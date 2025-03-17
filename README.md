@@ -4,7 +4,13 @@ This is an Angular UI Component library in use by TrueNAS and other related soft
 
 ## Contributing
 
-To get started with contributing to this project, simply clone the repo and run 
+Required dependencies
+
+- yarn >= 1.22
+- Node.js >= 18.19.1
+
+
+To get started with contributing to this project, simply clone the repo, ensure the above dependencies are met and run...
 
 ```
 yarn install
