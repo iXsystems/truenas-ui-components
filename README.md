@@ -1,4 +1,4 @@
-# TrueNAS-UI
+# TrueNAS-UI Components
 
 This is an Angular UI Component library in use by TrueNAS and other related software. It includes the component library itself as well as a Storybook setup complete with documentation and accessibility testing
 
@@ -14,7 +14,7 @@ The Storybook instance will provide a complete Angular environment allowing the 
 
 Using an Angular Library allows new components to be developed in isolation forcing them to be decoupled from any business logic. Storybook can then be used in the development process to provide clear guidelines and testing to ensure those guidelines are followed.
 
-## Installing TrueNAS-UI into your Angular project
+## Installing TrueNAS-UI Components into your Angular project
 
 Coming Soon
 
