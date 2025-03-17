@@ -2,7 +2,7 @@
 
 This is an Angular UI Component library in use by TrueNAS and other related software. It includes the component library itself as well as a Storybook setup complete with documentation and accessibility testing
 
-## Documentation
+## Storybook Documentation & Testing
 
 To use Storybook simply use the following command from the root directory of this repository
 
