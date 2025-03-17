@@ -1,27 +1,23 @@
-# TruenasUi
+# TrueNAS-UI
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 14.2.6.
+This is an Angular UI Component library in use by TrueNAS and other related software. It includes the component library itself as well as a Storybook setup complete with documentation and accessibility testing
 
-## Development server
+## Documentation
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+To use Storybook simply use the following command from the root directory of this repository
 
-## Code scaffolding
+```
+yarn run sb
+```
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+The Storybook instance will provide a complete Angular environment allowing the ability to test and preview the library components independently before using them in external projects. There is also documentation and a complete design system that includes code snippets and other useful information.
 
-## Build
+Using an Angular Library allows new components to be developed in isolation forcing them to be decoupled from any business logic. Storybook can then be used in the development process to provide clear guidelines and testing to ensure those guidelines are followed.
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+## Installing TrueNAS-UI into your Angular project
 
-## Running unit tests
+Coming Soon
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+## License
 
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+TBD

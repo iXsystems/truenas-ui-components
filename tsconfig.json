@@ -21,7 +21,14 @@
     "lib": [
       "es2020",
       "dom"
-    ]
+    ],
+    "paths": {
+      "truenas-ui": [
+        "./dist/truenas-ui",
+        "./dist/truenas-ui",
+        "./dist/truenas-ui"
+      ]
+    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

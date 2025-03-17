@@ -1,0 +1,27 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Style Guide/Themes" />
+
+# Theming in TrueNAS UI Library
+
+This library supports multiple themes. You can switch themes using the **Storybook toolbar**.
+
+## Available Themes
+- **iX Dark** (default)
+- **iX Blue**
+- **Dracula**
+- **Nord**
+- **Paper**
+- **Solarized Dark**
+- **Midnight**
+- **High Contrast**
+
+## Usage in Components
+Use CSS variables to apply theme styles:
+
+```scss
+.my-component {
+  background-color: var(--bg1);
+  color: var(--fg1);
+}
+

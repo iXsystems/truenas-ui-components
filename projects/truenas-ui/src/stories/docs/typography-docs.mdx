@@ -1,0 +1,23 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Style Guide/Typography" />
+
+# Typography in TrueNAS UI Library
+
+The theme css file that ships with this library also includes typography related style rules. The TrueNAS font families and text styles are described below.
+
+## Font Variables
+- --font-family-header
+- --font-family-body
+- --font-family-body2
+- --font-family-monospace
+
+## Usage in Components
+Use CSS variables to apply text styles:
+
+```scss
+.my-component {
+  font-family: var(--font-family-body);
+  color: var(--fg1);
+}
+```
