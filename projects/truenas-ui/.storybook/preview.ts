@@ -1,5 +1,7 @@
 import { Preview, Decorator, StoryContext } from '@storybook/angular';
 import { default as truenasTheme } from './truenasTheme';
+import 'zone.js';
+
 
 /**
  * Ensure the theme switcher appears in the Storybook toolbar.

@@ -2,15 +2,15 @@
   display: inline-block;
   cursor: pointer;
   border: 0;
-  font-weight: 700;
+  font-weight: 500;
   line-height: 1;
-  font-family: 'Nunito Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: 'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
-.storybook-button--primary {
+.button-primary {
   background-color: var(--primary);
   color: var(--primary-txt);
 }
-.storybook-button--secondary {
+.button-default {
   box-shadow: rgba(0, 0, 0, 0.15) 0px 0px 0px 1px inset;
   background-color: var(--btn-default-bg);
   color: var(--btn-default-txt);

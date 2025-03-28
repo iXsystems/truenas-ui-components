@@ -1,15 +1,24 @@
-import { SpectatorPipe, createPipeFactory } from '@ngneat/spectator/jest';
-import { FileSizePipe } from 'app/modules/pipes/file-size/file-size.pipe';
+import { FileSizePipe } from './file-size.pipe';
 
 describe('FileSizePipe', () => {
-  let spectator: SpectatorPipe<FileSizePipe>;
-  const createPipe = createPipeFactory({
-    pipe: FileSizePipe,
+  let pipe: FileSizePipe;
+
+  beforeEach(() => {
+    pipe = new FileSizePipe();
   });
 
-  it('converts value to IEC units', () => {
-    spectator = createPipe('{{ 1024 | ixFileSize }}');
+  it('converts bytes to KiB', () => {
+    const result = pipe.transform(1024);
+    expect(result).toBe('1 KiB');
+  });
 
-    expect(spectator.element.innerHTML).toBe('1 KiB');
+  it('converts bytes to MiB', () => {
+    const result = pipe.transform(1024 * 1024);
+    expect(result).toBe('1 MiB');
+  });
+
+  it('handles 0 bytes', () => {
+    const result = pipe.transform(0);
+    expect(result).toBe('0 B');
   });
 });

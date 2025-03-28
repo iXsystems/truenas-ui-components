@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { buildNormalizedFileSize } from 'app/helpers/file-size.utils';
+import { buildNormalizedFileSize } from './file-size.utils';
 
 @Pipe({
   name: 'ixFileSize',

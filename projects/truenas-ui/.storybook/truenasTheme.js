@@ -25,7 +25,7 @@ export default create({
 
   brandTitle: 'TrueNAS UI Storybook',
   brandUrl: 'https://truenas.com',
-  brandImage: 'https://raw.githubusercontent.com/truenas/webui/refs/heads/master/src/assets/icons/custom/truenas-logo-color.svg',
+  brandImage: 'https://raw.githubusercontent.com/truenas/webui/refs/heads/release/25.04-RC.1/src/assets/icons/custom/truenas-logo-color.svg',
   brandTarget: '_self',
 
 

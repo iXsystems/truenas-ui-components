@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { fn } from '@storybook/test';
-
+import { userEvent, within } from '@storybook/testing-library';
+import { expect } from '@storybook/jest';
 import { ButtonComponent } from '../lib/ix-button/ix-button.component';
 
 // More on how to set up stories at: https://storybook.js.org/docs/writing-stories
@@ -24,12 +25,25 @@ type Story = StoryObj<ButtonComponent>;
 export const Primary: Story = {
   args: {
     primary: true,
-    label: 'Button',
+    label: 'Primary',
+  },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const primaryButton = canvas.getByRole('button');
+
+    await expect(primaryButton.classList.contains('button-primary')).toBe(true);
   },
 };
 
 export const Default: Story = {
   args: {
-    label: 'Button',
+    primary: false,
+    label: 'Default',
+  },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const defaultButton = canvas.getByRole('button');
+
+    await expect(defaultButton.classList.contains('button-primary')).toBe(true);
   },
 };

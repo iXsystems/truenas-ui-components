@@ -1,0 +1,33 @@
+    .input {
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      width: 100%;
+    }
+
+    .input.input-invalid {
+      border-color: var(--red);
+    }
+
+    .input.input-valid {
+      border-color: #ccc;
+    }
+
+    .input:focus {
+      outline: unset;
+    }
+
+    .input-label {
+      display: block;
+      margin-bottom: 0.25rem;
+      font-weight: 600;
+    }
+
+    .input-label.input-invalid {
+      color: var(--red);
+    }
+
+    .input-label.input-valid {
+      color: #ccc;
+    }

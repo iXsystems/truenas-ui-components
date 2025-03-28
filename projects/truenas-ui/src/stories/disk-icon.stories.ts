@@ -1,7 +1,9 @@
 import { DiskIconComponent } from '../lib/disk-icon/disk-icon.component';
 import { DiskType } from '../lib/enums/disk-type.enum';
 
-import type { Meta, StoryObj } from '@storybook/angular/';
+import type { Meta, StoryObj } from '@storybook/angular';
+import { within } from '@storybook/testing-library';
+import { expect } from '@storybook/jest';
 
 const meta: Meta<DiskIconComponent> = {
   title: 'Components/DiskIcon',
@@ -23,5 +25,16 @@ export const DiskIcon: Story = {
     type: DiskType.Hdd,
     name: 'Disk 1',
   },
-};
 
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+
+    // Check if the disk name appears
+    const nameLabel = canvas.getByText(args.name);
+    await expect(nameLabel.textContent).toBe(args.name);
+
+    // Check if the disk size appears
+    const sizeLabel = canvas.getByText(args.size);
+    await expect(sizeLabel.textContent).toBe(args.size);
+  },
+};
