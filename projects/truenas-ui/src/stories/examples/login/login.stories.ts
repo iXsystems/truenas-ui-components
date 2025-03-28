@@ -36,8 +36,11 @@ export const BasicFlow: Story = {
 
     await step('Enter email and password', async () => {
       await userEvent.type(usernameInput, 'johndoe');
+      await new Promise((r) => setTimeout(r, 1500));
       await userEvent.type(passwordInput, 'abcd1234');
     });
+
+    await new Promise((r) => setTimeout(r, 1500));
 
     await step('Submit form', async () => {
       await userEvent.click(submitButton);

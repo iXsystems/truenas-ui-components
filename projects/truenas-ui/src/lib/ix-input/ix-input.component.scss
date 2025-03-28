@@ -4,6 +4,7 @@
       border: 1px solid #ccc;
       border-radius: 4px;
       width: 100%;
+      background-color: var(--bg1) !important;
     }
 
     .input.input-invalid {
@@ -11,7 +12,7 @@
     }
 
     .input.input-valid {
-      border-color: #ccc;
+      border-color: var(--alt-bg2);
     }
 
     .input:focus {
@@ -29,5 +30,5 @@
     }
 
     .input-label.input-valid {
-      color: #ccc;
+      color: var(--fg2);
     }
