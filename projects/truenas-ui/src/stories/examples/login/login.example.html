@@ -1,0 +1,23 @@
+<form>
+  <div class="form-control">
+    <ix-form-input
+      [inputType]="InputType.PlainText"
+      [label]="'Username'"
+      [placeholder]="'Enter your Username'"
+      [testId]="'username'"
+      [required]="true"
+    ></ix-form-input>
+  </div>
+  <div class="form-control">
+    <ix-form-input
+      [inputType]="InputType.Password"
+      [label]="'Password'"
+      [placeholder]="'Enter your password'"
+      [testId]="'password'"
+      [required]="true"
+    ></ix-form-input>
+  </div>
+  <div class="form-control">
+    <ix-button [primary]="true" [label]="'Login'"></ix-button>
+  </div>
+</form>

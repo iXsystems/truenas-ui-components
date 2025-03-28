@@ -8,7 +8,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
   templateUrl: './ix-button.component.html',
   styleUrls: ['./ix-button.component.scss'],
 })
-export class ButtonComponent {
+export class IxButtonComponent {
   size = 'large';
 
   @Input()

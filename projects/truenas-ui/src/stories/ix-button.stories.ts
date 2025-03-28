@@ -2,12 +2,12 @@ import type { Meta, StoryObj } from '@storybook/angular';
 import { fn } from '@storybook/test';
 import { userEvent, within } from '@storybook/testing-library';
 import { expect } from '@storybook/jest';
-import { ButtonComponent } from '../lib/ix-button/ix-button.component';
+import { IxButtonComponent } from '../lib/ix-button/ix-button.component';
 
 // More on how to set up stories at: https://storybook.js.org/docs/writing-stories
-const meta: Meta<ButtonComponent> = {
+const meta: Meta<IxButtonComponent> = {
   title: 'Components/Button',
-  component: ButtonComponent,
+  component: IxButtonComponent,
   tags: ['autodocs'],
   argTypes: {
     backgroundColor: {
@@ -19,7 +19,7 @@ const meta: Meta<ButtonComponent> = {
 };
 
 export default meta;
-type Story = StoryObj<ButtonComponent>;
+type Story = StoryObj<IxButtonComponent>;
 
 // More on writing stories with args: https://storybook.js.org/docs/writing-stories/args
 export const Primary: Story = {
