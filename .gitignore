@@ -8,6 +8,7 @@
 
 # Node
 /node_modules
+projects/truenas-ui/node_modules
 npm-debug.log
 yarn-error.log
 
@@ -32,7 +33,7 @@ yarn-error.log
 /.angular/cache
 .sass-cache/
 /connect.lock
-/coverage
+projects/truenas-ui/coverage
 /libpeerconnection.log
 testem.log
 /typings
