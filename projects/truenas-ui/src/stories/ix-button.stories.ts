@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { fn } from '@storybook/test';
 import { userEvent, within } from '@storybook/testing-library';
 import { expect } from '@storybook/jest';
 import { IxButtonComponent } from '../lib/ix-button/ix-button.component';
@@ -13,9 +12,8 @@ const meta: Meta<IxButtonComponent> = {
     backgroundColor: {
       control: 'color',
     },
+    onClick: { action: "clicked" },
   },
-  // Use `fn` to spy on the onClick arg, which will appear in the actions panel once invoked: https://storybook.js.org/docs/essentials/actions#action-args
-  args: { onClick: fn() },
 };
 
 export default meta;
@@ -32,6 +30,7 @@ export const Primary: Story = {
     const primaryButton = canvas.getByRole('button');
 
     await expect(primaryButton.classList.contains('button-primary')).toBe(true);
+    await userEvent.click(primaryButton);
   },
 };
 
@@ -45,5 +44,6 @@ export const Default: Story = {
     const defaultButton = canvas.getByRole('button');
 
     await expect(defaultButton.classList.contains('button-primary')).toBe(true);
+    await userEvent.click(defaultButton);
   },
 };

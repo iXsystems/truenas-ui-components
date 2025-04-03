@@ -21,7 +21,8 @@ export class IxButtonComponent {
   label = 'Button';
 
   @Output()
-  onClick = new EventEmitter<Event>();
+  onClick = new EventEmitter<MouseEvent>();
+
 
   public get classes(): string[] {
     const mode = this.primary ? 'button-primary' : 'button-default';
