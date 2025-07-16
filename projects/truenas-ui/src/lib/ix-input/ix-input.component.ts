@@ -32,4 +32,12 @@ export class IxInputComponent implements AfterViewInit {
         console.log(`Input focused via: ${origin}`);
       });
   }
+
+  validate() {
+    if (this.required && !this.value) {
+      this.error = 'This field is required';
+    } else {
+      this.error = null;
+    }
+  }
 }

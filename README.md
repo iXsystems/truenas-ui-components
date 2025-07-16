@@ -30,7 +30,44 @@ Using an Angular Library allows new components to be developed in isolation forc
 
 ## Installing TrueNAS-UI Components into your Angular project
 
-Coming Soon
+To use the TrueNAS-UI component library in your Angular application, first install the package and then import the components you need. The library provides standalone components that can be imported individually or through the main module.
+
+### Installation
+```bash
+npm install truenas-ui
+# or
+yarn add truenas-ui
+```
+
+### Using Components
+Import individual components in your Angular component:
+```typescript
+import { IxButtonComponent, IxInputComponent } from 'truenas-ui';
+
+@Component({
+  selector: 'app-example',
+  standalone: true,
+  imports: [IxButtonComponent, IxInputComponent],
+  template: `
+    <ix-button variant="primary">Click me</ix-button>
+    <ix-input label="Username" placeholder="Enter username"></ix-input>
+  `
+})
+export class ExampleComponent {}
+```
+
+### Including Themes
+Add the theme CSS to your `angular.json` styles array:
+```json
+{
+  "styles": [
+    "node_modules/truenas-ui/src/styles/themes.css",
+    "src/styles.css"
+  ]
+}
+```
+
+The library includes 8 built-in themes (ix-dark, ix-blue, dracula, nord, paper, solarized-dark, midnight, high-contrast) that can be applied by adding the theme class to your document root.
 
 ## License
 

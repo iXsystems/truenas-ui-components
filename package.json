@@ -10,9 +10,10 @@
     "test-cc": "yarn jest --clearCache && yarn jest --config ./projects/truenas-ui/jest.config.ts",
     "test-coverage": "yarn jest --clearCache && yarn jest --config ./projects/truenas-ui/jest.config.ts --coverage",
     "test-sb": "test-storybook",
-    "storybook": "ng run truenas-ui:storybook",
-    "build-storybook": "ng run truenas-ui:build-storybook",
-    "sb": "yarn run storybook --host localhost",
+    "copy-themes": "cp ./projects/truenas-ui/src/styles/themes.css ./projects/truenas-ui/.storybook/public/",
+    "storybook": "yarn copy-themes && ng run truenas-ui:storybook",
+    "build-storybook": "yarn copy-themes && ng run truenas-ui:build-storybook",
+    "sb": "yarn copy-themes && yarn run storybook --host localhost",
     "reinstall": "rm -rf ./node_modules && yarn install"
   },
   "private": true,
