@@ -13,7 +13,7 @@
     "copy-themes": "cp ./projects/truenas-ui/src/styles/themes.css ./projects/truenas-ui/.storybook/public/",
     "storybook": "yarn copy-themes && ng run truenas-ui:storybook",
     "build-storybook": "yarn copy-themes && ng run truenas-ui:build-storybook",
-    "sb": "yarn copy-themes && yarn run storybook --host localhost",
+    "sb": "yarn copy-themes && yarn run storybook --host 0.0.0.0",
     "reinstall": "rm -rf ./node_modules && yarn install"
   },
   "private": true,

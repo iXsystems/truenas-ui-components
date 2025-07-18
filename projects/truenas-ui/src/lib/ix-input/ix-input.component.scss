@@ -1,10 +1,18 @@
     .input {
       padding: 0.5rem;
       font-size: 1rem;
-      border: 1px solid #ccc;
+      border: 1px solid var(--lines, #ccc);
       border-radius: 4px;
       width: 100%;
       background-color: var(--bg1) !important;
+      font-family: inherit;
+      color: var(--fg2);
+    }
+
+    .input.textarea {
+      min-height: 80px;
+      resize: vertical;
+      line-height: 1.4;
     }
 
     .input.input-invalid {

@@ -9,7 +9,10 @@
       {{ label }}
       <span *ngIf="required">*</span>
     </label>
+    
+    <!-- Regular input field -->
     <input
+      *ngIf="!multiline"
       #inputEl
       [id]="id"
       [(ngModel)]="value"
@@ -23,4 +26,23 @@
         'input-valid': error === null && value !== ''
       }"
     />
+    
+    <!-- Textarea field -->
+    <textarea
+      *ngIf="multiline"
+      #inputEl
+      [id]="id"
+      [(ngModel)]="value"
+      [attr.placeholder]="placeholder"
+      [attr.data-testid]="testId"
+      [rows]="rows"
+      (blur)="validate()"
+      [ngClass]="{
+        'input': true,
+        'textarea': true,
+        'input-invalid': error !== null,
+        'input-valid': error === null && value !== ''
+      }"
+    ></textarea>
+    
     <p class="error-message" *ngIf="error">{{ error }}</p>

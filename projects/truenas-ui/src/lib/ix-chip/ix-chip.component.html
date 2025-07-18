@@ -1,0 +1,24 @@
+<div
+  #chipEl
+  [ngClass]="classes"
+  [attr.data-testid]="testId"
+  [attr.aria-label]="label"
+  [attr.aria-disabled]="disabled"
+  [attr.tabindex]="disabled ? -1 : 0"
+  role="button"
+  (click)="handleClick($event)"
+  (keydown)="handleKeyDown($event)"
+>
+  <span class="ix-chip__icon" *ngIf="icon" [innerHTML]="icon"></span>
+  <span class="ix-chip__label">{{ label }}</span>
+  <button
+    *ngIf="closable"
+    type="button"
+    class="ix-chip__close"
+    [attr.aria-label]="'Remove ' + label"
+    [disabled]="disabled"
+    (click)="handleClose($event)"
+  >
+    <span class="ix-chip__close-icon">×</span>
+  </button>
+</div>

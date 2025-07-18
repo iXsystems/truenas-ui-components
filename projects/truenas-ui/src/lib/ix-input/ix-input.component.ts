@@ -12,7 +12,7 @@ import { InputType } from '../enums/input-type.enum';
   styleUrl: './ix-input.component.scss',
 })
 export class IxInputComponent implements AfterViewInit {
-  @ViewChild('inputEl') inputEl!: ElementRef<HTMLInputElement>;
+  @ViewChild('inputEl') inputEl!: ElementRef<HTMLInputElement | HTMLTextAreaElement>;
 
   @Input() inputType: InputType = InputType.PlainText;
   @Input() label = 'Name';
@@ -20,6 +20,8 @@ export class IxInputComponent implements AfterViewInit {
   @Input() testId?: string;
   @Input() error: string | null = null;
   @Input() required: boolean = false;
+  @Input() multiline: boolean = false;
+  @Input() rows: number = 3;
 
   id = 'form-input';
   value = '';

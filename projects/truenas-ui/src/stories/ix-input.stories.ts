@@ -5,7 +5,7 @@ import { IxInputComponent } from '../lib/ix-input/ix-input.component';
 import { InputType } from '../lib/enums/input-type.enum';
 
 const meta: Meta<IxInputComponent> = {
-  title: 'Components/iX-Input',
+  title: 'Components/Input',
   component: IxInputComponent,
   tags: ['autodocs'],
   argTypes: {
@@ -15,6 +15,12 @@ const meta: Meta<IxInputComponent> = {
     },
     required: {
       control: { type: 'boolean' },
+    },
+    multiline: {
+      control: { type: 'boolean' },
+    },
+    rows: {
+      control: { type: 'number' },
     },
   },
 };
@@ -52,5 +58,23 @@ export const Invalid: Story = {
     const input = canvas.getByTestId(args.testId!);
     await userEvent.type(input, 'emailprovider');
     await expect(input).toHaveClass('input-invalid');
+  },
+};
+
+export const Multiline: Story = {
+  args: {
+    inputType: InputType.PlainText,
+    label: 'Comments',
+    placeholder: 'Enter your comments here...',
+    testId: 'multiline-input',
+    required: false,
+    multiline: true,
+    rows: 4,
+  },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const input = canvas.getByTestId(args.testId!);
+    await userEvent.type(input, 'This is a multiline textarea input.');
+    await expect(input).toHaveClass('textarea');
   },
 };

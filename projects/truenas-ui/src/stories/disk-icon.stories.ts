@@ -6,7 +6,7 @@ import { within } from '@storybook/testing-library';
 import { expect } from '@storybook/jest';
 
 const meta: Meta<DiskIconComponent> = {
-  title: 'Components/DiskIcon',
+  title: 'Components/Disk Icon',
   component: DiskIconComponent,
   tags: ['autodocs'],
   argTypes: {
