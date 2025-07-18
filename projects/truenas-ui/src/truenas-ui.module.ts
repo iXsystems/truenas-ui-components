@@ -6,11 +6,13 @@ import { IxCheckboxComponent } from './lib/ix-checkbox/ix-checkbox.component';
 import { IxTabsComponent } from './lib/ix-tabs/ix-tabs.component';
 import { IxTabComponent } from './lib/ix-tab/ix-tab.component';
 import { IxTabPanelComponent } from './lib/ix-tab-panel/ix-tab-panel.component';
+import { IxMenuComponent } from './lib/ix-menu/ix-menu.component';
+import { IxKeyboardShortcutComponent } from './lib/ix-keyboard-shortcut/ix-keyboard-shortcut.component';
 
 @NgModule({
   declarations: [DiskIconComponent],
-  imports: [IxChipComponent, IxCardComponent, IxCheckboxComponent, IxTabsComponent, IxTabComponent, IxTabPanelComponent],
-  exports: [DiskIconComponent, IxChipComponent, IxCardComponent, IxCheckboxComponent, IxTabsComponent, IxTabComponent, IxTabPanelComponent],
+  imports: [IxChipComponent, IxCardComponent, IxCheckboxComponent, IxTabsComponent, IxTabComponent, IxTabPanelComponent, IxMenuComponent, IxKeyboardShortcutComponent],
+  exports: [DiskIconComponent, IxChipComponent, IxCardComponent, IxCheckboxComponent, IxTabsComponent, IxTabComponent, IxTabPanelComponent, IxMenuComponent, IxKeyboardShortcutComponent],
 })
 export class TruenasUiModule {}
 
