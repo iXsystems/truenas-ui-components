@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { userEvent, within } from '@storybook/testing-library';
 import { expect } from '@storybook/jest';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { IxInputComponent } from '../lib/ix-input/ix-input.component';
+import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.component';
 import { InputType } from '../lib/enums/input-type.enum';
 
 const meta: Meta<IxInputComponent> = {
@@ -12,15 +14,27 @@ const meta: Meta<IxInputComponent> = {
     inputType: {
       control: { type: 'select' },
       options: Object.values(InputType),
+      description: 'Type of input field',
     },
-    required: {
-      control: { type: 'boolean' },
+    placeholder: {
+      control: 'text',
+      description: 'Placeholder text for the input',
+    },
+    disabled: {
+      control: 'boolean',
+      description: 'Whether the input is disabled',
     },
     multiline: {
-      control: { type: 'boolean' },
+      control: 'boolean',
+      description: 'Whether to render as textarea',
     },
     rows: {
-      control: { type: 'number' },
+      control: 'number',
+      description: 'Number of rows for textarea',
+    },
+    testId: {
+      control: 'text',
+      description: 'Test ID for the input component',
     },
   },
 };
@@ -28,53 +42,131 @@ const meta: Meta<IxInputComponent> = {
 export default meta;
 type Story = StoryObj<IxInputComponent>;
 
-export const Valid: Story = {
+export const Default: Story = {
+  render: (args) => ({
+    props: args,
+    template: `
+      <ix-form-field 
+        label="Full Name"
+        hint="Enter your first and last name">
+        <ix-input
+          [inputType]="inputType"
+          [placeholder]="placeholder"
+          [disabled]="disabled"
+          [testId]="testId"
+          [multiline]="multiline"
+          [rows]="rows">
+        </ix-input>
+      </ix-form-field>
+    `,
+    moduleMetadata: {
+      imports: [IxFormFieldComponent],
+    },
+  }),
   args: {
-    inputType: InputType.Email,
-    label: 'Email',
-    placeholder: 'Enter your email',
-    testId: 'valid-input',
-    required: true,
-  },
-  play: async ({ canvasElement, args }) => {
-    const canvas = within(canvasElement);
-    const input = canvas.getByTestId(args.testId!);
-    await userEvent.type(input, 'email@provider.com');
-    await expect(input).toHaveClass('input-valid');
+    inputType: InputType.PlainText,
+    placeholder: 'Enter your full name',
+    testId: 'default-input',
+    disabled: false,
+    multiline: false,
+    rows: 3,
   },
 };
 
-export const Invalid: Story = {
+export const WithError: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      emailControl: new FormControl('invalid-email', { 
+        validators: [(control) => {
+          const email = control.value;
+          if (!email || !email.includes('@')) {
+            return { email: true };
+          }
+          return null;
+        }]
+      })
+    },
+    template: `
+      <ix-form-field 
+        label="Email Address"
+        hint="Must be a valid email format"
+        [required]="true">
+        <ix-input
+          [inputType]="inputType"
+          [placeholder]="placeholder"
+          [disabled]="disabled"
+          [testId]="testId"
+          [formControl]="emailControl">
+        </ix-input>
+      </ix-form-field>
+    `,
+    moduleMetadata: {
+      imports: [IxFormFieldComponent, ReactiveFormsModule],
+    },
+  }),
   args: {
     inputType: InputType.Email,
-    label: 'Email',
     placeholder: 'Enter your email',
-    testId: 'invalid-input',
-    required: false,
-    error: 'This is not a valid email address',
-  },
-  play: async ({ canvasElement, args }) => {
-    const canvas = within(canvasElement);
-    const input = canvas.getByTestId(args.testId!);
-    await userEvent.type(input, 'emailprovider');
-    await expect(input).toHaveClass('input-invalid');
+    testId: 'error-input',
+    disabled: false,
   },
 };
 
 export const Multiline: Story = {
+  render: (args) => ({
+    props: args,
+    template: `
+      <ix-form-field 
+        label="Comments"
+        hint="Share your thoughts or feedback">
+        <ix-input
+          [inputType]="inputType"
+          [placeholder]="placeholder"
+          [disabled]="disabled"
+          [testId]="testId"
+          [multiline]="multiline"
+          [rows]="rows">
+        </ix-input>
+      </ix-form-field>
+    `,
+    moduleMetadata: {
+      imports: [IxFormFieldComponent],
+    },
+  }),
   args: {
     inputType: InputType.PlainText,
-    label: 'Comments',
     placeholder: 'Enter your comments here...',
     testId: 'multiline-input',
-    required: false,
+    disabled: false,
     multiline: true,
     rows: 4,
   },
-  play: async ({ canvasElement, args }) => {
-    const canvas = within(canvasElement);
-    const input = canvas.getByTestId(args.testId!);
-    await userEvent.type(input, 'This is a multiline textarea input.');
-    await expect(input).toHaveClass('textarea');
+};
+
+export const Disabled: Story = {
+  render: (args) => ({
+    props: args,
+    template: `
+      <ix-form-field 
+        label="Disabled Input"
+        hint="This input is disabled">
+        <ix-input
+          [inputType]="inputType"
+          [placeholder]="placeholder"
+          [disabled]="disabled"
+          [testId]="testId">
+        </ix-input>
+      </ix-form-field>
+    `,
+    moduleMetadata: {
+      imports: [IxFormFieldComponent],
+    },
+  }),
+  args: {
+    inputType: InputType.PlainText,
+    placeholder: 'This field is disabled',
+    testId: 'disabled-input',
+    disabled: true,
   },
 };

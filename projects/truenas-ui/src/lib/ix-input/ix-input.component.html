@@ -1,48 +1,31 @@
-    <label
-      [attr.for]="id"
-      [ngClass]="{
-        'input-label': true,
-        'input-invalid': error !== null,
-        'input-valid': error === null && value !== ''
-      }"
-      >
-      {{ label }}
-      <span *ngIf="required">*</span>
-    </label>
-    
-    <!-- Regular input field -->
-    <input
-      *ngIf="!multiline"
-      #inputEl
-      [id]="id"
-      [(ngModel)]="value"
-      [type]="inputType"
-      [attr.placeholder]="placeholder"
-      [attr.data-testid]="testId"
-      (blur)="validate()"
-      [ngClass]="{
-        'input': true,
-        'input-invalid': error !== null,
-        'input-valid': error === null && value !== ''
-      }"
-    />
-    
-    <!-- Textarea field -->
-    <textarea
-      *ngIf="multiline"
-      #inputEl
-      [id]="id"
-      [(ngModel)]="value"
-      [attr.placeholder]="placeholder"
-      [attr.data-testid]="testId"
-      [rows]="rows"
-      (blur)="validate()"
-      [ngClass]="{
-        'input': true,
-        'textarea': true,
-        'input-invalid': error !== null,
-        'input-valid': error === null && value !== ''
-      }"
-    ></textarea>
-    
-    <p class="error-message" *ngIf="error">{{ error }}</p>
+<div class="ix-input-container">
+  <!-- Regular input field -->
+  <input
+    *ngIf="!multiline"
+    #inputEl
+    [id]="id"
+    [value]="value"
+    [type]="inputType"
+    [attr.placeholder]="placeholder"
+    [attr.data-testid]="testId"
+    [disabled]="disabled"
+    (input)="onValueChange($event)"
+    (blur)="onBlur()"
+    class="ix-input"
+  />
+  
+  <!-- Textarea field -->
+  <textarea
+    *ngIf="multiline"
+    #inputEl
+    [id]="id"
+    [value]="value"
+    [attr.placeholder]="placeholder"
+    [attr.data-testid]="testId"
+    [rows]="rows"
+    [disabled]="disabled"
+    (input)="onValueChange($event)"
+    (blur)="onBlur()"
+    class="ix-input ix-textarea"
+  ></textarea>
+</div>

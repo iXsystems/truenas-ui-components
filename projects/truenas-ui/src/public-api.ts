@@ -15,6 +15,8 @@ export * from './lib/ix-tab/ix-tab.component';
 export * from './lib/ix-tab-panel/ix-tab-panel.component';
 export * from './lib/ix-menu/ix-menu.component';
 export * from './lib/ix-keyboard-shortcut/ix-keyboard-shortcut.component';
+export * from './lib/ix-form-field/ix-form-field.component';
+export * from './lib/ix-select/ix-select.component';
 export * from './lib/enums/disk-type.enum';
 export * from './lib/enums/input-type.enum';
 export * from './lib/enums/modifier-keys.enum';
