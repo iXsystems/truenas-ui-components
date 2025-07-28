@@ -1,27 +1,28 @@
 <div [ngClass]="classes">
-  <label [for]="id" class="ix-checkbox__label">
+  <label [for]="id" class="ix-radio__label">
     <input
-      #checkboxEl
-      type="checkbox"
+      #radioEl
+      type="radio"
       [id]="id"
+      [name]="name"
+      [value]="value"
       [checked]="checked"
       [disabled]="disabled"
       [required]="required"
-      [indeterminate]="indeterminate"
       [attr.data-testid]="testId"
       [attr.aria-describedby]="error ? id + '-error' : null"
       [attr.aria-invalid]="error ? 'true' : null"
-      class="ix-checkbox__input"
-      (change)="onCheckboxChange($event)"
+      class="ix-radio__input"
+      (change)="onRadioChange($event)"
     />
-    <span class="ix-checkbox__checkmark"></span>
-    <span class="ix-checkbox__text" *ngIf="!hideLabel">{{ label }}</span>
+    <span class="ix-radio__checkmark"></span>
+    <span class="ix-radio__text">{{ label }}</span>
   </label>
   
   @if (error) {
     <div 
       [id]="id + '-error'" 
-      class="ix-checkbox__error"
+      class="ix-radio__error"
       role="alert"
       aria-live="polite"
     >

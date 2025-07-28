@@ -48,7 +48,7 @@
   --primary: var(--blue);
   --topbar: #111111;
   --topbar-txt: rgba(255,255,255,0.85);
-  --accent: #545454;
+  --accent: var(--yellow);
   --bg1: #1E1E1E;
   --bg2: #282828;
   --fg1: #ffffff;

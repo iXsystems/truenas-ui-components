@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { IxCheckboxComponent } from '../lib/ix-checkbox/ix-checkbox.component';
 
 const meta: Meta<IxCheckboxComponent> = {
@@ -192,7 +194,10 @@ export const Interactive: Story = {
         <button (click)="onToggle()">Toggle programmatically</button>
         <p>Current state: {{ checked ? 'Checked' : 'Unchecked' }}</p>
       </div>
-    `
+    `,
+    moduleMetadata: {
+      imports: [FormsModule, CommonModule]
+    }
   })
 };
 
@@ -240,6 +245,9 @@ export const Group: Story = {
           </ul>
         </div>
       </div>
-    `
+    `,
+    moduleMetadata: {
+      imports: [FormsModule, CommonModule]
+    }
   })
 };

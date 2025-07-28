@@ -3,43 +3,47 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
 
+export type SlideToggleColor = 'primary' | 'accent' | 'warn';
+
 @Component({
-  selector: 'ix-checkbox',
+  selector: 'ix-slide-toggle',
   standalone: true,
   imports: [CommonModule, FormsModule, A11yModule],
-  templateUrl: './ix-checkbox.component.html',
-  styleUrl: './ix-checkbox.component.scss',
+  templateUrl: './ix-slide-toggle.component.html',
+  styleUrl: './ix-slide-toggle.component.scss',
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => IxCheckboxComponent),
+      useExisting: forwardRef(() => IxSlideToggleComponent),
       multi: true
     }
   ]
 })
-export class IxCheckboxComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
-  @ViewChild('checkboxEl') checkboxEl!: ElementRef<HTMLInputElement>;
+export class IxSlideToggleComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
+  @ViewChild('toggleEl') toggleEl!: ElementRef<HTMLInputElement>;
 
-  @Input() label = 'Checkbox';
-  @Input() hideLabel = false;
+  @Input() labelPosition: 'before' | 'after' = 'after';
+  @Input() label?: string;
   @Input() disabled = false;
   @Input() required = false;
-  @Input() indeterminate = false;
+  @Input() color: SlideToggleColor = 'primary';
   @Input() testId?: string;
-  @Input() error: string | null = null;
+  @Input() ariaLabel?: string;
+  @Input() ariaLabelledby?: string;
   @Input() checked = false;
 
   @Output() change = new EventEmitter<boolean>();
+  @Output() toggleChange = new EventEmitter<boolean>();
 
-  id = `ix-checkbox-${Math.random().toString(36).substr(2, 9)}`;
+  id = `ix-slide-toggle-${Math.random().toString(36).substr(2, 9)}`;
 
   private focusMonitor = inject(FocusMonitor);
   private onChange = (_: boolean) => {};
   private onTouched = () => {};
 
   ngAfterViewInit() {
-    if (this.checkboxEl) {
-      this.focusMonitor.monitor(this.checkboxEl)
+    if (this.toggleEl) {
+      this.focusMonitor.monitor(this.toggleEl)
         .subscribe(origin => {
           // Focus monitoring for accessibility
         });
@@ -47,8 +51,8 @@ export class IxCheckboxComponent implements AfterViewInit, OnDestroy, ControlVal
   }
 
   ngOnDestroy() {
-    if (this.checkboxEl) {
-      this.focusMonitor.stopMonitoring(this.checkboxEl);
+    if (this.toggleEl) {
+      this.focusMonitor.stopMonitoring(this.toggleEl);
     }
   }
 
@@ -69,29 +73,42 @@ export class IxCheckboxComponent implements AfterViewInit, OnDestroy, ControlVal
     this.disabled = isDisabled;
   }
 
-  onCheckboxChange(event: Event): void {
+  onToggleChange(event: Event): void {
+    event.stopPropagation();
+    
     const target = event.target as HTMLInputElement;
     this.checked = target.checked;
+    
     this.onChange(this.checked);
     this.onTouched();
     this.change.emit(this.checked);
+    this.toggleChange.emit(this.checked);
+  }
+
+  onLabelClick(): void {
+    if (!this.disabled && this.toggleEl) {
+      this.toggleEl.nativeElement.click();
+    }
   }
 
   get classes(): string[] {
-    const classes = ['ix-checkbox'];
+    const classes = ['ix-slide-toggle'];
     
     if (this.disabled) {
-      classes.push('ix-checkbox--disabled');
+      classes.push('ix-slide-toggle--disabled');
     }
     
-    if (this.error) {
-      classes.push('ix-checkbox--error');
+    if (this.checked) {
+      classes.push('ix-slide-toggle--checked');
     }
     
-    if (this.indeterminate) {
-      classes.push('ix-checkbox--indeterminate');
-    }
+    classes.push(`ix-slide-toggle--${this.color}`);
+    classes.push(`ix-slide-toggle--label-${this.labelPosition}`);
 
     return classes;
+  }
+
+  get effectiveAriaLabel(): string | undefined {
+    return this.ariaLabel || (this.label ? undefined : 'Toggle');
   }
 }

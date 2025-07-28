@@ -1,0 +1,25 @@
+<div class="ix-list-item__content">
+  <!-- Leading icon/avatar slot -->
+  <div class="ix-list-item__leading" *ngIf="hasLeadingContent">
+    <ng-content select="[ixListIcon], [ixListAvatar]"></ng-content>
+  </div>
+
+  <!-- Text content -->
+  <div class="ix-list-item__text">
+    <!-- Primary text -->
+    <div class="ix-list-item__primary-text">
+      <ng-content select="[ixListItemTitle], [ixListItemPrimary]"></ng-content>
+      <ng-content *ngIf="!hasPrimaryTextDirective"></ng-content>
+    </div>
+    
+    <!-- Secondary text -->
+    <div class="ix-list-item__secondary-text" *ngIf="hasSecondaryTextContent">
+      <ng-content select="[ixListItemLine], [ixListItemSecondary]"></ng-content>
+    </div>
+  </div>
+
+  <!-- Trailing content slot -->
+  <div class="ix-list-item__trailing" *ngIf="hasTrailingContent">
+    <ng-content select="[ixListItemTrailing]"></ng-content>
+  </div>
+</div>

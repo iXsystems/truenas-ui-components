@@ -43,7 +43,7 @@ export const Default: Story = {
     const canvas = within(canvasElement);
     const defaultButton = canvas.getByRole('button');
 
-    await expect(defaultButton.classList.contains('button-primary')).toBe(true);
+    await expect(defaultButton.classList.contains('button-default')).toBe(true);
     await userEvent.click(defaultButton);
   },
 };

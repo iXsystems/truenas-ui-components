@@ -1,0 +1,132 @@
+// List Option Component Styles
+// Based on Angular Material Design patterns
+
+.ix-list-option {
+  display: block;
+  position: relative;
+  min-height: 48px;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--fg1);
+  transition: background-color 0.2s ease;
+  user-select: none;
+
+  &__content {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    min-height: inherit;
+    box-sizing: border-box;
+    transition: background-color 0.2s ease;
+    border-radius: 4px;
+  }
+
+  &__leading {
+    flex-shrink: 0;
+    margin-right: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  &__primary-text {
+    font-size: 16px;
+    font-weight: normal;
+    line-height: 1.5;
+    color: var(--fg1);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__secondary-text {
+    font-size: 14px;
+    font-weight: normal;
+    line-height: 1.4;
+    color: var(--fg2);
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__checkbox {
+    flex-shrink: 0;
+    margin-left: 16px;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+
+  // Disabled state
+  &--disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+
+  }
+
+}
+
+// Icon styles
+::ng-deep [ixListIcon] {
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
+  color: var(--fg2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Avatar styles
+::ng-deep [ixListAvatar] {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: var(--alt-bg1);
+  color: var(--fg1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+}
+
+// List item title directive
+::ng-deep [ixListItemTitle] {
+  font-weight: normal;
+}
+
+// List item line directive
+::ng-deep [ixListItemLine] {
+  display: block;
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--fg2);
+  line-height: 1.4;
+}
+
+// Hover states using :host selector
+:host(:hover:not(.ix-list-option--disabled)) {
+  .ix-list-option__content {
+    background-color: var(--alt-bg2);
+  }
+}
+
+:host(:focus) {
+  outline: none;
+  
+  .ix-list-option__content {
+    background-color: var(--alt-bg2);
+  }
+}
