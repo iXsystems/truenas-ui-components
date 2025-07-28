@@ -1,13 +1,14 @@
 import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
+import { IxIconComponent } from '../ix-icon/ix-icon.component';
 
 export type ChipColor = 'primary' | 'secondary' | 'accent';
 
 @Component({
   selector: 'ix-chip',
   standalone: true,
-  imports: [CommonModule, A11yModule],
+  imports: [CommonModule, A11yModule, IxIconComponent],
   templateUrl: './ix-chip.component.html',
   styleUrls: ['./ix-chip.component.scss'],
 })

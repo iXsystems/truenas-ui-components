@@ -9,7 +9,7 @@
   (click)="handleClick($event)"
   (keydown)="handleKeyDown($event)"
 >
-  <span class="ix-chip__icon" *ngIf="icon" [innerHTML]="icon"></span>
+  <ix-icon *ngIf="icon" [name]="icon" class="ix-chip__icon" size="sm"></ix-icon>
   <span class="ix-chip__label">{{ label }}</span>
   <button
     *ngIf="closable"

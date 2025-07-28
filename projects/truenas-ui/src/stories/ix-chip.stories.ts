@@ -64,7 +64,7 @@ export const Default: Story = {
 export const WithIcon: Story = {
   args: {
     label: 'Featured',
-    icon: '★',
+    icon: 'star',
     color: 'primary',
     closable: true,
     disabled: false,
