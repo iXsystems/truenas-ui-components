@@ -13,35 +13,7 @@ import { IxTreeNodeOutletDirective } from './ix-tree-node-outlet.directive';
     { provide: CdkNestedTreeNode, useExisting: IxNestedTreeNodeComponent },
     { provide: CdkTreeNode, useExisting: IxNestedTreeNodeComponent }
   ],
-  template: `
-    <div class="ix-nested-tree-node__content">
-      <!-- Toggle button for expandable nodes (provided by component) -->
-      <button
-        *ngIf="isExpandable"
-        class="ix-nested-tree-node__toggle"
-        [class.ix-nested-tree-node__toggle--expanded]="isExpanded"
-        cdkTreeNodeToggle
-        [attr.aria-label]="'Toggle node'"
-        type="button">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--fg2)"
-             [style.transform]="isExpanded ? 'rotate(90deg)' : 'rotate(0deg)'"
-             style="transition: transform 0.2s ease;">
-          <path d="M6 4l4 4-4 4V4z"/>
-        </svg>
-      </button>
-
-      <!-- Spacer for non-expandable nodes to maintain alignment -->
-      <div *ngIf="!isExpandable" class="ix-nested-tree-node__spacer"></div>
-
-      <!-- Consumer content -->
-      <ng-content></ng-content>
-    </div>
-
-    <!-- Children container -->
-    <div class="ix-nested-tree-node-container" *ngIf="isExpandable" [class.ix-tree-invisible]="!isExpanded" role="group">
-      <ng-content select="[slot=children]"></ng-content>
-    </div>
-  `,
+  templateUrl: './ix-nested-tree-node.component.html',
   styleUrl: './ix-nested-tree-node.component.scss',
   host: {
     'class': 'ix-nested-tree-node-wrapper',

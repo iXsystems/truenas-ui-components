@@ -11,38 +11,7 @@ import { IxIconComponent } from '../ix-icon/ix-icon.component';
   providers: [
     { provide: CdkTreeNode, useExisting: IxTreeNodeComponent }
   ],
-  template: `
-    <div class="ix-tree-node" 
-         [class.ix-tree-node--expandable]="isExpandable"
-         [attr.aria-level]="level + 1"
-         [attr.aria-expanded]="isExpandable ? isExpanded : null"
-         [style.cursor]="isExpandable ? 'pointer' : 'default'"
-         cdkTreeNodeToggle
-         role="treeitem">
-      
-      <div class="ix-tree-node__content">
-        <!-- Arrow icon for expandable nodes -->
-        <div 
-          *ngIf="isExpandable"
-          class="ix-tree-node__toggle"
-          [class.ix-tree-node__toggle--expanded]="isExpanded">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--fg2)"
-               [style.transform]="isExpanded ? 'rotate(90deg)' : 'rotate(0deg)'"
-               style="transition: transform 0.2s ease;">
-            <path d="M6 4l4 4-4 4V4z"/>
-          </svg>
-        </div>
-        
-        <!-- Spacer for non-expandable nodes -->
-        <div *ngIf="!isExpandable" class="ix-tree-node__spacer"></div>
-        
-        <!-- Node content -->
-        <div class="ix-tree-node__text">
-          <ng-content></ng-content>
-        </div>
-      </div>
-    </div>
-  `,
+  templateUrl: './ix-tree-node.component.html',
   styleUrl: './ix-tree-node.component.scss',
   host: {
     'class': 'ix-tree-node-wrapper',

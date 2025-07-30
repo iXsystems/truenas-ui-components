@@ -112,9 +112,7 @@ export class IxTreeFlatDataSource<T, F> extends DataSource<F> {
   providers: [
     { provide: CdkTree, useExisting: IxTreeComponent }
   ],
-  template: `
-    <ng-container cdkTreeNodeOutlet></ng-container>
-  `,
+  templateUrl: './ix-tree.component.html',
   styleUrl: './ix-tree.component.scss',
   host: {
     'class': 'ix-tree',
