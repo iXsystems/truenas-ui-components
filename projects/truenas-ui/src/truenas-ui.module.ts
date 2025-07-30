@@ -27,11 +27,15 @@ import { IxDividerComponent } from './lib/ix-divider/ix-divider.component';
 import { IxListSubheaderComponent } from './lib/ix-list-subheader/ix-list-subheader.component';
 import { IxSelectionListComponent } from './lib/ix-selection-list/ix-selection-list.component';
 import { IxListOptionComponent } from './lib/ix-list-option/ix-list-option.component';
+import { IxTableComponent } from './lib/ix-table/ix-table.component';
+import { IxTableColumnDirective, IxHeaderCellDefDirective, IxCellDefDirective } from './lib/ix-table-column/ix-table-column.directive';
+import { IxTreeComponent } from './lib/ix-tree/ix-tree.component';
+import { IxTreeNodeComponent } from './lib/ix-tree/ix-tree-node.component';
 
 @NgModule({
   declarations: [DiskIconComponent],
-  imports: [IxChipComponent, IxCardComponent, IxCheckboxComponent, IxRadioComponent, IxSlideToggleComponent, IxTabsComponent, IxTabComponent, IxTabPanelComponent, IxMenuComponent, IxKeyboardShortcutComponent, IxIconComponent, IxListComponent, IxListItemComponent, IxListSubheaderComponent, IxListIconDirective, IxListAvatarDirective, IxListItemTitleDirective, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTrailingDirective, IxDividerDirective, IxDividerComponent, IxSelectionListComponent, IxListOptionComponent],
-  exports: [DiskIconComponent, IxChipComponent, IxCardComponent, IxCheckboxComponent, IxRadioComponent, IxSlideToggleComponent, IxTabsComponent, IxTabComponent, IxTabPanelComponent, IxMenuComponent, IxKeyboardShortcutComponent, IxIconComponent, IxListComponent, IxListItemComponent, IxListSubheaderComponent, IxListIconDirective, IxListAvatarDirective, IxListItemTitleDirective, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTrailingDirective, IxDividerDirective, IxDividerComponent, IxSelectionListComponent, IxListOptionComponent],
+  imports: [IxChipComponent, IxCardComponent, IxCheckboxComponent, IxRadioComponent, IxSlideToggleComponent, IxTabsComponent, IxTabComponent, IxTabPanelComponent, IxMenuComponent, IxKeyboardShortcutComponent, IxIconComponent, IxListComponent, IxListItemComponent, IxListSubheaderComponent, IxListIconDirective, IxListAvatarDirective, IxListItemTitleDirective, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTrailingDirective, IxDividerDirective, IxDividerComponent, IxSelectionListComponent, IxListOptionComponent, IxTableComponent, IxTableColumnDirective, IxHeaderCellDefDirective, IxCellDefDirective, IxTreeComponent, IxTreeNodeComponent],
+  exports: [DiskIconComponent, IxChipComponent, IxCardComponent, IxCheckboxComponent, IxRadioComponent, IxSlideToggleComponent, IxTabsComponent, IxTabComponent, IxTabPanelComponent, IxMenuComponent, IxKeyboardShortcutComponent, IxIconComponent, IxListComponent, IxListItemComponent, IxListSubheaderComponent, IxListIconDirective, IxListAvatarDirective, IxListItemTitleDirective, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTrailingDirective, IxDividerDirective, IxDividerComponent, IxSelectionListComponent, IxListOptionComponent, IxTableComponent, IxTableColumnDirective, IxHeaderCellDefDirective, IxCellDefDirective, IxTreeComponent, IxTreeNodeComponent],
 })
 export class TruenasUiModule {}
 
