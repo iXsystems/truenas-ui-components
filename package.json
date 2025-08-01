@@ -28,6 +28,7 @@
     "@angular/platform-browser-dynamic": "^19.0.0",
     "@angular/router": "^19.0.0",
     "rxjs": "~7.5.0",
+    "truenas-ui": "file:../truenas-ui/dist/truenas-ui",
     "tslib": "^2.3.0"
   },
   "devDependencies": {

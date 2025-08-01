@@ -38,6 +38,13 @@
   --font-family-body2: "Roboto", "Helvetica Neue", sans-serif;
   --black: #000000;
   --white: #ffffff;
+  
+  /* Icon sizing variables */
+  --icon-xs: 12px;
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 24px;
+  --icon-xl: 32px;
 }
 
 

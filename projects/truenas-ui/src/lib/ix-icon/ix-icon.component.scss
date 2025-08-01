@@ -4,35 +4,35 @@
   justify-content: center;
   vertical-align: middle;
   
-  // Size variants
+  // Size variants using global CSS variables
   &--xs {
-    width: 12px;
-    height: 12px;
-    font-size: 12px;
+    width: var(--icon-xs) !important;
+    height: var(--icon-xs) !important;
+    font-size: var(--icon-xs) !important;
   }
   
   &--sm {
-    width: 16px;
-    height: 16px;
-    font-size: 16px;
+    width: var(--icon-sm) !important;
+    height: var(--icon-sm) !important;
+    font-size: var(--icon-sm) !important;
   }
   
   &--md {
-    width: 20px;
-    height: 20px;
-    font-size: 20px;
+    width: var(--icon-md) !important;
+    height: var(--icon-md) !important;
+    font-size: var(--icon-md) !important;
   }
   
   &--lg {
-    width: 24px;
-    height: 24px;
-    font-size: 24px;
+    width: var(--icon-lg) !important;
+    height: var(--icon-lg) !important;
+    font-size: var(--icon-lg) !important;
   }
   
   &--xl {
-    width: 32px;
-    height: 32px;
-    font-size: 32px;
+    width: var(--icon-xl) !important;
+    height: var(--icon-xl) !important;
+    font-size: var(--icon-xl) !important;
   }
   
   // Icon content containers
@@ -76,7 +76,7 @@
 
 // CSS Custom Properties for easy theming
 .ix-icon {
-  width: var(--ix-icon-size, 20px);
-  height: var(--ix-icon-size, 20px);
+  width: var(--ix-icon-size, var(--icon-md));
+  height: var(--ix-icon-size, var(--icon-md));
   color: var(--ix-icon-color, currentColor);
 }

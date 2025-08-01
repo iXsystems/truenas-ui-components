@@ -87,13 +87,17 @@ export class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
     }
 
     // 1. Try icon registry (libraries and custom icons)
-    let registryResult = this.iconRegistry.resolveIcon(this.name);
+    const iconOptions = {
+      size: this.size,
+      color: this.color
+    };
+    let registryResult = this.iconRegistry.resolveIcon(this.name, iconOptions);
     
     // Fallback to global registry for Storybook/demos (when DI doesn't work)
     if (!registryResult && typeof window !== 'undefined' && (window as any).__storybookIconRegistry) {
       const globalRegistry = (window as any).__storybookIconRegistry;
       if (globalRegistry) {
-        registryResult = globalRegistry.resolveIcon(this.name);
+        registryResult = globalRegistry.resolveIcon(this.name, iconOptions);
       }
     }
     
