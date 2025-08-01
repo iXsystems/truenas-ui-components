@@ -1,0 +1,93 @@
+<div class="ix-select-container" [attr.data-testid]="testId">
+  <!-- Select Trigger -->
+  <div 
+    class="ix-select-trigger"
+    [class.disabled]="disabled"
+    [class.open]="isOpen"
+    [attr.aria-expanded]="isOpen"
+    [attr.aria-haspopup]="true"
+    [attr.aria-label]="placeholder"
+    role="combobox"
+    tabindex="0"
+    (click)="toggleDropdown()"
+    (keydown)="onKeydown($event)">
+    
+    <!-- Display Text -->
+    <span 
+      class="ix-select-text"
+      [class.placeholder]="selectedValue === null || selectedValue === undefined">
+      {{ getDisplayText() }}
+    </span>
+
+    <!-- Dropdown Arrow -->
+    <div class="ix-select-arrow" [class.open]="isOpen">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="6,9 12,15 18,9"></polyline>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Dropdown Menu -->
+  <div 
+    *ngIf="isOpen" 
+    class="ix-select-dropdown"
+    role="listbox">
+    
+    <!-- Options List -->
+    <div class="ix-select-options">
+      <!-- Regular Options -->
+      <div 
+        *ngFor="let option of options"
+        class="ix-select-option"
+        [class.selected]="isSelected(option)"
+        [class.disabled]="option.disabled"
+        [attr.aria-selected]="isSelected(option)"
+        [attr.aria-disabled]="option.disabled"
+        role="option"
+        (mousedown)="$event.preventDefault()"
+        (click)="onOptionClick(option)">
+        
+        {{ option.label }}
+      </div>
+
+      <!-- Option Groups -->
+      <ng-container *ngFor="let group of optionGroups; let isFirst = first">
+        <!-- Group Separator (not shown before first group if we have regular options) -->
+        <div 
+          *ngIf="!isFirst || options.length > 0"
+          class="ix-select-separator"
+          role="separator">
+        </div>
+
+        <!-- Group Label -->
+        <div 
+          class="ix-select-group-label"
+          [class.disabled]="group.disabled">
+          {{ group.label }}
+        </div>
+
+        <!-- Group Options -->
+        <div 
+          *ngFor="let option of group.options"
+          class="ix-select-option"
+          [class.selected]="isSelected(option)"
+          [class.disabled]="option.disabled || group.disabled"
+          [attr.aria-selected]="isSelected(option)"
+          [attr.aria-disabled]="option.disabled || group.disabled"
+          role="option"
+          (mousedown)="$event.preventDefault()"
+          (click)="onOptionClick(option)">
+          
+          {{ option.label }}
+        </div>
+      </ng-container>
+
+      <!-- No Options Message -->
+      <div 
+        *ngIf="!hasAnyOptions()" 
+        class="ix-select-no-options">
+        No options available
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,82 @@
+.ix-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  
+  // Size variants using global CSS variables
+  &--xs {
+    width: var(--icon-xs) !important;
+    height: var(--icon-xs) !important;
+    font-size: var(--icon-xs) !important;
+  }
+  
+  &--sm {
+    width: var(--icon-sm) !important;
+    height: var(--icon-sm) !important;
+    font-size: var(--icon-sm) !important;
+  }
+  
+  &--md {
+    width: var(--icon-md) !important;
+    height: var(--icon-md) !important;
+    font-size: var(--icon-md) !important;
+  }
+  
+  &--lg {
+    width: var(--icon-lg) !important;
+    height: var(--icon-lg) !important;
+    font-size: var(--icon-lg) !important;
+  }
+  
+  &--xl {
+    width: var(--icon-xl) !important;
+    height: var(--icon-xl) !important;
+    font-size: var(--icon-xl) !important;
+  }
+  
+  // Icon content containers
+  &__svg {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    :global(svg) {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+      color: inherit;
+    }
+  }
+  
+  &__css {
+    font-size: inherit;
+    line-height: 1;
+    color: inherit;
+  }
+  
+  &__unicode {
+    font-size: inherit;
+    line-height: 1;
+    color: inherit;
+    text-align: center;
+  }
+  
+  &__text {
+    font-size: 0.75em;
+    font-weight: 600;
+    line-height: 1;
+    color: inherit;
+    text-align: center;
+    opacity: 0.7;
+  }
+}
+
+// CSS Custom Properties for easy theming
+.ix-icon {
+  width: var(--ix-icon-size, var(--icon-md));
+  height: var(--ix-icon-size, var(--icon-md));
+  color: var(--ix-icon-color, currentColor);
+}

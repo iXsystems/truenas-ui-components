@@ -1,0 +1,34 @@
+<div 
+  class="ix-icon"
+  [ngClass]="'ix-icon--' + size"
+  [style.color]="color"
+  [attr.aria-label]="effectiveAriaLabel"
+  [attr.title]="tooltip"
+  role="img">
+  
+  
+  <ng-container [ngSwitch]="iconResult.source">
+    <!-- SVG content (from third-party libraries or assets) -->
+    <div *ngSwitchCase="'svg'" 
+         class="ix-icon__svg"
+         #svgContainer>
+    </div>
+    
+    <!-- CSS class icons (Font Awesome, Material Icons, etc.) -->
+    <i *ngSwitchCase="'css'" 
+       class="ix-icon__css"
+       [class]="iconResult.content"
+       aria-hidden="true">
+    </i>
+    
+    <!-- Unicode characters -->
+    <span *ngSwitchCase="'unicode'" 
+          class="ix-icon__unicode"
+          aria-hidden="true">{{ iconResult.content }}</span>
+    
+    <!-- Text abbreviation fallback -->
+    <span *ngSwitchDefault 
+          class="ix-icon__text"
+          aria-hidden="true">{{ iconResult.content }}</span>
+  </ng-container>
+</div>

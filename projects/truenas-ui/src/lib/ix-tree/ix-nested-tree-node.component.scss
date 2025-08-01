@@ -1,0 +1,129 @@
+
+.ix-nested-tree-node-wrapper {
+  display: block;
+  width: 100%;
+}
+
+.ix-nested-tree-node {
+  display: block;
+  width: 100%;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+  color: var(--fg1);
+
+  &--expandable {
+    .ix-nested-tree-node__content {
+      cursor: pointer;
+    }
+  }
+}
+
+.ix-nested-tree-node__content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: var(--alt-bg2);
+  }
+
+  &:focus-within {
+    background-color: var(--alt-bg2);
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+  }
+}
+
+// Ensure the invisible class works for show/hide
+.ix-tree-invisible {
+  display: none;
+}
+
+.ix-nested-tree-node__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--fg2);
+  transition: background-color 0.2s ease, color 0.2s ease;
+
+  &:hover {
+    background-color: var(--bg3);
+    color: var(--fg1);
+  }
+
+  &:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  svg {
+    transition: transform 0.2s ease;
+  }
+
+  &--expanded svg {
+    transform: rotate(90deg);
+  }
+}
+
+.ix-nested-tree-node__spacer {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.ix-nested-tree-node__text {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0; // Allow text truncation
+  color: var(--fg1);
+}
+
+div.ix-nested-tree-node-container {
+  padding-left: 40px;
+}
+
+
+// Accessibility improvements
+@media (prefers-reduced-motion: reduce) {
+  .ix-nested-tree-node__toggle svg,
+  .ix-nested-tree-node__content,
+  .ix-nested-tree-node__children {
+    transition: none;
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .ix-nested-tree-node__content {
+    border: 1px solid transparent;
+
+    &:hover,
+    &:focus-within {
+      border-color: var(--fg1);
+    }
+  }
+
+  .ix-nested-tree-node__toggle {
+    border: 1px solid var(--fg2);
+
+    &:hover,
+    &:focus {
+      border-color: var(--fg1);
+    }
+  }
+}

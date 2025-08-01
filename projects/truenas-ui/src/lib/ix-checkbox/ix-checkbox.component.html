@@ -1,0 +1,31 @@
+<div [ngClass]="classes">
+  <label [for]="id" class="ix-checkbox__label">
+    <input
+      #checkboxEl
+      type="checkbox"
+      [id]="id"
+      [checked]="checked"
+      [disabled]="disabled"
+      [required]="required"
+      [indeterminate]="indeterminate"
+      [attr.data-testid]="testId"
+      [attr.aria-describedby]="error ? id + '-error' : null"
+      [attr.aria-invalid]="error ? 'true' : null"
+      class="ix-checkbox__input"
+      (change)="onCheckboxChange($event)"
+    />
+    <span class="ix-checkbox__checkmark"></span>
+    <span class="ix-checkbox__text" *ngIf="!hideLabel">{{ label }}</span>
+  </label>
+  
+  @if (error) {
+    <div 
+      [id]="id + '-error'" 
+      class="ix-checkbox__error"
+      role="alert"
+      aria-live="polite"
+    >
+      {{ error }}
+    </div>
+  }
+</div>
