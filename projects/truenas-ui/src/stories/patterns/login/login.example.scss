@@ -1,0 +1,21 @@
+form {
+  max-width:600px;
+  margin: 0 auto;
+  padding:24px;
+  background-color: var(--bg2);
+  box-shadow: 0 8px 6px rgba(0, 0, 0, 0.1);
+  //border: solid 1px var(--alt-fg1);
+}
+
+.form-control {
+  margin: 16px auto;
+  width: 80%;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--fg1);
+  font-size: 0.9rem;
+}
