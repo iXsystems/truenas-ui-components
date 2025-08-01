@@ -11,3 +11,11 @@ form {
   margin: 16px auto;
   width: 80%;
 }
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--fg1);
+  font-size: 0.9rem;
+}

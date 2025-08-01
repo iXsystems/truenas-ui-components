@@ -36,10 +36,7 @@ export class IxInputComponent implements AfterViewInit, ControlValueAccessor {
   private focusMonitor = inject(FocusMonitor);
 
   ngAfterViewInit() {
-    this.focusMonitor.monitor(this.inputEl)
-      .subscribe(origin => {
-        console.log(`Input focused via: ${origin}`);
-      });
+    this.focusMonitor.monitor(this.inputEl);
   }
 
   // ControlValueAccessor implementation

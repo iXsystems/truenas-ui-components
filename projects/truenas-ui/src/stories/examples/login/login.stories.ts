@@ -17,7 +17,7 @@ class LoginFormDocComponent {
 }
 
 const meta: Meta<LoginFormDocComponent> = {
-  title: 'Examples/Login Form',
+  title: 'Patterns/Login Form',
   component: LoginFormDocComponent,
   tags: [],
 };
