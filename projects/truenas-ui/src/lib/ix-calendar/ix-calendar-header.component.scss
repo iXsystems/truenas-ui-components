@@ -1,0 +1,94 @@
+.ix-calendar-header {
+  display: flex;
+  padding: 16px;
+}
+
+.ix-calendar-controls {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.cdk-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.ix-calendar-period-button {
+  background: none;
+  border: none;
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--fg1, #333);
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background: var(--alt-bg2, #e8f4fd);
+  }
+
+  &:focus {
+    outline: 2px solid var(--primary, #007bff);
+    outline-offset: 2px;
+    background: var(--alt-bg2, #e8f4fd);
+  }
+}
+
+.ix-calendar-arrow {
+  width: 10px;
+  height: 5px;
+  fill: currentColor;
+}
+
+.ix-calendar-spacer {
+  flex: 1;
+}
+
+.ix-calendar-previous-button,
+.ix-calendar-next-button {
+  background: none;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg1, #333);
+  transition: background-color 0.2s ease;
+
+  svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--alt-bg2, #e8f4fd);
+  }
+
+  &:focus {
+    outline: 2px solid var(--primary, #007bff);
+    outline-offset: 2px;
+    background: var(--alt-bg2, #e8f4fd);
+  }
+
+  &:disabled {
+    color: var(--fg2, #666);
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

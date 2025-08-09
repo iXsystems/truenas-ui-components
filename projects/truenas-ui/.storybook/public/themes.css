@@ -319,6 +319,88 @@
 }
 
 /* ================================
+  ixInput directive styles
+  ================================ */
+.ix-input-directive,
+input.ix-input-directive,
+textarea.ix-input-directive {
+  display: block;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--fg1, #212529);
+  background-color: var(--bg1, #ffffff);
+  border: 1px solid var(--lines, #d1d5db);
+  border-radius: 0.375rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  outline: none;
+  font-family: var(--font-family-body, 'Inter'), sans-serif;
+}
+
+.ix-input-directive::placeholder,
+input.ix-input-directive::placeholder,
+textarea.ix-input-directive::placeholder {
+  color: var(--fg2, #6c757d);
+  opacity: 1;
+}
+
+.ix-input-directive:focus,
+input.ix-input-directive:focus,
+textarea.ix-input-directive:focus {
+  border-color: var(--primary, #007bff);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.ix-input-directive:disabled,
+input.ix-input-directive:disabled,
+textarea.ix-input-directive:disabled {
+  background-color: var(--alt-bg1, #f8f9fa);
+  color: var(--fg2, #6c757d);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.ix-input-directive.error,
+input.ix-input-directive.error,
+textarea.ix-input-directive.error {
+  border-color: var(--red, #dc3545);
+}
+
+.ix-input-directive.error:focus,
+input.ix-input-directive.error:focus,
+textarea.ix-input-directive.error:focus {
+  border-color: var(--red, #dc3545);
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+}
+
+/* Textarea-specific styles */
+textarea.ix-input-directive {
+  min-height: 6rem;
+  resize: vertical;
+  line-height: 1.4;
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .ix-input-directive,
+  input.ix-input-directive,
+  textarea.ix-input-directive {
+    transition: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .ix-input-directive,
+  input.ix-input-directive,
+  textarea.ix-input-directive {
+    border-width: 2px;
+  }
+}
+
+/* ================================
    Let's apply these variables to
    the preview and story book docs elements
    ================================ */
