@@ -51,4 +51,5 @@ export * from './lib/ix-calendar/ix-month-view.component';
 export * from './lib/ix-calendar/ix-multi-year-view.component';
 export * from './lib/ix-date-range-input/ix-date-input.component';
 export * from './lib/ix-date-range-input/ix-date-range-input.component';
+export * from './lib/ix-date-range-input/ix-time-input.component';
 export * from './lib/services/ix-keyboard-shortcut.service';
