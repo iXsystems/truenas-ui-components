@@ -1,7 +1,8 @@
-import { Preview, Decorator, StoryContext } from '@storybook/angular';
+import { Preview, Decorator, StoryContext, applicationConfig } from '@storybook/angular';
+import { provideAnimations } from '@angular/platform-browser/animations';
+import { Dialog } from '@angular/cdk/dialog';
 import { default as truenasTheme } from './truenasTheme';
 import 'zone.js';
-
 
 /**
  * Ensure the theme switcher appears in the Storybook toolbar.
@@ -30,7 +31,7 @@ export const globalTypes = {
 };
 
 /**
- * Register themes using Storybook’s built-in theme switcher.
+ * Register themes using Storybook's built-in theme switcher.
  */
 export const parameters: Preview['parameters'] = {
   backgrounds: {
@@ -76,16 +77,18 @@ export const decorators: Decorator[] = [
 
     return storyFn(); // Ensure storyFn is correctly called without parameters
   },
+  applicationConfig({
+    providers: [
+      provideAnimations(),
+      Dialog
+    ]
+  })
 ];
 
-/*
 const preview: Preview = {
-  parameters: {
-    docs: {
-      theme: truenasTheme,
-    },
-  },
+  parameters,
+  globalTypes,
+  decorators,
 };
 
 export default preview;
-*/
