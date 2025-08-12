@@ -21,11 +21,15 @@ export class IxCardComponent {
   @Input()
   bordered = false;
 
+  @Input()
+  background = true;
+
   public get classes(): string[] {
     const elevationClass = `ix-card--elevation-${this.elevation}`;
     const paddingClass = `ix-card--padding-${this.padding}`;
     const borderedClass = this.bordered ? 'ix-card--bordered' : '';
+    const backgroundClass = this.background ? 'ix-card--background' : '';
     
-    return ['ix-card', elevationClass, paddingClass, borderedClass].filter(Boolean);
+    return ['ix-card', elevationClass, paddingClass, borderedClass, backgroundClass].filter(Boolean);
   }
 }

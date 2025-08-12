@@ -38,13 +38,16 @@
   --font-family-body2: "Roboto", "Helvetica Neue", sans-serif;
   --black: #000000;
   --white: #ffffff;
-  
+
   /* Icon sizing variables */
   --icon-xs: 12px;
   --icon-sm: 16px;
   --icon-md: 20px;
   --icon-lg: 24px;
   --icon-xl: 32px;
+  
+  /* Dialog content padding */
+  --content-padding: 24px;
 }
 
 
@@ -58,7 +61,7 @@
   --accent: var(--yellow);
   --bg1: #1E1E1E;
   --bg2: #282828;
-  --fg1: #ffffff;
+  --fg1: #808080;
   --fg2: rgba(255,255,255,0.85);
   --alt-bg1: #383838;
   --alt-bg2: #545454;
@@ -319,6 +322,121 @@
 }
 
 /* ================================
+  Global autofill styling for all input types
+  ================================ */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+textarea:-webkit-autofill:active,
+.ix-input:-webkit-autofill,
+.ix-input:-webkit-autofill:hover,
+.ix-input:-webkit-autofill:focus,
+.ix-input:-webkit-autofill:active {
+  /* Use a very long transition to effectively override the browser's background */
+  -webkit-transition: background-color 5000s ease-in-out 0s;
+  transition: background-color 5000s ease-in-out 0s;
+  /* Set the text color to match our theme */
+  -webkit-text-fill-color: var(--fg1) !important;
+  /* Override the background with our theme colors */
+  background-color: var(--bg1) !important;
+  border-color: var(--lines) !important;
+}
+
+/* For Firefox and other browsers */
+input:-moz-autofill,
+textarea:-moz-autofill,
+.ix-input:-moz-autofill {
+  background-color: var(--bg1) !important;
+  color: var(--fg1) !important;
+}
+
+/* ================================
+  ixInput directive styles
+  ================================ */
+.ix-input-directive,
+input.ix-input-directive,
+textarea.ix-input-directive {
+  display: block;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--fg1, #212529);
+  background-color: var(--bg1, #ffffff);
+  border: 1px solid var(--lines, #d1d5db);
+  border-radius: 0.375rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  outline: none;
+  font-family: var(--font-family-body, 'Inter'), sans-serif;
+}
+
+.ix-input-directive::placeholder,
+input.ix-input-directive::placeholder,
+textarea.ix-input-directive::placeholder {
+  color: var(--fg2, #6c757d);
+  opacity: 1;
+}
+
+.ix-input-directive:focus,
+input.ix-input-directive:focus,
+textarea.ix-input-directive:focus {
+  border-color: var(--primary, #007bff);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.ix-input-directive:disabled,
+input.ix-input-directive:disabled,
+textarea.ix-input-directive:disabled {
+  background-color: var(--alt-bg1, #f8f9fa);
+  color: var(--fg2, #6c757d);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.ix-input-directive.error,
+input.ix-input-directive.error,
+textarea.ix-input-directive.error {
+  border-color: var(--red, #dc3545);
+}
+
+.ix-input-directive.error:focus,
+input.ix-input-directive.error:focus,
+textarea.ix-input-directive.error:focus {
+  border-color: var(--red, #dc3545);
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+}
+
+/* Textarea-specific styles */
+textarea.ix-input-directive {
+  min-height: 6rem;
+  resize: vertical;
+  line-height: 1.4;
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .ix-input-directive,
+  input.ix-input-directive,
+  textarea.ix-input-directive {
+    transition: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .ix-input-directive,
+  input.ix-input-directive,
+  textarea.ix-input-directive {
+    border-width: 2px;
+  }
+}
+
+/* ================================
    Let's apply these variables to
    the preview and story book docs elements
    ================================ */
@@ -388,4 +506,160 @@ input:not([role="switch"]),
 
 .docblock-source {
   border: solid 1px var(--alt-bg2) !important;
+}
+
+/* ================================
+   IX Dialog Styles
+   ================================ */
+
+/* Dialog panel - the main dialog container */
+.ix-dialog-panel {
+  display: flex;
+  flex-direction: column;
+  /* make the panel fit the viewport without causing page scroll */
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 8px;
+  background: var(--bg1, #ffffff);
+  color: var(--fg1, #000000);
+  box-shadow: 0 11px 15px -7px rgba(0, 0, 0, 0.2),
+              0 24px 38px 3px rgba(0, 0, 0, 0.14),
+              0 9px 46px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* Shell component wrapper */
+ix-dialog-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* allow inner area to shrink */
+  width: 100%;
+  height: 100%;
+}
+
+/* Dialog header and actions - fixed size */
+.ix-dialog__header,
+.ix-dialog__actions {
+  flex: 0 0 auto;
+  padding: 16px;
+}
+
+/* Dialog header styling */
+.ix-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--lines, #e5e7eb);
+}
+
+.ix-dialog__title {
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--fg1, #000000);
+  flex: 1; /* Take up remaining space */
+}
+
+/* Close button */
+.ix-dialog__close,
+.ix-dialog__fullscreen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--alt-fg1, #6c757d);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  transition: all 0.2s ease-in-out;
+  flex-shrink: 0; /* Don't shrink */
+  margin-left: 16px; /* Space between title and button */
+}
+
+.ix-dialog__close:hover {
+  background: var(--alt-bg1, #f8f9fa);
+  color: var(--fg1, #000000);
+}
+
+.ix-dialog__close:focus {
+  outline: 2px solid var(--primary, #007bff);
+  outline-offset: 2px;
+}
+
+.ix-dialog__close:active {
+  transform: scale(0.95);
+}
+
+/* Dialog content - the only scrolling area */
+.ix-dialog__content {
+  /* the only scrolling area */
+  flex: 1 1 auto;
+  min-height: 0;           /* CRITICAL in flex parents */
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Dialog actions */
+.ix-dialog__actions {
+  border-top: 1px solid var(--lines, #e5e7eb);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ix-dialog__actions ix-button:not(:first-child) {
+  margin-left: 16px;
+}
+
+/* Destructive variant */
+.ix-dialog--destructive .ix-dialog__header {
+  border-bottom-color: var(--lines, #e5e7eb);
+}
+
+.ix-dialog--destructive .ix-dialog__title {
+  color: var(--red, #dc3545);
+}
+
+/* Dialog backdrop */
+.cdk-dialog-backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* Container positioning */
+.cdk-dialog-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* Fullscreen dialog support */
+.ix-dialog--fullscreen .cdk-dialog-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.ix-dialog--fullscreen .cdk-dialog-panel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
 }

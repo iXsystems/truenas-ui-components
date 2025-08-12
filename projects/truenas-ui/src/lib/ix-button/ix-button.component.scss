@@ -1,3 +1,9 @@
+:host {
+  display: inline-block;
+  width: fit-content;
+  justify-self: center;
+}
+
 .storybook-button {
   display: inline-block;
   cursor: pointer;
@@ -14,6 +20,44 @@
   box-shadow: rgba(0, 0, 0, 0.15) 0px 0px 0px 1px inset;
   background-color: var(--btn-default-bg);
   color: var(--btn-default-txt);
+}
+.button-outline-primary {
+  background-color: transparent;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  transition: all 0.2s ease-in-out;
+}
+.button-outline-primary:hover {
+  background-color: var(--primary);
+  border: 1px solid var(--primary);
+  color: var(--primary-txt);
+}
+.button-outline-default {
+  background-color: transparent;
+  border: 1px solid var(--lines, #e5e7eb);
+  color: var(--fg1, #000000);
+  transition: all 0.2s ease-in-out;
+}
+.button-outline-default:hover {
+  background-color: var(--btn-default-bg);
+  border: 1px solid var(--btn-default-bg);
+  color: var(--btn-default-txt);
+  box-shadow: rgba(0, 0, 0, 0.15) 0px 0px 0px 1px inset;
+}
+.button-warn {
+  background-color: var(--red);
+  color: white;
+}
+.button-outline-warn {
+  background-color: transparent;
+  border: 1px solid var(--red);
+  color: var(--red);
+  transition: all 0.2s ease-in-out;
+}
+.button-outline-warn:hover {
+  background-color: var(--red);
+  border: 1px solid var(--red);
+  color: white;
 }
 .storybook-button--small {
   padding: 10px 16px;

@@ -17,9 +17,10 @@
   border-radius: 0.375rem;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
   outline: none;
+  box-sizing: border-box;
 
   &::placeholder {
-    color: var(--fg2, #6c757d);
+    color: var(--alt-fg1, #999);
     opacity: 1;
   }
 
@@ -43,6 +44,7 @@
       box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
     }
   }
+
 }
 
 .ix-textarea {

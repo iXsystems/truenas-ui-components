@@ -12,6 +12,17 @@ const meta: Meta<IxButtonComponent> = {
     backgroundColor: {
       control: 'color',
     },
+    color: {
+      control: 'select',
+      options: ['primary', 'secondary', 'warn', 'default'],
+    },
+    variant: {
+      control: 'select',
+      options: ['filled', 'outline'],
+    },
+    primary: {
+      control: 'boolean',
+    },
     onClick: { action: "clicked" },
   },
 };
@@ -22,7 +33,8 @@ type Story = StoryObj<IxButtonComponent>;
 // More on writing stories with args: https://storybook.js.org/docs/writing-stories/args
 export const Primary: Story = {
   args: {
-    primary: true,
+    color: 'primary',
+    variant: 'filled',
     label: 'Primary',
   },
   play: async ({ canvasElement, args }) => {
@@ -36,7 +48,8 @@ export const Primary: Story = {
 
 export const Default: Story = {
   args: {
-    primary: false,
+    color: 'default',
+    variant: 'filled',
     label: 'Default',
   },
   play: async ({ canvasElement, args }) => {
@@ -45,5 +58,65 @@ export const Default: Story = {
 
     await expect(defaultButton.classList.contains('button-default')).toBe(true);
     await userEvent.click(defaultButton);
+  },
+};
+
+export const OutlinePrimary: Story = {
+  args: {
+    color: 'primary',
+    variant: 'outline',
+    label: 'Outline Primary',
+  },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const outlineButton = canvas.getByRole('button');
+
+    await expect(outlineButton.classList.contains('button-outline-primary')).toBe(true);
+    await userEvent.click(outlineButton);
+  },
+};
+
+export const OutlineDefault: Story = {
+  args: {
+    color: 'default',
+    variant: 'outline',
+    label: 'Outline Default',
+  },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const outlineButton = canvas.getByRole('button');
+
+    await expect(outlineButton.classList.contains('button-outline-default')).toBe(true);
+    await userEvent.click(outlineButton);
+  },
+};
+
+export const Warn: Story = {
+  args: {
+    color: 'warn',
+    variant: 'filled',
+    label: 'Warning',
+  },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const warnButton = canvas.getByRole('button');
+
+    await expect(warnButton.classList.contains('button-warn')).toBe(true);
+    await userEvent.click(warnButton);
+  },
+};
+
+export const OutlineWarn: Story = {
+  args: {
+    color: 'warn',
+    variant: 'outline',
+    label: 'Outline Warning',
+  },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const outlineWarnButton = canvas.getByRole('button');
+
+    await expect(outlineWarnButton.classList.contains('button-outline-warn')).toBe(true);
+    await userEvent.click(outlineWarnButton);
   },
 };

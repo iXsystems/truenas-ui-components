@@ -31,11 +31,29 @@ import { IxTableComponent } from './lib/ix-table/ix-table.component';
 import { IxTableColumnDirective, IxHeaderCellDefDirective, IxCellDefDirective } from './lib/ix-table-column/ix-table-column.directive';
 import { IxTreeComponent } from './lib/ix-tree/ix-tree.component';
 import { IxTreeNodeComponent } from './lib/ix-tree/ix-tree-node.component';
+import { IxSpinnerComponent } from './lib/ix-spinner/ix-spinner.component';
+import { IxBrandedSpinnerComponent } from './lib/ix-spinner/ix-branded-spinner.component';
+import { IxProgressBarComponent } from './lib/ix-progress-bar/ix-progress-bar.component';
+import { IxCalendarComponent } from './lib/ix-calendar/ix-calendar.component';
+import { IxCalendarHeaderComponent } from './lib/ix-calendar/ix-calendar-header.component';
+import { IxMonthViewComponent } from './lib/ix-calendar/ix-month-view.component';
+import { IxDateInputComponent } from './lib/ix-date-range-input/ix-date-input.component';
+import { IxDateRangeInputComponent } from './lib/ix-date-range-input/ix-date-range-input.component';
+import { IxTimeInputComponent } from './lib/ix-date-range-input/ix-time-input.component';
+import { IxSliderComponent } from './lib/ix-slider/ix-slider.component';
+import { IxSliderThumbDirective } from './lib/ix-slider/ix-slider-thumb.directive';
+import { IxSliderWithLabelDirective } from './lib/ix-slider/ix-slider-with-label.directive';
+import { IxTooltipDirective } from './lib/ix-tooltip/ix-tooltip.directive';
+import { IxTooltipComponent } from './lib/ix-tooltip/ix-tooltip.component';
+import { IxDialogShellComponent } from './lib/ix-dialog/ix-dialog-shell.component';
+import { IxConfirmDialogComponent } from './lib/ix-dialog/ix-confirm-dialog.component';
+import { IxStepperComponent } from './lib/ix-stepper/ix-stepper.component';
+import { IxStepComponent } from './lib/ix-stepper/ix-step.component';
 
 @NgModule({
   declarations: [DiskIconComponent],
-  imports: [IxChipComponent, IxCardComponent, IxCheckboxComponent, IxRadioComponent, IxSlideToggleComponent, IxTabsComponent, IxTabComponent, IxTabPanelComponent, IxMenuComponent, IxKeyboardShortcutComponent, IxIconComponent, IxListComponent, IxListItemComponent, IxListSubheaderComponent, IxListIconDirective, IxListAvatarDirective, IxListItemTitleDirective, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTrailingDirective, IxDividerDirective, IxDividerComponent, IxSelectionListComponent, IxListOptionComponent, IxTableComponent, IxTableColumnDirective, IxHeaderCellDefDirective, IxCellDefDirective, IxTreeComponent, IxTreeNodeComponent],
-  exports: [DiskIconComponent, IxChipComponent, IxCardComponent, IxCheckboxComponent, IxRadioComponent, IxSlideToggleComponent, IxTabsComponent, IxTabComponent, IxTabPanelComponent, IxMenuComponent, IxKeyboardShortcutComponent, IxIconComponent, IxListComponent, IxListItemComponent, IxListSubheaderComponent, IxListIconDirective, IxListAvatarDirective, IxListItemTitleDirective, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTrailingDirective, IxDividerDirective, IxDividerComponent, IxSelectionListComponent, IxListOptionComponent, IxTableComponent, IxTableColumnDirective, IxHeaderCellDefDirective, IxCellDefDirective, IxTreeComponent, IxTreeNodeComponent],
+  imports: [IxChipComponent, IxCardComponent, IxCheckboxComponent, IxRadioComponent, IxSlideToggleComponent, IxTabsComponent, IxTabComponent, IxTabPanelComponent, IxMenuComponent, IxKeyboardShortcutComponent, IxIconComponent, IxListComponent, IxListItemComponent, IxListSubheaderComponent, IxListIconDirective, IxListAvatarDirective, IxListItemTitleDirective, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTrailingDirective, IxDividerDirective, IxDividerComponent, IxSelectionListComponent, IxListOptionComponent, IxTableComponent, IxTableColumnDirective, IxHeaderCellDefDirective, IxCellDefDirective, IxTreeComponent, IxTreeNodeComponent, IxSpinnerComponent, IxBrandedSpinnerComponent, IxProgressBarComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxMonthViewComponent, IxDateInputComponent, IxDateRangeInputComponent, IxTimeInputComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxTooltipDirective, IxTooltipComponent, IxDialogShellComponent, IxConfirmDialogComponent, IxStepperComponent, IxStepComponent],
+  exports: [DiskIconComponent, IxChipComponent, IxCardComponent, IxCheckboxComponent, IxRadioComponent, IxSlideToggleComponent, IxTabsComponent, IxTabComponent, IxTabPanelComponent, IxMenuComponent, IxKeyboardShortcutComponent, IxIconComponent, IxListComponent, IxListItemComponent, IxListSubheaderComponent, IxListIconDirective, IxListAvatarDirective, IxListItemTitleDirective, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTrailingDirective, IxDividerDirective, IxDividerComponent, IxSelectionListComponent, IxListOptionComponent, IxTableComponent, IxTableColumnDirective, IxHeaderCellDefDirective, IxCellDefDirective, IxTreeComponent, IxTreeNodeComponent, IxSpinnerComponent, IxBrandedSpinnerComponent, IxProgressBarComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxMonthViewComponent, IxDateInputComponent, IxDateRangeInputComponent, IxTimeInputComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxTooltipDirective, IxTooltipComponent, IxDialogShellComponent, IxConfirmDialogComponent, IxStepperComponent, IxStepComponent],
 })
 export class TruenasUiModule {}
 

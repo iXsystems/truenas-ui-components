@@ -15,6 +15,12 @@ export class IxButtonComponent {
   primary = false;
 
   @Input()
+  color: 'primary' | 'secondary' | 'warn' | 'default' = 'default';
+
+  @Input()
+  variant: 'filled' | 'outline' = 'filled';
+
+  @Input()
   backgroundColor?: string;
 
   @Input()
@@ -25,7 +31,29 @@ export class IxButtonComponent {
 
 
   public get classes(): string[] {
-    const mode = this.primary ? 'button-primary' : 'button-default';
+    // Support both primary boolean and color string approaches
+    const isPrimary = this.primary || this.color === 'primary';
+    const isWarn = this.color === 'warn';
+    
+    let mode = '';
+    if (this.variant === 'outline') {
+      if (isPrimary) {
+        mode = 'button-outline-primary';
+      } else if (isWarn) {
+        mode = 'button-outline-warn';
+      } else {
+        mode = 'button-outline-default';
+      }
+    } else {
+      if (isPrimary) {
+        mode = 'button-primary';
+      } else if (isWarn) {
+        mode = 'button-warn';
+      } else {
+        mode = 'button-default';
+      }
+    }
+    
     return ['storybook-button', `storybook-button--${this.size}`, mode];
   }
 }

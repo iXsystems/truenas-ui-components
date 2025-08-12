@@ -1,0 +1,21 @@
+<!-- Background/buffer layer -->
+<div class="ix-progress-bar-buffer" aria-hidden="true">
+  <!-- Buffer bar hidden in new implementation -->
+  <!-- Buffer dots for buffer mode -->
+  <div class="ix-progress-bar-buffer-dots" 
+       *ngIf="mode === 'buffer'"
+       [style.width]="bufferStyles.width"
+       [style.right]="bufferStyles.right"></div>
+</div>
+
+<!-- Primary bar -->
+<div class="ix-progress-bar-bar ix-progress-bar-primary-bar" aria-hidden="true">
+  <span class="ix-progress-bar-bar-inner" 
+        [style.transform]="primaryTransform"></span>
+</div>
+
+<!-- Secondary bar (for indeterminate mode) -->
+<div class="ix-progress-bar-bar ix-progress-bar-secondary-bar" aria-hidden="true" *ngIf="mode === 'indeterminate'">
+  <span class="ix-progress-bar-bar-inner"></span>
+</div>
+

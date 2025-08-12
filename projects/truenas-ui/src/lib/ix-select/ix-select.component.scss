@@ -32,6 +32,7 @@
   cursor: pointer;
   transition: all 0.15s ease-in-out;
   outline: none;
+  box-sizing: border-box;
 
   &:hover:not(.disabled) {
     border-color: var(--primary, #007bff);
@@ -73,7 +74,7 @@
   color: var(--fg1, #212529);
 
   &.placeholder {
-    color: var(--fg2, #6c757d);
+    color: var(--alt-fg1, #999);
   }
 }
 

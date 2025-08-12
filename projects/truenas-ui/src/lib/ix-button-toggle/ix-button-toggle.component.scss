@@ -1,0 +1,126 @@
+.ix-button-toggle {
+  display: inline-block;
+  position: relative;
+  
+  &:first-child .ix-button-toggle__button {
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  
+  &:last-child .ix-button-toggle__button {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+
+  &:not(:first-child):not(:last-child) .ix-button-toggle__button {
+    border-radius: 0;
+  }
+
+  &:first-child:last-child .ix-button-toggle__button {
+    border-radius: 6px;
+  }
+
+  &:not(:first-child) .ix-button-toggle__button {
+    margin-left: -1px;
+  }
+
+  &--standalone .ix-button-toggle__button {
+    border-radius: 6px;
+  }
+
+  .ix-button-toggle__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 64px;
+    height: 36px;
+    padding: 0 16px;
+    border: 1px solid var(--lines, #d1d5db);
+    background: var(--bg1, #ffffff);
+    color: var(--fg2, #6b7280);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+
+    &:hover:not(:disabled) {
+      background: var(--alt-bg1, #f9fafb);
+      z-index: 2;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--primary, #3b82f6);
+      outline-offset: 2px;
+      z-index: 3;
+    }
+
+    &:disabled {
+      cursor: not-allowed !important;
+      background: var(--alt-bg2, #f3f4f6) !important;
+      color: var(--fg1, #000000) !important;
+      opacity: 0.6 !important;
+      
+      &:hover {
+        background: var(--alt-bg2, #f3f4f6) !important;
+        cursor: not-allowed !important;
+      }
+    }
+
+    &--checked {
+      background: var(--primary, #3b82f6);
+      color: var(--primary-txt, #ffffff);
+      border-color: var(--primary, #3b82f6);
+      z-index: 2;
+      padding: 0 20px; // Expand padding to make room for checkmark
+
+      &:hover:not(:disabled) {
+        background: var(--primary, #3b82f6);
+      }
+    }
+  }
+
+  .ix-button-toggle__label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    pointer-events: none;
+    line-height: 1;
+  }
+
+  .ix-button-toggle__check {
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 1;
+    margin-right: 4px;
+    transform: translateX(-4px) scale(0.8);
+    opacity: 0;
+    animation: checkmarkSlideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes checkmarkSlideIn {
+    0% {
+      transform: translateX(-8px) scale(0.8);
+      opacity: 0;
+    }
+    50% {
+      transform: translateX(-2px) scale(1.1);
+      opacity: 0.7;
+    }
+    100% {
+      transform: translateX(0) scale(1);
+      opacity: 1;
+    }
+  }
+}
+
