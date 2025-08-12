@@ -71,8 +71,8 @@ export class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
 
   onRadioChange(event: Event): void {
     const target = event.target as HTMLInputElement;
+    this.checked = target.checked;
     if (target.checked) {
-      this.checked = true;
       this.onChange(this.value);
       this.onTouched();
       this.change.emit(this.value);
@@ -88,10 +88,6 @@ export class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
     
     if (this.error) {
       classes.push('ix-radio--error');
-    }
-    
-    if (this.checked) {
-      classes.push('ix-radio--checked');
     }
 
     return classes;

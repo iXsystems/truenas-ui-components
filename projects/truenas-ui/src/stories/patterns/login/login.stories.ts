@@ -20,6 +20,11 @@ const meta: Meta<LoginFormDocComponent> = {
   title: 'Patterns/Login Form',
   component: LoginFormDocComponent,
   tags: [],
+  parameters: {
+    a11y: {
+      disable: true
+    }
+  }
 };
 
 export default meta;

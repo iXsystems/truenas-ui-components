@@ -1,0 +1,55 @@
+<div class="ix-stepper" 
+     [class.ix-stepper--horizontal]="orientation === 'horizontal' || (orientation === 'auto' && isWideScreen)" 
+     [class.ix-stepper--vertical]="orientation === 'vertical' || (orientation === 'auto' && !isWideScreen)">
+  
+  <!-- Step Headers -->
+  <div class="ix-stepper__header">
+    <ng-container *ngFor="let step of steps; let i = index; trackBy: _trackByStepIndex">
+      <div class="ix-stepper__step-header" 
+           [class.ix-stepper__step-header--active]="selectedIndex === i"
+           [class.ix-stepper__step-header--completed]="step.completed"
+           [class.ix-stepper__step-header--error]="step.hasError"
+           [class.ix-stepper__step-header--optional]="step.optional"
+           (click)="selectStep(i)">
+        
+        <!-- Step Number/Icon -->
+        <div class="ix-stepper__step-indicator">
+          <ng-container *ngIf="step.completed && !step.hasError">
+            <span class="ix-stepper__step-check">✓</span>
+          </ng-container>
+          <ng-container *ngIf="step.hasError">
+            <span class="ix-stepper__step-error">!</span>
+          </ng-container>
+          <ng-container *ngIf="!step.completed && !step.hasError">
+            <ng-container *ngIf="step.icon; else stepNumber">
+              <span class="ix-stepper__step-icon">{{ step.icon }}</span>
+            </ng-container>
+            <ng-template #stepNumber>
+              <span class="ix-stepper__step-number">{{ i + 1 }}</span>
+            </ng-template>
+          </ng-container>
+        </div>
+        
+        <!-- Step Label -->
+        <div class="ix-stepper__step-label">
+          <div class="ix-stepper__step-title">{{ step.label }}</div>
+          <span class="ix-stepper__step-subtitle" *ngIf="step.optional">Optional</span>
+        </div>
+      </div>
+      
+      <!-- Connector Line (except for last step) -->
+      <div class="ix-stepper__connector" *ngIf="i < steps.length - 1"></div>
+    </ng-container>
+  </div>
+  
+  <!-- Step Content -->
+  <div class="ix-stepper__content">
+    <ng-container *ngFor="let step of steps; let i = index">
+      <div class="ix-stepper__step-content" 
+           *ngIf="selectedIndex === i"
+           [@stepTransition]="selectedIndex">
+        <ng-container *ngTemplateOutlet="step.content"></ng-container>
+      </div>
+    </ng-container>
+  </div>
+</div>

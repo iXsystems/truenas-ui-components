@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.component';
-import { IxSliderComponent } from '../lib/ix-slider/ix-slider.component';
+import { IxSliderComponent, LabelType } from '../lib/ix-slider/ix-slider.component';
 import { IxSliderThumbDirective } from '../lib/ix-slider/ix-slider-thumb.directive';
 import { IxSliderWithLabelDirective } from '../lib/ix-slider/ix-slider-with-label.directive';
 import { IxTooltipComponent } from '../lib/ix-tooltip/ix-tooltip.component';
@@ -25,6 +25,38 @@ const meta: Meta<IxSliderComponent> = {
     disabled: {
       control: 'boolean',
       description: 'Disable the slider'
+    },
+    labelType: {
+      control: { type: 'select' },
+      options: ['none', 'handle', 'track', 'both'] as LabelType[],
+      description: 'Label display type: none (no label), handle (tooltip on thumb), track (fixed position above track), both (track label + handle tooltip)'
+    },
+    labelPrefix: {
+      control: 'text',
+      description: 'Prefix to display before the value (e.g., "$")'
+    },
+    labelSuffix: {
+      control: 'text',
+      description: 'Suffix to display after the value (e.g., "°C")'
+    }
+  },
+  parameters: {
+    docs: {
+      description: {
+        component: `
+The IX Slider component provides an interactive range input with customizable styling and label options. Configure custom ranges by setting min/max/step properties, and choose from four label display types:
+
+- **none**: No label displayed
+- **handle**: Tooltip appears on the thumb during interaction
+- **track**: Fixed label displayed above the slider track
+- **both**: Combines track label (always visible) with handle tooltip (on interaction)
+
+Use labelPrefix and labelSuffix to add units or currency symbols to the displayed value.
+        `
+      }
+    },
+    controls: {
+      expanded: true
     }
   },
 };
@@ -35,13 +67,16 @@ type Story = StoryObj<IxSliderComponent>;
 export const Default: Story = {
   render: (args) => ({
     template: `
-      <ix-form-field label="Volume">
+      <ix-form-field label="Speed Control">
         <ix-slider 
           [min]="min"
           [max]="max" 
           [step]="step"
-          [disabled]="disabled">
-          <input ixSliderThumb>
+          [disabled]="disabled"
+          [labelType]="labelType"
+          [labelPrefix]="labelPrefix"
+          [labelSuffix]="labelSuffix">
+          <input ixSliderThumb value="50">
         </ix-slider>
       </ix-form-field>
     `,
@@ -60,82 +95,12 @@ export const Default: Story = {
     min: 0,
     max: 100,
     step: 1,
-    disabled: false
+    disabled: false,
+    labelType: 'both' as LabelType,
+    labelPrefix: '',
+    labelSuffix: ' km/h'
   }
 };
 
-export const CustomRange: Story = {
-  render: () => ({
-    template: `
-      <div style="display: flex; gap: 20px; flex-direction: column;">
-        <ix-form-field label="Temperature (°C)">
-          <ix-slider [min]="-10" [max]="40" [step]="1">
-            <input ixSliderThumb>
-          </ix-slider>
-        </ix-form-field>
-        
-        <ix-form-field label="Price ($)">
-          <ix-slider [min]="0" [max]="1000" [step]="10">
-            <input ixSliderThumb>
-          </ix-slider>
-        </ix-form-field>
-        
-        <ix-form-field label="Opacity">
-          <ix-slider [min]="0" [max]="1" [step]="0.1">
-            <input ixSliderThumb>
-          </ix-slider>
-        </ix-form-field>
-        
-        <ix-form-field label="Disabled slider">
-          <ix-slider [min]="0" [max]="100" [disabled]="true">
-            <input ixSliderThumb>
-          </ix-slider>
-        </ix-form-field>
-      </div>
-    `,
-    moduleMetadata: {
-      imports: [
-        IxFormFieldComponent,
-        IxSliderComponent,
-        IxSliderThumbDirective,
-        IxSliderWithLabelDirective,
-        IxTooltipComponent
-      ],
-    },
-  }),
-};
 
-export const WithLabel: Story = {
-  render: () => ({
-    template: `
-      <div style="display: flex; gap: 40px; flex-direction: column; padding: 40px;">
-        <ix-form-field label="Volume with label">
-          <ix-slider [min]="0" [max]="100" [step]="1" ixSliderWithLabel>
-            <input ixSliderThumb>
-          </ix-slider>
-        </ix-form-field>
-        
-        <ix-form-field label="Temperature (°C) with label">
-          <ix-slider [min]="-10" [max]="40" [step]="1" labelSuffix="°C" ixSliderWithLabel>
-            <input ixSliderThumb>
-          </ix-slider>
-        </ix-form-field>
-        
-        <ix-form-field label="Price ($) with label">
-          <ix-slider [min]="0" [max]="1000" [step]="10" labelPrefix="$" ixSliderWithLabel>
-            <input ixSliderThumb>
-          </ix-slider>
-        </ix-form-field>
-      </div>
-    `,
-    moduleMetadata: {
-      imports: [
-        IxFormFieldComponent,
-        IxSliderComponent,
-        IxSliderThumbDirective,
-        IxSliderWithLabelDirective,
-        IxTooltipComponent
-      ],
-    },
-  }),
-};
+

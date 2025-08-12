@@ -7,7 +7,7 @@ import { IxButtonComponent } from '../ix-button/ix-button.component';
   selector: 'ix-confirm-dialog',
   template: `
     <ix-dialog-shell [title]="data.title">
-      <p>{{ data.message }}</p>
+      <p style="padding: var(--content-padding);">{{ data.message }}</p>
       <div ixDialogAction>
         <ix-button 
           type="button"

@@ -167,6 +167,22 @@
   }
 }
 
+// Track label positioned at the right end above the track
+.ix-slider-track-label {
+  position: absolute;
+  top: -28px; // Position above the track
+  right: 0;   // Align to right end of track
+  padding: 4px 0;
+  background: transparent;
+  color: var(--fg1, #000);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  user-select: none;
+  z-index: 2;
+}
+
 
 // Accessibility improvements
 @media (prefers-reduced-motion: reduce) {

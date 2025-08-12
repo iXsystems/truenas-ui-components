@@ -30,7 +30,18 @@ export class IxSliderWithLabelDirective implements OnInit, OnDestroy {
     // Enable the label in the slider component
     this._slider.enableLabel();
     
-    // Set up event listeners for interaction
+    // Set default labelType to 'handle' if not already set
+    if (this._slider.labelType === 'none') {
+      this._slider.labelType = 'handle';
+    }
+    
+    // Only set up event listeners for handle type labels (tooltip behavior)
+    if (this._slider.labelType === 'handle') {
+      this._setupInteractionListeners();
+    }
+  }
+
+  private _setupInteractionListeners(): void {
     const sliderContainer = this._elementRef.nativeElement.querySelector('.ix-slider-container');
     const thumbInput = this._elementRef.nativeElement.querySelector('input[ixSliderThumb]');
     
@@ -62,20 +73,23 @@ export class IxSliderWithLabelDirective implements OnInit, OnDestroy {
   }
 
   private _cleanup(): void {
-    const sliderContainer = this._elementRef.nativeElement.querySelector('.ix-slider-container');
-    const thumbInput = this._elementRef.nativeElement.querySelector('input[ixSliderThumb]');
-    
-    if (sliderContainer) {
-      sliderContainer.removeEventListener('mousedown', this._onInteractionStart);
-      sliderContainer.removeEventListener('touchstart', this._onInteractionStart);
+    // Only clean up interaction listeners if they were set up for handle type
+    if (this._slider.labelType === 'handle') {
+      const sliderContainer = this._elementRef.nativeElement.querySelector('.ix-slider-container');
+      const thumbInput = this._elementRef.nativeElement.querySelector('input[ixSliderThumb]');
+      
+      if (sliderContainer) {
+        sliderContainer.removeEventListener('mousedown', this._onInteractionStart);
+        sliderContainer.removeEventListener('touchstart', this._onInteractionStart);
+      }
+      
+      if (thumbInput) {
+        thumbInput.removeEventListener('mousedown', this._onInteractionStart);
+        thumbInput.removeEventListener('touchstart', this._onInteractionStart);
+      }
+      
+      document.removeEventListener('mouseup', this._onInteractionEnd);
+      document.removeEventListener('touchend', this._onInteractionEnd);
     }
-    
-    if (thumbInput) {
-      thumbInput.removeEventListener('mousedown', this._onInteractionStart);
-      thumbInput.removeEventListener('touchstart', this._onInteractionStart);
-    }
-    
-    document.removeEventListener('mouseup', this._onInteractionEnd);
-    document.removeEventListener('touchend', this._onInteractionEnd);
   }
 }

@@ -1,5 +1,4 @@
 .ix-card {
-  background-color: var(--bg2, #ffffff);
   border-radius: 8px;
   transition: box-shadow 0.3s ease;
   overflow: hidden;
@@ -18,6 +17,10 @@
   
   &--bordered {
     border: 1px solid var(--lines, #e5e7eb);
+  }
+
+  &--background {
+    background-color: var(--bg2, #ffffff);
   }
   
   &--padding-small {

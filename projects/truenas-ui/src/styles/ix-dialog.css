@@ -75,7 +75,6 @@
 .ix-dialog-content {
   flex-grow: 1;
   overflow: auto;
-  padding: 0 24px;
   box-sizing: border-box;
   min-height: 0; /* Allow flexbox to shrink */
 }

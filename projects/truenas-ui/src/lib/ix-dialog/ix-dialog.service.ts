@@ -12,6 +12,7 @@ export interface IxDialogDefaults {
   height?: string;
   disableClose?: boolean;
   role?: 'dialog' | 'alertdialog';
+  fullscreen?: boolean;
 }
 
 const DEFAULTS: IxDialogDefaults = {
@@ -27,12 +28,26 @@ export class IxDialog {
 
   open<C, D = unknown, R = unknown>(
     target: IxDialogOpenTarget<C>,
-    config: DialogConfig<D> = {}
+    config: DialogConfig<D> & { fullscreen?: boolean } = {}
   ): DialogRef<R, C> {
+    const baseClasses = [...(DEFAULTS.panelClass as string[]), ...(config.panelClass ?? [])];
+    
+    // Handle fullscreen mode
+    if (config.fullscreen) {
+      baseClasses.push('ix-dialog--fullscreen');
+    }
+    
     const merged = {
       ...DEFAULTS,
       ...config,
-      panelClass: [...(DEFAULTS.panelClass as string[]), ...(config.panelClass ?? [])],
+      panelClass: baseClasses,
+      // Override size constraints for fullscreen
+      ...(config.fullscreen && {
+        maxWidth: '100vw',
+        maxHeight: '100vh',
+        width: '100vw',
+        height: '100vh',
+      }),
       // focus & scroll behavior (tweak as you prefer)
       autoFocus: config.autoFocus ?? true,
       restoreFocus: config.restoreFocus ?? true,

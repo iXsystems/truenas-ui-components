@@ -19,6 +19,9 @@ const meta: Meta<IxCardComponent> = {
     bordered: {
       control: 'boolean',
     },
+    background: {
+      control: 'boolean',
+    },
     title: {
       control: 'text',
     },
@@ -31,6 +34,7 @@ const meta: Meta<IxCardComponent> = {
         [elevation]="elevation" 
         [padding]="padding" 
         [bordered]="bordered"
+        [background]="background"
       >
         <p>This is the card content. You can put any content here including other components, text, images, etc.</p>
         <p>The card provides a clean container with customizable elevation, padding, and optional borders.</p>
@@ -48,6 +52,7 @@ export const Default: Story = {
     elevation: 'medium',
     padding: 'medium',
     bordered: false,
+    background: true,
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -122,5 +127,26 @@ export const BorderedLowElevation: Story = {
     elevation: 'low',
     padding: 'medium',
     bordered: true,
+    background: true,
+  },
+};
+
+export const NoBackground: Story = {
+  args: {
+    title: 'Transparent Card',
+    elevation: 'medium',
+    padding: 'medium',
+    bordered: false,
+    background: false,
+  },
+};
+
+export const BorderedNoBackground: Story = {
+  args: {
+    title: 'Bordered Transparent',
+    elevation: 'low',
+    padding: 'medium',
+    bordered: true,
+    background: false,
   },
 };
