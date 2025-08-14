@@ -60,11 +60,12 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.0.0",
+    "lucide": "^0.539.0",
     "ng-packagr": "^19.0.0",
     "storybook": "^8.5.8",
     "style-loader": "^4.0.0",
     "ts-jest": "^29.3.0",
-    "typescript": "^5.7.3",
+    "typescript": "~5.6.0",
     "zone.js": "^0.14.2"
   }
 }

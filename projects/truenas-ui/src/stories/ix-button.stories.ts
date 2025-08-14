@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { userEvent, within } from '@storybook/testing-library';
-import { expect } from '@storybook/jest';
+import { expect } from '@storybook/test';
 import { IxButtonComponent } from '../lib/ix-button/ix-button.component';
 
 // More on how to set up stories at: https://storybook.js.org/docs/writing-stories
