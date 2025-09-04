@@ -1,0 +1,178 @@
+<svg width="1400" height="900" viewBox="0 0 1400 900" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1400" height="900" fill="#1a1a1a"/>
+  
+  <!-- Header Bar -->
+  <rect x="0" y="0" width="1400" height="64" fill="#2d2d2d"/>
+  <text x="24" y="40" fill="#ffffff" font-size="18" font-weight="600">TrueNAS</text>
+  <text x="120" y="40" fill="#64b5f6" font-size="16">Storage</text>
+  
+  <!-- System Status Indicator (Top Right) -->
+  <circle cx="1200" cy="32" r="8" fill="#4caf50"/>
+  <text x="1220" y="38" fill="#4caf50" font-size="12" font-weight="500">System Healthy</text>
+  
+  <!-- User Account -->
+  <circle cx="1320" cy="32" r="16" fill="#424242"/>
+  <text x="1320" y="37" text-anchor="middle" fill="#ffffff" font-size="12">👤</text>
+  <text x="1350" y="38" fill="#ffffff" font-size="12">Admin</text>
+  
+  <!-- Navigation Sidebar -->
+  <rect x="0" y="64" width="240" height="836" fill="#2d2d2d"/>
+  <text x="24" y="100" fill="#ffffff" font-size="16" font-weight="600">Navigation</text>
+  
+  <!-- Nav Items -->
+  <rect x="12" y="120" width="216" height="40" fill="#64b5f6" rx="8"/>
+  <text x="24" y="145" fill="#ffffff" font-size="14" font-weight="500">📊 Dashboard</text>
+  
+  <rect x="12" y="168" width="216" height="40" fill="#424242" rx="8"/>
+  <text x="24" y="193" fill="#ffffff" font-size="14" font-weight="500">💾 Storage Overview</text>
+  
+  <rect x="24" y="216" width="200" height="32" fill="transparent"/>
+  <text x="36" y="237" fill="#9e9e9e" font-size="12">• Set Up Safe Storage</text>
+  
+  <rect x="24" y="248" width="200" height="32" fill="transparent"/>
+  <text x="36" y="269" fill="#9e9e9e" font-size="12">• Storage Health</text>
+  
+  <rect x="24" y="280" width="200" height="32" fill="transparent"/>
+  <text x="36" y="301" fill="#9e9e9e" font-size="12">• Learn Storage</text>
+  
+  <!-- Main Content Area -->
+  <rect x="240" y="64" width="1160" height="836" fill="#1a1a1a"/>
+  
+  <!-- Main ix-card: Welcome State -->
+  <rect x="280" y="104" width="1080" height="752" fill="#2d2d2d" stroke="#4caf50" stroke-width="2" rx="12"/>
+  
+  <!-- Card Header -->
+  <rect x="296" y="120" width="1048" height="60" fill="#2d2d2d"/>
+  <text x="320" y="155" fill="#ffffff" font-size="24" font-weight="600">Set Up Safe Storage</text>
+  <text x="320" y="175" fill="#9e9e9e" font-size="14">Protect your important files with automatic backup drives</text>
+  
+  <!-- Illustration Area (ix-card content) -->
+  <rect x="320" y="200" width="1024" height="120" fill="#263238" stroke="#4caf50" stroke-width="1" stroke-dasharray="4,4" rx="8"/>
+  
+  <!-- Storage Concept Illustration -->
+  <g transform="translate(672, 240)">
+    <!-- Main Storage -->
+    <circle cx="0" cy="20" r="16" fill="#4caf50"/>
+    <text x="0" y="27" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="bold">💾</text>
+    
+    <!-- Mirror Drives -->
+    <circle cx="-40" cy="60" r="12" fill="#64b5f6"/>
+    <text x="-40" y="67" text-anchor="middle" fill="#ffffff" font-size="10">💿</text>
+    <circle cx="40" cy="60" r="12" fill="#64b5f6"/>
+    <text x="40" y="67" text-anchor="middle" fill="#ffffff" font-size="10">💿</text>
+    
+    <!-- Connection lines -->
+    <path d="M 0 36 L -40 48" stroke="#4caf50" stroke-width="2"/>
+    <path d="M 0 36 L 40 48" stroke="#4caf50" stroke-width="2"/>
+    
+    <!-- Labels -->
+    <text x="0" y="100" text-anchor="middle" fill="#9e9e9e" font-size="12">Your files protected by multiple drives</text>
+  </g>
+  
+  <!-- Protection Level Selection (ix-card with radio options) -->
+  <rect x="320" y="340" width="500" height="280" fill="#373737" stroke="#616161" stroke-width="1" rx="8"/>
+  
+  <!-- Card Title -->
+  <text x="340" y="370" fill="#ffffff" font-size="18" font-weight="600">Choose Your Protection</text>
+  <text x="340" y="390" fill="#9e9e9e" font-size="14">Select how you want to keep your files safe</text>
+  
+  <!-- Option 1: Basic Protection (ix-radio + ix-card) -->
+  <rect x="340" y="410" width="460" height="80" fill="#2d2d2d" stroke="#4caf50" stroke-width="2" rx="6"/>
+  <circle cx="360" cy="430" r="8" fill="#4caf50"/>
+  <circle cx="360" cy="430" r="4" fill="#ffffff"/>
+  
+  <text x="380" y="435" fill="#ffffff" font-size="16" font-weight="600">🛡️ Basic Protection (Recommended)</text>
+  <text x="380" y="455" fill="#9e9e9e" font-size="12">Two drives mirror each other - files stay safe if one drive fails</text>
+  <text x="380" y="470" fill="#81c784" font-size="12">✓ Perfect for most users  ✓ Simple setup  ✓ Maximum safety</text>
+  
+  <!-- Progressive Disclosure Toggle -->
+  <rect x="720" y="420" width="70" height="24" fill="#424242" stroke="#616161" rx="12"/>
+  <text x="755" y="435" text-anchor="middle" fill="#9e9e9e" font-size="10">technical details ▼</text>
+  
+  <!-- Option 2: Balanced Protection -->
+  <rect x="340" y="500" width="460" height="80" fill="#2d2d2d" stroke="#616161" stroke-width="1" rx="6"/>
+  <circle cx="360" cy="520" r="8" fill="transparent" stroke="#616161" stroke-width="2"/>
+  
+  <text x="380" y="525" fill="#ffffff" font-size="16" font-weight="600">⚖️ Balanced Protection</text>
+  <text x="380" y="545" fill="#9e9e9e" font-size="12">Multiple drive pairs - fast performance with full protection</text>
+  <text x="380" y="560" fill="#64b5f6" font-size="12">✓ Faster access  ✓ Survives multiple failures  ✓ Needs 4+ drives</text>
+  
+  <!-- Progressive Disclosure Toggle -->
+  <rect x="720" y="510" width="70" height="24" fill="#424242" stroke="#616161" rx="12"/>
+  <text x="755" y="525" text-anchor="middle" fill="#9e9e9e" font-size="10">technical details ▼</text>
+  
+  <!-- Drive Selection Preview (ix-card) -->
+  <rect x="840" y="340" width="480" height="280" fill="#373737" stroke="#616161" stroke-width="1" rx="8"/>
+  
+  <text x="860" y="370" fill="#ffffff" font-size="18" font-weight="600">Available Drives</text>
+  <text x="860" y="390" fill="#9e9e9e" font-size="14">We found these drives ready to use</text>
+  
+  <!-- Drive Cards (ix-card components) -->
+  <rect x="860" y="410" width="100" height="80" fill="#2d2d2d" stroke="#4caf50" stroke-width="2" rx="6"/>
+  <circle cx="910" cy="435" r="8" fill="#4caf50"/>
+  <text x="910" y="441" text-anchor="middle" fill="#ffffff" font-size="8">💿</text>
+  <text x="910" y="460" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="600">Drive 1</text>
+  <text x="910" y="475" text-anchor="middle" fill="#81c784" font-size="10">2TB ✓</text>
+  
+  <rect x="980" y="410" width="100" height="80" fill="#2d2d2d" stroke="#4caf50" stroke-width="2" rx="6"/>
+  <circle cx="1030" cy="435" r="8" fill="#4caf50"/>
+  <text x="1030" y="441" text-anchor="middle" fill="#ffffff" font-size="8">💿</text>
+  <text x="1030" y="460" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="600">Drive 2</text>
+  <text x="1030" y="475" text-anchor="middle" fill="#81c784" font-size="10">2TB ✓</text>
+  
+  <rect x="1100" y="410" width="100" height="80" fill="#2d2d2d" stroke="#9e9e9e" stroke-width="1" stroke-dasharray="3,3" rx="6"/>
+  <circle cx="1150" cy="435" r="8" fill="#616161"/>
+  <text x="1150" y="441" text-anchor="middle" fill="#9e9e9e" font-size="8">💿</text>
+  <text x="1150" y="460" text-anchor="middle" fill="#9e9e9e" font-size="12">Drive 3</text>
+  <text x="1150" y="475" text-anchor="middle" fill="#9e9e9e" font-size="10">4TB</text>
+  
+  <rect x="1220" y="410" width="80" height="80" fill="transparent" stroke="#9e9e9e" stroke-width="1" stroke-dasharray="3,3" rx="6"/>
+  <text x="1260" y="440" text-anchor="middle" fill="#9e9e9e" font-size="10">Need</text>
+  <text x="1260" y="455" text-anchor="middle" fill="#9e9e9e" font-size="10">more</text>
+  <text x="1260" y="470" text-anchor="middle" fill="#9e9e9e" font-size="10">drives?</text>
+  
+  <!-- Smart Recommendation Panel (ix-card with alert styling) -->
+  <rect x="860" y="510" width="440" height="90" fill="#263238" stroke="#4caf50" stroke-width="1" rx="6"/>
+  <circle cx="880" cy="535" r="12" fill="#4caf50"/>
+  <text x="880" y="541" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="bold">✓</text>
+  
+  <text x="905" y="540" fill="#81c784" font-size="16" font-weight="600">Perfect Match!</text>
+  <text x="905" y="560" fill="#ffffff" font-size="13">You have 2 matching drives - ideal for Basic Protection</text>
+  <text x="905" y="580" fill="#9e9e9e" font-size="12">This setup will give you ~2TB of protected storage space</text>
+  
+  <!-- Contextual Technical Information Example -->
+  <rect x="320" y="640" width="700" height="100" fill="#1e1e1e" stroke="#424242" stroke-width="1" rx="8"/>
+  
+  <text x="340" y="660" fill="#ffffff" font-size="14" font-weight="600">Example: Technical Information in Context</text>
+  <text x="340" y="680" fill="#9e9e9e" font-size="12">When user clicks "technical details ▼" on Basic Protection:</text>
+  
+  <!-- Example of revealed technical details -->
+  <rect x="340" y="690" width="660" height="40" fill="#2d2d2d" stroke="#4caf50" stroke-width="1" rx="4"/>
+  <text x="350" y="710" fill="#81c784" font-size="11" font-weight="600">📋 Technical Details:</text>
+  <text x="460" y="710" fill="#e8f5e8" font-size="11">"Basic Protection creates a Mirror VDEV (RAID1) with 2 drives for redundancy"</text>
+  <text x="350" y="725" fill="#9e9e9e" font-size="10">ZFS pool configuration: 2x drive mirror, automatic checksums, LZ4 compression</text>
+  
+  <!-- Action Buttons (ix-button components) -->
+  <rect x="320" y="760" width="200" height="48" fill="#4caf50" stroke="#388e3c" rx="24"/>
+  <text x="420" y="790" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="600">Set Up Protection</text>
+  
+  <rect x="540" y="760" width="150" height="48" fill="transparent" stroke="#4caf50" stroke-width="2" rx="24"/>
+  <text x="615" y="790" text-anchor="middle" fill="#4caf50" font-size="16" font-weight="500">Learn More</text>
+  
+  <rect x="710" y="760" width="150" height="48" fill="transparent" stroke="#64b5f6" stroke-width="1" rx="24"/>
+  <text x="785" y="790" text-anchor="middle" fill="#64b5f6" font-size="16" font-weight="500">Show All Details</text>
+  
+  <!-- Contextual Help Panel -->
+  <rect x="1050" y="650" width="270" height="90" fill="#263238" stroke="#64b5f6" stroke-width="1" rx="6"/>
+  <text x="1070" y="675" fill="#81d4fa" font-size="14" font-weight="600">💡 Need Help?</text>
+  <text x="1070" y="695" fill="#e1f5fe" font-size="11">Click any "technical details" to learn more</text>
+  <text x="1070" y="710" fill="#e1f5fe" font-size="11">Or visit our Storage Guide for tutorials</text>
+  <rect x="1070" y="720" width="80" height="20" fill="#64b5f6" rx="10"/>
+  <text x="1110" y="733" text-anchor="middle" fill="#ffffff" font-size="10">Learn More</text>
+  
+  <!-- Status Bar -->
+  <rect x="0" y="876" width="1400" height="24" fill="#2d2d2d"/>
+  <text x="24" y="892" fill="#9e9e9e" font-size="12">TrueNAS UI Component Library - Progressive Disclosure Demo</text>
+  <text x="1250" y="892" fill="#64b5f6" font-size="12">Universal Operations Interface</text>
+</svg>

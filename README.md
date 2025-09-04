@@ -15,7 +15,7 @@ This is an Angular UI Component library in use by TrueNAS and other related soft
 - Angular 19 (core, common, forms, router, animations)
 - Angular CDK (for accessibility features)
 - RxJS 7.5.0
-- TypeScript 5.7.3
+- TypeScript 5.6.0
 
 ### Development Dependencies
 

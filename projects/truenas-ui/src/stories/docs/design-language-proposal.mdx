@@ -1,0 +1,106 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Style Guide/Design Language (WIP)" />
+
+# TrueNAS Design Language Definition
+
+## Visual Language Layer
+
+**Material Design**: Combines tactile elements, bold visuals, and foundational print-based design elements including typography, grids, space, scale, color, and imagery. Heavily theory-driven with physical world metaphors (paper, shadows, elevation).
+
+**Airbnb**: Focuses on platform-agnostic consistency with primitives including color, typography, and shapes organized into a hierarchical system. More pragmatically business-focused, emphasizing trust and accessibility across global markets.
+
+**IBM Carbon**: Built on systematic tokens and themes with strong emphasis on data-driven interfaces. Visual language prioritizes clarity over decoration with high contrast ratios, precise typography scales, and color systems designed for complex enterprise workflows. Emphasizes functional aesthetics that support productivity and decision-making in professional contexts.
+
+**TrueNAS Visual Language**:
+*Progressive Clarity* - Visual hierarchy that adapts complexity to user expertise without patronizing advanced users. Clean, technical aesthetics that build confidence through precision while remaining approachable. Color system that clearly communicates system health, warnings, and status across all user skill levels. Typography that balances dense information display with readability during high-stress troubleshooting. Visual elements should feel enterprise-grade reliable while being immediately comprehensible to all users during normal operations.
+
+## Interaction Language Layer
+
+**Material Design**: Centers on "meaningful motion" with activity transitions, ripple effects, and circular reveals that make UI expressive and easy to use. Motion is physics-based and educational, teaching users about spatial relationships.
+
+**Airbnb**: Prioritizes cross-platform conventions over unique interactions, following platform-specific patterns for navigation and system iconography while maintaining consistent component behavior.
+
+**IBM Carbon**: Emphasizes efficient task completion through predictable, low-friction interactions. Motion is purposeful and restrained, focusing on functional transitions that communicate system state and guide user attention. Keyboard navigation and accessibility are first-class considerations, with interaction patterns optimized for high-frequency enterprise use.
+
+**TrueNAS Interaction Language**:
+*Confident Workflow* - Interactions that accelerate workflows while providing safety rails for all users. Motion and feedback that communicate system state changes clearly (crucial for storage operations). Progressive disclosure mechanisms that reveal advanced options without overwhelming core functionality. Micro-interactions that build confidence during long-running operations like health checks or data transfers. Touch-friendly mobile interfaces for remote management, but keyboard-optimized flows for power users. Every interaction should feel deliberate and trustworthy - no surprise behaviors that could risk data integrity.
+
+## Content Language Layer
+
+**Material Design**: Emphasizes clarity and hierarchy through systematic typography scales. Provides comprehensive typography guidance covering font styles, hierarchy, and line height as part of Google's broader design language rulebook.
+
+**Airbnb**: Content strategy deeply integrated with trust-building and global localization needs. Language must work across cultures while maintaining brand personality that feels welcoming and reliable.
+
+**IBM Carbon**: Content philosophy centers on clear, actionable communication optimized for professional decision-making. Writing style is direct and scannable, with systematic approaches to microcopy, error messaging, and technical communication. Language patterns support cognitive efficiency in complex workflows while maintaining human warmth.
+
+**TrueNAS Content Language**:
+*Universal Operations, Technical Diagnostics* - Core operations use plain language for everyone: "Storage health check," "Network folder," "Backup copy," "User account." Technical precision only appears in troubleshooting contexts, maintaining clear connection to operational language: "Network folder (SMB)" not "SMB share," "Storage health check (ZFS scrub)" not "scrub error." This bridging helps users connect diagnostic information back to features they created. Error messages use operational terms with technical identifiers appended when needed for diagnosis.
+
+## Spatial Language Layer
+
+**Material Design**: Built on elevation concepts with cards, surfaces, and layered components that create depth through shadows and material hierarchy. Space is architecturally-informed with consistent elevation logic.
+
+**Airbnb**: Responsive-first spatial organization that adapts seamlessly across device sizes from mobile to tablet while maintaining component integrity.
+
+**IBM Carbon**: Utilizes systematic grid structures and component spacing optimized for dense information display. Spatial relationships emphasize functional grouping and progressive disclosure, with layout patterns that support both overview and detail-focused tasks. White space is purposeful, creating breathing room without sacrificing information density.
+
+**TrueNAS Spatial Language**:
+*Intelligent Density* - Information architecture that scales from simple setup flows to comprehensive monitoring dashboards. Spatial organization that reflects data hierarchy (storage collections → secure folders → files) intuitively. Responsive layouts that work equally well on large professional monitors and mobile devices during remote management. Contextual sidebars and drill-down patterns that maintain spatial orientation during complex configuration tasks. Clean separation between operational areas and diagnostic/troubleshooting areas to prevent accidental changes. Space should feel organized and purposeful - never cluttered but information-rich when monitoring system health.
+
+---
+
+## Design Language Integration
+
+This language creates one clear operational vocabulary that all users can understand, while preserving technical precision where it matters most - when diagnosing problems. Rather than trying to serve two different audiences with two different vocabularies, we serve one primary goal (clear operations) with technical depth available when troubleshooting demands it. This approach reduces cognitive load during normal use while maintaining the diagnostic power technical users need during problem resolution.
+
+## Pattern Example: Network Folder Creation and Troubleshooting
+
+### Normal Operation Flow
+**Setup Interface:**
+- Main navigation: "File Sharing"
+- Button: "Create Network Folder"
+- Form fields:
+  - "Folder name": Family Photos
+  - "Folder location": /mnt/storage/photos
+  - "Access type": Windows & Mac compatible (default)
+  - "Who can access": Family Members (dropdown)
+
+**Success State:**
+- Confirmation: "Network folder 'Family Photos' created successfully"
+- Status indicator: Green dot with "Active"
+- Quick action: "Open folder" button
+
+### Diagnostic/Troubleshooting Interface
+**When Issues Arise:**
+- Alert banner: "Network folder 'Family Photos' connection issues"
+- Error details section (expandable):
+  - "Network folder 'Family Photos' (SMB) cannot be reached"
+  - "Service status: SMB service stopped"
+  - "Last active: 2 hours ago"
+
+**Technical Diagnostic Panel:**
+- Service logs show: "SMB/CIFS service error"
+- System status: "smbd process not running"
+- Network diagnostics: "Port 445 not responding"
+
+**User-Friendly Error Resolution:**
+- Primary message: "Your 'Family Photos' network folder isn't available right now"
+- Suggested actions:
+  1. "Restart file sharing service" (button)
+  2. "Check network connection" (link to network diagnostics)
+  3. "Contact support" (pre-fills ticket with technical details)
+
+**Support Handoff:**
+When user clicks "Contact support," the system pre-populates:
+- "User issue: Network folder 'Family Photos' not accessible"
+- "Technical details: SMB share /mnt/storage/photos, service smbd stopped, error code xyz"
+- This gives support both user context and technical specifics
+
+### Implementation Notes for Prototype
+- Use consistent "Network folder" terminology in all user-facing text
+- Append technical identifiers "(SMB)" only in error states and diagnostics
+- Maintain visual hierarchy: plain language prominent, technical details secondary
+- Error messages should always lead with operational language, technical details in expandable sections
+- System logs and API responses can use full technical terminology since they're developer/admin contexts
+- Help tooltips should explain concepts in operational terms first: "Network folders let you access files from any device. This uses SMB protocol for Windows compatibility."

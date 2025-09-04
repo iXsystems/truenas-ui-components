@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { within } from '@storybook/testing-library';
-import { expect } from '@storybook/jest';
+import { expect } from '@storybook/test';
 import { IxCardComponent } from '../lib/ix-card/ix-card.component';
 
 const meta: Meta<IxCardComponent> = {
@@ -10,7 +10,7 @@ const meta: Meta<IxCardComponent> = {
   argTypes: {
     elevation: {
       control: 'select',
-      options: ['low', 'medium', 'high'],
+      options: ['none', 'low', 'medium', 'high'],
     },
     padding: {
       control: 'select',
@@ -148,5 +148,15 @@ export const BorderedNoBackground: Story = {
     padding: 'medium',
     bordered: true,
     background: false,
+  },
+};
+
+export const NoElevation: Story = {
+  args: {
+    title: 'No Elevation Card',
+    elevation: 'none',
+    padding: 'medium',
+    bordered: true,
+    background: true,
   },
 };

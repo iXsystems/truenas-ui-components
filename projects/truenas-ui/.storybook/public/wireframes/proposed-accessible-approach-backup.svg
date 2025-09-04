@@ -1,0 +1,161 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="800" fill="#f8f9fa" stroke="#dee2e6" stroke-width="1"/>
+  
+  <!-- Title -->
+  <text x="600" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#28a745">Proposed: Task-Oriented Pool Creation Process</text>
+  
+  <!-- Step 1: Welcome State -->
+  <rect x="50" y="60" width="280" height="320" fill="white" stroke="#28a745" stroke-width="2" rx="8"/>
+  <text x="190" y="85" text-anchor="middle" font-size="14" font-weight="bold">Step 1: Welcome & Learn</text>
+  
+  <!-- Header -->
+  <rect x="60" y="100" width="260" height="40" fill="#343a40"/>
+  <text x="70" y="125" fill="white" font-size="12" font-weight="bold">TrueNAS - Storage</text>
+  <rect x="250" y="110" width="60" height="20" fill="#28a745" rx="10"/>
+  <text x="280" y="123" text-anchor="middle" fill="white" font-size="8">Beginner</text>
+  
+  <!-- Illustration -->
+  <rect x="70" y="150" width="240" height="60" fill="#e8f5e8" stroke="#28a745" stroke-width="1" stroke-dasharray="2,2"/>
+  <circle cx="190" cy="165" r="8" fill="#28a745"/>
+  <circle cx="165" cy="185" r="6" fill="#17a2b8"/>
+  <circle cx="215" cy="185" r="6" fill="#17a2b8"/>
+  <line x1="190" y1="173" x2="165" y2="179" stroke="#666" stroke-width="1"/>
+  <line x1="190" y1="173" x2="215" y2="179" stroke="#666" stroke-width="1"/>
+  <text x="190" y="205" text-anchor="middle" font-size="9" fill="#666">Drives protecting your files</text>
+  
+  <!-- Welcome Content -->
+  <text x="190" y="230" text-anchor="middle" font-size="14" font-weight="bold" fill="#28a745">Set Up Safe Storage</text>
+  <text x="190" y="250" text-anchor="middle" font-size="11" fill="#666">Protect your files with automatic backup</text>
+  
+  <!-- Options -->
+  <rect x="70" y="270" width="240" height="80" fill="#f8f9fa" stroke="#28a745" stroke-width="1" rx="3"/>
+  <text x="80" y="290" font-size="11" font-weight="bold">🛡️ Basic Protection</text>
+  <text x="80" y="305" font-size="9" fill="#666">Two drives mirror each other</text>
+  <rect x="250" y="280" width="50" height="12" fill="#e9ecef" stroke="#ccc" rx="6"/>
+  <text x="275" y="289" text-anchor="middle" font-size="6" fill="#666">technical details ▼</text>
+  
+  <text x="80" y="325" font-size="11" font-weight="bold">🔒 Maximum Protection</text>
+  <text x="80" y="340" font-size="9" fill="#666">Three+ drives protect against multiple failures</text>
+  
+  <!-- Action -->
+  <rect x="120" y="360" width="140" height="25" fill="#28a745" stroke="#1e7e34" rx="4"/>
+  <text x="190" y="377" text-anchor="middle" fill="white" font-size="11" font-weight="bold">Set Up Protection</text>
+  
+  <!-- Step 2: Guided Selection -->
+  <rect x="380" y="60" width="280" height="320" fill="white" stroke="#28a745" stroke-width="2" rx="8"/>
+  <text x="520" y="85" text-anchor="middle" font-size="14" font-weight="bold">Step 2: Pick Your Drives</text>
+  
+  <!-- Drive Selection Interface -->
+  <rect x="390" y="100" width="260" height="260" fill="#f8f9fa" stroke="#28a745" stroke-width="1"/>
+  <text x="520" y="125" text-anchor="middle" font-size="12" font-weight="bold" fill="#28a745">Available Drives</text>
+  
+  <!-- Drive Icons -->
+  <rect x="400" y="140" width="80" height="40" fill="white" stroke="#28a745" stroke-width="1" rx="3"/>
+  <circle cx="420" cy="155" r="5" fill="#28a745"/>
+  <text x="430" y="160" font-size="8" fill="#666">Drive 1</text>
+  <text x="430" y="170" font-size="8" fill="#666">2TB ✓</text>
+  
+  <rect x="490" y="140" width="80" height="40" fill="white" stroke="#28a745" stroke-width="1" rx="3"/>
+  <circle cx="510" cy="155" r="5" fill="#28a745"/>
+  <text x="520" y="160" font-size="8" fill="#666">Drive 2</text>
+  <text x="520" y="170" font-size="8" fill="#666">2TB ✓</text>
+  
+  <rect x="580" y="140" width="70" height="40" fill="#f8f9fa" stroke="#ccc" stroke-width="1" stroke-dasharray="2,2" rx="3"/>
+  <text x="615" y="165" text-anchor="middle" font-size="8" fill="#666">Need more?</text>
+  
+  <!-- Explanation -->
+  <rect x="400" y="190" width="240" height="60" fill="#e8f5e8" stroke="#28a745" stroke-width="1" rx="3"/>
+  <text x="520" y="210" text-anchor="middle" font-size="11" font-weight="bold" fill="#28a745">Perfect! You have 2 matching drives</text>
+  <text x="520" y="225" text-anchor="middle" font-size="9" fill="#666">This gives you Basic Protection - if one drive fails,</text>
+  <text x="520" y="235" text-anchor="middle" font-size="9" fill="#666">your files are automatically safe on the other drive</text>
+  
+  <!-- Progressive Disclosure -->
+  <rect x="400" y="260" width="240" height="40" fill="#fff3cd" stroke="#ffc107" stroke-width="1" rx="3"/>
+  <text x="410" y="275" font-size="9" fill="#856404">💡 Want technical details?</text>
+  <rect x="550" y="270" width="80" height="15" fill="#ffc107" stroke="#e0a800" rx="7"/>
+  <text x="590" y="280" text-anchor="middle" font-size="7" fill="#856404">Show RAID info ▼</text>
+  
+  <!-- Continue Button -->
+  <rect x="450" y="320" width="140" height="30" fill="#28a745" stroke="#1e7e34" rx="4"/>
+  <text x="520" y="340" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Continue Setup</text>
+  
+  <!-- Step 3: Confirmation -->
+  <rect x="710" y="60" width="280" height="320" fill="white" stroke="#28a745" stroke-width="2" rx="8"/>
+  <text x="850" y="85" text-anchor="middle" font-size="14" font-weight="bold">Step 3: Ready to Create</text>
+  
+  <!-- Summary -->
+  <rect x="720" y="100" width="260" height="200" fill="#e8f5e8" stroke="#28a745" stroke-width="1"/>
+  <text x="850" y="125" text-anchor="middle" font-size="12" font-weight="bold" fill="#28a745">Your Safe Storage Setup</text>
+  
+  <!-- Visual Summary -->
+  <rect x="730" y="140" width="240" height="80" fill="white" stroke="#28a745" stroke-width="1" rx="3"/>
+  <circle cx="800" cy="165" r="8" fill="#28a745"/>
+  <circle cx="775" cy="185" r="6" fill="#17a2b8"/>
+  <circle cx="825" cy="185" r="6" fill="#17a2b8"/>
+  <line x1="800" y1="173" x2="775" y2="179" stroke="#666" stroke-width="1"/>
+  <line x1="800" y1="173" x2="825" y2="179" stroke="#666" stroke-width="1"/>
+  <text x="880" y="170" font-size="10" fill="#666">Protection: Basic</text>
+  <text x="880" y="185" font-size="10" fill="#666">Drives: 2 × 2TB</text>
+  <text x="880" y="200" font-size="10" fill="#666">Safe Capacity: ~2TB</text>
+  
+  <!-- Confirmation Text -->
+  <text x="850" y="240" text-anchor="middle" font-size="11" fill="#666">✓ Files will be automatically copied to both drives</text>
+  <text x="850" y="255" text-anchor="middle" font-size="11" fill="#666">✓ If one drive fails, your files stay safe</text>
+  <text x="850" y="270" text-anchor="middle" font-size="11" fill="#666">✓ You can add more drives later</text>
+  
+  <!-- Technical Toggle -->
+  <rect x="730" y="310" width="240" height="25" fill="#fff3cd" stroke="#ffc107" stroke-width="1" rx="3"/>
+  <text x="740" y="325" font-size="9" fill="#856404">Technical name will be: "mypool" (Mirror VDEV)</text>
+  <rect x="900" y="315" width="60" height="15" fill="#e9ecef" stroke="#ccc" rx="7"/>
+  <text x="930" y="325" text-anchor="middle" font-size="6" fill="#666">change settings ▼</text>
+  
+  <!-- Final Actions -->
+  <rect x="730" y="345" width="120" height="30" fill="#28a745" stroke="#1e7e34" rx="4"/>
+  <text x="790" y="365" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Create Safe Storage</text>
+  
+  <rect x="860" y="345" width="100" height="30" fill="white" stroke="#6c757d" stroke-width="1" rx="4"/>
+  <text x="910" y="365" text-anchor="middle" fill="#6c757d" font-size="11">Go Back</text>
+  
+  <!-- Step 4: Success -->
+  <rect x="380" y="420" width="280" height="320" fill="white" stroke="#28a745" stroke-width="2" rx="8"/>
+  <text x="520" y="445" text-anchor="middle" font-size="14" font-weight="bold" fill="#28a745">Step 4: Safe Storage Created!</text>
+  
+  <!-- Success Content -->
+  <rect x="390" y="460" width="260" height="260" fill="#e8f5e8" stroke="#28a745" stroke-width="1"/>
+  
+  <!-- Success Icon -->
+  <circle cx="520" cy="500" r="20" fill="#28a745"/>
+  <text x="520" y="508" text-anchor="middle" font-size="16" fill="white">✓</text>
+  
+  <text x="520" y="535" text-anchor="middle" font-size="14" font-weight="bold" fill="#28a745">Your files are now protected!</text>
+  
+  <!-- Pool Status Card -->
+  <rect x="400" y="550" width="240" height="80" fill="white" stroke="#28a745" stroke-width="1" rx="4"/>
+  <text x="410" y="570" font-size="12" font-weight="bold">mypool</text>
+  <text x="410" y="585" font-size="10" fill="#666">Status: Healthy (2 drives protecting each other)</text>
+  <text x="410" y="600" font-size="10" fill="#666">Available space: ~2TB ready for your files</text>
+  <text x="410" y="615" font-size="10" fill="#666">Protection: Files automatically saved to both drives</text>
+  
+  <!-- Next Steps -->
+  <rect x="400" y="640" width="240" height="60" fill="#e3f2fd" stroke="#2196f3" stroke-width="1" stroke-dasharray="2,2"/>
+  <text x="520" y="660" text-anchor="middle" font-size="11" font-weight="bold" fill="#1976d2">What's Next?</text>
+  <text x="520" y="675" text-anchor="middle" font-size="9" fill="#1976d2">• Set up file sharing</text>
+  <text x="520" y="690" text-anchor="middle" font-size="9" fill="#1976d2">• Learn about automatic backups</text>
+  
+  <!-- Flow Arrows -->
+  <path d="M 340 220 L 360 220" stroke="#28a745" stroke-width="3" fill="none" marker-end="url(#arrowhead-green)"/>
+  <path d="M 670 220 L 690 220" stroke="#28a745" stroke-width="3" fill="none" marker-end="url(#arrowhead-green)"/>
+  <path d="M 750 390 Q 750 410 520 410" stroke="#28a745" stroke-width="3" fill="none" marker-end="url(#arrowhead-green)"/>
+  
+  <!-- Arrow marker definitions -->
+  <defs>
+    <marker id="arrowhead-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#28a745"/>
+    </marker>
+  </defs>
+  
+  <!-- Bottom Summary -->
+  <rect x="50" y="760" width="940" height="30" fill="#e8f5e8" stroke="#28a745" stroke-width="1" rx="4"/>
+  <text x="520" y="780" text-anchor="middle" font-size="12" font-weight="bold" fill="#28a745">Proposed Approach: Start with user goals, provide task-oriented guidance, reveal technical depth on demand</text>
+</svg>
