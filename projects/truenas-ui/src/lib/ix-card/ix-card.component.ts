@@ -13,7 +13,7 @@ export class IxCardComponent {
   title?: string;
 
   @Input()
-  elevation: 'low' | 'medium' | 'high' = 'medium';
+  elevation: 'none' | 'low' | 'medium' | 'high' = 'medium';
 
   @Input()
   padding: 'small' | 'medium' | 'large' = 'medium';

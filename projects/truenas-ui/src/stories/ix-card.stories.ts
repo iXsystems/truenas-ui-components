@@ -10,7 +10,7 @@ const meta: Meta<IxCardComponent> = {
   argTypes: {
     elevation: {
       control: 'select',
-      options: ['low', 'medium', 'high'],
+      options: ['none', 'low', 'medium', 'high'],
     },
     padding: {
       control: 'select',
@@ -148,5 +148,15 @@ export const BorderedNoBackground: Story = {
     padding: 'medium',
     bordered: true,
     background: false,
+  },
+};
+
+export const NoElevation: Story = {
+  args: {
+    title: 'No Elevation Card',
+    elevation: 'none',
+    padding: 'medium',
+    bordered: true,
+    background: true,
   },
 };

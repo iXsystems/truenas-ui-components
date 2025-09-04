@@ -10,6 +10,7 @@ export * from './lib/ix-input/ix-input.component';
 export * from './lib/ix-input/ix-input.directive';
 export * from './lib/ix-chip/ix-chip.component';
 export * from './lib/ix-card/ix-card.component';
+export * from './lib/ix-expansion-panel/ix-expansion-panel.component';
 export * from './lib/ix-checkbox/ix-checkbox.component';
 export * from './lib/ix-radio/ix-radio.component';
 export * from './lib/ix-slide-toggle/ix-slide-toggle.component';
