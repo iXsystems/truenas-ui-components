@@ -1,0 +1,43 @@
+<div class="ix-file-picker-container">
+  <div #wrapper ixInput class="ix-file-picker-wrapper" style="padding-right: 40px;">
+    <input 
+      type="text"
+      class="ix-file-picker-input"
+      [class.error]="hasError()"
+      [value]="displayPath()"
+      [placeholder]="placeholder"
+      [readonly]="!allowManualInput"
+      [disabled]="disabled"
+      (blur)="onPathInput($event)">
+    
+    <button 
+      type="button"
+      class="ix-file-picker-toggle"
+      (click)="openFilePicker()"
+      [disabled]="disabled"
+      aria-label="Open file picker">
+      <ix-icon name="folder" library="mdi"></ix-icon>
+    </button>
+  </div>
+  
+  <ng-template #filePickerTemplate>
+    <ix-file-picker-popup
+      class="ix-file-picker-popup"
+      [mode]="mode"
+      [multiSelect]="multiSelect"
+      [allowCreate]="allowCreate"
+      [allowDatasetCreate]="allowDatasetCreate"
+      [allowZvolCreate]="allowZvolCreate"
+      [currentPath]="currentPath()"
+      [fileItems]="fileItems()"
+      [selectedItems]="selectedItems()"
+      [loading]="loading()"
+      [fileExtensions]="fileExtensions"
+      (itemClick)="onItemClick($event)"
+      (itemDoubleClick)="onItemDoubleClick($event)"
+      (pathNavigate)="navigateToPath($event)"
+      (createFolder)="onCreateFolder()"
+      (close)="close()">
+    </ix-file-picker-popup>
+  </ng-template>
+</div>

@@ -2,7 +2,7 @@
    Global Styles: Typography
    ================================ */
 :root {
-  --primary: #0095D5; /* WCAG fix #007db3 */
+  --primary: #007db3; /* WCAG fix #007db3 */
   --primary-txt: #ffffff;
   --btn-default-bg: #545454;
   --btn-default-txt: #ffffff;
@@ -23,7 +23,7 @@
   --red: #CE2929;
   --magenta: #C006C7;
   --violet: #7617D8;
-  --blue: #0095D5;
+  --blue: #007db3;
   --cyan: #00d0d6;
   --green: #71BF44;
   --pink: #ffc0cb;
@@ -67,13 +67,13 @@
   --alt-bg2: #545454;
   --alt-fg1: rgba(194,194,194,0.5);
   --alt-fg2: #e1e1e1;
-  --lines: #383838;
+  --lines: #4a4a4a;
   --yellow: #DED142;
   --orange: #E68D37;
   --red: #CE2929;
   --magenta: #C006C7;
   --violet: #7617D8;
-  --blue: #0095D5; /* WCAG fix #007db3 */
+  --blue: #007db3;
   --cyan: #00d0d6;
   --green: #71BF44;
   --pink: #ffc0cb;
@@ -90,23 +90,23 @@
 .ix-blue {
   --primary: var(--blue);
   --primary-txt: #ffffff;
-  --topbar: #0095D5;
+  --topbar: #007db3;
   --accent: #DED142;
   --bg1: #f2f2f2;
   --bg2: #ffffff;
   --fg1: #585858;
   --fg2: #666666;
-  --alt-bg1: #ababab;
-  --alt-bg2: #cdcdcd;
+  --alt-bg1: #f0f0f0;
+  --alt-bg2: #e8e8e8;
   --alt-fg1: #181a26;
   --alt-fg2: #282a36;
-  --lines: #383838;
+  --lines: #d0d0d0;
   --yellow: #DED142;
   --orange: #E68D37;
   --red: #CE2929;
   --magenta: #C006C7;
   --violet: #7617D8;
-  --blue: #0095D5; /* WCAG fix #007db3 */
+  --blue: #007db3;
   --cyan: #00d0d6;
   --green: #71BF44;
   --pink: #ffc0cb;
@@ -130,11 +130,11 @@
   --bg2: #282a36;
   --fg1: #efefef;
   --fg2: #cacac5;
-  --alt-bg1: rgba(122,122,122,0.8);
-  --alt-bg2: rgba(122,122,122,0.5);
+  --alt-bg1: #3a3d4a;
+  --alt-bg2: #44475a;
   --alt-fg1: #f8f8f2;
   --alt-fg2: #fafaf5;
-  --lines: #383838;
+  --lines: #50526e;
   --yellow: #f1fa8c;
   --orange: #ffb86c;
   --red: #ff5555;
@@ -168,7 +168,7 @@
   --alt-bg2: #4c566a;
   --alt-fg1: #d8dee9;
   --alt-fg2: #d8dee9;
-  --lines: #383838;
+  --lines: #576277;
   --yellow: #ebcb8b;
   --orange: #d08770;
   --red: #bf616a;
@@ -197,11 +197,11 @@
   --bg2: #FAFAFA;
   --fg1: #3f3f3f;
   --fg2: #666666;
-  --alt-bg1: #ababab;
-  --alt-bg2: #cdcdcd;
+  --alt-bg1: #f0f0f0;
+  --alt-bg2: #e8e8e8;
   --alt-fg1: #181a26;
   --alt-fg2: #282a36;
-  --lines: #383838;
+  --lines: #d5d5d5;
   --yellow: #f0cb00;
   --orange: #ee9302;
   --red: #ff0013;
@@ -233,11 +233,11 @@
   --bg2: #073642;
   --fg1: #586e75;
   --fg2: #7f99a2;
-  --alt-bg1: rgba(122, 122, 122, 0.8);
-  --alt-bg2: #0b4f60; /* Alternative: #314c54 */
+  --alt-bg1: #0e4853;
+  --alt-bg2: #155a68;
   --alt-fg1: #839496;
   --alt-fg2: #282a36;
-  --lines: #383838;
+  --lines: #586e75;
   --yellow: #b58900;
   --orange: #cb4b16;
   --red: #dc322f;
@@ -268,11 +268,11 @@
   --bg2: #303d48;
   --fg1: #aaaaaa;
   --fg2: #cccccc;
-  --alt-bg1: rgba(122, 122, 122, 0.8);
-  --alt-bg2: #6F6E6C;
+  --alt-bg1: #3d4a55;
+  --alt-bg2: #4a5762;
   --alt-fg1: #c1c1c1;
   --alt-fg2: #e1e1e1;
-  --lines: #383838;
+  --lines: #56646f;
   --yellow: #f0cb00;
   --orange: #ee9302;
   --red: #ff0013;
@@ -300,11 +300,11 @@
   --bg2: #ffffff;
   --fg1: #222222;
   --fg2: #333333;
-  --alt-bg1: #ababab;
-  --alt-bg2: #cdcdcd;
+  --alt-bg1: #f0f0f0;
+  --alt-bg2: #e8e8e8;
   --alt-fg1: #181a26;
   --alt-fg2: #282a36;
-  --lines: #383838;
+  --lines: #c0c0c0;
   --yellow: #f0cb00;
   --orange: #ee9302;
   --red: #ff0013;

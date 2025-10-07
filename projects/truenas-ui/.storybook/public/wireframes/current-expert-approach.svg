@@ -1,0 +1,104 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="800" fill="#f8f9fa" stroke="#dee2e6" stroke-width="1"/>
+  
+  <!-- Title -->
+  <text x="600" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#dc3545">Current: Technology-First Pool Creation Process</text>
+  
+  <!-- Step 1: Empty State -->
+  <rect x="50" y="60" width="280" height="320" fill="white" stroke="#dee2e6" stroke-width="2" rx="8"/>
+  <text x="190" y="85" text-anchor="middle" font-size="14" font-weight="bold">Step 1: Empty State</text>
+  
+  <!-- Header -->
+  <rect x="60" y="100" width="260" height="40" fill="#343a40"/>
+  <text x="70" y="125" fill="white" font-size="12" font-weight="bold">TrueNAS - Storage</text>
+  <rect x="250" y="110" width="60" height="20" fill="#007bff" rx="3"/>
+  <text x="280" y="123" text-anchor="middle" fill="white" font-size="10">Create Pool</text>
+  
+  <!-- Empty Content -->
+  <circle cx="190" cy="200" r="25" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>
+  <text x="190" y="207" text-anchor="middle" font-size="16" fill="#666">💾</text>
+  <text x="190" y="240" text-anchor="middle" font-size="12" font-weight="bold">No pools available</text>
+  <text x="190" y="260" text-anchor="middle" font-size="10" fill="#666">It seems you do not have any pools configured.</text>
+  
+  <!-- Action -->
+  <rect x="140" y="280" width="100" height="30" fill="#007bff" stroke="#0056b3" rx="4"/>
+  <text x="190" y="300" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Create Pool</text>
+  
+  <!-- Step 2: Pool Manager -->
+  <rect x="380" y="60" width="280" height="320" fill="white" stroke="#dee2e6" stroke-width="2" rx="8"/>
+  <text x="520" y="85" text-anchor="middle" font-size="14" font-weight="bold">Step 2: Pool Manager Wizard</text>
+  
+  <!-- Complex Form -->
+  <rect x="390" y="100" width="260" height="260" fill="#f8f9fa" stroke="#dee2e6" stroke-width="1"/>
+  <text x="520" y="125" text-anchor="middle" font-size="12" font-weight="bold" fill="#dc3545">8 Technical Steps Required</text>
+  
+  <text x="400" y="150" font-size="10" fill="#666">1. General Pool Options</text>
+  <text x="400" y="170" font-size="10" fill="#666">2. Pool Manager Configuration</text>
+  <text x="400" y="190" font-size="10" fill="#666">3. Data VDEV Layout (RAIDZ1/2/3)</text>
+  <text x="400" y="210" font-size="10" fill="#666">4. Log VDEV (SLOG) - Optional</text>
+  <text x="400" y="230" font-size="10" fill="#666">5. Cache VDEV (L2ARC) - Optional</text>
+  <text x="400" y="250" font-size="10" fill="#666">6. Metadata VDEV - Optional</text>
+  <text x="400" y="270" font-size="10" fill="#666">7. Spare VDEV - Optional</text>
+  <text x="400" y="290" font-size="10" fill="#666">8. Dedup VDEV - Optional</text>
+  
+  <rect x="400" y="310" width="100" height="25" fill="#dc3545" stroke="#c82333" rx="3"/>
+  <text x="450" y="327" text-anchor="middle" fill="white" font-size="10">Complex Process</text>
+  
+  <!-- Step 3: Technical Configuration -->
+  <rect x="710" y="60" width="280" height="320" fill="white" stroke="#dee2e6" stroke-width="2" rx="8"/>
+  <text x="850" y="85" text-anchor="middle" font-size="14" font-weight="bold">Step 3: Technical Configuration</text>
+  
+  <!-- Technical Details -->
+  <rect x="720" y="100" width="260" height="260" fill="#fff3cd" stroke="#ffeaa7" stroke-width="1"/>
+  <text x="850" y="125" text-anchor="middle" font-size="12" font-weight="bold" fill="#856404">ZFS Technical Terms</text>
+  
+  <text x="730" y="150" font-size="9" fill="#856404">• VDEVs (Virtual Devices)</text>
+  <text x="730" y="170" font-size="9" fill="#856404">• RAIDZ1, RAIDZ2, RAIDZ3</text>
+  <text x="730" y="190" font-size="9" fill="#856404">• Pool topology and ashift</text>
+  <text x="730" y="210" font-size="9" fill="#856404">• Compression algorithms (LZ4, GZIP)</text>
+  <text x="730" y="230" font-size="9" fill="#856404">• Deduplication and checksums</text>
+  <text x="730" y="250" font-size="9" fill="#856404">• SLOG and L2ARC configuration</text>
+  <text x="730" y="270" font-size="9" fill="#856404">• Block size and recordsize</text>
+  <text x="730" y="290" font-size="9" fill="#856404">• Encryption and key management</text>
+  
+  <rect x="740" y="310" width="120" height="25" fill="#dc3545" stroke="#c82333" rx="3"/>
+  <text x="800" y="327" text-anchor="middle" fill="white" font-size="10">Assumes ZFS Expertise</text>
+  
+  <!-- Step 4: Final Result -->
+  <rect x="380" y="420" width="280" height="320" fill="white" stroke="#28a745" stroke-width="2" rx="8"/>
+  <text x="520" y="445" text-anchor="middle" font-size="14" font-weight="bold" fill="#28a745">Step 4: Pool Created (If Successful)</text>
+  
+  <!-- Pool Cards -->
+  <rect x="390" y="460" width="260" height="80" fill="#e8f5e8" stroke="#28a745" stroke-width="1" rx="4"/>
+  <text x="400" y="480" font-size="12" font-weight="bold">mypool</text>
+  <text x="400" y="500" font-size="10" fill="#666">VDEVs: 1x Mirror (2 drives)</text>
+  <text x="400" y="515" font-size="10" fill="#666">Status: ONLINE</text>
+  <text x="400" y="530" font-size="10" fill="#666">Used: 0% of 2TB</text>
+  
+  <!-- Statistics -->
+  <rect x="390" y="560" width="260" height="160" fill="#f8f9fa" stroke="#dee2e6" stroke-width="1"/>
+  <text x="520" y="585" text-anchor="middle" font-size="12" font-weight="bold" fill="#dc3545">Process Problems</text>
+  
+  <text x="400" y="610" font-size="10" fill="#dc3545">✗ High abandonment rate</text>
+  <text x="400" y="630" font-size="10" fill="#dc3545">✗ Requires ZFS knowledge</text>
+  <text x="400" y="650" font-size="10" fill="#dc3545">✗ Technical jargon barriers</text>
+  <text x="400" y="670" font-size="10" fill="#dc3545">✗ No contextual guidance</text>
+  <text x="400" y="690" font-size="10" fill="#dc3545">✗ Complex multi-step process</text>
+  
+  <!-- Flow Arrows -->
+  <path d="M 340 220 L 360 220" stroke="#666" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 670 220 L 690 220" stroke="#666" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 750 390 Q 750 410 520 410" stroke="#666" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+    </marker>
+  </defs>
+  
+  <!-- Bottom Summary -->
+  <rect x="50" y="760" width="940" height="30" fill="#fff3cd" stroke="#ffc107" stroke-width="1" rx="4"/>
+  <text x="520" y="780" text-anchor="middle" font-size="12" font-weight="bold" fill="#856404">Current Approach: Users must learn ZFS technology before accomplishing basic storage goals</text>
+</svg>

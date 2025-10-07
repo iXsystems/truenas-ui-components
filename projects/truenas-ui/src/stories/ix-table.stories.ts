@@ -131,6 +131,13 @@ export const TableWithFiltering: Story = {
             user.status.toLowerCase().includes(filter)
           );
         }
+      },
+      highlightText: (text: string, filter: string) => {
+        if (!filter.trim()) {
+          return text;
+        }
+        const regex = new RegExp(`(${filter})`, 'gi');
+        return text.replace(regex, '<mark style="background-color: var(--yellow); padding: 0 2px;">$1</mark>');
       }
     },
     template: `
@@ -195,15 +202,6 @@ export const TableWithFiltering: Story = {
            style="text-align: center; padding: 32px; color: var(--fg2);">
         No results found for "{{ filterText }}"
       </div>
-    `,
-    methods: {
-      highlightText: (text: string, filter: string) => {
-        if (!filter.trim()) {
-          return text;
-        }
-        const regex = new RegExp(`(${filter})`, 'gi');
-        return text.replace(regex, '<mark style="background-color: var(--yellow); padding: 0 2px;">$1</mark>');
-      }
-    }
+    `
   }),
 };

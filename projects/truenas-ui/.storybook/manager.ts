@@ -1,4 +1,4 @@
-import { addons } from '@storybook/addons';
+import { addons } from '@storybook/manager-api';
 import { themes } from '@storybook/theming';
 import { default as truenasTheme } from './truenasTheme';
 
@@ -6,6 +6,6 @@ import { default as truenasTheme } from './truenasTheme';
  * Register themes with Storybook's UI.
  */
 addons.setConfig({
-  theme: truenasTheme, // Default to dark mode (you can change this)
+  theme: truenasTheme,
 });
 

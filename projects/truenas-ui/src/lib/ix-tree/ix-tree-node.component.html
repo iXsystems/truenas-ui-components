@@ -12,11 +12,12 @@
       *ngIf="isExpandable"
       class="ix-tree-node__toggle"
       [class.ix-tree-node__toggle--expanded]="isExpanded">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--fg2)"
-           [style.transform]="isExpanded ? 'rotate(90deg)' : 'rotate(0deg)'"
-           style="transition: transform 0.2s ease;">
-        <path d="M6 4l4 4-4 4V4z"/>
-      </svg>
+      <ix-icon 
+        [name]="isExpanded ? 'chevron-down' : 'chevron-right'"
+        library="mdi"
+        size="sm"
+        style="transition: transform 0.2s ease;">
+      </ix-icon>
     </div>
     
     <!-- Spacer for non-expandable nodes -->

@@ -187,3 +187,157 @@ export const Default: Story = {
     tooltip: 'Home icon (Unicode fallback)',
   },
 };
+
+export const LucideIcons: Story = {
+  args: {
+    name: 'lucide:home',
+    size: 'md',
+    tooltip: 'Lucide Home icon',
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Icons from the Lucide library using the library prefix `lucide:`. These are rendered as SVG icons with proper stroke styling.',
+      },
+    },
+  },
+};
+
+export const MdiIcons: Story = {
+  args: {
+    name: 'harddisk',
+    library: 'mdi',
+    size: 'md',
+    tooltip: 'MDI Harddisk icon',
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Material Design Icons (MDI) using the `library="mdi"` parameter. Perfect for TrueNAS-specific hardware and storage icons.',
+      },
+    },
+  },
+};
+
+export const TrueNASIconShowcase: Story = {
+  render: () => ({
+    template: `
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; padding: 20px;">
+        <div style="text-align: center;">
+          <ix-icon name="harddisk" library="mdi" size="lg" tooltip="Hard Disk"></ix-icon>
+          <div style="margin-top: 8px; font-size: 12px;">Hard Disk</div>
+        </div>
+        <div style="text-align: center;">
+          <ix-icon name="server" library="mdi" size="lg" tooltip="Server"></ix-icon>
+          <div style="margin-top: 8px; font-size: 12px;">Server</div>
+        </div>
+        <div style="text-align: center;">
+          <ix-icon name="nas" library="mdi" size="lg" tooltip="NAS"></ix-icon>
+          <div style="margin-top: 8px; font-size: 12px;">NAS</div>
+        </div>
+        <div style="text-align: center;">
+          <ix-icon name="database" library="mdi" size="lg" tooltip="Database"></ix-icon>
+          <div style="margin-top: 8px; font-size: 12px;">Database</div>
+        </div>
+        <div style="text-align: center;">
+          <ix-icon name="storage" library="mdi" size="lg" tooltip="Storage"></ix-icon>
+          <div style="margin-top: 8px; font-size: 12px;">Storage</div>
+        </div>
+        <div style="text-align: center;">
+          <ix-icon name="memory" library="mdi" size="lg" tooltip="Memory"></ix-icon>
+          <div style="margin-top: 8px; font-size: 12px;">Memory</div>
+        </div>
+        <div style="text-align: center;">
+          <ix-icon name="cpu" library="mdi" size="lg" tooltip="CPU"></ix-icon>
+          <div style="margin-top: 8px; font-size: 12px;">CPU</div>
+        </div>
+        <div style="text-align: center;">
+          <ix-icon name="network-share" library="mdi" size="lg" tooltip="Network Share"></ix-icon>
+          <div style="margin-top: 8px; font-size: 12px;">Network Share</div>
+        </div>
+        <div style="text-align: center;">
+          <ix-icon name="folder" library="mdi" size="lg" tooltip="Folder"></ix-icon>
+          <div style="margin-top: 8px; font-size: 12px;">Folder</div>
+        </div>
+        <div style="text-align: center;">
+          <ix-icon name="file" library="mdi" size="lg" tooltip="File"></ix-icon>
+          <div style="margin-top: 8px; font-size: 12px;">File</div>
+        </div>
+      </div>
+    `,
+  }),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Complete showcase of available MDI icons in the TrueNAS UI library. All icons use `library="mdi"` and are specifically chosen for TrueNAS use cases.',
+      },
+    },
+  },
+};
+
+export const LibraryComparison: Story = {
+  render: () => ({
+    template: `
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 20px;">
+        <div style="text-align: center; border: 1px solid var(--border-color, #ccc); padding: 16px; border-radius: 8px;">
+          <h4 style="margin-top: 0;">Material (Default)</h4>
+          <ix-icon name="home" size="lg" tooltip="Material Home"></ix-icon>
+          <div style="margin-top: 8px;">name="home"</div>
+          <div style="font-size: 12px; color: var(--text-secondary, #666);">Unicode fallback</div>
+        </div>
+        <div style="text-align: center; border: 1px solid var(--border-color, #ccc); padding: 16px; border-radius: 8px;">
+          <h4 style="margin-top: 0;">Lucide</h4>
+          <ix-icon name="lucide:home" size="lg" tooltip="Lucide Home"></ix-icon>
+          <div style="margin-top: 8px;">name="lucide:home"</div>
+          <div style="font-size: 12px; color: var(--text-secondary, #666);">Library prefix</div>
+        </div>
+        <div style="text-align: center; border: 1px solid var(--border-color, #ccc); padding: 16px; border-radius: 8px;">
+          <h4 style="margin-top: 0;">MDI</h4>
+          <ix-icon name="folder" library="mdi" size="lg" tooltip="MDI Folder"></ix-icon>
+          <div style="margin-top: 8px;">library="mdi"</div>
+          <div style="font-size: 12px; color: var(--text-secondary, #666);">Library parameter</div>
+        </div>
+      </div>
+    `,
+  }),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Comparison of different icon library approaches supported by the ix-icon component.',
+      },
+    },
+  },
+};
+
+export const SizesAndColors: Story = {
+  render: () => ({
+    template: `
+      <div style="padding: 20px;">
+        <h4>Sizes</h4>
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+          <ix-icon name="harddisk" library="mdi" size="xs"></ix-icon>
+          <ix-icon name="harddisk" library="mdi" size="sm"></ix-icon>
+          <ix-icon name="harddisk" library="mdi" size="md"></ix-icon>
+          <ix-icon name="harddisk" library="mdi" size="lg"></ix-icon>
+          <ix-icon name="harddisk" library="mdi" size="xl"></ix-icon>
+        </div>
+        
+        <h4>Colors</h4>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <ix-icon name="server" library="mdi" size="lg" color="var(--primary, #007acc)"></ix-icon>
+          <ix-icon name="server" library="mdi" size="lg" color="var(--success, #28a745)"></ix-icon>
+          <ix-icon name="server" library="mdi" size="lg" color="var(--warning, #ffc107)"></ix-icon>
+          <ix-icon name="server" library="mdi" size="lg" color="var(--danger, #dc3545)"></ix-icon>
+          <ix-icon name="server" library="mdi" size="lg" color="#9c27b0"></ix-icon>
+        </div>
+      </div>
+    `,
+  }),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Demonstration of different sizes and color customization options for MDI icons.',
+      },
+    },
+  },
+};

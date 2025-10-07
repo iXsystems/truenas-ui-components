@@ -1,0 +1,129 @@
+<!-- Header with breadcrumb navigation -->
+<div class="ix-file-picker-header">
+  <nav class="ix-file-picker-breadcrumb" aria-label="File path">
+    <button 
+      *ngFor="let segment of pathSegments(); let last = last"
+      class="breadcrumb-segment"
+      [class.current]="last"
+      [disabled]="last"
+      (click)="navigateToPath(segment.path)">
+      {{ segment.name }}
+    </button>
+  </nav>
+  
+  <div class="ix-file-picker-actions">
+    <ix-button 
+      *ngIf="allowCreate" 
+      variant="outline"
+      (onClick)="onCreateFolder()">
+      <ix-icon name="folder-plus" library="mdi"></ix-icon>
+      New Folder
+    </ix-button>
+  </div>
+</div>
+
+<!-- Loading indicator -->
+<div *ngIf="loading" class="ix-file-picker-loading">
+  <ix-icon name="loading" library="mdi"></ix-icon>
+  <span>Loading...</span>
+</div>
+
+<!-- File table -->
+<div class="ix-file-picker-content" *ngIf="!loading">
+  <ix-table 
+    [dataSource]="filteredFileItems()"
+    [displayedColumns]="multiSelect ? displayedColumns : displayedColumns.slice(1)">
+    
+    <!-- Selection column -->
+    <ng-container ixColumnDef="select" *ngIf="multiSelect">
+      <ng-template ixHeaderCellDef>
+        <!-- Select all checkbox -->
+      </ng-template>
+      <ng-template ixCellDef let-item>
+        <input 
+          type="checkbox" 
+          [checked]="isSelected(item)"
+          [disabled]="!!item.disabled"
+          (click)="$event.stopPropagation()"
+          (change)="onItemClick(item)">
+      </ng-template>
+    </ng-container>
+
+    <!-- Name column -->
+    <ng-container ixColumnDef="name">
+      <ng-template ixHeaderCellDef>Name</ng-template>
+      <ng-template ixCellDef let-item>
+        <div class="file-name-cell"
+             [class.selected]="isSelected(item)"
+             [class.disabled]="!!item.disabled"
+             [class.zfs-object]="isZfsObject(item)"
+             (click)="onItemClick(item)"
+             (dblclick)="onItemDoubleClick(item)">
+          <ix-icon 
+            [name]="getItemIcon(item)"
+            [library]="getItemIconLibrary(item)"
+            [class]="'file-icon-' + item.type"
+            class="file-icon">
+          </ix-icon>
+          <span class="file-name">{{ item.name }}</span>
+          
+          <!-- ZFS badge -->
+          <span 
+            *ngIf="isZfsObject(item)" 
+            class="zfs-badge"
+            [class]="'zfs-badge-' + item.type">
+            {{ getZfsBadge(item) }}
+          </span>
+          
+          <!-- Permission indicator -->
+          <ix-icon 
+            *ngIf="item.permissions === 'none'"
+            name="lock"
+            library="mdi"
+            class="permission-icon">
+          </ix-icon>
+        </div>
+      </ng-template>
+    </ng-container>
+
+    <!-- Size column -->
+    <ng-container ixColumnDef="size">
+      <ng-template ixHeaderCellDef>Size</ng-template>
+      <ng-template ixCellDef let-item>
+        <span *ngIf="item.size !== undefined">{{ item.size | ixFileSize }}</span>
+        <span *ngIf="item.size === undefined && item.type === 'folder'" class="folder-indicator">--</span>
+      </ng-template>
+    </ng-container>
+
+    <!-- Modified column -->
+    <ng-container ixColumnDef="modified">
+      <ng-template ixHeaderCellDef>Modified</ng-template>
+      <ng-template ixCellDef let-item>
+        <span *ngIf="item.modified">{{ formatDate(item.modified) }}</span>
+      </ng-template>
+    </ng-container>
+
+
+  </ix-table>
+  
+  <!-- Empty state -->
+  <div *ngIf="filteredFileItems().length === 0" class="empty-state">
+    <ix-icon name="folder-open" library="mdi"></ix-icon>
+    <p>No items found</p>
+  </div>
+</div>
+
+<!-- Footer for multi-select -->
+<div *ngIf="multiSelect && selectedItems.length > 0" class="ix-file-picker-footer">
+  <span class="selection-count">
+    {{ selectedItems.length }} item{{ selectedItems.length !== 1 ? 's' : '' }} selected
+  </span>
+  <div class="footer-actions">
+    <ix-button variant="outline" (onClick)="selectedItems = []">
+      Clear Selection
+    </ix-button>
+    <ix-button (onClick)="close.emit()">
+      Done
+    </ix-button>
+  </div>
+</div>

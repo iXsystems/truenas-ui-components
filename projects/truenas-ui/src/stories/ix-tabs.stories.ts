@@ -132,7 +132,13 @@ export const WithIcons: Story = {
     selectedIndex: 0
   },
   render: (args) => ({
-    props: args,
+    props: {
+      ...args,
+      dashboardIcon: 'mdi:dashboard',
+      settingsIcon: 'mdi:settings',
+      usersIcon: 'mdi:users',
+      reportsIcon: 'mdi:reports'
+    },
     template: `
       <div style="width: 100%; height: 400px; border: 1px solid var(--lines); border-radius: 4px;">
         <ix-tabs 
@@ -141,10 +147,10 @@ export const WithIcons: Story = {
           (tabChange)="tabChange($event)"
           style="width: 100%; height: 100%;"
         >
-          <ix-tab label="Dashboard" icon="📊"></ix-tab>
-          <ix-tab label="Settings" icon="⚙️"></ix-tab>
-          <ix-tab label="Users" icon="👥"></ix-tab>
-          <ix-tab label="Reports" icon="📈"></ix-tab>
+          <ix-tab label="Dashboard" [icon]="dashboardIcon"></ix-tab>
+          <ix-tab label="Settings" [icon]="settingsIcon"></ix-tab>
+          <ix-tab label="Users" [icon]="usersIcon"></ix-tab>
+          <ix-tab label="Reports" [icon]="reportsIcon"></ix-tab>
           
           <ix-tab-panel>
             <h3>Dashboard Panel</h3>

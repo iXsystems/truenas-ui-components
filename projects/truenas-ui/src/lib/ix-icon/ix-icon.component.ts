@@ -2,9 +2,11 @@ import { Component, Input, OnInit, OnChanges, SimpleChanges, ChangeDetectionStra
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { IxIconRegistryService } from './ix-icon-registry.service';
+import { IxMdiIconService } from '../ix-mdi-icon/ix-mdi-icon.service';
 
 export type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 export type IconSource = 'svg' | 'css' | 'unicode' | 'text';
+export type IconLibraryType = 'material' | 'mdi' | 'custom';
 
 export interface IconResult {
   source: IconSource;
@@ -26,12 +28,14 @@ export class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
   @Input() color?: string;
   @Input() tooltip?: string;
   @Input() ariaLabel?: string;
+  @Input() library?: IconLibraryType;
 
   @ViewChild('svgContainer', { static: false }) svgContainer?: ElementRef<HTMLDivElement>;
 
   iconResult: IconResult = { source: 'text', content: '?' };
 
   private iconRegistry = inject(IxIconRegistryService);
+  private mdiIconService = inject(IxMdiIconService);
 
   constructor(
     private sanitizer: DomSanitizer,
@@ -43,7 +47,7 @@ export class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['name']) {
+    if (changes['name'] || changes['library']) {
       this.resolveIcon();
       this.cdr.markForCheck();
       // Update SVG content after view updates
@@ -80,9 +84,15 @@ export class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
     }
   }
 
-  private resolveIcon(): void {
+  private async resolveIcon(): Promise<void> {
     if (!this.name) {
       this.iconResult = { source: 'text', content: '?' };
+      return;
+    }
+
+    // Handle MDI library specifically
+    if (this.library === 'mdi') {
+      await this.resolveMdiIcon();
       return;
     }
 
@@ -132,6 +142,61 @@ export class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
       source: 'text',
       content: this.generateTextAbbreviation(this.name)
     };
+  }
+
+  private async resolveMdiIcon(): Promise<void> {
+    try {
+      // Always try to resolve through icon registry first with mdi: prefix
+      const iconOptions = {
+        size: this.size,
+        color: this.color
+      };
+      
+      const registryResult = this.iconRegistry.resolveIcon(`mdi:${this.name}`, iconOptions);
+      
+      if (registryResult) {
+        this.iconResult = registryResult;
+        this.cdr.markForCheck();
+        return;
+      }
+
+      // Ensure the MDI icon is loaded if registry didn't find it
+      const loaded = await this.mdiIconService.ensureIconLoaded(this.name);
+      
+      if (!loaded) {
+        console.warn(`Icon "${this.name}" not found in MDI library`);
+        this.iconResult = {
+          source: 'text',
+          content: this.generateTextAbbreviation(this.name)
+        };
+        this.cdr.markForCheck();
+        return;
+      }
+
+      // Try registry again after ensuring icon is loaded
+      const retryResult = this.iconRegistry.resolveIcon(`mdi:${this.name}`, iconOptions);
+      
+      if (retryResult) {
+        this.iconResult = retryResult;
+        this.cdr.markForCheck();
+        return;
+      }
+
+      // Final fallback if registry resolution still fails
+      this.iconResult = {
+        source: 'text',
+        content: this.generateTextAbbreviation(this.name)
+      };
+      this.cdr.markForCheck();
+      
+    } catch (error) {
+      console.warn(`Failed to resolve MDI icon '${this.name}':`, error);
+      this.iconResult = {
+        source: 'text',
+        content: this.generateTextAbbreviation(this.name)
+      };
+      this.cdr.markForCheck();
+    }
   }
 
   private tryThirdPartyIcon(name: string): IconResult | null {
