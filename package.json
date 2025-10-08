@@ -16,7 +16,8 @@
     "sb": "yarn copy-themes && yarn run storybook --host 0.0.0.0",
     "sbh": "yarn copy-themes && yarn run storybook --host 0.0.0.0 --no-open",
     "reinstall": "rm -rf ./node_modules && yarn install",
-    "prepare": "yarn build"
+    "prepare": "yarn build",
+    "postinstall": "yarn build"
   },
   "private": true,
   "dependencies": {
