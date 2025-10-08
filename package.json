@@ -15,7 +15,8 @@
     "build-storybook": "yarn copy-themes && ng run truenas-ui:build-storybook",
     "sb": "yarn copy-themes && yarn run storybook --host 0.0.0.0",
     "sbh": "yarn copy-themes && yarn run storybook --host 0.0.0.0 --no-open",
-    "reinstall": "rm -rf ./node_modules && yarn install"
+    "reinstall": "rm -rf ./node_modules && yarn install",
+    "prepare": "yarn build"
   },
   "private": true,
   "dependencies": {
