@@ -16,23 +16,24 @@
     "sb": "yarn copy-themes && yarn run storybook --host 0.0.0.0",
     "sbh": "yarn copy-themes && yarn run storybook --host 0.0.0.0 --no-open",
     "reinstall": "rm -rf ./node_modules && yarn install",
-    "prepare": "yarn build",
-    "postinstall": "yarn build"
+    "prepare": "yarn build"
   },
   "private": true,
-  "dependencies": {
+  "peerDependencies": {
     "@angular/animations": "^19.0.0",
     "@angular/cdk": "^19.0.0",
     "@angular/common": "^19.0.0",
-    "@angular/compiler": "^19.0.0",
     "@angular/core": "^19.0.0",
     "@angular/forms": "^19.0.0",
     "@angular/platform-browser": "^19.0.0",
     "@angular/platform-browser-dynamic": "^19.0.0",
     "@angular/router": "^19.0.0",
+    "rxjs": "~7.5.0",
+    "zone.js": "^0.14.2"
+  },
+  "dependencies": {
     "@mdi/angular-material": "^7.2.96",
     "@mdi/js": "^7.4.47",
-    "rxjs": "~7.5.0",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
@@ -72,8 +73,7 @@
     "storybook": "^8.5.8",
     "style-loader": "^4.0.0",
     "ts-jest": "^29.3.0",
-    "typescript": "~5.6.0",
-    "zone.js": "^0.14.2"
+    "typescript": "~5.6.0"
   },
   "packageManager": "yarn@4.10.3"
 }
