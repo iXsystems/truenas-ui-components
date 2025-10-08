@@ -16,20 +16,20 @@
     "sb": "yarn copy-themes && yarn run storybook --host 0.0.0.0",
     "sbh": "yarn copy-themes && yarn run storybook --host 0.0.0.0 --no-open",
     "reinstall": "rm -rf ./node_modules && yarn install",
-    "prepare": "yarn build"
+    "prepare": "husky"
   },
   "private": true,
   "peerDependencies": {
-    "@angular/animations": "^19.0.0",
-    "@angular/cdk": "^19.0.0",
-    "@angular/common": "^19.0.0",
-    "@angular/core": "^19.0.0",
-    "@angular/forms": "^19.0.0",
-    "@angular/platform-browser": "^19.0.0",
-    "@angular/platform-browser-dynamic": "^19.0.0",
-    "@angular/router": "^19.0.0",
-    "rxjs": "~7.5.0",
-    "zone.js": "^0.14.2"
+    "@angular/animations": "^20.0.0",
+    "@angular/cdk": "^20.0.0",
+    "@angular/common": "^20.0.0",
+    "@angular/core": "^20.0.0",
+    "@angular/forms": "^20.0.0",
+    "@angular/platform-browser": "^20.0.0",
+    "@angular/platform-browser-dynamic": "^20.0.0",
+    "@angular/router": "^20.0.0",
+    "rxjs": "^7.5.0",
+    "zone.js": "^0.15.0"
   },
   "dependencies": {
     "@mdi/angular-material": "^7.2.96",
@@ -38,10 +38,19 @@
   },
   "devDependencies": {
     "@angular-devkit/architect": "^0.1902.0",
-    "@angular-devkit/build-angular": "^19.0.0",
+    "@angular-devkit/build-angular": "^20.0.0",
     "@angular-devkit/core": "^19.2.0",
-    "@angular/cli": "^19.0.0",
-    "@angular/compiler-cli": "^19.0.0",
+    "@angular/animations": "^20.3.4",
+    "@angular/cdk": "^20.2.8",
+    "@angular/cli": "^20.0.0",
+    "@angular/common": "^20.3.4",
+    "@angular/compiler": "^20.3.4",
+    "@angular/compiler-cli": "^20.0.0",
+    "@angular/core": "^20.3.4",
+    "@angular/forms": "^20.3.4",
+    "@angular/platform-browser": "^20.3.4",
+    "@angular/platform-browser-dynamic": "^20.3.4",
+    "@angular/router": "^20.3.4",
     "@nrwl/jest": "^19.8.4",
     "@storybook/addon-a11y": "^7.5.0",
     "@storybook/addon-essentials": "^8.5.8",
@@ -59,6 +68,7 @@
     "@types/jasmine": "~4.0.0",
     "@types/jest": "^29.5.14",
     "css-loader": "^7.1.2",
+    "husky": "^9.1.7",
     "jasmine-core": "~4.3.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
@@ -69,11 +79,13 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.0.0",
     "lucide": "^0.545.0",
-    "ng-packagr": "^19.0.0",
+    "ng-packagr": "^20.0.0",
+    "rxjs": "^7.8.2",
     "storybook": "^8.5.8",
     "style-loader": "^4.0.0",
     "ts-jest": "^29.3.0",
-    "typescript": "~5.6.0"
+    "typescript": "~5.8.0",
+    "zone.js": "^0.15.1"
   },
   "packageManager": "yarn@4.10.3"
 }
