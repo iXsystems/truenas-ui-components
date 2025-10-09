@@ -7,15 +7,15 @@ This is an Angular UI Component library in use by TrueNAS and other related soft
 ### Required Dependencies
 
 - **Node.js** >= 18.19.1
-- **Yarn** >= 1.22
+- **Yarn** >= 4.10.3 (Yarn Berry)
 - **Angular CLI** (automatically installed with dependencies)
 
 ### Key Framework Dependencies
 
-- Angular 19 (core, common, forms, router, animations)
+- Angular 20 (core, common, forms, router, animations)
 - Angular CDK (for accessibility features)
 - RxJS 7.5.0
-- TypeScript 5.6.0
+- TypeScript 5.8.0
 
 ### Development Dependencies
 
@@ -73,11 +73,10 @@ ng build truenas-ui                    # Build the library
 cd dist/truenas-ui/ && npm pack        # Create distributable .tgz file
 ```
 
-**Local Testing:**
+**Local Testing (GitHub Installation):**
 ```bash
 # In your test application directory
-yarn add file:../path/to/truenas-ui/dist/truenas-ui    # Install from local build
-npm install ../path/to/truenas-ui/dist/truenas-ui      # Alternative with npm
+yarn add git@github.com:iXsystems/truenas-ui-components.git#branch-name
 ```
 
 ### Build Output
@@ -90,45 +89,63 @@ The build process creates a distributable library in the `dist/truenas-ui/` dire
 - Theme CSS files
 - Package metadata
 
-### Local Development Workflow
+### GitHub Installation Workflow
 
-For testing library changes in an application during development:
+This library is distributed via GitHub and automatically builds on commit using Husky pre-commit hooks. To use the library in your application:
 
-1. **Build the library:**
+1. **Install from GitHub (main branch):**
    ```bash
-   ng build truenas-ui
+   yarn add git@github.com:iXsystems/truenas-ui-components.git
    ```
 
-2. **Install in your test application:**
+2. **Install from a specific branch:**
    ```bash
-   # Navigate to your application directory
-   cd /path/to/your/test-app
-   
-   # Install the local build
-   yarn add file:../path/to/truenas-ui/dist/truenas-ui
+   yarn add git@github.com:iXsystems/truenas-ui-components.git#branch-name
    ```
 
-3. **After making changes to the library:**
+3. **Install a specific commit:**
    ```bash
-   # Rebuild the library
-   ng build truenas-ui
-   
-   # Reinstall in your test app to pick up changes
-   cd /path/to/your/test-app
-   yarn add file:../path/to/truenas-ui/dist/truenas-ui
+   yarn add git@github.com:iXsystems/truenas-ui-components.git#commit-hash
    ```
 
-**Note:** You may need to clear your application's build cache (`rm -rf .angular/ && rm -rf node_modules/.cache/`) and restart the dev server to ensure changes are reflected.
+4. **Update to latest version:**
+   ```bash
+   yarn upgrade truenas-ui
+   ```
+
+**How it works:**
+- The library automatically builds on every commit via Husky pre-commit hooks
+- The `dist/` directory is committed to the repository with built artifacts
+- Your application installs directly from GitHub with pre-built files
+- No build step required in consuming applications
+
+**Note:** Changes to the library are automatically built and committed. Simply push to GitHub and reinstall in your application to get updates.
 
 ## Installing TrueNAS-UI Components into your Angular project
 
-To use the TrueNAS-UI component library in your Angular application, first install the package and then import the components you need. The library provides standalone components that can be imported individually or through the main module.
+To use the TrueNAS-UI component library in your Angular application, install it directly from GitHub, then import the components you need. The library provides standalone components that can be imported individually or through the main module.
 
 ### Installation
+
+**Install from main branch:**
 ```bash
-npm install truenas-ui
-# or
-yarn add truenas-ui
+yarn add git@github.com:iXsystems/truenas-ui-components.git
+```
+
+**Install from a specific branch:**
+```bash
+yarn add git@github.com:iXsystems/truenas-ui-components.git#branch-name
+```
+
+**Install from a specific commit:**
+```bash
+yarn add git@github.com:iXsystems/truenas-ui-components.git#commit-hash
+```
+
+**Example with branch:**
+```bash
+# Install from the 'my-branch' branch
+yarn add git@github.com:iXsystems/truenas-ui-components.git#my-branch
 ```
 
 ### Using Components
@@ -153,13 +170,34 @@ Add the theme CSS to your `angular.json` styles array:
 ```json
 {
   "styles": [
-    "node_modules/truenas-ui/src/styles/themes.css",
+    "node_modules/truenas-ui/dist/truenas-ui/src/styles/themes.css",
     "src/styles.css"
   ]
 }
 ```
 
 The library includes 8 built-in themes (ix-dark, ix-blue, dracula, nord, paper, solarized-dark, midnight, high-contrast) that can be applied by adding the theme class to your document root.
+
+### Peer Dependencies
+
+This library requires the following peer dependencies in your Angular 20 application:
+
+```json
+{
+  "@angular/animations": "^20.0.0",
+  "@angular/cdk": "^20.0.0",
+  "@angular/common": "^20.0.0",
+  "@angular/core": "^20.0.0",
+  "@angular/forms": "^20.0.0",
+  "@angular/platform-browser": "^20.0.0",
+  "@angular/platform-browser-dynamic": "^20.0.0",
+  "@angular/router": "^20.0.0",
+  "rxjs": "^7.5.0",
+  "zone.js": "^0.15.0"
+}
+```
+
+These should already be present in your Angular 20 application.
 
 ## License
 
