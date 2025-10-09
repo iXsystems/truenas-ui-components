@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { userEvent, within } from '@storybook/testing-library';
-import { expect } from '@storybook/test';
+import { expect } from '@storybook/jest';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { IxChipComponent } from '../lib/ix-chip/ix-chip.component';
 import { IxInputComponent } from '../lib/ix-input/ix-input.component';
@@ -64,7 +64,7 @@ export const Default: Story = {
 export const WithIcon: Story = {
   args: {
     label: 'Featured',
-    icon: 'star',
+    icon: 'mdi:star',
     color: 'primary',
     closable: true,
     disabled: false,

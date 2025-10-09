@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { userEvent, within } from '@storybook/testing-library';
-import { expect } from '@storybook/test';
+import { expect } from '@storybook/jest';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { IxInputComponent } from '../lib/ix-input/ix-input.component';
 import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.component';

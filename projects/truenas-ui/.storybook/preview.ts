@@ -11,7 +11,7 @@ export const globalTypes = {
   theme: {
     name: 'Theme',
     description: 'Select a theme',
-    defaultValue: 'ix-dark', // Default theme applied at startup
+    defaultValue: 'ix-dark',
     toolbar: {
       icon: 'paintbrush',
       items: [
@@ -54,28 +54,15 @@ export const parameters: Preview['parameters'] = {
 };
 
 /**
- * Decorator to apply themes dynamically inside the iframe.
+ * Decorators for application configuration and default theme
  */
 export const decorators: Decorator[] = [
-  (storyFn, context: StoryContext) => {
-    const theme = context.globals['theme'] || 'ix-dark'; // Ensure a valid theme is set
-
-    // Remove previous theme classes
-    document.documentElement.classList.forEach((cls) => {
-      if (
-        cls.startsWith('ix-') ||
-        ['dracula', 'nord', 'paper', 'solarized-dark', 'midnight', 'high-contrast'].includes(cls)
-      ) {
-        document.documentElement.classList.remove(cls);
-      }
-    });
-
-    // Add new theme class only if valid
-    if (theme) {
-      document.documentElement.classList.add(theme);
+  (storyFn) => {
+    // Apply default theme class if none exists
+    if (!document.documentElement.className.includes('ix-')) {
+      document.documentElement.classList.add('ix-dark');
     }
-
-    return storyFn(); // Ensure storyFn is correctly called without parameters
+    return storyFn();
   },
   applicationConfig({
     providers: [

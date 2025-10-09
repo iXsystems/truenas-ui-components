@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { within } from '@storybook/testing-library';
-import { expect } from '@storybook/test';
+import { expect } from '@storybook/jest';
 import { IxCardComponent } from '../lib/ix-card/ix-card.component';
 
 const meta: Meta<IxCardComponent> = {

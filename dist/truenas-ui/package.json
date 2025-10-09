@@ -12,9 +12,15 @@
     "tslib": "^2.3.0"
   },
   "sideEffects": false,
-  "devDependencies": {
-    "@storybook/jest": "^0.2.3",
-    "@testing-library/jest-dom": "^6.6.3",
-    "lucide": "^0.526.0"
+  "module": "fesm2022/truenas-ui.mjs",
+  "typings": "index.d.ts",
+  "exports": {
+    "./package.json": {
+      "default": "./package.json"
+    },
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./fesm2022/truenas-ui.mjs"
+    }
   }
 }

@@ -3,7 +3,7 @@ import { DiskType } from '../lib/enums/disk-type.enum';
 
 import type { Meta, StoryObj } from '@storybook/angular';
 import { within } from '@storybook/testing-library';
-import { expect } from '@storybook/test';
+import { expect } from '@storybook/jest';
 
 const meta: Meta<DiskIconComponent> = {
   title: 'Components/Disk Icon',
