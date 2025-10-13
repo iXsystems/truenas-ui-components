@@ -163,37 +163,8 @@ describe('IxFilePickerPopupComponent', () => {
     });
   });
 
-  describe('Path Segments', () => {
-    it('should generate correct path segments', () => {
-      // Create a fresh component instance for this test to avoid state pollution
-      const testFixture = TestBed.createComponent(IxFilePickerPopupComponent);
-      const testComponent = testFixture.componentInstance;
-      
-      testComponent.currentPath = '/mnt/tank/documents';
-      
-      const segments = testComponent.pathSegments();
-      
-      expect(segments).toEqual([
-        { name: 'Root', path: '/mnt' },
-        { name: 'tank', path: '/mnt/tank' },
-        { name: 'documents', path: '/mnt/tank/documents' }
-      ]);
-    });
-
-    it('should handle root path correctly', () => {
-      // Create a fresh component instance for this test to avoid state pollution
-      const testFixture = TestBed.createComponent(IxFilePickerPopupComponent);
-      const testComponent = testFixture.componentInstance;
-      
-      testComponent.currentPath = '/mnt';
-      
-      const segments = testComponent.pathSegments();
-      
-      expect(segments).toEqual([
-        { name: 'Root', path: '/mnt' }
-      ]);
-    });
-  });
+  // Path Segments tests removed - logic moved to TruncatePathPipe
+  // See truncate-path.pipe.spec.ts for path segmentation tests
 
   describe('File Filtering', () => {
     it('should filter by file mode', () => {

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal, computed, OnInit, AfterViewInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, AfterViewInit, computed, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { A11yModule } from '@angular/cdk/a11y';
@@ -8,6 +8,7 @@ import { IxButtonComponent } from '../ix-button/ix-button.component';
 import { IxTableComponent } from '../ix-table/ix-table.component';
 import { IxTableColumnDirective, IxHeaderCellDefDirective, IxCellDefDirective } from '../ix-table-column/ix-table-column.directive';
 import { FileSizePipe } from '../pipes/file-size/file-size.pipe';
+import { TruncatePathPipe } from '../pipes/truncate-path/truncate-path.pipe';
 import { FileSystemItem, FilePickerCallbacks, CreateFolderEvent, FilePickerError, PathSegment, FilePickerMode } from './ix-file-picker.interfaces';
 
 @Component({
@@ -23,7 +24,8 @@ import { FileSystemItem, FilePickerCallbacks, CreateFolderEvent, FilePickerError
     IxCellDefDirective,
     ScrollingModule,
     A11yModule,
-    FileSizePipe
+    FileSizePipe,
+    TruncatePathPipe
   ],
   templateUrl: './ix-file-picker-popup.component.html',
   styleUrl: './ix-file-picker-popup.component.scss',
@@ -32,16 +34,16 @@ import { FileSystemItem, FilePickerCallbacks, CreateFolderEvent, FilePickerError
   }
 })
 export class IxFilePickerPopupComponent implements OnInit, AfterViewInit {
-  @Input() mode: FilePickerMode = 'any';
-  @Input() multiSelect = false;
-  @Input() allowCreate = true;
-  @Input() allowDatasetCreate = false;
-  @Input() allowZvolCreate = false;
-  @Input() currentPath = '/mnt';
-  @Input() fileItems: FileSystemItem[] = [];
-  @Input() selectedItems: string[] = [];
-  @Input() loading = false;
-  @Input() fileExtensions?: string[];
+  mode = input<FilePickerMode>('any');
+  multiSelect = input<boolean>(false);
+  allowCreate = input<boolean>(true);
+  allowDatasetCreate = input<boolean>(false);
+  allowZvolCreate = input<boolean>(false);
+  currentPath = input<string>('/mnt');
+  fileItems = input<FileSystemItem[]>([]);
+  selectedItems = input<string[]>([]);
+  loading = input<boolean>(false);
+  fileExtensions = input<string[] | undefined>(undefined);
 
   constructor() {
   }
@@ -56,38 +58,18 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit {
   @Output() itemDoubleClick = new EventEmitter<FileSystemItem>();
   @Output() pathNavigate = new EventEmitter<string>();
   @Output() createFolder = new EventEmitter<CreateFolderEvent>();
+  @Output() clearSelection = new EventEmitter<void>();
   @Output() close = new EventEmitter<void>();
 
   // Table configuration
   displayedColumns = ['select', 'name', 'size', 'modified'];
 
   // Computed values
-  pathSegments = computed(() => {
-    const path = this.currentPath;
-    if (!path || path === '/') return [{ name: 'Root', path: '/' }];
-    
-    const segments: PathSegment[] = [];
-    const parts = path.split('/').filter(p => p);
-    
-    // Skip the first "mnt" part if it exists
-    const relevantParts = parts[0] === 'mnt' ? parts.slice(1) : parts;
-    
-    segments.push({ name: 'Root', path: '/mnt' });
-    
-    let currentPath = '/mnt';
-    for (const part of relevantParts) {
-      currentPath += '/' + part;
-      segments.push({ name: part, path: currentPath });
-    }
-    
-    return segments;
-  });
-
   filteredFileItems = computed(() => {
-    const items = this.fileItems;
-    const extensions = this.fileExtensions;
-    const mode = this.mode;
-    
+    const items = this.fileItems();
+    const extensions = this.fileExtensions();
+    const mode = this.mode();
+
     return items.filter(item => {
       // Filter by mode
       if (mode !== 'any') {
@@ -96,12 +78,12 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit {
         if (mode === 'dataset' && item.type !== 'dataset') return false;
         if (mode === 'zvol' && item.type !== 'zvol') return false;
       }
-      
+
       // Filter by file extensions
       if (extensions && extensions.length > 0 && item.type === 'file') {
         return extensions.some(ext => item.name.toLowerCase().endsWith(ext.toLowerCase()));
       }
-      
+
       return true;
     });
   });
@@ -120,9 +102,13 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit {
 
   onCreateFolder(): void {
     this.createFolder.emit({
-      parentPath: this.currentPath,
+      parentPath: this.currentPath(),
       folderName: 'New Folder'
     });
+  }
+
+  onClearSelection(): void {
+    this.clearSelection.emit();
   }
 
   // Utility methods
@@ -178,7 +164,7 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit {
   }
 
   isSelected(item: FileSystemItem): boolean {
-    return this.selectedItems.includes(item.path);
+    return this.selectedItems().includes(item.path);
   }
 
   getFileInfo(item: FileSystemItem): string {

@@ -44,6 +44,8 @@ export * from './lib/enums/modifier-keys.enum';
 export * from './lib/enums/common-shortcuts.enum';
 export * from './lib/utils/shortcut-builder';
 export * from './lib/pipes/file-size/file-size.pipe';
+export * from './lib/pipes/strip-mnt-prefix/strip-mnt-prefix.pipe';
+export * from './lib/pipes/truncate-path/truncate-path.pipe';
 export * from './lib/ix-spinner/ix-spinner.component';
 export * from './lib/ix-spinner/ix-branded-spinner.component';
 export * from './lib/ix-progress-bar/ix-progress-bar.component';

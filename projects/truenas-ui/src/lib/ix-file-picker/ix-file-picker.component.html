@@ -1,14 +1,14 @@
 <div class="ix-file-picker-container">
   <div #wrapper ixInput class="ix-file-picker-wrapper" style="padding-right: 40px;">
-    <input 
+    <input
       type="text"
       class="ix-file-picker-input"
       [class.error]="hasError()"
-      [value]="displayPath()"
+      [value]="selectedPath() | ixStripMntPrefix"
       [placeholder]="placeholder"
       [readonly]="!allowManualInput"
       [disabled]="disabled"
-      (blur)="onPathInput($event)">
+      (input)="onPathInput($event)">
     
     <button 
       type="button"
@@ -37,6 +37,7 @@
       (itemDoubleClick)="onItemDoubleClick($event)"
       (pathNavigate)="navigateToPath($event)"
       (createFolder)="onCreateFolder()"
+      (clearSelection)="onClearSelection()"
       (close)="close()">
     </ix-file-picker-popup>
   </ng-template>

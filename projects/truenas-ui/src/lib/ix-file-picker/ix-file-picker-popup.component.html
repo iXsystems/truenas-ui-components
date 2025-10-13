@@ -1,41 +1,41 @@
 <!-- Header with breadcrumb navigation -->
 <div class="ix-file-picker-header">
   <nav class="ix-file-picker-breadcrumb" aria-label="File path">
-    <button 
-      *ngFor="let segment of pathSegments(); let last = last"
+    <button
+      *ngFor="let segment of currentPath() | ixTruncatePath; let last = last"
       class="breadcrumb-segment"
       [class.current]="last"
+      [class.parent-nav]="segment.name === '..'"
       [disabled]="last"
       (click)="navigateToPath(segment.path)">
       {{ segment.name }}
     </button>
   </nav>
-  
+
   <div class="ix-file-picker-actions">
-    <ix-button 
-      *ngIf="allowCreate" 
+    <ix-button
+      *ngIf="allowCreate()"
       variant="outline"
+      label="New Folder"
       (onClick)="onCreateFolder()">
-      <ix-icon name="folder-plus" library="mdi"></ix-icon>
-      New Folder
     </ix-button>
   </div>
 </div>
 
 <!-- Loading indicator -->
-<div *ngIf="loading" class="ix-file-picker-loading">
+<div *ngIf="loading()" class="ix-file-picker-loading">
   <ix-icon name="loading" library="mdi"></ix-icon>
   <span>Loading...</span>
 </div>
 
 <!-- File table -->
-<div class="ix-file-picker-content" *ngIf="!loading">
-  <ix-table 
+<div class="ix-file-picker-content" *ngIf="!loading()">
+  <ix-table
     [dataSource]="filteredFileItems()"
-    [displayedColumns]="multiSelect ? displayedColumns : displayedColumns.slice(1)">
-    
+    [displayedColumns]="multiSelect() ? displayedColumns : displayedColumns.slice(1)">
+
     <!-- Selection column -->
-    <ng-container ixColumnDef="select" *ngIf="multiSelect">
+    <ng-container ixColumnDef="select" *ngIf="multiSelect()">
       <ng-template ixHeaderCellDef>
         <!-- Select all checkbox -->
       </ng-template>
@@ -114,16 +114,19 @@
 </div>
 
 <!-- Footer for multi-select -->
-<div *ngIf="multiSelect && selectedItems.length > 0" class="ix-file-picker-footer">
+<div *ngIf="multiSelect() && selectedItems().length > 0" class="ix-file-picker-footer">
   <span class="selection-count">
-    {{ selectedItems.length }} item{{ selectedItems.length !== 1 ? 's' : '' }} selected
+    {{ selectedItems().length }} item{{ selectedItems().length !== 1 ? 's' : '' }} selected
   </span>
   <div class="footer-actions">
-    <ix-button variant="outline" (onClick)="selectedItems = []">
-      Clear Selection
+    <ix-button
+      variant="outline"
+      label="Clear Selection"
+      (onClick)="onClearSelection()">
     </ix-button>
-    <ix-button (onClick)="close.emit()">
-      Done
+    <ix-button
+      label="Done"
+      (onClick)="close.emit()">
     </ix-button>
   </div>
 </div>
