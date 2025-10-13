@@ -17,6 +17,7 @@
       *ngIf="allowCreate()"
       variant="outline"
       label="New Folder"
+      [disabled]="isCreateDisabled()"
       (onClick)="onCreateFolder()">
     </ix-button>
   </div>
@@ -53,36 +54,79 @@
     <ng-container ixColumnDef="name">
       <ng-template ixHeaderCellDef>Name</ng-template>
       <ng-template ixCellDef let-item>
-        <div class="file-name-cell"
+
+        <!-- NORMAL MODE: Display name -->
+        <div *ngIf="!item.isCreating"
+             class="file-name-cell"
              [class.selected]="isSelected(item)"
              [class.disabled]="!!item.disabled"
              [class.zfs-object]="isZfsObject(item)"
              (click)="onItemClick(item)"
              (dblclick)="onItemDoubleClick(item)">
-          <ix-icon 
+          <ix-icon
             [name]="getItemIcon(item)"
             [library]="getItemIconLibrary(item)"
             [class]="'file-icon-' + item.type"
             class="file-icon">
           </ix-icon>
           <span class="file-name">{{ item.name }}</span>
-          
+
           <!-- ZFS badge -->
-          <span 
-            *ngIf="isZfsObject(item)" 
+          <span
+            *ngIf="isZfsObject(item)"
             class="zfs-badge"
             [class]="'zfs-badge-' + item.type">
             {{ getZfsBadge(item) }}
           </span>
-          
+
           <!-- Permission indicator -->
-          <ix-icon 
+          <ix-icon
             *ngIf="item.permissions === 'none'"
             name="lock"
             library="mdi"
             class="permission-icon">
           </ix-icon>
         </div>
+
+        <!-- EDIT MODE: Inline name input with error display -->
+        <div *ngIf="item.isCreating" class="file-name-cell-wrapper">
+          <div class="file-name-cell editing" [class.has-error]="!!item.creationError">
+            <ix-icon
+              name="folder"
+              library="mdi"
+              class="file-icon file-icon-folder">
+            </ix-icon>
+            <input
+              #folderNameInput
+              type="text"
+              role="textbox"
+              aria-label="Folder name"
+              class="folder-name-input"
+              [class.error]="!!item.creationError"
+              [value]="item.name"
+              [disabled]="creationLoading()"
+              (keydown)="onFolderNameKeyDown($event, item)"
+              (blur)="onFolderNameInputBlur($event, item)"
+              [attr.data-autofocus]="true"
+              spellcheck="false"
+              autocomplete="off">
+
+            <!-- Loading indicator during submission -->
+            <ix-icon
+              *ngIf="creationLoading()"
+              name="loading"
+              library="mdi"
+              class="creation-loading-icon">
+            </ix-icon>
+          </div>
+
+          <!-- Inline error message -->
+          <div *ngIf="item.creationError" class="folder-creation-error">
+            <ix-icon name="alert-circle" library="mdi" class="error-icon"></ix-icon>
+            <span class="error-text">{{ item.creationError }}</span>
+          </div>
+        </div>
+
       </ng-template>
     </ng-container>
 

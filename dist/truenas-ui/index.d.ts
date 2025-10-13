@@ -1,5 +1,5 @@
 import * as i0 from '@angular/core';
-import { EventEmitter, AfterViewInit, ElementRef, OnDestroy, AfterContentInit, TemplateRef, QueryList, OnInit, ViewContainerRef, OnChanges, ChangeDetectorRef, SimpleChanges, IterableDiffers, PipeTransform } from '@angular/core';
+import { EventEmitter, AfterViewInit, ElementRef, OnDestroy, AfterContentInit, TemplateRef, QueryList, OnInit, ViewContainerRef, OnChanges, ChangeDetectorRef, SimpleChanges, IterableDiffers, PipeTransform, AfterViewChecked } from '@angular/core';
 import { ControlValueAccessor, NgControl } from '@angular/forms';
 import { CdkMenuTrigger } from '@angular/cdk/menu';
 import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
@@ -45,10 +45,11 @@ declare class IxButtonComponent {
     variant: 'filled' | 'outline';
     backgroundColor?: string;
     label: string;
+    disabled: boolean;
     onClick: EventEmitter<MouseEvent>;
     get classes(): string[];
     static ɵfac: i0.ɵɵFactoryDeclaration<IxButtonComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<IxButtonComponent, "ix-button", never, { "primary": { "alias": "primary"; "required": false; }; "color": { "alias": "color"; "required": false; }; "variant": { "alias": "variant"; "required": false; }; "backgroundColor": { "alias": "backgroundColor"; "required": false; }; "label": { "alias": "label"; "required": false; }; }, { "onClick": "onClick"; }, never, never, true, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<IxButtonComponent, "ix-button", never, { "primary": { "alias": "primary"; "required": false; }; "color": { "alias": "color"; "required": false; }; "variant": { "alias": "variant"; "required": false; }; "backgroundColor": { "alias": "backgroundColor"; "required": false; }; "label": { "alias": "label"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; }, { "onClick": "onClick"; }, never, never, true, never>;
 }
 
 declare enum InputType {
@@ -1174,6 +1175,9 @@ interface FileSystemItem {
     permissions?: 'read' | 'write' | 'none';
     icon?: string;
     disabled?: boolean;
+    isCreating?: boolean;
+    tempId?: string;
+    creationError?: string;
 }
 interface FilePickerCallbacks {
     getChildren?: (path: string) => Promise<FileSystemItem[]>;
@@ -1906,6 +1910,8 @@ declare class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnD
     selectedItems: i0.WritableSignal<string[]>;
     loading: i0.WritableSignal<boolean>;
     hasError: i0.WritableSignal<boolean>;
+    creatingItemTempId: i0.WritableSignal<string | null>;
+    creationLoading: i0.WritableSignal<boolean>;
     private onChange;
     private onTouched;
     constructor(overlay: Overlay, elementRef: ElementRef, viewContainerRef: ViewContainerRef, mdiIconService: IxMdiIconService);
@@ -1927,6 +1933,11 @@ declare class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnD
     navigateToPath(path: string): void;
     onCreateFolder(): void;
     onClearSelection(): void;
+    onSubmitFolderName(name: string, tempId: string): Promise<void>;
+    onCancelFolderCreation(tempId: string): void;
+    private removePendingItem;
+    private updateCreatingItemError;
+    private validateFolderName;
     private loadDirectory;
     private getMockFileItems;
     private updateSelection;
@@ -1938,7 +1949,7 @@ declare class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnD
     static ɵcmp: i0.ɵɵComponentDeclaration<IxFilePickerComponent, "ix-file-picker", never, { "mode": { "alias": "mode"; "required": false; }; "multiSelect": { "alias": "multiSelect"; "required": false; }; "allowCreate": { "alias": "allowCreate"; "required": false; }; "allowDatasetCreate": { "alias": "allowDatasetCreate"; "required": false; }; "allowZvolCreate": { "alias": "allowZvolCreate"; "required": false; }; "allowManualInput": { "alias": "allowManualInput"; "required": false; }; "placeholder": { "alias": "placeholder"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; "startPath": { "alias": "startPath"; "required": false; }; "rootPath": { "alias": "rootPath"; "required": false; }; "fileExtensions": { "alias": "fileExtensions"; "required": false; }; "callbacks": { "alias": "callbacks"; "required": false; }; }, { "selectionChange": "selectionChange"; "pathChange": "pathChange"; "createFolder": "createFolder"; "error": "error"; }, never, never, true, never>;
 }
 
-declare class IxFilePickerPopupComponent implements OnInit, AfterViewInit {
+declare class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterViewChecked {
     mode: i0.InputSignal<FilePickerMode>;
     multiSelect: i0.InputSignal<boolean>;
     allowCreate: i0.InputSignal<boolean>;
@@ -1948,16 +1959,23 @@ declare class IxFilePickerPopupComponent implements OnInit, AfterViewInit {
     fileItems: i0.InputSignal<FileSystemItem[]>;
     selectedItems: i0.InputSignal<string[]>;
     loading: i0.InputSignal<boolean>;
+    creationLoading: i0.InputSignal<boolean>;
     fileExtensions: i0.InputSignal<string[] | undefined>;
     constructor();
     ngOnInit(): void;
     ngAfterViewInit(): void;
+    ngAfterViewChecked(): void;
     itemClick: EventEmitter<FileSystemItem>;
     itemDoubleClick: EventEmitter<FileSystemItem>;
     pathNavigate: EventEmitter<string>;
     createFolder: EventEmitter<CreateFolderEvent>;
     clearSelection: EventEmitter<void>;
     close: EventEmitter<void>;
+    submitFolderName: EventEmitter<{
+        name: string;
+        tempId: string;
+    }>;
+    cancelFolderCreation: EventEmitter<string>;
     displayedColumns: string[];
     filteredFileItems: i0.Signal<FileSystemItem[]>;
     onItemClick(item: FileSystemItem): void;
@@ -1965,6 +1983,11 @@ declare class IxFilePickerPopupComponent implements OnInit, AfterViewInit {
     navigateToPath(path: string): void;
     onCreateFolder(): void;
     onClearSelection(): void;
+    onFolderNameSubmit(event: Event, item: FileSystemItem): void;
+    onFolderNameCancel(item: FileSystemItem): void;
+    onFolderNameInputBlur(event: Event, item: FileSystemItem): void;
+    onFolderNameKeyDown(event: KeyboardEvent, item: FileSystemItem): void;
+    isCreateDisabled(): boolean;
     getItemIcon(item: FileSystemItem): string;
     getFileIcon(filename: string): string;
     /**
@@ -1981,7 +2004,7 @@ declare class IxFilePickerPopupComponent implements OnInit, AfterViewInit {
     getTypeDisplayName(type: string): string;
     formatDate(date: Date): string;
     static ɵfac: i0.ɵɵFactoryDeclaration<IxFilePickerPopupComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<IxFilePickerPopupComponent, "ix-file-picker-popup", never, { "mode": { "alias": "mode"; "required": false; "isSignal": true; }; "multiSelect": { "alias": "multiSelect"; "required": false; "isSignal": true; }; "allowCreate": { "alias": "allowCreate"; "required": false; "isSignal": true; }; "allowDatasetCreate": { "alias": "allowDatasetCreate"; "required": false; "isSignal": true; }; "allowZvolCreate": { "alias": "allowZvolCreate"; "required": false; "isSignal": true; }; "currentPath": { "alias": "currentPath"; "required": false; "isSignal": true; }; "fileItems": { "alias": "fileItems"; "required": false; "isSignal": true; }; "selectedItems": { "alias": "selectedItems"; "required": false; "isSignal": true; }; "loading": { "alias": "loading"; "required": false; "isSignal": true; }; "fileExtensions": { "alias": "fileExtensions"; "required": false; "isSignal": true; }; }, { "itemClick": "itemClick"; "itemDoubleClick": "itemDoubleClick"; "pathNavigate": "pathNavigate"; "createFolder": "createFolder"; "clearSelection": "clearSelection"; "close": "close"; }, never, never, true, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<IxFilePickerPopupComponent, "ix-file-picker-popup", never, { "mode": { "alias": "mode"; "required": false; "isSignal": true; }; "multiSelect": { "alias": "multiSelect"; "required": false; "isSignal": true; }; "allowCreate": { "alias": "allowCreate"; "required": false; "isSignal": true; }; "allowDatasetCreate": { "alias": "allowDatasetCreate"; "required": false; "isSignal": true; }; "allowZvolCreate": { "alias": "allowZvolCreate"; "required": false; "isSignal": true; }; "currentPath": { "alias": "currentPath"; "required": false; "isSignal": true; }; "fileItems": { "alias": "fileItems"; "required": false; "isSignal": true; }; "selectedItems": { "alias": "selectedItems"; "required": false; "isSignal": true; }; "loading": { "alias": "loading"; "required": false; "isSignal": true; }; "creationLoading": { "alias": "creationLoading"; "required": false; "isSignal": true; }; "fileExtensions": { "alias": "fileExtensions"; "required": false; "isSignal": true; }; }, { "itemClick": "itemClick"; "itemDoubleClick": "itemDoubleClick"; "pathNavigate": "pathNavigate"; "createFolder": "createFolder"; "clearSelection": "clearSelection"; "close": "close"; "submitFolderName": "submitFolderName"; "cancelFolderCreation": "cancelFolderCreation"; }, never, never, true, never>;
 }
 
 interface KeyCombination {

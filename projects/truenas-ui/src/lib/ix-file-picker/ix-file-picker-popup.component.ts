@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, AfterViewInit, computed, input } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, AfterViewInit, AfterViewChecked, computed, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { A11yModule } from '@angular/cdk/a11y';
@@ -33,7 +33,7 @@ import { FileSystemItem, FilePickerCallbacks, CreateFolderEvent, FilePickerError
     'class': 'ix-file-picker-popup'
   }
 })
-export class IxFilePickerPopupComponent implements OnInit, AfterViewInit {
+export class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterViewChecked {
   mode = input<FilePickerMode>('any');
   multiSelect = input<boolean>(false);
   allowCreate = input<boolean>(true);
@@ -43,6 +43,7 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit {
   fileItems = input<FileSystemItem[]>([]);
   selectedItems = input<string[]>([]);
   loading = input<boolean>(false);
+  creationLoading = input<boolean>(false);
   fileExtensions = input<string[] | undefined>(undefined);
 
   constructor() {
@@ -54,12 +55,25 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit {
   ngAfterViewInit() {
   }
 
+  ngAfterViewChecked(): void {
+    // Auto-focus and select text in input when it appears
+    const input = document.querySelector('[data-autofocus="true"]') as HTMLInputElement;
+    if (input && input !== document.activeElement) {
+      setTimeout(() => {
+        input.focus();
+        input.select();
+      }, 0);
+    }
+  }
+
   @Output() itemClick = new EventEmitter<FileSystemItem>();
   @Output() itemDoubleClick = new EventEmitter<FileSystemItem>();
   @Output() pathNavigate = new EventEmitter<string>();
   @Output() createFolder = new EventEmitter<CreateFolderEvent>();
   @Output() clearSelection = new EventEmitter<void>();
   @Output() close = new EventEmitter<void>();
+  @Output() submitFolderName = new EventEmitter<{ name: string; tempId: string }>();
+  @Output() cancelFolderCreation = new EventEmitter<string>();
 
   // Table configuration
   displayedColumns = ['select', 'name', 'size', 'modified'];
@@ -89,18 +103,27 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit {
   });
 
   onItemClick(item: FileSystemItem): void {
+    if (item.isCreating) return; // Don't allow selection during creation
     this.itemClick.emit(item);
   }
 
   onItemDoubleClick(item: FileSystemItem): void {
+    if (item.isCreating) return; // Don't allow navigation during creation
     this.itemDoubleClick.emit(item);
   }
 
   navigateToPath(path: string): void {
+    // Check if any item is in creation mode
+    const hasCreatingItem = this.fileItems().some(item => item.isCreating);
+    if (hasCreatingItem) {
+      console.warn('Cannot navigate while creating a folder');
+      return;
+    }
     this.pathNavigate.emit(path);
   }
 
   onCreateFolder(): void {
+    console.log('Popup onCreateFolder called');
     this.createFolder.emit({
       parentPath: this.currentPath(),
       folderName: 'New Folder'
@@ -109,6 +132,47 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit {
 
   onClearSelection(): void {
     this.clearSelection.emit();
+  }
+
+  onFolderNameSubmit(event: Event, item: FileSystemItem): void {
+    const input = event.target as HTMLInputElement;
+    const name = input.value.trim();
+
+    if (item.tempId) {
+      // Even if empty, let parent component handle validation
+      this.submitFolderName.emit({ name, tempId: item.tempId });
+    }
+  }
+
+  onFolderNameCancel(item: FileSystemItem): void {
+    if (item.tempId) {
+      this.cancelFolderCreation.emit(item.tempId);
+    }
+  }
+
+  onFolderNameInputBlur(event: Event, item: FileSystemItem): void {
+    // Auto-submit on blur (don't close picker, parent handles submission)
+    const input = event.target as HTMLInputElement;
+    if (item.tempId) {
+      this.submitFolderName.emit({
+        name: input.value.trim(),
+        tempId: item.tempId
+      });
+    }
+  }
+
+  onFolderNameKeyDown(event: KeyboardEvent, item: FileSystemItem): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.onFolderNameSubmit(event, item);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.onFolderNameCancel(item);
+    }
+  }
+
+  isCreateDisabled(): boolean {
+    return this.fileItems().some(item => item.isCreating) || this.creationLoading();
   }
 
   // Utility methods

@@ -32,11 +32,14 @@
       [fileItems]="fileItems()"
       [selectedItems]="selectedItems()"
       [loading]="loading()"
+      [creationLoading]="creationLoading()"
       [fileExtensions]="fileExtensions"
       (itemClick)="onItemClick($event)"
       (itemDoubleClick)="onItemDoubleClick($event)"
       (pathNavigate)="navigateToPath($event)"
       (createFolder)="onCreateFolder()"
+      (submitFolderName)="onSubmitFolderName($event.name, $event.tempId)"
+      (cancelFolderCreation)="onCancelFolderCreation($event)"
       (clearSelection)="onClearSelection()"
       (close)="close()">
     </ix-file-picker-popup>

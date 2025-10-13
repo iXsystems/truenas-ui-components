@@ -26,6 +26,9 @@ export class IxButtonComponent {
   @Input()
   label = 'Button';
 
+  @Input()
+  disabled = false;
+
   @Output()
   onClick = new EventEmitter<MouseEvent>();
 

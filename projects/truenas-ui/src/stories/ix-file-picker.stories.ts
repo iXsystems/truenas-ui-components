@@ -36,7 +36,8 @@ const meta: Meta<IxFilePickerComponent> = {
               'folder-plus': `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M10 4H4C2.89 4 2 4.89 2 6V18C2 19.11 2.89 20 4 20H20C21.11 20 22 19.11 22 18V8C22 6.89 21.11 6 20 6H12L10 4M14 13V11H12V13H10V15H12V17H14V15H16V13H14Z"/></svg>`,
               'loading': `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 4V2A10 10 0 0 0 2 12H4A8 8 0 0 1 12 4Z"/></svg>`,
               'lock': `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 1C8.1 1 5 4.1 5 8V10H4C2.9 10 2 10.9 2 12V22C2 23.1 2.9 24 4 24H20C21.1 24 22 23.1 22 22V12C22 10.9 21.1 10 20 10H19V8C19 4.1 15.9 1 12 1M12 3C14.8 3 17 5.2 17 8V10H7V8C7 5.2 9.2 3 12 3Z"/></svg>`,
-              'folder-open': `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 20H4C2.89 20 2 19.11 2 18V6C2 4.89 2.89 4 4 4H10L12 6H19A2 2 0 0 1 2 2V18L19 20Z"/></svg>`
+              'folder-open': `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 20H4C2.89 20 2 19.11 2 18V6C2 4.89 2.89 4 4 4H10L12 6H19A2 2 0 0 1 2 2V18L19 20Z"/></svg>`,
+              'alert-circle': `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M13 13H11V7H13M13 17H11V15H13M12 2C6.48 2 2 6.48 2 12S6.48 22 12 22 22 17.52 22 12 17.52 2 12 2M12 20C7.59 20 4 16.41 4 12S7.59 4 12 4 20 7.59 20 12 16.41 20 12 20Z"/></svg>`
             };
 
             const svgContent = mdiIcons[iconName];
@@ -778,23 +779,69 @@ const createMdiShowcaseFileSystem = (): Record<string, FileSystemItem[]> => ({
   ]
 });
 
+// Create mutable shared filesystem at module level
+let mockFilesystem: Record<string, FileSystemItem[]>;
+
+// Reset function for each story
+function resetMockFilesystem() {
+  mockFilesystem = createMdiShowcaseFileSystem();
+}
+
+// Initialize on first load
+resetMockFilesystem();
+
 const mdiShowcaseCallbacks: FilePickerCallbacks = {
   getChildren: async (path: string): Promise<FileSystemItem[]> => {
     await new Promise(resolve => setTimeout(resolve, 400));
-    const mockFs = createMdiShowcaseFileSystem();
-    return mockFs[path] || [];
+    return mockFilesystem[path] || [];
   },
 
   validatePath: async (path: string): Promise<boolean> => {
     await new Promise(resolve => setTimeout(resolve, 100));
-    const mockFs = createMdiShowcaseFileSystem();
-    return Object.keys(mockFs).includes(path) ||
-           Object.values(mockFs).flat().some(item => item.path === path);
+    return Object.keys(mockFilesystem).includes(path) ||
+           Object.values(mockFilesystem).flat().some(item => item.path === path);
   },
 
   createFolder: async (parentPath: string, name: string): Promise<string> => {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    return `${parentPath}/${name}`;
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    // Simulate backend validation errors (for demo purposes)
+    if (name.toLowerCase() === 'forbidden') {
+      throw new Error('This folder name is not allowed');
+    }
+
+    if (name.length > 100) {
+      throw new Error('Folder name too long');
+    }
+
+    const newFolderPath = `${parentPath}/${name}`;
+
+    // Check for duplicates (backend validation)
+    const existingItems = mockFilesystem[parentPath] || [];
+    if (existingItems.some(item => item.name.toLowerCase() === name.toLowerCase())) {
+      throw new Error('A folder with this name already exists');
+    }
+
+    // Add new folder to mock filesystem
+    const newFolder: FileSystemItem = {
+      path: newFolderPath,
+      name: name,
+      type: 'folder',
+      modified: new Date(),
+      permissions: 'write'
+    };
+
+    // Add to parent directory's children
+    if (!mockFilesystem[parentPath]) {
+      mockFilesystem[parentPath] = [];
+    }
+    mockFilesystem[parentPath].push(newFolder);
+
+    // Initialize empty children array for the new folder
+    mockFilesystem[newFolderPath] = [];
+
+    return newFolderPath;
   }
 };
 
@@ -1002,10 +1049,7 @@ export const FolderCreation: Story = {
   render: (args) => ({
     props: {
       ...args,
-      callbacks: mdiShowcaseCallbacks,
-      onCreateFolder: (event: any) => {
-        console.log('Create folder event:', event);
-      }
+      callbacks: mdiShowcaseCallbacks
     },
     template: `
       <ix-form-field label="Folder creation test">
@@ -1013,8 +1057,7 @@ export const FolderCreation: Story = {
           [mode]="mode"
           [allowCreate]="allowCreate"
           [startPath]="startPath"
-          [callbacks]="callbacks"
-          (createFolder)="onCreateFolder($event)">
+          [callbacks]="callbacks">
         </ix-file-picker>
       </ix-form-field>
     `,
@@ -1030,27 +1073,89 @@ export const FolderCreation: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
+    // Reset mock filesystem before test
+    resetMockFilesystem();
+
     // Open picker
     const folderButton = canvas.getByRole('button', { name: /open file picker/i });
     await userEvent.click(folderButton);
 
-    // Wait for content (overlay renders outside canvasElement)
+    // Wait for content
     await waitFor(() => {
       expect(screen.queryByText('documents')).toBeInTheDocument();
-    }, { timeout: 2000 });
+    }, { timeout: 3000 });
 
-    // Find and click New Folder button (in overlay)
+    // Pause to let developers see the initial state
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Click "New Folder" button
     const newFolderButton = screen.getByRole('button', { name: /new folder/i });
-    expect(newFolderButton).toBeInTheDocument();
     await userEvent.click(newFolderButton);
 
-    // Event should be emitted (console.log in component)
-    // Note: In a real app, this would open a dialog
+    // Wait a moment for Angular to process the changes
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    // Verify editable input appears with default name and is focused
+    await waitFor(() => {
+      const input = screen.getByRole('textbox', { name: 'Folder name' }) as HTMLInputElement;
+      expect(input).toBeInTheDocument();
+      expect(input.value).toBe('New Folder');
+      expect(input).toHaveFocus();
+    }, { timeout: 3000 });
+
+    // Verify New Folder button is disabled during creation
+    expect(newFolderButton).toBeDisabled();
+
+    // Pause to let developers see the input field
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    // TEST 1: Test duplicate name validation
+    const input1 = screen.getByRole('textbox', { name: 'Folder name' }) as HTMLInputElement;
+    await userEvent.clear(input1);
+    await userEvent.type(input1, 'documents', { delay: 50 }); // Duplicate name with typing delay
+
+    // Pause before submitting
+    await new Promise(resolve => setTimeout(resolve, 500));
+    await userEvent.keyboard('{Enter}');
+
+    // Should show duplicate error
+    await waitFor(() => {
+      expect(screen.getByText(/already exists/i)).toBeInTheDocument();
+    }, { timeout: 3000 });
+
+    // Pause to let developers see the error
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // Verify input is still present and can be edited
+    const input2 = screen.getByRole('textbox', { name: 'Folder name' }) as HTMLInputElement;
+    expect(input2).toBeInTheDocument();
+
+    // TEST 2: Save folder with custom name
+    await userEvent.clear(input2);
+    await new Promise(resolve => setTimeout(resolve, 300));
+    await userEvent.type(input2, 'My New Folder', { delay: 50 });
+
+    // Pause before final submission
+    await new Promise(resolve => setTimeout(resolve, 500));
+    await userEvent.keyboard('{Enter}');
+
+    // Wait for folder creation to complete (includes API delay of 800ms)
+    await waitFor(() => {
+      expect(screen.getByText('My New Folder')).toBeInTheDocument();
+      // Input should be gone (no longer in edit mode)
+      expect(screen.queryByRole('textbox', { name: 'Folder name' })).not.toBeInTheDocument();
+    }, { timeout: 3000 });
+
+    // Pause to let developers see the success state
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Verify New Folder button is re-enabled
+    expect(newFolderButton).not.toBeDisabled();
   },
   parameters: {
     docs: {
       description: {
-        story: 'Tests folder creation: verifying "New Folder" button appears with allowCreate=true and emits event on click.'
+        story: 'Tests folder creation workflow: opens picker, clicks "New Folder", verifies input appears with default name, tests duplicate name validation showing inline error, then successfully creates folder with custom name.'
       }
     }
   }
