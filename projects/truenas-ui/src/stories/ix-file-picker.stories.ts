@@ -1117,7 +1117,7 @@ export const FolderCreation: Story = {
   }
 };
 
-export const FileFiltering: Story = {
+export const SelectionModes: Story = {
   render: (args) => ({
     props: {
       ...args,
@@ -1125,7 +1125,7 @@ export const FileFiltering: Story = {
     },
     template: `
       <div>
-        <ix-form-field label="Filter by mode: file">
+        <ix-form-field label="Example: Choose any file">
           <ix-file-picker
             mode="file"
             [startPath]="startPath"
@@ -1133,7 +1133,7 @@ export const FileFiltering: Story = {
           </ix-file-picker>
         </ix-form-field>
 
-        <ix-form-field label="Filter by extension: .txt">
+        <ix-form-field label="Example: Choose .txt files">
           <ix-file-picker
             mode="file"
             [fileExtensions]="fileExtensions"
@@ -1173,7 +1173,7 @@ export const FileFiltering: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Tests file filtering: mode="file" disables non-file items (folders remain visible for navigation), fileExtensions filters files by extension.'
+        story: 'Demonstrates different selection use cases: restrict selection to specific file types using mode and fileExtensions. Users can still navigate through folders, but only matching items are selectable.'
       }
     }
   }
