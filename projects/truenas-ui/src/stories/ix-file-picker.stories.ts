@@ -1,56 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { moduleMetadata } from '@storybook/angular';
 import { userEvent, within, screen, expect, waitFor } from '@storybook/test';
 import { IxFilePickerComponent } from '../lib/ix-file-picker/ix-file-picker.component';
 import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.component';
-import { IxIconRegistryService } from '../lib/ix-icon/ix-icon-registry.service';
 import { FileSystemItem, FilePickerCallbacks } from '../lib/ix-file-picker/ix-file-picker.interfaces';
 
 const meta: Meta<IxFilePickerComponent> = {
   title: 'Components/File Picker',
   component: IxFilePickerComponent,
-  decorators: [
-    (story) => {
-      // Register MDI icons for Storybook
-      if (typeof window !== 'undefined') {
-        const mockSanitizer = {
-          bypassSecurityTrustHtml: (html: string) => ({
-            changingThisBreaksApplicationSecurity: html,
-            getTypeName: () => 'HTML'
-          }),
-          sanitize: (context: any, value: any) => value
-        };
-
-        const iconRegistry = new IxIconRegistryService(mockSanitizer as any);
-
-        // Register MDI library with file picker icons
-        iconRegistry.registerLibrary({
-          name: 'mdi',
-          resolver: (iconName: string, options: any = {}) => {
-            const mdiIcons: Record<string, string> = {
-              'folder': `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M10 4H4C2.89 4 2 4.89 2 6V18C2 19.11 2.89 20 4 20H20C21.11 20 22 19.11 22 18V8C22 6.89 21.11 6 20 6H12L10 4Z"/></svg>`,
-              'file': `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20Z"/></svg>`,
-              'database': `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 3C16.42 3 20 4.79 20 7S16.42 11 12 11 4 9.21 4 7 7.58 3 12 3M4 7V10C4 12.21 7.58 14 12 14S20 12.21 20 10V7C20 9.21 16.42 11 12 11S4 9.21 4 7M4 14V17C4 19.21 7.58 21 12 21S20 19.21 20 17V14C20 16.21 16.42 18 12 18S4 16.21 4 14Z"/></svg>`,
-              'harddisk': `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M2 6H22V18H2V6M4 8V16H20V8H4M6 10H18V14H6V10Z"/></svg>`,
-              'network-share': `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M3 5V19H21V5H3M5 7H19V17H5V7M7 9V11H17V9H7M7 13V15H17V13H7Z"/></svg>`,
-              'folder-plus': `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M10 4H4C2.89 4 2 4.89 2 6V18C2 19.11 2.89 20 4 20H20C21.11 20 22 19.11 22 18V8C22 6.89 21.11 6 20 6H12L10 4M14 13V11H12V13H10V15H12V17H14V15H16V13H14Z"/></svg>`,
-              'loading': `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 4V2A10 10 0 0 0 2 12H4A8 8 0 0 1 12 4Z"/></svg>`,
-              'lock': `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 1C8.1 1 5 4.1 5 8V10H4C2.9 10 2 10.9 2 12V22C2 23.1 2.9 24 4 24H20C21.1 24 22 23.1 22 22V12C22 10.9 21.1 10 20 10H19V8C19 4.1 15.9 1 12 1M12 3C14.8 3 17 5.2 17 8V10H7V8C7 5.2 9.2 3 12 3Z"/></svg>`,
-              'folder-open': `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 20H4C2.89 20 2 19.11 2 18V6C2 4.89 2.89 4 4 4H10L12 6H19A2 2 0 0 1 2 2V18L19 20Z"/></svg>`,
-              'alert-circle': `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M13 13H11V7H13M13 17H11V15H13M12 2C6.48 2 2 6.48 2 12S6.48 22 12 22 22 17.52 22 12 17.52 2 12 2M12 20C7.59 20 4 16.41 4 12S7.59 4 12 4 20 7.59 20 12 16.41 20 12 20Z"/></svg>`
-            };
-
-            const svgContent = mdiIcons[iconName];
-            return svgContent || null;
-          }
-        });
-
-        (window as any).__storybookIconRegistry = iconRegistry;
-      }
-
-      return story();
-    }
-  ],
   tags: ['autodocs'],
   parameters: {
     docs: {
@@ -542,8 +498,8 @@ const createMdiShowcaseFileSystem = (): Record<string, FileSystemItem[]> => ({
   '/mnt/showcase': [
     // TrueNAS-specific items with MDI icons
     {
-      path: '/mnt/showcase/tank-pool',
-      name: 'tank-pool',
+      path: '/mnt/showcase/my-dataset',
+      name: 'my-dataset',
       type: 'dataset',
       size: undefined,
       modified: new Date(Date.now() - 60 * 60 * 1000),
@@ -641,9 +597,9 @@ const createMdiShowcaseFileSystem = (): Record<string, FileSystemItem[]> => ({
       permissions: 'none'
     }
   ],
-  '/mnt/showcase/tank-pool': [
+  '/mnt/showcase/my-dataset': [
     {
-      path: '/mnt/showcase/tank-pool/database.sql',
+      path: '/mnt/showcase/my-dataset/database.sql',
       name: 'database.sql',
       type: 'file',
       size: 524288000, // 500MB
@@ -651,7 +607,7 @@ const createMdiShowcaseFileSystem = (): Record<string, FileSystemItem[]> => ({
       permissions: 'write'
     },
     {
-      path: '/mnt/showcase/tank-pool/application.log',
+      path: '/mnt/showcase/my-dataset/application.log',
       name: 'application.log',
       type: 'file',
       size: 10485760, // 10MB
@@ -659,7 +615,7 @@ const createMdiShowcaseFileSystem = (): Record<string, FileSystemItem[]> => ({
       permissions: 'write'
     },
     {
-      path: '/mnt/showcase/tank-pool/backup-snapshot.zvol',
+      path: '/mnt/showcase/my-dataset/backup-snapshot.zvol',
       name: 'backup-snapshot.zvol',
       type: 'zvol',
       size: 5368709120, // 5GB
@@ -667,7 +623,7 @@ const createMdiShowcaseFileSystem = (): Record<string, FileSystemItem[]> => ({
       permissions: 'write'
     },
     {
-      path: '/mnt/showcase/tank-pool/cache.db',
+      path: '/mnt/showcase/my-dataset/cache.db',
       name: 'cache.db',
       type: 'file',
       size: 104857600, // 100MB
@@ -1292,7 +1248,7 @@ export const ZfsObjectDisplay: Story = {
 
     // Wait for content with ZFS objects (overlay renders outside canvasElement)
     await waitFor(() => {
-      expect(screen.queryByText('tank-pool')).toBeInTheDocument();
+      expect(screen.queryByText('my-dataset')).toBeInTheDocument();
     }, { timeout: 2000 });
 
     // Verify ZFS badges are present

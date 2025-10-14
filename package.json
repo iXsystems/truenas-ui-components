@@ -16,6 +16,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "generate-icons": "node scripts/generate-icon-constants.js",
+    "prebuild": "npm run generate-icons",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "jest --config ./projects/truenas-ui/jest.config.ts",

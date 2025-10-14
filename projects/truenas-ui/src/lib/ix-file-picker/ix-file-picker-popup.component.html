@@ -58,7 +58,6 @@
         <!-- NORMAL MODE: Display name -->
         <div *ngIf="!item.isCreating"
              class="file-name-cell"
-             [class.selected]="isSelected(item)"
              [class.disabled]="!!item.disabled"
              [class.zfs-object]="isZfsObject(item)"
              (click)="onItemClick(item)"
@@ -157,20 +156,19 @@
   </div>
 </div>
 
-<!-- Footer for multi-select -->
-<div *ngIf="multiSelect() && selectedItems().length > 0" class="ix-file-picker-footer">
-  <span class="selection-count">
+<!-- Footer -->
+<div class="ix-file-picker-footer" *ngIf="!loading()">
+  <span class="selection-count" *ngIf="selectedItems().length > 0">
     {{ selectedItems().length }} item{{ selectedItems().length !== 1 ? 's' : '' }} selected
+  </span>
+  <span class="selection-count" *ngIf="selectedItems().length === 0">
+    No items selected
   </span>
   <div class="footer-actions">
     <ix-button
-      variant="outline"
-      label="Clear Selection"
-      (onClick)="onClearSelection()">
-    </ix-button>
-    <ix-button
-      label="Done"
-      (onClick)="close.emit()">
+      label="Select"
+      [disabled]="selectedItems().length === 0"
+      (onClick)="onSubmit()">
     </ix-button>
   </div>
 </div>

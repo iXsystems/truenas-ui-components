@@ -4,6 +4,7 @@ import { ControlValueAccessor, NgControl } from '@angular/forms';
 import { CdkMenuTrigger } from '@angular/cdk/menu';
 import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
 import { SafeHtml, DomSanitizer } from '@angular/platform-browser';
+import { HttpClient } from '@angular/common/http';
 import * as i1 from '@angular/cdk/tree';
 import { CdkTree, FlatTreeControl, CdkTreeNode, CdkNestedTreeNode } from '@angular/cdk/tree';
 export { FlatTreeControl } from '@angular/cdk/tree';
@@ -730,6 +731,36 @@ declare class IxMdiIconService {
     private createSvgContent;
     static ɵfac: i0.ɵɵFactoryDeclaration<IxMdiIconService, never>;
     static ɵprov: i0.ɵɵInjectableDeclaration<IxMdiIconService>;
+}
+
+/**
+ * Service for loading and registering TrueNAS custom icons
+ */
+declare class TruenasIconsService {
+    private http;
+    private iconRegistry;
+    private iconsLoaded;
+    private iconBasePath;
+    constructor(http: HttpClient, iconRegistry: IxIconRegistryService);
+    /**
+     * Load and register all TrueNAS custom icons
+     * Call this in your app initialization (APP_INITIALIZER or main component)
+     *
+     * @param basePath Optional custom base path for icons (defaults to 'truenas-ui/src/assets/icons/')
+     * @returns Promise that resolves when all icons are loaded
+     */
+    loadIcons(basePath?: string): Promise<void>;
+    /**
+     * Register a single custom icon from SVG content
+     * Use this for inline registration without HTTP
+     */
+    registerIcon(name: string, svgContent: string): void;
+    /**
+     * Check if icons have been loaded
+     */
+    isLoaded(): boolean;
+    static ɵfac: i0.ɵɵFactoryDeclaration<TruenasIconsService, never>;
+    static ɵprov: i0.ɵɵInjectableDeclaration<TruenasIconsService>;
 }
 
 declare class IxListComponent {
@@ -1930,6 +1961,8 @@ declare class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnD
     close(): void;
     onItemClick(item: FileSystemItem): void;
     onItemDoubleClick(item: FileSystemItem): void;
+    onSubmit(): void;
+    onCancel(): void;
     navigateToPath(path: string): void;
     onCreateFolder(): void;
     onClearSelection(): void;
@@ -1950,6 +1983,7 @@ declare class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnD
 }
 
 declare class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterViewChecked {
+    private iconRegistry;
     mode: i0.InputSignal<FilePickerMode>;
     multiSelect: i0.InputSignal<boolean>;
     allowCreate: i0.InputSignal<boolean>;
@@ -1961,7 +1995,12 @@ declare class IxFilePickerPopupComponent implements OnInit, AfterViewInit, After
     loading: i0.InputSignal<boolean>;
     creationLoading: i0.InputSignal<boolean>;
     fileExtensions: i0.InputSignal<string[] | undefined>;
-    constructor();
+    constructor(iconRegistry: IxIconRegistryService);
+    /**
+     * Register MDI icon library with all icons used by the file picker component
+     * This makes the component self-contained with zero configuration required
+     */
+    private registerMdiIcons;
     ngOnInit(): void;
     ngAfterViewInit(): void;
     ngAfterViewChecked(): void;
@@ -1971,40 +2010,58 @@ declare class IxFilePickerPopupComponent implements OnInit, AfterViewInit, After
     createFolder: EventEmitter<CreateFolderEvent>;
     clearSelection: EventEmitter<void>;
     close: EventEmitter<void>;
+    submit: EventEmitter<void>;
+    cancel: EventEmitter<void>;
     submitFolderName: EventEmitter<{
         name: string;
         tempId: string;
     }>;
     cancelFolderCreation: EventEmitter<string>;
     displayedColumns: string[];
-    filteredFileItems: i0.Signal<FileSystemItem[]>;
+    filteredFileItems: i0.Signal<{
+        disabled: boolean;
+        path: string;
+        name: string;
+        type: "file" | "folder" | "dataset" | "zvol" | "mountpoint";
+        size?: number;
+        modified?: Date;
+        permissions?: "read" | "write" | "none";
+        icon?: string;
+        isCreating?: boolean;
+        tempId?: string;
+        creationError?: string;
+    }[]>;
     onItemClick(item: FileSystemItem): void;
     onItemDoubleClick(item: FileSystemItem): void;
     navigateToPath(path: string): void;
     onCreateFolder(): void;
     onClearSelection(): void;
+    onSubmit(): void;
+    onCancel(): void;
     onFolderNameSubmit(event: Event, item: FileSystemItem): void;
     onFolderNameCancel(item: FileSystemItem): void;
     onFolderNameInputBlur(event: Event, item: FileSystemItem): void;
     onFolderNameKeyDown(event: KeyboardEvent, item: FileSystemItem): void;
     isCreateDisabled(): boolean;
+    isNavigatable(item: FileSystemItem): boolean;
     getItemIcon(item: FileSystemItem): string;
     getFileIcon(filename: string): string;
     /**
      * Get the library type for the icon
      * @param item FileSystemItem
-     * @returns 'mdi' for all icons to use Material Design Icons
+     * @returns 'custom' for TrueNAS custom icons, 'mdi' for Material Design Icons
      */
-    getItemIconLibrary(item: FileSystemItem): 'mdi';
+    getItemIconLibrary(item: FileSystemItem): 'mdi' | 'custom';
     getZfsBadge(item: FileSystemItem): string;
     isZfsObject(item: FileSystemItem): boolean;
     isSelected(item: FileSystemItem): boolean;
+    getRowClass: (row: FileSystemItem) => string | string[];
     getFileInfo(item: FileSystemItem): string;
     formatFileSize(bytes: number): string;
     getTypeDisplayName(type: string): string;
     formatDate(date: Date): string;
     static ɵfac: i0.ɵɵFactoryDeclaration<IxFilePickerPopupComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<IxFilePickerPopupComponent, "ix-file-picker-popup", never, { "mode": { "alias": "mode"; "required": false; "isSignal": true; }; "multiSelect": { "alias": "multiSelect"; "required": false; "isSignal": true; }; "allowCreate": { "alias": "allowCreate"; "required": false; "isSignal": true; }; "allowDatasetCreate": { "alias": "allowDatasetCreate"; "required": false; "isSignal": true; }; "allowZvolCreate": { "alias": "allowZvolCreate"; "required": false; "isSignal": true; }; "currentPath": { "alias": "currentPath"; "required": false; "isSignal": true; }; "fileItems": { "alias": "fileItems"; "required": false; "isSignal": true; }; "selectedItems": { "alias": "selectedItems"; "required": false; "isSignal": true; }; "loading": { "alias": "loading"; "required": false; "isSignal": true; }; "creationLoading": { "alias": "creationLoading"; "required": false; "isSignal": true; }; "fileExtensions": { "alias": "fileExtensions"; "required": false; "isSignal": true; }; }, { "itemClick": "itemClick"; "itemDoubleClick": "itemDoubleClick"; "pathNavigate": "pathNavigate"; "createFolder": "createFolder"; "clearSelection": "clearSelection"; "close": "close"; "submitFolderName": "submitFolderName"; "cancelFolderCreation": "cancelFolderCreation"; }, never, never, true, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<IxFilePickerPopupComponent, "ix-file-picker-popup", never, { "mode": { "alias": "mode"; "required": false; "isSignal": true; }; "multiSelect": { "alias": "multiSelect"; "required": false; "isSignal": true; }; "allowCreate": { "alias": "allowCreate"; "required": false; "isSignal": true; }; "allowDatasetCreate": { "alias": "allowDatasetCreate"; "required": false; "isSignal": true; }; "allowZvolCreate": { "alias": "allowZvolCreate"; "required": false; "isSignal": true; }; "currentPath": { "alias": "currentPath"; "required": false; "isSignal": true; }; "fileItems": { "alias": "fileItems"; "required": false; "isSignal": true; }; "selectedItems": { "alias": "selectedItems"; "required": false; "isSignal": true; }; "loading": { "alias": "loading"; "required": false; "isSignal": true; }; "creationLoading": { "alias": "creationLoading"; "required": false; "isSignal": true; }; "fileExtensions": { "alias": "fileExtensions"; "required": false; "isSignal": true; }; }, { "itemClick": "itemClick"; "itemDoubleClick": "itemDoubleClick"; "pathNavigate": "pathNavigate"; "createFolder": "createFolder"; "clearSelection": "clearSelection"; "close": "close"; "submit": "submit"; "cancel": "cancel"; "submitFolderName": "submitFolderName"; "cancelFolderCreation": "cancelFolderCreation"; }, never, never, true, never>;
 }
 
 interface KeyCombination {
@@ -2096,5 +2153,5 @@ declare class IxKeyboardShortcutService {
     static ɵprov: i0.ɵɵInjectableDeclaration<IxKeyboardShortcutService>;
 }
 
-export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMdiIconService, IxMenuComponent, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TruenasUiComponent, TruenasUiService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, registerLucideIcons, setupLucideIntegration };
+export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMdiIconService, IxMenuComponent, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TruenasIconsService, TruenasUiComponent, TruenasUiService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, registerLucideIcons, setupLucideIntegration };
 export type { CalendarCell, ChipColor, CreateFolderEvent, DateRange, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem, IconLibrary, IconLibraryType, IconResult, IconSize, IconSource, IxButtonToggleType, IxDialogDefaults, IxDialogOpenTarget, IxFlatTreeNode, IxMenuItem, IxSelectOption, IxSelectOptionGroup, IxSelectionChange, IxTableDataSource, KeyCombination, LabelType, LucideIconOptions, PathSegment, PlatformType, ProgressBarMode, ResolvedIcon, ShortcutHandler, SlideToggleColor, SpinnerMode, TabChangeEvent, TooltipPosition, YearCell };

@@ -212,21 +212,54 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       }
 
       this.selectedItems.set([...selected]);
-      this.updateSelectionFromItems();
     } else {
-      this.updateSelection(item.path);
+      // Single select - just update selection state, don't apply yet
+      this.selectedItems.set([item.path]);
     }
   }
 
   onItemDoubleClick(item: FileSystemItem): void {
-    if (item.disabled || item.isCreating || this.creatingItemTempId()) return;
+    if (item.isCreating || this.creatingItemTempId()) return;
 
-    if (item.type === 'folder' || item.type === 'dataset' || item.type === 'mountpoint') {
+    // Define navigatable types
+    const isNavigatable = ['folder', 'dataset', 'mountpoint'].includes(item.type);
+
+    // Allow navigation even if disabled, as long as it's a navigatable type
+    if (isNavigatable) {
       this.navigateToPath(item.path);
-    } else if (!this.multiSelect) {
-      this.updateSelection(item.path);
-      this.close();
+    } else if (!item.disabled) {
+      // Double-click on selectable item submits immediately
+      this.selectedItems.set([item.path]);
+      this.onSubmit();
     }
+  }
+
+  onSubmit(): void {
+    // Apply the selection and close the popup
+    const selected = this.selectedItems();
+
+    if (selected.length === 0) return;
+
+    // Clear any existing error state
+    this.hasError.set(false);
+
+    if (this.multiSelect) {
+      this.selectedPath.set(selected.join(', '));
+      this.onChange(selected);
+      this.selectionChange.emit(selected);
+    } else {
+      const path = selected[0];
+      this.selectedPath.set(path);
+      this.onChange(path);
+      this.selectionChange.emit(path);
+    }
+
+    this.close();
+  }
+
+  onCancel(): void {
+    // Close without applying selection
+    this.close();
   }
 
   navigateToPath(path: string): void {
@@ -519,8 +552,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       scrollStrategy: this.overlay.scrollStrategies.reposition(),
       hasBackdrop: true,
       backdropClass: 'cdk-overlay-transparent-backdrop',
-      panelClass: 'ix-file-picker-overlay',
-      width: this.wrapperEl.nativeElement.offsetWidth
+      panelClass: 'ix-file-picker-overlay'
     });
 
     this.overlayRef.backdropClick().subscribe(() => {

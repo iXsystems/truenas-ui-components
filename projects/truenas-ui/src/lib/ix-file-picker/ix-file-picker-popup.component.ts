@@ -10,6 +10,20 @@ import { IxTableColumnDirective, IxHeaderCellDefDirective, IxCellDefDirective } 
 import { FileSizePipe } from '../pipes/file-size/file-size.pipe';
 import { TruncatePathPipe } from '../pipes/truncate-path/truncate-path.pipe';
 import { FileSystemItem, FilePickerCallbacks, CreateFolderEvent, FilePickerError, PathSegment, FilePickerMode } from './ix-file-picker.interfaces';
+import { IxIconRegistryService } from '../ix-icon/ix-icon-registry.service';
+import { registerTruenasIcons } from '../ix-custom-icons/generated-icons';
+import {
+  mdiFolder,
+  mdiFile,
+  mdiDatabase,
+  mdiHarddisk,
+  mdiFolderNetwork,
+  mdiFolderPlus,
+  mdiLoading,
+  mdiLock,
+  mdiFolderOpen,
+  mdiAlertCircle
+} from '@mdi/js';
 
 @Component({
   selector: 'ix-file-picker-popup',
@@ -46,7 +60,43 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
   creationLoading = input<boolean>(false);
   fileExtensions = input<string[] | undefined>(undefined);
 
-  constructor() {
+  constructor(private iconRegistry: IxIconRegistryService) {
+    // Register TrueNAS custom icons
+    registerTruenasIcons(this.iconRegistry);
+
+    // Register MDI icons used by this component
+    this.registerMdiIcons();
+  }
+
+  /**
+   * Register MDI icon library with all icons used by the file picker component
+   * This makes the component self-contained with zero configuration required
+   */
+  private registerMdiIcons(): void {
+    const mdiIcons: Record<string, string> = {
+      'folder': mdiFolder,
+      'file': mdiFile,
+      'database': mdiDatabase,
+      'harddisk': mdiHarddisk,
+      'folder-network': mdiFolderNetwork,
+      'folder-plus': mdiFolderPlus,
+      'loading': mdiLoading,
+      'lock': mdiLock,
+      'folder-open': mdiFolderOpen,
+      'alert-circle': mdiAlertCircle
+    };
+
+    // Register MDI library with resolver for file picker icons
+    this.iconRegistry.registerLibrary({
+      name: 'mdi',
+      resolver: (iconName: string) => {
+        const pathData = mdiIcons[iconName];
+        if (!pathData) {
+          return null;
+        }
+        return `<svg viewBox="0 0 24 24"><path fill="currentColor" d="${pathData}"/></svg>`;
+      }
+    });
   }
 
   ngOnInit() {
@@ -72,6 +122,8 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
   @Output() createFolder = new EventEmitter<CreateFolderEvent>();
   @Output() clearSelection = new EventEmitter<void>();
   @Output() close = new EventEmitter<void>();
+  @Output() submit = new EventEmitter<void>();
+  @Output() cancel = new EventEmitter<void>();
   @Output() submitFolderName = new EventEmitter<{ name: string; tempId: string }>();
   @Output() cancelFolderCreation = new EventEmitter<string>();
 
@@ -84,21 +136,30 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
     const extensions = this.fileExtensions();
     const mode = this.mode();
 
-    return items.filter(item => {
-      // Filter by mode
+    return items.map(item => {
+      let shouldDisable = false;
+
+      // Check if item matches mode
       if (mode !== 'any') {
-        if (mode === 'file' && item.type !== 'file') return false;
-        if (mode === 'folder' && item.type !== 'folder') return false;
-        if (mode === 'dataset' && item.type !== 'dataset') return false;
-        if (mode === 'zvol' && item.type !== 'zvol') return false;
+        const matchesMode =
+          (mode === 'file' && item.type === 'file') ||
+          (mode === 'folder' && item.type === 'folder') ||
+          (mode === 'dataset' && item.type === 'dataset') ||
+          (mode === 'zvol' && item.type === 'zvol');
+
+        shouldDisable = !matchesMode;
       }
 
-      // Filter by file extensions
+      // Check file extension filter (only applies to files)
       if (extensions && extensions.length > 0 && item.type === 'file') {
-        return extensions.some(ext => item.name.toLowerCase().endsWith(ext.toLowerCase()));
+        const matchesExtension = extensions.some(ext =>
+          item.name.toLowerCase().endsWith(ext.toLowerCase())
+        );
+        shouldDisable = shouldDisable || !matchesExtension;
       }
 
-      return true;
+      // Don't override existing disabled state from backend
+      return { ...item, disabled: item.disabled || shouldDisable };
     });
   });
 
@@ -132,6 +193,14 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
 
   onClearSelection(): void {
     this.clearSelection.emit();
+  }
+
+  onSubmit(): void {
+    this.submit.emit();
+  }
+
+  onCancel(): void {
+    this.cancel.emit();
   }
 
   onFolderNameSubmit(event: Event, item: FileSystemItem): void {
@@ -176,14 +245,18 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
   }
 
   // Utility methods
+  isNavigatable(item: FileSystemItem): boolean {
+    return ['folder', 'dataset', 'mountpoint'].includes(item.type);
+  }
+
   getItemIcon(item: FileSystemItem): string {
     if (item.icon) return item.icon;
-    
+
     switch (item.type) {
       case 'folder': return 'folder';
-      case 'dataset': return 'database';
-      case 'zvol': return 'harddisk';
-      case 'mountpoint': return 'network-share';
+      case 'dataset': return 'tn-dataset';
+      case 'zvol': return 'database';
+      case 'mountpoint': return 'folder-network';
       case 'file': return this.getFileIcon(item.name);
       default: return 'file';
     }
@@ -208,9 +281,14 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
   /**
    * Get the library type for the icon
    * @param item FileSystemItem
-   * @returns 'mdi' for all icons to use Material Design Icons
+   * @returns 'custom' for TrueNAS custom icons, 'mdi' for Material Design Icons
    */
-  getItemIconLibrary(item: FileSystemItem): 'mdi' {
+  getItemIconLibrary(item: FileSystemItem): 'mdi' | 'custom' {
+    // Use custom library for dataset icon
+    if (item.type === 'dataset') {
+      return 'custom';
+    }
+    // Use mdi for all other icons
     return 'mdi';
   }
 
@@ -229,6 +307,20 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
 
   isSelected(item: FileSystemItem): boolean {
     return this.selectedItems().includes(item.path);
+  }
+
+  getRowClass = (row: FileSystemItem): string | string[] => {
+    const classes: string[] = [];
+
+    if (this.isSelected(row) && !row.disabled) {
+      classes.push('selected');
+    }
+
+    if (row.disabled) {
+      classes.push('disabled');
+    }
+
+    return classes;
   }
 
   getFileInfo(item: FileSystemItem): string {
