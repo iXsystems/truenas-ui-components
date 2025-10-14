@@ -2,24 +2,25 @@ import * as i0 from '@angular/core';
 import { Injectable, Component, input, ChangeDetectionStrategy, EventEmitter, Output, Input, inject, forwardRef, ViewChild, Directive, ViewEncapsulation, ElementRef, ContentChild, ChangeDetectorRef, ContentChildren, TemplateRef, HostListener, Optional, Inject, Pipe, signal, computed, Host } from '@angular/core';
 import * as i1 from '@angular/common';
 import { CommonModule, NgIf, DOCUMENT } from '@angular/common';
-import * as i1$4 from '@angular/forms';
+import * as i1$5 from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR, NgControl } from '@angular/forms';
 import { FocusMonitor, A11yModule, LiveAnnouncer } from '@angular/cdk/a11y';
 import * as i1$1 from '@angular/platform-browser';
-import { mdiFolderOpen, mdiLock, mdiRefresh, mdiLoading, mdiFolderPlus, mdiMenuDown, mdiMenuRight, mdiArrowDown, mdiArrowRight, mdiChevronDown, mdiChevronRight, mdiMonitorShare, mdiCpu64Bit, mdiMemory, mdiFile, mdiFolder, mdiStoreOutline, mdiDatabaseOutline, mdiNas, mdiServer, mdiHarddisk } from '@mdi/js';
+import { mdiFolderOpen, mdiLock, mdiRefresh, mdiLoading, mdiFolderPlus, mdiMenuDown, mdiMenuRight, mdiArrowDown, mdiArrowRight, mdiChevronDown, mdiChevronRight, mdiMonitorShare, mdiCpu64Bit, mdiMemory, mdiFile, mdiFolder, mdiStoreOutline, mdiDatabaseOutline, mdiNas, mdiServer, mdiHarddisk, mdiAlertCircle, mdiFolderNetwork, mdiDatabase } from '@mdi/js';
 import { trigger, state, transition, style, animate } from '@angular/animations';
 import { SPACE, ENTER, END, HOME, DOWN_ARROW, UP_ARROW, RIGHT_ARROW, LEFT_ARROW } from '@angular/cdk/keycodes';
 import { CdkMenuTrigger, CdkMenu, CdkMenuItem } from '@angular/cdk/menu';
 import * as i1$2 from '@angular/cdk/overlay';
 import { Overlay, OverlayModule } from '@angular/cdk/overlay';
 import { TemplatePortal, PortalModule, ComponentPortal } from '@angular/cdk/portal';
-import * as i1$3 from '@angular/cdk/tree';
+import { firstValueFrom, BehaviorSubject, merge, Subject } from 'rxjs';
+import * as i1$3 from '@angular/common/http';
+import * as i1$4 from '@angular/cdk/tree';
 import { CdkTree, CdkTreeModule, CdkTreeNode, CDK_TREE_NODE_OUTLET_NODE, CdkTreeNodeOutlet, CdkNestedTreeNode } from '@angular/cdk/tree';
 export { FlatTreeControl } from '@angular/cdk/tree';
 import { DataSource } from '@angular/cdk/collections';
-import { BehaviorSubject, merge, Subject } from 'rxjs';
 import { map, takeUntil } from 'rxjs/operators';
-import * as i1$5 from '@angular/cdk/dialog';
+import * as i1$6 from '@angular/cdk/dialog';
 import { Dialog, DIALOG_DATA } from '@angular/cdk/dialog';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 
@@ -72,6 +73,7 @@ class IxButtonComponent {
     variant = 'filled';
     backgroundColor;
     label = 'Button';
+    disabled = false;
     onClick = new EventEmitter();
     get classes() {
         // Support both primary boolean and color string approaches
@@ -103,11 +105,11 @@ class IxButtonComponent {
         return ['storybook-button', `storybook-button--${this.size}`, mode];
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxButtonComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxButtonComponent, isStandalone: true, selector: "ix-button", inputs: { primary: "primary", color: "color", variant: "variant", backgroundColor: "backgroundColor", label: "label" }, outputs: { onClick: "onClick" }, ngImport: i0, template: "<button\n  type=\"button\"\n  (click)=\"onClick.emit($event)\"\n  [ngClass]=\"classes\"\n  [ngStyle]=\"{ 'background-color': backgroundColor }\"\n>\n  {{ label }}\n</button>\n\n", styles: [":host{display:inline-block;width:fit-content;justify-self:center}.storybook-button{display:inline-block;cursor:pointer;border:0;font-weight:500;line-height:1;font-family:IBM Plex Sans,Helvetica Neue,Helvetica,Arial,sans-serif}.button-primary{background-color:var(--primary);color:var(--primary-txt)}.button-default{box-shadow:#00000026 0 0 0 1px inset;background-color:var(--btn-default-bg);color:var(--btn-default-txt)}.button-outline-primary{background-color:transparent;border:1px solid var(--primary);color:var(--primary);transition:all .2s ease-in-out}.button-outline-primary:hover{background-color:var(--primary);border:1px solid var(--primary);color:var(--primary-txt)}.button-outline-default{background-color:transparent;border:1px solid var(--lines, #e5e7eb);color:var(--fg1, #000000);transition:all .2s ease-in-out}.button-outline-default:hover{background-color:var(--btn-default-bg);border:1px solid var(--btn-default-bg);color:var(--btn-default-txt);box-shadow:#00000026 0 0 0 1px inset}.button-warn{background-color:var(--red);color:#fff}.button-outline-warn{background-color:transparent;border:1px solid var(--red);color:var(--red);transition:all .2s ease-in-out}.button-outline-warn:hover{background-color:var(--red);border:1px solid var(--red);color:#fff}.storybook-button--small{padding:10px 16px;font-size:12px}.storybook-button--medium{padding:11px 20px;font-size:14px}.storybook-button--large{padding:12px 24px;font-size:16px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "directive", type: i1.NgStyle, selector: "[ngStyle]", inputs: ["ngStyle"] }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxButtonComponent, isStandalone: true, selector: "ix-button", inputs: { primary: "primary", color: "color", variant: "variant", backgroundColor: "backgroundColor", label: "label", disabled: "disabled" }, outputs: { onClick: "onClick" }, ngImport: i0, template: "<button\n  type=\"button\"\n  (click)=\"onClick.emit($event)\"\n  [ngClass]=\"classes\"\n  [ngStyle]=\"{ 'background-color': backgroundColor }\"\n  [disabled]=\"disabled\"\n>\n  {{ label }}\n</button>\n\n", styles: [":host{display:inline-block;width:fit-content;justify-self:center}.storybook-button{display:inline-block;cursor:pointer;border:0;font-weight:500;line-height:1;font-family:IBM Plex Sans,Helvetica Neue,Helvetica,Arial,sans-serif}.storybook-button:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.button-primary{background-color:var(--primary);color:var(--primary-txt)}.button-default{box-shadow:#00000026 0 0 0 1px inset;background-color:var(--btn-default-bg);color:var(--btn-default-txt)}.button-outline-primary{background-color:transparent;border:1px solid var(--primary);color:var(--primary);transition:all .2s ease-in-out}.button-outline-primary:hover{background-color:var(--primary);border:1px solid var(--primary);color:var(--primary-txt)}.button-outline-default{background-color:transparent;border:1px solid var(--lines, #e5e7eb);color:var(--fg1, #000000);transition:all .2s ease-in-out}.button-outline-default:hover{background-color:var(--btn-default-bg);border:1px solid var(--btn-default-bg);color:var(--btn-default-txt);box-shadow:#00000026 0 0 0 1px inset}.button-warn{background-color:var(--red);color:#fff}.button-outline-warn{background-color:transparent;border:1px solid var(--red);color:var(--red);transition:all .2s ease-in-out}.button-outline-warn:hover{background-color:var(--red);border:1px solid var(--red);color:#fff}.storybook-button--small{padding:10px 16px;font-size:12px}.storybook-button--medium{padding:11px 20px;font-size:14px}.storybook-button--large{padding:12px 24px;font-size:16px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "directive", type: i1.NgStyle, selector: "[ngStyle]", inputs: ["ngStyle"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxButtonComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-button', standalone: true, imports: [CommonModule], template: "<button\n  type=\"button\"\n  (click)=\"onClick.emit($event)\"\n  [ngClass]=\"classes\"\n  [ngStyle]=\"{ 'background-color': backgroundColor }\"\n>\n  {{ label }}\n</button>\n\n", styles: [":host{display:inline-block;width:fit-content;justify-self:center}.storybook-button{display:inline-block;cursor:pointer;border:0;font-weight:500;line-height:1;font-family:IBM Plex Sans,Helvetica Neue,Helvetica,Arial,sans-serif}.button-primary{background-color:var(--primary);color:var(--primary-txt)}.button-default{box-shadow:#00000026 0 0 0 1px inset;background-color:var(--btn-default-bg);color:var(--btn-default-txt)}.button-outline-primary{background-color:transparent;border:1px solid var(--primary);color:var(--primary);transition:all .2s ease-in-out}.button-outline-primary:hover{background-color:var(--primary);border:1px solid var(--primary);color:var(--primary-txt)}.button-outline-default{background-color:transparent;border:1px solid var(--lines, #e5e7eb);color:var(--fg1, #000000);transition:all .2s ease-in-out}.button-outline-default:hover{background-color:var(--btn-default-bg);border:1px solid var(--btn-default-bg);color:var(--btn-default-txt);box-shadow:#00000026 0 0 0 1px inset}.button-warn{background-color:var(--red);color:#fff}.button-outline-warn{background-color:transparent;border:1px solid var(--red);color:var(--red);transition:all .2s ease-in-out}.button-outline-warn:hover{background-color:var(--red);border:1px solid var(--red);color:#fff}.storybook-button--small{padding:10px 16px;font-size:12px}.storybook-button--medium{padding:11px 20px;font-size:14px}.storybook-button--large{padding:12px 24px;font-size:16px}\n"] }]
+            args: [{ selector: 'ix-button', standalone: true, imports: [CommonModule], template: "<button\n  type=\"button\"\n  (click)=\"onClick.emit($event)\"\n  [ngClass]=\"classes\"\n  [ngStyle]=\"{ 'background-color': backgroundColor }\"\n  [disabled]=\"disabled\"\n>\n  {{ label }}\n</button>\n\n", styles: [":host{display:inline-block;width:fit-content;justify-self:center}.storybook-button{display:inline-block;cursor:pointer;border:0;font-weight:500;line-height:1;font-family:IBM Plex Sans,Helvetica Neue,Helvetica,Arial,sans-serif}.storybook-button:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.button-primary{background-color:var(--primary);color:var(--primary-txt)}.button-default{box-shadow:#00000026 0 0 0 1px inset;background-color:var(--btn-default-bg);color:var(--btn-default-txt)}.button-outline-primary{background-color:transparent;border:1px solid var(--primary);color:var(--primary);transition:all .2s ease-in-out}.button-outline-primary:hover{background-color:var(--primary);border:1px solid var(--primary);color:var(--primary-txt)}.button-outline-default{background-color:transparent;border:1px solid var(--lines, #e5e7eb);color:var(--fg1, #000000);transition:all .2s ease-in-out}.button-outline-default:hover{background-color:var(--btn-default-bg);border:1px solid var(--btn-default-bg);color:var(--btn-default-txt);box-shadow:#00000026 0 0 0 1px inset}.button-warn{background-color:var(--red);color:#fff}.button-outline-warn{background-color:transparent;border:1px solid var(--red);color:var(--red);transition:all .2s ease-in-out}.button-outline-warn:hover{background-color:var(--red);border:1px solid var(--red);color:#fff}.storybook-button--small{padding:10px 16px;font-size:12px}.storybook-button--medium{padding:11px 20px;font-size:14px}.storybook-button--large{padding:12px 24px;font-size:16px}\n"] }]
         }], propDecorators: { primary: [{
                 type: Input
             }], color: [{
@@ -117,6 +119,8 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             }], backgroundColor: [{
                 type: Input
             }], label: [{
+                type: Input
+            }], disabled: [{
                 type: Input
             }], onClick: [{
                 type: Output
@@ -2357,6 +2361,78 @@ function registerLucideIcons(icons) {
     });
 }
 
+/**
+ * Service for loading and registering TrueNAS custom icons
+ */
+class TruenasIconsService {
+    http;
+    iconRegistry;
+    iconsLoaded = false;
+    iconBasePath = 'truenas-ui/src/assets/icons/';
+    constructor(http, iconRegistry) {
+        this.http = http;
+        this.iconRegistry = iconRegistry;
+    }
+    /**
+     * Load and register all TrueNAS custom icons
+     * Call this in your app initialization (APP_INITIALIZER or main component)
+     *
+     * @param basePath Optional custom base path for icons (defaults to 'truenas-ui/src/assets/icons/')
+     * @returns Promise that resolves when all icons are loaded
+     */
+    async loadIcons(basePath) {
+        if (this.iconsLoaded) {
+            return;
+        }
+        if (basePath) {
+            this.iconBasePath = basePath;
+        }
+        try {
+            // List of TrueNAS custom icons to load
+            const iconFiles = [
+                { name: 'tn-dataset', file: 'dataset.svg' }
+                // Add more icons here as needed
+            ];
+            // Load all icons in parallel
+            const loadPromises = iconFiles.map(async ({ name, file }) => {
+                try {
+                    const svgContent = await firstValueFrom(this.http.get(`${this.iconBasePath}${file}`, { responseType: 'text' }));
+                    this.iconRegistry.registerIcon(name, svgContent);
+                }
+                catch (error) {
+                    console.warn(`Failed to load TrueNAS icon '${name}' from ${file}:`, error);
+                }
+            });
+            await Promise.all(loadPromises);
+            this.iconsLoaded = true;
+        }
+        catch (error) {
+            console.error('Failed to load TrueNAS custom icons:', error);
+        }
+    }
+    /**
+     * Register a single custom icon from SVG content
+     * Use this for inline registration without HTTP
+     */
+    registerIcon(name, svgContent) {
+        this.iconRegistry.registerIcon(name, svgContent);
+    }
+    /**
+     * Check if icons have been loaded
+     */
+    isLoaded() {
+        return this.iconsLoaded;
+    }
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: TruenasIconsService, deps: [{ token: i1$3.HttpClient }, { token: IxIconRegistryService }], target: i0.ɵɵFactoryTarget.Injectable });
+    static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: TruenasIconsService, providedIn: 'root' });
+}
+i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: TruenasIconsService, decorators: [{
+            type: Injectable,
+            args: [{
+                    providedIn: 'root'
+                }]
+        }], ctorParameters: () => [{ type: i1$3.HttpClient }, { type: IxIconRegistryService }] });
+
 class IxListComponent {
     dense = false;
     disabled = false;
@@ -2972,7 +3048,7 @@ class IxTreeComponent extends CdkTree {
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTreeComponent, deps: [{ token: i0.IterableDiffers }, { token: i0.ChangeDetectorRef }, { token: i0.ViewContainerRef }], target: i0.ɵɵFactoryTarget.Component });
     static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxTreeComponent, isStandalone: true, selector: "ix-tree", host: { attributes: { "role": "tree" }, classAttribute: "ix-tree" }, providers: [
             { provide: CdkTree, useExisting: IxTreeComponent }
-        ], exportAs: ["ixTree"], usesInheritance: true, ngImport: i0, template: "<ng-container cdkTreeNodeOutlet></ng-container>", styles: [":host{display:block;width:100%}.ix-tree{width:100%;background-color:var(--bg1);border:1px solid var(--border);border-radius:6px;overflow:hidden}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "ngmodule", type: CdkTreeModule }, { kind: "directive", type: i1$3.CdkTreeNodeOutlet, selector: "[cdkTreeNodeOutlet]" }], changeDetection: i0.ChangeDetectionStrategy.Default, encapsulation: i0.ViewEncapsulation.None });
+        ], exportAs: ["ixTree"], usesInheritance: true, ngImport: i0, template: "<ng-container cdkTreeNodeOutlet></ng-container>", styles: [":host{display:block;width:100%}.ix-tree{width:100%;background-color:var(--bg1);border:1px solid var(--border);border-radius:6px;overflow:hidden}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "ngmodule", type: CdkTreeModule }, { kind: "directive", type: i1$4.CdkTreeNodeOutlet, selector: "[cdkTreeNodeOutlet]" }], changeDetection: i0.ChangeDetectionStrategy.Default, encapsulation: i0.ViewEncapsulation.None });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTreeComponent, decorators: [{
             type: Component,
@@ -3016,10 +3092,10 @@ class IxTreeNodeComponent extends CdkTreeNode {
     get isExpanded() {
         return this._tree?.treeControl ? this._tree.treeControl.isExpanded(this.data) : false;
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTreeNodeComponent, deps: [{ token: i0.ElementRef }, { token: i1$3.CdkTree, optional: true }, { token: CDK_TREE_NODE_OUTLET_NODE, optional: true }, { token: i0.ChangeDetectorRef, optional: true }, { token: IxMdiIconService, optional: true }], target: i0.ɵɵFactoryTarget.Component });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTreeNodeComponent, deps: [{ token: i0.ElementRef }, { token: i1$4.CdkTree, optional: true }, { token: CDK_TREE_NODE_OUTLET_NODE, optional: true }, { token: i0.ChangeDetectorRef, optional: true }, { token: IxMdiIconService, optional: true }], target: i0.ɵɵFactoryTarget.Component });
     static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxTreeNodeComponent, isStandalone: true, selector: "ix-tree-node", host: { attributes: { "role": "treeitem" }, properties: { "attr.aria-level": "level + 1", "attr.aria-expanded": "isExpandable ? isExpanded : null" }, classAttribute: "ix-tree-node-wrapper" }, providers: [
             { provide: CdkTreeNode, useExisting: IxTreeNodeComponent }
-        ], exportAs: ["ixTreeNode"], usesInheritance: true, ngImport: i0, template: "<div class=\"ix-tree-node\" \n     [class.ix-tree-node--expandable]=\"isExpandable\"\n     [attr.aria-level]=\"level + 1\"\n     [attr.aria-expanded]=\"isExpandable ? isExpanded : null\"\n     [style.cursor]=\"isExpandable ? 'pointer' : 'default'\"\n     cdkTreeNodeToggle\n     role=\"treeitem\">\n  \n  <div class=\"ix-tree-node__content\">\n    <!-- Arrow icon for expandable nodes -->\n    <div \n      *ngIf=\"isExpandable\"\n      class=\"ix-tree-node__toggle\"\n      [class.ix-tree-node__toggle--expanded]=\"isExpanded\">\n      <ix-icon \n        [name]=\"isExpanded ? 'chevron-down' : 'chevron-right'\"\n        library=\"mdi\"\n        size=\"sm\"\n        style=\"transition: transform 0.2s ease;\">\n      </ix-icon>\n    </div>\n    \n    <!-- Spacer for non-expandable nodes -->\n    <div *ngIf=\"!isExpandable\" class=\"ix-tree-node__spacer\"></div>\n    \n    <!-- Node content -->\n    <div class=\"ix-tree-node__text\">\n      <ng-content></ng-content>\n    </div>\n  </div>\n</div>", styles: [":host{display:block}.ix-tree-node{border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-tree-node:hover{background-color:var(--alt-bg2)}.ix-tree-node:last-child{border-bottom:none}.ix-tree-node--expandable{cursor:pointer}.ix-tree-node--expandable:hover{background-color:var(--alt-bg2)}.ix-tree-node--expandable:active{background-color:var(--alt-bg1)}.ix-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px}.ix-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:none;background:none;color:var(--fg2);cursor:pointer;border-radius:3px;transition:all .2s ease;flex-shrink:0}.ix-tree-node__toggle:hover{background-color:var(--alt-bg2);color:var(--fg1)}.ix-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:1px}.ix-tree-node__toggle svg{transition:transform .2s ease;transform:rotate(0)}.ix-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-tree-node__text{flex:1;min-width:0;color:var(--fg1)}.ix-tree-node__children{padding-left:24px}.ix-tree-invisible{display:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "ngmodule", type: CdkTreeModule }, { kind: "directive", type: i1$3.CdkTreeNodeToggle, selector: "[cdkTreeNodeToggle]", inputs: ["cdkTreeNodeToggleRecursive"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
+        ], exportAs: ["ixTreeNode"], usesInheritance: true, ngImport: i0, template: "<div class=\"ix-tree-node\" \n     [class.ix-tree-node--expandable]=\"isExpandable\"\n     [attr.aria-level]=\"level + 1\"\n     [attr.aria-expanded]=\"isExpandable ? isExpanded : null\"\n     [style.cursor]=\"isExpandable ? 'pointer' : 'default'\"\n     cdkTreeNodeToggle\n     role=\"treeitem\">\n  \n  <div class=\"ix-tree-node__content\">\n    <!-- Arrow icon for expandable nodes -->\n    <div \n      *ngIf=\"isExpandable\"\n      class=\"ix-tree-node__toggle\"\n      [class.ix-tree-node__toggle--expanded]=\"isExpanded\">\n      <ix-icon \n        [name]=\"isExpanded ? 'chevron-down' : 'chevron-right'\"\n        library=\"mdi\"\n        size=\"sm\"\n        style=\"transition: transform 0.2s ease;\">\n      </ix-icon>\n    </div>\n    \n    <!-- Spacer for non-expandable nodes -->\n    <div *ngIf=\"!isExpandable\" class=\"ix-tree-node__spacer\"></div>\n    \n    <!-- Node content -->\n    <div class=\"ix-tree-node__text\">\n      <ng-content></ng-content>\n    </div>\n  </div>\n</div>", styles: [":host{display:block}.ix-tree-node{border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-tree-node:hover{background-color:var(--alt-bg2)}.ix-tree-node:last-child{border-bottom:none}.ix-tree-node--expandable{cursor:pointer}.ix-tree-node--expandable:hover{background-color:var(--alt-bg2)}.ix-tree-node--expandable:active{background-color:var(--alt-bg1)}.ix-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px}.ix-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:none;background:none;color:var(--fg2);cursor:pointer;border-radius:3px;transition:all .2s ease;flex-shrink:0}.ix-tree-node__toggle:hover{background-color:var(--alt-bg2);color:var(--fg1)}.ix-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:1px}.ix-tree-node__toggle svg{transition:transform .2s ease;transform:rotate(0)}.ix-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-tree-node__text{flex:1;min-width:0;color:var(--fg1)}.ix-tree-node__children{padding-left:24px}.ix-tree-invisible{display:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "ngmodule", type: CdkTreeModule }, { kind: "directive", type: i1$4.CdkTreeNodeToggle, selector: "[cdkTreeNodeToggle]", inputs: ["cdkTreeNodeToggleRecursive"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTreeNodeComponent, decorators: [{
             type: Component,
@@ -3031,7 +3107,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                         '[attr.aria-expanded]': 'isExpandable ? isExpanded : null',
                         'role': 'treeitem'
                     }, encapsulation: ViewEncapsulation.Emulated, changeDetection: ChangeDetectionStrategy.OnPush, template: "<div class=\"ix-tree-node\" \n     [class.ix-tree-node--expandable]=\"isExpandable\"\n     [attr.aria-level]=\"level + 1\"\n     [attr.aria-expanded]=\"isExpandable ? isExpanded : null\"\n     [style.cursor]=\"isExpandable ? 'pointer' : 'default'\"\n     cdkTreeNodeToggle\n     role=\"treeitem\">\n  \n  <div class=\"ix-tree-node__content\">\n    <!-- Arrow icon for expandable nodes -->\n    <div \n      *ngIf=\"isExpandable\"\n      class=\"ix-tree-node__toggle\"\n      [class.ix-tree-node__toggle--expanded]=\"isExpanded\">\n      <ix-icon \n        [name]=\"isExpanded ? 'chevron-down' : 'chevron-right'\"\n        library=\"mdi\"\n        size=\"sm\"\n        style=\"transition: transform 0.2s ease;\">\n      </ix-icon>\n    </div>\n    \n    <!-- Spacer for non-expandable nodes -->\n    <div *ngIf=\"!isExpandable\" class=\"ix-tree-node__spacer\"></div>\n    \n    <!-- Node content -->\n    <div class=\"ix-tree-node__text\">\n      <ng-content></ng-content>\n    </div>\n  </div>\n</div>", styles: [":host{display:block}.ix-tree-node{border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-tree-node:hover{background-color:var(--alt-bg2)}.ix-tree-node:last-child{border-bottom:none}.ix-tree-node--expandable{cursor:pointer}.ix-tree-node--expandable:hover{background-color:var(--alt-bg2)}.ix-tree-node--expandable:active{background-color:var(--alt-bg1)}.ix-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px}.ix-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:none;background:none;color:var(--fg2);cursor:pointer;border-radius:3px;transition:all .2s ease;flex-shrink:0}.ix-tree-node__toggle:hover{background-color:var(--alt-bg2);color:var(--fg1)}.ix-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:1px}.ix-tree-node__toggle svg{transition:transform .2s ease;transform:rotate(0)}.ix-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-tree-node__text{flex:1;min-width:0;color:var(--fg1)}.ix-tree-node__children{padding-left:24px}.ix-tree-invisible{display:none}\n"] }]
-        }], ctorParameters: () => [{ type: i0.ElementRef }, { type: i1$3.CdkTree, decorators: [{
+        }], ctorParameters: () => [{ type: i0.ElementRef }, { type: i1$4.CdkTree, decorators: [{
                     type: Optional
                 }] }, { type: undefined, decorators: [{
                     type: Optional
@@ -3046,7 +3122,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
 
 class IxTreeNodeOutletDirective {
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTreeNodeOutletDirective, deps: [], target: i0.ɵɵFactoryTarget.Directive });
-    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "14.0.0", version: "20.3.4", type: IxTreeNodeOutletDirective, isStandalone: true, selector: "[ixTreeNodeOutlet]", hostDirectives: [{ directive: i1$3.CdkTreeNodeOutlet }], ngImport: i0 });
+    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "14.0.0", version: "20.3.4", type: IxTreeNodeOutletDirective, isStandalone: true, selector: "[ixTreeNodeOutlet]", hostDirectives: [{ directive: i1$4.CdkTreeNodeOutlet }], ngImport: i0 });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTreeNodeOutletDirective, decorators: [{
             type: Directive,
@@ -3123,11 +3199,11 @@ class IxNestedTreeNodeComponent extends CdkNestedTreeNode {
         }
         return false;
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxNestedTreeNodeComponent, deps: [{ token: i0.ElementRef }, { token: i1$3.CdkTree, optional: true }, { token: CDK_TREE_NODE_OUTLET_NODE, optional: true }, { token: i0.ChangeDetectorRef, optional: true }, { token: IxMdiIconService, optional: true }], target: i0.ɵɵFactoryTarget.Component });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxNestedTreeNodeComponent, deps: [{ token: i0.ElementRef }, { token: i1$4.CdkTree, optional: true }, { token: CDK_TREE_NODE_OUTLET_NODE, optional: true }, { token: i0.ChangeDetectorRef, optional: true }, { token: IxMdiIconService, optional: true }], target: i0.ɵɵFactoryTarget.Component });
     static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxNestedTreeNodeComponent, isStandalone: true, selector: "ix-nested-tree-node", host: { attributes: { "role": "treeitem" }, properties: { "attr.aria-level": "level + 1", "attr.aria-expanded": "isExpandable ? isExpanded : null" }, classAttribute: "ix-nested-tree-node-wrapper" }, providers: [
             { provide: CdkNestedTreeNode, useExisting: IxNestedTreeNodeComponent },
             { provide: CdkTreeNode, useExisting: IxNestedTreeNodeComponent }
-        ], exportAs: ["ixNestedTreeNode"], usesInheritance: true, ngImport: i0, template: "<div class=\"ix-nested-tree-node__content\">\n  <!-- Toggle button for expandable nodes (provided by component) -->\n  <button\n    *ngIf=\"isExpandable\"\n    class=\"ix-nested-tree-node__toggle\"\n    [class.ix-nested-tree-node__toggle--expanded]=\"isExpanded\"\n    cdkTreeNodeToggle\n    [attr.aria-label]=\"'Toggle node'\"\n    type=\"button\">\n    <ix-icon \n      [name]=\"isExpanded ? 'chevron-down' : 'chevron-right'\"\n      library=\"mdi\"\n      size=\"sm\"\n      style=\"transition: transform 0.2s ease;\">\n    </ix-icon>\n  </button>\n\n  <!-- Spacer for non-expandable nodes to maintain alignment -->\n  <div *ngIf=\"!isExpandable\" class=\"ix-nested-tree-node__spacer\"></div>\n\n  <!-- Consumer content -->\n  <ng-content></ng-content>\n</div>\n\n<!-- Children container -->\n<div class=\"ix-nested-tree-node-container\" *ngIf=\"isExpandable\" [class.ix-tree-invisible]=\"!isExpanded\" role=\"group\">\n  <ng-content select=\"[slot=children]\"></ng-content>\n</div>", styles: [".ix-nested-tree-node-wrapper{display:block;width:100%}.ix-nested-tree-node{display:block;width:100%;font-family:var(--font-family);font-size:var(--font-size-sm);line-height:1.4;color:var(--fg1)}.ix-nested-tree-node--expandable .ix-nested-tree-node__content{cursor:pointer}.ix-nested-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-nested-tree-node__content:hover{background-color:var(--alt-bg2)}.ix-nested-tree-node__content:focus-within{background-color:var(--alt-bg2);outline:2px solid var(--primary);outline-offset:-2px}.ix-tree-invisible{display:none}.ix-nested-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;margin-right:8px;padding:0;border:none;background:transparent;border-radius:4px;cursor:pointer;color:var(--fg2);transition:background-color .2s ease,color .2s ease}.ix-nested-tree-node__toggle:hover{background-color:var(--bg3);color:var(--fg1)}.ix-nested-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-nested-tree-node__toggle svg{transition:transform .2s ease}.ix-nested-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-nested-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-nested-tree-node__text{flex:1;display:flex;align-items:center;gap:8px;min-width:0;color:var(--fg1)}div.ix-nested-tree-node-container{padding-left:40px}@media (prefers-reduced-motion: reduce){.ix-nested-tree-node__toggle svg,.ix-nested-tree-node__content,.ix-nested-tree-node__children{transition:none}}@media (prefers-contrast: high){.ix-nested-tree-node__content{border:1px solid transparent}.ix-nested-tree-node__content:hover,.ix-nested-tree-node__content:focus-within{border-color:var(--fg1)}.ix-nested-tree-node__toggle{border:1px solid var(--fg2)}.ix-nested-tree-node__toggle:hover,.ix-nested-tree-node__toggle:focus{border-color:var(--fg1)}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "ngmodule", type: CdkTreeModule }, { kind: "directive", type: i1$3.CdkTreeNodeToggle, selector: "[cdkTreeNodeToggle]", inputs: ["cdkTreeNodeToggleRecursive"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
+        ], exportAs: ["ixNestedTreeNode"], usesInheritance: true, ngImport: i0, template: "<div class=\"ix-nested-tree-node__content\">\n  <!-- Toggle button for expandable nodes (provided by component) -->\n  <button\n    *ngIf=\"isExpandable\"\n    class=\"ix-nested-tree-node__toggle\"\n    [class.ix-nested-tree-node__toggle--expanded]=\"isExpanded\"\n    cdkTreeNodeToggle\n    [attr.aria-label]=\"'Toggle node'\"\n    type=\"button\">\n    <ix-icon \n      [name]=\"isExpanded ? 'chevron-down' : 'chevron-right'\"\n      library=\"mdi\"\n      size=\"sm\"\n      style=\"transition: transform 0.2s ease;\">\n    </ix-icon>\n  </button>\n\n  <!-- Spacer for non-expandable nodes to maintain alignment -->\n  <div *ngIf=\"!isExpandable\" class=\"ix-nested-tree-node__spacer\"></div>\n\n  <!-- Consumer content -->\n  <ng-content></ng-content>\n</div>\n\n<!-- Children container -->\n<div class=\"ix-nested-tree-node-container\" *ngIf=\"isExpandable\" [class.ix-tree-invisible]=\"!isExpanded\" role=\"group\">\n  <ng-content select=\"[slot=children]\"></ng-content>\n</div>", styles: [".ix-nested-tree-node-wrapper{display:block;width:100%}.ix-nested-tree-node{display:block;width:100%;font-family:var(--font-family);font-size:var(--font-size-sm);line-height:1.4;color:var(--fg1)}.ix-nested-tree-node--expandable .ix-nested-tree-node__content{cursor:pointer}.ix-nested-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-nested-tree-node__content:hover{background-color:var(--alt-bg2)}.ix-nested-tree-node__content:focus-within{background-color:var(--alt-bg2);outline:2px solid var(--primary);outline-offset:-2px}.ix-tree-invisible{display:none}.ix-nested-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;margin-right:8px;padding:0;border:none;background:transparent;border-radius:4px;cursor:pointer;color:var(--fg2);transition:background-color .2s ease,color .2s ease}.ix-nested-tree-node__toggle:hover{background-color:var(--bg3);color:var(--fg1)}.ix-nested-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-nested-tree-node__toggle svg{transition:transform .2s ease}.ix-nested-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-nested-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-nested-tree-node__text{flex:1;display:flex;align-items:center;gap:8px;min-width:0;color:var(--fg1)}div.ix-nested-tree-node-container{padding-left:40px}@media (prefers-reduced-motion: reduce){.ix-nested-tree-node__toggle svg,.ix-nested-tree-node__content,.ix-nested-tree-node__children{transition:none}}@media (prefers-contrast: high){.ix-nested-tree-node__content{border:1px solid transparent}.ix-nested-tree-node__content:hover,.ix-nested-tree-node__content:focus-within{border-color:var(--fg1)}.ix-nested-tree-node__toggle{border:1px solid var(--fg2)}.ix-nested-tree-node__toggle:hover,.ix-nested-tree-node__toggle:focus{border-color:var(--fg1)}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "ngmodule", type: CdkTreeModule }, { kind: "directive", type: i1$4.CdkTreeNodeToggle, selector: "[cdkTreeNodeToggle]", inputs: ["cdkTreeNodeToggleRecursive"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxNestedTreeNodeComponent, decorators: [{
             type: Component,
@@ -3140,7 +3216,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                         '[attr.aria-expanded]': 'isExpandable ? isExpanded : null',
                         'role': 'treeitem'
                     }, encapsulation: ViewEncapsulation.Emulated, changeDetection: ChangeDetectionStrategy.OnPush, template: "<div class=\"ix-nested-tree-node__content\">\n  <!-- Toggle button for expandable nodes (provided by component) -->\n  <button\n    *ngIf=\"isExpandable\"\n    class=\"ix-nested-tree-node__toggle\"\n    [class.ix-nested-tree-node__toggle--expanded]=\"isExpanded\"\n    cdkTreeNodeToggle\n    [attr.aria-label]=\"'Toggle node'\"\n    type=\"button\">\n    <ix-icon \n      [name]=\"isExpanded ? 'chevron-down' : 'chevron-right'\"\n      library=\"mdi\"\n      size=\"sm\"\n      style=\"transition: transform 0.2s ease;\">\n    </ix-icon>\n  </button>\n\n  <!-- Spacer for non-expandable nodes to maintain alignment -->\n  <div *ngIf=\"!isExpandable\" class=\"ix-nested-tree-node__spacer\"></div>\n\n  <!-- Consumer content -->\n  <ng-content></ng-content>\n</div>\n\n<!-- Children container -->\n<div class=\"ix-nested-tree-node-container\" *ngIf=\"isExpandable\" [class.ix-tree-invisible]=\"!isExpanded\" role=\"group\">\n  <ng-content select=\"[slot=children]\"></ng-content>\n</div>", styles: [".ix-nested-tree-node-wrapper{display:block;width:100%}.ix-nested-tree-node{display:block;width:100%;font-family:var(--font-family);font-size:var(--font-size-sm);line-height:1.4;color:var(--fg1)}.ix-nested-tree-node--expandable .ix-nested-tree-node__content{cursor:pointer}.ix-nested-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-nested-tree-node__content:hover{background-color:var(--alt-bg2)}.ix-nested-tree-node__content:focus-within{background-color:var(--alt-bg2);outline:2px solid var(--primary);outline-offset:-2px}.ix-tree-invisible{display:none}.ix-nested-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;margin-right:8px;padding:0;border:none;background:transparent;border-radius:4px;cursor:pointer;color:var(--fg2);transition:background-color .2s ease,color .2s ease}.ix-nested-tree-node__toggle:hover{background-color:var(--bg3);color:var(--fg1)}.ix-nested-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-nested-tree-node__toggle svg{transition:transform .2s ease}.ix-nested-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-nested-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-nested-tree-node__text{flex:1;display:flex;align-items:center;gap:8px;min-width:0;color:var(--fg1)}div.ix-nested-tree-node-container{padding-left:40px}@media (prefers-reduced-motion: reduce){.ix-nested-tree-node__toggle svg,.ix-nested-tree-node__content,.ix-nested-tree-node__children{transition:none}}@media (prefers-contrast: high){.ix-nested-tree-node__content{border:1px solid transparent}.ix-nested-tree-node__content:hover,.ix-nested-tree-node__content:focus-within{border-color:var(--fg1)}.ix-nested-tree-node__toggle{border:1px solid var(--fg2)}.ix-nested-tree-node__toggle:hover,.ix-nested-tree-node__toggle:focus{border-color:var(--fg1)}}\n"] }]
-        }], ctorParameters: () => [{ type: i0.ElementRef }, { type: i1$3.CdkTree, decorators: [{
+        }], ctorParameters: () => [{ type: i0.ElementRef }, { type: i1$4.CdkTree, decorators: [{
                     type: Optional
                 }] }, { type: undefined, decorators: [{
                     type: Optional
@@ -3649,6 +3725,58 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             type: Pipe,
             args: [{
                     name: 'ixFileSize',
+                    standalone: true,
+                }]
+        }] });
+
+class StripMntPrefixPipe {
+    transform(path) {
+        if (!path)
+            return '';
+        if (path.startsWith('/mnt/')) {
+            return path.substring(4); // Remove "/mnt" prefix -> "/mnt/foo" becomes "/foo"
+        }
+        else if (path === '/mnt') {
+            return '/'; // Show root as just "/"
+        }
+        return path;
+    }
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: StripMntPrefixPipe, deps: [], target: i0.ɵɵFactoryTarget.Pipe });
+    static ɵpipe = i0.ɵɵngDeclarePipe({ minVersion: "14.0.0", version: "20.3.4", ngImport: i0, type: StripMntPrefixPipe, isStandalone: true, name: "ixStripMntPrefix" });
+}
+i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: StripMntPrefixPipe, decorators: [{
+            type: Pipe,
+            args: [{
+                    name: 'ixStripMntPrefix',
+                    standalone: true,
+                }]
+        }] });
+
+class TruncatePathPipe {
+    transform(path) {
+        // At root /mnt, show just "/"
+        if (!path || path === '/mnt') {
+            return [{ name: '/', path: '/mnt' }];
+        }
+        // For subdirectories, show ".." (parent) and current directory
+        const segments = [];
+        // Calculate parent path
+        const lastSlashIndex = path.lastIndexOf('/');
+        const parentPath = lastSlashIndex > 0 ? path.substring(0, lastSlashIndex) : '/mnt';
+        // Get current directory name
+        const currentDirName = path.substring(lastSlashIndex + 1);
+        // Add parent navigation (..) and current directory
+        segments.push({ name: '..', path: parentPath });
+        segments.push({ name: currentDirName, path: path });
+        return segments;
+    }
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: TruncatePathPipe, deps: [], target: i0.ɵɵFactoryTarget.Pipe });
+    static ɵpipe = i0.ɵɵngDeclarePipe({ minVersion: "14.0.0", version: "20.3.4", ngImport: i0, type: TruncatePathPipe, isStandalone: true, name: "ixTruncatePath" });
+}
+i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: TruncatePathPipe, decorators: [{
+            type: Pipe,
+            args: [{
+                    name: 'ixTruncatePath',
                     standalone: true,
                 }]
         }] });
@@ -6101,7 +6229,7 @@ class IxTimeInputComponent {
       [ngModel]="_value"
       (selectionChange)="onSelectionChange($event)">
     </ix-select>
-  `, isInline: true, styles: [":host{display:block;width:100%}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "ngmodule", type: FormsModule }, { kind: "directive", type: i1$4.NgControlStatus, selector: "[formControlName],[ngModel],[formControl]" }, { kind: "directive", type: i1$4.NgModel, selector: "[ngModel]:not([formControlName]):not([formControl])", inputs: ["name", "disabled", "ngModel", "ngModelOptions"], outputs: ["ngModelChange"], exportAs: ["ngModel"] }, { kind: "component", type: IxSelectComponent, selector: "ix-select", inputs: ["options", "optionGroups", "placeholder", "disabled", "testId"], outputs: ["selectionChange"] }] });
+  `, isInline: true, styles: [":host{display:block;width:100%}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "ngmodule", type: FormsModule }, { kind: "directive", type: i1$5.NgControlStatus, selector: "[formControlName],[ngModel],[formControl]" }, { kind: "directive", type: i1$5.NgModel, selector: "[ngModel]:not([formControlName]):not([formControl])", inputs: ["name", "disabled", "ngModel", "ngModelOptions"], outputs: ["ngModelChange"], exportAs: ["ngModel"] }, { kind: "component", type: IxSelectComponent, selector: "ix-select", inputs: ["options", "optionGroups", "placeholder", "disabled", "testId"], outputs: ["selectionChange"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTimeInputComponent, decorators: [{
             type: Component,
@@ -7333,7 +7461,7 @@ class IxDialogShellComponent {
             this.isFullscreen = false;
         }
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxDialogShellComponent, deps: [{ token: i1$5.DialogRef }, { token: DOCUMENT }, { token: DIALOG_DATA, optional: true }], target: i0.ɵɵFactoryTarget.Component });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxDialogShellComponent, deps: [{ token: i1$6.DialogRef }, { token: DOCUMENT }, { token: DIALOG_DATA, optional: true }], target: i0.ɵɵFactoryTarget.Component });
     static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxDialogShellComponent, isStandalone: true, selector: "ix-dialog-shell", inputs: { title: "title", showFullscreenButton: "showFullscreenButton" }, host: { classAttribute: "ix-dialog-shell" }, ngImport: i0, template: `
     <header class="ix-dialog__header">
       <h2 class="ix-dialog__title">{{ title }}</h2>
@@ -7389,7 +7517,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                         'class': 'ix-dialog-shell'
                     }
                 }]
-        }], ctorParameters: () => [{ type: i1$5.DialogRef }, { type: Document, decorators: [{
+        }], ctorParameters: () => [{ type: i1$6.DialogRef }, { type: Document, decorators: [{
                     type: Inject,
                     args: [DOCUMENT]
                 }] }, { type: undefined, decorators: [{
@@ -7410,7 +7538,7 @@ class IxConfirmDialogComponent {
         this.ref = ref;
         this.data = data;
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxConfirmDialogComponent, deps: [{ token: i1$5.DialogRef }, { token: DIALOG_DATA }], target: i0.ɵɵFactoryTarget.Component });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxConfirmDialogComponent, deps: [{ token: i1$6.DialogRef }, { token: DIALOG_DATA }], target: i0.ɵɵFactoryTarget.Component });
     static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxConfirmDialogComponent, isStandalone: true, selector: "ix-confirm-dialog", host: { properties: { "class.ix-dialog--destructive": "data.destructive" }, classAttribute: "ix-dialog-shell" }, ngImport: i0, template: `
     <ix-dialog-shell [title]="data.title">
       <p style="padding: var(--content-padding);">{{ data.message }}</p>
@@ -7429,7 +7557,7 @@ class IxConfirmDialogComponent {
         </ix-button>
       </div>
     </ix-dialog-shell>
-  `, isInline: true, dependencies: [{ kind: "component", type: IxDialogShellComponent, selector: "ix-dialog-shell", inputs: ["title", "showFullscreenButton"] }, { kind: "component", type: IxButtonComponent, selector: "ix-button", inputs: ["primary", "color", "variant", "backgroundColor", "label"], outputs: ["onClick"] }] });
+  `, isInline: true, dependencies: [{ kind: "component", type: IxDialogShellComponent, selector: "ix-dialog-shell", inputs: ["title", "showFullscreenButton"] }, { kind: "component", type: IxButtonComponent, selector: "ix-button", inputs: ["primary", "color", "variant", "backgroundColor", "label", "disabled"], outputs: ["onClick"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxConfirmDialogComponent, decorators: [{
             type: Component,
@@ -7461,7 +7589,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                         '[class.ix-dialog--destructive]': 'data.destructive'
                     }
                 }]
-        }], ctorParameters: () => [{ type: i1$5.DialogRef }, { type: undefined, decorators: [{
+        }], ctorParameters: () => [{ type: i1$6.DialogRef }, { type: undefined, decorators: [{
                     type: Inject,
                     args: [DIALOG_DATA]
                 }] }] });
@@ -7618,94 +7746,213 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                 args: ['window:resize', ['$event']]
             }] } });
 
+/**
+ * Auto-generated from SVG files - DO NOT EDIT MANUALLY
+ *
+ * To regenerate this file, run:
+ *   npm run generate-icons
+ *
+ * Generated: 2025-10-14T18:02:49.377Z
+ * Source: projects/truenas-ui/src/assets/icons
+ */
+/* eslint-disable */
+const TRUENAS_ICONS = {
+    'tn-dataset': `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M6 8C5.72 8 5.48 7.9 5.29 7.71C5.1 7.52 5 7.28 5 7C5 6.72 5.1 6.48 5.29 6.29C5.48 6.1 5.72 6 6 6H18C18.28 6 18.52 6.1 18.71 6.29C18.9 6.48 19 6.72 19 7C19 7.28 18.9 7.52 18.71 7.71C18.52 7.9 18.28 8 18 8H6ZM8 5C7.72 5 7.48 4.9 7.29 4.71C7.1 4.52 7 4.28 7 4C7 3.72 7.1 3.48 7.29 3.29C7.48 3.1 7.72 3 8 3H16C16.28 3 16.52 3.1 16.71 3.29C16.9 3.48 17 3.72 17 4C17 4.28 16.9 4.52 16.71 4.71C16.52 4.9 16.28 5 16 5H8ZM3 9L5 21H19L21 9H3ZM14.71 15.1C14.52 15.29 14.28 15.39 14 15.39H10C9.72 15.39 9.48 15.29 9.29 15.1C9.1 14.91 9 14.67 9 14.39C9 14.11 9.1 13.87 9.29 13.68C9.48 13.49 9.72 13.39 10 13.39H14C14.28 13.39 14.52 13.49 14.71 13.68C14.9 13.87 15 14.11 15 14.39C15 14.67 14.9 14.91 14.71 15.1Z" fill="currentColor"/>
+</svg>`
+};
+/**
+ * Register all TrueNAS custom icons with the icon registry
+ * @param iconRegistry The IxIconRegistryService instance
+ */
+function registerTruenasIcons(iconRegistry) {
+    Object.entries(TRUENAS_ICONS).forEach(([name, svg]) => {
+        iconRegistry.registerIcon(name, svg);
+    });
+}
+
 class IxFilePickerPopupComponent {
-    mode = 'any';
-    multiSelect = false;
-    allowCreate = true;
-    allowDatasetCreate = false;
-    allowZvolCreate = false;
-    currentPath = '/mnt';
-    fileItems = [];
-    selectedItems = [];
-    loading = false;
-    fileExtensions;
-    constructor() {
+    iconRegistry;
+    mode = input('any', ...(ngDevMode ? [{ debugName: "mode" }] : []));
+    multiSelect = input(false, ...(ngDevMode ? [{ debugName: "multiSelect" }] : []));
+    allowCreate = input(true, ...(ngDevMode ? [{ debugName: "allowCreate" }] : []));
+    allowDatasetCreate = input(false, ...(ngDevMode ? [{ debugName: "allowDatasetCreate" }] : []));
+    allowZvolCreate = input(false, ...(ngDevMode ? [{ debugName: "allowZvolCreate" }] : []));
+    currentPath = input('/mnt', ...(ngDevMode ? [{ debugName: "currentPath" }] : []));
+    fileItems = input([], ...(ngDevMode ? [{ debugName: "fileItems" }] : []));
+    selectedItems = input([], ...(ngDevMode ? [{ debugName: "selectedItems" }] : []));
+    loading = input(false, ...(ngDevMode ? [{ debugName: "loading" }] : []));
+    creationLoading = input(false, ...(ngDevMode ? [{ debugName: "creationLoading" }] : []));
+    fileExtensions = input(undefined, ...(ngDevMode ? [{ debugName: "fileExtensions" }] : []));
+    constructor(iconRegistry) {
+        this.iconRegistry = iconRegistry;
+        // Register TrueNAS custom icons
+        registerTruenasIcons(this.iconRegistry);
+        // Register MDI icons used by this component
+        this.registerMdiIcons();
+    }
+    /**
+     * Register MDI icon library with all icons used by the file picker component
+     * This makes the component self-contained with zero configuration required
+     */
+    registerMdiIcons() {
+        const mdiIcons = {
+            'folder': mdiFolder,
+            'file': mdiFile,
+            'database': mdiDatabase,
+            'harddisk': mdiHarddisk,
+            'folder-network': mdiFolderNetwork,
+            'folder-plus': mdiFolderPlus,
+            'loading': mdiLoading,
+            'lock': mdiLock,
+            'folder-open': mdiFolderOpen,
+            'alert-circle': mdiAlertCircle
+        };
+        // Register MDI library with resolver for file picker icons
+        this.iconRegistry.registerLibrary({
+            name: 'mdi',
+            resolver: (iconName) => {
+                const pathData = mdiIcons[iconName];
+                if (!pathData) {
+                    return null;
+                }
+                return `<svg viewBox="0 0 24 24"><path fill="currentColor" d="${pathData}"/></svg>`;
+            }
+        });
     }
     ngOnInit() {
     }
     ngAfterViewInit() {
     }
+    ngAfterViewChecked() {
+        // Auto-focus and select text in input when it appears
+        const input = document.querySelector('[data-autofocus="true"]');
+        if (input && input !== document.activeElement) {
+            setTimeout(() => {
+                input.focus();
+                input.select();
+            }, 0);
+        }
+    }
     itemClick = new EventEmitter();
     itemDoubleClick = new EventEmitter();
     pathNavigate = new EventEmitter();
     createFolder = new EventEmitter();
+    clearSelection = new EventEmitter();
     close = new EventEmitter();
+    submit = new EventEmitter();
+    cancel = new EventEmitter();
+    submitFolderName = new EventEmitter();
+    cancelFolderCreation = new EventEmitter();
     // Table configuration
     displayedColumns = ['select', 'name', 'size', 'modified'];
     // Computed values
-    pathSegments = computed(() => {
-        const path = this.currentPath;
-        if (!path || path === '/')
-            return [{ name: 'Root', path: '/' }];
-        const segments = [];
-        const parts = path.split('/').filter(p => p);
-        // Skip the first "mnt" part if it exists
-        const relevantParts = parts[0] === 'mnt' ? parts.slice(1) : parts;
-        segments.push({ name: 'Root', path: '/mnt' });
-        let currentPath = '/mnt';
-        for (const part of relevantParts) {
-            currentPath += '/' + part;
-            segments.push({ name: part, path: currentPath });
-        }
-        return segments;
-    }, ...(ngDevMode ? [{ debugName: "pathSegments" }] : []));
     filteredFileItems = computed(() => {
-        const items = this.fileItems;
-        const extensions = this.fileExtensions;
-        const mode = this.mode;
-        return items.filter(item => {
-            // Filter by mode
+        const items = this.fileItems();
+        const extensions = this.fileExtensions();
+        const mode = this.mode();
+        return items.map(item => {
+            let shouldDisable = false;
+            // Check if item matches mode
             if (mode !== 'any') {
-                if (mode === 'file' && item.type !== 'file')
-                    return false;
-                if (mode === 'folder' && item.type !== 'folder')
-                    return false;
-                if (mode === 'dataset' && item.type !== 'dataset')
-                    return false;
-                if (mode === 'zvol' && item.type !== 'zvol')
-                    return false;
+                const matchesMode = (mode === 'file' && item.type === 'file') ||
+                    (mode === 'folder' && item.type === 'folder') ||
+                    (mode === 'dataset' && item.type === 'dataset') ||
+                    (mode === 'zvol' && item.type === 'zvol');
+                shouldDisable = !matchesMode;
             }
-            // Filter by file extensions
+            // Check file extension filter (only applies to files)
             if (extensions && extensions.length > 0 && item.type === 'file') {
-                return extensions.some(ext => item.name.toLowerCase().endsWith(ext.toLowerCase()));
+                const matchesExtension = extensions.some(ext => item.name.toLowerCase().endsWith(ext.toLowerCase()));
+                shouldDisable = shouldDisable || !matchesExtension;
             }
-            return true;
+            // Don't override existing disabled state from backend
+            return { ...item, disabled: item.disabled || shouldDisable };
         });
     }, ...(ngDevMode ? [{ debugName: "filteredFileItems" }] : []));
     onItemClick(item) {
+        if (item.isCreating)
+            return; // Don't allow selection during creation
         this.itemClick.emit(item);
     }
     onItemDoubleClick(item) {
+        if (item.isCreating)
+            return; // Don't allow navigation during creation
         this.itemDoubleClick.emit(item);
     }
     navigateToPath(path) {
+        // Check if any item is in creation mode
+        const hasCreatingItem = this.fileItems().some(item => item.isCreating);
+        if (hasCreatingItem) {
+            console.warn('Cannot navigate while creating a folder');
+            return;
+        }
         this.pathNavigate.emit(path);
     }
     onCreateFolder() {
+        console.log('Popup onCreateFolder called');
         this.createFolder.emit({
-            parentPath: this.currentPath,
+            parentPath: this.currentPath(),
             folderName: 'New Folder'
         });
     }
+    onClearSelection() {
+        this.clearSelection.emit();
+    }
+    onSubmit() {
+        this.submit.emit();
+    }
+    onCancel() {
+        this.cancel.emit();
+    }
+    onFolderNameSubmit(event, item) {
+        const input = event.target;
+        const name = input.value.trim();
+        if (item.tempId) {
+            // Even if empty, let parent component handle validation
+            this.submitFolderName.emit({ name, tempId: item.tempId });
+        }
+    }
+    onFolderNameCancel(item) {
+        if (item.tempId) {
+            this.cancelFolderCreation.emit(item.tempId);
+        }
+    }
+    onFolderNameInputBlur(event, item) {
+        // Auto-submit on blur (don't close picker, parent handles submission)
+        const input = event.target;
+        if (item.tempId) {
+            this.submitFolderName.emit({
+                name: input.value.trim(),
+                tempId: item.tempId
+            });
+        }
+    }
+    onFolderNameKeyDown(event, item) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            this.onFolderNameSubmit(event, item);
+        }
+        else if (event.key === 'Escape') {
+            event.preventDefault();
+            this.onFolderNameCancel(item);
+        }
+    }
+    isCreateDisabled() {
+        return this.fileItems().some(item => item.isCreating) || this.creationLoading();
+    }
     // Utility methods
+    isNavigatable(item) {
+        return ['folder', 'dataset', 'mountpoint'].includes(item.type);
+    }
     getItemIcon(item) {
         if (item.icon)
             return item.icon;
         switch (item.type) {
             case 'folder': return 'folder';
-            case 'dataset': return 'database';
-            case 'zvol': return 'harddisk';
-            case 'mountpoint': return 'network-share';
+            case 'dataset': return 'tn-dataset';
+            case 'zvol': return 'database';
+            case 'mountpoint': return 'folder-network';
             case 'file': return this.getFileIcon(item.name);
             default: return 'file';
         }
@@ -7761,9 +8008,14 @@ class IxFilePickerPopupComponent {
     /**
      * Get the library type for the icon
      * @param item FileSystemItem
-     * @returns 'mdi' for all icons to use Material Design Icons
+     * @returns 'custom' for TrueNAS custom icons, 'mdi' for Material Design Icons
      */
     getItemIconLibrary(item) {
+        // Use custom library for dataset icon
+        if (item.type === 'dataset') {
+            return 'custom';
+        }
+        // Use mdi for all other icons
         return 'mdi';
     }
     getZfsBadge(item) {
@@ -7778,8 +8030,18 @@ class IxFilePickerPopupComponent {
         return ['dataset', 'zvol', 'mountpoint'].includes(item.type);
     }
     isSelected(item) {
-        return this.selectedItems.includes(item.path);
+        return this.selectedItems().includes(item.path);
     }
+    getRowClass = (row) => {
+        const classes = [];
+        if (this.isSelected(row) && !row.disabled) {
+            classes.push('selected');
+        }
+        if (row.disabled) {
+            classes.push('disabled');
+        }
+        return classes;
+    };
     getFileInfo(item) {
         const parts = [];
         if (item.size !== undefined) {
@@ -7834,8 +8096,8 @@ class IxFilePickerPopupComponent {
         // Different year - include year
         return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}/${date.getFullYear()} ${timePart}`;
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxFilePickerPopupComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxFilePickerPopupComponent, isStandalone: true, selector: "ix-file-picker-popup", inputs: { mode: "mode", multiSelect: "multiSelect", allowCreate: "allowCreate", allowDatasetCreate: "allowDatasetCreate", allowZvolCreate: "allowZvolCreate", currentPath: "currentPath", fileItems: "fileItems", selectedItems: "selectedItems", loading: "loading", fileExtensions: "fileExtensions" }, outputs: { itemClick: "itemClick", itemDoubleClick: "itemDoubleClick", pathNavigate: "pathNavigate", createFolder: "createFolder", close: "close" }, host: { classAttribute: "ix-file-picker-popup" }, ngImport: i0, template: "<!-- Header with breadcrumb navigation -->\n<div class=\"ix-file-picker-header\">\n  <nav class=\"ix-file-picker-breadcrumb\" aria-label=\"File path\">\n    <button \n      *ngFor=\"let segment of pathSegments(); let last = last\"\n      class=\"breadcrumb-segment\"\n      [class.current]=\"last\"\n      [disabled]=\"last\"\n      (click)=\"navigateToPath(segment.path)\">\n      {{ segment.name }}\n    </button>\n  </nav>\n  \n  <div class=\"ix-file-picker-actions\">\n    <ix-button \n      *ngIf=\"allowCreate\" \n      variant=\"outline\"\n      (onClick)=\"onCreateFolder()\">\n      <ix-icon name=\"folder-plus\" library=\"mdi\"></ix-icon>\n      New Folder\n    </ix-button>\n  </div>\n</div>\n\n<!-- Loading indicator -->\n<div *ngIf=\"loading\" class=\"ix-file-picker-loading\">\n  <ix-icon name=\"loading\" library=\"mdi\"></ix-icon>\n  <span>Loading...</span>\n</div>\n\n<!-- File table -->\n<div class=\"ix-file-picker-content\" *ngIf=\"!loading\">\n  <ix-table \n    [dataSource]=\"filteredFileItems()\"\n    [displayedColumns]=\"multiSelect ? displayedColumns : displayedColumns.slice(1)\">\n    \n    <!-- Selection column -->\n    <ng-container ixColumnDef=\"select\" *ngIf=\"multiSelect\">\n      <ng-template ixHeaderCellDef>\n        <!-- Select all checkbox -->\n      </ng-template>\n      <ng-template ixCellDef let-item>\n        <input \n          type=\"checkbox\" \n          [checked]=\"isSelected(item)\"\n          [disabled]=\"!!item.disabled\"\n          (click)=\"$event.stopPropagation()\"\n          (change)=\"onItemClick(item)\">\n      </ng-template>\n    </ng-container>\n\n    <!-- Name column -->\n    <ng-container ixColumnDef=\"name\">\n      <ng-template ixHeaderCellDef>Name</ng-template>\n      <ng-template ixCellDef let-item>\n        <div class=\"file-name-cell\"\n             [class.selected]=\"isSelected(item)\"\n             [class.disabled]=\"!!item.disabled\"\n             [class.zfs-object]=\"isZfsObject(item)\"\n             (click)=\"onItemClick(item)\"\n             (dblclick)=\"onItemDoubleClick(item)\">\n          <ix-icon \n            [name]=\"getItemIcon(item)\"\n            [library]=\"getItemIconLibrary(item)\"\n            [class]=\"'file-icon-' + item.type\"\n            class=\"file-icon\">\n          </ix-icon>\n          <span class=\"file-name\">{{ item.name }}</span>\n          \n          <!-- ZFS badge -->\n          <span \n            *ngIf=\"isZfsObject(item)\" \n            class=\"zfs-badge\"\n            [class]=\"'zfs-badge-' + item.type\">\n            {{ getZfsBadge(item) }}\n          </span>\n          \n          <!-- Permission indicator -->\n          <ix-icon \n            *ngIf=\"item.permissions === 'none'\"\n            name=\"lock\"\n            library=\"mdi\"\n            class=\"permission-icon\">\n          </ix-icon>\n        </div>\n      </ng-template>\n    </ng-container>\n\n    <!-- Size column -->\n    <ng-container ixColumnDef=\"size\">\n      <ng-template ixHeaderCellDef>Size</ng-template>\n      <ng-template ixCellDef let-item>\n        <span *ngIf=\"item.size !== undefined\">{{ item.size | ixFileSize }}</span>\n        <span *ngIf=\"item.size === undefined && item.type === 'folder'\" class=\"folder-indicator\">--</span>\n      </ng-template>\n    </ng-container>\n\n    <!-- Modified column -->\n    <ng-container ixColumnDef=\"modified\">\n      <ng-template ixHeaderCellDef>Modified</ng-template>\n      <ng-template ixCellDef let-item>\n        <span *ngIf=\"item.modified\">{{ formatDate(item.modified) }}</span>\n      </ng-template>\n    </ng-container>\n\n\n  </ix-table>\n  \n  <!-- Empty state -->\n  <div *ngIf=\"filteredFileItems().length === 0\" class=\"empty-state\">\n    <ix-icon name=\"folder-open\" library=\"mdi\"></ix-icon>\n    <p>No items found</p>\n  </div>\n</div>\n\n<!-- Footer for multi-select -->\n<div *ngIf=\"multiSelect && selectedItems.length > 0\" class=\"ix-file-picker-footer\">\n  <span class=\"selection-count\">\n    {{ selectedItems.length }} item{{ selectedItems.length !== 1 ? 's' : '' }} selected\n  </span>\n  <div class=\"footer-actions\">\n    <ix-button variant=\"outline\" (onClick)=\"selectedItems = []\">\n      Clear Selection\n    </ix-button>\n    <ix-button (onClick)=\"close.emit()\">\n      Done\n    </ix-button>\n  </div>\n</div>", styles: [":host{display:block;background:var(--bg1, white);color:var(--fg1, #333);padding:0;box-shadow:0 4px 16px #0000001f,0 1px 4px #00000014;border-radius:8px;border:1px solid var(--lines, #e0e0e0);min-width:400px;max-width:600px;min-height:500px;max-height:600px;font-family:var(--font-family-body);display:flex;flex-direction:column;overflow:hidden}.ix-file-picker-header{display:flex;align-items:center;justify-content:space-between;padding:var(--content-padding, 24px);padding-bottom:16px;border-bottom:1px solid var(--lines)}.ix-file-picker-breadcrumb{display:flex;align-items:center;gap:4px;flex:1;min-width:0}.ix-file-picker-breadcrumb .breadcrumb-segment{background:transparent;border:none;color:var(--primary);cursor:pointer;padding:4px 8px;border-radius:4px;font-size:.875rem;white-space:nowrap;transition:background-color .15s ease-in-out}.ix-file-picker-breadcrumb .breadcrumb-segment:hover:not(:disabled){background:var(--bg2)}.ix-file-picker-breadcrumb .breadcrumb-segment:disabled,.ix-file-picker-breadcrumb .breadcrumb-segment.current{color:var(--fg1);cursor:default;font-weight:500}.ix-file-picker-breadcrumb .breadcrumb-segment:not(:last-child):after{content:\"/\";margin-left:8px;color:var(--alt-fg1)}.ix-file-picker-actions{display:flex;align-items:center;gap:8px}.ix-file-picker-actions ix-button{font-size:.875rem}.ix-file-picker-loading{display:flex;align-items:center;justify-content:center;gap:8px;padding:40px;color:var(--fg2)}.ix-file-picker-loading ix-icon{animation:spin 1s linear infinite}@keyframes spin{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.ix-file-picker-content{flex:1;padding:16px var(--content-padding, 24px);min-height:0}.file-list-viewport{width:100%;height:100%}.file-list-viewport .cdk-virtual-scroll-content-wrapper{width:100%}ix-table{width:100%}ix-table th{font-weight:600;color:var(--fg1);padding:12px 16px;border-bottom:2px solid var(--lines)}ix-table td{padding:8px 16px;border-bottom:1px solid var(--lines)}.file-checkbox{display:flex;align-items:center}.file-checkbox input[type=checkbox]{margin:0;width:16px;height:16px}.file-name-cell{display:flex;align-items:center;gap:8px;cursor:pointer;transition:background-color .15s ease-in-out}.file-name-cell:hover:not(.disabled){background-color:var(--bg2)}.file-name-cell.selected{background-color:var(--primary);color:var(--primary-txt)}.file-name-cell.disabled{opacity:.6;cursor:not-allowed}.file-icon{font-size:var(--icon-md, 20px);flex-shrink:0}.file-icon.file-icon-dataset{color:var(--blue, #007db3)}.file-icon.file-icon-zvol{color:var(--green, #71BF44)}.file-icon.file-icon-mountpoint{color:var(--orange, #E68D37)}.file-name{flex:1;font-weight:500}.zfs-badge{background:var(--alt-bg2);color:var(--alt-fg2);font-size:.625rem;font-weight:600;padding:2px 6px;border-radius:12px;text-transform:uppercase;letter-spacing:.5px}.zfs-badge.zfs-badge-dataset{background:var(--blue);color:#fff}.zfs-badge.zfs-badge-zvol{background:var(--green);color:#fff}.zfs-badge.zfs-badge-mountpoint{background:var(--orange);color:#fff}.permission-icon{color:var(--red);font-size:var(--icon-sm, 16px)}.file-type{font-size:.875rem;padding:2px 8px;border-radius:12px}.file-type.type-folder{background:var(--alt-bg1);color:var(--alt-fg2)}.file-type.type-file{background:var(--bg2);color:var(--fg2)}.file-type.type-dataset{background:#007db31a;color:var(--blue)}.file-type.type-zvol{background:#71bf441a;color:var(--green)}.file-type.type-mountpoint{background:#e68d371a;color:var(--orange)}.folder-indicator{color:var(--alt-fg1);font-style:italic}.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;color:var(--alt-fg1);text-align:center}.empty-state ix-icon{font-size:48px;margin-bottom:16px;opacity:.5}.empty-state p{margin:0;font-size:.875rem}.ix-file-picker-footer{display:flex;align-items:center;justify-content:space-between;padding:16px var(--content-padding, 24px);border-top:1px solid var(--lines);background:var(--bg2);border-bottom-left-radius:8px;border-bottom-right-radius:8px}.selection-count{font-size:.875rem;color:var(--fg2);font-weight:500}.footer-actions{display:flex;gap:8px}@media (prefers-reduced-motion: reduce){.file-item,.breadcrumb-segment{transition:none}.ix-file-picker-loading ix-icon{animation:none}}@media (prefers-contrast: high){:host{border-width:2px}.file-item:hover,.file-item.selected{border:2px solid var(--fg1)}.zfs-badge{border:1px solid var(--fg1)}}@media (max-width: 768px){:host{min-width:300px;max-width:calc(100vw - 32px);max-height:calc(100vh - 64px)}.ix-file-picker-header{flex-direction:column;gap:12px;align-items:stretch}.ix-file-picker-breadcrumb{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-file-picker-breadcrumb::-webkit-scrollbar{display:none}.file-item{padding:12px;min-height:56px}.file-info{font-size:.875rem}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1.NgForOf, selector: "[ngFor][ngForOf]", inputs: ["ngForOf", "ngForTrackBy", "ngForTemplate"] }, { kind: "directive", type: i1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }, { kind: "component", type: IxButtonComponent, selector: "ix-button", inputs: ["primary", "color", "variant", "backgroundColor", "label"], outputs: ["onClick"] }, { kind: "component", type: IxTableComponent, selector: "ix-table", inputs: ["dataSource", "displayedColumns"] }, { kind: "directive", type: IxTableColumnDirective, selector: "[ixColumnDef]", inputs: ["ixColumnDef"], exportAs: ["ixColumnDef"] }, { kind: "directive", type: IxHeaderCellDefDirective, selector: "[ixHeaderCellDef]" }, { kind: "directive", type: IxCellDefDirective, selector: "[ixCellDef]" }, { kind: "ngmodule", type: ScrollingModule }, { kind: "ngmodule", type: A11yModule }, { kind: "pipe", type: FileSizePipe, name: "ixFileSize" }] });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxFilePickerPopupComponent, deps: [{ token: IxIconRegistryService }], target: i0.ɵɵFactoryTarget.Component });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxFilePickerPopupComponent, isStandalone: true, selector: "ix-file-picker-popup", inputs: { mode: { classPropertyName: "mode", publicName: "mode", isSignal: true, isRequired: false, transformFunction: null }, multiSelect: { classPropertyName: "multiSelect", publicName: "multiSelect", isSignal: true, isRequired: false, transformFunction: null }, allowCreate: { classPropertyName: "allowCreate", publicName: "allowCreate", isSignal: true, isRequired: false, transformFunction: null }, allowDatasetCreate: { classPropertyName: "allowDatasetCreate", publicName: "allowDatasetCreate", isSignal: true, isRequired: false, transformFunction: null }, allowZvolCreate: { classPropertyName: "allowZvolCreate", publicName: "allowZvolCreate", isSignal: true, isRequired: false, transformFunction: null }, currentPath: { classPropertyName: "currentPath", publicName: "currentPath", isSignal: true, isRequired: false, transformFunction: null }, fileItems: { classPropertyName: "fileItems", publicName: "fileItems", isSignal: true, isRequired: false, transformFunction: null }, selectedItems: { classPropertyName: "selectedItems", publicName: "selectedItems", isSignal: true, isRequired: false, transformFunction: null }, loading: { classPropertyName: "loading", publicName: "loading", isSignal: true, isRequired: false, transformFunction: null }, creationLoading: { classPropertyName: "creationLoading", publicName: "creationLoading", isSignal: true, isRequired: false, transformFunction: null }, fileExtensions: { classPropertyName: "fileExtensions", publicName: "fileExtensions", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { itemClick: "itemClick", itemDoubleClick: "itemDoubleClick", pathNavigate: "pathNavigate", createFolder: "createFolder", clearSelection: "clearSelection", close: "close", submit: "submit", cancel: "cancel", submitFolderName: "submitFolderName", cancelFolderCreation: "cancelFolderCreation" }, host: { classAttribute: "ix-file-picker-popup" }, ngImport: i0, template: "<!-- Header with breadcrumb navigation -->\n<div class=\"ix-file-picker-header\">\n  <nav class=\"ix-file-picker-breadcrumb\" aria-label=\"File path\">\n    <button\n      *ngFor=\"let segment of currentPath() | ixTruncatePath; let last = last\"\n      class=\"breadcrumb-segment\"\n      [class.current]=\"last\"\n      [class.parent-nav]=\"segment.name === '..'\"\n      [disabled]=\"last\"\n      (click)=\"navigateToPath(segment.path)\">\n      {{ segment.name }}\n    </button>\n  </nav>\n\n  <div class=\"ix-file-picker-actions\">\n    <ix-button\n      *ngIf=\"allowCreate()\"\n      variant=\"outline\"\n      label=\"New Folder\"\n      [disabled]=\"isCreateDisabled()\"\n      (onClick)=\"onCreateFolder()\">\n    </ix-button>\n  </div>\n</div>\n\n<!-- Loading indicator -->\n<div *ngIf=\"loading()\" class=\"ix-file-picker-loading\">\n  <ix-icon name=\"loading\" library=\"mdi\"></ix-icon>\n  <span>Loading...</span>\n</div>\n\n<!-- File table -->\n<div class=\"ix-file-picker-content\" *ngIf=\"!loading()\">\n  <ix-table\n    [dataSource]=\"filteredFileItems()\"\n    [displayedColumns]=\"multiSelect() ? displayedColumns : displayedColumns.slice(1)\">\n\n    <!-- Selection column -->\n    <ng-container ixColumnDef=\"select\" *ngIf=\"multiSelect()\">\n      <ng-template ixHeaderCellDef>\n        <!-- Select all checkbox -->\n      </ng-template>\n      <ng-template ixCellDef let-item>\n        <input \n          type=\"checkbox\" \n          [checked]=\"isSelected(item)\"\n          [disabled]=\"!!item.disabled\"\n          (click)=\"$event.stopPropagation()\"\n          (change)=\"onItemClick(item)\">\n      </ng-template>\n    </ng-container>\n\n    <!-- Name column -->\n    <ng-container ixColumnDef=\"name\">\n      <ng-template ixHeaderCellDef>Name</ng-template>\n      <ng-template ixCellDef let-item>\n\n        <!-- NORMAL MODE: Display name -->\n        <div *ngIf=\"!item.isCreating\"\n             class=\"file-name-cell\"\n             [class.disabled]=\"!!item.disabled\"\n             [class.zfs-object]=\"isZfsObject(item)\"\n             (click)=\"onItemClick(item)\"\n             (dblclick)=\"onItemDoubleClick(item)\">\n          <ix-icon\n            [name]=\"getItemIcon(item)\"\n            [library]=\"getItemIconLibrary(item)\"\n            [class]=\"'file-icon-' + item.type\"\n            class=\"file-icon\">\n          </ix-icon>\n          <span class=\"file-name\">{{ item.name }}</span>\n\n          <!-- ZFS badge -->\n          <span\n            *ngIf=\"isZfsObject(item)\"\n            class=\"zfs-badge\"\n            [class]=\"'zfs-badge-' + item.type\">\n            {{ getZfsBadge(item) }}\n          </span>\n\n          <!-- Permission indicator -->\n          <ix-icon\n            *ngIf=\"item.permissions === 'none'\"\n            name=\"lock\"\n            library=\"mdi\"\n            class=\"permission-icon\">\n          </ix-icon>\n        </div>\n\n        <!-- EDIT MODE: Inline name input with error display -->\n        <div *ngIf=\"item.isCreating\" class=\"file-name-cell-wrapper\">\n          <div class=\"file-name-cell editing\" [class.has-error]=\"!!item.creationError\">\n            <ix-icon\n              name=\"folder\"\n              library=\"mdi\"\n              class=\"file-icon file-icon-folder\">\n            </ix-icon>\n            <input\n              #folderNameInput\n              type=\"text\"\n              role=\"textbox\"\n              aria-label=\"Folder name\"\n              class=\"folder-name-input\"\n              [class.error]=\"!!item.creationError\"\n              [value]=\"item.name\"\n              [disabled]=\"creationLoading()\"\n              (keydown)=\"onFolderNameKeyDown($event, item)\"\n              (blur)=\"onFolderNameInputBlur($event, item)\"\n              [attr.data-autofocus]=\"true\"\n              spellcheck=\"false\"\n              autocomplete=\"off\">\n\n            <!-- Loading indicator during submission -->\n            <ix-icon\n              *ngIf=\"creationLoading()\"\n              name=\"loading\"\n              library=\"mdi\"\n              class=\"creation-loading-icon\">\n            </ix-icon>\n          </div>\n\n          <!-- Inline error message -->\n          <div *ngIf=\"item.creationError\" class=\"folder-creation-error\">\n            <ix-icon name=\"alert-circle\" library=\"mdi\" class=\"error-icon\"></ix-icon>\n            <span class=\"error-text\">{{ item.creationError }}</span>\n          </div>\n        </div>\n\n      </ng-template>\n    </ng-container>\n\n    <!-- Size column -->\n    <ng-container ixColumnDef=\"size\">\n      <ng-template ixHeaderCellDef>Size</ng-template>\n      <ng-template ixCellDef let-item>\n        <span *ngIf=\"item.size !== undefined\">{{ item.size | ixFileSize }}</span>\n        <span *ngIf=\"item.size === undefined && item.type === 'folder'\" class=\"folder-indicator\">--</span>\n      </ng-template>\n    </ng-container>\n\n    <!-- Modified column -->\n    <ng-container ixColumnDef=\"modified\">\n      <ng-template ixHeaderCellDef>Modified</ng-template>\n      <ng-template ixCellDef let-item>\n        <span *ngIf=\"item.modified\">{{ formatDate(item.modified) }}</span>\n      </ng-template>\n    </ng-container>\n\n\n  </ix-table>\n  \n  <!-- Empty state -->\n  <div *ngIf=\"filteredFileItems().length === 0\" class=\"empty-state\">\n    <ix-icon name=\"folder-open\" library=\"mdi\"></ix-icon>\n    <p>No items found</p>\n  </div>\n</div>\n\n<!-- Footer -->\n<div class=\"ix-file-picker-footer\" *ngIf=\"!loading()\">\n  <span class=\"selection-count\" *ngIf=\"selectedItems().length > 0\">\n    {{ selectedItems().length }} item{{ selectedItems().length !== 1 ? 's' : '' }} selected\n  </span>\n  <span class=\"selection-count\" *ngIf=\"selectedItems().length === 0\">\n    No items selected\n  </span>\n  <div class=\"footer-actions\">\n    <ix-button\n      label=\"Select\"\n      [disabled]=\"selectedItems().length === 0\"\n      (onClick)=\"onSubmit()\">\n    </ix-button>\n  </div>\n</div>", styles: [":host{display:block;background:var(--bg1, white);color:var(--fg1, #333);padding:0;box-shadow:0 4px 16px #0000001f,0 1px 4px #00000014;border-radius:8px;border:1px solid var(--lines, #e0e0e0);min-width:400px;max-width:600px;min-height:500px;max-height:600px;font-family:var(--font-family-body);display:flex;flex-direction:column;overflow:hidden}.ix-file-picker-header{display:flex;align-items:center;justify-content:space-between;padding:var(--content-padding, 24px);padding-bottom:16px;border-bottom:1px solid var(--lines)}.ix-file-picker-breadcrumb{display:flex;align-items:center;gap:4px;flex:1;min-width:0}.ix-file-picker-breadcrumb .breadcrumb-segment{background:transparent;border:none;color:var(--primary);cursor:pointer;padding:4px 8px;border-radius:4px;font-size:.875rem;white-space:nowrap;transition:background-color .15s ease-in-out}.ix-file-picker-breadcrumb .breadcrumb-segment:hover:not(:disabled){background:var(--bg2)}.ix-file-picker-breadcrumb .breadcrumb-segment:disabled,.ix-file-picker-breadcrumb .breadcrumb-segment.current{color:var(--fg1);cursor:default;font-weight:500}.ix-file-picker-breadcrumb .breadcrumb-segment:not(:last-child):after{content:\"/\";margin-left:8px;color:var(--alt-fg1)}.ix-file-picker-actions{display:flex;align-items:center;gap:8px}.ix-file-picker-actions ix-button{font-size:.875rem}.ix-file-picker-loading{display:flex;align-items:center;justify-content:center;gap:8px;padding:40px;color:var(--fg2)}.ix-file-picker-loading ix-icon{animation:spin 1s linear infinite}@keyframes spin{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.ix-file-picker-content{flex:1;min-height:0;overflow-y:auto}.file-list-viewport{width:100%;height:100%}.file-list-viewport .cdk-virtual-scroll-content-wrapper{width:100%}ix-table{width:100%}ix-table th,ix-table .ix-table__header-cell{font-weight:600;color:var(--fg1);padding:12px 16px;border-bottom:2px solid var(--lines)}ix-table td,ix-table .ix-table__cell{padding:8px 16px;border-bottom:1px solid var(--lines)}.file-checkbox{display:flex;align-items:center}.file-checkbox input[type=checkbox]{margin:0;width:16px;height:16px}.file-name-cell{display:flex;align-items:center;gap:8px;cursor:pointer}.file-name-cell.disabled{opacity:.5;color:var(--fg2, #757575)}.file-name-cell.disabled .file-name{color:var(--fg2, #757575)}.file-name-cell.disabled .file-icon{opacity:.6}.file-name-cell.disabled:has(.file-icon-folder),.file-name-cell.disabled:has(.file-icon-dataset),.file-name-cell.disabled:has(.file-icon-mountpoint){cursor:pointer}.file-name-cell.disabled:not(:has(.file-icon-folder)):not(:has(.file-icon-dataset)):not(:has(.file-icon-mountpoint)){cursor:not-allowed}.file-name-cell.editing{display:flex;align-items:center;gap:8px;padding:2px;cursor:default}.file-name-cell.editing .folder-name-input{flex:1;border:2px solid var(--primary, #0066cc);padding:4px 8px;font-size:inherit;font-family:inherit;background:var(--bg1, white);color:var(--fg1, black);outline:none;border-radius:3px;min-width:200px}.file-name-cell.editing .folder-name-input:focus{border-color:var(--primary, #0066cc);box-shadow:0 0 0 3px #0066cc1a}.file-name-cell.editing .folder-name-input.error{border-color:var(--error, #d32f2f)}.file-name-cell.editing .folder-name-input:disabled{opacity:.6;cursor:not-allowed;background:var(--bg2, #f5f5f5)}.file-name-cell.editing .creation-loading-icon{animation:spin 1s linear infinite;color:var(--primary, #0066cc);flex-shrink:0}.file-name-cell-wrapper{display:flex;flex-direction:column;gap:4px}.folder-creation-error{display:flex;align-items:center;gap:6px;padding:4px 8px 4px 36px;margin-bottom:12px;background:#d32f2f1a;border-left:3px solid var(--error, #d32f2f);border-radius:3px;font-size:.875rem;color:var(--error, #d32f2f)}.folder-creation-error .error-icon{flex-shrink:0;width:20px;height:20px}.folder-creation-error .error-text{flex:1}.file-icon{display:flex;align-items:center;justify-content:center;font-size:var(--icon-md, 20px);flex-shrink:0;line-height:1}.file-icon.file-icon-folder{color:var(--primary)}.file-icon.file-icon-dataset{color:var(--blue, #007db3)}.file-icon.file-icon-zvol{color:var(--green, #71BF44)}.file-icon.file-icon-mountpoint{color:var(--orange, #E68D37)}.file-name{flex:1;font-weight:500;line-height:1.4}.zfs-badge{display:inline-flex;align-items:center;background:var(--alt-bg2);color:var(--alt-fg2);font-size:.625rem;font-weight:600;padding:2px 6px;border-radius:12px;text-transform:uppercase;letter-spacing:.5px;line-height:1}.zfs-badge.zfs-badge-dataset{background:var(--blue);color:#fff}.zfs-badge.zfs-badge-zvol{background:var(--green);color:#fff}.zfs-badge.zfs-badge-mountpoint{background:var(--orange);color:#fff}.permission-icon{display:flex;align-items:center;justify-content:center;color:var(--red);font-size:var(--icon-sm, 16px);line-height:1}.file-type{font-size:.875rem;padding:2px 8px;border-radius:12px}.file-type.type-folder{background:var(--alt-bg1);color:var(--alt-fg2)}.file-type.type-file{background:var(--bg2);color:var(--fg2)}.file-type.type-dataset{background:#007db31a;color:var(--blue)}.file-type.type-zvol{background:#71bf441a;color:var(--green)}.file-type.type-mountpoint{background:#e68d371a;color:var(--orange)}.folder-indicator{color:var(--alt-fg1);font-style:italic}.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;color:var(--alt-fg1);text-align:center}.empty-state ix-icon{font-size:48px;margin-bottom:16px;opacity:.5}.empty-state p{margin:0;font-size:.875rem}.ix-file-picker-footer{display:flex;align-items:center;justify-content:space-between;padding:16px var(--content-padding, 24px);border-top:1px solid var(--lines);background:var(--bg2);border-bottom-left-radius:8px;border-bottom-right-radius:8px}.selection-count{font-size:.875rem;color:var(--fg2);font-weight:500}.footer-actions{display:flex;gap:8px}@media (prefers-reduced-motion: reduce){.file-item,.breadcrumb-segment{transition:none}.ix-file-picker-loading ix-icon{animation:none}}@media (prefers-contrast: high){:host{border-width:2px}.file-item:hover,.file-item.selected{border:2px solid var(--fg1)}.zfs-badge{border:1px solid var(--fg1)}}@media (max-width: 768px){:host{min-width:300px;max-width:calc(100vw - 32px);max-height:calc(100vh - 64px)}.ix-file-picker-header{flex-direction:column;gap:12px;align-items:stretch}.ix-file-picker-breadcrumb{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-file-picker-breadcrumb::-webkit-scrollbar{display:none}.file-item{padding:12px;min-height:56px}.file-info{font-size:.875rem}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1.NgForOf, selector: "[ngFor][ngForOf]", inputs: ["ngForOf", "ngForTrackBy", "ngForTemplate"] }, { kind: "directive", type: i1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }, { kind: "component", type: IxButtonComponent, selector: "ix-button", inputs: ["primary", "color", "variant", "backgroundColor", "label", "disabled"], outputs: ["onClick"] }, { kind: "component", type: IxTableComponent, selector: "ix-table", inputs: ["dataSource", "displayedColumns"] }, { kind: "directive", type: IxTableColumnDirective, selector: "[ixColumnDef]", inputs: ["ixColumnDef"], exportAs: ["ixColumnDef"] }, { kind: "directive", type: IxHeaderCellDefDirective, selector: "[ixHeaderCellDef]" }, { kind: "directive", type: IxCellDefDirective, selector: "[ixCellDef]" }, { kind: "ngmodule", type: ScrollingModule }, { kind: "ngmodule", type: A11yModule }, { kind: "pipe", type: FileSizePipe, name: "ixFileSize" }, { kind: "pipe", type: TruncatePathPipe, name: "ixTruncatePath" }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxFilePickerPopupComponent, decorators: [{
             type: Component,
@@ -7849,31 +8111,12 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                         IxCellDefDirective,
                         ScrollingModule,
                         A11yModule,
-                        FileSizePipe
+                        FileSizePipe,
+                        TruncatePathPipe
                     ], host: {
                         'class': 'ix-file-picker-popup'
-                    }, template: "<!-- Header with breadcrumb navigation -->\n<div class=\"ix-file-picker-header\">\n  <nav class=\"ix-file-picker-breadcrumb\" aria-label=\"File path\">\n    <button \n      *ngFor=\"let segment of pathSegments(); let last = last\"\n      class=\"breadcrumb-segment\"\n      [class.current]=\"last\"\n      [disabled]=\"last\"\n      (click)=\"navigateToPath(segment.path)\">\n      {{ segment.name }}\n    </button>\n  </nav>\n  \n  <div class=\"ix-file-picker-actions\">\n    <ix-button \n      *ngIf=\"allowCreate\" \n      variant=\"outline\"\n      (onClick)=\"onCreateFolder()\">\n      <ix-icon name=\"folder-plus\" library=\"mdi\"></ix-icon>\n      New Folder\n    </ix-button>\n  </div>\n</div>\n\n<!-- Loading indicator -->\n<div *ngIf=\"loading\" class=\"ix-file-picker-loading\">\n  <ix-icon name=\"loading\" library=\"mdi\"></ix-icon>\n  <span>Loading...</span>\n</div>\n\n<!-- File table -->\n<div class=\"ix-file-picker-content\" *ngIf=\"!loading\">\n  <ix-table \n    [dataSource]=\"filteredFileItems()\"\n    [displayedColumns]=\"multiSelect ? displayedColumns : displayedColumns.slice(1)\">\n    \n    <!-- Selection column -->\n    <ng-container ixColumnDef=\"select\" *ngIf=\"multiSelect\">\n      <ng-template ixHeaderCellDef>\n        <!-- Select all checkbox -->\n      </ng-template>\n      <ng-template ixCellDef let-item>\n        <input \n          type=\"checkbox\" \n          [checked]=\"isSelected(item)\"\n          [disabled]=\"!!item.disabled\"\n          (click)=\"$event.stopPropagation()\"\n          (change)=\"onItemClick(item)\">\n      </ng-template>\n    </ng-container>\n\n    <!-- Name column -->\n    <ng-container ixColumnDef=\"name\">\n      <ng-template ixHeaderCellDef>Name</ng-template>\n      <ng-template ixCellDef let-item>\n        <div class=\"file-name-cell\"\n             [class.selected]=\"isSelected(item)\"\n             [class.disabled]=\"!!item.disabled\"\n             [class.zfs-object]=\"isZfsObject(item)\"\n             (click)=\"onItemClick(item)\"\n             (dblclick)=\"onItemDoubleClick(item)\">\n          <ix-icon \n            [name]=\"getItemIcon(item)\"\n            [library]=\"getItemIconLibrary(item)\"\n            [class]=\"'file-icon-' + item.type\"\n            class=\"file-icon\">\n          </ix-icon>\n          <span class=\"file-name\">{{ item.name }}</span>\n          \n          <!-- ZFS badge -->\n          <span \n            *ngIf=\"isZfsObject(item)\" \n            class=\"zfs-badge\"\n            [class]=\"'zfs-badge-' + item.type\">\n            {{ getZfsBadge(item) }}\n          </span>\n          \n          <!-- Permission indicator -->\n          <ix-icon \n            *ngIf=\"item.permissions === 'none'\"\n            name=\"lock\"\n            library=\"mdi\"\n            class=\"permission-icon\">\n          </ix-icon>\n        </div>\n      </ng-template>\n    </ng-container>\n\n    <!-- Size column -->\n    <ng-container ixColumnDef=\"size\">\n      <ng-template ixHeaderCellDef>Size</ng-template>\n      <ng-template ixCellDef let-item>\n        <span *ngIf=\"item.size !== undefined\">{{ item.size | ixFileSize }}</span>\n        <span *ngIf=\"item.size === undefined && item.type === 'folder'\" class=\"folder-indicator\">--</span>\n      </ng-template>\n    </ng-container>\n\n    <!-- Modified column -->\n    <ng-container ixColumnDef=\"modified\">\n      <ng-template ixHeaderCellDef>Modified</ng-template>\n      <ng-template ixCellDef let-item>\n        <span *ngIf=\"item.modified\">{{ formatDate(item.modified) }}</span>\n      </ng-template>\n    </ng-container>\n\n\n  </ix-table>\n  \n  <!-- Empty state -->\n  <div *ngIf=\"filteredFileItems().length === 0\" class=\"empty-state\">\n    <ix-icon name=\"folder-open\" library=\"mdi\"></ix-icon>\n    <p>No items found</p>\n  </div>\n</div>\n\n<!-- Footer for multi-select -->\n<div *ngIf=\"multiSelect && selectedItems.length > 0\" class=\"ix-file-picker-footer\">\n  <span class=\"selection-count\">\n    {{ selectedItems.length }} item{{ selectedItems.length !== 1 ? 's' : '' }} selected\n  </span>\n  <div class=\"footer-actions\">\n    <ix-button variant=\"outline\" (onClick)=\"selectedItems = []\">\n      Clear Selection\n    </ix-button>\n    <ix-button (onClick)=\"close.emit()\">\n      Done\n    </ix-button>\n  </div>\n</div>", styles: [":host{display:block;background:var(--bg1, white);color:var(--fg1, #333);padding:0;box-shadow:0 4px 16px #0000001f,0 1px 4px #00000014;border-radius:8px;border:1px solid var(--lines, #e0e0e0);min-width:400px;max-width:600px;min-height:500px;max-height:600px;font-family:var(--font-family-body);display:flex;flex-direction:column;overflow:hidden}.ix-file-picker-header{display:flex;align-items:center;justify-content:space-between;padding:var(--content-padding, 24px);padding-bottom:16px;border-bottom:1px solid var(--lines)}.ix-file-picker-breadcrumb{display:flex;align-items:center;gap:4px;flex:1;min-width:0}.ix-file-picker-breadcrumb .breadcrumb-segment{background:transparent;border:none;color:var(--primary);cursor:pointer;padding:4px 8px;border-radius:4px;font-size:.875rem;white-space:nowrap;transition:background-color .15s ease-in-out}.ix-file-picker-breadcrumb .breadcrumb-segment:hover:not(:disabled){background:var(--bg2)}.ix-file-picker-breadcrumb .breadcrumb-segment:disabled,.ix-file-picker-breadcrumb .breadcrumb-segment.current{color:var(--fg1);cursor:default;font-weight:500}.ix-file-picker-breadcrumb .breadcrumb-segment:not(:last-child):after{content:\"/\";margin-left:8px;color:var(--alt-fg1)}.ix-file-picker-actions{display:flex;align-items:center;gap:8px}.ix-file-picker-actions ix-button{font-size:.875rem}.ix-file-picker-loading{display:flex;align-items:center;justify-content:center;gap:8px;padding:40px;color:var(--fg2)}.ix-file-picker-loading ix-icon{animation:spin 1s linear infinite}@keyframes spin{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.ix-file-picker-content{flex:1;padding:16px var(--content-padding, 24px);min-height:0}.file-list-viewport{width:100%;height:100%}.file-list-viewport .cdk-virtual-scroll-content-wrapper{width:100%}ix-table{width:100%}ix-table th{font-weight:600;color:var(--fg1);padding:12px 16px;border-bottom:2px solid var(--lines)}ix-table td{padding:8px 16px;border-bottom:1px solid var(--lines)}.file-checkbox{display:flex;align-items:center}.file-checkbox input[type=checkbox]{margin:0;width:16px;height:16px}.file-name-cell{display:flex;align-items:center;gap:8px;cursor:pointer;transition:background-color .15s ease-in-out}.file-name-cell:hover:not(.disabled){background-color:var(--bg2)}.file-name-cell.selected{background-color:var(--primary);color:var(--primary-txt)}.file-name-cell.disabled{opacity:.6;cursor:not-allowed}.file-icon{font-size:var(--icon-md, 20px);flex-shrink:0}.file-icon.file-icon-dataset{color:var(--blue, #007db3)}.file-icon.file-icon-zvol{color:var(--green, #71BF44)}.file-icon.file-icon-mountpoint{color:var(--orange, #E68D37)}.file-name{flex:1;font-weight:500}.zfs-badge{background:var(--alt-bg2);color:var(--alt-fg2);font-size:.625rem;font-weight:600;padding:2px 6px;border-radius:12px;text-transform:uppercase;letter-spacing:.5px}.zfs-badge.zfs-badge-dataset{background:var(--blue);color:#fff}.zfs-badge.zfs-badge-zvol{background:var(--green);color:#fff}.zfs-badge.zfs-badge-mountpoint{background:var(--orange);color:#fff}.permission-icon{color:var(--red);font-size:var(--icon-sm, 16px)}.file-type{font-size:.875rem;padding:2px 8px;border-radius:12px}.file-type.type-folder{background:var(--alt-bg1);color:var(--alt-fg2)}.file-type.type-file{background:var(--bg2);color:var(--fg2)}.file-type.type-dataset{background:#007db31a;color:var(--blue)}.file-type.type-zvol{background:#71bf441a;color:var(--green)}.file-type.type-mountpoint{background:#e68d371a;color:var(--orange)}.folder-indicator{color:var(--alt-fg1);font-style:italic}.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;color:var(--alt-fg1);text-align:center}.empty-state ix-icon{font-size:48px;margin-bottom:16px;opacity:.5}.empty-state p{margin:0;font-size:.875rem}.ix-file-picker-footer{display:flex;align-items:center;justify-content:space-between;padding:16px var(--content-padding, 24px);border-top:1px solid var(--lines);background:var(--bg2);border-bottom-left-radius:8px;border-bottom-right-radius:8px}.selection-count{font-size:.875rem;color:var(--fg2);font-weight:500}.footer-actions{display:flex;gap:8px}@media (prefers-reduced-motion: reduce){.file-item,.breadcrumb-segment{transition:none}.ix-file-picker-loading ix-icon{animation:none}}@media (prefers-contrast: high){:host{border-width:2px}.file-item:hover,.file-item.selected{border:2px solid var(--fg1)}.zfs-badge{border:1px solid var(--fg1)}}@media (max-width: 768px){:host{min-width:300px;max-width:calc(100vw - 32px);max-height:calc(100vh - 64px)}.ix-file-picker-header{flex-direction:column;gap:12px;align-items:stretch}.ix-file-picker-breadcrumb{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-file-picker-breadcrumb::-webkit-scrollbar{display:none}.file-item{padding:12px;min-height:56px}.file-info{font-size:.875rem}}\n"] }]
-        }], ctorParameters: () => [], propDecorators: { mode: [{
-                type: Input
-            }], multiSelect: [{
-                type: Input
-            }], allowCreate: [{
-                type: Input
-            }], allowDatasetCreate: [{
-                type: Input
-            }], allowZvolCreate: [{
-                type: Input
-            }], currentPath: [{
-                type: Input
-            }], fileItems: [{
-                type: Input
-            }], selectedItems: [{
-                type: Input
-            }], loading: [{
-                type: Input
-            }], fileExtensions: [{
-                type: Input
-            }], itemClick: [{
+                    }, template: "<!-- Header with breadcrumb navigation -->\n<div class=\"ix-file-picker-header\">\n  <nav class=\"ix-file-picker-breadcrumb\" aria-label=\"File path\">\n    <button\n      *ngFor=\"let segment of currentPath() | ixTruncatePath; let last = last\"\n      class=\"breadcrumb-segment\"\n      [class.current]=\"last\"\n      [class.parent-nav]=\"segment.name === '..'\"\n      [disabled]=\"last\"\n      (click)=\"navigateToPath(segment.path)\">\n      {{ segment.name }}\n    </button>\n  </nav>\n\n  <div class=\"ix-file-picker-actions\">\n    <ix-button\n      *ngIf=\"allowCreate()\"\n      variant=\"outline\"\n      label=\"New Folder\"\n      [disabled]=\"isCreateDisabled()\"\n      (onClick)=\"onCreateFolder()\">\n    </ix-button>\n  </div>\n</div>\n\n<!-- Loading indicator -->\n<div *ngIf=\"loading()\" class=\"ix-file-picker-loading\">\n  <ix-icon name=\"loading\" library=\"mdi\"></ix-icon>\n  <span>Loading...</span>\n</div>\n\n<!-- File table -->\n<div class=\"ix-file-picker-content\" *ngIf=\"!loading()\">\n  <ix-table\n    [dataSource]=\"filteredFileItems()\"\n    [displayedColumns]=\"multiSelect() ? displayedColumns : displayedColumns.slice(1)\">\n\n    <!-- Selection column -->\n    <ng-container ixColumnDef=\"select\" *ngIf=\"multiSelect()\">\n      <ng-template ixHeaderCellDef>\n        <!-- Select all checkbox -->\n      </ng-template>\n      <ng-template ixCellDef let-item>\n        <input \n          type=\"checkbox\" \n          [checked]=\"isSelected(item)\"\n          [disabled]=\"!!item.disabled\"\n          (click)=\"$event.stopPropagation()\"\n          (change)=\"onItemClick(item)\">\n      </ng-template>\n    </ng-container>\n\n    <!-- Name column -->\n    <ng-container ixColumnDef=\"name\">\n      <ng-template ixHeaderCellDef>Name</ng-template>\n      <ng-template ixCellDef let-item>\n\n        <!-- NORMAL MODE: Display name -->\n        <div *ngIf=\"!item.isCreating\"\n             class=\"file-name-cell\"\n             [class.disabled]=\"!!item.disabled\"\n             [class.zfs-object]=\"isZfsObject(item)\"\n             (click)=\"onItemClick(item)\"\n             (dblclick)=\"onItemDoubleClick(item)\">\n          <ix-icon\n            [name]=\"getItemIcon(item)\"\n            [library]=\"getItemIconLibrary(item)\"\n            [class]=\"'file-icon-' + item.type\"\n            class=\"file-icon\">\n          </ix-icon>\n          <span class=\"file-name\">{{ item.name }}</span>\n\n          <!-- ZFS badge -->\n          <span\n            *ngIf=\"isZfsObject(item)\"\n            class=\"zfs-badge\"\n            [class]=\"'zfs-badge-' + item.type\">\n            {{ getZfsBadge(item) }}\n          </span>\n\n          <!-- Permission indicator -->\n          <ix-icon\n            *ngIf=\"item.permissions === 'none'\"\n            name=\"lock\"\n            library=\"mdi\"\n            class=\"permission-icon\">\n          </ix-icon>\n        </div>\n\n        <!-- EDIT MODE: Inline name input with error display -->\n        <div *ngIf=\"item.isCreating\" class=\"file-name-cell-wrapper\">\n          <div class=\"file-name-cell editing\" [class.has-error]=\"!!item.creationError\">\n            <ix-icon\n              name=\"folder\"\n              library=\"mdi\"\n              class=\"file-icon file-icon-folder\">\n            </ix-icon>\n            <input\n              #folderNameInput\n              type=\"text\"\n              role=\"textbox\"\n              aria-label=\"Folder name\"\n              class=\"folder-name-input\"\n              [class.error]=\"!!item.creationError\"\n              [value]=\"item.name\"\n              [disabled]=\"creationLoading()\"\n              (keydown)=\"onFolderNameKeyDown($event, item)\"\n              (blur)=\"onFolderNameInputBlur($event, item)\"\n              [attr.data-autofocus]=\"true\"\n              spellcheck=\"false\"\n              autocomplete=\"off\">\n\n            <!-- Loading indicator during submission -->\n            <ix-icon\n              *ngIf=\"creationLoading()\"\n              name=\"loading\"\n              library=\"mdi\"\n              class=\"creation-loading-icon\">\n            </ix-icon>\n          </div>\n\n          <!-- Inline error message -->\n          <div *ngIf=\"item.creationError\" class=\"folder-creation-error\">\n            <ix-icon name=\"alert-circle\" library=\"mdi\" class=\"error-icon\"></ix-icon>\n            <span class=\"error-text\">{{ item.creationError }}</span>\n          </div>\n        </div>\n\n      </ng-template>\n    </ng-container>\n\n    <!-- Size column -->\n    <ng-container ixColumnDef=\"size\">\n      <ng-template ixHeaderCellDef>Size</ng-template>\n      <ng-template ixCellDef let-item>\n        <span *ngIf=\"item.size !== undefined\">{{ item.size | ixFileSize }}</span>\n        <span *ngIf=\"item.size === undefined && item.type === 'folder'\" class=\"folder-indicator\">--</span>\n      </ng-template>\n    </ng-container>\n\n    <!-- Modified column -->\n    <ng-container ixColumnDef=\"modified\">\n      <ng-template ixHeaderCellDef>Modified</ng-template>\n      <ng-template ixCellDef let-item>\n        <span *ngIf=\"item.modified\">{{ formatDate(item.modified) }}</span>\n      </ng-template>\n    </ng-container>\n\n\n  </ix-table>\n  \n  <!-- Empty state -->\n  <div *ngIf=\"filteredFileItems().length === 0\" class=\"empty-state\">\n    <ix-icon name=\"folder-open\" library=\"mdi\"></ix-icon>\n    <p>No items found</p>\n  </div>\n</div>\n\n<!-- Footer -->\n<div class=\"ix-file-picker-footer\" *ngIf=\"!loading()\">\n  <span class=\"selection-count\" *ngIf=\"selectedItems().length > 0\">\n    {{ selectedItems().length }} item{{ selectedItems().length !== 1 ? 's' : '' }} selected\n  </span>\n  <span class=\"selection-count\" *ngIf=\"selectedItems().length === 0\">\n    No items selected\n  </span>\n  <div class=\"footer-actions\">\n    <ix-button\n      label=\"Select\"\n      [disabled]=\"selectedItems().length === 0\"\n      (onClick)=\"onSubmit()\">\n    </ix-button>\n  </div>\n</div>", styles: [":host{display:block;background:var(--bg1, white);color:var(--fg1, #333);padding:0;box-shadow:0 4px 16px #0000001f,0 1px 4px #00000014;border-radius:8px;border:1px solid var(--lines, #e0e0e0);min-width:400px;max-width:600px;min-height:500px;max-height:600px;font-family:var(--font-family-body);display:flex;flex-direction:column;overflow:hidden}.ix-file-picker-header{display:flex;align-items:center;justify-content:space-between;padding:var(--content-padding, 24px);padding-bottom:16px;border-bottom:1px solid var(--lines)}.ix-file-picker-breadcrumb{display:flex;align-items:center;gap:4px;flex:1;min-width:0}.ix-file-picker-breadcrumb .breadcrumb-segment{background:transparent;border:none;color:var(--primary);cursor:pointer;padding:4px 8px;border-radius:4px;font-size:.875rem;white-space:nowrap;transition:background-color .15s ease-in-out}.ix-file-picker-breadcrumb .breadcrumb-segment:hover:not(:disabled){background:var(--bg2)}.ix-file-picker-breadcrumb .breadcrumb-segment:disabled,.ix-file-picker-breadcrumb .breadcrumb-segment.current{color:var(--fg1);cursor:default;font-weight:500}.ix-file-picker-breadcrumb .breadcrumb-segment:not(:last-child):after{content:\"/\";margin-left:8px;color:var(--alt-fg1)}.ix-file-picker-actions{display:flex;align-items:center;gap:8px}.ix-file-picker-actions ix-button{font-size:.875rem}.ix-file-picker-loading{display:flex;align-items:center;justify-content:center;gap:8px;padding:40px;color:var(--fg2)}.ix-file-picker-loading ix-icon{animation:spin 1s linear infinite}@keyframes spin{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.ix-file-picker-content{flex:1;min-height:0;overflow-y:auto}.file-list-viewport{width:100%;height:100%}.file-list-viewport .cdk-virtual-scroll-content-wrapper{width:100%}ix-table{width:100%}ix-table th,ix-table .ix-table__header-cell{font-weight:600;color:var(--fg1);padding:12px 16px;border-bottom:2px solid var(--lines)}ix-table td,ix-table .ix-table__cell{padding:8px 16px;border-bottom:1px solid var(--lines)}.file-checkbox{display:flex;align-items:center}.file-checkbox input[type=checkbox]{margin:0;width:16px;height:16px}.file-name-cell{display:flex;align-items:center;gap:8px;cursor:pointer}.file-name-cell.disabled{opacity:.5;color:var(--fg2, #757575)}.file-name-cell.disabled .file-name{color:var(--fg2, #757575)}.file-name-cell.disabled .file-icon{opacity:.6}.file-name-cell.disabled:has(.file-icon-folder),.file-name-cell.disabled:has(.file-icon-dataset),.file-name-cell.disabled:has(.file-icon-mountpoint){cursor:pointer}.file-name-cell.disabled:not(:has(.file-icon-folder)):not(:has(.file-icon-dataset)):not(:has(.file-icon-mountpoint)){cursor:not-allowed}.file-name-cell.editing{display:flex;align-items:center;gap:8px;padding:2px;cursor:default}.file-name-cell.editing .folder-name-input{flex:1;border:2px solid var(--primary, #0066cc);padding:4px 8px;font-size:inherit;font-family:inherit;background:var(--bg1, white);color:var(--fg1, black);outline:none;border-radius:3px;min-width:200px}.file-name-cell.editing .folder-name-input:focus{border-color:var(--primary, #0066cc);box-shadow:0 0 0 3px #0066cc1a}.file-name-cell.editing .folder-name-input.error{border-color:var(--error, #d32f2f)}.file-name-cell.editing .folder-name-input:disabled{opacity:.6;cursor:not-allowed;background:var(--bg2, #f5f5f5)}.file-name-cell.editing .creation-loading-icon{animation:spin 1s linear infinite;color:var(--primary, #0066cc);flex-shrink:0}.file-name-cell-wrapper{display:flex;flex-direction:column;gap:4px}.folder-creation-error{display:flex;align-items:center;gap:6px;padding:4px 8px 4px 36px;margin-bottom:12px;background:#d32f2f1a;border-left:3px solid var(--error, #d32f2f);border-radius:3px;font-size:.875rem;color:var(--error, #d32f2f)}.folder-creation-error .error-icon{flex-shrink:0;width:20px;height:20px}.folder-creation-error .error-text{flex:1}.file-icon{display:flex;align-items:center;justify-content:center;font-size:var(--icon-md, 20px);flex-shrink:0;line-height:1}.file-icon.file-icon-folder{color:var(--primary)}.file-icon.file-icon-dataset{color:var(--blue, #007db3)}.file-icon.file-icon-zvol{color:var(--green, #71BF44)}.file-icon.file-icon-mountpoint{color:var(--orange, #E68D37)}.file-name{flex:1;font-weight:500;line-height:1.4}.zfs-badge{display:inline-flex;align-items:center;background:var(--alt-bg2);color:var(--alt-fg2);font-size:.625rem;font-weight:600;padding:2px 6px;border-radius:12px;text-transform:uppercase;letter-spacing:.5px;line-height:1}.zfs-badge.zfs-badge-dataset{background:var(--blue);color:#fff}.zfs-badge.zfs-badge-zvol{background:var(--green);color:#fff}.zfs-badge.zfs-badge-mountpoint{background:var(--orange);color:#fff}.permission-icon{display:flex;align-items:center;justify-content:center;color:var(--red);font-size:var(--icon-sm, 16px);line-height:1}.file-type{font-size:.875rem;padding:2px 8px;border-radius:12px}.file-type.type-folder{background:var(--alt-bg1);color:var(--alt-fg2)}.file-type.type-file{background:var(--bg2);color:var(--fg2)}.file-type.type-dataset{background:#007db31a;color:var(--blue)}.file-type.type-zvol{background:#71bf441a;color:var(--green)}.file-type.type-mountpoint{background:#e68d371a;color:var(--orange)}.folder-indicator{color:var(--alt-fg1);font-style:italic}.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;color:var(--alt-fg1);text-align:center}.empty-state ix-icon{font-size:48px;margin-bottom:16px;opacity:.5}.empty-state p{margin:0;font-size:.875rem}.ix-file-picker-footer{display:flex;align-items:center;justify-content:space-between;padding:16px var(--content-padding, 24px);border-top:1px solid var(--lines);background:var(--bg2);border-bottom-left-radius:8px;border-bottom-right-radius:8px}.selection-count{font-size:.875rem;color:var(--fg2);font-weight:500}.footer-actions{display:flex;gap:8px}@media (prefers-reduced-motion: reduce){.file-item,.breadcrumb-segment{transition:none}.ix-file-picker-loading ix-icon{animation:none}}@media (prefers-contrast: high){:host{border-width:2px}.file-item:hover,.file-item.selected{border:2px solid var(--fg1)}.zfs-badge{border:1px solid var(--fg1)}}@media (max-width: 768px){:host{min-width:300px;max-width:calc(100vw - 32px);max-height:calc(100vh - 64px)}.ix-file-picker-header{flex-direction:column;gap:12px;align-items:stretch}.ix-file-picker-breadcrumb{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-file-picker-breadcrumb::-webkit-scrollbar{display:none}.file-item{padding:12px;min-height:56px}.file-info{font-size:.875rem}}\n"] }]
+        }], ctorParameters: () => [{ type: IxIconRegistryService }], propDecorators: { itemClick: [{
                 type: Output
             }], itemDoubleClick: [{
                 type: Output
@@ -7881,7 +8124,17 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                 type: Output
             }], createFolder: [{
                 type: Output
+            }], clearSelection: [{
+                type: Output
             }], close: [{
+                type: Output
+            }], submit: [{
+                type: Output
+            }], cancel: [{
+                type: Output
+            }], submitFolderName: [{
+                type: Output
+            }], cancelFolderCreation: [{
                 type: Output
             }] } });
 
@@ -7919,19 +8172,8 @@ class IxFilePickerComponent {
     selectedItems = signal([], ...(ngDevMode ? [{ debugName: "selectedItems" }] : []));
     loading = signal(false, ...(ngDevMode ? [{ debugName: "loading" }] : []));
     hasError = signal(false, ...(ngDevMode ? [{ debugName: "hasError" }] : []));
-    // Computed display path (omits /mnt)
-    displayPath = computed(() => {
-        const path = this.selectedPath();
-        if (!path)
-            return '';
-        if (path.startsWith('/mnt/')) {
-            return path.substring(4); // Remove "/mnt" prefix
-        }
-        else if (path === '/mnt') {
-            return '/'; // Show root as just "/"
-        }
-        return path;
-    }, ...(ngDevMode ? [{ debugName: "displayPath" }] : []));
+    creatingItemTempId = signal(null, ...(ngDevMode ? [{ debugName: "creatingItemTempId" }] : []));
+    creationLoading = signal(false, ...(ngDevMode ? [{ debugName: "creationLoading" }] : []));
     // ControlValueAccessor implementation
     onChange = (value) => { };
     onTouched = () => { };
@@ -8000,17 +8242,17 @@ class IxFilePickerComponent {
     // Event handlers
     onPathInput(event) {
         const target = event.target;
-        const displayPath = target.value;
-        if (this.allowManualInput && displayPath !== this.displayPath()) {
-            // Convert display path back to full path with /mnt prefix
-            const fullPath = this.displayPathToFullPath(displayPath);
+        const inputValue = target.value;
+        if (this.allowManualInput) {
+            // Convert display path to full path with /mnt prefix
+            const fullPath = this.toFullPath(inputValue);
             if (this.callbacks?.validatePath) {
                 this.callbacks.validatePath(fullPath).then(isValid => {
                     if (isValid) {
                         this.updateSelection(fullPath);
                     }
                     else {
-                        this.emitError('validation', `Invalid path: ${displayPath}`, fullPath);
+                        this.emitError('validation', `Invalid path: ${inputValue}`, fullPath);
                     }
                 }).catch(err => {
                     this.emitError('validation', err.message || 'Path validation failed', fullPath);
@@ -8025,10 +8267,9 @@ class IxFilePickerComponent {
     openFilePicker() {
         if (this.isOpen() || this.disabled)
             return;
-        this.loadDirectory(this.currentPath()).then(() => {
-            this.createOverlay();
-            this.isOpen.set(true);
-        });
+        this.createOverlay();
+        this.isOpen.set(true);
+        this.loadDirectory(this.currentPath());
     }
     close() {
         if (this.overlayRef) {
@@ -8040,7 +8281,7 @@ class IxFilePickerComponent {
     }
     // File browser methods
     onItemClick(item) {
-        if (item.disabled)
+        if (item.disabled || item.isCreating || this.creatingItemTempId())
             return;
         if (this.multiSelect) {
             const selected = this.selectedItems();
@@ -8052,33 +8293,170 @@ class IxFilePickerComponent {
                 selected.push(item.path);
             }
             this.selectedItems.set([...selected]);
-            this.updateSelectionFromItems();
         }
         else {
-            this.updateSelection(item.path);
+            // Single select - just update selection state, don't apply yet
+            this.selectedItems.set([item.path]);
         }
     }
     onItemDoubleClick(item) {
-        if (item.disabled)
+        if (item.isCreating || this.creatingItemTempId())
             return;
-        if (item.type === 'folder' || item.type === 'dataset' || item.type === 'mountpoint') {
+        // Define navigatable types
+        const isNavigatable = ['folder', 'dataset', 'mountpoint'].includes(item.type);
+        // Allow navigation even if disabled, as long as it's a navigatable type
+        if (isNavigatable) {
             this.navigateToPath(item.path);
         }
-        else if (!this.multiSelect) {
-            this.updateSelection(item.path);
-            this.close();
+        else if (!item.disabled) {
+            // Double-click on selectable item submits immediately
+            this.selectedItems.set([item.path]);
+            this.onSubmit();
         }
     }
+    onSubmit() {
+        // Apply the selection and close the popup
+        const selected = this.selectedItems();
+        if (selected.length === 0)
+            return;
+        // Clear any existing error state
+        this.hasError.set(false);
+        if (this.multiSelect) {
+            this.selectedPath.set(selected.join(', '));
+            this.onChange(selected);
+            this.selectionChange.emit(selected);
+        }
+        else {
+            const path = selected[0];
+            this.selectedPath.set(path);
+            this.onChange(path);
+            this.selectionChange.emit(path);
+        }
+        this.close();
+    }
+    onCancel() {
+        // Close without applying selection
+        this.close();
+    }
     navigateToPath(path) {
+        // Prevent navigation if currently creating a folder
+        if (this.creatingItemTempId()) {
+            console.warn('Cannot navigate while creating a folder');
+            return;
+        }
         this.loadDirectory(path);
     }
     onCreateFolder() {
-        // This would typically open a dialog for folder name input
-        // For now, emit the event for the parent component to handle
+        // Prevent multiple simultaneous creations
+        if (this.creatingItemTempId()) {
+            console.warn('Already creating a folder');
+            return;
+        }
+        // Generate temporary ID
+        const tempId = `temp-${Date.now()}`;
+        // Create pending item
+        const pendingFolder = {
+            path: `${this.currentPath()}/__pending__/${tempId}`,
+            name: 'New Folder',
+            type: 'folder',
+            isCreating: true,
+            tempId: tempId,
+            modified: new Date()
+        };
+        // Add to top of file list
+        const currentItems = this.fileItems();
+        this.fileItems.set([pendingFolder, ...currentItems]);
+        this.creatingItemTempId.set(tempId);
+        // Still emit event for parent components
         this.createFolder.emit({
             parentPath: this.currentPath(),
             folderName: 'New Folder'
         });
+    }
+    onClearSelection() {
+        this.selectedItems.set([]);
+        this.selectedPath.set('');
+        this.onChange(this.multiSelect ? [] : '');
+        this.selectionChange.emit(this.multiSelect ? [] : '');
+    }
+    async onSubmitFolderName(name, tempId) {
+        // Validate folder name
+        const validation = this.validateFolderName(name);
+        if (!validation.valid) {
+            // Update the item with error message
+            this.updateCreatingItemError(tempId, validation.error);
+            return;
+        }
+        if (!this.callbacks?.createFolder) {
+            this.updateCreatingItemError(tempId, 'Create folder callback not provided');
+            return;
+        }
+        // Clear any previous errors
+        this.updateCreatingItemError(tempId, undefined);
+        this.creationLoading.set(true);
+        try {
+            // Call the callback with parent path and user-entered name
+            const createdPath = await this.callbacks.createFolder(this.currentPath(), name.trim());
+            // Remove pending item
+            this.removePendingItem(tempId);
+            this.creatingItemTempId.set(null);
+            // Reload directory to show the newly created folder
+            await this.loadDirectory(this.currentPath());
+        }
+        catch (err) {
+            console.error('Failed to create folder:', err);
+            // Show error inline, keep input editable for retry
+            const errorMessage = err.message || 'Failed to create folder';
+            this.updateCreatingItemError(tempId, errorMessage);
+            this.emitError('creation', errorMessage, this.currentPath());
+        }
+        finally {
+            this.creationLoading.set(false);
+        }
+    }
+    onCancelFolderCreation(tempId) {
+        this.removePendingItem(tempId);
+        this.creatingItemTempId.set(null);
+        this.creationLoading.set(false);
+    }
+    removePendingItem(tempId) {
+        const items = this.fileItems().filter(item => item.tempId !== tempId);
+        this.fileItems.set(items);
+    }
+    updateCreatingItemError(tempId, error) {
+        const items = this.fileItems().map(item => {
+            if (item.tempId === tempId) {
+                return { ...item, creationError: error };
+            }
+            return item;
+        });
+        this.fileItems.set(items);
+    }
+    validateFolderName(name) {
+        const trimmed = name.trim();
+        if (!trimmed) {
+            return { valid: false, error: 'Folder name cannot be empty' };
+        }
+        if (trimmed.length > 255) {
+            return { valid: false, error: 'Folder name too long (max 255 characters)' };
+        }
+        // Check for invalid characters (common across file systems)
+        const invalidChars = /[<>:"|?*\x00-\x1f]/;
+        if (invalidChars.test(trimmed)) {
+            return { valid: false, error: 'Invalid characters in folder name' };
+        }
+        // Disallow folder names that are just dots
+        if (/^\.+$/.test(trimmed)) {
+            return { valid: false, error: 'Invalid folder name' };
+        }
+        // Check for duplicate names in current directory
+        const existingNames = this.fileItems()
+            .filter(item => !item.isCreating)
+            .map(item => item.name.toLowerCase());
+        if (existingNames.includes(trimmed.toLowerCase())) {
+            return { valid: false, error: 'A folder with this name already exists' };
+        }
+        return { valid: true };
     }
     async loadDirectory(path) {
         if (!this.callbacks?.getChildren) {
@@ -8134,6 +8512,8 @@ class IxFilePickerComponent {
         ];
     }
     updateSelection(path) {
+        // Clear any existing error state since popup selections are valid
+        this.hasError.set(false);
         if (this.multiSelect) {
             const selected = [path];
             this.selectedItems.set(selected);
@@ -8148,27 +8528,26 @@ class IxFilePickerComponent {
         this.selectionChange.emit(this.multiSelect ? this.selectedItems() : path);
     }
     updateSelectionFromItems() {
+        // Clear any existing error state since popup selections are valid
+        this.hasError.set(false);
         const selected = this.selectedItems();
         this.selectedPath.set(selected.join(', '));
         this.onChange(this.multiSelect ? selected : selected[0] || '');
         this.selectionChange.emit(this.multiSelect ? selected : selected[0] || '');
     }
-    displayPathToFullPath(displayPath) {
+    toFullPath(displayPath) {
         if (!displayPath)
             return '/mnt';
-        if (displayPath === '/') {
+        if (displayPath === '/')
             return '/mnt';
-        }
-        if (displayPath.startsWith('/')) {
+        if (displayPath.startsWith('/'))
             return '/mnt' + displayPath;
-        }
         return '/mnt/' + displayPath;
     }
     emitError(type, message, path) {
         this.hasError.set(true);
         this.error.emit({ type, message, path });
-        // Clear error after a delay
-        setTimeout(() => this.hasError.set(false), 3000);
+        // Error persists until cleared by valid input or selection
     }
     createOverlay() {
         if (this.overlayRef)
@@ -8214,8 +8593,7 @@ class IxFilePickerComponent {
             scrollStrategy: this.overlay.scrollStrategies.reposition(),
             hasBackdrop: true,
             backdropClass: 'cdk-overlay-transparent-backdrop',
-            panelClass: 'ix-file-picker-overlay',
-            width: this.wrapperEl.nativeElement.offsetWidth
+            panelClass: 'ix-file-picker-overlay'
         });
         this.overlayRef.backdropClick().subscribe(() => {
             this.close();
@@ -8224,13 +8602,13 @@ class IxFilePickerComponent {
         this.overlayRef.attach(this.portal);
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxFilePickerComponent, deps: [{ token: i1$2.Overlay }, { token: i0.ElementRef }, { token: i0.ViewContainerRef }, { token: IxMdiIconService }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxFilePickerComponent, isStandalone: true, selector: "ix-file-picker", inputs: { mode: "mode", multiSelect: "multiSelect", allowCreate: "allowCreate", allowDatasetCreate: "allowDatasetCreate", allowZvolCreate: "allowZvolCreate", allowManualInput: "allowManualInput", placeholder: "placeholder", disabled: "disabled", startPath: "startPath", rootPath: "rootPath", fileExtensions: "fileExtensions", callbacks: "callbacks" }, outputs: { selectionChange: "selectionChange", pathChange: "pathChange", createFolder: "createFolder", error: "error" }, host: { properties: { "class.error": "hasError" }, classAttribute: "ix-file-picker" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxFilePickerComponent, isStandalone: true, selector: "ix-file-picker", inputs: { mode: "mode", multiSelect: "multiSelect", allowCreate: "allowCreate", allowDatasetCreate: "allowDatasetCreate", allowZvolCreate: "allowZvolCreate", allowManualInput: "allowManualInput", placeholder: "placeholder", disabled: "disabled", startPath: "startPath", rootPath: "rootPath", fileExtensions: "fileExtensions", callbacks: "callbacks" }, outputs: { selectionChange: "selectionChange", pathChange: "pathChange", createFolder: "createFolder", error: "error" }, host: { properties: { "class.error": "hasError()" }, classAttribute: "ix-file-picker" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxFilePickerComponent),
                 multi: true
             }
-        ], viewQueries: [{ propertyName: "wrapperEl", first: true, predicate: ["wrapper"], descendants: true }, { propertyName: "filePickerTemplate", first: true, predicate: ["filePickerTemplate"], descendants: true, static: true }], ngImport: i0, template: "<div class=\"ix-file-picker-container\">\n  <div #wrapper ixInput class=\"ix-file-picker-wrapper\" style=\"padding-right: 40px;\">\n    <input \n      type=\"text\"\n      class=\"ix-file-picker-input\"\n      [class.error]=\"hasError()\"\n      [value]=\"displayPath()\"\n      [placeholder]=\"placeholder\"\n      [readonly]=\"!allowManualInput\"\n      [disabled]=\"disabled\"\n      (blur)=\"onPathInput($event)\">\n    \n    <button \n      type=\"button\"\n      class=\"ix-file-picker-toggle\"\n      (click)=\"openFilePicker()\"\n      [disabled]=\"disabled\"\n      aria-label=\"Open file picker\">\n      <ix-icon name=\"folder\" library=\"mdi\"></ix-icon>\n    </button>\n  </div>\n  \n  <ng-template #filePickerTemplate>\n    <ix-file-picker-popup\n      class=\"ix-file-picker-popup\"\n      [mode]=\"mode\"\n      [multiSelect]=\"multiSelect\"\n      [allowCreate]=\"allowCreate\"\n      [allowDatasetCreate]=\"allowDatasetCreate\"\n      [allowZvolCreate]=\"allowZvolCreate\"\n      [currentPath]=\"currentPath()\"\n      [fileItems]=\"fileItems()\"\n      [selectedItems]=\"selectedItems()\"\n      [loading]=\"loading()\"\n      [fileExtensions]=\"fileExtensions\"\n      (itemClick)=\"onItemClick($event)\"\n      (itemDoubleClick)=\"onItemDoubleClick($event)\"\n      (pathNavigate)=\"navigateToPath($event)\"\n      (createFolder)=\"onCreateFolder()\"\n      (close)=\"close()\">\n    </ix-file-picker-popup>\n  </ng-template>\n</div>", styles: [":host{display:block;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-file-picker-container{position:relative;display:flex;align-items:center;width:100%}.ix-file-picker-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-file-picker-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box;font-family:inherit}.ix-file-picker-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-file-picker-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-file-picker-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-file-picker-input.error{border-color:var(--error, #dc3545)}.ix-file-picker-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-file-picker-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;color:var(--fg1);border-radius:4px}.ix-file-picker-toggle:hover{background:var(--bg2, #f0f0f0)}.ix-file-picker-toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-file-picker-toggle:disabled{cursor:not-allowed;opacity:.5}.ix-file-picker-toggle ix-icon{font-size:var(--icon-md, 20px)}:host:focus-within .ix-file-picker-input{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}:host.error .ix-file-picker-input{border-color:var(--error, #dc3545)}:host.error .ix-file-picker-input:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}@media (prefers-reduced-motion: reduce){.ix-file-picker-input,.ix-file-picker-toggle,.file-item,.breadcrumb-segment{transition:none}.ix-file-picker-loading ix-icon{animation:none}}@media (prefers-contrast: high){.ix-file-picker-input{border-width:2px}.file-item:hover,.file-item.selected{border:2px solid var(--fg1)}.zfs-badge{border:1px solid var(--fg1)}}@media (max-width: 768px){:host ::ng-deep .ix-file-picker-overlay .ix-file-picker-dialog{min-width:300px;max-width:calc(100vw - 32px);max-height:calc(100vh - 64px)}.ix-file-picker-header{flex-direction:column;gap:12px;align-items:stretch}.ix-file-picker-breadcrumb{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-file-picker-breadcrumb::-webkit-scrollbar{display:none}.file-item{padding:12px;min-height:56px}.file-info{font-size:.875rem}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: IxInputDirective, selector: "input[ixInput], textarea[ixInput], div[ixInput]" }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }, { kind: "component", type: IxFilePickerPopupComponent, selector: "ix-file-picker-popup", inputs: ["mode", "multiSelect", "allowCreate", "allowDatasetCreate", "allowZvolCreate", "currentPath", "fileItems", "selectedItems", "loading", "fileExtensions"], outputs: ["itemClick", "itemDoubleClick", "pathNavigate", "createFolder", "close"] }, { kind: "ngmodule", type: OverlayModule }, { kind: "ngmodule", type: PortalModule }, { kind: "ngmodule", type: A11yModule }] });
+        ], viewQueries: [{ propertyName: "wrapperEl", first: true, predicate: ["wrapper"], descendants: true }, { propertyName: "filePickerTemplate", first: true, predicate: ["filePickerTemplate"], descendants: true, static: true }], ngImport: i0, template: "<div class=\"ix-file-picker-container\">\n  <div #wrapper ixInput class=\"ix-file-picker-wrapper\" style=\"padding-right: 40px;\">\n    <input\n      type=\"text\"\n      class=\"ix-file-picker-input\"\n      [class.error]=\"hasError()\"\n      [value]=\"selectedPath() | ixStripMntPrefix\"\n      [placeholder]=\"placeholder\"\n      [readonly]=\"!allowManualInput\"\n      [disabled]=\"disabled\"\n      (input)=\"onPathInput($event)\">\n    \n    <button \n      type=\"button\"\n      class=\"ix-file-picker-toggle\"\n      (click)=\"openFilePicker()\"\n      [disabled]=\"disabled\"\n      aria-label=\"Open file picker\">\n      <ix-icon name=\"folder\" library=\"mdi\"></ix-icon>\n    </button>\n  </div>\n  \n  <ng-template #filePickerTemplate>\n    <ix-file-picker-popup\n      class=\"ix-file-picker-popup\"\n      [mode]=\"mode\"\n      [multiSelect]=\"multiSelect\"\n      [allowCreate]=\"allowCreate\"\n      [allowDatasetCreate]=\"allowDatasetCreate\"\n      [allowZvolCreate]=\"allowZvolCreate\"\n      [currentPath]=\"currentPath()\"\n      [fileItems]=\"fileItems()\"\n      [selectedItems]=\"selectedItems()\"\n      [loading]=\"loading()\"\n      [creationLoading]=\"creationLoading()\"\n      [fileExtensions]=\"fileExtensions\"\n      (itemClick)=\"onItemClick($event)\"\n      (itemDoubleClick)=\"onItemDoubleClick($event)\"\n      (pathNavigate)=\"navigateToPath($event)\"\n      (createFolder)=\"onCreateFolder()\"\n      (submitFolderName)=\"onSubmitFolderName($event.name, $event.tempId)\"\n      (cancelFolderCreation)=\"onCancelFolderCreation($event)\"\n      (clearSelection)=\"onClearSelection()\"\n      (submit)=\"onSubmit()\"\n      (cancel)=\"onCancel()\"\n      (close)=\"close()\">\n    </ix-file-picker-popup>\n  </ng-template>\n</div>", styles: [":host{display:block;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-file-picker-container{position:relative;display:flex;align-items:center;width:100%}.ix-file-picker-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-file-picker-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box;font-family:inherit}.ix-file-picker-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-file-picker-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-file-picker-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-file-picker-input.error{border-color:var(--error, #dc3545)}.ix-file-picker-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-file-picker-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;color:var(--fg1);border-radius:4px}.ix-file-picker-toggle:hover{background:var(--bg2, #f0f0f0)}.ix-file-picker-toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-file-picker-toggle:disabled{cursor:not-allowed;opacity:.5}.ix-file-picker-toggle ix-icon{font-size:var(--icon-md, 20px)}:host:focus-within .ix-file-picker-input{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}:host.error .ix-file-picker-input{border-color:var(--error, #dc3545)}:host.error .ix-file-picker-input:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}@media (prefers-reduced-motion: reduce){.ix-file-picker-input,.ix-file-picker-toggle,.file-item,.breadcrumb-segment{transition:none}.ix-file-picker-loading ix-icon{animation:none}}@media (prefers-contrast: high){.ix-file-picker-input{border-width:2px}.file-item:hover,.file-item.selected{border:2px solid var(--fg1)}.zfs-badge{border:1px solid var(--fg1)}}@media (max-width: 768px){:host ::ng-deep .ix-file-picker-overlay .ix-file-picker-dialog{min-width:300px;max-width:calc(100vw - 32px);max-height:calc(100vh - 64px)}.ix-file-picker-header{flex-direction:column;gap:12px;align-items:stretch}.ix-file-picker-breadcrumb{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-file-picker-breadcrumb::-webkit-scrollbar{display:none}.file-item{padding:12px;min-height:56px}.file-info{font-size:.875rem}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: IxInputDirective, selector: "input[ixInput], textarea[ixInput], div[ixInput]" }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }, { kind: "component", type: IxFilePickerPopupComponent, selector: "ix-file-picker-popup", inputs: ["mode", "multiSelect", "allowCreate", "allowDatasetCreate", "allowZvolCreate", "currentPath", "fileItems", "selectedItems", "loading", "creationLoading", "fileExtensions"], outputs: ["itemClick", "itemDoubleClick", "pathNavigate", "createFolder", "clearSelection", "close", "submit", "cancel", "submitFolderName", "cancelFolderCreation"] }, { kind: "ngmodule", type: OverlayModule }, { kind: "ngmodule", type: PortalModule }, { kind: "ngmodule", type: A11yModule }, { kind: "pipe", type: StripMntPrefixPipe, name: "ixStripMntPrefix" }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxFilePickerComponent, decorators: [{
             type: Component,
@@ -8241,7 +8619,8 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                         IxFilePickerPopupComponent,
                         OverlayModule,
                         PortalModule,
-                        A11yModule
+                        A11yModule,
+                        StripMntPrefixPipe
                     ], providers: [
                         {
                             provide: NG_VALUE_ACCESSOR,
@@ -8250,8 +8629,8 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                         }
                     ], host: {
                         'class': 'ix-file-picker',
-                        '[class.error]': 'hasError'
-                    }, template: "<div class=\"ix-file-picker-container\">\n  <div #wrapper ixInput class=\"ix-file-picker-wrapper\" style=\"padding-right: 40px;\">\n    <input \n      type=\"text\"\n      class=\"ix-file-picker-input\"\n      [class.error]=\"hasError()\"\n      [value]=\"displayPath()\"\n      [placeholder]=\"placeholder\"\n      [readonly]=\"!allowManualInput\"\n      [disabled]=\"disabled\"\n      (blur)=\"onPathInput($event)\">\n    \n    <button \n      type=\"button\"\n      class=\"ix-file-picker-toggle\"\n      (click)=\"openFilePicker()\"\n      [disabled]=\"disabled\"\n      aria-label=\"Open file picker\">\n      <ix-icon name=\"folder\" library=\"mdi\"></ix-icon>\n    </button>\n  </div>\n  \n  <ng-template #filePickerTemplate>\n    <ix-file-picker-popup\n      class=\"ix-file-picker-popup\"\n      [mode]=\"mode\"\n      [multiSelect]=\"multiSelect\"\n      [allowCreate]=\"allowCreate\"\n      [allowDatasetCreate]=\"allowDatasetCreate\"\n      [allowZvolCreate]=\"allowZvolCreate\"\n      [currentPath]=\"currentPath()\"\n      [fileItems]=\"fileItems()\"\n      [selectedItems]=\"selectedItems()\"\n      [loading]=\"loading()\"\n      [fileExtensions]=\"fileExtensions\"\n      (itemClick)=\"onItemClick($event)\"\n      (itemDoubleClick)=\"onItemDoubleClick($event)\"\n      (pathNavigate)=\"navigateToPath($event)\"\n      (createFolder)=\"onCreateFolder()\"\n      (close)=\"close()\">\n    </ix-file-picker-popup>\n  </ng-template>\n</div>", styles: [":host{display:block;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-file-picker-container{position:relative;display:flex;align-items:center;width:100%}.ix-file-picker-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-file-picker-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box;font-family:inherit}.ix-file-picker-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-file-picker-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-file-picker-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-file-picker-input.error{border-color:var(--error, #dc3545)}.ix-file-picker-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-file-picker-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;color:var(--fg1);border-radius:4px}.ix-file-picker-toggle:hover{background:var(--bg2, #f0f0f0)}.ix-file-picker-toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-file-picker-toggle:disabled{cursor:not-allowed;opacity:.5}.ix-file-picker-toggle ix-icon{font-size:var(--icon-md, 20px)}:host:focus-within .ix-file-picker-input{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}:host.error .ix-file-picker-input{border-color:var(--error, #dc3545)}:host.error .ix-file-picker-input:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}@media (prefers-reduced-motion: reduce){.ix-file-picker-input,.ix-file-picker-toggle,.file-item,.breadcrumb-segment{transition:none}.ix-file-picker-loading ix-icon{animation:none}}@media (prefers-contrast: high){.ix-file-picker-input{border-width:2px}.file-item:hover,.file-item.selected{border:2px solid var(--fg1)}.zfs-badge{border:1px solid var(--fg1)}}@media (max-width: 768px){:host ::ng-deep .ix-file-picker-overlay .ix-file-picker-dialog{min-width:300px;max-width:calc(100vw - 32px);max-height:calc(100vh - 64px)}.ix-file-picker-header{flex-direction:column;gap:12px;align-items:stretch}.ix-file-picker-breadcrumb{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-file-picker-breadcrumb::-webkit-scrollbar{display:none}.file-item{padding:12px;min-height:56px}.file-info{font-size:.875rem}}\n"] }]
+                        '[class.error]': 'hasError()'
+                    }, template: "<div class=\"ix-file-picker-container\">\n  <div #wrapper ixInput class=\"ix-file-picker-wrapper\" style=\"padding-right: 40px;\">\n    <input\n      type=\"text\"\n      class=\"ix-file-picker-input\"\n      [class.error]=\"hasError()\"\n      [value]=\"selectedPath() | ixStripMntPrefix\"\n      [placeholder]=\"placeholder\"\n      [readonly]=\"!allowManualInput\"\n      [disabled]=\"disabled\"\n      (input)=\"onPathInput($event)\">\n    \n    <button \n      type=\"button\"\n      class=\"ix-file-picker-toggle\"\n      (click)=\"openFilePicker()\"\n      [disabled]=\"disabled\"\n      aria-label=\"Open file picker\">\n      <ix-icon name=\"folder\" library=\"mdi\"></ix-icon>\n    </button>\n  </div>\n  \n  <ng-template #filePickerTemplate>\n    <ix-file-picker-popup\n      class=\"ix-file-picker-popup\"\n      [mode]=\"mode\"\n      [multiSelect]=\"multiSelect\"\n      [allowCreate]=\"allowCreate\"\n      [allowDatasetCreate]=\"allowDatasetCreate\"\n      [allowZvolCreate]=\"allowZvolCreate\"\n      [currentPath]=\"currentPath()\"\n      [fileItems]=\"fileItems()\"\n      [selectedItems]=\"selectedItems()\"\n      [loading]=\"loading()\"\n      [creationLoading]=\"creationLoading()\"\n      [fileExtensions]=\"fileExtensions\"\n      (itemClick)=\"onItemClick($event)\"\n      (itemDoubleClick)=\"onItemDoubleClick($event)\"\n      (pathNavigate)=\"navigateToPath($event)\"\n      (createFolder)=\"onCreateFolder()\"\n      (submitFolderName)=\"onSubmitFolderName($event.name, $event.tempId)\"\n      (cancelFolderCreation)=\"onCancelFolderCreation($event)\"\n      (clearSelection)=\"onClearSelection()\"\n      (submit)=\"onSubmit()\"\n      (cancel)=\"onCancel()\"\n      (close)=\"close()\">\n    </ix-file-picker-popup>\n  </ng-template>\n</div>", styles: [":host{display:block;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-file-picker-container{position:relative;display:flex;align-items:center;width:100%}.ix-file-picker-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-file-picker-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box;font-family:inherit}.ix-file-picker-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-file-picker-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-file-picker-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-file-picker-input.error{border-color:var(--error, #dc3545)}.ix-file-picker-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-file-picker-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;color:var(--fg1);border-radius:4px}.ix-file-picker-toggle:hover{background:var(--bg2, #f0f0f0)}.ix-file-picker-toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-file-picker-toggle:disabled{cursor:not-allowed;opacity:.5}.ix-file-picker-toggle ix-icon{font-size:var(--icon-md, 20px)}:host:focus-within .ix-file-picker-input{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}:host.error .ix-file-picker-input{border-color:var(--error, #dc3545)}:host.error .ix-file-picker-input:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}@media (prefers-reduced-motion: reduce){.ix-file-picker-input,.ix-file-picker-toggle,.file-item,.breadcrumb-segment{transition:none}.ix-file-picker-loading ix-icon{animation:none}}@media (prefers-contrast: high){.ix-file-picker-input{border-width:2px}.file-item:hover,.file-item.selected{border:2px solid var(--fg1)}.zfs-badge{border:1px solid var(--fg1)}}@media (max-width: 768px){:host ::ng-deep .ix-file-picker-overlay .ix-file-picker-dialog{min-width:300px;max-width:calc(100vw - 32px);max-height:calc(100vh - 64px)}.ix-file-picker-header{flex-direction:column;gap:12px;align-items:stretch}.ix-file-picker-breadcrumb{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-file-picker-breadcrumb::-webkit-scrollbar{display:none}.file-item{padding:12px;min-height:56px}.file-info{font-size:.875rem}}\n"] }]
         }], ctorParameters: () => [{ type: i1$2.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }, { type: IxMdiIconService }], propDecorators: { mode: [{
                 type: Input
             }], multiSelect: [{
@@ -8532,5 +8911,5 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * Generated bundle index. Do not edit.
  */
 
-export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMdiIconService, IxMenuComponent, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, TruenasUiComponent, TruenasUiService, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, registerLucideIcons, setupLucideIntegration };
+export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMdiIconService, IxMenuComponent, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TruenasIconsService, TruenasUiComponent, TruenasUiService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, registerLucideIcons, setupLucideIntegration };
 //# sourceMappingURL=truenas-ui.mjs.map

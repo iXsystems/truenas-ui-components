@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, TemplateRef, ViewContainerRef, forwardRef, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, TemplateRef, ViewContainerRef, forwardRef, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { OverlayModule, Overlay, OverlayRef, ConnectedPosition } from '@angular/cdk/overlay';
@@ -13,6 +13,7 @@ import { IxIconComponent } from '../ix-icon/ix-icon.component';
 import { IxFilePickerPopupComponent } from './ix-file-picker-popup.component';
 import { IxMdiIconService } from '../ix-mdi-icon/ix-mdi-icon.service';
 import { FileSystemItem, FilePickerCallbacks, CreateFolderEvent, FilePickerError, PathSegment, FilePickerMode } from './ix-file-picker.interfaces';
+import { StripMntPrefixPipe } from '../pipes/strip-mnt-prefix/strip-mnt-prefix.pipe';
 
 @Component({
   selector: 'ix-file-picker',
@@ -24,7 +25,8 @@ import { FileSystemItem, FilePickerCallbacks, CreateFolderEvent, FilePickerError
     IxFilePickerPopupComponent,
     OverlayModule,
     PortalModule,
-    A11yModule
+    A11yModule,
+    StripMntPrefixPipe
   ],
   providers: [
     {
@@ -37,7 +39,7 @@ import { FileSystemItem, FilePickerCallbacks, CreateFolderEvent, FilePickerError
   styleUrl: './ix-file-picker.component.scss',
   host: {
     'class': 'ix-file-picker',
-    '[class.error]': 'hasError'
+    '[class.error]': 'hasError()'
   }
 })
 export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDestroy {
@@ -74,21 +76,8 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   selectedItems = signal<string[]>([]);
   loading = signal<boolean>(false);
   hasError = signal<boolean>(false);
-
-  // Computed display path (omits /mnt)
-  displayPath = computed(() => {
-    const path = this.selectedPath();
-    if (!path) return '';
-    
-    if (path.startsWith('/mnt/')) {
-      return path.substring(4); // Remove "/mnt" prefix
-    } else if (path === '/mnt') {
-      return '/'; // Show root as just "/"
-    }
-    
-    return path;
-  });
-
+  creatingItemTempId = signal<string | null>(null);
+  creationLoading = signal<boolean>(false);
 
   // ControlValueAccessor implementation
   private onChange = (value: string | string[]) => {};
@@ -104,7 +93,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   async ngOnInit(): Promise<void> {
     this.currentPath.set(this.startPath);
     this.selectedPath.set(this.multiSelect ? '' : '');
-    
+
     // Ensure MDI icons are loaded for the file picker trigger and popup
     await this.initializeMdiIcons();
   }
@@ -126,7 +115,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
         this.mdiIconService.ensureIconLoaded('lock'),
         this.mdiIconService.ensureIconLoaded('folder-open')
       ];
-      
+
       await Promise.all(iconPromises);
     } catch (error) {
       console.warn('Failed to initialize some MDI icons for file picker:', error);
@@ -167,18 +156,18 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   // Event handlers
   onPathInput(event: Event): void {
     const target = event.target as HTMLInputElement;
-    const displayPath = target.value;
-    
-    if (this.allowManualInput && displayPath !== this.displayPath()) {
-      // Convert display path back to full path with /mnt prefix
-      const fullPath = this.displayPathToFullPath(displayPath);
-      
+    const inputValue = target.value;
+
+    if (this.allowManualInput) {
+      // Convert display path to full path with /mnt prefix
+      const fullPath = this.toFullPath(inputValue);
+
       if (this.callbacks?.validatePath) {
         this.callbacks.validatePath(fullPath).then(isValid => {
           if (isValid) {
             this.updateSelection(fullPath);
           } else {
-            this.emitError('validation', `Invalid path: ${displayPath}`, fullPath);
+            this.emitError('validation', `Invalid path: ${inputValue}`, fullPath);
           }
         }).catch(err => {
           this.emitError('validation', err.message || 'Path validation failed', fullPath);
@@ -187,17 +176,16 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
         this.updateSelection(fullPath);
       }
     }
-    
+
     this.onTouched();
   }
 
   openFilePicker(): void {
     if (this.isOpen() || this.disabled) return;
-    
-    this.loadDirectory(this.currentPath()).then(() => {
-      this.createOverlay();
-      this.isOpen.set(true);
-    });
+
+    this.createOverlay();
+    this.isOpen.set(true);
+    this.loadDirectory(this.currentPath());
   }
 
   close(): void {
@@ -211,49 +199,216 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
   // File browser methods
   onItemClick(item: FileSystemItem): void {
-    if (item.disabled) return;
-    
+    if (item.disabled || item.isCreating || this.creatingItemTempId()) return;
+
     if (this.multiSelect) {
       const selected = this.selectedItems();
       const index = selected.indexOf(item.path);
-      
+
       if (index >= 0) {
         selected.splice(index, 1);
       } else {
         selected.push(item.path);
       }
-      
+
       this.selectedItems.set([...selected]);
-      this.updateSelectionFromItems();
     } else {
-      this.updateSelection(item.path);
+      // Single select - just update selection state, don't apply yet
+      this.selectedItems.set([item.path]);
     }
   }
 
   onItemDoubleClick(item: FileSystemItem): void {
-    if (item.disabled) return;
-    
-    if (item.type === 'folder' || item.type === 'dataset' || item.type === 'mountpoint') {
+    if (item.isCreating || this.creatingItemTempId()) return;
+
+    // Define navigatable types
+    const isNavigatable = ['folder', 'dataset', 'mountpoint'].includes(item.type);
+
+    // Allow navigation even if disabled, as long as it's a navigatable type
+    if (isNavigatable) {
       this.navigateToPath(item.path);
-    } else if (!this.multiSelect) {
-      this.updateSelection(item.path);
-      this.close();
+    } else if (!item.disabled) {
+      // Double-click on selectable item submits immediately
+      this.selectedItems.set([item.path]);
+      this.onSubmit();
     }
   }
 
+  onSubmit(): void {
+    // Apply the selection and close the popup
+    const selected = this.selectedItems();
+
+    if (selected.length === 0) return;
+
+    // Clear any existing error state
+    this.hasError.set(false);
+
+    if (this.multiSelect) {
+      this.selectedPath.set(selected.join(', '));
+      this.onChange(selected);
+      this.selectionChange.emit(selected);
+    } else {
+      const path = selected[0];
+      this.selectedPath.set(path);
+      this.onChange(path);
+      this.selectionChange.emit(path);
+    }
+
+    this.close();
+  }
+
+  onCancel(): void {
+    // Close without applying selection
+    this.close();
+  }
+
   navigateToPath(path: string): void {
+    // Prevent navigation if currently creating a folder
+    if (this.creatingItemTempId()) {
+      console.warn('Cannot navigate while creating a folder');
+      return;
+    }
     this.loadDirectory(path);
   }
 
   onCreateFolder(): void {
-    // This would typically open a dialog for folder name input
-    // For now, emit the event for the parent component to handle
+    // Prevent multiple simultaneous creations
+    if (this.creatingItemTempId()) {
+      console.warn('Already creating a folder');
+      return;
+    }
+
+    // Generate temporary ID
+    const tempId = `temp-${Date.now()}`;
+
+    // Create pending item
+    const pendingFolder: FileSystemItem = {
+      path: `${this.currentPath()}/__pending__/${tempId}`,
+      name: 'New Folder',
+      type: 'folder',
+      isCreating: true,
+      tempId: tempId,
+      modified: new Date()
+    };
+
+    // Add to top of file list
+    const currentItems = this.fileItems();
+    this.fileItems.set([pendingFolder, ...currentItems]);
+    this.creatingItemTempId.set(tempId);
+
+    // Still emit event for parent components
     this.createFolder.emit({
       parentPath: this.currentPath(),
       folderName: 'New Folder'
     });
   }
 
+  onClearSelection(): void {
+    this.selectedItems.set([]);
+    this.selectedPath.set('');
+    this.onChange(this.multiSelect ? [] : '');
+    this.selectionChange.emit(this.multiSelect ? [] : '');
+  }
+
+  async onSubmitFolderName(name: string, tempId: string): Promise<void> {
+    // Validate folder name
+    const validation = this.validateFolderName(name);
+    if (!validation.valid) {
+      // Update the item with error message
+      this.updateCreatingItemError(tempId, validation.error!);
+      return;
+    }
+
+    if (!this.callbacks?.createFolder) {
+      this.updateCreatingItemError(tempId, 'Create folder callback not provided');
+      return;
+    }
+
+    // Clear any previous errors
+    this.updateCreatingItemError(tempId, undefined);
+    this.creationLoading.set(true);
+
+    try {
+      // Call the callback with parent path and user-entered name
+      const createdPath = await this.callbacks.createFolder(
+        this.currentPath(),
+        name.trim()
+      );
+
+      // Remove pending item
+      this.removePendingItem(tempId);
+      this.creatingItemTempId.set(null);
+
+      // Reload directory to show the newly created folder
+      await this.loadDirectory(this.currentPath());
+
+    } catch (err: any) {
+      console.error('Failed to create folder:', err);
+
+      // Show error inline, keep input editable for retry
+      const errorMessage = err.message || 'Failed to create folder';
+      this.updateCreatingItemError(tempId, errorMessage);
+      this.emitError('creation', errorMessage, this.currentPath());
+
+    } finally {
+      this.creationLoading.set(false);
+    }
+  }
+
+  onCancelFolderCreation(tempId: string): void {
+    this.removePendingItem(tempId);
+    this.creatingItemTempId.set(null);
+    this.creationLoading.set(false);
+  }
+
+  private removePendingItem(tempId: string): void {
+    const items = this.fileItems().filter(item => item.tempId !== tempId);
+    this.fileItems.set(items);
+  }
+
+  private updateCreatingItemError(tempId: string, error: string | undefined): void {
+    const items = this.fileItems().map(item => {
+      if (item.tempId === tempId) {
+        return { ...item, creationError: error };
+      }
+      return item;
+    });
+    this.fileItems.set(items);
+  }
+
+  private validateFolderName(name: string): { valid: boolean; error?: string } {
+    const trimmed = name.trim();
+
+    if (!trimmed) {
+      return { valid: false, error: 'Folder name cannot be empty' };
+    }
+
+    if (trimmed.length > 255) {
+      return { valid: false, error: 'Folder name too long (max 255 characters)' };
+    }
+
+    // Check for invalid characters (common across file systems)
+    const invalidChars = /[<>:"|?*\x00-\x1f]/;
+    if (invalidChars.test(trimmed)) {
+      return { valid: false, error: 'Invalid characters in folder name' };
+    }
+
+    // Disallow folder names that are just dots
+    if (/^\.+$/.test(trimmed)) {
+      return { valid: false, error: 'Invalid folder name' };
+    }
+
+    // Check for duplicate names in current directory
+    const existingNames = this.fileItems()
+      .filter(item => !item.isCreating)
+      .map(item => item.name.toLowerCase());
+
+    if (existingNames.includes(trimmed.toLowerCase())) {
+      return { valid: false, error: 'A folder with this name already exists' };
+    }
+
+    return { valid: true };
+  }
 
   private async loadDirectory(path: string): Promise<void> {
     if (!this.callbacks?.getChildren) {
@@ -263,9 +418,9 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       this.pathChange.emit(path);
       return;
     }
-    
+
     this.loading.set(true);
-    
+
     try {
       const items = await this.callbacks.getChildren(path);
       this.fileItems.set(items);
@@ -311,6 +466,9 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   }
 
   private updateSelection(path: string): void {
+    // Clear any existing error state since popup selections are valid
+    this.hasError.set(false);
+
     if (this.multiSelect) {
       const selected = [path];
       this.selectedItems.set(selected);
@@ -321,37 +479,31 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       this.selectedItems.set([path]);
       this.onChange(path);
     }
-    
+
     this.selectionChange.emit(this.multiSelect ? this.selectedItems() : path);
   }
 
   private updateSelectionFromItems(): void {
+    // Clear any existing error state since popup selections are valid
+    this.hasError.set(false);
+
     const selected = this.selectedItems();
     this.selectedPath.set(selected.join(', '));
     this.onChange(this.multiSelect ? selected : selected[0] || '');
     this.selectionChange.emit(this.multiSelect ? selected : selected[0] || '');
   }
 
-  private displayPathToFullPath(displayPath: string): string {
+  private toFullPath(displayPath: string): string {
     if (!displayPath) return '/mnt';
-    
-    if (displayPath === '/') {
-      return '/mnt';
-    }
-    
-    if (displayPath.startsWith('/')) {
-      return '/mnt' + displayPath;
-    }
-    
+    if (displayPath === '/') return '/mnt';
+    if (displayPath.startsWith('/')) return '/mnt' + displayPath;
     return '/mnt/' + displayPath;
   }
 
   private emitError(type: FilePickerError['type'], message: string, path?: string): void {
     this.hasError.set(true);
     this.error.emit({ type, message, path });
-    
-    // Clear error after a delay
-    setTimeout(() => this.hasError.set(false), 3000);
+    // Error persists until cleared by valid input or selection
   }
 
   private createOverlay(): void {
@@ -400,8 +552,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       scrollStrategy: this.overlay.scrollStrategies.reposition(),
       hasBackdrop: true,
       backdropClass: 'cdk-overlay-transparent-backdrop',
-      panelClass: 'ix-file-picker-overlay',
-      width: this.wrapperEl.nativeElement.offsetWidth
+      panelClass: 'ix-file-picker-overlay'
     });
 
     this.overlayRef.backdropClick().subscribe(() => {
