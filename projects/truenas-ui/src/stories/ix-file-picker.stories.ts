@@ -1163,15 +1163,17 @@ export const FileFiltering: Story = {
       expect(screen.queryByText('readme.txt')).toBeInTheDocument();
     }, { timeout: 2000 });
 
-    // Verify only files are visible (no folders like 'documents')
-    expect(screen.queryByText('documents')).not.toBeInTheDocument();
+    // Verify files are visible and folders are present but disabled
     expect(screen.queryByText('readme.txt')).toBeInTheDocument();
     expect(screen.queryByText('config.json')).toBeInTheDocument();
+
+    // Folders should still be visible (for navigation) but disabled
+    expect(screen.queryByText('documents')).toBeInTheDocument();
   },
   parameters: {
     docs: {
       description: {
-        story: 'Tests file filtering: mode="file" shows only files, fileExtensions filters by extension.'
+        story: 'Tests file filtering: mode="file" disables non-file items (folders remain visible for navigation), fileExtensions filters files by extension.'
       }
     }
   }
