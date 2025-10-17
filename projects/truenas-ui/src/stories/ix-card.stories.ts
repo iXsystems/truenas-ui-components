@@ -69,8 +69,10 @@ const meta: Meta<IxCardComponent> = {
         [bordered]="bordered"
         [background]="background"
       >
-        <p>This is the card content. You can put any content here including other components, text, images, etc.</p>
-        <p>The card provides a clean container with customizable elevation, padding, and optional borders.</p>
+        <div style="padding: 24px;">
+          <p>This is the card content. You can put any content here including other components, text, images, etc.</p>
+          <p>The card provides a clean container with customizable elevation, padding, and optional borders.</p>
+        </div>
       </ix-card>
     `,
   }),
@@ -211,7 +213,9 @@ export const WithHeaderStatus: Story = {
         [bordered]="bordered"
         [background]="background"
         [headerStatus]="headerStatus">
-        <p>This card includes a status badge in the header showing the current state.</p>
+        <div style="padding: 24px;">
+          <p>This card includes a status badge in the header showing the current state.</p>
+        </div>
       </ix-card>
     `,
   }),
@@ -238,7 +242,9 @@ export const WithHeaderControl: Story = {
         [bordered]="bordered"
         [background]="background"
         [headerControl]="headerControl">
-        <p>This card includes a slide toggle control in the header for quick enable/disable actions.</p>
+        <div style="padding: 24px;">
+          <p>This card includes a slide toggle control in the header for quick enable/disable actions.</p>
+        </div>
       </ix-card>
     `,
   }),
@@ -266,7 +272,9 @@ export const WithHeaderMenu: Story = {
         [bordered]="bordered"
         [background]="background"
         [headerMenu]="headerMenu">
-        <p>This card includes a three-dot menu icon in the header with common actions. Click the dots to open the menu.</p>
+        <div style="padding: 24px;">
+          <p>This card includes a three-dot menu icon in the header with common actions. Click the dots to open the menu.</p>
+        </div>
       </ix-card>
     `,
   }),
@@ -289,7 +297,9 @@ export const WithTitleLink: Story = {
         [padding]="padding"
         [bordered]="bordered"
         [background]="background">
-        <p>This card has a clickable title that navigates to a detail page.</p>
+        <div style="padding: 24px;">
+          <p>This card has a clickable title that navigates to a detail page.</p>
+        </div>
       </ix-card>
     `,
   }),
@@ -320,7 +330,9 @@ export const WithFooterActions: Story = {
         [background]="background"
         [primaryAction]="primaryAction"
         [secondaryAction]="secondaryAction">
-        <p>This card includes action buttons in the footer for common operations.</p>
+        <div style="padding: 24px;">
+          <p>This card includes action buttons in the footer for common operations.</p>
+        </div>
       </ix-card>
     `,
   }),
@@ -351,7 +363,9 @@ export const WithFooterLink: Story = {
         [background]="background"
         [footerLink]="footerLink"
         [primaryAction]="primaryAction">
-        <p>This card includes a footer link on the left and a primary action on the right.</p>
+        <div style="padding: 24px;">
+          <p>This card includes a footer link on the left and a primary action on the right.</p>
+        </div>
       </ix-card>
     `,
   }),
@@ -404,7 +418,7 @@ export const CompleteExample: Story = {
         [footerLink]="footerLink"
         [primaryAction]="primaryAction"
         [secondaryAction]="secondaryAction">
-        <div>
+        <div style="padding: 24px;">
           <h4 style="margin-top: 0;">Service Configuration</h4>
           <p>Configure your service settings and preferences below.</p>
           <ul>
