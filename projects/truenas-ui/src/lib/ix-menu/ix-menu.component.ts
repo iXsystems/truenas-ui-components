@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, Output, EventEmitter, TemplateRef, ViewChild, OnInit, ElementRef } from '@angular/core';
-import { CdkMenuTrigger, CdkMenu, CdkMenuItem } from '@angular/cdk/menu';
+import { Component, Input, Output, EventEmitter, TemplateRef, ViewChild, OnInit, ViewContainerRef } from '@angular/core';
+import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { ViewContainerRef } from '@angular/core';
+import { IxIconComponent } from '../ix-icon/ix-icon.component';
 
 export interface IxMenuItem {
   id: string;
@@ -19,24 +19,19 @@ export interface IxMenuItem {
 @Component({
   selector: 'ix-menu',
   standalone: true,
-  imports: [CommonModule, CdkMenuTrigger, CdkMenu, CdkMenuItem],
-  providers: [Overlay],
+  imports: [CommonModule, CdkMenu, CdkMenuItem, CdkMenuTrigger, IxIconComponent],
   templateUrl: './ix-menu.component.html',
   styleUrls: ['./ix-menu.component.scss'],
 })
 export class IxMenuComponent implements OnInit {
   @Input() items: IxMenuItem[] = [];
-  @Input() triggerText = 'Menu';
-  @Input() disabled = false;
-  @Input() position: 'above' | 'below' | 'before' | 'after' = 'below';
-  @Input() contextMenu = false; // New input for context menu mode
+  @Input() contextMenu = false; // Enable context menu mode (right-click)
 
   @Output() menuItemClick = new EventEmitter<IxMenuItem>();
   @Output() menuOpen = new EventEmitter<void>();
   @Output() menuClose = new EventEmitter<void>();
 
-  @ViewChild(CdkMenuTrigger) trigger!: CdkMenuTrigger;
-  @ViewChild('contextTrigger', { read: ElementRef }) contextTriggerRef!: ElementRef;
+  @ViewChild('menuTemplate', { read: TemplateRef }) menuTemplate!: TemplateRef<any>;
   @ViewChild('contextMenuTemplate', { read: TemplateRef }) contextMenuTemplate!: TemplateRef<any>;
 
   private contextOverlayRef?: OverlayRef;
@@ -75,12 +70,14 @@ export class IxMenuComponent implements OnInit {
     this.menuClose.emit();
   }
 
-  public openMenu(): void {
-    this.trigger?.open();
-  }
-
-  public closeMenu(): void {
-    this.trigger?.close();
+  /**
+   * Get the menu template for use by the trigger directive
+   */
+  public getMenuTemplate(): TemplateRef<any> | null {
+    if (this.contextMenu) {
+      return this.contextMenuTemplate || null;
+    }
+    return this.menuTemplate || null;
   }
 
   public openContextMenuAt(x: number, y: number): void {
@@ -127,10 +124,10 @@ export class IxMenuComponent implements OnInit {
   }
 
   onContextMenu(event: MouseEvent): void {
-    if (this.contextMenu && !this.disabled) {
+    if (this.contextMenu) {
       event.preventDefault();
       event.stopPropagation();
-      
+
       // Open at cursor position
       this.openContextMenuAt(event.clientX, event.clientY);
     }
@@ -138,20 +135,5 @@ export class IxMenuComponent implements OnInit {
 
   trackByItemId(index: number, item: IxMenuItem): string {
     return item.id;
-  }
-
-  getMenuPosition(): any {
-    switch (this.position) {
-      case 'above':
-        return [{ originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom' }];
-      case 'below':
-        return [{ originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top' }];
-      case 'before':
-        return [{ originX: 'start', originY: 'top', overlayX: 'end', overlayY: 'top' }];
-      case 'after':
-        return [{ originX: 'end', originY: 'top', overlayX: 'start', overlayY: 'top' }];
-      default:
-        return [{ originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top' }];
-    }
   }
 }

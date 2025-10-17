@@ -2,22 +2,14 @@ import type { Meta, StoryObj } from '@storybook/angular';
 import { userEvent, within } from '@storybook/testing-library';
 import { expect } from '@storybook/jest';
 import { IxMenuComponent, IxMenuItem } from '../lib/ix-menu/ix-menu.component';
+import { IxMenuTriggerDirective } from '../lib/ix-menu/ix-menu-trigger.directive';
+import { IxButtonComponent } from '../lib/ix-button/ix-button.component';
 
 const meta: Meta<IxMenuComponent> = {
   title: 'Components/Menu',
   component: IxMenuComponent,
   tags: ['autodocs'],
   argTypes: {
-    position: {
-      control: 'select',
-      options: ['above', 'below', 'before', 'after'],
-    },
-    disabled: {
-      control: 'boolean',
-    },
-    triggerText: {
-      control: 'text',
-    },
     contextMenu: {
       control: 'boolean',
       description: 'Enable context menu mode (right-click to open)',
@@ -44,14 +36,27 @@ const defaultItems: IxMenuItem[] = [
 export const Default: Story = {
   args: {
     items: defaultItems,
-    triggerText: 'Menu',
-    disabled: false,
-    position: 'below',
   },
+  render: (args) => ({
+    props: args,
+    template: `
+      <ix-button [ixMenuTriggerFor]="menu">Menu</ix-button>
+      <ix-menu
+        #menu
+        [items]="items"
+        (menuItemClick)="menuItemClick($event)"
+        (menuOpen)="menuOpen($event)"
+        (menuClose)="menuClose($event)">
+      </ix-menu>
+    `,
+    moduleMetadata: {
+      imports: [IxMenuTriggerDirective, IxButtonComponent],
+    },
+  }),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const menuTrigger = canvas.getByRole('button', { name: /menu/i });
-    
+
     await expect(menuTrigger).toBeInTheDocument();
     await userEvent.click(menuTrigger);
   },
@@ -65,9 +70,17 @@ export const WithIcons: Story = {
       { id: '3', label: 'Profile', icon: '👤' },
       { id: '4', label: 'Logout', icon: '⎋' },
     ],
-    triggerText: 'Navigation',
-    position: 'below',
   },
+  render: (args) => ({
+    props: args,
+    template: `
+      <ix-button [ixMenuTriggerFor]="menu">Navigation</ix-button>
+      <ix-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></ix-menu>
+    `,
+    moduleMetadata: {
+      imports: [IxMenuTriggerDirective, IxButtonComponent],
+    },
+  }),
 };
 
 export const WithSeparators: Story = {
@@ -81,9 +94,17 @@ export const WithSeparators: Story = {
       { id: 'sep2', label: '', separator: true },
       { id: '5', label: 'Logout', icon: '⎋', shortcut: '⇧⌘Q' },
     ],
-    triggerText: 'User Menu',
-    position: 'below',
   },
+  render: (args) => ({
+    props: args,
+    template: `
+      <ix-button [ixMenuTriggerFor]="menu">User Menu</ix-button>
+      <ix-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></ix-menu>
+    `,
+    moduleMetadata: {
+      imports: [IxMenuTriggerDirective, IxButtonComponent],
+    },
+  }),
 };
 
 export const WithDisabledItems: Story = {
@@ -94,18 +115,33 @@ export const WithDisabledItems: Story = {
       { id: '3', label: 'Another Action', icon: '⚙' },
       { id: '4', label: 'Unavailable', icon: '✗', disabled: true },
     ],
-    triggerText: 'Actions',
-    position: 'below',
   },
+  render: (args) => ({
+    props: args,
+    template: `
+      <ix-button [ixMenuTriggerFor]="menu">Actions</ix-button>
+      <ix-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></ix-menu>
+    `,
+    moduleMetadata: {
+      imports: [IxMenuTriggerDirective, IxButtonComponent],
+    },
+  }),
 };
 
-export const DisabledMenu: Story = {
+export const DisabledButton: Story = {
   args: {
     items: defaultItems,
-    triggerText: 'Disabled Menu',
-    disabled: true,
-    position: 'below',
   },
+  render: (args) => ({
+    props: args,
+    template: `
+      <ix-button [ixMenuTriggerFor]="menu" [disabled]="true">Disabled Menu</ix-button>
+      <ix-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></ix-menu>
+    `,
+    moduleMetadata: {
+      imports: [IxMenuTriggerDirective, IxButtonComponent],
+    },
+  }),
 };
 
 export const PositionAbove: Story = {
@@ -115,24 +151,24 @@ export const PositionAbove: Story = {
       { id: '2', label: 'Option 2' },
       { id: '3', label: 'Option 3' },
     ],
-    triggerText: 'Menu Above',
-    position: 'above',
   },
   render: (args) => ({
     props: args,
     template: `
       <div style="margin-top: 200px; padding: 20px;">
+        <ix-button [ixMenuTriggerFor]="menu" ixMenuPosition="above">Menu Above</ix-button>
         <ix-menu
+          #menu
           [items]="items"
-          [triggerText]="triggerText"
-          [position]="position"
-          [disabled]="disabled"
           (menuItemClick)="menuItemClick($event)"
           (menuOpen)="menuOpen($event)"
           (menuClose)="menuClose($event)">
         </ix-menu>
       </div>
     `,
+    moduleMetadata: {
+      imports: [IxMenuTriggerDirective, IxButtonComponent],
+    },
   }),
 };
 
@@ -181,9 +217,17 @@ export const NestedMenus: Story = {
         { id: '4-4', label: 'About' },
       ]},
     ],
-    triggerText: 'Menu with Submenus',
-    position: 'below',
   },
+  render: (args) => ({
+    props: args,
+    template: `
+      <ix-button [ixMenuTriggerFor]="menu">Menu with Submenus</ix-button>
+      <ix-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></ix-menu>
+    `,
+    moduleMetadata: {
+      imports: [IxMenuTriggerDirective, IxButtonComponent],
+    },
+  }),
 };
 
 export const WithKeyboardShortcuts: Story = {
@@ -203,36 +247,34 @@ export const WithKeyboardShortcuts: Story = {
       { id: 'sep3', label: '', separator: true },
       { id: '10', label: 'Preferences', shortcut: '⌘,' },
     ],
-    triggerText: 'File Menu',
-    position: 'below',
   },
-  decorators: [
-    (story, context) => ({
-      template: `
-        <div>
-          <ix-menu
-            [items]="items"
-            [triggerText]="triggerText"
-            [position]="position"
-            [disabled]="disabled"
-            (menuItemClick)="menuItemClick($event)"
-            (menuOpen)="menuOpen($event)"
-            (menuClose)="menuClose($event)">
-          </ix-menu>
-          <div style="margin-top: 24px; padding: 16px; border: 1px solid var(--lines, #ddd); border-radius: 4px; font-size: 14px; color: var(--fg2, #666666);">
-            <strong>⚠️ Accessibility Warning</strong><br>
-            Always use modifier keys (⌘, Ctrl, Alt, Shift) for keyboard shortcuts. 
-            Avoid single letters like H, K, T, F, B, L as they conflict with screen reader navigation.
-            <br><br>
-            <strong>Learn more:</strong>&nbsp;&nbsp;
-            <a href="https://www.w3.org/WAI/WCAG21/Understanding/character-key-shortcuts.html" target="_blank" rel="noopener" style="color: var(--primary, #007bff);">WCAG 2.1.4 Character Key Shortcuts</a> • 
-            <a href="https://webaim.org/techniques/keyboard/" target="_blank" rel="noopener" style="color: var(--primary, #007bff);">WebAIM Keyboard Accessibility</a>
-          </div>
+  render: (args) => ({
+    props: args,
+    template: `
+      <div>
+        <ix-button [ixMenuTriggerFor]="menu">File Menu</ix-button>
+        <ix-menu
+          #menu
+          [items]="items"
+          (menuItemClick)="menuItemClick($event)"
+          (menuOpen)="menuOpen($event)"
+          (menuClose)="menuClose($event)">
+        </ix-menu>
+        <div style="margin-top: 24px; padding: 16px; border: 1px solid var(--lines, #ddd); border-radius: 4px; font-size: 14px; color: var(--fg2, #666666);">
+          <strong>⚠️ Accessibility Warning</strong><br>
+          Always use modifier keys (⌘, Ctrl, Alt, Shift) for keyboard shortcuts.
+          Avoid single letters like H, K, T, F, B, L as they conflict with screen reader navigation.
+          <br><br>
+          <strong>Learn more:</strong>&nbsp;&nbsp;
+          <a href="https://www.w3.org/WAI/WCAG21/Understanding/character-key-shortcuts.html" target="_blank" rel="noopener" style="color: var(--primary, #007bff);">WCAG 2.1.4 Character Key Shortcuts</a> •
+          <a href="https://webaim.org/techniques/keyboard/" target="_blank" rel="noopener" style="color: var(--primary, #007bff);">WebAIM Keyboard Accessibility</a>
         </div>
-      `,
-      props: context.args,
-    }),
-  ],
+      </div>
+    `,
+    moduleMetadata: {
+      imports: [IxMenuTriggerDirective, IxButtonComponent],
+    },
+  }),
 };
 
 export const ContextMenu: Story = {

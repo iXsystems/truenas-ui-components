@@ -31,11 +31,10 @@ describe('IxMenuComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should render trigger text', () => {
-    component.triggerText = 'Test Menu';
+  it('should expose menu template', () => {
     fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.ix-menu-trigger')?.textContent).toContain('Test Menu');
+    const template = component.getMenuTemplate();
+    expect(template).toBeTruthy();
   });
 
   it('should emit menuItemClick when item is clicked', () => {
@@ -81,12 +80,12 @@ describe('IxMenuComponent', () => {
     expect(onMenuCloseSpy).toHaveBeenCalled();
   });
 
-  it('should have disabled class when disabled', () => {
-    component.disabled = true;
+  it('should return context menu template when contextMenu is true', () => {
+    component.contextMenu = true;
     fixture.detectChanges();
-    
-    const trigger = fixture.nativeElement.querySelector('.ix-menu-trigger');
-    expect(trigger).toHaveClass('disabled');
+
+    const template = component.getMenuTemplate();
+    expect(template).toBe(component.contextMenuTemplate);
   });
 
   it('should track items by id', () => {

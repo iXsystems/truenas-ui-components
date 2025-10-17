@@ -1,9 +1,8 @@
 import * as i0 from '@angular/core';
-import { EventEmitter, AfterViewInit, ElementRef, OnDestroy, AfterContentInit, TemplateRef, QueryList, OnInit, ViewContainerRef, OnChanges, ChangeDetectorRef, SimpleChanges, IterableDiffers, PipeTransform, AfterViewChecked } from '@angular/core';
-import { ControlValueAccessor, NgControl } from '@angular/forms';
-import { CdkMenuTrigger } from '@angular/cdk/menu';
-import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
+import { EventEmitter, OnInit, OnChanges, AfterViewInit, ElementRef, ChangeDetectorRef, SimpleChanges, TemplateRef, ViewContainerRef, OnDestroy, AfterContentInit, QueryList, IterableDiffers, PipeTransform, AfterViewChecked } from '@angular/core';
 import { SafeHtml, DomSanitizer } from '@angular/platform-browser';
+import { ControlValueAccessor, NgControl } from '@angular/forms';
+import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
 import { HttpClient } from '@angular/common/http';
 import * as i1 from '@angular/cdk/tree';
 import { CdkTree, FlatTreeControl, CdkTreeNode, CdkNestedTreeNode } from '@angular/cdk/tree';
@@ -51,6 +50,59 @@ declare class IxButtonComponent {
     get classes(): string[];
     static ɵfac: i0.ɵɵFactoryDeclaration<IxButtonComponent, never>;
     static ɵcmp: i0.ɵɵComponentDeclaration<IxButtonComponent, "ix-button", never, { "primary": { "alias": "primary"; "required": false; }; "color": { "alias": "color"; "required": false; }; "variant": { "alias": "variant"; "required": false; }; "backgroundColor": { "alias": "backgroundColor"; "required": false; }; "label": { "alias": "label"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; }, { "onClick": "onClick"; }, never, never, true, never>;
+}
+
+type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+type IconSource = 'svg' | 'css' | 'unicode' | 'text';
+type IconLibraryType = 'material' | 'mdi' | 'custom';
+interface IconResult {
+    source: IconSource;
+    content: string | SafeHtml;
+}
+declare class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
+    private sanitizer;
+    private cdr;
+    name: string;
+    size: IconSize;
+    color?: string;
+    tooltip?: string;
+    ariaLabel?: string;
+    library?: IconLibraryType;
+    svgContainer?: ElementRef<HTMLDivElement>;
+    iconResult: IconResult;
+    private iconRegistry;
+    private mdiIconService;
+    constructor(sanitizer: DomSanitizer, cdr: ChangeDetectorRef);
+    ngOnInit(): void;
+    ngOnChanges(changes: SimpleChanges): void;
+    ngAfterViewInit(): void;
+    get effectiveAriaLabel(): string;
+    get sanitizedContent(): any;
+    private updateSvgContent;
+    private resolveIcon;
+    private resolveMdiIcon;
+    private tryThirdPartyIcon;
+    private tryCssIcon;
+    private tryUnicodeIcon;
+    private generateTextAbbreviation;
+    private cssClassExists;
+    static ɵfac: i0.ɵɵFactoryDeclaration<IxIconComponent, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<IxIconComponent, "ix-icon", never, { "name": { "alias": "name"; "required": false; }; "size": { "alias": "size"; "required": false; }; "color": { "alias": "color"; "required": false; }; "tooltip": { "alias": "tooltip"; "required": false; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; }; "library": { "alias": "library"; "required": false; }; }, {}, never, never, true, never>;
+}
+
+declare class IxIconButtonComponent {
+    disabled: boolean;
+    ariaLabel?: string;
+    name: string;
+    size: IconSize;
+    color?: string;
+    tooltip?: string;
+    library?: IconLibraryType;
+    onClick: EventEmitter<MouseEvent>;
+    get classes(): string[];
+    get effectiveAriaLabel(): string;
+    static ɵfac: i0.ɵɵFactoryDeclaration<IxIconButtonComponent, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<IxIconButtonComponent, "ix-icon-button", never, { "disabled": { "alias": "disabled"; "required": false; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; }; "name": { "alias": "name"; "required": false; }; "size": { "alias": "size"; "required": false; }; "color": { "alias": "color"; "required": false; }; "tooltip": { "alias": "tooltip"; "required": false; }; "library": { "alias": "library"; "required": false; }; }, { "onClick": "onClick"; }, never, never, true, never>;
 }
 
 declare enum InputType {
@@ -111,15 +163,209 @@ declare class IxChipComponent implements AfterViewInit {
     static ɵcmp: i0.ɵɵComponentDeclaration<IxChipComponent, "ix-chip", never, { "label": { "alias": "label"; "required": false; }; "icon": { "alias": "icon"; "required": false; }; "closable": { "alias": "closable"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; "color": { "alias": "color"; "required": false; }; "testId": { "alias": "testId"; "required": false; }; }, { "onClose": "onClose"; "onClick": "onClick"; }, never, never, true, never>;
 }
 
+interface IxMenuItem {
+    id: string;
+    label: string;
+    icon?: string;
+    disabled?: boolean;
+    separator?: boolean;
+    action?: () => void;
+    children?: IxMenuItem[];
+    shortcut?: string;
+}
+declare class IxMenuComponent implements OnInit {
+    private overlay;
+    private viewContainerRef;
+    items: IxMenuItem[];
+    contextMenu: boolean;
+    menuItemClick: EventEmitter<IxMenuItem>;
+    menuOpen: EventEmitter<void>;
+    menuClose: EventEmitter<void>;
+    menuTemplate: TemplateRef<any>;
+    contextMenuTemplate: TemplateRef<any>;
+    private contextOverlayRef?;
+    constructor(overlay: Overlay, viewContainerRef: ViewContainerRef);
+    ngOnInit(): void;
+    onMenuItemClick(item: IxMenuItem): void;
+    hasChildren(item: IxMenuItem): boolean;
+    onMenuOpen(): void;
+    onMenuClose(): void;
+    /**
+     * Get the menu template for use by the trigger directive
+     */
+    getMenuTemplate(): TemplateRef<any> | null;
+    openContextMenuAt(x: number, y: number): void;
+    private closeContextMenu;
+    onContextMenu(event: MouseEvent): void;
+    trackByItemId(index: number, item: IxMenuItem): string;
+    static ɵfac: i0.ɵɵFactoryDeclaration<IxMenuComponent, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<IxMenuComponent, "ix-menu", never, { "items": { "alias": "items"; "required": false; }; "contextMenu": { "alias": "contextMenu"; "required": false; }; }, { "menuItemClick": "menuItemClick"; "menuOpen": "menuOpen"; "menuClose": "menuClose"; }, never, ["*"], true, never>;
+}
+
+interface IconLibrary {
+    name: string;
+    resolver: (iconName: string, options?: any) => string | HTMLElement | null;
+    defaultOptions?: any;
+}
+interface ResolvedIcon {
+    source: 'svg' | 'css' | 'unicode' | 'text';
+    content: string | SafeHtml;
+}
+declare class IxIconRegistryService {
+    private sanitizer;
+    private libraries;
+    private customIcons;
+    constructor(sanitizer: DomSanitizer);
+    /**
+     * Register an icon library (like Lucide, Heroicons, etc.)
+     *
+     * @example
+     * ```typescript
+     * // Register Lucide
+     * import * as LucideIcons from 'lucide';
+     *
+     * iconRegistry.registerLibrary({
+     *   name: 'lucide',
+     *   resolver: (iconName: string, options = {}) => {
+     *     const pascalCase = iconName.split('-').map(part =>
+     *       part.charAt(0).toUpperCase() + part.slice(1)
+     *     ).join('');
+     *
+     *     const iconFunction = (LucideIcons as any)[pascalCase];
+     *     if (iconFunction && typeof iconFunction === 'function') {
+     *       return iconFunction({
+     *         size: 24,
+     *         color: 'currentColor',
+     *         strokeWidth: 2,
+     *         ...options
+     *       });
+     *     }
+     *     return null;
+     *   },
+     *   defaultOptions: { size: 24, strokeWidth: 2 }
+     * });
+     * ```
+     */
+    registerLibrary(library: IconLibrary): void;
+    /**
+     * Register a custom SVG icon
+     *
+     * @example
+     * ```typescript
+     * iconRegistry.registerIcon('my-logo', `
+     *   <svg viewBox="0 0 24 24">
+     *     <path d="M12 2L2 7v10c0 5.55 3.84 10 9 11 1.16-.08 2-.35 3-.82z"/>
+     *   </svg>
+     * `);
+     * ```
+     */
+    registerIcon(name: string, svgContent: string): void;
+    /**
+     * Register multiple custom icons at once
+     */
+    registerIcons(icons: Record<string, string>): void;
+    /**
+     * Resolve an icon using registered libraries and custom icons
+     *
+     * Format: "library:icon-name" or just "icon-name" for custom icons
+     *
+     * @example
+     * ```typescript
+     * // Library icons
+     * registry.resolveIcon('lucide:home')
+     * registry.resolveIcon('heroicons:user-circle')
+     * registry.resolveIcon('fa:home')
+     *
+     * // Custom icons
+     * registry.resolveIcon('my-logo')
+     * registry.resolveIcon('custom:special-icon')
+     * ```
+     */
+    resolveIcon(name: string, options?: any): ResolvedIcon | null;
+    /**
+     * Check if a library is registered
+     */
+    hasLibrary(libraryName: string): boolean;
+    /**
+     * Check if a custom icon is registered
+     */
+    hasIcon(iconName: string): boolean;
+    /**
+     * Get list of registered libraries
+     */
+    getRegisteredLibraries(): string[];
+    /**
+     * Get list of registered custom icons
+     */
+    getRegisteredIcons(): string[];
+    /**
+     * Remove a library
+     */
+    unregisterLibrary(libraryName: string): void;
+    /**
+     * Remove a custom icon
+     */
+    unregisterIcon(iconName: string): void;
+    /**
+     * Clear all registered libraries and icons
+     */
+    clear(): void;
+    private resolveLibraryIcon;
+    private resolveCustomIcon;
+    static ɵfac: i0.ɵɵFactoryDeclaration<IxIconRegistryService, never>;
+    static ɵprov: i0.ɵɵInjectableDeclaration<IxIconRegistryService>;
+}
+
+interface IxCardAction {
+    label: string;
+    handler: () => void;
+    disabled?: boolean;
+    icon?: string;
+}
+interface IxCardControl {
+    label: string;
+    checked: boolean;
+    handler: (checked: boolean) => void;
+    disabled?: boolean;
+}
+interface IxCardHeaderStatus {
+    label: string;
+    type?: 'success' | 'warning' | 'error' | 'info' | 'neutral';
+}
+interface IxCardFooterLink {
+    label: string;
+    handler: () => void;
+}
+
 declare class IxCardComponent {
+    private iconRegistry;
+    constructor(iconRegistry: IxIconRegistryService);
     title?: string;
+    titleLink?: string;
     elevation: 'none' | 'low' | 'medium' | 'high';
     padding: 'small' | 'medium' | 'large';
     bordered: boolean;
     background: boolean;
+    headerStatus?: IxCardHeaderStatus;
+    headerControl?: IxCardControl;
+    headerMenu?: IxMenuItem[];
+    primaryAction?: IxCardAction;
+    secondaryAction?: IxCardAction;
+    footerLink?: IxCardFooterLink;
+    /**
+     * Register MDI icon library with all icons used by the card component
+     * This makes the component self-contained with zero configuration required
+     */
+    private registerMdiIcons;
     get classes(): string[];
+    get hasHeader(): boolean;
+    get hasFooter(): boolean;
+    onTitleClick(): void;
+    onControlChange(checked: boolean): void;
+    onHeaderMenuItemClick(item: IxMenuItem): void;
+    getStatusClass(type?: string): string;
     static ɵfac: i0.ɵɵFactoryDeclaration<IxCardComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<IxCardComponent, "ix-card", never, { "title": { "alias": "title"; "required": false; }; "elevation": { "alias": "elevation"; "required": false; }; "padding": { "alias": "padding"; "required": false; }; "bordered": { "alias": "bordered"; "required": false; }; "background": { "alias": "background"; "required": false; }; }, {}, never, ["*"], true, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<IxCardComponent, "ix-card", never, { "title": { "alias": "title"; "required": false; }; "titleLink": { "alias": "titleLink"; "required": false; }; "elevation": { "alias": "elevation"; "required": false; }; "padding": { "alias": "padding"; "required": false; }; "bordered": { "alias": "bordered"; "required": false; }; "background": { "alias": "background"; "required": false; }; "headerStatus": { "alias": "headerStatus"; "required": false; }; "headerControl": { "alias": "headerControl"; "required": false; }; "headerMenu": { "alias": "headerMenu"; "required": false; }; "primaryAction": { "alias": "primaryAction"; "required": false; }; "secondaryAction": { "alias": "secondaryAction"; "required": false; }; "footerLink": { "alias": "footerLink"; "required": false; }; }, {}, never, ["*"], true, never>;
 }
 
 declare class IxExpansionPanelComponent {
@@ -304,46 +550,25 @@ declare class IxTabsComponent implements AfterContentInit, AfterViewInit {
     static ɵcmp: i0.ɵɵComponentDeclaration<IxTabsComponent, "ix-tabs", never, { "selectedIndex": { "alias": "selectedIndex"; "required": false; }; "orientation": { "alias": "orientation"; "required": false; }; "highlightPosition": { "alias": "highlightPosition"; "required": false; }; }, { "selectedIndexChange": "selectedIndexChange"; "tabChange": "tabChange"; }, ["tabs", "panels"], ["ix-tab", "ix-tab-panel"], true, never>;
 }
 
-interface IxMenuItem {
-    id: string;
-    label: string;
-    icon?: string;
-    disabled?: boolean;
-    separator?: boolean;
-    action?: () => void;
-    children?: IxMenuItem[];
-    shortcut?: string;
-}
-declare class IxMenuComponent implements OnInit {
+/**
+ * Directive that attaches a menu to any element.
+ * Usage: <button [ixMenuTriggerFor]="menu">Open Menu</button>
+ */
+declare class IxMenuTriggerDirective {
+    private elementRef;
     private overlay;
     private viewContainerRef;
-    items: IxMenuItem[];
-    triggerText: string;
-    disabled: boolean;
-    position: 'above' | 'below' | 'before' | 'after';
-    contextMenu: boolean;
-    menuItemClick: EventEmitter<IxMenuItem>;
-    menuOpen: EventEmitter<void>;
-    menuClose: EventEmitter<void>;
-    trigger: CdkMenuTrigger;
-    contextTriggerRef: ElementRef;
-    contextMenuTemplate: TemplateRef<any>;
-    private contextOverlayRef?;
-    constructor(overlay: Overlay, viewContainerRef: ViewContainerRef);
-    ngOnInit(): void;
-    onMenuItemClick(item: IxMenuItem): void;
-    hasChildren(item: IxMenuItem): boolean;
-    onMenuOpen(): void;
-    onMenuClose(): void;
+    menu: IxMenuComponent;
+    ixMenuPosition: 'above' | 'below' | 'before' | 'after';
+    private overlayRef?;
+    private isMenuOpen;
+    constructor(elementRef: ElementRef, overlay: Overlay, viewContainerRef: ViewContainerRef);
+    onClick(): void;
     openMenu(): void;
     closeMenu(): void;
-    openContextMenuAt(x: number, y: number): void;
-    private closeContextMenu;
-    onContextMenu(event: MouseEvent): void;
-    trackByItemId(index: number, item: IxMenuItem): string;
-    getMenuPosition(): any;
-    static ɵfac: i0.ɵɵFactoryDeclaration<IxMenuComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<IxMenuComponent, "ix-menu", never, { "items": { "alias": "items"; "required": false; }; "triggerText": { "alias": "triggerText"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; "position": { "alias": "position"; "required": false; }; "contextMenu": { "alias": "contextMenu"; "required": false; }; }, { "menuItemClick": "menuItemClick"; "menuOpen": "menuOpen"; "menuClose": "menuClose"; }, never, ["*"], true, never>;
+    private getPositions;
+    static ɵfac: i0.ɵɵFactoryDeclaration<IxMenuTriggerDirective, never>;
+    static ɵdir: i0.ɵɵDirectiveDeclaration<IxMenuTriggerDirective, "[ixMenuTriggerFor]", ["ixMenuTrigger"], { "menu": { "alias": "ixMenuTriggerFor"; "required": false; }; "ixMenuPosition": { "alias": "ixMenuPosition"; "required": false; }; }, {}, never, never, true, never>;
 }
 
 declare enum ModifierKeys {
@@ -449,158 +674,6 @@ declare class IxSelectComponent implements ControlValueAccessor {
     onKeydown(event: KeyboardEvent): void;
     static ɵfac: i0.ɵɵFactoryDeclaration<IxSelectComponent, never>;
     static ɵcmp: i0.ɵɵComponentDeclaration<IxSelectComponent, "ix-select", never, { "options": { "alias": "options"; "required": false; }; "optionGroups": { "alias": "optionGroups"; "required": false; }; "placeholder": { "alias": "placeholder"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; "testId": { "alias": "testId"; "required": false; }; }, { "selectionChange": "selectionChange"; }, never, never, true, never>;
-}
-
-type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-type IconSource = 'svg' | 'css' | 'unicode' | 'text';
-type IconLibraryType = 'material' | 'mdi' | 'custom';
-interface IconResult {
-    source: IconSource;
-    content: string | SafeHtml;
-}
-declare class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
-    private sanitizer;
-    private cdr;
-    name: string;
-    size: IconSize;
-    color?: string;
-    tooltip?: string;
-    ariaLabel?: string;
-    library?: IconLibraryType;
-    svgContainer?: ElementRef<HTMLDivElement>;
-    iconResult: IconResult;
-    private iconRegistry;
-    private mdiIconService;
-    constructor(sanitizer: DomSanitizer, cdr: ChangeDetectorRef);
-    ngOnInit(): void;
-    ngOnChanges(changes: SimpleChanges): void;
-    ngAfterViewInit(): void;
-    get effectiveAriaLabel(): string;
-    get sanitizedContent(): any;
-    private updateSvgContent;
-    private resolveIcon;
-    private resolveMdiIcon;
-    private tryThirdPartyIcon;
-    private tryCssIcon;
-    private tryUnicodeIcon;
-    private generateTextAbbreviation;
-    private cssClassExists;
-    static ɵfac: i0.ɵɵFactoryDeclaration<IxIconComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<IxIconComponent, "ix-icon", never, { "name": { "alias": "name"; "required": false; }; "size": { "alias": "size"; "required": false; }; "color": { "alias": "color"; "required": false; }; "tooltip": { "alias": "tooltip"; "required": false; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; }; "library": { "alias": "library"; "required": false; }; }, {}, never, never, true, never>;
-}
-
-interface IconLibrary {
-    name: string;
-    resolver: (iconName: string, options?: any) => string | HTMLElement | null;
-    defaultOptions?: any;
-}
-interface ResolvedIcon {
-    source: 'svg' | 'css' | 'unicode' | 'text';
-    content: string | SafeHtml;
-}
-declare class IxIconRegistryService {
-    private sanitizer;
-    private libraries;
-    private customIcons;
-    constructor(sanitizer: DomSanitizer);
-    /**
-     * Register an icon library (like Lucide, Heroicons, etc.)
-     *
-     * @example
-     * ```typescript
-     * // Register Lucide
-     * import * as LucideIcons from 'lucide';
-     *
-     * iconRegistry.registerLibrary({
-     *   name: 'lucide',
-     *   resolver: (iconName: string, options = {}) => {
-     *     const pascalCase = iconName.split('-').map(part =>
-     *       part.charAt(0).toUpperCase() + part.slice(1)
-     *     ).join('');
-     *
-     *     const iconFunction = (LucideIcons as any)[pascalCase];
-     *     if (iconFunction && typeof iconFunction === 'function') {
-     *       return iconFunction({
-     *         size: 24,
-     *         color: 'currentColor',
-     *         strokeWidth: 2,
-     *         ...options
-     *       });
-     *     }
-     *     return null;
-     *   },
-     *   defaultOptions: { size: 24, strokeWidth: 2 }
-     * });
-     * ```
-     */
-    registerLibrary(library: IconLibrary): void;
-    /**
-     * Register a custom SVG icon
-     *
-     * @example
-     * ```typescript
-     * iconRegistry.registerIcon('my-logo', `
-     *   <svg viewBox="0 0 24 24">
-     *     <path d="M12 2L2 7v10c0 5.55 3.84 10 9 11 1.16-.08 2-.35 3-.82z"/>
-     *   </svg>
-     * `);
-     * ```
-     */
-    registerIcon(name: string, svgContent: string): void;
-    /**
-     * Register multiple custom icons at once
-     */
-    registerIcons(icons: Record<string, string>): void;
-    /**
-     * Resolve an icon using registered libraries and custom icons
-     *
-     * Format: "library:icon-name" or just "icon-name" for custom icons
-     *
-     * @example
-     * ```typescript
-     * // Library icons
-     * registry.resolveIcon('lucide:home')
-     * registry.resolveIcon('heroicons:user-circle')
-     * registry.resolveIcon('fa:home')
-     *
-     * // Custom icons
-     * registry.resolveIcon('my-logo')
-     * registry.resolveIcon('custom:special-icon')
-     * ```
-     */
-    resolveIcon(name: string, options?: any): ResolvedIcon | null;
-    /**
-     * Check if a library is registered
-     */
-    hasLibrary(libraryName: string): boolean;
-    /**
-     * Check if a custom icon is registered
-     */
-    hasIcon(iconName: string): boolean;
-    /**
-     * Get list of registered libraries
-     */
-    getRegisteredLibraries(): string[];
-    /**
-     * Get list of registered custom icons
-     */
-    getRegisteredIcons(): string[];
-    /**
-     * Remove a library
-     */
-    unregisterLibrary(libraryName: string): void;
-    /**
-     * Remove a custom icon
-     */
-    unregisterIcon(iconName: string): void;
-    /**
-     * Clear all registered libraries and icons
-     */
-    clear(): void;
-    private resolveLibraryIcon;
-    private resolveCustomIcon;
-    static ɵfac: i0.ɵɵFactoryDeclaration<IxIconRegistryService, never>;
-    static ɵprov: i0.ɵɵInjectableDeclaration<IxIconRegistryService>;
 }
 
 /**
@@ -2153,5 +2226,5 @@ declare class IxKeyboardShortcutService {
     static ɵprov: i0.ɵɵInjectableDeclaration<IxKeyboardShortcutService>;
 }
 
-export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMdiIconService, IxMenuComponent, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TruenasIconsService, TruenasUiComponent, TruenasUiService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, registerLucideIcons, setupLucideIntegration };
-export type { CalendarCell, ChipColor, CreateFolderEvent, DateRange, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem, IconLibrary, IconLibraryType, IconResult, IconSize, IconSource, IxButtonToggleType, IxDialogDefaults, IxDialogOpenTarget, IxFlatTreeNode, IxMenuItem, IxSelectOption, IxSelectOptionGroup, IxSelectionChange, IxTableDataSource, KeyCombination, LabelType, LucideIconOptions, PathSegment, PlatformType, ProgressBarMode, ResolvedIcon, ShortcutHandler, SlideToggleColor, SpinnerMode, TabChangeEvent, TooltipPosition, YearCell };
+export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconButtonComponent, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMdiIconService, IxMenuComponent, IxMenuTriggerDirective, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TruenasIconsService, TruenasUiComponent, TruenasUiService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, registerLucideIcons, setupLucideIntegration };
+export type { CalendarCell, ChipColor, CreateFolderEvent, DateRange, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem, IconLibrary, IconLibraryType, IconResult, IconSize, IconSource, IxButtonToggleType, IxCardAction, IxCardControl, IxCardFooterLink, IxCardHeaderStatus, IxDialogDefaults, IxDialogOpenTarget, IxFlatTreeNode, IxMenuItem, IxSelectOption, IxSelectOptionGroup, IxSelectionChange, IxTableDataSource, KeyCombination, LabelType, LucideIconOptions, PathSegment, PlatformType, ProgressBarMode, ResolvedIcon, ShortcutHandler, SlideToggleColor, SpinnerMode, TabChangeEvent, TooltipPosition, YearCell };
