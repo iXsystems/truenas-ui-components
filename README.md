@@ -129,17 +129,17 @@ To use the TrueNAS-UI component library in your Angular application, install it 
 
 **Install from main branch:**
 ```bash
-yarn add git@github.com:iXsystems/truenas-ui-components.git
+yarn add truenas-ui@git@github.com:iXsystems/truenas-ui-components.git
 ```
 
 **Install from a specific branch:**
 ```bash
-yarn add git@github.com:iXsystems/truenas-ui-components.git#branch-name
+yarn add truenas-ui@git@github.com:iXsystems/truenas-ui-components.git#branch-name
 ```
 
 **Install from a specific commit:**
 ```bash
-yarn add git@github.com:iXsystems/truenas-ui-components.git#commit-hash
+yarn add truenas-ui@git@github.com:iXsystems/truenas-ui-components.git#commit-hash
 ```
 
 **Example with branch:**
