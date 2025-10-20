@@ -8,26 +8,33 @@
   
   
   <ng-container [ngSwitch]="iconResult.source">
+    <!-- Sprite icons (from generated sprite.svg) -->
+    <svg *ngSwitchCase="'sprite'"
+         class="ix-icon__sprite"
+         aria-hidden="true">
+      <use [attr.href]="iconResult.spriteUrl"></use>
+    </svg>
+
     <!-- SVG content (from third-party libraries or assets) -->
-    <div *ngSwitchCase="'svg'" 
+    <div *ngSwitchCase="'svg'"
          class="ix-icon__svg"
          #svgContainer>
     </div>
-    
+
     <!-- CSS class icons (Font Awesome, Material Icons, etc.) -->
-    <i *ngSwitchCase="'css'" 
+    <i *ngSwitchCase="'css'"
        class="ix-icon__css"
        [class]="iconResult.content"
        aria-hidden="true">
     </i>
-    
+
     <!-- Unicode characters -->
-    <span *ngSwitchCase="'unicode'" 
+    <span *ngSwitchCase="'unicode'"
           class="ix-icon__unicode"
           aria-hidden="true">{{ iconResult.content }}</span>
-    
+
     <!-- Text abbreviation fallback -->
-    <span *ngSwitchDefault 
+    <span *ngSwitchDefault
           class="ix-icon__text"
           aria-hidden="true">{{ iconResult.content }}</span>
   </ng-container>

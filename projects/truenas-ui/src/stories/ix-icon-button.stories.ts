@@ -3,6 +3,26 @@ import { within } from '@storybook/testing-library';
 import { expect } from '@storybook/jest';
 import { IxIconButtonComponent } from '../lib/ix-icon-button/ix-icon-button.component';
 import { IxCardComponent } from '../lib/ix-card/ix-card.component';
+import { iconMarker } from '../lib/ix-icon/icon-marker';
+
+// Mark icons used in stories for sprite generation
+const STORY_ICONS = [
+  iconMarker('mdi-home'),
+  iconMarker('mdi-star'),
+  iconMarker('mdi-information'),
+  iconMarker('mdi-delete'),
+  iconMarker('mdi-heart'),
+  iconMarker('mdi-menu'),
+  iconMarker('mdi-dots-vertical'),
+  iconMarker('mdi-magnify'),
+  iconMarker('mdi-bell'),
+  iconMarker('mdi-cog'),
+  iconMarker('mdi-pencil'),
+  iconMarker('mdi-content-copy'),
+  iconMarker('mdi-share-variant'),
+  iconMarker('mdi-refresh'),
+  iconMarker('mdi-close'),
+];
 
 const meta: Meta<IxIconButtonComponent> = {
   title: 'Components/Icon Button',
@@ -62,7 +82,7 @@ export const Default: Story = {
 
 export const Small: Story = {
   args: {
-    name: 'settings',
+    name: 'cog',
     size: 'sm',
     library: 'mdi',
     ariaLabel: 'Settings',
@@ -80,7 +100,7 @@ export const Large: Story = {
 
 export const WithTooltip: Story = {
   args: {
-    name: 'info',
+    name: 'information',
     size: 'md',
     library: 'mdi',
     tooltip: 'More information',

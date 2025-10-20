@@ -65,22 +65,79 @@ export const Default: Story = {
 export const WithIcons: Story = {
   args: {
     items: [
-      { id: '1', label: 'Home', icon: '⌂' },
-      { id: '2', label: 'Settings', icon: '⚙' },
-      { id: '3', label: 'Profile', icon: '👤' },
-      { id: '4', label: 'Logout', icon: '⎋' },
+      { id: '1', label: 'Home (Unicode Character)', icon: '⌂' },
+      { id: '2', label: 'Settings (MDI)', icon: 'cog', iconLibrary: 'mdi' },
+      { id: '3', label: 'Server (MDI)', icon: 'server', iconLibrary: 'mdi' },
+      { id: '4', label: 'Database (MDI)', icon: 'database', iconLibrary: 'mdi' },
     ],
   },
+  argTypes: {
+    items: {
+      control: 'object',
+      description: 'Array of menu items with icons',
+    },
+  },
   render: (args) => ({
-    props: args,
+    props: {
+      items: args.items,
+      menuItemClick: args.menuItemClick,
+    },
     template: `
-      <ix-button [ixMenuTriggerFor]="menu">Navigation</ix-button>
-      <ix-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></ix-menu>
+      <div style="padding: 20px;">
+        <ix-button [ixMenuTriggerFor]="menu">Icon Methods Demo</ix-button>
+        <ix-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></ix-menu>
+
+        <div style="margin-top: 24px; padding: 16px; border: 1px solid var(--lines, #ddd); border-radius: 4px; font-size: 14px; color: var(--fg2, #666666);">
+          <strong>Recommended Icon Usage:</strong>
+          <ul style="margin: 8px 0; padding-left: 20px;">
+            <li><strong>Unicode Character:</strong> <code>icon: '⌂'</code> - For simple symbols and emojis</li>
+            <li><strong>MDI with iconLibrary:</strong> <code>icon: 'cog', iconLibrary: 'mdi'</code> - Clean, semantic names</li>
+            <li><strong>Try changing:</strong> <code>icon</code> values in Controls → cog, home, folder, harddisk, nas, server, database, network, memory</li>
+          </ul>
+          <div style="margin-top: 12px; padding: 8px; background: var(--bg2, #f0f0f0); border-radius: 4px;">
+            <strong>💡 Tip:</strong> The <code>iconLibrary</code> property keeps icon names clean and semantic. Available: home, cog, server, database, folder, harddisk, nas, network, memory, file, star, heart, bell, delete, edit, and more.
+          </div>
+        </div>
+      </div>
     `,
     moduleMetadata: {
       imports: [IxMenuTriggerDirective, IxButtonComponent],
     },
   }),
+  parameters: {
+    docs: {
+      description: {
+        story: `
+This story demonstrates the recommended approach for adding icons to menu items using the \`iconLibrary\` property.
+
+**Unicode Character (For Simple Symbols)**
+\`\`\`typescript
+{ id: '1', label: 'Home', icon: '⌂' }
+\`\`\`
+Use Unicode characters directly for simple symbols and emojis.
+
+**MDI Icons with iconLibrary (Recommended)**
+\`\`\`typescript
+{ id: '2', label: 'Settings', icon: 'cog', iconLibrary: 'mdi' }
+{ id: '3', label: 'Server', icon: 'server', iconLibrary: 'mdi' }
+{ id: '4', label: 'Database', icon: 'database', iconLibrary: 'mdi' }
+\`\`\`
+
+The \`iconLibrary\` property provides a clean, semantic API for icon specification:
+- **No prefixes needed**: Use \`icon: 'cog'\` instead of \`icon: 'mdi-cog'\`
+- **More maintainable**: Library is specified separately from the icon name
+- **Type-safe**: The property is typed as \`'material' | 'mdi' | 'custom'\`
+
+**Available MDI Icons**
+home, cog, server, database, folder, harddisk, nas, network, memory, file, star, heart, bell, delete, edit, close, information, lock, magnify, menu, pencil, refresh, share-variant, and many more.
+
+**Alternative Methods**
+- **Library prefix syntax**: \`icon: 'lucide:home'\` (requires library registration via \`IxIconRegistryService\`)
+- **Unicode fallback names**: \`icon: 'star'\` (maps to ★ if not in sprite)
+        `,
+      },
+    },
+  },
 };
 
 export const WithSeparators: Story = {

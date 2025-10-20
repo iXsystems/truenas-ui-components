@@ -3,9 +3,21 @@
   "dest": "../../dist/truenas-ui",
   "assets": [
     "src/styles/*.css",
-    "src/assets/**/*"
+    "src/assets/**/*",
+    "assets/**/*",
+    "scripts/**/*"
   ],
   "lib": {
     "entryFile": "src/public-api.ts"
-  }
+  },
+  "allowedNonPeerDependencies": [
+    "@mdi/svg",
+    "@material-design-icons/svg",
+    "cheerio",
+    "svg-sprite",
+    "vinyl",
+    "tsx",
+    "@types/svg-sprite",
+    "@types/vinyl"
+  ]
 }

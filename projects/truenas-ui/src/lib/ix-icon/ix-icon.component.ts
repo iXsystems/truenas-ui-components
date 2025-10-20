@@ -2,15 +2,15 @@ import { Component, Input, OnInit, OnChanges, SimpleChanges, ChangeDetectionStra
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { IxIconRegistryService } from './ix-icon-registry.service';
-import { IxMdiIconService } from '../ix-mdi-icon/ix-mdi-icon.service';
 
 export type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-export type IconSource = 'svg' | 'css' | 'unicode' | 'text';
-export type IconLibraryType = 'material' | 'mdi' | 'custom';
+export type IconSource = 'svg' | 'css' | 'unicode' | 'text' | 'sprite';
+export type IconLibraryType = 'material' | 'mdi' | 'custom' | 'lucide';
 
 export interface IconResult {
   source: IconSource;
   content: string | SafeHtml;
+  spriteUrl?: string; // For sprite-based icons
 }
 
 @Component({
@@ -35,7 +35,6 @@ export class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
   iconResult: IconResult = { source: 'text', content: '?' };
 
   private iconRegistry = inject(IxIconRegistryService);
-  private mdiIconService = inject(IxMdiIconService);
 
   constructor(
     private sanitizer: DomSanitizer,
@@ -43,15 +42,30 @@ export class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
-    this.resolveIcon();
+    this.resolveIcon()
+      .then(() => {
+        this.cdr.markForCheck();
+        setTimeout(() => this.updateSvgContent(), 0);
+      })
+      .catch((error) => {
+        console.error('[IxIcon] Resolution failed', error);
+        this.iconResult = { source: 'text', content: '!' };
+        this.cdr.markForCheck();
+      });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['name'] || changes['library']) {
-      this.resolveIcon();
-      this.cdr.markForCheck();
-      // Update SVG content after view updates
-      setTimeout(() => this.updateSvgContent(), 0);
+      this.resolveIcon()
+        .then(() => {
+          this.cdr.markForCheck();
+          setTimeout(() => this.updateSvgContent(), 0);
+        })
+        .catch((error) => {
+          console.error('[IxIcon] Resolution failed (onChange)', error);
+          this.iconResult = { source: 'text', content: '!' };
+          this.cdr.markForCheck();
+        });
     }
   }
 
@@ -90,10 +104,24 @@ export class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
       return;
     }
 
-    // Handle MDI library specifically
-    if (this.library === 'mdi') {
-      await this.resolveMdiIcon();
-      return;
+    // Wait for sprite to load (if it's being loaded)
+    try {
+      await this.iconRegistry.getSpriteLoader().ensureSpriteLoaded();
+    } catch (error) {
+      // Sprite loading failed, continue with other resolution methods
+      console.warn('[IxIcon] Sprite loading failed, falling back to other icon sources:', error);
+    }
+
+    // Construct the effective icon name based on library attribute
+    let effectiveIconName = this.name;
+    if (this.library === 'mdi' && !this.name.startsWith('mdi-')) {
+      effectiveIconName = `mdi-${this.name}`;
+    } else if (this.library === 'material' && !this.name.startsWith('mat-')) {
+      // Material icons don't need prefix in sprite
+      effectiveIconName = this.name;
+    } else if (this.library === 'lucide' && !this.name.includes(':')) {
+      // Convert to registry format for Lucide icons
+      effectiveIconName = `lucide:${this.name}`;
     }
 
     // 1. Try icon registry (libraries and custom icons)
@@ -101,37 +129,37 @@ export class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
       size: this.size,
       color: this.color
     };
-    let registryResult = this.iconRegistry.resolveIcon(this.name, iconOptions);
-    
+    let registryResult = this.iconRegistry.resolveIcon(effectiveIconName, iconOptions);
+
     // Fallback to global registry for Storybook/demos (when DI doesn't work)
     if (!registryResult && typeof window !== 'undefined' && (window as any).__storybookIconRegistry) {
       const globalRegistry = (window as any).__storybookIconRegistry;
       if (globalRegistry) {
-        registryResult = globalRegistry.resolveIcon(this.name, iconOptions);
+        registryResult = globalRegistry.resolveIcon(effectiveIconName, iconOptions);
       }
     }
-    
+
     if (registryResult) {
       this.iconResult = registryResult;
       return;
     }
 
     // 2. Try built-in third-party patterns (deprecated - use registry instead)
-    const thirdPartyResult = this.tryThirdPartyIcon(this.name);
+    const thirdPartyResult = this.tryThirdPartyIcon(effectiveIconName);
     if (thirdPartyResult) {
       this.iconResult = thirdPartyResult;
       return;
     }
 
     // 3. Try CSS class (Font Awesome, Material Icons, etc.)
-    const cssResult = this.tryCssIcon(this.name);
+    const cssResult = this.tryCssIcon(effectiveIconName);
     if (cssResult) {
       this.iconResult = cssResult;
       return;
     }
 
     // 4. Try Unicode mapping
-    const unicodeResult = this.tryUnicodeIcon(this.name);
+    const unicodeResult = this.tryUnicodeIcon(effectiveIconName);
     if (unicodeResult) {
       this.iconResult = unicodeResult;
       return;
@@ -140,63 +168,8 @@ export class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
     // 5. Fallback to text abbreviation
     this.iconResult = {
       source: 'text',
-      content: this.generateTextAbbreviation(this.name)
+      content: this.generateTextAbbreviation(effectiveIconName)
     };
-  }
-
-  private async resolveMdiIcon(): Promise<void> {
-    try {
-      // Always try to resolve through icon registry first with mdi: prefix
-      const iconOptions = {
-        size: this.size,
-        color: this.color
-      };
-      
-      const registryResult = this.iconRegistry.resolveIcon(`mdi:${this.name}`, iconOptions);
-      
-      if (registryResult) {
-        this.iconResult = registryResult;
-        this.cdr.markForCheck();
-        return;
-      }
-
-      // Ensure the MDI icon is loaded if registry didn't find it
-      const loaded = await this.mdiIconService.ensureIconLoaded(this.name);
-      
-      if (!loaded) {
-        console.warn(`Icon "${this.name}" not found in MDI library`);
-        this.iconResult = {
-          source: 'text',
-          content: this.generateTextAbbreviation(this.name)
-        };
-        this.cdr.markForCheck();
-        return;
-      }
-
-      // Try registry again after ensuring icon is loaded
-      const retryResult = this.iconRegistry.resolveIcon(`mdi:${this.name}`, iconOptions);
-      
-      if (retryResult) {
-        this.iconResult = retryResult;
-        this.cdr.markForCheck();
-        return;
-      }
-
-      // Final fallback if registry resolution still fails
-      this.iconResult = {
-        source: 'text',
-        content: this.generateTextAbbreviation(this.name)
-      };
-      this.cdr.markForCheck();
-      
-    } catch (error) {
-      console.warn(`Failed to resolve MDI icon '${this.name}':`, error);
-      this.iconResult = {
-        source: 'text',
-        content: this.generateTextAbbreviation(this.name)
-      };
-      this.cdr.markForCheck();
-    }
   }
 
   private tryThirdPartyIcon(name: string): IconResult | null {

@@ -1,5 +1,6 @@
 import { Preview, Decorator, StoryContext, applicationConfig } from '@storybook/angular';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideHttpClient } from '@angular/common/http';
 import { Dialog } from '@angular/cdk/dialog';
 import { default as truenasTheme } from './truenasTheme';
 import 'zone.js';
@@ -67,6 +68,7 @@ export const decorators: Decorator[] = [
   applicationConfig({
     providers: [
       provideAnimations(),
+      provideHttpClient(),
       Dialog
     ]
   })

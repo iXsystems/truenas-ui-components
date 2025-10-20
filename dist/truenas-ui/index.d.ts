@@ -1,6 +1,6 @@
 import * as i0 from '@angular/core';
 import { EventEmitter, OnInit, OnChanges, AfterViewInit, ElementRef, ChangeDetectorRef, SimpleChanges, TemplateRef, ViewContainerRef, OnDestroy, AfterContentInit, QueryList, IterableDiffers, PipeTransform, AfterViewChecked } from '@angular/core';
-import { SafeHtml, DomSanitizer } from '@angular/platform-browser';
+import { SafeHtml, DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ControlValueAccessor, NgControl } from '@angular/forms';
 import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
 import { HttpClient } from '@angular/common/http';
@@ -53,11 +53,12 @@ declare class IxButtonComponent {
 }
 
 type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-type IconSource = 'svg' | 'css' | 'unicode' | 'text';
-type IconLibraryType = 'material' | 'mdi' | 'custom';
+type IconSource = 'svg' | 'css' | 'unicode' | 'text' | 'sprite';
+type IconLibraryType = 'material' | 'mdi' | 'custom' | 'lucide';
 interface IconResult {
     source: IconSource;
     content: string | SafeHtml;
+    spriteUrl?: string;
 }
 declare class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
     private sanitizer;
@@ -71,7 +72,6 @@ declare class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
     svgContainer?: ElementRef<HTMLDivElement>;
     iconResult: IconResult;
     private iconRegistry;
-    private mdiIconService;
     constructor(sanitizer: DomSanitizer, cdr: ChangeDetectorRef);
     ngOnInit(): void;
     ngOnChanges(changes: SimpleChanges): void;
@@ -80,7 +80,6 @@ declare class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
     get sanitizedContent(): any;
     private updateSvgContent;
     private resolveIcon;
-    private resolveMdiIcon;
     private tryThirdPartyIcon;
     private tryCssIcon;
     private tryUnicodeIcon;
@@ -167,6 +166,7 @@ interface IxMenuItem {
     id: string;
     label: string;
     icon?: string;
+    iconLibrary?: 'material' | 'mdi' | 'custom' | 'lucide';
     disabled?: boolean;
     separator?: boolean;
     action?: () => void;
@@ -202,20 +202,79 @@ declare class IxMenuComponent implements OnInit {
     static ɵcmp: i0.ɵɵComponentDeclaration<IxMenuComponent, "ix-menu", never, { "items": { "alias": "items"; "required": false; }; "contextMenu": { "alias": "contextMenu"; "required": false; }; }, { "menuItemClick": "menuItemClick"; "menuOpen": "menuOpen"; "menuClose": "menuClose"; }, never, ["*"], true, never>;
 }
 
+interface SpriteConfig {
+    iconUrl: string;
+    icons?: string[];
+}
+/**
+ * Service for loading and managing icon sprites.
+ * This is a custom implementation that does NOT depend on Angular Material.
+ *
+ * The sprite system works by:
+ * 1. Loading sprite-config.json which contains the versioned sprite URL
+ * 2. Icons are resolved as SVG fragment identifiers (e.g., sprite.svg#icon-name)
+ * 3. The sprite SVG contains all icons used in the application
+ */
+declare class IxSpriteLoaderService {
+    private http;
+    private sanitizer;
+    private spriteConfig?;
+    private spriteLoaded;
+    private spriteLoadPromise?;
+    constructor(http: HttpClient, sanitizer: DomSanitizer);
+    /**
+     * Load the sprite configuration from assets/icons/sprite-config.json
+     * This contains the cache-busted URL for the sprite file
+     */
+    private loadSpriteConfig;
+    /**
+     * Ensure the sprite is loaded before resolving icons
+     */
+    ensureSpriteLoaded(): Promise<boolean>;
+    /**
+     * Get the full URL for an icon in the sprite
+     * Returns a URL like: assets/icons/sprite.svg?v=hash#icon-name
+     *
+     * @param iconName The icon name (e.g., 'folder', 'mdi-server', 'ix-dataset')
+     * @returns The fragment identifier URL for the icon, or null if sprite not loaded or icon not in sprite
+     */
+    getIconUrl(iconName: string): string | null;
+    /**
+     * Get a sanitized resource URL for an icon
+     * This is used when binding to [src] or similar attributes
+     *
+     * @param iconName The icon name
+     * @returns Sanitized resource URL or null
+     */
+    getSafeIconUrl(iconName: string): SafeResourceUrl | null;
+    /**
+     * Check if the sprite is loaded
+     */
+    isSpriteLoaded(): boolean;
+    /**
+     * Get the sprite config if loaded
+     */
+    getSpriteConfig(): SpriteConfig | undefined;
+    static ɵfac: i0.ɵɵFactoryDeclaration<IxSpriteLoaderService, never>;
+    static ɵprov: i0.ɵɵInjectableDeclaration<IxSpriteLoaderService>;
+}
+
 interface IconLibrary {
     name: string;
     resolver: (iconName: string, options?: any) => string | HTMLElement | null;
     defaultOptions?: any;
 }
 interface ResolvedIcon {
-    source: 'svg' | 'css' | 'unicode' | 'text';
+    source: 'svg' | 'css' | 'unicode' | 'text' | 'sprite';
     content: string | SafeHtml;
+    spriteUrl?: string;
 }
 declare class IxIconRegistryService {
     private sanitizer;
+    private spriteLoader;
     private libraries;
     private customIcons;
-    constructor(sanitizer: DomSanitizer);
+    constructor(sanitizer: DomSanitizer, spriteLoader: IxSpriteLoaderService);
     /**
      * Register an icon library (like Lucide, Heroicons, etc.)
      *
@@ -265,20 +324,33 @@ declare class IxIconRegistryService {
      */
     registerIcons(icons: Record<string, string>): void;
     /**
-     * Resolve an icon using registered libraries and custom icons
+     * Resolve an icon from the sprite
+     * Returns the sprite URL if the sprite is loaded
+     */
+    private resolveSpriteIcon;
+    /**
+     * Resolve an icon using sprite, registered libraries, and custom icons
      *
-     * Format: "library:icon-name" or just "icon-name" for custom icons
+     * Resolution order:
+     * 1. Sprite icons (Material, MDI, custom TrueNAS icons)
+     * 2. Registered libraries (with prefix, e.g., "lucide:home")
+     * 3. Custom registered icons
+     *
+     * Format: "library:icon-name" or just "icon-name"
      *
      * @example
      * ```typescript
+     * // Sprite icons (automatic from sprite.svg)
+     * registry.resolveIcon('folder')        // Material Design icon
+     * registry.resolveIcon('mdi-server')    // MDI icon
+     * registry.resolveIcon('ix-dataset')    // Custom TrueNAS icon
+     *
      * // Library icons
      * registry.resolveIcon('lucide:home')
      * registry.resolveIcon('heroicons:user-circle')
-     * registry.resolveIcon('fa:home')
      *
-     * // Custom icons
+     * // Custom registered icons
      * registry.resolveIcon('my-logo')
-     * registry.resolveIcon('custom:special-icon')
      * ```
      */
     resolveIcon(name: string, options?: any): ResolvedIcon | null;
@@ -310,6 +382,11 @@ declare class IxIconRegistryService {
      * Clear all registered libraries and icons
      */
     clear(): void;
+    /**
+     * Get the sprite loader service
+     * Useful for checking sprite status or manually resolving sprite icons
+     */
+    getSpriteLoader(): IxSpriteLoaderService;
     private resolveLibraryIcon;
     private resolveCustomIcon;
     static ɵfac: i0.ɵɵFactoryDeclaration<IxIconRegistryService, never>;
@@ -677,6 +754,37 @@ declare class IxSelectComponent implements ControlValueAccessor {
 }
 
 /**
+ * Marks an icon name for inclusion in the sprite generation.
+ *
+ * This is an identity function that simply returns the icon name unchanged.
+ * Its purpose is to provide a marker that the build scripts can detect when
+ * scanning for icons that need to be included in the sprite.
+ *
+ * Use this when icon names are computed dynamically or come from variables,
+ * to ensure they're included in the sprite at build time.
+ *
+ * @example
+ * ```typescript
+ * // Static icon name - automatically detected from template
+ * <ix-icon name="folder"></ix-icon>
+ *
+ * // Dynamic icon name - needs iconMarker() to be detected
+ * const iconName = condition ? iconMarker('edit') : iconMarker('delete');
+ * <ix-icon [name]="iconName"></ix-icon>
+ *
+ * // Array of dynamic icons
+ * const actions = [
+ *   { name: 'Save', icon: iconMarker('save') },
+ *   { name: 'Cancel', icon: iconMarker('close') }
+ * ];
+ * ```
+ *
+ * @param iconName - The icon name to mark for sprite inclusion
+ * @returns The same icon name (identity function)
+ */
+declare function iconMarker(iconName: string): string;
+
+/**
  * Lucide Icons Integration Helper
  *
  * This helper provides easy integration with Lucide icons.
@@ -760,51 +868,6 @@ declare function createLucideLibrary(icons: Record<string, any>, defaultOptions?
  * ```
  */
 declare function registerLucideIcons(icons: Record<string, any>): void;
-
-declare class IxMdiIconService {
-    private iconRegistry;
-    private domSanitizer;
-    private registeredIcons;
-    private mdiLibrary;
-    constructor(iconRegistry: IxIconRegistryService, domSanitizer: DomSanitizer);
-    /**
-     * Set up the MDI icon library with the icon registry
-     */
-    private setupMdiLibrary;
-    /**
-     * Register a single MDI icon with the icon registry
-     * @param name The icon name to register
-     * @param svgPath The SVG path data from @mdi/js
-     * @returns Promise<boolean> True if registration was successful
-     */
-    registerIcon(name: string, svgPath: string): Promise<boolean>;
-    /**
-     * Check if an icon is already registered
-     * @param name The icon name to check
-     * @returns boolean True if the icon is registered
-     */
-    isIconRegistered(name: string): boolean;
-    /**
-     * Ensure an icon is loaded from the catalog (lazy loading)
-     * @param iconName The icon name to load
-     * @returns Promise<boolean> True if the icon was loaded or already registered
-     */
-    ensureIconLoaded(iconName: string): Promise<boolean>;
-    /**
-     * Load icon data from the catalog
-     * @param iconName The icon name to load
-     * @returns Promise<string | null> The SVG path data or null if not found
-     */
-    loadIconData(iconName: string): Promise<string | null>;
-    /**
-     * Create SVG content from MDI path data
-     * @param svgPath The SVG path data from @mdi/js
-     * @returns string Complete SVG markup
-     */
-    private createSvgContent;
-    static ɵfac: i0.ɵɵFactoryDeclaration<IxMdiIconService, never>;
-    static ɵprov: i0.ɵɵInjectableDeclaration<IxMdiIconService>;
-}
 
 /**
  * Service for loading and registering TrueNAS custom icons
@@ -1035,31 +1098,27 @@ declare class IxTreeComponent<T, K = T> extends CdkTree<T, K> {
     static ɵcmp: i0.ɵɵComponentDeclaration<IxTreeComponent<any, any>, "ix-tree", ["ixTree"], {}, {}, never, never, true, never>;
 }
 
-declare class IxTreeNodeComponent<T, K = T> extends CdkTreeNode<T, K> implements OnInit {
-    private mdiIconService?;
-    constructor(elementRef: ElementRef<HTMLElement>, tree: CdkTree<T, K>, data?: T, changeDetectorRef?: ChangeDetectorRef, mdiIconService?: IxMdiIconService | undefined);
-    ngOnInit(): Promise<void>;
+declare class IxTreeNodeComponent<T, K = T> extends CdkTreeNode<T, K> {
+    constructor(elementRef: ElementRef<HTMLElement>, tree: CdkTree<T, K>, data?: T, changeDetectorRef?: ChangeDetectorRef);
     /** The tree node's level in the tree */
     get level(): number;
     /** Whether the tree node is expandable */
     get isExpandable(): boolean;
     /** Whether the tree node is expanded */
     get isExpanded(): boolean;
-    static ɵfac: i0.ɵɵFactoryDeclaration<IxTreeNodeComponent<any, any>, [null, { optional: true; }, { optional: true; }, { optional: true; }, { optional: true; }]>;
+    static ɵfac: i0.ɵɵFactoryDeclaration<IxTreeNodeComponent<any, any>, [null, { optional: true; }, { optional: true; }, { optional: true; }]>;
     static ɵcmp: i0.ɵɵComponentDeclaration<IxTreeNodeComponent<any, any>, "ix-tree-node", ["ixTreeNode"], {}, {}, never, ["*"], true, never>;
 }
 
-declare class IxNestedTreeNodeComponent<T, K = T> extends CdkNestedTreeNode<T, K> implements OnInit {
-    private mdiIconService?;
-    constructor(elementRef: ElementRef<HTMLElement>, tree: CdkTree<T, K>, data?: T, changeDetectorRef?: ChangeDetectorRef, mdiIconService?: IxMdiIconService | undefined);
-    ngOnInit(): Promise<void>;
+declare class IxNestedTreeNodeComponent<T, K = T> extends CdkNestedTreeNode<T, K> {
+    constructor(elementRef: ElementRef<HTMLElement>, tree: CdkTree<T, K>, data?: T, changeDetectorRef?: ChangeDetectorRef);
     /** The tree node's level in the tree */
     get level(): number;
     /** Whether the tree node is expandable */
     get isExpandable(): boolean;
     /** Whether the tree node is expanded */
     get isExpanded(): boolean;
-    static ɵfac: i0.ɵɵFactoryDeclaration<IxNestedTreeNodeComponent<any, any>, [null, { optional: true; }, { optional: true; }, { optional: true; }, { optional: true; }]>;
+    static ɵfac: i0.ɵɵFactoryDeclaration<IxNestedTreeNodeComponent<any, any>, [null, { optional: true; }, { optional: true; }, { optional: true; }]>;
     static ɵcmp: i0.ɵɵComponentDeclaration<IxNestedTreeNodeComponent<any, any>, "ix-nested-tree-node", ["ixNestedTreeNode"], {}, {}, never, ["*", "[slot=children]"], true, never>;
 }
 
@@ -1985,7 +2044,6 @@ declare class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnD
     private overlay;
     private elementRef;
     private viewContainerRef;
-    private mdiIconService;
     mode: FilePickerMode;
     multiSelect: boolean;
     allowCreate: boolean;
@@ -2018,12 +2076,8 @@ declare class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnD
     creationLoading: i0.WritableSignal<boolean>;
     private onChange;
     private onTouched;
-    constructor(overlay: Overlay, elementRef: ElementRef, viewContainerRef: ViewContainerRef, mdiIconService: IxMdiIconService);
-    ngOnInit(): Promise<void>;
-    /**
-     * Initialize MDI icons required for file picker functionality
-     */
-    private initializeMdiIcons;
+    constructor(overlay: Overlay, elementRef: ElementRef, viewContainerRef: ViewContainerRef);
+    ngOnInit(): void;
     ngOnDestroy(): void;
     writeValue(value: string | string[]): void;
     registerOnChange(fn: (value: string | string[]) => void): void;
@@ -2226,5 +2280,5 @@ declare class IxKeyboardShortcutService {
     static ɵprov: i0.ɵɵInjectableDeclaration<IxKeyboardShortcutService>;
 }
 
-export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconButtonComponent, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMdiIconService, IxMenuComponent, IxMenuTriggerDirective, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TruenasIconsService, TruenasUiComponent, TruenasUiService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, registerLucideIcons, setupLucideIntegration };
-export type { CalendarCell, ChipColor, CreateFolderEvent, DateRange, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem, IconLibrary, IconLibraryType, IconResult, IconSize, IconSource, IxButtonToggleType, IxCardAction, IxCardControl, IxCardFooterLink, IxCardHeaderStatus, IxDialogDefaults, IxDialogOpenTarget, IxFlatTreeNode, IxMenuItem, IxSelectOption, IxSelectOptionGroup, IxSelectionChange, IxTableDataSource, KeyCombination, LabelType, LucideIconOptions, PathSegment, PlatformType, ProgressBarMode, ResolvedIcon, ShortcutHandler, SlideToggleColor, SpinnerMode, TabChangeEvent, TooltipPosition, YearCell };
+export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconButtonComponent, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMenuComponent, IxMenuTriggerDirective, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxSpriteLoaderService, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TruenasIconsService, TruenasUiComponent, TruenasUiService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, iconMarker, registerLucideIcons, setupLucideIntegration };
+export type { CalendarCell, ChipColor, CreateFolderEvent, DateRange, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem, IconLibrary, IconLibraryType, IconResult, IconSize, IconSource, IxButtonToggleType, IxCardAction, IxCardControl, IxCardFooterLink, IxCardHeaderStatus, IxDialogDefaults, IxDialogOpenTarget, IxFlatTreeNode, IxMenuItem, IxSelectOption, IxSelectOptionGroup, IxSelectionChange, IxTableDataSource, KeyCombination, LabelType, LucideIconOptions, PathSegment, PlatformType, ProgressBarMode, ResolvedIcon, ShortcutHandler, SlideToggleColor, SpinnerMode, SpriteConfig, TabChangeEvent, TooltipPosition, YearCell };

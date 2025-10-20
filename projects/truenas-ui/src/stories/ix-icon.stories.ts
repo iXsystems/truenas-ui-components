@@ -1,13 +1,24 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { applicationConfig } from '@storybook/angular';
 import { importProvidersFrom } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { IxIconComponent } from '../lib/ix-icon/ix-icon.component';
 import { IxIconRegistryService } from '../lib/ix-icon/ix-icon-registry.service';
+import { iconMarker } from '../lib/ix-icon/icon-marker';
 
 // Import Lucide for demonstration
 import { Home, User, Settings, Heart, Star, Search, Menu } from 'lucide';
+
+// Mark icons used in stories for sprite generation
+const STORY_ICONS = [
+  iconMarker('mdi-harddisk'),
+  iconMarker('mdi-server'),
+  iconMarker('mdi-nas'),
+  iconMarker('mdi-database'),
+  iconMarker('mdi-memory'),
+  iconMarker('mdi-network'),
+  iconMarker('mdi-file'),
+];
 
 const meta: Meta<IxIconComponent> = {
   title: 'Components/Icon',
@@ -18,11 +29,20 @@ const meta: Meta<IxIconComponent> = {
     docs: {
       description: {
         component: `
-A flexible icon component with a powerful registry system for integrating any third-party icon library.
+A flexible icon component with sprite-based icon loading and a powerful registry system for integrating any third-party icon library.
+
+## Icon Sprite System
+
+The component includes an automatic sprite generation system that:
+- **Scans templates** to find all icon references
+- **Generates optimized sprite** with only used icons (tree-shaking)
+- **Includes 7,000+ icons**: Material Design Icons (MDI) and Material Design
+- **Custom TrueNAS icons**: 40 specialized icons for storage, hardware, and networking
+- **Cache-busted URLs**: MD5 hash versioning for efficient caching
 
 ## Icon Registry System
 
-The component uses a global icon registry that allows you to register:
+Beyond the sprite, you can also register additional icon libraries:
 - **Icon Libraries**: Lucide, Heroicons, Font Awesome, etc.
 - **Custom SVG Icons**: Your own icon sets
 - **Multiple Sources**: Mix and match different icon libraries
@@ -65,7 +85,12 @@ iconRegistry.registerIcons({
   argTypes: {
     name: {
       control: 'text',
-      description: 'Icon identifier. Try: lucide:home, lucide:user, lucide:settings, lucide:heart, lucide:star, lucide:menu, demo-heart, or any Unicode fallback like home, star, check',
+      description: 'Icon name. Use with library parameter for icon libraries (e.g., name="home" library="lucide" or name="cog" library="mdi"). Try: home, user, settings, heart, star, menu, or Unicode fallbacks',
+    },
+    library: {
+      control: 'select',
+      options: [undefined, 'mdi', 'lucide', 'material', 'custom'],
+      description: 'Icon library. Use "mdi" for Material Design Icons, "lucide" for Lucide icons',
     },
     size: {
       control: 'select',
@@ -87,7 +112,7 @@ iconRegistry.registerIcons({
   },
   decorators: [
     (story) => {
-      // Set up global icon registry for Storybook examples
+      // Set up global icon registry for Storybook examples with Lucide icons
       if (typeof window !== 'undefined') {
         const mockSanitizer = {
           bypassSecurityTrustHtml: (html: string) => {
@@ -99,8 +124,17 @@ iconRegistry.registerIcons({
           },
           sanitize: (context: any, value: any) => value
         };
-        
-        const iconRegistry = new IxIconRegistryService(mockSanitizer as any);
+
+        // Create a mock sprite loader for the registry (real sprite loader will work in components via DI)
+        const mockSpriteLoader = {
+          isSpriteLoaded: () => false,
+          getIconUrl: () => null,
+          getSafeIconUrl: () => null,
+          ensureSpriteLoaded: () => Promise.resolve(false),
+          getSpriteConfig: () => undefined
+        };
+
+        const iconRegistry = new IxIconRegistryService(mockSanitizer as any, mockSpriteLoader as any);
 
         // Register Lucide library
         iconRegistry.registerLibrary({
@@ -190,14 +224,15 @@ export const Default: Story = {
 
 export const LucideIcons: Story = {
   args: {
-    name: 'lucide:home',
+    name: 'home',
+    library: 'lucide',
     size: 'md',
     tooltip: 'Lucide Home icon',
   },
   parameters: {
     docs: {
       description: {
-        story: 'Icons from the Lucide library using the library prefix `lucide:`. These are rendered as SVG icons with proper stroke styling.',
+        story: 'Icons from the Lucide library using the `library="lucide"` parameter. These are rendered as SVG icons with proper stroke styling.',
       },
     },
   },
@@ -213,7 +248,7 @@ export const MdiIcons: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Material Design Icons (MDI) using the `library="mdi"` parameter. Perfect for TrueNAS-specific hardware and storage icons.',
+        story: 'Material Design Icons (MDI) using the `library="mdi"` parameter. These icons are loaded from the generated sprite file which includes 7,000+ MDI icons and 40 custom TrueNAS icons. Perfect for TrueNAS-specific hardware and storage icons.',
       },
     },
   },
@@ -240,20 +275,12 @@ export const TrueNASIconShowcase: Story = {
           <div style="margin-top: 8px; font-size: 12px;">Database</div>
         </div>
         <div style="text-align: center;">
-          <ix-icon name="storage" library="mdi" size="lg" tooltip="Storage"></ix-icon>
-          <div style="margin-top: 8px; font-size: 12px;">Storage</div>
-        </div>
-        <div style="text-align: center;">
           <ix-icon name="memory" library="mdi" size="lg" tooltip="Memory"></ix-icon>
           <div style="margin-top: 8px; font-size: 12px;">Memory</div>
         </div>
         <div style="text-align: center;">
-          <ix-icon name="cpu" library="mdi" size="lg" tooltip="CPU"></ix-icon>
-          <div style="margin-top: 8px; font-size: 12px;">CPU</div>
-        </div>
-        <div style="text-align: center;">
-          <ix-icon name="network-share" library="mdi" size="lg" tooltip="Network Share"></ix-icon>
-          <div style="margin-top: 8px; font-size: 12px;">Network Share</div>
+          <ix-icon name="network" library="mdi" size="lg" tooltip="Network"></ix-icon>
+          <div style="margin-top: 8px; font-size: 12px;">Network</div>
         </div>
         <div style="text-align: center;">
           <ix-icon name="folder" library="mdi" size="lg" tooltip="Folder"></ix-icon>
@@ -287,9 +314,9 @@ export const LibraryComparison: Story = {
         </div>
         <div style="text-align: center; border: 1px solid var(--border-color, #ccc); padding: 16px; border-radius: 8px;">
           <h4 style="margin-top: 0;">Lucide</h4>
-          <ix-icon name="lucide:home" size="lg" tooltip="Lucide Home"></ix-icon>
-          <div style="margin-top: 8px;">name="lucide:home"</div>
-          <div style="font-size: 12px; color: var(--text-secondary, #666);">Library prefix</div>
+          <ix-icon name="home" library="lucide" size="lg" tooltip="Lucide Home"></ix-icon>
+          <div style="margin-top: 8px;">library="lucide"</div>
+          <div style="font-size: 12px; color: var(--text-secondary, #666);">Library parameter</div>
         </div>
         <div style="text-align: center; border: 1px solid var(--border-color, #ccc); padding: 16px; border-radius: 8px;">
           <h4 style="margin-top: 0;">MDI</h4>
@@ -303,7 +330,19 @@ export const LibraryComparison: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Comparison of different icon library approaches supported by the ix-icon component.',
+        story: `Comparison of different icon library approaches supported by the ix-icon component.
+
+All libraries use the consistent \`library\` parameter:
+- **MDI**: \`<ix-icon name="folder" library="mdi">\`
+- **Lucide**: \`<ix-icon name="home" library="lucide">\`
+- **Material**: \`<ix-icon name="home">\` (default, falls back to Unicode)
+
+**Note for Menu Items**: When using icons in \`ix-menu\`, use the \`iconLibrary\` property:
+\`\`\`typescript
+{ id: '1', label: 'Home', icon: 'folder', iconLibrary: 'mdi' }
+{ id: '2', label: 'User', icon: 'user', iconLibrary: 'lucide' }
+\`\`\`
+This provides a consistent, type-safe API for menu item configuration.`,
       },
     },
   },

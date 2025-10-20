@@ -45,3 +45,7 @@ testem.log
 Thumbs.db
 
 *storybook.log
+
+# Generated icon sprite files
+projects/truenas-ui/assets/icons/sprite.svg
+projects/truenas-ui/assets/icons/sprite-config.json

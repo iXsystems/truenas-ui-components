@@ -9,6 +9,7 @@ export interface IxMenuItem {
   id: string;
   label: string;
   icon?: string;
+  iconLibrary?: 'material' | 'mdi' | 'custom' | 'lucide';
   disabled?: boolean;
   separator?: boolean;
   action?: () => void;
