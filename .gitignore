@@ -44,7 +44,9 @@ testem.log
 .DS_Store
 Thumbs.db
 
+# Storybook
 *storybook.log
+/storybook-static
 
 # Generated icon sprite files
 projects/truenas-ui/assets/icons/sprite.svg
