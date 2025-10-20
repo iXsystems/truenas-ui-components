@@ -4,6 +4,9 @@
   "main": "./dist/truenas-ui/fesm2022/truenas-ui.mjs",
   "module": "./dist/truenas-ui/fesm2022/truenas-ui.mjs",
   "typings": "./dist/truenas-ui/index.d.ts",
+  "bin": {
+    "truenas-icons": "./dist/truenas-ui/scripts/icon-sprite/cli.js"
+  },
   "exports": {
     "./package.json": {
       "default": "./package.json"
@@ -50,7 +53,15 @@
   "dependencies": {
     "@mdi/angular-material": "^7.2.96",
     "@mdi/js": "^7.4.47",
-    "tslib": "^2.3.0"
+    "@material-design-icons/svg": "~0.14.13",
+    "@mdi/svg": "~7.4.47",
+    "@types/svg-sprite": "~0.0.39",
+    "@types/vinyl": "~2.0.12",
+    "cheerio": "~1.0.0",
+    "svg-sprite": "~2.0.4",
+    "tslib": "^2.3.0",
+    "tsx": "~4.19.1",
+    "vinyl": "~3.0.0"
   },
   "devDependencies": {
     "@angular-devkit/architect": "^0.1902.0",
