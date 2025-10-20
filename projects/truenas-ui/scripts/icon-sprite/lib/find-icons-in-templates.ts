@@ -26,16 +26,30 @@ export function findIconsInTemplates(path: string): Set<string> {
       // Handle bound name attribute: [name]="expression"
       // Extract string literals from the expression
       if (boundName) {
-        // Match string literals in the expression
-        // This handles ternary: isExpanded ? 'chevron-down' : 'chevron-right'
-        const stringLiteralRegex = /['"]([^'"]+)['"]/g;
+        // Match string literals that are values, not comparison operands
+        // This handles:
+        // - Ternary: isExpanded ? 'chevron-down' : 'chevron-right'
+        // - But skips comparisons: element.status === 'Active' ? 'check' : 'close'
+        //
+        // Strategy: Match quoted strings that come after ? or : (ternary results)
+        // or are standalone (not part of a comparison)
+        const ternaryResultRegex = /[?:]\s*['"]([^'"]+)['"]/g;
         let match;
-        while ((match = stringLiteralRegex.exec(boundName)) !== null) {
+        while ((match = ternaryResultRegex.exec(boundName)) !== null) {
           const iconName = match[1];
-          // Skip if it looks like a property accessor or contains invalid characters
           // Valid icon names only contain alphanumeric, hyphens, and underscores
           if (/^[a-z0-9\-_]+$/i.test(iconName)) {
             extractedNames.push(iconName);
+          }
+        }
+
+        // Also handle simple string literals (no ternary, no comparison)
+        // e.g., [name]="'folder'" (though this is unusual)
+        if (!boundName.includes('?') && !boundName.includes('=')) {
+          const simpleStringRegex = /^['"]([^'"]+)['"]$/;
+          const simpleMatch = boundName.match(simpleStringRegex);
+          if (simpleMatch && /^[a-z0-9\-_]+$/i.test(simpleMatch[1])) {
+            extractedNames.push(simpleMatch[1]);
           }
         }
       }
