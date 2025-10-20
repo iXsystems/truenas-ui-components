@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { IxIconRegistryService, IconLibrary } from '../ix-icon/ix-icon-registry.service';
-import { 
+import {
   mdiHarddisk,
   mdiServer,
   mdiNas,
@@ -14,15 +14,59 @@ import {
   mdiMonitorShare,
   mdiChevronRight,
   mdiChevronDown,
+  mdiChevronLeft,
+  mdiChevronUp,
   mdiArrowRight,
   mdiArrowDown,
+  mdiArrowLeft,
+  mdiArrowUp,
   mdiMenuRight,
   mdiMenuDown,
+  mdiMenuLeft,
+  mdiMenuUp,
   mdiFolderPlus,
   mdiLoading,
   mdiRefresh,
   mdiLock,
-  mdiFolderOpen
+  mdiFolderOpen,
+  mdiPencil,
+  mdiDelete,
+  mdiContentCopy,
+  mdiCheck,
+  mdiClose,
+  mdiPlus,
+  mdiMinus,
+  mdiCog,
+  mdiDotsHorizontal,
+  mdiDotsVertical,
+  mdiFloppy,
+  mdiStop,
+  mdiMagnify,
+  mdiFilter,
+  mdiInformation,
+  mdiInformationOutline,
+  mdiCloseCircle,
+  mdiHelpCircle,
+  mdiAccountCircle,
+  mdiAccountGroup,
+  mdiShieldLock,
+  mdiKey,
+  mdiLockOpen,
+  mdiUpload,
+  mdiDownload,
+  mdiArchive,
+  mdiZipBox,
+  mdiEye,
+  mdiEyeOff,
+  mdiViewDashboard,
+  mdiHome,
+  mdiPower,
+  mdiRestart,
+  mdiStar,
+  mdiHeart,
+  mdiMenu,
+  mdiBell,
+  mdiShareVariant
 } from '@mdi/js';
 
 /**
@@ -41,21 +85,83 @@ const TRUENAS_MDI_ICON_CATALOG = {
   'memory': mdiMemory,
   'cpu': mdiCpu64Bit,
   'network-share': mdiMonitorShare,
-  
-  // Navigation and Tree Expand/Collapse Icons
+
+  // Navigation and Directional Icons (all 4 directions)
   'chevron-right': mdiChevronRight,
   'chevron-down': mdiChevronDown,
+  'chevron-left': mdiChevronLeft,
+  'chevron-up': mdiChevronUp,
   'arrow-right': mdiArrowRight,
   'arrow-down': mdiArrowDown,
+  'arrow-left': mdiArrowLeft,
+  'arrow-up': mdiArrowUp,
   'menu-right': mdiMenuRight,
   'menu-down': mdiMenuDown,
-  
-  // UI and Action Icons
+  'menu-left': mdiMenuLeft,
+  'menu-up': mdiMenuUp,
+  'home': mdiHome,
+
+  // File and Folder Operations
   'folder-plus': mdiFolderPlus,
+  'folder-open': mdiFolderOpen,
+  'upload': mdiUpload,
+  'download': mdiDownload,
+  'archive': mdiArchive,
+  'zip-box': mdiZipBox,
+
+  // Critical UI Actions
+  'pencil': mdiPencil,
+  'delete': mdiDelete,
+  'content-copy': mdiContentCopy,
+  'check': mdiCheck,
+  'close': mdiClose,
+  'plus': mdiPlus,
+  'minus': mdiMinus,
+  'cog': mdiCog,
+  'settings': mdiCog,
+  'dots-horizontal': mdiDotsHorizontal,
+  'dots-vertical': mdiDotsVertical,
+  'floppy': mdiFloppy,
+  'stop': mdiStop,
   'loading': mdiLoading,
   'refresh': mdiRefresh,
+
+  // Search and Filter
+  'magnify': mdiMagnify,
+  'filter': mdiFilter,
+
+  // Status and Alerts
+  'info': mdiInformation,
+  'information': mdiInformation,
+  'information-outline': mdiInformationOutline,
+  'close-circle': mdiCloseCircle,
+  'help-circle': mdiHelpCircle,
+
+  // Security and Access
   'lock': mdiLock,
-  'folder-open': mdiFolderOpen
+  'lock-open': mdiLockOpen,
+  'shield-lock': mdiShieldLock,
+  'key': mdiKey,
+
+  // User and Account
+  'account-circle': mdiAccountCircle,
+  'account-group': mdiAccountGroup,
+
+  // Visibility
+  'eye': mdiEye,
+  'eye-off': mdiEyeOff,
+  'view-dashboard': mdiViewDashboard,
+
+  // System Control
+  'power': mdiPower,
+  'restart': mdiRestart,
+
+  // Common UI Icons
+  'star': mdiStar,
+  'heart': mdiHeart,
+  'menu': mdiMenu,
+  'bell': mdiBell,
+  'share-variant': mdiShareVariant
 } as const;
 
 @Injectable({
@@ -86,6 +192,9 @@ export class IxMdiIconService {
         return null;
       }
     };
+
+    // Register the library immediately so it's available for all icons
+    this.iconRegistry.registerLibrary(this.mdiLibrary);
   }
 
   /**
