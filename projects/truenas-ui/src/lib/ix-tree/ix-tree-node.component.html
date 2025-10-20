@@ -12,9 +12,8 @@
       *ngIf="isExpandable"
       class="ix-tree-node__toggle"
       [class.ix-tree-node__toggle--expanded]="isExpanded">
-      <ix-icon 
-        [name]="isExpanded ? 'chevron-down' : 'chevron-right'"
-        library="mdi"
+      <ix-icon
+        [name]="isExpanded ? 'mdi:chevron-down' : 'mdi:chevron-right'"
         size="sm"
         style="transition: transform 0.2s ease;">
       </ix-icon>
