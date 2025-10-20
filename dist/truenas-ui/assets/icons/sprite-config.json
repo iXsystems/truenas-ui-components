@@ -1,5 +1,5 @@
 {
-  "iconUrl": "assets/icons/sprite.svg?v=eced63ab39",
+  "iconUrl": "assets/icons/sprite.svg?v=4a3f84b831",
   "icons": [
     "close",
     "delete",
@@ -46,6 +46,8 @@
     "ix-two-factor-auth",
     "mdi-alert-circle",
     "mdi-bell",
+    "mdi-chevron-down",
+    "mdi-chevron-right",
     "mdi-close",
     "mdi-cog",
     "mdi-content-copy",
