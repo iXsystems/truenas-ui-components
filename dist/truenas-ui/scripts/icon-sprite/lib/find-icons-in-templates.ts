@@ -18,6 +18,12 @@ export function findIconsInTemplates(path: string): Set<string> {
         return;
       }
 
+      // Skip icons with registry format (e.g., "mdi:menu", "lucide:home")
+      // These are resolved at runtime via icon registry, not sprite
+      if (name.includes(':')) {
+        return;
+      }
+
       // Handle library attribute - prefix the icon name with library prefix
       if (library === 'mdi' && !name.startsWith('mdi-')) {
         iconNames.add(`mdi-${name}`);
