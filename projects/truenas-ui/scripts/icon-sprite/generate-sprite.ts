@@ -48,6 +48,9 @@ export async function generateSprite(config: SpriteGeneratorConfig = {}): Promis
 
     const usedIcons = new Set([...templateIcons, ...markerIcons]);
 
+    // Merge library icons if truenas-ui is installed (for consumer projects)
+    mergeLibraryIcons(usedIcons, resolved.projectRoot);
+
     // Add custom icons if directory is specified
     let allIcons: Set<string>;
     if (resolved.customIconsDir) {
@@ -129,4 +132,32 @@ function addCustomIconsFromPath(usedIcons: Set<string>, customIconsPath: string)
   }
 
   return new Set([...customIcons, ...usedIcons]);
+}
+
+/**
+ * Merge library icons from truenas-ui package if installed
+ * This ensures library-internal icons (chevrons, folder, etc.) are available in consumer apps
+ */
+function mergeLibraryIcons(usedIcons: Set<string>, projectRoot: string): void {
+  const librarySpritePath = resolve(
+    projectRoot,
+    'node_modules/truenas-ui/dist/truenas-ui/assets/icons/sprite-config.json'
+  );
+
+  // Skip if truenas-ui is not installed (e.g., when building the library itself)
+  if (!fs.existsSync(librarySpritePath)) {
+    return;
+  }
+
+  try {
+    const libraryConfig = JSON.parse(fs.readFileSync(librarySpritePath, 'utf-8'));
+    const libraryIcons = libraryConfig.icons || [];
+
+    if (libraryIcons.length > 0) {
+      console.info(`Merging ${libraryIcons.length} icon(s) from truenas-ui library`);
+      libraryIcons.forEach((icon: string) => usedIcons.add(icon));
+    }
+  } catch (error) {
+    console.warn('Warning: Could not load library sprite config:', error);
+  }
 }

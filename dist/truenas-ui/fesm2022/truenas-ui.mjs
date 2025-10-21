@@ -131,119 +131,67 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * This is a custom implementation that does NOT depend on Angular Material.
  *
  * The sprite system works by:
- * 1. Auto-loads the library's bundled sprite (contains all library icons like chevrons, MDI icons, etc.)
- * 2. Optionally loads consumer's sprite (if they generated one for app-specific icons)
- * 3. Merges both sprite configs - consumer icons override library icons if names conflict
- * 4. Icons are resolved as SVG fragment identifiers (e.g., sprite.svg#icon-name)
+ * 1. Loads the application's sprite (generated via `yarn icons` command)
+ * 2. The sprite includes both consumer icons and library-internal icons (chevrons, folder, etc.)
+ * 3. Icons are resolved as SVG fragment identifiers (e.g., sprite.svg#icon-name)
  */
 class IxSpriteLoaderService {
     http;
     sanitizer;
-    librarySpriteConfig;
-    consumerSpriteConfig;
-    mergedSpriteConfig;
+    spriteConfig;
     spriteLoaded = false;
     spriteLoadPromise;
     constructor(http, sanitizer) {
         this.http = http;
         this.sanitizer = sanitizer;
-        // Start loading both library and consumer sprites immediately
-        this.loadSpriteConfigs();
+        // Start loading sprite immediately
+        this.loadSpriteConfig();
     }
     /**
-     * Load both library and consumer sprite configurations
-     * Library sprite is always loaded, consumer sprite is optional
+     * Load the sprite configuration
      */
-    async loadSpriteConfigs() {
+    async loadSpriteConfig() {
         if (this.spriteLoadPromise) {
             return this.spriteLoadPromise;
         }
         this.spriteLoadPromise = (async () => {
-            // Load library sprite (always available, bundled with the library)
             try {
-                const libraryConfig = await firstValueFrom(this.http.get('truenas-ui/assets/icons/sprite-config.json'));
-                this.librarySpriteConfig = libraryConfig;
+                const config = await firstValueFrom(this.http.get('assets/icons/sprite-config.json'));
+                this.spriteConfig = config;
+                this.spriteLoaded = true;
             }
             catch (error) {
-                console.warn('[IxSpriteLoader] Failed to load library sprite config. Library icons may not work:', error);
+                console.error('[IxSpriteLoader] Failed to load sprite config. Icons may not work:', error);
             }
-            // Load consumer sprite (optional, only if consumer generated one)
-            try {
-                const consumerConfig = await firstValueFrom(this.http.get('assets/icons/sprite-config.json'));
-                this.consumerSpriteConfig = consumerConfig;
-            }
-            catch (error) {
-                // This is expected if consumer hasn't generated a sprite - not an error
-                console.debug('[IxSpriteLoader] No consumer sprite found (this is normal if you haven\'t generated one)');
-            }
-            // Merge the configs
-            this.mergeSpriteConfigs();
-            this.spriteLoaded = true;
         })();
         return this.spriteLoadPromise;
-    }
-    /**
-     * Merge library and consumer sprite configs
-     * Consumer icons take precedence over library icons if names conflict
-     */
-    mergeSpriteConfigs() {
-        if (!this.librarySpriteConfig && !this.consumerSpriteConfig) {
-            return;
-        }
-        // Start with library config
-        const mergedIcons = new Set(this.librarySpriteConfig?.icons || []);
-        // Add consumer icons (will override if names conflict)
-        if (this.consumerSpriteConfig?.icons) {
-            this.consumerSpriteConfig.icons.forEach(icon => mergedIcons.add(icon));
-        }
-        // Use consumer sprite URL as primary if available, otherwise library sprite URL
-        const primarySpriteUrl = this.consumerSpriteConfig?.iconUrl || this.librarySpriteConfig?.iconUrl || '';
-        this.mergedSpriteConfig = {
-            iconUrl: primarySpriteUrl,
-            icons: Array.from(mergedIcons)
-        };
     }
     /**
      * Ensure the sprite is loaded before resolving icons
      */
     async ensureSpriteLoaded() {
-        await this.loadSpriteConfigs();
+        await this.loadSpriteConfig();
         return this.spriteLoaded;
     }
     /**
      * Get the full URL for an icon in the sprite
      * Returns a URL like: assets/icons/sprite.svg?v=hash#icon-name
-     * or truenas-ui/assets/icons/sprite.svg?v=hash#icon-name for library icons
      *
      * @param iconName The icon name (e.g., 'folder', 'mdi-server', 'ix-dataset')
      * @returns The fragment identifier URL for the icon, or null if sprite not loaded or icon not in sprite
      */
     getIconUrl(iconName) {
-        if (!this.mergedSpriteConfig) {
+        if (!this.spriteConfig) {
             console.warn(`[IxSpriteLoader] Icon sprite not loaded yet, cannot resolve: ${iconName}`);
             return null;
         }
-        // Check if the icon exists in the merged sprite manifest
-        if (this.mergedSpriteConfig.icons && !this.mergedSpriteConfig.icons.includes(iconName)) {
+        // Check if the icon exists in the sprite manifest
+        if (this.spriteConfig.icons && !this.spriteConfig.icons.includes(iconName)) {
             return null;
-        }
-        // Determine which sprite URL to use
-        let spriteUrl;
-        // Check if icon is in consumer sprite (takes precedence)
-        if (this.consumerSpriteConfig?.icons?.includes(iconName)) {
-            spriteUrl = this.consumerSpriteConfig.iconUrl;
-        }
-        else if (this.librarySpriteConfig?.icons?.includes(iconName)) {
-            // Icon is from library sprite
-            spriteUrl = this.librarySpriteConfig.iconUrl;
-        }
-        else {
-            // Fallback to merged config URL
-            spriteUrl = this.mergedSpriteConfig.iconUrl;
         }
         // The sprite URL already includes the cache-busting version parameter
         // We just append the icon name as a fragment identifier
-        return `${spriteUrl}#${iconName}`;
+        return `${this.spriteConfig.iconUrl}#${iconName}`;
     }
     /**
      * Get a sanitized resource URL for an icon
@@ -266,22 +214,10 @@ class IxSpriteLoaderService {
         return this.spriteLoaded;
     }
     /**
-     * Get the merged sprite config if loaded
+     * Get the sprite config if loaded
      */
     getSpriteConfig() {
-        return this.mergedSpriteConfig;
-    }
-    /**
-     * Get the library sprite config
-     */
-    getLibrarySpriteConfig() {
-        return this.librarySpriteConfig;
-    }
-    /**
-     * Get the consumer sprite config
-     */
-    getConsumerSpriteConfig() {
-        return this.consumerSpriteConfig;
+        return this.spriteConfig;
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSpriteLoaderService, deps: [{ token: i1$1.HttpClient }, { token: i1$2.DomSanitizer }], target: i0.ɵɵFactoryTarget.Injectable });
     static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSpriteLoaderService, providedIn: 'root' });
