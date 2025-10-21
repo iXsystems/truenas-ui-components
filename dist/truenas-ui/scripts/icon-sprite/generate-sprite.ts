@@ -73,7 +73,7 @@ export async function generateSprite(config: SpriteGeneratorConfig = {}): Promis
       throw new Error('No icons found in the project. Make sure your templates include <ix-icon> elements or use iconMarker() for dynamic icons.');
     }
 
-    const icons = getIconPaths(allIcons);
+    const icons = getIconPaths(allIcons, resolved.projectRoot);
 
     const result = await buildSprite(icons);
     const file = Object.values(result)[0].sprite;
