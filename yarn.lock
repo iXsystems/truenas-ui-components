@@ -10078,7 +10078,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-glob@npm:3.3.3":
+"fast-glob@npm:3.3.3, fast-glob@npm:^3.3.3":
   version: 3.3.3
   resolution: "fast-glob@npm:3.3.3"
   dependencies:
@@ -17284,6 +17284,7 @@ __metadata:
     "@types/vinyl": "npm:~2.0.12"
     cheerio: "npm:~1.0.0"
     css-loader: "npm:^7.1.2"
+    fast-glob: "npm:^3.3.3"
     husky: "npm:^9.1.7"
     jasmine-core: "npm:~4.3.0"
     jest: "npm:^29.7.0"

@@ -59,6 +59,7 @@
     "@types/svg-sprite": "~0.0.39",
     "@types/vinyl": "~2.0.12",
     "cheerio": "~1.0.0",
+    "fast-glob": "^3.3.3",
     "svg-sprite": "~2.0.4",
     "tslib": "^2.3.0",
     "tsx": "~4.19.1",
