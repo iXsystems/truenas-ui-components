@@ -4,6 +4,9 @@
   "main": "./dist/truenas-ui/fesm2022/truenas-ui.mjs",
   "module": "./dist/truenas-ui/fesm2022/truenas-ui.mjs",
   "typings": "./dist/truenas-ui/index.d.ts",
+  "bin": {
+    "truenas-icons": "./dist/truenas-ui/scripts/icon-sprite/cli.js"
+  },
   "exports": {
     "./package.json": {
       "default": "./package.json"
@@ -17,6 +20,7 @@
     "ng": "ng",
     "start": "ng serve",
     "generate-icons": "node scripts/generate-icon-constants.js",
+    "generate-sprite": "npx tsx projects/truenas-ui/scripts/icon-sprite/make-sprite.ts",
     "prebuild": "npm run generate-icons",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
@@ -25,10 +29,12 @@
     "test-coverage": "yarn jest --clearCache && yarn jest --config ./projects/truenas-ui/jest.config.ts --coverage",
     "test-sb": "test-storybook",
     "copy-themes": "cp ./projects/truenas-ui/src/styles/themes.css ./projects/truenas-ui/.storybook/public/",
-    "storybook": "yarn copy-themes && ng run truenas-ui:storybook",
-    "build-storybook": "yarn copy-themes && ng run truenas-ui:build-storybook",
-    "sb": "yarn copy-themes && yarn run storybook --host 0.0.0.0",
-    "sbh": "NODE_OPTIONS='--max-old-space-size=4096' yarn copy-themes && yarn run storybook --host 0.0.0.0 --no-open --loglevel warn",
+    "copy-sprite": "cp ./projects/truenas-ui/assets/icons/sprite.svg ./projects/truenas-ui/.storybook/public/assets/icons/ && cp ./projects/truenas-ui/assets/icons/sprite-config.json ./projects/truenas-ui/.storybook/public/assets/icons/",
+    "copy-assets": "yarn copy-themes && yarn copy-sprite",
+    "storybook": "yarn generate-sprite && yarn copy-assets && ng run truenas-ui:storybook",
+    "build-storybook": "yarn generate-sprite && yarn copy-assets && ng run truenas-ui:build-storybook",
+    "sb": "yarn copy-assets && yarn run storybook --host 0.0.0.0",
+    "sbh": "NODE_OPTIONS='--max-old-space-size=4096' yarn copy-assets && yarn run storybook --host 0.0.0.0 --no-open --loglevel warn",
     "reinstall": "rm -rf ./node_modules && yarn install",
     "prepare": "husky"
   },
@@ -46,9 +52,18 @@
     "zone.js": "^0.15.0"
   },
   "dependencies": {
+    "@material-design-icons/svg": "~0.14.13",
     "@mdi/angular-material": "^7.2.96",
     "@mdi/js": "^7.4.47",
-    "tslib": "^2.3.0"
+    "@mdi/svg": "~7.4.47",
+    "@types/svg-sprite": "~0.0.39",
+    "@types/vinyl": "~2.0.12",
+    "cheerio": "~1.0.0",
+    "fast-glob": "^3.3.3",
+    "svg-sprite": "~2.0.4",
+    "tslib": "^2.3.0",
+    "tsx": "~4.19.1",
+    "vinyl": "~3.0.0"
   },
   "devDependencies": {
     "@angular-devkit/architect": "^0.1902.0",

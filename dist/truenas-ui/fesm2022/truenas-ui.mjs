@@ -2,19 +2,19 @@ import * as i0 from '@angular/core';
 import { Injectable, Component, input, ChangeDetectionStrategy, EventEmitter, Output, Input, inject, ViewChild, ViewEncapsulation, forwardRef, Directive, TemplateRef, HostListener, ElementRef, ContentChild, ChangeDetectorRef, ContentChildren, Optional, Inject, Pipe, signal, computed, Host } from '@angular/core';
 import * as i1 from '@angular/common';
 import { CommonModule, NgIf, DOCUMENT } from '@angular/common';
-import * as i1$1 from '@angular/platform-browser';
-import { mdiShareVariant, mdiBell, mdiMenu, mdiHeart, mdiStar, mdiRestart, mdiPower, mdiViewDashboard, mdiEyeOff, mdiEye, mdiAccountGroup, mdiAccountCircle, mdiKey, mdiShieldLock, mdiLockOpen, mdiLock, mdiHelpCircle, mdiCloseCircle, mdiInformationOutline, mdiInformation, mdiFilter, mdiMagnify, mdiRefresh, mdiLoading, mdiStop, mdiFloppy, mdiDotsVertical, mdiDotsHorizontal, mdiCog, mdiMinus, mdiPlus, mdiClose, mdiCheck, mdiContentCopy, mdiDelete, mdiPencil, mdiZipBox, mdiArchive, mdiDownload, mdiUpload, mdiFolderOpen, mdiFolderPlus, mdiHome, mdiMenuUp, mdiMenuLeft, mdiMenuDown, mdiMenuRight, mdiArrowUp, mdiArrowLeft, mdiArrowDown, mdiArrowRight, mdiChevronUp, mdiChevronLeft, mdiChevronDown, mdiChevronRight, mdiMonitorShare, mdiCpu64Bit, mdiMemory, mdiFile, mdiFolder, mdiStoreOutline, mdiDatabaseOutline, mdiNas, mdiServer, mdiHarddisk, mdiAlertCircle, mdiFolderNetwork, mdiDatabase } from '@mdi/js';
+import * as i1$2 from '@angular/platform-browser';
+import { firstValueFrom, BehaviorSubject, merge, Subject } from 'rxjs';
+import * as i1$1 from '@angular/common/http';
 import * as i1$5 from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR, NgControl } from '@angular/forms';
 import { FocusMonitor, A11yModule, LiveAnnouncer } from '@angular/cdk/a11y';
 import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { TemplatePortal, PortalModule, ComponentPortal } from '@angular/cdk/portal';
-import * as i1$2 from '@angular/cdk/overlay';
+import * as i1$3 from '@angular/cdk/overlay';
 import { OverlayModule } from '@angular/cdk/overlay';
+import { mdiDotsVertical, mdiAlertCircle, mdiFolderOpen, mdiLock, mdiLoading, mdiFolderPlus, mdiFolderNetwork, mdiHarddisk, mdiDatabase, mdiFile, mdiFolder } from '@mdi/js';
 import { trigger, state, transition, style, animate } from '@angular/animations';
 import { SPACE, ENTER, END, HOME, DOWN_ARROW, UP_ARROW, RIGHT_ARROW, LEFT_ARROW } from '@angular/cdk/keycodes';
-import { firstValueFrom, BehaviorSubject, merge, Subject } from 'rxjs';
-import * as i1$3 from '@angular/common/http';
 import * as i1$4 from '@angular/cdk/tree';
 import { CdkTree, CdkTreeModule, CdkTreeNode, CDK_TREE_NODE_OUTLET_NODE, CdkTreeNodeOutlet, CdkNestedTreeNode } from '@angular/cdk/tree';
 export { FlatTreeControl } from '@angular/cdk/tree';
@@ -126,12 +126,117 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                 type: Output
             }] } });
 
+/**
+ * Service for loading and managing icon sprites.
+ * This is a custom implementation that does NOT depend on Angular Material.
+ *
+ * The sprite system works by:
+ * 1. Loads the application's sprite (generated via `yarn icons` command)
+ * 2. The sprite includes both consumer icons and library-internal icons (chevrons, folder, etc.)
+ * 3. Icons are resolved as SVG fragment identifiers (e.g., sprite.svg#icon-name)
+ */
+class IxSpriteLoaderService {
+    http;
+    sanitizer;
+    spriteConfig;
+    spriteLoaded = false;
+    spriteLoadPromise;
+    constructor(http, sanitizer) {
+        this.http = http;
+        this.sanitizer = sanitizer;
+        // Start loading sprite immediately
+        this.loadSpriteConfig();
+    }
+    /**
+     * Load the sprite configuration
+     */
+    async loadSpriteConfig() {
+        if (this.spriteLoadPromise) {
+            return this.spriteLoadPromise;
+        }
+        this.spriteLoadPromise = (async () => {
+            try {
+                const config = await firstValueFrom(this.http.get('assets/icons/sprite-config.json'));
+                this.spriteConfig = config;
+                this.spriteLoaded = true;
+            }
+            catch (error) {
+                console.error('[IxSpriteLoader] Failed to load sprite config. Icons may not work:', error);
+            }
+        })();
+        return this.spriteLoadPromise;
+    }
+    /**
+     * Ensure the sprite is loaded before resolving icons
+     */
+    async ensureSpriteLoaded() {
+        await this.loadSpriteConfig();
+        return this.spriteLoaded;
+    }
+    /**
+     * Get the full URL for an icon in the sprite
+     * Returns a URL like: assets/icons/sprite.svg?v=hash#icon-name
+     *
+     * @param iconName The icon name (e.g., 'folder', 'mdi-server', 'ix-dataset')
+     * @returns The fragment identifier URL for the icon, or null if sprite not loaded or icon not in sprite
+     */
+    getIconUrl(iconName) {
+        if (!this.spriteConfig) {
+            console.warn(`[IxSpriteLoader] Icon sprite not loaded yet, cannot resolve: ${iconName}`);
+            return null;
+        }
+        // Check if the icon exists in the sprite manifest
+        if (this.spriteConfig.icons && !this.spriteConfig.icons.includes(iconName)) {
+            return null;
+        }
+        // The sprite URL already includes the cache-busting version parameter
+        // We just append the icon name as a fragment identifier
+        return `${this.spriteConfig.iconUrl}#${iconName}`;
+    }
+    /**
+     * Get a sanitized resource URL for an icon
+     * This is used when binding to [src] or similar attributes
+     *
+     * @param iconName The icon name
+     * @returns Sanitized resource URL or null
+     */
+    getSafeIconUrl(iconName) {
+        const url = this.getIconUrl(iconName);
+        if (!url) {
+            return null;
+        }
+        return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+    }
+    /**
+     * Check if the sprite is loaded
+     */
+    isSpriteLoaded() {
+        return this.spriteLoaded;
+    }
+    /**
+     * Get the sprite config if loaded
+     */
+    getSpriteConfig() {
+        return this.spriteConfig;
+    }
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSpriteLoaderService, deps: [{ token: i1$1.HttpClient }, { token: i1$2.DomSanitizer }], target: i0.ɵɵFactoryTarget.Injectable });
+    static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSpriteLoaderService, providedIn: 'root' });
+}
+i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSpriteLoaderService, decorators: [{
+            type: Injectable,
+            args: [{
+                    providedIn: 'root'
+                }]
+        }], ctorParameters: () => [{ type: i1$1.HttpClient }, { type: i1$2.DomSanitizer }] });
+
 class IxIconRegistryService {
     sanitizer;
+    spriteLoader;
     libraries = new Map();
     customIcons = new Map();
-    constructor(sanitizer) {
+    constructor(sanitizer, spriteLoader) {
         this.sanitizer = sanitizer;
+        this.spriteLoader = spriteLoader;
     }
     /**
      * Register an icon library (like Lucide, Heroicons, etc.)
@@ -190,34 +295,65 @@ class IxIconRegistryService {
         });
     }
     /**
-     * Resolve an icon using registered libraries and custom icons
+     * Resolve an icon from the sprite
+     * Returns the sprite URL if the sprite is loaded
+     */
+    resolveSpriteIcon(name) {
+        if (!this.spriteLoader.isSpriteLoaded()) {
+            return null;
+        }
+        const spriteUrl = this.spriteLoader.getIconUrl(name);
+        if (!spriteUrl) {
+            return null;
+        }
+        return {
+            source: 'sprite',
+            content: '', // Not used for sprite icons
+            spriteUrl: spriteUrl
+        };
+    }
+    /**
+     * Resolve an icon using sprite, registered libraries, and custom icons
      *
-     * Format: "library:icon-name" or just "icon-name" for custom icons
+     * Resolution order:
+     * 1. Sprite icons (Material, MDI, custom TrueNAS icons)
+     * 2. Registered libraries (with prefix, e.g., "lucide:home")
+     * 3. Custom registered icons
+     *
+     * Format: "library:icon-name" or just "icon-name"
      *
      * @example
      * ```typescript
+     * // Sprite icons (automatic from sprite.svg)
+     * registry.resolveIcon('folder')        // Material Design icon
+     * registry.resolveIcon('mdi-server')    // MDI icon
+     * registry.resolveIcon('ix-dataset')    // Custom TrueNAS icon
+     *
      * // Library icons
      * registry.resolveIcon('lucide:home')
      * registry.resolveIcon('heroicons:user-circle')
-     * registry.resolveIcon('fa:home')
      *
-     * // Custom icons
+     * // Custom registered icons
      * registry.resolveIcon('my-logo')
-     * registry.resolveIcon('custom:special-icon')
      * ```
      */
     resolveIcon(name, options) {
-        // Handle library prefix (e.g., "lucide:home")
+        // 1. Try sprite first (if loaded)
+        const spriteIcon = this.resolveSpriteIcon(name);
+        if (spriteIcon) {
+            return spriteIcon;
+        }
+        // 2. Handle library prefix (e.g., "lucide:home")
         if (name.includes(':')) {
             const [libraryName, iconName] = name.split(':', 2);
             return this.resolveLibraryIcon(libraryName, iconName, options);
         }
-        // Handle custom prefix (e.g., "custom:icon")
+        // 3. Handle custom prefix (e.g., "custom:icon")
         if (name.startsWith('custom:')) {
             const iconName = name.replace('custom:', '');
             return this.resolveCustomIcon(iconName);
         }
-        // Handle direct custom icon name
+        // 4. Handle direct custom icon name
         return this.resolveCustomIcon(name);
     }
     /**
@@ -263,6 +399,13 @@ class IxIconRegistryService {
         this.libraries.clear();
         this.customIcons.clear();
     }
+    /**
+     * Get the sprite loader service
+     * Useful for checking sprite status or manually resolving sprite icons
+     */
+    getSpriteLoader() {
+        return this.spriteLoader;
+    }
     resolveLibraryIcon(libraryName, iconName, options) {
         const library = this.libraries.get(libraryName);
         if (!library) {
@@ -307,7 +450,7 @@ class IxIconRegistryService {
             content: this.sanitizer.bypassSecurityTrustHtml(svgContent)
         };
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxIconRegistryService, deps: [{ token: i1$1.DomSanitizer }], target: i0.ɵɵFactoryTarget.Injectable });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxIconRegistryService, deps: [{ token: i1$2.DomSanitizer }, { token: IxSpriteLoaderService }], target: i0.ɵɵFactoryTarget.Injectable });
     static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxIconRegistryService, providedIn: 'root' });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxIconRegistryService, decorators: [{
@@ -315,194 +458,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             args: [{
                     providedIn: 'root'
                 }]
-        }], ctorParameters: () => [{ type: i1$1.DomSanitizer }] });
-
-/**
- * Icon catalog for TrueNAS-relevant MDI icons
- * This defines which icons are available for lazy loading
- */
-const TRUENAS_MDI_ICON_CATALOG = {
-    // Hardware and Storage Icons
-    'harddisk': mdiHarddisk,
-    'server': mdiServer,
-    'nas': mdiNas,
-    'database': mdiDatabaseOutline,
-    'storage': mdiStoreOutline,
-    'folder': mdiFolder,
-    'file': mdiFile,
-    'memory': mdiMemory,
-    'cpu': mdiCpu64Bit,
-    'network-share': mdiMonitorShare,
-    // Navigation and Directional Icons (all 4 directions)
-    'chevron-right': mdiChevronRight,
-    'chevron-down': mdiChevronDown,
-    'chevron-left': mdiChevronLeft,
-    'chevron-up': mdiChevronUp,
-    'arrow-right': mdiArrowRight,
-    'arrow-down': mdiArrowDown,
-    'arrow-left': mdiArrowLeft,
-    'arrow-up': mdiArrowUp,
-    'menu-right': mdiMenuRight,
-    'menu-down': mdiMenuDown,
-    'menu-left': mdiMenuLeft,
-    'menu-up': mdiMenuUp,
-    'home': mdiHome,
-    // File and Folder Operations
-    'folder-plus': mdiFolderPlus,
-    'folder-open': mdiFolderOpen,
-    'upload': mdiUpload,
-    'download': mdiDownload,
-    'archive': mdiArchive,
-    'zip-box': mdiZipBox,
-    // Critical UI Actions
-    'pencil': mdiPencil,
-    'delete': mdiDelete,
-    'content-copy': mdiContentCopy,
-    'check': mdiCheck,
-    'close': mdiClose,
-    'plus': mdiPlus,
-    'minus': mdiMinus,
-    'cog': mdiCog,
-    'settings': mdiCog,
-    'dots-horizontal': mdiDotsHorizontal,
-    'dots-vertical': mdiDotsVertical,
-    'floppy': mdiFloppy,
-    'stop': mdiStop,
-    'loading': mdiLoading,
-    'refresh': mdiRefresh,
-    // Search and Filter
-    'magnify': mdiMagnify,
-    'filter': mdiFilter,
-    // Status and Alerts
-    'info': mdiInformation,
-    'information': mdiInformation,
-    'information-outline': mdiInformationOutline,
-    'close-circle': mdiCloseCircle,
-    'help-circle': mdiHelpCircle,
-    // Security and Access
-    'lock': mdiLock,
-    'lock-open': mdiLockOpen,
-    'shield-lock': mdiShieldLock,
-    'key': mdiKey,
-    // User and Account
-    'account-circle': mdiAccountCircle,
-    'account-group': mdiAccountGroup,
-    // Visibility
-    'eye': mdiEye,
-    'eye-off': mdiEyeOff,
-    'view-dashboard': mdiViewDashboard,
-    // System Control
-    'power': mdiPower,
-    'restart': mdiRestart,
-    // Common UI Icons
-    'star': mdiStar,
-    'heart': mdiHeart,
-    'menu': mdiMenu,
-    'bell': mdiBell,
-    'share-variant': mdiShareVariant
-};
-class IxMdiIconService {
-    iconRegistry;
-    domSanitizer;
-    registeredIcons = new Set();
-    mdiLibrary;
-    constructor(iconRegistry, domSanitizer) {
-        this.iconRegistry = iconRegistry;
-        this.domSanitizer = domSanitizer;
-        this.setupMdiLibrary();
-    }
-    /**
-     * Set up the MDI icon library with the icon registry
-     */
-    setupMdiLibrary() {
-        this.mdiLibrary = {
-            name: 'mdi',
-            resolver: (iconName, options = {}) => {
-                const iconPath = TRUENAS_MDI_ICON_CATALOG[iconName];
-                if (iconPath) {
-                    return this.createSvgContent(iconPath);
-                }
-                return null;
-            }
-        };
-        // Register the library immediately so it's available for all icons
-        this.iconRegistry.registerLibrary(this.mdiLibrary);
-    }
-    /**
-     * Register a single MDI icon with the icon registry
-     * @param name The icon name to register
-     * @param svgPath The SVG path data from @mdi/js
-     * @returns Promise<boolean> True if registration was successful
-     */
-    async registerIcon(name, svgPath) {
-        try {
-            // Register the library if not already registered
-            if (!this.iconRegistry.hasLibrary('mdi')) {
-                this.iconRegistry.registerLibrary(this.mdiLibrary);
-            }
-            this.registeredIcons.add(name);
-            return true;
-        }
-        catch (error) {
-            console.error(`Failed to register MDI icon '${name}':`, error);
-            return false;
-        }
-    }
-    /**
-     * Check if an icon is already registered
-     * @param name The icon name to check
-     * @returns boolean True if the icon is registered
-     */
-    isIconRegistered(name) {
-        return this.registeredIcons.has(name);
-    }
-    /**
-     * Ensure an icon is loaded from the catalog (lazy loading)
-     * @param iconName The icon name to load
-     * @returns Promise<boolean> True if the icon was loaded or already registered
-     */
-    async ensureIconLoaded(iconName) {
-        // Register the library if not already registered
-        if (!this.iconRegistry.hasLibrary('mdi')) {
-            this.iconRegistry.registerLibrary(this.mdiLibrary);
-        }
-        // Check if icon exists in catalog
-        if (!(iconName in TRUENAS_MDI_ICON_CATALOG)) {
-            return false;
-        }
-        // For the icon registry system, we don't need to pre-register individual icons
-        // The library resolver will handle them on demand
-        this.registeredIcons.add(iconName);
-        return true;
-    }
-    /**
-     * Load icon data from the catalog
-     * @param iconName The icon name to load
-     * @returns Promise<string | null> The SVG path data or null if not found
-     */
-    async loadIconData(iconName) {
-        const iconData = TRUENAS_MDI_ICON_CATALOG[iconName];
-        return iconData || null;
-    }
-    /**
-     * Create SVG content from MDI path data
-     * @param svgPath The SVG path data from @mdi/js
-     * @returns string Complete SVG markup
-     */
-    createSvgContent(svgPath) {
-        return `<svg viewBox="0 0 24 24" width="24" height="24">
-      <path fill="currentColor" d="${svgPath}"/>
-    </svg>`;
-    }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMdiIconService, deps: [{ token: IxIconRegistryService }, { token: i1$1.DomSanitizer }], target: i0.ɵɵFactoryTarget.Injectable });
-    static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMdiIconService, providedIn: 'root' });
-}
-i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMdiIconService, decorators: [{
-            type: Injectable,
-            args: [{
-                    providedIn: 'root'
-                }]
-        }], ctorParameters: () => [{ type: IxIconRegistryService }, { type: i1$1.DomSanitizer }] });
+        }], ctorParameters: () => [{ type: i1$2.DomSanitizer }, { type: IxSpriteLoaderService }] });
 
 class IxIconComponent {
     sanitizer;
@@ -516,20 +472,34 @@ class IxIconComponent {
     svgContainer;
     iconResult = { source: 'text', content: '?' };
     iconRegistry = inject(IxIconRegistryService);
-    mdiIconService = inject(IxMdiIconService);
     constructor(sanitizer, cdr) {
         this.sanitizer = sanitizer;
         this.cdr = cdr;
     }
     ngOnInit() {
-        this.resolveIcon();
+        this.resolveIcon()
+            .then(() => {
+            this.cdr.markForCheck();
+            setTimeout(() => this.updateSvgContent(), 0);
+        })
+            .catch((error) => {
+            console.error('[IxIcon] Resolution failed', error);
+            this.iconResult = { source: 'text', content: '!' };
+            this.cdr.markForCheck();
+        });
     }
     ngOnChanges(changes) {
         if (changes['name'] || changes['library']) {
-            this.resolveIcon();
-            this.cdr.markForCheck();
-            // Update SVG content after view updates
-            setTimeout(() => this.updateSvgContent(), 0);
+            this.resolveIcon()
+                .then(() => {
+                this.cdr.markForCheck();
+                setTimeout(() => this.updateSvgContent(), 0);
+            })
+                .catch((error) => {
+                console.error('[IxIcon] Resolution failed (onChange)', error);
+                this.iconResult = { source: 'text', content: '!' };
+                this.cdr.markForCheck();
+            });
         }
     }
     ngAfterViewInit() {
@@ -560,22 +530,38 @@ class IxIconComponent {
             this.iconResult = { source: 'text', content: '?' };
             return;
         }
-        // Handle MDI library specifically
-        if (this.library === 'mdi') {
-            await this.resolveMdiIcon();
-            return;
+        // Wait for sprite to load (if it's being loaded)
+        try {
+            await this.iconRegistry.getSpriteLoader().ensureSpriteLoaded();
+        }
+        catch (error) {
+            // Sprite loading failed, continue with other resolution methods
+            console.warn('[IxIcon] Sprite loading failed, falling back to other icon sources:', error);
+        }
+        // Construct the effective icon name based on library attribute
+        let effectiveIconName = this.name;
+        if (this.library === 'mdi' && !this.name.startsWith('mdi-')) {
+            effectiveIconName = `mdi-${this.name}`;
+        }
+        else if (this.library === 'material' && !this.name.startsWith('mat-')) {
+            // Material icons don't need prefix in sprite
+            effectiveIconName = this.name;
+        }
+        else if (this.library === 'lucide' && !this.name.includes(':')) {
+            // Convert to registry format for Lucide icons
+            effectiveIconName = `lucide:${this.name}`;
         }
         // 1. Try icon registry (libraries and custom icons)
         const iconOptions = {
             size: this.size,
             color: this.color
         };
-        let registryResult = this.iconRegistry.resolveIcon(this.name, iconOptions);
+        let registryResult = this.iconRegistry.resolveIcon(effectiveIconName, iconOptions);
         // Fallback to global registry for Storybook/demos (when DI doesn't work)
         if (!registryResult && typeof window !== 'undefined' && window.__storybookIconRegistry) {
             const globalRegistry = window.__storybookIconRegistry;
             if (globalRegistry) {
-                registryResult = globalRegistry.resolveIcon(this.name, iconOptions);
+                registryResult = globalRegistry.resolveIcon(effectiveIconName, iconOptions);
             }
         }
         if (registryResult) {
@@ -583,19 +569,19 @@ class IxIconComponent {
             return;
         }
         // 2. Try built-in third-party patterns (deprecated - use registry instead)
-        const thirdPartyResult = this.tryThirdPartyIcon(this.name);
+        const thirdPartyResult = this.tryThirdPartyIcon(effectiveIconName);
         if (thirdPartyResult) {
             this.iconResult = thirdPartyResult;
             return;
         }
         // 3. Try CSS class (Font Awesome, Material Icons, etc.)
-        const cssResult = this.tryCssIcon(this.name);
+        const cssResult = this.tryCssIcon(effectiveIconName);
         if (cssResult) {
             this.iconResult = cssResult;
             return;
         }
         // 4. Try Unicode mapping
-        const unicodeResult = this.tryUnicodeIcon(this.name);
+        const unicodeResult = this.tryUnicodeIcon(effectiveIconName);
         if (unicodeResult) {
             this.iconResult = unicodeResult;
             return;
@@ -603,55 +589,8 @@ class IxIconComponent {
         // 5. Fallback to text abbreviation
         this.iconResult = {
             source: 'text',
-            content: this.generateTextAbbreviation(this.name)
+            content: this.generateTextAbbreviation(effectiveIconName)
         };
-    }
-    async resolveMdiIcon() {
-        try {
-            // Always try to resolve through icon registry first with mdi: prefix
-            const iconOptions = {
-                size: this.size,
-                color: this.color
-            };
-            const registryResult = this.iconRegistry.resolveIcon(`mdi:${this.name}`, iconOptions);
-            if (registryResult) {
-                this.iconResult = registryResult;
-                this.cdr.markForCheck();
-                return;
-            }
-            // Ensure the MDI icon is loaded if registry didn't find it
-            const loaded = await this.mdiIconService.ensureIconLoaded(this.name);
-            if (!loaded) {
-                console.warn(`Icon "${this.name}" not found in MDI library`);
-                this.iconResult = {
-                    source: 'text',
-                    content: this.generateTextAbbreviation(this.name)
-                };
-                this.cdr.markForCheck();
-                return;
-            }
-            // Try registry again after ensuring icon is loaded
-            const retryResult = this.iconRegistry.resolveIcon(`mdi:${this.name}`, iconOptions);
-            if (retryResult) {
-                this.iconResult = retryResult;
-                this.cdr.markForCheck();
-                return;
-            }
-            // Final fallback if registry resolution still fails
-            this.iconResult = {
-                source: 'text',
-                content: this.generateTextAbbreviation(this.name)
-            };
-            this.cdr.markForCheck();
-        }
-        catch (error) {
-            console.warn(`Failed to resolve MDI icon '${this.name}':`, error);
-            this.iconResult = {
-                source: 'text',
-                content: this.generateTextAbbreviation(this.name)
-            };
-            this.cdr.markForCheck();
-        }
     }
     tryThirdPartyIcon(name) {
         // This method is deprecated in favor of the icon registry
@@ -746,13 +685,13 @@ class IxIconComponent {
         // In real implementation, consumers would override this method
         return false; // Disable generic CSS class checking for now
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxIconComponent, deps: [{ token: i1$1.DomSanitizer }, { token: i0.ChangeDetectorRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxIconComponent, isStandalone: true, selector: "ix-icon", inputs: { name: "name", size: "size", color: "color", tooltip: "tooltip", ariaLabel: "ariaLabel", library: "library" }, viewQueries: [{ propertyName: "svgContainer", first: true, predicate: ["svgContainer"], descendants: true }], usesOnChanges: true, ngImport: i0, template: "<div \n  class=\"ix-icon\"\n  [ngClass]=\"'ix-icon--' + size\"\n  [style.color]=\"color\"\n  [attr.aria-label]=\"effectiveAriaLabel\"\n  [attr.title]=\"tooltip\"\n  role=\"img\">\n  \n  \n  <ng-container [ngSwitch]=\"iconResult.source\">\n    <!-- SVG content (from third-party libraries or assets) -->\n    <div *ngSwitchCase=\"'svg'\" \n         class=\"ix-icon__svg\"\n         #svgContainer>\n    </div>\n    \n    <!-- CSS class icons (Font Awesome, Material Icons, etc.) -->\n    <i *ngSwitchCase=\"'css'\" \n       class=\"ix-icon__css\"\n       [class]=\"iconResult.content\"\n       aria-hidden=\"true\">\n    </i>\n    \n    <!-- Unicode characters -->\n    <span *ngSwitchCase=\"'unicode'\" \n          class=\"ix-icon__unicode\"\n          aria-hidden=\"true\">{{ iconResult.content }}</span>\n    \n    <!-- Text abbreviation fallback -->\n    <span *ngSwitchDefault \n          class=\"ix-icon__text\"\n          aria-hidden=\"true\">{{ iconResult.content }}</span>\n  </ng-container>\n</div>", styles: [".ix-icon{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}.ix-icon--xs{width:var(--icon-xs)!important;height:var(--icon-xs)!important;font-size:var(--icon-xs)!important}.ix-icon--sm{width:var(--icon-sm)!important;height:var(--icon-sm)!important;font-size:var(--icon-sm)!important}.ix-icon--md{width:var(--icon-md)!important;height:var(--icon-md)!important;font-size:var(--icon-md)!important}.ix-icon--lg{width:var(--icon-lg)!important;height:var(--icon-lg)!important;font-size:var(--icon-lg)!important}.ix-icon--xl{width:var(--icon-xl)!important;height:var(--icon-xl)!important;font-size:var(--icon-xl)!important}.ix-icon__svg{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.ix-icon__svg :global(svg){width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__css{font-size:inherit;line-height:1;color:inherit}.ix-icon__unicode{font-size:inherit;line-height:1;color:inherit;text-align:center}.ix-icon__text{font-size:.75em;font-weight:600;line-height:1;color:inherit;text-align:center;opacity:.7}.ix-icon{width:var(--ix-icon-size, var(--icon-md));height:var(--ix-icon-size, var(--icon-md));color:var(--ix-icon-color, currentColor)}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "directive", type: i1.NgSwitch, selector: "[ngSwitch]", inputs: ["ngSwitch"] }, { kind: "directive", type: i1.NgSwitchCase, selector: "[ngSwitchCase]", inputs: ["ngSwitchCase"] }, { kind: "directive", type: i1.NgSwitchDefault, selector: "[ngSwitchDefault]" }], changeDetection: i0.ChangeDetectionStrategy.OnPush, encapsulation: i0.ViewEncapsulation.None });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxIconComponent, deps: [{ token: i1$2.DomSanitizer }, { token: i0.ChangeDetectorRef }], target: i0.ɵɵFactoryTarget.Component });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxIconComponent, isStandalone: true, selector: "ix-icon", inputs: { name: "name", size: "size", color: "color", tooltip: "tooltip", ariaLabel: "ariaLabel", library: "library" }, viewQueries: [{ propertyName: "svgContainer", first: true, predicate: ["svgContainer"], descendants: true }], usesOnChanges: true, ngImport: i0, template: "<div \n  class=\"ix-icon\"\n  [ngClass]=\"'ix-icon--' + size\"\n  [style.color]=\"color\"\n  [attr.aria-label]=\"effectiveAriaLabel\"\n  [attr.title]=\"tooltip\"\n  role=\"img\">\n  \n  \n  <ng-container [ngSwitch]=\"iconResult.source\">\n    <!-- Sprite icons (from generated sprite.svg) -->\n    <svg *ngSwitchCase=\"'sprite'\"\n         class=\"ix-icon__sprite\"\n         aria-hidden=\"true\">\n      <use [attr.href]=\"iconResult.spriteUrl\"></use>\n    </svg>\n\n    <!-- SVG content (from third-party libraries or assets) -->\n    <div *ngSwitchCase=\"'svg'\"\n         class=\"ix-icon__svg\"\n         #svgContainer>\n    </div>\n\n    <!-- CSS class icons (Font Awesome, Material Icons, etc.) -->\n    <i *ngSwitchCase=\"'css'\"\n       class=\"ix-icon__css\"\n       [class]=\"iconResult.content\"\n       aria-hidden=\"true\">\n    </i>\n\n    <!-- Unicode characters -->\n    <span *ngSwitchCase=\"'unicode'\"\n          class=\"ix-icon__unicode\"\n          aria-hidden=\"true\">{{ iconResult.content }}</span>\n\n    <!-- Text abbreviation fallback -->\n    <span *ngSwitchDefault\n          class=\"ix-icon__text\"\n          aria-hidden=\"true\">{{ iconResult.content }}</span>\n  </ng-container>\n</div>", styles: [".ix-icon{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}.ix-icon--xs{width:var(--icon-xs)!important;height:var(--icon-xs)!important;font-size:var(--icon-xs)!important}.ix-icon--sm{width:var(--icon-sm)!important;height:var(--icon-sm)!important;font-size:var(--icon-sm)!important}.ix-icon--md{width:var(--icon-md)!important;height:var(--icon-md)!important;font-size:var(--icon-md)!important}.ix-icon--lg{width:var(--icon-lg)!important;height:var(--icon-lg)!important;font-size:var(--icon-lg)!important}.ix-icon--xl{width:var(--icon-xl)!important;height:var(--icon-xl)!important;font-size:var(--icon-xl)!important}.ix-icon__sprite{width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__svg{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.ix-icon__svg :global(svg){width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__css{font-size:inherit;line-height:1;color:inherit}.ix-icon__unicode{font-size:inherit;line-height:1;color:inherit;text-align:center}.ix-icon__text{font-size:.75em;font-weight:600;line-height:1;color:inherit;text-align:center;opacity:.7}.ix-icon{width:var(--ix-icon-size, var(--icon-md));height:var(--ix-icon-size, var(--icon-md));color:var(--ix-icon-color, currentColor)}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "directive", type: i1.NgSwitch, selector: "[ngSwitch]", inputs: ["ngSwitch"] }, { kind: "directive", type: i1.NgSwitchCase, selector: "[ngSwitchCase]", inputs: ["ngSwitchCase"] }, { kind: "directive", type: i1.NgSwitchDefault, selector: "[ngSwitchDefault]" }], changeDetection: i0.ChangeDetectionStrategy.OnPush, encapsulation: i0.ViewEncapsulation.None });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxIconComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-icon', standalone: true, imports: [CommonModule], changeDetection: ChangeDetectionStrategy.OnPush, encapsulation: ViewEncapsulation.None, template: "<div \n  class=\"ix-icon\"\n  [ngClass]=\"'ix-icon--' + size\"\n  [style.color]=\"color\"\n  [attr.aria-label]=\"effectiveAriaLabel\"\n  [attr.title]=\"tooltip\"\n  role=\"img\">\n  \n  \n  <ng-container [ngSwitch]=\"iconResult.source\">\n    <!-- SVG content (from third-party libraries or assets) -->\n    <div *ngSwitchCase=\"'svg'\" \n         class=\"ix-icon__svg\"\n         #svgContainer>\n    </div>\n    \n    <!-- CSS class icons (Font Awesome, Material Icons, etc.) -->\n    <i *ngSwitchCase=\"'css'\" \n       class=\"ix-icon__css\"\n       [class]=\"iconResult.content\"\n       aria-hidden=\"true\">\n    </i>\n    \n    <!-- Unicode characters -->\n    <span *ngSwitchCase=\"'unicode'\" \n          class=\"ix-icon__unicode\"\n          aria-hidden=\"true\">{{ iconResult.content }}</span>\n    \n    <!-- Text abbreviation fallback -->\n    <span *ngSwitchDefault \n          class=\"ix-icon__text\"\n          aria-hidden=\"true\">{{ iconResult.content }}</span>\n  </ng-container>\n</div>", styles: [".ix-icon{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}.ix-icon--xs{width:var(--icon-xs)!important;height:var(--icon-xs)!important;font-size:var(--icon-xs)!important}.ix-icon--sm{width:var(--icon-sm)!important;height:var(--icon-sm)!important;font-size:var(--icon-sm)!important}.ix-icon--md{width:var(--icon-md)!important;height:var(--icon-md)!important;font-size:var(--icon-md)!important}.ix-icon--lg{width:var(--icon-lg)!important;height:var(--icon-lg)!important;font-size:var(--icon-lg)!important}.ix-icon--xl{width:var(--icon-xl)!important;height:var(--icon-xl)!important;font-size:var(--icon-xl)!important}.ix-icon__svg{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.ix-icon__svg :global(svg){width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__css{font-size:inherit;line-height:1;color:inherit}.ix-icon__unicode{font-size:inherit;line-height:1;color:inherit;text-align:center}.ix-icon__text{font-size:.75em;font-weight:600;line-height:1;color:inherit;text-align:center;opacity:.7}.ix-icon{width:var(--ix-icon-size, var(--icon-md));height:var(--ix-icon-size, var(--icon-md));color:var(--ix-icon-color, currentColor)}\n"] }]
-        }], ctorParameters: () => [{ type: i1$1.DomSanitizer }, { type: i0.ChangeDetectorRef }], propDecorators: { name: [{
+            args: [{ selector: 'ix-icon', standalone: true, imports: [CommonModule], changeDetection: ChangeDetectionStrategy.OnPush, encapsulation: ViewEncapsulation.None, template: "<div \n  class=\"ix-icon\"\n  [ngClass]=\"'ix-icon--' + size\"\n  [style.color]=\"color\"\n  [attr.aria-label]=\"effectiveAriaLabel\"\n  [attr.title]=\"tooltip\"\n  role=\"img\">\n  \n  \n  <ng-container [ngSwitch]=\"iconResult.source\">\n    <!-- Sprite icons (from generated sprite.svg) -->\n    <svg *ngSwitchCase=\"'sprite'\"\n         class=\"ix-icon__sprite\"\n         aria-hidden=\"true\">\n      <use [attr.href]=\"iconResult.spriteUrl\"></use>\n    </svg>\n\n    <!-- SVG content (from third-party libraries or assets) -->\n    <div *ngSwitchCase=\"'svg'\"\n         class=\"ix-icon__svg\"\n         #svgContainer>\n    </div>\n\n    <!-- CSS class icons (Font Awesome, Material Icons, etc.) -->\n    <i *ngSwitchCase=\"'css'\"\n       class=\"ix-icon__css\"\n       [class]=\"iconResult.content\"\n       aria-hidden=\"true\">\n    </i>\n\n    <!-- Unicode characters -->\n    <span *ngSwitchCase=\"'unicode'\"\n          class=\"ix-icon__unicode\"\n          aria-hidden=\"true\">{{ iconResult.content }}</span>\n\n    <!-- Text abbreviation fallback -->\n    <span *ngSwitchDefault\n          class=\"ix-icon__text\"\n          aria-hidden=\"true\">{{ iconResult.content }}</span>\n  </ng-container>\n</div>", styles: [".ix-icon{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}.ix-icon--xs{width:var(--icon-xs)!important;height:var(--icon-xs)!important;font-size:var(--icon-xs)!important}.ix-icon--sm{width:var(--icon-sm)!important;height:var(--icon-sm)!important;font-size:var(--icon-sm)!important}.ix-icon--md{width:var(--icon-md)!important;height:var(--icon-md)!important;font-size:var(--icon-md)!important}.ix-icon--lg{width:var(--icon-lg)!important;height:var(--icon-lg)!important;font-size:var(--icon-lg)!important}.ix-icon--xl{width:var(--icon-xl)!important;height:var(--icon-xl)!important;font-size:var(--icon-xl)!important}.ix-icon__sprite{width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__svg{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.ix-icon__svg :global(svg){width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__css{font-size:inherit;line-height:1;color:inherit}.ix-icon__unicode{font-size:inherit;line-height:1;color:inherit;text-align:center}.ix-icon__text{font-size:.75em;font-weight:600;line-height:1;color:inherit;text-align:center;opacity:.7}.ix-icon{width:var(--ix-icon-size, var(--icon-md));height:var(--ix-icon-size, var(--icon-md));color:var(--ix-icon-color, currentColor)}\n"] }]
+        }], ctorParameters: () => [{ type: i1$2.DomSanitizer }, { type: i0.ChangeDetectorRef }], propDecorators: { name: [{
                 type: Input
             }], size: [{
                 type: Input
@@ -1203,13 +1142,13 @@ class IxMenuComponent {
     trackByItemId(index, item) {
         return item.id;
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMenuComponent, deps: [{ token: i1$2.Overlay }, { token: i0.ViewContainerRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxMenuComponent, isStandalone: true, selector: "ix-menu", inputs: { items: "items", contextMenu: "contextMenu" }, outputs: { menuItemClick: "menuItemClick", menuOpen: "menuOpen", menuClose: "menuClose" }, viewQueries: [{ propertyName: "menuTemplate", first: true, predicate: ["menuTemplate"], descendants: true, read: TemplateRef }, { propertyName: "contextMenuTemplate", first: true, predicate: ["contextMenuTemplate"], descendants: true, read: TemplateRef }], ngImport: i0, template: "<!-- Context menu content slot -->\n<div *ngIf=\"contextMenu\" class=\"ix-menu-context-content\" (contextmenu)=\"onContextMenu($event)\">\n  <ng-content></ng-content>\n</div>\n\n  <!-- Context menu template for overlay -->\n  <ng-template #contextMenuTemplate>\n    <div class=\"ix-menu\" cdkMenu>\n      <ng-container *ngFor=\"let item of items; trackBy: trackByItemId\">\n        <div\n          *ngIf=\"item.separator; else menuItem\"\n          class=\"ix-menu-separator\"\n          role=\"separator\"\n        ></div>\n        \n        <ng-template #menuItem>\n          <button\n            *ngIf=\"!item.children || item.children.length === 0; else nestedMenuItem\"\n            cdkMenuItem\n            [disabled]=\"item.disabled\"\n            [class.disabled]=\"item.disabled\"\n            class=\"ix-menu-item\"\n            (click)=\"onMenuItemClick(item)\"\n            type=\"button\"\n          >\n            <ix-icon *ngIf=\"item.icon\" [name]=\"item.icon\" library=\"mdi\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n            <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n            <span *ngIf=\"item.shortcut\" class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n          </button>\n          \n          <ng-template #nestedMenuItem>\n            <button\n              cdkMenuItem\n              [cdkMenuTriggerFor]=\"nestedMenu\"\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item ix-menu-item--nested\"\n              type=\"button\"\n            >\n              <ix-icon *ngIf=\"item.icon\" [name]=\"item.icon\" library=\"mdi\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              <span *ngIf=\"item.shortcut\" class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              <span class=\"ix-menu-item-arrow\">\u25B6</span>\n            </button>\n            \n            <ng-template #nestedMenu>\n              <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                <ng-container *ngFor=\"let nestedItem of item.children; trackBy: trackByItemId\">\n                  <div\n                    *ngIf=\"nestedItem.separator; else nestedMenuItemTemplate\"\n                    class=\"ix-menu-separator\"\n                    role=\"separator\"\n                  ></div>\n                  \n                  <ng-template #nestedMenuItemTemplate>\n                    <button\n                      *ngIf=\"!nestedItem.children || nestedItem.children.length === 0; else deepNestedMenuItem\"\n                      cdkMenuItem\n                      [disabled]=\"nestedItem.disabled\"\n                      [class.disabled]=\"nestedItem.disabled\"\n                      class=\"ix-menu-item\"\n                      (click)=\"onMenuItemClick(nestedItem)\"\n                      type=\"button\"\n                    >\n                      <ix-icon *ngIf=\"nestedItem.icon\" [name]=\"nestedItem.icon\" library=\"mdi\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                      <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                      <span *ngIf=\"nestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                    </button>\n                    \n                    <ng-template #deepNestedMenuItem>\n                      <button\n                        cdkMenuItem\n                        [cdkMenuTriggerFor]=\"deepNestedMenu\"\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item ix-menu-item--nested\"\n                        type=\"button\"\n                      >\n                        <ix-icon *ngIf=\"nestedItem.icon\" [name]=\"nestedItem.icon\" library=\"mdi\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        <span *ngIf=\"nestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        <span class=\"ix-menu-item-arrow\">\u25B6</span>\n                      </button>\n                      \n                      <ng-template #deepNestedMenu>\n                        <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                          <ng-container *ngFor=\"let deepNestedItem of nestedItem.children; trackBy: trackByItemId\">\n                            <div\n                              *ngIf=\"deepNestedItem.separator; else deepNestedMenuItemTemplate\"\n                              class=\"ix-menu-separator\"\n                              role=\"separator\"\n                            ></div>\n                            \n                            <ng-template #deepNestedMenuItemTemplate>\n                              <button\n                                cdkMenuItem\n                                [disabled]=\"deepNestedItem.disabled\"\n                                [class.disabled]=\"deepNestedItem.disabled\"\n                                class=\"ix-menu-item\"\n                                (click)=\"onMenuItemClick(deepNestedItem)\"\n                                type=\"button\"\n                              >\n                                <ix-icon *ngIf=\"deepNestedItem.icon\" [name]=\"deepNestedItem.icon\" library=\"mdi\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                                <span class=\"ix-menu-item-label\">{{ deepNestedItem.label }}</span>\n                                <span *ngIf=\"deepNestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ deepNestedItem.shortcut }}</span>\n                              </button>\n                            </ng-template>\n                          </ng-container>\n                        </div>\n                      </ng-template>\n                    </ng-template>\n                  </ng-template>\n                </ng-container>\n              </div>\n            </ng-template>\n          </ng-template>\n        </ng-template>\n      </ng-container>\n    </div>\n  </ng-template>\n\n  <!-- Regular menu template -->\n  <ng-template #menuTemplate>\n    <div class=\"ix-menu\" cdkMenu>\n      <ng-container *ngFor=\"let item of items; trackBy: trackByItemId\">\n        <div\n          *ngIf=\"item.separator; else menuItem\"\n          class=\"ix-menu-separator\"\n          role=\"separator\"\n        ></div>\n        \n        <ng-template #menuItem>\n          <button\n            *ngIf=\"!item.children || item.children.length === 0; else nestedMenuItem\"\n            cdkMenuItem\n            [disabled]=\"item.disabled\"\n            [class.disabled]=\"item.disabled\"\n            class=\"ix-menu-item\"\n            (click)=\"onMenuItemClick(item)\"\n            type=\"button\"\n          >\n            <ix-icon *ngIf=\"item.icon\" [name]=\"item.icon\" library=\"mdi\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n            <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n            <span *ngIf=\"item.shortcut\" class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n          </button>\n          \n          <ng-template #nestedMenuItem>\n            <button\n              cdkMenuItem\n              [cdkMenuTriggerFor]=\"nestedMenu\"\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item ix-menu-item--nested\"\n              type=\"button\"\n            >\n              <ix-icon *ngIf=\"item.icon\" [name]=\"item.icon\" library=\"mdi\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              <span *ngIf=\"item.shortcut\" class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              <span class=\"ix-menu-item-arrow\">\u25B6</span>\n            </button>\n            \n            <ng-template #nestedMenu>\n              <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                <ng-container *ngFor=\"let nestedItem of item.children; trackBy: trackByItemId\">\n                  <div\n                    *ngIf=\"nestedItem.separator; else nestedMenuItemTemplate\"\n                    class=\"ix-menu-separator\"\n                    role=\"separator\"\n                  ></div>\n                  \n                  <ng-template #nestedMenuItemTemplate>\n                    <button\n                      *ngIf=\"!nestedItem.children || nestedItem.children.length === 0; else deepNestedMenuItem\"\n                      cdkMenuItem\n                      [disabled]=\"nestedItem.disabled\"\n                      [class.disabled]=\"nestedItem.disabled\"\n                      class=\"ix-menu-item\"\n                      (click)=\"onMenuItemClick(nestedItem)\"\n                      type=\"button\"\n                    >\n                      <ix-icon *ngIf=\"nestedItem.icon\" [name]=\"nestedItem.icon\" library=\"mdi\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                      <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                      <span *ngIf=\"nestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                    </button>\n                    \n                    <ng-template #deepNestedMenuItem>\n                      <button\n                        cdkMenuItem\n                        [cdkMenuTriggerFor]=\"deepNestedMenu\"\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item ix-menu-item--nested\"\n                        type=\"button\"\n                      >\n                        <ix-icon *ngIf=\"nestedItem.icon\" [name]=\"nestedItem.icon\" library=\"mdi\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        <span *ngIf=\"nestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        <span class=\"ix-menu-item-arrow\">\u25B6</span>\n                      </button>\n                      \n                      <ng-template #deepNestedMenu>\n                        <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                          <ng-container *ngFor=\"let deepNestedItem of nestedItem.children; trackBy: trackByItemId\">\n                            <div\n                              *ngIf=\"deepNestedItem.separator; else deepNestedMenuItemTemplate\"\n                              class=\"ix-menu-separator\"\n                              role=\"separator\"\n                            ></div>\n                            \n                            <ng-template #deepNestedMenuItemTemplate>\n                              <button\n                                cdkMenuItem\n                                [disabled]=\"deepNestedItem.disabled\"\n                                [class.disabled]=\"deepNestedItem.disabled\"\n                                class=\"ix-menu-item\"\n                                (click)=\"onMenuItemClick(deepNestedItem)\"\n                                type=\"button\"\n                              >\n                                <ix-icon *ngIf=\"deepNestedItem.icon\" [name]=\"deepNestedItem.icon\" library=\"mdi\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                                <span class=\"ix-menu-item-label\">{{ deepNestedItem.label }}</span>\n                                <span *ngIf=\"deepNestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ deepNestedItem.shortcut }}</span>\n                              </button>\n                            </ng-template>\n                          </ng-container>\n                        </div>\n                      </ng-template>\n                    </ng-template>\n                  </ng-template>\n                </ng-container>\n              </div>\n            </ng-template>\n          </ng-template>\n        </ng-template>\n      </ng-container>\n    </div>\n  </ng-template>", styles: [".ix-menu-container{display:inline-block;position:relative}.ix-menu-container.ix-menu-container--context{display:block;width:100%;height:100%;cursor:context-menu}.ix-menu-trigger{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--bg1, #ffffff);border:1px solid var(--lines, #e0e0e0);border-radius:4px;color:var(--fg1, #333333);cursor:pointer;font-size:14px;transition:all .2s ease}.ix-menu-trigger:hover:not(.disabled){background:var(--bg2, #f5f5f5);border-color:var(--lines, #cccccc)}.ix-menu-trigger:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-menu-trigger.disabled{opacity:.5;cursor:not-allowed}.ix-menu-arrow{font-size:12px;transition:transform .2s ease}.ix-menu-arrow.ix-menu-arrow--up{transform:rotate(180deg)}.ix-menu{display:flex;flex-direction:column;background:var(--bg2, #f5f5f5);border:1px solid var(--lines, #e0e0e0);border-radius:4px;box-shadow:0 8px 24px #00000026,0 4px 8px #0000001a;min-width:160px;max-width:300px;padding:4px 0;z-index:1000}.ix-menu-item{display:flex;align-items:center;gap:8px;width:100%;padding:8px 16px;border:none;background:transparent;color:var(--fg1, #333333);cursor:pointer;font-size:14px;text-align:left;transition:background-color .2s ease}.ix-menu-item:hover:not(.disabled){background:var(--alt-bg2, #e8f4fd)!important}.ix-menu-item:focus{outline:none;background:var(--alt-bg2, #e8f4fd)}.ix-menu-item[aria-selected=true]{background:var(--alt-bg2, #e8f4fd)}.ix-menu-item.disabled{opacity:.5;cursor:not-allowed}.ix-menu-item.disabled:hover{background:transparent!important}.ix-menu-item-icon{font-size:16px;width:16px;text-align:center}.ix-menu-item-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ix-menu-item-shortcut{font-size:12px;color:var(--fg2, #666666);margin-left:auto;padding-left:16px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-weight:400;opacity:.7}.ix-menu-item-arrow{font-size:10px;margin-left:8px;color:var(--fg2, #666666);transition:transform .2s ease;flex-shrink:0}.ix-menu-item--nested{position:relative}.ix-menu-item--nested:hover .ix-menu-item-arrow{color:var(--fg1, #333333)}.ix-menu-separator{height:1px;background:var(--lines, #e0e0e0);margin:4px 0}.ix-menu--nested{margin-left:4px;box-shadow:0 8px 24px #00000026,0 4px 8px #0000001a;border-radius:4px}.ix-menu-context-content{width:100%;height:100%}.ix-menu-context-content:hover:before{content:\"\";position:absolute;inset:0;background:rgba(var(--primary-rgb, 0, 123, 255),.05);pointer-events:none;border:1px dashed rgba(var(--primary-rgb, 0, 123, 255),.3);border-radius:4px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1.NgForOf, selector: "[ngFor][ngForOf]", inputs: ["ngForOf", "ngForTrackBy", "ngForTemplate"] }, { kind: "directive", type: i1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "directive", type: CdkMenu, selector: "[cdkMenu]", outputs: ["closed"], exportAs: ["cdkMenu"] }, { kind: "directive", type: CdkMenuItem, selector: "[cdkMenuItem]", inputs: ["cdkMenuItemDisabled", "cdkMenuitemTypeaheadLabel"], outputs: ["cdkMenuItemTriggered"], exportAs: ["cdkMenuItem"] }, { kind: "directive", type: CdkMenuTrigger, selector: "[cdkMenuTriggerFor]", inputs: ["cdkMenuTriggerFor", "cdkMenuPosition", "cdkMenuTriggerData"], outputs: ["cdkMenuOpened", "cdkMenuClosed"], exportAs: ["cdkMenuTriggerFor"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }] });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMenuComponent, deps: [{ token: i1$3.Overlay }, { token: i0.ViewContainerRef }], target: i0.ɵɵFactoryTarget.Component });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxMenuComponent, isStandalone: true, selector: "ix-menu", inputs: { items: "items", contextMenu: "contextMenu" }, outputs: { menuItemClick: "menuItemClick", menuOpen: "menuOpen", menuClose: "menuClose" }, viewQueries: [{ propertyName: "menuTemplate", first: true, predicate: ["menuTemplate"], descendants: true, read: TemplateRef }, { propertyName: "contextMenuTemplate", first: true, predicate: ["contextMenuTemplate"], descendants: true, read: TemplateRef }], ngImport: i0, template: "<!-- Context menu content slot -->\n<div *ngIf=\"contextMenu\" class=\"ix-menu-context-content\" (contextmenu)=\"onContextMenu($event)\">\n  <ng-content></ng-content>\n</div>\n\n  <!-- Context menu template for overlay -->\n  <ng-template #contextMenuTemplate>\n    <div class=\"ix-menu\" cdkMenu>\n      <ng-container *ngFor=\"let item of items; trackBy: trackByItemId\">\n        <div\n          *ngIf=\"item.separator; else menuItem\"\n          class=\"ix-menu-separator\"\n          role=\"separator\"\n        ></div>\n        \n        <ng-template #menuItem>\n          <button\n            *ngIf=\"!item.children || item.children.length === 0; else nestedMenuItem\"\n            cdkMenuItem\n            [disabled]=\"item.disabled\"\n            [class.disabled]=\"item.disabled\"\n            class=\"ix-menu-item\"\n            (click)=\"onMenuItemClick(item)\"\n            type=\"button\"\n          >\n            <ix-icon *ngIf=\"item.icon\" [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n            <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n            <span *ngIf=\"item.shortcut\" class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n          </button>\n          \n          <ng-template #nestedMenuItem>\n            <button\n              cdkMenuItem\n              [cdkMenuTriggerFor]=\"nestedMenu\"\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item ix-menu-item--nested\"\n              type=\"button\"\n            >\n              <ix-icon *ngIf=\"item.icon\" [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              <span *ngIf=\"item.shortcut\" class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              <span class=\"ix-menu-item-arrow\">\u25B6</span>\n            </button>\n            \n            <ng-template #nestedMenu>\n              <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                <ng-container *ngFor=\"let nestedItem of item.children; trackBy: trackByItemId\">\n                  <div\n                    *ngIf=\"nestedItem.separator; else nestedMenuItemTemplate\"\n                    class=\"ix-menu-separator\"\n                    role=\"separator\"\n                  ></div>\n                  \n                  <ng-template #nestedMenuItemTemplate>\n                    <button\n                      *ngIf=\"!nestedItem.children || nestedItem.children.length === 0; else deepNestedMenuItem\"\n                      cdkMenuItem\n                      [disabled]=\"nestedItem.disabled\"\n                      [class.disabled]=\"nestedItem.disabled\"\n                      class=\"ix-menu-item\"\n                      (click)=\"onMenuItemClick(nestedItem)\"\n                      type=\"button\"\n                    >\n                      <ix-icon *ngIf=\"nestedItem.icon\" [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                      <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                      <span *ngIf=\"nestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                    </button>\n                    \n                    <ng-template #deepNestedMenuItem>\n                      <button\n                        cdkMenuItem\n                        [cdkMenuTriggerFor]=\"deepNestedMenu\"\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item ix-menu-item--nested\"\n                        type=\"button\"\n                      >\n                        <ix-icon *ngIf=\"nestedItem.icon\" [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        <span *ngIf=\"nestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        <span class=\"ix-menu-item-arrow\">\u25B6</span>\n                      </button>\n                      \n                      <ng-template #deepNestedMenu>\n                        <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                          <ng-container *ngFor=\"let deepNestedItem of nestedItem.children; trackBy: trackByItemId\">\n                            <div\n                              *ngIf=\"deepNestedItem.separator; else deepNestedMenuItemTemplate\"\n                              class=\"ix-menu-separator\"\n                              role=\"separator\"\n                            ></div>\n                            \n                            <ng-template #deepNestedMenuItemTemplate>\n                              <button\n                                cdkMenuItem\n                                [disabled]=\"deepNestedItem.disabled\"\n                                [class.disabled]=\"deepNestedItem.disabled\"\n                                class=\"ix-menu-item\"\n                                (click)=\"onMenuItemClick(deepNestedItem)\"\n                                type=\"button\"\n                              >\n                                <ix-icon *ngIf=\"deepNestedItem.icon\" [name]=\"deepNestedItem.icon\" [library]=\"deepNestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                                <span class=\"ix-menu-item-label\">{{ deepNestedItem.label }}</span>\n                                <span *ngIf=\"deepNestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ deepNestedItem.shortcut }}</span>\n                              </button>\n                            </ng-template>\n                          </ng-container>\n                        </div>\n                      </ng-template>\n                    </ng-template>\n                  </ng-template>\n                </ng-container>\n              </div>\n            </ng-template>\n          </ng-template>\n        </ng-template>\n      </ng-container>\n    </div>\n  </ng-template>\n\n  <!-- Regular menu template -->\n  <ng-template #menuTemplate>\n    <div class=\"ix-menu\" cdkMenu>\n      <ng-container *ngFor=\"let item of items; trackBy: trackByItemId\">\n        <div\n          *ngIf=\"item.separator; else menuItem\"\n          class=\"ix-menu-separator\"\n          role=\"separator\"\n        ></div>\n        \n        <ng-template #menuItem>\n          <button\n            *ngIf=\"!item.children || item.children.length === 0; else nestedMenuItem\"\n            cdkMenuItem\n            [disabled]=\"item.disabled\"\n            [class.disabled]=\"item.disabled\"\n            class=\"ix-menu-item\"\n            (click)=\"onMenuItemClick(item)\"\n            type=\"button\"\n          >\n            <ix-icon *ngIf=\"item.icon\" [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n            <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n            <span *ngIf=\"item.shortcut\" class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n          </button>\n          \n          <ng-template #nestedMenuItem>\n            <button\n              cdkMenuItem\n              [cdkMenuTriggerFor]=\"nestedMenu\"\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item ix-menu-item--nested\"\n              type=\"button\"\n            >\n              <ix-icon *ngIf=\"item.icon\" [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              <span *ngIf=\"item.shortcut\" class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              <span class=\"ix-menu-item-arrow\">\u25B6</span>\n            </button>\n            \n            <ng-template #nestedMenu>\n              <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                <ng-container *ngFor=\"let nestedItem of item.children; trackBy: trackByItemId\">\n                  <div\n                    *ngIf=\"nestedItem.separator; else nestedMenuItemTemplate\"\n                    class=\"ix-menu-separator\"\n                    role=\"separator\"\n                  ></div>\n                  \n                  <ng-template #nestedMenuItemTemplate>\n                    <button\n                      *ngIf=\"!nestedItem.children || nestedItem.children.length === 0; else deepNestedMenuItem\"\n                      cdkMenuItem\n                      [disabled]=\"nestedItem.disabled\"\n                      [class.disabled]=\"nestedItem.disabled\"\n                      class=\"ix-menu-item\"\n                      (click)=\"onMenuItemClick(nestedItem)\"\n                      type=\"button\"\n                    >\n                      <ix-icon *ngIf=\"nestedItem.icon\" [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                      <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                      <span *ngIf=\"nestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                    </button>\n                    \n                    <ng-template #deepNestedMenuItem>\n                      <button\n                        cdkMenuItem\n                        [cdkMenuTriggerFor]=\"deepNestedMenu\"\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item ix-menu-item--nested\"\n                        type=\"button\"\n                      >\n                        <ix-icon *ngIf=\"nestedItem.icon\" [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        <span *ngIf=\"nestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        <span class=\"ix-menu-item-arrow\">\u25B6</span>\n                      </button>\n                      \n                      <ng-template #deepNestedMenu>\n                        <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                          <ng-container *ngFor=\"let deepNestedItem of nestedItem.children; trackBy: trackByItemId\">\n                            <div\n                              *ngIf=\"deepNestedItem.separator; else deepNestedMenuItemTemplate\"\n                              class=\"ix-menu-separator\"\n                              role=\"separator\"\n                            ></div>\n                            \n                            <ng-template #deepNestedMenuItemTemplate>\n                              <button\n                                cdkMenuItem\n                                [disabled]=\"deepNestedItem.disabled\"\n                                [class.disabled]=\"deepNestedItem.disabled\"\n                                class=\"ix-menu-item\"\n                                (click)=\"onMenuItemClick(deepNestedItem)\"\n                                type=\"button\"\n                              >\n                                <ix-icon *ngIf=\"deepNestedItem.icon\" [name]=\"deepNestedItem.icon\" [library]=\"deepNestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                                <span class=\"ix-menu-item-label\">{{ deepNestedItem.label }}</span>\n                                <span *ngIf=\"deepNestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ deepNestedItem.shortcut }}</span>\n                              </button>\n                            </ng-template>\n                          </ng-container>\n                        </div>\n                      </ng-template>\n                    </ng-template>\n                  </ng-template>\n                </ng-container>\n              </div>\n            </ng-template>\n          </ng-template>\n        </ng-template>\n      </ng-container>\n    </div>\n  </ng-template>", styles: [".ix-menu-container{display:inline-block;position:relative}.ix-menu-container.ix-menu-container--context{display:block;width:100%;height:100%;cursor:context-menu}.ix-menu-trigger{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--bg1, #ffffff);border:1px solid var(--lines, #e0e0e0);border-radius:4px;color:var(--fg1, #333333);cursor:pointer;font-size:14px;transition:all .2s ease}.ix-menu-trigger:hover:not(.disabled){background:var(--bg2, #f5f5f5);border-color:var(--lines, #cccccc)}.ix-menu-trigger:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-menu-trigger.disabled{opacity:.5;cursor:not-allowed}.ix-menu-arrow{font-size:12px;transition:transform .2s ease}.ix-menu-arrow.ix-menu-arrow--up{transform:rotate(180deg)}.ix-menu{display:flex;flex-direction:column;background:var(--bg2, #f5f5f5);border:1px solid var(--lines, #e0e0e0);border-radius:4px;box-shadow:0 8px 24px #00000026,0 4px 8px #0000001a;min-width:160px;max-width:300px;padding:4px 0;z-index:1000}.ix-menu-item{display:flex;align-items:center;gap:8px;width:100%;padding:8px 16px;border:none;background:transparent;color:var(--fg1, #333333);cursor:pointer;font-size:14px;text-align:left;transition:background-color .2s ease}.ix-menu-item:hover:not(.disabled){background:var(--alt-bg2, #e8f4fd)!important}.ix-menu-item:focus{outline:none;background:var(--alt-bg2, #e8f4fd)}.ix-menu-item[aria-selected=true]{background:var(--alt-bg2, #e8f4fd)}.ix-menu-item.disabled{opacity:.5;cursor:not-allowed}.ix-menu-item.disabled:hover{background:transparent!important}.ix-menu-item-icon{font-size:16px;width:16px;text-align:center}.ix-menu-item-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ix-menu-item-shortcut{font-size:12px;color:var(--fg2, #666666);margin-left:auto;padding-left:16px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-weight:400;opacity:.7}.ix-menu-item-arrow{font-size:10px;margin-left:8px;color:var(--fg2, #666666);transition:transform .2s ease;flex-shrink:0}.ix-menu-item--nested{position:relative}.ix-menu-item--nested:hover .ix-menu-item-arrow{color:var(--fg1, #333333)}.ix-menu-separator{height:1px;background:var(--lines, #e0e0e0);margin:4px 0}.ix-menu--nested{margin-left:4px;box-shadow:0 8px 24px #00000026,0 4px 8px #0000001a;border-radius:4px}.ix-menu-context-content{width:100%;height:100%}.ix-menu-context-content:hover:before{content:\"\";position:absolute;inset:0;background:rgba(var(--primary-rgb, 0, 123, 255),.05);pointer-events:none;border:1px dashed rgba(var(--primary-rgb, 0, 123, 255),.3);border-radius:4px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1.NgForOf, selector: "[ngFor][ngForOf]", inputs: ["ngForOf", "ngForTrackBy", "ngForTemplate"] }, { kind: "directive", type: i1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "directive", type: CdkMenu, selector: "[cdkMenu]", outputs: ["closed"], exportAs: ["cdkMenu"] }, { kind: "directive", type: CdkMenuItem, selector: "[cdkMenuItem]", inputs: ["cdkMenuItemDisabled", "cdkMenuitemTypeaheadLabel"], outputs: ["cdkMenuItemTriggered"], exportAs: ["cdkMenuItem"] }, { kind: "directive", type: CdkMenuTrigger, selector: "[cdkMenuTriggerFor]", inputs: ["cdkMenuTriggerFor", "cdkMenuPosition", "cdkMenuTriggerData"], outputs: ["cdkMenuOpened", "cdkMenuClosed"], exportAs: ["cdkMenuTriggerFor"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMenuComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-menu', standalone: true, imports: [CommonModule, CdkMenu, CdkMenuItem, CdkMenuTrigger, IxIconComponent], template: "<!-- Context menu content slot -->\n<div *ngIf=\"contextMenu\" class=\"ix-menu-context-content\" (contextmenu)=\"onContextMenu($event)\">\n  <ng-content></ng-content>\n</div>\n\n  <!-- Context menu template for overlay -->\n  <ng-template #contextMenuTemplate>\n    <div class=\"ix-menu\" cdkMenu>\n      <ng-container *ngFor=\"let item of items; trackBy: trackByItemId\">\n        <div\n          *ngIf=\"item.separator; else menuItem\"\n          class=\"ix-menu-separator\"\n          role=\"separator\"\n        ></div>\n        \n        <ng-template #menuItem>\n          <button\n            *ngIf=\"!item.children || item.children.length === 0; else nestedMenuItem\"\n            cdkMenuItem\n            [disabled]=\"item.disabled\"\n            [class.disabled]=\"item.disabled\"\n            class=\"ix-menu-item\"\n            (click)=\"onMenuItemClick(item)\"\n            type=\"button\"\n          >\n            <ix-icon *ngIf=\"item.icon\" [name]=\"item.icon\" library=\"mdi\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n            <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n            <span *ngIf=\"item.shortcut\" class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n          </button>\n          \n          <ng-template #nestedMenuItem>\n            <button\n              cdkMenuItem\n              [cdkMenuTriggerFor]=\"nestedMenu\"\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item ix-menu-item--nested\"\n              type=\"button\"\n            >\n              <ix-icon *ngIf=\"item.icon\" [name]=\"item.icon\" library=\"mdi\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              <span *ngIf=\"item.shortcut\" class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              <span class=\"ix-menu-item-arrow\">\u25B6</span>\n            </button>\n            \n            <ng-template #nestedMenu>\n              <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                <ng-container *ngFor=\"let nestedItem of item.children; trackBy: trackByItemId\">\n                  <div\n                    *ngIf=\"nestedItem.separator; else nestedMenuItemTemplate\"\n                    class=\"ix-menu-separator\"\n                    role=\"separator\"\n                  ></div>\n                  \n                  <ng-template #nestedMenuItemTemplate>\n                    <button\n                      *ngIf=\"!nestedItem.children || nestedItem.children.length === 0; else deepNestedMenuItem\"\n                      cdkMenuItem\n                      [disabled]=\"nestedItem.disabled\"\n                      [class.disabled]=\"nestedItem.disabled\"\n                      class=\"ix-menu-item\"\n                      (click)=\"onMenuItemClick(nestedItem)\"\n                      type=\"button\"\n                    >\n                      <ix-icon *ngIf=\"nestedItem.icon\" [name]=\"nestedItem.icon\" library=\"mdi\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                      <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                      <span *ngIf=\"nestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                    </button>\n                    \n                    <ng-template #deepNestedMenuItem>\n                      <button\n                        cdkMenuItem\n                        [cdkMenuTriggerFor]=\"deepNestedMenu\"\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item ix-menu-item--nested\"\n                        type=\"button\"\n                      >\n                        <ix-icon *ngIf=\"nestedItem.icon\" [name]=\"nestedItem.icon\" library=\"mdi\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        <span *ngIf=\"nestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        <span class=\"ix-menu-item-arrow\">\u25B6</span>\n                      </button>\n                      \n                      <ng-template #deepNestedMenu>\n                        <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                          <ng-container *ngFor=\"let deepNestedItem of nestedItem.children; trackBy: trackByItemId\">\n                            <div\n                              *ngIf=\"deepNestedItem.separator; else deepNestedMenuItemTemplate\"\n                              class=\"ix-menu-separator\"\n                              role=\"separator\"\n                            ></div>\n                            \n                            <ng-template #deepNestedMenuItemTemplate>\n                              <button\n                                cdkMenuItem\n                                [disabled]=\"deepNestedItem.disabled\"\n                                [class.disabled]=\"deepNestedItem.disabled\"\n                                class=\"ix-menu-item\"\n                                (click)=\"onMenuItemClick(deepNestedItem)\"\n                                type=\"button\"\n                              >\n                                <ix-icon *ngIf=\"deepNestedItem.icon\" [name]=\"deepNestedItem.icon\" library=\"mdi\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                                <span class=\"ix-menu-item-label\">{{ deepNestedItem.label }}</span>\n                                <span *ngIf=\"deepNestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ deepNestedItem.shortcut }}</span>\n                              </button>\n                            </ng-template>\n                          </ng-container>\n                        </div>\n                      </ng-template>\n                    </ng-template>\n                  </ng-template>\n                </ng-container>\n              </div>\n            </ng-template>\n          </ng-template>\n        </ng-template>\n      </ng-container>\n    </div>\n  </ng-template>\n\n  <!-- Regular menu template -->\n  <ng-template #menuTemplate>\n    <div class=\"ix-menu\" cdkMenu>\n      <ng-container *ngFor=\"let item of items; trackBy: trackByItemId\">\n        <div\n          *ngIf=\"item.separator; else menuItem\"\n          class=\"ix-menu-separator\"\n          role=\"separator\"\n        ></div>\n        \n        <ng-template #menuItem>\n          <button\n            *ngIf=\"!item.children || item.children.length === 0; else nestedMenuItem\"\n            cdkMenuItem\n            [disabled]=\"item.disabled\"\n            [class.disabled]=\"item.disabled\"\n            class=\"ix-menu-item\"\n            (click)=\"onMenuItemClick(item)\"\n            type=\"button\"\n          >\n            <ix-icon *ngIf=\"item.icon\" [name]=\"item.icon\" library=\"mdi\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n            <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n            <span *ngIf=\"item.shortcut\" class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n          </button>\n          \n          <ng-template #nestedMenuItem>\n            <button\n              cdkMenuItem\n              [cdkMenuTriggerFor]=\"nestedMenu\"\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item ix-menu-item--nested\"\n              type=\"button\"\n            >\n              <ix-icon *ngIf=\"item.icon\" [name]=\"item.icon\" library=\"mdi\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              <span *ngIf=\"item.shortcut\" class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              <span class=\"ix-menu-item-arrow\">\u25B6</span>\n            </button>\n            \n            <ng-template #nestedMenu>\n              <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                <ng-container *ngFor=\"let nestedItem of item.children; trackBy: trackByItemId\">\n                  <div\n                    *ngIf=\"nestedItem.separator; else nestedMenuItemTemplate\"\n                    class=\"ix-menu-separator\"\n                    role=\"separator\"\n                  ></div>\n                  \n                  <ng-template #nestedMenuItemTemplate>\n                    <button\n                      *ngIf=\"!nestedItem.children || nestedItem.children.length === 0; else deepNestedMenuItem\"\n                      cdkMenuItem\n                      [disabled]=\"nestedItem.disabled\"\n                      [class.disabled]=\"nestedItem.disabled\"\n                      class=\"ix-menu-item\"\n                      (click)=\"onMenuItemClick(nestedItem)\"\n                      type=\"button\"\n                    >\n                      <ix-icon *ngIf=\"nestedItem.icon\" [name]=\"nestedItem.icon\" library=\"mdi\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                      <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                      <span *ngIf=\"nestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                    </button>\n                    \n                    <ng-template #deepNestedMenuItem>\n                      <button\n                        cdkMenuItem\n                        [cdkMenuTriggerFor]=\"deepNestedMenu\"\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item ix-menu-item--nested\"\n                        type=\"button\"\n                      >\n                        <ix-icon *ngIf=\"nestedItem.icon\" [name]=\"nestedItem.icon\" library=\"mdi\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        <span *ngIf=\"nestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        <span class=\"ix-menu-item-arrow\">\u25B6</span>\n                      </button>\n                      \n                      <ng-template #deepNestedMenu>\n                        <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                          <ng-container *ngFor=\"let deepNestedItem of nestedItem.children; trackBy: trackByItemId\">\n                            <div\n                              *ngIf=\"deepNestedItem.separator; else deepNestedMenuItemTemplate\"\n                              class=\"ix-menu-separator\"\n                              role=\"separator\"\n                            ></div>\n                            \n                            <ng-template #deepNestedMenuItemTemplate>\n                              <button\n                                cdkMenuItem\n                                [disabled]=\"deepNestedItem.disabled\"\n                                [class.disabled]=\"deepNestedItem.disabled\"\n                                class=\"ix-menu-item\"\n                                (click)=\"onMenuItemClick(deepNestedItem)\"\n                                type=\"button\"\n                              >\n                                <ix-icon *ngIf=\"deepNestedItem.icon\" [name]=\"deepNestedItem.icon\" library=\"mdi\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                                <span class=\"ix-menu-item-label\">{{ deepNestedItem.label }}</span>\n                                <span *ngIf=\"deepNestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ deepNestedItem.shortcut }}</span>\n                              </button>\n                            </ng-template>\n                          </ng-container>\n                        </div>\n                      </ng-template>\n                    </ng-template>\n                  </ng-template>\n                </ng-container>\n              </div>\n            </ng-template>\n          </ng-template>\n        </ng-template>\n      </ng-container>\n    </div>\n  </ng-template>", styles: [".ix-menu-container{display:inline-block;position:relative}.ix-menu-container.ix-menu-container--context{display:block;width:100%;height:100%;cursor:context-menu}.ix-menu-trigger{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--bg1, #ffffff);border:1px solid var(--lines, #e0e0e0);border-radius:4px;color:var(--fg1, #333333);cursor:pointer;font-size:14px;transition:all .2s ease}.ix-menu-trigger:hover:not(.disabled){background:var(--bg2, #f5f5f5);border-color:var(--lines, #cccccc)}.ix-menu-trigger:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-menu-trigger.disabled{opacity:.5;cursor:not-allowed}.ix-menu-arrow{font-size:12px;transition:transform .2s ease}.ix-menu-arrow.ix-menu-arrow--up{transform:rotate(180deg)}.ix-menu{display:flex;flex-direction:column;background:var(--bg2, #f5f5f5);border:1px solid var(--lines, #e0e0e0);border-radius:4px;box-shadow:0 8px 24px #00000026,0 4px 8px #0000001a;min-width:160px;max-width:300px;padding:4px 0;z-index:1000}.ix-menu-item{display:flex;align-items:center;gap:8px;width:100%;padding:8px 16px;border:none;background:transparent;color:var(--fg1, #333333);cursor:pointer;font-size:14px;text-align:left;transition:background-color .2s ease}.ix-menu-item:hover:not(.disabled){background:var(--alt-bg2, #e8f4fd)!important}.ix-menu-item:focus{outline:none;background:var(--alt-bg2, #e8f4fd)}.ix-menu-item[aria-selected=true]{background:var(--alt-bg2, #e8f4fd)}.ix-menu-item.disabled{opacity:.5;cursor:not-allowed}.ix-menu-item.disabled:hover{background:transparent!important}.ix-menu-item-icon{font-size:16px;width:16px;text-align:center}.ix-menu-item-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ix-menu-item-shortcut{font-size:12px;color:var(--fg2, #666666);margin-left:auto;padding-left:16px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-weight:400;opacity:.7}.ix-menu-item-arrow{font-size:10px;margin-left:8px;color:var(--fg2, #666666);transition:transform .2s ease;flex-shrink:0}.ix-menu-item--nested{position:relative}.ix-menu-item--nested:hover .ix-menu-item-arrow{color:var(--fg1, #333333)}.ix-menu-separator{height:1px;background:var(--lines, #e0e0e0);margin:4px 0}.ix-menu--nested{margin-left:4px;box-shadow:0 8px 24px #00000026,0 4px 8px #0000001a;border-radius:4px}.ix-menu-context-content{width:100%;height:100%}.ix-menu-context-content:hover:before{content:\"\";position:absolute;inset:0;background:rgba(var(--primary-rgb, 0, 123, 255),.05);pointer-events:none;border:1px dashed rgba(var(--primary-rgb, 0, 123, 255),.3);border-radius:4px}\n"] }]
-        }], ctorParameters: () => [{ type: i1$2.Overlay }, { type: i0.ViewContainerRef }], propDecorators: { items: [{
+            args: [{ selector: 'ix-menu', standalone: true, imports: [CommonModule, CdkMenu, CdkMenuItem, CdkMenuTrigger, IxIconComponent], template: "<!-- Context menu content slot -->\n<div *ngIf=\"contextMenu\" class=\"ix-menu-context-content\" (contextmenu)=\"onContextMenu($event)\">\n  <ng-content></ng-content>\n</div>\n\n  <!-- Context menu template for overlay -->\n  <ng-template #contextMenuTemplate>\n    <div class=\"ix-menu\" cdkMenu>\n      <ng-container *ngFor=\"let item of items; trackBy: trackByItemId\">\n        <div\n          *ngIf=\"item.separator; else menuItem\"\n          class=\"ix-menu-separator\"\n          role=\"separator\"\n        ></div>\n        \n        <ng-template #menuItem>\n          <button\n            *ngIf=\"!item.children || item.children.length === 0; else nestedMenuItem\"\n            cdkMenuItem\n            [disabled]=\"item.disabled\"\n            [class.disabled]=\"item.disabled\"\n            class=\"ix-menu-item\"\n            (click)=\"onMenuItemClick(item)\"\n            type=\"button\"\n          >\n            <ix-icon *ngIf=\"item.icon\" [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n            <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n            <span *ngIf=\"item.shortcut\" class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n          </button>\n          \n          <ng-template #nestedMenuItem>\n            <button\n              cdkMenuItem\n              [cdkMenuTriggerFor]=\"nestedMenu\"\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item ix-menu-item--nested\"\n              type=\"button\"\n            >\n              <ix-icon *ngIf=\"item.icon\" [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              <span *ngIf=\"item.shortcut\" class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              <span class=\"ix-menu-item-arrow\">\u25B6</span>\n            </button>\n            \n            <ng-template #nestedMenu>\n              <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                <ng-container *ngFor=\"let nestedItem of item.children; trackBy: trackByItemId\">\n                  <div\n                    *ngIf=\"nestedItem.separator; else nestedMenuItemTemplate\"\n                    class=\"ix-menu-separator\"\n                    role=\"separator\"\n                  ></div>\n                  \n                  <ng-template #nestedMenuItemTemplate>\n                    <button\n                      *ngIf=\"!nestedItem.children || nestedItem.children.length === 0; else deepNestedMenuItem\"\n                      cdkMenuItem\n                      [disabled]=\"nestedItem.disabled\"\n                      [class.disabled]=\"nestedItem.disabled\"\n                      class=\"ix-menu-item\"\n                      (click)=\"onMenuItemClick(nestedItem)\"\n                      type=\"button\"\n                    >\n                      <ix-icon *ngIf=\"nestedItem.icon\" [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                      <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                      <span *ngIf=\"nestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                    </button>\n                    \n                    <ng-template #deepNestedMenuItem>\n                      <button\n                        cdkMenuItem\n                        [cdkMenuTriggerFor]=\"deepNestedMenu\"\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item ix-menu-item--nested\"\n                        type=\"button\"\n                      >\n                        <ix-icon *ngIf=\"nestedItem.icon\" [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        <span *ngIf=\"nestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        <span class=\"ix-menu-item-arrow\">\u25B6</span>\n                      </button>\n                      \n                      <ng-template #deepNestedMenu>\n                        <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                          <ng-container *ngFor=\"let deepNestedItem of nestedItem.children; trackBy: trackByItemId\">\n                            <div\n                              *ngIf=\"deepNestedItem.separator; else deepNestedMenuItemTemplate\"\n                              class=\"ix-menu-separator\"\n                              role=\"separator\"\n                            ></div>\n                            \n                            <ng-template #deepNestedMenuItemTemplate>\n                              <button\n                                cdkMenuItem\n                                [disabled]=\"deepNestedItem.disabled\"\n                                [class.disabled]=\"deepNestedItem.disabled\"\n                                class=\"ix-menu-item\"\n                                (click)=\"onMenuItemClick(deepNestedItem)\"\n                                type=\"button\"\n                              >\n                                <ix-icon *ngIf=\"deepNestedItem.icon\" [name]=\"deepNestedItem.icon\" [library]=\"deepNestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                                <span class=\"ix-menu-item-label\">{{ deepNestedItem.label }}</span>\n                                <span *ngIf=\"deepNestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ deepNestedItem.shortcut }}</span>\n                              </button>\n                            </ng-template>\n                          </ng-container>\n                        </div>\n                      </ng-template>\n                    </ng-template>\n                  </ng-template>\n                </ng-container>\n              </div>\n            </ng-template>\n          </ng-template>\n        </ng-template>\n      </ng-container>\n    </div>\n  </ng-template>\n\n  <!-- Regular menu template -->\n  <ng-template #menuTemplate>\n    <div class=\"ix-menu\" cdkMenu>\n      <ng-container *ngFor=\"let item of items; trackBy: trackByItemId\">\n        <div\n          *ngIf=\"item.separator; else menuItem\"\n          class=\"ix-menu-separator\"\n          role=\"separator\"\n        ></div>\n        \n        <ng-template #menuItem>\n          <button\n            *ngIf=\"!item.children || item.children.length === 0; else nestedMenuItem\"\n            cdkMenuItem\n            [disabled]=\"item.disabled\"\n            [class.disabled]=\"item.disabled\"\n            class=\"ix-menu-item\"\n            (click)=\"onMenuItemClick(item)\"\n            type=\"button\"\n          >\n            <ix-icon *ngIf=\"item.icon\" [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n            <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n            <span *ngIf=\"item.shortcut\" class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n          </button>\n          \n          <ng-template #nestedMenuItem>\n            <button\n              cdkMenuItem\n              [cdkMenuTriggerFor]=\"nestedMenu\"\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item ix-menu-item--nested\"\n              type=\"button\"\n            >\n              <ix-icon *ngIf=\"item.icon\" [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              <span *ngIf=\"item.shortcut\" class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              <span class=\"ix-menu-item-arrow\">\u25B6</span>\n            </button>\n            \n            <ng-template #nestedMenu>\n              <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                <ng-container *ngFor=\"let nestedItem of item.children; trackBy: trackByItemId\">\n                  <div\n                    *ngIf=\"nestedItem.separator; else nestedMenuItemTemplate\"\n                    class=\"ix-menu-separator\"\n                    role=\"separator\"\n                  ></div>\n                  \n                  <ng-template #nestedMenuItemTemplate>\n                    <button\n                      *ngIf=\"!nestedItem.children || nestedItem.children.length === 0; else deepNestedMenuItem\"\n                      cdkMenuItem\n                      [disabled]=\"nestedItem.disabled\"\n                      [class.disabled]=\"nestedItem.disabled\"\n                      class=\"ix-menu-item\"\n                      (click)=\"onMenuItemClick(nestedItem)\"\n                      type=\"button\"\n                    >\n                      <ix-icon *ngIf=\"nestedItem.icon\" [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                      <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                      <span *ngIf=\"nestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                    </button>\n                    \n                    <ng-template #deepNestedMenuItem>\n                      <button\n                        cdkMenuItem\n                        [cdkMenuTriggerFor]=\"deepNestedMenu\"\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item ix-menu-item--nested\"\n                        type=\"button\"\n                      >\n                        <ix-icon *ngIf=\"nestedItem.icon\" [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        <span *ngIf=\"nestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        <span class=\"ix-menu-item-arrow\">\u25B6</span>\n                      </button>\n                      \n                      <ng-template #deepNestedMenu>\n                        <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                          <ng-container *ngFor=\"let deepNestedItem of nestedItem.children; trackBy: trackByItemId\">\n                            <div\n                              *ngIf=\"deepNestedItem.separator; else deepNestedMenuItemTemplate\"\n                              class=\"ix-menu-separator\"\n                              role=\"separator\"\n                            ></div>\n                            \n                            <ng-template #deepNestedMenuItemTemplate>\n                              <button\n                                cdkMenuItem\n                                [disabled]=\"deepNestedItem.disabled\"\n                                [class.disabled]=\"deepNestedItem.disabled\"\n                                class=\"ix-menu-item\"\n                                (click)=\"onMenuItemClick(deepNestedItem)\"\n                                type=\"button\"\n                              >\n                                <ix-icon *ngIf=\"deepNestedItem.icon\" [name]=\"deepNestedItem.icon\" [library]=\"deepNestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                                <span class=\"ix-menu-item-label\">{{ deepNestedItem.label }}</span>\n                                <span *ngIf=\"deepNestedItem.shortcut\" class=\"ix-menu-item-shortcut\">{{ deepNestedItem.shortcut }}</span>\n                              </button>\n                            </ng-template>\n                          </ng-container>\n                        </div>\n                      </ng-template>\n                    </ng-template>\n                  </ng-template>\n                </ng-container>\n              </div>\n            </ng-template>\n          </ng-template>\n        </ng-template>\n      </ng-container>\n    </div>\n  </ng-template>", styles: [".ix-menu-container{display:inline-block;position:relative}.ix-menu-container.ix-menu-container--context{display:block;width:100%;height:100%;cursor:context-menu}.ix-menu-trigger{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--bg1, #ffffff);border:1px solid var(--lines, #e0e0e0);border-radius:4px;color:var(--fg1, #333333);cursor:pointer;font-size:14px;transition:all .2s ease}.ix-menu-trigger:hover:not(.disabled){background:var(--bg2, #f5f5f5);border-color:var(--lines, #cccccc)}.ix-menu-trigger:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-menu-trigger.disabled{opacity:.5;cursor:not-allowed}.ix-menu-arrow{font-size:12px;transition:transform .2s ease}.ix-menu-arrow.ix-menu-arrow--up{transform:rotate(180deg)}.ix-menu{display:flex;flex-direction:column;background:var(--bg2, #f5f5f5);border:1px solid var(--lines, #e0e0e0);border-radius:4px;box-shadow:0 8px 24px #00000026,0 4px 8px #0000001a;min-width:160px;max-width:300px;padding:4px 0;z-index:1000}.ix-menu-item{display:flex;align-items:center;gap:8px;width:100%;padding:8px 16px;border:none;background:transparent;color:var(--fg1, #333333);cursor:pointer;font-size:14px;text-align:left;transition:background-color .2s ease}.ix-menu-item:hover:not(.disabled){background:var(--alt-bg2, #e8f4fd)!important}.ix-menu-item:focus{outline:none;background:var(--alt-bg2, #e8f4fd)}.ix-menu-item[aria-selected=true]{background:var(--alt-bg2, #e8f4fd)}.ix-menu-item.disabled{opacity:.5;cursor:not-allowed}.ix-menu-item.disabled:hover{background:transparent!important}.ix-menu-item-icon{font-size:16px;width:16px;text-align:center}.ix-menu-item-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ix-menu-item-shortcut{font-size:12px;color:var(--fg2, #666666);margin-left:auto;padding-left:16px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-weight:400;opacity:.7}.ix-menu-item-arrow{font-size:10px;margin-left:8px;color:var(--fg2, #666666);transition:transform .2s ease;flex-shrink:0}.ix-menu-item--nested{position:relative}.ix-menu-item--nested:hover .ix-menu-item-arrow{color:var(--fg1, #333333)}.ix-menu-separator{height:1px;background:var(--lines, #e0e0e0);margin:4px 0}.ix-menu--nested{margin-left:4px;box-shadow:0 8px 24px #00000026,0 4px 8px #0000001a;border-radius:4px}.ix-menu-context-content{width:100%;height:100%}.ix-menu-context-content:hover:before{content:\"\";position:absolute;inset:0;background:rgba(var(--primary-rgb, 0, 123, 255),.05);pointer-events:none;border:1px dashed rgba(var(--primary-rgb, 0, 123, 255),.3);border-radius:4px}\n"] }]
+        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ViewContainerRef }], propDecorators: { items: [{
                 type: Input
             }], contextMenu: [{
                 type: Input
@@ -1318,7 +1257,7 @@ class IxMenuTriggerDirective {
                 ];
         }
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMenuTriggerDirective, deps: [{ token: i0.ElementRef }, { token: i1$2.Overlay }, { token: i0.ViewContainerRef }], target: i0.ɵɵFactoryTarget.Directive });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMenuTriggerDirective, deps: [{ token: i0.ElementRef }, { token: i1$3.Overlay }, { token: i0.ViewContainerRef }], target: i0.ɵɵFactoryTarget.Directive });
     static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "14.0.0", version: "20.3.4", type: IxMenuTriggerDirective, isStandalone: true, selector: "[ixMenuTriggerFor]", inputs: { menu: ["ixMenuTriggerFor", "menu"], ixMenuPosition: "ixMenuPosition" }, host: { listeners: { "click": "onClick()" } }, exportAs: ["ixMenuTrigger"], ngImport: i0 });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMenuTriggerDirective, decorators: [{
@@ -1328,7 +1267,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                     standalone: true,
                     exportAs: 'ixMenuTrigger'
                 }]
-        }], ctorParameters: () => [{ type: i0.ElementRef }, { type: i1$2.Overlay }, { type: i0.ViewContainerRef }], propDecorators: { menu: [{
+        }], ctorParameters: () => [{ type: i0.ElementRef }, { type: i1$3.Overlay }, { type: i0.ViewContainerRef }], propDecorators: { menu: [{
                 type: Input,
                 args: ['ixMenuTriggerFor']
             }], ixMenuPosition: [{
@@ -2458,6 +2397,39 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             }] } });
 
 /**
+ * Marks an icon name for inclusion in the sprite generation.
+ *
+ * This is an identity function that simply returns the icon name unchanged.
+ * Its purpose is to provide a marker that the build scripts can detect when
+ * scanning for icons that need to be included in the sprite.
+ *
+ * Use this when icon names are computed dynamically or come from variables,
+ * to ensure they're included in the sprite at build time.
+ *
+ * @example
+ * ```typescript
+ * // Static icon name - automatically detected from template
+ * <ix-icon name="folder"></ix-icon>
+ *
+ * // Dynamic icon name - needs iconMarker() to be detected
+ * const iconName = condition ? iconMarker('edit') : iconMarker('delete');
+ * <ix-icon [name]="iconName"></ix-icon>
+ *
+ * // Array of dynamic icons
+ * const actions = [
+ *   { name: 'Save', icon: iconMarker('save') },
+ *   { name: 'Cancel', icon: iconMarker('close') }
+ * ];
+ * ```
+ *
+ * @param iconName - The icon name to mark for sprite inclusion
+ * @returns The same icon name (identity function)
+ */
+function iconMarker(iconName) {
+    return iconName;
+}
+
+/**
  * Lucide Icons Integration Helper
  *
  * This helper provides easy integration with Lucide icons.
@@ -2678,7 +2650,7 @@ class TruenasIconsService {
     isLoaded() {
         return this.iconsLoaded;
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: TruenasIconsService, deps: [{ token: i1$3.HttpClient }, { token: IxIconRegistryService }], target: i0.ɵɵFactoryTarget.Injectable });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: TruenasIconsService, deps: [{ token: i1$1.HttpClient }, { token: IxIconRegistryService }], target: i0.ɵɵFactoryTarget.Injectable });
     static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: TruenasIconsService, providedIn: 'root' });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: TruenasIconsService, decorators: [{
@@ -2686,7 +2658,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             args: [{
                     providedIn: 'root'
                 }]
-        }], ctorParameters: () => [{ type: i1$3.HttpClient }, { type: IxIconRegistryService }] });
+        }], ctorParameters: () => [{ type: i1$1.HttpClient }, { type: IxIconRegistryService }] });
 
 class IxListComponent {
     dense = false;
@@ -3316,24 +3288,8 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
         }], ctorParameters: () => [{ type: i0.IterableDiffers }, { type: i0.ChangeDetectorRef }, { type: i0.ViewContainerRef }] });
 
 class IxTreeNodeComponent extends CdkTreeNode {
-    mdiIconService;
-    constructor(elementRef, tree, data, changeDetectorRef, mdiIconService) {
+    constructor(elementRef, tree, data, changeDetectorRef) {
         super(elementRef, tree, data, changeDetectorRef);
-        this.mdiIconService = mdiIconService;
-    }
-    async ngOnInit() {
-        // Pre-load tree navigation icons
-        if (this.mdiIconService) {
-            try {
-                await Promise.all([
-                    this.mdiIconService.ensureIconLoaded('chevron-right'),
-                    this.mdiIconService.ensureIconLoaded('chevron-down')
-                ]);
-            }
-            catch (error) {
-                console.warn('Failed to load tree navigation icons:', error);
-            }
-        }
     }
     /** The tree node's level in the tree */
     get level() {
@@ -3347,10 +3303,10 @@ class IxTreeNodeComponent extends CdkTreeNode {
     get isExpanded() {
         return this._tree?.treeControl ? this._tree.treeControl.isExpanded(this.data) : false;
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTreeNodeComponent, deps: [{ token: i0.ElementRef }, { token: i1$4.CdkTree, optional: true }, { token: CDK_TREE_NODE_OUTLET_NODE, optional: true }, { token: i0.ChangeDetectorRef, optional: true }, { token: IxMdiIconService, optional: true }], target: i0.ɵɵFactoryTarget.Component });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTreeNodeComponent, deps: [{ token: i0.ElementRef }, { token: i1$4.CdkTree, optional: true }, { token: CDK_TREE_NODE_OUTLET_NODE, optional: true }, { token: i0.ChangeDetectorRef, optional: true }], target: i0.ɵɵFactoryTarget.Component });
     static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxTreeNodeComponent, isStandalone: true, selector: "ix-tree-node", host: { attributes: { "role": "treeitem" }, properties: { "attr.aria-level": "level + 1", "attr.aria-expanded": "isExpandable ? isExpanded : null" }, classAttribute: "ix-tree-node-wrapper" }, providers: [
             { provide: CdkTreeNode, useExisting: IxTreeNodeComponent }
-        ], exportAs: ["ixTreeNode"], usesInheritance: true, ngImport: i0, template: "<div class=\"ix-tree-node\" \n     [class.ix-tree-node--expandable]=\"isExpandable\"\n     [attr.aria-level]=\"level + 1\"\n     [attr.aria-expanded]=\"isExpandable ? isExpanded : null\"\n     [style.cursor]=\"isExpandable ? 'pointer' : 'default'\"\n     cdkTreeNodeToggle\n     role=\"treeitem\">\n  \n  <div class=\"ix-tree-node__content\">\n    <!-- Arrow icon for expandable nodes -->\n    <div \n      *ngIf=\"isExpandable\"\n      class=\"ix-tree-node__toggle\"\n      [class.ix-tree-node__toggle--expanded]=\"isExpanded\">\n      <ix-icon \n        [name]=\"isExpanded ? 'chevron-down' : 'chevron-right'\"\n        library=\"mdi\"\n        size=\"sm\"\n        style=\"transition: transform 0.2s ease;\">\n      </ix-icon>\n    </div>\n    \n    <!-- Spacer for non-expandable nodes -->\n    <div *ngIf=\"!isExpandable\" class=\"ix-tree-node__spacer\"></div>\n    \n    <!-- Node content -->\n    <div class=\"ix-tree-node__text\">\n      <ng-content></ng-content>\n    </div>\n  </div>\n</div>", styles: [":host{display:block}.ix-tree-node{border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-tree-node:hover{background-color:var(--alt-bg2)}.ix-tree-node:last-child{border-bottom:none}.ix-tree-node--expandable{cursor:pointer}.ix-tree-node--expandable:hover{background-color:var(--alt-bg2)}.ix-tree-node--expandable:active{background-color:var(--alt-bg1)}.ix-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px}.ix-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:none;background:none;color:var(--fg2);cursor:pointer;border-radius:3px;transition:all .2s ease;flex-shrink:0}.ix-tree-node__toggle:hover{background-color:var(--alt-bg2);color:var(--fg1)}.ix-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:1px}.ix-tree-node__toggle svg{transition:transform .2s ease;transform:rotate(0)}.ix-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-tree-node__text{flex:1;min-width:0;color:var(--fg1)}.ix-tree-node__children{padding-left:24px}.ix-tree-invisible{display:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "ngmodule", type: CdkTreeModule }, { kind: "directive", type: i1$4.CdkTreeNodeToggle, selector: "[cdkTreeNodeToggle]", inputs: ["cdkTreeNodeToggleRecursive"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
+        ], exportAs: ["ixTreeNode"], usesInheritance: true, ngImport: i0, template: "<div class=\"ix-tree-node\" \n     [class.ix-tree-node--expandable]=\"isExpandable\"\n     [attr.aria-level]=\"level + 1\"\n     [attr.aria-expanded]=\"isExpandable ? isExpanded : null\"\n     [style.cursor]=\"isExpandable ? 'pointer' : 'default'\"\n     cdkTreeNodeToggle\n     role=\"treeitem\">\n  \n  <div class=\"ix-tree-node__content\">\n    <!-- Arrow icon for expandable nodes -->\n    <div \n      *ngIf=\"isExpandable\"\n      class=\"ix-tree-node__toggle\"\n      [class.ix-tree-node__toggle--expanded]=\"isExpanded\">\n      <ix-icon\n        [name]=\"isExpanded ? 'chevron-down' : 'chevron-right'\"\n        library=\"mdi\"\n        size=\"sm\"\n        style=\"transition: transform 0.2s ease;\">\n      </ix-icon>\n    </div>\n    \n    <!-- Spacer for non-expandable nodes -->\n    <div *ngIf=\"!isExpandable\" class=\"ix-tree-node__spacer\"></div>\n    \n    <!-- Node content -->\n    <div class=\"ix-tree-node__text\">\n      <ng-content></ng-content>\n    </div>\n  </div>\n</div>", styles: [":host{display:block}.ix-tree-node{border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-tree-node:hover{background-color:var(--alt-bg2)}.ix-tree-node:last-child{border-bottom:none}.ix-tree-node--expandable{cursor:pointer}.ix-tree-node--expandable:hover{background-color:var(--alt-bg2)}.ix-tree-node--expandable:active{background-color:var(--alt-bg1)}.ix-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px}.ix-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:none;background:none;color:var(--fg2);cursor:pointer;border-radius:3px;transition:all .2s ease;flex-shrink:0}.ix-tree-node__toggle:hover{background-color:var(--alt-bg2);color:var(--fg1)}.ix-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:1px}.ix-tree-node__toggle svg{transition:transform .2s ease;transform:rotate(0)}.ix-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-tree-node__text{flex:1;min-width:0;color:var(--fg1)}.ix-tree-node__children{padding-left:24px}.ix-tree-invisible{display:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "ngmodule", type: CdkTreeModule }, { kind: "directive", type: i1$4.CdkTreeNodeToggle, selector: "[cdkTreeNodeToggle]", inputs: ["cdkTreeNodeToggleRecursive"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTreeNodeComponent, decorators: [{
             type: Component,
@@ -3361,7 +3317,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                         '[attr.aria-level]': 'level + 1',
                         '[attr.aria-expanded]': 'isExpandable ? isExpanded : null',
                         'role': 'treeitem'
-                    }, encapsulation: ViewEncapsulation.Emulated, changeDetection: ChangeDetectionStrategy.OnPush, template: "<div class=\"ix-tree-node\" \n     [class.ix-tree-node--expandable]=\"isExpandable\"\n     [attr.aria-level]=\"level + 1\"\n     [attr.aria-expanded]=\"isExpandable ? isExpanded : null\"\n     [style.cursor]=\"isExpandable ? 'pointer' : 'default'\"\n     cdkTreeNodeToggle\n     role=\"treeitem\">\n  \n  <div class=\"ix-tree-node__content\">\n    <!-- Arrow icon for expandable nodes -->\n    <div \n      *ngIf=\"isExpandable\"\n      class=\"ix-tree-node__toggle\"\n      [class.ix-tree-node__toggle--expanded]=\"isExpanded\">\n      <ix-icon \n        [name]=\"isExpanded ? 'chevron-down' : 'chevron-right'\"\n        library=\"mdi\"\n        size=\"sm\"\n        style=\"transition: transform 0.2s ease;\">\n      </ix-icon>\n    </div>\n    \n    <!-- Spacer for non-expandable nodes -->\n    <div *ngIf=\"!isExpandable\" class=\"ix-tree-node__spacer\"></div>\n    \n    <!-- Node content -->\n    <div class=\"ix-tree-node__text\">\n      <ng-content></ng-content>\n    </div>\n  </div>\n</div>", styles: [":host{display:block}.ix-tree-node{border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-tree-node:hover{background-color:var(--alt-bg2)}.ix-tree-node:last-child{border-bottom:none}.ix-tree-node--expandable{cursor:pointer}.ix-tree-node--expandable:hover{background-color:var(--alt-bg2)}.ix-tree-node--expandable:active{background-color:var(--alt-bg1)}.ix-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px}.ix-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:none;background:none;color:var(--fg2);cursor:pointer;border-radius:3px;transition:all .2s ease;flex-shrink:0}.ix-tree-node__toggle:hover{background-color:var(--alt-bg2);color:var(--fg1)}.ix-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:1px}.ix-tree-node__toggle svg{transition:transform .2s ease;transform:rotate(0)}.ix-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-tree-node__text{flex:1;min-width:0;color:var(--fg1)}.ix-tree-node__children{padding-left:24px}.ix-tree-invisible{display:none}\n"] }]
+                    }, encapsulation: ViewEncapsulation.Emulated, changeDetection: ChangeDetectionStrategy.OnPush, template: "<div class=\"ix-tree-node\" \n     [class.ix-tree-node--expandable]=\"isExpandable\"\n     [attr.aria-level]=\"level + 1\"\n     [attr.aria-expanded]=\"isExpandable ? isExpanded : null\"\n     [style.cursor]=\"isExpandable ? 'pointer' : 'default'\"\n     cdkTreeNodeToggle\n     role=\"treeitem\">\n  \n  <div class=\"ix-tree-node__content\">\n    <!-- Arrow icon for expandable nodes -->\n    <div \n      *ngIf=\"isExpandable\"\n      class=\"ix-tree-node__toggle\"\n      [class.ix-tree-node__toggle--expanded]=\"isExpanded\">\n      <ix-icon\n        [name]=\"isExpanded ? 'chevron-down' : 'chevron-right'\"\n        library=\"mdi\"\n        size=\"sm\"\n        style=\"transition: transform 0.2s ease;\">\n      </ix-icon>\n    </div>\n    \n    <!-- Spacer for non-expandable nodes -->\n    <div *ngIf=\"!isExpandable\" class=\"ix-tree-node__spacer\"></div>\n    \n    <!-- Node content -->\n    <div class=\"ix-tree-node__text\">\n      <ng-content></ng-content>\n    </div>\n  </div>\n</div>", styles: [":host{display:block}.ix-tree-node{border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-tree-node:hover{background-color:var(--alt-bg2)}.ix-tree-node:last-child{border-bottom:none}.ix-tree-node--expandable{cursor:pointer}.ix-tree-node--expandable:hover{background-color:var(--alt-bg2)}.ix-tree-node--expandable:active{background-color:var(--alt-bg1)}.ix-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px}.ix-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:none;background:none;color:var(--fg2);cursor:pointer;border-radius:3px;transition:all .2s ease;flex-shrink:0}.ix-tree-node__toggle:hover{background-color:var(--alt-bg2);color:var(--fg1)}.ix-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:1px}.ix-tree-node__toggle svg{transition:transform .2s ease;transform:rotate(0)}.ix-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-tree-node__text{flex:1;min-width:0;color:var(--fg1)}.ix-tree-node__children{padding-left:24px}.ix-tree-invisible{display:none}\n"] }]
         }], ctorParameters: () => [{ type: i0.ElementRef }, { type: i1$4.CdkTree, decorators: [{
                     type: Optional
                 }] }, { type: undefined, decorators: [{
@@ -3370,8 +3326,6 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                     type: Inject,
                     args: [CDK_TREE_NODE_OUTLET_NODE]
                 }] }, { type: i0.ChangeDetectorRef, decorators: [{
-                    type: Optional
-                }] }, { type: IxMdiIconService, decorators: [{
                     type: Optional
                 }] }] });
 
@@ -3393,24 +3347,8 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
         }] });
 
 class IxNestedTreeNodeComponent extends CdkNestedTreeNode {
-    mdiIconService;
-    constructor(elementRef, tree, data, changeDetectorRef, mdiIconService) {
+    constructor(elementRef, tree, data, changeDetectorRef) {
         super(elementRef, tree, data, changeDetectorRef);
-        this.mdiIconService = mdiIconService;
-    }
-    async ngOnInit() {
-        // Pre-load tree navigation icons
-        if (this.mdiIconService) {
-            try {
-                await Promise.all([
-                    this.mdiIconService.ensureIconLoaded('chevron-right'),
-                    this.mdiIconService.ensureIconLoaded('chevron-down')
-                ]);
-            }
-            catch (error) {
-                console.warn('Failed to load tree navigation icons:', error);
-            }
-        }
     }
     /** The tree node's level in the tree */
     get level() {
@@ -3454,11 +3392,11 @@ class IxNestedTreeNodeComponent extends CdkNestedTreeNode {
         }
         return false;
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxNestedTreeNodeComponent, deps: [{ token: i0.ElementRef }, { token: i1$4.CdkTree, optional: true }, { token: CDK_TREE_NODE_OUTLET_NODE, optional: true }, { token: i0.ChangeDetectorRef, optional: true }, { token: IxMdiIconService, optional: true }], target: i0.ɵɵFactoryTarget.Component });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxNestedTreeNodeComponent, deps: [{ token: i0.ElementRef }, { token: i1$4.CdkTree, optional: true }, { token: CDK_TREE_NODE_OUTLET_NODE, optional: true }, { token: i0.ChangeDetectorRef, optional: true }], target: i0.ɵɵFactoryTarget.Component });
     static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxNestedTreeNodeComponent, isStandalone: true, selector: "ix-nested-tree-node", host: { attributes: { "role": "treeitem" }, properties: { "attr.aria-level": "level + 1", "attr.aria-expanded": "isExpandable ? isExpanded : null" }, classAttribute: "ix-nested-tree-node-wrapper" }, providers: [
             { provide: CdkNestedTreeNode, useExisting: IxNestedTreeNodeComponent },
             { provide: CdkTreeNode, useExisting: IxNestedTreeNodeComponent }
-        ], exportAs: ["ixNestedTreeNode"], usesInheritance: true, ngImport: i0, template: "<div class=\"ix-nested-tree-node__content\">\n  <!-- Toggle button for expandable nodes (provided by component) -->\n  <button\n    *ngIf=\"isExpandable\"\n    class=\"ix-nested-tree-node__toggle\"\n    [class.ix-nested-tree-node__toggle--expanded]=\"isExpanded\"\n    cdkTreeNodeToggle\n    [attr.aria-label]=\"'Toggle node'\"\n    type=\"button\">\n    <ix-icon \n      [name]=\"isExpanded ? 'chevron-down' : 'chevron-right'\"\n      library=\"mdi\"\n      size=\"sm\"\n      style=\"transition: transform 0.2s ease;\">\n    </ix-icon>\n  </button>\n\n  <!-- Spacer for non-expandable nodes to maintain alignment -->\n  <div *ngIf=\"!isExpandable\" class=\"ix-nested-tree-node__spacer\"></div>\n\n  <!-- Consumer content -->\n  <ng-content></ng-content>\n</div>\n\n<!-- Children container -->\n<div class=\"ix-nested-tree-node-container\" *ngIf=\"isExpandable\" [class.ix-tree-invisible]=\"!isExpanded\" role=\"group\">\n  <ng-content select=\"[slot=children]\"></ng-content>\n</div>", styles: [".ix-nested-tree-node-wrapper{display:block;width:100%}.ix-nested-tree-node{display:block;width:100%;font-family:var(--font-family);font-size:var(--font-size-sm);line-height:1.4;color:var(--fg1)}.ix-nested-tree-node--expandable .ix-nested-tree-node__content{cursor:pointer}.ix-nested-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-nested-tree-node__content:hover{background-color:var(--alt-bg2)}.ix-nested-tree-node__content:focus-within{background-color:var(--alt-bg2);outline:2px solid var(--primary);outline-offset:-2px}.ix-tree-invisible{display:none}.ix-nested-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;margin-right:8px;padding:0;border:none;background:transparent;border-radius:4px;cursor:pointer;color:var(--fg2);transition:background-color .2s ease,color .2s ease}.ix-nested-tree-node__toggle:hover{background-color:var(--bg3);color:var(--fg1)}.ix-nested-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-nested-tree-node__toggle svg{transition:transform .2s ease}.ix-nested-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-nested-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-nested-tree-node__text{flex:1;display:flex;align-items:center;gap:8px;min-width:0;color:var(--fg1)}div.ix-nested-tree-node-container{padding-left:40px}@media (prefers-reduced-motion: reduce){.ix-nested-tree-node__toggle svg,.ix-nested-tree-node__content,.ix-nested-tree-node__children{transition:none}}@media (prefers-contrast: high){.ix-nested-tree-node__content{border:1px solid transparent}.ix-nested-tree-node__content:hover,.ix-nested-tree-node__content:focus-within{border-color:var(--fg1)}.ix-nested-tree-node__toggle{border:1px solid var(--fg2)}.ix-nested-tree-node__toggle:hover,.ix-nested-tree-node__toggle:focus{border-color:var(--fg1)}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "ngmodule", type: CdkTreeModule }, { kind: "directive", type: i1$4.CdkTreeNodeToggle, selector: "[cdkTreeNodeToggle]", inputs: ["cdkTreeNodeToggleRecursive"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
+        ], exportAs: ["ixNestedTreeNode"], usesInheritance: true, ngImport: i0, template: "<div class=\"ix-nested-tree-node__content\">\n  <!-- Toggle button for expandable nodes (provided by component) -->\n  <button\n    *ngIf=\"isExpandable\"\n    class=\"ix-nested-tree-node__toggle\"\n    [class.ix-nested-tree-node__toggle--expanded]=\"isExpanded\"\n    cdkTreeNodeToggle\n    [attr.aria-label]=\"'Toggle node'\"\n    type=\"button\">\n    <ix-icon\n      [name]=\"isExpanded ? 'chevron-down' : 'chevron-right'\"\n      library=\"mdi\"\n      size=\"sm\"\n      style=\"transition: transform 0.2s ease;\">\n    </ix-icon>\n  </button>\n\n  <!-- Spacer for non-expandable nodes to maintain alignment -->\n  <div *ngIf=\"!isExpandable\" class=\"ix-nested-tree-node__spacer\"></div>\n\n  <!-- Consumer content -->\n  <ng-content></ng-content>\n</div>\n\n<!-- Children container -->\n<div class=\"ix-nested-tree-node-container\" *ngIf=\"isExpandable\" [class.ix-tree-invisible]=\"!isExpanded\" role=\"group\">\n  <ng-content select=\"[slot=children]\"></ng-content>\n</div>", styles: [".ix-nested-tree-node-wrapper{display:block;width:100%}.ix-nested-tree-node{display:block;width:100%;font-family:var(--font-family);font-size:var(--font-size-sm);line-height:1.4;color:var(--fg1)}.ix-nested-tree-node--expandable .ix-nested-tree-node__content{cursor:pointer}.ix-nested-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-nested-tree-node__content:hover{background-color:var(--alt-bg2)}.ix-nested-tree-node__content:focus-within{background-color:var(--alt-bg2);outline:2px solid var(--primary);outline-offset:-2px}.ix-tree-invisible{display:none}.ix-nested-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;margin-right:8px;padding:0;border:none;background:transparent;border-radius:4px;cursor:pointer;color:var(--fg2);transition:background-color .2s ease,color .2s ease}.ix-nested-tree-node__toggle:hover{background-color:var(--bg3);color:var(--fg1)}.ix-nested-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-nested-tree-node__toggle svg{transition:transform .2s ease}.ix-nested-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-nested-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-nested-tree-node__text{flex:1;display:flex;align-items:center;gap:8px;min-width:0;color:var(--fg1)}div.ix-nested-tree-node-container{padding-left:40px}@media (prefers-reduced-motion: reduce){.ix-nested-tree-node__toggle svg,.ix-nested-tree-node__content,.ix-nested-tree-node__children{transition:none}}@media (prefers-contrast: high){.ix-nested-tree-node__content{border:1px solid transparent}.ix-nested-tree-node__content:hover,.ix-nested-tree-node__content:focus-within{border-color:var(--fg1)}.ix-nested-tree-node__toggle{border:1px solid var(--fg2)}.ix-nested-tree-node__toggle:hover,.ix-nested-tree-node__toggle:focus{border-color:var(--fg1)}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "ngmodule", type: CdkTreeModule }, { kind: "directive", type: i1$4.CdkTreeNodeToggle, selector: "[cdkTreeNodeToggle]", inputs: ["cdkTreeNodeToggleRecursive"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxNestedTreeNodeComponent, decorators: [{
             type: Component,
@@ -3470,7 +3408,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                         '[attr.aria-level]': 'level + 1',
                         '[attr.aria-expanded]': 'isExpandable ? isExpanded : null',
                         'role': 'treeitem'
-                    }, encapsulation: ViewEncapsulation.Emulated, changeDetection: ChangeDetectionStrategy.OnPush, template: "<div class=\"ix-nested-tree-node__content\">\n  <!-- Toggle button for expandable nodes (provided by component) -->\n  <button\n    *ngIf=\"isExpandable\"\n    class=\"ix-nested-tree-node__toggle\"\n    [class.ix-nested-tree-node__toggle--expanded]=\"isExpanded\"\n    cdkTreeNodeToggle\n    [attr.aria-label]=\"'Toggle node'\"\n    type=\"button\">\n    <ix-icon \n      [name]=\"isExpanded ? 'chevron-down' : 'chevron-right'\"\n      library=\"mdi\"\n      size=\"sm\"\n      style=\"transition: transform 0.2s ease;\">\n    </ix-icon>\n  </button>\n\n  <!-- Spacer for non-expandable nodes to maintain alignment -->\n  <div *ngIf=\"!isExpandable\" class=\"ix-nested-tree-node__spacer\"></div>\n\n  <!-- Consumer content -->\n  <ng-content></ng-content>\n</div>\n\n<!-- Children container -->\n<div class=\"ix-nested-tree-node-container\" *ngIf=\"isExpandable\" [class.ix-tree-invisible]=\"!isExpanded\" role=\"group\">\n  <ng-content select=\"[slot=children]\"></ng-content>\n</div>", styles: [".ix-nested-tree-node-wrapper{display:block;width:100%}.ix-nested-tree-node{display:block;width:100%;font-family:var(--font-family);font-size:var(--font-size-sm);line-height:1.4;color:var(--fg1)}.ix-nested-tree-node--expandable .ix-nested-tree-node__content{cursor:pointer}.ix-nested-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-nested-tree-node__content:hover{background-color:var(--alt-bg2)}.ix-nested-tree-node__content:focus-within{background-color:var(--alt-bg2);outline:2px solid var(--primary);outline-offset:-2px}.ix-tree-invisible{display:none}.ix-nested-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;margin-right:8px;padding:0;border:none;background:transparent;border-radius:4px;cursor:pointer;color:var(--fg2);transition:background-color .2s ease,color .2s ease}.ix-nested-tree-node__toggle:hover{background-color:var(--bg3);color:var(--fg1)}.ix-nested-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-nested-tree-node__toggle svg{transition:transform .2s ease}.ix-nested-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-nested-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-nested-tree-node__text{flex:1;display:flex;align-items:center;gap:8px;min-width:0;color:var(--fg1)}div.ix-nested-tree-node-container{padding-left:40px}@media (prefers-reduced-motion: reduce){.ix-nested-tree-node__toggle svg,.ix-nested-tree-node__content,.ix-nested-tree-node__children{transition:none}}@media (prefers-contrast: high){.ix-nested-tree-node__content{border:1px solid transparent}.ix-nested-tree-node__content:hover,.ix-nested-tree-node__content:focus-within{border-color:var(--fg1)}.ix-nested-tree-node__toggle{border:1px solid var(--fg2)}.ix-nested-tree-node__toggle:hover,.ix-nested-tree-node__toggle:focus{border-color:var(--fg1)}}\n"] }]
+                    }, encapsulation: ViewEncapsulation.Emulated, changeDetection: ChangeDetectionStrategy.OnPush, template: "<div class=\"ix-nested-tree-node__content\">\n  <!-- Toggle button for expandable nodes (provided by component) -->\n  <button\n    *ngIf=\"isExpandable\"\n    class=\"ix-nested-tree-node__toggle\"\n    [class.ix-nested-tree-node__toggle--expanded]=\"isExpanded\"\n    cdkTreeNodeToggle\n    [attr.aria-label]=\"'Toggle node'\"\n    type=\"button\">\n    <ix-icon\n      [name]=\"isExpanded ? 'chevron-down' : 'chevron-right'\"\n      library=\"mdi\"\n      size=\"sm\"\n      style=\"transition: transform 0.2s ease;\">\n    </ix-icon>\n  </button>\n\n  <!-- Spacer for non-expandable nodes to maintain alignment -->\n  <div *ngIf=\"!isExpandable\" class=\"ix-nested-tree-node__spacer\"></div>\n\n  <!-- Consumer content -->\n  <ng-content></ng-content>\n</div>\n\n<!-- Children container -->\n<div class=\"ix-nested-tree-node-container\" *ngIf=\"isExpandable\" [class.ix-tree-invisible]=\"!isExpanded\" role=\"group\">\n  <ng-content select=\"[slot=children]\"></ng-content>\n</div>", styles: [".ix-nested-tree-node-wrapper{display:block;width:100%}.ix-nested-tree-node{display:block;width:100%;font-family:var(--font-family);font-size:var(--font-size-sm);line-height:1.4;color:var(--fg1)}.ix-nested-tree-node--expandable .ix-nested-tree-node__content{cursor:pointer}.ix-nested-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-nested-tree-node__content:hover{background-color:var(--alt-bg2)}.ix-nested-tree-node__content:focus-within{background-color:var(--alt-bg2);outline:2px solid var(--primary);outline-offset:-2px}.ix-tree-invisible{display:none}.ix-nested-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;margin-right:8px;padding:0;border:none;background:transparent;border-radius:4px;cursor:pointer;color:var(--fg2);transition:background-color .2s ease,color .2s ease}.ix-nested-tree-node__toggle:hover{background-color:var(--bg3);color:var(--fg1)}.ix-nested-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-nested-tree-node__toggle svg{transition:transform .2s ease}.ix-nested-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-nested-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-nested-tree-node__text{flex:1;display:flex;align-items:center;gap:8px;min-width:0;color:var(--fg1)}div.ix-nested-tree-node-container{padding-left:40px}@media (prefers-reduced-motion: reduce){.ix-nested-tree-node__toggle svg,.ix-nested-tree-node__content,.ix-nested-tree-node__children{transition:none}}@media (prefers-contrast: high){.ix-nested-tree-node__content{border:1px solid transparent}.ix-nested-tree-node__content:hover,.ix-nested-tree-node__content:focus-within{border-color:var(--fg1)}.ix-nested-tree-node__toggle{border:1px solid var(--fg2)}.ix-nested-tree-node__toggle:hover,.ix-nested-tree-node__toggle:focus{border-color:var(--fg1)}}\n"] }]
         }], ctorParameters: () => [{ type: i0.ElementRef }, { type: i1$4.CdkTree, decorators: [{
                     type: Optional
                 }] }, { type: undefined, decorators: [{
@@ -3479,8 +3417,6 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                     type: Inject,
                     args: [CDK_TREE_NODE_OUTLET_NODE]
                 }] }, { type: i0.ChangeDetectorRef, decorators: [{
-                    type: Optional
-                }] }, { type: IxMdiIconService, decorators: [{
                     type: Optional
                 }] }] });
 
@@ -5645,7 +5581,7 @@ class IxDateInputComponent {
         this.portal = new TemplatePortal(this.calendarTemplate, this.viewContainerRef);
         this.overlayRef.attach(this.portal);
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxDateInputComponent, deps: [{ token: i1$2.Overlay }, { token: i0.ElementRef }, { token: i0.ViewContainerRef }], target: i0.ɵɵFactoryTarget.Component });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxDateInputComponent, deps: [{ token: i1$3.Overlay }, { token: i0.ElementRef }, { token: i0.ViewContainerRef }], target: i0.ɵɵFactoryTarget.Component });
     static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxDateInputComponent, isStandalone: true, selector: "ix-date-input", inputs: { disabled: "disabled", placeholder: "placeholder", min: "min", max: "max", dateFilter: "dateFilter" }, host: { classAttribute: "ix-date-input" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
@@ -5783,7 +5719,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
   `, host: {
                         'class': 'ix-date-input'
                     }, styles: [":host{display:block;width:100%}.ix-date-input-container{position:relative;display:flex;align-items:center}.ix-date-input-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-date-segment-group{display:flex;align-items:center}.ix-date-segment{background:transparent;border:none;outline:none;font:inherit;color:inherit;padding:0;min-width:0;text-align:center;width:2.6ch}.ix-date-segment::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-date-segment:focus{outline:none;background:var(--bg2, rgba(0, 0, 0, .05));border-radius:2px}.ix-date-segment:focus::placeholder{opacity:0}.ix-date-segment.ix-date-segment-year{width:4ch}.ix-date-segment-separator{padding:0 2px;-webkit-user-select:none;user-select:none;color:var(--alt-fg1, #999)}.ix-date-input-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;font-size:16px}.ix-date-input-toggle:hover{background:var(--bg2, #f0f0f0);border-radius:4px}.ix-date-input-toggle:disabled{cursor:not-allowed;opacity:.5}:host ::ng-deep .ix-datepicker-overlay .ix-calendar{background:var(--bg1, white);border:1px solid var(--lines, #e0e0e0);border-radius:8px;box-shadow:0 4px 12px #00000026;padding:24px;min-width:380px;--calendar-cell-size: 48px;--calendar-header-height: 44px;--calendar-cell-font-size: 16px;--calendar-header-font-size: 14px}:host ::ng-deep .ix-datepicker-overlay .ix-calendar .ix-calendar-content{padding:0}\n"] }]
-        }], ctorParameters: () => [{ type: i1$2.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }], propDecorators: { disabled: [{
+        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }], propDecorators: { disabled: [{
                 type: Input
             }], placeholder: [{
                 type: Input
@@ -6165,7 +6101,7 @@ class IxDateRangeInputComponent {
         this.portal = new TemplatePortal(this.calendarTemplate, this.viewContainerRef);
         this.overlayRef.attach(this.portal);
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxDateRangeInputComponent, deps: [{ token: i1$2.Overlay }, { token: i0.ElementRef }, { token: i0.ViewContainerRef }], target: i0.ɵɵFactoryTarget.Component });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxDateRangeInputComponent, deps: [{ token: i1$3.Overlay }, { token: i0.ElementRef }, { token: i0.ViewContainerRef }], target: i0.ɵɵFactoryTarget.Component });
     static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxDateRangeInputComponent, isStandalone: true, selector: "ix-date-range-input", inputs: { disabled: "disabled", placeholder: "placeholder" }, host: { classAttribute: "ix-date-range-input" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
@@ -6379,7 +6315,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
   `, host: {
                         'class': 'ix-date-range-input'
                     }, styles: [":host{display:block;width:100%}.ix-date-range-container{position:relative;display:flex;align-items:center}.ix-date-range-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-date-segment-group{display:flex;align-items:center}.ix-date-segment{background:transparent;border:none;outline:none;font:inherit;color:inherit;padding:0;min-width:0;text-align:center;width:2.6ch}.ix-date-segment::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-date-segment:focus{outline:none;background:var(--bg2, rgba(0, 0, 0, .05));border-radius:2px}.ix-date-segment:focus::placeholder{opacity:0}.ix-date-segment.ix-date-segment-year{width:4ch}.ix-date-segment-separator{padding:0 2px;-webkit-user-select:none;user-select:none;color:var(--alt-fg1, #999)}.ix-date-range-separator{padding:0 .25em;-webkit-user-select:none;user-select:none;color:var(--fg2, #666);flex-shrink:0}.ix-date-range-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;font-size:16px}.ix-date-range-toggle:hover{background:var(--bg2, #f0f0f0);border-radius:4px}.ix-date-range-toggle:disabled{cursor:not-allowed;opacity:.5}:host ::ng-deep .ix-datepicker-overlay .ix-calendar{background:var(--bg1, white);border:1px solid var(--lines, #e0e0e0);border-radius:8px;box-shadow:0 4px 12px #00000026;padding:24px;min-width:380px;--calendar-cell-size: 48px;--calendar-header-height: 44px;--calendar-cell-font-size: 16px;--calendar-header-font-size: 14px}:host ::ng-deep .ix-datepicker-overlay .ix-calendar .ix-calendar-content{padding:0}\n"] }]
-        }], ctorParameters: () => [{ type: i1$2.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }], propDecorators: { disabled: [{
+        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }], propDecorators: { disabled: [{
                 type: Input
             }], placeholder: [{
                 type: Input
@@ -7549,7 +7485,7 @@ class IxTooltipDirective {
             this._hideTimeout = null;
         }
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTooltipDirective, deps: [{ token: i1$2.Overlay }, { token: i0.ElementRef }, { token: i0.ViewContainerRef }, { token: i1$2.OverlayPositionBuilder }], target: i0.ɵɵFactoryTarget.Directive });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTooltipDirective, deps: [{ token: i1$3.Overlay }, { token: i0.ElementRef }, { token: i0.ViewContainerRef }, { token: i1$3.OverlayPositionBuilder }], target: i0.ɵɵFactoryTarget.Directive });
     static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "14.0.0", version: "20.3.4", type: IxTooltipDirective, isStandalone: true, selector: "[ixTooltip]", inputs: { message: ["ixTooltip", "message"], position: ["ixTooltipPosition", "position"], disabled: ["ixTooltipDisabled", "disabled"], showDelay: ["ixTooltipShowDelay", "showDelay"], hideDelay: ["ixTooltipHideDelay", "hideDelay"], tooltipClass: ["ixTooltipClass", "tooltipClass"] }, host: { listeners: { "mouseenter": "_onMouseEnter()", "mouseleave": "_onMouseLeave()", "focus": "_onFocus()", "blur": "_onBlur()", "keydown": "_onKeydown($event)" }, properties: { "attr.aria-describedby": "_ariaDescribedBy" } }, ngImport: i0 });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTooltipDirective, decorators: [{
@@ -7561,7 +7497,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                         '[attr.aria-describedby]': '_ariaDescribedBy',
                     }
                 }]
-        }], ctorParameters: () => [{ type: i1$2.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }, { type: i1$2.OverlayPositionBuilder }], propDecorators: { message: [{
+        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }, { type: i1$3.OverlayPositionBuilder }], propDecorators: { message: [{
                 type: Input,
                 args: ['ixTooltip']
             }], position: [{
@@ -8397,7 +8333,6 @@ class IxFilePickerComponent {
     overlay;
     elementRef;
     viewContainerRef;
-    mdiIconService;
     mode = 'any';
     multiSelect = false;
     allowCreate = true;
@@ -8432,40 +8367,14 @@ class IxFilePickerComponent {
     // ControlValueAccessor implementation
     onChange = (value) => { };
     onTouched = () => { };
-    constructor(overlay, elementRef, viewContainerRef, mdiIconService) {
+    constructor(overlay, elementRef, viewContainerRef) {
         this.overlay = overlay;
         this.elementRef = elementRef;
         this.viewContainerRef = viewContainerRef;
-        this.mdiIconService = mdiIconService;
     }
-    async ngOnInit() {
+    ngOnInit() {
         this.currentPath.set(this.startPath);
         this.selectedPath.set(this.multiSelect ? '' : '');
-        // Ensure MDI icons are loaded for the file picker trigger and popup
-        await this.initializeMdiIcons();
-    }
-    /**
-     * Initialize MDI icons required for file picker functionality
-     */
-    async initializeMdiIcons() {
-        try {
-            // Pre-load essential icons for file picker
-            const iconPromises = [
-                this.mdiIconService.ensureIconLoaded('folder'),
-                this.mdiIconService.ensureIconLoaded('file'),
-                this.mdiIconService.ensureIconLoaded('database'),
-                this.mdiIconService.ensureIconLoaded('harddisk'),
-                this.mdiIconService.ensureIconLoaded('network-share'),
-                this.mdiIconService.ensureIconLoaded('folder-plus'),
-                this.mdiIconService.ensureIconLoaded('loading'),
-                this.mdiIconService.ensureIconLoaded('lock'),
-                this.mdiIconService.ensureIconLoaded('folder-open')
-            ];
-            await Promise.all(iconPromises);
-        }
-        catch (error) {
-            console.warn('Failed to initialize some MDI icons for file picker:', error);
-        }
     }
     ngOnDestroy() {
         this.destroy$.next();
@@ -8856,7 +8765,7 @@ class IxFilePickerComponent {
         this.portal = new TemplatePortal(this.filePickerTemplate, this.viewContainerRef);
         this.overlayRef.attach(this.portal);
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxFilePickerComponent, deps: [{ token: i1$2.Overlay }, { token: i0.ElementRef }, { token: i0.ViewContainerRef }, { token: IxMdiIconService }], target: i0.ɵɵFactoryTarget.Component });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxFilePickerComponent, deps: [{ token: i1$3.Overlay }, { token: i0.ElementRef }, { token: i0.ViewContainerRef }], target: i0.ɵɵFactoryTarget.Component });
     static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxFilePickerComponent, isStandalone: true, selector: "ix-file-picker", inputs: { mode: "mode", multiSelect: "multiSelect", allowCreate: "allowCreate", allowDatasetCreate: "allowDatasetCreate", allowZvolCreate: "allowZvolCreate", allowManualInput: "allowManualInput", placeholder: "placeholder", disabled: "disabled", startPath: "startPath", rootPath: "rootPath", fileExtensions: "fileExtensions", callbacks: "callbacks" }, outputs: { selectionChange: "selectionChange", pathChange: "pathChange", createFolder: "createFolder", error: "error" }, host: { properties: { "class.error": "hasError()" }, classAttribute: "ix-file-picker" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
@@ -8886,7 +8795,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                         'class': 'ix-file-picker',
                         '[class.error]': 'hasError()'
                     }, template: "<div class=\"ix-file-picker-container\">\n  <div #wrapper ixInput class=\"ix-file-picker-wrapper\" style=\"padding-right: 40px;\">\n    <input\n      type=\"text\"\n      class=\"ix-file-picker-input\"\n      [class.error]=\"hasError()\"\n      [value]=\"selectedPath() | ixStripMntPrefix\"\n      [placeholder]=\"placeholder\"\n      [readonly]=\"!allowManualInput\"\n      [disabled]=\"disabled\"\n      (input)=\"onPathInput($event)\">\n    \n    <button \n      type=\"button\"\n      class=\"ix-file-picker-toggle\"\n      (click)=\"openFilePicker()\"\n      [disabled]=\"disabled\"\n      aria-label=\"Open file picker\">\n      <ix-icon name=\"folder\" library=\"mdi\"></ix-icon>\n    </button>\n  </div>\n  \n  <ng-template #filePickerTemplate>\n    <ix-file-picker-popup\n      class=\"ix-file-picker-popup\"\n      [mode]=\"mode\"\n      [multiSelect]=\"multiSelect\"\n      [allowCreate]=\"allowCreate\"\n      [allowDatasetCreate]=\"allowDatasetCreate\"\n      [allowZvolCreate]=\"allowZvolCreate\"\n      [currentPath]=\"currentPath()\"\n      [fileItems]=\"fileItems()\"\n      [selectedItems]=\"selectedItems()\"\n      [loading]=\"loading()\"\n      [creationLoading]=\"creationLoading()\"\n      [fileExtensions]=\"fileExtensions\"\n      (itemClick)=\"onItemClick($event)\"\n      (itemDoubleClick)=\"onItemDoubleClick($event)\"\n      (pathNavigate)=\"navigateToPath($event)\"\n      (createFolder)=\"onCreateFolder()\"\n      (submitFolderName)=\"onSubmitFolderName($event.name, $event.tempId)\"\n      (cancelFolderCreation)=\"onCancelFolderCreation($event)\"\n      (clearSelection)=\"onClearSelection()\"\n      (submit)=\"onSubmit()\"\n      (cancel)=\"onCancel()\"\n      (close)=\"close()\">\n    </ix-file-picker-popup>\n  </ng-template>\n</div>", styles: [":host{display:block;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-file-picker-container{position:relative;display:flex;align-items:center;width:100%}.ix-file-picker-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-file-picker-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box;font-family:inherit}.ix-file-picker-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-file-picker-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-file-picker-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-file-picker-input.error{border-color:var(--error, #dc3545)}.ix-file-picker-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-file-picker-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;color:var(--fg1);border-radius:4px}.ix-file-picker-toggle:hover{background:var(--bg2, #f0f0f0)}.ix-file-picker-toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-file-picker-toggle:disabled{cursor:not-allowed;opacity:.5}.ix-file-picker-toggle ix-icon{font-size:var(--icon-md, 20px)}:host:focus-within .ix-file-picker-input{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}:host.error .ix-file-picker-input{border-color:var(--error, #dc3545)}:host.error .ix-file-picker-input:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}@media (prefers-reduced-motion: reduce){.ix-file-picker-input,.ix-file-picker-toggle,.file-item,.breadcrumb-segment{transition:none}.ix-file-picker-loading ix-icon{animation:none}}@media (prefers-contrast: high){.ix-file-picker-input{border-width:2px}.file-item:hover,.file-item.selected{border:2px solid var(--fg1)}.zfs-badge{border:1px solid var(--fg1)}}@media (max-width: 768px){:host ::ng-deep .ix-file-picker-overlay .ix-file-picker-dialog{min-width:300px;max-width:calc(100vw - 32px);max-height:calc(100vh - 64px)}.ix-file-picker-header{flex-direction:column;gap:12px;align-items:stretch}.ix-file-picker-breadcrumb{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-file-picker-breadcrumb::-webkit-scrollbar{display:none}.file-item{padding:12px;min-height:56px}.file-info{font-size:.875rem}}\n"] }]
-        }], ctorParameters: () => [{ type: i1$2.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }, { type: IxMdiIconService }], propDecorators: { mode: [{
+        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }], propDecorators: { mode: [{
                 type: Input
             }], multiSelect: [{
                 type: Input
@@ -9166,5 +9075,5 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * Generated bundle index. Do not edit.
  */
 
-export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconButtonComponent, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMdiIconService, IxMenuComponent, IxMenuTriggerDirective, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TruenasIconsService, TruenasUiComponent, TruenasUiService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, registerLucideIcons, setupLucideIntegration };
+export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconButtonComponent, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMenuComponent, IxMenuTriggerDirective, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxSpriteLoaderService, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TruenasIconsService, TruenasUiComponent, TruenasUiService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, iconMarker, registerLucideIcons, setupLucideIntegration };
 //# sourceMappingURL=truenas-ui.mjs.map

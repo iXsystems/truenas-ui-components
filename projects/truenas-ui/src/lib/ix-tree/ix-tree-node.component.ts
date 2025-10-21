@@ -1,8 +1,7 @@
-import { Component, ChangeDetectionStrategy, ViewEncapsulation, ElementRef, ChangeDetectorRef, Optional, Inject, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ViewEncapsulation, ElementRef, ChangeDetectorRef, Optional, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CdkTreeNode, CdkTreeNodeDef, CdkTree, CDK_TREE_NODE_OUTLET_NODE, CdkTreeModule } from '@angular/cdk/tree';
 import { IxIconComponent } from '../ix-icon/ix-icon.component';
-import { IxMdiIconService } from '../ix-mdi-icon/ix-mdi-icon.service';
 
 @Component({
   selector: 'ix-tree-node',
@@ -23,29 +22,14 @@ import { IxMdiIconService } from '../ix-mdi-icon/ix-mdi-icon.service';
   encapsulation: ViewEncapsulation.Emulated,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class IxTreeNodeComponent<T, K = T> extends CdkTreeNode<T, K> implements OnInit {
+export class IxTreeNodeComponent<T, K = T> extends CdkTreeNode<T, K> {
   constructor(
     elementRef: ElementRef<HTMLElement>,
     @Optional() tree: CdkTree<T, K>,
     @Optional() @Inject(CDK_TREE_NODE_OUTLET_NODE) data?: T,
-    @Optional() changeDetectorRef?: ChangeDetectorRef,
-    @Optional() private mdiIconService?: IxMdiIconService
+    @Optional() changeDetectorRef?: ChangeDetectorRef
   ) {
     super(elementRef, tree, data, changeDetectorRef);
-  }
-
-  override async ngOnInit(): Promise<void> {
-    // Pre-load tree navigation icons
-    if (this.mdiIconService) {
-      try {
-        await Promise.all([
-          this.mdiIconService.ensureIconLoaded('chevron-right'),
-          this.mdiIconService.ensureIconLoaded('chevron-down')
-        ]);
-      } catch (error) {
-        console.warn('Failed to load tree navigation icons:', error);
-      }
-    }
   }
 
   /** The tree node's level in the tree */

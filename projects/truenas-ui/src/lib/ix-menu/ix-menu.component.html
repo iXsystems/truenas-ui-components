@@ -23,7 +23,7 @@
             (click)="onMenuItemClick(item)"
             type="button"
           >
-            <ix-icon *ngIf="item.icon" [name]="item.icon" library="mdi" size="sm" class="ix-menu-item-icon"></ix-icon>
+            <ix-icon *ngIf="item.icon" [name]="item.icon" [library]="item.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
             <span class="ix-menu-item-label">{{ item.label }}</span>
             <span *ngIf="item.shortcut" class="ix-menu-item-shortcut">{{ item.shortcut }}</span>
           </button>
@@ -37,7 +37,7 @@
               class="ix-menu-item ix-menu-item--nested"
               type="button"
             >
-              <ix-icon *ngIf="item.icon" [name]="item.icon" library="mdi" size="sm" class="ix-menu-item-icon"></ix-icon>
+              <ix-icon *ngIf="item.icon" [name]="item.icon" [library]="item.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
               <span class="ix-menu-item-label">{{ item.label }}</span>
               <span *ngIf="item.shortcut" class="ix-menu-item-shortcut">{{ item.shortcut }}</span>
               <span class="ix-menu-item-arrow">▶</span>
@@ -62,7 +62,7 @@
                       (click)="onMenuItemClick(nestedItem)"
                       type="button"
                     >
-                      <ix-icon *ngIf="nestedItem.icon" [name]="nestedItem.icon" library="mdi" size="sm" class="ix-menu-item-icon"></ix-icon>
+                      <ix-icon *ngIf="nestedItem.icon" [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
                       <span class="ix-menu-item-label">{{ nestedItem.label }}</span>
                       <span *ngIf="nestedItem.shortcut" class="ix-menu-item-shortcut">{{ nestedItem.shortcut }}</span>
                     </button>
@@ -76,7 +76,7 @@
                         class="ix-menu-item ix-menu-item--nested"
                         type="button"
                       >
-                        <ix-icon *ngIf="nestedItem.icon" [name]="nestedItem.icon" library="mdi" size="sm" class="ix-menu-item-icon"></ix-icon>
+                        <ix-icon *ngIf="nestedItem.icon" [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
                         <span class="ix-menu-item-label">{{ nestedItem.label }}</span>
                         <span *ngIf="nestedItem.shortcut" class="ix-menu-item-shortcut">{{ nestedItem.shortcut }}</span>
                         <span class="ix-menu-item-arrow">▶</span>
@@ -100,7 +100,7 @@
                                 (click)="onMenuItemClick(deepNestedItem)"
                                 type="button"
                               >
-                                <ix-icon *ngIf="deepNestedItem.icon" [name]="deepNestedItem.icon" library="mdi" size="sm" class="ix-menu-item-icon"></ix-icon>
+                                <ix-icon *ngIf="deepNestedItem.icon" [name]="deepNestedItem.icon" [library]="deepNestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
                                 <span class="ix-menu-item-label">{{ deepNestedItem.label }}</span>
                                 <span *ngIf="deepNestedItem.shortcut" class="ix-menu-item-shortcut">{{ deepNestedItem.shortcut }}</span>
                               </button>
@@ -139,7 +139,7 @@
             (click)="onMenuItemClick(item)"
             type="button"
           >
-            <ix-icon *ngIf="item.icon" [name]="item.icon" library="mdi" size="sm" class="ix-menu-item-icon"></ix-icon>
+            <ix-icon *ngIf="item.icon" [name]="item.icon" [library]="item.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
             <span class="ix-menu-item-label">{{ item.label }}</span>
             <span *ngIf="item.shortcut" class="ix-menu-item-shortcut">{{ item.shortcut }}</span>
           </button>
@@ -153,7 +153,7 @@
               class="ix-menu-item ix-menu-item--nested"
               type="button"
             >
-              <ix-icon *ngIf="item.icon" [name]="item.icon" library="mdi" size="sm" class="ix-menu-item-icon"></ix-icon>
+              <ix-icon *ngIf="item.icon" [name]="item.icon" [library]="item.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
               <span class="ix-menu-item-label">{{ item.label }}</span>
               <span *ngIf="item.shortcut" class="ix-menu-item-shortcut">{{ item.shortcut }}</span>
               <span class="ix-menu-item-arrow">▶</span>
@@ -178,7 +178,7 @@
                       (click)="onMenuItemClick(nestedItem)"
                       type="button"
                     >
-                      <ix-icon *ngIf="nestedItem.icon" [name]="nestedItem.icon" library="mdi" size="sm" class="ix-menu-item-icon"></ix-icon>
+                      <ix-icon *ngIf="nestedItem.icon" [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
                       <span class="ix-menu-item-label">{{ nestedItem.label }}</span>
                       <span *ngIf="nestedItem.shortcut" class="ix-menu-item-shortcut">{{ nestedItem.shortcut }}</span>
                     </button>
@@ -192,7 +192,7 @@
                         class="ix-menu-item ix-menu-item--nested"
                         type="button"
                       >
-                        <ix-icon *ngIf="nestedItem.icon" [name]="nestedItem.icon" library="mdi" size="sm" class="ix-menu-item-icon"></ix-icon>
+                        <ix-icon *ngIf="nestedItem.icon" [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
                         <span class="ix-menu-item-label">{{ nestedItem.label }}</span>
                         <span *ngIf="nestedItem.shortcut" class="ix-menu-item-shortcut">{{ nestedItem.shortcut }}</span>
                         <span class="ix-menu-item-arrow">▶</span>
@@ -216,7 +216,7 @@
                                 (click)="onMenuItemClick(deepNestedItem)"
                                 type="button"
                               >
-                                <ix-icon *ngIf="deepNestedItem.icon" [name]="deepNestedItem.icon" library="mdi" size="sm" class="ix-menu-item-icon"></ix-icon>
+                                <ix-icon *ngIf="deepNestedItem.icon" [name]="deepNestedItem.icon" [library]="deepNestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
                                 <span class="ix-menu-item-label">{{ deepNestedItem.label }}</span>
                                 <span *ngIf="deepNestedItem.shortcut" class="ix-menu-item-shortcut">{{ deepNestedItem.shortcut }}</span>
                               </button>

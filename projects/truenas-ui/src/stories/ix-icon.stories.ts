@@ -1,13 +1,24 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { applicationConfig } from '@storybook/angular';
 import { importProvidersFrom } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { IxIconComponent } from '../lib/ix-icon/ix-icon.component';
 import { IxIconRegistryService } from '../lib/ix-icon/ix-icon-registry.service';
+import { iconMarker } from '../lib/ix-icon/icon-marker';
 
 // Import Lucide for demonstration
 import { Home, User, Settings, Heart, Star, Search, Menu } from 'lucide';
+
+// Mark icons used in stories for sprite generation
+const STORY_ICONS = [
+  iconMarker('mdi-harddisk'),
+  iconMarker('mdi-server'),
+  iconMarker('mdi-nas'),
+  iconMarker('mdi-database'),
+  iconMarker('mdi-memory'),
+  iconMarker('mdi-network'),
+  iconMarker('mdi-file'),
+];
 
 const meta: Meta<IxIconComponent> = {
   title: 'Components/Icon',
@@ -18,46 +29,109 @@ const meta: Meta<IxIconComponent> = {
     docs: {
       description: {
         component: `
-A flexible icon component with a powerful registry system for integrating any third-party icon library.
+A flexible icon component with automatic sprite generation for optimal performance.
 
-## Icon Registry System
+## Quick Start
 
-The component uses a global icon registry that allows you to register:
-- **Icon Libraries**: Lucide, Heroicons, Font Awesome, etc.
-- **Custom SVG Icons**: Your own icon sets
-- **Multiple Sources**: Mix and match different icon libraries
+The icon system works automatically with zero configuration:
 
-## Integration Examples
+1. **Use icons in your templates**:
+\`\`\`html
+<ix-icon name="folder" library="mdi" size="lg"></ix-icon>
+<ix-icon name="server" library="mdi"></ix-icon>
+\`\`\`
 
-### Icon Libraries (via Registry)
-- **Lucide**: \`name="lucide:home"\` → Register Lucide with \`setupLucideIntegration()\`
-- **Heroicons**: \`name="heroicons:user"\` → Register your own library
-- **Font Awesome**: \`name="fa:home"\` → Register FA as a library
+2. **Generate the sprite** (run once, then whenever icons change):
+\`\`\`bash
+yarn icons
+\`\`\`
 
-### Custom Icons (via Registry)
-- **Individual Icons**: \`name="my-logo"\` → Register with \`iconRegistry.registerIcon()\`
-- **Icon Sets**: \`name="brand:logo"\` → Register as a library
+That's it! The sprite generation automatically:
+- ✅ Scans your templates for all icon usage
+- ✅ Includes all library icons (chevrons, folder, etc.)
+- ✅ Bundles only icons you use (tree-shaking)
+- ✅ Adds cache-busting hashes
 
-### Built-in Fallbacks
-- **Unicode**: Common icons like \`home\`, \`star\`, \`check\` → ⌂, ★, ✓
-- **Text**: Any name → Abbreviated text (e.g., "unknown-icon" → "UN")
+## What's Included
 
-## Setup Example
+- **7,000+ MDI icons**: Material Design Icons for general use
+- **40+ TrueNAS icons**: Custom icons for storage, hardware, networking (\`ix-*\` prefix)
+- **Library icons**: Internal component icons (chevrons, folder, etc.) automatically included
+
+## Setup in Your App
+
+**Step 1: Add the sprite generation script to package.json**:
+\`\`\`json
+{
+  "scripts": {
+    "icons": "truenas-icons generate"
+  }
+}
+\`\`\`
+
+**Step 2: Run the sprite generator**:
+\`\`\`bash
+yarn icons
+\`\`\`
+
+This scans your templates and generates:
+- \`src/assets/icons/sprite.svg\` - The sprite file
+- \`src/assets/icons/sprite-config.json\` - Icon manifest
+
+**Step 3: Use icons in your templates**:
+\`\`\`html
+<!-- MDI icons -->
+<ix-icon name="folder" library="mdi"></ix-icon>
+<ix-icon name="server" library="mdi"></ix-icon>
+
+<!-- TrueNAS custom icons -->
+<ix-icon name="ix-dataset" library="mdi"></ix-icon>
+<ix-icon name="ix-hdd" library="mdi"></ix-icon>
+\`\`\`
+
+## Dynamic Icons
+
+If you use icons dynamically in TypeScript (not in templates), mark them with \`iconMarker()\`:
 
 \`\`\`typescript
-import { IxIconRegistryService, setupLucideIntegration } from 'truenas-ui';
-import * as LucideIcons from 'lucide';
+import { iconMarker } from 'truenas-ui';
 
-// Register Lucide library
-setupLucideIntegration(LucideIcons);
+// Mark icons used in TypeScript logic
+iconMarker('mdi-code-json');
+iconMarker('mdi-language-typescript');
+iconMarker('mdi-file-document');
 
-// Register custom icons
-iconRegistry.registerIcon('my-logo', '<svg>...</svg>');
-iconRegistry.registerIcons({
-  'brand-logo': '<svg>...</svg>',
-  'custom-heart': '<svg>...</svg>'
+// Then use them dynamically
+getFileIcon(filename: string): string {
+  if (filename.endsWith('.json')) return 'code-json';
+  if (filename.endsWith('.ts')) return 'language-typescript';
+  return 'file-document';
+}
+\`\`\`
+
+Then run \`yarn icons\` to include them in the sprite.
+
+## Using Other Icon Libraries (Optional)
+
+For icon libraries beyond MDI (like Lucide, Heroicons, Font Awesome), use the registry system:
+
+\`\`\`typescript
+import { IxIconRegistryService } from 'truenas-ui';
+import { Home, User, Settings } from 'lucide';
+
+// In your component or app initializer
+iconRegistry.registerLibrary({
+  name: 'lucide',
+  resolver: (iconName: string) => {
+    const icons = { home: Home, user: User, settings: Settings };
+    return convertToSvgString(icons[iconName]);
+  }
 });
 \`\`\`
+
+Then use: \`<ix-icon name="home" library="lucide"></ix-icon>\`
+
+**Note**: MDI icons use the sprite system (no registry needed). Other libraries require manual registration.
         `,
       },
     },
@@ -65,7 +139,12 @@ iconRegistry.registerIcons({
   argTypes: {
     name: {
       control: 'text',
-      description: 'Icon identifier. Try: lucide:home, lucide:user, lucide:settings, lucide:heart, lucide:star, lucide:menu, demo-heart, or any Unicode fallback like home, star, check',
+      description: 'Icon name. Use with library parameter for icon libraries (e.g., name="home" library="lucide" or name="cog" library="mdi"). Try: home, user, settings, heart, star, menu, or Unicode fallbacks',
+    },
+    library: {
+      control: 'select',
+      options: [undefined, 'mdi', 'lucide', 'material', 'custom'],
+      description: 'Icon library. Use "mdi" for Material Design Icons, "lucide" for Lucide icons',
     },
     size: {
       control: 'select',
@@ -87,7 +166,7 @@ iconRegistry.registerIcons({
   },
   decorators: [
     (story) => {
-      // Set up global icon registry for Storybook examples
+      // Set up global icon registry for Storybook examples with Lucide icons
       if (typeof window !== 'undefined') {
         const mockSanitizer = {
           bypassSecurityTrustHtml: (html: string) => {
@@ -99,8 +178,17 @@ iconRegistry.registerIcons({
           },
           sanitize: (context: any, value: any) => value
         };
-        
-        const iconRegistry = new IxIconRegistryService(mockSanitizer as any);
+
+        // Create a mock sprite loader for the registry (real sprite loader will work in components via DI)
+        const mockSpriteLoader = {
+          isSpriteLoaded: () => false,
+          getIconUrl: () => null,
+          getSafeIconUrl: () => null,
+          ensureSpriteLoaded: () => Promise.resolve(false),
+          getSpriteConfig: () => undefined
+        };
+
+        const iconRegistry = new IxIconRegistryService(mockSanitizer as any, mockSpriteLoader as any);
 
         // Register Lucide library
         iconRegistry.registerLibrary({
@@ -190,14 +278,15 @@ export const Default: Story = {
 
 export const LucideIcons: Story = {
   args: {
-    name: 'lucide:home',
+    name: 'home',
+    library: 'lucide',
     size: 'md',
     tooltip: 'Lucide Home icon',
   },
   parameters: {
     docs: {
       description: {
-        story: 'Icons from the Lucide library using the library prefix `lucide:`. These are rendered as SVG icons with proper stroke styling.',
+        story: 'Icons from the Lucide library using the `library="lucide"` parameter. These are rendered as SVG icons with proper stroke styling.',
       },
     },
   },
@@ -213,7 +302,7 @@ export const MdiIcons: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Material Design Icons (MDI) using the `library="mdi"` parameter. Perfect for TrueNAS-specific hardware and storage icons.',
+        story: 'Material Design Icons (MDI) using the `library="mdi"` parameter. These icons are loaded from the generated sprite file which includes 7,000+ MDI icons and 40 custom TrueNAS icons. Perfect for TrueNAS-specific hardware and storage icons.',
       },
     },
   },
@@ -240,20 +329,12 @@ export const TrueNASIconShowcase: Story = {
           <div style="margin-top: 8px; font-size: 12px;">Database</div>
         </div>
         <div style="text-align: center;">
-          <ix-icon name="storage" library="mdi" size="lg" tooltip="Storage"></ix-icon>
-          <div style="margin-top: 8px; font-size: 12px;">Storage</div>
-        </div>
-        <div style="text-align: center;">
           <ix-icon name="memory" library="mdi" size="lg" tooltip="Memory"></ix-icon>
           <div style="margin-top: 8px; font-size: 12px;">Memory</div>
         </div>
         <div style="text-align: center;">
-          <ix-icon name="cpu" library="mdi" size="lg" tooltip="CPU"></ix-icon>
-          <div style="margin-top: 8px; font-size: 12px;">CPU</div>
-        </div>
-        <div style="text-align: center;">
-          <ix-icon name="network-share" library="mdi" size="lg" tooltip="Network Share"></ix-icon>
-          <div style="margin-top: 8px; font-size: 12px;">Network Share</div>
+          <ix-icon name="network" library="mdi" size="lg" tooltip="Network"></ix-icon>
+          <div style="margin-top: 8px; font-size: 12px;">Network</div>
         </div>
         <div style="text-align: center;">
           <ix-icon name="folder" library="mdi" size="lg" tooltip="Folder"></ix-icon>
@@ -287,9 +368,9 @@ export const LibraryComparison: Story = {
         </div>
         <div style="text-align: center; border: 1px solid var(--border-color, #ccc); padding: 16px; border-radius: 8px;">
           <h4 style="margin-top: 0;">Lucide</h4>
-          <ix-icon name="lucide:home" size="lg" tooltip="Lucide Home"></ix-icon>
-          <div style="margin-top: 8px;">name="lucide:home"</div>
-          <div style="font-size: 12px; color: var(--text-secondary, #666);">Library prefix</div>
+          <ix-icon name="home" library="lucide" size="lg" tooltip="Lucide Home"></ix-icon>
+          <div style="margin-top: 8px;">library="lucide"</div>
+          <div style="font-size: 12px; color: var(--text-secondary, #666);">Library parameter</div>
         </div>
         <div style="text-align: center; border: 1px solid var(--border-color, #ccc); padding: 16px; border-radius: 8px;">
           <h4 style="margin-top: 0;">MDI</h4>
@@ -303,7 +384,19 @@ export const LibraryComparison: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Comparison of different icon library approaches supported by the ix-icon component.',
+        story: `Comparison of different icon library approaches supported by the ix-icon component.
+
+All libraries use the consistent \`library\` parameter:
+- **MDI**: \`<ix-icon name="folder" library="mdi">\`
+- **Lucide**: \`<ix-icon name="home" library="lucide">\`
+- **Material**: \`<ix-icon name="home">\` (default, falls back to Unicode)
+
+**Note for Menu Items**: When using icons in \`ix-menu\`, use the \`iconLibrary\` property:
+\`\`\`typescript
+{ id: '1', label: 'Home', icon: 'folder', iconLibrary: 'mdi' }
+{ id: '2', label: 'User', icon: 'user', iconLibrary: 'lucide' }
+\`\`\`
+This provides a consistent, type-safe API for menu item configuration.`,
       },
     },
   },

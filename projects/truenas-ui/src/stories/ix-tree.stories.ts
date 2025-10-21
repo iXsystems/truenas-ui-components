@@ -9,6 +9,18 @@ import { IxTreeNodeOutletDirective } from '../lib/ix-tree/ix-tree-node-outlet.di
 import { CdkTreeModule } from '@angular/cdk/tree';
 import { IxIconComponent } from '../lib/ix-icon/ix-icon.component';
 
+// Mark icons used dynamically in templates so they're included in sprite generation
+function iconMarker(iconName: string): void {
+  // This function is used by the sprite scanner to detect dynamically-used icons
+  // It's called at module load time to ensure icons are included in the build
+  return;
+}
+
+// Ensure these icons are included in the library sprite
+iconMarker('mdi-cpu-64-bit');
+iconMarker('mdi-nas');
+iconMarker('mdi-share-variant');
+
 // Example data structure for CDK Tree integration
 interface FileNode {
   name: string;
@@ -169,7 +181,7 @@ export const TrueNASStorageTree: Story = {
           children: [
             {
               name: 'Storage Pools',
-              type: 'storage',
+              type: 'nas',
               children: [
                 {
                   name: 'Pool1',
@@ -185,7 +197,7 @@ export const TrueNASStorageTree: Story = {
             },
             {
               name: 'Network Shares',
-              type: 'network-share',
+              type: 'share-variant',
               children: [
                 { name: 'SMB Share', type: 'folder' },
                 { name: 'NFS Export', type: 'folder' }
@@ -195,7 +207,7 @@ export const TrueNASStorageTree: Story = {
               name: 'System Resources',
               type: 'server',
               children: [
-                { name: 'CPU Usage', type: 'cpu' },
+                { name: 'CPU Usage', type: 'cpu-64-bit' },
                 { name: 'Memory Usage', type: 'memory' },
                 { name: 'Databases', type: 'database' }
               ]

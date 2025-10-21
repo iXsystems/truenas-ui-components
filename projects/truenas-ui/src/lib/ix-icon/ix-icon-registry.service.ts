@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { IxSpriteLoaderService } from './ix-sprite-loader.service';
 
 export interface IconLibrary {
   name: string;
@@ -8,8 +9,9 @@ export interface IconLibrary {
 }
 
 export interface ResolvedIcon {
-  source: 'svg' | 'css' | 'unicode' | 'text';
+  source: 'svg' | 'css' | 'unicode' | 'text' | 'sprite';
   content: string | SafeHtml;
+  spriteUrl?: string; // For sprite-based icons
 }
 
 @Injectable({
@@ -19,7 +21,10 @@ export class IxIconRegistryService {
   private libraries = new Map<string, IconLibrary>();
   private customIcons = new Map<string, string>();
 
-  constructor(private sanitizer: DomSanitizer) {}
+  constructor(
+    private sanitizer: DomSanitizer,
+    private spriteLoader: IxSpriteLoaderService
+  ) {}
 
   /**
    * Register an icon library (like Lucide, Heroicons, etc.)
@@ -81,36 +86,71 @@ export class IxIconRegistryService {
   }
 
   /**
-   * Resolve an icon using registered libraries and custom icons
-   * 
-   * Format: "library:icon-name" or just "icon-name" for custom icons
-   * 
+   * Resolve an icon from the sprite
+   * Returns the sprite URL if the sprite is loaded
+   */
+  private resolveSpriteIcon(name: string): ResolvedIcon | null {
+    if (!this.spriteLoader.isSpriteLoaded()) {
+      return null;
+    }
+
+    const spriteUrl = this.spriteLoader.getIconUrl(name);
+    if (!spriteUrl) {
+      return null;
+    }
+
+    return {
+      source: 'sprite',
+      content: '', // Not used for sprite icons
+      spriteUrl: spriteUrl
+    };
+  }
+
+  /**
+   * Resolve an icon using sprite, registered libraries, and custom icons
+   *
+   * Resolution order:
+   * 1. Sprite icons (Material, MDI, custom TrueNAS icons)
+   * 2. Registered libraries (with prefix, e.g., "lucide:home")
+   * 3. Custom registered icons
+   *
+   * Format: "library:icon-name" or just "icon-name"
+   *
    * @example
    * ```typescript
+   * // Sprite icons (automatic from sprite.svg)
+   * registry.resolveIcon('folder')        // Material Design icon
+   * registry.resolveIcon('mdi-server')    // MDI icon
+   * registry.resolveIcon('ix-dataset')    // Custom TrueNAS icon
+   *
    * // Library icons
    * registry.resolveIcon('lucide:home')
    * registry.resolveIcon('heroicons:user-circle')
-   * registry.resolveIcon('fa:home')
-   * 
-   * // Custom icons
+   *
+   * // Custom registered icons
    * registry.resolveIcon('my-logo')
-   * registry.resolveIcon('custom:special-icon')
    * ```
    */
   resolveIcon(name: string, options?: any): ResolvedIcon | null {
-    // Handle library prefix (e.g., "lucide:home")
+    // 1. Try sprite first (if loaded)
+    const spriteIcon = this.resolveSpriteIcon(name);
+    if (spriteIcon) {
+      return spriteIcon;
+    }
+
+    // 2. Handle library prefix (e.g., "lucide:home")
     if (name.includes(':')) {
       const [libraryName, iconName] = name.split(':', 2);
       return this.resolveLibraryIcon(libraryName, iconName, options);
     }
 
-    // Handle custom prefix (e.g., "custom:icon")
+    // 3. Handle custom prefix (e.g., "custom:icon")
     if (name.startsWith('custom:')) {
       const iconName = name.replace('custom:', '');
       return this.resolveCustomIcon(iconName);
     }
 
-    // Handle direct custom icon name
+    // 4. Handle direct custom icon name
     return this.resolveCustomIcon(name);
   }
 
@@ -162,6 +202,14 @@ export class IxIconRegistryService {
   clear(): void {
     this.libraries.clear();
     this.customIcons.clear();
+  }
+
+  /**
+   * Get the sprite loader service
+   * Useful for checking sprite status or manually resolving sprite icons
+   */
+  getSpriteLoader(): IxSpriteLoaderService {
+    return this.spriteLoader;
   }
 
   private resolveLibraryIcon(libraryName: string, iconName: string, options?: any): ResolvedIcon | null {

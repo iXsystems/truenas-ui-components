@@ -11,7 +11,6 @@ import { takeUntil } from 'rxjs/operators';
 import { IxInputDirective } from '../ix-input/ix-input.directive';
 import { IxIconComponent } from '../ix-icon/ix-icon.component';
 import { IxFilePickerPopupComponent } from './ix-file-picker-popup.component';
-import { IxMdiIconService } from '../ix-mdi-icon/ix-mdi-icon.service';
 import { FileSystemItem, FilePickerCallbacks, CreateFolderEvent, FilePickerError, PathSegment, FilePickerMode } from './ix-file-picker.interfaces';
 import { StripMntPrefixPipe } from '../pipes/strip-mnt-prefix/strip-mnt-prefix.pipe';
 
@@ -86,40 +85,12 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   constructor(
     private overlay: Overlay,
     private elementRef: ElementRef,
-    private viewContainerRef: ViewContainerRef,
-    private mdiIconService: IxMdiIconService
+    private viewContainerRef: ViewContainerRef
   ) {}
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit(): void {
     this.currentPath.set(this.startPath);
     this.selectedPath.set(this.multiSelect ? '' : '');
-
-    // Ensure MDI icons are loaded for the file picker trigger and popup
-    await this.initializeMdiIcons();
-  }
-
-  /**
-   * Initialize MDI icons required for file picker functionality
-   */
-  private async initializeMdiIcons(): Promise<void> {
-    try {
-      // Pre-load essential icons for file picker
-      const iconPromises = [
-        this.mdiIconService.ensureIconLoaded('folder'),
-        this.mdiIconService.ensureIconLoaded('file'),
-        this.mdiIconService.ensureIconLoaded('database'),
-        this.mdiIconService.ensureIconLoaded('harddisk'),
-        this.mdiIconService.ensureIconLoaded('network-share'),
-        this.mdiIconService.ensureIconLoaded('folder-plus'),
-        this.mdiIconService.ensureIconLoaded('loading'),
-        this.mdiIconService.ensureIconLoaded('lock'),
-        this.mdiIconService.ensureIconLoaded('folder-open')
-      ];
-
-      await Promise.all(iconPromises);
-    } catch (error) {
-      console.warn('Failed to initialize some MDI icons for file picker:', error);
-    }
   }
 
   ngOnDestroy(): void {
