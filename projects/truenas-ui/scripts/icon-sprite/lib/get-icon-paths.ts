@@ -12,22 +12,22 @@ export function getIconPaths(names: Set<string>, projectRoot: string = process.c
 
       // Check local custom icons first, then library custom icons
       if (fs.existsSync(localPath)) {
-        iconPaths.set(name, `assets/icons/custom/${name.slice(3)}.svg`);
+        iconPaths.set(name, localPath);
       } else if (fs.existsSync(libraryPath)) {
-        iconPaths.set(name, `node_modules/truenas-ui/dist/truenas-ui/assets/icons/custom/${name.slice(3)}.svg`);
+        iconPaths.set(name, libraryPath);
       } else {
         // Fallback to local path (will error if doesn't exist, which is expected)
-        iconPaths.set(name, `assets/icons/custom/${name.slice(3)}.svg`);
+        iconPaths.set(name, localPath);
       }
       return;
     }
 
     if (name.startsWith('mdi-')) {
-      iconPaths.set(name, `node_modules/@mdi/svg/svg/${name.slice(4)}.svg`);
+      iconPaths.set(name, resolve(projectRoot, `node_modules/@mdi/svg/svg/${name.slice(4)}.svg`));
       return;
     }
 
-    iconPaths.set(name, `node_modules/@material-design-icons/svg/filled/${name}.svg`);
+    iconPaths.set(name, resolve(projectRoot, `node_modules/@material-design-icons/svg/filled/${name}.svg`));
   });
 
   return iconPaths;
