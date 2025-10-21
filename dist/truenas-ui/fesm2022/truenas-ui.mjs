@@ -131,70 +131,119 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * This is a custom implementation that does NOT depend on Angular Material.
  *
  * The sprite system works by:
- * 1. Loading sprite-config.json which contains the versioned sprite URL
- * 2. Icons are resolved as SVG fragment identifiers (e.g., sprite.svg#icon-name)
- * 3. The sprite SVG contains all icons used in the application
+ * 1. Auto-loads the library's bundled sprite (contains all library icons like chevrons, MDI icons, etc.)
+ * 2. Optionally loads consumer's sprite (if they generated one for app-specific icons)
+ * 3. Merges both sprite configs - consumer icons override library icons if names conflict
+ * 4. Icons are resolved as SVG fragment identifiers (e.g., sprite.svg#icon-name)
  */
 class IxSpriteLoaderService {
     http;
     sanitizer;
-    spriteConfig;
+    librarySpriteConfig;
+    consumerSpriteConfig;
+    mergedSpriteConfig;
     spriteLoaded = false;
     spriteLoadPromise;
     constructor(http, sanitizer) {
         this.http = http;
         this.sanitizer = sanitizer;
-        // Start loading sprite config immediately
-        this.loadSpriteConfig();
+        // Start loading both library and consumer sprites immediately
+        this.loadSpriteConfigs();
     }
     /**
-     * Load the sprite configuration from assets/icons/sprite-config.json
-     * This contains the cache-busted URL for the sprite file
+     * Load both library and consumer sprite configurations
+     * Library sprite is always loaded, consumer sprite is optional
      */
-    async loadSpriteConfig() {
+    async loadSpriteConfigs() {
         if (this.spriteLoadPromise) {
             return this.spriteLoadPromise;
         }
         this.spriteLoadPromise = (async () => {
+            // Load library sprite (always available, bundled with the library)
             try {
-                const config = await firstValueFrom(this.http.get('assets/icons/sprite-config.json'));
-                this.spriteConfig = config;
-                this.spriteLoaded = true;
+                const libraryConfig = await firstValueFrom(this.http.get('truenas-ui/assets/icons/sprite-config.json'));
+                this.librarySpriteConfig = libraryConfig;
             }
             catch (error) {
-                console.error('Failed to load icon sprite config:', error);
-                // Set a flag so we don't keep retrying
-                this.spriteLoaded = false;
+                console.warn('[IxSpriteLoader] Failed to load library sprite config. Library icons may not work:', error);
             }
+            // Load consumer sprite (optional, only if consumer generated one)
+            try {
+                const consumerConfig = await firstValueFrom(this.http.get('assets/icons/sprite-config.json'));
+                this.consumerSpriteConfig = consumerConfig;
+            }
+            catch (error) {
+                // This is expected if consumer hasn't generated a sprite - not an error
+                console.debug('[IxSpriteLoader] No consumer sprite found (this is normal if you haven\'t generated one)');
+            }
+            // Merge the configs
+            this.mergeSpriteConfigs();
+            this.spriteLoaded = true;
         })();
         return this.spriteLoadPromise;
+    }
+    /**
+     * Merge library and consumer sprite configs
+     * Consumer icons take precedence over library icons if names conflict
+     */
+    mergeSpriteConfigs() {
+        if (!this.librarySpriteConfig && !this.consumerSpriteConfig) {
+            return;
+        }
+        // Start with library config
+        const mergedIcons = new Set(this.librarySpriteConfig?.icons || []);
+        // Add consumer icons (will override if names conflict)
+        if (this.consumerSpriteConfig?.icons) {
+            this.consumerSpriteConfig.icons.forEach(icon => mergedIcons.add(icon));
+        }
+        // Use consumer sprite URL as primary if available, otherwise library sprite URL
+        const primarySpriteUrl = this.consumerSpriteConfig?.iconUrl || this.librarySpriteConfig?.iconUrl || '';
+        this.mergedSpriteConfig = {
+            iconUrl: primarySpriteUrl,
+            icons: Array.from(mergedIcons)
+        };
     }
     /**
      * Ensure the sprite is loaded before resolving icons
      */
     async ensureSpriteLoaded() {
-        await this.loadSpriteConfig();
+        await this.loadSpriteConfigs();
         return this.spriteLoaded;
     }
     /**
      * Get the full URL for an icon in the sprite
      * Returns a URL like: assets/icons/sprite.svg?v=hash#icon-name
+     * or truenas-ui/assets/icons/sprite.svg?v=hash#icon-name for library icons
      *
      * @param iconName The icon name (e.g., 'folder', 'mdi-server', 'ix-dataset')
      * @returns The fragment identifier URL for the icon, or null if sprite not loaded or icon not in sprite
      */
     getIconUrl(iconName) {
-        if (!this.spriteConfig) {
-            console.warn(`Icon sprite not loaded yet, cannot resolve: ${iconName}`);
+        if (!this.mergedSpriteConfig) {
+            console.warn(`[IxSpriteLoader] Icon sprite not loaded yet, cannot resolve: ${iconName}`);
             return null;
         }
-        // Check if the icon exists in the sprite manifest
-        if (this.spriteConfig.icons && !this.spriteConfig.icons.includes(iconName)) {
+        // Check if the icon exists in the merged sprite manifest
+        if (this.mergedSpriteConfig.icons && !this.mergedSpriteConfig.icons.includes(iconName)) {
             return null;
+        }
+        // Determine which sprite URL to use
+        let spriteUrl;
+        // Check if icon is in consumer sprite (takes precedence)
+        if (this.consumerSpriteConfig?.icons?.includes(iconName)) {
+            spriteUrl = this.consumerSpriteConfig.iconUrl;
+        }
+        else if (this.librarySpriteConfig?.icons?.includes(iconName)) {
+            // Icon is from library sprite
+            spriteUrl = this.librarySpriteConfig.iconUrl;
+        }
+        else {
+            // Fallback to merged config URL
+            spriteUrl = this.mergedSpriteConfig.iconUrl;
         }
         // The sprite URL already includes the cache-busting version parameter
         // We just append the icon name as a fragment identifier
-        return `${this.spriteConfig.iconUrl}#${iconName}`;
+        return `${spriteUrl}#${iconName}`;
     }
     /**
      * Get a sanitized resource URL for an icon
@@ -217,10 +266,22 @@ class IxSpriteLoaderService {
         return this.spriteLoaded;
     }
     /**
-     * Get the sprite config if loaded
+     * Get the merged sprite config if loaded
      */
     getSpriteConfig() {
-        return this.spriteConfig;
+        return this.mergedSpriteConfig;
+    }
+    /**
+     * Get the library sprite config
+     */
+    getLibrarySpriteConfig() {
+        return this.librarySpriteConfig;
+    }
+    /**
+     * Get the consumer sprite config
+     */
+    getConsumerSpriteConfig() {
+        return this.consumerSpriteConfig;
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSpriteLoaderService, deps: [{ token: i1$1.HttpClient }, { token: i1$2.DomSanitizer }], target: i0.ɵɵFactoryTarget.Injectable });
     static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSpriteLoaderService, providedIn: 'root' });
@@ -3309,7 +3370,7 @@ class IxTreeNodeComponent extends CdkTreeNode {
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTreeNodeComponent, deps: [{ token: i0.ElementRef }, { token: i1$4.CdkTree, optional: true }, { token: CDK_TREE_NODE_OUTLET_NODE, optional: true }, { token: i0.ChangeDetectorRef, optional: true }], target: i0.ɵɵFactoryTarget.Component });
     static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxTreeNodeComponent, isStandalone: true, selector: "ix-tree-node", host: { attributes: { "role": "treeitem" }, properties: { "attr.aria-level": "level + 1", "attr.aria-expanded": "isExpandable ? isExpanded : null" }, classAttribute: "ix-tree-node-wrapper" }, providers: [
             { provide: CdkTreeNode, useExisting: IxTreeNodeComponent }
-        ], exportAs: ["ixTreeNode"], usesInheritance: true, ngImport: i0, template: "<div class=\"ix-tree-node\" \n     [class.ix-tree-node--expandable]=\"isExpandable\"\n     [attr.aria-level]=\"level + 1\"\n     [attr.aria-expanded]=\"isExpandable ? isExpanded : null\"\n     [style.cursor]=\"isExpandable ? 'pointer' : 'default'\"\n     cdkTreeNodeToggle\n     role=\"treeitem\">\n  \n  <div class=\"ix-tree-node__content\">\n    <!-- Arrow icon for expandable nodes -->\n    <div \n      *ngIf=\"isExpandable\"\n      class=\"ix-tree-node__toggle\"\n      [class.ix-tree-node__toggle--expanded]=\"isExpanded\">\n      <ix-icon\n        [name]=\"isExpanded ? 'mdi:chevron-down' : 'mdi:chevron-right'\"\n        size=\"sm\"\n        style=\"transition: transform 0.2s ease;\">\n      </ix-icon>\n    </div>\n    \n    <!-- Spacer for non-expandable nodes -->\n    <div *ngIf=\"!isExpandable\" class=\"ix-tree-node__spacer\"></div>\n    \n    <!-- Node content -->\n    <div class=\"ix-tree-node__text\">\n      <ng-content></ng-content>\n    </div>\n  </div>\n</div>", styles: [":host{display:block}.ix-tree-node{border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-tree-node:hover{background-color:var(--alt-bg2)}.ix-tree-node:last-child{border-bottom:none}.ix-tree-node--expandable{cursor:pointer}.ix-tree-node--expandable:hover{background-color:var(--alt-bg2)}.ix-tree-node--expandable:active{background-color:var(--alt-bg1)}.ix-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px}.ix-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:none;background:none;color:var(--fg2);cursor:pointer;border-radius:3px;transition:all .2s ease;flex-shrink:0}.ix-tree-node__toggle:hover{background-color:var(--alt-bg2);color:var(--fg1)}.ix-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:1px}.ix-tree-node__toggle svg{transition:transform .2s ease;transform:rotate(0)}.ix-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-tree-node__text{flex:1;min-width:0;color:var(--fg1)}.ix-tree-node__children{padding-left:24px}.ix-tree-invisible{display:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "ngmodule", type: CdkTreeModule }, { kind: "directive", type: i1$4.CdkTreeNodeToggle, selector: "[cdkTreeNodeToggle]", inputs: ["cdkTreeNodeToggleRecursive"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
+        ], exportAs: ["ixTreeNode"], usesInheritance: true, ngImport: i0, template: "<div class=\"ix-tree-node\" \n     [class.ix-tree-node--expandable]=\"isExpandable\"\n     [attr.aria-level]=\"level + 1\"\n     [attr.aria-expanded]=\"isExpandable ? isExpanded : null\"\n     [style.cursor]=\"isExpandable ? 'pointer' : 'default'\"\n     cdkTreeNodeToggle\n     role=\"treeitem\">\n  \n  <div class=\"ix-tree-node__content\">\n    <!-- Arrow icon for expandable nodes -->\n    <div \n      *ngIf=\"isExpandable\"\n      class=\"ix-tree-node__toggle\"\n      [class.ix-tree-node__toggle--expanded]=\"isExpanded\">\n      <ix-icon\n        [name]=\"isExpanded ? 'chevron-down' : 'chevron-right'\"\n        library=\"mdi\"\n        size=\"sm\"\n        style=\"transition: transform 0.2s ease;\">\n      </ix-icon>\n    </div>\n    \n    <!-- Spacer for non-expandable nodes -->\n    <div *ngIf=\"!isExpandable\" class=\"ix-tree-node__spacer\"></div>\n    \n    <!-- Node content -->\n    <div class=\"ix-tree-node__text\">\n      <ng-content></ng-content>\n    </div>\n  </div>\n</div>", styles: [":host{display:block}.ix-tree-node{border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-tree-node:hover{background-color:var(--alt-bg2)}.ix-tree-node:last-child{border-bottom:none}.ix-tree-node--expandable{cursor:pointer}.ix-tree-node--expandable:hover{background-color:var(--alt-bg2)}.ix-tree-node--expandable:active{background-color:var(--alt-bg1)}.ix-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px}.ix-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:none;background:none;color:var(--fg2);cursor:pointer;border-radius:3px;transition:all .2s ease;flex-shrink:0}.ix-tree-node__toggle:hover{background-color:var(--alt-bg2);color:var(--fg1)}.ix-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:1px}.ix-tree-node__toggle svg{transition:transform .2s ease;transform:rotate(0)}.ix-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-tree-node__text{flex:1;min-width:0;color:var(--fg1)}.ix-tree-node__children{padding-left:24px}.ix-tree-invisible{display:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "ngmodule", type: CdkTreeModule }, { kind: "directive", type: i1$4.CdkTreeNodeToggle, selector: "[cdkTreeNodeToggle]", inputs: ["cdkTreeNodeToggleRecursive"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTreeNodeComponent, decorators: [{
             type: Component,
@@ -3320,7 +3381,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                         '[attr.aria-level]': 'level + 1',
                         '[attr.aria-expanded]': 'isExpandable ? isExpanded : null',
                         'role': 'treeitem'
-                    }, encapsulation: ViewEncapsulation.Emulated, changeDetection: ChangeDetectionStrategy.OnPush, template: "<div class=\"ix-tree-node\" \n     [class.ix-tree-node--expandable]=\"isExpandable\"\n     [attr.aria-level]=\"level + 1\"\n     [attr.aria-expanded]=\"isExpandable ? isExpanded : null\"\n     [style.cursor]=\"isExpandable ? 'pointer' : 'default'\"\n     cdkTreeNodeToggle\n     role=\"treeitem\">\n  \n  <div class=\"ix-tree-node__content\">\n    <!-- Arrow icon for expandable nodes -->\n    <div \n      *ngIf=\"isExpandable\"\n      class=\"ix-tree-node__toggle\"\n      [class.ix-tree-node__toggle--expanded]=\"isExpanded\">\n      <ix-icon\n        [name]=\"isExpanded ? 'mdi:chevron-down' : 'mdi:chevron-right'\"\n        size=\"sm\"\n        style=\"transition: transform 0.2s ease;\">\n      </ix-icon>\n    </div>\n    \n    <!-- Spacer for non-expandable nodes -->\n    <div *ngIf=\"!isExpandable\" class=\"ix-tree-node__spacer\"></div>\n    \n    <!-- Node content -->\n    <div class=\"ix-tree-node__text\">\n      <ng-content></ng-content>\n    </div>\n  </div>\n</div>", styles: [":host{display:block}.ix-tree-node{border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-tree-node:hover{background-color:var(--alt-bg2)}.ix-tree-node:last-child{border-bottom:none}.ix-tree-node--expandable{cursor:pointer}.ix-tree-node--expandable:hover{background-color:var(--alt-bg2)}.ix-tree-node--expandable:active{background-color:var(--alt-bg1)}.ix-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px}.ix-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:none;background:none;color:var(--fg2);cursor:pointer;border-radius:3px;transition:all .2s ease;flex-shrink:0}.ix-tree-node__toggle:hover{background-color:var(--alt-bg2);color:var(--fg1)}.ix-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:1px}.ix-tree-node__toggle svg{transition:transform .2s ease;transform:rotate(0)}.ix-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-tree-node__text{flex:1;min-width:0;color:var(--fg1)}.ix-tree-node__children{padding-left:24px}.ix-tree-invisible{display:none}\n"] }]
+                    }, encapsulation: ViewEncapsulation.Emulated, changeDetection: ChangeDetectionStrategy.OnPush, template: "<div class=\"ix-tree-node\" \n     [class.ix-tree-node--expandable]=\"isExpandable\"\n     [attr.aria-level]=\"level + 1\"\n     [attr.aria-expanded]=\"isExpandable ? isExpanded : null\"\n     [style.cursor]=\"isExpandable ? 'pointer' : 'default'\"\n     cdkTreeNodeToggle\n     role=\"treeitem\">\n  \n  <div class=\"ix-tree-node__content\">\n    <!-- Arrow icon for expandable nodes -->\n    <div \n      *ngIf=\"isExpandable\"\n      class=\"ix-tree-node__toggle\"\n      [class.ix-tree-node__toggle--expanded]=\"isExpanded\">\n      <ix-icon\n        [name]=\"isExpanded ? 'chevron-down' : 'chevron-right'\"\n        library=\"mdi\"\n        size=\"sm\"\n        style=\"transition: transform 0.2s ease;\">\n      </ix-icon>\n    </div>\n    \n    <!-- Spacer for non-expandable nodes -->\n    <div *ngIf=\"!isExpandable\" class=\"ix-tree-node__spacer\"></div>\n    \n    <!-- Node content -->\n    <div class=\"ix-tree-node__text\">\n      <ng-content></ng-content>\n    </div>\n  </div>\n</div>", styles: [":host{display:block}.ix-tree-node{border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-tree-node:hover{background-color:var(--alt-bg2)}.ix-tree-node:last-child{border-bottom:none}.ix-tree-node--expandable{cursor:pointer}.ix-tree-node--expandable:hover{background-color:var(--alt-bg2)}.ix-tree-node--expandable:active{background-color:var(--alt-bg1)}.ix-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px}.ix-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:none;background:none;color:var(--fg2);cursor:pointer;border-radius:3px;transition:all .2s ease;flex-shrink:0}.ix-tree-node__toggle:hover{background-color:var(--alt-bg2);color:var(--fg1)}.ix-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:1px}.ix-tree-node__toggle svg{transition:transform .2s ease;transform:rotate(0)}.ix-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-tree-node__text{flex:1;min-width:0;color:var(--fg1)}.ix-tree-node__children{padding-left:24px}.ix-tree-invisible{display:none}\n"] }]
         }], ctorParameters: () => [{ type: i0.ElementRef }, { type: i1$4.CdkTree, decorators: [{
                     type: Optional
                 }] }, { type: undefined, decorators: [{
@@ -3399,7 +3460,7 @@ class IxNestedTreeNodeComponent extends CdkNestedTreeNode {
     static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxNestedTreeNodeComponent, isStandalone: true, selector: "ix-nested-tree-node", host: { attributes: { "role": "treeitem" }, properties: { "attr.aria-level": "level + 1", "attr.aria-expanded": "isExpandable ? isExpanded : null" }, classAttribute: "ix-nested-tree-node-wrapper" }, providers: [
             { provide: CdkNestedTreeNode, useExisting: IxNestedTreeNodeComponent },
             { provide: CdkTreeNode, useExisting: IxNestedTreeNodeComponent }
-        ], exportAs: ["ixNestedTreeNode"], usesInheritance: true, ngImport: i0, template: "<div class=\"ix-nested-tree-node__content\">\n  <!-- Toggle button for expandable nodes (provided by component) -->\n  <button\n    *ngIf=\"isExpandable\"\n    class=\"ix-nested-tree-node__toggle\"\n    [class.ix-nested-tree-node__toggle--expanded]=\"isExpanded\"\n    cdkTreeNodeToggle\n    [attr.aria-label]=\"'Toggle node'\"\n    type=\"button\">\n    <ix-icon\n      [name]=\"isExpanded ? 'mdi:chevron-down' : 'mdi:chevron-right'\"\n      size=\"sm\"\n      style=\"transition: transform 0.2s ease;\">\n    </ix-icon>\n  </button>\n\n  <!-- Spacer for non-expandable nodes to maintain alignment -->\n  <div *ngIf=\"!isExpandable\" class=\"ix-nested-tree-node__spacer\"></div>\n\n  <!-- Consumer content -->\n  <ng-content></ng-content>\n</div>\n\n<!-- Children container -->\n<div class=\"ix-nested-tree-node-container\" *ngIf=\"isExpandable\" [class.ix-tree-invisible]=\"!isExpanded\" role=\"group\">\n  <ng-content select=\"[slot=children]\"></ng-content>\n</div>", styles: [".ix-nested-tree-node-wrapper{display:block;width:100%}.ix-nested-tree-node{display:block;width:100%;font-family:var(--font-family);font-size:var(--font-size-sm);line-height:1.4;color:var(--fg1)}.ix-nested-tree-node--expandable .ix-nested-tree-node__content{cursor:pointer}.ix-nested-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-nested-tree-node__content:hover{background-color:var(--alt-bg2)}.ix-nested-tree-node__content:focus-within{background-color:var(--alt-bg2);outline:2px solid var(--primary);outline-offset:-2px}.ix-tree-invisible{display:none}.ix-nested-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;margin-right:8px;padding:0;border:none;background:transparent;border-radius:4px;cursor:pointer;color:var(--fg2);transition:background-color .2s ease,color .2s ease}.ix-nested-tree-node__toggle:hover{background-color:var(--bg3);color:var(--fg1)}.ix-nested-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-nested-tree-node__toggle svg{transition:transform .2s ease}.ix-nested-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-nested-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-nested-tree-node__text{flex:1;display:flex;align-items:center;gap:8px;min-width:0;color:var(--fg1)}div.ix-nested-tree-node-container{padding-left:40px}@media (prefers-reduced-motion: reduce){.ix-nested-tree-node__toggle svg,.ix-nested-tree-node__content,.ix-nested-tree-node__children{transition:none}}@media (prefers-contrast: high){.ix-nested-tree-node__content{border:1px solid transparent}.ix-nested-tree-node__content:hover,.ix-nested-tree-node__content:focus-within{border-color:var(--fg1)}.ix-nested-tree-node__toggle{border:1px solid var(--fg2)}.ix-nested-tree-node__toggle:hover,.ix-nested-tree-node__toggle:focus{border-color:var(--fg1)}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "ngmodule", type: CdkTreeModule }, { kind: "directive", type: i1$4.CdkTreeNodeToggle, selector: "[cdkTreeNodeToggle]", inputs: ["cdkTreeNodeToggleRecursive"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
+        ], exportAs: ["ixNestedTreeNode"], usesInheritance: true, ngImport: i0, template: "<div class=\"ix-nested-tree-node__content\">\n  <!-- Toggle button for expandable nodes (provided by component) -->\n  <button\n    *ngIf=\"isExpandable\"\n    class=\"ix-nested-tree-node__toggle\"\n    [class.ix-nested-tree-node__toggle--expanded]=\"isExpanded\"\n    cdkTreeNodeToggle\n    [attr.aria-label]=\"'Toggle node'\"\n    type=\"button\">\n    <ix-icon\n      [name]=\"isExpanded ? 'chevron-down' : 'chevron-right'\"\n      library=\"mdi\"\n      size=\"sm\"\n      style=\"transition: transform 0.2s ease;\">\n    </ix-icon>\n  </button>\n\n  <!-- Spacer for non-expandable nodes to maintain alignment -->\n  <div *ngIf=\"!isExpandable\" class=\"ix-nested-tree-node__spacer\"></div>\n\n  <!-- Consumer content -->\n  <ng-content></ng-content>\n</div>\n\n<!-- Children container -->\n<div class=\"ix-nested-tree-node-container\" *ngIf=\"isExpandable\" [class.ix-tree-invisible]=\"!isExpanded\" role=\"group\">\n  <ng-content select=\"[slot=children]\"></ng-content>\n</div>", styles: [".ix-nested-tree-node-wrapper{display:block;width:100%}.ix-nested-tree-node{display:block;width:100%;font-family:var(--font-family);font-size:var(--font-size-sm);line-height:1.4;color:var(--fg1)}.ix-nested-tree-node--expandable .ix-nested-tree-node__content{cursor:pointer}.ix-nested-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-nested-tree-node__content:hover{background-color:var(--alt-bg2)}.ix-nested-tree-node__content:focus-within{background-color:var(--alt-bg2);outline:2px solid var(--primary);outline-offset:-2px}.ix-tree-invisible{display:none}.ix-nested-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;margin-right:8px;padding:0;border:none;background:transparent;border-radius:4px;cursor:pointer;color:var(--fg2);transition:background-color .2s ease,color .2s ease}.ix-nested-tree-node__toggle:hover{background-color:var(--bg3);color:var(--fg1)}.ix-nested-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-nested-tree-node__toggle svg{transition:transform .2s ease}.ix-nested-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-nested-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-nested-tree-node__text{flex:1;display:flex;align-items:center;gap:8px;min-width:0;color:var(--fg1)}div.ix-nested-tree-node-container{padding-left:40px}@media (prefers-reduced-motion: reduce){.ix-nested-tree-node__toggle svg,.ix-nested-tree-node__content,.ix-nested-tree-node__children{transition:none}}@media (prefers-contrast: high){.ix-nested-tree-node__content{border:1px solid transparent}.ix-nested-tree-node__content:hover,.ix-nested-tree-node__content:focus-within{border-color:var(--fg1)}.ix-nested-tree-node__toggle{border:1px solid var(--fg2)}.ix-nested-tree-node__toggle:hover,.ix-nested-tree-node__toggle:focus{border-color:var(--fg1)}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "ngmodule", type: CdkTreeModule }, { kind: "directive", type: i1$4.CdkTreeNodeToggle, selector: "[cdkTreeNodeToggle]", inputs: ["cdkTreeNodeToggleRecursive"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxNestedTreeNodeComponent, decorators: [{
             type: Component,
@@ -3411,7 +3472,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                         '[attr.aria-level]': 'level + 1',
                         '[attr.aria-expanded]': 'isExpandable ? isExpanded : null',
                         'role': 'treeitem'
-                    }, encapsulation: ViewEncapsulation.Emulated, changeDetection: ChangeDetectionStrategy.OnPush, template: "<div class=\"ix-nested-tree-node__content\">\n  <!-- Toggle button for expandable nodes (provided by component) -->\n  <button\n    *ngIf=\"isExpandable\"\n    class=\"ix-nested-tree-node__toggle\"\n    [class.ix-nested-tree-node__toggle--expanded]=\"isExpanded\"\n    cdkTreeNodeToggle\n    [attr.aria-label]=\"'Toggle node'\"\n    type=\"button\">\n    <ix-icon\n      [name]=\"isExpanded ? 'mdi:chevron-down' : 'mdi:chevron-right'\"\n      size=\"sm\"\n      style=\"transition: transform 0.2s ease;\">\n    </ix-icon>\n  </button>\n\n  <!-- Spacer for non-expandable nodes to maintain alignment -->\n  <div *ngIf=\"!isExpandable\" class=\"ix-nested-tree-node__spacer\"></div>\n\n  <!-- Consumer content -->\n  <ng-content></ng-content>\n</div>\n\n<!-- Children container -->\n<div class=\"ix-nested-tree-node-container\" *ngIf=\"isExpandable\" [class.ix-tree-invisible]=\"!isExpanded\" role=\"group\">\n  <ng-content select=\"[slot=children]\"></ng-content>\n</div>", styles: [".ix-nested-tree-node-wrapper{display:block;width:100%}.ix-nested-tree-node{display:block;width:100%;font-family:var(--font-family);font-size:var(--font-size-sm);line-height:1.4;color:var(--fg1)}.ix-nested-tree-node--expandable .ix-nested-tree-node__content{cursor:pointer}.ix-nested-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-nested-tree-node__content:hover{background-color:var(--alt-bg2)}.ix-nested-tree-node__content:focus-within{background-color:var(--alt-bg2);outline:2px solid var(--primary);outline-offset:-2px}.ix-tree-invisible{display:none}.ix-nested-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;margin-right:8px;padding:0;border:none;background:transparent;border-radius:4px;cursor:pointer;color:var(--fg2);transition:background-color .2s ease,color .2s ease}.ix-nested-tree-node__toggle:hover{background-color:var(--bg3);color:var(--fg1)}.ix-nested-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-nested-tree-node__toggle svg{transition:transform .2s ease}.ix-nested-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-nested-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-nested-tree-node__text{flex:1;display:flex;align-items:center;gap:8px;min-width:0;color:var(--fg1)}div.ix-nested-tree-node-container{padding-left:40px}@media (prefers-reduced-motion: reduce){.ix-nested-tree-node__toggle svg,.ix-nested-tree-node__content,.ix-nested-tree-node__children{transition:none}}@media (prefers-contrast: high){.ix-nested-tree-node__content{border:1px solid transparent}.ix-nested-tree-node__content:hover,.ix-nested-tree-node__content:focus-within{border-color:var(--fg1)}.ix-nested-tree-node__toggle{border:1px solid var(--fg2)}.ix-nested-tree-node__toggle:hover,.ix-nested-tree-node__toggle:focus{border-color:var(--fg1)}}\n"] }]
+                    }, encapsulation: ViewEncapsulation.Emulated, changeDetection: ChangeDetectionStrategy.OnPush, template: "<div class=\"ix-nested-tree-node__content\">\n  <!-- Toggle button for expandable nodes (provided by component) -->\n  <button\n    *ngIf=\"isExpandable\"\n    class=\"ix-nested-tree-node__toggle\"\n    [class.ix-nested-tree-node__toggle--expanded]=\"isExpanded\"\n    cdkTreeNodeToggle\n    [attr.aria-label]=\"'Toggle node'\"\n    type=\"button\">\n    <ix-icon\n      [name]=\"isExpanded ? 'chevron-down' : 'chevron-right'\"\n      library=\"mdi\"\n      size=\"sm\"\n      style=\"transition: transform 0.2s ease;\">\n    </ix-icon>\n  </button>\n\n  <!-- Spacer for non-expandable nodes to maintain alignment -->\n  <div *ngIf=\"!isExpandable\" class=\"ix-nested-tree-node__spacer\"></div>\n\n  <!-- Consumer content -->\n  <ng-content></ng-content>\n</div>\n\n<!-- Children container -->\n<div class=\"ix-nested-tree-node-container\" *ngIf=\"isExpandable\" [class.ix-tree-invisible]=\"!isExpanded\" role=\"group\">\n  <ng-content select=\"[slot=children]\"></ng-content>\n</div>", styles: [".ix-nested-tree-node-wrapper{display:block;width:100%}.ix-nested-tree-node{display:block;width:100%;font-family:var(--font-family);font-size:var(--font-size-sm);line-height:1.4;color:var(--fg1)}.ix-nested-tree-node--expandable .ix-nested-tree-node__content{cursor:pointer}.ix-nested-tree-node__content{display:flex;align-items:center;gap:8px;min-height:48px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background-color .2s ease}.ix-nested-tree-node__content:hover{background-color:var(--alt-bg2)}.ix-nested-tree-node__content:focus-within{background-color:var(--alt-bg2);outline:2px solid var(--primary);outline-offset:-2px}.ix-tree-invisible{display:none}.ix-nested-tree-node__toggle{display:flex;align-items:center;justify-content:center;width:24px;height:24px;margin-right:8px;padding:0;border:none;background:transparent;border-radius:4px;cursor:pointer;color:var(--fg2);transition:background-color .2s ease,color .2s ease}.ix-nested-tree-node__toggle:hover{background-color:var(--bg3);color:var(--fg1)}.ix-nested-tree-node__toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-nested-tree-node__toggle svg{transition:transform .2s ease}.ix-nested-tree-node__toggle--expanded svg{transform:rotate(90deg)}.ix-nested-tree-node__spacer{width:24px;height:24px;flex-shrink:0}.ix-nested-tree-node__text{flex:1;display:flex;align-items:center;gap:8px;min-width:0;color:var(--fg1)}div.ix-nested-tree-node-container{padding-left:40px}@media (prefers-reduced-motion: reduce){.ix-nested-tree-node__toggle svg,.ix-nested-tree-node__content,.ix-nested-tree-node__children{transition:none}}@media (prefers-contrast: high){.ix-nested-tree-node__content{border:1px solid transparent}.ix-nested-tree-node__content:hover,.ix-nested-tree-node__content:focus-within{border-color:var(--fg1)}.ix-nested-tree-node__toggle{border:1px solid var(--fg2)}.ix-nested-tree-node__toggle:hover,.ix-nested-tree-node__toggle:focus{border-color:var(--fg1)}}\n"] }]
         }], ctorParameters: () => [{ type: i0.ElementRef }, { type: i1$4.CdkTree, decorators: [{
                     type: Optional
                 }] }, { type: undefined, decorators: [{

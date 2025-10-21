@@ -211,22 +211,30 @@ interface SpriteConfig {
  * This is a custom implementation that does NOT depend on Angular Material.
  *
  * The sprite system works by:
- * 1. Loading sprite-config.json which contains the versioned sprite URL
- * 2. Icons are resolved as SVG fragment identifiers (e.g., sprite.svg#icon-name)
- * 3. The sprite SVG contains all icons used in the application
+ * 1. Auto-loads the library's bundled sprite (contains all library icons like chevrons, MDI icons, etc.)
+ * 2. Optionally loads consumer's sprite (if they generated one for app-specific icons)
+ * 3. Merges both sprite configs - consumer icons override library icons if names conflict
+ * 4. Icons are resolved as SVG fragment identifiers (e.g., sprite.svg#icon-name)
  */
 declare class IxSpriteLoaderService {
     private http;
     private sanitizer;
-    private spriteConfig?;
+    private librarySpriteConfig?;
+    private consumerSpriteConfig?;
+    private mergedSpriteConfig?;
     private spriteLoaded;
     private spriteLoadPromise?;
     constructor(http: HttpClient, sanitizer: DomSanitizer);
     /**
-     * Load the sprite configuration from assets/icons/sprite-config.json
-     * This contains the cache-busted URL for the sprite file
+     * Load both library and consumer sprite configurations
+     * Library sprite is always loaded, consumer sprite is optional
      */
-    private loadSpriteConfig;
+    private loadSpriteConfigs;
+    /**
+     * Merge library and consumer sprite configs
+     * Consumer icons take precedence over library icons if names conflict
+     */
+    private mergeSpriteConfigs;
     /**
      * Ensure the sprite is loaded before resolving icons
      */
@@ -234,6 +242,7 @@ declare class IxSpriteLoaderService {
     /**
      * Get the full URL for an icon in the sprite
      * Returns a URL like: assets/icons/sprite.svg?v=hash#icon-name
+     * or truenas-ui/assets/icons/sprite.svg?v=hash#icon-name for library icons
      *
      * @param iconName The icon name (e.g., 'folder', 'mdi-server', 'ix-dataset')
      * @returns The fragment identifier URL for the icon, or null if sprite not loaded or icon not in sprite
@@ -252,9 +261,17 @@ declare class IxSpriteLoaderService {
      */
     isSpriteLoaded(): boolean;
     /**
-     * Get the sprite config if loaded
+     * Get the merged sprite config if loaded
      */
     getSpriteConfig(): SpriteConfig | undefined;
+    /**
+     * Get the library sprite config
+     */
+    getLibrarySpriteConfig(): SpriteConfig | undefined;
+    /**
+     * Get the consumer sprite config
+     */
+    getConsumerSpriteConfig(): SpriteConfig | undefined;
     static ɵfac: i0.ɵɵFactoryDeclaration<IxSpriteLoaderService, never>;
     static ɵprov: i0.ɵɵInjectableDeclaration<IxSpriteLoaderService>;
 }

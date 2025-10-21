@@ -1,5 +1,5 @@
 {
-  "iconUrl": "assets/icons/sprite.svg?v=4a3f84b831",
+  "iconUrl": "assets/icons/sprite.svg?v=94d6c2e3ae",
   "icons": [
     "close",
     "delete",
@@ -51,6 +51,7 @@
     "mdi-close",
     "mdi-cog",
     "mdi-content-copy",
+    "mdi-cpu-64-bit",
     "mdi-database",
     "mdi-delete",
     "mdi-dots-vertical",
