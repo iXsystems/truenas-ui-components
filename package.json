@@ -51,9 +51,9 @@
     "zone.js": "^0.15.0"
   },
   "dependencies": {
+    "@material-design-icons/svg": "~0.14.13",
     "@mdi/angular-material": "^7.2.96",
     "@mdi/js": "^7.4.47",
-    "@material-design-icons/svg": "~0.14.13",
     "@mdi/svg": "~7.4.47",
     "@types/svg-sprite": "~0.0.39",
     "@types/vinyl": "~2.0.12",
