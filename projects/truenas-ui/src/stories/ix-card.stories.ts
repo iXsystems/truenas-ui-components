@@ -104,6 +104,7 @@ export const WithoutTitle: Story = {
   args: {
     elevation: 'medium',
     padding: 'medium',
+    padContent: true,
     bordered: false,
   },
   play: async ({ canvasElement }) => {
@@ -120,6 +121,7 @@ export const LowElevation: Story = {
     title: 'Low Elevation Card',
     elevation: 'low',
     padding: 'medium',
+    padContent: true,
     bordered: false,
   },
 };
@@ -129,6 +131,7 @@ export const HighElevation: Story = {
     title: 'High Elevation Card',
     elevation: 'high',
     padding: 'medium',
+    padContent: true,
     bordered: false,
   },
 };
@@ -138,6 +141,7 @@ export const SmallPadding: Story = {
     title: 'Small Padding',
     elevation: 'medium',
     padding: 'small',
+    padContent: true,
     bordered: false,
   },
 };
@@ -147,6 +151,7 @@ export const LargePadding: Story = {
     title: 'Large Padding',
     elevation: 'medium',
     padding: 'large',
+    padContent: true,
     bordered: false,
   },
 };
@@ -200,6 +205,7 @@ export const BorderedLowElevation: Story = {
     title: 'Bordered Low Elevation',
     elevation: 'low',
     padding: 'medium',
+    padContent: true,
     bordered: true,
     background: true,
   },
@@ -210,6 +216,7 @@ export const NoBackground: Story = {
     title: 'Transparent Card',
     elevation: 'medium',
     padding: 'medium',
+    padContent: true,
     bordered: false,
     background: false,
   },
@@ -220,6 +227,7 @@ export const BorderedNoBackground: Story = {
     title: 'Bordered Transparent',
     elevation: 'low',
     padding: 'medium',
+    padContent: true,
     bordered: true,
     background: false,
   },
@@ -230,6 +238,7 @@ export const NoElevation: Story = {
     title: 'No Elevation Card',
     elevation: 'none',
     padding: 'medium',
+    padContent: true,
     bordered: true,
     background: true,
   },
