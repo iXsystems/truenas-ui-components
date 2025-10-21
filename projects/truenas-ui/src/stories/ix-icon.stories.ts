@@ -29,55 +29,109 @@ const meta: Meta<IxIconComponent> = {
     docs: {
       description: {
         component: `
-A flexible icon component with sprite-based icon loading and a powerful registry system for integrating any third-party icon library.
+A flexible icon component with automatic sprite generation for optimal performance.
 
-## Icon Sprite System
+## Quick Start
 
-The component includes an automatic sprite generation system that:
-- **Scans templates** to find all icon references
-- **Generates optimized sprite** with only used icons (tree-shaking)
-- **Includes 7,000+ icons**: Material Design Icons (MDI) and Material Design
-- **Custom TrueNAS icons**: 40 specialized icons for storage, hardware, and networking
-- **Cache-busted URLs**: MD5 hash versioning for efficient caching
+The icon system works automatically with zero configuration:
 
-## Icon Registry System
+1. **Use icons in your templates**:
+\`\`\`html
+<ix-icon name="folder" library="mdi" size="lg"></ix-icon>
+<ix-icon name="server" library="mdi"></ix-icon>
+\`\`\`
 
-Beyond the sprite, you can also register additional icon libraries:
-- **Icon Libraries**: Lucide, Heroicons, Font Awesome, etc.
-- **Custom SVG Icons**: Your own icon sets
-- **Multiple Sources**: Mix and match different icon libraries
+2. **Generate the sprite** (run once, then whenever icons change):
+\`\`\`bash
+yarn icons
+\`\`\`
 
-## Integration Examples
+That's it! The sprite generation automatically:
+- ✅ Scans your templates for all icon usage
+- ✅ Includes all library icons (chevrons, folder, etc.)
+- ✅ Bundles only icons you use (tree-shaking)
+- ✅ Adds cache-busting hashes
 
-### Icon Libraries (via Registry)
-- **Lucide**: \`name="lucide:home"\` → Register Lucide with \`setupLucideIntegration()\`
-- **Heroicons**: \`name="heroicons:user"\` → Register your own library
-- **Font Awesome**: \`name="fa:home"\` → Register FA as a library
+## What's Included
 
-### Custom Icons (via Registry)
-- **Individual Icons**: \`name="my-logo"\` → Register with \`iconRegistry.registerIcon()\`
-- **Icon Sets**: \`name="brand:logo"\` → Register as a library
+- **7,000+ MDI icons**: Material Design Icons for general use
+- **40+ TrueNAS icons**: Custom icons for storage, hardware, networking (\`ix-*\` prefix)
+- **Library icons**: Internal component icons (chevrons, folder, etc.) automatically included
 
-### Built-in Fallbacks
-- **Unicode**: Common icons like \`home\`, \`star\`, \`check\` → ⌂, ★, ✓
-- **Text**: Any name → Abbreviated text (e.g., "unknown-icon" → "UN")
+## Setup in Your App
 
-## Setup Example
+**Step 1: Add the sprite generation script to package.json**:
+\`\`\`json
+{
+  "scripts": {
+    "icons": "truenas-icons generate"
+  }
+}
+\`\`\`
+
+**Step 2: Run the sprite generator**:
+\`\`\`bash
+yarn icons
+\`\`\`
+
+This scans your templates and generates:
+- \`src/assets/icons/sprite.svg\` - The sprite file
+- \`src/assets/icons/sprite-config.json\` - Icon manifest
+
+**Step 3: Use icons in your templates**:
+\`\`\`html
+<!-- MDI icons -->
+<ix-icon name="folder" library="mdi"></ix-icon>
+<ix-icon name="server" library="mdi"></ix-icon>
+
+<!-- TrueNAS custom icons -->
+<ix-icon name="ix-dataset" library="mdi"></ix-icon>
+<ix-icon name="ix-hdd" library="mdi"></ix-icon>
+\`\`\`
+
+## Dynamic Icons
+
+If you use icons dynamically in TypeScript (not in templates), mark them with \`iconMarker()\`:
 
 \`\`\`typescript
-import { IxIconRegistryService, setupLucideIntegration } from 'truenas-ui';
-import * as LucideIcons from 'lucide';
+import { iconMarker } from 'truenas-ui';
 
-// Register Lucide library
-setupLucideIntegration(LucideIcons);
+// Mark icons used in TypeScript logic
+iconMarker('mdi-code-json');
+iconMarker('mdi-language-typescript');
+iconMarker('mdi-file-document');
 
-// Register custom icons
-iconRegistry.registerIcon('my-logo', '<svg>...</svg>');
-iconRegistry.registerIcons({
-  'brand-logo': '<svg>...</svg>',
-  'custom-heart': '<svg>...</svg>'
+// Then use them dynamically
+getFileIcon(filename: string): string {
+  if (filename.endsWith('.json')) return 'code-json';
+  if (filename.endsWith('.ts')) return 'language-typescript';
+  return 'file-document';
+}
+\`\`\`
+
+Then run \`yarn icons\` to include them in the sprite.
+
+## Using Other Icon Libraries (Optional)
+
+For icon libraries beyond MDI (like Lucide, Heroicons, Font Awesome), use the registry system:
+
+\`\`\`typescript
+import { IxIconRegistryService } from 'truenas-ui';
+import { Home, User, Settings } from 'lucide';
+
+// In your component or app initializer
+iconRegistry.registerLibrary({
+  name: 'lucide',
+  resolver: (iconName: string) => {
+    const icons = { home: Home, user: User, settings: Settings };
+    return convertToSvgString(icons[iconName]);
+  }
 });
 \`\`\`
+
+Then use: \`<ix-icon name="home" library="lucide"></ix-icon>\`
+
+**Note**: MDI icons use the sprite system (no registry needed). Other libraries require manual registration.
         `,
       },
     },
