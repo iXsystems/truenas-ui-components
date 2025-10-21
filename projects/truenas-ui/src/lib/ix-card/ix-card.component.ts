@@ -40,6 +40,9 @@ export class IxCardComponent {
   padding: 'small' | 'medium' | 'large' = 'medium';
 
   @Input()
+  padContent = true;
+
+  @Input()
   bordered = false;
 
   @Input()
@@ -90,10 +93,11 @@ export class IxCardComponent {
   public get classes(): string[] {
     const elevationClass = `ix-card--elevation-${this.elevation}`;
     const paddingClass = `ix-card--padding-${this.padding}`;
+    const contentPaddingClass = this.padContent ? `ix-card--content-padding-${this.padding}` : 'ix-card--content-padding-none';
     const borderedClass = this.bordered ? 'ix-card--bordered' : '';
     const backgroundClass = this.background ? 'ix-card--background' : '';
 
-    return ['ix-card', elevationClass, paddingClass, borderedClass, backgroundClass].filter(Boolean);
+    return ['ix-card', elevationClass, paddingClass, contentPaddingClass, borderedClass, backgroundClass].filter(Boolean);
   }
 
   public get hasHeader(): boolean {
