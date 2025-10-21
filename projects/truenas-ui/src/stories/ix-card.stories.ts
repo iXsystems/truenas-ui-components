@@ -16,7 +16,11 @@ const meta: Meta<IxCardComponent> = {
     padding: {
       control: 'select',
       options: ['small', 'medium', 'large'],
-      description: 'Internal padding size',
+      description: 'Padding size for header, footer, and content areas',
+    },
+    padContent: {
+      control: 'boolean',
+      description: 'Enable content area padding. Set to false ONLY for full-width content like tables, images, or charts.',
     },
     bordered: {
       control: 'boolean',
@@ -66,13 +70,12 @@ const meta: Meta<IxCardComponent> = {
         [title]="title"
         [elevation]="elevation"
         [padding]="padding"
+        [padContent]="padContent"
         [bordered]="bordered"
         [background]="background"
       >
-        <div style="padding: 24px;">
-          <p>This is the card content. You can put any content here including other components, text, images, etc.</p>
-          <p>The card provides a clean container with customizable elevation, padding, and optional borders.</p>
-        </div>
+        <p>This is the card content. You can put any content here including other components, text, images, etc.</p>
+        <p>The card provides a clean container with customizable elevation, padding, and optional borders.</p>
       </ix-card>
     `,
   }),
@@ -86,6 +89,7 @@ export const Default: Story = {
     title: 'Card Title',
     elevation: 'medium',
     padding: 'medium',
+    padContent: true,
     bordered: false,
     background: true,
   },
@@ -100,6 +104,7 @@ export const WithoutTitle: Story = {
   args: {
     elevation: 'medium',
     padding: 'medium',
+    padContent: true,
     bordered: false,
   },
   play: async ({ canvasElement }) => {
@@ -116,6 +121,7 @@ export const LowElevation: Story = {
     title: 'Low Elevation Card',
     elevation: 'low',
     padding: 'medium',
+    padContent: true,
     bordered: false,
   },
 };
@@ -125,6 +131,7 @@ export const HighElevation: Story = {
     title: 'High Elevation Card',
     elevation: 'high',
     padding: 'medium',
+    padContent: true,
     bordered: false,
   },
 };
@@ -134,6 +141,7 @@ export const SmallPadding: Story = {
     title: 'Small Padding',
     elevation: 'medium',
     padding: 'small',
+    padContent: true,
     bordered: false,
   },
 };
@@ -143,6 +151,7 @@ export const LargePadding: Story = {
     title: 'Large Padding',
     elevation: 'medium',
     padding: 'large',
+    padContent: true,
     bordered: false,
   },
 };
@@ -152,8 +161,43 @@ export const Bordered: Story = {
     title: 'Bordered Card',
     elevation: 'medium',
     padding: 'medium',
+    padContent: true,
     bordered: true,
   },
+};
+
+/**
+ * Use padContent="false" for full-width content like:
+ * - Tables (ix-table)
+ * - Images (full-width)
+ * - Charts/graphs
+ * - Custom layouts that need edge-to-edge content
+ */
+export const FullWidthContent: Story = {
+  args: {
+    title: 'Full-Width Content (No Padding)',
+    elevation: 'medium',
+    padding: 'medium',
+    padContent: false,
+    bordered: true,
+  },
+  render: (args) => ({
+    props: args,
+    template: `
+      <ix-card
+        [title]="title"
+        [elevation]="elevation"
+        [padding]="padding"
+        [padContent]="padContent"
+        [bordered]="bordered"
+        [background]="background">
+        <div style="padding: 16px; margin: 0; border: 2px dashed var(--lines);">
+          <p style="margin: 0;">This div has manual padding to show the content area has no built-in padding.</p>
+          <p style="margin: 8px 0 0;">Use padContent="false" for tables, images, charts, or custom edge-to-edge layouts.</p>
+        </div>
+      </ix-card>
+    `,
+  }),
 };
 
 export const BorderedLowElevation: Story = {
@@ -161,6 +205,7 @@ export const BorderedLowElevation: Story = {
     title: 'Bordered Low Elevation',
     elevation: 'low',
     padding: 'medium',
+    padContent: true,
     bordered: true,
     background: true,
   },
@@ -171,6 +216,7 @@ export const NoBackground: Story = {
     title: 'Transparent Card',
     elevation: 'medium',
     padding: 'medium',
+    padContent: true,
     bordered: false,
     background: false,
   },
@@ -181,6 +227,7 @@ export const BorderedNoBackground: Story = {
     title: 'Bordered Transparent',
     elevation: 'low',
     padding: 'medium',
+    padContent: true,
     bordered: true,
     background: false,
   },
@@ -191,6 +238,7 @@ export const NoElevation: Story = {
     title: 'No Elevation Card',
     elevation: 'none',
     padding: 'medium',
+    padContent: true,
     bordered: true,
     background: true,
   },
@@ -201,6 +249,7 @@ export const WithHeaderStatus: Story = {
     title: 'System Status',
     elevation: 'medium',
     padding: 'medium',
+    padContent: true,
     headerStatus: { label: 'Active', type: 'success' },
   },
   render: (args) => ({
@@ -210,12 +259,11 @@ export const WithHeaderStatus: Story = {
         [title]="title"
         [elevation]="elevation"
         [padding]="padding"
+        [padContent]="padContent"
         [bordered]="bordered"
         [background]="background"
         [headerStatus]="headerStatus">
-        <div style="padding: 24px;">
-          <p>This card includes a status badge in the header showing the current state.</p>
-        </div>
+        <p>This card includes a status badge in the header showing the current state.</p>
       </ix-card>
     `,
   }),
@@ -226,6 +274,7 @@ export const WithHeaderControl: Story = {
     title: 'Feature Settings',
     elevation: 'medium',
     padding: 'medium',
+    padContent: true,
     headerControl: {
       label: 'Enable',
       checked: true,
@@ -239,12 +288,11 @@ export const WithHeaderControl: Story = {
         [title]="title"
         [elevation]="elevation"
         [padding]="padding"
+        [padContent]="padContent"
         [bordered]="bordered"
         [background]="background"
         [headerControl]="headerControl">
-        <div style="padding: 24px;">
-          <p>This card includes a slide toggle control in the header for quick enable/disable actions.</p>
-        </div>
+        <p>This card includes a slide toggle control in the header for quick enable/disable actions.</p>
       </ix-card>
     `,
   }),
@@ -255,6 +303,7 @@ export const WithHeaderMenu: Story = {
     title: 'Configuration',
     elevation: 'medium',
     padding: 'medium',
+    padContent: true,
     headerMenu: [
       { id: '1', label: 'Edit', action: () => console.log('Edit clicked'), icon: 'pencil' },
       { id: '2', label: 'Duplicate', action: () => console.log('Duplicate clicked'), icon: 'content-copy' },
@@ -269,12 +318,11 @@ export const WithHeaderMenu: Story = {
         [title]="title"
         [elevation]="elevation"
         [padding]="padding"
+        [padContent]="padContent"
         [bordered]="bordered"
         [background]="background"
         [headerMenu]="headerMenu">
-        <div style="padding: 24px;">
-          <p>This card includes a three-dot menu icon in the header with common actions. Click the dots to open the menu.</p>
-        </div>
+        <p>This card includes a three-dot menu icon in the header with common actions. Click the dots to open the menu.</p>
       </ix-card>
     `,
   }),
@@ -285,6 +333,7 @@ export const WithTitleLink: Story = {
     title: 'View Details',
     elevation: 'medium',
     padding: 'medium',
+    padContent: true,
     titleLink: '#/details',
   },
   render: (args) => ({
@@ -295,11 +344,10 @@ export const WithTitleLink: Story = {
         [titleLink]="titleLink"
         [elevation]="elevation"
         [padding]="padding"
+        [padContent]="padContent"
         [bordered]="bordered"
         [background]="background">
-        <div style="padding: 24px;">
-          <p>This card has a clickable title that navigates to a detail page.</p>
-        </div>
+        <p>This card has a clickable title that navigates to a detail page.</p>
       </ix-card>
     `,
   }),
@@ -310,6 +358,7 @@ export const WithFooterActions: Story = {
     title: 'Edit Configuration',
     elevation: 'medium',
     padding: 'medium',
+    padContent: true,
     primaryAction: {
       label: 'Primary',
       handler: () => console.log('Primary clicked'),
@@ -326,13 +375,12 @@ export const WithFooterActions: Story = {
         [title]="title"
         [elevation]="elevation"
         [padding]="padding"
+        [padContent]="padContent"
         [bordered]="bordered"
         [background]="background"
         [primaryAction]="primaryAction"
         [secondaryAction]="secondaryAction">
-        <div style="padding: 24px;">
-          <p>This card includes action buttons in the footer for common operations.</p>
-        </div>
+        <p>This card includes action buttons in the footer for common operations.</p>
       </ix-card>
     `,
   }),
@@ -343,6 +391,7 @@ export const WithFooterLink: Story = {
     title: 'Welcome',
     elevation: 'medium',
     padding: 'medium',
+    padContent: true,
     footerLink: {
       label: 'Learn more',
       handler: () => console.log('Learn more clicked'),
@@ -359,13 +408,12 @@ export const WithFooterLink: Story = {
         [title]="title"
         [elevation]="elevation"
         [padding]="padding"
+        [padContent]="padContent"
         [bordered]="bordered"
         [background]="background"
         [footerLink]="footerLink"
         [primaryAction]="primaryAction">
-        <div style="padding: 24px;">
-          <p>This card includes a footer link on the left and a primary action on the right.</p>
-        </div>
+        <p>This card includes a footer link on the left and a primary action on the right.</p>
       </ix-card>
     `,
   }),
@@ -376,6 +424,7 @@ export const CompleteExample: Story = {
     title: 'My Service',
     elevation: 'medium',
     padding: 'medium',
+    padContent: true,
     bordered: true,
     headerStatus: { label: 'Running', type: 'success' },
     headerControl: {
@@ -410,6 +459,7 @@ export const CompleteExample: Story = {
         [title]="title"
         [elevation]="elevation"
         [padding]="padding"
+        [padContent]="padContent"
         [bordered]="bordered"
         [background]="background"
         [headerStatus]="headerStatus"
@@ -418,15 +468,13 @@ export const CompleteExample: Story = {
         [footerLink]="footerLink"
         [primaryAction]="primaryAction"
         [secondaryAction]="secondaryAction">
-        <div style="padding: 24px;">
-          <h4 style="margin-top: 0;">Service Configuration</h4>
-          <p>Configure your service settings and preferences below.</p>
-          <ul>
-            <li>Automatic synchronization enabled</li>
-            <li>Real-time monitoring active</li>
-            <li>Backup schedule configured</li>
-          </ul>
-        </div>
+        <h4 style="margin-top: 0;">Service Configuration</h4>
+        <p>Configure your service settings and preferences below.</p>
+        <ul>
+          <li>Automatic synchronization enabled</li>
+          <li>Real-time monitoring active</li>
+          <li>Backup schedule configured</li>
+        </ul>
       </ix-card>
     `,
   }),

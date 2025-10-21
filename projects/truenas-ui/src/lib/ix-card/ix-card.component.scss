@@ -47,6 +47,30 @@
       padding: 24px 32px;
     }
   }
+
+  &--content-padding-none {
+    .ix-card__content {
+      padding: 0;
+    }
+  }
+
+  &--content-padding-small {
+    .ix-card__content {
+      padding: 16px;
+    }
+  }
+
+  &--content-padding-medium {
+    .ix-card__content {
+      padding: 24px;
+    }
+  }
+
+  &--content-padding-large {
+    .ix-card__content {
+      padding: 32px;
+    }
+  }
 }
 
 .ix-card__content {

@@ -420,6 +420,7 @@ declare class IxCardComponent {
     titleLink?: string;
     elevation: 'none' | 'low' | 'medium' | 'high';
     padding: 'small' | 'medium' | 'large';
+    padContent: boolean;
     bordered: boolean;
     background: boolean;
     headerStatus?: IxCardHeaderStatus;
@@ -441,7 +442,7 @@ declare class IxCardComponent {
     onHeaderMenuItemClick(item: IxMenuItem): void;
     getStatusClass(type?: string): string;
     static ɵfac: i0.ɵɵFactoryDeclaration<IxCardComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<IxCardComponent, "ix-card", never, { "title": { "alias": "title"; "required": false; }; "titleLink": { "alias": "titleLink"; "required": false; }; "elevation": { "alias": "elevation"; "required": false; }; "padding": { "alias": "padding"; "required": false; }; "bordered": { "alias": "bordered"; "required": false; }; "background": { "alias": "background"; "required": false; }; "headerStatus": { "alias": "headerStatus"; "required": false; }; "headerControl": { "alias": "headerControl"; "required": false; }; "headerMenu": { "alias": "headerMenu"; "required": false; }; "primaryAction": { "alias": "primaryAction"; "required": false; }; "secondaryAction": { "alias": "secondaryAction"; "required": false; }; "footerLink": { "alias": "footerLink"; "required": false; }; }, {}, never, ["*"], true, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<IxCardComponent, "ix-card", never, { "title": { "alias": "title"; "required": false; }; "titleLink": { "alias": "titleLink"; "required": false; }; "elevation": { "alias": "elevation"; "required": false; }; "padding": { "alias": "padding"; "required": false; }; "padContent": { "alias": "padContent"; "required": false; }; "bordered": { "alias": "bordered"; "required": false; }; "background": { "alias": "background"; "required": false; }; "headerStatus": { "alias": "headerStatus"; "required": false; }; "headerControl": { "alias": "headerControl"; "required": false; }; "headerMenu": { "alias": "headerMenu"; "required": false; }; "primaryAction": { "alias": "primaryAction"; "required": false; }; "secondaryAction": { "alias": "secondaryAction"; "required": false; }; "footerLink": { "alias": "footerLink"; "required": false; }; }, {}, never, ["*"], true, never>;
 }
 
 declare class IxExpansionPanelComponent {
