@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
 import { IxIconButtonComponent } from './ix-icon-button.component';
 
 describe('IxIconButtonComponent', () => {
@@ -7,7 +8,8 @@ describe('IxIconButtonComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IxIconButtonComponent]
+      imports: [IxIconButtonComponent],
+      providers: [provideHttpClient()]
     })
     .compileComponents();
 

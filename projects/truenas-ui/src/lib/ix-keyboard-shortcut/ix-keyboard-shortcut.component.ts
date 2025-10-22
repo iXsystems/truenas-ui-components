@@ -57,41 +57,47 @@ export class IxKeyboardShortcutComponent implements OnInit, OnChanges {
       .replace(/⌘/g, 'Ctrl')
       .replace(/⌥/g, 'Alt')
       .replace(/⇧/g, 'Shift')
-      .replace(/⌃/g, 'Ctrl')
-      // Add + between modifiers if not present
-      .replace(/(?<=[a-zA-Z])(?=[A-Z])/g, '+')
-      .replace(/(?<=[a-zA-Z])(?=[a-z])/g, '+');
+      .replace(/⌃/g, 'Ctrl');
   }
 
 
   get shortcutKeys(): string[] {
     if (!this.displayShortcut) return [];
-    
+
     // Split by common separators
     const separators = ['+', ' ', ''];
     let keys: string[] = [];
-    
+
     // For Mac-style shortcuts without separators
     if (this.displayShortcut.includes('⌘') || this.displayShortcut.includes('⌥') || this.displayShortcut.includes('⇧')) {
       const macSymbols = ['⌘', '⌥', '⇧', '⌃'];
-      let remaining = this.displayShortcut;
-      
-      for (const symbol of macSymbols) {
-        if (remaining.includes(symbol)) {
-          keys.push(symbol);
-          remaining = remaining.replace(symbol, '');
+      let currentKey = '';
+
+      // Iterate through each character to preserve order
+      for (const char of this.displayShortcut) {
+        if (macSymbols.includes(char)) {
+          // If we have accumulated characters, add them first
+          if (currentKey) {
+            keys.push(currentKey);
+            currentKey = '';
+          }
+          // Add the Mac symbol
+          keys.push(char);
+        } else {
+          // Accumulate non-symbol characters
+          currentKey += char;
         }
       }
-      
-      // Add remaining characters as individual keys
-      if (remaining) {
-        keys.push(remaining);
+
+      // Add any remaining characters
+      if (currentKey) {
+        keys.push(currentKey);
       }
     } else {
       // For Windows/Linux style shortcuts with + separators
       keys = this.displayShortcut.split('+');
     }
-    
+
     return keys.filter(key => key.trim() !== '');
   }
 }

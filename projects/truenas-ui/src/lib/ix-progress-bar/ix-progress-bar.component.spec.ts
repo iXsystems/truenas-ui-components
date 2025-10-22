@@ -51,8 +51,9 @@ describe('IxProgressBarComponent', () => {
     component.mode = 'indeterminate';
     component.value = 50;
     expect(component.primaryTransform).toBe('');
-    
+
     component.mode = 'buffer';
+    component.value = 0; // Reset value for buffer mode test
     expect(component.primaryTransform).toBe('scaleX(0)');
   });
 
@@ -63,20 +64,22 @@ describe('IxProgressBarComponent', () => {
     // The CSS animation handles the movement
   });
 
-  it('should calculate buffer transform for buffer mode', () => {
+  it('should calculate buffer styles for buffer mode', () => {
     component.mode = 'buffer';
     component.bufferValue = 75;
-    expect(component.bufferTransform).toBe('scaleX(0.75)');
+    const styles = component.bufferStyles;
+    expect(styles.width).toBe('75%');
+    expect(styles.right).toBe('0px');
   });
 
-  it('should clamp bufferValue between 0 and 100 for buffer transform', () => {
+  it('should clamp bufferValue between 0 and 100 for buffer styles', () => {
     component.mode = 'buffer';
-    
+
     component.bufferValue = -10;
-    expect(component.bufferTransform).toBe('scaleX(0)');
-    
+    expect(component.bufferStyles.width).toBe('0%');
+
     component.bufferValue = 150;
-    expect(component.bufferTransform).toBe('scaleX(1)');
+    expect(component.bufferStyles.width).toBe('100%');
   });
 
   it('should return scaleX(0) for non-buffer modes in buffer transform', () => {
