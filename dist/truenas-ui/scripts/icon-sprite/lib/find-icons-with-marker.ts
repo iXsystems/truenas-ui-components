@@ -1,7 +1,9 @@
 import { execSync } from 'node:child_process';
 
 export function findIconsWithMarker(path: string): Set<string> {
-  const command = `grep -rEo "iconMarker\\\\('[^']+'" --include="*.ts" --include="*.html" ${path}`;
+  // Updated regex to capture iconMarker() and libIconMarker() calls with optional second parameter
+  // Matches: iconMarker('name') or iconMarker('name', 'library') or libIconMarker('ix-name')
+  const command = `grep -rEo "(lib)?iconMarker\\\\('[^']+',?\\s*'?[^'\\)]*'?\\)" --include="*.ts" --include="*.html" ${path}`;
 
   const icons = new Set<string>();
 
@@ -12,12 +14,33 @@ export function findIconsWithMarker(path: string): Set<string> {
       .filter(Boolean)
       .forEach((line) => {
         const [, match] = line.split(':');
-        const value = /'([^']+)'/.exec(match)?.[1];
-        if (!value) {
+        if (!match) {
           return;
         }
 
-        icons.add(value);
+        // Extract icon name (first parameter)
+        const iconNameMatch = /'([^']+)'/.exec(match);
+        if (!iconNameMatch) {
+          return;
+        }
+
+        let iconName = iconNameMatch[1];
+
+        // Extract library parameter (second parameter) if present
+        // Look for pattern: , 'library' after the icon name
+        const libraryMatch = /,\s*'([^']+)'/.exec(match);
+        const library = libraryMatch?.[1];
+
+        // Apply prefix transformation (matching runtime iconMarker() logic)
+        if (library === 'mdi' && !iconName.startsWith('mdi-')) {
+          iconName = `mdi-${iconName}`;
+        } else if (library === 'custom' && !iconName.startsWith('app-')) {
+          iconName = `app-${iconName}`;
+        }
+        // Material icons have no prefix
+        // libIconMarker already has ix- prefix, no transformation needed
+
+        icons.add(iconName);
       });
   } catch (error: any) {
     // grep returns exit code 1 when no matches are found, which is not an error

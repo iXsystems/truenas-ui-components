@@ -8,13 +8,7 @@ import { IxNestedTreeNodeComponent } from '../lib/ix-tree/ix-nested-tree-node.co
 import { IxTreeNodeOutletDirective } from '../lib/ix-tree/ix-tree-node-outlet.directive';
 import { CdkTreeModule } from '@angular/cdk/tree';
 import { IxIconComponent } from '../lib/ix-icon/ix-icon.component';
-
-// Mark icons used dynamically in templates so they're included in sprite generation
-function iconMarker(iconName: string): void {
-  // This function is used by the sprite scanner to detect dynamically-used icons
-  // It's called at module load time to ensure icons are included in the build
-  return;
-}
+import { iconMarker } from '../lib/ix-icon/icon-marker';
 
 // Ensure these icons are included in the library sprite
 iconMarker('mdi-cpu-64-bit');

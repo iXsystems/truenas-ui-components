@@ -70,6 +70,10 @@ export function findIconsInTemplates(path: string): Set<string> {
         // Handle library attribute - prefix the icon name with library prefix
         if (library === 'mdi' && !iconName.startsWith('mdi-')) {
           iconNames.add(`mdi-${iconName}`);
+        } else if (library === 'custom' && !iconName.startsWith('app-') && !iconName.startsWith('ix-')) {
+          // Consumer custom icons get app- prefix
+          // (Library templates should never use library="custom", they use libIconMarker() instead)
+          iconNames.add(`app-${iconName}`);
         } else if (library === 'material' && !iconName.startsWith('mat-')) {
           iconNames.add(iconName); // Material icons don't need prefix
         } else {

@@ -2403,33 +2403,73 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
 /**
  * Marks an icon name for inclusion in the sprite generation.
  *
- * This is an identity function that simply returns the icon name unchanged.
- * Its purpose is to provide a marker that the build scripts can detect when
- * scanning for icons that need to be included in the sprite.
+ * This function serves two purposes:
+ * 1. At runtime: Applies library-specific prefixes (e.g., mdi-, app-)
+ * 2. At build time: Marker for the scanner to detect icons for sprite inclusion
  *
  * Use this when icon names are computed dynamically or come from variables,
  * to ensure they're included in the sprite at build time.
  *
  * @example
- * ```typescript
  * // Static icon name - automatically detected from template
  * <ix-icon name="folder"></ix-icon>
  *
- * // Dynamic icon name - needs iconMarker() to be detected
- * const iconName = condition ? iconMarker('edit') : iconMarker('delete');
+ * @example
+ * // Dynamic MDI icon
+ * const iconName = condition ? iconMarker("pencil", "mdi") : iconMarker("delete", "mdi");
  * <ix-icon [name]="iconName"></ix-icon>
  *
+ * @example
+ * // Dynamic custom icon (consumer's own icon)
+ * const logo = iconMarker("your-logo-name", "custom");
+ * <ix-icon [name]="logo"></ix-icon>
+ *
+ * @example
  * // Array of dynamic icons
  * const actions = [
- *   { name: 'Save', icon: iconMarker('save') },
- *   { name: 'Cancel', icon: iconMarker('close') }
+ *   { name: "Save", icon: iconMarker("content-save", "mdi") },
+ *   { name: "Cancel", icon: iconMarker("close", "mdi") }
  * ];
- * ```
  *
  * @param iconName - The icon name to mark for sprite inclusion
- * @returns The same icon name (identity function)
+ * @param library - Optional library type: 'mdi', 'material', or 'custom'
+ * @returns The icon name with appropriate prefix applied
+ * @public
  */
-function iconMarker(iconName) {
+function iconMarker(iconName, library) {
+    // Apply library-specific prefixes
+    if (library === 'mdi' && !iconName.startsWith('mdi-')) {
+        return `mdi-${iconName}`;
+    }
+    if (library === 'custom' && !iconName.startsWith('app-')) {
+        return `app-${iconName}`;
+    }
+    // Material icons have no prefix
+    return iconName;
+}
+/**
+ * INTERNAL LIBRARY USE ONLY
+ *
+ * Marks an icon name for inclusion in the sprite generation with library namespace.
+ * This function MUST be used by library component code for custom icons.
+ *
+ * The TypeScript type enforces that the icon name starts with 'ix-' prefix,
+ * which reserves this namespace exclusively for library-provided custom icons.
+ *
+ * @example
+ * ```typescript
+ * // ✅ Correct - Library component code
+ * const icon = libIconMarker('ix-dataset');
+ *
+ * // ❌ Wrong - Will cause TypeScript error
+ * const icon = libIconMarker('dataset');
+ * ```
+ *
+ * @param iconName - The icon name with 'ix-' prefix (enforced by TypeScript)
+ * @returns The same icon name (identity function)
+ * @internal
+ */
+function libIconMarker(iconName) {
     return iconName;
 }
 
@@ -9079,5 +9119,5 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * Generated bundle index. Do not edit.
  */
 
-export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconButtonComponent, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMenuComponent, IxMenuTriggerDirective, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxSpriteLoaderService, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TruenasIconsService, TruenasUiComponent, TruenasUiService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, iconMarker, registerLucideIcons, setupLucideIntegration };
+export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconButtonComponent, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMenuComponent, IxMenuTriggerDirective, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxSpriteLoaderService, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TruenasIconsService, TruenasUiComponent, TruenasUiService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, iconMarker, libIconMarker, registerLucideIcons, setupLucideIntegration };
 //# sourceMappingURL=truenas-ui.mjs.map

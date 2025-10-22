@@ -26,23 +26,38 @@ export function getIconPaths(names: Set<string>, projectRoot: string = process.c
   const nodeModulesPath = findNodeModules(projectRoot);
 
   names.forEach((name) => {
-    // Library structure: custom icons are in assets/icons/custom/ (not src/assets/)
+    // Library custom icons (ix- prefix) - ONLY from library package
     if (name.startsWith('ix-')) {
-      const localPath = resolve(projectRoot, `assets/icons/custom/${name.slice(3)}.svg`);
-      const libraryPath = resolve(nodeModulesPath, `truenas-ui/dist/truenas-ui/assets/icons/custom/${name.slice(3)}.svg`);
+      // When building the library itself, icons are in the source directory
+      // When consuming the library, icons are in node_modules
+      const sourceLibraryPath = resolve(projectRoot, `assets/icons/custom/${name.slice(3)}.svg`);
+      const installedLibraryPath = resolve(nodeModulesPath, `truenas-ui/dist/truenas-ui/assets/icons/custom/${name.slice(3)}.svg`);
 
-      // Check local custom icons first, then library custom icons
-      if (fs.existsSync(localPath)) {
-        iconPaths.set(name, localPath);
-      } else if (fs.existsSync(libraryPath)) {
-        iconPaths.set(name, libraryPath);
+      // Check source first (for library development), then installed package (for consumers)
+      if (fs.existsSync(sourceLibraryPath)) {
+        iconPaths.set(name, sourceLibraryPath);
+      } else if (fs.existsSync(installedLibraryPath)) {
+        iconPaths.set(name, installedLibraryPath);
       } else {
-        // Fallback to local path (will error if doesn't exist, which is expected)
-        iconPaths.set(name, localPath);
+        console.warn(`⚠ Library custom icon not found: ${name} (looking for ${name.slice(3)}.svg in library)`);
+        // Fallback to source path (will error if doesn't exist, which is expected)
+        iconPaths.set(name, sourceLibraryPath);
       }
       return;
     }
 
+    // Consumer custom icons (app- prefix) - ONLY from consumer's assets
+    if (name.startsWith('app-')) {
+      const localPath = resolve(projectRoot, `assets/icons/custom/${name.slice(4)}.svg`);
+
+      if (!fs.existsSync(localPath)) {
+        console.warn(`⚠ Consumer custom icon not found: ${name} (looking for ${name.slice(4)}.svg in assets/icons/custom/)`);
+      }
+      iconPaths.set(name, localPath);
+      return;
+    }
+
+    // MDI icons
     if (name.startsWith('mdi-')) {
       const mdiPath = resolve(nodeModulesPath, `@mdi/svg/svg/${name.slice(4)}.svg`);
       if (!fs.existsSync(mdiPath)) {
@@ -53,6 +68,7 @@ export function getIconPaths(names: Set<string>, projectRoot: string = process.c
       return;
     }
 
+    // Material Design Icons (no prefix)
     const materialPath = resolve(nodeModulesPath, `@material-design-icons/svg/filled/${name}.svg`);
     if (!fs.existsSync(materialPath)) {
       console.warn(`⚠ Material icon not found: ${name} (looking for ${name}.svg in @material-design-icons)`);
