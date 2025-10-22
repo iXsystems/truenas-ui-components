@@ -10,14 +10,17 @@ import { iconMarker } from '../lib/ix-icon/icon-marker';
 import { Home, User, Settings, Heart, Star, Search, Menu } from 'lucide';
 
 // Mark icons used in stories for sprite generation
+// Using the new two-parameter API for clarity
 const STORY_ICONS = [
-  iconMarker('mdi-harddisk'),
-  iconMarker('mdi-server'),
-  iconMarker('mdi-nas'),
-  iconMarker('mdi-database'),
-  iconMarker('mdi-memory'),
-  iconMarker('mdi-network'),
-  iconMarker('mdi-file'),
+  iconMarker('harddisk', 'mdi'),
+  iconMarker('server', 'mdi'),
+  iconMarker('nas', 'mdi'),
+  iconMarker('database', 'mdi'),
+  iconMarker('memory', 'mdi'),
+  iconMarker('network', 'mdi'),
+  iconMarker('file', 'mdi'),
+  iconMarker('home', 'material'),  // Material icon example
+  iconMarker('settings', 'material'),  // Material icon example
 ];
 
 const meta: Meta<IxIconComponent> = {
@@ -96,16 +99,16 @@ If you use icons dynamically in TypeScript (not in templates), mark them with \`
 \`\`\`typescript
 import { iconMarker } from 'truenas-ui';
 
-// Mark icons used in TypeScript logic
-iconMarker('mdi-code-json');
-iconMarker('mdi-language-typescript');
-iconMarker('mdi-file-document');
+// Mark icons used in TypeScript logic using the two-parameter API
+iconMarker('code-json', 'mdi');
+iconMarker('language-typescript', 'mdi');
+iconMarker('file-document', 'mdi');
 
 // Then use them dynamically
 getFileIcon(filename: string): string {
-  if (filename.endsWith('.json')) return 'code-json';
-  if (filename.endsWith('.ts')) return 'language-typescript';
-  return 'file-document';
+  if (filename.endsWith('.json')) return 'mdi-code-json';
+  if (filename.endsWith('.ts')) return 'mdi-language-typescript';
+  return 'mdi-file-document';
 }
 \`\`\`
 

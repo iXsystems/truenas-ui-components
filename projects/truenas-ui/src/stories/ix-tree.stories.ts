@@ -11,9 +11,10 @@ import { IxIconComponent } from '../lib/ix-icon/ix-icon.component';
 import { iconMarker } from '../lib/ix-icon/icon-marker';
 
 // Ensure these icons are included in the library sprite
-iconMarker('mdi-cpu-64-bit');
-iconMarker('mdi-nas');
-iconMarker('mdi-share-variant');
+// Using the new two-parameter API
+iconMarker('cpu-64-bit', 'mdi');
+iconMarker('nas', 'mdi');
+iconMarker('share-variant', 'mdi');
 
 // Example data structure for CDK Tree integration
 interface FileNode {

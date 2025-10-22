@@ -1,6 +1,7 @@
 {
-  "iconUrl": "assets/icons/sprite.svg?v=7fb25eecc8",
+  "iconUrl": "assets/icons/sprite.svg?v=bfd1adadc5",
   "icons": [
+    "home",
     "ix-cloud-off",
     "ix-dataset",
     "ix-dataset-root",
@@ -73,6 +74,7 @@
     "mdi-refresh",
     "mdi-server",
     "mdi-share-variant",
-    "mdi-star"
+    "mdi-star",
+    "settings"
   ]
 }

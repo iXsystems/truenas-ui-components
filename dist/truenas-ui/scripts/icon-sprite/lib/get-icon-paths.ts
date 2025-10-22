@@ -48,10 +48,15 @@ export function getIconPaths(names: Set<string>, projectRoot: string = process.c
 
     // Consumer custom icons (app- prefix) - ONLY from consumer's assets
     if (name.startsWith('app-')) {
-      const localPath = resolve(projectRoot, `assets/icons/custom/${name.slice(4)}.svg`);
+      // Try src/assets first (Angular convention), then assets (fallback)
+      const srcAssetsPath = resolve(projectRoot, `src/assets/icons/custom/${name.slice(4)}.svg`);
+      const assetsPath = resolve(projectRoot, `assets/icons/custom/${name.slice(4)}.svg`);
 
-      if (!fs.existsSync(localPath)) {
-        console.warn(`⚠ Consumer custom icon not found: ${name} (looking for ${name.slice(4)}.svg in assets/icons/custom/)`);
+      let localPath = srcAssetsPath;
+      if (!fs.existsSync(srcAssetsPath) && fs.existsSync(assetsPath)) {
+        localPath = assetsPath;
+      } else if (!fs.existsSync(srcAssetsPath)) {
+        console.warn(`⚠ Consumer custom icon not found: ${name} (looking for ${name.slice(4)}.svg in src/assets/icons/custom/ or assets/icons/custom/)`);
       }
       iconPaths.set(name, localPath);
       return;
