@@ -50,5 +50,19 @@ if [ -n "$COMPONENT_FILES" ]; then
   echo "✅ Icon marker usage looks good"
 fi
 
+echo ""
+echo "🧪 Running tests to prevent regressions..."
+yarn test --passWithNoTests
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Error: Tests are failing. Please fix failing tests before committing."
+  echo ""
+  exit 1
+fi
+
+echo "✅ All tests passed"
+echo ""
+
 yarn build
 git add dist/
