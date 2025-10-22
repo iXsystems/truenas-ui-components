@@ -1,3 +1,68 @@
 #!/bin/sh
+
+# Check icon marker usage in library component code
+echo "🔍 Checking icon marker usage in library components..."
+
+# Get staged library component files (exclude tests and stories)
+COMPONENT_FILES=$(git diff --cached --name-only --diff-filter=ACM | \
+  grep "projects/truenas-ui/src/lib/" | \
+  grep "\.ts$" | \
+  grep -v "\.spec\.ts$" | \
+  grep -v "\.stories\.ts$" | \
+  grep -v "/test/" | \
+  grep -v "/mocks/" | \
+  grep -v "/fixtures/" || true)
+
+if [ -n "$COMPONENT_FILES" ]; then
+  # Check for iconMarker() in component code (should use libIconMarker instead)
+  ICONMARKER_VIOLATIONS=$(echo "$COMPONENT_FILES" | xargs grep -l "iconMarker(" 2>/dev/null || true)
+
+  if [ -n "$ICONMARKER_VIOLATIONS" ]; then
+    echo ""
+    echo "❌ Error: Library component code must use libIconMarker(), not iconMarker()"
+    echo "   (Tests and stories can use iconMarker())"
+    echo ""
+    echo "   Files with violations:"
+    echo "$ICONMARKER_VIOLATIONS" | sed 's/^/     - /'
+    echo ""
+    echo "   Fix: Replace iconMarker() with libIconMarker() and use explicit ix- prefix:"
+    echo "     iconMarker('dataset', 'custom')  →  libIconMarker('ix-dataset')"
+    echo ""
+    exit 1
+  fi
+
+  # Check for libIconMarker without ix- prefix
+  LIBICON_VIOLATIONS=$(echo "$COMPONENT_FILES" | xargs grep -E "libIconMarker\(['\"][^i][^x][^-]" 2>/dev/null || true)
+
+  if [ -n "$LIBICON_VIOLATIONS" ]; then
+    echo ""
+    echo "❌ Error: libIconMarker() must use ix- prefix"
+    echo ""
+    echo "   Violations found:"
+    echo "$LIBICON_VIOLATIONS"
+    echo ""
+    echo "   Fix: Add ix- prefix to icon names:"
+    echo "     libIconMarker('dataset')  →  libIconMarker('ix-dataset')"
+    echo ""
+    exit 1
+  fi
+
+  echo "✅ Icon marker usage looks good"
+fi
+
+echo ""
+echo "🧪 Running tests to prevent regressions..."
+yarn test --passWithNoTests
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Error: Tests are failing. Please fix failing tests before committing."
+  echo ""
+  exit 1
+fi
+
+echo "✅ All tests passed"
+echo ""
+
 yarn build
 git add dist/

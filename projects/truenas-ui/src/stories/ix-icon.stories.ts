@@ -10,14 +10,17 @@ import { iconMarker } from '../lib/ix-icon/icon-marker';
 import { Home, User, Settings, Heart, Star, Search, Menu } from 'lucide';
 
 // Mark icons used in stories for sprite generation
+// Using the new two-parameter API for clarity
 const STORY_ICONS = [
-  iconMarker('mdi-harddisk'),
-  iconMarker('mdi-server'),
-  iconMarker('mdi-nas'),
-  iconMarker('mdi-database'),
-  iconMarker('mdi-memory'),
-  iconMarker('mdi-network'),
-  iconMarker('mdi-file'),
+  iconMarker('harddisk', 'mdi'),
+  iconMarker('server', 'mdi'),
+  iconMarker('nas', 'mdi'),
+  iconMarker('database', 'mdi'),
+  iconMarker('memory', 'mdi'),
+  iconMarker('network', 'mdi'),
+  iconMarker('file', 'mdi'),
+  iconMarker('home', 'material'),  // Material icon example
+  iconMarker('settings', 'material'),  // Material icon example
 ];
 
 const meta: Meta<IxIconComponent> = {
@@ -31,85 +34,35 @@ const meta: Meta<IxIconComponent> = {
         component: `
 A flexible icon component with automatic sprite generation for optimal performance.
 
-## Quick Start
+## 📚 Complete Documentation
 
-The icon system works automatically with zero configuration:
+**For full setup instructions, integration guide, and best practices, see [API / Icon System](/story/api-icon-system).**
 
-1. **Use icons in your templates**:
-\`\`\`html
-<ix-icon name="folder" library="mdi" size="lg"></ix-icon>
-<ix-icon name="server" library="mdi"></ix-icon>
-\`\`\`
+## Quick Example
 
-2. **Generate the sprite** (run once, then whenever icons change):
-\`\`\`bash
-yarn icons
-\`\`\`
+The icon system supports 7000+ MDI icons, Material icons, library custom icons, and your own custom icons:
 
-That's it! The sprite generation automatically:
-- ✅ Scans your templates for all icon usage
-- ✅ Includes all library icons (chevrons, folder, etc.)
-- ✅ Bundles only icons you use (tree-shaking)
-- ✅ Adds cache-busting hashes
-
-## What's Included
-
-- **7,000+ MDI icons**: Material Design Icons for general use
-- **40+ TrueNAS icons**: Custom icons for storage, hardware, networking (\`ix-*\` prefix)
-- **Library icons**: Internal component icons (chevrons, folder, etc.) automatically included
-
-## Setup in Your App
-
-**Step 1: Add the sprite generation script to package.json**:
-\`\`\`json
-{
-  "scripts": {
-    "icons": "truenas-icons generate"
-  }
-}
-\`\`\`
-
-**Step 2: Run the sprite generator**:
-\`\`\`bash
-yarn icons
-\`\`\`
-
-This scans your templates and generates:
-- \`src/assets/icons/sprite.svg\` - The sprite file
-- \`src/assets/icons/sprite-config.json\` - Icon manifest
-
-**Step 3: Use icons in your templates**:
 \`\`\`html
 <!-- MDI icons -->
-<ix-icon name="folder" library="mdi"></ix-icon>
-<ix-icon name="server" library="mdi"></ix-icon>
+<ix-icon name="folder" library="mdi" size="lg"></ix-icon>
 
-<!-- TrueNAS custom icons -->
-<ix-icon name="ix-dataset" library="mdi"></ix-icon>
-<ix-icon name="ix-hdd" library="mdi"></ix-icon>
+<!-- Material icons -->
+<ix-icon name="home" library="material"></ix-icon>
+
+<!-- Library custom icons (TrueNAS-specific) -->
+<ix-icon name="dataset" library="custom"></ix-icon>
 \`\`\`
 
-## Dynamic Icons
+Run \`yarn icons\` to generate the sprite with only the icons you use.
 
-If you use icons dynamically in TypeScript (not in templates), mark them with \`iconMarker()\`:
+## Features
 
-\`\`\`typescript
-import { iconMarker } from 'truenas-ui';
-
-// Mark icons used in TypeScript logic
-iconMarker('mdi-code-json');
-iconMarker('mdi-language-typescript');
-iconMarker('mdi-file-document');
-
-// Then use them dynamically
-getFileIcon(filename: string): string {
-  if (filename.endsWith('.json')) return 'code-json';
-  if (filename.endsWith('.ts')) return 'language-typescript';
-  return 'file-document';
-}
-\`\`\`
-
-Then run \`yarn icons\` to include them in the sprite.
+- ✅ **7,000+ MDI icons** - Material Design Icons for general use
+- ✅ **Automatic sprite generation** - Bundles only icons you actually use
+- ✅ **40+ TrueNAS icons** - Storage, hardware, networking icons with \`ix-\` prefix
+- ✅ **Custom icon support** - Add your own SVG icons to your app
+- ✅ **Tree-shaking** - Optimal bundle size
+- ✅ **Cache-busting** - Versioned sprite URLs
 
 ## Using Other Icon Libraries (Optional)
 

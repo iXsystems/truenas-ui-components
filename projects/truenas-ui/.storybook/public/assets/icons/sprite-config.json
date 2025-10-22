@@ -1,9 +1,7 @@
 {
-  "iconUrl": "assets/icons/sprite.svg?v=d56320c5bb",
+  "iconUrl": "assets/icons/sprite.svg?v=34dd660f48",
   "icons": [
-    "close",
-    "delete",
-    "edit",
+    "home",
     "ix-cloud-off",
     "ix-dataset",
     "ix-dataset-root",
@@ -49,7 +47,6 @@
     "mdi-chevron-down",
     "mdi-chevron-right",
     "mdi-close",
-    "mdi-code-json",
     "mdi-cog",
     "mdi-content-copy",
     "mdi-cpu-64-bit",
@@ -57,14 +54,12 @@
     "mdi-delete",
     "mdi-dots-vertical",
     "mdi-file",
-    "mdi-file-document",
     "mdi-folder",
     "mdi-folder-open",
     "mdi-harddisk",
     "mdi-heart",
     "mdi-home",
     "mdi-information",
-    "mdi-language-typescript",
     "mdi-loading",
     "mdi-lock",
     "mdi-magnify",
@@ -77,6 +72,6 @@
     "mdi-server",
     "mdi-share-variant",
     "mdi-star",
-    "save"
+    "settings"
   ]
 }

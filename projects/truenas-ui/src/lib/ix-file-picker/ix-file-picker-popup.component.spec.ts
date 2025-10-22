@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideHttpClient } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 
@@ -48,16 +49,17 @@ describe('IxFilePickerPopupComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IxFilePickerPopupComponent, NoopAnimationsModule, FileSizePipe]
+      imports: [IxFilePickerPopupComponent, NoopAnimationsModule, FileSizePipe],
+      providers: [provideHttpClient()]
     }).compileComponents();
 
     fixture = TestBed.createComponent(IxFilePickerPopupComponent);
     component = fixture.componentInstance;
     
     // Set up component with mock data
-    component.fileItems = mockFileItems;
-    component.currentPath = '/mnt/tank';
-    component.loading = false;
+    fixture.componentRef.setInput('fileItems', mockFileItems);
+    fixture.componentRef.setInput('currentPath', '/mnt/tank');
+    fixture.componentRef.setInput('loading', false);
     
     fixture.detectChanges();
   });
@@ -137,7 +139,7 @@ describe('IxFilePickerPopupComponent', () => {
     it('should display formatted dates in the template', () => {
       // The mock data has various dates including 'today' items
       // Force change detection to render the template
-      component.loading = false; // Ensure content is visible
+      fixture.componentRef.setInput('loading', false); // Ensure content is visible
       fixture.detectChanges();
       
       // Check if the formatDate method is called and produces expected output
@@ -171,41 +173,45 @@ describe('IxFilePickerPopupComponent', () => {
       // Create a fresh component instance for this test
       const testFixture = TestBed.createComponent(IxFilePickerPopupComponent);
       const testComponent = testFixture.componentInstance;
-      
-      testComponent.mode = 'file';
-      testComponent.fileItems = mockFileItems;
-      
+
+      testFixture.componentRef.setInput('mode', 'file');
+      testFixture.componentRef.setInput('fileItems', mockFileItems);
+      testFixture.detectChanges(); // Trigger change detection for computed signals
+
       const filtered = testComponent.filteredFileItems();
-      
-      expect(filtered.every(item => item.type === 'file')).toBe(true);
-      expect(filtered.length).toBe(2); // database.db and small.txt
+      const enabledItems = filtered.filter(item => !item.disabled);
+
+      expect(enabledItems.every(item => item.type === 'file')).toBe(true);
+      expect(enabledItems.length).toBe(2); // database.db and small.txt
     });
 
     it('should filter by folder mode', () => {
       // Create a fresh component instance for this test
       const testFixture = TestBed.createComponent(IxFilePickerPopupComponent);
       const testComponent = testFixture.componentInstance;
-      
-      testComponent.mode = 'folder';
-      testComponent.fileItems = mockFileItems;
-      
+
+      testFixture.componentRef.setInput('mode', 'folder');
+      testFixture.componentRef.setInput('fileItems', mockFileItems);
+      testFixture.detectChanges(); // Trigger change detection for computed signals
+
       const filtered = testComponent.filteredFileItems();
-      
-      expect(filtered.every(item => item.type === 'folder')).toBe(true);
-      expect(filtered.length).toBe(1); // documents folder
+      const enabledItems = filtered.filter(item => !item.disabled);
+
+      expect(enabledItems.every(item => item.type === 'folder')).toBe(true);
+      expect(enabledItems.length).toBe(1); // documents folder
     });
 
     it('should filter by file extensions', () => {
       // Create a fresh component instance for this test
       const testFixture = TestBed.createComponent(IxFilePickerPopupComponent);
       const testComponent = testFixture.componentInstance;
-      
-      testComponent.fileExtensions = ['.txt'];
-      testComponent.mode = 'any'; // Set mode to allow all types
-      testComponent.fileItems = mockFileItems;
-      
+
+      testFixture.componentRef.setInput('fileExtensions', ['.txt']);
+      testFixture.componentRef.setInput('mode', 'any'); // Set mode to allow all types
+      testFixture.componentRef.setInput('fileItems', mockFileItems);
+
       const filtered = testComponent.filteredFileItems();
-      
+
       const txtFiles = filtered.filter(item => item.name.endsWith('.txt'));
       expect(txtFiles.length).toBe(1); // small.txt
     });
@@ -214,10 +220,10 @@ describe('IxFilePickerPopupComponent', () => {
       // Create a fresh component instance for this test
       const testFixture = TestBed.createComponent(IxFilePickerPopupComponent);
       const testComponent = testFixture.componentInstance;
-      
-      testComponent.mode = 'any';
-      testComponent.fileItems = mockFileItems;
-      
+
+      testFixture.componentRef.setInput('mode', 'any');
+      testFixture.componentRef.setInput('fileItems', mockFileItems);
+
       const filtered = testComponent.filteredFileItems();
       
       expect(filtered.length).toBe(mockFileItems.length);
@@ -227,9 +233,9 @@ describe('IxFilePickerPopupComponent', () => {
   describe('Utility Methods', () => {
     it('should return correct icons for different file types', () => {
       expect(component.getItemIcon({ type: 'folder' } as FileSystemItem)).toBe('folder');
-      expect(component.getItemIcon({ type: 'dataset' } as FileSystemItem)).toBe('folder_special');
-      expect(component.getItemIcon({ type: 'zvol' } as FileSystemItem)).toBe('storage');
-      expect(component.getItemIcon({ type: 'file', name: 'test.pdf' } as FileSystemItem)).toBe('picture_as_pdf');
+      expect(component.getItemIcon({ type: 'dataset' } as FileSystemItem)).toBe('tn-dataset');
+      expect(component.getItemIcon({ type: 'zvol' } as FileSystemItem)).toBe('database');
+      expect(component.getItemIcon({ type: 'file', name: 'test.pdf' } as FileSystemItem)).toBe('file');
     });
 
     it('should identify ZFS objects correctly', () => {
@@ -297,8 +303,8 @@ describe('IxFilePickerPopupComponent', () => {
 
   describe('Selection Handling', () => {
     it('should correctly identify selected items', () => {
-      component.selectedItems = ['/mnt/tank/database.db'];
-      
+      fixture.componentRef.setInput('selectedItems', ['/mnt/tank/database.db']);
+
       expect(component.isSelected(mockFileItems[1])).toBe(true); // database.db
       expect(component.isSelected(mockFileItems[0])).toBe(false); // documents
     });
@@ -306,17 +312,17 @@ describe('IxFilePickerPopupComponent', () => {
 
   describe('Loading State', () => {
     it('should show loading indicator when loading', () => {
-      component.loading = true;
+      fixture.componentRef.setInput('loading', true);
       fixture.detectChanges();
-      
+
       const loadingElement = fixture.debugElement.query(By.css('.ix-file-picker-loading'));
       expect(loadingElement).toBeTruthy();
     });
 
     it('should hide content when loading', () => {
-      component.loading = true;
+      fixture.componentRef.setInput('loading', true);
       fixture.detectChanges();
-      
+
       const contentElement = fixture.debugElement.query(By.css('.ix-file-picker-content'));
       expect(contentElement).toBeFalsy();
     });

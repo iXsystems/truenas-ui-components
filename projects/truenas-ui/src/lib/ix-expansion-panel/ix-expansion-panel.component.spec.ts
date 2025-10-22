@@ -80,7 +80,39 @@ describe('IxExpansionPanelComponent', () => {
 
   it('should default to header title style', () => {
     const classes = component.classes;
-    
+
     expect(classes).toContain('ix-expansion-panel--title-header');
+  });
+
+  it('should apply background class when background is true', () => {
+    component.background = true;
+
+    const classes = component.classes;
+
+    expect(classes).toContain('ix-expansion-panel--background');
+  });
+
+  it('should not apply background class when background is false', () => {
+    component.background = false;
+
+    const classes = component.classes;
+
+    expect(classes).not.toContain('ix-expansion-panel--background');
+  });
+
+  it('should apply disabled class when disabled is true', () => {
+    component.disabled = true;
+
+    const classes = component.classes;
+
+    expect(classes).toContain('ix-expansion-panel--disabled');
+  });
+
+  it('should not apply disabled class when disabled is false', () => {
+    component.disabled = false;
+
+    const classes = component.classes;
+
+    expect(classes).not.toContain('ix-expansion-panel--disabled');
   });
 });

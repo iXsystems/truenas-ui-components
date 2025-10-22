@@ -56,7 +56,7 @@ describe('IxParticleProgressBarComponent', () => {
   });
 
   it('should have default dimensions', () => {
-    expect(component.height).toBe(60);
+    expect(component.height).toBe(40);
     expect(component.width).toBe(600);
     expect(component.fill).toBe(300);
   });

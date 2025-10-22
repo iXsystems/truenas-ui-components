@@ -1,0 +1,270 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="API/Icon System" />
+
+# Icon System
+
+The TrueNAS UI library includes an automatic sprite generation system that optimizes icon loading by bundling only the icons you actually use.
+
+## Quick Start
+
+### 1. Add the Sprite Generation Script
+
+In your application's `package.json`:
+
+```json
+{
+  "scripts": {
+    "icons": "truenas-icons generate"
+  }
+}
+```
+
+### 2. Use Icons in Templates
+
+```html
+<!-- MDI icons (7000+ Material Design Icons) -->
+<ix-icon name="folder" library="mdi"></ix-icon>
+<ix-icon name="server" library="mdi"></ix-icon>
+
+<!-- Material Design icons (official Google icons) -->
+<ix-icon name="home" library="material"></ix-icon>
+<ix-icon name="settings" library="material"></ix-icon>
+
+<!-- Library custom icons (TrueNAS-specific) -->
+<ix-icon name="dataset" library="custom"></ix-icon>
+<ix-icon name="zvol" library="custom"></ix-icon>
+
+<!-- Your app-specific custom icons -->
+<ix-icon name="your-icon" library="custom"></ix-icon>
+```
+
+### 3. Generate the Sprite
+
+```bash
+yarn icons
+```
+
+This scans your code and generates:
+- `src/assets/icons/sprite.svg` - The sprite file
+- `src/assets/icons/sprite-config.json` - Icon manifest
+
+## Icon Libraries
+
+The system supports four icon sources with automatic namespace separation:
+
+### 1. MDI Icons (`library="mdi"`)
+
+7000+ Material Design Icons from @mdi/svg
+
+**Usage:**
+```typescript
+iconMarker('folder', 'mdi');
+```
+
+**Template:**
+```html
+<ix-icon name="folder" library="mdi"></ix-icon>
+```
+
+**Sprite name:** `mdi-folder`
+
+### 2. Material Icons (`library="material"`)
+
+Official Google Material Design icons from @material-design-icons
+
+**Usage:**
+```typescript
+iconMarker('home', 'material');
+```
+
+**Template:**
+```html
+<ix-icon name="home" library="material"></ix-icon>
+```
+
+**Sprite name:** `home` (no prefix)
+
+### 3. Library Custom Icons (`library="custom"`)
+
+TrueNAS-specific icons included in the component library (ix- prefix)
+
+**Usage in library code:**
+```typescript
+import { libIconMarker } from 'truenas-ui';
+libIconMarker('ix-dataset');
+```
+
+**Usage in your app:**
+```typescript
+iconMarker('dataset', 'custom');  // Resolves to ix-dataset
+```
+
+**Template:**
+```html
+<ix-icon name="dataset" library="custom"></ix-icon>
+```
+
+**Sprite name:** `ix-dataset`
+
+### 4. Consumer Custom Icons (`library="custom"`)
+
+Your application-specific custom icons (app- prefix)
+
+**Location:** `src/assets/icons/custom/your-icon.svg`
+
+**Usage:**
+```typescript
+iconMarker('your-icon', 'custom');  // Resolves to app-your-icon
+```
+
+**Template:**
+```html
+<ix-icon name="your-icon" library="custom"></ix-icon>
+```
+
+**Sprite name:** `app-your-icon`
+
+## Dynamic Icons
+
+If you use icons dynamically in TypeScript (not directly in templates), mark them with `iconMarker()`:
+
+```typescript
+import { iconMarker } from 'truenas-ui';
+
+// Mark icons for sprite generation
+iconMarker('code-json', 'mdi');
+iconMarker('language-typescript', 'mdi');
+iconMarker('file-document', 'mdi');
+
+// Then use them dynamically
+getFileIcon(filename: string): string {
+  if (filename.endsWith('.json')) return 'code-json';
+  if (filename.endsWith('.ts')) return 'language-typescript';
+  return 'file-document';
+}
+```
+
+**Important:** After marking icons, run `yarn icons` to include them in the sprite.
+
+## Adding Custom Icons to Your App
+
+### Step 1: Create Icon Directory
+
+```bash
+mkdir -p src/assets/icons/custom
+```
+
+### Step 2: Add Your SVG Icon
+
+Create your icon file (e.g., `my-logo.svg`) in `src/assets/icons/custom/`:
+
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <path fill="currentColor" d="M12 2L2 7v10c0 5.55..."/>
+</svg>
+```
+
+**SVG Requirements:**
+- Use `currentColor` for fill/stroke to enable color customization
+- Use `viewBox` for proper scaling
+- Remove fixed `width` and `height` attributes
+
+### Step 3: Mark the Icon
+
+```typescript
+import { iconMarker } from 'truenas-ui';
+
+iconMarker('my-logo', 'custom');
+```
+
+### Step 4: Generate Sprite
+
+```bash
+yarn icons
+```
+
+### Step 5: Use the Icon
+
+```html
+<ix-icon name="my-logo" library="custom"></ix-icon>
+```
+
+## Icon Component Props
+
+```html
+<ix-icon
+  name="folder"           <!-- Icon name (required) -->
+  library="mdi"          <!-- Icon library: 'mdi', 'material', 'custom' -->
+  size="md"              <!-- Size: 'xs', 'sm', 'md', 'lg', 'xl' -->
+  color="#007acc"        <!-- Custom color (CSS color value) -->
+  tooltip="Folder icon"  <!-- Tooltip text on hover -->
+  ariaLabel="Open folder" <!-- Accessibility label -->
+></ix-icon>
+```
+
+## How It Works
+
+The sprite generation system:
+
+1. **Scans TypeScript files** for `iconMarker()` and `libIconMarker()` calls
+2. **Scans HTML templates** for `<ix-icon>` component usage
+3. **Resolves icon paths** based on library type and prefix rules
+4. **Generates sprite** with only the icons you use (tree-shaking)
+5. **Creates manifest** (`sprite-config.json`) for debugging
+6. **Adds cache-busting** via versioned URLs
+
+### Namespace Separation
+
+The system automatically applies prefixes to prevent naming conflicts:
+
+| Library | Your Code | Sprite Name | Source |
+|---------|-----------|-------------|---------|
+| MDI | `iconMarker('folder', 'mdi')` | `mdi-folder` | @mdi/svg package |
+| Material | `iconMarker('home', 'material')` | `home` | @material-design-icons package |
+| Library Custom | `iconMarker('dataset', 'custom')` | `ix-dataset` | Library assets |
+| Consumer Custom | `iconMarker('my-logo', 'custom')` | `app-my-logo` | Your app assets |
+
+This ensures library icons (`ix-*`) never conflict with your app icons (`app-*`).
+
+## Troubleshooting
+
+### Icon not appearing?
+
+1. **Check the sprite config:**
+   ```bash
+   cat src/assets/icons/sprite-config.json
+   ```
+
+2. **Regenerate the sprite:**
+   ```bash
+   yarn icons
+   ```
+
+3. **Verify the icon name:**
+   - MDI icons: Check https://pictogrammers.com/library/mdi/
+   - Material icons: Check https://fonts.google.com/icons
+   - Custom icons: Verify file exists in `src/assets/icons/custom/`
+
+### Scanner warnings?
+
+The scanner may warn about icons used in documentation or comments. These warnings are informational and won't break your build.
+
+### Dynamic icons not included?
+
+Make sure you've marked them with `iconMarker()` and run `yarn icons` after adding the marker.
+
+## Best Practices
+
+1. **Use the sprite system for MDI and Material icons** - Don't register them manually
+2. **Mark dynamic icons** - Use `iconMarker()` for icons used in TypeScript logic
+3. **Regenerate after changes** - Run `yarn icons` when adding/removing icon usage
+4. **Use semantic naming** - Choose icon names that describe their purpose
+5. **Provide accessibility labels** - Use `ariaLabel` for icon-only buttons
+6. **Test custom icons** - Verify your SVG icons work with `currentColor`
+
+## See Also
+
+- [Icon Component](/story/components-icon--default) - Visual examples and interactive demos
+- [Theming](/story/api-theming) - Customizing icon colors with themes
+- [CONTRIBUTE.md](https://github.com/iXsystems/truenas-ui-components/blob/main/CONTRIBUTE.md) - Contributing guide with detailed icon system documentation

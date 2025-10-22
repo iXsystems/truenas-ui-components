@@ -1,155 +1,38 @@
 # TrueNAS-UI Components
 
-This is an Angular UI Component library in use by TrueNAS and other related software. It includes the component library itself as well as a Storybook setup complete with documentation and accessibility testing
+An Angular UI component library for TrueNAS and related software. Includes reusable components, comprehensive theming, and automatic icon sprite generation.
 
-## Contributing
+## Installation
 
-### Required Dependencies
+### For Consumers
 
-- **Node.js** >= 18.19.1
-- **Yarn** >= 4.10.3 (Yarn Berry)
-- **Angular CLI** (automatically installed with dependencies)
-
-### Key Framework Dependencies
-
-- Angular 20 (core, common, forms, router, animations)
-- Angular CDK (for accessibility features)
-- RxJS 7.5.0
-- TypeScript 5.8.0
-
-### Development Dependencies
-
-- Jest for testing
-- Storybook 8.5.8 for component development
-- ng-packagr for library building
-
-### Getting Started
-
-To get started with contributing to this project:
-
-1. Clone the repository
-2. Ensure the above dependencies are met
-3. Install dependencies:
+Install the library directly from GitHub:
 
 ```bash
-yarn install
-```
-
-## Storybook Documentation & Testing
-
-To use Storybook simply use the following command from the root directory of this repository
-
-```
-yarn run sb
-```
-
-The Storybook instance will provide a complete Angular environment allowing the ability to test and preview the library components independently before using them in external projects. There is also documentation and a complete design system that includes code snippets and other useful information.
-
-Using an Angular Library allows new components to be developed in isolation forcing them to be decoupled from any business logic. Storybook can then be used in the development process to provide clear guidelines and testing to ensure those guidelines are followed.
-
-## Building the Library
-
-### Development Commands
-
-**Core Development:**
-```bash
-yarn install          # Install dependencies
-yarn run sb           # Start Storybook development server (localhost:6006)
-ng build truenas-ui   # Build the library
-yarn build            # Alternative build command
-```
-
-**Testing:**
-```bash
-yarn test             # Run Jest tests
-yarn test-cc          # Clear cache and run tests
-yarn test-coverage    # Run tests with coverage report
-yarn test-sb          # Run Storybook interaction tests
-```
-
-**Library Distribution:**
-```bash
-ng build truenas-ui                    # Build the library
-cd dist/truenas-ui/ && npm pack        # Create distributable .tgz file
-```
-
-**Local Testing (GitHub Installation):**
-```bash
-# In your test application directory
-yarn add git@github.com:iXsystems/truenas-ui-components.git#branch-name
-```
-
-### Build Output
-
-The build process creates a distributable library in the `dist/truenas-ui/` directory. This includes:
-
-- Compiled JavaScript modules (ESM and CommonJS)
-- TypeScript declaration files
-- Component stylesheets
-- Theme CSS files
-- Package metadata
-
-### GitHub Installation Workflow
-
-This library is distributed via GitHub and automatically builds on commit using Husky pre-commit hooks. To use the library in your application:
-
-1. **Install from GitHub (main branch):**
-   ```bash
-   yarn add git@github.com:iXsystems/truenas-ui-components.git
-   ```
-
-2. **Install from a specific branch:**
-   ```bash
-   yarn add git@github.com:iXsystems/truenas-ui-components.git#branch-name
-   ```
-
-3. **Install a specific commit:**
-   ```bash
-   yarn add git@github.com:iXsystems/truenas-ui-components.git#commit-hash
-   ```
-
-4. **Update to latest version:**
-   ```bash
-   yarn upgrade truenas-ui
-   ```
-
-**How it works:**
-- The library automatically builds on every commit via Husky pre-commit hooks
-- The `dist/` directory is committed to the repository with built artifacts
-- Your application installs directly from GitHub with pre-built files
-- No build step required in consuming applications
-
-**Note:** Changes to the library are automatically built and committed. Simply push to GitHub and reinstall in your application to get updates.
-
-## Installing TrueNAS-UI Components into your Angular project
-
-To use the TrueNAS-UI component library in your Angular application, install it directly from GitHub, then import the components you need. The library provides standalone components that can be imported individually or through the main module.
-
-### Installation
-
-**Install from main branch:**
-```bash
+# Install from main branch
 yarn add truenas-ui@git@github.com:iXsystems/truenas-ui-components.git
-```
 
-**Install from a specific branch:**
-```bash
+# Install from a specific branch
 yarn add truenas-ui@git@github.com:iXsystems/truenas-ui-components.git#branch-name
-```
 
-**Install from a specific commit:**
-```bash
+# Install from a specific commit
 yarn add truenas-ui@git@github.com:iXsystems/truenas-ui-components.git#commit-hash
 ```
 
-**Example with branch:**
+### For Contributors
+
 ```bash
-# Install from the 'my-branch' branch
-yarn add git@github.com:iXsystems/truenas-ui-components.git#my-branch
+git clone git@github.com:iXsystems/truenas-ui-components.git
+cd truenas-ui-components
+yarn install
 ```
 
+## Quick Start
+
 ### Using Components
-Import individual components in your Angular component:
+
+Import components in your Angular application:
+
 ```typescript
 import { IxButtonComponent, IxInputComponent } from 'truenas-ui';
 
@@ -166,7 +49,9 @@ export class ExampleComponent {}
 ```
 
 ### Including Themes
-Add the theme CSS to your `angular.json` styles array:
+
+Add the theme CSS to your `angular.json`:
+
 ```json
 {
   "styles": [
@@ -176,11 +61,109 @@ Add the theme CSS to your `angular.json` styles array:
 }
 ```
 
-The library includes 8 built-in themes (ix-dark, ix-blue, dracula, nord, paper, solarized-dark, midnight, high-contrast) that can be applied by adding the theme class to your document root.
+Apply a theme by adding the theme class to your document root:
 
-### Peer Dependencies
+```typescript
+document.documentElement.classList.add('ix-dark');
+```
 
-This library requires the following peer dependencies in your Angular 20 application:
+**Available themes:** ix-dark, ix-blue, dracula, nord, paper, solarized-dark, midnight, high-contrast
+
+## Development
+
+### Prerequisites
+
+- **Node.js** >= 18.19.1
+- **Yarn** >= 4.10.3 (Yarn Berry)
+- **Angular 20**
+
+### Development Commands
+
+```bash
+yarn run sb           # Start Storybook (localhost:6006)
+yarn build            # Build the library
+yarn test             # Run Jest tests
+yarn test-coverage    # Run tests with coverage
+yarn icons            # Generate icon sprite
+```
+
+### Building the Library
+
+```bash
+# Build the library
+ng build truenas-ui
+
+# Create distributable package
+cd dist/truenas-ui && npm pack
+```
+
+The build output is located in `dist/truenas-ui/` and includes compiled modules, TypeScript declarations, styles, and assets.
+
+## Icon System
+
+The library includes an automatic sprite generation system. Mark icons in your code and they'll be automatically included in the sprite:
+
+```typescript
+import { iconMarker } from 'truenas-ui';
+
+// MDI icons
+iconMarker('folder', 'mdi');
+
+// Material icons
+iconMarker('home', 'material');
+
+// Custom icons
+iconMarker('dataset', 'custom');
+```
+
+Use icons in templates:
+
+```html
+<ix-icon name="folder" library="mdi"></ix-icon>
+<ix-icon name="dataset" library="custom"></ix-icon>
+```
+
+Generate the sprite in your application:
+
+```bash
+yarn icons
+```
+
+## Storybook
+
+View component documentation and examples:
+
+```bash
+yarn run sb
+```
+
+Storybook provides:
+- Interactive component playground
+- Complete design system documentation
+- Accessibility testing (via @storybook/addon-a11y)
+- Code examples and usage guidelines
+
+## Testing
+
+```bash
+yarn test              # Run all Jest tests
+yarn test-cc           # Clear cache and run tests
+yarn test-coverage     # Generate coverage report
+yarn test-sb           # Run Storybook interaction tests
+```
+
+## Contributing
+
+See [CONTRIBUTE.md](./CONTRIBUTE.md) for detailed development guidelines, including:
+
+- Icon system documentation
+- Component development workflow
+- Testing best practices
+- Code style conventions
+
+## Peer Dependencies
+
+This library requires Angular 20:
 
 ```json
 {
@@ -197,7 +180,14 @@ This library requires the following peer dependencies in your Angular 20 applica
 }
 ```
 
-These should already be present in your Angular 20 application.
+## Distribution
+
+The library is distributed via GitHub with pre-built artifacts:
+
+- The `dist/` directory is committed to the repository
+- Pre-commit hooks automatically build the library
+- No build step required in consuming applications
+- Simply install from GitHub and import components
 
 ## License
 

@@ -6,22 +6,23 @@ import { IxCardComponent } from '../lib/ix-card/ix-card.component';
 import { iconMarker } from '../lib/ix-icon/icon-marker';
 
 // Mark icons used in stories for sprite generation
+// Using the new two-parameter API
 const STORY_ICONS = [
-  iconMarker('mdi-home'),
-  iconMarker('mdi-star'),
-  iconMarker('mdi-information'),
-  iconMarker('mdi-delete'),
-  iconMarker('mdi-heart'),
-  iconMarker('mdi-menu'),
-  iconMarker('mdi-dots-vertical'),
-  iconMarker('mdi-magnify'),
-  iconMarker('mdi-bell'),
-  iconMarker('mdi-cog'),
-  iconMarker('mdi-pencil'),
-  iconMarker('mdi-content-copy'),
-  iconMarker('mdi-share-variant'),
-  iconMarker('mdi-refresh'),
-  iconMarker('mdi-close'),
+  iconMarker('home', 'mdi'),
+  iconMarker('star', 'mdi'),
+  iconMarker('information', 'mdi'),
+  iconMarker('delete', 'mdi'),
+  iconMarker('heart', 'mdi'),
+  iconMarker('menu', 'mdi'),
+  iconMarker('dots-vertical', 'mdi'),
+  iconMarker('magnify', 'mdi'),
+  iconMarker('bell', 'mdi'),
+  iconMarker('cog', 'mdi'),
+  iconMarker('pencil', 'mdi'),
+  iconMarker('content-copy', 'mdi'),
+  iconMarker('share-variant', 'mdi'),
+  iconMarker('refresh', 'mdi'),
+  iconMarker('close', 'mdi'),
 ];
 
 const meta: Meta<IxIconButtonComponent> = {
