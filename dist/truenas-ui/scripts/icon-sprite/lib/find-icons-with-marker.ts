@@ -1,6 +1,6 @@
 import { execSync } from 'node:child_process';
 
-export function findIconsWithMarker(path: string): Set<string> {
+export function findIconsWithMarker(path: string, skipIcons?: Set<string>): Set<string> {
   // Updated regex to capture iconMarker() and libIconMarker() calls with optional second parameter
   // Matches: iconMarker('name') or iconMarker('name', 'library') or libIconMarker('ix-name')
   const command = `grep -rEo "(lib)?iconMarker\\\\('[^']+',?\\s*'?[^'\\)]*'?\\)" --include="*.ts" --include="*.html" ${path}`;
@@ -36,9 +36,16 @@ export function findIconsWithMarker(path: string): Set<string> {
           iconName = `mdi-${iconName}`;
         } else if (library === 'custom' && !iconName.startsWith('app-')) {
           iconName = `app-${iconName}`;
+        } else if (library === 'material' && !iconName.startsWith('mat-')) {
+          iconName = `mat-${iconName}`;
         }
-        // Material icons have no prefix
+        // Material icons get mat- prefix
         // libIconMarker already has ix- prefix, no transformation needed
+
+        // Skip if already provided by library
+        if (skipIcons?.has(iconName)) {
+          return;
+        }
 
         icons.add(iconName);
       });

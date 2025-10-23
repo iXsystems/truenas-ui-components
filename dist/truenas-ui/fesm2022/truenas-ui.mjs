@@ -544,8 +544,8 @@ class IxIconComponent {
             effectiveIconName = `mdi-${this.name}`;
         }
         else if (this.library === 'material' && !this.name.startsWith('mat-')) {
-            // Material icons don't need prefix in sprite
-            effectiveIconName = this.name;
+            // Material icons get mat- prefix in sprite
+            effectiveIconName = `mat-${this.name}`;
         }
         else if (this.library === 'lucide' && !this.name.includes(':')) {
             // Convert to registry format for Lucide icons
@@ -2451,7 +2451,9 @@ function iconMarker(iconName, library) {
     if (library === 'custom' && !iconName.startsWith('app-')) {
         return `app-${iconName}`;
     }
-    // Material icons have no prefix
+    if (library === 'material' && !iconName.startsWith('mat-')) {
+        return `mat-${iconName}`;
+    }
     return iconName;
 }
 /**

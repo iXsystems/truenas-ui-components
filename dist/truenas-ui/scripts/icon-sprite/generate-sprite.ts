@@ -30,14 +30,20 @@ export async function generateSprite(config: SpriteGeneratorConfig = {}): Promis
       fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    // Scan all source directories for icon usage
+    // Load library icons FIRST (if truenas-ui is installed as a dependency)
+    const libraryIcons = loadLibraryIcons(resolved.projectRoot);
+    if (libraryIcons.size > 0) {
+      console.info(`Loaded ${libraryIcons.size} icon(s) from truenas-ui library`);
+    }
+
+    // Scan all source directories for icon usage, skipping icons already in library
     const templateIcons = new Set<string>();
     const markerIcons = new Set<string>();
 
     for (const srcDir of srcDirs) {
       if (fs.existsSync(srcDir)) {
-        const dirTemplateIcons = findIconsInTemplates(srcDir);
-        const dirMarkerIcons = findIconsWithMarker(srcDir);
+        const dirTemplateIcons = findIconsInTemplates(srcDir, libraryIcons);
+        const dirMarkerIcons = findIconsWithMarker(srcDir, libraryIcons);
 
         dirTemplateIcons.forEach(icon => templateIcons.add(icon));
         dirMarkerIcons.forEach(icon => markerIcons.add(icon));
@@ -46,10 +52,13 @@ export async function generateSprite(config: SpriteGeneratorConfig = {}): Promis
       }
     }
 
-    const usedIcons = new Set([...templateIcons, ...markerIcons]);
+    // Combine library icons + consumer-specific icons
+    const consumerIconCount = templateIcons.size + markerIcons.size;
+    const usedIcons = new Set([...libraryIcons, ...templateIcons, ...markerIcons]);
 
-    // Merge library icons if truenas-ui is installed (for consumer projects)
-    mergeLibraryIcons(usedIcons, resolved.projectRoot);
+    if (consumerIconCount > 0) {
+      console.info(`Found ${consumerIconCount} additional icon(s) in consumer application`);
+    }
 
     // Add custom icons if directory is specified
     let allIcons: Set<string>;
@@ -135,10 +144,11 @@ function addCustomIconsFromPath(usedIcons: Set<string>, customIconsPath: string)
 }
 
 /**
- * Merge library icons from truenas-ui package if installed
+ * Load library icons from truenas-ui package if installed
  * This ensures library-internal icons (chevrons, folder, etc.) are available in consumer apps
+ * Returns a Set of icon names from the library, or an empty Set if library is not installed
  */
-function mergeLibraryIcons(usedIcons: Set<string>, projectRoot: string): void {
+function loadLibraryIcons(projectRoot: string): Set<string> {
   const librarySpritePath = resolve(
     projectRoot,
     'node_modules/truenas-ui/dist/truenas-ui/assets/icons/sprite-config.json'
@@ -146,18 +156,15 @@ function mergeLibraryIcons(usedIcons: Set<string>, projectRoot: string): void {
 
   // Skip if truenas-ui is not installed (e.g., when building the library itself)
   if (!fs.existsSync(librarySpritePath)) {
-    return;
+    return new Set<string>();
   }
 
   try {
     const libraryConfig = JSON.parse(fs.readFileSync(librarySpritePath, 'utf-8'));
     const libraryIcons = libraryConfig.icons || [];
-
-    if (libraryIcons.length > 0) {
-      console.info(`Merging ${libraryIcons.length} icon(s) from truenas-ui library`);
-      libraryIcons.forEach((icon: string) => usedIcons.add(icon));
-    }
+    return new Set<string>(libraryIcons);
   } catch (error) {
     console.warn('Warning: Could not load library sprite config:', error);
+    return new Set<string>();
   }
 }

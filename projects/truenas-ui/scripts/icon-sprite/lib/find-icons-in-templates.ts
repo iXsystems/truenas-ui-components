@@ -2,7 +2,7 @@ import fs from 'fs';
 import fg from 'fast-glob';
 import * as cheerio from 'cheerio';
 
-export function findIconsInTemplates(path: string): Set<string> {
+export function findIconsInTemplates(path: string, skipIcons?: Set<string>): Set<string> {
   const iconNames = new Set<string>();
 
   const templates = fg.sync(`${path}/**/*.html`);
@@ -11,7 +11,8 @@ export function findIconsInTemplates(path: string): Set<string> {
     const content = fs.readFileSync(template, 'utf-8');
     const parsedTemplate = cheerio.load(content);
 
-    parsedTemplate('ix-icon').each((_, iconTag) => {
+    // Helper function to extract icon names from elements (used for both ix-icon and ix-icon-button)
+    const processIconElement = (iconTag: cheerio.Element) => {
       // Check both 'name' and '[name]' attributes (Angular binding syntax)
       const staticName = parsedTemplate(iconTag).attr('name');
       const boundName = parsedTemplate(iconTag).attr('[name]');
@@ -67,19 +68,39 @@ export function findIconsInTemplates(path: string): Set<string> {
           return;
         }
 
+        // Determine the final icon name with appropriate prefix
+        let finalIconName: string;
+
         // Handle library attribute - prefix the icon name with library prefix
         if (library === 'mdi' && !iconName.startsWith('mdi-')) {
-          iconNames.add(`mdi-${iconName}`);
+          finalIconName = `mdi-${iconName}`;
         } else if (library === 'custom' && !iconName.startsWith('app-') && !iconName.startsWith('ix-')) {
           // Consumer custom icons get app- prefix
           // (Library templates should never use library="custom", they use libIconMarker() instead)
-          iconNames.add(`app-${iconName}`);
+          finalIconName = `app-${iconName}`;
         } else if (library === 'material' && !iconName.startsWith('mat-')) {
-          iconNames.add(iconName); // Material icons don't need prefix
+          finalIconName = `mat-${iconName}`; // Material icons get mat- prefix
         } else {
-          iconNames.add(iconName);
+          finalIconName = iconName;
         }
+
+        // Skip if already provided by library
+        if (skipIcons?.has(finalIconName)) {
+          return;
+        }
+
+        iconNames.add(finalIconName);
       });
+    };
+
+    // Scan ix-icon elements
+    parsedTemplate('ix-icon').each((_, iconTag) => {
+      processIconElement(iconTag);
+    });
+
+    // Scan ix-icon-button elements (they also have name and library attributes)
+    parsedTemplate('ix-icon-button').each((_, iconTag) => {
+      processIconElement(iconTag);
     });
   });
 
