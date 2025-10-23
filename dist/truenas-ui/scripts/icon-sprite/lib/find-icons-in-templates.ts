@@ -11,7 +11,8 @@ export function findIconsInTemplates(path: string): Set<string> {
     const content = fs.readFileSync(template, 'utf-8');
     const parsedTemplate = cheerio.load(content);
 
-    parsedTemplate('ix-icon').each((_, iconTag) => {
+    // Helper function to extract icon names from elements (used for both ix-icon and ix-icon-button)
+    const processIconElement = (iconTag: cheerio.Element) => {
       // Check both 'name' and '[name]' attributes (Angular binding syntax)
       const staticName = parsedTemplate(iconTag).attr('name');
       const boundName = parsedTemplate(iconTag).attr('[name]');
@@ -80,6 +81,16 @@ export function findIconsInTemplates(path: string): Set<string> {
           iconNames.add(iconName);
         }
       });
+    };
+
+    // Scan ix-icon elements
+    parsedTemplate('ix-icon').each((_, iconTag) => {
+      processIconElement(iconTag);
+    });
+
+    // Scan ix-icon-button elements (they also have name and library attributes)
+    parsedTemplate('ix-icon-button').each((_, iconTag) => {
+      processIconElement(iconTag);
     });
   });
 
