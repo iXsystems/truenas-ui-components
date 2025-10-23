@@ -117,8 +117,8 @@ export class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
     if (this.library === 'mdi' && !this.name.startsWith('mdi-')) {
       effectiveIconName = `mdi-${this.name}`;
     } else if (this.library === 'material' && !this.name.startsWith('mat-')) {
-      // Material icons don't need prefix in sprite
-      effectiveIconName = this.name;
+      // Material icons get mat- prefix in sprite
+      effectiveIconName = `mat-${this.name}`;
     } else if (this.library === 'lucide' && !this.name.includes(':')) {
       // Convert to registry format for Lucide icons
       effectiveIconName = `lucide:${this.name}`;

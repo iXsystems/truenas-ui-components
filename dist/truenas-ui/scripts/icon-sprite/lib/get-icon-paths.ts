@@ -73,7 +73,17 @@ export function getIconPaths(names: Set<string>, projectRoot: string = process.c
       return;
     }
 
-    // Material Design Icons (no prefix)
+    // Material Design Icons (mat- prefix)
+    if (name.startsWith('mat-')) {
+      const materialPath = resolve(nodeModulesPath, `@material-design-icons/svg/filled/${name.slice(4)}.svg`);
+      if (!fs.existsSync(materialPath)) {
+        console.warn(`⚠ Material icon not found: ${name} (looking for ${name.slice(4)}.svg in @material-design-icons)`);
+      }
+      iconPaths.set(name, materialPath);
+      return;
+    }
+
+    // Fallback for icons without recognized prefix (should be rare)
     const materialPath = resolve(nodeModulesPath, `@material-design-icons/svg/filled/${name}.svg`);
     if (!fs.existsSync(materialPath)) {
       console.warn(`⚠ Material icon not found: ${name} (looking for ${name}.svg in @material-design-icons)`);

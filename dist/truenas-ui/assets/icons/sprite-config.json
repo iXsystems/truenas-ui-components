@@ -1,7 +1,6 @@
 {
-  "iconUrl": "assets/icons/sprite.svg?v=34dd660f48",
+  "iconUrl": "assets/icons/sprite.svg?v=c0666c4751",
   "icons": [
-    "home",
     "ix-cloud-off",
     "ix-dataset",
     "ix-dataset-root",
@@ -42,6 +41,8 @@
     "ix-truenas-logo-type",
     "ix-truenas-logo-type-color",
     "ix-two-factor-auth",
+    "mat-home",
+    "mat-settings",
     "mdi-alert-circle",
     "mdi-bell",
     "mdi-chevron-down",
@@ -71,7 +72,6 @@
     "mdi-refresh",
     "mdi-server",
     "mdi-share-variant",
-    "mdi-star",
-    "settings"
+    "mdi-star"
   ]
 }

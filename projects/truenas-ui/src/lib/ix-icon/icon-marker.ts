@@ -45,7 +45,9 @@ export function iconMarker(
   if (library === 'custom' && !iconName.startsWith('app-')) {
     return `app-${iconName}`;
   }
-  // Material icons have no prefix
+  if (library === 'material' && !iconName.startsWith('mat-')) {
+    return `mat-${iconName}`;
+  }
   return iconName;
 }
 
