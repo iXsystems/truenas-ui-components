@@ -34,7 +34,13 @@
     height: var(--icon-xl) !important;
     font-size: var(--icon-xl) !important;
   }
-  
+
+  // Full size variant - removes fixed size constraints
+  &--full-size {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
   // Icon content containers
   &__sprite {
     width: 100%;

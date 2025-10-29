@@ -29,6 +29,7 @@ export class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
   @Input() tooltip?: string;
   @Input() ariaLabel?: string;
   @Input() library?: IconLibraryType;
+  @Input() fullSize?: boolean = false;
 
   @ViewChild('svgContainer', { static: false }) svgContainer?: ElementRef<HTMLDivElement>;
 

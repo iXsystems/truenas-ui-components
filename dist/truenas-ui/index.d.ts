@@ -69,6 +69,7 @@ declare class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
     tooltip?: string;
     ariaLabel?: string;
     library?: IconLibraryType;
+    fullSize?: boolean;
     svgContainer?: ElementRef<HTMLDivElement>;
     iconResult: IconResult;
     private iconRegistry;
@@ -86,7 +87,7 @@ declare class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
     private generateTextAbbreviation;
     private cssClassExists;
     static ɵfac: i0.ɵɵFactoryDeclaration<IxIconComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<IxIconComponent, "ix-icon", never, { "name": { "alias": "name"; "required": false; }; "size": { "alias": "size"; "required": false; }; "color": { "alias": "color"; "required": false; }; "tooltip": { "alias": "tooltip"; "required": false; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; }; "library": { "alias": "library"; "required": false; }; }, {}, never, never, true, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<IxIconComponent, "ix-icon", never, { "name": { "alias": "name"; "required": false; }; "size": { "alias": "size"; "required": false; }; "color": { "alias": "color"; "required": false; }; "tooltip": { "alias": "tooltip"; "required": false; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; }; "library": { "alias": "library"; "required": false; }; "fullSize": { "alias": "fullSize"; "required": false; }; }, {}, never, never, true, never>;
 }
 
 declare class IxIconButtonComponent {

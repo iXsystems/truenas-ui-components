@@ -1,6 +1,6 @@
-<div 
+<div
   class="ix-icon"
-  [ngClass]="'ix-icon--' + size"
+  [ngClass]="['ix-icon--' + size, fullSize ? 'ix-icon--full-size' : '']"
   [style.color]="color"
   [attr.aria-label]="effectiveAriaLabel"
   [attr.title]="tooltip"
