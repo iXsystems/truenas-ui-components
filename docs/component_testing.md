@@ -506,3 +506,237 @@ See these test files for reference:
 - `ix-button.component.spec.ts` - Simple component tests
 - `ix-card.component.spec.ts` - Complex component with children
 - `ix-checkbox.component.spec.ts` - Form control tests
+- `ix-banner.component.spec.ts` - Harness testing examples
+
+## Component Harness Testing
+
+### What are Component Harnesses?
+
+Test utilities from Angular CDK that provide a simple, stable API for querying components. Benefits:
+- **Environment-agnostic**: Works in Jest, Protractor, Selenium, etc.
+- **Abstracts DOM details**: Tests won't break if internal structure changes
+- **Reusable by consumers**: Part of public API for integration testing
+
+### When to Use Harnesses
+
+**Use harnesses for:**
+- Checking component existence/absence in integration tests
+- Text-based queries across component content
+- Consumer tests (harnesses are public API)
+- Integration tests that compose multiple components
+
+**Use traditional TestBed for:**
+- Testing internal component logic
+- Testing computed signals and getters
+- Unit testing individual methods
+
+**Keep harnesses minimal** - only add methods consumers actually need.
+
+### Setup
+
+```typescript
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+import { HarnessLoader } from '@angular/cdk/testing';
+import { IxBannerHarness } from './ix-banner.harness';
+
+describe('Component with Harness', () => {
+  let loader: HarnessLoader;
+  let fixture: ComponentFixture<MyComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [MyComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(MyComponent);
+    loader = TestbedHarnessEnvironment.loader(fixture);
+    fixture.detectChanges();
+  });
+});
+```
+
+### Basic Usage
+
+#### Check Existence
+
+```typescript
+it('should have banner', async () => {
+  const banner = await loader.getHarness(IxBannerHarness);
+  expect(banner).toBeTruthy();
+});
+
+it('should check if banner exists', async () => {
+  const hasBanner = await loader.hasHarness(IxBannerHarness);
+  expect(hasBanner).toBe(true);
+});
+```
+
+#### Find by Text Content
+
+```typescript
+it('should find banner with specific text', async () => {
+  const errorBanner = await loader.getHarness(
+    IxBannerHarness.with({ textContains: 'network error' })
+  );
+  expect(errorBanner).toBeTruthy();
+});
+
+it('should verify banner text', async () => {
+  const banner = await loader.getHarness(IxBannerHarness);
+  const text = await banner.getText();
+  expect(text).toContain('Expected content');
+});
+```
+
+#### Regex Matching
+
+```typescript
+it('should match with regex pattern', async () => {
+  const hasSuccess = await loader.hasHarness(
+    IxBannerHarness.with({ textContains: /success/i })
+  );
+  expect(hasSuccess).toBe(true);
+});
+
+it('should find error banner', async () => {
+  const banner = await loader.getHarness(
+    IxBannerHarness.with({ textContains: /Error:/ })
+  );
+  expect(banner).toBeTruthy();
+});
+```
+
+### Multiple Harnesses
+
+```typescript
+it('should get all banners', async () => {
+  const banners = await loader.getAllHarnesses(IxBannerHarness);
+  expect(banners.length).toBe(3);
+});
+
+it('should filter multiple banners', async () => {
+  const errorBanners = await loader.getAllHarnesses(
+    IxBannerHarness.with({ textContains: /error/i })
+  );
+  expect(errorBanners.length).toBe(2);
+});
+```
+
+### Text Matching
+
+- **String**: Exact substring match
+  ```typescript
+  IxBannerHarness.with({ textContains: 'Success' })
+  ```
+
+- **Regex**: Pattern match
+  ```typescript
+  IxBannerHarness.with({ textContains: /Error:/ })
+  ```
+
+- **Case-insensitive**: Use regex with `i` flag
+  ```typescript
+  IxBannerHarness.with({ textContains: /success/i })
+  ```
+
+### Important: Always Await
+
+All harness methods are async. Always use `await`:
+
+```typescript
+// ✅ Correct
+it('should get text', async () => {
+  const banner = await loader.getHarness(IxBannerHarness);
+  expect(await banner.getText()).toBe('Success');
+});
+
+// ❌ Wrong - forgot await
+it('should get text', async () => {
+  const banner = await loader.getHarness(IxBannerHarness);
+  expect(banner.getText()).toBe('Success'); // This will fail!
+});
+```
+
+### Error Handling
+
+```typescript
+it('should handle missing harness', async () => {
+  // This throws if harness not found
+  await expectAsync(
+    loader.getHarness(IxBannerHarness.with({ textContains: 'Not Found' }))
+  ).toBeRejected();
+});
+
+it('should check existence instead', async () => {
+  const exists = await loader.hasHarness(
+    IxBannerHarness.with({ textContains: 'Not Found' })
+  );
+  expect(exists).toBe(false);
+});
+```
+
+### Consumer Integration Test Example
+
+```typescript
+// Consumer's test for their component that uses ix-banner
+describe('My Component with TrueNAS Banner', () => {
+  let fixture: ComponentFixture<MyComponent>;
+  let loader: HarnessLoader;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [MyComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(MyComponent);
+    loader = TestbedHarnessEnvironment.loader(fixture);
+    fixture.detectChanges();
+  });
+
+  it('should display error banner on failure', async () => {
+    // Trigger error in your component
+    fixture.componentInstance.simulateError();
+    fixture.detectChanges();
+
+    // Verify error banner appears
+    const hasError = await loader.hasHarness(
+      IxBannerHarness.with({ textContains: /error/i })
+    );
+    expect(hasError).toBe(true);
+  });
+
+  it('should verify success message', async () => {
+    fixture.componentInstance.save();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const banner = await loader.getHarness(
+      IxBannerHarness.with({ textContains: /saved/i })
+    );
+    const text = await banner.getText();
+    expect(text).toContain('successfully saved');
+  });
+});
+```
+
+### Best Practices
+
+**Do:**
+- Always await harness method calls
+- Use `hasHarness()` to check existence (doesn't throw)
+- Use filters to find specific instances
+- Test from user perspective (what they see)
+- Combine harness tests with traditional tests
+
+**Don't:**
+- Access component internals via harness
+- Make assumptions about DOM structure
+- Use harnesses for unit testing internal methods
+- Forget to call `fixture.detectChanges()` before queries
+- Mix harness and direct DOM queries in same test
+
+### Reference Implementation
+
+See `/Users/aaronervin/Projects/truenas-ui-components/projects/truenas-ui/src/lib/ix-banner/` for complete harness implementation:
+- `ix-banner.harness.ts` - Minimal harness definition
+- `ix-banner.component.spec.ts` - Harness usage examples

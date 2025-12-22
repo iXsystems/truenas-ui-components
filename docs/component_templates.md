@@ -620,3 +620,123 @@ export class MyComponent {
   }
 }
 ```
+
+## Component Harness Template
+
+**Important**: Keep harnesses **minimal**. Only add methods that consumers actually need.
+
+All NEW components should include a test harness for consumers. Harnesses provide a simple, stable API for testing components in integration tests and consumer applications.
+
+### Basic Harness (Minimal API)
+
+Start with this minimal template - only add more methods if consumers explicitly need them:
+
+```typescript
+import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
+
+/**
+ * Harness for interacting with ix-[name] in tests.
+ * Provides simple existence checks and text-based queries.
+ *
+ * @example
+ * ```typescript
+ * // Check existence
+ * const component = await loader.getHarness(Ix[Name]Harness);
+ *
+ * // Find by text content
+ * const match = await loader.getHarness(
+ *   Ix[Name]Harness.with({ textContains: 'my text' })
+ * );
+ * ```
+ */
+export class Ix[Name]Harness extends ComponentHarness {
+  /**
+   * The selector for the host element of an `Ix[Name]Component` instance.
+   */
+  static hostSelector = 'ix-[name]';
+
+  /**
+   * Gets a `HarnessPredicate` that can be used to search for a component
+   * with specific text content.
+   *
+   * @param options Options for filtering which instances are considered a match.
+   * @returns A `HarnessPredicate` configured with the given options.
+   */
+  static with(options: [Name]HarnessFilters = {}) {
+    return new HarnessPredicate(Ix[Name]Harness, options)
+      .addOption('textContains', options.textContains, (harness, text) =>
+        HarnessPredicate.stringMatches(harness.getText(), text)
+      );
+  }
+
+  /**
+   * Gets all text content from the component.
+   *
+   * @returns Promise resolving to the component's text content, trimmed of whitespace.
+   */
+  async getText(): Promise<string> {
+    const host = await this.host();
+    return (await host.text()).trim();
+  }
+}
+
+/**
+ * A set of criteria that can be used to filter a list of harness instances.
+ */
+export interface [Name]HarnessFilters {
+  /** Filters by text content. Supports string or regex matching. */
+  textContains?: string | RegExp;
+}
+```
+
+### Usage
+
+```typescript
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+import { Ix[Name]Harness } from '@truenas/ui-components';
+
+// In your test
+const loader = TestbedHarnessEnvironment.loader(fixture);
+
+// Check existence
+const component = await loader.getHarness(Ix[Name]Harness);
+expect(component).toBeTruthy();
+
+// Find by text content
+const match = await loader.getHarness(
+  Ix[Name]Harness.with({ textContains: 'my text' })
+);
+
+// Check if exists
+const exists = await loader.hasHarness(
+  Ix[Name]Harness.with({ textContains: /pattern/i })
+);
+```
+
+### When to Add More Methods
+
+**Only add additional methods if consumers actually need them:**
+
+- **Interactive components** (button, input): Add interaction methods like `click()`, `setValue()`
+- **Complex queries**: Add specific getters only if `textContains` is insufficient
+- **Child components**: Add child harness getters when consumers need to interact with nested components
+
+### Best Practices
+
+**Do:**
+- Start minimal, add methods only when use case demands it
+- Prefer text-based queries over implementation-specific methods
+- Use `textContains` filter for most query needs
+- Document all methods with JSDoc and examples
+- Make all methods async (return `Promise<T>`)
+- Export harness in public API
+
+**Don't:**
+- Create large API surfaces "just in case"
+- Expose internal implementation details
+- Add methods for every getter/property
+- Forget to update filter interface when adding options
+
+### Reference Implementation
+
+See `ix-banner.harness.ts` for a complete minimal harness example.

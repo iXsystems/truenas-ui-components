@@ -42,6 +42,14 @@ Navigate to your new directory and create these required files:
   - See `component_testing.md` for patterns
   - Test creation, inputs, outputs, and classes
   - Use Jest syntax
+  - Include both traditional and harness-based tests
+
+- [ ] **Component harness file** (REQUIRED for NEW components): `ix-[name].harness.ts`
+  - See `component_templates.md` for harness template
+  - Extend `ComponentHarness` from `@angular/cdk/testing`
+  - Implement minimal API: `getText()` and `with({ containsText })`
+  - Export harness and filter interface
+  - Document all methods with JSDoc
 
 ### Phase 3: Optional Files
 
@@ -58,6 +66,7 @@ Navigate to your new directory and create these required files:
 - [ ] **Export in public API**
   - Open: `projects/truenas-ui/src/public-api.ts`
   - Add: `export * from './lib/ix-[name]/ix-[name].component';`
+  - Add: `export * from './lib/ix-[name]/ix-[name].harness';` ← REQUIRED for new components
   - If using index.ts: `export * from './lib/ix-[name]';`
   - If interfaces exist: `export * from './lib/ix-[name]/ix-[name].interfaces';`
 
@@ -110,6 +119,7 @@ projects/truenas-ui/src/lib/ix-[name]/
 ├── ix-[name].component.html       # Template
 ├── ix-[name].component.scss       # Styles
 ├── ix-[name].component.spec.ts    # Tests
+├── ix-[name].harness.ts           # Test harness (REQUIRED for new components)
 ├── ix-[name].interfaces.ts        # (Optional) Types
 └── index.ts                       # (Optional) Barrel export
 
@@ -117,7 +127,8 @@ projects/truenas-ui/src/stories/
 └── ix-[name].stories.ts           # Storybook story
 
 projects/truenas-ui/src/public-api.ts
-└── export * from './lib/ix-[name]/...';  # Public export
+├── export * from './lib/ix-[name]/ix-[name].component';
+└── export * from './lib/ix-[name]/ix-[name].harness';  # Public harness export
 ```
 
 ## Where to Find Templates
@@ -174,6 +185,7 @@ For reference, look at these existing components:
 - **Complex component**: `ix-card/`
 - **Form control**: `ix-checkbox/`
 - **With directives**: `ix-menu/`
+- **Harness reference**: `ix-banner/` - Complete harness implementation with minimal API
 
 ## Next Steps
 
