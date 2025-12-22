@@ -1,5 +1,6 @@
 import * as i0 from '@angular/core';
 import { EventEmitter, OnInit, OnChanges, AfterViewInit, ElementRef, ChangeDetectorRef, SimpleChanges, TemplateRef, ViewContainerRef, OnDestroy, AfterContentInit, QueryList, IterableDiffers, PipeTransform, AfterViewChecked } from '@angular/core';
+import { ComponentHarness, BaseHarnessFilters, HarnessPredicate } from '@angular/cdk/testing';
 import { SafeHtml, DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ControlValueAccessor, NgControl } from '@angular/forms';
 import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
@@ -36,6 +37,104 @@ declare class DiskIconComponent {
     protected readonly DiskType: typeof DiskType;
     static ɵfac: i0.ɵɵFactoryDeclaration<DiskIconComponent, never>;
     static ɵcmp: i0.ɵɵComponentDeclaration<DiskIconComponent, "ix-disk-icon", never, { "size": { "alias": "size"; "required": true; "isSignal": true; }; "type": { "alias": "type"; "required": true; "isSignal": true; }; "name": { "alias": "name"; "required": true; "isSignal": true; }; }, {}, never, never, true, never>;
+}
+
+type IxBannerType = 'info' | 'warning' | 'error' | 'success';
+declare class IxBannerComponent {
+    private iconRegistry;
+    heading: i0.InputSignal<string>;
+    message: i0.InputSignal<string | undefined>;
+    type: i0.InputSignal<IxBannerType>;
+    constructor();
+    /**
+     * Register all MDI icons used by the banner component
+     * Makes component self-contained with zero external configuration
+     */
+    private registerMdiIcons;
+    /**
+     * Get the appropriate icon name based on banner type
+     */
+    get iconName(): string;
+    /**
+     * Get ARIA role based on banner type
+     * Error/warning use 'alert' for immediate attention
+     * Info/success use 'status' for polite announcements
+     */
+    get ariaRole(): 'alert' | 'status';
+    /**
+     * Generate CSS classes using BEM methodology
+     */
+    get classes(): string[];
+    static ɵfac: i0.ɵɵFactoryDeclaration<IxBannerComponent, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<IxBannerComponent, "ix-banner", never, { "heading": { "alias": "heading"; "required": true; "isSignal": true; }; "message": { "alias": "message"; "required": false; "isSignal": true; }; "type": { "alias": "type"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
+}
+
+/**
+ * Harness for interacting with ix-banner in tests.
+ * Provides simple text-based querying for existence checks.
+ *
+ * @example
+ * ```typescript
+ * // Check for existence
+ * const banner = await loader.getHarness(IxBannerHarness);
+ *
+ * // Find banner containing specific text
+ * const errorBanner = await loader.getHarness(
+ *   IxBannerHarness.with({ textContains: 'network error' })
+ * );
+ *
+ * // Check if banner exists with text
+ * const hasBanner = await loader.hasHarness(
+ *   IxBannerHarness.with({ textContains: /success/i })
+ * );
+ * ```
+ */
+declare class IxBannerHarness extends ComponentHarness {
+    /**
+     * The selector for the host element of an `IxBannerComponent` instance.
+     */
+    static hostSelector: string;
+    /**
+     * Gets a `HarnessPredicate` that can be used to search for a banner
+     * with specific text content.
+     *
+     * @param options Options for filtering which banner instances are considered a match.
+     * @returns A `HarnessPredicate` configured with the given options.
+     *
+     * @example
+     * ```typescript
+     * // Find banner containing specific text
+     * const banner = await loader.getHarness(
+     *   IxBannerHarness.with({ textContains: 'error occurred' })
+     * );
+     *
+     * // Find banner with regex pattern
+     * const banner = await loader.getHarness(
+     *   IxBannerHarness.with({ textContains: /Error:/ })
+     * );
+     * ```
+     */
+    static with(options?: BannerHarnessFilters): HarnessPredicate<IxBannerHarness>;
+    /**
+     * Gets all text content from the banner (heading + message combined).
+     *
+     * @returns Promise resolving to the banner's text content, trimmed of whitespace.
+     *
+     * @example
+     * ```typescript
+     * const banner = await loader.getHarness(IxBannerHarness);
+     * const text = await banner.getText();
+     * expect(text).toContain('Success');
+     * ```
+     */
+    getText(): Promise<string>;
+}
+/**
+ * A set of criteria that can be used to filter a list of `IxBannerHarness` instances.
+ */
+interface BannerHarnessFilters extends BaseHarnessFilters {
+    /** Filters by text content within banner. Supports string or regex matching. */
+    textContains?: string | RegExp;
 }
 
 declare class IxButtonComponent {
@@ -2310,5 +2409,5 @@ declare class IxKeyboardShortcutService {
     static ɵprov: i0.ɵɵInjectableDeclaration<IxKeyboardShortcutService>;
 }
 
-export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconButtonComponent, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMenuComponent, IxMenuTriggerDirective, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxSpriteLoaderService, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TruenasIconsService, TruenasUiComponent, TruenasUiService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, iconMarker, libIconMarker, registerLucideIcons, setupLucideIntegration };
-export type { CalendarCell, ChipColor, CreateFolderEvent, DateRange, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem, IconLibrary, IconLibraryType, IconResult, IconSize, IconSource, IxButtonToggleType, IxCardAction, IxCardControl, IxCardFooterLink, IxCardHeaderStatus, IxDialogDefaults, IxDialogOpenTarget, IxFlatTreeNode, IxMenuItem, IxSelectOption, IxSelectOptionGroup, IxSelectionChange, IxTableDataSource, KeyCombination, LabelType, LucideIconOptions, PathSegment, PlatformType, ProgressBarMode, ResolvedIcon, ShortcutHandler, SlideToggleColor, SpinnerMode, SpriteConfig, TabChangeEvent, TooltipPosition, YearCell };
+export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBannerComponent, IxBannerHarness, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconButtonComponent, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMenuComponent, IxMenuTriggerDirective, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxSpriteLoaderService, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TruenasIconsService, TruenasUiComponent, TruenasUiService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, iconMarker, libIconMarker, registerLucideIcons, setupLucideIntegration };
+export type { BannerHarnessFilters, CalendarCell, ChipColor, CreateFolderEvent, DateRange, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem, IconLibrary, IconLibraryType, IconResult, IconSize, IconSource, IxBannerType, IxButtonToggleType, IxCardAction, IxCardControl, IxCardFooterLink, IxCardHeaderStatus, IxDialogDefaults, IxDialogOpenTarget, IxFlatTreeNode, IxMenuItem, IxSelectOption, IxSelectOptionGroup, IxSelectionChange, IxTableDataSource, KeyCombination, LabelType, LucideIconOptions, PathSegment, PlatformType, ProgressBarMode, ResolvedIcon, ShortcutHandler, SlideToggleColor, SpinnerMode, SpriteConfig, TabChangeEvent, TooltipPosition, YearCell };
