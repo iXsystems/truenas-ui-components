@@ -159,6 +159,8 @@ export class Ix[Name]Component {
 
 ## HTML Template Templates
 
+**Important:** Use modern Angular control flow syntax (`@if`, `@for`, `@switch`) instead of the deprecated structural directives (`*ngIf`, `*ngFor`, `*ngSwitch`). The new syntax is cleaner, more type-safe, and better for performance.
+
 ### Simple Template
 
 ```html
@@ -171,9 +173,11 @@ export class Ix[Name]Component {
 
 ```html
 <div [ngClass]="classes">
-  <div class="ix-[name]__header" *ngIf="title">
-    <h3>{{ title }}</h3>
-  </div>
+  @if (title) {
+    <div class="ix-[name]__header">
+      <h3>{{ title }}</h3>
+    </div>
+  }
   <div class="ix-[name]__content">
     <ng-content></ng-content>
   </div>
@@ -205,9 +209,11 @@ export class Ix[Name]Component {
     <ng-content></ng-content>
   </div>
 
-  <div class="ix-[name]__footer" *ngIf="showFooter">
-    <ng-content select="[footer]"></ng-content>
-  </div>
+  @if (showFooter) {
+    <div class="ix-[name]__footer">
+      <ng-content select="[footer]"></ng-content>
+    </div>
+  }
 </div>
 ```
 
@@ -215,22 +221,25 @@ export class Ix[Name]Component {
 
 ```html
 <div [ngClass]="classes">
-  <div class="ix-[name]__icon" *ngIf="showIcon()">
-    <ix-icon [name]="iconName()" [library]="iconLibrary()"></ix-icon>
-  </div>
+  @if (showIcon()) {
+    <div class="ix-[name]__icon">
+      <ix-icon [name]="iconName()" [library]="iconLibrary()"></ix-icon>
+    </div>
+  }
 
   <div class="ix-[name]__content">
     {{ label() }}
   </div>
 
-  <button
-    *ngIf="closable()"
-    type="button"
-    class="ix-[name]__close"
-    (click)="onClose.emit()"
-  >
-    <ix-icon name="close" library="mdi"></ix-icon>
-  </button>
+  @if (closable()) {
+    <button
+      type="button"
+      class="ix-[name]__close"
+      (click)="onClose.emit()"
+    >
+      <ix-icon name="close" library="mdi"></ix-icon>
+    </button>
+  }
 </div>
 ```
 
