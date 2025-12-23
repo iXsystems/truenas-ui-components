@@ -14,6 +14,9 @@ This file helps coding agents quickly find the right documentation for working o
 **Do you need to write or fix tests?**
 → Read `docs/component_testing.md`
 
+**Do you need to document a component harness?**
+→ Read `docs/harness_documentation.md`
+
 **Do you need to understand naming conventions or architecture?**
 → Read `docs/component_conventions.md`
 
@@ -32,6 +35,7 @@ This file helps coding agents quickly find the right documentation for working o
 | `component_styling.md` | CSS patterns, theme variables, responsive design | Working on styles or appearance | ~150 lines |
 | `component_testing.md` | Testing patterns, Jest examples, mocking | Writing or debugging tests | ~120 lines |
 | `component_conventions.md` | Naming rules, architecture decisions, patterns | Understanding project structure or design choices | ~100 lines |
+| `harness_documentation.md` | Auto-generating harness API docs in Storybook | Creating harness documentation or integrating into stories | ~650 lines |
 
 ## Common Usage Patterns
 
@@ -88,6 +92,12 @@ npm run build-storybook
 
 ### Story File Templates
 Story templates are included in `component_templates.md` under "Storybook Story Templates"
+
+### Harness Documentation in Storybook
+**Auto-generated API documentation for component harnesses:**
+- Harness JSDoc comments automatically generate Storybook documentation
+- Documentation appears at end of component's Docs tab
+- See `docs/harness_documentation.md` for complete guide on JSDoc conventions and integration
 
 ### Key Storybook Concepts Used Here
 
