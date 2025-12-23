@@ -1,19 +1,25 @@
 <div class="ix-list-option__content">
   <!-- Leading content (icons, avatars) -->
-  <div class="ix-list-option__leading" *ngIf="hasLeadingContent">
-    <ng-content select="[ixListIcon], [ixListAvatar]"></ng-content>
-  </div>
+  @if (hasLeadingContent) {
+    <div class="ix-list-option__leading">
+      <ng-content select="[ixListIcon], [ixListAvatar]"></ng-content>
+    </div>
+  }
 
   <!-- Text content -->
   <div class="ix-list-option__text">
     <div class="ix-list-option__primary-text">
       <ng-content select="[ixListItemTitle], [ixListItemPrimary]"></ng-content>
-      <ng-content *ngIf="!hasPrimaryTextDirective"></ng-content>
+      @if (!hasPrimaryTextDirective) {
+        <ng-content></ng-content>
+      }
     </div>
-    
-    <div class="ix-list-option__secondary-text" *ngIf="hasSecondaryTextContent">
-      <ng-content select="[ixListItemLine], [ixListItemSecondary]"></ng-content>
-    </div>
+
+    @if (hasSecondaryTextContent) {
+      <div class="ix-list-option__secondary-text">
+        <ng-content select="[ixListItemLine], [ixListItemSecondary]"></ng-content>
+      </div>
+    }
   </div>
 
   <!-- Checkbox on the right -->

@@ -1,52 +1,60 @@
 <div [ngClass]="classes">
   <!-- Header section -->
-  <div class="ix-card__header" *ngIf="hasHeader">
-    <div class="ix-card__header-left">
-      <h3
-        class="ix-card__title"
-        [class.ix-card__title--link]="titleLink"
-        (click)="onTitleClick()"
-        *ngIf="title">
-        {{ title }}
-      </h3>
+  @if (hasHeader) {
+    <div class="ix-card__header">
+      <div class="ix-card__header-left">
+        @if (title) {
+          <h3
+            class="ix-card__title"
+            [class.ix-card__title--link]="titleLink"
+            (click)="onTitleClick()">
+            {{ title }}
+          </h3>
+        }
+      </div>
+
+      <div class="ix-card__header-right">
+        <!-- Header Status -->
+        @if (headerStatus) {
+          <div
+            class="ix-card__status"
+            [ngClass]="getStatusClass(headerStatus?.type)">
+            {{ headerStatus.label }}
+          </div>
+        }
+
+        <!-- Header Control (Slide Toggle) -->
+        @if (headerControl) {
+          <div class="ix-card__control">
+            <ix-slide-toggle
+              [label]="headerControl.label"
+              [checked]="headerControl.checked"
+              [disabled]="headerControl.disabled || false"
+              (change)="onControlChange($event)">
+            </ix-slide-toggle>
+          </div>
+        }
+
+        <!-- Header Menu -->
+        @if (headerMenu && headerMenu.length) {
+          <div class="ix-card__menu">
+            <ix-icon-button
+              name="dots-vertical"
+              library="mdi"
+              size="md"
+              [ixMenuTriggerFor]="cardMenu"
+              ariaLabel="Card menu">
+            </ix-icon-button>
+            <ix-menu
+              #cardMenu
+              [items]="headerMenu"
+              (menuItemClick)="onHeaderMenuItemClick($event)">
+            </ix-menu>
+          </div>
+        }
+      </div>
     </div>
-
-    <div class="ix-card__header-right">
-      <!-- Header Status -->
-      <div
-        class="ix-card__status"
-        [ngClass]="getStatusClass(headerStatus?.type)"
-        *ngIf="headerStatus">
-        {{ headerStatus.label }}
-      </div>
-
-      <!-- Header Control (Slide Toggle) -->
-      <div class="ix-card__control" *ngIf="headerControl">
-        <ix-slide-toggle
-          [label]="headerControl.label"
-          [checked]="headerControl.checked"
-          [disabled]="headerControl.disabled || false"
-          (change)="onControlChange($event)">
-        </ix-slide-toggle>
-      </div>
-
-      <!-- Header Menu -->
-      <div class="ix-card__menu" *ngIf="headerMenu && headerMenu.length">
-        <ix-icon-button
-          name="dots-vertical"
-          library="mdi"
-          size="md"
-          [ixMenuTriggerFor]="cardMenu"
-          ariaLabel="Card menu">
-        </ix-icon-button>
-        <ix-menu
-          #cardMenu
-          [items]="headerMenu"
-          (menuItemClick)="onHeaderMenuItemClick($event)">
-        </ix-menu>
-      </div>
-    </div>
-  </div>
+  }
 
   <!-- Content section -->
   <div class="ix-card__content">
@@ -54,35 +62,40 @@
   </div>
 
   <!-- Footer section -->
-  <div class="ix-card__footer" *ngIf="hasFooter">
-    <div class="ix-card__footer-left">
-      <button
-        *ngIf="footerLink"
-        type="button"
-        class="ix-card__footer-link"
-        (click)="footerLink.handler()">
-        {{ footerLink.label }}
-      </button>
-    </div>
+  @if (hasFooter) {
+    <div class="ix-card__footer">
+      <div class="ix-card__footer-left">
+        @if (footerLink) {
+          <button
+            type="button"
+            class="ix-card__footer-link"
+            (click)="footerLink.handler()">
+            {{ footerLink.label }}
+          </button>
+        }
+      </div>
 
-    <div class="ix-card__footer-right">
-      <ix-button
-        *ngIf="secondaryAction"
-        [label]="secondaryAction.label"
-        variant="outline"
-        color="default"
-        [disabled]="secondaryAction.disabled || false"
-        (click)="secondaryAction.handler()">
-      </ix-button>
+      <div class="ix-card__footer-right">
+        @if (secondaryAction) {
+          <ix-button
+            [label]="secondaryAction.label"
+            variant="outline"
+            color="default"
+            [disabled]="secondaryAction.disabled || false"
+            (click)="secondaryAction.handler()">
+          </ix-button>
+        }
 
-      <ix-button
-        *ngIf="primaryAction"
-        [label]="primaryAction.label"
-        variant="filled"
-        color="primary"
-        [disabled]="primaryAction.disabled || false"
-        (click)="primaryAction.handler()">
-      </ix-button>
+        @if (primaryAction) {
+          <ix-button
+            [label]="primaryAction.label"
+            variant="filled"
+            color="primary"
+            [disabled]="primaryAction.disabled || false"
+            (click)="primaryAction.handler()">
+          </ix-button>
+        }
+      </div>
     </div>
-  </div>
+  }
 </div>

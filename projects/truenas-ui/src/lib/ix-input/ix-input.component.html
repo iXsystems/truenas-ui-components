@@ -1,31 +1,33 @@
 <div class="ix-input-container">
   <!-- Regular input field -->
-  <input
-    *ngIf="!multiline"
-    #inputEl
-    [id]="id"
-    [value]="value"
-    [type]="inputType"
-    [attr.placeholder]="placeholder"
-    [attr.data-testid]="testId"
-    [disabled]="disabled"
-    (input)="onValueChange($event)"
-    (blur)="onBlur()"
-    class="ix-input"
-  />
-  
+  @if (!multiline) {
+    <input
+      #inputEl
+      [id]="id"
+      [value]="value"
+      [type]="inputType"
+      [attr.placeholder]="placeholder"
+      [attr.data-testid]="testId"
+      [disabled]="disabled"
+      (input)="onValueChange($event)"
+      (blur)="onBlur()"
+      class="ix-input"
+    />
+  }
+
   <!-- Textarea field -->
-  <textarea
-    *ngIf="multiline"
-    #inputEl
-    [id]="id"
-    [value]="value"
-    [attr.placeholder]="placeholder"
-    [attr.data-testid]="testId"
-    [rows]="rows"
-    [disabled]="disabled"
-    (input)="onValueChange($event)"
-    (blur)="onBlur()"
-    class="ix-input ix-textarea"
-  ></textarea>
+  @if (multiline) {
+    <textarea
+      #inputEl
+      [id]="id"
+      [value]="value"
+      [attr.placeholder]="placeholder"
+      [attr.data-testid]="testId"
+      [rows]="rows"
+      [disabled]="disabled"
+      (input)="onValueChange($event)"
+      (blur)="onBlur()"
+      class="ix-input ix-textarea"
+    ></textarea>
+  }
 </div>

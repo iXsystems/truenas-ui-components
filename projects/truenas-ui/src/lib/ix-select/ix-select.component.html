@@ -28,66 +28,70 @@
   </div>
 
   <!-- Dropdown Menu -->
-  <div 
-    *ngIf="isOpen" 
-    class="ix-select-dropdown"
-    role="listbox">
-    
-    <!-- Options List -->
-    <div class="ix-select-options">
-      <!-- Regular Options -->
-      <div 
-        *ngFor="let option of options"
-        class="ix-select-option"
-        [class.selected]="isSelected(option)"
-        [class.disabled]="option.disabled"
-        [attr.aria-selected]="isSelected(option)"
-        [attr.aria-disabled]="option.disabled"
-        role="option"
-        (mousedown)="$event.preventDefault()"
-        (click)="onOptionClick(option)">
-        
-        {{ option.label }}
-      </div>
+  @if (isOpen) {
+    <div
+      class="ix-select-dropdown"
+      role="listbox">
 
-      <!-- Option Groups -->
-      <ng-container *ngFor="let group of optionGroups; let isFirst = first">
-        <!-- Group Separator (not shown before first group if we have regular options) -->
-        <div 
-          *ngIf="!isFirst || options.length > 0"
-          class="ix-select-separator"
-          role="separator">
-        </div>
+      <!-- Options List -->
+      <div class="ix-select-options">
+        <!-- Regular Options -->
+        @for (option of options; track $index) {
+          <div
+            class="ix-select-option"
+            [class.selected]="isSelected(option)"
+            [class.disabled]="option.disabled"
+            [attr.aria-selected]="isSelected(option)"
+            [attr.aria-disabled]="option.disabled"
+            role="option"
+            (mousedown)="$event.preventDefault()"
+            (click)="onOptionClick(option)">
 
-        <!-- Group Label -->
-        <div 
-          class="ix-select-group-label"
-          [class.disabled]="group.disabled">
-          {{ group.label }}
-        </div>
+            {{ option.label }}
+          </div>
+        }
 
-        <!-- Group Options -->
-        <div 
-          *ngFor="let option of group.options"
-          class="ix-select-option"
-          [class.selected]="isSelected(option)"
-          [class.disabled]="option.disabled || group.disabled"
-          [attr.aria-selected]="isSelected(option)"
-          [attr.aria-disabled]="option.disabled || group.disabled"
-          role="option"
-          (mousedown)="$event.preventDefault()"
-          (click)="onOptionClick(option)">
-          
-          {{ option.label }}
-        </div>
-      </ng-container>
+        <!-- Option Groups -->
+        @for (group of optionGroups; track $index; let isFirst = $first) {
+          <!-- Group Separator (not shown before first group if we have regular options) -->
+          @if (!isFirst || options.length > 0) {
+            <div
+              class="ix-select-separator"
+              role="separator">
+            </div>
+          }
 
-      <!-- No Options Message -->
-      <div 
-        *ngIf="!hasAnyOptions()" 
-        class="ix-select-no-options">
-        No options available
+          <!-- Group Label -->
+          <div
+            class="ix-select-group-label"
+            [class.disabled]="group.disabled">
+            {{ group.label }}
+          </div>
+
+          <!-- Group Options -->
+          @for (option of group.options; track $index) {
+            <div
+              class="ix-select-option"
+              [class.selected]="isSelected(option)"
+              [class.disabled]="option.disabled || group.disabled"
+              [attr.aria-selected]="isSelected(option)"
+              [attr.aria-disabled]="option.disabled || group.disabled"
+              role="option"
+              (mousedown)="$event.preventDefault()"
+              (click)="onOptionClick(option)">
+
+              {{ option.label }}
+            </div>
+          }
+        }
+
+        <!-- No Options Message -->
+        @if (!hasAnyOptions()) {
+          <div class="ix-select-no-options">
+            No options available
+          </div>
+        }
       </div>
     </div>
-  </div>
+  }
 </div>

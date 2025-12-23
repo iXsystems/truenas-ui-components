@@ -6,9 +6,9 @@
   role="tabpanel"
   [attr.tabindex]="isActive ? 0 : -1"
 >
-  <ng-container *ngIf="shouldRender">
+  @if (shouldRender) {
     <div class="ix-tab-panel__content">
       <ng-content></ng-content>
     </div>
-  </ng-container>
+  }
 </div>

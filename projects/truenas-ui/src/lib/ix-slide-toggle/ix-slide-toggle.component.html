@@ -2,12 +2,13 @@
   <label [for]="id" class="ix-slide-toggle__label">
     
     <!-- Label before toggle -->
-    <span 
-      *ngIf="label && labelPosition === 'before'" 
-      class="ix-slide-toggle__label-text ix-slide-toggle__label-text--before"
-      (click)="onLabelClick()">
-      {{ label }}
-    </span>
+    @if (label && labelPosition === 'before') {
+      <span
+        class="ix-slide-toggle__label-text ix-slide-toggle__label-text--before"
+        (click)="onLabelClick()">
+        {{ label }}
+      </span>
+    }
 
     <!-- Toggle track and thumb -->
     <div class="ix-slide-toggle__bar">
@@ -33,34 +34,37 @@
           <div class="ix-slide-toggle__ripple"></div>
           <!-- State icon -->
           <div class="ix-slide-toggle__icon">
-            <svg 
-              *ngIf="checked" 
-              class="ix-slide-toggle__check-icon"
-              viewBox="0 0 24 24" 
-              width="16" 
-              height="16">
-              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor"/>
-            </svg>
-            <svg 
-              *ngIf="!checked" 
-              class="ix-slide-toggle__minus-icon"
-              viewBox="0 0 24 24" 
-              width="16" 
-              height="16">
-              <path d="M19 13H5v-2h14v2z" fill="currentColor"/>
-            </svg>
+            @if (checked) {
+              <svg
+                class="ix-slide-toggle__check-icon"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor"/>
+              </svg>
+            }
+            @if (!checked) {
+              <svg
+                class="ix-slide-toggle__minus-icon"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16">
+                <path d="M19 13H5v-2h14v2z" fill="currentColor"/>
+              </svg>
+            }
           </div>
         </div>
       </div>
     </div>
 
     <!-- Label after toggle -->
-    <span 
-      *ngIf="label && labelPosition === 'after'" 
-      class="ix-slide-toggle__label-text ix-slide-toggle__label-text--after"
-      (click)="onLabelClick()">
-      {{ label }}
-    </span>
+    @if (label && labelPosition === 'after') {
+      <span
+        class="ix-slide-toggle__label-text ix-slide-toggle__label-text--after"
+        (click)="onLabelClick()">
+        {{ label }}
+      </span>
+    }
 
   </label>
 </div>

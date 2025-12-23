@@ -15,7 +15,9 @@
       (change)="onCheckboxChange($event)"
     />
     <span class="ix-checkbox__checkmark"></span>
-    <span class="ix-checkbox__text" *ngIf="!hideLabel">{{ label }}</span>
+    @if (!hideLabel) {
+      <span class="ix-checkbox__text">{{ label }}</span>
+    }
   </label>
   
   @if (error) {

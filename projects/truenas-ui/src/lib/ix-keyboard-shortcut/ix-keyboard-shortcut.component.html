@@ -1,6 +1,8 @@
 <span class="ix-keyboard-shortcut" [attr.aria-label]="'Keyboard shortcut: ' + displayShortcut">
-  <ng-container *ngFor="let key of shortcutKeys; let last = last">
+  @for (key of shortcutKeys; track $index; let last = $last) {
     <kbd class="ix-key">{{ key }}</kbd>
-    <span *ngIf="!last" class="ix-key-separator">{{ separator || '+' }}</span>
-  </ng-container>
+    @if (!last) {
+      <span class="ix-key-separator">{{ separator || '+' }}</span>
+    }
+  }
 </span>
