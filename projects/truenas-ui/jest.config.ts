@@ -11,7 +11,4 @@ module.exports = {
   collectCoverage: true,
   coverageDirectory: '<rootDir>/coverage',
   coverageProvider: 'v8',
-  fakeTimers: {
-    enableGlobally: true,
-  },
 };

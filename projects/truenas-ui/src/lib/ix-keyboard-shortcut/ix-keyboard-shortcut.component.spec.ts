@@ -76,6 +76,7 @@ describe('IxKeyboardShortcutComponent', () => {
   });
 
   it('should update display shortcut when shortcut input changes', () => {
+    component.platform = 'mac';
     component.shortcut = '⌘N';
     component.ngOnInit();
     expect(component.displayShortcut).toBe('⌘N');
