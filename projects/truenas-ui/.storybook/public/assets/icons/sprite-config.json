@@ -1,5 +1,5 @@
 {
-  "iconUrl": "assets/icons/sprite.svg?v=c0666c4751",
+  "iconUrl": "assets/icons/sprite.svg?v=54e42f7b16",
   "icons": [
     "ix-cloud-off",
     "ix-dataset",
@@ -43,8 +43,10 @@
     "ix-two-factor-auth",
     "mat-home",
     "mat-settings",
+    "mdi-alert",
     "mdi-alert-circle",
     "mdi-bell",
+    "mdi-check-circle",
     "mdi-chevron-down",
     "mdi-chevron-right",
     "mdi-close",

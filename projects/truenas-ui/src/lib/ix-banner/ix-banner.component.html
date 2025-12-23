@@ -1,0 +1,26 @@
+<div
+  [ngClass]="classes"
+  [attr.role]="ariaRole"
+  aria-live="polite"
+>
+  <div class="ix-banner__icon">
+    <ix-icon
+      [name]="iconName"
+      library="mdi"
+      size="md"
+      aria-hidden="true"
+    ></ix-icon>
+  </div>
+
+  <div class="ix-banner__content">
+    <div class="ix-banner__heading">
+      {{ heading() }}
+    </div>
+
+    @if (message()) {
+      <div class="ix-banner__message">
+        {{ message() }}
+      </div>
+    }
+  </div>
+</div>
