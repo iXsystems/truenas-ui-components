@@ -2,35 +2,43 @@
   <!-- Header Row -->
   <thead class="ix-table__header">
     <tr class="ix-table__header-row">
-      <th 
-        *ngFor="let column of displayedColumns" 
-        class="ix-table__header-cell"
-        [attr.data-column]="column">
-        <ng-container 
-          *ngIf="getColumnDef(column)?.headerTemplate"
-          [ngTemplateOutlet]="getColumnDef(column)?.headerTemplate || null">
-        </ng-container>
-        <span *ngIf="!getColumnDef(column)?.headerTemplate">{{ column }}</span>
-      </th>
+      @for (column of displayedColumns; track $index) {
+        <th
+          class="ix-table__header-cell"
+          [attr.data-column]="column">
+          @if (getColumnDef(column)?.headerTemplate) {
+            <ng-container
+              [ngTemplateOutlet]="getColumnDef(column)?.headerTemplate || null">
+            </ng-container>
+          }
+          @if (!getColumnDef(column)?.headerTemplate) {
+            <span>{{ column }}</span>
+          }
+        </th>
+      }
     </tr>
   </thead>
 
   <!-- Data Rows -->
   <tbody class="ix-table__body">
-    <tr 
-      *ngFor="let row of data; trackBy: trackByIndex" 
-      class="ix-table__row">
-      <td 
-        *ngFor="let column of displayedColumns" 
-        class="ix-table__cell"
-        [attr.data-column]="column">
-        <ng-container 
-          *ngIf="getColumnDef(column)?.cellTemplate"
-          [ngTemplateOutlet]="getColumnDef(column)?.cellTemplate || null"
-          [ngTemplateOutletContext]="{ $implicit: row, column: column }">
-        </ng-container>
-        <span *ngIf="!getColumnDef(column)?.cellTemplate">{{ row[column] }}</span>
-      </td>
-    </tr>
+    @for (row of data; track $index) {
+      <tr class="ix-table__row">
+        @for (column of displayedColumns; track $index) {
+          <td
+            class="ix-table__cell"
+            [attr.data-column]="column">
+            @if (getColumnDef(column)?.cellTemplate) {
+              <ng-container
+                [ngTemplateOutlet]="getColumnDef(column)?.cellTemplate || null"
+                [ngTemplateOutletContext]="{ $implicit: row, column: column }">
+              </ng-container>
+            }
+            @if (!getColumnDef(column)?.cellTemplate) {
+              <span>{{ row[column] }}</span>
+            }
+          </td>
+        }
+      </tr>
+    }
   </tbody>
 </table>

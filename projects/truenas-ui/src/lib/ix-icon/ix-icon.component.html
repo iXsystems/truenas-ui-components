@@ -6,36 +6,46 @@
   [attr.title]="tooltip"
   role="img">
   
-  
-  <ng-container [ngSwitch]="iconResult.source">
+
+  @switch (iconResult.source) {
     <!-- Sprite icons (from generated sprite.svg) -->
-    <svg *ngSwitchCase="'sprite'"
-         class="ix-icon__sprite"
-         aria-hidden="true">
-      <use [attr.href]="iconResult.spriteUrl"></use>
-    </svg>
+    @case ('sprite') {
+      <svg
+           class="ix-icon__sprite"
+           aria-hidden="true">
+        <use [attr.href]="iconResult.spriteUrl"></use>
+      </svg>
+    }
 
     <!-- SVG content (from third-party libraries or assets) -->
-    <div *ngSwitchCase="'svg'"
-         class="ix-icon__svg"
-         #svgContainer>
-    </div>
+    @case ('svg') {
+      <div
+           class="ix-icon__svg"
+           #svgContainer>
+      </div>
+    }
 
     <!-- CSS class icons (Font Awesome, Material Icons, etc.) -->
-    <i *ngSwitchCase="'css'"
-       class="ix-icon__css"
-       [class]="iconResult.content"
-       aria-hidden="true">
-    </i>
+    @case ('css') {
+      <i
+         class="ix-icon__css"
+         [class]="iconResult.content"
+         aria-hidden="true">
+      </i>
+    }
 
     <!-- Unicode characters -->
-    <span *ngSwitchCase="'unicode'"
-          class="ix-icon__unicode"
-          aria-hidden="true">{{ iconResult.content }}</span>
+    @case ('unicode') {
+      <span
+            class="ix-icon__unicode"
+            aria-hidden="true">{{ iconResult.content }}</span>
+    }
 
     <!-- Text abbreviation fallback -->
-    <span *ngSwitchDefault
-          class="ix-icon__text"
-          aria-hidden="true">{{ iconResult.content }}</span>
-  </ng-container>
+    @default {
+      <span
+            class="ix-icon__text"
+            aria-hidden="true">{{ iconResult.content }}</span>
+    }
+  }
 </div>
