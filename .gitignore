@@ -50,3 +50,7 @@ Thumbs.db
 # Generated icon sprite files
 projects/truenas-ui/assets/icons/sprite.svg
 projects/truenas-ui/assets/icons/sprite-config.json
+
+# Generated harness documentation
+projects/truenas-ui/.storybook/harness-docs/*.md
+projects/truenas-ui/.storybook/harness-docs-loader.ts
