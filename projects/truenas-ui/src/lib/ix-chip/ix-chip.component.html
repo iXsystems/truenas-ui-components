@@ -9,16 +9,19 @@
   (click)="handleClick($event)"
   (keydown)="handleKeyDown($event)"
 >
-  <ix-icon *ngIf="icon" [name]="icon" class="ix-chip__icon" size="sm"></ix-icon>
+  @if (icon) {
+    <ix-icon [name]="icon" class="ix-chip__icon" size="sm"></ix-icon>
+  }
   <span class="ix-chip__label">{{ label }}</span>
-  <button
-    *ngIf="closable"
-    type="button"
-    class="ix-chip__close"
-    [attr.aria-label]="'Remove ' + label"
-    [disabled]="disabled"
-    (click)="handleClose($event)"
-  >
-    <span class="ix-chip__close-icon">×</span>
-  </button>
+  @if (closable) {
+    <button
+      type="button"
+      class="ix-chip__close"
+      [attr.aria-label]="'Remove ' + label"
+      [disabled]="disabled"
+      (click)="handleClose($event)"
+    >
+      <span class="ix-chip__close-icon">×</span>
+    </button>
+  }
 </div>

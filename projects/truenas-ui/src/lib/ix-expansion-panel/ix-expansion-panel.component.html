@@ -5,9 +5,11 @@
           [attr.aria-expanded]="expanded"
           [attr.aria-controls]="contentId"
           [attr.aria-disabled]="disabled">
-    <div class="ix-expansion-panel__title" *ngIf="title">
-      {{ title }}
-    </div>
+    @if (title) {
+      <div class="ix-expansion-panel__title">
+        {{ title }}
+      </div>
+    }
     <ng-content select="[slot=title]"></ng-content>
     
     <div class="ix-expansion-panel__indicator">
