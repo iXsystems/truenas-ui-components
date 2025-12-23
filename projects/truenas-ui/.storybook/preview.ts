@@ -1,35 +1,9 @@
-import { Preview, Decorator, StoryContext, applicationConfig } from '@storybook/angular';
-import { provideAnimations } from '@angular/platform-browser/animations';
+import { Preview, Decorator, applicationConfig } from '@storybook/angular';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideHttpClient } from '@angular/common/http';
 import { Dialog } from '@angular/cdk/dialog';
-import { default as truenasTheme } from './truenasTheme';
+import { withThemeByClassName } from '@storybook/addon-themes';
 import 'zone.js';
-
-/**
- * Ensure the theme switcher appears in the Storybook toolbar.
- */
-export const globalTypes = {
-  theme: {
-    name: 'Theme',
-    description: 'Select a theme',
-    defaultValue: 'ix-dark',
-    toolbar: {
-      icon: 'paintbrush',
-      items: [
-        { value: 'ix-dark', title: 'iX Dark' },
-        { value: 'ix-blue', title: 'iX Blue' },
-        { value: 'dracula', title: 'Dracula' },
-        { value: 'nord', title: 'Nord' },
-        { value: 'paper', title: 'Paper' },
-        { value: 'solarized-dark', title: 'Solarized Dark' },
-        { value: 'midnight', title: 'Midnight' },
-        { value: 'high-contrast', title: 'High Contrast' },
-      ],
-      showName: true,
-      dynamicTitle: true,
-    },
-  },
-};
 
 /**
  * Register themes using Storybook's built-in theme switcher.
@@ -38,36 +12,28 @@ export const parameters: Preview['parameters'] = {
   backgrounds: {
     disable: true,
   },
-  themes: {
-    default: 'ix-dark',
-    clearable: false,
-    list: [
-      { name: 'iX Dark', class: 'ix-dark', color: '#1E1E1E', default: true },
-      { name: 'iX Blue', class: 'ix-blue', color: '#f2f2f2' },
-      { name: 'Dracula', class: 'dracula', color: '#282a36' },
-      { name: 'Nord', class: 'nord', color: '#3b4252' },
-      { name: 'Paper', class: 'paper', color: '#FAFAFA' },
-      { name: 'Solarized Dark', class: 'solarized-dark', color: '#002b36' },
-      { name: 'Midnight', class: 'midnight', color: '#212a35' },
-      { name: 'High Contrast', class: 'high-contrast', color: '#dddddd' },
-    ],
-  },
 };
 
 /**
- * Decorators for application configuration and default theme
+ * Decorators for application configuration and theme switching
  */
 export const decorators: Decorator[] = [
-  (storyFn) => {
-    // Apply default theme class if none exists
-    if (!document.documentElement.className.includes('ix-')) {
-      document.documentElement.classList.add('ix-dark');
-    }
-    return storyFn();
-  },
+  withThemeByClassName({
+    themes: {
+      'iX Dark': 'ix-dark',
+      'iX Blue': 'ix-blue',
+      'Dracula': 'dracula',
+      'Nord': 'nord',
+      'Paper': 'paper',
+      'Solarized Dark': 'solarized-dark',
+      'Midnight': 'midnight',
+      'High Contrast': 'high-contrast',
+    },
+    defaultTheme: 'iX Dark',
+  }),
   applicationConfig({
     providers: [
-      provideAnimations(),
+      provideAnimationsAsync(),
       provideHttpClient(),
       Dialog
     ]
@@ -76,7 +42,6 @@ export const decorators: Decorator[] = [
 
 const preview: Preview = {
   parameters,
-  globalTypes,
   decorators,
 };
 
