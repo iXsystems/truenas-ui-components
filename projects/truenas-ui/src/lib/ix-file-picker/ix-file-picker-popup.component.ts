@@ -184,7 +184,6 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
   }
 
   onCreateFolder(): void {
-    console.log('Popup onCreateFolder called');
     this.createFolder.emit({
       parentPath: this.currentPath(),
       folderName: 'New Folder'
