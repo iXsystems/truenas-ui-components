@@ -3,6 +3,7 @@ import { within } from '@storybook/testing-library';
 import { expect } from '@storybook/jest';
 import { IxBannerComponent } from '../lib/ix-banner/ix-banner.component';
 import { iconMarker } from '../lib/ix-icon/icon-marker';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 
 // Mark icons for sprite generation (since they're computed dynamically)
 iconMarker('information', 'mdi');
@@ -10,10 +11,20 @@ iconMarker('alert', 'mdi');
 iconMarker('alert-circle', 'mdi');
 iconMarker('check-circle', 'mdi');
 
+// Load harness documentation
+const harnessDoc = loadHarnessDoc('ix-banner');
+
 const meta: Meta<IxBannerComponent> = {
   title: 'Components/Banner',
   component: IxBannerComponent,
   tags: ['autodocs'],
+  parameters: {
+    docs: {
+      description: {
+        component: 'Banner component for displaying informational messages to users. Supports four severity levels (info, warning, error, success) with appropriate visual styling and icons.'
+      }
+    }
+  },
   argTypes: {
     heading: {
       control: 'text',
@@ -113,4 +124,22 @@ export const MultipleTypes: Story = {
       </div>
     `,
   }),
+};
+
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      canvas: {
+        hidden: true,
+        sourceState: 'none'
+      },
+      description: {
+        story: harnessDoc || ''
+      }
+    },
+    controls: { disable: true },
+    layout: 'fullscreen'
+  },
+  render: () => ({ template: '' })
 };
