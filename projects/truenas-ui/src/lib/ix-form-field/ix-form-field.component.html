@@ -1,9 +1,13 @@
 <div class="ix-form-field" [attr.data-testid]="testId">
   <!-- Label -->
-  <label *ngIf="label" class="ix-form-field-label" [class.required]="required">
-    {{ label }}
-    <span *ngIf="required" class="required-asterisk" aria-label="required">*</span>
-  </label>
+  @if (label) {
+    <label class="ix-form-field-label" [class.required]="required">
+      {{ label }}
+      @if (required) {
+        <span class="required-asterisk" aria-label="required">*</span>
+      }
+    </label>
+  }
 
   <!-- Form Control Content -->
   <div class="ix-form-field-wrapper">
@@ -12,17 +16,18 @@
 
   <!-- Hint or Error Message -->
   <div class="ix-form-field-subscript">
-    <div 
-      *ngIf="showError" 
-      class="ix-form-field-error" 
-      role="alert"
-      aria-live="polite">
-      {{ errorMessage }}
-    </div>
-    <div 
-      *ngIf="showHint" 
-      class="ix-form-field-hint">
-      {{ hint }}
-    </div>
+    @if (showError) {
+      <div
+        class="ix-form-field-error"
+        role="alert"
+        aria-live="polite">
+        {{ errorMessage }}
+      </div>
+    }
+    @if (showHint) {
+      <div class="ix-form-field-hint">
+        {{ hint }}
+      </div>
+    }
   </div>
 </div>

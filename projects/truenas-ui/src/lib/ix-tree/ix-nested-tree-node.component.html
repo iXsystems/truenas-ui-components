@@ -1,28 +1,33 @@
 <div class="ix-nested-tree-node__content">
   <!-- Toggle button for expandable nodes (provided by component) -->
-  <button
-    *ngIf="isExpandable"
-    class="ix-nested-tree-node__toggle"
-    [class.ix-nested-tree-node__toggle--expanded]="isExpanded"
-    cdkTreeNodeToggle
-    [attr.aria-label]="'Toggle node'"
-    type="button">
-    <ix-icon
-      [name]="isExpanded ? 'chevron-down' : 'chevron-right'"
-      library="mdi"
-      size="sm"
-      style="transition: transform 0.2s ease;">
-    </ix-icon>
-  </button>
+  @if (isExpandable) {
+    <button
+      class="ix-nested-tree-node__toggle"
+      [class.ix-nested-tree-node__toggle--expanded]="isExpanded"
+      cdkTreeNodeToggle
+      [attr.aria-label]="'Toggle node'"
+      type="button">
+      <ix-icon
+        [name]="isExpanded ? 'chevron-down' : 'chevron-right'"
+        library="mdi"
+        size="sm"
+        style="transition: transform 0.2s ease;">
+      </ix-icon>
+    </button>
+  }
 
   <!-- Spacer for non-expandable nodes to maintain alignment -->
-  <div *ngIf="!isExpandable" class="ix-nested-tree-node__spacer"></div>
+  @if (!isExpandable) {
+    <div class="ix-nested-tree-node__spacer"></div>
+  }
 
   <!-- Consumer content -->
   <ng-content></ng-content>
 </div>
 
 <!-- Children container -->
-<div class="ix-nested-tree-node-container" *ngIf="isExpandable" [class.ix-tree-invisible]="!isExpanded" role="group">
-  <ng-content select="[slot=children]"></ng-content>
-</div>
+@if (isExpandable) {
+  <div class="ix-nested-tree-node-container" [class.ix-tree-invisible]="!isExpanded" role="group">
+    <ng-content select="[slot=children]"></ng-content>
+  </div>
+}
