@@ -1,34 +1,38 @@
 <!-- Context menu content slot -->
-<div *ngIf="contextMenu" class="ix-menu-context-content" (contextmenu)="onContextMenu($event)">
-  <ng-content></ng-content>
-</div>
+@if (contextMenu) {
+  <div class="ix-menu-context-content" (contextmenu)="onContextMenu($event)">
+    <ng-content></ng-content>
+  </div>
+}
 
   <!-- Context menu template for overlay -->
   <ng-template #contextMenuTemplate>
     <div class="ix-menu" cdkMenu>
-      <ng-container *ngFor="let item of items; trackBy: trackByItemId">
-        <div
-          *ngIf="item.separator; else menuItem"
-          class="ix-menu-separator"
-          role="separator"
-        ></div>
-        
-        <ng-template #menuItem>
-          <button
-            *ngIf="!item.children || item.children.length === 0; else nestedMenuItem"
-            cdkMenuItem
-            [disabled]="item.disabled"
-            [class.disabled]="item.disabled"
-            class="ix-menu-item"
-            (click)="onMenuItemClick(item)"
-            type="button"
-          >
-            <ix-icon *ngIf="item.icon" [name]="item.icon" [library]="item.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
-            <span class="ix-menu-item-label">{{ item.label }}</span>
-            <span *ngIf="item.shortcut" class="ix-menu-item-shortcut">{{ item.shortcut }}</span>
-          </button>
-          
-          <ng-template #nestedMenuItem>
+      @for (item of items; track trackByItemId($index, item)) {
+        @if (item.separator) {
+          <div
+            class="ix-menu-separator"
+            role="separator"
+          ></div>
+        } @else {
+          @if (!item.children || item.children.length === 0) {
+            <button
+              cdkMenuItem
+              [disabled]="item.disabled"
+              [class.disabled]="item.disabled"
+              class="ix-menu-item"
+              (click)="onMenuItemClick(item)"
+              type="button"
+            >
+              @if (item.icon) {
+                <ix-icon [name]="item.icon" [library]="item.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+              }
+              <span class="ix-menu-item-label">{{ item.label }}</span>
+              @if (item.shortcut) {
+                <span class="ix-menu-item-shortcut">{{ item.shortcut }}</span>
+              }
+            </button>
+          } @else {
             <button
               cdkMenuItem
               [cdkMenuTriggerFor]="nestedMenu"
@@ -37,37 +41,43 @@
               class="ix-menu-item ix-menu-item--nested"
               type="button"
             >
-              <ix-icon *ngIf="item.icon" [name]="item.icon" [library]="item.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+              @if (item.icon) {
+                <ix-icon [name]="item.icon" [library]="item.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+              }
               <span class="ix-menu-item-label">{{ item.label }}</span>
-              <span *ngIf="item.shortcut" class="ix-menu-item-shortcut">{{ item.shortcut }}</span>
+              @if (item.shortcut) {
+                <span class="ix-menu-item-shortcut">{{ item.shortcut }}</span>
+              }
               <span class="ix-menu-item-arrow">▶</span>
             </button>
-            
+
             <ng-template #nestedMenu>
               <div class="ix-menu ix-menu--nested" cdkMenu>
-                <ng-container *ngFor="let nestedItem of item.children; trackBy: trackByItemId">
-                  <div
-                    *ngIf="nestedItem.separator; else nestedMenuItemTemplate"
-                    class="ix-menu-separator"
-                    role="separator"
-                  ></div>
-                  
-                  <ng-template #nestedMenuItemTemplate>
-                    <button
-                      *ngIf="!nestedItem.children || nestedItem.children.length === 0; else deepNestedMenuItem"
-                      cdkMenuItem
-                      [disabled]="nestedItem.disabled"
-                      [class.disabled]="nestedItem.disabled"
-                      class="ix-menu-item"
-                      (click)="onMenuItemClick(nestedItem)"
-                      type="button"
-                    >
-                      <ix-icon *ngIf="nestedItem.icon" [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
-                      <span class="ix-menu-item-label">{{ nestedItem.label }}</span>
-                      <span *ngIf="nestedItem.shortcut" class="ix-menu-item-shortcut">{{ nestedItem.shortcut }}</span>
-                    </button>
-                    
-                    <ng-template #deepNestedMenuItem>
+                @for (nestedItem of item.children; track trackByItemId($index, nestedItem)) {
+                  @if (nestedItem.separator) {
+                    <div
+                      class="ix-menu-separator"
+                      role="separator"
+                    ></div>
+                  } @else {
+                    @if (!nestedItem.children || nestedItem.children.length === 0) {
+                      <button
+                        cdkMenuItem
+                        [disabled]="nestedItem.disabled"
+                        [class.disabled]="nestedItem.disabled"
+                        class="ix-menu-item"
+                        (click)="onMenuItemClick(nestedItem)"
+                        type="button"
+                      >
+                        @if (nestedItem.icon) {
+                          <ix-icon [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+                        }
+                        <span class="ix-menu-item-label">{{ nestedItem.label }}</span>
+                        @if (nestedItem.shortcut) {
+                          <span class="ix-menu-item-shortcut">{{ nestedItem.shortcut }}</span>
+                        }
+                      </button>
+                    } @else {
                       <button
                         cdkMenuItem
                         [cdkMenuTriggerFor]="deepNestedMenu"
@@ -76,22 +86,25 @@
                         class="ix-menu-item ix-menu-item--nested"
                         type="button"
                       >
-                        <ix-icon *ngIf="nestedItem.icon" [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+                        @if (nestedItem.icon) {
+                          <ix-icon [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+                        }
                         <span class="ix-menu-item-label">{{ nestedItem.label }}</span>
-                        <span *ngIf="nestedItem.shortcut" class="ix-menu-item-shortcut">{{ nestedItem.shortcut }}</span>
+                        @if (nestedItem.shortcut) {
+                          <span class="ix-menu-item-shortcut">{{ nestedItem.shortcut }}</span>
+                        }
                         <span class="ix-menu-item-arrow">▶</span>
                       </button>
-                      
+
                       <ng-template #deepNestedMenu>
                         <div class="ix-menu ix-menu--nested" cdkMenu>
-                          <ng-container *ngFor="let deepNestedItem of nestedItem.children; trackBy: trackByItemId">
-                            <div
-                              *ngIf="deepNestedItem.separator; else deepNestedMenuItemTemplate"
-                              class="ix-menu-separator"
-                              role="separator"
-                            ></div>
-                            
-                            <ng-template #deepNestedMenuItemTemplate>
+                          @for (deepNestedItem of nestedItem.children; track trackByItemId($index, deepNestedItem)) {
+                            @if (deepNestedItem.separator) {
+                              <div
+                                class="ix-menu-separator"
+                                role="separator"
+                              ></div>
+                            } @else {
                               <button
                                 cdkMenuItem
                                 [disabled]="deepNestedItem.disabled"
@@ -100,51 +113,57 @@
                                 (click)="onMenuItemClick(deepNestedItem)"
                                 type="button"
                               >
-                                <ix-icon *ngIf="deepNestedItem.icon" [name]="deepNestedItem.icon" [library]="deepNestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+                                @if (deepNestedItem.icon) {
+                                  <ix-icon [name]="deepNestedItem.icon" [library]="deepNestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+                                }
                                 <span class="ix-menu-item-label">{{ deepNestedItem.label }}</span>
-                                <span *ngIf="deepNestedItem.shortcut" class="ix-menu-item-shortcut">{{ deepNestedItem.shortcut }}</span>
+                                @if (deepNestedItem.shortcut) {
+                                  <span class="ix-menu-item-shortcut">{{ deepNestedItem.shortcut }}</span>
+                                }
                               </button>
-                            </ng-template>
-                          </ng-container>
+                            }
+                          }
                         </div>
                       </ng-template>
-                    </ng-template>
-                  </ng-template>
-                </ng-container>
+                    }
+                  }
+                }
               </div>
             </ng-template>
-          </ng-template>
-        </ng-template>
-      </ng-container>
+          }
+        }
+      }
     </div>
   </ng-template>
 
   <!-- Regular menu template -->
   <ng-template #menuTemplate>
     <div class="ix-menu" cdkMenu>
-      <ng-container *ngFor="let item of items; trackBy: trackByItemId">
-        <div
-          *ngIf="item.separator; else menuItem"
-          class="ix-menu-separator"
-          role="separator"
-        ></div>
-        
-        <ng-template #menuItem>
-          <button
-            *ngIf="!item.children || item.children.length === 0; else nestedMenuItem"
-            cdkMenuItem
-            [disabled]="item.disabled"
-            [class.disabled]="item.disabled"
-            class="ix-menu-item"
-            (click)="onMenuItemClick(item)"
-            type="button"
-          >
-            <ix-icon *ngIf="item.icon" [name]="item.icon" [library]="item.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
-            <span class="ix-menu-item-label">{{ item.label }}</span>
-            <span *ngIf="item.shortcut" class="ix-menu-item-shortcut">{{ item.shortcut }}</span>
-          </button>
-          
-          <ng-template #nestedMenuItem>
+      @for (item of items; track trackByItemId($index, item)) {
+        @if (item.separator) {
+          <div
+            class="ix-menu-separator"
+            role="separator"
+          ></div>
+        } @else {
+          @if (!item.children || item.children.length === 0) {
+            <button
+              cdkMenuItem
+              [disabled]="item.disabled"
+              [class.disabled]="item.disabled"
+              class="ix-menu-item"
+              (click)="onMenuItemClick(item)"
+              type="button"
+            >
+              @if (item.icon) {
+                <ix-icon [name]="item.icon" [library]="item.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+              }
+              <span class="ix-menu-item-label">{{ item.label }}</span>
+              @if (item.shortcut) {
+                <span class="ix-menu-item-shortcut">{{ item.shortcut }}</span>
+              }
+            </button>
+          } @else {
             <button
               cdkMenuItem
               [cdkMenuTriggerFor]="nestedMenu"
@@ -153,37 +172,43 @@
               class="ix-menu-item ix-menu-item--nested"
               type="button"
             >
-              <ix-icon *ngIf="item.icon" [name]="item.icon" [library]="item.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+              @if (item.icon) {
+                <ix-icon [name]="item.icon" [library]="item.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+              }
               <span class="ix-menu-item-label">{{ item.label }}</span>
-              <span *ngIf="item.shortcut" class="ix-menu-item-shortcut">{{ item.shortcut }}</span>
+              @if (item.shortcut) {
+                <span class="ix-menu-item-shortcut">{{ item.shortcut }}</span>
+              }
               <span class="ix-menu-item-arrow">▶</span>
             </button>
-            
+
             <ng-template #nestedMenu>
               <div class="ix-menu ix-menu--nested" cdkMenu>
-                <ng-container *ngFor="let nestedItem of item.children; trackBy: trackByItemId">
-                  <div
-                    *ngIf="nestedItem.separator; else nestedMenuItemTemplate"
-                    class="ix-menu-separator"
-                    role="separator"
-                  ></div>
-                  
-                  <ng-template #nestedMenuItemTemplate>
-                    <button
-                      *ngIf="!nestedItem.children || nestedItem.children.length === 0; else deepNestedMenuItem"
-                      cdkMenuItem
-                      [disabled]="nestedItem.disabled"
-                      [class.disabled]="nestedItem.disabled"
-                      class="ix-menu-item"
-                      (click)="onMenuItemClick(nestedItem)"
-                      type="button"
-                    >
-                      <ix-icon *ngIf="nestedItem.icon" [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
-                      <span class="ix-menu-item-label">{{ nestedItem.label }}</span>
-                      <span *ngIf="nestedItem.shortcut" class="ix-menu-item-shortcut">{{ nestedItem.shortcut }}</span>
-                    </button>
-                    
-                    <ng-template #deepNestedMenuItem>
+                @for (nestedItem of item.children; track trackByItemId($index, nestedItem)) {
+                  @if (nestedItem.separator) {
+                    <div
+                      class="ix-menu-separator"
+                      role="separator"
+                    ></div>
+                  } @else {
+                    @if (!nestedItem.children || nestedItem.children.length === 0) {
+                      <button
+                        cdkMenuItem
+                        [disabled]="nestedItem.disabled"
+                        [class.disabled]="nestedItem.disabled"
+                        class="ix-menu-item"
+                        (click)="onMenuItemClick(nestedItem)"
+                        type="button"
+                      >
+                        @if (nestedItem.icon) {
+                          <ix-icon [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+                        }
+                        <span class="ix-menu-item-label">{{ nestedItem.label }}</span>
+                        @if (nestedItem.shortcut) {
+                          <span class="ix-menu-item-shortcut">{{ nestedItem.shortcut }}</span>
+                        }
+                      </button>
+                    } @else {
                       <button
                         cdkMenuItem
                         [cdkMenuTriggerFor]="deepNestedMenu"
@@ -192,22 +217,25 @@
                         class="ix-menu-item ix-menu-item--nested"
                         type="button"
                       >
-                        <ix-icon *ngIf="nestedItem.icon" [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+                        @if (nestedItem.icon) {
+                          <ix-icon [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+                        }
                         <span class="ix-menu-item-label">{{ nestedItem.label }}</span>
-                        <span *ngIf="nestedItem.shortcut" class="ix-menu-item-shortcut">{{ nestedItem.shortcut }}</span>
+                        @if (nestedItem.shortcut) {
+                          <span class="ix-menu-item-shortcut">{{ nestedItem.shortcut }}</span>
+                        }
                         <span class="ix-menu-item-arrow">▶</span>
                       </button>
-                      
+
                       <ng-template #deepNestedMenu>
                         <div class="ix-menu ix-menu--nested" cdkMenu>
-                          <ng-container *ngFor="let deepNestedItem of nestedItem.children; trackBy: trackByItemId">
-                            <div
-                              *ngIf="deepNestedItem.separator; else deepNestedMenuItemTemplate"
-                              class="ix-menu-separator"
-                              role="separator"
-                            ></div>
-                            
-                            <ng-template #deepNestedMenuItemTemplate>
+                          @for (deepNestedItem of nestedItem.children; track trackByItemId($index, deepNestedItem)) {
+                            @if (deepNestedItem.separator) {
+                              <div
+                                class="ix-menu-separator"
+                                role="separator"
+                              ></div>
+                            } @else {
                               <button
                                 cdkMenuItem
                                 [disabled]="deepNestedItem.disabled"
@@ -216,21 +244,25 @@
                                 (click)="onMenuItemClick(deepNestedItem)"
                                 type="button"
                               >
-                                <ix-icon *ngIf="deepNestedItem.icon" [name]="deepNestedItem.icon" [library]="deepNestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+                                @if (deepNestedItem.icon) {
+                                  <ix-icon [name]="deepNestedItem.icon" [library]="deepNestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+                                }
                                 <span class="ix-menu-item-label">{{ deepNestedItem.label }}</span>
-                                <span *ngIf="deepNestedItem.shortcut" class="ix-menu-item-shortcut">{{ deepNestedItem.shortcut }}</span>
+                                @if (deepNestedItem.shortcut) {
+                                  <span class="ix-menu-item-shortcut">{{ deepNestedItem.shortcut }}</span>
+                                }
                               </button>
-                            </ng-template>
-                          </ng-container>
+                            }
+                          }
                         </div>
                       </ng-template>
-                    </ng-template>
-                  </ng-template>
-                </ng-container>
+                    }
+                  }
+                }
               </div>
             </ng-template>
-          </ng-template>
-        </ng-template>
-      </ng-container>
+          }
+        }
+      }
     </div>
   </ng-template>
