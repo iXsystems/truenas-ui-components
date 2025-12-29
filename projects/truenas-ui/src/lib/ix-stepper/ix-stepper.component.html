@@ -51,7 +51,7 @@
       @if (selectedIndex() === i) {
         <div class="ix-stepper__step-content"
              [@stepTransition]="selectedIndex()">
-          <ng-container *ngTemplateOutlet="step.content"></ng-container>
+          <ng-container *ngTemplateOutlet="step.content()"></ng-container>
         </div>
       }
     }

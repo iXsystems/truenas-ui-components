@@ -85,7 +85,7 @@ describe('IxMenuComponent', () => {
     fixture.detectChanges();
 
     const template = component.getMenuTemplate();
-    expect(template).toBe(component.contextMenuTemplate);
+    expect(template).toBe(component.contextMenuTemplate());
   });
 
   it('should track items by id', () => {

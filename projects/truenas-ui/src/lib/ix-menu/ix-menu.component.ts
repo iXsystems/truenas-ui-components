@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, output, TemplateRef, ViewChild, ViewContainerRef, computed } from '@angular/core';
+import { Component, input, output, TemplateRef, viewChild, ViewContainerRef, computed } from '@angular/core';
 import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
@@ -32,8 +32,8 @@ export class IxMenuComponent {
   menuOpen = output<void>();
   menuClose = output<void>();
 
-  @ViewChild('menuTemplate', { read: TemplateRef }) menuTemplate!: TemplateRef<any>;
-  @ViewChild('contextMenuTemplate', { read: TemplateRef }) contextMenuTemplate!: TemplateRef<any>;
+  menuTemplate = viewChild.required<TemplateRef<any>>('menuTemplate');
+  contextMenuTemplate = viewChild.required<TemplateRef<any>>('contextMenuTemplate');
 
   private contextOverlayRef?: OverlayRef;
 
@@ -72,13 +72,14 @@ export class IxMenuComponent {
    */
   public getMenuTemplate(): TemplateRef<any> | null {
     if (this.contextMenu()) {
-      return this.contextMenuTemplate || null;
+      return this.contextMenuTemplate() || null;
     }
-    return this.menuTemplate || null;
+    return this.menuTemplate() || null;
   }
 
   public openContextMenuAt(x: number, y: number): void {
-    if (this.contextMenu() && this.contextMenuTemplate) {
+    const contextMenuTemplate = this.contextMenuTemplate();
+    if (this.contextMenu() && contextMenuTemplate) {
       // Close any existing context menu
       this.closeContextMenu();
 
@@ -100,7 +101,7 @@ export class IxMenuComponent {
       });
 
       // Create portal and attach to overlay
-      const portal = new TemplatePortal(this.contextMenuTemplate, this.viewContainerRef);
+      const portal = new TemplatePortal(contextMenuTemplate, this.viewContainerRef);
       this.contextOverlayRef.attach(portal);
 
       // Handle backdrop click to close menu

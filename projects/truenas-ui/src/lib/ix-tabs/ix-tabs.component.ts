@@ -1,4 +1,4 @@
-import { Component, ContentChildren, QueryList, AfterContentInit, input, output, ChangeDetectionStrategy, inject, ChangeDetectorRef, ViewChild, ElementRef, AfterViewInit, signal, computed, effect } from '@angular/core';
+import { Component, ContentChildren, QueryList, AfterContentInit, input, output, ChangeDetectionStrategy, inject, ChangeDetectorRef, viewChild, ElementRef, AfterViewInit, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FocusMonitor, A11yModule, LiveAnnouncer } from '@angular/cdk/a11y';
 import { LEFT_ARROW, RIGHT_ARROW, UP_ARROW, DOWN_ARROW, HOME, END, ENTER, SPACE } from '@angular/cdk/keycodes';
@@ -22,7 +22,7 @@ export interface TabChangeEvent {
 export class IxTabsComponent implements AfterContentInit, AfterViewInit {
   @ContentChildren(IxTabComponent) tabs!: QueryList<IxTabComponent>;
   @ContentChildren(IxTabPanelComponent) panels!: QueryList<IxTabPanelComponent>;
-  @ViewChild('tabHeader') tabHeader!: ElementRef<HTMLElement>;
+  tabHeader = viewChild.required<ElementRef<HTMLElement>>('tabHeader');
 
   selectedIndex = input<number>(0);
   orientation = input<'horizontal' | 'vertical'>('horizontal');
@@ -167,7 +167,8 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
   }
 
   private updateHighlightBar() {
-    if (!this.tabHeader || !this.tabs || this.tabs.length === 0) {
+    const tabHeader = this.tabHeader();
+    if (!tabHeader || !this.tabs || this.tabs.length === 0) {
       return;
     }
 
@@ -177,7 +178,7 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
     }
 
     const tabElement = activeTab.elementRef.nativeElement;
-    const headerElement = this.tabHeader.nativeElement;
+    const headerElement = tabHeader.nativeElement;
 
     // Get the position and dimensions of the active tab relative to the header
     const tabRect = tabElement.getBoundingClientRect();

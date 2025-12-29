@@ -1,4 +1,4 @@
-import { Component, input, computed, effect, ChangeDetectionStrategy, ViewEncapsulation, ChangeDetectorRef, inject, ViewChild, ElementRef, AfterViewInit, signal } from '@angular/core';
+import { Component, input, computed, effect, ChangeDetectionStrategy, ViewEncapsulation, ChangeDetectorRef, inject, viewChild, ElementRef, AfterViewInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { IxIconRegistryService } from './ix-icon-registry.service';
@@ -30,7 +30,7 @@ export class IxIconComponent implements AfterViewInit {
   ariaLabel = input<string | undefined>(undefined);
   library = input<IconLibraryType | undefined>(undefined);
 
-  @ViewChild('svgContainer', { static: false }) svgContainer?: ElementRef<HTMLDivElement>;
+  svgContainer = viewChild<ElementRef<HTMLDivElement>>('svgContainer');
 
   iconResult: IconResult = { source: 'text', content: '?' };
 
@@ -79,11 +79,12 @@ export class IxIconComponent implements AfterViewInit {
   });
 
   private updateSvgContent(): void {
-    if (this.iconResult.source === 'svg' && this.svgContainer) {
+    const svgContainer = this.svgContainer();
+    if (this.iconResult.source === 'svg' && svgContainer) {
       const content = this.sanitizedContent();
       if (typeof content === 'string') {
         // Bypass Angular's sanitization by setting innerHTML directly
-        this.svgContainer.nativeElement.innerHTML = content;
+        svgContainer.nativeElement.innerHTML = content;
       }
     }
   }

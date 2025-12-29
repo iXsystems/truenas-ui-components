@@ -1,4 +1,4 @@
-import { Component, input, TemplateRef, ViewChild, ElementRef, inject, computed, signal } from '@angular/core';
+import { Component, input, TemplateRef, viewChild, ElementRef, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { A11yModule } from '@angular/cdk/a11y';
 
@@ -14,7 +14,7 @@ export class IxTabPanelComponent {
   lazyLoad = input<boolean>(false);
   testId = input<string | undefined>(undefined);
 
-  @ViewChild('content', { static: true }) content!: TemplateRef<any>;
+  content = viewChild.required<TemplateRef<any>>('content');
 
   // Internal properties set by parent IxTabsComponent (public signals for parent control)
   public index = signal<number>(0);

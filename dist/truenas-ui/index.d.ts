@@ -168,7 +168,7 @@ declare class IxIconComponent implements AfterViewInit {
     tooltip: _angular_core.InputSignal<string | undefined>;
     ariaLabel: _angular_core.InputSignal<string | undefined>;
     library: _angular_core.InputSignal<IconLibraryType | undefined>;
-    svgContainer?: ElementRef<HTMLDivElement>;
+    svgContainer: _angular_core.Signal<ElementRef<HTMLDivElement> | undefined>;
     iconResult: IconResult;
     private iconRegistry;
     constructor(sanitizer: DomSanitizer, cdr: ChangeDetectorRef);
@@ -280,8 +280,8 @@ declare class IxMenuComponent {
     menuItemClick: _angular_core.OutputEmitterRef<IxMenuItem>;
     menuOpen: _angular_core.OutputEmitterRef<void>;
     menuClose: _angular_core.OutputEmitterRef<void>;
-    menuTemplate: TemplateRef<any>;
-    contextMenuTemplate: TemplateRef<any>;
+    menuTemplate: _angular_core.Signal<TemplateRef<any>>;
+    contextMenuTemplate: _angular_core.Signal<TemplateRef<any>>;
     private contextOverlayRef?;
     constructor(overlay: Overlay, viewContainerRef: ViewContainerRef);
     onMenuItemClick(item: IxMenuItem): void;
@@ -686,7 +686,7 @@ declare class IxTabPanelComponent {
     label: _angular_core.InputSignal<string>;
     lazyLoad: _angular_core.InputSignal<boolean>;
     testId: _angular_core.InputSignal<string | undefined>;
-    content: TemplateRef<any>;
+    content: _angular_core.Signal<TemplateRef<any>>;
     index: _angular_core.WritableSignal<number>;
     isActive: _angular_core.WritableSignal<boolean>;
     hasBeenActive: _angular_core.WritableSignal<boolean>;
@@ -706,7 +706,7 @@ interface TabChangeEvent {
 declare class IxTabsComponent implements AfterContentInit, AfterViewInit {
     tabs: QueryList<IxTabComponent>;
     panels: QueryList<IxTabPanelComponent>;
-    tabHeader: ElementRef<HTMLElement>;
+    tabHeader: _angular_core.Signal<ElementRef<HTMLElement>>;
     selectedIndex: _angular_core.InputSignal<number>;
     orientation: _angular_core.InputSignal<"horizontal" | "vertical">;
     highlightPosition: _angular_core.InputSignal<"top" | "bottom" | "left" | "right">;
@@ -2158,7 +2158,7 @@ declare class IxStepComponent {
     completed: _angular_core.InputSignal<boolean>;
     hasError: _angular_core.InputSignal<boolean>;
     data: _angular_core.InputSignal<any>;
-    content: TemplateRef<any>;
+    content: _angular_core.Signal<TemplateRef<any>>;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxStepComponent, never>;
     static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxStepComponent, "ix-step", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "icon": { "alias": "icon"; "required": false; "isSignal": true; }; "optional": { "alias": "optional"; "required": false; "isSignal": true; }; "completed": { "alias": "completed"; "required": false; "isSignal": true; }; "hasError": { "alias": "hasError"; "required": false; "isSignal": true; }; "data": { "alias": "data"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
 }
