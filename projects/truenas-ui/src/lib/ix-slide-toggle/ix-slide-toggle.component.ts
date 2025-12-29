@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject, input, output, computed, signal, forwardRef } from '@angular/core';
+import { Component, viewChild, ElementRef, AfterViewInit, OnDestroy, inject, input, output, computed, signal, forwardRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
@@ -20,7 +20,7 @@ export type SlideToggleColor = 'primary' | 'accent' | 'warn';
   ]
 })
 export class IxSlideToggleComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
-  @ViewChild('toggleEl') toggleEl!: ElementRef<HTMLInputElement>;
+  toggleEl = viewChild.required<ElementRef<HTMLInputElement>>('toggleEl');
 
   labelPosition = input<'before' | 'after'>('after');
   label = input<string | undefined>(undefined);
@@ -49,8 +49,9 @@ export class IxSlideToggleComponent implements AfterViewInit, OnDestroy, Control
   private onTouched = () => {};
 
   ngAfterViewInit() {
-    if (this.toggleEl) {
-      this.focusMonitor.monitor(this.toggleEl)
+    const toggleEl = this.toggleEl();
+    if (toggleEl) {
+      this.focusMonitor.monitor(toggleEl)
         .subscribe(origin => {
           // Focus monitoring for accessibility
         });
@@ -58,8 +59,9 @@ export class IxSlideToggleComponent implements AfterViewInit, OnDestroy, Control
   }
 
   ngOnDestroy() {
-    if (this.toggleEl) {
-      this.focusMonitor.stopMonitoring(this.toggleEl);
+    const toggleEl = this.toggleEl();
+    if (toggleEl) {
+      this.focusMonitor.stopMonitoring(toggleEl);
     }
   }
 
@@ -97,8 +99,9 @@ export class IxSlideToggleComponent implements AfterViewInit, OnDestroy, Control
   }
 
   onLabelClick(): void {
-    if (!this.isDisabled() && this.toggleEl) {
-      this.toggleEl.nativeElement.click();
+    const toggleEl = this.toggleEl();
+    if (!this.isDisabled() && toggleEl) {
+      toggleEl.nativeElement.click();
     }
   }
 

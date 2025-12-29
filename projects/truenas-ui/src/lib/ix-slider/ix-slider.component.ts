@@ -1,4 +1,4 @@
-import { Component, ContentChild, input, forwardRef, signal, computed, ViewChild, ElementRef, OnInit, OnDestroy, AfterViewInit, effect } from '@angular/core';
+import { Component, ContentChild, input, forwardRef, signal, computed, viewChild, ElementRef, OnInit, OnDestroy, AfterViewInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
@@ -73,8 +73,8 @@ export class IxSliderComponent implements ControlValueAccessor, OnDestroy, After
   labelType = input<LabelType>('none');
 
   @ContentChild(IxSliderThumbDirective) thumbDirective!: IxSliderThumbDirective;
-  @ViewChild('sliderContainer') sliderContainer!: ElementRef<HTMLDivElement>;
-  @ViewChild('thumbVisual') thumbVisual!: ElementRef<HTMLDivElement>;
+  sliderContainer = viewChild.required<ElementRef<HTMLDivElement>>('sliderContainer');
+  thumbVisual = viewChild.required<ElementRef<HTMLDivElement>>('thumbVisual');
 
   private onChange = (value: number) => {};
   private onTouched = () => {};
@@ -101,7 +101,7 @@ export class IxSliderComponent implements ControlValueAccessor, OnDestroy, After
 
   // Computed position for thumb (in pixels from left)
   thumbPosition = computed(() => {
-    const containerWidth = this.sliderContainer?.nativeElement?.offsetWidth || 0;
+    const containerWidth = this.sliderContainer()?.nativeElement?.offsetWidth || 0;
     const percentage = this.fillPercentage();
     // Center the thumb (20px width, so -10px offset)
     return (containerWidth * percentage / 100) - 10;
@@ -118,7 +118,7 @@ export class IxSliderComponent implements ControlValueAccessor, OnDestroy, After
       if (currentLabelType !== 'none') {
         this.enableLabel();
         // Set up interaction listeners for handle type after view init
-        if (this.sliderContainer && (currentLabelType === 'handle' || currentLabelType === 'both')) {
+        if (this.sliderContainer() && (currentLabelType === 'handle' || currentLabelType === 'both')) {
           this.setupHandleInteractionListeners();
         }
       } else {
@@ -187,7 +187,7 @@ export class IxSliderComponent implements ControlValueAccessor, OnDestroy, After
   }
 
   getSliderRect(): DOMRect {
-    return this.sliderContainer.nativeElement.getBoundingClientRect();
+    return this.sliderContainer().nativeElement.getBoundingClientRect();
   }
 
   onTrackClick(event: MouseEvent | TouchEvent): void {
@@ -229,36 +229,38 @@ export class IxSliderComponent implements ControlValueAccessor, OnDestroy, After
 
   // Handle interaction listeners for tooltip-style labels
   private setupHandleInteractionListeners(): void {
-    if (this.sliderContainer) {
-      const containerEl = this.sliderContainer.nativeElement;
+    const sliderContainer = this.sliderContainer();
+    if (sliderContainer) {
+      const containerEl = sliderContainer.nativeElement;
       const thumbInput = containerEl.querySelector('input[ixSliderThumb]');
-      
+
       containerEl.addEventListener('mousedown', this.onInteractionStart);
       containerEl.addEventListener('touchstart', this.onInteractionStart);
-      
+
       if (thumbInput) {
         thumbInput.addEventListener('mousedown', this.onInteractionStart);
         thumbInput.addEventListener('touchstart', this.onInteractionStart);
       }
-      
+
       document.addEventListener('mouseup', this.onInteractionEnd);
       document.addEventListener('touchend', this.onInteractionEnd);
     }
   }
 
   private cleanupHandleInteractionListeners(): void {
-    if (this.sliderContainer) {
-      const containerEl = this.sliderContainer.nativeElement;
+    const sliderContainer = this.sliderContainer();
+    if (sliderContainer) {
+      const containerEl = sliderContainer.nativeElement;
       const thumbInput = containerEl.querySelector('input[ixSliderThumb]');
-      
+
       containerEl.removeEventListener('mousedown', this.onInteractionStart);
       containerEl.removeEventListener('touchstart', this.onInteractionStart);
-      
+
       if (thumbInput) {
         thumbInput.removeEventListener('mousedown', this.onInteractionStart);
         thumbInput.removeEventListener('touchstart', this.onInteractionStart);
       }
-      
+
       document.removeEventListener('mouseup', this.onInteractionEnd);
       document.removeEventListener('touchend', this.onInteractionEnd);
     }

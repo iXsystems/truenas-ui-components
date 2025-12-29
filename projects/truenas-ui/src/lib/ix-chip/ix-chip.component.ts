@@ -1,4 +1,4 @@
-import { Component, input, output, computed, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject } from '@angular/core';
+import { Component, input, output, computed, viewChild, ElementRef, AfterViewInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
 import { IxIconComponent } from '../ix-icon/ix-icon.component';
@@ -13,7 +13,7 @@ export type ChipColor = 'primary' | 'secondary' | 'accent';
   styleUrls: ['./ix-chip.component.scss'],
 })
 export class IxChipComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('chipEl') chipEl!: ElementRef<HTMLElement>;
+  chipEl = viewChild.required<ElementRef<HTMLElement>>('chipEl');
 
   label = input<string>('Chip');
   icon = input<string | undefined>(undefined);
@@ -28,7 +28,7 @@ export class IxChipComponent implements AfterViewInit, OnDestroy {
   private focusMonitor = inject(FocusMonitor);
 
   ngAfterViewInit() {
-    this.focusMonitor.monitor(this.chipEl)
+    this.focusMonitor.monitor(this.chipEl())
       .subscribe(origin => {
         if (origin) {
           console.log(`Chip focused via: ${origin}`);
@@ -37,7 +37,7 @@ export class IxChipComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.focusMonitor.stopMonitoring(this.chipEl);
+    this.focusMonitor.stopMonitoring(this.chipEl());
   }
 
   classes = computed(() => {

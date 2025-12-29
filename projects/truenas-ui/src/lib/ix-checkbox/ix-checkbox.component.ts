@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject, input, output, computed, signal, forwardRef } from '@angular/core';
+import { Component, viewChild, ElementRef, AfterViewInit, OnDestroy, inject, input, output, computed, signal, forwardRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
@@ -18,7 +18,7 @@ import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
   ]
 })
 export class IxCheckboxComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
-  @ViewChild('checkboxEl') checkboxEl!: ElementRef<HTMLInputElement>;
+  checkboxEl = viewChild.required<ElementRef<HTMLInputElement>>('checkboxEl');
 
   label = input<string>('Checkbox');
   hideLabel = input<boolean>(false);
@@ -45,8 +45,9 @@ export class IxCheckboxComponent implements AfterViewInit, OnDestroy, ControlVal
   private onTouched = () => {};
 
   ngAfterViewInit() {
-    if (this.checkboxEl) {
-      this.focusMonitor.monitor(this.checkboxEl)
+    const checkboxEl = this.checkboxEl();
+    if (checkboxEl) {
+      this.focusMonitor.monitor(checkboxEl)
         .subscribe(origin => {
           // Focus monitoring for accessibility
         });
@@ -54,8 +55,9 @@ export class IxCheckboxComponent implements AfterViewInit, OnDestroy, ControlVal
   }
 
   ngOnDestroy() {
-    if (this.checkboxEl) {
-      this.focusMonitor.stopMonitoring(this.checkboxEl);
+    const checkboxEl = this.checkboxEl();
+    if (checkboxEl) {
+      this.focusMonitor.stopMonitoring(checkboxEl);
     }
   }
 

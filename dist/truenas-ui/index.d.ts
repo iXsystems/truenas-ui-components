@@ -208,7 +208,7 @@ declare enum InputType {
 }
 
 declare class IxInputComponent implements AfterViewInit, ControlValueAccessor {
-    inputEl: ElementRef<HTMLInputElement | HTMLTextAreaElement>;
+    inputEl: _angular_core.Signal<ElementRef<HTMLInputElement | HTMLTextAreaElement>>;
     inputType: _angular_core.InputSignal<InputType>;
     placeholder: _angular_core.InputSignal<string>;
     testId: _angular_core.InputSignal<string | undefined>;
@@ -241,7 +241,7 @@ declare class IxInputDirective {
 
 type ChipColor = 'primary' | 'secondary' | 'accent';
 declare class IxChipComponent implements AfterViewInit, OnDestroy {
-    chipEl: ElementRef<HTMLElement>;
+    chipEl: _angular_core.Signal<ElementRef<HTMLElement>>;
     label: _angular_core.InputSignal<string>;
     icon: _angular_core.InputSignal<string | undefined>;
     closable: _angular_core.InputSignal<boolean>;
@@ -564,7 +564,7 @@ declare class IxExpansionPanelComponent {
 }
 
 declare class IxCheckboxComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
-    checkboxEl: ElementRef<HTMLInputElement>;
+    checkboxEl: _angular_core.Signal<ElementRef<HTMLInputElement>>;
     label: _angular_core.InputSignal<string>;
     hideLabel: _angular_core.InputSignal<boolean>;
     disabled: _angular_core.InputSignal<boolean>;
@@ -595,7 +595,7 @@ declare class IxCheckboxComponent implements AfterViewInit, OnDestroy, ControlVa
 }
 
 declare class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
-    radioEl: ElementRef<HTMLInputElement>;
+    radioEl: _angular_core.Signal<ElementRef<HTMLInputElement>>;
     label: _angular_core.InputSignal<string>;
     value: _angular_core.InputSignal<any>;
     name: _angular_core.InputSignal<string | undefined>;
@@ -625,7 +625,7 @@ declare class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValue
 
 type SlideToggleColor = 'primary' | 'accent' | 'warn';
 declare class IxSlideToggleComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
-    toggleEl: ElementRef<HTMLInputElement>;
+    toggleEl: _angular_core.Signal<ElementRef<HTMLInputElement>>;
     labelPosition: _angular_core.InputSignal<"before" | "after">;
     label: _angular_core.InputSignal<string | undefined>;
     disabled: _angular_core.InputSignal<boolean>;
@@ -1934,8 +1934,8 @@ declare class IxSliderComponent implements ControlValueAccessor, OnDestroy, Afte
     labelSuffix: _angular_core.InputSignal<string>;
     labelType: _angular_core.InputSignal<LabelType>;
     thumbDirective: IxSliderThumbDirective;
-    sliderContainer: ElementRef<HTMLDivElement>;
-    thumbVisual: ElementRef<HTMLDivElement>;
+    sliderContainer: _angular_core.Signal<ElementRef<HTMLDivElement>>;
+    thumbVisual: _angular_core.Signal<ElementRef<HTMLDivElement>>;
     private onChange;
     private onTouched;
     value: _angular_core.WritableSignal<number>;

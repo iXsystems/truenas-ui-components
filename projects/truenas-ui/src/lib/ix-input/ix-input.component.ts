@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, AfterViewInit, inject, input, computed, signal, forwardRef } from '@angular/core';
+import { Component, viewChild, ElementRef, AfterViewInit, inject, input, computed, signal, forwardRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
@@ -19,7 +19,7 @@ import { InputType } from '../enums/input-type.enum';
   styleUrl: './ix-input.component.scss',
 })
 export class IxInputComponent implements AfterViewInit, ControlValueAccessor {
-  @ViewChild('inputEl') inputEl!: ElementRef<HTMLInputElement | HTMLTextAreaElement>;
+  inputEl = viewChild.required<ElementRef<HTMLInputElement | HTMLTextAreaElement>>('inputEl');
 
   inputType = input<InputType>(InputType.PlainText);
   placeholder = input<string>('Enter your name');
@@ -40,7 +40,7 @@ export class IxInputComponent implements AfterViewInit, ControlValueAccessor {
   private focusMonitor = inject(FocusMonitor);
 
   ngAfterViewInit() {
-    this.focusMonitor.monitor(this.inputEl);
+    this.focusMonitor.monitor(this.inputEl());
   }
 
   // ControlValueAccessor implementation

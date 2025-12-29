@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject, input, output, computed, signal, forwardRef } from '@angular/core';
+import { Component, viewChild, ElementRef, AfterViewInit, OnDestroy, inject, input, output, computed, signal, forwardRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
@@ -18,7 +18,7 @@ import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
   ]
 })
 export class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
-  @ViewChild('radioEl') radioEl!: ElementRef<HTMLInputElement>;
+  radioEl = viewChild.required<ElementRef<HTMLInputElement>>('radioEl');
 
   label = input<string>('Radio');
   value = input<any>('');
@@ -42,8 +42,9 @@ export class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
   private onTouched = () => {};
 
   ngAfterViewInit() {
-    if (this.radioEl) {
-      this.focusMonitor.monitor(this.radioEl)
+    const radioEl = this.radioEl();
+    if (radioEl) {
+      this.focusMonitor.monitor(radioEl)
         .subscribe(origin => {
           // Focus monitoring for accessibility
         });
@@ -51,8 +52,9 @@ export class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
   }
 
   ngOnDestroy() {
-    if (this.radioEl) {
-      this.focusMonitor.stopMonitoring(this.radioEl);
+    const radioEl = this.radioEl();
+    if (radioEl) {
+      this.focusMonitor.stopMonitoring(radioEl);
     }
   }
 
