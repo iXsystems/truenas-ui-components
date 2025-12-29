@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, Output, EventEmitter, TemplateRef, ViewChild, OnInit, ViewContainerRef } from '@angular/core';
+import { Component, input, output, TemplateRef, ViewChild, ViewContainerRef, computed } from '@angular/core';
 import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
@@ -24,13 +24,13 @@ export interface IxMenuItem {
   templateUrl: './ix-menu.component.html',
   styleUrls: ['./ix-menu.component.scss'],
 })
-export class IxMenuComponent implements OnInit {
-  @Input() items: IxMenuItem[] = [];
-  @Input() contextMenu = false; // Enable context menu mode (right-click)
+export class IxMenuComponent {
+  items = input<IxMenuItem[]>([]);
+  contextMenu = input<boolean>(false); // Enable context menu mode (right-click)
 
-  @Output() menuItemClick = new EventEmitter<IxMenuItem>();
-  @Output() menuOpen = new EventEmitter<void>();
-  @Output() menuClose = new EventEmitter<void>();
+  menuItemClick = output<IxMenuItem>();
+  menuOpen = output<void>();
+  menuClose = output<void>();
 
   @ViewChild('menuTemplate', { read: TemplateRef }) menuTemplate!: TemplateRef<any>;
   @ViewChild('contextMenuTemplate', { read: TemplateRef }) contextMenuTemplate!: TemplateRef<any>;
@@ -41,10 +41,6 @@ export class IxMenuComponent implements OnInit {
     private overlay: Overlay,
     private viewContainerRef: ViewContainerRef
   ) {}
-
-  ngOnInit(): void {
-    // Component initialization
-  }
 
   onMenuItemClick(item: IxMenuItem): void {
     if (!item.disabled && (!item.children || item.children.length === 0)) {
@@ -59,9 +55,9 @@ export class IxMenuComponent implements OnInit {
     }
   }
 
-  hasChildren(item: IxMenuItem): boolean {
+  hasChildren = computed(() => (item: IxMenuItem): boolean => {
     return !!(item.children && item.children.length > 0);
-  }
+  });
 
   onMenuOpen(): void {
     this.menuOpen.emit();
@@ -75,17 +71,17 @@ export class IxMenuComponent implements OnInit {
    * Get the menu template for use by the trigger directive
    */
   public getMenuTemplate(): TemplateRef<any> | null {
-    if (this.contextMenu) {
+    if (this.contextMenu()) {
       return this.contextMenuTemplate || null;
     }
     return this.menuTemplate || null;
   }
 
   public openContextMenuAt(x: number, y: number): void {
-    if (this.contextMenu && this.contextMenuTemplate) {
+    if (this.contextMenu() && this.contextMenuTemplate) {
       // Close any existing context menu
       this.closeContextMenu();
-      
+
       // Create overlay at cursor position
       const positionStrategy = this.overlay.position()
         .flexibleConnectedTo({ x, y })
@@ -125,7 +121,7 @@ export class IxMenuComponent implements OnInit {
   }
 
   onContextMenu(event: MouseEvent): void {
-    if (this.contextMenu) {
+    if (this.contextMenu()) {
       event.preventDefault();
       event.stopPropagation();
 

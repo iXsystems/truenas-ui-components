@@ -1,4 +1,4 @@
-import { Directive, Input, ElementRef, ViewContainerRef, HostListener } from '@angular/core';
+import { Directive, input, ElementRef, ViewContainerRef, signal } from '@angular/core';
 import { Overlay, OverlayRef, ConnectedPosition } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { IxMenuComponent } from './ix-menu.component';
@@ -10,14 +10,17 @@ import { IxMenuComponent } from './ix-menu.component';
 @Directive({
   selector: '[ixMenuTriggerFor]',
   standalone: true,
-  exportAs: 'ixMenuTrigger'
+  exportAs: 'ixMenuTrigger',
+  host: {
+    '(click)': 'onClick()'
+  }
 })
 export class IxMenuTriggerDirective {
-  @Input('ixMenuTriggerFor') menu!: IxMenuComponent;
-  @Input() ixMenuPosition: 'above' | 'below' | 'before' | 'after' = 'below';
+  menu = input.required<IxMenuComponent>({ alias: 'ixMenuTriggerFor' });
+  ixMenuPosition = input<'above' | 'below' | 'before' | 'after'>('below');
 
   private overlayRef?: OverlayRef;
-  private isMenuOpen = false;
+  private isMenuOpen = signal<boolean>(false);
 
   constructor(
     private elementRef: ElementRef,
@@ -25,9 +28,8 @@ export class IxMenuTriggerDirective {
     private viewContainerRef: ViewContainerRef
   ) {}
 
-  @HostListener('click')
   onClick(): void {
-    if (this.isMenuOpen) {
+    if (this.isMenuOpen()) {
       this.closeMenu();
     } else {
       this.openMenu();
@@ -35,12 +37,13 @@ export class IxMenuTriggerDirective {
   }
 
   openMenu(): void {
-    if (!this.menu || this.isMenuOpen) {
+    const menuComponent = this.menu();
+    if (!menuComponent || this.isMenuOpen()) {
       return;
     }
 
     // Get menu template
-    const menuTemplate = this.menu.getMenuTemplate();
+    const menuTemplate = menuComponent.getMenuTemplate();
     if (!menuTemplate) {
       return;
     }
@@ -65,7 +68,7 @@ export class IxMenuTriggerDirective {
     const portal = new TemplatePortal(menuTemplate, this.viewContainerRef);
     this.overlayRef.attach(portal);
 
-    this.isMenuOpen = true;
+    this.isMenuOpen.set(true);
 
     // Handle backdrop click
     this.overlayRef.backdropClick().subscribe(() => {
@@ -73,20 +76,20 @@ export class IxMenuTriggerDirective {
     });
 
     // Notify menu component
-    this.menu.onMenuOpen();
+    menuComponent.onMenuOpen();
   }
 
   closeMenu(): void {
     if (this.overlayRef) {
       this.overlayRef.dispose();
       this.overlayRef = undefined;
-      this.isMenuOpen = false;
-      this.menu.onMenuClose();
+      this.isMenuOpen.set(false);
+      this.menu().onMenuClose();
     }
   }
 
   private getPositions(): ConnectedPosition[] {
-    switch (this.ixMenuPosition) {
+    switch (this.ixMenuPosition()) {
       case 'above':
         return [
           { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom' }

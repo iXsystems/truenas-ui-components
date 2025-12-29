@@ -1,5 +1,5 @@
 import * as _angular_core from '@angular/core';
-import { AfterViewInit, ElementRef, ChangeDetectorRef, OnDestroy, OnInit, EventEmitter, TemplateRef, ViewContainerRef, AfterContentInit, QueryList, IterableDiffers, PipeTransform, OnChanges, SimpleChanges, AfterViewChecked } from '@angular/core';
+import { AfterViewInit, ElementRef, ChangeDetectorRef, OnDestroy, TemplateRef, ViewContainerRef, AfterContentInit, QueryList, EventEmitter, IterableDiffers, PipeTransform, OnInit, OnChanges, SimpleChanges, AfterViewChecked } from '@angular/core';
 import { ComponentHarness, BaseHarnessFilters, HarnessPredicate } from '@angular/cdk/testing';
 import { SafeHtml, DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ControlValueAccessor, NgControl } from '@angular/forms';
@@ -272,21 +272,20 @@ interface IxMenuItem {
     children?: IxMenuItem[];
     shortcut?: string;
 }
-declare class IxMenuComponent implements OnInit {
+declare class IxMenuComponent {
     private overlay;
     private viewContainerRef;
-    items: IxMenuItem[];
-    contextMenu: boolean;
-    menuItemClick: EventEmitter<IxMenuItem>;
-    menuOpen: EventEmitter<void>;
-    menuClose: EventEmitter<void>;
+    items: _angular_core.InputSignal<IxMenuItem[]>;
+    contextMenu: _angular_core.InputSignal<boolean>;
+    menuItemClick: _angular_core.OutputEmitterRef<IxMenuItem>;
+    menuOpen: _angular_core.OutputEmitterRef<void>;
+    menuClose: _angular_core.OutputEmitterRef<void>;
     menuTemplate: TemplateRef<any>;
     contextMenuTemplate: TemplateRef<any>;
     private contextOverlayRef?;
     constructor(overlay: Overlay, viewContainerRef: ViewContainerRef);
-    ngOnInit(): void;
     onMenuItemClick(item: IxMenuItem): void;
-    hasChildren(item: IxMenuItem): boolean;
+    hasChildren: _angular_core.Signal<(item: IxMenuItem) => boolean>;
     onMenuOpen(): void;
     onMenuClose(): void;
     /**
@@ -298,7 +297,7 @@ declare class IxMenuComponent implements OnInit {
     onContextMenu(event: MouseEvent): void;
     trackByItemId(index: number, item: IxMenuItem): string;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxMenuComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxMenuComponent, "ix-menu", never, { "items": { "alias": "items"; "required": false; }; "contextMenu": { "alias": "contextMenu"; "required": false; }; }, { "menuItemClick": "menuItemClick"; "menuOpen": "menuOpen"; "menuClose": "menuClose"; }, never, ["*"], true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxMenuComponent, "ix-menu", never, { "items": { "alias": "items"; "required": false; "isSignal": true; }; "contextMenu": { "alias": "contextMenu"; "required": false; "isSignal": true; }; }, { "menuItemClick": "menuItemClick"; "menuOpen": "menuOpen"; "menuClose": "menuClose"; }, never, ["*"], true, never>;
 }
 
 interface SpriteConfig {
@@ -748,8 +747,8 @@ declare class IxMenuTriggerDirective {
     private elementRef;
     private overlay;
     private viewContainerRef;
-    menu: IxMenuComponent;
-    ixMenuPosition: 'above' | 'below' | 'before' | 'after';
+    menu: _angular_core.InputSignal<IxMenuComponent>;
+    ixMenuPosition: _angular_core.InputSignal<"before" | "after" | "above" | "below">;
     private overlayRef?;
     private isMenuOpen;
     constructor(elementRef: ElementRef, overlay: Overlay, viewContainerRef: ViewContainerRef);
@@ -758,7 +757,7 @@ declare class IxMenuTriggerDirective {
     closeMenu(): void;
     private getPositions;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxMenuTriggerDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxMenuTriggerDirective, "[ixMenuTriggerFor]", ["ixMenuTrigger"], { "menu": { "alias": "ixMenuTriggerFor"; "required": false; }; "ixMenuPosition": { "alias": "ixMenuPosition"; "required": false; }; }, {}, never, never, true, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxMenuTriggerDirective, "[ixMenuTriggerFor]", ["ixMenuTrigger"], { "menu": { "alias": "ixMenuTriggerFor"; "required": true; "isSignal": true; }; "ixMenuPosition": { "alias": "ixMenuPosition"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
 declare enum ModifierKeys {
@@ -834,14 +833,16 @@ interface IxSelectOptionGroup {
 declare class IxSelectComponent implements ControlValueAccessor {
     private elementRef;
     private cdr;
-    options: IxSelectOption[];
-    optionGroups: IxSelectOptionGroup[];
-    placeholder: string;
-    disabled: boolean;
-    testId: string;
-    selectionChange: EventEmitter<any>;
-    protected isOpen: boolean;
-    selectedValue: any;
+    options: _angular_core.InputSignal<IxSelectOption[]>;
+    optionGroups: _angular_core.InputSignal<IxSelectOptionGroup[]>;
+    placeholder: _angular_core.InputSignal<string>;
+    disabled: _angular_core.InputSignal<boolean>;
+    testId: _angular_core.InputSignal<string>;
+    selectionChange: _angular_core.OutputEmitterRef<any>;
+    protected isOpen: _angular_core.WritableSignal<boolean>;
+    protected selectedValue: _angular_core.WritableSignal<any>;
+    private formDisabled;
+    isDisabled: _angular_core.Signal<boolean>;
     private onChange;
     private onTouched;
     constructor(elementRef: ElementRef, cdr: ChangeDetectorRef);
@@ -853,15 +854,14 @@ declare class IxSelectComponent implements ControlValueAccessor {
     closeDropdown(): void;
     onOptionClick(option: IxSelectOption): void;
     selectOption(option: IxSelectOption): void;
-    isSelected(option: IxSelectOption): boolean;
-    getDisplayText(): string;
+    isSelected: _angular_core.Signal<(option: IxSelectOption) => boolean>;
+    getDisplayText: _angular_core.Signal<any>;
     private findOptionByValue;
-    hasAnyOptions(): boolean;
+    hasAnyOptions: _angular_core.Signal<boolean>;
     private compareValues;
-    onDocumentClick(event: Event): void;
     onKeydown(event: KeyboardEvent): void;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxSelectComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxSelectComponent, "ix-select", never, { "options": { "alias": "options"; "required": false; }; "optionGroups": { "alias": "optionGroups"; "required": false; }; "placeholder": { "alias": "placeholder"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; "testId": { "alias": "testId"; "required": false; }; }, { "selectionChange": "selectionChange"; }, never, never, true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxSelectComponent, "ix-select", never, { "options": { "alias": "options"; "required": false; "isSignal": true; }; "optionGroups": { "alias": "optionGroups"; "required": false; "isSignal": true; }; "placeholder": { "alias": "placeholder"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, { "selectionChange": "selectionChange"; }, never, never, true, never>;
 }
 
 /**

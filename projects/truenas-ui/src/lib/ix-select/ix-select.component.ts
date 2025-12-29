@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, Output, EventEmitter, forwardRef, HostListener, ElementRef, ChangeDetectorRef } from '@angular/core';
+import { Component, input, output, forwardRef, ElementRef, ChangeDetectorRef, signal, computed, effect } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 export interface IxSelectOption {
@@ -29,16 +29,21 @@ export interface IxSelectOptionGroup {
   styleUrls: ['./ix-select.component.scss']
 })
 export class IxSelectComponent implements ControlValueAccessor {
-  @Input() options: IxSelectOption[] = [];
-  @Input() optionGroups: IxSelectOptionGroup[] = [];
-  @Input() placeholder = 'Select an option';
-  @Input() disabled = false;
-  @Input() testId = '';
+  options = input<IxSelectOption[]>([]);
+  optionGroups = input<IxSelectOptionGroup[]>([]);
+  placeholder = input<string>('Select an option');
+  disabled = input<boolean>(false);
+  testId = input<string>('');
 
-  @Output() selectionChange = new EventEmitter<any>();
+  selectionChange = output<any>();
 
-  protected isOpen = false;
-  public selectedValue: any = null;
+  // Internal state signals
+  protected isOpen = signal<boolean>(false);
+  protected selectedValue = signal<any>(null);
+  private formDisabled = signal<boolean>(false);
+
+  // Computed disabled state (combines input and form state)
+  isDisabled = computed(() => this.disabled() || this.formDisabled());
 
   private onChange = (value: any) => {};
   private onTouched = () => {};
@@ -46,11 +51,33 @@ export class IxSelectComponent implements ControlValueAccessor {
   constructor(
     private elementRef: ElementRef,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    // Click-outside detection using effect
+    effect(() => {
+      if (this.isOpen()) {
+        const clickListener = (event: Event) => {
+          if (!this.elementRef.nativeElement.contains(event.target as Node)) {
+            this.closeDropdown();
+          }
+        };
+
+        // Add listener after a small delay to avoid immediate closure
+        setTimeout(() => {
+          document.addEventListener('click', clickListener);
+        }, 0);
+
+        // Cleanup function
+        return () => {
+          document.removeEventListener('click', clickListener);
+        };
+      }
+      return undefined;
+    });
+  }
 
   // ControlValueAccessor implementation
   writeValue(value: any): void {
-    this.selectedValue = value;
+    this.selectedValue.set(value);
   }
 
   registerOnChange(fn: any): void {
@@ -62,20 +89,20 @@ export class IxSelectComponent implements ControlValueAccessor {
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
+    this.formDisabled.set(isDisabled);
   }
 
   // Component methods
   toggleDropdown(): void {
-    if (this.disabled) return;
-    this.isOpen = !this.isOpen;
-    if (!this.isOpen) {
+    if (this.isDisabled()) return;
+    this.isOpen.set(!this.isOpen());
+    if (!this.isOpen()) {
       this.onTouched();
     }
   }
 
   closeDropdown(): void {
-    this.isOpen = false;
+    this.isOpen.set(false);
     this.onTouched();
   }
 
@@ -86,32 +113,34 @@ export class IxSelectComponent implements ControlValueAccessor {
   selectOption(option: IxSelectOption): void {
     if (option.disabled) return;
 
-    this.selectedValue = option.value;
+    this.selectedValue.set(option.value);
     this.onChange(option.value);
     this.selectionChange.emit(option.value);
     this.closeDropdown();
     this.cdr.markForCheck(); // Trigger change detection
   }
 
-  isSelected(option: IxSelectOption): boolean {
-    return this.compareValues(this.selectedValue, option.value);
-  }
+  // Computed properties
+  isSelected = computed(() => (option: IxSelectOption): boolean => {
+    return this.compareValues(this.selectedValue(), option.value);
+  });
 
-  getDisplayText(): string {
-    if (this.selectedValue === null || this.selectedValue === undefined) {
-      return this.placeholder;
+  getDisplayText = computed(() => {
+    const value = this.selectedValue();
+    if (value === null || value === undefined) {
+      return this.placeholder();
     }
-    const option = this.findOptionByValue(this.selectedValue);
-    return option ? option.label : this.selectedValue;
-  }
+    const option = this.findOptionByValue(value);
+    return option ? option.label : value;
+  });
 
   private findOptionByValue(value: any): IxSelectOption | undefined {
     // Search in regular options first
-    const regularOption = this.options.find(opt => this.compareValues(opt.value, value));
+    const regularOption = this.options().find(opt => this.compareValues(opt.value, value));
     if (regularOption) return regularOption;
 
     // Search in option groups
-    for (const group of this.optionGroups) {
+    for (const group of this.optionGroups()) {
       const groupOption = group.options.find(opt => this.compareValues(opt.value, value));
       if (groupOption) return groupOption;
     }
@@ -119,9 +148,9 @@ export class IxSelectComponent implements ControlValueAccessor {
     return undefined;
   }
 
-  hasAnyOptions(): boolean {
-    return this.options.length > 0 || this.optionGroups.length > 0;
-  }
+  hasAnyOptions = computed(() => {
+    return this.options().length > 0 || this.optionGroups().length > 0;
+  });
 
   private compareValues(a: any, b: any): boolean {
     if (a === b) return true;
@@ -131,32 +160,24 @@ export class IxSelectComponent implements ControlValueAccessor {
     return false;
   }
 
-  // Click outside to close
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: Event): void {
-    if (!this.elementRef.nativeElement.contains(event.target as Node)) {
-      this.closeDropdown();
-    }
-  }
-
   // Keyboard navigation
   onKeydown(event: KeyboardEvent): void {
     switch (event.key) {
       case 'Enter':
       case ' ':
-        if (!this.isOpen) {
+        if (!this.isOpen()) {
           this.toggleDropdown();
           event.preventDefault();
         }
         break;
       case 'Escape':
-        if (this.isOpen) {
+        if (this.isOpen()) {
           this.closeDropdown();
           event.preventDefault();
         }
         break;
       case 'ArrowDown':
-        if (!this.isOpen) {
+        if (!this.isOpen()) {
           this.toggleDropdown();
         }
         event.preventDefault();
