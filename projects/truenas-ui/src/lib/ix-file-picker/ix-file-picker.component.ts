@@ -2,7 +2,7 @@ import { A11yModule } from '@angular/cdk/a11y';
 import { ConnectedPosition, Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
 import { PortalModule, TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
-import { Component, computed, ElementRef, forwardRef, input, OnDestroy, OnInit, output, signal, TemplateRef, ViewChild, ViewContainerRef } from '@angular/core';
+import { Component, computed, ElementRef, forwardRef, input, OnDestroy, OnInit, output, signal, TemplateRef, viewChild, ViewContainerRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
 
@@ -58,8 +58,8 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   createFolder = output<CreateFolderEvent>();
   error = output<FilePickerError>();
 
-  @ViewChild('wrapper') wrapperEl!: ElementRef<HTMLDivElement>;
-  @ViewChild('filePickerTemplate', { static: true }) filePickerTemplate!: TemplateRef<any>;
+  wrapperEl = viewChild.required<ElementRef<HTMLDivElement>>('wrapper');
+  filePickerTemplate = viewChild.required<TemplateRef<any>>('filePickerTemplate');
 
   private destroy$ = new Subject<void>();
   private overlayRef?: OverlayRef;
@@ -518,7 +518,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
     const positionStrategy = this.overlay
       .position()
-      .flexibleConnectedTo(this.wrapperEl)
+      .flexibleConnectedTo(this.wrapperEl())
       .withPositions(positions)
       .withFlexibleDimensions(false)
       .withPush(false);
@@ -535,7 +535,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       this.close();
     });
 
-    this.portal = new TemplatePortal(this.filePickerTemplate, this.viewContainerRef);
+    this.portal = new TemplatePortal(this.filePickerTemplate(), this.viewContainerRef);
     this.overlayRef.attach(this.portal);
   }
 

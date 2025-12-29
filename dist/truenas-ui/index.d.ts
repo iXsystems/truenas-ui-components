@@ -1,5 +1,5 @@
 import * as _angular_core from '@angular/core';
-import { AfterViewInit, ElementRef, ChangeDetectorRef, OnDestroy, TemplateRef, ViewContainerRef, AfterContentInit, IterableDiffers, PipeTransform, OnInit, AfterViewChecked, EventEmitter } from '@angular/core';
+import { AfterViewInit, ElementRef, ChangeDetectorRef, OnDestroy, TemplateRef, ViewContainerRef, AfterContentInit, IterableDiffers, PipeTransform, OnInit, AfterViewChecked } from '@angular/core';
 import { ComponentHarness, BaseHarnessFilters, HarnessPredicate } from '@angular/cdk/testing';
 import { SafeHtml, DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ControlValueAccessor, NgControl } from '@angular/forms';
@@ -709,7 +709,7 @@ declare class IxTabsComponent implements AfterContentInit, AfterViewInit {
     tabHeader: _angular_core.Signal<ElementRef<HTMLElement>>;
     selectedIndex: _angular_core.InputSignal<number>;
     orientation: _angular_core.InputSignal<"horizontal" | "vertical">;
-    highlightPosition: _angular_core.InputSignal<"left" | "right" | "top" | "bottom">;
+    highlightPosition: _angular_core.InputSignal<"top" | "bottom" | "left" | "right">;
     selectedIndexChange: _angular_core.OutputEmitterRef<number>;
     tabChange: _angular_core.OutputEmitterRef<TabChangeEvent>;
     private internalSelectedIndex;
@@ -2165,7 +2165,7 @@ declare class IxStepComponent {
 
 declare class IxStepperComponent {
     private cdr;
-    orientation: _angular_core.InputSignal<"horizontal" | "vertical" | "auto">;
+    orientation: _angular_core.InputSignal<"auto" | "horizontal" | "vertical">;
     linear: _angular_core.InputSignal<boolean>;
     selectedIndex: _angular_core.ModelSignal<number>;
     selectionChange: _angular_core.OutputEmitterRef<any>;
@@ -2204,8 +2204,8 @@ declare class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnD
     pathChange: _angular_core.OutputEmitterRef<string>;
     createFolder: _angular_core.OutputEmitterRef<CreateFolderEvent>;
     error: _angular_core.OutputEmitterRef<FilePickerError>;
-    wrapperEl: ElementRef<HTMLDivElement>;
-    filePickerTemplate: TemplateRef<any>;
+    wrapperEl: _angular_core.Signal<ElementRef<HTMLDivElement>>;
+    filePickerTemplate: _angular_core.Signal<TemplateRef<any>>;
     private destroy$;
     private overlayRef?;
     private portal?;
@@ -2277,19 +2277,19 @@ declare class IxFilePickerPopupComponent implements OnInit, AfterViewInit, After
     ngOnInit(): void;
     ngAfterViewInit(): void;
     ngAfterViewChecked(): void;
-    itemClick: EventEmitter<FileSystemItem>;
-    itemDoubleClick: EventEmitter<FileSystemItem>;
-    pathNavigate: EventEmitter<string>;
-    createFolder: EventEmitter<CreateFolderEvent>;
-    clearSelection: EventEmitter<void>;
-    close: EventEmitter<void>;
-    submit: EventEmitter<void>;
-    cancel: EventEmitter<void>;
-    submitFolderName: EventEmitter<{
+    itemClick: _angular_core.OutputEmitterRef<FileSystemItem>;
+    itemDoubleClick: _angular_core.OutputEmitterRef<FileSystemItem>;
+    pathNavigate: _angular_core.OutputEmitterRef<string>;
+    createFolder: _angular_core.OutputEmitterRef<CreateFolderEvent>;
+    clearSelection: _angular_core.OutputEmitterRef<void>;
+    close: _angular_core.OutputEmitterRef<void>;
+    submit: _angular_core.OutputEmitterRef<void>;
+    cancel: _angular_core.OutputEmitterRef<void>;
+    submitFolderName: _angular_core.OutputEmitterRef<{
         name: string;
         tempId: string;
     }>;
-    cancelFolderCreation: EventEmitter<string>;
+    cancelFolderCreation: _angular_core.OutputEmitterRef<string>;
     displayedColumns: string[];
     filteredFileItems: _angular_core.Signal<{
         disabled: boolean;

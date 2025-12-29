@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, AfterViewInit, AfterViewChecked, computed, input } from '@angular/core';
+import { Component, OnInit, AfterViewInit, AfterViewChecked, computed, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { A11yModule } from '@angular/cdk/a11y';
@@ -116,16 +116,16 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
     }
   }
 
-  @Output() itemClick = new EventEmitter<FileSystemItem>();
-  @Output() itemDoubleClick = new EventEmitter<FileSystemItem>();
-  @Output() pathNavigate = new EventEmitter<string>();
-  @Output() createFolder = new EventEmitter<CreateFolderEvent>();
-  @Output() clearSelection = new EventEmitter<void>();
-  @Output() close = new EventEmitter<void>();
-  @Output() submit = new EventEmitter<void>();
-  @Output() cancel = new EventEmitter<void>();
-  @Output() submitFolderName = new EventEmitter<{ name: string; tempId: string }>();
-  @Output() cancelFolderCreation = new EventEmitter<string>();
+  itemClick = output<FileSystemItem>();
+  itemDoubleClick = output<FileSystemItem>();
+  pathNavigate = output<string>();
+  createFolder = output<CreateFolderEvent>();
+  clearSelection = output<void>();
+  close = output<void>();
+  submit = output<void>();
+  cancel = output<void>();
+  submitFolderName = output<{ name: string; tempId: string }>();
+  cancelFolderCreation = output<string>();
 
   // Table configuration
   displayedColumns = ['select', 'name', 'size', 'modified'];

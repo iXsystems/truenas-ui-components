@@ -131,7 +131,7 @@ This is the authoritative API documentation for the \`ix-file-picker\` component
 
 ### Selection Configuration
 \`\`\`typescript
-@Input() mode: 'file' | 'folder' | 'dataset' | 'zvol' | 'any' = 'any';
+mode = input<FilePickerMode>('any');
 \`\`\`
 **Description:** Determines what types of items can be selected.
 - \`'file'\` - Only files can be selected
@@ -141,61 +141,61 @@ This is the authoritative API documentation for the \`ix-file-picker\` component
 - \`'any'\` - Any item type can be selected (default)
 
 \`\`\`typescript
-@Input() multiSelect: boolean = false;
+multiSelect = input<boolean>(false);
 \`\`\`
 **Description:** Enable multi-selection mode with checkboxes.
 
 ### Creation Permissions
 \`\`\`typescript
-@Input() allowCreate: boolean = true;
+allowCreate = input<boolean>(true);
 \`\`\`
 **Description:** Show "New Folder" button in the file picker popup.
 
 \`\`\`typescript
-@Input() allowDatasetCreate: boolean = false;
+allowDatasetCreate = input<boolean>(false);
 \`\`\`
 **Description:** Show "New Dataset" option (requires \`createDataset\` callback).
 
 \`\`\`typescript
-@Input() allowZvolCreate: boolean = false;
+allowZvolCreate = input<boolean>(false);
 \`\`\`
 **Description:** Show "New Zvol" option (requires \`createZvol\` callback).
 
 ### Navigation Configuration
 \`\`\`typescript
-@Input() startPath: string = '/mnt';
+startPath = input<string>('/mnt');
 \`\`\`
 **Description:** Initial directory path to display when picker opens.
 
 \`\`\`typescript
-@Input() rootPath?: string;
+rootPath = input<string | undefined>(undefined);
 \`\`\`
 **Description:** Restrict navigation - users cannot navigate above this path.
 
 \`\`\`typescript
-@Input() fileExtensions?: string[];
+fileExtensions = input<string[] | undefined>(undefined);
 \`\`\`
 **Description:** Filter files by extension (e.g., \`['.log', '.conf', '.txt']\`).
 
 ### Behavior
 \`\`\`typescript
-@Input() allowManualInput: boolean = true;
+allowManualInput = input<boolean>(true);
 \`\`\`
 **Description:** Allow users to type paths directly in the input field.
 
 \`\`\`typescript
-@Input() placeholder: string = 'Select file or folder';
+placeholder = input<string>('Select file or folder');
 \`\`\`
 **Description:** Placeholder text for the input field.
 
 \`\`\`typescript
-@Input() disabled: boolean = false;
+disabled = input<boolean>(false);
 \`\`\`
 **Description:** Disable the file picker input and button.
 
 ### Integration
 \`\`\`typescript
-@Input() callbacks?: FilePickerCallbacks;
+callbacks = input<FilePickerCallbacks | undefined>(undefined);
 \`\`\`
 **Description:** Object containing callback functions for data operations (see Callbacks section).
 
@@ -204,22 +204,22 @@ This is the authoritative API documentation for the \`ix-file-picker\` component
 ## Component Outputs
 
 \`\`\`typescript
-@Output() selectionChange: EventEmitter<string | string[]>;
+selectionChange = output<string | string[]>();
 \`\`\`
 **Description:** Emitted when user selects item(s). Returns single path string or array of paths (multi-select).
 
 \`\`\`typescript
-@Output() pathChange: EventEmitter<string>;
+pathChange = output<string>();
 \`\`\`
 **Description:** Emitted when user navigates to a different directory.
 
 \`\`\`typescript
-@Output() createFolder: EventEmitter<CreateFolderEvent>;
+createFolder = output<CreateFolderEvent>();
 \`\`\`
 **Description:** Emitted when user clicks "New Folder" button.
 
 \`\`\`typescript
-@Output() error: EventEmitter<FilePickerError>;
+error = output<FilePickerError>();
 \`\`\`
 **Description:** Emitted when navigation, validation, or creation operations fail.
 
