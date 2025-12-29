@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, computed, signal, ContentChild, AfterContentInit } from '@angular/core';
+import { Component, input, computed, signal, contentChild, AfterContentInit } from '@angular/core';
 import { NgControl } from '@angular/forms';
 
 @Component({
@@ -15,15 +15,16 @@ export class IxFormFieldComponent implements AfterContentInit {
   required = input<boolean>(false);
   testId = input<string>('');
 
-  @ContentChild(NgControl, { static: false }) control?: NgControl;
+  control = contentChild(NgControl);
 
   protected hasError = signal<boolean>(false);
   protected errorMessage = signal<string>('');
 
   ngAfterContentInit(): void {
-    if (this.control) {
+    const control = this.control();
+    if (control) {
       // Listen for control status changes
-      this.control.statusChanges?.subscribe(() => {
+      control.statusChanges?.subscribe(() => {
         this.updateErrorState();
       });
 
@@ -33,16 +34,18 @@ export class IxFormFieldComponent implements AfterContentInit {
   }
 
   private updateErrorState(): void {
-    if (this.control) {
-      this.hasError.set(!!(this.control.invalid && (this.control.dirty || this.control.touched)));
+    const control = this.control();
+    if (control) {
+      this.hasError.set(!!(control.invalid && (control.dirty || control.touched)));
       this.errorMessage.set(this.getErrorMessage());
     }
   }
 
   private getErrorMessage(): string {
-    if (!this.control?.errors) return '';
+    const control = this.control();
+    if (!control?.errors) return '';
 
-    const errors = this.control.errors;
+    const errors = control.errors;
 
     // Return the first error message found
     if (errors['required']) return 'This field is required';

@@ -1,5 +1,5 @@
 import * as _angular_core from '@angular/core';
-import { AfterViewInit, ElementRef, ChangeDetectorRef, OnDestroy, TemplateRef, ViewContainerRef, AfterContentInit, QueryList, IterableDiffers, PipeTransform, OnInit, AfterViewChecked, EventEmitter } from '@angular/core';
+import { AfterViewInit, ElementRef, ChangeDetectorRef, OnDestroy, TemplateRef, ViewContainerRef, AfterContentInit, IterableDiffers, PipeTransform, OnInit, AfterViewChecked, EventEmitter } from '@angular/core';
 import { ComponentHarness, BaseHarnessFilters, HarnessPredicate } from '@angular/cdk/testing';
 import { SafeHtml, DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ControlValueAccessor, NgControl } from '@angular/forms';
@@ -54,7 +54,7 @@ declare class IxBannerComponent {
     /**
      * Get the appropriate icon name based on banner type
      */
-    iconName: _angular_core.Signal<"information" | "alert" | "alert-circle" | "check-circle">;
+    iconName: _angular_core.Signal<"alert-circle" | "information" | "alert" | "check-circle">;
     /**
      * Get ARIA role based on banner type
      * Error/warning use 'alert' for immediate attention
@@ -517,7 +517,7 @@ declare class IxCardComponent {
     title: _angular_core.InputSignal<string | undefined>;
     titleLink: _angular_core.InputSignal<string | undefined>;
     elevation: _angular_core.InputSignal<"none" | "low" | "medium" | "high">;
-    padding: _angular_core.InputSignal<"large" | "medium" | "small">;
+    padding: _angular_core.InputSignal<"small" | "large" | "medium">;
     padContent: _angular_core.InputSignal<boolean>;
     bordered: _angular_core.InputSignal<boolean>;
     background: _angular_core.InputSignal<boolean>;
@@ -546,12 +546,12 @@ declare class IxCardComponent {
 declare class IxExpansionPanelComponent {
     title: _angular_core.InputSignal<string | undefined>;
     elevation: _angular_core.InputSignal<"none" | "low" | "medium" | "high">;
-    padding: _angular_core.InputSignal<"large" | "medium" | "small">;
+    padding: _angular_core.InputSignal<"small" | "large" | "medium">;
     bordered: _angular_core.InputSignal<boolean>;
     background: _angular_core.InputSignal<boolean>;
     expanded: _angular_core.InputSignal<boolean>;
     disabled: _angular_core.InputSignal<boolean>;
-    titleStyle: _angular_core.InputSignal<"link" | "header" | "body">;
+    titleStyle: _angular_core.InputSignal<"body" | "header" | "link">;
     expandedChange: _angular_core.OutputEmitterRef<boolean>;
     toggleEvent: _angular_core.OutputEmitterRef<void>;
     private internalExpanded;
@@ -666,7 +666,7 @@ declare class IxTabComponent implements AfterContentInit {
     iconTemplate: _angular_core.InputSignal<TemplateRef<any> | undefined>;
     testId: _angular_core.InputSignal<string | undefined>;
     selected: _angular_core.OutputEmitterRef<void>;
-    iconContent?: TemplateRef<any>;
+    iconContent: _angular_core.Signal<TemplateRef<any> | undefined>;
     index: _angular_core.WritableSignal<number>;
     isActive: _angular_core.WritableSignal<boolean>;
     tabsComponent?: any;
@@ -704,12 +704,12 @@ interface TabChangeEvent {
     previousIndex: number;
 }
 declare class IxTabsComponent implements AfterContentInit, AfterViewInit {
-    tabs: QueryList<IxTabComponent>;
-    panels: QueryList<IxTabPanelComponent>;
+    tabs: _angular_core.Signal<readonly IxTabComponent[]>;
+    panels: _angular_core.Signal<readonly IxTabPanelComponent[]>;
     tabHeader: _angular_core.Signal<ElementRef<HTMLElement>>;
     selectedIndex: _angular_core.InputSignal<number>;
     orientation: _angular_core.InputSignal<"horizontal" | "vertical">;
-    highlightPosition: _angular_core.InputSignal<"top" | "bottom" | "left" | "right">;
+    highlightPosition: _angular_core.InputSignal<"left" | "right" | "top" | "bottom">;
     selectedIndexChange: _angular_core.OutputEmitterRef<number>;
     tabChange: _angular_core.OutputEmitterRef<TabChangeEvent>;
     private internalSelectedIndex;
@@ -808,7 +808,7 @@ declare class IxFormFieldComponent implements AfterContentInit {
     hint: _angular_core.InputSignal<string>;
     required: _angular_core.InputSignal<boolean>;
     testId: _angular_core.InputSignal<string>;
-    control?: NgControl;
+    control: _angular_core.Signal<NgControl | undefined>;
     protected hasError: _angular_core.WritableSignal<boolean>;
     protected errorMessage: _angular_core.WritableSignal<string>;
     ngAfterContentInit(): void;
@@ -1933,7 +1933,7 @@ declare class IxSliderComponent implements ControlValueAccessor, OnDestroy, Afte
     labelPrefix: _angular_core.InputSignal<string>;
     labelSuffix: _angular_core.InputSignal<string>;
     labelType: _angular_core.InputSignal<LabelType>;
-    thumbDirective: IxSliderThumbDirective;
+    thumbDirective: _angular_core.Signal<IxSliderThumbDirective>;
     sliderContainer: _angular_core.Signal<ElementRef<HTMLDivElement>>;
     thumbVisual: _angular_core.Signal<ElementRef<HTMLDivElement>>;
     private onChange;
@@ -2165,7 +2165,7 @@ declare class IxStepComponent {
 
 declare class IxStepperComponent {
     private cdr;
-    orientation: _angular_core.InputSignal<"auto" | "horizontal" | "vertical">;
+    orientation: _angular_core.InputSignal<"horizontal" | "vertical" | "auto">;
     linear: _angular_core.InputSignal<boolean>;
     selectedIndex: _angular_core.ModelSignal<number>;
     selectionChange: _angular_core.OutputEmitterRef<any>;

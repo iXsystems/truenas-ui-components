@@ -1,4 +1,4 @@
-import { Component, input, output, ElementRef, inject, TemplateRef, ContentChild, AfterContentInit, computed, signal } from '@angular/core';
+import { Component, input, output, ElementRef, inject, TemplateRef, contentChild, AfterContentInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { A11yModule } from '@angular/cdk/a11y';
 
@@ -18,7 +18,7 @@ export class IxTabComponent implements AfterContentInit {
 
   selected = output<void>();
 
-  @ContentChild('iconContent') iconContent?: TemplateRef<any>;
+  iconContent = contentChild<TemplateRef<any>>('iconContent');
 
   // Internal properties set by parent IxTabsComponent (public signals for parent control)
   public index = signal<number>(0);
@@ -30,7 +30,7 @@ export class IxTabComponent implements AfterContentInit {
   protected hasIconContent = signal<boolean>(false);
 
   ngAfterContentInit() {
-    this.hasIconContent.set(!!this.iconContent);
+    this.hasIconContent.set(!!this.iconContent());
   }
 
   onClick() {

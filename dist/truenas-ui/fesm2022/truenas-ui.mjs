@@ -1,5 +1,5 @@
 import * as i0 from '@angular/core';
-import { Injectable, Component, input, ChangeDetectionStrategy, viewChild, inject, effect, computed, ViewEncapsulation, output, signal, forwardRef, Directive, ElementRef, ContentChild, ChangeDetectorRef, ContentChildren, HostListener, contentChildren, contentChild, TemplateRef, Optional, Inject, Pipe, Host, model, EventEmitter, Output, ViewChild } from '@angular/core';
+import { Injectable, Component, input, ChangeDetectionStrategy, viewChild, inject, effect, computed, ViewEncapsulation, output, signal, forwardRef, Directive, contentChild, ElementRef, contentChildren, ChangeDetectorRef, HostListener, TemplateRef, Optional, Inject, Pipe, Host, model, EventEmitter, Output, ViewChild } from '@angular/core';
 import * as i1$2 from '@angular/common';
 import { CommonModule, NgIf, DOCUMENT } from '@angular/common';
 import * as i1$1 from '@angular/platform-browser';
@@ -1660,7 +1660,7 @@ class IxTabComponent {
     iconTemplate = input(undefined, ...(ngDevMode ? [{ debugName: "iconTemplate" }] : []));
     testId = input(undefined, ...(ngDevMode ? [{ debugName: "testId" }] : []));
     selected = output();
-    iconContent;
+    iconContent = contentChild('iconContent', ...(ngDevMode ? [{ debugName: "iconContent" }] : []));
     // Internal properties set by parent IxTabsComponent (public signals for parent control)
     index = signal(0, ...(ngDevMode ? [{ debugName: "index" }] : []));
     isActive = signal(false, ...(ngDevMode ? [{ debugName: "isActive" }] : []));
@@ -1668,7 +1668,7 @@ class IxTabComponent {
     elementRef = inject((ElementRef));
     hasIconContent = signal(false, ...(ngDevMode ? [{ debugName: "hasIconContent" }] : []));
     ngAfterContentInit() {
-        this.hasIconContent.set(!!this.iconContent);
+        this.hasIconContent.set(!!this.iconContent());
     }
     onClick() {
         if (!this.disabled()) {
@@ -1697,15 +1697,12 @@ class IxTabComponent {
         return !!(this.hasIconContent() || this.iconTemplate() || this.icon());
     }, ...(ngDevMode ? [{ debugName: "hasIcon" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTabComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTabComponent, isStandalone: true, selector: "ix-tab", inputs: { label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, icon: { classPropertyName: "icon", publicName: "icon", isSignal: true, isRequired: false, transformFunction: null }, iconTemplate: { classPropertyName: "iconTemplate", publicName: "iconTemplate", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selected: "selected" }, queries: [{ propertyName: "iconContent", first: true, predicate: ["iconContent"], descendants: true }], ngImport: i0, template: "<button\n  [ngClass]=\"classes()\"\n  [attr.data-testid]=\"testId()\"\n  [attr.aria-selected]=\"isActive()\"\n  [attr.aria-disabled]=\"disabled()\"\n  [attr.tabindex]=\"tabIndex()\"\n  [disabled]=\"disabled()\"\n  role=\"tab\"\n  type=\"button\"\n  (click)=\"onClick()\"\n  (keydown)=\"onKeydown($event)\"\n>\n  @if (hasIcon()) {\n    <span class=\"ix-tab__icon\">\n      @if (iconContent) {\n        <ng-container *ngTemplateOutlet=\"iconContent\"></ng-container>\n      } @else if (iconTemplate()) {\n        <ng-container *ngTemplateOutlet=\"iconTemplate()\"></ng-container>\n      } @else {\n        <span [innerHTML]=\"icon()\"></span>\n      }\n    </span>\n  }\n  <span class=\"ix-tab__label\">\n    {{ label() }}\n    <ng-content></ng-content>\n  </span>\n</button>", styles: [".ix-tab{display:flex;align-items:center;justify-content:flex-start;gap:8px;padding:12px 16px;border:none;border-bottom:none;background:transparent;color:var(--fg2, #666);font-family:var(--font-family-body, \"Inter\", sans-serif);font-size:14px;font-weight:500;line-height:1.5;cursor:pointer;white-space:nowrap;min-width:0;flex-shrink:0}.ix-tab:hover:not(.ix-tab--disabled):not(.ix-tab--active){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tab:focus-visible{outline:2px solid var(--primary, #0095d5);outline-offset:-2px;border-radius:4px}.ix-tab--disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.ix-tab__icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:14px;flex-shrink:0}.ix-tab__label{display:flex;align-items:center;min-width:0;text-overflow:ellipsis;overflow:hidden}@media (prefers-contrast: high){.ix-tab{border-width:3px}.ix-tab:focus-visible{outline-width:3px}}:host-context(.ix-tabs--vertical){width:100%}:host-context(.ix-tabs--vertical) .ix-tab{width:100%}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "directive", type: i1$2.NgTemplateOutlet, selector: "[ngTemplateOutlet]", inputs: ["ngTemplateOutletContext", "ngTemplateOutlet", "ngTemplateOutletInjector"] }, { kind: "ngmodule", type: A11yModule }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTabComponent, isStandalone: true, selector: "ix-tab", inputs: { label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, icon: { classPropertyName: "icon", publicName: "icon", isSignal: true, isRequired: false, transformFunction: null }, iconTemplate: { classPropertyName: "iconTemplate", publicName: "iconTemplate", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selected: "selected" }, queries: [{ propertyName: "iconContent", first: true, predicate: ["iconContent"], descendants: true, isSignal: true }], ngImport: i0, template: "<button\n  [ngClass]=\"classes()\"\n  [attr.data-testid]=\"testId()\"\n  [attr.aria-selected]=\"isActive()\"\n  [attr.aria-disabled]=\"disabled()\"\n  [attr.tabindex]=\"tabIndex()\"\n  [disabled]=\"disabled()\"\n  role=\"tab\"\n  type=\"button\"\n  (click)=\"onClick()\"\n  (keydown)=\"onKeydown($event)\"\n>\n  @if (hasIcon()) {\n    <span class=\"ix-tab__icon\">\n      @if (iconContent()) {\n        <ng-container *ngTemplateOutlet=\"iconContent()\"></ng-container>\n      } @else if (iconTemplate()) {\n        <ng-container *ngTemplateOutlet=\"iconTemplate()\"></ng-container>\n      } @else {\n        <span [innerHTML]=\"icon()\"></span>\n      }\n    </span>\n  }\n  <span class=\"ix-tab__label\">\n    {{ label() }}\n    <ng-content></ng-content>\n  </span>\n</button>", styles: [".ix-tab{display:flex;align-items:center;justify-content:flex-start;gap:8px;padding:12px 16px;border:none;border-bottom:none;background:transparent;color:var(--fg2, #666);font-family:var(--font-family-body, \"Inter\", sans-serif);font-size:14px;font-weight:500;line-height:1.5;cursor:pointer;white-space:nowrap;min-width:0;flex-shrink:0}.ix-tab:hover:not(.ix-tab--disabled):not(.ix-tab--active){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tab:focus-visible{outline:2px solid var(--primary, #0095d5);outline-offset:-2px;border-radius:4px}.ix-tab--disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.ix-tab__icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:14px;flex-shrink:0}.ix-tab__label{display:flex;align-items:center;min-width:0;text-overflow:ellipsis;overflow:hidden}@media (prefers-contrast: high){.ix-tab{border-width:3px}.ix-tab:focus-visible{outline-width:3px}}:host-context(.ix-tabs--vertical){width:100%}:host-context(.ix-tabs--vertical) .ix-tab{width:100%}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "directive", type: i1$2.NgTemplateOutlet, selector: "[ngTemplateOutlet]", inputs: ["ngTemplateOutletContext", "ngTemplateOutlet", "ngTemplateOutletInjector"] }, { kind: "ngmodule", type: A11yModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTabComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-tab', standalone: true, imports: [CommonModule, A11yModule], template: "<button\n  [ngClass]=\"classes()\"\n  [attr.data-testid]=\"testId()\"\n  [attr.aria-selected]=\"isActive()\"\n  [attr.aria-disabled]=\"disabled()\"\n  [attr.tabindex]=\"tabIndex()\"\n  [disabled]=\"disabled()\"\n  role=\"tab\"\n  type=\"button\"\n  (click)=\"onClick()\"\n  (keydown)=\"onKeydown($event)\"\n>\n  @if (hasIcon()) {\n    <span class=\"ix-tab__icon\">\n      @if (iconContent) {\n        <ng-container *ngTemplateOutlet=\"iconContent\"></ng-container>\n      } @else if (iconTemplate()) {\n        <ng-container *ngTemplateOutlet=\"iconTemplate()\"></ng-container>\n      } @else {\n        <span [innerHTML]=\"icon()\"></span>\n      }\n    </span>\n  }\n  <span class=\"ix-tab__label\">\n    {{ label() }}\n    <ng-content></ng-content>\n  </span>\n</button>", styles: [".ix-tab{display:flex;align-items:center;justify-content:flex-start;gap:8px;padding:12px 16px;border:none;border-bottom:none;background:transparent;color:var(--fg2, #666);font-family:var(--font-family-body, \"Inter\", sans-serif);font-size:14px;font-weight:500;line-height:1.5;cursor:pointer;white-space:nowrap;min-width:0;flex-shrink:0}.ix-tab:hover:not(.ix-tab--disabled):not(.ix-tab--active){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tab:focus-visible{outline:2px solid var(--primary, #0095d5);outline-offset:-2px;border-radius:4px}.ix-tab--disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.ix-tab__icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:14px;flex-shrink:0}.ix-tab__label{display:flex;align-items:center;min-width:0;text-overflow:ellipsis;overflow:hidden}@media (prefers-contrast: high){.ix-tab{border-width:3px}.ix-tab:focus-visible{outline-width:3px}}:host-context(.ix-tabs--vertical){width:100%}:host-context(.ix-tabs--vertical) .ix-tab{width:100%}\n"] }]
-        }], propDecorators: { iconContent: [{
-                type: ContentChild,
-                args: ['iconContent']
-            }] } });
+            args: [{ selector: 'ix-tab', standalone: true, imports: [CommonModule, A11yModule], template: "<button\n  [ngClass]=\"classes()\"\n  [attr.data-testid]=\"testId()\"\n  [attr.aria-selected]=\"isActive()\"\n  [attr.aria-disabled]=\"disabled()\"\n  [attr.tabindex]=\"tabIndex()\"\n  [disabled]=\"disabled()\"\n  role=\"tab\"\n  type=\"button\"\n  (click)=\"onClick()\"\n  (keydown)=\"onKeydown($event)\"\n>\n  @if (hasIcon()) {\n    <span class=\"ix-tab__icon\">\n      @if (iconContent()) {\n        <ng-container *ngTemplateOutlet=\"iconContent()\"></ng-container>\n      } @else if (iconTemplate()) {\n        <ng-container *ngTemplateOutlet=\"iconTemplate()\"></ng-container>\n      } @else {\n        <span [innerHTML]=\"icon()\"></span>\n      }\n    </span>\n  }\n  <span class=\"ix-tab__label\">\n    {{ label() }}\n    <ng-content></ng-content>\n  </span>\n</button>", styles: [".ix-tab{display:flex;align-items:center;justify-content:flex-start;gap:8px;padding:12px 16px;border:none;border-bottom:none;background:transparent;color:var(--fg2, #666);font-family:var(--font-family-body, \"Inter\", sans-serif);font-size:14px;font-weight:500;line-height:1.5;cursor:pointer;white-space:nowrap;min-width:0;flex-shrink:0}.ix-tab:hover:not(.ix-tab--disabled):not(.ix-tab--active){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tab:focus-visible{outline:2px solid var(--primary, #0095d5);outline-offset:-2px;border-radius:4px}.ix-tab--disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.ix-tab__icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:14px;flex-shrink:0}.ix-tab__label{display:flex;align-items:center;min-width:0;text-overflow:ellipsis;overflow:hidden}@media (prefers-contrast: high){.ix-tab{border-width:3px}.ix-tab:focus-visible{outline-width:3px}}:host-context(.ix-tabs--vertical){width:100%}:host-context(.ix-tabs--vertical) .ix-tab{width:100%}\n"] }]
+        }] });
 
 class IxTabPanelComponent {
     label = input('', ...(ngDevMode ? [{ debugName: "label" }] : []));
@@ -1746,8 +1743,8 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
         }] });
 
 class IxTabsComponent {
-    tabs;
-    panels;
+    tabs = contentChildren(IxTabComponent, ...(ngDevMode ? [{ debugName: "tabs" }] : []));
+    panels = contentChildren(IxTabPanelComponent, ...(ngDevMode ? [{ debugName: "panels" }] : []));
     tabHeader = viewChild.required('tabHeader');
     selectedIndex = input(0, ...(ngDevMode ? [{ debugName: "selectedIndex" }] : []));
     orientation = input('horizontal', ...(ngDevMode ? [{ debugName: "orientation" }] : []));
@@ -1772,13 +1769,15 @@ class IxTabsComponent {
         // Reactive child state management - update tabs and panels when selectedIndex changes
         effect(() => {
             const currentIndex = this.internalSelectedIndex();
-            if (this.tabs && this.tabs.length > 0) {
-                this.tabs.forEach((tab, i) => {
+            const tabs = this.tabs();
+            if (tabs && tabs.length > 0) {
+                tabs.forEach((tab, i) => {
                     tab.isActive.set(i === currentIndex);
                 });
             }
-            if (this.panels && this.panels.length > 0) {
-                this.panels.forEach((panel, i) => {
+            const panels = this.panels();
+            if (panels && panels.length > 0) {
+                panels.forEach((panel, i) => {
                     panel.isActive.set(i === currentIndex);
                     if (i === currentIndex) {
                         panel.onActivate();
@@ -1792,9 +1791,13 @@ class IxTabsComponent {
         this.initializeTabs();
         this.selectTab(this.internalSelectedIndex());
         // Listen for tab changes
-        this.tabs.changes.subscribe(() => {
-            this.initializeTabs();
-            this.updateHighlightBar();
+        effect(() => {
+            // Track tabs signal to react to changes
+            const tabs = this.tabs();
+            if (tabs.length > 0) {
+                this.initializeTabs();
+                this.updateHighlightBar();
+            }
         });
     }
     ngAfterViewInit() {
@@ -1806,7 +1809,7 @@ class IxTabsComponent {
         }, 0);
     }
     ngOnDestroy() {
-        this.tabs.forEach(tab => {
+        this.tabs().forEach(tab => {
             if (tab.elementRef) {
                 this.focusMonitor.stopMonitoring(tab.elementRef);
             }
@@ -1814,7 +1817,7 @@ class IxTabsComponent {
     }
     initializeTabs() {
         const currentIndex = this.internalSelectedIndex();
-        this.tabs.forEach((tab, index) => {
+        this.tabs().forEach((tab, index) => {
             tab.index.set(index);
             tab.isActive.set(index === currentIndex);
             tab.tabsComponent = this;
@@ -1834,7 +1837,7 @@ class IxTabsComponent {
                 }
             });
         });
-        this.panels.forEach((panel, index) => {
+        this.panels().forEach((panel, index) => {
             panel.index.set(index);
             panel.isActive.set(index === currentIndex);
         });
@@ -1842,10 +1845,11 @@ class IxTabsComponent {
         this.cdr.detectChanges();
     }
     selectTab(index) {
-        if (index < 0 || index >= this.tabs.length) {
+        const tabs = this.tabs();
+        if (index < 0 || index >= tabs.length) {
             return;
         }
-        const tab = this.tabs.get(index);
+        const tab = tabs[index];
         if (tab && tab.disabled()) {
             return;
         }
@@ -1866,10 +1870,11 @@ class IxTabsComponent {
     }
     updateHighlightBar() {
         const tabHeader = this.tabHeader();
-        if (!tabHeader || !this.tabs || this.tabs.length === 0) {
+        const tabs = this.tabs();
+        if (!tabHeader || !tabs || tabs.length === 0) {
             return;
         }
-        const activeTab = this.tabs.get(this.internalSelectedIndex());
+        const activeTab = tabs[this.internalSelectedIndex()];
         if (!activeTab || !activeTab.elementRef) {
             return;
         }
@@ -1964,39 +1969,43 @@ class IxTabsComponent {
         }
     }
     getPreviousEnabledTabIndex(currentIndex) {
+        const tabs = this.tabs();
         for (let i = currentIndex - 1; i >= 0; i--) {
-            if (!this.tabs.get(i)?.disabled()) {
+            if (!tabs[i]?.disabled()) {
                 return i;
             }
         }
         return this.getLastEnabledTabIndex();
     }
     getNextEnabledTabIndex(currentIndex) {
-        for (let i = currentIndex + 1; i < this.tabs.length; i++) {
-            if (!this.tabs.get(i)?.disabled()) {
+        const tabs = this.tabs();
+        for (let i = currentIndex + 1; i < tabs.length; i++) {
+            if (!tabs[i]?.disabled()) {
                 return i;
             }
         }
         return this.getFirstEnabledTabIndex();
     }
     getFirstEnabledTabIndex() {
-        for (let i = 0; i < this.tabs.length; i++) {
-            if (!this.tabs.get(i)?.disabled()) {
+        const tabs = this.tabs();
+        for (let i = 0; i < tabs.length; i++) {
+            if (!tabs[i]?.disabled()) {
                 return i;
             }
         }
         return 0;
     }
     getLastEnabledTabIndex() {
-        for (let i = this.tabs.length - 1; i >= 0; i--) {
-            if (!this.tabs.get(i)?.disabled()) {
+        const tabs = this.tabs();
+        for (let i = tabs.length - 1; i >= 0; i--) {
+            if (!tabs[i]?.disabled()) {
                 return i;
             }
         }
-        return this.tabs.length - 1;
+        return tabs.length - 1;
     }
     focusTab(index) {
-        const tab = this.tabs.get(index);
+        const tab = this.tabs()[index];
         if (tab && tab.elementRef) {
             tab.elementRef.nativeElement.focus();
         }
@@ -2014,18 +2023,12 @@ class IxTabsComponent {
         return classes.join(' ');
     }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTabsComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTabsComponent, isStandalone: true, selector: "ix-tabs", inputs: { selectedIndex: { classPropertyName: "selectedIndex", publicName: "selectedIndex", isSignal: true, isRequired: false, transformFunction: null }, orientation: { classPropertyName: "orientation", publicName: "orientation", isSignal: true, isRequired: false, transformFunction: null }, highlightPosition: { classPropertyName: "highlightPosition", publicName: "highlightPosition", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectedIndexChange: "selectedIndexChange", tabChange: "tabChange" }, queries: [{ propertyName: "tabs", predicate: IxTabComponent }, { propertyName: "panels", predicate: IxTabPanelComponent }], viewQueries: [{ propertyName: "tabHeader", first: true, predicate: ["tabHeader"], descendants: true, isSignal: true }], ngImport: i0, template: "<div [ngClass]=\"classes()\" role=\"tablist\" [attr.aria-orientation]=\"orientation()\">\n  <div class=\"ix-tabs__header\" #tabHeader>\n    <ng-content select=\"ix-tab\"></ng-content>\n    @if (highlightBarVisible()) {\n      <div class=\"ix-tabs__highlight-bar\"\n           [style.left.px]=\"highlightBarLeft()\"\n           [style.width.px]=\"highlightBarWidth()\"\n           [style.top.px]=\"highlightBarTop()\"\n           [style.height.px]=\"highlightBarHeight()\">\n      </div>\n    }\n  </div>\n\n  <div class=\"ix-tabs__content\">\n    <ng-content select=\"ix-tab-panel\"></ng-content>\n  </div>\n</div>", styles: [".ix-tabs{display:flex;flex-direction:column;width:100%;height:100%;min-width:0;font-family:var(--font-family-body, \"Inter\", sans-serif)}.ix-tabs--disabled{opacity:.6;pointer-events:none}.ix-tabs--vertical{flex-direction:row}.ix-tabs--vertical .ix-tabs__header{flex-direction:column;border-bottom:none;border-right:1px solid var(--lines, #e0e0e0);min-width:240px;width:auto}.ix-tabs--vertical .ix-tabs__content{flex:1;min-width:0}.ix-tabs--vertical .ix-tabs__highlight-bar{bottom:auto;height:auto}.ix-tabs--vertical .ix-tab{justify-content:flex-start;text-align:left;width:100%}.ix-tabs--vertical .ix-tab:hover:not(.ix-tab--disabled){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tabs__header{display:flex;background-color:var(--bg1, #fff);position:relative;border-bottom:1px solid var(--lines, #e0e0e0)}.ix-tabs__highlight-bar{position:absolute;bottom:-1px;height:2px;background-color:var(--primary, #0095d5);transition:left .3s ease,width .3s ease,top .3s ease,height .3s ease;z-index:1}.ix-tabs__content{flex:1;position:relative;background-color:var(--bg1, #fff);min-height:0;width:100%;overflow:hidden}@media (max-width: 768px){.ix-tabs__header{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-tabs__header::-webkit-scrollbar{display:none}.ix-tabs--vertical .ix-tabs__header{overflow-y:auto;overflow-x:visible;max-height:300px}}@media (prefers-reduced-motion: reduce){.ix-tabs__highlight-bar{transition:none}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: A11yModule }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTabsComponent, isStandalone: true, selector: "ix-tabs", inputs: { selectedIndex: { classPropertyName: "selectedIndex", publicName: "selectedIndex", isSignal: true, isRequired: false, transformFunction: null }, orientation: { classPropertyName: "orientation", publicName: "orientation", isSignal: true, isRequired: false, transformFunction: null }, highlightPosition: { classPropertyName: "highlightPosition", publicName: "highlightPosition", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectedIndexChange: "selectedIndexChange", tabChange: "tabChange" }, queries: [{ propertyName: "tabs", predicate: IxTabComponent, isSignal: true }, { propertyName: "panels", predicate: IxTabPanelComponent, isSignal: true }], viewQueries: [{ propertyName: "tabHeader", first: true, predicate: ["tabHeader"], descendants: true, isSignal: true }], ngImport: i0, template: "<div [ngClass]=\"classes()\" role=\"tablist\" [attr.aria-orientation]=\"orientation()\">\n  <div class=\"ix-tabs__header\" #tabHeader>\n    <ng-content select=\"ix-tab\"></ng-content>\n    @if (highlightBarVisible()) {\n      <div class=\"ix-tabs__highlight-bar\"\n           [style.left.px]=\"highlightBarLeft()\"\n           [style.width.px]=\"highlightBarWidth()\"\n           [style.top.px]=\"highlightBarTop()\"\n           [style.height.px]=\"highlightBarHeight()\">\n      </div>\n    }\n  </div>\n\n  <div class=\"ix-tabs__content\">\n    <ng-content select=\"ix-tab-panel\"></ng-content>\n  </div>\n</div>", styles: [".ix-tabs{display:flex;flex-direction:column;width:100%;height:100%;min-width:0;font-family:var(--font-family-body, \"Inter\", sans-serif)}.ix-tabs--disabled{opacity:.6;pointer-events:none}.ix-tabs--vertical{flex-direction:row}.ix-tabs--vertical .ix-tabs__header{flex-direction:column;border-bottom:none;border-right:1px solid var(--lines, #e0e0e0);min-width:240px;width:auto}.ix-tabs--vertical .ix-tabs__content{flex:1;min-width:0}.ix-tabs--vertical .ix-tabs__highlight-bar{bottom:auto;height:auto}.ix-tabs--vertical .ix-tab{justify-content:flex-start;text-align:left;width:100%}.ix-tabs--vertical .ix-tab:hover:not(.ix-tab--disabled){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tabs__header{display:flex;background-color:var(--bg1, #fff);position:relative;border-bottom:1px solid var(--lines, #e0e0e0)}.ix-tabs__highlight-bar{position:absolute;bottom:-1px;height:2px;background-color:var(--primary, #0095d5);transition:left .3s ease,width .3s ease,top .3s ease,height .3s ease;z-index:1}.ix-tabs__content{flex:1;position:relative;background-color:var(--bg1, #fff);min-height:0;width:100%;overflow:hidden}@media (max-width: 768px){.ix-tabs__header{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-tabs__header::-webkit-scrollbar{display:none}.ix-tabs--vertical .ix-tabs__header{overflow-y:auto;overflow-x:visible;max-height:300px}}@media (prefers-reduced-motion: reduce){.ix-tabs__highlight-bar{transition:none}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: A11yModule }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTabsComponent, decorators: [{
             type: Component,
             args: [{ selector: 'ix-tabs', standalone: true, imports: [CommonModule, A11yModule, IxTabComponent, IxTabPanelComponent], changeDetection: ChangeDetectionStrategy.OnPush, template: "<div [ngClass]=\"classes()\" role=\"tablist\" [attr.aria-orientation]=\"orientation()\">\n  <div class=\"ix-tabs__header\" #tabHeader>\n    <ng-content select=\"ix-tab\"></ng-content>\n    @if (highlightBarVisible()) {\n      <div class=\"ix-tabs__highlight-bar\"\n           [style.left.px]=\"highlightBarLeft()\"\n           [style.width.px]=\"highlightBarWidth()\"\n           [style.top.px]=\"highlightBarTop()\"\n           [style.height.px]=\"highlightBarHeight()\">\n      </div>\n    }\n  </div>\n\n  <div class=\"ix-tabs__content\">\n    <ng-content select=\"ix-tab-panel\"></ng-content>\n  </div>\n</div>", styles: [".ix-tabs{display:flex;flex-direction:column;width:100%;height:100%;min-width:0;font-family:var(--font-family-body, \"Inter\", sans-serif)}.ix-tabs--disabled{opacity:.6;pointer-events:none}.ix-tabs--vertical{flex-direction:row}.ix-tabs--vertical .ix-tabs__header{flex-direction:column;border-bottom:none;border-right:1px solid var(--lines, #e0e0e0);min-width:240px;width:auto}.ix-tabs--vertical .ix-tabs__content{flex:1;min-width:0}.ix-tabs--vertical .ix-tabs__highlight-bar{bottom:auto;height:auto}.ix-tabs--vertical .ix-tab{justify-content:flex-start;text-align:left;width:100%}.ix-tabs--vertical .ix-tab:hover:not(.ix-tab--disabled){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tabs__header{display:flex;background-color:var(--bg1, #fff);position:relative;border-bottom:1px solid var(--lines, #e0e0e0)}.ix-tabs__highlight-bar{position:absolute;bottom:-1px;height:2px;background-color:var(--primary, #0095d5);transition:left .3s ease,width .3s ease,top .3s ease,height .3s ease;z-index:1}.ix-tabs__content{flex:1;position:relative;background-color:var(--bg1, #fff);min-height:0;width:100%;overflow:hidden}@media (max-width: 768px){.ix-tabs__header{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-tabs__header::-webkit-scrollbar{display:none}.ix-tabs--vertical .ix-tabs__header{overflow-y:auto;overflow-x:visible;max-height:300px}}@media (prefers-reduced-motion: reduce){.ix-tabs__highlight-bar{transition:none}}\n"] }]
-        }], ctorParameters: () => [], propDecorators: { tabs: [{
-                type: ContentChildren,
-                args: [IxTabComponent]
-            }], panels: [{
-                type: ContentChildren,
-                args: [IxTabPanelComponent]
-            }] } });
+        }], ctorParameters: () => [] });
 
 class IxKeyboardShortcutComponent {
     shortcut = input('', ...(ngDevMode ? [{ debugName: "shortcut" }] : []));
@@ -2116,13 +2119,14 @@ class IxFormFieldComponent {
     hint = input('', ...(ngDevMode ? [{ debugName: "hint" }] : []));
     required = input(false, ...(ngDevMode ? [{ debugName: "required" }] : []));
     testId = input('', ...(ngDevMode ? [{ debugName: "testId" }] : []));
-    control;
+    control = contentChild(NgControl, ...(ngDevMode ? [{ debugName: "control" }] : []));
     hasError = signal(false, ...(ngDevMode ? [{ debugName: "hasError" }] : []));
     errorMessage = signal('', ...(ngDevMode ? [{ debugName: "errorMessage" }] : []));
     ngAfterContentInit() {
-        if (this.control) {
+        const control = this.control();
+        if (control) {
             // Listen for control status changes
-            this.control.statusChanges?.subscribe(() => {
+            control.statusChanges?.subscribe(() => {
                 this.updateErrorState();
             });
             // Initial error state check
@@ -2130,15 +2134,17 @@ class IxFormFieldComponent {
         }
     }
     updateErrorState() {
-        if (this.control) {
-            this.hasError.set(!!(this.control.invalid && (this.control.dirty || this.control.touched)));
+        const control = this.control();
+        if (control) {
+            this.hasError.set(!!(control.invalid && (control.dirty || control.touched)));
             this.errorMessage.set(this.getErrorMessage());
         }
     }
     getErrorMessage() {
-        if (!this.control?.errors)
+        const control = this.control();
+        if (!control?.errors)
             return '';
-        const errors = this.control.errors;
+        const errors = control.errors;
         // Return the first error message found
         if (errors['required'])
             return 'This field is required';
@@ -2164,15 +2170,12 @@ class IxFormFieldComponent {
         return !!this.hint() && !this.showError();
     }, ...(ngDevMode ? [{ debugName: "showHint" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxFormFieldComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxFormFieldComponent, isStandalone: true, selector: "ix-form-field", inputs: { label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, hint: { classPropertyName: "hint", publicName: "hint", isSignal: true, isRequired: false, transformFunction: null }, required: { classPropertyName: "required", publicName: "required", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null } }, queries: [{ propertyName: "control", first: true, predicate: NgControl, descendants: true }], ngImport: i0, template: "<div class=\"ix-form-field\" [attr.data-testid]=\"testId()\">\n  <!-- Label -->\n  @if (label()) {\n    <label class=\"ix-form-field-label\" [class.required]=\"required()\">\n      {{ label() }}\n      @if (required()) {\n        <span class=\"required-asterisk\" aria-label=\"required\">*</span>\n      }\n    </label>\n  }\n\n  <!-- Form Control Content -->\n  <div class=\"ix-form-field-wrapper\">\n    <ng-content></ng-content>\n  </div>\n\n  <!-- Hint or Error Message -->\n  <div class=\"ix-form-field-subscript\">\n    @if (showError()) {\n      <div\n        class=\"ix-form-field-error\"\n        role=\"alert\"\n        aria-live=\"polite\">\n        {{ errorMessage() }}\n      </div>\n    }\n    @if (showHint()) {\n      <div class=\"ix-form-field-hint\">\n        {{ hint() }}\n      </div>\n    }\n  </div>\n</div>", styles: [".ix-form-field{display:block;width:100%;margin-bottom:1rem;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-form-field-label{display:block;margin-bottom:.5rem;font-size:.875rem;font-weight:500;color:var(--fg1, #333);line-height:1.4}.ix-form-field-label.required .required-asterisk{color:var(--error, #dc3545);margin-left:.25rem}.ix-form-field-wrapper{position:relative;width:100%;overflow:visible}.ix-form-field-wrapper :ng-deep .ix-select-container,.ix-form-field-wrapper :ng-deep .ix-input-container{margin-bottom:0}.ix-form-field-wrapper :ng-deep .ix-select-label,.ix-form-field-wrapper :ng-deep .ix-input-label{display:none}.ix-form-field-wrapper :ng-deep .ix-select-error,.ix-form-field-wrapper :ng-deep .ix-input-error{display:none}.ix-form-field-wrapper :ng-deep .ix-select-dropdown{z-index:1000}.ix-form-field-subscript{min-height:1.25rem;margin-top:.25rem;font-size:.75rem;line-height:1.4}.ix-form-field-error{color:var(--error, #dc3545);margin:0}.ix-form-field-hint{color:var(--fg2, #6c757d);margin:0}.ix-form-field-wrapper:has(:focus-visible) .ix-form-field-label{color:var(--primary, #007bff)}.ix-form-field-wrapper:has(.error) .ix-form-field-label{color:var(--error, #dc3545)}@media (prefers-reduced-motion: reduce){.ix-form-field-label{transition:none}}@media (prefers-contrast: high){.ix-form-field-label,.ix-form-field-error{font-weight:600}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxFormFieldComponent, isStandalone: true, selector: "ix-form-field", inputs: { label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, hint: { classPropertyName: "hint", publicName: "hint", isSignal: true, isRequired: false, transformFunction: null }, required: { classPropertyName: "required", publicName: "required", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null } }, queries: [{ propertyName: "control", first: true, predicate: NgControl, descendants: true, isSignal: true }], ngImport: i0, template: "<div class=\"ix-form-field\" [attr.data-testid]=\"testId()\">\n  <!-- Label -->\n  @if (label()) {\n    <label class=\"ix-form-field-label\" [class.required]=\"required()\">\n      {{ label() }}\n      @if (required()) {\n        <span class=\"required-asterisk\" aria-label=\"required\">*</span>\n      }\n    </label>\n  }\n\n  <!-- Form Control Content -->\n  <div class=\"ix-form-field-wrapper\">\n    <ng-content></ng-content>\n  </div>\n\n  <!-- Hint or Error Message -->\n  <div class=\"ix-form-field-subscript\">\n    @if (showError()) {\n      <div\n        class=\"ix-form-field-error\"\n        role=\"alert\"\n        aria-live=\"polite\">\n        {{ errorMessage() }}\n      </div>\n    }\n    @if (showHint()) {\n      <div class=\"ix-form-field-hint\">\n        {{ hint() }}\n      </div>\n    }\n  </div>\n</div>", styles: [".ix-form-field{display:block;width:100%;margin-bottom:1rem;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-form-field-label{display:block;margin-bottom:.5rem;font-size:.875rem;font-weight:500;color:var(--fg1, #333);line-height:1.4}.ix-form-field-label.required .required-asterisk{color:var(--error, #dc3545);margin-left:.25rem}.ix-form-field-wrapper{position:relative;width:100%;overflow:visible}.ix-form-field-wrapper :ng-deep .ix-select-container,.ix-form-field-wrapper :ng-deep .ix-input-container{margin-bottom:0}.ix-form-field-wrapper :ng-deep .ix-select-label,.ix-form-field-wrapper :ng-deep .ix-input-label{display:none}.ix-form-field-wrapper :ng-deep .ix-select-error,.ix-form-field-wrapper :ng-deep .ix-input-error{display:none}.ix-form-field-wrapper :ng-deep .ix-select-dropdown{z-index:1000}.ix-form-field-subscript{min-height:1.25rem;margin-top:.25rem;font-size:.75rem;line-height:1.4}.ix-form-field-error{color:var(--error, #dc3545);margin:0}.ix-form-field-hint{color:var(--fg2, #6c757d);margin:0}.ix-form-field-wrapper:has(:focus-visible) .ix-form-field-label{color:var(--primary, #007bff)}.ix-form-field-wrapper:has(.error) .ix-form-field-label{color:var(--error, #dc3545)}@media (prefers-reduced-motion: reduce){.ix-form-field-label{transition:none}}@media (prefers-contrast: high){.ix-form-field-label,.ix-form-field-error{font-weight:600}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxFormFieldComponent, decorators: [{
             type: Component,
             args: [{ selector: 'ix-form-field', standalone: true, imports: [CommonModule], template: "<div class=\"ix-form-field\" [attr.data-testid]=\"testId()\">\n  <!-- Label -->\n  @if (label()) {\n    <label class=\"ix-form-field-label\" [class.required]=\"required()\">\n      {{ label() }}\n      @if (required()) {\n        <span class=\"required-asterisk\" aria-label=\"required\">*</span>\n      }\n    </label>\n  }\n\n  <!-- Form Control Content -->\n  <div class=\"ix-form-field-wrapper\">\n    <ng-content></ng-content>\n  </div>\n\n  <!-- Hint or Error Message -->\n  <div class=\"ix-form-field-subscript\">\n    @if (showError()) {\n      <div\n        class=\"ix-form-field-error\"\n        role=\"alert\"\n        aria-live=\"polite\">\n        {{ errorMessage() }}\n      </div>\n    }\n    @if (showHint()) {\n      <div class=\"ix-form-field-hint\">\n        {{ hint() }}\n      </div>\n    }\n  </div>\n</div>", styles: [".ix-form-field{display:block;width:100%;margin-bottom:1rem;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-form-field-label{display:block;margin-bottom:.5rem;font-size:.875rem;font-weight:500;color:var(--fg1, #333);line-height:1.4}.ix-form-field-label.required .required-asterisk{color:var(--error, #dc3545);margin-left:.25rem}.ix-form-field-wrapper{position:relative;width:100%;overflow:visible}.ix-form-field-wrapper :ng-deep .ix-select-container,.ix-form-field-wrapper :ng-deep .ix-input-container{margin-bottom:0}.ix-form-field-wrapper :ng-deep .ix-select-label,.ix-form-field-wrapper :ng-deep .ix-input-label{display:none}.ix-form-field-wrapper :ng-deep .ix-select-error,.ix-form-field-wrapper :ng-deep .ix-input-error{display:none}.ix-form-field-wrapper :ng-deep .ix-select-dropdown{z-index:1000}.ix-form-field-subscript{min-height:1.25rem;margin-top:.25rem;font-size:.75rem;line-height:1.4}.ix-form-field-error{color:var(--error, #dc3545);margin:0}.ix-form-field-hint{color:var(--fg2, #6c757d);margin:0}.ix-form-field-wrapper:has(:focus-visible) .ix-form-field-label{color:var(--primary, #007bff)}.ix-form-field-wrapper:has(.error) .ix-form-field-label{color:var(--error, #dc3545)}@media (prefers-reduced-motion: reduce){.ix-form-field-label{transition:none}}@media (prefers-contrast: high){.ix-form-field-label,.ix-form-field-error{font-weight:600}}\n"] }]
-        }], propDecorators: { control: [{
-                type: ContentChild,
-                args: [NgControl, { static: false }]
-            }] } });
+        }] });
 
 class IxSelectComponent {
     elementRef;
@@ -6392,7 +6395,7 @@ class IxSliderComponent {
     labelPrefix = input('', ...(ngDevMode ? [{ debugName: "labelPrefix" }] : []));
     labelSuffix = input('', ...(ngDevMode ? [{ debugName: "labelSuffix" }] : []));
     labelType = input('none', ...(ngDevMode ? [{ debugName: "labelType" }] : []));
-    thumbDirective;
+    thumbDirective = contentChild.required(IxSliderThumbDirective);
     sliderContainer = viewChild.required('sliderContainer');
     thumbVisual = viewChild.required('thumbVisual');
     onChange = (value) => { };
@@ -6444,8 +6447,9 @@ class IxSliderComponent {
     }
     ngAfterViewInit() {
         // Initialize thumb directive if present
-        if (this.thumbDirective) {
-            this.thumbDirective.slider = this;
+        const thumbDirective = this.thumbDirective();
+        if (thumbDirective) {
+            thumbDirective.slider = this;
         }
         this.updateThumbPosition();
         // Set up handle interaction listeners if labelType is handle or both
@@ -6571,7 +6575,7 @@ class IxSliderComponent {
                 useExisting: forwardRef(() => IxSliderComponent),
                 multi: true
             }
-        ], queries: [{ propertyName: "thumbDirective", first: true, predicate: IxSliderThumbDirective, descendants: true }], viewQueries: [{ propertyName: "sliderContainer", first: true, predicate: ["sliderContainer"], descendants: true, isSignal: true }, { propertyName: "thumbVisual", first: true, predicate: ["thumbVisual"], descendants: true, isSignal: true }], ngImport: i0, template: `
+        ], queries: [{ propertyName: "thumbDirective", first: true, predicate: IxSliderThumbDirective, descendants: true, isSignal: true }], viewQueries: [{ propertyName: "sliderContainer", first: true, predicate: ["sliderContainer"], descendants: true, isSignal: true }, { propertyName: "thumbVisual", first: true, predicate: ["thumbVisual"], descendants: true, isSignal: true }], ngImport: i0, template: `
     <div
       class="ix-slider-container"
       #sliderContainer
@@ -6663,10 +6667,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                         'class': 'ix-slider',
                         '[attr.aria-disabled]': 'isDisabled()'
                     }, styles: [":host{display:block;width:100%;height:48px;position:relative;touch-action:pan-x}.ix-slider-container{position:relative;width:100%;height:100%;display:flex;align-items:center;cursor:pointer}.ix-slider-container[data-disabled=true]{cursor:not-allowed;opacity:.6}.ix-slider-track{position:relative;width:100%;height:4px}.ix-slider-track-inactive{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--lines, #e0e0e0);border-radius:2px}.ix-slider-track-active{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;border-radius:2px}.ix-slider-track-active-fill{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--primary, #007bff);border-radius:2px;transform-origin:left center;transition:transform .1s ease-out}:host ::ng-deep .ix-slider-thumb{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;margin:0;padding:0;cursor:pointer;z-index:2;-webkit-appearance:none;appearance:none;background:none;border:none;outline:none}:host ::ng-deep .ix-slider-thumb:disabled{cursor:not-allowed}:host ::ng-deep .ix-slider-thumb:focus{outline:none}:host ::ng-deep .ix-slider-thumb:focus-visible{outline:none}:host ::ng-deep .ix-slider-thumb:focus-visible+.ix-slider-visual-thumb{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-slider-thumb-visual{position:absolute;top:50%;left:0;pointer-events:none;z-index:3;transition:transform .1s ease-out}.ix-slider-thumb-knob{width:20px;height:24px;background:var(--primary, #007bff);border:2px solid var(--bg1, white);border-radius:4px;box-shadow:0 2px 4px #0003;transition:box-shadow .15s ease;transform:translateY(-50%)}.ix-slider-container:hover .ix-slider-thumb-knob{box-shadow:0 4px 8px #0000004d}.ix-slider-container[data-disabled=true] .ix-slider-thumb-knob{background:var(--fg2, #999);box-shadow:0 1px 2px #0000001a}.ix-slider-thumb-label{position:absolute;bottom:calc(100% + 16px);left:50%;transform:translate(-50%) translateY(-50%);padding:8px 12px;background:var(--primary, #007bff);color:var(--primary-txt, white);border-radius:6px;font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;opacity:0;pointer-events:none;-webkit-user-select:none;user-select:none;transition:opacity .15s ease;z-index:4;box-shadow:0 2px 8px #00000026}.ix-slider-thumb-label:after{content:\"\";position:absolute;top:100%;left:50%;transform:translate(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid var(--primary, #007bff)}.ix-slider-thumb-label.visible{opacity:1}.ix-slider-track-label{position:absolute;top:-28px;right:0;padding:4px 0;background:transparent;color:var(--fg1, #000);font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;-webkit-user-select:none;user-select:none;z-index:2}@media (prefers-reduced-motion: reduce){.ix-slider-track-active-fill,.ix-slider-thumb-visual,.ix-slider-thumb-knob,.ix-slider-thumb-label{transition:none}}@media (prefers-contrast: high){.ix-slider-track-inactive{border:1px solid var(--fg1, #000)}.ix-slider-thumb-knob{border-width:3px;border-color:var(--fg1, #000)}}\n"] }]
-        }], ctorParameters: () => [], propDecorators: { thumbDirective: [{
-                type: ContentChild,
-                args: [IxSliderThumbDirective]
-            }] } });
+        }], ctorParameters: () => [] });
 
 class IxSliderWithLabelDirective {
     _elementRef;
@@ -7618,7 +7619,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * To regenerate this file, run:
  *   npm run generate-icons
  *
- * Generated: 2025-12-29T20:00:58.602Z
+ * Generated: 2025-12-29T20:12:41.301Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 /* eslint-disable */

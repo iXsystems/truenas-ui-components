@@ -1,4 +1,4 @@
-import { Component, ContentChild, input, forwardRef, signal, computed, viewChild, ElementRef, OnInit, OnDestroy, AfterViewInit, effect } from '@angular/core';
+import { Component, contentChild, input, forwardRef, signal, computed, viewChild, ElementRef, OnInit, OnDestroy, AfterViewInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
@@ -72,7 +72,7 @@ export class IxSliderComponent implements ControlValueAccessor, OnDestroy, After
   labelSuffix = input<string>('');
   labelType = input<LabelType>('none');
 
-  @ContentChild(IxSliderThumbDirective) thumbDirective!: IxSliderThumbDirective;
+  thumbDirective = contentChild.required(IxSliderThumbDirective);
   sliderContainer = viewChild.required<ElementRef<HTMLDivElement>>('sliderContainer');
   thumbVisual = viewChild.required<ElementRef<HTMLDivElement>>('thumbVisual');
 
@@ -131,8 +131,9 @@ export class IxSliderComponent implements ControlValueAccessor, OnDestroy, After
 
   ngAfterViewInit() {
     // Initialize thumb directive if present
-    if (this.thumbDirective) {
-      this.thumbDirective.slider = this;
+    const thumbDirective = this.thumbDirective();
+    if (thumbDirective) {
+      thumbDirective.slider = this;
     }
     this.updateThumbPosition();
 

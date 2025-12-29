@@ -12,8 +12,8 @@
 >
   @if (hasIcon()) {
     <span class="ix-tab__icon">
-      @if (iconContent) {
-        <ng-container *ngTemplateOutlet="iconContent"></ng-container>
+      @if (iconContent()) {
+        <ng-container *ngTemplateOutlet="iconContent()"></ng-container>
       } @else if (iconTemplate()) {
         <ng-container *ngTemplateOutlet="iconTemplate()"></ng-container>
       } @else {

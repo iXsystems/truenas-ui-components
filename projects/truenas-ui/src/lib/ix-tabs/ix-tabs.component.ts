@@ -1,4 +1,4 @@
-import { Component, ContentChildren, QueryList, AfterContentInit, input, output, ChangeDetectionStrategy, inject, ChangeDetectorRef, viewChild, ElementRef, AfterViewInit, signal, computed, effect } from '@angular/core';
+import { Component, contentChildren, AfterContentInit, input, output, ChangeDetectionStrategy, inject, ChangeDetectorRef, viewChild, ElementRef, AfterViewInit, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FocusMonitor, A11yModule, LiveAnnouncer } from '@angular/cdk/a11y';
 import { LEFT_ARROW, RIGHT_ARROW, UP_ARROW, DOWN_ARROW, HOME, END, ENTER, SPACE } from '@angular/cdk/keycodes';
@@ -20,8 +20,8 @@ export interface TabChangeEvent {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class IxTabsComponent implements AfterContentInit, AfterViewInit {
-  @ContentChildren(IxTabComponent) tabs!: QueryList<IxTabComponent>;
-  @ContentChildren(IxTabPanelComponent) panels!: QueryList<IxTabPanelComponent>;
+  tabs = contentChildren(IxTabComponent);
+  panels = contentChildren(IxTabPanelComponent);
   tabHeader = viewChild.required<ElementRef<HTMLElement>>('tabHeader');
 
   selectedIndex = input<number>(0);
@@ -54,14 +54,16 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
     effect(() => {
       const currentIndex = this.internalSelectedIndex();
 
-      if (this.tabs && this.tabs.length > 0) {
-        this.tabs.forEach((tab, i) => {
+      const tabs = this.tabs();
+      if (tabs && tabs.length > 0) {
+        tabs.forEach((tab, i) => {
           tab.isActive.set(i === currentIndex);
         });
       }
 
-      if (this.panels && this.panels.length > 0) {
-        this.panels.forEach((panel, i) => {
+      const panels = this.panels();
+      if (panels && panels.length > 0) {
+        panels.forEach((panel, i) => {
           panel.isActive.set(i === currentIndex);
           if (i === currentIndex) {
             panel.onActivate();
@@ -78,9 +80,13 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
     this.selectTab(this.internalSelectedIndex());
 
     // Listen for tab changes
-    this.tabs.changes.subscribe(() => {
-      this.initializeTabs();
-      this.updateHighlightBar();
+    effect(() => {
+      // Track tabs signal to react to changes
+      const tabs = this.tabs();
+      if (tabs.length > 0) {
+        this.initializeTabs();
+        this.updateHighlightBar();
+      }
     });
   }
 
@@ -95,7 +101,7 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
 
 
   ngOnDestroy() {
-    this.tabs.forEach(tab => {
+    this.tabs().forEach(tab => {
       if (tab.elementRef) {
         this.focusMonitor.stopMonitoring(tab.elementRef);
       }
@@ -105,7 +111,7 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
   private initializeTabs() {
     const currentIndex = this.internalSelectedIndex();
 
-    this.tabs.forEach((tab, index) => {
+    this.tabs().forEach((tab, index) => {
       tab.index.set(index);
       tab.isActive.set(index === currentIndex);
       tab.tabsComponent = this;
@@ -128,7 +134,7 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
       });
     });
 
-    this.panels.forEach((panel, index) => {
+    this.panels().forEach((panel, index) => {
       panel.index.set(index);
       panel.isActive.set(index === currentIndex);
     });
@@ -138,11 +144,12 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
   }
 
   selectTab(index: number) {
-    if (index < 0 || index >= this.tabs.length) {
+    const tabs = this.tabs();
+    if (index < 0 || index >= tabs.length) {
       return;
     }
 
-    const tab = this.tabs.get(index);
+    const tab = tabs[index];
     if (tab && tab.disabled()) {
       return;
     }
@@ -168,11 +175,12 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
 
   private updateHighlightBar() {
     const tabHeader = this.tabHeader();
-    if (!tabHeader || !this.tabs || this.tabs.length === 0) {
+    const tabs = this.tabs();
+    if (!tabHeader || !tabs || tabs.length === 0) {
       return;
     }
 
-    const activeTab = this.tabs.get(this.internalSelectedIndex());
+    const activeTab = tabs[this.internalSelectedIndex()];
     if (!activeTab || !activeTab.elementRef) {
       return;
     }
@@ -268,8 +276,9 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
   }
 
   private getPreviousEnabledTabIndex(currentIndex: number): number {
+    const tabs = this.tabs();
     for (let i = currentIndex - 1; i >= 0; i--) {
-      if (!this.tabs.get(i)?.disabled()) {
+      if (!tabs[i]?.disabled()) {
         return i;
       }
     }
@@ -277,8 +286,9 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
   }
 
   private getNextEnabledTabIndex(currentIndex: number): number {
-    for (let i = currentIndex + 1; i < this.tabs.length; i++) {
-      if (!this.tabs.get(i)?.disabled()) {
+    const tabs = this.tabs();
+    for (let i = currentIndex + 1; i < tabs.length; i++) {
+      if (!tabs[i]?.disabled()) {
         return i;
       }
     }
@@ -286,8 +296,9 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
   }
 
   private getFirstEnabledTabIndex(): number {
-    for (let i = 0; i < this.tabs.length; i++) {
-      if (!this.tabs.get(i)?.disabled()) {
+    const tabs = this.tabs();
+    for (let i = 0; i < tabs.length; i++) {
+      if (!tabs[i]?.disabled()) {
         return i;
       }
     }
@@ -295,16 +306,17 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
   }
 
   private getLastEnabledTabIndex(): number {
-    for (let i = this.tabs.length - 1; i >= 0; i--) {
-      if (!this.tabs.get(i)?.disabled()) {
+    const tabs = this.tabs();
+    for (let i = tabs.length - 1; i >= 0; i--) {
+      if (!tabs[i]?.disabled()) {
         return i;
       }
     }
-    return this.tabs.length - 1;
+    return tabs.length - 1;
   }
 
   private focusTab(index: number) {
-    const tab = this.tabs.get(index);
+    const tab = this.tabs()[index];
     if (tab && tab.elementRef) {
       tab.elementRef.nativeElement.focus();
     }
