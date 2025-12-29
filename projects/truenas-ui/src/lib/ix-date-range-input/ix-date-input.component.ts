@@ -1,4 +1,4 @@
-import { Component, Input, forwardRef, signal, computed, ViewChild, ElementRef, OnInit, ViewContainerRef, TemplateRef, OnDestroy } from '@angular/core';
+import { Component, input, forwardRef, signal, computed, viewChild, ElementRef, OnInit, ViewContainerRef, TemplateRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { OverlayModule, Overlay, OverlayRef, ConnectedPosition } from '@angular/cdk/overlay';
@@ -24,45 +24,45 @@ import { Subject } from 'rxjs';
       <div #wrapper ixInput class="ix-date-input-wrapper" style="padding-right: 40px;">
         <!-- Date segments MM/DD/YYYY -->
         <div class="ix-date-segment-group">
-          <input 
+          <input
             #monthInput
             type="text"
             class="ix-date-segment ix-date-segment-month"
             placeholder="MM"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('month')"
             (blur)="onSegmentBlur('month')"
             (keydown)="onSegmentKeydown($event, 'month')">
           <span class="ix-date-segment-separator">/</span>
-          <input 
+          <input
             #dayInput
             type="text"
             class="ix-date-segment ix-date-segment-day"
             placeholder="DD"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('day')"
             (blur)="onSegmentBlur('day')"
             (keydown)="onSegmentKeydown($event, 'day')">
           <span class="ix-date-segment-separator">/</span>
-          <input 
+          <input
             #yearInput
             type="text"
             class="ix-date-segment ix-date-segment-year"
             placeholder="YYYY"
             maxlength="4"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('year')"
             (blur)="onSegmentBlur('year')"
             (keydown)="onSegmentKeydown($event, 'year')">
         </div>
-        
-        <button 
+
+        <button
           type="button"
           class="ix-date-input-toggle"
           (click)="openDatepicker()"
-          [disabled]="disabled"
+          [disabled]="isDisabled()"
           aria-label="Open calendar">
           <span aria-hidden="true">📅</span>
         </button>
@@ -85,18 +85,21 @@ import { Subject } from 'rxjs';
   }
 })
 export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDestroy {
-  @Input() disabled = false;
-  @Input() placeholder = 'Select date';
-  @Input() min?: Date;
-  @Input() max?: Date;
-  @Input() dateFilter?: (date: Date) => boolean;
+  disabled = input<boolean>(false);
+  placeholder = input<string>('Select date');
+  min = input<Date | undefined>(undefined);
+  max = input<Date | undefined>(undefined);
+  dateFilter = input<((date: Date) => boolean) | undefined>(undefined);
 
-  @ViewChild('monthInput') monthRef!: ElementRef<HTMLInputElement>;
-  @ViewChild('dayInput') dayRef!: ElementRef<HTMLInputElement>;
-  @ViewChild('yearInput') yearRef!: ElementRef<HTMLInputElement>;
-  @ViewChild('calendarTemplate', { static: true }) calendarTemplate!: TemplateRef<any>;
-  @ViewChild(IxCalendarComponent) calendar!: IxCalendarComponent;
-  @ViewChild('wrapper') wrapperEl!: ElementRef<HTMLDivElement>;
+  private formDisabled = signal<boolean>(false);
+  isDisabled = computed(() => this.disabled() || this.formDisabled());
+
+  monthRef = viewChild.required<ElementRef<HTMLInputElement>>('monthInput');
+  dayRef = viewChild.required<ElementRef<HTMLInputElement>>('dayInput');
+  yearRef = viewChild.required<ElementRef<HTMLInputElement>>('yearInput');
+  calendarTemplate = viewChild.required<TemplateRef<any>>('calendarTemplate');
+  calendar = viewChild.required<IxCalendarComponent>(IxCalendarComponent);
+  wrapperEl = viewChild.required<ElementRef<HTMLDivElement>>('wrapper');
 
   private destroy$ = new Subject<void>();
   private overlayRef?: OverlayRef;
@@ -145,7 +148,7 @@ export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDes
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
+    this.formDisabled.set(isDisabled);
   }
 
   // Segment event handlers
@@ -156,10 +159,10 @@ export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDes
   onSegmentBlur(segment: 'month' | 'day' | 'year'): void {
     this.onTouched();
     // Only validate and update when we have complete values
-    const month = this.monthRef?.nativeElement?.value || '';
-    const day = this.dayRef?.nativeElement?.value || '';
-    const year = this.yearRef?.nativeElement?.value || '';
-    
+    const month = this.monthRef()?.nativeElement?.value || '';
+    const day = this.dayRef()?.nativeElement?.value || '';
+    const year = this.yearRef()?.nativeElement?.value || '';
+
     // Only try to create a date if all segments have some value
     if (month && day && year && year.length === 4) {
       this.updateDateFromSegments();
@@ -213,25 +216,25 @@ export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDes
       this.year.set(yearVal);
       
       // Update input elements
-      if (this.monthRef?.nativeElement) this.monthRef.nativeElement.value = monthVal;
-      if (this.dayRef?.nativeElement) this.dayRef.nativeElement.value = dayVal;
-      if (this.yearRef?.nativeElement) this.yearRef.nativeElement.value = yearVal;
+      if (this.monthRef()?.nativeElement) this.monthRef().nativeElement.value = monthVal;
+      if (this.dayRef()?.nativeElement) this.dayRef().nativeElement.value = dayVal;
+      if (this.yearRef()?.nativeElement) this.yearRef().nativeElement.value = yearVal;
     } else {
       // Clear all values
       this.month.set('');
       this.day.set('');
       this.year.set('');
-      
-      if (this.monthRef?.nativeElement) this.monthRef.nativeElement.value = '';
-      if (this.dayRef?.nativeElement) this.dayRef.nativeElement.value = '';
-      if (this.yearRef?.nativeElement) this.yearRef.nativeElement.value = '';
+
+      if (this.monthRef()?.nativeElement) this.monthRef().nativeElement.value = '';
+      if (this.dayRef()?.nativeElement) this.dayRef().nativeElement.value = '';
+      if (this.yearRef()?.nativeElement) this.yearRef().nativeElement.value = '';
     }
   }
-  
+
   private updateDateFromSegments(): void {
-    const month = this.monthRef?.nativeElement?.value || '';
-    const day = this.dayRef?.nativeElement?.value || '';
-    const year = this.yearRef?.nativeElement?.value || '';
+    const month = this.monthRef()?.nativeElement?.value || '';
+    const day = this.dayRef()?.nativeElement?.value || '';
+    const year = this.yearRef()?.nativeElement?.value || '';
     
     let date: Date | null = null;
     if (month && day && year && year.length === 4) {
@@ -252,26 +255,27 @@ export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDes
   }
   
   private focusNextSegment(segment: 'month' | 'day' | 'year'): void {
-    if (segment === 'month') this.dayRef.nativeElement.focus();
-    else if (segment === 'day') this.yearRef.nativeElement.focus();
+    if (segment === 'month') this.dayRef().nativeElement.focus();
+    else if (segment === 'day') this.yearRef().nativeElement.focus();
     // Year is the last field
   }
-  
+
   private focusPrevSegment(segment: 'month' | 'day' | 'year'): void {
-    if (segment === 'day') this.monthRef.nativeElement.focus();
-    else if (segment === 'year') this.dayRef.nativeElement.focus();
+    if (segment === 'day') this.monthRef().nativeElement.focus();
+    else if (segment === 'year') this.dayRef().nativeElement.focus();
     // Month is the first field
   }
 
   openDatepicker(): void {
     if (this.isOpen()) return;
-    
+
     this.createOverlay();
     this.isOpen.set(true);
-    
+
     // Reset calendar interaction state when opening
-    if (this.calendar) {
-      setTimeout(() => this.calendar.resetInteractionState(), 0);
+    const cal = this.calendar();
+    if (cal) {
+      setTimeout(() => cal.resetInteractionState(), 0);
     }
   }
 
@@ -320,7 +324,7 @@ export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDes
 
     const positionStrategy = this.overlay
       .position()
-      .flexibleConnectedTo(this.wrapperEl)
+      .flexibleConnectedTo(this.wrapperEl())
       .withPositions(positions)
       .withPush(false);
 
@@ -337,7 +341,7 @@ export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDes
       this.close();
     });
 
-    this.portal = new TemplatePortal(this.calendarTemplate, this.viewContainerRef);
+    this.portal = new TemplatePortal(this.calendarTemplate(), this.viewContainerRef);
     this.overlayRef.attach(this.portal);
   }
 }

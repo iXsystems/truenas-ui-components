@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal, computed } from '@angular/core';
+import { Component, input, output, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DateRange } from '../ix-date-range-input/ix-date-range-input.component';
 
@@ -77,32 +77,18 @@ export interface CalendarCell {
   styleUrls: ['./ix-month-view.component.scss']
 })
 export class IxMonthViewComponent {
-  @Input() set activeDate(date: Date) {
-    this._activeDate.set(date);
-  }
-  get activeDate(): Date {
-    return this._activeDate();
-  }
-  
-  private _activeDate = signal<Date>(new Date());
-  @Input() selected?: Date | null;
-  @Input() minDate?: Date;
-  @Input() maxDate?: Date;
-  @Input() dateFilter?: (date: Date) => boolean;
-  
-  // Range mode inputs
-  @Input() rangeMode = false;
-  
-  @Input() set selectedRange(value: { start: Date | null; end: Date | null; selecting: 'start' | 'end' } | undefined) {
-    this._selectedRange.set(value);
-  }
-  get selectedRange() {
-    return this._selectedRange();
-  }
-  private _selectedRange = signal<{ start: Date | null; end: Date | null; selecting: 'start' | 'end' } | undefined>(undefined);
+  activeDate = input<Date>(new Date());
+  selected = input<Date | null | undefined>(undefined);
+  minDate = input<Date | undefined>(undefined);
+  maxDate = input<Date | undefined>(undefined);
+  dateFilter = input<((date: Date) => boolean) | undefined>(undefined);
 
-  @Output() selectedChange = new EventEmitter<Date>();
-  @Output() activeDateChange = new EventEmitter<Date>();
+  // Range mode inputs
+  rangeMode = input<boolean>(false);
+  selectedRange = input<{ start: Date | null; end: Date | null; selecting: 'start' | 'end' } | undefined>(undefined);
+
+  selectedChange = output<Date>();
+  activeDateChange = output<Date>();
 
   readonly weekdays = [
     { long: 'Sunday', short: 'S' },
@@ -118,10 +104,10 @@ export class IxMonthViewComponent {
   
 
   calendarRows = computed(() => {
-    const activeDate = this._activeDate();
+    const activeDate = this.activeDate();
     // Include selectedRange signal in the computed dependency so it recalculates when range changes
-    const currentSelectedRange = this._selectedRange();
-    
+    const currentSelectedRange = this.selectedRange();
+
     if (!activeDate) return [];
     
     const year = activeDate.getFullYear();
@@ -164,16 +150,16 @@ export class IxMonthViewComponent {
   private createCell(date: Date, value: number): CalendarCell {
     const today = new Date();
     const isToday = this.isSameDate(date, today);
-    const isSelected = this.selected ? this.isSameDate(date, this.selected) : false;
+    const isSelected = this.selected() ? this.isSameDate(date, this.selected()!) : false;
     const enabled = this.isDateEnabled(date);
 
     // Range mode calculations
     let rangeStart = false;
     let rangeEnd = false;
     let inRange = false;
-    
-    const currentRange = this._selectedRange();
-    if (this.rangeMode && currentRange) {
+
+    const currentRange = this.selectedRange();
+    if (this.rangeMode() && currentRange) {
       const { start, end } = currentRange;
       
       if (start && this.isSameDate(date, start)) {
@@ -214,9 +200,12 @@ export class IxMonthViewComponent {
   }
 
   private isDateEnabled(date: Date): boolean {
-    if (this.minDate && date < this.minDate) return false;
-    if (this.maxDate && date > this.maxDate) return false;
-    if (this.dateFilter && !this.dateFilter(date)) return false;
+    const minDate = this.minDate();
+    const maxDate = this.maxDate();
+    const dateFilter = this.dateFilter();
+    if (minDate && date < minDate) return false;
+    if (maxDate && date > maxDate) return false;
+    if (dateFilter && !dateFilter(date)) return false;
     return true;
   }
 

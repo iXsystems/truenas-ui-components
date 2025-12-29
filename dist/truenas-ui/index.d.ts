@@ -1,5 +1,5 @@
 import * as _angular_core from '@angular/core';
-import { AfterViewInit, ElementRef, ChangeDetectorRef, OnDestroy, TemplateRef, ViewContainerRef, AfterContentInit, QueryList, IterableDiffers, PipeTransform, OnInit, OnChanges, EventEmitter, SimpleChanges, AfterViewChecked } from '@angular/core';
+import { AfterViewInit, ElementRef, ChangeDetectorRef, OnDestroy, TemplateRef, ViewContainerRef, AfterContentInit, QueryList, IterableDiffers, PipeTransform, OnInit, AfterViewChecked, EventEmitter } from '@angular/core';
 import { ComponentHarness, BaseHarnessFilters, HarnessPredicate } from '@angular/cdk/testing';
 import { SafeHtml, DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ControlValueAccessor, NgControl } from '@angular/forms';
@@ -1627,17 +1627,19 @@ declare class IxDateRangeInputComponent implements ControlValueAccessor, OnInit,
     private overlay;
     private elementRef;
     private viewContainerRef;
-    disabled: boolean;
-    placeholder: string;
-    startMonthRef: ElementRef<HTMLInputElement>;
-    startDayRef: ElementRef<HTMLInputElement>;
-    startYearRef: ElementRef<HTMLInputElement>;
-    endMonthRef: ElementRef<HTMLInputElement>;
-    endDayRef: ElementRef<HTMLInputElement>;
-    endYearRef: ElementRef<HTMLInputElement>;
-    calendarTemplate: TemplateRef<any>;
-    calendar: IxCalendarComponent;
-    wrapperEl: ElementRef<HTMLDivElement>;
+    disabled: _angular_core.InputSignal<boolean>;
+    placeholder: _angular_core.InputSignal<string>;
+    private formDisabled;
+    isDisabled: _angular_core.Signal<boolean>;
+    startMonthRef: _angular_core.Signal<ElementRef<HTMLInputElement>>;
+    startDayRef: _angular_core.Signal<ElementRef<HTMLInputElement>>;
+    startYearRef: _angular_core.Signal<ElementRef<HTMLInputElement>>;
+    endMonthRef: _angular_core.Signal<ElementRef<HTMLInputElement>>;
+    endDayRef: _angular_core.Signal<ElementRef<HTMLInputElement>>;
+    endYearRef: _angular_core.Signal<ElementRef<HTMLInputElement>>;
+    calendarTemplate: _angular_core.Signal<TemplateRef<any>>;
+    calendar: _angular_core.Signal<IxCalendarComponent>;
+    wrapperEl: _angular_core.Signal<ElementRef<HTMLDivElement>>;
     private destroy$;
     private overlayRef?;
     private portal?;
@@ -1676,21 +1678,21 @@ declare class IxDateRangeInputComponent implements ControlValueAccessor, OnInit,
     close(): void;
     private createOverlay;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxDateRangeInputComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxDateRangeInputComponent, "ix-date-range-input", never, { "disabled": { "alias": "disabled"; "required": false; }; "placeholder": { "alias": "placeholder"; "required": false; }; }, {}, never, never, true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxDateRangeInputComponent, "ix-date-range-input", never, { "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "placeholder": { "alias": "placeholder"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
-declare class IxCalendarComponent implements OnInit, OnChanges {
-    startView: 'month' | 'year';
-    selected?: Date | null;
-    minDate?: Date;
-    maxDate?: Date;
-    dateFilter?: (date: Date) => boolean;
-    rangeMode: boolean;
-    selectedRange?: DateRange;
-    selectedChange: EventEmitter<Date>;
-    activeDateChange: EventEmitter<Date>;
-    viewChanged: EventEmitter<"month" | "year">;
-    selectedRangeChange: EventEmitter<DateRange>;
+declare class IxCalendarComponent implements OnInit {
+    startView: _angular_core.InputSignal<"month" | "year">;
+    selected: _angular_core.InputSignal<Date | null | undefined>;
+    minDate: _angular_core.InputSignal<Date | undefined>;
+    maxDate: _angular_core.InputSignal<Date | undefined>;
+    dateFilter: _angular_core.InputSignal<((date: Date) => boolean) | undefined>;
+    rangeMode: _angular_core.InputSignal<boolean>;
+    selectedRange: _angular_core.InputSignal<DateRange | undefined>;
+    selectedChange: _angular_core.OutputEmitterRef<Date>;
+    activeDateChange: _angular_core.OutputEmitterRef<Date>;
+    viewChanged: _angular_core.OutputEmitterRef<"month" | "year">;
+    selectedRangeChange: _angular_core.OutputEmitterRef<DateRange>;
     currentDate: _angular_core.WritableSignal<Date>;
     currentView: _angular_core.WritableSignal<"month" | "year">;
     rangeState: _angular_core.WritableSignal<{
@@ -1699,8 +1701,8 @@ declare class IxCalendarComponent implements OnInit, OnChanges {
         selecting: "start" | "end";
     }>;
     private userHasInteracted;
+    constructor();
     ngOnInit(): void;
-    ngOnChanges(changes: SimpleChanges): void;
     private initializeRangeState;
     onMonthSelected(month: number): void;
     onYearSelected(year: number): void;
@@ -1716,19 +1718,17 @@ declare class IxCalendarComponent implements OnInit, OnChanges {
      */
     resetInteractionState(): void;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxCalendarComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxCalendarComponent, "ix-calendar", never, { "startView": { "alias": "startView"; "required": false; }; "selected": { "alias": "selected"; "required": false; }; "minDate": { "alias": "minDate"; "required": false; }; "maxDate": { "alias": "maxDate"; "required": false; }; "dateFilter": { "alias": "dateFilter"; "required": false; }; "rangeMode": { "alias": "rangeMode"; "required": false; }; "selectedRange": { "alias": "selectedRange"; "required": false; }; }, { "selectedChange": "selectedChange"; "activeDateChange": "activeDateChange"; "viewChanged": "viewChanged"; "selectedRangeChange": "selectedRangeChange"; }, never, never, true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxCalendarComponent, "ix-calendar", never, { "startView": { "alias": "startView"; "required": false; "isSignal": true; }; "selected": { "alias": "selected"; "required": false; "isSignal": true; }; "minDate": { "alias": "minDate"; "required": false; "isSignal": true; }; "maxDate": { "alias": "maxDate"; "required": false; "isSignal": true; }; "dateFilter": { "alias": "dateFilter"; "required": false; "isSignal": true; }; "rangeMode": { "alias": "rangeMode"; "required": false; "isSignal": true; }; "selectedRange": { "alias": "selectedRange"; "required": false; "isSignal": true; }; }, { "selectedChange": "selectedChange"; "activeDateChange": "activeDateChange"; "viewChanged": "viewChanged"; "selectedRangeChange": "selectedRangeChange"; }, never, never, true, never>;
 }
 
 declare class IxCalendarHeaderComponent {
-    set currentDate(date: Date);
-    get currentDate(): Date;
-    private _currentDate;
-    currentView: 'month' | 'year';
-    monthSelected: EventEmitter<number>;
-    yearSelected: EventEmitter<number>;
-    viewChanged: EventEmitter<"month" | "year">;
-    previousClicked: EventEmitter<void>;
-    nextClicked: EventEmitter<void>;
+    currentDate: _angular_core.InputSignal<Date>;
+    currentView: _angular_core.InputSignal<"month" | "year">;
+    monthSelected: _angular_core.OutputEmitterRef<number>;
+    yearSelected: _angular_core.OutputEmitterRef<number>;
+    viewChanged: _angular_core.OutputEmitterRef<"month" | "year">;
+    previousClicked: _angular_core.OutputEmitterRef<void>;
+    nextClicked: _angular_core.OutputEmitterRef<void>;
     private months;
     periodLabelId: string;
     periodLabel: _angular_core.Signal<string>;
@@ -1738,7 +1738,7 @@ declare class IxCalendarHeaderComponent {
     onPreviousClick(): void;
     onNextClick(): void;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxCalendarHeaderComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxCalendarHeaderComponent, "ix-calendar-header", never, { "currentDate": { "alias": "currentDate"; "required": false; }; "currentView": { "alias": "currentView"; "required": false; }; }, { "monthSelected": "monthSelected"; "yearSelected": "yearSelected"; "viewChanged": "viewChanged"; "previousClicked": "previousClicked"; "nextClicked": "nextClicked"; }, never, never, true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxCalendarHeaderComponent, "ix-calendar-header", never, { "currentDate": { "alias": "currentDate"; "required": false; "isSignal": true; }; "currentView": { "alias": "currentView"; "required": false; "isSignal": true; }; }, { "monthSelected": "monthSelected"; "yearSelected": "yearSelected"; "viewChanged": "viewChanged"; "previousClicked": "previousClicked"; "nextClicked": "nextClicked"; }, never, never, true, never>;
 }
 
 interface CalendarCell {
@@ -1756,27 +1756,19 @@ interface CalendarCell {
     inRange?: boolean;
 }
 declare class IxMonthViewComponent {
-    set activeDate(date: Date);
-    get activeDate(): Date;
-    private _activeDate;
-    selected?: Date | null;
-    minDate?: Date;
-    maxDate?: Date;
-    dateFilter?: (date: Date) => boolean;
-    rangeMode: boolean;
-    set selectedRange(value: {
-        start: Date | null;
-        end: Date | null;
-        selecting: 'start' | 'end';
-    } | undefined);
-    get selectedRange(): {
+    activeDate: _angular_core.InputSignal<Date>;
+    selected: _angular_core.InputSignal<Date | null | undefined>;
+    minDate: _angular_core.InputSignal<Date | undefined>;
+    maxDate: _angular_core.InputSignal<Date | undefined>;
+    dateFilter: _angular_core.InputSignal<((date: Date) => boolean) | undefined>;
+    rangeMode: _angular_core.InputSignal<boolean>;
+    selectedRange: _angular_core.InputSignal<{
         start: Date | null;
         end: Date | null;
         selecting: "start" | "end";
-    } | undefined;
-    private _selectedRange;
-    selectedChange: EventEmitter<Date>;
-    activeDateChange: EventEmitter<Date>;
+    } | undefined>;
+    selectedChange: _angular_core.OutputEmitterRef<Date>;
+    activeDateChange: _angular_core.OutputEmitterRef<Date>;
     readonly weekdays: {
         long: string;
         short: string;
@@ -1791,7 +1783,7 @@ declare class IxMonthViewComponent {
     trackByRow(index: number, row: CalendarCell[]): string;
     onCellClicked(cell: CalendarCell): void;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxMonthViewComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxMonthViewComponent, "ix-month-view", never, { "activeDate": { "alias": "activeDate"; "required": false; }; "selected": { "alias": "selected"; "required": false; }; "minDate": { "alias": "minDate"; "required": false; }; "maxDate": { "alias": "maxDate"; "required": false; }; "dateFilter": { "alias": "dateFilter"; "required": false; }; "rangeMode": { "alias": "rangeMode"; "required": false; }; "selectedRange": { "alias": "selectedRange"; "required": false; }; }, { "selectedChange": "selectedChange"; "activeDateChange": "activeDateChange"; }, never, never, true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxMonthViewComponent, "ix-month-view", never, { "activeDate": { "alias": "activeDate"; "required": false; "isSignal": true; }; "selected": { "alias": "selected"; "required": false; "isSignal": true; }; "minDate": { "alias": "minDate"; "required": false; "isSignal": true; }; "maxDate": { "alias": "maxDate"; "required": false; "isSignal": true; }; "dateFilter": { "alias": "dateFilter"; "required": false; "isSignal": true; }; "rangeMode": { "alias": "rangeMode"; "required": false; "isSignal": true; }; "selectedRange": { "alias": "selectedRange"; "required": false; "isSignal": true; }; }, { "selectedChange": "selectedChange"; "activeDateChange": "activeDateChange"; }, never, never, true, never>;
 }
 
 interface YearCell {
@@ -1804,15 +1796,13 @@ interface YearCell {
     today: boolean;
 }
 declare class IxMultiYearViewComponent {
-    set activeDate(date: Date);
-    get activeDate(): Date;
-    private _activeDate;
-    selected?: Date | null;
-    minDate?: Date;
-    maxDate?: Date;
-    dateFilter?: (date: Date) => boolean;
-    selectedChange: EventEmitter<Date>;
-    activeDateChange: EventEmitter<Date>;
+    activeDate: _angular_core.InputSignal<Date>;
+    selected: _angular_core.InputSignal<Date | null | undefined>;
+    minDate: _angular_core.InputSignal<Date | undefined>;
+    maxDate: _angular_core.InputSignal<Date | undefined>;
+    dateFilter: _angular_core.InputSignal<((date: Date) => boolean) | undefined>;
+    selectedChange: _angular_core.OutputEmitterRef<Date>;
+    activeDateChange: _angular_core.OutputEmitterRef<Date>;
     readonly cellWidth = 25;
     readonly cellAspectRatio = 7.14286;
     readonly yearsPerRow = 4;
@@ -1829,24 +1819,26 @@ declare class IxMultiYearViewComponent {
     trackByRow(index: number, row: YearCell[]): string;
     onYearClicked(cell: YearCell): void;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxMultiYearViewComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxMultiYearViewComponent, "ix-multi-year-view", never, { "activeDate": { "alias": "activeDate"; "required": false; }; "selected": { "alias": "selected"; "required": false; }; "minDate": { "alias": "minDate"; "required": false; }; "maxDate": { "alias": "maxDate"; "required": false; }; "dateFilter": { "alias": "dateFilter"; "required": false; }; }, { "selectedChange": "selectedChange"; "activeDateChange": "activeDateChange"; }, never, never, true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxMultiYearViewComponent, "ix-multi-year-view", never, { "activeDate": { "alias": "activeDate"; "required": false; "isSignal": true; }; "selected": { "alias": "selected"; "required": false; "isSignal": true; }; "minDate": { "alias": "minDate"; "required": false; "isSignal": true; }; "maxDate": { "alias": "maxDate"; "required": false; "isSignal": true; }; "dateFilter": { "alias": "dateFilter"; "required": false; "isSignal": true; }; }, { "selectedChange": "selectedChange"; "activeDateChange": "activeDateChange"; }, never, never, true, never>;
 }
 
 declare class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDestroy {
     private overlay;
     private elementRef;
     private viewContainerRef;
-    disabled: boolean;
-    placeholder: string;
-    min?: Date;
-    max?: Date;
-    dateFilter?: (date: Date) => boolean;
-    monthRef: ElementRef<HTMLInputElement>;
-    dayRef: ElementRef<HTMLInputElement>;
-    yearRef: ElementRef<HTMLInputElement>;
-    calendarTemplate: TemplateRef<any>;
-    calendar: IxCalendarComponent;
-    wrapperEl: ElementRef<HTMLDivElement>;
+    disabled: _angular_core.InputSignal<boolean>;
+    placeholder: _angular_core.InputSignal<string>;
+    min: _angular_core.InputSignal<Date | undefined>;
+    max: _angular_core.InputSignal<Date | undefined>;
+    dateFilter: _angular_core.InputSignal<((date: Date) => boolean) | undefined>;
+    private formDisabled;
+    isDisabled: _angular_core.Signal<boolean>;
+    monthRef: _angular_core.Signal<ElementRef<HTMLInputElement>>;
+    dayRef: _angular_core.Signal<ElementRef<HTMLInputElement>>;
+    yearRef: _angular_core.Signal<ElementRef<HTMLInputElement>>;
+    calendarTemplate: _angular_core.Signal<TemplateRef<any>>;
+    calendar: _angular_core.Signal<IxCalendarComponent>;
+    wrapperEl: _angular_core.Signal<ElementRef<HTMLDivElement>>;
     private destroy$;
     private overlayRef?;
     private portal?;
@@ -1877,16 +1869,18 @@ declare class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDe
     close(): void;
     private createOverlay;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxDateInputComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxDateInputComponent, "ix-date-input", never, { "disabled": { "alias": "disabled"; "required": false; }; "placeholder": { "alias": "placeholder"; "required": false; }; "min": { "alias": "min"; "required": false; }; "max": { "alias": "max"; "required": false; }; "dateFilter": { "alias": "dateFilter"; "required": false; }; }, {}, never, never, true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxDateInputComponent, "ix-date-input", never, { "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "placeholder": { "alias": "placeholder"; "required": false; "isSignal": true; }; "min": { "alias": "min"; "required": false; "isSignal": true; }; "max": { "alias": "max"; "required": false; "isSignal": true; }; "dateFilter": { "alias": "dateFilter"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
 declare class IxTimeInputComponent implements ControlValueAccessor {
-    disabled: boolean;
-    format: '12h' | '24h';
-    granularity: '15m' | '30m' | '1h';
-    placeholder: string;
-    testId: string;
-    private get step();
+    disabled: _angular_core.InputSignal<boolean>;
+    format: _angular_core.InputSignal<"12h" | "24h">;
+    granularity: _angular_core.InputSignal<"15m" | "30m" | "1h">;
+    placeholder: _angular_core.InputSignal<string>;
+    testId: _angular_core.InputSignal<string>;
+    private formDisabled;
+    isDisabled: _angular_core.Signal<boolean>;
+    private step;
     private onChange;
     private onTouched;
     _value: string | null;
@@ -1897,7 +1891,7 @@ declare class IxTimeInputComponent implements ControlValueAccessor {
     setDisabledState(isDisabled: boolean): void;
     onSelectionChange(value: string): void;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTimeInputComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTimeInputComponent, "ix-time-input", never, { "disabled": { "alias": "disabled"; "required": false; }; "format": { "alias": "format"; "required": false; }; "granularity": { "alias": "granularity"; "required": false; }; "placeholder": { "alias": "placeholder"; "required": false; }; "testId": { "alias": "testId"; "required": false; }; }, {}, never, never, true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTimeInputComponent, "ix-time-input", never, { "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "format": { "alias": "format"; "required": false; "isSignal": true; }; "granularity": { "alias": "granularity"; "required": false; "isSignal": true; }; "placeholder": { "alias": "placeholder"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
 declare class IxSliderThumbDirective implements ControlValueAccessor, OnInit, OnDestroy {

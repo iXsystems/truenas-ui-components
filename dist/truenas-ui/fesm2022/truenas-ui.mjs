@@ -1,5 +1,5 @@
 import * as i0 from '@angular/core';
-import { Injectable, Component, input, ChangeDetectionStrategy, inject, effect, computed, ViewChild, ViewEncapsulation, output, signal, forwardRef, Directive, TemplateRef, ElementRef, ContentChild, ChangeDetectorRef, ContentChildren, HostListener, contentChildren, Input, Optional, Inject, Pipe, viewChild, EventEmitter, Output, Host, model } from '@angular/core';
+import { Injectable, Component, input, ChangeDetectionStrategy, inject, effect, computed, ViewChild, ViewEncapsulation, output, signal, forwardRef, Directive, TemplateRef, ElementRef, ContentChild, ChangeDetectorRef, ContentChildren, HostListener, contentChildren, Input, Optional, Inject, Pipe, viewChild, Host, model, EventEmitter, Output } from '@angular/core';
 import * as i1$2 from '@angular/common';
 import { CommonModule, NgIf, DOCUMENT } from '@angular/common';
 import * as i1$1 from '@angular/platform-browser';
@@ -4348,29 +4348,23 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
         }] });
 
 class IxCalendarHeaderComponent {
-    set currentDate(date) {
-        this._currentDate.set(date);
-    }
-    get currentDate() {
-        return this._currentDate();
-    }
-    _currentDate = signal(new Date(), ...(ngDevMode ? [{ debugName: "_currentDate" }] : []));
-    currentView = 'month';
-    monthSelected = new EventEmitter();
-    yearSelected = new EventEmitter();
-    viewChanged = new EventEmitter();
-    previousClicked = new EventEmitter();
-    nextClicked = new EventEmitter();
+    currentDate = input(new Date(), ...(ngDevMode ? [{ debugName: "currentDate" }] : []));
+    currentView = input('month', ...(ngDevMode ? [{ debugName: "currentView" }] : []));
+    monthSelected = output();
+    yearSelected = output();
+    viewChanged = output();
+    previousClicked = output();
+    nextClicked = output();
     months = [
         'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
         'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
     ];
     periodLabelId = `ix-calendar-period-label-${Math.floor(Math.random() * 10000)}`;
     periodLabel = computed(() => {
-        const date = this._currentDate();
+        const date = this.currentDate();
         if (!date)
             return '';
-        if (this.currentView === 'month') {
+        if (this.currentView() === 'month') {
             const month = this.months[date.getMonth()];
             const year = date.getFullYear();
             return `${month} ${year}`;
@@ -4384,13 +4378,13 @@ class IxCalendarHeaderComponent {
         }
     }, ...(ngDevMode ? [{ debugName: "periodLabel" }] : []));
     previousLabel = computed(() => {
-        return this.currentView === 'month' ? 'Previous month' : 'Previous 24 years';
+        return this.currentView() === 'month' ? 'Previous month' : 'Previous 24 years';
     }, ...(ngDevMode ? [{ debugName: "previousLabel" }] : []));
     nextLabel = computed(() => {
-        return this.currentView === 'month' ? 'Next month' : 'Next 24 years';
+        return this.currentView() === 'month' ? 'Next month' : 'Next 24 years';
     }, ...(ngDevMode ? [{ debugName: "nextLabel" }] : []));
     toggleView() {
-        const newView = this.currentView === 'month' ? 'year' : 'month';
+        const newView = this.currentView() === 'month' ? 'year' : 'month';
         this.viewChanged.emit(newView);
     }
     onPreviousClick() {
@@ -4400,7 +4394,7 @@ class IxCalendarHeaderComponent {
         this.nextClicked.emit();
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxCalendarHeaderComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxCalendarHeaderComponent, isStandalone: true, selector: "ix-calendar-header", inputs: { currentDate: "currentDate", currentView: "currentView" }, outputs: { monthSelected: "monthSelected", yearSelected: "yearSelected", viewChanged: "viewChanged", previousClicked: "previousClicked", nextClicked: "nextClicked" }, ngImport: i0, template: `
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxCalendarHeaderComponent, isStandalone: true, selector: "ix-calendar-header", inputs: { currentDate: { classPropertyName: "currentDate", publicName: "currentDate", isSignal: true, isRequired: false, transformFunction: null }, currentView: { classPropertyName: "currentView", publicName: "currentView", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { monthSelected: "monthSelected", yearSelected: "yearSelected", viewChanged: "viewChanged", previousClicked: "previousClicked", nextClicked: "nextClicked" }, ngImport: i0, template: `
     <div class="ix-calendar-header">
       <div class="ix-calendar-controls">
         <!-- Period label (visually hidden for screen readers) -->
@@ -4499,45 +4493,19 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
       </div>
     </div>
   `, styles: [".ix-calendar-header{display:flex;padding:16px}.ix-calendar-controls{display:flex;align-items:center;width:100%}.cdk-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}.ix-calendar-period-button{background:none;border:none;font-weight:600;font-size:16px;color:var(--fg1, #333);padding:8px 12px;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:background-color .2s ease}.ix-calendar-period-button:hover{background:var(--alt-bg2, #e8f4fd)}.ix-calendar-period-button:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px;background:var(--alt-bg2, #e8f4fd)}.ix-calendar-arrow{width:10px;height:5px;fill:currentColor}.ix-calendar-spacer{flex:1}.ix-calendar-previous-button,.ix-calendar-next-button{background:none;border:none;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--fg1, #333);transition:background-color .2s ease}.ix-calendar-previous-button svg,.ix-calendar-next-button svg{width:24px;height:24px;fill:currentColor}.ix-calendar-previous-button:hover:not(:disabled),.ix-calendar-next-button:hover:not(:disabled){background:var(--alt-bg2, #e8f4fd)}.ix-calendar-previous-button:focus,.ix-calendar-next-button:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px;background:var(--alt-bg2, #e8f4fd)}.ix-calendar-previous-button:disabled,.ix-calendar-next-button:disabled{color:var(--fg2, #666);opacity:.5;cursor:not-allowed}\n"] }]
-        }], propDecorators: { currentDate: [{
-                type: Input
-            }], currentView: [{
-                type: Input
-            }], monthSelected: [{
-                type: Output
-            }], yearSelected: [{
-                type: Output
-            }], viewChanged: [{
-                type: Output
-            }], previousClicked: [{
-                type: Output
-            }], nextClicked: [{
-                type: Output
-            }] } });
+        }] });
 
 class IxMonthViewComponent {
-    set activeDate(date) {
-        this._activeDate.set(date);
-    }
-    get activeDate() {
-        return this._activeDate();
-    }
-    _activeDate = signal(new Date(), ...(ngDevMode ? [{ debugName: "_activeDate" }] : []));
-    selected;
-    minDate;
-    maxDate;
-    dateFilter;
+    activeDate = input(new Date(), ...(ngDevMode ? [{ debugName: "activeDate" }] : []));
+    selected = input(undefined, ...(ngDevMode ? [{ debugName: "selected" }] : []));
+    minDate = input(undefined, ...(ngDevMode ? [{ debugName: "minDate" }] : []));
+    maxDate = input(undefined, ...(ngDevMode ? [{ debugName: "maxDate" }] : []));
+    dateFilter = input(undefined, ...(ngDevMode ? [{ debugName: "dateFilter" }] : []));
     // Range mode inputs
-    rangeMode = false;
-    set selectedRange(value) {
-        this._selectedRange.set(value);
-    }
-    get selectedRange() {
-        return this._selectedRange();
-    }
-    _selectedRange = signal(undefined, ...(ngDevMode ? [{ debugName: "_selectedRange" }] : []));
-    selectedChange = new EventEmitter();
-    activeDateChange = new EventEmitter();
+    rangeMode = input(false, ...(ngDevMode ? [{ debugName: "rangeMode" }] : []));
+    selectedRange = input(undefined, ...(ngDevMode ? [{ debugName: "selectedRange" }] : []));
+    selectedChange = output();
+    activeDateChange = output();
     weekdays = [
         { long: 'Sunday', short: 'S' },
         { long: 'Monday', short: 'M' },
@@ -4549,9 +4517,9 @@ class IxMonthViewComponent {
     ];
     // Cell sizing now controlled via CSS custom properties in the SCSS file
     calendarRows = computed(() => {
-        const activeDate = this._activeDate();
+        const activeDate = this.activeDate();
         // Include selectedRange signal in the computed dependency so it recalculates when range changes
-        const currentSelectedRange = this._selectedRange();
+        const currentSelectedRange = this.selectedRange();
         if (!activeDate)
             return [];
         const year = activeDate.getFullYear();
@@ -4587,14 +4555,14 @@ class IxMonthViewComponent {
     createCell(date, value) {
         const today = new Date();
         const isToday = this.isSameDate(date, today);
-        const isSelected = this.selected ? this.isSameDate(date, this.selected) : false;
+        const isSelected = this.selected() ? this.isSameDate(date, this.selected()) : false;
         const enabled = this.isDateEnabled(date);
         // Range mode calculations
         let rangeStart = false;
         let rangeEnd = false;
         let inRange = false;
-        const currentRange = this._selectedRange();
-        if (this.rangeMode && currentRange) {
+        const currentRange = this.selectedRange();
+        if (this.rangeMode() && currentRange) {
             const { start, end } = currentRange;
             if (start && this.isSameDate(date, start)) {
                 rangeStart = true;
@@ -4631,11 +4599,14 @@ class IxMonthViewComponent {
         };
     }
     isDateEnabled(date) {
-        if (this.minDate && date < this.minDate)
+        const minDate = this.minDate();
+        const maxDate = this.maxDate();
+        const dateFilter = this.dateFilter();
+        if (minDate && date < minDate)
             return false;
-        if (this.maxDate && date > this.maxDate)
+        if (maxDate && date > maxDate)
             return false;
-        if (this.dateFilter && !this.dateFilter(date))
+        if (dateFilter && !dateFilter(date))
             return false;
         return true;
     }
@@ -4675,7 +4646,7 @@ class IxMonthViewComponent {
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMonthViewComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxMonthViewComponent, isStandalone: true, selector: "ix-month-view", inputs: { activeDate: "activeDate", selected: "selected", minDate: "minDate", maxDate: "maxDate", dateFilter: "dateFilter", rangeMode: "rangeMode", selectedRange: "selectedRange" }, outputs: { selectedChange: "selectedChange", activeDateChange: "activeDateChange" }, ngImport: i0, template: `
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxMonthViewComponent, isStandalone: true, selector: "ix-month-view", inputs: { activeDate: { classPropertyName: "activeDate", publicName: "activeDate", isSignal: true, isRequired: false, transformFunction: null }, selected: { classPropertyName: "selected", publicName: "selected", isSignal: true, isRequired: false, transformFunction: null }, minDate: { classPropertyName: "minDate", publicName: "minDate", isSignal: true, isRequired: false, transformFunction: null }, maxDate: { classPropertyName: "maxDate", publicName: "maxDate", isSignal: true, isRequired: false, transformFunction: null }, dateFilter: { classPropertyName: "dateFilter", publicName: "dateFilter", isSignal: true, isRequired: false, transformFunction: null }, rangeMode: { classPropertyName: "rangeMode", publicName: "rangeMode", isSignal: true, isRequired: false, transformFunction: null }, selectedRange: { classPropertyName: "selectedRange", publicName: "selectedRange", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectedChange: "selectedChange", activeDateChange: "activeDateChange" }, ngImport: i0, template: `
     <table role="grid" class="ix-calendar-table">
       <!-- Table header with day names -->
       <thead class="ix-calendar-table-header">
@@ -4784,47 +4755,23 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
       </tbody>
     </table>
   `, styles: [":host{--calendar-cell-size: 48px;--calendar-header-height: 40px;--calendar-cell-font-size: 16px;--calendar-header-font-size: 14px}.ix-calendar-table{width:calc(7 * var(--calendar-cell-size));border-spacing:0;border-collapse:separate}.ix-calendar-table-header th{text-align:center;height:var(--calendar-header-height);padding:8px 0;font-size:var(--calendar-header-font-size);font-weight:500;color:var(--fg2, #666)}.ix-calendar-table-header-divider{height:1px;border:0}.ix-calendar-body tr{border:0}.ix-calendar-body-cell-container{position:relative;border:0;outline:0;height:var(--calendar-cell-size);width:14.2857142857%}.ix-calendar-body-cell{position:absolute;inset:0;margin:auto;background:transparent;border:0;outline:0;cursor:pointer;color:var(--fg1, #333);width:var(--calendar-cell-size);height:var(--calendar-cell-size)}.ix-calendar-body-cell:not(:disabled):hover:not(.ix-calendar-body-selected):not(.ix-calendar-body-range-start):not(.ix-calendar-body-range-end):not(.ix-calendar-body-in-range){background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-calendar-body-cell:focus .ix-calendar-body-cell-content.ix-focus-indicator{background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:disabled{color:var(--fg2, #666);opacity:.5;cursor:default}.ix-calendar-body-cell.ix-calendar-body-today:not(.ix-calendar-body-selected){border:1px solid var(--primary, #007bff);color:var(--primary, #007bff)}.ix-calendar-body-cell.ix-calendar-body-selected,.ix-calendar-body-cell.ix-calendar-body-range-start,.ix-calendar-body-cell.ix-calendar-body-range-end,.ix-calendar-body-cell.ix-calendar-body-in-range{background:var(--primary, #007bff);color:#fff}.ix-calendar-body-cell-content{position:relative;display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;height:100%;font-size:var(--calendar-cell-font-size);font-weight:400;transition:background-color .2s cubic-bezier(.25,.8,.25,1)}.ix-calendar-body-cell-preview{position:absolute;inset:0;background:transparent}.cdk-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}.ix-focus-indicator{position:relative}.ix-focus-indicator:before{content:\"\";position:absolute;inset:0;opacity:0;background:currentColor;transition:opacity .2s cubic-bezier(.25,.8,.25,1)}\n"] }]
-        }], propDecorators: { activeDate: [{
-                type: Input
-            }], selected: [{
-                type: Input
-            }], minDate: [{
-                type: Input
-            }], maxDate: [{
-                type: Input
-            }], dateFilter: [{
-                type: Input
-            }], rangeMode: [{
-                type: Input
-            }], selectedRange: [{
-                type: Input
-            }], selectedChange: [{
-                type: Output
-            }], activeDateChange: [{
-                type: Output
-            }] } });
+        }] });
 
 class IxMultiYearViewComponent {
-    set activeDate(date) {
-        this._activeDate.set(date);
-    }
-    get activeDate() {
-        return this._activeDate();
-    }
-    _activeDate = signal(new Date(), ...(ngDevMode ? [{ debugName: "_activeDate" }] : []));
-    selected;
-    minDate;
-    maxDate;
-    dateFilter;
-    selectedChange = new EventEmitter();
-    activeDateChange = new EventEmitter();
+    activeDate = input(new Date(), ...(ngDevMode ? [{ debugName: "activeDate" }] : []));
+    selected = input(undefined, ...(ngDevMode ? [{ debugName: "selected" }] : []));
+    minDate = input(undefined, ...(ngDevMode ? [{ debugName: "minDate" }] : []));
+    maxDate = input(undefined, ...(ngDevMode ? [{ debugName: "maxDate" }] : []));
+    dateFilter = input(undefined, ...(ngDevMode ? [{ debugName: "dateFilter" }] : []));
+    selectedChange = output();
+    activeDateChange = output();
     cellWidth = 25; // 100/4 for 4 columns
     cellAspectRatio = 7.14286; // Same as Material
     yearsPerRow = 4;
     yearRowCount = 6; // Shows 24 years total (6 rows x 4 columns)
     // Calculate the year range to display
     yearRange = computed(() => {
-        const activeDate = this._activeDate();
+        const activeDate = this.activeDate();
         const currentYear = activeDate.getFullYear();
         // Calculate the starting year for a 24-year range
         // We want the active year to be roughly in the middle
@@ -4847,8 +4794,8 @@ class IxMultiYearViewComponent {
     createYearCell(year) {
         const today = new Date();
         const currentYear = today.getFullYear();
-        const activeYear = this._activeDate().getFullYear();
-        const selectedYear = this.selected?.getFullYear();
+        const activeYear = this.activeDate().getFullYear();
+        const selectedYear = this.selected()?.getFullYear();
         const isToday = year === currentYear;
         const isSelected = year === selectedYear;
         const isActive = year === activeYear;
@@ -4864,14 +4811,17 @@ class IxMultiYearViewComponent {
         };
     }
     isYearEnabled(year) {
-        if (this.minDate && year < this.minDate.getFullYear())
+        const minDate = this.minDate();
+        const maxDate = this.maxDate();
+        const dateFilter = this.dateFilter();
+        if (minDate && year < minDate.getFullYear())
             return false;
-        if (this.maxDate && year > this.maxDate.getFullYear())
+        if (maxDate && year > maxDate.getFullYear())
             return false;
         // If we have a date filter, test January 1st of that year
-        if (this.dateFilter) {
+        if (dateFilter) {
             const testDate = new Date(year, 0, 1);
-            if (!this.dateFilter(testDate))
+            if (!dateFilter(testDate))
                 return false;
         }
         return true;
@@ -4893,13 +4843,13 @@ class IxMultiYearViewComponent {
     onYearClicked(cell) {
         if (cell.enabled) {
             // Create a new date with the selected year, keeping current month and day
-            const currentDate = this._activeDate();
+            const currentDate = this.activeDate();
             const newDate = new Date(cell.year, currentDate.getMonth(), currentDate.getDate());
             this.selectedChange.emit(newDate);
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMultiYearViewComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxMultiYearViewComponent, isStandalone: true, selector: "ix-multi-year-view", inputs: { activeDate: "activeDate", selected: "selected", minDate: "minDate", maxDate: "maxDate", dateFilter: "dateFilter" }, outputs: { selectedChange: "selectedChange", activeDateChange: "activeDateChange" }, ngImport: i0, template: `
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxMultiYearViewComponent, isStandalone: true, selector: "ix-multi-year-view", inputs: { activeDate: { classPropertyName: "activeDate", publicName: "activeDate", isSignal: true, isRequired: false, transformFunction: null }, selected: { classPropertyName: "selected", publicName: "selected", isSignal: true, isRequired: false, transformFunction: null }, minDate: { classPropertyName: "minDate", publicName: "minDate", isSignal: true, isRequired: false, transformFunction: null }, maxDate: { classPropertyName: "maxDate", publicName: "maxDate", isSignal: true, isRequired: false, transformFunction: null }, dateFilter: { classPropertyName: "dateFilter", publicName: "dateFilter", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectedChange: "selectedChange", activeDateChange: "activeDateChange" }, ngImport: i0, template: `
     <table role="grid" class="ix-calendar-table">
       <!-- Table body with year cells -->
       <tbody class="ix-calendar-body">
@@ -4978,36 +4928,22 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
       </tbody>
     </table>
   `, styles: [".ix-calendar-table{width:100%;border-spacing:0;border-collapse:separate}.ix-calendar-table-header-divider{height:16px;border:none}.ix-calendar-body{min-width:224px}.ix-calendar-body-cell-container{position:relative;border:none}.ix-calendar-body-cell{position:absolute;top:5%;left:5%;width:90%;height:90%;border:none;background:transparent;color:var(--fg1, #333);cursor:pointer;font-size:14px;font-weight:500;transition:background-color .2s ease}.ix-calendar-body-cell:hover:not(:disabled){background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px;background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:disabled{color:var(--fg2, #666);opacity:.5;cursor:default}.ix-calendar-body-cell.ix-calendar-body-today:not(.ix-calendar-body-selected){border:1px solid var(--primary, #007bff);color:var(--primary, #007bff)}.ix-calendar-body-cell.ix-calendar-body-selected{background:var(--primary, #007bff);color:#fff}.ix-calendar-body-cell-content{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%;transition:background-color .2s cubic-bezier(.25,.8,.25,1)}.ix-focus-indicator{position:relative}.ix-focus-indicator:before{content:\"\";position:absolute;inset:0;opacity:0;background:currentColor;transition:opacity .2s cubic-bezier(.25,.8,.25,1)}.ix-calendar-body-cell-preview{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}\n"] }]
-        }], propDecorators: { activeDate: [{
-                type: Input
-            }], selected: [{
-                type: Input
-            }], minDate: [{
-                type: Input
-            }], maxDate: [{
-                type: Input
-            }], dateFilter: [{
-                type: Input
-            }], selectedChange: [{
-                type: Output
-            }], activeDateChange: [{
-                type: Output
-            }] } });
+        }] });
 
 class IxCalendarComponent {
-    startView = 'month';
-    selected;
-    minDate;
-    maxDate;
-    dateFilter;
+    startView = input('month', ...(ngDevMode ? [{ debugName: "startView" }] : []));
+    selected = input(undefined, ...(ngDevMode ? [{ debugName: "selected" }] : []));
+    minDate = input(undefined, ...(ngDevMode ? [{ debugName: "minDate" }] : []));
+    maxDate = input(undefined, ...(ngDevMode ? [{ debugName: "maxDate" }] : []));
+    dateFilter = input(undefined, ...(ngDevMode ? [{ debugName: "dateFilter" }] : []));
     // Range mode inputs
-    rangeMode = false;
-    selectedRange;
-    selectedChange = new EventEmitter();
-    activeDateChange = new EventEmitter();
-    viewChanged = new EventEmitter();
+    rangeMode = input(false, ...(ngDevMode ? [{ debugName: "rangeMode" }] : []));
+    selectedRange = input(undefined, ...(ngDevMode ? [{ debugName: "selectedRange" }] : []));
+    selectedChange = output();
+    activeDateChange = output();
+    viewChanged = output();
     // Range mode outputs
-    selectedRangeChange = new EventEmitter();
+    selectedRangeChange = output();
     currentDate = signal(new Date(), ...(ngDevMode ? [{ debugName: "currentDate" }] : []));
     currentView = signal('month', ...(ngDevMode ? [{ debugName: "currentView" }] : []));
     // Range selection state - this is the authoritative source for calendar display
@@ -5018,34 +4954,43 @@ class IxCalendarComponent {
     }, ...(ngDevMode ? [{ debugName: "rangeState" }] : []));
     // Track if user has interacted with calendar - once true, ignore external selectedRange
     userHasInteracted = false;
-    ngOnInit() {
-        this.currentView.set(this.startView);
-        // Initialize range state if in range mode (this also handles currentDate)
-        if (this.rangeMode) {
-            this.initializeRangeState();
-        }
-        else if (this.selected) {
-            // For single date mode, navigate to the selected date's month
-            this.currentDate.set(new Date(this.selected));
-        }
+    constructor() {
+        // Watch for changes to selectedRange input
+        effect(() => {
+            const selectedRange = this.selectedRange();
+            const rangeMode = this.rangeMode();
+            // Only update range state from external selectedRange if user hasn't interacted yet
+            if (!this.userHasInteracted && rangeMode) {
+                this.initializeRangeState();
+            }
+        });
     }
-    ngOnChanges(changes) {
-        // Only update range state from external selectedRange if user hasn't interacted yet
-        if (changes['selectedRange'] && !this.userHasInteracted && this.rangeMode) {
+    ngOnInit() {
+        this.currentView.set(this.startView());
+        // Initialize range state if in range mode (this also handles currentDate)
+        if (this.rangeMode()) {
             this.initializeRangeState();
+        }
+        else {
+            const selected = this.selected();
+            if (selected) {
+                // For single date mode, navigate to the selected date's month
+                this.currentDate.set(new Date(selected));
+            }
         }
     }
     initializeRangeState() {
-        if (this.rangeMode) {
-            if (this.selectedRange) {
+        if (this.rangeMode()) {
+            const selectedRange = this.selectedRange();
+            if (selectedRange) {
                 this.rangeState.set({
-                    start: this.selectedRange.start,
-                    end: this.selectedRange.end,
-                    selecting: this.selectedRange.start && this.selectedRange.end ? 'start' :
-                        this.selectedRange.start ? 'end' : 'start'
+                    start: selectedRange.start,
+                    end: selectedRange.end,
+                    selecting: selectedRange.start && selectedRange.end ? 'start' :
+                        selectedRange.start ? 'end' : 'start'
                 });
                 // Navigate to the month of the selected start date, or end date if no start date
-                const dateToShow = this.selectedRange.start || this.selectedRange.end;
+                const dateToShow = selectedRange.start || selectedRange.end;
                 if (dateToShow) {
                     this.currentDate.set(new Date(dateToShow));
                 }
@@ -5104,7 +5049,7 @@ class IxCalendarComponent {
         this.activeDateChange.emit(newDate);
     }
     onSelectedChange(date) {
-        if (this.rangeMode) {
+        if (this.rangeMode()) {
             this.handleRangeSelection(date);
         }
         else {
@@ -5182,7 +5127,7 @@ class IxCalendarComponent {
         this.initializeRangeState();
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxCalendarComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxCalendarComponent, isStandalone: true, selector: "ix-calendar", inputs: { startView: "startView", selected: "selected", minDate: "minDate", maxDate: "maxDate", dateFilter: "dateFilter", rangeMode: "rangeMode", selectedRange: "selectedRange" }, outputs: { selectedChange: "selectedChange", activeDateChange: "activeDateChange", viewChanged: "viewChanged", selectedRangeChange: "selectedRangeChange" }, usesOnChanges: true, ngImport: i0, template: `
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxCalendarComponent, isStandalone: true, selector: "ix-calendar", inputs: { startView: { classPropertyName: "startView", publicName: "startView", isSignal: true, isRequired: false, transformFunction: null }, selected: { classPropertyName: "selected", publicName: "selected", isSignal: true, isRequired: false, transformFunction: null }, minDate: { classPropertyName: "minDate", publicName: "minDate", isSignal: true, isRequired: false, transformFunction: null }, maxDate: { classPropertyName: "maxDate", publicName: "maxDate", isSignal: true, isRequired: false, transformFunction: null }, dateFilter: { classPropertyName: "dateFilter", publicName: "dateFilter", isSignal: true, isRequired: false, transformFunction: null }, rangeMode: { classPropertyName: "rangeMode", publicName: "rangeMode", isSignal: true, isRequired: false, transformFunction: null }, selectedRange: { classPropertyName: "selectedRange", publicName: "selectedRange", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectedChange: "selectedChange", activeDateChange: "activeDateChange", viewChanged: "viewChanged", selectedRangeChange: "selectedRangeChange" }, ngImport: i0, template: `
     <ix-calendar-header 
       [currentDate]="currentDate()"
       [currentView]="currentView()"
@@ -5194,27 +5139,27 @@ class IxCalendarComponent {
     </ix-calendar-header>
 
     <div class="ix-calendar-content" cdkMonitorSubtreeFocus tabindex="-1">
-      <ix-month-view 
+      <ix-month-view
         *ngIf="currentView() === 'month'"
         [activeDate]="currentDate()"
-        [selected]="selected"
-        [dateFilter]="dateFilter"
-        [minDate]="minDate"
-        [maxDate]="maxDate"
-        [rangeMode]="rangeMode"
-        [selectedRange]="rangeMode ? rangeState() : undefined"
+        [selected]="selected()"
+        [dateFilter]="dateFilter()"
+        [minDate]="minDate()"
+        [maxDate]="maxDate()"
+        [rangeMode]="rangeMode()"
+        [selectedRange]="rangeMode() ? rangeState() : undefined"
         (selectedChange)="onSelectedChange($event)"
         (activeDateChange)="onActiveDateChange($event)">
       </ix-month-view>
-      
+
       <!-- Multi-year view -->
-      <ix-multi-year-view 
+      <ix-multi-year-view
         *ngIf="currentView() === 'year'"
         [activeDate]="currentDate()"
-        [selected]="selected"
-        [dateFilter]="dateFilter"
-        [minDate]="minDate"
-        [maxDate]="maxDate"
+        [selected]="selected()"
+        [dateFilter]="dateFilter()"
+        [minDate]="minDate()"
+        [maxDate]="maxDate()"
         (selectedChange)="onYearSelectedFromView($event)"
         (activeDateChange)="onActiveDateChange($event)">
       </ix-multi-year-view>
@@ -5235,71 +5180,51 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
     </ix-calendar-header>
 
     <div class="ix-calendar-content" cdkMonitorSubtreeFocus tabindex="-1">
-      <ix-month-view 
+      <ix-month-view
         *ngIf="currentView() === 'month'"
         [activeDate]="currentDate()"
-        [selected]="selected"
-        [dateFilter]="dateFilter"
-        [minDate]="minDate"
-        [maxDate]="maxDate"
-        [rangeMode]="rangeMode"
-        [selectedRange]="rangeMode ? rangeState() : undefined"
+        [selected]="selected()"
+        [dateFilter]="dateFilter()"
+        [minDate]="minDate()"
+        [maxDate]="maxDate()"
+        [rangeMode]="rangeMode()"
+        [selectedRange]="rangeMode() ? rangeState() : undefined"
         (selectedChange)="onSelectedChange($event)"
         (activeDateChange)="onActiveDateChange($event)">
       </ix-month-view>
-      
+
       <!-- Multi-year view -->
-      <ix-multi-year-view 
+      <ix-multi-year-view
         *ngIf="currentView() === 'year'"
         [activeDate]="currentDate()"
-        [selected]="selected"
-        [dateFilter]="dateFilter"
-        [minDate]="minDate"
-        [maxDate]="maxDate"
+        [selected]="selected()"
+        [dateFilter]="dateFilter()"
+        [minDate]="minDate()"
+        [maxDate]="maxDate()"
         (selectedChange)="onYearSelectedFromView($event)"
         (activeDateChange)="onActiveDateChange($event)">
       </ix-multi-year-view>
     </div>
   `, styles: [":host{display:block;background:var(--bg2, #f5f5f5);color:var(--fg1, #333);padding:0 8px 8px;box-shadow:0 4px 16px #0000001f,0 1px 4px #00000014}.ix-calendar-content{padding:8px;outline:none}.ix-year-view{text-align:center;padding:20px;color:var(--fg2, #666)}\n"] }]
-        }], propDecorators: { startView: [{
-                type: Input
-            }], selected: [{
-                type: Input
-            }], minDate: [{
-                type: Input
-            }], maxDate: [{
-                type: Input
-            }], dateFilter: [{
-                type: Input
-            }], rangeMode: [{
-                type: Input
-            }], selectedRange: [{
-                type: Input
-            }], selectedChange: [{
-                type: Output
-            }], activeDateChange: [{
-                type: Output
-            }], viewChanged: [{
-                type: Output
-            }], selectedRangeChange: [{
-                type: Output
-            }] } });
+        }], ctorParameters: () => [] });
 
 class IxDateInputComponent {
     overlay;
     elementRef;
     viewContainerRef;
-    disabled = false;
-    placeholder = 'Select date';
-    min;
-    max;
-    dateFilter;
-    monthRef;
-    dayRef;
-    yearRef;
-    calendarTemplate;
-    calendar;
-    wrapperEl;
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    placeholder = input('Select date', ...(ngDevMode ? [{ debugName: "placeholder" }] : []));
+    min = input(undefined, ...(ngDevMode ? [{ debugName: "min" }] : []));
+    max = input(undefined, ...(ngDevMode ? [{ debugName: "max" }] : []));
+    dateFilter = input(undefined, ...(ngDevMode ? [{ debugName: "dateFilter" }] : []));
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
+    monthRef = viewChild.required('monthInput');
+    dayRef = viewChild.required('dayInput');
+    yearRef = viewChild.required('yearInput');
+    calendarTemplate = viewChild.required('calendarTemplate');
+    calendar = viewChild.required(IxCalendarComponent);
+    wrapperEl = viewChild.required('wrapper');
     destroy$ = new Subject();
     overlayRef;
     portal;
@@ -5337,7 +5262,7 @@ class IxDateInputComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     // Segment event handlers
     onSegmentFocus(segment) {
@@ -5346,9 +5271,9 @@ class IxDateInputComponent {
     onSegmentBlur(segment) {
         this.onTouched();
         // Only validate and update when we have complete values
-        const month = this.monthRef?.nativeElement?.value || '';
-        const day = this.dayRef?.nativeElement?.value || '';
-        const year = this.yearRef?.nativeElement?.value || '';
+        const month = this.monthRef()?.nativeElement?.value || '';
+        const day = this.dayRef()?.nativeElement?.value || '';
+        const year = this.yearRef()?.nativeElement?.value || '';
         // Only try to create a date if all segments have some value
         if (month && day && year && year.length === 4) {
             this.updateDateFromSegments();
@@ -5396,30 +5321,30 @@ class IxDateInputComponent {
             this.day.set(dayVal);
             this.year.set(yearVal);
             // Update input elements
-            if (this.monthRef?.nativeElement)
-                this.monthRef.nativeElement.value = monthVal;
-            if (this.dayRef?.nativeElement)
-                this.dayRef.nativeElement.value = dayVal;
-            if (this.yearRef?.nativeElement)
-                this.yearRef.nativeElement.value = yearVal;
+            if (this.monthRef()?.nativeElement)
+                this.monthRef().nativeElement.value = monthVal;
+            if (this.dayRef()?.nativeElement)
+                this.dayRef().nativeElement.value = dayVal;
+            if (this.yearRef()?.nativeElement)
+                this.yearRef().nativeElement.value = yearVal;
         }
         else {
             // Clear all values
             this.month.set('');
             this.day.set('');
             this.year.set('');
-            if (this.monthRef?.nativeElement)
-                this.monthRef.nativeElement.value = '';
-            if (this.dayRef?.nativeElement)
-                this.dayRef.nativeElement.value = '';
-            if (this.yearRef?.nativeElement)
-                this.yearRef.nativeElement.value = '';
+            if (this.monthRef()?.nativeElement)
+                this.monthRef().nativeElement.value = '';
+            if (this.dayRef()?.nativeElement)
+                this.dayRef().nativeElement.value = '';
+            if (this.yearRef()?.nativeElement)
+                this.yearRef().nativeElement.value = '';
         }
     }
     updateDateFromSegments() {
-        const month = this.monthRef?.nativeElement?.value || '';
-        const day = this.dayRef?.nativeElement?.value || '';
-        const year = this.yearRef?.nativeElement?.value || '';
+        const month = this.monthRef()?.nativeElement?.value || '';
+        const day = this.dayRef()?.nativeElement?.value || '';
+        const year = this.yearRef()?.nativeElement?.value || '';
         let date = null;
         if (month && day && year && year.length === 4) {
             const monthNum = parseInt(month, 10);
@@ -5437,16 +5362,16 @@ class IxDateInputComponent {
     }
     focusNextSegment(segment) {
         if (segment === 'month')
-            this.dayRef.nativeElement.focus();
+            this.dayRef().nativeElement.focus();
         else if (segment === 'day')
-            this.yearRef.nativeElement.focus();
+            this.yearRef().nativeElement.focus();
         // Year is the last field
     }
     focusPrevSegment(segment) {
         if (segment === 'day')
-            this.monthRef.nativeElement.focus();
+            this.monthRef().nativeElement.focus();
         else if (segment === 'year')
-            this.dayRef.nativeElement.focus();
+            this.dayRef().nativeElement.focus();
         // Month is the first field
     }
     openDatepicker() {
@@ -5455,8 +5380,9 @@ class IxDateInputComponent {
         this.createOverlay();
         this.isOpen.set(true);
         // Reset calendar interaction state when opening
-        if (this.calendar) {
-            setTimeout(() => this.calendar.resetInteractionState(), 0);
+        const cal = this.calendar();
+        if (cal) {
+            setTimeout(() => cal.resetInteractionState(), 0);
         }
     }
     close() {
@@ -5502,7 +5428,7 @@ class IxDateInputComponent {
         ];
         const positionStrategy = this.overlay
             .position()
-            .flexibleConnectedTo(this.wrapperEl)
+            .flexibleConnectedTo(this.wrapperEl())
             .withPositions(positions)
             .withPush(false);
         this.overlayRef = this.overlay.create({
@@ -5516,60 +5442,60 @@ class IxDateInputComponent {
         this.overlayRef.backdropClick().subscribe(() => {
             this.close();
         });
-        this.portal = new TemplatePortal(this.calendarTemplate, this.viewContainerRef);
+        this.portal = new TemplatePortal(this.calendarTemplate(), this.viewContainerRef);
         this.overlayRef.attach(this.portal);
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxDateInputComponent, deps: [{ token: i1$3.Overlay }, { token: i0.ElementRef }, { token: i0.ViewContainerRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxDateInputComponent, isStandalone: true, selector: "ix-date-input", inputs: { disabled: "disabled", placeholder: "placeholder", min: "min", max: "max", dateFilter: "dateFilter" }, host: { classAttribute: "ix-date-input" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.2.0", version: "20.3.4", type: IxDateInputComponent, isStandalone: true, selector: "ix-date-input", inputs: { disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, placeholder: { classPropertyName: "placeholder", publicName: "placeholder", isSignal: true, isRequired: false, transformFunction: null }, min: { classPropertyName: "min", publicName: "min", isSignal: true, isRequired: false, transformFunction: null }, max: { classPropertyName: "max", publicName: "max", isSignal: true, isRequired: false, transformFunction: null }, dateFilter: { classPropertyName: "dateFilter", publicName: "dateFilter", isSignal: true, isRequired: false, transformFunction: null } }, host: { classAttribute: "ix-date-input" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxDateInputComponent),
                 multi: true
             }
-        ], viewQueries: [{ propertyName: "monthRef", first: true, predicate: ["monthInput"], descendants: true }, { propertyName: "dayRef", first: true, predicate: ["dayInput"], descendants: true }, { propertyName: "yearRef", first: true, predicate: ["yearInput"], descendants: true }, { propertyName: "calendarTemplate", first: true, predicate: ["calendarTemplate"], descendants: true, static: true }, { propertyName: "calendar", first: true, predicate: IxCalendarComponent, descendants: true }, { propertyName: "wrapperEl", first: true, predicate: ["wrapper"], descendants: true }], ngImport: i0, template: `
+        ], viewQueries: [{ propertyName: "monthRef", first: true, predicate: ["monthInput"], descendants: true, isSignal: true }, { propertyName: "dayRef", first: true, predicate: ["dayInput"], descendants: true, isSignal: true }, { propertyName: "yearRef", first: true, predicate: ["yearInput"], descendants: true, isSignal: true }, { propertyName: "calendarTemplate", first: true, predicate: ["calendarTemplate"], descendants: true, isSignal: true }, { propertyName: "calendar", first: true, predicate: IxCalendarComponent, descendants: true, isSignal: true }, { propertyName: "wrapperEl", first: true, predicate: ["wrapper"], descendants: true, isSignal: true }], ngImport: i0, template: `
     <div class="ix-date-input-container">
       <div #wrapper ixInput class="ix-date-input-wrapper" style="padding-right: 40px;">
         <!-- Date segments MM/DD/YYYY -->
         <div class="ix-date-segment-group">
-          <input 
+          <input
             #monthInput
             type="text"
             class="ix-date-segment ix-date-segment-month"
             placeholder="MM"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('month')"
             (blur)="onSegmentBlur('month')"
             (keydown)="onSegmentKeydown($event, 'month')">
           <span class="ix-date-segment-separator">/</span>
-          <input 
+          <input
             #dayInput
             type="text"
             class="ix-date-segment ix-date-segment-day"
             placeholder="DD"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('day')"
             (blur)="onSegmentBlur('day')"
             (keydown)="onSegmentKeydown($event, 'day')">
           <span class="ix-date-segment-separator">/</span>
-          <input 
+          <input
             #yearInput
             type="text"
             class="ix-date-segment ix-date-segment-year"
             placeholder="YYYY"
             maxlength="4"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('year')"
             (blur)="onSegmentBlur('year')"
             (keydown)="onSegmentKeydown($event, 'year')">
         </div>
-        
-        <button 
+
+        <button
           type="button"
           class="ix-date-input-toggle"
           (click)="openDatepicker()"
-          [disabled]="disabled"
+          [disabled]="isDisabled()"
           aria-label="Open calendar">
           <span aria-hidden="true">📅</span>
         </button>
@@ -5600,45 +5526,45 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
       <div #wrapper ixInput class="ix-date-input-wrapper" style="padding-right: 40px;">
         <!-- Date segments MM/DD/YYYY -->
         <div class="ix-date-segment-group">
-          <input 
+          <input
             #monthInput
             type="text"
             class="ix-date-segment ix-date-segment-month"
             placeholder="MM"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('month')"
             (blur)="onSegmentBlur('month')"
             (keydown)="onSegmentKeydown($event, 'month')">
           <span class="ix-date-segment-separator">/</span>
-          <input 
+          <input
             #dayInput
             type="text"
             class="ix-date-segment ix-date-segment-day"
             placeholder="DD"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('day')"
             (blur)="onSegmentBlur('day')"
             (keydown)="onSegmentKeydown($event, 'day')">
           <span class="ix-date-segment-separator">/</span>
-          <input 
+          <input
             #yearInput
             type="text"
             class="ix-date-segment ix-date-segment-year"
             placeholder="YYYY"
             maxlength="4"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('year')"
             (blur)="onSegmentBlur('year')"
             (keydown)="onSegmentKeydown($event, 'year')">
         </div>
-        
-        <button 
+
+        <button
           type="button"
           class="ix-date-input-toggle"
           (click)="openDatepicker()"
-          [disabled]="disabled"
+          [disabled]="isDisabled()"
           aria-label="Open calendar">
           <span aria-hidden="true">📅</span>
         </button>
@@ -5657,51 +5583,25 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
   `, host: {
                         'class': 'ix-date-input'
                     }, styles: [":host{display:block;width:100%}.ix-date-input-container{position:relative;display:flex;align-items:center}.ix-date-input-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-date-segment-group{display:flex;align-items:center}.ix-date-segment{background:transparent;border:none;outline:none;font:inherit;color:inherit;padding:0;min-width:0;text-align:center;width:2.6ch}.ix-date-segment::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-date-segment:focus{outline:none;background:var(--bg2, rgba(0, 0, 0, .05));border-radius:2px}.ix-date-segment:focus::placeholder{opacity:0}.ix-date-segment.ix-date-segment-year{width:4ch}.ix-date-segment-separator{padding:0 2px;-webkit-user-select:none;user-select:none;color:var(--alt-fg1, #999)}.ix-date-input-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;font-size:16px}.ix-date-input-toggle:hover{background:var(--bg2, #f0f0f0);border-radius:4px}.ix-date-input-toggle:disabled{cursor:not-allowed;opacity:.5}:host ::ng-deep .ix-datepicker-overlay .ix-calendar{background:var(--bg1, white);border:1px solid var(--lines, #e0e0e0);border-radius:8px;box-shadow:0 4px 12px #00000026;padding:24px;min-width:380px;--calendar-cell-size: 48px;--calendar-header-height: 44px;--calendar-cell-font-size: 16px;--calendar-header-font-size: 14px}:host ::ng-deep .ix-datepicker-overlay .ix-calendar .ix-calendar-content{padding:0}\n"] }]
-        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }], propDecorators: { disabled: [{
-                type: Input
-            }], placeholder: [{
-                type: Input
-            }], min: [{
-                type: Input
-            }], max: [{
-                type: Input
-            }], dateFilter: [{
-                type: Input
-            }], monthRef: [{
-                type: ViewChild,
-                args: ['monthInput']
-            }], dayRef: [{
-                type: ViewChild,
-                args: ['dayInput']
-            }], yearRef: [{
-                type: ViewChild,
-                args: ['yearInput']
-            }], calendarTemplate: [{
-                type: ViewChild,
-                args: ['calendarTemplate', { static: true }]
-            }], calendar: [{
-                type: ViewChild,
-                args: [IxCalendarComponent]
-            }], wrapperEl: [{
-                type: ViewChild,
-                args: ['wrapper']
-            }] } });
+        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }] });
 
 class IxDateRangeInputComponent {
     overlay;
     elementRef;
     viewContainerRef;
-    disabled = false;
-    placeholder = 'Select date range';
-    startMonthRef;
-    startDayRef;
-    startYearRef;
-    endMonthRef;
-    endDayRef;
-    endYearRef;
-    calendarTemplate;
-    calendar;
-    wrapperEl;
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    placeholder = input('Select date range', ...(ngDevMode ? [{ debugName: "placeholder" }] : []));
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
+    startMonthRef = viewChild.required('startMonthInput');
+    startDayRef = viewChild.required('startDayInput');
+    startYearRef = viewChild.required('startYearInput');
+    endMonthRef = viewChild.required('endMonthInput');
+    endDayRef = viewChild.required('endDayInput');
+    endYearRef = viewChild.required('endYearInput');
+    calendarTemplate = viewChild.required('calendarTemplate');
+    calendar = viewChild.required(IxCalendarComponent);
+    wrapperEl = viewChild.required('wrapper');
     destroy$ = new Subject();
     overlayRef;
     portal;
@@ -5747,7 +5647,7 @@ class IxDateRangeInputComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     // Segment event handlers
     onSegmentFocus(range, segment) {
@@ -5756,9 +5656,9 @@ class IxDateRangeInputComponent {
     onSegmentBlur(range, segment) {
         this.onTouched();
         // Only validate and update when we have complete values, don't clear partial entries
-        const month = range === 'start' ? (this.startMonthRef?.nativeElement?.value || '') : (this.endMonthRef?.nativeElement?.value || '');
-        const day = range === 'start' ? (this.startDayRef?.nativeElement?.value || '') : (this.endDayRef?.nativeElement?.value || '');
-        const year = range === 'start' ? (this.startYearRef?.nativeElement?.value || '') : (this.endYearRef?.nativeElement?.value || '');
+        const month = range === 'start' ? (this.startMonthRef()?.nativeElement?.value || '') : (this.endMonthRef()?.nativeElement?.value || '');
+        const day = range === 'start' ? (this.startDayRef()?.nativeElement?.value || '') : (this.endDayRef()?.nativeElement?.value || '');
+        const year = range === 'start' ? (this.startYearRef()?.nativeElement?.value || '') : (this.endYearRef()?.nativeElement?.value || '');
         // Only try to create a date if all segments have some value
         if (month && day && year && year.length === 4) {
             this.updateDateFromSegments(range);
@@ -5791,14 +5691,14 @@ class IxDateRangeInputComponent {
         // Handle input field updates and clearing
         if (range.start && !range.end) {
             // Start date selected - clear end date input fields immediately
-            if (this.endMonthRef?.nativeElement)
-                this.endMonthRef.nativeElement.value = '';
-            if (this.endDayRef?.nativeElement)
-                this.endDayRef.nativeElement.value = '';
-            if (this.endYearRef?.nativeElement)
-                this.endYearRef.nativeElement.value = '';
+            if (this.endMonthRef()?.nativeElement)
+                this.endMonthRef().nativeElement.value = '';
+            if (this.endDayRef()?.nativeElement)
+                this.endDayRef().nativeElement.value = '';
+            if (this.endYearRef()?.nativeElement)
+                this.endYearRef().nativeElement.value = '';
             // Focus end month for next selection
-            setTimeout(() => this.endMonthRef?.nativeElement?.focus(), 0);
+            setTimeout(() => this.endMonthRef()?.nativeElement?.focus(), 0);
         }
         else if (range.start && range.end) {
             // Both dates selected - close calendar
@@ -5821,12 +5721,12 @@ class IxDateRangeInputComponent {
             this.startDay.set(dayVal);
             this.startYear.set(yearVal);
             // Only update input elements if they're empty or this is from calendar selection
-            if (this.startMonthRef?.nativeElement)
-                this.startMonthRef.nativeElement.value = monthVal;
-            if (this.startDayRef?.nativeElement)
-                this.startDayRef.nativeElement.value = dayVal;
-            if (this.startYearRef?.nativeElement)
-                this.startYearRef.nativeElement.value = yearVal;
+            if (this.startMonthRef()?.nativeElement)
+                this.startMonthRef().nativeElement.value = monthVal;
+            if (this.startDayRef()?.nativeElement)
+                this.startDayRef().nativeElement.value = dayVal;
+            if (this.startYearRef()?.nativeElement)
+                this.startYearRef().nativeElement.value = yearVal;
         }
         // Update end date segments - only when we have valid dates from calendar  
         if (range.end) {
@@ -5837,12 +5737,12 @@ class IxDateRangeInputComponent {
             this.endDay.set(dayVal);
             this.endYear.set(yearVal);
             // Only update input elements if they're empty or this is from calendar selection
-            if (this.endMonthRef?.nativeElement)
-                this.endMonthRef.nativeElement.value = monthVal;
-            if (this.endDayRef?.nativeElement)
-                this.endDayRef.nativeElement.value = dayVal;
-            if (this.endYearRef?.nativeElement)
-                this.endYearRef.nativeElement.value = yearVal;
+            if (this.endMonthRef()?.nativeElement)
+                this.endMonthRef().nativeElement.value = monthVal;
+            if (this.endDayRef()?.nativeElement)
+                this.endDayRef().nativeElement.value = dayVal;
+            if (this.endYearRef()?.nativeElement)
+                this.endYearRef().nativeElement.value = yearVal;
         }
     }
     setSegmentValue(range, segment, value) {
@@ -5866,14 +5766,14 @@ class IxDateRangeInputComponent {
     updateDateFromSegments(range) {
         let month, day, year;
         if (range === 'start') {
-            month = this.startMonthRef?.nativeElement?.value || '';
-            day = this.startDayRef?.nativeElement?.value || '';
-            year = this.startYearRef?.nativeElement?.value || '';
+            month = this.startMonthRef()?.nativeElement?.value || '';
+            day = this.startDayRef()?.nativeElement?.value || '';
+            year = this.startYearRef()?.nativeElement?.value || '';
         }
         else {
-            month = this.endMonthRef?.nativeElement?.value || '';
-            day = this.endDayRef?.nativeElement?.value || '';
-            year = this.endYearRef?.nativeElement?.value || '';
+            month = this.endMonthRef()?.nativeElement?.value || '';
+            day = this.endDayRef()?.nativeElement?.value || '';
+            year = this.endYearRef()?.nativeElement?.value || '';
         }
         let date = null;
         if (month && day && year && year.length === 4) {
@@ -5899,17 +5799,17 @@ class IxDateRangeInputComponent {
     focusNextSegment(range, segment) {
         if (range === 'start') {
             if (segment === 'month')
-                this.startDayRef.nativeElement.focus();
+                this.startDayRef().nativeElement.focus();
             else if (segment === 'day')
-                this.startYearRef.nativeElement.focus();
+                this.startYearRef().nativeElement.focus();
             else if (segment === 'year')
-                this.endMonthRef.nativeElement.focus();
+                this.endMonthRef().nativeElement.focus();
         }
         else {
             if (segment === 'month')
-                this.endDayRef.nativeElement.focus();
+                this.endDayRef().nativeElement.focus();
             else if (segment === 'day')
-                this.endYearRef.nativeElement.focus();
+                this.endYearRef().nativeElement.focus();
             // End year is the last field - could focus calendar button or just stay
         }
     }
@@ -5917,17 +5817,17 @@ class IxDateRangeInputComponent {
         if (range === 'start') {
             // Start month is the first field - nowhere to go back
             if (segment === 'day')
-                this.startMonthRef.nativeElement.focus();
+                this.startMonthRef().nativeElement.focus();
             else if (segment === 'year')
-                this.startDayRef.nativeElement.focus();
+                this.startDayRef().nativeElement.focus();
         }
         else {
             if (segment === 'month')
-                this.startYearRef.nativeElement.focus();
+                this.startYearRef().nativeElement.focus();
             else if (segment === 'day')
-                this.endMonthRef.nativeElement.focus();
+                this.endMonthRef().nativeElement.focus();
             else if (segment === 'year')
-                this.endDayRef.nativeElement.focus();
+                this.endDayRef().nativeElement.focus();
         }
     }
     formatDate(date) {
@@ -5975,8 +5875,9 @@ class IxDateRangeInputComponent {
         this.createOverlay();
         this.isOpen.set(true);
         // Reset calendar interaction state when opening
-        if (this.calendar) {
-            setTimeout(() => this.calendar.resetInteractionState(), 0);
+        const cal = this.calendar();
+        if (cal) {
+            setTimeout(() => cal.resetInteractionState(), 0);
         }
     }
     close() {
@@ -6022,7 +5923,7 @@ class IxDateRangeInputComponent {
         ];
         const positionStrategy = this.overlay
             .position()
-            .flexibleConnectedTo(this.wrapperEl)
+            .flexibleConnectedTo(this.wrapperEl())
             .withPositions(positions)
             .withPush(false);
         this.overlayRef = this.overlay.create({
@@ -6036,17 +5937,17 @@ class IxDateRangeInputComponent {
         this.overlayRef.backdropClick().subscribe(() => {
             this.close();
         });
-        this.portal = new TemplatePortal(this.calendarTemplate, this.viewContainerRef);
+        this.portal = new TemplatePortal(this.calendarTemplate(), this.viewContainerRef);
         this.overlayRef.attach(this.portal);
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxDateRangeInputComponent, deps: [{ token: i1$3.Overlay }, { token: i0.ElementRef }, { token: i0.ViewContainerRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxDateRangeInputComponent, isStandalone: true, selector: "ix-date-range-input", inputs: { disabled: "disabled", placeholder: "placeholder" }, host: { classAttribute: "ix-date-range-input" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.2.0", version: "20.3.4", type: IxDateRangeInputComponent, isStandalone: true, selector: "ix-date-range-input", inputs: { disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, placeholder: { classPropertyName: "placeholder", publicName: "placeholder", isSignal: true, isRequired: false, transformFunction: null } }, host: { classAttribute: "ix-date-range-input" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxDateRangeInputComponent),
                 multi: true
             }
-        ], viewQueries: [{ propertyName: "startMonthRef", first: true, predicate: ["startMonthInput"], descendants: true }, { propertyName: "startDayRef", first: true, predicate: ["startDayInput"], descendants: true }, { propertyName: "startYearRef", first: true, predicate: ["startYearInput"], descendants: true }, { propertyName: "endMonthRef", first: true, predicate: ["endMonthInput"], descendants: true }, { propertyName: "endDayRef", first: true, predicate: ["endDayInput"], descendants: true }, { propertyName: "endYearRef", first: true, predicate: ["endYearInput"], descendants: true }, { propertyName: "calendarTemplate", first: true, predicate: ["calendarTemplate"], descendants: true, static: true }, { propertyName: "calendar", first: true, predicate: IxCalendarComponent, descendants: true }, { propertyName: "wrapperEl", first: true, predicate: ["wrapper"], descendants: true }], ngImport: i0, template: `
+        ], viewQueries: [{ propertyName: "startMonthRef", first: true, predicate: ["startMonthInput"], descendants: true, isSignal: true }, { propertyName: "startDayRef", first: true, predicate: ["startDayInput"], descendants: true, isSignal: true }, { propertyName: "startYearRef", first: true, predicate: ["startYearInput"], descendants: true, isSignal: true }, { propertyName: "endMonthRef", first: true, predicate: ["endMonthInput"], descendants: true, isSignal: true }, { propertyName: "endDayRef", first: true, predicate: ["endDayInput"], descendants: true, isSignal: true }, { propertyName: "endYearRef", first: true, predicate: ["endYearInput"], descendants: true, isSignal: true }, { propertyName: "calendarTemplate", first: true, predicate: ["calendarTemplate"], descendants: true, isSignal: true }, { propertyName: "calendar", first: true, predicate: IxCalendarComponent, descendants: true, isSignal: true }, { propertyName: "wrapperEl", first: true, predicate: ["wrapper"], descendants: true, isSignal: true }], ngImport: i0, template: `
     <div class="ix-date-range-container">
       <div #wrapper ixInput class="ix-date-range-wrapper" style="padding-right: 40px;">
         <!-- Start date segments -->
@@ -6057,7 +5958,7 @@ class IxDateRangeInputComponent {
             class="ix-date-segment ix-date-segment-month"
             placeholder="MM"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('start', 'month')"
             (blur)="onSegmentBlur('start', 'month')"
             (keydown)="onSegmentKeydown($event, 'start', 'month')">
@@ -6068,7 +5969,7 @@ class IxDateRangeInputComponent {
             class="ix-date-segment ix-date-segment-day"
             placeholder="DD"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('start', 'day')"
             (blur)="onSegmentBlur('start', 'day')"
             (keydown)="onSegmentKeydown($event, 'start', 'day')">
@@ -6079,7 +5980,7 @@ class IxDateRangeInputComponent {
             class="ix-date-segment ix-date-segment-year"
             placeholder="YYYY"
             maxlength="4"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('start', 'year')"
             (blur)="onSegmentBlur('start', 'year')"
             (keydown)="onSegmentKeydown($event, 'start', 'year')">
@@ -6095,7 +5996,7 @@ class IxDateRangeInputComponent {
             class="ix-date-segment ix-date-segment-month"
             placeholder="MM"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('end', 'month')"
             (blur)="onSegmentBlur('end', 'month')"
             (keydown)="onSegmentKeydown($event, 'end', 'month')">
@@ -6106,7 +6007,7 @@ class IxDateRangeInputComponent {
             class="ix-date-segment ix-date-segment-day"
             placeholder="DD"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('end', 'day')"
             (blur)="onSegmentBlur('end', 'day')"
             (keydown)="onSegmentKeydown($event, 'end', 'day')">
@@ -6117,7 +6018,7 @@ class IxDateRangeInputComponent {
             class="ix-date-segment ix-date-segment-year"
             placeholder="YYYY"
             maxlength="4"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('end', 'year')"
             (blur)="onSegmentBlur('end', 'year')"
             (keydown)="onSegmentKeydown($event, 'end', 'year')">
@@ -6127,7 +6028,7 @@ class IxDateRangeInputComponent {
           type="button"
           class="ix-date-range-toggle"
           (click)="openDatepicker()"
-          [disabled]="disabled"
+          [disabled]="isDisabled()"
           aria-label="Open calendar">
           <span aria-hidden="true">📅</span>
         </button>
@@ -6164,7 +6065,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             class="ix-date-segment ix-date-segment-month"
             placeholder="MM"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('start', 'month')"
             (blur)="onSegmentBlur('start', 'month')"
             (keydown)="onSegmentKeydown($event, 'start', 'month')">
@@ -6175,7 +6076,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             class="ix-date-segment ix-date-segment-day"
             placeholder="DD"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('start', 'day')"
             (blur)="onSegmentBlur('start', 'day')"
             (keydown)="onSegmentKeydown($event, 'start', 'day')">
@@ -6186,7 +6087,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             class="ix-date-segment ix-date-segment-year"
             placeholder="YYYY"
             maxlength="4"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('start', 'year')"
             (blur)="onSegmentBlur('start', 'year')"
             (keydown)="onSegmentKeydown($event, 'start', 'year')">
@@ -6202,7 +6103,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             class="ix-date-segment ix-date-segment-month"
             placeholder="MM"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('end', 'month')"
             (blur)="onSegmentBlur('end', 'month')"
             (keydown)="onSegmentKeydown($event, 'end', 'month')">
@@ -6213,7 +6114,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             class="ix-date-segment ix-date-segment-day"
             placeholder="DD"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('end', 'day')"
             (blur)="onSegmentBlur('end', 'day')"
             (keydown)="onSegmentKeydown($event, 'end', 'day')">
@@ -6224,7 +6125,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             class="ix-date-segment ix-date-segment-year"
             placeholder="YYYY"
             maxlength="4"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('end', 'year')"
             (blur)="onSegmentBlur('end', 'year')"
             (keydown)="onSegmentKeydown($event, 'end', 'year')">
@@ -6234,7 +6135,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
           type="button"
           class="ix-date-range-toggle"
           (click)="openDatepicker()"
-          [disabled]="disabled"
+          [disabled]="isDisabled()"
           aria-label="Open calendar">
           <span aria-hidden="true">📅</span>
         </button>
@@ -6253,53 +6154,24 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
   `, host: {
                         'class': 'ix-date-range-input'
                     }, styles: [":host{display:block;width:100%}.ix-date-range-container{position:relative;display:flex;align-items:center}.ix-date-range-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-date-segment-group{display:flex;align-items:center}.ix-date-segment{background:transparent;border:none;outline:none;font:inherit;color:inherit;padding:0;min-width:0;text-align:center;width:2.6ch}.ix-date-segment::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-date-segment:focus{outline:none;background:var(--bg2, rgba(0, 0, 0, .05));border-radius:2px}.ix-date-segment:focus::placeholder{opacity:0}.ix-date-segment.ix-date-segment-year{width:4ch}.ix-date-segment-separator{padding:0 2px;-webkit-user-select:none;user-select:none;color:var(--alt-fg1, #999)}.ix-date-range-separator{padding:0 .25em;-webkit-user-select:none;user-select:none;color:var(--fg2, #666);flex-shrink:0}.ix-date-range-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;font-size:16px}.ix-date-range-toggle:hover{background:var(--bg2, #f0f0f0);border-radius:4px}.ix-date-range-toggle:disabled{cursor:not-allowed;opacity:.5}:host ::ng-deep .ix-datepicker-overlay .ix-calendar{background:var(--bg1, white);border:1px solid var(--lines, #e0e0e0);border-radius:8px;box-shadow:0 4px 12px #00000026;padding:24px;min-width:380px;--calendar-cell-size: 48px;--calendar-header-height: 44px;--calendar-cell-font-size: 16px;--calendar-header-font-size: 14px}:host ::ng-deep .ix-datepicker-overlay .ix-calendar .ix-calendar-content{padding:0}\n"] }]
-        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }], propDecorators: { disabled: [{
-                type: Input
-            }], placeholder: [{
-                type: Input
-            }], startMonthRef: [{
-                type: ViewChild,
-                args: ['startMonthInput']
-            }], startDayRef: [{
-                type: ViewChild,
-                args: ['startDayInput']
-            }], startYearRef: [{
-                type: ViewChild,
-                args: ['startYearInput']
-            }], endMonthRef: [{
-                type: ViewChild,
-                args: ['endMonthInput']
-            }], endDayRef: [{
-                type: ViewChild,
-                args: ['endDayInput']
-            }], endYearRef: [{
-                type: ViewChild,
-                args: ['endYearInput']
-            }], calendarTemplate: [{
-                type: ViewChild,
-                args: ['calendarTemplate', { static: true }]
-            }], calendar: [{
-                type: ViewChild,
-                args: [IxCalendarComponent]
-            }], wrapperEl: [{
-                type: ViewChild,
-                args: ['wrapper']
-            }] } });
+        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }] });
 
 class IxTimeInputComponent {
-    disabled = false;
-    format = '12h';
-    granularity = '15m';
-    placeholder = 'Pick a time';
-    testId = '';
-    get step() {
-        switch (this.granularity) {
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    format = input('12h', ...(ngDevMode ? [{ debugName: "format" }] : []));
+    granularity = input('15m', ...(ngDevMode ? [{ debugName: "granularity" }] : []));
+    placeholder = input('Pick a time', ...(ngDevMode ? [{ debugName: "placeholder" }] : []));
+    testId = input('', ...(ngDevMode ? [{ debugName: "testId" }] : []));
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
+    step = computed(() => {
+        switch (this.granularity()) {
             case '15m': return 15;
             case '30m': return 30;
             case '1h': return 60;
             default: return 15;
         }
-    }
+    }, ...(ngDevMode ? [{ debugName: "step" }] : []));
     onChange = (value) => { };
     onTouched = () => { };
     _value = null;
@@ -6307,10 +6179,10 @@ class IxTimeInputComponent {
     timeSelectOptions = computed(() => {
         const options = [];
         const totalMinutes = 24 * 60; // Total minutes in a day
-        for (let minutes = 0; minutes < totalMinutes; minutes += this.step) {
+        for (let minutes = 0; minutes < totalMinutes; minutes += this.step()) {
             const hours = Math.floor(minutes / 60);
             const mins = minutes % 60;
-            if (this.format === '24h') {
+            if (this.format() === '24h') {
                 const timeStr = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
                 options.push({ value: timeStr, label: timeStr });
             }
@@ -6334,7 +6206,7 @@ class IxTimeInputComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     // Event handlers
     onSelectionChange(value) {
@@ -6343,7 +6215,7 @@ class IxTimeInputComponent {
         this.onTouched();
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTimeInputComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxTimeInputComponent, isStandalone: true, selector: "ix-time-input", inputs: { disabled: "disabled", format: "format", granularity: "granularity", placeholder: "placeholder", testId: "testId" }, host: { classAttribute: "ix-time-input" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxTimeInputComponent, isStandalone: true, selector: "ix-time-input", inputs: { disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, format: { classPropertyName: "format", publicName: "format", isSignal: true, isRequired: false, transformFunction: null }, granularity: { classPropertyName: "granularity", publicName: "granularity", isSignal: true, isRequired: false, transformFunction: null }, placeholder: { classPropertyName: "placeholder", publicName: "placeholder", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null } }, host: { classAttribute: "ix-time-input" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxTimeInputComponent),
@@ -6352,9 +6224,9 @@ class IxTimeInputComponent {
         ], ngImport: i0, template: `
     <ix-select
       [options]="timeSelectOptions()"
-      [placeholder]="placeholder"
-      [disabled]="disabled"
-      [testId]="testId"
+      [placeholder]="placeholder()"
+      [disabled]="isDisabled()"
+      [testId]="testId()"
       [ngModel]="_value"
       (selectionChange)="onSelectionChange($event)">
     </ix-select>
@@ -6371,26 +6243,16 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                     ], template: `
     <ix-select
       [options]="timeSelectOptions()"
-      [placeholder]="placeholder"
-      [disabled]="disabled"
-      [testId]="testId"
+      [placeholder]="placeholder()"
+      [disabled]="isDisabled()"
+      [testId]="testId()"
       [ngModel]="_value"
       (selectionChange)="onSelectionChange($event)">
     </ix-select>
   `, host: {
                         'class': 'ix-time-input'
                     }, styles: [":host{display:block;width:100%}\n"] }]
-        }], propDecorators: { disabled: [{
-                type: Input
-            }], format: [{
-                type: Input
-            }], granularity: [{
-                type: Input
-            }], placeholder: [{
-                type: Input
-            }], testId: [{
-                type: Input
-            }] } });
+        }] });
 
 class IxSliderThumbDirective {
     elementRef;
@@ -7813,7 +7675,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * To regenerate this file, run:
  *   npm run generate-icons
  *
- * Generated: 2025-12-29T19:02:29.924Z
+ * Generated: 2025-12-29T19:19:33.220Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 /* eslint-disable */
