@@ -1,4 +1,4 @@
-import { Component, ContentChildren, QueryList, AfterContentInit, Input, Output, EventEmitter, ChangeDetectionStrategy, inject, ChangeDetectorRef, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, ContentChildren, QueryList, AfterContentInit, input, output, ChangeDetectionStrategy, inject, ChangeDetectorRef, ViewChild, ElementRef, AfterViewInit, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FocusMonitor, A11yModule, LiveAnnouncer } from '@angular/cdk/a11y';
 import { LEFT_ARROW, RIGHT_ARROW, UP_ARROW, DOWN_ARROW, HOME, END, ENTER, SPACE } from '@angular/cdk/keycodes';
@@ -24,26 +24,58 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
   @ContentChildren(IxTabPanelComponent) panels!: QueryList<IxTabPanelComponent>;
   @ViewChild('tabHeader') tabHeader!: ElementRef<HTMLElement>;
 
-  @Input() selectedIndex = 0;
-  @Input() orientation: 'horizontal' | 'vertical' = 'horizontal';
-  @Input() highlightPosition: 'left' | 'right' | 'top' | 'bottom' = 'bottom';
+  selectedIndex = input<number>(0);
+  orientation = input<'horizontal' | 'vertical'>('horizontal');
+  highlightPosition = input<'left' | 'right' | 'top' | 'bottom'>('bottom');
 
-  @Output() selectedIndexChange = new EventEmitter<number>();
-  @Output() tabChange = new EventEmitter<TabChangeEvent>();
+  selectedIndexChange = output<number>();
+  tabChange = output<TabChangeEvent>();
 
-  highlightBarLeft = 0;
-  highlightBarWidth = 0;
-  highlightBarTop = 0;
-  highlightBarHeight = 0; // Start hidden
-  highlightBarVisible = false;
+  // Internal state for selected index (mutable)
+  private internalSelectedIndex = signal<number>(0);
+
+  highlightBarLeft = signal<number>(0);
+  highlightBarWidth = signal<number>(0);
+  highlightBarTop = signal<number>(0);
+  highlightBarHeight = signal<number>(0);
+  highlightBarVisible = signal<boolean>(false);
 
   private focusMonitor = inject(FocusMonitor);
   private liveAnnouncer = inject(LiveAnnouncer);
   private cdr = inject(ChangeDetectorRef);
 
+  constructor() {
+    // Sync input to internal state
+    effect(() => {
+      this.internalSelectedIndex.set(this.selectedIndex());
+    });
+
+    // Reactive child state management - update tabs and panels when selectedIndex changes
+    effect(() => {
+      const currentIndex = this.internalSelectedIndex();
+
+      if (this.tabs && this.tabs.length > 0) {
+        this.tabs.forEach((tab, i) => {
+          tab.isActive.set(i === currentIndex);
+        });
+      }
+
+      if (this.panels && this.panels.length > 0) {
+        this.panels.forEach((panel, i) => {
+          panel.isActive.set(i === currentIndex);
+          if (i === currentIndex) {
+            panel.onActivate();
+          }
+        });
+      }
+
+      this.cdr.detectChanges();
+    });
+  }
+
   ngAfterContentInit() {
     this.initializeTabs();
-    this.selectTab(this.selectedIndex);
+    this.selectTab(this.internalSelectedIndex());
 
     // Listen for tab changes
     this.tabs.changes.subscribe(() => {
@@ -56,7 +88,7 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
     // Wait for next tick to ensure DOM is fully rendered
     setTimeout(() => {
       this.updateHighlightBar();
-      this.highlightBarVisible = true;
+      this.highlightBarVisible.set(true);
       this.cdr.detectChanges();
     }, 0);
   }
@@ -71,9 +103,11 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
   }
 
   private initializeTabs() {
+    const currentIndex = this.internalSelectedIndex();
+
     this.tabs.forEach((tab, index) => {
-      tab.index = index;
-      tab.isActive = index === this.selectedIndex;
+      tab.index.set(index);
+      tab.isActive.set(index === currentIndex);
       tab.tabsComponent = this;
 
       // Set up focus monitoring
@@ -88,15 +122,15 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
 
       // Set up click handlers
       tab.selected.subscribe(() => {
-        if (!tab.disabled) {
+        if (!tab.disabled()) {
           this.selectTab(index);
         }
       });
     });
 
     this.panels.forEach((panel, index) => {
-      panel.index = index;
-      panel.isActive = index === this.selectedIndex;
+      panel.index.set(index);
+      panel.isActive.set(index === currentIndex);
     });
 
     // Trigger change detection to update DOM
@@ -109,28 +143,14 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
     }
 
     const tab = this.tabs.get(index);
-    if (tab && tab.disabled) {
+    if (tab && tab.disabled()) {
       return;
     }
 
-    const previousIndex = this.selectedIndex;
-    this.selectedIndex = index;
+    const previousIndex = this.internalSelectedIndex();
+    this.internalSelectedIndex.set(index);
 
-    // Update tab states
-    this.tabs.forEach((tab, i) => {
-      tab.isActive = i === index;
-    });
-
-    // Update panel states
-    this.panels.forEach((panel, i) => {
-      panel.isActive = i === index;
-      if (i === index) {
-        panel.onActivate();
-      }
-    });
-
-    // Trigger change detection to update DOM
-    this.cdr.detectChanges();
+    // Effect will update child states automatically
 
     // Update highlight bar
     this.updateHighlightBar();
@@ -143,7 +163,6 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
         tab,
         previousIndex
       });
-
     }
   }
 
@@ -152,77 +171,75 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
       return;
     }
 
-    const activeTab = this.tabs.get(this.selectedIndex);
+    const activeTab = this.tabs.get(this.internalSelectedIndex());
     if (!activeTab || !activeTab.elementRef) {
       return;
     }
 
     const tabElement = activeTab.elementRef.nativeElement;
     const headerElement = this.tabHeader.nativeElement;
-    
+
     // Get the position and dimensions of the active tab relative to the header
     const tabRect = tabElement.getBoundingClientRect();
     const headerRect = headerElement.getBoundingClientRect();
-    
-    if (this.orientation === 'vertical') {
+
+    if (this.orientation() === 'vertical') {
       // For vertical tabs, animate top position and height
-      this.highlightBarTop = tabRect.top - headerRect.top;
-      this.highlightBarHeight = tabRect.height;
+      this.highlightBarTop.set(tabRect.top - headerRect.top);
+      this.highlightBarHeight.set(tabRect.height);
       // Position highlight bar based on highlightPosition
-      if (this.highlightPosition === 'left') {
-        this.highlightBarLeft = tabRect.left - headerRect.left;
-        this.highlightBarWidth = 3;
+      if (this.highlightPosition() === 'left') {
+        this.highlightBarLeft.set(tabRect.left - headerRect.left);
+        this.highlightBarWidth.set(3);
       } else { // right
-        this.highlightBarLeft = (tabRect.right - headerRect.left) - 3;
-        this.highlightBarWidth = 3;
+        this.highlightBarLeft.set((tabRect.right - headerRect.left) - 3);
+        this.highlightBarWidth.set(3);
       }
     } else {
       // For horizontal tabs, animate left position and width
-      this.highlightBarLeft = tabRect.left - headerRect.left;
-      this.highlightBarWidth = tabRect.width;
+      this.highlightBarLeft.set(tabRect.left - headerRect.left);
+      this.highlightBarWidth.set(tabRect.width);
       // Position highlight bar based on highlightPosition
-      if (this.highlightPosition === 'top') {
-        this.highlightBarTop = tabRect.top - headerRect.top;
-        this.highlightBarHeight = 2;
+      if (this.highlightPosition() === 'top') {
+        this.highlightBarTop.set(tabRect.top - headerRect.top);
+        this.highlightBarHeight.set(2);
       } else { // bottom
-        this.highlightBarTop = (tabRect.bottom - headerRect.top) - 2;
-        this.highlightBarHeight = 2;
+        this.highlightBarTop.set((tabRect.bottom - headerRect.top) - 2);
+        this.highlightBarHeight.set(2);
       }
     }
-
 
     // Trigger change detection to update the highlight bar position
     this.cdr.detectChanges();
   }
 
   onKeydown(event: KeyboardEvent, currentIndex: number) {
-
     let targetIndex = currentIndex;
 
     switch (event.keyCode) {
       case LEFT_ARROW:
-        if (this.orientation === 'horizontal') {
+        if (this.orientation() === 'horizontal') {
           targetIndex = this.getPreviousEnabledTabIndex(currentIndex);
         } else {
           return; // No action for vertical tabs
         }
         break;
       case RIGHT_ARROW:
-        if (this.orientation === 'horizontal') {
+        if (this.orientation() === 'horizontal') {
           targetIndex = this.getNextEnabledTabIndex(currentIndex);
         } else {
           return; // No action for vertical tabs
         }
         break;
       case UP_ARROW:
-        if (this.orientation === 'vertical') {
+        if (this.orientation() === 'vertical') {
           targetIndex = this.getPreviousEnabledTabIndex(currentIndex);
         } else {
           return; // No action for horizontal tabs
         }
         break;
       case DOWN_ARROW:
-        if (this.orientation === 'vertical') {
+        if (this.orientation() === 'vertical') {
           targetIndex = this.getNextEnabledTabIndex(currentIndex);
         } else {
           return; // No action for horizontal tabs
@@ -251,7 +268,7 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
 
   private getPreviousEnabledTabIndex(currentIndex: number): number {
     for (let i = currentIndex - 1; i >= 0; i--) {
-      if (!this.tabs.get(i)?.disabled) {
+      if (!this.tabs.get(i)?.disabled()) {
         return i;
       }
     }
@@ -260,7 +277,7 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
 
   private getNextEnabledTabIndex(currentIndex: number): number {
     for (let i = currentIndex + 1; i < this.tabs.length; i++) {
-      if (!this.tabs.get(i)?.disabled) {
+      if (!this.tabs.get(i)?.disabled()) {
         return i;
       }
     }
@@ -269,7 +286,7 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
 
   private getFirstEnabledTabIndex(): number {
     for (let i = 0; i < this.tabs.length; i++) {
-      if (!this.tabs.get(i)?.disabled) {
+      if (!this.tabs.get(i)?.disabled()) {
         return i;
       }
     }
@@ -278,7 +295,7 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
 
   private getLastEnabledTabIndex(): number {
     for (let i = this.tabs.length - 1; i >= 0; i--) {
-      if (!this.tabs.get(i)?.disabled) {
+      if (!this.tabs.get(i)?.disabled()) {
         return i;
       }
     }
@@ -292,19 +309,18 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
     }
   }
 
-
-  get classes(): string {
+  classes = computed(() => {
     const classes = ['ix-tabs'];
-    
-    if (this.orientation === 'vertical') {
+
+    if (this.orientation() === 'vertical') {
       classes.push('ix-tabs--vertical');
     } else {
       classes.push('ix-tabs--horizontal');
     }
-    
+
     // Add highlight position class
-    classes.push(`ix-tabs--highlight-${this.highlightPosition}`);
-    
+    classes.push(`ix-tabs--highlight-${this.highlightPosition()}`);
+
     return classes.join(' ');
-  }
+  });
 }

@@ -1,4 +1,4 @@
-import { Component, input, TemplateRef, ViewChild, ElementRef, inject, computed } from '@angular/core';
+import { Component, input, TemplateRef, ViewChild, ElementRef, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { A11yModule } from '@angular/cdk/a11y';
 
@@ -16,21 +16,21 @@ export class IxTabPanelComponent {
 
   @ViewChild('content', { static: true }) content!: TemplateRef<any>;
 
-  // Internal properties set by parent IxTabsComponent
-  index = 0;
-  isActive = false;
-  hasBeenActive = false;
+  // Internal properties set by parent IxTabsComponent (public signals for parent control)
+  public index = signal<number>(0);
+  public isActive = signal<boolean>(false);
+  public hasBeenActive = signal<boolean>(false);
 
   elementRef = inject(ElementRef<HTMLElement>);
 
   classes = computed(() => {
     const classes = ['ix-tab-panel'];
 
-    if (this.isActive) {
+    if (this.isActive()) {
       classes.push('ix-tab-panel--active');
     }
 
-    if (!this.isActive) {
+    if (!this.isActive()) {
       classes.push('ix-tab-panel--hidden');
     }
 
@@ -43,10 +43,10 @@ export class IxTabPanelComponent {
     }
 
     // For lazy loading, only render if it's currently active or has been active before
-    return this.isActive || this.hasBeenActive;
+    return this.isActive() || this.hasBeenActive();
   });
 
   onActivate() {
-    this.hasBeenActive = true;
+    this.hasBeenActive.set(true);
   }
 }

@@ -1686,67 +1686,55 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             }] } });
 
 class IxTabComponent {
-    label = '';
-    disabled = false;
-    icon;
-    iconTemplate;
-    testId;
-    selected = new EventEmitter();
+    label = input('', ...(ngDevMode ? [{ debugName: "label" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    icon = input(undefined, ...(ngDevMode ? [{ debugName: "icon" }] : []));
+    iconTemplate = input(undefined, ...(ngDevMode ? [{ debugName: "iconTemplate" }] : []));
+    testId = input(undefined, ...(ngDevMode ? [{ debugName: "testId" }] : []));
+    selected = output();
     iconContent;
-    // Internal properties set by parent IxTabsComponent
-    index = 0;
-    isActive = false;
+    // Internal properties set by parent IxTabsComponent (public signals for parent control)
+    index = signal(0, ...(ngDevMode ? [{ debugName: "index" }] : []));
+    isActive = signal(false, ...(ngDevMode ? [{ debugName: "isActive" }] : []));
     tabsComponent; // Will be set by parent
     elementRef = inject((ElementRef));
-    hasIconContent = false;
+    hasIconContent = signal(false, ...(ngDevMode ? [{ debugName: "hasIconContent" }] : []));
     ngAfterContentInit() {
-        this.hasIconContent = !!this.iconContent;
+        this.hasIconContent.set(!!this.iconContent);
     }
     onClick() {
-        if (!this.disabled) {
+        if (!this.disabled()) {
             this.selected.emit();
         }
     }
     onKeydown(event) {
         if (this.tabsComponent) {
-            this.tabsComponent.onKeydown(event, this.index);
+            this.tabsComponent.onKeydown(event, this.index());
         }
     }
-    get classes() {
+    classes = computed(() => {
         const classes = ['ix-tab'];
-        if (this.isActive) {
+        if (this.isActive()) {
             classes.push('ix-tab--active');
         }
-        if (this.disabled) {
+        if (this.disabled()) {
             classes.push('ix-tab--disabled');
         }
         return classes.join(' ');
-    }
-    get tabIndex() {
-        return this.isActive ? 0 : -1;
-    }
-    get hasIcon() {
-        return !!(this.iconContent || this.iconTemplate || this.icon);
-    }
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
+    tabIndex = computed(() => {
+        return this.isActive() ? 0 : -1;
+    }, ...(ngDevMode ? [{ debugName: "tabIndex" }] : []));
+    hasIcon = computed(() => {
+        return !!(this.hasIconContent() || this.iconTemplate() || this.icon());
+    }, ...(ngDevMode ? [{ debugName: "hasIcon" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTabComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTabComponent, isStandalone: true, selector: "ix-tab", inputs: { label: "label", disabled: "disabled", icon: "icon", iconTemplate: "iconTemplate", testId: "testId" }, outputs: { selected: "selected" }, queries: [{ propertyName: "iconContent", first: true, predicate: ["iconContent"], descendants: true }], ngImport: i0, template: "<button\n  [ngClass]=\"classes\"\n  [attr.data-testid]=\"testId\"\n  [attr.aria-selected]=\"isActive\"\n  [attr.aria-disabled]=\"disabled\"\n  [attr.tabindex]=\"tabIndex\"\n  [disabled]=\"disabled\"\n  role=\"tab\"\n  type=\"button\"\n  (click)=\"onClick()\"\n  (keydown)=\"onKeydown($event)\"\n>\n  @if (hasIcon) {\n    <span class=\"ix-tab__icon\">\n      @if (iconContent) {\n        <ng-container *ngTemplateOutlet=\"iconContent\"></ng-container>\n      } @else if (iconTemplate) {\n        <ng-container *ngTemplateOutlet=\"iconTemplate\"></ng-container>\n      } @else {\n        <span [innerHTML]=\"icon\"></span>\n      }\n    </span>\n  }\n  <span class=\"ix-tab__label\">\n    {{ label }}\n    <ng-content></ng-content>\n  </span>\n</button>", styles: [".ix-tab{display:flex;align-items:center;justify-content:flex-start;gap:8px;padding:12px 16px;border:none;border-bottom:none;background:transparent;color:var(--fg2, #666);font-family:var(--font-family-body, \"Inter\", sans-serif);font-size:14px;font-weight:500;line-height:1.5;cursor:pointer;white-space:nowrap;min-width:0;flex-shrink:0}.ix-tab:hover:not(.ix-tab--disabled):not(.ix-tab--active){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tab:focus-visible{outline:2px solid var(--primary, #0095d5);outline-offset:-2px;border-radius:4px}.ix-tab--disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.ix-tab__icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:14px;flex-shrink:0}.ix-tab__label{display:flex;align-items:center;min-width:0;text-overflow:ellipsis;overflow:hidden}@media (prefers-contrast: high){.ix-tab{border-width:3px}.ix-tab:focus-visible{outline-width:3px}}:host-context(.ix-tabs--vertical){width:100%}:host-context(.ix-tabs--vertical) .ix-tab{width:100%}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "directive", type: i1$2.NgTemplateOutlet, selector: "[ngTemplateOutlet]", inputs: ["ngTemplateOutletContext", "ngTemplateOutlet", "ngTemplateOutletInjector"] }, { kind: "ngmodule", type: A11yModule }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTabComponent, isStandalone: true, selector: "ix-tab", inputs: { label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, icon: { classPropertyName: "icon", publicName: "icon", isSignal: true, isRequired: false, transformFunction: null }, iconTemplate: { classPropertyName: "iconTemplate", publicName: "iconTemplate", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selected: "selected" }, queries: [{ propertyName: "iconContent", first: true, predicate: ["iconContent"], descendants: true }], ngImport: i0, template: "<button\n  [ngClass]=\"classes()\"\n  [attr.data-testid]=\"testId()\"\n  [attr.aria-selected]=\"isActive()\"\n  [attr.aria-disabled]=\"disabled()\"\n  [attr.tabindex]=\"tabIndex()\"\n  [disabled]=\"disabled()\"\n  role=\"tab\"\n  type=\"button\"\n  (click)=\"onClick()\"\n  (keydown)=\"onKeydown($event)\"\n>\n  @if (hasIcon()) {\n    <span class=\"ix-tab__icon\">\n      @if (iconContent) {\n        <ng-container *ngTemplateOutlet=\"iconContent\"></ng-container>\n      } @else if (iconTemplate()) {\n        <ng-container *ngTemplateOutlet=\"iconTemplate()\"></ng-container>\n      } @else {\n        <span [innerHTML]=\"icon()\"></span>\n      }\n    </span>\n  }\n  <span class=\"ix-tab__label\">\n    {{ label() }}\n    <ng-content></ng-content>\n  </span>\n</button>", styles: [".ix-tab{display:flex;align-items:center;justify-content:flex-start;gap:8px;padding:12px 16px;border:none;border-bottom:none;background:transparent;color:var(--fg2, #666);font-family:var(--font-family-body, \"Inter\", sans-serif);font-size:14px;font-weight:500;line-height:1.5;cursor:pointer;white-space:nowrap;min-width:0;flex-shrink:0}.ix-tab:hover:not(.ix-tab--disabled):not(.ix-tab--active){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tab:focus-visible{outline:2px solid var(--primary, #0095d5);outline-offset:-2px;border-radius:4px}.ix-tab--disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.ix-tab__icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:14px;flex-shrink:0}.ix-tab__label{display:flex;align-items:center;min-width:0;text-overflow:ellipsis;overflow:hidden}@media (prefers-contrast: high){.ix-tab{border-width:3px}.ix-tab:focus-visible{outline-width:3px}}:host-context(.ix-tabs--vertical){width:100%}:host-context(.ix-tabs--vertical) .ix-tab{width:100%}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "directive", type: i1$2.NgTemplateOutlet, selector: "[ngTemplateOutlet]", inputs: ["ngTemplateOutletContext", "ngTemplateOutlet", "ngTemplateOutletInjector"] }, { kind: "ngmodule", type: A11yModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTabComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-tab', standalone: true, imports: [CommonModule, A11yModule], template: "<button\n  [ngClass]=\"classes\"\n  [attr.data-testid]=\"testId\"\n  [attr.aria-selected]=\"isActive\"\n  [attr.aria-disabled]=\"disabled\"\n  [attr.tabindex]=\"tabIndex\"\n  [disabled]=\"disabled\"\n  role=\"tab\"\n  type=\"button\"\n  (click)=\"onClick()\"\n  (keydown)=\"onKeydown($event)\"\n>\n  @if (hasIcon) {\n    <span class=\"ix-tab__icon\">\n      @if (iconContent) {\n        <ng-container *ngTemplateOutlet=\"iconContent\"></ng-container>\n      } @else if (iconTemplate) {\n        <ng-container *ngTemplateOutlet=\"iconTemplate\"></ng-container>\n      } @else {\n        <span [innerHTML]=\"icon\"></span>\n      }\n    </span>\n  }\n  <span class=\"ix-tab__label\">\n    {{ label }}\n    <ng-content></ng-content>\n  </span>\n</button>", styles: [".ix-tab{display:flex;align-items:center;justify-content:flex-start;gap:8px;padding:12px 16px;border:none;border-bottom:none;background:transparent;color:var(--fg2, #666);font-family:var(--font-family-body, \"Inter\", sans-serif);font-size:14px;font-weight:500;line-height:1.5;cursor:pointer;white-space:nowrap;min-width:0;flex-shrink:0}.ix-tab:hover:not(.ix-tab--disabled):not(.ix-tab--active){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tab:focus-visible{outline:2px solid var(--primary, #0095d5);outline-offset:-2px;border-radius:4px}.ix-tab--disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.ix-tab__icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:14px;flex-shrink:0}.ix-tab__label{display:flex;align-items:center;min-width:0;text-overflow:ellipsis;overflow:hidden}@media (prefers-contrast: high){.ix-tab{border-width:3px}.ix-tab:focus-visible{outline-width:3px}}:host-context(.ix-tabs--vertical){width:100%}:host-context(.ix-tabs--vertical) .ix-tab{width:100%}\n"] }]
-        }], propDecorators: { label: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], icon: [{
-                type: Input
-            }], iconTemplate: [{
-                type: Input
-            }], testId: [{
-                type: Input
-            }], selected: [{
-                type: Output
-            }], iconContent: [{
+            args: [{ selector: 'ix-tab', standalone: true, imports: [CommonModule, A11yModule], template: "<button\n  [ngClass]=\"classes()\"\n  [attr.data-testid]=\"testId()\"\n  [attr.aria-selected]=\"isActive()\"\n  [attr.aria-disabled]=\"disabled()\"\n  [attr.tabindex]=\"tabIndex()\"\n  [disabled]=\"disabled()\"\n  role=\"tab\"\n  type=\"button\"\n  (click)=\"onClick()\"\n  (keydown)=\"onKeydown($event)\"\n>\n  @if (hasIcon()) {\n    <span class=\"ix-tab__icon\">\n      @if (iconContent) {\n        <ng-container *ngTemplateOutlet=\"iconContent\"></ng-container>\n      } @else if (iconTemplate()) {\n        <ng-container *ngTemplateOutlet=\"iconTemplate()\"></ng-container>\n      } @else {\n        <span [innerHTML]=\"icon()\"></span>\n      }\n    </span>\n  }\n  <span class=\"ix-tab__label\">\n    {{ label() }}\n    <ng-content></ng-content>\n  </span>\n</button>", styles: [".ix-tab{display:flex;align-items:center;justify-content:flex-start;gap:8px;padding:12px 16px;border:none;border-bottom:none;background:transparent;color:var(--fg2, #666);font-family:var(--font-family-body, \"Inter\", sans-serif);font-size:14px;font-weight:500;line-height:1.5;cursor:pointer;white-space:nowrap;min-width:0;flex-shrink:0}.ix-tab:hover:not(.ix-tab--disabled):not(.ix-tab--active){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tab:focus-visible{outline:2px solid var(--primary, #0095d5);outline-offset:-2px;border-radius:4px}.ix-tab--disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.ix-tab__icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:14px;flex-shrink:0}.ix-tab__label{display:flex;align-items:center;min-width:0;text-overflow:ellipsis;overflow:hidden}@media (prefers-contrast: high){.ix-tab{border-width:3px}.ix-tab:focus-visible{outline-width:3px}}:host-context(.ix-tabs--vertical){width:100%}:host-context(.ix-tabs--vertical) .ix-tab{width:100%}\n"] }]
+        }], propDecorators: { iconContent: [{
                 type: ContentChild,
                 args: ['iconContent']
             }] } });
@@ -1756,17 +1744,17 @@ class IxTabPanelComponent {
     lazyLoad = input(false, ...(ngDevMode ? [{ debugName: "lazyLoad" }] : []));
     testId = input(undefined, ...(ngDevMode ? [{ debugName: "testId" }] : []));
     content;
-    // Internal properties set by parent IxTabsComponent
-    index = 0;
-    isActive = false;
-    hasBeenActive = false;
+    // Internal properties set by parent IxTabsComponent (public signals for parent control)
+    index = signal(0, ...(ngDevMode ? [{ debugName: "index" }] : []));
+    isActive = signal(false, ...(ngDevMode ? [{ debugName: "isActive" }] : []));
+    hasBeenActive = signal(false, ...(ngDevMode ? [{ debugName: "hasBeenActive" }] : []));
     elementRef = inject((ElementRef));
     classes = computed(() => {
         const classes = ['ix-tab-panel'];
-        if (this.isActive) {
+        if (this.isActive()) {
             classes.push('ix-tab-panel--active');
         }
-        if (!this.isActive) {
+        if (!this.isActive()) {
             classes.push('ix-tab-panel--hidden');
         }
         return classes.join(' ');
@@ -1776,17 +1764,17 @@ class IxTabPanelComponent {
             return true;
         }
         // For lazy loading, only render if it's currently active or has been active before
-        return this.isActive || this.hasBeenActive;
+        return this.isActive() || this.hasBeenActive();
     }, ...(ngDevMode ? [{ debugName: "shouldRender" }] : []));
     onActivate() {
-        this.hasBeenActive = true;
+        this.hasBeenActive.set(true);
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTabPanelComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTabPanelComponent, isStandalone: true, selector: "ix-tab-panel", inputs: { label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, lazyLoad: { classPropertyName: "lazyLoad", publicName: "lazyLoad", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null } }, viewQueries: [{ propertyName: "content", first: true, predicate: ["content"], descendants: true, static: true }], ngImport: i0, template: "<div\n  [ngClass]=\"classes()\"\n  [attr.data-testid]=\"testId()\"\n  [attr.aria-hidden]=\"!isActive\"\n  [attr.aria-labelledby]=\"'tab-' + index\"\n  role=\"tabpanel\"\n  [attr.tabindex]=\"isActive ? 0 : -1\"\n>\n  @if (shouldRender()) {\n    <div class=\"ix-tab-panel__content\">\n      <ng-content></ng-content>\n    </div>\n  }\n</div>", styles: [".ix-tab-panel{display:block;width:100%;height:100%;min-width:0;background-color:var(--bg1, #fff);box-sizing:border-box}.ix-tab-panel--hidden{display:none}.ix-tab-panel--active{display:block}.ix-tab-panel:focus-visible{outline:2px solid var(--primary, #0095d5);outline-offset:-2px;border-radius:4px}.ix-tab-panel__content{padding:0 16px;height:100%;overflow:auto;min-height:0;display:flex;flex-direction:column}@media (prefers-reduced-motion: reduce){.ix-tab-panel{transition:none}}@media (prefers-contrast: high){.ix-tab-panel{border:1px solid var(--lines, #e0e0e0)}.ix-tab-panel:focus-visible{outline-width:3px}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: A11yModule }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTabPanelComponent, isStandalone: true, selector: "ix-tab-panel", inputs: { label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, lazyLoad: { classPropertyName: "lazyLoad", publicName: "lazyLoad", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null } }, viewQueries: [{ propertyName: "content", first: true, predicate: ["content"], descendants: true, static: true }], ngImport: i0, template: "<div\n  [ngClass]=\"classes()\"\n  [attr.data-testid]=\"testId()\"\n  [attr.aria-hidden]=\"!isActive()\"\n  [attr.aria-labelledby]=\"'tab-' + index()\"\n  role=\"tabpanel\"\n  [attr.tabindex]=\"isActive() ? 0 : -1\"\n>\n  @if (shouldRender()) {\n    <div class=\"ix-tab-panel__content\">\n      <ng-content></ng-content>\n    </div>\n  }\n</div>", styles: [".ix-tab-panel{display:block;width:100%;height:100%;min-width:0;background-color:var(--bg1, #fff);box-sizing:border-box}.ix-tab-panel--hidden{display:none}.ix-tab-panel--active{display:block}.ix-tab-panel:focus-visible{outline:2px solid var(--primary, #0095d5);outline-offset:-2px;border-radius:4px}.ix-tab-panel__content{padding:0 16px;height:100%;overflow:auto;min-height:0;display:flex;flex-direction:column}@media (prefers-reduced-motion: reduce){.ix-tab-panel{transition:none}}@media (prefers-contrast: high){.ix-tab-panel{border:1px solid var(--lines, #e0e0e0)}.ix-tab-panel:focus-visible{outline-width:3px}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: A11yModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTabPanelComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-tab-panel', standalone: true, imports: [CommonModule, A11yModule], template: "<div\n  [ngClass]=\"classes()\"\n  [attr.data-testid]=\"testId()\"\n  [attr.aria-hidden]=\"!isActive\"\n  [attr.aria-labelledby]=\"'tab-' + index\"\n  role=\"tabpanel\"\n  [attr.tabindex]=\"isActive ? 0 : -1\"\n>\n  @if (shouldRender()) {\n    <div class=\"ix-tab-panel__content\">\n      <ng-content></ng-content>\n    </div>\n  }\n</div>", styles: [".ix-tab-panel{display:block;width:100%;height:100%;min-width:0;background-color:var(--bg1, #fff);box-sizing:border-box}.ix-tab-panel--hidden{display:none}.ix-tab-panel--active{display:block}.ix-tab-panel:focus-visible{outline:2px solid var(--primary, #0095d5);outline-offset:-2px;border-radius:4px}.ix-tab-panel__content{padding:0 16px;height:100%;overflow:auto;min-height:0;display:flex;flex-direction:column}@media (prefers-reduced-motion: reduce){.ix-tab-panel{transition:none}}@media (prefers-contrast: high){.ix-tab-panel{border:1px solid var(--lines, #e0e0e0)}.ix-tab-panel:focus-visible{outline-width:3px}}\n"] }]
+            args: [{ selector: 'ix-tab-panel', standalone: true, imports: [CommonModule, A11yModule], template: "<div\n  [ngClass]=\"classes()\"\n  [attr.data-testid]=\"testId()\"\n  [attr.aria-hidden]=\"!isActive()\"\n  [attr.aria-labelledby]=\"'tab-' + index()\"\n  role=\"tabpanel\"\n  [attr.tabindex]=\"isActive() ? 0 : -1\"\n>\n  @if (shouldRender()) {\n    <div class=\"ix-tab-panel__content\">\n      <ng-content></ng-content>\n    </div>\n  }\n</div>", styles: [".ix-tab-panel{display:block;width:100%;height:100%;min-width:0;background-color:var(--bg1, #fff);box-sizing:border-box}.ix-tab-panel--hidden{display:none}.ix-tab-panel--active{display:block}.ix-tab-panel:focus-visible{outline:2px solid var(--primary, #0095d5);outline-offset:-2px;border-radius:4px}.ix-tab-panel__content{padding:0 16px;height:100%;overflow:auto;min-height:0;display:flex;flex-direction:column}@media (prefers-reduced-motion: reduce){.ix-tab-panel{transition:none}}@media (prefers-contrast: high){.ix-tab-panel{border:1px solid var(--lines, #e0e0e0)}.ix-tab-panel:focus-visible{outline-width:3px}}\n"] }]
         }], propDecorators: { content: [{
                 type: ViewChild,
                 args: ['content', { static: true }]
@@ -1796,22 +1784,48 @@ class IxTabsComponent {
     tabs;
     panels;
     tabHeader;
-    selectedIndex = 0;
-    orientation = 'horizontal';
-    highlightPosition = 'bottom';
-    selectedIndexChange = new EventEmitter();
-    tabChange = new EventEmitter();
-    highlightBarLeft = 0;
-    highlightBarWidth = 0;
-    highlightBarTop = 0;
-    highlightBarHeight = 0; // Start hidden
-    highlightBarVisible = false;
+    selectedIndex = input(0, ...(ngDevMode ? [{ debugName: "selectedIndex" }] : []));
+    orientation = input('horizontal', ...(ngDevMode ? [{ debugName: "orientation" }] : []));
+    highlightPosition = input('bottom', ...(ngDevMode ? [{ debugName: "highlightPosition" }] : []));
+    selectedIndexChange = output();
+    tabChange = output();
+    // Internal state for selected index (mutable)
+    internalSelectedIndex = signal(0, ...(ngDevMode ? [{ debugName: "internalSelectedIndex" }] : []));
+    highlightBarLeft = signal(0, ...(ngDevMode ? [{ debugName: "highlightBarLeft" }] : []));
+    highlightBarWidth = signal(0, ...(ngDevMode ? [{ debugName: "highlightBarWidth" }] : []));
+    highlightBarTop = signal(0, ...(ngDevMode ? [{ debugName: "highlightBarTop" }] : []));
+    highlightBarHeight = signal(0, ...(ngDevMode ? [{ debugName: "highlightBarHeight" }] : []));
+    highlightBarVisible = signal(false, ...(ngDevMode ? [{ debugName: "highlightBarVisible" }] : []));
     focusMonitor = inject(FocusMonitor);
     liveAnnouncer = inject(LiveAnnouncer);
     cdr = inject(ChangeDetectorRef);
+    constructor() {
+        // Sync input to internal state
+        effect(() => {
+            this.internalSelectedIndex.set(this.selectedIndex());
+        });
+        // Reactive child state management - update tabs and panels when selectedIndex changes
+        effect(() => {
+            const currentIndex = this.internalSelectedIndex();
+            if (this.tabs && this.tabs.length > 0) {
+                this.tabs.forEach((tab, i) => {
+                    tab.isActive.set(i === currentIndex);
+                });
+            }
+            if (this.panels && this.panels.length > 0) {
+                this.panels.forEach((panel, i) => {
+                    panel.isActive.set(i === currentIndex);
+                    if (i === currentIndex) {
+                        panel.onActivate();
+                    }
+                });
+            }
+            this.cdr.detectChanges();
+        });
+    }
     ngAfterContentInit() {
         this.initializeTabs();
-        this.selectTab(this.selectedIndex);
+        this.selectTab(this.internalSelectedIndex());
         // Listen for tab changes
         this.tabs.changes.subscribe(() => {
             this.initializeTabs();
@@ -1822,7 +1836,7 @@ class IxTabsComponent {
         // Wait for next tick to ensure DOM is fully rendered
         setTimeout(() => {
             this.updateHighlightBar();
-            this.highlightBarVisible = true;
+            this.highlightBarVisible.set(true);
             this.cdr.detectChanges();
         }, 0);
     }
@@ -1834,9 +1848,10 @@ class IxTabsComponent {
         });
     }
     initializeTabs() {
+        const currentIndex = this.internalSelectedIndex();
         this.tabs.forEach((tab, index) => {
-            tab.index = index;
-            tab.isActive = index === this.selectedIndex;
+            tab.index.set(index);
+            tab.isActive.set(index === currentIndex);
             tab.tabsComponent = this;
             // Set up focus monitoring
             if (tab.elementRef) {
@@ -1849,14 +1864,14 @@ class IxTabsComponent {
             }
             // Set up click handlers
             tab.selected.subscribe(() => {
-                if (!tab.disabled) {
+                if (!tab.disabled()) {
                     this.selectTab(index);
                 }
             });
         });
         this.panels.forEach((panel, index) => {
-            panel.index = index;
-            panel.isActive = index === this.selectedIndex;
+            panel.index.set(index);
+            panel.isActive.set(index === currentIndex);
         });
         // Trigger change detection to update DOM
         this.cdr.detectChanges();
@@ -1866,24 +1881,12 @@ class IxTabsComponent {
             return;
         }
         const tab = this.tabs.get(index);
-        if (tab && tab.disabled) {
+        if (tab && tab.disabled()) {
             return;
         }
-        const previousIndex = this.selectedIndex;
-        this.selectedIndex = index;
-        // Update tab states
-        this.tabs.forEach((tab, i) => {
-            tab.isActive = i === index;
-        });
-        // Update panel states
-        this.panels.forEach((panel, i) => {
-            panel.isActive = i === index;
-            if (i === index) {
-                panel.onActivate();
-            }
-        });
-        // Trigger change detection to update DOM
-        this.cdr.detectChanges();
+        const previousIndex = this.internalSelectedIndex();
+        this.internalSelectedIndex.set(index);
+        // Effect will update child states automatically
         // Update highlight bar
         this.updateHighlightBar();
         // Emit events
@@ -1900,7 +1903,7 @@ class IxTabsComponent {
         if (!this.tabHeader || !this.tabs || this.tabs.length === 0) {
             return;
         }
-        const activeTab = this.tabs.get(this.selectedIndex);
+        const activeTab = this.tabs.get(this.internalSelectedIndex());
         if (!activeTab || !activeTab.elementRef) {
             return;
         }
@@ -1909,32 +1912,32 @@ class IxTabsComponent {
         // Get the position and dimensions of the active tab relative to the header
         const tabRect = tabElement.getBoundingClientRect();
         const headerRect = headerElement.getBoundingClientRect();
-        if (this.orientation === 'vertical') {
+        if (this.orientation() === 'vertical') {
             // For vertical tabs, animate top position and height
-            this.highlightBarTop = tabRect.top - headerRect.top;
-            this.highlightBarHeight = tabRect.height;
+            this.highlightBarTop.set(tabRect.top - headerRect.top);
+            this.highlightBarHeight.set(tabRect.height);
             // Position highlight bar based on highlightPosition
-            if (this.highlightPosition === 'left') {
-                this.highlightBarLeft = tabRect.left - headerRect.left;
-                this.highlightBarWidth = 3;
+            if (this.highlightPosition() === 'left') {
+                this.highlightBarLeft.set(tabRect.left - headerRect.left);
+                this.highlightBarWidth.set(3);
             }
             else { // right
-                this.highlightBarLeft = (tabRect.right - headerRect.left) - 3;
-                this.highlightBarWidth = 3;
+                this.highlightBarLeft.set((tabRect.right - headerRect.left) - 3);
+                this.highlightBarWidth.set(3);
             }
         }
         else {
             // For horizontal tabs, animate left position and width
-            this.highlightBarLeft = tabRect.left - headerRect.left;
-            this.highlightBarWidth = tabRect.width;
+            this.highlightBarLeft.set(tabRect.left - headerRect.left);
+            this.highlightBarWidth.set(tabRect.width);
             // Position highlight bar based on highlightPosition
-            if (this.highlightPosition === 'top') {
-                this.highlightBarTop = tabRect.top - headerRect.top;
-                this.highlightBarHeight = 2;
+            if (this.highlightPosition() === 'top') {
+                this.highlightBarTop.set(tabRect.top - headerRect.top);
+                this.highlightBarHeight.set(2);
             }
             else { // bottom
-                this.highlightBarTop = (tabRect.bottom - headerRect.top) - 2;
-                this.highlightBarHeight = 2;
+                this.highlightBarTop.set((tabRect.bottom - headerRect.top) - 2);
+                this.highlightBarHeight.set(2);
             }
         }
         // Trigger change detection to update the highlight bar position
@@ -1944,7 +1947,7 @@ class IxTabsComponent {
         let targetIndex = currentIndex;
         switch (event.keyCode) {
             case LEFT_ARROW:
-                if (this.orientation === 'horizontal') {
+                if (this.orientation() === 'horizontal') {
                     targetIndex = this.getPreviousEnabledTabIndex(currentIndex);
                 }
                 else {
@@ -1952,7 +1955,7 @@ class IxTabsComponent {
                 }
                 break;
             case RIGHT_ARROW:
-                if (this.orientation === 'horizontal') {
+                if (this.orientation() === 'horizontal') {
                     targetIndex = this.getNextEnabledTabIndex(currentIndex);
                 }
                 else {
@@ -1960,7 +1963,7 @@ class IxTabsComponent {
                 }
                 break;
             case UP_ARROW:
-                if (this.orientation === 'vertical') {
+                if (this.orientation() === 'vertical') {
                     targetIndex = this.getPreviousEnabledTabIndex(currentIndex);
                 }
                 else {
@@ -1968,7 +1971,7 @@ class IxTabsComponent {
                 }
                 break;
             case DOWN_ARROW:
-                if (this.orientation === 'vertical') {
+                if (this.orientation() === 'vertical') {
                     targetIndex = this.getNextEnabledTabIndex(currentIndex);
                 }
                 else {
@@ -1996,7 +1999,7 @@ class IxTabsComponent {
     }
     getPreviousEnabledTabIndex(currentIndex) {
         for (let i = currentIndex - 1; i >= 0; i--) {
-            if (!this.tabs.get(i)?.disabled) {
+            if (!this.tabs.get(i)?.disabled()) {
                 return i;
             }
         }
@@ -2004,7 +2007,7 @@ class IxTabsComponent {
     }
     getNextEnabledTabIndex(currentIndex) {
         for (let i = currentIndex + 1; i < this.tabs.length; i++) {
-            if (!this.tabs.get(i)?.disabled) {
+            if (!this.tabs.get(i)?.disabled()) {
                 return i;
             }
         }
@@ -2012,7 +2015,7 @@ class IxTabsComponent {
     }
     getFirstEnabledTabIndex() {
         for (let i = 0; i < this.tabs.length; i++) {
-            if (!this.tabs.get(i)?.disabled) {
+            if (!this.tabs.get(i)?.disabled()) {
                 return i;
             }
         }
@@ -2020,7 +2023,7 @@ class IxTabsComponent {
     }
     getLastEnabledTabIndex() {
         for (let i = this.tabs.length - 1; i >= 0; i--) {
-            if (!this.tabs.get(i)?.disabled) {
+            if (!this.tabs.get(i)?.disabled()) {
                 return i;
             }
         }
@@ -2032,25 +2035,25 @@ class IxTabsComponent {
             tab.elementRef.nativeElement.focus();
         }
     }
-    get classes() {
+    classes = computed(() => {
         const classes = ['ix-tabs'];
-        if (this.orientation === 'vertical') {
+        if (this.orientation() === 'vertical') {
             classes.push('ix-tabs--vertical');
         }
         else {
             classes.push('ix-tabs--horizontal');
         }
         // Add highlight position class
-        classes.push(`ix-tabs--highlight-${this.highlightPosition}`);
+        classes.push(`ix-tabs--highlight-${this.highlightPosition()}`);
         return classes.join(' ');
-    }
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTabsComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTabsComponent, isStandalone: true, selector: "ix-tabs", inputs: { selectedIndex: "selectedIndex", orientation: "orientation", highlightPosition: "highlightPosition" }, outputs: { selectedIndexChange: "selectedIndexChange", tabChange: "tabChange" }, queries: [{ propertyName: "tabs", predicate: IxTabComponent }, { propertyName: "panels", predicate: IxTabPanelComponent }], viewQueries: [{ propertyName: "tabHeader", first: true, predicate: ["tabHeader"], descendants: true }], ngImport: i0, template: "<div [ngClass]=\"classes\" role=\"tablist\" [attr.aria-orientation]=\"orientation\">\n  <div class=\"ix-tabs__header\" #tabHeader>\n    <ng-content select=\"ix-tab\"></ng-content>\n    @if (highlightBarVisible) {\n      <div class=\"ix-tabs__highlight-bar\"\n           [style.left.px]=\"highlightBarLeft\"\n           [style.width.px]=\"highlightBarWidth\"\n           [style.top.px]=\"highlightBarTop\"\n           [style.height.px]=\"highlightBarHeight\">\n      </div>\n    }\n  </div>\n  \n  <div class=\"ix-tabs__content\">\n    <ng-content select=\"ix-tab-panel\"></ng-content>\n  </div>\n</div>", styles: [".ix-tabs{display:flex;flex-direction:column;width:100%;height:100%;min-width:0;font-family:var(--font-family-body, \"Inter\", sans-serif)}.ix-tabs--disabled{opacity:.6;pointer-events:none}.ix-tabs--vertical{flex-direction:row}.ix-tabs--vertical .ix-tabs__header{flex-direction:column;border-bottom:none;border-right:1px solid var(--lines, #e0e0e0);min-width:240px;width:auto}.ix-tabs--vertical .ix-tabs__content{flex:1;min-width:0}.ix-tabs--vertical .ix-tabs__highlight-bar{bottom:auto;height:auto}.ix-tabs--vertical .ix-tab{justify-content:flex-start;text-align:left;width:100%}.ix-tabs--vertical .ix-tab:hover:not(.ix-tab--disabled){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tabs__header{display:flex;background-color:var(--bg1, #fff);position:relative;border-bottom:1px solid var(--lines, #e0e0e0)}.ix-tabs__highlight-bar{position:absolute;bottom:-1px;height:2px;background-color:var(--primary, #0095d5);transition:left .3s ease,width .3s ease,top .3s ease,height .3s ease;z-index:1}.ix-tabs__content{flex:1;position:relative;background-color:var(--bg1, #fff);min-height:0;width:100%;overflow:hidden}@media (max-width: 768px){.ix-tabs__header{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-tabs__header::-webkit-scrollbar{display:none}.ix-tabs--vertical .ix-tabs__header{overflow-y:auto;overflow-x:visible;max-height:300px}}@media (prefers-reduced-motion: reduce){.ix-tabs__highlight-bar{transition:none}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: A11yModule }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTabsComponent, isStandalone: true, selector: "ix-tabs", inputs: { selectedIndex: { classPropertyName: "selectedIndex", publicName: "selectedIndex", isSignal: true, isRequired: false, transformFunction: null }, orientation: { classPropertyName: "orientation", publicName: "orientation", isSignal: true, isRequired: false, transformFunction: null }, highlightPosition: { classPropertyName: "highlightPosition", publicName: "highlightPosition", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectedIndexChange: "selectedIndexChange", tabChange: "tabChange" }, queries: [{ propertyName: "tabs", predicate: IxTabComponent }, { propertyName: "panels", predicate: IxTabPanelComponent }], viewQueries: [{ propertyName: "tabHeader", first: true, predicate: ["tabHeader"], descendants: true }], ngImport: i0, template: "<div [ngClass]=\"classes()\" role=\"tablist\" [attr.aria-orientation]=\"orientation()\">\n  <div class=\"ix-tabs__header\" #tabHeader>\n    <ng-content select=\"ix-tab\"></ng-content>\n    @if (highlightBarVisible()) {\n      <div class=\"ix-tabs__highlight-bar\"\n           [style.left.px]=\"highlightBarLeft()\"\n           [style.width.px]=\"highlightBarWidth()\"\n           [style.top.px]=\"highlightBarTop()\"\n           [style.height.px]=\"highlightBarHeight()\">\n      </div>\n    }\n  </div>\n\n  <div class=\"ix-tabs__content\">\n    <ng-content select=\"ix-tab-panel\"></ng-content>\n  </div>\n</div>", styles: [".ix-tabs{display:flex;flex-direction:column;width:100%;height:100%;min-width:0;font-family:var(--font-family-body, \"Inter\", sans-serif)}.ix-tabs--disabled{opacity:.6;pointer-events:none}.ix-tabs--vertical{flex-direction:row}.ix-tabs--vertical .ix-tabs__header{flex-direction:column;border-bottom:none;border-right:1px solid var(--lines, #e0e0e0);min-width:240px;width:auto}.ix-tabs--vertical .ix-tabs__content{flex:1;min-width:0}.ix-tabs--vertical .ix-tabs__highlight-bar{bottom:auto;height:auto}.ix-tabs--vertical .ix-tab{justify-content:flex-start;text-align:left;width:100%}.ix-tabs--vertical .ix-tab:hover:not(.ix-tab--disabled){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tabs__header{display:flex;background-color:var(--bg1, #fff);position:relative;border-bottom:1px solid var(--lines, #e0e0e0)}.ix-tabs__highlight-bar{position:absolute;bottom:-1px;height:2px;background-color:var(--primary, #0095d5);transition:left .3s ease,width .3s ease,top .3s ease,height .3s ease;z-index:1}.ix-tabs__content{flex:1;position:relative;background-color:var(--bg1, #fff);min-height:0;width:100%;overflow:hidden}@media (max-width: 768px){.ix-tabs__header{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-tabs__header::-webkit-scrollbar{display:none}.ix-tabs--vertical .ix-tabs__header{overflow-y:auto;overflow-x:visible;max-height:300px}}@media (prefers-reduced-motion: reduce){.ix-tabs__highlight-bar{transition:none}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: A11yModule }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTabsComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-tabs', standalone: true, imports: [CommonModule, A11yModule, IxTabComponent, IxTabPanelComponent], changeDetection: ChangeDetectionStrategy.OnPush, template: "<div [ngClass]=\"classes\" role=\"tablist\" [attr.aria-orientation]=\"orientation\">\n  <div class=\"ix-tabs__header\" #tabHeader>\n    <ng-content select=\"ix-tab\"></ng-content>\n    @if (highlightBarVisible) {\n      <div class=\"ix-tabs__highlight-bar\"\n           [style.left.px]=\"highlightBarLeft\"\n           [style.width.px]=\"highlightBarWidth\"\n           [style.top.px]=\"highlightBarTop\"\n           [style.height.px]=\"highlightBarHeight\">\n      </div>\n    }\n  </div>\n  \n  <div class=\"ix-tabs__content\">\n    <ng-content select=\"ix-tab-panel\"></ng-content>\n  </div>\n</div>", styles: [".ix-tabs{display:flex;flex-direction:column;width:100%;height:100%;min-width:0;font-family:var(--font-family-body, \"Inter\", sans-serif)}.ix-tabs--disabled{opacity:.6;pointer-events:none}.ix-tabs--vertical{flex-direction:row}.ix-tabs--vertical .ix-tabs__header{flex-direction:column;border-bottom:none;border-right:1px solid var(--lines, #e0e0e0);min-width:240px;width:auto}.ix-tabs--vertical .ix-tabs__content{flex:1;min-width:0}.ix-tabs--vertical .ix-tabs__highlight-bar{bottom:auto;height:auto}.ix-tabs--vertical .ix-tab{justify-content:flex-start;text-align:left;width:100%}.ix-tabs--vertical .ix-tab:hover:not(.ix-tab--disabled){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tabs__header{display:flex;background-color:var(--bg1, #fff);position:relative;border-bottom:1px solid var(--lines, #e0e0e0)}.ix-tabs__highlight-bar{position:absolute;bottom:-1px;height:2px;background-color:var(--primary, #0095d5);transition:left .3s ease,width .3s ease,top .3s ease,height .3s ease;z-index:1}.ix-tabs__content{flex:1;position:relative;background-color:var(--bg1, #fff);min-height:0;width:100%;overflow:hidden}@media (max-width: 768px){.ix-tabs__header{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-tabs__header::-webkit-scrollbar{display:none}.ix-tabs--vertical .ix-tabs__header{overflow-y:auto;overflow-x:visible;max-height:300px}}@media (prefers-reduced-motion: reduce){.ix-tabs__highlight-bar{transition:none}}\n"] }]
-        }], propDecorators: { tabs: [{
+            args: [{ selector: 'ix-tabs', standalone: true, imports: [CommonModule, A11yModule, IxTabComponent, IxTabPanelComponent], changeDetection: ChangeDetectionStrategy.OnPush, template: "<div [ngClass]=\"classes()\" role=\"tablist\" [attr.aria-orientation]=\"orientation()\">\n  <div class=\"ix-tabs__header\" #tabHeader>\n    <ng-content select=\"ix-tab\"></ng-content>\n    @if (highlightBarVisible()) {\n      <div class=\"ix-tabs__highlight-bar\"\n           [style.left.px]=\"highlightBarLeft()\"\n           [style.width.px]=\"highlightBarWidth()\"\n           [style.top.px]=\"highlightBarTop()\"\n           [style.height.px]=\"highlightBarHeight()\">\n      </div>\n    }\n  </div>\n\n  <div class=\"ix-tabs__content\">\n    <ng-content select=\"ix-tab-panel\"></ng-content>\n  </div>\n</div>", styles: [".ix-tabs{display:flex;flex-direction:column;width:100%;height:100%;min-width:0;font-family:var(--font-family-body, \"Inter\", sans-serif)}.ix-tabs--disabled{opacity:.6;pointer-events:none}.ix-tabs--vertical{flex-direction:row}.ix-tabs--vertical .ix-tabs__header{flex-direction:column;border-bottom:none;border-right:1px solid var(--lines, #e0e0e0);min-width:240px;width:auto}.ix-tabs--vertical .ix-tabs__content{flex:1;min-width:0}.ix-tabs--vertical .ix-tabs__highlight-bar{bottom:auto;height:auto}.ix-tabs--vertical .ix-tab{justify-content:flex-start;text-align:left;width:100%}.ix-tabs--vertical .ix-tab:hover:not(.ix-tab--disabled){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tabs__header{display:flex;background-color:var(--bg1, #fff);position:relative;border-bottom:1px solid var(--lines, #e0e0e0)}.ix-tabs__highlight-bar{position:absolute;bottom:-1px;height:2px;background-color:var(--primary, #0095d5);transition:left .3s ease,width .3s ease,top .3s ease,height .3s ease;z-index:1}.ix-tabs__content{flex:1;position:relative;background-color:var(--bg1, #fff);min-height:0;width:100%;overflow:hidden}@media (max-width: 768px){.ix-tabs__header{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-tabs__header::-webkit-scrollbar{display:none}.ix-tabs--vertical .ix-tabs__header{overflow-y:auto;overflow-x:visible;max-height:300px}}@media (prefers-reduced-motion: reduce){.ix-tabs__highlight-bar{transition:none}}\n"] }]
+        }], ctorParameters: () => [], propDecorators: { tabs: [{
                 type: ContentChildren,
                 args: [IxTabComponent]
             }], panels: [{
@@ -2059,16 +2062,6 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             }], tabHeader: [{
                 type: ViewChild,
                 args: ['tabHeader']
-            }], selectedIndex: [{
-                type: Input
-            }], orientation: [{
-                type: Input
-            }], highlightPosition: [{
-                type: Input
-            }], selectedIndexChange: [{
-                type: Output
-            }], tabChange: [{
-                type: Output
             }] } });
 
 class IxKeyboardShortcutComponent {
@@ -7916,7 +7909,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * To regenerate this file, run:
  *   npm run generate-icons
  *
- * Generated: 2025-12-29T17:50:10.110Z
+ * Generated: 2025-12-29T18:08:30.719Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 /* eslint-disable */

@@ -127,52 +127,6 @@ export const WithDisabledTab: Story = {
   })
 };
 
-export const WithIcons: Story = {
-  args: {
-    selectedIndex: 0
-  },
-  render: (args) => ({
-    props: {
-      ...args,
-      dashboardIcon: 'mdi:dashboard',
-      settingsIcon: 'mdi:settings',
-      usersIcon: 'mdi:users',
-      reportsIcon: 'mdi:reports'
-    },
-    template: `
-      <div style="width: 100%; height: 400px; border: 1px solid var(--lines); border-radius: 4px;">
-        <ix-tabs 
-          [selectedIndex]="selectedIndex"
-          (selectedIndexChange)="selectedIndexChange($event)"
-          (tabChange)="tabChange($event)"
-          style="width: 100%; height: 100%;"
-        >
-          <ix-tab label="Dashboard" [icon]="dashboardIcon"></ix-tab>
-          <ix-tab label="Settings" [icon]="settingsIcon"></ix-tab>
-          <ix-tab label="Users" [icon]="usersIcon"></ix-tab>
-          <ix-tab label="Reports" [icon]="reportsIcon"></ix-tab>
-          
-          <ix-tab-panel>
-            <h3>Dashboard Panel</h3>
-          </ix-tab-panel>
-          
-          <ix-tab-panel>
-            <h3>Settings Panel</h3>
-          </ix-tab-panel>
-          
-          <ix-tab-panel>
-            <h3>Users Panel</h3>
-          </ix-tab-panel>
-          
-          <ix-tab-panel>
-            <h3>Reports Panel</h3>
-          </ix-tab-panel>
-        </ix-tabs>
-      </div>
-    `
-  })
-};
-
 export const WithTemplateIcons: Story = {
   args: {
     selectedIndex: 0

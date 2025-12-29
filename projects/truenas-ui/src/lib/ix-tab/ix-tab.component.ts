@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ElementRef, inject, TemplateRef, ContentChild, AfterContentInit } from '@angular/core';
+import { Component, input, output, ElementRef, inject, TemplateRef, ContentChild, AfterContentInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { A11yModule } from '@angular/cdk/a11y';
 
@@ -10,60 +10,60 @@ import { A11yModule } from '@angular/cdk/a11y';
   styleUrl: './ix-tab.component.scss'
 })
 export class IxTabComponent implements AfterContentInit {
-  @Input() label = '';
-  @Input() disabled = false;
-  @Input() icon?: string;
-  @Input() iconTemplate?: TemplateRef<any>;
-  @Input() testId?: string;
+  label = input<string>('');
+  disabled = input<boolean>(false);
+  icon = input<string | undefined>(undefined);
+  iconTemplate = input<TemplateRef<any> | undefined>(undefined);
+  testId = input<string | undefined>(undefined);
 
-  @Output() selected = new EventEmitter<void>();
+  selected = output<void>();
 
   @ContentChild('iconContent') iconContent?: TemplateRef<any>;
 
-  // Internal properties set by parent IxTabsComponent
-  index = 0;
-  isActive = false;
+  // Internal properties set by parent IxTabsComponent (public signals for parent control)
+  public index = signal<number>(0);
+  public isActive = signal<boolean>(false);
   tabsComponent?: any; // Will be set by parent
 
   elementRef = inject(ElementRef<HTMLElement>);
-  
-  hasIconContent = false;
+
+  protected hasIconContent = signal<boolean>(false);
 
   ngAfterContentInit() {
-    this.hasIconContent = !!this.iconContent;
+    this.hasIconContent.set(!!this.iconContent);
   }
 
   onClick() {
-    if (!this.disabled) {
+    if (!this.disabled()) {
       this.selected.emit();
     }
   }
 
   onKeydown(event: KeyboardEvent) {
     if (this.tabsComponent) {
-      this.tabsComponent.onKeydown(event, this.index);
+      this.tabsComponent.onKeydown(event, this.index());
     }
   }
 
-  get classes(): string {
+  classes = computed(() => {
     const classes = ['ix-tab'];
-    
-    if (this.isActive) {
+
+    if (this.isActive()) {
       classes.push('ix-tab--active');
     }
-    
-    if (this.disabled) {
+
+    if (this.disabled()) {
       classes.push('ix-tab--disabled');
     }
 
     return classes.join(' ');
-  }
+  });
 
-  get tabIndex(): number {
-    return this.isActive ? 0 : -1;
-  }
+  tabIndex = computed(() => {
+    return this.isActive() ? 0 : -1;
+  });
 
-  get hasIcon(): boolean {
-    return !!(this.iconContent || this.iconTemplate || this.icon);
-  }
+  hasIcon = computed(() => {
+    return !!(this.hasIconContent() || this.iconTemplate() || this.icon());
+  });
 }

@@ -661,26 +661,26 @@ declare class IxSlideToggleComponent implements AfterViewInit, OnDestroy, Contro
 }
 
 declare class IxTabComponent implements AfterContentInit {
-    label: string;
-    disabled: boolean;
-    icon?: string;
-    iconTemplate?: TemplateRef<any>;
-    testId?: string;
-    selected: EventEmitter<void>;
+    label: _angular_core.InputSignal<string>;
+    disabled: _angular_core.InputSignal<boolean>;
+    icon: _angular_core.InputSignal<string | undefined>;
+    iconTemplate: _angular_core.InputSignal<TemplateRef<any> | undefined>;
+    testId: _angular_core.InputSignal<string | undefined>;
+    selected: _angular_core.OutputEmitterRef<void>;
     iconContent?: TemplateRef<any>;
-    index: number;
-    isActive: boolean;
+    index: _angular_core.WritableSignal<number>;
+    isActive: _angular_core.WritableSignal<boolean>;
     tabsComponent?: any;
     elementRef: ElementRef<any>;
-    hasIconContent: boolean;
+    protected hasIconContent: _angular_core.WritableSignal<boolean>;
     ngAfterContentInit(): void;
     onClick(): void;
     onKeydown(event: KeyboardEvent): void;
-    get classes(): string;
-    get tabIndex(): number;
-    get hasIcon(): boolean;
+    classes: _angular_core.Signal<string>;
+    tabIndex: _angular_core.Signal<0 | -1>;
+    hasIcon: _angular_core.Signal<boolean>;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTabComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTabComponent, "ix-tab", never, { "label": { "alias": "label"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; "icon": { "alias": "icon"; "required": false; }; "iconTemplate": { "alias": "iconTemplate"; "required": false; }; "testId": { "alias": "testId"; "required": false; }; }, { "selected": "selected"; }, ["iconContent"], ["*"], true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTabComponent, "ix-tab", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "icon": { "alias": "icon"; "required": false; "isSignal": true; }; "iconTemplate": { "alias": "iconTemplate"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, { "selected": "selected"; }, ["iconContent"], ["*"], true, never>;
 }
 
 declare class IxTabPanelComponent {
@@ -688,9 +688,9 @@ declare class IxTabPanelComponent {
     lazyLoad: _angular_core.InputSignal<boolean>;
     testId: _angular_core.InputSignal<string | undefined>;
     content: TemplateRef<any>;
-    index: number;
-    isActive: boolean;
-    hasBeenActive: boolean;
+    index: _angular_core.WritableSignal<number>;
+    isActive: _angular_core.WritableSignal<boolean>;
+    hasBeenActive: _angular_core.WritableSignal<boolean>;
     elementRef: ElementRef<any>;
     classes: _angular_core.Signal<string>;
     shouldRender: _angular_core.Signal<boolean>;
@@ -708,19 +708,21 @@ declare class IxTabsComponent implements AfterContentInit, AfterViewInit {
     tabs: QueryList<IxTabComponent>;
     panels: QueryList<IxTabPanelComponent>;
     tabHeader: ElementRef<HTMLElement>;
-    selectedIndex: number;
-    orientation: 'horizontal' | 'vertical';
-    highlightPosition: 'left' | 'right' | 'top' | 'bottom';
-    selectedIndexChange: EventEmitter<number>;
-    tabChange: EventEmitter<TabChangeEvent>;
-    highlightBarLeft: number;
-    highlightBarWidth: number;
-    highlightBarTop: number;
-    highlightBarHeight: number;
-    highlightBarVisible: boolean;
+    selectedIndex: _angular_core.InputSignal<number>;
+    orientation: _angular_core.InputSignal<"horizontal" | "vertical">;
+    highlightPosition: _angular_core.InputSignal<"top" | "bottom" | "left" | "right">;
+    selectedIndexChange: _angular_core.OutputEmitterRef<number>;
+    tabChange: _angular_core.OutputEmitterRef<TabChangeEvent>;
+    private internalSelectedIndex;
+    highlightBarLeft: _angular_core.WritableSignal<number>;
+    highlightBarWidth: _angular_core.WritableSignal<number>;
+    highlightBarTop: _angular_core.WritableSignal<number>;
+    highlightBarHeight: _angular_core.WritableSignal<number>;
+    highlightBarVisible: _angular_core.WritableSignal<boolean>;
     private focusMonitor;
     private liveAnnouncer;
     private cdr;
+    constructor();
     ngAfterContentInit(): void;
     ngAfterViewInit(): void;
     ngOnDestroy(): void;
@@ -733,9 +735,9 @@ declare class IxTabsComponent implements AfterContentInit, AfterViewInit {
     private getFirstEnabledTabIndex;
     private getLastEnabledTabIndex;
     private focusTab;
-    get classes(): string;
+    classes: _angular_core.Signal<string>;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTabsComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTabsComponent, "ix-tabs", never, { "selectedIndex": { "alias": "selectedIndex"; "required": false; }; "orientation": { "alias": "orientation"; "required": false; }; "highlightPosition": { "alias": "highlightPosition"; "required": false; }; }, { "selectedIndexChange": "selectedIndexChange"; "tabChange": "tabChange"; }, ["tabs", "panels"], ["ix-tab", "ix-tab-panel"], true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTabsComponent, "ix-tabs", never, { "selectedIndex": { "alias": "selectedIndex"; "required": false; "isSignal": true; }; "orientation": { "alias": "orientation"; "required": false; "isSignal": true; }; "highlightPosition": { "alias": "highlightPosition"; "required": false; "isSignal": true; }; }, { "selectedIndexChange": "selectedIndexChange"; "tabChange": "tabChange"; }, ["tabs", "panels"], ["ix-tab", "ix-tab-panel"], true, never>;
 }
 
 /**
