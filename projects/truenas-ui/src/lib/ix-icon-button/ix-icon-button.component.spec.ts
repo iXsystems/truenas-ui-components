@@ -35,7 +35,7 @@ describe('IxIconButtonComponent', () => {
   it('should not emit onClick when disabled', () => {
     const clickSpy = jest.fn();
     component.onClick.subscribe(clickSpy);
-    component.disabled = true;
+    fixture.componentRef.setInput('disabled', true);
     fixture.detectChanges();
 
     const button = fixture.nativeElement.querySelector('button');
@@ -45,22 +45,22 @@ describe('IxIconButtonComponent', () => {
   });
 
   it('should render icon with correct properties', () => {
-    component.name = 'home';
-    component.size = 'lg';
-    component.library = 'mdi';
+    fixture.componentRef.setInput('name', 'home');
+    fixture.componentRef.setInput('size', 'lg');
+    fixture.componentRef.setInput('library', 'mdi');
     fixture.detectChanges();
 
     const icon = fixture.nativeElement.querySelector('ix-icon');
     expect(icon).toBeTruthy();
 
     // Check component properties directly instead of DOM attributes
-    expect(component.name).toBe('home');
-    expect(component.size).toBe('lg');
-    expect(component.library).toBe('mdi');
+    expect(component.name()).toBe('home');
+    expect(component.size()).toBe('lg');
+    expect(component.library()).toBe('mdi');
   });
 
   it('should use aria-label when provided', () => {
-    component.ariaLabel = 'Custom label';
+    fixture.componentRef.setInput('ariaLabel', 'Custom label');
     fixture.detectChanges();
 
     const button = fixture.nativeElement.querySelector('button');
@@ -68,7 +68,7 @@ describe('IxIconButtonComponent', () => {
   });
 
   it('should use name as fallback aria-label', () => {
-    component.name = 'settings';
+    fixture.componentRef.setInput('name', 'settings');
     fixture.detectChanges();
 
     const button = fixture.nativeElement.querySelector('button');
@@ -76,7 +76,7 @@ describe('IxIconButtonComponent', () => {
   });
 
   it('should apply tooltip', () => {
-    component.tooltip = 'Click me';
+    fixture.componentRef.setInput('tooltip', 'Click me');
     fixture.detectChanges();
 
     const button = fixture.nativeElement.querySelector('button');

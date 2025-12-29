@@ -1,5 +1,5 @@
 import * as i0 from '@angular/core';
-import { Injectable, Component, input, ChangeDetectionStrategy, inject, ViewChild, Input, ViewEncapsulation, computed, output, EventEmitter, Output, signal, forwardRef, Directive, TemplateRef, HostListener, ElementRef, ContentChild, ChangeDetectorRef, ContentChildren, Optional, Inject, Pipe, Host } from '@angular/core';
+import { Injectable, Component, input, ChangeDetectionStrategy, inject, effect, computed, ViewChild, ViewEncapsulation, output, signal, forwardRef, Directive, EventEmitter, TemplateRef, Output, Input, HostListener, ElementRef, ContentChild, ChangeDetectorRef, ContentChildren, Optional, Inject, Pipe, Host } from '@angular/core';
 import * as i1$2 from '@angular/common';
 import { CommonModule, NgIf, DOCUMENT } from '@angular/common';
 import * as i1$1 from '@angular/platform-browser';
@@ -404,33 +404,23 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
 class IxIconComponent {
     sanitizer;
     cdr;
-    name = '';
-    size = 'md';
-    color;
-    tooltip;
-    ariaLabel;
-    library;
+    name = input('', ...(ngDevMode ? [{ debugName: "name" }] : []));
+    size = input('md', ...(ngDevMode ? [{ debugName: "size" }] : []));
+    color = input(undefined, ...(ngDevMode ? [{ debugName: "color" }] : []));
+    tooltip = input(undefined, ...(ngDevMode ? [{ debugName: "tooltip" }] : []));
+    ariaLabel = input(undefined, ...(ngDevMode ? [{ debugName: "ariaLabel" }] : []));
+    library = input(undefined, ...(ngDevMode ? [{ debugName: "library" }] : []));
     svgContainer;
     iconResult = { source: 'text', content: '?' };
     iconRegistry = inject(IxIconRegistryService);
     constructor(sanitizer, cdr) {
         this.sanitizer = sanitizer;
         this.cdr = cdr;
-    }
-    ngOnInit() {
-        this.resolveIcon()
-            .then(() => {
-            this.cdr.markForCheck();
-            setTimeout(() => this.updateSvgContent(), 0);
-        })
-            .catch((error) => {
-            console.error('[IxIcon] Resolution failed', error);
-            this.iconResult = { source: 'text', content: '!' };
-            this.cdr.markForCheck();
-        });
-    }
-    ngOnChanges(changes) {
-        if (changes['name'] || changes['library']) {
+        // Use effect to watch for changes in name or library
+        effect(() => {
+            const currentName = this.name();
+            const currentLibrary = this.library();
+            // Trigger icon resolution when name or library changes
             this.resolveIcon()
                 .then(() => {
                 this.cdr.markForCheck();
@@ -441,25 +431,25 @@ class IxIconComponent {
                 this.iconResult = { source: 'text', content: '!' };
                 this.cdr.markForCheck();
             });
-        }
+        });
     }
     ngAfterViewInit() {
         this.updateSvgContent();
     }
-    get effectiveAriaLabel() {
-        return this.ariaLabel || this.name || 'Icon';
-    }
-    get sanitizedContent() {
+    effectiveAriaLabel = computed(() => {
+        return this.ariaLabel() || this.name() || 'Icon';
+    }, ...(ngDevMode ? [{ debugName: "effectiveAriaLabel" }] : []));
+    sanitizedContent = computed(() => {
         const content = this.iconResult.content;
         // Handle mock SafeHtml objects from Storybook
         if (content && typeof content === 'object' && content.changingThisBreaksApplicationSecurity) {
             return content.changingThisBreaksApplicationSecurity;
         }
         return content;
-    }
+    }, ...(ngDevMode ? [{ debugName: "sanitizedContent" }] : []));
     updateSvgContent() {
         if (this.iconResult.source === 'svg' && this.svgContainer) {
-            const content = this.sanitizedContent;
+            const content = this.sanitizedContent();
             if (typeof content === 'string') {
                 // Bypass Angular's sanitization by setting innerHTML directly
                 this.svgContainer.nativeElement.innerHTML = content;
@@ -467,7 +457,7 @@ class IxIconComponent {
         }
     }
     async resolveIcon() {
-        if (!this.name) {
+        if (!this.name()) {
             this.iconResult = { source: 'text', content: '?' };
             return;
         }
@@ -480,22 +470,22 @@ class IxIconComponent {
             console.warn('[IxIcon] Sprite loading failed, falling back to other icon sources:', error);
         }
         // Construct the effective icon name based on library attribute
-        let effectiveIconName = this.name;
-        if (this.library === 'mdi' && !this.name.startsWith('mdi-')) {
-            effectiveIconName = `mdi-${this.name}`;
+        let effectiveIconName = this.name();
+        if (this.library() === 'mdi' && !this.name().startsWith('mdi-')) {
+            effectiveIconName = `mdi-${this.name()}`;
         }
-        else if (this.library === 'material' && !this.name.startsWith('mat-')) {
+        else if (this.library() === 'material' && !this.name().startsWith('mat-')) {
             // Material icons get mat- prefix in sprite
-            effectiveIconName = `mat-${this.name}`;
+            effectiveIconName = `mat-${this.name()}`;
         }
-        else if (this.library === 'lucide' && !this.name.includes(':')) {
+        else if (this.library() === 'lucide' && !this.name().includes(':')) {
             // Convert to registry format for Lucide icons
-            effectiveIconName = `lucide:${this.name}`;
+            effectiveIconName = `lucide:${this.name()}`;
         }
         // 1. Try icon registry (libraries and custom icons)
         const iconOptions = {
-            size: this.size,
-            color: this.color
+            size: this.size(),
+            color: this.color()
         };
         let registryResult = this.iconRegistry.resolveIcon(effectiveIconName, iconOptions);
         // Fallback to global registry for Storybook/demos (when DI doesn't work)
@@ -627,24 +617,12 @@ class IxIconComponent {
         return false; // Disable generic CSS class checking for now
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxIconComponent, deps: [{ token: i1$1.DomSanitizer }, { token: i0.ChangeDetectorRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxIconComponent, isStandalone: true, selector: "ix-icon", inputs: { name: "name", size: "size", color: "color", tooltip: "tooltip", ariaLabel: "ariaLabel", library: "library" }, viewQueries: [{ propertyName: "svgContainer", first: true, predicate: ["svgContainer"], descendants: true }], usesOnChanges: true, ngImport: i0, template: "<div \n  class=\"ix-icon\"\n  [ngClass]=\"'ix-icon--' + size\"\n  [style.color]=\"color\"\n  [attr.aria-label]=\"effectiveAriaLabel\"\n  [attr.title]=\"tooltip\"\n  role=\"img\">\n  \n\n  @switch (iconResult.source) {\n    <!-- Sprite icons (from generated sprite.svg) -->\n    @case ('sprite') {\n      <svg\n           class=\"ix-icon__sprite\"\n           aria-hidden=\"true\">\n        <use [attr.href]=\"iconResult.spriteUrl\"></use>\n      </svg>\n    }\n\n    <!-- SVG content (from third-party libraries or assets) -->\n    @case ('svg') {\n      <div\n           class=\"ix-icon__svg\"\n           #svgContainer>\n      </div>\n    }\n\n    <!-- CSS class icons (Font Awesome, Material Icons, etc.) -->\n    @case ('css') {\n      <i\n         class=\"ix-icon__css\"\n         [class]=\"iconResult.content\"\n         aria-hidden=\"true\">\n      </i>\n    }\n\n    <!-- Unicode characters -->\n    @case ('unicode') {\n      <span\n            class=\"ix-icon__unicode\"\n            aria-hidden=\"true\">{{ iconResult.content }}</span>\n    }\n\n    <!-- Text abbreviation fallback -->\n    @default {\n      <span\n            class=\"ix-icon__text\"\n            aria-hidden=\"true\">{{ iconResult.content }}</span>\n    }\n  }\n</div>", styles: [".ix-icon{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}.ix-icon--xs{width:var(--icon-xs)!important;height:var(--icon-xs)!important;font-size:var(--icon-xs)!important}.ix-icon--sm{width:var(--icon-sm)!important;height:var(--icon-sm)!important;font-size:var(--icon-sm)!important}.ix-icon--md{width:var(--icon-md)!important;height:var(--icon-md)!important;font-size:var(--icon-md)!important}.ix-icon--lg{width:var(--icon-lg)!important;height:var(--icon-lg)!important;font-size:var(--icon-lg)!important}.ix-icon--xl{width:var(--icon-xl)!important;height:var(--icon-xl)!important;font-size:var(--icon-xl)!important}.ix-icon__sprite{width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__svg{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.ix-icon__svg :global(svg){width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__css{font-size:inherit;line-height:1;color:inherit}.ix-icon__unicode{font-size:inherit;line-height:1;color:inherit;text-align:center}.ix-icon__text{font-size:.75em;font-weight:600;line-height:1;color:inherit;text-align:center;opacity:.7}.ix-icon{width:var(--ix-icon-size, var(--icon-md));height:var(--ix-icon-size, var(--icon-md));color:var(--ix-icon-color, currentColor)}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }], changeDetection: i0.ChangeDetectionStrategy.OnPush, encapsulation: i0.ViewEncapsulation.None });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxIconComponent, isStandalone: true, selector: "ix-icon", inputs: { name: { classPropertyName: "name", publicName: "name", isSignal: true, isRequired: false, transformFunction: null }, size: { classPropertyName: "size", publicName: "size", isSignal: true, isRequired: false, transformFunction: null }, color: { classPropertyName: "color", publicName: "color", isSignal: true, isRequired: false, transformFunction: null }, tooltip: { classPropertyName: "tooltip", publicName: "tooltip", isSignal: true, isRequired: false, transformFunction: null }, ariaLabel: { classPropertyName: "ariaLabel", publicName: "ariaLabel", isSignal: true, isRequired: false, transformFunction: null }, library: { classPropertyName: "library", publicName: "library", isSignal: true, isRequired: false, transformFunction: null } }, viewQueries: [{ propertyName: "svgContainer", first: true, predicate: ["svgContainer"], descendants: true }], ngImport: i0, template: "<div\n  class=\"ix-icon\"\n  [ngClass]=\"'ix-icon--' + size()\"\n  [style.color]=\"color()\"\n  [attr.aria-label]=\"effectiveAriaLabel()\"\n  [attr.title]=\"tooltip()\"\n  role=\"img\">\n  \n\n  @switch (iconResult.source) {\n    <!-- Sprite icons (from generated sprite.svg) -->\n    @case ('sprite') {\n      <svg\n           class=\"ix-icon__sprite\"\n           aria-hidden=\"true\">\n        <use [attr.href]=\"iconResult.spriteUrl\"></use>\n      </svg>\n    }\n\n    <!-- SVG content (from third-party libraries or assets) -->\n    @case ('svg') {\n      <div\n           class=\"ix-icon__svg\"\n           #svgContainer>\n      </div>\n    }\n\n    <!-- CSS class icons (Font Awesome, Material Icons, etc.) -->\n    @case ('css') {\n      <i\n         class=\"ix-icon__css\"\n         [class]=\"iconResult.content\"\n         aria-hidden=\"true\">\n      </i>\n    }\n\n    <!-- Unicode characters -->\n    @case ('unicode') {\n      <span\n            class=\"ix-icon__unicode\"\n            aria-hidden=\"true\">{{ iconResult.content }}</span>\n    }\n\n    <!-- Text abbreviation fallback -->\n    @default {\n      <span\n            class=\"ix-icon__text\"\n            aria-hidden=\"true\">{{ iconResult.content }}</span>\n    }\n  }\n</div>", styles: [".ix-icon{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}.ix-icon--xs{width:var(--icon-xs)!important;height:var(--icon-xs)!important;font-size:var(--icon-xs)!important}.ix-icon--sm{width:var(--icon-sm)!important;height:var(--icon-sm)!important;font-size:var(--icon-sm)!important}.ix-icon--md{width:var(--icon-md)!important;height:var(--icon-md)!important;font-size:var(--icon-md)!important}.ix-icon--lg{width:var(--icon-lg)!important;height:var(--icon-lg)!important;font-size:var(--icon-lg)!important}.ix-icon--xl{width:var(--icon-xl)!important;height:var(--icon-xl)!important;font-size:var(--icon-xl)!important}.ix-icon__sprite{width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__svg{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.ix-icon__svg :global(svg){width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__css{font-size:inherit;line-height:1;color:inherit}.ix-icon__unicode{font-size:inherit;line-height:1;color:inherit;text-align:center}.ix-icon__text{font-size:.75em;font-weight:600;line-height:1;color:inherit;text-align:center;opacity:.7}.ix-icon{width:var(--ix-icon-size, var(--icon-md));height:var(--ix-icon-size, var(--icon-md));color:var(--ix-icon-color, currentColor)}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }], changeDetection: i0.ChangeDetectionStrategy.OnPush, encapsulation: i0.ViewEncapsulation.None });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxIconComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-icon', standalone: true, imports: [CommonModule], changeDetection: ChangeDetectionStrategy.OnPush, encapsulation: ViewEncapsulation.None, template: "<div \n  class=\"ix-icon\"\n  [ngClass]=\"'ix-icon--' + size\"\n  [style.color]=\"color\"\n  [attr.aria-label]=\"effectiveAriaLabel\"\n  [attr.title]=\"tooltip\"\n  role=\"img\">\n  \n\n  @switch (iconResult.source) {\n    <!-- Sprite icons (from generated sprite.svg) -->\n    @case ('sprite') {\n      <svg\n           class=\"ix-icon__sprite\"\n           aria-hidden=\"true\">\n        <use [attr.href]=\"iconResult.spriteUrl\"></use>\n      </svg>\n    }\n\n    <!-- SVG content (from third-party libraries or assets) -->\n    @case ('svg') {\n      <div\n           class=\"ix-icon__svg\"\n           #svgContainer>\n      </div>\n    }\n\n    <!-- CSS class icons (Font Awesome, Material Icons, etc.) -->\n    @case ('css') {\n      <i\n         class=\"ix-icon__css\"\n         [class]=\"iconResult.content\"\n         aria-hidden=\"true\">\n      </i>\n    }\n\n    <!-- Unicode characters -->\n    @case ('unicode') {\n      <span\n            class=\"ix-icon__unicode\"\n            aria-hidden=\"true\">{{ iconResult.content }}</span>\n    }\n\n    <!-- Text abbreviation fallback -->\n    @default {\n      <span\n            class=\"ix-icon__text\"\n            aria-hidden=\"true\">{{ iconResult.content }}</span>\n    }\n  }\n</div>", styles: [".ix-icon{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}.ix-icon--xs{width:var(--icon-xs)!important;height:var(--icon-xs)!important;font-size:var(--icon-xs)!important}.ix-icon--sm{width:var(--icon-sm)!important;height:var(--icon-sm)!important;font-size:var(--icon-sm)!important}.ix-icon--md{width:var(--icon-md)!important;height:var(--icon-md)!important;font-size:var(--icon-md)!important}.ix-icon--lg{width:var(--icon-lg)!important;height:var(--icon-lg)!important;font-size:var(--icon-lg)!important}.ix-icon--xl{width:var(--icon-xl)!important;height:var(--icon-xl)!important;font-size:var(--icon-xl)!important}.ix-icon__sprite{width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__svg{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.ix-icon__svg :global(svg){width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__css{font-size:inherit;line-height:1;color:inherit}.ix-icon__unicode{font-size:inherit;line-height:1;color:inherit;text-align:center}.ix-icon__text{font-size:.75em;font-weight:600;line-height:1;color:inherit;text-align:center;opacity:.7}.ix-icon{width:var(--ix-icon-size, var(--icon-md));height:var(--ix-icon-size, var(--icon-md));color:var(--ix-icon-color, currentColor)}\n"] }]
-        }], ctorParameters: () => [{ type: i1$1.DomSanitizer }, { type: i0.ChangeDetectorRef }], propDecorators: { name: [{
-                type: Input
-            }], size: [{
-                type: Input
-            }], color: [{
-                type: Input
-            }], tooltip: [{
-                type: Input
-            }], ariaLabel: [{
-                type: Input
-            }], library: [{
-                type: Input
-            }], svgContainer: [{
+            args: [{ selector: 'ix-icon', standalone: true, imports: [CommonModule], changeDetection: ChangeDetectionStrategy.OnPush, encapsulation: ViewEncapsulation.None, template: "<div\n  class=\"ix-icon\"\n  [ngClass]=\"'ix-icon--' + size()\"\n  [style.color]=\"color()\"\n  [attr.aria-label]=\"effectiveAriaLabel()\"\n  [attr.title]=\"tooltip()\"\n  role=\"img\">\n  \n\n  @switch (iconResult.source) {\n    <!-- Sprite icons (from generated sprite.svg) -->\n    @case ('sprite') {\n      <svg\n           class=\"ix-icon__sprite\"\n           aria-hidden=\"true\">\n        <use [attr.href]=\"iconResult.spriteUrl\"></use>\n      </svg>\n    }\n\n    <!-- SVG content (from third-party libraries or assets) -->\n    @case ('svg') {\n      <div\n           class=\"ix-icon__svg\"\n           #svgContainer>\n      </div>\n    }\n\n    <!-- CSS class icons (Font Awesome, Material Icons, etc.) -->\n    @case ('css') {\n      <i\n         class=\"ix-icon__css\"\n         [class]=\"iconResult.content\"\n         aria-hidden=\"true\">\n      </i>\n    }\n\n    <!-- Unicode characters -->\n    @case ('unicode') {\n      <span\n            class=\"ix-icon__unicode\"\n            aria-hidden=\"true\">{{ iconResult.content }}</span>\n    }\n\n    <!-- Text abbreviation fallback -->\n    @default {\n      <span\n            class=\"ix-icon__text\"\n            aria-hidden=\"true\">{{ iconResult.content }}</span>\n    }\n  }\n</div>", styles: [".ix-icon{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}.ix-icon--xs{width:var(--icon-xs)!important;height:var(--icon-xs)!important;font-size:var(--icon-xs)!important}.ix-icon--sm{width:var(--icon-sm)!important;height:var(--icon-sm)!important;font-size:var(--icon-sm)!important}.ix-icon--md{width:var(--icon-md)!important;height:var(--icon-md)!important;font-size:var(--icon-md)!important}.ix-icon--lg{width:var(--icon-lg)!important;height:var(--icon-lg)!important;font-size:var(--icon-lg)!important}.ix-icon--xl{width:var(--icon-xl)!important;height:var(--icon-xl)!important;font-size:var(--icon-xl)!important}.ix-icon__sprite{width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__svg{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.ix-icon__svg :global(svg){width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__css{font-size:inherit;line-height:1;color:inherit}.ix-icon__unicode{font-size:inherit;line-height:1;color:inherit;text-align:center}.ix-icon__text{font-size:.75em;font-weight:600;line-height:1;color:inherit;text-align:center;opacity:.7}.ix-icon{width:var(--ix-icon-size, var(--icon-md));height:var(--ix-icon-size, var(--icon-md));color:var(--ix-icon-color, currentColor)}\n"] }]
+        }], ctorParameters: () => [{ type: i1$1.DomSanitizer }, { type: i0.ChangeDetectorRef }], propDecorators: { svgContainer: [{
                 type: ViewChild,
                 args: ['svgContainer', { static: false }]
             }] } });
@@ -834,44 +812,28 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
 
 class IxIconButtonComponent {
     // Button-related inputs
-    disabled = false;
-    ariaLabel;
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    ariaLabel = input(undefined, ...(ngDevMode ? [{ debugName: "ariaLabel" }] : []));
     // Icon-related inputs
-    name = '';
-    size = 'md';
-    color;
-    tooltip;
-    library;
-    onClick = new EventEmitter();
-    get classes() {
+    name = input('', ...(ngDevMode ? [{ debugName: "name" }] : []));
+    size = input('md', ...(ngDevMode ? [{ debugName: "size" }] : []));
+    color = input(undefined, ...(ngDevMode ? [{ debugName: "color" }] : []));
+    tooltip = input(undefined, ...(ngDevMode ? [{ debugName: "tooltip" }] : []));
+    library = input(undefined, ...(ngDevMode ? [{ debugName: "library" }] : []));
+    onClick = output();
+    classes = computed(() => {
         return ['ix-icon-button'];
-    }
-    get effectiveAriaLabel() {
-        return this.ariaLabel || this.name || 'Icon button';
-    }
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
+    effectiveAriaLabel = computed(() => {
+        return this.ariaLabel() || this.name() || 'Icon button';
+    }, ...(ngDevMode ? [{ debugName: "effectiveAriaLabel" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxIconButtonComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxIconButtonComponent, isStandalone: true, selector: "ix-icon-button", inputs: { disabled: "disabled", ariaLabel: "ariaLabel", name: "name", size: "size", color: "color", tooltip: "tooltip", library: "library" }, outputs: { onClick: "onClick" }, ngImport: i0, template: "<button\n  type=\"button\"\n  (click)=\"onClick.emit($event)\"\n  [ngClass]=\"classes\"\n  [disabled]=\"disabled\"\n  [attr.aria-label]=\"effectiveAriaLabel\"\n  [attr.title]=\"tooltip\"\n>\n  <ix-icon\n    [name]=\"name\"\n    [size]=\"size\"\n    [color]=\"color\"\n    [library]=\"library\"\n    [ariaLabel]=\"effectiveAriaLabel\">\n  </ix-icon>\n</button>\n", styles: [":host{display:inline-block;width:fit-content}.ix-icon-button{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:none;background:transparent;padding:8px;border-radius:4px;transition:background-color .2s ease,color .2s ease;color:var(--fg2, #6b7280)}.ix-icon-button:hover:not(:disabled){background-color:var(--bg3, #f3f4f6);color:var(--fg1, #1f2937)}.ix-icon-button:active:not(:disabled){background-color:var(--bg3, #e5e7eb)}.ix-icon-button:focus-visible{outline:2px solid var(--primary, #2563eb);outline-offset:2px}.ix-icon-button:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxIconButtonComponent, isStandalone: true, selector: "ix-icon-button", inputs: { disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, ariaLabel: { classPropertyName: "ariaLabel", publicName: "ariaLabel", isSignal: true, isRequired: false, transformFunction: null }, name: { classPropertyName: "name", publicName: "name", isSignal: true, isRequired: false, transformFunction: null }, size: { classPropertyName: "size", publicName: "size", isSignal: true, isRequired: false, transformFunction: null }, color: { classPropertyName: "color", publicName: "color", isSignal: true, isRequired: false, transformFunction: null }, tooltip: { classPropertyName: "tooltip", publicName: "tooltip", isSignal: true, isRequired: false, transformFunction: null }, library: { classPropertyName: "library", publicName: "library", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { onClick: "onClick" }, ngImport: i0, template: "<button\n  type=\"button\"\n  (click)=\"onClick.emit($event)\"\n  [ngClass]=\"classes()\"\n  [disabled]=\"disabled()\"\n  [attr.aria-label]=\"effectiveAriaLabel()\"\n  [attr.title]=\"tooltip()\"\n>\n  <ix-icon\n    [name]=\"name()\"\n    [size]=\"size()\"\n    [color]=\"color()\"\n    [library]=\"library()\"\n    [ariaLabel]=\"effectiveAriaLabel()\">\n  </ix-icon>\n</button>\n", styles: [":host{display:inline-block;width:fit-content}.ix-icon-button{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:none;background:transparent;padding:8px;border-radius:4px;transition:background-color .2s ease,color .2s ease;color:var(--fg2, #6b7280)}.ix-icon-button:hover:not(:disabled){background-color:var(--bg3, #f3f4f6);color:var(--fg1, #1f2937)}.ix-icon-button:active:not(:disabled){background-color:var(--bg3, #e5e7eb)}.ix-icon-button:focus-visible{outline:2px solid var(--primary, #2563eb);outline-offset:2px}.ix-icon-button:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxIconButtonComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-icon-button', standalone: true, imports: [CommonModule, IxIconComponent], template: "<button\n  type=\"button\"\n  (click)=\"onClick.emit($event)\"\n  [ngClass]=\"classes\"\n  [disabled]=\"disabled\"\n  [attr.aria-label]=\"effectiveAriaLabel\"\n  [attr.title]=\"tooltip\"\n>\n  <ix-icon\n    [name]=\"name\"\n    [size]=\"size\"\n    [color]=\"color\"\n    [library]=\"library\"\n    [ariaLabel]=\"effectiveAriaLabel\">\n  </ix-icon>\n</button>\n", styles: [":host{display:inline-block;width:fit-content}.ix-icon-button{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:none;background:transparent;padding:8px;border-radius:4px;transition:background-color .2s ease,color .2s ease;color:var(--fg2, #6b7280)}.ix-icon-button:hover:not(:disabled){background-color:var(--bg3, #f3f4f6);color:var(--fg1, #1f2937)}.ix-icon-button:active:not(:disabled){background-color:var(--bg3, #e5e7eb)}.ix-icon-button:focus-visible{outline:2px solid var(--primary, #2563eb);outline-offset:2px}.ix-icon-button:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}\n"] }]
-        }], propDecorators: { disabled: [{
-                type: Input
-            }], ariaLabel: [{
-                type: Input
-            }], name: [{
-                type: Input
-            }], size: [{
-                type: Input
-            }], color: [{
-                type: Input
-            }], tooltip: [{
-                type: Input
-            }], library: [{
-                type: Input
-            }], onClick: [{
-                type: Output
-            }] } });
+            args: [{ selector: 'ix-icon-button', standalone: true, imports: [CommonModule, IxIconComponent], template: "<button\n  type=\"button\"\n  (click)=\"onClick.emit($event)\"\n  [ngClass]=\"classes()\"\n  [disabled]=\"disabled()\"\n  [attr.aria-label]=\"effectiveAriaLabel()\"\n  [attr.title]=\"tooltip()\"\n>\n  <ix-icon\n    [name]=\"name()\"\n    [size]=\"size()\"\n    [color]=\"color()\"\n    [library]=\"library()\"\n    [ariaLabel]=\"effectiveAriaLabel()\">\n  </ix-icon>\n</button>\n", styles: [":host{display:inline-block;width:fit-content}.ix-icon-button{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:none;background:transparent;padding:8px;border-radius:4px;transition:background-color .2s ease,color .2s ease;color:var(--fg2, #6b7280)}.ix-icon-button:hover:not(:disabled){background-color:var(--bg3, #f3f4f6);color:var(--fg1, #1f2937)}.ix-icon-button:active:not(:disabled){background-color:var(--bg3, #e5e7eb)}.ix-icon-button:focus-visible{outline:2px solid var(--primary, #2563eb);outline-offset:2px}.ix-icon-button:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}\n"] }]
+        }] });
 
 var InputType;
 (function (InputType) {
@@ -962,14 +924,14 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
 
 class IxChipComponent {
     chipEl;
-    label = 'Chip';
-    icon;
-    closable = true;
-    disabled = false;
-    color = 'primary';
-    testId;
-    onClose = new EventEmitter();
-    onClick = new EventEmitter();
+    label = input('Chip', ...(ngDevMode ? [{ debugName: "label" }] : []));
+    icon = input(undefined, ...(ngDevMode ? [{ debugName: "icon" }] : []));
+    closable = input(true, ...(ngDevMode ? [{ debugName: "closable" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    color = input('primary', ...(ngDevMode ? [{ debugName: "color" }] : []));
+    testId = input(undefined, ...(ngDevMode ? [{ debugName: "testId" }] : []));
+    onClose = output();
+    onClick = output();
     focusMonitor = inject(FocusMonitor);
     ngAfterViewInit() {
         this.focusMonitor.monitor(this.chipEl)
@@ -982,67 +944,51 @@ class IxChipComponent {
     ngOnDestroy() {
         this.focusMonitor.stopMonitoring(this.chipEl);
     }
-    get classes() {
-        const classes = ['ix-chip', `ix-chip--${this.color}`];
-        if (this.disabled) {
+    classes = computed(() => {
+        const classes = ['ix-chip', `ix-chip--${this.color()}`];
+        if (this.disabled()) {
             classes.push('ix-chip--disabled');
         }
-        if (this.closable) {
+        if (this.closable()) {
             classes.push('ix-chip--closable');
         }
         return classes;
-    }
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
     handleClick(event) {
-        if (this.disabled) {
+        if (this.disabled()) {
             return;
         }
         this.onClick.emit(event);
     }
     handleClose(event) {
         event.stopPropagation();
-        if (this.disabled) {
+        if (this.disabled()) {
             return;
         }
         this.onClose.emit();
     }
     handleKeyDown(event) {
-        if (this.disabled) {
+        if (this.disabled()) {
             return;
         }
         if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             this.onClick.emit(event);
         }
-        if (this.closable && (event.key === 'Delete' || event.key === 'Backspace')) {
+        if (this.closable() && (event.key === 'Delete' || event.key === 'Backspace')) {
             event.preventDefault();
             this.onClose.emit();
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxChipComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxChipComponent, isStandalone: true, selector: "ix-chip", inputs: { label: "label", icon: "icon", closable: "closable", disabled: "disabled", color: "color", testId: "testId" }, outputs: { onClose: "onClose", onClick: "onClick" }, viewQueries: [{ propertyName: "chipEl", first: true, predicate: ["chipEl"], descendants: true }], ngImport: i0, template: "<div\n  #chipEl\n  [ngClass]=\"classes\"\n  [attr.data-testid]=\"testId\"\n  [attr.aria-label]=\"label\"\n  [attr.aria-disabled]=\"disabled\"\n  [attr.tabindex]=\"disabled ? -1 : 0\"\n  role=\"button\"\n  (click)=\"handleClick($event)\"\n  (keydown)=\"handleKeyDown($event)\"\n>\n  @if (icon) {\n    <ix-icon [name]=\"icon\" class=\"ix-chip__icon\" size=\"sm\"></ix-icon>\n  }\n  <span class=\"ix-chip__label\">{{ label }}</span>\n  @if (closable) {\n    <button\n      type=\"button\"\n      class=\"ix-chip__close\"\n      [attr.aria-label]=\"'Remove ' + label\"\n      [disabled]=\"disabled\"\n      (click)=\"handleClose($event)\"\n    >\n      <span class=\"ix-chip__close-icon\">\u00D7</span>\n    </button>\n  }\n</div>", styles: [".ix-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:16px;font-family:var(--font-family-body);font-size:14px;font-weight:500;line-height:1.2;cursor:pointer;transition:all .2s ease-in-out;border:1px solid transparent;outline:none;-webkit-user-select:none;user-select:none}.ix-chip:focus-visible{outline:2px solid var(--primary);outline-offset:2px}.ix-chip:hover:not(.ix-chip--disabled){transform:translateY(-1px);box-shadow:0 2px 4px #0000001a}.ix-chip--primary{background-color:var(--primary);color:var(--primary-txt);border-color:var(--primary)}.ix-chip--primary:hover:not(.ix-chip--disabled){background-color:var(--blue);border-color:var(--blue)}.ix-chip--secondary{background-color:var(--alt-bg1);color:var(--alt-fg2);border-color:var(--alt-bg2)}.ix-chip--secondary:hover:not(.ix-chip--disabled){background-color:var(--alt-bg2);border-color:var(--accent)}.ix-chip--accent{background-color:var(--accent);color:var(--fg1);border-color:var(--accent)}.ix-chip--accent:hover:not(.ix-chip--disabled){background-color:var(--alt-bg2);border-color:var(--alt-bg2)}.ix-chip--disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.ix-chip--closable{padding-right:8px}.ix-chip__icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:12px}.ix-chip__label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}.ix-chip__close{display:flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;margin:0;border:none;border-radius:50%;background-color:#fff3;color:inherit;cursor:pointer;transition:background-color .2s ease-in-out;outline:none}.ix-chip__close:hover:not(:disabled){background-color:#ffffff4d}.ix-chip__close:focus-visible{outline:1px solid currentColor;outline-offset:1px}.ix-chip__close:disabled{cursor:not-allowed;opacity:.5}.ix-chip__close-icon{font-size:14px;font-weight:700;line-height:1}.ix-dark .ix-chip--secondary .ix-chip__close{background-color:#0003}.ix-dark .ix-chip--secondary .ix-chip__close:hover:not(:disabled){background-color:#0000004d}.high-contrast .ix-chip{border-width:2px}.high-contrast .ix-chip:focus-visible{outline-width:3px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: A11yModule }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxChipComponent, isStandalone: true, selector: "ix-chip", inputs: { label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, icon: { classPropertyName: "icon", publicName: "icon", isSignal: true, isRequired: false, transformFunction: null }, closable: { classPropertyName: "closable", publicName: "closable", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, color: { classPropertyName: "color", publicName: "color", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { onClose: "onClose", onClick: "onClick" }, viewQueries: [{ propertyName: "chipEl", first: true, predicate: ["chipEl"], descendants: true }], ngImport: i0, template: "<div\n  #chipEl\n  [ngClass]=\"classes()\"\n  [attr.data-testid]=\"testId()\"\n  [attr.aria-label]=\"label()\"\n  [attr.aria-disabled]=\"disabled()\"\n  [attr.tabindex]=\"disabled() ? -1 : 0\"\n  role=\"button\"\n  (click)=\"handleClick($event)\"\n  (keydown)=\"handleKeyDown($event)\"\n>\n  @if (icon()) {\n    <ix-icon [name]=\"icon()!\" class=\"ix-chip__icon\" size=\"sm\"></ix-icon>\n  }\n  <span class=\"ix-chip__label\">{{ label() }}</span>\n  @if (closable()) {\n    <button\n      type=\"button\"\n      class=\"ix-chip__close\"\n      [attr.aria-label]=\"'Remove ' + label()\"\n      [disabled]=\"disabled()\"\n      (click)=\"handleClose($event)\"\n    >\n      <span class=\"ix-chip__close-icon\">\u00D7</span>\n    </button>\n  }\n</div>", styles: [".ix-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:16px;font-family:var(--font-family-body);font-size:14px;font-weight:500;line-height:1.2;cursor:pointer;transition:all .2s ease-in-out;border:1px solid transparent;outline:none;-webkit-user-select:none;user-select:none}.ix-chip:focus-visible{outline:2px solid var(--primary);outline-offset:2px}.ix-chip:hover:not(.ix-chip--disabled){transform:translateY(-1px);box-shadow:0 2px 4px #0000001a}.ix-chip--primary{background-color:var(--primary);color:var(--primary-txt);border-color:var(--primary)}.ix-chip--primary:hover:not(.ix-chip--disabled){background-color:var(--blue);border-color:var(--blue)}.ix-chip--secondary{background-color:var(--alt-bg1);color:var(--alt-fg2);border-color:var(--alt-bg2)}.ix-chip--secondary:hover:not(.ix-chip--disabled){background-color:var(--alt-bg2);border-color:var(--accent)}.ix-chip--accent{background-color:var(--accent);color:var(--fg1);border-color:var(--accent)}.ix-chip--accent:hover:not(.ix-chip--disabled){background-color:var(--alt-bg2);border-color:var(--alt-bg2)}.ix-chip--disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.ix-chip--closable{padding-right:8px}.ix-chip__icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:12px}.ix-chip__label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}.ix-chip__close{display:flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;margin:0;border:none;border-radius:50%;background-color:#fff3;color:inherit;cursor:pointer;transition:background-color .2s ease-in-out;outline:none}.ix-chip__close:hover:not(:disabled){background-color:#ffffff4d}.ix-chip__close:focus-visible{outline:1px solid currentColor;outline-offset:1px}.ix-chip__close:disabled{cursor:not-allowed;opacity:.5}.ix-chip__close-icon{font-size:14px;font-weight:700;line-height:1}.ix-dark .ix-chip--secondary .ix-chip__close{background-color:#0003}.ix-dark .ix-chip--secondary .ix-chip__close:hover:not(:disabled){background-color:#0000004d}.high-contrast .ix-chip{border-width:2px}.high-contrast .ix-chip:focus-visible{outline-width:3px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: A11yModule }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxChipComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-chip', standalone: true, imports: [CommonModule, A11yModule, IxIconComponent], template: "<div\n  #chipEl\n  [ngClass]=\"classes\"\n  [attr.data-testid]=\"testId\"\n  [attr.aria-label]=\"label\"\n  [attr.aria-disabled]=\"disabled\"\n  [attr.tabindex]=\"disabled ? -1 : 0\"\n  role=\"button\"\n  (click)=\"handleClick($event)\"\n  (keydown)=\"handleKeyDown($event)\"\n>\n  @if (icon) {\n    <ix-icon [name]=\"icon\" class=\"ix-chip__icon\" size=\"sm\"></ix-icon>\n  }\n  <span class=\"ix-chip__label\">{{ label }}</span>\n  @if (closable) {\n    <button\n      type=\"button\"\n      class=\"ix-chip__close\"\n      [attr.aria-label]=\"'Remove ' + label\"\n      [disabled]=\"disabled\"\n      (click)=\"handleClose($event)\"\n    >\n      <span class=\"ix-chip__close-icon\">\u00D7</span>\n    </button>\n  }\n</div>", styles: [".ix-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:16px;font-family:var(--font-family-body);font-size:14px;font-weight:500;line-height:1.2;cursor:pointer;transition:all .2s ease-in-out;border:1px solid transparent;outline:none;-webkit-user-select:none;user-select:none}.ix-chip:focus-visible{outline:2px solid var(--primary);outline-offset:2px}.ix-chip:hover:not(.ix-chip--disabled){transform:translateY(-1px);box-shadow:0 2px 4px #0000001a}.ix-chip--primary{background-color:var(--primary);color:var(--primary-txt);border-color:var(--primary)}.ix-chip--primary:hover:not(.ix-chip--disabled){background-color:var(--blue);border-color:var(--blue)}.ix-chip--secondary{background-color:var(--alt-bg1);color:var(--alt-fg2);border-color:var(--alt-bg2)}.ix-chip--secondary:hover:not(.ix-chip--disabled){background-color:var(--alt-bg2);border-color:var(--accent)}.ix-chip--accent{background-color:var(--accent);color:var(--fg1);border-color:var(--accent)}.ix-chip--accent:hover:not(.ix-chip--disabled){background-color:var(--alt-bg2);border-color:var(--alt-bg2)}.ix-chip--disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.ix-chip--closable{padding-right:8px}.ix-chip__icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:12px}.ix-chip__label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}.ix-chip__close{display:flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;margin:0;border:none;border-radius:50%;background-color:#fff3;color:inherit;cursor:pointer;transition:background-color .2s ease-in-out;outline:none}.ix-chip__close:hover:not(:disabled){background-color:#ffffff4d}.ix-chip__close:focus-visible{outline:1px solid currentColor;outline-offset:1px}.ix-chip__close:disabled{cursor:not-allowed;opacity:.5}.ix-chip__close-icon{font-size:14px;font-weight:700;line-height:1}.ix-dark .ix-chip--secondary .ix-chip__close{background-color:#0003}.ix-dark .ix-chip--secondary .ix-chip__close:hover:not(:disabled){background-color:#0000004d}.high-contrast .ix-chip{border-width:2px}.high-contrast .ix-chip:focus-visible{outline-width:3px}\n"] }]
+            args: [{ selector: 'ix-chip', standalone: true, imports: [CommonModule, A11yModule, IxIconComponent], template: "<div\n  #chipEl\n  [ngClass]=\"classes()\"\n  [attr.data-testid]=\"testId()\"\n  [attr.aria-label]=\"label()\"\n  [attr.aria-disabled]=\"disabled()\"\n  [attr.tabindex]=\"disabled() ? -1 : 0\"\n  role=\"button\"\n  (click)=\"handleClick($event)\"\n  (keydown)=\"handleKeyDown($event)\"\n>\n  @if (icon()) {\n    <ix-icon [name]=\"icon()!\" class=\"ix-chip__icon\" size=\"sm\"></ix-icon>\n  }\n  <span class=\"ix-chip__label\">{{ label() }}</span>\n  @if (closable()) {\n    <button\n      type=\"button\"\n      class=\"ix-chip__close\"\n      [attr.aria-label]=\"'Remove ' + label()\"\n      [disabled]=\"disabled()\"\n      (click)=\"handleClose($event)\"\n    >\n      <span class=\"ix-chip__close-icon\">\u00D7</span>\n    </button>\n  }\n</div>", styles: [".ix-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:16px;font-family:var(--font-family-body);font-size:14px;font-weight:500;line-height:1.2;cursor:pointer;transition:all .2s ease-in-out;border:1px solid transparent;outline:none;-webkit-user-select:none;user-select:none}.ix-chip:focus-visible{outline:2px solid var(--primary);outline-offset:2px}.ix-chip:hover:not(.ix-chip--disabled){transform:translateY(-1px);box-shadow:0 2px 4px #0000001a}.ix-chip--primary{background-color:var(--primary);color:var(--primary-txt);border-color:var(--primary)}.ix-chip--primary:hover:not(.ix-chip--disabled){background-color:var(--blue);border-color:var(--blue)}.ix-chip--secondary{background-color:var(--alt-bg1);color:var(--alt-fg2);border-color:var(--alt-bg2)}.ix-chip--secondary:hover:not(.ix-chip--disabled){background-color:var(--alt-bg2);border-color:var(--accent)}.ix-chip--accent{background-color:var(--accent);color:var(--fg1);border-color:var(--accent)}.ix-chip--accent:hover:not(.ix-chip--disabled){background-color:var(--alt-bg2);border-color:var(--alt-bg2)}.ix-chip--disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.ix-chip--closable{padding-right:8px}.ix-chip__icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:12px}.ix-chip__label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}.ix-chip__close{display:flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;margin:0;border:none;border-radius:50%;background-color:#fff3;color:inherit;cursor:pointer;transition:background-color .2s ease-in-out;outline:none}.ix-chip__close:hover:not(:disabled){background-color:#ffffff4d}.ix-chip__close:focus-visible{outline:1px solid currentColor;outline-offset:1px}.ix-chip__close:disabled{cursor:not-allowed;opacity:.5}.ix-chip__close-icon{font-size:14px;font-weight:700;line-height:1}.ix-dark .ix-chip--secondary .ix-chip__close{background-color:#0003}.ix-dark .ix-chip--secondary .ix-chip__close:hover:not(:disabled){background-color:#0000004d}.high-contrast .ix-chip{border-width:2px}.high-contrast .ix-chip:focus-visible{outline-width:3px}\n"] }]
         }], propDecorators: { chipEl: [{
                 type: ViewChild,
                 args: ['chipEl']
-            }], label: [{
-                type: Input
-            }], icon: [{
-                type: Input
-            }], closable: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], color: [{
-                type: Input
-            }], testId: [{
-                type: Input
-            }], onClose: [{
-                type: Output
-            }], onClick: [{
-                type: Output
             }] } });
 
 class IxSlideToggleComponent {
@@ -2138,20 +2084,16 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             }] } });
 
 class IxKeyboardShortcutComponent {
-    shortcut = '';
-    platform = 'auto';
-    separator = '';
-    displayShortcut = '';
-    ngOnInit() {
-        this.displayShortcut = this.formatShortcut(this.shortcut);
-    }
-    ngOnChanges() {
-        this.displayShortcut = this.formatShortcut(this.shortcut);
-    }
+    shortcut = input('', ...(ngDevMode ? [{ debugName: "shortcut" }] : []));
+    platform = input('auto', ...(ngDevMode ? [{ debugName: "platform" }] : []));
+    separator = input('', ...(ngDevMode ? [{ debugName: "separator" }] : []));
+    displayShortcut = computed(() => {
+        return this.formatShortcut(this.shortcut());
+    }, ...(ngDevMode ? [{ debugName: "displayShortcut" }] : []));
     formatShortcut(shortcut) {
         if (!shortcut)
             return '';
-        const detectedPlatform = this.platform === 'auto' ? this.detectPlatform() : this.platform;
+        const detectedPlatform = this.platform() === 'auto' ? this.detectPlatform() : this.platform();
         // Convert Mac-style shortcuts to platform-appropriate format
         if (detectedPlatform === 'windows' || detectedPlatform === 'linux') {
             return this.convertToWindows(shortcut);
@@ -2179,18 +2121,19 @@ class IxKeyboardShortcutComponent {
             .replace(/⇧/g, 'Shift')
             .replace(/⌃/g, 'Ctrl');
     }
-    get shortcutKeys() {
-        if (!this.displayShortcut)
+    shortcutKeys = computed(() => {
+        const displayShortcut = this.displayShortcut();
+        if (!displayShortcut)
             return [];
         // Split by common separators
         const separators = ['+', ' ', ''];
         let keys = [];
         // For Mac-style shortcuts without separators
-        if (this.displayShortcut.includes('⌘') || this.displayShortcut.includes('⌥') || this.displayShortcut.includes('⇧')) {
+        if (displayShortcut.includes('⌘') || displayShortcut.includes('⌥') || displayShortcut.includes('⇧')) {
             const macSymbols = ['⌘', '⌥', '⇧', '⌃'];
             let currentKey = '';
             // Iterate through each character to preserve order
-            for (const char of this.displayShortcut) {
+            for (const char of displayShortcut) {
                 if (macSymbols.includes(char)) {
                     // If we have accumulated characters, add them first
                     if (currentKey) {
@@ -2212,23 +2155,17 @@ class IxKeyboardShortcutComponent {
         }
         else {
             // For Windows/Linux style shortcuts with + separators
-            keys = this.displayShortcut.split('+');
+            keys = displayShortcut.split('+');
         }
         return keys.filter(key => key.trim() !== '');
-    }
+    }, ...(ngDevMode ? [{ debugName: "shortcutKeys" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxKeyboardShortcutComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxKeyboardShortcutComponent, isStandalone: true, selector: "ix-keyboard-shortcut", inputs: { shortcut: "shortcut", platform: "platform", separator: "separator" }, usesOnChanges: true, ngImport: i0, template: "<span class=\"ix-keyboard-shortcut\" [attr.aria-label]=\"'Keyboard shortcut: ' + displayShortcut\">\n  @for (key of shortcutKeys; track $index; let last = $last) {\n    <kbd class=\"ix-key\">{{ key }}</kbd>\n    @if (!last) {\n      <span class=\"ix-key-separator\">{{ separator || '+' }}</span>\n    }\n  }\n</span>", styles: [".ix-keyboard-shortcut{display:inline-flex;align-items:center;gap:2px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1}.ix-key{display:inline-block;padding:2px 6px;background:var(--bg2, #f5f5f5);border:1px solid var(--lines, #ddd);border-radius:3px;font-family:inherit;font-size:inherit;font-weight:500;color:var(--fg2, #666666);text-align:center;min-width:16px;line-height:1.2;box-shadow:0 1px 2px #0000001a}.ix-key-separator{color:var(--fg2, #666666);font-size:10px;font-weight:400;margin:0 1px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxKeyboardShortcutComponent, isStandalone: true, selector: "ix-keyboard-shortcut", inputs: { shortcut: { classPropertyName: "shortcut", publicName: "shortcut", isSignal: true, isRequired: false, transformFunction: null }, platform: { classPropertyName: "platform", publicName: "platform", isSignal: true, isRequired: false, transformFunction: null }, separator: { classPropertyName: "separator", publicName: "separator", isSignal: true, isRequired: false, transformFunction: null } }, ngImport: i0, template: "<span class=\"ix-keyboard-shortcut\" [attr.aria-label]=\"'Keyboard shortcut: ' + displayShortcut()\">\n  @for (key of shortcutKeys(); track $index; let last = $last) {\n    <kbd class=\"ix-key\">{{ key }}</kbd>\n    @if (!last) {\n      <span class=\"ix-key-separator\">{{ separator() || '+' }}</span>\n    }\n  }\n</span>", styles: [".ix-keyboard-shortcut{display:inline-flex;align-items:center;gap:2px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1}.ix-key{display:inline-block;padding:2px 6px;background:var(--bg2, #f5f5f5);border:1px solid var(--lines, #ddd);border-radius:3px;font-family:inherit;font-size:inherit;font-weight:500;color:var(--fg2, #666666);text-align:center;min-width:16px;line-height:1.2;box-shadow:0 1px 2px #0000001a}.ix-key-separator{color:var(--fg2, #666666);font-size:10px;font-weight:400;margin:0 1px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxKeyboardShortcutComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-keyboard-shortcut', standalone: true, imports: [CommonModule], template: "<span class=\"ix-keyboard-shortcut\" [attr.aria-label]=\"'Keyboard shortcut: ' + displayShortcut\">\n  @for (key of shortcutKeys; track $index; let last = $last) {\n    <kbd class=\"ix-key\">{{ key }}</kbd>\n    @if (!last) {\n      <span class=\"ix-key-separator\">{{ separator || '+' }}</span>\n    }\n  }\n</span>", styles: [".ix-keyboard-shortcut{display:inline-flex;align-items:center;gap:2px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1}.ix-key{display:inline-block;padding:2px 6px;background:var(--bg2, #f5f5f5);border:1px solid var(--lines, #ddd);border-radius:3px;font-family:inherit;font-size:inherit;font-weight:500;color:var(--fg2, #666666);text-align:center;min-width:16px;line-height:1.2;box-shadow:0 1px 2px #0000001a}.ix-key-separator{color:var(--fg2, #666666);font-size:10px;font-weight:400;margin:0 1px}\n"] }]
-        }], propDecorators: { shortcut: [{
-                type: Input
-            }], platform: [{
-                type: Input
-            }], separator: [{
-                type: Input
-            }] } });
+            args: [{ selector: 'ix-keyboard-shortcut', standalone: true, imports: [CommonModule], template: "<span class=\"ix-keyboard-shortcut\" [attr.aria-label]=\"'Keyboard shortcut: ' + displayShortcut()\">\n  @for (key of shortcutKeys(); track $index; let last = $last) {\n    <kbd class=\"ix-key\">{{ key }}</kbd>\n    @if (!last) {\n      <span class=\"ix-key-separator\">{{ separator() || '+' }}</span>\n    }\n  }\n</span>", styles: [".ix-keyboard-shortcut{display:inline-flex;align-items:center;gap:2px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1}.ix-key{display:inline-block;padding:2px 6px;background:var(--bg2, #f5f5f5);border:1px solid var(--lines, #ddd);border-radius:3px;font-family:inherit;font-size:inherit;font-weight:500;color:var(--fg2, #666666);text-align:center;min-width:16px;line-height:1.2;box-shadow:0 1px 2px #0000001a}.ix-key-separator{color:var(--fg2, #666666);font-size:10px;font-weight:400;margin:0 1px}\n"] }]
+        }] });
 
 class IxFormFieldComponent {
     label = '';
@@ -7998,7 +7935,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * To regenerate this file, run:
  *   npm run generate-icons
  *
- * Generated: 2025-12-29T17:20:56.032Z
+ * Generated: 2025-12-29T17:38:25.732Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 /* eslint-disable */

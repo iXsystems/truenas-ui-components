@@ -1,5 +1,5 @@
 import * as _angular_core from '@angular/core';
-import { OnInit, OnChanges, AfterViewInit, ElementRef, ChangeDetectorRef, SimpleChanges, EventEmitter, TemplateRef, ViewContainerRef, OnDestroy, AfterContentInit, QueryList, IterableDiffers, PipeTransform, AfterViewChecked } from '@angular/core';
+import { AfterViewInit, ElementRef, ChangeDetectorRef, OnDestroy, OnInit, EventEmitter, TemplateRef, ViewContainerRef, AfterContentInit, QueryList, IterableDiffers, PipeTransform, OnChanges, SimpleChanges, AfterViewChecked } from '@angular/core';
 import { ComponentHarness, BaseHarnessFilters, HarnessPredicate } from '@angular/cdk/testing';
 import { SafeHtml, DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ControlValueAccessor, NgControl } from '@angular/forms';
@@ -159,24 +159,22 @@ interface IconResult {
     content: string | SafeHtml;
     spriteUrl?: string;
 }
-declare class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
+declare class IxIconComponent implements AfterViewInit {
     private sanitizer;
     private cdr;
-    name: string;
-    size: IconSize;
-    color?: string;
-    tooltip?: string;
-    ariaLabel?: string;
-    library?: IconLibraryType;
+    name: _angular_core.InputSignal<string>;
+    size: _angular_core.InputSignal<IconSize>;
+    color: _angular_core.InputSignal<string | undefined>;
+    tooltip: _angular_core.InputSignal<string | undefined>;
+    ariaLabel: _angular_core.InputSignal<string | undefined>;
+    library: _angular_core.InputSignal<IconLibraryType | undefined>;
     svgContainer?: ElementRef<HTMLDivElement>;
     iconResult: IconResult;
     private iconRegistry;
     constructor(sanitizer: DomSanitizer, cdr: ChangeDetectorRef);
-    ngOnInit(): void;
-    ngOnChanges(changes: SimpleChanges): void;
     ngAfterViewInit(): void;
-    get effectiveAriaLabel(): string;
-    get sanitizedContent(): any;
+    effectiveAriaLabel: _angular_core.Signal<string>;
+    sanitizedContent: _angular_core.Signal<any>;
     private updateSvgContent;
     private resolveIcon;
     private tryThirdPartyIcon;
@@ -185,22 +183,22 @@ declare class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
     private generateTextAbbreviation;
     private cssClassExists;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxIconComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxIconComponent, "ix-icon", never, { "name": { "alias": "name"; "required": false; }; "size": { "alias": "size"; "required": false; }; "color": { "alias": "color"; "required": false; }; "tooltip": { "alias": "tooltip"; "required": false; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; }; "library": { "alias": "library"; "required": false; }; }, {}, never, never, true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxIconComponent, "ix-icon", never, { "name": { "alias": "name"; "required": false; "isSignal": true; }; "size": { "alias": "size"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; "tooltip": { "alias": "tooltip"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "library": { "alias": "library"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
 declare class IxIconButtonComponent {
-    disabled: boolean;
-    ariaLabel?: string;
-    name: string;
-    size: IconSize;
-    color?: string;
-    tooltip?: string;
-    library?: IconLibraryType;
-    onClick: EventEmitter<MouseEvent>;
-    get classes(): string[];
-    get effectiveAriaLabel(): string;
+    disabled: _angular_core.InputSignal<boolean>;
+    ariaLabel: _angular_core.InputSignal<string | undefined>;
+    name: _angular_core.InputSignal<string>;
+    size: _angular_core.InputSignal<IconSize>;
+    color: _angular_core.InputSignal<string | undefined>;
+    tooltip: _angular_core.InputSignal<string | undefined>;
+    library: _angular_core.InputSignal<IconLibraryType | undefined>;
+    onClick: _angular_core.OutputEmitterRef<MouseEvent>;
+    classes: _angular_core.Signal<string[]>;
+    effectiveAriaLabel: _angular_core.Signal<string>;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxIconButtonComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxIconButtonComponent, "ix-icon-button", never, { "disabled": { "alias": "disabled"; "required": false; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; }; "name": { "alias": "name"; "required": false; }; "size": { "alias": "size"; "required": false; }; "color": { "alias": "color"; "required": false; }; "tooltip": { "alias": "tooltip"; "required": false; }; "library": { "alias": "library"; "required": false; }; }, { "onClick": "onClick"; }, never, never, true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxIconButtonComponent, "ix-icon-button", never, { "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "name": { "alias": "name"; "required": false; "isSignal": true; }; "size": { "alias": "size"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; "tooltip": { "alias": "tooltip"; "required": false; "isSignal": true; }; "library": { "alias": "library"; "required": false; "isSignal": true; }; }, { "onClick": "onClick"; }, never, never, true, never>;
 }
 
 declare enum InputType {
@@ -242,25 +240,25 @@ declare class IxInputDirective {
 }
 
 type ChipColor = 'primary' | 'secondary' | 'accent';
-declare class IxChipComponent implements AfterViewInit {
+declare class IxChipComponent implements AfterViewInit, OnDestroy {
     chipEl: ElementRef<HTMLElement>;
-    label: string;
-    icon?: string;
-    closable: boolean;
-    disabled: boolean;
-    color: ChipColor;
-    testId?: string;
-    onClose: EventEmitter<void>;
-    onClick: EventEmitter<MouseEvent>;
+    label: _angular_core.InputSignal<string>;
+    icon: _angular_core.InputSignal<string | undefined>;
+    closable: _angular_core.InputSignal<boolean>;
+    disabled: _angular_core.InputSignal<boolean>;
+    color: _angular_core.InputSignal<ChipColor>;
+    testId: _angular_core.InputSignal<string | undefined>;
+    onClose: _angular_core.OutputEmitterRef<void>;
+    onClick: _angular_core.OutputEmitterRef<MouseEvent>;
     private focusMonitor;
     ngAfterViewInit(): void;
     ngOnDestroy(): void;
-    get classes(): string[];
+    classes: _angular_core.Signal<string[]>;
     handleClick(event: MouseEvent): void;
     handleClose(event: MouseEvent): void;
     handleKeyDown(event: KeyboardEvent): void;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxChipComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxChipComponent, "ix-chip", never, { "label": { "alias": "label"; "required": false; }; "icon": { "alias": "icon"; "required": false; }; "closable": { "alias": "closable"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; "color": { "alias": "color"; "required": false; }; "testId": { "alias": "testId"; "required": false; }; }, { "onClose": "onClose"; "onClick": "onClick"; }, never, never, true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxChipComponent, "ix-chip", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "icon": { "alias": "icon"; "required": false; "isSignal": true; }; "closable": { "alias": "closable"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, { "onClose": "onClose"; "onClick": "onClick"; }, never, never, true, never>;
 }
 
 interface IxMenuItem {
@@ -789,19 +787,17 @@ declare enum LinuxModifierKeys {
 }
 type PlatformType = 'mac' | 'windows' | 'linux' | 'auto';
 
-declare class IxKeyboardShortcutComponent implements OnInit, OnChanges {
-    shortcut: string;
-    platform: PlatformType;
-    separator: string;
-    displayShortcut: string;
-    ngOnInit(): void;
-    ngOnChanges(): void;
+declare class IxKeyboardShortcutComponent {
+    shortcut: _angular_core.InputSignal<string>;
+    platform: _angular_core.InputSignal<PlatformType>;
+    separator: _angular_core.InputSignal<string>;
+    displayShortcut: _angular_core.Signal<string>;
     private formatShortcut;
     private detectPlatform;
     private convertToWindows;
-    get shortcutKeys(): string[];
+    shortcutKeys: _angular_core.Signal<string[]>;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxKeyboardShortcutComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxKeyboardShortcutComponent, "ix-keyboard-shortcut", never, { "shortcut": { "alias": "shortcut"; "required": false; }; "platform": { "alias": "platform"; "required": false; }; "separator": { "alias": "separator"; "required": false; }; }, {}, never, never, true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxKeyboardShortcutComponent, "ix-keyboard-shortcut", never, { "shortcut": { "alias": "shortcut"; "required": false; "isSignal": true; }; "platform": { "alias": "platform"; "required": false; "isSignal": true; }; "separator": { "alias": "separator"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
 declare class IxFormFieldComponent implements AfterContentInit {

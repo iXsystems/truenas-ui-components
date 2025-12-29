@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy, ViewEncapsulation, ChangeDetectorRef, inject, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, input, computed, effect, ChangeDetectionStrategy, ViewEncapsulation, ChangeDetectorRef, inject, ViewChild, ElementRef, AfterViewInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { IxIconRegistryService } from './ix-icon-registry.service';
@@ -22,13 +22,13 @@ export interface IconResult {
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None
 })
-export class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
-  @Input() name: string = '';
-  @Input() size: IconSize = 'md';
-  @Input() color?: string;
-  @Input() tooltip?: string;
-  @Input() ariaLabel?: string;
-  @Input() library?: IconLibraryType;
+export class IxIconComponent implements AfterViewInit {
+  name = input<string>('');
+  size = input<IconSize>('md');
+  color = input<string | undefined>(undefined);
+  tooltip = input<string | undefined>(undefined);
+  ariaLabel = input<string | undefined>(undefined);
+  library = input<IconLibraryType | undefined>(undefined);
 
   @ViewChild('svgContainer', { static: false }) svgContainer?: ElementRef<HTMLDivElement>;
 
@@ -39,23 +39,13 @@ export class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
   constructor(
     private sanitizer: DomSanitizer,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    // Use effect to watch for changes in name or library
+    effect(() => {
+      const currentName = this.name();
+      const currentLibrary = this.library();
 
-  ngOnInit(): void {
-    this.resolveIcon()
-      .then(() => {
-        this.cdr.markForCheck();
-        setTimeout(() => this.updateSvgContent(), 0);
-      })
-      .catch((error) => {
-        console.error('[IxIcon] Resolution failed', error);
-        this.iconResult = { source: 'text', content: '!' };
-        this.cdr.markForCheck();
-      });
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['name'] || changes['library']) {
+      // Trigger icon resolution when name or library changes
       this.resolveIcon()
         .then(() => {
           this.cdr.markForCheck();
@@ -66,31 +56,31 @@ export class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
           this.iconResult = { source: 'text', content: '!' };
           this.cdr.markForCheck();
         });
-    }
+    });
   }
 
   ngAfterViewInit(): void {
     this.updateSvgContent();
   }
 
-  get effectiveAriaLabel(): string {
-    return this.ariaLabel || this.name || 'Icon';
-  }
+  effectiveAriaLabel = computed(() => {
+    return this.ariaLabel() || this.name() || 'Icon';
+  });
 
-  get sanitizedContent(): any {
+  sanitizedContent = computed(() => {
     const content = this.iconResult.content;
-    
+
     // Handle mock SafeHtml objects from Storybook
     if (content && typeof content === 'object' && (content as any).changingThisBreaksApplicationSecurity) {
       return (content as any).changingThisBreaksApplicationSecurity;
     }
-    
+
     return content;
-  }
+  });
 
   private updateSvgContent(): void {
     if (this.iconResult.source === 'svg' && this.svgContainer) {
-      const content = this.sanitizedContent;
+      const content = this.sanitizedContent();
       if (typeof content === 'string') {
         // Bypass Angular's sanitization by setting innerHTML directly
         this.svgContainer.nativeElement.innerHTML = content;
@@ -99,7 +89,7 @@ export class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
   }
 
   private async resolveIcon(): Promise<void> {
-    if (!this.name) {
+    if (!this.name()) {
       this.iconResult = { source: 'text', content: '?' };
       return;
     }
@@ -113,21 +103,21 @@ export class IxIconComponent implements OnInit, OnChanges, AfterViewInit {
     }
 
     // Construct the effective icon name based on library attribute
-    let effectiveIconName = this.name;
-    if (this.library === 'mdi' && !this.name.startsWith('mdi-')) {
-      effectiveIconName = `mdi-${this.name}`;
-    } else if (this.library === 'material' && !this.name.startsWith('mat-')) {
+    let effectiveIconName = this.name();
+    if (this.library() === 'mdi' && !this.name().startsWith('mdi-')) {
+      effectiveIconName = `mdi-${this.name()}`;
+    } else if (this.library() === 'material' && !this.name().startsWith('mat-')) {
       // Material icons get mat- prefix in sprite
-      effectiveIconName = `mat-${this.name}`;
-    } else if (this.library === 'lucide' && !this.name.includes(':')) {
+      effectiveIconName = `mat-${this.name()}`;
+    } else if (this.library() === 'lucide' && !this.name().includes(':')) {
       // Convert to registry format for Lucide icons
-      effectiveIconName = `lucide:${this.name}`;
+      effectiveIconName = `lucide:${this.name()}`;
     }
 
     // 1. Try icon registry (libraries and custom icons)
     const iconOptions = {
-      size: this.size,
-      color: this.color
+      size: this.size(),
+      color: this.color()
     };
     let registryResult = this.iconRegistry.resolveIcon(effectiveIconName, iconOptions);
 

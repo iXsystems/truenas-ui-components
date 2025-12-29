@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit, inject } from '@angular/core';
+import { Component, input, output, computed, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
 import { IxIconComponent } from '../ix-icon/ix-icon.component';
@@ -12,18 +12,18 @@ export type ChipColor = 'primary' | 'secondary' | 'accent';
   templateUrl: './ix-chip.component.html',
   styleUrls: ['./ix-chip.component.scss'],
 })
-export class IxChipComponent implements AfterViewInit {
+export class IxChipComponent implements AfterViewInit, OnDestroy {
   @ViewChild('chipEl') chipEl!: ElementRef<HTMLElement>;
 
-  @Input() label = 'Chip';
-  @Input() icon?: string;
-  @Input() closable = true;
-  @Input() disabled = false;
-  @Input() color: ChipColor = 'primary';
-  @Input() testId?: string;
+  label = input<string>('Chip');
+  icon = input<string | undefined>(undefined);
+  closable = input<boolean>(true);
+  disabled = input<boolean>(false);
+  color = input<ChipColor>('primary');
+  testId = input<string | undefined>(undefined);
 
-  @Output() onClose = new EventEmitter<void>();
-  @Output() onClick = new EventEmitter<MouseEvent>();
+  onClose = output<void>();
+  onClick = output<MouseEvent>();
 
   private focusMonitor = inject(FocusMonitor);
 
@@ -40,22 +40,22 @@ export class IxChipComponent implements AfterViewInit {
     this.focusMonitor.stopMonitoring(this.chipEl);
   }
 
-  public get classes(): string[] {
-    const classes = ['ix-chip', `ix-chip--${this.color}`];
-    
-    if (this.disabled) {
+  classes = computed(() => {
+    const classes = ['ix-chip', `ix-chip--${this.color()}`];
+
+    if (this.disabled()) {
       classes.push('ix-chip--disabled');
     }
-    
-    if (this.closable) {
+
+    if (this.closable()) {
       classes.push('ix-chip--closable');
     }
-    
+
     return classes;
-  }
+  });
 
   public handleClick(event: MouseEvent): void {
-    if (this.disabled) {
+    if (this.disabled()) {
       return;
     }
     this.onClick.emit(event);
@@ -63,23 +63,23 @@ export class IxChipComponent implements AfterViewInit {
 
   public handleClose(event: MouseEvent): void {
     event.stopPropagation();
-    if (this.disabled) {
+    if (this.disabled()) {
       return;
     }
     this.onClose.emit();
   }
 
   public handleKeyDown(event: KeyboardEvent): void {
-    if (this.disabled) {
+    if (this.disabled()) {
       return;
     }
-    
+
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       this.onClick.emit(event as any);
     }
-    
-    if (this.closable && (event.key === 'Delete' || event.key === 'Backspace')) {
+
+    if (this.closable() && (event.key === 'Delete' || event.key === 'Backspace')) {
       event.preventDefault();
       this.onClose.emit();
     }
