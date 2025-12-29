@@ -1,18 +1,16 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, TemplateRef, ViewContainerRef, forwardRef, OnInit, OnDestroy, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { OverlayModule, Overlay, OverlayRef, ConnectedPosition } from '@angular/cdk/overlay';
-import { TemplatePortal, PortalModule } from '@angular/cdk/portal';
 import { A11yModule } from '@angular/cdk/a11y';
-import { ScrollingModule } from '@angular/cdk/scrolling';
-import { Subject, BehaviorSubject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { ConnectedPosition, Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
+import { PortalModule, TemplatePortal } from '@angular/cdk/portal';
+import { CommonModule } from '@angular/common';
+import { Component, computed, ElementRef, forwardRef, input, OnDestroy, OnInit, output, signal, TemplateRef, ViewChild, ViewContainerRef } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Subject } from 'rxjs';
 
-import { IxInputDirective } from '../ix-input/ix-input.directive';
 import { IxIconComponent } from '../ix-icon/ix-icon.component';
-import { IxFilePickerPopupComponent } from './ix-file-picker-popup.component';
-import { FileSystemItem, FilePickerCallbacks, CreateFolderEvent, FilePickerError, PathSegment, FilePickerMode } from './ix-file-picker.interfaces';
+import { IxInputDirective } from '../ix-input/ix-input.directive';
 import { StripMntPrefixPipe } from '../pipes/strip-mnt-prefix/strip-mnt-prefix.pipe';
+import { IxFilePickerPopupComponent } from './ix-file-picker-popup.component';
+import { CreateFolderEvent, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem } from './ix-file-picker.interfaces';
 
 @Component({
   selector: 'ix-file-picker',
@@ -42,23 +40,23 @@ import { StripMntPrefixPipe } from '../pipes/strip-mnt-prefix/strip-mnt-prefix.p
   }
 })
 export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDestroy {
-  @Input() mode: FilePickerMode = 'any';
-  @Input() multiSelect = false;
-  @Input() allowCreate = true;
-  @Input() allowDatasetCreate = false;
-  @Input() allowZvolCreate = false;
-  @Input() allowManualInput = true;
-  @Input() placeholder = 'Select file or folder';
-  @Input() disabled = false;
-  @Input() startPath = '/mnt';
-  @Input() rootPath?: string;
-  @Input() fileExtensions?: string[];
-  @Input() callbacks?: FilePickerCallbacks;
+  mode = input<FilePickerMode>('any');
+  multiSelect = input<boolean>(false);
+  allowCreate = input<boolean>(true);
+  allowDatasetCreate = input<boolean>(false);
+  allowZvolCreate = input<boolean>(false);
+  allowManualInput = input<boolean>(true);
+  placeholder = input<string>('Select file or folder');
+  disabled = input<boolean>(false);
+  startPath = input<string>('/mnt');
+  rootPath = input<string | undefined>(undefined);
+  fileExtensions = input<string[] | undefined>(undefined);
+  callbacks = input<FilePickerCallbacks | undefined>(undefined);
 
-  @Output() selectionChange = new EventEmitter<string | string[]>();
-  @Output() pathChange = new EventEmitter<string>();
-  @Output() createFolder = new EventEmitter<CreateFolderEvent>();
-  @Output() error = new EventEmitter<FilePickerError>();
+  selectionChange = output<string | string[]>();
+  pathChange = output<string>();
+  createFolder = output<CreateFolderEvent>();
+  error = output<FilePickerError>();
 
   @ViewChild('wrapper') wrapperEl!: ElementRef<HTMLDivElement>;
   @ViewChild('filePickerTemplate', { static: true }) filePickerTemplate!: TemplateRef<any>;
@@ -77,6 +75,10 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   hasError = signal<boolean>(false);
   creatingItemTempId = signal<string | null>(null);
   creationLoading = signal<boolean>(false);
+  private formDisabled = signal<boolean>(false);
+
+  // Computed disabled state (combines input and form state)
+  isDisabled = computed(() => this.disabled() || this.formDisabled());
 
   // ControlValueAccessor implementation
   private onChange = (value: string | string[]) => {};
@@ -89,8 +91,8 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   ) {}
 
   ngOnInit(): void {
-    this.currentPath.set(this.startPath);
-    this.selectedPath.set(this.multiSelect ? '' : '');
+    this.currentPath.set(this.startPath());
+    this.selectedPath.set(this.multiSelect() ? '' : '');
   }
 
   ngOnDestroy(): void {
@@ -101,7 +103,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
   // ControlValueAccessor implementation
   writeValue(value: string | string[]): void {
-    if (this.multiSelect) {
+    if (this.multiSelect()) {
       this.selectedItems.set(Array.isArray(value) ? value : value ? [value] : []);
       // For multi-select, show full paths separated by commas
       this.selectedPath.set(this.selectedItems().join(', '));
@@ -121,7 +123,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
+    this.formDisabled.set(isDisabled);
   }
 
   // Event handlers
@@ -129,12 +131,13 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     const target = event.target as HTMLInputElement;
     const inputValue = target.value;
 
-    if (this.allowManualInput) {
+    if (this.allowManualInput()) {
       // Convert display path to full path with /mnt prefix
       const fullPath = this.toFullPath(inputValue);
 
-      if (this.callbacks?.validatePath) {
-        this.callbacks.validatePath(fullPath).then(isValid => {
+      const cb = this.callbacks();
+      if (cb?.validatePath) {
+        cb.validatePath(fullPath).then(isValid => {
           if (isValid) {
             this.updateSelection(fullPath);
           } else {
@@ -152,7 +155,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   }
 
   openFilePicker(): void {
-    if (this.isOpen() || this.disabled) return;
+    if (this.isOpen() || this.isDisabled()) return;
 
     this.createOverlay();
     this.isOpen.set(true);
@@ -172,7 +175,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   onItemClick(item: FileSystemItem): void {
     if (item.disabled || item.isCreating || this.creatingItemTempId()) return;
 
-    if (this.multiSelect) {
+    if (this.multiSelect()) {
       const selected = this.selectedItems();
       const index = selected.indexOf(item.path);
 
@@ -214,7 +217,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     // Clear any existing error state
     this.hasError.set(false);
 
-    if (this.multiSelect) {
+    if (this.multiSelect()) {
       this.selectedPath.set(selected.join(', '));
       this.onChange(selected);
       this.selectionChange.emit(selected);
@@ -277,8 +280,8 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   onClearSelection(): void {
     this.selectedItems.set([]);
     this.selectedPath.set('');
-    this.onChange(this.multiSelect ? [] : '');
-    this.selectionChange.emit(this.multiSelect ? [] : '');
+    this.onChange(this.multiSelect() ? [] : '');
+    this.selectionChange.emit(this.multiSelect() ? [] : '');
   }
 
   async onSubmitFolderName(name: string, tempId: string): Promise<void> {
@@ -290,7 +293,8 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       return;
     }
 
-    if (!this.callbacks?.createFolder) {
+    const cb = this.callbacks();
+    if (!cb?.createFolder) {
       this.updateCreatingItemError(tempId, 'Create folder callback not provided');
       return;
     }
@@ -301,7 +305,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
     try {
       // Call the callback with parent path and user-entered name
-      const createdPath = await this.callbacks.createFolder(
+      const createdPath = await cb.createFolder(
         this.currentPath(),
         name.trim()
       );
@@ -382,7 +386,8 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   }
 
   private async loadDirectory(path: string): Promise<void> {
-    if (!this.callbacks?.getChildren) {
+    const cb = this.callbacks();
+    if (!cb?.getChildren) {
       // Default mock data for development
       this.fileItems.set(this.getMockFileItems(path));
       this.currentPath.set(path);
@@ -393,8 +398,8 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     this.loading.set(true);
 
     try {
-      const items = await this.callbacks.getChildren(path);
-      this.fileItems.set(items);
+      const items = await cb.getChildren(path);
+      this.fileItems.set(items || []);
       this.currentPath.set(path);
       this.pathChange.emit(path);
     } catch (err: any) {
@@ -440,7 +445,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     // Clear any existing error state since popup selections are valid
     this.hasError.set(false);
 
-    if (this.multiSelect) {
+    if (this.multiSelect()) {
       const selected = [path];
       this.selectedItems.set(selected);
       this.selectedPath.set(selected.join(', '));
@@ -451,7 +456,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       this.onChange(path);
     }
 
-    this.selectionChange.emit(this.multiSelect ? this.selectedItems() : path);
+    this.selectionChange.emit(this.multiSelect() ? this.selectedItems() : path);
   }
 
   private updateSelectionFromItems(): void {
@@ -460,8 +465,8 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
     const selected = this.selectedItems();
     this.selectedPath.set(selected.join(', '));
-    this.onChange(this.multiSelect ? selected : selected[0] || '');
-    this.selectionChange.emit(this.multiSelect ? selected : selected[0] || '');
+    this.onChange(this.multiSelect() ? selected : selected[0] || '');
+    this.selectionChange.emit(this.multiSelect() ? selected : selected[0] || '');
   }
 
   private toFullPath(displayPath: string): string {

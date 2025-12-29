@@ -2136,9 +2136,9 @@ declare class IxDialogShellComponent implements OnInit {
     private ref;
     private document;
     private data?;
-    title: string;
-    showFullscreenButton: boolean;
-    isFullscreen: boolean;
+    title: _angular_core.InputSignal<string>;
+    showFullscreenButton: _angular_core.InputSignal<boolean>;
+    isFullscreen: _angular_core.WritableSignal<boolean>;
     private originalStyles;
     constructor(ref: DialogRef, document: Document, data?: any | undefined);
     ngOnInit(): void;
@@ -2147,7 +2147,7 @@ declare class IxDialogShellComponent implements OnInit {
     private enterFullscreen;
     private exitFullscreen;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxDialogShellComponent, [null, null, { optional: true; }]>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxDialogShellComponent, "ix-dialog-shell", never, { "title": { "alias": "title"; "required": false; }; "showFullscreenButton": { "alias": "showFullscreenButton"; "required": false; }; }, {}, never, ["*", "[ixDialogAction]"], true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxDialogShellComponent, "ix-dialog-shell", never, { "title": { "alias": "title"; "required": false; "isSignal": true; }; "showFullscreenButton": { "alias": "showFullscreenButton"; "required": false; "isSignal": true; }; }, {}, never, ["*", "[ixDialogAction]"], true, never>;
 }
 
 declare class IxConfirmDialogComponent {
@@ -2170,48 +2170,47 @@ declare class IxStepComponent {
     static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxStepComponent, "ix-step", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "icon": { "alias": "icon"; "required": false; "isSignal": true; }; "optional": { "alias": "optional"; "required": false; "isSignal": true; }; "completed": { "alias": "completed"; "required": false; "isSignal": true; }; "hasError": { "alias": "hasError"; "required": false; "isSignal": true; }; "data": { "alias": "data"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
 }
 
-declare class IxStepperComponent implements AfterContentInit {
+declare class IxStepperComponent {
     private cdr;
-    orientation: 'horizontal' | 'vertical' | 'auto';
-    linear: boolean;
-    selectedIndex: number;
-    selectionChange: EventEmitter<any>;
-    completed: EventEmitter<any>;
-    steps: QueryList<IxStepComponent>;
+    orientation: _angular_core.InputSignal<"auto" | "horizontal" | "vertical">;
+    linear: _angular_core.InputSignal<boolean>;
+    selectedIndex: _angular_core.ModelSignal<number>;
+    selectionChange: _angular_core.OutputEmitterRef<any>;
+    completed: _angular_core.OutputEmitterRef<any>;
+    steps: _angular_core.Signal<readonly IxStepComponent[]>;
     constructor(cdr: ChangeDetectorRef);
     onWindowResize(event: any): void;
-    ngAfterContentInit(): void;
     private _getStepData;
-    get isWideScreen(): boolean;
+    isWideScreen: _angular_core.Signal<boolean>;
     selectStep(index: number): void;
     canSelectStep(index: number): boolean;
     next(): void;
     previous(): void;
     _trackByStepIndex(index: number): number;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxStepperComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxStepperComponent, "ix-stepper", never, { "orientation": { "alias": "orientation"; "required": false; }; "linear": { "alias": "linear"; "required": false; }; "selectedIndex": { "alias": "selectedIndex"; "required": false; }; }, { "selectionChange": "selectionChange"; "completed": "completed"; }, ["steps"], never, true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxStepperComponent, "ix-stepper", never, { "orientation": { "alias": "orientation"; "required": false; "isSignal": true; }; "linear": { "alias": "linear"; "required": false; "isSignal": true; }; "selectedIndex": { "alias": "selectedIndex"; "required": false; "isSignal": true; }; }, { "selectedIndex": "selectedIndexChange"; "selectionChange": "selectionChange"; "completed": "completed"; }, ["steps"], never, true, never>;
 }
 
 declare class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDestroy {
     private overlay;
     private elementRef;
     private viewContainerRef;
-    mode: FilePickerMode;
-    multiSelect: boolean;
-    allowCreate: boolean;
-    allowDatasetCreate: boolean;
-    allowZvolCreate: boolean;
-    allowManualInput: boolean;
-    placeholder: string;
-    disabled: boolean;
-    startPath: string;
-    rootPath?: string;
-    fileExtensions?: string[];
-    callbacks?: FilePickerCallbacks;
-    selectionChange: EventEmitter<string | string[]>;
-    pathChange: EventEmitter<string>;
-    createFolder: EventEmitter<CreateFolderEvent>;
-    error: EventEmitter<FilePickerError>;
+    mode: _angular_core.InputSignal<FilePickerMode>;
+    multiSelect: _angular_core.InputSignal<boolean>;
+    allowCreate: _angular_core.InputSignal<boolean>;
+    allowDatasetCreate: _angular_core.InputSignal<boolean>;
+    allowZvolCreate: _angular_core.InputSignal<boolean>;
+    allowManualInput: _angular_core.InputSignal<boolean>;
+    placeholder: _angular_core.InputSignal<string>;
+    disabled: _angular_core.InputSignal<boolean>;
+    startPath: _angular_core.InputSignal<string>;
+    rootPath: _angular_core.InputSignal<string | undefined>;
+    fileExtensions: _angular_core.InputSignal<string[] | undefined>;
+    callbacks: _angular_core.InputSignal<FilePickerCallbacks | undefined>;
+    selectionChange: _angular_core.OutputEmitterRef<string | string[]>;
+    pathChange: _angular_core.OutputEmitterRef<string>;
+    createFolder: _angular_core.OutputEmitterRef<CreateFolderEvent>;
+    error: _angular_core.OutputEmitterRef<FilePickerError>;
     wrapperEl: ElementRef<HTMLDivElement>;
     filePickerTemplate: TemplateRef<any>;
     private destroy$;
@@ -2226,6 +2225,8 @@ declare class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnD
     hasError: _angular_core.WritableSignal<boolean>;
     creatingItemTempId: _angular_core.WritableSignal<string | null>;
     creationLoading: _angular_core.WritableSignal<boolean>;
+    private formDisabled;
+    isDisabled: _angular_core.Signal<boolean>;
     private onChange;
     private onTouched;
     constructor(overlay: Overlay, elementRef: ElementRef, viewContainerRef: ViewContainerRef);
@@ -2258,7 +2259,7 @@ declare class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnD
     private emitError;
     private createOverlay;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxFilePickerComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxFilePickerComponent, "ix-file-picker", never, { "mode": { "alias": "mode"; "required": false; }; "multiSelect": { "alias": "multiSelect"; "required": false; }; "allowCreate": { "alias": "allowCreate"; "required": false; }; "allowDatasetCreate": { "alias": "allowDatasetCreate"; "required": false; }; "allowZvolCreate": { "alias": "allowZvolCreate"; "required": false; }; "allowManualInput": { "alias": "allowManualInput"; "required": false; }; "placeholder": { "alias": "placeholder"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; "startPath": { "alias": "startPath"; "required": false; }; "rootPath": { "alias": "rootPath"; "required": false; }; "fileExtensions": { "alias": "fileExtensions"; "required": false; }; "callbacks": { "alias": "callbacks"; "required": false; }; }, { "selectionChange": "selectionChange"; "pathChange": "pathChange"; "createFolder": "createFolder"; "error": "error"; }, never, never, true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxFilePickerComponent, "ix-file-picker", never, { "mode": { "alias": "mode"; "required": false; "isSignal": true; }; "multiSelect": { "alias": "multiSelect"; "required": false; "isSignal": true; }; "allowCreate": { "alias": "allowCreate"; "required": false; "isSignal": true; }; "allowDatasetCreate": { "alias": "allowDatasetCreate"; "required": false; "isSignal": true; }; "allowZvolCreate": { "alias": "allowZvolCreate"; "required": false; "isSignal": true; }; "allowManualInput": { "alias": "allowManualInput"; "required": false; "isSignal": true; }; "placeholder": { "alias": "placeholder"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "startPath": { "alias": "startPath"; "required": false; "isSignal": true; }; "rootPath": { "alias": "rootPath"; "required": false; "isSignal": true; }; "fileExtensions": { "alias": "fileExtensions"; "required": false; "isSignal": true; }; "callbacks": { "alias": "callbacks"; "required": false; "isSignal": true; }; }, { "selectionChange": "selectionChange"; "pathChange": "pathChange"; "createFolder": "createFolder"; "error": "error"; }, never, never, true, never>;
 }
 
 declare class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterViewChecked {

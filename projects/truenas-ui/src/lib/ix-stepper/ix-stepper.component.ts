@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ContentChildren, QueryList, AfterContentInit, OnDestroy, ChangeDetectorRef, HostListener } from '@angular/core';
+import { Component, input, output, contentChildren, signal, computed, effect, model, ChangeDetectorRef } from '@angular/core';
 import { IxStepComponent } from './ix-step.component';
 import { CommonModule } from '@angular/common';
 import { trigger, state, style, transition, animate } from '@angular/animations';
@@ -16,59 +16,54 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
         animate('300ms ease-in-out', style({ opacity: 1, transform: 'translateX(0)' }))
       ])
     ])
-  ]
-})
-export class IxStepperComponent implements AfterContentInit {
-  @Input() 
-  orientation: 'horizontal' | 'vertical' | 'auto' = 'horizontal';
-  
-  @Input()
-  linear = false;
-  
-  @Input()
-  selectedIndex = 0;
-  
-  @Output()
-  selectionChange = new EventEmitter<any>();
-  
-  @Output()
-  completed = new EventEmitter<any>();
-  
-  @ContentChildren(IxStepComponent, { descendants: true }) 
-  steps!: QueryList<IxStepComponent>;
-
-  constructor(private cdr: ChangeDetectorRef) {}
-
-  @HostListener('window:resize', ['$event'])
-  onWindowResize(event: any) {
-    this.cdr.detectChanges();
+  ],
+  host: {
+    '(window:resize)': 'onWindowResize($event)'
   }
+})
+export class IxStepperComponent {
+  orientation = input<'horizontal' | 'vertical' | 'auto'>('horizontal');
+  linear = input<boolean>(false);
+  selectedIndex = model<number>(0);
 
-  ngAfterContentInit(): void {
-    // Check if all steps are completed when selection changes
-    this.selectionChange.subscribe(() => {
-      if (this.steps.toArray().every(step => step.completed)) {
+  selectionChange = output<any>();
+  completed = output<any>();
+
+  steps = contentChildren(IxStepComponent, { descendants: true });
+
+  constructor(private cdr: ChangeDetectorRef) {
+    // Effect to check if all steps are completed
+    effect(() => {
+      // Trigger on any step completion change
+      const stepsArray = this.steps();
+      const allCompleted = stepsArray.every(step => step.completed());
+      if (allCompleted && stepsArray.length > 0) {
         this.completed.emit(this._getStepData());
       }
     });
   }
 
+  onWindowResize(event: any) {
+    this.cdr.detectChanges();
+  }
+
   private _getStepData(): any[] {
-    return this.steps.toArray().map(step => ({
-      label: step.label,
-      completed: step.completed,
-      data: step.data
+    return this.steps().map(step => ({
+      label: step.label(),
+      completed: step.completed(),
+      data: step.data()
     }));
   }
 
-  get isWideScreen(): boolean {
+  isWideScreen = computed(() => {
+    // Note: This will only update on window resize due to ChangeDetectorRef trigger
     return window.innerWidth > 768;
-  }
+  });
 
   selectStep(index: number): void {
-    if (!this.linear || this.canSelectStep(index)) {
-      const previousIndex = this.selectedIndex;
-      this.selectedIndex = index;
+    if (!this.linear() || this.canSelectStep(index)) {
+      const previousIndex = this.selectedIndex();
+      this.selectedIndex.set(index);
       this.selectionChange.emit({
         selectedIndex: index,
         previouslySelectedIndex: previousIndex
@@ -77,11 +72,12 @@ export class IxStepperComponent implements AfterContentInit {
   }
 
   canSelectStep(index: number): boolean {
-    if (!this.linear) return true;
-    
+    if (!this.linear()) return true;
+
     // In linear mode, can only select completed steps or the next step
+    const stepsArray = this.steps();
     for (let i = 0; i < index; i++) {
-      if (!this.steps.toArray()[i]?.completed) {
+      if (!stepsArray[i]?.completed()) {
         return false;
       }
     }
@@ -89,14 +85,15 @@ export class IxStepperComponent implements AfterContentInit {
   }
 
   next(): void {
-    if (this.selectedIndex < this.steps.length - 1) {
-      this.selectStep(this.selectedIndex + 1);
+    const stepsLength = this.steps().length;
+    if (this.selectedIndex() < stepsLength - 1) {
+      this.selectStep(this.selectedIndex() + 1);
     }
   }
 
   previous(): void {
-    if (this.selectedIndex > 0) {
-      this.selectStep(this.selectedIndex - 1);
+    if (this.selectedIndex() > 0) {
+      this.selectStep(this.selectedIndex() - 1);
     }
   }
 

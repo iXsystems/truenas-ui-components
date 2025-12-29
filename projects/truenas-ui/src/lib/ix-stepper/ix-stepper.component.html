@@ -1,12 +1,12 @@
-<div class="ix-stepper" 
-     [class.ix-stepper--horizontal]="orientation === 'horizontal' || (orientation === 'auto' && isWideScreen)" 
-     [class.ix-stepper--vertical]="orientation === 'vertical' || (orientation === 'auto' && !isWideScreen)">
-  
+<div class="ix-stepper"
+     [class.ix-stepper--horizontal]="orientation() === 'horizontal' || (orientation() === 'auto' && isWideScreen())"
+     [class.ix-stepper--vertical]="orientation() === 'vertical' || (orientation() === 'auto' && !isWideScreen())">
+
   <!-- Step Headers -->
   <div class="ix-stepper__header">
-    @for (step of steps; track $index; let i = $index) {
+    @for (step of steps(); track $index; let i = $index) {
       <div class="ix-stepper__step-header"
-           [class.ix-stepper__step-header--active]="selectedIndex === i"
+           [class.ix-stepper__step-header--active]="selectedIndex() === i"
            [class.ix-stepper__step-header--completed]="step.completed()"
            [class.ix-stepper__step-header--error]="step.hasError()"
            [class.ix-stepper__step-header--optional]="step.optional()"
@@ -39,18 +39,18 @@
       </div>
 
       <!-- Connector Line (except for last step) -->
-      @if (i < steps.length - 1) {
+      @if (i < steps().length - 1) {
         <div class="ix-stepper__connector"></div>
       }
     }
   </div>
-  
+
   <!-- Step Content -->
   <div class="ix-stepper__content">
-    @for (step of steps; track $index; let i = $index) {
-      @if (selectedIndex === i) {
+    @for (step of steps(); track $index; let i = $index) {
+      @if (selectedIndex() === i) {
         <div class="ix-stepper__step-content"
-             [@stepTransition]="selectedIndex">
+             [@stepTransition]="selectedIndex()">
           <ng-container *ngTemplateOutlet="step.content"></ng-container>
         </div>
       }

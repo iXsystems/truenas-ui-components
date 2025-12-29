@@ -1,5 +1,5 @@
 import * as i0 from '@angular/core';
-import { Injectable, Component, input, ChangeDetectionStrategy, inject, effect, computed, ViewChild, ViewEncapsulation, output, signal, forwardRef, Directive, TemplateRef, ElementRef, ContentChild, ChangeDetectorRef, ContentChildren, HostListener, contentChildren, Input, Optional, Inject, Pipe, EventEmitter, Output, Host } from '@angular/core';
+import { Injectable, Component, input, ChangeDetectionStrategy, inject, effect, computed, ViewChild, ViewEncapsulation, output, signal, forwardRef, Directive, TemplateRef, ElementRef, ContentChild, ChangeDetectorRef, ContentChildren, HostListener, contentChildren, Input, Optional, Inject, Pipe, EventEmitter, Output, Host, model } from '@angular/core';
 import * as i1$2 from '@angular/common';
 import { CommonModule, NgIf, DOCUMENT } from '@angular/common';
 import * as i1$1 from '@angular/platform-browser';
@@ -7505,9 +7505,9 @@ class IxDialogShellComponent {
     ref;
     document;
     data;
-    title = '';
-    showFullscreenButton = false;
-    isFullscreen = false;
+    title = input('', ...(ngDevMode ? [{ debugName: "title" }] : []));
+    showFullscreenButton = input(false, ...(ngDevMode ? [{ debugName: "showFullscreenButton" }] : []));
+    isFullscreen = signal(false, ...(ngDevMode ? [{ debugName: "isFullscreen" }] : []));
     originalStyles = {};
     constructor(ref, document, data) {
         this.ref = ref;
@@ -7519,7 +7519,7 @@ class IxDialogShellComponent {
         setTimeout(() => {
             const dialogPanel = this.document.querySelector('.ix-dialog-panel');
             if (dialogPanel?.classList.contains('ix-dialog--fullscreen')) {
-                this.isFullscreen = true;
+                this.isFullscreen.set(true);
             }
         });
     }
@@ -7527,7 +7527,7 @@ class IxDialogShellComponent {
         this.ref.close(result);
     }
     toggleFullscreen() {
-        if (this.isFullscreen) {
+        if (this.isFullscreen()) {
             this.exitFullscreen();
         }
         else {
@@ -7553,7 +7553,7 @@ class IxDialogShellComponent {
             dialogPanel.style.borderRadius = '0';
             // Add fullscreen class
             dialogPanel.classList.add('ix-dialog--fullscreen');
-            this.isFullscreen = true;
+            this.isFullscreen.set(true);
         }
     }
     exitFullscreen() {
@@ -7567,20 +7567,20 @@ class IxDialogShellComponent {
             dialogPanel.style.borderRadius = this.originalStyles['panelBorderRadius'] || '8px';
             // Remove fullscreen class
             dialogPanel.classList.remove('ix-dialog--fullscreen');
-            this.isFullscreen = false;
+            this.isFullscreen.set(false);
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxDialogShellComponent, deps: [{ token: i1$6.DialogRef }, { token: DOCUMENT }, { token: DIALOG_DATA, optional: true }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxDialogShellComponent, isStandalone: true, selector: "ix-dialog-shell", inputs: { title: "title", showFullscreenButton: "showFullscreenButton" }, host: { classAttribute: "ix-dialog-shell" }, ngImport: i0, template: `
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxDialogShellComponent, isStandalone: true, selector: "ix-dialog-shell", inputs: { title: { classPropertyName: "title", publicName: "title", isSignal: true, isRequired: false, transformFunction: null }, showFullscreenButton: { classPropertyName: "showFullscreenButton", publicName: "showFullscreenButton", isSignal: true, isRequired: false, transformFunction: null } }, host: { classAttribute: "ix-dialog-shell" }, ngImport: i0, template: `
     <header class="ix-dialog__header">
-      <h2 class="ix-dialog__title">{{ title }}</h2>
-      <button type="button" 
-              class="ix-dialog__fullscreen" 
-              tabindex="-1" 
-              (click)="toggleFullscreen()" 
-              [attr.aria-label]="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
-              *ngIf="showFullscreenButton">
-        <span class="ix-dialog__fullscreen-icon">{{ isFullscreen ? '⤓' : '⤢' }}</span>
+      <h2 class="ix-dialog__title">{{ title() }}</h2>
+      <button type="button"
+              class="ix-dialog__fullscreen"
+              tabindex="-1"
+              (click)="toggleFullscreen()"
+              [attr.aria-label]="isFullscreen() ? 'Exit fullscreen' : 'Enter fullscreen'"
+              *ngIf="showFullscreenButton()">
+        <span class="ix-dialog__fullscreen-icon">{{ isFullscreen() ? '⤓' : '⤢' }}</span>
       </button>
       <button type="button" class="ix-dialog__close" tabindex="-1" (click)="close()" aria-label="Close dialog">✕</button>
     </header>
@@ -7600,14 +7600,14 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                     selector: 'ix-dialog-shell',
                     template: `
     <header class="ix-dialog__header">
-      <h2 class="ix-dialog__title">{{ title }}</h2>
-      <button type="button" 
-              class="ix-dialog__fullscreen" 
-              tabindex="-1" 
-              (click)="toggleFullscreen()" 
-              [attr.aria-label]="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
-              *ngIf="showFullscreenButton">
-        <span class="ix-dialog__fullscreen-icon">{{ isFullscreen ? '⤓' : '⤢' }}</span>
+      <h2 class="ix-dialog__title">{{ title() }}</h2>
+      <button type="button"
+              class="ix-dialog__fullscreen"
+              tabindex="-1"
+              (click)="toggleFullscreen()"
+              [attr.aria-label]="isFullscreen() ? 'Exit fullscreen' : 'Enter fullscreen'"
+              *ngIf="showFullscreenButton()">
+        <span class="ix-dialog__fullscreen-icon">{{ isFullscreen() ? '⤓' : '⤢' }}</span>
       </button>
       <button type="button" class="ix-dialog__close" tabindex="-1" (click)="close()" aria-label="Close dialog">✕</button>
     </header>
@@ -7634,11 +7634,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                 }, {
                     type: Inject,
                     args: [DIALOG_DATA]
-                }] }], propDecorators: { title: [{
-                type: Input
-            }], showFullscreenButton: [{
-                type: Input
-            }] } });
+                }] }] });
 
 class IxConfirmDialogComponent {
     ref;
@@ -7741,40 +7737,42 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
 
 class IxStepperComponent {
     cdr;
-    orientation = 'horizontal';
-    linear = false;
-    selectedIndex = 0;
-    selectionChange = new EventEmitter();
-    completed = new EventEmitter();
-    steps;
+    orientation = input('horizontal', ...(ngDevMode ? [{ debugName: "orientation" }] : []));
+    linear = input(false, ...(ngDevMode ? [{ debugName: "linear" }] : []));
+    selectedIndex = model(0, ...(ngDevMode ? [{ debugName: "selectedIndex" }] : []));
+    selectionChange = output();
+    completed = output();
+    steps = contentChildren(IxStepComponent, ...(ngDevMode ? [{ debugName: "steps", descendants: true }] : [{ descendants: true }]));
     constructor(cdr) {
         this.cdr = cdr;
-    }
-    onWindowResize(event) {
-        this.cdr.detectChanges();
-    }
-    ngAfterContentInit() {
-        // Check if all steps are completed when selection changes
-        this.selectionChange.subscribe(() => {
-            if (this.steps.toArray().every(step => step.completed)) {
+        // Effect to check if all steps are completed
+        effect(() => {
+            // Trigger on any step completion change
+            const stepsArray = this.steps();
+            const allCompleted = stepsArray.every(step => step.completed());
+            if (allCompleted && stepsArray.length > 0) {
                 this.completed.emit(this._getStepData());
             }
         });
     }
+    onWindowResize(event) {
+        this.cdr.detectChanges();
+    }
     _getStepData() {
-        return this.steps.toArray().map(step => ({
-            label: step.label,
-            completed: step.completed,
-            data: step.data
+        return this.steps().map(step => ({
+            label: step.label(),
+            completed: step.completed(),
+            data: step.data()
         }));
     }
-    get isWideScreen() {
+    isWideScreen = computed(() => {
+        // Note: This will only update on window resize due to ChangeDetectorRef trigger
         return window.innerWidth > 768;
-    }
+    }, ...(ngDevMode ? [{ debugName: "isWideScreen" }] : []));
     selectStep(index) {
-        if (!this.linear || this.canSelectStep(index)) {
-            const previousIndex = this.selectedIndex;
-            this.selectedIndex = index;
+        if (!this.linear() || this.canSelectStep(index)) {
+            const previousIndex = this.selectedIndex();
+            this.selectedIndex.set(index);
             this.selectionChange.emit({
                 selectedIndex: index,
                 previouslySelectedIndex: previousIndex
@@ -7782,31 +7780,33 @@ class IxStepperComponent {
         }
     }
     canSelectStep(index) {
-        if (!this.linear)
+        if (!this.linear())
             return true;
         // In linear mode, can only select completed steps or the next step
+        const stepsArray = this.steps();
         for (let i = 0; i < index; i++) {
-            if (!this.steps.toArray()[i]?.completed) {
+            if (!stepsArray[i]?.completed()) {
                 return false;
             }
         }
         return true;
     }
     next() {
-        if (this.selectedIndex < this.steps.length - 1) {
-            this.selectStep(this.selectedIndex + 1);
+        const stepsLength = this.steps().length;
+        if (this.selectedIndex() < stepsLength - 1) {
+            this.selectStep(this.selectedIndex() + 1);
         }
     }
     previous() {
-        if (this.selectedIndex > 0) {
-            this.selectStep(this.selectedIndex - 1);
+        if (this.selectedIndex() > 0) {
+            this.selectStep(this.selectedIndex() - 1);
         }
     }
     _trackByStepIndex(index) {
         return index;
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxStepperComponent, deps: [{ token: i0.ChangeDetectorRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxStepperComponent, isStandalone: true, selector: "ix-stepper", inputs: { orientation: "orientation", linear: "linear", selectedIndex: "selectedIndex" }, outputs: { selectionChange: "selectionChange", completed: "completed" }, host: { listeners: { "window:resize": "onWindowResize($event)" } }, queries: [{ propertyName: "steps", predicate: IxStepComponent, descendants: true }], ngImport: i0, template: "<div class=\"ix-stepper\" \n     [class.ix-stepper--horizontal]=\"orientation === 'horizontal' || (orientation === 'auto' && isWideScreen)\" \n     [class.ix-stepper--vertical]=\"orientation === 'vertical' || (orientation === 'auto' && !isWideScreen)\">\n  \n  <!-- Step Headers -->\n  <div class=\"ix-stepper__header\">\n    @for (step of steps; track $index; let i = $index) {\n      <div class=\"ix-stepper__step-header\"\n           [class.ix-stepper__step-header--active]=\"selectedIndex === i\"\n           [class.ix-stepper__step-header--completed]=\"step.completed()\"\n           [class.ix-stepper__step-header--error]=\"step.hasError()\"\n           [class.ix-stepper__step-header--optional]=\"step.optional()\"\n           (click)=\"selectStep(i)\">\n\n        <!-- Step Number/Icon -->\n        <div class=\"ix-stepper__step-indicator\">\n          @if (step.completed() && !step.hasError()) {\n            <span class=\"ix-stepper__step-check\">\u2713</span>\n          }\n          @if (step.hasError()) {\n            <span class=\"ix-stepper__step-error\">!</span>\n          }\n          @if (!step.completed() && !step.hasError()) {\n            @if (step.icon()) {\n              <span class=\"ix-stepper__step-icon\">{{ step.icon() }}</span>\n            } @else {\n              <span class=\"ix-stepper__step-number\">{{ i + 1 }}</span>\n            }\n          }\n        </div>\n\n        <!-- Step Label -->\n        <div class=\"ix-stepper__step-label\">\n          <div class=\"ix-stepper__step-title\">{{ step.label() }}</div>\n          @if (step.optional()) {\n            <span class=\"ix-stepper__step-subtitle\">Optional</span>\n          }\n        </div>\n      </div>\n\n      <!-- Connector Line (except for last step) -->\n      @if (i < steps.length - 1) {\n        <div class=\"ix-stepper__connector\"></div>\n      }\n    }\n  </div>\n  \n  <!-- Step Content -->\n  <div class=\"ix-stepper__content\">\n    @for (step of steps; track $index; let i = $index) {\n      @if (selectedIndex === i) {\n        <div class=\"ix-stepper__step-content\"\n             [@stepTransition]=\"selectedIndex\">\n          <ng-container *ngTemplateOutlet=\"step.content\"></ng-container>\n        </div>\n      }\n    }\n  </div>\n</div>", styles: [".ix-stepper{display:flex;font-family:inherit;--step-diameter: 48px;--step-diameter-sm: 32px;--step-padding: 12px}.ix-stepper--horizontal{flex-direction:column}.ix-stepper--horizontal .ix-stepper__header{display:flex;justify-content:center;margin-bottom:32px;padding:0 16px}.ix-stepper--horizontal .ix-stepper__step-header{display:flex;flex-direction:column;align-items:center;text-align:center;cursor:pointer;transition:all .2s ease-in-out}.ix-stepper--horizontal .ix-stepper__step-header:not(.ix-stepper__step-header--active):hover .ix-stepper__step-indicator{transform:scale(.95)}.ix-stepper--horizontal .ix-stepper__connector{flex:1;height:2px;background:var(--lines, #e5e7eb);margin:0 16px;position:relative;top:calc(var(--step-diameter) / 2)}.ix-stepper--vertical{flex-direction:row}.ix-stepper--vertical .ix-stepper__header{display:flex;flex-direction:column;width:280px;padding:16px;border-right:1px solid var(--lines, #e5e7eb)}.ix-stepper--vertical .ix-stepper__step-header{display:flex;flex-direction:row;align-items:center;text-align:left;cursor:pointer;transition:all .2s ease-in-out;padding:var(--step-padding);border-radius:8px;margin-bottom:8px}.ix-stepper--vertical .ix-stepper__step-header:not(.ix-stepper__step-header--active):hover .ix-stepper__step-indicator{transform:scale(.95)}.ix-stepper--vertical .ix-stepper__step-header .ix-stepper__step-label{margin-left:12px;margin-top:0}.ix-stepper--vertical .ix-stepper__connector{width:2px;height:24px;background:var(--lines, #e5e7eb);position:relative;left:calc(var(--step-diameter) / 2 + var(--step-padding));margin-bottom:8px}.ix-stepper--vertical .ix-stepper__content{flex:1;padding:16px}.ix-stepper__step-indicator{display:flex;align-items:center;justify-content:center;width:var(--step-diameter);height:var(--step-diameter);border-radius:50%;background:var(--alt-bg1, #f8f9fa);color:var(--alt-fg1, #495057);font-weight:400;font-size:14px;transition:all .2s ease-in-out;position:relative;transform:scale(.65)}.ix-stepper__step-number{font-weight:400}.ix-stepper__step-label{margin-top:8px}.ix-stepper__step-title{display:block;font-weight:400;font-size:14px;color:var(--fg1, #000000);line-height:1.2}.ix-stepper__step-subtitle{display:block;font-size:12px;color:var(--fg2, #6c757d);margin-top:2px}.ix-stepper__step-header--active .ix-stepper__step-indicator{background:var(--primary, #007bff);color:var(--primary-txt, #ffffff);transform:scale(1)}.ix-stepper__step-header--active .ix-stepper__step-title{color:var(--fg2, #6c757d);font-weight:600}.ix-stepper__step-header--completed .ix-stepper__step-indicator{background:var(--green, #28a745);color:#fff}.ix-stepper__step-header--completed .ix-stepper__step-check{font-size:16px;font-weight:700}.ix-stepper__step-header--error .ix-stepper__step-indicator{background:var(--red, #dc3545);color:#fff}.ix-stepper__step-header--error .ix-stepper__step-error{font-size:18px;font-weight:700}.ix-stepper__step-header--error .ix-stepper__step-title{color:var(--fg1, #000000)}.ix-stepper__step-header--active.ix-stepper__step-header--error .ix-stepper__step-title{color:var(--fg2, #6c757d);font-weight:600}.ix-stepper__step-header--optional .ix-stepper__step-indicator{border:2px dashed var(--lines, #e5e7eb);background:transparent}.ix-stepper--horizontal .ix-stepper__step-header--completed+.ix-stepper__connector{background:var(--green, #28a745)}.ix-stepper--horizontal .ix-stepper__step-header--completed+.ix-stepper__connector:after{content:\"\";position:absolute;top:0;left:0;right:0;height:100%;background:var(--green, #28a745);animation:progressFill .3s ease-in-out}.ix-stepper--vertical .ix-stepper__step-header--completed+.ix-stepper__connector{background:var(--green, #28a745)}.ix-stepper__content{min-height:200px}.ix-stepper__step-content{padding:16px;background:var(--bg1, #ffffff);border-radius:8px;border:1px solid var(--lines, #e5e7eb)}@keyframes progressFill{0%{width:0}to{width:100%}}.ix-stepper__step-header:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-stepper__step-header:focus:not(:focus-visible){outline:none}@media (max-width: 780px){.ix-stepper--vertical .ix-stepper__header{width:180px;border-right:none;border-bottom:1px solid var(--lines, #e5e7eb);padding:16px 0}.ix-stepper--vertical .ix-stepper__step-header{flex-direction:column;align-items:center;text-align:center;min-width:80px;padding:8px 4px}.ix-stepper--vertical .ix-stepper__step-header .ix-stepper__step-label{margin-left:0;margin-top:8px}.ix-stepper--vertical .ix-stepper__connector{display:none}}@media (max-width: 780px){.ix-stepper .ix-stepper__step-label{display:none}.ix-stepper .ix-stepper__step-indicator{width:var(--step-diameter-sm);height:var(--step-diameter-sm);font-size:12px}.ix-stepper--horizontal .ix-stepper__header{padding:0 8px}.ix-stepper--horizontal .ix-stepper__connector{top:calc(var(--step-diameter-sm) / 2);margin:0 8px}.ix-stepper--vertical .ix-stepper__header{width:60px}.ix-stepper--vertical .ix-stepper__step-header{padding:4px;margin-bottom:4px}.ix-stepper--vertical .ix-stepper__connector{left:calc(var(--step-diameter-sm) / 2 + 4px);height:16px;margin-bottom:4px}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgTemplateOutlet, selector: "[ngTemplateOutlet]", inputs: ["ngTemplateOutletContext", "ngTemplateOutlet", "ngTemplateOutletInjector"] }], animations: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxStepperComponent, isStandalone: true, selector: "ix-stepper", inputs: { orientation: { classPropertyName: "orientation", publicName: "orientation", isSignal: true, isRequired: false, transformFunction: null }, linear: { classPropertyName: "linear", publicName: "linear", isSignal: true, isRequired: false, transformFunction: null }, selectedIndex: { classPropertyName: "selectedIndex", publicName: "selectedIndex", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectedIndex: "selectedIndexChange", selectionChange: "selectionChange", completed: "completed" }, host: { listeners: { "window:resize": "onWindowResize($event)" } }, queries: [{ propertyName: "steps", predicate: IxStepComponent, descendants: true, isSignal: true }], ngImport: i0, template: "<div class=\"ix-stepper\"\n     [class.ix-stepper--horizontal]=\"orientation() === 'horizontal' || (orientation() === 'auto' && isWideScreen())\"\n     [class.ix-stepper--vertical]=\"orientation() === 'vertical' || (orientation() === 'auto' && !isWideScreen())\">\n\n  <!-- Step Headers -->\n  <div class=\"ix-stepper__header\">\n    @for (step of steps(); track $index; let i = $index) {\n      <div class=\"ix-stepper__step-header\"\n           [class.ix-stepper__step-header--active]=\"selectedIndex() === i\"\n           [class.ix-stepper__step-header--completed]=\"step.completed()\"\n           [class.ix-stepper__step-header--error]=\"step.hasError()\"\n           [class.ix-stepper__step-header--optional]=\"step.optional()\"\n           (click)=\"selectStep(i)\">\n\n        <!-- Step Number/Icon -->\n        <div class=\"ix-stepper__step-indicator\">\n          @if (step.completed() && !step.hasError()) {\n            <span class=\"ix-stepper__step-check\">\u2713</span>\n          }\n          @if (step.hasError()) {\n            <span class=\"ix-stepper__step-error\">!</span>\n          }\n          @if (!step.completed() && !step.hasError()) {\n            @if (step.icon()) {\n              <span class=\"ix-stepper__step-icon\">{{ step.icon() }}</span>\n            } @else {\n              <span class=\"ix-stepper__step-number\">{{ i + 1 }}</span>\n            }\n          }\n        </div>\n\n        <!-- Step Label -->\n        <div class=\"ix-stepper__step-label\">\n          <div class=\"ix-stepper__step-title\">{{ step.label() }}</div>\n          @if (step.optional()) {\n            <span class=\"ix-stepper__step-subtitle\">Optional</span>\n          }\n        </div>\n      </div>\n\n      <!-- Connector Line (except for last step) -->\n      @if (i < steps().length - 1) {\n        <div class=\"ix-stepper__connector\"></div>\n      }\n    }\n  </div>\n\n  <!-- Step Content -->\n  <div class=\"ix-stepper__content\">\n    @for (step of steps(); track $index; let i = $index) {\n      @if (selectedIndex() === i) {\n        <div class=\"ix-stepper__step-content\"\n             [@stepTransition]=\"selectedIndex()\">\n          <ng-container *ngTemplateOutlet=\"step.content\"></ng-container>\n        </div>\n      }\n    }\n  </div>\n</div>", styles: [".ix-stepper{display:flex;font-family:inherit;--step-diameter: 48px;--step-diameter-sm: 32px;--step-padding: 12px}.ix-stepper--horizontal{flex-direction:column}.ix-stepper--horizontal .ix-stepper__header{display:flex;justify-content:center;margin-bottom:32px;padding:0 16px}.ix-stepper--horizontal .ix-stepper__step-header{display:flex;flex-direction:column;align-items:center;text-align:center;cursor:pointer;transition:all .2s ease-in-out}.ix-stepper--horizontal .ix-stepper__step-header:not(.ix-stepper__step-header--active):hover .ix-stepper__step-indicator{transform:scale(.95)}.ix-stepper--horizontal .ix-stepper__connector{flex:1;height:2px;background:var(--lines, #e5e7eb);margin:0 16px;position:relative;top:calc(var(--step-diameter) / 2)}.ix-stepper--vertical{flex-direction:row}.ix-stepper--vertical .ix-stepper__header{display:flex;flex-direction:column;width:280px;padding:16px;border-right:1px solid var(--lines, #e5e7eb)}.ix-stepper--vertical .ix-stepper__step-header{display:flex;flex-direction:row;align-items:center;text-align:left;cursor:pointer;transition:all .2s ease-in-out;padding:var(--step-padding);border-radius:8px;margin-bottom:8px}.ix-stepper--vertical .ix-stepper__step-header:not(.ix-stepper__step-header--active):hover .ix-stepper__step-indicator{transform:scale(.95)}.ix-stepper--vertical .ix-stepper__step-header .ix-stepper__step-label{margin-left:12px;margin-top:0}.ix-stepper--vertical .ix-stepper__connector{width:2px;height:24px;background:var(--lines, #e5e7eb);position:relative;left:calc(var(--step-diameter) / 2 + var(--step-padding));margin-bottom:8px}.ix-stepper--vertical .ix-stepper__content{flex:1;padding:16px}.ix-stepper__step-indicator{display:flex;align-items:center;justify-content:center;width:var(--step-diameter);height:var(--step-diameter);border-radius:50%;background:var(--alt-bg1, #f8f9fa);color:var(--alt-fg1, #495057);font-weight:400;font-size:14px;transition:all .2s ease-in-out;position:relative;transform:scale(.65)}.ix-stepper__step-number{font-weight:400}.ix-stepper__step-label{margin-top:8px}.ix-stepper__step-title{display:block;font-weight:400;font-size:14px;color:var(--fg1, #000000);line-height:1.2}.ix-stepper__step-subtitle{display:block;font-size:12px;color:var(--fg2, #6c757d);margin-top:2px}.ix-stepper__step-header--active .ix-stepper__step-indicator{background:var(--primary, #007bff);color:var(--primary-txt, #ffffff);transform:scale(1)}.ix-stepper__step-header--active .ix-stepper__step-title{color:var(--fg2, #6c757d);font-weight:600}.ix-stepper__step-header--completed .ix-stepper__step-indicator{background:var(--green, #28a745);color:#fff}.ix-stepper__step-header--completed .ix-stepper__step-check{font-size:16px;font-weight:700}.ix-stepper__step-header--error .ix-stepper__step-indicator{background:var(--red, #dc3545);color:#fff}.ix-stepper__step-header--error .ix-stepper__step-error{font-size:18px;font-weight:700}.ix-stepper__step-header--error .ix-stepper__step-title{color:var(--fg1, #000000)}.ix-stepper__step-header--active.ix-stepper__step-header--error .ix-stepper__step-title{color:var(--fg2, #6c757d);font-weight:600}.ix-stepper__step-header--optional .ix-stepper__step-indicator{border:2px dashed var(--lines, #e5e7eb);background:transparent}.ix-stepper--horizontal .ix-stepper__step-header--completed+.ix-stepper__connector{background:var(--green, #28a745)}.ix-stepper--horizontal .ix-stepper__step-header--completed+.ix-stepper__connector:after{content:\"\";position:absolute;top:0;left:0;right:0;height:100%;background:var(--green, #28a745);animation:progressFill .3s ease-in-out}.ix-stepper--vertical .ix-stepper__step-header--completed+.ix-stepper__connector{background:var(--green, #28a745)}.ix-stepper__content{min-height:200px}.ix-stepper__step-content{padding:16px;background:var(--bg1, #ffffff);border-radius:8px;border:1px solid var(--lines, #e5e7eb)}@keyframes progressFill{0%{width:0}to{width:100%}}.ix-stepper__step-header:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-stepper__step-header:focus:not(:focus-visible){outline:none}@media (max-width: 780px){.ix-stepper--vertical .ix-stepper__header{width:180px;border-right:none;border-bottom:1px solid var(--lines, #e5e7eb);padding:16px 0}.ix-stepper--vertical .ix-stepper__step-header{flex-direction:column;align-items:center;text-align:center;min-width:80px;padding:8px 4px}.ix-stepper--vertical .ix-stepper__step-header .ix-stepper__step-label{margin-left:0;margin-top:8px}.ix-stepper--vertical .ix-stepper__connector{display:none}}@media (max-width: 780px){.ix-stepper .ix-stepper__step-label{display:none}.ix-stepper .ix-stepper__step-indicator{width:var(--step-diameter-sm);height:var(--step-diameter-sm);font-size:12px}.ix-stepper--horizontal .ix-stepper__header{padding:0 8px}.ix-stepper--horizontal .ix-stepper__connector{top:calc(var(--step-diameter-sm) / 2);margin:0 8px}.ix-stepper--vertical .ix-stepper__header{width:60px}.ix-stepper--vertical .ix-stepper__step-header{padding:4px;margin-bottom:4px}.ix-stepper--vertical .ix-stepper__connector{left:calc(var(--step-diameter-sm) / 2 + 4px);height:16px;margin-bottom:4px}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgTemplateOutlet, selector: "[ngTemplateOutlet]", inputs: ["ngTemplateOutletContext", "ngTemplateOutlet", "ngTemplateOutletInjector"] }], animations: [
             trigger('stepTransition', [
                 transition(':enter', [
                     style({ opacity: 0, transform: 'translateX(50px)' }),
@@ -7824,24 +7824,10 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                                 animate('300ms ease-in-out', style({ opacity: 1, transform: 'translateX(0)' }))
                             ])
                         ])
-                    ], template: "<div class=\"ix-stepper\" \n     [class.ix-stepper--horizontal]=\"orientation === 'horizontal' || (orientation === 'auto' && isWideScreen)\" \n     [class.ix-stepper--vertical]=\"orientation === 'vertical' || (orientation === 'auto' && !isWideScreen)\">\n  \n  <!-- Step Headers -->\n  <div class=\"ix-stepper__header\">\n    @for (step of steps; track $index; let i = $index) {\n      <div class=\"ix-stepper__step-header\"\n           [class.ix-stepper__step-header--active]=\"selectedIndex === i\"\n           [class.ix-stepper__step-header--completed]=\"step.completed()\"\n           [class.ix-stepper__step-header--error]=\"step.hasError()\"\n           [class.ix-stepper__step-header--optional]=\"step.optional()\"\n           (click)=\"selectStep(i)\">\n\n        <!-- Step Number/Icon -->\n        <div class=\"ix-stepper__step-indicator\">\n          @if (step.completed() && !step.hasError()) {\n            <span class=\"ix-stepper__step-check\">\u2713</span>\n          }\n          @if (step.hasError()) {\n            <span class=\"ix-stepper__step-error\">!</span>\n          }\n          @if (!step.completed() && !step.hasError()) {\n            @if (step.icon()) {\n              <span class=\"ix-stepper__step-icon\">{{ step.icon() }}</span>\n            } @else {\n              <span class=\"ix-stepper__step-number\">{{ i + 1 }}</span>\n            }\n          }\n        </div>\n\n        <!-- Step Label -->\n        <div class=\"ix-stepper__step-label\">\n          <div class=\"ix-stepper__step-title\">{{ step.label() }}</div>\n          @if (step.optional()) {\n            <span class=\"ix-stepper__step-subtitle\">Optional</span>\n          }\n        </div>\n      </div>\n\n      <!-- Connector Line (except for last step) -->\n      @if (i < steps.length - 1) {\n        <div class=\"ix-stepper__connector\"></div>\n      }\n    }\n  </div>\n  \n  <!-- Step Content -->\n  <div class=\"ix-stepper__content\">\n    @for (step of steps; track $index; let i = $index) {\n      @if (selectedIndex === i) {\n        <div class=\"ix-stepper__step-content\"\n             [@stepTransition]=\"selectedIndex\">\n          <ng-container *ngTemplateOutlet=\"step.content\"></ng-container>\n        </div>\n      }\n    }\n  </div>\n</div>", styles: [".ix-stepper{display:flex;font-family:inherit;--step-diameter: 48px;--step-diameter-sm: 32px;--step-padding: 12px}.ix-stepper--horizontal{flex-direction:column}.ix-stepper--horizontal .ix-stepper__header{display:flex;justify-content:center;margin-bottom:32px;padding:0 16px}.ix-stepper--horizontal .ix-stepper__step-header{display:flex;flex-direction:column;align-items:center;text-align:center;cursor:pointer;transition:all .2s ease-in-out}.ix-stepper--horizontal .ix-stepper__step-header:not(.ix-stepper__step-header--active):hover .ix-stepper__step-indicator{transform:scale(.95)}.ix-stepper--horizontal .ix-stepper__connector{flex:1;height:2px;background:var(--lines, #e5e7eb);margin:0 16px;position:relative;top:calc(var(--step-diameter) / 2)}.ix-stepper--vertical{flex-direction:row}.ix-stepper--vertical .ix-stepper__header{display:flex;flex-direction:column;width:280px;padding:16px;border-right:1px solid var(--lines, #e5e7eb)}.ix-stepper--vertical .ix-stepper__step-header{display:flex;flex-direction:row;align-items:center;text-align:left;cursor:pointer;transition:all .2s ease-in-out;padding:var(--step-padding);border-radius:8px;margin-bottom:8px}.ix-stepper--vertical .ix-stepper__step-header:not(.ix-stepper__step-header--active):hover .ix-stepper__step-indicator{transform:scale(.95)}.ix-stepper--vertical .ix-stepper__step-header .ix-stepper__step-label{margin-left:12px;margin-top:0}.ix-stepper--vertical .ix-stepper__connector{width:2px;height:24px;background:var(--lines, #e5e7eb);position:relative;left:calc(var(--step-diameter) / 2 + var(--step-padding));margin-bottom:8px}.ix-stepper--vertical .ix-stepper__content{flex:1;padding:16px}.ix-stepper__step-indicator{display:flex;align-items:center;justify-content:center;width:var(--step-diameter);height:var(--step-diameter);border-radius:50%;background:var(--alt-bg1, #f8f9fa);color:var(--alt-fg1, #495057);font-weight:400;font-size:14px;transition:all .2s ease-in-out;position:relative;transform:scale(.65)}.ix-stepper__step-number{font-weight:400}.ix-stepper__step-label{margin-top:8px}.ix-stepper__step-title{display:block;font-weight:400;font-size:14px;color:var(--fg1, #000000);line-height:1.2}.ix-stepper__step-subtitle{display:block;font-size:12px;color:var(--fg2, #6c757d);margin-top:2px}.ix-stepper__step-header--active .ix-stepper__step-indicator{background:var(--primary, #007bff);color:var(--primary-txt, #ffffff);transform:scale(1)}.ix-stepper__step-header--active .ix-stepper__step-title{color:var(--fg2, #6c757d);font-weight:600}.ix-stepper__step-header--completed .ix-stepper__step-indicator{background:var(--green, #28a745);color:#fff}.ix-stepper__step-header--completed .ix-stepper__step-check{font-size:16px;font-weight:700}.ix-stepper__step-header--error .ix-stepper__step-indicator{background:var(--red, #dc3545);color:#fff}.ix-stepper__step-header--error .ix-stepper__step-error{font-size:18px;font-weight:700}.ix-stepper__step-header--error .ix-stepper__step-title{color:var(--fg1, #000000)}.ix-stepper__step-header--active.ix-stepper__step-header--error .ix-stepper__step-title{color:var(--fg2, #6c757d);font-weight:600}.ix-stepper__step-header--optional .ix-stepper__step-indicator{border:2px dashed var(--lines, #e5e7eb);background:transparent}.ix-stepper--horizontal .ix-stepper__step-header--completed+.ix-stepper__connector{background:var(--green, #28a745)}.ix-stepper--horizontal .ix-stepper__step-header--completed+.ix-stepper__connector:after{content:\"\";position:absolute;top:0;left:0;right:0;height:100%;background:var(--green, #28a745);animation:progressFill .3s ease-in-out}.ix-stepper--vertical .ix-stepper__step-header--completed+.ix-stepper__connector{background:var(--green, #28a745)}.ix-stepper__content{min-height:200px}.ix-stepper__step-content{padding:16px;background:var(--bg1, #ffffff);border-radius:8px;border:1px solid var(--lines, #e5e7eb)}@keyframes progressFill{0%{width:0}to{width:100%}}.ix-stepper__step-header:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-stepper__step-header:focus:not(:focus-visible){outline:none}@media (max-width: 780px){.ix-stepper--vertical .ix-stepper__header{width:180px;border-right:none;border-bottom:1px solid var(--lines, #e5e7eb);padding:16px 0}.ix-stepper--vertical .ix-stepper__step-header{flex-direction:column;align-items:center;text-align:center;min-width:80px;padding:8px 4px}.ix-stepper--vertical .ix-stepper__step-header .ix-stepper__step-label{margin-left:0;margin-top:8px}.ix-stepper--vertical .ix-stepper__connector{display:none}}@media (max-width: 780px){.ix-stepper .ix-stepper__step-label{display:none}.ix-stepper .ix-stepper__step-indicator{width:var(--step-diameter-sm);height:var(--step-diameter-sm);font-size:12px}.ix-stepper--horizontal .ix-stepper__header{padding:0 8px}.ix-stepper--horizontal .ix-stepper__connector{top:calc(var(--step-diameter-sm) / 2);margin:0 8px}.ix-stepper--vertical .ix-stepper__header{width:60px}.ix-stepper--vertical .ix-stepper__step-header{padding:4px;margin-bottom:4px}.ix-stepper--vertical .ix-stepper__connector{left:calc(var(--step-diameter-sm) / 2 + 4px);height:16px;margin-bottom:4px}}\n"] }]
-        }], ctorParameters: () => [{ type: i0.ChangeDetectorRef }], propDecorators: { orientation: [{
-                type: Input
-            }], linear: [{
-                type: Input
-            }], selectedIndex: [{
-                type: Input
-            }], selectionChange: [{
-                type: Output
-            }], completed: [{
-                type: Output
-            }], steps: [{
-                type: ContentChildren,
-                args: [IxStepComponent, { descendants: true }]
-            }], onWindowResize: [{
-                type: HostListener,
-                args: ['window:resize', ['$event']]
-            }] } });
+                    ], host: {
+                        '(window:resize)': 'onWindowResize($event)'
+                    }, template: "<div class=\"ix-stepper\"\n     [class.ix-stepper--horizontal]=\"orientation() === 'horizontal' || (orientation() === 'auto' && isWideScreen())\"\n     [class.ix-stepper--vertical]=\"orientation() === 'vertical' || (orientation() === 'auto' && !isWideScreen())\">\n\n  <!-- Step Headers -->\n  <div class=\"ix-stepper__header\">\n    @for (step of steps(); track $index; let i = $index) {\n      <div class=\"ix-stepper__step-header\"\n           [class.ix-stepper__step-header--active]=\"selectedIndex() === i\"\n           [class.ix-stepper__step-header--completed]=\"step.completed()\"\n           [class.ix-stepper__step-header--error]=\"step.hasError()\"\n           [class.ix-stepper__step-header--optional]=\"step.optional()\"\n           (click)=\"selectStep(i)\">\n\n        <!-- Step Number/Icon -->\n        <div class=\"ix-stepper__step-indicator\">\n          @if (step.completed() && !step.hasError()) {\n            <span class=\"ix-stepper__step-check\">\u2713</span>\n          }\n          @if (step.hasError()) {\n            <span class=\"ix-stepper__step-error\">!</span>\n          }\n          @if (!step.completed() && !step.hasError()) {\n            @if (step.icon()) {\n              <span class=\"ix-stepper__step-icon\">{{ step.icon() }}</span>\n            } @else {\n              <span class=\"ix-stepper__step-number\">{{ i + 1 }}</span>\n            }\n          }\n        </div>\n\n        <!-- Step Label -->\n        <div class=\"ix-stepper__step-label\">\n          <div class=\"ix-stepper__step-title\">{{ step.label() }}</div>\n          @if (step.optional()) {\n            <span class=\"ix-stepper__step-subtitle\">Optional</span>\n          }\n        </div>\n      </div>\n\n      <!-- Connector Line (except for last step) -->\n      @if (i < steps().length - 1) {\n        <div class=\"ix-stepper__connector\"></div>\n      }\n    }\n  </div>\n\n  <!-- Step Content -->\n  <div class=\"ix-stepper__content\">\n    @for (step of steps(); track $index; let i = $index) {\n      @if (selectedIndex() === i) {\n        <div class=\"ix-stepper__step-content\"\n             [@stepTransition]=\"selectedIndex()\">\n          <ng-container *ngTemplateOutlet=\"step.content\"></ng-container>\n        </div>\n      }\n    }\n  </div>\n</div>", styles: [".ix-stepper{display:flex;font-family:inherit;--step-diameter: 48px;--step-diameter-sm: 32px;--step-padding: 12px}.ix-stepper--horizontal{flex-direction:column}.ix-stepper--horizontal .ix-stepper__header{display:flex;justify-content:center;margin-bottom:32px;padding:0 16px}.ix-stepper--horizontal .ix-stepper__step-header{display:flex;flex-direction:column;align-items:center;text-align:center;cursor:pointer;transition:all .2s ease-in-out}.ix-stepper--horizontal .ix-stepper__step-header:not(.ix-stepper__step-header--active):hover .ix-stepper__step-indicator{transform:scale(.95)}.ix-stepper--horizontal .ix-stepper__connector{flex:1;height:2px;background:var(--lines, #e5e7eb);margin:0 16px;position:relative;top:calc(var(--step-diameter) / 2)}.ix-stepper--vertical{flex-direction:row}.ix-stepper--vertical .ix-stepper__header{display:flex;flex-direction:column;width:280px;padding:16px;border-right:1px solid var(--lines, #e5e7eb)}.ix-stepper--vertical .ix-stepper__step-header{display:flex;flex-direction:row;align-items:center;text-align:left;cursor:pointer;transition:all .2s ease-in-out;padding:var(--step-padding);border-radius:8px;margin-bottom:8px}.ix-stepper--vertical .ix-stepper__step-header:not(.ix-stepper__step-header--active):hover .ix-stepper__step-indicator{transform:scale(.95)}.ix-stepper--vertical .ix-stepper__step-header .ix-stepper__step-label{margin-left:12px;margin-top:0}.ix-stepper--vertical .ix-stepper__connector{width:2px;height:24px;background:var(--lines, #e5e7eb);position:relative;left:calc(var(--step-diameter) / 2 + var(--step-padding));margin-bottom:8px}.ix-stepper--vertical .ix-stepper__content{flex:1;padding:16px}.ix-stepper__step-indicator{display:flex;align-items:center;justify-content:center;width:var(--step-diameter);height:var(--step-diameter);border-radius:50%;background:var(--alt-bg1, #f8f9fa);color:var(--alt-fg1, #495057);font-weight:400;font-size:14px;transition:all .2s ease-in-out;position:relative;transform:scale(.65)}.ix-stepper__step-number{font-weight:400}.ix-stepper__step-label{margin-top:8px}.ix-stepper__step-title{display:block;font-weight:400;font-size:14px;color:var(--fg1, #000000);line-height:1.2}.ix-stepper__step-subtitle{display:block;font-size:12px;color:var(--fg2, #6c757d);margin-top:2px}.ix-stepper__step-header--active .ix-stepper__step-indicator{background:var(--primary, #007bff);color:var(--primary-txt, #ffffff);transform:scale(1)}.ix-stepper__step-header--active .ix-stepper__step-title{color:var(--fg2, #6c757d);font-weight:600}.ix-stepper__step-header--completed .ix-stepper__step-indicator{background:var(--green, #28a745);color:#fff}.ix-stepper__step-header--completed .ix-stepper__step-check{font-size:16px;font-weight:700}.ix-stepper__step-header--error .ix-stepper__step-indicator{background:var(--red, #dc3545);color:#fff}.ix-stepper__step-header--error .ix-stepper__step-error{font-size:18px;font-weight:700}.ix-stepper__step-header--error .ix-stepper__step-title{color:var(--fg1, #000000)}.ix-stepper__step-header--active.ix-stepper__step-header--error .ix-stepper__step-title{color:var(--fg2, #6c757d);font-weight:600}.ix-stepper__step-header--optional .ix-stepper__step-indicator{border:2px dashed var(--lines, #e5e7eb);background:transparent}.ix-stepper--horizontal .ix-stepper__step-header--completed+.ix-stepper__connector{background:var(--green, #28a745)}.ix-stepper--horizontal .ix-stepper__step-header--completed+.ix-stepper__connector:after{content:\"\";position:absolute;top:0;left:0;right:0;height:100%;background:var(--green, #28a745);animation:progressFill .3s ease-in-out}.ix-stepper--vertical .ix-stepper__step-header--completed+.ix-stepper__connector{background:var(--green, #28a745)}.ix-stepper__content{min-height:200px}.ix-stepper__step-content{padding:16px;background:var(--bg1, #ffffff);border-radius:8px;border:1px solid var(--lines, #e5e7eb)}@keyframes progressFill{0%{width:0}to{width:100%}}.ix-stepper__step-header:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-stepper__step-header:focus:not(:focus-visible){outline:none}@media (max-width: 780px){.ix-stepper--vertical .ix-stepper__header{width:180px;border-right:none;border-bottom:1px solid var(--lines, #e5e7eb);padding:16px 0}.ix-stepper--vertical .ix-stepper__step-header{flex-direction:column;align-items:center;text-align:center;min-width:80px;padding:8px 4px}.ix-stepper--vertical .ix-stepper__step-header .ix-stepper__step-label{margin-left:0;margin-top:8px}.ix-stepper--vertical .ix-stepper__connector{display:none}}@media (max-width: 780px){.ix-stepper .ix-stepper__step-label{display:none}.ix-stepper .ix-stepper__step-indicator{width:var(--step-diameter-sm);height:var(--step-diameter-sm);font-size:12px}.ix-stepper--horizontal .ix-stepper__header{padding:0 8px}.ix-stepper--horizontal .ix-stepper__connector{top:calc(var(--step-diameter-sm) / 2);margin:0 8px}.ix-stepper--vertical .ix-stepper__header{width:60px}.ix-stepper--vertical .ix-stepper__step-header{padding:4px;margin-bottom:4px}.ix-stepper--vertical .ix-stepper__connector{left:calc(var(--step-diameter-sm) / 2 + 4px);height:16px;margin-bottom:4px}}\n"] }]
+        }], ctorParameters: () => [{ type: i0.ChangeDetectorRef }] });
 
 /**
  * Auto-generated from SVG files - DO NOT EDIT MANUALLY
@@ -7849,7 +7835,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * To regenerate this file, run:
  *   npm run generate-icons
  *
- * Generated: 2025-12-29T18:37:29.826Z
+ * Generated: 2025-12-29T18:53:31.756Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 /* eslint-disable */
@@ -8238,22 +8224,22 @@ class IxFilePickerComponent {
     overlay;
     elementRef;
     viewContainerRef;
-    mode = 'any';
-    multiSelect = false;
-    allowCreate = true;
-    allowDatasetCreate = false;
-    allowZvolCreate = false;
-    allowManualInput = true;
-    placeholder = 'Select file or folder';
-    disabled = false;
-    startPath = '/mnt';
-    rootPath;
-    fileExtensions;
-    callbacks;
-    selectionChange = new EventEmitter();
-    pathChange = new EventEmitter();
-    createFolder = new EventEmitter();
-    error = new EventEmitter();
+    mode = input('any', ...(ngDevMode ? [{ debugName: "mode" }] : []));
+    multiSelect = input(false, ...(ngDevMode ? [{ debugName: "multiSelect" }] : []));
+    allowCreate = input(true, ...(ngDevMode ? [{ debugName: "allowCreate" }] : []));
+    allowDatasetCreate = input(false, ...(ngDevMode ? [{ debugName: "allowDatasetCreate" }] : []));
+    allowZvolCreate = input(false, ...(ngDevMode ? [{ debugName: "allowZvolCreate" }] : []));
+    allowManualInput = input(true, ...(ngDevMode ? [{ debugName: "allowManualInput" }] : []));
+    placeholder = input('Select file or folder', ...(ngDevMode ? [{ debugName: "placeholder" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    startPath = input('/mnt', ...(ngDevMode ? [{ debugName: "startPath" }] : []));
+    rootPath = input(undefined, ...(ngDevMode ? [{ debugName: "rootPath" }] : []));
+    fileExtensions = input(undefined, ...(ngDevMode ? [{ debugName: "fileExtensions" }] : []));
+    callbacks = input(undefined, ...(ngDevMode ? [{ debugName: "callbacks" }] : []));
+    selectionChange = output();
+    pathChange = output();
+    createFolder = output();
+    error = output();
     wrapperEl;
     filePickerTemplate;
     destroy$ = new Subject();
@@ -8269,6 +8255,9 @@ class IxFilePickerComponent {
     hasError = signal(false, ...(ngDevMode ? [{ debugName: "hasError" }] : []));
     creatingItemTempId = signal(null, ...(ngDevMode ? [{ debugName: "creatingItemTempId" }] : []));
     creationLoading = signal(false, ...(ngDevMode ? [{ debugName: "creationLoading" }] : []));
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    // Computed disabled state (combines input and form state)
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
     // ControlValueAccessor implementation
     onChange = (value) => { };
     onTouched = () => { };
@@ -8278,8 +8267,8 @@ class IxFilePickerComponent {
         this.viewContainerRef = viewContainerRef;
     }
     ngOnInit() {
-        this.currentPath.set(this.startPath);
-        this.selectedPath.set(this.multiSelect ? '' : '');
+        this.currentPath.set(this.startPath());
+        this.selectedPath.set(this.multiSelect() ? '' : '');
     }
     ngOnDestroy() {
         this.destroy$.next();
@@ -8288,7 +8277,7 @@ class IxFilePickerComponent {
     }
     // ControlValueAccessor implementation
     writeValue(value) {
-        if (this.multiSelect) {
+        if (this.multiSelect()) {
             this.selectedItems.set(Array.isArray(value) ? value : value ? [value] : []);
             // For multi-select, show full paths separated by commas
             this.selectedPath.set(this.selectedItems().join(', '));
@@ -8306,17 +8295,18 @@ class IxFilePickerComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     // Event handlers
     onPathInput(event) {
         const target = event.target;
         const inputValue = target.value;
-        if (this.allowManualInput) {
+        if (this.allowManualInput()) {
             // Convert display path to full path with /mnt prefix
             const fullPath = this.toFullPath(inputValue);
-            if (this.callbacks?.validatePath) {
-                this.callbacks.validatePath(fullPath).then(isValid => {
+            const cb = this.callbacks();
+            if (cb?.validatePath) {
+                cb.validatePath(fullPath).then(isValid => {
                     if (isValid) {
                         this.updateSelection(fullPath);
                     }
@@ -8334,7 +8324,7 @@ class IxFilePickerComponent {
         this.onTouched();
     }
     openFilePicker() {
-        if (this.isOpen() || this.disabled)
+        if (this.isOpen() || this.isDisabled())
             return;
         this.createOverlay();
         this.isOpen.set(true);
@@ -8352,7 +8342,7 @@ class IxFilePickerComponent {
     onItemClick(item) {
         if (item.disabled || item.isCreating || this.creatingItemTempId())
             return;
-        if (this.multiSelect) {
+        if (this.multiSelect()) {
             const selected = this.selectedItems();
             const index = selected.indexOf(item.path);
             if (index >= 0) {
@@ -8390,7 +8380,7 @@ class IxFilePickerComponent {
             return;
         // Clear any existing error state
         this.hasError.set(false);
-        if (this.multiSelect) {
+        if (this.multiSelect()) {
             this.selectedPath.set(selected.join(', '));
             this.onChange(selected);
             this.selectionChange.emit(selected);
@@ -8445,8 +8435,8 @@ class IxFilePickerComponent {
     onClearSelection() {
         this.selectedItems.set([]);
         this.selectedPath.set('');
-        this.onChange(this.multiSelect ? [] : '');
-        this.selectionChange.emit(this.multiSelect ? [] : '');
+        this.onChange(this.multiSelect() ? [] : '');
+        this.selectionChange.emit(this.multiSelect() ? [] : '');
     }
     async onSubmitFolderName(name, tempId) {
         // Validate folder name
@@ -8456,7 +8446,8 @@ class IxFilePickerComponent {
             this.updateCreatingItemError(tempId, validation.error);
             return;
         }
-        if (!this.callbacks?.createFolder) {
+        const cb = this.callbacks();
+        if (!cb?.createFolder) {
             this.updateCreatingItemError(tempId, 'Create folder callback not provided');
             return;
         }
@@ -8465,7 +8456,7 @@ class IxFilePickerComponent {
         this.creationLoading.set(true);
         try {
             // Call the callback with parent path and user-entered name
-            const createdPath = await this.callbacks.createFolder(this.currentPath(), name.trim());
+            const createdPath = await cb.createFolder(this.currentPath(), name.trim());
             // Remove pending item
             this.removePendingItem(tempId);
             this.creatingItemTempId.set(null);
@@ -8528,7 +8519,8 @@ class IxFilePickerComponent {
         return { valid: true };
     }
     async loadDirectory(path) {
-        if (!this.callbacks?.getChildren) {
+        const cb = this.callbacks();
+        if (!cb?.getChildren) {
             // Default mock data for development
             this.fileItems.set(this.getMockFileItems(path));
             this.currentPath.set(path);
@@ -8537,8 +8529,8 @@ class IxFilePickerComponent {
         }
         this.loading.set(true);
         try {
-            const items = await this.callbacks.getChildren(path);
-            this.fileItems.set(items);
+            const items = await cb.getChildren(path);
+            this.fileItems.set(items || []);
             this.currentPath.set(path);
             this.pathChange.emit(path);
         }
@@ -8583,7 +8575,7 @@ class IxFilePickerComponent {
     updateSelection(path) {
         // Clear any existing error state since popup selections are valid
         this.hasError.set(false);
-        if (this.multiSelect) {
+        if (this.multiSelect()) {
             const selected = [path];
             this.selectedItems.set(selected);
             this.selectedPath.set(selected.join(', '));
@@ -8594,15 +8586,15 @@ class IxFilePickerComponent {
             this.selectedItems.set([path]);
             this.onChange(path);
         }
-        this.selectionChange.emit(this.multiSelect ? this.selectedItems() : path);
+        this.selectionChange.emit(this.multiSelect() ? this.selectedItems() : path);
     }
     updateSelectionFromItems() {
         // Clear any existing error state since popup selections are valid
         this.hasError.set(false);
         const selected = this.selectedItems();
         this.selectedPath.set(selected.join(', '));
-        this.onChange(this.multiSelect ? selected : selected[0] || '');
-        this.selectionChange.emit(this.multiSelect ? selected : selected[0] || '');
+        this.onChange(this.multiSelect() ? selected : selected[0] || '');
+        this.selectionChange.emit(this.multiSelect() ? selected : selected[0] || '');
     }
     toFullPath(displayPath) {
         if (!displayPath)
@@ -8671,13 +8663,13 @@ class IxFilePickerComponent {
         this.overlayRef.attach(this.portal);
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxFilePickerComponent, deps: [{ token: i1$3.Overlay }, { token: i0.ElementRef }, { token: i0.ViewContainerRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxFilePickerComponent, isStandalone: true, selector: "ix-file-picker", inputs: { mode: "mode", multiSelect: "multiSelect", allowCreate: "allowCreate", allowDatasetCreate: "allowDatasetCreate", allowZvolCreate: "allowZvolCreate", allowManualInput: "allowManualInput", placeholder: "placeholder", disabled: "disabled", startPath: "startPath", rootPath: "rootPath", fileExtensions: "fileExtensions", callbacks: "callbacks" }, outputs: { selectionChange: "selectionChange", pathChange: "pathChange", createFolder: "createFolder", error: "error" }, host: { properties: { "class.error": "hasError()" }, classAttribute: "ix-file-picker" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxFilePickerComponent, isStandalone: true, selector: "ix-file-picker", inputs: { mode: { classPropertyName: "mode", publicName: "mode", isSignal: true, isRequired: false, transformFunction: null }, multiSelect: { classPropertyName: "multiSelect", publicName: "multiSelect", isSignal: true, isRequired: false, transformFunction: null }, allowCreate: { classPropertyName: "allowCreate", publicName: "allowCreate", isSignal: true, isRequired: false, transformFunction: null }, allowDatasetCreate: { classPropertyName: "allowDatasetCreate", publicName: "allowDatasetCreate", isSignal: true, isRequired: false, transformFunction: null }, allowZvolCreate: { classPropertyName: "allowZvolCreate", publicName: "allowZvolCreate", isSignal: true, isRequired: false, transformFunction: null }, allowManualInput: { classPropertyName: "allowManualInput", publicName: "allowManualInput", isSignal: true, isRequired: false, transformFunction: null }, placeholder: { classPropertyName: "placeholder", publicName: "placeholder", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, startPath: { classPropertyName: "startPath", publicName: "startPath", isSignal: true, isRequired: false, transformFunction: null }, rootPath: { classPropertyName: "rootPath", publicName: "rootPath", isSignal: true, isRequired: false, transformFunction: null }, fileExtensions: { classPropertyName: "fileExtensions", publicName: "fileExtensions", isSignal: true, isRequired: false, transformFunction: null }, callbacks: { classPropertyName: "callbacks", publicName: "callbacks", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectionChange: "selectionChange", pathChange: "pathChange", createFolder: "createFolder", error: "error" }, host: { properties: { "class.error": "hasError()" }, classAttribute: "ix-file-picker" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxFilePickerComponent),
                 multi: true
             }
-        ], viewQueries: [{ propertyName: "wrapperEl", first: true, predicate: ["wrapper"], descendants: true }, { propertyName: "filePickerTemplate", first: true, predicate: ["filePickerTemplate"], descendants: true, static: true }], ngImport: i0, template: "<div class=\"ix-file-picker-container\">\n  <div #wrapper ixInput class=\"ix-file-picker-wrapper\" style=\"padding-right: 40px;\">\n    <input\n      type=\"text\"\n      class=\"ix-file-picker-input\"\n      [class.error]=\"hasError()\"\n      [value]=\"selectedPath() | ixStripMntPrefix\"\n      [placeholder]=\"placeholder\"\n      [readonly]=\"!allowManualInput\"\n      [disabled]=\"disabled\"\n      (input)=\"onPathInput($event)\">\n    \n    <button \n      type=\"button\"\n      class=\"ix-file-picker-toggle\"\n      (click)=\"openFilePicker()\"\n      [disabled]=\"disabled\"\n      aria-label=\"Open file picker\">\n      <ix-icon name=\"folder\" library=\"mdi\"></ix-icon>\n    </button>\n  </div>\n  \n  <ng-template #filePickerTemplate>\n    <ix-file-picker-popup\n      class=\"ix-file-picker-popup\"\n      [mode]=\"mode\"\n      [multiSelect]=\"multiSelect\"\n      [allowCreate]=\"allowCreate\"\n      [allowDatasetCreate]=\"allowDatasetCreate\"\n      [allowZvolCreate]=\"allowZvolCreate\"\n      [currentPath]=\"currentPath()\"\n      [fileItems]=\"fileItems()\"\n      [selectedItems]=\"selectedItems()\"\n      [loading]=\"loading()\"\n      [creationLoading]=\"creationLoading()\"\n      [fileExtensions]=\"fileExtensions\"\n      (itemClick)=\"onItemClick($event)\"\n      (itemDoubleClick)=\"onItemDoubleClick($event)\"\n      (pathNavigate)=\"navigateToPath($event)\"\n      (createFolder)=\"onCreateFolder()\"\n      (submitFolderName)=\"onSubmitFolderName($event.name, $event.tempId)\"\n      (cancelFolderCreation)=\"onCancelFolderCreation($event)\"\n      (clearSelection)=\"onClearSelection()\"\n      (submit)=\"onSubmit()\"\n      (cancel)=\"onCancel()\"\n      (close)=\"close()\">\n    </ix-file-picker-popup>\n  </ng-template>\n</div>", styles: [":host{display:block;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-file-picker-container{position:relative;display:flex;align-items:center;width:100%}.ix-file-picker-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-file-picker-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box;font-family:inherit}.ix-file-picker-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-file-picker-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-file-picker-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-file-picker-input.error{border-color:var(--error, #dc3545)}.ix-file-picker-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-file-picker-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;color:var(--fg1);border-radius:4px}.ix-file-picker-toggle:hover{background:var(--bg2, #f0f0f0)}.ix-file-picker-toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-file-picker-toggle:disabled{cursor:not-allowed;opacity:.5}.ix-file-picker-toggle ix-icon{font-size:var(--icon-md, 20px)}:host:focus-within .ix-file-picker-input{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}:host.error .ix-file-picker-input{border-color:var(--error, #dc3545)}:host.error .ix-file-picker-input:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}@media (prefers-reduced-motion: reduce){.ix-file-picker-input,.ix-file-picker-toggle,.file-item,.breadcrumb-segment{transition:none}.ix-file-picker-loading ix-icon{animation:none}}@media (prefers-contrast: high){.ix-file-picker-input{border-width:2px}.file-item:hover,.file-item.selected{border:2px solid var(--fg1)}.zfs-badge{border:1px solid var(--fg1)}}@media (max-width: 768px){:host ::ng-deep .ix-file-picker-overlay .ix-file-picker-dialog{min-width:300px;max-width:calc(100vw - 32px);max-height:calc(100vh - 64px)}.ix-file-picker-header{flex-direction:column;gap:12px;align-items:stretch}.ix-file-picker-breadcrumb{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-file-picker-breadcrumb::-webkit-scrollbar{display:none}.file-item{padding:12px;min-height:56px}.file-info{font-size:.875rem}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: IxInputDirective, selector: "input[ixInput], textarea[ixInput], div[ixInput]" }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }, { kind: "component", type: IxFilePickerPopupComponent, selector: "ix-file-picker-popup", inputs: ["mode", "multiSelect", "allowCreate", "allowDatasetCreate", "allowZvolCreate", "currentPath", "fileItems", "selectedItems", "loading", "creationLoading", "fileExtensions"], outputs: ["itemClick", "itemDoubleClick", "pathNavigate", "createFolder", "clearSelection", "close", "submit", "cancel", "submitFolderName", "cancelFolderCreation"] }, { kind: "ngmodule", type: OverlayModule }, { kind: "ngmodule", type: PortalModule }, { kind: "ngmodule", type: A11yModule }, { kind: "pipe", type: StripMntPrefixPipe, name: "ixStripMntPrefix" }] });
+        ], viewQueries: [{ propertyName: "wrapperEl", first: true, predicate: ["wrapper"], descendants: true }, { propertyName: "filePickerTemplate", first: true, predicate: ["filePickerTemplate"], descendants: true, static: true }], ngImport: i0, template: "<div class=\"ix-file-picker-container\">\n  <div #wrapper ixInput class=\"ix-file-picker-wrapper\" style=\"padding-right: 40px;\">\n    <input\n      type=\"text\"\n      class=\"ix-file-picker-input\"\n      [class.error]=\"hasError()\"\n      [value]=\"selectedPath() | ixStripMntPrefix\"\n      [placeholder]=\"placeholder()\"\n      [readonly]=\"!allowManualInput()\"\n      [disabled]=\"isDisabled()\"\n      (input)=\"onPathInput($event)\">\n\n    <button\n      type=\"button\"\n      class=\"ix-file-picker-toggle\"\n      (click)=\"openFilePicker()\"\n      [disabled]=\"isDisabled()\"\n      aria-label=\"Open file picker\">\n      <ix-icon name=\"folder\" library=\"mdi\"></ix-icon>\n    </button>\n  </div>\n  \n  <ng-template #filePickerTemplate>\n    <ix-file-picker-popup\n      class=\"ix-file-picker-popup\"\n      [mode]=\"mode()\"\n      [multiSelect]=\"multiSelect()\"\n      [allowCreate]=\"allowCreate()\"\n      [allowDatasetCreate]=\"allowDatasetCreate()\"\n      [allowZvolCreate]=\"allowZvolCreate()\"\n      [currentPath]=\"currentPath()\"\n      [fileItems]=\"fileItems()\"\n      [selectedItems]=\"selectedItems()\"\n      [loading]=\"loading()\"\n      [creationLoading]=\"creationLoading()\"\n      [fileExtensions]=\"fileExtensions()\"\n      (itemClick)=\"onItemClick($event)\"\n      (itemDoubleClick)=\"onItemDoubleClick($event)\"\n      (pathNavigate)=\"navigateToPath($event)\"\n      (createFolder)=\"onCreateFolder()\"\n      (submitFolderName)=\"onSubmitFolderName($event.name, $event.tempId)\"\n      (cancelFolderCreation)=\"onCancelFolderCreation($event)\"\n      (clearSelection)=\"onClearSelection()\"\n      (submit)=\"onSubmit()\"\n      (cancel)=\"onCancel()\"\n      (close)=\"close()\">\n    </ix-file-picker-popup>\n  </ng-template>\n</div>", styles: [":host{display:block;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-file-picker-container{position:relative;display:flex;align-items:center;width:100%}.ix-file-picker-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-file-picker-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box;font-family:inherit}.ix-file-picker-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-file-picker-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-file-picker-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-file-picker-input.error{border-color:var(--error, #dc3545)}.ix-file-picker-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-file-picker-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;color:var(--fg1);border-radius:4px}.ix-file-picker-toggle:hover{background:var(--bg2, #f0f0f0)}.ix-file-picker-toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-file-picker-toggle:disabled{cursor:not-allowed;opacity:.5}.ix-file-picker-toggle ix-icon{font-size:var(--icon-md, 20px)}:host:focus-within .ix-file-picker-input{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}:host.error .ix-file-picker-input{border-color:var(--error, #dc3545)}:host.error .ix-file-picker-input:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}@media (prefers-reduced-motion: reduce){.ix-file-picker-input,.ix-file-picker-toggle,.file-item,.breadcrumb-segment{transition:none}.ix-file-picker-loading ix-icon{animation:none}}@media (prefers-contrast: high){.ix-file-picker-input{border-width:2px}.file-item:hover,.file-item.selected{border:2px solid var(--fg1)}.zfs-badge{border:1px solid var(--fg1)}}@media (max-width: 768px){:host ::ng-deep .ix-file-picker-overlay .ix-file-picker-dialog{min-width:300px;max-width:calc(100vw - 32px);max-height:calc(100vh - 64px)}.ix-file-picker-header{flex-direction:column;gap:12px;align-items:stretch}.ix-file-picker-breadcrumb{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-file-picker-breadcrumb::-webkit-scrollbar{display:none}.file-item{padding:12px;min-height:56px}.file-info{font-size:.875rem}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: IxInputDirective, selector: "input[ixInput], textarea[ixInput], div[ixInput]" }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }, { kind: "component", type: IxFilePickerPopupComponent, selector: "ix-file-picker-popup", inputs: ["mode", "multiSelect", "allowCreate", "allowDatasetCreate", "allowZvolCreate", "currentPath", "fileItems", "selectedItems", "loading", "creationLoading", "fileExtensions"], outputs: ["itemClick", "itemDoubleClick", "pathNavigate", "createFolder", "clearSelection", "close", "submit", "cancel", "submitFolderName", "cancelFolderCreation"] }, { kind: "ngmodule", type: OverlayModule }, { kind: "ngmodule", type: PortalModule }, { kind: "ngmodule", type: A11yModule }, { kind: "pipe", type: StripMntPrefixPipe, name: "ixStripMntPrefix" }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxFilePickerComponent, decorators: [{
             type: Component,
@@ -8699,40 +8691,8 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                     ], host: {
                         'class': 'ix-file-picker',
                         '[class.error]': 'hasError()'
-                    }, template: "<div class=\"ix-file-picker-container\">\n  <div #wrapper ixInput class=\"ix-file-picker-wrapper\" style=\"padding-right: 40px;\">\n    <input\n      type=\"text\"\n      class=\"ix-file-picker-input\"\n      [class.error]=\"hasError()\"\n      [value]=\"selectedPath() | ixStripMntPrefix\"\n      [placeholder]=\"placeholder\"\n      [readonly]=\"!allowManualInput\"\n      [disabled]=\"disabled\"\n      (input)=\"onPathInput($event)\">\n    \n    <button \n      type=\"button\"\n      class=\"ix-file-picker-toggle\"\n      (click)=\"openFilePicker()\"\n      [disabled]=\"disabled\"\n      aria-label=\"Open file picker\">\n      <ix-icon name=\"folder\" library=\"mdi\"></ix-icon>\n    </button>\n  </div>\n  \n  <ng-template #filePickerTemplate>\n    <ix-file-picker-popup\n      class=\"ix-file-picker-popup\"\n      [mode]=\"mode\"\n      [multiSelect]=\"multiSelect\"\n      [allowCreate]=\"allowCreate\"\n      [allowDatasetCreate]=\"allowDatasetCreate\"\n      [allowZvolCreate]=\"allowZvolCreate\"\n      [currentPath]=\"currentPath()\"\n      [fileItems]=\"fileItems()\"\n      [selectedItems]=\"selectedItems()\"\n      [loading]=\"loading()\"\n      [creationLoading]=\"creationLoading()\"\n      [fileExtensions]=\"fileExtensions\"\n      (itemClick)=\"onItemClick($event)\"\n      (itemDoubleClick)=\"onItemDoubleClick($event)\"\n      (pathNavigate)=\"navigateToPath($event)\"\n      (createFolder)=\"onCreateFolder()\"\n      (submitFolderName)=\"onSubmitFolderName($event.name, $event.tempId)\"\n      (cancelFolderCreation)=\"onCancelFolderCreation($event)\"\n      (clearSelection)=\"onClearSelection()\"\n      (submit)=\"onSubmit()\"\n      (cancel)=\"onCancel()\"\n      (close)=\"close()\">\n    </ix-file-picker-popup>\n  </ng-template>\n</div>", styles: [":host{display:block;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-file-picker-container{position:relative;display:flex;align-items:center;width:100%}.ix-file-picker-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-file-picker-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box;font-family:inherit}.ix-file-picker-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-file-picker-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-file-picker-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-file-picker-input.error{border-color:var(--error, #dc3545)}.ix-file-picker-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-file-picker-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;color:var(--fg1);border-radius:4px}.ix-file-picker-toggle:hover{background:var(--bg2, #f0f0f0)}.ix-file-picker-toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-file-picker-toggle:disabled{cursor:not-allowed;opacity:.5}.ix-file-picker-toggle ix-icon{font-size:var(--icon-md, 20px)}:host:focus-within .ix-file-picker-input{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}:host.error .ix-file-picker-input{border-color:var(--error, #dc3545)}:host.error .ix-file-picker-input:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}@media (prefers-reduced-motion: reduce){.ix-file-picker-input,.ix-file-picker-toggle,.file-item,.breadcrumb-segment{transition:none}.ix-file-picker-loading ix-icon{animation:none}}@media (prefers-contrast: high){.ix-file-picker-input{border-width:2px}.file-item:hover,.file-item.selected{border:2px solid var(--fg1)}.zfs-badge{border:1px solid var(--fg1)}}@media (max-width: 768px){:host ::ng-deep .ix-file-picker-overlay .ix-file-picker-dialog{min-width:300px;max-width:calc(100vw - 32px);max-height:calc(100vh - 64px)}.ix-file-picker-header{flex-direction:column;gap:12px;align-items:stretch}.ix-file-picker-breadcrumb{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-file-picker-breadcrumb::-webkit-scrollbar{display:none}.file-item{padding:12px;min-height:56px}.file-info{font-size:.875rem}}\n"] }]
-        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }], propDecorators: { mode: [{
-                type: Input
-            }], multiSelect: [{
-                type: Input
-            }], allowCreate: [{
-                type: Input
-            }], allowDatasetCreate: [{
-                type: Input
-            }], allowZvolCreate: [{
-                type: Input
-            }], allowManualInput: [{
-                type: Input
-            }], placeholder: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], startPath: [{
-                type: Input
-            }], rootPath: [{
-                type: Input
-            }], fileExtensions: [{
-                type: Input
-            }], callbacks: [{
-                type: Input
-            }], selectionChange: [{
-                type: Output
-            }], pathChange: [{
-                type: Output
-            }], createFolder: [{
-                type: Output
-            }], error: [{
-                type: Output
-            }], wrapperEl: [{
+                    }, template: "<div class=\"ix-file-picker-container\">\n  <div #wrapper ixInput class=\"ix-file-picker-wrapper\" style=\"padding-right: 40px;\">\n    <input\n      type=\"text\"\n      class=\"ix-file-picker-input\"\n      [class.error]=\"hasError()\"\n      [value]=\"selectedPath() | ixStripMntPrefix\"\n      [placeholder]=\"placeholder()\"\n      [readonly]=\"!allowManualInput()\"\n      [disabled]=\"isDisabled()\"\n      (input)=\"onPathInput($event)\">\n\n    <button\n      type=\"button\"\n      class=\"ix-file-picker-toggle\"\n      (click)=\"openFilePicker()\"\n      [disabled]=\"isDisabled()\"\n      aria-label=\"Open file picker\">\n      <ix-icon name=\"folder\" library=\"mdi\"></ix-icon>\n    </button>\n  </div>\n  \n  <ng-template #filePickerTemplate>\n    <ix-file-picker-popup\n      class=\"ix-file-picker-popup\"\n      [mode]=\"mode()\"\n      [multiSelect]=\"multiSelect()\"\n      [allowCreate]=\"allowCreate()\"\n      [allowDatasetCreate]=\"allowDatasetCreate()\"\n      [allowZvolCreate]=\"allowZvolCreate()\"\n      [currentPath]=\"currentPath()\"\n      [fileItems]=\"fileItems()\"\n      [selectedItems]=\"selectedItems()\"\n      [loading]=\"loading()\"\n      [creationLoading]=\"creationLoading()\"\n      [fileExtensions]=\"fileExtensions()\"\n      (itemClick)=\"onItemClick($event)\"\n      (itemDoubleClick)=\"onItemDoubleClick($event)\"\n      (pathNavigate)=\"navigateToPath($event)\"\n      (createFolder)=\"onCreateFolder()\"\n      (submitFolderName)=\"onSubmitFolderName($event.name, $event.tempId)\"\n      (cancelFolderCreation)=\"onCancelFolderCreation($event)\"\n      (clearSelection)=\"onClearSelection()\"\n      (submit)=\"onSubmit()\"\n      (cancel)=\"onCancel()\"\n      (close)=\"close()\">\n    </ix-file-picker-popup>\n  </ng-template>\n</div>", styles: [":host{display:block;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-file-picker-container{position:relative;display:flex;align-items:center;width:100%}.ix-file-picker-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-file-picker-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box;font-family:inherit}.ix-file-picker-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-file-picker-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-file-picker-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-file-picker-input.error{border-color:var(--error, #dc3545)}.ix-file-picker-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-file-picker-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;color:var(--fg1);border-radius:4px}.ix-file-picker-toggle:hover{background:var(--bg2, #f0f0f0)}.ix-file-picker-toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-file-picker-toggle:disabled{cursor:not-allowed;opacity:.5}.ix-file-picker-toggle ix-icon{font-size:var(--icon-md, 20px)}:host:focus-within .ix-file-picker-input{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}:host.error .ix-file-picker-input{border-color:var(--error, #dc3545)}:host.error .ix-file-picker-input:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}@media (prefers-reduced-motion: reduce){.ix-file-picker-input,.ix-file-picker-toggle,.file-item,.breadcrumb-segment{transition:none}.ix-file-picker-loading ix-icon{animation:none}}@media (prefers-contrast: high){.ix-file-picker-input{border-width:2px}.file-item:hover,.file-item.selected{border:2px solid var(--fg1)}.zfs-badge{border:1px solid var(--fg1)}}@media (max-width: 768px){:host ::ng-deep .ix-file-picker-overlay .ix-file-picker-dialog{min-width:300px;max-width:calc(100vw - 32px);max-height:calc(100vh - 64px)}.ix-file-picker-header{flex-direction:column;gap:12px;align-items:stretch}.ix-file-picker-breadcrumb{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-file-picker-breadcrumb::-webkit-scrollbar{display:none}.file-item{padding:12px;min-height:56px}.file-info{font-size:.875rem}}\n"] }]
+        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }], propDecorators: { wrapperEl: [{
                 type: ViewChild,
                 args: ['wrapper']
             }], filePickerTemplate: [{
