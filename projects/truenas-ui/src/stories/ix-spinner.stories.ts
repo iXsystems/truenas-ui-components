@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxSpinnerComponent } from '../lib/ix-spinner/ix-spinner.component';
 import { IxBrandedSpinnerComponent } from '../lib/ix-spinner/ix-branded-spinner.component';
+import { IxSpinnerComponent } from '../lib/ix-spinner/ix-spinner.component';
 
 const meta: Meta<IxSpinnerComponent> = {
   title: 'Components/Spinner',

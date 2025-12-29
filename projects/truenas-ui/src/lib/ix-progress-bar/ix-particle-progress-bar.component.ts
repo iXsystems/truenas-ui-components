@@ -1,12 +1,14 @@
+import type {
+  AfterViewInit,
+  ElementRef,
+  OnDestroy
+} from '@angular/core';
 import {
   Component,
   input,
   computed,
-  AfterViewInit,
   viewChild,
-  ElementRef,
-  ChangeDetectionStrategy,
-  OnDestroy
+  ChangeDetectionStrategy
 } from '@angular/core';
 
 @Component({
@@ -110,7 +112,7 @@ export class IxParticleProgressBarComponent implements AfterViewInit, OnDestroy 
     }
 
     for (let j = 0; j < 3; j++) {
-      if (Math.random() < 0.8) this.spawnParticle();
+      if (Math.random() < 0.8) {this.spawnParticle();}
     }
 
     this.animationId = requestAnimationFrame(() => this.animate());
@@ -132,7 +134,7 @@ export class IxParticleProgressBarComponent implements AfterViewInit, OnDestroy 
 
   private parseHSLA(hsla: string): { h: number; s: number; l: number; a: number } {
     const match = hsla.match(/hsla?\(([\d.]+),\s*([\d.]+)%?,\s*([\d.]+)%?(?:,\s*([\d.]+))?\)/i);
-    if (!match) throw new Error('Invalid HSLA color');
+    if (!match) {throw new Error('Invalid HSLA color');}
     return {
       h: parseFloat(match[1]),
       s: parseFloat(match[2]) / 100,

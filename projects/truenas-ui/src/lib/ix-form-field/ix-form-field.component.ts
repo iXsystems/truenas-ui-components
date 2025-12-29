@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, computed, signal, contentChild, AfterContentInit } from '@angular/core';
+import type { AfterContentInit } from '@angular/core';
+import { Component, input, computed, signal, contentChild } from '@angular/core';
 import { NgControl } from '@angular/forms';
 
 @Component({
@@ -43,18 +44,18 @@ export class IxFormFieldComponent implements AfterContentInit {
 
   private getErrorMessage(): string {
     const control = this.control();
-    if (!control?.errors) return '';
+    if (!control?.errors) {return '';}
 
     const errors = control.errors;
 
     // Return the first error message found
-    if (errors['required']) return 'This field is required';
-    if (errors['email']) return 'Please enter a valid email address';
-    if (errors['minlength']) return `Minimum length is ${errors['minlength'].requiredLength}`;
-    if (errors['maxlength']) return `Maximum length is ${errors['maxlength'].requiredLength}`;
-    if (errors['pattern']) return 'Please enter a valid format';
-    if (errors['min']) return `Minimum value is ${errors['min'].min}`;
-    if (errors['max']) return `Maximum value is ${errors['max'].max}`;
+    if (errors['required']) {return 'This field is required';}
+    if (errors['email']) {return 'Please enter a valid email address';}
+    if (errors['minlength']) {return `Minimum length is ${errors['minlength'].requiredLength}`;}
+    if (errors['maxlength']) {return `Maximum length is ${errors['maxlength'].requiredLength}`;}
+    if (errors['pattern']) {return 'Please enter a valid format';}
+    if (errors['min']) {return `Minimum value is ${errors['min'].min}`;}
+    if (errors['max']) {return `Maximum value is ${errors['max'].max}`;}
 
     // Return custom error message if available
     return Object.keys(errors)[0] || 'Invalid input';

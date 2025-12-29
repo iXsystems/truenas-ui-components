@@ -1,12 +1,15 @@
-import { Component, input, forwardRef, signal, computed, viewChild, ElementRef, OnInit, ViewContainerRef, TemplateRef, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { OverlayModule, Overlay, OverlayRef, ConnectedPosition } from '@angular/cdk/overlay';
-import { TemplatePortal, PortalModule } from '@angular/cdk/portal';
 import { A11yModule } from '@angular/cdk/a11y';
-import { IxInputDirective } from '../ix-input/ix-input.directive';
-import { IxCalendarComponent } from '../ix-calendar/ix-calendar.component';
+import type { Overlay, OverlayRef, ConnectedPosition } from '@angular/cdk/overlay';
+import { OverlayModule } from '@angular/cdk/overlay';
+import { TemplatePortal, PortalModule } from '@angular/cdk/portal';
+import { CommonModule } from '@angular/common';
+import type { ElementRef, OnInit, ViewContainerRef, TemplateRef, OnDestroy } from '@angular/core';
+import { Component, input, forwardRef, signal, computed, viewChild } from '@angular/core';
+import type { ControlValueAccessor} from '@angular/forms';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
+import { IxCalendarComponent } from '../ix-calendar/ix-calendar.component';
+import { IxInputDirective } from '../ix-input/ix-input.directive';
 
 @Component({
   selector: 'ix-date-input',
@@ -61,9 +64,9 @@ import { Subject } from 'rxjs';
         <button
           type="button"
           class="ix-date-input-toggle"
-          (click)="openDatepicker()"
+          aria-label="Open calendar"
           [disabled]="isDisabled()"
-          aria-label="Open calendar">
+          (click)="openDatepicker()">
           <span aria-hidden="true">📅</span>
         </button>
       </div>
@@ -74,8 +77,7 @@ import { Subject } from 'rxjs';
           [startView]="'month'"
           [rangeMode]="false"
           [selected]="value()"
-          (selectedChange)="onDateSelected($event)">
-        </ix-calendar>
+          (selectedChange)="onDateSelected($event)" />
       </ng-template>
     </div>
   `,
@@ -216,18 +218,18 @@ export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDes
       this.year.set(yearVal);
       
       // Update input elements
-      if (this.monthRef()?.nativeElement) this.monthRef().nativeElement.value = monthVal;
-      if (this.dayRef()?.nativeElement) this.dayRef().nativeElement.value = dayVal;
-      if (this.yearRef()?.nativeElement) this.yearRef().nativeElement.value = yearVal;
+      if (this.monthRef()?.nativeElement) {this.monthRef().nativeElement.value = monthVal;}
+      if (this.dayRef()?.nativeElement) {this.dayRef().nativeElement.value = dayVal;}
+      if (this.yearRef()?.nativeElement) {this.yearRef().nativeElement.value = yearVal;}
     } else {
       // Clear all values
       this.month.set('');
       this.day.set('');
       this.year.set('');
 
-      if (this.monthRef()?.nativeElement) this.monthRef().nativeElement.value = '';
-      if (this.dayRef()?.nativeElement) this.dayRef().nativeElement.value = '';
-      if (this.yearRef()?.nativeElement) this.yearRef().nativeElement.value = '';
+      if (this.monthRef()?.nativeElement) {this.monthRef().nativeElement.value = '';}
+      if (this.dayRef()?.nativeElement) {this.dayRef().nativeElement.value = '';}
+      if (this.yearRef()?.nativeElement) {this.yearRef().nativeElement.value = '';}
     }
   }
 
@@ -255,19 +257,19 @@ export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDes
   }
   
   private focusNextSegment(segment: 'month' | 'day' | 'year'): void {
-    if (segment === 'month') this.dayRef().nativeElement.focus();
-    else if (segment === 'day') this.yearRef().nativeElement.focus();
+    if (segment === 'month') {this.dayRef().nativeElement.focus();}
+    else if (segment === 'day') {this.yearRef().nativeElement.focus();}
     // Year is the last field
   }
 
   private focusPrevSegment(segment: 'month' | 'day' | 'year'): void {
-    if (segment === 'day') this.monthRef().nativeElement.focus();
-    else if (segment === 'year') this.dayRef().nativeElement.focus();
+    if (segment === 'day') {this.monthRef().nativeElement.focus();}
+    else if (segment === 'year') {this.dayRef().nativeElement.focus();}
     // Month is the first field
   }
 
   openDatepicker(): void {
-    if (this.isOpen()) return;
+    if (this.isOpen()) {return;}
 
     this.createOverlay();
     this.isOpen.set(true);
@@ -289,7 +291,7 @@ export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDes
   }
 
   private createOverlay(): void {
-    if (this.overlayRef) return;
+    if (this.overlayRef) {return;}
 
     const positions: ConnectedPosition[] = [
       {

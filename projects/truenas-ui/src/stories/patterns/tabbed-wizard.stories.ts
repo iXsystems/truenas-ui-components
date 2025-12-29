@@ -1,32 +1,33 @@
-import type { Meta, StoryObj } from '@storybook/angular';
-import { Component } from '@angular/core';
-import { DialogRef } from '@angular/cdk/dialog';
+import type { DialogRef } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import type { Meta, StoryObj } from '@storybook/angular';
 import { IxButtonComponent } from '../../lib/ix-button/ix-button.component';
+import { IxCheckboxComponent } from '../../lib/ix-checkbox/ix-checkbox.component';
 import { IxDialogShellComponent } from '../../lib/ix-dialog';
 import { IxDialog } from '../../lib/ix-dialog/ix-dialog.service';
-import { IxRadioComponent } from '../../lib/ix-radio/ix-radio.component';
-import { IxCheckboxComponent } from '../../lib/ix-checkbox/ix-checkbox.component';
 import { IxInputComponent } from '../../lib/ix-input/ix-input.component';
-import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select.component';
-import { IxTabsComponent } from '../../lib/ix-tabs/ix-tabs.component';
+import { IxRadioComponent } from '../../lib/ix-radio/ix-radio.component';
+import type { IxSelectOption } from '../../lib/ix-select/ix-select.component';
+import { IxSelectComponent } from '../../lib/ix-select/ix-select.component';
 import { IxTabComponent } from '../../lib/ix-tab/ix-tab.component';
 import { IxTabPanelComponent } from '../../lib/ix-tab-panel/ix-tab-panel.component';
+import { IxTabsComponent } from '../../lib/ix-tabs/ix-tabs.component';
 
 // VM Creation Tabbed Wizard Dialog Component  
 @Component({
   selector: 'tabbed-wizard-dialog',
   template: `
     <ix-dialog-shell title="Create Virtual Machine" [showFullscreenButton]="true">
-      <ix-tabs [selectedIndex]="0" orientation="vertical">
-        <ix-tab label="General"></ix-tab>
-        <ix-tab label="OS"></ix-tab>
-        <ix-tab label="System"></ix-tab>
-        <ix-tab label="Disks"></ix-tab>
-        <ix-tab label="CPU"></ix-tab>
-        <ix-tab label="Memory"></ix-tab>
-        <ix-tab label="Network"></ix-tab>
+      <ix-tabs orientation="vertical" [selectedIndex]="0">
+        <ix-tab label="General" />
+        <ix-tab label="OS" />
+        <ix-tab label="System" />
+        <ix-tab label="Disks" />
+        <ix-tab label="CPU" />
+        <ix-tab label="Memory" />
+        <ix-tab label="Network" />
 
         <ix-tab-panel>
           <div style="padding: 0 16px;">
@@ -36,20 +37,20 @@ import { IxTabPanelComponent } from '../../lib/ix-tab-panel/ix-tab-panel.compone
             <div style="display: grid; gap: 16px;">
               <div>
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">VM Name</label>
-                <ix-input placeholder="my-virtual-machine" [(ngModel)]="vmConfig.general.name"></ix-input>
+                <ix-input placeholder="my-virtual-machine" [(ngModel)]="vmConfig.general.name" />
               </div>
               
               <div>
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Description</label>
-                <ix-input placeholder="Brief description of this VM" [(ngModel)]="vmConfig.general.description"></ix-input>
+                <ix-input placeholder="Brief description of this VM" [(ngModel)]="vmConfig.general.description" />
               </div>
               
               <div>
-                <ix-checkbox label="Start on boot" [(ngModel)]="vmConfig.general.autoStart"></ix-checkbox>
+                <ix-checkbox label="Start on boot" [(ngModel)]="vmConfig.general.autoStart" />
               </div>
               
               <div>
-                <ix-checkbox label="Enable VNC remote access" [(ngModel)]="vmConfig.general.enableVnc"></ix-checkbox>
+                <ix-checkbox label="Enable VNC remote access" [(ngModel)]="vmConfig.general.enableVnc" />
               </div>
             </div>
           </div>
@@ -64,20 +65,20 @@ import { IxTabPanelComponent } from '../../lib/ix-tab-panel/ix-tab-panel.compone
               <div>
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Guest Operating System</label>
                 <div style="display: flex; flex-direction: column; gap: 8px;">
-                  <ix-radio name="osType" value="linux" label="Linux" [(ngModel)]="vmConfig.os.type"></ix-radio>
-                  <ix-radio name="osType" value="windows" label="Windows" [(ngModel)]="vmConfig.os.type"></ix-radio>
-                  <ix-radio name="osType" value="freebsd" label="FreeBSD" [(ngModel)]="vmConfig.os.type"></ix-radio>
-                  <ix-radio name="osType" value="other" label="Other" [(ngModel)]="vmConfig.os.type"></ix-radio>
+                  <ix-radio name="osType" value="linux" label="Linux" [(ngModel)]="vmConfig.os.type" />
+                  <ix-radio name="osType" value="windows" label="Windows" [(ngModel)]="vmConfig.os.type" />
+                  <ix-radio name="osType" value="freebsd" label="FreeBSD" [(ngModel)]="vmConfig.os.type" />
+                  <ix-radio name="osType" value="other" label="Other" [(ngModel)]="vmConfig.os.type" />
                 </div>
               </div>
               
               <div>
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Installation Media</label>
-                <ix-select [options]="isoOptions" placeholder="Select ISO image" [(ngModel)]="vmConfig.os.bootImage"></ix-select>
+                <ix-select placeholder="Select ISO image" [options]="isoOptions" [(ngModel)]="vmConfig.os.bootImage" />
               </div>
               
               <div>
-                <ix-checkbox label="Install from network" [(ngModel)]="vmConfig.os.networkInstall"></ix-checkbox>
+                <ix-checkbox label="Install from network" [(ngModel)]="vmConfig.os.networkInstall" />
               </div>
             </div>
           </div>
@@ -91,19 +92,19 @@ import { IxTabPanelComponent } from '../../lib/ix-tab-panel/ix-tab-panel.compone
             <div style="display: grid; gap: 16px;">
               <div>
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Machine Type</label>
-                <ix-select [options]="machineOptions" [(ngModel)]="vmConfig.system.machine"></ix-select>
+                <ix-select [options]="machineOptions" [(ngModel)]="vmConfig.system.machine" />
               </div>
               
               <div>
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Boot Method</label>
                 <div style="display: flex; flex-direction: column; gap: 8px;">
-                  <ix-radio name="bootMethod" value="uefi" label="UEFI" [(ngModel)]="vmConfig.system.bootMethod"></ix-radio>
-                  <ix-radio name="bootMethod" value="legacy" label="Legacy BIOS" [(ngModel)]="vmConfig.system.bootMethod"></ix-radio>
+                  <ix-radio name="bootMethod" value="uefi" label="UEFI" [(ngModel)]="vmConfig.system.bootMethod" />
+                  <ix-radio name="bootMethod" value="legacy" label="Legacy BIOS" [(ngModel)]="vmConfig.system.bootMethod" />
                 </div>
               </div>
               
               <div>
-                <ix-checkbox label="Enable Secure Boot" [(ngModel)]="vmConfig.system.secureBoot" [disabled]="vmConfig.system.bootMethod !== 'uefi'"></ix-checkbox>
+                <ix-checkbox label="Enable Secure Boot" [disabled]="vmConfig.system.bootMethod !== 'uefi'" [(ngModel)]="vmConfig.system.secureBoot" />
               </div>
             </div>
           </div>
@@ -117,20 +118,20 @@ import { IxTabPanelComponent } from '../../lib/ix-tab-panel/ix-tab-panel.compone
             <div style="display: grid; gap: 16px;">
               <div>
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Create new disk</label>
-                <ix-checkbox label="Create a new virtual disk" [(ngModel)]="vmConfig.disks.createNew"></ix-checkbox>
+                <ix-checkbox label="Create a new virtual disk" [(ngModel)]="vmConfig.disks.createNew" />
               </div>
               
               <div *ngIf="vmConfig.disks.createNew">
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Disk Size (GB)</label>
-                <ix-input type="number" placeholder="20" [(ngModel)]="vmConfig.disks.size"></ix-input>
+                <ix-input type="number" placeholder="20" [(ngModel)]="vmConfig.disks.size" />
               </div>
               
               <div>
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Disk Type</label>
                 <div style="display: flex; flex-direction: column; gap: 8px;">
-                  <ix-radio name="diskType" value="virtio" label="VirtIO (Recommended)" [(ngModel)]="vmConfig.disks.type"></ix-radio>
-                  <ix-radio name="diskType" value="ahci" label="AHCI" [(ngModel)]="vmConfig.disks.type"></ix-radio>
-                  <ix-radio name="diskType" value="ide" label="IDE (Legacy)" [(ngModel)]="vmConfig.disks.type"></ix-radio>
+                  <ix-radio name="diskType" value="virtio" label="VirtIO (Recommended)" [(ngModel)]="vmConfig.disks.type" />
+                  <ix-radio name="diskType" value="ahci" label="AHCI" [(ngModel)]="vmConfig.disks.type" />
+                  <ix-radio name="diskType" value="ide" label="IDE (Legacy)" [(ngModel)]="vmConfig.disks.type" />
                 </div>
               </div>
             </div>
@@ -145,21 +146,21 @@ import { IxTabPanelComponent } from '../../lib/ix-tab-panel/ix-tab-panel.compone
             <div style="display: grid; gap: 16px;">
               <div>
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">CPU Cores</label>
-                <ix-input type="number" placeholder="2" [(ngModel)]="vmConfig.cpu.cores"></ix-input>
+                <ix-input type="number" placeholder="2" [(ngModel)]="vmConfig.cpu.cores" />
               </div>
               
               <div>
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">CPU Threads</label>
-                <ix-input type="number" placeholder="1" [(ngModel)]="vmConfig.cpu.threads"></ix-input>
+                <ix-input type="number" placeholder="1" [(ngModel)]="vmConfig.cpu.threads" />
               </div>
               
               <div>
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">CPU Mode</label>
-                <ix-select [options]="cpuModeOptions" [(ngModel)]="vmConfig.cpu.mode"></ix-select>
+                <ix-select [options]="cpuModeOptions" [(ngModel)]="vmConfig.cpu.mode" />
               </div>
               
               <div>
-                <ix-checkbox label="Enable CPU hotplug" [(ngModel)]="vmConfig.cpu.hotplug"></ix-checkbox>
+                <ix-checkbox label="Enable CPU hotplug" [(ngModel)]="vmConfig.cpu.hotplug" />
               </div>
             </div>
           </div>
@@ -173,15 +174,15 @@ import { IxTabPanelComponent } from '../../lib/ix-tab-panel/ix-tab-panel.compone
             <div style="display: grid; gap: 16px;">
               <div>
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Memory Size (MB)</label>
-                <ix-input type="number" placeholder="4096" [(ngModel)]="vmConfig.memory.size"></ix-input>
+                <ix-input type="number" placeholder="4096" [(ngModel)]="vmConfig.memory.size" />
               </div>
               
               <div>
-                <ix-checkbox label="Enable memory ballooning" [(ngModel)]="vmConfig.memory.ballooning"></ix-checkbox>
+                <ix-checkbox label="Enable memory ballooning" [(ngModel)]="vmConfig.memory.ballooning" />
               </div>
               
               <div>
-                <ix-checkbox label="Enable memory hotplug" [(ngModel)]="vmConfig.memory.hotplug"></ix-checkbox>
+                <ix-checkbox label="Enable memory hotplug" [(ngModel)]="vmConfig.memory.hotplug" />
               </div>
             </div>
           </div>
@@ -195,20 +196,20 @@ import { IxTabPanelComponent } from '../../lib/ix-tab-panel/ix-tab-panel.compone
             <div style="display: grid; gap: 16px;">
               <div>
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Network Interface</label>
-                <ix-select [options]="networkOptions" [(ngModel)]="vmConfig.network.interface"></ix-select>
+                <ix-select [options]="networkOptions" [(ngModel)]="vmConfig.network.interface" />
               </div>
               
               <div>
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">NIC Type</label>
                 <div style="display: flex; flex-direction: column; gap: 8px;">
-                  <ix-radio name="nicType" value="virtio" label="VirtIO (Recommended)" [(ngModel)]="vmConfig.network.nicType"></ix-radio>
-                  <ix-radio name="nicType" value="e1000" label="Intel E1000" [(ngModel)]="vmConfig.network.nicType"></ix-radio>
-                  <ix-radio name="nicType" value="rtl8139" label="Realtek RTL8139" [(ngModel)]="vmConfig.network.nicType"></ix-radio>
+                  <ix-radio name="nicType" value="virtio" label="VirtIO (Recommended)" [(ngModel)]="vmConfig.network.nicType" />
+                  <ix-radio name="nicType" value="e1000" label="Intel E1000" [(ngModel)]="vmConfig.network.nicType" />
+                  <ix-radio name="nicType" value="rtl8139" label="Realtek RTL8139" [(ngModel)]="vmConfig.network.nicType" />
                 </div>
               </div>
               
               <div>
-                <ix-checkbox label="Attach to bridge" [(ngModel)]="vmConfig.network.bridge"></ix-checkbox>
+                <ix-checkbox label="Attach to bridge" [(ngModel)]="vmConfig.network.bridge" />
               </div>
             </div>
           </div>
@@ -218,12 +219,10 @@ import { IxTabPanelComponent } from '../../lib/ix-tab-panel/ix-tab-panel.compone
       <div ixDialogAction>
         <ix-button variant="outline" 
                    label="Cancel"
-                   (click)="cancel()">
-        </ix-button>
+                   (click)="cancel()" />
         <ix-button color="primary" 
                    label="Create Virtual Machine"
-                   (click)="createVM()">
-        </ix-button>
+                   (click)="createVM()" />
       </div>
     </ix-dialog-shell>
   `,
@@ -332,10 +331,9 @@ class TabbedWizardDialogComponent {
       </p>
       <ix-button variant="primary" 
                  label="Launch Tabbed Wizard"
-                 (click)="openTabbedWizard()">
-      </ix-button>
+                 (click)="openTabbedWizard()" />
       
-      <div style="margin-top: 24px; padding: 16px; border: 1px solid var(--lines); border-radius: 8px;" *ngIf="lastResult">
+      <div *ngIf="lastResult" style="margin-top: 24px; padding: 16px; border: 1px solid var(--lines); border-radius: 8px;">
         <h4>Last Result:</h4>
         <pre style="margin: 8px 0 0 0; color: var(--fg2);">{{ lastResult | json }}</pre>
       </div>

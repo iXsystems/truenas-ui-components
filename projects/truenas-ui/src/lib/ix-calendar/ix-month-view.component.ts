@@ -1,6 +1,5 @@
-import { Component, input, output, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DateRange } from '../ix-date-range-input/ix-date-range-input.component';
+import { Component, input, output, computed } from '@angular/core';
 
 export interface CalendarCell {
   value: number;
@@ -26,7 +25,7 @@ export interface CalendarCell {
       <!-- Table header with day names -->
       <thead class="ix-calendar-table-header">
         <tr>
-          <th scope="col" *ngFor="let day of weekdays">
+          <th *ngFor="let day of weekdays" scope="col">
             <span class="cdk-visually-hidden">{{ day.long }}</span>
             <span aria-hidden="true">{{ day.short }}</span>
           </th>
@@ -36,7 +35,7 @@ export interface CalendarCell {
       <!-- Table body with calendar cells -->
       <tbody class="ix-calendar-body">
         <!-- Calendar rows -->
-        <tr role="row" *ngFor="let row of calendarRows(); let rowIndex = index; trackBy: trackByRow">
+        <tr *ngFor="let row of calendarRows(); let rowIndex = index; trackBy: trackByRow" role="row">
           <td 
             *ngFor="let cell of row; let colIndex = index; trackBy: trackByDate"
             role="gridcell"
@@ -108,7 +107,7 @@ export class IxMonthViewComponent {
     // Include selectedRange signal in the computed dependency so it recalculates when range changes
     const currentSelectedRange = this.selectedRange();
 
-    if (!activeDate) return [];
+    if (!activeDate) {return [];}
     
     const year = activeDate.getFullYear();
     const month = activeDate.getMonth();
@@ -203,9 +202,9 @@ export class IxMonthViewComponent {
     const minDate = this.minDate();
     const maxDate = this.maxDate();
     const dateFilter = this.dateFilter();
-    if (minDate && date < minDate) return false;
-    if (maxDate && date > maxDate) return false;
-    if (dateFilter && !dateFilter(date)) return false;
+    if (minDate && date < minDate) {return false;}
+    if (maxDate && date > maxDate) {return false;}
+    if (dateFilter && !dateFilter(date)) {return false;}
     return true;
   }
 
@@ -230,11 +229,11 @@ export class IxMonthViewComponent {
       day: 'numeric' 
     });
     
-    if (isSelected) label += ' (selected)';
-    if (isToday) label += ' (today)';
-    if (rangeStart) label += ' (range start)';
-    if (rangeEnd) label += ' (range end)';
-    if (inRange) label += ' (in range)';
+    if (isSelected) {label += ' (selected)';}
+    if (isToday) {label += ' (today)';}
+    if (rangeStart) {label += ' (range start)';}
+    if (rangeEnd) {label += ' (range end)';}
+    if (inRange) {label += ' (in range)';}
     
     return label;
   }

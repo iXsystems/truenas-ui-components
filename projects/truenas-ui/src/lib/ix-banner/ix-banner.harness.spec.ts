@@ -1,12 +1,13 @@
-import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import type { HarnessLoader } from '@angular/cdk/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+import { provideHttpClient } from '@angular/common/http';
 import { Component, signal } from '@angular/core';
+import { TestBed, fakeAsync, flush } from '@angular/core/testing';
+import type { ComponentFixture} from '@angular/core/testing';
 import { IxBannerComponent } from './ix-banner.component';
 import { IxBannerHarness } from './ix-banner.harness';
-import { IxSpriteLoaderService } from '../ix-icon/ix-sprite-loader.service';
 import { IxIconRegistryService } from '../ix-icon/ix-icon-registry.service';
+import { IxSpriteLoaderService } from '../ix-icon/ix-sprite-loader.service';
 
 // Test host component for harness testing
 @Component({
@@ -17,8 +18,7 @@ import { IxIconRegistryService } from '../ix-icon/ix-icon-registry.service';
     <ix-banner
       [heading]="heading()"
       [message]="message()"
-      [type]="type()">
-    </ix-banner>
+      [type]="type()" />
   `
 })
 class TestHostComponent {

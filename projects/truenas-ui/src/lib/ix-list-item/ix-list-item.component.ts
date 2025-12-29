@@ -1,5 +1,6 @@
-import { Component, input, output, computed, signal, ElementRef, AfterContentInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import type { ElementRef, AfterContentInit } from '@angular/core';
+import { Component, input, output, computed, signal } from '@angular/core';
 
 @Component({
   selector: 'ix-list-item',

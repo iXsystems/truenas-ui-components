@@ -1,13 +1,14 @@
-import type { Meta, StoryObj } from '@storybook/angular';
-import { Component, Inject } from '@angular/core';
-import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
-import { FormsModule } from '@angular/forms';
+import type { DialogRef} from '@angular/cdk/dialog';
+import { DIALOG_DATA } from '@angular/cdk/dialog';
 import { JsonPipe } from '@angular/common';
+import { Component, Inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import type { Meta, StoryObj } from '@storybook/angular';
 import { IxButtonComponent } from '../lib/ix-button/ix-button.component';
+import { IxDialogShellComponent } from '../lib/ix-dialog/ix-dialog-shell.component';
+import { IxDialog } from '../lib/ix-dialog/ix-dialog.service';
 import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.component';
 import { IxInputComponent } from '../lib/ix-input/ix-input.component';
-import { IxDialog } from '../lib/ix-dialog/ix-dialog.service';
-import { IxDialogShellComponent } from '../lib/ix-dialog/ix-dialog-shell.component';
 
 // Example user edit dialog component
 @Component({
@@ -16,19 +17,19 @@ import { IxDialogShellComponent } from '../lib/ix-dialog/ix-dialog-shell.compone
     <ix-dialog-shell title="Edit User">
       <form style="padding: var(--content-padding);">
         <ix-form-field label="Name">
-          <ix-input [(ngModel)]="name" name="name" placeholder="Enter user name"></ix-input>
+          <ix-input name="name" placeholder="Enter user name" [(ngModel)]="name" />
         </ix-form-field>
         <ix-form-field label="Email">  
-          <ix-input [(ngModel)]="email" name="email" placeholder="Enter email address"></ix-input>
+          <ix-input name="email" placeholder="Enter email address" [(ngModel)]="email" />
         </ix-form-field>
         <ix-form-field label="Role">
-          <ix-input [(ngModel)]="role" name="role" placeholder="Enter user role"></ix-input>
+          <ix-input name="role" placeholder="Enter user role" [(ngModel)]="role" />
         </ix-form-field>
       </form>
       
       <div ixDialogAction>
-        <ix-button type="button" variant="outline" label="Cancel" (click)="cancel()"></ix-button>
-        <ix-button type="button" color="primary" label="Save User" (click)="save()"></ix-button>
+        <ix-button type="button" variant="outline" label="Cancel" (click)="cancel()" />
+        <ix-button type="button" color="primary" label="Save User" (click)="save()" />
       </div>
     </ix-dialog-shell>
   `,
@@ -149,8 +150,8 @@ class UserEditDialogComponent {
       </div>
       
       <div ixDialogAction>
-        <ix-button type="button" variant="outline" label="Cancel" (click)="ref.close()"></ix-button>
-        <ix-button type="button" color="primary" label="Apply Settings" (click)="ref.close('apply')"></ix-button>
+        <ix-button type="button" variant="outline" label="Cancel" (click)="ref.close()" />
+        <ix-button type="button" color="primary" label="Apply Settings" (click)="ref.close('apply')" />
       </div>
     </ix-dialog-shell>
   `,
@@ -241,8 +242,8 @@ class SystemSettingsDialogComponent {
       </div>
       
       <div ixDialogAction>
-        <ix-button type="button" variant="outline" label="Cancel" (click)="ref.close()"></ix-button>
-        <ix-button type="button" color="primary" label="Apply Settings" (click)="ref.close('apply')"></ix-button>
+        <ix-button type="button" variant="outline" label="Cancel" (click)="ref.close()" />
+        <ix-button type="button" color="primary" label="Apply Settings" (click)="ref.close('apply')" />
       </div>
     </ix-dialog-shell>
   `,
@@ -261,26 +262,22 @@ class FullscreenSettingsDialogComponent {
       <ix-button 
         type="button" 
         label="Edit User" 
-        (click)="openUserDialog()">
-      </ix-button>
+        (click)="openUserDialog()" />
       
       <ix-button 
         type="button" 
         label="System Settings (Scrollable)" 
-        (click)="openSystemDialog()">
-      </ix-button>
+        (click)="openSystemDialog()" />
       
       <ix-button 
         type="button" 
         label="Confirm Delete" 
-        (click)="openConfirmDialog()">
-      </ix-button>
+        (click)="openConfirmDialog()" />
       
       <ix-button 
         type="button" 
         label="Fullscreen Settings" 
-        (click)="openFullscreenDialog()">
-      </ix-button>
+        (click)="openFullscreenDialog()" />
     </div>
     
     <div style="padding: 16px;">

@@ -1,5 +1,5 @@
-import { Component, input, ChangeDetectionStrategy, ViewEncapsulation, computed } from '@angular/core';
 import { NgIf } from '@angular/common';
+import { Component, input, ChangeDetectionStrategy, ViewEncapsulation, computed } from '@angular/core';
 
 export type SpinnerMode = 'determinate' | 'indeterminate';
 

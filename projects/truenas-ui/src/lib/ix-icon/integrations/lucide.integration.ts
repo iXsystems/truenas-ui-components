@@ -18,7 +18,8 @@
  */
 
 import { inject } from '@angular/core';
-import { IxIconRegistryService, IconLibrary } from '../ix-icon-registry.service';
+import type { IconLibrary } from '../ix-icon-registry.service';
+import { IxIconRegistryService } from '../ix-icon-registry.service';
 
 export interface LucideIconOptions {
   size?: number;

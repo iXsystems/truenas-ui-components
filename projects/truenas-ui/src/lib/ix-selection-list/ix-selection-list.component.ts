@@ -1,6 +1,7 @@
-import { Component, input, output, contentChildren, signal, computed, forwardRef, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Component, input, output, contentChildren, signal, computed, forwardRef, effect } from '@angular/core';
+import type { ControlValueAccessor} from '@angular/forms';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { IxListOptionComponent } from '../ix-list-option/ix-list-option.component';
 
 export interface IxSelectionChange {

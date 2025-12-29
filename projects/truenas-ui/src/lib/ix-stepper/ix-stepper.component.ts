@@ -1,7 +1,8 @@
-import { Component, input, output, contentChildren, signal, computed, effect, model, ChangeDetectorRef } from '@angular/core';
-import { IxStepComponent } from './ix-step.component';
+import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
-import { trigger, state, style, transition, animate } from '@angular/animations';
+import type { ChangeDetectorRef } from '@angular/core';
+import { Component, input, output, contentChildren, computed, effect, model } from '@angular/core';
+import { IxStepComponent } from './ix-step.component';
 
 @Component({
   selector: 'ix-stepper',
@@ -72,7 +73,7 @@ export class IxStepperComponent {
   }
 
   canSelectStep(index: number): boolean {
-    if (!this.linear()) return true;
+    if (!this.linear()) {return true;}
 
     // In linear mode, can only select completed steps or the next step
     const stepsArray = this.steps();

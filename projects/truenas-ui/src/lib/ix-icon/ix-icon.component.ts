@@ -1,6 +1,7 @@
-import { Component, input, computed, effect, ChangeDetectionStrategy, ViewEncapsulation, ChangeDetectorRef, inject, viewChild, ElementRef, AfterViewInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import type { ChangeDetectorRef, ElementRef, AfterViewInit} from '@angular/core';
+import { Component, input, computed, effect, ChangeDetectionStrategy, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import type { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { IxIconRegistryService } from './ix-icon-registry.service';
 
 export type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -246,7 +247,7 @@ export class IxIconComponent implements AfterViewInit {
   }
 
   private generateTextAbbreviation(name: string): string {
-    if (!name) return '?';
+    if (!name) {return '?';}
     
     // Handle hyphenated names (e.g., 'arrow-left' -> 'AL')
     if (name.includes('-')) {
@@ -262,7 +263,7 @@ export class IxIconComponent implements AfterViewInit {
   }
 
   private cssClassExists(className: string): boolean {
-    if (typeof document === 'undefined') return false;
+    if (typeof document === 'undefined') {return false;}
     
     // For now, only return true for known CSS icon patterns
     // In real implementation, consumers would override this method

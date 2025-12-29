@@ -1,7 +1,9 @@
-import { Component, input, signal, forwardRef, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/forms';
-import { IxSelectComponent, IxSelectOption } from '../ix-select/ix-select.component';
+import { Component, input, signal, forwardRef, computed } from '@angular/core';
+import type { ControlValueAccessor} from '@angular/forms';
+import { NG_VALUE_ACCESSOR, FormsModule } from '@angular/forms';
+import type { IxSelectOption } from '../ix-select/ix-select.component';
+import { IxSelectComponent } from '../ix-select/ix-select.component';
 
 @Component({
   selector: 'ix-time-input',
@@ -21,8 +23,7 @@ import { IxSelectComponent, IxSelectOption } from '../ix-select/ix-select.compon
       [disabled]="isDisabled()"
       [testId]="testId()"
       [ngModel]="_value"
-      (selectionChange)="onSelectionChange($event)">
-    </ix-select>
+      (selectionChange)="onSelectionChange($event)" />
   `,
   styleUrl: './ix-time-input.component.scss',
   host: {
@@ -51,7 +52,7 @@ export class IxTimeInputComponent implements ControlValueAccessor {
   private onChange = (value: string) => {};
   private onTouched = () => {};
 
-  public _value: string | null = null;
+  _value: string | null = null;
   
   // Generate time options for ix-select
   timeSelectOptions = computed((): IxSelectOption[] => {

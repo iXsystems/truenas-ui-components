@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxStepperComponent, IxStepComponent } from '../lib/ix-stepper';
 import { IxInputComponent } from '../lib/ix-input/ix-input.component';
+import { IxStepperComponent, IxStepComponent } from '../lib/ix-stepper';
 
 
 const meta: Meta<IxStepperComponent> = {

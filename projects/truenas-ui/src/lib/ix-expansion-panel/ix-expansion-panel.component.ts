@@ -1,6 +1,6 @@
+import { trigger, state, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { Component, input, output, computed, signal } from '@angular/core';
-import { trigger, state, style, transition, animate } from '@angular/animations';
 
 @Component({
   selector: 'ix-expansion-panel',
@@ -55,9 +55,9 @@ export class IxExpansionPanelComponent {
     return internal !== null ? internal : this.expanded();
   });
 
-  public readonly contentId = `ix-expansion-panel-content-${Math.random().toString(36).substr(2, 9)}`;
+  readonly contentId = `ix-expansion-panel-content-${Math.random().toString(36).substr(2, 9)}`;
 
-  public toggle(): void {
+  toggle(): void {
     if (this.disabled()) {
       return;
     }

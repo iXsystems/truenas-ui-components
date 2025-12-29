@@ -1,5 +1,5 @@
-import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'ix-tooltip',
@@ -8,8 +8,8 @@ import { CommonModule } from '@angular/common';
   template: `
     <div
       class="ix-tooltip"
-      [id]="id()"
       role="tooltip"
+      [id]="id()"
       [attr.aria-hidden]="false">
       {{ message() }}
     </div>

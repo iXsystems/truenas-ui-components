@@ -1,5 +1,5 @@
-import { Component, input, output, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, input, output, computed } from '@angular/core';
 
 @Component({
   selector: 'ix-calendar-header',
@@ -22,7 +22,7 @@ import { CommonModule } from '@angular/common';
           (click)="toggleView()">
           <span [attr.aria-hidden]="true">{{ periodLabel() }}</span>
           <svg viewBox="0 0 10 5" focusable="false" aria-hidden="true" class="ix-calendar-arrow">
-            <polygon points="0,0 5,5 10,0"></polygon>
+            <polygon points="0,0 5,5 10,0" />
           </svg>
         </button>
 
@@ -36,7 +36,7 @@ import { CommonModule } from '@angular/common';
           [attr.aria-label]="previousLabel()"
           (click)="onPreviousClick()">
           <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-            <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path>
+            <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
           </svg>
         </button>
 
@@ -47,7 +47,7 @@ import { CommonModule } from '@angular/common';
           [attr.aria-label]="nextLabel()"
           (click)="onNextClick()">
           <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-            <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path>
+            <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
           </svg>
         </button>
       </div>
@@ -74,7 +74,7 @@ export class IxCalendarHeaderComponent {
 
   periodLabel = computed(() => {
     const date = this.currentDate();
-    if (!date) return '';
+    if (!date) {return '';}
 
     if (this.currentView() === 'month') {
       const month = this.months[date.getMonth()];

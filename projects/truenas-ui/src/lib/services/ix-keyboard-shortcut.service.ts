@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { PlatformType } from '../enums/modifier-keys.enum';
 import { CommonShortcuts, WindowsShortcuts, LinuxShortcuts } from '../enums/common-shortcuts.enum';
+import type { PlatformType } from '../enums/modifier-keys.enum';
 
 export interface KeyCombination {
   ctrlKey: boolean;

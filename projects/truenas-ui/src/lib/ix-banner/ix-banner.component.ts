@@ -1,13 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, input, inject, computed } from '@angular/core';
-import { IxIconComponent } from '../ix-icon/ix-icon.component';
-import { IxIconRegistryService } from '../ix-icon/ix-icon-registry.service';
 import {
   mdiInformation,
   mdiAlert,
   mdiAlertCircle,
   mdiCheckCircle,
 } from '@mdi/js';
+import { IxIconRegistryService } from '../ix-icon/ix-icon-registry.service';
+import { IxIconComponent } from '../ix-icon/ix-icon.component';
 
 export type IxBannerType = 'info' | 'warning' | 'error' | 'success';
 

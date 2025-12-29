@@ -1,8 +1,8 @@
-import type { Meta, StoryObj } from '@storybook/angular';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IxButtonToggleComponent } from '../lib/ix-button-toggle/ix-button-toggle.component';
+import type { Meta, StoryObj } from '@storybook/angular';
 import { IxButtonToggleGroupComponent } from '../lib/ix-button-toggle/ix-button-toggle-group.component';
+import { IxButtonToggleComponent } from '../lib/ix-button-toggle/ix-button-toggle.component';
 import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.component';
 
 @Component({
@@ -12,7 +12,7 @@ import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.compone
       <div>
         <h2 style="margin-bottom: 16px; color: var(--fg1);">Single Selection (Radio Mode)</h2>
         <ix-form-field label="Text Alignment">
-          <ix-button-toggle-group [(ngModel)]="alignment" name="alignment" aria-label="Text alignment">
+          <ix-button-toggle-group name="alignment" aria-label="Text alignment" [(ngModel)]="alignment">
             <ix-button-toggle value="left">Left</ix-button-toggle>
             <ix-button-toggle value="center">Center</ix-button-toggle>
             <ix-button-toggle value="right">Right</ix-button-toggle>
@@ -25,7 +25,7 @@ import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.compone
       <div>
         <h2 style="margin-bottom: 16px; color: var(--fg1);">Multiple Selection (Checkbox Mode)</h2>
         <ix-form-field label="Font Style">
-          <ix-button-toggle-group [(ngModel)]="fontStyles" [multiple]="true" name="fontStyle" aria-label="Font style">
+          <ix-button-toggle-group name="fontStyle" aria-label="Font style" [multiple]="true" [(ngModel)]="fontStyles">
             <ix-button-toggle value="bold">Bold</ix-button-toggle>
             <ix-button-toggle value="italic">Italic</ix-button-toggle>
             <ix-button-toggle value="underline">Underline</ix-button-toggle>
@@ -39,7 +39,7 @@ import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.compone
       <div>
         <h2 style="margin-bottom: 16px; color: var(--fg1);">Standalone Toggle</h2>
         <ix-form-field label="Enable feature">
-          <ix-button-toggle [(ngModel)]="featureEnabled" value="enabled">
+          <ix-button-toggle value="enabled" [(ngModel)]="featureEnabled">
             {{ featureEnabled ? 'Enabled' : 'Enable Feature' }}
           </ix-button-toggle>
         </ix-form-field>
@@ -49,7 +49,7 @@ import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.compone
       <div>
         <h2 style="margin-bottom: 16px; color: var(--fg1);">Disabled State</h2>
         <ix-form-field label="Read-only options">
-          <ix-button-toggle-group [disabled]="true" name="readonly" aria-label="Read-only options">
+          <ix-button-toggle-group name="readonly" aria-label="Read-only options" [disabled]="true">
             <ix-button-toggle value="option1">Option 1</ix-button-toggle>
             <ix-button-toggle value="option2">Option 2</ix-button-toggle>
             <ix-button-toggle value="option3">Option 3</ix-button-toggle>

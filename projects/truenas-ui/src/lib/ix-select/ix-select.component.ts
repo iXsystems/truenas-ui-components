@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, output, forwardRef, ElementRef, ChangeDetectorRef, signal, computed, effect } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import type { ElementRef, ChangeDetectorRef} from '@angular/core';
+import { Component, input, output, forwardRef, signal, computed, effect } from '@angular/core';
+import type { ControlValueAccessor} from '@angular/forms';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
 export interface IxSelectOption {
   value: any;
@@ -94,7 +96,7 @@ export class IxSelectComponent implements ControlValueAccessor {
 
   // Component methods
   toggleDropdown(): void {
-    if (this.isDisabled()) return;
+    if (this.isDisabled()) {return;}
     this.isOpen.set(!this.isOpen());
     if (!this.isOpen()) {
       this.onTouched();
@@ -111,7 +113,7 @@ export class IxSelectComponent implements ControlValueAccessor {
   }
 
   selectOption(option: IxSelectOption): void {
-    if (option.disabled) return;
+    if (option.disabled) {return;}
 
     this.selectedValue.set(option.value);
     this.onChange(option.value);
@@ -137,12 +139,12 @@ export class IxSelectComponent implements ControlValueAccessor {
   private findOptionByValue(value: any): IxSelectOption | undefined {
     // Search in regular options first
     const regularOption = this.options().find(opt => this.compareValues(opt.value, value));
-    if (regularOption) return regularOption;
+    if (regularOption) {return regularOption;}
 
     // Search in option groups
     for (const group of this.optionGroups()) {
       const groupOption = group.options.find(opt => this.compareValues(opt.value, value));
-      if (groupOption) return groupOption;
+      if (groupOption) {return groupOption;}
     }
 
     return undefined;
@@ -153,7 +155,7 @@ export class IxSelectComponent implements ControlValueAccessor {
   });
 
   private compareValues(a: any, b: any): boolean {
-    if (a === b) return true;
+    if (a === b) {return true;}
     if (typeof a === 'object' && typeof b === 'object' && a !== null && b !== null) {
       return JSON.stringify(a) === JSON.stringify(b);
     }

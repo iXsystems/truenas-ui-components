@@ -1,5 +1,7 @@
-import { Directive, ElementRef, HostListener, OnInit, OnDestroy, forwardRef, Inject, signal } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import type { ElementRef, OnInit, OnDestroy} from '@angular/core';
+import { Directive, forwardRef, signal } from '@angular/core';
+import type { ControlValueAccessor} from '@angular/forms';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Directive({
   selector: 'input[ixSliderThumb]',
@@ -91,14 +93,14 @@ export class IxSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
   }
 
   onMouseDown(event: MouseEvent): void {
-    if (this.disabled()) return;
+    if (this.disabled()) {return;}
     this.isDragging = true;
     this.addGlobalListeners();
     event.stopPropagation(); // Prevent track click
   }
 
   onTouchStart(event: TouchEvent): void {
-    if (this.disabled()) return;
+    if (this.disabled()) {return;}
     this.isDragging = true;
     this.addGlobalListeners();
     event.stopPropagation(); // Prevent track click
@@ -119,7 +121,7 @@ export class IxSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
   }
 
   private onGlobalMouseMove = (event: MouseEvent): void => {
-    if (!this.isDragging || this.disabled()) return;
+    if (!this.isDragging || this.disabled()) {return;}
     event.preventDefault();
     this.updateValueFromPosition(event.clientX);
   };
@@ -133,7 +135,7 @@ export class IxSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
   };
 
   private onGlobalTouchMove = (event: TouchEvent): void => {
-    if (!this.isDragging || this.disabled()) return;
+    if (!this.isDragging || this.disabled()) {return;}
     event.preventDefault();
     const touch = event.touches[0];
     this.updateValueFromPosition(touch.clientX);
@@ -148,7 +150,7 @@ export class IxSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
   };
 
   private updateValueFromPosition(clientX: number): void {
-    if (!this.slider) return;
+    if (!this.slider) {return;}
 
     const rect = this.slider.getSliderRect();
     const percentage = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));

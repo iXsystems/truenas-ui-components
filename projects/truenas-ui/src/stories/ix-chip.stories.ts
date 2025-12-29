@@ -1,11 +1,10 @@
+import { ReactiveFormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
-import { userEvent, within } from '@storybook/testing-library';
 import { expect } from '@storybook/jest';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { IxChipComponent } from '../lib/ix-chip/ix-chip.component';
-import { IxInputComponent } from '../lib/ix-input/ix-input.component';
-import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.component';
+import { userEvent, within } from '@storybook/testing-library';
 import { InputType } from '../lib/enums/input-type.enum';
+import { IxChipComponent } from '../lib/ix-chip/ix-chip.component';
+import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.component';
 
 const meta: Meta<IxChipComponent> = {
   title: 'Components/Chip',
@@ -206,7 +205,7 @@ export const ChipInputExample: Story = {
         // Focus the input when the container is clicked
         setTimeout(() => {
           const input = document.querySelector('[data-testid="chip-input"]') as HTMLInputElement;
-          if (input) input.focus();
+          if (input) {input.focus();}
         }, 0);
       },
       

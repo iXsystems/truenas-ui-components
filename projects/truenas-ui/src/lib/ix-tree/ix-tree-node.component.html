@@ -1,10 +1,10 @@
 <div class="ix-tree-node" 
+     cdkTreeNodeToggle
+     role="treeitem"
      [class.ix-tree-node--expandable]="isExpandable"
      [attr.aria-level]="level + 1"
      [attr.aria-expanded]="isExpandable ? isExpanded : null"
-     [style.cursor]="isExpandable ? 'pointer' : 'default'"
-     cdkTreeNodeToggle
-     role="treeitem">
+     [style.cursor]="isExpandable ? 'pointer' : 'default'">
   
   <div class="ix-tree-node__content">
     <!-- Arrow icon for expandable nodes -->
@@ -13,11 +13,10 @@
         class="ix-tree-node__toggle"
         [class.ix-tree-node__toggle--expanded]="isExpanded">
         <ix-icon
-          [name]="isExpanded ? 'chevron-down' : 'chevron-right'"
           library="mdi"
           size="sm"
-          style="transition: transform 0.2s ease;">
-        </ix-icon>
+          style="transition: transform 0.2s ease;"
+          [name]="isExpanded ? 'chevron-down' : 'chevron-right'" />
       </div>
     }
 
@@ -28,7 +27,7 @@
     
     <!-- Node content -->
     <div class="ix-tree-node__text">
-      <ng-content></ng-content>
+      <ng-content />
     </div>
   </div>
 </div>

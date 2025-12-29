@@ -1,17 +1,8 @@
-import { Component, OnInit, AfterViewInit, AfterViewChecked, computed, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ScrollingModule } from '@angular/cdk/scrolling';
 import { A11yModule } from '@angular/cdk/a11y';
-
-import { IxIconComponent } from '../ix-icon/ix-icon.component';
-import { IxButtonComponent } from '../ix-button/ix-button.component';
-import { IxTableComponent } from '../ix-table/ix-table.component';
-import { IxTableColumnDirective, IxHeaderCellDefDirective, IxCellDefDirective } from '../ix-table-column/ix-table-column.directive';
-import { FileSizePipe } from '../pipes/file-size/file-size.pipe';
-import { TruncatePathPipe } from '../pipes/truncate-path/truncate-path.pipe';
-import { FileSystemItem, FilePickerCallbacks, CreateFolderEvent, FilePickerError, PathSegment, FilePickerMode } from './ix-file-picker.interfaces';
-import { IxIconRegistryService } from '../ix-icon/ix-icon-registry.service';
-import { registerTruenasIcons } from '../ix-custom-icons/generated-icons';
+import { ScrollingModule } from '@angular/cdk/scrolling';
+import { CommonModule } from '@angular/common';
+import type { OnInit, AfterViewInit, AfterViewChecked} from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import {
   mdiFolder,
   mdiFile,
@@ -24,6 +15,15 @@ import {
   mdiFolderOpen,
   mdiAlertCircle
 } from '@mdi/js';
+import type { FileSystemItem, CreateFolderEvent, FilePickerMode } from './ix-file-picker.interfaces';
+import { IxButtonComponent } from '../ix-button/ix-button.component';
+import { registerTruenasIcons } from '../ix-custom-icons/generated-icons';
+import type { IxIconRegistryService } from '../ix-icon/ix-icon-registry.service';
+import { IxIconComponent } from '../ix-icon/ix-icon.component';
+import { IxTableComponent } from '../ix-table/ix-table.component';
+import { IxTableColumnDirective, IxHeaderCellDefDirective, IxCellDefDirective } from '../ix-table-column/ix-table-column.directive';
+import { FileSizePipe } from '../pipes/file-size/file-size.pipe';
+import { TruncatePathPipe } from '../pipes/truncate-path/truncate-path.pipe';
 
 @Component({
   selector: 'ix-file-picker-popup',
@@ -164,12 +164,12 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
   });
 
   onItemClick(item: FileSystemItem): void {
-    if (item.isCreating) return; // Don't allow selection during creation
+    if (item.isCreating) {return;} // Don't allow selection during creation
     this.itemClick.emit(item);
   }
 
   onItemDoubleClick(item: FileSystemItem): void {
-    if (item.isCreating) return; // Don't allow navigation during creation
+    if (item.isCreating) {return;} // Don't allow navigation during creation
     this.itemDoubleClick.emit(item);
   }
 
@@ -249,7 +249,7 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
   }
 
   getItemIcon(item: FileSystemItem): string {
-    if (item.icon) return item.icon;
+    if (item.icon) {return item.icon;}
 
     switch (item.type) {
       case 'folder': return 'folder';
@@ -337,7 +337,7 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
   }
 
   formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 B';
+    if (bytes === 0) {return '0 B';}
     
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];

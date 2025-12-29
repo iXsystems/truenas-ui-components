@@ -30,8 +30,7 @@
               [label]="control.label"
               [checked]="control.checked"
               [disabled]="control.disabled || false"
-              (change)="onControlChange($event)">
-            </ix-slide-toggle>
+              (change)="onControlChange($event)" />
           </div>
         }
 
@@ -43,14 +42,12 @@
                 name="dots-vertical"
                 library="mdi"
                 size="md"
-                [ixMenuTriggerFor]="cardMenu"
-                ariaLabel="Card menu">
-              </ix-icon-button>
+                ariaLabel="Card menu"
+                [ixMenuTriggerFor]="cardMenu" />
               <ix-menu
                 #cardMenu
                 [items]="menu"
-                (menuItemClick)="onHeaderMenuItemClick($event)">
-              </ix-menu>
+                (menuItemClick)="onHeaderMenuItemClick($event)" />
             </div>
           }
         }
@@ -60,7 +57,7 @@
 
   <!-- Content section -->
   <div class="ix-card__content">
-    <ng-content></ng-content>
+    <ng-content />
   </div>
 
   <!-- Footer section -->
@@ -80,22 +77,20 @@
       <div class="ix-card__footer-right">
         @if (secondaryAction(); as action) {
           <ix-button
-            [label]="action.label"
             variant="outline"
             color="default"
+            [label]="action.label"
             [disabled]="action.disabled || false"
-            (click)="action.handler()">
-          </ix-button>
+            (click)="action.handler()" />
         }
 
         @if (primaryAction(); as action) {
           <ix-button
-            [label]="action.label"
             variant="filled"
             color="primary"
+            [label]="action.label"
             [disabled]="action.disabled || false"
-            (click)="action.handler()">
-          </ix-button>
+            (click)="action.handler()" />
         }
       </div>
     </div>

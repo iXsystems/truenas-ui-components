@@ -1,7 +1,8 @@
-import { Directive, input, ElementRef, ViewContainerRef, signal } from '@angular/core';
-import { Overlay, OverlayRef, ConnectedPosition } from '@angular/cdk/overlay';
+import type { Overlay, OverlayRef, ConnectedPosition } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { IxMenuComponent } from './ix-menu.component';
+import type { ElementRef, ViewContainerRef} from '@angular/core';
+import { Directive, input, signal } from '@angular/core';
+import type { IxMenuComponent } from './ix-menu.component';
 
 /**
  * Directive that attaches a menu to any element.

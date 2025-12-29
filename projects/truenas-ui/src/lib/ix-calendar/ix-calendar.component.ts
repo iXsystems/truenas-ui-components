@@ -1,9 +1,10 @@
-import { Component, input, output, signal, computed, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import type { OnInit } from '@angular/core';
+import { Component, input, output, signal, effect } from '@angular/core';
 import { IxCalendarHeaderComponent } from './ix-calendar-header.component';
 import { IxMonthViewComponent } from './ix-month-view.component';
 import { IxMultiYearViewComponent } from './ix-multi-year-view.component';
-import { DateRange } from '../ix-date-range-input/ix-date-range-input.component';
+import type { DateRange } from '../ix-date-range-input/ix-date-range-input.component';
 
 @Component({
   selector: 'ix-calendar',
@@ -17,8 +18,7 @@ import { DateRange } from '../ix-date-range-input/ix-date-range-input.component'
       (yearSelected)="onYearSelected($event)"
       (viewChanged)="onViewChanged($event)"
       (previousClicked)="onPreviousClicked()"
-      (nextClicked)="onNextClicked()">
-    </ix-calendar-header>
+      (nextClicked)="onNextClicked()" />
 
     <div class="ix-calendar-content" cdkMonitorSubtreeFocus tabindex="-1">
       <ix-month-view
@@ -31,8 +31,7 @@ import { DateRange } from '../ix-date-range-input/ix-date-range-input.component'
         [rangeMode]="rangeMode()"
         [selectedRange]="rangeMode() ? rangeState() : undefined"
         (selectedChange)="onSelectedChange($event)"
-        (activeDateChange)="onActiveDateChange($event)">
-      </ix-month-view>
+        (activeDateChange)="onActiveDateChange($event)" />
 
       <!-- Multi-year view -->
       <ix-multi-year-view
@@ -43,8 +42,7 @@ import { DateRange } from '../ix-date-range-input/ix-date-range-input.component'
         [minDate]="minDate()"
         [maxDate]="maxDate()"
         (selectedChange)="onYearSelectedFromView($event)"
-        (activeDateChange)="onActiveDateChange($event)">
-      </ix-multi-year-view>
+        (activeDateChange)="onActiveDateChange($event)" />
     </div>
   `,
   styleUrls: ['./ix-calendar.component.scss']
@@ -71,7 +69,7 @@ export class IxCalendarComponent implements OnInit {
   currentView = signal<'month' | 'year'>('month');
   
   // Range selection state - this is the authoritative source for calendar display
-  public rangeState = signal<{
+  rangeState = signal<{
     start: Date | null;
     end: Date | null;
     selecting: 'start' | 'end';

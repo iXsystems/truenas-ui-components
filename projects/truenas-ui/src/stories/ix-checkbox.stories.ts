@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/angular';
-import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import type { Meta, StoryObj } from '@storybook/angular';
 import { IxCheckboxComponent } from '../lib/ix-checkbox/ix-checkbox.component';
 
 const meta: Meta<IxCheckboxComponent> = {

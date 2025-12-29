@@ -1,11 +1,10 @@
-import type { Meta, StoryObj } from '@storybook/angular';
-import { moduleMetadata } from '@storybook/angular';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
+import type { Meta, StoryObj } from '@storybook/angular';
+import { moduleMetadata } from '@storybook/angular';
+import { IxInputComponent } from '../lib/ix-input/ix-input.component';
 import { IxTableComponent } from '../lib/ix-table/ix-table.component';
 import { IxTableColumnDirective, IxHeaderCellDefDirective, IxCellDefDirective } from '../lib/ix-table-column/ix-table-column.directive';
-import { IxInputComponent } from '../lib/ix-input/ix-input.component';
 
 interface User {
   id: number;

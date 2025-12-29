@@ -1,8 +1,10 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, QueryList } from '@angular/core';
+import type { QueryList } from '@angular/core';
+import type { ComponentFixture} from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
-import { IxTableComponent, IxTableDataSource } from './ix-table.component';
-import { IxTableColumnDirective } from '../ix-table-column/ix-table-column.directive';
+import type { IxTableDataSource } from './ix-table.component';
+import { IxTableComponent } from './ix-table.component';
+import type { IxTableColumnDirective } from '../ix-table-column/ix-table-column.directive';
 
 describe('IxTableComponent', () => {
   let component: IxTableComponent;

@@ -1,9 +1,8 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
+import type { ComponentFixture} from '@angular/core/testing';
+import { TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
 import { DomSanitizer } from '@angular/platform-browser';
-
-import { IxIconComponent } from './ix-icon.component';
 import { IxIconRegistryService } from './ix-icon-registry.service';
+import { IxIconComponent } from './ix-icon.component';
 import { IxSpriteLoaderService } from './ix-sprite-loader.service';
 
 describe('IxIconComponent - MDI Support', () => {

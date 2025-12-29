@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, input, computed } from '@angular/core';
-import { PlatformType } from '../enums/modifier-keys.enum';
+import type { PlatformType } from '../enums/modifier-keys.enum';
 
 @Component({
   selector: 'ix-keyboard-shortcut',
@@ -19,7 +19,7 @@ export class IxKeyboardShortcutComponent {
   });
 
   private formatShortcut(shortcut: string): string {
-    if (!shortcut) return '';
+    if (!shortcut) {return '';}
 
     const detectedPlatform = this.platform() === 'auto' ? this.detectPlatform() : this.platform();
     
@@ -57,7 +57,7 @@ export class IxKeyboardShortcutComponent {
 
   shortcutKeys = computed(() => {
     const displayShortcut = this.displayShortcut();
-    if (!displayShortcut) return [];
+    if (!displayShortcut) {return [];}
 
     // Split by common separators
     const separators = ['+', ' ', ''];

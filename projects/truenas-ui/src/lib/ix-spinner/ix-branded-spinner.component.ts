@@ -1,4 +1,5 @@
-import { Component, input, OnInit, OnDestroy, ViewEncapsulation, ElementRef, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
+import type { OnInit, OnDestroy, ElementRef, AfterViewInit} from '@angular/core';
+import { Component, input, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'ix-branded-spinner',
@@ -46,7 +47,7 @@ export class IxBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewIn
   }
 
   private startProgressLoop(): void {
-    if (!this.isAnimating || this.paths.length === 0) return;
+    if (!this.isAnimating || this.paths.length === 0) {return;}
 
     // Reset all paths to invisible
     this.paths.forEach((path) => {
@@ -61,15 +62,15 @@ export class IxBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewIn
   }
 
   private animateSequence(): void {
-    if (!this.isAnimating) return;
+    if (!this.isAnimating) {return;}
 
     let startTime: number;
     const totalDrawTime = (this.paths.length - 1) * this.delayStep + this.duration;
 
     const animate = (timestamp: number) => {
-      if (!this.isAnimating) return;
+      if (!this.isAnimating) {return;}
 
-      if (!startTime) startTime = timestamp;
+      if (!startTime) {startTime = timestamp;}
       const elapsed = timestamp - startTime;
 
       let allDone = true;

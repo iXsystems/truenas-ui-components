@@ -1,8 +1,8 @@
-import type { Meta, StoryObj } from '@storybook/angular';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { IxSlideToggleComponent } from '../lib/ix-slide-toggle/ix-slide-toggle.component';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import type { Meta, StoryObj } from '@storybook/angular';
 import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.component';
+import { IxSlideToggleComponent } from '../lib/ix-slide-toggle/ix-slide-toggle.component';
 
 const meta: Meta<IxSlideToggleComponent> = {
   title: 'Components/Slide Toggle',

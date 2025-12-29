@@ -1,12 +1,13 @@
-import {
-  Directive,
+import type {
   ElementRef,
   OnDestroy,
-  OnInit,
+  OnInit} from '@angular/core';
+import {
+  Directive,
   input,
   Host
 } from '@angular/core';
-import { IxSliderComponent } from './ix-slider.component';
+import type { IxSliderComponent } from './ix-slider.component';
 
 @Directive({
   selector: 'ix-slider[ixSliderWithLabel]',

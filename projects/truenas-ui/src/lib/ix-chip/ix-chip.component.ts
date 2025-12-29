@@ -1,6 +1,7 @@
-import { Component, input, output, computed, viewChild, ElementRef, AfterViewInit, OnDestroy, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
+import { CommonModule } from '@angular/common';
+import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
+import { Component, input, output, computed, viewChild, inject } from '@angular/core';
 import { IxIconComponent } from '../ix-icon/ix-icon.component';
 
 export type ChipColor = 'primary' | 'secondary' | 'accent';
@@ -54,14 +55,14 @@ export class IxChipComponent implements AfterViewInit, OnDestroy {
     return classes;
   });
 
-  public handleClick(event: MouseEvent): void {
+  handleClick(event: MouseEvent): void {
     if (this.disabled()) {
       return;
     }
     this.onClick.emit(event);
   }
 
-  public handleClose(event: MouseEvent): void {
+  handleClose(event: MouseEvent): void {
     event.stopPropagation();
     if (this.disabled()) {
       return;
@@ -69,7 +70,7 @@ export class IxChipComponent implements AfterViewInit, OnDestroy {
     this.onClose.emit();
   }
 
-  public handleKeyDown(event: KeyboardEvent): void {
+  handleKeyDown(event: KeyboardEvent): void {
     if (this.disabled()) {
       return;
     }

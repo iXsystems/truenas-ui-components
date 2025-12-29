@@ -1,6 +1,8 @@
-import { Injectable, inject, TemplateRef } from '@angular/core';
-import { ComponentType } from '@angular/cdk/portal';
-import { Dialog, DialogConfig, DialogRef } from '@angular/cdk/dialog';
+import type { DialogConfig, DialogRef } from '@angular/cdk/dialog';
+import { Dialog } from '@angular/cdk/dialog';
+import type { ComponentType } from '@angular/cdk/portal';
+import type { TemplateRef } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 
 export type IxDialogOpenTarget<C> = ComponentType<C> | TemplateRef<unknown>;
 

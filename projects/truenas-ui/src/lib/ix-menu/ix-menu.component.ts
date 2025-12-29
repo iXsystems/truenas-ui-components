@@ -1,8 +1,9 @@
-import { CommonModule } from '@angular/common';
-import { Component, input, output, TemplateRef, viewChild, ViewContainerRef, computed } from '@angular/core';
 import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
-import { Overlay, OverlayRef } from '@angular/cdk/overlay';
+import type { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
+import { CommonModule } from '@angular/common';
+import { Component, input, output, viewChild, computed } from '@angular/core';
+import type { TemplateRef, ViewContainerRef} from '@angular/core';
 import { IxIconComponent } from '../ix-icon/ix-icon.component';
 
 export interface IxMenuItem {
@@ -70,14 +71,14 @@ export class IxMenuComponent {
   /**
    * Get the menu template for use by the trigger directive
    */
-  public getMenuTemplate(): TemplateRef<any> | null {
+  getMenuTemplate(): TemplateRef<any> | null {
     if (this.contextMenu()) {
       return this.contextMenuTemplate() || null;
     }
     return this.menuTemplate() || null;
   }
 
-  public openContextMenuAt(x: number, y: number): void {
+  openContextMenuAt(x: number, y: number): void {
     const contextMenuTemplate = this.contextMenuTemplate();
     if (this.contextMenu() && contextMenuTemplate) {
       // Close any existing context menu

@@ -1,16 +1,17 @@
-import type { Meta, StoryObj } from '@storybook/angular';
-import { Component } from '@angular/core';
-import { DialogRef } from '@angular/cdk/dialog';
+import type { DialogRef } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
+import type { Meta, StoryObj } from '@storybook/angular';
 import { IxButtonComponent } from '../../lib/ix-button/ix-button.component';
+import { IxCheckboxComponent } from '../../lib/ix-checkbox/ix-checkbox.component';
 import { IxDialogShellComponent } from '../../lib/ix-dialog';
 import { IxDialog } from '../../lib/ix-dialog/ix-dialog.service';
-import { IxRadioComponent } from '../../lib/ix-radio/ix-radio.component';
-import { IxCheckboxComponent } from '../../lib/ix-checkbox/ix-checkbox.component';
 import { IxInputComponent } from '../../lib/ix-input/ix-input.component';
-import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select.component';
+import { IxRadioComponent } from '../../lib/ix-radio/ix-radio.component';
+import type { IxSelectOption } from '../../lib/ix-select/ix-select.component';
+import { IxSelectComponent } from '../../lib/ix-select/ix-select.component';
+import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
 
 // Backup Wizard Dialog Component
 @Component({
@@ -18,7 +19,7 @@ import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select
   template: `
     <ix-dialog-shell title="Backup Configuration Wizard" [showFullscreenButton]="true">
       <div style="padding: 0 var(--content-padding); margin-top: var(--content-padding);">
-        <ix-stepper [linear]="true" [selectedIndex]="currentStep" orientation="auto" (selectionChange)="onStepChange($event)">
+        <ix-stepper orientation="auto" [linear]="true" [selectedIndex]="currentStep" (selectionChange)="onStepChange($event)">
         
         <ix-step label="Backup Target">
           <h4>Select Backup Target</h4>
@@ -29,9 +30,9 @@ import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select
                 Backup Destination
               </label>
               <div style="display: flex; flex-direction: column; gap: 8px;">
-                <ix-radio name="backupTarget" value="local" label="Local Storage - Fast, no network required" [(ngModel)]="backupTarget"></ix-radio>
-                <ix-radio name="backupTarget" value="cloud" label="Cloud Storage - Off-site protection" [(ngModel)]="backupTarget"></ix-radio>
-                <ix-radio name="backupTarget" value="remote" label="Remote Server - Network attached storage" [(ngModel)]="backupTarget"></ix-radio>
+                <ix-radio name="backupTarget" value="local" label="Local Storage - Fast, no network required" [(ngModel)]="backupTarget" />
+                <ix-radio name="backupTarget" value="cloud" label="Cloud Storage - Off-site protection" [(ngModel)]="backupTarget" />
+                <ix-radio name="backupTarget" value="remote" label="Remote Server - Network attached storage" [(ngModel)]="backupTarget" />
               </div>
             </div>
           </div>
@@ -45,10 +46,9 @@ import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select
               <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">
                 Choose an account
               </label>
-              <ix-select [options]="accountOptions"
-                         placeholder="Select an account"
-                         [(ngModel)]="selectedAccount">
-              </ix-select>
+              <ix-select placeholder="Select an account"
+                         [options]="accountOptions"
+                         [(ngModel)]="selectedAccount" />
             </div>
           </div>
         </ix-step>
@@ -62,11 +62,10 @@ import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select
                 Dataset Path
               </label>
               <ix-input [placeholder]="'Enter dataset path (e.g., pool1/documents)'"
-                        [(ngModel)]="selectedDatasetPath">
-              </ix-input>
+                        [(ngModel)]="selectedDatasetPath" />
             </div>
             <div>
-              <ix-checkbox label="Include snapshots in backup" [(ngModel)]="includeSnapshots"></ix-checkbox>
+              <ix-checkbox label="Include snapshots in backup" [(ngModel)]="includeSnapshots" />
             </div>
           </div>
         </ix-step>
@@ -107,18 +106,15 @@ import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select
       <div ixDialogAction>
         <ix-button variant="outline" 
                    label="Cancel"
-                   (click)="cancel()">
-        </ix-button>
-        <ix-button variant="outline" 
+                   (click)="cancel()" />
+        <ix-button *ngIf="currentStep > 0" 
+                   variant="outline"
                    label="Back"
-                   (click)="previousStep()"
-                   *ngIf="currentStep > 0">
-        </ix-button>
+                   (click)="previousStep()" />
         <ix-button color="primary" 
                    [label]="getNextButtonLabel()"
-                   (click)="nextStep()"
-                   [disabled]="!canProceed()">
-        </ix-button>
+                   [disabled]="!canProceed()"
+                   (click)="nextStep()" />
       </div>
     </ix-dialog-shell>
   `,
@@ -196,7 +192,7 @@ class BackupWizardDialogComponent {
   }
 
   getNextButtonLabel(): string {
-    if (this.currentStep === 3) return 'Create Backup Task';
+    if (this.currentStep === 3) {return 'Create Backup Task';}
     return 'Next';
   }
 
@@ -229,10 +225,9 @@ class BackupWizardDialogComponent {
       </p>
       <ix-button variant="primary" 
                  label="Launch Stepped Wizard"
-                 (click)="openWizard()">
-      </ix-button>
+                 (click)="openWizard()" />
       
-      <div style="margin-top: 24px; padding: 16px; border: 1px solid var(--lines); border-radius: 8px;" *ngIf="lastResult">
+      <div *ngIf="lastResult" style="margin-top: 24px; padding: 16px; border: 1px solid var(--lines); border-radius: 8px;">
         <h4>Last Result:</h4>
         <pre style="margin: 8px 0 0 0; color: var(--fg2);">{{ lastResult | json }}</pre>
       </div>

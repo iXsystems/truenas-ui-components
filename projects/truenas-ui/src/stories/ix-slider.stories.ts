@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.component';
-import { IxSliderComponent, LabelType } from '../lib/ix-slider/ix-slider.component';
 import { IxSliderThumbDirective } from '../lib/ix-slider/ix-slider-thumb.directive';
 import { IxSliderWithLabelDirective } from '../lib/ix-slider/ix-slider-with-label.directive';
+import type { LabelType } from '../lib/ix-slider/ix-slider.component';
+import { IxSliderComponent } from '../lib/ix-slider/ix-slider.component';
 import { IxTooltipComponent } from '../lib/ix-tooltip/ix-tooltip.component';
 
 const meta: Meta<IxSliderComponent> = {

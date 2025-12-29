@@ -1,19 +1,20 @@
 import { CommonModule } from '@angular/common';
 import { Component, input, computed } from '@angular/core';
-import { IxButtonComponent } from '../ix-button/ix-button.component';
-import { IxIconComponent } from '../ix-icon/ix-icon.component';
-import { IxIconButtonComponent } from '../ix-icon-button/ix-icon-button.component';
-import { IxSlideToggleComponent } from '../ix-slide-toggle/ix-slide-toggle.component';
-import { IxMenuComponent, IxMenuItem } from '../ix-menu/ix-menu.component';
-import { IxMenuTriggerDirective } from '../ix-menu/ix-menu-trigger.directive';
-import { IxIconRegistryService } from '../ix-icon/ix-icon-registry.service';
-import {
+import { mdiDotsVertical } from '@mdi/js';
+import type {
   IxCardAction,
   IxCardControl,
   IxCardHeaderStatus,
   IxCardFooterLink
 } from './ix-card.interfaces';
-import { mdiDotsVertical } from '@mdi/js';
+import { IxButtonComponent } from '../ix-button/ix-button.component';
+import type { IxIconRegistryService } from '../ix-icon/ix-icon-registry.service';
+import { IxIconComponent } from '../ix-icon/ix-icon.component';
+import { IxIconButtonComponent } from '../ix-icon-button/ix-icon-button.component';
+import { IxMenuTriggerDirective } from '../ix-menu/ix-menu-trigger.directive';
+import type { IxMenuItem } from '../ix-menu/ix-menu.component';
+import { IxMenuComponent } from '../ix-menu/ix-menu.component';
+import { IxSlideToggleComponent } from '../ix-slide-toggle/ix-slide-toggle.component';
 
 @Component({
   selector: 'ix-card',

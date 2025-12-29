@@ -1,16 +1,18 @@
 import { A11yModule } from '@angular/cdk/a11y';
-import { ConnectedPosition, Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
+import type { ConnectedPosition, Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { PortalModule, TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
-import { Component, computed, ElementRef, forwardRef, input, OnDestroy, OnInit, output, signal, TemplateRef, viewChild, ViewContainerRef } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import type { ElementRef, OnDestroy, OnInit, TemplateRef, ViewContainerRef } from '@angular/core';
+import { Component, computed, forwardRef, input, output, signal, viewChild } from '@angular/core';
+import type { ControlValueAccessor} from '@angular/forms';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
-
+import { IxFilePickerPopupComponent } from './ix-file-picker-popup.component';
+import type { CreateFolderEvent, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem } from './ix-file-picker.interfaces';
 import { IxIconComponent } from '../ix-icon/ix-icon.component';
 import { IxInputDirective } from '../ix-input/ix-input.directive';
 import { StripMntPrefixPipe } from '../pipes/strip-mnt-prefix/strip-mnt-prefix.pipe';
-import { IxFilePickerPopupComponent } from './ix-file-picker-popup.component';
-import { CreateFolderEvent, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem } from './ix-file-picker.interfaces';
 
 @Component({
   selector: 'ix-file-picker',
@@ -155,7 +157,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   }
 
   openFilePicker(): void {
-    if (this.isOpen() || this.isDisabled()) return;
+    if (this.isOpen() || this.isDisabled()) {return;}
 
     this.createOverlay();
     this.isOpen.set(true);
@@ -173,7 +175,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
   // File browser methods
   onItemClick(item: FileSystemItem): void {
-    if (item.disabled || item.isCreating || this.creatingItemTempId()) return;
+    if (item.disabled || item.isCreating || this.creatingItemTempId()) {return;}
 
     if (this.multiSelect()) {
       const selected = this.selectedItems();
@@ -193,7 +195,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   }
 
   onItemDoubleClick(item: FileSystemItem): void {
-    if (item.isCreating || this.creatingItemTempId()) return;
+    if (item.isCreating || this.creatingItemTempId()) {return;}
 
     // Define navigatable types
     const isNavigatable = ['folder', 'dataset', 'mountpoint'].includes(item.type);
@@ -212,7 +214,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     // Apply the selection and close the popup
     const selected = this.selectedItems();
 
-    if (selected.length === 0) return;
+    if (selected.length === 0) {return;}
 
     // Clear any existing error state
     this.hasError.set(false);
@@ -470,9 +472,9 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   }
 
   private toFullPath(displayPath: string): string {
-    if (!displayPath) return '/mnt';
-    if (displayPath === '/') return '/mnt';
-    if (displayPath.startsWith('/')) return '/mnt' + displayPath;
+    if (!displayPath) {return '/mnt';}
+    if (displayPath === '/') {return '/mnt';}
+    if (displayPath.startsWith('/')) {return '/mnt' + displayPath;}
     return '/mnt/' + displayPath;
   }
 
@@ -483,7 +485,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   }
 
   private createOverlay(): void {
-    if (this.overlayRef) return;
+    if (this.overlayRef) {return;}
 
     const positions: ConnectedPosition[] = [
       {

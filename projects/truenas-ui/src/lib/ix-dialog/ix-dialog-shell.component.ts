@@ -1,29 +1,31 @@
-import { Component, input, signal, OnInit, Inject, Optional } from '@angular/core';
-import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
+import type { DialogRef} from '@angular/cdk/dialog';
+import { DIALOG_DATA } from '@angular/cdk/dialog';
 import { DOCUMENT, CommonModule } from '@angular/common';
+import { Component, input, signal, Inject, Optional } from '@angular/core';
+import type { OnInit} from '@angular/core';
 
 @Component({
   selector: 'ix-dialog-shell',
   template: `
     <header class="ix-dialog__header">
       <h2 class="ix-dialog__title">{{ title() }}</h2>
-      <button type="button"
+      <button *ngIf="showFullscreenButton()"
+              type="button"
               class="ix-dialog__fullscreen"
               tabindex="-1"
-              (click)="toggleFullscreen()"
               [attr.aria-label]="isFullscreen() ? 'Exit fullscreen' : 'Enter fullscreen'"
-              *ngIf="showFullscreenButton()">
+              (click)="toggleFullscreen()">
         <span class="ix-dialog__fullscreen-icon">{{ isFullscreen() ? '⤓' : '⤢' }}</span>
       </button>
-      <button type="button" class="ix-dialog__close" tabindex="-1" (click)="close()" aria-label="Close dialog">✕</button>
+      <button type="button" class="ix-dialog__close" tabindex="-1" aria-label="Close dialog" (click)="close()">✕</button>
     </header>
 
     <section class="ix-dialog__content" cdkDialogContent>
-      <ng-content></ng-content>
+      <ng-content />
     </section>
 
     <footer class="ix-dialog__actions" cdkDialogActions>
-      <ng-content select="[ixDialogAction]"></ng-content>
+      <ng-content select="[ixDialogAction]" />
     </footer>
   `,
   standalone: true,

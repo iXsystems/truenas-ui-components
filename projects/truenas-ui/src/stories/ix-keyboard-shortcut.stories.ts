@@ -1,7 +1,8 @@
+import type { OnDestroy } from '@angular/core';
+import { Component } from '@angular/core';
+import { action } from '@storybook/addon-actions';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { IxKeyboardShortcutComponent } from '../lib/ix-keyboard-shortcut/ix-keyboard-shortcut.component';
-import { Component, OnDestroy } from '@angular/core';
-import { action } from '@storybook/addon-actions';
 
 @Component({
   selector: 'shortcut-test',
@@ -10,7 +11,7 @@ import { action } from '@storybook/addon-actions';
   template: `
     <div style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
       <h3>Keyboard Shortcut Test</h3>
-      <p>Try pressing <ix-keyboard-shortcut shortcut="⌘S" platform="auto"></ix-keyboard-shortcut> to test the shortcut functionality.</p>
+      <p>Try pressing <ix-keyboard-shortcut shortcut="⌘S" platform="auto" /> to test the shortcut functionality.</p>
       <p>The shortcut should trigger both a Storybook action and a browser alert.</p>
 
       <div style="margin-top: 20px; padding: 16px; border: 1px solid var(--lines); border-radius: 4px;">
@@ -33,15 +34,15 @@ import { action } from '@storybook/addon-actions';
         <div style="display: flex; gap: 24px; align-items: center; margin: 16px 0;">
           <div>
             <strong>Mac Style:</strong>
-            <ix-keyboard-shortcut shortcut="⌘S" platform="mac"></ix-keyboard-shortcut>
+            <ix-keyboard-shortcut shortcut="⌘S" platform="mac" />
           </div>
           <div>
             <strong>Windows/Linux Style:</strong>
-            <ix-keyboard-shortcut shortcut="Ctrl+S" platform="windows"></ix-keyboard-shortcut>
+            <ix-keyboard-shortcut shortcut="Ctrl+S" platform="windows" />
           </div>
           <div>
             <strong>Auto-detect:</strong>
-            <ix-keyboard-shortcut shortcut="⌘S" platform="auto"></ix-keyboard-shortcut>
+            <ix-keyboard-shortcut shortcut="⌘S" platform="auto" />
           </div>
         </div>
 
@@ -49,27 +50,27 @@ import { action } from '@storybook/addon-actions';
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 16px 0;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <span>Save:</span>
-            <ix-keyboard-shortcut shortcut="⌘S" platform="auto"></ix-keyboard-shortcut>
+            <ix-keyboard-shortcut shortcut="⌘S" platform="auto" />
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <span>Save As:</span>
-            <ix-keyboard-shortcut shortcut="⇧⌘S" platform="auto"></ix-keyboard-shortcut>
+            <ix-keyboard-shortcut shortcut="⇧⌘S" platform="auto" />
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <span>Copy:</span>
-            <ix-keyboard-shortcut shortcut="⌘C" platform="auto"></ix-keyboard-shortcut>
+            <ix-keyboard-shortcut shortcut="⌘C" platform="auto" />
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <span>Paste:</span>
-            <ix-keyboard-shortcut shortcut="⌘V" platform="auto"></ix-keyboard-shortcut>
+            <ix-keyboard-shortcut shortcut="⌘V" platform="auto" />
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <span>Find:</span>
-            <ix-keyboard-shortcut shortcut="⌘F" platform="auto"></ix-keyboard-shortcut>
+            <ix-keyboard-shortcut shortcut="⌘F" platform="auto" />
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <span>Undo:</span>
-            <ix-keyboard-shortcut shortcut="⌘Z" platform="auto"></ix-keyboard-shortcut>
+            <ix-keyboard-shortcut shortcut="⌘Z" platform="auto" />
           </div>
         </div>
 

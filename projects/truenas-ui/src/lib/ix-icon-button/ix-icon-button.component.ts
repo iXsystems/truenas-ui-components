@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, input, output, computed } from '@angular/core';
-import { IxIconComponent, IconSize, IconLibraryType } from '../ix-icon/ix-icon.component';
+import type { IconSize, IconLibraryType } from '../ix-icon/ix-icon.component';
+import { IxIconComponent } from '../ix-icon/ix-icon.component';
 
 @Component({
   selector: 'ix-icon-button',

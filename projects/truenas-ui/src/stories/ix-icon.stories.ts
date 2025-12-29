@@ -1,13 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { importProvidersFrom } from '@angular/core';
-import { CommonModule } from '@angular/common';
-
-import { IxIconComponent } from '../lib/ix-icon/ix-icon.component';
-import { IxIconRegistryService } from '../lib/ix-icon/ix-icon-registry.service';
+import { Home, User, Settings, Heart, Star, Search, Menu } from 'lucide';
 import { iconMarker } from '../lib/ix-icon/icon-marker';
+import { IxIconRegistryService } from '../lib/ix-icon/ix-icon-registry.service';
+import { IxIconComponent } from '../lib/ix-icon/ix-icon.component';
 
 // Import Lucide for demonstration
-import { Home, User, Settings, Heart, Star, Search, Menu } from 'lucide';
 
 // Mark icons used in stories for sprite generation
 // Using the new two-parameter API for clarity

@@ -1,17 +1,17 @@
-import type { Meta, StoryObj } from '@storybook/angular';
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IxButtonComponent } from '../../lib/ix-button/ix-button.component';
-import { IxCardComponent } from '../../lib/ix-card/ix-card.component';
-import { IxRadioComponent } from '../../lib/ix-radio/ix-radio.component';
-import { IxFormFieldComponent } from '../../lib/ix-form-field/ix-form-field.component';
-import { IxInputComponent } from '../../lib/ix-input/ix-input.component';
-import { IxExpansionPanelComponent } from '../../lib/ix-expansion-panel/ix-expansion-panel.component';
+import type { Meta, StoryObj } from '@storybook/angular';
 import { DiskIconComponent } from '../../lib/disk-icon/disk-icon.component';
 import { DiskType } from '../../lib/enums/disk-type.enum';
-import { IxSlideToggleComponent } from '../../lib/ix-slide-toggle/ix-slide-toggle.component';
+import { IxButtonComponent } from '../../lib/ix-button/ix-button.component';
+import { IxCardComponent } from '../../lib/ix-card/ix-card.component';
 import { IxCheckboxComponent } from '../../lib/ix-checkbox/ix-checkbox.component';
+import { IxExpansionPanelComponent } from '../../lib/ix-expansion-panel/ix-expansion-panel.component';
+import { IxFormFieldComponent } from '../../lib/ix-form-field/ix-form-field.component';
+import { IxInputComponent } from '../../lib/ix-input/ix-input.component';
+import { IxRadioComponent } from '../../lib/ix-radio/ix-radio.component';
 import { IxSelectComponent } from '../../lib/ix-select/ix-select.component';
+import { IxSlideToggleComponent } from '../../lib/ix-slide-toggle/ix-slide-toggle.component';
 import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
 
 @Component({
@@ -45,7 +45,7 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
         <!-- Wizard Container -->
         <ix-card elevation="low" [bordered]="true">
           <div style="padding: 24px;">
-            <ix-stepper [linear]="true" [selectedIndex]="currentStep()" orientation="horizontal">
+            <ix-stepper orientation="horizontal" [linear]="true" [selectedIndex]="currentStep()">
             
               <!-- Step 1: Name -->
               <ix-step label="Name" [completed]="isStepCompleted(0)">
@@ -54,7 +54,7 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
                   <p style="margin: 0 0 20px 0; color: var(--fg2, #666); font-size: 14px;">Choose a name that describes what you'll store here</p>
                   
                   <ix-form-field label="Pool Name" style="margin-bottom: 20px;">
-                    <ix-input [(ngModel)]="poolName" placeholder="e.g., family-photos, documents, backup" required></ix-input>
+                    <ix-input placeholder="e.g., family-photos, documents, backup" required [(ngModel)]="poolName" />
                   </ix-form-field>
                   
                   @if (poolName().trim().length === 0) {
@@ -81,8 +81,7 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
                         name="protectionType" 
                         value="raidz1" 
                         label="Basic Protection"
-                        [(ngModel)]="selectedStorageType">
-                      </ix-radio>
+                        [(ngModel)]="selectedStorageType" />
                       <div style="margin: 4px 0 0 24px; font-size: 13px; color: var(--fg2, #666);">
                         Survives 1 drive failure • Uses all 12 drives • ~92% storage efficiency
                       </div>
@@ -93,8 +92,7 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
                         name="protectionType" 
                         value="raidz2" 
                         label="Medium Protection"
-                        [(ngModel)]="selectedStorageType">
-                      </ix-radio>
+                        [(ngModel)]="selectedStorageType" />
                       <div style="margin: 4px 0 0 24px; font-size: 13px; color: var(--fg2, #666);">
                         Survives 2 drive failures • Uses all 12 drives • ~83% storage efficiency
                       </div>
@@ -105,8 +103,7 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
                         name="protectionType" 
                         value="raidz3" 
                         label="High Protection"
-                        [(ngModel)]="selectedStorageType">
-                      </ix-radio>
+                        [(ngModel)]="selectedStorageType" />
                       <div style="margin: 4px 0 0 24px; font-size: 13px; color: var(--fg2, #666);">
                         <span style="background: var(--primary, #007bff); color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 8px;">RECOMMENDED</span>
                         Survives 3 drive failures • Uses all 12 drives • ~75% storage efficiency
@@ -118,8 +115,7 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
                         name="protectionType" 
                         value="mirror" 
                         label="Maximum Protection"
-                        [(ngModel)]="selectedStorageType">
-                      </ix-radio>
+                        [(ngModel)]="selectedStorageType" />
                       <div style="margin: 4px 0 0 24px; font-size: 13px; color: var(--fg2, #666);">
                         Survives up to 6 drive failures • 6 mirror pairs • 50% storage efficiency
                       </div>
@@ -130,7 +126,7 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
                   <div style="margin-bottom: 20px; padding: 12px; background: var(--alt-bg1, #f8f9fa); border-radius: 6px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                       <label style="font-weight: 500; color: var(--fg1); font-size: 14px;">Use all available disks</label>
-                      <ix-slide-toggle [(ngModel)]="useAllDisks"></ix-slide-toggle>
+                      <ix-slide-toggle [(ngModel)]="useAllDisks" />
                     </div>
                     <div style="font-size: 12px; color: var(--fg2, #666);">
                       When disabled, some disks are kept available for automatic hot spare configuration
@@ -142,9 +138,9 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
                     title="Technical Summary"
                     titleStyle="link"
                     elevation="none"
+                    style="margin-top: 16px;"
                     [bordered]="true"
-                    [background]="false"
-                    style="margin-top: 16px;">
+                    [background]="false">
                     <div style="padding: 12px; background: var(--bg2, #ffffff); border-radius: 4px; margin-top: 8px;">
                       <div style="font-size: 13px; color: var(--fg2, #666); line-height: 1.5;">
                         <div style="margin-bottom: 12px;">
@@ -199,9 +195,8 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
                     <div style="margin-bottom: 16px; padding: 12px; background: var(--bg2, #ffffff); border-radius: 6px; border: 1px solid var(--lines, #ddd);">
                       <ix-checkbox 
                         label="Enable Encryption (for sensitive data)"
-                        [(ngModel)]="enableEncryption"
-                        style="margin-bottom: 8px;">
-                      </ix-checkbox>
+                        style="margin-bottom: 8px;"
+                        [(ngModel)]="enableEncryption" />
                       <div style="font-size: 12px; color: var(--fg2, #666); margin-left: 24px;">
                         Only enable if you store sensitive data that requires encryption at rest
                       </div>
@@ -209,7 +204,7 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
                       @if (enableEncryption()) {
                         <div style="margin: 12px 0 0 24px; padding: 12px; background: var(--alt-bg1, #f8f9fa); border-radius: 4px;">
                           <ix-form-field label="Encryption Passphrase">
-                            <ix-input type="password" [(ngModel)]="encryptionKey" placeholder="Enter secure passphrase"></ix-input>
+                            <ix-input type="password" placeholder="Enter secure passphrase" [(ngModel)]="encryptionKey" />
                           </ix-form-field>
                           <div style="font-size: 11px; color: var(--fg2, #666); margin-top: 4px;">
                             ⚠️ Store this passphrase safely - you'll need it to access your data
@@ -226,7 +221,7 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
                         <span style="margin-right: 8px; font-size: 16px;">⚙️</span>
                         <label style="font-weight: 500; color: var(--fg1); font-size: 14px;">Expert Optimizations</label>
                       </div>
-                      <ix-slide-toggle [(ngModel)]="enableAdvancedOptions"></ix-slide-toggle>
+                      <ix-slide-toggle [(ngModel)]="enableAdvancedOptions" />
                     </div>
                     <div style="font-size: 12px; color: var(--fg2, #666);">
                       Advanced tuning options for specific workloads - only modify if you know what these do
@@ -241,9 +236,9 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
                           title="Performance Tuning"
                           titleStyle="link"
                           elevation="none"
+                          style="margin-bottom: 12px;"
                           [bordered]="true"
-                          [background]="false"
-                          style="margin-bottom: 12px;">
+                          [background]="false">
                           <div style="padding: 12px; background: var(--bg2, #ffffff); border-radius: 4px; margin-top: 8px;">
                             <ix-form-field label="Record Size" style="margin-bottom: 12px;">
                               <ix-select [(ngModel)]="recordSize">
@@ -266,8 +261,7 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
                         <div style="margin-bottom: 12px; padding: 12px; background: var(--bg2, #ffffff); border-radius: 4px; border: 1px solid var(--lines, #ddd);">
                           <ix-checkbox 
                             label="Add Hot Spare Drive"
-                            [(ngModel)]="enableHotSpare">
-                          </ix-checkbox>
+                            [(ngModel)]="enableHotSpare" />
                           <div style="margin-top: 6px; margin-left: 24px; font-size: 12px; color: var(--fg2, #666);">
                             Automatically replaces failed drives (requires one additional drive)
                           </div>
@@ -288,11 +282,10 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
                             
                             <ix-form-field label="Custom ZFS Properties" style="margin-bottom: 12px;">
                               <ix-input 
-                                [(ngModel)]="advancedProperties" 
-                                placeholder="checksum=sha256, dedup=on, copies=2"
+                                placeholder="checksum=sha256, dedup=on, copies=2" 
                                 multiline="true"
-                                rows="3">
-                              </ix-input>
+                                rows="3"
+                                [(ngModel)]="advancedProperties" />
                               <div style="font-size: 11px; color: var(--fg2); margin-top: 4px;">
                                 Override default ZFS properties (comma-separated)
                               </div>
@@ -300,8 +293,7 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
 
                             <ix-checkbox 
                               label="Import existing pool instead of creating new"
-                              [(ngModel)]="importExisting">
-                            </ix-checkbox>
+                              [(ngModel)]="importExisting" />
                           </div>
                         </ix-expansion-panel>
                       </div>
@@ -333,8 +325,7 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
                           <ix-disk-icon 
                             size="4TB" 
                             [name]="getDriveName(driveIndex)" 
-                            [type]="DiskType.Ssd">
-                          </ix-disk-icon>
+                            [type]="DiskType.Ssd" />
                           <div style="font-size: 9px; color: var(--primary, #007bff); margin-top: 2px; font-weight: 500;">4TB SSD</div>
                         </div>
                       }
@@ -346,8 +337,7 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
                             <ix-disk-icon 
                               size="4TB" 
                               [name]="getDriveName(spareIndex)" 
-                              [type]="DiskType.Ssd">
-                            </ix-disk-icon>
+                              [type]="DiskType.Ssd" />
                             <div style="font-size: 9px; color: var(--orange, #ff9800); margin-top: 2px; font-weight: 500;">Hot Spare</div>
                           </div>
                         }
@@ -438,8 +428,7 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
                   size="medium"
                   label="Previous"
                   [disabled]="currentStep() === 0"
-                  (click)="previousStep()">
-                </ix-button>
+                  (click)="previousStep()" />
                 
                 @if (currentStep() < 3) {
                   <ix-button 
@@ -447,16 +436,14 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
                     size="medium"
                     label="Next"
                     [disabled]="!canProceedToNextStep()"
-                    (click)="nextStep()">
-                  </ix-button>
+                    (click)="nextStep()" />
                 } @else {
                   <ix-button 
                     color="primary" 
                     size="medium"
                     label="Create Pool"
                     [disabled]="!canCreatePool()"
-                    (click)="createPool()">
-                  </ix-button>
+                    (click)="createPool()" />
                 }
               </div>
             </div>
@@ -508,15 +495,13 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
                 color="primary" 
                 size="large"
                 label="Continue to Dataset Setup"
-                (click)="continueToDatasets()">
-              </ix-button>
+                (click)="continueToDatasets()" />
               
               <ix-button 
                 color="secondary" 
                 size="large"
                 label="Create Another Pool"
-                (click)="resetWizard()">
-              </ix-button>
+                (click)="resetWizard()" />
             </div>
           </div>
         </ix-card>
@@ -678,8 +663,8 @@ class ZfsPoolSetupComponent {
   }
 
   getCompressionLabel(): string {
-    if (this.compressionType() === 'off') return 'Disabled';
-    if (this.compressionType() === 'manual') return this.compressionAlgorithm().toUpperCase();
+    if (this.compressionType() === 'off') {return 'Disabled';}
+    if (this.compressionType() === 'manual') {return this.compressionAlgorithm().toUpperCase();}
     return 'LZ4 (Auto)';
   }
 

@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { DomSanitizer } from '@angular/platform-browser';
-import { IxIconRegistryService, IconLibrary } from './ix-icon-registry.service';
+import type { IconLibrary } from './ix-icon-registry.service';
+import { IxIconRegistryService } from './ix-icon-registry.service';
 import { IxSpriteLoaderService } from './ix-sprite-loader.service';
 
 describe('IxIconRegistryService', () => {

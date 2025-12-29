@@ -1,15 +1,15 @@
 <div
+  aria-live="polite"
   [ngClass]="classes()"
   [attr.role]="ariaRole()"
-  aria-live="polite"
 >
   <div class="ix-banner__icon">
     <ix-icon
-      [name]="iconName()"
       library="mdi"
       size="md"
       aria-hidden="true"
-    ></ix-icon>
+      [name]="iconName()"
+    />
   </div>
 
   <div class="ix-banner__content">

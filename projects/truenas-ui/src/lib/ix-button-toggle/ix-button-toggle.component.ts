@@ -1,8 +1,10 @@
-import { Component, input, output, signal, computed, forwardRef, ChangeDetectionStrategy, ViewEncapsulation, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
-import { IxButtonToggleGroupComponent } from './ix-button-toggle-group.component';
+import { CommonModule } from '@angular/common';
+import type { ChangeDetectorRef } from '@angular/core';
+import { Component, input, output, signal, computed, forwardRef, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
+import type { ControlValueAccessor} from '@angular/forms';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import type { IxButtonToggleGroupComponent } from './ix-button-toggle-group.component';
 
 @Component({
   selector: 'ix-button-toggle',
@@ -27,8 +29,8 @@ import { IxButtonToggleGroupComponent } from './ix-button-toggle-group.component
       [attr.id]="buttonId()"
       (click)="toggle()">
       <span class="ix-button-toggle__label">
-        <span class="ix-button-toggle__check" *ngIf="checked()">✓</span>
-        <ng-content></ng-content>
+        <span *ngIf="checked()" class="ix-button-toggle__check">✓</span>
+        <ng-content />
       </span>
     </button>
   `,

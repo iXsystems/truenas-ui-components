@@ -10,9 +10,9 @@
  * Usage: npx tsx scripts/generate-harness-docs.ts
  */
 
-import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as ts from 'typescript';
 
 interface MethodInfo {
   name: string;

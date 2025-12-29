@@ -1,16 +1,17 @@
-import type { Meta, StoryObj } from '@storybook/angular';
-import { Component } from '@angular/core';
-import { DialogRef } from '@angular/cdk/dialog';
+import type { DialogRef } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
+import type { Meta, StoryObj } from '@storybook/angular';
 import { IxButtonComponent } from '../../lib/ix-button/ix-button.component';
+import { IxCheckboxComponent } from '../../lib/ix-checkbox/ix-checkbox.component';
 import { IxDialogShellComponent } from '../../lib/ix-dialog';
 import { IxDialog } from '../../lib/ix-dialog/ix-dialog.service';
-import { IxRadioComponent } from '../../lib/ix-radio/ix-radio.component';
-import { IxCheckboxComponent } from '../../lib/ix-checkbox/ix-checkbox.component';
 import { IxInputComponent } from '../../lib/ix-input/ix-input.component';
-import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select.component';
+import { IxRadioComponent } from '../../lib/ix-radio/ix-radio.component';
+import type { IxSelectOption } from '../../lib/ix-select/ix-select.component';
+import { IxSelectComponent } from '../../lib/ix-select/ix-select.component';
+import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
 
 // Onboarding Wizard Dialog Component
 @Component({
@@ -18,7 +19,7 @@ import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select
   template: `
     <ix-dialog-shell title="TrueNAS System Onboarding" [showFullscreenButton]="false">
       <div style="padding: 0 var(--content-padding); margin-top: var(--content-padding);">
-        <ix-stepper [linear]="true" [selectedIndex]="currentStep" orientation="horizontal" (selectionChange)="onStepChange($event)">
+        <ix-stepper orientation="horizontal" [linear]="true" [selectedIndex]="currentStep" (selectionChange)="onStepChange($event)">
         
         <ix-step label="Storage Setup" [completed]="step1Complete">
           <h2 style="color: var(--fg2); margin-top: unset;">Storage Setup</h2>
@@ -27,19 +28,19 @@ import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select
           <div style="display: grid; gap: 16px; max-width: 600px;">
             <div>
               <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Pool Name</label>
-              <ix-input placeholder="tank" [(ngModel)]="config.storage.poolName"></ix-input>
+              <ix-input placeholder="tank" [(ngModel)]="config.storage.poolName" />
             </div>
             
             <div>
-              <ix-checkbox label="Enable Compression (LZ4)" [(ngModel)]="config.storage.compression"></ix-checkbox>
+              <ix-checkbox label="Enable Compression (LZ4)" [(ngModel)]="config.storage.compression" />
             </div>
             
             <div>
               <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Create Starter Datasets</label>
               <div style="display: grid; gap: 8px;">
-                <ix-checkbox label="media - For photos, videos, music" [(ngModel)]="config.storage.createMedia"></ix-checkbox>
-                <ix-checkbox label="backups - For backup storage" [(ngModel)]="config.storage.createBackups"></ix-checkbox>
-                <ix-checkbox label="vm-storage - For virtual machines" [(ngModel)]="config.storage.createVmStorage"></ix-checkbox>
+                <ix-checkbox label="media - For photos, videos, music" [(ngModel)]="config.storage.createMedia" />
+                <ix-checkbox label="backups - For backup storage" [(ngModel)]="config.storage.createBackups" />
+                <ix-checkbox label="vm-storage - For virtual machines" [(ngModel)]="config.storage.createVmStorage" />
               </div>
             </div>
             
@@ -50,27 +51,27 @@ import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select
                 <div>
                   <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Available Disks</label>
                   <div style="display: grid; gap: 8px;">
-                    <ix-checkbox label="sda - 1TB WD Blue (Empty)" [(ngModel)]="config.storage.disk1"></ix-checkbox>
-                    <ix-checkbox label="sdb - 1TB WD Blue (Empty)" [(ngModel)]="config.storage.disk2"></ix-checkbox>
-                    <ix-checkbox label="sdc - 2TB Seagate (Empty)" [(ngModel)]="config.storage.disk3"></ix-checkbox>
+                    <ix-checkbox label="sda - 1TB WD Blue (Empty)" [(ngModel)]="config.storage.disk1" />
+                    <ix-checkbox label="sdb - 1TB WD Blue (Empty)" [(ngModel)]="config.storage.disk2" />
+                    <ix-checkbox label="sdc - 2TB Seagate (Empty)" [(ngModel)]="config.storage.disk3" />
                   </div>
                 </div>
                 
                 <div>
                   <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">RAID/ZFS Layout</label>
                   <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <ix-radio name="raidType" value="mirror" label="Mirror (RAID1) - Best redundancy" [(ngModel)]="config.storage.raidType"></ix-radio>
-                    <ix-radio name="raidType" value="raidz1" label="RAIDZ1 - Good balance of space/redundancy (min 3 disks)" [(ngModel)]="config.storage.raidType"></ix-radio>
-                    <ix-radio name="raidType" value="raidz2" label="RAIDZ2 - Higher redundancy, can lose 2 disks (min 4 disks)" [(ngModel)]="config.storage.raidType"></ix-radio>
-                    <ix-radio name="raidType" value="raidz3" label="RAIDZ3 - Highest redundancy, can lose 3 disks (min 5 disks)" [(ngModel)]="config.storage.raidType"></ix-radio>
-                    <ix-radio name="raidType" value="stripe" label="Stripe - Maximum space, no redundancy" [(ngModel)]="config.storage.raidType"></ix-radio>
+                    <ix-radio name="raidType" value="mirror" label="Mirror (RAID1) - Best redundancy" [(ngModel)]="config.storage.raidType" />
+                    <ix-radio name="raidType" value="raidz1" label="RAIDZ1 - Good balance of space/redundancy (min 3 disks)" [(ngModel)]="config.storage.raidType" />
+                    <ix-radio name="raidType" value="raidz2" label="RAIDZ2 - Higher redundancy, can lose 2 disks (min 4 disks)" [(ngModel)]="config.storage.raidType" />
+                    <ix-radio name="raidType" value="raidz3" label="RAIDZ3 - Highest redundancy, can lose 3 disks (min 5 disks)" [(ngModel)]="config.storage.raidType" />
+                    <ix-radio name="raidType" value="stripe" label="Stripe - Maximum space, no redundancy" [(ngModel)]="config.storage.raidType" />
                   </div>
                 </div>
               </div>
             </div>
             
             <div>
-              <ix-checkbox label="Advanced Pool Options" [(ngModel)]="config.storage.advancedOptions"></ix-checkbox>
+              <ix-checkbox label="Advanced Pool Options" [(ngModel)]="config.storage.advancedOptions" />
             </div>
             
             <div *ngIf="config.storage.advancedOptions" style="margin-top: 16px;">
@@ -78,30 +79,30 @@ import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select
               
               <div style="display: grid; gap: 16px;">
                 <div>
-                  <ix-checkbox label="Reserve disks as hot spares" [(ngModel)]="config.storage.enableHotSpares"></ix-checkbox>
+                  <ix-checkbox label="Reserve disks as hot spares" [(ngModel)]="config.storage.enableHotSpares" />
                 </div>
                 
                 <div>
                   <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">SLOG Device (Optional)</label>
-                  <ix-select [options]="slogDeviceOptions" placeholder="Select dedicated log device" [(ngModel)]="config.storage.slogDevice"></ix-select>
+                  <ix-select placeholder="Select dedicated log device" [options]="slogDeviceOptions" [(ngModel)]="config.storage.slogDevice" />
                 </div>
                 
                 <div>
                   <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">L2ARC Cache Device (Optional)</label>
-                  <ix-select [options]="cacheDeviceOptions" placeholder="Select cache device" [(ngModel)]="config.storage.l2arcDevice"></ix-select>
+                  <ix-select placeholder="Select cache device" [options]="cacheDeviceOptions" [(ngModel)]="config.storage.l2arcDevice" />
                 </div>
                 
                 <div>
                   <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Metadata Special Device (Optional)</label>
-                  <ix-select [options]="metadataDeviceOptions" placeholder="Select metadata device" [(ngModel)]="config.storage.metadataDevice"></ix-select>
+                  <ix-select placeholder="Select metadata device" [options]="metadataDeviceOptions" [(ngModel)]="config.storage.metadataDevice" />
                 </div>
                 
                 <div>
-                  <ix-checkbox label="Enable pool encryption" [(ngModel)]="config.storage.enableEncryption"></ix-checkbox>
+                  <ix-checkbox label="Enable pool encryption" [(ngModel)]="config.storage.enableEncryption" />
                 </div>
                 
                 <div>
-                  <ix-checkbox label="Enable deduplication" [(ngModel)]="config.storage.enableDeduplication"></ix-checkbox>
+                  <ix-checkbox label="Enable deduplication" [(ngModel)]="config.storage.enableDeduplication" />
                   <div *ngIf="config.storage.enableDeduplication" style="margin-top: 8px; padding: 8px; background: var(--warning-bg); border-radius: 4px; font-size: 14px; color: var(--warning-fg);">
                     <strong>Warning:</strong> Deduplication requires significant RAM (5GB+ recommended per TB of storage).
                   </div>
@@ -113,8 +114,7 @@ import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select
               <ix-button variant="outline" 
                          color="warn"
                          label="Exit Wizard and Setup DRAID"
-                         (click)="exitForDraid()">
-              </ix-button>
+                         (click)="exitForDraid()" />
             </div>
           </div>
         </ix-step>
@@ -126,30 +126,30 @@ import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select
           <div style="display: grid; gap: 16px; max-width: 600px;">
             <div>
               <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Hostname</label>
-              <ix-input placeholder="truenas-server" [(ngModel)]="config.network.hostname"></ix-input>
+              <ix-input placeholder="truenas-server" [(ngModel)]="config.network.hostname" />
             </div>
             
             <div>
               <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Domain</label>
-              <ix-input placeholder="home.local" [(ngModel)]="config.network.domain"></ix-input>
+              <ix-input placeholder="home.local" [(ngModel)]="config.network.domain" />
             </div>
             
             <div>
               <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Network Configuration</label>
               <div style="display: flex; flex-direction: column; gap: 8px;">
-                <ix-radio name="ipType" value="dhcp" label="DHCP (Automatic)" [(ngModel)]="config.network.ipType"></ix-radio>
-                <ix-radio name="ipType" value="static" label="Static IP Address" [(ngModel)]="config.network.ipType"></ix-radio>
+                <ix-radio name="ipType" value="dhcp" label="DHCP (Automatic)" [(ngModel)]="config.network.ipType" />
+                <ix-radio name="ipType" value="static" label="Static IP Address" [(ngModel)]="config.network.ipType" />
               </div>
             </div>
             
             <div *ngIf="config.network.ipType === 'static'">
               <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Static IP Address</label>
-              <ix-input placeholder="192.168.1.100/24" [(ngModel)]="config.network.staticIp"></ix-input>
+              <ix-input placeholder="192.168.1.100/24" [(ngModel)]="config.network.staticIp" />
             </div>
             
             <div *ngIf="config.network.ipType === 'static'">
               <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Gateway</label>
-              <ix-input placeholder="192.168.1.1" [(ngModel)]="config.network.gateway"></ix-input>
+              <ix-input placeholder="192.168.1.1" [(ngModel)]="config.network.gateway" />
             </div>
           </div>
         </ix-step>
@@ -161,21 +161,21 @@ import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select
           <div style="display: grid; gap: 16px; max-width: 600px;">
             <div>
               <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Username</label>
-              <ix-input placeholder="admin" [(ngModel)]="config.admin.username"></ix-input>
+              <ix-input placeholder="admin" [(ngModel)]="config.admin.username" />
             </div>
             
             <div>
               <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Password</label>
-              <ix-input type="password" placeholder="Enter secure password" [(ngModel)]="config.admin.password"></ix-input>
+              <ix-input type="password" placeholder="Enter secure password" [(ngModel)]="config.admin.password" />
             </div>
             
             <div>
               <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Confirm Password</label>
-              <ix-input type="password" placeholder="Confirm password" [(ngModel)]="config.admin.confirmPassword"></ix-input>
+              <ix-input type="password" placeholder="Confirm password" [(ngModel)]="config.admin.confirmPassword" />
             </div>
             
             <div>
-              <ix-checkbox label="Enable root SSH access" [(ngModel)]="config.admin.enableSsh"></ix-checkbox>
+              <ix-checkbox label="Enable root SSH access" [(ngModel)]="config.admin.enableSsh" />
             </div>
           </div>
         </ix-step>
@@ -188,19 +188,19 @@ import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select
             <div>
               <h4 style="margin-bottom: 16px; color: var(--fg1); border-bottom: 1px solid var(--lines); padding-bottom: 8px;">Core Services</h4>
               <div style="display: grid; gap: 8px;">
-                <ix-checkbox label="Enable SMB/CIFS file sharing" [(ngModel)]="config.services.enableSmb"></ix-checkbox>
-                <ix-checkbox label="Enable NFS file sharing" [(ngModel)]="config.services.enableNfs"></ix-checkbox>
-                <ix-checkbox label="Enable FTP service" [(ngModel)]="config.services.enableFtp"></ix-checkbox>
-                <ix-checkbox label="Enable SMART monitoring" [(ngModel)]="config.services.enableSmart"></ix-checkbox>
+                <ix-checkbox label="Enable SMB/CIFS file sharing" [(ngModel)]="config.services.enableSmb" />
+                <ix-checkbox label="Enable NFS file sharing" [(ngModel)]="config.services.enableNfs" />
+                <ix-checkbox label="Enable FTP service" [(ngModel)]="config.services.enableFtp" />
+                <ix-checkbox label="Enable SMART monitoring" [(ngModel)]="config.services.enableSmart" />
               </div>
             </div>
             
             <div>
               <h4 style="margin-bottom: 16px; color: var(--fg1); border-bottom: 1px solid var(--lines); padding-bottom: 8px;">Security Settings</h4>
               <div style="display: grid; gap: 12px;">
-                <ix-checkbox label="Enable automatic security updates" [(ngModel)]="config.services.autoUpdates"></ix-checkbox>
-                <ix-checkbox label="Enable fail2ban intrusion prevention" [(ngModel)]="config.services.enableFail2ban"></ix-checkbox>
-                <ix-checkbox label="Enable firewall" [(ngModel)]="config.services.enableFirewall"></ix-checkbox>
+                <ix-checkbox label="Enable automatic security updates" [(ngModel)]="config.services.autoUpdates" />
+                <ix-checkbox label="Enable fail2ban intrusion prevention" [(ngModel)]="config.services.enableFail2ban" />
+                <ix-checkbox label="Enable firewall" [(ngModel)]="config.services.enableFirewall" />
               </div>
             </div>
           </div>
@@ -214,28 +214,28 @@ import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select
             <div>
               <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Certificate Type</label>
               <div style="display: flex; flex-direction: column; gap: 8px;">
-                <ix-radio name="certType" value="self-signed" label="Self-signed certificate (Quick setup)" [(ngModel)]="config.https.certType"></ix-radio>
-                <ix-radio name="certType" value="letsencrypt" label="Let's Encrypt certificate (Requires domain)" [(ngModel)]="config.https.certType"></ix-radio>
-                <ix-radio name="certType" value="existing" label="Import existing certificate" [(ngModel)]="config.https.certType"></ix-radio>
+                <ix-radio name="certType" value="self-signed" label="Self-signed certificate (Quick setup)" [(ngModel)]="config.https.certType" />
+                <ix-radio name="certType" value="letsencrypt" label="Let's Encrypt certificate (Requires domain)" [(ngModel)]="config.https.certType" />
+                <ix-radio name="certType" value="existing" label="Import existing certificate" [(ngModel)]="config.https.certType" />
               </div>
             </div>
             
             <div *ngIf="config.https.certType === 'letsencrypt'">
               <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Domain Name</label>
-              <ix-input placeholder="truenas.example.com" [(ngModel)]="config.https.domain"></ix-input>
+              <ix-input placeholder="truenas.example.com" [(ngModel)]="config.https.domain" />
             </div>
             
             <div *ngIf="config.https.certType === 'letsencrypt'">
               <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Email for Certificate Notifications</label>
-              <ix-input type="email" placeholder="admin@example.com" [(ngModel)]="config.https.email"></ix-input>
+              <ix-input type="email" placeholder="admin@example.com" [(ngModel)]="config.https.email" />
             </div>
             
             <div>
-              <ix-checkbox label="Redirect HTTP to HTTPS" [(ngModel)]="config.https.redirectHttp"></ix-checkbox>
+              <ix-checkbox label="Redirect HTTP to HTTPS" [(ngModel)]="config.https.redirectHttp" />
             </div>
             
             <div>
-              <ix-checkbox label="Enable HSTS (HTTP Strict Transport Security)" [(ngModel)]="config.https.enableHsts"></ix-checkbox>
+              <ix-checkbox label="Enable HSTS (HTTP Strict Transport Security)" [(ngModel)]="config.https.enableHsts" />
             </div>
           </div>
         </ix-step>
@@ -248,35 +248,35 @@ import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select
             <div>
               <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Notification Method</label>
               <div style="display: flex; flex-direction: column; gap: 8px;">
-                <ix-radio name="notifyMethod" value="email" label="Email notifications" [(ngModel)]="config.notifications.method"></ix-radio>
-                <ix-radio name="notifyMethod" value="slack" label="Slack notifications" [(ngModel)]="config.notifications.method"></ix-radio>
-                <ix-radio name="notifyMethod" value="webhook" label="Custom webhook" [(ngModel)]="config.notifications.method"></ix-radio>
-                <ix-radio name="notifyMethod" value="none" label="No notifications" [(ngModel)]="config.notifications.method"></ix-radio>
+                <ix-radio name="notifyMethod" value="email" label="Email notifications" [(ngModel)]="config.notifications.method" />
+                <ix-radio name="notifyMethod" value="slack" label="Slack notifications" [(ngModel)]="config.notifications.method" />
+                <ix-radio name="notifyMethod" value="webhook" label="Custom webhook" [(ngModel)]="config.notifications.method" />
+                <ix-radio name="notifyMethod" value="none" label="No notifications" [(ngModel)]="config.notifications.method" />
               </div>
             </div>
             
             <div *ngIf="config.notifications.method === 'email'">
               <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Email Address</label>
-              <ix-input type="email" placeholder="admin@example.com" [(ngModel)]="config.notifications.email"></ix-input>
+              <ix-input type="email" placeholder="admin@example.com" [(ngModel)]="config.notifications.email" />
             </div>
             
             <div *ngIf="config.notifications.method === 'email'">
               <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">SMTP Server</label>
-              <ix-input placeholder="smtp.gmail.com" [(ngModel)]="config.notifications.smtpServer"></ix-input>
+              <ix-input placeholder="smtp.gmail.com" [(ngModel)]="config.notifications.smtpServer" />
             </div>
             
             <div *ngIf="config.notifications.method === 'slack'">
               <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Slack Webhook URL</label>
-              <ix-input placeholder="https://hooks.slack.com/services/..." [(ngModel)]="config.notifications.slackWebhook"></ix-input>
+              <ix-input placeholder="https://hooks.slack.com/services/..." [(ngModel)]="config.notifications.slackWebhook" />
             </div>
             
             <div style="margin-top: 16px;">
               <h4 style="margin-bottom: 12px; color: var(--fg1);">Alert Types</h4>
               <div style="display: grid; gap: 8px;">
-                <ix-checkbox label="System health alerts" [(ngModel)]="config.notifications.systemHealth"></ix-checkbox>
-                <ix-checkbox label="Storage alerts" [(ngModel)]="config.notifications.storageAlerts"></ix-checkbox>
-                <ix-checkbox label="Security alerts" [(ngModel)]="config.notifications.securityAlerts"></ix-checkbox>
-                <ix-checkbox label="Update notifications" [(ngModel)]="config.notifications.updateAlerts"></ix-checkbox>
+                <ix-checkbox label="System health alerts" [(ngModel)]="config.notifications.systemHealth" />
+                <ix-checkbox label="Storage alerts" [(ngModel)]="config.notifications.storageAlerts" />
+                <ix-checkbox label="Security alerts" [(ngModel)]="config.notifications.securityAlerts" />
+                <ix-checkbox label="Update notifications" [(ngModel)]="config.notifications.updateAlerts" />
               </div>
             </div>
           </div>
@@ -308,15 +308,15 @@ import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select
             </div>
             
             <div>
-              <ix-checkbox label="Start all configured services" [(ngModel)]="config.final.startServices"></ix-checkbox>
+              <ix-checkbox label="Start all configured services" [(ngModel)]="config.final.startServices" />
             </div>
             
             <div>
-              <ix-checkbox label="Launch TrueNAS web interface after setup" [(ngModel)]="config.final.launchWebInterface"></ix-checkbox>
+              <ix-checkbox label="Launch TrueNAS web interface after setup" [(ngModel)]="config.final.launchWebInterface" />
             </div>
             
             <div>
-              <ix-checkbox label="Download configuration as file" [(ngModel)]="config.final.downloadConfig"></ix-checkbox>
+              <ix-checkbox label="Download configuration as file" [(ngModel)]="config.final.downloadConfig" />
             </div>
           </div>
         </ix-step>
@@ -325,16 +325,14 @@ import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select
       </div>
       
       <div ixDialogAction>
-        <ix-button variant="outline" 
+        <ix-button *ngIf="currentStep > 0" 
+                   variant="outline"
                    label="Back"
-                   (click)="previousStep()"
-                   *ngIf="currentStep > 0">
-        </ix-button>
+                   (click)="previousStep()" />
         <ix-button color="primary" 
                    [label]="getNextButtonLabel()"
-                   (click)="nextStep()"
-                   [disabled]="!canProceed()">
-        </ix-button>
+                   [disabled]="!canProceed()"
+                   (click)="nextStep()" />
       </div>
     </ix-dialog-shell>
   `,
@@ -529,7 +527,7 @@ class OnboardingWizardDialogComponent {
   }
 
   getNextButtonLabel(): string {
-    if (this.currentStep === 6) return 'Complete Setup';
+    if (this.currentStep === 6) {return 'Complete Setup';}
     return 'Next';
   }
 
@@ -571,10 +569,10 @@ class OnboardingWizardDialogComponent {
   getEnabledServicesCount(): number {
     const services = this.config.services;
     let count = 0;
-    if (services.enableSmb) count++;
-    if (services.enableNfs) count++;
-    if (services.enableFtp) count++;
-    if (services.enableSmart) count++;
+    if (services.enableSmb) {count++;}
+    if (services.enableNfs) {count++;}
+    if (services.enableFtp) {count++;}
+    if (services.enableSmart) {count++;}
     return count;
   }
 }
@@ -593,10 +591,9 @@ class OnboardingWizardDialogComponent {
       </p>
       <ix-button variant="primary" 
                  label="Launch Captive Wizard"
-                 (click)="openCaptiveWizard()">
-      </ix-button>
+                 (click)="openCaptiveWizard()" />
       
-      <div style="margin-top: 24px; padding: 16px; border: 1px solid var(--lines); border-radius: 8px;" *ngIf="lastResult">
+      <div *ngIf="lastResult" style="margin-top: 24px; padding: 16px; border: 1px solid var(--lines); border-radius: 8px;">
         <h4>Last Result:</h4>
         <pre style="margin: 8px 0 0 0; color: var(--fg2);">{{ lastResult | json }}</pre>
       </div>

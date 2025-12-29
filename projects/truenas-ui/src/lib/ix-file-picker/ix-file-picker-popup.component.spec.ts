@@ -1,11 +1,10 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideHttpClient } from '@angular/common/http';
-import { DebugElement } from '@angular/core';
+import type { ComponentFixture} from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { IxFilePickerPopupComponent } from './ix-file-picker-popup.component';
-import { FileSystemItem } from './ix-file-picker.interfaces';
+import type { FileSystemItem } from './ix-file-picker.interfaces';
 import { FileSizePipe } from '../pipes/file-size/file-size.pipe';
 
 describe('IxFilePickerPopupComponent', () => {
@@ -144,7 +143,7 @@ describe('IxFilePickerPopupComponent', () => {
       
       // Check if the formatDate method is called and produces expected output
       const todayItem = mockFileItems.find(item => {
-        if (!item.modified) return false;
+        if (!item.modified) {return false;}
         const today = new Date();
         const itemDate = new Date(item.modified.getFullYear(), item.modified.getMonth(), item.modified.getDate());
         const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());

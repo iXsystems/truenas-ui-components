@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.component';
-import { IxDateRangeInputComponent } from '../lib/ix-date-range-input/ix-date-range-input.component';
 import { IxDateInputComponent } from '../lib/ix-date-range-input/ix-date-input.component';
+import { IxDateRangeInputComponent } from '../lib/ix-date-range-input/ix-date-range-input.component';
 import { IxTimeInputComponent } from '../lib/ix-date-range-input/ix-time-input.component';
+import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.component';
 
 const meta: Meta = {
   title: 'Components/Date Picker',

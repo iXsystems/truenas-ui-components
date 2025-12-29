@@ -1,7 +1,8 @@
-import { Component, contentChildren, input, output, signal, computed, forwardRef, ChangeDetectionStrategy, ViewEncapsulation, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
+import { CommonModule } from '@angular/common';
+import { Component, contentChildren, input, output, signal, computed, forwardRef, ChangeDetectionStrategy, ViewEncapsulation, effect } from '@angular/core';
+import type { ControlValueAccessor} from '@angular/forms';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { IxButtonToggleComponent } from './ix-button-toggle.component';
 
 export type IxButtonToggleType = 'checkbox' | 'radio';
@@ -22,7 +23,7 @@ export type IxButtonToggleType = 'checkbox' | 'radio';
          [attr.role]="multiple() ? 'group' : 'radiogroup'"
          [attr.aria-label]="ariaLabel()"
          [attr.aria-labelledby]="ariaLabelledby()">
-      <ng-content></ng-content>
+      <ng-content />
     </div>
   `,
   styleUrl: './ix-button-toggle-group.component.scss',

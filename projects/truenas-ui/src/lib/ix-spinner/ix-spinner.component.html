@@ -1,16 +1,15 @@
 <svg
+  class="ix-spinner-svg"
   [attr.width]="diameter()"
   [attr.height]="diameter()"
-  [attr.viewBox]="viewBox()"
-  class="ix-spinner-svg">
+  [attr.viewBox]="viewBox()">
   <circle
     class="ix-spinner-circle"
+    fill="none"
     [attr.cx]="diameter() / 2"
     [attr.cy]="diameter() / 2"
     [attr.r]="radius()"
     [attr.stroke-width]="strokeWidth()"
     [attr.stroke-dasharray]="strokeDasharray()"
-    [attr.stroke-dashoffset]="strokeDashoffset()"
-    fill="none">
-  </circle>
+    [attr.stroke-dashoffset]="strokeDashoffset()" />
 </svg>

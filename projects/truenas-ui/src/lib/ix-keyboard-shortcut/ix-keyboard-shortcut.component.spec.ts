@@ -1,4 +1,5 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import type { ComponentFixture} from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { IxKeyboardShortcutComponent } from './ix-keyboard-shortcut.component';
 
 describe('IxKeyboardShortcutComponent', () => {

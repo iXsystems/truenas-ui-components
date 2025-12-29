@@ -1,4 +1,5 @@
-import { ComponentHarness, HarnessPredicate, BaseHarnessFilters } from '@angular/cdk/testing';
+import type { BaseHarnessFilters } from '@angular/cdk/testing';
+import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
 
 /**
  * Harness for interacting with ix-banner in tests.

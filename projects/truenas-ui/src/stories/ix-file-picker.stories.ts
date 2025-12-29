@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { userEvent, within, screen, expect, waitFor } from '@storybook/test';
 import { IxFilePickerComponent } from '../lib/ix-file-picker/ix-file-picker.component';
+import type { FileSystemItem, FilePickerCallbacks } from '../lib/ix-file-picker/ix-file-picker.interfaces';
 import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.component';
-import { FileSystemItem, FilePickerCallbacks } from '../lib/ix-file-picker/ix-file-picker.interfaces';
 
 const meta: Meta<IxFilePickerComponent> = {
   title: 'Components/File Picker',

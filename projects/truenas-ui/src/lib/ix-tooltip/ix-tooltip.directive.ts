@@ -1,21 +1,22 @@
-import {
-  Directive,
-  ElementRef,
-  input,
-  OnDestroy,
-  HostListener,
-  ViewContainerRef,
-  OnInit,
-  TemplateRef,
-  ComponentRef
-} from '@angular/core';
-import {
+import type {
   Overlay,
   OverlayRef,
   ConnectedPosition,
   OverlayPositionBuilder
 } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
+import type {
+  ElementRef,
+  OnDestroy,
+  ViewContainerRef,
+  OnInit,
+  ComponentRef
+} from '@angular/core';
+import {
+  Directive,
+  input,
+  HostListener
+} from '@angular/core';
 import { IxTooltipComponent } from './ix-tooltip.component';
 
 export type TooltipPosition = 'above' | 'below' | 'left' | 'right' | 'before' | 'after';

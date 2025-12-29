@@ -1,9 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { userEvent, within } from '@storybook/testing-library';
-import { expect } from '@storybook/jest';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { IxSelectComponent, IxSelectOption, IxSelectOptionGroup } from '../lib/ix-select/ix-select.component';
 import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.component';
+import type { IxSelectOption, IxSelectOptionGroup } from '../lib/ix-select/ix-select.component';
+import { IxSelectComponent } from '../lib/ix-select/ix-select.component';
 
 const meta: Meta<IxSelectComponent> = {
   title: 'Components/Select',

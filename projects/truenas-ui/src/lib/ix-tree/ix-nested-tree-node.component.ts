@@ -1,8 +1,10 @@
-import { Component, ChangeDetectionStrategy, ViewEncapsulation, ElementRef, ChangeDetectorRef, Optional, Inject } from '@angular/core';
+import type { CdkTree} from '@angular/cdk/tree';
+import { CdkNestedTreeNode, CdkTreeNode, CDK_TREE_NODE_OUTLET_NODE, CdkTreeModule } from '@angular/cdk/tree';
 import { CommonModule } from '@angular/common';
-import { CdkNestedTreeNode, CdkTreeNode, CdkTreeNodeDef, CdkTree, CDK_TREE_NODE_OUTLET_NODE, CdkTreeModule, CdkTreeNodeOutlet } from '@angular/cdk/tree';
-import { IxIconComponent } from '../ix-icon/ix-icon.component';
+import type { ElementRef, ChangeDetectorRef} from '@angular/core';
+import { Component, ChangeDetectionStrategy, ViewEncapsulation, Optional, Inject } from '@angular/core';
 import { IxTreeNodeOutletDirective } from './ix-tree-node-outlet.directive';
+import { IxIconComponent } from '../ix-icon/ix-icon.component';
 
 @Component({
   selector: 'ix-nested-tree-node',

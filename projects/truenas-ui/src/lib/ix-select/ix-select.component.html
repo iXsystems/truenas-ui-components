@@ -2,13 +2,13 @@
   <!-- Select Trigger -->
   <div
     class="ix-select-trigger"
+    role="combobox"
+    tabindex="0"
     [class.disabled]="isDisabled()"
     [class.open]="isOpen()"
     [attr.aria-expanded]="isOpen()"
     [attr.aria-haspopup]="true"
     [attr.aria-label]="placeholder()"
-    role="combobox"
-    tabindex="0"
     (click)="toggleDropdown()"
     (keydown)="onKeydown($event)">
 
@@ -22,7 +22,7 @@
     <!-- Dropdown Arrow -->
     <div class="ix-select-arrow" [class.open]="isOpen()">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="6,9 12,15 18,9"></polyline>
+        <polyline points="6,9 12,15 18,9" />
       </svg>
     </div>
   </div>
@@ -39,11 +39,11 @@
         @for (option of options(); track $index) {
           <div
             class="ix-select-option"
+            role="option"
             [class.selected]="isSelected()(option)"
             [class.disabled]="option.disabled"
             [attr.aria-selected]="isSelected()(option)"
             [attr.aria-disabled]="option.disabled"
-            role="option"
             (mousedown)="$event.preventDefault()"
             (click)="onOptionClick(option)">
 
@@ -72,11 +72,11 @@
           @for (option of group.options; track $index) {
             <div
               class="ix-select-option"
+              role="option"
               [class.selected]="isSelected()(option)"
               [class.disabled]="option.disabled || group.disabled"
               [attr.aria-selected]="isSelected()(option)"
               [attr.aria-disabled]="option.disabled || group.disabled"
-              role="option"
               (mousedown)="$event.preventDefault()"
               (click)="onOptionClick(option)">
 

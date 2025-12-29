@@ -1,5 +1,6 @@
-import { Component, input, contentChildren, computed, effect, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import type { ChangeDetectorRef } from '@angular/core';
+import { Component, input, contentChildren, computed, effect } from '@angular/core';
 import { IxTableColumnDirective } from '../ix-table-column/ix-table-column.directive';
 
 export interface IxTableDataSource<T = any> {

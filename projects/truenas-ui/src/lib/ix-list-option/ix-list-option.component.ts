@@ -1,5 +1,6 @@
-import { Component, input, output, computed, signal, HostListener, ElementRef, AfterContentInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import type { ElementRef, AfterContentInit, ChangeDetectorRef } from '@angular/core';
+import { Component, input, output, computed, signal, HostListener } from '@angular/core';
 import { IxCheckboxComponent } from '../ix-checkbox/ix-checkbox.component';
 
 @Component({
@@ -30,9 +31,9 @@ export class IxListOptionComponent implements AfterContentInit {
 
   // Internal state for tracking selection (for uncontrolled usage)
   // Made public so parent ix-selection-list can control it
-  public internalSelected = signal<boolean | null>(null);
-  public internalDisabled = signal<boolean | null>(null);
-  public internalColor = signal<'primary' | 'accent' | 'warn' | null>(null);
+  internalSelected = signal<boolean | null>(null);
+  internalDisabled = signal<boolean | null>(null);
+  internalColor = signal<'primary' | 'accent' | 'warn' | null>(null);
 
   // Effective selected state (prefers internal state if set, otherwise uses input)
   effectiveSelected = computed(() => {

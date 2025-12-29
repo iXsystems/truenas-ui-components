@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { within } from '@storybook/testing-library';
 import { expect } from '@storybook/jest';
+import { within } from '@storybook/testing-library';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { IxBannerComponent } from '../lib/ix-banner/ix-banner.component';
 import { iconMarker } from '../lib/ix-icon/icon-marker';
-import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 
 // Mark icons for sprite generation (since they're computed dynamically)
 iconMarker('information', 'mdi');

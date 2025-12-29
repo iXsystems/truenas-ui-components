@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { IxSpriteLoaderService } from './ix-sprite-loader.service';
+import type { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import type { IxSpriteLoaderService } from './ix-sprite-loader.service';
 
 export interface IconLibrary {
   name: string;

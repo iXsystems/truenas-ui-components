@@ -1,7 +1,9 @@
-import { Component, viewChild, ElementRef, AfterViewInit, inject, input, computed, signal, forwardRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
+import { CommonModule } from '@angular/common';
+import type { ElementRef, AfterViewInit} from '@angular/core';
+import { Component, viewChild, inject, input, computed, signal, forwardRef } from '@angular/core';
+import type { ControlValueAccessor} from '@angular/forms';
+import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { InputType } from '../enums/input-type.enum';
 
 @Component({

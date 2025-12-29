@@ -1,14 +1,13 @@
+import { CdkTreeModule } from '@angular/cdk/tree';
+import { CommonModule } from '@angular/common';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
-import { CommonModule } from '@angular/common';
-
-import { IxTreeComponent, FlatTreeControl, IxTreeFlatDataSource, IxTreeFlattener, ArrayDataSource } from '../lib/ix-tree/ix-tree.component';
-import { IxTreeNodeComponent } from '../lib/ix-tree/ix-tree-node.component';
+import { iconMarker } from '../lib/ix-icon/icon-marker';
+import { IxIconComponent } from '../lib/ix-icon/ix-icon.component';
 import { IxNestedTreeNodeComponent } from '../lib/ix-tree/ix-nested-tree-node.component';
 import { IxTreeNodeOutletDirective } from '../lib/ix-tree/ix-tree-node-outlet.directive';
-import { CdkTreeModule } from '@angular/cdk/tree';
-import { IxIconComponent } from '../lib/ix-icon/ix-icon.component';
-import { iconMarker } from '../lib/ix-icon/icon-marker';
+import { IxTreeNodeComponent } from '../lib/ix-tree/ix-tree-node.component';
+import { IxTreeComponent, FlatTreeControl, IxTreeFlatDataSource, IxTreeFlattener, ArrayDataSource } from '../lib/ix-tree/ix-tree.component';
 
 // Ensure these icons are included in the library sprite
 // Using the new two-parameter API

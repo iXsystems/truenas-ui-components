@@ -1,5 +1,6 @@
+import type { DialogRef} from '@angular/cdk/dialog';
+import { DIALOG_DATA } from '@angular/cdk/dialog';
 import { Component, Inject } from '@angular/core';
-import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { IxDialogShellComponent } from './ix-dialog-shell.component';
 import { IxButtonComponent } from '../ix-button/ix-button.component';
 
@@ -13,14 +14,12 @@ import { IxButtonComponent } from '../ix-button/ix-button.component';
           type="button"
           variant="outline"
           [label]="data.cancelText || 'Cancel'" 
-          (click)="ref.close(false)">
-        </ix-button>
+          (click)="ref.close(false)" />
         <ix-button 
           type="button" 
           [color]="data.destructive ? 'warn' : 'primary'"
           [label]="data.confirmText || 'OK'" 
-          (click)="ref.close(true)">
-        </ix-button>
+          (click)="ref.close(true)" />
       </div>
     </ix-dialog-shell>
   `,

@@ -1,9 +1,8 @@
+import { CommonModule } from '@angular/common';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
-import { CommonModule } from '@angular/common';
-
+import { IxDividerComponent } from '../lib/ix-divider/ix-divider.component';
 import { IxListComponent } from '../lib/ix-list/ix-list.component';
-import { IxListItemComponent } from '../lib/ix-list-item/ix-list-item.component';
 import { 
   IxListIconDirective, 
   IxListAvatarDirective, 
@@ -14,10 +13,10 @@ import {
   IxListItemTrailingDirective,
   IxDividerDirective
 } from '../lib/ix-list-directives/ix-list-directives';
-import { IxDividerComponent } from '../lib/ix-divider/ix-divider.component';
+import { IxListItemComponent } from '../lib/ix-list-item/ix-list-item.component';
+import { IxListOptionComponent } from '../lib/ix-list-option/ix-list-option.component';
 import { IxListSubheaderComponent } from '../lib/ix-list-subheader/ix-list-subheader.component';
 import { IxSelectionListComponent } from '../lib/ix-selection-list/ix-selection-list.component';
-import { IxListOptionComponent } from '../lib/ix-list-option/ix-list-option.component';
 
 const meta: Meta<IxListComponent> = {
   title: 'Components/List',
