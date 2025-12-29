@@ -1191,20 +1191,19 @@ interface IxTableDataSource<T = any> {
     connect?(): T[];
     disconnect?(): void;
 }
-declare class IxTableComponent implements AfterContentInit {
+declare class IxTableComponent {
     private cdr;
-    dataSource: IxTableDataSource | any[];
-    displayedColumns: string[];
-    columnDefs: QueryList<IxTableColumnDirective>;
+    dataSource: _angular_core.InputSignal<any[] | IxTableDataSource<any>>;
+    displayedColumns: _angular_core.InputSignal<string[]>;
+    columnDefs: _angular_core.Signal<readonly IxTableColumnDirective[]>;
     private columnDefMap;
     constructor(cdr: ChangeDetectorRef);
-    ngAfterContentInit(): void;
     private processColumnDefs;
-    get data(): any[];
+    data: _angular_core.Signal<any[]>;
     getColumnDef(columnName: string): IxTableColumnDirective | undefined;
     trackByIndex(index: number): number;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTableComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTableComponent, "ix-table", never, { "dataSource": { "alias": "dataSource"; "required": false; }; "displayedColumns": { "alias": "displayedColumns"; "required": false; }; }, {}, ["columnDefs"], never, true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTableComponent, "ix-table", never, { "dataSource": { "alias": "dataSource"; "required": false; "isSignal": true; }; "displayedColumns": { "alias": "displayedColumns"; "required": false; "isSignal": true; }; }, {}, ["columnDefs"], never, true, never>;
 }
 
 /** Flat node with expandable and level information */
@@ -1538,7 +1537,7 @@ declare class IxSpinnerComponent {
 
 declare class IxBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewInit {
     private elementRef;
-    ariaLabel: string | null;
+    ariaLabel: _angular_core.InputSignal<string | null>;
     private paths;
     private animationId;
     private isAnimating;
@@ -1554,7 +1553,7 @@ declare class IxBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewI
     private animateSequence;
     private tween;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxBrandedSpinnerComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxBrandedSpinnerComponent, "ix-branded-spinner", never, { "ariaLabel": { "alias": "ariaLabel"; "required": false; }; }, {}, never, never, true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxBrandedSpinnerComponent, "ix-branded-spinner", never, { "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
 type ProgressBarMode = 'determinate' | 'indeterminate' | 'buffer';
@@ -1584,25 +1583,25 @@ declare class IxProgressBarComponent {
 }
 
 declare class IxParticleProgressBarComponent implements AfterViewInit, OnDestroy {
-    speed: 'slow' | 'medium' | 'fast' | 'ludicrous';
-    color: string;
-    height: number;
-    width: number;
-    fill: number;
-    canvasRef: ElementRef<HTMLCanvasElement>;
+    speed: _angular_core.InputSignal<"medium" | "slow" | "fast" | "ludicrous">;
+    color: _angular_core.InputSignal<string>;
+    height: _angular_core.InputSignal<number>;
+    width: _angular_core.InputSignal<number>;
+    fill: _angular_core.InputSignal<number>;
+    canvasRef: _angular_core.Signal<ElementRef<HTMLCanvasElement>>;
     private ctx;
     private particles;
     private shades;
     private animationId?;
-    private get speedConfig();
+    private speedConfig;
     /**
      * Calculate the gradient offset so the transition only happens in the last 100px
      */
-    get gradientTransitionStart(): number;
+    gradientTransitionStart: _angular_core.Signal<number>;
     /**
      * Get the color for the progress bar (uses the exact same color as input)
      */
-    get progressBarColor(): string;
+    progressBarColor: _angular_core.Signal<string>;
     ngAfterViewInit(): void;
     ngOnDestroy(): void;
     private animate;
@@ -1617,7 +1616,7 @@ declare class IxParticleProgressBarComponent implements AfterViewInit, OnDestroy
      */
     private generateDarkerShades;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxParticleProgressBarComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxParticleProgressBarComponent, "ix-particle-progress-bar", never, { "speed": { "alias": "speed"; "required": false; }; "color": { "alias": "color"; "required": false; }; "height": { "alias": "height"; "required": false; }; "width": { "alias": "width"; "required": false; }; "fill": { "alias": "fill"; "required": false; }; }, {}, never, never, true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxParticleProgressBarComponent, "ix-particle-progress-bar", never, { "speed": { "alias": "speed"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; "height": { "alias": "height"; "required": false; "isSignal": true; }; "width": { "alias": "width"; "required": false; "isSignal": true; }; "fill": { "alias": "fill"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
 interface DateRange {

@@ -1,4 +1,4 @@
-import { Component, Input, ContentChildren, QueryList, AfterContentInit, ChangeDetectorRef } from '@angular/core';
+import { Component, input, contentChildren, computed, effect, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IxTableColumnDirective } from '../ix-table-column/ix-table-column.directive';
 
@@ -18,26 +18,25 @@ export interface IxTableDataSource<T = any> {
     'class': 'ix-table'
   }
 })
-export class IxTableComponent implements AfterContentInit {
-  @Input() dataSource: IxTableDataSource | any[] = [];
-  @Input() displayedColumns: string[] = [];
+export class IxTableComponent {
+  dataSource = input<IxTableDataSource | any[]>([]);
+  displayedColumns = input<string[]>([]);
 
-  @ContentChildren(IxTableColumnDirective) columnDefs!: QueryList<IxTableColumnDirective>;
+  columnDefs = contentChildren(IxTableColumnDirective);
 
   private columnDefMap = new Map<string, IxTableColumnDirective>();
 
-  constructor(private cdr: ChangeDetectorRef) {}
-
-  ngAfterContentInit(): void {
-    this.processColumnDefs();
-    this.columnDefs.changes.subscribe(() => {
-      this.processColumnDefs();
+  constructor(private cdr: ChangeDetectorRef) {
+    // Effect to process column defs whenever they change
+    effect(() => {
+      const columns = this.columnDefs();
+      this.processColumnDefs(columns);
     });
   }
 
-  private processColumnDefs(): void {
+  private processColumnDefs(columns: readonly IxTableColumnDirective[]): void {
     this.columnDefMap.clear();
-    this.columnDefs.forEach(columnDef => {
+    columns.forEach(columnDef => {
       if (columnDef.name) {
         this.columnDefMap.set(columnDef.name, columnDef);
       }
@@ -45,12 +44,13 @@ export class IxTableComponent implements AfterContentInit {
     this.cdr.detectChanges();
   }
 
-  get data(): any[] {
-    if (Array.isArray(this.dataSource)) {
-      return this.dataSource;
+  data = computed(() => {
+    const source = this.dataSource();
+    if (Array.isArray(source)) {
+      return source;
     }
-    return this.dataSource?.data || this.dataSource?.connect?.() || [];
-  }
+    return source?.data || source?.connect?.() || [];
+  });
 
   getColumnDef(columnName: string): IxTableColumnDirective | undefined {
     return this.columnDefMap.get(columnName);

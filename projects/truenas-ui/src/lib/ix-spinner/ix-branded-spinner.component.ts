@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, ViewEncapsulation, ElementRef, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, OnInit, OnDestroy, ViewEncapsulation, ElementRef, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'ix-branded-spinner',
@@ -10,11 +10,11 @@ import { Component, Input, OnInit, OnDestroy, ViewEncapsulation, ElementRef, Aft
   host: {
     'class': 'ix-branded-spinner',
     'role': 'progressbar',
-    '[attr.aria-label]': 'ariaLabel || "Loading..."'
+    '[attr.aria-label]': 'ariaLabel() || "Loading..."'
   }
 })
 export class IxBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewInit {
-  @Input() ariaLabel: string | null = null;
+  ariaLabel = input<string | null>(null);
 
   private paths: SVGPathElement[] = [];
   private animationId: number | null = null;

@@ -32,10 +32,13 @@ describe('IxParticleProgressBarComponent', () => {
 
     fixture = TestBed.createComponent(IxParticleProgressBarComponent);
     component = fixture.componentInstance;
-    
-    // Mock the canvas element
-    component['canvasRef'] = { nativeElement: mockCanvas };
-    
+
+    // Mock the canvas element by overriding the viewChild signal
+    Object.defineProperty(component, 'canvasRef', {
+      value: jest.fn().mockReturnValue({ nativeElement: mockCanvas }),
+      writable: false
+    });
+
     fixture.detectChanges();
   });
 
@@ -48,34 +51,34 @@ describe('IxParticleProgressBarComponent', () => {
   });
 
   it('should have default speed as medium', () => {
-    expect(component.speed).toBe('medium');
+    expect(component.speed()).toBe('medium');
   });
 
   it('should have default color', () => {
-    expect(component.color).toBe('hsla(198, 100%, 42%, 1)');
+    expect(component.color()).toBe('hsla(198, 100%, 42%, 1)');
   });
 
   it('should have default dimensions', () => {
-    expect(component.height).toBe(40);
-    expect(component.width).toBe(600);
-    expect(component.fill).toBe(300);
+    expect(component.height()).toBe(40);
+    expect(component.width()).toBe(600);
+    expect(component.fill()).toBe(300);
   });
 
   it('should generate correct speed config for different speeds', () => {
-    component.speed = 'slow';
-    const slowConfig = component['speedConfig'];
+    fixture.componentRef.setInput('speed', 'slow');
+    const slowConfig = component['speedConfig']();
     expect(slowConfig.speedMin).toBe(0.5);
     expect(slowConfig.speedMax).toBe(1.5);
     expect(slowConfig.fadeRate).toBeGreaterThan(0);
 
-    component.speed = 'fast';
-    const fastConfig = component['speedConfig'];
+    fixture.componentRef.setInput('speed', 'fast');
+    const fastConfig = component['speedConfig']();
     expect(fastConfig.speedMin).toBe(2);
     expect(fastConfig.speedMax).toBe(4);
     expect(fastConfig.fadeRate).toBeGreaterThan(0);
 
-    component.speed = 'ludicrous';
-    const ludicrousConfig = component['speedConfig'];
+    fixture.componentRef.setInput('speed', 'ludicrous');
+    const ludicrousConfig = component['speedConfig']();
     expect(ludicrousConfig.speedMin).toBe(4);
     expect(ludicrousConfig.speedMax).toBe(8);
     expect(ludicrousConfig.fadeRate).toBeGreaterThan(0);
@@ -83,13 +86,13 @@ describe('IxParticleProgressBarComponent', () => {
 
   it('should calculate dynamic fade rate based on travel distance', () => {
     // Longer fill should result in slower fade rate
-    component.fill = 600;
-    component.speed = 'medium';
-    const longConfig = component['speedConfig'];
-    
-    component.fill = 300;
-    const shortConfig = component['speedConfig'];
-    
+    fixture.componentRef.setInput('fill', 600);
+    fixture.componentRef.setInput('speed', 'medium');
+    const longConfig = component['speedConfig']();
+
+    fixture.componentRef.setInput('fill', 300);
+    const shortConfig = component['speedConfig']();
+
     // Longer distance should have slower fade rate (smaller value)
     expect(longConfig.fadeRate).toBeLessThan(shortConfig.fadeRate);
   });
@@ -117,30 +120,30 @@ describe('IxParticleProgressBarComponent', () => {
 
   it('should calculate gradient transition start correctly', () => {
     // When fill is 100px or less, transition should start at 0%
-    component.fill = 50;
-    expect(component.gradientTransitionStart).toBe(0);
-    
-    component.fill = 100;
-    expect(component.gradientTransitionStart).toBe(0);
-    
+    fixture.componentRef.setInput('fill', 50);
+    expect(component.gradientTransitionStart()).toBe(0);
+
+    fixture.componentRef.setInput('fill', 100);
+    expect(component.gradientTransitionStart()).toBe(0);
+
     // When fill is more than 100px, transition should start at (fill-100)/fill * 100
-    component.fill = 200;
-    expect(component.gradientTransitionStart).toBe(50); // (200-100)/200 * 100 = 50%
-    
-    component.fill = 300;
-    expect(component.gradientTransitionStart).toBeCloseTo(66.67, 1); // (300-100)/300 * 100 = 66.67%
-    
-    component.fill = 400;
-    expect(component.gradientTransitionStart).toBe(75); // (400-100)/400 * 100 = 75%
+    fixture.componentRef.setInput('fill', 200);
+    expect(component.gradientTransitionStart()).toBe(50); // (200-100)/200 * 100 = 50%
+
+    fixture.componentRef.setInput('fill', 300);
+    expect(component.gradientTransitionStart()).toBeCloseTo(66.67, 1); // (300-100)/300 * 100 = 66.67%
+
+    fixture.componentRef.setInput('fill', 400);
+    expect(component.gradientTransitionStart()).toBe(75); // (400-100)/400 * 100 = 75%
   });
 
   it('should return same color for progress bar as input', () => {
     // Progress bar color should always match the input color exactly
-    expect(component.progressBarColor).toBe('hsla(198, 100%, 42%, 1)');
-    
+    expect(component.progressBarColor()).toBe('hsla(198, 100%, 42%, 1)');
+
     // Should work with different colors
-    component.color = 'hsla(120, 100%, 50%, 1)';
-    expect(component.progressBarColor).toBe('hsla(120, 100%, 50%, 1)');
+    fixture.componentRef.setInput('color', 'hsla(120, 100%, 50%, 1)');
+    expect(component.progressBarColor()).toBe('hsla(120, 100%, 50%, 1)');
   });
 
   it('should generate darker shades for particle depth', () => {

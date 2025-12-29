@@ -1,5 +1,5 @@
 import * as i0 from '@angular/core';
-import { Injectable, Component, input, ChangeDetectionStrategy, inject, effect, computed, ViewChild, ViewEncapsulation, output, signal, forwardRef, Directive, TemplateRef, ElementRef, ContentChild, ChangeDetectorRef, ContentChildren, HostListener, contentChildren, Input, Optional, Inject, Pipe, EventEmitter, Output, Host, model } from '@angular/core';
+import { Injectable, Component, input, ChangeDetectionStrategy, inject, effect, computed, ViewChild, ViewEncapsulation, output, signal, forwardRef, Directive, TemplateRef, ElementRef, ContentChild, ChangeDetectorRef, ContentChildren, HostListener, contentChildren, Input, Optional, Inject, Pipe, viewChild, EventEmitter, Output, Host, model } from '@angular/core';
 import * as i1$2 from '@angular/common';
 import { CommonModule, NgIf, DOCUMENT } from '@angular/common';
 import * as i1$1 from '@angular/platform-browser';
@@ -3123,34 +3123,34 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
 
 class IxTableComponent {
     cdr;
-    dataSource = [];
-    displayedColumns = [];
-    columnDefs;
+    dataSource = input([], ...(ngDevMode ? [{ debugName: "dataSource" }] : []));
+    displayedColumns = input([], ...(ngDevMode ? [{ debugName: "displayedColumns" }] : []));
+    columnDefs = contentChildren(IxTableColumnDirective, ...(ngDevMode ? [{ debugName: "columnDefs" }] : []));
     columnDefMap = new Map();
     constructor(cdr) {
         this.cdr = cdr;
-    }
-    ngAfterContentInit() {
-        this.processColumnDefs();
-        this.columnDefs.changes.subscribe(() => {
-            this.processColumnDefs();
+        // Effect to process column defs whenever they change
+        effect(() => {
+            const columns = this.columnDefs();
+            this.processColumnDefs(columns);
         });
     }
-    processColumnDefs() {
+    processColumnDefs(columns) {
         this.columnDefMap.clear();
-        this.columnDefs.forEach(columnDef => {
+        columns.forEach(columnDef => {
             if (columnDef.name) {
                 this.columnDefMap.set(columnDef.name, columnDef);
             }
         });
         this.cdr.detectChanges();
     }
-    get data() {
-        if (Array.isArray(this.dataSource)) {
-            return this.dataSource;
+    data = computed(() => {
+        const source = this.dataSource();
+        if (Array.isArray(source)) {
+            return source;
         }
-        return this.dataSource?.data || this.dataSource?.connect?.() || [];
-    }
+        return source?.data || source?.connect?.() || [];
+    }, ...(ngDevMode ? [{ debugName: "data" }] : []));
     getColumnDef(columnName) {
         return this.columnDefMap.get(columnName);
     }
@@ -3158,21 +3158,14 @@ class IxTableComponent {
         return index;
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTableComponent, deps: [{ token: i0.ChangeDetectorRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTableComponent, isStandalone: true, selector: "ix-table", inputs: { dataSource: "dataSource", displayedColumns: "displayedColumns" }, host: { classAttribute: "ix-table" }, queries: [{ propertyName: "columnDefs", predicate: IxTableColumnDirective }], ngImport: i0, template: "<table class=\"ix-table__table\">\n  <!-- Header Row -->\n  <thead class=\"ix-table__header\">\n    <tr class=\"ix-table__header-row\">\n      @for (column of displayedColumns; track $index) {\n        <th\n          class=\"ix-table__header-cell\"\n          [attr.data-column]=\"column\">\n          @if (getColumnDef(column)?.headerTemplate) {\n            <ng-container\n              [ngTemplateOutlet]=\"getColumnDef(column)?.headerTemplate || null\">\n            </ng-container>\n          }\n          @if (!getColumnDef(column)?.headerTemplate) {\n            <span>{{ column }}</span>\n          }\n        </th>\n      }\n    </tr>\n  </thead>\n\n  <!-- Data Rows -->\n  <tbody class=\"ix-table__body\">\n    @for (row of data; track $index) {\n      <tr class=\"ix-table__row\">\n        @for (column of displayedColumns; track $index) {\n          <td\n            class=\"ix-table__cell\"\n            [attr.data-column]=\"column\">\n            @if (getColumnDef(column)?.cellTemplate) {\n              <ng-container\n                [ngTemplateOutlet]=\"getColumnDef(column)?.cellTemplate || null\"\n                [ngTemplateOutletContext]=\"{ $implicit: row, column: column }\">\n              </ng-container>\n            }\n            @if (!getColumnDef(column)?.cellTemplate) {\n              <span>{{ row[column] }}</span>\n            }\n          </td>\n        }\n      </tr>\n    }\n  </tbody>\n</table>", styles: [".ix-table{display:block;width:100%;overflow-x:auto}.ix-table__table{width:100%;border-collapse:collapse;border-spacing:0;background-color:var(--bg2);border-radius:4px;overflow:hidden}.ix-table__header{background-color:var(--topbar);color:var(--topbar-txt)}.ix-table__header-row{height:56px}.ix-table__header-cell{padding:0 16px;text-align:left;font-weight:600;font-size:14px;border-bottom:1px solid var(--lines);white-space:nowrap;vertical-align:middle}.ix-table__body{background-color:var(--bg2)}.ix-table__row{height:48px;transition:background-color .2s ease}.ix-table__row:hover{background-color:var(--alt-bg1)}.ix-table__row:not(:last-child){border-bottom:1px solid var(--lines)}.ix-table__cell{padding:0 16px;font-size:14px;color:var(--fg1);vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ix-table--dense .ix-table__header-row{height:40px}.ix-table--dense .ix-table__row{height:32px}.ix-table--dense .ix-table__header-cell,.ix-table--dense .ix-table__cell{padding:0 12px;font-size:13px}@media (max-width: 768px){.ix-table__table{font-size:12px}.ix-table__header-cell,.ix-table__cell{padding:0 8px}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgTemplateOutlet, selector: "[ngTemplateOutlet]", inputs: ["ngTemplateOutletContext", "ngTemplateOutlet", "ngTemplateOutletInjector"] }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTableComponent, isStandalone: true, selector: "ix-table", inputs: { dataSource: { classPropertyName: "dataSource", publicName: "dataSource", isSignal: true, isRequired: false, transformFunction: null }, displayedColumns: { classPropertyName: "displayedColumns", publicName: "displayedColumns", isSignal: true, isRequired: false, transformFunction: null } }, host: { classAttribute: "ix-table" }, queries: [{ propertyName: "columnDefs", predicate: IxTableColumnDirective, isSignal: true }], ngImport: i0, template: "<table class=\"ix-table__table\">\n  <!-- Header Row -->\n  <thead class=\"ix-table__header\">\n    <tr class=\"ix-table__header-row\">\n      @for (column of displayedColumns(); track $index) {\n        <th\n          class=\"ix-table__header-cell\"\n          [attr.data-column]=\"column\">\n          @if (getColumnDef(column)?.headerTemplate) {\n            <ng-container\n              [ngTemplateOutlet]=\"getColumnDef(column)?.headerTemplate || null\">\n            </ng-container>\n          }\n          @if (!getColumnDef(column)?.headerTemplate) {\n            <span>{{ column }}</span>\n          }\n        </th>\n      }\n    </tr>\n  </thead>\n\n  <!-- Data Rows -->\n  <tbody class=\"ix-table__body\">\n    @for (row of data(); track $index) {\n      <tr class=\"ix-table__row\">\n        @for (column of displayedColumns(); track $index) {\n          <td\n            class=\"ix-table__cell\"\n            [attr.data-column]=\"column\">\n            @if (getColumnDef(column)?.cellTemplate) {\n              <ng-container\n                [ngTemplateOutlet]=\"getColumnDef(column)?.cellTemplate || null\"\n                [ngTemplateOutletContext]=\"{ $implicit: row, column: column }\">\n              </ng-container>\n            }\n            @if (!getColumnDef(column)?.cellTemplate) {\n              <span>{{ row[column] }}</span>\n            }\n          </td>\n        }\n      </tr>\n    }\n  </tbody>\n</table>", styles: [".ix-table{display:block;width:100%;overflow-x:auto}.ix-table__table{width:100%;border-collapse:collapse;border-spacing:0;background-color:var(--bg2);border-radius:4px;overflow:hidden}.ix-table__header{background-color:var(--topbar);color:var(--topbar-txt)}.ix-table__header-row{height:56px}.ix-table__header-cell{padding:0 16px;text-align:left;font-weight:600;font-size:14px;border-bottom:1px solid var(--lines);white-space:nowrap;vertical-align:middle}.ix-table__body{background-color:var(--bg2)}.ix-table__row{height:48px;transition:background-color .2s ease}.ix-table__row:hover{background-color:var(--alt-bg1)}.ix-table__row:not(:last-child){border-bottom:1px solid var(--lines)}.ix-table__cell{padding:0 16px;font-size:14px;color:var(--fg1);vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ix-table--dense .ix-table__header-row{height:40px}.ix-table--dense .ix-table__row{height:32px}.ix-table--dense .ix-table__header-cell,.ix-table--dense .ix-table__cell{padding:0 12px;font-size:13px}@media (max-width: 768px){.ix-table__table{font-size:12px}.ix-table__header-cell,.ix-table__cell{padding:0 8px}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgTemplateOutlet, selector: "[ngTemplateOutlet]", inputs: ["ngTemplateOutletContext", "ngTemplateOutlet", "ngTemplateOutletInjector"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTableComponent, decorators: [{
             type: Component,
             args: [{ selector: 'ix-table', standalone: true, imports: [CommonModule], host: {
                         'class': 'ix-table'
-                    }, template: "<table class=\"ix-table__table\">\n  <!-- Header Row -->\n  <thead class=\"ix-table__header\">\n    <tr class=\"ix-table__header-row\">\n      @for (column of displayedColumns; track $index) {\n        <th\n          class=\"ix-table__header-cell\"\n          [attr.data-column]=\"column\">\n          @if (getColumnDef(column)?.headerTemplate) {\n            <ng-container\n              [ngTemplateOutlet]=\"getColumnDef(column)?.headerTemplate || null\">\n            </ng-container>\n          }\n          @if (!getColumnDef(column)?.headerTemplate) {\n            <span>{{ column }}</span>\n          }\n        </th>\n      }\n    </tr>\n  </thead>\n\n  <!-- Data Rows -->\n  <tbody class=\"ix-table__body\">\n    @for (row of data; track $index) {\n      <tr class=\"ix-table__row\">\n        @for (column of displayedColumns; track $index) {\n          <td\n            class=\"ix-table__cell\"\n            [attr.data-column]=\"column\">\n            @if (getColumnDef(column)?.cellTemplate) {\n              <ng-container\n                [ngTemplateOutlet]=\"getColumnDef(column)?.cellTemplate || null\"\n                [ngTemplateOutletContext]=\"{ $implicit: row, column: column }\">\n              </ng-container>\n            }\n            @if (!getColumnDef(column)?.cellTemplate) {\n              <span>{{ row[column] }}</span>\n            }\n          </td>\n        }\n      </tr>\n    }\n  </tbody>\n</table>", styles: [".ix-table{display:block;width:100%;overflow-x:auto}.ix-table__table{width:100%;border-collapse:collapse;border-spacing:0;background-color:var(--bg2);border-radius:4px;overflow:hidden}.ix-table__header{background-color:var(--topbar);color:var(--topbar-txt)}.ix-table__header-row{height:56px}.ix-table__header-cell{padding:0 16px;text-align:left;font-weight:600;font-size:14px;border-bottom:1px solid var(--lines);white-space:nowrap;vertical-align:middle}.ix-table__body{background-color:var(--bg2)}.ix-table__row{height:48px;transition:background-color .2s ease}.ix-table__row:hover{background-color:var(--alt-bg1)}.ix-table__row:not(:last-child){border-bottom:1px solid var(--lines)}.ix-table__cell{padding:0 16px;font-size:14px;color:var(--fg1);vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ix-table--dense .ix-table__header-row{height:40px}.ix-table--dense .ix-table__row{height:32px}.ix-table--dense .ix-table__header-cell,.ix-table--dense .ix-table__cell{padding:0 12px;font-size:13px}@media (max-width: 768px){.ix-table__table{font-size:12px}.ix-table__header-cell,.ix-table__cell{padding:0 8px}}\n"] }]
-        }], ctorParameters: () => [{ type: i0.ChangeDetectorRef }], propDecorators: { dataSource: [{
-                type: Input
-            }], displayedColumns: [{
-                type: Input
-            }], columnDefs: [{
-                type: ContentChildren,
-                args: [IxTableColumnDirective]
-            }] } });
+                    }, template: "<table class=\"ix-table__table\">\n  <!-- Header Row -->\n  <thead class=\"ix-table__header\">\n    <tr class=\"ix-table__header-row\">\n      @for (column of displayedColumns(); track $index) {\n        <th\n          class=\"ix-table__header-cell\"\n          [attr.data-column]=\"column\">\n          @if (getColumnDef(column)?.headerTemplate) {\n            <ng-container\n              [ngTemplateOutlet]=\"getColumnDef(column)?.headerTemplate || null\">\n            </ng-container>\n          }\n          @if (!getColumnDef(column)?.headerTemplate) {\n            <span>{{ column }}</span>\n          }\n        </th>\n      }\n    </tr>\n  </thead>\n\n  <!-- Data Rows -->\n  <tbody class=\"ix-table__body\">\n    @for (row of data(); track $index) {\n      <tr class=\"ix-table__row\">\n        @for (column of displayedColumns(); track $index) {\n          <td\n            class=\"ix-table__cell\"\n            [attr.data-column]=\"column\">\n            @if (getColumnDef(column)?.cellTemplate) {\n              <ng-container\n                [ngTemplateOutlet]=\"getColumnDef(column)?.cellTemplate || null\"\n                [ngTemplateOutletContext]=\"{ $implicit: row, column: column }\">\n              </ng-container>\n            }\n            @if (!getColumnDef(column)?.cellTemplate) {\n              <span>{{ row[column] }}</span>\n            }\n          </td>\n        }\n      </tr>\n    }\n  </tbody>\n</table>", styles: [".ix-table{display:block;width:100%;overflow-x:auto}.ix-table__table{width:100%;border-collapse:collapse;border-spacing:0;background-color:var(--bg2);border-radius:4px;overflow:hidden}.ix-table__header{background-color:var(--topbar);color:var(--topbar-txt)}.ix-table__header-row{height:56px}.ix-table__header-cell{padding:0 16px;text-align:left;font-weight:600;font-size:14px;border-bottom:1px solid var(--lines);white-space:nowrap;vertical-align:middle}.ix-table__body{background-color:var(--bg2)}.ix-table__row{height:48px;transition:background-color .2s ease}.ix-table__row:hover{background-color:var(--alt-bg1)}.ix-table__row:not(:last-child){border-bottom:1px solid var(--lines)}.ix-table__cell{padding:0 16px;font-size:14px;color:var(--fg1);vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ix-table--dense .ix-table__header-row{height:40px}.ix-table--dense .ix-table__row{height:32px}.ix-table--dense .ix-table__header-cell,.ix-table--dense .ix-table__cell{padding:0 12px;font-size:13px}@media (max-width: 768px){.ix-table__table{font-size:12px}.ix-table__header-cell,.ix-table__cell{padding:0 8px}}\n"] }]
+        }], ctorParameters: () => [{ type: i0.ChangeDetectorRef }] });
 
 /**
  * Tree flattener to convert normal type of node to node with children & level information.
@@ -4001,7 +3994,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
 
 class IxBrandedSpinnerComponent {
     elementRef;
-    ariaLabel = null;
+    ariaLabel = input(null, ...(ngDevMode ? [{ debugName: "ariaLabel" }] : []));
     paths = [];
     animationId = null;
     isAnimating = false;
@@ -4097,18 +4090,16 @@ class IxBrandedSpinnerComponent {
         return from + (to - from) * progress;
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxBrandedSpinnerComponent, deps: [{ token: i0.ElementRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxBrandedSpinnerComponent, isStandalone: true, selector: "ix-branded-spinner", inputs: { ariaLabel: "ariaLabel" }, host: { attributes: { "role": "progressbar" }, properties: { "attr.aria-label": "ariaLabel || \"Loading...\"" }, classAttribute: "ix-branded-spinner" }, ngImport: i0, template: "<div class=\"ix-branded-spinner-container\">\n  <svg \n    viewBox=\"0 -7 62 62\" \n    preserveAspectRatio=\"xMidYMid meet\" \n    xmlns=\"http://www.w3.org/2000/svg\"\n    class=\"ix-branded-spinner-logo\">\n    \n    <!-- EXPLODED LOGO PATHS -->\n    <path class=\"exploded center\" fill=\"#AFADAE\" d=\"m41.79 24.13-11.26 6.51-11.28-6.51 11.28-6.51 11.26 6.51Z\" />\n    <path class=\"exploded top-left\" fill=\"#35BEEB\" d=\"M27.86 0v13.01l-13.93 8.04-11.28-6.5L27.86 0Z\" />\n    <path class=\"exploded bottom-right\" fill=\"#35BEEB\" d=\"M61.03 19.16v13.01L33.19 48.25V35.24l27.84-16.08Z\" />\n    <path class=\"exploded bottom-left\" fill=\"#0A95D3\" d=\"M27.86 35.24v13L0 32.17v-13l12.59 7.26s.03.02.05.03l15.23 8.79-.01-.01Z\" />\n    <path class=\"exploded top-right\" fill=\"#0A95D3\" d=\"m58.38 14.55-11.27 6.51-13.92-8.05V0l25.19 14.55Z\" />\n  </svg>\n</div>", styles: [".ix-branded-spinner{display:inline-block;vertical-align:middle}.ix-branded-spinner-container{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100px;min-height:100px}.ix-branded-spinner-logo{width:100px;height:100px}.ix-branded-spinner-logo path.exploded{fill-opacity:0;stroke-width:1px;stroke:var(--primary, #007bff)}.ix-branded-spinner-logo path#morph-target{fill-opacity:0;fill:var(--primary, #007bff)}\n"], changeDetection: i0.ChangeDetectionStrategy.OnPush, encapsulation: i0.ViewEncapsulation.None });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxBrandedSpinnerComponent, isStandalone: true, selector: "ix-branded-spinner", inputs: { ariaLabel: { classPropertyName: "ariaLabel", publicName: "ariaLabel", isSignal: true, isRequired: false, transformFunction: null } }, host: { attributes: { "role": "progressbar" }, properties: { "attr.aria-label": "ariaLabel() || \"Loading...\"" }, classAttribute: "ix-branded-spinner" }, ngImport: i0, template: "<div class=\"ix-branded-spinner-container\">\n  <svg \n    viewBox=\"0 -7 62 62\" \n    preserveAspectRatio=\"xMidYMid meet\" \n    xmlns=\"http://www.w3.org/2000/svg\"\n    class=\"ix-branded-spinner-logo\">\n    \n    <!-- EXPLODED LOGO PATHS -->\n    <path class=\"exploded center\" fill=\"#AFADAE\" d=\"m41.79 24.13-11.26 6.51-11.28-6.51 11.28-6.51 11.26 6.51Z\" />\n    <path class=\"exploded top-left\" fill=\"#35BEEB\" d=\"M27.86 0v13.01l-13.93 8.04-11.28-6.5L27.86 0Z\" />\n    <path class=\"exploded bottom-right\" fill=\"#35BEEB\" d=\"M61.03 19.16v13.01L33.19 48.25V35.24l27.84-16.08Z\" />\n    <path class=\"exploded bottom-left\" fill=\"#0A95D3\" d=\"M27.86 35.24v13L0 32.17v-13l12.59 7.26s.03.02.05.03l15.23 8.79-.01-.01Z\" />\n    <path class=\"exploded top-right\" fill=\"#0A95D3\" d=\"m58.38 14.55-11.27 6.51-13.92-8.05V0l25.19 14.55Z\" />\n  </svg>\n</div>", styles: [".ix-branded-spinner{display:inline-block;vertical-align:middle}.ix-branded-spinner-container{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100px;min-height:100px}.ix-branded-spinner-logo{width:100px;height:100px}.ix-branded-spinner-logo path.exploded{fill-opacity:0;stroke-width:1px;stroke:var(--primary, #007bff)}.ix-branded-spinner-logo path#morph-target{fill-opacity:0;fill:var(--primary, #007bff)}\n"], changeDetection: i0.ChangeDetectionStrategy.OnPush, encapsulation: i0.ViewEncapsulation.None });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxBrandedSpinnerComponent, decorators: [{
             type: Component,
             args: [{ selector: 'ix-branded-spinner', standalone: true, changeDetection: ChangeDetectionStrategy.OnPush, encapsulation: ViewEncapsulation.None, host: {
                         'class': 'ix-branded-spinner',
                         'role': 'progressbar',
-                        '[attr.aria-label]': 'ariaLabel || "Loading..."'
+                        '[attr.aria-label]': 'ariaLabel() || "Loading..."'
                     }, template: "<div class=\"ix-branded-spinner-container\">\n  <svg \n    viewBox=\"0 -7 62 62\" \n    preserveAspectRatio=\"xMidYMid meet\" \n    xmlns=\"http://www.w3.org/2000/svg\"\n    class=\"ix-branded-spinner-logo\">\n    \n    <!-- EXPLODED LOGO PATHS -->\n    <path class=\"exploded center\" fill=\"#AFADAE\" d=\"m41.79 24.13-11.26 6.51-11.28-6.51 11.28-6.51 11.26 6.51Z\" />\n    <path class=\"exploded top-left\" fill=\"#35BEEB\" d=\"M27.86 0v13.01l-13.93 8.04-11.28-6.5L27.86 0Z\" />\n    <path class=\"exploded bottom-right\" fill=\"#35BEEB\" d=\"M61.03 19.16v13.01L33.19 48.25V35.24l27.84-16.08Z\" />\n    <path class=\"exploded bottom-left\" fill=\"#0A95D3\" d=\"M27.86 35.24v13L0 32.17v-13l12.59 7.26s.03.02.05.03l15.23 8.79-.01-.01Z\" />\n    <path class=\"exploded top-right\" fill=\"#0A95D3\" d=\"m58.38 14.55-11.27 6.51-13.92-8.05V0l25.19 14.55Z\" />\n  </svg>\n</div>", styles: [".ix-branded-spinner{display:inline-block;vertical-align:middle}.ix-branded-spinner-container{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100px;min-height:100px}.ix-branded-spinner-logo{width:100px;height:100px}.ix-branded-spinner-logo path.exploded{fill-opacity:0;stroke-width:1px;stroke:var(--primary, #007bff)}.ix-branded-spinner-logo path#morph-target{fill-opacity:0;fill:var(--primary, #007bff)}\n"] }]
-        }], ctorParameters: () => [{ type: i0.ElementRef }], propDecorators: { ariaLabel: [{
-                type: Input
-            }] } });
+        }], ctorParameters: () => [{ type: i0.ElementRef }] });
 
 class IxProgressBarComponent {
     mode = input('determinate', ...(ngDevMode ? [{ debugName: "mode" }] : []));
@@ -4171,26 +4162,26 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
         }] });
 
 class IxParticleProgressBarComponent {
-    speed = 'medium';
-    color = 'hsla(198, 100%, 42%, 1)';
-    height = 40;
-    width = 600;
-    fill = 300;
-    canvasRef;
+    speed = input('medium', ...(ngDevMode ? [{ debugName: "speed" }] : []));
+    color = input('hsla(198, 100%, 42%, 1)', ...(ngDevMode ? [{ debugName: "color" }] : []));
+    height = input(40, ...(ngDevMode ? [{ debugName: "height" }] : []));
+    width = input(600, ...(ngDevMode ? [{ debugName: "width" }] : []));
+    fill = input(300, ...(ngDevMode ? [{ debugName: "fill" }] : []));
+    canvasRef = viewChild.required('canvas');
     ctx;
     particles = [];
     shades = [];
     animationId;
-    get speedConfig() {
+    speedConfig = computed(() => {
         const baseConfig = {
             slow: { speedMin: 0.5, speedMax: 1.5 },
             medium: { speedMin: 1, speedMax: 2.5 },
             fast: { speedMin: 2, speedMax: 4 },
             ludicrous: { speedMin: 4, speedMax: 8 }
-        }[this.speed];
+        }[this.speed()];
         // Calculate dynamic fade rate based on travel distance
         // Particles should fade out over the full travel distance (minus border radius buffer)
-        const travelDistance = Math.max(this.fill - 12, 20); // Distance from x=50 to x=50+fill-12 (avoid border radius), minimum 20px
+        const travelDistance = Math.max(this.fill() - 12, 20); // Distance from x=50 to x=50+fill-12 (avoid border radius), minimum 20px
         const averageSpeed = (baseConfig.speedMin + baseConfig.speedMax) / 2;
         const estimatedFrames = travelDistance / averageSpeed; // Approximate frames to travel the distance
         const fadeRate = 1 / estimatedFrames; // Fade from 1 to 0 over the travel distance
@@ -4198,25 +4189,25 @@ class IxParticleProgressBarComponent {
             ...baseConfig,
             fadeRate: Math.max(fadeRate, 0.001) // Minimum fade rate to prevent too slow fading
         };
-    }
+    }, ...(ngDevMode ? [{ debugName: "speedConfig" }] : []));
     /**
      * Calculate the gradient offset so the transition only happens in the last 100px
      */
-    get gradientTransitionStart() {
-        if (this.fill <= 100) {
+    gradientTransitionStart = computed(() => {
+        if (this.fill() <= 100) {
             return 0; // If fill is 100px or less, transition starts immediately
         }
-        return ((this.fill - 100) / this.fill) * 100; // Transparent until last 100px
-    }
+        return ((this.fill() - 100) / this.fill()) * 100; // Transparent until last 100px
+    }, ...(ngDevMode ? [{ debugName: "gradientTransitionStart" }] : []));
     /**
      * Get the color for the progress bar (uses the exact same color as input)
      */
-    get progressBarColor() {
-        return this.color;
-    }
+    progressBarColor = computed(() => {
+        return this.color();
+    }, ...(ngDevMode ? [{ debugName: "progressBarColor" }] : []));
     ngAfterViewInit() {
-        this.ctx = this.canvasRef.nativeElement.getContext('2d');
-        this.shades = this.generateDarkerShades(this.color, 4);
+        this.ctx = this.canvasRef().nativeElement.getContext('2d');
+        this.shades = this.generateDarkerShades(this.color(), 4);
         this.animate();
     }
     ngOnDestroy() {
@@ -4225,7 +4216,7 @@ class IxParticleProgressBarComponent {
         }
     }
     animate() {
-        this.ctx.clearRect(0, 0, this.width, this.height);
+        this.ctx.clearRect(0, 0, this.width(), this.height());
         for (let i = 0; i < this.particles.length; i++) {
             const p = this.particles[i];
             this.ctx.beginPath();
@@ -4241,8 +4232,8 @@ class IxParticleProgressBarComponent {
             this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
             this.ctx.fill();
             p.x += p.speed;
-            p.opacity -= this.speedConfig.fadeRate;
-            if (p.x > 50 + this.fill - 12 || p.opacity <= 0) {
+            p.opacity -= this.speedConfig().fadeRate;
+            if (p.x > 50 + this.fill() - 12 || p.opacity <= 0) {
                 this.particles.splice(i, 1);
                 i--;
             }
@@ -4254,12 +4245,12 @@ class IxParticleProgressBarComponent {
         this.animationId = requestAnimationFrame(() => this.animate());
     }
     spawnParticle() {
-        const { speedMin, speedMax } = this.speedConfig;
+        const { speedMin, speedMax } = this.speedConfig();
         const color = this.shades[Math.floor(Math.random() * this.shades.length)];
         const speed = speedMin + Math.random() * (speedMax - speedMin);
         this.particles.push({
             x: 50,
-            y: this.height / 2 + (Math.random() * (this.height / 2) - this.height / 4),
+            y: this.height() / 2 + (Math.random() * (this.height() / 2) - this.height() / 4),
             radius: Math.random() * 2 + 1,
             speed,
             opacity: 1,
@@ -4347,27 +4338,14 @@ class IxParticleProgressBarComponent {
         return shades;
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxParticleProgressBarComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxParticleProgressBarComponent, isStandalone: true, selector: "ix-particle-progress-bar", inputs: { speed: "speed", color: "color", height: "height", width: "width", fill: "fill" }, host: { classAttribute: "ix-particle-progress-bar" }, viewQueries: [{ propertyName: "canvasRef", first: true, predicate: ["canvas"], descendants: true, static: true }], ngImport: i0, template: "<svg [attr.width]=\"width\" [attr.height]=\"height\">\n  <defs>\n    <linearGradient id=\"fadeToPrimary\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"0%\">\n      <stop offset=\"0%\" stop-color=\"transparent\" />\n      <stop [attr.offset]=\"gradientTransitionStart + '%'\" stop-color=\"transparent\" />\n      <stop offset=\"100%\" [attr.stop-color]=\"progressBarColor\" />\n    </linearGradient>\n  </defs>\n\n  <!-- Background bar -->\n  <rect x=\"50\" [attr.y]=\"height / 2 - height / 4\" [attr.width]=\"width - 100\" [attr.height]=\"height / 2\" [attr.rx]=\"height / 4\" fill=\"rgba(0,0,0,0.1)\" />\n\n  <!-- Fill bar -->\n  <rect\n    x=\"50\"\n    [attr.y]=\"height / 2 - height / 4\"\n    [attr.width]=\"fill\"\n    [attr.height]=\"height / 2\"\n    [attr.rx]=\"height / 4\"\n    fill=\"url(#fadeToPrimary)\"\n  />\n\n  <!-- Particle canvas -->\n  <foreignObject x=\"0\" y=\"0\" [attr.width]=\"width\" [attr.height]=\"height\">\n    <canvas #canvas [attr.width]=\"width\" [attr.height]=\"height\" style=\"pointer-events: none;\"></canvas>\n  </foreignObject>\n</svg>\n", styles: [":host{display:block}\n"], changeDetection: i0.ChangeDetectionStrategy.OnPush });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.2.0", version: "20.3.4", type: IxParticleProgressBarComponent, isStandalone: true, selector: "ix-particle-progress-bar", inputs: { speed: { classPropertyName: "speed", publicName: "speed", isSignal: true, isRequired: false, transformFunction: null }, color: { classPropertyName: "color", publicName: "color", isSignal: true, isRequired: false, transformFunction: null }, height: { classPropertyName: "height", publicName: "height", isSignal: true, isRequired: false, transformFunction: null }, width: { classPropertyName: "width", publicName: "width", isSignal: true, isRequired: false, transformFunction: null }, fill: { classPropertyName: "fill", publicName: "fill", isSignal: true, isRequired: false, transformFunction: null } }, host: { classAttribute: "ix-particle-progress-bar" }, viewQueries: [{ propertyName: "canvasRef", first: true, predicate: ["canvas"], descendants: true, isSignal: true }], ngImport: i0, template: "<svg [attr.width]=\"width()\" [attr.height]=\"height()\">\n  <defs>\n    <linearGradient id=\"fadeToPrimary\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"0%\">\n      <stop offset=\"0%\" stop-color=\"transparent\" />\n      <stop [attr.offset]=\"gradientTransitionStart() + '%'\" stop-color=\"transparent\" />\n      <stop offset=\"100%\" [attr.stop-color]=\"progressBarColor()\" />\n    </linearGradient>\n  </defs>\n\n  <!-- Background bar -->\n  <rect x=\"50\" [attr.y]=\"height() / 2 - height() / 4\" [attr.width]=\"width() - 100\" [attr.height]=\"height() / 2\" [attr.rx]=\"height() / 4\" fill=\"rgba(0,0,0,0.1)\" />\n\n  <!-- Fill bar -->\n  <rect\n    x=\"50\"\n    [attr.y]=\"height() / 2 - height() / 4\"\n    [attr.width]=\"fill()\"\n    [attr.height]=\"height() / 2\"\n    [attr.rx]=\"height() / 4\"\n    fill=\"url(#fadeToPrimary)\"\n  />\n\n  <!-- Particle canvas -->\n  <foreignObject x=\"0\" y=\"0\" [attr.width]=\"width()\" [attr.height]=\"height()\">\n    <canvas #canvas [attr.width]=\"width()\" [attr.height]=\"height()\" style=\"pointer-events: none;\"></canvas>\n  </foreignObject>\n</svg>\n", styles: [":host{display:block}\n"], changeDetection: i0.ChangeDetectionStrategy.OnPush });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxParticleProgressBarComponent, decorators: [{
             type: Component,
             args: [{ selector: 'ix-particle-progress-bar', standalone: true, changeDetection: ChangeDetectionStrategy.OnPush, host: {
                         'class': 'ix-particle-progress-bar'
-                    }, template: "<svg [attr.width]=\"width\" [attr.height]=\"height\">\n  <defs>\n    <linearGradient id=\"fadeToPrimary\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"0%\">\n      <stop offset=\"0%\" stop-color=\"transparent\" />\n      <stop [attr.offset]=\"gradientTransitionStart + '%'\" stop-color=\"transparent\" />\n      <stop offset=\"100%\" [attr.stop-color]=\"progressBarColor\" />\n    </linearGradient>\n  </defs>\n\n  <!-- Background bar -->\n  <rect x=\"50\" [attr.y]=\"height / 2 - height / 4\" [attr.width]=\"width - 100\" [attr.height]=\"height / 2\" [attr.rx]=\"height / 4\" fill=\"rgba(0,0,0,0.1)\" />\n\n  <!-- Fill bar -->\n  <rect\n    x=\"50\"\n    [attr.y]=\"height / 2 - height / 4\"\n    [attr.width]=\"fill\"\n    [attr.height]=\"height / 2\"\n    [attr.rx]=\"height / 4\"\n    fill=\"url(#fadeToPrimary)\"\n  />\n\n  <!-- Particle canvas -->\n  <foreignObject x=\"0\" y=\"0\" [attr.width]=\"width\" [attr.height]=\"height\">\n    <canvas #canvas [attr.width]=\"width\" [attr.height]=\"height\" style=\"pointer-events: none;\"></canvas>\n  </foreignObject>\n</svg>\n", styles: [":host{display:block}\n"] }]
-        }], propDecorators: { speed: [{
-                type: Input
-            }], color: [{
-                type: Input
-            }], height: [{
-                type: Input
-            }], width: [{
-                type: Input
-            }], fill: [{
-                type: Input
-            }], canvasRef: [{
-                type: ViewChild,
-                args: ['canvas', { static: true }]
-            }] } });
+                    }, template: "<svg [attr.width]=\"width()\" [attr.height]=\"height()\">\n  <defs>\n    <linearGradient id=\"fadeToPrimary\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"0%\">\n      <stop offset=\"0%\" stop-color=\"transparent\" />\n      <stop [attr.offset]=\"gradientTransitionStart() + '%'\" stop-color=\"transparent\" />\n      <stop offset=\"100%\" [attr.stop-color]=\"progressBarColor()\" />\n    </linearGradient>\n  </defs>\n\n  <!-- Background bar -->\n  <rect x=\"50\" [attr.y]=\"height() / 2 - height() / 4\" [attr.width]=\"width() - 100\" [attr.height]=\"height() / 2\" [attr.rx]=\"height() / 4\" fill=\"rgba(0,0,0,0.1)\" />\n\n  <!-- Fill bar -->\n  <rect\n    x=\"50\"\n    [attr.y]=\"height() / 2 - height() / 4\"\n    [attr.width]=\"fill()\"\n    [attr.height]=\"height() / 2\"\n    [attr.rx]=\"height() / 4\"\n    fill=\"url(#fadeToPrimary)\"\n  />\n\n  <!-- Particle canvas -->\n  <foreignObject x=\"0\" y=\"0\" [attr.width]=\"width()\" [attr.height]=\"height()\">\n    <canvas #canvas [attr.width]=\"width()\" [attr.height]=\"height()\" style=\"pointer-events: none;\"></canvas>\n  </foreignObject>\n</svg>\n", styles: [":host{display:block}\n"] }]
+        }] });
 
 class IxCalendarHeaderComponent {
     set currentDate(date) {
@@ -7835,7 +7813,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * To regenerate this file, run:
  *   npm run generate-icons
  *
- * Generated: 2025-12-29T18:53:31.756Z
+ * Generated: 2025-12-29T19:02:29.924Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 /* eslint-disable */

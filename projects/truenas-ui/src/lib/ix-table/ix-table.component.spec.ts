@@ -31,25 +31,25 @@ describe('IxTableComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('data getter', () => {
+  describe('data computed', () => {
     it('should return array when dataSource is an array', () => {
       const testData = [{ id: 1, name: 'Test' }];
-      component.dataSource = testData;
+      fixture.componentRef.setInput('dataSource', testData);
 
-      expect(component.data).toEqual(testData);
+      expect(component.data()).toEqual(testData);
     });
 
     it('should return data from dataSource.data when available', () => {
       const testData = [{ id: 1, name: 'Test' }];
-      component.dataSource = { data: testData };
+      fixture.componentRef.setInput('dataSource', { data: testData });
 
-      expect(component.data).toEqual(testData);
+      expect(component.data()).toEqual(testData);
     });
 
     it('should return data array when dataSource.data is empty', () => {
-      component.dataSource = { data: [] } as IxTableDataSource;
+      fixture.componentRef.setInput('dataSource', { data: [] } as IxTableDataSource);
 
-      const result = component.data;
+      const result = component.data();
 
       expect(result).toEqual([]);
     });
@@ -58,65 +58,35 @@ describe('IxTableComponent', () => {
       const testData = [{ id: 1, name: 'Test' }];
       const connectSpy = jest.fn().mockReturnValue(testData);
       // Don't include data property to trigger connect() call
-      component.dataSource = { connect: connectSpy } as any;
+      fixture.componentRef.setInput('dataSource', { connect: connectSpy } as any);
 
-      const result = component.data;
+      const result = component.data();
 
       expect(connectSpy).toHaveBeenCalled();
       expect(result).toEqual(testData);
     });
 
     it('should return empty array when dataSource is undefined', () => {
-      component.dataSource = undefined as any;
+      fixture.componentRef.setInput('dataSource', undefined as any);
 
-      expect(component.data).toEqual([]);
+      expect(component.data()).toEqual([]);
     });
   });
 
   describe('column definitions', () => {
-    it('should process column definitions after content init', () => {
-      const mockColumnDef = { name: 'testColumn' } as IxTableColumnDirective;
-      component.columnDefs = createMockQueryList([mockColumnDef]);
-
-      component.ngAfterContentInit();
-
-      expect(component.getColumnDef('testColumn')).toBeDefined();
-    });
-
-    it('should return undefined for non-existent column', () => {
-      component.columnDefs = createMockQueryList([]);
-      component.ngAfterContentInit();
-
-      expect(component.getColumnDef('nonExistent')).toBeUndefined();
-    });
-
-    it('should update column definitions when columnDefs changes', () => {
+    it('should process column definitions via effect', () => {
       const mockColumnDef1 = { name: 'column1' } as IxTableColumnDirective;
       const mockColumnDef2 = { name: 'column2' } as IxTableColumnDirective;
 
-      // Create initial query list with only column1
-      let columns = [mockColumnDef1];
-      const mockQueryList: any = createMockQueryList(columns);
+      // Test processColumnDefs directly with mock data
+      component['processColumnDefs']([mockColumnDef1, mockColumnDef2]);
 
-      // Update forEach to use current columns array
-      mockQueryList.forEach = (callback: Function) => columns.forEach(col => callback(col));
-
-      component.columnDefs = mockQueryList;
-      component.ngAfterContentInit();
-
-      // Initially, only column1 should be available
-      expect(component.getColumnDef('column1')).toBeDefined();
-      expect(component.getColumnDef('column2')).toBeUndefined();
-
-      // Simulate adding column2
-      columns = [mockColumnDef1, mockColumnDef2];
-
-      // Trigger the change
-      mockQueryList._triggerChange();
-
-      // Verify that both columns are now available
       expect(component.getColumnDef('column1')).toBeDefined();
       expect(component.getColumnDef('column2')).toBeDefined();
+    });
+
+    it('should return undefined for non-existent column', () => {
+      expect(component.getColumnDef('nonExistent')).toBeUndefined();
     });
 
     it('should clear and rebuild column map when processing', () => {
@@ -124,15 +94,13 @@ describe('IxTableComponent', () => {
       const mockColumnDef2 = { name: 'column2' } as IxTableColumnDirective;
 
       // First processing
-      component.columnDefs = createMockQueryList([mockColumnDef1, mockColumnDef2]);
-      component.ngAfterContentInit();
+      component['processColumnDefs']([mockColumnDef1, mockColumnDef2]);
 
       expect(component.getColumnDef('column1')).toBeDefined();
       expect(component.getColumnDef('column2')).toBeDefined();
 
       // Second processing with only column2
-      component.columnDefs = createMockQueryList([mockColumnDef2]);
-      component['processColumnDefs']();
+      component['processColumnDefs']([mockColumnDef2]);
 
       expect(component.getColumnDef('column1')).toBeUndefined();
       expect(component.getColumnDef('column2')).toBeDefined();
@@ -140,9 +108,7 @@ describe('IxTableComponent', () => {
 
     it('should handle column definitions without names', () => {
       const mockColumnDefWithoutName = {} as IxTableColumnDirective;
-      component.columnDefs = createMockQueryList([mockColumnDefWithoutName]);
-
-      component.ngAfterContentInit();
+      component['processColumnDefs']([mockColumnDefWithoutName]);
 
       // Should not throw and should result in empty map
       expect(component.getColumnDef('')).toBeUndefined();
@@ -159,12 +125,12 @@ describe('IxTableComponent', () => {
 
   describe('displayedColumns', () => {
     it('should start with empty array by default', () => {
-      expect(component.displayedColumns).toEqual([]);
+      expect(component.displayedColumns()).toEqual([]);
     });
 
     it('should accept displayedColumns input', () => {
-      component.displayedColumns = ['col1', 'col2'];
-      expect(component.displayedColumns).toEqual(['col1', 'col2']);
+      fixture.componentRef.setInput('displayedColumns', ['col1', 'col2']);
+      expect(component.displayedColumns()).toEqual(['col1', 'col2']);
     });
   });
 });

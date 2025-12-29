@@ -24,7 +24,7 @@ describe('IxBrandedSpinnerComponent', () => {
   });
 
   it('should have correct accessibility attributes', () => {
-    component.ariaLabel = 'Loading system...';
+    fixture.componentRef.setInput('ariaLabel', 'Loading system...');
     fixture.detectChanges();
 
     const element = fixture.nativeElement;
