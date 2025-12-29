@@ -21,41 +21,43 @@ describe('IxExpansionPanelComponent', () => {
   });
 
   it('should start collapsed by default', () => {
-    expect(component.expanded).toBe(false);
+    expect(component.effectiveExpanded()).toBe(false);
   });
 
   it('should toggle when button is clicked', () => {
-    const initialState = component.expanded;
+    const initialState = component.effectiveExpanded();
     component.toggle();
-    expect(component.expanded).toBe(!initialState);
+    expect(component.effectiveExpanded()).toBe(!initialState);
   });
 
   it('should emit events when toggled', () => {
     jest.spyOn(component.expandedChange, 'emit');
     jest.spyOn(component.toggleEvent, 'emit');
-    
+
     component.toggle();
-    
+
     expect(component.expandedChange.emit).toHaveBeenCalledWith(true);
     expect(component.toggleEvent.emit).toHaveBeenCalled();
   });
 
   it('should not toggle when disabled', () => {
-    component.disabled = true;
-    const initialState = component.expanded;
-    
+    fixture.componentRef.setInput('disabled', true);
+    fixture.detectChanges();
+    const initialState = component.effectiveExpanded();
+
     component.toggle();
-    
-    expect(component.expanded).toBe(initialState);
+
+    expect(component.effectiveExpanded()).toBe(initialState);
   });
 
   it('should apply correct classes', () => {
-    component.elevation = 'high';
-    component.bordered = true;
-    component.expanded = true;
-    
-    const classes = component.classes;
-    
+    fixture.componentRef.setInput('elevation', 'high');
+    fixture.componentRef.setInput('bordered', true);
+    fixture.componentRef.setInput('expanded', true);
+    fixture.detectChanges();
+
+    const classes = component.classes();
+
     expect(classes).toContain('ix-expansion-panel');
     expect(classes).toContain('ix-expansion-panel--elevation-high');
     expect(classes).toContain('ix-expansion-panel--bordered');
@@ -63,55 +65,61 @@ describe('IxExpansionPanelComponent', () => {
   });
 
   it('should apply none elevation class when elevation is none', () => {
-    component.elevation = 'none';
-    
-    const classes = component.classes;
-    
+    fixture.componentRef.setInput('elevation', 'none');
+    fixture.detectChanges();
+
+    const classes = component.classes();
+
     expect(classes).toContain('ix-expansion-panel--elevation-none');
   });
 
   it('should apply correct title style classes', () => {
-    component.titleStyle = 'link';
-    
-    const classes = component.classes;
-    
+    fixture.componentRef.setInput('titleStyle', 'link');
+    fixture.detectChanges();
+
+    const classes = component.classes();
+
     expect(classes).toContain('ix-expansion-panel--title-link');
   });
 
   it('should default to header title style', () => {
-    const classes = component.classes;
+    const classes = component.classes();
 
     expect(classes).toContain('ix-expansion-panel--title-header');
   });
 
   it('should apply background class when background is true', () => {
-    component.background = true;
+    fixture.componentRef.setInput('background', true);
+    fixture.detectChanges();
 
-    const classes = component.classes;
+    const classes = component.classes();
 
     expect(classes).toContain('ix-expansion-panel--background');
   });
 
   it('should not apply background class when background is false', () => {
-    component.background = false;
+    fixture.componentRef.setInput('background', false);
+    fixture.detectChanges();
 
-    const classes = component.classes;
+    const classes = component.classes();
 
     expect(classes).not.toContain('ix-expansion-panel--background');
   });
 
   it('should apply disabled class when disabled is true', () => {
-    component.disabled = true;
+    fixture.componentRef.setInput('disabled', true);
+    fixture.detectChanges();
 
-    const classes = component.classes;
+    const classes = component.classes();
 
     expect(classes).toContain('ix-expansion-panel--disabled');
   });
 
   it('should not apply disabled class when disabled is false', () => {
-    component.disabled = false;
+    fixture.componentRef.setInput('disabled', false);
+    fixture.detectChanges();
 
-    const classes = component.classes;
+    const classes = component.classes();
 
     expect(classes).not.toContain('ix-expansion-panel--disabled');
   });

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, ContentChild, AfterContentInit } from '@angular/core';
+import { Component, input, computed, signal, contentChild, AfterContentInit } from '@angular/core';
 import { NgControl } from '@angular/forms';
 
 @Component({
@@ -10,40 +10,43 @@ import { NgControl } from '@angular/forms';
   styleUrls: ['./ix-form-field.component.scss']
 })
 export class IxFormFieldComponent implements AfterContentInit {
-  @Input() label = '';
-  @Input() hint = '';
-  @Input() required = false;
-  @Input() testId = '';
+  label = input<string>('');
+  hint = input<string>('');
+  required = input<boolean>(false);
+  testId = input<string>('');
 
-  @ContentChild(NgControl, { static: false }) control?: NgControl;
+  control = contentChild(NgControl);
 
-  protected hasError = false;
-  protected errorMessage = '';
+  protected hasError = signal<boolean>(false);
+  protected errorMessage = signal<string>('');
 
   ngAfterContentInit(): void {
-    if (this.control) {
+    const control = this.control();
+    if (control) {
       // Listen for control status changes
-      this.control.statusChanges?.subscribe(() => {
+      control.statusChanges?.subscribe(() => {
         this.updateErrorState();
       });
-      
+
       // Initial error state check
       this.updateErrorState();
     }
   }
 
   private updateErrorState(): void {
-    if (this.control) {
-      this.hasError = !!(this.control.invalid && (this.control.dirty || this.control.touched));
-      this.errorMessage = this.getErrorMessage();
+    const control = this.control();
+    if (control) {
+      this.hasError.set(!!(control.invalid && (control.dirty || control.touched)));
+      this.errorMessage.set(this.getErrorMessage());
     }
   }
 
   private getErrorMessage(): string {
-    if (!this.control?.errors) return '';
+    const control = this.control();
+    if (!control?.errors) return '';
 
-    const errors = this.control.errors;
-    
+    const errors = control.errors;
+
     // Return the first error message found
     if (errors['required']) return 'This field is required';
     if (errors['email']) return 'Please enter a valid email address';
@@ -57,11 +60,11 @@ export class IxFormFieldComponent implements AfterContentInit {
     return Object.keys(errors)[0] || 'Invalid input';
   }
 
-  get showError(): boolean {
-    return this.hasError && !!this.errorMessage;
-  }
+  showError = computed(() => {
+    return this.hasError() && !!this.errorMessage();
+  });
 
-  get showHint(): boolean {
-    return !!this.hint && !this.showError;
-  }
+  showHint = computed(() => {
+    return !!this.hint() && !this.showError();
+  });
 }

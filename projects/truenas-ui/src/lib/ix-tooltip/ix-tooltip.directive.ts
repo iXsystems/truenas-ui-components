@@ -1,19 +1,19 @@
-import { 
-  Directive, 
-  ElementRef, 
-  Input, 
-  OnDestroy, 
+import {
+  Directive,
+  ElementRef,
+  input,
+  OnDestroy,
   HostListener,
   ViewContainerRef,
   OnInit,
   TemplateRef,
   ComponentRef
 } from '@angular/core';
-import { 
-  Overlay, 
-  OverlayRef, 
+import {
+  Overlay,
+  OverlayRef,
   ConnectedPosition,
-  OverlayPositionBuilder 
+  OverlayPositionBuilder
 } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { IxTooltipComponent } from './ix-tooltip.component';
@@ -28,12 +28,12 @@ export type TooltipPosition = 'above' | 'below' | 'left' | 'right' | 'before' | 
   }
 })
 export class IxTooltipDirective implements OnInit, OnDestroy {
-  @Input('ixTooltip') message = '';
-  @Input('ixTooltipPosition') position: TooltipPosition = 'above';
-  @Input('ixTooltipDisabled') disabled = false;
-  @Input('ixTooltipShowDelay') showDelay = 0;
-  @Input('ixTooltipHideDelay') hideDelay = 0;
-  @Input('ixTooltipClass') tooltipClass = '';
+  message = input<string>('', { alias: 'ixTooltip' });
+  position = input<TooltipPosition>('above', { alias: 'ixTooltipPosition' });
+  disabled = input<boolean>(false, { alias: 'ixTooltipDisabled' });
+  showDelay = input<number>(0, { alias: 'ixTooltipShowDelay' });
+  hideDelay = input<number>(0, { alias: 'ixTooltipHideDelay' });
+  tooltipClass = input<string>('', { alias: 'ixTooltipClass' });
 
   private _overlayRef: OverlayRef | null = null;
   private _tooltipInstance: ComponentRef<IxTooltipComponent> | null = null;
@@ -66,26 +66,26 @@ export class IxTooltipDirective implements OnInit, OnDestroy {
 
   @HostListener('mouseenter')
   _onMouseEnter(): void {
-    if (!this.disabled && this.message) {
-      this.show(this.showDelay);
+    if (!this.disabled() && this.message()) {
+      this.show(this.showDelay());
     }
   }
 
   @HostListener('mouseleave')
   _onMouseLeave(): void {
-    this.hide(this.hideDelay);
+    this.hide(this.hideDelay());
   }
 
   @HostListener('focus')
   _onFocus(): void {
-    if (!this.disabled && this.message) {
-      this.show(this.showDelay);
+    if (!this.disabled() && this.message()) {
+      this.show(this.showDelay());
     }
   }
 
   @HostListener('blur')
   _onBlur(): void {
-    this.hide(this.hideDelay);
+    this.hide(this.hideDelay());
   }
 
   @HostListener('keydown', ['$event'])
@@ -97,7 +97,7 @@ export class IxTooltipDirective implements OnInit, OnDestroy {
 
   /** Shows the tooltip */
   show(delay: number = 0): void {
-    if (this.disabled || !this.message || this._isTooltipVisible) {
+    if (this.disabled() || !this.message() || this._isTooltipVisible) {
       return;
     }
 
@@ -132,7 +132,7 @@ export class IxTooltipDirective implements OnInit, OnDestroy {
 
   private _createOverlay(): void {
     const positions = this._getPositions();
-    
+
     const positionStrategy = this._overlayPositionBuilder
       .flexibleConnectedTo(this._elementRef)
       .withPositions(positions)
@@ -143,7 +143,7 @@ export class IxTooltipDirective implements OnInit, OnDestroy {
     this._overlayRef = this._overlay.create({
       positionStrategy,
       scrollStrategy: this._overlay.scrollStrategies.reposition({ scrollThrottle: 20 }),
-      panelClass: ['ix-tooltip-panel', `ix-tooltip-panel-${this.position}`, this.tooltipClass].filter(Boolean),
+      panelClass: ['ix-tooltip-panel', `ix-tooltip-panel-${this.position()}`, this.tooltipClass()].filter(Boolean),
     });
   }
 
@@ -155,14 +155,14 @@ export class IxTooltipDirective implements OnInit, OnDestroy {
     if (!this._tooltipInstance) {
       const portal = new ComponentPortal(IxTooltipComponent, this._viewContainerRef);
       this._tooltipInstance = this._overlayRef.attach(portal);
-      this._tooltipInstance.instance.message = this.message;
-      this._tooltipInstance.instance.id = this._ariaDescribedBy!;
+      this._tooltipInstance.setInput('message', this.message());
+      this._tooltipInstance.setInput('id', this._ariaDescribedBy!);
       this._isTooltipVisible = true;
     }
   }
 
   private _getPositions(): ConnectedPosition[] {
-    switch (this.position) {
+    switch (this.position()) {
       case 'above':
         return [
           { originX: 'center', originY: 'top', overlayX: 'center', overlayY: 'bottom', offsetY: -12 },

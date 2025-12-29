@@ -1,4 +1,4 @@
-import { Component, Input, TemplateRef, ViewChild, ElementRef, inject } from '@angular/core';
+import { Component, input, TemplateRef, viewChild, ElementRef, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { A11yModule } from '@angular/cdk/a11y';
 
@@ -10,43 +10,43 @@ import { A11yModule } from '@angular/cdk/a11y';
   styleUrl: './ix-tab-panel.component.scss'
 })
 export class IxTabPanelComponent {
-  @Input() label = '';
-  @Input() lazyLoad = false;
-  @Input() testId?: string;
+  label = input<string>('');
+  lazyLoad = input<boolean>(false);
+  testId = input<string | undefined>(undefined);
 
-  @ViewChild('content', { static: true }) content!: TemplateRef<any>;
+  content = viewChild.required<TemplateRef<any>>('content');
 
-  // Internal properties set by parent IxTabsComponent
-  index = 0;
-  isActive = false;
-  hasBeenActive = false;
+  // Internal properties set by parent IxTabsComponent (public signals for parent control)
+  public index = signal<number>(0);
+  public isActive = signal<boolean>(false);
+  public hasBeenActive = signal<boolean>(false);
 
   elementRef = inject(ElementRef<HTMLElement>);
 
-  get classes(): string {
+  classes = computed(() => {
     const classes = ['ix-tab-panel'];
-    
-    if (this.isActive) {
+
+    if (this.isActive()) {
       classes.push('ix-tab-panel--active');
     }
-    
-    if (!this.isActive) {
+
+    if (!this.isActive()) {
       classes.push('ix-tab-panel--hidden');
     }
 
     return classes.join(' ');
-  }
+  });
 
-  get shouldRender(): boolean {
-    if (!this.lazyLoad) {
+  shouldRender = computed(() => {
+    if (!this.lazyLoad()) {
       return true;
     }
-    
+
     // For lazy loading, only render if it's currently active or has been active before
-    return this.isActive || this.hasBeenActive;
-  }
+    return this.isActive() || this.hasBeenActive();
+  });
 
   onActivate() {
-    this.hasBeenActive = true;
+    this.hasBeenActive.set(true);
   }
 }

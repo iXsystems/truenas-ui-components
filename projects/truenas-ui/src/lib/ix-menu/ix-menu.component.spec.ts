@@ -23,7 +23,7 @@ describe('IxMenuComponent', () => {
 
     fixture = TestBed.createComponent(IxMenuComponent);
     component = fixture.componentInstance;
-    component.items = mockMenuItems;
+    fixture.componentRef.setInput('items', mockMenuItems);
     fixture.detectChanges();
   });
 
@@ -81,26 +81,26 @@ describe('IxMenuComponent', () => {
   });
 
   it('should return context menu template when contextMenu is true', () => {
-    component.contextMenu = true;
+    fixture.componentRef.setInput('contextMenu', true);
     fixture.detectChanges();
 
     const template = component.getMenuTemplate();
-    expect(template).toBe(component.contextMenuTemplate);
+    expect(template).toBe(component.contextMenuTemplate());
   });
 
   it('should track items by id', () => {
     const testItem = mockMenuItems[0];
     const result = component.trackByItemId(0, testItem);
-    
+
     expect(result).toBe(testItem.id);
   });
 
   it('should detect items with children', () => {
     const itemWithChildren = mockMenuItems[4];
     const itemWithoutChildren = mockMenuItems[0];
-    
-    expect(component.hasChildren(itemWithChildren)).toBe(true);
-    expect(component.hasChildren(itemWithoutChildren)).toBe(false);
+
+    expect(component.hasChildren()(itemWithChildren)).toBe(true);
+    expect(component.hasChildren()(itemWithoutChildren)).toBe(false);
   });
 
   it('should not emit menuItemClick for items with children', () => {

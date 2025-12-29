@@ -1,5 +1,5 @@
 <!-- Context menu content slot -->
-@if (contextMenu) {
+@if (contextMenu()) {
   <div class="ix-menu-context-content" (contextmenu)="onContextMenu($event)">
     <ng-content></ng-content>
   </div>
@@ -8,7 +8,7 @@
   <!-- Context menu template for overlay -->
   <ng-template #contextMenuTemplate>
     <div class="ix-menu" cdkMenu>
-      @for (item of items; track trackByItemId($index, item)) {
+      @for (item of items(); track trackByItemId($index, item)) {
         @if (item.separator) {
           <div
             class="ix-menu-separator"
@@ -139,7 +139,7 @@
   <!-- Regular menu template -->
   <ng-template #menuTemplate>
     <div class="ix-menu" cdkMenu>
-      @for (item of items; track trackByItemId($index, item)) {
+      @for (item of items(); track trackByItemId($index, item)) {
         @if (item.separator) {
           <div
             class="ix-menu-separator"

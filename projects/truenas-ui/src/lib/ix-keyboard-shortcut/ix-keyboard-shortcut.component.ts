@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit, OnChanges } from '@angular/core';
+import { Component, input, computed } from '@angular/core';
 import { PlatformType } from '../enums/modifier-keys.enum';
 
 @Component({
@@ -9,25 +9,19 @@ import { PlatformType } from '../enums/modifier-keys.enum';
   templateUrl: './ix-keyboard-shortcut.component.html',
   styleUrls: ['./ix-keyboard-shortcut.component.scss'],
 })
-export class IxKeyboardShortcutComponent implements OnInit, OnChanges {
-  @Input() shortcut: string = '';
-  @Input() platform: PlatformType = 'auto';
-  @Input() separator: string = '';
+export class IxKeyboardShortcutComponent {
+  shortcut = input<string>('');
+  platform = input<PlatformType>('auto');
+  separator = input<string>('');
 
-  displayShortcut: string = '';
-
-  ngOnInit(): void {
-    this.displayShortcut = this.formatShortcut(this.shortcut);
-  }
-
-  ngOnChanges(): void {
-    this.displayShortcut = this.formatShortcut(this.shortcut);
-  }
+  displayShortcut = computed(() => {
+    return this.formatShortcut(this.shortcut());
+  });
 
   private formatShortcut(shortcut: string): string {
     if (!shortcut) return '';
 
-    const detectedPlatform = this.platform === 'auto' ? this.detectPlatform() : this.platform;
+    const detectedPlatform = this.platform() === 'auto' ? this.detectPlatform() : this.platform();
     
     // Convert Mac-style shortcuts to platform-appropriate format
     if (detectedPlatform === 'windows' || detectedPlatform === 'linux') {
@@ -61,20 +55,21 @@ export class IxKeyboardShortcutComponent implements OnInit, OnChanges {
   }
 
 
-  get shortcutKeys(): string[] {
-    if (!this.displayShortcut) return [];
+  shortcutKeys = computed(() => {
+    const displayShortcut = this.displayShortcut();
+    if (!displayShortcut) return [];
 
     // Split by common separators
     const separators = ['+', ' ', ''];
     let keys: string[] = [];
 
     // For Mac-style shortcuts without separators
-    if (this.displayShortcut.includes('⌘') || this.displayShortcut.includes('⌥') || this.displayShortcut.includes('⇧')) {
+    if (displayShortcut.includes('⌘') || displayShortcut.includes('⌥') || displayShortcut.includes('⇧')) {
       const macSymbols = ['⌘', '⌥', '⇧', '⌃'];
       let currentKey = '';
 
       // Iterate through each character to preserve order
-      for (const char of this.displayShortcut) {
+      for (const char of displayShortcut) {
         if (macSymbols.includes(char)) {
           // If we have accumulated characters, add them first
           if (currentKey) {
@@ -95,9 +90,9 @@ export class IxKeyboardShortcutComponent implements OnInit, OnChanges {
       }
     } else {
       // For Windows/Linux style shortcuts with + separators
-      keys = this.displayShortcut.split('+');
+      keys = displayShortcut.split('+');
     }
 
     return keys.filter(key => key.trim() !== '');
-  }
+  });
 }

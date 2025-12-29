@@ -62,7 +62,7 @@ describe('IxIconComponent - MDI Support', () => {
   });
 
   it('should render material icon by default', fakeAsync(() => {
-    component.name = 'settings';
+    fixture.componentRef.setInput('name', 'settings');
     fixture.detectChanges();
     tick();
     flush();
@@ -76,8 +76,8 @@ describe('IxIconComponent - MDI Support', () => {
     spriteLoader.getIconUrl.mockReturnValue('#icon-mdi-harddisk');
     spriteLoader.getSafeIconUrl.mockReturnValue('#icon-mdi-harddisk' as any);
 
-    component.name = 'harddisk';
-    component.library = 'mdi';
+    fixture.componentRef.setInput('name', 'harddisk');
+    fixture.componentRef.setInput('library', 'mdi');
     fixture.detectChanges();
     tick();
     flush();
@@ -88,7 +88,7 @@ describe('IxIconComponent - MDI Support', () => {
   }));
 
   it('should maintain backward compatibility', fakeAsync(() => {
-    component.name = 'delete';
+    fixture.componentRef.setInput('name', 'delete');
     // No library specified - should default to existing behavior
     fixture.detectChanges();
     tick();
@@ -101,8 +101,8 @@ describe('IxIconComponent - MDI Support', () => {
     spriteLoader.getIconUrl.mockReturnValue(null);
     iconRegistry.resolveIcon.mockReturnValue(null); // Icon not found
 
-    component.name = 'unknown-icon';
-    component.library = 'mdi';
+    fixture.componentRef.setInput('name', 'unknown-icon');
+    fixture.componentRef.setInput('library', 'mdi');
     fixture.detectChanges();
 
     // Should try to load from sprite first, then fall back to registry
@@ -167,8 +167,8 @@ describe('IxIconComponent - Error Handling', () => {
     spriteLoader.getIconUrl.mockReturnValue(null); // Icon not in sprite
     iconRegistry.resolveIcon.mockReturnValue(null); // Not found in registry
 
-    component.name = 'nonexistent';
-    component.library = 'mdi';
+    fixture.componentRef.setInput('name', 'nonexistent');
+    fixture.componentRef.setInput('library', 'mdi');
     fixture.detectChanges();
     tick();
     flush();
@@ -182,8 +182,8 @@ describe('IxIconComponent - Error Handling', () => {
     spriteLoader.getIconUrl.mockReturnValue(null); // Icon not in sprite
     iconRegistry.resolveIcon.mockReturnValue(null);
 
-    component.name = 'missing';
-    component.library = 'mdi';
+    fixture.componentRef.setInput('name', 'missing');
+    fixture.componentRef.setInput('library', 'mdi');
     fixture.detectChanges();
     tick();
     flush();
@@ -198,8 +198,8 @@ describe('IxIconComponent - Error Handling', () => {
     spriteLoader.getIconUrl.mockReturnValue('#icon-mdi-harddisk');
     spriteLoader.getSafeIconUrl.mockReturnValue('#icon-mdi-harddisk' as any);
 
-    component.name = 'harddisk';
-    component.library = 'mdi';
+    fixture.componentRef.setInput('name', 'harddisk');
+    fixture.componentRef.setInput('library', 'mdi');
     fixture.detectChanges();
     tick();
     flush();

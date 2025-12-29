@@ -1,26 +1,26 @@
-<div class="ix-select-container" [attr.data-testid]="testId">
+<div class="ix-select-container" [attr.data-testid]="testId()">
   <!-- Select Trigger -->
-  <div 
+  <div
     class="ix-select-trigger"
-    [class.disabled]="disabled"
-    [class.open]="isOpen"
-    [attr.aria-expanded]="isOpen"
+    [class.disabled]="isDisabled()"
+    [class.open]="isOpen()"
+    [attr.aria-expanded]="isOpen()"
     [attr.aria-haspopup]="true"
-    [attr.aria-label]="placeholder"
+    [attr.aria-label]="placeholder()"
     role="combobox"
     tabindex="0"
     (click)="toggleDropdown()"
     (keydown)="onKeydown($event)">
-    
+
     <!-- Display Text -->
-    <span 
+    <span
       class="ix-select-text"
-      [class.placeholder]="selectedValue === null || selectedValue === undefined">
+      [class.placeholder]="selectedValue() === null || selectedValue() === undefined">
       {{ getDisplayText() }}
     </span>
 
     <!-- Dropdown Arrow -->
-    <div class="ix-select-arrow" [class.open]="isOpen">
+    <div class="ix-select-arrow" [class.open]="isOpen()">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polyline points="6,9 12,15 18,9"></polyline>
       </svg>
@@ -28,7 +28,7 @@
   </div>
 
   <!-- Dropdown Menu -->
-  @if (isOpen) {
+  @if (isOpen()) {
     <div
       class="ix-select-dropdown"
       role="listbox">
@@ -36,12 +36,12 @@
       <!-- Options List -->
       <div class="ix-select-options">
         <!-- Regular Options -->
-        @for (option of options; track $index) {
+        @for (option of options(); track $index) {
           <div
             class="ix-select-option"
-            [class.selected]="isSelected(option)"
+            [class.selected]="isSelected()(option)"
             [class.disabled]="option.disabled"
-            [attr.aria-selected]="isSelected(option)"
+            [attr.aria-selected]="isSelected()(option)"
             [attr.aria-disabled]="option.disabled"
             role="option"
             (mousedown)="$event.preventDefault()"
@@ -52,9 +52,9 @@
         }
 
         <!-- Option Groups -->
-        @for (group of optionGroups; track $index; let isFirst = $first) {
+        @for (group of optionGroups(); track $index; let isFirst = $first) {
           <!-- Group Separator (not shown before first group if we have regular options) -->
-          @if (!isFirst || options.length > 0) {
+          @if (!isFirst || options().length > 0) {
             <div
               class="ix-select-separator"
               role="separator">
@@ -72,9 +72,9 @@
           @for (option of group.options; track $index) {
             <div
               class="ix-select-option"
-              [class.selected]="isSelected(option)"
+              [class.selected]="isSelected()(option)"
               [class.disabled]="option.disabled || group.disabled"
-              [attr.aria-selected]="isSelected(option)"
+              [attr.aria-selected]="isSelected()(option)"
               [attr.aria-disabled]="option.disabled || group.disabled"
               role="option"
               (mousedown)="$event.preventDefault()"

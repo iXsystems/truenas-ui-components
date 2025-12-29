@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, input, output, computed } from '@angular/core';
 
 @Component({
   selector: 'ix-button',
@@ -11,35 +11,22 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 export class IxButtonComponent {
   size = 'large';
 
-  @Input()
-  primary = false;
+  primary = input<boolean>(false);
+  color = input<'primary' | 'secondary' | 'warn' | 'default'>('default');
+  variant = input<'filled' | 'outline'>('filled');
+  backgroundColor = input<string | undefined>(undefined);
+  label = input<string>('Button');
+  disabled = input<boolean>(false);
 
-  @Input()
-  color: 'primary' | 'secondary' | 'warn' | 'default' = 'default';
+  onClick = output<MouseEvent>();
 
-  @Input()
-  variant: 'filled' | 'outline' = 'filled';
-
-  @Input()
-  backgroundColor?: string;
-
-  @Input()
-  label = 'Button';
-
-  @Input()
-  disabled = false;
-
-  @Output()
-  onClick = new EventEmitter<MouseEvent>();
-
-
-  public get classes(): string[] {
+  classes = computed(() => {
     // Support both primary boolean and color string approaches
-    const isPrimary = this.primary || this.color === 'primary';
-    const isWarn = this.color === 'warn';
-    
+    const isPrimary = this.primary() || this.color() === 'primary';
+    const isWarn = this.color() === 'warn';
+
     let mode = '';
-    if (this.variant === 'outline') {
+    if (this.variant() === 'outline') {
       if (isPrimary) {
         mode = 'button-outline-primary';
       } else if (isWarn) {
@@ -56,7 +43,7 @@ export class IxButtonComponent {
         mode = 'button-default';
       }
     }
-    
+
     return ['storybook-button', `storybook-button--${this.size}`, mode];
-  }
+  });
 }

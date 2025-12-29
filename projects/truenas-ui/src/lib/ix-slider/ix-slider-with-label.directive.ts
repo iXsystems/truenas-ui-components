@@ -1,9 +1,9 @@
-import { 
-  Directive, 
-  ElementRef, 
-  OnDestroy, 
+import {
+  Directive,
+  ElementRef,
+  OnDestroy,
   OnInit,
-  Input,
+  input,
   Host
 } from '@angular/core';
 import { IxSliderComponent } from './ix-slider.component';
@@ -13,7 +13,7 @@ import { IxSliderComponent } from './ix-slider.component';
   standalone: true
 })
 export class IxSliderWithLabelDirective implements OnInit, OnDestroy {
-  @Input('ixSliderWithLabel') enabled: boolean | string = true;
+  enabled = input<boolean | string>(true, { alias: 'ixSliderWithLabel' });
 
   constructor(
     private _elementRef: ElementRef<HTMLElement>,
@@ -21,22 +21,19 @@ export class IxSliderWithLabelDirective implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    const isEnabled = this.enabled === true || this.enabled === '' || this.enabled === 'true';
-    
+    const enabled = this.enabled();
+    const isEnabled = enabled === true || enabled === '' || enabled === 'true';
+
     if (!isEnabled) {
       return;
     }
 
     // Enable the label in the slider component
     this._slider.enableLabel();
-    
-    // Set default labelType to 'handle' if not already set
-    if (this._slider.labelType === 'none') {
-      this._slider.labelType = 'handle';
-    }
-    
+
     // Only set up event listeners for handle type labels (tooltip behavior)
-    if (this._slider.labelType === 'handle') {
+    const currentLabelType = this._slider.labelType();
+    if (currentLabelType === 'handle' || currentLabelType === 'both') {
       this._setupInteractionListeners();
     }
   }
@@ -74,20 +71,21 @@ export class IxSliderWithLabelDirective implements OnInit, OnDestroy {
 
   private _cleanup(): void {
     // Only clean up interaction listeners if they were set up for handle type
-    if (this._slider.labelType === 'handle') {
+    const currentLabelType = this._slider.labelType();
+    if (currentLabelType === 'handle' || currentLabelType === 'both') {
       const sliderContainer = this._elementRef.nativeElement.querySelector('.ix-slider-container');
       const thumbInput = this._elementRef.nativeElement.querySelector('input[ixSliderThumb]');
-      
+
       if (sliderContainer) {
         sliderContainer.removeEventListener('mousedown', this._onInteractionStart);
         sliderContainer.removeEventListener('touchstart', this._onInteractionStart);
       }
-      
+
       if (thumbInput) {
         thumbInput.removeEventListener('mousedown', this._onInteractionStart);
         thumbInput.removeEventListener('touchstart', this._onInteractionStart);
       }
-      
+
       document.removeEventListener('mouseup', this._onInteractionEnd);
       document.removeEventListener('touchend', this._onInteractionEnd);
     }

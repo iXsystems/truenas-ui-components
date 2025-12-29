@@ -1,8 +1,9 @@
 import {
   Component,
-  Input,
+  input,
+  computed,
   AfterViewInit,
-  ViewChild,
+  viewChild,
   ElementRef,
   ChangeDetectionStrategy,
   OnDestroy
@@ -19,30 +20,30 @@ import {
   }
 })
 export class IxParticleProgressBarComponent implements AfterViewInit, OnDestroy {
-  @Input() speed: 'slow' | 'medium' | 'fast' | 'ludicrous' = 'medium';
-  @Input() color: string = 'hsla(198, 100%, 42%, 1)';
-  @Input() height = 40;
-  @Input() width = 600;
-  @Input() fill = 300;
+  speed = input<'slow' | 'medium' | 'fast' | 'ludicrous'>('medium');
+  color = input<string>('hsla(198, 100%, 42%, 1)');
+  height = input<number>(40);
+  width = input<number>(600);
+  fill = input<number>(300);
 
-  @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
+  canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
 
   private ctx!: CanvasRenderingContext2D;
   private particles: any[] = [];
   private shades: string[] = [];
   private animationId?: number;
 
-  private get speedConfig() {
+  private speedConfig = computed(() => {
     const baseConfig = {
       slow: { speedMin: 0.5, speedMax: 1.5 },
       medium: { speedMin: 1, speedMax: 2.5 },
       fast: { speedMin: 2, speedMax: 4 },
       ludicrous: { speedMin: 4, speedMax: 8 }
-    }[this.speed];
+    }[this.speed()];
 
     // Calculate dynamic fade rate based on travel distance
     // Particles should fade out over the full travel distance (minus border radius buffer)
-    const travelDistance = Math.max(this.fill - 12, 20); // Distance from x=50 to x=50+fill-12 (avoid border radius), minimum 20px
+    const travelDistance = Math.max(this.fill() - 12, 20); // Distance from x=50 to x=50+fill-12 (avoid border radius), minimum 20px
     const averageSpeed = (baseConfig.speedMin + baseConfig.speedMax) / 2;
     const estimatedFrames = travelDistance / averageSpeed; // Approximate frames to travel the distance
     const fadeRate = 1 / estimatedFrames; // Fade from 1 to 0 over the travel distance
@@ -51,28 +52,28 @@ export class IxParticleProgressBarComponent implements AfterViewInit, OnDestroy 
       ...baseConfig,
       fadeRate: Math.max(fadeRate, 0.001) // Minimum fade rate to prevent too slow fading
     };
-  }
+  });
 
   /**
    * Calculate the gradient offset so the transition only happens in the last 100px
    */
-  get gradientTransitionStart(): number {
-    if (this.fill <= 100) {
+  gradientTransitionStart = computed(() => {
+    if (this.fill() <= 100) {
       return 0; // If fill is 100px or less, transition starts immediately
     }
-    return ((this.fill - 100) / this.fill) * 100; // Transparent until last 100px
-  }
+    return ((this.fill() - 100) / this.fill()) * 100; // Transparent until last 100px
+  });
 
   /**
    * Get the color for the progress bar (uses the exact same color as input)
    */
-  get progressBarColor(): string {
-    return this.color;
-  }
+  progressBarColor = computed(() => {
+    return this.color();
+  });
 
   ngAfterViewInit(): void {
-    this.ctx = this.canvasRef.nativeElement.getContext('2d')!;
-    this.shades = this.generateDarkerShades(this.color, 4);
+    this.ctx = this.canvasRef().nativeElement.getContext('2d')!;
+    this.shades = this.generateDarkerShades(this.color(), 4);
     this.animate();
   }
 
@@ -83,7 +84,7 @@ export class IxParticleProgressBarComponent implements AfterViewInit, OnDestroy 
   }
 
   private animate() {
-    this.ctx.clearRect(0, 0, this.width, this.height);
+    this.ctx.clearRect(0, 0, this.width(), this.height());
 
     for (let i = 0; i < this.particles.length; i++) {
       const p = this.particles[i];
@@ -100,9 +101,9 @@ export class IxParticleProgressBarComponent implements AfterViewInit, OnDestroy 
       this.ctx.fill();
 
       p.x += p.speed;
-      p.opacity -= this.speedConfig.fadeRate;
+      p.opacity -= this.speedConfig().fadeRate;
 
-      if (p.x > 50 + this.fill - 12 || p.opacity <= 0) {
+      if (p.x > 50 + this.fill() - 12 || p.opacity <= 0) {
         this.particles.splice(i, 1);
         i--;
       }
@@ -116,12 +117,12 @@ export class IxParticleProgressBarComponent implements AfterViewInit, OnDestroy 
   }
 
   private spawnParticle() {
-    const { speedMin, speedMax } = this.speedConfig;
+    const { speedMin, speedMax } = this.speedConfig();
     const color = this.shades[Math.floor(Math.random() * this.shades.length)];
     const speed = speedMin + Math.random() * (speedMax - speedMin);
     this.particles.push({
       x: 50,
-      y: this.height / 2 + (Math.random() * (this.height / 2) - this.height / 4),
+      y: this.height() / 2 + (Math.random() * (this.height() / 2) - this.height() / 4),
       radius: Math.random() * 2 + 1,
       speed,
       opacity: 1,

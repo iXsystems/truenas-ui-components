@@ -1,4 +1,4 @@
-import { Component, Input, forwardRef, computed } from '@angular/core';
+import { Component, input, signal, forwardRef, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/forms';
 import { IxSelectComponent, IxSelectOption } from '../ix-select/ix-select.component';
@@ -17,9 +17,9 @@ import { IxSelectComponent, IxSelectOption } from '../ix-select/ix-select.compon
   template: `
     <ix-select
       [options]="timeSelectOptions()"
-      [placeholder]="placeholder"
-      [disabled]="disabled"
-      [testId]="testId"
+      [placeholder]="placeholder()"
+      [disabled]="isDisabled()"
+      [testId]="testId()"
       [ngModel]="_value"
       (selectionChange)="onSelectionChange($event)">
     </ix-select>
@@ -30,20 +30,23 @@ import { IxSelectComponent, IxSelectOption } from '../ix-select/ix-select.compon
   }
 })
 export class IxTimeInputComponent implements ControlValueAccessor {
-  @Input() disabled = false;
-  @Input() format: '12h' | '24h' = '12h';
-  @Input() granularity: '15m' | '30m' | '1h' = '15m';
-  @Input() placeholder = 'Pick a time';
-  @Input() testId = '';
+  disabled = input<boolean>(false);
+  format = input<'12h' | '24h'>('12h');
+  granularity = input<'15m' | '30m' | '1h'>('15m');
+  placeholder = input<string>('Pick a time');
+  testId = input<string>('');
 
-  private get step(): number {
-    switch (this.granularity) {
+  private formDisabled = signal<boolean>(false);
+  isDisabled = computed(() => this.disabled() || this.formDisabled());
+
+  private step = computed((): number => {
+    switch (this.granularity()) {
       case '15m': return 15;
       case '30m': return 30;
       case '1h': return 60;
       default: return 15;
     }
-  }
+  });
 
   private onChange = (value: string) => {};
   private onTouched = () => {};
@@ -54,12 +57,12 @@ export class IxTimeInputComponent implements ControlValueAccessor {
   timeSelectOptions = computed((): IxSelectOption[] => {
     const options: IxSelectOption[] = [];
     const totalMinutes = 24 * 60; // Total minutes in a day
-    
-    for (let minutes = 0; minutes < totalMinutes; minutes += this.step) {
+
+    for (let minutes = 0; minutes < totalMinutes; minutes += this.step()) {
       const hours = Math.floor(minutes / 60);
       const mins = minutes % 60;
-      
-      if (this.format === '24h') {
+
+      if (this.format() === '24h') {
         const timeStr = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
         options.push({ value: timeStr, label: timeStr });
       } else {
@@ -69,7 +72,7 @@ export class IxTimeInputComponent implements ControlValueAccessor {
         options.push({ value: timeStr, label: timeStr });
       }
     }
-    
+
     return options;
   });
 
@@ -88,7 +91,7 @@ export class IxTimeInputComponent implements ControlValueAccessor {
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
+    this.formDisabled.set(isDisabled);
   }
 
   // Event handlers

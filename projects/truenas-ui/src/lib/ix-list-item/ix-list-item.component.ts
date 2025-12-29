@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ElementRef, AfterContentInit } from '@angular/core';
+import { Component, input, output, computed, signal, ElementRef, AfterContentInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -9,24 +9,24 @@ import { CommonModule } from '@angular/common';
   styleUrl: './ix-list-item.component.scss',
   host: {
     'class': 'ix-list-item',
-    '[class.ix-list-item--disabled]': 'disabled',
-    '[class.ix-list-item--clickable]': 'clickable',
-    '[class.ix-list-item--two-line]': 'hasSecondaryText',
-    '[class.ix-list-item--three-line]': 'hasThirdText',
+    '[class.ix-list-item--disabled]': 'disabled()',
+    '[class.ix-list-item--clickable]': 'clickable()',
+    '[class.ix-list-item--two-line]': 'hasSecondaryText()',
+    '[class.ix-list-item--three-line]': 'hasThirdText()',
     'role': 'listitem',
     '(click)': 'onClick($event)'
   }
 })
 export class IxListItemComponent implements AfterContentInit {
-  @Input() disabled = false;
-  @Input() clickable = false;
+  disabled = input<boolean>(false);
+  clickable = input<boolean>(false);
 
-  @Output() itemClick = new EventEmitter<Event>();
+  itemClick = output<Event>();
 
-  hasLeadingContent = false;
-  hasSecondaryTextContent = false;
-  hasTrailingContent = false;
-  hasPrimaryTextDirective = false;
+  protected hasLeadingContent = signal<boolean>(false);
+  protected hasSecondaryTextContent = signal<boolean>(false);
+  protected hasTrailingContent = signal<boolean>(false);
+  protected hasPrimaryTextDirective = signal<boolean>(false);
 
   constructor(private elementRef: ElementRef) {}
 
@@ -36,42 +36,42 @@ export class IxListItemComponent implements AfterContentInit {
 
   private checkContentProjection(): void {
     const element = this.elementRef.nativeElement;
-    
+
     // Check for leading content (icons/avatars)
-    this.hasLeadingContent = !!(
-      element.querySelector('[ixListIcon]') || 
+    this.hasLeadingContent.set(!!(
+      element.querySelector('[ixListIcon]') ||
       element.querySelector('[ixListAvatar]')
-    );
+    ));
 
     // Check for secondary text content
-    this.hasSecondaryTextContent = !!(
+    this.hasSecondaryTextContent.set(!!(
       element.querySelector('[ixListItemLine]') ||
       element.querySelector('[ixListItemSecondary]')
-    );
+    ));
 
     // Check for trailing content
-    this.hasTrailingContent = !!element.querySelector('[ixListItemTrailing]');
+    this.hasTrailingContent.set(!!element.querySelector('[ixListItemTrailing]'));
 
     // Check for primary text directive
-    this.hasPrimaryTextDirective = !!(
+    this.hasPrimaryTextDirective.set(!!(
       element.querySelector('[ixListItemTitle]') ||
       element.querySelector('[ixListItemPrimary]')
-    );
+    ));
   }
 
-  get hasSecondaryText(): boolean {
-    return this.hasSecondaryTextContent;
-  }
+  hasSecondaryText = computed(() => {
+    return this.hasSecondaryTextContent();
+  });
 
-  get hasThirdText(): boolean {
+  hasThirdText = computed(() => {
     // For now, we'll consider third line as having more than one secondary line
     const element = this.elementRef.nativeElement;
     const secondaryElements = element.querySelectorAll('[ixListItemLine], [ixListItemSecondary]');
     return secondaryElements.length > 1;
-  }
+  });
 
   onClick(event: Event): void {
-    if (!this.disabled && this.clickable) {
+    if (!this.disabled() && this.clickable()) {
       this.itemClick.emit(event);
     }
   }

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal, computed, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, input, output, signal, computed, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IxCalendarHeaderComponent } from './ix-calendar-header.component';
 import { IxMonthViewComponent } from './ix-month-view.component';
@@ -21,27 +21,27 @@ import { DateRange } from '../ix-date-range-input/ix-date-range-input.component'
     </ix-calendar-header>
 
     <div class="ix-calendar-content" cdkMonitorSubtreeFocus tabindex="-1">
-      <ix-month-view 
+      <ix-month-view
         *ngIf="currentView() === 'month'"
         [activeDate]="currentDate()"
-        [selected]="selected"
-        [dateFilter]="dateFilter"
-        [minDate]="minDate"
-        [maxDate]="maxDate"
-        [rangeMode]="rangeMode"
-        [selectedRange]="rangeMode ? rangeState() : undefined"
+        [selected]="selected()"
+        [dateFilter]="dateFilter()"
+        [minDate]="minDate()"
+        [maxDate]="maxDate()"
+        [rangeMode]="rangeMode()"
+        [selectedRange]="rangeMode() ? rangeState() : undefined"
         (selectedChange)="onSelectedChange($event)"
         (activeDateChange)="onActiveDateChange($event)">
       </ix-month-view>
-      
+
       <!-- Multi-year view -->
-      <ix-multi-year-view 
+      <ix-multi-year-view
         *ngIf="currentView() === 'year'"
         [activeDate]="currentDate()"
-        [selected]="selected"
-        [dateFilter]="dateFilter"
-        [minDate]="minDate"
-        [maxDate]="maxDate"
+        [selected]="selected()"
+        [dateFilter]="dateFilter()"
+        [minDate]="minDate()"
+        [maxDate]="maxDate()"
         (selectedChange)="onYearSelectedFromView($event)"
         (activeDateChange)="onActiveDateChange($event)">
       </ix-multi-year-view>
@@ -49,23 +49,23 @@ import { DateRange } from '../ix-date-range-input/ix-date-range-input.component'
   `,
   styleUrls: ['./ix-calendar.component.scss']
 })
-export class IxCalendarComponent implements OnInit, OnChanges {
-  @Input() startView: 'month' | 'year' = 'month';
-  @Input() selected?: Date | null;
-  @Input() minDate?: Date;
-  @Input() maxDate?: Date;
-  @Input() dateFilter?: (date: Date) => boolean;
-  
-  // Range mode inputs
-  @Input() rangeMode = false;
-  @Input() selectedRange?: DateRange;
+export class IxCalendarComponent implements OnInit {
+  startView = input<'month' | 'year'>('month');
+  selected = input<Date | null | undefined>(undefined);
+  minDate = input<Date | undefined>(undefined);
+  maxDate = input<Date | undefined>(undefined);
+  dateFilter = input<((date: Date) => boolean) | undefined>(undefined);
 
-  @Output() selectedChange = new EventEmitter<Date>();
-  @Output() activeDateChange = new EventEmitter<Date>();
-  @Output() viewChanged = new EventEmitter<'month' | 'year'>();
-  
+  // Range mode inputs
+  rangeMode = input<boolean>(false);
+  selectedRange = input<DateRange | undefined>(undefined);
+
+  selectedChange = output<Date>();
+  activeDateChange = output<Date>();
+  viewChanged = output<'month' | 'year'>();
+
   // Range mode outputs
-  @Output() selectedRangeChange = new EventEmitter<DateRange>();
+  selectedRangeChange = output<DateRange>();
 
   currentDate = signal<Date>(new Date());
   currentView = signal<'month' | 'year'>('month');
@@ -84,37 +84,46 @@ export class IxCalendarComponent implements OnInit, OnChanges {
   // Track if user has interacted with calendar - once true, ignore external selectedRange
   private userHasInteracted = false;
 
-  ngOnInit(): void {
-    this.currentView.set(this.startView);
-    
-    // Initialize range state if in range mode (this also handles currentDate)
-    if (this.rangeMode) {
-      this.initializeRangeState();
-    } else if (this.selected) {
-      // For single date mode, navigate to the selected date's month
-      this.currentDate.set(new Date(this.selected));
-    }
+  constructor() {
+    // Watch for changes to selectedRange input
+    effect(() => {
+      const selectedRange = this.selectedRange();
+      const rangeMode = this.rangeMode();
+      // Only update range state from external selectedRange if user hasn't interacted yet
+      if (!this.userHasInteracted && rangeMode) {
+        this.initializeRangeState();
+      }
+    });
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    // Only update range state from external selectedRange if user hasn't interacted yet
-    if (changes['selectedRange'] && !this.userHasInteracted && this.rangeMode) {
+  ngOnInit(): void {
+    this.currentView.set(this.startView());
+
+    // Initialize range state if in range mode (this also handles currentDate)
+    if (this.rangeMode()) {
       this.initializeRangeState();
+    } else {
+      const selected = this.selected();
+      if (selected) {
+        // For single date mode, navigate to the selected date's month
+        this.currentDate.set(new Date(selected));
+      }
     }
   }
 
   private initializeRangeState(): void {
-    if (this.rangeMode) {
-      if (this.selectedRange) {
+    if (this.rangeMode()) {
+      const selectedRange = this.selectedRange();
+      if (selectedRange) {
         this.rangeState.set({
-          start: this.selectedRange.start,
-          end: this.selectedRange.end,
-          selecting: this.selectedRange.start && this.selectedRange.end ? 'start' : 
-                    this.selectedRange.start ? 'end' : 'start'
+          start: selectedRange.start,
+          end: selectedRange.end,
+          selecting: selectedRange.start && selectedRange.end ? 'start' :
+                    selectedRange.start ? 'end' : 'start'
         });
-        
+
         // Navigate to the month of the selected start date, or end date if no start date
-        const dateToShow = this.selectedRange.start || this.selectedRange.end;
+        const dateToShow = selectedRange.start || selectedRange.end;
         if (dateToShow) {
           this.currentDate.set(new Date(dateToShow));
         }
@@ -180,7 +189,7 @@ export class IxCalendarComponent implements OnInit, OnChanges {
   }
 
   onSelectedChange(date: Date): void {
-    if (this.rangeMode) {
+    if (this.rangeMode()) {
       this.handleRangeSelection(date);
     } else {
       this.selectedChange.emit(date);

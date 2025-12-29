@@ -124,8 +124,8 @@ The IX Stepper component provides a guided step-by-step interface for complex wo
 
 | Event | Type | Description |
 |-------|------|-------------|
-| \`selectionChange\` | \`EventEmitter<{selectedIndex: number, previouslySelectedIndex: number}>\` | Fired when step selection changes |
-| \`completed\` | \`EventEmitter<any[]>\` | Fired when all steps are completed |
+| \`selectionChange\` | \`output<{selectedIndex: number, previouslySelectedIndex: number}>()\` | Fired when step selection changes |
+| \`completed\` | \`output<any[]>()\` | Fired when all steps are completed |
 
 ## Step States
 
@@ -143,18 +143,18 @@ The stepper component provides programmatic navigation:
 
 \`\`\`typescript
 // Access stepper instance
-@ViewChild(IxStepperComponent) stepper!: IxStepperComponent;
+stepper = viewChild.required(IxStepperComponent);
 
 // Navigate to specific step
-stepper.selectStep(2);
+stepper().selectStep(2);
 
 // Navigate forward/backward
-stepper.next();
-stepper.previous();
+stepper().next();
+stepper().previous();
 
 // Check if step can be selected
-if (stepper.canSelectStep(3)) {
-  stepper.selectStep(3);
+if (stepper().canSelectStep(3)) {
+  stepper().selectStep(3);
 }
 \`\`\`
 

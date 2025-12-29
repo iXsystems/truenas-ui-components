@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, computed, signal } from '@angular/core';
+import { Component, input, output, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -56,21 +56,14 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./ix-calendar-header.component.scss']
 })
 export class IxCalendarHeaderComponent {
-  @Input() set currentDate(date: Date) {
-    this._currentDate.set(date);
-  }
-  get currentDate(): Date {
-    return this._currentDate();
-  }
-  
-  private _currentDate = signal<Date>(new Date());
-  @Input() currentView: 'month' | 'year' = 'month';
+  currentDate = input<Date>(new Date());
+  currentView = input<'month' | 'year'>('month');
 
-  @Output() monthSelected = new EventEmitter<number>();
-  @Output() yearSelected = new EventEmitter<number>();
-  @Output() viewChanged = new EventEmitter<'month' | 'year'>();
-  @Output() previousClicked = new EventEmitter<void>();
-  @Output() nextClicked = new EventEmitter<void>();
+  monthSelected = output<number>();
+  yearSelected = output<number>();
+  viewChanged = output<'month' | 'year'>();
+  previousClicked = output<void>();
+  nextClicked = output<void>();
 
   private months = [
     'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
@@ -80,10 +73,10 @@ export class IxCalendarHeaderComponent {
   periodLabelId = `ix-calendar-period-label-${Math.floor(Math.random() * 10000)}`;
 
   periodLabel = computed(() => {
-    const date = this._currentDate();
+    const date = this.currentDate();
     if (!date) return '';
-    
-    if (this.currentView === 'month') {
+
+    if (this.currentView() === 'month') {
       const month = this.months[date.getMonth()];
       const year = date.getFullYear();
       return `${month} ${year}`;
@@ -97,15 +90,15 @@ export class IxCalendarHeaderComponent {
   });
 
   previousLabel = computed(() => {
-    return this.currentView === 'month' ? 'Previous month' : 'Previous 24 years';
+    return this.currentView() === 'month' ? 'Previous month' : 'Previous 24 years';
   });
 
   nextLabel = computed(() => {
-    return this.currentView === 'month' ? 'Next month' : 'Next 24 years';
+    return this.currentView() === 'month' ? 'Next month' : 'Next 24 years';
   });
 
   toggleView(): void {
-    const newView = this.currentView === 'month' ? 'year' : 'month';
+    const newView = this.currentView() === 'month' ? 'year' : 'month';
     this.viewChanged.emit(newView);
   }
 

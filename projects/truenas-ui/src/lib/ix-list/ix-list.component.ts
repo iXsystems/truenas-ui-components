@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -9,12 +9,12 @@ import { CommonModule } from '@angular/common';
   styleUrl: './ix-list.component.scss',
   host: {
     'class': 'ix-list',
-    '[class.ix-list--dense]': 'dense',
-    '[class.ix-list--disabled]': 'disabled',
+    '[class.ix-list--dense]': 'dense()',
+    '[class.ix-list--disabled]': 'disabled()',
     'role': 'list'
   }
 })
 export class IxListComponent {
-  @Input() dense = false;
-  @Input() disabled = false;
+  dense = input<boolean>(false);
+  disabled = input<boolean>(false);
 }

@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject, Input, Output, EventEmitter, forwardRef } from '@angular/core';
+import { Component, viewChild, ElementRef, AfterViewInit, OnDestroy, inject, input, output, computed, signal, forwardRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
@@ -18,28 +18,33 @@ import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
   ]
 })
 export class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
-  @ViewChild('radioEl') radioEl!: ElementRef<HTMLInputElement>;
+  radioEl = viewChild.required<ElementRef<HTMLInputElement>>('radioEl');
 
-  @Input() label = 'Radio';
-  @Input() value: any = '';
-  @Input() name?: string;
-  @Input() disabled = false;
-  @Input() required = false;
-  @Input() testId?: string;
-  @Input() error: string | null = null;
+  label = input<string>('Radio');
+  value = input<any>('');
+  name = input<string | undefined>(undefined);
+  disabled = input<boolean>(false);
+  required = input<boolean>(false);
+  testId = input<string | undefined>(undefined);
+  error = input<string | null>(null);
 
-  @Output() change = new EventEmitter<any>();
+  change = output<any>();
 
   id = `ix-radio-${Math.random().toString(36).substr(2, 9)}`;
   checked = false;
+
+  // CVA disabled state management
+  private formDisabled = signal<boolean>(false);
+  isDisabled = computed(() => this.disabled() || this.formDisabled());
 
   private focusMonitor = inject(FocusMonitor);
   private onChange = (_: any) => {};
   private onTouched = () => {};
 
   ngAfterViewInit() {
-    if (this.radioEl) {
-      this.focusMonitor.monitor(this.radioEl)
+    const radioEl = this.radioEl();
+    if (radioEl) {
+      this.focusMonitor.monitor(radioEl)
         .subscribe(origin => {
           // Focus monitoring for accessibility
         });
@@ -47,14 +52,15 @@ export class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
   }
 
   ngOnDestroy() {
-    if (this.radioEl) {
-      this.focusMonitor.stopMonitoring(this.radioEl);
+    const radioEl = this.radioEl();
+    if (radioEl) {
+      this.focusMonitor.stopMonitoring(radioEl);
     }
   }
 
   // ControlValueAccessor implementation
   writeValue(value: any): void {
-    this.checked = value !== null && value !== undefined && value === this.value;
+    this.checked = value !== null && value !== undefined && value === this.value();
   }
 
   registerOnChange(fn: (value: any) => void): void {
@@ -66,30 +72,30 @@ export class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
+    this.formDisabled.set(isDisabled);
   }
 
   onRadioChange(event: Event): void {
     const target = event.target as HTMLInputElement;
     this.checked = target.checked;
     if (target.checked) {
-      this.onChange(this.value);
+      this.onChange(this.value());
       this.onTouched();
-      this.change.emit(this.value);
+      this.change.emit(this.value());
     }
   }
 
-  get classes(): string[] {
+  classes = computed(() => {
     const classes = ['ix-radio'];
-    
-    if (this.disabled) {
+
+    if (this.isDisabled()) {
       classes.push('ix-radio--disabled');
     }
-    
-    if (this.error) {
+
+    if (this.error()) {
       classes.push('ix-radio--error');
     }
 
     return classes;
-  }
+  });
 }

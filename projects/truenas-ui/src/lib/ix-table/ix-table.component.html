@@ -2,16 +2,16 @@
   <!-- Header Row -->
   <thead class="ix-table__header">
     <tr class="ix-table__header-row">
-      @for (column of displayedColumns; track $index) {
+      @for (column of displayedColumns(); track $index) {
         <th
           class="ix-table__header-cell"
           [attr.data-column]="column">
-          @if (getColumnDef(column)?.headerTemplate) {
+          @if (getColumnDef(column)?.headerTemplate()) {
             <ng-container
-              [ngTemplateOutlet]="getColumnDef(column)?.headerTemplate || null">
+              [ngTemplateOutlet]="getColumnDef(column)?.headerTemplate() || null">
             </ng-container>
           }
-          @if (!getColumnDef(column)?.headerTemplate) {
+          @if (!getColumnDef(column)?.headerTemplate()) {
             <span>{{ column }}</span>
           }
         </th>
@@ -21,19 +21,19 @@
 
   <!-- Data Rows -->
   <tbody class="ix-table__body">
-    @for (row of data; track $index) {
+    @for (row of data(); track $index) {
       <tr class="ix-table__row">
-        @for (column of displayedColumns; track $index) {
+        @for (column of displayedColumns(); track $index) {
           <td
             class="ix-table__cell"
             [attr.data-column]="column">
-            @if (getColumnDef(column)?.cellTemplate) {
+            @if (getColumnDef(column)?.cellTemplate()) {
               <ng-container
-                [ngTemplateOutlet]="getColumnDef(column)?.cellTemplate || null"
+                [ngTemplateOutlet]="getColumnDef(column)?.cellTemplate() || null"
                 [ngTemplateOutletContext]="{ $implicit: row, column: column }">
               </ng-container>
             }
-            @if (!getColumnDef(column)?.cellTemplate) {
+            @if (!getColumnDef(column)?.cellTemplate()) {
               <span>{{ row[column] }}</span>
             }
           </td>

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, input, output, computed } from '@angular/core';
 import { IxIconComponent, IconSize, IconLibraryType } from '../ix-icon/ix-icon.component';
 
 @Component({
@@ -11,36 +11,23 @@ import { IxIconComponent, IconSize, IconLibraryType } from '../ix-icon/ix-icon.c
 })
 export class IxIconButtonComponent {
   // Button-related inputs
-  @Input()
-  disabled = false;
-
-  @Input()
-  ariaLabel?: string;
+  disabled = input<boolean>(false);
+  ariaLabel = input<string | undefined>(undefined);
 
   // Icon-related inputs
-  @Input()
-  name: string = '';
+  name = input<string>('');
+  size = input<IconSize>('md');
+  color = input<string | undefined>(undefined);
+  tooltip = input<string | undefined>(undefined);
+  library = input<IconLibraryType | undefined>(undefined);
 
-  @Input()
-  size: IconSize = 'md';
+  onClick = output<MouseEvent>();
 
-  @Input()
-  color?: string;
-
-  @Input()
-  tooltip?: string;
-
-  @Input()
-  library?: IconLibraryType;
-
-  @Output()
-  onClick = new EventEmitter<MouseEvent>();
-
-  public get classes(): string[] {
+  classes = computed(() => {
     return ['ix-icon-button'];
-  }
+  });
 
-  public get effectiveAriaLabel(): string {
-    return this.ariaLabel || this.name || 'Icon button';
-  }
+  effectiveAriaLabel = computed(() => {
+    return this.ariaLabel() || this.name() || 'Icon button';
+  });
 }

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, HostListener, ElementRef, AfterContentInit, ChangeDetectorRef } from '@angular/core';
+import { Component, input, output, computed, signal, HostListener, ElementRef, AfterContentInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IxCheckboxComponent } from '../ix-checkbox/ix-checkbox.component';
 
@@ -10,27 +10,49 @@ import { IxCheckboxComponent } from '../ix-checkbox/ix-checkbox.component';
   styleUrl: './ix-list-option.component.scss',
   host: {
     'class': 'ix-list-option',
-    '[class.ix-list-option--selected]': 'selected',
-    '[class.ix-list-option--disabled]': 'disabled',
+    '[class.ix-list-option--selected]': 'effectiveSelected()',
+    '[class.ix-list-option--disabled]': 'effectiveDisabled()',
     'role': 'option',
-    '[attr.aria-selected]': 'selected',
-    '[attr.aria-disabled]': 'disabled'
+    '[attr.aria-selected]': 'effectiveSelected()',
+    '[attr.aria-disabled]': 'effectiveDisabled()'
   }
 })
 export class IxListOptionComponent implements AfterContentInit {
-  @Input() value: any;
-  @Input() selected = false;
-  @Input() disabled = false;
-  @Input() color: 'primary' | 'accent' | 'warn' = 'primary';
+  value = input<any>(undefined);
+  selected = input<boolean>(false);
+  disabled = input<boolean>(false);
+  color = input<'primary' | 'accent' | 'warn'>('primary');
 
-  @Output() selectionChange = new EventEmitter<boolean>();
+  selectionChange = output<boolean>();
 
   // Reference to parent selection list (set by parent)
   selectionList?: any;
 
-  hasLeadingContent = false;
-  hasSecondaryTextContent = false;
-  hasPrimaryTextDirective = false;
+  // Internal state for tracking selection (for uncontrolled usage)
+  // Made public so parent ix-selection-list can control it
+  public internalSelected = signal<boolean | null>(null);
+  public internalDisabled = signal<boolean | null>(null);
+  public internalColor = signal<'primary' | 'accent' | 'warn' | null>(null);
+
+  // Effective selected state (prefers internal state if set, otherwise uses input)
+  effectiveSelected = computed(() => {
+    const internal = this.internalSelected();
+    return internal !== null ? internal : this.selected();
+  });
+
+  effectiveDisabled = computed(() => {
+    const internal = this.internalDisabled();
+    return internal !== null ? internal : this.disabled();
+  });
+
+  effectiveColor = computed(() => {
+    const internal = this.internalColor();
+    return internal !== null ? internal : this.color();
+  });
+
+  protected hasLeadingContent = signal<boolean>(false);
+  protected hasSecondaryTextContent = signal<boolean>(false);
+  protected hasPrimaryTextDirective = signal<boolean>(false);
 
   constructor(private elementRef: ElementRef, private cdr: ChangeDetectorRef) {}
 
@@ -40,29 +62,29 @@ export class IxListOptionComponent implements AfterContentInit {
 
   private checkContentProjection(): void {
     const element = this.elementRef.nativeElement;
-    
+
     // Check for leading content (icons/avatars)
-    this.hasLeadingContent = !!(
-      element.querySelector('[ixListIcon]') || 
+    this.hasLeadingContent.set(!!(
+      element.querySelector('[ixListIcon]') ||
       element.querySelector('[ixListAvatar]')
-    );
+    ));
 
     // Check for secondary text content
-    this.hasSecondaryTextContent = !!(
+    this.hasSecondaryTextContent.set(!!(
       element.querySelector('[ixListItemLine]') ||
       element.querySelector('[ixListItemSecondary]')
-    );
+    ));
 
     // Check for primary text directive
-    this.hasPrimaryTextDirective = !!(
+    this.hasPrimaryTextDirective.set(!!(
       element.querySelector('[ixListItemTitle]') ||
       element.querySelector('[ixListItemPrimary]')
-    );
+    ));
   }
 
   @HostListener('click', ['$event'])
   onClick(event: Event): void {
-    if (this.disabled) {
+    if (this.effectiveDisabled()) {
       return;
     }
 
@@ -72,7 +94,7 @@ export class IxListOptionComponent implements AfterContentInit {
   @HostListener('keydown.space', ['$event'])
   @HostListener('keydown.enter', ['$event'])
   onKeydown(event: KeyboardEvent): void {
-    if (this.disabled) {
+    if (this.effectiveDisabled()) {
       return;
     }
 
@@ -81,13 +103,14 @@ export class IxListOptionComponent implements AfterContentInit {
   }
 
   toggle(): void {
-    if (this.disabled) {
+    if (this.effectiveDisabled()) {
       return;
     }
 
-    this.selected = !this.selected;
+    const newSelected = !this.effectiveSelected();
+    this.internalSelected.set(newSelected);
     this.cdr.detectChanges();
-    this.selectionChange.emit(this.selected);
+    this.selectionChange.emit(newSelected);
 
     // Notify parent selection list
     if (this.selectionList) {

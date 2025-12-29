@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal, computed } from '@angular/core';
+import { Component, input, output, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface YearCell {
@@ -56,21 +56,14 @@ export interface YearCell {
   styleUrls: ['./ix-multi-year-view.component.scss']
 })
 export class IxMultiYearViewComponent {
-  @Input() set activeDate(date: Date) {
-    this._activeDate.set(date);
-  }
-  get activeDate(): Date {
-    return this._activeDate();
-  }
-  
-  private _activeDate = signal<Date>(new Date());
-  @Input() selected?: Date | null;
-  @Input() minDate?: Date;
-  @Input() maxDate?: Date;
-  @Input() dateFilter?: (date: Date) => boolean;
+  activeDate = input<Date>(new Date());
+  selected = input<Date | null | undefined>(undefined);
+  minDate = input<Date | undefined>(undefined);
+  maxDate = input<Date | undefined>(undefined);
+  dateFilter = input<((date: Date) => boolean) | undefined>(undefined);
 
-  @Output() selectedChange = new EventEmitter<Date>();
-  @Output() activeDateChange = new EventEmitter<Date>();
+  selectedChange = output<Date>();
+  activeDateChange = output<Date>();
 
   readonly cellWidth = 25; // 100/4 for 4 columns
   readonly cellAspectRatio = 7.14286; // Same as Material
@@ -79,13 +72,13 @@ export class IxMultiYearViewComponent {
 
   // Calculate the year range to display
   yearRange = computed(() => {
-    const activeDate = this._activeDate();
+    const activeDate = this.activeDate();
     const currentYear = activeDate.getFullYear();
-    
+
     // Calculate the starting year for a 24-year range
     // We want the active year to be roughly in the middle
     const startYear = Math.floor(currentYear / 24) * 24;
-    
+
     return { start: startYear, end: startYear + 23 };
   });
 
@@ -110,9 +103,9 @@ export class IxMultiYearViewComponent {
   private createYearCell(year: number): YearCell {
     const today = new Date();
     const currentYear = today.getFullYear();
-    const activeYear = this._activeDate().getFullYear();
-    const selectedYear = this.selected?.getFullYear();
-    
+    const activeYear = this.activeDate().getFullYear();
+    const selectedYear = this.selected()?.getFullYear();
+
     const isToday = year === currentYear;
     const isSelected = year === selectedYear;
     const isActive = year === activeYear;
@@ -130,15 +123,18 @@ export class IxMultiYearViewComponent {
   }
 
   private isYearEnabled(year: number): boolean {
-    if (this.minDate && year < this.minDate.getFullYear()) return false;
-    if (this.maxDate && year > this.maxDate.getFullYear()) return false;
-    
+    const minDate = this.minDate();
+    const maxDate = this.maxDate();
+    const dateFilter = this.dateFilter();
+    if (minDate && year < minDate.getFullYear()) return false;
+    if (maxDate && year > maxDate.getFullYear()) return false;
+
     // If we have a date filter, test January 1st of that year
-    if (this.dateFilter) {
+    if (dateFilter) {
       const testDate = new Date(year, 0, 1);
-      if (!this.dateFilter(testDate)) return false;
+      if (!dateFilter(testDate)) return false;
     }
-    
+
     return true;
   }
 
@@ -162,7 +158,7 @@ export class IxMultiYearViewComponent {
   onYearClicked(cell: YearCell): void {
     if (cell.enabled) {
       // Create a new date with the selected year, keeping current month and day
-      const currentDate = this._activeDate();
+      const currentDate = this.activeDate();
       const newDate = new Date(cell.year, currentDate.getMonth(), currentDate.getDate());
       this.selectedChange.emit(newDate);
     }

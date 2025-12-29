@@ -1,5 +1,5 @@
 import * as i0 from '@angular/core';
-import { Injectable, Component, input, ChangeDetectionStrategy, inject, ViewChild, Input, ViewEncapsulation, EventEmitter, Output, forwardRef, Directive, TemplateRef, HostListener, ElementRef, ContentChild, ChangeDetectorRef, ContentChildren, Optional, Inject, Pipe, signal, computed, Host } from '@angular/core';
+import { Injectable, Component, input, ChangeDetectionStrategy, viewChild, inject, effect, computed, ViewEncapsulation, output, signal, forwardRef, Directive, contentChild, ElementRef, contentChildren, ChangeDetectorRef, HostListener, TemplateRef, Optional, Inject, Pipe, Host, model } from '@angular/core';
 import * as i1$2 from '@angular/common';
 import { CommonModule, NgIf, DOCUMENT } from '@angular/common';
 import * as i1$1 from '@angular/platform-browser';
@@ -20,7 +20,7 @@ import * as i1$4 from '@angular/cdk/tree';
 import { CdkTree, CdkTreeModule, CdkTreeNode, CDK_TREE_NODE_OUTLET_NODE, CdkTreeNodeOutlet, CdkNestedTreeNode } from '@angular/cdk/tree';
 export { FlatTreeControl } from '@angular/cdk/tree';
 import { DataSource } from '@angular/cdk/collections';
-import { map, takeUntil } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import * as i1$6 from '@angular/cdk/dialog';
 import { Dialog, DIALOG_DATA } from '@angular/cdk/dialog';
 import { ScrollingModule } from '@angular/cdk/scrolling';
@@ -404,33 +404,23 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
 class IxIconComponent {
     sanitizer;
     cdr;
-    name = '';
-    size = 'md';
-    color;
-    tooltip;
-    ariaLabel;
-    library;
-    svgContainer;
+    name = input('', ...(ngDevMode ? [{ debugName: "name" }] : []));
+    size = input('md', ...(ngDevMode ? [{ debugName: "size" }] : []));
+    color = input(undefined, ...(ngDevMode ? [{ debugName: "color" }] : []));
+    tooltip = input(undefined, ...(ngDevMode ? [{ debugName: "tooltip" }] : []));
+    ariaLabel = input(undefined, ...(ngDevMode ? [{ debugName: "ariaLabel" }] : []));
+    library = input(undefined, ...(ngDevMode ? [{ debugName: "library" }] : []));
+    svgContainer = viewChild('svgContainer', ...(ngDevMode ? [{ debugName: "svgContainer" }] : []));
     iconResult = { source: 'text', content: '?' };
     iconRegistry = inject(IxIconRegistryService);
     constructor(sanitizer, cdr) {
         this.sanitizer = sanitizer;
         this.cdr = cdr;
-    }
-    ngOnInit() {
-        this.resolveIcon()
-            .then(() => {
-            this.cdr.markForCheck();
-            setTimeout(() => this.updateSvgContent(), 0);
-        })
-            .catch((error) => {
-            console.error('[IxIcon] Resolution failed', error);
-            this.iconResult = { source: 'text', content: '!' };
-            this.cdr.markForCheck();
-        });
-    }
-    ngOnChanges(changes) {
-        if (changes['name'] || changes['library']) {
+        // Use effect to watch for changes in name or library
+        effect(() => {
+            const currentName = this.name();
+            const currentLibrary = this.library();
+            // Trigger icon resolution when name or library changes
             this.resolveIcon()
                 .then(() => {
                 this.cdr.markForCheck();
@@ -441,33 +431,34 @@ class IxIconComponent {
                 this.iconResult = { source: 'text', content: '!' };
                 this.cdr.markForCheck();
             });
-        }
+        });
     }
     ngAfterViewInit() {
         this.updateSvgContent();
     }
-    get effectiveAriaLabel() {
-        return this.ariaLabel || this.name || 'Icon';
-    }
-    get sanitizedContent() {
+    effectiveAriaLabel = computed(() => {
+        return this.ariaLabel() || this.name() || 'Icon';
+    }, ...(ngDevMode ? [{ debugName: "effectiveAriaLabel" }] : []));
+    sanitizedContent = computed(() => {
         const content = this.iconResult.content;
         // Handle mock SafeHtml objects from Storybook
         if (content && typeof content === 'object' && content.changingThisBreaksApplicationSecurity) {
             return content.changingThisBreaksApplicationSecurity;
         }
         return content;
-    }
+    }, ...(ngDevMode ? [{ debugName: "sanitizedContent" }] : []));
     updateSvgContent() {
-        if (this.iconResult.source === 'svg' && this.svgContainer) {
-            const content = this.sanitizedContent;
+        const svgContainer = this.svgContainer();
+        if (this.iconResult.source === 'svg' && svgContainer) {
+            const content = this.sanitizedContent();
             if (typeof content === 'string') {
                 // Bypass Angular's sanitization by setting innerHTML directly
-                this.svgContainer.nativeElement.innerHTML = content;
+                svgContainer.nativeElement.innerHTML = content;
             }
         }
     }
     async resolveIcon() {
-        if (!this.name) {
+        if (!this.name()) {
             this.iconResult = { source: 'text', content: '?' };
             return;
         }
@@ -480,22 +471,22 @@ class IxIconComponent {
             console.warn('[IxIcon] Sprite loading failed, falling back to other icon sources:', error);
         }
         // Construct the effective icon name based on library attribute
-        let effectiveIconName = this.name;
-        if (this.library === 'mdi' && !this.name.startsWith('mdi-')) {
-            effectiveIconName = `mdi-${this.name}`;
+        let effectiveIconName = this.name();
+        if (this.library() === 'mdi' && !this.name().startsWith('mdi-')) {
+            effectiveIconName = `mdi-${this.name()}`;
         }
-        else if (this.library === 'material' && !this.name.startsWith('mat-')) {
+        else if (this.library() === 'material' && !this.name().startsWith('mat-')) {
             // Material icons get mat- prefix in sprite
-            effectiveIconName = `mat-${this.name}`;
+            effectiveIconName = `mat-${this.name()}`;
         }
-        else if (this.library === 'lucide' && !this.name.includes(':')) {
+        else if (this.library() === 'lucide' && !this.name().includes(':')) {
             // Convert to registry format for Lucide icons
-            effectiveIconName = `lucide:${this.name}`;
+            effectiveIconName = `lucide:${this.name()}`;
         }
         // 1. Try icon registry (libraries and custom icons)
         const iconOptions = {
-            size: this.size,
-            color: this.color
+            size: this.size(),
+            color: this.color()
         };
         let registryResult = this.iconRegistry.resolveIcon(effectiveIconName, iconOptions);
         // Fallback to global registry for Storybook/demos (when DI doesn't work)
@@ -627,27 +618,12 @@ class IxIconComponent {
         return false; // Disable generic CSS class checking for now
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxIconComponent, deps: [{ token: i1$1.DomSanitizer }, { token: i0.ChangeDetectorRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxIconComponent, isStandalone: true, selector: "ix-icon", inputs: { name: "name", size: "size", color: "color", tooltip: "tooltip", ariaLabel: "ariaLabel", library: "library" }, viewQueries: [{ propertyName: "svgContainer", first: true, predicate: ["svgContainer"], descendants: true }], usesOnChanges: true, ngImport: i0, template: "<div \n  class=\"ix-icon\"\n  [ngClass]=\"'ix-icon--' + size\"\n  [style.color]=\"color\"\n  [attr.aria-label]=\"effectiveAriaLabel\"\n  [attr.title]=\"tooltip\"\n  role=\"img\">\n  \n\n  @switch (iconResult.source) {\n    <!-- Sprite icons (from generated sprite.svg) -->\n    @case ('sprite') {\n      <svg\n           class=\"ix-icon__sprite\"\n           aria-hidden=\"true\">\n        <use [attr.href]=\"iconResult.spriteUrl\"></use>\n      </svg>\n    }\n\n    <!-- SVG content (from third-party libraries or assets) -->\n    @case ('svg') {\n      <div\n           class=\"ix-icon__svg\"\n           #svgContainer>\n      </div>\n    }\n\n    <!-- CSS class icons (Font Awesome, Material Icons, etc.) -->\n    @case ('css') {\n      <i\n         class=\"ix-icon__css\"\n         [class]=\"iconResult.content\"\n         aria-hidden=\"true\">\n      </i>\n    }\n\n    <!-- Unicode characters -->\n    @case ('unicode') {\n      <span\n            class=\"ix-icon__unicode\"\n            aria-hidden=\"true\">{{ iconResult.content }}</span>\n    }\n\n    <!-- Text abbreviation fallback -->\n    @default {\n      <span\n            class=\"ix-icon__text\"\n            aria-hidden=\"true\">{{ iconResult.content }}</span>\n    }\n  }\n</div>", styles: [".ix-icon{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}.ix-icon--xs{width:var(--icon-xs)!important;height:var(--icon-xs)!important;font-size:var(--icon-xs)!important}.ix-icon--sm{width:var(--icon-sm)!important;height:var(--icon-sm)!important;font-size:var(--icon-sm)!important}.ix-icon--md{width:var(--icon-md)!important;height:var(--icon-md)!important;font-size:var(--icon-md)!important}.ix-icon--lg{width:var(--icon-lg)!important;height:var(--icon-lg)!important;font-size:var(--icon-lg)!important}.ix-icon--xl{width:var(--icon-xl)!important;height:var(--icon-xl)!important;font-size:var(--icon-xl)!important}.ix-icon__sprite{width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__svg{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.ix-icon__svg :global(svg){width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__css{font-size:inherit;line-height:1;color:inherit}.ix-icon__unicode{font-size:inherit;line-height:1;color:inherit;text-align:center}.ix-icon__text{font-size:.75em;font-weight:600;line-height:1;color:inherit;text-align:center;opacity:.7}.ix-icon{width:var(--ix-icon-size, var(--icon-md));height:var(--ix-icon-size, var(--icon-md));color:var(--ix-icon-color, currentColor)}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }], changeDetection: i0.ChangeDetectionStrategy.OnPush, encapsulation: i0.ViewEncapsulation.None });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxIconComponent, isStandalone: true, selector: "ix-icon", inputs: { name: { classPropertyName: "name", publicName: "name", isSignal: true, isRequired: false, transformFunction: null }, size: { classPropertyName: "size", publicName: "size", isSignal: true, isRequired: false, transformFunction: null }, color: { classPropertyName: "color", publicName: "color", isSignal: true, isRequired: false, transformFunction: null }, tooltip: { classPropertyName: "tooltip", publicName: "tooltip", isSignal: true, isRequired: false, transformFunction: null }, ariaLabel: { classPropertyName: "ariaLabel", publicName: "ariaLabel", isSignal: true, isRequired: false, transformFunction: null }, library: { classPropertyName: "library", publicName: "library", isSignal: true, isRequired: false, transformFunction: null } }, viewQueries: [{ propertyName: "svgContainer", first: true, predicate: ["svgContainer"], descendants: true, isSignal: true }], ngImport: i0, template: "<div\n  class=\"ix-icon\"\n  [ngClass]=\"'ix-icon--' + size()\"\n  [style.color]=\"color()\"\n  [attr.aria-label]=\"effectiveAriaLabel()\"\n  [attr.title]=\"tooltip()\"\n  role=\"img\">\n  \n\n  @switch (iconResult.source) {\n    <!-- Sprite icons (from generated sprite.svg) -->\n    @case ('sprite') {\n      <svg\n           class=\"ix-icon__sprite\"\n           aria-hidden=\"true\">\n        <use [attr.href]=\"iconResult.spriteUrl\"></use>\n      </svg>\n    }\n\n    <!-- SVG content (from third-party libraries or assets) -->\n    @case ('svg') {\n      <div\n           class=\"ix-icon__svg\"\n           #svgContainer>\n      </div>\n    }\n\n    <!-- CSS class icons (Font Awesome, Material Icons, etc.) -->\n    @case ('css') {\n      <i\n         class=\"ix-icon__css\"\n         [class]=\"iconResult.content\"\n         aria-hidden=\"true\">\n      </i>\n    }\n\n    <!-- Unicode characters -->\n    @case ('unicode') {\n      <span\n            class=\"ix-icon__unicode\"\n            aria-hidden=\"true\">{{ iconResult.content }}</span>\n    }\n\n    <!-- Text abbreviation fallback -->\n    @default {\n      <span\n            class=\"ix-icon__text\"\n            aria-hidden=\"true\">{{ iconResult.content }}</span>\n    }\n  }\n</div>", styles: [".ix-icon{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}.ix-icon--xs{width:var(--icon-xs)!important;height:var(--icon-xs)!important;font-size:var(--icon-xs)!important}.ix-icon--sm{width:var(--icon-sm)!important;height:var(--icon-sm)!important;font-size:var(--icon-sm)!important}.ix-icon--md{width:var(--icon-md)!important;height:var(--icon-md)!important;font-size:var(--icon-md)!important}.ix-icon--lg{width:var(--icon-lg)!important;height:var(--icon-lg)!important;font-size:var(--icon-lg)!important}.ix-icon--xl{width:var(--icon-xl)!important;height:var(--icon-xl)!important;font-size:var(--icon-xl)!important}.ix-icon__sprite{width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__svg{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.ix-icon__svg :global(svg){width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__css{font-size:inherit;line-height:1;color:inherit}.ix-icon__unicode{font-size:inherit;line-height:1;color:inherit;text-align:center}.ix-icon__text{font-size:.75em;font-weight:600;line-height:1;color:inherit;text-align:center;opacity:.7}.ix-icon{width:var(--ix-icon-size, var(--icon-md));height:var(--ix-icon-size, var(--icon-md));color:var(--ix-icon-color, currentColor)}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }], changeDetection: i0.ChangeDetectionStrategy.OnPush, encapsulation: i0.ViewEncapsulation.None });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxIconComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-icon', standalone: true, imports: [CommonModule], changeDetection: ChangeDetectionStrategy.OnPush, encapsulation: ViewEncapsulation.None, template: "<div \n  class=\"ix-icon\"\n  [ngClass]=\"'ix-icon--' + size\"\n  [style.color]=\"color\"\n  [attr.aria-label]=\"effectiveAriaLabel\"\n  [attr.title]=\"tooltip\"\n  role=\"img\">\n  \n\n  @switch (iconResult.source) {\n    <!-- Sprite icons (from generated sprite.svg) -->\n    @case ('sprite') {\n      <svg\n           class=\"ix-icon__sprite\"\n           aria-hidden=\"true\">\n        <use [attr.href]=\"iconResult.spriteUrl\"></use>\n      </svg>\n    }\n\n    <!-- SVG content (from third-party libraries or assets) -->\n    @case ('svg') {\n      <div\n           class=\"ix-icon__svg\"\n           #svgContainer>\n      </div>\n    }\n\n    <!-- CSS class icons (Font Awesome, Material Icons, etc.) -->\n    @case ('css') {\n      <i\n         class=\"ix-icon__css\"\n         [class]=\"iconResult.content\"\n         aria-hidden=\"true\">\n      </i>\n    }\n\n    <!-- Unicode characters -->\n    @case ('unicode') {\n      <span\n            class=\"ix-icon__unicode\"\n            aria-hidden=\"true\">{{ iconResult.content }}</span>\n    }\n\n    <!-- Text abbreviation fallback -->\n    @default {\n      <span\n            class=\"ix-icon__text\"\n            aria-hidden=\"true\">{{ iconResult.content }}</span>\n    }\n  }\n</div>", styles: [".ix-icon{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}.ix-icon--xs{width:var(--icon-xs)!important;height:var(--icon-xs)!important;font-size:var(--icon-xs)!important}.ix-icon--sm{width:var(--icon-sm)!important;height:var(--icon-sm)!important;font-size:var(--icon-sm)!important}.ix-icon--md{width:var(--icon-md)!important;height:var(--icon-md)!important;font-size:var(--icon-md)!important}.ix-icon--lg{width:var(--icon-lg)!important;height:var(--icon-lg)!important;font-size:var(--icon-lg)!important}.ix-icon--xl{width:var(--icon-xl)!important;height:var(--icon-xl)!important;font-size:var(--icon-xl)!important}.ix-icon__sprite{width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__svg{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.ix-icon__svg :global(svg){width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__css{font-size:inherit;line-height:1;color:inherit}.ix-icon__unicode{font-size:inherit;line-height:1;color:inherit;text-align:center}.ix-icon__text{font-size:.75em;font-weight:600;line-height:1;color:inherit;text-align:center;opacity:.7}.ix-icon{width:var(--ix-icon-size, var(--icon-md));height:var(--ix-icon-size, var(--icon-md));color:var(--ix-icon-color, currentColor)}\n"] }]
-        }], ctorParameters: () => [{ type: i1$1.DomSanitizer }, { type: i0.ChangeDetectorRef }], propDecorators: { name: [{
-                type: Input
-            }], size: [{
-                type: Input
-            }], color: [{
-                type: Input
-            }], tooltip: [{
-                type: Input
-            }], ariaLabel: [{
-                type: Input
-            }], library: [{
-                type: Input
-            }], svgContainer: [{
-                type: ViewChild,
-                args: ['svgContainer', { static: false }]
-            }] } });
+            args: [{ selector: 'ix-icon', standalone: true, imports: [CommonModule], changeDetection: ChangeDetectionStrategy.OnPush, encapsulation: ViewEncapsulation.None, template: "<div\n  class=\"ix-icon\"\n  [ngClass]=\"'ix-icon--' + size()\"\n  [style.color]=\"color()\"\n  [attr.aria-label]=\"effectiveAriaLabel()\"\n  [attr.title]=\"tooltip()\"\n  role=\"img\">\n  \n\n  @switch (iconResult.source) {\n    <!-- Sprite icons (from generated sprite.svg) -->\n    @case ('sprite') {\n      <svg\n           class=\"ix-icon__sprite\"\n           aria-hidden=\"true\">\n        <use [attr.href]=\"iconResult.spriteUrl\"></use>\n      </svg>\n    }\n\n    <!-- SVG content (from third-party libraries or assets) -->\n    @case ('svg') {\n      <div\n           class=\"ix-icon__svg\"\n           #svgContainer>\n      </div>\n    }\n\n    <!-- CSS class icons (Font Awesome, Material Icons, etc.) -->\n    @case ('css') {\n      <i\n         class=\"ix-icon__css\"\n         [class]=\"iconResult.content\"\n         aria-hidden=\"true\">\n      </i>\n    }\n\n    <!-- Unicode characters -->\n    @case ('unicode') {\n      <span\n            class=\"ix-icon__unicode\"\n            aria-hidden=\"true\">{{ iconResult.content }}</span>\n    }\n\n    <!-- Text abbreviation fallback -->\n    @default {\n      <span\n            class=\"ix-icon__text\"\n            aria-hidden=\"true\">{{ iconResult.content }}</span>\n    }\n  }\n</div>", styles: [".ix-icon{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}.ix-icon--xs{width:var(--icon-xs)!important;height:var(--icon-xs)!important;font-size:var(--icon-xs)!important}.ix-icon--sm{width:var(--icon-sm)!important;height:var(--icon-sm)!important;font-size:var(--icon-sm)!important}.ix-icon--md{width:var(--icon-md)!important;height:var(--icon-md)!important;font-size:var(--icon-md)!important}.ix-icon--lg{width:var(--icon-lg)!important;height:var(--icon-lg)!important;font-size:var(--icon-lg)!important}.ix-icon--xl{width:var(--icon-xl)!important;height:var(--icon-xl)!important;font-size:var(--icon-xl)!important}.ix-icon__sprite{width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__svg{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.ix-icon__svg :global(svg){width:100%;height:100%;fill:currentColor;color:inherit}.ix-icon__css{font-size:inherit;line-height:1;color:inherit}.ix-icon__unicode{font-size:inherit;line-height:1;color:inherit;text-align:center}.ix-icon__text{font-size:.75em;font-weight:600;line-height:1;color:inherit;text-align:center;opacity:.7}.ix-icon{width:var(--ix-icon-size, var(--icon-md));height:var(--ix-icon-size, var(--icon-md));color:var(--ix-icon-color, currentColor)}\n"] }]
+        }], ctorParameters: () => [{ type: i1$1.DomSanitizer }, { type: i0.ChangeDetectorRef }] });
 
 const ICON_MAP = {
     'info': 'information',
@@ -689,34 +665,34 @@ class IxBannerComponent {
     /**
      * Get the appropriate icon name based on banner type
      */
-    get iconName() {
+    iconName = computed(() => {
         return ICON_MAP[this.type()];
-    }
+    }, ...(ngDevMode ? [{ debugName: "iconName" }] : []));
     /**
      * Get ARIA role based on banner type
      * Error/warning use 'alert' for immediate attention
      * Info/success use 'status' for polite announcements
      */
-    get ariaRole() {
+    ariaRole = computed(() => {
         return this.type() === 'error' || this.type() === 'warning'
             ? 'alert'
             : 'status';
-    }
+    }, ...(ngDevMode ? [{ debugName: "ariaRole" }] : []));
     /**
      * Generate CSS classes using BEM methodology
      */
-    get classes() {
+    classes = computed(() => {
         return [
             'ix-banner',
             `ix-banner--${this.type()}`,
         ];
-    }
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxBannerComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxBannerComponent, isStandalone: true, selector: "ix-banner", inputs: { heading: { classPropertyName: "heading", publicName: "heading", isSignal: true, isRequired: true, transformFunction: null }, message: { classPropertyName: "message", publicName: "message", isSignal: true, isRequired: false, transformFunction: null }, type: { classPropertyName: "type", publicName: "type", isSignal: true, isRequired: false, transformFunction: null } }, ngImport: i0, template: "<div\n  [ngClass]=\"classes\"\n  [attr.role]=\"ariaRole\"\n  aria-live=\"polite\"\n>\n  <div class=\"ix-banner__icon\">\n    <ix-icon\n      [name]=\"iconName\"\n      library=\"mdi\"\n      size=\"md\"\n      aria-hidden=\"true\"\n    ></ix-icon>\n  </div>\n\n  <div class=\"ix-banner__content\">\n    <div class=\"ix-banner__heading\">\n      {{ heading() }}\n    </div>\n\n    @if (message()) {\n      <div class=\"ix-banner__message\">\n        {{ message() }}\n      </div>\n    }\n  </div>\n</div>\n", styles: [".ix-banner{display:flex;align-items:flex-start;gap:12px;padding:16px;border-radius:6px;border-left:4px solid;transition:opacity .2s ease}@media (prefers-reduced-motion: reduce){.ix-banner{transition:none}}.ix-banner--info{border-left-color:var(--info, #3b82f6);background-color:var(--alt-bg1, #383838)}.ix-banner--info .ix-banner__heading,.ix-banner--info .ix-banner__icon{color:var(--info, #3b82f6)}.ix-banner--warning{border-left-color:var(--warning, #f59e0b);background-color:var(--alt-bg1, #383838)}.ix-banner--warning .ix-banner__heading,.ix-banner--warning .ix-banner__icon{color:var(--warning, #f59e0b)}.ix-banner--error{border-left-color:var(--error, #ef4444);background-color:var(--alt-bg1, #383838)}.ix-banner--error .ix-banner__heading,.ix-banner--error .ix-banner__icon{color:var(--error, #ef4444)}.ix-banner--success{border-left-color:var(--success, #10b981);background-color:var(--alt-bg1, #383838)}.ix-banner--success .ix-banner__heading,.ix-banner--success .ix-banner__icon{color:var(--success, #10b981)}.ix-banner__icon{flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:2px}.ix-banner__content{flex:1;min-width:0}.ix-banner__heading{font-size:1rem;font-weight:600;line-height:1.5;margin:0}.ix-banner__message{font-size:.875rem;color:var(--fg2, #6b7280);line-height:1.5;margin-top:4px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxBannerComponent, isStandalone: true, selector: "ix-banner", inputs: { heading: { classPropertyName: "heading", publicName: "heading", isSignal: true, isRequired: true, transformFunction: null }, message: { classPropertyName: "message", publicName: "message", isSignal: true, isRequired: false, transformFunction: null }, type: { classPropertyName: "type", publicName: "type", isSignal: true, isRequired: false, transformFunction: null } }, ngImport: i0, template: "<div\n  [ngClass]=\"classes()\"\n  [attr.role]=\"ariaRole()\"\n  aria-live=\"polite\"\n>\n  <div class=\"ix-banner__icon\">\n    <ix-icon\n      [name]=\"iconName()\"\n      library=\"mdi\"\n      size=\"md\"\n      aria-hidden=\"true\"\n    ></ix-icon>\n  </div>\n\n  <div class=\"ix-banner__content\">\n    <div class=\"ix-banner__heading\">\n      {{ heading() }}\n    </div>\n\n    @if (message()) {\n      <div class=\"ix-banner__message\">\n        {{ message() }}\n      </div>\n    }\n  </div>\n</div>\n", styles: [".ix-banner{display:flex;align-items:flex-start;gap:12px;padding:16px;border-radius:6px;border-left:4px solid;transition:opacity .2s ease}@media (prefers-reduced-motion: reduce){.ix-banner{transition:none}}.ix-banner--info{border-left-color:var(--info, #3b82f6);background-color:var(--alt-bg1, #383838)}.ix-banner--info .ix-banner__heading,.ix-banner--info .ix-banner__icon{color:var(--info, #3b82f6)}.ix-banner--warning{border-left-color:var(--warning, #f59e0b);background-color:var(--alt-bg1, #383838)}.ix-banner--warning .ix-banner__heading,.ix-banner--warning .ix-banner__icon{color:var(--warning, #f59e0b)}.ix-banner--error{border-left-color:var(--error, #ef4444);background-color:var(--alt-bg1, #383838)}.ix-banner--error .ix-banner__heading,.ix-banner--error .ix-banner__icon{color:var(--error, #ef4444)}.ix-banner--success{border-left-color:var(--success, #10b981);background-color:var(--alt-bg1, #383838)}.ix-banner--success .ix-banner__heading,.ix-banner--success .ix-banner__icon{color:var(--success, #10b981)}.ix-banner__icon{flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:2px}.ix-banner__content{flex:1;min-width:0}.ix-banner__heading{font-size:1rem;font-weight:600;line-height:1.5;margin:0}.ix-banner__message{font-size:.875rem;color:var(--fg2, #6b7280);line-height:1.5;margin-top:4px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxBannerComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-banner', standalone: true, imports: [CommonModule, IxIconComponent], template: "<div\n  [ngClass]=\"classes\"\n  [attr.role]=\"ariaRole\"\n  aria-live=\"polite\"\n>\n  <div class=\"ix-banner__icon\">\n    <ix-icon\n      [name]=\"iconName\"\n      library=\"mdi\"\n      size=\"md\"\n      aria-hidden=\"true\"\n    ></ix-icon>\n  </div>\n\n  <div class=\"ix-banner__content\">\n    <div class=\"ix-banner__heading\">\n      {{ heading() }}\n    </div>\n\n    @if (message()) {\n      <div class=\"ix-banner__message\">\n        {{ message() }}\n      </div>\n    }\n  </div>\n</div>\n", styles: [".ix-banner{display:flex;align-items:flex-start;gap:12px;padding:16px;border-radius:6px;border-left:4px solid;transition:opacity .2s ease}@media (prefers-reduced-motion: reduce){.ix-banner{transition:none}}.ix-banner--info{border-left-color:var(--info, #3b82f6);background-color:var(--alt-bg1, #383838)}.ix-banner--info .ix-banner__heading,.ix-banner--info .ix-banner__icon{color:var(--info, #3b82f6)}.ix-banner--warning{border-left-color:var(--warning, #f59e0b);background-color:var(--alt-bg1, #383838)}.ix-banner--warning .ix-banner__heading,.ix-banner--warning .ix-banner__icon{color:var(--warning, #f59e0b)}.ix-banner--error{border-left-color:var(--error, #ef4444);background-color:var(--alt-bg1, #383838)}.ix-banner--error .ix-banner__heading,.ix-banner--error .ix-banner__icon{color:var(--error, #ef4444)}.ix-banner--success{border-left-color:var(--success, #10b981);background-color:var(--alt-bg1, #383838)}.ix-banner--success .ix-banner__heading,.ix-banner--success .ix-banner__icon{color:var(--success, #10b981)}.ix-banner__icon{flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:2px}.ix-banner__content{flex:1;min-width:0}.ix-banner__heading{font-size:1rem;font-weight:600;line-height:1.5;margin:0}.ix-banner__message{font-size:.875rem;color:var(--fg2, #6b7280);line-height:1.5;margin-top:4px}\n"] }]
+            args: [{ selector: 'ix-banner', standalone: true, imports: [CommonModule, IxIconComponent], template: "<div\n  [ngClass]=\"classes()\"\n  [attr.role]=\"ariaRole()\"\n  aria-live=\"polite\"\n>\n  <div class=\"ix-banner__icon\">\n    <ix-icon\n      [name]=\"iconName()\"\n      library=\"mdi\"\n      size=\"md\"\n      aria-hidden=\"true\"\n    ></ix-icon>\n  </div>\n\n  <div class=\"ix-banner__content\">\n    <div class=\"ix-banner__heading\">\n      {{ heading() }}\n    </div>\n\n    @if (message()) {\n      <div class=\"ix-banner__message\">\n        {{ message() }}\n      </div>\n    }\n  </div>\n</div>\n", styles: [".ix-banner{display:flex;align-items:flex-start;gap:12px;padding:16px;border-radius:6px;border-left:4px solid;transition:opacity .2s ease}@media (prefers-reduced-motion: reduce){.ix-banner{transition:none}}.ix-banner--info{border-left-color:var(--info, #3b82f6);background-color:var(--alt-bg1, #383838)}.ix-banner--info .ix-banner__heading,.ix-banner--info .ix-banner__icon{color:var(--info, #3b82f6)}.ix-banner--warning{border-left-color:var(--warning, #f59e0b);background-color:var(--alt-bg1, #383838)}.ix-banner--warning .ix-banner__heading,.ix-banner--warning .ix-banner__icon{color:var(--warning, #f59e0b)}.ix-banner--error{border-left-color:var(--error, #ef4444);background-color:var(--alt-bg1, #383838)}.ix-banner--error .ix-banner__heading,.ix-banner--error .ix-banner__icon{color:var(--error, #ef4444)}.ix-banner--success{border-left-color:var(--success, #10b981);background-color:var(--alt-bg1, #383838)}.ix-banner--success .ix-banner__heading,.ix-banner--success .ix-banner__icon{color:var(--success, #10b981)}.ix-banner__icon{flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:2px}.ix-banner__content{flex:1;min-width:0}.ix-banner__heading{font-size:1rem;font-weight:600;line-height:1.5;margin:0}.ix-banner__message{font-size:.875rem;color:var(--fg2, #6b7280);line-height:1.5;margin-top:4px}\n"] }]
         }], ctorParameters: () => [] });
 
 /**
@@ -788,19 +764,19 @@ class IxBannerHarness extends ComponentHarness {
 
 class IxButtonComponent {
     size = 'large';
-    primary = false;
-    color = 'default';
-    variant = 'filled';
-    backgroundColor;
-    label = 'Button';
-    disabled = false;
-    onClick = new EventEmitter();
-    get classes() {
+    primary = input(false, ...(ngDevMode ? [{ debugName: "primary" }] : []));
+    color = input('default', ...(ngDevMode ? [{ debugName: "color" }] : []));
+    variant = input('filled', ...(ngDevMode ? [{ debugName: "variant" }] : []));
+    backgroundColor = input(undefined, ...(ngDevMode ? [{ debugName: "backgroundColor" }] : []));
+    label = input('Button', ...(ngDevMode ? [{ debugName: "label" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    onClick = output();
+    classes = computed(() => {
         // Support both primary boolean and color string approaches
-        const isPrimary = this.primary || this.color === 'primary';
-        const isWarn = this.color === 'warn';
+        const isPrimary = this.primary() || this.color() === 'primary';
+        const isWarn = this.color() === 'warn';
         let mode = '';
-        if (this.variant === 'outline') {
+        if (this.variant() === 'outline') {
             if (isPrimary) {
                 mode = 'button-outline-primary';
             }
@@ -823,69 +799,39 @@ class IxButtonComponent {
             }
         }
         return ['storybook-button', `storybook-button--${this.size}`, mode];
-    }
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxButtonComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxButtonComponent, isStandalone: true, selector: "ix-button", inputs: { primary: "primary", color: "color", variant: "variant", backgroundColor: "backgroundColor", label: "label", disabled: "disabled" }, outputs: { onClick: "onClick" }, ngImport: i0, template: "<button\n  type=\"button\"\n  (click)=\"onClick.emit($event)\"\n  [ngClass]=\"classes\"\n  [ngStyle]=\"{ 'background-color': backgroundColor }\"\n  [disabled]=\"disabled\"\n>\n  {{ label }}\n</button>\n\n", styles: [":host{display:inline-block;width:fit-content;justify-self:center}.storybook-button{display:inline-block;cursor:pointer;border:0;font-weight:500;line-height:1;font-family:IBM Plex Sans,Helvetica Neue,Helvetica,Arial,sans-serif}.storybook-button:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.button-primary{background-color:var(--primary);color:var(--primary-txt)}.button-default{box-shadow:#00000026 0 0 0 1px inset;background-color:var(--btn-default-bg);color:var(--btn-default-txt)}.button-outline-primary{background-color:transparent;border:1px solid var(--primary);color:var(--primary);transition:all .2s ease-in-out}.button-outline-primary:hover{background-color:var(--primary);border:1px solid var(--primary);color:var(--primary-txt)}.button-outline-default{background-color:transparent;border:1px solid var(--lines, #e5e7eb);color:var(--fg1, #000000);transition:all .2s ease-in-out}.button-outline-default:hover{background-color:var(--btn-default-bg);border:1px solid var(--btn-default-bg);color:var(--btn-default-txt);box-shadow:#00000026 0 0 0 1px inset}.button-warn{background-color:var(--red);color:#fff}.button-outline-warn{background-color:transparent;border:1px solid var(--red);color:var(--red);transition:all .2s ease-in-out}.button-outline-warn:hover{background-color:var(--red);border:1px solid var(--red);color:#fff}.storybook-button--small{padding:10px 16px;font-size:12px}.storybook-button--medium{padding:11px 20px;font-size:14px}.storybook-button--large{padding:12px 24px;font-size:16px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "directive", type: i1$2.NgStyle, selector: "[ngStyle]", inputs: ["ngStyle"] }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxButtonComponent, isStandalone: true, selector: "ix-button", inputs: { primary: { classPropertyName: "primary", publicName: "primary", isSignal: true, isRequired: false, transformFunction: null }, color: { classPropertyName: "color", publicName: "color", isSignal: true, isRequired: false, transformFunction: null }, variant: { classPropertyName: "variant", publicName: "variant", isSignal: true, isRequired: false, transformFunction: null }, backgroundColor: { classPropertyName: "backgroundColor", publicName: "backgroundColor", isSignal: true, isRequired: false, transformFunction: null }, label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { onClick: "onClick" }, ngImport: i0, template: "<button\n  type=\"button\"\n  (click)=\"onClick.emit($event)\"\n  [ngClass]=\"classes()\"\n  [ngStyle]=\"{ 'background-color': backgroundColor() }\"\n  [disabled]=\"disabled()\"\n>\n  {{ label() }}\n</button>\n\n", styles: [":host{display:inline-block;width:fit-content;justify-self:center}.storybook-button{display:inline-block;cursor:pointer;border:0;font-weight:500;line-height:1;font-family:IBM Plex Sans,Helvetica Neue,Helvetica,Arial,sans-serif}.storybook-button:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.button-primary{background-color:var(--primary);color:var(--primary-txt)}.button-default{box-shadow:#00000026 0 0 0 1px inset;background-color:var(--btn-default-bg);color:var(--btn-default-txt)}.button-outline-primary{background-color:transparent;border:1px solid var(--primary);color:var(--primary);transition:all .2s ease-in-out}.button-outline-primary:hover{background-color:var(--primary);border:1px solid var(--primary);color:var(--primary-txt)}.button-outline-default{background-color:transparent;border:1px solid var(--lines, #e5e7eb);color:var(--fg1, #000000);transition:all .2s ease-in-out}.button-outline-default:hover{background-color:var(--btn-default-bg);border:1px solid var(--btn-default-bg);color:var(--btn-default-txt);box-shadow:#00000026 0 0 0 1px inset}.button-warn{background-color:var(--red);color:#fff}.button-outline-warn{background-color:transparent;border:1px solid var(--red);color:var(--red);transition:all .2s ease-in-out}.button-outline-warn:hover{background-color:var(--red);border:1px solid var(--red);color:#fff}.storybook-button--small{padding:10px 16px;font-size:12px}.storybook-button--medium{padding:11px 20px;font-size:14px}.storybook-button--large{padding:12px 24px;font-size:16px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "directive", type: i1$2.NgStyle, selector: "[ngStyle]", inputs: ["ngStyle"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxButtonComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-button', standalone: true, imports: [CommonModule], template: "<button\n  type=\"button\"\n  (click)=\"onClick.emit($event)\"\n  [ngClass]=\"classes\"\n  [ngStyle]=\"{ 'background-color': backgroundColor }\"\n  [disabled]=\"disabled\"\n>\n  {{ label }}\n</button>\n\n", styles: [":host{display:inline-block;width:fit-content;justify-self:center}.storybook-button{display:inline-block;cursor:pointer;border:0;font-weight:500;line-height:1;font-family:IBM Plex Sans,Helvetica Neue,Helvetica,Arial,sans-serif}.storybook-button:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.button-primary{background-color:var(--primary);color:var(--primary-txt)}.button-default{box-shadow:#00000026 0 0 0 1px inset;background-color:var(--btn-default-bg);color:var(--btn-default-txt)}.button-outline-primary{background-color:transparent;border:1px solid var(--primary);color:var(--primary);transition:all .2s ease-in-out}.button-outline-primary:hover{background-color:var(--primary);border:1px solid var(--primary);color:var(--primary-txt)}.button-outline-default{background-color:transparent;border:1px solid var(--lines, #e5e7eb);color:var(--fg1, #000000);transition:all .2s ease-in-out}.button-outline-default:hover{background-color:var(--btn-default-bg);border:1px solid var(--btn-default-bg);color:var(--btn-default-txt);box-shadow:#00000026 0 0 0 1px inset}.button-warn{background-color:var(--red);color:#fff}.button-outline-warn{background-color:transparent;border:1px solid var(--red);color:var(--red);transition:all .2s ease-in-out}.button-outline-warn:hover{background-color:var(--red);border:1px solid var(--red);color:#fff}.storybook-button--small{padding:10px 16px;font-size:12px}.storybook-button--medium{padding:11px 20px;font-size:14px}.storybook-button--large{padding:12px 24px;font-size:16px}\n"] }]
-        }], propDecorators: { primary: [{
-                type: Input
-            }], color: [{
-                type: Input
-            }], variant: [{
-                type: Input
-            }], backgroundColor: [{
-                type: Input
-            }], label: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], onClick: [{
-                type: Output
-            }] } });
+            args: [{ selector: 'ix-button', standalone: true, imports: [CommonModule], template: "<button\n  type=\"button\"\n  (click)=\"onClick.emit($event)\"\n  [ngClass]=\"classes()\"\n  [ngStyle]=\"{ 'background-color': backgroundColor() }\"\n  [disabled]=\"disabled()\"\n>\n  {{ label() }}\n</button>\n\n", styles: [":host{display:inline-block;width:fit-content;justify-self:center}.storybook-button{display:inline-block;cursor:pointer;border:0;font-weight:500;line-height:1;font-family:IBM Plex Sans,Helvetica Neue,Helvetica,Arial,sans-serif}.storybook-button:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.button-primary{background-color:var(--primary);color:var(--primary-txt)}.button-default{box-shadow:#00000026 0 0 0 1px inset;background-color:var(--btn-default-bg);color:var(--btn-default-txt)}.button-outline-primary{background-color:transparent;border:1px solid var(--primary);color:var(--primary);transition:all .2s ease-in-out}.button-outline-primary:hover{background-color:var(--primary);border:1px solid var(--primary);color:var(--primary-txt)}.button-outline-default{background-color:transparent;border:1px solid var(--lines, #e5e7eb);color:var(--fg1, #000000);transition:all .2s ease-in-out}.button-outline-default:hover{background-color:var(--btn-default-bg);border:1px solid var(--btn-default-bg);color:var(--btn-default-txt);box-shadow:#00000026 0 0 0 1px inset}.button-warn{background-color:var(--red);color:#fff}.button-outline-warn{background-color:transparent;border:1px solid var(--red);color:var(--red);transition:all .2s ease-in-out}.button-outline-warn:hover{background-color:var(--red);border:1px solid var(--red);color:#fff}.storybook-button--small{padding:10px 16px;font-size:12px}.storybook-button--medium{padding:11px 20px;font-size:14px}.storybook-button--large{padding:12px 24px;font-size:16px}\n"] }]
+        }] });
 
 class IxIconButtonComponent {
     // Button-related inputs
-    disabled = false;
-    ariaLabel;
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    ariaLabel = input(undefined, ...(ngDevMode ? [{ debugName: "ariaLabel" }] : []));
     // Icon-related inputs
-    name = '';
-    size = 'md';
-    color;
-    tooltip;
-    library;
-    onClick = new EventEmitter();
-    get classes() {
+    name = input('', ...(ngDevMode ? [{ debugName: "name" }] : []));
+    size = input('md', ...(ngDevMode ? [{ debugName: "size" }] : []));
+    color = input(undefined, ...(ngDevMode ? [{ debugName: "color" }] : []));
+    tooltip = input(undefined, ...(ngDevMode ? [{ debugName: "tooltip" }] : []));
+    library = input(undefined, ...(ngDevMode ? [{ debugName: "library" }] : []));
+    onClick = output();
+    classes = computed(() => {
         return ['ix-icon-button'];
-    }
-    get effectiveAriaLabel() {
-        return this.ariaLabel || this.name || 'Icon button';
-    }
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
+    effectiveAriaLabel = computed(() => {
+        return this.ariaLabel() || this.name() || 'Icon button';
+    }, ...(ngDevMode ? [{ debugName: "effectiveAriaLabel" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxIconButtonComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxIconButtonComponent, isStandalone: true, selector: "ix-icon-button", inputs: { disabled: "disabled", ariaLabel: "ariaLabel", name: "name", size: "size", color: "color", tooltip: "tooltip", library: "library" }, outputs: { onClick: "onClick" }, ngImport: i0, template: "<button\n  type=\"button\"\n  (click)=\"onClick.emit($event)\"\n  [ngClass]=\"classes\"\n  [disabled]=\"disabled\"\n  [attr.aria-label]=\"effectiveAriaLabel\"\n  [attr.title]=\"tooltip\"\n>\n  <ix-icon\n    [name]=\"name\"\n    [size]=\"size\"\n    [color]=\"color\"\n    [library]=\"library\"\n    [ariaLabel]=\"effectiveAriaLabel\">\n  </ix-icon>\n</button>\n", styles: [":host{display:inline-block;width:fit-content}.ix-icon-button{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:none;background:transparent;padding:8px;border-radius:4px;transition:background-color .2s ease,color .2s ease;color:var(--fg2, #6b7280)}.ix-icon-button:hover:not(:disabled){background-color:var(--bg3, #f3f4f6);color:var(--fg1, #1f2937)}.ix-icon-button:active:not(:disabled){background-color:var(--bg3, #e5e7eb)}.ix-icon-button:focus-visible{outline:2px solid var(--primary, #2563eb);outline-offset:2px}.ix-icon-button:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxIconButtonComponent, isStandalone: true, selector: "ix-icon-button", inputs: { disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, ariaLabel: { classPropertyName: "ariaLabel", publicName: "ariaLabel", isSignal: true, isRequired: false, transformFunction: null }, name: { classPropertyName: "name", publicName: "name", isSignal: true, isRequired: false, transformFunction: null }, size: { classPropertyName: "size", publicName: "size", isSignal: true, isRequired: false, transformFunction: null }, color: { classPropertyName: "color", publicName: "color", isSignal: true, isRequired: false, transformFunction: null }, tooltip: { classPropertyName: "tooltip", publicName: "tooltip", isSignal: true, isRequired: false, transformFunction: null }, library: { classPropertyName: "library", publicName: "library", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { onClick: "onClick" }, ngImport: i0, template: "<button\n  type=\"button\"\n  (click)=\"onClick.emit($event)\"\n  [ngClass]=\"classes()\"\n  [disabled]=\"disabled()\"\n  [attr.aria-label]=\"effectiveAriaLabel()\"\n  [attr.title]=\"tooltip()\"\n>\n  <ix-icon\n    [name]=\"name()\"\n    [size]=\"size()\"\n    [color]=\"color()\"\n    [library]=\"library()\"\n    [ariaLabel]=\"effectiveAriaLabel()\">\n  </ix-icon>\n</button>\n", styles: [":host{display:inline-block;width:fit-content}.ix-icon-button{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:none;background:transparent;padding:8px;border-radius:4px;transition:background-color .2s ease,color .2s ease;color:var(--fg2, #6b7280)}.ix-icon-button:hover:not(:disabled){background-color:var(--bg3, #f3f4f6);color:var(--fg1, #1f2937)}.ix-icon-button:active:not(:disabled){background-color:var(--bg3, #e5e7eb)}.ix-icon-button:focus-visible{outline:2px solid var(--primary, #2563eb);outline-offset:2px}.ix-icon-button:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxIconButtonComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-icon-button', standalone: true, imports: [CommonModule, IxIconComponent], template: "<button\n  type=\"button\"\n  (click)=\"onClick.emit($event)\"\n  [ngClass]=\"classes\"\n  [disabled]=\"disabled\"\n  [attr.aria-label]=\"effectiveAriaLabel\"\n  [attr.title]=\"tooltip\"\n>\n  <ix-icon\n    [name]=\"name\"\n    [size]=\"size\"\n    [color]=\"color\"\n    [library]=\"library\"\n    [ariaLabel]=\"effectiveAriaLabel\">\n  </ix-icon>\n</button>\n", styles: [":host{display:inline-block;width:fit-content}.ix-icon-button{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:none;background:transparent;padding:8px;border-radius:4px;transition:background-color .2s ease,color .2s ease;color:var(--fg2, #6b7280)}.ix-icon-button:hover:not(:disabled){background-color:var(--bg3, #f3f4f6);color:var(--fg1, #1f2937)}.ix-icon-button:active:not(:disabled){background-color:var(--bg3, #e5e7eb)}.ix-icon-button:focus-visible{outline:2px solid var(--primary, #2563eb);outline-offset:2px}.ix-icon-button:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}\n"] }]
-        }], propDecorators: { disabled: [{
-                type: Input
-            }], ariaLabel: [{
-                type: Input
-            }], name: [{
-                type: Input
-            }], size: [{
-                type: Input
-            }], color: [{
-                type: Input
-            }], tooltip: [{
-                type: Input
-            }], library: [{
-                type: Input
-            }], onClick: [{
-                type: Output
-            }] } });
+            args: [{ selector: 'ix-icon-button', standalone: true, imports: [CommonModule, IxIconComponent], template: "<button\n  type=\"button\"\n  (click)=\"onClick.emit($event)\"\n  [ngClass]=\"classes()\"\n  [disabled]=\"disabled()\"\n  [attr.aria-label]=\"effectiveAriaLabel()\"\n  [attr.title]=\"tooltip()\"\n>\n  <ix-icon\n    [name]=\"name()\"\n    [size]=\"size()\"\n    [color]=\"color()\"\n    [library]=\"library()\"\n    [ariaLabel]=\"effectiveAriaLabel()\">\n  </ix-icon>\n</button>\n", styles: [":host{display:inline-block;width:fit-content}.ix-icon-button{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:none;background:transparent;padding:8px;border-radius:4px;transition:background-color .2s ease,color .2s ease;color:var(--fg2, #6b7280)}.ix-icon-button:hover:not(:disabled){background-color:var(--bg3, #f3f4f6);color:var(--fg1, #1f2937)}.ix-icon-button:active:not(:disabled){background-color:var(--bg3, #e5e7eb)}.ix-icon-button:focus-visible{outline:2px solid var(--primary, #2563eb);outline-offset:2px}.ix-icon-button:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}\n"] }]
+        }] });
 
 var InputType;
 (function (InputType) {
@@ -895,20 +841,23 @@ var InputType;
 })(InputType || (InputType = {}));
 
 class IxInputComponent {
-    inputEl;
-    inputType = InputType.PlainText;
-    placeholder = 'Enter your name';
-    testId;
-    disabled = false;
-    multiline = false;
-    rows = 3;
+    inputEl = viewChild.required('inputEl');
+    inputType = input(InputType.PlainText, ...(ngDevMode ? [{ debugName: "inputType" }] : []));
+    placeholder = input('Enter your name', ...(ngDevMode ? [{ debugName: "placeholder" }] : []));
+    testId = input(undefined, ...(ngDevMode ? [{ debugName: "testId" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    multiline = input(false, ...(ngDevMode ? [{ debugName: "multiline" }] : []));
+    rows = input(3, ...(ngDevMode ? [{ debugName: "rows" }] : []));
     id = 'ix-input';
     value = '';
+    // CVA disabled state management
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
     onChange = (value) => { };
     onTouched = () => { };
     focusMonitor = inject(FocusMonitor);
     ngAfterViewInit() {
-        this.focusMonitor.monitor(this.inputEl);
+        this.focusMonitor.monitor(this.inputEl());
     }
     // ControlValueAccessor implementation
     writeValue(value) {
@@ -921,7 +870,7 @@ class IxInputComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     // Component methods
     onValueChange(event) {
@@ -933,13 +882,13 @@ class IxInputComponent {
         this.onTouched();
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxInputComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxInputComponent, isStandalone: true, selector: "ix-input", inputs: { inputType: "inputType", placeholder: "placeholder", testId: "testId", disabled: "disabled", multiline: "multiline", rows: "rows" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxInputComponent, isStandalone: true, selector: "ix-input", inputs: { inputType: { classPropertyName: "inputType", publicName: "inputType", isSignal: true, isRequired: false, transformFunction: null }, placeholder: { classPropertyName: "placeholder", publicName: "placeholder", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, multiline: { classPropertyName: "multiline", publicName: "multiline", isSignal: true, isRequired: false, transformFunction: null }, rows: { classPropertyName: "rows", publicName: "rows", isSignal: true, isRequired: false, transformFunction: null } }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxInputComponent),
                 multi: true
             }
-        ], viewQueries: [{ propertyName: "inputEl", first: true, predicate: ["inputEl"], descendants: true }], ngImport: i0, template: "<div class=\"ix-input-container\">\n  <!-- Regular input field -->\n  @if (!multiline) {\n    <input\n      #inputEl\n      [id]=\"id\"\n      [value]=\"value\"\n      [type]=\"inputType\"\n      [attr.placeholder]=\"placeholder\"\n      [attr.data-testid]=\"testId\"\n      [disabled]=\"disabled\"\n      (input)=\"onValueChange($event)\"\n      (blur)=\"onBlur()\"\n      class=\"ix-input\"\n    />\n  }\n\n  <!-- Textarea field -->\n  @if (multiline) {\n    <textarea\n      #inputEl\n      [id]=\"id\"\n      [value]=\"value\"\n      [attr.placeholder]=\"placeholder\"\n      [attr.data-testid]=\"testId\"\n      [rows]=\"rows\"\n      [disabled]=\"disabled\"\n      (input)=\"onValueChange($event)\"\n      (blur)=\"onBlur()\"\n      class=\"ix-input ix-textarea\"\n    ></textarea>\n  }\n</div>\n", styles: [".ix-input-container{position:relative;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box}.ix-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-input.error{border-color:var(--error, #dc3545)}.ix-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-textarea{min-height:6rem;resize:vertical;line-height:1.4}@media (prefers-reduced-motion: reduce){.ix-input{transition:none}}@media (prefers-contrast: high){.ix-input{border-width:2px}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "ngmodule", type: FormsModule }, { kind: "ngmodule", type: A11yModule }] });
+        ], viewQueries: [{ propertyName: "inputEl", first: true, predicate: ["inputEl"], descendants: true, isSignal: true }], ngImport: i0, template: "<div class=\"ix-input-container\">\n  <!-- Regular input field -->\n  @if (!multiline()) {\n    <input\n      #inputEl\n      [id]=\"id\"\n      [value]=\"value\"\n      [type]=\"inputType()\"\n      [attr.placeholder]=\"placeholder()\"\n      [attr.data-testid]=\"testId()\"\n      [disabled]=\"isDisabled()\"\n      (input)=\"onValueChange($event)\"\n      (blur)=\"onBlur()\"\n      class=\"ix-input\"\n    />\n  }\n\n  <!-- Textarea field -->\n  @if (multiline()) {\n    <textarea\n      #inputEl\n      [id]=\"id\"\n      [value]=\"value\"\n      [attr.placeholder]=\"placeholder()\"\n      [attr.data-testid]=\"testId()\"\n      [rows]=\"rows()\"\n      [disabled]=\"isDisabled()\"\n      (input)=\"onValueChange($event)\"\n      (blur)=\"onBlur()\"\n      class=\"ix-input ix-textarea\"\n    ></textarea>\n  }\n</div>\n", styles: [".ix-input-container{position:relative;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box}.ix-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-input.error{border-color:var(--error, #dc3545)}.ix-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-textarea{min-height:6rem;resize:vertical;line-height:1.4}@media (prefers-reduced-motion: reduce){.ix-input{transition:none}}@media (prefers-contrast: high){.ix-input{border-width:2px}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "ngmodule", type: FormsModule }, { kind: "ngmodule", type: A11yModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxInputComponent, decorators: [{
             type: Component,
@@ -949,23 +898,8 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                             useExisting: forwardRef(() => IxInputComponent),
                             multi: true
                         }
-                    ], template: "<div class=\"ix-input-container\">\n  <!-- Regular input field -->\n  @if (!multiline) {\n    <input\n      #inputEl\n      [id]=\"id\"\n      [value]=\"value\"\n      [type]=\"inputType\"\n      [attr.placeholder]=\"placeholder\"\n      [attr.data-testid]=\"testId\"\n      [disabled]=\"disabled\"\n      (input)=\"onValueChange($event)\"\n      (blur)=\"onBlur()\"\n      class=\"ix-input\"\n    />\n  }\n\n  <!-- Textarea field -->\n  @if (multiline) {\n    <textarea\n      #inputEl\n      [id]=\"id\"\n      [value]=\"value\"\n      [attr.placeholder]=\"placeholder\"\n      [attr.data-testid]=\"testId\"\n      [rows]=\"rows\"\n      [disabled]=\"disabled\"\n      (input)=\"onValueChange($event)\"\n      (blur)=\"onBlur()\"\n      class=\"ix-input ix-textarea\"\n    ></textarea>\n  }\n</div>\n", styles: [".ix-input-container{position:relative;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box}.ix-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-input.error{border-color:var(--error, #dc3545)}.ix-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-textarea{min-height:6rem;resize:vertical;line-height:1.4}@media (prefers-reduced-motion: reduce){.ix-input{transition:none}}@media (prefers-contrast: high){.ix-input{border-width:2px}}\n"] }]
-        }], propDecorators: { inputEl: [{
-                type: ViewChild,
-                args: ['inputEl']
-            }], inputType: [{
-                type: Input
-            }], placeholder: [{
-                type: Input
-            }], testId: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], multiline: [{
-                type: Input
-            }], rows: [{
-                type: Input
-            }] } });
+                    ], template: "<div class=\"ix-input-container\">\n  <!-- Regular input field -->\n  @if (!multiline()) {\n    <input\n      #inputEl\n      [id]=\"id\"\n      [value]=\"value\"\n      [type]=\"inputType()\"\n      [attr.placeholder]=\"placeholder()\"\n      [attr.data-testid]=\"testId()\"\n      [disabled]=\"isDisabled()\"\n      (input)=\"onValueChange($event)\"\n      (blur)=\"onBlur()\"\n      class=\"ix-input\"\n    />\n  }\n\n  <!-- Textarea field -->\n  @if (multiline()) {\n    <textarea\n      #inputEl\n      [id]=\"id\"\n      [value]=\"value\"\n      [attr.placeholder]=\"placeholder()\"\n      [attr.data-testid]=\"testId()\"\n      [rows]=\"rows()\"\n      [disabled]=\"isDisabled()\"\n      (input)=\"onValueChange($event)\"\n      (blur)=\"onBlur()\"\n      class=\"ix-input ix-textarea\"\n    ></textarea>\n  }\n</div>\n", styles: [".ix-input-container{position:relative;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box}.ix-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-input.error{border-color:var(--error, #dc3545)}.ix-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-textarea{min-height:6rem;resize:vertical;line-height:1.4}@media (prefers-reduced-motion: reduce){.ix-input{transition:none}}@media (prefers-contrast: high){.ix-input{border-width:2px}}\n"] }]
+        }] });
 
 class IxInputDirective {
     constructor() { }
@@ -984,18 +918,18 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
         }], ctorParameters: () => [] });
 
 class IxChipComponent {
-    chipEl;
-    label = 'Chip';
-    icon;
-    closable = true;
-    disabled = false;
-    color = 'primary';
-    testId;
-    onClose = new EventEmitter();
-    onClick = new EventEmitter();
+    chipEl = viewChild.required('chipEl');
+    label = input('Chip', ...(ngDevMode ? [{ debugName: "label" }] : []));
+    icon = input(undefined, ...(ngDevMode ? [{ debugName: "icon" }] : []));
+    closable = input(true, ...(ngDevMode ? [{ debugName: "closable" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    color = input('primary', ...(ngDevMode ? [{ debugName: "color" }] : []));
+    testId = input(undefined, ...(ngDevMode ? [{ debugName: "testId" }] : []));
+    onClose = output();
+    onClick = output();
     focusMonitor = inject(FocusMonitor);
     ngAfterViewInit() {
-        this.focusMonitor.monitor(this.chipEl)
+        this.focusMonitor.monitor(this.chipEl())
             .subscribe(origin => {
             if (origin) {
                 console.log(`Chip focused via: ${origin}`);
@@ -1003,104 +937,94 @@ class IxChipComponent {
         });
     }
     ngOnDestroy() {
-        this.focusMonitor.stopMonitoring(this.chipEl);
+        this.focusMonitor.stopMonitoring(this.chipEl());
     }
-    get classes() {
-        const classes = ['ix-chip', `ix-chip--${this.color}`];
-        if (this.disabled) {
+    classes = computed(() => {
+        const classes = ['ix-chip', `ix-chip--${this.color()}`];
+        if (this.disabled()) {
             classes.push('ix-chip--disabled');
         }
-        if (this.closable) {
+        if (this.closable()) {
             classes.push('ix-chip--closable');
         }
         return classes;
-    }
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
     handleClick(event) {
-        if (this.disabled) {
+        if (this.disabled()) {
             return;
         }
         this.onClick.emit(event);
     }
     handleClose(event) {
         event.stopPropagation();
-        if (this.disabled) {
+        if (this.disabled()) {
             return;
         }
         this.onClose.emit();
     }
     handleKeyDown(event) {
-        if (this.disabled) {
+        if (this.disabled()) {
             return;
         }
         if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             this.onClick.emit(event);
         }
-        if (this.closable && (event.key === 'Delete' || event.key === 'Backspace')) {
+        if (this.closable() && (event.key === 'Delete' || event.key === 'Backspace')) {
             event.preventDefault();
             this.onClose.emit();
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxChipComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxChipComponent, isStandalone: true, selector: "ix-chip", inputs: { label: "label", icon: "icon", closable: "closable", disabled: "disabled", color: "color", testId: "testId" }, outputs: { onClose: "onClose", onClick: "onClick" }, viewQueries: [{ propertyName: "chipEl", first: true, predicate: ["chipEl"], descendants: true }], ngImport: i0, template: "<div\n  #chipEl\n  [ngClass]=\"classes\"\n  [attr.data-testid]=\"testId\"\n  [attr.aria-label]=\"label\"\n  [attr.aria-disabled]=\"disabled\"\n  [attr.tabindex]=\"disabled ? -1 : 0\"\n  role=\"button\"\n  (click)=\"handleClick($event)\"\n  (keydown)=\"handleKeyDown($event)\"\n>\n  @if (icon) {\n    <ix-icon [name]=\"icon\" class=\"ix-chip__icon\" size=\"sm\"></ix-icon>\n  }\n  <span class=\"ix-chip__label\">{{ label }}</span>\n  @if (closable) {\n    <button\n      type=\"button\"\n      class=\"ix-chip__close\"\n      [attr.aria-label]=\"'Remove ' + label\"\n      [disabled]=\"disabled\"\n      (click)=\"handleClose($event)\"\n    >\n      <span class=\"ix-chip__close-icon\">\u00D7</span>\n    </button>\n  }\n</div>", styles: [".ix-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:16px;font-family:var(--font-family-body);font-size:14px;font-weight:500;line-height:1.2;cursor:pointer;transition:all .2s ease-in-out;border:1px solid transparent;outline:none;-webkit-user-select:none;user-select:none}.ix-chip:focus-visible{outline:2px solid var(--primary);outline-offset:2px}.ix-chip:hover:not(.ix-chip--disabled){transform:translateY(-1px);box-shadow:0 2px 4px #0000001a}.ix-chip--primary{background-color:var(--primary);color:var(--primary-txt);border-color:var(--primary)}.ix-chip--primary:hover:not(.ix-chip--disabled){background-color:var(--blue);border-color:var(--blue)}.ix-chip--secondary{background-color:var(--alt-bg1);color:var(--alt-fg2);border-color:var(--alt-bg2)}.ix-chip--secondary:hover:not(.ix-chip--disabled){background-color:var(--alt-bg2);border-color:var(--accent)}.ix-chip--accent{background-color:var(--accent);color:var(--fg1);border-color:var(--accent)}.ix-chip--accent:hover:not(.ix-chip--disabled){background-color:var(--alt-bg2);border-color:var(--alt-bg2)}.ix-chip--disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.ix-chip--closable{padding-right:8px}.ix-chip__icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:12px}.ix-chip__label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}.ix-chip__close{display:flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;margin:0;border:none;border-radius:50%;background-color:#fff3;color:inherit;cursor:pointer;transition:background-color .2s ease-in-out;outline:none}.ix-chip__close:hover:not(:disabled){background-color:#ffffff4d}.ix-chip__close:focus-visible{outline:1px solid currentColor;outline-offset:1px}.ix-chip__close:disabled{cursor:not-allowed;opacity:.5}.ix-chip__close-icon{font-size:14px;font-weight:700;line-height:1}.ix-dark .ix-chip--secondary .ix-chip__close{background-color:#0003}.ix-dark .ix-chip--secondary .ix-chip__close:hover:not(:disabled){background-color:#0000004d}.high-contrast .ix-chip{border-width:2px}.high-contrast .ix-chip:focus-visible{outline-width:3px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: A11yModule }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxChipComponent, isStandalone: true, selector: "ix-chip", inputs: { label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, icon: { classPropertyName: "icon", publicName: "icon", isSignal: true, isRequired: false, transformFunction: null }, closable: { classPropertyName: "closable", publicName: "closable", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, color: { classPropertyName: "color", publicName: "color", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { onClose: "onClose", onClick: "onClick" }, viewQueries: [{ propertyName: "chipEl", first: true, predicate: ["chipEl"], descendants: true, isSignal: true }], ngImport: i0, template: "<div\n  #chipEl\n  [ngClass]=\"classes()\"\n  [attr.data-testid]=\"testId()\"\n  [attr.aria-label]=\"label()\"\n  [attr.aria-disabled]=\"disabled()\"\n  [attr.tabindex]=\"disabled() ? -1 : 0\"\n  role=\"button\"\n  (click)=\"handleClick($event)\"\n  (keydown)=\"handleKeyDown($event)\"\n>\n  @if (icon()) {\n    <ix-icon [name]=\"icon()!\" class=\"ix-chip__icon\" size=\"sm\"></ix-icon>\n  }\n  <span class=\"ix-chip__label\">{{ label() }}</span>\n  @if (closable()) {\n    <button\n      type=\"button\"\n      class=\"ix-chip__close\"\n      [attr.aria-label]=\"'Remove ' + label()\"\n      [disabled]=\"disabled()\"\n      (click)=\"handleClose($event)\"\n    >\n      <span class=\"ix-chip__close-icon\">\u00D7</span>\n    </button>\n  }\n</div>", styles: [".ix-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:16px;font-family:var(--font-family-body);font-size:14px;font-weight:500;line-height:1.2;cursor:pointer;transition:all .2s ease-in-out;border:1px solid transparent;outline:none;-webkit-user-select:none;user-select:none}.ix-chip:focus-visible{outline:2px solid var(--primary);outline-offset:2px}.ix-chip:hover:not(.ix-chip--disabled){transform:translateY(-1px);box-shadow:0 2px 4px #0000001a}.ix-chip--primary{background-color:var(--primary);color:var(--primary-txt);border-color:var(--primary)}.ix-chip--primary:hover:not(.ix-chip--disabled){background-color:var(--blue);border-color:var(--blue)}.ix-chip--secondary{background-color:var(--alt-bg1);color:var(--alt-fg2);border-color:var(--alt-bg2)}.ix-chip--secondary:hover:not(.ix-chip--disabled){background-color:var(--alt-bg2);border-color:var(--accent)}.ix-chip--accent{background-color:var(--accent);color:var(--fg1);border-color:var(--accent)}.ix-chip--accent:hover:not(.ix-chip--disabled){background-color:var(--alt-bg2);border-color:var(--alt-bg2)}.ix-chip--disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.ix-chip--closable{padding-right:8px}.ix-chip__icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:12px}.ix-chip__label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}.ix-chip__close{display:flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;margin:0;border:none;border-radius:50%;background-color:#fff3;color:inherit;cursor:pointer;transition:background-color .2s ease-in-out;outline:none}.ix-chip__close:hover:not(:disabled){background-color:#ffffff4d}.ix-chip__close:focus-visible{outline:1px solid currentColor;outline-offset:1px}.ix-chip__close:disabled{cursor:not-allowed;opacity:.5}.ix-chip__close-icon{font-size:14px;font-weight:700;line-height:1}.ix-dark .ix-chip--secondary .ix-chip__close{background-color:#0003}.ix-dark .ix-chip--secondary .ix-chip__close:hover:not(:disabled){background-color:#0000004d}.high-contrast .ix-chip{border-width:2px}.high-contrast .ix-chip:focus-visible{outline-width:3px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: A11yModule }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxChipComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-chip', standalone: true, imports: [CommonModule, A11yModule, IxIconComponent], template: "<div\n  #chipEl\n  [ngClass]=\"classes\"\n  [attr.data-testid]=\"testId\"\n  [attr.aria-label]=\"label\"\n  [attr.aria-disabled]=\"disabled\"\n  [attr.tabindex]=\"disabled ? -1 : 0\"\n  role=\"button\"\n  (click)=\"handleClick($event)\"\n  (keydown)=\"handleKeyDown($event)\"\n>\n  @if (icon) {\n    <ix-icon [name]=\"icon\" class=\"ix-chip__icon\" size=\"sm\"></ix-icon>\n  }\n  <span class=\"ix-chip__label\">{{ label }}</span>\n  @if (closable) {\n    <button\n      type=\"button\"\n      class=\"ix-chip__close\"\n      [attr.aria-label]=\"'Remove ' + label\"\n      [disabled]=\"disabled\"\n      (click)=\"handleClose($event)\"\n    >\n      <span class=\"ix-chip__close-icon\">\u00D7</span>\n    </button>\n  }\n</div>", styles: [".ix-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:16px;font-family:var(--font-family-body);font-size:14px;font-weight:500;line-height:1.2;cursor:pointer;transition:all .2s ease-in-out;border:1px solid transparent;outline:none;-webkit-user-select:none;user-select:none}.ix-chip:focus-visible{outline:2px solid var(--primary);outline-offset:2px}.ix-chip:hover:not(.ix-chip--disabled){transform:translateY(-1px);box-shadow:0 2px 4px #0000001a}.ix-chip--primary{background-color:var(--primary);color:var(--primary-txt);border-color:var(--primary)}.ix-chip--primary:hover:not(.ix-chip--disabled){background-color:var(--blue);border-color:var(--blue)}.ix-chip--secondary{background-color:var(--alt-bg1);color:var(--alt-fg2);border-color:var(--alt-bg2)}.ix-chip--secondary:hover:not(.ix-chip--disabled){background-color:var(--alt-bg2);border-color:var(--accent)}.ix-chip--accent{background-color:var(--accent);color:var(--fg1);border-color:var(--accent)}.ix-chip--accent:hover:not(.ix-chip--disabled){background-color:var(--alt-bg2);border-color:var(--alt-bg2)}.ix-chip--disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.ix-chip--closable{padding-right:8px}.ix-chip__icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:12px}.ix-chip__label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}.ix-chip__close{display:flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;margin:0;border:none;border-radius:50%;background-color:#fff3;color:inherit;cursor:pointer;transition:background-color .2s ease-in-out;outline:none}.ix-chip__close:hover:not(:disabled){background-color:#ffffff4d}.ix-chip__close:focus-visible{outline:1px solid currentColor;outline-offset:1px}.ix-chip__close:disabled{cursor:not-allowed;opacity:.5}.ix-chip__close-icon{font-size:14px;font-weight:700;line-height:1}.ix-dark .ix-chip--secondary .ix-chip__close{background-color:#0003}.ix-dark .ix-chip--secondary .ix-chip__close:hover:not(:disabled){background-color:#0000004d}.high-contrast .ix-chip{border-width:2px}.high-contrast .ix-chip:focus-visible{outline-width:3px}\n"] }]
-        }], propDecorators: { chipEl: [{
-                type: ViewChild,
-                args: ['chipEl']
-            }], label: [{
-                type: Input
-            }], icon: [{
-                type: Input
-            }], closable: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], color: [{
-                type: Input
-            }], testId: [{
-                type: Input
-            }], onClose: [{
-                type: Output
-            }], onClick: [{
-                type: Output
-            }] } });
+            args: [{ selector: 'ix-chip', standalone: true, imports: [CommonModule, A11yModule, IxIconComponent], template: "<div\n  #chipEl\n  [ngClass]=\"classes()\"\n  [attr.data-testid]=\"testId()\"\n  [attr.aria-label]=\"label()\"\n  [attr.aria-disabled]=\"disabled()\"\n  [attr.tabindex]=\"disabled() ? -1 : 0\"\n  role=\"button\"\n  (click)=\"handleClick($event)\"\n  (keydown)=\"handleKeyDown($event)\"\n>\n  @if (icon()) {\n    <ix-icon [name]=\"icon()!\" class=\"ix-chip__icon\" size=\"sm\"></ix-icon>\n  }\n  <span class=\"ix-chip__label\">{{ label() }}</span>\n  @if (closable()) {\n    <button\n      type=\"button\"\n      class=\"ix-chip__close\"\n      [attr.aria-label]=\"'Remove ' + label()\"\n      [disabled]=\"disabled()\"\n      (click)=\"handleClose($event)\"\n    >\n      <span class=\"ix-chip__close-icon\">\u00D7</span>\n    </button>\n  }\n</div>", styles: [".ix-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:16px;font-family:var(--font-family-body);font-size:14px;font-weight:500;line-height:1.2;cursor:pointer;transition:all .2s ease-in-out;border:1px solid transparent;outline:none;-webkit-user-select:none;user-select:none}.ix-chip:focus-visible{outline:2px solid var(--primary);outline-offset:2px}.ix-chip:hover:not(.ix-chip--disabled){transform:translateY(-1px);box-shadow:0 2px 4px #0000001a}.ix-chip--primary{background-color:var(--primary);color:var(--primary-txt);border-color:var(--primary)}.ix-chip--primary:hover:not(.ix-chip--disabled){background-color:var(--blue);border-color:var(--blue)}.ix-chip--secondary{background-color:var(--alt-bg1);color:var(--alt-fg2);border-color:var(--alt-bg2)}.ix-chip--secondary:hover:not(.ix-chip--disabled){background-color:var(--alt-bg2);border-color:var(--accent)}.ix-chip--accent{background-color:var(--accent);color:var(--fg1);border-color:var(--accent)}.ix-chip--accent:hover:not(.ix-chip--disabled){background-color:var(--alt-bg2);border-color:var(--alt-bg2)}.ix-chip--disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.ix-chip--closable{padding-right:8px}.ix-chip__icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:12px}.ix-chip__label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}.ix-chip__close{display:flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;margin:0;border:none;border-radius:50%;background-color:#fff3;color:inherit;cursor:pointer;transition:background-color .2s ease-in-out;outline:none}.ix-chip__close:hover:not(:disabled){background-color:#ffffff4d}.ix-chip__close:focus-visible{outline:1px solid currentColor;outline-offset:1px}.ix-chip__close:disabled{cursor:not-allowed;opacity:.5}.ix-chip__close-icon{font-size:14px;font-weight:700;line-height:1}.ix-dark .ix-chip--secondary .ix-chip__close{background-color:#0003}.ix-dark .ix-chip--secondary .ix-chip__close:hover:not(:disabled){background-color:#0000004d}.high-contrast .ix-chip{border-width:2px}.high-contrast .ix-chip:focus-visible{outline-width:3px}\n"] }]
+        }] });
 
 class IxSlideToggleComponent {
-    toggleEl;
-    labelPosition = 'after';
-    label;
-    disabled = false;
-    required = false;
-    color = 'primary';
-    testId;
-    ariaLabel;
-    ariaLabelledby;
-    checked = false;
-    change = new EventEmitter();
-    toggleChange = new EventEmitter();
+    toggleEl = viewChild.required('toggleEl');
+    labelPosition = input('after', ...(ngDevMode ? [{ debugName: "labelPosition" }] : []));
+    label = input(undefined, ...(ngDevMode ? [{ debugName: "label" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    required = input(false, ...(ngDevMode ? [{ debugName: "required" }] : []));
+    color = input('primary', ...(ngDevMode ? [{ debugName: "color" }] : []));
+    testId = input(undefined, ...(ngDevMode ? [{ debugName: "testId" }] : []));
+    ariaLabel = input(undefined, ...(ngDevMode ? [{ debugName: "ariaLabel" }] : []));
+    ariaLabelledby = input(undefined, ...(ngDevMode ? [{ debugName: "ariaLabelledby" }] : []));
+    checked = input(false, ...(ngDevMode ? [{ debugName: "checked" }] : []));
+    change = output();
+    toggleChange = output();
     id = `ix-slide-toggle-${Math.random().toString(36).substr(2, 9)}`;
+    // Internal state for CVA
+    internalChecked = signal(false, ...(ngDevMode ? [{ debugName: "internalChecked" }] : []));
+    // CVA disabled state management
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
     focusMonitor = inject(FocusMonitor);
     onChange = (_) => { };
     onTouched = () => { };
     ngAfterViewInit() {
-        if (this.toggleEl) {
-            this.focusMonitor.monitor(this.toggleEl)
+        const toggleEl = this.toggleEl();
+        if (toggleEl) {
+            this.focusMonitor.monitor(toggleEl)
                 .subscribe(origin => {
                 // Focus monitoring for accessibility
             });
         }
     }
     ngOnDestroy() {
-        if (this.toggleEl) {
-            this.focusMonitor.stopMonitoring(this.toggleEl);
+        const toggleEl = this.toggleEl();
+        if (toggleEl) {
+            this.focusMonitor.stopMonitoring(toggleEl);
         }
     }
+    // Computed for effective checked state (input or CVA-controlled)
+    effectiveChecked = computed(() => this.internalChecked() || this.checked(), ...(ngDevMode ? [{ debugName: "effectiveChecked" }] : []));
     // ControlValueAccessor implementation
     writeValue(value) {
-        this.checked = value !== null && value !== undefined ? value : false;
+        this.internalChecked.set(value !== null && value !== undefined ? value : false);
     }
     registerOnChange(fn) {
         this.onChange = fn;
@@ -1109,45 +1033,47 @@ class IxSlideToggleComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     onToggleChange(event) {
         event.stopPropagation();
         const target = event.target;
-        this.checked = target.checked;
-        this.onChange(this.checked);
+        const checked = target.checked;
+        this.internalChecked.set(checked);
+        this.onChange(checked);
         this.onTouched();
-        this.change.emit(this.checked);
-        this.toggleChange.emit(this.checked);
+        this.change.emit(checked);
+        this.toggleChange.emit(checked);
     }
     onLabelClick() {
-        if (!this.disabled && this.toggleEl) {
-            this.toggleEl.nativeElement.click();
+        const toggleEl = this.toggleEl();
+        if (!this.isDisabled() && toggleEl) {
+            toggleEl.nativeElement.click();
         }
     }
-    get classes() {
+    classes = computed(() => {
         const classes = ['ix-slide-toggle'];
-        if (this.disabled) {
+        if (this.isDisabled()) {
             classes.push('ix-slide-toggle--disabled');
         }
-        if (this.checked) {
+        if (this.effectiveChecked()) {
             classes.push('ix-slide-toggle--checked');
         }
-        classes.push(`ix-slide-toggle--${this.color}`);
-        classes.push(`ix-slide-toggle--label-${this.labelPosition}`);
+        classes.push(`ix-slide-toggle--${this.color()}`);
+        classes.push(`ix-slide-toggle--label-${this.labelPosition()}`);
         return classes;
-    }
-    get effectiveAriaLabel() {
-        return this.ariaLabel || (this.label ? undefined : 'Toggle');
-    }
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
+    effectiveAriaLabel = computed(() => {
+        return this.ariaLabel() || (this.label() ? undefined : 'Toggle');
+    }, ...(ngDevMode ? [{ debugName: "effectiveAriaLabel" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSlideToggleComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxSlideToggleComponent, isStandalone: true, selector: "ix-slide-toggle", inputs: { labelPosition: "labelPosition", label: "label", disabled: "disabled", required: "required", color: "color", testId: "testId", ariaLabel: "ariaLabel", ariaLabelledby: "ariaLabelledby", checked: "checked" }, outputs: { change: "change", toggleChange: "toggleChange" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxSlideToggleComponent, isStandalone: true, selector: "ix-slide-toggle", inputs: { labelPosition: { classPropertyName: "labelPosition", publicName: "labelPosition", isSignal: true, isRequired: false, transformFunction: null }, label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, required: { classPropertyName: "required", publicName: "required", isSignal: true, isRequired: false, transformFunction: null }, color: { classPropertyName: "color", publicName: "color", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null }, ariaLabel: { classPropertyName: "ariaLabel", publicName: "ariaLabel", isSignal: true, isRequired: false, transformFunction: null }, ariaLabelledby: { classPropertyName: "ariaLabelledby", publicName: "ariaLabelledby", isSignal: true, isRequired: false, transformFunction: null }, checked: { classPropertyName: "checked", publicName: "checked", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { change: "change", toggleChange: "toggleChange" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxSlideToggleComponent),
                 multi: true
             }
-        ], viewQueries: [{ propertyName: "toggleEl", first: true, predicate: ["toggleEl"], descendants: true }], ngImport: i0, template: "<div [ngClass]=\"classes\" [attr.data-testid]=\"testId\">\n  <label [for]=\"id\" class=\"ix-slide-toggle__label\">\n    \n    <!-- Label before toggle -->\n    @if (label && labelPosition === 'before') {\n      <span\n        class=\"ix-slide-toggle__label-text ix-slide-toggle__label-text--before\"\n        (click)=\"onLabelClick()\">\n        {{ label }}\n      </span>\n    }\n\n    <!-- Toggle track and thumb -->\n    <div class=\"ix-slide-toggle__bar\">\n      <input\n        #toggleEl\n        type=\"checkbox\"\n        [id]=\"id\"\n        [checked]=\"checked\"\n        [disabled]=\"disabled\"\n        [required]=\"required\"\n        [attr.aria-label]=\"effectiveAriaLabel\"\n        [attr.aria-labelledby]=\"ariaLabelledby\"\n        class=\"ix-slide-toggle__input\"\n        (change)=\"onToggleChange($event)\"\n      />\n      \n      <div class=\"ix-slide-toggle__track\">\n        <div class=\"ix-slide-toggle__track-fill\"></div>\n      </div>\n      \n      <div class=\"ix-slide-toggle__thumb-container\">\n        <div class=\"ix-slide-toggle__thumb\">\n          <div class=\"ix-slide-toggle__ripple\"></div>\n          <!-- State icon -->\n          <div class=\"ix-slide-toggle__icon\">\n            @if (checked) {\n              <svg\n                class=\"ix-slide-toggle__check-icon\"\n                viewBox=\"0 0 24 24\"\n                width=\"16\"\n                height=\"16\">\n                <path d=\"M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z\" fill=\"currentColor\"/>\n              </svg>\n            }\n            @if (!checked) {\n              <svg\n                class=\"ix-slide-toggle__minus-icon\"\n                viewBox=\"0 0 24 24\"\n                width=\"16\"\n                height=\"16\">\n                <path d=\"M19 13H5v-2h14v2z\" fill=\"currentColor\"/>\n              </svg>\n            }\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- Label after toggle -->\n    @if (label && labelPosition === 'after') {\n      <span\n        class=\"ix-slide-toggle__label-text ix-slide-toggle__label-text--after\"\n        (click)=\"onLabelClick()\">\n        {{ label }}\n      </span>\n    }\n\n  </label>\n</div>", styles: [".ix-slide-toggle{display:inline-flex;align-items:center;cursor:pointer;-webkit-user-select:none;user-select:none;line-height:1;font-family:inherit}.ix-slide-toggle__label{display:flex;align-items:center;cursor:inherit}.ix-slide-toggle__label-text{font-size:14px;line-height:1.4;color:var(--fg1);transition:color .2s ease}.ix-slide-toggle__label-text--before{margin-right:8px}.ix-slide-toggle__label-text--after{margin-left:8px}.ix-slide-toggle__input{position:absolute;opacity:0;width:0;height:0;margin:0;pointer-events:none}.ix-slide-toggle__input:focus+.ix-slide-toggle__track{box-shadow:0 0 0 2px rgba(var(--primary-rgb, 0, 123, 255),.2)}.ix-slide-toggle__bar{position:relative;display:flex;align-items:center;flex-shrink:0}.ix-slide-toggle__track{position:relative;width:52px;height:32px;border-radius:16px;background-color:var(--lines);border:1px solid transparent;transition:background-color .2s ease,border-color .2s ease;overflow:hidden}.ix-slide-toggle__track-fill{position:absolute;inset:0;border-radius:inherit;background-color:var(--primary, #007cba);opacity:0;transform:scaleX(0);transform-origin:left center;transition:opacity .2s ease,transform .2s ease}.ix-slide-toggle__thumb-container{position:absolute;top:50%;left:4px;transform:translateY(-50%);width:24px;height:24px;transition:transform .2s ease;z-index:1}.ix-slide-toggle__thumb{position:relative;width:24px;height:24px;border-radius:50%;background-color:var(--bg2);border:1px solid var(--lines);box-shadow:0 2px 4px #0003;transition:background-color .2s ease,border-color .2s ease,box-shadow .2s ease;display:flex;align-items:center;justify-content:center}.ix-slide-toggle__ripple{position:absolute;width:40px;height:40px;border-radius:50%;background-color:transparent;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0;transition:opacity .2s ease,background-color .2s ease}.ix-slide-toggle__icon{position:relative;display:flex;align-items:center;justify-content:center;z-index:2;pointer-events:none}.ix-slide-toggle__check-icon,.ix-slide-toggle__minus-icon{transition:opacity .2s ease,transform .2s ease;color:var(--fg2)}.ix-slide-toggle:hover:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.08}.ix-slide-toggle--checked .ix-slide-toggle__track{background-color:var(--primary);opacity:.5}.ix-slide-toggle--checked .ix-slide-toggle__track-fill{opacity:1;transform:scaleX(1)}.ix-slide-toggle--checked .ix-slide-toggle__thumb-container{transform:translateY(-50%) translate(24px)}.ix-slide-toggle--checked .ix-slide-toggle__thumb{background-color:var(--bg2);border-color:var(--primary)}.ix-slide-toggle--checked .ix-slide-toggle__check-icon{color:var(--primary)}.ix-slide-toggle--checked:hover:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.12}.ix-slide-toggle--disabled{cursor:not-allowed;opacity:.6}.ix-slide-toggle--disabled .ix-slide-toggle__label-text{color:var(--alt-fg1)}.ix-slide-toggle--disabled .ix-slide-toggle__track{background-color:var(--alt-bg1)}.ix-slide-toggle--disabled .ix-slide-toggle__thumb{background-color:var(--alt-bg2);border-color:var(--alt-bg1);box-shadow:none}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__track,.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__track-fill{background-color:var(--alt-bg1)}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__thumb{background-color:var(--alt-bg2);border-color:var(--alt-bg1)}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__check-icon{color:var(--alt-fg1)}.ix-slide-toggle--disabled:hover .ix-slide-toggle__ripple{opacity:0}.ix-slide-toggle--accent{--primary: var(--accent)}.ix-slide-toggle--warn{--primary: var(--red)}.ix-slide-toggle--label-before .ix-slide-toggle__label{flex-direction:row-reverse}.ix-slide-toggle--label-after .ix-slide-toggle__label{flex-direction:row}.ix-slide-toggle .ix-slide-toggle__input:focus-visible+.ix-slide-toggle__track{outline:2px solid var(--primary);outline-offset:2px}.ix-slide-toggle:active:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.16;transform:translate(-50%,-50%) scale(1.1)}@media (prefers-contrast: high){.ix-slide-toggle .ix-slide-toggle__track{border-color:var(--fg1)}.ix-slide-toggle .ix-slide-toggle__thumb{border-width:2px}.ix-slide-toggle--disabled .ix-slide-toggle__track,.ix-slide-toggle--disabled .ix-slide-toggle__thumb{border-color:var(--alt-fg1)}}@media (prefers-reduced-motion: reduce){.ix-slide-toggle .ix-slide-toggle__track,.ix-slide-toggle .ix-slide-toggle__track-fill,.ix-slide-toggle .ix-slide-toggle__thumb-container,.ix-slide-toggle .ix-slide-toggle__thumb,.ix-slide-toggle .ix-slide-toggle__ripple{transition:none}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: FormsModule }, { kind: "ngmodule", type: A11yModule }] });
+        ], viewQueries: [{ propertyName: "toggleEl", first: true, predicate: ["toggleEl"], descendants: true, isSignal: true }], ngImport: i0, template: "<div [ngClass]=\"classes()\" [attr.data-testid]=\"testId()\">\n  <label [for]=\"id\" class=\"ix-slide-toggle__label\">\n\n    <!-- Label before toggle -->\n    @if (label() && labelPosition() === 'before') {\n      <span\n        class=\"ix-slide-toggle__label-text ix-slide-toggle__label-text--before\"\n        (click)=\"onLabelClick()\">\n        {{ label() }}\n      </span>\n    }\n\n    <!-- Toggle track and thumb -->\n    <div class=\"ix-slide-toggle__bar\">\n      <input\n        #toggleEl\n        type=\"checkbox\"\n        [id]=\"id\"\n        [checked]=\"effectiveChecked()\"\n        [disabled]=\"isDisabled()\"\n        [required]=\"required()\"\n        [attr.aria-label]=\"effectiveAriaLabel()\"\n        [attr.aria-labelledby]=\"ariaLabelledby()\"\n        class=\"ix-slide-toggle__input\"\n        (change)=\"onToggleChange($event)\"\n      />\n\n      <div class=\"ix-slide-toggle__track\">\n        <div class=\"ix-slide-toggle__track-fill\"></div>\n      </div>\n\n      <div class=\"ix-slide-toggle__thumb-container\">\n        <div class=\"ix-slide-toggle__thumb\">\n          <div class=\"ix-slide-toggle__ripple\"></div>\n          <!-- State icon -->\n          <div class=\"ix-slide-toggle__icon\">\n            @if (effectiveChecked()) {\n              <svg\n                class=\"ix-slide-toggle__check-icon\"\n                viewBox=\"0 0 24 24\"\n                width=\"16\"\n                height=\"16\">\n                <path d=\"M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z\" fill=\"currentColor\"/>\n              </svg>\n            }\n            @if (!effectiveChecked()) {\n              <svg\n                class=\"ix-slide-toggle__minus-icon\"\n                viewBox=\"0 0 24 24\"\n                width=\"16\"\n                height=\"16\">\n                <path d=\"M19 13H5v-2h14v2z\" fill=\"currentColor\"/>\n              </svg>\n            }\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- Label after toggle -->\n    @if (label() && labelPosition() === 'after') {\n      <span\n        class=\"ix-slide-toggle__label-text ix-slide-toggle__label-text--after\"\n        (click)=\"onLabelClick()\">\n        {{ label() }}\n      </span>\n    }\n\n  </label>\n</div>", styles: [".ix-slide-toggle{display:inline-flex;align-items:center;cursor:pointer;-webkit-user-select:none;user-select:none;line-height:1;font-family:inherit}.ix-slide-toggle__label{display:flex;align-items:center;cursor:inherit}.ix-slide-toggle__label-text{font-size:14px;line-height:1.4;color:var(--fg1);transition:color .2s ease}.ix-slide-toggle__label-text--before{margin-right:8px}.ix-slide-toggle__label-text--after{margin-left:8px}.ix-slide-toggle__input{position:absolute;opacity:0;width:0;height:0;margin:0;pointer-events:none}.ix-slide-toggle__input:focus+.ix-slide-toggle__track{box-shadow:0 0 0 2px rgba(var(--primary-rgb, 0, 123, 255),.2)}.ix-slide-toggle__bar{position:relative;display:flex;align-items:center;flex-shrink:0}.ix-slide-toggle__track{position:relative;width:52px;height:32px;border-radius:16px;background-color:var(--lines);border:1px solid transparent;transition:background-color .2s ease,border-color .2s ease;overflow:hidden}.ix-slide-toggle__track-fill{position:absolute;inset:0;border-radius:inherit;background-color:var(--primary, #007cba);opacity:0;transform:scaleX(0);transform-origin:left center;transition:opacity .2s ease,transform .2s ease}.ix-slide-toggle__thumb-container{position:absolute;top:50%;left:4px;transform:translateY(-50%);width:24px;height:24px;transition:transform .2s ease;z-index:1}.ix-slide-toggle__thumb{position:relative;width:24px;height:24px;border-radius:50%;background-color:var(--bg2);border:1px solid var(--lines);box-shadow:0 2px 4px #0003;transition:background-color .2s ease,border-color .2s ease,box-shadow .2s ease;display:flex;align-items:center;justify-content:center}.ix-slide-toggle__ripple{position:absolute;width:40px;height:40px;border-radius:50%;background-color:transparent;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0;transition:opacity .2s ease,background-color .2s ease}.ix-slide-toggle__icon{position:relative;display:flex;align-items:center;justify-content:center;z-index:2;pointer-events:none}.ix-slide-toggle__check-icon,.ix-slide-toggle__minus-icon{transition:opacity .2s ease,transform .2s ease;color:var(--fg2)}.ix-slide-toggle:hover:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.08}.ix-slide-toggle--checked .ix-slide-toggle__track{background-color:var(--primary);opacity:.5}.ix-slide-toggle--checked .ix-slide-toggle__track-fill{opacity:1;transform:scaleX(1)}.ix-slide-toggle--checked .ix-slide-toggle__thumb-container{transform:translateY(-50%) translate(24px)}.ix-slide-toggle--checked .ix-slide-toggle__thumb{background-color:var(--bg2);border-color:var(--primary)}.ix-slide-toggle--checked .ix-slide-toggle__check-icon{color:var(--primary)}.ix-slide-toggle--checked:hover:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.12}.ix-slide-toggle--disabled{cursor:not-allowed;opacity:.6}.ix-slide-toggle--disabled .ix-slide-toggle__label-text{color:var(--alt-fg1)}.ix-slide-toggle--disabled .ix-slide-toggle__track{background-color:var(--alt-bg1)}.ix-slide-toggle--disabled .ix-slide-toggle__thumb{background-color:var(--alt-bg2);border-color:var(--alt-bg1);box-shadow:none}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__track,.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__track-fill{background-color:var(--alt-bg1)}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__thumb{background-color:var(--alt-bg2);border-color:var(--alt-bg1)}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__check-icon{color:var(--alt-fg1)}.ix-slide-toggle--disabled:hover .ix-slide-toggle__ripple{opacity:0}.ix-slide-toggle--accent{--primary: var(--accent)}.ix-slide-toggle--warn{--primary: var(--red)}.ix-slide-toggle .ix-slide-toggle__input:focus-visible+.ix-slide-toggle__track{outline:2px solid var(--primary);outline-offset:2px}.ix-slide-toggle:active:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.16;transform:translate(-50%,-50%) scale(1.1)}@media (prefers-contrast: high){.ix-slide-toggle .ix-slide-toggle__track{border-color:var(--fg1)}.ix-slide-toggle .ix-slide-toggle__thumb{border-width:2px}.ix-slide-toggle--disabled .ix-slide-toggle__track,.ix-slide-toggle--disabled .ix-slide-toggle__thumb{border-color:var(--alt-fg1)}}@media (prefers-reduced-motion: reduce){.ix-slide-toggle .ix-slide-toggle__track,.ix-slide-toggle .ix-slide-toggle__track-fill,.ix-slide-toggle .ix-slide-toggle__thumb-container,.ix-slide-toggle .ix-slide-toggle__thumb,.ix-slide-toggle .ix-slide-toggle__ripple{transition:none}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: FormsModule }, { kind: "ngmodule", type: A11yModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSlideToggleComponent, decorators: [{
             type: Component,
@@ -1157,51 +1083,23 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                             useExisting: forwardRef(() => IxSlideToggleComponent),
                             multi: true
                         }
-                    ], template: "<div [ngClass]=\"classes\" [attr.data-testid]=\"testId\">\n  <label [for]=\"id\" class=\"ix-slide-toggle__label\">\n    \n    <!-- Label before toggle -->\n    @if (label && labelPosition === 'before') {\n      <span\n        class=\"ix-slide-toggle__label-text ix-slide-toggle__label-text--before\"\n        (click)=\"onLabelClick()\">\n        {{ label }}\n      </span>\n    }\n\n    <!-- Toggle track and thumb -->\n    <div class=\"ix-slide-toggle__bar\">\n      <input\n        #toggleEl\n        type=\"checkbox\"\n        [id]=\"id\"\n        [checked]=\"checked\"\n        [disabled]=\"disabled\"\n        [required]=\"required\"\n        [attr.aria-label]=\"effectiveAriaLabel\"\n        [attr.aria-labelledby]=\"ariaLabelledby\"\n        class=\"ix-slide-toggle__input\"\n        (change)=\"onToggleChange($event)\"\n      />\n      \n      <div class=\"ix-slide-toggle__track\">\n        <div class=\"ix-slide-toggle__track-fill\"></div>\n      </div>\n      \n      <div class=\"ix-slide-toggle__thumb-container\">\n        <div class=\"ix-slide-toggle__thumb\">\n          <div class=\"ix-slide-toggle__ripple\"></div>\n          <!-- State icon -->\n          <div class=\"ix-slide-toggle__icon\">\n            @if (checked) {\n              <svg\n                class=\"ix-slide-toggle__check-icon\"\n                viewBox=\"0 0 24 24\"\n                width=\"16\"\n                height=\"16\">\n                <path d=\"M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z\" fill=\"currentColor\"/>\n              </svg>\n            }\n            @if (!checked) {\n              <svg\n                class=\"ix-slide-toggle__minus-icon\"\n                viewBox=\"0 0 24 24\"\n                width=\"16\"\n                height=\"16\">\n                <path d=\"M19 13H5v-2h14v2z\" fill=\"currentColor\"/>\n              </svg>\n            }\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- Label after toggle -->\n    @if (label && labelPosition === 'after') {\n      <span\n        class=\"ix-slide-toggle__label-text ix-slide-toggle__label-text--after\"\n        (click)=\"onLabelClick()\">\n        {{ label }}\n      </span>\n    }\n\n  </label>\n</div>", styles: [".ix-slide-toggle{display:inline-flex;align-items:center;cursor:pointer;-webkit-user-select:none;user-select:none;line-height:1;font-family:inherit}.ix-slide-toggle__label{display:flex;align-items:center;cursor:inherit}.ix-slide-toggle__label-text{font-size:14px;line-height:1.4;color:var(--fg1);transition:color .2s ease}.ix-slide-toggle__label-text--before{margin-right:8px}.ix-slide-toggle__label-text--after{margin-left:8px}.ix-slide-toggle__input{position:absolute;opacity:0;width:0;height:0;margin:0;pointer-events:none}.ix-slide-toggle__input:focus+.ix-slide-toggle__track{box-shadow:0 0 0 2px rgba(var(--primary-rgb, 0, 123, 255),.2)}.ix-slide-toggle__bar{position:relative;display:flex;align-items:center;flex-shrink:0}.ix-slide-toggle__track{position:relative;width:52px;height:32px;border-radius:16px;background-color:var(--lines);border:1px solid transparent;transition:background-color .2s ease,border-color .2s ease;overflow:hidden}.ix-slide-toggle__track-fill{position:absolute;inset:0;border-radius:inherit;background-color:var(--primary, #007cba);opacity:0;transform:scaleX(0);transform-origin:left center;transition:opacity .2s ease,transform .2s ease}.ix-slide-toggle__thumb-container{position:absolute;top:50%;left:4px;transform:translateY(-50%);width:24px;height:24px;transition:transform .2s ease;z-index:1}.ix-slide-toggle__thumb{position:relative;width:24px;height:24px;border-radius:50%;background-color:var(--bg2);border:1px solid var(--lines);box-shadow:0 2px 4px #0003;transition:background-color .2s ease,border-color .2s ease,box-shadow .2s ease;display:flex;align-items:center;justify-content:center}.ix-slide-toggle__ripple{position:absolute;width:40px;height:40px;border-radius:50%;background-color:transparent;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0;transition:opacity .2s ease,background-color .2s ease}.ix-slide-toggle__icon{position:relative;display:flex;align-items:center;justify-content:center;z-index:2;pointer-events:none}.ix-slide-toggle__check-icon,.ix-slide-toggle__minus-icon{transition:opacity .2s ease,transform .2s ease;color:var(--fg2)}.ix-slide-toggle:hover:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.08}.ix-slide-toggle--checked .ix-slide-toggle__track{background-color:var(--primary);opacity:.5}.ix-slide-toggle--checked .ix-slide-toggle__track-fill{opacity:1;transform:scaleX(1)}.ix-slide-toggle--checked .ix-slide-toggle__thumb-container{transform:translateY(-50%) translate(24px)}.ix-slide-toggle--checked .ix-slide-toggle__thumb{background-color:var(--bg2);border-color:var(--primary)}.ix-slide-toggle--checked .ix-slide-toggle__check-icon{color:var(--primary)}.ix-slide-toggle--checked:hover:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.12}.ix-slide-toggle--disabled{cursor:not-allowed;opacity:.6}.ix-slide-toggle--disabled .ix-slide-toggle__label-text{color:var(--alt-fg1)}.ix-slide-toggle--disabled .ix-slide-toggle__track{background-color:var(--alt-bg1)}.ix-slide-toggle--disabled .ix-slide-toggle__thumb{background-color:var(--alt-bg2);border-color:var(--alt-bg1);box-shadow:none}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__track,.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__track-fill{background-color:var(--alt-bg1)}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__thumb{background-color:var(--alt-bg2);border-color:var(--alt-bg1)}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__check-icon{color:var(--alt-fg1)}.ix-slide-toggle--disabled:hover .ix-slide-toggle__ripple{opacity:0}.ix-slide-toggle--accent{--primary: var(--accent)}.ix-slide-toggle--warn{--primary: var(--red)}.ix-slide-toggle--label-before .ix-slide-toggle__label{flex-direction:row-reverse}.ix-slide-toggle--label-after .ix-slide-toggle__label{flex-direction:row}.ix-slide-toggle .ix-slide-toggle__input:focus-visible+.ix-slide-toggle__track{outline:2px solid var(--primary);outline-offset:2px}.ix-slide-toggle:active:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.16;transform:translate(-50%,-50%) scale(1.1)}@media (prefers-contrast: high){.ix-slide-toggle .ix-slide-toggle__track{border-color:var(--fg1)}.ix-slide-toggle .ix-slide-toggle__thumb{border-width:2px}.ix-slide-toggle--disabled .ix-slide-toggle__track,.ix-slide-toggle--disabled .ix-slide-toggle__thumb{border-color:var(--alt-fg1)}}@media (prefers-reduced-motion: reduce){.ix-slide-toggle .ix-slide-toggle__track,.ix-slide-toggle .ix-slide-toggle__track-fill,.ix-slide-toggle .ix-slide-toggle__thumb-container,.ix-slide-toggle .ix-slide-toggle__thumb,.ix-slide-toggle .ix-slide-toggle__ripple{transition:none}}\n"] }]
-        }], propDecorators: { toggleEl: [{
-                type: ViewChild,
-                args: ['toggleEl']
-            }], labelPosition: [{
-                type: Input
-            }], label: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], required: [{
-                type: Input
-            }], color: [{
-                type: Input
-            }], testId: [{
-                type: Input
-            }], ariaLabel: [{
-                type: Input
-            }], ariaLabelledby: [{
-                type: Input
-            }], checked: [{
-                type: Input
-            }], change: [{
-                type: Output
-            }], toggleChange: [{
-                type: Output
-            }] } });
+                    ], template: "<div [ngClass]=\"classes()\" [attr.data-testid]=\"testId()\">\n  <label [for]=\"id\" class=\"ix-slide-toggle__label\">\n\n    <!-- Label before toggle -->\n    @if (label() && labelPosition() === 'before') {\n      <span\n        class=\"ix-slide-toggle__label-text ix-slide-toggle__label-text--before\"\n        (click)=\"onLabelClick()\">\n        {{ label() }}\n      </span>\n    }\n\n    <!-- Toggle track and thumb -->\n    <div class=\"ix-slide-toggle__bar\">\n      <input\n        #toggleEl\n        type=\"checkbox\"\n        [id]=\"id\"\n        [checked]=\"effectiveChecked()\"\n        [disabled]=\"isDisabled()\"\n        [required]=\"required()\"\n        [attr.aria-label]=\"effectiveAriaLabel()\"\n        [attr.aria-labelledby]=\"ariaLabelledby()\"\n        class=\"ix-slide-toggle__input\"\n        (change)=\"onToggleChange($event)\"\n      />\n\n      <div class=\"ix-slide-toggle__track\">\n        <div class=\"ix-slide-toggle__track-fill\"></div>\n      </div>\n\n      <div class=\"ix-slide-toggle__thumb-container\">\n        <div class=\"ix-slide-toggle__thumb\">\n          <div class=\"ix-slide-toggle__ripple\"></div>\n          <!-- State icon -->\n          <div class=\"ix-slide-toggle__icon\">\n            @if (effectiveChecked()) {\n              <svg\n                class=\"ix-slide-toggle__check-icon\"\n                viewBox=\"0 0 24 24\"\n                width=\"16\"\n                height=\"16\">\n                <path d=\"M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z\" fill=\"currentColor\"/>\n              </svg>\n            }\n            @if (!effectiveChecked()) {\n              <svg\n                class=\"ix-slide-toggle__minus-icon\"\n                viewBox=\"0 0 24 24\"\n                width=\"16\"\n                height=\"16\">\n                <path d=\"M19 13H5v-2h14v2z\" fill=\"currentColor\"/>\n              </svg>\n            }\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- Label after toggle -->\n    @if (label() && labelPosition() === 'after') {\n      <span\n        class=\"ix-slide-toggle__label-text ix-slide-toggle__label-text--after\"\n        (click)=\"onLabelClick()\">\n        {{ label() }}\n      </span>\n    }\n\n  </label>\n</div>", styles: [".ix-slide-toggle{display:inline-flex;align-items:center;cursor:pointer;-webkit-user-select:none;user-select:none;line-height:1;font-family:inherit}.ix-slide-toggle__label{display:flex;align-items:center;cursor:inherit}.ix-slide-toggle__label-text{font-size:14px;line-height:1.4;color:var(--fg1);transition:color .2s ease}.ix-slide-toggle__label-text--before{margin-right:8px}.ix-slide-toggle__label-text--after{margin-left:8px}.ix-slide-toggle__input{position:absolute;opacity:0;width:0;height:0;margin:0;pointer-events:none}.ix-slide-toggle__input:focus+.ix-slide-toggle__track{box-shadow:0 0 0 2px rgba(var(--primary-rgb, 0, 123, 255),.2)}.ix-slide-toggle__bar{position:relative;display:flex;align-items:center;flex-shrink:0}.ix-slide-toggle__track{position:relative;width:52px;height:32px;border-radius:16px;background-color:var(--lines);border:1px solid transparent;transition:background-color .2s ease,border-color .2s ease;overflow:hidden}.ix-slide-toggle__track-fill{position:absolute;inset:0;border-radius:inherit;background-color:var(--primary, #007cba);opacity:0;transform:scaleX(0);transform-origin:left center;transition:opacity .2s ease,transform .2s ease}.ix-slide-toggle__thumb-container{position:absolute;top:50%;left:4px;transform:translateY(-50%);width:24px;height:24px;transition:transform .2s ease;z-index:1}.ix-slide-toggle__thumb{position:relative;width:24px;height:24px;border-radius:50%;background-color:var(--bg2);border:1px solid var(--lines);box-shadow:0 2px 4px #0003;transition:background-color .2s ease,border-color .2s ease,box-shadow .2s ease;display:flex;align-items:center;justify-content:center}.ix-slide-toggle__ripple{position:absolute;width:40px;height:40px;border-radius:50%;background-color:transparent;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0;transition:opacity .2s ease,background-color .2s ease}.ix-slide-toggle__icon{position:relative;display:flex;align-items:center;justify-content:center;z-index:2;pointer-events:none}.ix-slide-toggle__check-icon,.ix-slide-toggle__minus-icon{transition:opacity .2s ease,transform .2s ease;color:var(--fg2)}.ix-slide-toggle:hover:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.08}.ix-slide-toggle--checked .ix-slide-toggle__track{background-color:var(--primary);opacity:.5}.ix-slide-toggle--checked .ix-slide-toggle__track-fill{opacity:1;transform:scaleX(1)}.ix-slide-toggle--checked .ix-slide-toggle__thumb-container{transform:translateY(-50%) translate(24px)}.ix-slide-toggle--checked .ix-slide-toggle__thumb{background-color:var(--bg2);border-color:var(--primary)}.ix-slide-toggle--checked .ix-slide-toggle__check-icon{color:var(--primary)}.ix-slide-toggle--checked:hover:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.12}.ix-slide-toggle--disabled{cursor:not-allowed;opacity:.6}.ix-slide-toggle--disabled .ix-slide-toggle__label-text{color:var(--alt-fg1)}.ix-slide-toggle--disabled .ix-slide-toggle__track{background-color:var(--alt-bg1)}.ix-slide-toggle--disabled .ix-slide-toggle__thumb{background-color:var(--alt-bg2);border-color:var(--alt-bg1);box-shadow:none}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__track,.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__track-fill{background-color:var(--alt-bg1)}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__thumb{background-color:var(--alt-bg2);border-color:var(--alt-bg1)}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__check-icon{color:var(--alt-fg1)}.ix-slide-toggle--disabled:hover .ix-slide-toggle__ripple{opacity:0}.ix-slide-toggle--accent{--primary: var(--accent)}.ix-slide-toggle--warn{--primary: var(--red)}.ix-slide-toggle .ix-slide-toggle__input:focus-visible+.ix-slide-toggle__track{outline:2px solid var(--primary);outline-offset:2px}.ix-slide-toggle:active:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.16;transform:translate(-50%,-50%) scale(1.1)}@media (prefers-contrast: high){.ix-slide-toggle .ix-slide-toggle__track{border-color:var(--fg1)}.ix-slide-toggle .ix-slide-toggle__thumb{border-width:2px}.ix-slide-toggle--disabled .ix-slide-toggle__track,.ix-slide-toggle--disabled .ix-slide-toggle__thumb{border-color:var(--alt-fg1)}}@media (prefers-reduced-motion: reduce){.ix-slide-toggle .ix-slide-toggle__track,.ix-slide-toggle .ix-slide-toggle__track-fill,.ix-slide-toggle .ix-slide-toggle__thumb-container,.ix-slide-toggle .ix-slide-toggle__thumb,.ix-slide-toggle .ix-slide-toggle__ripple{transition:none}}\n"] }]
+        }] });
 
 class IxMenuComponent {
     overlay;
     viewContainerRef;
-    items = [];
-    contextMenu = false; // Enable context menu mode (right-click)
-    menuItemClick = new EventEmitter();
-    menuOpen = new EventEmitter();
-    menuClose = new EventEmitter();
-    menuTemplate;
-    contextMenuTemplate;
+    items = input([], ...(ngDevMode ? [{ debugName: "items" }] : []));
+    contextMenu = input(false, ...(ngDevMode ? [{ debugName: "contextMenu" }] : [])); // Enable context menu mode (right-click)
+    menuItemClick = output();
+    menuOpen = output();
+    menuClose = output();
+    menuTemplate = viewChild.required('menuTemplate');
+    contextMenuTemplate = viewChild.required('contextMenuTemplate');
     contextOverlayRef;
     constructor(overlay, viewContainerRef) {
         this.overlay = overlay;
         this.viewContainerRef = viewContainerRef;
-    }
-    ngOnInit() {
-        // Component initialization
     }
     onMenuItemClick(item) {
         if (!item.disabled && (!item.children || item.children.length === 0)) {
@@ -1215,9 +1113,9 @@ class IxMenuComponent {
             }
         }
     }
-    hasChildren(item) {
+    hasChildren = computed(() => (item) => {
         return !!(item.children && item.children.length > 0);
-    }
+    }, ...(ngDevMode ? [{ debugName: "hasChildren" }] : []));
     onMenuOpen() {
         this.menuOpen.emit();
     }
@@ -1228,13 +1126,14 @@ class IxMenuComponent {
      * Get the menu template for use by the trigger directive
      */
     getMenuTemplate() {
-        if (this.contextMenu) {
-            return this.contextMenuTemplate || null;
+        if (this.contextMenu()) {
+            return this.contextMenuTemplate() || null;
         }
-        return this.menuTemplate || null;
+        return this.menuTemplate() || null;
     }
     openContextMenuAt(x, y) {
-        if (this.contextMenu && this.contextMenuTemplate) {
+        const contextMenuTemplate = this.contextMenuTemplate();
+        if (this.contextMenu() && contextMenuTemplate) {
             // Close any existing context menu
             this.closeContextMenu();
             // Create overlay at cursor position
@@ -1253,7 +1152,7 @@ class IxMenuComponent {
                 backdropClass: 'cdk-overlay-transparent-backdrop'
             });
             // Create portal and attach to overlay
-            const portal = new TemplatePortal(this.contextMenuTemplate, this.viewContainerRef);
+            const portal = new TemplatePortal(contextMenuTemplate, this.viewContainerRef);
             this.contextOverlayRef.attach(portal);
             // Handle backdrop click to close menu
             this.contextOverlayRef.backdropClick().subscribe(() => {
@@ -1270,7 +1169,7 @@ class IxMenuComponent {
         }
     }
     onContextMenu(event) {
-        if (this.contextMenu) {
+        if (this.contextMenu()) {
             event.preventDefault();
             event.stopPropagation();
             // Open at cursor position
@@ -1281,28 +1180,12 @@ class IxMenuComponent {
         return item.id;
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMenuComponent, deps: [{ token: i1$3.Overlay }, { token: i0.ViewContainerRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxMenuComponent, isStandalone: true, selector: "ix-menu", inputs: { items: "items", contextMenu: "contextMenu" }, outputs: { menuItemClick: "menuItemClick", menuOpen: "menuOpen", menuClose: "menuClose" }, viewQueries: [{ propertyName: "menuTemplate", first: true, predicate: ["menuTemplate"], descendants: true, read: TemplateRef }, { propertyName: "contextMenuTemplate", first: true, predicate: ["contextMenuTemplate"], descendants: true, read: TemplateRef }], ngImport: i0, template: "<!-- Context menu content slot -->\n@if (contextMenu) {\n  <div class=\"ix-menu-context-content\" (contextmenu)=\"onContextMenu($event)\">\n    <ng-content></ng-content>\n  </div>\n}\n\n  <!-- Context menu template for overlay -->\n  <ng-template #contextMenuTemplate>\n    <div class=\"ix-menu\" cdkMenu>\n      @for (item of items; track trackByItemId($index, item)) {\n        @if (item.separator) {\n          <div\n            class=\"ix-menu-separator\"\n            role=\"separator\"\n          ></div>\n        } @else {\n          @if (!item.children || item.children.length === 0) {\n            <button\n              cdkMenuItem\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item\"\n              (click)=\"onMenuItemClick(item)\"\n              type=\"button\"\n            >\n              @if (item.icon) {\n                <ix-icon [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              }\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              @if (item.shortcut) {\n                <span class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              }\n            </button>\n          } @else {\n            <button\n              cdkMenuItem\n              [cdkMenuTriggerFor]=\"nestedMenu\"\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item ix-menu-item--nested\"\n              type=\"button\"\n            >\n              @if (item.icon) {\n                <ix-icon [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              }\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              @if (item.shortcut) {\n                <span class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              }\n              <span class=\"ix-menu-item-arrow\">\u25B6</span>\n            </button>\n\n            <ng-template #nestedMenu>\n              <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                @for (nestedItem of item.children; track trackByItemId($index, nestedItem)) {\n                  @if (nestedItem.separator) {\n                    <div\n                      class=\"ix-menu-separator\"\n                      role=\"separator\"\n                    ></div>\n                  } @else {\n                    @if (!nestedItem.children || nestedItem.children.length === 0) {\n                      <button\n                        cdkMenuItem\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item\"\n                        (click)=\"onMenuItemClick(nestedItem)\"\n                        type=\"button\"\n                      >\n                        @if (nestedItem.icon) {\n                          <ix-icon [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        }\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        @if (nestedItem.shortcut) {\n                          <span class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        }\n                      </button>\n                    } @else {\n                      <button\n                        cdkMenuItem\n                        [cdkMenuTriggerFor]=\"deepNestedMenu\"\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item ix-menu-item--nested\"\n                        type=\"button\"\n                      >\n                        @if (nestedItem.icon) {\n                          <ix-icon [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        }\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        @if (nestedItem.shortcut) {\n                          <span class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        }\n                        <span class=\"ix-menu-item-arrow\">\u25B6</span>\n                      </button>\n\n                      <ng-template #deepNestedMenu>\n                        <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                          @for (deepNestedItem of nestedItem.children; track trackByItemId($index, deepNestedItem)) {\n                            @if (deepNestedItem.separator) {\n                              <div\n                                class=\"ix-menu-separator\"\n                                role=\"separator\"\n                              ></div>\n                            } @else {\n                              <button\n                                cdkMenuItem\n                                [disabled]=\"deepNestedItem.disabled\"\n                                [class.disabled]=\"deepNestedItem.disabled\"\n                                class=\"ix-menu-item\"\n                                (click)=\"onMenuItemClick(deepNestedItem)\"\n                                type=\"button\"\n                              >\n                                @if (deepNestedItem.icon) {\n                                  <ix-icon [name]=\"deepNestedItem.icon\" [library]=\"deepNestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                                }\n                                <span class=\"ix-menu-item-label\">{{ deepNestedItem.label }}</span>\n                                @if (deepNestedItem.shortcut) {\n                                  <span class=\"ix-menu-item-shortcut\">{{ deepNestedItem.shortcut }}</span>\n                                }\n                              </button>\n                            }\n                          }\n                        </div>\n                      </ng-template>\n                    }\n                  }\n                }\n              </div>\n            </ng-template>\n          }\n        }\n      }\n    </div>\n  </ng-template>\n\n  <!-- Regular menu template -->\n  <ng-template #menuTemplate>\n    <div class=\"ix-menu\" cdkMenu>\n      @for (item of items; track trackByItemId($index, item)) {\n        @if (item.separator) {\n          <div\n            class=\"ix-menu-separator\"\n            role=\"separator\"\n          ></div>\n        } @else {\n          @if (!item.children || item.children.length === 0) {\n            <button\n              cdkMenuItem\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item\"\n              (click)=\"onMenuItemClick(item)\"\n              type=\"button\"\n            >\n              @if (item.icon) {\n                <ix-icon [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              }\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              @if (item.shortcut) {\n                <span class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              }\n            </button>\n          } @else {\n            <button\n              cdkMenuItem\n              [cdkMenuTriggerFor]=\"nestedMenu\"\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item ix-menu-item--nested\"\n              type=\"button\"\n            >\n              @if (item.icon) {\n                <ix-icon [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              }\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              @if (item.shortcut) {\n                <span class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              }\n              <span class=\"ix-menu-item-arrow\">\u25B6</span>\n            </button>\n\n            <ng-template #nestedMenu>\n              <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                @for (nestedItem of item.children; track trackByItemId($index, nestedItem)) {\n                  @if (nestedItem.separator) {\n                    <div\n                      class=\"ix-menu-separator\"\n                      role=\"separator\"\n                    ></div>\n                  } @else {\n                    @if (!nestedItem.children || nestedItem.children.length === 0) {\n                      <button\n                        cdkMenuItem\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item\"\n                        (click)=\"onMenuItemClick(nestedItem)\"\n                        type=\"button\"\n                      >\n                        @if (nestedItem.icon) {\n                          <ix-icon [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        }\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        @if (nestedItem.shortcut) {\n                          <span class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        }\n                      </button>\n                    } @else {\n                      <button\n                        cdkMenuItem\n                        [cdkMenuTriggerFor]=\"deepNestedMenu\"\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item ix-menu-item--nested\"\n                        type=\"button\"\n                      >\n                        @if (nestedItem.icon) {\n                          <ix-icon [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        }\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        @if (nestedItem.shortcut) {\n                          <span class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        }\n                        <span class=\"ix-menu-item-arrow\">\u25B6</span>\n                      </button>\n\n                      <ng-template #deepNestedMenu>\n                        <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                          @for (deepNestedItem of nestedItem.children; track trackByItemId($index, deepNestedItem)) {\n                            @if (deepNestedItem.separator) {\n                              <div\n                                class=\"ix-menu-separator\"\n                                role=\"separator\"\n                              ></div>\n                            } @else {\n                              <button\n                                cdkMenuItem\n                                [disabled]=\"deepNestedItem.disabled\"\n                                [class.disabled]=\"deepNestedItem.disabled\"\n                                class=\"ix-menu-item\"\n                                (click)=\"onMenuItemClick(deepNestedItem)\"\n                                type=\"button\"\n                              >\n                                @if (deepNestedItem.icon) {\n                                  <ix-icon [name]=\"deepNestedItem.icon\" [library]=\"deepNestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                                }\n                                <span class=\"ix-menu-item-label\">{{ deepNestedItem.label }}</span>\n                                @if (deepNestedItem.shortcut) {\n                                  <span class=\"ix-menu-item-shortcut\">{{ deepNestedItem.shortcut }}</span>\n                                }\n                              </button>\n                            }\n                          }\n                        </div>\n                      </ng-template>\n                    }\n                  }\n                }\n              </div>\n            </ng-template>\n          }\n        }\n      }\n    </div>\n  </ng-template>", styles: [".ix-menu-container{display:inline-block;position:relative}.ix-menu-container.ix-menu-container--context{display:block;width:100%;height:100%;cursor:context-menu}.ix-menu-trigger{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--bg1, #ffffff);border:1px solid var(--lines, #e0e0e0);border-radius:4px;color:var(--fg1, #333333);cursor:pointer;font-size:14px;transition:all .2s ease}.ix-menu-trigger:hover:not(.disabled){background:var(--bg2, #f5f5f5);border-color:var(--lines, #cccccc)}.ix-menu-trigger:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-menu-trigger.disabled{opacity:.5;cursor:not-allowed}.ix-menu-arrow{font-size:12px;transition:transform .2s ease}.ix-menu-arrow.ix-menu-arrow--up{transform:rotate(180deg)}.ix-menu{display:flex;flex-direction:column;background:var(--bg2, #f5f5f5);border:1px solid var(--lines, #e0e0e0);border-radius:4px;box-shadow:0 8px 24px #00000026,0 4px 8px #0000001a;min-width:160px;max-width:300px;padding:4px 0;z-index:1000}.ix-menu-item{display:flex;align-items:center;gap:8px;width:100%;padding:8px 16px;border:none;background:transparent;color:var(--fg1, #333333);cursor:pointer;font-size:14px;text-align:left;transition:background-color .2s ease}.ix-menu-item:hover:not(.disabled){background:var(--alt-bg2, #e8f4fd)!important}.ix-menu-item:focus{outline:none;background:var(--alt-bg2, #e8f4fd)}.ix-menu-item[aria-selected=true]{background:var(--alt-bg2, #e8f4fd)}.ix-menu-item.disabled{opacity:.5;cursor:not-allowed}.ix-menu-item.disabled:hover{background:transparent!important}.ix-menu-item-icon{font-size:16px;width:16px;text-align:center}.ix-menu-item-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ix-menu-item-shortcut{font-size:12px;color:var(--fg2, #666666);margin-left:auto;padding-left:16px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-weight:400;opacity:.7}.ix-menu-item-arrow{font-size:10px;margin-left:8px;color:var(--fg2, #666666);transition:transform .2s ease;flex-shrink:0}.ix-menu-item--nested{position:relative}.ix-menu-item--nested:hover .ix-menu-item-arrow{color:var(--fg1, #333333)}.ix-menu-separator{height:1px;background:var(--lines, #e0e0e0);margin:4px 0}.ix-menu--nested{margin-left:4px;box-shadow:0 8px 24px #00000026,0 4px 8px #0000001a;border-radius:4px}.ix-menu-context-content{width:100%;height:100%}.ix-menu-context-content:hover:before{content:\"\";position:absolute;inset:0;background:rgba(var(--primary-rgb, 0, 123, 255),.05);pointer-events:none;border:1px dashed rgba(var(--primary-rgb, 0, 123, 255),.3);border-radius:4px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: CdkMenu, selector: "[cdkMenu]", outputs: ["closed"], exportAs: ["cdkMenu"] }, { kind: "directive", type: CdkMenuItem, selector: "[cdkMenuItem]", inputs: ["cdkMenuItemDisabled", "cdkMenuitemTypeaheadLabel"], outputs: ["cdkMenuItemTriggered"], exportAs: ["cdkMenuItem"] }, { kind: "directive", type: CdkMenuTrigger, selector: "[cdkMenuTriggerFor]", inputs: ["cdkMenuTriggerFor", "cdkMenuPosition", "cdkMenuTriggerData"], outputs: ["cdkMenuOpened", "cdkMenuClosed"], exportAs: ["cdkMenuTriggerFor"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxMenuComponent, isStandalone: true, selector: "ix-menu", inputs: { items: { classPropertyName: "items", publicName: "items", isSignal: true, isRequired: false, transformFunction: null }, contextMenu: { classPropertyName: "contextMenu", publicName: "contextMenu", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { menuItemClick: "menuItemClick", menuOpen: "menuOpen", menuClose: "menuClose" }, viewQueries: [{ propertyName: "menuTemplate", first: true, predicate: ["menuTemplate"], descendants: true, isSignal: true }, { propertyName: "contextMenuTemplate", first: true, predicate: ["contextMenuTemplate"], descendants: true, isSignal: true }], ngImport: i0, template: "<!-- Context menu content slot -->\n@if (contextMenu()) {\n  <div class=\"ix-menu-context-content\" (contextmenu)=\"onContextMenu($event)\">\n    <ng-content></ng-content>\n  </div>\n}\n\n  <!-- Context menu template for overlay -->\n  <ng-template #contextMenuTemplate>\n    <div class=\"ix-menu\" cdkMenu>\n      @for (item of items(); track trackByItemId($index, item)) {\n        @if (item.separator) {\n          <div\n            class=\"ix-menu-separator\"\n            role=\"separator\"\n          ></div>\n        } @else {\n          @if (!item.children || item.children.length === 0) {\n            <button\n              cdkMenuItem\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item\"\n              (click)=\"onMenuItemClick(item)\"\n              type=\"button\"\n            >\n              @if (item.icon) {\n                <ix-icon [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              }\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              @if (item.shortcut) {\n                <span class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              }\n            </button>\n          } @else {\n            <button\n              cdkMenuItem\n              [cdkMenuTriggerFor]=\"nestedMenu\"\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item ix-menu-item--nested\"\n              type=\"button\"\n            >\n              @if (item.icon) {\n                <ix-icon [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              }\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              @if (item.shortcut) {\n                <span class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              }\n              <span class=\"ix-menu-item-arrow\">\u25B6</span>\n            </button>\n\n            <ng-template #nestedMenu>\n              <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                @for (nestedItem of item.children; track trackByItemId($index, nestedItem)) {\n                  @if (nestedItem.separator) {\n                    <div\n                      class=\"ix-menu-separator\"\n                      role=\"separator\"\n                    ></div>\n                  } @else {\n                    @if (!nestedItem.children || nestedItem.children.length === 0) {\n                      <button\n                        cdkMenuItem\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item\"\n                        (click)=\"onMenuItemClick(nestedItem)\"\n                        type=\"button\"\n                      >\n                        @if (nestedItem.icon) {\n                          <ix-icon [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        }\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        @if (nestedItem.shortcut) {\n                          <span class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        }\n                      </button>\n                    } @else {\n                      <button\n                        cdkMenuItem\n                        [cdkMenuTriggerFor]=\"deepNestedMenu\"\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item ix-menu-item--nested\"\n                        type=\"button\"\n                      >\n                        @if (nestedItem.icon) {\n                          <ix-icon [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        }\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        @if (nestedItem.shortcut) {\n                          <span class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        }\n                        <span class=\"ix-menu-item-arrow\">\u25B6</span>\n                      </button>\n\n                      <ng-template #deepNestedMenu>\n                        <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                          @for (deepNestedItem of nestedItem.children; track trackByItemId($index, deepNestedItem)) {\n                            @if (deepNestedItem.separator) {\n                              <div\n                                class=\"ix-menu-separator\"\n                                role=\"separator\"\n                              ></div>\n                            } @else {\n                              <button\n                                cdkMenuItem\n                                [disabled]=\"deepNestedItem.disabled\"\n                                [class.disabled]=\"deepNestedItem.disabled\"\n                                class=\"ix-menu-item\"\n                                (click)=\"onMenuItemClick(deepNestedItem)\"\n                                type=\"button\"\n                              >\n                                @if (deepNestedItem.icon) {\n                                  <ix-icon [name]=\"deepNestedItem.icon\" [library]=\"deepNestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                                }\n                                <span class=\"ix-menu-item-label\">{{ deepNestedItem.label }}</span>\n                                @if (deepNestedItem.shortcut) {\n                                  <span class=\"ix-menu-item-shortcut\">{{ deepNestedItem.shortcut }}</span>\n                                }\n                              </button>\n                            }\n                          }\n                        </div>\n                      </ng-template>\n                    }\n                  }\n                }\n              </div>\n            </ng-template>\n          }\n        }\n      }\n    </div>\n  </ng-template>\n\n  <!-- Regular menu template -->\n  <ng-template #menuTemplate>\n    <div class=\"ix-menu\" cdkMenu>\n      @for (item of items(); track trackByItemId($index, item)) {\n        @if (item.separator) {\n          <div\n            class=\"ix-menu-separator\"\n            role=\"separator\"\n          ></div>\n        } @else {\n          @if (!item.children || item.children.length === 0) {\n            <button\n              cdkMenuItem\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item\"\n              (click)=\"onMenuItemClick(item)\"\n              type=\"button\"\n            >\n              @if (item.icon) {\n                <ix-icon [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              }\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              @if (item.shortcut) {\n                <span class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              }\n            </button>\n          } @else {\n            <button\n              cdkMenuItem\n              [cdkMenuTriggerFor]=\"nestedMenu\"\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item ix-menu-item--nested\"\n              type=\"button\"\n            >\n              @if (item.icon) {\n                <ix-icon [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              }\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              @if (item.shortcut) {\n                <span class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              }\n              <span class=\"ix-menu-item-arrow\">\u25B6</span>\n            </button>\n\n            <ng-template #nestedMenu>\n              <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                @for (nestedItem of item.children; track trackByItemId($index, nestedItem)) {\n                  @if (nestedItem.separator) {\n                    <div\n                      class=\"ix-menu-separator\"\n                      role=\"separator\"\n                    ></div>\n                  } @else {\n                    @if (!nestedItem.children || nestedItem.children.length === 0) {\n                      <button\n                        cdkMenuItem\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item\"\n                        (click)=\"onMenuItemClick(nestedItem)\"\n                        type=\"button\"\n                      >\n                        @if (nestedItem.icon) {\n                          <ix-icon [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        }\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        @if (nestedItem.shortcut) {\n                          <span class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        }\n                      </button>\n                    } @else {\n                      <button\n                        cdkMenuItem\n                        [cdkMenuTriggerFor]=\"deepNestedMenu\"\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item ix-menu-item--nested\"\n                        type=\"button\"\n                      >\n                        @if (nestedItem.icon) {\n                          <ix-icon [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        }\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        @if (nestedItem.shortcut) {\n                          <span class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        }\n                        <span class=\"ix-menu-item-arrow\">\u25B6</span>\n                      </button>\n\n                      <ng-template #deepNestedMenu>\n                        <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                          @for (deepNestedItem of nestedItem.children; track trackByItemId($index, deepNestedItem)) {\n                            @if (deepNestedItem.separator) {\n                              <div\n                                class=\"ix-menu-separator\"\n                                role=\"separator\"\n                              ></div>\n                            } @else {\n                              <button\n                                cdkMenuItem\n                                [disabled]=\"deepNestedItem.disabled\"\n                                [class.disabled]=\"deepNestedItem.disabled\"\n                                class=\"ix-menu-item\"\n                                (click)=\"onMenuItemClick(deepNestedItem)\"\n                                type=\"button\"\n                              >\n                                @if (deepNestedItem.icon) {\n                                  <ix-icon [name]=\"deepNestedItem.icon\" [library]=\"deepNestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                                }\n                                <span class=\"ix-menu-item-label\">{{ deepNestedItem.label }}</span>\n                                @if (deepNestedItem.shortcut) {\n                                  <span class=\"ix-menu-item-shortcut\">{{ deepNestedItem.shortcut }}</span>\n                                }\n                              </button>\n                            }\n                          }\n                        </div>\n                      </ng-template>\n                    }\n                  }\n                }\n              </div>\n            </ng-template>\n          }\n        }\n      }\n    </div>\n  </ng-template>", styles: [".ix-menu-container{display:inline-block;position:relative}.ix-menu-container.ix-menu-container--context{display:block;width:100%;height:100%;cursor:context-menu}.ix-menu-trigger{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--bg1, #ffffff);border:1px solid var(--lines, #e0e0e0);border-radius:4px;color:var(--fg1, #333333);cursor:pointer;font-size:14px;transition:all .2s ease}.ix-menu-trigger:hover:not(.disabled){background:var(--bg2, #f5f5f5);border-color:var(--lines, #cccccc)}.ix-menu-trigger:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-menu-trigger.disabled{opacity:.5;cursor:not-allowed}.ix-menu-arrow{font-size:12px;transition:transform .2s ease}.ix-menu-arrow.ix-menu-arrow--up{transform:rotate(180deg)}.ix-menu{display:flex;flex-direction:column;background:var(--bg2, #f5f5f5);border:1px solid var(--lines, #e0e0e0);border-radius:4px;box-shadow:0 8px 24px #00000026,0 4px 8px #0000001a;min-width:160px;max-width:300px;padding:4px 0;z-index:1000}.ix-menu-item{display:flex;align-items:center;gap:8px;width:100%;padding:8px 16px;border:none;background:transparent;color:var(--fg1, #333333);cursor:pointer;font-size:14px;text-align:left;transition:background-color .2s ease}.ix-menu-item:hover:not(.disabled){background:var(--alt-bg2, #e8f4fd)!important}.ix-menu-item:focus{outline:none;background:var(--alt-bg2, #e8f4fd)}.ix-menu-item[aria-selected=true]{background:var(--alt-bg2, #e8f4fd)}.ix-menu-item.disabled{opacity:.5;cursor:not-allowed}.ix-menu-item.disabled:hover{background:transparent!important}.ix-menu-item-icon{font-size:16px;width:16px;text-align:center}.ix-menu-item-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ix-menu-item-shortcut{font-size:12px;color:var(--fg2, #666666);margin-left:auto;padding-left:16px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-weight:400;opacity:.7}.ix-menu-item-arrow{font-size:10px;margin-left:8px;color:var(--fg2, #666666);transition:transform .2s ease;flex-shrink:0}.ix-menu-item--nested{position:relative}.ix-menu-item--nested:hover .ix-menu-item-arrow{color:var(--fg1, #333333)}.ix-menu-separator{height:1px;background:var(--lines, #e0e0e0);margin:4px 0}.ix-menu--nested{margin-left:4px;box-shadow:0 8px 24px #00000026,0 4px 8px #0000001a;border-radius:4px}.ix-menu-context-content{width:100%;height:100%}.ix-menu-context-content:hover:before{content:\"\";position:absolute;inset:0;background:rgba(var(--primary-rgb, 0, 123, 255),.05);pointer-events:none;border:1px dashed rgba(var(--primary-rgb, 0, 123, 255),.3);border-radius:4px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: CdkMenu, selector: "[cdkMenu]", outputs: ["closed"], exportAs: ["cdkMenu"] }, { kind: "directive", type: CdkMenuItem, selector: "[cdkMenuItem]", inputs: ["cdkMenuItemDisabled", "cdkMenuitemTypeaheadLabel"], outputs: ["cdkMenuItemTriggered"], exportAs: ["cdkMenuItem"] }, { kind: "directive", type: CdkMenuTrigger, selector: "[cdkMenuTriggerFor]", inputs: ["cdkMenuTriggerFor", "cdkMenuPosition", "cdkMenuTriggerData"], outputs: ["cdkMenuOpened", "cdkMenuClosed"], exportAs: ["cdkMenuTriggerFor"] }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMenuComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-menu', standalone: true, imports: [CommonModule, CdkMenu, CdkMenuItem, CdkMenuTrigger, IxIconComponent], template: "<!-- Context menu content slot -->\n@if (contextMenu) {\n  <div class=\"ix-menu-context-content\" (contextmenu)=\"onContextMenu($event)\">\n    <ng-content></ng-content>\n  </div>\n}\n\n  <!-- Context menu template for overlay -->\n  <ng-template #contextMenuTemplate>\n    <div class=\"ix-menu\" cdkMenu>\n      @for (item of items; track trackByItemId($index, item)) {\n        @if (item.separator) {\n          <div\n            class=\"ix-menu-separator\"\n            role=\"separator\"\n          ></div>\n        } @else {\n          @if (!item.children || item.children.length === 0) {\n            <button\n              cdkMenuItem\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item\"\n              (click)=\"onMenuItemClick(item)\"\n              type=\"button\"\n            >\n              @if (item.icon) {\n                <ix-icon [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              }\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              @if (item.shortcut) {\n                <span class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              }\n            </button>\n          } @else {\n            <button\n              cdkMenuItem\n              [cdkMenuTriggerFor]=\"nestedMenu\"\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item ix-menu-item--nested\"\n              type=\"button\"\n            >\n              @if (item.icon) {\n                <ix-icon [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              }\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              @if (item.shortcut) {\n                <span class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              }\n              <span class=\"ix-menu-item-arrow\">\u25B6</span>\n            </button>\n\n            <ng-template #nestedMenu>\n              <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                @for (nestedItem of item.children; track trackByItemId($index, nestedItem)) {\n                  @if (nestedItem.separator) {\n                    <div\n                      class=\"ix-menu-separator\"\n                      role=\"separator\"\n                    ></div>\n                  } @else {\n                    @if (!nestedItem.children || nestedItem.children.length === 0) {\n                      <button\n                        cdkMenuItem\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item\"\n                        (click)=\"onMenuItemClick(nestedItem)\"\n                        type=\"button\"\n                      >\n                        @if (nestedItem.icon) {\n                          <ix-icon [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        }\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        @if (nestedItem.shortcut) {\n                          <span class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        }\n                      </button>\n                    } @else {\n                      <button\n                        cdkMenuItem\n                        [cdkMenuTriggerFor]=\"deepNestedMenu\"\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item ix-menu-item--nested\"\n                        type=\"button\"\n                      >\n                        @if (nestedItem.icon) {\n                          <ix-icon [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        }\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        @if (nestedItem.shortcut) {\n                          <span class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        }\n                        <span class=\"ix-menu-item-arrow\">\u25B6</span>\n                      </button>\n\n                      <ng-template #deepNestedMenu>\n                        <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                          @for (deepNestedItem of nestedItem.children; track trackByItemId($index, deepNestedItem)) {\n                            @if (deepNestedItem.separator) {\n                              <div\n                                class=\"ix-menu-separator\"\n                                role=\"separator\"\n                              ></div>\n                            } @else {\n                              <button\n                                cdkMenuItem\n                                [disabled]=\"deepNestedItem.disabled\"\n                                [class.disabled]=\"deepNestedItem.disabled\"\n                                class=\"ix-menu-item\"\n                                (click)=\"onMenuItemClick(deepNestedItem)\"\n                                type=\"button\"\n                              >\n                                @if (deepNestedItem.icon) {\n                                  <ix-icon [name]=\"deepNestedItem.icon\" [library]=\"deepNestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                                }\n                                <span class=\"ix-menu-item-label\">{{ deepNestedItem.label }}</span>\n                                @if (deepNestedItem.shortcut) {\n                                  <span class=\"ix-menu-item-shortcut\">{{ deepNestedItem.shortcut }}</span>\n                                }\n                              </button>\n                            }\n                          }\n                        </div>\n                      </ng-template>\n                    }\n                  }\n                }\n              </div>\n            </ng-template>\n          }\n        }\n      }\n    </div>\n  </ng-template>\n\n  <!-- Regular menu template -->\n  <ng-template #menuTemplate>\n    <div class=\"ix-menu\" cdkMenu>\n      @for (item of items; track trackByItemId($index, item)) {\n        @if (item.separator) {\n          <div\n            class=\"ix-menu-separator\"\n            role=\"separator\"\n          ></div>\n        } @else {\n          @if (!item.children || item.children.length === 0) {\n            <button\n              cdkMenuItem\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item\"\n              (click)=\"onMenuItemClick(item)\"\n              type=\"button\"\n            >\n              @if (item.icon) {\n                <ix-icon [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              }\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              @if (item.shortcut) {\n                <span class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              }\n            </button>\n          } @else {\n            <button\n              cdkMenuItem\n              [cdkMenuTriggerFor]=\"nestedMenu\"\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item ix-menu-item--nested\"\n              type=\"button\"\n            >\n              @if (item.icon) {\n                <ix-icon [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              }\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              @if (item.shortcut) {\n                <span class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              }\n              <span class=\"ix-menu-item-arrow\">\u25B6</span>\n            </button>\n\n            <ng-template #nestedMenu>\n              <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                @for (nestedItem of item.children; track trackByItemId($index, nestedItem)) {\n                  @if (nestedItem.separator) {\n                    <div\n                      class=\"ix-menu-separator\"\n                      role=\"separator\"\n                    ></div>\n                  } @else {\n                    @if (!nestedItem.children || nestedItem.children.length === 0) {\n                      <button\n                        cdkMenuItem\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item\"\n                        (click)=\"onMenuItemClick(nestedItem)\"\n                        type=\"button\"\n                      >\n                        @if (nestedItem.icon) {\n                          <ix-icon [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        }\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        @if (nestedItem.shortcut) {\n                          <span class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        }\n                      </button>\n                    } @else {\n                      <button\n                        cdkMenuItem\n                        [cdkMenuTriggerFor]=\"deepNestedMenu\"\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item ix-menu-item--nested\"\n                        type=\"button\"\n                      >\n                        @if (nestedItem.icon) {\n                          <ix-icon [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        }\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        @if (nestedItem.shortcut) {\n                          <span class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        }\n                        <span class=\"ix-menu-item-arrow\">\u25B6</span>\n                      </button>\n\n                      <ng-template #deepNestedMenu>\n                        <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                          @for (deepNestedItem of nestedItem.children; track trackByItemId($index, deepNestedItem)) {\n                            @if (deepNestedItem.separator) {\n                              <div\n                                class=\"ix-menu-separator\"\n                                role=\"separator\"\n                              ></div>\n                            } @else {\n                              <button\n                                cdkMenuItem\n                                [disabled]=\"deepNestedItem.disabled\"\n                                [class.disabled]=\"deepNestedItem.disabled\"\n                                class=\"ix-menu-item\"\n                                (click)=\"onMenuItemClick(deepNestedItem)\"\n                                type=\"button\"\n                              >\n                                @if (deepNestedItem.icon) {\n                                  <ix-icon [name]=\"deepNestedItem.icon\" [library]=\"deepNestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                                }\n                                <span class=\"ix-menu-item-label\">{{ deepNestedItem.label }}</span>\n                                @if (deepNestedItem.shortcut) {\n                                  <span class=\"ix-menu-item-shortcut\">{{ deepNestedItem.shortcut }}</span>\n                                }\n                              </button>\n                            }\n                          }\n                        </div>\n                      </ng-template>\n                    }\n                  }\n                }\n              </div>\n            </ng-template>\n          }\n        }\n      }\n    </div>\n  </ng-template>", styles: [".ix-menu-container{display:inline-block;position:relative}.ix-menu-container.ix-menu-container--context{display:block;width:100%;height:100%;cursor:context-menu}.ix-menu-trigger{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--bg1, #ffffff);border:1px solid var(--lines, #e0e0e0);border-radius:4px;color:var(--fg1, #333333);cursor:pointer;font-size:14px;transition:all .2s ease}.ix-menu-trigger:hover:not(.disabled){background:var(--bg2, #f5f5f5);border-color:var(--lines, #cccccc)}.ix-menu-trigger:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-menu-trigger.disabled{opacity:.5;cursor:not-allowed}.ix-menu-arrow{font-size:12px;transition:transform .2s ease}.ix-menu-arrow.ix-menu-arrow--up{transform:rotate(180deg)}.ix-menu{display:flex;flex-direction:column;background:var(--bg2, #f5f5f5);border:1px solid var(--lines, #e0e0e0);border-radius:4px;box-shadow:0 8px 24px #00000026,0 4px 8px #0000001a;min-width:160px;max-width:300px;padding:4px 0;z-index:1000}.ix-menu-item{display:flex;align-items:center;gap:8px;width:100%;padding:8px 16px;border:none;background:transparent;color:var(--fg1, #333333);cursor:pointer;font-size:14px;text-align:left;transition:background-color .2s ease}.ix-menu-item:hover:not(.disabled){background:var(--alt-bg2, #e8f4fd)!important}.ix-menu-item:focus{outline:none;background:var(--alt-bg2, #e8f4fd)}.ix-menu-item[aria-selected=true]{background:var(--alt-bg2, #e8f4fd)}.ix-menu-item.disabled{opacity:.5;cursor:not-allowed}.ix-menu-item.disabled:hover{background:transparent!important}.ix-menu-item-icon{font-size:16px;width:16px;text-align:center}.ix-menu-item-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ix-menu-item-shortcut{font-size:12px;color:var(--fg2, #666666);margin-left:auto;padding-left:16px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-weight:400;opacity:.7}.ix-menu-item-arrow{font-size:10px;margin-left:8px;color:var(--fg2, #666666);transition:transform .2s ease;flex-shrink:0}.ix-menu-item--nested{position:relative}.ix-menu-item--nested:hover .ix-menu-item-arrow{color:var(--fg1, #333333)}.ix-menu-separator{height:1px;background:var(--lines, #e0e0e0);margin:4px 0}.ix-menu--nested{margin-left:4px;box-shadow:0 8px 24px #00000026,0 4px 8px #0000001a;border-radius:4px}.ix-menu-context-content{width:100%;height:100%}.ix-menu-context-content:hover:before{content:\"\";position:absolute;inset:0;background:rgba(var(--primary-rgb, 0, 123, 255),.05);pointer-events:none;border:1px dashed rgba(var(--primary-rgb, 0, 123, 255),.3);border-radius:4px}\n"] }]
-        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ViewContainerRef }], propDecorators: { items: [{
-                type: Input
-            }], contextMenu: [{
-                type: Input
-            }], menuItemClick: [{
-                type: Output
-            }], menuOpen: [{
-                type: Output
-            }], menuClose: [{
-                type: Output
-            }], menuTemplate: [{
-                type: ViewChild,
-                args: ['menuTemplate', { read: TemplateRef }]
-            }], contextMenuTemplate: [{
-                type: ViewChild,
-                args: ['contextMenuTemplate', { read: TemplateRef }]
-            }] } });
+            args: [{ selector: 'ix-menu', standalone: true, imports: [CommonModule, CdkMenu, CdkMenuItem, CdkMenuTrigger, IxIconComponent], template: "<!-- Context menu content slot -->\n@if (contextMenu()) {\n  <div class=\"ix-menu-context-content\" (contextmenu)=\"onContextMenu($event)\">\n    <ng-content></ng-content>\n  </div>\n}\n\n  <!-- Context menu template for overlay -->\n  <ng-template #contextMenuTemplate>\n    <div class=\"ix-menu\" cdkMenu>\n      @for (item of items(); track trackByItemId($index, item)) {\n        @if (item.separator) {\n          <div\n            class=\"ix-menu-separator\"\n            role=\"separator\"\n          ></div>\n        } @else {\n          @if (!item.children || item.children.length === 0) {\n            <button\n              cdkMenuItem\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item\"\n              (click)=\"onMenuItemClick(item)\"\n              type=\"button\"\n            >\n              @if (item.icon) {\n                <ix-icon [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              }\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              @if (item.shortcut) {\n                <span class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              }\n            </button>\n          } @else {\n            <button\n              cdkMenuItem\n              [cdkMenuTriggerFor]=\"nestedMenu\"\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item ix-menu-item--nested\"\n              type=\"button\"\n            >\n              @if (item.icon) {\n                <ix-icon [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              }\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              @if (item.shortcut) {\n                <span class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              }\n              <span class=\"ix-menu-item-arrow\">\u25B6</span>\n            </button>\n\n            <ng-template #nestedMenu>\n              <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                @for (nestedItem of item.children; track trackByItemId($index, nestedItem)) {\n                  @if (nestedItem.separator) {\n                    <div\n                      class=\"ix-menu-separator\"\n                      role=\"separator\"\n                    ></div>\n                  } @else {\n                    @if (!nestedItem.children || nestedItem.children.length === 0) {\n                      <button\n                        cdkMenuItem\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item\"\n                        (click)=\"onMenuItemClick(nestedItem)\"\n                        type=\"button\"\n                      >\n                        @if (nestedItem.icon) {\n                          <ix-icon [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        }\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        @if (nestedItem.shortcut) {\n                          <span class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        }\n                      </button>\n                    } @else {\n                      <button\n                        cdkMenuItem\n                        [cdkMenuTriggerFor]=\"deepNestedMenu\"\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item ix-menu-item--nested\"\n                        type=\"button\"\n                      >\n                        @if (nestedItem.icon) {\n                          <ix-icon [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        }\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        @if (nestedItem.shortcut) {\n                          <span class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        }\n                        <span class=\"ix-menu-item-arrow\">\u25B6</span>\n                      </button>\n\n                      <ng-template #deepNestedMenu>\n                        <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                          @for (deepNestedItem of nestedItem.children; track trackByItemId($index, deepNestedItem)) {\n                            @if (deepNestedItem.separator) {\n                              <div\n                                class=\"ix-menu-separator\"\n                                role=\"separator\"\n                              ></div>\n                            } @else {\n                              <button\n                                cdkMenuItem\n                                [disabled]=\"deepNestedItem.disabled\"\n                                [class.disabled]=\"deepNestedItem.disabled\"\n                                class=\"ix-menu-item\"\n                                (click)=\"onMenuItemClick(deepNestedItem)\"\n                                type=\"button\"\n                              >\n                                @if (deepNestedItem.icon) {\n                                  <ix-icon [name]=\"deepNestedItem.icon\" [library]=\"deepNestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                                }\n                                <span class=\"ix-menu-item-label\">{{ deepNestedItem.label }}</span>\n                                @if (deepNestedItem.shortcut) {\n                                  <span class=\"ix-menu-item-shortcut\">{{ deepNestedItem.shortcut }}</span>\n                                }\n                              </button>\n                            }\n                          }\n                        </div>\n                      </ng-template>\n                    }\n                  }\n                }\n              </div>\n            </ng-template>\n          }\n        }\n      }\n    </div>\n  </ng-template>\n\n  <!-- Regular menu template -->\n  <ng-template #menuTemplate>\n    <div class=\"ix-menu\" cdkMenu>\n      @for (item of items(); track trackByItemId($index, item)) {\n        @if (item.separator) {\n          <div\n            class=\"ix-menu-separator\"\n            role=\"separator\"\n          ></div>\n        } @else {\n          @if (!item.children || item.children.length === 0) {\n            <button\n              cdkMenuItem\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item\"\n              (click)=\"onMenuItemClick(item)\"\n              type=\"button\"\n            >\n              @if (item.icon) {\n                <ix-icon [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              }\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              @if (item.shortcut) {\n                <span class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              }\n            </button>\n          } @else {\n            <button\n              cdkMenuItem\n              [cdkMenuTriggerFor]=\"nestedMenu\"\n              [disabled]=\"item.disabled\"\n              [class.disabled]=\"item.disabled\"\n              class=\"ix-menu-item ix-menu-item--nested\"\n              type=\"button\"\n            >\n              @if (item.icon) {\n                <ix-icon [name]=\"item.icon\" [library]=\"item.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n              }\n              <span class=\"ix-menu-item-label\">{{ item.label }}</span>\n              @if (item.shortcut) {\n                <span class=\"ix-menu-item-shortcut\">{{ item.shortcut }}</span>\n              }\n              <span class=\"ix-menu-item-arrow\">\u25B6</span>\n            </button>\n\n            <ng-template #nestedMenu>\n              <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                @for (nestedItem of item.children; track trackByItemId($index, nestedItem)) {\n                  @if (nestedItem.separator) {\n                    <div\n                      class=\"ix-menu-separator\"\n                      role=\"separator\"\n                    ></div>\n                  } @else {\n                    @if (!nestedItem.children || nestedItem.children.length === 0) {\n                      <button\n                        cdkMenuItem\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item\"\n                        (click)=\"onMenuItemClick(nestedItem)\"\n                        type=\"button\"\n                      >\n                        @if (nestedItem.icon) {\n                          <ix-icon [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        }\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        @if (nestedItem.shortcut) {\n                          <span class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        }\n                      </button>\n                    } @else {\n                      <button\n                        cdkMenuItem\n                        [cdkMenuTriggerFor]=\"deepNestedMenu\"\n                        [disabled]=\"nestedItem.disabled\"\n                        [class.disabled]=\"nestedItem.disabled\"\n                        class=\"ix-menu-item ix-menu-item--nested\"\n                        type=\"button\"\n                      >\n                        @if (nestedItem.icon) {\n                          <ix-icon [name]=\"nestedItem.icon\" [library]=\"nestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                        }\n                        <span class=\"ix-menu-item-label\">{{ nestedItem.label }}</span>\n                        @if (nestedItem.shortcut) {\n                          <span class=\"ix-menu-item-shortcut\">{{ nestedItem.shortcut }}</span>\n                        }\n                        <span class=\"ix-menu-item-arrow\">\u25B6</span>\n                      </button>\n\n                      <ng-template #deepNestedMenu>\n                        <div class=\"ix-menu ix-menu--nested\" cdkMenu>\n                          @for (deepNestedItem of nestedItem.children; track trackByItemId($index, deepNestedItem)) {\n                            @if (deepNestedItem.separator) {\n                              <div\n                                class=\"ix-menu-separator\"\n                                role=\"separator\"\n                              ></div>\n                            } @else {\n                              <button\n                                cdkMenuItem\n                                [disabled]=\"deepNestedItem.disabled\"\n                                [class.disabled]=\"deepNestedItem.disabled\"\n                                class=\"ix-menu-item\"\n                                (click)=\"onMenuItemClick(deepNestedItem)\"\n                                type=\"button\"\n                              >\n                                @if (deepNestedItem.icon) {\n                                  <ix-icon [name]=\"deepNestedItem.icon\" [library]=\"deepNestedItem.iconLibrary\" size=\"sm\" class=\"ix-menu-item-icon\"></ix-icon>\n                                }\n                                <span class=\"ix-menu-item-label\">{{ deepNestedItem.label }}</span>\n                                @if (deepNestedItem.shortcut) {\n                                  <span class=\"ix-menu-item-shortcut\">{{ deepNestedItem.shortcut }}</span>\n                                }\n                              </button>\n                            }\n                          }\n                        </div>\n                      </ng-template>\n                    }\n                  }\n                }\n              </div>\n            </ng-template>\n          }\n        }\n      }\n    </div>\n  </ng-template>", styles: [".ix-menu-container{display:inline-block;position:relative}.ix-menu-container.ix-menu-container--context{display:block;width:100%;height:100%;cursor:context-menu}.ix-menu-trigger{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--bg1, #ffffff);border:1px solid var(--lines, #e0e0e0);border-radius:4px;color:var(--fg1, #333333);cursor:pointer;font-size:14px;transition:all .2s ease}.ix-menu-trigger:hover:not(.disabled){background:var(--bg2, #f5f5f5);border-color:var(--lines, #cccccc)}.ix-menu-trigger:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-menu-trigger.disabled{opacity:.5;cursor:not-allowed}.ix-menu-arrow{font-size:12px;transition:transform .2s ease}.ix-menu-arrow.ix-menu-arrow--up{transform:rotate(180deg)}.ix-menu{display:flex;flex-direction:column;background:var(--bg2, #f5f5f5);border:1px solid var(--lines, #e0e0e0);border-radius:4px;box-shadow:0 8px 24px #00000026,0 4px 8px #0000001a;min-width:160px;max-width:300px;padding:4px 0;z-index:1000}.ix-menu-item{display:flex;align-items:center;gap:8px;width:100%;padding:8px 16px;border:none;background:transparent;color:var(--fg1, #333333);cursor:pointer;font-size:14px;text-align:left;transition:background-color .2s ease}.ix-menu-item:hover:not(.disabled){background:var(--alt-bg2, #e8f4fd)!important}.ix-menu-item:focus{outline:none;background:var(--alt-bg2, #e8f4fd)}.ix-menu-item[aria-selected=true]{background:var(--alt-bg2, #e8f4fd)}.ix-menu-item.disabled{opacity:.5;cursor:not-allowed}.ix-menu-item.disabled:hover{background:transparent!important}.ix-menu-item-icon{font-size:16px;width:16px;text-align:center}.ix-menu-item-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ix-menu-item-shortcut{font-size:12px;color:var(--fg2, #666666);margin-left:auto;padding-left:16px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-weight:400;opacity:.7}.ix-menu-item-arrow{font-size:10px;margin-left:8px;color:var(--fg2, #666666);transition:transform .2s ease;flex-shrink:0}.ix-menu-item--nested{position:relative}.ix-menu-item--nested:hover .ix-menu-item-arrow{color:var(--fg1, #333333)}.ix-menu-separator{height:1px;background:var(--lines, #e0e0e0);margin:4px 0}.ix-menu--nested{margin-left:4px;box-shadow:0 8px 24px #00000026,0 4px 8px #0000001a;border-radius:4px}.ix-menu-context-content{width:100%;height:100%}.ix-menu-context-content:hover:before{content:\"\";position:absolute;inset:0;background:rgba(var(--primary-rgb, 0, 123, 255),.05);pointer-events:none;border:1px dashed rgba(var(--primary-rgb, 0, 123, 255),.3);border-radius:4px}\n"] }]
+        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ViewContainerRef }] });
 
 /**
  * Directive that attaches a menu to any element.
@@ -1312,17 +1195,17 @@ class IxMenuTriggerDirective {
     elementRef;
     overlay;
     viewContainerRef;
-    menu;
-    ixMenuPosition = 'below';
+    menu = input.required(...(ngDevMode ? [{ debugName: "menu", alias: 'ixMenuTriggerFor' }] : [{ alias: 'ixMenuTriggerFor' }]));
+    ixMenuPosition = input('below', ...(ngDevMode ? [{ debugName: "ixMenuPosition" }] : []));
     overlayRef;
-    isMenuOpen = false;
+    isMenuOpen = signal(false, ...(ngDevMode ? [{ debugName: "isMenuOpen" }] : []));
     constructor(elementRef, overlay, viewContainerRef) {
         this.elementRef = elementRef;
         this.overlay = overlay;
         this.viewContainerRef = viewContainerRef;
     }
     onClick() {
-        if (this.isMenuOpen) {
+        if (this.isMenuOpen()) {
             this.closeMenu();
         }
         else {
@@ -1330,11 +1213,12 @@ class IxMenuTriggerDirective {
         }
     }
     openMenu() {
-        if (!this.menu || this.isMenuOpen) {
+        const menuComponent = this.menu();
+        if (!menuComponent || this.isMenuOpen()) {
             return;
         }
         // Get menu template
-        const menuTemplate = this.menu.getMenuTemplate();
+        const menuTemplate = menuComponent.getMenuTemplate();
         if (!menuTemplate) {
             return;
         }
@@ -1355,24 +1239,24 @@ class IxMenuTriggerDirective {
         // Create portal and attach
         const portal = new TemplatePortal(menuTemplate, this.viewContainerRef);
         this.overlayRef.attach(portal);
-        this.isMenuOpen = true;
+        this.isMenuOpen.set(true);
         // Handle backdrop click
         this.overlayRef.backdropClick().subscribe(() => {
             this.closeMenu();
         });
         // Notify menu component
-        this.menu.onMenuOpen();
+        menuComponent.onMenuOpen();
     }
     closeMenu() {
         if (this.overlayRef) {
             this.overlayRef.dispose();
             this.overlayRef = undefined;
-            this.isMenuOpen = false;
-            this.menu.onMenuClose();
+            this.isMenuOpen.set(false);
+            this.menu().onMenuClose();
         }
     }
     getPositions() {
-        switch (this.ixMenuPosition) {
+        switch (this.ixMenuPosition()) {
             case 'above':
                 return [
                     { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom' }
@@ -1396,24 +1280,19 @@ class IxMenuTriggerDirective {
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMenuTriggerDirective, deps: [{ token: i0.ElementRef }, { token: i1$3.Overlay }, { token: i0.ViewContainerRef }], target: i0.ɵɵFactoryTarget.Directive });
-    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "14.0.0", version: "20.3.4", type: IxMenuTriggerDirective, isStandalone: true, selector: "[ixMenuTriggerFor]", inputs: { menu: ["ixMenuTriggerFor", "menu"], ixMenuPosition: "ixMenuPosition" }, host: { listeners: { "click": "onClick()" } }, exportAs: ["ixMenuTrigger"], ngImport: i0 });
+    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "17.1.0", version: "20.3.4", type: IxMenuTriggerDirective, isStandalone: true, selector: "[ixMenuTriggerFor]", inputs: { menu: { classPropertyName: "menu", publicName: "ixMenuTriggerFor", isSignal: true, isRequired: true, transformFunction: null }, ixMenuPosition: { classPropertyName: "ixMenuPosition", publicName: "ixMenuPosition", isSignal: true, isRequired: false, transformFunction: null } }, host: { listeners: { "click": "onClick()" } }, exportAs: ["ixMenuTrigger"], ngImport: i0 });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMenuTriggerDirective, decorators: [{
             type: Directive,
             args: [{
                     selector: '[ixMenuTriggerFor]',
                     standalone: true,
-                    exportAs: 'ixMenuTrigger'
+                    exportAs: 'ixMenuTrigger',
+                    host: {
+                        '(click)': 'onClick()'
+                    }
                 }]
-        }], ctorParameters: () => [{ type: i0.ElementRef }, { type: i1$3.Overlay }, { type: i0.ViewContainerRef }], propDecorators: { menu: [{
-                type: Input,
-                args: ['ixMenuTriggerFor']
-            }], ixMenuPosition: [{
-                type: Input
-            }], onClick: [{
-                type: HostListener,
-                args: ['click']
-            }] } });
+        }], ctorParameters: () => [{ type: i0.ElementRef }, { type: i1$3.Overlay }, { type: i0.ViewContainerRef }] });
 
 class IxCardComponent {
     iconRegistry;
@@ -1422,21 +1301,21 @@ class IxCardComponent {
         // Register MDI icons used by this component
         this.registerMdiIcons();
     }
-    title;
-    titleLink; // Makes title navigable
-    elevation = 'medium';
-    padding = 'medium';
-    padContent = true;
-    bordered = false;
-    background = true;
+    title = input(undefined, ...(ngDevMode ? [{ debugName: "title" }] : []));
+    titleLink = input(undefined, ...(ngDevMode ? [{ debugName: "titleLink" }] : [])); // Makes title navigable
+    elevation = input('medium', ...(ngDevMode ? [{ debugName: "elevation" }] : []));
+    padding = input('medium', ...(ngDevMode ? [{ debugName: "padding" }] : []));
+    padContent = input(true, ...(ngDevMode ? [{ debugName: "padContent" }] : []));
+    bordered = input(false, ...(ngDevMode ? [{ debugName: "bordered" }] : []));
+    background = input(true, ...(ngDevMode ? [{ debugName: "background" }] : []));
     // Header elements (top-right) - Always render in header
-    headerStatus;
-    headerControl; // Slide toggle - ALWAYS in header
-    headerMenu;
+    headerStatus = input(undefined, ...(ngDevMode ? [{ debugName: "headerStatus" }] : []));
+    headerControl = input(undefined, ...(ngDevMode ? [{ debugName: "headerControl" }] : [])); // Slide toggle - ALWAYS in header
+    headerMenu = input(undefined, ...(ngDevMode ? [{ debugName: "headerMenu" }] : []));
     // Footer elements (bottom-right) - Always render in footer
-    primaryAction;
-    secondaryAction;
-    footerLink;
+    primaryAction = input(undefined, ...(ngDevMode ? [{ debugName: "primaryAction" }] : []));
+    secondaryAction = input(undefined, ...(ngDevMode ? [{ debugName: "secondaryAction" }] : []));
+    footerLink = input(undefined, ...(ngDevMode ? [{ debugName: "footerLink" }] : []));
     /**
      * Register MDI icon library with all icons used by the card component
      * This makes the component self-contained with zero configuration required
@@ -1457,28 +1336,30 @@ class IxCardComponent {
             }
         });
     }
-    get classes() {
-        const elevationClass = `ix-card--elevation-${this.elevation}`;
-        const paddingClass = `ix-card--padding-${this.padding}`;
-        const contentPaddingClass = this.padContent ? `ix-card--content-padding-${this.padding}` : 'ix-card--content-padding-none';
-        const borderedClass = this.bordered ? 'ix-card--bordered' : '';
-        const backgroundClass = this.background ? 'ix-card--background' : '';
+    classes = computed(() => {
+        const elevationClass = `ix-card--elevation-${this.elevation()}`;
+        const paddingClass = `ix-card--padding-${this.padding()}`;
+        const contentPaddingClass = this.padContent() ? `ix-card--content-padding-${this.padding()}` : 'ix-card--content-padding-none';
+        const borderedClass = this.bordered() ? 'ix-card--bordered' : '';
+        const backgroundClass = this.background() ? 'ix-card--background' : '';
         return ['ix-card', elevationClass, paddingClass, contentPaddingClass, borderedClass, backgroundClass].filter(Boolean);
-    }
-    get hasHeader() {
-        return !!(this.title || this.headerStatus || this.headerControl || this.headerMenu);
-    }
-    get hasFooter() {
-        return !!(this.primaryAction || this.secondaryAction || this.footerLink);
-    }
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
+    hasHeader = computed(() => {
+        return !!(this.title() || this.headerStatus() || this.headerControl() || this.headerMenu());
+    }, ...(ngDevMode ? [{ debugName: "hasHeader" }] : []));
+    hasFooter = computed(() => {
+        return !!(this.primaryAction() || this.secondaryAction() || this.footerLink());
+    }, ...(ngDevMode ? [{ debugName: "hasFooter" }] : []));
     onTitleClick() {
-        if (this.titleLink) {
-            window.location.href = this.titleLink;
+        const link = this.titleLink();
+        if (link) {
+            window.location.href = link;
         }
     }
     onControlChange(checked) {
-        if (this.headerControl) {
-            this.headerControl.handler(checked);
+        const control = this.headerControl();
+        if (control) {
+            control.handler(checked);
         }
     }
     onHeaderMenuItemClick(item) {
@@ -1488,67 +1369,49 @@ class IxCardComponent {
         return type ? `ix-card__status--${type}` : 'ix-card__status--neutral';
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxCardComponent, deps: [{ token: IxIconRegistryService }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxCardComponent, isStandalone: true, selector: "ix-card", inputs: { title: "title", titleLink: "titleLink", elevation: "elevation", padding: "padding", padContent: "padContent", bordered: "bordered", background: "background", headerStatus: "headerStatus", headerControl: "headerControl", headerMenu: "headerMenu", primaryAction: "primaryAction", secondaryAction: "secondaryAction", footerLink: "footerLink" }, ngImport: i0, template: "<div [ngClass]=\"classes\">\n  <!-- Header section -->\n  @if (hasHeader) {\n    <div class=\"ix-card__header\">\n      <div class=\"ix-card__header-left\">\n        @if (title) {\n          <h3\n            class=\"ix-card__title\"\n            [class.ix-card__title--link]=\"titleLink\"\n            (click)=\"onTitleClick()\">\n            {{ title }}\n          </h3>\n        }\n      </div>\n\n      <div class=\"ix-card__header-right\">\n        <!-- Header Status -->\n        @if (headerStatus) {\n          <div\n            class=\"ix-card__status\"\n            [ngClass]=\"getStatusClass(headerStatus?.type)\">\n            {{ headerStatus.label }}\n          </div>\n        }\n\n        <!-- Header Control (Slide Toggle) -->\n        @if (headerControl) {\n          <div class=\"ix-card__control\">\n            <ix-slide-toggle\n              [label]=\"headerControl.label\"\n              [checked]=\"headerControl.checked\"\n              [disabled]=\"headerControl.disabled || false\"\n              (change)=\"onControlChange($event)\">\n            </ix-slide-toggle>\n          </div>\n        }\n\n        <!-- Header Menu -->\n        @if (headerMenu && headerMenu.length) {\n          <div class=\"ix-card__menu\">\n            <ix-icon-button\n              name=\"dots-vertical\"\n              library=\"mdi\"\n              size=\"md\"\n              [ixMenuTriggerFor]=\"cardMenu\"\n              ariaLabel=\"Card menu\">\n            </ix-icon-button>\n            <ix-menu\n              #cardMenu\n              [items]=\"headerMenu\"\n              (menuItemClick)=\"onHeaderMenuItemClick($event)\">\n            </ix-menu>\n          </div>\n        }\n      </div>\n    </div>\n  }\n\n  <!-- Content section -->\n  <div class=\"ix-card__content\">\n    <ng-content></ng-content>\n  </div>\n\n  <!-- Footer section -->\n  @if (hasFooter) {\n    <div class=\"ix-card__footer\">\n      <div class=\"ix-card__footer-left\">\n        @if (footerLink) {\n          <button\n            type=\"button\"\n            class=\"ix-card__footer-link\"\n            (click)=\"footerLink.handler()\">\n            {{ footerLink.label }}\n          </button>\n        }\n      </div>\n\n      <div class=\"ix-card__footer-right\">\n        @if (secondaryAction) {\n          <ix-button\n            [label]=\"secondaryAction.label\"\n            variant=\"outline\"\n            color=\"default\"\n            [disabled]=\"secondaryAction.disabled || false\"\n            (click)=\"secondaryAction.handler()\">\n          </ix-button>\n        }\n\n        @if (primaryAction) {\n          <ix-button\n            [label]=\"primaryAction.label\"\n            variant=\"filled\"\n            color=\"primary\"\n            [disabled]=\"primaryAction.disabled || false\"\n            (click)=\"primaryAction.handler()\">\n          </ix-button>\n        }\n      </div>\n    </div>\n  }\n</div>", styles: [".ix-card{height:100%;display:flex;flex-direction:column;border-radius:8px;transition:box-shadow .3s ease;overflow:hidden}.ix-card--elevation-none{box-shadow:none}.ix-card--elevation-low{box-shadow:0 1px 3px #0000001a}.ix-card--elevation-medium{box-shadow:0 4px 6px #0000001a}.ix-card--elevation-high{box-shadow:0 10px 15px #0000001a}.ix-card--bordered{border:1px solid var(--lines, #e5e7eb)}.ix-card--background{background-color:var(--bg2, #ffffff)}.ix-card--padding-small .ix-card__header{padding:12px 16px}.ix-card--padding-medium .ix-card__header{padding:16px 24px}.ix-card--padding-large .ix-card__header{padding:24px 32px}.ix-card--content-padding-none .ix-card__content{padding:0}.ix-card--content-padding-small .ix-card__content{padding:16px}.ix-card--content-padding-medium .ix-card__content{padding:24px}.ix-card--content-padding-large .ix-card__content{padding:32px}.ix-card__content{flex:1;min-height:0}.ix-card__header{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid var(--lines, #e5e7eb)}.ix-card:not(.ix-card--bordered) .ix-card__header{border-bottom-color:#0000001a}.ix-card__header-left{flex:1;min-width:0}.ix-card__header-right{display:flex;align-items:center;gap:12px;flex-shrink:0}.ix-card__title{margin:0;font-size:1.125rem;font-weight:600;color:var(--fg1, #1f2937);line-height:1.5}.ix-card__title--link{cursor:pointer;transition:color .2s ease}.ix-card__title--link:hover{color:var(--primary, #2563eb)}.ix-card__status{display:inline-flex;align-items:center;padding:4px 12px;border-radius:12px;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px}.ix-card__status--success{background-color:#10b9811a;color:var(--success, #10b981)}.ix-card__status--warning{background-color:#f59e0b1a;color:var(--warning, #f59e0b)}.ix-card__status--error{background-color:#ef44441a;color:var(--error, #ef4444)}.ix-card__status--info{background-color:#3b82f61a;color:var(--info, #3b82f6)}.ix-card__status--neutral{background-color:#6b72801a;color:var(--fg2, #6b7280)}.ix-card__control,.ix-card__menu{display:flex;align-items:center}.ix-card__footer{display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid var(--lines, #e5e7eb);padding:16px 24px}.ix-card--padding-small .ix-card__footer{padding:12px 16px}.ix-card--padding-large .ix-card__footer{padding:24px 32px}.ix-card:not(.ix-card--bordered) .ix-card__footer{border-top-color:#0000001a}.ix-card__footer-left{flex:1;min-width:0}.ix-card__footer-right{display:flex;align-items:center;gap:8px;flex-shrink:0}.ix-card__footer-link{border:none;background:transparent;color:var(--primary, #2563eb);font-size:.875rem;font-weight:600;cursor:pointer;padding:0;text-decoration:none;transition:color .2s ease}.ix-card__footer-link:hover{color:var(--primary-dark, #1d4ed8);text-decoration:underline}.ix-card__footer-link:focus{outline:2px solid var(--primary, #2563eb);outline-offset:2px;border-radius:2px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "component", type: IxButtonComponent, selector: "ix-button", inputs: ["primary", "color", "variant", "backgroundColor", "label", "disabled"], outputs: ["onClick"] }, { kind: "component", type: IxIconButtonComponent, selector: "ix-icon-button", inputs: ["disabled", "ariaLabel", "name", "size", "color", "tooltip", "library"], outputs: ["onClick"] }, { kind: "component", type: IxSlideToggleComponent, selector: "ix-slide-toggle", inputs: ["labelPosition", "label", "disabled", "required", "color", "testId", "ariaLabel", "ariaLabelledby", "checked"], outputs: ["change", "toggleChange"] }, { kind: "component", type: IxMenuComponent, selector: "ix-menu", inputs: ["items", "contextMenu"], outputs: ["menuItemClick", "menuOpen", "menuClose"] }, { kind: "directive", type: IxMenuTriggerDirective, selector: "[ixMenuTriggerFor]", inputs: ["ixMenuTriggerFor", "ixMenuPosition"], exportAs: ["ixMenuTrigger"] }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxCardComponent, isStandalone: true, selector: "ix-card", inputs: { title: { classPropertyName: "title", publicName: "title", isSignal: true, isRequired: false, transformFunction: null }, titleLink: { classPropertyName: "titleLink", publicName: "titleLink", isSignal: true, isRequired: false, transformFunction: null }, elevation: { classPropertyName: "elevation", publicName: "elevation", isSignal: true, isRequired: false, transformFunction: null }, padding: { classPropertyName: "padding", publicName: "padding", isSignal: true, isRequired: false, transformFunction: null }, padContent: { classPropertyName: "padContent", publicName: "padContent", isSignal: true, isRequired: false, transformFunction: null }, bordered: { classPropertyName: "bordered", publicName: "bordered", isSignal: true, isRequired: false, transformFunction: null }, background: { classPropertyName: "background", publicName: "background", isSignal: true, isRequired: false, transformFunction: null }, headerStatus: { classPropertyName: "headerStatus", publicName: "headerStatus", isSignal: true, isRequired: false, transformFunction: null }, headerControl: { classPropertyName: "headerControl", publicName: "headerControl", isSignal: true, isRequired: false, transformFunction: null }, headerMenu: { classPropertyName: "headerMenu", publicName: "headerMenu", isSignal: true, isRequired: false, transformFunction: null }, primaryAction: { classPropertyName: "primaryAction", publicName: "primaryAction", isSignal: true, isRequired: false, transformFunction: null }, secondaryAction: { classPropertyName: "secondaryAction", publicName: "secondaryAction", isSignal: true, isRequired: false, transformFunction: null }, footerLink: { classPropertyName: "footerLink", publicName: "footerLink", isSignal: true, isRequired: false, transformFunction: null } }, ngImport: i0, template: "<div [ngClass]=\"classes()\">\n  <!-- Header section -->\n  @if (hasHeader()) {\n    <div class=\"ix-card__header\">\n      <div class=\"ix-card__header-left\">\n        @if (title()) {\n          <h3\n            class=\"ix-card__title\"\n            [class.ix-card__title--link]=\"titleLink()\"\n            (click)=\"onTitleClick()\">\n            {{ title() }}\n          </h3>\n        }\n      </div>\n\n      <div class=\"ix-card__header-right\">\n        <!-- Header Status -->\n        @if (headerStatus(); as status) {\n          <div\n            class=\"ix-card__status\"\n            [ngClass]=\"getStatusClass(status?.type)\">\n            {{ status.label }}\n          </div>\n        }\n\n        <!-- Header Control (Slide Toggle) -->\n        @if (headerControl(); as control) {\n          <div class=\"ix-card__control\">\n            <ix-slide-toggle\n              [label]=\"control.label\"\n              [checked]=\"control.checked\"\n              [disabled]=\"control.disabled || false\"\n              (change)=\"onControlChange($event)\">\n            </ix-slide-toggle>\n          </div>\n        }\n\n        <!-- Header Menu -->\n        @if (headerMenu(); as menu) {\n          @if (menu.length) {\n            <div class=\"ix-card__menu\">\n              <ix-icon-button\n                name=\"dots-vertical\"\n                library=\"mdi\"\n                size=\"md\"\n                [ixMenuTriggerFor]=\"cardMenu\"\n                ariaLabel=\"Card menu\">\n              </ix-icon-button>\n              <ix-menu\n                #cardMenu\n                [items]=\"menu\"\n                (menuItemClick)=\"onHeaderMenuItemClick($event)\">\n              </ix-menu>\n            </div>\n          }\n        }\n      </div>\n    </div>\n  }\n\n  <!-- Content section -->\n  <div class=\"ix-card__content\">\n    <ng-content></ng-content>\n  </div>\n\n  <!-- Footer section -->\n  @if (hasFooter()) {\n    <div class=\"ix-card__footer\">\n      <div class=\"ix-card__footer-left\">\n        @if (footerLink(); as link) {\n          <button\n            type=\"button\"\n            class=\"ix-card__footer-link\"\n            (click)=\"link.handler()\">\n            {{ link.label }}\n          </button>\n        }\n      </div>\n\n      <div class=\"ix-card__footer-right\">\n        @if (secondaryAction(); as action) {\n          <ix-button\n            [label]=\"action.label\"\n            variant=\"outline\"\n            color=\"default\"\n            [disabled]=\"action.disabled || false\"\n            (click)=\"action.handler()\">\n          </ix-button>\n        }\n\n        @if (primaryAction(); as action) {\n          <ix-button\n            [label]=\"action.label\"\n            variant=\"filled\"\n            color=\"primary\"\n            [disabled]=\"action.disabled || false\"\n            (click)=\"action.handler()\">\n          </ix-button>\n        }\n      </div>\n    </div>\n  }\n</div>", styles: [".ix-card{height:100%;display:flex;flex-direction:column;border-radius:8px;transition:box-shadow .3s ease;overflow:hidden}.ix-card--elevation-none{box-shadow:none}.ix-card--elevation-low{box-shadow:0 1px 3px #0000001a}.ix-card--elevation-medium{box-shadow:0 4px 6px #0000001a}.ix-card--elevation-high{box-shadow:0 10px 15px #0000001a}.ix-card--bordered{border:1px solid var(--lines, #e5e7eb)}.ix-card--background{background-color:var(--bg2, #ffffff)}.ix-card--padding-small .ix-card__header{padding:12px 16px}.ix-card--padding-medium .ix-card__header{padding:16px 24px}.ix-card--padding-large .ix-card__header{padding:24px 32px}.ix-card--content-padding-none .ix-card__content{padding:0}.ix-card--content-padding-small .ix-card__content{padding:16px}.ix-card--content-padding-medium .ix-card__content{padding:24px}.ix-card--content-padding-large .ix-card__content{padding:32px}.ix-card__content{flex:1;min-height:0}.ix-card__header{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid var(--lines, #e5e7eb)}.ix-card:not(.ix-card--bordered) .ix-card__header{border-bottom-color:#0000001a}.ix-card__header-left{flex:1;min-width:0}.ix-card__header-right{display:flex;align-items:center;gap:12px;flex-shrink:0}.ix-card__title{margin:0;font-size:1.125rem;font-weight:600;color:var(--fg1, #1f2937);line-height:1.5}.ix-card__title--link{cursor:pointer;transition:color .2s ease}.ix-card__title--link:hover{color:var(--primary, #2563eb)}.ix-card__status{display:inline-flex;align-items:center;padding:4px 12px;border-radius:12px;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px}.ix-card__status--success{background-color:#10b9811a;color:var(--success, #10b981)}.ix-card__status--warning{background-color:#f59e0b1a;color:var(--warning, #f59e0b)}.ix-card__status--error{background-color:#ef44441a;color:var(--error, #ef4444)}.ix-card__status--info{background-color:#3b82f61a;color:var(--info, #3b82f6)}.ix-card__status--neutral{background-color:#6b72801a;color:var(--fg2, #6b7280)}.ix-card__control,.ix-card__menu{display:flex;align-items:center}.ix-card__footer{display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid var(--lines, #e5e7eb);padding:16px 24px}.ix-card--padding-small .ix-card__footer{padding:12px 16px}.ix-card--padding-large .ix-card__footer{padding:24px 32px}.ix-card:not(.ix-card--bordered) .ix-card__footer{border-top-color:#0000001a}.ix-card__footer-left{flex:1;min-width:0}.ix-card__footer-right{display:flex;align-items:center;gap:8px;flex-shrink:0}.ix-card__footer-link{border:none;background:transparent;color:var(--primary, #2563eb);font-size:.875rem;font-weight:600;cursor:pointer;padding:0;text-decoration:none;transition:color .2s ease}.ix-card__footer-link:hover{color:var(--primary-dark, #1d4ed8);text-decoration:underline}.ix-card__footer-link:focus{outline:2px solid var(--primary, #2563eb);outline-offset:2px;border-radius:2px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "component", type: IxButtonComponent, selector: "ix-button", inputs: ["primary", "color", "variant", "backgroundColor", "label", "disabled"], outputs: ["onClick"] }, { kind: "component", type: IxIconButtonComponent, selector: "ix-icon-button", inputs: ["disabled", "ariaLabel", "name", "size", "color", "tooltip", "library"], outputs: ["onClick"] }, { kind: "component", type: IxSlideToggleComponent, selector: "ix-slide-toggle", inputs: ["labelPosition", "label", "disabled", "required", "color", "testId", "ariaLabel", "ariaLabelledby", "checked"], outputs: ["change", "toggleChange"] }, { kind: "component", type: IxMenuComponent, selector: "ix-menu", inputs: ["items", "contextMenu"], outputs: ["menuItemClick", "menuOpen", "menuClose"] }, { kind: "directive", type: IxMenuTriggerDirective, selector: "[ixMenuTriggerFor]", inputs: ["ixMenuTriggerFor", "ixMenuPosition"], exportAs: ["ixMenuTrigger"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxCardComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-card', standalone: true, imports: [CommonModule, IxButtonComponent, IxIconComponent, IxIconButtonComponent, IxSlideToggleComponent, IxMenuComponent, IxMenuTriggerDirective], template: "<div [ngClass]=\"classes\">\n  <!-- Header section -->\n  @if (hasHeader) {\n    <div class=\"ix-card__header\">\n      <div class=\"ix-card__header-left\">\n        @if (title) {\n          <h3\n            class=\"ix-card__title\"\n            [class.ix-card__title--link]=\"titleLink\"\n            (click)=\"onTitleClick()\">\n            {{ title }}\n          </h3>\n        }\n      </div>\n\n      <div class=\"ix-card__header-right\">\n        <!-- Header Status -->\n        @if (headerStatus) {\n          <div\n            class=\"ix-card__status\"\n            [ngClass]=\"getStatusClass(headerStatus?.type)\">\n            {{ headerStatus.label }}\n          </div>\n        }\n\n        <!-- Header Control (Slide Toggle) -->\n        @if (headerControl) {\n          <div class=\"ix-card__control\">\n            <ix-slide-toggle\n              [label]=\"headerControl.label\"\n              [checked]=\"headerControl.checked\"\n              [disabled]=\"headerControl.disabled || false\"\n              (change)=\"onControlChange($event)\">\n            </ix-slide-toggle>\n          </div>\n        }\n\n        <!-- Header Menu -->\n        @if (headerMenu && headerMenu.length) {\n          <div class=\"ix-card__menu\">\n            <ix-icon-button\n              name=\"dots-vertical\"\n              library=\"mdi\"\n              size=\"md\"\n              [ixMenuTriggerFor]=\"cardMenu\"\n              ariaLabel=\"Card menu\">\n            </ix-icon-button>\n            <ix-menu\n              #cardMenu\n              [items]=\"headerMenu\"\n              (menuItemClick)=\"onHeaderMenuItemClick($event)\">\n            </ix-menu>\n          </div>\n        }\n      </div>\n    </div>\n  }\n\n  <!-- Content section -->\n  <div class=\"ix-card__content\">\n    <ng-content></ng-content>\n  </div>\n\n  <!-- Footer section -->\n  @if (hasFooter) {\n    <div class=\"ix-card__footer\">\n      <div class=\"ix-card__footer-left\">\n        @if (footerLink) {\n          <button\n            type=\"button\"\n            class=\"ix-card__footer-link\"\n            (click)=\"footerLink.handler()\">\n            {{ footerLink.label }}\n          </button>\n        }\n      </div>\n\n      <div class=\"ix-card__footer-right\">\n        @if (secondaryAction) {\n          <ix-button\n            [label]=\"secondaryAction.label\"\n            variant=\"outline\"\n            color=\"default\"\n            [disabled]=\"secondaryAction.disabled || false\"\n            (click)=\"secondaryAction.handler()\">\n          </ix-button>\n        }\n\n        @if (primaryAction) {\n          <ix-button\n            [label]=\"primaryAction.label\"\n            variant=\"filled\"\n            color=\"primary\"\n            [disabled]=\"primaryAction.disabled || false\"\n            (click)=\"primaryAction.handler()\">\n          </ix-button>\n        }\n      </div>\n    </div>\n  }\n</div>", styles: [".ix-card{height:100%;display:flex;flex-direction:column;border-radius:8px;transition:box-shadow .3s ease;overflow:hidden}.ix-card--elevation-none{box-shadow:none}.ix-card--elevation-low{box-shadow:0 1px 3px #0000001a}.ix-card--elevation-medium{box-shadow:0 4px 6px #0000001a}.ix-card--elevation-high{box-shadow:0 10px 15px #0000001a}.ix-card--bordered{border:1px solid var(--lines, #e5e7eb)}.ix-card--background{background-color:var(--bg2, #ffffff)}.ix-card--padding-small .ix-card__header{padding:12px 16px}.ix-card--padding-medium .ix-card__header{padding:16px 24px}.ix-card--padding-large .ix-card__header{padding:24px 32px}.ix-card--content-padding-none .ix-card__content{padding:0}.ix-card--content-padding-small .ix-card__content{padding:16px}.ix-card--content-padding-medium .ix-card__content{padding:24px}.ix-card--content-padding-large .ix-card__content{padding:32px}.ix-card__content{flex:1;min-height:0}.ix-card__header{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid var(--lines, #e5e7eb)}.ix-card:not(.ix-card--bordered) .ix-card__header{border-bottom-color:#0000001a}.ix-card__header-left{flex:1;min-width:0}.ix-card__header-right{display:flex;align-items:center;gap:12px;flex-shrink:0}.ix-card__title{margin:0;font-size:1.125rem;font-weight:600;color:var(--fg1, #1f2937);line-height:1.5}.ix-card__title--link{cursor:pointer;transition:color .2s ease}.ix-card__title--link:hover{color:var(--primary, #2563eb)}.ix-card__status{display:inline-flex;align-items:center;padding:4px 12px;border-radius:12px;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px}.ix-card__status--success{background-color:#10b9811a;color:var(--success, #10b981)}.ix-card__status--warning{background-color:#f59e0b1a;color:var(--warning, #f59e0b)}.ix-card__status--error{background-color:#ef44441a;color:var(--error, #ef4444)}.ix-card__status--info{background-color:#3b82f61a;color:var(--info, #3b82f6)}.ix-card__status--neutral{background-color:#6b72801a;color:var(--fg2, #6b7280)}.ix-card__control,.ix-card__menu{display:flex;align-items:center}.ix-card__footer{display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid var(--lines, #e5e7eb);padding:16px 24px}.ix-card--padding-small .ix-card__footer{padding:12px 16px}.ix-card--padding-large .ix-card__footer{padding:24px 32px}.ix-card:not(.ix-card--bordered) .ix-card__footer{border-top-color:#0000001a}.ix-card__footer-left{flex:1;min-width:0}.ix-card__footer-right{display:flex;align-items:center;gap:8px;flex-shrink:0}.ix-card__footer-link{border:none;background:transparent;color:var(--primary, #2563eb);font-size:.875rem;font-weight:600;cursor:pointer;padding:0;text-decoration:none;transition:color .2s ease}.ix-card__footer-link:hover{color:var(--primary-dark, #1d4ed8);text-decoration:underline}.ix-card__footer-link:focus{outline:2px solid var(--primary, #2563eb);outline-offset:2px;border-radius:2px}\n"] }]
-        }], ctorParameters: () => [{ type: IxIconRegistryService }], propDecorators: { title: [{
-                type: Input
-            }], titleLink: [{
-                type: Input
-            }], elevation: [{
-                type: Input
-            }], padding: [{
-                type: Input
-            }], padContent: [{
-                type: Input
-            }], bordered: [{
-                type: Input
-            }], background: [{
-                type: Input
-            }], headerStatus: [{
-                type: Input
-            }], headerControl: [{
-                type: Input
-            }], headerMenu: [{
-                type: Input
-            }], primaryAction: [{
-                type: Input
-            }], secondaryAction: [{
-                type: Input
-            }], footerLink: [{
-                type: Input
-            }] } });
+            args: [{ selector: 'ix-card', standalone: true, imports: [CommonModule, IxButtonComponent, IxIconComponent, IxIconButtonComponent, IxSlideToggleComponent, IxMenuComponent, IxMenuTriggerDirective], template: "<div [ngClass]=\"classes()\">\n  <!-- Header section -->\n  @if (hasHeader()) {\n    <div class=\"ix-card__header\">\n      <div class=\"ix-card__header-left\">\n        @if (title()) {\n          <h3\n            class=\"ix-card__title\"\n            [class.ix-card__title--link]=\"titleLink()\"\n            (click)=\"onTitleClick()\">\n            {{ title() }}\n          </h3>\n        }\n      </div>\n\n      <div class=\"ix-card__header-right\">\n        <!-- Header Status -->\n        @if (headerStatus(); as status) {\n          <div\n            class=\"ix-card__status\"\n            [ngClass]=\"getStatusClass(status?.type)\">\n            {{ status.label }}\n          </div>\n        }\n\n        <!-- Header Control (Slide Toggle) -->\n        @if (headerControl(); as control) {\n          <div class=\"ix-card__control\">\n            <ix-slide-toggle\n              [label]=\"control.label\"\n              [checked]=\"control.checked\"\n              [disabled]=\"control.disabled || false\"\n              (change)=\"onControlChange($event)\">\n            </ix-slide-toggle>\n          </div>\n        }\n\n        <!-- Header Menu -->\n        @if (headerMenu(); as menu) {\n          @if (menu.length) {\n            <div class=\"ix-card__menu\">\n              <ix-icon-button\n                name=\"dots-vertical\"\n                library=\"mdi\"\n                size=\"md\"\n                [ixMenuTriggerFor]=\"cardMenu\"\n                ariaLabel=\"Card menu\">\n              </ix-icon-button>\n              <ix-menu\n                #cardMenu\n                [items]=\"menu\"\n                (menuItemClick)=\"onHeaderMenuItemClick($event)\">\n              </ix-menu>\n            </div>\n          }\n        }\n      </div>\n    </div>\n  }\n\n  <!-- Content section -->\n  <div class=\"ix-card__content\">\n    <ng-content></ng-content>\n  </div>\n\n  <!-- Footer section -->\n  @if (hasFooter()) {\n    <div class=\"ix-card__footer\">\n      <div class=\"ix-card__footer-left\">\n        @if (footerLink(); as link) {\n          <button\n            type=\"button\"\n            class=\"ix-card__footer-link\"\n            (click)=\"link.handler()\">\n            {{ link.label }}\n          </button>\n        }\n      </div>\n\n      <div class=\"ix-card__footer-right\">\n        @if (secondaryAction(); as action) {\n          <ix-button\n            [label]=\"action.label\"\n            variant=\"outline\"\n            color=\"default\"\n            [disabled]=\"action.disabled || false\"\n            (click)=\"action.handler()\">\n          </ix-button>\n        }\n\n        @if (primaryAction(); as action) {\n          <ix-button\n            [label]=\"action.label\"\n            variant=\"filled\"\n            color=\"primary\"\n            [disabled]=\"action.disabled || false\"\n            (click)=\"action.handler()\">\n          </ix-button>\n        }\n      </div>\n    </div>\n  }\n</div>", styles: [".ix-card{height:100%;display:flex;flex-direction:column;border-radius:8px;transition:box-shadow .3s ease;overflow:hidden}.ix-card--elevation-none{box-shadow:none}.ix-card--elevation-low{box-shadow:0 1px 3px #0000001a}.ix-card--elevation-medium{box-shadow:0 4px 6px #0000001a}.ix-card--elevation-high{box-shadow:0 10px 15px #0000001a}.ix-card--bordered{border:1px solid var(--lines, #e5e7eb)}.ix-card--background{background-color:var(--bg2, #ffffff)}.ix-card--padding-small .ix-card__header{padding:12px 16px}.ix-card--padding-medium .ix-card__header{padding:16px 24px}.ix-card--padding-large .ix-card__header{padding:24px 32px}.ix-card--content-padding-none .ix-card__content{padding:0}.ix-card--content-padding-small .ix-card__content{padding:16px}.ix-card--content-padding-medium .ix-card__content{padding:24px}.ix-card--content-padding-large .ix-card__content{padding:32px}.ix-card__content{flex:1;min-height:0}.ix-card__header{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid var(--lines, #e5e7eb)}.ix-card:not(.ix-card--bordered) .ix-card__header{border-bottom-color:#0000001a}.ix-card__header-left{flex:1;min-width:0}.ix-card__header-right{display:flex;align-items:center;gap:12px;flex-shrink:0}.ix-card__title{margin:0;font-size:1.125rem;font-weight:600;color:var(--fg1, #1f2937);line-height:1.5}.ix-card__title--link{cursor:pointer;transition:color .2s ease}.ix-card__title--link:hover{color:var(--primary, #2563eb)}.ix-card__status{display:inline-flex;align-items:center;padding:4px 12px;border-radius:12px;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px}.ix-card__status--success{background-color:#10b9811a;color:var(--success, #10b981)}.ix-card__status--warning{background-color:#f59e0b1a;color:var(--warning, #f59e0b)}.ix-card__status--error{background-color:#ef44441a;color:var(--error, #ef4444)}.ix-card__status--info{background-color:#3b82f61a;color:var(--info, #3b82f6)}.ix-card__status--neutral{background-color:#6b72801a;color:var(--fg2, #6b7280)}.ix-card__control,.ix-card__menu{display:flex;align-items:center}.ix-card__footer{display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid var(--lines, #e5e7eb);padding:16px 24px}.ix-card--padding-small .ix-card__footer{padding:12px 16px}.ix-card--padding-large .ix-card__footer{padding:24px 32px}.ix-card:not(.ix-card--bordered) .ix-card__footer{border-top-color:#0000001a}.ix-card__footer-left{flex:1;min-width:0}.ix-card__footer-right{display:flex;align-items:center;gap:8px;flex-shrink:0}.ix-card__footer-link{border:none;background:transparent;color:var(--primary, #2563eb);font-size:.875rem;font-weight:600;cursor:pointer;padding:0;text-decoration:none;transition:color .2s ease}.ix-card__footer-link:hover{color:var(--primary-dark, #1d4ed8);text-decoration:underline}.ix-card__footer-link:focus{outline:2px solid var(--primary, #2563eb);outline-offset:2px;border-radius:2px}\n"] }]
+        }], ctorParameters: () => [{ type: IxIconRegistryService }] });
 
 class IxExpansionPanelComponent {
-    title;
-    elevation = 'medium';
-    padding = 'medium';
-    bordered = false;
-    background = true;
-    expanded = false;
-    disabled = false;
-    titleStyle = 'header';
-    expandedChange = new EventEmitter();
-    toggleEvent = new EventEmitter();
+    title = input(undefined, ...(ngDevMode ? [{ debugName: "title" }] : []));
+    elevation = input('medium', ...(ngDevMode ? [{ debugName: "elevation" }] : []));
+    padding = input('medium', ...(ngDevMode ? [{ debugName: "padding" }] : []));
+    bordered = input(false, ...(ngDevMode ? [{ debugName: "bordered" }] : []));
+    background = input(true, ...(ngDevMode ? [{ debugName: "background" }] : []));
+    expanded = input(false, ...(ngDevMode ? [{ debugName: "expanded" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    titleStyle = input('header', ...(ngDevMode ? [{ debugName: "titleStyle" }] : []));
+    expandedChange = output();
+    toggleEvent = output();
+    // Internal state for tracking expansion (for uncontrolled usage)
+    internalExpanded = signal(null, ...(ngDevMode ? [{ debugName: "internalExpanded" }] : []));
+    // Effective expanded state (prefers internal state if set, otherwise uses input)
+    effectiveExpanded = computed(() => {
+        const internal = this.internalExpanded();
+        return internal !== null ? internal : this.expanded();
+    }, ...(ngDevMode ? [{ debugName: "effectiveExpanded" }] : []));
     contentId = `ix-expansion-panel-content-${Math.random().toString(36).substr(2, 9)}`;
     toggle() {
-        if (this.disabled) {
+        if (this.disabled()) {
             return;
         }
-        this.expanded = !this.expanded;
-        this.expandedChange.emit(this.expanded);
+        const newExpanded = !this.effectiveExpanded();
+        this.internalExpanded.set(newExpanded);
+        this.expandedChange.emit(newExpanded);
         this.toggleEvent.emit();
     }
-    get classes() {
-        const elevationClass = `ix-expansion-panel--elevation-${this.elevation}`;
-        const paddingClass = `ix-expansion-panel--padding-${this.padding}`;
-        const borderedClass = this.bordered ? 'ix-expansion-panel--bordered' : '';
-        const backgroundClass = this.background ? 'ix-expansion-panel--background' : '';
-        const expandedClass = this.expanded ? 'ix-expansion-panel--expanded' : '';
-        const disabledClass = this.disabled ? 'ix-expansion-panel--disabled' : '';
-        const titleStyleClass = `ix-expansion-panel--title-${this.titleStyle}`;
+    classes = computed(() => {
+        const elevationClass = `ix-expansion-panel--elevation-${this.elevation()}`;
+        const paddingClass = `ix-expansion-panel--padding-${this.padding()}`;
+        const borderedClass = this.bordered() ? 'ix-expansion-panel--bordered' : '';
+        const backgroundClass = this.background() ? 'ix-expansion-panel--background' : '';
+        const expandedClass = this.effectiveExpanded() ? 'ix-expansion-panel--expanded' : '';
+        const disabledClass = this.disabled() ? 'ix-expansion-panel--disabled' : '';
+        const titleStyleClass = `ix-expansion-panel--title-${this.titleStyle()}`;
         return [
             'ix-expansion-panel',
             elevationClass,
@@ -1559,9 +1422,9 @@ class IxExpansionPanelComponent {
             disabledClass,
             titleStyleClass
         ].filter(Boolean);
-    }
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxExpansionPanelComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxExpansionPanelComponent, isStandalone: true, selector: "ix-expansion-panel", inputs: { title: "title", elevation: "elevation", padding: "padding", bordered: "bordered", background: "background", expanded: "expanded", disabled: "disabled", titleStyle: "titleStyle" }, outputs: { expandedChange: "expandedChange", toggleEvent: "toggleEvent" }, ngImport: i0, template: "<div [ngClass]=\"classes\">\n  <button class=\"ix-expansion-panel__header\"\n          [disabled]=\"disabled\"\n          (click)=\"toggle()\"\n          [attr.aria-expanded]=\"expanded\"\n          [attr.aria-controls]=\"contentId\"\n          [attr.aria-disabled]=\"disabled\">\n    @if (title) {\n      <div class=\"ix-expansion-panel__title\">\n        {{ title }}\n      </div>\n    }\n    <ng-content select=\"[slot=title]\"></ng-content>\n    \n    <div class=\"ix-expansion-panel__indicator\">\n      <svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\">\n        <path d=\"m6 9 6 6 6-6\"/>\n      </svg>\n    </div>\n  </button>\n  \n  <div class=\"ix-expansion-panel__content\" \n       [id]=\"contentId\"\n       [attr.aria-hidden]=\"!expanded\"\n       [@expandCollapse]=\"expanded ? 'expanded' : 'collapsed'\">\n    <ng-content></ng-content>\n  </div>\n</div>", styles: [".ix-expansion-panel{border-radius:8px;transition:box-shadow .3s ease;overflow:hidden}.ix-expansion-panel--elevation-none{box-shadow:none}.ix-expansion-panel--elevation-low{box-shadow:0 1px 3px #0000001a}.ix-expansion-panel--elevation-medium{box-shadow:0 4px 6px #0000001a}.ix-expansion-panel--elevation-high{box-shadow:0 10px 15px #0000001a}.ix-expansion-panel--bordered{border:1px solid var(--lines, #e5e7eb)}.ix-expansion-panel--background{background-color:var(--bg2, #ffffff)}.ix-expansion-panel--disabled{opacity:.6;cursor:not-allowed}.ix-expansion-panel--disabled .ix-expansion-panel__header{cursor:not-allowed}.ix-expansion-panel--expanded .ix-expansion-panel__indicator svg{transform:rotate(180deg)}.ix-expansion-panel--padding-small .ix-expansion-panel__header{padding:12px 16px}.ix-expansion-panel--padding-small .ix-expansion-panel__content{padding:0 16px 16px}.ix-expansion-panel--padding-medium .ix-expansion-panel__header{padding:16px 24px}.ix-expansion-panel--padding-medium .ix-expansion-panel__content{padding:0 24px 24px}.ix-expansion-panel--padding-large .ix-expansion-panel__header{padding:24px 32px}.ix-expansion-panel--padding-large .ix-expansion-panel__content{padding:0 32px 32px}.ix-expansion-panel--title-header .ix-expansion-panel__title{font-size:1.125rem;font-weight:600;color:var(--fg1, #1f2937)}.ix-expansion-panel--title-header .ix-expansion-panel__indicator{color:var(--fg1, #1f2937)}.ix-expansion-panel--title-body .ix-expansion-panel__title{font-size:1rem;font-weight:400;color:var(--fg1, #1f2937)}.ix-expansion-panel--title-body .ix-expansion-panel__indicator{color:var(--fg1, #1f2937)}.ix-expansion-panel--title-link .ix-expansion-panel__title{font-size:1rem;font-weight:400;color:var(--primary, #3b82f6);text-decoration:none}.ix-expansion-panel--title-link .ix-expansion-panel__indicator{color:var(--primary, #3b82f6)}.ix-expansion-panel--title-link .ix-expansion-panel__header:hover:not(:disabled) .ix-expansion-panel__title{text-decoration:underline}.ix-expansion-panel--title-link .ix-expansion-panel__header:focus .ix-expansion-panel__title{text-decoration:underline}.ix-expansion-panel__header{width:100%;background:none;border:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:inherit;text-align:left;transition:background-color .2s ease}.ix-expansion-panel--bordered .ix-expansion-panel__header,.ix-expansion-panel--bordered.ix-expansion-panel--expanded .ix-expansion-panel__header{border-bottom:1px solid var(--lines, #e5e7eb)}.ix-expansion-panel__header:hover:not(:disabled){background-color:var(--alt-bg1, rgba(0, 0, 0, .05))}.ix-expansion-panel__header:focus{outline:2px solid var(--primary, #3b82f6);outline-offset:-2px}.ix-expansion-panel__header:disabled{cursor:not-allowed}.ix-expansion-panel__title{margin:0;line-height:1.5;flex:1;transition:text-decoration .2s ease}.ix-expansion-panel__indicator{display:flex;align-items:center;justify-content:center;margin-left:16px;transition:transform .2s ease,color .2s ease}.ix-expansion-panel__indicator svg{transition:transform .2s ease}.ix-expansion-panel__content{overflow:hidden}.ix-expansion-panel__content:not(.ix-expansion-panel--expanded){border-bottom:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }], animations: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxExpansionPanelComponent, isStandalone: true, selector: "ix-expansion-panel", inputs: { title: { classPropertyName: "title", publicName: "title", isSignal: true, isRequired: false, transformFunction: null }, elevation: { classPropertyName: "elevation", publicName: "elevation", isSignal: true, isRequired: false, transformFunction: null }, padding: { classPropertyName: "padding", publicName: "padding", isSignal: true, isRequired: false, transformFunction: null }, bordered: { classPropertyName: "bordered", publicName: "bordered", isSignal: true, isRequired: false, transformFunction: null }, background: { classPropertyName: "background", publicName: "background", isSignal: true, isRequired: false, transformFunction: null }, expanded: { classPropertyName: "expanded", publicName: "expanded", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, titleStyle: { classPropertyName: "titleStyle", publicName: "titleStyle", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { expandedChange: "expandedChange", toggleEvent: "toggleEvent" }, ngImport: i0, template: "<div [ngClass]=\"classes()\">\n  <button class=\"ix-expansion-panel__header\"\n          [disabled]=\"disabled()\"\n          (click)=\"toggle()\"\n          [attr.aria-expanded]=\"effectiveExpanded()\"\n          [attr.aria-controls]=\"contentId\"\n          [attr.aria-disabled]=\"disabled()\">\n    @if (title()) {\n      <div class=\"ix-expansion-panel__title\">\n        {{ title() }}\n      </div>\n    }\n    <ng-content select=\"[slot=title]\"></ng-content>\n\n    <div class=\"ix-expansion-panel__indicator\">\n      <svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\">\n        <path d=\"m6 9 6 6 6-6\"/>\n      </svg>\n    </div>\n  </button>\n\n  <div class=\"ix-expansion-panel__content\"\n       [id]=\"contentId\"\n       [attr.aria-hidden]=\"!effectiveExpanded()\"\n       [@expandCollapse]=\"effectiveExpanded() ? 'expanded' : 'collapsed'\">\n    <ng-content></ng-content>\n  </div>\n</div>", styles: [".ix-expansion-panel{border-radius:8px;transition:box-shadow .3s ease;overflow:hidden}.ix-expansion-panel--elevation-none{box-shadow:none}.ix-expansion-panel--elevation-low{box-shadow:0 1px 3px #0000001a}.ix-expansion-panel--elevation-medium{box-shadow:0 4px 6px #0000001a}.ix-expansion-panel--elevation-high{box-shadow:0 10px 15px #0000001a}.ix-expansion-panel--bordered{border:1px solid var(--lines, #e5e7eb)}.ix-expansion-panel--background{background-color:var(--bg2, #ffffff)}.ix-expansion-panel--disabled{opacity:.6;cursor:not-allowed}.ix-expansion-panel--disabled .ix-expansion-panel__header{cursor:not-allowed}.ix-expansion-panel--expanded .ix-expansion-panel__indicator svg{transform:rotate(180deg)}.ix-expansion-panel--padding-small .ix-expansion-panel__header{padding:12px 16px}.ix-expansion-panel--padding-small .ix-expansion-panel__content{padding:0 16px 16px}.ix-expansion-panel--padding-medium .ix-expansion-panel__header{padding:16px 24px}.ix-expansion-panel--padding-medium .ix-expansion-panel__content{padding:0 24px 24px}.ix-expansion-panel--padding-large .ix-expansion-panel__header{padding:24px 32px}.ix-expansion-panel--padding-large .ix-expansion-panel__content{padding:0 32px 32px}.ix-expansion-panel--title-header .ix-expansion-panel__title{font-size:1.125rem;font-weight:600;color:var(--fg1, #1f2937)}.ix-expansion-panel--title-header .ix-expansion-panel__indicator{color:var(--fg1, #1f2937)}.ix-expansion-panel--title-body .ix-expansion-panel__title{font-size:1rem;font-weight:400;color:var(--fg1, #1f2937)}.ix-expansion-panel--title-body .ix-expansion-panel__indicator{color:var(--fg1, #1f2937)}.ix-expansion-panel--title-link .ix-expansion-panel__title{font-size:1rem;font-weight:400;color:var(--primary, #3b82f6);text-decoration:none}.ix-expansion-panel--title-link .ix-expansion-panel__indicator{color:var(--primary, #3b82f6)}.ix-expansion-panel--title-link .ix-expansion-panel__header:hover:not(:disabled) .ix-expansion-panel__title{text-decoration:underline}.ix-expansion-panel--title-link .ix-expansion-panel__header:focus .ix-expansion-panel__title{text-decoration:underline}.ix-expansion-panel__header{width:100%;background:none;border:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:inherit;text-align:left;transition:background-color .2s ease}.ix-expansion-panel--bordered .ix-expansion-panel__header,.ix-expansion-panel--bordered.ix-expansion-panel--expanded .ix-expansion-panel__header{border-bottom:1px solid var(--lines, #e5e7eb)}.ix-expansion-panel__header:hover:not(:disabled){background-color:var(--alt-bg1, rgba(0, 0, 0, .05))}.ix-expansion-panel__header:focus{outline:2px solid var(--primary, #3b82f6);outline-offset:-2px}.ix-expansion-panel__header:disabled{cursor:not-allowed}.ix-expansion-panel__title{margin:0;line-height:1.5;flex:1;transition:text-decoration .2s ease}.ix-expansion-panel__indicator{display:flex;align-items:center;justify-content:center;margin-left:16px;transition:transform .2s ease,color .2s ease}.ix-expansion-panel__indicator svg{transition:transform .2s ease}.ix-expansion-panel__content{overflow:hidden}.ix-expansion-panel__content:not(.ix-expansion-panel--expanded){border-bottom:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }], animations: [
             trigger('expandCollapse', [
                 state('collapsed', style({
                     height: '0px',
@@ -1611,60 +1474,49 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                                 style({ display: 'none' })
                             ])
                         ])
-                    ], template: "<div [ngClass]=\"classes\">\n  <button class=\"ix-expansion-panel__header\"\n          [disabled]=\"disabled\"\n          (click)=\"toggle()\"\n          [attr.aria-expanded]=\"expanded\"\n          [attr.aria-controls]=\"contentId\"\n          [attr.aria-disabled]=\"disabled\">\n    @if (title) {\n      <div class=\"ix-expansion-panel__title\">\n        {{ title }}\n      </div>\n    }\n    <ng-content select=\"[slot=title]\"></ng-content>\n    \n    <div class=\"ix-expansion-panel__indicator\">\n      <svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\">\n        <path d=\"m6 9 6 6 6-6\"/>\n      </svg>\n    </div>\n  </button>\n  \n  <div class=\"ix-expansion-panel__content\" \n       [id]=\"contentId\"\n       [attr.aria-hidden]=\"!expanded\"\n       [@expandCollapse]=\"expanded ? 'expanded' : 'collapsed'\">\n    <ng-content></ng-content>\n  </div>\n</div>", styles: [".ix-expansion-panel{border-radius:8px;transition:box-shadow .3s ease;overflow:hidden}.ix-expansion-panel--elevation-none{box-shadow:none}.ix-expansion-panel--elevation-low{box-shadow:0 1px 3px #0000001a}.ix-expansion-panel--elevation-medium{box-shadow:0 4px 6px #0000001a}.ix-expansion-panel--elevation-high{box-shadow:0 10px 15px #0000001a}.ix-expansion-panel--bordered{border:1px solid var(--lines, #e5e7eb)}.ix-expansion-panel--background{background-color:var(--bg2, #ffffff)}.ix-expansion-panel--disabled{opacity:.6;cursor:not-allowed}.ix-expansion-panel--disabled .ix-expansion-panel__header{cursor:not-allowed}.ix-expansion-panel--expanded .ix-expansion-panel__indicator svg{transform:rotate(180deg)}.ix-expansion-panel--padding-small .ix-expansion-panel__header{padding:12px 16px}.ix-expansion-panel--padding-small .ix-expansion-panel__content{padding:0 16px 16px}.ix-expansion-panel--padding-medium .ix-expansion-panel__header{padding:16px 24px}.ix-expansion-panel--padding-medium .ix-expansion-panel__content{padding:0 24px 24px}.ix-expansion-panel--padding-large .ix-expansion-panel__header{padding:24px 32px}.ix-expansion-panel--padding-large .ix-expansion-panel__content{padding:0 32px 32px}.ix-expansion-panel--title-header .ix-expansion-panel__title{font-size:1.125rem;font-weight:600;color:var(--fg1, #1f2937)}.ix-expansion-panel--title-header .ix-expansion-panel__indicator{color:var(--fg1, #1f2937)}.ix-expansion-panel--title-body .ix-expansion-panel__title{font-size:1rem;font-weight:400;color:var(--fg1, #1f2937)}.ix-expansion-panel--title-body .ix-expansion-panel__indicator{color:var(--fg1, #1f2937)}.ix-expansion-panel--title-link .ix-expansion-panel__title{font-size:1rem;font-weight:400;color:var(--primary, #3b82f6);text-decoration:none}.ix-expansion-panel--title-link .ix-expansion-panel__indicator{color:var(--primary, #3b82f6)}.ix-expansion-panel--title-link .ix-expansion-panel__header:hover:not(:disabled) .ix-expansion-panel__title{text-decoration:underline}.ix-expansion-panel--title-link .ix-expansion-panel__header:focus .ix-expansion-panel__title{text-decoration:underline}.ix-expansion-panel__header{width:100%;background:none;border:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:inherit;text-align:left;transition:background-color .2s ease}.ix-expansion-panel--bordered .ix-expansion-panel__header,.ix-expansion-panel--bordered.ix-expansion-panel--expanded .ix-expansion-panel__header{border-bottom:1px solid var(--lines, #e5e7eb)}.ix-expansion-panel__header:hover:not(:disabled){background-color:var(--alt-bg1, rgba(0, 0, 0, .05))}.ix-expansion-panel__header:focus{outline:2px solid var(--primary, #3b82f6);outline-offset:-2px}.ix-expansion-panel__header:disabled{cursor:not-allowed}.ix-expansion-panel__title{margin:0;line-height:1.5;flex:1;transition:text-decoration .2s ease}.ix-expansion-panel__indicator{display:flex;align-items:center;justify-content:center;margin-left:16px;transition:transform .2s ease,color .2s ease}.ix-expansion-panel__indicator svg{transition:transform .2s ease}.ix-expansion-panel__content{overflow:hidden}.ix-expansion-panel__content:not(.ix-expansion-panel--expanded){border-bottom:none}\n"] }]
-        }], propDecorators: { title: [{
-                type: Input
-            }], elevation: [{
-                type: Input
-            }], padding: [{
-                type: Input
-            }], bordered: [{
-                type: Input
-            }], background: [{
-                type: Input
-            }], expanded: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], titleStyle: [{
-                type: Input
-            }], expandedChange: [{
-                type: Output
-            }], toggleEvent: [{
-                type: Output
-            }] } });
+                    ], template: "<div [ngClass]=\"classes()\">\n  <button class=\"ix-expansion-panel__header\"\n          [disabled]=\"disabled()\"\n          (click)=\"toggle()\"\n          [attr.aria-expanded]=\"effectiveExpanded()\"\n          [attr.aria-controls]=\"contentId\"\n          [attr.aria-disabled]=\"disabled()\">\n    @if (title()) {\n      <div class=\"ix-expansion-panel__title\">\n        {{ title() }}\n      </div>\n    }\n    <ng-content select=\"[slot=title]\"></ng-content>\n\n    <div class=\"ix-expansion-panel__indicator\">\n      <svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\">\n        <path d=\"m6 9 6 6 6-6\"/>\n      </svg>\n    </div>\n  </button>\n\n  <div class=\"ix-expansion-panel__content\"\n       [id]=\"contentId\"\n       [attr.aria-hidden]=\"!effectiveExpanded()\"\n       [@expandCollapse]=\"effectiveExpanded() ? 'expanded' : 'collapsed'\">\n    <ng-content></ng-content>\n  </div>\n</div>", styles: [".ix-expansion-panel{border-radius:8px;transition:box-shadow .3s ease;overflow:hidden}.ix-expansion-panel--elevation-none{box-shadow:none}.ix-expansion-panel--elevation-low{box-shadow:0 1px 3px #0000001a}.ix-expansion-panel--elevation-medium{box-shadow:0 4px 6px #0000001a}.ix-expansion-panel--elevation-high{box-shadow:0 10px 15px #0000001a}.ix-expansion-panel--bordered{border:1px solid var(--lines, #e5e7eb)}.ix-expansion-panel--background{background-color:var(--bg2, #ffffff)}.ix-expansion-panel--disabled{opacity:.6;cursor:not-allowed}.ix-expansion-panel--disabled .ix-expansion-panel__header{cursor:not-allowed}.ix-expansion-panel--expanded .ix-expansion-panel__indicator svg{transform:rotate(180deg)}.ix-expansion-panel--padding-small .ix-expansion-panel__header{padding:12px 16px}.ix-expansion-panel--padding-small .ix-expansion-panel__content{padding:0 16px 16px}.ix-expansion-panel--padding-medium .ix-expansion-panel__header{padding:16px 24px}.ix-expansion-panel--padding-medium .ix-expansion-panel__content{padding:0 24px 24px}.ix-expansion-panel--padding-large .ix-expansion-panel__header{padding:24px 32px}.ix-expansion-panel--padding-large .ix-expansion-panel__content{padding:0 32px 32px}.ix-expansion-panel--title-header .ix-expansion-panel__title{font-size:1.125rem;font-weight:600;color:var(--fg1, #1f2937)}.ix-expansion-panel--title-header .ix-expansion-panel__indicator{color:var(--fg1, #1f2937)}.ix-expansion-panel--title-body .ix-expansion-panel__title{font-size:1rem;font-weight:400;color:var(--fg1, #1f2937)}.ix-expansion-panel--title-body .ix-expansion-panel__indicator{color:var(--fg1, #1f2937)}.ix-expansion-panel--title-link .ix-expansion-panel__title{font-size:1rem;font-weight:400;color:var(--primary, #3b82f6);text-decoration:none}.ix-expansion-panel--title-link .ix-expansion-panel__indicator{color:var(--primary, #3b82f6)}.ix-expansion-panel--title-link .ix-expansion-panel__header:hover:not(:disabled) .ix-expansion-panel__title{text-decoration:underline}.ix-expansion-panel--title-link .ix-expansion-panel__header:focus .ix-expansion-panel__title{text-decoration:underline}.ix-expansion-panel__header{width:100%;background:none;border:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:inherit;text-align:left;transition:background-color .2s ease}.ix-expansion-panel--bordered .ix-expansion-panel__header,.ix-expansion-panel--bordered.ix-expansion-panel--expanded .ix-expansion-panel__header{border-bottom:1px solid var(--lines, #e5e7eb)}.ix-expansion-panel__header:hover:not(:disabled){background-color:var(--alt-bg1, rgba(0, 0, 0, .05))}.ix-expansion-panel__header:focus{outline:2px solid var(--primary, #3b82f6);outline-offset:-2px}.ix-expansion-panel__header:disabled{cursor:not-allowed}.ix-expansion-panel__title{margin:0;line-height:1.5;flex:1;transition:text-decoration .2s ease}.ix-expansion-panel__indicator{display:flex;align-items:center;justify-content:center;margin-left:16px;transition:transform .2s ease,color .2s ease}.ix-expansion-panel__indicator svg{transition:transform .2s ease}.ix-expansion-panel__content{overflow:hidden}.ix-expansion-panel__content:not(.ix-expansion-panel--expanded){border-bottom:none}\n"] }]
+        }] });
 
 class IxCheckboxComponent {
-    checkboxEl;
-    label = 'Checkbox';
-    hideLabel = false;
-    disabled = false;
-    required = false;
-    indeterminate = false;
-    testId;
-    error = null;
-    checked = false;
-    change = new EventEmitter();
+    checkboxEl = viewChild.required('checkboxEl');
+    label = input('Checkbox', ...(ngDevMode ? [{ debugName: "label" }] : []));
+    hideLabel = input(false, ...(ngDevMode ? [{ debugName: "hideLabel" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    required = input(false, ...(ngDevMode ? [{ debugName: "required" }] : []));
+    indeterminate = input(false, ...(ngDevMode ? [{ debugName: "indeterminate" }] : []));
+    testId = input(undefined, ...(ngDevMode ? [{ debugName: "testId" }] : []));
+    error = input(null, ...(ngDevMode ? [{ debugName: "error" }] : []));
+    checked = input(false, ...(ngDevMode ? [{ debugName: "checked" }] : []));
+    change = output();
     id = `ix-checkbox-${Math.random().toString(36).substr(2, 9)}`;
+    // Internal state for CVA
+    internalChecked = signal(false, ...(ngDevMode ? [{ debugName: "internalChecked" }] : []));
+    // CVA disabled state management
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
     focusMonitor = inject(FocusMonitor);
     onChange = (_) => { };
     onTouched = () => { };
     ngAfterViewInit() {
-        if (this.checkboxEl) {
-            this.focusMonitor.monitor(this.checkboxEl)
+        const checkboxEl = this.checkboxEl();
+        if (checkboxEl) {
+            this.focusMonitor.monitor(checkboxEl)
                 .subscribe(origin => {
                 // Focus monitoring for accessibility
             });
         }
     }
     ngOnDestroy() {
-        if (this.checkboxEl) {
-            this.focusMonitor.stopMonitoring(this.checkboxEl);
+        const checkboxEl = this.checkboxEl();
+        if (checkboxEl) {
+            this.focusMonitor.stopMonitoring(checkboxEl);
         }
     }
+    // Computed for effective checked state (input or CVA-controlled)
+    effectiveChecked = computed(() => this.internalChecked() || this.checked(), ...(ngDevMode ? [{ debugName: "effectiveChecked" }] : []));
     // ControlValueAccessor implementation
     writeValue(value) {
-        this.checked = value !== null && value !== undefined ? value : false;
+        this.internalChecked.set(value !== null && value !== undefined ? value : false);
     }
     registerOnChange(fn) {
         this.onChange = fn;
@@ -1673,36 +1525,37 @@ class IxCheckboxComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     onCheckboxChange(event) {
         const target = event.target;
-        this.checked = target.checked;
-        this.onChange(this.checked);
+        const checked = target.checked;
+        this.internalChecked.set(checked);
+        this.onChange(checked);
         this.onTouched();
-        this.change.emit(this.checked);
+        this.change.emit(checked);
     }
-    get classes() {
+    classes = computed(() => {
         const classes = ['ix-checkbox'];
-        if (this.disabled) {
+        if (this.isDisabled()) {
             classes.push('ix-checkbox--disabled');
         }
-        if (this.error) {
+        if (this.error()) {
             classes.push('ix-checkbox--error');
         }
-        if (this.indeterminate) {
+        if (this.indeterminate()) {
             classes.push('ix-checkbox--indeterminate');
         }
         return classes;
-    }
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxCheckboxComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxCheckboxComponent, isStandalone: true, selector: "ix-checkbox", inputs: { label: "label", hideLabel: "hideLabel", disabled: "disabled", required: "required", indeterminate: "indeterminate", testId: "testId", error: "error", checked: "checked" }, outputs: { change: "change" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxCheckboxComponent, isStandalone: true, selector: "ix-checkbox", inputs: { label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, hideLabel: { classPropertyName: "hideLabel", publicName: "hideLabel", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, required: { classPropertyName: "required", publicName: "required", isSignal: true, isRequired: false, transformFunction: null }, indeterminate: { classPropertyName: "indeterminate", publicName: "indeterminate", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null }, error: { classPropertyName: "error", publicName: "error", isSignal: true, isRequired: false, transformFunction: null }, checked: { classPropertyName: "checked", publicName: "checked", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { change: "change" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxCheckboxComponent),
                 multi: true
             }
-        ], viewQueries: [{ propertyName: "checkboxEl", first: true, predicate: ["checkboxEl"], descendants: true }], ngImport: i0, template: "<div [ngClass]=\"classes\">\n  <label [for]=\"id\" class=\"ix-checkbox__label\">\n    <input\n      #checkboxEl\n      type=\"checkbox\"\n      [id]=\"id\"\n      [checked]=\"checked\"\n      [disabled]=\"disabled\"\n      [required]=\"required\"\n      [indeterminate]=\"indeterminate\"\n      [attr.data-testid]=\"testId\"\n      [attr.aria-describedby]=\"error ? id + '-error' : null\"\n      [attr.aria-invalid]=\"error ? 'true' : null\"\n      class=\"ix-checkbox__input\"\n      (change)=\"onCheckboxChange($event)\"\n    />\n    <span class=\"ix-checkbox__checkmark\"></span>\n    @if (!hideLabel) {\n      <span class=\"ix-checkbox__text\">{{ label }}</span>\n    }\n  </label>\n  \n  @if (error) {\n    <div \n      [id]=\"id + '-error'\" \n      class=\"ix-checkbox__error\"\n      role=\"alert\"\n      aria-live=\"polite\"\n    >\n      {{ error }}\n    </div>\n  }\n</div>", styles: [".ix-checkbox{display:flex;flex-direction:column;gap:4px}.ix-checkbox__label{display:flex;align-items:center;gap:8px;cursor:pointer;-webkit-user-select:none;user-select:none;font-family:var(--font-family-body, \"Inter\", sans-serif);font-size:14px;line-height:1.5;color:var(--fg1, #333)}.ix-checkbox__label:hover:not(.ix-checkbox--disabled) .ix-checkbox__checkmark{border-color:var(--primary, #0095d5)}.ix-checkbox__input{position:absolute;opacity:0;cursor:pointer;height:0;width:0}.ix-checkbox__input:checked~.ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:checked~.ix-checkbox__checkmark:after{display:block}.ix-checkbox__input:indeterminate~.ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:indeterminate~.ix-checkbox__checkmark:after{display:block;content:\"\";left:4px;top:8px;width:8px;height:2px;background:var(--primary-txt, #fff);border-radius:1px;transform:none}.ix-checkbox__input:focus~.ix-checkbox__checkmark{outline:2px solid var(--primary, #0095d5);outline-offset:2px}.ix-checkbox__input:disabled~.ix-checkbox__checkmark{background-color:var(--bg2, #f5f5f5);border-color:var(--lines, #e0e0e0);cursor:not-allowed}.ix-checkbox__input:disabled:checked~.ix-checkbox__checkmark{background-color:var(--lines, #e0e0e0);border-color:var(--lines, #e0e0e0)}.ix-checkbox__checkmark{position:relative;height:16px;width:16px;background-color:var(--bg1, #fff);border:1px solid var(--lines, #ccc);border-radius:2px;transition:all .2s ease;flex-shrink:0}.ix-checkbox__checkmark:after{content:\"\";position:absolute;display:none;left:5px;top:2px;width:4px;height:8px;border:solid var(--primary-txt, #fff);border-width:0 2px 2px 0;transform:rotate(45deg)}.ix-checkbox__text{flex:1;min-width:0}.ix-checkbox__error{color:var(--red, #dc2626);font-size:12px;font-family:var(--font-family-body, \"Inter\", sans-serif);margin-top:4px;display:flex;align-items:center;gap:4px}.ix-checkbox--disabled .ix-checkbox__label{cursor:not-allowed;color:var(--fg2, #666);opacity:.6}.ix-checkbox--disabled .ix-checkbox__text{color:var(--fg2, #666)}.ix-checkbox--error .ix-checkbox__checkmark{border-color:var(--red, #dc2626)}.ix-checkbox--indeterminate .ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:focus-visible~.ix-checkbox__checkmark{outline:2px solid var(--primary, #0095d5);outline-offset:2px}@media (prefers-contrast: high){.ix-checkbox__checkmark{border-width:2px}}@media (prefers-reduced-motion: reduce){.ix-checkbox__checkmark{transition:none}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: FormsModule }, { kind: "ngmodule", type: A11yModule }] });
+        ], viewQueries: [{ propertyName: "checkboxEl", first: true, predicate: ["checkboxEl"], descendants: true, isSignal: true }], ngImport: i0, template: "<div [ngClass]=\"classes()\">\n  <label [for]=\"id\" class=\"ix-checkbox__label\">\n    <input\n      #checkboxEl\n      type=\"checkbox\"\n      [id]=\"id\"\n      [checked]=\"effectiveChecked()\"\n      [disabled]=\"isDisabled()\"\n      [required]=\"required()\"\n      [indeterminate]=\"indeterminate()\"\n      [attr.data-testid]=\"testId()\"\n      [attr.aria-describedby]=\"error() ? id + '-error' : null\"\n      [attr.aria-invalid]=\"error() ? 'true' : null\"\n      class=\"ix-checkbox__input\"\n      (change)=\"onCheckboxChange($event)\"\n    />\n    <span class=\"ix-checkbox__checkmark\"></span>\n    @if (!hideLabel()) {\n      <span class=\"ix-checkbox__text\">{{ label() }}</span>\n    }\n  </label>\n\n  @if (error()) {\n    <div\n      [id]=\"id + '-error'\"\n      class=\"ix-checkbox__error\"\n      role=\"alert\"\n      aria-live=\"polite\"\n    >\n      {{ error() }}\n    </div>\n  }\n</div>", styles: [".ix-checkbox{display:flex;flex-direction:column;gap:4px}.ix-checkbox__label{display:flex;align-items:center;gap:8px;cursor:pointer;-webkit-user-select:none;user-select:none;font-family:var(--font-family-body, \"Inter\", sans-serif);font-size:14px;line-height:1.5;color:var(--fg1, #333)}.ix-checkbox__label:hover:not(.ix-checkbox--disabled) .ix-checkbox__checkmark{border-color:var(--primary, #0095d5)}.ix-checkbox__input{position:absolute;opacity:0;cursor:pointer;height:0;width:0}.ix-checkbox__input:checked~.ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:checked~.ix-checkbox__checkmark:after{display:block}.ix-checkbox__input:indeterminate~.ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:indeterminate~.ix-checkbox__checkmark:after{display:block;content:\"\";left:4px;top:8px;width:8px;height:2px;background:var(--primary-txt, #fff);border-radius:1px;transform:none}.ix-checkbox__input:focus~.ix-checkbox__checkmark{outline:2px solid var(--primary, #0095d5);outline-offset:2px}.ix-checkbox__input:disabled~.ix-checkbox__checkmark{background-color:var(--bg2, #f5f5f5);border-color:var(--lines, #e0e0e0);cursor:not-allowed}.ix-checkbox__input:disabled:checked~.ix-checkbox__checkmark{background-color:var(--lines, #e0e0e0);border-color:var(--lines, #e0e0e0)}.ix-checkbox__checkmark{position:relative;height:16px;width:16px;background-color:var(--bg1, #fff);border:1px solid var(--lines, #ccc);border-radius:2px;transition:all .2s ease;flex-shrink:0}.ix-checkbox__checkmark:after{content:\"\";position:absolute;display:none;left:5px;top:2px;width:4px;height:8px;border:solid var(--primary-txt, #fff);border-width:0 2px 2px 0;transform:rotate(45deg)}.ix-checkbox__text{flex:1;min-width:0}.ix-checkbox__error{color:var(--red, #dc2626);font-size:12px;font-family:var(--font-family-body, \"Inter\", sans-serif);margin-top:4px;display:flex;align-items:center;gap:4px}.ix-checkbox--disabled .ix-checkbox__label{cursor:not-allowed;color:var(--fg2, #666);opacity:.6}.ix-checkbox--disabled .ix-checkbox__text{color:var(--fg2, #666)}.ix-checkbox--error .ix-checkbox__checkmark{border-color:var(--red, #dc2626)}.ix-checkbox--indeterminate .ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:focus-visible~.ix-checkbox__checkmark{outline:2px solid var(--primary, #0095d5);outline-offset:2px}@media (prefers-contrast: high){.ix-checkbox__checkmark{border-width:2px}}@media (prefers-reduced-motion: reduce){.ix-checkbox__checkmark{transition:none}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: FormsModule }, { kind: "ngmodule", type: A11yModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxCheckboxComponent, decorators: [{
             type: Component,
@@ -1712,61 +1565,45 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                             useExisting: forwardRef(() => IxCheckboxComponent),
                             multi: true
                         }
-                    ], template: "<div [ngClass]=\"classes\">\n  <label [for]=\"id\" class=\"ix-checkbox__label\">\n    <input\n      #checkboxEl\n      type=\"checkbox\"\n      [id]=\"id\"\n      [checked]=\"checked\"\n      [disabled]=\"disabled\"\n      [required]=\"required\"\n      [indeterminate]=\"indeterminate\"\n      [attr.data-testid]=\"testId\"\n      [attr.aria-describedby]=\"error ? id + '-error' : null\"\n      [attr.aria-invalid]=\"error ? 'true' : null\"\n      class=\"ix-checkbox__input\"\n      (change)=\"onCheckboxChange($event)\"\n    />\n    <span class=\"ix-checkbox__checkmark\"></span>\n    @if (!hideLabel) {\n      <span class=\"ix-checkbox__text\">{{ label }}</span>\n    }\n  </label>\n  \n  @if (error) {\n    <div \n      [id]=\"id + '-error'\" \n      class=\"ix-checkbox__error\"\n      role=\"alert\"\n      aria-live=\"polite\"\n    >\n      {{ error }}\n    </div>\n  }\n</div>", styles: [".ix-checkbox{display:flex;flex-direction:column;gap:4px}.ix-checkbox__label{display:flex;align-items:center;gap:8px;cursor:pointer;-webkit-user-select:none;user-select:none;font-family:var(--font-family-body, \"Inter\", sans-serif);font-size:14px;line-height:1.5;color:var(--fg1, #333)}.ix-checkbox__label:hover:not(.ix-checkbox--disabled) .ix-checkbox__checkmark{border-color:var(--primary, #0095d5)}.ix-checkbox__input{position:absolute;opacity:0;cursor:pointer;height:0;width:0}.ix-checkbox__input:checked~.ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:checked~.ix-checkbox__checkmark:after{display:block}.ix-checkbox__input:indeterminate~.ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:indeterminate~.ix-checkbox__checkmark:after{display:block;content:\"\";left:4px;top:8px;width:8px;height:2px;background:var(--primary-txt, #fff);border-radius:1px;transform:none}.ix-checkbox__input:focus~.ix-checkbox__checkmark{outline:2px solid var(--primary, #0095d5);outline-offset:2px}.ix-checkbox__input:disabled~.ix-checkbox__checkmark{background-color:var(--bg2, #f5f5f5);border-color:var(--lines, #e0e0e0);cursor:not-allowed}.ix-checkbox__input:disabled:checked~.ix-checkbox__checkmark{background-color:var(--lines, #e0e0e0);border-color:var(--lines, #e0e0e0)}.ix-checkbox__checkmark{position:relative;height:16px;width:16px;background-color:var(--bg1, #fff);border:1px solid var(--lines, #ccc);border-radius:2px;transition:all .2s ease;flex-shrink:0}.ix-checkbox__checkmark:after{content:\"\";position:absolute;display:none;left:5px;top:2px;width:4px;height:8px;border:solid var(--primary-txt, #fff);border-width:0 2px 2px 0;transform:rotate(45deg)}.ix-checkbox__text{flex:1;min-width:0}.ix-checkbox__error{color:var(--red, #dc2626);font-size:12px;font-family:var(--font-family-body, \"Inter\", sans-serif);margin-top:4px;display:flex;align-items:center;gap:4px}.ix-checkbox--disabled .ix-checkbox__label{cursor:not-allowed;color:var(--fg2, #666);opacity:.6}.ix-checkbox--disabled .ix-checkbox__text{color:var(--fg2, #666)}.ix-checkbox--error .ix-checkbox__checkmark{border-color:var(--red, #dc2626)}.ix-checkbox--indeterminate .ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:focus-visible~.ix-checkbox__checkmark{outline:2px solid var(--primary, #0095d5);outline-offset:2px}@media (prefers-contrast: high){.ix-checkbox__checkmark{border-width:2px}}@media (prefers-reduced-motion: reduce){.ix-checkbox__checkmark{transition:none}}\n"] }]
-        }], propDecorators: { checkboxEl: [{
-                type: ViewChild,
-                args: ['checkboxEl']
-            }], label: [{
-                type: Input
-            }], hideLabel: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], required: [{
-                type: Input
-            }], indeterminate: [{
-                type: Input
-            }], testId: [{
-                type: Input
-            }], error: [{
-                type: Input
-            }], checked: [{
-                type: Input
-            }], change: [{
-                type: Output
-            }] } });
+                    ], template: "<div [ngClass]=\"classes()\">\n  <label [for]=\"id\" class=\"ix-checkbox__label\">\n    <input\n      #checkboxEl\n      type=\"checkbox\"\n      [id]=\"id\"\n      [checked]=\"effectiveChecked()\"\n      [disabled]=\"isDisabled()\"\n      [required]=\"required()\"\n      [indeterminate]=\"indeterminate()\"\n      [attr.data-testid]=\"testId()\"\n      [attr.aria-describedby]=\"error() ? id + '-error' : null\"\n      [attr.aria-invalid]=\"error() ? 'true' : null\"\n      class=\"ix-checkbox__input\"\n      (change)=\"onCheckboxChange($event)\"\n    />\n    <span class=\"ix-checkbox__checkmark\"></span>\n    @if (!hideLabel()) {\n      <span class=\"ix-checkbox__text\">{{ label() }}</span>\n    }\n  </label>\n\n  @if (error()) {\n    <div\n      [id]=\"id + '-error'\"\n      class=\"ix-checkbox__error\"\n      role=\"alert\"\n      aria-live=\"polite\"\n    >\n      {{ error() }}\n    </div>\n  }\n</div>", styles: [".ix-checkbox{display:flex;flex-direction:column;gap:4px}.ix-checkbox__label{display:flex;align-items:center;gap:8px;cursor:pointer;-webkit-user-select:none;user-select:none;font-family:var(--font-family-body, \"Inter\", sans-serif);font-size:14px;line-height:1.5;color:var(--fg1, #333)}.ix-checkbox__label:hover:not(.ix-checkbox--disabled) .ix-checkbox__checkmark{border-color:var(--primary, #0095d5)}.ix-checkbox__input{position:absolute;opacity:0;cursor:pointer;height:0;width:0}.ix-checkbox__input:checked~.ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:checked~.ix-checkbox__checkmark:after{display:block}.ix-checkbox__input:indeterminate~.ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:indeterminate~.ix-checkbox__checkmark:after{display:block;content:\"\";left:4px;top:8px;width:8px;height:2px;background:var(--primary-txt, #fff);border-radius:1px;transform:none}.ix-checkbox__input:focus~.ix-checkbox__checkmark{outline:2px solid var(--primary, #0095d5);outline-offset:2px}.ix-checkbox__input:disabled~.ix-checkbox__checkmark{background-color:var(--bg2, #f5f5f5);border-color:var(--lines, #e0e0e0);cursor:not-allowed}.ix-checkbox__input:disabled:checked~.ix-checkbox__checkmark{background-color:var(--lines, #e0e0e0);border-color:var(--lines, #e0e0e0)}.ix-checkbox__checkmark{position:relative;height:16px;width:16px;background-color:var(--bg1, #fff);border:1px solid var(--lines, #ccc);border-radius:2px;transition:all .2s ease;flex-shrink:0}.ix-checkbox__checkmark:after{content:\"\";position:absolute;display:none;left:5px;top:2px;width:4px;height:8px;border:solid var(--primary-txt, #fff);border-width:0 2px 2px 0;transform:rotate(45deg)}.ix-checkbox__text{flex:1;min-width:0}.ix-checkbox__error{color:var(--red, #dc2626);font-size:12px;font-family:var(--font-family-body, \"Inter\", sans-serif);margin-top:4px;display:flex;align-items:center;gap:4px}.ix-checkbox--disabled .ix-checkbox__label{cursor:not-allowed;color:var(--fg2, #666);opacity:.6}.ix-checkbox--disabled .ix-checkbox__text{color:var(--fg2, #666)}.ix-checkbox--error .ix-checkbox__checkmark{border-color:var(--red, #dc2626)}.ix-checkbox--indeterminate .ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:focus-visible~.ix-checkbox__checkmark{outline:2px solid var(--primary, #0095d5);outline-offset:2px}@media (prefers-contrast: high){.ix-checkbox__checkmark{border-width:2px}}@media (prefers-reduced-motion: reduce){.ix-checkbox__checkmark{transition:none}}\n"] }]
+        }] });
 
 class IxRadioComponent {
-    radioEl;
-    label = 'Radio';
-    value = '';
-    name;
-    disabled = false;
-    required = false;
-    testId;
-    error = null;
-    change = new EventEmitter();
+    radioEl = viewChild.required('radioEl');
+    label = input('Radio', ...(ngDevMode ? [{ debugName: "label" }] : []));
+    value = input('', ...(ngDevMode ? [{ debugName: "value" }] : []));
+    name = input(undefined, ...(ngDevMode ? [{ debugName: "name" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    required = input(false, ...(ngDevMode ? [{ debugName: "required" }] : []));
+    testId = input(undefined, ...(ngDevMode ? [{ debugName: "testId" }] : []));
+    error = input(null, ...(ngDevMode ? [{ debugName: "error" }] : []));
+    change = output();
     id = `ix-radio-${Math.random().toString(36).substr(2, 9)}`;
     checked = false;
+    // CVA disabled state management
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
     focusMonitor = inject(FocusMonitor);
     onChange = (_) => { };
     onTouched = () => { };
     ngAfterViewInit() {
-        if (this.radioEl) {
-            this.focusMonitor.monitor(this.radioEl)
+        const radioEl = this.radioEl();
+        if (radioEl) {
+            this.focusMonitor.monitor(radioEl)
                 .subscribe(origin => {
                 // Focus monitoring for accessibility
             });
         }
     }
     ngOnDestroy() {
-        if (this.radioEl) {
-            this.focusMonitor.stopMonitoring(this.radioEl);
+        const radioEl = this.radioEl();
+        if (radioEl) {
+            this.focusMonitor.stopMonitoring(radioEl);
         }
     }
     // ControlValueAccessor implementation
     writeValue(value) {
-        this.checked = value !== null && value !== undefined && value === this.value;
+        this.checked = value !== null && value !== undefined && value === this.value();
     }
     registerOnChange(fn) {
         this.onChange = fn;
@@ -1775,35 +1612,35 @@ class IxRadioComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     onRadioChange(event) {
         const target = event.target;
         this.checked = target.checked;
         if (target.checked) {
-            this.onChange(this.value);
+            this.onChange(this.value());
             this.onTouched();
-            this.change.emit(this.value);
+            this.change.emit(this.value());
         }
     }
-    get classes() {
+    classes = computed(() => {
         const classes = ['ix-radio'];
-        if (this.disabled) {
+        if (this.isDisabled()) {
             classes.push('ix-radio--disabled');
         }
-        if (this.error) {
+        if (this.error()) {
             classes.push('ix-radio--error');
         }
         return classes;
-    }
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxRadioComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxRadioComponent, isStandalone: true, selector: "ix-radio", inputs: { label: "label", value: "value", name: "name", disabled: "disabled", required: "required", testId: "testId", error: "error" }, outputs: { change: "change" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxRadioComponent, isStandalone: true, selector: "ix-radio", inputs: { label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, value: { classPropertyName: "value", publicName: "value", isSignal: true, isRequired: false, transformFunction: null }, name: { classPropertyName: "name", publicName: "name", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, required: { classPropertyName: "required", publicName: "required", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null }, error: { classPropertyName: "error", publicName: "error", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { change: "change" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxRadioComponent),
                 multi: true
             }
-        ], viewQueries: [{ propertyName: "radioEl", first: true, predicate: ["radioEl"], descendants: true }], ngImport: i0, template: "<div [ngClass]=\"classes\">\n  <label [for]=\"id\" class=\"ix-radio__label\">\n    <input\n      #radioEl\n      type=\"radio\"\n      [id]=\"id\"\n      [name]=\"name\"\n      [value]=\"value\"\n      [checked]=\"checked\"\n      [disabled]=\"disabled\"\n      [required]=\"required\"\n      [attr.data-testid]=\"testId\"\n      [attr.aria-describedby]=\"error ? id + '-error' : null\"\n      [attr.aria-invalid]=\"error ? 'true' : null\"\n      class=\"ix-radio__input\"\n      (change)=\"onRadioChange($event)\"\n    />\n    <span class=\"ix-radio__checkmark\"></span>\n    <span class=\"ix-radio__text\">{{ label }}</span>\n  </label>\n  \n  @if (error) {\n    <div \n      [id]=\"id + '-error'\" \n      class=\"ix-radio__error\"\n      role=\"alert\"\n      aria-live=\"polite\"\n    >\n      {{ error }}\n    </div>\n  }\n</div>", styles: [".ix-radio{display:inline-block;margin-bottom:.5rem}.ix-radio__label{display:flex;align-items:center;cursor:pointer;-webkit-user-select:none;user-select:none;gap:.5rem}.ix-radio__label:hover .ix-radio__checkmark{border-color:var(--primary, #007cba)}.ix-radio__input{position:absolute;opacity:0;cursor:pointer;height:0;width:0}.ix-radio__input:focus+.ix-radio__checkmark{outline:2px solid var(--primary, #007cba);outline-offset:2px}.ix-radio__input:checked+.ix-radio__checkmark{border-color:var(--primary, #007cba);background-color:var(--primary, #007cba)}.ix-radio__input:checked+.ix-radio__checkmark:after{display:block}.ix-radio__input:disabled+.ix-radio__checkmark{border-color:var(--lines, #e5e7eb);background-color:var(--alt-bg1, #f8f9fa);cursor:not-allowed}.ix-radio__checkmark{position:relative;height:18px;width:18px;border:2px solid var(--lines, #e5e7eb);border-radius:50%;background-color:transparent;transition:all .2s ease;flex-shrink:0}.ix-radio__checkmark:after{content:\"\";position:absolute;display:none;top:50%;left:50%;width:8px;height:8px;border-radius:50%;background-color:#fff;transform:translate(-50%,-50%)}.ix-radio__text{color:var(--fg1, #000000);font-size:14px;line-height:1.4}.ix-radio__error{margin-top:.25rem;font-size:12px;color:var(--red, #dc3545)}.ix-radio--disabled .ix-radio__label{cursor:not-allowed;opacity:.6}.ix-radio--disabled .ix-radio__text{color:var(--fg2, #6c757d)}.ix-radio--error .ix-radio__checkmark{border-color:var(--red, #dc3545)}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: FormsModule }, { kind: "ngmodule", type: A11yModule }] });
+        ], viewQueries: [{ propertyName: "radioEl", first: true, predicate: ["radioEl"], descendants: true, isSignal: true }], ngImport: i0, template: "<div [ngClass]=\"classes()\">\n  <label [for]=\"id\" class=\"ix-radio__label\">\n    <input\n      #radioEl\n      type=\"radio\"\n      [id]=\"id\"\n      [name]=\"name()\"\n      [value]=\"value()\"\n      [checked]=\"checked\"\n      [disabled]=\"isDisabled()\"\n      [required]=\"required()\"\n      [attr.data-testid]=\"testId()\"\n      [attr.aria-describedby]=\"error() ? id + '-error' : null\"\n      [attr.aria-invalid]=\"error() ? 'true' : null\"\n      class=\"ix-radio__input\"\n      (change)=\"onRadioChange($event)\"\n    />\n    <span class=\"ix-radio__checkmark\"></span>\n    <span class=\"ix-radio__text\">{{ label() }}</span>\n  </label>\n\n  @if (error()) {\n    <div\n      [id]=\"id + '-error'\"\n      class=\"ix-radio__error\"\n      role=\"alert\"\n      aria-live=\"polite\"\n    >\n      {{ error() }}\n    </div>\n  }\n</div>", styles: [".ix-radio{display:inline-block;margin-bottom:.5rem}.ix-radio__label{display:flex;align-items:center;cursor:pointer;-webkit-user-select:none;user-select:none;gap:.5rem}.ix-radio__label:hover .ix-radio__checkmark{border-color:var(--primary, #007cba)}.ix-radio__input{position:absolute;opacity:0;cursor:pointer;height:0;width:0}.ix-radio__input:focus+.ix-radio__checkmark{outline:2px solid var(--primary, #007cba);outline-offset:2px}.ix-radio__input:checked+.ix-radio__checkmark{border-color:var(--primary, #007cba);background-color:var(--primary, #007cba)}.ix-radio__input:checked+.ix-radio__checkmark:after{display:block}.ix-radio__input:disabled+.ix-radio__checkmark{border-color:var(--lines, #e5e7eb);background-color:var(--alt-bg1, #f8f9fa);cursor:not-allowed}.ix-radio__checkmark{position:relative;height:18px;width:18px;border:2px solid var(--lines, #e5e7eb);border-radius:50%;background-color:transparent;transition:all .2s ease;flex-shrink:0}.ix-radio__checkmark:after{content:\"\";position:absolute;display:none;top:50%;left:50%;width:8px;height:8px;border-radius:50%;background-color:#fff;transform:translate(-50%,-50%)}.ix-radio__text{color:var(--fg1, #000000);font-size:14px;line-height:1.4}.ix-radio__error{margin-top:.25rem;font-size:12px;color:var(--red, #dc3545)}.ix-radio--disabled .ix-radio__label{cursor:not-allowed;opacity:.6}.ix-radio--disabled .ix-radio__text{color:var(--fg2, #6c757d)}.ix-radio--error .ix-radio__checkmark{border-color:var(--red, #dc3545)}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: FormsModule }, { kind: "ngmodule", type: A11yModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxRadioComponent, decorators: [{
             type: Component,
@@ -1813,186 +1650,176 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                             useExisting: forwardRef(() => IxRadioComponent),
                             multi: true
                         }
-                    ], template: "<div [ngClass]=\"classes\">\n  <label [for]=\"id\" class=\"ix-radio__label\">\n    <input\n      #radioEl\n      type=\"radio\"\n      [id]=\"id\"\n      [name]=\"name\"\n      [value]=\"value\"\n      [checked]=\"checked\"\n      [disabled]=\"disabled\"\n      [required]=\"required\"\n      [attr.data-testid]=\"testId\"\n      [attr.aria-describedby]=\"error ? id + '-error' : null\"\n      [attr.aria-invalid]=\"error ? 'true' : null\"\n      class=\"ix-radio__input\"\n      (change)=\"onRadioChange($event)\"\n    />\n    <span class=\"ix-radio__checkmark\"></span>\n    <span class=\"ix-radio__text\">{{ label }}</span>\n  </label>\n  \n  @if (error) {\n    <div \n      [id]=\"id + '-error'\" \n      class=\"ix-radio__error\"\n      role=\"alert\"\n      aria-live=\"polite\"\n    >\n      {{ error }}\n    </div>\n  }\n</div>", styles: [".ix-radio{display:inline-block;margin-bottom:.5rem}.ix-radio__label{display:flex;align-items:center;cursor:pointer;-webkit-user-select:none;user-select:none;gap:.5rem}.ix-radio__label:hover .ix-radio__checkmark{border-color:var(--primary, #007cba)}.ix-radio__input{position:absolute;opacity:0;cursor:pointer;height:0;width:0}.ix-radio__input:focus+.ix-radio__checkmark{outline:2px solid var(--primary, #007cba);outline-offset:2px}.ix-radio__input:checked+.ix-radio__checkmark{border-color:var(--primary, #007cba);background-color:var(--primary, #007cba)}.ix-radio__input:checked+.ix-radio__checkmark:after{display:block}.ix-radio__input:disabled+.ix-radio__checkmark{border-color:var(--lines, #e5e7eb);background-color:var(--alt-bg1, #f8f9fa);cursor:not-allowed}.ix-radio__checkmark{position:relative;height:18px;width:18px;border:2px solid var(--lines, #e5e7eb);border-radius:50%;background-color:transparent;transition:all .2s ease;flex-shrink:0}.ix-radio__checkmark:after{content:\"\";position:absolute;display:none;top:50%;left:50%;width:8px;height:8px;border-radius:50%;background-color:#fff;transform:translate(-50%,-50%)}.ix-radio__text{color:var(--fg1, #000000);font-size:14px;line-height:1.4}.ix-radio__error{margin-top:.25rem;font-size:12px;color:var(--red, #dc3545)}.ix-radio--disabled .ix-radio__label{cursor:not-allowed;opacity:.6}.ix-radio--disabled .ix-radio__text{color:var(--fg2, #6c757d)}.ix-radio--error .ix-radio__checkmark{border-color:var(--red, #dc3545)}\n"] }]
-        }], propDecorators: { radioEl: [{
-                type: ViewChild,
-                args: ['radioEl']
-            }], label: [{
-                type: Input
-            }], value: [{
-                type: Input
-            }], name: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], required: [{
-                type: Input
-            }], testId: [{
-                type: Input
-            }], error: [{
-                type: Input
-            }], change: [{
-                type: Output
-            }] } });
+                    ], template: "<div [ngClass]=\"classes()\">\n  <label [for]=\"id\" class=\"ix-radio__label\">\n    <input\n      #radioEl\n      type=\"radio\"\n      [id]=\"id\"\n      [name]=\"name()\"\n      [value]=\"value()\"\n      [checked]=\"checked\"\n      [disabled]=\"isDisabled()\"\n      [required]=\"required()\"\n      [attr.data-testid]=\"testId()\"\n      [attr.aria-describedby]=\"error() ? id + '-error' : null\"\n      [attr.aria-invalid]=\"error() ? 'true' : null\"\n      class=\"ix-radio__input\"\n      (change)=\"onRadioChange($event)\"\n    />\n    <span class=\"ix-radio__checkmark\"></span>\n    <span class=\"ix-radio__text\">{{ label() }}</span>\n  </label>\n\n  @if (error()) {\n    <div\n      [id]=\"id + '-error'\"\n      class=\"ix-radio__error\"\n      role=\"alert\"\n      aria-live=\"polite\"\n    >\n      {{ error() }}\n    </div>\n  }\n</div>", styles: [".ix-radio{display:inline-block;margin-bottom:.5rem}.ix-radio__label{display:flex;align-items:center;cursor:pointer;-webkit-user-select:none;user-select:none;gap:.5rem}.ix-radio__label:hover .ix-radio__checkmark{border-color:var(--primary, #007cba)}.ix-radio__input{position:absolute;opacity:0;cursor:pointer;height:0;width:0}.ix-radio__input:focus+.ix-radio__checkmark{outline:2px solid var(--primary, #007cba);outline-offset:2px}.ix-radio__input:checked+.ix-radio__checkmark{border-color:var(--primary, #007cba);background-color:var(--primary, #007cba)}.ix-radio__input:checked+.ix-radio__checkmark:after{display:block}.ix-radio__input:disabled+.ix-radio__checkmark{border-color:var(--lines, #e5e7eb);background-color:var(--alt-bg1, #f8f9fa);cursor:not-allowed}.ix-radio__checkmark{position:relative;height:18px;width:18px;border:2px solid var(--lines, #e5e7eb);border-radius:50%;background-color:transparent;transition:all .2s ease;flex-shrink:0}.ix-radio__checkmark:after{content:\"\";position:absolute;display:none;top:50%;left:50%;width:8px;height:8px;border-radius:50%;background-color:#fff;transform:translate(-50%,-50%)}.ix-radio__text{color:var(--fg1, #000000);font-size:14px;line-height:1.4}.ix-radio__error{margin-top:.25rem;font-size:12px;color:var(--red, #dc3545)}.ix-radio--disabled .ix-radio__label{cursor:not-allowed;opacity:.6}.ix-radio--disabled .ix-radio__text{color:var(--fg2, #6c757d)}.ix-radio--error .ix-radio__checkmark{border-color:var(--red, #dc3545)}\n"] }]
+        }] });
 
 class IxTabComponent {
-    label = '';
-    disabled = false;
-    icon;
-    iconTemplate;
-    testId;
-    selected = new EventEmitter();
-    iconContent;
-    // Internal properties set by parent IxTabsComponent
-    index = 0;
-    isActive = false;
+    label = input('', ...(ngDevMode ? [{ debugName: "label" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    icon = input(undefined, ...(ngDevMode ? [{ debugName: "icon" }] : []));
+    iconTemplate = input(undefined, ...(ngDevMode ? [{ debugName: "iconTemplate" }] : []));
+    testId = input(undefined, ...(ngDevMode ? [{ debugName: "testId" }] : []));
+    selected = output();
+    iconContent = contentChild('iconContent', ...(ngDevMode ? [{ debugName: "iconContent" }] : []));
+    // Internal properties set by parent IxTabsComponent (public signals for parent control)
+    index = signal(0, ...(ngDevMode ? [{ debugName: "index" }] : []));
+    isActive = signal(false, ...(ngDevMode ? [{ debugName: "isActive" }] : []));
     tabsComponent; // Will be set by parent
     elementRef = inject((ElementRef));
-    hasIconContent = false;
+    hasIconContent = signal(false, ...(ngDevMode ? [{ debugName: "hasIconContent" }] : []));
     ngAfterContentInit() {
-        this.hasIconContent = !!this.iconContent;
+        this.hasIconContent.set(!!this.iconContent());
     }
     onClick() {
-        if (!this.disabled) {
+        if (!this.disabled()) {
             this.selected.emit();
         }
     }
     onKeydown(event) {
         if (this.tabsComponent) {
-            this.tabsComponent.onKeydown(event, this.index);
+            this.tabsComponent.onKeydown(event, this.index());
         }
     }
-    get classes() {
+    classes = computed(() => {
         const classes = ['ix-tab'];
-        if (this.isActive) {
+        if (this.isActive()) {
             classes.push('ix-tab--active');
         }
-        if (this.disabled) {
+        if (this.disabled()) {
             classes.push('ix-tab--disabled');
         }
         return classes.join(' ');
-    }
-    get tabIndex() {
-        return this.isActive ? 0 : -1;
-    }
-    get hasIcon() {
-        return !!(this.iconContent || this.iconTemplate || this.icon);
-    }
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
+    tabIndex = computed(() => {
+        return this.isActive() ? 0 : -1;
+    }, ...(ngDevMode ? [{ debugName: "tabIndex" }] : []));
+    hasIcon = computed(() => {
+        return !!(this.hasIconContent() || this.iconTemplate() || this.icon());
+    }, ...(ngDevMode ? [{ debugName: "hasIcon" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTabComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTabComponent, isStandalone: true, selector: "ix-tab", inputs: { label: "label", disabled: "disabled", icon: "icon", iconTemplate: "iconTemplate", testId: "testId" }, outputs: { selected: "selected" }, queries: [{ propertyName: "iconContent", first: true, predicate: ["iconContent"], descendants: true }], ngImport: i0, template: "<button\n  [ngClass]=\"classes\"\n  [attr.data-testid]=\"testId\"\n  [attr.aria-selected]=\"isActive\"\n  [attr.aria-disabled]=\"disabled\"\n  [attr.tabindex]=\"tabIndex\"\n  [disabled]=\"disabled\"\n  role=\"tab\"\n  type=\"button\"\n  (click)=\"onClick()\"\n  (keydown)=\"onKeydown($event)\"\n>\n  @if (hasIcon) {\n    <span class=\"ix-tab__icon\">\n      @if (iconContent) {\n        <ng-container *ngTemplateOutlet=\"iconContent\"></ng-container>\n      } @else if (iconTemplate) {\n        <ng-container *ngTemplateOutlet=\"iconTemplate\"></ng-container>\n      } @else {\n        <span [innerHTML]=\"icon\"></span>\n      }\n    </span>\n  }\n  <span class=\"ix-tab__label\">\n    {{ label }}\n    <ng-content></ng-content>\n  </span>\n</button>", styles: [".ix-tab{display:flex;align-items:center;justify-content:flex-start;gap:8px;padding:12px 16px;border:none;border-bottom:none;background:transparent;color:var(--fg2, #666);font-family:var(--font-family-body, \"Inter\", sans-serif);font-size:14px;font-weight:500;line-height:1.5;cursor:pointer;white-space:nowrap;min-width:0;flex-shrink:0}.ix-tab:hover:not(.ix-tab--disabled):not(.ix-tab--active){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tab:focus-visible{outline:2px solid var(--primary, #0095d5);outline-offset:-2px;border-radius:4px}.ix-tab--disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.ix-tab__icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:14px;flex-shrink:0}.ix-tab__label{display:flex;align-items:center;min-width:0;text-overflow:ellipsis;overflow:hidden}@media (prefers-contrast: high){.ix-tab{border-width:3px}.ix-tab:focus-visible{outline-width:3px}}:host-context(.ix-tabs--vertical){width:100%}:host-context(.ix-tabs--vertical) .ix-tab{width:100%}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "directive", type: i1$2.NgTemplateOutlet, selector: "[ngTemplateOutlet]", inputs: ["ngTemplateOutletContext", "ngTemplateOutlet", "ngTemplateOutletInjector"] }, { kind: "ngmodule", type: A11yModule }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTabComponent, isStandalone: true, selector: "ix-tab", inputs: { label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, icon: { classPropertyName: "icon", publicName: "icon", isSignal: true, isRequired: false, transformFunction: null }, iconTemplate: { classPropertyName: "iconTemplate", publicName: "iconTemplate", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selected: "selected" }, queries: [{ propertyName: "iconContent", first: true, predicate: ["iconContent"], descendants: true, isSignal: true }], ngImport: i0, template: "<button\n  [ngClass]=\"classes()\"\n  [attr.data-testid]=\"testId()\"\n  [attr.aria-selected]=\"isActive()\"\n  [attr.aria-disabled]=\"disabled()\"\n  [attr.tabindex]=\"tabIndex()\"\n  [disabled]=\"disabled()\"\n  role=\"tab\"\n  type=\"button\"\n  (click)=\"onClick()\"\n  (keydown)=\"onKeydown($event)\"\n>\n  @if (hasIcon()) {\n    <span class=\"ix-tab__icon\">\n      @if (iconContent()) {\n        <ng-container *ngTemplateOutlet=\"iconContent()\"></ng-container>\n      } @else if (iconTemplate()) {\n        <ng-container *ngTemplateOutlet=\"iconTemplate()\"></ng-container>\n      } @else {\n        <span [innerHTML]=\"icon()\"></span>\n      }\n    </span>\n  }\n  <span class=\"ix-tab__label\">\n    {{ label() }}\n    <ng-content></ng-content>\n  </span>\n</button>", styles: [".ix-tab{display:flex;align-items:center;justify-content:flex-start;gap:8px;padding:12px 16px;border:none;border-bottom:none;background:transparent;color:var(--fg2, #666);font-family:var(--font-family-body, \"Inter\", sans-serif);font-size:14px;font-weight:500;line-height:1.5;cursor:pointer;white-space:nowrap;min-width:0;flex-shrink:0}.ix-tab:hover:not(.ix-tab--disabled):not(.ix-tab--active){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tab:focus-visible{outline:2px solid var(--primary, #0095d5);outline-offset:-2px;border-radius:4px}.ix-tab--disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.ix-tab__icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:14px;flex-shrink:0}.ix-tab__label{display:flex;align-items:center;min-width:0;text-overflow:ellipsis;overflow:hidden}@media (prefers-contrast: high){.ix-tab{border-width:3px}.ix-tab:focus-visible{outline-width:3px}}:host-context(.ix-tabs--vertical){width:100%}:host-context(.ix-tabs--vertical) .ix-tab{width:100%}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "directive", type: i1$2.NgTemplateOutlet, selector: "[ngTemplateOutlet]", inputs: ["ngTemplateOutletContext", "ngTemplateOutlet", "ngTemplateOutletInjector"] }, { kind: "ngmodule", type: A11yModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTabComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-tab', standalone: true, imports: [CommonModule, A11yModule], template: "<button\n  [ngClass]=\"classes\"\n  [attr.data-testid]=\"testId\"\n  [attr.aria-selected]=\"isActive\"\n  [attr.aria-disabled]=\"disabled\"\n  [attr.tabindex]=\"tabIndex\"\n  [disabled]=\"disabled\"\n  role=\"tab\"\n  type=\"button\"\n  (click)=\"onClick()\"\n  (keydown)=\"onKeydown($event)\"\n>\n  @if (hasIcon) {\n    <span class=\"ix-tab__icon\">\n      @if (iconContent) {\n        <ng-container *ngTemplateOutlet=\"iconContent\"></ng-container>\n      } @else if (iconTemplate) {\n        <ng-container *ngTemplateOutlet=\"iconTemplate\"></ng-container>\n      } @else {\n        <span [innerHTML]=\"icon\"></span>\n      }\n    </span>\n  }\n  <span class=\"ix-tab__label\">\n    {{ label }}\n    <ng-content></ng-content>\n  </span>\n</button>", styles: [".ix-tab{display:flex;align-items:center;justify-content:flex-start;gap:8px;padding:12px 16px;border:none;border-bottom:none;background:transparent;color:var(--fg2, #666);font-family:var(--font-family-body, \"Inter\", sans-serif);font-size:14px;font-weight:500;line-height:1.5;cursor:pointer;white-space:nowrap;min-width:0;flex-shrink:0}.ix-tab:hover:not(.ix-tab--disabled):not(.ix-tab--active){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tab:focus-visible{outline:2px solid var(--primary, #0095d5);outline-offset:-2px;border-radius:4px}.ix-tab--disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.ix-tab__icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:14px;flex-shrink:0}.ix-tab__label{display:flex;align-items:center;min-width:0;text-overflow:ellipsis;overflow:hidden}@media (prefers-contrast: high){.ix-tab{border-width:3px}.ix-tab:focus-visible{outline-width:3px}}:host-context(.ix-tabs--vertical){width:100%}:host-context(.ix-tabs--vertical) .ix-tab{width:100%}\n"] }]
-        }], propDecorators: { label: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], icon: [{
-                type: Input
-            }], iconTemplate: [{
-                type: Input
-            }], testId: [{
-                type: Input
-            }], selected: [{
-                type: Output
-            }], iconContent: [{
-                type: ContentChild,
-                args: ['iconContent']
-            }] } });
+            args: [{ selector: 'ix-tab', standalone: true, imports: [CommonModule, A11yModule], template: "<button\n  [ngClass]=\"classes()\"\n  [attr.data-testid]=\"testId()\"\n  [attr.aria-selected]=\"isActive()\"\n  [attr.aria-disabled]=\"disabled()\"\n  [attr.tabindex]=\"tabIndex()\"\n  [disabled]=\"disabled()\"\n  role=\"tab\"\n  type=\"button\"\n  (click)=\"onClick()\"\n  (keydown)=\"onKeydown($event)\"\n>\n  @if (hasIcon()) {\n    <span class=\"ix-tab__icon\">\n      @if (iconContent()) {\n        <ng-container *ngTemplateOutlet=\"iconContent()\"></ng-container>\n      } @else if (iconTemplate()) {\n        <ng-container *ngTemplateOutlet=\"iconTemplate()\"></ng-container>\n      } @else {\n        <span [innerHTML]=\"icon()\"></span>\n      }\n    </span>\n  }\n  <span class=\"ix-tab__label\">\n    {{ label() }}\n    <ng-content></ng-content>\n  </span>\n</button>", styles: [".ix-tab{display:flex;align-items:center;justify-content:flex-start;gap:8px;padding:12px 16px;border:none;border-bottom:none;background:transparent;color:var(--fg2, #666);font-family:var(--font-family-body, \"Inter\", sans-serif);font-size:14px;font-weight:500;line-height:1.5;cursor:pointer;white-space:nowrap;min-width:0;flex-shrink:0}.ix-tab:hover:not(.ix-tab--disabled):not(.ix-tab--active){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tab:focus-visible{outline:2px solid var(--primary, #0095d5);outline-offset:-2px;border-radius:4px}.ix-tab--disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.ix-tab__icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:14px;flex-shrink:0}.ix-tab__label{display:flex;align-items:center;min-width:0;text-overflow:ellipsis;overflow:hidden}@media (prefers-contrast: high){.ix-tab{border-width:3px}.ix-tab:focus-visible{outline-width:3px}}:host-context(.ix-tabs--vertical){width:100%}:host-context(.ix-tabs--vertical) .ix-tab{width:100%}\n"] }]
+        }] });
 
 class IxTabPanelComponent {
-    label = '';
-    lazyLoad = false;
-    testId;
-    content;
-    // Internal properties set by parent IxTabsComponent
-    index = 0;
-    isActive = false;
-    hasBeenActive = false;
+    label = input('', ...(ngDevMode ? [{ debugName: "label" }] : []));
+    lazyLoad = input(false, ...(ngDevMode ? [{ debugName: "lazyLoad" }] : []));
+    testId = input(undefined, ...(ngDevMode ? [{ debugName: "testId" }] : []));
+    content = viewChild.required('content');
+    // Internal properties set by parent IxTabsComponent (public signals for parent control)
+    index = signal(0, ...(ngDevMode ? [{ debugName: "index" }] : []));
+    isActive = signal(false, ...(ngDevMode ? [{ debugName: "isActive" }] : []));
+    hasBeenActive = signal(false, ...(ngDevMode ? [{ debugName: "hasBeenActive" }] : []));
     elementRef = inject((ElementRef));
-    get classes() {
+    classes = computed(() => {
         const classes = ['ix-tab-panel'];
-        if (this.isActive) {
+        if (this.isActive()) {
             classes.push('ix-tab-panel--active');
         }
-        if (!this.isActive) {
+        if (!this.isActive()) {
             classes.push('ix-tab-panel--hidden');
         }
         return classes.join(' ');
-    }
-    get shouldRender() {
-        if (!this.lazyLoad) {
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
+    shouldRender = computed(() => {
+        if (!this.lazyLoad()) {
             return true;
         }
         // For lazy loading, only render if it's currently active or has been active before
-        return this.isActive || this.hasBeenActive;
-    }
+        return this.isActive() || this.hasBeenActive();
+    }, ...(ngDevMode ? [{ debugName: "shouldRender" }] : []));
     onActivate() {
-        this.hasBeenActive = true;
+        this.hasBeenActive.set(true);
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTabPanelComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTabPanelComponent, isStandalone: true, selector: "ix-tab-panel", inputs: { label: "label", lazyLoad: "lazyLoad", testId: "testId" }, viewQueries: [{ propertyName: "content", first: true, predicate: ["content"], descendants: true, static: true }], ngImport: i0, template: "<div\n  [ngClass]=\"classes\"\n  [attr.data-testid]=\"testId\"\n  [attr.aria-hidden]=\"!isActive\"\n  [attr.aria-labelledby]=\"'tab-' + index\"\n  role=\"tabpanel\"\n  [attr.tabindex]=\"isActive ? 0 : -1\"\n>\n  @if (shouldRender) {\n    <div class=\"ix-tab-panel__content\">\n      <ng-content></ng-content>\n    </div>\n  }\n</div>", styles: [".ix-tab-panel{display:block;width:100%;height:100%;min-width:0;background-color:var(--bg1, #fff);box-sizing:border-box}.ix-tab-panel--hidden{display:none}.ix-tab-panel--active{display:block}.ix-tab-panel:focus-visible{outline:2px solid var(--primary, #0095d5);outline-offset:-2px;border-radius:4px}.ix-tab-panel__content{padding:0 16px;height:100%;overflow:auto;min-height:0;display:flex;flex-direction:column}@media (prefers-reduced-motion: reduce){.ix-tab-panel{transition:none}}@media (prefers-contrast: high){.ix-tab-panel{border:1px solid var(--lines, #e0e0e0)}.ix-tab-panel:focus-visible{outline-width:3px}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: A11yModule }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTabPanelComponent, isStandalone: true, selector: "ix-tab-panel", inputs: { label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, lazyLoad: { classPropertyName: "lazyLoad", publicName: "lazyLoad", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null } }, viewQueries: [{ propertyName: "content", first: true, predicate: ["content"], descendants: true, isSignal: true }], ngImport: i0, template: "<div\n  [ngClass]=\"classes()\"\n  [attr.data-testid]=\"testId()\"\n  [attr.aria-hidden]=\"!isActive()\"\n  [attr.aria-labelledby]=\"'tab-' + index()\"\n  role=\"tabpanel\"\n  [attr.tabindex]=\"isActive() ? 0 : -1\"\n>\n  @if (shouldRender()) {\n    <div class=\"ix-tab-panel__content\">\n      <ng-content></ng-content>\n    </div>\n  }\n</div>", styles: [".ix-tab-panel{display:block;width:100%;height:100%;min-width:0;background-color:var(--bg1, #fff);box-sizing:border-box}.ix-tab-panel--hidden{display:none}.ix-tab-panel--active{display:block}.ix-tab-panel:focus-visible{outline:2px solid var(--primary, #0095d5);outline-offset:-2px;border-radius:4px}.ix-tab-panel__content{padding:0 16px;height:100%;overflow:auto;min-height:0;display:flex;flex-direction:column}@media (prefers-reduced-motion: reduce){.ix-tab-panel{transition:none}}@media (prefers-contrast: high){.ix-tab-panel{border:1px solid var(--lines, #e0e0e0)}.ix-tab-panel:focus-visible{outline-width:3px}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: A11yModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTabPanelComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-tab-panel', standalone: true, imports: [CommonModule, A11yModule], template: "<div\n  [ngClass]=\"classes\"\n  [attr.data-testid]=\"testId\"\n  [attr.aria-hidden]=\"!isActive\"\n  [attr.aria-labelledby]=\"'tab-' + index\"\n  role=\"tabpanel\"\n  [attr.tabindex]=\"isActive ? 0 : -1\"\n>\n  @if (shouldRender) {\n    <div class=\"ix-tab-panel__content\">\n      <ng-content></ng-content>\n    </div>\n  }\n</div>", styles: [".ix-tab-panel{display:block;width:100%;height:100%;min-width:0;background-color:var(--bg1, #fff);box-sizing:border-box}.ix-tab-panel--hidden{display:none}.ix-tab-panel--active{display:block}.ix-tab-panel:focus-visible{outline:2px solid var(--primary, #0095d5);outline-offset:-2px;border-radius:4px}.ix-tab-panel__content{padding:0 16px;height:100%;overflow:auto;min-height:0;display:flex;flex-direction:column}@media (prefers-reduced-motion: reduce){.ix-tab-panel{transition:none}}@media (prefers-contrast: high){.ix-tab-panel{border:1px solid var(--lines, #e0e0e0)}.ix-tab-panel:focus-visible{outline-width:3px}}\n"] }]
-        }], propDecorators: { label: [{
-                type: Input
-            }], lazyLoad: [{
-                type: Input
-            }], testId: [{
-                type: Input
-            }], content: [{
-                type: ViewChild,
-                args: ['content', { static: true }]
-            }] } });
+            args: [{ selector: 'ix-tab-panel', standalone: true, imports: [CommonModule, A11yModule], template: "<div\n  [ngClass]=\"classes()\"\n  [attr.data-testid]=\"testId()\"\n  [attr.aria-hidden]=\"!isActive()\"\n  [attr.aria-labelledby]=\"'tab-' + index()\"\n  role=\"tabpanel\"\n  [attr.tabindex]=\"isActive() ? 0 : -1\"\n>\n  @if (shouldRender()) {\n    <div class=\"ix-tab-panel__content\">\n      <ng-content></ng-content>\n    </div>\n  }\n</div>", styles: [".ix-tab-panel{display:block;width:100%;height:100%;min-width:0;background-color:var(--bg1, #fff);box-sizing:border-box}.ix-tab-panel--hidden{display:none}.ix-tab-panel--active{display:block}.ix-tab-panel:focus-visible{outline:2px solid var(--primary, #0095d5);outline-offset:-2px;border-radius:4px}.ix-tab-panel__content{padding:0 16px;height:100%;overflow:auto;min-height:0;display:flex;flex-direction:column}@media (prefers-reduced-motion: reduce){.ix-tab-panel{transition:none}}@media (prefers-contrast: high){.ix-tab-panel{border:1px solid var(--lines, #e0e0e0)}.ix-tab-panel:focus-visible{outline-width:3px}}\n"] }]
+        }] });
 
 class IxTabsComponent {
-    tabs;
-    panels;
-    tabHeader;
-    selectedIndex = 0;
-    orientation = 'horizontal';
-    highlightPosition = 'bottom';
-    selectedIndexChange = new EventEmitter();
-    tabChange = new EventEmitter();
-    highlightBarLeft = 0;
-    highlightBarWidth = 0;
-    highlightBarTop = 0;
-    highlightBarHeight = 0; // Start hidden
-    highlightBarVisible = false;
+    tabs = contentChildren(IxTabComponent, ...(ngDevMode ? [{ debugName: "tabs" }] : []));
+    panels = contentChildren(IxTabPanelComponent, ...(ngDevMode ? [{ debugName: "panels" }] : []));
+    tabHeader = viewChild.required('tabHeader');
+    selectedIndex = input(0, ...(ngDevMode ? [{ debugName: "selectedIndex" }] : []));
+    orientation = input('horizontal', ...(ngDevMode ? [{ debugName: "orientation" }] : []));
+    highlightPosition = input('bottom', ...(ngDevMode ? [{ debugName: "highlightPosition" }] : []));
+    selectedIndexChange = output();
+    tabChange = output();
+    // Internal state for selected index (mutable)
+    internalSelectedIndex = signal(0, ...(ngDevMode ? [{ debugName: "internalSelectedIndex" }] : []));
+    highlightBarLeft = signal(0, ...(ngDevMode ? [{ debugName: "highlightBarLeft" }] : []));
+    highlightBarWidth = signal(0, ...(ngDevMode ? [{ debugName: "highlightBarWidth" }] : []));
+    highlightBarTop = signal(0, ...(ngDevMode ? [{ debugName: "highlightBarTop" }] : []));
+    highlightBarHeight = signal(0, ...(ngDevMode ? [{ debugName: "highlightBarHeight" }] : []));
+    highlightBarVisible = signal(false, ...(ngDevMode ? [{ debugName: "highlightBarVisible" }] : []));
     focusMonitor = inject(FocusMonitor);
     liveAnnouncer = inject(LiveAnnouncer);
     cdr = inject(ChangeDetectorRef);
+    constructor() {
+        // Sync input to internal state
+        effect(() => {
+            this.internalSelectedIndex.set(this.selectedIndex());
+        });
+        // Reactive child state management - update tabs and panels when selectedIndex changes
+        effect(() => {
+            const currentIndex = this.internalSelectedIndex();
+            const tabs = this.tabs();
+            if (tabs && tabs.length > 0) {
+                tabs.forEach((tab, i) => {
+                    tab.isActive.set(i === currentIndex);
+                });
+            }
+            const panels = this.panels();
+            if (panels && panels.length > 0) {
+                panels.forEach((panel, i) => {
+                    panel.isActive.set(i === currentIndex);
+                    if (i === currentIndex) {
+                        panel.onActivate();
+                    }
+                });
+            }
+            this.cdr.detectChanges();
+        });
+    }
     ngAfterContentInit() {
         this.initializeTabs();
-        this.selectTab(this.selectedIndex);
+        this.selectTab(this.internalSelectedIndex());
         // Listen for tab changes
-        this.tabs.changes.subscribe(() => {
-            this.initializeTabs();
-            this.updateHighlightBar();
+        effect(() => {
+            // Track tabs signal to react to changes
+            const tabs = this.tabs();
+            if (tabs.length > 0) {
+                this.initializeTabs();
+                this.updateHighlightBar();
+            }
         });
     }
     ngAfterViewInit() {
         // Wait for next tick to ensure DOM is fully rendered
         setTimeout(() => {
             this.updateHighlightBar();
-            this.highlightBarVisible = true;
+            this.highlightBarVisible.set(true);
             this.cdr.detectChanges();
         }, 0);
     }
     ngOnDestroy() {
-        this.tabs.forEach(tab => {
+        this.tabs().forEach(tab => {
             if (tab.elementRef) {
                 this.focusMonitor.stopMonitoring(tab.elementRef);
             }
         });
     }
     initializeTabs() {
-        this.tabs.forEach((tab, index) => {
-            tab.index = index;
-            tab.isActive = index === this.selectedIndex;
+        const currentIndex = this.internalSelectedIndex();
+        this.tabs().forEach((tab, index) => {
+            tab.index.set(index);
+            tab.isActive.set(index === currentIndex);
             tab.tabsComponent = this;
             // Set up focus monitoring
             if (tab.elementRef) {
@@ -2005,41 +1832,30 @@ class IxTabsComponent {
             }
             // Set up click handlers
             tab.selected.subscribe(() => {
-                if (!tab.disabled) {
+                if (!tab.disabled()) {
                     this.selectTab(index);
                 }
             });
         });
-        this.panels.forEach((panel, index) => {
-            panel.index = index;
-            panel.isActive = index === this.selectedIndex;
+        this.panels().forEach((panel, index) => {
+            panel.index.set(index);
+            panel.isActive.set(index === currentIndex);
         });
         // Trigger change detection to update DOM
         this.cdr.detectChanges();
     }
     selectTab(index) {
-        if (index < 0 || index >= this.tabs.length) {
+        const tabs = this.tabs();
+        if (index < 0 || index >= tabs.length) {
             return;
         }
-        const tab = this.tabs.get(index);
-        if (tab && tab.disabled) {
+        const tab = tabs[index];
+        if (tab && tab.disabled()) {
             return;
         }
-        const previousIndex = this.selectedIndex;
-        this.selectedIndex = index;
-        // Update tab states
-        this.tabs.forEach((tab, i) => {
-            tab.isActive = i === index;
-        });
-        // Update panel states
-        this.panels.forEach((panel, i) => {
-            panel.isActive = i === index;
-            if (i === index) {
-                panel.onActivate();
-            }
-        });
-        // Trigger change detection to update DOM
-        this.cdr.detectChanges();
+        const previousIndex = this.internalSelectedIndex();
+        this.internalSelectedIndex.set(index);
+        // Effect will update child states automatically
         // Update highlight bar
         this.updateHighlightBar();
         // Emit events
@@ -2053,44 +1869,46 @@ class IxTabsComponent {
         }
     }
     updateHighlightBar() {
-        if (!this.tabHeader || !this.tabs || this.tabs.length === 0) {
+        const tabHeader = this.tabHeader();
+        const tabs = this.tabs();
+        if (!tabHeader || !tabs || tabs.length === 0) {
             return;
         }
-        const activeTab = this.tabs.get(this.selectedIndex);
+        const activeTab = tabs[this.internalSelectedIndex()];
         if (!activeTab || !activeTab.elementRef) {
             return;
         }
         const tabElement = activeTab.elementRef.nativeElement;
-        const headerElement = this.tabHeader.nativeElement;
+        const headerElement = tabHeader.nativeElement;
         // Get the position and dimensions of the active tab relative to the header
         const tabRect = tabElement.getBoundingClientRect();
         const headerRect = headerElement.getBoundingClientRect();
-        if (this.orientation === 'vertical') {
+        if (this.orientation() === 'vertical') {
             // For vertical tabs, animate top position and height
-            this.highlightBarTop = tabRect.top - headerRect.top;
-            this.highlightBarHeight = tabRect.height;
+            this.highlightBarTop.set(tabRect.top - headerRect.top);
+            this.highlightBarHeight.set(tabRect.height);
             // Position highlight bar based on highlightPosition
-            if (this.highlightPosition === 'left') {
-                this.highlightBarLeft = tabRect.left - headerRect.left;
-                this.highlightBarWidth = 3;
+            if (this.highlightPosition() === 'left') {
+                this.highlightBarLeft.set(tabRect.left - headerRect.left);
+                this.highlightBarWidth.set(3);
             }
             else { // right
-                this.highlightBarLeft = (tabRect.right - headerRect.left) - 3;
-                this.highlightBarWidth = 3;
+                this.highlightBarLeft.set((tabRect.right - headerRect.left) - 3);
+                this.highlightBarWidth.set(3);
             }
         }
         else {
             // For horizontal tabs, animate left position and width
-            this.highlightBarLeft = tabRect.left - headerRect.left;
-            this.highlightBarWidth = tabRect.width;
+            this.highlightBarLeft.set(tabRect.left - headerRect.left);
+            this.highlightBarWidth.set(tabRect.width);
             // Position highlight bar based on highlightPosition
-            if (this.highlightPosition === 'top') {
-                this.highlightBarTop = tabRect.top - headerRect.top;
-                this.highlightBarHeight = 2;
+            if (this.highlightPosition() === 'top') {
+                this.highlightBarTop.set(tabRect.top - headerRect.top);
+                this.highlightBarHeight.set(2);
             }
             else { // bottom
-                this.highlightBarTop = (tabRect.bottom - headerRect.top) - 2;
-                this.highlightBarHeight = 2;
+                this.highlightBarTop.set((tabRect.bottom - headerRect.top) - 2);
+                this.highlightBarHeight.set(2);
             }
         }
         // Trigger change detection to update the highlight bar position
@@ -2100,7 +1918,7 @@ class IxTabsComponent {
         let targetIndex = currentIndex;
         switch (event.keyCode) {
             case LEFT_ARROW:
-                if (this.orientation === 'horizontal') {
+                if (this.orientation() === 'horizontal') {
                     targetIndex = this.getPreviousEnabledTabIndex(currentIndex);
                 }
                 else {
@@ -2108,7 +1926,7 @@ class IxTabsComponent {
                 }
                 break;
             case RIGHT_ARROW:
-                if (this.orientation === 'horizontal') {
+                if (this.orientation() === 'horizontal') {
                     targetIndex = this.getNextEnabledTabIndex(currentIndex);
                 }
                 else {
@@ -2116,7 +1934,7 @@ class IxTabsComponent {
                 }
                 break;
             case UP_ARROW:
-                if (this.orientation === 'vertical') {
+                if (this.orientation() === 'vertical') {
                     targetIndex = this.getPreviousEnabledTabIndex(currentIndex);
                 }
                 else {
@@ -2124,7 +1942,7 @@ class IxTabsComponent {
                 }
                 break;
             case DOWN_ARROW:
-                if (this.orientation === 'vertical') {
+                if (this.orientation() === 'vertical') {
                     targetIndex = this.getNextEnabledTabIndex(currentIndex);
                 }
                 else {
@@ -2151,97 +1969,78 @@ class IxTabsComponent {
         }
     }
     getPreviousEnabledTabIndex(currentIndex) {
+        const tabs = this.tabs();
         for (let i = currentIndex - 1; i >= 0; i--) {
-            if (!this.tabs.get(i)?.disabled) {
+            if (!tabs[i]?.disabled()) {
                 return i;
             }
         }
         return this.getLastEnabledTabIndex();
     }
     getNextEnabledTabIndex(currentIndex) {
-        for (let i = currentIndex + 1; i < this.tabs.length; i++) {
-            if (!this.tabs.get(i)?.disabled) {
+        const tabs = this.tabs();
+        for (let i = currentIndex + 1; i < tabs.length; i++) {
+            if (!tabs[i]?.disabled()) {
                 return i;
             }
         }
         return this.getFirstEnabledTabIndex();
     }
     getFirstEnabledTabIndex() {
-        for (let i = 0; i < this.tabs.length; i++) {
-            if (!this.tabs.get(i)?.disabled) {
+        const tabs = this.tabs();
+        for (let i = 0; i < tabs.length; i++) {
+            if (!tabs[i]?.disabled()) {
                 return i;
             }
         }
         return 0;
     }
     getLastEnabledTabIndex() {
-        for (let i = this.tabs.length - 1; i >= 0; i--) {
-            if (!this.tabs.get(i)?.disabled) {
+        const tabs = this.tabs();
+        for (let i = tabs.length - 1; i >= 0; i--) {
+            if (!tabs[i]?.disabled()) {
                 return i;
             }
         }
-        return this.tabs.length - 1;
+        return tabs.length - 1;
     }
     focusTab(index) {
-        const tab = this.tabs.get(index);
+        const tab = this.tabs()[index];
         if (tab && tab.elementRef) {
             tab.elementRef.nativeElement.focus();
         }
     }
-    get classes() {
+    classes = computed(() => {
         const classes = ['ix-tabs'];
-        if (this.orientation === 'vertical') {
+        if (this.orientation() === 'vertical') {
             classes.push('ix-tabs--vertical');
         }
         else {
             classes.push('ix-tabs--horizontal');
         }
         // Add highlight position class
-        classes.push(`ix-tabs--highlight-${this.highlightPosition}`);
+        classes.push(`ix-tabs--highlight-${this.highlightPosition()}`);
         return classes.join(' ');
-    }
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTabsComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTabsComponent, isStandalone: true, selector: "ix-tabs", inputs: { selectedIndex: "selectedIndex", orientation: "orientation", highlightPosition: "highlightPosition" }, outputs: { selectedIndexChange: "selectedIndexChange", tabChange: "tabChange" }, queries: [{ propertyName: "tabs", predicate: IxTabComponent }, { propertyName: "panels", predicate: IxTabPanelComponent }], viewQueries: [{ propertyName: "tabHeader", first: true, predicate: ["tabHeader"], descendants: true }], ngImport: i0, template: "<div [ngClass]=\"classes\" role=\"tablist\" [attr.aria-orientation]=\"orientation\">\n  <div class=\"ix-tabs__header\" #tabHeader>\n    <ng-content select=\"ix-tab\"></ng-content>\n    @if (highlightBarVisible) {\n      <div class=\"ix-tabs__highlight-bar\"\n           [style.left.px]=\"highlightBarLeft\"\n           [style.width.px]=\"highlightBarWidth\"\n           [style.top.px]=\"highlightBarTop\"\n           [style.height.px]=\"highlightBarHeight\">\n      </div>\n    }\n  </div>\n  \n  <div class=\"ix-tabs__content\">\n    <ng-content select=\"ix-tab-panel\"></ng-content>\n  </div>\n</div>", styles: [".ix-tabs{display:flex;flex-direction:column;width:100%;height:100%;min-width:0;font-family:var(--font-family-body, \"Inter\", sans-serif)}.ix-tabs--disabled{opacity:.6;pointer-events:none}.ix-tabs--vertical{flex-direction:row}.ix-tabs--vertical .ix-tabs__header{flex-direction:column;border-bottom:none;border-right:1px solid var(--lines, #e0e0e0);min-width:240px;width:auto}.ix-tabs--vertical .ix-tabs__content{flex:1;min-width:0}.ix-tabs--vertical .ix-tabs__highlight-bar{bottom:auto;height:auto}.ix-tabs--vertical .ix-tab{justify-content:flex-start;text-align:left;width:100%}.ix-tabs--vertical .ix-tab:hover:not(.ix-tab--disabled){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tabs__header{display:flex;background-color:var(--bg1, #fff);position:relative;border-bottom:1px solid var(--lines, #e0e0e0)}.ix-tabs__highlight-bar{position:absolute;bottom:-1px;height:2px;background-color:var(--primary, #0095d5);transition:left .3s ease,width .3s ease,top .3s ease,height .3s ease;z-index:1}.ix-tabs__content{flex:1;position:relative;background-color:var(--bg1, #fff);min-height:0;width:100%;overflow:hidden}@media (max-width: 768px){.ix-tabs__header{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-tabs__header::-webkit-scrollbar{display:none}.ix-tabs--vertical .ix-tabs__header{overflow-y:auto;overflow-x:visible;max-height:300px}}@media (prefers-reduced-motion: reduce){.ix-tabs__highlight-bar{transition:none}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: A11yModule }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTabsComponent, isStandalone: true, selector: "ix-tabs", inputs: { selectedIndex: { classPropertyName: "selectedIndex", publicName: "selectedIndex", isSignal: true, isRequired: false, transformFunction: null }, orientation: { classPropertyName: "orientation", publicName: "orientation", isSignal: true, isRequired: false, transformFunction: null }, highlightPosition: { classPropertyName: "highlightPosition", publicName: "highlightPosition", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectedIndexChange: "selectedIndexChange", tabChange: "tabChange" }, queries: [{ propertyName: "tabs", predicate: IxTabComponent, isSignal: true }, { propertyName: "panels", predicate: IxTabPanelComponent, isSignal: true }], viewQueries: [{ propertyName: "tabHeader", first: true, predicate: ["tabHeader"], descendants: true, isSignal: true }], ngImport: i0, template: "<div [ngClass]=\"classes()\" role=\"tablist\" [attr.aria-orientation]=\"orientation()\">\n  <div class=\"ix-tabs__header\" #tabHeader>\n    <ng-content select=\"ix-tab\"></ng-content>\n    @if (highlightBarVisible()) {\n      <div class=\"ix-tabs__highlight-bar\"\n           [style.left.px]=\"highlightBarLeft()\"\n           [style.width.px]=\"highlightBarWidth()\"\n           [style.top.px]=\"highlightBarTop()\"\n           [style.height.px]=\"highlightBarHeight()\">\n      </div>\n    }\n  </div>\n\n  <div class=\"ix-tabs__content\">\n    <ng-content select=\"ix-tab-panel\"></ng-content>\n  </div>\n</div>", styles: [".ix-tabs{display:flex;flex-direction:column;width:100%;height:100%;min-width:0;font-family:var(--font-family-body, \"Inter\", sans-serif)}.ix-tabs--disabled{opacity:.6;pointer-events:none}.ix-tabs--vertical{flex-direction:row}.ix-tabs--vertical .ix-tabs__header{flex-direction:column;border-bottom:none;border-right:1px solid var(--lines, #e0e0e0);min-width:240px;width:auto}.ix-tabs--vertical .ix-tabs__content{flex:1;min-width:0}.ix-tabs--vertical .ix-tabs__highlight-bar{bottom:auto;height:auto}.ix-tabs--vertical .ix-tab{justify-content:flex-start;text-align:left;width:100%}.ix-tabs--vertical .ix-tab:hover:not(.ix-tab--disabled){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tabs__header{display:flex;background-color:var(--bg1, #fff);position:relative;border-bottom:1px solid var(--lines, #e0e0e0)}.ix-tabs__highlight-bar{position:absolute;bottom:-1px;height:2px;background-color:var(--primary, #0095d5);transition:left .3s ease,width .3s ease,top .3s ease,height .3s ease;z-index:1}.ix-tabs__content{flex:1;position:relative;background-color:var(--bg1, #fff);min-height:0;width:100%;overflow:hidden}@media (max-width: 768px){.ix-tabs__header{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-tabs__header::-webkit-scrollbar{display:none}.ix-tabs--vertical .ix-tabs__header{overflow-y:auto;overflow-x:visible;max-height:300px}}@media (prefers-reduced-motion: reduce){.ix-tabs__highlight-bar{transition:none}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: A11yModule }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTabsComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-tabs', standalone: true, imports: [CommonModule, A11yModule, IxTabComponent, IxTabPanelComponent], changeDetection: ChangeDetectionStrategy.OnPush, template: "<div [ngClass]=\"classes\" role=\"tablist\" [attr.aria-orientation]=\"orientation\">\n  <div class=\"ix-tabs__header\" #tabHeader>\n    <ng-content select=\"ix-tab\"></ng-content>\n    @if (highlightBarVisible) {\n      <div class=\"ix-tabs__highlight-bar\"\n           [style.left.px]=\"highlightBarLeft\"\n           [style.width.px]=\"highlightBarWidth\"\n           [style.top.px]=\"highlightBarTop\"\n           [style.height.px]=\"highlightBarHeight\">\n      </div>\n    }\n  </div>\n  \n  <div class=\"ix-tabs__content\">\n    <ng-content select=\"ix-tab-panel\"></ng-content>\n  </div>\n</div>", styles: [".ix-tabs{display:flex;flex-direction:column;width:100%;height:100%;min-width:0;font-family:var(--font-family-body, \"Inter\", sans-serif)}.ix-tabs--disabled{opacity:.6;pointer-events:none}.ix-tabs--vertical{flex-direction:row}.ix-tabs--vertical .ix-tabs__header{flex-direction:column;border-bottom:none;border-right:1px solid var(--lines, #e0e0e0);min-width:240px;width:auto}.ix-tabs--vertical .ix-tabs__content{flex:1;min-width:0}.ix-tabs--vertical .ix-tabs__highlight-bar{bottom:auto;height:auto}.ix-tabs--vertical .ix-tab{justify-content:flex-start;text-align:left;width:100%}.ix-tabs--vertical .ix-tab:hover:not(.ix-tab--disabled){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tabs__header{display:flex;background-color:var(--bg1, #fff);position:relative;border-bottom:1px solid var(--lines, #e0e0e0)}.ix-tabs__highlight-bar{position:absolute;bottom:-1px;height:2px;background-color:var(--primary, #0095d5);transition:left .3s ease,width .3s ease,top .3s ease,height .3s ease;z-index:1}.ix-tabs__content{flex:1;position:relative;background-color:var(--bg1, #fff);min-height:0;width:100%;overflow:hidden}@media (max-width: 768px){.ix-tabs__header{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-tabs__header::-webkit-scrollbar{display:none}.ix-tabs--vertical .ix-tabs__header{overflow-y:auto;overflow-x:visible;max-height:300px}}@media (prefers-reduced-motion: reduce){.ix-tabs__highlight-bar{transition:none}}\n"] }]
-        }], propDecorators: { tabs: [{
-                type: ContentChildren,
-                args: [IxTabComponent]
-            }], panels: [{
-                type: ContentChildren,
-                args: [IxTabPanelComponent]
-            }], tabHeader: [{
-                type: ViewChild,
-                args: ['tabHeader']
-            }], selectedIndex: [{
-                type: Input
-            }], orientation: [{
-                type: Input
-            }], highlightPosition: [{
-                type: Input
-            }], selectedIndexChange: [{
-                type: Output
-            }], tabChange: [{
-                type: Output
-            }] } });
+            args: [{ selector: 'ix-tabs', standalone: true, imports: [CommonModule, A11yModule, IxTabComponent, IxTabPanelComponent], changeDetection: ChangeDetectionStrategy.OnPush, template: "<div [ngClass]=\"classes()\" role=\"tablist\" [attr.aria-orientation]=\"orientation()\">\n  <div class=\"ix-tabs__header\" #tabHeader>\n    <ng-content select=\"ix-tab\"></ng-content>\n    @if (highlightBarVisible()) {\n      <div class=\"ix-tabs__highlight-bar\"\n           [style.left.px]=\"highlightBarLeft()\"\n           [style.width.px]=\"highlightBarWidth()\"\n           [style.top.px]=\"highlightBarTop()\"\n           [style.height.px]=\"highlightBarHeight()\">\n      </div>\n    }\n  </div>\n\n  <div class=\"ix-tabs__content\">\n    <ng-content select=\"ix-tab-panel\"></ng-content>\n  </div>\n</div>", styles: [".ix-tabs{display:flex;flex-direction:column;width:100%;height:100%;min-width:0;font-family:var(--font-family-body, \"Inter\", sans-serif)}.ix-tabs--disabled{opacity:.6;pointer-events:none}.ix-tabs--vertical{flex-direction:row}.ix-tabs--vertical .ix-tabs__header{flex-direction:column;border-bottom:none;border-right:1px solid var(--lines, #e0e0e0);min-width:240px;width:auto}.ix-tabs--vertical .ix-tabs__content{flex:1;min-width:0}.ix-tabs--vertical .ix-tabs__highlight-bar{bottom:auto;height:auto}.ix-tabs--vertical .ix-tab{justify-content:flex-start;text-align:left;width:100%}.ix-tabs--vertical .ix-tab:hover:not(.ix-tab--disabled){background-color:var(--alt-bg1, #f5f5f5);color:var(--fg1, #333)}.ix-tabs__header{display:flex;background-color:var(--bg1, #fff);position:relative;border-bottom:1px solid var(--lines, #e0e0e0)}.ix-tabs__highlight-bar{position:absolute;bottom:-1px;height:2px;background-color:var(--primary, #0095d5);transition:left .3s ease,width .3s ease,top .3s ease,height .3s ease;z-index:1}.ix-tabs__content{flex:1;position:relative;background-color:var(--bg1, #fff);min-height:0;width:100%;overflow:hidden}@media (max-width: 768px){.ix-tabs__header{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-tabs__header::-webkit-scrollbar{display:none}.ix-tabs--vertical .ix-tabs__header{overflow-y:auto;overflow-x:visible;max-height:300px}}@media (prefers-reduced-motion: reduce){.ix-tabs__highlight-bar{transition:none}}\n"] }]
+        }], ctorParameters: () => [] });
 
 class IxKeyboardShortcutComponent {
-    shortcut = '';
-    platform = 'auto';
-    separator = '';
-    displayShortcut = '';
-    ngOnInit() {
-        this.displayShortcut = this.formatShortcut(this.shortcut);
-    }
-    ngOnChanges() {
-        this.displayShortcut = this.formatShortcut(this.shortcut);
-    }
+    shortcut = input('', ...(ngDevMode ? [{ debugName: "shortcut" }] : []));
+    platform = input('auto', ...(ngDevMode ? [{ debugName: "platform" }] : []));
+    separator = input('', ...(ngDevMode ? [{ debugName: "separator" }] : []));
+    displayShortcut = computed(() => {
+        return this.formatShortcut(this.shortcut());
+    }, ...(ngDevMode ? [{ debugName: "displayShortcut" }] : []));
     formatShortcut(shortcut) {
         if (!shortcut)
             return '';
-        const detectedPlatform = this.platform === 'auto' ? this.detectPlatform() : this.platform;
+        const detectedPlatform = this.platform() === 'auto' ? this.detectPlatform() : this.platform();
         // Convert Mac-style shortcuts to platform-appropriate format
         if (detectedPlatform === 'windows' || detectedPlatform === 'linux') {
             return this.convertToWindows(shortcut);
@@ -2269,18 +2068,19 @@ class IxKeyboardShortcutComponent {
             .replace(/⇧/g, 'Shift')
             .replace(/⌃/g, 'Ctrl');
     }
-    get shortcutKeys() {
-        if (!this.displayShortcut)
+    shortcutKeys = computed(() => {
+        const displayShortcut = this.displayShortcut();
+        if (!displayShortcut)
             return [];
         // Split by common separators
         const separators = ['+', ' ', ''];
         let keys = [];
         // For Mac-style shortcuts without separators
-        if (this.displayShortcut.includes('⌘') || this.displayShortcut.includes('⌥') || this.displayShortcut.includes('⇧')) {
+        if (displayShortcut.includes('⌘') || displayShortcut.includes('⌥') || displayShortcut.includes('⇧')) {
             const macSymbols = ['⌘', '⌥', '⇧', '⌃'];
             let currentKey = '';
             // Iterate through each character to preserve order
-            for (const char of this.displayShortcut) {
+            for (const char of displayShortcut) {
                 if (macSymbols.includes(char)) {
                     // If we have accumulated characters, add them first
                     if (currentKey) {
@@ -2302,36 +2102,31 @@ class IxKeyboardShortcutComponent {
         }
         else {
             // For Windows/Linux style shortcuts with + separators
-            keys = this.displayShortcut.split('+');
+            keys = displayShortcut.split('+');
         }
         return keys.filter(key => key.trim() !== '');
-    }
+    }, ...(ngDevMode ? [{ debugName: "shortcutKeys" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxKeyboardShortcutComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxKeyboardShortcutComponent, isStandalone: true, selector: "ix-keyboard-shortcut", inputs: { shortcut: "shortcut", platform: "platform", separator: "separator" }, usesOnChanges: true, ngImport: i0, template: "<span class=\"ix-keyboard-shortcut\" [attr.aria-label]=\"'Keyboard shortcut: ' + displayShortcut\">\n  @for (key of shortcutKeys; track $index; let last = $last) {\n    <kbd class=\"ix-key\">{{ key }}</kbd>\n    @if (!last) {\n      <span class=\"ix-key-separator\">{{ separator || '+' }}</span>\n    }\n  }\n</span>", styles: [".ix-keyboard-shortcut{display:inline-flex;align-items:center;gap:2px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1}.ix-key{display:inline-block;padding:2px 6px;background:var(--bg2, #f5f5f5);border:1px solid var(--lines, #ddd);border-radius:3px;font-family:inherit;font-size:inherit;font-weight:500;color:var(--fg2, #666666);text-align:center;min-width:16px;line-height:1.2;box-shadow:0 1px 2px #0000001a}.ix-key-separator{color:var(--fg2, #666666);font-size:10px;font-weight:400;margin:0 1px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxKeyboardShortcutComponent, isStandalone: true, selector: "ix-keyboard-shortcut", inputs: { shortcut: { classPropertyName: "shortcut", publicName: "shortcut", isSignal: true, isRequired: false, transformFunction: null }, platform: { classPropertyName: "platform", publicName: "platform", isSignal: true, isRequired: false, transformFunction: null }, separator: { classPropertyName: "separator", publicName: "separator", isSignal: true, isRequired: false, transformFunction: null } }, ngImport: i0, template: "<span class=\"ix-keyboard-shortcut\" [attr.aria-label]=\"'Keyboard shortcut: ' + displayShortcut()\">\n  @for (key of shortcutKeys(); track $index; let last = $last) {\n    <kbd class=\"ix-key\">{{ key }}</kbd>\n    @if (!last) {\n      <span class=\"ix-key-separator\">{{ separator() || '+' }}</span>\n    }\n  }\n</span>", styles: [".ix-keyboard-shortcut{display:inline-flex;align-items:center;gap:2px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1}.ix-key{display:inline-block;padding:2px 6px;background:var(--bg2, #f5f5f5);border:1px solid var(--lines, #ddd);border-radius:3px;font-family:inherit;font-size:inherit;font-weight:500;color:var(--fg2, #666666);text-align:center;min-width:16px;line-height:1.2;box-shadow:0 1px 2px #0000001a}.ix-key-separator{color:var(--fg2, #666666);font-size:10px;font-weight:400;margin:0 1px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxKeyboardShortcutComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-keyboard-shortcut', standalone: true, imports: [CommonModule], template: "<span class=\"ix-keyboard-shortcut\" [attr.aria-label]=\"'Keyboard shortcut: ' + displayShortcut\">\n  @for (key of shortcutKeys; track $index; let last = $last) {\n    <kbd class=\"ix-key\">{{ key }}</kbd>\n    @if (!last) {\n      <span class=\"ix-key-separator\">{{ separator || '+' }}</span>\n    }\n  }\n</span>", styles: [".ix-keyboard-shortcut{display:inline-flex;align-items:center;gap:2px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1}.ix-key{display:inline-block;padding:2px 6px;background:var(--bg2, #f5f5f5);border:1px solid var(--lines, #ddd);border-radius:3px;font-family:inherit;font-size:inherit;font-weight:500;color:var(--fg2, #666666);text-align:center;min-width:16px;line-height:1.2;box-shadow:0 1px 2px #0000001a}.ix-key-separator{color:var(--fg2, #666666);font-size:10px;font-weight:400;margin:0 1px}\n"] }]
-        }], propDecorators: { shortcut: [{
-                type: Input
-            }], platform: [{
-                type: Input
-            }], separator: [{
-                type: Input
-            }] } });
+            args: [{ selector: 'ix-keyboard-shortcut', standalone: true, imports: [CommonModule], template: "<span class=\"ix-keyboard-shortcut\" [attr.aria-label]=\"'Keyboard shortcut: ' + displayShortcut()\">\n  @for (key of shortcutKeys(); track $index; let last = $last) {\n    <kbd class=\"ix-key\">{{ key }}</kbd>\n    @if (!last) {\n      <span class=\"ix-key-separator\">{{ separator() || '+' }}</span>\n    }\n  }\n</span>", styles: [".ix-keyboard-shortcut{display:inline-flex;align-items:center;gap:2px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1}.ix-key{display:inline-block;padding:2px 6px;background:var(--bg2, #f5f5f5);border:1px solid var(--lines, #ddd);border-radius:3px;font-family:inherit;font-size:inherit;font-weight:500;color:var(--fg2, #666666);text-align:center;min-width:16px;line-height:1.2;box-shadow:0 1px 2px #0000001a}.ix-key-separator{color:var(--fg2, #666666);font-size:10px;font-weight:400;margin:0 1px}\n"] }]
+        }] });
 
 class IxFormFieldComponent {
-    label = '';
-    hint = '';
-    required = false;
-    testId = '';
-    control;
-    hasError = false;
-    errorMessage = '';
+    label = input('', ...(ngDevMode ? [{ debugName: "label" }] : []));
+    hint = input('', ...(ngDevMode ? [{ debugName: "hint" }] : []));
+    required = input(false, ...(ngDevMode ? [{ debugName: "required" }] : []));
+    testId = input('', ...(ngDevMode ? [{ debugName: "testId" }] : []));
+    control = contentChild(NgControl, ...(ngDevMode ? [{ debugName: "control" }] : []));
+    hasError = signal(false, ...(ngDevMode ? [{ debugName: "hasError" }] : []));
+    errorMessage = signal('', ...(ngDevMode ? [{ debugName: "errorMessage" }] : []));
     ngAfterContentInit() {
-        if (this.control) {
+        const control = this.control();
+        if (control) {
             // Listen for control status changes
-            this.control.statusChanges?.subscribe(() => {
+            control.statusChanges?.subscribe(() => {
                 this.updateErrorState();
             });
             // Initial error state check
@@ -2339,15 +2134,17 @@ class IxFormFieldComponent {
         }
     }
     updateErrorState() {
-        if (this.control) {
-            this.hasError = !!(this.control.invalid && (this.control.dirty || this.control.touched));
-            this.errorMessage = this.getErrorMessage();
+        const control = this.control();
+        if (control) {
+            this.hasError.set(!!(control.invalid && (control.dirty || control.touched)));
+            this.errorMessage.set(this.getErrorMessage());
         }
     }
     getErrorMessage() {
-        if (!this.control?.errors)
+        const control = this.control();
+        if (!control?.errors)
             return '';
-        const errors = this.control.errors;
+        const errors = control.errors;
         // Return the first error message found
         if (errors['required'])
             return 'This field is required';
@@ -2366,51 +2163,63 @@ class IxFormFieldComponent {
         // Return custom error message if available
         return Object.keys(errors)[0] || 'Invalid input';
     }
-    get showError() {
-        return this.hasError && !!this.errorMessage;
-    }
-    get showHint() {
-        return !!this.hint && !this.showError;
-    }
+    showError = computed(() => {
+        return this.hasError() && !!this.errorMessage();
+    }, ...(ngDevMode ? [{ debugName: "showError" }] : []));
+    showHint = computed(() => {
+        return !!this.hint() && !this.showError();
+    }, ...(ngDevMode ? [{ debugName: "showHint" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxFormFieldComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxFormFieldComponent, isStandalone: true, selector: "ix-form-field", inputs: { label: "label", hint: "hint", required: "required", testId: "testId" }, queries: [{ propertyName: "control", first: true, predicate: NgControl, descendants: true }], ngImport: i0, template: "<div class=\"ix-form-field\" [attr.data-testid]=\"testId\">\n  <!-- Label -->\n  @if (label) {\n    <label class=\"ix-form-field-label\" [class.required]=\"required\">\n      {{ label }}\n      @if (required) {\n        <span class=\"required-asterisk\" aria-label=\"required\">*</span>\n      }\n    </label>\n  }\n\n  <!-- Form Control Content -->\n  <div class=\"ix-form-field-wrapper\">\n    <ng-content></ng-content>\n  </div>\n\n  <!-- Hint or Error Message -->\n  <div class=\"ix-form-field-subscript\">\n    @if (showError) {\n      <div\n        class=\"ix-form-field-error\"\n        role=\"alert\"\n        aria-live=\"polite\">\n        {{ errorMessage }}\n      </div>\n    }\n    @if (showHint) {\n      <div class=\"ix-form-field-hint\">\n        {{ hint }}\n      </div>\n    }\n  </div>\n</div>", styles: [".ix-form-field{display:block;width:100%;margin-bottom:1rem;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-form-field-label{display:block;margin-bottom:.5rem;font-size:.875rem;font-weight:500;color:var(--fg1, #333);line-height:1.4}.ix-form-field-label.required .required-asterisk{color:var(--error, #dc3545);margin-left:.25rem}.ix-form-field-wrapper{position:relative;width:100%;overflow:visible}.ix-form-field-wrapper :ng-deep .ix-select-container,.ix-form-field-wrapper :ng-deep .ix-input-container{margin-bottom:0}.ix-form-field-wrapper :ng-deep .ix-select-label,.ix-form-field-wrapper :ng-deep .ix-input-label{display:none}.ix-form-field-wrapper :ng-deep .ix-select-error,.ix-form-field-wrapper :ng-deep .ix-input-error{display:none}.ix-form-field-wrapper :ng-deep .ix-select-dropdown{z-index:1000}.ix-form-field-subscript{min-height:1.25rem;margin-top:.25rem;font-size:.75rem;line-height:1.4}.ix-form-field-error{color:var(--error, #dc3545);margin:0}.ix-form-field-hint{color:var(--fg2, #6c757d);margin:0}.ix-form-field-wrapper:has(:focus-visible) .ix-form-field-label{color:var(--primary, #007bff)}.ix-form-field-wrapper:has(.error) .ix-form-field-label{color:var(--error, #dc3545)}@media (prefers-reduced-motion: reduce){.ix-form-field-label{transition:none}}@media (prefers-contrast: high){.ix-form-field-label,.ix-form-field-error{font-weight:600}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxFormFieldComponent, isStandalone: true, selector: "ix-form-field", inputs: { label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, hint: { classPropertyName: "hint", publicName: "hint", isSignal: true, isRequired: false, transformFunction: null }, required: { classPropertyName: "required", publicName: "required", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null } }, queries: [{ propertyName: "control", first: true, predicate: NgControl, descendants: true, isSignal: true }], ngImport: i0, template: "<div class=\"ix-form-field\" [attr.data-testid]=\"testId()\">\n  <!-- Label -->\n  @if (label()) {\n    <label class=\"ix-form-field-label\" [class.required]=\"required()\">\n      {{ label() }}\n      @if (required()) {\n        <span class=\"required-asterisk\" aria-label=\"required\">*</span>\n      }\n    </label>\n  }\n\n  <!-- Form Control Content -->\n  <div class=\"ix-form-field-wrapper\">\n    <ng-content></ng-content>\n  </div>\n\n  <!-- Hint or Error Message -->\n  <div class=\"ix-form-field-subscript\">\n    @if (showError()) {\n      <div\n        class=\"ix-form-field-error\"\n        role=\"alert\"\n        aria-live=\"polite\">\n        {{ errorMessage() }}\n      </div>\n    }\n    @if (showHint()) {\n      <div class=\"ix-form-field-hint\">\n        {{ hint() }}\n      </div>\n    }\n  </div>\n</div>", styles: [".ix-form-field{display:block;width:100%;margin-bottom:1rem;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-form-field-label{display:block;margin-bottom:.5rem;font-size:.875rem;font-weight:500;color:var(--fg1, #333);line-height:1.4}.ix-form-field-label.required .required-asterisk{color:var(--error, #dc3545);margin-left:.25rem}.ix-form-field-wrapper{position:relative;width:100%;overflow:visible}.ix-form-field-wrapper :ng-deep .ix-select-container,.ix-form-field-wrapper :ng-deep .ix-input-container{margin-bottom:0}.ix-form-field-wrapper :ng-deep .ix-select-label,.ix-form-field-wrapper :ng-deep .ix-input-label{display:none}.ix-form-field-wrapper :ng-deep .ix-select-error,.ix-form-field-wrapper :ng-deep .ix-input-error{display:none}.ix-form-field-wrapper :ng-deep .ix-select-dropdown{z-index:1000}.ix-form-field-subscript{min-height:1.25rem;margin-top:.25rem;font-size:.75rem;line-height:1.4}.ix-form-field-error{color:var(--error, #dc3545);margin:0}.ix-form-field-hint{color:var(--fg2, #6c757d);margin:0}.ix-form-field-wrapper:has(:focus-visible) .ix-form-field-label{color:var(--primary, #007bff)}.ix-form-field-wrapper:has(.error) .ix-form-field-label{color:var(--error, #dc3545)}@media (prefers-reduced-motion: reduce){.ix-form-field-label{transition:none}}@media (prefers-contrast: high){.ix-form-field-label,.ix-form-field-error{font-weight:600}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxFormFieldComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-form-field', standalone: true, imports: [CommonModule], template: "<div class=\"ix-form-field\" [attr.data-testid]=\"testId\">\n  <!-- Label -->\n  @if (label) {\n    <label class=\"ix-form-field-label\" [class.required]=\"required\">\n      {{ label }}\n      @if (required) {\n        <span class=\"required-asterisk\" aria-label=\"required\">*</span>\n      }\n    </label>\n  }\n\n  <!-- Form Control Content -->\n  <div class=\"ix-form-field-wrapper\">\n    <ng-content></ng-content>\n  </div>\n\n  <!-- Hint or Error Message -->\n  <div class=\"ix-form-field-subscript\">\n    @if (showError) {\n      <div\n        class=\"ix-form-field-error\"\n        role=\"alert\"\n        aria-live=\"polite\">\n        {{ errorMessage }}\n      </div>\n    }\n    @if (showHint) {\n      <div class=\"ix-form-field-hint\">\n        {{ hint }}\n      </div>\n    }\n  </div>\n</div>", styles: [".ix-form-field{display:block;width:100%;margin-bottom:1rem;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-form-field-label{display:block;margin-bottom:.5rem;font-size:.875rem;font-weight:500;color:var(--fg1, #333);line-height:1.4}.ix-form-field-label.required .required-asterisk{color:var(--error, #dc3545);margin-left:.25rem}.ix-form-field-wrapper{position:relative;width:100%;overflow:visible}.ix-form-field-wrapper :ng-deep .ix-select-container,.ix-form-field-wrapper :ng-deep .ix-input-container{margin-bottom:0}.ix-form-field-wrapper :ng-deep .ix-select-label,.ix-form-field-wrapper :ng-deep .ix-input-label{display:none}.ix-form-field-wrapper :ng-deep .ix-select-error,.ix-form-field-wrapper :ng-deep .ix-input-error{display:none}.ix-form-field-wrapper :ng-deep .ix-select-dropdown{z-index:1000}.ix-form-field-subscript{min-height:1.25rem;margin-top:.25rem;font-size:.75rem;line-height:1.4}.ix-form-field-error{color:var(--error, #dc3545);margin:0}.ix-form-field-hint{color:var(--fg2, #6c757d);margin:0}.ix-form-field-wrapper:has(:focus-visible) .ix-form-field-label{color:var(--primary, #007bff)}.ix-form-field-wrapper:has(.error) .ix-form-field-label{color:var(--error, #dc3545)}@media (prefers-reduced-motion: reduce){.ix-form-field-label{transition:none}}@media (prefers-contrast: high){.ix-form-field-label,.ix-form-field-error{font-weight:600}}\n"] }]
-        }], propDecorators: { label: [{
-                type: Input
-            }], hint: [{
-                type: Input
-            }], required: [{
-                type: Input
-            }], testId: [{
-                type: Input
-            }], control: [{
-                type: ContentChild,
-                args: [NgControl, { static: false }]
-            }] } });
+            args: [{ selector: 'ix-form-field', standalone: true, imports: [CommonModule], template: "<div class=\"ix-form-field\" [attr.data-testid]=\"testId()\">\n  <!-- Label -->\n  @if (label()) {\n    <label class=\"ix-form-field-label\" [class.required]=\"required()\">\n      {{ label() }}\n      @if (required()) {\n        <span class=\"required-asterisk\" aria-label=\"required\">*</span>\n      }\n    </label>\n  }\n\n  <!-- Form Control Content -->\n  <div class=\"ix-form-field-wrapper\">\n    <ng-content></ng-content>\n  </div>\n\n  <!-- Hint or Error Message -->\n  <div class=\"ix-form-field-subscript\">\n    @if (showError()) {\n      <div\n        class=\"ix-form-field-error\"\n        role=\"alert\"\n        aria-live=\"polite\">\n        {{ errorMessage() }}\n      </div>\n    }\n    @if (showHint()) {\n      <div class=\"ix-form-field-hint\">\n        {{ hint() }}\n      </div>\n    }\n  </div>\n</div>", styles: [".ix-form-field{display:block;width:100%;margin-bottom:1rem;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-form-field-label{display:block;margin-bottom:.5rem;font-size:.875rem;font-weight:500;color:var(--fg1, #333);line-height:1.4}.ix-form-field-label.required .required-asterisk{color:var(--error, #dc3545);margin-left:.25rem}.ix-form-field-wrapper{position:relative;width:100%;overflow:visible}.ix-form-field-wrapper :ng-deep .ix-select-container,.ix-form-field-wrapper :ng-deep .ix-input-container{margin-bottom:0}.ix-form-field-wrapper :ng-deep .ix-select-label,.ix-form-field-wrapper :ng-deep .ix-input-label{display:none}.ix-form-field-wrapper :ng-deep .ix-select-error,.ix-form-field-wrapper :ng-deep .ix-input-error{display:none}.ix-form-field-wrapper :ng-deep .ix-select-dropdown{z-index:1000}.ix-form-field-subscript{min-height:1.25rem;margin-top:.25rem;font-size:.75rem;line-height:1.4}.ix-form-field-error{color:var(--error, #dc3545);margin:0}.ix-form-field-hint{color:var(--fg2, #6c757d);margin:0}.ix-form-field-wrapper:has(:focus-visible) .ix-form-field-label{color:var(--primary, #007bff)}.ix-form-field-wrapper:has(.error) .ix-form-field-label{color:var(--error, #dc3545)}@media (prefers-reduced-motion: reduce){.ix-form-field-label{transition:none}}@media (prefers-contrast: high){.ix-form-field-label,.ix-form-field-error{font-weight:600}}\n"] }]
+        }] });
 
 class IxSelectComponent {
     elementRef;
     cdr;
-    options = [];
-    optionGroups = [];
-    placeholder = 'Select an option';
-    disabled = false;
-    testId = '';
-    selectionChange = new EventEmitter();
-    isOpen = false;
-    selectedValue = null;
+    options = input([], ...(ngDevMode ? [{ debugName: "options" }] : []));
+    optionGroups = input([], ...(ngDevMode ? [{ debugName: "optionGroups" }] : []));
+    placeholder = input('Select an option', ...(ngDevMode ? [{ debugName: "placeholder" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    testId = input('', ...(ngDevMode ? [{ debugName: "testId" }] : []));
+    selectionChange = output();
+    // Internal state signals
+    isOpen = signal(false, ...(ngDevMode ? [{ debugName: "isOpen" }] : []));
+    selectedValue = signal(null, ...(ngDevMode ? [{ debugName: "selectedValue" }] : []));
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    // Computed disabled state (combines input and form state)
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
     onChange = (value) => { };
     onTouched = () => { };
     constructor(elementRef, cdr) {
         this.elementRef = elementRef;
         this.cdr = cdr;
+        // Click-outside detection using effect
+        effect(() => {
+            if (this.isOpen()) {
+                const clickListener = (event) => {
+                    if (!this.elementRef.nativeElement.contains(event.target)) {
+                        this.closeDropdown();
+                    }
+                };
+                // Add listener after a small delay to avoid immediate closure
+                setTimeout(() => {
+                    document.addEventListener('click', clickListener);
+                }, 0);
+                // Cleanup function
+                return () => {
+                    document.removeEventListener('click', clickListener);
+                };
+            }
+            return undefined;
+        });
     }
     // ControlValueAccessor implementation
     writeValue(value) {
-        this.selectedValue = value;
+        this.selectedValue.set(value);
     }
     registerOnChange(fn) {
         this.onChange = fn;
@@ -2419,19 +2228,19 @@ class IxSelectComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     // Component methods
     toggleDropdown() {
-        if (this.disabled)
+        if (this.isDisabled())
             return;
-        this.isOpen = !this.isOpen;
-        if (!this.isOpen) {
+        this.isOpen.set(!this.isOpen());
+        if (!this.isOpen()) {
             this.onTouched();
         }
     }
     closeDropdown() {
-        this.isOpen = false;
+        this.isOpen.set(false);
         this.onTouched();
     }
     onOptionClick(option) {
@@ -2440,38 +2249,40 @@ class IxSelectComponent {
     selectOption(option) {
         if (option.disabled)
             return;
-        this.selectedValue = option.value;
+        this.selectedValue.set(option.value);
         this.onChange(option.value);
         this.selectionChange.emit(option.value);
         this.closeDropdown();
         this.cdr.markForCheck(); // Trigger change detection
     }
-    isSelected(option) {
-        return this.compareValues(this.selectedValue, option.value);
-    }
-    getDisplayText() {
-        if (this.selectedValue === null || this.selectedValue === undefined) {
-            return this.placeholder;
+    // Computed properties
+    isSelected = computed(() => (option) => {
+        return this.compareValues(this.selectedValue(), option.value);
+    }, ...(ngDevMode ? [{ debugName: "isSelected" }] : []));
+    getDisplayText = computed(() => {
+        const value = this.selectedValue();
+        if (value === null || value === undefined) {
+            return this.placeholder();
         }
-        const option = this.findOptionByValue(this.selectedValue);
-        return option ? option.label : this.selectedValue;
-    }
+        const option = this.findOptionByValue(value);
+        return option ? option.label : value;
+    }, ...(ngDevMode ? [{ debugName: "getDisplayText" }] : []));
     findOptionByValue(value) {
         // Search in regular options first
-        const regularOption = this.options.find(opt => this.compareValues(opt.value, value));
+        const regularOption = this.options().find(opt => this.compareValues(opt.value, value));
         if (regularOption)
             return regularOption;
         // Search in option groups
-        for (const group of this.optionGroups) {
+        for (const group of this.optionGroups()) {
             const groupOption = group.options.find(opt => this.compareValues(opt.value, value));
             if (groupOption)
                 return groupOption;
         }
         return undefined;
     }
-    hasAnyOptions() {
-        return this.options.length > 0 || this.optionGroups.length > 0;
-    }
+    hasAnyOptions = computed(() => {
+        return this.options().length > 0 || this.optionGroups().length > 0;
+    }, ...(ngDevMode ? [{ debugName: "hasAnyOptions" }] : []));
     compareValues(a, b) {
         if (a === b)
             return true;
@@ -2480,30 +2291,24 @@ class IxSelectComponent {
         }
         return false;
     }
-    // Click outside to close
-    onDocumentClick(event) {
-        if (!this.elementRef.nativeElement.contains(event.target)) {
-            this.closeDropdown();
-        }
-    }
     // Keyboard navigation
     onKeydown(event) {
         switch (event.key) {
             case 'Enter':
             case ' ':
-                if (!this.isOpen) {
+                if (!this.isOpen()) {
                     this.toggleDropdown();
                     event.preventDefault();
                 }
                 break;
             case 'Escape':
-                if (this.isOpen) {
+                if (this.isOpen()) {
                     this.closeDropdown();
                     event.preventDefault();
                 }
                 break;
             case 'ArrowDown':
-                if (!this.isOpen) {
+                if (!this.isOpen()) {
                     this.toggleDropdown();
                 }
                 event.preventDefault();
@@ -2511,13 +2316,13 @@ class IxSelectComponent {
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSelectComponent, deps: [{ token: i0.ElementRef }, { token: i0.ChangeDetectorRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxSelectComponent, isStandalone: true, selector: "ix-select", inputs: { options: "options", optionGroups: "optionGroups", placeholder: "placeholder", disabled: "disabled", testId: "testId" }, outputs: { selectionChange: "selectionChange" }, host: { listeners: { "document:click": "onDocumentClick($event)" } }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxSelectComponent, isStandalone: true, selector: "ix-select", inputs: { options: { classPropertyName: "options", publicName: "options", isSignal: true, isRequired: false, transformFunction: null }, optionGroups: { classPropertyName: "optionGroups", publicName: "optionGroups", isSignal: true, isRequired: false, transformFunction: null }, placeholder: { classPropertyName: "placeholder", publicName: "placeholder", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectionChange: "selectionChange" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxSelectComponent),
                 multi: true
             }
-        ], ngImport: i0, template: "<div class=\"ix-select-container\" [attr.data-testid]=\"testId\">\n  <!-- Select Trigger -->\n  <div \n    class=\"ix-select-trigger\"\n    [class.disabled]=\"disabled\"\n    [class.open]=\"isOpen\"\n    [attr.aria-expanded]=\"isOpen\"\n    [attr.aria-haspopup]=\"true\"\n    [attr.aria-label]=\"placeholder\"\n    role=\"combobox\"\n    tabindex=\"0\"\n    (click)=\"toggleDropdown()\"\n    (keydown)=\"onKeydown($event)\">\n    \n    <!-- Display Text -->\n    <span \n      class=\"ix-select-text\"\n      [class.placeholder]=\"selectedValue === null || selectedValue === undefined\">\n      {{ getDisplayText() }}\n    </span>\n\n    <!-- Dropdown Arrow -->\n    <div class=\"ix-select-arrow\" [class.open]=\"isOpen\">\n      <svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\">\n        <polyline points=\"6,9 12,15 18,9\"></polyline>\n      </svg>\n    </div>\n  </div>\n\n  <!-- Dropdown Menu -->\n  @if (isOpen) {\n    <div\n      class=\"ix-select-dropdown\"\n      role=\"listbox\">\n\n      <!-- Options List -->\n      <div class=\"ix-select-options\">\n        <!-- Regular Options -->\n        @for (option of options; track $index) {\n          <div\n            class=\"ix-select-option\"\n            [class.selected]=\"isSelected(option)\"\n            [class.disabled]=\"option.disabled\"\n            [attr.aria-selected]=\"isSelected(option)\"\n            [attr.aria-disabled]=\"option.disabled\"\n            role=\"option\"\n            (mousedown)=\"$event.preventDefault()\"\n            (click)=\"onOptionClick(option)\">\n\n            {{ option.label }}\n          </div>\n        }\n\n        <!-- Option Groups -->\n        @for (group of optionGroups; track $index; let isFirst = $first) {\n          <!-- Group Separator (not shown before first group if we have regular options) -->\n          @if (!isFirst || options.length > 0) {\n            <div\n              class=\"ix-select-separator\"\n              role=\"separator\">\n            </div>\n          }\n\n          <!-- Group Label -->\n          <div\n            class=\"ix-select-group-label\"\n            [class.disabled]=\"group.disabled\">\n            {{ group.label }}\n          </div>\n\n          <!-- Group Options -->\n          @for (option of group.options; track $index) {\n            <div\n              class=\"ix-select-option\"\n              [class.selected]=\"isSelected(option)\"\n              [class.disabled]=\"option.disabled || group.disabled\"\n              [attr.aria-selected]=\"isSelected(option)\"\n              [attr.aria-disabled]=\"option.disabled || group.disabled\"\n              role=\"option\"\n              (mousedown)=\"$event.preventDefault()\"\n              (click)=\"onOptionClick(option)\">\n\n              {{ option.label }}\n            </div>\n          }\n        }\n\n        <!-- No Options Message -->\n        @if (!hasAnyOptions()) {\n          <div class=\"ix-select-no-options\">\n            No options available\n          </div>\n        }\n      </div>\n    </div>\n  }\n</div>", styles: [".ix-select-container{position:relative;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-select-label{display:block;margin-bottom:.5rem;font-size:.875rem;font-weight:500;color:var(--fg1, #333);line-height:1.4}.ix-select-label.required .required-asterisk{color:var(--error, #dc3545);margin-left:.25rem}.ix-select-trigger{position:relative;display:flex;align-items:center;min-height:2.5rem;padding:.5rem 2.5rem .5rem .75rem;background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;cursor:pointer;transition:all .15s ease-in-out;outline:none;box-sizing:border-box}.ix-select-trigger:hover:not(.disabled){border-color:var(--primary, #007bff)}.ix-select-trigger:focus-visible{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-select-trigger.open{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-select-trigger.error{border-color:var(--error, #dc3545)}.ix-select-trigger.error:focus-visible,.ix-select-trigger.error.open{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-select-trigger.disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-select-text{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--fg1, #212529)}.ix-select-text.placeholder{color:var(--alt-fg1, #999)}.ix-select-arrow{position:absolute;right:.75rem;top:50%;transform:translateY(-50%);color:var(--fg2, #6c757d);transition:transform .15s ease-in-out;pointer-events:none}.ix-select-arrow.open{transform:translateY(-50%) rotate(180deg)}.ix-select-arrow svg{display:block}.ix-select-dropdown{position:absolute;top:100%;left:0;right:0;z-index:1000;margin-top:.25rem;background-color:var(--bg2, #f5f5f5);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;box-shadow:0 4px 6px -1px #0000001a,0 2px 4px -1px #0000000f;max-height:200px;overflow:hidden}.ix-select-options{overflow-y:auto;padding:.25rem 0;max-height:200px}.ix-select-option{display:flex;align-items:center;padding:.5rem .75rem;cursor:pointer;color:var(--fg1, #212529);transition:background-color .15s ease-in-out;pointer-events:auto;position:relative;z-index:1001}.ix-select-option:hover:not(.disabled){background-color:var(--alt-bg2, #f8f9fa)!important}.ix-select-option.selected{background-color:var(--alt-bg1, #f8f9fa)!important;color:var(--fg1, #212529)}.ix-select-option.selected:hover{background-color:var(--alt-bg2, #f8f9fa)!important}.ix-select-option.disabled{color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-select-separator{height:1px;background:var(--lines, #e0e0e0);margin:.25rem 0}.ix-select-group-label{padding:.375rem .75rem;font-size:.75rem;font-weight:600;color:var(--alt-fg1, #9ca3af);text-transform:uppercase;letter-spacing:.05em;cursor:default;-webkit-user-select:none;user-select:none}.ix-select-group-label.disabled{opacity:.6}.ix-select-no-options{padding:1rem .75rem;text-align:center;color:var(--fg2, #6c757d);font-style:italic}.ix-select-error{margin-top:.25rem;font-size:.75rem;color:var(--error, #dc3545)}@media (prefers-reduced-motion: reduce){.ix-select-trigger,.ix-select-option,.ix-select-arrow{transition:none}}@media (prefers-contrast: high){.ix-select-trigger{border-width:2px}.ix-select-option.selected{outline:2px solid var(--fg1, #000);outline-offset:-2px}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
+        ], ngImport: i0, template: "<div class=\"ix-select-container\" [attr.data-testid]=\"testId()\">\n  <!-- Select Trigger -->\n  <div\n    class=\"ix-select-trigger\"\n    [class.disabled]=\"isDisabled()\"\n    [class.open]=\"isOpen()\"\n    [attr.aria-expanded]=\"isOpen()\"\n    [attr.aria-haspopup]=\"true\"\n    [attr.aria-label]=\"placeholder()\"\n    role=\"combobox\"\n    tabindex=\"0\"\n    (click)=\"toggleDropdown()\"\n    (keydown)=\"onKeydown($event)\">\n\n    <!-- Display Text -->\n    <span\n      class=\"ix-select-text\"\n      [class.placeholder]=\"selectedValue() === null || selectedValue() === undefined\">\n      {{ getDisplayText() }}\n    </span>\n\n    <!-- Dropdown Arrow -->\n    <div class=\"ix-select-arrow\" [class.open]=\"isOpen()\">\n      <svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\">\n        <polyline points=\"6,9 12,15 18,9\"></polyline>\n      </svg>\n    </div>\n  </div>\n\n  <!-- Dropdown Menu -->\n  @if (isOpen()) {\n    <div\n      class=\"ix-select-dropdown\"\n      role=\"listbox\">\n\n      <!-- Options List -->\n      <div class=\"ix-select-options\">\n        <!-- Regular Options -->\n        @for (option of options(); track $index) {\n          <div\n            class=\"ix-select-option\"\n            [class.selected]=\"isSelected()(option)\"\n            [class.disabled]=\"option.disabled\"\n            [attr.aria-selected]=\"isSelected()(option)\"\n            [attr.aria-disabled]=\"option.disabled\"\n            role=\"option\"\n            (mousedown)=\"$event.preventDefault()\"\n            (click)=\"onOptionClick(option)\">\n\n            {{ option.label }}\n          </div>\n        }\n\n        <!-- Option Groups -->\n        @for (group of optionGroups(); track $index; let isFirst = $first) {\n          <!-- Group Separator (not shown before first group if we have regular options) -->\n          @if (!isFirst || options().length > 0) {\n            <div\n              class=\"ix-select-separator\"\n              role=\"separator\">\n            </div>\n          }\n\n          <!-- Group Label -->\n          <div\n            class=\"ix-select-group-label\"\n            [class.disabled]=\"group.disabled\">\n            {{ group.label }}\n          </div>\n\n          <!-- Group Options -->\n          @for (option of group.options; track $index) {\n            <div\n              class=\"ix-select-option\"\n              [class.selected]=\"isSelected()(option)\"\n              [class.disabled]=\"option.disabled || group.disabled\"\n              [attr.aria-selected]=\"isSelected()(option)\"\n              [attr.aria-disabled]=\"option.disabled || group.disabled\"\n              role=\"option\"\n              (mousedown)=\"$event.preventDefault()\"\n              (click)=\"onOptionClick(option)\">\n\n              {{ option.label }}\n            </div>\n          }\n        }\n\n        <!-- No Options Message -->\n        @if (!hasAnyOptions()) {\n          <div class=\"ix-select-no-options\">\n            No options available\n          </div>\n        }\n      </div>\n    </div>\n  }\n</div>", styles: [".ix-select-container{position:relative;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-select-label{display:block;margin-bottom:.5rem;font-size:.875rem;font-weight:500;color:var(--fg1, #333);line-height:1.4}.ix-select-label.required .required-asterisk{color:var(--error, #dc3545);margin-left:.25rem}.ix-select-trigger{position:relative;display:flex;align-items:center;min-height:2.5rem;padding:.5rem 2.5rem .5rem .75rem;background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;cursor:pointer;transition:all .15s ease-in-out;outline:none;box-sizing:border-box}.ix-select-trigger:hover:not(.disabled){border-color:var(--primary, #007bff)}.ix-select-trigger:focus-visible{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-select-trigger.open{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-select-trigger.error{border-color:var(--error, #dc3545)}.ix-select-trigger.error:focus-visible,.ix-select-trigger.error.open{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-select-trigger.disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-select-text{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--fg1, #212529)}.ix-select-text.placeholder{color:var(--alt-fg1, #999)}.ix-select-arrow{position:absolute;right:.75rem;top:50%;transform:translateY(-50%);color:var(--fg2, #6c757d);transition:transform .15s ease-in-out;pointer-events:none}.ix-select-arrow.open{transform:translateY(-50%) rotate(180deg)}.ix-select-arrow svg{display:block}.ix-select-dropdown{position:absolute;top:100%;left:0;right:0;z-index:1000;margin-top:.25rem;background-color:var(--bg2, #f5f5f5);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;box-shadow:0 4px 6px -1px #0000001a,0 2px 4px -1px #0000000f;max-height:200px;overflow:hidden}.ix-select-options{overflow-y:auto;padding:.25rem 0;max-height:200px}.ix-select-option{display:flex;align-items:center;padding:.5rem .75rem;cursor:pointer;color:var(--fg1, #212529);transition:background-color .15s ease-in-out;pointer-events:auto;position:relative;z-index:1001}.ix-select-option:hover:not(.disabled){background-color:var(--alt-bg2, #f8f9fa)!important}.ix-select-option.selected{background-color:var(--alt-bg1, #f8f9fa)!important;color:var(--fg1, #212529)}.ix-select-option.selected:hover{background-color:var(--alt-bg2, #f8f9fa)!important}.ix-select-option.disabled{color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-select-separator{height:1px;background:var(--lines, #e0e0e0);margin:.25rem 0}.ix-select-group-label{padding:.375rem .75rem;font-size:.75rem;font-weight:600;color:var(--alt-fg1, #9ca3af);text-transform:uppercase;letter-spacing:.05em;cursor:default;-webkit-user-select:none;user-select:none}.ix-select-group-label.disabled{opacity:.6}.ix-select-no-options{padding:1rem .75rem;text-align:center;color:var(--fg2, #6c757d);font-style:italic}.ix-select-error{margin-top:.25rem;font-size:.75rem;color:var(--error, #dc3545)}@media (prefers-reduced-motion: reduce){.ix-select-trigger,.ix-select-option,.ix-select-arrow{transition:none}}@media (prefers-contrast: high){.ix-select-trigger{border-width:2px}.ix-select-option.selected{outline:2px solid var(--fg1, #000);outline-offset:-2px}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSelectComponent, decorators: [{
             type: Component,
@@ -2527,23 +2332,8 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                             useExisting: forwardRef(() => IxSelectComponent),
                             multi: true
                         }
-                    ], template: "<div class=\"ix-select-container\" [attr.data-testid]=\"testId\">\n  <!-- Select Trigger -->\n  <div \n    class=\"ix-select-trigger\"\n    [class.disabled]=\"disabled\"\n    [class.open]=\"isOpen\"\n    [attr.aria-expanded]=\"isOpen\"\n    [attr.aria-haspopup]=\"true\"\n    [attr.aria-label]=\"placeholder\"\n    role=\"combobox\"\n    tabindex=\"0\"\n    (click)=\"toggleDropdown()\"\n    (keydown)=\"onKeydown($event)\">\n    \n    <!-- Display Text -->\n    <span \n      class=\"ix-select-text\"\n      [class.placeholder]=\"selectedValue === null || selectedValue === undefined\">\n      {{ getDisplayText() }}\n    </span>\n\n    <!-- Dropdown Arrow -->\n    <div class=\"ix-select-arrow\" [class.open]=\"isOpen\">\n      <svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\">\n        <polyline points=\"6,9 12,15 18,9\"></polyline>\n      </svg>\n    </div>\n  </div>\n\n  <!-- Dropdown Menu -->\n  @if (isOpen) {\n    <div\n      class=\"ix-select-dropdown\"\n      role=\"listbox\">\n\n      <!-- Options List -->\n      <div class=\"ix-select-options\">\n        <!-- Regular Options -->\n        @for (option of options; track $index) {\n          <div\n            class=\"ix-select-option\"\n            [class.selected]=\"isSelected(option)\"\n            [class.disabled]=\"option.disabled\"\n            [attr.aria-selected]=\"isSelected(option)\"\n            [attr.aria-disabled]=\"option.disabled\"\n            role=\"option\"\n            (mousedown)=\"$event.preventDefault()\"\n            (click)=\"onOptionClick(option)\">\n\n            {{ option.label }}\n          </div>\n        }\n\n        <!-- Option Groups -->\n        @for (group of optionGroups; track $index; let isFirst = $first) {\n          <!-- Group Separator (not shown before first group if we have regular options) -->\n          @if (!isFirst || options.length > 0) {\n            <div\n              class=\"ix-select-separator\"\n              role=\"separator\">\n            </div>\n          }\n\n          <!-- Group Label -->\n          <div\n            class=\"ix-select-group-label\"\n            [class.disabled]=\"group.disabled\">\n            {{ group.label }}\n          </div>\n\n          <!-- Group Options -->\n          @for (option of group.options; track $index) {\n            <div\n              class=\"ix-select-option\"\n              [class.selected]=\"isSelected(option)\"\n              [class.disabled]=\"option.disabled || group.disabled\"\n              [attr.aria-selected]=\"isSelected(option)\"\n              [attr.aria-disabled]=\"option.disabled || group.disabled\"\n              role=\"option\"\n              (mousedown)=\"$event.preventDefault()\"\n              (click)=\"onOptionClick(option)\">\n\n              {{ option.label }}\n            </div>\n          }\n        }\n\n        <!-- No Options Message -->\n        @if (!hasAnyOptions()) {\n          <div class=\"ix-select-no-options\">\n            No options available\n          </div>\n        }\n      </div>\n    </div>\n  }\n</div>", styles: [".ix-select-container{position:relative;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-select-label{display:block;margin-bottom:.5rem;font-size:.875rem;font-weight:500;color:var(--fg1, #333);line-height:1.4}.ix-select-label.required .required-asterisk{color:var(--error, #dc3545);margin-left:.25rem}.ix-select-trigger{position:relative;display:flex;align-items:center;min-height:2.5rem;padding:.5rem 2.5rem .5rem .75rem;background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;cursor:pointer;transition:all .15s ease-in-out;outline:none;box-sizing:border-box}.ix-select-trigger:hover:not(.disabled){border-color:var(--primary, #007bff)}.ix-select-trigger:focus-visible{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-select-trigger.open{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-select-trigger.error{border-color:var(--error, #dc3545)}.ix-select-trigger.error:focus-visible,.ix-select-trigger.error.open{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-select-trigger.disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-select-text{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--fg1, #212529)}.ix-select-text.placeholder{color:var(--alt-fg1, #999)}.ix-select-arrow{position:absolute;right:.75rem;top:50%;transform:translateY(-50%);color:var(--fg2, #6c757d);transition:transform .15s ease-in-out;pointer-events:none}.ix-select-arrow.open{transform:translateY(-50%) rotate(180deg)}.ix-select-arrow svg{display:block}.ix-select-dropdown{position:absolute;top:100%;left:0;right:0;z-index:1000;margin-top:.25rem;background-color:var(--bg2, #f5f5f5);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;box-shadow:0 4px 6px -1px #0000001a,0 2px 4px -1px #0000000f;max-height:200px;overflow:hidden}.ix-select-options{overflow-y:auto;padding:.25rem 0;max-height:200px}.ix-select-option{display:flex;align-items:center;padding:.5rem .75rem;cursor:pointer;color:var(--fg1, #212529);transition:background-color .15s ease-in-out;pointer-events:auto;position:relative;z-index:1001}.ix-select-option:hover:not(.disabled){background-color:var(--alt-bg2, #f8f9fa)!important}.ix-select-option.selected{background-color:var(--alt-bg1, #f8f9fa)!important;color:var(--fg1, #212529)}.ix-select-option.selected:hover{background-color:var(--alt-bg2, #f8f9fa)!important}.ix-select-option.disabled{color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-select-separator{height:1px;background:var(--lines, #e0e0e0);margin:.25rem 0}.ix-select-group-label{padding:.375rem .75rem;font-size:.75rem;font-weight:600;color:var(--alt-fg1, #9ca3af);text-transform:uppercase;letter-spacing:.05em;cursor:default;-webkit-user-select:none;user-select:none}.ix-select-group-label.disabled{opacity:.6}.ix-select-no-options{padding:1rem .75rem;text-align:center;color:var(--fg2, #6c757d);font-style:italic}.ix-select-error{margin-top:.25rem;font-size:.75rem;color:var(--error, #dc3545)}@media (prefers-reduced-motion: reduce){.ix-select-trigger,.ix-select-option,.ix-select-arrow{transition:none}}@media (prefers-contrast: high){.ix-select-trigger{border-width:2px}.ix-select-option.selected{outline:2px solid var(--fg1, #000);outline-offset:-2px}}\n"] }]
-        }], ctorParameters: () => [{ type: i0.ElementRef }, { type: i0.ChangeDetectorRef }], propDecorators: { options: [{
-                type: Input
-            }], optionGroups: [{
-                type: Input
-            }], placeholder: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], testId: [{
-                type: Input
-            }], selectionChange: [{
-                type: Output
-            }], onDocumentClick: [{
-                type: HostListener,
-                args: ['document:click', ['$event']]
-            }] } });
+                    ], template: "<div class=\"ix-select-container\" [attr.data-testid]=\"testId()\">\n  <!-- Select Trigger -->\n  <div\n    class=\"ix-select-trigger\"\n    [class.disabled]=\"isDisabled()\"\n    [class.open]=\"isOpen()\"\n    [attr.aria-expanded]=\"isOpen()\"\n    [attr.aria-haspopup]=\"true\"\n    [attr.aria-label]=\"placeholder()\"\n    role=\"combobox\"\n    tabindex=\"0\"\n    (click)=\"toggleDropdown()\"\n    (keydown)=\"onKeydown($event)\">\n\n    <!-- Display Text -->\n    <span\n      class=\"ix-select-text\"\n      [class.placeholder]=\"selectedValue() === null || selectedValue() === undefined\">\n      {{ getDisplayText() }}\n    </span>\n\n    <!-- Dropdown Arrow -->\n    <div class=\"ix-select-arrow\" [class.open]=\"isOpen()\">\n      <svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\">\n        <polyline points=\"6,9 12,15 18,9\"></polyline>\n      </svg>\n    </div>\n  </div>\n\n  <!-- Dropdown Menu -->\n  @if (isOpen()) {\n    <div\n      class=\"ix-select-dropdown\"\n      role=\"listbox\">\n\n      <!-- Options List -->\n      <div class=\"ix-select-options\">\n        <!-- Regular Options -->\n        @for (option of options(); track $index) {\n          <div\n            class=\"ix-select-option\"\n            [class.selected]=\"isSelected()(option)\"\n            [class.disabled]=\"option.disabled\"\n            [attr.aria-selected]=\"isSelected()(option)\"\n            [attr.aria-disabled]=\"option.disabled\"\n            role=\"option\"\n            (mousedown)=\"$event.preventDefault()\"\n            (click)=\"onOptionClick(option)\">\n\n            {{ option.label }}\n          </div>\n        }\n\n        <!-- Option Groups -->\n        @for (group of optionGroups(); track $index; let isFirst = $first) {\n          <!-- Group Separator (not shown before first group if we have regular options) -->\n          @if (!isFirst || options().length > 0) {\n            <div\n              class=\"ix-select-separator\"\n              role=\"separator\">\n            </div>\n          }\n\n          <!-- Group Label -->\n          <div\n            class=\"ix-select-group-label\"\n            [class.disabled]=\"group.disabled\">\n            {{ group.label }}\n          </div>\n\n          <!-- Group Options -->\n          @for (option of group.options; track $index) {\n            <div\n              class=\"ix-select-option\"\n              [class.selected]=\"isSelected()(option)\"\n              [class.disabled]=\"option.disabled || group.disabled\"\n              [attr.aria-selected]=\"isSelected()(option)\"\n              [attr.aria-disabled]=\"option.disabled || group.disabled\"\n              role=\"option\"\n              (mousedown)=\"$event.preventDefault()\"\n              (click)=\"onOptionClick(option)\">\n\n              {{ option.label }}\n            </div>\n          }\n        }\n\n        <!-- No Options Message -->\n        @if (!hasAnyOptions()) {\n          <div class=\"ix-select-no-options\">\n            No options available\n          </div>\n        }\n      </div>\n    </div>\n  }\n</div>", styles: [".ix-select-container{position:relative;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-select-label{display:block;margin-bottom:.5rem;font-size:.875rem;font-weight:500;color:var(--fg1, #333);line-height:1.4}.ix-select-label.required .required-asterisk{color:var(--error, #dc3545);margin-left:.25rem}.ix-select-trigger{position:relative;display:flex;align-items:center;min-height:2.5rem;padding:.5rem 2.5rem .5rem .75rem;background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;cursor:pointer;transition:all .15s ease-in-out;outline:none;box-sizing:border-box}.ix-select-trigger:hover:not(.disabled){border-color:var(--primary, #007bff)}.ix-select-trigger:focus-visible{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-select-trigger.open{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-select-trigger.error{border-color:var(--error, #dc3545)}.ix-select-trigger.error:focus-visible,.ix-select-trigger.error.open{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-select-trigger.disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-select-text{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--fg1, #212529)}.ix-select-text.placeholder{color:var(--alt-fg1, #999)}.ix-select-arrow{position:absolute;right:.75rem;top:50%;transform:translateY(-50%);color:var(--fg2, #6c757d);transition:transform .15s ease-in-out;pointer-events:none}.ix-select-arrow.open{transform:translateY(-50%) rotate(180deg)}.ix-select-arrow svg{display:block}.ix-select-dropdown{position:absolute;top:100%;left:0;right:0;z-index:1000;margin-top:.25rem;background-color:var(--bg2, #f5f5f5);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;box-shadow:0 4px 6px -1px #0000001a,0 2px 4px -1px #0000000f;max-height:200px;overflow:hidden}.ix-select-options{overflow-y:auto;padding:.25rem 0;max-height:200px}.ix-select-option{display:flex;align-items:center;padding:.5rem .75rem;cursor:pointer;color:var(--fg1, #212529);transition:background-color .15s ease-in-out;pointer-events:auto;position:relative;z-index:1001}.ix-select-option:hover:not(.disabled){background-color:var(--alt-bg2, #f8f9fa)!important}.ix-select-option.selected{background-color:var(--alt-bg1, #f8f9fa)!important;color:var(--fg1, #212529)}.ix-select-option.selected:hover{background-color:var(--alt-bg2, #f8f9fa)!important}.ix-select-option.disabled{color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-select-separator{height:1px;background:var(--lines, #e0e0e0);margin:.25rem 0}.ix-select-group-label{padding:.375rem .75rem;font-size:.75rem;font-weight:600;color:var(--alt-fg1, #9ca3af);text-transform:uppercase;letter-spacing:.05em;cursor:default;-webkit-user-select:none;user-select:none}.ix-select-group-label.disabled{opacity:.6}.ix-select-no-options{padding:1rem .75rem;text-align:center;color:var(--fg2, #6c757d);font-style:italic}.ix-select-error{margin-top:.25rem;font-size:.75rem;color:var(--error, #dc3545)}@media (prefers-reduced-motion: reduce){.ix-select-trigger,.ix-select-option,.ix-select-arrow{transition:none}}@media (prefers-contrast: high){.ix-select-trigger{border-width:2px}.ix-select-option.selected{outline:2px solid var(--fg1, #000);outline-offset:-2px}}\n"] }]
+        }], ctorParameters: () => [{ type: i0.ElementRef }, { type: i0.ChangeDetectorRef }] });
 
 /**
  * Marks an icon name for inclusion in the sprite generation.
@@ -2852,34 +2642,30 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
         }], ctorParameters: () => [{ type: i1.HttpClient }, { type: IxIconRegistryService }] });
 
 class IxListComponent {
-    dense = false;
-    disabled = false;
+    dense = input(false, ...(ngDevMode ? [{ debugName: "dense" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxListComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxListComponent, isStandalone: true, selector: "ix-list", inputs: { dense: "dense", disabled: "disabled" }, host: { attributes: { "role": "list" }, properties: { "class.ix-list--dense": "dense", "class.ix-list--disabled": "disabled" }, classAttribute: "ix-list" }, ngImport: i0, template: "<ng-content></ng-content>", styles: [".ix-list{display:block;padding:8px 0;margin:0;background-color:var(--bg2);border-radius:4px}.ix-list--dense{padding:4px 0}.ix-list--dense ::ng-deep .ix-list-item{min-height:40px;padding:4px 16px}.ix-list--disabled{opacity:.6;pointer-events:none}::ng-deep .ix-divider{border-top:1px solid var(--lines);margin:0;height:1px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxListComponent, isStandalone: true, selector: "ix-list", inputs: { dense: { classPropertyName: "dense", publicName: "dense", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null } }, host: { attributes: { "role": "list" }, properties: { "class.ix-list--dense": "dense()", "class.ix-list--disabled": "disabled()" }, classAttribute: "ix-list" }, ngImport: i0, template: "<ng-content></ng-content>", styles: [".ix-list{display:block;padding:8px 0;margin:0;background-color:var(--bg2);border-radius:4px}.ix-list--dense{padding:4px 0}.ix-list--dense ::ng-deep .ix-list-item{min-height:40px;padding:4px 16px}.ix-list--disabled{opacity:.6;pointer-events:none}::ng-deep .ix-divider{border-top:1px solid var(--lines);margin:0;height:1px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxListComponent, decorators: [{
             type: Component,
             args: [{ selector: 'ix-list', standalone: true, imports: [CommonModule], host: {
                         'class': 'ix-list',
-                        '[class.ix-list--dense]': 'dense',
-                        '[class.ix-list--disabled]': 'disabled',
+                        '[class.ix-list--dense]': 'dense()',
+                        '[class.ix-list--disabled]': 'disabled()',
                         'role': 'list'
                     }, template: "<ng-content></ng-content>", styles: [".ix-list{display:block;padding:8px 0;margin:0;background-color:var(--bg2);border-radius:4px}.ix-list--dense{padding:4px 0}.ix-list--dense ::ng-deep .ix-list-item{min-height:40px;padding:4px 16px}.ix-list--disabled{opacity:.6;pointer-events:none}::ng-deep .ix-divider{border-top:1px solid var(--lines);margin:0;height:1px}\n"] }]
-        }], propDecorators: { dense: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }] } });
+        }] });
 
 class IxListItemComponent {
     elementRef;
-    disabled = false;
-    clickable = false;
-    itemClick = new EventEmitter();
-    hasLeadingContent = false;
-    hasSecondaryTextContent = false;
-    hasTrailingContent = false;
-    hasPrimaryTextDirective = false;
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    clickable = input(false, ...(ngDevMode ? [{ debugName: "clickable" }] : []));
+    itemClick = output();
+    hasLeadingContent = signal(false, ...(ngDevMode ? [{ debugName: "hasLeadingContent" }] : []));
+    hasSecondaryTextContent = signal(false, ...(ngDevMode ? [{ debugName: "hasSecondaryTextContent" }] : []));
+    hasTrailingContent = signal(false, ...(ngDevMode ? [{ debugName: "hasTrailingContent" }] : []));
+    hasPrimaryTextDirective = signal(false, ...(ngDevMode ? [{ debugName: "hasPrimaryTextDirective" }] : []));
     constructor(elementRef) {
         this.elementRef = elementRef;
     }
@@ -2889,69 +2675,61 @@ class IxListItemComponent {
     checkContentProjection() {
         const element = this.elementRef.nativeElement;
         // Check for leading content (icons/avatars)
-        this.hasLeadingContent = !!(element.querySelector('[ixListIcon]') ||
-            element.querySelector('[ixListAvatar]'));
+        this.hasLeadingContent.set(!!(element.querySelector('[ixListIcon]') ||
+            element.querySelector('[ixListAvatar]')));
         // Check for secondary text content
-        this.hasSecondaryTextContent = !!(element.querySelector('[ixListItemLine]') ||
-            element.querySelector('[ixListItemSecondary]'));
+        this.hasSecondaryTextContent.set(!!(element.querySelector('[ixListItemLine]') ||
+            element.querySelector('[ixListItemSecondary]')));
         // Check for trailing content
-        this.hasTrailingContent = !!element.querySelector('[ixListItemTrailing]');
+        this.hasTrailingContent.set(!!element.querySelector('[ixListItemTrailing]'));
         // Check for primary text directive
-        this.hasPrimaryTextDirective = !!(element.querySelector('[ixListItemTitle]') ||
-            element.querySelector('[ixListItemPrimary]'));
+        this.hasPrimaryTextDirective.set(!!(element.querySelector('[ixListItemTitle]') ||
+            element.querySelector('[ixListItemPrimary]')));
     }
-    get hasSecondaryText() {
-        return this.hasSecondaryTextContent;
-    }
-    get hasThirdText() {
+    hasSecondaryText = computed(() => {
+        return this.hasSecondaryTextContent();
+    }, ...(ngDevMode ? [{ debugName: "hasSecondaryText" }] : []));
+    hasThirdText = computed(() => {
         // For now, we'll consider third line as having more than one secondary line
         const element = this.elementRef.nativeElement;
         const secondaryElements = element.querySelectorAll('[ixListItemLine], [ixListItemSecondary]');
         return secondaryElements.length > 1;
-    }
+    }, ...(ngDevMode ? [{ debugName: "hasThirdText" }] : []));
     onClick(event) {
-        if (!this.disabled && this.clickable) {
+        if (!this.disabled() && this.clickable()) {
             this.itemClick.emit(event);
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxListItemComponent, deps: [{ token: i0.ElementRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxListItemComponent, isStandalone: true, selector: "ix-list-item", inputs: { disabled: "disabled", clickable: "clickable" }, outputs: { itemClick: "itemClick" }, host: { attributes: { "role": "listitem" }, listeners: { "click": "onClick($event)" }, properties: { "class.ix-list-item--disabled": "disabled", "class.ix-list-item--clickable": "clickable", "class.ix-list-item--two-line": "hasSecondaryText", "class.ix-list-item--three-line": "hasThirdText" }, classAttribute: "ix-list-item" }, ngImport: i0, template: "<div class=\"ix-list-item__content\">\n  <!-- Leading icon/avatar slot -->\n  @if (hasLeadingContent) {\n    <div class=\"ix-list-item__leading\">\n      <ng-content select=\"[ixListIcon], [ixListAvatar]\"></ng-content>\n    </div>\n  }\n\n  <!-- Text content -->\n  <div class=\"ix-list-item__text\">\n    <!-- Primary text -->\n    <div class=\"ix-list-item__primary-text\">\n      <ng-content select=\"[ixListItemTitle], [ixListItemPrimary]\"></ng-content>\n      @if (!hasPrimaryTextDirective) {\n        <ng-content></ng-content>\n      }\n    </div>\n\n    <!-- Secondary text -->\n    @if (hasSecondaryTextContent) {\n      <div class=\"ix-list-item__secondary-text\">\n        <ng-content select=\"[ixListItemLine], [ixListItemSecondary]\"></ng-content>\n      </div>\n    }\n  </div>\n\n  <!-- Trailing content slot -->\n  @if (hasTrailingContent) {\n    <div class=\"ix-list-item__trailing\">\n      <ng-content select=\"[ixListItemTrailing]\"></ng-content>\n    </div>\n  }\n</div>", styles: [".ix-list-item{display:block;position:relative;min-height:48px;padding:0;cursor:default;text-decoration:none;color:var(--fg1);transition:background-color .2s ease}.ix-list-item__content{display:flex;align-items:center;padding:8px 16px;min-height:inherit;box-sizing:border-box}.ix-list-item__leading{flex-shrink:0;margin-right:16px;display:flex;align-items:center;justify-content:center}.ix-list-item__text{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}.ix-list-item__primary-text{font-size:16px;font-weight:400;line-height:1.5;color:var(--fg1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-item__secondary-text{font-size:14px;font-weight:400;line-height:1.4;color:var(--fg2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-item__trailing{flex-shrink:0;margin-left:16px;display:flex;align-items:center}.ix-list-item--clickable{cursor:pointer}.ix-list-item--clickable:hover:not(.ix-list-item--disabled){background-color:var(--alt-bg1)}.ix-list-item--clickable:focus{outline:none;background-color:var(--alt-bg1)}.ix-list-item--clickable:active:not(.ix-list-item--disabled){background-color:var(--alt-bg2)}.ix-list-item--two-line{min-height:64px}.ix-list-item--two-line .ix-list-item__primary-text{white-space:normal;line-height:1.4}.ix-list-item--two-line .ix-list-item__secondary-text{white-space:normal;line-height:1.3}.ix-list-item--three-line{min-height:88px}.ix-list-item--three-line .ix-list-item__text{align-items:flex-start;padding:8px 0}.ix-list-item--three-line .ix-list-item__primary-text{white-space:normal;line-height:1.4}.ix-list-item--three-line .ix-list-item__secondary-text{white-space:normal;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.ix-list-item--disabled{opacity:.6;cursor:not-allowed;pointer-events:none}::ng-deep [ixListIcon]{width:24px;height:24px;font-size:24px;color:var(--fg2);display:flex;align-items:center;justify-content:center}::ng-deep [ixListAvatar]{width:40px;height:40px;border-radius:50%;object-fit:cover;background-color:var(--alt-bg1);color:var(--fg1);display:flex;align-items:center;justify-content:center;font-weight:500}::ng-deep [ixListItemTitle]{font-weight:400}::ng-deep [ixListItemLine]{display:block;margin-top:4px;font-size:14px;color:var(--fg2);line-height:1.4}::ng-deep [ixListItemTrailing]{color:var(--fg2);font-size:14px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxListItemComponent, isStandalone: true, selector: "ix-list-item", inputs: { disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, clickable: { classPropertyName: "clickable", publicName: "clickable", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { itemClick: "itemClick" }, host: { attributes: { "role": "listitem" }, listeners: { "click": "onClick($event)" }, properties: { "class.ix-list-item--disabled": "disabled()", "class.ix-list-item--clickable": "clickable()", "class.ix-list-item--two-line": "hasSecondaryText()", "class.ix-list-item--three-line": "hasThirdText()" }, classAttribute: "ix-list-item" }, ngImport: i0, template: "<div class=\"ix-list-item__content\">\n  <!-- Leading icon/avatar slot -->\n  @if (hasLeadingContent()) {\n    <div class=\"ix-list-item__leading\">\n      <ng-content select=\"[ixListIcon], [ixListAvatar]\"></ng-content>\n    </div>\n  }\n\n  <!-- Text content -->\n  <div class=\"ix-list-item__text\">\n    <!-- Primary text -->\n    <div class=\"ix-list-item__primary-text\">\n      <ng-content select=\"[ixListItemTitle], [ixListItemPrimary]\"></ng-content>\n      @if (!hasPrimaryTextDirective()) {\n        <ng-content></ng-content>\n      }\n    </div>\n\n    <!-- Secondary text -->\n    @if (hasSecondaryTextContent()) {\n      <div class=\"ix-list-item__secondary-text\">\n        <ng-content select=\"[ixListItemLine], [ixListItemSecondary]\"></ng-content>\n      </div>\n    }\n  </div>\n\n  <!-- Trailing content slot -->\n  @if (hasTrailingContent()) {\n    <div class=\"ix-list-item__trailing\">\n      <ng-content select=\"[ixListItemTrailing]\"></ng-content>\n    </div>\n  }\n</div>", styles: [".ix-list-item{display:block;position:relative;min-height:48px;padding:0;cursor:default;text-decoration:none;color:var(--fg1);transition:background-color .2s ease}.ix-list-item__content{display:flex;align-items:center;padding:8px 16px;min-height:inherit;box-sizing:border-box}.ix-list-item__leading{flex-shrink:0;margin-right:16px;display:flex;align-items:center;justify-content:center}.ix-list-item__text{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}.ix-list-item__primary-text{font-size:16px;font-weight:400;line-height:1.5;color:var(--fg1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-item__secondary-text{font-size:14px;font-weight:400;line-height:1.4;color:var(--fg2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-item__trailing{flex-shrink:0;margin-left:16px;display:flex;align-items:center}.ix-list-item--clickable{cursor:pointer}.ix-list-item--clickable:hover:not(.ix-list-item--disabled){background-color:var(--alt-bg1)}.ix-list-item--clickable:focus{outline:none;background-color:var(--alt-bg1)}.ix-list-item--clickable:active:not(.ix-list-item--disabled){background-color:var(--alt-bg2)}.ix-list-item--two-line{min-height:64px}.ix-list-item--two-line .ix-list-item__primary-text{white-space:normal;line-height:1.4}.ix-list-item--two-line .ix-list-item__secondary-text{white-space:normal;line-height:1.3}.ix-list-item--three-line{min-height:88px}.ix-list-item--three-line .ix-list-item__text{align-items:flex-start;padding:8px 0}.ix-list-item--three-line .ix-list-item__primary-text{white-space:normal;line-height:1.4}.ix-list-item--three-line .ix-list-item__secondary-text{white-space:normal;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.ix-list-item--disabled{opacity:.6;cursor:not-allowed;pointer-events:none}::ng-deep [ixListIcon]{width:24px;height:24px;font-size:24px;color:var(--fg2);display:flex;align-items:center;justify-content:center}::ng-deep [ixListAvatar]{width:40px;height:40px;border-radius:50%;object-fit:cover;background-color:var(--alt-bg1);color:var(--fg1);display:flex;align-items:center;justify-content:center;font-weight:500}::ng-deep [ixListItemTitle]{font-weight:400}::ng-deep [ixListItemLine]{display:block;margin-top:4px;font-size:14px;color:var(--fg2);line-height:1.4}::ng-deep [ixListItemTrailing]{color:var(--fg2);font-size:14px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxListItemComponent, decorators: [{
             type: Component,
             args: [{ selector: 'ix-list-item', standalone: true, imports: [CommonModule], host: {
                         'class': 'ix-list-item',
-                        '[class.ix-list-item--disabled]': 'disabled',
-                        '[class.ix-list-item--clickable]': 'clickable',
-                        '[class.ix-list-item--two-line]': 'hasSecondaryText',
-                        '[class.ix-list-item--three-line]': 'hasThirdText',
+                        '[class.ix-list-item--disabled]': 'disabled()',
+                        '[class.ix-list-item--clickable]': 'clickable()',
+                        '[class.ix-list-item--two-line]': 'hasSecondaryText()',
+                        '[class.ix-list-item--three-line]': 'hasThirdText()',
                         'role': 'listitem',
                         '(click)': 'onClick($event)'
-                    }, template: "<div class=\"ix-list-item__content\">\n  <!-- Leading icon/avatar slot -->\n  @if (hasLeadingContent) {\n    <div class=\"ix-list-item__leading\">\n      <ng-content select=\"[ixListIcon], [ixListAvatar]\"></ng-content>\n    </div>\n  }\n\n  <!-- Text content -->\n  <div class=\"ix-list-item__text\">\n    <!-- Primary text -->\n    <div class=\"ix-list-item__primary-text\">\n      <ng-content select=\"[ixListItemTitle], [ixListItemPrimary]\"></ng-content>\n      @if (!hasPrimaryTextDirective) {\n        <ng-content></ng-content>\n      }\n    </div>\n\n    <!-- Secondary text -->\n    @if (hasSecondaryTextContent) {\n      <div class=\"ix-list-item__secondary-text\">\n        <ng-content select=\"[ixListItemLine], [ixListItemSecondary]\"></ng-content>\n      </div>\n    }\n  </div>\n\n  <!-- Trailing content slot -->\n  @if (hasTrailingContent) {\n    <div class=\"ix-list-item__trailing\">\n      <ng-content select=\"[ixListItemTrailing]\"></ng-content>\n    </div>\n  }\n</div>", styles: [".ix-list-item{display:block;position:relative;min-height:48px;padding:0;cursor:default;text-decoration:none;color:var(--fg1);transition:background-color .2s ease}.ix-list-item__content{display:flex;align-items:center;padding:8px 16px;min-height:inherit;box-sizing:border-box}.ix-list-item__leading{flex-shrink:0;margin-right:16px;display:flex;align-items:center;justify-content:center}.ix-list-item__text{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}.ix-list-item__primary-text{font-size:16px;font-weight:400;line-height:1.5;color:var(--fg1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-item__secondary-text{font-size:14px;font-weight:400;line-height:1.4;color:var(--fg2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-item__trailing{flex-shrink:0;margin-left:16px;display:flex;align-items:center}.ix-list-item--clickable{cursor:pointer}.ix-list-item--clickable:hover:not(.ix-list-item--disabled){background-color:var(--alt-bg1)}.ix-list-item--clickable:focus{outline:none;background-color:var(--alt-bg1)}.ix-list-item--clickable:active:not(.ix-list-item--disabled){background-color:var(--alt-bg2)}.ix-list-item--two-line{min-height:64px}.ix-list-item--two-line .ix-list-item__primary-text{white-space:normal;line-height:1.4}.ix-list-item--two-line .ix-list-item__secondary-text{white-space:normal;line-height:1.3}.ix-list-item--three-line{min-height:88px}.ix-list-item--three-line .ix-list-item__text{align-items:flex-start;padding:8px 0}.ix-list-item--three-line .ix-list-item__primary-text{white-space:normal;line-height:1.4}.ix-list-item--three-line .ix-list-item__secondary-text{white-space:normal;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.ix-list-item--disabled{opacity:.6;cursor:not-allowed;pointer-events:none}::ng-deep [ixListIcon]{width:24px;height:24px;font-size:24px;color:var(--fg2);display:flex;align-items:center;justify-content:center}::ng-deep [ixListAvatar]{width:40px;height:40px;border-radius:50%;object-fit:cover;background-color:var(--alt-bg1);color:var(--fg1);display:flex;align-items:center;justify-content:center;font-weight:500}::ng-deep [ixListItemTitle]{font-weight:400}::ng-deep [ixListItemLine]{display:block;margin-top:4px;font-size:14px;color:var(--fg2);line-height:1.4}::ng-deep [ixListItemTrailing]{color:var(--fg2);font-size:14px}\n"] }]
-        }], ctorParameters: () => [{ type: i0.ElementRef }], propDecorators: { disabled: [{
-                type: Input
-            }], clickable: [{
-                type: Input
-            }], itemClick: [{
-                type: Output
-            }] } });
+                    }, template: "<div class=\"ix-list-item__content\">\n  <!-- Leading icon/avatar slot -->\n  @if (hasLeadingContent()) {\n    <div class=\"ix-list-item__leading\">\n      <ng-content select=\"[ixListIcon], [ixListAvatar]\"></ng-content>\n    </div>\n  }\n\n  <!-- Text content -->\n  <div class=\"ix-list-item__text\">\n    <!-- Primary text -->\n    <div class=\"ix-list-item__primary-text\">\n      <ng-content select=\"[ixListItemTitle], [ixListItemPrimary]\"></ng-content>\n      @if (!hasPrimaryTextDirective()) {\n        <ng-content></ng-content>\n      }\n    </div>\n\n    <!-- Secondary text -->\n    @if (hasSecondaryTextContent()) {\n      <div class=\"ix-list-item__secondary-text\">\n        <ng-content select=\"[ixListItemLine], [ixListItemSecondary]\"></ng-content>\n      </div>\n    }\n  </div>\n\n  <!-- Trailing content slot -->\n  @if (hasTrailingContent()) {\n    <div class=\"ix-list-item__trailing\">\n      <ng-content select=\"[ixListItemTrailing]\"></ng-content>\n    </div>\n  }\n</div>", styles: [".ix-list-item{display:block;position:relative;min-height:48px;padding:0;cursor:default;text-decoration:none;color:var(--fg1);transition:background-color .2s ease}.ix-list-item__content{display:flex;align-items:center;padding:8px 16px;min-height:inherit;box-sizing:border-box}.ix-list-item__leading{flex-shrink:0;margin-right:16px;display:flex;align-items:center;justify-content:center}.ix-list-item__text{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}.ix-list-item__primary-text{font-size:16px;font-weight:400;line-height:1.5;color:var(--fg1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-item__secondary-text{font-size:14px;font-weight:400;line-height:1.4;color:var(--fg2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-item__trailing{flex-shrink:0;margin-left:16px;display:flex;align-items:center}.ix-list-item--clickable{cursor:pointer}.ix-list-item--clickable:hover:not(.ix-list-item--disabled){background-color:var(--alt-bg1)}.ix-list-item--clickable:focus{outline:none;background-color:var(--alt-bg1)}.ix-list-item--clickable:active:not(.ix-list-item--disabled){background-color:var(--alt-bg2)}.ix-list-item--two-line{min-height:64px}.ix-list-item--two-line .ix-list-item__primary-text{white-space:normal;line-height:1.4}.ix-list-item--two-line .ix-list-item__secondary-text{white-space:normal;line-height:1.3}.ix-list-item--three-line{min-height:88px}.ix-list-item--three-line .ix-list-item__text{align-items:flex-start;padding:8px 0}.ix-list-item--three-line .ix-list-item__primary-text{white-space:normal;line-height:1.4}.ix-list-item--three-line .ix-list-item__secondary-text{white-space:normal;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.ix-list-item--disabled{opacity:.6;cursor:not-allowed;pointer-events:none}::ng-deep [ixListIcon]{width:24px;height:24px;font-size:24px;color:var(--fg2);display:flex;align-items:center;justify-content:center}::ng-deep [ixListAvatar]{width:40px;height:40px;border-radius:50%;object-fit:cover;background-color:var(--alt-bg1);color:var(--fg1);display:flex;align-items:center;justify-content:center;font-weight:500}::ng-deep [ixListItemTitle]{font-weight:400}::ng-deep [ixListItemLine]{display:block;margin-top:4px;font-size:14px;color:var(--fg2);line-height:1.4}::ng-deep [ixListItemTrailing]{color:var(--fg2);font-size:14px}\n"] }]
+        }], ctorParameters: () => [{ type: i0.ElementRef }] });
 
 class IxListSubheaderComponent {
-    inset = false;
+    inset = input(false, ...(ngDevMode ? [{ debugName: "inset" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxListSubheaderComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxListSubheaderComponent, isStandalone: true, selector: "ix-list-subheader", inputs: { inset: "inset" }, host: { attributes: { "role": "heading", "aria-level": "3" }, properties: { "class.ix-list-subheader--inset": "inset" }, classAttribute: "ix-list-subheader" }, ngImport: i0, template: "<ng-content></ng-content>", styles: [":host{display:block;margin:.75rem 16px;font-size:14px;font-weight:600;color:var(--fg2);text-transform:uppercase;letter-spacing:.5px;line-height:1.4}:host-context(.ix-list--dense) :host{font-size:13px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxListSubheaderComponent, isStandalone: true, selector: "ix-list-subheader", inputs: { inset: { classPropertyName: "inset", publicName: "inset", isSignal: true, isRequired: false, transformFunction: null } }, host: { attributes: { "role": "heading", "aria-level": "3" }, properties: { "class.ix-list-subheader--inset": "inset()" }, classAttribute: "ix-list-subheader" }, ngImport: i0, template: "<ng-content></ng-content>", styles: [":host{display:block;margin:.75rem 16px;font-size:14px;font-weight:600;color:var(--fg2);text-transform:uppercase;letter-spacing:.5px;line-height:1.4}:host-context(.ix-list--dense) :host{font-size:13px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxListSubheaderComponent, decorators: [{
             type: Component,
             args: [{ selector: 'ix-list-subheader', standalone: true, imports: [CommonModule], host: {
                         'class': 'ix-list-subheader',
-                        '[class.ix-list-subheader--inset]': 'inset',
+                        '[class.ix-list-subheader--inset]': 'inset()',
                         'role': 'heading',
                         'aria-level': '3'
                     }, template: "<ng-content></ng-content>", styles: [":host{display:block;margin:.75rem 16px;font-size:14px;font-weight:600;color:var(--fg2);text-transform:uppercase;letter-spacing:.5px;line-height:1.4}:host-context(.ix-list--dense) :host{font-size:13px}\n"] }]
-        }], propDecorators: { inset: [{
-                type: Input
-            }] } });
+        }] });
 
 class IxListIconDirective {
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxListIconDirective, deps: [], target: i0.ɵɵFactoryTarget.Directive });
@@ -3068,39 +2846,53 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
         }] });
 
 class IxDividerComponent {
-    vertical = false;
-    inset = false;
+    vertical = input(false, ...(ngDevMode ? [{ debugName: "vertical" }] : []));
+    inset = input(false, ...(ngDevMode ? [{ debugName: "inset" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxDividerComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxDividerComponent, isStandalone: true, selector: "ix-divider", inputs: { vertical: "vertical", inset: "inset" }, host: { attributes: { "role": "separator" }, properties: { "class.ix-divider--vertical": "vertical", "class.ix-divider--inset": "inset", "attr.aria-orientation": "vertical ? \"vertical\" : \"horizontal\"" }, classAttribute: "ix-divider" }, ngImport: i0, template: "", styles: [":host{display:block;margin:0;border:none;background:var(--lines);height:1px;width:100%}:host.ix-divider--vertical{display:inline-block;height:100%;width:1px;vertical-align:middle;min-height:24px}:host.ix-divider--inset{margin-left:72px}:host:host-context(ix-list){margin:8px 0}:host:host-context(.ix-list--dense){margin:4px 0}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxDividerComponent, isStandalone: true, selector: "ix-divider", inputs: { vertical: { classPropertyName: "vertical", publicName: "vertical", isSignal: true, isRequired: false, transformFunction: null }, inset: { classPropertyName: "inset", publicName: "inset", isSignal: true, isRequired: false, transformFunction: null } }, host: { attributes: { "role": "separator" }, properties: { "class.ix-divider--vertical": "vertical()", "class.ix-divider--inset": "inset()", "attr.aria-orientation": "vertical() ? \"vertical\" : \"horizontal\"" }, classAttribute: "ix-divider" }, ngImport: i0, template: "", styles: [":host{display:block;margin:0;border:none;background:var(--lines);height:1px;width:100%}:host.ix-divider--vertical{display:inline-block;height:100%;width:1px;vertical-align:middle;min-height:24px}:host.ix-divider--inset{margin-left:72px}:host:host-context(ix-list){margin:8px 0}:host:host-context(.ix-list--dense){margin:4px 0}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxDividerComponent, decorators: [{
             type: Component,
             args: [{ selector: 'ix-divider', standalone: true, imports: [CommonModule], host: {
                         'class': 'ix-divider',
-                        '[class.ix-divider--vertical]': 'vertical',
-                        '[class.ix-divider--inset]': 'inset',
+                        '[class.ix-divider--vertical]': 'vertical()',
+                        '[class.ix-divider--inset]': 'inset()',
                         'role': 'separator',
-                        '[attr.aria-orientation]': 'vertical ? "vertical" : "horizontal"'
+                        '[attr.aria-orientation]': 'vertical() ? "vertical" : "horizontal"'
                     }, template: "", styles: [":host{display:block;margin:0;border:none;background:var(--lines);height:1px;width:100%}:host.ix-divider--vertical{display:inline-block;height:100%;width:1px;vertical-align:middle;min-height:24px}:host.ix-divider--inset{margin-left:72px}:host:host-context(ix-list){margin:8px 0}:host:host-context(.ix-list--dense){margin:4px 0}\n"] }]
-        }], propDecorators: { vertical: [{
-                type: Input
-            }], inset: [{
-                type: Input
-            }] } });
+        }] });
 
 class IxListOptionComponent {
     elementRef;
     cdr;
-    value;
-    selected = false;
-    disabled = false;
-    color = 'primary';
-    selectionChange = new EventEmitter();
+    value = input(undefined, ...(ngDevMode ? [{ debugName: "value" }] : []));
+    selected = input(false, ...(ngDevMode ? [{ debugName: "selected" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    color = input('primary', ...(ngDevMode ? [{ debugName: "color" }] : []));
+    selectionChange = output();
     // Reference to parent selection list (set by parent)
     selectionList;
-    hasLeadingContent = false;
-    hasSecondaryTextContent = false;
-    hasPrimaryTextDirective = false;
+    // Internal state for tracking selection (for uncontrolled usage)
+    // Made public so parent ix-selection-list can control it
+    internalSelected = signal(null, ...(ngDevMode ? [{ debugName: "internalSelected" }] : []));
+    internalDisabled = signal(null, ...(ngDevMode ? [{ debugName: "internalDisabled" }] : []));
+    internalColor = signal(null, ...(ngDevMode ? [{ debugName: "internalColor" }] : []));
+    // Effective selected state (prefers internal state if set, otherwise uses input)
+    effectiveSelected = computed(() => {
+        const internal = this.internalSelected();
+        return internal !== null ? internal : this.selected();
+    }, ...(ngDevMode ? [{ debugName: "effectiveSelected" }] : []));
+    effectiveDisabled = computed(() => {
+        const internal = this.internalDisabled();
+        return internal !== null ? internal : this.disabled();
+    }, ...(ngDevMode ? [{ debugName: "effectiveDisabled" }] : []));
+    effectiveColor = computed(() => {
+        const internal = this.internalColor();
+        return internal !== null ? internal : this.color();
+    }, ...(ngDevMode ? [{ debugName: "effectiveColor" }] : []));
+    hasLeadingContent = signal(false, ...(ngDevMode ? [{ debugName: "hasLeadingContent" }] : []));
+    hasSecondaryTextContent = signal(false, ...(ngDevMode ? [{ debugName: "hasSecondaryTextContent" }] : []));
+    hasPrimaryTextDirective = signal(false, ...(ngDevMode ? [{ debugName: "hasPrimaryTextDirective" }] : []));
     constructor(elementRef, cdr) {
         this.elementRef = elementRef;
         this.cdr = cdr;
@@ -3111,64 +2903,55 @@ class IxListOptionComponent {
     checkContentProjection() {
         const element = this.elementRef.nativeElement;
         // Check for leading content (icons/avatars)
-        this.hasLeadingContent = !!(element.querySelector('[ixListIcon]') ||
-            element.querySelector('[ixListAvatar]'));
+        this.hasLeadingContent.set(!!(element.querySelector('[ixListIcon]') ||
+            element.querySelector('[ixListAvatar]')));
         // Check for secondary text content
-        this.hasSecondaryTextContent = !!(element.querySelector('[ixListItemLine]') ||
-            element.querySelector('[ixListItemSecondary]'));
+        this.hasSecondaryTextContent.set(!!(element.querySelector('[ixListItemLine]') ||
+            element.querySelector('[ixListItemSecondary]')));
         // Check for primary text directive
-        this.hasPrimaryTextDirective = !!(element.querySelector('[ixListItemTitle]') ||
-            element.querySelector('[ixListItemPrimary]'));
+        this.hasPrimaryTextDirective.set(!!(element.querySelector('[ixListItemTitle]') ||
+            element.querySelector('[ixListItemPrimary]')));
     }
     onClick(event) {
-        if (this.disabled) {
+        if (this.effectiveDisabled()) {
             return;
         }
         this.toggle();
     }
     onKeydown(event) {
-        if (this.disabled) {
+        if (this.effectiveDisabled()) {
             return;
         }
         event.preventDefault();
         this.toggle();
     }
     toggle() {
-        if (this.disabled) {
+        if (this.effectiveDisabled()) {
             return;
         }
-        this.selected = !this.selected;
+        const newSelected = !this.effectiveSelected();
+        this.internalSelected.set(newSelected);
         this.cdr.detectChanges();
-        this.selectionChange.emit(this.selected);
+        this.selectionChange.emit(newSelected);
         // Notify parent selection list
         if (this.selectionList) {
             this.selectionList.onOptionSelectionChange();
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxListOptionComponent, deps: [{ token: i0.ElementRef }, { token: i0.ChangeDetectorRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxListOptionComponent, isStandalone: true, selector: "ix-list-option", inputs: { value: "value", selected: "selected", disabled: "disabled", color: "color" }, outputs: { selectionChange: "selectionChange" }, host: { attributes: { "role": "option" }, listeners: { "click": "onClick($event)", "keydown.space": "onKeydown($event)", "keydown.enter": "onKeydown($event)" }, properties: { "class.ix-list-option--selected": "selected", "class.ix-list-option--disabled": "disabled", "attr.aria-selected": "selected", "attr.aria-disabled": "disabled" }, classAttribute: "ix-list-option" }, ngImport: i0, template: "<div class=\"ix-list-option__content\">\n  <!-- Leading content (icons, avatars) -->\n  @if (hasLeadingContent) {\n    <div class=\"ix-list-option__leading\">\n      <ng-content select=\"[ixListIcon], [ixListAvatar]\"></ng-content>\n    </div>\n  }\n\n  <!-- Text content -->\n  <div class=\"ix-list-option__text\">\n    <div class=\"ix-list-option__primary-text\">\n      <ng-content select=\"[ixListItemTitle], [ixListItemPrimary]\"></ng-content>\n      @if (!hasPrimaryTextDirective) {\n        <ng-content></ng-content>\n      }\n    </div>\n\n    @if (hasSecondaryTextContent) {\n      <div class=\"ix-list-option__secondary-text\">\n        <ng-content select=\"[ixListItemLine], [ixListItemSecondary]\"></ng-content>\n      </div>\n    }\n  </div>\n\n  <!-- Checkbox on the right -->\n  <div class=\"ix-list-option__checkbox\">\n    <ix-checkbox \n      [checked]=\"selected\"\n      [disabled]=\"disabled\"\n      [hideLabel]=\"true\"\n      (click)=\"$event.stopPropagation()\"\n      tabindex=\"-1\">\n    </ix-checkbox>\n  </div>\n</div>", styles: [".ix-list-option{display:block;position:relative;min-height:48px;cursor:pointer;text-decoration:none;color:var(--fg1);transition:background-color .2s ease;-webkit-user-select:none;user-select:none}.ix-list-option__content{display:flex;align-items:center;padding:8px 16px;min-height:inherit;box-sizing:border-box;transition:background-color .2s ease;border-radius:4px}.ix-list-option__leading{flex-shrink:0;margin-right:16px;display:flex;align-items:center;justify-content:center}.ix-list-option__text{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}.ix-list-option__primary-text{font-size:16px;font-weight:400;line-height:1.5;color:var(--fg1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-option__secondary-text{font-size:14px;font-weight:400;line-height:1.4;color:var(--fg2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-option__checkbox{flex-shrink:0;margin-left:16px;position:relative;display:flex;align-items:center}.ix-list-option--disabled{opacity:.6;cursor:not-allowed;pointer-events:none}::ng-deep [ixListIcon]{width:24px;height:24px;font-size:24px;color:var(--fg2);display:flex;align-items:center;justify-content:center}::ng-deep [ixListAvatar]{width:40px;height:40px;border-radius:50%;object-fit:cover;background-color:var(--alt-bg1);color:var(--fg1);display:flex;align-items:center;justify-content:center;font-weight:500}::ng-deep [ixListItemTitle]{font-weight:400}::ng-deep [ixListItemLine]{display:block;margin-top:4px;font-size:14px;color:var(--fg2);line-height:1.4}:host(:hover:not(.ix-list-option--disabled)) .ix-list-option__content{background-color:var(--alt-bg2)}:host(:focus){outline:none}:host(:focus) .ix-list-option__content{background-color:var(--alt-bg2)}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "component", type: IxCheckboxComponent, selector: "ix-checkbox", inputs: ["label", "hideLabel", "disabled", "required", "indeterminate", "testId", "error", "checked"], outputs: ["change"] }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxListOptionComponent, isStandalone: true, selector: "ix-list-option", inputs: { value: { classPropertyName: "value", publicName: "value", isSignal: true, isRequired: false, transformFunction: null }, selected: { classPropertyName: "selected", publicName: "selected", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, color: { classPropertyName: "color", publicName: "color", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectionChange: "selectionChange" }, host: { attributes: { "role": "option" }, listeners: { "click": "onClick($event)", "keydown.space": "onKeydown($event)", "keydown.enter": "onKeydown($event)" }, properties: { "class.ix-list-option--selected": "effectiveSelected()", "class.ix-list-option--disabled": "effectiveDisabled()", "attr.aria-selected": "effectiveSelected()", "attr.aria-disabled": "effectiveDisabled()" }, classAttribute: "ix-list-option" }, ngImport: i0, template: "<div class=\"ix-list-option__content\">\n  <!-- Leading content (icons, avatars) -->\n  @if (hasLeadingContent()) {\n    <div class=\"ix-list-option__leading\">\n      <ng-content select=\"[ixListIcon], [ixListAvatar]\"></ng-content>\n    </div>\n  }\n\n  <!-- Text content -->\n  <div class=\"ix-list-option__text\">\n    <div class=\"ix-list-option__primary-text\">\n      <ng-content select=\"[ixListItemTitle], [ixListItemPrimary]\"></ng-content>\n      @if (!hasPrimaryTextDirective()) {\n        <ng-content></ng-content>\n      }\n    </div>\n\n    @if (hasSecondaryTextContent()) {\n      <div class=\"ix-list-option__secondary-text\">\n        <ng-content select=\"[ixListItemLine], [ixListItemSecondary]\"></ng-content>\n      </div>\n    }\n  </div>\n\n  <!-- Checkbox on the right -->\n  <div class=\"ix-list-option__checkbox\">\n    <ix-checkbox\n      [checked]=\"effectiveSelected()\"\n      [disabled]=\"effectiveDisabled()\"\n      [hideLabel]=\"true\"\n      (click)=\"$event.stopPropagation()\"\n      tabindex=\"-1\">\n    </ix-checkbox>\n  </div>\n</div>", styles: [".ix-list-option{display:block;position:relative;min-height:48px;cursor:pointer;text-decoration:none;color:var(--fg1);transition:background-color .2s ease;-webkit-user-select:none;user-select:none}.ix-list-option__content{display:flex;align-items:center;padding:8px 16px;min-height:inherit;box-sizing:border-box;transition:background-color .2s ease;border-radius:4px}.ix-list-option__leading{flex-shrink:0;margin-right:16px;display:flex;align-items:center;justify-content:center}.ix-list-option__text{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}.ix-list-option__primary-text{font-size:16px;font-weight:400;line-height:1.5;color:var(--fg1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-option__secondary-text{font-size:14px;font-weight:400;line-height:1.4;color:var(--fg2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-option__checkbox{flex-shrink:0;margin-left:16px;position:relative;display:flex;align-items:center}.ix-list-option--disabled{opacity:.6;cursor:not-allowed;pointer-events:none}::ng-deep [ixListIcon]{width:24px;height:24px;font-size:24px;color:var(--fg2);display:flex;align-items:center;justify-content:center}::ng-deep [ixListAvatar]{width:40px;height:40px;border-radius:50%;object-fit:cover;background-color:var(--alt-bg1);color:var(--fg1);display:flex;align-items:center;justify-content:center;font-weight:500}::ng-deep [ixListItemTitle]{font-weight:400}::ng-deep [ixListItemLine]{display:block;margin-top:4px;font-size:14px;color:var(--fg2);line-height:1.4}:host(:hover:not(.ix-list-option--disabled)) .ix-list-option__content{background-color:var(--alt-bg2)}:host(:focus){outline:none}:host(:focus) .ix-list-option__content{background-color:var(--alt-bg2)}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "component", type: IxCheckboxComponent, selector: "ix-checkbox", inputs: ["label", "hideLabel", "disabled", "required", "indeterminate", "testId", "error", "checked"], outputs: ["change"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxListOptionComponent, decorators: [{
             type: Component,
             args: [{ selector: 'ix-list-option', standalone: true, imports: [CommonModule, IxCheckboxComponent], host: {
                         'class': 'ix-list-option',
-                        '[class.ix-list-option--selected]': 'selected',
-                        '[class.ix-list-option--disabled]': 'disabled',
+                        '[class.ix-list-option--selected]': 'effectiveSelected()',
+                        '[class.ix-list-option--disabled]': 'effectiveDisabled()',
                         'role': 'option',
-                        '[attr.aria-selected]': 'selected',
-                        '[attr.aria-disabled]': 'disabled'
-                    }, template: "<div class=\"ix-list-option__content\">\n  <!-- Leading content (icons, avatars) -->\n  @if (hasLeadingContent) {\n    <div class=\"ix-list-option__leading\">\n      <ng-content select=\"[ixListIcon], [ixListAvatar]\"></ng-content>\n    </div>\n  }\n\n  <!-- Text content -->\n  <div class=\"ix-list-option__text\">\n    <div class=\"ix-list-option__primary-text\">\n      <ng-content select=\"[ixListItemTitle], [ixListItemPrimary]\"></ng-content>\n      @if (!hasPrimaryTextDirective) {\n        <ng-content></ng-content>\n      }\n    </div>\n\n    @if (hasSecondaryTextContent) {\n      <div class=\"ix-list-option__secondary-text\">\n        <ng-content select=\"[ixListItemLine], [ixListItemSecondary]\"></ng-content>\n      </div>\n    }\n  </div>\n\n  <!-- Checkbox on the right -->\n  <div class=\"ix-list-option__checkbox\">\n    <ix-checkbox \n      [checked]=\"selected\"\n      [disabled]=\"disabled\"\n      [hideLabel]=\"true\"\n      (click)=\"$event.stopPropagation()\"\n      tabindex=\"-1\">\n    </ix-checkbox>\n  </div>\n</div>", styles: [".ix-list-option{display:block;position:relative;min-height:48px;cursor:pointer;text-decoration:none;color:var(--fg1);transition:background-color .2s ease;-webkit-user-select:none;user-select:none}.ix-list-option__content{display:flex;align-items:center;padding:8px 16px;min-height:inherit;box-sizing:border-box;transition:background-color .2s ease;border-radius:4px}.ix-list-option__leading{flex-shrink:0;margin-right:16px;display:flex;align-items:center;justify-content:center}.ix-list-option__text{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}.ix-list-option__primary-text{font-size:16px;font-weight:400;line-height:1.5;color:var(--fg1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-option__secondary-text{font-size:14px;font-weight:400;line-height:1.4;color:var(--fg2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-option__checkbox{flex-shrink:0;margin-left:16px;position:relative;display:flex;align-items:center}.ix-list-option--disabled{opacity:.6;cursor:not-allowed;pointer-events:none}::ng-deep [ixListIcon]{width:24px;height:24px;font-size:24px;color:var(--fg2);display:flex;align-items:center;justify-content:center}::ng-deep [ixListAvatar]{width:40px;height:40px;border-radius:50%;object-fit:cover;background-color:var(--alt-bg1);color:var(--fg1);display:flex;align-items:center;justify-content:center;font-weight:500}::ng-deep [ixListItemTitle]{font-weight:400}::ng-deep [ixListItemLine]{display:block;margin-top:4px;font-size:14px;color:var(--fg2);line-height:1.4}:host(:hover:not(.ix-list-option--disabled)) .ix-list-option__content{background-color:var(--alt-bg2)}:host(:focus){outline:none}:host(:focus) .ix-list-option__content{background-color:var(--alt-bg2)}\n"] }]
-        }], ctorParameters: () => [{ type: i0.ElementRef }, { type: i0.ChangeDetectorRef }], propDecorators: { value: [{
-                type: Input
-            }], selected: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], color: [{
-                type: Input
-            }], selectionChange: [{
-                type: Output
-            }], onClick: [{
+                        '[attr.aria-selected]': 'effectiveSelected()',
+                        '[attr.aria-disabled]': 'effectiveDisabled()'
+                    }, template: "<div class=\"ix-list-option__content\">\n  <!-- Leading content (icons, avatars) -->\n  @if (hasLeadingContent()) {\n    <div class=\"ix-list-option__leading\">\n      <ng-content select=\"[ixListIcon], [ixListAvatar]\"></ng-content>\n    </div>\n  }\n\n  <!-- Text content -->\n  <div class=\"ix-list-option__text\">\n    <div class=\"ix-list-option__primary-text\">\n      <ng-content select=\"[ixListItemTitle], [ixListItemPrimary]\"></ng-content>\n      @if (!hasPrimaryTextDirective()) {\n        <ng-content></ng-content>\n      }\n    </div>\n\n    @if (hasSecondaryTextContent()) {\n      <div class=\"ix-list-option__secondary-text\">\n        <ng-content select=\"[ixListItemLine], [ixListItemSecondary]\"></ng-content>\n      </div>\n    }\n  </div>\n\n  <!-- Checkbox on the right -->\n  <div class=\"ix-list-option__checkbox\">\n    <ix-checkbox\n      [checked]=\"effectiveSelected()\"\n      [disabled]=\"effectiveDisabled()\"\n      [hideLabel]=\"true\"\n      (click)=\"$event.stopPropagation()\"\n      tabindex=\"-1\">\n    </ix-checkbox>\n  </div>\n</div>", styles: [".ix-list-option{display:block;position:relative;min-height:48px;cursor:pointer;text-decoration:none;color:var(--fg1);transition:background-color .2s ease;-webkit-user-select:none;user-select:none}.ix-list-option__content{display:flex;align-items:center;padding:8px 16px;min-height:inherit;box-sizing:border-box;transition:background-color .2s ease;border-radius:4px}.ix-list-option__leading{flex-shrink:0;margin-right:16px;display:flex;align-items:center;justify-content:center}.ix-list-option__text{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}.ix-list-option__primary-text{font-size:16px;font-weight:400;line-height:1.5;color:var(--fg1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-option__secondary-text{font-size:14px;font-weight:400;line-height:1.4;color:var(--fg2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-option__checkbox{flex-shrink:0;margin-left:16px;position:relative;display:flex;align-items:center}.ix-list-option--disabled{opacity:.6;cursor:not-allowed;pointer-events:none}::ng-deep [ixListIcon]{width:24px;height:24px;font-size:24px;color:var(--fg2);display:flex;align-items:center;justify-content:center}::ng-deep [ixListAvatar]{width:40px;height:40px;border-radius:50%;object-fit:cover;background-color:var(--alt-bg1);color:var(--fg1);display:flex;align-items:center;justify-content:center;font-weight:500}::ng-deep [ixListItemTitle]{font-weight:400}::ng-deep [ixListItemLine]{display:block;margin-top:4px;font-size:14px;color:var(--fg2);line-height:1.4}:host(:hover:not(.ix-list-option--disabled)) .ix-list-option__content{background-color:var(--alt-bg2)}:host(:focus){outline:none}:host(:focus) .ix-list-option__content{background-color:var(--alt-bg2)}\n"] }]
+        }], ctorParameters: () => [{ type: i0.ElementRef }, { type: i0.ChangeDetectorRef }], propDecorators: { onClick: [{
                 type: HostListener,
                 args: ['click', ['$event']]
             }], onKeydown: [{
@@ -3180,31 +2963,34 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             }] } });
 
 class IxSelectionListComponent {
-    dense = false;
-    disabled = false;
-    multiple = true;
-    color = 'primary';
-    selectionChange = new EventEmitter();
-    options;
+    dense = input(false, ...(ngDevMode ? [{ debugName: "dense" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    multiple = input(true, ...(ngDevMode ? [{ debugName: "multiple" }] : []));
+    color = input('primary', ...(ngDevMode ? [{ debugName: "color" }] : []));
+    selectionChange = output();
+    options = contentChildren(IxListOptionComponent, ...(ngDevMode ? [{ debugName: "options", descendants: true }] : [{ descendants: true }]));
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    // Computed disabled state (combines input and form state)
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
     onChange = (_) => { };
     onTouched = () => { };
-    ngAfterContentInit() {
-        this.options.forEach(option => {
-            option.selectionList = this;
-            option.color = this.color;
-        });
-        this.options.changes.subscribe(() => {
-            this.options.forEach(option => {
+    constructor() {
+        // Effect to update options when they change
+        effect(() => {
+            const opts = this.options();
+            const currentColor = this.color();
+            opts.forEach(option => {
                 option.selectionList = this;
-                option.color = this.color;
+                option.internalColor.set(currentColor);
             });
         });
     }
     // ControlValueAccessor implementation
     writeValue(value) {
-        if (value && this.options) {
-            this.options.forEach(option => {
-                option.selected = value.includes(option.value);
+        if (value) {
+            const opts = this.options();
+            opts.forEach(option => {
+                option.internalSelected.set(value.includes(option.value()));
             });
         }
     }
@@ -3215,35 +3001,36 @@ class IxSelectionListComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
-        if (this.options) {
-            this.options.forEach(option => {
-                option.disabled = isDisabled;
-            });
-        }
+        this.formDisabled.set(isDisabled);
+        const opts = this.options();
+        opts.forEach(option => {
+            option.internalDisabled.set(isDisabled);
+        });
     }
     onOptionSelectionChange() {
         this.onTouched();
-        const selectedValues = this.options
-            .filter(option => option.selected)
-            .map(option => option.value);
+        const opts = this.options();
+        const selectedValues = opts
+            .filter(option => option.effectiveSelected())
+            .map(option => option.value());
         this.onChange(selectedValues);
         this.selectionChange.emit({
             source: this,
-            options: this.options.filter(option => option.selected)
+            options: opts.filter(option => option.effectiveSelected())
         });
     }
     get selectedOptions() {
-        return this.options ? this.options.filter(option => option.selected) : [];
+        const opts = this.options();
+        return opts.filter(option => option.effectiveSelected());
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSelectionListComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxSelectionListComponent, isStandalone: true, selector: "ix-selection-list", inputs: { dense: "dense", disabled: "disabled", multiple: "multiple", color: "color" }, outputs: { selectionChange: "selectionChange" }, host: { attributes: { "role": "listbox" }, properties: { "class.ix-selection-list--dense": "dense", "class.ix-selection-list--disabled": "disabled", "attr.aria-multiselectable": "multiple" }, classAttribute: "ix-selection-list" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.2.0", version: "20.3.4", type: IxSelectionListComponent, isStandalone: true, selector: "ix-selection-list", inputs: { dense: { classPropertyName: "dense", publicName: "dense", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, multiple: { classPropertyName: "multiple", publicName: "multiple", isSignal: true, isRequired: false, transformFunction: null }, color: { classPropertyName: "color", publicName: "color", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectionChange: "selectionChange" }, host: { attributes: { "role": "listbox" }, properties: { "class.ix-selection-list--dense": "dense()", "class.ix-selection-list--disabled": "isDisabled()", "attr.aria-multiselectable": "multiple()" }, classAttribute: "ix-selection-list" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxSelectionListComponent),
                 multi: true
             }
-        ], queries: [{ propertyName: "options", predicate: i0.forwardRef(() => IxListOptionComponent), descendants: true }], ngImport: i0, template: "<ng-content></ng-content>", styles: [".ix-selection-list{display:block;padding:8px 0;margin:0;background-color:var(--bg2);border-radius:4px}.ix-selection-list--dense{padding:4px 0}.ix-selection-list--disabled{opacity:.6;pointer-events:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
+        ], queries: [{ propertyName: "options", predicate: IxListOptionComponent, descendants: true, isSignal: true }], ngImport: i0, template: "<ng-content></ng-content>", styles: [".ix-selection-list{display:block;padding:8px 0;margin:0;background-color:var(--bg2);border-radius:4px}.ix-selection-list--dense{padding:4px 0}.ix-selection-list--disabled{opacity:.6;pointer-events:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSelectionListComponent, decorators: [{
             type: Component,
@@ -3255,25 +3042,12 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                         }
                     ], host: {
                         'class': 'ix-selection-list',
-                        '[class.ix-selection-list--dense]': 'dense',
-                        '[class.ix-selection-list--disabled]': 'disabled',
+                        '[class.ix-selection-list--dense]': 'dense()',
+                        '[class.ix-selection-list--disabled]': 'isDisabled()',
                         'role': 'listbox',
-                        '[attr.aria-multiselectable]': 'multiple'
+                        '[attr.aria-multiselectable]': 'multiple()'
                     }, template: "<ng-content></ng-content>", styles: [".ix-selection-list{display:block;padding:8px 0;margin:0;background-color:var(--bg2);border-radius:4px}.ix-selection-list--dense{padding:4px 0}.ix-selection-list--disabled{opacity:.6;pointer-events:none}\n"] }]
-        }], propDecorators: { dense: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], multiple: [{
-                type: Input
-            }], color: [{
-                type: Input
-            }], selectionChange: [{
-                type: Output
-            }], options: [{
-                type: ContentChildren,
-                args: [forwardRef(() => IxListOptionComponent), { descendants: true }]
-            }] } });
+        }], ctorParameters: () => [] });
 
 class IxHeaderCellDefDirective {
     template;
@@ -3306,11 +3080,11 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                 }]
         }], ctorParameters: () => [{ type: i0.TemplateRef }] });
 class IxTableColumnDirective {
-    name;
-    headerTemplate;
-    cellTemplate;
+    name = input.required(...(ngDevMode ? [{ debugName: "name", alias: 'ixColumnDef' }] : [{ alias: 'ixColumnDef' }]));
+    headerTemplate = contentChild(IxHeaderCellDefDirective, ...(ngDevMode ? [{ debugName: "headerTemplate", read: TemplateRef }] : [{ read: TemplateRef }]));
+    cellTemplate = contentChild(IxCellDefDirective, ...(ngDevMode ? [{ debugName: "cellTemplate", read: TemplateRef }] : [{ read: TemplateRef }]));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTableColumnDirective, deps: [], target: i0.ɵɵFactoryTarget.Directive });
-    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "14.0.0", version: "20.3.4", type: IxTableColumnDirective, isStandalone: true, selector: "[ixColumnDef]", inputs: { name: ["ixColumnDef", "name"] }, queries: [{ propertyName: "headerTemplate", first: true, predicate: IxHeaderCellDefDirective, descendants: true, read: TemplateRef }, { propertyName: "cellTemplate", first: true, predicate: IxCellDefDirective, descendants: true, read: TemplateRef }], exportAs: ["ixColumnDef"], ngImport: i0 });
+    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "17.2.0", version: "20.3.4", type: IxTableColumnDirective, isStandalone: true, selector: "[ixColumnDef]", inputs: { name: { classPropertyName: "name", publicName: "ixColumnDef", isSignal: true, isRequired: true, transformFunction: null } }, queries: [{ propertyName: "headerTemplate", first: true, predicate: IxHeaderCellDefDirective, descendants: true, read: TemplateRef, isSignal: true }, { propertyName: "cellTemplate", first: true, predicate: IxCellDefDirective, descendants: true, read: TemplateRef, isSignal: true }], exportAs: ["ixColumnDef"], ngImport: i0 });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTableColumnDirective, decorators: [{
             type: Directive,
@@ -3319,47 +3093,39 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                     standalone: true,
                     exportAs: 'ixColumnDef'
                 }]
-        }], propDecorators: { name: [{
-                type: Input,
-                args: ['ixColumnDef']
-            }], headerTemplate: [{
-                type: ContentChild,
-                args: [IxHeaderCellDefDirective, { read: TemplateRef }]
-            }], cellTemplate: [{
-                type: ContentChild,
-                args: [IxCellDefDirective, { read: TemplateRef }]
-            }] } });
+        }] });
 
 class IxTableComponent {
     cdr;
-    dataSource = [];
-    displayedColumns = [];
-    columnDefs;
+    dataSource = input([], ...(ngDevMode ? [{ debugName: "dataSource" }] : []));
+    displayedColumns = input([], ...(ngDevMode ? [{ debugName: "displayedColumns" }] : []));
+    columnDefs = contentChildren(IxTableColumnDirective, ...(ngDevMode ? [{ debugName: "columnDefs" }] : []));
     columnDefMap = new Map();
     constructor(cdr) {
         this.cdr = cdr;
-    }
-    ngAfterContentInit() {
-        this.processColumnDefs();
-        this.columnDefs.changes.subscribe(() => {
-            this.processColumnDefs();
+        // Effect to process column defs whenever they change
+        effect(() => {
+            const columns = this.columnDefs();
+            this.processColumnDefs(columns);
         });
     }
-    processColumnDefs() {
+    processColumnDefs(columns) {
         this.columnDefMap.clear();
-        this.columnDefs.forEach(columnDef => {
-            if (columnDef.name) {
-                this.columnDefMap.set(columnDef.name, columnDef);
+        columns.forEach(columnDef => {
+            const name = columnDef.name();
+            if (name) {
+                this.columnDefMap.set(name, columnDef);
             }
         });
         this.cdr.detectChanges();
     }
-    get data() {
-        if (Array.isArray(this.dataSource)) {
-            return this.dataSource;
+    data = computed(() => {
+        const source = this.dataSource();
+        if (Array.isArray(source)) {
+            return source;
         }
-        return this.dataSource?.data || this.dataSource?.connect?.() || [];
-    }
+        return source?.data || source?.connect?.() || [];
+    }, ...(ngDevMode ? [{ debugName: "data" }] : []));
     getColumnDef(columnName) {
         return this.columnDefMap.get(columnName);
     }
@@ -3367,21 +3133,14 @@ class IxTableComponent {
         return index;
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTableComponent, deps: [{ token: i0.ChangeDetectorRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTableComponent, isStandalone: true, selector: "ix-table", inputs: { dataSource: "dataSource", displayedColumns: "displayedColumns" }, host: { classAttribute: "ix-table" }, queries: [{ propertyName: "columnDefs", predicate: IxTableColumnDirective }], ngImport: i0, template: "<table class=\"ix-table__table\">\n  <!-- Header Row -->\n  <thead class=\"ix-table__header\">\n    <tr class=\"ix-table__header-row\">\n      @for (column of displayedColumns; track $index) {\n        <th\n          class=\"ix-table__header-cell\"\n          [attr.data-column]=\"column\">\n          @if (getColumnDef(column)?.headerTemplate) {\n            <ng-container\n              [ngTemplateOutlet]=\"getColumnDef(column)?.headerTemplate || null\">\n            </ng-container>\n          }\n          @if (!getColumnDef(column)?.headerTemplate) {\n            <span>{{ column }}</span>\n          }\n        </th>\n      }\n    </tr>\n  </thead>\n\n  <!-- Data Rows -->\n  <tbody class=\"ix-table__body\">\n    @for (row of data; track $index) {\n      <tr class=\"ix-table__row\">\n        @for (column of displayedColumns; track $index) {\n          <td\n            class=\"ix-table__cell\"\n            [attr.data-column]=\"column\">\n            @if (getColumnDef(column)?.cellTemplate) {\n              <ng-container\n                [ngTemplateOutlet]=\"getColumnDef(column)?.cellTemplate || null\"\n                [ngTemplateOutletContext]=\"{ $implicit: row, column: column }\">\n              </ng-container>\n            }\n            @if (!getColumnDef(column)?.cellTemplate) {\n              <span>{{ row[column] }}</span>\n            }\n          </td>\n        }\n      </tr>\n    }\n  </tbody>\n</table>", styles: [".ix-table{display:block;width:100%;overflow-x:auto}.ix-table__table{width:100%;border-collapse:collapse;border-spacing:0;background-color:var(--bg2);border-radius:4px;overflow:hidden}.ix-table__header{background-color:var(--topbar);color:var(--topbar-txt)}.ix-table__header-row{height:56px}.ix-table__header-cell{padding:0 16px;text-align:left;font-weight:600;font-size:14px;border-bottom:1px solid var(--lines);white-space:nowrap;vertical-align:middle}.ix-table__body{background-color:var(--bg2)}.ix-table__row{height:48px;transition:background-color .2s ease}.ix-table__row:hover{background-color:var(--alt-bg1)}.ix-table__row:not(:last-child){border-bottom:1px solid var(--lines)}.ix-table__cell{padding:0 16px;font-size:14px;color:var(--fg1);vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ix-table--dense .ix-table__header-row{height:40px}.ix-table--dense .ix-table__row{height:32px}.ix-table--dense .ix-table__header-cell,.ix-table--dense .ix-table__cell{padding:0 12px;font-size:13px}@media (max-width: 768px){.ix-table__table{font-size:12px}.ix-table__header-cell,.ix-table__cell{padding:0 8px}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgTemplateOutlet, selector: "[ngTemplateOutlet]", inputs: ["ngTemplateOutletContext", "ngTemplateOutlet", "ngTemplateOutletInjector"] }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTableComponent, isStandalone: true, selector: "ix-table", inputs: { dataSource: { classPropertyName: "dataSource", publicName: "dataSource", isSignal: true, isRequired: false, transformFunction: null }, displayedColumns: { classPropertyName: "displayedColumns", publicName: "displayedColumns", isSignal: true, isRequired: false, transformFunction: null } }, host: { classAttribute: "ix-table" }, queries: [{ propertyName: "columnDefs", predicate: IxTableColumnDirective, isSignal: true }], ngImport: i0, template: "<table class=\"ix-table__table\">\n  <!-- Header Row -->\n  <thead class=\"ix-table__header\">\n    <tr class=\"ix-table__header-row\">\n      @for (column of displayedColumns(); track $index) {\n        <th\n          class=\"ix-table__header-cell\"\n          [attr.data-column]=\"column\">\n          @if (getColumnDef(column)?.headerTemplate()) {\n            <ng-container\n              [ngTemplateOutlet]=\"getColumnDef(column)?.headerTemplate() || null\">\n            </ng-container>\n          }\n          @if (!getColumnDef(column)?.headerTemplate()) {\n            <span>{{ column }}</span>\n          }\n        </th>\n      }\n    </tr>\n  </thead>\n\n  <!-- Data Rows -->\n  <tbody class=\"ix-table__body\">\n    @for (row of data(); track $index) {\n      <tr class=\"ix-table__row\">\n        @for (column of displayedColumns(); track $index) {\n          <td\n            class=\"ix-table__cell\"\n            [attr.data-column]=\"column\">\n            @if (getColumnDef(column)?.cellTemplate()) {\n              <ng-container\n                [ngTemplateOutlet]=\"getColumnDef(column)?.cellTemplate() || null\"\n                [ngTemplateOutletContext]=\"{ $implicit: row, column: column }\">\n              </ng-container>\n            }\n            @if (!getColumnDef(column)?.cellTemplate()) {\n              <span>{{ row[column] }}</span>\n            }\n          </td>\n        }\n      </tr>\n    }\n  </tbody>\n</table>", styles: [".ix-table{display:block;width:100%;overflow-x:auto}.ix-table__table{width:100%;border-collapse:collapse;border-spacing:0;background-color:var(--bg2);border-radius:4px;overflow:hidden}.ix-table__header{background-color:var(--topbar);color:var(--topbar-txt)}.ix-table__header-row{height:56px}.ix-table__header-cell{padding:0 16px;text-align:left;font-weight:600;font-size:14px;border-bottom:1px solid var(--lines);white-space:nowrap;vertical-align:middle}.ix-table__body{background-color:var(--bg2)}.ix-table__row{height:48px;transition:background-color .2s ease}.ix-table__row:hover{background-color:var(--alt-bg1)}.ix-table__row:not(:last-child){border-bottom:1px solid var(--lines)}.ix-table__cell{padding:0 16px;font-size:14px;color:var(--fg1);vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ix-table--dense .ix-table__header-row{height:40px}.ix-table--dense .ix-table__row{height:32px}.ix-table--dense .ix-table__header-cell,.ix-table--dense .ix-table__cell{padding:0 12px;font-size:13px}@media (max-width: 768px){.ix-table__table{font-size:12px}.ix-table__header-cell,.ix-table__cell{padding:0 8px}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgTemplateOutlet, selector: "[ngTemplateOutlet]", inputs: ["ngTemplateOutletContext", "ngTemplateOutlet", "ngTemplateOutletInjector"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTableComponent, decorators: [{
             type: Component,
             args: [{ selector: 'ix-table', standalone: true, imports: [CommonModule], host: {
                         'class': 'ix-table'
-                    }, template: "<table class=\"ix-table__table\">\n  <!-- Header Row -->\n  <thead class=\"ix-table__header\">\n    <tr class=\"ix-table__header-row\">\n      @for (column of displayedColumns; track $index) {\n        <th\n          class=\"ix-table__header-cell\"\n          [attr.data-column]=\"column\">\n          @if (getColumnDef(column)?.headerTemplate) {\n            <ng-container\n              [ngTemplateOutlet]=\"getColumnDef(column)?.headerTemplate || null\">\n            </ng-container>\n          }\n          @if (!getColumnDef(column)?.headerTemplate) {\n            <span>{{ column }}</span>\n          }\n        </th>\n      }\n    </tr>\n  </thead>\n\n  <!-- Data Rows -->\n  <tbody class=\"ix-table__body\">\n    @for (row of data; track $index) {\n      <tr class=\"ix-table__row\">\n        @for (column of displayedColumns; track $index) {\n          <td\n            class=\"ix-table__cell\"\n            [attr.data-column]=\"column\">\n            @if (getColumnDef(column)?.cellTemplate) {\n              <ng-container\n                [ngTemplateOutlet]=\"getColumnDef(column)?.cellTemplate || null\"\n                [ngTemplateOutletContext]=\"{ $implicit: row, column: column }\">\n              </ng-container>\n            }\n            @if (!getColumnDef(column)?.cellTemplate) {\n              <span>{{ row[column] }}</span>\n            }\n          </td>\n        }\n      </tr>\n    }\n  </tbody>\n</table>", styles: [".ix-table{display:block;width:100%;overflow-x:auto}.ix-table__table{width:100%;border-collapse:collapse;border-spacing:0;background-color:var(--bg2);border-radius:4px;overflow:hidden}.ix-table__header{background-color:var(--topbar);color:var(--topbar-txt)}.ix-table__header-row{height:56px}.ix-table__header-cell{padding:0 16px;text-align:left;font-weight:600;font-size:14px;border-bottom:1px solid var(--lines);white-space:nowrap;vertical-align:middle}.ix-table__body{background-color:var(--bg2)}.ix-table__row{height:48px;transition:background-color .2s ease}.ix-table__row:hover{background-color:var(--alt-bg1)}.ix-table__row:not(:last-child){border-bottom:1px solid var(--lines)}.ix-table__cell{padding:0 16px;font-size:14px;color:var(--fg1);vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ix-table--dense .ix-table__header-row{height:40px}.ix-table--dense .ix-table__row{height:32px}.ix-table--dense .ix-table__header-cell,.ix-table--dense .ix-table__cell{padding:0 12px;font-size:13px}@media (max-width: 768px){.ix-table__table{font-size:12px}.ix-table__header-cell,.ix-table__cell{padding:0 8px}}\n"] }]
-        }], ctorParameters: () => [{ type: i0.ChangeDetectorRef }], propDecorators: { dataSource: [{
-                type: Input
-            }], displayedColumns: [{
-                type: Input
-            }], columnDefs: [{
-                type: ContentChildren,
-                args: [IxTableColumnDirective]
-            }] } });
+                    }, template: "<table class=\"ix-table__table\">\n  <!-- Header Row -->\n  <thead class=\"ix-table__header\">\n    <tr class=\"ix-table__header-row\">\n      @for (column of displayedColumns(); track $index) {\n        <th\n          class=\"ix-table__header-cell\"\n          [attr.data-column]=\"column\">\n          @if (getColumnDef(column)?.headerTemplate()) {\n            <ng-container\n              [ngTemplateOutlet]=\"getColumnDef(column)?.headerTemplate() || null\">\n            </ng-container>\n          }\n          @if (!getColumnDef(column)?.headerTemplate()) {\n            <span>{{ column }}</span>\n          }\n        </th>\n      }\n    </tr>\n  </thead>\n\n  <!-- Data Rows -->\n  <tbody class=\"ix-table__body\">\n    @for (row of data(); track $index) {\n      <tr class=\"ix-table__row\">\n        @for (column of displayedColumns(); track $index) {\n          <td\n            class=\"ix-table__cell\"\n            [attr.data-column]=\"column\">\n            @if (getColumnDef(column)?.cellTemplate()) {\n              <ng-container\n                [ngTemplateOutlet]=\"getColumnDef(column)?.cellTemplate() || null\"\n                [ngTemplateOutletContext]=\"{ $implicit: row, column: column }\">\n              </ng-container>\n            }\n            @if (!getColumnDef(column)?.cellTemplate()) {\n              <span>{{ row[column] }}</span>\n            }\n          </td>\n        }\n      </tr>\n    }\n  </tbody>\n</table>", styles: [".ix-table{display:block;width:100%;overflow-x:auto}.ix-table__table{width:100%;border-collapse:collapse;border-spacing:0;background-color:var(--bg2);border-radius:4px;overflow:hidden}.ix-table__header{background-color:var(--topbar);color:var(--topbar-txt)}.ix-table__header-row{height:56px}.ix-table__header-cell{padding:0 16px;text-align:left;font-weight:600;font-size:14px;border-bottom:1px solid var(--lines);white-space:nowrap;vertical-align:middle}.ix-table__body{background-color:var(--bg2)}.ix-table__row{height:48px;transition:background-color .2s ease}.ix-table__row:hover{background-color:var(--alt-bg1)}.ix-table__row:not(:last-child){border-bottom:1px solid var(--lines)}.ix-table__cell{padding:0 16px;font-size:14px;color:var(--fg1);vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ix-table--dense .ix-table__header-row{height:40px}.ix-table--dense .ix-table__row{height:32px}.ix-table--dense .ix-table__header-cell,.ix-table--dense .ix-table__cell{padding:0 12px;font-size:13px}@media (max-width: 768px){.ix-table__table{font-size:12px}.ix-table__header-cell,.ix-table__cell{padding:0 8px}}\n"] }]
+        }], ctorParameters: () => [{ type: i0.ChangeDetectorRef }] });
 
 /**
  * Tree flattener to convert normal type of node to node with children & level information.
@@ -4164,65 +3923,53 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
         }] });
 
 class IxSpinnerComponent {
-    mode = 'indeterminate';
-    value = 0;
-    diameter = 40;
-    strokeWidth = 4;
-    ariaLabel = null;
-    ariaLabelledby = null;
-    get radius() {
-        return (this.diameter - this.strokeWidth) / 2;
-    }
-    get circumference() {
-        return 2 * Math.PI * this.radius;
-    }
-    get strokeDasharray() {
-        return `${this.circumference} ${this.circumference}`;
-    }
-    get strokeDashoffset() {
-        if (this.mode === 'indeterminate') {
+    mode = input('indeterminate', ...(ngDevMode ? [{ debugName: "mode" }] : []));
+    value = input(0, ...(ngDevMode ? [{ debugName: "value" }] : []));
+    diameter = input(40, ...(ngDevMode ? [{ debugName: "diameter" }] : []));
+    strokeWidth = input(4, ...(ngDevMode ? [{ debugName: "strokeWidth" }] : []));
+    ariaLabel = input(null, ...(ngDevMode ? [{ debugName: "ariaLabel" }] : []));
+    ariaLabelledby = input(null, ...(ngDevMode ? [{ debugName: "ariaLabelledby" }] : []));
+    radius = computed(() => {
+        return (this.diameter() - this.strokeWidth()) / 2;
+    }, ...(ngDevMode ? [{ debugName: "radius" }] : []));
+    circumference = computed(() => {
+        return 2 * Math.PI * this.radius();
+    }, ...(ngDevMode ? [{ debugName: "circumference" }] : []));
+    strokeDasharray = computed(() => {
+        return `${this.circumference()} ${this.circumference()}`;
+    }, ...(ngDevMode ? [{ debugName: "strokeDasharray" }] : []));
+    strokeDashoffset = computed(() => {
+        if (this.mode() === 'indeterminate') {
             return 0;
         }
-        const progress = Math.max(0, Math.min(100, this.value));
-        return this.circumference - (progress / 100) * this.circumference;
-    }
-    get viewBox() {
-        const size = this.diameter;
+        const progress = Math.max(0, Math.min(100, this.value()));
+        return this.circumference() - (progress / 100) * this.circumference();
+    }, ...(ngDevMode ? [{ debugName: "strokeDashoffset" }] : []));
+    viewBox = computed(() => {
+        const size = this.diameter();
         return `0 0 ${size} ${size}`;
-    }
+    }, ...(ngDevMode ? [{ debugName: "viewBox" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSpinnerComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxSpinnerComponent, isStandalone: true, selector: "ix-spinner", inputs: { mode: "mode", value: "value", diameter: "diameter", strokeWidth: "strokeWidth", ariaLabel: "ariaLabel", ariaLabelledby: "ariaLabelledby" }, host: { attributes: { "role": "progressbar" }, properties: { "class.ix-spinner-indeterminate": "mode === \"indeterminate\"", "class.ix-spinner-determinate": "mode === \"determinate\"", "attr.aria-valuenow": "mode === \"determinate\" ? value : null", "attr.aria-valuemin": "mode === \"determinate\" ? 0 : null", "attr.aria-valuemax": "mode === \"determinate\" ? 100 : null", "attr.aria-label": "ariaLabel || null", "attr.aria-labelledby": "ariaLabelledby || null" }, classAttribute: "ix-spinner" }, ngImport: i0, template: "<svg \n  [attr.width]=\"diameter\" \n  [attr.height]=\"diameter\" \n  [attr.viewBox]=\"viewBox\"\n  class=\"ix-spinner-svg\">\n  <circle\n    class=\"ix-spinner-circle\"\n    [attr.cx]=\"diameter / 2\"\n    [attr.cy]=\"diameter / 2\"\n    [attr.r]=\"radius\"\n    [attr.stroke-width]=\"strokeWidth\"\n    [attr.stroke-dasharray]=\"strokeDasharray\"\n    [attr.stroke-dashoffset]=\"strokeDashoffset\"\n    fill=\"none\">\n  </circle>\n</svg>", styles: [".ix-spinner{display:inline-block;vertical-align:middle}.ix-spinner-svg{animation:ix-spinner-rotate 2s linear infinite;transform-origin:center}.ix-spinner-circle{stroke:var(--primary, #007bff);stroke-linecap:round;transition:stroke-dashoffset .35s cubic-bezier(.4,0,.2,1)}.ix-spinner-indeterminate .ix-spinner-circle{animation:ix-spinner-dash 1.4s ease-in-out infinite}.ix-spinner-determinate .ix-spinner-svg{animation:none;transform:rotate(-90deg)}@keyframes ix-spinner-rotate{0%{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes ix-spinner-dash{0%{stroke-dasharray:1,200;stroke-dashoffset:0}50%{stroke-dasharray:100,200;stroke-dashoffset:-15}to{stroke-dasharray:100,200;stroke-dashoffset:-125}}\n"], changeDetection: i0.ChangeDetectionStrategy.OnPush, encapsulation: i0.ViewEncapsulation.None });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxSpinnerComponent, isStandalone: true, selector: "ix-spinner", inputs: { mode: { classPropertyName: "mode", publicName: "mode", isSignal: true, isRequired: false, transformFunction: null }, value: { classPropertyName: "value", publicName: "value", isSignal: true, isRequired: false, transformFunction: null }, diameter: { classPropertyName: "diameter", publicName: "diameter", isSignal: true, isRequired: false, transformFunction: null }, strokeWidth: { classPropertyName: "strokeWidth", publicName: "strokeWidth", isSignal: true, isRequired: false, transformFunction: null }, ariaLabel: { classPropertyName: "ariaLabel", publicName: "ariaLabel", isSignal: true, isRequired: false, transformFunction: null }, ariaLabelledby: { classPropertyName: "ariaLabelledby", publicName: "ariaLabelledby", isSignal: true, isRequired: false, transformFunction: null } }, host: { attributes: { "role": "progressbar" }, properties: { "class.ix-spinner-indeterminate": "mode() === \"indeterminate\"", "class.ix-spinner-determinate": "mode() === \"determinate\"", "attr.aria-valuenow": "mode() === \"determinate\" ? value() : null", "attr.aria-valuemin": "mode() === \"determinate\" ? 0 : null", "attr.aria-valuemax": "mode() === \"determinate\" ? 100 : null", "attr.aria-label": "ariaLabel() || null", "attr.aria-labelledby": "ariaLabelledby() || null" }, classAttribute: "ix-spinner" }, ngImport: i0, template: "<svg\n  [attr.width]=\"diameter()\"\n  [attr.height]=\"diameter()\"\n  [attr.viewBox]=\"viewBox()\"\n  class=\"ix-spinner-svg\">\n  <circle\n    class=\"ix-spinner-circle\"\n    [attr.cx]=\"diameter() / 2\"\n    [attr.cy]=\"diameter() / 2\"\n    [attr.r]=\"radius()\"\n    [attr.stroke-width]=\"strokeWidth()\"\n    [attr.stroke-dasharray]=\"strokeDasharray()\"\n    [attr.stroke-dashoffset]=\"strokeDashoffset()\"\n    fill=\"none\">\n  </circle>\n</svg>", styles: [".ix-spinner{display:inline-block;vertical-align:middle}.ix-spinner-svg{animation:ix-spinner-rotate 2s linear infinite;transform-origin:center}.ix-spinner-circle{stroke:var(--primary, #007bff);stroke-linecap:round;transition:stroke-dashoffset .35s cubic-bezier(.4,0,.2,1)}.ix-spinner-indeterminate .ix-spinner-circle{animation:ix-spinner-dash 1.4s ease-in-out infinite}.ix-spinner-determinate .ix-spinner-svg{animation:none;transform:rotate(-90deg)}@keyframes ix-spinner-rotate{0%{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes ix-spinner-dash{0%{stroke-dasharray:1,200;stroke-dashoffset:0}50%{stroke-dasharray:100,200;stroke-dashoffset:-15}to{stroke-dasharray:100,200;stroke-dashoffset:-125}}\n"], changeDetection: i0.ChangeDetectionStrategy.OnPush, encapsulation: i0.ViewEncapsulation.None });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSpinnerComponent, decorators: [{
             type: Component,
             args: [{ selector: 'ix-spinner', standalone: true, imports: [NgIf], changeDetection: ChangeDetectionStrategy.OnPush, encapsulation: ViewEncapsulation.None, host: {
                         'class': 'ix-spinner',
-                        '[class.ix-spinner-indeterminate]': 'mode === "indeterminate"',
-                        '[class.ix-spinner-determinate]': 'mode === "determinate"',
-                        '[attr.aria-valuenow]': 'mode === "determinate" ? value : null',
-                        '[attr.aria-valuemin]': 'mode === "determinate" ? 0 : null',
-                        '[attr.aria-valuemax]': 'mode === "determinate" ? 100 : null',
+                        '[class.ix-spinner-indeterminate]': 'mode() === "indeterminate"',
+                        '[class.ix-spinner-determinate]': 'mode() === "determinate"',
+                        '[attr.aria-valuenow]': 'mode() === "determinate" ? value() : null',
+                        '[attr.aria-valuemin]': 'mode() === "determinate" ? 0 : null',
+                        '[attr.aria-valuemax]': 'mode() === "determinate" ? 100 : null',
                         'role': 'progressbar',
-                        '[attr.aria-label]': 'ariaLabel || null',
-                        '[attr.aria-labelledby]': 'ariaLabelledby || null'
-                    }, template: "<svg \n  [attr.width]=\"diameter\" \n  [attr.height]=\"diameter\" \n  [attr.viewBox]=\"viewBox\"\n  class=\"ix-spinner-svg\">\n  <circle\n    class=\"ix-spinner-circle\"\n    [attr.cx]=\"diameter / 2\"\n    [attr.cy]=\"diameter / 2\"\n    [attr.r]=\"radius\"\n    [attr.stroke-width]=\"strokeWidth\"\n    [attr.stroke-dasharray]=\"strokeDasharray\"\n    [attr.stroke-dashoffset]=\"strokeDashoffset\"\n    fill=\"none\">\n  </circle>\n</svg>", styles: [".ix-spinner{display:inline-block;vertical-align:middle}.ix-spinner-svg{animation:ix-spinner-rotate 2s linear infinite;transform-origin:center}.ix-spinner-circle{stroke:var(--primary, #007bff);stroke-linecap:round;transition:stroke-dashoffset .35s cubic-bezier(.4,0,.2,1)}.ix-spinner-indeterminate .ix-spinner-circle{animation:ix-spinner-dash 1.4s ease-in-out infinite}.ix-spinner-determinate .ix-spinner-svg{animation:none;transform:rotate(-90deg)}@keyframes ix-spinner-rotate{0%{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes ix-spinner-dash{0%{stroke-dasharray:1,200;stroke-dashoffset:0}50%{stroke-dasharray:100,200;stroke-dashoffset:-15}to{stroke-dasharray:100,200;stroke-dashoffset:-125}}\n"] }]
-        }], propDecorators: { mode: [{
-                type: Input
-            }], value: [{
-                type: Input
-            }], diameter: [{
-                type: Input
-            }], strokeWidth: [{
-                type: Input
-            }], ariaLabel: [{
-                type: Input
-            }], ariaLabelledby: [{
-                type: Input
-            }] } });
+                        '[attr.aria-label]': 'ariaLabel() || null',
+                        '[attr.aria-labelledby]': 'ariaLabelledby() || null'
+                    }, template: "<svg\n  [attr.width]=\"diameter()\"\n  [attr.height]=\"diameter()\"\n  [attr.viewBox]=\"viewBox()\"\n  class=\"ix-spinner-svg\">\n  <circle\n    class=\"ix-spinner-circle\"\n    [attr.cx]=\"diameter() / 2\"\n    [attr.cy]=\"diameter() / 2\"\n    [attr.r]=\"radius()\"\n    [attr.stroke-width]=\"strokeWidth()\"\n    [attr.stroke-dasharray]=\"strokeDasharray()\"\n    [attr.stroke-dashoffset]=\"strokeDashoffset()\"\n    fill=\"none\">\n  </circle>\n</svg>", styles: [".ix-spinner{display:inline-block;vertical-align:middle}.ix-spinner-svg{animation:ix-spinner-rotate 2s linear infinite;transform-origin:center}.ix-spinner-circle{stroke:var(--primary, #007bff);stroke-linecap:round;transition:stroke-dashoffset .35s cubic-bezier(.4,0,.2,1)}.ix-spinner-indeterminate .ix-spinner-circle{animation:ix-spinner-dash 1.4s ease-in-out infinite}.ix-spinner-determinate .ix-spinner-svg{animation:none;transform:rotate(-90deg)}@keyframes ix-spinner-rotate{0%{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes ix-spinner-dash{0%{stroke-dasharray:1,200;stroke-dashoffset:0}50%{stroke-dasharray:100,200;stroke-dashoffset:-15}to{stroke-dasharray:100,200;stroke-dashoffset:-125}}\n"] }]
+        }] });
 
 class IxBrandedSpinnerComponent {
     elementRef;
-    ariaLabel = null;
+    ariaLabel = input(null, ...(ngDevMode ? [{ debugName: "ariaLabel" }] : []));
     paths = [];
     animationId = null;
     isAnimating = false;
@@ -4318,46 +4065,44 @@ class IxBrandedSpinnerComponent {
         return from + (to - from) * progress;
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxBrandedSpinnerComponent, deps: [{ token: i0.ElementRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxBrandedSpinnerComponent, isStandalone: true, selector: "ix-branded-spinner", inputs: { ariaLabel: "ariaLabel" }, host: { attributes: { "role": "progressbar" }, properties: { "attr.aria-label": "ariaLabel || \"Loading...\"" }, classAttribute: "ix-branded-spinner" }, ngImport: i0, template: "<div class=\"ix-branded-spinner-container\">\n  <svg \n    viewBox=\"0 -7 62 62\" \n    preserveAspectRatio=\"xMidYMid meet\" \n    xmlns=\"http://www.w3.org/2000/svg\"\n    class=\"ix-branded-spinner-logo\">\n    \n    <!-- EXPLODED LOGO PATHS -->\n    <path class=\"exploded center\" fill=\"#AFADAE\" d=\"m41.79 24.13-11.26 6.51-11.28-6.51 11.28-6.51 11.26 6.51Z\" />\n    <path class=\"exploded top-left\" fill=\"#35BEEB\" d=\"M27.86 0v13.01l-13.93 8.04-11.28-6.5L27.86 0Z\" />\n    <path class=\"exploded bottom-right\" fill=\"#35BEEB\" d=\"M61.03 19.16v13.01L33.19 48.25V35.24l27.84-16.08Z\" />\n    <path class=\"exploded bottom-left\" fill=\"#0A95D3\" d=\"M27.86 35.24v13L0 32.17v-13l12.59 7.26s.03.02.05.03l15.23 8.79-.01-.01Z\" />\n    <path class=\"exploded top-right\" fill=\"#0A95D3\" d=\"m58.38 14.55-11.27 6.51-13.92-8.05V0l25.19 14.55Z\" />\n  </svg>\n</div>", styles: [".ix-branded-spinner{display:inline-block;vertical-align:middle}.ix-branded-spinner-container{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100px;min-height:100px}.ix-branded-spinner-logo{width:100px;height:100px}.ix-branded-spinner-logo path.exploded{fill-opacity:0;stroke-width:1px;stroke:var(--primary, #007bff)}.ix-branded-spinner-logo path#morph-target{fill-opacity:0;fill:var(--primary, #007bff)}\n"], changeDetection: i0.ChangeDetectionStrategy.OnPush, encapsulation: i0.ViewEncapsulation.None });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxBrandedSpinnerComponent, isStandalone: true, selector: "ix-branded-spinner", inputs: { ariaLabel: { classPropertyName: "ariaLabel", publicName: "ariaLabel", isSignal: true, isRequired: false, transformFunction: null } }, host: { attributes: { "role": "progressbar" }, properties: { "attr.aria-label": "ariaLabel() || \"Loading...\"" }, classAttribute: "ix-branded-spinner" }, ngImport: i0, template: "<div class=\"ix-branded-spinner-container\">\n  <svg \n    viewBox=\"0 -7 62 62\" \n    preserveAspectRatio=\"xMidYMid meet\" \n    xmlns=\"http://www.w3.org/2000/svg\"\n    class=\"ix-branded-spinner-logo\">\n    \n    <!-- EXPLODED LOGO PATHS -->\n    <path class=\"exploded center\" fill=\"#AFADAE\" d=\"m41.79 24.13-11.26 6.51-11.28-6.51 11.28-6.51 11.26 6.51Z\" />\n    <path class=\"exploded top-left\" fill=\"#35BEEB\" d=\"M27.86 0v13.01l-13.93 8.04-11.28-6.5L27.86 0Z\" />\n    <path class=\"exploded bottom-right\" fill=\"#35BEEB\" d=\"M61.03 19.16v13.01L33.19 48.25V35.24l27.84-16.08Z\" />\n    <path class=\"exploded bottom-left\" fill=\"#0A95D3\" d=\"M27.86 35.24v13L0 32.17v-13l12.59 7.26s.03.02.05.03l15.23 8.79-.01-.01Z\" />\n    <path class=\"exploded top-right\" fill=\"#0A95D3\" d=\"m58.38 14.55-11.27 6.51-13.92-8.05V0l25.19 14.55Z\" />\n  </svg>\n</div>", styles: [".ix-branded-spinner{display:inline-block;vertical-align:middle}.ix-branded-spinner-container{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100px;min-height:100px}.ix-branded-spinner-logo{width:100px;height:100px}.ix-branded-spinner-logo path.exploded{fill-opacity:0;stroke-width:1px;stroke:var(--primary, #007bff)}.ix-branded-spinner-logo path#morph-target{fill-opacity:0;fill:var(--primary, #007bff)}\n"], changeDetection: i0.ChangeDetectionStrategy.OnPush, encapsulation: i0.ViewEncapsulation.None });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxBrandedSpinnerComponent, decorators: [{
             type: Component,
             args: [{ selector: 'ix-branded-spinner', standalone: true, changeDetection: ChangeDetectionStrategy.OnPush, encapsulation: ViewEncapsulation.None, host: {
                         'class': 'ix-branded-spinner',
                         'role': 'progressbar',
-                        '[attr.aria-label]': 'ariaLabel || "Loading..."'
+                        '[attr.aria-label]': 'ariaLabel() || "Loading..."'
                     }, template: "<div class=\"ix-branded-spinner-container\">\n  <svg \n    viewBox=\"0 -7 62 62\" \n    preserveAspectRatio=\"xMidYMid meet\" \n    xmlns=\"http://www.w3.org/2000/svg\"\n    class=\"ix-branded-spinner-logo\">\n    \n    <!-- EXPLODED LOGO PATHS -->\n    <path class=\"exploded center\" fill=\"#AFADAE\" d=\"m41.79 24.13-11.26 6.51-11.28-6.51 11.28-6.51 11.26 6.51Z\" />\n    <path class=\"exploded top-left\" fill=\"#35BEEB\" d=\"M27.86 0v13.01l-13.93 8.04-11.28-6.5L27.86 0Z\" />\n    <path class=\"exploded bottom-right\" fill=\"#35BEEB\" d=\"M61.03 19.16v13.01L33.19 48.25V35.24l27.84-16.08Z\" />\n    <path class=\"exploded bottom-left\" fill=\"#0A95D3\" d=\"M27.86 35.24v13L0 32.17v-13l12.59 7.26s.03.02.05.03l15.23 8.79-.01-.01Z\" />\n    <path class=\"exploded top-right\" fill=\"#0A95D3\" d=\"m58.38 14.55-11.27 6.51-13.92-8.05V0l25.19 14.55Z\" />\n  </svg>\n</div>", styles: [".ix-branded-spinner{display:inline-block;vertical-align:middle}.ix-branded-spinner-container{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100px;min-height:100px}.ix-branded-spinner-logo{width:100px;height:100px}.ix-branded-spinner-logo path.exploded{fill-opacity:0;stroke-width:1px;stroke:var(--primary, #007bff)}.ix-branded-spinner-logo path#morph-target{fill-opacity:0;fill:var(--primary, #007bff)}\n"] }]
-        }], ctorParameters: () => [{ type: i0.ElementRef }], propDecorators: { ariaLabel: [{
-                type: Input
-            }] } });
+        }], ctorParameters: () => [{ type: i0.ElementRef }] });
 
 class IxProgressBarComponent {
-    mode = 'determinate';
-    value = 0;
-    bufferValue = 0;
-    ariaLabel = null;
-    ariaLabelledby = null;
+    mode = input('determinate', ...(ngDevMode ? [{ debugName: "mode" }] : []));
+    value = input(0, ...(ngDevMode ? [{ debugName: "value" }] : []));
+    bufferValue = input(0, ...(ngDevMode ? [{ debugName: "bufferValue" }] : []));
+    ariaLabel = input(null, ...(ngDevMode ? [{ debugName: "ariaLabel" }] : []));
+    ariaLabelledby = input(null, ...(ngDevMode ? [{ debugName: "ariaLabelledby" }] : []));
     /**
      * Gets the transform value for the primary progress bar
      */
-    get primaryTransform() {
-        if (this.mode === 'determinate' || this.mode === 'buffer') {
-            const clampedValue = Math.max(0, Math.min(100, this.value));
+    primaryTransform = computed(() => {
+        if (this.mode() === 'determinate' || this.mode() === 'buffer') {
+            const clampedValue = Math.max(0, Math.min(100, this.value()));
             const scale = clampedValue / 100;
             return `scaleX(${scale})`;
         }
         // For indeterminate mode, don't apply inline transform - CSS animation handles it
-        if (this.mode === 'indeterminate') {
+        if (this.mode() === 'indeterminate') {
             return '';
         }
         return 'scaleX(0)';
-    }
+    }, ...(ngDevMode ? [{ debugName: "primaryTransform" }] : []));
     /**
      * Gets the positioning and size for the buffer dots animation
      */
-    get bufferStyles() {
-        if (this.mode === 'buffer') {
-            const buffer = Math.max(0, Math.min(100, this.bufferValue));
+    bufferStyles = computed(() => {
+        if (this.mode() === 'buffer') {
+            const buffer = Math.max(0, Math.min(100, this.bufferValue()));
             // Buffer takes up bufferValue% of total width, positioned from right
             return {
                 width: `${buffer}%`,
@@ -4365,63 +4110,53 @@ class IxProgressBarComponent {
             };
         }
         return { width: '0%', right: '0px' };
-    }
+    }, ...(ngDevMode ? [{ debugName: "bufferStyles" }] : []));
     /**
      * Gets the transform value for the buffer progress bar (deprecated - use bufferStyles)
      */
-    get bufferTransform() {
+    bufferTransform = computed(() => {
         return 'scaleX(0)'; // Hide the old buffer bar
-    }
+    }, ...(ngDevMode ? [{ debugName: "bufferTransform" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxProgressBarComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxProgressBarComponent, isStandalone: true, selector: "ix-progress-bar", inputs: { mode: "mode", value: "value", bufferValue: "bufferValue", ariaLabel: "ariaLabel", ariaLabelledby: "ariaLabelledby" }, host: { attributes: { "role": "progressbar" }, properties: { "class.ix-progress-bar-determinate": "mode === \"determinate\"", "class.ix-progress-bar-indeterminate": "mode === \"indeterminate\"", "class.ix-progress-bar-buffer": "mode === \"buffer\"", "attr.aria-valuenow": "mode === \"determinate\" ? value : null", "attr.aria-valuemin": "mode === \"determinate\" ? 0 : null", "attr.aria-valuemax": "mode === \"determinate\" ? 100 : null", "attr.aria-label": "ariaLabel || null", "attr.aria-labelledby": "ariaLabelledby || null" }, classAttribute: "ix-progress-bar" }, ngImport: i0, template: "<!-- Background/buffer layer -->\n<div class=\"ix-progress-bar-buffer\" aria-hidden=\"true\">\n  <!-- Buffer bar hidden in new implementation -->\n  <!-- Buffer dots for buffer mode -->\n  @if (mode === 'buffer') {\n    <div class=\"ix-progress-bar-buffer-dots\"\n         [style.width]=\"bufferStyles.width\"\n         [style.right]=\"bufferStyles.right\"></div>\n  }\n</div>\n\n<!-- Primary bar -->\n<div class=\"ix-progress-bar-bar ix-progress-bar-primary-bar\" aria-hidden=\"true\">\n  <span class=\"ix-progress-bar-bar-inner\" \n        [style.transform]=\"primaryTransform\"></span>\n</div>\n\n<!-- Secondary bar (for indeterminate mode) -->\n@if (mode === 'indeterminate') {\n  <div class=\"ix-progress-bar-bar ix-progress-bar-secondary-bar\" aria-hidden=\"true\">\n    <span class=\"ix-progress-bar-bar-inner\"></span>\n  </div>\n}\n\n", styles: [":host{display:block;height:4px;overflow:hidden;position:relative;transition:opacity .25s linear;width:100%}.ix-progress-bar-buffer{position:absolute;top:0;bottom:0;width:100%;background-color:var(--bg2, #e5e7eb)}.ix-progress-bar-buffer-bar{display:none}.ix-progress-bar-buffer-dots{position:absolute;top:0;bottom:0;width:100%;background-image:radial-gradient(circle at center,var(--alt-bg2) 2px,transparent 2px);background-size:10px 4px;background-repeat:repeat-x;animation:ix-progress-bar-buffer-dots .25s infinite linear}@keyframes ix-progress-bar-buffer-dots{0%{background-position-x:0}to{background-position-x:-10px}}.ix-progress-bar-bar{position:absolute;top:0;bottom:0;left:0;width:100%;transform-origin:left center}.ix-progress-bar-bar-inner{display:block;position:absolute;top:0;bottom:0;left:0;width:100%;background-color:var(--primary, #3b82f6);transform-origin:left center;height:100%}.ix-progress-bar-primary-bar{z-index:1}.ix-progress-bar-secondary-bar{z-index:0;display:none}.ix-progress-bar-secondary-bar .ix-progress-bar-bar-inner{background-color:var(--primary, #3b82f6)}:host(.ix-progress-bar-indeterminate) .ix-progress-bar-primary-bar .ix-progress-bar-bar-inner{animation:ix-progress-bar-indeterminate 2s infinite linear;background-color:var(--primary, #3b82f6);opacity:1!important;z-index:999!important}@keyframes ix-progress-bar-indeterminate{0%{transform:translate(-100%) scaleX(.3)}to{transform:translate(100%) scaleX(.3)}}:host(.ix-progress-bar-buffer) .ix-progress-bar-buffer-bar{opacity:1}:host(.ix-progress-bar-buffer) .ix-progress-bar-buffer-dots{opacity:1}:host(.ix-progress-bar-determinate) .ix-progress-bar-buffer-dots{display:none}:host(.ix-progress-bar-determinate) .ix-progress-bar-secondary-bar{display:none}:host(.ix-progress-bar-buffer) .ix-progress-bar-secondary-bar{display:none}:host(.ix-progress-bar-indeterminate) .ix-progress-bar-buffer-dots{display:none}:host(.ix-progress-bar-indeterminate) .ix-progress-bar-buffer-bar{display:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxProgressBarComponent, isStandalone: true, selector: "ix-progress-bar", inputs: { mode: { classPropertyName: "mode", publicName: "mode", isSignal: true, isRequired: false, transformFunction: null }, value: { classPropertyName: "value", publicName: "value", isSignal: true, isRequired: false, transformFunction: null }, bufferValue: { classPropertyName: "bufferValue", publicName: "bufferValue", isSignal: true, isRequired: false, transformFunction: null }, ariaLabel: { classPropertyName: "ariaLabel", publicName: "ariaLabel", isSignal: true, isRequired: false, transformFunction: null }, ariaLabelledby: { classPropertyName: "ariaLabelledby", publicName: "ariaLabelledby", isSignal: true, isRequired: false, transformFunction: null } }, host: { attributes: { "role": "progressbar" }, properties: { "class.ix-progress-bar-determinate": "mode() === \"determinate\"", "class.ix-progress-bar-indeterminate": "mode() === \"indeterminate\"", "class.ix-progress-bar-buffer": "mode() === \"buffer\"", "attr.aria-valuenow": "mode() === \"determinate\" ? value() : null", "attr.aria-valuemin": "mode() === \"determinate\" ? 0 : null", "attr.aria-valuemax": "mode() === \"determinate\" ? 100 : null", "attr.aria-label": "ariaLabel() || null", "attr.aria-labelledby": "ariaLabelledby() || null" }, classAttribute: "ix-progress-bar" }, ngImport: i0, template: "<!-- Background/buffer layer -->\n<div class=\"ix-progress-bar-buffer\" aria-hidden=\"true\">\n  <!-- Buffer bar hidden in new implementation -->\n  <!-- Buffer dots for buffer mode -->\n  @if (mode() === 'buffer') {\n    <div class=\"ix-progress-bar-buffer-dots\"\n         [style.width]=\"bufferStyles().width\"\n         [style.right]=\"bufferStyles().right\"></div>\n  }\n</div>\n\n<!-- Primary bar -->\n<div class=\"ix-progress-bar-bar ix-progress-bar-primary-bar\" aria-hidden=\"true\">\n  <span class=\"ix-progress-bar-bar-inner\"\n        [style.transform]=\"primaryTransform()\"></span>\n</div>\n\n<!-- Secondary bar (for indeterminate mode) -->\n@if (mode() === 'indeterminate') {\n  <div class=\"ix-progress-bar-bar ix-progress-bar-secondary-bar\" aria-hidden=\"true\">\n    <span class=\"ix-progress-bar-bar-inner\"></span>\n  </div>\n}\n\n", styles: [":host{display:block;height:4px;overflow:hidden;position:relative;transition:opacity .25s linear;width:100%}.ix-progress-bar-buffer{position:absolute;top:0;bottom:0;width:100%;background-color:var(--bg2, #e5e7eb)}.ix-progress-bar-buffer-bar{display:none}.ix-progress-bar-buffer-dots{position:absolute;top:0;bottom:0;width:100%;background-image:radial-gradient(circle at center,var(--alt-bg2) 2px,transparent 2px);background-size:10px 4px;background-repeat:repeat-x;animation:ix-progress-bar-buffer-dots .25s infinite linear}@keyframes ix-progress-bar-buffer-dots{0%{background-position-x:0}to{background-position-x:-10px}}.ix-progress-bar-bar{position:absolute;top:0;bottom:0;left:0;width:100%;transform-origin:left center}.ix-progress-bar-bar-inner{display:block;position:absolute;top:0;bottom:0;left:0;width:100%;background-color:var(--primary, #3b82f6);transform-origin:left center;height:100%}.ix-progress-bar-primary-bar{z-index:1}.ix-progress-bar-secondary-bar{z-index:0;display:none}.ix-progress-bar-secondary-bar .ix-progress-bar-bar-inner{background-color:var(--primary, #3b82f6)}:host(.ix-progress-bar-indeterminate) .ix-progress-bar-primary-bar .ix-progress-bar-bar-inner{animation:ix-progress-bar-indeterminate 2s infinite linear;background-color:var(--primary, #3b82f6);opacity:1!important;z-index:999!important}@keyframes ix-progress-bar-indeterminate{0%{transform:translate(-100%) scaleX(.3)}to{transform:translate(100%) scaleX(.3)}}:host(.ix-progress-bar-buffer) .ix-progress-bar-buffer-bar{opacity:1}:host(.ix-progress-bar-buffer) .ix-progress-bar-buffer-dots{opacity:1}:host(.ix-progress-bar-determinate) .ix-progress-bar-buffer-dots{display:none}:host(.ix-progress-bar-determinate) .ix-progress-bar-secondary-bar{display:none}:host(.ix-progress-bar-buffer) .ix-progress-bar-secondary-bar{display:none}:host(.ix-progress-bar-indeterminate) .ix-progress-bar-buffer-dots{display:none}:host(.ix-progress-bar-indeterminate) .ix-progress-bar-buffer-bar{display:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxProgressBarComponent, decorators: [{
             type: Component,
             args: [{ selector: 'ix-progress-bar', standalone: true, imports: [CommonModule], changeDetection: ChangeDetectionStrategy.OnPush, host: {
                         'class': 'ix-progress-bar',
-                        '[class.ix-progress-bar-determinate]': 'mode === "determinate"',
-                        '[class.ix-progress-bar-indeterminate]': 'mode === "indeterminate"',
-                        '[class.ix-progress-bar-buffer]': 'mode === "buffer"',
+                        '[class.ix-progress-bar-determinate]': 'mode() === "determinate"',
+                        '[class.ix-progress-bar-indeterminate]': 'mode() === "indeterminate"',
+                        '[class.ix-progress-bar-buffer]': 'mode() === "buffer"',
                         'role': 'progressbar',
-                        '[attr.aria-valuenow]': 'mode === "determinate" ? value : null',
-                        '[attr.aria-valuemin]': 'mode === "determinate" ? 0 : null',
-                        '[attr.aria-valuemax]': 'mode === "determinate" ? 100 : null',
-                        '[attr.aria-label]': 'ariaLabel || null',
-                        '[attr.aria-labelledby]': 'ariaLabelledby || null'
-                    }, template: "<!-- Background/buffer layer -->\n<div class=\"ix-progress-bar-buffer\" aria-hidden=\"true\">\n  <!-- Buffer bar hidden in new implementation -->\n  <!-- Buffer dots for buffer mode -->\n  @if (mode === 'buffer') {\n    <div class=\"ix-progress-bar-buffer-dots\"\n         [style.width]=\"bufferStyles.width\"\n         [style.right]=\"bufferStyles.right\"></div>\n  }\n</div>\n\n<!-- Primary bar -->\n<div class=\"ix-progress-bar-bar ix-progress-bar-primary-bar\" aria-hidden=\"true\">\n  <span class=\"ix-progress-bar-bar-inner\" \n        [style.transform]=\"primaryTransform\"></span>\n</div>\n\n<!-- Secondary bar (for indeterminate mode) -->\n@if (mode === 'indeterminate') {\n  <div class=\"ix-progress-bar-bar ix-progress-bar-secondary-bar\" aria-hidden=\"true\">\n    <span class=\"ix-progress-bar-bar-inner\"></span>\n  </div>\n}\n\n", styles: [":host{display:block;height:4px;overflow:hidden;position:relative;transition:opacity .25s linear;width:100%}.ix-progress-bar-buffer{position:absolute;top:0;bottom:0;width:100%;background-color:var(--bg2, #e5e7eb)}.ix-progress-bar-buffer-bar{display:none}.ix-progress-bar-buffer-dots{position:absolute;top:0;bottom:0;width:100%;background-image:radial-gradient(circle at center,var(--alt-bg2) 2px,transparent 2px);background-size:10px 4px;background-repeat:repeat-x;animation:ix-progress-bar-buffer-dots .25s infinite linear}@keyframes ix-progress-bar-buffer-dots{0%{background-position-x:0}to{background-position-x:-10px}}.ix-progress-bar-bar{position:absolute;top:0;bottom:0;left:0;width:100%;transform-origin:left center}.ix-progress-bar-bar-inner{display:block;position:absolute;top:0;bottom:0;left:0;width:100%;background-color:var(--primary, #3b82f6);transform-origin:left center;height:100%}.ix-progress-bar-primary-bar{z-index:1}.ix-progress-bar-secondary-bar{z-index:0;display:none}.ix-progress-bar-secondary-bar .ix-progress-bar-bar-inner{background-color:var(--primary, #3b82f6)}:host(.ix-progress-bar-indeterminate) .ix-progress-bar-primary-bar .ix-progress-bar-bar-inner{animation:ix-progress-bar-indeterminate 2s infinite linear;background-color:var(--primary, #3b82f6);opacity:1!important;z-index:999!important}@keyframes ix-progress-bar-indeterminate{0%{transform:translate(-100%) scaleX(.3)}to{transform:translate(100%) scaleX(.3)}}:host(.ix-progress-bar-buffer) .ix-progress-bar-buffer-bar{opacity:1}:host(.ix-progress-bar-buffer) .ix-progress-bar-buffer-dots{opacity:1}:host(.ix-progress-bar-determinate) .ix-progress-bar-buffer-dots{display:none}:host(.ix-progress-bar-determinate) .ix-progress-bar-secondary-bar{display:none}:host(.ix-progress-bar-buffer) .ix-progress-bar-secondary-bar{display:none}:host(.ix-progress-bar-indeterminate) .ix-progress-bar-buffer-dots{display:none}:host(.ix-progress-bar-indeterminate) .ix-progress-bar-buffer-bar{display:none}\n"] }]
-        }], propDecorators: { mode: [{
-                type: Input
-            }], value: [{
-                type: Input
-            }], bufferValue: [{
-                type: Input
-            }], ariaLabel: [{
-                type: Input
-            }], ariaLabelledby: [{
-                type: Input
-            }] } });
+                        '[attr.aria-valuenow]': 'mode() === "determinate" ? value() : null',
+                        '[attr.aria-valuemin]': 'mode() === "determinate" ? 0 : null',
+                        '[attr.aria-valuemax]': 'mode() === "determinate" ? 100 : null',
+                        '[attr.aria-label]': 'ariaLabel() || null',
+                        '[attr.aria-labelledby]': 'ariaLabelledby() || null'
+                    }, template: "<!-- Background/buffer layer -->\n<div class=\"ix-progress-bar-buffer\" aria-hidden=\"true\">\n  <!-- Buffer bar hidden in new implementation -->\n  <!-- Buffer dots for buffer mode -->\n  @if (mode() === 'buffer') {\n    <div class=\"ix-progress-bar-buffer-dots\"\n         [style.width]=\"bufferStyles().width\"\n         [style.right]=\"bufferStyles().right\"></div>\n  }\n</div>\n\n<!-- Primary bar -->\n<div class=\"ix-progress-bar-bar ix-progress-bar-primary-bar\" aria-hidden=\"true\">\n  <span class=\"ix-progress-bar-bar-inner\"\n        [style.transform]=\"primaryTransform()\"></span>\n</div>\n\n<!-- Secondary bar (for indeterminate mode) -->\n@if (mode() === 'indeterminate') {\n  <div class=\"ix-progress-bar-bar ix-progress-bar-secondary-bar\" aria-hidden=\"true\">\n    <span class=\"ix-progress-bar-bar-inner\"></span>\n  </div>\n}\n\n", styles: [":host{display:block;height:4px;overflow:hidden;position:relative;transition:opacity .25s linear;width:100%}.ix-progress-bar-buffer{position:absolute;top:0;bottom:0;width:100%;background-color:var(--bg2, #e5e7eb)}.ix-progress-bar-buffer-bar{display:none}.ix-progress-bar-buffer-dots{position:absolute;top:0;bottom:0;width:100%;background-image:radial-gradient(circle at center,var(--alt-bg2) 2px,transparent 2px);background-size:10px 4px;background-repeat:repeat-x;animation:ix-progress-bar-buffer-dots .25s infinite linear}@keyframes ix-progress-bar-buffer-dots{0%{background-position-x:0}to{background-position-x:-10px}}.ix-progress-bar-bar{position:absolute;top:0;bottom:0;left:0;width:100%;transform-origin:left center}.ix-progress-bar-bar-inner{display:block;position:absolute;top:0;bottom:0;left:0;width:100%;background-color:var(--primary, #3b82f6);transform-origin:left center;height:100%}.ix-progress-bar-primary-bar{z-index:1}.ix-progress-bar-secondary-bar{z-index:0;display:none}.ix-progress-bar-secondary-bar .ix-progress-bar-bar-inner{background-color:var(--primary, #3b82f6)}:host(.ix-progress-bar-indeterminate) .ix-progress-bar-primary-bar .ix-progress-bar-bar-inner{animation:ix-progress-bar-indeterminate 2s infinite linear;background-color:var(--primary, #3b82f6);opacity:1!important;z-index:999!important}@keyframes ix-progress-bar-indeterminate{0%{transform:translate(-100%) scaleX(.3)}to{transform:translate(100%) scaleX(.3)}}:host(.ix-progress-bar-buffer) .ix-progress-bar-buffer-bar{opacity:1}:host(.ix-progress-bar-buffer) .ix-progress-bar-buffer-dots{opacity:1}:host(.ix-progress-bar-determinate) .ix-progress-bar-buffer-dots{display:none}:host(.ix-progress-bar-determinate) .ix-progress-bar-secondary-bar{display:none}:host(.ix-progress-bar-buffer) .ix-progress-bar-secondary-bar{display:none}:host(.ix-progress-bar-indeterminate) .ix-progress-bar-buffer-dots{display:none}:host(.ix-progress-bar-indeterminate) .ix-progress-bar-buffer-bar{display:none}\n"] }]
+        }] });
 
 class IxParticleProgressBarComponent {
-    speed = 'medium';
-    color = 'hsla(198, 100%, 42%, 1)';
-    height = 40;
-    width = 600;
-    fill = 300;
-    canvasRef;
+    speed = input('medium', ...(ngDevMode ? [{ debugName: "speed" }] : []));
+    color = input('hsla(198, 100%, 42%, 1)', ...(ngDevMode ? [{ debugName: "color" }] : []));
+    height = input(40, ...(ngDevMode ? [{ debugName: "height" }] : []));
+    width = input(600, ...(ngDevMode ? [{ debugName: "width" }] : []));
+    fill = input(300, ...(ngDevMode ? [{ debugName: "fill" }] : []));
+    canvasRef = viewChild.required('canvas');
     ctx;
     particles = [];
     shades = [];
     animationId;
-    get speedConfig() {
+    speedConfig = computed(() => {
         const baseConfig = {
             slow: { speedMin: 0.5, speedMax: 1.5 },
             medium: { speedMin: 1, speedMax: 2.5 },
             fast: { speedMin: 2, speedMax: 4 },
             ludicrous: { speedMin: 4, speedMax: 8 }
-        }[this.speed];
+        }[this.speed()];
         // Calculate dynamic fade rate based on travel distance
         // Particles should fade out over the full travel distance (minus border radius buffer)
-        const travelDistance = Math.max(this.fill - 12, 20); // Distance from x=50 to x=50+fill-12 (avoid border radius), minimum 20px
+        const travelDistance = Math.max(this.fill() - 12, 20); // Distance from x=50 to x=50+fill-12 (avoid border radius), minimum 20px
         const averageSpeed = (baseConfig.speedMin + baseConfig.speedMax) / 2;
         const estimatedFrames = travelDistance / averageSpeed; // Approximate frames to travel the distance
         const fadeRate = 1 / estimatedFrames; // Fade from 1 to 0 over the travel distance
@@ -4429,25 +4164,25 @@ class IxParticleProgressBarComponent {
             ...baseConfig,
             fadeRate: Math.max(fadeRate, 0.001) // Minimum fade rate to prevent too slow fading
         };
-    }
+    }, ...(ngDevMode ? [{ debugName: "speedConfig" }] : []));
     /**
      * Calculate the gradient offset so the transition only happens in the last 100px
      */
-    get gradientTransitionStart() {
-        if (this.fill <= 100) {
+    gradientTransitionStart = computed(() => {
+        if (this.fill() <= 100) {
             return 0; // If fill is 100px or less, transition starts immediately
         }
-        return ((this.fill - 100) / this.fill) * 100; // Transparent until last 100px
-    }
+        return ((this.fill() - 100) / this.fill()) * 100; // Transparent until last 100px
+    }, ...(ngDevMode ? [{ debugName: "gradientTransitionStart" }] : []));
     /**
      * Get the color for the progress bar (uses the exact same color as input)
      */
-    get progressBarColor() {
-        return this.color;
-    }
+    progressBarColor = computed(() => {
+        return this.color();
+    }, ...(ngDevMode ? [{ debugName: "progressBarColor" }] : []));
     ngAfterViewInit() {
-        this.ctx = this.canvasRef.nativeElement.getContext('2d');
-        this.shades = this.generateDarkerShades(this.color, 4);
+        this.ctx = this.canvasRef().nativeElement.getContext('2d');
+        this.shades = this.generateDarkerShades(this.color(), 4);
         this.animate();
     }
     ngOnDestroy() {
@@ -4456,7 +4191,7 @@ class IxParticleProgressBarComponent {
         }
     }
     animate() {
-        this.ctx.clearRect(0, 0, this.width, this.height);
+        this.ctx.clearRect(0, 0, this.width(), this.height());
         for (let i = 0; i < this.particles.length; i++) {
             const p = this.particles[i];
             this.ctx.beginPath();
@@ -4472,8 +4207,8 @@ class IxParticleProgressBarComponent {
             this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
             this.ctx.fill();
             p.x += p.speed;
-            p.opacity -= this.speedConfig.fadeRate;
-            if (p.x > 50 + this.fill - 12 || p.opacity <= 0) {
+            p.opacity -= this.speedConfig().fadeRate;
+            if (p.x > 50 + this.fill() - 12 || p.opacity <= 0) {
                 this.particles.splice(i, 1);
                 i--;
             }
@@ -4485,12 +4220,12 @@ class IxParticleProgressBarComponent {
         this.animationId = requestAnimationFrame(() => this.animate());
     }
     spawnParticle() {
-        const { speedMin, speedMax } = this.speedConfig;
+        const { speedMin, speedMax } = this.speedConfig();
         const color = this.shades[Math.floor(Math.random() * this.shades.length)];
         const speed = speedMin + Math.random() * (speedMax - speedMin);
         this.particles.push({
             x: 50,
-            y: this.height / 2 + (Math.random() * (this.height / 2) - this.height / 4),
+            y: this.height() / 2 + (Math.random() * (this.height() / 2) - this.height() / 4),
             radius: Math.random() * 2 + 1,
             speed,
             opacity: 1,
@@ -4578,52 +4313,33 @@ class IxParticleProgressBarComponent {
         return shades;
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxParticleProgressBarComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxParticleProgressBarComponent, isStandalone: true, selector: "ix-particle-progress-bar", inputs: { speed: "speed", color: "color", height: "height", width: "width", fill: "fill" }, host: { classAttribute: "ix-particle-progress-bar" }, viewQueries: [{ propertyName: "canvasRef", first: true, predicate: ["canvas"], descendants: true, static: true }], ngImport: i0, template: "<svg [attr.width]=\"width\" [attr.height]=\"height\">\n  <defs>\n    <linearGradient id=\"fadeToPrimary\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"0%\">\n      <stop offset=\"0%\" stop-color=\"transparent\" />\n      <stop [attr.offset]=\"gradientTransitionStart + '%'\" stop-color=\"transparent\" />\n      <stop offset=\"100%\" [attr.stop-color]=\"progressBarColor\" />\n    </linearGradient>\n  </defs>\n\n  <!-- Background bar -->\n  <rect x=\"50\" [attr.y]=\"height / 2 - height / 4\" [attr.width]=\"width - 100\" [attr.height]=\"height / 2\" [attr.rx]=\"height / 4\" fill=\"rgba(0,0,0,0.1)\" />\n\n  <!-- Fill bar -->\n  <rect\n    x=\"50\"\n    [attr.y]=\"height / 2 - height / 4\"\n    [attr.width]=\"fill\"\n    [attr.height]=\"height / 2\"\n    [attr.rx]=\"height / 4\"\n    fill=\"url(#fadeToPrimary)\"\n  />\n\n  <!-- Particle canvas -->\n  <foreignObject x=\"0\" y=\"0\" [attr.width]=\"width\" [attr.height]=\"height\">\n    <canvas #canvas [attr.width]=\"width\" [attr.height]=\"height\" style=\"pointer-events: none;\"></canvas>\n  </foreignObject>\n</svg>\n", styles: [":host{display:block}\n"], changeDetection: i0.ChangeDetectionStrategy.OnPush });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.2.0", version: "20.3.4", type: IxParticleProgressBarComponent, isStandalone: true, selector: "ix-particle-progress-bar", inputs: { speed: { classPropertyName: "speed", publicName: "speed", isSignal: true, isRequired: false, transformFunction: null }, color: { classPropertyName: "color", publicName: "color", isSignal: true, isRequired: false, transformFunction: null }, height: { classPropertyName: "height", publicName: "height", isSignal: true, isRequired: false, transformFunction: null }, width: { classPropertyName: "width", publicName: "width", isSignal: true, isRequired: false, transformFunction: null }, fill: { classPropertyName: "fill", publicName: "fill", isSignal: true, isRequired: false, transformFunction: null } }, host: { classAttribute: "ix-particle-progress-bar" }, viewQueries: [{ propertyName: "canvasRef", first: true, predicate: ["canvas"], descendants: true, isSignal: true }], ngImport: i0, template: "<svg [attr.width]=\"width()\" [attr.height]=\"height()\">\n  <defs>\n    <linearGradient id=\"fadeToPrimary\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"0%\">\n      <stop offset=\"0%\" stop-color=\"transparent\" />\n      <stop [attr.offset]=\"gradientTransitionStart() + '%'\" stop-color=\"transparent\" />\n      <stop offset=\"100%\" [attr.stop-color]=\"progressBarColor()\" />\n    </linearGradient>\n  </defs>\n\n  <!-- Background bar -->\n  <rect x=\"50\" [attr.y]=\"height() / 2 - height() / 4\" [attr.width]=\"width() - 100\" [attr.height]=\"height() / 2\" [attr.rx]=\"height() / 4\" fill=\"rgba(0,0,0,0.1)\" />\n\n  <!-- Fill bar -->\n  <rect\n    x=\"50\"\n    [attr.y]=\"height() / 2 - height() / 4\"\n    [attr.width]=\"fill()\"\n    [attr.height]=\"height() / 2\"\n    [attr.rx]=\"height() / 4\"\n    fill=\"url(#fadeToPrimary)\"\n  />\n\n  <!-- Particle canvas -->\n  <foreignObject x=\"0\" y=\"0\" [attr.width]=\"width()\" [attr.height]=\"height()\">\n    <canvas #canvas [attr.width]=\"width()\" [attr.height]=\"height()\" style=\"pointer-events: none;\"></canvas>\n  </foreignObject>\n</svg>\n", styles: [":host{display:block}\n"], changeDetection: i0.ChangeDetectionStrategy.OnPush });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxParticleProgressBarComponent, decorators: [{
             type: Component,
             args: [{ selector: 'ix-particle-progress-bar', standalone: true, changeDetection: ChangeDetectionStrategy.OnPush, host: {
                         'class': 'ix-particle-progress-bar'
-                    }, template: "<svg [attr.width]=\"width\" [attr.height]=\"height\">\n  <defs>\n    <linearGradient id=\"fadeToPrimary\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"0%\">\n      <stop offset=\"0%\" stop-color=\"transparent\" />\n      <stop [attr.offset]=\"gradientTransitionStart + '%'\" stop-color=\"transparent\" />\n      <stop offset=\"100%\" [attr.stop-color]=\"progressBarColor\" />\n    </linearGradient>\n  </defs>\n\n  <!-- Background bar -->\n  <rect x=\"50\" [attr.y]=\"height / 2 - height / 4\" [attr.width]=\"width - 100\" [attr.height]=\"height / 2\" [attr.rx]=\"height / 4\" fill=\"rgba(0,0,0,0.1)\" />\n\n  <!-- Fill bar -->\n  <rect\n    x=\"50\"\n    [attr.y]=\"height / 2 - height / 4\"\n    [attr.width]=\"fill\"\n    [attr.height]=\"height / 2\"\n    [attr.rx]=\"height / 4\"\n    fill=\"url(#fadeToPrimary)\"\n  />\n\n  <!-- Particle canvas -->\n  <foreignObject x=\"0\" y=\"0\" [attr.width]=\"width\" [attr.height]=\"height\">\n    <canvas #canvas [attr.width]=\"width\" [attr.height]=\"height\" style=\"pointer-events: none;\"></canvas>\n  </foreignObject>\n</svg>\n", styles: [":host{display:block}\n"] }]
-        }], propDecorators: { speed: [{
-                type: Input
-            }], color: [{
-                type: Input
-            }], height: [{
-                type: Input
-            }], width: [{
-                type: Input
-            }], fill: [{
-                type: Input
-            }], canvasRef: [{
-                type: ViewChild,
-                args: ['canvas', { static: true }]
-            }] } });
+                    }, template: "<svg [attr.width]=\"width()\" [attr.height]=\"height()\">\n  <defs>\n    <linearGradient id=\"fadeToPrimary\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"0%\">\n      <stop offset=\"0%\" stop-color=\"transparent\" />\n      <stop [attr.offset]=\"gradientTransitionStart() + '%'\" stop-color=\"transparent\" />\n      <stop offset=\"100%\" [attr.stop-color]=\"progressBarColor()\" />\n    </linearGradient>\n  </defs>\n\n  <!-- Background bar -->\n  <rect x=\"50\" [attr.y]=\"height() / 2 - height() / 4\" [attr.width]=\"width() - 100\" [attr.height]=\"height() / 2\" [attr.rx]=\"height() / 4\" fill=\"rgba(0,0,0,0.1)\" />\n\n  <!-- Fill bar -->\n  <rect\n    x=\"50\"\n    [attr.y]=\"height() / 2 - height() / 4\"\n    [attr.width]=\"fill()\"\n    [attr.height]=\"height() / 2\"\n    [attr.rx]=\"height() / 4\"\n    fill=\"url(#fadeToPrimary)\"\n  />\n\n  <!-- Particle canvas -->\n  <foreignObject x=\"0\" y=\"0\" [attr.width]=\"width()\" [attr.height]=\"height()\">\n    <canvas #canvas [attr.width]=\"width()\" [attr.height]=\"height()\" style=\"pointer-events: none;\"></canvas>\n  </foreignObject>\n</svg>\n", styles: [":host{display:block}\n"] }]
+        }] });
 
 class IxCalendarHeaderComponent {
-    set currentDate(date) {
-        this._currentDate.set(date);
-    }
-    get currentDate() {
-        return this._currentDate();
-    }
-    _currentDate = signal(new Date(), ...(ngDevMode ? [{ debugName: "_currentDate" }] : []));
-    currentView = 'month';
-    monthSelected = new EventEmitter();
-    yearSelected = new EventEmitter();
-    viewChanged = new EventEmitter();
-    previousClicked = new EventEmitter();
-    nextClicked = new EventEmitter();
+    currentDate = input(new Date(), ...(ngDevMode ? [{ debugName: "currentDate" }] : []));
+    currentView = input('month', ...(ngDevMode ? [{ debugName: "currentView" }] : []));
+    monthSelected = output();
+    yearSelected = output();
+    viewChanged = output();
+    previousClicked = output();
+    nextClicked = output();
     months = [
         'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
         'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
     ];
     periodLabelId = `ix-calendar-period-label-${Math.floor(Math.random() * 10000)}`;
     periodLabel = computed(() => {
-        const date = this._currentDate();
+        const date = this.currentDate();
         if (!date)
             return '';
-        if (this.currentView === 'month') {
+        if (this.currentView() === 'month') {
             const month = this.months[date.getMonth()];
             const year = date.getFullYear();
             return `${month} ${year}`;
@@ -4637,13 +4353,13 @@ class IxCalendarHeaderComponent {
         }
     }, ...(ngDevMode ? [{ debugName: "periodLabel" }] : []));
     previousLabel = computed(() => {
-        return this.currentView === 'month' ? 'Previous month' : 'Previous 24 years';
+        return this.currentView() === 'month' ? 'Previous month' : 'Previous 24 years';
     }, ...(ngDevMode ? [{ debugName: "previousLabel" }] : []));
     nextLabel = computed(() => {
-        return this.currentView === 'month' ? 'Next month' : 'Next 24 years';
+        return this.currentView() === 'month' ? 'Next month' : 'Next 24 years';
     }, ...(ngDevMode ? [{ debugName: "nextLabel" }] : []));
     toggleView() {
-        const newView = this.currentView === 'month' ? 'year' : 'month';
+        const newView = this.currentView() === 'month' ? 'year' : 'month';
         this.viewChanged.emit(newView);
     }
     onPreviousClick() {
@@ -4653,7 +4369,7 @@ class IxCalendarHeaderComponent {
         this.nextClicked.emit();
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxCalendarHeaderComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxCalendarHeaderComponent, isStandalone: true, selector: "ix-calendar-header", inputs: { currentDate: "currentDate", currentView: "currentView" }, outputs: { monthSelected: "monthSelected", yearSelected: "yearSelected", viewChanged: "viewChanged", previousClicked: "previousClicked", nextClicked: "nextClicked" }, ngImport: i0, template: `
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxCalendarHeaderComponent, isStandalone: true, selector: "ix-calendar-header", inputs: { currentDate: { classPropertyName: "currentDate", publicName: "currentDate", isSignal: true, isRequired: false, transformFunction: null }, currentView: { classPropertyName: "currentView", publicName: "currentView", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { monthSelected: "monthSelected", yearSelected: "yearSelected", viewChanged: "viewChanged", previousClicked: "previousClicked", nextClicked: "nextClicked" }, ngImport: i0, template: `
     <div class="ix-calendar-header">
       <div class="ix-calendar-controls">
         <!-- Period label (visually hidden for screen readers) -->
@@ -4752,45 +4468,19 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
       </div>
     </div>
   `, styles: [".ix-calendar-header{display:flex;padding:16px}.ix-calendar-controls{display:flex;align-items:center;width:100%}.cdk-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}.ix-calendar-period-button{background:none;border:none;font-weight:600;font-size:16px;color:var(--fg1, #333);padding:8px 12px;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:background-color .2s ease}.ix-calendar-period-button:hover{background:var(--alt-bg2, #e8f4fd)}.ix-calendar-period-button:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px;background:var(--alt-bg2, #e8f4fd)}.ix-calendar-arrow{width:10px;height:5px;fill:currentColor}.ix-calendar-spacer{flex:1}.ix-calendar-previous-button,.ix-calendar-next-button{background:none;border:none;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--fg1, #333);transition:background-color .2s ease}.ix-calendar-previous-button svg,.ix-calendar-next-button svg{width:24px;height:24px;fill:currentColor}.ix-calendar-previous-button:hover:not(:disabled),.ix-calendar-next-button:hover:not(:disabled){background:var(--alt-bg2, #e8f4fd)}.ix-calendar-previous-button:focus,.ix-calendar-next-button:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px;background:var(--alt-bg2, #e8f4fd)}.ix-calendar-previous-button:disabled,.ix-calendar-next-button:disabled{color:var(--fg2, #666);opacity:.5;cursor:not-allowed}\n"] }]
-        }], propDecorators: { currentDate: [{
-                type: Input
-            }], currentView: [{
-                type: Input
-            }], monthSelected: [{
-                type: Output
-            }], yearSelected: [{
-                type: Output
-            }], viewChanged: [{
-                type: Output
-            }], previousClicked: [{
-                type: Output
-            }], nextClicked: [{
-                type: Output
-            }] } });
+        }] });
 
 class IxMonthViewComponent {
-    set activeDate(date) {
-        this._activeDate.set(date);
-    }
-    get activeDate() {
-        return this._activeDate();
-    }
-    _activeDate = signal(new Date(), ...(ngDevMode ? [{ debugName: "_activeDate" }] : []));
-    selected;
-    minDate;
-    maxDate;
-    dateFilter;
+    activeDate = input(new Date(), ...(ngDevMode ? [{ debugName: "activeDate" }] : []));
+    selected = input(undefined, ...(ngDevMode ? [{ debugName: "selected" }] : []));
+    minDate = input(undefined, ...(ngDevMode ? [{ debugName: "minDate" }] : []));
+    maxDate = input(undefined, ...(ngDevMode ? [{ debugName: "maxDate" }] : []));
+    dateFilter = input(undefined, ...(ngDevMode ? [{ debugName: "dateFilter" }] : []));
     // Range mode inputs
-    rangeMode = false;
-    set selectedRange(value) {
-        this._selectedRange.set(value);
-    }
-    get selectedRange() {
-        return this._selectedRange();
-    }
-    _selectedRange = signal(undefined, ...(ngDevMode ? [{ debugName: "_selectedRange" }] : []));
-    selectedChange = new EventEmitter();
-    activeDateChange = new EventEmitter();
+    rangeMode = input(false, ...(ngDevMode ? [{ debugName: "rangeMode" }] : []));
+    selectedRange = input(undefined, ...(ngDevMode ? [{ debugName: "selectedRange" }] : []));
+    selectedChange = output();
+    activeDateChange = output();
     weekdays = [
         { long: 'Sunday', short: 'S' },
         { long: 'Monday', short: 'M' },
@@ -4802,9 +4492,9 @@ class IxMonthViewComponent {
     ];
     // Cell sizing now controlled via CSS custom properties in the SCSS file
     calendarRows = computed(() => {
-        const activeDate = this._activeDate();
+        const activeDate = this.activeDate();
         // Include selectedRange signal in the computed dependency so it recalculates when range changes
-        const currentSelectedRange = this._selectedRange();
+        const currentSelectedRange = this.selectedRange();
         if (!activeDate)
             return [];
         const year = activeDate.getFullYear();
@@ -4840,14 +4530,14 @@ class IxMonthViewComponent {
     createCell(date, value) {
         const today = new Date();
         const isToday = this.isSameDate(date, today);
-        const isSelected = this.selected ? this.isSameDate(date, this.selected) : false;
+        const isSelected = this.selected() ? this.isSameDate(date, this.selected()) : false;
         const enabled = this.isDateEnabled(date);
         // Range mode calculations
         let rangeStart = false;
         let rangeEnd = false;
         let inRange = false;
-        const currentRange = this._selectedRange();
-        if (this.rangeMode && currentRange) {
+        const currentRange = this.selectedRange();
+        if (this.rangeMode() && currentRange) {
             const { start, end } = currentRange;
             if (start && this.isSameDate(date, start)) {
                 rangeStart = true;
@@ -4884,11 +4574,14 @@ class IxMonthViewComponent {
         };
     }
     isDateEnabled(date) {
-        if (this.minDate && date < this.minDate)
+        const minDate = this.minDate();
+        const maxDate = this.maxDate();
+        const dateFilter = this.dateFilter();
+        if (minDate && date < minDate)
             return false;
-        if (this.maxDate && date > this.maxDate)
+        if (maxDate && date > maxDate)
             return false;
-        if (this.dateFilter && !this.dateFilter(date))
+        if (dateFilter && !dateFilter(date))
             return false;
         return true;
     }
@@ -4928,7 +4621,7 @@ class IxMonthViewComponent {
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMonthViewComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxMonthViewComponent, isStandalone: true, selector: "ix-month-view", inputs: { activeDate: "activeDate", selected: "selected", minDate: "minDate", maxDate: "maxDate", dateFilter: "dateFilter", rangeMode: "rangeMode", selectedRange: "selectedRange" }, outputs: { selectedChange: "selectedChange", activeDateChange: "activeDateChange" }, ngImport: i0, template: `
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxMonthViewComponent, isStandalone: true, selector: "ix-month-view", inputs: { activeDate: { classPropertyName: "activeDate", publicName: "activeDate", isSignal: true, isRequired: false, transformFunction: null }, selected: { classPropertyName: "selected", publicName: "selected", isSignal: true, isRequired: false, transformFunction: null }, minDate: { classPropertyName: "minDate", publicName: "minDate", isSignal: true, isRequired: false, transformFunction: null }, maxDate: { classPropertyName: "maxDate", publicName: "maxDate", isSignal: true, isRequired: false, transformFunction: null }, dateFilter: { classPropertyName: "dateFilter", publicName: "dateFilter", isSignal: true, isRequired: false, transformFunction: null }, rangeMode: { classPropertyName: "rangeMode", publicName: "rangeMode", isSignal: true, isRequired: false, transformFunction: null }, selectedRange: { classPropertyName: "selectedRange", publicName: "selectedRange", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectedChange: "selectedChange", activeDateChange: "activeDateChange" }, ngImport: i0, template: `
     <table role="grid" class="ix-calendar-table">
       <!-- Table header with day names -->
       <thead class="ix-calendar-table-header">
@@ -5037,47 +4730,23 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
       </tbody>
     </table>
   `, styles: [":host{--calendar-cell-size: 48px;--calendar-header-height: 40px;--calendar-cell-font-size: 16px;--calendar-header-font-size: 14px}.ix-calendar-table{width:calc(7 * var(--calendar-cell-size));border-spacing:0;border-collapse:separate}.ix-calendar-table-header th{text-align:center;height:var(--calendar-header-height);padding:8px 0;font-size:var(--calendar-header-font-size);font-weight:500;color:var(--fg2, #666)}.ix-calendar-table-header-divider{height:1px;border:0}.ix-calendar-body tr{border:0}.ix-calendar-body-cell-container{position:relative;border:0;outline:0;height:var(--calendar-cell-size);width:14.2857142857%}.ix-calendar-body-cell{position:absolute;inset:0;margin:auto;background:transparent;border:0;outline:0;cursor:pointer;color:var(--fg1, #333);width:var(--calendar-cell-size);height:var(--calendar-cell-size)}.ix-calendar-body-cell:not(:disabled):hover:not(.ix-calendar-body-selected):not(.ix-calendar-body-range-start):not(.ix-calendar-body-range-end):not(.ix-calendar-body-in-range){background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-calendar-body-cell:focus .ix-calendar-body-cell-content.ix-focus-indicator{background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:disabled{color:var(--fg2, #666);opacity:.5;cursor:default}.ix-calendar-body-cell.ix-calendar-body-today:not(.ix-calendar-body-selected){border:1px solid var(--primary, #007bff);color:var(--primary, #007bff)}.ix-calendar-body-cell.ix-calendar-body-selected,.ix-calendar-body-cell.ix-calendar-body-range-start,.ix-calendar-body-cell.ix-calendar-body-range-end,.ix-calendar-body-cell.ix-calendar-body-in-range{background:var(--primary, #007bff);color:#fff}.ix-calendar-body-cell-content{position:relative;display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;height:100%;font-size:var(--calendar-cell-font-size);font-weight:400;transition:background-color .2s cubic-bezier(.25,.8,.25,1)}.ix-calendar-body-cell-preview{position:absolute;inset:0;background:transparent}.cdk-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}.ix-focus-indicator{position:relative}.ix-focus-indicator:before{content:\"\";position:absolute;inset:0;opacity:0;background:currentColor;transition:opacity .2s cubic-bezier(.25,.8,.25,1)}\n"] }]
-        }], propDecorators: { activeDate: [{
-                type: Input
-            }], selected: [{
-                type: Input
-            }], minDate: [{
-                type: Input
-            }], maxDate: [{
-                type: Input
-            }], dateFilter: [{
-                type: Input
-            }], rangeMode: [{
-                type: Input
-            }], selectedRange: [{
-                type: Input
-            }], selectedChange: [{
-                type: Output
-            }], activeDateChange: [{
-                type: Output
-            }] } });
+        }] });
 
 class IxMultiYearViewComponent {
-    set activeDate(date) {
-        this._activeDate.set(date);
-    }
-    get activeDate() {
-        return this._activeDate();
-    }
-    _activeDate = signal(new Date(), ...(ngDevMode ? [{ debugName: "_activeDate" }] : []));
-    selected;
-    minDate;
-    maxDate;
-    dateFilter;
-    selectedChange = new EventEmitter();
-    activeDateChange = new EventEmitter();
+    activeDate = input(new Date(), ...(ngDevMode ? [{ debugName: "activeDate" }] : []));
+    selected = input(undefined, ...(ngDevMode ? [{ debugName: "selected" }] : []));
+    minDate = input(undefined, ...(ngDevMode ? [{ debugName: "minDate" }] : []));
+    maxDate = input(undefined, ...(ngDevMode ? [{ debugName: "maxDate" }] : []));
+    dateFilter = input(undefined, ...(ngDevMode ? [{ debugName: "dateFilter" }] : []));
+    selectedChange = output();
+    activeDateChange = output();
     cellWidth = 25; // 100/4 for 4 columns
     cellAspectRatio = 7.14286; // Same as Material
     yearsPerRow = 4;
     yearRowCount = 6; // Shows 24 years total (6 rows x 4 columns)
     // Calculate the year range to display
     yearRange = computed(() => {
-        const activeDate = this._activeDate();
+        const activeDate = this.activeDate();
         const currentYear = activeDate.getFullYear();
         // Calculate the starting year for a 24-year range
         // We want the active year to be roughly in the middle
@@ -5100,8 +4769,8 @@ class IxMultiYearViewComponent {
     createYearCell(year) {
         const today = new Date();
         const currentYear = today.getFullYear();
-        const activeYear = this._activeDate().getFullYear();
-        const selectedYear = this.selected?.getFullYear();
+        const activeYear = this.activeDate().getFullYear();
+        const selectedYear = this.selected()?.getFullYear();
         const isToday = year === currentYear;
         const isSelected = year === selectedYear;
         const isActive = year === activeYear;
@@ -5117,14 +4786,17 @@ class IxMultiYearViewComponent {
         };
     }
     isYearEnabled(year) {
-        if (this.minDate && year < this.minDate.getFullYear())
+        const minDate = this.minDate();
+        const maxDate = this.maxDate();
+        const dateFilter = this.dateFilter();
+        if (minDate && year < minDate.getFullYear())
             return false;
-        if (this.maxDate && year > this.maxDate.getFullYear())
+        if (maxDate && year > maxDate.getFullYear())
             return false;
         // If we have a date filter, test January 1st of that year
-        if (this.dateFilter) {
+        if (dateFilter) {
             const testDate = new Date(year, 0, 1);
-            if (!this.dateFilter(testDate))
+            if (!dateFilter(testDate))
                 return false;
         }
         return true;
@@ -5146,13 +4818,13 @@ class IxMultiYearViewComponent {
     onYearClicked(cell) {
         if (cell.enabled) {
             // Create a new date with the selected year, keeping current month and day
-            const currentDate = this._activeDate();
+            const currentDate = this.activeDate();
             const newDate = new Date(cell.year, currentDate.getMonth(), currentDate.getDate());
             this.selectedChange.emit(newDate);
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMultiYearViewComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxMultiYearViewComponent, isStandalone: true, selector: "ix-multi-year-view", inputs: { activeDate: "activeDate", selected: "selected", minDate: "minDate", maxDate: "maxDate", dateFilter: "dateFilter" }, outputs: { selectedChange: "selectedChange", activeDateChange: "activeDateChange" }, ngImport: i0, template: `
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxMultiYearViewComponent, isStandalone: true, selector: "ix-multi-year-view", inputs: { activeDate: { classPropertyName: "activeDate", publicName: "activeDate", isSignal: true, isRequired: false, transformFunction: null }, selected: { classPropertyName: "selected", publicName: "selected", isSignal: true, isRequired: false, transformFunction: null }, minDate: { classPropertyName: "minDate", publicName: "minDate", isSignal: true, isRequired: false, transformFunction: null }, maxDate: { classPropertyName: "maxDate", publicName: "maxDate", isSignal: true, isRequired: false, transformFunction: null }, dateFilter: { classPropertyName: "dateFilter", publicName: "dateFilter", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectedChange: "selectedChange", activeDateChange: "activeDateChange" }, ngImport: i0, template: `
     <table role="grid" class="ix-calendar-table">
       <!-- Table body with year cells -->
       <tbody class="ix-calendar-body">
@@ -5231,36 +4903,22 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
       </tbody>
     </table>
   `, styles: [".ix-calendar-table{width:100%;border-spacing:0;border-collapse:separate}.ix-calendar-table-header-divider{height:16px;border:none}.ix-calendar-body{min-width:224px}.ix-calendar-body-cell-container{position:relative;border:none}.ix-calendar-body-cell{position:absolute;top:5%;left:5%;width:90%;height:90%;border:none;background:transparent;color:var(--fg1, #333);cursor:pointer;font-size:14px;font-weight:500;transition:background-color .2s ease}.ix-calendar-body-cell:hover:not(:disabled){background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px;background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:disabled{color:var(--fg2, #666);opacity:.5;cursor:default}.ix-calendar-body-cell.ix-calendar-body-today:not(.ix-calendar-body-selected){border:1px solid var(--primary, #007bff);color:var(--primary, #007bff)}.ix-calendar-body-cell.ix-calendar-body-selected{background:var(--primary, #007bff);color:#fff}.ix-calendar-body-cell-content{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%;transition:background-color .2s cubic-bezier(.25,.8,.25,1)}.ix-focus-indicator{position:relative}.ix-focus-indicator:before{content:\"\";position:absolute;inset:0;opacity:0;background:currentColor;transition:opacity .2s cubic-bezier(.25,.8,.25,1)}.ix-calendar-body-cell-preview{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}\n"] }]
-        }], propDecorators: { activeDate: [{
-                type: Input
-            }], selected: [{
-                type: Input
-            }], minDate: [{
-                type: Input
-            }], maxDate: [{
-                type: Input
-            }], dateFilter: [{
-                type: Input
-            }], selectedChange: [{
-                type: Output
-            }], activeDateChange: [{
-                type: Output
-            }] } });
+        }] });
 
 class IxCalendarComponent {
-    startView = 'month';
-    selected;
-    minDate;
-    maxDate;
-    dateFilter;
+    startView = input('month', ...(ngDevMode ? [{ debugName: "startView" }] : []));
+    selected = input(undefined, ...(ngDevMode ? [{ debugName: "selected" }] : []));
+    minDate = input(undefined, ...(ngDevMode ? [{ debugName: "minDate" }] : []));
+    maxDate = input(undefined, ...(ngDevMode ? [{ debugName: "maxDate" }] : []));
+    dateFilter = input(undefined, ...(ngDevMode ? [{ debugName: "dateFilter" }] : []));
     // Range mode inputs
-    rangeMode = false;
-    selectedRange;
-    selectedChange = new EventEmitter();
-    activeDateChange = new EventEmitter();
-    viewChanged = new EventEmitter();
+    rangeMode = input(false, ...(ngDevMode ? [{ debugName: "rangeMode" }] : []));
+    selectedRange = input(undefined, ...(ngDevMode ? [{ debugName: "selectedRange" }] : []));
+    selectedChange = output();
+    activeDateChange = output();
+    viewChanged = output();
     // Range mode outputs
-    selectedRangeChange = new EventEmitter();
+    selectedRangeChange = output();
     currentDate = signal(new Date(), ...(ngDevMode ? [{ debugName: "currentDate" }] : []));
     currentView = signal('month', ...(ngDevMode ? [{ debugName: "currentView" }] : []));
     // Range selection state - this is the authoritative source for calendar display
@@ -5271,34 +4929,43 @@ class IxCalendarComponent {
     }, ...(ngDevMode ? [{ debugName: "rangeState" }] : []));
     // Track if user has interacted with calendar - once true, ignore external selectedRange
     userHasInteracted = false;
-    ngOnInit() {
-        this.currentView.set(this.startView);
-        // Initialize range state if in range mode (this also handles currentDate)
-        if (this.rangeMode) {
-            this.initializeRangeState();
-        }
-        else if (this.selected) {
-            // For single date mode, navigate to the selected date's month
-            this.currentDate.set(new Date(this.selected));
-        }
+    constructor() {
+        // Watch for changes to selectedRange input
+        effect(() => {
+            const selectedRange = this.selectedRange();
+            const rangeMode = this.rangeMode();
+            // Only update range state from external selectedRange if user hasn't interacted yet
+            if (!this.userHasInteracted && rangeMode) {
+                this.initializeRangeState();
+            }
+        });
     }
-    ngOnChanges(changes) {
-        // Only update range state from external selectedRange if user hasn't interacted yet
-        if (changes['selectedRange'] && !this.userHasInteracted && this.rangeMode) {
+    ngOnInit() {
+        this.currentView.set(this.startView());
+        // Initialize range state if in range mode (this also handles currentDate)
+        if (this.rangeMode()) {
             this.initializeRangeState();
+        }
+        else {
+            const selected = this.selected();
+            if (selected) {
+                // For single date mode, navigate to the selected date's month
+                this.currentDate.set(new Date(selected));
+            }
         }
     }
     initializeRangeState() {
-        if (this.rangeMode) {
-            if (this.selectedRange) {
+        if (this.rangeMode()) {
+            const selectedRange = this.selectedRange();
+            if (selectedRange) {
                 this.rangeState.set({
-                    start: this.selectedRange.start,
-                    end: this.selectedRange.end,
-                    selecting: this.selectedRange.start && this.selectedRange.end ? 'start' :
-                        this.selectedRange.start ? 'end' : 'start'
+                    start: selectedRange.start,
+                    end: selectedRange.end,
+                    selecting: selectedRange.start && selectedRange.end ? 'start' :
+                        selectedRange.start ? 'end' : 'start'
                 });
                 // Navigate to the month of the selected start date, or end date if no start date
-                const dateToShow = this.selectedRange.start || this.selectedRange.end;
+                const dateToShow = selectedRange.start || selectedRange.end;
                 if (dateToShow) {
                     this.currentDate.set(new Date(dateToShow));
                 }
@@ -5357,7 +5024,7 @@ class IxCalendarComponent {
         this.activeDateChange.emit(newDate);
     }
     onSelectedChange(date) {
-        if (this.rangeMode) {
+        if (this.rangeMode()) {
             this.handleRangeSelection(date);
         }
         else {
@@ -5435,7 +5102,7 @@ class IxCalendarComponent {
         this.initializeRangeState();
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxCalendarComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxCalendarComponent, isStandalone: true, selector: "ix-calendar", inputs: { startView: "startView", selected: "selected", minDate: "minDate", maxDate: "maxDate", dateFilter: "dateFilter", rangeMode: "rangeMode", selectedRange: "selectedRange" }, outputs: { selectedChange: "selectedChange", activeDateChange: "activeDateChange", viewChanged: "viewChanged", selectedRangeChange: "selectedRangeChange" }, usesOnChanges: true, ngImport: i0, template: `
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxCalendarComponent, isStandalone: true, selector: "ix-calendar", inputs: { startView: { classPropertyName: "startView", publicName: "startView", isSignal: true, isRequired: false, transformFunction: null }, selected: { classPropertyName: "selected", publicName: "selected", isSignal: true, isRequired: false, transformFunction: null }, minDate: { classPropertyName: "minDate", publicName: "minDate", isSignal: true, isRequired: false, transformFunction: null }, maxDate: { classPropertyName: "maxDate", publicName: "maxDate", isSignal: true, isRequired: false, transformFunction: null }, dateFilter: { classPropertyName: "dateFilter", publicName: "dateFilter", isSignal: true, isRequired: false, transformFunction: null }, rangeMode: { classPropertyName: "rangeMode", publicName: "rangeMode", isSignal: true, isRequired: false, transformFunction: null }, selectedRange: { classPropertyName: "selectedRange", publicName: "selectedRange", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectedChange: "selectedChange", activeDateChange: "activeDateChange", viewChanged: "viewChanged", selectedRangeChange: "selectedRangeChange" }, ngImport: i0, template: `
     <ix-calendar-header 
       [currentDate]="currentDate()"
       [currentView]="currentView()"
@@ -5447,27 +5114,27 @@ class IxCalendarComponent {
     </ix-calendar-header>
 
     <div class="ix-calendar-content" cdkMonitorSubtreeFocus tabindex="-1">
-      <ix-month-view 
+      <ix-month-view
         *ngIf="currentView() === 'month'"
         [activeDate]="currentDate()"
-        [selected]="selected"
-        [dateFilter]="dateFilter"
-        [minDate]="minDate"
-        [maxDate]="maxDate"
-        [rangeMode]="rangeMode"
-        [selectedRange]="rangeMode ? rangeState() : undefined"
+        [selected]="selected()"
+        [dateFilter]="dateFilter()"
+        [minDate]="minDate()"
+        [maxDate]="maxDate()"
+        [rangeMode]="rangeMode()"
+        [selectedRange]="rangeMode() ? rangeState() : undefined"
         (selectedChange)="onSelectedChange($event)"
         (activeDateChange)="onActiveDateChange($event)">
       </ix-month-view>
-      
+
       <!-- Multi-year view -->
-      <ix-multi-year-view 
+      <ix-multi-year-view
         *ngIf="currentView() === 'year'"
         [activeDate]="currentDate()"
-        [selected]="selected"
-        [dateFilter]="dateFilter"
-        [minDate]="minDate"
-        [maxDate]="maxDate"
+        [selected]="selected()"
+        [dateFilter]="dateFilter()"
+        [minDate]="minDate()"
+        [maxDate]="maxDate()"
         (selectedChange)="onYearSelectedFromView($event)"
         (activeDateChange)="onActiveDateChange($event)">
       </ix-multi-year-view>
@@ -5488,71 +5155,51 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
     </ix-calendar-header>
 
     <div class="ix-calendar-content" cdkMonitorSubtreeFocus tabindex="-1">
-      <ix-month-view 
+      <ix-month-view
         *ngIf="currentView() === 'month'"
         [activeDate]="currentDate()"
-        [selected]="selected"
-        [dateFilter]="dateFilter"
-        [minDate]="minDate"
-        [maxDate]="maxDate"
-        [rangeMode]="rangeMode"
-        [selectedRange]="rangeMode ? rangeState() : undefined"
+        [selected]="selected()"
+        [dateFilter]="dateFilter()"
+        [minDate]="minDate()"
+        [maxDate]="maxDate()"
+        [rangeMode]="rangeMode()"
+        [selectedRange]="rangeMode() ? rangeState() : undefined"
         (selectedChange)="onSelectedChange($event)"
         (activeDateChange)="onActiveDateChange($event)">
       </ix-month-view>
-      
+
       <!-- Multi-year view -->
-      <ix-multi-year-view 
+      <ix-multi-year-view
         *ngIf="currentView() === 'year'"
         [activeDate]="currentDate()"
-        [selected]="selected"
-        [dateFilter]="dateFilter"
-        [minDate]="minDate"
-        [maxDate]="maxDate"
+        [selected]="selected()"
+        [dateFilter]="dateFilter()"
+        [minDate]="minDate()"
+        [maxDate]="maxDate()"
         (selectedChange)="onYearSelectedFromView($event)"
         (activeDateChange)="onActiveDateChange($event)">
       </ix-multi-year-view>
     </div>
   `, styles: [":host{display:block;background:var(--bg2, #f5f5f5);color:var(--fg1, #333);padding:0 8px 8px;box-shadow:0 4px 16px #0000001f,0 1px 4px #00000014}.ix-calendar-content{padding:8px;outline:none}.ix-year-view{text-align:center;padding:20px;color:var(--fg2, #666)}\n"] }]
-        }], propDecorators: { startView: [{
-                type: Input
-            }], selected: [{
-                type: Input
-            }], minDate: [{
-                type: Input
-            }], maxDate: [{
-                type: Input
-            }], dateFilter: [{
-                type: Input
-            }], rangeMode: [{
-                type: Input
-            }], selectedRange: [{
-                type: Input
-            }], selectedChange: [{
-                type: Output
-            }], activeDateChange: [{
-                type: Output
-            }], viewChanged: [{
-                type: Output
-            }], selectedRangeChange: [{
-                type: Output
-            }] } });
+        }], ctorParameters: () => [] });
 
 class IxDateInputComponent {
     overlay;
     elementRef;
     viewContainerRef;
-    disabled = false;
-    placeholder = 'Select date';
-    min;
-    max;
-    dateFilter;
-    monthRef;
-    dayRef;
-    yearRef;
-    calendarTemplate;
-    calendar;
-    wrapperEl;
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    placeholder = input('Select date', ...(ngDevMode ? [{ debugName: "placeholder" }] : []));
+    min = input(undefined, ...(ngDevMode ? [{ debugName: "min" }] : []));
+    max = input(undefined, ...(ngDevMode ? [{ debugName: "max" }] : []));
+    dateFilter = input(undefined, ...(ngDevMode ? [{ debugName: "dateFilter" }] : []));
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
+    monthRef = viewChild.required('monthInput');
+    dayRef = viewChild.required('dayInput');
+    yearRef = viewChild.required('yearInput');
+    calendarTemplate = viewChild.required('calendarTemplate');
+    calendar = viewChild.required(IxCalendarComponent);
+    wrapperEl = viewChild.required('wrapper');
     destroy$ = new Subject();
     overlayRef;
     portal;
@@ -5590,7 +5237,7 @@ class IxDateInputComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     // Segment event handlers
     onSegmentFocus(segment) {
@@ -5599,9 +5246,9 @@ class IxDateInputComponent {
     onSegmentBlur(segment) {
         this.onTouched();
         // Only validate and update when we have complete values
-        const month = this.monthRef?.nativeElement?.value || '';
-        const day = this.dayRef?.nativeElement?.value || '';
-        const year = this.yearRef?.nativeElement?.value || '';
+        const month = this.monthRef()?.nativeElement?.value || '';
+        const day = this.dayRef()?.nativeElement?.value || '';
+        const year = this.yearRef()?.nativeElement?.value || '';
         // Only try to create a date if all segments have some value
         if (month && day && year && year.length === 4) {
             this.updateDateFromSegments();
@@ -5649,30 +5296,30 @@ class IxDateInputComponent {
             this.day.set(dayVal);
             this.year.set(yearVal);
             // Update input elements
-            if (this.monthRef?.nativeElement)
-                this.monthRef.nativeElement.value = monthVal;
-            if (this.dayRef?.nativeElement)
-                this.dayRef.nativeElement.value = dayVal;
-            if (this.yearRef?.nativeElement)
-                this.yearRef.nativeElement.value = yearVal;
+            if (this.monthRef()?.nativeElement)
+                this.monthRef().nativeElement.value = monthVal;
+            if (this.dayRef()?.nativeElement)
+                this.dayRef().nativeElement.value = dayVal;
+            if (this.yearRef()?.nativeElement)
+                this.yearRef().nativeElement.value = yearVal;
         }
         else {
             // Clear all values
             this.month.set('');
             this.day.set('');
             this.year.set('');
-            if (this.monthRef?.nativeElement)
-                this.monthRef.nativeElement.value = '';
-            if (this.dayRef?.nativeElement)
-                this.dayRef.nativeElement.value = '';
-            if (this.yearRef?.nativeElement)
-                this.yearRef.nativeElement.value = '';
+            if (this.monthRef()?.nativeElement)
+                this.monthRef().nativeElement.value = '';
+            if (this.dayRef()?.nativeElement)
+                this.dayRef().nativeElement.value = '';
+            if (this.yearRef()?.nativeElement)
+                this.yearRef().nativeElement.value = '';
         }
     }
     updateDateFromSegments() {
-        const month = this.monthRef?.nativeElement?.value || '';
-        const day = this.dayRef?.nativeElement?.value || '';
-        const year = this.yearRef?.nativeElement?.value || '';
+        const month = this.monthRef()?.nativeElement?.value || '';
+        const day = this.dayRef()?.nativeElement?.value || '';
+        const year = this.yearRef()?.nativeElement?.value || '';
         let date = null;
         if (month && day && year && year.length === 4) {
             const monthNum = parseInt(month, 10);
@@ -5690,16 +5337,16 @@ class IxDateInputComponent {
     }
     focusNextSegment(segment) {
         if (segment === 'month')
-            this.dayRef.nativeElement.focus();
+            this.dayRef().nativeElement.focus();
         else if (segment === 'day')
-            this.yearRef.nativeElement.focus();
+            this.yearRef().nativeElement.focus();
         // Year is the last field
     }
     focusPrevSegment(segment) {
         if (segment === 'day')
-            this.monthRef.nativeElement.focus();
+            this.monthRef().nativeElement.focus();
         else if (segment === 'year')
-            this.dayRef.nativeElement.focus();
+            this.dayRef().nativeElement.focus();
         // Month is the first field
     }
     openDatepicker() {
@@ -5708,8 +5355,9 @@ class IxDateInputComponent {
         this.createOverlay();
         this.isOpen.set(true);
         // Reset calendar interaction state when opening
-        if (this.calendar) {
-            setTimeout(() => this.calendar.resetInteractionState(), 0);
+        const cal = this.calendar();
+        if (cal) {
+            setTimeout(() => cal.resetInteractionState(), 0);
         }
     }
     close() {
@@ -5755,7 +5403,7 @@ class IxDateInputComponent {
         ];
         const positionStrategy = this.overlay
             .position()
-            .flexibleConnectedTo(this.wrapperEl)
+            .flexibleConnectedTo(this.wrapperEl())
             .withPositions(positions)
             .withPush(false);
         this.overlayRef = this.overlay.create({
@@ -5769,60 +5417,60 @@ class IxDateInputComponent {
         this.overlayRef.backdropClick().subscribe(() => {
             this.close();
         });
-        this.portal = new TemplatePortal(this.calendarTemplate, this.viewContainerRef);
+        this.portal = new TemplatePortal(this.calendarTemplate(), this.viewContainerRef);
         this.overlayRef.attach(this.portal);
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxDateInputComponent, deps: [{ token: i1$3.Overlay }, { token: i0.ElementRef }, { token: i0.ViewContainerRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxDateInputComponent, isStandalone: true, selector: "ix-date-input", inputs: { disabled: "disabled", placeholder: "placeholder", min: "min", max: "max", dateFilter: "dateFilter" }, host: { classAttribute: "ix-date-input" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.2.0", version: "20.3.4", type: IxDateInputComponent, isStandalone: true, selector: "ix-date-input", inputs: { disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, placeholder: { classPropertyName: "placeholder", publicName: "placeholder", isSignal: true, isRequired: false, transformFunction: null }, min: { classPropertyName: "min", publicName: "min", isSignal: true, isRequired: false, transformFunction: null }, max: { classPropertyName: "max", publicName: "max", isSignal: true, isRequired: false, transformFunction: null }, dateFilter: { classPropertyName: "dateFilter", publicName: "dateFilter", isSignal: true, isRequired: false, transformFunction: null } }, host: { classAttribute: "ix-date-input" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxDateInputComponent),
                 multi: true
             }
-        ], viewQueries: [{ propertyName: "monthRef", first: true, predicate: ["monthInput"], descendants: true }, { propertyName: "dayRef", first: true, predicate: ["dayInput"], descendants: true }, { propertyName: "yearRef", first: true, predicate: ["yearInput"], descendants: true }, { propertyName: "calendarTemplate", first: true, predicate: ["calendarTemplate"], descendants: true, static: true }, { propertyName: "calendar", first: true, predicate: IxCalendarComponent, descendants: true }, { propertyName: "wrapperEl", first: true, predicate: ["wrapper"], descendants: true }], ngImport: i0, template: `
+        ], viewQueries: [{ propertyName: "monthRef", first: true, predicate: ["monthInput"], descendants: true, isSignal: true }, { propertyName: "dayRef", first: true, predicate: ["dayInput"], descendants: true, isSignal: true }, { propertyName: "yearRef", first: true, predicate: ["yearInput"], descendants: true, isSignal: true }, { propertyName: "calendarTemplate", first: true, predicate: ["calendarTemplate"], descendants: true, isSignal: true }, { propertyName: "calendar", first: true, predicate: IxCalendarComponent, descendants: true, isSignal: true }, { propertyName: "wrapperEl", first: true, predicate: ["wrapper"], descendants: true, isSignal: true }], ngImport: i0, template: `
     <div class="ix-date-input-container">
       <div #wrapper ixInput class="ix-date-input-wrapper" style="padding-right: 40px;">
         <!-- Date segments MM/DD/YYYY -->
         <div class="ix-date-segment-group">
-          <input 
+          <input
             #monthInput
             type="text"
             class="ix-date-segment ix-date-segment-month"
             placeholder="MM"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('month')"
             (blur)="onSegmentBlur('month')"
             (keydown)="onSegmentKeydown($event, 'month')">
           <span class="ix-date-segment-separator">/</span>
-          <input 
+          <input
             #dayInput
             type="text"
             class="ix-date-segment ix-date-segment-day"
             placeholder="DD"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('day')"
             (blur)="onSegmentBlur('day')"
             (keydown)="onSegmentKeydown($event, 'day')">
           <span class="ix-date-segment-separator">/</span>
-          <input 
+          <input
             #yearInput
             type="text"
             class="ix-date-segment ix-date-segment-year"
             placeholder="YYYY"
             maxlength="4"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('year')"
             (blur)="onSegmentBlur('year')"
             (keydown)="onSegmentKeydown($event, 'year')">
         </div>
-        
-        <button 
+
+        <button
           type="button"
           class="ix-date-input-toggle"
           (click)="openDatepicker()"
-          [disabled]="disabled"
+          [disabled]="isDisabled()"
           aria-label="Open calendar">
           <span aria-hidden="true">📅</span>
         </button>
@@ -5853,45 +5501,45 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
       <div #wrapper ixInput class="ix-date-input-wrapper" style="padding-right: 40px;">
         <!-- Date segments MM/DD/YYYY -->
         <div class="ix-date-segment-group">
-          <input 
+          <input
             #monthInput
             type="text"
             class="ix-date-segment ix-date-segment-month"
             placeholder="MM"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('month')"
             (blur)="onSegmentBlur('month')"
             (keydown)="onSegmentKeydown($event, 'month')">
           <span class="ix-date-segment-separator">/</span>
-          <input 
+          <input
             #dayInput
             type="text"
             class="ix-date-segment ix-date-segment-day"
             placeholder="DD"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('day')"
             (blur)="onSegmentBlur('day')"
             (keydown)="onSegmentKeydown($event, 'day')">
           <span class="ix-date-segment-separator">/</span>
-          <input 
+          <input
             #yearInput
             type="text"
             class="ix-date-segment ix-date-segment-year"
             placeholder="YYYY"
             maxlength="4"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('year')"
             (blur)="onSegmentBlur('year')"
             (keydown)="onSegmentKeydown($event, 'year')">
         </div>
-        
-        <button 
+
+        <button
           type="button"
           class="ix-date-input-toggle"
           (click)="openDatepicker()"
-          [disabled]="disabled"
+          [disabled]="isDisabled()"
           aria-label="Open calendar">
           <span aria-hidden="true">📅</span>
         </button>
@@ -5910,51 +5558,25 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
   `, host: {
                         'class': 'ix-date-input'
                     }, styles: [":host{display:block;width:100%}.ix-date-input-container{position:relative;display:flex;align-items:center}.ix-date-input-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-date-segment-group{display:flex;align-items:center}.ix-date-segment{background:transparent;border:none;outline:none;font:inherit;color:inherit;padding:0;min-width:0;text-align:center;width:2.6ch}.ix-date-segment::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-date-segment:focus{outline:none;background:var(--bg2, rgba(0, 0, 0, .05));border-radius:2px}.ix-date-segment:focus::placeholder{opacity:0}.ix-date-segment.ix-date-segment-year{width:4ch}.ix-date-segment-separator{padding:0 2px;-webkit-user-select:none;user-select:none;color:var(--alt-fg1, #999)}.ix-date-input-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;font-size:16px}.ix-date-input-toggle:hover{background:var(--bg2, #f0f0f0);border-radius:4px}.ix-date-input-toggle:disabled{cursor:not-allowed;opacity:.5}:host ::ng-deep .ix-datepicker-overlay .ix-calendar{background:var(--bg1, white);border:1px solid var(--lines, #e0e0e0);border-radius:8px;box-shadow:0 4px 12px #00000026;padding:24px;min-width:380px;--calendar-cell-size: 48px;--calendar-header-height: 44px;--calendar-cell-font-size: 16px;--calendar-header-font-size: 14px}:host ::ng-deep .ix-datepicker-overlay .ix-calendar .ix-calendar-content{padding:0}\n"] }]
-        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }], propDecorators: { disabled: [{
-                type: Input
-            }], placeholder: [{
-                type: Input
-            }], min: [{
-                type: Input
-            }], max: [{
-                type: Input
-            }], dateFilter: [{
-                type: Input
-            }], monthRef: [{
-                type: ViewChild,
-                args: ['monthInput']
-            }], dayRef: [{
-                type: ViewChild,
-                args: ['dayInput']
-            }], yearRef: [{
-                type: ViewChild,
-                args: ['yearInput']
-            }], calendarTemplate: [{
-                type: ViewChild,
-                args: ['calendarTemplate', { static: true }]
-            }], calendar: [{
-                type: ViewChild,
-                args: [IxCalendarComponent]
-            }], wrapperEl: [{
-                type: ViewChild,
-                args: ['wrapper']
-            }] } });
+        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }] });
 
 class IxDateRangeInputComponent {
     overlay;
     elementRef;
     viewContainerRef;
-    disabled = false;
-    placeholder = 'Select date range';
-    startMonthRef;
-    startDayRef;
-    startYearRef;
-    endMonthRef;
-    endDayRef;
-    endYearRef;
-    calendarTemplate;
-    calendar;
-    wrapperEl;
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    placeholder = input('Select date range', ...(ngDevMode ? [{ debugName: "placeholder" }] : []));
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
+    startMonthRef = viewChild.required('startMonthInput');
+    startDayRef = viewChild.required('startDayInput');
+    startYearRef = viewChild.required('startYearInput');
+    endMonthRef = viewChild.required('endMonthInput');
+    endDayRef = viewChild.required('endDayInput');
+    endYearRef = viewChild.required('endYearInput');
+    calendarTemplate = viewChild.required('calendarTemplate');
+    calendar = viewChild.required(IxCalendarComponent);
+    wrapperEl = viewChild.required('wrapper');
     destroy$ = new Subject();
     overlayRef;
     portal;
@@ -6000,7 +5622,7 @@ class IxDateRangeInputComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     // Segment event handlers
     onSegmentFocus(range, segment) {
@@ -6009,9 +5631,9 @@ class IxDateRangeInputComponent {
     onSegmentBlur(range, segment) {
         this.onTouched();
         // Only validate and update when we have complete values, don't clear partial entries
-        const month = range === 'start' ? (this.startMonthRef?.nativeElement?.value || '') : (this.endMonthRef?.nativeElement?.value || '');
-        const day = range === 'start' ? (this.startDayRef?.nativeElement?.value || '') : (this.endDayRef?.nativeElement?.value || '');
-        const year = range === 'start' ? (this.startYearRef?.nativeElement?.value || '') : (this.endYearRef?.nativeElement?.value || '');
+        const month = range === 'start' ? (this.startMonthRef()?.nativeElement?.value || '') : (this.endMonthRef()?.nativeElement?.value || '');
+        const day = range === 'start' ? (this.startDayRef()?.nativeElement?.value || '') : (this.endDayRef()?.nativeElement?.value || '');
+        const year = range === 'start' ? (this.startYearRef()?.nativeElement?.value || '') : (this.endYearRef()?.nativeElement?.value || '');
         // Only try to create a date if all segments have some value
         if (month && day && year && year.length === 4) {
             this.updateDateFromSegments(range);
@@ -6044,14 +5666,14 @@ class IxDateRangeInputComponent {
         // Handle input field updates and clearing
         if (range.start && !range.end) {
             // Start date selected - clear end date input fields immediately
-            if (this.endMonthRef?.nativeElement)
-                this.endMonthRef.nativeElement.value = '';
-            if (this.endDayRef?.nativeElement)
-                this.endDayRef.nativeElement.value = '';
-            if (this.endYearRef?.nativeElement)
-                this.endYearRef.nativeElement.value = '';
+            if (this.endMonthRef()?.nativeElement)
+                this.endMonthRef().nativeElement.value = '';
+            if (this.endDayRef()?.nativeElement)
+                this.endDayRef().nativeElement.value = '';
+            if (this.endYearRef()?.nativeElement)
+                this.endYearRef().nativeElement.value = '';
             // Focus end month for next selection
-            setTimeout(() => this.endMonthRef?.nativeElement?.focus(), 0);
+            setTimeout(() => this.endMonthRef()?.nativeElement?.focus(), 0);
         }
         else if (range.start && range.end) {
             // Both dates selected - close calendar
@@ -6074,12 +5696,12 @@ class IxDateRangeInputComponent {
             this.startDay.set(dayVal);
             this.startYear.set(yearVal);
             // Only update input elements if they're empty or this is from calendar selection
-            if (this.startMonthRef?.nativeElement)
-                this.startMonthRef.nativeElement.value = monthVal;
-            if (this.startDayRef?.nativeElement)
-                this.startDayRef.nativeElement.value = dayVal;
-            if (this.startYearRef?.nativeElement)
-                this.startYearRef.nativeElement.value = yearVal;
+            if (this.startMonthRef()?.nativeElement)
+                this.startMonthRef().nativeElement.value = monthVal;
+            if (this.startDayRef()?.nativeElement)
+                this.startDayRef().nativeElement.value = dayVal;
+            if (this.startYearRef()?.nativeElement)
+                this.startYearRef().nativeElement.value = yearVal;
         }
         // Update end date segments - only when we have valid dates from calendar  
         if (range.end) {
@@ -6090,12 +5712,12 @@ class IxDateRangeInputComponent {
             this.endDay.set(dayVal);
             this.endYear.set(yearVal);
             // Only update input elements if they're empty or this is from calendar selection
-            if (this.endMonthRef?.nativeElement)
-                this.endMonthRef.nativeElement.value = monthVal;
-            if (this.endDayRef?.nativeElement)
-                this.endDayRef.nativeElement.value = dayVal;
-            if (this.endYearRef?.nativeElement)
-                this.endYearRef.nativeElement.value = yearVal;
+            if (this.endMonthRef()?.nativeElement)
+                this.endMonthRef().nativeElement.value = monthVal;
+            if (this.endDayRef()?.nativeElement)
+                this.endDayRef().nativeElement.value = dayVal;
+            if (this.endYearRef()?.nativeElement)
+                this.endYearRef().nativeElement.value = yearVal;
         }
     }
     setSegmentValue(range, segment, value) {
@@ -6119,14 +5741,14 @@ class IxDateRangeInputComponent {
     updateDateFromSegments(range) {
         let month, day, year;
         if (range === 'start') {
-            month = this.startMonthRef?.nativeElement?.value || '';
-            day = this.startDayRef?.nativeElement?.value || '';
-            year = this.startYearRef?.nativeElement?.value || '';
+            month = this.startMonthRef()?.nativeElement?.value || '';
+            day = this.startDayRef()?.nativeElement?.value || '';
+            year = this.startYearRef()?.nativeElement?.value || '';
         }
         else {
-            month = this.endMonthRef?.nativeElement?.value || '';
-            day = this.endDayRef?.nativeElement?.value || '';
-            year = this.endYearRef?.nativeElement?.value || '';
+            month = this.endMonthRef()?.nativeElement?.value || '';
+            day = this.endDayRef()?.nativeElement?.value || '';
+            year = this.endYearRef()?.nativeElement?.value || '';
         }
         let date = null;
         if (month && day && year && year.length === 4) {
@@ -6152,17 +5774,17 @@ class IxDateRangeInputComponent {
     focusNextSegment(range, segment) {
         if (range === 'start') {
             if (segment === 'month')
-                this.startDayRef.nativeElement.focus();
+                this.startDayRef().nativeElement.focus();
             else if (segment === 'day')
-                this.startYearRef.nativeElement.focus();
+                this.startYearRef().nativeElement.focus();
             else if (segment === 'year')
-                this.endMonthRef.nativeElement.focus();
+                this.endMonthRef().nativeElement.focus();
         }
         else {
             if (segment === 'month')
-                this.endDayRef.nativeElement.focus();
+                this.endDayRef().nativeElement.focus();
             else if (segment === 'day')
-                this.endYearRef.nativeElement.focus();
+                this.endYearRef().nativeElement.focus();
             // End year is the last field - could focus calendar button or just stay
         }
     }
@@ -6170,17 +5792,17 @@ class IxDateRangeInputComponent {
         if (range === 'start') {
             // Start month is the first field - nowhere to go back
             if (segment === 'day')
-                this.startMonthRef.nativeElement.focus();
+                this.startMonthRef().nativeElement.focus();
             else if (segment === 'year')
-                this.startDayRef.nativeElement.focus();
+                this.startDayRef().nativeElement.focus();
         }
         else {
             if (segment === 'month')
-                this.startYearRef.nativeElement.focus();
+                this.startYearRef().nativeElement.focus();
             else if (segment === 'day')
-                this.endMonthRef.nativeElement.focus();
+                this.endMonthRef().nativeElement.focus();
             else if (segment === 'year')
-                this.endDayRef.nativeElement.focus();
+                this.endDayRef().nativeElement.focus();
         }
     }
     formatDate(date) {
@@ -6228,8 +5850,9 @@ class IxDateRangeInputComponent {
         this.createOverlay();
         this.isOpen.set(true);
         // Reset calendar interaction state when opening
-        if (this.calendar) {
-            setTimeout(() => this.calendar.resetInteractionState(), 0);
+        const cal = this.calendar();
+        if (cal) {
+            setTimeout(() => cal.resetInteractionState(), 0);
         }
     }
     close() {
@@ -6275,7 +5898,7 @@ class IxDateRangeInputComponent {
         ];
         const positionStrategy = this.overlay
             .position()
-            .flexibleConnectedTo(this.wrapperEl)
+            .flexibleConnectedTo(this.wrapperEl())
             .withPositions(positions)
             .withPush(false);
         this.overlayRef = this.overlay.create({
@@ -6289,17 +5912,17 @@ class IxDateRangeInputComponent {
         this.overlayRef.backdropClick().subscribe(() => {
             this.close();
         });
-        this.portal = new TemplatePortal(this.calendarTemplate, this.viewContainerRef);
+        this.portal = new TemplatePortal(this.calendarTemplate(), this.viewContainerRef);
         this.overlayRef.attach(this.portal);
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxDateRangeInputComponent, deps: [{ token: i1$3.Overlay }, { token: i0.ElementRef }, { token: i0.ViewContainerRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxDateRangeInputComponent, isStandalone: true, selector: "ix-date-range-input", inputs: { disabled: "disabled", placeholder: "placeholder" }, host: { classAttribute: "ix-date-range-input" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.2.0", version: "20.3.4", type: IxDateRangeInputComponent, isStandalone: true, selector: "ix-date-range-input", inputs: { disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, placeholder: { classPropertyName: "placeholder", publicName: "placeholder", isSignal: true, isRequired: false, transformFunction: null } }, host: { classAttribute: "ix-date-range-input" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxDateRangeInputComponent),
                 multi: true
             }
-        ], viewQueries: [{ propertyName: "startMonthRef", first: true, predicate: ["startMonthInput"], descendants: true }, { propertyName: "startDayRef", first: true, predicate: ["startDayInput"], descendants: true }, { propertyName: "startYearRef", first: true, predicate: ["startYearInput"], descendants: true }, { propertyName: "endMonthRef", first: true, predicate: ["endMonthInput"], descendants: true }, { propertyName: "endDayRef", first: true, predicate: ["endDayInput"], descendants: true }, { propertyName: "endYearRef", first: true, predicate: ["endYearInput"], descendants: true }, { propertyName: "calendarTemplate", first: true, predicate: ["calendarTemplate"], descendants: true, static: true }, { propertyName: "calendar", first: true, predicate: IxCalendarComponent, descendants: true }, { propertyName: "wrapperEl", first: true, predicate: ["wrapper"], descendants: true }], ngImport: i0, template: `
+        ], viewQueries: [{ propertyName: "startMonthRef", first: true, predicate: ["startMonthInput"], descendants: true, isSignal: true }, { propertyName: "startDayRef", first: true, predicate: ["startDayInput"], descendants: true, isSignal: true }, { propertyName: "startYearRef", first: true, predicate: ["startYearInput"], descendants: true, isSignal: true }, { propertyName: "endMonthRef", first: true, predicate: ["endMonthInput"], descendants: true, isSignal: true }, { propertyName: "endDayRef", first: true, predicate: ["endDayInput"], descendants: true, isSignal: true }, { propertyName: "endYearRef", first: true, predicate: ["endYearInput"], descendants: true, isSignal: true }, { propertyName: "calendarTemplate", first: true, predicate: ["calendarTemplate"], descendants: true, isSignal: true }, { propertyName: "calendar", first: true, predicate: IxCalendarComponent, descendants: true, isSignal: true }, { propertyName: "wrapperEl", first: true, predicate: ["wrapper"], descendants: true, isSignal: true }], ngImport: i0, template: `
     <div class="ix-date-range-container">
       <div #wrapper ixInput class="ix-date-range-wrapper" style="padding-right: 40px;">
         <!-- Start date segments -->
@@ -6310,7 +5933,7 @@ class IxDateRangeInputComponent {
             class="ix-date-segment ix-date-segment-month"
             placeholder="MM"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('start', 'month')"
             (blur)="onSegmentBlur('start', 'month')"
             (keydown)="onSegmentKeydown($event, 'start', 'month')">
@@ -6321,7 +5944,7 @@ class IxDateRangeInputComponent {
             class="ix-date-segment ix-date-segment-day"
             placeholder="DD"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('start', 'day')"
             (blur)="onSegmentBlur('start', 'day')"
             (keydown)="onSegmentKeydown($event, 'start', 'day')">
@@ -6332,7 +5955,7 @@ class IxDateRangeInputComponent {
             class="ix-date-segment ix-date-segment-year"
             placeholder="YYYY"
             maxlength="4"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('start', 'year')"
             (blur)="onSegmentBlur('start', 'year')"
             (keydown)="onSegmentKeydown($event, 'start', 'year')">
@@ -6348,7 +5971,7 @@ class IxDateRangeInputComponent {
             class="ix-date-segment ix-date-segment-month"
             placeholder="MM"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('end', 'month')"
             (blur)="onSegmentBlur('end', 'month')"
             (keydown)="onSegmentKeydown($event, 'end', 'month')">
@@ -6359,7 +5982,7 @@ class IxDateRangeInputComponent {
             class="ix-date-segment ix-date-segment-day"
             placeholder="DD"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('end', 'day')"
             (blur)="onSegmentBlur('end', 'day')"
             (keydown)="onSegmentKeydown($event, 'end', 'day')">
@@ -6370,7 +5993,7 @@ class IxDateRangeInputComponent {
             class="ix-date-segment ix-date-segment-year"
             placeholder="YYYY"
             maxlength="4"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('end', 'year')"
             (blur)="onSegmentBlur('end', 'year')"
             (keydown)="onSegmentKeydown($event, 'end', 'year')">
@@ -6380,7 +6003,7 @@ class IxDateRangeInputComponent {
           type="button"
           class="ix-date-range-toggle"
           (click)="openDatepicker()"
-          [disabled]="disabled"
+          [disabled]="isDisabled()"
           aria-label="Open calendar">
           <span aria-hidden="true">📅</span>
         </button>
@@ -6417,7 +6040,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             class="ix-date-segment ix-date-segment-month"
             placeholder="MM"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('start', 'month')"
             (blur)="onSegmentBlur('start', 'month')"
             (keydown)="onSegmentKeydown($event, 'start', 'month')">
@@ -6428,7 +6051,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             class="ix-date-segment ix-date-segment-day"
             placeholder="DD"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('start', 'day')"
             (blur)="onSegmentBlur('start', 'day')"
             (keydown)="onSegmentKeydown($event, 'start', 'day')">
@@ -6439,7 +6062,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             class="ix-date-segment ix-date-segment-year"
             placeholder="YYYY"
             maxlength="4"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('start', 'year')"
             (blur)="onSegmentBlur('start', 'year')"
             (keydown)="onSegmentKeydown($event, 'start', 'year')">
@@ -6455,7 +6078,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             class="ix-date-segment ix-date-segment-month"
             placeholder="MM"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('end', 'month')"
             (blur)="onSegmentBlur('end', 'month')"
             (keydown)="onSegmentKeydown($event, 'end', 'month')">
@@ -6466,7 +6089,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             class="ix-date-segment ix-date-segment-day"
             placeholder="DD"
             maxlength="2"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('end', 'day')"
             (blur)="onSegmentBlur('end', 'day')"
             (keydown)="onSegmentKeydown($event, 'end', 'day')">
@@ -6477,7 +6100,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             class="ix-date-segment ix-date-segment-year"
             placeholder="YYYY"
             maxlength="4"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
             (focus)="onSegmentFocus('end', 'year')"
             (blur)="onSegmentBlur('end', 'year')"
             (keydown)="onSegmentKeydown($event, 'end', 'year')">
@@ -6487,7 +6110,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
           type="button"
           class="ix-date-range-toggle"
           (click)="openDatepicker()"
-          [disabled]="disabled"
+          [disabled]="isDisabled()"
           aria-label="Open calendar">
           <span aria-hidden="true">📅</span>
         </button>
@@ -6506,53 +6129,24 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
   `, host: {
                         'class': 'ix-date-range-input'
                     }, styles: [":host{display:block;width:100%}.ix-date-range-container{position:relative;display:flex;align-items:center}.ix-date-range-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-date-segment-group{display:flex;align-items:center}.ix-date-segment{background:transparent;border:none;outline:none;font:inherit;color:inherit;padding:0;min-width:0;text-align:center;width:2.6ch}.ix-date-segment::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-date-segment:focus{outline:none;background:var(--bg2, rgba(0, 0, 0, .05));border-radius:2px}.ix-date-segment:focus::placeholder{opacity:0}.ix-date-segment.ix-date-segment-year{width:4ch}.ix-date-segment-separator{padding:0 2px;-webkit-user-select:none;user-select:none;color:var(--alt-fg1, #999)}.ix-date-range-separator{padding:0 .25em;-webkit-user-select:none;user-select:none;color:var(--fg2, #666);flex-shrink:0}.ix-date-range-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;font-size:16px}.ix-date-range-toggle:hover{background:var(--bg2, #f0f0f0);border-radius:4px}.ix-date-range-toggle:disabled{cursor:not-allowed;opacity:.5}:host ::ng-deep .ix-datepicker-overlay .ix-calendar{background:var(--bg1, white);border:1px solid var(--lines, #e0e0e0);border-radius:8px;box-shadow:0 4px 12px #00000026;padding:24px;min-width:380px;--calendar-cell-size: 48px;--calendar-header-height: 44px;--calendar-cell-font-size: 16px;--calendar-header-font-size: 14px}:host ::ng-deep .ix-datepicker-overlay .ix-calendar .ix-calendar-content{padding:0}\n"] }]
-        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }], propDecorators: { disabled: [{
-                type: Input
-            }], placeholder: [{
-                type: Input
-            }], startMonthRef: [{
-                type: ViewChild,
-                args: ['startMonthInput']
-            }], startDayRef: [{
-                type: ViewChild,
-                args: ['startDayInput']
-            }], startYearRef: [{
-                type: ViewChild,
-                args: ['startYearInput']
-            }], endMonthRef: [{
-                type: ViewChild,
-                args: ['endMonthInput']
-            }], endDayRef: [{
-                type: ViewChild,
-                args: ['endDayInput']
-            }], endYearRef: [{
-                type: ViewChild,
-                args: ['endYearInput']
-            }], calendarTemplate: [{
-                type: ViewChild,
-                args: ['calendarTemplate', { static: true }]
-            }], calendar: [{
-                type: ViewChild,
-                args: [IxCalendarComponent]
-            }], wrapperEl: [{
-                type: ViewChild,
-                args: ['wrapper']
-            }] } });
+        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }] });
 
 class IxTimeInputComponent {
-    disabled = false;
-    format = '12h';
-    granularity = '15m';
-    placeholder = 'Pick a time';
-    testId = '';
-    get step() {
-        switch (this.granularity) {
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    format = input('12h', ...(ngDevMode ? [{ debugName: "format" }] : []));
+    granularity = input('15m', ...(ngDevMode ? [{ debugName: "granularity" }] : []));
+    placeholder = input('Pick a time', ...(ngDevMode ? [{ debugName: "placeholder" }] : []));
+    testId = input('', ...(ngDevMode ? [{ debugName: "testId" }] : []));
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
+    step = computed(() => {
+        switch (this.granularity()) {
             case '15m': return 15;
             case '30m': return 30;
             case '1h': return 60;
             default: return 15;
         }
-    }
+    }, ...(ngDevMode ? [{ debugName: "step" }] : []));
     onChange = (value) => { };
     onTouched = () => { };
     _value = null;
@@ -6560,10 +6154,10 @@ class IxTimeInputComponent {
     timeSelectOptions = computed(() => {
         const options = [];
         const totalMinutes = 24 * 60; // Total minutes in a day
-        for (let minutes = 0; minutes < totalMinutes; minutes += this.step) {
+        for (let minutes = 0; minutes < totalMinutes; minutes += this.step()) {
             const hours = Math.floor(minutes / 60);
             const mins = minutes % 60;
-            if (this.format === '24h') {
+            if (this.format() === '24h') {
                 const timeStr = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
                 options.push({ value: timeStr, label: timeStr });
             }
@@ -6587,7 +6181,7 @@ class IxTimeInputComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     // Event handlers
     onSelectionChange(value) {
@@ -6596,7 +6190,7 @@ class IxTimeInputComponent {
         this.onTouched();
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTimeInputComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxTimeInputComponent, isStandalone: true, selector: "ix-time-input", inputs: { disabled: "disabled", format: "format", granularity: "granularity", placeholder: "placeholder", testId: "testId" }, host: { classAttribute: "ix-time-input" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxTimeInputComponent, isStandalone: true, selector: "ix-time-input", inputs: { disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, format: { classPropertyName: "format", publicName: "format", isSignal: true, isRequired: false, transformFunction: null }, granularity: { classPropertyName: "granularity", publicName: "granularity", isSignal: true, isRequired: false, transformFunction: null }, placeholder: { classPropertyName: "placeholder", publicName: "placeholder", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null } }, host: { classAttribute: "ix-time-input" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxTimeInputComponent),
@@ -6605,9 +6199,9 @@ class IxTimeInputComponent {
         ], ngImport: i0, template: `
     <ix-select
       [options]="timeSelectOptions()"
-      [placeholder]="placeholder"
-      [disabled]="disabled"
-      [testId]="testId"
+      [placeholder]="placeholder()"
+      [disabled]="isDisabled()"
+      [testId]="testId()"
       [ngModel]="_value"
       (selectionChange)="onSelectionChange($event)">
     </ix-select>
@@ -6624,30 +6218,20 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                     ], template: `
     <ix-select
       [options]="timeSelectOptions()"
-      [placeholder]="placeholder"
-      [disabled]="disabled"
-      [testId]="testId"
+      [placeholder]="placeholder()"
+      [disabled]="isDisabled()"
+      [testId]="testId()"
       [ngModel]="_value"
       (selectionChange)="onSelectionChange($event)">
     </ix-select>
   `, host: {
                         'class': 'ix-time-input'
                     }, styles: [":host{display:block;width:100%}\n"] }]
-        }], propDecorators: { disabled: [{
-                type: Input
-            }], format: [{
-                type: Input
-            }], granularity: [{
-                type: Input
-            }], placeholder: [{
-                type: Input
-            }], testId: [{
-                type: Input
-            }] } });
+        }] });
 
 class IxSliderThumbDirective {
     elementRef;
-    disabled = false;
+    disabled = signal(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
     slider; // Will be set by parent slider component
     onChangeCallback = (value) => { };
     onTouched = () => { };
@@ -6683,7 +6267,7 @@ class IxSliderThumbDirective {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.disabled.set(isDisabled);
         if (this.elementRef.nativeElement) {
             this.elementRef.nativeElement.disabled = isDisabled;
         }
@@ -6700,14 +6284,14 @@ class IxSliderThumbDirective {
         this.onTouched();
     }
     onMouseDown(event) {
-        if (this.disabled)
+        if (this.disabled())
             return;
         this.isDragging = true;
         this.addGlobalListeners();
         event.stopPropagation(); // Prevent track click
     }
     onTouchStart(event) {
-        if (this.disabled)
+        if (this.disabled())
             return;
         this.isDragging = true;
         this.addGlobalListeners();
@@ -6726,7 +6310,7 @@ class IxSliderThumbDirective {
         document.removeEventListener('touchend', this.onGlobalTouchEnd);
     }
     onGlobalMouseMove = (event) => {
-        if (!this.isDragging || this.disabled)
+        if (!this.isDragging || this.disabled())
             return;
         event.preventDefault();
         this.updateValueFromPosition(event.clientX);
@@ -6739,7 +6323,7 @@ class IxSliderThumbDirective {
         }
     };
     onGlobalTouchMove = (event) => {
-        if (!this.isDragging || this.disabled)
+        if (!this.isDragging || this.disabled())
             return;
         event.preventDefault();
         const touch = event.touches[0];
@@ -6757,14 +6341,16 @@ class IxSliderThumbDirective {
             return;
         const rect = this.slider.getSliderRect();
         const percentage = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-        const newValue = this.slider.min + (percentage * (this.slider.max - this.slider.min));
+        const minVal = this.slider.min();
+        const maxVal = this.slider.max();
+        const newValue = minVal + (percentage * (maxVal - minVal));
         this.slider.updateValue(newValue);
     }
     cleanup() {
         this.removeGlobalListeners();
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSliderThumbDirective, deps: [{ token: i0.ElementRef }], target: i0.ɵɵFactoryTarget.Directive });
-    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "14.0.0", version: "20.3.4", type: IxSliderThumbDirective, isStandalone: true, selector: "input[ixSliderThumb]", inputs: { disabled: "disabled" }, host: { attributes: { "type": "range" }, listeners: { "input": "onInput($event)", "change": "onChange($event)", "blur": "onTouched()", "mousedown": "onMouseDown($event)", "touchstart": "onTouchStart($event)" }, properties: { "disabled": "slider?.disabled", "attr.min": "slider?.min", "attr.max": "slider?.max", "attr.step": "slider?.step", "value": "slider?.value()" }, classAttribute: "ix-slider-thumb" }, providers: [
+    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "14.0.0", version: "20.3.4", type: IxSliderThumbDirective, isStandalone: true, selector: "input[ixSliderThumb]", host: { attributes: { "type": "range" }, listeners: { "input": "onInput($event)", "change": "onChange($event)", "blur": "onTouched()", "mousedown": "onMouseDown($event)", "touchstart": "onTouchStart($event)" }, properties: { "disabled": "slider?.isDisabled()", "attr.min": "slider?.min()", "attr.max": "slider?.max()", "attr.step": "slider?.step()", "value": "slider?.value()" }, classAttribute: "ix-slider-thumb" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxSliderThumbDirective),
@@ -6787,10 +6373,10 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                     host: {
                         'type': 'range',
                         'class': 'ix-slider-thumb',
-                        '[disabled]': 'slider?.disabled',
-                        '[attr.min]': 'slider?.min',
-                        '[attr.max]': 'slider?.max',
-                        '[attr.step]': 'slider?.step',
+                        '[disabled]': 'slider?.isDisabled()',
+                        '[attr.min]': 'slider?.min()',
+                        '[attr.max]': 'slider?.max()',
+                        '[attr.step]': 'slider?.step()',
                         '[value]': 'slider?.value()',
                         '(input)': 'onInput($event)',
                         '(change)': 'onChange($event)',
@@ -6799,32 +6385,33 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                         '(touchstart)': 'onTouchStart($event)'
                     }
                 }]
-        }], ctorParameters: () => [{ type: i0.ElementRef }], propDecorators: { disabled: [{
-                type: Input
-            }] } });
+        }], ctorParameters: () => [{ type: i0.ElementRef }] });
 
 class IxSliderComponent {
-    min = 0;
-    max = 100;
-    step = 1;
-    disabled = false;
-    labelPrefix = '';
-    labelSuffix = '';
-    labelType = 'none';
-    thumbDirective;
-    sliderContainer;
-    thumbVisual;
+    min = input(0, ...(ngDevMode ? [{ debugName: "min" }] : []));
+    max = input(100, ...(ngDevMode ? [{ debugName: "max" }] : []));
+    step = input(1, ...(ngDevMode ? [{ debugName: "step" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    labelPrefix = input('', ...(ngDevMode ? [{ debugName: "labelPrefix" }] : []));
+    labelSuffix = input('', ...(ngDevMode ? [{ debugName: "labelSuffix" }] : []));
+    labelType = input('none', ...(ngDevMode ? [{ debugName: "labelType" }] : []));
+    thumbDirective = contentChild.required(IxSliderThumbDirective);
+    sliderContainer = viewChild.required('sliderContainer');
+    thumbVisual = viewChild.required('thumbVisual');
     onChange = (value) => { };
     onTouched = () => { };
     value = signal(0, ...(ngDevMode ? [{ debugName: "value" }] : []));
     _showLabel = signal(false, ...(ngDevMode ? [{ debugName: "_showLabel" }] : []));
     _labelVisible = signal(false, ...(ngDevMode ? [{ debugName: "_labelVisible" }] : []));
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    // Computed disabled state (combines input and form state)
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
     // Computed percentage for track fill
     fillPercentage = computed(() => {
-        const range = this.max - this.min;
+        const range = this.max() - this.min();
         if (range === 0)
             return 0;
-        return ((this.value() - this.min) / range) * 100;
+        return ((this.value() - this.min()) / range) * 100;
     }, ...(ngDevMode ? [{ debugName: "fillPercentage" }] : []));
     // Computed scale for track fill (0 to 1)
     fillScale = computed(() => {
@@ -6832,7 +6419,7 @@ class IxSliderComponent {
     }, ...(ngDevMode ? [{ debugName: "fillScale" }] : []));
     // Computed position for thumb (in pixels from left)
     thumbPosition = computed(() => {
-        const containerWidth = this.sliderContainer?.nativeElement?.offsetWidth || 0;
+        const containerWidth = this.sliderContainer()?.nativeElement?.offsetWidth || 0;
         const percentage = this.fillPercentage();
         // Center the thumb (20px width, so -10px offset)
         return (containerWidth * percentage / 100) - 10;
@@ -6840,18 +6427,14 @@ class IxSliderComponent {
     // Public signals for label management
     showLabel = this._showLabel.asReadonly();
     labelVisible = this._labelVisible.asReadonly();
-    ngOnInit() {
-        // Enable label if labelType is not 'none'
-        if (this.labelType !== 'none') {
-            this.enableLabel();
-        }
-    }
-    ngOnChanges(changes) {
-        if (changes['labelType']) {
-            if (this.labelType !== 'none') {
+    constructor() {
+        // Effect to handle labelType changes
+        effect(() => {
+            const currentLabelType = this.labelType();
+            if (currentLabelType !== 'none') {
                 this.enableLabel();
                 // Set up interaction listeners for handle type after view init
-                if (this.sliderContainer && (this.labelType === 'handle' || this.labelType === 'both')) {
+                if (this.sliderContainer() && (currentLabelType === 'handle' || currentLabelType === 'both')) {
                     this.setupHandleInteractionListeners();
                 }
             }
@@ -6860,16 +6443,18 @@ class IxSliderComponent {
                 this._showLabel.set(false);
                 this.cleanupHandleInteractionListeners();
             }
-        }
+        });
     }
     ngAfterViewInit() {
         // Initialize thumb directive if present
-        if (this.thumbDirective) {
-            this.thumbDirective.slider = this;
+        const thumbDirective = this.thumbDirective();
+        if (thumbDirective) {
+            thumbDirective.slider = this;
         }
         this.updateThumbPosition();
         // Set up handle interaction listeners if labelType is handle or both
-        if ((this.labelType === 'handle' || this.labelType === 'both') && this._showLabel()) {
+        const currentLabelType = this.labelType();
+        if ((currentLabelType === 'handle' || currentLabelType === 'both') && this._showLabel()) {
             this.setupHandleInteractionListeners();
         }
     }
@@ -6889,7 +6474,7 @@ class IxSliderComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     // Public methods for thumb directive and label management
     updateValue(newValue) {
@@ -6908,16 +6493,18 @@ class IxSliderComponent {
         this._labelVisible.set(false);
     }
     getSliderRect() {
-        return this.sliderContainer.nativeElement.getBoundingClientRect();
+        return this.sliderContainer().nativeElement.getBoundingClientRect();
     }
     onTrackClick(event) {
-        if (this.disabled)
+        if (this.isDisabled())
             return;
         event.preventDefault();
         const rect = this.getSliderRect();
         const clientX = event instanceof MouseEvent ? event.clientX : event.touches[0].clientX;
         const percentage = (clientX - rect.left) / rect.width;
-        const newValue = this.min + (percentage * (this.max - this.min));
+        const minVal = this.min();
+        const maxVal = this.max();
+        const newValue = minVal + (percentage * (maxVal - minVal));
         this.updateValue(newValue);
         this.onTouched();
     }
@@ -6926,19 +6513,23 @@ class IxSliderComponent {
         // No manual DOM manipulation needed
     }
     clampValue(value) {
+        const minVal = this.min();
+        const maxVal = this.max();
+        const stepVal = this.step();
         // Clamp to min/max
-        let clampedValue = Math.max(this.min, Math.min(this.max, value));
+        let clampedValue = Math.max(minVal, Math.min(maxVal, value));
         // Snap to step
-        if (this.step > 0) {
-            const steps = Math.round((clampedValue - this.min) / this.step);
-            clampedValue = this.min + (steps * this.step);
+        if (stepVal > 0) {
+            const steps = Math.round((clampedValue - minVal) / stepVal);
+            clampedValue = minVal + (steps * stepVal);
         }
         return clampedValue;
     }
     // Handle interaction listeners for tooltip-style labels
     setupHandleInteractionListeners() {
-        if (this.sliderContainer) {
-            const containerEl = this.sliderContainer.nativeElement;
+        const sliderContainer = this.sliderContainer();
+        if (sliderContainer) {
+            const containerEl = sliderContainer.nativeElement;
             const thumbInput = containerEl.querySelector('input[ixSliderThumb]');
             containerEl.addEventListener('mousedown', this.onInteractionStart);
             containerEl.addEventListener('touchstart', this.onInteractionStart);
@@ -6951,8 +6542,9 @@ class IxSliderComponent {
         }
     }
     cleanupHandleInteractionListeners() {
-        if (this.sliderContainer) {
-            const containerEl = this.sliderContainer.nativeElement;
+        const sliderContainer = this.sliderContainer();
+        if (sliderContainer) {
+            const containerEl = sliderContainer.nativeElement;
             const thumbInput = containerEl.querySelector('input[ixSliderThumb]');
             containerEl.removeEventListener('mousedown', this.onInteractionStart);
             containerEl.removeEventListener('touchstart', this.onInteractionStart);
@@ -6965,59 +6557,61 @@ class IxSliderComponent {
         }
     }
     onInteractionStart = () => {
-        if (this.labelType === 'handle' || this.labelType === 'both') {
+        const currentLabelType = this.labelType();
+        if (currentLabelType === 'handle' || currentLabelType === 'both') {
             this.showThumbLabel();
         }
     };
     onInteractionEnd = () => {
-        if (this.labelType === 'handle' || this.labelType === 'both') {
+        const currentLabelType = this.labelType();
+        if (currentLabelType === 'handle' || currentLabelType === 'both') {
             this.hideThumbLabel();
         }
     };
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSliderComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxSliderComponent, isStandalone: true, selector: "ix-slider", inputs: { min: "min", max: "max", step: "step", disabled: "disabled", labelPrefix: "labelPrefix", labelSuffix: "labelSuffix", labelType: "labelType" }, host: { properties: { "attr.aria-disabled": "disabled" }, classAttribute: "ix-slider" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.2.0", version: "20.3.4", type: IxSliderComponent, isStandalone: true, selector: "ix-slider", inputs: { min: { classPropertyName: "min", publicName: "min", isSignal: true, isRequired: false, transformFunction: null }, max: { classPropertyName: "max", publicName: "max", isSignal: true, isRequired: false, transformFunction: null }, step: { classPropertyName: "step", publicName: "step", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, labelPrefix: { classPropertyName: "labelPrefix", publicName: "labelPrefix", isSignal: true, isRequired: false, transformFunction: null }, labelSuffix: { classPropertyName: "labelSuffix", publicName: "labelSuffix", isSignal: true, isRequired: false, transformFunction: null }, labelType: { classPropertyName: "labelType", publicName: "labelType", isSignal: true, isRequired: false, transformFunction: null } }, host: { properties: { "attr.aria-disabled": "isDisabled()" }, classAttribute: "ix-slider" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxSliderComponent),
                 multi: true
             }
-        ], queries: [{ propertyName: "thumbDirective", first: true, predicate: IxSliderThumbDirective, descendants: true }], viewQueries: [{ propertyName: "sliderContainer", first: true, predicate: ["sliderContainer"], descendants: true }, { propertyName: "thumbVisual", first: true, predicate: ["thumbVisual"], descendants: true }], usesOnChanges: true, ngImport: i0, template: `
-    <div 
+        ], queries: [{ propertyName: "thumbDirective", first: true, predicate: IxSliderThumbDirective, descendants: true, isSignal: true }], viewQueries: [{ propertyName: "sliderContainer", first: true, predicate: ["sliderContainer"], descendants: true, isSignal: true }, { propertyName: "thumbVisual", first: true, predicate: ["thumbVisual"], descendants: true, isSignal: true }], ngImport: i0, template: `
+    <div
       class="ix-slider-container"
       #sliderContainer
-      [attr.aria-disabled]="disabled"
-      [attr.data-disabled]="disabled"
+      [attr.aria-disabled]="isDisabled()"
+      [attr.data-disabled]="isDisabled()"
       (mousedown)="onTrackClick($event)"
       (touchstart)="onTrackClick($event)">
-      
+
       <div class="ix-slider-track">
         <div class="ix-slider-track-inactive"></div>
         <div class="ix-slider-track-active">
-          <div 
-            class="ix-slider-track-active-fill" 
+          <div
+            class="ix-slider-track-active-fill"
             [style.transform]="'scaleX(' + fillScale() + ')'">
           </div>
         </div>
-        <div 
+        <div
           class="ix-slider-track-label"
-          *ngIf="(labelType === 'track' || labelType === 'both') && showLabel()">
-          {{ labelPrefix }}{{ value() }}{{ labelSuffix }}
+          *ngIf="(labelType() === 'track' || labelType() === 'both') && showLabel()">
+          {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}
         </div>
       </div>
-      
-      <div 
+
+      <div
         class="ix-slider-thumb-visual"
         #thumbVisual
         [style.transform]="'translateX(' + thumbPosition() + 'px)'">
         <div class="ix-slider-thumb-knob"></div>
-        <div 
+        <div
           class="ix-slider-thumb-label"
-          *ngIf="(labelType === 'handle' || labelType === 'both') && showLabel()"
+          *ngIf="(labelType() === 'handle' || labelType() === 'both') && showLabel()"
           [class.visible]="labelVisible()">
-          {{ labelPrefix }}{{ value() }}{{ labelSuffix }}
+          {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}
         </div>
       </div>
-      
+
       <ng-content></ng-content>
     </div>
   `, isInline: true, styles: [":host{display:block;width:100%;height:48px;position:relative;touch-action:pan-x}.ix-slider-container{position:relative;width:100%;height:100%;display:flex;align-items:center;cursor:pointer}.ix-slider-container[data-disabled=true]{cursor:not-allowed;opacity:.6}.ix-slider-track{position:relative;width:100%;height:4px}.ix-slider-track-inactive{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--lines, #e0e0e0);border-radius:2px}.ix-slider-track-active{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;border-radius:2px}.ix-slider-track-active-fill{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--primary, #007bff);border-radius:2px;transform-origin:left center;transition:transform .1s ease-out}:host ::ng-deep .ix-slider-thumb{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;margin:0;padding:0;cursor:pointer;z-index:2;-webkit-appearance:none;appearance:none;background:none;border:none;outline:none}:host ::ng-deep .ix-slider-thumb:disabled{cursor:not-allowed}:host ::ng-deep .ix-slider-thumb:focus{outline:none}:host ::ng-deep .ix-slider-thumb:focus-visible{outline:none}:host ::ng-deep .ix-slider-thumb:focus-visible+.ix-slider-visual-thumb{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-slider-thumb-visual{position:absolute;top:50%;left:0;pointer-events:none;z-index:3;transition:transform .1s ease-out}.ix-slider-thumb-knob{width:20px;height:24px;background:var(--primary, #007bff);border:2px solid var(--bg1, white);border-radius:4px;box-shadow:0 2px 4px #0003;transition:box-shadow .15s ease;transform:translateY(-50%)}.ix-slider-container:hover .ix-slider-thumb-knob{box-shadow:0 4px 8px #0000004d}.ix-slider-container[data-disabled=true] .ix-slider-thumb-knob{background:var(--fg2, #999);box-shadow:0 1px 2px #0000001a}.ix-slider-thumb-label{position:absolute;bottom:calc(100% + 16px);left:50%;transform:translate(-50%) translateY(-50%);padding:8px 12px;background:var(--primary, #007bff);color:var(--primary-txt, white);border-radius:6px;font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;opacity:0;pointer-events:none;-webkit-user-select:none;user-select:none;transition:opacity .15s ease;z-index:4;box-shadow:0 2px 8px #00000026}.ix-slider-thumb-label:after{content:\"\";position:absolute;top:100%;left:50%;transform:translate(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid var(--primary, #007bff)}.ix-slider-thumb-label.visible{opacity:1}.ix-slider-track-label{position:absolute;top:-28px;right:0;padding:4px 0;background:transparent;color:var(--fg1, #000);font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;-webkit-user-select:none;user-select:none;z-index:2}@media (prefers-reduced-motion: reduce){.ix-slider-track-active-fill,.ix-slider-thumb-visual,.ix-slider-thumb-knob,.ix-slider-thumb-label{transition:none}}@media (prefers-contrast: high){.ix-slider-track-inactive{border:1px solid var(--fg1, #000)}.ix-slider-thumb-knob{border-width:3px;border-color:var(--fg1, #000)}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "ngmodule", type: A11yModule }] });
@@ -7031,94 +6625,69 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                             multi: true
                         }
                     ], template: `
-    <div 
+    <div
       class="ix-slider-container"
       #sliderContainer
-      [attr.aria-disabled]="disabled"
-      [attr.data-disabled]="disabled"
+      [attr.aria-disabled]="isDisabled()"
+      [attr.data-disabled]="isDisabled()"
       (mousedown)="onTrackClick($event)"
       (touchstart)="onTrackClick($event)">
-      
+
       <div class="ix-slider-track">
         <div class="ix-slider-track-inactive"></div>
         <div class="ix-slider-track-active">
-          <div 
-            class="ix-slider-track-active-fill" 
+          <div
+            class="ix-slider-track-active-fill"
             [style.transform]="'scaleX(' + fillScale() + ')'">
           </div>
         </div>
-        <div 
+        <div
           class="ix-slider-track-label"
-          *ngIf="(labelType === 'track' || labelType === 'both') && showLabel()">
-          {{ labelPrefix }}{{ value() }}{{ labelSuffix }}
+          *ngIf="(labelType() === 'track' || labelType() === 'both') && showLabel()">
+          {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}
         </div>
       </div>
-      
-      <div 
+
+      <div
         class="ix-slider-thumb-visual"
         #thumbVisual
         [style.transform]="'translateX(' + thumbPosition() + 'px)'">
         <div class="ix-slider-thumb-knob"></div>
-        <div 
+        <div
           class="ix-slider-thumb-label"
-          *ngIf="(labelType === 'handle' || labelType === 'both') && showLabel()"
+          *ngIf="(labelType() === 'handle' || labelType() === 'both') && showLabel()"
           [class.visible]="labelVisible()">
-          {{ labelPrefix }}{{ value() }}{{ labelSuffix }}
+          {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}
         </div>
       </div>
-      
+
       <ng-content></ng-content>
     </div>
   `, host: {
                         'class': 'ix-slider',
-                        '[attr.aria-disabled]': 'disabled'
+                        '[attr.aria-disabled]': 'isDisabled()'
                     }, styles: [":host{display:block;width:100%;height:48px;position:relative;touch-action:pan-x}.ix-slider-container{position:relative;width:100%;height:100%;display:flex;align-items:center;cursor:pointer}.ix-slider-container[data-disabled=true]{cursor:not-allowed;opacity:.6}.ix-slider-track{position:relative;width:100%;height:4px}.ix-slider-track-inactive{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--lines, #e0e0e0);border-radius:2px}.ix-slider-track-active{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;border-radius:2px}.ix-slider-track-active-fill{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--primary, #007bff);border-radius:2px;transform-origin:left center;transition:transform .1s ease-out}:host ::ng-deep .ix-slider-thumb{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;margin:0;padding:0;cursor:pointer;z-index:2;-webkit-appearance:none;appearance:none;background:none;border:none;outline:none}:host ::ng-deep .ix-slider-thumb:disabled{cursor:not-allowed}:host ::ng-deep .ix-slider-thumb:focus{outline:none}:host ::ng-deep .ix-slider-thumb:focus-visible{outline:none}:host ::ng-deep .ix-slider-thumb:focus-visible+.ix-slider-visual-thumb{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-slider-thumb-visual{position:absolute;top:50%;left:0;pointer-events:none;z-index:3;transition:transform .1s ease-out}.ix-slider-thumb-knob{width:20px;height:24px;background:var(--primary, #007bff);border:2px solid var(--bg1, white);border-radius:4px;box-shadow:0 2px 4px #0003;transition:box-shadow .15s ease;transform:translateY(-50%)}.ix-slider-container:hover .ix-slider-thumb-knob{box-shadow:0 4px 8px #0000004d}.ix-slider-container[data-disabled=true] .ix-slider-thumb-knob{background:var(--fg2, #999);box-shadow:0 1px 2px #0000001a}.ix-slider-thumb-label{position:absolute;bottom:calc(100% + 16px);left:50%;transform:translate(-50%) translateY(-50%);padding:8px 12px;background:var(--primary, #007bff);color:var(--primary-txt, white);border-radius:6px;font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;opacity:0;pointer-events:none;-webkit-user-select:none;user-select:none;transition:opacity .15s ease;z-index:4;box-shadow:0 2px 8px #00000026}.ix-slider-thumb-label:after{content:\"\";position:absolute;top:100%;left:50%;transform:translate(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid var(--primary, #007bff)}.ix-slider-thumb-label.visible{opacity:1}.ix-slider-track-label{position:absolute;top:-28px;right:0;padding:4px 0;background:transparent;color:var(--fg1, #000);font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;-webkit-user-select:none;user-select:none;z-index:2}@media (prefers-reduced-motion: reduce){.ix-slider-track-active-fill,.ix-slider-thumb-visual,.ix-slider-thumb-knob,.ix-slider-thumb-label{transition:none}}@media (prefers-contrast: high){.ix-slider-track-inactive{border:1px solid var(--fg1, #000)}.ix-slider-thumb-knob{border-width:3px;border-color:var(--fg1, #000)}}\n"] }]
-        }], propDecorators: { min: [{
-                type: Input
-            }], max: [{
-                type: Input
-            }], step: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], labelPrefix: [{
-                type: Input
-            }], labelSuffix: [{
-                type: Input
-            }], labelType: [{
-                type: Input
-            }], thumbDirective: [{
-                type: ContentChild,
-                args: [IxSliderThumbDirective]
-            }], sliderContainer: [{
-                type: ViewChild,
-                args: ['sliderContainer']
-            }], thumbVisual: [{
-                type: ViewChild,
-                args: ['thumbVisual']
-            }] } });
+        }], ctorParameters: () => [] });
 
 class IxSliderWithLabelDirective {
     _elementRef;
     _slider;
-    enabled = true;
+    enabled = input(true, ...(ngDevMode ? [{ debugName: "enabled", alias: 'ixSliderWithLabel' }] : [{ alias: 'ixSliderWithLabel' }]));
     constructor(_elementRef, _slider) {
         this._elementRef = _elementRef;
         this._slider = _slider;
     }
     ngOnInit() {
-        const isEnabled = this.enabled === true || this.enabled === '' || this.enabled === 'true';
+        const enabled = this.enabled();
+        const isEnabled = enabled === true || enabled === '' || enabled === 'true';
         if (!isEnabled) {
             return;
         }
         // Enable the label in the slider component
         this._slider.enableLabel();
-        // Set default labelType to 'handle' if not already set
-        if (this._slider.labelType === 'none') {
-            this._slider.labelType = 'handle';
-        }
         // Only set up event listeners for handle type labels (tooltip behavior)
-        if (this._slider.labelType === 'handle') {
+        const currentLabelType = this._slider.labelType();
+        if (currentLabelType === 'handle' || currentLabelType === 'both') {
             this._setupInteractionListeners();
         }
     }
@@ -7147,7 +6716,8 @@ class IxSliderWithLabelDirective {
     };
     _cleanup() {
         // Only clean up interaction listeners if they were set up for handle type
-        if (this._slider.labelType === 'handle') {
+        const currentLabelType = this._slider.labelType();
+        if (currentLabelType === 'handle' || currentLabelType === 'both') {
             const sliderContainer = this._elementRef.nativeElement.querySelector('.ix-slider-container');
             const thumbInput = this._elementRef.nativeElement.querySelector('input[ixSliderThumb]');
             if (sliderContainer) {
@@ -7163,7 +6733,7 @@ class IxSliderWithLabelDirective {
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSliderWithLabelDirective, deps: [{ token: i0.ElementRef }, { token: IxSliderComponent, host: true }], target: i0.ɵɵFactoryTarget.Directive });
-    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "14.0.0", version: "20.3.4", type: IxSliderWithLabelDirective, isStandalone: true, selector: "ix-slider[ixSliderWithLabel]", inputs: { enabled: ["ixSliderWithLabel", "enabled"] }, ngImport: i0 });
+    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "17.1.0", version: "20.3.4", type: IxSliderWithLabelDirective, isStandalone: true, selector: "ix-slider[ixSliderWithLabel]", inputs: { enabled: { classPropertyName: "enabled", publicName: "ixSliderWithLabel", isSignal: true, isRequired: false, transformFunction: null } }, ngImport: i0 });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSliderWithLabelDirective, decorators: [{
             type: Directive,
@@ -7173,33 +6743,31 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                 }]
         }], ctorParameters: () => [{ type: i0.ElementRef }, { type: IxSliderComponent, decorators: [{
                     type: Host
-                }] }], propDecorators: { enabled: [{
-                type: Input,
-                args: ['ixSliderWithLabel']
-            }] } });
+                }] }] });
 
-let nextId = 0;
 class IxButtonToggleComponent {
     cdr;
     static _uniqueIdCounter = 0;
-    id = `ix-button-toggle-${IxButtonToggleComponent._uniqueIdCounter++}`;
-    value;
-    disabled = false;
-    checked = false;
-    ariaLabel = '';
-    ariaLabelledby = '';
-    change = new EventEmitter();
-    buttonId;
+    id = input(`ix-button-toggle-${IxButtonToggleComponent._uniqueIdCounter++}`, ...(ngDevMode ? [{ debugName: "id" }] : []));
+    value = input(undefined, ...(ngDevMode ? [{ debugName: "value" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    checked = signal(false, ...(ngDevMode ? [{ debugName: "checked" }] : []));
+    ariaLabel = input('', ...(ngDevMode ? [{ debugName: "ariaLabel" }] : []));
+    ariaLabelledby = input('', ...(ngDevMode ? [{ debugName: "ariaLabelledby" }] : []));
+    change = output();
+    buttonId = computed(() => this.id() + '-button', ...(ngDevMode ? [{ debugName: "buttonId" }] : []));
     buttonToggleGroup;
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    // Computed disabled state (combines input and form state)
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
     onChange = (value) => { };
     onTouched = () => { };
     constructor(cdr) {
         this.cdr = cdr;
-        this.buttonId = this.id + '-button';
     }
     // ControlValueAccessor implementation
     writeValue(value) {
-        this.checked = !!value;
+        this.checked.set(!!value);
     }
     registerOnChange(fn) {
         this.onChange = fn;
@@ -7208,10 +6776,10 @@ class IxButtonToggleComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     toggle() {
-        if (this.disabled) {
+        if (this.isDisabled()) {
             return;
         }
         // If part of a group, let the group handle the state
@@ -7220,30 +6788,31 @@ class IxButtonToggleComponent {
         }
         else {
             // Standalone toggle - handle its own state
-            this.checked = !this.checked;
-            this.onChange(this.checked);
+            const newValue = !this.checked();
+            this.checked.set(newValue);
+            this.onChange(newValue);
             this.onTouched();
             this.change.emit({
                 source: this,
-                value: this.value || this.checked
+                value: this.value() || newValue
             });
         }
     }
-    focus() {
+    onFocus() {
         this.onTouched();
     }
     // Method for group to mark this toggle as checked
     _markForCheck() {
-        this.checked = true;
+        this.checked.set(true);
         this.cdr.markForCheck();
     }
     // Method for group to mark this toggle as unchecked
     _markForUncheck() {
-        this.checked = false;
+        this.checked.set(false);
         this.cdr.markForCheck();
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxButtonToggleComponent, deps: [{ token: i0.ChangeDetectorRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxButtonToggleComponent, isStandalone: true, selector: "ix-button-toggle", inputs: { id: "id", value: "value", disabled: "disabled", checked: "checked", ariaLabel: "ariaLabel", ariaLabelledby: "ariaLabelledby" }, outputs: { change: "change" }, host: { listeners: { "focus": "focus()" }, properties: { "attr.id": "id", "class.ix-button-toggle--checked": "checked", "class.ix-button-toggle--disabled": "disabled", "class.ix-button-toggle--standalone": "!buttonToggleGroup" }, classAttribute: "ix-button-toggle" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxButtonToggleComponent, isStandalone: true, selector: "ix-button-toggle", inputs: { id: { classPropertyName: "id", publicName: "id", isSignal: true, isRequired: false, transformFunction: null }, value: { classPropertyName: "value", publicName: "value", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, ariaLabel: { classPropertyName: "ariaLabel", publicName: "ariaLabel", isSignal: true, isRequired: false, transformFunction: null }, ariaLabelledby: { classPropertyName: "ariaLabelledby", publicName: "ariaLabelledby", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { change: "change" }, host: { listeners: { "focus": "onFocus()" }, properties: { "attr.id": "id()", "class.ix-button-toggle--checked": "checked()", "class.ix-button-toggle--disabled": "isDisabled()", "class.ix-button-toggle--standalone": "!buttonToggleGroup" }, classAttribute: "ix-button-toggle" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxButtonToggleComponent),
@@ -7253,15 +6822,15 @@ class IxButtonToggleComponent {
     <button
       type="button"
       class="ix-button-toggle__button"
-      [class.ix-button-toggle__button--checked]="checked"
-      [disabled]="disabled"
-      [attr.aria-pressed]="checked"
-      [attr.aria-label]="ariaLabel || null"
-      [attr.aria-labelledby]="ariaLabelledby"
-      [attr.id]="buttonId"
+      [class.ix-button-toggle__button--checked]="checked()"
+      [disabled]="isDisabled()"
+      [attr.aria-pressed]="checked()"
+      [attr.aria-label]="ariaLabel() || null"
+      [attr.aria-labelledby]="ariaLabelledby()"
+      [attr.id]="buttonId()"
       (click)="toggle()">
       <span class="ix-button-toggle__label">
-        <span class="ix-button-toggle__check" *ngIf="checked">✓</span>
+        <span class="ix-button-toggle__check" *ngIf="checked()">✓</span>
         <ng-content></ng-content>
       </span>
     </button>
@@ -7279,80 +6848,60 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
     <button
       type="button"
       class="ix-button-toggle__button"
-      [class.ix-button-toggle__button--checked]="checked"
-      [disabled]="disabled"
-      [attr.aria-pressed]="checked"
-      [attr.aria-label]="ariaLabel || null"
-      [attr.aria-labelledby]="ariaLabelledby"
-      [attr.id]="buttonId"
+      [class.ix-button-toggle__button--checked]="checked()"
+      [disabled]="isDisabled()"
+      [attr.aria-pressed]="checked()"
+      [attr.aria-label]="ariaLabel() || null"
+      [attr.aria-labelledby]="ariaLabelledby()"
+      [attr.id]="buttonId()"
       (click)="toggle()">
       <span class="ix-button-toggle__label">
-        <span class="ix-button-toggle__check" *ngIf="checked">✓</span>
+        <span class="ix-button-toggle__check" *ngIf="checked()">✓</span>
         <ng-content></ng-content>
       </span>
     </button>
   `, changeDetection: ChangeDetectionStrategy.OnPush, encapsulation: ViewEncapsulation.None, host: {
                         'class': 'ix-button-toggle',
-                        '[attr.id]': 'id',
-                        '[class.ix-button-toggle--checked]': 'checked',
-                        '[class.ix-button-toggle--disabled]': 'disabled',
-                        '[class.ix-button-toggle--standalone]': '!buttonToggleGroup'
+                        '[attr.id]': 'id()',
+                        '[class.ix-button-toggle--checked]': 'checked()',
+                        '[class.ix-button-toggle--disabled]': 'isDisabled()',
+                        '[class.ix-button-toggle--standalone]': '!buttonToggleGroup',
+                        '(focus)': 'onFocus()'
                     }, styles: [".ix-button-toggle{display:inline-block;position:relative}.ix-button-toggle:first-child .ix-button-toggle__button{border-radius:6px 0 0 6px}.ix-button-toggle:last-child .ix-button-toggle__button{border-radius:0 6px 6px 0}.ix-button-toggle:not(:first-child):not(:last-child) .ix-button-toggle__button{border-radius:0}.ix-button-toggle:first-child:last-child .ix-button-toggle__button{border-radius:6px}.ix-button-toggle:not(:first-child) .ix-button-toggle__button{margin-left:-1px}.ix-button-toggle--standalone .ix-button-toggle__button{border-radius:6px}.ix-button-toggle .ix-button-toggle__button{display:inline-flex;align-items:center;justify-content:center;min-width:64px;height:36px;padding:0 16px;border:1px solid var(--lines, #d1d5db);background:var(--bg1, #ffffff);color:var(--fg2, #6b7280);font-family:inherit;font-size:14px;font-weight:500;text-decoration:none;cursor:pointer;transition:all .25s cubic-bezier(.4,0,.2,1);outline:none;position:relative;z-index:1;overflow:hidden}.ix-button-toggle .ix-button-toggle__button:hover:not(:disabled){background:var(--alt-bg1, #f9fafb);z-index:2}.ix-button-toggle .ix-button-toggle__button:focus-visible{outline:2px solid var(--primary, #3b82f6);outline-offset:2px;z-index:3}.ix-button-toggle .ix-button-toggle__button:disabled{cursor:not-allowed!important;background:var(--alt-bg2, #f3f4f6)!important;color:var(--fg1, #000000)!important;opacity:.6!important}.ix-button-toggle .ix-button-toggle__button:disabled:hover{background:var(--alt-bg2, #f3f4f6)!important;cursor:not-allowed!important}.ix-button-toggle .ix-button-toggle__button--checked{background:var(--primary, #3b82f6);color:var(--primary-txt, #ffffff);border-color:var(--primary, #3b82f6);z-index:2;padding:0 20px}.ix-button-toggle .ix-button-toggle__button--checked:hover:not(:disabled){background:var(--primary, #3b82f6)}.ix-button-toggle .ix-button-toggle__label{display:flex;align-items:center;justify-content:center;gap:8px;pointer-events:none;line-height:1}.ix-button-toggle .ix-button-toggle__check{font-size:12px;font-weight:700;line-height:1;margin-right:4px;transform:translate(-4px) scale(.8);opacity:0;animation:checkmarkSlideIn .25s cubic-bezier(.4,0,.2,1) forwards}@keyframes checkmarkSlideIn{0%{transform:translate(-8px) scale(.8);opacity:0}50%{transform:translate(-2px) scale(1.1);opacity:.7}to{transform:translate(0) scale(1);opacity:1}}\n"] }]
-        }], ctorParameters: () => [{ type: i0.ChangeDetectorRef }], propDecorators: { id: [{
-                type: Input
-            }], value: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], checked: [{
-                type: Input
-            }], ariaLabel: [{
-                type: Input
-            }], ariaLabelledby: [{
-                type: Input
-            }], change: [{
-                type: Output
-            }], focus: [{
-                type: HostListener,
-                args: ['focus']
-            }] } });
+        }], ctorParameters: () => [{ type: i0.ChangeDetectorRef }] });
 
 class IxButtonToggleGroupComponent {
-    buttonToggles;
-    multiple = false;
-    disabled = false;
-    name = '';
-    ariaLabel = '';
-    ariaLabelledby = '';
-    change = new EventEmitter();
-    selectedValue = null;
-    selectedValues = [];
-    destroy$ = new Subject();
+    buttonToggles = contentChildren(IxButtonToggleComponent, ...(ngDevMode ? [{ debugName: "buttonToggles", descendants: true }] : [{ descendants: true }]));
+    multiple = input(false, ...(ngDevMode ? [{ debugName: "multiple" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    name = input('', ...(ngDevMode ? [{ debugName: "name" }] : []));
+    ariaLabel = input('', ...(ngDevMode ? [{ debugName: "ariaLabel" }] : []));
+    ariaLabelledby = input('', ...(ngDevMode ? [{ debugName: "ariaLabelledby" }] : []));
+    change = output();
+    selectedValue = signal(null, ...(ngDevMode ? [{ debugName: "selectedValue" }] : []));
+    selectedValues = signal([], ...(ngDevMode ? [{ debugName: "selectedValues" }] : []));
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    // Computed disabled state (combines input and form state)
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
     onChange = (value) => { };
     onTouched = () => { };
-    ngAfterContentInit() {
-        this.buttonToggles.forEach(toggle => {
-            toggle.buttonToggleGroup = this;
-        });
-        // Listen for changes in the button toggles
-        this.buttonToggles.changes.pipe(takeUntil(this.destroy$)).subscribe(() => {
-            this.buttonToggles.forEach(toggle => {
+    constructor() {
+        // Effect to update button toggles when content children change
+        effect(() => {
+            const toggles = this.buttonToggles();
+            toggles.forEach(toggle => {
                 toggle.buttonToggleGroup = this;
             });
         });
     }
-    ngOnDestroy() {
-        this.destroy$.next();
-        this.destroy$.complete();
-    }
     // ControlValueAccessor implementation
     writeValue(value) {
-        if (this.multiple) {
-            this.selectedValues = Array.isArray(value) ? value : [];
+        if (this.multiple()) {
+            this.selectedValues.set(Array.isArray(value) ? value : []);
             this.updateTogglesFromValues();
         }
         else {
-            this.selectedValue = value;
+            this.selectedValue.set(value);
             this.updateTogglesFromValue();
         }
     }
@@ -7363,18 +6912,17 @@ class IxButtonToggleGroupComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
-        if (this.buttonToggles) {
-            this.buttonToggles.forEach(toggle => {
-                toggle.disabled = isDisabled;
-            });
-        }
+        this.formDisabled.set(isDisabled);
+        const toggles = this.buttonToggles();
+        toggles.forEach(toggle => {
+            toggle.setDisabledState(isDisabled);
+        });
     }
     _onButtonToggleClick(clickedToggle) {
-        if (this.disabled || clickedToggle.disabled) {
+        if (this.isDisabled() || clickedToggle.isDisabled()) {
             return;
         }
-        if (this.multiple) {
+        if (this.multiple()) {
             this.handleMultipleSelection(clickedToggle);
         }
         else {
@@ -7383,46 +6931,49 @@ class IxButtonToggleGroupComponent {
         this.onTouched();
         this.change.emit({
             source: clickedToggle,
-            value: this.multiple ? this.selectedValues : this.selectedValue
+            value: this.multiple() ? this.selectedValues() : this.selectedValue()
         });
     }
     handleSingleSelection(clickedToggle) {
         // In radio mode, clicking the same toggle deselects it
-        if (this.selectedValue === clickedToggle.value) {
-            this.selectedValue = null;
+        if (this.selectedValue() === clickedToggle.value) {
+            this.selectedValue.set(null);
             clickedToggle._markForUncheck();
         }
         else {
             // Deselect all others
-            this.buttonToggles.forEach(toggle => {
+            const toggles = this.buttonToggles();
+            toggles.forEach(toggle => {
                 if (toggle !== clickedToggle) {
                     toggle._markForUncheck();
                 }
             });
-            this.selectedValue = clickedToggle.value;
+            this.selectedValue.set(clickedToggle.value);
             clickedToggle._markForCheck();
         }
-        this.onChange(this.selectedValue);
+        this.onChange(this.selectedValue());
     }
     handleMultipleSelection(clickedToggle) {
-        const index = this.selectedValues.indexOf(clickedToggle.value);
+        const currentValues = [...this.selectedValues()];
+        const index = currentValues.indexOf(clickedToggle.value);
         if (index > -1) {
             // Remove from selection
-            this.selectedValues.splice(index, 1);
+            currentValues.splice(index, 1);
             clickedToggle._markForUncheck();
         }
         else {
             // Add to selection
-            this.selectedValues.push(clickedToggle.value);
+            currentValues.push(clickedToggle.value);
             clickedToggle._markForCheck();
         }
-        this.onChange([...this.selectedValues]);
+        this.selectedValues.set(currentValues);
+        this.onChange([...currentValues]);
     }
     updateTogglesFromValue() {
-        if (!this.buttonToggles)
-            return;
-        this.buttonToggles.forEach(toggle => {
-            if (toggle.value === this.selectedValue) {
+        const toggles = this.buttonToggles();
+        const value = this.selectedValue();
+        toggles.forEach(toggle => {
+            if (toggle.value === value) {
                 toggle._markForCheck();
             }
             else {
@@ -7431,10 +6982,10 @@ class IxButtonToggleGroupComponent {
         });
     }
     updateTogglesFromValues() {
-        if (!this.buttonToggles)
-            return;
-        this.buttonToggles.forEach(toggle => {
-            if (this.selectedValues.includes(toggle.value)) {
+        const toggles = this.buttonToggles();
+        const values = this.selectedValues();
+        toggles.forEach(toggle => {
+            if (values.includes(toggle.value)) {
                 toggle._markForCheck();
             }
             else {
@@ -7443,17 +6994,17 @@ class IxButtonToggleGroupComponent {
         });
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxButtonToggleGroupComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxButtonToggleGroupComponent, isStandalone: true, selector: "ix-button-toggle-group", inputs: { multiple: "multiple", disabled: "disabled", name: "name", ariaLabel: "ariaLabel", ariaLabelledby: "ariaLabelledby" }, outputs: { change: "change" }, host: { classAttribute: "ix-button-toggle-group" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.2.0", version: "20.3.4", type: IxButtonToggleGroupComponent, isStandalone: true, selector: "ix-button-toggle-group", inputs: { multiple: { classPropertyName: "multiple", publicName: "multiple", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, name: { classPropertyName: "name", publicName: "name", isSignal: true, isRequired: false, transformFunction: null }, ariaLabel: { classPropertyName: "ariaLabel", publicName: "ariaLabel", isSignal: true, isRequired: false, transformFunction: null }, ariaLabelledby: { classPropertyName: "ariaLabelledby", publicName: "ariaLabelledby", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { change: "change" }, host: { classAttribute: "ix-button-toggle-group" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxButtonToggleGroupComponent),
                 multi: true
             }
-        ], queries: [{ propertyName: "buttonToggles", predicate: IxButtonToggleComponent, descendants: true }], ngImport: i0, template: `
-    <div class="ix-button-toggle-group" 
-         [attr.role]="multiple ? 'group' : 'radiogroup'"
-         [attr.aria-label]="ariaLabel"
-         [attr.aria-labelledby]="ariaLabelledby">
+        ], queries: [{ propertyName: "buttonToggles", predicate: IxButtonToggleComponent, descendants: true, isSignal: true }], ngImport: i0, template: `
+    <div class="ix-button-toggle-group"
+         [attr.role]="multiple() ? 'group' : 'radiogroup'"
+         [attr.aria-label]="ariaLabel()"
+         [attr.aria-labelledby]="ariaLabelledby()">
       <ng-content></ng-content>
     </div>
   `, isInline: true, styles: [".ix-button-toggle-group{display:inline-flex;align-items:stretch;border-radius:6px;box-shadow:0 1px 2px #0000000d}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "ngmodule", type: A11yModule }], changeDetection: i0.ChangeDetectionStrategy.OnPush, encapsulation: i0.ViewEncapsulation.None });
@@ -7467,76 +7018,57 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                             multi: true
                         }
                     ], template: `
-    <div class="ix-button-toggle-group" 
-         [attr.role]="multiple ? 'group' : 'radiogroup'"
-         [attr.aria-label]="ariaLabel"
-         [attr.aria-labelledby]="ariaLabelledby">
+    <div class="ix-button-toggle-group"
+         [attr.role]="multiple() ? 'group' : 'radiogroup'"
+         [attr.aria-label]="ariaLabel()"
+         [attr.aria-labelledby]="ariaLabelledby()">
       <ng-content></ng-content>
     </div>
   `, changeDetection: ChangeDetectionStrategy.OnPush, encapsulation: ViewEncapsulation.None, host: {
                         'class': 'ix-button-toggle-group'
                     }, styles: [".ix-button-toggle-group{display:inline-flex;align-items:stretch;border-radius:6px;box-shadow:0 1px 2px #0000000d}\n"] }]
-        }], propDecorators: { buttonToggles: [{
-                type: ContentChildren,
-                args: [IxButtonToggleComponent, { descendants: true }]
-            }], multiple: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], name: [{
-                type: Input
-            }], ariaLabel: [{
-                type: Input
-            }], ariaLabelledby: [{
-                type: Input
-            }], change: [{
-                type: Output
-            }] } });
+        }], ctorParameters: () => [] });
 
 class IxTooltipComponent {
-    message = '';
-    id = '';
+    message = input('', ...(ngDevMode ? [{ debugName: "message" }] : []));
+    id = input('', ...(ngDevMode ? [{ debugName: "id" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTooltipComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxTooltipComponent, isStandalone: true, selector: "ix-tooltip", inputs: { message: "message", id: "id" }, host: { classAttribute: "ix-tooltip-component" }, ngImport: i0, template: `
-    <div 
-      class="ix-tooltip" 
-      [id]="id"
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxTooltipComponent, isStandalone: true, selector: "ix-tooltip", inputs: { message: { classPropertyName: "message", publicName: "message", isSignal: true, isRequired: false, transformFunction: null }, id: { classPropertyName: "id", publicName: "id", isSignal: true, isRequired: false, transformFunction: null } }, host: { classAttribute: "ix-tooltip-component" }, ngImport: i0, template: `
+    <div
+      class="ix-tooltip"
+      [id]="id()"
       role="tooltip"
       [attr.aria-hidden]="false">
-      {{ message }}
+      {{ message() }}
     </div>
   `, isInline: true, styles: [":host{display:block;pointer-events:none;z-index:1200}.ix-tooltip{background:#373737e6;color:#fff;padding:6px 8px;border-radius:4px;font-size:12px;font-weight:500;line-height:1.4;max-width:200px;word-wrap:break-word;white-space:pre-line;box-shadow:0 2px 8px #0003;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);animation:ix-tooltip-show .15s cubic-bezier(0,0,.2,1) forwards;transform-origin:center bottom}@keyframes ix-tooltip-show{0%{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}.ix-tooltip{position:relative}.ix-tooltip:after{content:\"\";position:absolute;width:0;height:0;border-style:solid;z-index:1}:host-context(.ix-tooltip-panel-above) .ix-tooltip:after{top:100%;left:50%;transform:translate(-50%);border-width:6px 6px 0 6px;border-color:rgba(55,55,55,.9) transparent transparent transparent}:host-context(.ix-tooltip-panel-below) .ix-tooltip:after{bottom:100%;left:50%;transform:translate(-50%);border-width:0 6px 6px 6px;border-color:transparent transparent rgba(55,55,55,.9) transparent}:host-context(.ix-tooltip-panel-left) .ix-tooltip:after,:host-context(.ix-tooltip-panel-before) .ix-tooltip:after{top:50%;left:100%;transform:translateY(-50%);border-width:6px 0 6px 6px;border-color:transparent transparent transparent rgba(55,55,55,.9)}:host-context(.ix-tooltip-panel-right) .ix-tooltip:after,:host-context(.ix-tooltip-panel-after) .ix-tooltip:after{top:50%;right:100%;transform:translateY(-50%);border-width:6px 6px 6px 0;border-color:transparent rgba(55,55,55,.9) transparent transparent}@media (prefers-contrast: high){.ix-tooltip{background:var(--fg1, #000);color:var(--bg1, #fff);border:1px solid var(--lines, #999)}:host-context(.ix-tooltip-panel-above) .ix-tooltip:after{border-top-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-below) .ix-tooltip:after{border-bottom-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-left) .ix-tooltip:after,:host-context(.ix-tooltip-panel-before) .ix-tooltip:after{border-left-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-right) .ix-tooltip:after,:host-context(.ix-tooltip-panel-after) .ix-tooltip:after{border-right-color:var(--fg1, #000)}}:host-context(.ix-slider-thumb-label) .ix-tooltip{font-size:11px;padding:4px 6px;font-weight:600;min-width:24px;text-align:center;background:#373737f2}@media (prefers-reduced-motion: reduce){.ix-tooltip{animation:none}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTooltipComponent, decorators: [{
             type: Component,
             args: [{ selector: 'ix-tooltip', standalone: true, imports: [CommonModule], template: `
-    <div 
-      class="ix-tooltip" 
-      [id]="id"
+    <div
+      class="ix-tooltip"
+      [id]="id()"
       role="tooltip"
       [attr.aria-hidden]="false">
-      {{ message }}
+      {{ message() }}
     </div>
   `, changeDetection: ChangeDetectionStrategy.OnPush, host: {
                         'class': 'ix-tooltip-component'
                     }, styles: [":host{display:block;pointer-events:none;z-index:1200}.ix-tooltip{background:#373737e6;color:#fff;padding:6px 8px;border-radius:4px;font-size:12px;font-weight:500;line-height:1.4;max-width:200px;word-wrap:break-word;white-space:pre-line;box-shadow:0 2px 8px #0003;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);animation:ix-tooltip-show .15s cubic-bezier(0,0,.2,1) forwards;transform-origin:center bottom}@keyframes ix-tooltip-show{0%{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}.ix-tooltip{position:relative}.ix-tooltip:after{content:\"\";position:absolute;width:0;height:0;border-style:solid;z-index:1}:host-context(.ix-tooltip-panel-above) .ix-tooltip:after{top:100%;left:50%;transform:translate(-50%);border-width:6px 6px 0 6px;border-color:rgba(55,55,55,.9) transparent transparent transparent}:host-context(.ix-tooltip-panel-below) .ix-tooltip:after{bottom:100%;left:50%;transform:translate(-50%);border-width:0 6px 6px 6px;border-color:transparent transparent rgba(55,55,55,.9) transparent}:host-context(.ix-tooltip-panel-left) .ix-tooltip:after,:host-context(.ix-tooltip-panel-before) .ix-tooltip:after{top:50%;left:100%;transform:translateY(-50%);border-width:6px 0 6px 6px;border-color:transparent transparent transparent rgba(55,55,55,.9)}:host-context(.ix-tooltip-panel-right) .ix-tooltip:after,:host-context(.ix-tooltip-panel-after) .ix-tooltip:after{top:50%;right:100%;transform:translateY(-50%);border-width:6px 6px 6px 0;border-color:transparent rgba(55,55,55,.9) transparent transparent}@media (prefers-contrast: high){.ix-tooltip{background:var(--fg1, #000);color:var(--bg1, #fff);border:1px solid var(--lines, #999)}:host-context(.ix-tooltip-panel-above) .ix-tooltip:after{border-top-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-below) .ix-tooltip:after{border-bottom-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-left) .ix-tooltip:after,:host-context(.ix-tooltip-panel-before) .ix-tooltip:after{border-left-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-right) .ix-tooltip:after,:host-context(.ix-tooltip-panel-after) .ix-tooltip:after{border-right-color:var(--fg1, #000)}}:host-context(.ix-slider-thumb-label) .ix-tooltip{font-size:11px;padding:4px 6px;font-weight:600;min-width:24px;text-align:center;background:#373737f2}@media (prefers-reduced-motion: reduce){.ix-tooltip{animation:none}}\n"] }]
-        }], propDecorators: { message: [{
-                type: Input
-            }], id: [{
-                type: Input
-            }] } });
+        }] });
 
 class IxTooltipDirective {
     _overlay;
     _elementRef;
     _viewContainerRef;
     _overlayPositionBuilder;
-    message = '';
-    position = 'above';
-    disabled = false;
-    showDelay = 0;
-    hideDelay = 0;
-    tooltipClass = '';
+    message = input('', ...(ngDevMode ? [{ debugName: "message", alias: 'ixTooltip' }] : [{ alias: 'ixTooltip' }]));
+    position = input('above', ...(ngDevMode ? [{ debugName: "position", alias: 'ixTooltipPosition' }] : [{ alias: 'ixTooltipPosition' }]));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled", alias: 'ixTooltipDisabled' }] : [{ alias: 'ixTooltipDisabled' }]));
+    showDelay = input(0, ...(ngDevMode ? [{ debugName: "showDelay", alias: 'ixTooltipShowDelay' }] : [{ alias: 'ixTooltipShowDelay' }]));
+    hideDelay = input(0, ...(ngDevMode ? [{ debugName: "hideDelay", alias: 'ixTooltipHideDelay' }] : [{ alias: 'ixTooltipHideDelay' }]));
+    tooltipClass = input('', ...(ngDevMode ? [{ debugName: "tooltipClass", alias: 'ixTooltipClass' }] : [{ alias: 'ixTooltipClass' }]));
     _overlayRef = null;
     _tooltipInstance = null;
     _showTimeout;
@@ -7562,20 +7094,20 @@ class IxTooltipDirective {
         }
     }
     _onMouseEnter() {
-        if (!this.disabled && this.message) {
-            this.show(this.showDelay);
+        if (!this.disabled() && this.message()) {
+            this.show(this.showDelay());
         }
     }
     _onMouseLeave() {
-        this.hide(this.hideDelay);
+        this.hide(this.hideDelay());
     }
     _onFocus() {
-        if (!this.disabled && this.message) {
-            this.show(this.showDelay);
+        if (!this.disabled() && this.message()) {
+            this.show(this.showDelay());
         }
     }
     _onBlur() {
-        this.hide(this.hideDelay);
+        this.hide(this.hideDelay());
     }
     _onKeydown(event) {
         if (event.key === 'Escape' && this._isTooltipVisible) {
@@ -7584,7 +7116,7 @@ class IxTooltipDirective {
     }
     /** Shows the tooltip */
     show(delay = 0) {
-        if (this.disabled || !this.message || this._isTooltipVisible) {
+        if (this.disabled() || !this.message() || this._isTooltipVisible) {
             return;
         }
         this._clearTimeouts();
@@ -7621,7 +7153,7 @@ class IxTooltipDirective {
         this._overlayRef = this._overlay.create({
             positionStrategy,
             scrollStrategy: this._overlay.scrollStrategies.reposition({ scrollThrottle: 20 }),
-            panelClass: ['ix-tooltip-panel', `ix-tooltip-panel-${this.position}`, this.tooltipClass].filter(Boolean),
+            panelClass: ['ix-tooltip-panel', `ix-tooltip-panel-${this.position()}`, this.tooltipClass()].filter(Boolean),
         });
     }
     _attachTooltip() {
@@ -7631,13 +7163,13 @@ class IxTooltipDirective {
         if (!this._tooltipInstance) {
             const portal = new ComponentPortal(IxTooltipComponent, this._viewContainerRef);
             this._tooltipInstance = this._overlayRef.attach(portal);
-            this._tooltipInstance.instance.message = this.message;
-            this._tooltipInstance.instance.id = this._ariaDescribedBy;
+            this._tooltipInstance.setInput('message', this.message());
+            this._tooltipInstance.setInput('id', this._ariaDescribedBy);
             this._isTooltipVisible = true;
         }
     }
     _getPositions() {
-        switch (this.position) {
+        switch (this.position()) {
             case 'above':
                 return [
                     { originX: 'center', originY: 'top', overlayX: 'center', overlayY: 'bottom', offsetY: -12 },
@@ -7677,7 +7209,7 @@ class IxTooltipDirective {
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTooltipDirective, deps: [{ token: i1$3.Overlay }, { token: i0.ElementRef }, { token: i0.ViewContainerRef }, { token: i1$3.OverlayPositionBuilder }], target: i0.ɵɵFactoryTarget.Directive });
-    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "14.0.0", version: "20.3.4", type: IxTooltipDirective, isStandalone: true, selector: "[ixTooltip]", inputs: { message: ["ixTooltip", "message"], position: ["ixTooltipPosition", "position"], disabled: ["ixTooltipDisabled", "disabled"], showDelay: ["ixTooltipShowDelay", "showDelay"], hideDelay: ["ixTooltipHideDelay", "hideDelay"], tooltipClass: ["ixTooltipClass", "tooltipClass"] }, host: { listeners: { "mouseenter": "_onMouseEnter()", "mouseleave": "_onMouseLeave()", "focus": "_onFocus()", "blur": "_onBlur()", "keydown": "_onKeydown($event)" }, properties: { "attr.aria-describedby": "_ariaDescribedBy" } }, ngImport: i0 });
+    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "17.1.0", version: "20.3.4", type: IxTooltipDirective, isStandalone: true, selector: "[ixTooltip]", inputs: { message: { classPropertyName: "message", publicName: "ixTooltip", isSignal: true, isRequired: false, transformFunction: null }, position: { classPropertyName: "position", publicName: "ixTooltipPosition", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "ixTooltipDisabled", isSignal: true, isRequired: false, transformFunction: null }, showDelay: { classPropertyName: "showDelay", publicName: "ixTooltipShowDelay", isSignal: true, isRequired: false, transformFunction: null }, hideDelay: { classPropertyName: "hideDelay", publicName: "ixTooltipHideDelay", isSignal: true, isRequired: false, transformFunction: null }, tooltipClass: { classPropertyName: "tooltipClass", publicName: "ixTooltipClass", isSignal: true, isRequired: false, transformFunction: null } }, host: { listeners: { "mouseenter": "_onMouseEnter()", "mouseleave": "_onMouseLeave()", "focus": "_onFocus()", "blur": "_onBlur()", "keydown": "_onKeydown($event)" }, properties: { "attr.aria-describedby": "_ariaDescribedBy" } }, ngImport: i0 });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTooltipDirective, decorators: [{
             type: Directive,
@@ -7688,25 +7220,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                         '[attr.aria-describedby]': '_ariaDescribedBy',
                     }
                 }]
-        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }, { type: i1$3.OverlayPositionBuilder }], propDecorators: { message: [{
-                type: Input,
-                args: ['ixTooltip']
-            }], position: [{
-                type: Input,
-                args: ['ixTooltipPosition']
-            }], disabled: [{
-                type: Input,
-                args: ['ixTooltipDisabled']
-            }], showDelay: [{
-                type: Input,
-                args: ['ixTooltipShowDelay']
-            }], hideDelay: [{
-                type: Input,
-                args: ['ixTooltipHideDelay']
-            }], tooltipClass: [{
-                type: Input,
-                args: ['ixTooltipClass']
-            }], _onMouseEnter: [{
+        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }, { type: i1$3.OverlayPositionBuilder }], propDecorators: { _onMouseEnter: [{
                 type: HostListener,
                 args: ['mouseenter']
             }], _onMouseLeave: [{
@@ -7778,9 +7292,9 @@ class IxDialogShellComponent {
     ref;
     document;
     data;
-    title = '';
-    showFullscreenButton = false;
-    isFullscreen = false;
+    title = input('', ...(ngDevMode ? [{ debugName: "title" }] : []));
+    showFullscreenButton = input(false, ...(ngDevMode ? [{ debugName: "showFullscreenButton" }] : []));
+    isFullscreen = signal(false, ...(ngDevMode ? [{ debugName: "isFullscreen" }] : []));
     originalStyles = {};
     constructor(ref, document, data) {
         this.ref = ref;
@@ -7792,7 +7306,7 @@ class IxDialogShellComponent {
         setTimeout(() => {
             const dialogPanel = this.document.querySelector('.ix-dialog-panel');
             if (dialogPanel?.classList.contains('ix-dialog--fullscreen')) {
-                this.isFullscreen = true;
+                this.isFullscreen.set(true);
             }
         });
     }
@@ -7800,7 +7314,7 @@ class IxDialogShellComponent {
         this.ref.close(result);
     }
     toggleFullscreen() {
-        if (this.isFullscreen) {
+        if (this.isFullscreen()) {
             this.exitFullscreen();
         }
         else {
@@ -7826,7 +7340,7 @@ class IxDialogShellComponent {
             dialogPanel.style.borderRadius = '0';
             // Add fullscreen class
             dialogPanel.classList.add('ix-dialog--fullscreen');
-            this.isFullscreen = true;
+            this.isFullscreen.set(true);
         }
     }
     exitFullscreen() {
@@ -7840,20 +7354,20 @@ class IxDialogShellComponent {
             dialogPanel.style.borderRadius = this.originalStyles['panelBorderRadius'] || '8px';
             // Remove fullscreen class
             dialogPanel.classList.remove('ix-dialog--fullscreen');
-            this.isFullscreen = false;
+            this.isFullscreen.set(false);
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxDialogShellComponent, deps: [{ token: i1$6.DialogRef }, { token: DOCUMENT }, { token: DIALOG_DATA, optional: true }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxDialogShellComponent, isStandalone: true, selector: "ix-dialog-shell", inputs: { title: "title", showFullscreenButton: "showFullscreenButton" }, host: { classAttribute: "ix-dialog-shell" }, ngImport: i0, template: `
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxDialogShellComponent, isStandalone: true, selector: "ix-dialog-shell", inputs: { title: { classPropertyName: "title", publicName: "title", isSignal: true, isRequired: false, transformFunction: null }, showFullscreenButton: { classPropertyName: "showFullscreenButton", publicName: "showFullscreenButton", isSignal: true, isRequired: false, transformFunction: null } }, host: { classAttribute: "ix-dialog-shell" }, ngImport: i0, template: `
     <header class="ix-dialog__header">
-      <h2 class="ix-dialog__title">{{ title }}</h2>
-      <button type="button" 
-              class="ix-dialog__fullscreen" 
-              tabindex="-1" 
-              (click)="toggleFullscreen()" 
-              [attr.aria-label]="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
-              *ngIf="showFullscreenButton">
-        <span class="ix-dialog__fullscreen-icon">{{ isFullscreen ? '⤓' : '⤢' }}</span>
+      <h2 class="ix-dialog__title">{{ title() }}</h2>
+      <button type="button"
+              class="ix-dialog__fullscreen"
+              tabindex="-1"
+              (click)="toggleFullscreen()"
+              [attr.aria-label]="isFullscreen() ? 'Exit fullscreen' : 'Enter fullscreen'"
+              *ngIf="showFullscreenButton()">
+        <span class="ix-dialog__fullscreen-icon">{{ isFullscreen() ? '⤓' : '⤢' }}</span>
       </button>
       <button type="button" class="ix-dialog__close" tabindex="-1" (click)="close()" aria-label="Close dialog">✕</button>
     </header>
@@ -7873,14 +7387,14 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                     selector: 'ix-dialog-shell',
                     template: `
     <header class="ix-dialog__header">
-      <h2 class="ix-dialog__title">{{ title }}</h2>
-      <button type="button" 
-              class="ix-dialog__fullscreen" 
-              tabindex="-1" 
-              (click)="toggleFullscreen()" 
-              [attr.aria-label]="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
-              *ngIf="showFullscreenButton">
-        <span class="ix-dialog__fullscreen-icon">{{ isFullscreen ? '⤓' : '⤢' }}</span>
+      <h2 class="ix-dialog__title">{{ title() }}</h2>
+      <button type="button"
+              class="ix-dialog__fullscreen"
+              tabindex="-1"
+              (click)="toggleFullscreen()"
+              [attr.aria-label]="isFullscreen() ? 'Exit fullscreen' : 'Enter fullscreen'"
+              *ngIf="showFullscreenButton()">
+        <span class="ix-dialog__fullscreen-icon">{{ isFullscreen() ? '⤓' : '⤢' }}</span>
       </button>
       <button type="button" class="ix-dialog__close" tabindex="-1" (click)="close()" aria-label="Close dialog">✕</button>
     </header>
@@ -7907,11 +7421,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                 }, {
                     type: Inject,
                     args: [DIALOG_DATA]
-                }] }], propDecorators: { title: [{
-                type: Input
-            }], showFullscreenButton: [{
-                type: Input
-            }] } });
+                }] }] });
 
 class IxConfirmDialogComponent {
     ref;
@@ -7982,15 +7492,15 @@ var ixConfirmDialog_component = /*#__PURE__*/Object.freeze({
 });
 
 class IxStepComponent {
-    label = '';
-    icon;
-    optional = false;
-    completed = false;
-    hasError = false;
-    data = null;
-    content;
+    label = input('', ...(ngDevMode ? [{ debugName: "label" }] : []));
+    icon = input(undefined, ...(ngDevMode ? [{ debugName: "icon" }] : []));
+    optional = input(false, ...(ngDevMode ? [{ debugName: "optional" }] : []));
+    completed = input(false, ...(ngDevMode ? [{ debugName: "completed" }] : []));
+    hasError = input(false, ...(ngDevMode ? [{ debugName: "hasError" }] : []));
+    data = input(null, ...(ngDevMode ? [{ debugName: "data" }] : []));
+    content = viewChild.required('content');
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxStepComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxStepComponent, isStandalone: true, selector: "ix-step", inputs: { label: "label", icon: "icon", optional: "optional", completed: "completed", hasError: "hasError", data: "data" }, viewQueries: [{ propertyName: "content", first: true, predicate: ["content"], descendants: true, static: true }], ngImport: i0, template: `
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.2.0", version: "20.3.4", type: IxStepComponent, isStandalone: true, selector: "ix-step", inputs: { label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, icon: { classPropertyName: "icon", publicName: "icon", isSignal: true, isRequired: false, transformFunction: null }, optional: { classPropertyName: "optional", publicName: "optional", isSignal: true, isRequired: false, transformFunction: null }, completed: { classPropertyName: "completed", publicName: "completed", isSignal: true, isRequired: false, transformFunction: null }, hasError: { classPropertyName: "hasError", publicName: "hasError", isSignal: true, isRequired: false, transformFunction: null }, data: { classPropertyName: "data", publicName: "data", isSignal: true, isRequired: false, transformFunction: null } }, viewQueries: [{ propertyName: "content", first: true, predicate: ["content"], descendants: true, isSignal: true }], ngImport: i0, template: `
     <ng-template #content>
       <ng-content></ng-content>
     </ng-template>
@@ -8007,59 +7517,46 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
   `,
                     standalone: true
                 }]
-        }], propDecorators: { label: [{
-                type: Input
-            }], icon: [{
-                type: Input
-            }], optional: [{
-                type: Input
-            }], completed: [{
-                type: Input
-            }], hasError: [{
-                type: Input
-            }], data: [{
-                type: Input
-            }], content: [{
-                type: ViewChild,
-                args: ['content', { static: true }]
-            }] } });
+        }] });
 
 class IxStepperComponent {
     cdr;
-    orientation = 'horizontal';
-    linear = false;
-    selectedIndex = 0;
-    selectionChange = new EventEmitter();
-    completed = new EventEmitter();
-    steps;
+    orientation = input('horizontal', ...(ngDevMode ? [{ debugName: "orientation" }] : []));
+    linear = input(false, ...(ngDevMode ? [{ debugName: "linear" }] : []));
+    selectedIndex = model(0, ...(ngDevMode ? [{ debugName: "selectedIndex" }] : []));
+    selectionChange = output();
+    completed = output();
+    steps = contentChildren(IxStepComponent, ...(ngDevMode ? [{ debugName: "steps", descendants: true }] : [{ descendants: true }]));
     constructor(cdr) {
         this.cdr = cdr;
-    }
-    onWindowResize(event) {
-        this.cdr.detectChanges();
-    }
-    ngAfterContentInit() {
-        // Check if all steps are completed when selection changes
-        this.selectionChange.subscribe(() => {
-            if (this.steps.toArray().every(step => step.completed)) {
+        // Effect to check if all steps are completed
+        effect(() => {
+            // Trigger on any step completion change
+            const stepsArray = this.steps();
+            const allCompleted = stepsArray.every(step => step.completed());
+            if (allCompleted && stepsArray.length > 0) {
                 this.completed.emit(this._getStepData());
             }
         });
     }
+    onWindowResize(event) {
+        this.cdr.detectChanges();
+    }
     _getStepData() {
-        return this.steps.toArray().map(step => ({
-            label: step.label,
-            completed: step.completed,
-            data: step.data
+        return this.steps().map(step => ({
+            label: step.label(),
+            completed: step.completed(),
+            data: step.data()
         }));
     }
-    get isWideScreen() {
+    isWideScreen = computed(() => {
+        // Note: This will only update on window resize due to ChangeDetectorRef trigger
         return window.innerWidth > 768;
-    }
+    }, ...(ngDevMode ? [{ debugName: "isWideScreen" }] : []));
     selectStep(index) {
-        if (!this.linear || this.canSelectStep(index)) {
-            const previousIndex = this.selectedIndex;
-            this.selectedIndex = index;
+        if (!this.linear() || this.canSelectStep(index)) {
+            const previousIndex = this.selectedIndex();
+            this.selectedIndex.set(index);
             this.selectionChange.emit({
                 selectedIndex: index,
                 previouslySelectedIndex: previousIndex
@@ -8067,31 +7564,33 @@ class IxStepperComponent {
         }
     }
     canSelectStep(index) {
-        if (!this.linear)
+        if (!this.linear())
             return true;
         // In linear mode, can only select completed steps or the next step
+        const stepsArray = this.steps();
         for (let i = 0; i < index; i++) {
-            if (!this.steps.toArray()[i]?.completed) {
+            if (!stepsArray[i]?.completed()) {
                 return false;
             }
         }
         return true;
     }
     next() {
-        if (this.selectedIndex < this.steps.length - 1) {
-            this.selectStep(this.selectedIndex + 1);
+        const stepsLength = this.steps().length;
+        if (this.selectedIndex() < stepsLength - 1) {
+            this.selectStep(this.selectedIndex() + 1);
         }
     }
     previous() {
-        if (this.selectedIndex > 0) {
-            this.selectStep(this.selectedIndex - 1);
+        if (this.selectedIndex() > 0) {
+            this.selectStep(this.selectedIndex() - 1);
         }
     }
     _trackByStepIndex(index) {
         return index;
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxStepperComponent, deps: [{ token: i0.ChangeDetectorRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxStepperComponent, isStandalone: true, selector: "ix-stepper", inputs: { orientation: "orientation", linear: "linear", selectedIndex: "selectedIndex" }, outputs: { selectionChange: "selectionChange", completed: "completed" }, host: { listeners: { "window:resize": "onWindowResize($event)" } }, queries: [{ propertyName: "steps", predicate: IxStepComponent, descendants: true }], ngImport: i0, template: "<div class=\"ix-stepper\" \n     [class.ix-stepper--horizontal]=\"orientation === 'horizontal' || (orientation === 'auto' && isWideScreen)\" \n     [class.ix-stepper--vertical]=\"orientation === 'vertical' || (orientation === 'auto' && !isWideScreen)\">\n  \n  <!-- Step Headers -->\n  <div class=\"ix-stepper__header\">\n    @for (step of steps; track $index; let i = $index) {\n      <div class=\"ix-stepper__step-header\"\n           [class.ix-stepper__step-header--active]=\"selectedIndex === i\"\n           [class.ix-stepper__step-header--completed]=\"step.completed\"\n           [class.ix-stepper__step-header--error]=\"step.hasError\"\n           [class.ix-stepper__step-header--optional]=\"step.optional\"\n           (click)=\"selectStep(i)\">\n\n        <!-- Step Number/Icon -->\n        <div class=\"ix-stepper__step-indicator\">\n          @if (step.completed && !step.hasError) {\n            <span class=\"ix-stepper__step-check\">\u2713</span>\n          }\n          @if (step.hasError) {\n            <span class=\"ix-stepper__step-error\">!</span>\n          }\n          @if (!step.completed && !step.hasError) {\n            @if (step.icon) {\n              <span class=\"ix-stepper__step-icon\">{{ step.icon }}</span>\n            } @else {\n              <span class=\"ix-stepper__step-number\">{{ i + 1 }}</span>\n            }\n          }\n        </div>\n\n        <!-- Step Label -->\n        <div class=\"ix-stepper__step-label\">\n          <div class=\"ix-stepper__step-title\">{{ step.label }}</div>\n          @if (step.optional) {\n            <span class=\"ix-stepper__step-subtitle\">Optional</span>\n          }\n        </div>\n      </div>\n\n      <!-- Connector Line (except for last step) -->\n      @if (i < steps.length - 1) {\n        <div class=\"ix-stepper__connector\"></div>\n      }\n    }\n  </div>\n  \n  <!-- Step Content -->\n  <div class=\"ix-stepper__content\">\n    @for (step of steps; track $index; let i = $index) {\n      @if (selectedIndex === i) {\n        <div class=\"ix-stepper__step-content\"\n             [@stepTransition]=\"selectedIndex\">\n          <ng-container *ngTemplateOutlet=\"step.content\"></ng-container>\n        </div>\n      }\n    }\n  </div>\n</div>", styles: [".ix-stepper{display:flex;font-family:inherit;--step-diameter: 48px;--step-diameter-sm: 32px;--step-padding: 12px}.ix-stepper--horizontal{flex-direction:column}.ix-stepper--horizontal .ix-stepper__header{display:flex;justify-content:center;margin-bottom:32px;padding:0 16px}.ix-stepper--horizontal .ix-stepper__step-header{display:flex;flex-direction:column;align-items:center;text-align:center;cursor:pointer;transition:all .2s ease-in-out}.ix-stepper--horizontal .ix-stepper__step-header:not(.ix-stepper__step-header--active):hover .ix-stepper__step-indicator{transform:scale(.95)}.ix-stepper--horizontal .ix-stepper__connector{flex:1;height:2px;background:var(--lines, #e5e7eb);margin:0 16px;position:relative;top:calc(var(--step-diameter) / 2)}.ix-stepper--vertical{flex-direction:row}.ix-stepper--vertical .ix-stepper__header{display:flex;flex-direction:column;width:280px;padding:16px;border-right:1px solid var(--lines, #e5e7eb)}.ix-stepper--vertical .ix-stepper__step-header{display:flex;flex-direction:row;align-items:center;text-align:left;cursor:pointer;transition:all .2s ease-in-out;padding:var(--step-padding);border-radius:8px;margin-bottom:8px}.ix-stepper--vertical .ix-stepper__step-header:not(.ix-stepper__step-header--active):hover .ix-stepper__step-indicator{transform:scale(.95)}.ix-stepper--vertical .ix-stepper__step-header .ix-stepper__step-label{margin-left:12px;margin-top:0}.ix-stepper--vertical .ix-stepper__connector{width:2px;height:24px;background:var(--lines, #e5e7eb);position:relative;left:calc(var(--step-diameter) / 2 + var(--step-padding));margin-bottom:8px}.ix-stepper--vertical .ix-stepper__content{flex:1;padding:16px}.ix-stepper__step-indicator{display:flex;align-items:center;justify-content:center;width:var(--step-diameter);height:var(--step-diameter);border-radius:50%;background:var(--alt-bg1, #f8f9fa);color:var(--alt-fg1, #495057);font-weight:400;font-size:14px;transition:all .2s ease-in-out;position:relative;transform:scale(.65)}.ix-stepper__step-number{font-weight:400}.ix-stepper__step-label{margin-top:8px}.ix-stepper__step-title{display:block;font-weight:400;font-size:14px;color:var(--fg1, #000000);line-height:1.2}.ix-stepper__step-subtitle{display:block;font-size:12px;color:var(--fg2, #6c757d);margin-top:2px}.ix-stepper__step-header--active .ix-stepper__step-indicator{background:var(--primary, #007bff);color:var(--primary-txt, #ffffff);transform:scale(1)}.ix-stepper__step-header--active .ix-stepper__step-title{color:var(--fg2, #6c757d);font-weight:600}.ix-stepper__step-header--completed .ix-stepper__step-indicator{background:var(--green, #28a745);color:#fff}.ix-stepper__step-header--completed .ix-stepper__step-check{font-size:16px;font-weight:700}.ix-stepper__step-header--error .ix-stepper__step-indicator{background:var(--red, #dc3545);color:#fff}.ix-stepper__step-header--error .ix-stepper__step-error{font-size:18px;font-weight:700}.ix-stepper__step-header--error .ix-stepper__step-title{color:var(--fg1, #000000)}.ix-stepper__step-header--active.ix-stepper__step-header--error .ix-stepper__step-title{color:var(--fg2, #6c757d);font-weight:600}.ix-stepper__step-header--optional .ix-stepper__step-indicator{border:2px dashed var(--lines, #e5e7eb);background:transparent}.ix-stepper--horizontal .ix-stepper__step-header--completed+.ix-stepper__connector{background:var(--green, #28a745)}.ix-stepper--horizontal .ix-stepper__step-header--completed+.ix-stepper__connector:after{content:\"\";position:absolute;top:0;left:0;right:0;height:100%;background:var(--green, #28a745);animation:progressFill .3s ease-in-out}.ix-stepper--vertical .ix-stepper__step-header--completed+.ix-stepper__connector{background:var(--green, #28a745)}.ix-stepper__content{min-height:200px}.ix-stepper__step-content{padding:16px;background:var(--bg1, #ffffff);border-radius:8px;border:1px solid var(--lines, #e5e7eb)}@keyframes progressFill{0%{width:0}to{width:100%}}.ix-stepper__step-header:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-stepper__step-header:focus:not(:focus-visible){outline:none}@media (max-width: 780px){.ix-stepper--vertical .ix-stepper__header{width:180px;border-right:none;border-bottom:1px solid var(--lines, #e5e7eb);padding:16px 0}.ix-stepper--vertical .ix-stepper__step-header{flex-direction:column;align-items:center;text-align:center;min-width:80px;padding:8px 4px}.ix-stepper--vertical .ix-stepper__step-header .ix-stepper__step-label{margin-left:0;margin-top:8px}.ix-stepper--vertical .ix-stepper__connector{display:none}}@media (max-width: 780px){.ix-stepper .ix-stepper__step-label{display:none}.ix-stepper .ix-stepper__step-indicator{width:var(--step-diameter-sm);height:var(--step-diameter-sm);font-size:12px}.ix-stepper--horizontal .ix-stepper__header{padding:0 8px}.ix-stepper--horizontal .ix-stepper__connector{top:calc(var(--step-diameter-sm) / 2);margin:0 8px}.ix-stepper--vertical .ix-stepper__header{width:60px}.ix-stepper--vertical .ix-stepper__step-header{padding:4px;margin-bottom:4px}.ix-stepper--vertical .ix-stepper__connector{left:calc(var(--step-diameter-sm) / 2 + 4px);height:16px;margin-bottom:4px}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgTemplateOutlet, selector: "[ngTemplateOutlet]", inputs: ["ngTemplateOutletContext", "ngTemplateOutlet", "ngTemplateOutletInjector"] }], animations: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxStepperComponent, isStandalone: true, selector: "ix-stepper", inputs: { orientation: { classPropertyName: "orientation", publicName: "orientation", isSignal: true, isRequired: false, transformFunction: null }, linear: { classPropertyName: "linear", publicName: "linear", isSignal: true, isRequired: false, transformFunction: null }, selectedIndex: { classPropertyName: "selectedIndex", publicName: "selectedIndex", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectedIndex: "selectedIndexChange", selectionChange: "selectionChange", completed: "completed" }, host: { listeners: { "window:resize": "onWindowResize($event)" } }, queries: [{ propertyName: "steps", predicate: IxStepComponent, descendants: true, isSignal: true }], ngImport: i0, template: "<div class=\"ix-stepper\"\n     [class.ix-stepper--horizontal]=\"orientation() === 'horizontal' || (orientation() === 'auto' && isWideScreen())\"\n     [class.ix-stepper--vertical]=\"orientation() === 'vertical' || (orientation() === 'auto' && !isWideScreen())\">\n\n  <!-- Step Headers -->\n  <div class=\"ix-stepper__header\">\n    @for (step of steps(); track $index; let i = $index) {\n      <div class=\"ix-stepper__step-header\"\n           [class.ix-stepper__step-header--active]=\"selectedIndex() === i\"\n           [class.ix-stepper__step-header--completed]=\"step.completed()\"\n           [class.ix-stepper__step-header--error]=\"step.hasError()\"\n           [class.ix-stepper__step-header--optional]=\"step.optional()\"\n           (click)=\"selectStep(i)\">\n\n        <!-- Step Number/Icon -->\n        <div class=\"ix-stepper__step-indicator\">\n          @if (step.completed() && !step.hasError()) {\n            <span class=\"ix-stepper__step-check\">\u2713</span>\n          }\n          @if (step.hasError()) {\n            <span class=\"ix-stepper__step-error\">!</span>\n          }\n          @if (!step.completed() && !step.hasError()) {\n            @if (step.icon()) {\n              <span class=\"ix-stepper__step-icon\">{{ step.icon() }}</span>\n            } @else {\n              <span class=\"ix-stepper__step-number\">{{ i + 1 }}</span>\n            }\n          }\n        </div>\n\n        <!-- Step Label -->\n        <div class=\"ix-stepper__step-label\">\n          <div class=\"ix-stepper__step-title\">{{ step.label() }}</div>\n          @if (step.optional()) {\n            <span class=\"ix-stepper__step-subtitle\">Optional</span>\n          }\n        </div>\n      </div>\n\n      <!-- Connector Line (except for last step) -->\n      @if (i < steps().length - 1) {\n        <div class=\"ix-stepper__connector\"></div>\n      }\n    }\n  </div>\n\n  <!-- Step Content -->\n  <div class=\"ix-stepper__content\">\n    @for (step of steps(); track $index; let i = $index) {\n      @if (selectedIndex() === i) {\n        <div class=\"ix-stepper__step-content\"\n             [@stepTransition]=\"selectedIndex()\">\n          <ng-container *ngTemplateOutlet=\"step.content()\"></ng-container>\n        </div>\n      }\n    }\n  </div>\n</div>", styles: [".ix-stepper{display:flex;font-family:inherit;--step-diameter: 48px;--step-diameter-sm: 32px;--step-padding: 12px}.ix-stepper--horizontal{flex-direction:column}.ix-stepper--horizontal .ix-stepper__header{display:flex;justify-content:center;margin-bottom:32px;padding:0 16px}.ix-stepper--horizontal .ix-stepper__step-header{display:flex;flex-direction:column;align-items:center;text-align:center;cursor:pointer;transition:all .2s ease-in-out}.ix-stepper--horizontal .ix-stepper__step-header:not(.ix-stepper__step-header--active):hover .ix-stepper__step-indicator{transform:scale(.95)}.ix-stepper--horizontal .ix-stepper__connector{flex:1;height:2px;background:var(--lines, #e5e7eb);margin:0 16px;position:relative;top:calc(var(--step-diameter) / 2)}.ix-stepper--vertical{flex-direction:row}.ix-stepper--vertical .ix-stepper__header{display:flex;flex-direction:column;width:280px;padding:16px;border-right:1px solid var(--lines, #e5e7eb)}.ix-stepper--vertical .ix-stepper__step-header{display:flex;flex-direction:row;align-items:center;text-align:left;cursor:pointer;transition:all .2s ease-in-out;padding:var(--step-padding);border-radius:8px;margin-bottom:8px}.ix-stepper--vertical .ix-stepper__step-header:not(.ix-stepper__step-header--active):hover .ix-stepper__step-indicator{transform:scale(.95)}.ix-stepper--vertical .ix-stepper__step-header .ix-stepper__step-label{margin-left:12px;margin-top:0}.ix-stepper--vertical .ix-stepper__connector{width:2px;height:24px;background:var(--lines, #e5e7eb);position:relative;left:calc(var(--step-diameter) / 2 + var(--step-padding));margin-bottom:8px}.ix-stepper--vertical .ix-stepper__content{flex:1;padding:16px}.ix-stepper__step-indicator{display:flex;align-items:center;justify-content:center;width:var(--step-diameter);height:var(--step-diameter);border-radius:50%;background:var(--alt-bg1, #f8f9fa);color:var(--alt-fg1, #495057);font-weight:400;font-size:14px;transition:all .2s ease-in-out;position:relative;transform:scale(.65)}.ix-stepper__step-number{font-weight:400}.ix-stepper__step-label{margin-top:8px}.ix-stepper__step-title{display:block;font-weight:400;font-size:14px;color:var(--fg1, #000000);line-height:1.2}.ix-stepper__step-subtitle{display:block;font-size:12px;color:var(--fg2, #6c757d);margin-top:2px}.ix-stepper__step-header--active .ix-stepper__step-indicator{background:var(--primary, #007bff);color:var(--primary-txt, #ffffff);transform:scale(1)}.ix-stepper__step-header--active .ix-stepper__step-title{color:var(--fg2, #6c757d);font-weight:600}.ix-stepper__step-header--completed .ix-stepper__step-indicator{background:var(--green, #28a745);color:#fff}.ix-stepper__step-header--completed .ix-stepper__step-check{font-size:16px;font-weight:700}.ix-stepper__step-header--error .ix-stepper__step-indicator{background:var(--red, #dc3545);color:#fff}.ix-stepper__step-header--error .ix-stepper__step-error{font-size:18px;font-weight:700}.ix-stepper__step-header--error .ix-stepper__step-title{color:var(--fg1, #000000)}.ix-stepper__step-header--active.ix-stepper__step-header--error .ix-stepper__step-title{color:var(--fg2, #6c757d);font-weight:600}.ix-stepper__step-header--optional .ix-stepper__step-indicator{border:2px dashed var(--lines, #e5e7eb);background:transparent}.ix-stepper--horizontal .ix-stepper__step-header--completed+.ix-stepper__connector{background:var(--green, #28a745)}.ix-stepper--horizontal .ix-stepper__step-header--completed+.ix-stepper__connector:after{content:\"\";position:absolute;top:0;left:0;right:0;height:100%;background:var(--green, #28a745);animation:progressFill .3s ease-in-out}.ix-stepper--vertical .ix-stepper__step-header--completed+.ix-stepper__connector{background:var(--green, #28a745)}.ix-stepper__content{min-height:200px}.ix-stepper__step-content{padding:16px;background:var(--bg1, #ffffff);border-radius:8px;border:1px solid var(--lines, #e5e7eb)}@keyframes progressFill{0%{width:0}to{width:100%}}.ix-stepper__step-header:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-stepper__step-header:focus:not(:focus-visible){outline:none}@media (max-width: 780px){.ix-stepper--vertical .ix-stepper__header{width:180px;border-right:none;border-bottom:1px solid var(--lines, #e5e7eb);padding:16px 0}.ix-stepper--vertical .ix-stepper__step-header{flex-direction:column;align-items:center;text-align:center;min-width:80px;padding:8px 4px}.ix-stepper--vertical .ix-stepper__step-header .ix-stepper__step-label{margin-left:0;margin-top:8px}.ix-stepper--vertical .ix-stepper__connector{display:none}}@media (max-width: 780px){.ix-stepper .ix-stepper__step-label{display:none}.ix-stepper .ix-stepper__step-indicator{width:var(--step-diameter-sm);height:var(--step-diameter-sm);font-size:12px}.ix-stepper--horizontal .ix-stepper__header{padding:0 8px}.ix-stepper--horizontal .ix-stepper__connector{top:calc(var(--step-diameter-sm) / 2);margin:0 8px}.ix-stepper--vertical .ix-stepper__header{width:60px}.ix-stepper--vertical .ix-stepper__step-header{padding:4px;margin-bottom:4px}.ix-stepper--vertical .ix-stepper__connector{left:calc(var(--step-diameter-sm) / 2 + 4px);height:16px;margin-bottom:4px}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgTemplateOutlet, selector: "[ngTemplateOutlet]", inputs: ["ngTemplateOutletContext", "ngTemplateOutlet", "ngTemplateOutletInjector"] }], animations: [
             trigger('stepTransition', [
                 transition(':enter', [
                     style({ opacity: 0, transform: 'translateX(50px)' }),
@@ -8109,24 +7608,10 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                                 animate('300ms ease-in-out', style({ opacity: 1, transform: 'translateX(0)' }))
                             ])
                         ])
-                    ], template: "<div class=\"ix-stepper\" \n     [class.ix-stepper--horizontal]=\"orientation === 'horizontal' || (orientation === 'auto' && isWideScreen)\" \n     [class.ix-stepper--vertical]=\"orientation === 'vertical' || (orientation === 'auto' && !isWideScreen)\">\n  \n  <!-- Step Headers -->\n  <div class=\"ix-stepper__header\">\n    @for (step of steps; track $index; let i = $index) {\n      <div class=\"ix-stepper__step-header\"\n           [class.ix-stepper__step-header--active]=\"selectedIndex === i\"\n           [class.ix-stepper__step-header--completed]=\"step.completed\"\n           [class.ix-stepper__step-header--error]=\"step.hasError\"\n           [class.ix-stepper__step-header--optional]=\"step.optional\"\n           (click)=\"selectStep(i)\">\n\n        <!-- Step Number/Icon -->\n        <div class=\"ix-stepper__step-indicator\">\n          @if (step.completed && !step.hasError) {\n            <span class=\"ix-stepper__step-check\">\u2713</span>\n          }\n          @if (step.hasError) {\n            <span class=\"ix-stepper__step-error\">!</span>\n          }\n          @if (!step.completed && !step.hasError) {\n            @if (step.icon) {\n              <span class=\"ix-stepper__step-icon\">{{ step.icon }}</span>\n            } @else {\n              <span class=\"ix-stepper__step-number\">{{ i + 1 }}</span>\n            }\n          }\n        </div>\n\n        <!-- Step Label -->\n        <div class=\"ix-stepper__step-label\">\n          <div class=\"ix-stepper__step-title\">{{ step.label }}</div>\n          @if (step.optional) {\n            <span class=\"ix-stepper__step-subtitle\">Optional</span>\n          }\n        </div>\n      </div>\n\n      <!-- Connector Line (except for last step) -->\n      @if (i < steps.length - 1) {\n        <div class=\"ix-stepper__connector\"></div>\n      }\n    }\n  </div>\n  \n  <!-- Step Content -->\n  <div class=\"ix-stepper__content\">\n    @for (step of steps; track $index; let i = $index) {\n      @if (selectedIndex === i) {\n        <div class=\"ix-stepper__step-content\"\n             [@stepTransition]=\"selectedIndex\">\n          <ng-container *ngTemplateOutlet=\"step.content\"></ng-container>\n        </div>\n      }\n    }\n  </div>\n</div>", styles: [".ix-stepper{display:flex;font-family:inherit;--step-diameter: 48px;--step-diameter-sm: 32px;--step-padding: 12px}.ix-stepper--horizontal{flex-direction:column}.ix-stepper--horizontal .ix-stepper__header{display:flex;justify-content:center;margin-bottom:32px;padding:0 16px}.ix-stepper--horizontal .ix-stepper__step-header{display:flex;flex-direction:column;align-items:center;text-align:center;cursor:pointer;transition:all .2s ease-in-out}.ix-stepper--horizontal .ix-stepper__step-header:not(.ix-stepper__step-header--active):hover .ix-stepper__step-indicator{transform:scale(.95)}.ix-stepper--horizontal .ix-stepper__connector{flex:1;height:2px;background:var(--lines, #e5e7eb);margin:0 16px;position:relative;top:calc(var(--step-diameter) / 2)}.ix-stepper--vertical{flex-direction:row}.ix-stepper--vertical .ix-stepper__header{display:flex;flex-direction:column;width:280px;padding:16px;border-right:1px solid var(--lines, #e5e7eb)}.ix-stepper--vertical .ix-stepper__step-header{display:flex;flex-direction:row;align-items:center;text-align:left;cursor:pointer;transition:all .2s ease-in-out;padding:var(--step-padding);border-radius:8px;margin-bottom:8px}.ix-stepper--vertical .ix-stepper__step-header:not(.ix-stepper__step-header--active):hover .ix-stepper__step-indicator{transform:scale(.95)}.ix-stepper--vertical .ix-stepper__step-header .ix-stepper__step-label{margin-left:12px;margin-top:0}.ix-stepper--vertical .ix-stepper__connector{width:2px;height:24px;background:var(--lines, #e5e7eb);position:relative;left:calc(var(--step-diameter) / 2 + var(--step-padding));margin-bottom:8px}.ix-stepper--vertical .ix-stepper__content{flex:1;padding:16px}.ix-stepper__step-indicator{display:flex;align-items:center;justify-content:center;width:var(--step-diameter);height:var(--step-diameter);border-radius:50%;background:var(--alt-bg1, #f8f9fa);color:var(--alt-fg1, #495057);font-weight:400;font-size:14px;transition:all .2s ease-in-out;position:relative;transform:scale(.65)}.ix-stepper__step-number{font-weight:400}.ix-stepper__step-label{margin-top:8px}.ix-stepper__step-title{display:block;font-weight:400;font-size:14px;color:var(--fg1, #000000);line-height:1.2}.ix-stepper__step-subtitle{display:block;font-size:12px;color:var(--fg2, #6c757d);margin-top:2px}.ix-stepper__step-header--active .ix-stepper__step-indicator{background:var(--primary, #007bff);color:var(--primary-txt, #ffffff);transform:scale(1)}.ix-stepper__step-header--active .ix-stepper__step-title{color:var(--fg2, #6c757d);font-weight:600}.ix-stepper__step-header--completed .ix-stepper__step-indicator{background:var(--green, #28a745);color:#fff}.ix-stepper__step-header--completed .ix-stepper__step-check{font-size:16px;font-weight:700}.ix-stepper__step-header--error .ix-stepper__step-indicator{background:var(--red, #dc3545);color:#fff}.ix-stepper__step-header--error .ix-stepper__step-error{font-size:18px;font-weight:700}.ix-stepper__step-header--error .ix-stepper__step-title{color:var(--fg1, #000000)}.ix-stepper__step-header--active.ix-stepper__step-header--error .ix-stepper__step-title{color:var(--fg2, #6c757d);font-weight:600}.ix-stepper__step-header--optional .ix-stepper__step-indicator{border:2px dashed var(--lines, #e5e7eb);background:transparent}.ix-stepper--horizontal .ix-stepper__step-header--completed+.ix-stepper__connector{background:var(--green, #28a745)}.ix-stepper--horizontal .ix-stepper__step-header--completed+.ix-stepper__connector:after{content:\"\";position:absolute;top:0;left:0;right:0;height:100%;background:var(--green, #28a745);animation:progressFill .3s ease-in-out}.ix-stepper--vertical .ix-stepper__step-header--completed+.ix-stepper__connector{background:var(--green, #28a745)}.ix-stepper__content{min-height:200px}.ix-stepper__step-content{padding:16px;background:var(--bg1, #ffffff);border-radius:8px;border:1px solid var(--lines, #e5e7eb)}@keyframes progressFill{0%{width:0}to{width:100%}}.ix-stepper__step-header:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-stepper__step-header:focus:not(:focus-visible){outline:none}@media (max-width: 780px){.ix-stepper--vertical .ix-stepper__header{width:180px;border-right:none;border-bottom:1px solid var(--lines, #e5e7eb);padding:16px 0}.ix-stepper--vertical .ix-stepper__step-header{flex-direction:column;align-items:center;text-align:center;min-width:80px;padding:8px 4px}.ix-stepper--vertical .ix-stepper__step-header .ix-stepper__step-label{margin-left:0;margin-top:8px}.ix-stepper--vertical .ix-stepper__connector{display:none}}@media (max-width: 780px){.ix-stepper .ix-stepper__step-label{display:none}.ix-stepper .ix-stepper__step-indicator{width:var(--step-diameter-sm);height:var(--step-diameter-sm);font-size:12px}.ix-stepper--horizontal .ix-stepper__header{padding:0 8px}.ix-stepper--horizontal .ix-stepper__connector{top:calc(var(--step-diameter-sm) / 2);margin:0 8px}.ix-stepper--vertical .ix-stepper__header{width:60px}.ix-stepper--vertical .ix-stepper__step-header{padding:4px;margin-bottom:4px}.ix-stepper--vertical .ix-stepper__connector{left:calc(var(--step-diameter-sm) / 2 + 4px);height:16px;margin-bottom:4px}}\n"] }]
-        }], ctorParameters: () => [{ type: i0.ChangeDetectorRef }], propDecorators: { orientation: [{
-                type: Input
-            }], linear: [{
-                type: Input
-            }], selectedIndex: [{
-                type: Input
-            }], selectionChange: [{
-                type: Output
-            }], completed: [{
-                type: Output
-            }], steps: [{
-                type: ContentChildren,
-                args: [IxStepComponent, { descendants: true }]
-            }], onWindowResize: [{
-                type: HostListener,
-                args: ['window:resize', ['$event']]
-            }] } });
+                    ], host: {
+                        '(window:resize)': 'onWindowResize($event)'
+                    }, template: "<div class=\"ix-stepper\"\n     [class.ix-stepper--horizontal]=\"orientation() === 'horizontal' || (orientation() === 'auto' && isWideScreen())\"\n     [class.ix-stepper--vertical]=\"orientation() === 'vertical' || (orientation() === 'auto' && !isWideScreen())\">\n\n  <!-- Step Headers -->\n  <div class=\"ix-stepper__header\">\n    @for (step of steps(); track $index; let i = $index) {\n      <div class=\"ix-stepper__step-header\"\n           [class.ix-stepper__step-header--active]=\"selectedIndex() === i\"\n           [class.ix-stepper__step-header--completed]=\"step.completed()\"\n           [class.ix-stepper__step-header--error]=\"step.hasError()\"\n           [class.ix-stepper__step-header--optional]=\"step.optional()\"\n           (click)=\"selectStep(i)\">\n\n        <!-- Step Number/Icon -->\n        <div class=\"ix-stepper__step-indicator\">\n          @if (step.completed() && !step.hasError()) {\n            <span class=\"ix-stepper__step-check\">\u2713</span>\n          }\n          @if (step.hasError()) {\n            <span class=\"ix-stepper__step-error\">!</span>\n          }\n          @if (!step.completed() && !step.hasError()) {\n            @if (step.icon()) {\n              <span class=\"ix-stepper__step-icon\">{{ step.icon() }}</span>\n            } @else {\n              <span class=\"ix-stepper__step-number\">{{ i + 1 }}</span>\n            }\n          }\n        </div>\n\n        <!-- Step Label -->\n        <div class=\"ix-stepper__step-label\">\n          <div class=\"ix-stepper__step-title\">{{ step.label() }}</div>\n          @if (step.optional()) {\n            <span class=\"ix-stepper__step-subtitle\">Optional</span>\n          }\n        </div>\n      </div>\n\n      <!-- Connector Line (except for last step) -->\n      @if (i < steps().length - 1) {\n        <div class=\"ix-stepper__connector\"></div>\n      }\n    }\n  </div>\n\n  <!-- Step Content -->\n  <div class=\"ix-stepper__content\">\n    @for (step of steps(); track $index; let i = $index) {\n      @if (selectedIndex() === i) {\n        <div class=\"ix-stepper__step-content\"\n             [@stepTransition]=\"selectedIndex()\">\n          <ng-container *ngTemplateOutlet=\"step.content()\"></ng-container>\n        </div>\n      }\n    }\n  </div>\n</div>", styles: [".ix-stepper{display:flex;font-family:inherit;--step-diameter: 48px;--step-diameter-sm: 32px;--step-padding: 12px}.ix-stepper--horizontal{flex-direction:column}.ix-stepper--horizontal .ix-stepper__header{display:flex;justify-content:center;margin-bottom:32px;padding:0 16px}.ix-stepper--horizontal .ix-stepper__step-header{display:flex;flex-direction:column;align-items:center;text-align:center;cursor:pointer;transition:all .2s ease-in-out}.ix-stepper--horizontal .ix-stepper__step-header:not(.ix-stepper__step-header--active):hover .ix-stepper__step-indicator{transform:scale(.95)}.ix-stepper--horizontal .ix-stepper__connector{flex:1;height:2px;background:var(--lines, #e5e7eb);margin:0 16px;position:relative;top:calc(var(--step-diameter) / 2)}.ix-stepper--vertical{flex-direction:row}.ix-stepper--vertical .ix-stepper__header{display:flex;flex-direction:column;width:280px;padding:16px;border-right:1px solid var(--lines, #e5e7eb)}.ix-stepper--vertical .ix-stepper__step-header{display:flex;flex-direction:row;align-items:center;text-align:left;cursor:pointer;transition:all .2s ease-in-out;padding:var(--step-padding);border-radius:8px;margin-bottom:8px}.ix-stepper--vertical .ix-stepper__step-header:not(.ix-stepper__step-header--active):hover .ix-stepper__step-indicator{transform:scale(.95)}.ix-stepper--vertical .ix-stepper__step-header .ix-stepper__step-label{margin-left:12px;margin-top:0}.ix-stepper--vertical .ix-stepper__connector{width:2px;height:24px;background:var(--lines, #e5e7eb);position:relative;left:calc(var(--step-diameter) / 2 + var(--step-padding));margin-bottom:8px}.ix-stepper--vertical .ix-stepper__content{flex:1;padding:16px}.ix-stepper__step-indicator{display:flex;align-items:center;justify-content:center;width:var(--step-diameter);height:var(--step-diameter);border-radius:50%;background:var(--alt-bg1, #f8f9fa);color:var(--alt-fg1, #495057);font-weight:400;font-size:14px;transition:all .2s ease-in-out;position:relative;transform:scale(.65)}.ix-stepper__step-number{font-weight:400}.ix-stepper__step-label{margin-top:8px}.ix-stepper__step-title{display:block;font-weight:400;font-size:14px;color:var(--fg1, #000000);line-height:1.2}.ix-stepper__step-subtitle{display:block;font-size:12px;color:var(--fg2, #6c757d);margin-top:2px}.ix-stepper__step-header--active .ix-stepper__step-indicator{background:var(--primary, #007bff);color:var(--primary-txt, #ffffff);transform:scale(1)}.ix-stepper__step-header--active .ix-stepper__step-title{color:var(--fg2, #6c757d);font-weight:600}.ix-stepper__step-header--completed .ix-stepper__step-indicator{background:var(--green, #28a745);color:#fff}.ix-stepper__step-header--completed .ix-stepper__step-check{font-size:16px;font-weight:700}.ix-stepper__step-header--error .ix-stepper__step-indicator{background:var(--red, #dc3545);color:#fff}.ix-stepper__step-header--error .ix-stepper__step-error{font-size:18px;font-weight:700}.ix-stepper__step-header--error .ix-stepper__step-title{color:var(--fg1, #000000)}.ix-stepper__step-header--active.ix-stepper__step-header--error .ix-stepper__step-title{color:var(--fg2, #6c757d);font-weight:600}.ix-stepper__step-header--optional .ix-stepper__step-indicator{border:2px dashed var(--lines, #e5e7eb);background:transparent}.ix-stepper--horizontal .ix-stepper__step-header--completed+.ix-stepper__connector{background:var(--green, #28a745)}.ix-stepper--horizontal .ix-stepper__step-header--completed+.ix-stepper__connector:after{content:\"\";position:absolute;top:0;left:0;right:0;height:100%;background:var(--green, #28a745);animation:progressFill .3s ease-in-out}.ix-stepper--vertical .ix-stepper__step-header--completed+.ix-stepper__connector{background:var(--green, #28a745)}.ix-stepper__content{min-height:200px}.ix-stepper__step-content{padding:16px;background:var(--bg1, #ffffff);border-radius:8px;border:1px solid var(--lines, #e5e7eb)}@keyframes progressFill{0%{width:0}to{width:100%}}.ix-stepper__step-header:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-stepper__step-header:focus:not(:focus-visible){outline:none}@media (max-width: 780px){.ix-stepper--vertical .ix-stepper__header{width:180px;border-right:none;border-bottom:1px solid var(--lines, #e5e7eb);padding:16px 0}.ix-stepper--vertical .ix-stepper__step-header{flex-direction:column;align-items:center;text-align:center;min-width:80px;padding:8px 4px}.ix-stepper--vertical .ix-stepper__step-header .ix-stepper__step-label{margin-left:0;margin-top:8px}.ix-stepper--vertical .ix-stepper__connector{display:none}}@media (max-width: 780px){.ix-stepper .ix-stepper__step-label{display:none}.ix-stepper .ix-stepper__step-indicator{width:var(--step-diameter-sm);height:var(--step-diameter-sm);font-size:12px}.ix-stepper--horizontal .ix-stepper__header{padding:0 8px}.ix-stepper--horizontal .ix-stepper__connector{top:calc(var(--step-diameter-sm) / 2);margin:0 8px}.ix-stepper--vertical .ix-stepper__header{width:60px}.ix-stepper--vertical .ix-stepper__step-header{padding:4px;margin-bottom:4px}.ix-stepper--vertical .ix-stepper__connector{left:calc(var(--step-diameter-sm) / 2 + 4px);height:16px;margin-bottom:4px}}\n"] }]
+        }], ctorParameters: () => [{ type: i0.ChangeDetectorRef }] });
 
 /**
  * Auto-generated from SVG files - DO NOT EDIT MANUALLY
@@ -8134,7 +7619,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * To regenerate this file, run:
  *   npm run generate-icons
  *
- * Generated: 2025-12-23T21:09:45.403Z
+ * Generated: 2025-12-29T20:21:46.211Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 /* eslint-disable */
@@ -8216,16 +7701,16 @@ class IxFilePickerPopupComponent {
             }, 0);
         }
     }
-    itemClick = new EventEmitter();
-    itemDoubleClick = new EventEmitter();
-    pathNavigate = new EventEmitter();
-    createFolder = new EventEmitter();
-    clearSelection = new EventEmitter();
-    close = new EventEmitter();
-    submit = new EventEmitter();
-    cancel = new EventEmitter();
-    submitFolderName = new EventEmitter();
-    cancelFolderCreation = new EventEmitter();
+    itemClick = output();
+    itemDoubleClick = output();
+    pathNavigate = output();
+    createFolder = output();
+    clearSelection = output();
+    close = output();
+    submit = output();
+    cancel = output();
+    submitFolderName = output();
+    cancelFolderCreation = output();
     // Table configuration
     displayedColumns = ['select', 'name', 'size', 'modified'];
     // Computed values
@@ -8497,50 +7982,30 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                     ], host: {
                         'class': 'ix-file-picker-popup'
                     }, template: "<!-- Header with breadcrumb navigation -->\n<div class=\"ix-file-picker-header\">\n  <nav class=\"ix-file-picker-breadcrumb\" aria-label=\"File path\">\n    @for (segment of currentPath() | ixTruncatePath; track $index; let last = $last) {\n      <button\n        class=\"breadcrumb-segment\"\n        [class.current]=\"last\"\n        [class.parent-nav]=\"segment.name === '..'\"\n        [disabled]=\"last\"\n        (click)=\"navigateToPath(segment.path)\">\n        {{ segment.name }}\n      </button>\n    }\n  </nav>\n\n  <div class=\"ix-file-picker-actions\">\n    @if (allowCreate()) {\n      <ix-button\n        variant=\"outline\"\n        label=\"New Folder\"\n        [disabled]=\"isCreateDisabled()\"\n        (onClick)=\"onCreateFolder()\">\n      </ix-button>\n    }\n  </div>\n</div>\n\n<!-- Loading indicator -->\n@if (loading()) {\n  <div class=\"ix-file-picker-loading\">\n    <ix-icon name=\"loading\" library=\"mdi\"></ix-icon>\n    <span>Loading...</span>\n  </div>\n}\n\n<!-- File table -->\n@if (!loading()) {\n  <div class=\"ix-file-picker-content\">\n  <ix-table\n    [dataSource]=\"filteredFileItems()\"\n    [displayedColumns]=\"multiSelect() ? displayedColumns : displayedColumns.slice(1)\">\n\n    <!-- Selection column -->\n    @if (multiSelect()) {\n      <ng-container ixColumnDef=\"select\">\n      <ng-template ixHeaderCellDef>\n        <!-- Select all checkbox -->\n      </ng-template>\n      <ng-template ixCellDef let-item>\n        <input \n          type=\"checkbox\" \n          [checked]=\"isSelected(item)\"\n          [disabled]=\"!!item.disabled\"\n          (click)=\"$event.stopPropagation()\"\n          (change)=\"onItemClick(item)\">\n      </ng-template>\n      </ng-container>\n    }\n\n    <!-- Name column -->\n    <ng-container ixColumnDef=\"name\">\n      <ng-template ixHeaderCellDef>Name</ng-template>\n      <ng-template ixCellDef let-item>\n\n        <!-- NORMAL MODE: Display name -->\n        @if (!item.isCreating) {\n          <div\n               class=\"file-name-cell\"\n               [class.disabled]=\"!!item.disabled\"\n               [class.zfs-object]=\"isZfsObject(item)\"\n               (click)=\"onItemClick(item)\"\n               (dblclick)=\"onItemDoubleClick(item)\">\n            <ix-icon\n              [name]=\"getItemIcon(item)\"\n              [library]=\"getItemIconLibrary(item)\"\n              [class]=\"'file-icon-' + item.type\"\n              class=\"file-icon\">\n            </ix-icon>\n            <span class=\"file-name\">{{ item.name }}</span>\n\n            <!-- ZFS badge -->\n            @if (isZfsObject(item)) {\n              <span\n                class=\"zfs-badge\"\n                [class]=\"'zfs-badge-' + item.type\">\n                {{ getZfsBadge(item) }}\n              </span>\n            }\n\n            <!-- Permission indicator -->\n            @if (item.permissions === 'none') {\n              <ix-icon\n                name=\"lock\"\n                library=\"mdi\"\n                class=\"permission-icon\">\n              </ix-icon>\n            }\n          </div>\n        }\n\n        <!-- EDIT MODE: Inline name input with error display -->\n        @if (item.isCreating) {\n          <div class=\"file-name-cell-wrapper\">\n            <div class=\"file-name-cell editing\" [class.has-error]=\"!!item.creationError\">\n              <ix-icon\n                name=\"folder\"\n                library=\"mdi\"\n                class=\"file-icon file-icon-folder\">\n              </ix-icon>\n              <input\n                #folderNameInput\n                type=\"text\"\n                role=\"textbox\"\n                aria-label=\"Folder name\"\n                class=\"folder-name-input\"\n                [class.error]=\"!!item.creationError\"\n                [value]=\"item.name\"\n                [disabled]=\"creationLoading()\"\n                (keydown)=\"onFolderNameKeyDown($event, item)\"\n                (blur)=\"onFolderNameInputBlur($event, item)\"\n                [attr.data-autofocus]=\"true\"\n                spellcheck=\"false\"\n                autocomplete=\"off\">\n\n              <!-- Loading indicator during submission -->\n              @if (creationLoading()) {\n                <ix-icon\n                  name=\"loading\"\n                  library=\"mdi\"\n                  class=\"creation-loading-icon\">\n                </ix-icon>\n              }\n            </div>\n\n            <!-- Inline error message -->\n            @if (item.creationError) {\n              <div class=\"folder-creation-error\">\n                <ix-icon name=\"alert-circle\" library=\"mdi\" class=\"error-icon\"></ix-icon>\n                <span class=\"error-text\">{{ item.creationError }}</span>\n              </div>\n            }\n          </div>\n        }\n\n      </ng-template>\n    </ng-container>\n\n    <!-- Size column -->\n    <ng-container ixColumnDef=\"size\">\n      <ng-template ixHeaderCellDef>Size</ng-template>\n      <ng-template ixCellDef let-item>\n        @if (item.size !== undefined) {\n          <span>{{ item.size | ixFileSize }}</span>\n        }\n        @if (item.size === undefined && item.type === 'folder') {\n          <span class=\"folder-indicator\">--</span>\n        }\n      </ng-template>\n    </ng-container>\n\n    <!-- Modified column -->\n    <ng-container ixColumnDef=\"modified\">\n      <ng-template ixHeaderCellDef>Modified</ng-template>\n      <ng-template ixCellDef let-item>\n        @if (item.modified) {\n          <span>{{ formatDate(item.modified) }}</span>\n        }\n      </ng-template>\n    </ng-container>\n\n\n  </ix-table>\n\n  <!-- Empty state -->\n  @if (filteredFileItems().length === 0) {\n    <div class=\"empty-state\">\n      <ix-icon name=\"folder-open\" library=\"mdi\"></ix-icon>\n      <p>No items found</p>\n    </div>\n  }\n  </div>\n}\n\n<!-- Footer -->\n@if (!loading()) {\n  <div class=\"ix-file-picker-footer\">\n    @if (selectedItems().length > 0) {\n      <span class=\"selection-count\">\n        {{ selectedItems().length }} item{{ selectedItems().length !== 1 ? 's' : '' }} selected\n      </span>\n    }\n    @if (selectedItems().length === 0) {\n      <span class=\"selection-count\">\n        No items selected\n      </span>\n    }\n    <div class=\"footer-actions\">\n      <ix-button\n        label=\"Select\"\n        [disabled]=\"selectedItems().length === 0\"\n        (onClick)=\"onSubmit()\">\n      </ix-button>\n    </div>\n  </div>\n}", styles: [":host{display:block;background:var(--bg1, white);color:var(--fg1, #333);padding:0;box-shadow:0 4px 16px #0000001f,0 1px 4px #00000014;border-radius:8px;border:1px solid var(--lines, #e0e0e0);min-width:400px;max-width:600px;min-height:500px;max-height:600px;font-family:var(--font-family-body);display:flex;flex-direction:column;overflow:hidden}.ix-file-picker-header{display:flex;align-items:center;justify-content:space-between;padding:var(--content-padding, 24px);padding-bottom:16px;border-bottom:1px solid var(--lines)}.ix-file-picker-breadcrumb{display:flex;align-items:center;gap:4px;flex:1;min-width:0}.ix-file-picker-breadcrumb .breadcrumb-segment{background:transparent;border:none;color:var(--primary);cursor:pointer;padding:4px 8px;border-radius:4px;font-size:.875rem;white-space:nowrap;transition:background-color .15s ease-in-out}.ix-file-picker-breadcrumb .breadcrumb-segment:hover:not(:disabled){background:var(--bg2)}.ix-file-picker-breadcrumb .breadcrumb-segment:disabled,.ix-file-picker-breadcrumb .breadcrumb-segment.current{color:var(--fg1);cursor:default;font-weight:500}.ix-file-picker-breadcrumb .breadcrumb-segment:not(:last-child):after{content:\"/\";margin-left:8px;color:var(--alt-fg1)}.ix-file-picker-actions{display:flex;align-items:center;gap:8px}.ix-file-picker-actions ix-button{font-size:.875rem}.ix-file-picker-loading{display:flex;align-items:center;justify-content:center;gap:8px;padding:40px;color:var(--fg2)}.ix-file-picker-loading ix-icon{animation:spin 1s linear infinite}@keyframes spin{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.ix-file-picker-content{flex:1;min-height:0;overflow-y:auto}.file-list-viewport{width:100%;height:100%}.file-list-viewport .cdk-virtual-scroll-content-wrapper{width:100%}ix-table{width:100%}ix-table th,ix-table .ix-table__header-cell{font-weight:600;color:var(--fg1);padding:12px 16px;border-bottom:2px solid var(--lines)}ix-table td,ix-table .ix-table__cell{padding:8px 16px;border-bottom:1px solid var(--lines)}.file-checkbox{display:flex;align-items:center}.file-checkbox input[type=checkbox]{margin:0;width:16px;height:16px}.file-name-cell{display:flex;align-items:center;gap:8px;cursor:pointer}.file-name-cell.disabled{opacity:.5;color:var(--fg2, #757575)}.file-name-cell.disabled .file-name{color:var(--fg2, #757575)}.file-name-cell.disabled .file-icon{opacity:.6}.file-name-cell.disabled:has(.file-icon-folder),.file-name-cell.disabled:has(.file-icon-dataset),.file-name-cell.disabled:has(.file-icon-mountpoint){cursor:pointer}.file-name-cell.disabled:not(:has(.file-icon-folder)):not(:has(.file-icon-dataset)):not(:has(.file-icon-mountpoint)){cursor:not-allowed}.file-name-cell.editing{display:flex;align-items:center;gap:8px;padding:2px;cursor:default}.file-name-cell.editing .folder-name-input{flex:1;border:2px solid var(--primary, #0066cc);padding:4px 8px;font-size:inherit;font-family:inherit;background:var(--bg1, white);color:var(--fg1, black);outline:none;border-radius:3px;min-width:200px}.file-name-cell.editing .folder-name-input:focus{border-color:var(--primary, #0066cc);box-shadow:0 0 0 3px #0066cc1a}.file-name-cell.editing .folder-name-input.error{border-color:var(--error, #d32f2f)}.file-name-cell.editing .folder-name-input:disabled{opacity:.6;cursor:not-allowed;background:var(--bg2, #f5f5f5)}.file-name-cell.editing .creation-loading-icon{animation:spin 1s linear infinite;color:var(--primary, #0066cc);flex-shrink:0}.file-name-cell-wrapper{display:flex;flex-direction:column;gap:4px}.folder-creation-error{display:flex;align-items:center;gap:6px;padding:4px 8px 4px 36px;margin-bottom:12px;background:#d32f2f1a;border-left:3px solid var(--error, #d32f2f);border-radius:3px;font-size:.875rem;color:var(--error, #d32f2f)}.folder-creation-error .error-icon{flex-shrink:0;width:20px;height:20px}.folder-creation-error .error-text{flex:1}.file-icon{display:flex;align-items:center;justify-content:center;font-size:var(--icon-md, 20px);flex-shrink:0;line-height:1}.file-icon.file-icon-folder{color:var(--primary)}.file-icon.file-icon-dataset{color:var(--blue, #007db3)}.file-icon.file-icon-zvol{color:var(--green, #71BF44)}.file-icon.file-icon-mountpoint{color:var(--orange, #E68D37)}.file-name{flex:1;font-weight:500;line-height:1.4}.zfs-badge{display:inline-flex;align-items:center;background:var(--alt-bg2);color:var(--alt-fg2);font-size:.625rem;font-weight:600;padding:2px 6px;border-radius:12px;text-transform:uppercase;letter-spacing:.5px;line-height:1}.zfs-badge.zfs-badge-dataset{background:var(--blue);color:#fff}.zfs-badge.zfs-badge-zvol{background:var(--green);color:#fff}.zfs-badge.zfs-badge-mountpoint{background:var(--orange);color:#fff}.permission-icon{display:flex;align-items:center;justify-content:center;color:var(--red);font-size:var(--icon-sm, 16px);line-height:1}.file-type{font-size:.875rem;padding:2px 8px;border-radius:12px}.file-type.type-folder{background:var(--alt-bg1);color:var(--alt-fg2)}.file-type.type-file{background:var(--bg2);color:var(--fg2)}.file-type.type-dataset{background:#007db31a;color:var(--blue)}.file-type.type-zvol{background:#71bf441a;color:var(--green)}.file-type.type-mountpoint{background:#e68d371a;color:var(--orange)}.folder-indicator{color:var(--alt-fg1);font-style:italic}.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;color:var(--alt-fg1);text-align:center}.empty-state ix-icon{font-size:48px;margin-bottom:16px;opacity:.5}.empty-state p{margin:0;font-size:.875rem}.ix-file-picker-footer{display:flex;align-items:center;justify-content:space-between;padding:16px var(--content-padding, 24px);border-top:1px solid var(--lines);background:var(--bg2);border-bottom-left-radius:8px;border-bottom-right-radius:8px}.selection-count{font-size:.875rem;color:var(--fg2);font-weight:500}.footer-actions{display:flex;gap:8px}@media (prefers-reduced-motion: reduce){.file-item,.breadcrumb-segment{transition:none}.ix-file-picker-loading ix-icon{animation:none}}@media (prefers-contrast: high){:host{border-width:2px}.file-item:hover,.file-item.selected{border:2px solid var(--fg1)}.zfs-badge{border:1px solid var(--fg1)}}@media (max-width: 768px){:host{min-width:300px;max-width:calc(100vw - 32px);max-height:calc(100vh - 64px)}.ix-file-picker-header{flex-direction:column;gap:12px;align-items:stretch}.ix-file-picker-breadcrumb{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-file-picker-breadcrumb::-webkit-scrollbar{display:none}.file-item{padding:12px;min-height:56px}.file-info{font-size:.875rem}}\n"] }]
-        }], ctorParameters: () => [{ type: IxIconRegistryService }], propDecorators: { itemClick: [{
-                type: Output
-            }], itemDoubleClick: [{
-                type: Output
-            }], pathNavigate: [{
-                type: Output
-            }], createFolder: [{
-                type: Output
-            }], clearSelection: [{
-                type: Output
-            }], close: [{
-                type: Output
-            }], submit: [{
-                type: Output
-            }], cancel: [{
-                type: Output
-            }], submitFolderName: [{
-                type: Output
-            }], cancelFolderCreation: [{
-                type: Output
-            }] } });
+        }], ctorParameters: () => [{ type: IxIconRegistryService }] });
 
 class IxFilePickerComponent {
     overlay;
     elementRef;
     viewContainerRef;
-    mode = 'any';
-    multiSelect = false;
-    allowCreate = true;
-    allowDatasetCreate = false;
-    allowZvolCreate = false;
-    allowManualInput = true;
-    placeholder = 'Select file or folder';
-    disabled = false;
-    startPath = '/mnt';
-    rootPath;
-    fileExtensions;
-    callbacks;
-    selectionChange = new EventEmitter();
-    pathChange = new EventEmitter();
-    createFolder = new EventEmitter();
-    error = new EventEmitter();
-    wrapperEl;
-    filePickerTemplate;
+    mode = input('any', ...(ngDevMode ? [{ debugName: "mode" }] : []));
+    multiSelect = input(false, ...(ngDevMode ? [{ debugName: "multiSelect" }] : []));
+    allowCreate = input(true, ...(ngDevMode ? [{ debugName: "allowCreate" }] : []));
+    allowDatasetCreate = input(false, ...(ngDevMode ? [{ debugName: "allowDatasetCreate" }] : []));
+    allowZvolCreate = input(false, ...(ngDevMode ? [{ debugName: "allowZvolCreate" }] : []));
+    allowManualInput = input(true, ...(ngDevMode ? [{ debugName: "allowManualInput" }] : []));
+    placeholder = input('Select file or folder', ...(ngDevMode ? [{ debugName: "placeholder" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    startPath = input('/mnt', ...(ngDevMode ? [{ debugName: "startPath" }] : []));
+    rootPath = input(undefined, ...(ngDevMode ? [{ debugName: "rootPath" }] : []));
+    fileExtensions = input(undefined, ...(ngDevMode ? [{ debugName: "fileExtensions" }] : []));
+    callbacks = input(undefined, ...(ngDevMode ? [{ debugName: "callbacks" }] : []));
+    selectionChange = output();
+    pathChange = output();
+    createFolder = output();
+    error = output();
+    wrapperEl = viewChild.required('wrapper');
+    filePickerTemplate = viewChild.required('filePickerTemplate');
     destroy$ = new Subject();
     overlayRef;
     portal;
@@ -8554,6 +8019,9 @@ class IxFilePickerComponent {
     hasError = signal(false, ...(ngDevMode ? [{ debugName: "hasError" }] : []));
     creatingItemTempId = signal(null, ...(ngDevMode ? [{ debugName: "creatingItemTempId" }] : []));
     creationLoading = signal(false, ...(ngDevMode ? [{ debugName: "creationLoading" }] : []));
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    // Computed disabled state (combines input and form state)
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
     // ControlValueAccessor implementation
     onChange = (value) => { };
     onTouched = () => { };
@@ -8563,8 +8031,8 @@ class IxFilePickerComponent {
         this.viewContainerRef = viewContainerRef;
     }
     ngOnInit() {
-        this.currentPath.set(this.startPath);
-        this.selectedPath.set(this.multiSelect ? '' : '');
+        this.currentPath.set(this.startPath());
+        this.selectedPath.set(this.multiSelect() ? '' : '');
     }
     ngOnDestroy() {
         this.destroy$.next();
@@ -8573,7 +8041,7 @@ class IxFilePickerComponent {
     }
     // ControlValueAccessor implementation
     writeValue(value) {
-        if (this.multiSelect) {
+        if (this.multiSelect()) {
             this.selectedItems.set(Array.isArray(value) ? value : value ? [value] : []);
             // For multi-select, show full paths separated by commas
             this.selectedPath.set(this.selectedItems().join(', '));
@@ -8591,17 +8059,18 @@ class IxFilePickerComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     // Event handlers
     onPathInput(event) {
         const target = event.target;
         const inputValue = target.value;
-        if (this.allowManualInput) {
+        if (this.allowManualInput()) {
             // Convert display path to full path with /mnt prefix
             const fullPath = this.toFullPath(inputValue);
-            if (this.callbacks?.validatePath) {
-                this.callbacks.validatePath(fullPath).then(isValid => {
+            const cb = this.callbacks();
+            if (cb?.validatePath) {
+                cb.validatePath(fullPath).then(isValid => {
                     if (isValid) {
                         this.updateSelection(fullPath);
                     }
@@ -8619,7 +8088,7 @@ class IxFilePickerComponent {
         this.onTouched();
     }
     openFilePicker() {
-        if (this.isOpen() || this.disabled)
+        if (this.isOpen() || this.isDisabled())
             return;
         this.createOverlay();
         this.isOpen.set(true);
@@ -8637,7 +8106,7 @@ class IxFilePickerComponent {
     onItemClick(item) {
         if (item.disabled || item.isCreating || this.creatingItemTempId())
             return;
-        if (this.multiSelect) {
+        if (this.multiSelect()) {
             const selected = this.selectedItems();
             const index = selected.indexOf(item.path);
             if (index >= 0) {
@@ -8675,7 +8144,7 @@ class IxFilePickerComponent {
             return;
         // Clear any existing error state
         this.hasError.set(false);
-        if (this.multiSelect) {
+        if (this.multiSelect()) {
             this.selectedPath.set(selected.join(', '));
             this.onChange(selected);
             this.selectionChange.emit(selected);
@@ -8730,8 +8199,8 @@ class IxFilePickerComponent {
     onClearSelection() {
         this.selectedItems.set([]);
         this.selectedPath.set('');
-        this.onChange(this.multiSelect ? [] : '');
-        this.selectionChange.emit(this.multiSelect ? [] : '');
+        this.onChange(this.multiSelect() ? [] : '');
+        this.selectionChange.emit(this.multiSelect() ? [] : '');
     }
     async onSubmitFolderName(name, tempId) {
         // Validate folder name
@@ -8741,7 +8210,8 @@ class IxFilePickerComponent {
             this.updateCreatingItemError(tempId, validation.error);
             return;
         }
-        if (!this.callbacks?.createFolder) {
+        const cb = this.callbacks();
+        if (!cb?.createFolder) {
             this.updateCreatingItemError(tempId, 'Create folder callback not provided');
             return;
         }
@@ -8750,7 +8220,7 @@ class IxFilePickerComponent {
         this.creationLoading.set(true);
         try {
             // Call the callback with parent path and user-entered name
-            const createdPath = await this.callbacks.createFolder(this.currentPath(), name.trim());
+            const createdPath = await cb.createFolder(this.currentPath(), name.trim());
             // Remove pending item
             this.removePendingItem(tempId);
             this.creatingItemTempId.set(null);
@@ -8813,7 +8283,8 @@ class IxFilePickerComponent {
         return { valid: true };
     }
     async loadDirectory(path) {
-        if (!this.callbacks?.getChildren) {
+        const cb = this.callbacks();
+        if (!cb?.getChildren) {
             // Default mock data for development
             this.fileItems.set(this.getMockFileItems(path));
             this.currentPath.set(path);
@@ -8822,8 +8293,8 @@ class IxFilePickerComponent {
         }
         this.loading.set(true);
         try {
-            const items = await this.callbacks.getChildren(path);
-            this.fileItems.set(items);
+            const items = await cb.getChildren(path);
+            this.fileItems.set(items || []);
             this.currentPath.set(path);
             this.pathChange.emit(path);
         }
@@ -8868,7 +8339,7 @@ class IxFilePickerComponent {
     updateSelection(path) {
         // Clear any existing error state since popup selections are valid
         this.hasError.set(false);
-        if (this.multiSelect) {
+        if (this.multiSelect()) {
             const selected = [path];
             this.selectedItems.set(selected);
             this.selectedPath.set(selected.join(', '));
@@ -8879,15 +8350,15 @@ class IxFilePickerComponent {
             this.selectedItems.set([path]);
             this.onChange(path);
         }
-        this.selectionChange.emit(this.multiSelect ? this.selectedItems() : path);
+        this.selectionChange.emit(this.multiSelect() ? this.selectedItems() : path);
     }
     updateSelectionFromItems() {
         // Clear any existing error state since popup selections are valid
         this.hasError.set(false);
         const selected = this.selectedItems();
         this.selectedPath.set(selected.join(', '));
-        this.onChange(this.multiSelect ? selected : selected[0] || '');
-        this.selectionChange.emit(this.multiSelect ? selected : selected[0] || '');
+        this.onChange(this.multiSelect() ? selected : selected[0] || '');
+        this.selectionChange.emit(this.multiSelect() ? selected : selected[0] || '');
     }
     toFullPath(displayPath) {
         if (!displayPath)
@@ -8938,7 +8409,7 @@ class IxFilePickerComponent {
         ];
         const positionStrategy = this.overlay
             .position()
-            .flexibleConnectedTo(this.wrapperEl)
+            .flexibleConnectedTo(this.wrapperEl())
             .withPositions(positions)
             .withFlexibleDimensions(false)
             .withPush(false);
@@ -8952,17 +8423,17 @@ class IxFilePickerComponent {
         this.overlayRef.backdropClick().subscribe(() => {
             this.close();
         });
-        this.portal = new TemplatePortal(this.filePickerTemplate, this.viewContainerRef);
+        this.portal = new TemplatePortal(this.filePickerTemplate(), this.viewContainerRef);
         this.overlayRef.attach(this.portal);
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxFilePickerComponent, deps: [{ token: i1$3.Overlay }, { token: i0.ElementRef }, { token: i0.ViewContainerRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxFilePickerComponent, isStandalone: true, selector: "ix-file-picker", inputs: { mode: "mode", multiSelect: "multiSelect", allowCreate: "allowCreate", allowDatasetCreate: "allowDatasetCreate", allowZvolCreate: "allowZvolCreate", allowManualInput: "allowManualInput", placeholder: "placeholder", disabled: "disabled", startPath: "startPath", rootPath: "rootPath", fileExtensions: "fileExtensions", callbacks: "callbacks" }, outputs: { selectionChange: "selectionChange", pathChange: "pathChange", createFolder: "createFolder", error: "error" }, host: { properties: { "class.error": "hasError()" }, classAttribute: "ix-file-picker" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.2.0", version: "20.3.4", type: IxFilePickerComponent, isStandalone: true, selector: "ix-file-picker", inputs: { mode: { classPropertyName: "mode", publicName: "mode", isSignal: true, isRequired: false, transformFunction: null }, multiSelect: { classPropertyName: "multiSelect", publicName: "multiSelect", isSignal: true, isRequired: false, transformFunction: null }, allowCreate: { classPropertyName: "allowCreate", publicName: "allowCreate", isSignal: true, isRequired: false, transformFunction: null }, allowDatasetCreate: { classPropertyName: "allowDatasetCreate", publicName: "allowDatasetCreate", isSignal: true, isRequired: false, transformFunction: null }, allowZvolCreate: { classPropertyName: "allowZvolCreate", publicName: "allowZvolCreate", isSignal: true, isRequired: false, transformFunction: null }, allowManualInput: { classPropertyName: "allowManualInput", publicName: "allowManualInput", isSignal: true, isRequired: false, transformFunction: null }, placeholder: { classPropertyName: "placeholder", publicName: "placeholder", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, startPath: { classPropertyName: "startPath", publicName: "startPath", isSignal: true, isRequired: false, transformFunction: null }, rootPath: { classPropertyName: "rootPath", publicName: "rootPath", isSignal: true, isRequired: false, transformFunction: null }, fileExtensions: { classPropertyName: "fileExtensions", publicName: "fileExtensions", isSignal: true, isRequired: false, transformFunction: null }, callbacks: { classPropertyName: "callbacks", publicName: "callbacks", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectionChange: "selectionChange", pathChange: "pathChange", createFolder: "createFolder", error: "error" }, host: { properties: { "class.error": "hasError()" }, classAttribute: "ix-file-picker" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxFilePickerComponent),
                 multi: true
             }
-        ], viewQueries: [{ propertyName: "wrapperEl", first: true, predicate: ["wrapper"], descendants: true }, { propertyName: "filePickerTemplate", first: true, predicate: ["filePickerTemplate"], descendants: true, static: true }], ngImport: i0, template: "<div class=\"ix-file-picker-container\">\n  <div #wrapper ixInput class=\"ix-file-picker-wrapper\" style=\"padding-right: 40px;\">\n    <input\n      type=\"text\"\n      class=\"ix-file-picker-input\"\n      [class.error]=\"hasError()\"\n      [value]=\"selectedPath() | ixStripMntPrefix\"\n      [placeholder]=\"placeholder\"\n      [readonly]=\"!allowManualInput\"\n      [disabled]=\"disabled\"\n      (input)=\"onPathInput($event)\">\n    \n    <button \n      type=\"button\"\n      class=\"ix-file-picker-toggle\"\n      (click)=\"openFilePicker()\"\n      [disabled]=\"disabled\"\n      aria-label=\"Open file picker\">\n      <ix-icon name=\"folder\" library=\"mdi\"></ix-icon>\n    </button>\n  </div>\n  \n  <ng-template #filePickerTemplate>\n    <ix-file-picker-popup\n      class=\"ix-file-picker-popup\"\n      [mode]=\"mode\"\n      [multiSelect]=\"multiSelect\"\n      [allowCreate]=\"allowCreate\"\n      [allowDatasetCreate]=\"allowDatasetCreate\"\n      [allowZvolCreate]=\"allowZvolCreate\"\n      [currentPath]=\"currentPath()\"\n      [fileItems]=\"fileItems()\"\n      [selectedItems]=\"selectedItems()\"\n      [loading]=\"loading()\"\n      [creationLoading]=\"creationLoading()\"\n      [fileExtensions]=\"fileExtensions\"\n      (itemClick)=\"onItemClick($event)\"\n      (itemDoubleClick)=\"onItemDoubleClick($event)\"\n      (pathNavigate)=\"navigateToPath($event)\"\n      (createFolder)=\"onCreateFolder()\"\n      (submitFolderName)=\"onSubmitFolderName($event.name, $event.tempId)\"\n      (cancelFolderCreation)=\"onCancelFolderCreation($event)\"\n      (clearSelection)=\"onClearSelection()\"\n      (submit)=\"onSubmit()\"\n      (cancel)=\"onCancel()\"\n      (close)=\"close()\">\n    </ix-file-picker-popup>\n  </ng-template>\n</div>", styles: [":host{display:block;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-file-picker-container{position:relative;display:flex;align-items:center;width:100%}.ix-file-picker-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-file-picker-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box;font-family:inherit}.ix-file-picker-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-file-picker-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-file-picker-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-file-picker-input.error{border-color:var(--error, #dc3545)}.ix-file-picker-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-file-picker-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;color:var(--fg1);border-radius:4px}.ix-file-picker-toggle:hover{background:var(--bg2, #f0f0f0)}.ix-file-picker-toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-file-picker-toggle:disabled{cursor:not-allowed;opacity:.5}.ix-file-picker-toggle ix-icon{font-size:var(--icon-md, 20px)}:host:focus-within .ix-file-picker-input{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}:host.error .ix-file-picker-input{border-color:var(--error, #dc3545)}:host.error .ix-file-picker-input:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}@media (prefers-reduced-motion: reduce){.ix-file-picker-input,.ix-file-picker-toggle,.file-item,.breadcrumb-segment{transition:none}.ix-file-picker-loading ix-icon{animation:none}}@media (prefers-contrast: high){.ix-file-picker-input{border-width:2px}.file-item:hover,.file-item.selected{border:2px solid var(--fg1)}.zfs-badge{border:1px solid var(--fg1)}}@media (max-width: 768px){:host ::ng-deep .ix-file-picker-overlay .ix-file-picker-dialog{min-width:300px;max-width:calc(100vw - 32px);max-height:calc(100vh - 64px)}.ix-file-picker-header{flex-direction:column;gap:12px;align-items:stretch}.ix-file-picker-breadcrumb{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-file-picker-breadcrumb::-webkit-scrollbar{display:none}.file-item{padding:12px;min-height:56px}.file-info{font-size:.875rem}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: IxInputDirective, selector: "input[ixInput], textarea[ixInput], div[ixInput]" }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }, { kind: "component", type: IxFilePickerPopupComponent, selector: "ix-file-picker-popup", inputs: ["mode", "multiSelect", "allowCreate", "allowDatasetCreate", "allowZvolCreate", "currentPath", "fileItems", "selectedItems", "loading", "creationLoading", "fileExtensions"], outputs: ["itemClick", "itemDoubleClick", "pathNavigate", "createFolder", "clearSelection", "close", "submit", "cancel", "submitFolderName", "cancelFolderCreation"] }, { kind: "ngmodule", type: OverlayModule }, { kind: "ngmodule", type: PortalModule }, { kind: "ngmodule", type: A11yModule }, { kind: "pipe", type: StripMntPrefixPipe, name: "ixStripMntPrefix" }] });
+        ], viewQueries: [{ propertyName: "wrapperEl", first: true, predicate: ["wrapper"], descendants: true, isSignal: true }, { propertyName: "filePickerTemplate", first: true, predicate: ["filePickerTemplate"], descendants: true, isSignal: true }], ngImport: i0, template: "<div class=\"ix-file-picker-container\">\n  <div #wrapper ixInput class=\"ix-file-picker-wrapper\" style=\"padding-right: 40px;\">\n    <input\n      type=\"text\"\n      class=\"ix-file-picker-input\"\n      [class.error]=\"hasError()\"\n      [value]=\"selectedPath() | ixStripMntPrefix\"\n      [placeholder]=\"placeholder()\"\n      [readonly]=\"!allowManualInput()\"\n      [disabled]=\"isDisabled()\"\n      (input)=\"onPathInput($event)\">\n\n    <button\n      type=\"button\"\n      class=\"ix-file-picker-toggle\"\n      (click)=\"openFilePicker()\"\n      [disabled]=\"isDisabled()\"\n      aria-label=\"Open file picker\">\n      <ix-icon name=\"folder\" library=\"mdi\"></ix-icon>\n    </button>\n  </div>\n  \n  <ng-template #filePickerTemplate>\n    <ix-file-picker-popup\n      class=\"ix-file-picker-popup\"\n      [mode]=\"mode()\"\n      [multiSelect]=\"multiSelect()\"\n      [allowCreate]=\"allowCreate()\"\n      [allowDatasetCreate]=\"allowDatasetCreate()\"\n      [allowZvolCreate]=\"allowZvolCreate()\"\n      [currentPath]=\"currentPath()\"\n      [fileItems]=\"fileItems()\"\n      [selectedItems]=\"selectedItems()\"\n      [loading]=\"loading()\"\n      [creationLoading]=\"creationLoading()\"\n      [fileExtensions]=\"fileExtensions()\"\n      (itemClick)=\"onItemClick($event)\"\n      (itemDoubleClick)=\"onItemDoubleClick($event)\"\n      (pathNavigate)=\"navigateToPath($event)\"\n      (createFolder)=\"onCreateFolder()\"\n      (submitFolderName)=\"onSubmitFolderName($event.name, $event.tempId)\"\n      (cancelFolderCreation)=\"onCancelFolderCreation($event)\"\n      (clearSelection)=\"onClearSelection()\"\n      (submit)=\"onSubmit()\"\n      (cancel)=\"onCancel()\"\n      (close)=\"close()\">\n    </ix-file-picker-popup>\n  </ng-template>\n</div>", styles: [":host{display:block;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-file-picker-container{position:relative;display:flex;align-items:center;width:100%}.ix-file-picker-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-file-picker-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box;font-family:inherit}.ix-file-picker-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-file-picker-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-file-picker-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-file-picker-input.error{border-color:var(--error, #dc3545)}.ix-file-picker-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-file-picker-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;color:var(--fg1);border-radius:4px}.ix-file-picker-toggle:hover{background:var(--bg2, #f0f0f0)}.ix-file-picker-toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-file-picker-toggle:disabled{cursor:not-allowed;opacity:.5}.ix-file-picker-toggle ix-icon{font-size:var(--icon-md, 20px)}:host:focus-within .ix-file-picker-input{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}:host.error .ix-file-picker-input{border-color:var(--error, #dc3545)}:host.error .ix-file-picker-input:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}@media (prefers-reduced-motion: reduce){.ix-file-picker-input,.ix-file-picker-toggle,.file-item,.breadcrumb-segment{transition:none}.ix-file-picker-loading ix-icon{animation:none}}@media (prefers-contrast: high){.ix-file-picker-input{border-width:2px}.file-item:hover,.file-item.selected{border:2px solid var(--fg1)}.zfs-badge{border:1px solid var(--fg1)}}@media (max-width: 768px){:host ::ng-deep .ix-file-picker-overlay .ix-file-picker-dialog{min-width:300px;max-width:calc(100vw - 32px);max-height:calc(100vh - 64px)}.ix-file-picker-header{flex-direction:column;gap:12px;align-items:stretch}.ix-file-picker-breadcrumb{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-file-picker-breadcrumb::-webkit-scrollbar{display:none}.file-item{padding:12px;min-height:56px}.file-info{font-size:.875rem}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: IxInputDirective, selector: "input[ixInput], textarea[ixInput], div[ixInput]" }, { kind: "component", type: IxIconComponent, selector: "ix-icon", inputs: ["name", "size", "color", "tooltip", "ariaLabel", "library"] }, { kind: "component", type: IxFilePickerPopupComponent, selector: "ix-file-picker-popup", inputs: ["mode", "multiSelect", "allowCreate", "allowDatasetCreate", "allowZvolCreate", "currentPath", "fileItems", "selectedItems", "loading", "creationLoading", "fileExtensions"], outputs: ["itemClick", "itemDoubleClick", "pathNavigate", "createFolder", "clearSelection", "close", "submit", "cancel", "submitFolderName", "cancelFolderCreation"] }, { kind: "ngmodule", type: OverlayModule }, { kind: "ngmodule", type: PortalModule }, { kind: "ngmodule", type: A11yModule }, { kind: "pipe", type: StripMntPrefixPipe, name: "ixStripMntPrefix" }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxFilePickerComponent, decorators: [{
             type: Component,
@@ -8984,46 +8455,8 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                     ], host: {
                         'class': 'ix-file-picker',
                         '[class.error]': 'hasError()'
-                    }, template: "<div class=\"ix-file-picker-container\">\n  <div #wrapper ixInput class=\"ix-file-picker-wrapper\" style=\"padding-right: 40px;\">\n    <input\n      type=\"text\"\n      class=\"ix-file-picker-input\"\n      [class.error]=\"hasError()\"\n      [value]=\"selectedPath() | ixStripMntPrefix\"\n      [placeholder]=\"placeholder\"\n      [readonly]=\"!allowManualInput\"\n      [disabled]=\"disabled\"\n      (input)=\"onPathInput($event)\">\n    \n    <button \n      type=\"button\"\n      class=\"ix-file-picker-toggle\"\n      (click)=\"openFilePicker()\"\n      [disabled]=\"disabled\"\n      aria-label=\"Open file picker\">\n      <ix-icon name=\"folder\" library=\"mdi\"></ix-icon>\n    </button>\n  </div>\n  \n  <ng-template #filePickerTemplate>\n    <ix-file-picker-popup\n      class=\"ix-file-picker-popup\"\n      [mode]=\"mode\"\n      [multiSelect]=\"multiSelect\"\n      [allowCreate]=\"allowCreate\"\n      [allowDatasetCreate]=\"allowDatasetCreate\"\n      [allowZvolCreate]=\"allowZvolCreate\"\n      [currentPath]=\"currentPath()\"\n      [fileItems]=\"fileItems()\"\n      [selectedItems]=\"selectedItems()\"\n      [loading]=\"loading()\"\n      [creationLoading]=\"creationLoading()\"\n      [fileExtensions]=\"fileExtensions\"\n      (itemClick)=\"onItemClick($event)\"\n      (itemDoubleClick)=\"onItemDoubleClick($event)\"\n      (pathNavigate)=\"navigateToPath($event)\"\n      (createFolder)=\"onCreateFolder()\"\n      (submitFolderName)=\"onSubmitFolderName($event.name, $event.tempId)\"\n      (cancelFolderCreation)=\"onCancelFolderCreation($event)\"\n      (clearSelection)=\"onClearSelection()\"\n      (submit)=\"onSubmit()\"\n      (cancel)=\"onCancel()\"\n      (close)=\"close()\">\n    </ix-file-picker-popup>\n  </ng-template>\n</div>", styles: [":host{display:block;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-file-picker-container{position:relative;display:flex;align-items:center;width:100%}.ix-file-picker-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-file-picker-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box;font-family:inherit}.ix-file-picker-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-file-picker-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-file-picker-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-file-picker-input.error{border-color:var(--error, #dc3545)}.ix-file-picker-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-file-picker-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;color:var(--fg1);border-radius:4px}.ix-file-picker-toggle:hover{background:var(--bg2, #f0f0f0)}.ix-file-picker-toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-file-picker-toggle:disabled{cursor:not-allowed;opacity:.5}.ix-file-picker-toggle ix-icon{font-size:var(--icon-md, 20px)}:host:focus-within .ix-file-picker-input{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}:host.error .ix-file-picker-input{border-color:var(--error, #dc3545)}:host.error .ix-file-picker-input:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}@media (prefers-reduced-motion: reduce){.ix-file-picker-input,.ix-file-picker-toggle,.file-item,.breadcrumb-segment{transition:none}.ix-file-picker-loading ix-icon{animation:none}}@media (prefers-contrast: high){.ix-file-picker-input{border-width:2px}.file-item:hover,.file-item.selected{border:2px solid var(--fg1)}.zfs-badge{border:1px solid var(--fg1)}}@media (max-width: 768px){:host ::ng-deep .ix-file-picker-overlay .ix-file-picker-dialog{min-width:300px;max-width:calc(100vw - 32px);max-height:calc(100vh - 64px)}.ix-file-picker-header{flex-direction:column;gap:12px;align-items:stretch}.ix-file-picker-breadcrumb{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-file-picker-breadcrumb::-webkit-scrollbar{display:none}.file-item{padding:12px;min-height:56px}.file-info{font-size:.875rem}}\n"] }]
-        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }], propDecorators: { mode: [{
-                type: Input
-            }], multiSelect: [{
-                type: Input
-            }], allowCreate: [{
-                type: Input
-            }], allowDatasetCreate: [{
-                type: Input
-            }], allowZvolCreate: [{
-                type: Input
-            }], allowManualInput: [{
-                type: Input
-            }], placeholder: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], startPath: [{
-                type: Input
-            }], rootPath: [{
-                type: Input
-            }], fileExtensions: [{
-                type: Input
-            }], callbacks: [{
-                type: Input
-            }], selectionChange: [{
-                type: Output
-            }], pathChange: [{
-                type: Output
-            }], createFolder: [{
-                type: Output
-            }], error: [{
-                type: Output
-            }], wrapperEl: [{
-                type: ViewChild,
-                args: ['wrapper']
-            }], filePickerTemplate: [{
-                type: ViewChild,
-                args: ['filePickerTemplate', { static: true }]
-            }] } });
+                    }, template: "<div class=\"ix-file-picker-container\">\n  <div #wrapper ixInput class=\"ix-file-picker-wrapper\" style=\"padding-right: 40px;\">\n    <input\n      type=\"text\"\n      class=\"ix-file-picker-input\"\n      [class.error]=\"hasError()\"\n      [value]=\"selectedPath() | ixStripMntPrefix\"\n      [placeholder]=\"placeholder()\"\n      [readonly]=\"!allowManualInput()\"\n      [disabled]=\"isDisabled()\"\n      (input)=\"onPathInput($event)\">\n\n    <button\n      type=\"button\"\n      class=\"ix-file-picker-toggle\"\n      (click)=\"openFilePicker()\"\n      [disabled]=\"isDisabled()\"\n      aria-label=\"Open file picker\">\n      <ix-icon name=\"folder\" library=\"mdi\"></ix-icon>\n    </button>\n  </div>\n  \n  <ng-template #filePickerTemplate>\n    <ix-file-picker-popup\n      class=\"ix-file-picker-popup\"\n      [mode]=\"mode()\"\n      [multiSelect]=\"multiSelect()\"\n      [allowCreate]=\"allowCreate()\"\n      [allowDatasetCreate]=\"allowDatasetCreate()\"\n      [allowZvolCreate]=\"allowZvolCreate()\"\n      [currentPath]=\"currentPath()\"\n      [fileItems]=\"fileItems()\"\n      [selectedItems]=\"selectedItems()\"\n      [loading]=\"loading()\"\n      [creationLoading]=\"creationLoading()\"\n      [fileExtensions]=\"fileExtensions()\"\n      (itemClick)=\"onItemClick($event)\"\n      (itemDoubleClick)=\"onItemDoubleClick($event)\"\n      (pathNavigate)=\"navigateToPath($event)\"\n      (createFolder)=\"onCreateFolder()\"\n      (submitFolderName)=\"onSubmitFolderName($event.name, $event.tempId)\"\n      (cancelFolderCreation)=\"onCancelFolderCreation($event)\"\n      (clearSelection)=\"onClearSelection()\"\n      (submit)=\"onSubmit()\"\n      (cancel)=\"onCancel()\"\n      (close)=\"close()\">\n    </ix-file-picker-popup>\n  </ng-template>\n</div>", styles: [":host{display:block;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-file-picker-container{position:relative;display:flex;align-items:center;width:100%}.ix-file-picker-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-file-picker-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box;font-family:inherit}.ix-file-picker-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-file-picker-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-file-picker-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-file-picker-input.error{border-color:var(--error, #dc3545)}.ix-file-picker-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-file-picker-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;color:var(--fg1);border-radius:4px}.ix-file-picker-toggle:hover{background:var(--bg2, #f0f0f0)}.ix-file-picker-toggle:focus{outline:2px solid var(--primary);outline-offset:2px}.ix-file-picker-toggle:disabled{cursor:not-allowed;opacity:.5}.ix-file-picker-toggle ix-icon{font-size:var(--icon-md, 20px)}:host:focus-within .ix-file-picker-input{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}:host.error .ix-file-picker-input{border-color:var(--error, #dc3545)}:host.error .ix-file-picker-input:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}@media (prefers-reduced-motion: reduce){.ix-file-picker-input,.ix-file-picker-toggle,.file-item,.breadcrumb-segment{transition:none}.ix-file-picker-loading ix-icon{animation:none}}@media (prefers-contrast: high){.ix-file-picker-input{border-width:2px}.file-item:hover,.file-item.selected{border:2px solid var(--fg1)}.zfs-badge{border:1px solid var(--fg1)}}@media (max-width: 768px){:host ::ng-deep .ix-file-picker-overlay .ix-file-picker-dialog{min-width:300px;max-width:calc(100vw - 32px);max-height:calc(100vh - 64px)}.ix-file-picker-header{flex-direction:column;gap:12px;align-items:stretch}.ix-file-picker-breadcrumb{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.ix-file-picker-breadcrumb::-webkit-scrollbar{display:none}.file-item{padding:12px;min-height:56px}.file-info{font-size:.875rem}}\n"] }]
+        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }] });
 
 class IxKeyboardShortcutService {
     shortcuts = new Map();

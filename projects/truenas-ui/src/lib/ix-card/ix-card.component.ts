@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, input, computed } from '@angular/core';
 import { IxButtonComponent } from '../ix-button/ix-button.component';
 import { IxIconComponent } from '../ix-icon/ix-icon.component';
 import { IxIconButtonComponent } from '../ix-icon-button/ix-icon-button.component';
@@ -27,46 +27,24 @@ export class IxCardComponent {
     // Register MDI icons used by this component
     this.registerMdiIcons();
   }
-  @Input()
-  title?: string;
 
-  @Input()
-  titleLink?: string; // Makes title navigable
-
-  @Input()
-  elevation: 'none' | 'low' | 'medium' | 'high' = 'medium';
-
-  @Input()
-  padding: 'small' | 'medium' | 'large' = 'medium';
-
-  @Input()
-  padContent = true;
-
-  @Input()
-  bordered = false;
-
-  @Input()
-  background = true;
+  title = input<string | undefined>(undefined);
+  titleLink = input<string | undefined>(undefined); // Makes title navigable
+  elevation = input<'none' | 'low' | 'medium' | 'high'>('medium');
+  padding = input<'small' | 'medium' | 'large'>('medium');
+  padContent = input<boolean>(true);
+  bordered = input<boolean>(false);
+  background = input<boolean>(true);
 
   // Header elements (top-right) - Always render in header
-  @Input()
-  headerStatus?: IxCardHeaderStatus;
-
-  @Input()
-  headerControl?: IxCardControl; // Slide toggle - ALWAYS in header
-
-  @Input()
-  headerMenu?: IxMenuItem[];
+  headerStatus = input<IxCardHeaderStatus | undefined>(undefined);
+  headerControl = input<IxCardControl | undefined>(undefined); // Slide toggle - ALWAYS in header
+  headerMenu = input<IxMenuItem[] | undefined>(undefined);
 
   // Footer elements (bottom-right) - Always render in footer
-  @Input()
-  primaryAction?: IxCardAction;
-
-  @Input()
-  secondaryAction?: IxCardAction;
-
-  @Input()
-  footerLink?: IxCardFooterLink;
+  primaryAction = input<IxCardAction | undefined>(undefined);
+  secondaryAction = input<IxCardAction | undefined>(undefined);
+  footerLink = input<IxCardFooterLink | undefined>(undefined);
 
   /**
    * Register MDI icon library with all icons used by the card component
@@ -90,33 +68,35 @@ export class IxCardComponent {
     });
   }
 
-  public get classes(): string[] {
-    const elevationClass = `ix-card--elevation-${this.elevation}`;
-    const paddingClass = `ix-card--padding-${this.padding}`;
-    const contentPaddingClass = this.padContent ? `ix-card--content-padding-${this.padding}` : 'ix-card--content-padding-none';
-    const borderedClass = this.bordered ? 'ix-card--bordered' : '';
-    const backgroundClass = this.background ? 'ix-card--background' : '';
+  classes = computed(() => {
+    const elevationClass = `ix-card--elevation-${this.elevation()}`;
+    const paddingClass = `ix-card--padding-${this.padding()}`;
+    const contentPaddingClass = this.padContent() ? `ix-card--content-padding-${this.padding()}` : 'ix-card--content-padding-none';
+    const borderedClass = this.bordered() ? 'ix-card--bordered' : '';
+    const backgroundClass = this.background() ? 'ix-card--background' : '';
 
     return ['ix-card', elevationClass, paddingClass, contentPaddingClass, borderedClass, backgroundClass].filter(Boolean);
-  }
+  });
 
-  public get hasHeader(): boolean {
-    return !!(this.title || this.headerStatus || this.headerControl || this.headerMenu);
-  }
+  hasHeader = computed(() => {
+    return !!(this.title() || this.headerStatus() || this.headerControl() || this.headerMenu());
+  });
 
-  public get hasFooter(): boolean {
-    return !!(this.primaryAction || this.secondaryAction || this.footerLink);
-  }
+  hasFooter = computed(() => {
+    return !!(this.primaryAction() || this.secondaryAction() || this.footerLink());
+  });
 
   onTitleClick(): void {
-    if (this.titleLink) {
-      window.location.href = this.titleLink;
+    const link = this.titleLink();
+    if (link) {
+      window.location.href = link;
     }
   }
 
   onControlChange(checked: boolean): void {
-    if (this.headerControl) {
-      this.headerControl.handler(checked);
+    const control = this.headerControl();
+    if (control) {
+      control.handler(checked);
     }
   }
 

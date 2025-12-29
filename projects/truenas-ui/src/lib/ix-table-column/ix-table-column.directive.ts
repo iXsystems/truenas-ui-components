@@ -1,4 +1,4 @@
-import { Directive, Input, TemplateRef, ContentChild } from '@angular/core';
+import { Directive, TemplateRef, input, contentChild } from '@angular/core';
 
 @Directive({
   selector: '[ixHeaderCellDef]',
@@ -22,11 +22,9 @@ export class IxCellDefDirective {
   exportAs: 'ixColumnDef'
 })
 export class IxTableColumnDirective {
-  @Input('ixColumnDef') name!: string;
+  name = input.required<string>({ alias: 'ixColumnDef' });
 
-  @ContentChild(IxHeaderCellDefDirective, { read: TemplateRef })
-  headerTemplate?: TemplateRef<any>;
+  headerTemplate = contentChild(IxHeaderCellDefDirective, { read: TemplateRef });
 
-  @ContentChild(IxCellDefDirective, { read: TemplateRef })
-  cellTemplate?: TemplateRef<any>;
+  cellTemplate = contentChild(IxCellDefDirective, { read: TemplateRef });
 }
