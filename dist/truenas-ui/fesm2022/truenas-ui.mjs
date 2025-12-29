@@ -1,5 +1,5 @@
 import * as i0 from '@angular/core';
-import { Injectable, Component, input, ChangeDetectionStrategy, inject, ViewChild, Input, ViewEncapsulation, computed, EventEmitter, Output, forwardRef, Directive, TemplateRef, HostListener, ElementRef, ContentChild, ChangeDetectorRef, ContentChildren, Optional, Inject, Pipe, signal, Host } from '@angular/core';
+import { Injectable, Component, input, ChangeDetectionStrategy, inject, ViewChild, Input, ViewEncapsulation, computed, output, EventEmitter, Output, signal, forwardRef, Directive, TemplateRef, HostListener, ElementRef, ContentChild, ChangeDetectorRef, ContentChildren, Optional, Inject, Pipe, Host } from '@angular/core';
 import * as i1$2 from '@angular/common';
 import { CommonModule, NgIf, DOCUMENT } from '@angular/common';
 import * as i1$1 from '@angular/platform-browser';
@@ -788,19 +788,19 @@ class IxBannerHarness extends ComponentHarness {
 
 class IxButtonComponent {
     size = 'large';
-    primary = false;
-    color = 'default';
-    variant = 'filled';
-    backgroundColor;
-    label = 'Button';
-    disabled = false;
-    onClick = new EventEmitter();
-    get classes() {
+    primary = input(false, ...(ngDevMode ? [{ debugName: "primary" }] : []));
+    color = input('default', ...(ngDevMode ? [{ debugName: "color" }] : []));
+    variant = input('filled', ...(ngDevMode ? [{ debugName: "variant" }] : []));
+    backgroundColor = input(undefined, ...(ngDevMode ? [{ debugName: "backgroundColor" }] : []));
+    label = input('Button', ...(ngDevMode ? [{ debugName: "label" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    onClick = output();
+    classes = computed(() => {
         // Support both primary boolean and color string approaches
-        const isPrimary = this.primary || this.color === 'primary';
-        const isWarn = this.color === 'warn';
+        const isPrimary = this.primary() || this.color() === 'primary';
+        const isWarn = this.color() === 'warn';
         let mode = '';
-        if (this.variant === 'outline') {
+        if (this.variant() === 'outline') {
             if (isPrimary) {
                 mode = 'button-outline-primary';
             }
@@ -823,28 +823,14 @@ class IxButtonComponent {
             }
         }
         return ['storybook-button', `storybook-button--${this.size}`, mode];
-    }
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxButtonComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxButtonComponent, isStandalone: true, selector: "ix-button", inputs: { primary: "primary", color: "color", variant: "variant", backgroundColor: "backgroundColor", label: "label", disabled: "disabled" }, outputs: { onClick: "onClick" }, ngImport: i0, template: "<button\n  type=\"button\"\n  (click)=\"onClick.emit($event)\"\n  [ngClass]=\"classes\"\n  [ngStyle]=\"{ 'background-color': backgroundColor }\"\n  [disabled]=\"disabled\"\n>\n  {{ label }}\n</button>\n\n", styles: [":host{display:inline-block;width:fit-content;justify-self:center}.storybook-button{display:inline-block;cursor:pointer;border:0;font-weight:500;line-height:1;font-family:IBM Plex Sans,Helvetica Neue,Helvetica,Arial,sans-serif}.storybook-button:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.button-primary{background-color:var(--primary);color:var(--primary-txt)}.button-default{box-shadow:#00000026 0 0 0 1px inset;background-color:var(--btn-default-bg);color:var(--btn-default-txt)}.button-outline-primary{background-color:transparent;border:1px solid var(--primary);color:var(--primary);transition:all .2s ease-in-out}.button-outline-primary:hover{background-color:var(--primary);border:1px solid var(--primary);color:var(--primary-txt)}.button-outline-default{background-color:transparent;border:1px solid var(--lines, #e5e7eb);color:var(--fg1, #000000);transition:all .2s ease-in-out}.button-outline-default:hover{background-color:var(--btn-default-bg);border:1px solid var(--btn-default-bg);color:var(--btn-default-txt);box-shadow:#00000026 0 0 0 1px inset}.button-warn{background-color:var(--red);color:#fff}.button-outline-warn{background-color:transparent;border:1px solid var(--red);color:var(--red);transition:all .2s ease-in-out}.button-outline-warn:hover{background-color:var(--red);border:1px solid var(--red);color:#fff}.storybook-button--small{padding:10px 16px;font-size:12px}.storybook-button--medium{padding:11px 20px;font-size:14px}.storybook-button--large{padding:12px 24px;font-size:16px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "directive", type: i1$2.NgStyle, selector: "[ngStyle]", inputs: ["ngStyle"] }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxButtonComponent, isStandalone: true, selector: "ix-button", inputs: { primary: { classPropertyName: "primary", publicName: "primary", isSignal: true, isRequired: false, transformFunction: null }, color: { classPropertyName: "color", publicName: "color", isSignal: true, isRequired: false, transformFunction: null }, variant: { classPropertyName: "variant", publicName: "variant", isSignal: true, isRequired: false, transformFunction: null }, backgroundColor: { classPropertyName: "backgroundColor", publicName: "backgroundColor", isSignal: true, isRequired: false, transformFunction: null }, label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { onClick: "onClick" }, ngImport: i0, template: "<button\n  type=\"button\"\n  (click)=\"onClick.emit($event)\"\n  [ngClass]=\"classes()\"\n  [ngStyle]=\"{ 'background-color': backgroundColor() }\"\n  [disabled]=\"disabled()\"\n>\n  {{ label() }}\n</button>\n\n", styles: [":host{display:inline-block;width:fit-content;justify-self:center}.storybook-button{display:inline-block;cursor:pointer;border:0;font-weight:500;line-height:1;font-family:IBM Plex Sans,Helvetica Neue,Helvetica,Arial,sans-serif}.storybook-button:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.button-primary{background-color:var(--primary);color:var(--primary-txt)}.button-default{box-shadow:#00000026 0 0 0 1px inset;background-color:var(--btn-default-bg);color:var(--btn-default-txt)}.button-outline-primary{background-color:transparent;border:1px solid var(--primary);color:var(--primary);transition:all .2s ease-in-out}.button-outline-primary:hover{background-color:var(--primary);border:1px solid var(--primary);color:var(--primary-txt)}.button-outline-default{background-color:transparent;border:1px solid var(--lines, #e5e7eb);color:var(--fg1, #000000);transition:all .2s ease-in-out}.button-outline-default:hover{background-color:var(--btn-default-bg);border:1px solid var(--btn-default-bg);color:var(--btn-default-txt);box-shadow:#00000026 0 0 0 1px inset}.button-warn{background-color:var(--red);color:#fff}.button-outline-warn{background-color:transparent;border:1px solid var(--red);color:var(--red);transition:all .2s ease-in-out}.button-outline-warn:hover{background-color:var(--red);border:1px solid var(--red);color:#fff}.storybook-button--small{padding:10px 16px;font-size:12px}.storybook-button--medium{padding:11px 20px;font-size:14px}.storybook-button--large{padding:12px 24px;font-size:16px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "directive", type: i1$2.NgStyle, selector: "[ngStyle]", inputs: ["ngStyle"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxButtonComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-button', standalone: true, imports: [CommonModule], template: "<button\n  type=\"button\"\n  (click)=\"onClick.emit($event)\"\n  [ngClass]=\"classes\"\n  [ngStyle]=\"{ 'background-color': backgroundColor }\"\n  [disabled]=\"disabled\"\n>\n  {{ label }}\n</button>\n\n", styles: [":host{display:inline-block;width:fit-content;justify-self:center}.storybook-button{display:inline-block;cursor:pointer;border:0;font-weight:500;line-height:1;font-family:IBM Plex Sans,Helvetica Neue,Helvetica,Arial,sans-serif}.storybook-button:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.button-primary{background-color:var(--primary);color:var(--primary-txt)}.button-default{box-shadow:#00000026 0 0 0 1px inset;background-color:var(--btn-default-bg);color:var(--btn-default-txt)}.button-outline-primary{background-color:transparent;border:1px solid var(--primary);color:var(--primary);transition:all .2s ease-in-out}.button-outline-primary:hover{background-color:var(--primary);border:1px solid var(--primary);color:var(--primary-txt)}.button-outline-default{background-color:transparent;border:1px solid var(--lines, #e5e7eb);color:var(--fg1, #000000);transition:all .2s ease-in-out}.button-outline-default:hover{background-color:var(--btn-default-bg);border:1px solid var(--btn-default-bg);color:var(--btn-default-txt);box-shadow:#00000026 0 0 0 1px inset}.button-warn{background-color:var(--red);color:#fff}.button-outline-warn{background-color:transparent;border:1px solid var(--red);color:var(--red);transition:all .2s ease-in-out}.button-outline-warn:hover{background-color:var(--red);border:1px solid var(--red);color:#fff}.storybook-button--small{padding:10px 16px;font-size:12px}.storybook-button--medium{padding:11px 20px;font-size:14px}.storybook-button--large{padding:12px 24px;font-size:16px}\n"] }]
-        }], propDecorators: { primary: [{
-                type: Input
-            }], color: [{
-                type: Input
-            }], variant: [{
-                type: Input
-            }], backgroundColor: [{
-                type: Input
-            }], label: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], onClick: [{
-                type: Output
-            }] } });
+            args: [{ selector: 'ix-button', standalone: true, imports: [CommonModule], template: "<button\n  type=\"button\"\n  (click)=\"onClick.emit($event)\"\n  [ngClass]=\"classes()\"\n  [ngStyle]=\"{ 'background-color': backgroundColor() }\"\n  [disabled]=\"disabled()\"\n>\n  {{ label() }}\n</button>\n\n", styles: [":host{display:inline-block;width:fit-content;justify-self:center}.storybook-button{display:inline-block;cursor:pointer;border:0;font-weight:500;line-height:1;font-family:IBM Plex Sans,Helvetica Neue,Helvetica,Arial,sans-serif}.storybook-button:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}.button-primary{background-color:var(--primary);color:var(--primary-txt)}.button-default{box-shadow:#00000026 0 0 0 1px inset;background-color:var(--btn-default-bg);color:var(--btn-default-txt)}.button-outline-primary{background-color:transparent;border:1px solid var(--primary);color:var(--primary);transition:all .2s ease-in-out}.button-outline-primary:hover{background-color:var(--primary);border:1px solid var(--primary);color:var(--primary-txt)}.button-outline-default{background-color:transparent;border:1px solid var(--lines, #e5e7eb);color:var(--fg1, #000000);transition:all .2s ease-in-out}.button-outline-default:hover{background-color:var(--btn-default-bg);border:1px solid var(--btn-default-bg);color:var(--btn-default-txt);box-shadow:#00000026 0 0 0 1px inset}.button-warn{background-color:var(--red);color:#fff}.button-outline-warn{background-color:transparent;border:1px solid var(--red);color:var(--red);transition:all .2s ease-in-out}.button-outline-warn:hover{background-color:var(--red);border:1px solid var(--red);color:#fff}.storybook-button--small{padding:10px 16px;font-size:12px}.storybook-button--medium{padding:11px 20px;font-size:14px}.storybook-button--large{padding:12px 24px;font-size:16px}\n"] }]
+        }] });
 
 class IxIconButtonComponent {
     // Button-related inputs
@@ -896,14 +882,17 @@ var InputType;
 
 class IxInputComponent {
     inputEl;
-    inputType = InputType.PlainText;
-    placeholder = 'Enter your name';
-    testId;
-    disabled = false;
-    multiline = false;
-    rows = 3;
+    inputType = input(InputType.PlainText, ...(ngDevMode ? [{ debugName: "inputType" }] : []));
+    placeholder = input('Enter your name', ...(ngDevMode ? [{ debugName: "placeholder" }] : []));
+    testId = input(undefined, ...(ngDevMode ? [{ debugName: "testId" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    multiline = input(false, ...(ngDevMode ? [{ debugName: "multiline" }] : []));
+    rows = input(3, ...(ngDevMode ? [{ debugName: "rows" }] : []));
     id = 'ix-input';
     value = '';
+    // CVA disabled state management
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
     onChange = (value) => { };
     onTouched = () => { };
     focusMonitor = inject(FocusMonitor);
@@ -921,7 +910,7 @@ class IxInputComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     // Component methods
     onValueChange(event) {
@@ -933,13 +922,13 @@ class IxInputComponent {
         this.onTouched();
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxInputComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxInputComponent, isStandalone: true, selector: "ix-input", inputs: { inputType: "inputType", placeholder: "placeholder", testId: "testId", disabled: "disabled", multiline: "multiline", rows: "rows" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxInputComponent, isStandalone: true, selector: "ix-input", inputs: { inputType: { classPropertyName: "inputType", publicName: "inputType", isSignal: true, isRequired: false, transformFunction: null }, placeholder: { classPropertyName: "placeholder", publicName: "placeholder", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, multiline: { classPropertyName: "multiline", publicName: "multiline", isSignal: true, isRequired: false, transformFunction: null }, rows: { classPropertyName: "rows", publicName: "rows", isSignal: true, isRequired: false, transformFunction: null } }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxInputComponent),
                 multi: true
             }
-        ], viewQueries: [{ propertyName: "inputEl", first: true, predicate: ["inputEl"], descendants: true }], ngImport: i0, template: "<div class=\"ix-input-container\">\n  <!-- Regular input field -->\n  @if (!multiline) {\n    <input\n      #inputEl\n      [id]=\"id\"\n      [value]=\"value\"\n      [type]=\"inputType\"\n      [attr.placeholder]=\"placeholder\"\n      [attr.data-testid]=\"testId\"\n      [disabled]=\"disabled\"\n      (input)=\"onValueChange($event)\"\n      (blur)=\"onBlur()\"\n      class=\"ix-input\"\n    />\n  }\n\n  <!-- Textarea field -->\n  @if (multiline) {\n    <textarea\n      #inputEl\n      [id]=\"id\"\n      [value]=\"value\"\n      [attr.placeholder]=\"placeholder\"\n      [attr.data-testid]=\"testId\"\n      [rows]=\"rows\"\n      [disabled]=\"disabled\"\n      (input)=\"onValueChange($event)\"\n      (blur)=\"onBlur()\"\n      class=\"ix-input ix-textarea\"\n    ></textarea>\n  }\n</div>\n", styles: [".ix-input-container{position:relative;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box}.ix-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-input.error{border-color:var(--error, #dc3545)}.ix-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-textarea{min-height:6rem;resize:vertical;line-height:1.4}@media (prefers-reduced-motion: reduce){.ix-input{transition:none}}@media (prefers-contrast: high){.ix-input{border-width:2px}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "ngmodule", type: FormsModule }, { kind: "ngmodule", type: A11yModule }] });
+        ], viewQueries: [{ propertyName: "inputEl", first: true, predicate: ["inputEl"], descendants: true }], ngImport: i0, template: "<div class=\"ix-input-container\">\n  <!-- Regular input field -->\n  @if (!multiline()) {\n    <input\n      #inputEl\n      [id]=\"id\"\n      [value]=\"value\"\n      [type]=\"inputType()\"\n      [attr.placeholder]=\"placeholder()\"\n      [attr.data-testid]=\"testId()\"\n      [disabled]=\"isDisabled()\"\n      (input)=\"onValueChange($event)\"\n      (blur)=\"onBlur()\"\n      class=\"ix-input\"\n    />\n  }\n\n  <!-- Textarea field -->\n  @if (multiline()) {\n    <textarea\n      #inputEl\n      [id]=\"id\"\n      [value]=\"value\"\n      [attr.placeholder]=\"placeholder()\"\n      [attr.data-testid]=\"testId()\"\n      [rows]=\"rows()\"\n      [disabled]=\"isDisabled()\"\n      (input)=\"onValueChange($event)\"\n      (blur)=\"onBlur()\"\n      class=\"ix-input ix-textarea\"\n    ></textarea>\n  }\n</div>\n", styles: [".ix-input-container{position:relative;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box}.ix-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-input.error{border-color:var(--error, #dc3545)}.ix-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-textarea{min-height:6rem;resize:vertical;line-height:1.4}@media (prefers-reduced-motion: reduce){.ix-input{transition:none}}@media (prefers-contrast: high){.ix-input{border-width:2px}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "ngmodule", type: FormsModule }, { kind: "ngmodule", type: A11yModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxInputComponent, decorators: [{
             type: Component,
@@ -949,22 +938,10 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                             useExisting: forwardRef(() => IxInputComponent),
                             multi: true
                         }
-                    ], template: "<div class=\"ix-input-container\">\n  <!-- Regular input field -->\n  @if (!multiline) {\n    <input\n      #inputEl\n      [id]=\"id\"\n      [value]=\"value\"\n      [type]=\"inputType\"\n      [attr.placeholder]=\"placeholder\"\n      [attr.data-testid]=\"testId\"\n      [disabled]=\"disabled\"\n      (input)=\"onValueChange($event)\"\n      (blur)=\"onBlur()\"\n      class=\"ix-input\"\n    />\n  }\n\n  <!-- Textarea field -->\n  @if (multiline) {\n    <textarea\n      #inputEl\n      [id]=\"id\"\n      [value]=\"value\"\n      [attr.placeholder]=\"placeholder\"\n      [attr.data-testid]=\"testId\"\n      [rows]=\"rows\"\n      [disabled]=\"disabled\"\n      (input)=\"onValueChange($event)\"\n      (blur)=\"onBlur()\"\n      class=\"ix-input ix-textarea\"\n    ></textarea>\n  }\n</div>\n", styles: [".ix-input-container{position:relative;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box}.ix-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-input.error{border-color:var(--error, #dc3545)}.ix-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-textarea{min-height:6rem;resize:vertical;line-height:1.4}@media (prefers-reduced-motion: reduce){.ix-input{transition:none}}@media (prefers-contrast: high){.ix-input{border-width:2px}}\n"] }]
+                    ], template: "<div class=\"ix-input-container\">\n  <!-- Regular input field -->\n  @if (!multiline()) {\n    <input\n      #inputEl\n      [id]=\"id\"\n      [value]=\"value\"\n      [type]=\"inputType()\"\n      [attr.placeholder]=\"placeholder()\"\n      [attr.data-testid]=\"testId()\"\n      [disabled]=\"isDisabled()\"\n      (input)=\"onValueChange($event)\"\n      (blur)=\"onBlur()\"\n      class=\"ix-input\"\n    />\n  }\n\n  <!-- Textarea field -->\n  @if (multiline()) {\n    <textarea\n      #inputEl\n      [id]=\"id\"\n      [value]=\"value\"\n      [attr.placeholder]=\"placeholder()\"\n      [attr.data-testid]=\"testId()\"\n      [rows]=\"rows()\"\n      [disabled]=\"isDisabled()\"\n      (input)=\"onValueChange($event)\"\n      (blur)=\"onBlur()\"\n      class=\"ix-input ix-textarea\"\n    ></textarea>\n  }\n</div>\n", styles: [".ix-input-container{position:relative;width:100%;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-input{display:block;width:100%;min-height:2.5rem;padding:.5rem .75rem;font-size:1rem;line-height:1.5;color:var(--fg1, #212529);background-color:var(--bg1, #ffffff);border:1px solid var(--lines, #d1d5db);border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;outline:none;box-sizing:border-box}.ix-input::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-input:focus{border-color:var(--primary, #007bff);box-shadow:0 0 0 2px #007bff40}.ix-input:disabled{background-color:var(--alt-bg1, #f8f9fa);color:var(--fg2, #6c757d);cursor:not-allowed;opacity:.6}.ix-input.error{border-color:var(--error, #dc3545)}.ix-input.error:focus{border-color:var(--error, #dc3545);box-shadow:0 0 0 2px #dc354540}.ix-textarea{min-height:6rem;resize:vertical;line-height:1.4}@media (prefers-reduced-motion: reduce){.ix-input{transition:none}}@media (prefers-contrast: high){.ix-input{border-width:2px}}\n"] }]
         }], propDecorators: { inputEl: [{
                 type: ViewChild,
                 args: ['inputEl']
-            }], inputType: [{
-                type: Input
-            }], placeholder: [{
-                type: Input
-            }], testId: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], multiline: [{
-                type: Input
-            }], rows: [{
-                type: Input
             }] } });
 
 class IxInputDirective {
@@ -1070,18 +1047,23 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
 
 class IxSlideToggleComponent {
     toggleEl;
-    labelPosition = 'after';
-    label;
-    disabled = false;
-    required = false;
-    color = 'primary';
-    testId;
-    ariaLabel;
-    ariaLabelledby;
-    checked = false;
-    change = new EventEmitter();
-    toggleChange = new EventEmitter();
+    labelPosition = input('after', ...(ngDevMode ? [{ debugName: "labelPosition" }] : []));
+    label = input(undefined, ...(ngDevMode ? [{ debugName: "label" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    required = input(false, ...(ngDevMode ? [{ debugName: "required" }] : []));
+    color = input('primary', ...(ngDevMode ? [{ debugName: "color" }] : []));
+    testId = input(undefined, ...(ngDevMode ? [{ debugName: "testId" }] : []));
+    ariaLabel = input(undefined, ...(ngDevMode ? [{ debugName: "ariaLabel" }] : []));
+    ariaLabelledby = input(undefined, ...(ngDevMode ? [{ debugName: "ariaLabelledby" }] : []));
+    checked = input(false, ...(ngDevMode ? [{ debugName: "checked" }] : []));
+    change = output();
+    toggleChange = output();
     id = `ix-slide-toggle-${Math.random().toString(36).substr(2, 9)}`;
+    // Internal state for CVA
+    internalChecked = signal(false, ...(ngDevMode ? [{ debugName: "internalChecked" }] : []));
+    // CVA disabled state management
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
     focusMonitor = inject(FocusMonitor);
     onChange = (_) => { };
     onTouched = () => { };
@@ -1098,9 +1080,11 @@ class IxSlideToggleComponent {
             this.focusMonitor.stopMonitoring(this.toggleEl);
         }
     }
+    // Computed for effective checked state (input or CVA-controlled)
+    effectiveChecked = computed(() => this.internalChecked() || this.checked(), ...(ngDevMode ? [{ debugName: "effectiveChecked" }] : []));
     // ControlValueAccessor implementation
     writeValue(value) {
-        this.checked = value !== null && value !== undefined ? value : false;
+        this.internalChecked.set(value !== null && value !== undefined ? value : false);
     }
     registerOnChange(fn) {
         this.onChange = fn;
@@ -1109,45 +1093,46 @@ class IxSlideToggleComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     onToggleChange(event) {
         event.stopPropagation();
         const target = event.target;
-        this.checked = target.checked;
-        this.onChange(this.checked);
+        const checked = target.checked;
+        this.internalChecked.set(checked);
+        this.onChange(checked);
         this.onTouched();
-        this.change.emit(this.checked);
-        this.toggleChange.emit(this.checked);
+        this.change.emit(checked);
+        this.toggleChange.emit(checked);
     }
     onLabelClick() {
-        if (!this.disabled && this.toggleEl) {
+        if (!this.isDisabled() && this.toggleEl) {
             this.toggleEl.nativeElement.click();
         }
     }
-    get classes() {
+    classes = computed(() => {
         const classes = ['ix-slide-toggle'];
-        if (this.disabled) {
+        if (this.isDisabled()) {
             classes.push('ix-slide-toggle--disabled');
         }
-        if (this.checked) {
+        if (this.effectiveChecked()) {
             classes.push('ix-slide-toggle--checked');
         }
-        classes.push(`ix-slide-toggle--${this.color}`);
-        classes.push(`ix-slide-toggle--label-${this.labelPosition}`);
+        classes.push(`ix-slide-toggle--${this.color()}`);
+        classes.push(`ix-slide-toggle--label-${this.labelPosition()}`);
         return classes;
-    }
-    get effectiveAriaLabel() {
-        return this.ariaLabel || (this.label ? undefined : 'Toggle');
-    }
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
+    effectiveAriaLabel = computed(() => {
+        return this.ariaLabel() || (this.label() ? undefined : 'Toggle');
+    }, ...(ngDevMode ? [{ debugName: "effectiveAriaLabel" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSlideToggleComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxSlideToggleComponent, isStandalone: true, selector: "ix-slide-toggle", inputs: { labelPosition: "labelPosition", label: "label", disabled: "disabled", required: "required", color: "color", testId: "testId", ariaLabel: "ariaLabel", ariaLabelledby: "ariaLabelledby", checked: "checked" }, outputs: { change: "change", toggleChange: "toggleChange" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxSlideToggleComponent, isStandalone: true, selector: "ix-slide-toggle", inputs: { labelPosition: { classPropertyName: "labelPosition", publicName: "labelPosition", isSignal: true, isRequired: false, transformFunction: null }, label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, required: { classPropertyName: "required", publicName: "required", isSignal: true, isRequired: false, transformFunction: null }, color: { classPropertyName: "color", publicName: "color", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null }, ariaLabel: { classPropertyName: "ariaLabel", publicName: "ariaLabel", isSignal: true, isRequired: false, transformFunction: null }, ariaLabelledby: { classPropertyName: "ariaLabelledby", publicName: "ariaLabelledby", isSignal: true, isRequired: false, transformFunction: null }, checked: { classPropertyName: "checked", publicName: "checked", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { change: "change", toggleChange: "toggleChange" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxSlideToggleComponent),
                 multi: true
             }
-        ], viewQueries: [{ propertyName: "toggleEl", first: true, predicate: ["toggleEl"], descendants: true }], ngImport: i0, template: "<div [ngClass]=\"classes\" [attr.data-testid]=\"testId\">\n  <label [for]=\"id\" class=\"ix-slide-toggle__label\">\n    \n    <!-- Label before toggle -->\n    @if (label && labelPosition === 'before') {\n      <span\n        class=\"ix-slide-toggle__label-text ix-slide-toggle__label-text--before\"\n        (click)=\"onLabelClick()\">\n        {{ label }}\n      </span>\n    }\n\n    <!-- Toggle track and thumb -->\n    <div class=\"ix-slide-toggle__bar\">\n      <input\n        #toggleEl\n        type=\"checkbox\"\n        [id]=\"id\"\n        [checked]=\"checked\"\n        [disabled]=\"disabled\"\n        [required]=\"required\"\n        [attr.aria-label]=\"effectiveAriaLabel\"\n        [attr.aria-labelledby]=\"ariaLabelledby\"\n        class=\"ix-slide-toggle__input\"\n        (change)=\"onToggleChange($event)\"\n      />\n      \n      <div class=\"ix-slide-toggle__track\">\n        <div class=\"ix-slide-toggle__track-fill\"></div>\n      </div>\n      \n      <div class=\"ix-slide-toggle__thumb-container\">\n        <div class=\"ix-slide-toggle__thumb\">\n          <div class=\"ix-slide-toggle__ripple\"></div>\n          <!-- State icon -->\n          <div class=\"ix-slide-toggle__icon\">\n            @if (checked) {\n              <svg\n                class=\"ix-slide-toggle__check-icon\"\n                viewBox=\"0 0 24 24\"\n                width=\"16\"\n                height=\"16\">\n                <path d=\"M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z\" fill=\"currentColor\"/>\n              </svg>\n            }\n            @if (!checked) {\n              <svg\n                class=\"ix-slide-toggle__minus-icon\"\n                viewBox=\"0 0 24 24\"\n                width=\"16\"\n                height=\"16\">\n                <path d=\"M19 13H5v-2h14v2z\" fill=\"currentColor\"/>\n              </svg>\n            }\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- Label after toggle -->\n    @if (label && labelPosition === 'after') {\n      <span\n        class=\"ix-slide-toggle__label-text ix-slide-toggle__label-text--after\"\n        (click)=\"onLabelClick()\">\n        {{ label }}\n      </span>\n    }\n\n  </label>\n</div>", styles: [".ix-slide-toggle{display:inline-flex;align-items:center;cursor:pointer;-webkit-user-select:none;user-select:none;line-height:1;font-family:inherit}.ix-slide-toggle__label{display:flex;align-items:center;cursor:inherit}.ix-slide-toggle__label-text{font-size:14px;line-height:1.4;color:var(--fg1);transition:color .2s ease}.ix-slide-toggle__label-text--before{margin-right:8px}.ix-slide-toggle__label-text--after{margin-left:8px}.ix-slide-toggle__input{position:absolute;opacity:0;width:0;height:0;margin:0;pointer-events:none}.ix-slide-toggle__input:focus+.ix-slide-toggle__track{box-shadow:0 0 0 2px rgba(var(--primary-rgb, 0, 123, 255),.2)}.ix-slide-toggle__bar{position:relative;display:flex;align-items:center;flex-shrink:0}.ix-slide-toggle__track{position:relative;width:52px;height:32px;border-radius:16px;background-color:var(--lines);border:1px solid transparent;transition:background-color .2s ease,border-color .2s ease;overflow:hidden}.ix-slide-toggle__track-fill{position:absolute;inset:0;border-radius:inherit;background-color:var(--primary, #007cba);opacity:0;transform:scaleX(0);transform-origin:left center;transition:opacity .2s ease,transform .2s ease}.ix-slide-toggle__thumb-container{position:absolute;top:50%;left:4px;transform:translateY(-50%);width:24px;height:24px;transition:transform .2s ease;z-index:1}.ix-slide-toggle__thumb{position:relative;width:24px;height:24px;border-radius:50%;background-color:var(--bg2);border:1px solid var(--lines);box-shadow:0 2px 4px #0003;transition:background-color .2s ease,border-color .2s ease,box-shadow .2s ease;display:flex;align-items:center;justify-content:center}.ix-slide-toggle__ripple{position:absolute;width:40px;height:40px;border-radius:50%;background-color:transparent;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0;transition:opacity .2s ease,background-color .2s ease}.ix-slide-toggle__icon{position:relative;display:flex;align-items:center;justify-content:center;z-index:2;pointer-events:none}.ix-slide-toggle__check-icon,.ix-slide-toggle__minus-icon{transition:opacity .2s ease,transform .2s ease;color:var(--fg2)}.ix-slide-toggle:hover:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.08}.ix-slide-toggle--checked .ix-slide-toggle__track{background-color:var(--primary);opacity:.5}.ix-slide-toggle--checked .ix-slide-toggle__track-fill{opacity:1;transform:scaleX(1)}.ix-slide-toggle--checked .ix-slide-toggle__thumb-container{transform:translateY(-50%) translate(24px)}.ix-slide-toggle--checked .ix-slide-toggle__thumb{background-color:var(--bg2);border-color:var(--primary)}.ix-slide-toggle--checked .ix-slide-toggle__check-icon{color:var(--primary)}.ix-slide-toggle--checked:hover:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.12}.ix-slide-toggle--disabled{cursor:not-allowed;opacity:.6}.ix-slide-toggle--disabled .ix-slide-toggle__label-text{color:var(--alt-fg1)}.ix-slide-toggle--disabled .ix-slide-toggle__track{background-color:var(--alt-bg1)}.ix-slide-toggle--disabled .ix-slide-toggle__thumb{background-color:var(--alt-bg2);border-color:var(--alt-bg1);box-shadow:none}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__track,.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__track-fill{background-color:var(--alt-bg1)}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__thumb{background-color:var(--alt-bg2);border-color:var(--alt-bg1)}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__check-icon{color:var(--alt-fg1)}.ix-slide-toggle--disabled:hover .ix-slide-toggle__ripple{opacity:0}.ix-slide-toggle--accent{--primary: var(--accent)}.ix-slide-toggle--warn{--primary: var(--red)}.ix-slide-toggle--label-before .ix-slide-toggle__label{flex-direction:row-reverse}.ix-slide-toggle--label-after .ix-slide-toggle__label{flex-direction:row}.ix-slide-toggle .ix-slide-toggle__input:focus-visible+.ix-slide-toggle__track{outline:2px solid var(--primary);outline-offset:2px}.ix-slide-toggle:active:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.16;transform:translate(-50%,-50%) scale(1.1)}@media (prefers-contrast: high){.ix-slide-toggle .ix-slide-toggle__track{border-color:var(--fg1)}.ix-slide-toggle .ix-slide-toggle__thumb{border-width:2px}.ix-slide-toggle--disabled .ix-slide-toggle__track,.ix-slide-toggle--disabled .ix-slide-toggle__thumb{border-color:var(--alt-fg1)}}@media (prefers-reduced-motion: reduce){.ix-slide-toggle .ix-slide-toggle__track,.ix-slide-toggle .ix-slide-toggle__track-fill,.ix-slide-toggle .ix-slide-toggle__thumb-container,.ix-slide-toggle .ix-slide-toggle__thumb,.ix-slide-toggle .ix-slide-toggle__ripple{transition:none}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: FormsModule }, { kind: "ngmodule", type: A11yModule }] });
+        ], viewQueries: [{ propertyName: "toggleEl", first: true, predicate: ["toggleEl"], descendants: true }], ngImport: i0, template: "<div [ngClass]=\"classes()\" [attr.data-testid]=\"testId()\">\n  <label [for]=\"id\" class=\"ix-slide-toggle__label\">\n\n    <!-- Label before toggle -->\n    @if (label() && labelPosition() === 'before') {\n      <span\n        class=\"ix-slide-toggle__label-text ix-slide-toggle__label-text--before\"\n        (click)=\"onLabelClick()\">\n        {{ label() }}\n      </span>\n    }\n\n    <!-- Toggle track and thumb -->\n    <div class=\"ix-slide-toggle__bar\">\n      <input\n        #toggleEl\n        type=\"checkbox\"\n        [id]=\"id\"\n        [checked]=\"effectiveChecked()\"\n        [disabled]=\"isDisabled()\"\n        [required]=\"required()\"\n        [attr.aria-label]=\"effectiveAriaLabel()\"\n        [attr.aria-labelledby]=\"ariaLabelledby()\"\n        class=\"ix-slide-toggle__input\"\n        (change)=\"onToggleChange($event)\"\n      />\n\n      <div class=\"ix-slide-toggle__track\">\n        <div class=\"ix-slide-toggle__track-fill\"></div>\n      </div>\n\n      <div class=\"ix-slide-toggle__thumb-container\">\n        <div class=\"ix-slide-toggle__thumb\">\n          <div class=\"ix-slide-toggle__ripple\"></div>\n          <!-- State icon -->\n          <div class=\"ix-slide-toggle__icon\">\n            @if (effectiveChecked()) {\n              <svg\n                class=\"ix-slide-toggle__check-icon\"\n                viewBox=\"0 0 24 24\"\n                width=\"16\"\n                height=\"16\">\n                <path d=\"M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z\" fill=\"currentColor\"/>\n              </svg>\n            }\n            @if (!effectiveChecked()) {\n              <svg\n                class=\"ix-slide-toggle__minus-icon\"\n                viewBox=\"0 0 24 24\"\n                width=\"16\"\n                height=\"16\">\n                <path d=\"M19 13H5v-2h14v2z\" fill=\"currentColor\"/>\n              </svg>\n            }\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- Label after toggle -->\n    @if (label() && labelPosition() === 'after') {\n      <span\n        class=\"ix-slide-toggle__label-text ix-slide-toggle__label-text--after\"\n        (click)=\"onLabelClick()\">\n        {{ label() }}\n      </span>\n    }\n\n  </label>\n</div>", styles: [".ix-slide-toggle{display:inline-flex;align-items:center;cursor:pointer;-webkit-user-select:none;user-select:none;line-height:1;font-family:inherit}.ix-slide-toggle__label{display:flex;align-items:center;cursor:inherit}.ix-slide-toggle__label-text{font-size:14px;line-height:1.4;color:var(--fg1);transition:color .2s ease}.ix-slide-toggle__label-text--before{margin-right:8px}.ix-slide-toggle__label-text--after{margin-left:8px}.ix-slide-toggle__input{position:absolute;opacity:0;width:0;height:0;margin:0;pointer-events:none}.ix-slide-toggle__input:focus+.ix-slide-toggle__track{box-shadow:0 0 0 2px rgba(var(--primary-rgb, 0, 123, 255),.2)}.ix-slide-toggle__bar{position:relative;display:flex;align-items:center;flex-shrink:0}.ix-slide-toggle__track{position:relative;width:52px;height:32px;border-radius:16px;background-color:var(--lines);border:1px solid transparent;transition:background-color .2s ease,border-color .2s ease;overflow:hidden}.ix-slide-toggle__track-fill{position:absolute;inset:0;border-radius:inherit;background-color:var(--primary, #007cba);opacity:0;transform:scaleX(0);transform-origin:left center;transition:opacity .2s ease,transform .2s ease}.ix-slide-toggle__thumb-container{position:absolute;top:50%;left:4px;transform:translateY(-50%);width:24px;height:24px;transition:transform .2s ease;z-index:1}.ix-slide-toggle__thumb{position:relative;width:24px;height:24px;border-radius:50%;background-color:var(--bg2);border:1px solid var(--lines);box-shadow:0 2px 4px #0003;transition:background-color .2s ease,border-color .2s ease,box-shadow .2s ease;display:flex;align-items:center;justify-content:center}.ix-slide-toggle__ripple{position:absolute;width:40px;height:40px;border-radius:50%;background-color:transparent;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0;transition:opacity .2s ease,background-color .2s ease}.ix-slide-toggle__icon{position:relative;display:flex;align-items:center;justify-content:center;z-index:2;pointer-events:none}.ix-slide-toggle__check-icon,.ix-slide-toggle__minus-icon{transition:opacity .2s ease,transform .2s ease;color:var(--fg2)}.ix-slide-toggle:hover:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.08}.ix-slide-toggle--checked .ix-slide-toggle__track{background-color:var(--primary);opacity:.5}.ix-slide-toggle--checked .ix-slide-toggle__track-fill{opacity:1;transform:scaleX(1)}.ix-slide-toggle--checked .ix-slide-toggle__thumb-container{transform:translateY(-50%) translate(24px)}.ix-slide-toggle--checked .ix-slide-toggle__thumb{background-color:var(--bg2);border-color:var(--primary)}.ix-slide-toggle--checked .ix-slide-toggle__check-icon{color:var(--primary)}.ix-slide-toggle--checked:hover:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.12}.ix-slide-toggle--disabled{cursor:not-allowed;opacity:.6}.ix-slide-toggle--disabled .ix-slide-toggle__label-text{color:var(--alt-fg1)}.ix-slide-toggle--disabled .ix-slide-toggle__track{background-color:var(--alt-bg1)}.ix-slide-toggle--disabled .ix-slide-toggle__thumb{background-color:var(--alt-bg2);border-color:var(--alt-bg1);box-shadow:none}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__track,.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__track-fill{background-color:var(--alt-bg1)}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__thumb{background-color:var(--alt-bg2);border-color:var(--alt-bg1)}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__check-icon{color:var(--alt-fg1)}.ix-slide-toggle--disabled:hover .ix-slide-toggle__ripple{opacity:0}.ix-slide-toggle--accent{--primary: var(--accent)}.ix-slide-toggle--warn{--primary: var(--red)}.ix-slide-toggle .ix-slide-toggle__input:focus-visible+.ix-slide-toggle__track{outline:2px solid var(--primary);outline-offset:2px}.ix-slide-toggle:active:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.16;transform:translate(-50%,-50%) scale(1.1)}@media (prefers-contrast: high){.ix-slide-toggle .ix-slide-toggle__track{border-color:var(--fg1)}.ix-slide-toggle .ix-slide-toggle__thumb{border-width:2px}.ix-slide-toggle--disabled .ix-slide-toggle__track,.ix-slide-toggle--disabled .ix-slide-toggle__thumb{border-color:var(--alt-fg1)}}@media (prefers-reduced-motion: reduce){.ix-slide-toggle .ix-slide-toggle__track,.ix-slide-toggle .ix-slide-toggle__track-fill,.ix-slide-toggle .ix-slide-toggle__thumb-container,.ix-slide-toggle .ix-slide-toggle__thumb,.ix-slide-toggle .ix-slide-toggle__ripple{transition:none}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: FormsModule }, { kind: "ngmodule", type: A11yModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSlideToggleComponent, decorators: [{
             type: Component,
@@ -1157,32 +1142,10 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                             useExisting: forwardRef(() => IxSlideToggleComponent),
                             multi: true
                         }
-                    ], template: "<div [ngClass]=\"classes\" [attr.data-testid]=\"testId\">\n  <label [for]=\"id\" class=\"ix-slide-toggle__label\">\n    \n    <!-- Label before toggle -->\n    @if (label && labelPosition === 'before') {\n      <span\n        class=\"ix-slide-toggle__label-text ix-slide-toggle__label-text--before\"\n        (click)=\"onLabelClick()\">\n        {{ label }}\n      </span>\n    }\n\n    <!-- Toggle track and thumb -->\n    <div class=\"ix-slide-toggle__bar\">\n      <input\n        #toggleEl\n        type=\"checkbox\"\n        [id]=\"id\"\n        [checked]=\"checked\"\n        [disabled]=\"disabled\"\n        [required]=\"required\"\n        [attr.aria-label]=\"effectiveAriaLabel\"\n        [attr.aria-labelledby]=\"ariaLabelledby\"\n        class=\"ix-slide-toggle__input\"\n        (change)=\"onToggleChange($event)\"\n      />\n      \n      <div class=\"ix-slide-toggle__track\">\n        <div class=\"ix-slide-toggle__track-fill\"></div>\n      </div>\n      \n      <div class=\"ix-slide-toggle__thumb-container\">\n        <div class=\"ix-slide-toggle__thumb\">\n          <div class=\"ix-slide-toggle__ripple\"></div>\n          <!-- State icon -->\n          <div class=\"ix-slide-toggle__icon\">\n            @if (checked) {\n              <svg\n                class=\"ix-slide-toggle__check-icon\"\n                viewBox=\"0 0 24 24\"\n                width=\"16\"\n                height=\"16\">\n                <path d=\"M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z\" fill=\"currentColor\"/>\n              </svg>\n            }\n            @if (!checked) {\n              <svg\n                class=\"ix-slide-toggle__minus-icon\"\n                viewBox=\"0 0 24 24\"\n                width=\"16\"\n                height=\"16\">\n                <path d=\"M19 13H5v-2h14v2z\" fill=\"currentColor\"/>\n              </svg>\n            }\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- Label after toggle -->\n    @if (label && labelPosition === 'after') {\n      <span\n        class=\"ix-slide-toggle__label-text ix-slide-toggle__label-text--after\"\n        (click)=\"onLabelClick()\">\n        {{ label }}\n      </span>\n    }\n\n  </label>\n</div>", styles: [".ix-slide-toggle{display:inline-flex;align-items:center;cursor:pointer;-webkit-user-select:none;user-select:none;line-height:1;font-family:inherit}.ix-slide-toggle__label{display:flex;align-items:center;cursor:inherit}.ix-slide-toggle__label-text{font-size:14px;line-height:1.4;color:var(--fg1);transition:color .2s ease}.ix-slide-toggle__label-text--before{margin-right:8px}.ix-slide-toggle__label-text--after{margin-left:8px}.ix-slide-toggle__input{position:absolute;opacity:0;width:0;height:0;margin:0;pointer-events:none}.ix-slide-toggle__input:focus+.ix-slide-toggle__track{box-shadow:0 0 0 2px rgba(var(--primary-rgb, 0, 123, 255),.2)}.ix-slide-toggle__bar{position:relative;display:flex;align-items:center;flex-shrink:0}.ix-slide-toggle__track{position:relative;width:52px;height:32px;border-radius:16px;background-color:var(--lines);border:1px solid transparent;transition:background-color .2s ease,border-color .2s ease;overflow:hidden}.ix-slide-toggle__track-fill{position:absolute;inset:0;border-radius:inherit;background-color:var(--primary, #007cba);opacity:0;transform:scaleX(0);transform-origin:left center;transition:opacity .2s ease,transform .2s ease}.ix-slide-toggle__thumb-container{position:absolute;top:50%;left:4px;transform:translateY(-50%);width:24px;height:24px;transition:transform .2s ease;z-index:1}.ix-slide-toggle__thumb{position:relative;width:24px;height:24px;border-radius:50%;background-color:var(--bg2);border:1px solid var(--lines);box-shadow:0 2px 4px #0003;transition:background-color .2s ease,border-color .2s ease,box-shadow .2s ease;display:flex;align-items:center;justify-content:center}.ix-slide-toggle__ripple{position:absolute;width:40px;height:40px;border-radius:50%;background-color:transparent;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0;transition:opacity .2s ease,background-color .2s ease}.ix-slide-toggle__icon{position:relative;display:flex;align-items:center;justify-content:center;z-index:2;pointer-events:none}.ix-slide-toggle__check-icon,.ix-slide-toggle__minus-icon{transition:opacity .2s ease,transform .2s ease;color:var(--fg2)}.ix-slide-toggle:hover:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.08}.ix-slide-toggle--checked .ix-slide-toggle__track{background-color:var(--primary);opacity:.5}.ix-slide-toggle--checked .ix-slide-toggle__track-fill{opacity:1;transform:scaleX(1)}.ix-slide-toggle--checked .ix-slide-toggle__thumb-container{transform:translateY(-50%) translate(24px)}.ix-slide-toggle--checked .ix-slide-toggle__thumb{background-color:var(--bg2);border-color:var(--primary)}.ix-slide-toggle--checked .ix-slide-toggle__check-icon{color:var(--primary)}.ix-slide-toggle--checked:hover:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.12}.ix-slide-toggle--disabled{cursor:not-allowed;opacity:.6}.ix-slide-toggle--disabled .ix-slide-toggle__label-text{color:var(--alt-fg1)}.ix-slide-toggle--disabled .ix-slide-toggle__track{background-color:var(--alt-bg1)}.ix-slide-toggle--disabled .ix-slide-toggle__thumb{background-color:var(--alt-bg2);border-color:var(--alt-bg1);box-shadow:none}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__track,.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__track-fill{background-color:var(--alt-bg1)}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__thumb{background-color:var(--alt-bg2);border-color:var(--alt-bg1)}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__check-icon{color:var(--alt-fg1)}.ix-slide-toggle--disabled:hover .ix-slide-toggle__ripple{opacity:0}.ix-slide-toggle--accent{--primary: var(--accent)}.ix-slide-toggle--warn{--primary: var(--red)}.ix-slide-toggle--label-before .ix-slide-toggle__label{flex-direction:row-reverse}.ix-slide-toggle--label-after .ix-slide-toggle__label{flex-direction:row}.ix-slide-toggle .ix-slide-toggle__input:focus-visible+.ix-slide-toggle__track{outline:2px solid var(--primary);outline-offset:2px}.ix-slide-toggle:active:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.16;transform:translate(-50%,-50%) scale(1.1)}@media (prefers-contrast: high){.ix-slide-toggle .ix-slide-toggle__track{border-color:var(--fg1)}.ix-slide-toggle .ix-slide-toggle__thumb{border-width:2px}.ix-slide-toggle--disabled .ix-slide-toggle__track,.ix-slide-toggle--disabled .ix-slide-toggle__thumb{border-color:var(--alt-fg1)}}@media (prefers-reduced-motion: reduce){.ix-slide-toggle .ix-slide-toggle__track,.ix-slide-toggle .ix-slide-toggle__track-fill,.ix-slide-toggle .ix-slide-toggle__thumb-container,.ix-slide-toggle .ix-slide-toggle__thumb,.ix-slide-toggle .ix-slide-toggle__ripple{transition:none}}\n"] }]
+                    ], template: "<div [ngClass]=\"classes()\" [attr.data-testid]=\"testId()\">\n  <label [for]=\"id\" class=\"ix-slide-toggle__label\">\n\n    <!-- Label before toggle -->\n    @if (label() && labelPosition() === 'before') {\n      <span\n        class=\"ix-slide-toggle__label-text ix-slide-toggle__label-text--before\"\n        (click)=\"onLabelClick()\">\n        {{ label() }}\n      </span>\n    }\n\n    <!-- Toggle track and thumb -->\n    <div class=\"ix-slide-toggle__bar\">\n      <input\n        #toggleEl\n        type=\"checkbox\"\n        [id]=\"id\"\n        [checked]=\"effectiveChecked()\"\n        [disabled]=\"isDisabled()\"\n        [required]=\"required()\"\n        [attr.aria-label]=\"effectiveAriaLabel()\"\n        [attr.aria-labelledby]=\"ariaLabelledby()\"\n        class=\"ix-slide-toggle__input\"\n        (change)=\"onToggleChange($event)\"\n      />\n\n      <div class=\"ix-slide-toggle__track\">\n        <div class=\"ix-slide-toggle__track-fill\"></div>\n      </div>\n\n      <div class=\"ix-slide-toggle__thumb-container\">\n        <div class=\"ix-slide-toggle__thumb\">\n          <div class=\"ix-slide-toggle__ripple\"></div>\n          <!-- State icon -->\n          <div class=\"ix-slide-toggle__icon\">\n            @if (effectiveChecked()) {\n              <svg\n                class=\"ix-slide-toggle__check-icon\"\n                viewBox=\"0 0 24 24\"\n                width=\"16\"\n                height=\"16\">\n                <path d=\"M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z\" fill=\"currentColor\"/>\n              </svg>\n            }\n            @if (!effectiveChecked()) {\n              <svg\n                class=\"ix-slide-toggle__minus-icon\"\n                viewBox=\"0 0 24 24\"\n                width=\"16\"\n                height=\"16\">\n                <path d=\"M19 13H5v-2h14v2z\" fill=\"currentColor\"/>\n              </svg>\n            }\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- Label after toggle -->\n    @if (label() && labelPosition() === 'after') {\n      <span\n        class=\"ix-slide-toggle__label-text ix-slide-toggle__label-text--after\"\n        (click)=\"onLabelClick()\">\n        {{ label() }}\n      </span>\n    }\n\n  </label>\n</div>", styles: [".ix-slide-toggle{display:inline-flex;align-items:center;cursor:pointer;-webkit-user-select:none;user-select:none;line-height:1;font-family:inherit}.ix-slide-toggle__label{display:flex;align-items:center;cursor:inherit}.ix-slide-toggle__label-text{font-size:14px;line-height:1.4;color:var(--fg1);transition:color .2s ease}.ix-slide-toggle__label-text--before{margin-right:8px}.ix-slide-toggle__label-text--after{margin-left:8px}.ix-slide-toggle__input{position:absolute;opacity:0;width:0;height:0;margin:0;pointer-events:none}.ix-slide-toggle__input:focus+.ix-slide-toggle__track{box-shadow:0 0 0 2px rgba(var(--primary-rgb, 0, 123, 255),.2)}.ix-slide-toggle__bar{position:relative;display:flex;align-items:center;flex-shrink:0}.ix-slide-toggle__track{position:relative;width:52px;height:32px;border-radius:16px;background-color:var(--lines);border:1px solid transparent;transition:background-color .2s ease,border-color .2s ease;overflow:hidden}.ix-slide-toggle__track-fill{position:absolute;inset:0;border-radius:inherit;background-color:var(--primary, #007cba);opacity:0;transform:scaleX(0);transform-origin:left center;transition:opacity .2s ease,transform .2s ease}.ix-slide-toggle__thumb-container{position:absolute;top:50%;left:4px;transform:translateY(-50%);width:24px;height:24px;transition:transform .2s ease;z-index:1}.ix-slide-toggle__thumb{position:relative;width:24px;height:24px;border-radius:50%;background-color:var(--bg2);border:1px solid var(--lines);box-shadow:0 2px 4px #0003;transition:background-color .2s ease,border-color .2s ease,box-shadow .2s ease;display:flex;align-items:center;justify-content:center}.ix-slide-toggle__ripple{position:absolute;width:40px;height:40px;border-radius:50%;background-color:transparent;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0;transition:opacity .2s ease,background-color .2s ease}.ix-slide-toggle__icon{position:relative;display:flex;align-items:center;justify-content:center;z-index:2;pointer-events:none}.ix-slide-toggle__check-icon,.ix-slide-toggle__minus-icon{transition:opacity .2s ease,transform .2s ease;color:var(--fg2)}.ix-slide-toggle:hover:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.08}.ix-slide-toggle--checked .ix-slide-toggle__track{background-color:var(--primary);opacity:.5}.ix-slide-toggle--checked .ix-slide-toggle__track-fill{opacity:1;transform:scaleX(1)}.ix-slide-toggle--checked .ix-slide-toggle__thumb-container{transform:translateY(-50%) translate(24px)}.ix-slide-toggle--checked .ix-slide-toggle__thumb{background-color:var(--bg2);border-color:var(--primary)}.ix-slide-toggle--checked .ix-slide-toggle__check-icon{color:var(--primary)}.ix-slide-toggle--checked:hover:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.12}.ix-slide-toggle--disabled{cursor:not-allowed;opacity:.6}.ix-slide-toggle--disabled .ix-slide-toggle__label-text{color:var(--alt-fg1)}.ix-slide-toggle--disabled .ix-slide-toggle__track{background-color:var(--alt-bg1)}.ix-slide-toggle--disabled .ix-slide-toggle__thumb{background-color:var(--alt-bg2);border-color:var(--alt-bg1);box-shadow:none}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__track,.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__track-fill{background-color:var(--alt-bg1)}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__thumb{background-color:var(--alt-bg2);border-color:var(--alt-bg1)}.ix-slide-toggle--disabled.ix-slide-toggle--checked .ix-slide-toggle__check-icon{color:var(--alt-fg1)}.ix-slide-toggle--disabled:hover .ix-slide-toggle__ripple{opacity:0}.ix-slide-toggle--accent{--primary: var(--accent)}.ix-slide-toggle--warn{--primary: var(--red)}.ix-slide-toggle .ix-slide-toggle__input:focus-visible+.ix-slide-toggle__track{outline:2px solid var(--primary);outline-offset:2px}.ix-slide-toggle:active:not(.ix-slide-toggle--disabled) .ix-slide-toggle__ripple{background-color:var(--primary);opacity:.16;transform:translate(-50%,-50%) scale(1.1)}@media (prefers-contrast: high){.ix-slide-toggle .ix-slide-toggle__track{border-color:var(--fg1)}.ix-slide-toggle .ix-slide-toggle__thumb{border-width:2px}.ix-slide-toggle--disabled .ix-slide-toggle__track,.ix-slide-toggle--disabled .ix-slide-toggle__thumb{border-color:var(--alt-fg1)}}@media (prefers-reduced-motion: reduce){.ix-slide-toggle .ix-slide-toggle__track,.ix-slide-toggle .ix-slide-toggle__track-fill,.ix-slide-toggle .ix-slide-toggle__thumb-container,.ix-slide-toggle .ix-slide-toggle__thumb,.ix-slide-toggle .ix-slide-toggle__ripple{transition:none}}\n"] }]
         }], propDecorators: { toggleEl: [{
                 type: ViewChild,
                 args: ['toggleEl']
-            }], labelPosition: [{
-                type: Input
-            }], label: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], required: [{
-                type: Input
-            }], color: [{
-                type: Input
-            }], testId: [{
-                type: Input
-            }], ariaLabel: [{
-                type: Input
-            }], ariaLabelledby: [{
-                type: Input
-            }], checked: [{
-                type: Input
-            }], change: [{
-                type: Output
-            }], toggleChange: [{
-                type: Output
             }] } });
 
 class IxMenuComponent {
@@ -1612,16 +1575,21 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
 
 class IxCheckboxComponent {
     checkboxEl;
-    label = 'Checkbox';
-    hideLabel = false;
-    disabled = false;
-    required = false;
-    indeterminate = false;
-    testId;
-    error = null;
-    checked = false;
-    change = new EventEmitter();
+    label = input('Checkbox', ...(ngDevMode ? [{ debugName: "label" }] : []));
+    hideLabel = input(false, ...(ngDevMode ? [{ debugName: "hideLabel" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    required = input(false, ...(ngDevMode ? [{ debugName: "required" }] : []));
+    indeterminate = input(false, ...(ngDevMode ? [{ debugName: "indeterminate" }] : []));
+    testId = input(undefined, ...(ngDevMode ? [{ debugName: "testId" }] : []));
+    error = input(null, ...(ngDevMode ? [{ debugName: "error" }] : []));
+    checked = input(false, ...(ngDevMode ? [{ debugName: "checked" }] : []));
+    change = output();
     id = `ix-checkbox-${Math.random().toString(36).substr(2, 9)}`;
+    // Internal state for CVA
+    internalChecked = signal(false, ...(ngDevMode ? [{ debugName: "internalChecked" }] : []));
+    // CVA disabled state management
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
     focusMonitor = inject(FocusMonitor);
     onChange = (_) => { };
     onTouched = () => { };
@@ -1638,9 +1606,11 @@ class IxCheckboxComponent {
             this.focusMonitor.stopMonitoring(this.checkboxEl);
         }
     }
+    // Computed for effective checked state (input or CVA-controlled)
+    effectiveChecked = computed(() => this.internalChecked() || this.checked(), ...(ngDevMode ? [{ debugName: "effectiveChecked" }] : []));
     // ControlValueAccessor implementation
     writeValue(value) {
-        this.checked = value !== null && value !== undefined ? value : false;
+        this.internalChecked.set(value !== null && value !== undefined ? value : false);
     }
     registerOnChange(fn) {
         this.onChange = fn;
@@ -1649,36 +1619,37 @@ class IxCheckboxComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     onCheckboxChange(event) {
         const target = event.target;
-        this.checked = target.checked;
-        this.onChange(this.checked);
+        const checked = target.checked;
+        this.internalChecked.set(checked);
+        this.onChange(checked);
         this.onTouched();
-        this.change.emit(this.checked);
+        this.change.emit(checked);
     }
-    get classes() {
+    classes = computed(() => {
         const classes = ['ix-checkbox'];
-        if (this.disabled) {
+        if (this.isDisabled()) {
             classes.push('ix-checkbox--disabled');
         }
-        if (this.error) {
+        if (this.error()) {
             classes.push('ix-checkbox--error');
         }
-        if (this.indeterminate) {
+        if (this.indeterminate()) {
             classes.push('ix-checkbox--indeterminate');
         }
         return classes;
-    }
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxCheckboxComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxCheckboxComponent, isStandalone: true, selector: "ix-checkbox", inputs: { label: "label", hideLabel: "hideLabel", disabled: "disabled", required: "required", indeterminate: "indeterminate", testId: "testId", error: "error", checked: "checked" }, outputs: { change: "change" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxCheckboxComponent, isStandalone: true, selector: "ix-checkbox", inputs: { label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, hideLabel: { classPropertyName: "hideLabel", publicName: "hideLabel", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, required: { classPropertyName: "required", publicName: "required", isSignal: true, isRequired: false, transformFunction: null }, indeterminate: { classPropertyName: "indeterminate", publicName: "indeterminate", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null }, error: { classPropertyName: "error", publicName: "error", isSignal: true, isRequired: false, transformFunction: null }, checked: { classPropertyName: "checked", publicName: "checked", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { change: "change" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxCheckboxComponent),
                 multi: true
             }
-        ], viewQueries: [{ propertyName: "checkboxEl", first: true, predicate: ["checkboxEl"], descendants: true }], ngImport: i0, template: "<div [ngClass]=\"classes\">\n  <label [for]=\"id\" class=\"ix-checkbox__label\">\n    <input\n      #checkboxEl\n      type=\"checkbox\"\n      [id]=\"id\"\n      [checked]=\"checked\"\n      [disabled]=\"disabled\"\n      [required]=\"required\"\n      [indeterminate]=\"indeterminate\"\n      [attr.data-testid]=\"testId\"\n      [attr.aria-describedby]=\"error ? id + '-error' : null\"\n      [attr.aria-invalid]=\"error ? 'true' : null\"\n      class=\"ix-checkbox__input\"\n      (change)=\"onCheckboxChange($event)\"\n    />\n    <span class=\"ix-checkbox__checkmark\"></span>\n    @if (!hideLabel) {\n      <span class=\"ix-checkbox__text\">{{ label }}</span>\n    }\n  </label>\n  \n  @if (error) {\n    <div \n      [id]=\"id + '-error'\" \n      class=\"ix-checkbox__error\"\n      role=\"alert\"\n      aria-live=\"polite\"\n    >\n      {{ error }}\n    </div>\n  }\n</div>", styles: [".ix-checkbox{display:flex;flex-direction:column;gap:4px}.ix-checkbox__label{display:flex;align-items:center;gap:8px;cursor:pointer;-webkit-user-select:none;user-select:none;font-family:var(--font-family-body, \"Inter\", sans-serif);font-size:14px;line-height:1.5;color:var(--fg1, #333)}.ix-checkbox__label:hover:not(.ix-checkbox--disabled) .ix-checkbox__checkmark{border-color:var(--primary, #0095d5)}.ix-checkbox__input{position:absolute;opacity:0;cursor:pointer;height:0;width:0}.ix-checkbox__input:checked~.ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:checked~.ix-checkbox__checkmark:after{display:block}.ix-checkbox__input:indeterminate~.ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:indeterminate~.ix-checkbox__checkmark:after{display:block;content:\"\";left:4px;top:8px;width:8px;height:2px;background:var(--primary-txt, #fff);border-radius:1px;transform:none}.ix-checkbox__input:focus~.ix-checkbox__checkmark{outline:2px solid var(--primary, #0095d5);outline-offset:2px}.ix-checkbox__input:disabled~.ix-checkbox__checkmark{background-color:var(--bg2, #f5f5f5);border-color:var(--lines, #e0e0e0);cursor:not-allowed}.ix-checkbox__input:disabled:checked~.ix-checkbox__checkmark{background-color:var(--lines, #e0e0e0);border-color:var(--lines, #e0e0e0)}.ix-checkbox__checkmark{position:relative;height:16px;width:16px;background-color:var(--bg1, #fff);border:1px solid var(--lines, #ccc);border-radius:2px;transition:all .2s ease;flex-shrink:0}.ix-checkbox__checkmark:after{content:\"\";position:absolute;display:none;left:5px;top:2px;width:4px;height:8px;border:solid var(--primary-txt, #fff);border-width:0 2px 2px 0;transform:rotate(45deg)}.ix-checkbox__text{flex:1;min-width:0}.ix-checkbox__error{color:var(--red, #dc2626);font-size:12px;font-family:var(--font-family-body, \"Inter\", sans-serif);margin-top:4px;display:flex;align-items:center;gap:4px}.ix-checkbox--disabled .ix-checkbox__label{cursor:not-allowed;color:var(--fg2, #666);opacity:.6}.ix-checkbox--disabled .ix-checkbox__text{color:var(--fg2, #666)}.ix-checkbox--error .ix-checkbox__checkmark{border-color:var(--red, #dc2626)}.ix-checkbox--indeterminate .ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:focus-visible~.ix-checkbox__checkmark{outline:2px solid var(--primary, #0095d5);outline-offset:2px}@media (prefers-contrast: high){.ix-checkbox__checkmark{border-width:2px}}@media (prefers-reduced-motion: reduce){.ix-checkbox__checkmark{transition:none}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: FormsModule }, { kind: "ngmodule", type: A11yModule }] });
+        ], viewQueries: [{ propertyName: "checkboxEl", first: true, predicate: ["checkboxEl"], descendants: true }], ngImport: i0, template: "<div [ngClass]=\"classes()\">\n  <label [for]=\"id\" class=\"ix-checkbox__label\">\n    <input\n      #checkboxEl\n      type=\"checkbox\"\n      [id]=\"id\"\n      [checked]=\"effectiveChecked()\"\n      [disabled]=\"isDisabled()\"\n      [required]=\"required()\"\n      [indeterminate]=\"indeterminate()\"\n      [attr.data-testid]=\"testId()\"\n      [attr.aria-describedby]=\"error() ? id + '-error' : null\"\n      [attr.aria-invalid]=\"error() ? 'true' : null\"\n      class=\"ix-checkbox__input\"\n      (change)=\"onCheckboxChange($event)\"\n    />\n    <span class=\"ix-checkbox__checkmark\"></span>\n    @if (!hideLabel()) {\n      <span class=\"ix-checkbox__text\">{{ label() }}</span>\n    }\n  </label>\n\n  @if (error()) {\n    <div\n      [id]=\"id + '-error'\"\n      class=\"ix-checkbox__error\"\n      role=\"alert\"\n      aria-live=\"polite\"\n    >\n      {{ error() }}\n    </div>\n  }\n</div>", styles: [".ix-checkbox{display:flex;flex-direction:column;gap:4px}.ix-checkbox__label{display:flex;align-items:center;gap:8px;cursor:pointer;-webkit-user-select:none;user-select:none;font-family:var(--font-family-body, \"Inter\", sans-serif);font-size:14px;line-height:1.5;color:var(--fg1, #333)}.ix-checkbox__label:hover:not(.ix-checkbox--disabled) .ix-checkbox__checkmark{border-color:var(--primary, #0095d5)}.ix-checkbox__input{position:absolute;opacity:0;cursor:pointer;height:0;width:0}.ix-checkbox__input:checked~.ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:checked~.ix-checkbox__checkmark:after{display:block}.ix-checkbox__input:indeterminate~.ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:indeterminate~.ix-checkbox__checkmark:after{display:block;content:\"\";left:4px;top:8px;width:8px;height:2px;background:var(--primary-txt, #fff);border-radius:1px;transform:none}.ix-checkbox__input:focus~.ix-checkbox__checkmark{outline:2px solid var(--primary, #0095d5);outline-offset:2px}.ix-checkbox__input:disabled~.ix-checkbox__checkmark{background-color:var(--bg2, #f5f5f5);border-color:var(--lines, #e0e0e0);cursor:not-allowed}.ix-checkbox__input:disabled:checked~.ix-checkbox__checkmark{background-color:var(--lines, #e0e0e0);border-color:var(--lines, #e0e0e0)}.ix-checkbox__checkmark{position:relative;height:16px;width:16px;background-color:var(--bg1, #fff);border:1px solid var(--lines, #ccc);border-radius:2px;transition:all .2s ease;flex-shrink:0}.ix-checkbox__checkmark:after{content:\"\";position:absolute;display:none;left:5px;top:2px;width:4px;height:8px;border:solid var(--primary-txt, #fff);border-width:0 2px 2px 0;transform:rotate(45deg)}.ix-checkbox__text{flex:1;min-width:0}.ix-checkbox__error{color:var(--red, #dc2626);font-size:12px;font-family:var(--font-family-body, \"Inter\", sans-serif);margin-top:4px;display:flex;align-items:center;gap:4px}.ix-checkbox--disabled .ix-checkbox__label{cursor:not-allowed;color:var(--fg2, #666);opacity:.6}.ix-checkbox--disabled .ix-checkbox__text{color:var(--fg2, #666)}.ix-checkbox--error .ix-checkbox__checkmark{border-color:var(--red, #dc2626)}.ix-checkbox--indeterminate .ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:focus-visible~.ix-checkbox__checkmark{outline:2px solid var(--primary, #0095d5);outline-offset:2px}@media (prefers-contrast: high){.ix-checkbox__checkmark{border-width:2px}}@media (prefers-reduced-motion: reduce){.ix-checkbox__checkmark{transition:none}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: FormsModule }, { kind: "ngmodule", type: A11yModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxCheckboxComponent, decorators: [{
             type: Component,
@@ -1688,42 +1659,27 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                             useExisting: forwardRef(() => IxCheckboxComponent),
                             multi: true
                         }
-                    ], template: "<div [ngClass]=\"classes\">\n  <label [for]=\"id\" class=\"ix-checkbox__label\">\n    <input\n      #checkboxEl\n      type=\"checkbox\"\n      [id]=\"id\"\n      [checked]=\"checked\"\n      [disabled]=\"disabled\"\n      [required]=\"required\"\n      [indeterminate]=\"indeterminate\"\n      [attr.data-testid]=\"testId\"\n      [attr.aria-describedby]=\"error ? id + '-error' : null\"\n      [attr.aria-invalid]=\"error ? 'true' : null\"\n      class=\"ix-checkbox__input\"\n      (change)=\"onCheckboxChange($event)\"\n    />\n    <span class=\"ix-checkbox__checkmark\"></span>\n    @if (!hideLabel) {\n      <span class=\"ix-checkbox__text\">{{ label }}</span>\n    }\n  </label>\n  \n  @if (error) {\n    <div \n      [id]=\"id + '-error'\" \n      class=\"ix-checkbox__error\"\n      role=\"alert\"\n      aria-live=\"polite\"\n    >\n      {{ error }}\n    </div>\n  }\n</div>", styles: [".ix-checkbox{display:flex;flex-direction:column;gap:4px}.ix-checkbox__label{display:flex;align-items:center;gap:8px;cursor:pointer;-webkit-user-select:none;user-select:none;font-family:var(--font-family-body, \"Inter\", sans-serif);font-size:14px;line-height:1.5;color:var(--fg1, #333)}.ix-checkbox__label:hover:not(.ix-checkbox--disabled) .ix-checkbox__checkmark{border-color:var(--primary, #0095d5)}.ix-checkbox__input{position:absolute;opacity:0;cursor:pointer;height:0;width:0}.ix-checkbox__input:checked~.ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:checked~.ix-checkbox__checkmark:after{display:block}.ix-checkbox__input:indeterminate~.ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:indeterminate~.ix-checkbox__checkmark:after{display:block;content:\"\";left:4px;top:8px;width:8px;height:2px;background:var(--primary-txt, #fff);border-radius:1px;transform:none}.ix-checkbox__input:focus~.ix-checkbox__checkmark{outline:2px solid var(--primary, #0095d5);outline-offset:2px}.ix-checkbox__input:disabled~.ix-checkbox__checkmark{background-color:var(--bg2, #f5f5f5);border-color:var(--lines, #e0e0e0);cursor:not-allowed}.ix-checkbox__input:disabled:checked~.ix-checkbox__checkmark{background-color:var(--lines, #e0e0e0);border-color:var(--lines, #e0e0e0)}.ix-checkbox__checkmark{position:relative;height:16px;width:16px;background-color:var(--bg1, #fff);border:1px solid var(--lines, #ccc);border-radius:2px;transition:all .2s ease;flex-shrink:0}.ix-checkbox__checkmark:after{content:\"\";position:absolute;display:none;left:5px;top:2px;width:4px;height:8px;border:solid var(--primary-txt, #fff);border-width:0 2px 2px 0;transform:rotate(45deg)}.ix-checkbox__text{flex:1;min-width:0}.ix-checkbox__error{color:var(--red, #dc2626);font-size:12px;font-family:var(--font-family-body, \"Inter\", sans-serif);margin-top:4px;display:flex;align-items:center;gap:4px}.ix-checkbox--disabled .ix-checkbox__label{cursor:not-allowed;color:var(--fg2, #666);opacity:.6}.ix-checkbox--disabled .ix-checkbox__text{color:var(--fg2, #666)}.ix-checkbox--error .ix-checkbox__checkmark{border-color:var(--red, #dc2626)}.ix-checkbox--indeterminate .ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:focus-visible~.ix-checkbox__checkmark{outline:2px solid var(--primary, #0095d5);outline-offset:2px}@media (prefers-contrast: high){.ix-checkbox__checkmark{border-width:2px}}@media (prefers-reduced-motion: reduce){.ix-checkbox__checkmark{transition:none}}\n"] }]
+                    ], template: "<div [ngClass]=\"classes()\">\n  <label [for]=\"id\" class=\"ix-checkbox__label\">\n    <input\n      #checkboxEl\n      type=\"checkbox\"\n      [id]=\"id\"\n      [checked]=\"effectiveChecked()\"\n      [disabled]=\"isDisabled()\"\n      [required]=\"required()\"\n      [indeterminate]=\"indeterminate()\"\n      [attr.data-testid]=\"testId()\"\n      [attr.aria-describedby]=\"error() ? id + '-error' : null\"\n      [attr.aria-invalid]=\"error() ? 'true' : null\"\n      class=\"ix-checkbox__input\"\n      (change)=\"onCheckboxChange($event)\"\n    />\n    <span class=\"ix-checkbox__checkmark\"></span>\n    @if (!hideLabel()) {\n      <span class=\"ix-checkbox__text\">{{ label() }}</span>\n    }\n  </label>\n\n  @if (error()) {\n    <div\n      [id]=\"id + '-error'\"\n      class=\"ix-checkbox__error\"\n      role=\"alert\"\n      aria-live=\"polite\"\n    >\n      {{ error() }}\n    </div>\n  }\n</div>", styles: [".ix-checkbox{display:flex;flex-direction:column;gap:4px}.ix-checkbox__label{display:flex;align-items:center;gap:8px;cursor:pointer;-webkit-user-select:none;user-select:none;font-family:var(--font-family-body, \"Inter\", sans-serif);font-size:14px;line-height:1.5;color:var(--fg1, #333)}.ix-checkbox__label:hover:not(.ix-checkbox--disabled) .ix-checkbox__checkmark{border-color:var(--primary, #0095d5)}.ix-checkbox__input{position:absolute;opacity:0;cursor:pointer;height:0;width:0}.ix-checkbox__input:checked~.ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:checked~.ix-checkbox__checkmark:after{display:block}.ix-checkbox__input:indeterminate~.ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:indeterminate~.ix-checkbox__checkmark:after{display:block;content:\"\";left:4px;top:8px;width:8px;height:2px;background:var(--primary-txt, #fff);border-radius:1px;transform:none}.ix-checkbox__input:focus~.ix-checkbox__checkmark{outline:2px solid var(--primary, #0095d5);outline-offset:2px}.ix-checkbox__input:disabled~.ix-checkbox__checkmark{background-color:var(--bg2, #f5f5f5);border-color:var(--lines, #e0e0e0);cursor:not-allowed}.ix-checkbox__input:disabled:checked~.ix-checkbox__checkmark{background-color:var(--lines, #e0e0e0);border-color:var(--lines, #e0e0e0)}.ix-checkbox__checkmark{position:relative;height:16px;width:16px;background-color:var(--bg1, #fff);border:1px solid var(--lines, #ccc);border-radius:2px;transition:all .2s ease;flex-shrink:0}.ix-checkbox__checkmark:after{content:\"\";position:absolute;display:none;left:5px;top:2px;width:4px;height:8px;border:solid var(--primary-txt, #fff);border-width:0 2px 2px 0;transform:rotate(45deg)}.ix-checkbox__text{flex:1;min-width:0}.ix-checkbox__error{color:var(--red, #dc2626);font-size:12px;font-family:var(--font-family-body, \"Inter\", sans-serif);margin-top:4px;display:flex;align-items:center;gap:4px}.ix-checkbox--disabled .ix-checkbox__label{cursor:not-allowed;color:var(--fg2, #666);opacity:.6}.ix-checkbox--disabled .ix-checkbox__text{color:var(--fg2, #666)}.ix-checkbox--error .ix-checkbox__checkmark{border-color:var(--red, #dc2626)}.ix-checkbox--indeterminate .ix-checkbox__checkmark{background-color:var(--primary, #0095d5);border-color:var(--primary, #0095d5)}.ix-checkbox__input:focus-visible~.ix-checkbox__checkmark{outline:2px solid var(--primary, #0095d5);outline-offset:2px}@media (prefers-contrast: high){.ix-checkbox__checkmark{border-width:2px}}@media (prefers-reduced-motion: reduce){.ix-checkbox__checkmark{transition:none}}\n"] }]
         }], propDecorators: { checkboxEl: [{
                 type: ViewChild,
                 args: ['checkboxEl']
-            }], label: [{
-                type: Input
-            }], hideLabel: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], required: [{
-                type: Input
-            }], indeterminate: [{
-                type: Input
-            }], testId: [{
-                type: Input
-            }], error: [{
-                type: Input
-            }], checked: [{
-                type: Input
-            }], change: [{
-                type: Output
             }] } });
 
 class IxRadioComponent {
     radioEl;
-    label = 'Radio';
-    value = '';
-    name;
-    disabled = false;
-    required = false;
-    testId;
-    error = null;
-    change = new EventEmitter();
+    label = input('Radio', ...(ngDevMode ? [{ debugName: "label" }] : []));
+    value = input('', ...(ngDevMode ? [{ debugName: "value" }] : []));
+    name = input(undefined, ...(ngDevMode ? [{ debugName: "name" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    required = input(false, ...(ngDevMode ? [{ debugName: "required" }] : []));
+    testId = input(undefined, ...(ngDevMode ? [{ debugName: "testId" }] : []));
+    error = input(null, ...(ngDevMode ? [{ debugName: "error" }] : []));
+    change = output();
     id = `ix-radio-${Math.random().toString(36).substr(2, 9)}`;
     checked = false;
+    // CVA disabled state management
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
     focusMonitor = inject(FocusMonitor);
     onChange = (_) => { };
     onTouched = () => { };
@@ -1742,7 +1698,7 @@ class IxRadioComponent {
     }
     // ControlValueAccessor implementation
     writeValue(value) {
-        this.checked = value !== null && value !== undefined && value === this.value;
+        this.checked = value !== null && value !== undefined && value === this.value();
     }
     registerOnChange(fn) {
         this.onChange = fn;
@@ -1751,35 +1707,35 @@ class IxRadioComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     onRadioChange(event) {
         const target = event.target;
         this.checked = target.checked;
         if (target.checked) {
-            this.onChange(this.value);
+            this.onChange(this.value());
             this.onTouched();
-            this.change.emit(this.value);
+            this.change.emit(this.value());
         }
     }
-    get classes() {
+    classes = computed(() => {
         const classes = ['ix-radio'];
-        if (this.disabled) {
+        if (this.isDisabled()) {
             classes.push('ix-radio--disabled');
         }
-        if (this.error) {
+        if (this.error()) {
             classes.push('ix-radio--error');
         }
         return classes;
-    }
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxRadioComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxRadioComponent, isStandalone: true, selector: "ix-radio", inputs: { label: "label", value: "value", name: "name", disabled: "disabled", required: "required", testId: "testId", error: "error" }, outputs: { change: "change" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxRadioComponent, isStandalone: true, selector: "ix-radio", inputs: { label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, value: { classPropertyName: "value", publicName: "value", isSignal: true, isRequired: false, transformFunction: null }, name: { classPropertyName: "name", publicName: "name", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, required: { classPropertyName: "required", publicName: "required", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null }, error: { classPropertyName: "error", publicName: "error", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { change: "change" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxRadioComponent),
                 multi: true
             }
-        ], viewQueries: [{ propertyName: "radioEl", first: true, predicate: ["radioEl"], descendants: true }], ngImport: i0, template: "<div [ngClass]=\"classes\">\n  <label [for]=\"id\" class=\"ix-radio__label\">\n    <input\n      #radioEl\n      type=\"radio\"\n      [id]=\"id\"\n      [name]=\"name\"\n      [value]=\"value\"\n      [checked]=\"checked\"\n      [disabled]=\"disabled\"\n      [required]=\"required\"\n      [attr.data-testid]=\"testId\"\n      [attr.aria-describedby]=\"error ? id + '-error' : null\"\n      [attr.aria-invalid]=\"error ? 'true' : null\"\n      class=\"ix-radio__input\"\n      (change)=\"onRadioChange($event)\"\n    />\n    <span class=\"ix-radio__checkmark\"></span>\n    <span class=\"ix-radio__text\">{{ label }}</span>\n  </label>\n  \n  @if (error) {\n    <div \n      [id]=\"id + '-error'\" \n      class=\"ix-radio__error\"\n      role=\"alert\"\n      aria-live=\"polite\"\n    >\n      {{ error }}\n    </div>\n  }\n</div>", styles: [".ix-radio{display:inline-block;margin-bottom:.5rem}.ix-radio__label{display:flex;align-items:center;cursor:pointer;-webkit-user-select:none;user-select:none;gap:.5rem}.ix-radio__label:hover .ix-radio__checkmark{border-color:var(--primary, #007cba)}.ix-radio__input{position:absolute;opacity:0;cursor:pointer;height:0;width:0}.ix-radio__input:focus+.ix-radio__checkmark{outline:2px solid var(--primary, #007cba);outline-offset:2px}.ix-radio__input:checked+.ix-radio__checkmark{border-color:var(--primary, #007cba);background-color:var(--primary, #007cba)}.ix-radio__input:checked+.ix-radio__checkmark:after{display:block}.ix-radio__input:disabled+.ix-radio__checkmark{border-color:var(--lines, #e5e7eb);background-color:var(--alt-bg1, #f8f9fa);cursor:not-allowed}.ix-radio__checkmark{position:relative;height:18px;width:18px;border:2px solid var(--lines, #e5e7eb);border-radius:50%;background-color:transparent;transition:all .2s ease;flex-shrink:0}.ix-radio__checkmark:after{content:\"\";position:absolute;display:none;top:50%;left:50%;width:8px;height:8px;border-radius:50%;background-color:#fff;transform:translate(-50%,-50%)}.ix-radio__text{color:var(--fg1, #000000);font-size:14px;line-height:1.4}.ix-radio__error{margin-top:.25rem;font-size:12px;color:var(--red, #dc3545)}.ix-radio--disabled .ix-radio__label{cursor:not-allowed;opacity:.6}.ix-radio--disabled .ix-radio__text{color:var(--fg2, #6c757d)}.ix-radio--error .ix-radio__checkmark{border-color:var(--red, #dc3545)}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: FormsModule }, { kind: "ngmodule", type: A11yModule }] });
+        ], viewQueries: [{ propertyName: "radioEl", first: true, predicate: ["radioEl"], descendants: true }], ngImport: i0, template: "<div [ngClass]=\"classes()\">\n  <label [for]=\"id\" class=\"ix-radio__label\">\n    <input\n      #radioEl\n      type=\"radio\"\n      [id]=\"id\"\n      [name]=\"name()\"\n      [value]=\"value()\"\n      [checked]=\"checked\"\n      [disabled]=\"isDisabled()\"\n      [required]=\"required()\"\n      [attr.data-testid]=\"testId()\"\n      [attr.aria-describedby]=\"error() ? id + '-error' : null\"\n      [attr.aria-invalid]=\"error() ? 'true' : null\"\n      class=\"ix-radio__input\"\n      (change)=\"onRadioChange($event)\"\n    />\n    <span class=\"ix-radio__checkmark\"></span>\n    <span class=\"ix-radio__text\">{{ label() }}</span>\n  </label>\n\n  @if (error()) {\n    <div\n      [id]=\"id + '-error'\"\n      class=\"ix-radio__error\"\n      role=\"alert\"\n      aria-live=\"polite\"\n    >\n      {{ error() }}\n    </div>\n  }\n</div>", styles: [".ix-radio{display:inline-block;margin-bottom:.5rem}.ix-radio__label{display:flex;align-items:center;cursor:pointer;-webkit-user-select:none;user-select:none;gap:.5rem}.ix-radio__label:hover .ix-radio__checkmark{border-color:var(--primary, #007cba)}.ix-radio__input{position:absolute;opacity:0;cursor:pointer;height:0;width:0}.ix-radio__input:focus+.ix-radio__checkmark{outline:2px solid var(--primary, #007cba);outline-offset:2px}.ix-radio__input:checked+.ix-radio__checkmark{border-color:var(--primary, #007cba);background-color:var(--primary, #007cba)}.ix-radio__input:checked+.ix-radio__checkmark:after{display:block}.ix-radio__input:disabled+.ix-radio__checkmark{border-color:var(--lines, #e5e7eb);background-color:var(--alt-bg1, #f8f9fa);cursor:not-allowed}.ix-radio__checkmark{position:relative;height:18px;width:18px;border:2px solid var(--lines, #e5e7eb);border-radius:50%;background-color:transparent;transition:all .2s ease;flex-shrink:0}.ix-radio__checkmark:after{content:\"\";position:absolute;display:none;top:50%;left:50%;width:8px;height:8px;border-radius:50%;background-color:#fff;transform:translate(-50%,-50%)}.ix-radio__text{color:var(--fg1, #000000);font-size:14px;line-height:1.4}.ix-radio__error{margin-top:.25rem;font-size:12px;color:var(--red, #dc3545)}.ix-radio--disabled .ix-radio__label{cursor:not-allowed;opacity:.6}.ix-radio--disabled .ix-radio__text{color:var(--fg2, #6c757d)}.ix-radio--error .ix-radio__checkmark{border-color:var(--red, #dc3545)}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }, { kind: "ngmodule", type: FormsModule }, { kind: "ngmodule", type: A11yModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxRadioComponent, decorators: [{
             type: Component,
@@ -1789,26 +1745,10 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                             useExisting: forwardRef(() => IxRadioComponent),
                             multi: true
                         }
-                    ], template: "<div [ngClass]=\"classes\">\n  <label [for]=\"id\" class=\"ix-radio__label\">\n    <input\n      #radioEl\n      type=\"radio\"\n      [id]=\"id\"\n      [name]=\"name\"\n      [value]=\"value\"\n      [checked]=\"checked\"\n      [disabled]=\"disabled\"\n      [required]=\"required\"\n      [attr.data-testid]=\"testId\"\n      [attr.aria-describedby]=\"error ? id + '-error' : null\"\n      [attr.aria-invalid]=\"error ? 'true' : null\"\n      class=\"ix-radio__input\"\n      (change)=\"onRadioChange($event)\"\n    />\n    <span class=\"ix-radio__checkmark\"></span>\n    <span class=\"ix-radio__text\">{{ label }}</span>\n  </label>\n  \n  @if (error) {\n    <div \n      [id]=\"id + '-error'\" \n      class=\"ix-radio__error\"\n      role=\"alert\"\n      aria-live=\"polite\"\n    >\n      {{ error }}\n    </div>\n  }\n</div>", styles: [".ix-radio{display:inline-block;margin-bottom:.5rem}.ix-radio__label{display:flex;align-items:center;cursor:pointer;-webkit-user-select:none;user-select:none;gap:.5rem}.ix-radio__label:hover .ix-radio__checkmark{border-color:var(--primary, #007cba)}.ix-radio__input{position:absolute;opacity:0;cursor:pointer;height:0;width:0}.ix-radio__input:focus+.ix-radio__checkmark{outline:2px solid var(--primary, #007cba);outline-offset:2px}.ix-radio__input:checked+.ix-radio__checkmark{border-color:var(--primary, #007cba);background-color:var(--primary, #007cba)}.ix-radio__input:checked+.ix-radio__checkmark:after{display:block}.ix-radio__input:disabled+.ix-radio__checkmark{border-color:var(--lines, #e5e7eb);background-color:var(--alt-bg1, #f8f9fa);cursor:not-allowed}.ix-radio__checkmark{position:relative;height:18px;width:18px;border:2px solid var(--lines, #e5e7eb);border-radius:50%;background-color:transparent;transition:all .2s ease;flex-shrink:0}.ix-radio__checkmark:after{content:\"\";position:absolute;display:none;top:50%;left:50%;width:8px;height:8px;border-radius:50%;background-color:#fff;transform:translate(-50%,-50%)}.ix-radio__text{color:var(--fg1, #000000);font-size:14px;line-height:1.4}.ix-radio__error{margin-top:.25rem;font-size:12px;color:var(--red, #dc3545)}.ix-radio--disabled .ix-radio__label{cursor:not-allowed;opacity:.6}.ix-radio--disabled .ix-radio__text{color:var(--fg2, #6c757d)}.ix-radio--error .ix-radio__checkmark{border-color:var(--red, #dc3545)}\n"] }]
+                    ], template: "<div [ngClass]=\"classes()\">\n  <label [for]=\"id\" class=\"ix-radio__label\">\n    <input\n      #radioEl\n      type=\"radio\"\n      [id]=\"id\"\n      [name]=\"name()\"\n      [value]=\"value()\"\n      [checked]=\"checked\"\n      [disabled]=\"isDisabled()\"\n      [required]=\"required()\"\n      [attr.data-testid]=\"testId()\"\n      [attr.aria-describedby]=\"error() ? id + '-error' : null\"\n      [attr.aria-invalid]=\"error() ? 'true' : null\"\n      class=\"ix-radio__input\"\n      (change)=\"onRadioChange($event)\"\n    />\n    <span class=\"ix-radio__checkmark\"></span>\n    <span class=\"ix-radio__text\">{{ label() }}</span>\n  </label>\n\n  @if (error()) {\n    <div\n      [id]=\"id + '-error'\"\n      class=\"ix-radio__error\"\n      role=\"alert\"\n      aria-live=\"polite\"\n    >\n      {{ error() }}\n    </div>\n  }\n</div>", styles: [".ix-radio{display:inline-block;margin-bottom:.5rem}.ix-radio__label{display:flex;align-items:center;cursor:pointer;-webkit-user-select:none;user-select:none;gap:.5rem}.ix-radio__label:hover .ix-radio__checkmark{border-color:var(--primary, #007cba)}.ix-radio__input{position:absolute;opacity:0;cursor:pointer;height:0;width:0}.ix-radio__input:focus+.ix-radio__checkmark{outline:2px solid var(--primary, #007cba);outline-offset:2px}.ix-radio__input:checked+.ix-radio__checkmark{border-color:var(--primary, #007cba);background-color:var(--primary, #007cba)}.ix-radio__input:checked+.ix-radio__checkmark:after{display:block}.ix-radio__input:disabled+.ix-radio__checkmark{border-color:var(--lines, #e5e7eb);background-color:var(--alt-bg1, #f8f9fa);cursor:not-allowed}.ix-radio__checkmark{position:relative;height:18px;width:18px;border:2px solid var(--lines, #e5e7eb);border-radius:50%;background-color:transparent;transition:all .2s ease;flex-shrink:0}.ix-radio__checkmark:after{content:\"\";position:absolute;display:none;top:50%;left:50%;width:8px;height:8px;border-radius:50%;background-color:#fff;transform:translate(-50%,-50%)}.ix-radio__text{color:var(--fg1, #000000);font-size:14px;line-height:1.4}.ix-radio__error{margin-top:.25rem;font-size:12px;color:var(--red, #dc3545)}.ix-radio--disabled .ix-radio__label{cursor:not-allowed;opacity:.6}.ix-radio--disabled .ix-radio__text{color:var(--fg2, #6c757d)}.ix-radio--error .ix-radio__checkmark{border-color:var(--red, #dc3545)}\n"] }]
         }], propDecorators: { radioEl: [{
                 type: ViewChild,
                 args: ['radioEl']
-            }], label: [{
-                type: Input
-            }], value: [{
-                type: Input
-            }], name: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], required: [{
-                type: Input
-            }], testId: [{
-                type: Input
-            }], error: [{
-                type: Input
-            }], change: [{
-                type: Output
             }] } });
 
 class IxTabComponent {
@@ -8058,7 +7998,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * To regenerate this file, run:
  *   npm run generate-icons
  *
- * Generated: 2025-12-29T16:59:56.482Z
+ * Generated: 2025-12-29T17:20:56.032Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 /* eslint-disable */

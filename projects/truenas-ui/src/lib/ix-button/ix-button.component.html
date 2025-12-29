@@ -1,10 +1,10 @@
 <button
   type="button"
   (click)="onClick.emit($event)"
-  [ngClass]="classes"
-  [ngStyle]="{ 'background-color': backgroundColor }"
-  [disabled]="disabled"
+  [ngClass]="classes()"
+  [ngStyle]="{ 'background-color': backgroundColor() }"
+  [disabled]="disabled()"
 >
-  {{ label }}
+  {{ label() }}
 </button>
 

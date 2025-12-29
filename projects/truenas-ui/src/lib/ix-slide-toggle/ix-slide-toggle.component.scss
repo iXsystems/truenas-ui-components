@@ -225,19 +225,6 @@
     --primary: var(--red);
   }
 
-  // Label positioning
-  &--label-before {
-    .ix-slide-toggle__label {
-      flex-direction: row-reverse;
-    }
-  }
-
-  &--label-after {
-    .ix-slide-toggle__label {
-      flex-direction: row;
-    }
-  }
-
   // Focus states
   .ix-slide-toggle__input:focus-visible + .ix-slide-toggle__track {
     outline: 2px solid var(--primary);

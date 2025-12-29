@@ -1,12 +1,12 @@
-<div [ngClass]="classes" [attr.data-testid]="testId">
+<div [ngClass]="classes()" [attr.data-testid]="testId()">
   <label [for]="id" class="ix-slide-toggle__label">
-    
+
     <!-- Label before toggle -->
-    @if (label && labelPosition === 'before') {
+    @if (label() && labelPosition() === 'before') {
       <span
         class="ix-slide-toggle__label-text ix-slide-toggle__label-text--before"
         (click)="onLabelClick()">
-        {{ label }}
+        {{ label() }}
       </span>
     }
 
@@ -16,25 +16,25 @@
         #toggleEl
         type="checkbox"
         [id]="id"
-        [checked]="checked"
-        [disabled]="disabled"
-        [required]="required"
-        [attr.aria-label]="effectiveAriaLabel"
-        [attr.aria-labelledby]="ariaLabelledby"
+        [checked]="effectiveChecked()"
+        [disabled]="isDisabled()"
+        [required]="required()"
+        [attr.aria-label]="effectiveAriaLabel()"
+        [attr.aria-labelledby]="ariaLabelledby()"
         class="ix-slide-toggle__input"
         (change)="onToggleChange($event)"
       />
-      
+
       <div class="ix-slide-toggle__track">
         <div class="ix-slide-toggle__track-fill"></div>
       </div>
-      
+
       <div class="ix-slide-toggle__thumb-container">
         <div class="ix-slide-toggle__thumb">
           <div class="ix-slide-toggle__ripple"></div>
           <!-- State icon -->
           <div class="ix-slide-toggle__icon">
-            @if (checked) {
+            @if (effectiveChecked()) {
               <svg
                 class="ix-slide-toggle__check-icon"
                 viewBox="0 0 24 24"
@@ -43,7 +43,7 @@
                 <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor"/>
               </svg>
             }
-            @if (!checked) {
+            @if (!effectiveChecked()) {
               <svg
                 class="ix-slide-toggle__minus-icon"
                 viewBox="0 0 24 24"
@@ -58,11 +58,11 @@
     </div>
 
     <!-- Label after toggle -->
-    @if (label && labelPosition === 'after') {
+    @if (label() && labelPosition() === 'after') {
       <span
         class="ix-slide-toggle__label-text ix-slide-toggle__label-text--after"
         (click)="onLabelClick()">
-        {{ label }}
+        {{ label() }}
       </span>
     }
 

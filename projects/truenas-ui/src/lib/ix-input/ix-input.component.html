@@ -1,14 +1,14 @@
 <div class="ix-input-container">
   <!-- Regular input field -->
-  @if (!multiline) {
+  @if (!multiline()) {
     <input
       #inputEl
       [id]="id"
       [value]="value"
-      [type]="inputType"
-      [attr.placeholder]="placeholder"
-      [attr.data-testid]="testId"
-      [disabled]="disabled"
+      [type]="inputType()"
+      [attr.placeholder]="placeholder()"
+      [attr.data-testid]="testId()"
+      [disabled]="isDisabled()"
       (input)="onValueChange($event)"
       (blur)="onBlur()"
       class="ix-input"
@@ -16,15 +16,15 @@
   }
 
   <!-- Textarea field -->
-  @if (multiline) {
+  @if (multiline()) {
     <textarea
       #inputEl
       [id]="id"
       [value]="value"
-      [attr.placeholder]="placeholder"
-      [attr.data-testid]="testId"
-      [rows]="rows"
-      [disabled]="disabled"
+      [attr.placeholder]="placeholder()"
+      [attr.data-testid]="testId()"
+      [rows]="rows()"
+      [disabled]="isDisabled()"
       (input)="onValueChange($event)"
       (blur)="onBlur()"
       class="ix-input ix-textarea"

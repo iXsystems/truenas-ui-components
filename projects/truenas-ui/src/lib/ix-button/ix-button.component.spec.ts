@@ -21,81 +21,90 @@ describe('IxButtonComponent', () => {
 
   describe('filled variant', () => {
     it('should apply correct class for filled variant with primary color', () => {
-      component.variant = 'filled';
-      component.color = 'primary';
-      const classes = component.classes;
+      fixture.componentRef.setInput('variant', 'filled');
+      fixture.componentRef.setInput('color', 'primary');
+      fixture.detectChanges();
+      const classes = component.classes();
       expect(classes).toContain('button-primary');
     });
 
     it('should apply correct class for filled variant with warn color', () => {
-      component.variant = 'filled';
-      component.color = 'warn';
-      const classes = component.classes;
+      fixture.componentRef.setInput('variant', 'filled');
+      fixture.componentRef.setInput('color', 'warn');
+      fixture.detectChanges();
+      const classes = component.classes();
       expect(classes).toContain('button-warn');
     });
 
     it('should apply correct class for filled variant with default color', () => {
-      component.variant = 'filled';
-      component.color = 'default';
-      const classes = component.classes;
+      fixture.componentRef.setInput('variant', 'filled');
+      fixture.componentRef.setInput('color', 'default');
+      fixture.detectChanges();
+      const classes = component.classes();
       expect(classes).toContain('button-default');
     });
 
     it('should apply primary class when primary boolean is true', () => {
-      component.variant = 'filled';
-      component.primary = true;
-      const classes = component.classes;
+      fixture.componentRef.setInput('variant', 'filled');
+      fixture.componentRef.setInput('primary', true);
+      fixture.detectChanges();
+      const classes = component.classes();
       expect(classes).toContain('button-primary');
     });
   });
 
   describe('outline variant', () => {
     it('should apply correct class for outline variant with primary color', () => {
-      component.variant = 'outline';
-      component.color = 'primary';
-      const classes = component.classes;
+      fixture.componentRef.setInput('variant', 'outline');
+      fixture.componentRef.setInput('color', 'primary');
+      fixture.detectChanges();
+      const classes = component.classes();
       expect(classes).toContain('button-outline-primary');
     });
 
     it('should apply correct class for outline variant with warn color', () => {
-      component.variant = 'outline';
-      component.color = 'warn';
-      const classes = component.classes;
+      fixture.componentRef.setInput('variant', 'outline');
+      fixture.componentRef.setInput('color', 'warn');
+      fixture.detectChanges();
+      const classes = component.classes();
       expect(classes).toContain('button-outline-warn');
     });
 
     it('should apply correct class for outline variant with default color', () => {
-      component.variant = 'outline';
-      component.color = 'default';
-      const classes = component.classes;
+      fixture.componentRef.setInput('variant', 'outline');
+      fixture.componentRef.setInput('color', 'default');
+      fixture.detectChanges();
+      const classes = component.classes();
       expect(classes).toContain('button-outline-default');
     });
 
     it('should apply outline-primary when primary boolean is true', () => {
-      component.variant = 'outline';
-      component.primary = true;
-      const classes = component.classes;
+      fixture.componentRef.setInput('variant', 'outline');
+      fixture.componentRef.setInput('primary', true);
+      fixture.detectChanges();
+      const classes = component.classes();
       expect(classes).toContain('button-outline-primary');
     });
   });
 
   describe('classes getter', () => {
     it('should always include base storybook-button class', () => {
-      const classes = component.classes;
+      const classes = component.classes();
       expect(classes).toContain('storybook-button');
     });
 
     it('should include size class', () => {
       component.size = 'large';
-      const classes = component.classes;
+      const classes = component.classes();
       expect(classes).toContain('storybook-button--large');
     });
   });
 
   describe('disabled state', () => {
     it('should have disabled property', () => {
-      component.disabled = true;
-      expect(component.disabled).toBe(true);
+      fixture.componentRef.setInput('disabled', true);
+      fixture.detectChanges();
+      expect(component.disabled()).toBe(true);
     });
   });
 

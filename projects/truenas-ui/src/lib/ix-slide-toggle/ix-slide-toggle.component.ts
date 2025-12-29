@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject, Input, Output, EventEmitter, forwardRef } from '@angular/core';
+import { Component, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject, input, output, computed, signal, forwardRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
@@ -22,20 +22,27 @@ export type SlideToggleColor = 'primary' | 'accent' | 'warn';
 export class IxSlideToggleComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
   @ViewChild('toggleEl') toggleEl!: ElementRef<HTMLInputElement>;
 
-  @Input() labelPosition: 'before' | 'after' = 'after';
-  @Input() label?: string;
-  @Input() disabled = false;
-  @Input() required = false;
-  @Input() color: SlideToggleColor = 'primary';
-  @Input() testId?: string;
-  @Input() ariaLabel?: string;
-  @Input() ariaLabelledby?: string;
-  @Input() checked = false;
+  labelPosition = input<'before' | 'after'>('after');
+  label = input<string | undefined>(undefined);
+  disabled = input<boolean>(false);
+  required = input<boolean>(false);
+  color = input<SlideToggleColor>('primary');
+  testId = input<string | undefined>(undefined);
+  ariaLabel = input<string | undefined>(undefined);
+  ariaLabelledby = input<string | undefined>(undefined);
+  checked = input<boolean>(false);
 
-  @Output() change = new EventEmitter<boolean>();
-  @Output() toggleChange = new EventEmitter<boolean>();
+  change = output<boolean>();
+  toggleChange = output<boolean>();
 
   id = `ix-slide-toggle-${Math.random().toString(36).substr(2, 9)}`;
+
+  // Internal state for CVA
+  private internalChecked = signal<boolean>(false);
+
+  // CVA disabled state management
+  private formDisabled = signal<boolean>(false);
+  isDisabled = computed(() => this.disabled() || this.formDisabled());
 
   private focusMonitor = inject(FocusMonitor);
   private onChange = (_: boolean) => {};
@@ -56,9 +63,12 @@ export class IxSlideToggleComponent implements AfterViewInit, OnDestroy, Control
     }
   }
 
+  // Computed for effective checked state (input or CVA-controlled)
+  effectiveChecked = computed(() => this.internalChecked() || this.checked());
+
   // ControlValueAccessor implementation
   writeValue(value: boolean): void {
-    this.checked = value !== null && value !== undefined ? value : false;
+    this.internalChecked.set(value !== null && value !== undefined ? value : false);
   }
 
   registerOnChange(fn: (value: boolean) => void): void {
@@ -70,45 +80,46 @@ export class IxSlideToggleComponent implements AfterViewInit, OnDestroy, Control
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
+    this.formDisabled.set(isDisabled);
   }
 
   onToggleChange(event: Event): void {
     event.stopPropagation();
-    
+
     const target = event.target as HTMLInputElement;
-    this.checked = target.checked;
-    
-    this.onChange(this.checked);
+    const checked = target.checked;
+    this.internalChecked.set(checked);
+
+    this.onChange(checked);
     this.onTouched();
-    this.change.emit(this.checked);
-    this.toggleChange.emit(this.checked);
+    this.change.emit(checked);
+    this.toggleChange.emit(checked);
   }
 
   onLabelClick(): void {
-    if (!this.disabled && this.toggleEl) {
+    if (!this.isDisabled() && this.toggleEl) {
       this.toggleEl.nativeElement.click();
     }
   }
 
-  get classes(): string[] {
+  classes = computed(() => {
     const classes = ['ix-slide-toggle'];
-    
-    if (this.disabled) {
+
+    if (this.isDisabled()) {
       classes.push('ix-slide-toggle--disabled');
     }
-    
-    if (this.checked) {
+
+    if (this.effectiveChecked()) {
       classes.push('ix-slide-toggle--checked');
     }
-    
-    classes.push(`ix-slide-toggle--${this.color}`);
-    classes.push(`ix-slide-toggle--label-${this.labelPosition}`);
+
+    classes.push(`ix-slide-toggle--${this.color()}`);
+    classes.push(`ix-slide-toggle--label-${this.labelPosition()}`);
 
     return classes;
-  }
+  });
 
-  get effectiveAriaLabel(): string | undefined {
-    return this.ariaLabel || (this.label ? undefined : 'Toggle');
-  }
+  effectiveAriaLabel = computed(() => {
+    return this.ariaLabel() || (this.label() ? undefined : 'Toggle');
+  });
 }

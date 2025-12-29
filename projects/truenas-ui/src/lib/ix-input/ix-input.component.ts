@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, AfterViewInit, inject, Input, forwardRef } from '@angular/core';
+import { Component, ViewChild, ElementRef, AfterViewInit, inject, input, computed, signal, forwardRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
@@ -21,15 +21,19 @@ import { InputType } from '../enums/input-type.enum';
 export class IxInputComponent implements AfterViewInit, ControlValueAccessor {
   @ViewChild('inputEl') inputEl!: ElementRef<HTMLInputElement | HTMLTextAreaElement>;
 
-  @Input() inputType: InputType = InputType.PlainText;
-  @Input() placeholder = 'Enter your name';
-  @Input() testId?: string;
-  @Input() disabled = false;
-  @Input() multiline: boolean = false;
-  @Input() rows: number = 3;
+  inputType = input<InputType>(InputType.PlainText);
+  placeholder = input<string>('Enter your name');
+  testId = input<string | undefined>(undefined);
+  disabled = input<boolean>(false);
+  multiline = input<boolean>(false);
+  rows = input<number>(3);
 
   id = 'ix-input';
   value = '';
+
+  // CVA disabled state management
+  private formDisabled = signal<boolean>(false);
+  isDisabled = computed(() => this.disabled() || this.formDisabled());
 
   private onChange = (value: any) => {};
   private onTouched = () => {};
@@ -53,7 +57,7 @@ export class IxInputComponent implements AfterViewInit, ControlValueAccessor {
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
+    this.formDisabled.set(isDisabled);
   }
 
   // Component methods
