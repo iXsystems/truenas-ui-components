@@ -1,56 +1,58 @@
-<div [ngClass]="classes">
+<div [ngClass]="classes()">
   <!-- Header section -->
-  @if (hasHeader) {
+  @if (hasHeader()) {
     <div class="ix-card__header">
       <div class="ix-card__header-left">
-        @if (title) {
+        @if (title()) {
           <h3
             class="ix-card__title"
-            [class.ix-card__title--link]="titleLink"
+            [class.ix-card__title--link]="titleLink()"
             (click)="onTitleClick()">
-            {{ title }}
+            {{ title() }}
           </h3>
         }
       </div>
 
       <div class="ix-card__header-right">
         <!-- Header Status -->
-        @if (headerStatus) {
+        @if (headerStatus(); as status) {
           <div
             class="ix-card__status"
-            [ngClass]="getStatusClass(headerStatus?.type)">
-            {{ headerStatus.label }}
+            [ngClass]="getStatusClass(status?.type)">
+            {{ status.label }}
           </div>
         }
 
         <!-- Header Control (Slide Toggle) -->
-        @if (headerControl) {
+        @if (headerControl(); as control) {
           <div class="ix-card__control">
             <ix-slide-toggle
-              [label]="headerControl.label"
-              [checked]="headerControl.checked"
-              [disabled]="headerControl.disabled || false"
+              [label]="control.label"
+              [checked]="control.checked"
+              [disabled]="control.disabled || false"
               (change)="onControlChange($event)">
             </ix-slide-toggle>
           </div>
         }
 
         <!-- Header Menu -->
-        @if (headerMenu && headerMenu.length) {
-          <div class="ix-card__menu">
-            <ix-icon-button
-              name="dots-vertical"
-              library="mdi"
-              size="md"
-              [ixMenuTriggerFor]="cardMenu"
-              ariaLabel="Card menu">
-            </ix-icon-button>
-            <ix-menu
-              #cardMenu
-              [items]="headerMenu"
-              (menuItemClick)="onHeaderMenuItemClick($event)">
-            </ix-menu>
-          </div>
+        @if (headerMenu(); as menu) {
+          @if (menu.length) {
+            <div class="ix-card__menu">
+              <ix-icon-button
+                name="dots-vertical"
+                library="mdi"
+                size="md"
+                [ixMenuTriggerFor]="cardMenu"
+                ariaLabel="Card menu">
+              </ix-icon-button>
+              <ix-menu
+                #cardMenu
+                [items]="menu"
+                (menuItemClick)="onHeaderMenuItemClick($event)">
+              </ix-menu>
+            </div>
+          }
         }
       </div>
     </div>
@@ -62,37 +64,37 @@
   </div>
 
   <!-- Footer section -->
-  @if (hasFooter) {
+  @if (hasFooter()) {
     <div class="ix-card__footer">
       <div class="ix-card__footer-left">
-        @if (footerLink) {
+        @if (footerLink(); as link) {
           <button
             type="button"
             class="ix-card__footer-link"
-            (click)="footerLink.handler()">
-            {{ footerLink.label }}
+            (click)="link.handler()">
+            {{ link.label }}
           </button>
         }
       </div>
 
       <div class="ix-card__footer-right">
-        @if (secondaryAction) {
+        @if (secondaryAction(); as action) {
           <ix-button
-            [label]="secondaryAction.label"
+            [label]="action.label"
             variant="outline"
             color="default"
-            [disabled]="secondaryAction.disabled || false"
-            (click)="secondaryAction.handler()">
+            [disabled]="action.disabled || false"
+            (click)="action.handler()">
           </ix-button>
         }
 
-        @if (primaryAction) {
+        @if (primaryAction(); as action) {
           <ix-button
-            [label]="primaryAction.label"
+            [label]="action.label"
             variant="filled"
             color="primary"
-            [disabled]="primaryAction.disabled || false"
-            (click)="primaryAction.handler()">
+            [disabled]="action.disabled || false"
+            (click)="action.handler()">
           </ix-button>
         }
       </div>

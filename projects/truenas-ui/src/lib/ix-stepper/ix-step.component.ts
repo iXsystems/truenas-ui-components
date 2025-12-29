@@ -1,4 +1,4 @@
-import { Component, Input, TemplateRef, ViewChild } from '@angular/core';
+import { Component, input, TemplateRef, ViewChild } from '@angular/core';
 
 @Component({
   selector: 'ix-step',
@@ -10,24 +10,13 @@ import { Component, Input, TemplateRef, ViewChild } from '@angular/core';
   standalone: true
 })
 export class IxStepComponent {
-  @Input() 
-  label: string = '';
-  
-  @Input()
-  icon?: string;
-  
-  @Input()
-  optional = false;
-  
-  @Input()
-  completed = false;
-  
-  @Input()
-  hasError = false;
-  
-  @Input()
-  data: any = null;
-  
+  label = input<string>('');
+  icon = input<string | undefined>(undefined);
+  optional = input<boolean>(false);
+  completed = input<boolean>(false);
+  hasError = input<boolean>(false);
+  data = input<any>(null);
+
   @ViewChild('content', { static: true })
   content!: TemplateRef<any>;
 }

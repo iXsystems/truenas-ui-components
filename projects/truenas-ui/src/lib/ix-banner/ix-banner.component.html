@@ -1,11 +1,11 @@
 <div
-  [ngClass]="classes"
-  [attr.role]="ariaRole"
+  [ngClass]="classes()"
+  [attr.role]="ariaRole()"
   aria-live="polite"
 >
   <div class="ix-banner__icon">
     <ix-icon
-      [name]="iconName"
+      [name]="iconName()"
       library="mdi"
       size="md"
       aria-hidden="true"

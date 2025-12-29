@@ -4,7 +4,7 @@
  * To regenerate this file, run:
  *   npm run generate-icons
  * 
- * Generated: 2025-12-23T21:09:45.403Z
+ * Generated: 2025-12-29T16:59:56.482Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 

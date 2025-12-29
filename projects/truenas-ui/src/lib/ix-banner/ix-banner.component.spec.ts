@@ -46,84 +46,84 @@ describe('IxBannerComponent', () => {
     });
   });
 
-  describe('classes getter', () => {
+  describe('classes computed', () => {
     it('should include base class', () => {
-      const classes = component.classes;
+      const classes = component.classes();
       expect(classes).toContain('ix-banner');
     });
 
     it('should include info type class by default', () => {
-      const classes = component.classes;
+      const classes = component.classes();
       expect(classes).toContain('ix-banner--info');
     });
 
     it('should include warning type class', () => {
       fixture.componentRef.setInput('type', 'warning');
       fixture.detectChanges();
-      const classes = component.classes;
+      const classes = component.classes();
       expect(classes).toContain('ix-banner--warning');
     });
 
     it('should include error type class', () => {
       fixture.componentRef.setInput('type', 'error');
       fixture.detectChanges();
-      const classes = component.classes;
+      const classes = component.classes();
       expect(classes).toContain('ix-banner--error');
     });
 
     it('should include success type class', () => {
       fixture.componentRef.setInput('type', 'success');
       fixture.detectChanges();
-      const classes = component.classes;
+      const classes = component.classes();
       expect(classes).toContain('ix-banner--success');
     });
   });
 
-  describe('iconName getter', () => {
+  describe('iconName computed', () => {
     it('should return information icon for info type', () => {
-      expect(component.iconName).toBe('information');
+      expect(component.iconName()).toBe('information');
     });
 
     it('should return alert icon for warning type', () => {
       fixture.componentRef.setInput('type', 'warning');
       fixture.detectChanges();
-      expect(component.iconName).toBe('alert');
+      expect(component.iconName()).toBe('alert');
     });
 
     it('should return alert-circle icon for error type', () => {
       fixture.componentRef.setInput('type', 'error');
       fixture.detectChanges();
-      expect(component.iconName).toBe('alert-circle');
+      expect(component.iconName()).toBe('alert-circle');
     });
 
     it('should return check-circle icon for success type', () => {
       fixture.componentRef.setInput('type', 'success');
       fixture.detectChanges();
-      expect(component.iconName).toBe('check-circle');
+      expect(component.iconName()).toBe('check-circle');
     });
   });
 
-  describe('ariaRole getter', () => {
+  describe('ariaRole computed', () => {
     it('should return status for info type', () => {
-      expect(component.ariaRole).toBe('status');
+      expect(component.ariaRole()).toBe('status');
     });
 
     it('should return alert for warning type', () => {
       fixture.componentRef.setInput('type', 'warning');
       fixture.detectChanges();
-      expect(component.ariaRole).toBe('alert');
+      expect(component.ariaRole()).toBe('alert');
     });
 
     it('should return alert for error type', () => {
       fixture.componentRef.setInput('type', 'error');
       fixture.detectChanges();
-      expect(component.ariaRole).toBe('alert');
+      expect(component.ariaRole()).toBe('alert');
     });
 
     it('should return status for success type', () => {
       fixture.componentRef.setInput('type', 'success');
       fixture.detectChanges();
-      expect(component.ariaRole).toBe('status');
+      expect(component.ariaRole()).toBe('status');
     });
   });
 

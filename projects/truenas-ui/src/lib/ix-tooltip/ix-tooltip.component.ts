@@ -1,4 +1,4 @@
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -6,12 +6,12 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div 
-      class="ix-tooltip" 
-      [id]="id"
+    <div
+      class="ix-tooltip"
+      [id]="id()"
       role="tooltip"
       [attr.aria-hidden]="false">
-      {{ message }}
+      {{ message() }}
     </div>
   `,
   styleUrl: './ix-tooltip.component.scss',
@@ -21,6 +21,6 @@ import { CommonModule } from '@angular/common';
   }
 })
 export class IxTooltipComponent {
-  @Input() message = '';
-  @Input() id = '';
+  message = input('');
+  id = input('');
 }

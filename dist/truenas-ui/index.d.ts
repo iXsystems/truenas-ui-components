@@ -54,17 +54,17 @@ declare class IxBannerComponent {
     /**
      * Get the appropriate icon name based on banner type
      */
-    get iconName(): string;
+    iconName: i0.Signal<"information" | "alert" | "alert-circle" | "check-circle">;
     /**
      * Get ARIA role based on banner type
      * Error/warning use 'alert' for immediate attention
      * Info/success use 'status' for polite announcements
      */
-    get ariaRole(): 'alert' | 'status';
+    ariaRole: i0.Signal<"alert" | "status">;
     /**
      * Generate CSS classes using BEM methodology
      */
-    get classes(): string[];
+    classes: i0.Signal<string[]>;
     static ɵfac: i0.ɵɵFactoryDeclaration<IxBannerComponent, never>;
     static ɵcmp: i0.ɵɵComponentDeclaration<IxBannerComponent, "ix-banner", never, { "heading": { "alias": "heading"; "required": true; "isSignal": true; }; "message": { "alias": "message"; "required": false; "isSignal": true; }; "type": { "alias": "type"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
@@ -515,33 +515,33 @@ interface IxCardFooterLink {
 declare class IxCardComponent {
     private iconRegistry;
     constructor(iconRegistry: IxIconRegistryService);
-    title?: string;
-    titleLink?: string;
-    elevation: 'none' | 'low' | 'medium' | 'high';
-    padding: 'small' | 'medium' | 'large';
-    padContent: boolean;
-    bordered: boolean;
-    background: boolean;
-    headerStatus?: IxCardHeaderStatus;
-    headerControl?: IxCardControl;
-    headerMenu?: IxMenuItem[];
-    primaryAction?: IxCardAction;
-    secondaryAction?: IxCardAction;
-    footerLink?: IxCardFooterLink;
+    title: i0.InputSignal<string | undefined>;
+    titleLink: i0.InputSignal<string | undefined>;
+    elevation: i0.InputSignal<"none" | "low" | "medium" | "high">;
+    padding: i0.InputSignal<"large" | "medium" | "small">;
+    padContent: i0.InputSignal<boolean>;
+    bordered: i0.InputSignal<boolean>;
+    background: i0.InputSignal<boolean>;
+    headerStatus: i0.InputSignal<IxCardHeaderStatus | undefined>;
+    headerControl: i0.InputSignal<IxCardControl | undefined>;
+    headerMenu: i0.InputSignal<IxMenuItem[] | undefined>;
+    primaryAction: i0.InputSignal<IxCardAction | undefined>;
+    secondaryAction: i0.InputSignal<IxCardAction | undefined>;
+    footerLink: i0.InputSignal<IxCardFooterLink | undefined>;
     /**
      * Register MDI icon library with all icons used by the card component
      * This makes the component self-contained with zero configuration required
      */
     private registerMdiIcons;
-    get classes(): string[];
-    get hasHeader(): boolean;
-    get hasFooter(): boolean;
+    classes: i0.Signal<string[]>;
+    hasHeader: i0.Signal<boolean>;
+    hasFooter: i0.Signal<boolean>;
     onTitleClick(): void;
     onControlChange(checked: boolean): void;
     onHeaderMenuItemClick(item: IxMenuItem): void;
     getStatusClass(type?: string): string;
     static ɵfac: i0.ɵɵFactoryDeclaration<IxCardComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<IxCardComponent, "ix-card", never, { "title": { "alias": "title"; "required": false; }; "titleLink": { "alias": "titleLink"; "required": false; }; "elevation": { "alias": "elevation"; "required": false; }; "padding": { "alias": "padding"; "required": false; }; "padContent": { "alias": "padContent"; "required": false; }; "bordered": { "alias": "bordered"; "required": false; }; "background": { "alias": "background"; "required": false; }; "headerStatus": { "alias": "headerStatus"; "required": false; }; "headerControl": { "alias": "headerControl"; "required": false; }; "headerMenu": { "alias": "headerMenu"; "required": false; }; "primaryAction": { "alias": "primaryAction"; "required": false; }; "secondaryAction": { "alias": "secondaryAction"; "required": false; }; "footerLink": { "alias": "footerLink"; "required": false; }; }, {}, never, ["*"], true, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<IxCardComponent, "ix-card", never, { "title": { "alias": "title"; "required": false; "isSignal": true; }; "titleLink": { "alias": "titleLink"; "required": false; "isSignal": true; }; "elevation": { "alias": "elevation"; "required": false; "isSignal": true; }; "padding": { "alias": "padding"; "required": false; "isSignal": true; }; "padContent": { "alias": "padContent"; "required": false; "isSignal": true; }; "bordered": { "alias": "bordered"; "required": false; "isSignal": true; }; "background": { "alias": "background"; "required": false; "isSignal": true; }; "headerStatus": { "alias": "headerStatus"; "required": false; "isSignal": true; }; "headerControl": { "alias": "headerControl"; "required": false; "isSignal": true; }; "headerMenu": { "alias": "headerMenu"; "required": false; "isSignal": true; }; "primaryAction": { "alias": "primaryAction"; "required": false; "isSignal": true; }; "secondaryAction": { "alias": "secondaryAction"; "required": false; "isSignal": true; }; "footerLink": { "alias": "footerLink"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
 }
 
 declare class IxExpansionPanelComponent {
@@ -672,19 +672,19 @@ declare class IxTabComponent implements AfterContentInit {
 }
 
 declare class IxTabPanelComponent {
-    label: string;
-    lazyLoad: boolean;
-    testId?: string;
+    label: i0.InputSignal<string>;
+    lazyLoad: i0.InputSignal<boolean>;
+    testId: i0.InputSignal<string | undefined>;
     content: TemplateRef<any>;
     index: number;
     isActive: boolean;
     hasBeenActive: boolean;
     elementRef: ElementRef<any>;
-    get classes(): string;
-    get shouldRender(): boolean;
+    classes: i0.Signal<string>;
+    shouldRender: i0.Signal<boolean>;
     onActivate(): void;
     static ɵfac: i0.ɵɵFactoryDeclaration<IxTabPanelComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<IxTabPanelComponent, "ix-tab-panel", never, { "label": { "alias": "label"; "required": false; }; "lazyLoad": { "alias": "lazyLoad"; "required": false; }; "testId": { "alias": "testId"; "required": false; }; }, {}, never, ["*"], true, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<IxTabPanelComponent, "ix-tab-panel", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "lazyLoad": { "alias": "lazyLoad"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
 }
 
 interface TabChangeEvent {
@@ -1029,10 +1029,10 @@ declare class TruenasIconsService {
 }
 
 declare class IxListComponent {
-    dense: boolean;
-    disabled: boolean;
+    dense: i0.InputSignal<boolean>;
+    disabled: i0.InputSignal<boolean>;
     static ɵfac: i0.ɵɵFactoryDeclaration<IxListComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<IxListComponent, "ix-list", never, { "dense": { "alias": "dense"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; }, {}, never, ["*"], true, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<IxListComponent, "ix-list", never, { "dense": { "alias": "dense"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
 }
 
 declare class IxListItemComponent implements AfterContentInit {
@@ -1094,10 +1094,10 @@ declare class IxDividerDirective {
 }
 
 declare class IxDividerComponent {
-    vertical: boolean;
-    inset: boolean;
+    vertical: i0.InputSignal<boolean>;
+    inset: i0.InputSignal<boolean>;
     static ɵfac: i0.ɵɵFactoryDeclaration<IxDividerComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<IxDividerComponent, "ix-divider", never, { "vertical": { "alias": "vertical"; "required": false; }; "inset": { "alias": "inset"; "required": false; }; }, {}, never, never, true, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<IxDividerComponent, "ix-divider", never, { "vertical": { "alias": "vertical"; "required": false; "isSignal": true; }; "inset": { "alias": "inset"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
 declare class IxListOptionComponent implements AfterContentInit {
@@ -1501,19 +1501,19 @@ declare class TruncatePathPipe implements PipeTransform {
 
 type SpinnerMode = 'determinate' | 'indeterminate';
 declare class IxSpinnerComponent {
-    mode: SpinnerMode;
-    value: number;
-    diameter: number;
-    strokeWidth: number;
-    ariaLabel: string | null;
-    ariaLabelledby: string | null;
-    get radius(): number;
-    get circumference(): number;
-    get strokeDasharray(): string;
-    get strokeDashoffset(): number;
-    get viewBox(): string;
+    mode: i0.InputSignal<SpinnerMode>;
+    value: i0.InputSignal<number>;
+    diameter: i0.InputSignal<number>;
+    strokeWidth: i0.InputSignal<number>;
+    ariaLabel: i0.InputSignal<string | null>;
+    ariaLabelledby: i0.InputSignal<string | null>;
+    radius: i0.Signal<number>;
+    circumference: i0.Signal<number>;
+    strokeDasharray: i0.Signal<string>;
+    strokeDashoffset: i0.Signal<number>;
+    viewBox: i0.Signal<string>;
     static ɵfac: i0.ɵɵFactoryDeclaration<IxSpinnerComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<IxSpinnerComponent, "ix-spinner", never, { "mode": { "alias": "mode"; "required": false; }; "value": { "alias": "value"; "required": false; }; "diameter": { "alias": "diameter"; "required": false; }; "strokeWidth": { "alias": "strokeWidth"; "required": false; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; }; "ariaLabelledby": { "alias": "ariaLabelledby"; "required": false; }; }, {}, never, never, true, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<IxSpinnerComponent, "ix-spinner", never, { "mode": { "alias": "mode"; "required": false; "isSignal": true; }; "value": { "alias": "value"; "required": false; "isSignal": true; }; "diameter": { "alias": "diameter"; "required": false; "isSignal": true; }; "strokeWidth": { "alias": "strokeWidth"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "ariaLabelledby": { "alias": "ariaLabelledby"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
 declare class IxBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -1539,28 +1539,28 @@ declare class IxBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewI
 
 type ProgressBarMode = 'determinate' | 'indeterminate' | 'buffer';
 declare class IxProgressBarComponent {
-    mode: ProgressBarMode;
-    value: number;
-    bufferValue: number;
-    ariaLabel: string | null;
-    ariaLabelledby: string | null;
+    mode: i0.InputSignal<ProgressBarMode>;
+    value: i0.InputSignal<number>;
+    bufferValue: i0.InputSignal<number>;
+    ariaLabel: i0.InputSignal<string | null>;
+    ariaLabelledby: i0.InputSignal<string | null>;
     /**
      * Gets the transform value for the primary progress bar
      */
-    get primaryTransform(): string;
+    primaryTransform: i0.Signal<string>;
     /**
      * Gets the positioning and size for the buffer dots animation
      */
-    get bufferStyles(): {
+    bufferStyles: i0.Signal<{
         width: string;
         right: string;
-    };
+    }>;
     /**
      * Gets the transform value for the buffer progress bar (deprecated - use bufferStyles)
      */
-    get bufferTransform(): string;
+    bufferTransform: i0.Signal<string>;
     static ɵfac: i0.ɵɵFactoryDeclaration<IxProgressBarComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<IxProgressBarComponent, "ix-progress-bar", never, { "mode": { "alias": "mode"; "required": false; }; "value": { "alias": "value"; "required": false; }; "bufferValue": { "alias": "bufferValue"; "required": false; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; }; "ariaLabelledby": { "alias": "ariaLabelledby"; "required": false; }; }, {}, never, never, true, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<IxProgressBarComponent, "ix-progress-bar", never, { "mode": { "alias": "mode"; "required": false; "isSignal": true; }; "value": { "alias": "value"; "required": false; "isSignal": true; }; "bufferValue": { "alias": "bufferValue"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "ariaLabelledby": { "alias": "ariaLabelledby"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
 declare class IxParticleProgressBarComponent implements AfterViewInit, OnDestroy {
@@ -2075,10 +2075,10 @@ declare class IxTooltipDirective implements OnInit, OnDestroy {
 }
 
 declare class IxTooltipComponent {
-    message: string;
-    id: string;
+    message: i0.InputSignal<string>;
+    id: i0.InputSignal<string>;
     static ɵfac: i0.ɵɵFactoryDeclaration<IxTooltipComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<IxTooltipComponent, "ix-tooltip", never, { "message": { "alias": "message"; "required": false; }; "id": { "alias": "id"; "required": false; }; }, {}, never, never, true, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<IxTooltipComponent, "ix-tooltip", never, { "message": { "alias": "message"; "required": false; "isSignal": true; }; "id": { "alias": "id"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
 type IxDialogOpenTarget<C> = ComponentType<C> | TemplateRef<unknown>;
@@ -2136,15 +2136,15 @@ declare class IxConfirmDialogComponent {
 }
 
 declare class IxStepComponent {
-    label: string;
-    icon?: string;
-    optional: boolean;
-    completed: boolean;
-    hasError: boolean;
-    data: any;
+    label: i0.InputSignal<string>;
+    icon: i0.InputSignal<string | undefined>;
+    optional: i0.InputSignal<boolean>;
+    completed: i0.InputSignal<boolean>;
+    hasError: i0.InputSignal<boolean>;
+    data: i0.InputSignal<any>;
     content: TemplateRef<any>;
     static ɵfac: i0.ɵɵFactoryDeclaration<IxStepComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<IxStepComponent, "ix-step", never, { "label": { "alias": "label"; "required": false; }; "icon": { "alias": "icon"; "required": false; }; "optional": { "alias": "optional"; "required": false; }; "completed": { "alias": "completed"; "required": false; }; "hasError": { "alias": "hasError"; "required": false; }; "data": { "alias": "data"; "required": false; }; }, {}, never, ["*"], true, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<IxStepComponent, "ix-step", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "icon": { "alias": "icon"; "required": false; "isSignal": true; }; "optional": { "alias": "optional"; "required": false; "isSignal": true; }; "completed": { "alias": "completed"; "required": false; "isSignal": true; }; "hasError": { "alias": "hasError"; "required": false; "isSignal": true; }; "data": { "alias": "data"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
 }
 
 declare class IxStepperComponent implements AfterContentInit {

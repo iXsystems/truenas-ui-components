@@ -155,8 +155,8 @@ export class IxTooltipDirective implements OnInit, OnDestroy {
     if (!this._tooltipInstance) {
       const portal = new ComponentPortal(IxTooltipComponent, this._viewContainerRef);
       this._tooltipInstance = this._overlayRef.attach(portal);
-      this._tooltipInstance.instance.message = this.message;
-      this._tooltipInstance.instance.id = this._ariaDescribedBy!;
+      this._tooltipInstance.setInput('message', this.message);
+      this._tooltipInstance.setInput('id', this._ariaDescribedBy!);
       this._isTooltipVisible = true;
     }
   }

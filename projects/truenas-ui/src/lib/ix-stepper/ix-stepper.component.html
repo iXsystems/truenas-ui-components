@@ -7,22 +7,22 @@
     @for (step of steps; track $index; let i = $index) {
       <div class="ix-stepper__step-header"
            [class.ix-stepper__step-header--active]="selectedIndex === i"
-           [class.ix-stepper__step-header--completed]="step.completed"
-           [class.ix-stepper__step-header--error]="step.hasError"
-           [class.ix-stepper__step-header--optional]="step.optional"
+           [class.ix-stepper__step-header--completed]="step.completed()"
+           [class.ix-stepper__step-header--error]="step.hasError()"
+           [class.ix-stepper__step-header--optional]="step.optional()"
            (click)="selectStep(i)">
 
         <!-- Step Number/Icon -->
         <div class="ix-stepper__step-indicator">
-          @if (step.completed && !step.hasError) {
+          @if (step.completed() && !step.hasError()) {
             <span class="ix-stepper__step-check">✓</span>
           }
-          @if (step.hasError) {
+          @if (step.hasError()) {
             <span class="ix-stepper__step-error">!</span>
           }
-          @if (!step.completed && !step.hasError) {
-            @if (step.icon) {
-              <span class="ix-stepper__step-icon">{{ step.icon }}</span>
+          @if (!step.completed() && !step.hasError()) {
+            @if (step.icon()) {
+              <span class="ix-stepper__step-icon">{{ step.icon() }}</span>
             } @else {
               <span class="ix-stepper__step-number">{{ i + 1 }}</span>
             }
@@ -31,8 +31,8 @@
 
         <!-- Step Label -->
         <div class="ix-stepper__step-label">
-          <div class="ix-stepper__step-title">{{ step.label }}</div>
-          @if (step.optional) {
+          <div class="ix-stepper__step-title">{{ step.label() }}</div>
+          @if (step.optional()) {
             <span class="ix-stepper__step-subtitle">Optional</span>
           }
         </div>

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, inject } from '@angular/core';
+import { Component, input, inject, computed } from '@angular/core';
 import { IxIconComponent } from '../ix-icon/ix-icon.component';
 import { IxIconRegistryService } from '../ix-icon/ix-icon-registry.service';
 import {
@@ -64,28 +64,28 @@ export class IxBannerComponent {
   /**
    * Get the appropriate icon name based on banner type
    */
-  public get iconName(): string {
+  iconName = computed(() => {
     return ICON_MAP[this.type()];
-  }
+  });
 
   /**
    * Get ARIA role based on banner type
    * Error/warning use 'alert' for immediate attention
    * Info/success use 'status' for polite announcements
    */
-  public get ariaRole(): 'alert' | 'status' {
+  ariaRole = computed(() => {
     return this.type() === 'error' || this.type() === 'warning'
       ? 'alert'
       : 'status';
-  }
+  });
 
   /**
    * Generate CSS classes using BEM methodology
    */
-  public get classes(): string[] {
+  classes = computed(() => {
     return [
       'ix-banner',
       `ix-banner--${this.type()}`,
     ];
-  }
+  });
 }
