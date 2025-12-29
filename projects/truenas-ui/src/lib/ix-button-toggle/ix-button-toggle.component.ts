@@ -1,10 +1,8 @@
-import { Component, Input, Output, EventEmitter, forwardRef, ChangeDetectionStrategy, ViewEncapsulation, HostBinding, HostListener, ChangeDetectorRef } from '@angular/core';
+import { Component, input, output, signal, computed, forwardRef, ChangeDetectionStrategy, ViewEncapsulation, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
 import { IxButtonToggleGroupComponent } from './ix-button-toggle-group.component';
-
-let nextId = 0;
 
 @Component({
   selector: 'ix-button-toggle',
@@ -21,15 +19,15 @@ let nextId = 0;
     <button
       type="button"
       class="ix-button-toggle__button"
-      [class.ix-button-toggle__button--checked]="checked"
-      [disabled]="disabled"
-      [attr.aria-pressed]="checked"
-      [attr.aria-label]="ariaLabel || null"
-      [attr.aria-labelledby]="ariaLabelledby"
-      [attr.id]="buttonId"
+      [class.ix-button-toggle__button--checked]="checked()"
+      [disabled]="isDisabled()"
+      [attr.aria-pressed]="checked()"
+      [attr.aria-label]="ariaLabel() || null"
+      [attr.aria-labelledby]="ariaLabelledby()"
+      [attr.id]="buttonId()"
       (click)="toggle()">
       <span class="ix-button-toggle__label">
-        <span class="ix-button-toggle__check" *ngIf="checked">✓</span>
+        <span class="ix-button-toggle__check" *ngIf="checked()">✓</span>
         <ng-content></ng-content>
       </span>
     </button>
@@ -39,37 +37,41 @@ let nextId = 0;
   encapsulation: ViewEncapsulation.None,
   host: {
     'class': 'ix-button-toggle',
-    '[attr.id]': 'id',
-    '[class.ix-button-toggle--checked]': 'checked',
-    '[class.ix-button-toggle--disabled]': 'disabled',
-    '[class.ix-button-toggle--standalone]': '!buttonToggleGroup'
+    '[attr.id]': 'id()',
+    '[class.ix-button-toggle--checked]': 'checked()',
+    '[class.ix-button-toggle--disabled]': 'isDisabled()',
+    '[class.ix-button-toggle--standalone]': '!buttonToggleGroup',
+    '(focus)': 'onFocus()'
   }
 })
 export class IxButtonToggleComponent implements ControlValueAccessor {
   private static _uniqueIdCounter = 0;
 
-  @Input() id: string = `ix-button-toggle-${IxButtonToggleComponent._uniqueIdCounter++}`;
-  @Input() value: any;
-  @Input() disabled = false;
-  @Input() checked = false;
-  @Input() ariaLabel: string = '';
-  @Input() ariaLabelledby: string = '';
+  id = input<string>(`ix-button-toggle-${IxButtonToggleComponent._uniqueIdCounter++}`);
+  value = input<any>(undefined);
+  disabled = input<boolean>(false);
+  checked = signal<boolean>(false);
+  ariaLabel = input<string>('');
+  ariaLabelledby = input<string>('');
 
-  @Output() change = new EventEmitter<{ source: IxButtonToggleComponent; value: any }>();
+  change = output<{ source: IxButtonToggleComponent; value: any }>();
 
-  buttonId: string;
+  buttonId = computed(() => this.id() + '-button');
   buttonToggleGroup?: IxButtonToggleGroupComponent;
+
+  private formDisabled = signal<boolean>(false);
+
+  // Computed disabled state (combines input and form state)
+  isDisabled = computed(() => this.disabled() || this.formDisabled());
 
   private onChange = (value: any) => {};
   private onTouched = () => {};
 
-  constructor(private cdr: ChangeDetectorRef) {
-    this.buttonId = this.id + '-button';
-  }
+  constructor(private cdr: ChangeDetectorRef) {}
 
   // ControlValueAccessor implementation
   writeValue(value: any): void {
-    this.checked = !!value;
+    this.checked.set(!!value);
   }
 
   registerOnChange(fn: any): void {
@@ -81,11 +83,11 @@ export class IxButtonToggleComponent implements ControlValueAccessor {
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
+    this.formDisabled.set(isDisabled);
   }
 
   toggle(): void {
-    if (this.disabled) {
+    if (this.isDisabled()) {
       return;
     }
 
@@ -94,31 +96,31 @@ export class IxButtonToggleComponent implements ControlValueAccessor {
       this.buttonToggleGroup._onButtonToggleClick(this);
     } else {
       // Standalone toggle - handle its own state
-      this.checked = !this.checked;
-      this.onChange(this.checked);
+      const newValue = !this.checked();
+      this.checked.set(newValue);
+      this.onChange(newValue);
       this.onTouched();
-      
+
       this.change.emit({
         source: this,
-        value: this.value || this.checked
+        value: this.value() || newValue
       });
     }
   }
 
-  @HostListener('focus')
-  focus(): void {
+  onFocus(): void {
     this.onTouched();
   }
 
   // Method for group to mark this toggle as checked
   _markForCheck(): void {
-    this.checked = true;
+    this.checked.set(true);
     this.cdr.markForCheck();
   }
 
   // Method for group to mark this toggle as unchecked
   _markForUncheck(): void {
-    this.checked = false;
+    this.checked.set(false);
     this.cdr.markForCheck();
   }
 }

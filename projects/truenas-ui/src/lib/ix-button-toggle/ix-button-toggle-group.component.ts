@@ -1,10 +1,8 @@
-import { Component, ContentChildren, QueryList, Input, Output, EventEmitter, forwardRef, AfterContentInit, OnDestroy, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
+import { Component, contentChildren, input, output, signal, computed, forwardRef, ChangeDetectionStrategy, ViewEncapsulation, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
 import { IxButtonToggleComponent } from './ix-button-toggle.component';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 
 export type IxButtonToggleType = 'checkbox' | 'radio';
 
@@ -20,10 +18,10 @@ export type IxButtonToggleType = 'checkbox' | 'radio';
     }
   ],
   template: `
-    <div class="ix-button-toggle-group" 
-         [attr.role]="multiple ? 'group' : 'radiogroup'"
-         [attr.aria-label]="ariaLabel"
-         [attr.aria-labelledby]="ariaLabelledby">
+    <div class="ix-button-toggle-group"
+         [attr.role]="multiple() ? 'group' : 'radiogroup'"
+         [attr.aria-label]="ariaLabel()"
+         [attr.aria-labelledby]="ariaLabelledby()">
       <ng-content></ng-content>
     </div>
   `,
@@ -34,49 +32,44 @@ export type IxButtonToggleType = 'checkbox' | 'radio';
     'class': 'ix-button-toggle-group'
   }
 })
-export class IxButtonToggleGroupComponent implements ControlValueAccessor, AfterContentInit, OnDestroy {
-  @ContentChildren(IxButtonToggleComponent, { descendants: true }) buttonToggles!: QueryList<IxButtonToggleComponent>;
+export class IxButtonToggleGroupComponent implements ControlValueAccessor {
+  buttonToggles = contentChildren(IxButtonToggleComponent, { descendants: true });
 
-  @Input() multiple = false;
-  @Input() disabled = false;
-  @Input() name: string = '';
-  @Input() ariaLabel: string = '';
-  @Input() ariaLabelledby: string = '';
+  multiple = input<boolean>(false);
+  disabled = input<boolean>(false);
+  name = input<string>('');
+  ariaLabel = input<string>('');
+  ariaLabelledby = input<string>('');
 
-  @Output() change = new EventEmitter<{ source: IxButtonToggleComponent; value: any }>();
+  change = output<{ source: IxButtonToggleComponent; value: any }>();
 
-  private selectedValue: any = null;
-  private selectedValues: any[] = [];
-  private destroy$ = new Subject<void>();
+  private selectedValue = signal<any>(null);
+  private selectedValues = signal<any[]>([]);
+  private formDisabled = signal<boolean>(false);
+
+  // Computed disabled state (combines input and form state)
+  isDisabled = computed(() => this.disabled() || this.formDisabled());
 
   private onChange = (value: any) => {};
   private onTouched = () => {};
 
-  ngAfterContentInit(): void {
-    this.buttonToggles.forEach(toggle => {
-      toggle.buttonToggleGroup = this;
-    });
-
-    // Listen for changes in the button toggles
-    this.buttonToggles.changes.pipe(takeUntil(this.destroy$)).subscribe(() => {
-      this.buttonToggles.forEach(toggle => {
+  constructor() {
+    // Effect to update button toggles when content children change
+    effect(() => {
+      const toggles = this.buttonToggles();
+      toggles.forEach(toggle => {
         toggle.buttonToggleGroup = this;
       });
     });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
   // ControlValueAccessor implementation
   writeValue(value: any): void {
-    if (this.multiple) {
-      this.selectedValues = Array.isArray(value) ? value : [];
+    if (this.multiple()) {
+      this.selectedValues.set(Array.isArray(value) ? value : []);
       this.updateTogglesFromValues();
     } else {
-      this.selectedValue = value;
+      this.selectedValue.set(value);
       this.updateTogglesFromValue();
     }
   }
@@ -90,20 +83,19 @@ export class IxButtonToggleGroupComponent implements ControlValueAccessor, After
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
-    if (this.buttonToggles) {
-      this.buttonToggles.forEach(toggle => {
-        toggle.disabled = isDisabled;
-      });
-    }
+    this.formDisabled.set(isDisabled);
+    const toggles = this.buttonToggles();
+    toggles.forEach(toggle => {
+      toggle.setDisabledState(isDisabled);
+    });
   }
 
   _onButtonToggleClick(clickedToggle: IxButtonToggleComponent): void {
-    if (this.disabled || clickedToggle.disabled) {
+    if (this.isDisabled() || clickedToggle.isDisabled()) {
       return;
     }
 
-    if (this.multiple) {
+    if (this.multiple()) {
       this.handleMultipleSelection(clickedToggle);
     } else {
       this.handleSingleSelection(clickedToggle);
@@ -112,51 +104,55 @@ export class IxButtonToggleGroupComponent implements ControlValueAccessor, After
     this.onTouched();
     this.change.emit({
       source: clickedToggle,
-      value: this.multiple ? this.selectedValues : this.selectedValue
+      value: this.multiple() ? this.selectedValues() : this.selectedValue()
     });
   }
 
   private handleSingleSelection(clickedToggle: IxButtonToggleComponent): void {
     // In radio mode, clicking the same toggle deselects it
-    if (this.selectedValue === clickedToggle.value) {
-      this.selectedValue = null;
+    if (this.selectedValue() === clickedToggle.value) {
+      this.selectedValue.set(null);
       clickedToggle._markForUncheck();
     } else {
       // Deselect all others
-      this.buttonToggles.forEach(toggle => {
+      const toggles = this.buttonToggles();
+      toggles.forEach(toggle => {
         if (toggle !== clickedToggle) {
           toggle._markForUncheck();
         }
       });
-      
-      this.selectedValue = clickedToggle.value;
+
+      this.selectedValue.set(clickedToggle.value);
       clickedToggle._markForCheck();
     }
 
-    this.onChange(this.selectedValue);
+    this.onChange(this.selectedValue());
   }
 
   private handleMultipleSelection(clickedToggle: IxButtonToggleComponent): void {
-    const index = this.selectedValues.indexOf(clickedToggle.value);
-    
+    const currentValues = [...this.selectedValues()];
+    const index = currentValues.indexOf(clickedToggle.value);
+
     if (index > -1) {
       // Remove from selection
-      this.selectedValues.splice(index, 1);
+      currentValues.splice(index, 1);
       clickedToggle._markForUncheck();
     } else {
       // Add to selection
-      this.selectedValues.push(clickedToggle.value);
+      currentValues.push(clickedToggle.value);
       clickedToggle._markForCheck();
     }
 
-    this.onChange([...this.selectedValues]);
+    this.selectedValues.set(currentValues);
+    this.onChange([...currentValues]);
   }
 
   private updateTogglesFromValue(): void {
-    if (!this.buttonToggles) return;
+    const toggles = this.buttonToggles();
+    const value = this.selectedValue();
 
-    this.buttonToggles.forEach(toggle => {
-      if (toggle.value === this.selectedValue) {
+    toggles.forEach(toggle => {
+      if (toggle.value === value) {
         toggle._markForCheck();
       } else {
         toggle._markForUncheck();
@@ -165,10 +161,11 @@ export class IxButtonToggleGroupComponent implements ControlValueAccessor, After
   }
 
   private updateTogglesFromValues(): void {
-    if (!this.buttonToggles) return;
+    const toggles = this.buttonToggles();
+    const values = this.selectedValues();
 
-    this.buttonToggles.forEach(toggle => {
-      if (this.selectedValues.includes(toggle.value)) {
+    toggles.forEach(toggle => {
+      if (values.includes(toggle.value)) {
         toggle._markForCheck();
       } else {
         toggle._markForUncheck();

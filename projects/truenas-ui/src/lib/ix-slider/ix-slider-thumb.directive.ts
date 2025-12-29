@@ -14,10 +14,10 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
   host: {
     'type': 'range',
     'class': 'ix-slider-thumb',
-    '[disabled]': 'slider?.disabled',
-    '[attr.min]': 'slider?.min',
-    '[attr.max]': 'slider?.max',
-    '[attr.step]': 'slider?.step',
+    '[disabled]': 'slider?.isDisabled()',
+    '[attr.min]': 'slider?.min()',
+    '[attr.max]': 'slider?.max()',
+    '[attr.step]': 'slider?.step()',
     '[value]': 'slider?.value()',
     '(input)': 'onInput($event)',
     '(change)': 'onChange($event)',
@@ -149,11 +149,13 @@ export class IxSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
 
   private updateValueFromPosition(clientX: number): void {
     if (!this.slider) return;
-    
+
     const rect = this.slider.getSliderRect();
     const percentage = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    const newValue = this.slider.min + (percentage * (this.slider.max - this.slider.min));
-    
+    const minVal = this.slider.min();
+    const maxVal = this.slider.max();
+    const newValue = minVal + (percentage * (maxVal - minVal));
+
     this.slider.updateValue(newValue);
   }
 

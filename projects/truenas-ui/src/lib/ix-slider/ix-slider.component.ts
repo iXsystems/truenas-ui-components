@@ -1,4 +1,4 @@
-import { Component, ContentChild, Input, forwardRef, signal, computed, ViewChild, ElementRef, OnInit, OnDestroy, AfterViewInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, ContentChild, input, forwardRef, signal, computed, ViewChild, ElementRef, OnInit, OnDestroy, AfterViewInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
@@ -18,59 +18,59 @@ export type LabelType = 'none' | 'handle' | 'track' | 'both';
     }
   ],
   template: `
-    <div 
+    <div
       class="ix-slider-container"
       #sliderContainer
-      [attr.aria-disabled]="disabled"
-      [attr.data-disabled]="disabled"
+      [attr.aria-disabled]="isDisabled()"
+      [attr.data-disabled]="isDisabled()"
       (mousedown)="onTrackClick($event)"
       (touchstart)="onTrackClick($event)">
-      
+
       <div class="ix-slider-track">
         <div class="ix-slider-track-inactive"></div>
         <div class="ix-slider-track-active">
-          <div 
-            class="ix-slider-track-active-fill" 
+          <div
+            class="ix-slider-track-active-fill"
             [style.transform]="'scaleX(' + fillScale() + ')'">
           </div>
         </div>
-        <div 
+        <div
           class="ix-slider-track-label"
-          *ngIf="(labelType === 'track' || labelType === 'both') && showLabel()">
-          {{ labelPrefix }}{{ value() }}{{ labelSuffix }}
+          *ngIf="(labelType() === 'track' || labelType() === 'both') && showLabel()">
+          {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}
         </div>
       </div>
-      
-      <div 
+
+      <div
         class="ix-slider-thumb-visual"
         #thumbVisual
         [style.transform]="'translateX(' + thumbPosition() + 'px)'">
         <div class="ix-slider-thumb-knob"></div>
-        <div 
+        <div
           class="ix-slider-thumb-label"
-          *ngIf="(labelType === 'handle' || labelType === 'both') && showLabel()"
+          *ngIf="(labelType() === 'handle' || labelType() === 'both') && showLabel()"
           [class.visible]="labelVisible()">
-          {{ labelPrefix }}{{ value() }}{{ labelSuffix }}
+          {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}
         </div>
       </div>
-      
+
       <ng-content></ng-content>
     </div>
   `,
   styleUrl: './ix-slider.component.scss',
   host: {
     'class': 'ix-slider',
-    '[attr.aria-disabled]': 'disabled'
+    '[attr.aria-disabled]': 'isDisabled()'
   }
 })
-export class IxSliderComponent implements ControlValueAccessor, OnInit, OnDestroy, AfterViewInit, OnChanges {
-  @Input() min = 0;
-  @Input() max = 100;
-  @Input() step = 1;
-  @Input() disabled = false;
-  @Input() labelPrefix = '';
-  @Input() labelSuffix = '';
-  @Input() labelType: LabelType = 'none';
+export class IxSliderComponent implements ControlValueAccessor, OnDestroy, AfterViewInit {
+  min = input<number>(0);
+  max = input<number>(100);
+  step = input<number>(1);
+  disabled = input<boolean>(false);
+  labelPrefix = input<string>('');
+  labelSuffix = input<string>('');
+  labelType = input<LabelType>('none');
 
   @ContentChild(IxSliderThumbDirective) thumbDirective!: IxSliderThumbDirective;
   @ViewChild('sliderContainer') sliderContainer!: ElementRef<HTMLDivElement>;
@@ -78,16 +78,20 @@ export class IxSliderComponent implements ControlValueAccessor, OnInit, OnDestro
 
   private onChange = (value: number) => {};
   private onTouched = () => {};
-  
+
   value = signal<number>(0);
   private _showLabel = signal<boolean>(false);
   private _labelVisible = signal<boolean>(false);
+  private formDisabled = signal<boolean>(false);
+
+  // Computed disabled state (combines input and form state)
+  isDisabled = computed(() => this.disabled() || this.formDisabled());
 
   // Computed percentage for track fill
   fillPercentage = computed(() => {
-    const range = this.max - this.min;
+    const range = this.max() - this.min();
     if (range === 0) return 0;
-    return ((this.value() - this.min) / range) * 100;
+    return ((this.value() - this.min()) / range) * 100;
   });
 
   // Computed scale for track fill (0 to 1)
@@ -107,19 +111,14 @@ export class IxSliderComponent implements ControlValueAccessor, OnInit, OnDestro
   showLabel = this._showLabel.asReadonly();
   labelVisible = this._labelVisible.asReadonly();
 
-  ngOnInit() {
-    // Enable label if labelType is not 'none'
-    if (this.labelType !== 'none') {
-      this.enableLabel();
-    }
-  }
-
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['labelType']) {
-      if (this.labelType !== 'none') {
+  constructor() {
+    // Effect to handle labelType changes
+    effect(() => {
+      const currentLabelType = this.labelType();
+      if (currentLabelType !== 'none') {
         this.enableLabel();
         // Set up interaction listeners for handle type after view init
-        if (this.sliderContainer && (this.labelType === 'handle' || this.labelType === 'both')) {
+        if (this.sliderContainer && (currentLabelType === 'handle' || currentLabelType === 'both')) {
           this.setupHandleInteractionListeners();
         }
       } else {
@@ -127,7 +126,7 @@ export class IxSliderComponent implements ControlValueAccessor, OnInit, OnDestro
         this._showLabel.set(false);
         this.cleanupHandleInteractionListeners();
       }
-    }
+    });
   }
 
   ngAfterViewInit() {
@@ -136,9 +135,10 @@ export class IxSliderComponent implements ControlValueAccessor, OnInit, OnDestro
       this.thumbDirective.slider = this;
     }
     this.updateThumbPosition();
-    
+
     // Set up handle interaction listeners if labelType is handle or both
-    if ((this.labelType === 'handle' || this.labelType === 'both') && this._showLabel()) {
+    const currentLabelType = this.labelType();
+    if ((currentLabelType === 'handle' || currentLabelType === 'both') && this._showLabel()) {
       this.setupHandleInteractionListeners();
     }
   }
@@ -163,7 +163,7 @@ export class IxSliderComponent implements ControlValueAccessor, OnInit, OnDestro
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
+    this.formDisabled.set(isDisabled);
   }
 
   // Public methods for thumb directive and label management
@@ -191,14 +191,16 @@ export class IxSliderComponent implements ControlValueAccessor, OnInit, OnDestro
   }
 
   onTrackClick(event: MouseEvent | TouchEvent): void {
-    if (this.disabled) return;
-    
+    if (this.isDisabled()) return;
+
     event.preventDefault();
     const rect = this.getSliderRect();
     const clientX = event instanceof MouseEvent ? event.clientX : event.touches[0].clientX;
     const percentage = (clientX - rect.left) / rect.width;
-    const newValue = this.min + (percentage * (this.max - this.min));
-    
+    const minVal = this.min();
+    const maxVal = this.max();
+    const newValue = minVal + (percentage * (maxVal - minVal));
+
     this.updateValue(newValue);
     this.onTouched();
   }
@@ -209,15 +211,19 @@ export class IxSliderComponent implements ControlValueAccessor, OnInit, OnDestro
   }
 
   private clampValue(value: number): number {
+    const minVal = this.min();
+    const maxVal = this.max();
+    const stepVal = this.step();
+
     // Clamp to min/max
-    let clampedValue = Math.max(this.min, Math.min(this.max, value));
-    
+    let clampedValue = Math.max(minVal, Math.min(maxVal, value));
+
     // Snap to step
-    if (this.step > 0) {
-      const steps = Math.round((clampedValue - this.min) / this.step);
-      clampedValue = this.min + (steps * this.step);
+    if (stepVal > 0) {
+      const steps = Math.round((clampedValue - minVal) / stepVal);
+      clampedValue = minVal + (steps * stepVal);
     }
-    
+
     return clampedValue;
   }
 
@@ -259,13 +265,15 @@ export class IxSliderComponent implements ControlValueAccessor, OnInit, OnDestro
   }
 
   private onInteractionStart = (): void => {
-    if (this.labelType === 'handle' || this.labelType === 'both') {
+    const currentLabelType = this.labelType();
+    if (currentLabelType === 'handle' || currentLabelType === 'both') {
       this.showThumbLabel();
     }
   }
 
   private onInteractionEnd = (): void => {
-    if (this.labelType === 'handle' || this.labelType === 'both') {
+    const currentLabelType = this.labelType();
+    if (currentLabelType === 'handle' || currentLabelType === 'both') {
       this.hideThumbLabel();
     }
   }

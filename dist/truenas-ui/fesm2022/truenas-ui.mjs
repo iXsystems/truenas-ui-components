@@ -1,5 +1,5 @@
 import * as i0 from '@angular/core';
-import { Injectable, Component, input, ChangeDetectionStrategy, inject, effect, computed, ViewChild, ViewEncapsulation, output, signal, forwardRef, Directive, TemplateRef, ElementRef, ContentChild, ChangeDetectorRef, ContentChildren, HostListener, EventEmitter, Output, Input, Optional, Inject, Pipe, Host } from '@angular/core';
+import { Injectable, Component, input, ChangeDetectionStrategy, inject, effect, computed, ViewChild, ViewEncapsulation, output, signal, forwardRef, Directive, TemplateRef, ElementRef, ContentChild, ChangeDetectorRef, ContentChildren, HostListener, contentChildren, Input, Optional, Inject, Pipe, EventEmitter, Output, Host } from '@angular/core';
 import * as i1$2 from '@angular/common';
 import { CommonModule, NgIf, DOCUMENT } from '@angular/common';
 import * as i1$1 from '@angular/platform-browser';
@@ -20,7 +20,7 @@ import * as i1$4 from '@angular/cdk/tree';
 import { CdkTree, CdkTreeModule, CdkTreeNode, CDK_TREE_NODE_OUTLET_NODE, CdkTreeNodeOutlet, CdkNestedTreeNode } from '@angular/cdk/tree';
 export { FlatTreeControl } from '@angular/cdk/tree';
 import { DataSource } from '@angular/cdk/collections';
-import { map, takeUntil } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import * as i1$6 from '@angular/cdk/dialog';
 import { Dialog, DIALOG_DATA } from '@angular/cdk/dialog';
 import { ScrollingModule } from '@angular/cdk/scrolling';
@@ -2980,30 +2980,33 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             }] } });
 
 class IxSelectionListComponent {
-    dense = false;
-    disabled = false;
-    multiple = true;
-    color = 'primary';
-    selectionChange = new EventEmitter();
-    options;
+    dense = input(false, ...(ngDevMode ? [{ debugName: "dense" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    multiple = input(true, ...(ngDevMode ? [{ debugName: "multiple" }] : []));
+    color = input('primary', ...(ngDevMode ? [{ debugName: "color" }] : []));
+    selectionChange = output();
+    options = contentChildren(IxListOptionComponent, ...(ngDevMode ? [{ debugName: "options", descendants: true }] : [{ descendants: true }]));
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    // Computed disabled state (combines input and form state)
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
     onChange = (_) => { };
     onTouched = () => { };
-    ngAfterContentInit() {
-        this.options.forEach(option => {
-            option.selectionList = this;
-            option.internalColor.set(this.color);
-        });
-        this.options.changes.subscribe(() => {
-            this.options.forEach(option => {
+    constructor() {
+        // Effect to update options when they change
+        effect(() => {
+            const opts = this.options();
+            const currentColor = this.color();
+            opts.forEach(option => {
                 option.selectionList = this;
-                option.internalColor.set(this.color);
+                option.internalColor.set(currentColor);
             });
         });
     }
     // ControlValueAccessor implementation
     writeValue(value) {
-        if (value && this.options) {
-            this.options.forEach(option => {
+        if (value) {
+            const opts = this.options();
+            opts.forEach(option => {
                 option.internalSelected.set(value.includes(option.value()));
             });
         }
@@ -3015,35 +3018,36 @@ class IxSelectionListComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
-        if (this.options) {
-            this.options.forEach(option => {
-                option.internalDisabled.set(isDisabled);
-            });
-        }
+        this.formDisabled.set(isDisabled);
+        const opts = this.options();
+        opts.forEach(option => {
+            option.internalDisabled.set(isDisabled);
+        });
     }
     onOptionSelectionChange() {
         this.onTouched();
-        const selectedValues = this.options
+        const opts = this.options();
+        const selectedValues = opts
             .filter(option => option.effectiveSelected())
             .map(option => option.value());
         this.onChange(selectedValues);
         this.selectionChange.emit({
             source: this,
-            options: this.options.filter(option => option.effectiveSelected())
+            options: opts.filter(option => option.effectiveSelected())
         });
     }
     get selectedOptions() {
-        return this.options ? this.options.filter(option => option.effectiveSelected()) : [];
+        const opts = this.options();
+        return opts.filter(option => option.effectiveSelected());
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSelectionListComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxSelectionListComponent, isStandalone: true, selector: "ix-selection-list", inputs: { dense: "dense", disabled: "disabled", multiple: "multiple", color: "color" }, outputs: { selectionChange: "selectionChange" }, host: { attributes: { "role": "listbox" }, properties: { "class.ix-selection-list--dense": "dense", "class.ix-selection-list--disabled": "disabled", "attr.aria-multiselectable": "multiple" }, classAttribute: "ix-selection-list" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.2.0", version: "20.3.4", type: IxSelectionListComponent, isStandalone: true, selector: "ix-selection-list", inputs: { dense: { classPropertyName: "dense", publicName: "dense", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, multiple: { classPropertyName: "multiple", publicName: "multiple", isSignal: true, isRequired: false, transformFunction: null }, color: { classPropertyName: "color", publicName: "color", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectionChange: "selectionChange" }, host: { attributes: { "role": "listbox" }, properties: { "class.ix-selection-list--dense": "dense()", "class.ix-selection-list--disabled": "isDisabled()", "attr.aria-multiselectable": "multiple()" }, classAttribute: "ix-selection-list" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxSelectionListComponent),
                 multi: true
             }
-        ], queries: [{ propertyName: "options", predicate: i0.forwardRef(() => IxListOptionComponent), descendants: true }], ngImport: i0, template: "<ng-content></ng-content>", styles: [".ix-selection-list{display:block;padding:8px 0;margin:0;background-color:var(--bg2);border-radius:4px}.ix-selection-list--dense{padding:4px 0}.ix-selection-list--disabled{opacity:.6;pointer-events:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
+        ], queries: [{ propertyName: "options", predicate: IxListOptionComponent, descendants: true, isSignal: true }], ngImport: i0, template: "<ng-content></ng-content>", styles: [".ix-selection-list{display:block;padding:8px 0;margin:0;background-color:var(--bg2);border-radius:4px}.ix-selection-list--dense{padding:4px 0}.ix-selection-list--disabled{opacity:.6;pointer-events:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSelectionListComponent, decorators: [{
             type: Component,
@@ -3055,25 +3059,12 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                         }
                     ], host: {
                         'class': 'ix-selection-list',
-                        '[class.ix-selection-list--dense]': 'dense',
-                        '[class.ix-selection-list--disabled]': 'disabled',
+                        '[class.ix-selection-list--dense]': 'dense()',
+                        '[class.ix-selection-list--disabled]': 'isDisabled()',
                         'role': 'listbox',
-                        '[attr.aria-multiselectable]': 'multiple'
+                        '[attr.aria-multiselectable]': 'multiple()'
                     }, template: "<ng-content></ng-content>", styles: [".ix-selection-list{display:block;padding:8px 0;margin:0;background-color:var(--bg2);border-radius:4px}.ix-selection-list--dense{padding:4px 0}.ix-selection-list--disabled{opacity:.6;pointer-events:none}\n"] }]
-        }], propDecorators: { dense: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], multiple: [{
-                type: Input
-            }], color: [{
-                type: Input
-            }], selectionChange: [{
-                type: Output
-            }], options: [{
-                type: ContentChildren,
-                args: [forwardRef(() => IxListOptionComponent), { descendants: true }]
-            }] } });
+        }], ctorParameters: () => [] });
 
 class IxHeaderCellDefDirective {
     template;
@@ -6535,14 +6526,16 @@ class IxSliderThumbDirective {
             return;
         const rect = this.slider.getSliderRect();
         const percentage = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-        const newValue = this.slider.min + (percentage * (this.slider.max - this.slider.min));
+        const minVal = this.slider.min();
+        const maxVal = this.slider.max();
+        const newValue = minVal + (percentage * (maxVal - minVal));
         this.slider.updateValue(newValue);
     }
     cleanup() {
         this.removeGlobalListeners();
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSliderThumbDirective, deps: [{ token: i0.ElementRef }], target: i0.ɵɵFactoryTarget.Directive });
-    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "14.0.0", version: "20.3.4", type: IxSliderThumbDirective, isStandalone: true, selector: "input[ixSliderThumb]", inputs: { disabled: "disabled" }, host: { attributes: { "type": "range" }, listeners: { "input": "onInput($event)", "change": "onChange($event)", "blur": "onTouched()", "mousedown": "onMouseDown($event)", "touchstart": "onTouchStart($event)" }, properties: { "disabled": "slider?.disabled", "attr.min": "slider?.min", "attr.max": "slider?.max", "attr.step": "slider?.step", "value": "slider?.value()" }, classAttribute: "ix-slider-thumb" }, providers: [
+    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "14.0.0", version: "20.3.4", type: IxSliderThumbDirective, isStandalone: true, selector: "input[ixSliderThumb]", inputs: { disabled: "disabled" }, host: { attributes: { "type": "range" }, listeners: { "input": "onInput($event)", "change": "onChange($event)", "blur": "onTouched()", "mousedown": "onMouseDown($event)", "touchstart": "onTouchStart($event)" }, properties: { "disabled": "slider?.isDisabled()", "attr.min": "slider?.min()", "attr.max": "slider?.max()", "attr.step": "slider?.step()", "value": "slider?.value()" }, classAttribute: "ix-slider-thumb" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxSliderThumbDirective),
@@ -6565,10 +6558,10 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                     host: {
                         'type': 'range',
                         'class': 'ix-slider-thumb',
-                        '[disabled]': 'slider?.disabled',
-                        '[attr.min]': 'slider?.min',
-                        '[attr.max]': 'slider?.max',
-                        '[attr.step]': 'slider?.step',
+                        '[disabled]': 'slider?.isDisabled()',
+                        '[attr.min]': 'slider?.min()',
+                        '[attr.max]': 'slider?.max()',
+                        '[attr.step]': 'slider?.step()',
                         '[value]': 'slider?.value()',
                         '(input)': 'onInput($event)',
                         '(change)': 'onChange($event)',
@@ -6582,13 +6575,13 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             }] } });
 
 class IxSliderComponent {
-    min = 0;
-    max = 100;
-    step = 1;
-    disabled = false;
-    labelPrefix = '';
-    labelSuffix = '';
-    labelType = 'none';
+    min = input(0, ...(ngDevMode ? [{ debugName: "min" }] : []));
+    max = input(100, ...(ngDevMode ? [{ debugName: "max" }] : []));
+    step = input(1, ...(ngDevMode ? [{ debugName: "step" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    labelPrefix = input('', ...(ngDevMode ? [{ debugName: "labelPrefix" }] : []));
+    labelSuffix = input('', ...(ngDevMode ? [{ debugName: "labelSuffix" }] : []));
+    labelType = input('none', ...(ngDevMode ? [{ debugName: "labelType" }] : []));
     thumbDirective;
     sliderContainer;
     thumbVisual;
@@ -6597,12 +6590,15 @@ class IxSliderComponent {
     value = signal(0, ...(ngDevMode ? [{ debugName: "value" }] : []));
     _showLabel = signal(false, ...(ngDevMode ? [{ debugName: "_showLabel" }] : []));
     _labelVisible = signal(false, ...(ngDevMode ? [{ debugName: "_labelVisible" }] : []));
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    // Computed disabled state (combines input and form state)
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
     // Computed percentage for track fill
     fillPercentage = computed(() => {
-        const range = this.max - this.min;
+        const range = this.max() - this.min();
         if (range === 0)
             return 0;
-        return ((this.value() - this.min) / range) * 100;
+        return ((this.value() - this.min()) / range) * 100;
     }, ...(ngDevMode ? [{ debugName: "fillPercentage" }] : []));
     // Computed scale for track fill (0 to 1)
     fillScale = computed(() => {
@@ -6618,18 +6614,14 @@ class IxSliderComponent {
     // Public signals for label management
     showLabel = this._showLabel.asReadonly();
     labelVisible = this._labelVisible.asReadonly();
-    ngOnInit() {
-        // Enable label if labelType is not 'none'
-        if (this.labelType !== 'none') {
-            this.enableLabel();
-        }
-    }
-    ngOnChanges(changes) {
-        if (changes['labelType']) {
-            if (this.labelType !== 'none') {
+    constructor() {
+        // Effect to handle labelType changes
+        effect(() => {
+            const currentLabelType = this.labelType();
+            if (currentLabelType !== 'none') {
                 this.enableLabel();
                 // Set up interaction listeners for handle type after view init
-                if (this.sliderContainer && (this.labelType === 'handle' || this.labelType === 'both')) {
+                if (this.sliderContainer && (currentLabelType === 'handle' || currentLabelType === 'both')) {
                     this.setupHandleInteractionListeners();
                 }
             }
@@ -6638,7 +6630,7 @@ class IxSliderComponent {
                 this._showLabel.set(false);
                 this.cleanupHandleInteractionListeners();
             }
-        }
+        });
     }
     ngAfterViewInit() {
         // Initialize thumb directive if present
@@ -6647,7 +6639,8 @@ class IxSliderComponent {
         }
         this.updateThumbPosition();
         // Set up handle interaction listeners if labelType is handle or both
-        if ((this.labelType === 'handle' || this.labelType === 'both') && this._showLabel()) {
+        const currentLabelType = this.labelType();
+        if ((currentLabelType === 'handle' || currentLabelType === 'both') && this._showLabel()) {
             this.setupHandleInteractionListeners();
         }
     }
@@ -6667,7 +6660,7 @@ class IxSliderComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     // Public methods for thumb directive and label management
     updateValue(newValue) {
@@ -6689,13 +6682,15 @@ class IxSliderComponent {
         return this.sliderContainer.nativeElement.getBoundingClientRect();
     }
     onTrackClick(event) {
-        if (this.disabled)
+        if (this.isDisabled())
             return;
         event.preventDefault();
         const rect = this.getSliderRect();
         const clientX = event instanceof MouseEvent ? event.clientX : event.touches[0].clientX;
         const percentage = (clientX - rect.left) / rect.width;
-        const newValue = this.min + (percentage * (this.max - this.min));
+        const minVal = this.min();
+        const maxVal = this.max();
+        const newValue = minVal + (percentage * (maxVal - minVal));
         this.updateValue(newValue);
         this.onTouched();
     }
@@ -6704,12 +6699,15 @@ class IxSliderComponent {
         // No manual DOM manipulation needed
     }
     clampValue(value) {
+        const minVal = this.min();
+        const maxVal = this.max();
+        const stepVal = this.step();
         // Clamp to min/max
-        let clampedValue = Math.max(this.min, Math.min(this.max, value));
+        let clampedValue = Math.max(minVal, Math.min(maxVal, value));
         // Snap to step
-        if (this.step > 0) {
-            const steps = Math.round((clampedValue - this.min) / this.step);
-            clampedValue = this.min + (steps * this.step);
+        if (stepVal > 0) {
+            const steps = Math.round((clampedValue - minVal) / stepVal);
+            clampedValue = minVal + (steps * stepVal);
         }
         return clampedValue;
     }
@@ -6743,59 +6741,61 @@ class IxSliderComponent {
         }
     }
     onInteractionStart = () => {
-        if (this.labelType === 'handle' || this.labelType === 'both') {
+        const currentLabelType = this.labelType();
+        if (currentLabelType === 'handle' || currentLabelType === 'both') {
             this.showThumbLabel();
         }
     };
     onInteractionEnd = () => {
-        if (this.labelType === 'handle' || this.labelType === 'both') {
+        const currentLabelType = this.labelType();
+        if (currentLabelType === 'handle' || currentLabelType === 'both') {
             this.hideThumbLabel();
         }
     };
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSliderComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxSliderComponent, isStandalone: true, selector: "ix-slider", inputs: { min: "min", max: "max", step: "step", disabled: "disabled", labelPrefix: "labelPrefix", labelSuffix: "labelSuffix", labelType: "labelType" }, host: { properties: { "attr.aria-disabled": "disabled" }, classAttribute: "ix-slider" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxSliderComponent, isStandalone: true, selector: "ix-slider", inputs: { min: { classPropertyName: "min", publicName: "min", isSignal: true, isRequired: false, transformFunction: null }, max: { classPropertyName: "max", publicName: "max", isSignal: true, isRequired: false, transformFunction: null }, step: { classPropertyName: "step", publicName: "step", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, labelPrefix: { classPropertyName: "labelPrefix", publicName: "labelPrefix", isSignal: true, isRequired: false, transformFunction: null }, labelSuffix: { classPropertyName: "labelSuffix", publicName: "labelSuffix", isSignal: true, isRequired: false, transformFunction: null }, labelType: { classPropertyName: "labelType", publicName: "labelType", isSignal: true, isRequired: false, transformFunction: null } }, host: { properties: { "attr.aria-disabled": "isDisabled()" }, classAttribute: "ix-slider" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxSliderComponent),
                 multi: true
             }
-        ], queries: [{ propertyName: "thumbDirective", first: true, predicate: IxSliderThumbDirective, descendants: true }], viewQueries: [{ propertyName: "sliderContainer", first: true, predicate: ["sliderContainer"], descendants: true }, { propertyName: "thumbVisual", first: true, predicate: ["thumbVisual"], descendants: true }], usesOnChanges: true, ngImport: i0, template: `
-    <div 
+        ], queries: [{ propertyName: "thumbDirective", first: true, predicate: IxSliderThumbDirective, descendants: true }], viewQueries: [{ propertyName: "sliderContainer", first: true, predicate: ["sliderContainer"], descendants: true }, { propertyName: "thumbVisual", first: true, predicate: ["thumbVisual"], descendants: true }], ngImport: i0, template: `
+    <div
       class="ix-slider-container"
       #sliderContainer
-      [attr.aria-disabled]="disabled"
-      [attr.data-disabled]="disabled"
+      [attr.aria-disabled]="isDisabled()"
+      [attr.data-disabled]="isDisabled()"
       (mousedown)="onTrackClick($event)"
       (touchstart)="onTrackClick($event)">
-      
+
       <div class="ix-slider-track">
         <div class="ix-slider-track-inactive"></div>
         <div class="ix-slider-track-active">
-          <div 
-            class="ix-slider-track-active-fill" 
+          <div
+            class="ix-slider-track-active-fill"
             [style.transform]="'scaleX(' + fillScale() + ')'">
           </div>
         </div>
-        <div 
+        <div
           class="ix-slider-track-label"
-          *ngIf="(labelType === 'track' || labelType === 'both') && showLabel()">
-          {{ labelPrefix }}{{ value() }}{{ labelSuffix }}
+          *ngIf="(labelType() === 'track' || labelType() === 'both') && showLabel()">
+          {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}
         </div>
       </div>
-      
-      <div 
+
+      <div
         class="ix-slider-thumb-visual"
         #thumbVisual
         [style.transform]="'translateX(' + thumbPosition() + 'px)'">
         <div class="ix-slider-thumb-knob"></div>
-        <div 
+        <div
           class="ix-slider-thumb-label"
-          *ngIf="(labelType === 'handle' || labelType === 'both') && showLabel()"
+          *ngIf="(labelType() === 'handle' || labelType() === 'both') && showLabel()"
           [class.visible]="labelVisible()">
-          {{ labelPrefix }}{{ value() }}{{ labelSuffix }}
+          {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}
         </div>
       </div>
-      
+
       <ng-content></ng-content>
     </div>
   `, isInline: true, styles: [":host{display:block;width:100%;height:48px;position:relative;touch-action:pan-x}.ix-slider-container{position:relative;width:100%;height:100%;display:flex;align-items:center;cursor:pointer}.ix-slider-container[data-disabled=true]{cursor:not-allowed;opacity:.6}.ix-slider-track{position:relative;width:100%;height:4px}.ix-slider-track-inactive{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--lines, #e0e0e0);border-radius:2px}.ix-slider-track-active{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;border-radius:2px}.ix-slider-track-active-fill{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--primary, #007bff);border-radius:2px;transform-origin:left center;transition:transform .1s ease-out}:host ::ng-deep .ix-slider-thumb{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;margin:0;padding:0;cursor:pointer;z-index:2;-webkit-appearance:none;appearance:none;background:none;border:none;outline:none}:host ::ng-deep .ix-slider-thumb:disabled{cursor:not-allowed}:host ::ng-deep .ix-slider-thumb:focus{outline:none}:host ::ng-deep .ix-slider-thumb:focus-visible{outline:none}:host ::ng-deep .ix-slider-thumb:focus-visible+.ix-slider-visual-thumb{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-slider-thumb-visual{position:absolute;top:50%;left:0;pointer-events:none;z-index:3;transition:transform .1s ease-out}.ix-slider-thumb-knob{width:20px;height:24px;background:var(--primary, #007bff);border:2px solid var(--bg1, white);border-radius:4px;box-shadow:0 2px 4px #0003;transition:box-shadow .15s ease;transform:translateY(-50%)}.ix-slider-container:hover .ix-slider-thumb-knob{box-shadow:0 4px 8px #0000004d}.ix-slider-container[data-disabled=true] .ix-slider-thumb-knob{background:var(--fg2, #999);box-shadow:0 1px 2px #0000001a}.ix-slider-thumb-label{position:absolute;bottom:calc(100% + 16px);left:50%;transform:translate(-50%) translateY(-50%);padding:8px 12px;background:var(--primary, #007bff);color:var(--primary-txt, white);border-radius:6px;font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;opacity:0;pointer-events:none;-webkit-user-select:none;user-select:none;transition:opacity .15s ease;z-index:4;box-shadow:0 2px 8px #00000026}.ix-slider-thumb-label:after{content:\"\";position:absolute;top:100%;left:50%;transform:translate(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid var(--primary, #007bff)}.ix-slider-thumb-label.visible{opacity:1}.ix-slider-track-label{position:absolute;top:-28px;right:0;padding:4px 0;background:transparent;color:var(--fg1, #000);font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;-webkit-user-select:none;user-select:none;z-index:2}@media (prefers-reduced-motion: reduce){.ix-slider-track-active-fill,.ix-slider-thumb-visual,.ix-slider-thumb-knob,.ix-slider-thumb-label{transition:none}}@media (prefers-contrast: high){.ix-slider-track-inactive{border:1px solid var(--fg1, #000)}.ix-slider-thumb-knob{border-width:3px;border-color:var(--fg1, #000)}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "ngmodule", type: A11yModule }] });
@@ -6809,63 +6809,49 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                             multi: true
                         }
                     ], template: `
-    <div 
+    <div
       class="ix-slider-container"
       #sliderContainer
-      [attr.aria-disabled]="disabled"
-      [attr.data-disabled]="disabled"
+      [attr.aria-disabled]="isDisabled()"
+      [attr.data-disabled]="isDisabled()"
       (mousedown)="onTrackClick($event)"
       (touchstart)="onTrackClick($event)">
-      
+
       <div class="ix-slider-track">
         <div class="ix-slider-track-inactive"></div>
         <div class="ix-slider-track-active">
-          <div 
-            class="ix-slider-track-active-fill" 
+          <div
+            class="ix-slider-track-active-fill"
             [style.transform]="'scaleX(' + fillScale() + ')'">
           </div>
         </div>
-        <div 
+        <div
           class="ix-slider-track-label"
-          *ngIf="(labelType === 'track' || labelType === 'both') && showLabel()">
-          {{ labelPrefix }}{{ value() }}{{ labelSuffix }}
+          *ngIf="(labelType() === 'track' || labelType() === 'both') && showLabel()">
+          {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}
         </div>
       </div>
-      
-      <div 
+
+      <div
         class="ix-slider-thumb-visual"
         #thumbVisual
         [style.transform]="'translateX(' + thumbPosition() + 'px)'">
         <div class="ix-slider-thumb-knob"></div>
-        <div 
+        <div
           class="ix-slider-thumb-label"
-          *ngIf="(labelType === 'handle' || labelType === 'both') && showLabel()"
+          *ngIf="(labelType() === 'handle' || labelType() === 'both') && showLabel()"
           [class.visible]="labelVisible()">
-          {{ labelPrefix }}{{ value() }}{{ labelSuffix }}
+          {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}
         </div>
       </div>
-      
+
       <ng-content></ng-content>
     </div>
   `, host: {
                         'class': 'ix-slider',
-                        '[attr.aria-disabled]': 'disabled'
+                        '[attr.aria-disabled]': 'isDisabled()'
                     }, styles: [":host{display:block;width:100%;height:48px;position:relative;touch-action:pan-x}.ix-slider-container{position:relative;width:100%;height:100%;display:flex;align-items:center;cursor:pointer}.ix-slider-container[data-disabled=true]{cursor:not-allowed;opacity:.6}.ix-slider-track{position:relative;width:100%;height:4px}.ix-slider-track-inactive{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--lines, #e0e0e0);border-radius:2px}.ix-slider-track-active{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;border-radius:2px}.ix-slider-track-active-fill{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--primary, #007bff);border-radius:2px;transform-origin:left center;transition:transform .1s ease-out}:host ::ng-deep .ix-slider-thumb{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;margin:0;padding:0;cursor:pointer;z-index:2;-webkit-appearance:none;appearance:none;background:none;border:none;outline:none}:host ::ng-deep .ix-slider-thumb:disabled{cursor:not-allowed}:host ::ng-deep .ix-slider-thumb:focus{outline:none}:host ::ng-deep .ix-slider-thumb:focus-visible{outline:none}:host ::ng-deep .ix-slider-thumb:focus-visible+.ix-slider-visual-thumb{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-slider-thumb-visual{position:absolute;top:50%;left:0;pointer-events:none;z-index:3;transition:transform .1s ease-out}.ix-slider-thumb-knob{width:20px;height:24px;background:var(--primary, #007bff);border:2px solid var(--bg1, white);border-radius:4px;box-shadow:0 2px 4px #0003;transition:box-shadow .15s ease;transform:translateY(-50%)}.ix-slider-container:hover .ix-slider-thumb-knob{box-shadow:0 4px 8px #0000004d}.ix-slider-container[data-disabled=true] .ix-slider-thumb-knob{background:var(--fg2, #999);box-shadow:0 1px 2px #0000001a}.ix-slider-thumb-label{position:absolute;bottom:calc(100% + 16px);left:50%;transform:translate(-50%) translateY(-50%);padding:8px 12px;background:var(--primary, #007bff);color:var(--primary-txt, white);border-radius:6px;font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;opacity:0;pointer-events:none;-webkit-user-select:none;user-select:none;transition:opacity .15s ease;z-index:4;box-shadow:0 2px 8px #00000026}.ix-slider-thumb-label:after{content:\"\";position:absolute;top:100%;left:50%;transform:translate(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid var(--primary, #007bff)}.ix-slider-thumb-label.visible{opacity:1}.ix-slider-track-label{position:absolute;top:-28px;right:0;padding:4px 0;background:transparent;color:var(--fg1, #000);font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;-webkit-user-select:none;user-select:none;z-index:2}@media (prefers-reduced-motion: reduce){.ix-slider-track-active-fill,.ix-slider-thumb-visual,.ix-slider-thumb-knob,.ix-slider-thumb-label{transition:none}}@media (prefers-contrast: high){.ix-slider-track-inactive{border:1px solid var(--fg1, #000)}.ix-slider-thumb-knob{border-width:3px;border-color:var(--fg1, #000)}}\n"] }]
-        }], propDecorators: { min: [{
-                type: Input
-            }], max: [{
-                type: Input
-            }], step: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], labelPrefix: [{
-                type: Input
-            }], labelSuffix: [{
-                type: Input
-            }], labelType: [{
-                type: Input
-            }], thumbDirective: [{
+        }], ctorParameters: () => [], propDecorators: { thumbDirective: [{
                 type: ContentChild,
                 args: [IxSliderThumbDirective]
             }], sliderContainer: [{
@@ -6891,12 +6877,9 @@ class IxSliderWithLabelDirective {
         }
         // Enable the label in the slider component
         this._slider.enableLabel();
-        // Set default labelType to 'handle' if not already set
-        if (this._slider.labelType === 'none') {
-            this._slider.labelType = 'handle';
-        }
         // Only set up event listeners for handle type labels (tooltip behavior)
-        if (this._slider.labelType === 'handle') {
+        const currentLabelType = this._slider.labelType();
+        if (currentLabelType === 'handle' || currentLabelType === 'both') {
             this._setupInteractionListeners();
         }
     }
@@ -6925,7 +6908,8 @@ class IxSliderWithLabelDirective {
     };
     _cleanup() {
         // Only clean up interaction listeners if they were set up for handle type
-        if (this._slider.labelType === 'handle') {
+        const currentLabelType = this._slider.labelType();
+        if (currentLabelType === 'handle' || currentLabelType === 'both') {
             const sliderContainer = this._elementRef.nativeElement.querySelector('.ix-slider-container');
             const thumbInput = this._elementRef.nativeElement.querySelector('input[ixSliderThumb]');
             if (sliderContainer) {
@@ -6956,28 +6940,29 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                 args: ['ixSliderWithLabel']
             }] } });
 
-let nextId = 0;
 class IxButtonToggleComponent {
     cdr;
     static _uniqueIdCounter = 0;
-    id = `ix-button-toggle-${IxButtonToggleComponent._uniqueIdCounter++}`;
-    value;
-    disabled = false;
-    checked = false;
-    ariaLabel = '';
-    ariaLabelledby = '';
-    change = new EventEmitter();
-    buttonId;
+    id = input(`ix-button-toggle-${IxButtonToggleComponent._uniqueIdCounter++}`, ...(ngDevMode ? [{ debugName: "id" }] : []));
+    value = input(undefined, ...(ngDevMode ? [{ debugName: "value" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    checked = signal(false, ...(ngDevMode ? [{ debugName: "checked" }] : []));
+    ariaLabel = input('', ...(ngDevMode ? [{ debugName: "ariaLabel" }] : []));
+    ariaLabelledby = input('', ...(ngDevMode ? [{ debugName: "ariaLabelledby" }] : []));
+    change = output();
+    buttonId = computed(() => this.id() + '-button', ...(ngDevMode ? [{ debugName: "buttonId" }] : []));
     buttonToggleGroup;
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    // Computed disabled state (combines input and form state)
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
     onChange = (value) => { };
     onTouched = () => { };
     constructor(cdr) {
         this.cdr = cdr;
-        this.buttonId = this.id + '-button';
     }
     // ControlValueAccessor implementation
     writeValue(value) {
-        this.checked = !!value;
+        this.checked.set(!!value);
     }
     registerOnChange(fn) {
         this.onChange = fn;
@@ -6986,10 +6971,10 @@ class IxButtonToggleComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.formDisabled.set(isDisabled);
     }
     toggle() {
-        if (this.disabled) {
+        if (this.isDisabled()) {
             return;
         }
         // If part of a group, let the group handle the state
@@ -6998,30 +6983,31 @@ class IxButtonToggleComponent {
         }
         else {
             // Standalone toggle - handle its own state
-            this.checked = !this.checked;
-            this.onChange(this.checked);
+            const newValue = !this.checked();
+            this.checked.set(newValue);
+            this.onChange(newValue);
             this.onTouched();
             this.change.emit({
                 source: this,
-                value: this.value || this.checked
+                value: this.value() || newValue
             });
         }
     }
-    focus() {
+    onFocus() {
         this.onTouched();
     }
     // Method for group to mark this toggle as checked
     _markForCheck() {
-        this.checked = true;
+        this.checked.set(true);
         this.cdr.markForCheck();
     }
     // Method for group to mark this toggle as unchecked
     _markForUncheck() {
-        this.checked = false;
+        this.checked.set(false);
         this.cdr.markForCheck();
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxButtonToggleComponent, deps: [{ token: i0.ChangeDetectorRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxButtonToggleComponent, isStandalone: true, selector: "ix-button-toggle", inputs: { id: "id", value: "value", disabled: "disabled", checked: "checked", ariaLabel: "ariaLabel", ariaLabelledby: "ariaLabelledby" }, outputs: { change: "change" }, host: { listeners: { "focus": "focus()" }, properties: { "attr.id": "id", "class.ix-button-toggle--checked": "checked", "class.ix-button-toggle--disabled": "disabled", "class.ix-button-toggle--standalone": "!buttonToggleGroup" }, classAttribute: "ix-button-toggle" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxButtonToggleComponent, isStandalone: true, selector: "ix-button-toggle", inputs: { id: { classPropertyName: "id", publicName: "id", isSignal: true, isRequired: false, transformFunction: null }, value: { classPropertyName: "value", publicName: "value", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, ariaLabel: { classPropertyName: "ariaLabel", publicName: "ariaLabel", isSignal: true, isRequired: false, transformFunction: null }, ariaLabelledby: { classPropertyName: "ariaLabelledby", publicName: "ariaLabelledby", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { change: "change" }, host: { listeners: { "focus": "onFocus()" }, properties: { "attr.id": "id()", "class.ix-button-toggle--checked": "checked()", "class.ix-button-toggle--disabled": "isDisabled()", "class.ix-button-toggle--standalone": "!buttonToggleGroup" }, classAttribute: "ix-button-toggle" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxButtonToggleComponent),
@@ -7031,15 +7017,15 @@ class IxButtonToggleComponent {
     <button
       type="button"
       class="ix-button-toggle__button"
-      [class.ix-button-toggle__button--checked]="checked"
-      [disabled]="disabled"
-      [attr.aria-pressed]="checked"
-      [attr.aria-label]="ariaLabel || null"
-      [attr.aria-labelledby]="ariaLabelledby"
-      [attr.id]="buttonId"
+      [class.ix-button-toggle__button--checked]="checked()"
+      [disabled]="isDisabled()"
+      [attr.aria-pressed]="checked()"
+      [attr.aria-label]="ariaLabel() || null"
+      [attr.aria-labelledby]="ariaLabelledby()"
+      [attr.id]="buttonId()"
       (click)="toggle()">
       <span class="ix-button-toggle__label">
-        <span class="ix-button-toggle__check" *ngIf="checked">✓</span>
+        <span class="ix-button-toggle__check" *ngIf="checked()">✓</span>
         <ng-content></ng-content>
       </span>
     </button>
@@ -7057,80 +7043,60 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
     <button
       type="button"
       class="ix-button-toggle__button"
-      [class.ix-button-toggle__button--checked]="checked"
-      [disabled]="disabled"
-      [attr.aria-pressed]="checked"
-      [attr.aria-label]="ariaLabel || null"
-      [attr.aria-labelledby]="ariaLabelledby"
-      [attr.id]="buttonId"
+      [class.ix-button-toggle__button--checked]="checked()"
+      [disabled]="isDisabled()"
+      [attr.aria-pressed]="checked()"
+      [attr.aria-label]="ariaLabel() || null"
+      [attr.aria-labelledby]="ariaLabelledby()"
+      [attr.id]="buttonId()"
       (click)="toggle()">
       <span class="ix-button-toggle__label">
-        <span class="ix-button-toggle__check" *ngIf="checked">✓</span>
+        <span class="ix-button-toggle__check" *ngIf="checked()">✓</span>
         <ng-content></ng-content>
       </span>
     </button>
   `, changeDetection: ChangeDetectionStrategy.OnPush, encapsulation: ViewEncapsulation.None, host: {
                         'class': 'ix-button-toggle',
-                        '[attr.id]': 'id',
-                        '[class.ix-button-toggle--checked]': 'checked',
-                        '[class.ix-button-toggle--disabled]': 'disabled',
-                        '[class.ix-button-toggle--standalone]': '!buttonToggleGroup'
+                        '[attr.id]': 'id()',
+                        '[class.ix-button-toggle--checked]': 'checked()',
+                        '[class.ix-button-toggle--disabled]': 'isDisabled()',
+                        '[class.ix-button-toggle--standalone]': '!buttonToggleGroup',
+                        '(focus)': 'onFocus()'
                     }, styles: [".ix-button-toggle{display:inline-block;position:relative}.ix-button-toggle:first-child .ix-button-toggle__button{border-radius:6px 0 0 6px}.ix-button-toggle:last-child .ix-button-toggle__button{border-radius:0 6px 6px 0}.ix-button-toggle:not(:first-child):not(:last-child) .ix-button-toggle__button{border-radius:0}.ix-button-toggle:first-child:last-child .ix-button-toggle__button{border-radius:6px}.ix-button-toggle:not(:first-child) .ix-button-toggle__button{margin-left:-1px}.ix-button-toggle--standalone .ix-button-toggle__button{border-radius:6px}.ix-button-toggle .ix-button-toggle__button{display:inline-flex;align-items:center;justify-content:center;min-width:64px;height:36px;padding:0 16px;border:1px solid var(--lines, #d1d5db);background:var(--bg1, #ffffff);color:var(--fg2, #6b7280);font-family:inherit;font-size:14px;font-weight:500;text-decoration:none;cursor:pointer;transition:all .25s cubic-bezier(.4,0,.2,1);outline:none;position:relative;z-index:1;overflow:hidden}.ix-button-toggle .ix-button-toggle__button:hover:not(:disabled){background:var(--alt-bg1, #f9fafb);z-index:2}.ix-button-toggle .ix-button-toggle__button:focus-visible{outline:2px solid var(--primary, #3b82f6);outline-offset:2px;z-index:3}.ix-button-toggle .ix-button-toggle__button:disabled{cursor:not-allowed!important;background:var(--alt-bg2, #f3f4f6)!important;color:var(--fg1, #000000)!important;opacity:.6!important}.ix-button-toggle .ix-button-toggle__button:disabled:hover{background:var(--alt-bg2, #f3f4f6)!important;cursor:not-allowed!important}.ix-button-toggle .ix-button-toggle__button--checked{background:var(--primary, #3b82f6);color:var(--primary-txt, #ffffff);border-color:var(--primary, #3b82f6);z-index:2;padding:0 20px}.ix-button-toggle .ix-button-toggle__button--checked:hover:not(:disabled){background:var(--primary, #3b82f6)}.ix-button-toggle .ix-button-toggle__label{display:flex;align-items:center;justify-content:center;gap:8px;pointer-events:none;line-height:1}.ix-button-toggle .ix-button-toggle__check{font-size:12px;font-weight:700;line-height:1;margin-right:4px;transform:translate(-4px) scale(.8);opacity:0;animation:checkmarkSlideIn .25s cubic-bezier(.4,0,.2,1) forwards}@keyframes checkmarkSlideIn{0%{transform:translate(-8px) scale(.8);opacity:0}50%{transform:translate(-2px) scale(1.1);opacity:.7}to{transform:translate(0) scale(1);opacity:1}}\n"] }]
-        }], ctorParameters: () => [{ type: i0.ChangeDetectorRef }], propDecorators: { id: [{
-                type: Input
-            }], value: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], checked: [{
-                type: Input
-            }], ariaLabel: [{
-                type: Input
-            }], ariaLabelledby: [{
-                type: Input
-            }], change: [{
-                type: Output
-            }], focus: [{
-                type: HostListener,
-                args: ['focus']
-            }] } });
+        }], ctorParameters: () => [{ type: i0.ChangeDetectorRef }] });
 
 class IxButtonToggleGroupComponent {
-    buttonToggles;
-    multiple = false;
-    disabled = false;
-    name = '';
-    ariaLabel = '';
-    ariaLabelledby = '';
-    change = new EventEmitter();
-    selectedValue = null;
-    selectedValues = [];
-    destroy$ = new Subject();
+    buttonToggles = contentChildren(IxButtonToggleComponent, ...(ngDevMode ? [{ debugName: "buttonToggles", descendants: true }] : [{ descendants: true }]));
+    multiple = input(false, ...(ngDevMode ? [{ debugName: "multiple" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    name = input('', ...(ngDevMode ? [{ debugName: "name" }] : []));
+    ariaLabel = input('', ...(ngDevMode ? [{ debugName: "ariaLabel" }] : []));
+    ariaLabelledby = input('', ...(ngDevMode ? [{ debugName: "ariaLabelledby" }] : []));
+    change = output();
+    selectedValue = signal(null, ...(ngDevMode ? [{ debugName: "selectedValue" }] : []));
+    selectedValues = signal([], ...(ngDevMode ? [{ debugName: "selectedValues" }] : []));
+    formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
+    // Computed disabled state (combines input and form state)
+    isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
     onChange = (value) => { };
     onTouched = () => { };
-    ngAfterContentInit() {
-        this.buttonToggles.forEach(toggle => {
-            toggle.buttonToggleGroup = this;
-        });
-        // Listen for changes in the button toggles
-        this.buttonToggles.changes.pipe(takeUntil(this.destroy$)).subscribe(() => {
-            this.buttonToggles.forEach(toggle => {
+    constructor() {
+        // Effect to update button toggles when content children change
+        effect(() => {
+            const toggles = this.buttonToggles();
+            toggles.forEach(toggle => {
                 toggle.buttonToggleGroup = this;
             });
         });
     }
-    ngOnDestroy() {
-        this.destroy$.next();
-        this.destroy$.complete();
-    }
     // ControlValueAccessor implementation
     writeValue(value) {
-        if (this.multiple) {
-            this.selectedValues = Array.isArray(value) ? value : [];
+        if (this.multiple()) {
+            this.selectedValues.set(Array.isArray(value) ? value : []);
             this.updateTogglesFromValues();
         }
         else {
-            this.selectedValue = value;
+            this.selectedValue.set(value);
             this.updateTogglesFromValue();
         }
     }
@@ -7141,18 +7107,17 @@ class IxButtonToggleGroupComponent {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
-        if (this.buttonToggles) {
-            this.buttonToggles.forEach(toggle => {
-                toggle.disabled = isDisabled;
-            });
-        }
+        this.formDisabled.set(isDisabled);
+        const toggles = this.buttonToggles();
+        toggles.forEach(toggle => {
+            toggle.setDisabledState(isDisabled);
+        });
     }
     _onButtonToggleClick(clickedToggle) {
-        if (this.disabled || clickedToggle.disabled) {
+        if (this.isDisabled() || clickedToggle.isDisabled()) {
             return;
         }
-        if (this.multiple) {
+        if (this.multiple()) {
             this.handleMultipleSelection(clickedToggle);
         }
         else {
@@ -7161,46 +7126,49 @@ class IxButtonToggleGroupComponent {
         this.onTouched();
         this.change.emit({
             source: clickedToggle,
-            value: this.multiple ? this.selectedValues : this.selectedValue
+            value: this.multiple() ? this.selectedValues() : this.selectedValue()
         });
     }
     handleSingleSelection(clickedToggle) {
         // In radio mode, clicking the same toggle deselects it
-        if (this.selectedValue === clickedToggle.value) {
-            this.selectedValue = null;
+        if (this.selectedValue() === clickedToggle.value) {
+            this.selectedValue.set(null);
             clickedToggle._markForUncheck();
         }
         else {
             // Deselect all others
-            this.buttonToggles.forEach(toggle => {
+            const toggles = this.buttonToggles();
+            toggles.forEach(toggle => {
                 if (toggle !== clickedToggle) {
                     toggle._markForUncheck();
                 }
             });
-            this.selectedValue = clickedToggle.value;
+            this.selectedValue.set(clickedToggle.value);
             clickedToggle._markForCheck();
         }
-        this.onChange(this.selectedValue);
+        this.onChange(this.selectedValue());
     }
     handleMultipleSelection(clickedToggle) {
-        const index = this.selectedValues.indexOf(clickedToggle.value);
+        const currentValues = [...this.selectedValues()];
+        const index = currentValues.indexOf(clickedToggle.value);
         if (index > -1) {
             // Remove from selection
-            this.selectedValues.splice(index, 1);
+            currentValues.splice(index, 1);
             clickedToggle._markForUncheck();
         }
         else {
             // Add to selection
-            this.selectedValues.push(clickedToggle.value);
+            currentValues.push(clickedToggle.value);
             clickedToggle._markForCheck();
         }
-        this.onChange([...this.selectedValues]);
+        this.selectedValues.set(currentValues);
+        this.onChange([...currentValues]);
     }
     updateTogglesFromValue() {
-        if (!this.buttonToggles)
-            return;
-        this.buttonToggles.forEach(toggle => {
-            if (toggle.value === this.selectedValue) {
+        const toggles = this.buttonToggles();
+        const value = this.selectedValue();
+        toggles.forEach(toggle => {
+            if (toggle.value === value) {
                 toggle._markForCheck();
             }
             else {
@@ -7209,10 +7177,10 @@ class IxButtonToggleGroupComponent {
         });
     }
     updateTogglesFromValues() {
-        if (!this.buttonToggles)
-            return;
-        this.buttonToggles.forEach(toggle => {
-            if (this.selectedValues.includes(toggle.value)) {
+        const toggles = this.buttonToggles();
+        const values = this.selectedValues();
+        toggles.forEach(toggle => {
+            if (values.includes(toggle.value)) {
                 toggle._markForCheck();
             }
             else {
@@ -7221,17 +7189,17 @@ class IxButtonToggleGroupComponent {
         });
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxButtonToggleGroupComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxButtonToggleGroupComponent, isStandalone: true, selector: "ix-button-toggle-group", inputs: { multiple: "multiple", disabled: "disabled", name: "name", ariaLabel: "ariaLabel", ariaLabelledby: "ariaLabelledby" }, outputs: { change: "change" }, host: { classAttribute: "ix-button-toggle-group" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.2.0", version: "20.3.4", type: IxButtonToggleGroupComponent, isStandalone: true, selector: "ix-button-toggle-group", inputs: { multiple: { classPropertyName: "multiple", publicName: "multiple", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, name: { classPropertyName: "name", publicName: "name", isSignal: true, isRequired: false, transformFunction: null }, ariaLabel: { classPropertyName: "ariaLabel", publicName: "ariaLabel", isSignal: true, isRequired: false, transformFunction: null }, ariaLabelledby: { classPropertyName: "ariaLabelledby", publicName: "ariaLabelledby", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { change: "change" }, host: { classAttribute: "ix-button-toggle-group" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxButtonToggleGroupComponent),
                 multi: true
             }
-        ], queries: [{ propertyName: "buttonToggles", predicate: IxButtonToggleComponent, descendants: true }], ngImport: i0, template: `
-    <div class="ix-button-toggle-group" 
-         [attr.role]="multiple ? 'group' : 'radiogroup'"
-         [attr.aria-label]="ariaLabel"
-         [attr.aria-labelledby]="ariaLabelledby">
+        ], queries: [{ propertyName: "buttonToggles", predicate: IxButtonToggleComponent, descendants: true, isSignal: true }], ngImport: i0, template: `
+    <div class="ix-button-toggle-group"
+         [attr.role]="multiple() ? 'group' : 'radiogroup'"
+         [attr.aria-label]="ariaLabel()"
+         [attr.aria-labelledby]="ariaLabelledby()">
       <ng-content></ng-content>
     </div>
   `, isInline: true, styles: [".ix-button-toggle-group{display:inline-flex;align-items:stretch;border-radius:6px;box-shadow:0 1px 2px #0000000d}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "ngmodule", type: A11yModule }], changeDetection: i0.ChangeDetectionStrategy.OnPush, encapsulation: i0.ViewEncapsulation.None });
@@ -7245,31 +7213,16 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                             multi: true
                         }
                     ], template: `
-    <div class="ix-button-toggle-group" 
-         [attr.role]="multiple ? 'group' : 'radiogroup'"
-         [attr.aria-label]="ariaLabel"
-         [attr.aria-labelledby]="ariaLabelledby">
+    <div class="ix-button-toggle-group"
+         [attr.role]="multiple() ? 'group' : 'radiogroup'"
+         [attr.aria-label]="ariaLabel()"
+         [attr.aria-labelledby]="ariaLabelledby()">
       <ng-content></ng-content>
     </div>
   `, changeDetection: ChangeDetectionStrategy.OnPush, encapsulation: ViewEncapsulation.None, host: {
                         'class': 'ix-button-toggle-group'
                     }, styles: [".ix-button-toggle-group{display:inline-flex;align-items:stretch;border-radius:6px;box-shadow:0 1px 2px #0000000d}\n"] }]
-        }], propDecorators: { buttonToggles: [{
-                type: ContentChildren,
-                args: [IxButtonToggleComponent, { descendants: true }]
-            }], multiple: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], name: [{
-                type: Input
-            }], ariaLabel: [{
-                type: Input
-            }], ariaLabelledby: [{
-                type: Input
-            }], change: [{
-                type: Output
-            }] } });
+        }], ctorParameters: () => [] });
 
 class IxTooltipComponent {
     message = input('', ...(ngDevMode ? [{ debugName: "message" }] : []));
@@ -7896,7 +7849,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * To regenerate this file, run:
  *   npm run generate-icons
  *
- * Generated: 2025-12-29T18:20:09.136Z
+ * Generated: 2025-12-29T18:37:29.826Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 /* eslint-disable */

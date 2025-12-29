@@ -162,10 +162,9 @@ export const Playground: Story = {
   render: (args) => ({
     template: `
       <ix-form-field label="Interactive Toggle">
-        <ix-button-toggle 
+        <ix-button-toggle
           [value]="value"
           [disabled]="disabled"
-          [checked]="checked"
           [ariaLabel]="ariaLabel">
           Toggle Me
         </ix-button-toggle>
@@ -182,7 +181,6 @@ export const Playground: Story = {
   args: {
     value: 'toggle-value',
     disabled: false,
-    checked: false,
     ariaLabel: 'Toggle button'
   }
 };

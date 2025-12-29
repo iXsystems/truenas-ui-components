@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ContentChildren, QueryList, AfterContentInit, forwardRef } from '@angular/core';
+import { Component, input, output, contentChildren, signal, computed, forwardRef, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { IxListOptionComponent } from '../ix-list-option/ix-list-option.component';
@@ -23,44 +23,47 @@ export interface IxSelectionChange {
   ],
   host: {
     'class': 'ix-selection-list',
-    '[class.ix-selection-list--dense]': 'dense',
-    '[class.ix-selection-list--disabled]': 'disabled',
+    '[class.ix-selection-list--dense]': 'dense()',
+    '[class.ix-selection-list--disabled]': 'isDisabled()',
     'role': 'listbox',
-    '[attr.aria-multiselectable]': 'multiple'
+    '[attr.aria-multiselectable]': 'multiple()'
   }
 })
-export class IxSelectionListComponent implements AfterContentInit, ControlValueAccessor {
-  @Input() dense = false;
-  @Input() disabled = false;
-  @Input() multiple = true;
-  @Input() color: 'primary' | 'accent' | 'warn' = 'primary';
+export class IxSelectionListComponent implements ControlValueAccessor {
+  dense = input<boolean>(false);
+  disabled = input<boolean>(false);
+  multiple = input<boolean>(true);
+  color = input<'primary' | 'accent' | 'warn'>('primary');
 
-  @Output() selectionChange = new EventEmitter<IxSelectionChange>();
+  selectionChange = output<IxSelectionChange>();
 
-  @ContentChildren(forwardRef(() => IxListOptionComponent), { descendants: true })
-  options!: QueryList<IxListOptionComponent>;
+  options = contentChildren(IxListOptionComponent, { descendants: true });
+
+  private formDisabled = signal<boolean>(false);
+
+  // Computed disabled state (combines input and form state)
+  isDisabled = computed(() => this.disabled() || this.formDisabled());
 
   private onChange = (_: any) => {};
   private onTouched = () => {};
 
-  ngAfterContentInit(): void {
-    this.options.forEach(option => {
-      option.selectionList = this;
-      option.internalColor.set(this.color);
-    });
-
-    this.options.changes.subscribe(() => {
-      this.options.forEach(option => {
+  constructor() {
+    // Effect to update options when they change
+    effect(() => {
+      const opts = this.options();
+      const currentColor = this.color();
+      opts.forEach(option => {
         option.selectionList = this;
-        option.internalColor.set(this.color);
+        option.internalColor.set(currentColor);
       });
     });
   }
 
   // ControlValueAccessor implementation
   writeValue(value: any[]): void {
-    if (value && this.options) {
-      this.options.forEach(option => {
+    if (value) {
+      const opts = this.options();
+      opts.forEach(option => {
         option.internalSelected.set(value.includes(option.value()));
       });
     }
@@ -75,17 +78,17 @@ export class IxSelectionListComponent implements AfterContentInit, ControlValueA
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
-    if (this.options) {
-      this.options.forEach(option => {
-        option.internalDisabled.set(isDisabled);
-      });
-    }
+    this.formDisabled.set(isDisabled);
+    const opts = this.options();
+    opts.forEach(option => {
+      option.internalDisabled.set(isDisabled);
+    });
   }
 
   onOptionSelectionChange(): void {
     this.onTouched();
-    const selectedValues = this.options
+    const opts = this.options();
+    const selectedValues = opts
       .filter(option => option.effectiveSelected())
       .map(option => option.value());
 
@@ -93,11 +96,12 @@ export class IxSelectionListComponent implements AfterContentInit, ControlValueA
 
     this.selectionChange.emit({
       source: this,
-      options: this.options.filter(option => option.effectiveSelected())
+      options: opts.filter(option => option.effectiveSelected())
     });
   }
 
   get selectedOptions(): IxListOptionComponent[] {
-    return this.options ? this.options.filter(option => option.effectiveSelected()) : [];
+    const opts = this.options();
+    return opts.filter(option => option.effectiveSelected());
   }
 }

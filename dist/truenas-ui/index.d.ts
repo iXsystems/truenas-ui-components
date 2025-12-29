@@ -1,5 +1,5 @@
 import * as _angular_core from '@angular/core';
-import { AfterViewInit, ElementRef, ChangeDetectorRef, OnDestroy, TemplateRef, ViewContainerRef, AfterContentInit, QueryList, EventEmitter, IterableDiffers, PipeTransform, OnInit, OnChanges, SimpleChanges, AfterViewChecked } from '@angular/core';
+import { AfterViewInit, ElementRef, ChangeDetectorRef, OnDestroy, TemplateRef, ViewContainerRef, AfterContentInit, QueryList, IterableDiffers, PipeTransform, OnInit, OnChanges, EventEmitter, SimpleChanges, AfterViewChecked } from '@angular/core';
 import { ComponentHarness, BaseHarnessFilters, HarnessPredicate } from '@angular/cdk/testing';
 import { SafeHtml, DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ControlValueAccessor, NgControl } from '@angular/forms';
@@ -1144,16 +1144,18 @@ interface IxSelectionChange {
     source: IxSelectionListComponent;
     options: IxListOptionComponent[];
 }
-declare class IxSelectionListComponent implements AfterContentInit, ControlValueAccessor {
-    dense: boolean;
-    disabled: boolean;
-    multiple: boolean;
-    color: 'primary' | 'accent' | 'warn';
-    selectionChange: EventEmitter<IxSelectionChange>;
-    options: QueryList<IxListOptionComponent>;
+declare class IxSelectionListComponent implements ControlValueAccessor {
+    dense: _angular_core.InputSignal<boolean>;
+    disabled: _angular_core.InputSignal<boolean>;
+    multiple: _angular_core.InputSignal<boolean>;
+    color: _angular_core.InputSignal<"primary" | "warn" | "accent">;
+    selectionChange: _angular_core.OutputEmitterRef<IxSelectionChange>;
+    options: _angular_core.Signal<readonly IxListOptionComponent[]>;
+    private formDisabled;
+    isDisabled: _angular_core.Signal<boolean>;
     private onChange;
     private onTouched;
-    ngAfterContentInit(): void;
+    constructor();
     writeValue(value: any[]): void;
     registerOnChange(fn: (value: any[]) => void): void;
     registerOnTouched(fn: () => void): void;
@@ -1161,7 +1163,7 @@ declare class IxSelectionListComponent implements AfterContentInit, ControlValue
     onOptionSelectionChange(): void;
     get selectedOptions(): IxListOptionComponent[];
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxSelectionListComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxSelectionListComponent, "ix-selection-list", never, { "dense": { "alias": "dense"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; "multiple": { "alias": "multiple"; "required": false; }; "color": { "alias": "color"; "required": false; }; }, { "selectionChange": "selectionChange"; }, ["options"], ["*"], true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxSelectionListComponent, "ix-selection-list", never, { "dense": { "alias": "dense"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "multiple": { "alias": "multiple"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; }, { "selectionChange": "selectionChange"; }, ["options"], ["*"], true, never>;
 }
 
 declare class IxHeaderCellDefDirective {
@@ -1930,14 +1932,14 @@ declare class IxSliderThumbDirective implements ControlValueAccessor, OnInit, On
 }
 
 type LabelType = 'none' | 'handle' | 'track' | 'both';
-declare class IxSliderComponent implements ControlValueAccessor, OnInit, OnDestroy, AfterViewInit, OnChanges {
-    min: number;
-    max: number;
-    step: number;
-    disabled: boolean;
-    labelPrefix: string;
-    labelSuffix: string;
-    labelType: LabelType;
+declare class IxSliderComponent implements ControlValueAccessor, OnDestroy, AfterViewInit {
+    min: _angular_core.InputSignal<number>;
+    max: _angular_core.InputSignal<number>;
+    step: _angular_core.InputSignal<number>;
+    disabled: _angular_core.InputSignal<boolean>;
+    labelPrefix: _angular_core.InputSignal<string>;
+    labelSuffix: _angular_core.InputSignal<string>;
+    labelType: _angular_core.InputSignal<LabelType>;
     thumbDirective: IxSliderThumbDirective;
     sliderContainer: ElementRef<HTMLDivElement>;
     thumbVisual: ElementRef<HTMLDivElement>;
@@ -1946,13 +1948,14 @@ declare class IxSliderComponent implements ControlValueAccessor, OnInit, OnDestr
     value: _angular_core.WritableSignal<number>;
     private _showLabel;
     private _labelVisible;
+    private formDisabled;
+    isDisabled: _angular_core.Signal<boolean>;
     fillPercentage: _angular_core.Signal<number>;
     fillScale: _angular_core.Signal<number>;
     thumbPosition: _angular_core.Signal<number>;
     showLabel: _angular_core.Signal<boolean>;
     labelVisible: _angular_core.Signal<boolean>;
-    ngOnInit(): void;
-    ngOnChanges(changes: SimpleChanges): void;
+    constructor();
     ngAfterViewInit(): void;
     ngOnDestroy(): void;
     writeValue(value: number): void;
@@ -1972,7 +1975,7 @@ declare class IxSliderComponent implements ControlValueAccessor, OnInit, OnDestr
     private onInteractionStart;
     private onInteractionEnd;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxSliderComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxSliderComponent, "ix-slider", never, { "min": { "alias": "min"; "required": false; }; "max": { "alias": "max"; "required": false; }; "step": { "alias": "step"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; "labelPrefix": { "alias": "labelPrefix"; "required": false; }; "labelSuffix": { "alias": "labelSuffix"; "required": false; }; "labelType": { "alias": "labelType"; "required": false; }; }, {}, ["thumbDirective"], ["*"], true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxSliderComponent, "ix-slider", never, { "min": { "alias": "min"; "required": false; "isSignal": true; }; "max": { "alias": "max"; "required": false; "isSignal": true; }; "step": { "alias": "step"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "labelPrefix": { "alias": "labelPrefix"; "required": false; "isSignal": true; }; "labelSuffix": { "alias": "labelSuffix"; "required": false; "isSignal": true; }; "labelType": { "alias": "labelType"; "required": false; "isSignal": true; }; }, {}, ["thumbDirective"], ["*"], true, never>;
 }
 
 declare class IxSliderWithLabelDirective implements OnInit, OnDestroy {
@@ -1991,24 +1994,24 @@ declare class IxSliderWithLabelDirective implements OnInit, OnDestroy {
 }
 
 type IxButtonToggleType = 'checkbox' | 'radio';
-declare class IxButtonToggleGroupComponent implements ControlValueAccessor, AfterContentInit, OnDestroy {
-    buttonToggles: QueryList<IxButtonToggleComponent>;
-    multiple: boolean;
-    disabled: boolean;
-    name: string;
-    ariaLabel: string;
-    ariaLabelledby: string;
-    change: EventEmitter<{
+declare class IxButtonToggleGroupComponent implements ControlValueAccessor {
+    buttonToggles: _angular_core.Signal<readonly IxButtonToggleComponent[]>;
+    multiple: _angular_core.InputSignal<boolean>;
+    disabled: _angular_core.InputSignal<boolean>;
+    name: _angular_core.InputSignal<string>;
+    ariaLabel: _angular_core.InputSignal<string>;
+    ariaLabelledby: _angular_core.InputSignal<string>;
+    change: _angular_core.OutputEmitterRef<{
         source: IxButtonToggleComponent;
         value: any;
     }>;
     private selectedValue;
     private selectedValues;
-    private destroy$;
+    private formDisabled;
+    isDisabled: _angular_core.Signal<boolean>;
     private onChange;
     private onTouched;
-    ngAfterContentInit(): void;
-    ngOnDestroy(): void;
+    constructor();
     writeValue(value: any): void;
     registerOnChange(fn: any): void;
     registerOnTouched(fn: any): void;
@@ -2019,24 +2022,26 @@ declare class IxButtonToggleGroupComponent implements ControlValueAccessor, Afte
     private updateTogglesFromValue;
     private updateTogglesFromValues;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxButtonToggleGroupComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxButtonToggleGroupComponent, "ix-button-toggle-group", never, { "multiple": { "alias": "multiple"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; "name": { "alias": "name"; "required": false; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; }; "ariaLabelledby": { "alias": "ariaLabelledby"; "required": false; }; }, { "change": "change"; }, ["buttonToggles"], ["*"], true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxButtonToggleGroupComponent, "ix-button-toggle-group", never, { "multiple": { "alias": "multiple"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "name": { "alias": "name"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "ariaLabelledby": { "alias": "ariaLabelledby"; "required": false; "isSignal": true; }; }, { "change": "change"; }, ["buttonToggles"], ["*"], true, never>;
 }
 
 declare class IxButtonToggleComponent implements ControlValueAccessor {
     private cdr;
     private static _uniqueIdCounter;
-    id: string;
-    value: any;
-    disabled: boolean;
-    checked: boolean;
-    ariaLabel: string;
-    ariaLabelledby: string;
-    change: EventEmitter<{
+    id: _angular_core.InputSignal<string>;
+    value: _angular_core.InputSignal<any>;
+    disabled: _angular_core.InputSignal<boolean>;
+    checked: _angular_core.WritableSignal<boolean>;
+    ariaLabel: _angular_core.InputSignal<string>;
+    ariaLabelledby: _angular_core.InputSignal<string>;
+    change: _angular_core.OutputEmitterRef<{
         source: IxButtonToggleComponent;
         value: any;
     }>;
-    buttonId: string;
+    buttonId: _angular_core.Signal<string>;
     buttonToggleGroup?: IxButtonToggleGroupComponent;
+    private formDisabled;
+    isDisabled: _angular_core.Signal<boolean>;
     private onChange;
     private onTouched;
     constructor(cdr: ChangeDetectorRef);
@@ -2045,11 +2050,11 @@ declare class IxButtonToggleComponent implements ControlValueAccessor {
     registerOnTouched(fn: any): void;
     setDisabledState(isDisabled: boolean): void;
     toggle(): void;
-    focus(): void;
+    onFocus(): void;
     _markForCheck(): void;
     _markForUncheck(): void;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxButtonToggleComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxButtonToggleComponent, "ix-button-toggle", never, { "id": { "alias": "id"; "required": false; }; "value": { "alias": "value"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; "checked": { "alias": "checked"; "required": false; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; }; "ariaLabelledby": { "alias": "ariaLabelledby"; "required": false; }; }, { "change": "change"; }, never, ["*"], true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxButtonToggleComponent, "ix-button-toggle", never, { "id": { "alias": "id"; "required": false; "isSignal": true; }; "value": { "alias": "value"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "ariaLabelledby": { "alias": "ariaLabelledby"; "required": false; "isSignal": true; }; }, { "change": "change"; }, never, ["*"], true, never>;
 }
 
 type TooltipPosition = 'above' | 'below' | 'left' | 'right' | 'before' | 'after';
