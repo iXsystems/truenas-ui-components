@@ -545,21 +545,23 @@ declare class IxCardComponent {
 }
 
 declare class IxExpansionPanelComponent {
-    title?: string;
-    elevation: 'none' | 'low' | 'medium' | 'high';
-    padding: 'small' | 'medium' | 'large';
-    bordered: boolean;
-    background: boolean;
-    expanded: boolean;
-    disabled: boolean;
-    titleStyle: 'header' | 'body' | 'link';
-    expandedChange: EventEmitter<boolean>;
-    toggleEvent: EventEmitter<void>;
+    title: _angular_core.InputSignal<string | undefined>;
+    elevation: _angular_core.InputSignal<"none" | "low" | "medium" | "high">;
+    padding: _angular_core.InputSignal<"large" | "medium" | "small">;
+    bordered: _angular_core.InputSignal<boolean>;
+    background: _angular_core.InputSignal<boolean>;
+    expanded: _angular_core.InputSignal<boolean>;
+    disabled: _angular_core.InputSignal<boolean>;
+    titleStyle: _angular_core.InputSignal<"link" | "header" | "body">;
+    expandedChange: _angular_core.OutputEmitterRef<boolean>;
+    toggleEvent: _angular_core.OutputEmitterRef<void>;
+    private internalExpanded;
+    effectiveExpanded: _angular_core.Signal<boolean>;
     readonly contentId: string;
     toggle(): void;
-    get classes(): string[];
+    classes: _angular_core.Signal<string[]>;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxExpansionPanelComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxExpansionPanelComponent, "ix-expansion-panel", never, { "title": { "alias": "title"; "required": false; }; "elevation": { "alias": "elevation"; "required": false; }; "padding": { "alias": "padding"; "required": false; }; "bordered": { "alias": "bordered"; "required": false; }; "background": { "alias": "background"; "required": false; }; "expanded": { "alias": "expanded"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; "titleStyle": { "alias": "titleStyle"; "required": false; }; }, { "expandedChange": "expandedChange"; "toggleEvent": "toggleEvent"; }, never, ["[slot=title]", "*"], true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxExpansionPanelComponent, "ix-expansion-panel", never, { "title": { "alias": "title"; "required": false; "isSignal": true; }; "elevation": { "alias": "elevation"; "required": false; "isSignal": true; }; "padding": { "alias": "padding"; "required": false; "isSignal": true; }; "bordered": { "alias": "bordered"; "required": false; "isSignal": true; }; "background": { "alias": "background"; "required": false; "isSignal": true; }; "expanded": { "alias": "expanded"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "titleStyle": { "alias": "titleStyle"; "required": false; "isSignal": true; }; }, { "expandedChange": "expandedChange"; "toggleEvent": "toggleEvent"; }, never, ["[slot=title]", "*"], true, never>;
 }
 
 declare class IxCheckboxComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
@@ -801,20 +803,20 @@ declare class IxKeyboardShortcutComponent {
 }
 
 declare class IxFormFieldComponent implements AfterContentInit {
-    label: string;
-    hint: string;
-    required: boolean;
-    testId: string;
+    label: _angular_core.InputSignal<string>;
+    hint: _angular_core.InputSignal<string>;
+    required: _angular_core.InputSignal<boolean>;
+    testId: _angular_core.InputSignal<string>;
     control?: NgControl;
-    protected hasError: boolean;
-    protected errorMessage: string;
+    protected hasError: _angular_core.WritableSignal<boolean>;
+    protected errorMessage: _angular_core.WritableSignal<string>;
     ngAfterContentInit(): void;
     private updateErrorState;
     private getErrorMessage;
-    get showError(): boolean;
-    get showHint(): boolean;
+    showError: _angular_core.Signal<boolean>;
+    showHint: _angular_core.Signal<boolean>;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxFormFieldComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxFormFieldComponent, "ix-form-field", never, { "label": { "alias": "label"; "required": false; }; "hint": { "alias": "hint"; "required": false; }; "required": { "alias": "required"; "required": false; }; "testId": { "alias": "testId"; "required": false; }; }, {}, ["control"], ["*"], true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxFormFieldComponent, "ix-form-field", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "hint": { "alias": "hint"; "required": false; "isSignal": true; }; "required": { "alias": "required"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, {}, ["control"], ["*"], true, never>;
 }
 
 interface IxSelectOption {
@@ -1045,27 +1047,27 @@ declare class IxListComponent {
 
 declare class IxListItemComponent implements AfterContentInit {
     private elementRef;
-    disabled: boolean;
-    clickable: boolean;
-    itemClick: EventEmitter<Event>;
-    hasLeadingContent: boolean;
-    hasSecondaryTextContent: boolean;
-    hasTrailingContent: boolean;
-    hasPrimaryTextDirective: boolean;
+    disabled: _angular_core.InputSignal<boolean>;
+    clickable: _angular_core.InputSignal<boolean>;
+    itemClick: _angular_core.OutputEmitterRef<Event>;
+    protected hasLeadingContent: _angular_core.WritableSignal<boolean>;
+    protected hasSecondaryTextContent: _angular_core.WritableSignal<boolean>;
+    protected hasTrailingContent: _angular_core.WritableSignal<boolean>;
+    protected hasPrimaryTextDirective: _angular_core.WritableSignal<boolean>;
     constructor(elementRef: ElementRef);
     ngAfterContentInit(): void;
     private checkContentProjection;
-    get hasSecondaryText(): boolean;
-    get hasThirdText(): boolean;
+    hasSecondaryText: _angular_core.Signal<boolean>;
+    hasThirdText: _angular_core.Signal<boolean>;
     onClick(event: Event): void;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxListItemComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxListItemComponent, "ix-list-item", never, { "disabled": { "alias": "disabled"; "required": false; }; "clickable": { "alias": "clickable"; "required": false; }; }, { "itemClick": "itemClick"; }, never, ["[ixListIcon], [ixListAvatar]", "[ixListItemTitle], [ixListItemPrimary]", "*", "[ixListItemLine], [ixListItemSecondary]", "[ixListItemTrailing]"], true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxListItemComponent, "ix-list-item", never, { "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "clickable": { "alias": "clickable"; "required": false; "isSignal": true; }; }, { "itemClick": "itemClick"; }, never, ["[ixListIcon], [ixListAvatar]", "[ixListItemTitle], [ixListItemPrimary]", "*", "[ixListItemLine], [ixListItemSecondary]", "[ixListItemTrailing]"], true, never>;
 }
 
 declare class IxListSubheaderComponent {
-    inset: boolean;
+    inset: _angular_core.InputSignal<boolean>;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxListSubheaderComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxListSubheaderComponent, "ix-list-subheader", never, { "inset": { "alias": "inset"; "required": false; }; }, {}, never, ["*"], true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxListSubheaderComponent, "ix-list-subheader", never, { "inset": { "alias": "inset"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
 }
 
 declare class IxListIconDirective {
@@ -1111,15 +1113,21 @@ declare class IxDividerComponent {
 declare class IxListOptionComponent implements AfterContentInit {
     private elementRef;
     private cdr;
-    value: any;
-    selected: boolean;
-    disabled: boolean;
-    color: 'primary' | 'accent' | 'warn';
-    selectionChange: EventEmitter<boolean>;
+    value: _angular_core.InputSignal<any>;
+    selected: _angular_core.InputSignal<boolean>;
+    disabled: _angular_core.InputSignal<boolean>;
+    color: _angular_core.InputSignal<"primary" | "warn" | "accent">;
+    selectionChange: _angular_core.OutputEmitterRef<boolean>;
     selectionList?: any;
-    hasLeadingContent: boolean;
-    hasSecondaryTextContent: boolean;
-    hasPrimaryTextDirective: boolean;
+    internalSelected: _angular_core.WritableSignal<boolean | null>;
+    internalDisabled: _angular_core.WritableSignal<boolean | null>;
+    internalColor: _angular_core.WritableSignal<"primary" | "warn" | "accent" | null>;
+    effectiveSelected: _angular_core.Signal<boolean>;
+    effectiveDisabled: _angular_core.Signal<boolean>;
+    effectiveColor: _angular_core.Signal<"primary" | "warn" | "accent">;
+    protected hasLeadingContent: _angular_core.WritableSignal<boolean>;
+    protected hasSecondaryTextContent: _angular_core.WritableSignal<boolean>;
+    protected hasPrimaryTextDirective: _angular_core.WritableSignal<boolean>;
     constructor(elementRef: ElementRef, cdr: ChangeDetectorRef);
     ngAfterContentInit(): void;
     private checkContentProjection;
@@ -1127,7 +1135,7 @@ declare class IxListOptionComponent implements AfterContentInit {
     onKeydown(event: KeyboardEvent): void;
     toggle(): void;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxListOptionComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxListOptionComponent, "ix-list-option", never, { "value": { "alias": "value"; "required": false; }; "selected": { "alias": "selected"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; "color": { "alias": "color"; "required": false; }; }, { "selectionChange": "selectionChange"; }, never, ["[ixListIcon], [ixListAvatar]", "[ixListItemTitle], [ixListItemPrimary]", "*", "[ixListItemLine], [ixListItemSecondary]"], true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxListOptionComponent, "ix-list-option", never, { "value": { "alias": "value"; "required": false; "isSignal": true; }; "selected": { "alias": "selected"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; }, { "selectionChange": "selectionChange"; }, never, ["[ixListIcon], [ixListAvatar]", "[ixListItemTitle], [ixListItemPrimary]", "*", "[ixListItemLine], [ixListItemSecondary]"], true, never>;
 }
 
 interface IxSelectionChange {

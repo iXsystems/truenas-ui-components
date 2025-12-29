@@ -1407,33 +1407,41 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
         }], ctorParameters: () => [{ type: IxIconRegistryService }] });
 
 class IxExpansionPanelComponent {
-    title;
-    elevation = 'medium';
-    padding = 'medium';
-    bordered = false;
-    background = true;
-    expanded = false;
-    disabled = false;
-    titleStyle = 'header';
-    expandedChange = new EventEmitter();
-    toggleEvent = new EventEmitter();
+    title = input(undefined, ...(ngDevMode ? [{ debugName: "title" }] : []));
+    elevation = input('medium', ...(ngDevMode ? [{ debugName: "elevation" }] : []));
+    padding = input('medium', ...(ngDevMode ? [{ debugName: "padding" }] : []));
+    bordered = input(false, ...(ngDevMode ? [{ debugName: "bordered" }] : []));
+    background = input(true, ...(ngDevMode ? [{ debugName: "background" }] : []));
+    expanded = input(false, ...(ngDevMode ? [{ debugName: "expanded" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    titleStyle = input('header', ...(ngDevMode ? [{ debugName: "titleStyle" }] : []));
+    expandedChange = output();
+    toggleEvent = output();
+    // Internal state for tracking expansion (for uncontrolled usage)
+    internalExpanded = signal(null, ...(ngDevMode ? [{ debugName: "internalExpanded" }] : []));
+    // Effective expanded state (prefers internal state if set, otherwise uses input)
+    effectiveExpanded = computed(() => {
+        const internal = this.internalExpanded();
+        return internal !== null ? internal : this.expanded();
+    }, ...(ngDevMode ? [{ debugName: "effectiveExpanded" }] : []));
     contentId = `ix-expansion-panel-content-${Math.random().toString(36).substr(2, 9)}`;
     toggle() {
-        if (this.disabled) {
+        if (this.disabled()) {
             return;
         }
-        this.expanded = !this.expanded;
-        this.expandedChange.emit(this.expanded);
+        const newExpanded = !this.effectiveExpanded();
+        this.internalExpanded.set(newExpanded);
+        this.expandedChange.emit(newExpanded);
         this.toggleEvent.emit();
     }
-    get classes() {
-        const elevationClass = `ix-expansion-panel--elevation-${this.elevation}`;
-        const paddingClass = `ix-expansion-panel--padding-${this.padding}`;
-        const borderedClass = this.bordered ? 'ix-expansion-panel--bordered' : '';
-        const backgroundClass = this.background ? 'ix-expansion-panel--background' : '';
-        const expandedClass = this.expanded ? 'ix-expansion-panel--expanded' : '';
-        const disabledClass = this.disabled ? 'ix-expansion-panel--disabled' : '';
-        const titleStyleClass = `ix-expansion-panel--title-${this.titleStyle}`;
+    classes = computed(() => {
+        const elevationClass = `ix-expansion-panel--elevation-${this.elevation()}`;
+        const paddingClass = `ix-expansion-panel--padding-${this.padding()}`;
+        const borderedClass = this.bordered() ? 'ix-expansion-panel--bordered' : '';
+        const backgroundClass = this.background() ? 'ix-expansion-panel--background' : '';
+        const expandedClass = this.effectiveExpanded() ? 'ix-expansion-panel--expanded' : '';
+        const disabledClass = this.disabled() ? 'ix-expansion-panel--disabled' : '';
+        const titleStyleClass = `ix-expansion-panel--title-${this.titleStyle()}`;
         return [
             'ix-expansion-panel',
             elevationClass,
@@ -1444,9 +1452,9 @@ class IxExpansionPanelComponent {
             disabledClass,
             titleStyleClass
         ].filter(Boolean);
-    }
+    }, ...(ngDevMode ? [{ debugName: "classes" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxExpansionPanelComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxExpansionPanelComponent, isStandalone: true, selector: "ix-expansion-panel", inputs: { title: "title", elevation: "elevation", padding: "padding", bordered: "bordered", background: "background", expanded: "expanded", disabled: "disabled", titleStyle: "titleStyle" }, outputs: { expandedChange: "expandedChange", toggleEvent: "toggleEvent" }, ngImport: i0, template: "<div [ngClass]=\"classes\">\n  <button class=\"ix-expansion-panel__header\"\n          [disabled]=\"disabled\"\n          (click)=\"toggle()\"\n          [attr.aria-expanded]=\"expanded\"\n          [attr.aria-controls]=\"contentId\"\n          [attr.aria-disabled]=\"disabled\">\n    @if (title) {\n      <div class=\"ix-expansion-panel__title\">\n        {{ title }}\n      </div>\n    }\n    <ng-content select=\"[slot=title]\"></ng-content>\n    \n    <div class=\"ix-expansion-panel__indicator\">\n      <svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\">\n        <path d=\"m6 9 6 6 6-6\"/>\n      </svg>\n    </div>\n  </button>\n  \n  <div class=\"ix-expansion-panel__content\" \n       [id]=\"contentId\"\n       [attr.aria-hidden]=\"!expanded\"\n       [@expandCollapse]=\"expanded ? 'expanded' : 'collapsed'\">\n    <ng-content></ng-content>\n  </div>\n</div>", styles: [".ix-expansion-panel{border-radius:8px;transition:box-shadow .3s ease;overflow:hidden}.ix-expansion-panel--elevation-none{box-shadow:none}.ix-expansion-panel--elevation-low{box-shadow:0 1px 3px #0000001a}.ix-expansion-panel--elevation-medium{box-shadow:0 4px 6px #0000001a}.ix-expansion-panel--elevation-high{box-shadow:0 10px 15px #0000001a}.ix-expansion-panel--bordered{border:1px solid var(--lines, #e5e7eb)}.ix-expansion-panel--background{background-color:var(--bg2, #ffffff)}.ix-expansion-panel--disabled{opacity:.6;cursor:not-allowed}.ix-expansion-panel--disabled .ix-expansion-panel__header{cursor:not-allowed}.ix-expansion-panel--expanded .ix-expansion-panel__indicator svg{transform:rotate(180deg)}.ix-expansion-panel--padding-small .ix-expansion-panel__header{padding:12px 16px}.ix-expansion-panel--padding-small .ix-expansion-panel__content{padding:0 16px 16px}.ix-expansion-panel--padding-medium .ix-expansion-panel__header{padding:16px 24px}.ix-expansion-panel--padding-medium .ix-expansion-panel__content{padding:0 24px 24px}.ix-expansion-panel--padding-large .ix-expansion-panel__header{padding:24px 32px}.ix-expansion-panel--padding-large .ix-expansion-panel__content{padding:0 32px 32px}.ix-expansion-panel--title-header .ix-expansion-panel__title{font-size:1.125rem;font-weight:600;color:var(--fg1, #1f2937)}.ix-expansion-panel--title-header .ix-expansion-panel__indicator{color:var(--fg1, #1f2937)}.ix-expansion-panel--title-body .ix-expansion-panel__title{font-size:1rem;font-weight:400;color:var(--fg1, #1f2937)}.ix-expansion-panel--title-body .ix-expansion-panel__indicator{color:var(--fg1, #1f2937)}.ix-expansion-panel--title-link .ix-expansion-panel__title{font-size:1rem;font-weight:400;color:var(--primary, #3b82f6);text-decoration:none}.ix-expansion-panel--title-link .ix-expansion-panel__indicator{color:var(--primary, #3b82f6)}.ix-expansion-panel--title-link .ix-expansion-panel__header:hover:not(:disabled) .ix-expansion-panel__title{text-decoration:underline}.ix-expansion-panel--title-link .ix-expansion-panel__header:focus .ix-expansion-panel__title{text-decoration:underline}.ix-expansion-panel__header{width:100%;background:none;border:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:inherit;text-align:left;transition:background-color .2s ease}.ix-expansion-panel--bordered .ix-expansion-panel__header,.ix-expansion-panel--bordered.ix-expansion-panel--expanded .ix-expansion-panel__header{border-bottom:1px solid var(--lines, #e5e7eb)}.ix-expansion-panel__header:hover:not(:disabled){background-color:var(--alt-bg1, rgba(0, 0, 0, .05))}.ix-expansion-panel__header:focus{outline:2px solid var(--primary, #3b82f6);outline-offset:-2px}.ix-expansion-panel__header:disabled{cursor:not-allowed}.ix-expansion-panel__title{margin:0;line-height:1.5;flex:1;transition:text-decoration .2s ease}.ix-expansion-panel__indicator{display:flex;align-items:center;justify-content:center;margin-left:16px;transition:transform .2s ease,color .2s ease}.ix-expansion-panel__indicator svg{transition:transform .2s ease}.ix-expansion-panel__content{overflow:hidden}.ix-expansion-panel__content:not(.ix-expansion-panel--expanded){border-bottom:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }], animations: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxExpansionPanelComponent, isStandalone: true, selector: "ix-expansion-panel", inputs: { title: { classPropertyName: "title", publicName: "title", isSignal: true, isRequired: false, transformFunction: null }, elevation: { classPropertyName: "elevation", publicName: "elevation", isSignal: true, isRequired: false, transformFunction: null }, padding: { classPropertyName: "padding", publicName: "padding", isSignal: true, isRequired: false, transformFunction: null }, bordered: { classPropertyName: "bordered", publicName: "bordered", isSignal: true, isRequired: false, transformFunction: null }, background: { classPropertyName: "background", publicName: "background", isSignal: true, isRequired: false, transformFunction: null }, expanded: { classPropertyName: "expanded", publicName: "expanded", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, titleStyle: { classPropertyName: "titleStyle", publicName: "titleStyle", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { expandedChange: "expandedChange", toggleEvent: "toggleEvent" }, ngImport: i0, template: "<div [ngClass]=\"classes()\">\n  <button class=\"ix-expansion-panel__header\"\n          [disabled]=\"disabled()\"\n          (click)=\"toggle()\"\n          [attr.aria-expanded]=\"effectiveExpanded()\"\n          [attr.aria-controls]=\"contentId\"\n          [attr.aria-disabled]=\"disabled()\">\n    @if (title()) {\n      <div class=\"ix-expansion-panel__title\">\n        {{ title() }}\n      </div>\n    }\n    <ng-content select=\"[slot=title]\"></ng-content>\n\n    <div class=\"ix-expansion-panel__indicator\">\n      <svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\">\n        <path d=\"m6 9 6 6 6-6\"/>\n      </svg>\n    </div>\n  </button>\n\n  <div class=\"ix-expansion-panel__content\"\n       [id]=\"contentId\"\n       [attr.aria-hidden]=\"!effectiveExpanded()\"\n       [@expandCollapse]=\"effectiveExpanded() ? 'expanded' : 'collapsed'\">\n    <ng-content></ng-content>\n  </div>\n</div>", styles: [".ix-expansion-panel{border-radius:8px;transition:box-shadow .3s ease;overflow:hidden}.ix-expansion-panel--elevation-none{box-shadow:none}.ix-expansion-panel--elevation-low{box-shadow:0 1px 3px #0000001a}.ix-expansion-panel--elevation-medium{box-shadow:0 4px 6px #0000001a}.ix-expansion-panel--elevation-high{box-shadow:0 10px 15px #0000001a}.ix-expansion-panel--bordered{border:1px solid var(--lines, #e5e7eb)}.ix-expansion-panel--background{background-color:var(--bg2, #ffffff)}.ix-expansion-panel--disabled{opacity:.6;cursor:not-allowed}.ix-expansion-panel--disabled .ix-expansion-panel__header{cursor:not-allowed}.ix-expansion-panel--expanded .ix-expansion-panel__indicator svg{transform:rotate(180deg)}.ix-expansion-panel--padding-small .ix-expansion-panel__header{padding:12px 16px}.ix-expansion-panel--padding-small .ix-expansion-panel__content{padding:0 16px 16px}.ix-expansion-panel--padding-medium .ix-expansion-panel__header{padding:16px 24px}.ix-expansion-panel--padding-medium .ix-expansion-panel__content{padding:0 24px 24px}.ix-expansion-panel--padding-large .ix-expansion-panel__header{padding:24px 32px}.ix-expansion-panel--padding-large .ix-expansion-panel__content{padding:0 32px 32px}.ix-expansion-panel--title-header .ix-expansion-panel__title{font-size:1.125rem;font-weight:600;color:var(--fg1, #1f2937)}.ix-expansion-panel--title-header .ix-expansion-panel__indicator{color:var(--fg1, #1f2937)}.ix-expansion-panel--title-body .ix-expansion-panel__title{font-size:1rem;font-weight:400;color:var(--fg1, #1f2937)}.ix-expansion-panel--title-body .ix-expansion-panel__indicator{color:var(--fg1, #1f2937)}.ix-expansion-panel--title-link .ix-expansion-panel__title{font-size:1rem;font-weight:400;color:var(--primary, #3b82f6);text-decoration:none}.ix-expansion-panel--title-link .ix-expansion-panel__indicator{color:var(--primary, #3b82f6)}.ix-expansion-panel--title-link .ix-expansion-panel__header:hover:not(:disabled) .ix-expansion-panel__title{text-decoration:underline}.ix-expansion-panel--title-link .ix-expansion-panel__header:focus .ix-expansion-panel__title{text-decoration:underline}.ix-expansion-panel__header{width:100%;background:none;border:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:inherit;text-align:left;transition:background-color .2s ease}.ix-expansion-panel--bordered .ix-expansion-panel__header,.ix-expansion-panel--bordered.ix-expansion-panel--expanded .ix-expansion-panel__header{border-bottom:1px solid var(--lines, #e5e7eb)}.ix-expansion-panel__header:hover:not(:disabled){background-color:var(--alt-bg1, rgba(0, 0, 0, .05))}.ix-expansion-panel__header:focus{outline:2px solid var(--primary, #3b82f6);outline-offset:-2px}.ix-expansion-panel__header:disabled{cursor:not-allowed}.ix-expansion-panel__title{margin:0;line-height:1.5;flex:1;transition:text-decoration .2s ease}.ix-expansion-panel__indicator{display:flex;align-items:center;justify-content:center;margin-left:16px;transition:transform .2s ease,color .2s ease}.ix-expansion-panel__indicator svg{transition:transform .2s ease}.ix-expansion-panel__content{overflow:hidden}.ix-expansion-panel__content:not(.ix-expansion-panel--expanded){border-bottom:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgClass, selector: "[ngClass]", inputs: ["class", "ngClass"] }], animations: [
             trigger('expandCollapse', [
                 state('collapsed', style({
                     height: '0px',
@@ -1496,28 +1504,8 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                                 style({ display: 'none' })
                             ])
                         ])
-                    ], template: "<div [ngClass]=\"classes\">\n  <button class=\"ix-expansion-panel__header\"\n          [disabled]=\"disabled\"\n          (click)=\"toggle()\"\n          [attr.aria-expanded]=\"expanded\"\n          [attr.aria-controls]=\"contentId\"\n          [attr.aria-disabled]=\"disabled\">\n    @if (title) {\n      <div class=\"ix-expansion-panel__title\">\n        {{ title }}\n      </div>\n    }\n    <ng-content select=\"[slot=title]\"></ng-content>\n    \n    <div class=\"ix-expansion-panel__indicator\">\n      <svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\">\n        <path d=\"m6 9 6 6 6-6\"/>\n      </svg>\n    </div>\n  </button>\n  \n  <div class=\"ix-expansion-panel__content\" \n       [id]=\"contentId\"\n       [attr.aria-hidden]=\"!expanded\"\n       [@expandCollapse]=\"expanded ? 'expanded' : 'collapsed'\">\n    <ng-content></ng-content>\n  </div>\n</div>", styles: [".ix-expansion-panel{border-radius:8px;transition:box-shadow .3s ease;overflow:hidden}.ix-expansion-panel--elevation-none{box-shadow:none}.ix-expansion-panel--elevation-low{box-shadow:0 1px 3px #0000001a}.ix-expansion-panel--elevation-medium{box-shadow:0 4px 6px #0000001a}.ix-expansion-panel--elevation-high{box-shadow:0 10px 15px #0000001a}.ix-expansion-panel--bordered{border:1px solid var(--lines, #e5e7eb)}.ix-expansion-panel--background{background-color:var(--bg2, #ffffff)}.ix-expansion-panel--disabled{opacity:.6;cursor:not-allowed}.ix-expansion-panel--disabled .ix-expansion-panel__header{cursor:not-allowed}.ix-expansion-panel--expanded .ix-expansion-panel__indicator svg{transform:rotate(180deg)}.ix-expansion-panel--padding-small .ix-expansion-panel__header{padding:12px 16px}.ix-expansion-panel--padding-small .ix-expansion-panel__content{padding:0 16px 16px}.ix-expansion-panel--padding-medium .ix-expansion-panel__header{padding:16px 24px}.ix-expansion-panel--padding-medium .ix-expansion-panel__content{padding:0 24px 24px}.ix-expansion-panel--padding-large .ix-expansion-panel__header{padding:24px 32px}.ix-expansion-panel--padding-large .ix-expansion-panel__content{padding:0 32px 32px}.ix-expansion-panel--title-header .ix-expansion-panel__title{font-size:1.125rem;font-weight:600;color:var(--fg1, #1f2937)}.ix-expansion-panel--title-header .ix-expansion-panel__indicator{color:var(--fg1, #1f2937)}.ix-expansion-panel--title-body .ix-expansion-panel__title{font-size:1rem;font-weight:400;color:var(--fg1, #1f2937)}.ix-expansion-panel--title-body .ix-expansion-panel__indicator{color:var(--fg1, #1f2937)}.ix-expansion-panel--title-link .ix-expansion-panel__title{font-size:1rem;font-weight:400;color:var(--primary, #3b82f6);text-decoration:none}.ix-expansion-panel--title-link .ix-expansion-panel__indicator{color:var(--primary, #3b82f6)}.ix-expansion-panel--title-link .ix-expansion-panel__header:hover:not(:disabled) .ix-expansion-panel__title{text-decoration:underline}.ix-expansion-panel--title-link .ix-expansion-panel__header:focus .ix-expansion-panel__title{text-decoration:underline}.ix-expansion-panel__header{width:100%;background:none;border:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:inherit;text-align:left;transition:background-color .2s ease}.ix-expansion-panel--bordered .ix-expansion-panel__header,.ix-expansion-panel--bordered.ix-expansion-panel--expanded .ix-expansion-panel__header{border-bottom:1px solid var(--lines, #e5e7eb)}.ix-expansion-panel__header:hover:not(:disabled){background-color:var(--alt-bg1, rgba(0, 0, 0, .05))}.ix-expansion-panel__header:focus{outline:2px solid var(--primary, #3b82f6);outline-offset:-2px}.ix-expansion-panel__header:disabled{cursor:not-allowed}.ix-expansion-panel__title{margin:0;line-height:1.5;flex:1;transition:text-decoration .2s ease}.ix-expansion-panel__indicator{display:flex;align-items:center;justify-content:center;margin-left:16px;transition:transform .2s ease,color .2s ease}.ix-expansion-panel__indicator svg{transition:transform .2s ease}.ix-expansion-panel__content{overflow:hidden}.ix-expansion-panel__content:not(.ix-expansion-panel--expanded){border-bottom:none}\n"] }]
-        }], propDecorators: { title: [{
-                type: Input
-            }], elevation: [{
-                type: Input
-            }], padding: [{
-                type: Input
-            }], bordered: [{
-                type: Input
-            }], background: [{
-                type: Input
-            }], expanded: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], titleStyle: [{
-                type: Input
-            }], expandedChange: [{
-                type: Output
-            }], toggleEvent: [{
-                type: Output
-            }] } });
+                    ], template: "<div [ngClass]=\"classes()\">\n  <button class=\"ix-expansion-panel__header\"\n          [disabled]=\"disabled()\"\n          (click)=\"toggle()\"\n          [attr.aria-expanded]=\"effectiveExpanded()\"\n          [attr.aria-controls]=\"contentId\"\n          [attr.aria-disabled]=\"disabled()\">\n    @if (title()) {\n      <div class=\"ix-expansion-panel__title\">\n        {{ title() }}\n      </div>\n    }\n    <ng-content select=\"[slot=title]\"></ng-content>\n\n    <div class=\"ix-expansion-panel__indicator\">\n      <svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\">\n        <path d=\"m6 9 6 6 6-6\"/>\n      </svg>\n    </div>\n  </button>\n\n  <div class=\"ix-expansion-panel__content\"\n       [id]=\"contentId\"\n       [attr.aria-hidden]=\"!effectiveExpanded()\"\n       [@expandCollapse]=\"effectiveExpanded() ? 'expanded' : 'collapsed'\">\n    <ng-content></ng-content>\n  </div>\n</div>", styles: [".ix-expansion-panel{border-radius:8px;transition:box-shadow .3s ease;overflow:hidden}.ix-expansion-panel--elevation-none{box-shadow:none}.ix-expansion-panel--elevation-low{box-shadow:0 1px 3px #0000001a}.ix-expansion-panel--elevation-medium{box-shadow:0 4px 6px #0000001a}.ix-expansion-panel--elevation-high{box-shadow:0 10px 15px #0000001a}.ix-expansion-panel--bordered{border:1px solid var(--lines, #e5e7eb)}.ix-expansion-panel--background{background-color:var(--bg2, #ffffff)}.ix-expansion-panel--disabled{opacity:.6;cursor:not-allowed}.ix-expansion-panel--disabled .ix-expansion-panel__header{cursor:not-allowed}.ix-expansion-panel--expanded .ix-expansion-panel__indicator svg{transform:rotate(180deg)}.ix-expansion-panel--padding-small .ix-expansion-panel__header{padding:12px 16px}.ix-expansion-panel--padding-small .ix-expansion-panel__content{padding:0 16px 16px}.ix-expansion-panel--padding-medium .ix-expansion-panel__header{padding:16px 24px}.ix-expansion-panel--padding-medium .ix-expansion-panel__content{padding:0 24px 24px}.ix-expansion-panel--padding-large .ix-expansion-panel__header{padding:24px 32px}.ix-expansion-panel--padding-large .ix-expansion-panel__content{padding:0 32px 32px}.ix-expansion-panel--title-header .ix-expansion-panel__title{font-size:1.125rem;font-weight:600;color:var(--fg1, #1f2937)}.ix-expansion-panel--title-header .ix-expansion-panel__indicator{color:var(--fg1, #1f2937)}.ix-expansion-panel--title-body .ix-expansion-panel__title{font-size:1rem;font-weight:400;color:var(--fg1, #1f2937)}.ix-expansion-panel--title-body .ix-expansion-panel__indicator{color:var(--fg1, #1f2937)}.ix-expansion-panel--title-link .ix-expansion-panel__title{font-size:1rem;font-weight:400;color:var(--primary, #3b82f6);text-decoration:none}.ix-expansion-panel--title-link .ix-expansion-panel__indicator{color:var(--primary, #3b82f6)}.ix-expansion-panel--title-link .ix-expansion-panel__header:hover:not(:disabled) .ix-expansion-panel__title{text-decoration:underline}.ix-expansion-panel--title-link .ix-expansion-panel__header:focus .ix-expansion-panel__title{text-decoration:underline}.ix-expansion-panel__header{width:100%;background:none;border:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:inherit;text-align:left;transition:background-color .2s ease}.ix-expansion-panel--bordered .ix-expansion-panel__header,.ix-expansion-panel--bordered.ix-expansion-panel--expanded .ix-expansion-panel__header{border-bottom:1px solid var(--lines, #e5e7eb)}.ix-expansion-panel__header:hover:not(:disabled){background-color:var(--alt-bg1, rgba(0, 0, 0, .05))}.ix-expansion-panel__header:focus{outline:2px solid var(--primary, #3b82f6);outline-offset:-2px}.ix-expansion-panel__header:disabled{cursor:not-allowed}.ix-expansion-panel__title{margin:0;line-height:1.5;flex:1;transition:text-decoration .2s ease}.ix-expansion-panel__indicator{display:flex;align-items:center;justify-content:center;margin-left:16px;transition:transform .2s ease,color .2s ease}.ix-expansion-panel__indicator svg{transition:transform .2s ease}.ix-expansion-panel__content{overflow:hidden}.ix-expansion-panel__content:not(.ix-expansion-panel--expanded){border-bottom:none}\n"] }]
+        }] });
 
 class IxCheckboxComponent {
     checkboxEl;
@@ -2168,13 +2156,13 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
         }] });
 
 class IxFormFieldComponent {
-    label = '';
-    hint = '';
-    required = false;
-    testId = '';
+    label = input('', ...(ngDevMode ? [{ debugName: "label" }] : []));
+    hint = input('', ...(ngDevMode ? [{ debugName: "hint" }] : []));
+    required = input(false, ...(ngDevMode ? [{ debugName: "required" }] : []));
+    testId = input('', ...(ngDevMode ? [{ debugName: "testId" }] : []));
     control;
-    hasError = false;
-    errorMessage = '';
+    hasError = signal(false, ...(ngDevMode ? [{ debugName: "hasError" }] : []));
+    errorMessage = signal('', ...(ngDevMode ? [{ debugName: "errorMessage" }] : []));
     ngAfterContentInit() {
         if (this.control) {
             // Listen for control status changes
@@ -2187,8 +2175,8 @@ class IxFormFieldComponent {
     }
     updateErrorState() {
         if (this.control) {
-            this.hasError = !!(this.control.invalid && (this.control.dirty || this.control.touched));
-            this.errorMessage = this.getErrorMessage();
+            this.hasError.set(!!(this.control.invalid && (this.control.dirty || this.control.touched)));
+            this.errorMessage.set(this.getErrorMessage());
         }
     }
     getErrorMessage() {
@@ -2213,27 +2201,19 @@ class IxFormFieldComponent {
         // Return custom error message if available
         return Object.keys(errors)[0] || 'Invalid input';
     }
-    get showError() {
-        return this.hasError && !!this.errorMessage;
-    }
-    get showHint() {
-        return !!this.hint && !this.showError;
-    }
+    showError = computed(() => {
+        return this.hasError() && !!this.errorMessage();
+    }, ...(ngDevMode ? [{ debugName: "showError" }] : []));
+    showHint = computed(() => {
+        return !!this.hint() && !this.showError();
+    }, ...(ngDevMode ? [{ debugName: "showHint" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxFormFieldComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxFormFieldComponent, isStandalone: true, selector: "ix-form-field", inputs: { label: "label", hint: "hint", required: "required", testId: "testId" }, queries: [{ propertyName: "control", first: true, predicate: NgControl, descendants: true }], ngImport: i0, template: "<div class=\"ix-form-field\" [attr.data-testid]=\"testId\">\n  <!-- Label -->\n  @if (label) {\n    <label class=\"ix-form-field-label\" [class.required]=\"required\">\n      {{ label }}\n      @if (required) {\n        <span class=\"required-asterisk\" aria-label=\"required\">*</span>\n      }\n    </label>\n  }\n\n  <!-- Form Control Content -->\n  <div class=\"ix-form-field-wrapper\">\n    <ng-content></ng-content>\n  </div>\n\n  <!-- Hint or Error Message -->\n  <div class=\"ix-form-field-subscript\">\n    @if (showError) {\n      <div\n        class=\"ix-form-field-error\"\n        role=\"alert\"\n        aria-live=\"polite\">\n        {{ errorMessage }}\n      </div>\n    }\n    @if (showHint) {\n      <div class=\"ix-form-field-hint\">\n        {{ hint }}\n      </div>\n    }\n  </div>\n</div>", styles: [".ix-form-field{display:block;width:100%;margin-bottom:1rem;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-form-field-label{display:block;margin-bottom:.5rem;font-size:.875rem;font-weight:500;color:var(--fg1, #333);line-height:1.4}.ix-form-field-label.required .required-asterisk{color:var(--error, #dc3545);margin-left:.25rem}.ix-form-field-wrapper{position:relative;width:100%;overflow:visible}.ix-form-field-wrapper :ng-deep .ix-select-container,.ix-form-field-wrapper :ng-deep .ix-input-container{margin-bottom:0}.ix-form-field-wrapper :ng-deep .ix-select-label,.ix-form-field-wrapper :ng-deep .ix-input-label{display:none}.ix-form-field-wrapper :ng-deep .ix-select-error,.ix-form-field-wrapper :ng-deep .ix-input-error{display:none}.ix-form-field-wrapper :ng-deep .ix-select-dropdown{z-index:1000}.ix-form-field-subscript{min-height:1.25rem;margin-top:.25rem;font-size:.75rem;line-height:1.4}.ix-form-field-error{color:var(--error, #dc3545);margin:0}.ix-form-field-hint{color:var(--fg2, #6c757d);margin:0}.ix-form-field-wrapper:has(:focus-visible) .ix-form-field-label{color:var(--primary, #007bff)}.ix-form-field-wrapper:has(.error) .ix-form-field-label{color:var(--error, #dc3545)}@media (prefers-reduced-motion: reduce){.ix-form-field-label{transition:none}}@media (prefers-contrast: high){.ix-form-field-label,.ix-form-field-error{font-weight:600}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxFormFieldComponent, isStandalone: true, selector: "ix-form-field", inputs: { label: { classPropertyName: "label", publicName: "label", isSignal: true, isRequired: false, transformFunction: null }, hint: { classPropertyName: "hint", publicName: "hint", isSignal: true, isRequired: false, transformFunction: null }, required: { classPropertyName: "required", publicName: "required", isSignal: true, isRequired: false, transformFunction: null }, testId: { classPropertyName: "testId", publicName: "testId", isSignal: true, isRequired: false, transformFunction: null } }, queries: [{ propertyName: "control", first: true, predicate: NgControl, descendants: true }], ngImport: i0, template: "<div class=\"ix-form-field\" [attr.data-testid]=\"testId()\">\n  <!-- Label -->\n  @if (label()) {\n    <label class=\"ix-form-field-label\" [class.required]=\"required()\">\n      {{ label() }}\n      @if (required()) {\n        <span class=\"required-asterisk\" aria-label=\"required\">*</span>\n      }\n    </label>\n  }\n\n  <!-- Form Control Content -->\n  <div class=\"ix-form-field-wrapper\">\n    <ng-content></ng-content>\n  </div>\n\n  <!-- Hint or Error Message -->\n  <div class=\"ix-form-field-subscript\">\n    @if (showError()) {\n      <div\n        class=\"ix-form-field-error\"\n        role=\"alert\"\n        aria-live=\"polite\">\n        {{ errorMessage() }}\n      </div>\n    }\n    @if (showHint()) {\n      <div class=\"ix-form-field-hint\">\n        {{ hint() }}\n      </div>\n    }\n  </div>\n</div>", styles: [".ix-form-field{display:block;width:100%;margin-bottom:1rem;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-form-field-label{display:block;margin-bottom:.5rem;font-size:.875rem;font-weight:500;color:var(--fg1, #333);line-height:1.4}.ix-form-field-label.required .required-asterisk{color:var(--error, #dc3545);margin-left:.25rem}.ix-form-field-wrapper{position:relative;width:100%;overflow:visible}.ix-form-field-wrapper :ng-deep .ix-select-container,.ix-form-field-wrapper :ng-deep .ix-input-container{margin-bottom:0}.ix-form-field-wrapper :ng-deep .ix-select-label,.ix-form-field-wrapper :ng-deep .ix-input-label{display:none}.ix-form-field-wrapper :ng-deep .ix-select-error,.ix-form-field-wrapper :ng-deep .ix-input-error{display:none}.ix-form-field-wrapper :ng-deep .ix-select-dropdown{z-index:1000}.ix-form-field-subscript{min-height:1.25rem;margin-top:.25rem;font-size:.75rem;line-height:1.4}.ix-form-field-error{color:var(--error, #dc3545);margin:0}.ix-form-field-hint{color:var(--fg2, #6c757d);margin:0}.ix-form-field-wrapper:has(:focus-visible) .ix-form-field-label{color:var(--primary, #007bff)}.ix-form-field-wrapper:has(.error) .ix-form-field-label{color:var(--error, #dc3545)}@media (prefers-reduced-motion: reduce){.ix-form-field-label{transition:none}}@media (prefers-contrast: high){.ix-form-field-label,.ix-form-field-error{font-weight:600}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxFormFieldComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-form-field', standalone: true, imports: [CommonModule], template: "<div class=\"ix-form-field\" [attr.data-testid]=\"testId\">\n  <!-- Label -->\n  @if (label) {\n    <label class=\"ix-form-field-label\" [class.required]=\"required\">\n      {{ label }}\n      @if (required) {\n        <span class=\"required-asterisk\" aria-label=\"required\">*</span>\n      }\n    </label>\n  }\n\n  <!-- Form Control Content -->\n  <div class=\"ix-form-field-wrapper\">\n    <ng-content></ng-content>\n  </div>\n\n  <!-- Hint or Error Message -->\n  <div class=\"ix-form-field-subscript\">\n    @if (showError) {\n      <div\n        class=\"ix-form-field-error\"\n        role=\"alert\"\n        aria-live=\"polite\">\n        {{ errorMessage }}\n      </div>\n    }\n    @if (showHint) {\n      <div class=\"ix-form-field-hint\">\n        {{ hint }}\n      </div>\n    }\n  </div>\n</div>", styles: [".ix-form-field{display:block;width:100%;margin-bottom:1rem;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-form-field-label{display:block;margin-bottom:.5rem;font-size:.875rem;font-weight:500;color:var(--fg1, #333);line-height:1.4}.ix-form-field-label.required .required-asterisk{color:var(--error, #dc3545);margin-left:.25rem}.ix-form-field-wrapper{position:relative;width:100%;overflow:visible}.ix-form-field-wrapper :ng-deep .ix-select-container,.ix-form-field-wrapper :ng-deep .ix-input-container{margin-bottom:0}.ix-form-field-wrapper :ng-deep .ix-select-label,.ix-form-field-wrapper :ng-deep .ix-input-label{display:none}.ix-form-field-wrapper :ng-deep .ix-select-error,.ix-form-field-wrapper :ng-deep .ix-input-error{display:none}.ix-form-field-wrapper :ng-deep .ix-select-dropdown{z-index:1000}.ix-form-field-subscript{min-height:1.25rem;margin-top:.25rem;font-size:.75rem;line-height:1.4}.ix-form-field-error{color:var(--error, #dc3545);margin:0}.ix-form-field-hint{color:var(--fg2, #6c757d);margin:0}.ix-form-field-wrapper:has(:focus-visible) .ix-form-field-label{color:var(--primary, #007bff)}.ix-form-field-wrapper:has(.error) .ix-form-field-label{color:var(--error, #dc3545)}@media (prefers-reduced-motion: reduce){.ix-form-field-label{transition:none}}@media (prefers-contrast: high){.ix-form-field-label,.ix-form-field-error{font-weight:600}}\n"] }]
-        }], propDecorators: { label: [{
-                type: Input
-            }], hint: [{
-                type: Input
-            }], required: [{
-                type: Input
-            }], testId: [{
-                type: Input
-            }], control: [{
+            args: [{ selector: 'ix-form-field', standalone: true, imports: [CommonModule], template: "<div class=\"ix-form-field\" [attr.data-testid]=\"testId()\">\n  <!-- Label -->\n  @if (label()) {\n    <label class=\"ix-form-field-label\" [class.required]=\"required()\">\n      {{ label() }}\n      @if (required()) {\n        <span class=\"required-asterisk\" aria-label=\"required\">*</span>\n      }\n    </label>\n  }\n\n  <!-- Form Control Content -->\n  <div class=\"ix-form-field-wrapper\">\n    <ng-content></ng-content>\n  </div>\n\n  <!-- Hint or Error Message -->\n  <div class=\"ix-form-field-subscript\">\n    @if (showError()) {\n      <div\n        class=\"ix-form-field-error\"\n        role=\"alert\"\n        aria-live=\"polite\">\n        {{ errorMessage() }}\n      </div>\n    }\n    @if (showHint()) {\n      <div class=\"ix-form-field-hint\">\n        {{ hint() }}\n      </div>\n    }\n  </div>\n</div>", styles: [".ix-form-field{display:block;width:100%;margin-bottom:1rem;font-family:var(--font-family-body, \"Inter\"),sans-serif}.ix-form-field-label{display:block;margin-bottom:.5rem;font-size:.875rem;font-weight:500;color:var(--fg1, #333);line-height:1.4}.ix-form-field-label.required .required-asterisk{color:var(--error, #dc3545);margin-left:.25rem}.ix-form-field-wrapper{position:relative;width:100%;overflow:visible}.ix-form-field-wrapper :ng-deep .ix-select-container,.ix-form-field-wrapper :ng-deep .ix-input-container{margin-bottom:0}.ix-form-field-wrapper :ng-deep .ix-select-label,.ix-form-field-wrapper :ng-deep .ix-input-label{display:none}.ix-form-field-wrapper :ng-deep .ix-select-error,.ix-form-field-wrapper :ng-deep .ix-input-error{display:none}.ix-form-field-wrapper :ng-deep .ix-select-dropdown{z-index:1000}.ix-form-field-subscript{min-height:1.25rem;margin-top:.25rem;font-size:.75rem;line-height:1.4}.ix-form-field-error{color:var(--error, #dc3545);margin:0}.ix-form-field-hint{color:var(--fg2, #6c757d);margin:0}.ix-form-field-wrapper:has(:focus-visible) .ix-form-field-label{color:var(--primary, #007bff)}.ix-form-field-wrapper:has(.error) .ix-form-field-label{color:var(--error, #dc3545)}@media (prefers-reduced-motion: reduce){.ix-form-field-label{transition:none}}@media (prefers-contrast: high){.ix-form-field-label,.ix-form-field-error{font-weight:600}}\n"] }]
+        }], propDecorators: { control: [{
                 type: ContentChild,
                 args: [NgControl, { static: false }]
             }] } });
@@ -2716,13 +2696,13 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
 
 class IxListItemComponent {
     elementRef;
-    disabled = false;
-    clickable = false;
-    itemClick = new EventEmitter();
-    hasLeadingContent = false;
-    hasSecondaryTextContent = false;
-    hasTrailingContent = false;
-    hasPrimaryTextDirective = false;
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    clickable = input(false, ...(ngDevMode ? [{ debugName: "clickable" }] : []));
+    itemClick = output();
+    hasLeadingContent = signal(false, ...(ngDevMode ? [{ debugName: "hasLeadingContent" }] : []));
+    hasSecondaryTextContent = signal(false, ...(ngDevMode ? [{ debugName: "hasSecondaryTextContent" }] : []));
+    hasTrailingContent = signal(false, ...(ngDevMode ? [{ debugName: "hasTrailingContent" }] : []));
+    hasPrimaryTextDirective = signal(false, ...(ngDevMode ? [{ debugName: "hasPrimaryTextDirective" }] : []));
     constructor(elementRef) {
         this.elementRef = elementRef;
     }
@@ -2732,69 +2712,61 @@ class IxListItemComponent {
     checkContentProjection() {
         const element = this.elementRef.nativeElement;
         // Check for leading content (icons/avatars)
-        this.hasLeadingContent = !!(element.querySelector('[ixListIcon]') ||
-            element.querySelector('[ixListAvatar]'));
+        this.hasLeadingContent.set(!!(element.querySelector('[ixListIcon]') ||
+            element.querySelector('[ixListAvatar]')));
         // Check for secondary text content
-        this.hasSecondaryTextContent = !!(element.querySelector('[ixListItemLine]') ||
-            element.querySelector('[ixListItemSecondary]'));
+        this.hasSecondaryTextContent.set(!!(element.querySelector('[ixListItemLine]') ||
+            element.querySelector('[ixListItemSecondary]')));
         // Check for trailing content
-        this.hasTrailingContent = !!element.querySelector('[ixListItemTrailing]');
+        this.hasTrailingContent.set(!!element.querySelector('[ixListItemTrailing]'));
         // Check for primary text directive
-        this.hasPrimaryTextDirective = !!(element.querySelector('[ixListItemTitle]') ||
-            element.querySelector('[ixListItemPrimary]'));
+        this.hasPrimaryTextDirective.set(!!(element.querySelector('[ixListItemTitle]') ||
+            element.querySelector('[ixListItemPrimary]')));
     }
-    get hasSecondaryText() {
-        return this.hasSecondaryTextContent;
-    }
-    get hasThirdText() {
+    hasSecondaryText = computed(() => {
+        return this.hasSecondaryTextContent();
+    }, ...(ngDevMode ? [{ debugName: "hasSecondaryText" }] : []));
+    hasThirdText = computed(() => {
         // For now, we'll consider third line as having more than one secondary line
         const element = this.elementRef.nativeElement;
         const secondaryElements = element.querySelectorAll('[ixListItemLine], [ixListItemSecondary]');
         return secondaryElements.length > 1;
-    }
+    }, ...(ngDevMode ? [{ debugName: "hasThirdText" }] : []));
     onClick(event) {
-        if (!this.disabled && this.clickable) {
+        if (!this.disabled() && this.clickable()) {
             this.itemClick.emit(event);
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxListItemComponent, deps: [{ token: i0.ElementRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxListItemComponent, isStandalone: true, selector: "ix-list-item", inputs: { disabled: "disabled", clickable: "clickable" }, outputs: { itemClick: "itemClick" }, host: { attributes: { "role": "listitem" }, listeners: { "click": "onClick($event)" }, properties: { "class.ix-list-item--disabled": "disabled", "class.ix-list-item--clickable": "clickable", "class.ix-list-item--two-line": "hasSecondaryText", "class.ix-list-item--three-line": "hasThirdText" }, classAttribute: "ix-list-item" }, ngImport: i0, template: "<div class=\"ix-list-item__content\">\n  <!-- Leading icon/avatar slot -->\n  @if (hasLeadingContent) {\n    <div class=\"ix-list-item__leading\">\n      <ng-content select=\"[ixListIcon], [ixListAvatar]\"></ng-content>\n    </div>\n  }\n\n  <!-- Text content -->\n  <div class=\"ix-list-item__text\">\n    <!-- Primary text -->\n    <div class=\"ix-list-item__primary-text\">\n      <ng-content select=\"[ixListItemTitle], [ixListItemPrimary]\"></ng-content>\n      @if (!hasPrimaryTextDirective) {\n        <ng-content></ng-content>\n      }\n    </div>\n\n    <!-- Secondary text -->\n    @if (hasSecondaryTextContent) {\n      <div class=\"ix-list-item__secondary-text\">\n        <ng-content select=\"[ixListItemLine], [ixListItemSecondary]\"></ng-content>\n      </div>\n    }\n  </div>\n\n  <!-- Trailing content slot -->\n  @if (hasTrailingContent) {\n    <div class=\"ix-list-item__trailing\">\n      <ng-content select=\"[ixListItemTrailing]\"></ng-content>\n    </div>\n  }\n</div>", styles: [".ix-list-item{display:block;position:relative;min-height:48px;padding:0;cursor:default;text-decoration:none;color:var(--fg1);transition:background-color .2s ease}.ix-list-item__content{display:flex;align-items:center;padding:8px 16px;min-height:inherit;box-sizing:border-box}.ix-list-item__leading{flex-shrink:0;margin-right:16px;display:flex;align-items:center;justify-content:center}.ix-list-item__text{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}.ix-list-item__primary-text{font-size:16px;font-weight:400;line-height:1.5;color:var(--fg1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-item__secondary-text{font-size:14px;font-weight:400;line-height:1.4;color:var(--fg2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-item__trailing{flex-shrink:0;margin-left:16px;display:flex;align-items:center}.ix-list-item--clickable{cursor:pointer}.ix-list-item--clickable:hover:not(.ix-list-item--disabled){background-color:var(--alt-bg1)}.ix-list-item--clickable:focus{outline:none;background-color:var(--alt-bg1)}.ix-list-item--clickable:active:not(.ix-list-item--disabled){background-color:var(--alt-bg2)}.ix-list-item--two-line{min-height:64px}.ix-list-item--two-line .ix-list-item__primary-text{white-space:normal;line-height:1.4}.ix-list-item--two-line .ix-list-item__secondary-text{white-space:normal;line-height:1.3}.ix-list-item--three-line{min-height:88px}.ix-list-item--three-line .ix-list-item__text{align-items:flex-start;padding:8px 0}.ix-list-item--three-line .ix-list-item__primary-text{white-space:normal;line-height:1.4}.ix-list-item--three-line .ix-list-item__secondary-text{white-space:normal;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.ix-list-item--disabled{opacity:.6;cursor:not-allowed;pointer-events:none}::ng-deep [ixListIcon]{width:24px;height:24px;font-size:24px;color:var(--fg2);display:flex;align-items:center;justify-content:center}::ng-deep [ixListAvatar]{width:40px;height:40px;border-radius:50%;object-fit:cover;background-color:var(--alt-bg1);color:var(--fg1);display:flex;align-items:center;justify-content:center;font-weight:500}::ng-deep [ixListItemTitle]{font-weight:400}::ng-deep [ixListItemLine]{display:block;margin-top:4px;font-size:14px;color:var(--fg2);line-height:1.4}::ng-deep [ixListItemTrailing]{color:var(--fg2);font-size:14px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxListItemComponent, isStandalone: true, selector: "ix-list-item", inputs: { disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, clickable: { classPropertyName: "clickable", publicName: "clickable", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { itemClick: "itemClick" }, host: { attributes: { "role": "listitem" }, listeners: { "click": "onClick($event)" }, properties: { "class.ix-list-item--disabled": "disabled()", "class.ix-list-item--clickable": "clickable()", "class.ix-list-item--two-line": "hasSecondaryText()", "class.ix-list-item--three-line": "hasThirdText()" }, classAttribute: "ix-list-item" }, ngImport: i0, template: "<div class=\"ix-list-item__content\">\n  <!-- Leading icon/avatar slot -->\n  @if (hasLeadingContent()) {\n    <div class=\"ix-list-item__leading\">\n      <ng-content select=\"[ixListIcon], [ixListAvatar]\"></ng-content>\n    </div>\n  }\n\n  <!-- Text content -->\n  <div class=\"ix-list-item__text\">\n    <!-- Primary text -->\n    <div class=\"ix-list-item__primary-text\">\n      <ng-content select=\"[ixListItemTitle], [ixListItemPrimary]\"></ng-content>\n      @if (!hasPrimaryTextDirective()) {\n        <ng-content></ng-content>\n      }\n    </div>\n\n    <!-- Secondary text -->\n    @if (hasSecondaryTextContent()) {\n      <div class=\"ix-list-item__secondary-text\">\n        <ng-content select=\"[ixListItemLine], [ixListItemSecondary]\"></ng-content>\n      </div>\n    }\n  </div>\n\n  <!-- Trailing content slot -->\n  @if (hasTrailingContent()) {\n    <div class=\"ix-list-item__trailing\">\n      <ng-content select=\"[ixListItemTrailing]\"></ng-content>\n    </div>\n  }\n</div>", styles: [".ix-list-item{display:block;position:relative;min-height:48px;padding:0;cursor:default;text-decoration:none;color:var(--fg1);transition:background-color .2s ease}.ix-list-item__content{display:flex;align-items:center;padding:8px 16px;min-height:inherit;box-sizing:border-box}.ix-list-item__leading{flex-shrink:0;margin-right:16px;display:flex;align-items:center;justify-content:center}.ix-list-item__text{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}.ix-list-item__primary-text{font-size:16px;font-weight:400;line-height:1.5;color:var(--fg1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-item__secondary-text{font-size:14px;font-weight:400;line-height:1.4;color:var(--fg2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-item__trailing{flex-shrink:0;margin-left:16px;display:flex;align-items:center}.ix-list-item--clickable{cursor:pointer}.ix-list-item--clickable:hover:not(.ix-list-item--disabled){background-color:var(--alt-bg1)}.ix-list-item--clickable:focus{outline:none;background-color:var(--alt-bg1)}.ix-list-item--clickable:active:not(.ix-list-item--disabled){background-color:var(--alt-bg2)}.ix-list-item--two-line{min-height:64px}.ix-list-item--two-line .ix-list-item__primary-text{white-space:normal;line-height:1.4}.ix-list-item--two-line .ix-list-item__secondary-text{white-space:normal;line-height:1.3}.ix-list-item--three-line{min-height:88px}.ix-list-item--three-line .ix-list-item__text{align-items:flex-start;padding:8px 0}.ix-list-item--three-line .ix-list-item__primary-text{white-space:normal;line-height:1.4}.ix-list-item--three-line .ix-list-item__secondary-text{white-space:normal;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.ix-list-item--disabled{opacity:.6;cursor:not-allowed;pointer-events:none}::ng-deep [ixListIcon]{width:24px;height:24px;font-size:24px;color:var(--fg2);display:flex;align-items:center;justify-content:center}::ng-deep [ixListAvatar]{width:40px;height:40px;border-radius:50%;object-fit:cover;background-color:var(--alt-bg1);color:var(--fg1);display:flex;align-items:center;justify-content:center;font-weight:500}::ng-deep [ixListItemTitle]{font-weight:400}::ng-deep [ixListItemLine]{display:block;margin-top:4px;font-size:14px;color:var(--fg2);line-height:1.4}::ng-deep [ixListItemTrailing]{color:var(--fg2);font-size:14px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxListItemComponent, decorators: [{
             type: Component,
             args: [{ selector: 'ix-list-item', standalone: true, imports: [CommonModule], host: {
                         'class': 'ix-list-item',
-                        '[class.ix-list-item--disabled]': 'disabled',
-                        '[class.ix-list-item--clickable]': 'clickable',
-                        '[class.ix-list-item--two-line]': 'hasSecondaryText',
-                        '[class.ix-list-item--three-line]': 'hasThirdText',
+                        '[class.ix-list-item--disabled]': 'disabled()',
+                        '[class.ix-list-item--clickable]': 'clickable()',
+                        '[class.ix-list-item--two-line]': 'hasSecondaryText()',
+                        '[class.ix-list-item--three-line]': 'hasThirdText()',
                         'role': 'listitem',
                         '(click)': 'onClick($event)'
-                    }, template: "<div class=\"ix-list-item__content\">\n  <!-- Leading icon/avatar slot -->\n  @if (hasLeadingContent) {\n    <div class=\"ix-list-item__leading\">\n      <ng-content select=\"[ixListIcon], [ixListAvatar]\"></ng-content>\n    </div>\n  }\n\n  <!-- Text content -->\n  <div class=\"ix-list-item__text\">\n    <!-- Primary text -->\n    <div class=\"ix-list-item__primary-text\">\n      <ng-content select=\"[ixListItemTitle], [ixListItemPrimary]\"></ng-content>\n      @if (!hasPrimaryTextDirective) {\n        <ng-content></ng-content>\n      }\n    </div>\n\n    <!-- Secondary text -->\n    @if (hasSecondaryTextContent) {\n      <div class=\"ix-list-item__secondary-text\">\n        <ng-content select=\"[ixListItemLine], [ixListItemSecondary]\"></ng-content>\n      </div>\n    }\n  </div>\n\n  <!-- Trailing content slot -->\n  @if (hasTrailingContent) {\n    <div class=\"ix-list-item__trailing\">\n      <ng-content select=\"[ixListItemTrailing]\"></ng-content>\n    </div>\n  }\n</div>", styles: [".ix-list-item{display:block;position:relative;min-height:48px;padding:0;cursor:default;text-decoration:none;color:var(--fg1);transition:background-color .2s ease}.ix-list-item__content{display:flex;align-items:center;padding:8px 16px;min-height:inherit;box-sizing:border-box}.ix-list-item__leading{flex-shrink:0;margin-right:16px;display:flex;align-items:center;justify-content:center}.ix-list-item__text{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}.ix-list-item__primary-text{font-size:16px;font-weight:400;line-height:1.5;color:var(--fg1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-item__secondary-text{font-size:14px;font-weight:400;line-height:1.4;color:var(--fg2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-item__trailing{flex-shrink:0;margin-left:16px;display:flex;align-items:center}.ix-list-item--clickable{cursor:pointer}.ix-list-item--clickable:hover:not(.ix-list-item--disabled){background-color:var(--alt-bg1)}.ix-list-item--clickable:focus{outline:none;background-color:var(--alt-bg1)}.ix-list-item--clickable:active:not(.ix-list-item--disabled){background-color:var(--alt-bg2)}.ix-list-item--two-line{min-height:64px}.ix-list-item--two-line .ix-list-item__primary-text{white-space:normal;line-height:1.4}.ix-list-item--two-line .ix-list-item__secondary-text{white-space:normal;line-height:1.3}.ix-list-item--three-line{min-height:88px}.ix-list-item--three-line .ix-list-item__text{align-items:flex-start;padding:8px 0}.ix-list-item--three-line .ix-list-item__primary-text{white-space:normal;line-height:1.4}.ix-list-item--three-line .ix-list-item__secondary-text{white-space:normal;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.ix-list-item--disabled{opacity:.6;cursor:not-allowed;pointer-events:none}::ng-deep [ixListIcon]{width:24px;height:24px;font-size:24px;color:var(--fg2);display:flex;align-items:center;justify-content:center}::ng-deep [ixListAvatar]{width:40px;height:40px;border-radius:50%;object-fit:cover;background-color:var(--alt-bg1);color:var(--fg1);display:flex;align-items:center;justify-content:center;font-weight:500}::ng-deep [ixListItemTitle]{font-weight:400}::ng-deep [ixListItemLine]{display:block;margin-top:4px;font-size:14px;color:var(--fg2);line-height:1.4}::ng-deep [ixListItemTrailing]{color:var(--fg2);font-size:14px}\n"] }]
-        }], ctorParameters: () => [{ type: i0.ElementRef }], propDecorators: { disabled: [{
-                type: Input
-            }], clickable: [{
-                type: Input
-            }], itemClick: [{
-                type: Output
-            }] } });
+                    }, template: "<div class=\"ix-list-item__content\">\n  <!-- Leading icon/avatar slot -->\n  @if (hasLeadingContent()) {\n    <div class=\"ix-list-item__leading\">\n      <ng-content select=\"[ixListIcon], [ixListAvatar]\"></ng-content>\n    </div>\n  }\n\n  <!-- Text content -->\n  <div class=\"ix-list-item__text\">\n    <!-- Primary text -->\n    <div class=\"ix-list-item__primary-text\">\n      <ng-content select=\"[ixListItemTitle], [ixListItemPrimary]\"></ng-content>\n      @if (!hasPrimaryTextDirective()) {\n        <ng-content></ng-content>\n      }\n    </div>\n\n    <!-- Secondary text -->\n    @if (hasSecondaryTextContent()) {\n      <div class=\"ix-list-item__secondary-text\">\n        <ng-content select=\"[ixListItemLine], [ixListItemSecondary]\"></ng-content>\n      </div>\n    }\n  </div>\n\n  <!-- Trailing content slot -->\n  @if (hasTrailingContent()) {\n    <div class=\"ix-list-item__trailing\">\n      <ng-content select=\"[ixListItemTrailing]\"></ng-content>\n    </div>\n  }\n</div>", styles: [".ix-list-item{display:block;position:relative;min-height:48px;padding:0;cursor:default;text-decoration:none;color:var(--fg1);transition:background-color .2s ease}.ix-list-item__content{display:flex;align-items:center;padding:8px 16px;min-height:inherit;box-sizing:border-box}.ix-list-item__leading{flex-shrink:0;margin-right:16px;display:flex;align-items:center;justify-content:center}.ix-list-item__text{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}.ix-list-item__primary-text{font-size:16px;font-weight:400;line-height:1.5;color:var(--fg1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-item__secondary-text{font-size:14px;font-weight:400;line-height:1.4;color:var(--fg2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-item__trailing{flex-shrink:0;margin-left:16px;display:flex;align-items:center}.ix-list-item--clickable{cursor:pointer}.ix-list-item--clickable:hover:not(.ix-list-item--disabled){background-color:var(--alt-bg1)}.ix-list-item--clickable:focus{outline:none;background-color:var(--alt-bg1)}.ix-list-item--clickable:active:not(.ix-list-item--disabled){background-color:var(--alt-bg2)}.ix-list-item--two-line{min-height:64px}.ix-list-item--two-line .ix-list-item__primary-text{white-space:normal;line-height:1.4}.ix-list-item--two-line .ix-list-item__secondary-text{white-space:normal;line-height:1.3}.ix-list-item--three-line{min-height:88px}.ix-list-item--three-line .ix-list-item__text{align-items:flex-start;padding:8px 0}.ix-list-item--three-line .ix-list-item__primary-text{white-space:normal;line-height:1.4}.ix-list-item--three-line .ix-list-item__secondary-text{white-space:normal;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.ix-list-item--disabled{opacity:.6;cursor:not-allowed;pointer-events:none}::ng-deep [ixListIcon]{width:24px;height:24px;font-size:24px;color:var(--fg2);display:flex;align-items:center;justify-content:center}::ng-deep [ixListAvatar]{width:40px;height:40px;border-radius:50%;object-fit:cover;background-color:var(--alt-bg1);color:var(--fg1);display:flex;align-items:center;justify-content:center;font-weight:500}::ng-deep [ixListItemTitle]{font-weight:400}::ng-deep [ixListItemLine]{display:block;margin-top:4px;font-size:14px;color:var(--fg2);line-height:1.4}::ng-deep [ixListItemTrailing]{color:var(--fg2);font-size:14px}\n"] }]
+        }], ctorParameters: () => [{ type: i0.ElementRef }] });
 
 class IxListSubheaderComponent {
-    inset = false;
+    inset = input(false, ...(ngDevMode ? [{ debugName: "inset" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxListSubheaderComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxListSubheaderComponent, isStandalone: true, selector: "ix-list-subheader", inputs: { inset: "inset" }, host: { attributes: { "role": "heading", "aria-level": "3" }, properties: { "class.ix-list-subheader--inset": "inset" }, classAttribute: "ix-list-subheader" }, ngImport: i0, template: "<ng-content></ng-content>", styles: [":host{display:block;margin:.75rem 16px;font-size:14px;font-weight:600;color:var(--fg2);text-transform:uppercase;letter-spacing:.5px;line-height:1.4}:host-context(.ix-list--dense) :host{font-size:13px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxListSubheaderComponent, isStandalone: true, selector: "ix-list-subheader", inputs: { inset: { classPropertyName: "inset", publicName: "inset", isSignal: true, isRequired: false, transformFunction: null } }, host: { attributes: { "role": "heading", "aria-level": "3" }, properties: { "class.ix-list-subheader--inset": "inset()" }, classAttribute: "ix-list-subheader" }, ngImport: i0, template: "<ng-content></ng-content>", styles: [":host{display:block;margin:.75rem 16px;font-size:14px;font-weight:600;color:var(--fg2);text-transform:uppercase;letter-spacing:.5px;line-height:1.4}:host-context(.ix-list--dense) :host{font-size:13px}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxListSubheaderComponent, decorators: [{
             type: Component,
             args: [{ selector: 'ix-list-subheader', standalone: true, imports: [CommonModule], host: {
                         'class': 'ix-list-subheader',
-                        '[class.ix-list-subheader--inset]': 'inset',
+                        '[class.ix-list-subheader--inset]': 'inset()',
                         'role': 'heading',
                         'aria-level': '3'
                     }, template: "<ng-content></ng-content>", styles: [":host{display:block;margin:.75rem 16px;font-size:14px;font-weight:600;color:var(--fg2);text-transform:uppercase;letter-spacing:.5px;line-height:1.4}:host-context(.ix-list--dense) :host{font-size:13px}\n"] }]
-        }], propDecorators: { inset: [{
-                type: Input
-            }] } });
+        }] });
 
 class IxListIconDirective {
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxListIconDirective, deps: [], target: i0.ɵɵFactoryTarget.Directive });
@@ -2930,16 +2902,34 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
 class IxListOptionComponent {
     elementRef;
     cdr;
-    value;
-    selected = false;
-    disabled = false;
-    color = 'primary';
-    selectionChange = new EventEmitter();
+    value = input(undefined, ...(ngDevMode ? [{ debugName: "value" }] : []));
+    selected = input(false, ...(ngDevMode ? [{ debugName: "selected" }] : []));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
+    color = input('primary', ...(ngDevMode ? [{ debugName: "color" }] : []));
+    selectionChange = output();
     // Reference to parent selection list (set by parent)
     selectionList;
-    hasLeadingContent = false;
-    hasSecondaryTextContent = false;
-    hasPrimaryTextDirective = false;
+    // Internal state for tracking selection (for uncontrolled usage)
+    // Made public so parent ix-selection-list can control it
+    internalSelected = signal(null, ...(ngDevMode ? [{ debugName: "internalSelected" }] : []));
+    internalDisabled = signal(null, ...(ngDevMode ? [{ debugName: "internalDisabled" }] : []));
+    internalColor = signal(null, ...(ngDevMode ? [{ debugName: "internalColor" }] : []));
+    // Effective selected state (prefers internal state if set, otherwise uses input)
+    effectiveSelected = computed(() => {
+        const internal = this.internalSelected();
+        return internal !== null ? internal : this.selected();
+    }, ...(ngDevMode ? [{ debugName: "effectiveSelected" }] : []));
+    effectiveDisabled = computed(() => {
+        const internal = this.internalDisabled();
+        return internal !== null ? internal : this.disabled();
+    }, ...(ngDevMode ? [{ debugName: "effectiveDisabled" }] : []));
+    effectiveColor = computed(() => {
+        const internal = this.internalColor();
+        return internal !== null ? internal : this.color();
+    }, ...(ngDevMode ? [{ debugName: "effectiveColor" }] : []));
+    hasLeadingContent = signal(false, ...(ngDevMode ? [{ debugName: "hasLeadingContent" }] : []));
+    hasSecondaryTextContent = signal(false, ...(ngDevMode ? [{ debugName: "hasSecondaryTextContent" }] : []));
+    hasPrimaryTextDirective = signal(false, ...(ngDevMode ? [{ debugName: "hasPrimaryTextDirective" }] : []));
     constructor(elementRef, cdr) {
         this.elementRef = elementRef;
         this.cdr = cdr;
@@ -2950,64 +2940,55 @@ class IxListOptionComponent {
     checkContentProjection() {
         const element = this.elementRef.nativeElement;
         // Check for leading content (icons/avatars)
-        this.hasLeadingContent = !!(element.querySelector('[ixListIcon]') ||
-            element.querySelector('[ixListAvatar]'));
+        this.hasLeadingContent.set(!!(element.querySelector('[ixListIcon]') ||
+            element.querySelector('[ixListAvatar]')));
         // Check for secondary text content
-        this.hasSecondaryTextContent = !!(element.querySelector('[ixListItemLine]') ||
-            element.querySelector('[ixListItemSecondary]'));
+        this.hasSecondaryTextContent.set(!!(element.querySelector('[ixListItemLine]') ||
+            element.querySelector('[ixListItemSecondary]')));
         // Check for primary text directive
-        this.hasPrimaryTextDirective = !!(element.querySelector('[ixListItemTitle]') ||
-            element.querySelector('[ixListItemPrimary]'));
+        this.hasPrimaryTextDirective.set(!!(element.querySelector('[ixListItemTitle]') ||
+            element.querySelector('[ixListItemPrimary]')));
     }
     onClick(event) {
-        if (this.disabled) {
+        if (this.effectiveDisabled()) {
             return;
         }
         this.toggle();
     }
     onKeydown(event) {
-        if (this.disabled) {
+        if (this.effectiveDisabled()) {
             return;
         }
         event.preventDefault();
         this.toggle();
     }
     toggle() {
-        if (this.disabled) {
+        if (this.effectiveDisabled()) {
             return;
         }
-        this.selected = !this.selected;
+        const newSelected = !this.effectiveSelected();
+        this.internalSelected.set(newSelected);
         this.cdr.detectChanges();
-        this.selectionChange.emit(this.selected);
+        this.selectionChange.emit(newSelected);
         // Notify parent selection list
         if (this.selectionList) {
             this.selectionList.onOptionSelectionChange();
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxListOptionComponent, deps: [{ token: i0.ElementRef }, { token: i0.ChangeDetectorRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxListOptionComponent, isStandalone: true, selector: "ix-list-option", inputs: { value: "value", selected: "selected", disabled: "disabled", color: "color" }, outputs: { selectionChange: "selectionChange" }, host: { attributes: { "role": "option" }, listeners: { "click": "onClick($event)", "keydown.space": "onKeydown($event)", "keydown.enter": "onKeydown($event)" }, properties: { "class.ix-list-option--selected": "selected", "class.ix-list-option--disabled": "disabled", "attr.aria-selected": "selected", "attr.aria-disabled": "disabled" }, classAttribute: "ix-list-option" }, ngImport: i0, template: "<div class=\"ix-list-option__content\">\n  <!-- Leading content (icons, avatars) -->\n  @if (hasLeadingContent) {\n    <div class=\"ix-list-option__leading\">\n      <ng-content select=\"[ixListIcon], [ixListAvatar]\"></ng-content>\n    </div>\n  }\n\n  <!-- Text content -->\n  <div class=\"ix-list-option__text\">\n    <div class=\"ix-list-option__primary-text\">\n      <ng-content select=\"[ixListItemTitle], [ixListItemPrimary]\"></ng-content>\n      @if (!hasPrimaryTextDirective) {\n        <ng-content></ng-content>\n      }\n    </div>\n\n    @if (hasSecondaryTextContent) {\n      <div class=\"ix-list-option__secondary-text\">\n        <ng-content select=\"[ixListItemLine], [ixListItemSecondary]\"></ng-content>\n      </div>\n    }\n  </div>\n\n  <!-- Checkbox on the right -->\n  <div class=\"ix-list-option__checkbox\">\n    <ix-checkbox \n      [checked]=\"selected\"\n      [disabled]=\"disabled\"\n      [hideLabel]=\"true\"\n      (click)=\"$event.stopPropagation()\"\n      tabindex=\"-1\">\n    </ix-checkbox>\n  </div>\n</div>", styles: [".ix-list-option{display:block;position:relative;min-height:48px;cursor:pointer;text-decoration:none;color:var(--fg1);transition:background-color .2s ease;-webkit-user-select:none;user-select:none}.ix-list-option__content{display:flex;align-items:center;padding:8px 16px;min-height:inherit;box-sizing:border-box;transition:background-color .2s ease;border-radius:4px}.ix-list-option__leading{flex-shrink:0;margin-right:16px;display:flex;align-items:center;justify-content:center}.ix-list-option__text{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}.ix-list-option__primary-text{font-size:16px;font-weight:400;line-height:1.5;color:var(--fg1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-option__secondary-text{font-size:14px;font-weight:400;line-height:1.4;color:var(--fg2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-option__checkbox{flex-shrink:0;margin-left:16px;position:relative;display:flex;align-items:center}.ix-list-option--disabled{opacity:.6;cursor:not-allowed;pointer-events:none}::ng-deep [ixListIcon]{width:24px;height:24px;font-size:24px;color:var(--fg2);display:flex;align-items:center;justify-content:center}::ng-deep [ixListAvatar]{width:40px;height:40px;border-radius:50%;object-fit:cover;background-color:var(--alt-bg1);color:var(--fg1);display:flex;align-items:center;justify-content:center;font-weight:500}::ng-deep [ixListItemTitle]{font-weight:400}::ng-deep [ixListItemLine]{display:block;margin-top:4px;font-size:14px;color:var(--fg2);line-height:1.4}:host(:hover:not(.ix-list-option--disabled)) .ix-list-option__content{background-color:var(--alt-bg2)}:host(:focus){outline:none}:host(:focus) .ix-list-option__content{background-color:var(--alt-bg2)}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "component", type: IxCheckboxComponent, selector: "ix-checkbox", inputs: ["label", "hideLabel", "disabled", "required", "indeterminate", "testId", "error", "checked"], outputs: ["change"] }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxListOptionComponent, isStandalone: true, selector: "ix-list-option", inputs: { value: { classPropertyName: "value", publicName: "value", isSignal: true, isRequired: false, transformFunction: null }, selected: { classPropertyName: "selected", publicName: "selected", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, color: { classPropertyName: "color", publicName: "color", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectionChange: "selectionChange" }, host: { attributes: { "role": "option" }, listeners: { "click": "onClick($event)", "keydown.space": "onKeydown($event)", "keydown.enter": "onKeydown($event)" }, properties: { "class.ix-list-option--selected": "effectiveSelected()", "class.ix-list-option--disabled": "effectiveDisabled()", "attr.aria-selected": "effectiveSelected()", "attr.aria-disabled": "effectiveDisabled()" }, classAttribute: "ix-list-option" }, ngImport: i0, template: "<div class=\"ix-list-option__content\">\n  <!-- Leading content (icons, avatars) -->\n  @if (hasLeadingContent()) {\n    <div class=\"ix-list-option__leading\">\n      <ng-content select=\"[ixListIcon], [ixListAvatar]\"></ng-content>\n    </div>\n  }\n\n  <!-- Text content -->\n  <div class=\"ix-list-option__text\">\n    <div class=\"ix-list-option__primary-text\">\n      <ng-content select=\"[ixListItemTitle], [ixListItemPrimary]\"></ng-content>\n      @if (!hasPrimaryTextDirective()) {\n        <ng-content></ng-content>\n      }\n    </div>\n\n    @if (hasSecondaryTextContent()) {\n      <div class=\"ix-list-option__secondary-text\">\n        <ng-content select=\"[ixListItemLine], [ixListItemSecondary]\"></ng-content>\n      </div>\n    }\n  </div>\n\n  <!-- Checkbox on the right -->\n  <div class=\"ix-list-option__checkbox\">\n    <ix-checkbox\n      [checked]=\"effectiveSelected()\"\n      [disabled]=\"effectiveDisabled()\"\n      [hideLabel]=\"true\"\n      (click)=\"$event.stopPropagation()\"\n      tabindex=\"-1\">\n    </ix-checkbox>\n  </div>\n</div>", styles: [".ix-list-option{display:block;position:relative;min-height:48px;cursor:pointer;text-decoration:none;color:var(--fg1);transition:background-color .2s ease;-webkit-user-select:none;user-select:none}.ix-list-option__content{display:flex;align-items:center;padding:8px 16px;min-height:inherit;box-sizing:border-box;transition:background-color .2s ease;border-radius:4px}.ix-list-option__leading{flex-shrink:0;margin-right:16px;display:flex;align-items:center;justify-content:center}.ix-list-option__text{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}.ix-list-option__primary-text{font-size:16px;font-weight:400;line-height:1.5;color:var(--fg1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-option__secondary-text{font-size:14px;font-weight:400;line-height:1.4;color:var(--fg2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-option__checkbox{flex-shrink:0;margin-left:16px;position:relative;display:flex;align-items:center}.ix-list-option--disabled{opacity:.6;cursor:not-allowed;pointer-events:none}::ng-deep [ixListIcon]{width:24px;height:24px;font-size:24px;color:var(--fg2);display:flex;align-items:center;justify-content:center}::ng-deep [ixListAvatar]{width:40px;height:40px;border-radius:50%;object-fit:cover;background-color:var(--alt-bg1);color:var(--fg1);display:flex;align-items:center;justify-content:center;font-weight:500}::ng-deep [ixListItemTitle]{font-weight:400}::ng-deep [ixListItemLine]{display:block;margin-top:4px;font-size:14px;color:var(--fg2);line-height:1.4}:host(:hover:not(.ix-list-option--disabled)) .ix-list-option__content{background-color:var(--alt-bg2)}:host(:focus){outline:none}:host(:focus) .ix-list-option__content{background-color:var(--alt-bg2)}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "component", type: IxCheckboxComponent, selector: "ix-checkbox", inputs: ["label", "hideLabel", "disabled", "required", "indeterminate", "testId", "error", "checked"], outputs: ["change"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxListOptionComponent, decorators: [{
             type: Component,
             args: [{ selector: 'ix-list-option', standalone: true, imports: [CommonModule, IxCheckboxComponent], host: {
                         'class': 'ix-list-option',
-                        '[class.ix-list-option--selected]': 'selected',
-                        '[class.ix-list-option--disabled]': 'disabled',
+                        '[class.ix-list-option--selected]': 'effectiveSelected()',
+                        '[class.ix-list-option--disabled]': 'effectiveDisabled()',
                         'role': 'option',
-                        '[attr.aria-selected]': 'selected',
-                        '[attr.aria-disabled]': 'disabled'
-                    }, template: "<div class=\"ix-list-option__content\">\n  <!-- Leading content (icons, avatars) -->\n  @if (hasLeadingContent) {\n    <div class=\"ix-list-option__leading\">\n      <ng-content select=\"[ixListIcon], [ixListAvatar]\"></ng-content>\n    </div>\n  }\n\n  <!-- Text content -->\n  <div class=\"ix-list-option__text\">\n    <div class=\"ix-list-option__primary-text\">\n      <ng-content select=\"[ixListItemTitle], [ixListItemPrimary]\"></ng-content>\n      @if (!hasPrimaryTextDirective) {\n        <ng-content></ng-content>\n      }\n    </div>\n\n    @if (hasSecondaryTextContent) {\n      <div class=\"ix-list-option__secondary-text\">\n        <ng-content select=\"[ixListItemLine], [ixListItemSecondary]\"></ng-content>\n      </div>\n    }\n  </div>\n\n  <!-- Checkbox on the right -->\n  <div class=\"ix-list-option__checkbox\">\n    <ix-checkbox \n      [checked]=\"selected\"\n      [disabled]=\"disabled\"\n      [hideLabel]=\"true\"\n      (click)=\"$event.stopPropagation()\"\n      tabindex=\"-1\">\n    </ix-checkbox>\n  </div>\n</div>", styles: [".ix-list-option{display:block;position:relative;min-height:48px;cursor:pointer;text-decoration:none;color:var(--fg1);transition:background-color .2s ease;-webkit-user-select:none;user-select:none}.ix-list-option__content{display:flex;align-items:center;padding:8px 16px;min-height:inherit;box-sizing:border-box;transition:background-color .2s ease;border-radius:4px}.ix-list-option__leading{flex-shrink:0;margin-right:16px;display:flex;align-items:center;justify-content:center}.ix-list-option__text{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}.ix-list-option__primary-text{font-size:16px;font-weight:400;line-height:1.5;color:var(--fg1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-option__secondary-text{font-size:14px;font-weight:400;line-height:1.4;color:var(--fg2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-option__checkbox{flex-shrink:0;margin-left:16px;position:relative;display:flex;align-items:center}.ix-list-option--disabled{opacity:.6;cursor:not-allowed;pointer-events:none}::ng-deep [ixListIcon]{width:24px;height:24px;font-size:24px;color:var(--fg2);display:flex;align-items:center;justify-content:center}::ng-deep [ixListAvatar]{width:40px;height:40px;border-radius:50%;object-fit:cover;background-color:var(--alt-bg1);color:var(--fg1);display:flex;align-items:center;justify-content:center;font-weight:500}::ng-deep [ixListItemTitle]{font-weight:400}::ng-deep [ixListItemLine]{display:block;margin-top:4px;font-size:14px;color:var(--fg2);line-height:1.4}:host(:hover:not(.ix-list-option--disabled)) .ix-list-option__content{background-color:var(--alt-bg2)}:host(:focus){outline:none}:host(:focus) .ix-list-option__content{background-color:var(--alt-bg2)}\n"] }]
-        }], ctorParameters: () => [{ type: i0.ElementRef }, { type: i0.ChangeDetectorRef }], propDecorators: { value: [{
-                type: Input
-            }], selected: [{
-                type: Input
-            }], disabled: [{
-                type: Input
-            }], color: [{
-                type: Input
-            }], selectionChange: [{
-                type: Output
-            }], onClick: [{
+                        '[attr.aria-selected]': 'effectiveSelected()',
+                        '[attr.aria-disabled]': 'effectiveDisabled()'
+                    }, template: "<div class=\"ix-list-option__content\">\n  <!-- Leading content (icons, avatars) -->\n  @if (hasLeadingContent()) {\n    <div class=\"ix-list-option__leading\">\n      <ng-content select=\"[ixListIcon], [ixListAvatar]\"></ng-content>\n    </div>\n  }\n\n  <!-- Text content -->\n  <div class=\"ix-list-option__text\">\n    <div class=\"ix-list-option__primary-text\">\n      <ng-content select=\"[ixListItemTitle], [ixListItemPrimary]\"></ng-content>\n      @if (!hasPrimaryTextDirective()) {\n        <ng-content></ng-content>\n      }\n    </div>\n\n    @if (hasSecondaryTextContent()) {\n      <div class=\"ix-list-option__secondary-text\">\n        <ng-content select=\"[ixListItemLine], [ixListItemSecondary]\"></ng-content>\n      </div>\n    }\n  </div>\n\n  <!-- Checkbox on the right -->\n  <div class=\"ix-list-option__checkbox\">\n    <ix-checkbox\n      [checked]=\"effectiveSelected()\"\n      [disabled]=\"effectiveDisabled()\"\n      [hideLabel]=\"true\"\n      (click)=\"$event.stopPropagation()\"\n      tabindex=\"-1\">\n    </ix-checkbox>\n  </div>\n</div>", styles: [".ix-list-option{display:block;position:relative;min-height:48px;cursor:pointer;text-decoration:none;color:var(--fg1);transition:background-color .2s ease;-webkit-user-select:none;user-select:none}.ix-list-option__content{display:flex;align-items:center;padding:8px 16px;min-height:inherit;box-sizing:border-box;transition:background-color .2s ease;border-radius:4px}.ix-list-option__leading{flex-shrink:0;margin-right:16px;display:flex;align-items:center;justify-content:center}.ix-list-option__text{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}.ix-list-option__primary-text{font-size:16px;font-weight:400;line-height:1.5;color:var(--fg1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-option__secondary-text{font-size:14px;font-weight:400;line-height:1.4;color:var(--fg2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ix-list-option__checkbox{flex-shrink:0;margin-left:16px;position:relative;display:flex;align-items:center}.ix-list-option--disabled{opacity:.6;cursor:not-allowed;pointer-events:none}::ng-deep [ixListIcon]{width:24px;height:24px;font-size:24px;color:var(--fg2);display:flex;align-items:center;justify-content:center}::ng-deep [ixListAvatar]{width:40px;height:40px;border-radius:50%;object-fit:cover;background-color:var(--alt-bg1);color:var(--fg1);display:flex;align-items:center;justify-content:center;font-weight:500}::ng-deep [ixListItemTitle]{font-weight:400}::ng-deep [ixListItemLine]{display:block;margin-top:4px;font-size:14px;color:var(--fg2);line-height:1.4}:host(:hover:not(.ix-list-option--disabled)) .ix-list-option__content{background-color:var(--alt-bg2)}:host(:focus){outline:none}:host(:focus) .ix-list-option__content{background-color:var(--alt-bg2)}\n"] }]
+        }], ctorParameters: () => [{ type: i0.ElementRef }, { type: i0.ChangeDetectorRef }], propDecorators: { onClick: [{
                 type: HostListener,
                 args: ['click', ['$event']]
             }], onKeydown: [{
@@ -3030,12 +3011,12 @@ class IxSelectionListComponent {
     ngAfterContentInit() {
         this.options.forEach(option => {
             option.selectionList = this;
-            option.color = this.color;
+            option.internalColor.set(this.color);
         });
         this.options.changes.subscribe(() => {
             this.options.forEach(option => {
                 option.selectionList = this;
-                option.color = this.color;
+                option.internalColor.set(this.color);
             });
         });
     }
@@ -3043,7 +3024,7 @@ class IxSelectionListComponent {
     writeValue(value) {
         if (value && this.options) {
             this.options.forEach(option => {
-                option.selected = value.includes(option.value);
+                option.internalSelected.set(value.includes(option.value()));
             });
         }
     }
@@ -3057,23 +3038,23 @@ class IxSelectionListComponent {
         this.disabled = isDisabled;
         if (this.options) {
             this.options.forEach(option => {
-                option.disabled = isDisabled;
+                option.internalDisabled.set(isDisabled);
             });
         }
     }
     onOptionSelectionChange() {
         this.onTouched();
         const selectedValues = this.options
-            .filter(option => option.selected)
-            .map(option => option.value);
+            .filter(option => option.effectiveSelected())
+            .map(option => option.value());
         this.onChange(selectedValues);
         this.selectionChange.emit({
             source: this,
-            options: this.options.filter(option => option.selected)
+            options: this.options.filter(option => option.effectiveSelected())
         });
     }
     get selectedOptions() {
-        return this.options ? this.options.filter(option => option.selected) : [];
+        return this.options ? this.options.filter(option => option.effectiveSelected()) : [];
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSelectionListComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
     static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxSelectionListComponent, isStandalone: true, selector: "ix-selection-list", inputs: { dense: "dense", disabled: "disabled", multiple: "multiple", color: "color" }, outputs: { selectionChange: "selectionChange" }, host: { attributes: { "role": "listbox" }, properties: { "class.ix-selection-list--dense": "dense", "class.ix-selection-list--disabled": "disabled", "attr.aria-multiselectable": "multiple" }, classAttribute: "ix-selection-list" }, providers: [
@@ -7935,7 +7916,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * To regenerate this file, run:
  *   npm run generate-icons
  *
- * Generated: 2025-12-29T17:38:25.732Z
+ * Generated: 2025-12-29T17:50:10.110Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 /* eslint-disable */

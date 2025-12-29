@@ -1,28 +1,28 @@
-<div [ngClass]="classes">
+<div [ngClass]="classes()">
   <button class="ix-expansion-panel__header"
-          [disabled]="disabled"
+          [disabled]="disabled()"
           (click)="toggle()"
-          [attr.aria-expanded]="expanded"
+          [attr.aria-expanded]="effectiveExpanded()"
           [attr.aria-controls]="contentId"
-          [attr.aria-disabled]="disabled">
-    @if (title) {
+          [attr.aria-disabled]="disabled()">
+    @if (title()) {
       <div class="ix-expansion-panel__title">
-        {{ title }}
+        {{ title() }}
       </div>
     }
     <ng-content select="[slot=title]"></ng-content>
-    
+
     <div class="ix-expansion-panel__indicator">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="m6 9 6 6 6-6"/>
       </svg>
     </div>
   </button>
-  
-  <div class="ix-expansion-panel__content" 
+
+  <div class="ix-expansion-panel__content"
        [id]="contentId"
-       [attr.aria-hidden]="!expanded"
-       [@expandCollapse]="expanded ? 'expanded' : 'collapsed'">
+       [attr.aria-hidden]="!effectiveExpanded()"
+       [@expandCollapse]="effectiveExpanded() ? 'expanded' : 'collapsed'">
     <ng-content></ng-content>
   </div>
 </div>

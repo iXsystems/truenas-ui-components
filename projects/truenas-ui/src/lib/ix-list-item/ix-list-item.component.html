@@ -1,6 +1,6 @@
 <div class="ix-list-item__content">
   <!-- Leading icon/avatar slot -->
-  @if (hasLeadingContent) {
+  @if (hasLeadingContent()) {
     <div class="ix-list-item__leading">
       <ng-content select="[ixListIcon], [ixListAvatar]"></ng-content>
     </div>
@@ -11,13 +11,13 @@
     <!-- Primary text -->
     <div class="ix-list-item__primary-text">
       <ng-content select="[ixListItemTitle], [ixListItemPrimary]"></ng-content>
-      @if (!hasPrimaryTextDirective) {
+      @if (!hasPrimaryTextDirective()) {
         <ng-content></ng-content>
       }
     </div>
 
     <!-- Secondary text -->
-    @if (hasSecondaryTextContent) {
+    @if (hasSecondaryTextContent()) {
       <div class="ix-list-item__secondary-text">
         <ng-content select="[ixListItemLine], [ixListItemSecondary]"></ng-content>
       </div>
@@ -25,7 +25,7 @@
   </div>
 
   <!-- Trailing content slot -->
-  @if (hasTrailingContent) {
+  @if (hasTrailingContent()) {
     <div class="ix-list-item__trailing">
       <ng-content select="[ixListItemTrailing]"></ng-content>
     </div>

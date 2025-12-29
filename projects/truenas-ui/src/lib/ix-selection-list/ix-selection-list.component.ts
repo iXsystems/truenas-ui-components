@@ -46,13 +46,13 @@ export class IxSelectionListComponent implements AfterContentInit, ControlValueA
   ngAfterContentInit(): void {
     this.options.forEach(option => {
       option.selectionList = this;
-      option.color = this.color;
+      option.internalColor.set(this.color);
     });
 
     this.options.changes.subscribe(() => {
       this.options.forEach(option => {
         option.selectionList = this;
-        option.color = this.color;
+        option.internalColor.set(this.color);
       });
     });
   }
@@ -61,7 +61,7 @@ export class IxSelectionListComponent implements AfterContentInit, ControlValueA
   writeValue(value: any[]): void {
     if (value && this.options) {
       this.options.forEach(option => {
-        option.selected = value.includes(option.value);
+        option.internalSelected.set(value.includes(option.value()));
       });
     }
   }
@@ -78,7 +78,7 @@ export class IxSelectionListComponent implements AfterContentInit, ControlValueA
     this.disabled = isDisabled;
     if (this.options) {
       this.options.forEach(option => {
-        option.disabled = isDisabled;
+        option.internalDisabled.set(isDisabled);
       });
     }
   }
@@ -86,18 +86,18 @@ export class IxSelectionListComponent implements AfterContentInit, ControlValueA
   onOptionSelectionChange(): void {
     this.onTouched();
     const selectedValues = this.options
-      .filter(option => option.selected)
-      .map(option => option.value);
-    
+      .filter(option => option.effectiveSelected())
+      .map(option => option.value());
+
     this.onChange(selectedValues);
-    
+
     this.selectionChange.emit({
       source: this,
-      options: this.options.filter(option => option.selected)
+      options: this.options.filter(option => option.effectiveSelected())
     });
   }
 
   get selectedOptions(): IxListOptionComponent[] {
-    return this.options ? this.options.filter(option => option.selected) : [];
+    return this.options ? this.options.filter(option => option.effectiveSelected()) : [];
   }
 }

@@ -1,9 +1,9 @@
-<div class="ix-form-field" [attr.data-testid]="testId">
+<div class="ix-form-field" [attr.data-testid]="testId()">
   <!-- Label -->
-  @if (label) {
-    <label class="ix-form-field-label" [class.required]="required">
-      {{ label }}
-      @if (required) {
+  @if (label()) {
+    <label class="ix-form-field-label" [class.required]="required()">
+      {{ label() }}
+      @if (required()) {
         <span class="required-asterisk" aria-label="required">*</span>
       }
     </label>
@@ -16,17 +16,17 @@
 
   <!-- Hint or Error Message -->
   <div class="ix-form-field-subscript">
-    @if (showError) {
+    @if (showError()) {
       <div
         class="ix-form-field-error"
         role="alert"
         aria-live="polite">
-        {{ errorMessage }}
+        {{ errorMessage() }}
       </div>
     }
-    @if (showHint) {
+    @if (showHint()) {
       <div class="ix-form-field-hint">
-        {{ hint }}
+        {{ hint() }}
       </div>
     }
   </div>

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, input, output, computed, signal } from '@angular/core';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 
 @Component({
@@ -34,66 +34,58 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
   ]
 })
 export class IxExpansionPanelComponent {
-  @Input()
-  title?: string;
+  title = input<string | undefined>(undefined);
+  elevation = input<'none' | 'low' | 'medium' | 'high'>('medium');
+  padding = input<'small' | 'medium' | 'large'>('medium');
+  bordered = input<boolean>(false);
+  background = input<boolean>(true);
+  expanded = input<boolean>(false);
+  disabled = input<boolean>(false);
+  titleStyle = input<'header' | 'body' | 'link'>('header');
 
-  @Input()
-  elevation: 'none' | 'low' | 'medium' | 'high' = 'medium';
+  expandedChange = output<boolean>();
+  toggleEvent = output<void>();
 
-  @Input()
-  padding: 'small' | 'medium' | 'large' = 'medium';
+  // Internal state for tracking expansion (for uncontrolled usage)
+  private internalExpanded = signal<boolean | null>(null);
 
-  @Input()
-  bordered = false;
-
-  @Input()
-  background = true;
-
-  @Input()
-  expanded = false;
-
-  @Input()
-  disabled = false;
-
-  @Input()
-  titleStyle: 'header' | 'body' | 'link' = 'header';
-
-  @Output()
-  expandedChange = new EventEmitter<boolean>();
-
-  @Output()
-  toggleEvent = new EventEmitter<void>();
+  // Effective expanded state (prefers internal state if set, otherwise uses input)
+  effectiveExpanded = computed(() => {
+    const internal = this.internalExpanded();
+    return internal !== null ? internal : this.expanded();
+  });
 
   public readonly contentId = `ix-expansion-panel-content-${Math.random().toString(36).substr(2, 9)}`;
 
   public toggle(): void {
-    if (this.disabled) {
+    if (this.disabled()) {
       return;
     }
-    
-    this.expanded = !this.expanded;
-    this.expandedChange.emit(this.expanded);
+
+    const newExpanded = !this.effectiveExpanded();
+    this.internalExpanded.set(newExpanded);
+    this.expandedChange.emit(newExpanded);
     this.toggleEvent.emit();
   }
 
-  public get classes(): string[] {
-    const elevationClass = `ix-expansion-panel--elevation-${this.elevation}`;
-    const paddingClass = `ix-expansion-panel--padding-${this.padding}`;
-    const borderedClass = this.bordered ? 'ix-expansion-panel--bordered' : '';
-    const backgroundClass = this.background ? 'ix-expansion-panel--background' : '';
-    const expandedClass = this.expanded ? 'ix-expansion-panel--expanded' : '';
-    const disabledClass = this.disabled ? 'ix-expansion-panel--disabled' : '';
-    const titleStyleClass = `ix-expansion-panel--title-${this.titleStyle}`;
-    
+  classes = computed(() => {
+    const elevationClass = `ix-expansion-panel--elevation-${this.elevation()}`;
+    const paddingClass = `ix-expansion-panel--padding-${this.padding()}`;
+    const borderedClass = this.bordered() ? 'ix-expansion-panel--bordered' : '';
+    const backgroundClass = this.background() ? 'ix-expansion-panel--background' : '';
+    const expandedClass = this.effectiveExpanded() ? 'ix-expansion-panel--expanded' : '';
+    const disabledClass = this.disabled() ? 'ix-expansion-panel--disabled' : '';
+    const titleStyleClass = `ix-expansion-panel--title-${this.titleStyle()}`;
+
     return [
-      'ix-expansion-panel', 
-      elevationClass, 
-      paddingClass, 
-      borderedClass, 
+      'ix-expansion-panel',
+      elevationClass,
+      paddingClass,
+      borderedClass,
       backgroundClass,
       expandedClass,
       disabledClass,
       titleStyleClass
     ].filter(Boolean);
-  }
+  });
 }
