@@ -1,9 +1,9 @@
-import { 
-  Directive, 
-  ElementRef, 
-  OnDestroy, 
+import {
+  Directive,
+  ElementRef,
+  OnDestroy,
   OnInit,
-  Input,
+  input,
   Host
 } from '@angular/core';
 import { IxSliderComponent } from './ix-slider.component';
@@ -13,7 +13,7 @@ import { IxSliderComponent } from './ix-slider.component';
   standalone: true
 })
 export class IxSliderWithLabelDirective implements OnInit, OnDestroy {
-  @Input('ixSliderWithLabel') enabled: boolean | string = true;
+  enabled = input<boolean | string>(true, { alias: 'ixSliderWithLabel' });
 
   constructor(
     private _elementRef: ElementRef<HTMLElement>,
@@ -21,7 +21,8 @@ export class IxSliderWithLabelDirective implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    const isEnabled = this.enabled === true || this.enabled === '' || this.enabled === 'true';
+    const enabled = this.enabled();
+    const isEnabled = enabled === true || enabled === '' || enabled === 'true';
 
     if (!isEnabled) {
       return;

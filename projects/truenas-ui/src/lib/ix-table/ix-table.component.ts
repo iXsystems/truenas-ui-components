@@ -37,8 +37,9 @@ export class IxTableComponent {
   private processColumnDefs(columns: readonly IxTableColumnDirective[]): void {
     this.columnDefMap.clear();
     columns.forEach(columnDef => {
-      if (columnDef.name) {
-        this.columnDefMap.set(columnDef.name, columnDef);
+      const name = columnDef.name();
+      if (name) {
+        this.columnDefMap.set(name, columnDef);
       }
     });
     this.cdr.detectChanges();

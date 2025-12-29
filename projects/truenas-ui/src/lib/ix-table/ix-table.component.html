@@ -6,12 +6,12 @@
         <th
           class="ix-table__header-cell"
           [attr.data-column]="column">
-          @if (getColumnDef(column)?.headerTemplate) {
+          @if (getColumnDef(column)?.headerTemplate()) {
             <ng-container
-              [ngTemplateOutlet]="getColumnDef(column)?.headerTemplate || null">
+              [ngTemplateOutlet]="getColumnDef(column)?.headerTemplate() || null">
             </ng-container>
           }
-          @if (!getColumnDef(column)?.headerTemplate) {
+          @if (!getColumnDef(column)?.headerTemplate()) {
             <span>{{ column }}</span>
           }
         </th>
@@ -27,13 +27,13 @@
           <td
             class="ix-table__cell"
             [attr.data-column]="column">
-            @if (getColumnDef(column)?.cellTemplate) {
+            @if (getColumnDef(column)?.cellTemplate()) {
               <ng-container
-                [ngTemplateOutlet]="getColumnDef(column)?.cellTemplate || null"
+                [ngTemplateOutlet]="getColumnDef(column)?.cellTemplate() || null"
                 [ngTemplateOutletContext]="{ $implicit: row, column: column }">
               </ng-container>
             }
-            @if (!getColumnDef(column)?.cellTemplate) {
+            @if (!getColumnDef(column)?.cellTemplate()) {
               <span>{{ row[column] }}</span>
             }
           </td>

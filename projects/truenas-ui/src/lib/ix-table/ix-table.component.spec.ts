@@ -75,8 +75,16 @@ describe('IxTableComponent', () => {
 
   describe('column definitions', () => {
     it('should process column definitions via effect', () => {
-      const mockColumnDef1 = { name: 'column1' } as IxTableColumnDirective;
-      const mockColumnDef2 = { name: 'column2' } as IxTableColumnDirective;
+      const mockColumnDef1 = {
+        name: () => 'column1',
+        headerTemplate: () => undefined,
+        cellTemplate: () => undefined
+      } as unknown as IxTableColumnDirective;
+      const mockColumnDef2 = {
+        name: () => 'column2',
+        headerTemplate: () => undefined,
+        cellTemplate: () => undefined
+      } as unknown as IxTableColumnDirective;
 
       // Test processColumnDefs directly with mock data
       component['processColumnDefs']([mockColumnDef1, mockColumnDef2]);
@@ -90,8 +98,16 @@ describe('IxTableComponent', () => {
     });
 
     it('should clear and rebuild column map when processing', () => {
-      const mockColumnDef1 = { name: 'column1' } as IxTableColumnDirective;
-      const mockColumnDef2 = { name: 'column2' } as IxTableColumnDirective;
+      const mockColumnDef1 = {
+        name: () => 'column1',
+        headerTemplate: () => undefined,
+        cellTemplate: () => undefined
+      } as unknown as IxTableColumnDirective;
+      const mockColumnDef2 = {
+        name: () => 'column2',
+        headerTemplate: () => undefined,
+        cellTemplate: () => undefined
+      } as unknown as IxTableColumnDirective;
 
       // First processing
       component['processColumnDefs']([mockColumnDef1, mockColumnDef2]);
@@ -107,7 +123,11 @@ describe('IxTableComponent', () => {
     });
 
     it('should handle column definitions without names', () => {
-      const mockColumnDefWithoutName = {} as IxTableColumnDirective;
+      const mockColumnDefWithoutName = {
+        name: () => '',
+        headerTemplate: () => undefined,
+        cellTemplate: () => undefined
+      } as unknown as IxTableColumnDirective;
       component['processColumnDefs']([mockColumnDefWithoutName]);
 
       // Should not throw and should result in empty map

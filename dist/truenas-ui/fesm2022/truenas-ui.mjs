@@ -1,5 +1,5 @@
 import * as i0 from '@angular/core';
-import { Injectable, Component, input, ChangeDetectionStrategy, viewChild, inject, effect, computed, ViewEncapsulation, output, signal, forwardRef, Directive, ElementRef, ContentChild, ChangeDetectorRef, ContentChildren, HostListener, contentChildren, TemplateRef, Input, Optional, Inject, Pipe, Host, model, EventEmitter, Output, ViewChild } from '@angular/core';
+import { Injectable, Component, input, ChangeDetectionStrategy, viewChild, inject, effect, computed, ViewEncapsulation, output, signal, forwardRef, Directive, ElementRef, ContentChild, ChangeDetectorRef, ContentChildren, HostListener, contentChildren, contentChild, TemplateRef, Optional, Inject, Pipe, Host, model, EventEmitter, Output, ViewChild } from '@angular/core';
 import * as i1$2 from '@angular/common';
 import { CommonModule, NgIf, DOCUMENT } from '@angular/common';
 import * as i1$1 from '@angular/platform-browser';
@@ -3077,11 +3077,11 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                 }]
         }], ctorParameters: () => [{ type: i0.TemplateRef }] });
 class IxTableColumnDirective {
-    name;
-    headerTemplate;
-    cellTemplate;
+    name = input.required(...(ngDevMode ? [{ debugName: "name", alias: 'ixColumnDef' }] : [{ alias: 'ixColumnDef' }]));
+    headerTemplate = contentChild(IxHeaderCellDefDirective, ...(ngDevMode ? [{ debugName: "headerTemplate", read: TemplateRef }] : [{ read: TemplateRef }]));
+    cellTemplate = contentChild(IxCellDefDirective, ...(ngDevMode ? [{ debugName: "cellTemplate", read: TemplateRef }] : [{ read: TemplateRef }]));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTableColumnDirective, deps: [], target: i0.ɵɵFactoryTarget.Directive });
-    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "14.0.0", version: "20.3.4", type: IxTableColumnDirective, isStandalone: true, selector: "[ixColumnDef]", inputs: { name: ["ixColumnDef", "name"] }, queries: [{ propertyName: "headerTemplate", first: true, predicate: IxHeaderCellDefDirective, descendants: true, read: TemplateRef }, { propertyName: "cellTemplate", first: true, predicate: IxCellDefDirective, descendants: true, read: TemplateRef }], exportAs: ["ixColumnDef"], ngImport: i0 });
+    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "17.2.0", version: "20.3.4", type: IxTableColumnDirective, isStandalone: true, selector: "[ixColumnDef]", inputs: { name: { classPropertyName: "name", publicName: "ixColumnDef", isSignal: true, isRequired: true, transformFunction: null } }, queries: [{ propertyName: "headerTemplate", first: true, predicate: IxHeaderCellDefDirective, descendants: true, read: TemplateRef, isSignal: true }, { propertyName: "cellTemplate", first: true, predicate: IxCellDefDirective, descendants: true, read: TemplateRef, isSignal: true }], exportAs: ["ixColumnDef"], ngImport: i0 });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTableColumnDirective, decorators: [{
             type: Directive,
@@ -3090,16 +3090,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                     standalone: true,
                     exportAs: 'ixColumnDef'
                 }]
-        }], propDecorators: { name: [{
-                type: Input,
-                args: ['ixColumnDef']
-            }], headerTemplate: [{
-                type: ContentChild,
-                args: [IxHeaderCellDefDirective, { read: TemplateRef }]
-            }], cellTemplate: [{
-                type: ContentChild,
-                args: [IxCellDefDirective, { read: TemplateRef }]
-            }] } });
+        }] });
 
 class IxTableComponent {
     cdr;
@@ -3118,8 +3109,9 @@ class IxTableComponent {
     processColumnDefs(columns) {
         this.columnDefMap.clear();
         columns.forEach(columnDef => {
-            if (columnDef.name) {
-                this.columnDefMap.set(columnDef.name, columnDef);
+            const name = columnDef.name();
+            if (name) {
+                this.columnDefMap.set(name, columnDef);
             }
         });
         this.cdr.detectChanges();
@@ -3138,13 +3130,13 @@ class IxTableComponent {
         return index;
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTableComponent, deps: [{ token: i0.ChangeDetectorRef }], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTableComponent, isStandalone: true, selector: "ix-table", inputs: { dataSource: { classPropertyName: "dataSource", publicName: "dataSource", isSignal: true, isRequired: false, transformFunction: null }, displayedColumns: { classPropertyName: "displayedColumns", publicName: "displayedColumns", isSignal: true, isRequired: false, transformFunction: null } }, host: { classAttribute: "ix-table" }, queries: [{ propertyName: "columnDefs", predicate: IxTableColumnDirective, isSignal: true }], ngImport: i0, template: "<table class=\"ix-table__table\">\n  <!-- Header Row -->\n  <thead class=\"ix-table__header\">\n    <tr class=\"ix-table__header-row\">\n      @for (column of displayedColumns(); track $index) {\n        <th\n          class=\"ix-table__header-cell\"\n          [attr.data-column]=\"column\">\n          @if (getColumnDef(column)?.headerTemplate) {\n            <ng-container\n              [ngTemplateOutlet]=\"getColumnDef(column)?.headerTemplate || null\">\n            </ng-container>\n          }\n          @if (!getColumnDef(column)?.headerTemplate) {\n            <span>{{ column }}</span>\n          }\n        </th>\n      }\n    </tr>\n  </thead>\n\n  <!-- Data Rows -->\n  <tbody class=\"ix-table__body\">\n    @for (row of data(); track $index) {\n      <tr class=\"ix-table__row\">\n        @for (column of displayedColumns(); track $index) {\n          <td\n            class=\"ix-table__cell\"\n            [attr.data-column]=\"column\">\n            @if (getColumnDef(column)?.cellTemplate) {\n              <ng-container\n                [ngTemplateOutlet]=\"getColumnDef(column)?.cellTemplate || null\"\n                [ngTemplateOutletContext]=\"{ $implicit: row, column: column }\">\n              </ng-container>\n            }\n            @if (!getColumnDef(column)?.cellTemplate) {\n              <span>{{ row[column] }}</span>\n            }\n          </td>\n        }\n      </tr>\n    }\n  </tbody>\n</table>", styles: [".ix-table{display:block;width:100%;overflow-x:auto}.ix-table__table{width:100%;border-collapse:collapse;border-spacing:0;background-color:var(--bg2);border-radius:4px;overflow:hidden}.ix-table__header{background-color:var(--topbar);color:var(--topbar-txt)}.ix-table__header-row{height:56px}.ix-table__header-cell{padding:0 16px;text-align:left;font-weight:600;font-size:14px;border-bottom:1px solid var(--lines);white-space:nowrap;vertical-align:middle}.ix-table__body{background-color:var(--bg2)}.ix-table__row{height:48px;transition:background-color .2s ease}.ix-table__row:hover{background-color:var(--alt-bg1)}.ix-table__row:not(:last-child){border-bottom:1px solid var(--lines)}.ix-table__cell{padding:0 16px;font-size:14px;color:var(--fg1);vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ix-table--dense .ix-table__header-row{height:40px}.ix-table--dense .ix-table__row{height:32px}.ix-table--dense .ix-table__header-cell,.ix-table--dense .ix-table__cell{padding:0 12px;font-size:13px}@media (max-width: 768px){.ix-table__table{font-size:12px}.ix-table__header-cell,.ix-table__cell{padding:0 8px}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgTemplateOutlet, selector: "[ngTemplateOutlet]", inputs: ["ngTemplateOutletContext", "ngTemplateOutlet", "ngTemplateOutletInjector"] }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxTableComponent, isStandalone: true, selector: "ix-table", inputs: { dataSource: { classPropertyName: "dataSource", publicName: "dataSource", isSignal: true, isRequired: false, transformFunction: null }, displayedColumns: { classPropertyName: "displayedColumns", publicName: "displayedColumns", isSignal: true, isRequired: false, transformFunction: null } }, host: { classAttribute: "ix-table" }, queries: [{ propertyName: "columnDefs", predicate: IxTableColumnDirective, isSignal: true }], ngImport: i0, template: "<table class=\"ix-table__table\">\n  <!-- Header Row -->\n  <thead class=\"ix-table__header\">\n    <tr class=\"ix-table__header-row\">\n      @for (column of displayedColumns(); track $index) {\n        <th\n          class=\"ix-table__header-cell\"\n          [attr.data-column]=\"column\">\n          @if (getColumnDef(column)?.headerTemplate()) {\n            <ng-container\n              [ngTemplateOutlet]=\"getColumnDef(column)?.headerTemplate() || null\">\n            </ng-container>\n          }\n          @if (!getColumnDef(column)?.headerTemplate()) {\n            <span>{{ column }}</span>\n          }\n        </th>\n      }\n    </tr>\n  </thead>\n\n  <!-- Data Rows -->\n  <tbody class=\"ix-table__body\">\n    @for (row of data(); track $index) {\n      <tr class=\"ix-table__row\">\n        @for (column of displayedColumns(); track $index) {\n          <td\n            class=\"ix-table__cell\"\n            [attr.data-column]=\"column\">\n            @if (getColumnDef(column)?.cellTemplate()) {\n              <ng-container\n                [ngTemplateOutlet]=\"getColumnDef(column)?.cellTemplate() || null\"\n                [ngTemplateOutletContext]=\"{ $implicit: row, column: column }\">\n              </ng-container>\n            }\n            @if (!getColumnDef(column)?.cellTemplate()) {\n              <span>{{ row[column] }}</span>\n            }\n          </td>\n        }\n      </tr>\n    }\n  </tbody>\n</table>", styles: [".ix-table{display:block;width:100%;overflow-x:auto}.ix-table__table{width:100%;border-collapse:collapse;border-spacing:0;background-color:var(--bg2);border-radius:4px;overflow:hidden}.ix-table__header{background-color:var(--topbar);color:var(--topbar-txt)}.ix-table__header-row{height:56px}.ix-table__header-cell{padding:0 16px;text-align:left;font-weight:600;font-size:14px;border-bottom:1px solid var(--lines);white-space:nowrap;vertical-align:middle}.ix-table__body{background-color:var(--bg2)}.ix-table__row{height:48px;transition:background-color .2s ease}.ix-table__row:hover{background-color:var(--alt-bg1)}.ix-table__row:not(:last-child){border-bottom:1px solid var(--lines)}.ix-table__cell{padding:0 16px;font-size:14px;color:var(--fg1);vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ix-table--dense .ix-table__header-row{height:40px}.ix-table--dense .ix-table__row{height:32px}.ix-table--dense .ix-table__header-cell,.ix-table--dense .ix-table__cell{padding:0 12px;font-size:13px}@media (max-width: 768px){.ix-table__table{font-size:12px}.ix-table__header-cell,.ix-table__cell{padding:0 8px}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$2.NgTemplateOutlet, selector: "[ngTemplateOutlet]", inputs: ["ngTemplateOutletContext", "ngTemplateOutlet", "ngTemplateOutletInjector"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTableComponent, decorators: [{
             type: Component,
             args: [{ selector: 'ix-table', standalone: true, imports: [CommonModule], host: {
                         'class': 'ix-table'
-                    }, template: "<table class=\"ix-table__table\">\n  <!-- Header Row -->\n  <thead class=\"ix-table__header\">\n    <tr class=\"ix-table__header-row\">\n      @for (column of displayedColumns(); track $index) {\n        <th\n          class=\"ix-table__header-cell\"\n          [attr.data-column]=\"column\">\n          @if (getColumnDef(column)?.headerTemplate) {\n            <ng-container\n              [ngTemplateOutlet]=\"getColumnDef(column)?.headerTemplate || null\">\n            </ng-container>\n          }\n          @if (!getColumnDef(column)?.headerTemplate) {\n            <span>{{ column }}</span>\n          }\n        </th>\n      }\n    </tr>\n  </thead>\n\n  <!-- Data Rows -->\n  <tbody class=\"ix-table__body\">\n    @for (row of data(); track $index) {\n      <tr class=\"ix-table__row\">\n        @for (column of displayedColumns(); track $index) {\n          <td\n            class=\"ix-table__cell\"\n            [attr.data-column]=\"column\">\n            @if (getColumnDef(column)?.cellTemplate) {\n              <ng-container\n                [ngTemplateOutlet]=\"getColumnDef(column)?.cellTemplate || null\"\n                [ngTemplateOutletContext]=\"{ $implicit: row, column: column }\">\n              </ng-container>\n            }\n            @if (!getColumnDef(column)?.cellTemplate) {\n              <span>{{ row[column] }}</span>\n            }\n          </td>\n        }\n      </tr>\n    }\n  </tbody>\n</table>", styles: [".ix-table{display:block;width:100%;overflow-x:auto}.ix-table__table{width:100%;border-collapse:collapse;border-spacing:0;background-color:var(--bg2);border-radius:4px;overflow:hidden}.ix-table__header{background-color:var(--topbar);color:var(--topbar-txt)}.ix-table__header-row{height:56px}.ix-table__header-cell{padding:0 16px;text-align:left;font-weight:600;font-size:14px;border-bottom:1px solid var(--lines);white-space:nowrap;vertical-align:middle}.ix-table__body{background-color:var(--bg2)}.ix-table__row{height:48px;transition:background-color .2s ease}.ix-table__row:hover{background-color:var(--alt-bg1)}.ix-table__row:not(:last-child){border-bottom:1px solid var(--lines)}.ix-table__cell{padding:0 16px;font-size:14px;color:var(--fg1);vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ix-table--dense .ix-table__header-row{height:40px}.ix-table--dense .ix-table__row{height:32px}.ix-table--dense .ix-table__header-cell,.ix-table--dense .ix-table__cell{padding:0 12px;font-size:13px}@media (max-width: 768px){.ix-table__table{font-size:12px}.ix-table__header-cell,.ix-table__cell{padding:0 8px}}\n"] }]
+                    }, template: "<table class=\"ix-table__table\">\n  <!-- Header Row -->\n  <thead class=\"ix-table__header\">\n    <tr class=\"ix-table__header-row\">\n      @for (column of displayedColumns(); track $index) {\n        <th\n          class=\"ix-table__header-cell\"\n          [attr.data-column]=\"column\">\n          @if (getColumnDef(column)?.headerTemplate()) {\n            <ng-container\n              [ngTemplateOutlet]=\"getColumnDef(column)?.headerTemplate() || null\">\n            </ng-container>\n          }\n          @if (!getColumnDef(column)?.headerTemplate()) {\n            <span>{{ column }}</span>\n          }\n        </th>\n      }\n    </tr>\n  </thead>\n\n  <!-- Data Rows -->\n  <tbody class=\"ix-table__body\">\n    @for (row of data(); track $index) {\n      <tr class=\"ix-table__row\">\n        @for (column of displayedColumns(); track $index) {\n          <td\n            class=\"ix-table__cell\"\n            [attr.data-column]=\"column\">\n            @if (getColumnDef(column)?.cellTemplate()) {\n              <ng-container\n                [ngTemplateOutlet]=\"getColumnDef(column)?.cellTemplate() || null\"\n                [ngTemplateOutletContext]=\"{ $implicit: row, column: column }\">\n              </ng-container>\n            }\n            @if (!getColumnDef(column)?.cellTemplate()) {\n              <span>{{ row[column] }}</span>\n            }\n          </td>\n        }\n      </tr>\n    }\n  </tbody>\n</table>", styles: [".ix-table{display:block;width:100%;overflow-x:auto}.ix-table__table{width:100%;border-collapse:collapse;border-spacing:0;background-color:var(--bg2);border-radius:4px;overflow:hidden}.ix-table__header{background-color:var(--topbar);color:var(--topbar-txt)}.ix-table__header-row{height:56px}.ix-table__header-cell{padding:0 16px;text-align:left;font-weight:600;font-size:14px;border-bottom:1px solid var(--lines);white-space:nowrap;vertical-align:middle}.ix-table__body{background-color:var(--bg2)}.ix-table__row{height:48px;transition:background-color .2s ease}.ix-table__row:hover{background-color:var(--alt-bg1)}.ix-table__row:not(:last-child){border-bottom:1px solid var(--lines)}.ix-table__cell{padding:0 16px;font-size:14px;color:var(--fg1);vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ix-table--dense .ix-table__header-row{height:40px}.ix-table--dense .ix-table__row{height:32px}.ix-table--dense .ix-table__header-cell,.ix-table--dense .ix-table__cell{padding:0 12px;font-size:13px}@media (max-width: 768px){.ix-table__table{font-size:12px}.ix-table__header-cell,.ix-table__cell{padding:0 8px}}\n"] }]
         }], ctorParameters: () => [{ type: i0.ChangeDetectorRef }] });
 
 /**
@@ -6236,7 +6228,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
 
 class IxSliderThumbDirective {
     elementRef;
-    disabled = false;
+    disabled = signal(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
     slider; // Will be set by parent slider component
     onChangeCallback = (value) => { };
     onTouched = () => { };
@@ -6272,7 +6264,7 @@ class IxSliderThumbDirective {
         this.onTouched = fn;
     }
     setDisabledState(isDisabled) {
-        this.disabled = isDisabled;
+        this.disabled.set(isDisabled);
         if (this.elementRef.nativeElement) {
             this.elementRef.nativeElement.disabled = isDisabled;
         }
@@ -6289,14 +6281,14 @@ class IxSliderThumbDirective {
         this.onTouched();
     }
     onMouseDown(event) {
-        if (this.disabled)
+        if (this.disabled())
             return;
         this.isDragging = true;
         this.addGlobalListeners();
         event.stopPropagation(); // Prevent track click
     }
     onTouchStart(event) {
-        if (this.disabled)
+        if (this.disabled())
             return;
         this.isDragging = true;
         this.addGlobalListeners();
@@ -6315,7 +6307,7 @@ class IxSliderThumbDirective {
         document.removeEventListener('touchend', this.onGlobalTouchEnd);
     }
     onGlobalMouseMove = (event) => {
-        if (!this.isDragging || this.disabled)
+        if (!this.isDragging || this.disabled())
             return;
         event.preventDefault();
         this.updateValueFromPosition(event.clientX);
@@ -6328,7 +6320,7 @@ class IxSliderThumbDirective {
         }
     };
     onGlobalTouchMove = (event) => {
-        if (!this.isDragging || this.disabled)
+        if (!this.isDragging || this.disabled())
             return;
         event.preventDefault();
         const touch = event.touches[0];
@@ -6355,7 +6347,7 @@ class IxSliderThumbDirective {
         this.removeGlobalListeners();
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSliderThumbDirective, deps: [{ token: i0.ElementRef }], target: i0.ɵɵFactoryTarget.Directive });
-    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "14.0.0", version: "20.3.4", type: IxSliderThumbDirective, isStandalone: true, selector: "input[ixSliderThumb]", inputs: { disabled: "disabled" }, host: { attributes: { "type": "range" }, listeners: { "input": "onInput($event)", "change": "onChange($event)", "blur": "onTouched()", "mousedown": "onMouseDown($event)", "touchstart": "onTouchStart($event)" }, properties: { "disabled": "slider?.isDisabled()", "attr.min": "slider?.min()", "attr.max": "slider?.max()", "attr.step": "slider?.step()", "value": "slider?.value()" }, classAttribute: "ix-slider-thumb" }, providers: [
+    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "14.0.0", version: "20.3.4", type: IxSliderThumbDirective, isStandalone: true, selector: "input[ixSliderThumb]", host: { attributes: { "type": "range" }, listeners: { "input": "onInput($event)", "change": "onChange($event)", "blur": "onTouched()", "mousedown": "onMouseDown($event)", "touchstart": "onTouchStart($event)" }, properties: { "disabled": "slider?.isDisabled()", "attr.min": "slider?.min()", "attr.max": "slider?.max()", "attr.step": "slider?.step()", "value": "slider?.value()" }, classAttribute: "ix-slider-thumb" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxSliderThumbDirective),
@@ -6390,9 +6382,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                         '(touchstart)': 'onTouchStart($event)'
                     }
                 }]
-        }], ctorParameters: () => [{ type: i0.ElementRef }], propDecorators: { disabled: [{
-                type: Input
-            }] } });
+        }], ctorParameters: () => [{ type: i0.ElementRef }] });
 
 class IxSliderComponent {
     min = input(0, ...(ngDevMode ? [{ debugName: "min" }] : []));
@@ -6681,13 +6671,14 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
 class IxSliderWithLabelDirective {
     _elementRef;
     _slider;
-    enabled = true;
+    enabled = input(true, ...(ngDevMode ? [{ debugName: "enabled", alias: 'ixSliderWithLabel' }] : [{ alias: 'ixSliderWithLabel' }]));
     constructor(_elementRef, _slider) {
         this._elementRef = _elementRef;
         this._slider = _slider;
     }
     ngOnInit() {
-        const isEnabled = this.enabled === true || this.enabled === '' || this.enabled === 'true';
+        const enabled = this.enabled();
+        const isEnabled = enabled === true || enabled === '' || enabled === 'true';
         if (!isEnabled) {
             return;
         }
@@ -6741,7 +6732,7 @@ class IxSliderWithLabelDirective {
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSliderWithLabelDirective, deps: [{ token: i0.ElementRef }, { token: IxSliderComponent, host: true }], target: i0.ɵɵFactoryTarget.Directive });
-    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "14.0.0", version: "20.3.4", type: IxSliderWithLabelDirective, isStandalone: true, selector: "ix-slider[ixSliderWithLabel]", inputs: { enabled: ["ixSliderWithLabel", "enabled"] }, ngImport: i0 });
+    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "17.1.0", version: "20.3.4", type: IxSliderWithLabelDirective, isStandalone: true, selector: "ix-slider[ixSliderWithLabel]", inputs: { enabled: { classPropertyName: "enabled", publicName: "ixSliderWithLabel", isSignal: true, isRequired: false, transformFunction: null } }, ngImport: i0 });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSliderWithLabelDirective, decorators: [{
             type: Directive,
@@ -6751,10 +6742,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                 }]
         }], ctorParameters: () => [{ type: i0.ElementRef }, { type: IxSliderComponent, decorators: [{
                     type: Host
-                }] }], propDecorators: { enabled: [{
-                type: Input,
-                args: ['ixSliderWithLabel']
-            }] } });
+                }] }] });
 
 class IxButtonToggleComponent {
     cdr;
@@ -7074,12 +7062,12 @@ class IxTooltipDirective {
     _elementRef;
     _viewContainerRef;
     _overlayPositionBuilder;
-    message = '';
-    position = 'above';
-    disabled = false;
-    showDelay = 0;
-    hideDelay = 0;
-    tooltipClass = '';
+    message = input('', ...(ngDevMode ? [{ debugName: "message", alias: 'ixTooltip' }] : [{ alias: 'ixTooltip' }]));
+    position = input('above', ...(ngDevMode ? [{ debugName: "position", alias: 'ixTooltipPosition' }] : [{ alias: 'ixTooltipPosition' }]));
+    disabled = input(false, ...(ngDevMode ? [{ debugName: "disabled", alias: 'ixTooltipDisabled' }] : [{ alias: 'ixTooltipDisabled' }]));
+    showDelay = input(0, ...(ngDevMode ? [{ debugName: "showDelay", alias: 'ixTooltipShowDelay' }] : [{ alias: 'ixTooltipShowDelay' }]));
+    hideDelay = input(0, ...(ngDevMode ? [{ debugName: "hideDelay", alias: 'ixTooltipHideDelay' }] : [{ alias: 'ixTooltipHideDelay' }]));
+    tooltipClass = input('', ...(ngDevMode ? [{ debugName: "tooltipClass", alias: 'ixTooltipClass' }] : [{ alias: 'ixTooltipClass' }]));
     _overlayRef = null;
     _tooltipInstance = null;
     _showTimeout;
@@ -7105,20 +7093,20 @@ class IxTooltipDirective {
         }
     }
     _onMouseEnter() {
-        if (!this.disabled && this.message) {
-            this.show(this.showDelay);
+        if (!this.disabled() && this.message()) {
+            this.show(this.showDelay());
         }
     }
     _onMouseLeave() {
-        this.hide(this.hideDelay);
+        this.hide(this.hideDelay());
     }
     _onFocus() {
-        if (!this.disabled && this.message) {
-            this.show(this.showDelay);
+        if (!this.disabled() && this.message()) {
+            this.show(this.showDelay());
         }
     }
     _onBlur() {
-        this.hide(this.hideDelay);
+        this.hide(this.hideDelay());
     }
     _onKeydown(event) {
         if (event.key === 'Escape' && this._isTooltipVisible) {
@@ -7127,7 +7115,7 @@ class IxTooltipDirective {
     }
     /** Shows the tooltip */
     show(delay = 0) {
-        if (this.disabled || !this.message || this._isTooltipVisible) {
+        if (this.disabled() || !this.message() || this._isTooltipVisible) {
             return;
         }
         this._clearTimeouts();
@@ -7164,7 +7152,7 @@ class IxTooltipDirective {
         this._overlayRef = this._overlay.create({
             positionStrategy,
             scrollStrategy: this._overlay.scrollStrategies.reposition({ scrollThrottle: 20 }),
-            panelClass: ['ix-tooltip-panel', `ix-tooltip-panel-${this.position}`, this.tooltipClass].filter(Boolean),
+            panelClass: ['ix-tooltip-panel', `ix-tooltip-panel-${this.position()}`, this.tooltipClass()].filter(Boolean),
         });
     }
     _attachTooltip() {
@@ -7174,13 +7162,13 @@ class IxTooltipDirective {
         if (!this._tooltipInstance) {
             const portal = new ComponentPortal(IxTooltipComponent, this._viewContainerRef);
             this._tooltipInstance = this._overlayRef.attach(portal);
-            this._tooltipInstance.setInput('message', this.message);
+            this._tooltipInstance.setInput('message', this.message());
             this._tooltipInstance.setInput('id', this._ariaDescribedBy);
             this._isTooltipVisible = true;
         }
     }
     _getPositions() {
-        switch (this.position) {
+        switch (this.position()) {
             case 'above':
                 return [
                     { originX: 'center', originY: 'top', overlayX: 'center', overlayY: 'bottom', offsetY: -12 },
@@ -7220,7 +7208,7 @@ class IxTooltipDirective {
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTooltipDirective, deps: [{ token: i1$3.Overlay }, { token: i0.ElementRef }, { token: i0.ViewContainerRef }, { token: i1$3.OverlayPositionBuilder }], target: i0.ɵɵFactoryTarget.Directive });
-    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "14.0.0", version: "20.3.4", type: IxTooltipDirective, isStandalone: true, selector: "[ixTooltip]", inputs: { message: ["ixTooltip", "message"], position: ["ixTooltipPosition", "position"], disabled: ["ixTooltipDisabled", "disabled"], showDelay: ["ixTooltipShowDelay", "showDelay"], hideDelay: ["ixTooltipHideDelay", "hideDelay"], tooltipClass: ["ixTooltipClass", "tooltipClass"] }, host: { listeners: { "mouseenter": "_onMouseEnter()", "mouseleave": "_onMouseLeave()", "focus": "_onFocus()", "blur": "_onBlur()", "keydown": "_onKeydown($event)" }, properties: { "attr.aria-describedby": "_ariaDescribedBy" } }, ngImport: i0 });
+    static ɵdir = i0.ɵɵngDeclareDirective({ minVersion: "17.1.0", version: "20.3.4", type: IxTooltipDirective, isStandalone: true, selector: "[ixTooltip]", inputs: { message: { classPropertyName: "message", publicName: "ixTooltip", isSignal: true, isRequired: false, transformFunction: null }, position: { classPropertyName: "position", publicName: "ixTooltipPosition", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "ixTooltipDisabled", isSignal: true, isRequired: false, transformFunction: null }, showDelay: { classPropertyName: "showDelay", publicName: "ixTooltipShowDelay", isSignal: true, isRequired: false, transformFunction: null }, hideDelay: { classPropertyName: "hideDelay", publicName: "ixTooltipHideDelay", isSignal: true, isRequired: false, transformFunction: null }, tooltipClass: { classPropertyName: "tooltipClass", publicName: "ixTooltipClass", isSignal: true, isRequired: false, transformFunction: null } }, host: { listeners: { "mouseenter": "_onMouseEnter()", "mouseleave": "_onMouseLeave()", "focus": "_onFocus()", "blur": "_onBlur()", "keydown": "_onKeydown($event)" }, properties: { "attr.aria-describedby": "_ariaDescribedBy" } }, ngImport: i0 });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTooltipDirective, decorators: [{
             type: Directive,
@@ -7231,25 +7219,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                         '[attr.aria-describedby]': '_ariaDescribedBy',
                     }
                 }]
-        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }, { type: i1$3.OverlayPositionBuilder }], propDecorators: { message: [{
-                type: Input,
-                args: ['ixTooltip']
-            }], position: [{
-                type: Input,
-                args: ['ixTooltipPosition']
-            }], disabled: [{
-                type: Input,
-                args: ['ixTooltipDisabled']
-            }], showDelay: [{
-                type: Input,
-                args: ['ixTooltipShowDelay']
-            }], hideDelay: [{
-                type: Input,
-                args: ['ixTooltipHideDelay']
-            }], tooltipClass: [{
-                type: Input,
-                args: ['ixTooltipClass']
-            }], _onMouseEnter: [{
+        }], ctorParameters: () => [{ type: i1$3.Overlay }, { type: i0.ElementRef }, { type: i0.ViewContainerRef }, { type: i1$3.OverlayPositionBuilder }], propDecorators: { _onMouseEnter: [{
                 type: HostListener,
                 args: ['mouseenter']
             }], _onMouseLeave: [{
@@ -7648,7 +7618,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * To regenerate this file, run:
  *   npm run generate-icons
  *
- * Generated: 2025-12-29T19:39:05.631Z
+ * Generated: 2025-12-29T20:00:58.602Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 /* eslint-disable */

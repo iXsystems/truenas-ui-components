@@ -1179,11 +1179,11 @@ declare class IxCellDefDirective {
     static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxCellDefDirective, "[ixCellDef]", never, {}, {}, never, never, true, never>;
 }
 declare class IxTableColumnDirective {
-    name: string;
-    headerTemplate?: TemplateRef<any>;
-    cellTemplate?: TemplateRef<any>;
+    name: _angular_core.InputSignal<string>;
+    headerTemplate: _angular_core.Signal<TemplateRef<any> | undefined>;
+    cellTemplate: _angular_core.Signal<TemplateRef<any> | undefined>;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTableColumnDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxTableColumnDirective, "[ixColumnDef]", ["ixColumnDef"], { "name": { "alias": "ixColumnDef"; "required": false; }; }, {}, ["headerTemplate", "cellTemplate"], never, true, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxTableColumnDirective, "[ixColumnDef]", ["ixColumnDef"], { "name": { "alias": "ixColumnDef"; "required": true; "isSignal": true; }; }, {}, ["headerTemplate", "cellTemplate"], never, true, never>;
 }
 
 interface IxTableDataSource<T = any> {
@@ -1896,7 +1896,7 @@ declare class IxTimeInputComponent implements ControlValueAccessor {
 
 declare class IxSliderThumbDirective implements ControlValueAccessor, OnInit, OnDestroy {
     private elementRef;
-    disabled: boolean;
+    disabled: _angular_core.WritableSignal<boolean>;
     slider: any;
     private onChangeCallback;
     private onTouched;
@@ -1921,7 +1921,7 @@ declare class IxSliderThumbDirective implements ControlValueAccessor, OnInit, On
     private updateValueFromPosition;
     private cleanup;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxSliderThumbDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxSliderThumbDirective, "input[ixSliderThumb]", never, { "disabled": { "alias": "disabled"; "required": false; }; }, {}, never, never, true, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxSliderThumbDirective, "input[ixSliderThumb]", never, {}, {}, never, never, true, never>;
 }
 
 type LabelType = 'none' | 'handle' | 'track' | 'both';
@@ -1974,7 +1974,7 @@ declare class IxSliderComponent implements ControlValueAccessor, OnDestroy, Afte
 declare class IxSliderWithLabelDirective implements OnInit, OnDestroy {
     private _elementRef;
     private _slider;
-    enabled: boolean | string;
+    enabled: _angular_core.InputSignal<string | boolean>;
     constructor(_elementRef: ElementRef<HTMLElement>, _slider: IxSliderComponent);
     ngOnInit(): void;
     private _setupInteractionListeners;
@@ -1983,7 +1983,7 @@ declare class IxSliderWithLabelDirective implements OnInit, OnDestroy {
     private _onInteractionEnd;
     private _cleanup;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxSliderWithLabelDirective, [null, { host: true; }]>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxSliderWithLabelDirective, "ix-slider[ixSliderWithLabel]", never, { "enabled": { "alias": "ixSliderWithLabel"; "required": false; }; }, {}, never, never, true, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxSliderWithLabelDirective, "ix-slider[ixSliderWithLabel]", never, { "enabled": { "alias": "ixSliderWithLabel"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
 type IxButtonToggleType = 'checkbox' | 'radio';
@@ -2056,12 +2056,12 @@ declare class IxTooltipDirective implements OnInit, OnDestroy {
     private _elementRef;
     private _viewContainerRef;
     private _overlayPositionBuilder;
-    message: string;
-    position: TooltipPosition;
-    disabled: boolean;
-    showDelay: number;
-    hideDelay: number;
-    tooltipClass: string;
+    message: _angular_core.InputSignal<string>;
+    position: _angular_core.InputSignal<TooltipPosition>;
+    disabled: _angular_core.InputSignal<boolean>;
+    showDelay: _angular_core.InputSignal<number>;
+    hideDelay: _angular_core.InputSignal<number>;
+    tooltipClass: _angular_core.InputSignal<string>;
     private _overlayRef;
     private _tooltipInstance;
     private _showTimeout;
@@ -2087,7 +2087,7 @@ declare class IxTooltipDirective implements OnInit, OnDestroy {
     private _getPositions;
     private _clearTimeouts;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTooltipDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxTooltipDirective, "[ixTooltip]", never, { "message": { "alias": "ixTooltip"; "required": false; }; "position": { "alias": "ixTooltipPosition"; "required": false; }; "disabled": { "alias": "ixTooltipDisabled"; "required": false; }; "showDelay": { "alias": "ixTooltipShowDelay"; "required": false; }; "hideDelay": { "alias": "ixTooltipHideDelay"; "required": false; }; "tooltipClass": { "alias": "ixTooltipClass"; "required": false; }; }, {}, never, never, true, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxTooltipDirective, "[ixTooltip]", never, { "message": { "alias": "ixTooltip"; "required": false; "isSignal": true; }; "position": { "alias": "ixTooltipPosition"; "required": false; "isSignal": true; }; "disabled": { "alias": "ixTooltipDisabled"; "required": false; "isSignal": true; }; "showDelay": { "alias": "ixTooltipShowDelay"; "required": false; "isSignal": true; }; "hideDelay": { "alias": "ixTooltipHideDelay"; "required": false; "isSignal": true; }; "tooltipClass": { "alias": "ixTooltipClass"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
 declare class IxTooltipComponent {
