@@ -12,17 +12,6 @@ import { Overlay } from '@angular/cdk/overlay';
 import { DialogConfig, DialogRef } from '@angular/cdk/dialog';
 import { ComponentType } from '@angular/cdk/portal';
 
-declare class TruenasUiService {
-    constructor();
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TruenasUiService, never>;
-    static ɵprov: _angular_core.ɵɵInjectableDeclaration<TruenasUiService>;
-}
-
-declare class TruenasUiComponent {
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TruenasUiComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TruenasUiComponent, "lib-truenas-ui", never, {}, {}, never, never, true, never>;
-}
-
 declare enum DiskType {
     Hdd = "HDD",
     Ssd = "SSD"
@@ -52,7 +41,7 @@ declare class IxBannerComponent {
     /**
      * Get the appropriate icon name based on banner type
      */
-    iconName: _angular_core.Signal<"information" | "alert" | "alert-circle" | "check-circle">;
+    iconName: _angular_core.Signal<"alert-circle" | "information" | "alert" | "check-circle">;
     /**
      * Get ARIA role based on banner type
      * Error/warning use 'alert' for immediate attention
@@ -324,7 +313,7 @@ declare class IxCardComponent {
     title: _angular_core.InputSignal<string | undefined>;
     titleLink: _angular_core.InputSignal<string | undefined>;
     elevation: _angular_core.InputSignal<"none" | "low" | "medium" | "high">;
-    padding: _angular_core.InputSignal<"large" | "medium" | "small">;
+    padding: _angular_core.InputSignal<"small" | "large" | "medium">;
     padContent: _angular_core.InputSignal<boolean>;
     bordered: _angular_core.InputSignal<boolean>;
     background: _angular_core.InputSignal<boolean>;
@@ -353,12 +342,12 @@ declare class IxCardComponent {
 declare class IxExpansionPanelComponent {
     title: _angular_core.InputSignal<string | undefined>;
     elevation: _angular_core.InputSignal<"none" | "low" | "medium" | "high">;
-    padding: _angular_core.InputSignal<"large" | "medium" | "small">;
+    padding: _angular_core.InputSignal<"small" | "large" | "medium">;
     bordered: _angular_core.InputSignal<boolean>;
     background: _angular_core.InputSignal<boolean>;
     expanded: _angular_core.InputSignal<boolean>;
     disabled: _angular_core.InputSignal<boolean>;
-    titleStyle: _angular_core.InputSignal<"link" | "header" | "body">;
+    titleStyle: _angular_core.InputSignal<"body" | "header" | "link">;
     expandedChange: _angular_core.OutputEmitterRef<boolean>;
     toggleEvent: _angular_core.OutputEmitterRef<void>;
     private internalExpanded;
@@ -2442,5 +2431,5 @@ declare class IxKeyboardShortcutService {
     static ɵprov: _angular_core.ɵɵInjectableDeclaration<IxKeyboardShortcutService>;
 }
 
-export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBannerComponent, IxBannerHarness, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconButtonComponent, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMenuComponent, IxMenuTriggerDirective, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxSpriteLoaderService, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TruenasIconsService, TruenasUiComponent, TruenasUiService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, iconMarker, libIconMarker, registerLucideIcons, setupLucideIntegration };
+export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBannerComponent, IxBannerHarness, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconButtonComponent, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMenuComponent, IxMenuTriggerDirective, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxSpriteLoaderService, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TruenasIconsService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, iconMarker, libIconMarker, registerLucideIcons, setupLucideIntegration };
 export type { BannerHarnessFilters, CalendarCell, ChipColor, CreateFolderEvent, DateRange, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem, IconLibrary, IconLibraryType, IconResult, IconSize, IconSource, IxBannerType, IxButtonToggleType, IxCardAction, IxCardControl, IxCardFooterLink, IxCardHeaderStatus, IxConfirmDialogData, IxDialogDefaults, IxDialogOpenTarget, IxFlatTreeNode, IxMenuItem, IxSelectOption, IxSelectOptionGroup, IxSelectionChange, IxTableDataSource, KeyCombination, LabelType, LucideIconOptions, PathSegment, PlatformType, ProgressBarMode, ResolvedIcon, ShortcutHandler, SlideToggleColor, SpinnerMode, SpriteConfig, TabChangeEvent, TooltipPosition, YearCell };

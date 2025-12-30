@@ -109,36 +109,37 @@
         <p style="margin-bottom: 16px; color: var(--fg2);">Make your NAS reachable and properly identified on the network.</p>
         
         <div style="display: grid; gap: 16px; max-width: 600px;">
-        <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Hostname</label>
-            <ix-input placeholder="truenas-server" [(ngModel)]="config.network.hostname" />
-        </div>
-        
-        <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Domain</label>
-            <ix-input placeholder="home.local" [(ngModel)]="config.network.domain" />
-        </div>
-        
-        <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Network Configuration</label>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-            <ix-radio name="ipType" value="dhcp" label="DHCP (Automatic)" [(ngModel)]="config.network.ipType" />
-            <ix-radio name="ipType" value="static" label="Static IP Address" [(ngModel)]="config.network.ipType" />
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Hostname</label>
+                <ix-input placeholder="truenas-server" [(ngModel)]="config.network.hostname" />
             </div>
-        </div>
+            
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Domain</label>
+                <ix-input placeholder="home.local" [(ngModel)]="config.network.domain" />
+            </div>
+            
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Network Configuration</label>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                <ix-radio name="ipType" value="dhcp" label="DHCP (Automatic)" [(ngModel)]="config.network.ipType" />
+                <ix-radio name="ipType" value="static" label="Static IP Address" [(ngModel)]="config.network.ipType" />
+                </div>
+            </div>
 
-        @if (config.network.ipType === 'static') {
-        <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Static IP Address</label>
-            <ix-input placeholder="192.168.1.100/24" [(ngModel)]="config.network.staticIp" />
-        </div>
-        }
+            @if (config.network.ipType === 'static') {
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Static IP Address</label>
+                    <ix-input placeholder="192.168.1.100/24" [(ngModel)]="config.network.staticIp" />
+                </div>
+            }
 
-        @if (config.network.ipType === 'static') {
-        <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Gateway</label>
-            <ix-input placeholder="192.168.1.1" [(ngModel)]="config.network.gateway" />
-        </div>
+            @if (config.network.ipType === 'static') {
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Gateway</label>
+                    <ix-input placeholder="192.168.1.1" [(ngModel)]="config.network.gateway" />
+                </div>
+            }
         </div>
     </ix-step>
 
@@ -323,14 +324,14 @@
     </div>
     
     <div ixDialogAction>
-    @if (currentStep > 0) {
-    <ix-button variant="outline"
-                label="Back"
-                (click)="previousStep()" />
-    }
-    <ix-button color="primary"
-                [label]="getNextButtonLabel()"
-                [disabled]="!canProceed()"
-                (click)="nextStep()" />
+        @if (currentStep > 0) {
+            <ix-button variant="outline"
+                        label="Back"
+                        (click)="previousStep()" />
+        }
+        <ix-button color="primary"
+                    [label]="getNextButtonLabel()"
+                    [disabled]="!canProceed()"
+                    (click)="nextStep()" />
     </div>
 </ix-dialog-shell>

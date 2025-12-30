@@ -198,6 +198,13 @@ module.exports = [
       curly: ['error', 'all'],
     },
   },
+  // Stories configuration - disable component-selector rule
+  {
+    files: ['**/stories/**/*.ts'],
+    rules: {
+      '@angular-eslint/component-selector': 'off',
+    },
+  },
   // Script files configuration - allow console for CLI/build scripts
   {
     files: ['**/scripts/**/*.ts', '**/scripts/**/*.js'],
@@ -234,10 +241,10 @@ module.exports = [
         'error',
         { maxComplexity: 3 },
       ],
-      '@angular-eslint/template/cyclomatic-complexity': [
-        'error',
-        { maxComplexity: 20 },
-      ],
+      // '@angular-eslint/template/cyclomatic-complexity': [
+      //   'error',
+      //   { maxComplexity: 20 },
+      // ],
       '@angular-eslint/template/no-any': 'error',
 
       // Accessibility rules

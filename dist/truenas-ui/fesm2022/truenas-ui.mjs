@@ -1,5 +1,5 @@
 import * as i0 from '@angular/core';
-import { Injectable, Component, input, ChangeDetectionStrategy, inject, viewChild, ChangeDetectorRef, effect, computed, ViewEncapsulation, output, signal, forwardRef, Directive, ElementRef, ViewContainerRef, contentChild, contentChildren, HostListener, TemplateRef, IterableDiffers, Pipe, model } from '@angular/core';
+import { input, ChangeDetectionStrategy, Component, inject, Injectable, viewChild, ChangeDetectorRef, effect, computed, ViewEncapsulation, output, signal, forwardRef, Directive, ElementRef, ViewContainerRef, contentChild, contentChildren, HostListener, TemplateRef, IterableDiffers, Pipe, model } from '@angular/core';
 import * as i1$1 from '@angular/common';
 import { CommonModule, NgIf, DOCUMENT } from '@angular/common';
 import { mdiCheckCircle, mdiAlertCircle, mdiAlert, mdiInformation, mdiDotsVertical, mdiFolderOpen, mdiLock, mdiLoading, mdiFolderPlus, mdiFolderNetwork, mdiHarddisk, mdiDatabase, mdiFile, mdiFolder } from '@mdi/js';
@@ -23,27 +23,6 @@ import { DataSource } from '@angular/cdk/collections';
 import { map } from 'rxjs/operators';
 import { Dialog, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-
-class TruenasUiService {
-    constructor() { }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: TruenasUiService, deps: [], target: i0.ɵɵFactoryTarget.Injectable });
-    static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: TruenasUiService, providedIn: 'root' });
-}
-i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: TruenasUiService, decorators: [{
-            type: Injectable,
-            args: [{
-                    providedIn: 'root'
-                }]
-        }], ctorParameters: () => [] });
-
-class TruenasUiComponent {
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: TruenasUiComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: TruenasUiComponent, isStandalone: true, selector: "lib-truenas-ui", ngImport: i0, template: "<p>\n  truenas-ui works!\n</p>", styles: [""] });
-}
-i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: TruenasUiComponent, decorators: [{
-            type: Component,
-            args: [{ selector: 'lib-truenas-ui', imports: [], template: "<p>\n  truenas-ui works!\n</p>" }]
-        }] });
 
 var DiskType;
 (function (DiskType) {
@@ -6706,7 +6685,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * To regenerate this file, run:
  *   npm run generate-icons
  *
- * Generated: 2025-12-30T16:49:52.668Z
+ * Generated: 2025-12-30T18:29:48.839Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 /* eslint-disable */
@@ -7791,5 +7770,5 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * Generated bundle index. Do not edit.
  */
 
-export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBannerComponent, IxBannerHarness, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconButtonComponent, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMenuComponent, IxMenuTriggerDirective, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxSpriteLoaderService, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TruenasIconsService, TruenasUiComponent, TruenasUiService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, iconMarker, libIconMarker, registerLucideIcons, setupLucideIntegration };
+export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBannerComponent, IxBannerHarness, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconButtonComponent, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMenuComponent, IxMenuTriggerDirective, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxSpriteLoaderService, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TruenasIconsService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, iconMarker, libIconMarker, registerLucideIcons, setupLucideIntegration };
 //# sourceMappingURL=truenas-ui.mjs.map
