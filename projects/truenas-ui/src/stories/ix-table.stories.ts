@@ -197,10 +197,11 @@ export const TableWithFiltering: Story = {
         </ng-container>
       </ix-table>
 
-      <div *ngIf="filteredData.length === 0 && filterText.trim()" 
-           style="text-align: center; padding: 32px; color: var(--fg2);">
+      @if (filteredData.length === 0 && filterText.trim()) {
+      <div style="text-align: center; padding: 32px; color: var(--fg2);">
         No results found for "{{ filterText }}"
       </div>
+      }
     `
   }),
 };

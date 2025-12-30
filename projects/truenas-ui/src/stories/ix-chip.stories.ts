@@ -249,10 +249,10 @@ export const ChipInputExample: Story = {
                cursor: text;
              "
              (click)="focusInput()">
-          
+
           <!-- Chips inside the input area -->
+          @for (tag of tags; track tag) {
           <ix-chip
-            *ngFor="let tag of tags"
             [label]="tag"
             [color]="color"
             [closable]="true"
@@ -260,10 +260,11 @@ export const ChipInputExample: Story = {
             (onClose)="removeTag(tag)"
             style="flex-shrink: 0;">
           </ix-chip>
-          
+          }
+
           <!-- Persistent placeholder text -->
-          <span *ngIf="!inputValue" 
-                style="
+          @if (!inputValue) {
+          <span style="
                   color: var(--fg2, #6c757d);
                   font-style: italic;
                   font-size: 0.875rem;
@@ -274,6 +275,7 @@ export const ChipInputExample: Story = {
                 ">
             {{ placeholder }}
           </span>
+          }
           
           <!-- Inline input field -->
           <input
@@ -339,21 +341,24 @@ export const ChipsWithFormField: Story = {
       }
     },
     template: `
-      <ix-form-field 
+      <ix-form-field
         label="Selected Categories"
         hint="Your current selections">
         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; min-height: 2.5rem; align-items: center;">
+          @for (tag of selectedTags; track tag) {
           <ix-chip
-            *ngFor="let tag of selectedTags"
             [label]="tag"
             [color]="color"
             [closable]="closable"
             [disabled]="disabled"
             (onClose)="removeTag(tag)">
           </ix-chip>
-          <span *ngIf="selectedTags.length === 0" style="color: var(--fg2, #6c757d); font-style: italic;">
+          }
+          @if (selectedTags.length === 0) {
+          <span style="color: var(--fg2, #6c757d); font-style: italic;">
             No categories selected
           </span>
+          }
         </div>
       </ix-form-field>
     `,

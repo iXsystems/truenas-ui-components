@@ -85,14 +85,15 @@
     </div>
     
     <div ixDialogAction>
-    <ix-button variant="outline" 
+    <ix-button variant="outline"
                 label="Cancel"
                 (click)="cancel()" />
-    <ix-button *ngIf="currentStep > 0" 
-                variant="outline"
+    @if (currentStep > 0) {
+    <ix-button variant="outline"
                 label="Back"
                 (click)="previousStep()" />
-    <ix-button color="primary" 
+    }
+    <ix-button color="primary"
                 [label]="getNextButtonLabel()"
                 [disabled]="!canProceed()"
                 (click)="nextStep()" />

@@ -99,11 +99,13 @@
             <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Create new disk</label>
             <ix-checkbox label="Create a new virtual disk" [(ngModel)]="vmConfig.disks.createNew" />
             </div>
-            
-            <div *ngIf="vmConfig.disks.createNew">
+
+            @if (vmConfig.disks.createNew) {
+            <div>
             <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Disk Size (GB)</label>
             <ix-input type="number" placeholder="20" [(ngModel)]="vmConfig.disks.size" />
             </div>
+            }
             
             <div>
             <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Disk Type</label>

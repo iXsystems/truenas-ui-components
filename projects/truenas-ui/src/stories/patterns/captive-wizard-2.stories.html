@@ -10,8 +10,10 @@
                 label="Launch Captive Wizard"
                 (click)="openCaptiveWizard()" />
     
-    <div *ngIf="lastResult" style="margin-top: 24px; padding: 16px; border: 1px solid var(--lines); border-radius: 8px;">
+    @if (lastResult) {
+    <div style="margin-top: 24px; padding: 16px; border: 1px solid var(--lines); border-radius: 8px;">
     <h4>Last Result:</h4>
     <pre style="margin: 8px 0 0 0; color: var(--fg2);">{{ lastResult | json }}</pre>
     </div>
+    }
 </div>

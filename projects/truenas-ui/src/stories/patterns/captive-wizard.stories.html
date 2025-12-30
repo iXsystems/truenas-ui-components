@@ -54,42 +54,46 @@
         <div>
             <ix-checkbox label="Advanced Pool Options" [(ngModel)]="config.storage.advancedOptions" />
         </div>
-        
-        <div *ngIf="config.storage.advancedOptions" style="margin-top: 16px;">
+
+        @if (config.storage.advancedOptions) {
+        <div style="margin-top: 16px;">
             <h4 style="margin-bottom: 16px; color: var(--fg1); border-bottom: 1px solid var(--lines); padding-bottom: 8px;">Advanced Options</h4>
-            
+
             <div style="display: grid; gap: 16px;">
             <div>
                 <ix-checkbox label="Reserve disks as hot spares" [(ngModel)]="config.storage.enableHotSpares" />
             </div>
-            
+
             <div>
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">SLOG Device (Optional)</label>
                 <ix-select placeholder="Select dedicated log device" [options]="slogDeviceOptions" [(ngModel)]="config.storage.slogDevice" />
             </div>
-            
+
             <div>
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">L2ARC Cache Device (Optional)</label>
                 <ix-select placeholder="Select cache device" [options]="cacheDeviceOptions" [(ngModel)]="config.storage.l2arcDevice" />
             </div>
-            
+
             <div>
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Metadata Special Device (Optional)</label>
                 <ix-select placeholder="Select metadata device" [options]="metadataDeviceOptions" [(ngModel)]="config.storage.metadataDevice" />
             </div>
-            
+
             <div>
                 <ix-checkbox label="Enable pool encryption" [(ngModel)]="config.storage.enableEncryption" />
             </div>
-            
+
             <div>
                 <ix-checkbox label="Enable deduplication" [(ngModel)]="config.storage.enableDeduplication" />
-                <div *ngIf="config.storage.enableDeduplication" style="margin-top: 8px; padding: 8px; background: var(--warning-bg); border-radius: 4px; font-size: 14px; color: var(--warning-fg);">
+                @if (config.storage.enableDeduplication) {
+                <div style="margin-top: 8px; padding: 8px; background: var(--warning-bg); border-radius: 4px; font-size: 14px; color: var(--warning-fg);">
                 <strong>Warning:</strong> Deduplication requires significant RAM (5GB+ recommended per TB of storage).
                 </div>
+                }
             </div>
             </div>
         </div>
+        }
         
         <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--lines);">
             <ix-button variant="outline" 
@@ -122,13 +126,16 @@
             <ix-radio name="ipType" value="static" label="Static IP Address" [(ngModel)]="config.network.ipType" />
             </div>
         </div>
-        
-        <div *ngIf="config.network.ipType === 'static'">
+
+        @if (config.network.ipType === 'static') {
+        <div>
             <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Static IP Address</label>
             <ix-input placeholder="192.168.1.100/24" [(ngModel)]="config.network.staticIp" />
         </div>
-        
-        <div *ngIf="config.network.ipType === 'static'">
+        }
+
+        @if (config.network.ipType === 'static') {
+        <div>
             <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Gateway</label>
             <ix-input placeholder="192.168.1.1" [(ngModel)]="config.network.gateway" />
         </div>
@@ -200,16 +207,20 @@
             <ix-radio name="certType" value="existing" label="Import existing certificate" [(ngModel)]="config.https.certType" />
             </div>
         </div>
-        
-        <div *ngIf="config.https.certType === 'letsencrypt'">
+
+        @if (config.https.certType === 'letsencrypt') {
+        <div>
             <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Domain Name</label>
             <ix-input placeholder="truenas.example.com" [(ngModel)]="config.https.domain" />
         </div>
-        
-        <div *ngIf="config.https.certType === 'letsencrypt'">
+        }
+
+        @if (config.https.certType === 'letsencrypt') {
+        <div>
             <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Email for Certificate Notifications</label>
             <ix-input type="email" placeholder="admin@example.com" [(ngModel)]="config.https.email" />
         </div>
+        }
         
         <div>
             <ix-checkbox label="Redirect HTTP to HTTPS" [(ngModel)]="config.https.redirectHttp" />
@@ -235,21 +246,27 @@
             <ix-radio name="notifyMethod" value="none" label="No notifications" [(ngModel)]="config.notifications.method" />
             </div>
         </div>
-        
-        <div *ngIf="config.notifications.method === 'email'">
+
+        @if (config.notifications.method === 'email') {
+        <div>
             <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Email Address</label>
             <ix-input type="email" placeholder="admin@example.com" [(ngModel)]="config.notifications.email" />
         </div>
-        
-        <div *ngIf="config.notifications.method === 'email'">
+        }
+
+        @if (config.notifications.method === 'email') {
+        <div>
             <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">SMTP Server</label>
             <ix-input placeholder="smtp.gmail.com" [(ngModel)]="config.notifications.smtpServer" />
         </div>
-        
-        <div *ngIf="config.notifications.method === 'slack'">
+        }
+
+        @if (config.notifications.method === 'slack') {
+        <div>
             <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Slack Webhook URL</label>
             <ix-input placeholder="https://hooks.slack.com/services/..." [(ngModel)]="config.notifications.slackWebhook" />
         </div>
+        }
         
         <div style="margin-top: 16px;">
             <h4 style="margin-bottom: 12px; color: var(--fg1);">Alert Types</h4>
@@ -306,11 +323,12 @@
     </div>
     
     <div ixDialogAction>
-    <ix-button *ngIf="currentStep > 0" 
-                variant="outline"
+    @if (currentStep > 0) {
+    <ix-button variant="outline"
                 label="Back"
                 (click)="previousStep()" />
-    <ix-button color="primary" 
+    }
+    <ix-button color="primary"
                 [label]="getNextButtonLabel()"
                 [disabled]="!canProceed()"
                 (click)="nextStep()" />
