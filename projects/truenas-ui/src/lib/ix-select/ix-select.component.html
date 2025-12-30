@@ -8,6 +8,7 @@
     [class.open]="isOpen()"
     [attr.aria-expanded]="isOpen()"
     [attr.aria-haspopup]="true"
+    [attr.aria-controls]="isOpen() ? 'ix-select-dropdown-' + testId() : null"
     [attr.aria-label]="placeholder()"
     (click)="toggleDropdown()"
     (keydown)="onKeydown($event)">
@@ -31,7 +32,8 @@
   @if (isOpen()) {
     <div
       class="ix-select-dropdown"
-      role="listbox">
+      role="listbox"
+      [attr.id]="'ix-select-dropdown-' + testId()">
 
       <!-- Options List -->
       <div class="ix-select-options">
@@ -40,12 +42,15 @@
           <div
             class="ix-select-option"
             role="option"
+            [attr.tabindex]="option.disabled ? null : 0"
             [class.selected]="isSelected()(option)"
             [class.disabled]="option.disabled"
             [attr.aria-selected]="isSelected()(option)"
             [attr.aria-disabled]="option.disabled"
             (mousedown)="$event.preventDefault()"
-            (click)="onOptionClick(option)">
+            (click)="onOptionClick(option)"
+            (keydown.enter)="onOptionClick(option)"
+            (keydown.space)="onOptionClick(option)">
 
             {{ option.label }}
           </div>
@@ -73,12 +78,15 @@
             <div
               class="ix-select-option"
               role="option"
+              [attr.tabindex]="option.disabled || group.disabled ? null : 0"
               [class.selected]="isSelected()(option)"
               [class.disabled]="option.disabled || group.disabled"
               [attr.aria-selected]="isSelected()(option)"
               [attr.aria-disabled]="option.disabled || group.disabled"
               (mousedown)="$event.preventDefault()"
-              (click)="onOptionClick(option)">
+              (click)="onOptionClick(option)"
+              (keydown.enter)="onOptionClick(option)"
+              (keydown.space)="onOptionClick(option)">
 
               {{ option.label }}
             </div>

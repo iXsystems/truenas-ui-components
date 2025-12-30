@@ -67,8 +67,12 @@
                class="file-name-cell"
                [class.disabled]="!!item.disabled"
                [class.zfs-object]="isZfsObject(item)"
+               [attr.tabindex]="item.disabled ? null : 0"
+               [attr.role]="'button'"
                (click)="onItemClick(item)"
-               (dblclick)="onItemDoubleClick(item)">
+               (dblclick)="onItemDoubleClick(item)"
+               (keydown.enter)="onItemDoubleClick(item)"
+               (keydown.space)="onItemClick(item)">
             <ix-icon
               [name]="getItemIcon(item)"
               [library]="getItemIconLibrary(item)"

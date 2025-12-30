@@ -1,9 +1,10 @@
-<div class="ix-tree-node" 
+<div class="ix-tree-node"
      cdkTreeNodeToggle
      role="treeitem"
      [class.ix-tree-node--expandable]="isExpandable"
      [attr.aria-level]="level + 1"
      [attr.aria-expanded]="isExpandable ? isExpanded : null"
+     [attr.aria-selected]="false"
      [style.cursor]="isExpandable ? 'pointer' : 'default'">
   
   <div class="ix-tree-node__content">

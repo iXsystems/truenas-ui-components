@@ -2,36 +2,36 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
 import { CommonModule } from '@angular/common';
 import { Component, input, output, computed, signal } from '@angular/core';
 
+const expandCollapseAnimation = trigger('expandCollapse', [
+  state('collapsed', style({
+    height: '0px',
+    opacity: 0,
+    overflow: 'hidden',
+    display: 'none'
+  })),
+  state('expanded', style({
+    height: '*',
+    opacity: 1,
+    overflow: 'visible',
+    display: 'block'
+  })),
+  transition('collapsed => expanded', [
+    style({ display: 'block', height: '0px', opacity: 0 }),
+    animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ height: '*', opacity: 1 }))
+  ]),
+  transition('expanded => collapsed', [
+    animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ height: '0px', opacity: 0 })),
+    style({ display: 'none' })
+  ])
+]);
+
 @Component({
   selector: 'ix-expansion-panel',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './ix-expansion-panel.component.html',
   styleUrls: ['./ix-expansion-panel.component.scss'],
-  animations: [
-    trigger('expandCollapse', [
-      state('collapsed', style({
-        height: '0px',
-        opacity: 0,
-        overflow: 'hidden',
-        display: 'none'
-      })),
-      state('expanded', style({
-        height: '*',
-        opacity: 1,
-        overflow: 'visible',
-        display: 'block'
-      })),
-      transition('collapsed => expanded', [
-        style({ display: 'block', height: '0px', opacity: 0 }),
-        animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ height: '*', opacity: 1 }))
-      ]),
-      transition('expanded => collapsed', [
-        animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ height: '0px', opacity: 0 })),
-        style({ display: 'none' })
-      ])
-    ])
-  ]
+  animations: [expandCollapseAnimation]
 })
 export class IxExpansionPanelComponent {
   title = input<string | undefined>(undefined);

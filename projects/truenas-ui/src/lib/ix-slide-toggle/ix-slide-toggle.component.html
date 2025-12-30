@@ -5,7 +5,11 @@
     @if (label() && labelPosition() === 'before') {
       <span
         class="ix-slide-toggle__label-text ix-slide-toggle__label-text--before"
-        (click)="onLabelClick()">
+        tabindex="0"
+        role="button"
+        (click)="onLabelClick()"
+        (keydown.enter)="onLabelClick()"
+        (keydown.space)="onLabelClick()">
         {{ label() }}
       </span>
     }
@@ -61,7 +65,11 @@
     @if (label() && labelPosition() === 'after') {
       <span
         class="ix-slide-toggle__label-text ix-slide-toggle__label-text--after"
-        (click)="onLabelClick()">
+        tabindex="0"
+        role="button"
+        (click)="onLabelClick()"
+        (keydown.enter)="onLabelClick()"
+        (keydown.space)="onLabelClick()">
         {{ label() }}
       </span>
     }

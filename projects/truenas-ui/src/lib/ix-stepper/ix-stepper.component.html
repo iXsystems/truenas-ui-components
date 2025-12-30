@@ -6,11 +6,15 @@
   <div class="ix-stepper__header">
     @for (step of steps(); track $index; let i = $index) {
       <div class="ix-stepper__step-header"
+           tabindex="0"
+           role="button"
            [class.ix-stepper__step-header--active]="selectedIndex() === i"
            [class.ix-stepper__step-header--completed]="step.completed()"
            [class.ix-stepper__step-header--error]="step.hasError()"
            [class.ix-stepper__step-header--optional]="step.optional()"
-           (click)="selectStep(i)">
+           (click)="selectStep(i)"
+           (keydown.enter)="selectStep(i)"
+           (keydown.space)="selectStep(i)">
 
         <!-- Step Number/Icon -->
         <div class="ix-stepper__step-indicator">

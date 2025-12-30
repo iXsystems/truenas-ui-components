@@ -109,8 +109,8 @@ export const WithoutTitle: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const content = canvas.getByText((content) =>
-      content.startsWith('This is the card content')
+    const content = canvas.getByText((text) =>
+      text.startsWith('This is the card content')
     );
     await expect(content).toBeInTheDocument();
   },

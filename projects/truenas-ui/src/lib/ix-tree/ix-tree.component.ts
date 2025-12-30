@@ -1,15 +1,15 @@
+import { DataSource } from '@angular/cdk/collections';
 import { CdkTree, CdkTreeModule } from '@angular/cdk/tree';
+import type { FlatTreeControl } from '@angular/cdk/tree';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, IterableDiffers, ViewContainerRef, Component, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
-
-// Re-export CDK Tree types for convenience
-export { FlatTreeControl } from '@angular/cdk/tree';
-import type { FlatTreeControl } from '@angular/cdk/tree';
-export { ArrayDataSource } from '@angular/cdk/collections';
-import { DataSource } from '@angular/cdk/collections';
 import type { Observable} from 'rxjs';
 import { BehaviorSubject, merge } from 'rxjs';
 import { map } from 'rxjs/operators';
+
+// Re-export CDK Tree types for convenience
+export { FlatTreeControl } from '@angular/cdk/tree';
+export { ArrayDataSource } from '@angular/cdk/collections';
 
 /** Flat node with expandable and level information */
 export interface IxFlatTreeNode<T = unknown> {

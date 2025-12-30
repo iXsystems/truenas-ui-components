@@ -7,7 +7,11 @@
           <h3
             class="ix-card__title"
             [class.ix-card__title--link]="titleLink()"
-            (click)="onTitleClick()">
+            [attr.tabindex]="titleLink() ? 0 : null"
+            [attr.role]="titleLink() ? 'button' : null"
+            (click)="onTitleClick()"
+            (keydown.enter)="onTitleClick()"
+            (keydown.space)="onTitleClick()">
             {{ title() }}
           </h3>
         }
