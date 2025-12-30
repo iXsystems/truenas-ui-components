@@ -3,10 +3,10 @@ import { AfterViewInit, ElementRef, OnDestroy, TemplateRef, AfterContentInit, Ch
 import { ComponentHarness, BaseHarnessFilters, HarnessPredicate } from '@angular/cdk/testing';
 import { SafeHtml, SafeResourceUrl, DomSanitizer } from '@angular/platform-browser';
 import { ControlValueAccessor, NgControl } from '@angular/forms';
+import { DataSource } from '@angular/cdk/collections';
 import * as i1 from '@angular/cdk/tree';
 import { CdkTree, FlatTreeControl, CdkTreeNode, CdkNestedTreeNode } from '@angular/cdk/tree';
 export { FlatTreeControl } from '@angular/cdk/tree';
-import { DataSource } from '@angular/cdk/collections';
 import { Observable } from 'rxjs';
 import { Overlay } from '@angular/cdk/overlay';
 import { DialogConfig, DialogRef } from '@angular/cdk/dialog';

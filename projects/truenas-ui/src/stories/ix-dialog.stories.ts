@@ -1,7 +1,6 @@
-import type { DialogRef} from '@angular/cdk/dialog';
-import { DIALOG_DATA } from '@angular/cdk/dialog';
+import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { JsonPipe } from '@angular/common';
-import { Component, Inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { IxButtonComponent } from '../lib/ix-button/ix-button.component';
@@ -24,19 +23,13 @@ import { IxInputComponent } from '../lib/ix-input/ix-input.component';
   ]
 })
 class UserEditDialogComponent {
-  name = '';
-  email = '';
-  role = '';
+  ref = inject(DialogRef<{ name: string; email: string; role: string } | undefined>);
+  data = inject<{ userId: number; name?: string; email?: string; role?: string }>(DIALOG_DATA);
 
-  constructor(
-    public ref: DialogRef<{ name: string; email: string; role: string } | undefined>,
-    @Inject(DIALOG_DATA) public data: { userId: number; name?: string; email?: string; role?: string }
-  ) {
-    // Pre-fill form with existing data if available
-    this.name = data?.name || '';
-    this.email = data?.email || '';  
-    this.role = data?.role || '';
-  }
+  // Pre-fill form with existing data if available
+  name = this.data?.name || '';
+  email = this.data?.email || '';
+  role = this.data?.role || '';
 
   cancel() {
     this.ref.close();
@@ -59,7 +52,7 @@ class UserEditDialogComponent {
   imports: [IxDialogShellComponent, IxButtonComponent]
 })
 class SystemSettingsDialogComponent {
-  constructor(public ref: DialogRef<string>) {}
+  ref = inject(DialogRef<string>);
 }
 
 // Fullscreen-only dialog component (no toggle button needed)
@@ -70,7 +63,7 @@ class SystemSettingsDialogComponent {
   imports: [IxDialogShellComponent, IxButtonComponent]
 })
 class FullscreenSettingsDialogComponent {
-  constructor(public ref: DialogRef<string>) {}
+  ref = inject(DialogRef<string>);
 }
 
 // Story component that demonstrates opening dialogs

@@ -1,6 +1,6 @@
-import type { DialogRef } from '@angular/cdk/dialog';
+import { DialogRef } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { IxButtonComponent } from '../../lib/ix-button/ix-button.component';
@@ -99,7 +99,7 @@ class TabbedWizardDialogComponent {
     { value: 'hostonly', label: 'Host Only' }
   ];
 
-  constructor(public ref: DialogRef<typeof this.vmConfig | undefined>) {}
+  ref = inject(DialogRef<unknown>);
 
   cancel() {
     this.ref.close();

@@ -1,6 +1,6 @@
-import type { DialogRef } from '@angular/cdk/dialog';
+import { DialogRef } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { IxButtonComponent } from '../../lib/ix-button/ix-button.component';
@@ -32,6 +32,8 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
   ]
 })
 class BackupWizardDialogComponent {
+  ref = inject(DialogRef<{ target: string; account: string; dataset: string; includeSnapshots: boolean } | undefined>);
+
   currentStep = 0;
   backupTarget = 'cloud';
   selectedAccount = '';
@@ -44,8 +46,6 @@ class BackupWizardDialogComponent {
     { value: 'gcs-cold', label: 'Google Cloud Storage (Coldline)' },
     { value: 'local-nas', label: 'Local NAS Server' }
   ];
-
-  constructor(public ref: DialogRef<{ target: string; account: string; dataset: string; includeSnapshots: boolean } | undefined>) {}
 
   onStepChange(event: { selectedIndex: number }): void {
     this.currentStep = event.selectedIndex;

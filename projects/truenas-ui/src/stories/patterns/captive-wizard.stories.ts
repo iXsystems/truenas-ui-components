@@ -1,6 +1,6 @@
-import type { DialogRef } from '@angular/cdk/dialog';
+import { DialogRef } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { IxButtonComponent } from '../../lib/ix-button/ix-button.component';
@@ -185,7 +185,7 @@ class OnboardingWizardDialogComponent {
     { value: 'sdf', label: 'sdf - 256GB SATA SSD' }
   ];
 
-  constructor(public ref: DialogRef<{ action: string; config?: WizardConfig; reason?: string } | undefined>) {}
+  ref = inject(DialogRef<{ action: string; config?: WizardConfig; reason?: string } | undefined>);
 
   onStepChange(event: { selectedIndex: number }): void {
     this.currentStep = event.selectedIndex;
