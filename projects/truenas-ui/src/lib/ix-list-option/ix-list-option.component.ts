@@ -86,7 +86,7 @@ export class IxListOptionComponent implements AfterContentInit {
   }
 
   @HostListener('click', ['$event'])
-  onClick(event: Event): void {
+  onClick(_event: Event): void {
     if (this.effectiveDisabled()) {
       return;
     }

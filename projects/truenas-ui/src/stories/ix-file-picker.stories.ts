@@ -1420,7 +1420,7 @@ export const ErrorHandling: Story = {
         }
       },
       onError: (error: { type: string; message: string; path?: string }) => {
-        console.log('Error event:', error);
+        console.error('Error event:', error);
       }
     },
     template: `

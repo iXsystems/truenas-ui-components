@@ -1,4 +1,4 @@
-import { FocusMonitor, A11yModule, LiveAnnouncer } from '@angular/cdk/a11y';
+import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
 import { LEFT_ARROW, RIGHT_ARROW, UP_ARROW, DOWN_ARROW, HOME, END, ENTER, SPACE } from '@angular/cdk/keycodes';
 import { CommonModule } from '@angular/common';
 import type { AfterContentInit, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
@@ -42,7 +42,6 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit, OnDestr
   highlightBarVisible = signal<boolean>(false);
 
   private focusMonitor = inject(FocusMonitor);
-  private liveAnnouncer = inject(LiveAnnouncer);
   private cdr = inject(ChangeDetectorRef);
 
   constructor() {
@@ -119,12 +118,7 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit, OnDestr
 
       // Set up focus monitoring
       if (tab.elementRef) {
-        this.focusMonitor.monitor(tab.elementRef)
-          .subscribe(origin => {
-            if (origin) {
-              console.log(`Tab ${index} focused via: ${origin}`);
-            }
-          });
+        this.focusMonitor.monitor(tab.elementRef);
       }
 
       // Set up click handlers

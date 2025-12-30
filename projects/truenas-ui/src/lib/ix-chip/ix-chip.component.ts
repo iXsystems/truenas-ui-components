@@ -29,12 +29,7 @@ export class IxChipComponent implements AfterViewInit, OnDestroy {
   private focusMonitor = inject(FocusMonitor);
 
   ngAfterViewInit() {
-    this.focusMonitor.monitor(this.chipEl())
-      .subscribe(origin => {
-        if (origin) {
-          console.log(`Chip focused via: ${origin}`);
-        }
-      });
+    this.focusMonitor.monitor(this.chipEl());
   }
 
   ngOnDestroy() {

@@ -278,7 +278,7 @@ export const WithHeaderControl: Story = {
     headerControl: {
       label: 'Enable',
       checked: true,
-      handler: (checked: boolean) => console.log('Control changed:', checked),
+      handler: () => {},
     },
   },
   render: (args) => ({
@@ -305,10 +305,10 @@ export const WithHeaderMenu: Story = {
     padding: 'medium',
     padContent: true,
     headerMenu: [
-      { id: '1', label: 'Edit', action: () => console.log('Edit clicked'), icon: 'pencil' },
-      { id: '2', label: 'Duplicate', action: () => console.log('Duplicate clicked'), icon: 'content-copy' },
+      { id: '1', label: 'Edit', action: () => {}, icon: 'pencil' },
+      { id: '2', label: 'Duplicate', action: () => {}, icon: 'content-copy' },
       { id: 'sep1', label: '', separator: true },
-      { id: '3', label: 'Delete', action: () => console.log('Delete clicked'), icon: 'delete' },
+      { id: '3', label: 'Delete', action: () => {}, icon: 'delete' },
     ],
   },
   render: (args) => ({
@@ -361,11 +361,11 @@ export const WithFooterActions: Story = {
     padContent: true,
     primaryAction: {
       label: 'Primary',
-      handler: () => console.log('Primary clicked'),
+      handler: () => {},
     },
     secondaryAction: {
       label: 'Secondary',
-      handler: () => console.log('Secondary clicked'),
+      handler: () => {},
     },
   },
   render: (args) => ({
@@ -394,11 +394,11 @@ export const WithFooterLink: Story = {
     padContent: true,
     footerLink: {
       label: 'Learn more',
-      handler: () => console.log('Learn more clicked'),
+      handler: () => {},
     },
     primaryAction: {
       label: 'Primary',
-      handler: () => console.log('Primary clicked'),
+      handler: () => {},
     },
   },
   render: (args) => ({
@@ -430,26 +430,26 @@ export const CompleteExample: Story = {
     headerControl: {
       label: 'Auto-sync',
       checked: true,
-      handler: (checked: boolean) => console.log('Auto-sync:', checked),
+      handler: () => {},
     },
     headerMenu: [
-      { id: '1', label: 'Refresh', action: () => console.log('Refresh'), icon: 'refresh' },
-      { id: '2', label: 'Settings', action: () => console.log('Settings'), icon: 'cog' },
+      { id: '1', label: 'Refresh', action: () => {}, icon: 'refresh' },
+      { id: '2', label: 'Settings', action: () => {}, icon: 'cog' },
       { id: 'sep1', label: '', separator: true },
-      { id: '3', label: 'Stop Service', action: () => console.log('Stop'), icon: 'stop' },
+      { id: '3', label: 'Stop Service', action: () => {}, icon: 'stop' },
     ],
     footerLink: {
       label: 'View logs',
-      handler: () => console.log('View logs'),
+      handler: () => {},
     },
     primaryAction: {
       label: 'Primary',
-      handler: () => console.log('Primary'),
+      handler: () => {},
       icon: 'check',
     },
     secondaryAction: {
       label: 'Secondary',
-      handler: () => console.log('Secondary'),
+      handler: () => {},
     },
   },
   render: (args) => ({

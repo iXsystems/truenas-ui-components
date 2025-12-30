@@ -129,8 +129,6 @@ import { CommonShortcuts } from 'truenas-ui';`;
     alert('Keyboard shortcut triggered: Save');
     // This will show in Storybook actions tab
     this.shortcutAction({ shortcut: 'Cmd+S / Ctrl+S', action: 'Save', timestamp: new Date().toISOString() });
-    // Also log to console
-    console.log('Keyboard shortcut triggered: Save');
   }
 }
 

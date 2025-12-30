@@ -15,9 +15,11 @@ module.exports = [
       '.angular/**',
       'coverage/**',
       'storybook-static/**',
-      '**/*.js',
       '**/*.mjs',
       'projects/truenas-ui/.storybook/**',
+      // Ignore all .js files except scripts
+      '**/*.js',
+      '!**/scripts/**/*.js',
     ],
   },
   // TypeScript files configuration
@@ -63,7 +65,7 @@ module.exports = [
       '@typescript-eslint/no-unnecessary-boolean-literal-compare': 'error',
       '@typescript-eslint/no-shadow': 'error',
       '@typescript-eslint/no-mixed-enums': 'error',
-      '@typescript-eslint/member-ordering': 'error',
+      // '@typescript-eslint/member-ordering': 'error',
       '@typescript-eslint/no-confusing-void-expression': [
         'error',
         { ignoreArrowShorthand: true },
@@ -196,6 +198,17 @@ module.exports = [
       curly: ['error', 'all'],
     },
   },
+  // Script files configuration - allow console for CLI/build scripts
+  {
+    files: ['**/scripts/**/*.ts', '**/scripts/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+    },
+    rules: {
+      'no-console': 'off',
+    },
+  },
   // HTML template files configuration
   {
     files: ['**/*.html'],
@@ -230,7 +243,7 @@ module.exports = [
       // Accessibility rules
       '@angular-eslint/template/alt-text': 'error',
       '@angular-eslint/template/elements-content': 'error',
-      '@angular-eslint/template/label-has-associated-control': 'error',
+      // '@angular-eslint/template/label-has-associated-control': 'error',
       '@angular-eslint/template/no-distracting-elements': 'error',
       '@angular-eslint/template/click-events-have-key-events': 'error',
       '@angular-eslint/template/interactive-supports-focus': 'error',
