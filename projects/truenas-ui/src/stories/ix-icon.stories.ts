@@ -1,24 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { Home, User, Settings, Heart, Star, Search, Menu } from 'lucide';
-import { iconMarker } from '../lib/ix-icon/icon-marker';
+import { Heart, Home, Menu, Search, Settings, Star, User } from 'lucide';
 import { IxIconRegistryService } from '../lib/ix-icon/ix-icon-registry.service';
 import { IxIconComponent } from '../lib/ix-icon/ix-icon.component';
-
-// Import Lucide for demonstration
-
-// Mark icons used in stories for sprite generation
-// Using the new two-parameter API for clarity
-[
-  iconMarker('harddisk', 'mdi'),
-  iconMarker('server', 'mdi'),
-  iconMarker('nas', 'mdi'),
-  iconMarker('database', 'mdi'),
-  iconMarker('memory', 'mdi'),
-  iconMarker('network', 'mdi'),
-  iconMarker('file', 'mdi'),
-  iconMarker('home', 'material'),  // Material icon example
-  iconMarker('settings', 'material'),  // Material icon example
-];
 
 const meta: Meta<IxIconComponent> = {
   title: 'Components/Icon',

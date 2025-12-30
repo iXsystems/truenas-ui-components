@@ -45,7 +45,7 @@ export class IxStepperComponent {
     });
   }
 
-  onWindowResize(event: Event) {
+  onWindowResize(_event: Event) {
     this.cdr.detectChanges();
   }
 

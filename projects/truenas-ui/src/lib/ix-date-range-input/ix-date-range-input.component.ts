@@ -3,8 +3,8 @@ import { Overlay, type OverlayRef, type ConnectedPosition } from '@angular/cdk/o
 import { OverlayModule } from '@angular/cdk/overlay';
 import { TemplatePortal, PortalModule } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
-import type { OnInit, TemplateRef, OnDestroy } from '@angular/core';
-import { Component, input, forwardRef, signal, computed, viewChild, ElementRef, ViewContainerRef, inject } from '@angular/core';
+import type { OnInit, TemplateRef, OnDestroy , ElementRef} from '@angular/core';
+import { Component, input, forwardRef, signal, computed, viewChild, ViewContainerRef, inject } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -75,7 +75,6 @@ export class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, 
   });
 
   private overlay = inject(Overlay);
-  private elementRef = inject(ElementRef);
   private viewContainerRef = inject(ViewContainerRef);
 
   ngOnInit() {
@@ -127,21 +126,21 @@ export class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, 
 
 
   onSegmentKeydown(event: KeyboardEvent, range: 'start' | 'end', segment: 'month' | 'day' | 'year'): void {
-    const input = event.target as HTMLInputElement;
+    const inp = event.target as HTMLInputElement;
     
     // Only handle navigation - don't interfere with typing
     if (event.key === 'ArrowRight') {
-      if (input.selectionStart === input.value.length) {
+      if (inp.selectionStart === inp.value.length) {
         event.preventDefault();
         this.focusNextSegment(range, segment);
       }
     } else if (event.key === 'ArrowLeft') {
-      if (input.selectionStart === 0) {
+      if (inp.selectionStart === 0) {
         event.preventDefault();
         this.focusPrevSegment(range, segment);
       }
     } else if (event.key === 'Backspace') {
-      if (input.value === '' || input.selectionStart === 0) {
+      if (inp.value === '' || inp.selectionStart === 0) {
         event.preventDefault();
         this.focusPrevSegment(range, segment);
       }
@@ -278,52 +277,6 @@ export class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, 
       else if (segment === 'day') {this.endMonthRef().nativeElement.focus();}
       else if (segment === 'year') {this.endDayRef().nativeElement.focus();}
     }
-  }
-
-  private formatDate(date: Date): string {
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const year = date.getFullYear().toString();
-    return `${month}/${day}/${year}`;
-  }
-
-  private parseDate(dateStr: string): Date | null {
-    if (!dateStr || dateStr.trim() === '') {
-      return null;
-    }
-
-    // Try parsing common date formats
-    const formats = [
-      /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, // MM/DD/YYYY
-      /^(\d{1,2})-(\d{1,2})-(\d{4})$/,   // MM-DD-YYYY
-      /^(\d{4})-(\d{1,2})-(\d{1,2})$/    // YYYY-MM-DD
-    ];
-
-    for (const format of formats) {
-      const match = dateStr.match(format);
-      if (match) {
-        let month: number, day: number, year: number;
-        
-        if (format === formats[2]) { // YYYY-MM-DD
-          year = parseInt(match[1], 10);
-          month = parseInt(match[2], 10) - 1;
-          day = parseInt(match[3], 10);
-        } else { // MM/DD/YYYY or MM-DD-YYYY
-          month = parseInt(match[1], 10) - 1;
-          day = parseInt(match[2], 10);
-          year = parseInt(match[3], 10);
-        }
-
-        const date = new Date(year, month, day);
-        
-        // Validate the date
-        if (date.getFullYear() === year && date.getMonth() === month && date.getDate() === day) {
-          return date;
-        }
-      }
-    }
-
-    return null;
   }
 
   openDatepicker(): void {

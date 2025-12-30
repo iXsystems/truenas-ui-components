@@ -41,7 +41,7 @@ declare class IxBannerComponent {
     /**
      * Get the appropriate icon name based on banner type
      */
-    iconName: _angular_core.Signal<"alert-circle" | "information" | "alert" | "check-circle">;
+    iconName: _angular_core.Signal<"information" | "alert" | "alert-circle" | "check-circle">;
     /**
      * Get ARIA role based on banner type
      * Error/warning use 'alert' for immediate attention
@@ -313,7 +313,7 @@ declare class IxCardComponent {
     title: _angular_core.InputSignal<string | undefined>;
     titleLink: _angular_core.InputSignal<string | undefined>;
     elevation: _angular_core.InputSignal<"none" | "low" | "medium" | "high">;
-    padding: _angular_core.InputSignal<"small" | "large" | "medium">;
+    padding: _angular_core.InputSignal<"large" | "medium" | "small">;
     padContent: _angular_core.InputSignal<boolean>;
     bordered: _angular_core.InputSignal<boolean>;
     background: _angular_core.InputSignal<boolean>;
@@ -342,12 +342,12 @@ declare class IxCardComponent {
 declare class IxExpansionPanelComponent {
     title: _angular_core.InputSignal<string | undefined>;
     elevation: _angular_core.InputSignal<"none" | "low" | "medium" | "high">;
-    padding: _angular_core.InputSignal<"small" | "large" | "medium">;
+    padding: _angular_core.InputSignal<"large" | "medium" | "small">;
     bordered: _angular_core.InputSignal<boolean>;
     background: _angular_core.InputSignal<boolean>;
     expanded: _angular_core.InputSignal<boolean>;
     disabled: _angular_core.InputSignal<boolean>;
-    titleStyle: _angular_core.InputSignal<"body" | "header" | "link">;
+    titleStyle: _angular_core.InputSignal<"link" | "header" | "body">;
     expandedChange: _angular_core.OutputEmitterRef<boolean>;
     toggleEvent: _angular_core.OutputEmitterRef<void>;
     private internalExpanded;
@@ -1636,7 +1636,6 @@ declare class IxDateRangeInputComponent implements ControlValueAccessor, OnInit,
     private currentFocus;
     initialRange: _angular_core.Signal<DateRange>;
     private overlay;
-    private elementRef;
     private viewContainerRef;
     ngOnInit(): void;
     ngOnDestroy(): void;
@@ -1654,8 +1653,6 @@ declare class IxDateRangeInputComponent implements ControlValueAccessor, OnInit,
     private updateDateFromSegments;
     private focusNextSegment;
     private focusPrevSegment;
-    private formatDate;
-    private parseDate;
     openDatepicker(): void;
     close(): void;
     private createOverlay;
@@ -1885,8 +1882,8 @@ declare class IxSliderThumbDirective implements ControlValueAccessor, OnInit, On
         updateValue: (value: number) => void;
         getSliderRect: () => DOMRect;
     };
+    onTouched: () => void;
     private onChangeCallback;
-    private onTouched;
     private isDragging;
     private elementRef;
     ngOnInit(): void;
@@ -1896,7 +1893,7 @@ declare class IxSliderThumbDirective implements ControlValueAccessor, OnInit, On
     registerOnTouched(fn: () => void): void;
     setDisabledState(isDisabled: boolean): void;
     onInput(event: Event): void;
-    onChange(event: Event): void;
+    onChange(_event: Event): void;
     onMouseDown(event: MouseEvent): void;
     onTouchStart(event: TouchEvent): void;
     private addGlobalListeners;
@@ -2178,7 +2175,7 @@ declare class IxStepperComponent {
     steps: _angular_core.Signal<readonly IxStepComponent[]>;
     private cdr;
     constructor();
-    onWindowResize(event: Event): void;
+    onWindowResize(_event: Event): void;
     private _getStepData;
     isWideScreen: _angular_core.Signal<boolean>;
     selectStep(index: number): void;

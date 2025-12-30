@@ -92,7 +92,6 @@ function findHarnessFiles(): string[] {
  * Extract JSDoc comment text from a node
  */
 function getJSDocComment(node: ts.Node): string {
-  const jsDocTags = ts.getJSDocTags(node);
   const jsDocComments = ts.getJSDocCommentsAndTags(node);
 
   let description = '';
@@ -140,7 +139,7 @@ function getReturnsDescription(node: ts.Node): string {
 /**
  * Extract method signature including parameters
  */
-function getMethodSignature(method: ts.MethodDeclaration, checker: ts.TypeChecker): MethodInfo {
+function getMethodSignature(method: ts.MethodDeclaration): MethodInfo {
   const name = method.name.getText();
 
   // Get parameters - show only types, not parameter names
@@ -205,9 +204,6 @@ function parseHarnessFile(filePath: string): HarnessInfo | null {
     true
   );
 
-  const program = ts.createProgram([filePath], {});
-  const checker = program.getTypeChecker();
-
   let harnessInfo: HarnessInfo | null = null;
   const interfaces: InterfaceInfo[] = [];
 
@@ -245,7 +241,7 @@ function parseHarnessFile(filePath: string): HarnessInfo | null {
             );
 
             if (isPublic && methodName !== 'constructor') {
-              methods.push(getMethodSignature(member, checker));
+              methods.push(getMethodSignature(member));
             }
           }
         });

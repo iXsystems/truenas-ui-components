@@ -113,21 +113,21 @@ export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDes
   }
 
   onSegmentKeydown(event: KeyboardEvent, segment: 'month' | 'day' | 'year'): void {
-    const input = event.target as HTMLInputElement;
+    const inp = event.target as HTMLInputElement;
 
     // Handle navigation between segments
     if (event.key === 'ArrowRight') {
-      if (input.selectionStart === input.value.length) {
+      if (inp.selectionStart === inp.value.length) {
         event.preventDefault();
         this.focusNextSegment(segment);
       }
     } else if (event.key === 'ArrowLeft') {
-      if (input.selectionStart === 0) {
+      if (inp.selectionStart === 0) {
         event.preventDefault();
         this.focusPrevSegment(segment);
       }
     } else if (event.key === 'Backspace') {
-      if (input.value === '' || input.selectionStart === 0) {
+      if (inp.value === '' || inp.selectionStart === 0) {
         event.preventDefault();
         this.focusPrevSegment(segment);
       }

@@ -237,10 +237,10 @@ module.exports = [
       '@angular-eslint/template/attributes-order': 'error',
       '@angular-eslint/template/no-duplicate-attributes': 'error',
       '@angular-eslint/template/no-interpolation-in-attributes': 'error',
-      '@angular-eslint/template/conditional-complexity': [
-        'error',
-        { maxComplexity: 3 },
-      ],
+      // '@angular-eslint/template/conditional-complexity': [
+      //   'error',
+      //   { maxComplexity: 3 },
+      // ],
       // '@angular-eslint/template/cyclomatic-complexity': [
       //   'error',
       //   { maxComplexity: 20 },

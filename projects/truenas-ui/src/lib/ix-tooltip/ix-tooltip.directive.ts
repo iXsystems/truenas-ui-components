@@ -1,3 +1,6 @@
+/* eslint-disable @angular-eslint/no-input-rename */
+// Input aliasing is intentional for directive API consistency (e.g., ixTooltip, ixTooltipPosition)
+// This follows the standard Angular pattern used by Material and other directive-based components
 import {
   Overlay,
   type OverlayRef,

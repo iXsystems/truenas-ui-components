@@ -4858,22 +4858,22 @@ class IxDateInputComponent {
         }
     }
     onSegmentKeydown(event, segment) {
-        const input = event.target;
+        const inp = event.target;
         // Handle navigation between segments
         if (event.key === 'ArrowRight') {
-            if (input.selectionStart === input.value.length) {
+            if (inp.selectionStart === inp.value.length) {
                 event.preventDefault();
                 this.focusNextSegment(segment);
             }
         }
         else if (event.key === 'ArrowLeft') {
-            if (input.selectionStart === 0) {
+            if (inp.selectionStart === 0) {
                 event.preventDefault();
                 this.focusPrevSegment(segment);
             }
         }
         else if (event.key === 'Backspace') {
-            if (input.value === '' || input.selectionStart === 0) {
+            if (inp.value === '' || inp.selectionStart === 0) {
                 event.preventDefault();
                 this.focusPrevSegment(segment);
             }
@@ -5091,7 +5091,6 @@ class IxDateRangeInputComponent {
         return this.value();
     }, ...(ngDevMode ? [{ debugName: "initialRange" }] : []));
     overlay = inject(Overlay);
-    elementRef = inject(ElementRef);
     viewContainerRef = inject(ViewContainerRef);
     ngOnInit() {
         // Initialize display values
@@ -5132,22 +5131,22 @@ class IxDateRangeInputComponent {
         }
     }
     onSegmentKeydown(event, range, segment) {
-        const input = event.target;
+        const inp = event.target;
         // Only handle navigation - don't interfere with typing
         if (event.key === 'ArrowRight') {
-            if (input.selectionStart === input.value.length) {
+            if (inp.selectionStart === inp.value.length) {
                 event.preventDefault();
                 this.focusNextSegment(range, segment);
             }
         }
         else if (event.key === 'ArrowLeft') {
-            if (input.selectionStart === 0) {
+            if (inp.selectionStart === 0) {
                 event.preventDefault();
                 this.focusPrevSegment(range, segment);
             }
         }
         else if (event.key === 'Backspace') {
-            if (input.value === '' || input.selectionStart === 0) {
+            if (inp.value === '' || inp.selectionStart === 0) {
                 event.preventDefault();
                 this.focusPrevSegment(range, segment);
             }
@@ -5321,45 +5320,6 @@ class IxDateRangeInputComponent {
                 this.endDayRef().nativeElement.focus();
             }
         }
-    }
-    formatDate(date) {
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        const year = date.getFullYear().toString();
-        return `${month}/${day}/${year}`;
-    }
-    parseDate(dateStr) {
-        if (!dateStr || dateStr.trim() === '') {
-            return null;
-        }
-        // Try parsing common date formats
-        const formats = [
-            /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, // MM/DD/YYYY
-            /^(\d{1,2})-(\d{1,2})-(\d{4})$/, // MM-DD-YYYY
-            /^(\d{4})-(\d{1,2})-(\d{1,2})$/ // YYYY-MM-DD
-        ];
-        for (const format of formats) {
-            const match = dateStr.match(format);
-            if (match) {
-                let month, day, year;
-                if (format === formats[2]) { // YYYY-MM-DD
-                    year = parseInt(match[1], 10);
-                    month = parseInt(match[2], 10) - 1;
-                    day = parseInt(match[3], 10);
-                }
-                else { // MM/DD/YYYY or MM-DD-YYYY
-                    month = parseInt(match[1], 10) - 1;
-                    day = parseInt(match[2], 10);
-                    year = parseInt(match[3], 10);
-                }
-                const date = new Date(year, month, day);
-                // Validate the date
-                if (date.getFullYear() === year && date.getMonth() === month && date.getDate() === day) {
-                    return date;
-                }
-            }
-        }
-        return null;
     }
     openDatepicker() {
         if (this.isOpen()) {
@@ -5539,8 +5499,8 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
 class IxSliderThumbDirective {
     disabled = signal(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
     slider; // Will be set by parent slider component
-    onChangeCallback = (_value) => { };
     onTouched = () => { };
+    onChangeCallback = (_value) => { };
     isDragging = false;
     elementRef = inject((ElementRef));
     ngOnInit() {
@@ -5584,7 +5544,7 @@ class IxSliderThumbDirective {
         }
         this.onChangeCallback(value);
     }
-    onChange(event) {
+    onChange(_event) {
         this.onTouched();
     }
     onMouseDown(event) {
@@ -5937,7 +5897,7 @@ class IxSliderWithLabelDirective {
     ngOnDestroy() {
         this._cleanup();
     }
-    _onInteractionStart = (event) => {
+    _onInteractionStart = (_event) => {
         this._slider.showThumbLabel();
     };
     _onInteractionEnd = () => {
@@ -5987,7 +5947,7 @@ class IxButtonToggleComponent {
     formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
     // Computed disabled state (combines input and form state)
     isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
-    onChange = (value) => { };
+    onChange = (_value) => { };
     onTouched = () => { };
     // ControlValueAccessor implementation
     writeValue(value) {
@@ -6220,6 +6180,9 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                     }, template: "<div\n  class=\"ix-tooltip\"\n  role=\"tooltip\"\n  [id]=\"id()\"\n  [attr.aria-hidden]=\"false\">\n  {{ message() }}\n</div>\n", styles: [":host{display:block;pointer-events:none;z-index:1200}.ix-tooltip{background:#373737e6;color:#fff;padding:6px 8px;border-radius:4px;font-size:12px;font-weight:500;line-height:1.4;max-width:200px;word-wrap:break-word;white-space:pre-line;box-shadow:0 2px 8px #0003;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);animation:ix-tooltip-show .15s cubic-bezier(0,0,.2,1) forwards;transform-origin:center bottom}@keyframes ix-tooltip-show{0%{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}.ix-tooltip{position:relative}.ix-tooltip:after{content:\"\";position:absolute;width:0;height:0;border-style:solid;z-index:1}:host-context(.ix-tooltip-panel-above) .ix-tooltip:after{top:100%;left:50%;transform:translate(-50%);border-width:6px 6px 0 6px;border-color:rgba(55,55,55,.9) transparent transparent transparent}:host-context(.ix-tooltip-panel-below) .ix-tooltip:after{bottom:100%;left:50%;transform:translate(-50%);border-width:0 6px 6px 6px;border-color:transparent transparent rgba(55,55,55,.9) transparent}:host-context(.ix-tooltip-panel-left) .ix-tooltip:after,:host-context(.ix-tooltip-panel-before) .ix-tooltip:after{top:50%;left:100%;transform:translateY(-50%);border-width:6px 0 6px 6px;border-color:transparent transparent transparent rgba(55,55,55,.9)}:host-context(.ix-tooltip-panel-right) .ix-tooltip:after,:host-context(.ix-tooltip-panel-after) .ix-tooltip:after{top:50%;right:100%;transform:translateY(-50%);border-width:6px 6px 6px 0;border-color:transparent rgba(55,55,55,.9) transparent transparent}@media (prefers-contrast: high){.ix-tooltip{background:var(--fg1, #000);color:var(--bg1, #fff);border:1px solid var(--lines, #999)}:host-context(.ix-tooltip-panel-above) .ix-tooltip:after{border-top-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-below) .ix-tooltip:after{border-bottom-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-left) .ix-tooltip:after,:host-context(.ix-tooltip-panel-before) .ix-tooltip:after{border-left-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-right) .ix-tooltip:after,:host-context(.ix-tooltip-panel-after) .ix-tooltip:after{border-right-color:var(--fg1, #000)}}:host-context(.ix-slider-thumb-label) .ix-tooltip{font-size:11px;padding:4px 6px;font-weight:600;min-width:24px;text-align:center;background:#373737f2}@media (prefers-reduced-motion: reduce){.ix-tooltip{animation:none}}\n"] }]
         }] });
 
+/* eslint-disable @angular-eslint/no-input-rename */
+// Input aliasing is intentional for directive API consistency (e.g., ixTooltip, ixTooltipPosition)
+// This follows the standard Angular pattern used by Material and other directive-based components
 class IxTooltipDirective {
     message = input('', ...(ngDevMode ? [{ debugName: "message", alias: 'ixTooltip' }] : [{ alias: 'ixTooltip' }]));
     position = input('above', ...(ngDevMode ? [{ debugName: "position", alias: 'ixTooltipPosition' }] : [{ alias: 'ixTooltipPosition' }]));
@@ -6604,7 +6567,7 @@ class IxStepperComponent {
             }
         });
     }
-    onWindowResize(event) {
+    onWindowResize(_event) {
         this.cdr.detectChanges();
     }
     _getStepData() {
@@ -6758,11 +6721,11 @@ class IxFilePickerPopupComponent {
     }
     ngAfterViewChecked() {
         // Auto-focus and select text in input when it appears
-        const input = document.querySelector('[data-autofocus="true"]');
-        if (input && input !== document.activeElement) {
+        const inp = document.querySelector('[data-autofocus="true"]');
+        if (inp && inp !== document.activeElement) {
             setTimeout(() => {
-                input.focus();
-                input.select();
+                inp.focus();
+                inp.select();
             }, 0);
         }
     }
@@ -6839,8 +6802,8 @@ class IxFilePickerPopupComponent {
         this.cancel.emit();
     }
     onFolderNameSubmit(event, item) {
-        const input = event.target;
-        const name = input.value.trim();
+        const inp = event.target;
+        const name = inp.value.trim();
         if (item.tempId) {
             // Even if empty, let parent component handle validation
             this.submitFolderName.emit({ name, tempId: item.tempId });
@@ -6853,10 +6816,10 @@ class IxFilePickerPopupComponent {
     }
     onFolderNameInputBlur(event, item) {
         // Auto-submit on blur (don't close picker, parent handles submission)
-        const input = event.target;
+        const inp = event.target;
         if (item.tempId) {
             this.submitFolderName.emit({
-                name: input.value.trim(),
+                name: inp.value.trim(),
                 tempId: item.tempId
             });
         }

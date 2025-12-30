@@ -70,17 +70,15 @@
                (click)="onItemClick(item)"
                (dblclick)="onItemDoubleClick(item)">
             <ix-icon
-              class="file-icon"
               [name]="getItemIcon(item)"
               [library]="getItemIconLibrary(item)"
-              [class]="'file-icon-' + item.type" />
+              [class]="'file-icon file-icon-' + item.type" />
             <span class="file-name">{{ item.name }}</span>
 
             <!-- ZFS badge -->
             @if (isZfsObject(item)) {
               <span
-                class="zfs-badge"
-                [class]="'zfs-badge-' + item.type">
+                [class]="'zfs-badge zfs-badge-' + item.type">
                 {{ getZfsBadge(item) }}
               </span>
             }

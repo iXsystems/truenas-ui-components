@@ -41,8 +41,9 @@ export class IxSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
     getSliderRect: () => DOMRect;
   }; // Will be set by parent slider component
 
+  onTouched = () => {};
+
   private onChangeCallback = (_value: number) => {};
-  private onTouched = () => {};
   private isDragging = false;
 
   private elementRef = inject(ElementRef<HTMLInputElement>);
@@ -96,7 +97,7 @@ export class IxSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
     this.onChangeCallback(value);
   }
 
-  onChange(event: Event): void {
+  onChange(_event: Event): void {
     this.onTouched();
   }
 

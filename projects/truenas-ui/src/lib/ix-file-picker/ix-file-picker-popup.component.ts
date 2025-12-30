@@ -109,11 +109,11 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
 
   ngAfterViewChecked(): void {
     // Auto-focus and select text in input when it appears
-    const input = document.querySelector('[data-autofocus="true"]') as HTMLInputElement;
-    if (input && input !== document.activeElement) {
+    const inp = document.querySelector('[data-autofocus="true"]') as HTMLInputElement;
+    if (inp && inp !== document.activeElement) {
       setTimeout(() => {
-        input.focus();
-        input.select();
+        inp.focus();
+        inp.select();
       }, 0);
     }
   }
@@ -205,8 +205,8 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
   }
 
   onFolderNameSubmit(event: Event, item: FileSystemItem): void {
-    const input = event.target as HTMLInputElement;
-    const name = input.value.trim();
+    const inp = event.target as HTMLInputElement;
+    const name = inp.value.trim();
 
     if (item.tempId) {
       // Even if empty, let parent component handle validation
@@ -222,10 +222,10 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
 
   onFolderNameInputBlur(event: Event, item: FileSystemItem): void {
     // Auto-submit on blur (don't close picker, parent handles submission)
-    const input = event.target as HTMLInputElement;
+    const inp = event.target as HTMLInputElement;
     if (item.tempId) {
       this.submitFolderName.emit({
-        name: input.value.trim(),
+        name: inp.value.trim(),
         tempId: item.tempId
       });
     }

@@ -60,7 +60,7 @@ export class IxSliderWithLabelDirective implements OnInit, OnDestroy {
   }
 
 
-  private _onInteractionStart = (event: Event): void => {
+  private _onInteractionStart = (_event: Event): void => {
     this._slider.showThumbLabel();
   }
 
