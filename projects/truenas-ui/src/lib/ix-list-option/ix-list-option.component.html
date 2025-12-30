@@ -2,22 +2,22 @@
   <!-- Leading content (icons, avatars) -->
   @if (hasLeadingContent()) {
     <div class="ix-list-option__leading">
-      <ng-content select="[ixListIcon], [ixListAvatar]"></ng-content>
+      <ng-content select="[ixListIcon], [ixListAvatar]" />
     </div>
   }
 
   <!-- Text content -->
   <div class="ix-list-option__text">
     <div class="ix-list-option__primary-text">
-      <ng-content select="[ixListItemTitle], [ixListItemPrimary]"></ng-content>
+      <ng-content select="[ixListItemTitle], [ixListItemPrimary]" />
       @if (!hasPrimaryTextDirective()) {
-        <ng-content></ng-content>
+        <ng-content />
       }
     </div>
 
     @if (hasSecondaryTextContent()) {
       <div class="ix-list-option__secondary-text">
-        <ng-content select="[ixListItemLine], [ixListItemSecondary]"></ng-content>
+        <ng-content select="[ixListItemLine], [ixListItemSecondary]" />
       </div>
     }
   </div>
@@ -25,11 +25,10 @@
   <!-- Checkbox on the right -->
   <div class="ix-list-option__checkbox">
     <ix-checkbox
+      tabindex="-1"
       [checked]="effectiveSelected()"
       [disabled]="effectiveDisabled()"
       [hideLabel]="true"
-      (click)="$event.stopPropagation()"
-      tabindex="-1">
-    </ix-checkbox>
+      (click)="$event.stopPropagation()" />
   </div>
 </div>

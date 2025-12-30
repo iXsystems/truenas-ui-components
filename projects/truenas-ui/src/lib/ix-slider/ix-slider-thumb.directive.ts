@@ -1,5 +1,7 @@
-import { Directive, ElementRef, HostListener, OnInit, OnDestroy, forwardRef, Inject, signal } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import type { OnInit, OnDestroy} from '@angular/core';
+import { ElementRef, Directive, forwardRef, signal, inject } from '@angular/core';
+import type { ControlValueAccessor} from '@angular/forms';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Directive({
   selector: 'input[ixSliderThumb]',
@@ -29,13 +31,22 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 export class IxSliderThumbDirective implements ControlValueAccessor, OnInit, OnDestroy {
   disabled = signal<boolean>(false);
 
-  slider: any; // Will be set by parent slider component
-  
-  private onChangeCallback = (value: number) => {};
-  private onTouched = () => {};
+  slider?: {
+    isDisabled: () => boolean;
+    min: () => number;
+    max: () => number;
+    step: () => number;
+    value: () => number;
+    updateValue: (value: number) => void;
+    getSliderRect: () => DOMRect;
+  }; // Will be set by parent slider component
+
+  onTouched = () => {};
+
+  private onChangeCallback = (_value: number) => {};
   private isDragging = false;
 
-  constructor(private elementRef: ElementRef<HTMLInputElement>) {}
+  private elementRef = inject(ElementRef<HTMLInputElement>);
 
   ngOnInit() {
     // Make the native input visually hidden but still accessible
@@ -86,19 +97,19 @@ export class IxSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
     this.onChangeCallback(value);
   }
 
-  onChange(event: Event): void {
+  onChange(_event: Event): void {
     this.onTouched();
   }
 
   onMouseDown(event: MouseEvent): void {
-    if (this.disabled()) return;
+    if (this.disabled()) {return;}
     this.isDragging = true;
     this.addGlobalListeners();
     event.stopPropagation(); // Prevent track click
   }
 
   onTouchStart(event: TouchEvent): void {
-    if (this.disabled()) return;
+    if (this.disabled()) {return;}
     this.isDragging = true;
     this.addGlobalListeners();
     event.stopPropagation(); // Prevent track click
@@ -119,7 +130,7 @@ export class IxSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
   }
 
   private onGlobalMouseMove = (event: MouseEvent): void => {
-    if (!this.isDragging || this.disabled()) return;
+    if (!this.isDragging || this.disabled()) {return;}
     event.preventDefault();
     this.updateValueFromPosition(event.clientX);
   };
@@ -133,7 +144,7 @@ export class IxSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
   };
 
   private onGlobalTouchMove = (event: TouchEvent): void => {
-    if (!this.isDragging || this.disabled()) return;
+    if (!this.isDragging || this.disabled()) {return;}
     event.preventDefault();
     const touch = event.touches[0];
     this.updateValueFromPosition(touch.clientX);
@@ -148,7 +159,7 @@ export class IxSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
   };
 
   private updateValueFromPosition(clientX: number): void {
-    if (!this.slider) return;
+    if (!this.slider) {return;}
 
     const rect = this.slider.getSliderRect();
     const percentage = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));

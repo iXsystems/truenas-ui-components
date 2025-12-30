@@ -1,7 +1,9 @@
-import { Component, viewChild, ElementRef, AfterViewInit, OnDestroy, inject, input, output, computed, signal, forwardRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
+import { CommonModule } from '@angular/common';
+import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
+import { Component, viewChild, inject, input, output, computed, signal, forwardRef } from '@angular/core';
+import type { ControlValueAccessor} from '@angular/forms';
+import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 export type SlideToggleColor = 'primary' | 'accent' | 'warn';
 
@@ -52,7 +54,7 @@ export class IxSlideToggleComponent implements AfterViewInit, OnDestroy, Control
     const toggleEl = this.toggleEl();
     if (toggleEl) {
       this.focusMonitor.monitor(toggleEl)
-        .subscribe(origin => {
+        .subscribe(() => {
           // Focus monitoring for accessibility
         });
     }

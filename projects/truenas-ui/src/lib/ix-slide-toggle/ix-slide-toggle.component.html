@@ -1,11 +1,15 @@
 <div [ngClass]="classes()" [attr.data-testid]="testId()">
-  <label [for]="id" class="ix-slide-toggle__label">
+  <label class="ix-slide-toggle__label" [for]="id">
 
     <!-- Label before toggle -->
     @if (label() && labelPosition() === 'before') {
       <span
         class="ix-slide-toggle__label-text ix-slide-toggle__label-text--before"
-        (click)="onLabelClick()">
+        tabindex="0"
+        role="button"
+        (click)="onLabelClick()"
+        (keydown.enter)="onLabelClick()"
+        (keydown.space)="onLabelClick()">
         {{ label() }}
       </span>
     }
@@ -15,13 +19,13 @@
       <input
         #toggleEl
         type="checkbox"
+        class="ix-slide-toggle__input"
         [id]="id"
         [checked]="effectiveChecked()"
         [disabled]="isDisabled()"
         [required]="required()"
         [attr.aria-label]="effectiveAriaLabel()"
         [attr.aria-labelledby]="ariaLabelledby()"
-        class="ix-slide-toggle__input"
         (change)="onToggleChange($event)"
       />
 
@@ -61,7 +65,11 @@
     @if (label() && labelPosition() === 'after') {
       <span
         class="ix-slide-toggle__label-text ix-slide-toggle__label-text--after"
-        (click)="onLabelClick()">
+        tabindex="0"
+        role="button"
+        (click)="onLabelClick()"
+        (keydown.enter)="onLabelClick()"
+        (keydown.space)="onLabelClick()">
         {{ label() }}
       </span>
     }

@@ -1,0 +1,337 @@
+<ix-dialog-shell title="TrueNAS System Onboarding" [showFullscreenButton]="false">
+    <div style="padding: 0 var(--content-padding); margin-top: var(--content-padding);">
+    <ix-stepper orientation="horizontal" [linear]="true" [selectedIndex]="currentStep" (selectionChange)="onStepChange($event)">
+    
+    <ix-step label="Storage Setup" [completed]="step1Complete">
+        <h2 style="color: var(--fg2); margin-top: unset;">Storage Setup</h2>
+        <p style="margin-bottom: 16px; color: var(--fg2);">Create at least one writable pool/dataset for your data.</p>
+        
+        <div style="display: grid; gap: 16px; max-width: 600px;">
+        <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Pool Name</label>
+            <ix-input placeholder="tank" [(ngModel)]="config.storage.poolName" />
+        </div>
+        
+        <div>
+            <ix-checkbox label="Enable Compression (LZ4)" [(ngModel)]="config.storage.compression" />
+        </div>
+        
+        <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Create Starter Datasets</label>
+            <div style="display: grid; gap: 8px;">
+            <ix-checkbox label="media - For photos, videos, music" [(ngModel)]="config.storage.createMedia" />
+            <ix-checkbox label="backups - For backup storage" [(ngModel)]="config.storage.createBackups" />
+            <ix-checkbox label="vm-storage - For virtual machines" [(ngModel)]="config.storage.createVmStorage" />
+            </div>
+        </div>
+        
+        <div style="margin-top: 16px;">
+            <h4 style="margin-bottom: 16px; color: var(--fg1); border-bottom: 1px solid var(--lines); padding-bottom: 8px;">Basic Pool Setup</h4>
+            
+            <div style="display: grid; gap: 16px;">
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Available Disks</label>
+                <div style="display: grid; gap: 8px;">
+                <ix-checkbox label="sda - 1TB WD Blue (Empty)" [(ngModel)]="config.storage.disk1" />
+                <ix-checkbox label="sdb - 1TB WD Blue (Empty)" [(ngModel)]="config.storage.disk2" />
+                <ix-checkbox label="sdc - 2TB Seagate (Empty)" [(ngModel)]="config.storage.disk3" />
+                </div>
+            </div>
+            
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">RAID/ZFS Layout</label>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                <ix-radio name="raidType" value="mirror" label="Mirror (RAID1) - Best redundancy" [(ngModel)]="config.storage.raidType" />
+                <ix-radio name="raidType" value="raidz1" label="RAIDZ1 - Good balance of space/redundancy (min 3 disks)" [(ngModel)]="config.storage.raidType" />
+                <ix-radio name="raidType" value="raidz2" label="RAIDZ2 - Higher redundancy, can lose 2 disks (min 4 disks)" [(ngModel)]="config.storage.raidType" />
+                <ix-radio name="raidType" value="raidz3" label="RAIDZ3 - Highest redundancy, can lose 3 disks (min 5 disks)" [(ngModel)]="config.storage.raidType" />
+                <ix-radio name="raidType" value="stripe" label="Stripe - Maximum space, no redundancy" [(ngModel)]="config.storage.raidType" />
+                </div>
+            </div>
+            </div>
+        </div>
+        
+        <div>
+            <ix-checkbox label="Advanced Pool Options" [(ngModel)]="config.storage.advancedOptions" />
+        </div>
+
+        @if (config.storage.advancedOptions) {
+        <div style="margin-top: 16px;">
+            <h4 style="margin-bottom: 16px; color: var(--fg1); border-bottom: 1px solid var(--lines); padding-bottom: 8px;">Advanced Options</h4>
+
+            <div style="display: grid; gap: 16px;">
+            <div>
+                <ix-checkbox label="Reserve disks as hot spares" [(ngModel)]="config.storage.enableHotSpares" />
+            </div>
+
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">SLOG Device (Optional)</label>
+                <ix-select placeholder="Select dedicated log device" [options]="slogDeviceOptions" [(ngModel)]="config.storage.slogDevice" />
+            </div>
+
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">L2ARC Cache Device (Optional)</label>
+                <ix-select placeholder="Select cache device" [options]="cacheDeviceOptions" [(ngModel)]="config.storage.l2arcDevice" />
+            </div>
+
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Metadata Special Device (Optional)</label>
+                <ix-select placeholder="Select metadata device" [options]="metadataDeviceOptions" [(ngModel)]="config.storage.metadataDevice" />
+            </div>
+
+            <div>
+                <ix-checkbox label="Enable pool encryption" [(ngModel)]="config.storage.enableEncryption" />
+            </div>
+
+            <div>
+                <ix-checkbox label="Enable deduplication" [(ngModel)]="config.storage.enableDeduplication" />
+                @if (config.storage.enableDeduplication) {
+                <div style="margin-top: 8px; padding: 8px; background: var(--warning-bg); border-radius: 4px; font-size: 14px; color: var(--warning-fg);">
+                <strong>Warning:</strong> Deduplication requires significant RAM (5GB+ recommended per TB of storage).
+                </div>
+                }
+            </div>
+            </div>
+        </div>
+        }
+        
+        <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--lines);">
+            <ix-button variant="outline" 
+                        color="warn"
+                        label="Exit Wizard and Setup DRAID"
+                        (click)="exitForDraid()" />
+        </div>
+        </div>
+    </ix-step>
+
+    <ix-step label="Identity & Network" [completed]="step2Complete">
+        <h2 style="color: var(--fg2); margin-top: unset;">Identity & Network</h2>
+        <p style="margin-bottom: 16px; color: var(--fg2);">Make your NAS reachable and properly identified on the network.</p>
+        
+        <div style="display: grid; gap: 16px; max-width: 600px;">
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Hostname</label>
+                <ix-input placeholder="truenas-server" [(ngModel)]="config.network.hostname" />
+            </div>
+            
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Domain</label>
+                <ix-input placeholder="home.local" [(ngModel)]="config.network.domain" />
+            </div>
+            
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Network Configuration</label>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                <ix-radio name="ipType" value="dhcp" label="DHCP (Automatic)" [(ngModel)]="config.network.ipType" />
+                <ix-radio name="ipType" value="static" label="Static IP Address" [(ngModel)]="config.network.ipType" />
+                </div>
+            </div>
+
+            @if (config.network.ipType === 'static') {
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Static IP Address</label>
+                    <ix-input placeholder="192.168.1.100/24" [(ngModel)]="config.network.staticIp" />
+                </div>
+            }
+
+            @if (config.network.ipType === 'static') {
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Gateway</label>
+                    <ix-input placeholder="192.168.1.1" [(ngModel)]="config.network.gateway" />
+                </div>
+            }
+        </div>
+    </ix-step>
+
+    <ix-step label="Administrator Account" [completed]="step3Complete">
+        <h2 style="color: var(--fg2); margin-top: unset;">Administrator Account</h2>
+        <p style="margin-bottom: 16px; color: var(--fg2);">Create the initial administrator account for your TrueNAS system.</p>
+        
+        <div style="display: grid; gap: 16px; max-width: 600px;">
+        <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Username</label>
+            <ix-input placeholder="admin" [(ngModel)]="config.admin.username" />
+        </div>
+        
+        <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Password</label>
+            <ix-input type="password" placeholder="Enter secure password" [(ngModel)]="config.admin.password" />
+        </div>
+        
+        <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Confirm Password</label>
+            <ix-input type="password" placeholder="Confirm password" [(ngModel)]="config.admin.confirmPassword" />
+        </div>
+        
+        <div>
+            <ix-checkbox label="Enable root SSH access" [(ngModel)]="config.admin.enableSsh" />
+        </div>
+        </div>
+    </ix-step>
+
+    <ix-step label="Services & Security" [completed]="step4Complete">
+        <h2 style="color: var(--fg2); margin-top: unset;">Services & Security</h2>
+        <p style="margin-bottom: 16px; color: var(--fg2);">Configure essential services and security settings for your TrueNAS system.</p>
+        
+        <div style="display: grid; gap: 16px; max-width: 600px;">
+        <div>
+            <h4 style="margin-bottom: 16px; color: var(--fg1); border-bottom: 1px solid var(--lines); padding-bottom: 8px;">Core Services</h4>
+            <div style="display: grid; gap: 8px;">
+            <ix-checkbox label="Enable SMB/CIFS file sharing" [(ngModel)]="config.services.enableSmb" />
+            <ix-checkbox label="Enable NFS file sharing" [(ngModel)]="config.services.enableNfs" />
+            <ix-checkbox label="Enable FTP service" [(ngModel)]="config.services.enableFtp" />
+            <ix-checkbox label="Enable SMART monitoring" [(ngModel)]="config.services.enableSmart" />
+            </div>
+        </div>
+        
+        <div>
+            <h4 style="margin-bottom: 16px; color: var(--fg1); border-bottom: 1px solid var(--lines); padding-bottom: 8px;">Security Settings</h4>
+            <div style="display: grid; gap: 12px;">
+            <ix-checkbox label="Enable automatic security updates" [(ngModel)]="config.services.autoUpdates" />
+            <ix-checkbox label="Enable fail2ban intrusion prevention" [(ngModel)]="config.services.enableFail2ban" />
+            <ix-checkbox label="Enable firewall" [(ngModel)]="config.services.enableFirewall" />
+            </div>
+        </div>
+        </div>
+    </ix-step>
+
+    <ix-step label="HTTPS & Certificates" [completed]="step5Complete">
+        <h2 style="color: var(--fg2); margin-top: unset;">HTTPS & Certificates</h2>
+        <p style="margin-bottom: 16px; color: var(--fg2);">Configure HTTPS access and SSL certificates for secure web interface access.</p>
+        
+        <div style="display: grid; gap: 16px; max-width: 600px;">
+        <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Certificate Type</label>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+            <ix-radio name="certType" value="self-signed" label="Self-signed certificate (Quick setup)" [(ngModel)]="config.https.certType" />
+            <ix-radio name="certType" value="letsencrypt" label="Let's Encrypt certificate (Requires domain)" [(ngModel)]="config.https.certType" />
+            <ix-radio name="certType" value="existing" label="Import existing certificate" [(ngModel)]="config.https.certType" />
+            </div>
+        </div>
+
+        @if (config.https.certType === 'letsencrypt') {
+        <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Domain Name</label>
+            <ix-input placeholder="truenas.example.com" [(ngModel)]="config.https.domain" />
+        </div>
+        }
+
+        @if (config.https.certType === 'letsencrypt') {
+        <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Email for Certificate Notifications</label>
+            <ix-input type="email" placeholder="admin@example.com" [(ngModel)]="config.https.email" />
+        </div>
+        }
+        
+        <div>
+            <ix-checkbox label="Redirect HTTP to HTTPS" [(ngModel)]="config.https.redirectHttp" />
+        </div>
+        
+        <div>
+            <ix-checkbox label="Enable HSTS (HTTP Strict Transport Security)" [(ngModel)]="config.https.enableHsts" />
+        </div>
+        </div>
+    </ix-step>
+
+    <ix-step label="Notifications" [completed]="step6Complete">
+        <h2 style="color: var(--fg2); margin-top: unset;">Notifications</h2>
+        <p style="margin-bottom: 16px; color: var(--fg2);">Configure how TrueNAS will notify you about system events and alerts.</p>
+        
+        <div style="display: grid; gap: 16px; max-width: 600px;">
+        <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Notification Method</label>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+            <ix-radio name="notifyMethod" value="email" label="Email notifications" [(ngModel)]="config.notifications.method" />
+            <ix-radio name="notifyMethod" value="slack" label="Slack notifications" [(ngModel)]="config.notifications.method" />
+            <ix-radio name="notifyMethod" value="webhook" label="Custom webhook" [(ngModel)]="config.notifications.method" />
+            <ix-radio name="notifyMethod" value="none" label="No notifications" [(ngModel)]="config.notifications.method" />
+            </div>
+        </div>
+
+        @if (config.notifications.method === 'email') {
+        <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Email Address</label>
+            <ix-input type="email" placeholder="admin@example.com" [(ngModel)]="config.notifications.email" />
+        </div>
+        }
+
+        @if (config.notifications.method === 'email') {
+        <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">SMTP Server</label>
+            <ix-input placeholder="smtp.gmail.com" [(ngModel)]="config.notifications.smtpServer" />
+        </div>
+        }
+
+        @if (config.notifications.method === 'slack') {
+        <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Slack Webhook URL</label>
+            <ix-input placeholder="https://hooks.slack.com/services/..." [(ngModel)]="config.notifications.slackWebhook" />
+        </div>
+        }
+        
+        <div style="margin-top: 16px;">
+            <h4 style="margin-bottom: 12px; color: var(--fg1);">Alert Types</h4>
+            <div style="display: grid; gap: 8px;">
+            <ix-checkbox label="System health alerts" [(ngModel)]="config.notifications.systemHealth" />
+            <ix-checkbox label="Storage alerts" [(ngModel)]="config.notifications.storageAlerts" />
+            <ix-checkbox label="Security alerts" [(ngModel)]="config.notifications.securityAlerts" />
+            <ix-checkbox label="Update notifications" [(ngModel)]="config.notifications.updateAlerts" />
+            </div>
+        </div>
+        </div>
+    </ix-step>
+
+    <ix-step label="Review & Finish" [completed]="step7Complete">
+        <h2 style="color: var(--fg2); margin-top: unset;">Review & Finish</h2>
+        <p style="margin-bottom: 16px; color: var(--fg2);">Review your configuration and complete the onboarding process.</p>
+        
+        <div style="display: grid; gap: 16px;">
+        <div style="background: var(--bg2); padding: 16px; border-radius: 8px; border: 1px solid var(--lines);">
+            <h4 style="margin: 0 0 12px 0; color: var(--fg1);">Configuration Summary</h4>
+            <div style="display: grid; gap: 8px; font-size: 14px; color: var(--fg2);">
+            <div><strong>Storage Pool:</strong> {{ config.storage.poolName || 'Not specified' }} ({{ getRaidTypeLabel(config.storage.raidType) }})</div>
+            <div><strong>Hostname:</strong> {{ config.network.hostname || 'Not specified' }}.{{ config.network.domain || 'home.local' }}</div>
+            <div><strong>Network:</strong> {{ config.network.ipType === 'dhcp' ? 'DHCP' : 'Static IP (' + config.network.staticIp + ')' }}</div>
+            <div><strong>Admin User:</strong> {{ config.admin.username || 'Not specified' }}</div>
+            <div><strong>HTTPS:</strong> {{ getHttpsLabel() }}</div>
+            <div><strong>Notifications:</strong> {{ getNotificationLabel() }}</div>
+            <div><strong>Services:</strong> {{ getEnabledServicesCount() }} enabled</div>
+            </div>
+        </div>
+        
+        <div style="padding: 16px; background: var(--success-bg); border-radius: 8px; border: 1px solid var(--success);">
+            <h4 style="margin: 0 0 8px 0; color: var(--success);">Ready to Complete Setup</h4>
+            <p style="margin: 0; font-size: 14px; color: var(--success);">
+            Your TrueNAS system is configured and ready to be initialized. Click "Complete Setup" to apply all settings and start your system.
+            </p>
+        </div>
+        
+        <div>
+            <ix-checkbox label="Start all configured services" [(ngModel)]="config.final.startServices" />
+        </div>
+        
+        <div>
+            <ix-checkbox label="Launch TrueNAS web interface after setup" [(ngModel)]="config.final.launchWebInterface" />
+        </div>
+        
+        <div>
+            <ix-checkbox label="Download configuration as file" [(ngModel)]="config.final.downloadConfig" />
+        </div>
+        </div>
+    </ix-step>
+
+    </ix-stepper>
+    </div>
+    
+    <div ixDialogAction>
+        @if (currentStep > 0) {
+            <ix-button variant="outline"
+                        label="Back"
+                        (click)="previousStep()" />
+        }
+        <ix-button color="primary"
+                    [label]="getNextButtonLabel()"
+                    [disabled]="!canProceed()"
+                    (click)="nextStep()" />
+    </div>
+</ix-dialog-shell>

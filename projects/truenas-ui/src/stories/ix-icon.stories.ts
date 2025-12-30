@@ -1,27 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { importProvidersFrom } from '@angular/core';
-import { CommonModule } from '@angular/common';
-
-import { IxIconComponent } from '../lib/ix-icon/ix-icon.component';
+import { Heart, Home, Menu, Search, Settings, Star, User } from 'lucide';
 import { IxIconRegistryService } from '../lib/ix-icon/ix-icon-registry.service';
-import { iconMarker } from '../lib/ix-icon/icon-marker';
-
-// Import Lucide for demonstration
-import { Home, User, Settings, Heart, Star, Search, Menu } from 'lucide';
-
-// Mark icons used in stories for sprite generation
-// Using the new two-parameter API for clarity
-const STORY_ICONS = [
-  iconMarker('harddisk', 'mdi'),
-  iconMarker('server', 'mdi'),
-  iconMarker('nas', 'mdi'),
-  iconMarker('database', 'mdi'),
-  iconMarker('memory', 'mdi'),
-  iconMarker('network', 'mdi'),
-  iconMarker('file', 'mdi'),
-  iconMarker('home', 'material'),  // Material icon example
-  iconMarker('settings', 'material'),  // Material icon example
-];
+import { IxIconComponent } from '../lib/ix-icon/ix-icon.component';
 
 const meta: Meta<IxIconComponent> = {
   title: 'Components/Icon',
@@ -129,7 +109,7 @@ Then use: \`<ix-icon name="home" library="lucide"></ix-icon>\`
               getTypeName: () => 'HTML'
             };
           },
-          sanitize: (context: any, value: any) => value
+          sanitize: (context: unknown, value: unknown) => value
         };
 
         // Create a mock sprite loader for the registry (real sprite loader will work in components via DI)
@@ -141,13 +121,14 @@ Then use: \`<ix-icon name="home" library="lucide"></ix-icon>\`
           getSpriteConfig: () => undefined
         };
 
-        const iconRegistry = new IxIconRegistryService(mockSanitizer as any, mockSpriteLoader as any);
+        const iconRegistry = new IxIconRegistryService(mockSanitizer as never, mockSpriteLoader as never);
 
         // Register Lucide library
         iconRegistry.registerLibrary({
           name: 'lucide',
-          resolver: (iconName: string, options: any = {}) => {
-            const iconMap: Record<string, any> = {
+          resolver: (iconName: string, options?: unknown) => {
+            const opts = (options || {}) as { size?: number; color?: string; strokeWidth?: number };
+            const iconMap: Record<string, unknown> = {
               'home': Home,
               'user': User,
               'settings': Settings,
@@ -158,11 +139,11 @@ Then use: \`<ix-icon name="home" library="lucide"></ix-icon>\`
             };
 
             const iconData = iconMap[iconName];
-            
+
             if (iconData && Array.isArray(iconData)) {
               try {
                 // Lucide icons are arrays of path elements
-                const pathElements = iconData.map((path: any) => {
+                const pathElements = iconData.map((path: unknown) => {
                   if (Array.isArray(path) && path[0] === 'path') {
                     const attrs = path[1];
                     let pathString = `<path`;
@@ -176,19 +157,19 @@ Then use: \`<ix-icon name="home" library="lucide"></ix-icon>\`
                 }).join('');
 
                 const svgString = `
-                  <svg xmlns="http://www.w3.org/2000/svg" 
-                       width="${options.size || 24}" 
-                       height="${options.size || 24}" 
-                       viewBox="0 0 24 24" 
-                       fill="none" 
-                       stroke="${options.color || 'currentColor'}" 
-                       stroke-width="${options.strokeWidth || 2}" 
-                       stroke-linecap="round" 
+                  <svg xmlns="http://www.w3.org/2000/svg"
+                       width="${opts.size || 24}"
+                       height="${opts.size || 24}"
+                       viewBox="0 0 24 24"
+                       fill="none"
+                       stroke="${opts.color || 'currentColor'}"
+                       stroke-width="${opts.strokeWidth || 2}"
+                       stroke-linecap="round"
                        stroke-linejoin="round">
                     ${pathElements}
                   </svg>
                 `;
-                
+
                 return svgString;
               } catch (error) {
                 console.warn('Failed to render Lucide icon:', iconName, error);
@@ -210,7 +191,7 @@ Then use: \`<ix-icon name="home" library="lucide"></ix-icon>\`
         });
 
         // Make it available globally for the component
-        (window as any).__storybookIconRegistry = iconRegistry;
+        (window as unknown as { __storybookIconRegistry: IxIconRegistryService }).__storybookIconRegistry = iconRegistry;
       }
 
       return story();

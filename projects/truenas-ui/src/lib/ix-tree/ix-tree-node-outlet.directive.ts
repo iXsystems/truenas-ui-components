@@ -1,5 +1,5 @@
-import { Directive } from '@angular/core';
 import { CdkTreeNodeOutlet } from '@angular/cdk/tree';
+import { Directive } from '@angular/core';
 
 @Directive({
   selector: '[ixTreeNodeOutlet]',

@@ -1,5 +1,5 @@
-import { Component, input, ChangeDetectionStrategy, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, input, ChangeDetectionStrategy, computed } from '@angular/core';
 
 export type ProgressBarMode = 'determinate' | 'indeterminate' | 'buffer';
 

@@ -1,8 +1,9 @@
 <div [ngClass]="classes()">
-  <label [for]="id" class="ix-radio__label">
+  <label class="ix-radio__label" [for]="id">
     <input
       #radioEl
       type="radio"
+      class="ix-radio__input"
       [id]="id"
       [name]="name()"
       [value]="value()"
@@ -12,7 +13,6 @@
       [attr.data-testid]="testId()"
       [attr.aria-describedby]="error() ? id + '-error' : null"
       [attr.aria-invalid]="error() ? 'true' : null"
-      class="ix-radio__input"
       (change)="onRadioChange($event)"
     />
     <span class="ix-radio__checkmark"></span>
@@ -21,10 +21,10 @@
 
   @if (error()) {
     <div
-      [id]="id + '-error'"
       class="ix-radio__error"
       role="alert"
       aria-live="polite"
+      [id]="id + '-error'"
     >
       {{ error() }}
     </div>

@@ -1,4 +1,5 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import type { ComponentFixture} from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { IxBrandedSpinnerComponent } from './ix-branded-spinner.component';
 
 describe('IxBrandedSpinnerComponent', () => {
@@ -59,7 +60,6 @@ describe('IxBrandedSpinnerComponent', () => {
   });
 
   it('should cleanup animation on destroy', () => {
-    const cancelAnimationFrameSpy = jest.spyOn(window, 'cancelAnimationFrame');
     component.ngOnDestroy();
     // Should have stopped any running animations
     expect(component).toBeTruthy();

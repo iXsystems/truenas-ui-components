@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxTooltipDirective, TooltipPosition } from '../lib/ix-tooltip/ix-tooltip.directive';
-import { IxTooltipComponent } from '../lib/ix-tooltip/ix-tooltip.component';
 import { IxButtonComponent } from '../lib/ix-button/ix-button.component';
+import { IxTooltipComponent } from '../lib/ix-tooltip/ix-tooltip.component';
+import type { TooltipPosition } from '../lib/ix-tooltip/ix-tooltip.directive';
+import { IxTooltipDirective } from '../lib/ix-tooltip/ix-tooltip.directive';
 
 const meta: Meta = {
   title: 'Components/Tooltip',

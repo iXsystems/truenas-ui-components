@@ -1,10 +1,11 @@
+import type {
+  OnDestroy,
+  OnInit} from '@angular/core';
 import {
   Directive,
-  ElementRef,
-  OnDestroy,
-  OnInit,
   input,
-  Host
+  ElementRef,
+  inject
 } from '@angular/core';
 import { IxSliderComponent } from './ix-slider.component';
 
@@ -15,10 +16,8 @@ import { IxSliderComponent } from './ix-slider.component';
 export class IxSliderWithLabelDirective implements OnInit, OnDestroy {
   enabled = input<boolean | string>(true, { alias: 'ixSliderWithLabel' });
 
-  constructor(
-    private _elementRef: ElementRef<HTMLElement>,
-    @Host() private _slider: IxSliderComponent
-  ) {}
+  private _elementRef = inject(ElementRef<HTMLElement>);
+  private _slider = inject(IxSliderComponent, { host: true });
 
   ngOnInit() {
     const enabled = this.enabled();
@@ -61,7 +60,7 @@ export class IxSliderWithLabelDirective implements OnInit, OnDestroy {
   }
 
 
-  private _onInteractionStart = (event: Event): void => {
+  private _onInteractionStart = (_event: Event): void => {
     this._slider.showThumbLabel();
   }
 

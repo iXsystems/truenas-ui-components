@@ -1,5 +1,7 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { IxMenuComponent, IxMenuItem } from './ix-menu.component';
+import type { ComponentFixture} from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import type { IxMenuItem } from './ix-menu.component';
+import { IxMenuComponent } from './ix-menu.component';
 
 describe('IxMenuComponent', () => {
   let component: IxMenuComponent;

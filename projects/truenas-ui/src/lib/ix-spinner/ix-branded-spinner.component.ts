@@ -1,4 +1,5 @@
-import { Component, input, OnInit, OnDestroy, ViewEncapsulation, ElementRef, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
+import type { OnInit, OnDestroy, AfterViewInit} from '@angular/core';
+import { ElementRef, Component, input, ViewEncapsulation, ChangeDetectionStrategy, inject } from '@angular/core';
 
 @Component({
   selector: 'ix-branded-spinner',
@@ -22,11 +23,11 @@ export class IxBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewIn
 
   // Animation timing constants from reference implementation
   private readonly duration = 300; // time to draw each individual path
-  private readonly delayStep = 500; // delay between starting each path  
+  private readonly delayStep = 500; // delay between starting each path
   private readonly cyclePause = 1200; // pause after all paths are drawn
   private readonly emptyPause = 100; // brief pause with no strokes
 
-  constructor(private elementRef: ElementRef<HTMLElement>) {}
+  private elementRef = inject(ElementRef<HTMLElement>);
 
   ngOnInit(): void {
     this.isAnimating = true;
@@ -46,7 +47,7 @@ export class IxBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewIn
   }
 
   private startProgressLoop(): void {
-    if (!this.isAnimating || this.paths.length === 0) return;
+    if (!this.isAnimating || this.paths.length === 0) {return;}
 
     // Reset all paths to invisible
     this.paths.forEach((path) => {
@@ -61,15 +62,14 @@ export class IxBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewIn
   }
 
   private animateSequence(): void {
-    if (!this.isAnimating) return;
+    if (!this.isAnimating) {return;}
 
     let startTime: number;
-    const totalDrawTime = (this.paths.length - 1) * this.delayStep + this.duration;
 
     const animate = (timestamp: number) => {
-      if (!this.isAnimating) return;
+      if (!this.isAnimating) {return;}
 
-      if (!startTime) startTime = timestamp;
+      if (!startTime) {startTime = timestamp;}
       const elapsed = timestamp - startTime;
 
       let allDone = true;

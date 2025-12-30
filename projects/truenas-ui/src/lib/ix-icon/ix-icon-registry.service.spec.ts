@@ -1,29 +1,30 @@
 import { TestBed } from '@angular/core/testing';
-import { DomSanitizer } from '@angular/platform-browser';
-import { IxIconRegistryService, IconLibrary } from './ix-icon-registry.service';
-import { IxSpriteLoaderService } from './ix-sprite-loader.service';
+import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
+import type { IconLibrary } from './ix-icon-registry.service';
+import { IxIconRegistryService } from './ix-icon-registry.service';
+import { IxSpriteLoaderService, type SpriteConfig } from './ix-sprite-loader.service';
 
 describe('IxIconRegistryService', () => {
   let service: IxIconRegistryService;
   let mockSanitizer: jest.Mocked<DomSanitizer>;
-  let mockSpriteLoader: jest.Mocked<Partial<IxSpriteLoaderService>>;
+  let mockSpriteLoader: Partial<jest.Mocked<IxSpriteLoaderService>>;
 
   beforeEach(() => {
     mockSanitizer = {
-      bypassSecurityTrustHtml: jest.fn((value) => value as any),
+      bypassSecurityTrustHtml: jest.fn((value: string): SafeHtml => value as SafeHtml),
       sanitize: jest.fn(),
       bypassSecurityTrustScript: jest.fn(),
       bypassSecurityTrustStyle: jest.fn(),
       bypassSecurityTrustUrl: jest.fn(),
       bypassSecurityTrustResourceUrl: jest.fn()
-    } as any;
+    } as jest.Mocked<DomSanitizer>;
 
     mockSpriteLoader = {
-      isSpriteLoaded: jest.fn().mockReturnValue(false),
-      getIconUrl: jest.fn(),
+      isSpriteLoaded: jest.fn<boolean, []>().mockReturnValue(false),
+      getIconUrl: jest.fn<string | null, [string]>(),
       getSafeIconUrl: jest.fn(),
-      ensureSpriteLoaded: jest.fn(),
-      getSpriteConfig: jest.fn()
+      ensureSpriteLoaded: jest.fn<Promise<boolean>, []>(),
+      getSpriteConfig: jest.fn<SpriteConfig | undefined, []>()
     };
 
     TestBed.configureTestingModule({
@@ -139,7 +140,7 @@ describe('IxIconRegistryService', () => {
     });
 
     it('should merge library default options with provided options', () => {
-      const resolverSpy = jest.fn((name, options) => `<svg></svg>`);
+      const resolverSpy = jest.fn((_name, _options) => `<svg></svg>`);
       const library: IconLibrary = {
         name: 'custom-lib',
         resolver: resolverSpy,
@@ -155,8 +156,8 @@ describe('IxIconRegistryService', () => {
 
   describe('resolveIcon', () => {
     it('should prioritize sprite icons when sprite is loaded', () => {
-      mockSpriteLoader.isSpriteLoaded = jest.fn().mockReturnValue(true);
-      mockSpriteLoader.getIconUrl = jest.fn().mockReturnValue('#icon-home');
+      mockSpriteLoader.isSpriteLoaded = jest.fn<boolean, []>().mockReturnValue(true);
+      mockSpriteLoader.getIconUrl = jest.fn<string | null, [string]>().mockReturnValue('#icon-home');
 
       service.registerIcon('home', '<svg>custom</svg>');
 
@@ -167,7 +168,7 @@ describe('IxIconRegistryService', () => {
     });
 
     it('should resolve custom icon when sprite is not loaded', () => {
-      mockSpriteLoader.isSpriteLoaded = jest.fn().mockReturnValue(false);
+      mockSpriteLoader.isSpriteLoaded = jest.fn<boolean, []>().mockReturnValue(false);
 
       service.registerIcon('home', '<svg>custom</svg>');
 

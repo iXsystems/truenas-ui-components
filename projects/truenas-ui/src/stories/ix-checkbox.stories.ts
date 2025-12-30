@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/angular';
-import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import type { Meta, StoryObj } from '@storybook/angular';
 import { IxCheckboxComponent } from '../lib/ix-checkbox/ix-checkbox.component';
 
 const meta: Meta<IxCheckboxComponent> = {
@@ -238,10 +238,18 @@ export const Group: Story = {
         <div style="margin-top: 16px; padding: 12px; background: var(--bg2); border-radius: 4px;">
           <h4 style="margin: 0 0 8px 0; color: var(--fg1);">Selected Preferences:</h4>
           <ul style="margin: 0; padding-left: 20px; color: var(--fg2);">
-            <li *ngIf="preferences.notifications">Push notifications</li>
-            <li *ngIf="preferences.newsletter">Email newsletter</li>
-            <li *ngIf="preferences.updates">Product updates</li>
-            <li *ngIf="preferences.marketing">Marketing emails</li>
+            @if (preferences.notifications) {
+            <li>Push notifications</li>
+            }
+            @if (preferences.newsletter) {
+            <li>Email newsletter</li>
+            }
+            @if (preferences.updates) {
+            <li>Product updates</li>
+            }
+            @if (preferences.marketing) {
+            <li>Marketing emails</li>
+            }
           </ul>
         </div>
       </div>

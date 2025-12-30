@@ -1,17 +1,18 @@
-import { Component, ChangeDetectionStrategy, ViewEncapsulation, ChangeDetectorRef, IterableDiffers, ViewContainerRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DataSource } from '@angular/cdk/collections';
 import { CdkTree, CdkTreeModule } from '@angular/cdk/tree';
+import type { FlatTreeControl } from '@angular/cdk/tree';
+import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, IterableDiffers, ViewContainerRef, Component, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
+import type { Observable} from 'rxjs';
+import { BehaviorSubject, merge } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 // Re-export CDK Tree types for convenience
 export { FlatTreeControl } from '@angular/cdk/tree';
-import { FlatTreeControl } from '@angular/cdk/tree';
 export { ArrayDataSource } from '@angular/cdk/collections';
-import { DataSource } from '@angular/cdk/collections';
-import { BehaviorSubject, Observable, merge } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 /** Flat node with expandable and level information */
-export interface IxFlatTreeNode<T = any> {
+export interface IxFlatTreeNode<T = unknown> {
   data: T;
   expandable: boolean;
   level: number;
@@ -122,11 +123,7 @@ export class IxTreeFlatDataSource<T, F> extends DataSource<F> {
   changeDetection: ChangeDetectionStrategy.Default,
 })
 export class IxTreeComponent<T, K = T> extends CdkTree<T, K> {
-  constructor(
-    differs: IterableDiffers,
-    changeDetectorRef: ChangeDetectorRef,
-    viewContainer: ViewContainerRef
-  ) {
-    super(differs, changeDetectorRef, viewContainer);
+  constructor() {
+    super(inject(IterableDiffers), inject(ChangeDetectorRef), inject(ViewContainerRef));
   }
 }

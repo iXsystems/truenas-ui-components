@@ -1,0 +1,474 @@
+<div style="padding: 24px; max-width: 900px;">
+  
+  <!-- Header Section -->
+  <div style="margin-bottom: 32px;">
+    <h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 600;">Create Storage Pool</h1>
+    <p style="margin: 0; color: var(--fg2, #666); font-size: 14px;">Set up safe, reliable storage in 4 simple steps</p>
+  </div>
+
+  @if (!showSuccess()) {
+    <!-- Wizard Container -->
+    <ix-card elevation="low" [bordered]="true">
+      <div style="padding: 24px;">
+        <ix-stepper orientation="horizontal" [linear]="true" [selectedIndex]="currentStep()">
+        
+          <!-- Step 1: Name -->
+          <ix-step label="Name" [completed]="isStepCompleted(0)">
+            <div style="padding: 20px 0;">
+              <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: var(--fg1);">Name Your Storage Pool</h3>
+              <p style="margin: 0 0 20px 0; color: var(--fg2, #666); font-size: 14px;">Choose a name that describes what you'll store here</p>
+              
+              <ix-form-field label="Pool Name" style="margin-bottom: 20px;">
+                <ix-input placeholder="e.g., family-photos, documents, backup" required [(ngModel)]="poolName" />
+              </ix-form-field>
+              
+              @if (poolName().trim().length === 0) {
+                <div style="margin-bottom: 16px; padding: 8px; background: var(--orange, #ff9800); color: white; border-radius: 4px; font-size: 13px;">
+                  ⚠️ Pool name is required to continue
+                </div>
+              }
+              
+              <div style="margin-top: 16px; padding: 12px; background: var(--alt-bg1, #f8f9fa); border-radius: 6px; font-size: 13px; color: var(--fg2, #666);">
+                💡 <strong>Tip:</strong> Use descriptive names like "media-storage" or "backup-pool" to easily identify your storage later
+              </div>
+            </div>
+          </ix-step>
+
+          <!-- Step 2: Basic Settings -->
+          <ix-step label="Basic Settings" [completed]="isStepCompleted(1)">
+            <div style="padding: 20px 0;">
+              <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: var(--fg1);">Choose Your Protection Level</h3>
+              <p style="margin: 0 0 20px 0; color: var(--fg2, #666); font-size: 14px;">How safe should your data be if drives fail?</p>
+              
+              <div style="margin-bottom: 20px;">
+                <div style="margin-bottom: 16px;">
+                  <ix-radio 
+                    name="protectionType" 
+                    value="raidz1" 
+                    label="Basic Protection"
+                    [(ngModel)]="selectedStorageType" />
+                  <div style="margin: 4px 0 0 24px; font-size: 13px; color: var(--fg2, #666);">
+                    Survives 1 drive failure • Uses all 12 drives • ~92% storage efficiency
+                  </div>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                  <ix-radio 
+                    name="protectionType" 
+                    value="raidz2" 
+                    label="Medium Protection"
+                    [(ngModel)]="selectedStorageType" />
+                  <div style="margin: 4px 0 0 24px; font-size: 13px; color: var(--fg2, #666);">
+                    Survives 2 drive failures • Uses all 12 drives • ~83% storage efficiency
+                  </div>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                  <ix-radio 
+                    name="protectionType" 
+                    value="raidz3" 
+                    label="High Protection"
+                    [(ngModel)]="selectedStorageType" />
+                  <div style="margin: 4px 0 0 24px; font-size: 13px; color: var(--fg2, #666);">
+                    <span style="background: var(--primary, #007bff); color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 8px;">RECOMMENDED</span>
+                    Survives 3 drive failures • Uses all 12 drives • ~75% storage efficiency
+                  </div>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                  <ix-radio 
+                    name="protectionType" 
+                    value="mirror" 
+                    label="Maximum Protection"
+                    [(ngModel)]="selectedStorageType" />
+                  <div style="margin: 4px 0 0 24px; font-size: 13px; color: var(--fg2, #666);">
+                    Survives up to 6 drive failures • 6 mirror pairs • 50% storage efficiency
+                  </div>
+                </div>
+              </div>
+
+              <!-- Disk Usage Option -->
+              <div style="margin-bottom: 20px; padding: 12px; background: var(--alt-bg1, #f8f9fa); border-radius: 6px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                  <label style="font-weight: 500; color: var(--fg1); font-size: 14px;">Use all available disks</label>
+                  <ix-slide-toggle [(ngModel)]="useAllDisks" />
+                </div>
+                <div style="font-size: 12px; color: var(--fg2, #666);">
+                  When disabled, some disks are kept available for automatic hot spare configuration
+                </div>
+              </div>
+
+              <!-- Technical Summary (Expandable) -->
+              <ix-expansion-panel 
+                title="Technical Summary"
+                titleStyle="link"
+                elevation="none"
+                style="margin-top: 16px;"
+                [bordered]="true"
+                [background]="false">
+                <div style="padding: 12px; background: var(--bg2, #ffffff); border-radius: 4px; margin-top: 8px;">
+                  <div style="font-size: 13px; color: var(--fg2, #666); line-height: 1.5;">
+                    <div style="margin-bottom: 12px;">
+                      <strong style="color: var(--fg1);">{{ getSimpleStorageTypeLabel() }} Configuration Details:</strong>
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                      • <strong>RAID Type:</strong> {{ getTechnicalType() }}
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                      • <strong>VDEV Layout:</strong> {{ getVdevDescription() }}
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                      • <strong>Drives Required:</strong> {{ getRequiredDriveCount() }} × 4TB SSD drives
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                      • <strong>Storage Efficiency:</strong> {{ getStorageEfficiency() }}
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                      • <strong>Fault Tolerance:</strong> {{ getRedundancyDescription() }}
+                    </div>
+                    <div>
+                      • <strong>Disk Usage:</strong> {{ useAllDisks() ? 'All 12 disks used in pool' : '10 disks in pool, 2 reserved as hot spares' }}
+                    </div>
+                  </div>
+                </div>
+              </ix-expansion-panel>
+            </div>
+          </ix-step>
+
+          <!-- Step 3: Advanced Settings -->
+          <ix-step label="Advanced Settings" [completed]="isStepCompleted(2)">
+            <div style="padding: 20px 0;">
+              <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: var(--fg1);">Advanced Settings</h3>
+              <p style="margin: 0 0 20px 0; color: var(--fg2, #666); font-size: 14px;">Optional optimizations and expert configurations - your pool works great with defaults!</p>
+              
+              <!-- Default Notice -->
+              <div style="margin-bottom: 24px; padding: 16px; background: var(--alt-bg1, #e8f5e8); border-radius: 8px; border-left: 4px solid var(--green, #2e7d32);">
+                <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                  <span style="margin-right: 8px; font-size: 18px;">✓</span>
+                  <strong style="color: var(--green, #2e7d32);">Your pool is ready to create with optimal defaults!</strong>
+                </div>
+                <div style="font-size: 14px; color: var(--fg2, #666);">
+                  Automatic compression enabled, secure configurations applied. The settings below are optional optimizations for specific use cases.
+                </div>
+              </div>
+
+              <!-- Optional Security Enhancement -->
+              <div style="margin-bottom: 20px;">
+                <h4 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 500; color: var(--fg1);">Security Enhancement</h4>
+                
+                <!-- Encryption -->
+                <div style="margin-bottom: 16px; padding: 12px; background: var(--bg2, #ffffff); border-radius: 6px; border: 1px solid var(--lines, #ddd);">
+                  <ix-checkbox 
+                    label="Enable Encryption (for sensitive data)"
+                    style="margin-bottom: 8px;"
+                    [(ngModel)]="enableEncryption" />
+                  <div style="font-size: 12px; color: var(--fg2, #666); margin-left: 24px;">
+                    Only enable if you store sensitive data that requires encryption at rest
+                  </div>
+                  
+                  @if (enableEncryption()) {
+                    <div style="margin: 12px 0 0 24px; padding: 12px; background: var(--alt-bg1, #f8f9fa); border-radius: 4px;">
+                      <ix-form-field label="Encryption Passphrase">
+                        <ix-input type="password" placeholder="Enter secure passphrase" [(ngModel)]="encryptionKey" />
+                      </ix-form-field>
+                      <div style="font-size: 11px; color: var(--fg2, #666); margin-top: 4px;">
+                        ⚠️ Store this passphrase safely - you'll need it to access your data
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Expert Optimizations -->
+              <div style="margin-bottom: 20px; padding: 12px; background: var(--alt-bg1, #f8f9fa); border-radius: 6px; border-left: 3px solid var(--orange, #ff9800);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                  <div style="display: flex; align-items: center;">
+                    <span style="margin-right: 8px; font-size: 16px;">⚙️</span>
+                    <label style="font-weight: 500; color: var(--fg1); font-size: 14px;">Expert Optimizations</label>
+                  </div>
+                  <ix-slide-toggle [(ngModel)]="enableAdvancedOptions" />
+                </div>
+                <div style="font-size: 12px; color: var(--fg2, #666);">
+                  Advanced tuning options for specific workloads - only modify if you know what these do
+                </div>
+
+                @if (enableAdvancedOptions()) {
+                  <!-- Advanced Options Content -->
+                  <div style="border-top: 1px solid var(--lines, #e5e7eb); padding-top: 16px; margin-top: 16px;">
+                    
+                    <!-- Performance Tuning -->
+                    <ix-expansion-panel 
+                      title="Performance Tuning"
+                      titleStyle="link"
+                      elevation="none"
+                      style="margin-bottom: 12px;"
+                      [bordered]="true"
+                      [background]="false">
+                      <div style="padding: 12px; background: var(--bg2, #ffffff); border-radius: 4px; margin-top: 8px;">
+                        <ix-form-field label="Record Size" style="margin-bottom: 12px;">
+                          <ix-select [(ngModel)]="recordSize">
+                            <option value="128K">128K (Mixed workloads - default)</option>
+                            <option value="64K">64K (Small files)</option>
+                            <option value="1M">1M (Large files, video)</option>
+                          </ix-select>
+                        </ix-form-field>
+                        
+                        <ix-form-field label="Sector Size (ashift)">
+                          <ix-select [(ngModel)]="ashiftValue">
+                            <option value="12">4K sectors (modern drives)</option>
+                            <option value="9">512B sectors (legacy)</option>
+                          </ix-select>
+                        </ix-form-field>
+                      </div>
+                    </ix-expansion-panel>
+
+                    <!-- Hot Spare -->
+                    <div style="margin-bottom: 12px; padding: 12px; background: var(--bg2, #ffffff); border-radius: 4px; border: 1px solid var(--lines, #ddd);">
+                      <ix-checkbox 
+                        label="Add Hot Spare Drive"
+                        [(ngModel)]="enableHotSpare" />
+                      <div style="margin-top: 6px; margin-left: 24px; font-size: 12px; color: var(--fg2, #666);">
+                        Automatically replaces failed drives (requires one additional drive)
+                      </div>
+                    </div>
+
+                    <!-- Expert Configuration -->
+                    <ix-expansion-panel 
+                      title="Expert Configuration"
+                      titleStyle="link"
+                      elevation="none"
+                      [bordered]="true"
+                      [background]="false">
+                      <div style="margin-top: 12px; padding: 16px; background: var(--bg2, #ffffff); border-radius: 6px; border-left: 4px solid var(--orange, #ff9800);">
+                        <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                          <span style="font-size: 18px; margin-right: 8px;">⚠️</span>
+                          <strong style="color: var(--orange, #ff9800);">Advanced Users Only</strong>
+                        </div>
+                        
+                        <ix-form-field label="Custom ZFS Properties" style="margin-bottom: 12px;">
+                          <ix-input 
+                            placeholder="checksum=sha256, dedup=on, copies=2" 
+                            multiline="true"
+                            rows="3"
+                            [(ngModel)]="advancedProperties" />
+                          <div style="font-size: 11px; color: var(--fg2); margin-top: 4px;">
+                            Override default ZFS properties (comma-separated)
+                          </div>
+                        </ix-form-field>
+
+                        <ix-checkbox 
+                          label="Import existing pool instead of creating new"
+                          [(ngModel)]="importExisting" />
+                      </div>
+                    </ix-expansion-panel>
+                  </div>
+                }
+              </div>
+            </div>
+          </ix-step>
+
+          <!-- Step 4: Review -->
+          <ix-step label="Review" [completed]="isStepCompleted(3)">
+            <div style="padding: 20px 0;">
+              <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: var(--fg1);">Review Your Storage Pool</h3>
+              <p style="margin: 0 0 20px 0; color: var(--fg2, #666); font-size: 14px;">Final review of your storage configuration before creation</p>
+              
+              <!-- Storage Visualization -->
+              <div style="background: var(--alt-bg1, #f8f9fa); border-radius: 12px; padding: 24px; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                  <div style="text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 8px;">🏛️</div>
+                    <div style="font-weight: 600; color: var(--fg1); margin-bottom: 4px;">{{ poolName() }}</div>
+                    <div style="font-size: 12px; color: var(--fg2, #666);">{{ getSimpleStorageTypeLabel() }} Storage Pool</div>
+                  </div>
+                </div>
+                
+                <!-- Drive Visualization with wrapping -->
+                <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                  @for (driveIndex of getSelectedDriveIndexes(); track driveIndex) {
+                    <div style="display: flex; flex-direction: column; align-items: center; padding: 8px; border: 2px solid var(--primary, #007bff); border-radius: 8px; background: var(--bg2, #ffffff);">
+                      <ix-disk-icon 
+                        size="4TB" 
+                        [name]="getDriveName(driveIndex)" 
+                        [type]="DiskType.Ssd" />
+                      <div style="font-size: 9px; color: var(--primary, #007bff); margin-top: 2px; font-weight: 500;">4TB SSD</div>
+                    </div>
+                  }
+                  
+                  <!-- Hot Spare Drives -->
+                  @if (!useAllDisks()) {
+                    @for (spareIndex of getHotSpareDriveIndexes(); track spareIndex) {
+                      <div style="display: flex; flex-direction: column; align-items: center; padding: 8px; border: 2px solid var(--orange, #ff9800); border-radius: 8px; background: var(--bg2, #ffffff);">
+                        <ix-disk-icon 
+                          size="4TB" 
+                          [name]="getDriveName(spareIndex)" 
+                          [type]="DiskType.Ssd" />
+                        <div style="font-size: 9px; color: var(--orange, #ff9800); margin-top: 2px; font-weight: 500;">Hot Spare</div>
+                      </div>
+                    }
+                  }
+                </div>
+                
+                <!-- Protection Visualization -->
+                <div style="text-align: center; padding: 12px; background: var(--bg2, #ffffff); border-radius: 8px;">
+                  <div style="font-size: 14px; color: var(--fg1); font-weight: 500; margin-bottom: 4px;">
+                    {{ getProtectionDescription() }}
+                  </div>
+                  <div style="font-size: 12px; color: var(--fg2, #666);">
+                    {{ getRedundancyDescription() }}
+                    @if (!useAllDisks()) {
+                      <span> + {{ getHotSpareDriveIndexes().length }} hot spare(s)</span>
+                    }
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Configuration Summary -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div style="padding: 12px; background: var(--bg2, #ffffff); border-radius: 6px; border: 1px solid var(--lines, #ddd);">
+                  <div style="font-size: 12px; color: var(--fg2, #666); margin-bottom: 4px;">Total Capacity</div>
+                  <div style="font-size: 16px; font-weight: 500; color: var(--fg1);">{{ getTotalCapacity() }}</div>
+                </div>
+                <div style="padding: 12px; background: var(--bg2, #ffffff); border-radius: 6px; border: 1px solid var(--lines, #ddd);">
+                  <div style="font-size: 12px; color: var(--fg2, #666); margin-bottom: 4px;">Usable Space</div>
+                  <div style="font-size: 16px; font-weight: 500; color: var(--green, #2e7d32);">{{ getUsableCapacity() }}</div>
+                </div>
+              </div>
+              
+              <!-- Advanced Settings Summary -->
+              @if (enableEncryption() || enableHotSpare() || !useAllDisks()) {
+                <div style="margin-bottom: 16px; padding: 12px; background: var(--bg2, #ffffff); border-radius: 6px; border: 1px solid var(--lines, #ddd);">
+                  <div style="font-size: 14px; font-weight: 500; color: var(--fg1); margin-bottom: 8px;">Advanced Configuration</div>
+                  <div style="font-size: 12px; color: var(--fg2, #666); line-height: 1.4;">
+                    @if (enableEncryption()) {
+                      <div>• Encryption: Enabled with passphrase</div>
+                    }
+                    @if (!useAllDisks()) {
+                      <div>• Hot Spares: {{ getHotSpareDriveIndexes().length }} drive(s) reserved for automatic replacement</div>
+                    }
+                    @if (enableHotSpare() && useAllDisks()) {
+                      <div>• Hot Spares: Manual hot spare configuration enabled</div>
+                    }
+                  </div>
+                </div>
+              }
+              
+              <!-- Success Message -->
+              <div style="padding: 12px; background: var(--alt-bg1, #e8f5e8); border-radius: 6px; border-left: 4px solid var(--green, #2e7d32);">
+                <div style="display: flex; align-items: center;">
+                  <span style="margin-right: 8px; color: var(--green, #2e7d32);">✓</span>
+                  <div style="font-size: 13px; color: var(--green, #2e7d32); font-weight: 500;">
+                    Ready to create! Your storage pool is optimized and configured.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ix-step>
+
+        </ix-stepper>
+
+        <!-- Wizard Navigation -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--lines, #e5e7eb);">
+          <div style="display: flex; flex-direction: column;">
+            <div style="color: var(--fg2, #666); font-size: 14px;">
+              Step {{ currentStep() + 1 }} of 4
+            </div>
+            @if (!canProceedToNextStep() && currentStep() < 3) {
+              <div style="color: var(--orange, #ff9800); font-size: 12px; margin-top: 2px;">
+                Complete this step to continue
+              </div>
+            } @else if (currentStep() === 3 && !canCreatePool()) {
+              <div style="color: var(--orange, #ff9800); font-size: 12px; margin-top: 2px;">
+                Complete required steps to create pool
+              </div>
+            } @else {
+              <div style="color: var(--green, #2e7d32); font-size: 12px; margin-top: 2px;">
+                {{ currentStep() === 3 ? 'Ready to create!' : 'Ready to continue' }}
+              </div>
+            }
+          </div>
+          <div style="display: flex; gap: 12px;">
+            <ix-button 
+              color="secondary" 
+              size="medium"
+              label="Previous"
+              [disabled]="currentStep() === 0"
+              (click)="previousStep()" />
+            
+            @if (currentStep() < 3) {
+              <ix-button 
+                color="primary" 
+                size="medium"
+                label="Next"
+                [disabled]="!canProceedToNextStep()"
+                (click)="nextStep()" />
+            } @else {
+              <ix-button 
+                color="primary" 
+                size="medium"
+                label="Create Pool"
+                [disabled]="!canCreatePool()"
+                (click)="createPool()" />
+            }
+          </div>
+        </div>
+      </div>
+    </ix-card>
+  }
+
+  <!-- Success State -->
+  @if (showSuccess()) {
+    <ix-card elevation="low" [bordered]="true">
+      <div style="padding: 32px; text-align: center;">
+        <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 24px;">
+          <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--green, #4caf50); display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+            <span style="font-size: 40px; color: white;">✓</span>
+          </div>
+          <h2 style="margin: 0 0 8px 0; color: var(--fg1); font-size: 24px; font-weight: 600;">Storage Pool Created!</h2>
+          <div style="color: var(--fg2, #666); font-size: 16px; max-width: 500px;">
+            Your storage pool "{{ poolName() }}" is now ready and available for use. All your chosen settings have been applied.
+          </div>
+        </div>
+        
+        <!-- Configuration Summary -->
+        <div style="background: var(--alt-bg1, #f8f9fa); border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: left;">
+          <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: var(--fg1);">Configuration Summary</h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 14px; color: var(--fg2, #666);">
+            <div>
+              <div style="margin-bottom: 8px;"><strong style="color: var(--fg1);">Pool Name:</strong> {{ poolName() }}</div>
+              <div style="margin-bottom: 8px;"><strong style="color: var(--fg1);">Protection:</strong> {{ getSimpleStorageTypeLabel() }}</div>
+              <div style="margin-bottom: 8px;"><strong style="color: var(--fg1);">Drives:</strong> {{ getRequiredDriveCount() }} × 4TB SSD</div>
+            </div>
+            <div>
+              <div style="margin-bottom: 8px;"><strong style="color: var(--fg1);">Usable Space:</strong> {{ getUsableCapacity() }}</div>
+              <div style="margin-bottom: 8px;"><strong style="color: var(--fg1);">Compression:</strong> {{ getCompressionLabel() }}</div>
+              <div style="margin-bottom: 8px;"><strong style="color: var(--fg1);">Encryption:</strong> {{ enableEncryption() ? 'Enabled' : 'Disabled' }}</div>
+            </div>
+          </div>
+          
+          @if (enableHotSpare()) {
+            <div style="margin-top: 16px; padding: 8px; background: var(--bg2, #ffffff); border-radius: 4px; font-size: 13px; color: var(--fg2);">
+              <strong style="color: var(--green);">✓ Hot Spare:</strong> Additional drive configured for automatic failure recovery
+            </div>
+          }
+          
+        </div>
+        
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 12px; justify-content: center;">
+          <ix-button 
+            color="primary" 
+            size="large"
+            label="Continue to Dataset Setup"
+            (click)="continueToDatasets()" />
+          
+          <ix-button 
+            color="secondary" 
+            size="large"
+            label="Create Another Pool"
+            (click)="resetWizard()" />
+        </div>
+      </div>
+    </ix-card>
+  }
+</div>

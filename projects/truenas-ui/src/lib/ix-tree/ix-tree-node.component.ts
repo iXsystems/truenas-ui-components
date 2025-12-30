@@ -1,6 +1,6 @@
-import { Component, ChangeDetectionStrategy, ViewEncapsulation, ElementRef, ChangeDetectorRef, Optional, Inject } from '@angular/core';
+import { CdkTree, CdkTreeNode, CDK_TREE_NODE_OUTLET_NODE, CdkTreeModule } from '@angular/cdk/tree';
 import { CommonModule } from '@angular/common';
-import { CdkTreeNode, CdkTreeNodeDef, CdkTree, CDK_TREE_NODE_OUTLET_NODE, CdkTreeModule } from '@angular/cdk/tree';
+import { ElementRef, ChangeDetectorRef, Component, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
 import { IxIconComponent } from '../ix-icon/ix-icon.component';
 
 @Component({
@@ -23,13 +23,13 @@ import { IxIconComponent } from '../ix-icon/ix-icon.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IxTreeNodeComponent<T, K = T> extends CdkTreeNode<T, K> {
-  constructor(
-    elementRef: ElementRef<HTMLElement>,
-    @Optional() tree: CdkTree<T, K>,
-    @Optional() @Inject(CDK_TREE_NODE_OUTLET_NODE) data?: T,
-    @Optional() changeDetectorRef?: ChangeDetectorRef
-  ) {
-    super(elementRef, tree, data, changeDetectorRef);
+  constructor() {
+    super(
+      inject(ElementRef<HTMLElement>),
+      inject(CdkTree, { optional: true }),
+      inject(CDK_TREE_NODE_OUTLET_NODE, { optional: true }),
+      inject(ChangeDetectorRef, { optional: true })
+    );
   }
 
   /** The tree node's level in the tree */

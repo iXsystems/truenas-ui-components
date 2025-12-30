@@ -1,6 +1,7 @@
-import { Component, input, output, ElementRef, inject, TemplateRef, contentChild, AfterContentInit, computed, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { A11yModule } from '@angular/cdk/a11y';
+import { CommonModule } from '@angular/common';
+import type { TemplateRef, AfterContentInit} from '@angular/core';
+import { Component, input, output, ElementRef, inject, contentChild, computed, signal } from '@angular/core';
 
 @Component({
   selector: 'ix-tab',
@@ -13,17 +14,17 @@ export class IxTabComponent implements AfterContentInit {
   label = input<string>('');
   disabled = input<boolean>(false);
   icon = input<string | undefined>(undefined);
-  iconTemplate = input<TemplateRef<any> | undefined>(undefined);
+  iconTemplate = input<TemplateRef<unknown> | undefined>(undefined);
   testId = input<string | undefined>(undefined);
 
   selected = output<void>();
 
-  iconContent = contentChild<TemplateRef<any>>('iconContent');
+  iconContent = contentChild<TemplateRef<unknown>>('iconContent');
 
   // Internal properties set by parent IxTabsComponent (public signals for parent control)
-  public index = signal<number>(0);
-  public isActive = signal<boolean>(false);
-  tabsComponent?: any; // Will be set by parent
+  index = signal<number>(0);
+  isActive = signal<boolean>(false);
+  tabsComponent?: { onKeydown: (event: KeyboardEvent, index: number) => void }; // Will be set by parent
 
   elementRef = inject(ElementRef<HTMLElement>);
 

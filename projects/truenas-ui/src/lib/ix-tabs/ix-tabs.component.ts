@@ -1,7 +1,8 @@
-import { Component, contentChildren, AfterContentInit, input, output, ChangeDetectionStrategy, inject, ChangeDetectorRef, viewChild, ElementRef, AfterViewInit, signal, computed, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FocusMonitor, A11yModule, LiveAnnouncer } from '@angular/cdk/a11y';
+import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
 import { LEFT_ARROW, RIGHT_ARROW, UP_ARROW, DOWN_ARROW, HOME, END, ENTER, SPACE } from '@angular/cdk/keycodes';
+import { CommonModule } from '@angular/common';
+import type { AfterContentInit, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, contentChildren, input, output, ChangeDetectionStrategy, inject, ChangeDetectorRef, viewChild, signal, computed, effect } from '@angular/core';
 import { IxTabComponent } from '../ix-tab/ix-tab.component';
 import { IxTabPanelComponent } from '../ix-tab-panel/ix-tab-panel.component';
 
@@ -19,7 +20,7 @@ export interface TabChangeEvent {
   styleUrl: './ix-tabs.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class IxTabsComponent implements AfterContentInit, AfterViewInit {
+export class IxTabsComponent implements AfterContentInit, AfterViewInit, OnDestroy {
   tabs = contentChildren(IxTabComponent);
   panels = contentChildren(IxTabPanelComponent);
   tabHeader = viewChild.required<ElementRef<HTMLElement>>('tabHeader');
@@ -41,7 +42,6 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
   highlightBarVisible = signal<boolean>(false);
 
   private focusMonitor = inject(FocusMonitor);
-  private liveAnnouncer = inject(LiveAnnouncer);
   private cdr = inject(ChangeDetectorRef);
 
   constructor() {
@@ -118,12 +118,7 @@ export class IxTabsComponent implements AfterContentInit, AfterViewInit {
 
       // Set up focus monitoring
       if (tab.elementRef) {
-        this.focusMonitor.monitor(tab.elementRef)
-          .subscribe(origin => {
-            if (origin) {
-              console.log(`Tab ${index} focused via: ${origin}`);
-            }
-          });
+        this.focusMonitor.monitor(tab.elementRef);
       }
 
       // Set up click handlers

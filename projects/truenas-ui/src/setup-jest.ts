@@ -2,7 +2,7 @@ import 'jest-preset-angular/setup-jest';
 
 // Suppress expected console errors in test environment
 const originalConsoleError = console.error;
-console.error = (...args: any[]) => {
+console.error = (...args: unknown[]) => {
   const message = args[0]?.toString() || '';
 
   // Suppress expected icon/sprite loader errors in test environment

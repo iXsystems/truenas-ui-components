@@ -1,6 +1,7 @@
-import { Component, input, TemplateRef, viewChild, ElementRef, inject, computed, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { A11yModule } from '@angular/cdk/a11y';
+import { CommonModule } from '@angular/common';
+import type { TemplateRef} from '@angular/core';
+import { Component, input, viewChild, ElementRef, inject, computed, signal } from '@angular/core';
 
 @Component({
   selector: 'ix-tab-panel',
@@ -14,12 +15,12 @@ export class IxTabPanelComponent {
   lazyLoad = input<boolean>(false);
   testId = input<string | undefined>(undefined);
 
-  content = viewChild.required<TemplateRef<any>>('content');
+  content = viewChild.required<TemplateRef<unknown>>('content');
 
   // Internal properties set by parent IxTabsComponent (public signals for parent control)
-  public index = signal<number>(0);
-  public isActive = signal<boolean>(false);
-  public hasBeenActive = signal<boolean>(false);
+  index = signal<number>(0);
+  isActive = signal<boolean>(false);
+  hasBeenActive = signal<boolean>(false);
 
   elementRef = inject(ElementRef<HTMLElement>);
 

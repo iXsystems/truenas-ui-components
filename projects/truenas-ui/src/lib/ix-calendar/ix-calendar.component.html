@@ -1,0 +1,35 @@
+<ix-calendar-header
+  [currentDate]="currentDate()"
+  [currentView]="currentView()"
+  (monthSelected)="onMonthSelected($event)"
+  (yearSelected)="onYearSelected($event)"
+  (viewChanged)="onViewChanged($event)"
+  (previousClicked)="onPreviousClicked()"
+  (nextClicked)="onNextClicked()" />
+
+<div class="ix-calendar-content" cdkMonitorSubtreeFocus tabindex="-1">
+  @if (currentView() === 'month') {
+    <ix-month-view
+      [activeDate]="currentDate()"
+      [selected]="selected()"
+      [dateFilter]="dateFilter()"
+      [minDate]="minDate()"
+      [maxDate]="maxDate()"
+      [rangeMode]="rangeMode()"
+      [selectedRange]="rangeMode() ? rangeState() : undefined"
+      (selectedChange)="onSelectedChange($event)"
+      (activeDateChange)="onActiveDateChange($event)" />
+  }
+
+  <!-- Multi-year view -->
+  @if (currentView() === 'year') {
+    <ix-multi-year-view
+      [activeDate]="currentDate()"
+      [selected]="selected()"
+      [dateFilter]="dateFilter()"
+      [minDate]="minDate()"
+      [maxDate]="maxDate()"
+      (selectedChange)="onYearSelectedFromView($event)"
+      (activeDateChange)="onActiveDateChange($event)" />
+  }
+</div>

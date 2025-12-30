@@ -1,11 +1,10 @@
+import { ReactiveFormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
-import { userEvent, within } from '@storybook/testing-library';
 import { expect } from '@storybook/jest';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { IxChipComponent } from '../lib/ix-chip/ix-chip.component';
-import { IxInputComponent } from '../lib/ix-input/ix-input.component';
-import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.component';
+import { userEvent, within } from '@storybook/testing-library';
 import { InputType } from '../lib/enums/input-type.enum';
+import { IxChipComponent } from '../lib/ix-chip/ix-chip.component';
+import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.component';
 
 const meta: Meta<IxChipComponent> = {
   title: 'Components/Chip',
@@ -206,7 +205,7 @@ export const ChipInputExample: Story = {
         // Focus the input when the container is clicked
         setTimeout(() => {
           const input = document.querySelector('[data-testid="chip-input"]') as HTMLInputElement;
-          if (input) input.focus();
+          if (input) {input.focus();}
         }, 0);
       },
       
@@ -250,10 +249,10 @@ export const ChipInputExample: Story = {
                cursor: text;
              "
              (click)="focusInput()">
-          
+
           <!-- Chips inside the input area -->
+          @for (tag of tags; track tag) {
           <ix-chip
-            *ngFor="let tag of tags"
             [label]="tag"
             [color]="color"
             [closable]="true"
@@ -261,10 +260,11 @@ export const ChipInputExample: Story = {
             (onClose)="removeTag(tag)"
             style="flex-shrink: 0;">
           </ix-chip>
-          
+          }
+
           <!-- Persistent placeholder text -->
-          <span *ngIf="!inputValue" 
-                style="
+          @if (!inputValue) {
+          <span style="
                   color: var(--fg2, #6c757d);
                   font-style: italic;
                   font-size: 0.875rem;
@@ -275,6 +275,7 @@ export const ChipInputExample: Story = {
                 ">
             {{ placeholder }}
           </span>
+          }
           
           <!-- Inline input field -->
           <input
@@ -340,21 +341,24 @@ export const ChipsWithFormField: Story = {
       }
     },
     template: `
-      <ix-form-field 
+      <ix-form-field
         label="Selected Categories"
         hint="Your current selections">
         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; min-height: 2.5rem; align-items: center;">
+          @for (tag of selectedTags; track tag) {
           <ix-chip
-            *ngFor="let tag of selectedTags"
             [label]="tag"
             [color]="color"
             [closable]="closable"
             [disabled]="disabled"
             (onClose)="removeTag(tag)">
           </ix-chip>
-          <span *ngIf="selectedTags.length === 0" style="color: var(--fg2, #6c757d); font-style: italic;">
+          }
+          @if (selectedTags.length === 0) {
+          <span style="color: var(--fg2, #6c757d); font-style: italic;">
             No categories selected
           </span>
+          }
         </div>
       </ix-form-field>
     `,

@@ -1,8 +1,9 @@
 <div [ngClass]="classes()">
-  <label [for]="id" class="ix-checkbox__label">
+  <label class="ix-checkbox__label" [for]="id">
     <input
       #checkboxEl
       type="checkbox"
+      class="ix-checkbox__input"
       [id]="id"
       [checked]="effectiveChecked()"
       [disabled]="isDisabled()"
@@ -11,7 +12,6 @@
       [attr.data-testid]="testId()"
       [attr.aria-describedby]="error() ? id + '-error' : null"
       [attr.aria-invalid]="error() ? 'true' : null"
-      class="ix-checkbox__input"
       (change)="onCheckboxChange($event)"
     />
     <span class="ix-checkbox__checkmark"></span>
@@ -22,10 +22,10 @@
 
   @if (error()) {
     <div
-      [id]="id + '-error'"
       class="ix-checkbox__error"
       role="alert"
       aria-live="polite"
+      [id]="id + '-error'"
     >
       {{ error() }}
     </div>

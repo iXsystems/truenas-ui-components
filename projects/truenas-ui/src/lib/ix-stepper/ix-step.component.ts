@@ -1,10 +1,11 @@
-import { Component, input, TemplateRef, viewChild } from '@angular/core';
+import type { TemplateRef} from '@angular/core';
+import { Component, input, viewChild } from '@angular/core';
 
 @Component({
   selector: 'ix-step',
   template: `
     <ng-template #content>
-      <ng-content></ng-content>
+      <ng-content />
     </ng-template>
   `,
   standalone: true
@@ -15,7 +16,7 @@ export class IxStepComponent {
   optional = input<boolean>(false);
   completed = input<boolean>(false);
   hasError = input<boolean>(false);
-  data = input<any>(null);
+  data = input<unknown>(null);
 
-  content = viewChild.required<TemplateRef<any>>('content');
+  content = viewChild.required<TemplateRef<unknown>>('content');
 }

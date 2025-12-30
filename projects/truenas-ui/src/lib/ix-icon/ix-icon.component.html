@@ -1,10 +1,10 @@
 <div
   class="ix-icon"
+  role="img"
   [ngClass]="'ix-icon--' + size()"
   [style.color]="color()"
   [attr.aria-label]="effectiveAriaLabel()"
-  [attr.title]="tooltip()"
-  role="img">
+  [attr.title]="tooltip()">
   
 
   @switch (iconResult.source) {
@@ -13,24 +13,23 @@
       <svg
            class="ix-icon__sprite"
            aria-hidden="true">
-        <use [attr.href]="iconResult.spriteUrl"></use>
+        <use [attr.href]="iconResult.spriteUrl" />
       </svg>
     }
 
     <!-- SVG content (from third-party libraries or assets) -->
     @case ('svg') {
       <div
-           class="ix-icon__svg"
-           #svgContainer>
+           #svgContainer
+           class="ix-icon__svg">
       </div>
     }
 
     <!-- CSS class icons (Font Awesome, Material Icons, etc.) -->
     @case ('css') {
       <i
-         class="ix-icon__css"
-         [class]="iconResult.content"
-         aria-hidden="true">
+         aria-hidden="true"
+         [class]="'ix-icon__css ' + iconResult.content">
       </i>
     }
 

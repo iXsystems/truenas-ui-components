@@ -1,7 +1,9 @@
-import { Component, contentChild, input, forwardRef, signal, computed, viewChild, ElementRef, OnInit, OnDestroy, AfterViewInit, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
+import { CommonModule } from '@angular/common';
+import type { ElementRef, OnDestroy, AfterViewInit} from '@angular/core';
+import { Component, contentChild, input, forwardRef, signal, computed, viewChild, effect } from '@angular/core';
+import type { ControlValueAccessor} from '@angular/forms';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { IxSliderThumbDirective } from './ix-slider-thumb.directive';
 
 export type LabelType = 'none' | 'handle' | 'track' | 'both';
@@ -17,46 +19,7 @@ export type LabelType = 'none' | 'handle' | 'track' | 'both';
       multi: true
     }
   ],
-  template: `
-    <div
-      class="ix-slider-container"
-      #sliderContainer
-      [attr.aria-disabled]="isDisabled()"
-      [attr.data-disabled]="isDisabled()"
-      (mousedown)="onTrackClick($event)"
-      (touchstart)="onTrackClick($event)">
-
-      <div class="ix-slider-track">
-        <div class="ix-slider-track-inactive"></div>
-        <div class="ix-slider-track-active">
-          <div
-            class="ix-slider-track-active-fill"
-            [style.transform]="'scaleX(' + fillScale() + ')'">
-          </div>
-        </div>
-        <div
-          class="ix-slider-track-label"
-          *ngIf="(labelType() === 'track' || labelType() === 'both') && showLabel()">
-          {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}
-        </div>
-      </div>
-
-      <div
-        class="ix-slider-thumb-visual"
-        #thumbVisual
-        [style.transform]="'translateX(' + thumbPosition() + 'px)'">
-        <div class="ix-slider-thumb-knob"></div>
-        <div
-          class="ix-slider-thumb-label"
-          *ngIf="(labelType() === 'handle' || labelType() === 'both') && showLabel()"
-          [class.visible]="labelVisible()">
-          {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}
-        </div>
-      </div>
-
-      <ng-content></ng-content>
-    </div>
-  `,
+  templateUrl: './ix-slider.component.html',
   styleUrl: './ix-slider.component.scss',
   host: {
     'class': 'ix-slider',
@@ -76,7 +39,7 @@ export class IxSliderComponent implements ControlValueAccessor, OnDestroy, After
   sliderContainer = viewChild.required<ElementRef<HTMLDivElement>>('sliderContainer');
   thumbVisual = viewChild.required<ElementRef<HTMLDivElement>>('thumbVisual');
 
-  private onChange = (value: number) => {};
+  private onChange = (_value: number) => {};
   private onTouched = () => {};
 
   value = signal<number>(0);
@@ -90,7 +53,7 @@ export class IxSliderComponent implements ControlValueAccessor, OnDestroy, After
   // Computed percentage for track fill
   fillPercentage = computed(() => {
     const range = this.max() - this.min();
-    if (range === 0) return 0;
+    if (range === 0) {return 0;}
     return ((this.value() - this.min()) / range) * 100;
   });
 
@@ -192,7 +155,7 @@ export class IxSliderComponent implements ControlValueAccessor, OnDestroy, After
   }
 
   onTrackClick(event: MouseEvent | TouchEvent): void {
-    if (this.isDisabled()) return;
+    if (this.isDisabled()) {return;}
 
     event.preventDefault();
     const rect = this.getSliderRect();

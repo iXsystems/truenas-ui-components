@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxExpansionPanelComponent } from '../lib/ix-expansion-panel/ix-expansion-panel.component';
 import { IxCardComponent } from '../lib/ix-card/ix-card.component';
+import { IxExpansionPanelComponent } from '../lib/ix-expansion-panel/ix-expansion-panel.component';
 
 const meta: Meta<IxExpansionPanelComponent> = {
   title: 'Components/Expansion Panel',

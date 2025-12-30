@@ -1,29 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { within } from '@storybook/testing-library';
 import { expect } from '@storybook/jest';
-import { IxIconButtonComponent } from '../lib/ix-icon-button/ix-icon-button.component';
+import { within } from '@storybook/testing-library';
 import { IxCardComponent } from '../lib/ix-card/ix-card.component';
-import { iconMarker } from '../lib/ix-icon/icon-marker';
-
-// Mark icons used in stories for sprite generation
-// Using the new two-parameter API
-const STORY_ICONS = [
-  iconMarker('home', 'mdi'),
-  iconMarker('star', 'mdi'),
-  iconMarker('information', 'mdi'),
-  iconMarker('delete', 'mdi'),
-  iconMarker('heart', 'mdi'),
-  iconMarker('menu', 'mdi'),
-  iconMarker('dots-vertical', 'mdi'),
-  iconMarker('magnify', 'mdi'),
-  iconMarker('bell', 'mdi'),
-  iconMarker('cog', 'mdi'),
-  iconMarker('pencil', 'mdi'),
-  iconMarker('content-copy', 'mdi'),
-  iconMarker('share-variant', 'mdi'),
-  iconMarker('refresh', 'mdi'),
-  iconMarker('close', 'mdi'),
-];
+import { IxIconButtonComponent } from '../lib/ix-icon-button/ix-icon-button.component';
 
 const meta: Meta<IxIconButtonComponent> = {
   title: 'Components/Icon Button',

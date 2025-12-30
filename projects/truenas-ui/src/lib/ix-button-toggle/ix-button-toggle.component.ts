@@ -1,8 +1,10 @@
-import { Component, input, output, signal, computed, forwardRef, ChangeDetectionStrategy, ViewEncapsulation, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
-import { IxButtonToggleGroupComponent } from './ix-button-toggle-group.component';
+import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef } from '@angular/core';
+import { Component, input, output, signal, computed, forwardRef, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
+import type { ControlValueAccessor} from '@angular/forms';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import type { IxButtonToggleGroupComponent } from './ix-button-toggle-group.component';
 
 @Component({
   selector: 'ix-button-toggle',
@@ -15,23 +17,7 @@ import { IxButtonToggleGroupComponent } from './ix-button-toggle-group.component
       multi: true
     }
   ],
-  template: `
-    <button
-      type="button"
-      class="ix-button-toggle__button"
-      [class.ix-button-toggle__button--checked]="checked()"
-      [disabled]="isDisabled()"
-      [attr.aria-pressed]="checked()"
-      [attr.aria-label]="ariaLabel() || null"
-      [attr.aria-labelledby]="ariaLabelledby()"
-      [attr.id]="buttonId()"
-      (click)="toggle()">
-      <span class="ix-button-toggle__label">
-        <span class="ix-button-toggle__check" *ngIf="checked()">✓</span>
-        <ng-content></ng-content>
-      </span>
-    </button>
-  `,
+  templateUrl: './ix-button-toggle.component.html',
   styleUrl: './ix-button-toggle.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
@@ -45,16 +31,18 @@ import { IxButtonToggleGroupComponent } from './ix-button-toggle-group.component
   }
 })
 export class IxButtonToggleComponent implements ControlValueAccessor {
+  cdr = inject(ChangeDetectorRef);
+
   private static _uniqueIdCounter = 0;
 
   id = input<string>(`ix-button-toggle-${IxButtonToggleComponent._uniqueIdCounter++}`);
-  value = input<any>(undefined);
+  value = input<unknown>(undefined);
   disabled = input<boolean>(false);
   checked = signal<boolean>(false);
   ariaLabel = input<string>('');
   ariaLabelledby = input<string>('');
 
-  change = output<{ source: IxButtonToggleComponent; value: any }>();
+  change = output<{ source: IxButtonToggleComponent; value: unknown }>();
 
   buttonId = computed(() => this.id() + '-button');
   buttonToggleGroup?: IxButtonToggleGroupComponent;
@@ -64,21 +52,19 @@ export class IxButtonToggleComponent implements ControlValueAccessor {
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
-  private onChange = (value: any) => {};
+  private onChange = (_value: boolean) => {};
   private onTouched = () => {};
 
-  constructor(private cdr: ChangeDetectorRef) {}
-
   // ControlValueAccessor implementation
-  writeValue(value: any): void {
+  writeValue(value: boolean): void {
     this.checked.set(!!value);
   }
 
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (value: boolean) => void): void {
     this.onChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.onTouched = fn;
   }
 

@@ -1,127 +1,22 @@
-import type { Meta, StoryObj } from '@storybook/angular';
-import { Component } from '@angular/core';
 import { DialogRef } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
+import type { Meta, StoryObj } from '@storybook/angular';
 import { IxButtonComponent } from '../../lib/ix-button/ix-button.component';
+import { IxCheckboxComponent } from '../../lib/ix-checkbox/ix-checkbox.component';
 import { IxDialogShellComponent } from '../../lib/ix-dialog';
 import { IxDialog } from '../../lib/ix-dialog/ix-dialog.service';
-import { IxRadioComponent } from '../../lib/ix-radio/ix-radio.component';
-import { IxCheckboxComponent } from '../../lib/ix-checkbox/ix-checkbox.component';
 import { IxInputComponent } from '../../lib/ix-input/ix-input.component';
-import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select.component';
+import { IxRadioComponent } from '../../lib/ix-radio/ix-radio.component';
+import type { IxSelectOption } from '../../lib/ix-select/ix-select.component';
+import { IxSelectComponent } from '../../lib/ix-select/ix-select.component';
+import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
 
 // Backup Wizard Dialog Component
 @Component({
   selector: 'backup-wizard-dialog',
-  template: `
-    <ix-dialog-shell title="Backup Configuration Wizard" [showFullscreenButton]="true">
-      <div style="padding: 0 var(--content-padding); margin-top: var(--content-padding);">
-        <ix-stepper [linear]="true" [selectedIndex]="currentStep" orientation="auto" (selectionChange)="onStepChange($event)">
-        
-        <ix-step label="Backup Target">
-          <h4>Select Backup Target</h4>
-          <p>Choose where you want to store your backup data.</p>
-          <div style="margin-top: 16px;">
-            <div>
-              <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">
-                Backup Destination
-              </label>
-              <div style="display: flex; flex-direction: column; gap: 8px;">
-                <ix-radio name="backupTarget" value="local" label="Local Storage - Fast, no network required" [(ngModel)]="backupTarget"></ix-radio>
-                <ix-radio name="backupTarget" value="cloud" label="Cloud Storage - Off-site protection" [(ngModel)]="backupTarget"></ix-radio>
-                <ix-radio name="backupTarget" value="remote" label="Remote Server - Network attached storage" [(ngModel)]="backupTarget"></ix-radio>
-              </div>
-            </div>
-          </div>
-        </ix-step>
-
-        <ix-step label="Credentials">
-          <h4>Authentication & Credentials</h4>
-          <p>Select an existing account to use for your backup.</p>
-          <div style="margin-top: 16px;">
-            <div>
-              <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">
-                Choose an account
-              </label>
-              <ix-select [options]="accountOptions"
-                         placeholder="Select an account"
-                         [(ngModel)]="selectedAccount">
-              </ix-select>
-            </div>
-          </div>
-        </ix-step>
-
-        <ix-step label="Select Dataset">
-          <h4>Choose Dataset to Backup</h4>
-          <p>Enter the dataset path you want to include in your backup.</p>
-          <div style="margin-top: 16px;">
-            <div style="margin-bottom: 12px;">
-              <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">
-                Dataset Path
-              </label>
-              <ix-input [placeholder]="'Enter dataset path (e.g., pool1/documents)'"
-                        [(ngModel)]="selectedDatasetPath">
-              </ix-input>
-            </div>
-            <div>
-              <ix-checkbox label="Include snapshots in backup" [(ngModel)]="includeSnapshots"></ix-checkbox>
-            </div>
-          </div>
-        </ix-step>
-
-        <ix-step label="Review">
-          <h4>Review Configuration</h4>
-          <p>Please review your backup configuration before proceeding.</p>
-          <div style="margin-top: 16px;">
-            <div style="background: var(--bg2); padding: 16px; border-radius: 8px; border: 1px solid var(--lines);">
-              <div style="display: grid; gap: 12px;">
-                <div>
-                  <strong style="color: var(--fg1);">Backup Target:</strong>
-                  <span style="margin-left: 8px; color: var(--fg2);">{{ getBackupTargetLabel(backupTarget) }}</span>
-                </div>
-                <div>
-                  <strong style="color: var(--fg1);">Account:</strong>
-                  <span style="margin-left: 8px; color: var(--fg2);">{{ getAccountLabel(selectedAccount) }}</span>
-                </div>
-                <div>
-                  <strong style="color: var(--fg1);">Dataset:</strong>
-                  <span style="margin-left: 8px; color: var(--fg2);">{{ selectedDatasetPath || 'Not specified' }}</span>
-                </div>
-                <div>
-                  <strong style="color: var(--fg1);">Include Snapshots:</strong>
-                  <span style="margin-left: 8px; color: var(--fg2);">{{ includeSnapshots ? 'Yes' : 'No' }}</span>
-                </div>
-              </div>
-            </div>
-            <div style="margin-top: 16px; padding: 12px; color:var(--green); border-radius: 4px; font-size: 14px;">
-              <strong>Ready to create backup task!</strong> All configuration is valid and complete.
-            </div>
-          </div>
-        </ix-step>
-
-        </ix-stepper>
-      </div>
-      
-      <div ixDialogAction>
-        <ix-button variant="outline" 
-                   label="Cancel"
-                   (click)="cancel()">
-        </ix-button>
-        <ix-button variant="outline" 
-                   label="Back"
-                   (click)="previousStep()"
-                   *ngIf="currentStep > 0">
-        </ix-button>
-        <ix-button color="primary" 
-                   [label]="getNextButtonLabel()"
-                   (click)="nextStep()"
-                   [disabled]="!canProceed()">
-        </ix-button>
-      </div>
-    </ix-dialog-shell>
-  `,
+  templateUrl: './stepped-wizard.stories.html',
   standalone: true,
   imports: [
     IxDialogShellComponent,
@@ -137,6 +32,8 @@ import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select
   ]
 })
 class BackupWizardDialogComponent {
+  ref = inject(DialogRef<{ target: string; account: string; dataset: string; includeSnapshots: boolean } | undefined>);
+
   currentStep = 0;
   backupTarget = 'cloud';
   selectedAccount = '';
@@ -150,9 +47,7 @@ class BackupWizardDialogComponent {
     { value: 'local-nas', label: 'Local NAS Server' }
   ];
 
-  constructor(public ref: DialogRef<any>) {}
-
-  onStepChange(event: any) {
+  onStepChange(event: { selectedIndex: number }): void {
     this.currentStep = event.selectedIndex;
   }
 
@@ -196,7 +91,7 @@ class BackupWizardDialogComponent {
   }
 
   getNextButtonLabel(): string {
-    if (this.currentStep === 3) return 'Create Backup Task';
+    if (this.currentStep === 3) {return 'Create Backup Task';}
     return 'Next';
   }
 
@@ -218,31 +113,12 @@ class BackupWizardDialogComponent {
 // Demo Component
 @Component({
   selector: 'stepped-wizard-demo',
-  template: `
-    <div style="padding: 20px;">
-      <h1 style="margin-bottom: 8px; color: var(--fg1); font-family: var(--font-family-header);">Stepped Wizard Pattern</h1>
-      <p style="margin-bottom: 16px; color: var(--fg2); font-style: italic; font-size: 14px;">For linear workflows</p>
-      <p style="margin-bottom: 16px; color: var(--fg2);">
-        The Stepped Wizard pattern combines the ix-dialog and ix-stepper components to create guided, multi-step workflows. 
-        This pattern uses the stepper in linear mode to ensure users complete steps in the correct order. For non-linear 
-        wizards where users can jump between steps freely, use the Tabbed Wizard Pattern instead.
-      </p>
-      <ix-button variant="primary" 
-                 label="Launch Stepped Wizard"
-                 (click)="openWizard()">
-      </ix-button>
-      
-      <div style="margin-top: 24px; padding: 16px; border: 1px solid var(--lines); border-radius: 8px;" *ngIf="lastResult">
-        <h4>Last Result:</h4>
-        <pre style="margin: 8px 0 0 0; color: var(--fg2);">{{ lastResult | json }}</pre>
-      </div>
-    </div>
-  `,
+  templateUrl: './stepped-wizard-2.stories.html',
   standalone: true,
   imports: [IxButtonComponent, CommonModule]
 })
 class SteppedWizardDemoComponent {
-  lastResult: any = null;
+  lastResult: unknown = null;
 
   constructor(private ixDialog: IxDialog) {}
 
@@ -252,7 +128,7 @@ class SteppedWizardDemoComponent {
       height: '700px'
     });
 
-    dialogRef.closed.subscribe((result: any) => {
+    dialogRef.closed.subscribe((result) => {
       this.lastResult = result || 'Backup wizard was cancelled';
     });
   }

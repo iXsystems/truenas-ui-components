@@ -1,7 +1,7 @@
-import { Component, input, output, contentChildren, signal, computed, effect, model, ChangeDetectorRef } from '@angular/core';
-import { IxStepComponent } from './ix-step.component';
+import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
-import { trigger, state, style, transition, animate } from '@angular/animations';
+import { ChangeDetectorRef, Component, input, output, contentChildren, computed, effect, model, inject } from '@angular/core';
+import { IxStepComponent } from './ix-step.component';
 
 @Component({
   selector: 'ix-stepper',
@@ -26,12 +26,14 @@ export class IxStepperComponent {
   linear = input<boolean>(false);
   selectedIndex = model<number>(0);
 
-  selectionChange = output<any>();
-  completed = output<any>();
+  selectionChange = output<{ selectedIndex: number; previouslySelectedIndex: number }>();
+  completed = output<Array<{ label: string; completed: boolean; data: unknown }>>();
 
   steps = contentChildren(IxStepComponent, { descendants: true });
 
-  constructor(private cdr: ChangeDetectorRef) {
+  private cdr = inject(ChangeDetectorRef);
+
+  constructor() {
     // Effect to check if all steps are completed
     effect(() => {
       // Trigger on any step completion change
@@ -43,11 +45,11 @@ export class IxStepperComponent {
     });
   }
 
-  onWindowResize(event: any) {
+  onWindowResize(_event: Event) {
     this.cdr.detectChanges();
   }
 
-  private _getStepData(): any[] {
+  private _getStepData(): Array<{ label: string; completed: boolean; data: unknown }> {
     return this.steps().map(step => ({
       label: step.label(),
       completed: step.completed(),
@@ -72,7 +74,7 @@ export class IxStepperComponent {
   }
 
   canSelectStep(index: number): boolean {
-    if (!this.linear()) return true;
+    if (!this.linear()) {return true;}
 
     // In linear mode, can only select completed steps or the next step
     const stepsArray = this.steps();

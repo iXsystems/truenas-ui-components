@@ -1,31 +1,11 @@
-import { Component, input, signal, OnInit, Inject, Optional } from '@angular/core';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { DOCUMENT, CommonModule } from '@angular/common';
+import { Component, input, signal, inject } from '@angular/core';
+import type { OnInit} from '@angular/core';
 
 @Component({
   selector: 'ix-dialog-shell',
-  template: `
-    <header class="ix-dialog__header">
-      <h2 class="ix-dialog__title">{{ title() }}</h2>
-      <button type="button"
-              class="ix-dialog__fullscreen"
-              tabindex="-1"
-              (click)="toggleFullscreen()"
-              [attr.aria-label]="isFullscreen() ? 'Exit fullscreen' : 'Enter fullscreen'"
-              *ngIf="showFullscreenButton()">
-        <span class="ix-dialog__fullscreen-icon">{{ isFullscreen() ? '⤓' : '⤢' }}</span>
-      </button>
-      <button type="button" class="ix-dialog__close" tabindex="-1" (click)="close()" aria-label="Close dialog">✕</button>
-    </header>
-
-    <section class="ix-dialog__content" cdkDialogContent>
-      <ng-content></ng-content>
-    </section>
-
-    <footer class="ix-dialog__actions" cdkDialogActions>
-      <ng-content select="[ixDialogAction]"></ng-content>
-    </footer>
-  `,
+  templateUrl: './ix-dialog-shell.component.html',
   standalone: true,
   imports: [CommonModule],
   host: {
@@ -39,11 +19,9 @@ export class IxDialogShellComponent implements OnInit {
   isFullscreen = signal<boolean>(false);
   private originalStyles: { [key: string]: string } = {};
 
-  constructor(
-    private ref: DialogRef,
-    @Inject(DOCUMENT) private document: Document,
-    @Optional() @Inject(DIALOG_DATA) private data?: any
-  ) {}
+  private ref = inject(DialogRef);
+  private document = inject(DOCUMENT);
+  private data = inject(DIALOG_DATA, { optional: true });
 
   ngOnInit() {
     // Check if dialog was opened in fullscreen mode by looking for existing fullscreen class
@@ -54,9 +32,9 @@ export class IxDialogShellComponent implements OnInit {
       }
     });
   }
-  
-  close(result?: any) { 
-    this.ref.close(result); 
+
+  close(result?: unknown): void {
+    this.ref.close(result);
   }
   
   toggleFullscreen() {

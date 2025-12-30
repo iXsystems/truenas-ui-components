@@ -1,12 +1,15 @@
-import { Component, input, forwardRef, signal, computed, viewChild, ElementRef, OnInit, ViewContainerRef, TemplateRef, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { OverlayModule, Overlay, OverlayRef, ConnectedPosition } from '@angular/cdk/overlay';
-import { TemplatePortal, PortalModule } from '@angular/cdk/portal';
 import { A11yModule } from '@angular/cdk/a11y';
-import { IxInputDirective } from '../ix-input/ix-input.directive';
-import { IxCalendarComponent } from '../ix-calendar/ix-calendar.component';
+import { Overlay, type OverlayRef, type ConnectedPosition } from '@angular/cdk/overlay';
+import { OverlayModule } from '@angular/cdk/overlay';
+import { TemplatePortal, PortalModule } from '@angular/cdk/portal';
+import { CommonModule } from '@angular/common';
+import type { OnInit, TemplateRef, OnDestroy , ElementRef} from '@angular/core';
+import { Component, input, forwardRef, signal, computed, viewChild, ViewContainerRef, inject } from '@angular/core';
+import type { ControlValueAccessor} from '@angular/forms';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
+import { IxCalendarComponent } from '../ix-calendar/ix-calendar.component';
+import { IxInputDirective } from '../ix-input/ix-input.directive';
 
 export interface DateRange {
   start: Date | null;
@@ -24,104 +27,7 @@ export interface DateRange {
       multi: true
     }
   ],
-  template: `
-    <div class="ix-date-range-container">
-      <div #wrapper ixInput class="ix-date-range-wrapper" style="padding-right: 40px;">
-        <!-- Start date segments -->
-        <div class="ix-date-segment-group">
-          <input 
-            #startMonthInput
-            type="text"
-            class="ix-date-segment ix-date-segment-month"
-            placeholder="MM"
-            maxlength="2"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('start', 'month')"
-            (blur)="onSegmentBlur('start', 'month')"
-            (keydown)="onSegmentKeydown($event, 'start', 'month')">
-          <span class="ix-date-segment-separator">/</span>
-          <input 
-            #startDayInput
-            type="text"
-            class="ix-date-segment ix-date-segment-day"
-            placeholder="DD"
-            maxlength="2"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('start', 'day')"
-            (blur)="onSegmentBlur('start', 'day')"
-            (keydown)="onSegmentKeydown($event, 'start', 'day')">
-          <span class="ix-date-segment-separator">/</span>
-          <input 
-            #startYearInput
-            type="text"
-            class="ix-date-segment ix-date-segment-year"
-            placeholder="YYYY"
-            maxlength="4"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('start', 'year')"
-            (blur)="onSegmentBlur('start', 'year')"
-            (keydown)="onSegmentKeydown($event, 'start', 'year')">
-        </div>
-        
-        <span class="ix-date-range-separator">–</span>
-        
-        <!-- End date segments -->
-        <div class="ix-date-segment-group">
-          <input 
-            #endMonthInput
-            type="text"
-            class="ix-date-segment ix-date-segment-month"
-            placeholder="MM"
-            maxlength="2"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('end', 'month')"
-            (blur)="onSegmentBlur('end', 'month')"
-            (keydown)="onSegmentKeydown($event, 'end', 'month')">
-          <span class="ix-date-segment-separator">/</span>
-          <input 
-            #endDayInput
-            type="text"
-            class="ix-date-segment ix-date-segment-day"
-            placeholder="DD"
-            maxlength="2"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('end', 'day')"
-            (blur)="onSegmentBlur('end', 'day')"
-            (keydown)="onSegmentKeydown($event, 'end', 'day')">
-          <span class="ix-date-segment-separator">/</span>
-          <input 
-            #endYearInput
-            type="text"
-            class="ix-date-segment ix-date-segment-year"
-            placeholder="YYYY"
-            maxlength="4"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('end', 'year')"
-            (blur)="onSegmentBlur('end', 'year')"
-            (keydown)="onSegmentKeydown($event, 'end', 'year')">
-        </div>
-        
-        <button 
-          type="button"
-          class="ix-date-range-toggle"
-          (click)="openDatepicker()"
-          [disabled]="isDisabled()"
-          aria-label="Open calendar">
-          <span aria-hidden="true">📅</span>
-        </button>
-      </div>
-      
-      <ng-template #calendarTemplate>
-        <ix-calendar
-          class="ix-calendar"
-          [startView]="'month'"
-          [rangeMode]="true"
-          [selectedRange]="initialRange()"
-          (selectedRangeChange)="onRangeSelected($event)">
-        </ix-calendar>
-      </ng-template>
-    </div>
-  `,
+  templateUrl: './ix-date-range-input.component.html',
   styleUrl: './ix-date-range-input.component.scss',
   host: {
     'class': 'ix-date-range-input'
@@ -140,7 +46,7 @@ export class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, 
   endMonthRef = viewChild.required<ElementRef<HTMLInputElement>>('endMonthInput');
   endDayRef = viewChild.required<ElementRef<HTMLInputElement>>('endDayInput');
   endYearRef = viewChild.required<ElementRef<HTMLInputElement>>('endYearInput');
-  calendarTemplate = viewChild.required<TemplateRef<any>>('calendarTemplate');
+  calendarTemplate = viewChild.required<TemplateRef<unknown>>('calendarTemplate');
   calendar = viewChild.required<IxCalendarComponent>(IxCalendarComponent);
   wrapperEl = viewChild.required<ElementRef<HTMLDivElement>>('wrapper');
 
@@ -149,7 +55,7 @@ export class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, 
   private portal?: TemplatePortal;
   isOpen = signal<boolean>(false);
 
-  private onChange = (value: DateRange) => {};
+  private onChange = (_value: DateRange) => {};
   private onTouched = () => {};
 
   value = signal<DateRange>({ start: null, end: null });
@@ -168,11 +74,8 @@ export class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, 
     return this.value();
   });
 
-  constructor(
-    private overlay: Overlay, 
-    private elementRef: ElementRef,
-    private viewContainerRef: ViewContainerRef
-  ) {}
+  private overlay = inject(Overlay);
+  private viewContainerRef = inject(ViewContainerRef);
 
   ngOnInit() {
     // Initialize display values
@@ -204,11 +107,11 @@ export class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, 
   }
 
   // Segment event handlers
-  onSegmentFocus(range: 'start' | 'end', segment: 'month' | 'day' | 'year'): void {
+  onSegmentFocus(range: 'start' | 'end', _segment: 'month' | 'day' | 'year'): void {
     this.currentFocus = range;
   }
 
-  onSegmentBlur(range: 'start' | 'end', segment: 'month' | 'day' | 'year'): void {
+  onSegmentBlur(range: 'start' | 'end', _segment: 'month' | 'day' | 'year'): void {
     this.onTouched();
     // Only validate and update when we have complete values, don't clear partial entries
     const month = range === 'start' ? (this.startMonthRef()?.nativeElement?.value || '') : (this.endMonthRef()?.nativeElement?.value || '');
@@ -223,21 +126,21 @@ export class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, 
 
 
   onSegmentKeydown(event: KeyboardEvent, range: 'start' | 'end', segment: 'month' | 'day' | 'year'): void {
-    const input = event.target as HTMLInputElement;
+    const inp = event.target as HTMLInputElement;
     
     // Only handle navigation - don't interfere with typing
     if (event.key === 'ArrowRight') {
-      if (input.selectionStart === input.value.length) {
+      if (inp.selectionStart === inp.value.length) {
         event.preventDefault();
         this.focusNextSegment(range, segment);
       }
     } else if (event.key === 'ArrowLeft') {
-      if (input.selectionStart === 0) {
+      if (inp.selectionStart === 0) {
         event.preventDefault();
         this.focusPrevSegment(range, segment);
       }
     } else if (event.key === 'Backspace') {
-      if (input.value === '' || input.selectionStart === 0) {
+      if (inp.value === '' || inp.selectionStart === 0) {
         event.preventDefault();
         this.focusPrevSegment(range, segment);
       }
@@ -250,9 +153,9 @@ export class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, 
     // Handle input field updates and clearing
     if (range.start && !range.end) {
       // Start date selected - clear end date input fields immediately
-      if (this.endMonthRef()?.nativeElement) this.endMonthRef().nativeElement.value = '';
-      if (this.endDayRef()?.nativeElement) this.endDayRef().nativeElement.value = '';
-      if (this.endYearRef()?.nativeElement) this.endYearRef().nativeElement.value = '';
+      if (this.endMonthRef()?.nativeElement) {this.endMonthRef().nativeElement.value = '';}
+      if (this.endDayRef()?.nativeElement) {this.endDayRef().nativeElement.value = '';}
+      if (this.endYearRef()?.nativeElement) {this.endYearRef().nativeElement.value = '';}
       
       // Focus end month for next selection
       setTimeout(() => this.endMonthRef()?.nativeElement?.focus(), 0);
@@ -282,9 +185,9 @@ export class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, 
       this.startYear.set(yearVal);
       
       // Only update input elements if they're empty or this is from calendar selection
-      if (this.startMonthRef()?.nativeElement) this.startMonthRef().nativeElement.value = monthVal;
-      if (this.startDayRef()?.nativeElement) this.startDayRef().nativeElement.value = dayVal;
-      if (this.startYearRef()?.nativeElement) this.startYearRef().nativeElement.value = yearVal;
+      if (this.startMonthRef()?.nativeElement) {this.startMonthRef().nativeElement.value = monthVal;}
+      if (this.startDayRef()?.nativeElement) {this.startDayRef().nativeElement.value = dayVal;}
+      if (this.startYearRef()?.nativeElement) {this.startYearRef().nativeElement.value = yearVal;}
     }
     
     // Update end date segments - only when we have valid dates from calendar  
@@ -298,21 +201,21 @@ export class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, 
       this.endYear.set(yearVal);
       
       // Only update input elements if they're empty or this is from calendar selection
-      if (this.endMonthRef()?.nativeElement) this.endMonthRef().nativeElement.value = monthVal;
-      if (this.endDayRef()?.nativeElement) this.endDayRef().nativeElement.value = dayVal;
-      if (this.endYearRef()?.nativeElement) this.endYearRef().nativeElement.value = yearVal;
+      if (this.endMonthRef()?.nativeElement) {this.endMonthRef().nativeElement.value = monthVal;}
+      if (this.endDayRef()?.nativeElement) {this.endDayRef().nativeElement.value = dayVal;}
+      if (this.endYearRef()?.nativeElement) {this.endYearRef().nativeElement.value = yearVal;}
     }
   }
   
   private setSegmentValue(range: 'start' | 'end', segment: 'month' | 'day' | 'year', value: string): void {
     if (range === 'start') {
-      if (segment === 'month') this.startMonth.set(value);
-      else if (segment === 'day') this.startDay.set(value);
-      else if (segment === 'year') this.startYear.set(value);
+      if (segment === 'month') {this.startMonth.set(value);}
+      else if (segment === 'day') {this.startDay.set(value);}
+      else if (segment === 'year') {this.startYear.set(value);}
     } else {
-      if (segment === 'month') this.endMonth.set(value);
-      else if (segment === 'day') this.endDay.set(value);
-      else if (segment === 'year') this.endYear.set(value);
+      if (segment === 'month') {this.endMonth.set(value);}
+      else if (segment === 'day') {this.endDay.set(value);}
+      else if (segment === 'year') {this.endYear.set(value);}
     }
   }
   
@@ -354,12 +257,12 @@ export class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, 
   
   private focusNextSegment(range: 'start' | 'end', segment: 'month' | 'day' | 'year'): void {
     if (range === 'start') {
-      if (segment === 'month') this.startDayRef().nativeElement.focus();
-      else if (segment === 'day') this.startYearRef().nativeElement.focus();
-      else if (segment === 'year') this.endMonthRef().nativeElement.focus();
+      if (segment === 'month') {this.startDayRef().nativeElement.focus();}
+      else if (segment === 'day') {this.startYearRef().nativeElement.focus();}
+      else if (segment === 'year') {this.endMonthRef().nativeElement.focus();}
     } else {
-      if (segment === 'month') this.endDayRef().nativeElement.focus();
-      else if (segment === 'day') this.endYearRef().nativeElement.focus();
+      if (segment === 'month') {this.endDayRef().nativeElement.focus();}
+      else if (segment === 'day') {this.endYearRef().nativeElement.focus();}
       // End year is the last field - could focus calendar button or just stay
     }
   }
@@ -367,63 +270,17 @@ export class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, 
   private focusPrevSegment(range: 'start' | 'end', segment: 'month' | 'day' | 'year'): void {
     if (range === 'start') {
       // Start month is the first field - nowhere to go back
-      if (segment === 'day') this.startMonthRef().nativeElement.focus();
-      else if (segment === 'year') this.startDayRef().nativeElement.focus();
+      if (segment === 'day') {this.startMonthRef().nativeElement.focus();}
+      else if (segment === 'year') {this.startDayRef().nativeElement.focus();}
     } else {
-      if (segment === 'month') this.startYearRef().nativeElement.focus();
-      else if (segment === 'day') this.endMonthRef().nativeElement.focus();
-      else if (segment === 'year') this.endDayRef().nativeElement.focus();
+      if (segment === 'month') {this.startYearRef().nativeElement.focus();}
+      else if (segment === 'day') {this.endMonthRef().nativeElement.focus();}
+      else if (segment === 'year') {this.endDayRef().nativeElement.focus();}
     }
-  }
-
-  private formatDate(date: Date): string {
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const year = date.getFullYear().toString();
-    return `${month}/${day}/${year}`;
-  }
-
-  private parseDate(dateStr: string): Date | null {
-    if (!dateStr || dateStr.trim() === '') {
-      return null;
-    }
-
-    // Try parsing common date formats
-    const formats = [
-      /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, // MM/DD/YYYY
-      /^(\d{1,2})-(\d{1,2})-(\d{4})$/,   // MM-DD-YYYY
-      /^(\d{4})-(\d{1,2})-(\d{1,2})$/    // YYYY-MM-DD
-    ];
-
-    for (const format of formats) {
-      const match = dateStr.match(format);
-      if (match) {
-        let month: number, day: number, year: number;
-        
-        if (format === formats[2]) { // YYYY-MM-DD
-          year = parseInt(match[1], 10);
-          month = parseInt(match[2], 10) - 1;
-          day = parseInt(match[3], 10);
-        } else { // MM/DD/YYYY or MM-DD-YYYY
-          month = parseInt(match[1], 10) - 1;
-          day = parseInt(match[2], 10);
-          year = parseInt(match[3], 10);
-        }
-
-        const date = new Date(year, month, day);
-        
-        // Validate the date
-        if (date.getFullYear() === year && date.getMonth() === month && date.getDate() === day) {
-          return date;
-        }
-      }
-    }
-
-    return null;
   }
 
   openDatepicker(): void {
-    if (this.isOpen()) return;
+    if (this.isOpen()) {return;}
 
     this.createOverlay();
     this.isOpen.set(true);
@@ -445,7 +302,7 @@ export class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, 
   }
 
   private createOverlay(): void {
-    if (this.overlayRef) return;
+    if (this.overlayRef) {return;}
 
     const positions: ConnectedPosition[] = [
       {

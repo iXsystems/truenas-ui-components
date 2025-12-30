@@ -1,29 +1,16 @@
 import * as _angular_core from '@angular/core';
-import { AfterViewInit, ElementRef, ChangeDetectorRef, OnDestroy, TemplateRef, ViewContainerRef, AfterContentInit, IterableDiffers, PipeTransform, OnInit, AfterViewChecked } from '@angular/core';
+import { AfterViewInit, ElementRef, OnDestroy, TemplateRef, AfterContentInit, ChangeDetectorRef, PipeTransform, OnInit, ViewContainerRef, AfterViewChecked } from '@angular/core';
 import { ComponentHarness, BaseHarnessFilters, HarnessPredicate } from '@angular/cdk/testing';
-import { SafeHtml, DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { SafeHtml, SafeResourceUrl, DomSanitizer } from '@angular/platform-browser';
 import { ControlValueAccessor, NgControl } from '@angular/forms';
-import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
-import { HttpClient } from '@angular/common/http';
+import { DataSource } from '@angular/cdk/collections';
 import * as i1 from '@angular/cdk/tree';
 import { CdkTree, FlatTreeControl, CdkTreeNode, CdkNestedTreeNode } from '@angular/cdk/tree';
 export { FlatTreeControl } from '@angular/cdk/tree';
-import { DataSource } from '@angular/cdk/collections';
-import * as rxjs from 'rxjs';
 import { Observable } from 'rxjs';
-import { ComponentType } from '@angular/cdk/portal';
+import { Overlay } from '@angular/cdk/overlay';
 import { DialogConfig, DialogRef } from '@angular/cdk/dialog';
-
-declare class TruenasUiService {
-    constructor();
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TruenasUiService, never>;
-    static ɵprov: _angular_core.ɵɵInjectableDeclaration<TruenasUiService>;
-}
-
-declare class TruenasUiComponent {
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TruenasUiComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TruenasUiComponent, "lib-truenas-ui", never, {}, {}, never, never, true, never>;
-}
+import { ComponentType } from '@angular/cdk/portal';
 
 declare enum DiskType {
     Hdd = "HDD",
@@ -160,8 +147,6 @@ interface IconResult {
     spriteUrl?: string;
 }
 declare class IxIconComponent implements AfterViewInit {
-    private sanitizer;
-    private cdr;
     name: _angular_core.InputSignal<string>;
     size: _angular_core.InputSignal<IconSize>;
     color: _angular_core.InputSignal<string | undefined>;
@@ -171,10 +156,12 @@ declare class IxIconComponent implements AfterViewInit {
     svgContainer: _angular_core.Signal<ElementRef<HTMLDivElement> | undefined>;
     iconResult: IconResult;
     private iconRegistry;
-    constructor(sanitizer: DomSanitizer, cdr: ChangeDetectorRef);
+    private cdr;
+    private sanitizer;
+    constructor();
     ngAfterViewInit(): void;
     effectiveAriaLabel: _angular_core.Signal<string>;
-    sanitizedContent: _angular_core.Signal<any>;
+    sanitizedContent: _angular_core.Signal<SafeHtml>;
     private updateSvgContent;
     private resolveIcon;
     private tryThirdPartyIcon;
@@ -223,9 +210,9 @@ declare class IxInputComponent implements AfterViewInit, ControlValueAccessor {
     private onTouched;
     private focusMonitor;
     ngAfterViewInit(): void;
-    writeValue(value: any): void;
-    registerOnChange(fn: any): void;
-    registerOnTouched(fn: any): void;
+    writeValue(value: string): void;
+    registerOnChange(fn: (value: string) => void): void;
+    registerOnTouched(fn: () => void): void;
     setDisabledState(isDisabled: boolean): void;
     onValueChange(event: Event): void;
     onBlur(): void;
@@ -261,6 +248,27 @@ declare class IxChipComponent implements AfterViewInit, OnDestroy {
     static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxChipComponent, "ix-chip", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "icon": { "alias": "icon"; "required": false; "isSignal": true; }; "closable": { "alias": "closable"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, { "onClose": "onClose"; "onClick": "onClick"; }, never, never, true, never>;
 }
 
+interface IxCardAction {
+    label: string;
+    handler: () => void;
+    disabled?: boolean;
+    icon?: string;
+}
+interface IxCardControl {
+    label: string;
+    checked: boolean;
+    handler: (checked: boolean) => void;
+    disabled?: boolean;
+}
+interface IxCardHeaderStatus {
+    label: string;
+    type?: 'success' | 'warning' | 'error' | 'info' | 'neutral';
+}
+interface IxCardFooterLink {
+    label: string;
+    handler: () => void;
+}
+
 interface IxMenuItem {
     id: string;
     label: string;
@@ -273,17 +281,16 @@ interface IxMenuItem {
     shortcut?: string;
 }
 declare class IxMenuComponent {
-    private overlay;
-    private viewContainerRef;
     items: _angular_core.InputSignal<IxMenuItem[]>;
     contextMenu: _angular_core.InputSignal<boolean>;
     menuItemClick: _angular_core.OutputEmitterRef<IxMenuItem>;
     menuOpen: _angular_core.OutputEmitterRef<void>;
     menuClose: _angular_core.OutputEmitterRef<void>;
-    menuTemplate: _angular_core.Signal<TemplateRef<any>>;
-    contextMenuTemplate: _angular_core.Signal<TemplateRef<any>>;
+    menuTemplate: _angular_core.Signal<TemplateRef<unknown>>;
+    contextMenuTemplate: _angular_core.Signal<TemplateRef<unknown>>;
     private contextOverlayRef?;
-    constructor(overlay: Overlay, viewContainerRef: ViewContainerRef);
+    private overlay;
+    private viewContainerRef;
     onMenuItemClick(item: IxMenuItem): void;
     hasChildren: _angular_core.Signal<(item: IxMenuItem) => boolean>;
     onMenuOpen(): void;
@@ -291,13 +298,366 @@ declare class IxMenuComponent {
     /**
      * Get the menu template for use by the trigger directive
      */
-    getMenuTemplate(): TemplateRef<any> | null;
+    getMenuTemplate(): TemplateRef<unknown> | null;
     openContextMenuAt(x: number, y: number): void;
     private closeContextMenu;
     onContextMenu(event: MouseEvent): void;
     trackByItemId(index: number, item: IxMenuItem): string;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxMenuComponent, never>;
     static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxMenuComponent, "ix-menu", never, { "items": { "alias": "items"; "required": false; "isSignal": true; }; "contextMenu": { "alias": "contextMenu"; "required": false; "isSignal": true; }; }, { "menuItemClick": "menuItemClick"; "menuOpen": "menuOpen"; "menuClose": "menuClose"; }, never, ["*"], true, never>;
+}
+
+declare class IxCardComponent {
+    private iconRegistry;
+    constructor();
+    title: _angular_core.InputSignal<string | undefined>;
+    titleLink: _angular_core.InputSignal<string | undefined>;
+    elevation: _angular_core.InputSignal<"none" | "low" | "medium" | "high">;
+    padding: _angular_core.InputSignal<"large" | "medium" | "small">;
+    padContent: _angular_core.InputSignal<boolean>;
+    bordered: _angular_core.InputSignal<boolean>;
+    background: _angular_core.InputSignal<boolean>;
+    headerStatus: _angular_core.InputSignal<IxCardHeaderStatus | undefined>;
+    headerControl: _angular_core.InputSignal<IxCardControl | undefined>;
+    headerMenu: _angular_core.InputSignal<IxMenuItem[] | undefined>;
+    primaryAction: _angular_core.InputSignal<IxCardAction | undefined>;
+    secondaryAction: _angular_core.InputSignal<IxCardAction | undefined>;
+    footerLink: _angular_core.InputSignal<IxCardFooterLink | undefined>;
+    /**
+     * Register MDI icon library with all icons used by the card component
+     * This makes the component self-contained with zero configuration required
+     */
+    private registerMdiIcons;
+    classes: _angular_core.Signal<string[]>;
+    hasHeader: _angular_core.Signal<boolean>;
+    hasFooter: _angular_core.Signal<boolean>;
+    onTitleClick(): void;
+    onControlChange(checked: boolean): void;
+    onHeaderMenuItemClick(_item: IxMenuItem): void;
+    getStatusClass(type?: string): string;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxCardComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxCardComponent, "ix-card", never, { "title": { "alias": "title"; "required": false; "isSignal": true; }; "titleLink": { "alias": "titleLink"; "required": false; "isSignal": true; }; "elevation": { "alias": "elevation"; "required": false; "isSignal": true; }; "padding": { "alias": "padding"; "required": false; "isSignal": true; }; "padContent": { "alias": "padContent"; "required": false; "isSignal": true; }; "bordered": { "alias": "bordered"; "required": false; "isSignal": true; }; "background": { "alias": "background"; "required": false; "isSignal": true; }; "headerStatus": { "alias": "headerStatus"; "required": false; "isSignal": true; }; "headerControl": { "alias": "headerControl"; "required": false; "isSignal": true; }; "headerMenu": { "alias": "headerMenu"; "required": false; "isSignal": true; }; "primaryAction": { "alias": "primaryAction"; "required": false; "isSignal": true; }; "secondaryAction": { "alias": "secondaryAction"; "required": false; "isSignal": true; }; "footerLink": { "alias": "footerLink"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
+}
+
+declare class IxExpansionPanelComponent {
+    title: _angular_core.InputSignal<string | undefined>;
+    elevation: _angular_core.InputSignal<"none" | "low" | "medium" | "high">;
+    padding: _angular_core.InputSignal<"large" | "medium" | "small">;
+    bordered: _angular_core.InputSignal<boolean>;
+    background: _angular_core.InputSignal<boolean>;
+    expanded: _angular_core.InputSignal<boolean>;
+    disabled: _angular_core.InputSignal<boolean>;
+    titleStyle: _angular_core.InputSignal<"link" | "header" | "body">;
+    expandedChange: _angular_core.OutputEmitterRef<boolean>;
+    toggleEvent: _angular_core.OutputEmitterRef<void>;
+    private internalExpanded;
+    effectiveExpanded: _angular_core.Signal<boolean>;
+    readonly contentId: string;
+    toggle(): void;
+    classes: _angular_core.Signal<string[]>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxExpansionPanelComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxExpansionPanelComponent, "ix-expansion-panel", never, { "title": { "alias": "title"; "required": false; "isSignal": true; }; "elevation": { "alias": "elevation"; "required": false; "isSignal": true; }; "padding": { "alias": "padding"; "required": false; "isSignal": true; }; "bordered": { "alias": "bordered"; "required": false; "isSignal": true; }; "background": { "alias": "background"; "required": false; "isSignal": true; }; "expanded": { "alias": "expanded"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "titleStyle": { "alias": "titleStyle"; "required": false; "isSignal": true; }; }, { "expandedChange": "expandedChange"; "toggleEvent": "toggleEvent"; }, never, ["[slot=title]", "*"], true, never>;
+}
+
+declare class IxCheckboxComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
+    checkboxEl: _angular_core.Signal<ElementRef<HTMLInputElement>>;
+    label: _angular_core.InputSignal<string>;
+    hideLabel: _angular_core.InputSignal<boolean>;
+    disabled: _angular_core.InputSignal<boolean>;
+    required: _angular_core.InputSignal<boolean>;
+    indeterminate: _angular_core.InputSignal<boolean>;
+    testId: _angular_core.InputSignal<string | undefined>;
+    error: _angular_core.InputSignal<string | null>;
+    checked: _angular_core.InputSignal<boolean>;
+    change: _angular_core.OutputEmitterRef<boolean>;
+    id: string;
+    private internalChecked;
+    private formDisabled;
+    isDisabled: _angular_core.Signal<boolean>;
+    private focusMonitor;
+    private onChange;
+    private onTouched;
+    ngAfterViewInit(): void;
+    ngOnDestroy(): void;
+    effectiveChecked: _angular_core.Signal<boolean>;
+    writeValue(value: boolean): void;
+    registerOnChange(fn: (value: boolean) => void): void;
+    registerOnTouched(fn: () => void): void;
+    setDisabledState(isDisabled: boolean): void;
+    onCheckboxChange(event: Event): void;
+    classes: _angular_core.Signal<string[]>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxCheckboxComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxCheckboxComponent, "ix-checkbox", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "hideLabel": { "alias": "hideLabel"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "required": { "alias": "required"; "required": false; "isSignal": true; }; "indeterminate": { "alias": "indeterminate"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; "error": { "alias": "error"; "required": false; "isSignal": true; }; "checked": { "alias": "checked"; "required": false; "isSignal": true; }; }, { "change": "change"; }, never, never, true, never>;
+}
+
+declare class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
+    radioEl: _angular_core.Signal<ElementRef<HTMLInputElement>>;
+    label: _angular_core.InputSignal<string>;
+    value: _angular_core.InputSignal<unknown>;
+    name: _angular_core.InputSignal<string | undefined>;
+    disabled: _angular_core.InputSignal<boolean>;
+    required: _angular_core.InputSignal<boolean>;
+    testId: _angular_core.InputSignal<string | undefined>;
+    error: _angular_core.InputSignal<string | null>;
+    change: _angular_core.OutputEmitterRef<unknown>;
+    id: string;
+    checked: boolean;
+    private formDisabled;
+    isDisabled: _angular_core.Signal<boolean>;
+    private focusMonitor;
+    private onChange;
+    private onTouched;
+    ngAfterViewInit(): void;
+    ngOnDestroy(): void;
+    writeValue(value: unknown): void;
+    registerOnChange(fn: (value: unknown) => void): void;
+    registerOnTouched(fn: () => void): void;
+    setDisabledState(isDisabled: boolean): void;
+    onRadioChange(event: Event): void;
+    classes: _angular_core.Signal<string[]>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxRadioComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxRadioComponent, "ix-radio", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "value": { "alias": "value"; "required": false; "isSignal": true; }; "name": { "alias": "name"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "required": { "alias": "required"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; "error": { "alias": "error"; "required": false; "isSignal": true; }; }, { "change": "change"; }, never, never, true, never>;
+}
+
+type SlideToggleColor = 'primary' | 'accent' | 'warn';
+declare class IxSlideToggleComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
+    toggleEl: _angular_core.Signal<ElementRef<HTMLInputElement>>;
+    labelPosition: _angular_core.InputSignal<"after" | "before">;
+    label: _angular_core.InputSignal<string | undefined>;
+    disabled: _angular_core.InputSignal<boolean>;
+    required: _angular_core.InputSignal<boolean>;
+    color: _angular_core.InputSignal<SlideToggleColor>;
+    testId: _angular_core.InputSignal<string | undefined>;
+    ariaLabel: _angular_core.InputSignal<string | undefined>;
+    ariaLabelledby: _angular_core.InputSignal<string | undefined>;
+    checked: _angular_core.InputSignal<boolean>;
+    change: _angular_core.OutputEmitterRef<boolean>;
+    toggleChange: _angular_core.OutputEmitterRef<boolean>;
+    id: string;
+    private internalChecked;
+    private formDisabled;
+    isDisabled: _angular_core.Signal<boolean>;
+    private focusMonitor;
+    private onChange;
+    private onTouched;
+    ngAfterViewInit(): void;
+    ngOnDestroy(): void;
+    effectiveChecked: _angular_core.Signal<boolean>;
+    writeValue(value: boolean): void;
+    registerOnChange(fn: (value: boolean) => void): void;
+    registerOnTouched(fn: () => void): void;
+    setDisabledState(isDisabled: boolean): void;
+    onToggleChange(event: Event): void;
+    onLabelClick(): void;
+    classes: _angular_core.Signal<string[]>;
+    effectiveAriaLabel: _angular_core.Signal<string | undefined>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxSlideToggleComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxSlideToggleComponent, "ix-slide-toggle", never, { "labelPosition": { "alias": "labelPosition"; "required": false; "isSignal": true; }; "label": { "alias": "label"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "required": { "alias": "required"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "ariaLabelledby": { "alias": "ariaLabelledby"; "required": false; "isSignal": true; }; "checked": { "alias": "checked"; "required": false; "isSignal": true; }; }, { "change": "change"; "toggleChange": "toggleChange"; }, never, never, true, never>;
+}
+
+declare class IxTabComponent implements AfterContentInit {
+    label: _angular_core.InputSignal<string>;
+    disabled: _angular_core.InputSignal<boolean>;
+    icon: _angular_core.InputSignal<string | undefined>;
+    iconTemplate: _angular_core.InputSignal<TemplateRef<unknown> | undefined>;
+    testId: _angular_core.InputSignal<string | undefined>;
+    selected: _angular_core.OutputEmitterRef<void>;
+    iconContent: _angular_core.Signal<TemplateRef<unknown> | undefined>;
+    index: _angular_core.WritableSignal<number>;
+    isActive: _angular_core.WritableSignal<boolean>;
+    tabsComponent?: {
+        onKeydown: (event: KeyboardEvent, index: number) => void;
+    };
+    elementRef: ElementRef<any>;
+    protected hasIconContent: _angular_core.WritableSignal<boolean>;
+    ngAfterContentInit(): void;
+    onClick(): void;
+    onKeydown(event: KeyboardEvent): void;
+    classes: _angular_core.Signal<string>;
+    tabIndex: _angular_core.Signal<0 | -1>;
+    hasIcon: _angular_core.Signal<boolean>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTabComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTabComponent, "ix-tab", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "icon": { "alias": "icon"; "required": false; "isSignal": true; }; "iconTemplate": { "alias": "iconTemplate"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, { "selected": "selected"; }, ["iconContent"], ["*"], true, never>;
+}
+
+declare class IxTabPanelComponent {
+    label: _angular_core.InputSignal<string>;
+    lazyLoad: _angular_core.InputSignal<boolean>;
+    testId: _angular_core.InputSignal<string | undefined>;
+    content: _angular_core.Signal<TemplateRef<unknown>>;
+    index: _angular_core.WritableSignal<number>;
+    isActive: _angular_core.WritableSignal<boolean>;
+    hasBeenActive: _angular_core.WritableSignal<boolean>;
+    elementRef: ElementRef<any>;
+    classes: _angular_core.Signal<string>;
+    shouldRender: _angular_core.Signal<boolean>;
+    onActivate(): void;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTabPanelComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTabPanelComponent, "ix-tab-panel", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "lazyLoad": { "alias": "lazyLoad"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
+}
+
+interface TabChangeEvent {
+    index: number;
+    tab: IxTabComponent;
+    previousIndex: number;
+}
+declare class IxTabsComponent implements AfterContentInit, AfterViewInit, OnDestroy {
+    tabs: _angular_core.Signal<readonly IxTabComponent[]>;
+    panels: _angular_core.Signal<readonly IxTabPanelComponent[]>;
+    tabHeader: _angular_core.Signal<ElementRef<HTMLElement>>;
+    selectedIndex: _angular_core.InputSignal<number>;
+    orientation: _angular_core.InputSignal<"horizontal" | "vertical">;
+    highlightPosition: _angular_core.InputSignal<"top" | "bottom" | "left" | "right">;
+    selectedIndexChange: _angular_core.OutputEmitterRef<number>;
+    tabChange: _angular_core.OutputEmitterRef<TabChangeEvent>;
+    private internalSelectedIndex;
+    highlightBarLeft: _angular_core.WritableSignal<number>;
+    highlightBarWidth: _angular_core.WritableSignal<number>;
+    highlightBarTop: _angular_core.WritableSignal<number>;
+    highlightBarHeight: _angular_core.WritableSignal<number>;
+    highlightBarVisible: _angular_core.WritableSignal<boolean>;
+    private focusMonitor;
+    private cdr;
+    constructor();
+    ngAfterContentInit(): void;
+    ngAfterViewInit(): void;
+    ngOnDestroy(): void;
+    private initializeTabs;
+    selectTab(index: number): void;
+    private updateHighlightBar;
+    onKeydown(event: KeyboardEvent, currentIndex: number): void;
+    private getPreviousEnabledTabIndex;
+    private getNextEnabledTabIndex;
+    private getFirstEnabledTabIndex;
+    private getLastEnabledTabIndex;
+    private focusTab;
+    classes: _angular_core.Signal<string>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTabsComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTabsComponent, "ix-tabs", never, { "selectedIndex": { "alias": "selectedIndex"; "required": false; "isSignal": true; }; "orientation": { "alias": "orientation"; "required": false; "isSignal": true; }; "highlightPosition": { "alias": "highlightPosition"; "required": false; "isSignal": true; }; }, { "selectedIndexChange": "selectedIndexChange"; "tabChange": "tabChange"; }, ["tabs", "panels"], ["ix-tab", "ix-tab-panel"], true, never>;
+}
+
+/**
+ * Directive that attaches a menu to any element.
+ * Usage: <button [ixMenuTriggerFor]="menu">Open Menu</button>
+ */
+declare class IxMenuTriggerDirective {
+    menu: _angular_core.InputSignal<IxMenuComponent>;
+    ixMenuPosition: _angular_core.InputSignal<"after" | "before" | "above" | "below">;
+    private overlayRef?;
+    private isMenuOpen;
+    private elementRef;
+    private overlay;
+    private viewContainerRef;
+    onClick(): void;
+    openMenu(): void;
+    closeMenu(): void;
+    private getPositions;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxMenuTriggerDirective, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxMenuTriggerDirective, "[ixMenuTriggerFor]", ["ixMenuTrigger"], { "menu": { "alias": "ixMenuTriggerFor"; "required": true; "isSignal": true; }; "ixMenuPosition": { "alias": "ixMenuPosition"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
+}
+
+declare enum ModifierKeys {
+    COMMAND = "\u2318",
+    CMD = "\u2318",
+    CTRL = "Ctrl",
+    CONTROL = "Ctrl",
+    ALT = "\u2325",
+    OPTION = "\u2325",
+    OPT = "\u2325",
+    SHIFT = "\u21E7",
+    META = "\u2318",
+    SUPER = "\u2318"
+}
+declare enum WindowsModifierKeys {
+    CTRL = "Ctrl",
+    CONTROL = "Ctrl",
+    ALT = "Alt",
+    SHIFT = "Shift",
+    WIN = "Win",
+    WINDOWS = "Win"
+}
+declare enum LinuxModifierKeys {
+    CTRL = "Ctrl",
+    CONTROL = "Ctrl",
+    ALT = "Alt",
+    SHIFT = "Shift",
+    SUPER = "Super",
+    META = "Meta"
+}
+type PlatformType = 'mac' | 'windows' | 'linux' | 'auto';
+
+declare class IxKeyboardShortcutComponent {
+    shortcut: _angular_core.InputSignal<string>;
+    platform: _angular_core.InputSignal<PlatformType>;
+    separator: _angular_core.InputSignal<string>;
+    displayShortcut: _angular_core.Signal<string>;
+    private formatShortcut;
+    private detectPlatform;
+    private convertToWindows;
+    shortcutKeys: _angular_core.Signal<string[]>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxKeyboardShortcutComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxKeyboardShortcutComponent, "ix-keyboard-shortcut", never, { "shortcut": { "alias": "shortcut"; "required": false; "isSignal": true; }; "platform": { "alias": "platform"; "required": false; "isSignal": true; }; "separator": { "alias": "separator"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
+}
+
+declare class IxFormFieldComponent implements AfterContentInit {
+    label: _angular_core.InputSignal<string>;
+    hint: _angular_core.InputSignal<string>;
+    required: _angular_core.InputSignal<boolean>;
+    testId: _angular_core.InputSignal<string>;
+    control: _angular_core.Signal<NgControl | undefined>;
+    protected hasError: _angular_core.WritableSignal<boolean>;
+    protected errorMessage: _angular_core.WritableSignal<string>;
+    ngAfterContentInit(): void;
+    private updateErrorState;
+    private getErrorMessage;
+    showError: _angular_core.Signal<boolean>;
+    showHint: _angular_core.Signal<boolean>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxFormFieldComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxFormFieldComponent, "ix-form-field", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "hint": { "alias": "hint"; "required": false; "isSignal": true; }; "required": { "alias": "required"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, {}, ["control"], ["*"], true, never>;
+}
+
+interface IxSelectOption<T = unknown> {
+    value: T;
+    label: string;
+    disabled?: boolean;
+}
+interface IxSelectOptionGroup<T = unknown> {
+    label: string;
+    options: IxSelectOption<T>[];
+    disabled?: boolean;
+}
+declare class IxSelectComponent<T = unknown> implements ControlValueAccessor {
+    options: _angular_core.InputSignal<IxSelectOption<T>[]>;
+    optionGroups: _angular_core.InputSignal<IxSelectOptionGroup<T>[]>;
+    placeholder: _angular_core.InputSignal<string>;
+    disabled: _angular_core.InputSignal<boolean>;
+    testId: _angular_core.InputSignal<string>;
+    selectionChange: _angular_core.OutputEmitterRef<T>;
+    protected isOpen: _angular_core.WritableSignal<boolean>;
+    protected selectedValue: _angular_core.WritableSignal<T | null>;
+    private formDisabled;
+    isDisabled: _angular_core.Signal<boolean>;
+    private onChange;
+    private onTouched;
+    private elementRef;
+    private cdr;
+    constructor();
+    writeValue(value: T | null): void;
+    registerOnChange(fn: (value: T | null) => void): void;
+    registerOnTouched(fn: () => void): void;
+    setDisabledState(isDisabled: boolean): void;
+    toggleDropdown(): void;
+    closeDropdown(): void;
+    onOptionClick(option: IxSelectOption<T>): void;
+    selectOption(option: IxSelectOption<T>): void;
+    isSelected: _angular_core.Signal<(option: IxSelectOption<T>) => boolean>;
+    getDisplayText: _angular_core.Signal<string | (T & {})>;
+    private findOptionByValue;
+    hasAnyOptions: _angular_core.Signal<boolean>;
+    private compareValues;
+    onKeydown(event: KeyboardEvent): void;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxSelectComponent<any>, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxSelectComponent<any>, "ix-select", never, { "options": { "alias": "options"; "required": false; "isSignal": true; }; "optionGroups": { "alias": "optionGroups"; "required": false; "isSignal": true; }; "placeholder": { "alias": "placeholder"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, { "selectionChange": "selectionChange"; }, never, never, true, never>;
 }
 
 interface SpriteConfig {
@@ -314,12 +674,12 @@ interface SpriteConfig {
  * 3. Icons are resolved as SVG fragment identifiers (e.g., sprite.svg#icon-name)
  */
 declare class IxSpriteLoaderService {
-    private http;
-    private sanitizer;
     private spriteConfig?;
     private spriteLoaded;
     private spriteLoadPromise?;
-    constructor(http: HttpClient, sanitizer: DomSanitizer);
+    private http;
+    private sanitizer;
+    constructor();
     /**
      * Load the sprite configuration
      */
@@ -358,8 +718,8 @@ declare class IxSpriteLoaderService {
 
 interface IconLibrary {
     name: string;
-    resolver: (iconName: string, options?: any) => string | HTMLElement | null;
-    defaultOptions?: any;
+    resolver: (iconName: string, options?: unknown) => string | HTMLElement | null;
+    defaultOptions?: unknown;
 }
 interface ResolvedIcon {
     source: 'svg' | 'css' | 'unicode' | 'text' | 'sprite';
@@ -367,11 +727,11 @@ interface ResolvedIcon {
     spriteUrl?: string;
 }
 declare class IxIconRegistryService {
-    private sanitizer;
-    private spriteLoader;
     private libraries;
     private customIcons;
-    constructor(sanitizer: DomSanitizer, spriteLoader: IxSpriteLoaderService);
+    private sanitizer;
+    private spriteLoader;
+    constructor(sanitizer?: DomSanitizer, spriteLoader?: IxSpriteLoaderService);
     /**
      * Register an icon library (like Lucide, Heroicons, etc.)
      *
@@ -450,7 +810,7 @@ declare class IxIconRegistryService {
      * registry.resolveIcon('my-logo')
      * ```
      */
-    resolveIcon(name: string, options?: any): ResolvedIcon | null;
+    resolveIcon(name: string, options?: unknown): ResolvedIcon | null;
     /**
      * Check if a library is registered
      */
@@ -488,380 +848,6 @@ declare class IxIconRegistryService {
     private resolveCustomIcon;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxIconRegistryService, never>;
     static ɵprov: _angular_core.ɵɵInjectableDeclaration<IxIconRegistryService>;
-}
-
-interface IxCardAction {
-    label: string;
-    handler: () => void;
-    disabled?: boolean;
-    icon?: string;
-}
-interface IxCardControl {
-    label: string;
-    checked: boolean;
-    handler: (checked: boolean) => void;
-    disabled?: boolean;
-}
-interface IxCardHeaderStatus {
-    label: string;
-    type?: 'success' | 'warning' | 'error' | 'info' | 'neutral';
-}
-interface IxCardFooterLink {
-    label: string;
-    handler: () => void;
-}
-
-declare class IxCardComponent {
-    private iconRegistry;
-    constructor(iconRegistry: IxIconRegistryService);
-    title: _angular_core.InputSignal<string | undefined>;
-    titleLink: _angular_core.InputSignal<string | undefined>;
-    elevation: _angular_core.InputSignal<"none" | "low" | "medium" | "high">;
-    padding: _angular_core.InputSignal<"large" | "medium" | "small">;
-    padContent: _angular_core.InputSignal<boolean>;
-    bordered: _angular_core.InputSignal<boolean>;
-    background: _angular_core.InputSignal<boolean>;
-    headerStatus: _angular_core.InputSignal<IxCardHeaderStatus | undefined>;
-    headerControl: _angular_core.InputSignal<IxCardControl | undefined>;
-    headerMenu: _angular_core.InputSignal<IxMenuItem[] | undefined>;
-    primaryAction: _angular_core.InputSignal<IxCardAction | undefined>;
-    secondaryAction: _angular_core.InputSignal<IxCardAction | undefined>;
-    footerLink: _angular_core.InputSignal<IxCardFooterLink | undefined>;
-    /**
-     * Register MDI icon library with all icons used by the card component
-     * This makes the component self-contained with zero configuration required
-     */
-    private registerMdiIcons;
-    classes: _angular_core.Signal<string[]>;
-    hasHeader: _angular_core.Signal<boolean>;
-    hasFooter: _angular_core.Signal<boolean>;
-    onTitleClick(): void;
-    onControlChange(checked: boolean): void;
-    onHeaderMenuItemClick(item: IxMenuItem): void;
-    getStatusClass(type?: string): string;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxCardComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxCardComponent, "ix-card", never, { "title": { "alias": "title"; "required": false; "isSignal": true; }; "titleLink": { "alias": "titleLink"; "required": false; "isSignal": true; }; "elevation": { "alias": "elevation"; "required": false; "isSignal": true; }; "padding": { "alias": "padding"; "required": false; "isSignal": true; }; "padContent": { "alias": "padContent"; "required": false; "isSignal": true; }; "bordered": { "alias": "bordered"; "required": false; "isSignal": true; }; "background": { "alias": "background"; "required": false; "isSignal": true; }; "headerStatus": { "alias": "headerStatus"; "required": false; "isSignal": true; }; "headerControl": { "alias": "headerControl"; "required": false; "isSignal": true; }; "headerMenu": { "alias": "headerMenu"; "required": false; "isSignal": true; }; "primaryAction": { "alias": "primaryAction"; "required": false; "isSignal": true; }; "secondaryAction": { "alias": "secondaryAction"; "required": false; "isSignal": true; }; "footerLink": { "alias": "footerLink"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
-}
-
-declare class IxExpansionPanelComponent {
-    title: _angular_core.InputSignal<string | undefined>;
-    elevation: _angular_core.InputSignal<"none" | "low" | "medium" | "high">;
-    padding: _angular_core.InputSignal<"large" | "medium" | "small">;
-    bordered: _angular_core.InputSignal<boolean>;
-    background: _angular_core.InputSignal<boolean>;
-    expanded: _angular_core.InputSignal<boolean>;
-    disabled: _angular_core.InputSignal<boolean>;
-    titleStyle: _angular_core.InputSignal<"link" | "header" | "body">;
-    expandedChange: _angular_core.OutputEmitterRef<boolean>;
-    toggleEvent: _angular_core.OutputEmitterRef<void>;
-    private internalExpanded;
-    effectiveExpanded: _angular_core.Signal<boolean>;
-    readonly contentId: string;
-    toggle(): void;
-    classes: _angular_core.Signal<string[]>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxExpansionPanelComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxExpansionPanelComponent, "ix-expansion-panel", never, { "title": { "alias": "title"; "required": false; "isSignal": true; }; "elevation": { "alias": "elevation"; "required": false; "isSignal": true; }; "padding": { "alias": "padding"; "required": false; "isSignal": true; }; "bordered": { "alias": "bordered"; "required": false; "isSignal": true; }; "background": { "alias": "background"; "required": false; "isSignal": true; }; "expanded": { "alias": "expanded"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "titleStyle": { "alias": "titleStyle"; "required": false; "isSignal": true; }; }, { "expandedChange": "expandedChange"; "toggleEvent": "toggleEvent"; }, never, ["[slot=title]", "*"], true, never>;
-}
-
-declare class IxCheckboxComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
-    checkboxEl: _angular_core.Signal<ElementRef<HTMLInputElement>>;
-    label: _angular_core.InputSignal<string>;
-    hideLabel: _angular_core.InputSignal<boolean>;
-    disabled: _angular_core.InputSignal<boolean>;
-    required: _angular_core.InputSignal<boolean>;
-    indeterminate: _angular_core.InputSignal<boolean>;
-    testId: _angular_core.InputSignal<string | undefined>;
-    error: _angular_core.InputSignal<string | null>;
-    checked: _angular_core.InputSignal<boolean>;
-    change: _angular_core.OutputEmitterRef<boolean>;
-    id: string;
-    private internalChecked;
-    private formDisabled;
-    isDisabled: _angular_core.Signal<boolean>;
-    private focusMonitor;
-    private onChange;
-    private onTouched;
-    ngAfterViewInit(): void;
-    ngOnDestroy(): void;
-    effectiveChecked: _angular_core.Signal<boolean>;
-    writeValue(value: boolean): void;
-    registerOnChange(fn: (value: boolean) => void): void;
-    registerOnTouched(fn: () => void): void;
-    setDisabledState(isDisabled: boolean): void;
-    onCheckboxChange(event: Event): void;
-    classes: _angular_core.Signal<string[]>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxCheckboxComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxCheckboxComponent, "ix-checkbox", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "hideLabel": { "alias": "hideLabel"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "required": { "alias": "required"; "required": false; "isSignal": true; }; "indeterminate": { "alias": "indeterminate"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; "error": { "alias": "error"; "required": false; "isSignal": true; }; "checked": { "alias": "checked"; "required": false; "isSignal": true; }; }, { "change": "change"; }, never, never, true, never>;
-}
-
-declare class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
-    radioEl: _angular_core.Signal<ElementRef<HTMLInputElement>>;
-    label: _angular_core.InputSignal<string>;
-    value: _angular_core.InputSignal<any>;
-    name: _angular_core.InputSignal<string | undefined>;
-    disabled: _angular_core.InputSignal<boolean>;
-    required: _angular_core.InputSignal<boolean>;
-    testId: _angular_core.InputSignal<string | undefined>;
-    error: _angular_core.InputSignal<string | null>;
-    change: _angular_core.OutputEmitterRef<any>;
-    id: string;
-    checked: boolean;
-    private formDisabled;
-    isDisabled: _angular_core.Signal<boolean>;
-    private focusMonitor;
-    private onChange;
-    private onTouched;
-    ngAfterViewInit(): void;
-    ngOnDestroy(): void;
-    writeValue(value: any): void;
-    registerOnChange(fn: (value: any) => void): void;
-    registerOnTouched(fn: () => void): void;
-    setDisabledState(isDisabled: boolean): void;
-    onRadioChange(event: Event): void;
-    classes: _angular_core.Signal<string[]>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxRadioComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxRadioComponent, "ix-radio", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "value": { "alias": "value"; "required": false; "isSignal": true; }; "name": { "alias": "name"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "required": { "alias": "required"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; "error": { "alias": "error"; "required": false; "isSignal": true; }; }, { "change": "change"; }, never, never, true, never>;
-}
-
-type SlideToggleColor = 'primary' | 'accent' | 'warn';
-declare class IxSlideToggleComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
-    toggleEl: _angular_core.Signal<ElementRef<HTMLInputElement>>;
-    labelPosition: _angular_core.InputSignal<"before" | "after">;
-    label: _angular_core.InputSignal<string | undefined>;
-    disabled: _angular_core.InputSignal<boolean>;
-    required: _angular_core.InputSignal<boolean>;
-    color: _angular_core.InputSignal<SlideToggleColor>;
-    testId: _angular_core.InputSignal<string | undefined>;
-    ariaLabel: _angular_core.InputSignal<string | undefined>;
-    ariaLabelledby: _angular_core.InputSignal<string | undefined>;
-    checked: _angular_core.InputSignal<boolean>;
-    change: _angular_core.OutputEmitterRef<boolean>;
-    toggleChange: _angular_core.OutputEmitterRef<boolean>;
-    id: string;
-    private internalChecked;
-    private formDisabled;
-    isDisabled: _angular_core.Signal<boolean>;
-    private focusMonitor;
-    private onChange;
-    private onTouched;
-    ngAfterViewInit(): void;
-    ngOnDestroy(): void;
-    effectiveChecked: _angular_core.Signal<boolean>;
-    writeValue(value: boolean): void;
-    registerOnChange(fn: (value: boolean) => void): void;
-    registerOnTouched(fn: () => void): void;
-    setDisabledState(isDisabled: boolean): void;
-    onToggleChange(event: Event): void;
-    onLabelClick(): void;
-    classes: _angular_core.Signal<string[]>;
-    effectiveAriaLabel: _angular_core.Signal<string | undefined>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxSlideToggleComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxSlideToggleComponent, "ix-slide-toggle", never, { "labelPosition": { "alias": "labelPosition"; "required": false; "isSignal": true; }; "label": { "alias": "label"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "required": { "alias": "required"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "ariaLabelledby": { "alias": "ariaLabelledby"; "required": false; "isSignal": true; }; "checked": { "alias": "checked"; "required": false; "isSignal": true; }; }, { "change": "change"; "toggleChange": "toggleChange"; }, never, never, true, never>;
-}
-
-declare class IxTabComponent implements AfterContentInit {
-    label: _angular_core.InputSignal<string>;
-    disabled: _angular_core.InputSignal<boolean>;
-    icon: _angular_core.InputSignal<string | undefined>;
-    iconTemplate: _angular_core.InputSignal<TemplateRef<any> | undefined>;
-    testId: _angular_core.InputSignal<string | undefined>;
-    selected: _angular_core.OutputEmitterRef<void>;
-    iconContent: _angular_core.Signal<TemplateRef<any> | undefined>;
-    index: _angular_core.WritableSignal<number>;
-    isActive: _angular_core.WritableSignal<boolean>;
-    tabsComponent?: any;
-    elementRef: ElementRef<any>;
-    protected hasIconContent: _angular_core.WritableSignal<boolean>;
-    ngAfterContentInit(): void;
-    onClick(): void;
-    onKeydown(event: KeyboardEvent): void;
-    classes: _angular_core.Signal<string>;
-    tabIndex: _angular_core.Signal<0 | -1>;
-    hasIcon: _angular_core.Signal<boolean>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTabComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTabComponent, "ix-tab", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "icon": { "alias": "icon"; "required": false; "isSignal": true; }; "iconTemplate": { "alias": "iconTemplate"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, { "selected": "selected"; }, ["iconContent"], ["*"], true, never>;
-}
-
-declare class IxTabPanelComponent {
-    label: _angular_core.InputSignal<string>;
-    lazyLoad: _angular_core.InputSignal<boolean>;
-    testId: _angular_core.InputSignal<string | undefined>;
-    content: _angular_core.Signal<TemplateRef<any>>;
-    index: _angular_core.WritableSignal<number>;
-    isActive: _angular_core.WritableSignal<boolean>;
-    hasBeenActive: _angular_core.WritableSignal<boolean>;
-    elementRef: ElementRef<any>;
-    classes: _angular_core.Signal<string>;
-    shouldRender: _angular_core.Signal<boolean>;
-    onActivate(): void;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTabPanelComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTabPanelComponent, "ix-tab-panel", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "lazyLoad": { "alias": "lazyLoad"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
-}
-
-interface TabChangeEvent {
-    index: number;
-    tab: IxTabComponent;
-    previousIndex: number;
-}
-declare class IxTabsComponent implements AfterContentInit, AfterViewInit {
-    tabs: _angular_core.Signal<readonly IxTabComponent[]>;
-    panels: _angular_core.Signal<readonly IxTabPanelComponent[]>;
-    tabHeader: _angular_core.Signal<ElementRef<HTMLElement>>;
-    selectedIndex: _angular_core.InputSignal<number>;
-    orientation: _angular_core.InputSignal<"horizontal" | "vertical">;
-    highlightPosition: _angular_core.InputSignal<"top" | "bottom" | "left" | "right">;
-    selectedIndexChange: _angular_core.OutputEmitterRef<number>;
-    tabChange: _angular_core.OutputEmitterRef<TabChangeEvent>;
-    private internalSelectedIndex;
-    highlightBarLeft: _angular_core.WritableSignal<number>;
-    highlightBarWidth: _angular_core.WritableSignal<number>;
-    highlightBarTop: _angular_core.WritableSignal<number>;
-    highlightBarHeight: _angular_core.WritableSignal<number>;
-    highlightBarVisible: _angular_core.WritableSignal<boolean>;
-    private focusMonitor;
-    private liveAnnouncer;
-    private cdr;
-    constructor();
-    ngAfterContentInit(): void;
-    ngAfterViewInit(): void;
-    ngOnDestroy(): void;
-    private initializeTabs;
-    selectTab(index: number): void;
-    private updateHighlightBar;
-    onKeydown(event: KeyboardEvent, currentIndex: number): void;
-    private getPreviousEnabledTabIndex;
-    private getNextEnabledTabIndex;
-    private getFirstEnabledTabIndex;
-    private getLastEnabledTabIndex;
-    private focusTab;
-    classes: _angular_core.Signal<string>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTabsComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTabsComponent, "ix-tabs", never, { "selectedIndex": { "alias": "selectedIndex"; "required": false; "isSignal": true; }; "orientation": { "alias": "orientation"; "required": false; "isSignal": true; }; "highlightPosition": { "alias": "highlightPosition"; "required": false; "isSignal": true; }; }, { "selectedIndexChange": "selectedIndexChange"; "tabChange": "tabChange"; }, ["tabs", "panels"], ["ix-tab", "ix-tab-panel"], true, never>;
-}
-
-/**
- * Directive that attaches a menu to any element.
- * Usage: <button [ixMenuTriggerFor]="menu">Open Menu</button>
- */
-declare class IxMenuTriggerDirective {
-    private elementRef;
-    private overlay;
-    private viewContainerRef;
-    menu: _angular_core.InputSignal<IxMenuComponent>;
-    ixMenuPosition: _angular_core.InputSignal<"before" | "after" | "above" | "below">;
-    private overlayRef?;
-    private isMenuOpen;
-    constructor(elementRef: ElementRef, overlay: Overlay, viewContainerRef: ViewContainerRef);
-    onClick(): void;
-    openMenu(): void;
-    closeMenu(): void;
-    private getPositions;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxMenuTriggerDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxMenuTriggerDirective, "[ixMenuTriggerFor]", ["ixMenuTrigger"], { "menu": { "alias": "ixMenuTriggerFor"; "required": true; "isSignal": true; }; "ixMenuPosition": { "alias": "ixMenuPosition"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
-}
-
-declare enum ModifierKeys {
-    COMMAND = "\u2318",
-    CMD = "\u2318",
-    CTRL = "Ctrl",
-    CONTROL = "Ctrl",
-    ALT = "\u2325",
-    OPTION = "\u2325",
-    OPT = "\u2325",
-    SHIFT = "\u21E7",
-    META = "\u2318",
-    SUPER = "\u2318"
-}
-declare enum WindowsModifierKeys {
-    CTRL = "Ctrl",
-    CONTROL = "Ctrl",
-    ALT = "Alt",
-    SHIFT = "Shift",
-    WIN = "Win",
-    WINDOWS = "Win"
-}
-declare enum LinuxModifierKeys {
-    CTRL = "Ctrl",
-    CONTROL = "Ctrl",
-    ALT = "Alt",
-    SHIFT = "Shift",
-    SUPER = "Super",
-    META = "Meta"
-}
-type PlatformType = 'mac' | 'windows' | 'linux' | 'auto';
-
-declare class IxKeyboardShortcutComponent {
-    shortcut: _angular_core.InputSignal<string>;
-    platform: _angular_core.InputSignal<PlatformType>;
-    separator: _angular_core.InputSignal<string>;
-    displayShortcut: _angular_core.Signal<string>;
-    private formatShortcut;
-    private detectPlatform;
-    private convertToWindows;
-    shortcutKeys: _angular_core.Signal<string[]>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxKeyboardShortcutComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxKeyboardShortcutComponent, "ix-keyboard-shortcut", never, { "shortcut": { "alias": "shortcut"; "required": false; "isSignal": true; }; "platform": { "alias": "platform"; "required": false; "isSignal": true; }; "separator": { "alias": "separator"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
-}
-
-declare class IxFormFieldComponent implements AfterContentInit {
-    label: _angular_core.InputSignal<string>;
-    hint: _angular_core.InputSignal<string>;
-    required: _angular_core.InputSignal<boolean>;
-    testId: _angular_core.InputSignal<string>;
-    control: _angular_core.Signal<NgControl | undefined>;
-    protected hasError: _angular_core.WritableSignal<boolean>;
-    protected errorMessage: _angular_core.WritableSignal<string>;
-    ngAfterContentInit(): void;
-    private updateErrorState;
-    private getErrorMessage;
-    showError: _angular_core.Signal<boolean>;
-    showHint: _angular_core.Signal<boolean>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxFormFieldComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxFormFieldComponent, "ix-form-field", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "hint": { "alias": "hint"; "required": false; "isSignal": true; }; "required": { "alias": "required"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, {}, ["control"], ["*"], true, never>;
-}
-
-interface IxSelectOption {
-    value: any;
-    label: string;
-    disabled?: boolean;
-}
-interface IxSelectOptionGroup {
-    label: string;
-    options: IxSelectOption[];
-    disabled?: boolean;
-}
-declare class IxSelectComponent implements ControlValueAccessor {
-    private elementRef;
-    private cdr;
-    options: _angular_core.InputSignal<IxSelectOption[]>;
-    optionGroups: _angular_core.InputSignal<IxSelectOptionGroup[]>;
-    placeholder: _angular_core.InputSignal<string>;
-    disabled: _angular_core.InputSignal<boolean>;
-    testId: _angular_core.InputSignal<string>;
-    selectionChange: _angular_core.OutputEmitterRef<any>;
-    protected isOpen: _angular_core.WritableSignal<boolean>;
-    protected selectedValue: _angular_core.WritableSignal<any>;
-    private formDisabled;
-    isDisabled: _angular_core.Signal<boolean>;
-    private onChange;
-    private onTouched;
-    constructor(elementRef: ElementRef, cdr: ChangeDetectorRef);
-    writeValue(value: any): void;
-    registerOnChange(fn: any): void;
-    registerOnTouched(fn: any): void;
-    setDisabledState(isDisabled: boolean): void;
-    toggleDropdown(): void;
-    closeDropdown(): void;
-    onOptionClick(option: IxSelectOption): void;
-    selectOption(option: IxSelectOption): void;
-    isSelected: _angular_core.Signal<(option: IxSelectOption) => boolean>;
-    getDisplayText: _angular_core.Signal<any>;
-    private findOptionByValue;
-    hasAnyOptions: _angular_core.Signal<boolean>;
-    private compareValues;
-    onKeydown(event: KeyboardEvent): void;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxSelectComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxSelectComponent, "ix-select", never, { "options": { "alias": "options"; "required": false; "isSignal": true; }; "optionGroups": { "alias": "optionGroups"; "required": false; "isSignal": true; }; "placeholder": { "alias": "placeholder"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, { "selectionChange": "selectionChange"; }, never, never, true, never>;
 }
 
 /**
@@ -969,7 +955,7 @@ interface LucideIconOptions {
  * });
  * ```
  */
-declare function setupLucideIntegration(lucideIcons: any, defaultOptions?: LucideIconOptions): void;
+declare function setupLucideIntegration(lucideIcons: Record<string, unknown>, defaultOptions?: LucideIconOptions): void;
 /**
  * Alternative setup function that allows manual registration
  * Use this if you want more control over which icons are available
@@ -989,7 +975,7 @@ declare function setupLucideIntegration(lucideIcons: any, defaultOptions?: Lucid
  * iconRegistry.registerLibrary(lucideLibrary);
  * ```
  */
-declare function createLucideLibrary(icons: Record<string, any>, defaultOptions?: LucideIconOptions): IconLibrary;
+declare function createLucideLibrary(icons: Record<string, unknown>, defaultOptions?: LucideIconOptions): IconLibrary;
 /**
  * Register common Lucide icons individually
  * Useful when you only want specific icons to reduce bundle size
@@ -1008,17 +994,16 @@ declare function createLucideLibrary(icons: Record<string, any>, defaultOptions?
  * });
  * ```
  */
-declare function registerLucideIcons(icons: Record<string, any>): void;
+declare function registerLucideIcons(icons: Record<string, unknown>): void;
 
 /**
  * Service for loading and registering TrueNAS custom icons
  */
 declare class TruenasIconsService {
-    private http;
-    private iconRegistry;
     private iconsLoaded;
     private iconBasePath;
-    constructor(http: HttpClient, iconRegistry: IxIconRegistryService);
+    private http;
+    private iconRegistry;
     /**
      * Load and register all TrueNAS custom icons
      * Call this in your app initialization (APP_INITIALIZER or main component)
@@ -1048,7 +1033,6 @@ declare class IxListComponent {
 }
 
 declare class IxListItemComponent implements AfterContentInit {
-    private elementRef;
     disabled: _angular_core.InputSignal<boolean>;
     clickable: _angular_core.InputSignal<boolean>;
     itemClick: _angular_core.OutputEmitterRef<Event>;
@@ -1056,7 +1040,7 @@ declare class IxListItemComponent implements AfterContentInit {
     protected hasSecondaryTextContent: _angular_core.WritableSignal<boolean>;
     protected hasTrailingContent: _angular_core.WritableSignal<boolean>;
     protected hasPrimaryTextDirective: _angular_core.WritableSignal<boolean>;
-    constructor(elementRef: ElementRef);
+    private elementRef;
     ngAfterContentInit(): void;
     private checkContentProjection;
     hasSecondaryText: _angular_core.Signal<boolean>;
@@ -1113,14 +1097,16 @@ declare class IxDividerComponent {
 }
 
 declare class IxListOptionComponent implements AfterContentInit {
-    private elementRef;
-    private cdr;
-    value: _angular_core.InputSignal<any>;
+    cdr: ChangeDetectorRef;
+    elementRef: ElementRef<any>;
+    value: _angular_core.InputSignal<unknown>;
     selected: _angular_core.InputSignal<boolean>;
     disabled: _angular_core.InputSignal<boolean>;
     color: _angular_core.InputSignal<"primary" | "warn" | "accent">;
     selectionChange: _angular_core.OutputEmitterRef<boolean>;
-    selectionList?: any;
+    selectionList?: {
+        onOptionSelectionChange: () => void;
+    };
     internalSelected: _angular_core.WritableSignal<boolean | null>;
     internalDisabled: _angular_core.WritableSignal<boolean | null>;
     internalColor: _angular_core.WritableSignal<"primary" | "warn" | "accent" | null>;
@@ -1130,10 +1116,9 @@ declare class IxListOptionComponent implements AfterContentInit {
     protected hasLeadingContent: _angular_core.WritableSignal<boolean>;
     protected hasSecondaryTextContent: _angular_core.WritableSignal<boolean>;
     protected hasPrimaryTextDirective: _angular_core.WritableSignal<boolean>;
-    constructor(elementRef: ElementRef, cdr: ChangeDetectorRef);
     ngAfterContentInit(): void;
     private checkContentProjection;
-    onClick(event: Event): void;
+    onClick(_event: Event): void;
     onKeydown(event: KeyboardEvent): void;
     toggle(): void;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxListOptionComponent, never>;
@@ -1156,8 +1141,8 @@ declare class IxSelectionListComponent implements ControlValueAccessor {
     private onChange;
     private onTouched;
     constructor();
-    writeValue(value: any[]): void;
-    registerOnChange(fn: (value: any[]) => void): void;
+    writeValue(value: unknown[]): void;
+    registerOnChange(fn: (value: unknown[]) => void): void;
     registerOnTouched(fn: () => void): void;
     setDisabledState(isDisabled: boolean): void;
     onOptionSelectionChange(): void;
@@ -1168,13 +1153,11 @@ declare class IxSelectionListComponent implements ControlValueAccessor {
 
 declare class IxHeaderCellDefDirective {
     template: TemplateRef<any>;
-    constructor(template: TemplateRef<any>);
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxHeaderCellDefDirective, never>;
     static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxHeaderCellDefDirective, "[ixHeaderCellDef]", never, {}, {}, never, never, true, never>;
 }
 declare class IxCellDefDirective {
     template: TemplateRef<any>;
-    constructor(template: TemplateRef<any>);
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxCellDefDirective, never>;
     static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxCellDefDirective, "[ixCellDef]", never, {}, {}, never, never, true, never>;
 }
@@ -1186,28 +1169,29 @@ declare class IxTableColumnDirective {
     static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxTableColumnDirective, "[ixColumnDef]", ["ixColumnDef"], { "name": { "alias": "ixColumnDef"; "required": true; "isSignal": true; }; }, {}, ["headerTemplate", "cellTemplate"], never, true, never>;
 }
 
-interface IxTableDataSource<T = any> {
-    data: T[];
+interface IxTableDataSource<T = unknown> {
+    data?: T[];
     connect?(): T[];
     disconnect?(): void;
 }
-declare class IxTableComponent {
-    private cdr;
-    dataSource: _angular_core.InputSignal<any[] | IxTableDataSource<any>>;
+declare class IxTableComponent<T = unknown> {
+    dataSource: _angular_core.InputSignal<IxTableDataSource<T> | T[]>;
     displayedColumns: _angular_core.InputSignal<string[]>;
     columnDefs: _angular_core.Signal<readonly IxTableColumnDirective[]>;
     private columnDefMap;
-    constructor(cdr: ChangeDetectorRef);
+    private cdr;
+    constructor();
     private processColumnDefs;
-    data: _angular_core.Signal<any[]>;
+    data: _angular_core.Signal<T[]>;
     getColumnDef(columnName: string): IxTableColumnDirective | undefined;
     trackByIndex(index: number): number;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTableComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTableComponent, "ix-table", never, { "dataSource": { "alias": "dataSource"; "required": false; "isSignal": true; }; "displayedColumns": { "alias": "displayedColumns"; "required": false; "isSignal": true; }; }, {}, ["columnDefs"], never, true, never>;
+    getCellValue(row: T, column: string): unknown;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTableComponent<any>, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTableComponent<any>, "ix-table", never, { "dataSource": { "alias": "dataSource"; "required": false; "isSignal": true; }; "displayedColumns": { "alias": "displayedColumns"; "required": false; "isSignal": true; }; }, {}, ["columnDefs"], never, true, never>;
 }
 
 /** Flat node with expandable and level information */
-interface IxFlatTreeNode<T = any> {
+interface IxFlatTreeNode<T = unknown> {
     data: T;
     expandable: boolean;
     level: number;
@@ -1241,32 +1225,32 @@ declare class IxTreeFlatDataSource<T, F> extends DataSource<F> {
     private _getExpandedNodesWithLevel;
 }
 declare class IxTreeComponent<T, K = T> extends CdkTree<T, K> {
-    constructor(differs: IterableDiffers, changeDetectorRef: ChangeDetectorRef, viewContainer: ViewContainerRef);
+    constructor();
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTreeComponent<any, any>, never>;
     static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTreeComponent<any, any>, "ix-tree", ["ixTree"], {}, {}, never, never, true, never>;
 }
 
 declare class IxTreeNodeComponent<T, K = T> extends CdkTreeNode<T, K> {
-    constructor(elementRef: ElementRef<HTMLElement>, tree: CdkTree<T, K>, data?: T, changeDetectorRef?: ChangeDetectorRef);
+    constructor();
     /** The tree node's level in the tree */
     get level(): number;
     /** Whether the tree node is expandable */
     get isExpandable(): boolean;
     /** Whether the tree node is expanded */
     get isExpanded(): boolean;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTreeNodeComponent<any, any>, [null, { optional: true; }, { optional: true; }, { optional: true; }]>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTreeNodeComponent<any, any>, never>;
     static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTreeNodeComponent<any, any>, "ix-tree-node", ["ixTreeNode"], {}, {}, never, ["*"], true, never>;
 }
 
 declare class IxNestedTreeNodeComponent<T, K = T> extends CdkNestedTreeNode<T, K> {
-    constructor(elementRef: ElementRef<HTMLElement>, tree: CdkTree<T, K>, data?: T, changeDetectorRef?: ChangeDetectorRef);
+    constructor();
     /** The tree node's level in the tree */
     get level(): number;
     /** Whether the tree node is expandable */
     get isExpandable(): boolean;
     /** Whether the tree node is expanded */
     get isExpanded(): boolean;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxNestedTreeNodeComponent<any, any>, [null, { optional: true; }, { optional: true; }, { optional: true; }]>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxNestedTreeNodeComponent<any, any>, never>;
     static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxNestedTreeNodeComponent<any, any>, "ix-nested-tree-node", ["ixNestedTreeNode"], {}, {}, never, ["*", "[slot=children]"], true, never>;
 }
 
@@ -1536,7 +1520,6 @@ declare class IxSpinnerComponent {
 }
 
 declare class IxBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewInit {
-    private elementRef;
     ariaLabel: _angular_core.InputSignal<string | null>;
     private paths;
     private animationId;
@@ -1545,7 +1528,7 @@ declare class IxBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewI
     private readonly delayStep;
     private readonly cyclePause;
     private readonly emptyPause;
-    constructor(elementRef: ElementRef<HTMLElement>);
+    private elementRef;
     ngOnInit(): void;
     ngAfterViewInit(): void;
     ngOnDestroy(): void;
@@ -1624,9 +1607,6 @@ interface DateRange {
     end: Date | null;
 }
 declare class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, OnDestroy {
-    private overlay;
-    private elementRef;
-    private viewContainerRef;
     disabled: _angular_core.InputSignal<boolean>;
     placeholder: _angular_core.InputSignal<string>;
     private formDisabled;
@@ -1637,7 +1617,7 @@ declare class IxDateRangeInputComponent implements ControlValueAccessor, OnInit,
     endMonthRef: _angular_core.Signal<ElementRef<HTMLInputElement>>;
     endDayRef: _angular_core.Signal<ElementRef<HTMLInputElement>>;
     endYearRef: _angular_core.Signal<ElementRef<HTMLInputElement>>;
-    calendarTemplate: _angular_core.Signal<TemplateRef<any>>;
+    calendarTemplate: _angular_core.Signal<TemplateRef<unknown>>;
     calendar: _angular_core.Signal<IxCalendarComponent>;
     wrapperEl: _angular_core.Signal<ElementRef<HTMLDivElement>>;
     private destroy$;
@@ -1655,15 +1635,16 @@ declare class IxDateRangeInputComponent implements ControlValueAccessor, OnInit,
     endYear: _angular_core.WritableSignal<string>;
     private currentFocus;
     initialRange: _angular_core.Signal<DateRange>;
-    constructor(overlay: Overlay, elementRef: ElementRef, viewContainerRef: ViewContainerRef);
+    private overlay;
+    private viewContainerRef;
     ngOnInit(): void;
     ngOnDestroy(): void;
     writeValue(value: DateRange): void;
     registerOnChange(fn: (value: DateRange) => void): void;
     registerOnTouched(fn: () => void): void;
     setDisabledState(isDisabled: boolean): void;
-    onSegmentFocus(range: 'start' | 'end', segment: 'month' | 'day' | 'year'): void;
-    onSegmentBlur(range: 'start' | 'end', segment: 'month' | 'day' | 'year'): void;
+    onSegmentFocus(range: 'start' | 'end', _segment: 'month' | 'day' | 'year'): void;
+    onSegmentBlur(range: 'start' | 'end', _segment: 'month' | 'day' | 'year'): void;
     onSegmentKeydown(event: KeyboardEvent, range: 'start' | 'end', segment: 'month' | 'day' | 'year'): void;
     onRangeSelected(range: DateRange): void;
     private updateRange;
@@ -1672,8 +1653,6 @@ declare class IxDateRangeInputComponent implements ControlValueAccessor, OnInit,
     private updateDateFromSegments;
     private focusNextSegment;
     private focusPrevSegment;
-    private formatDate;
-    private parseDate;
     openDatepicker(): void;
     close(): void;
     private createOverlay;
@@ -1823,9 +1802,8 @@ declare class IxMultiYearViewComponent {
 }
 
 declare class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDestroy {
-    private overlay;
-    private elementRef;
-    private viewContainerRef;
+    overlay: Overlay;
+    viewContainerRef: ViewContainerRef;
     disabled: _angular_core.InputSignal<boolean>;
     placeholder: _angular_core.InputSignal<string>;
     min: _angular_core.InputSignal<Date | undefined>;
@@ -1836,7 +1814,7 @@ declare class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDe
     monthRef: _angular_core.Signal<ElementRef<HTMLInputElement>>;
     dayRef: _angular_core.Signal<ElementRef<HTMLInputElement>>;
     yearRef: _angular_core.Signal<ElementRef<HTMLInputElement>>;
-    calendarTemplate: _angular_core.Signal<TemplateRef<any>>;
+    calendarTemplate: _angular_core.Signal<TemplateRef<unknown>>;
     calendar: _angular_core.Signal<IxCalendarComponent>;
     wrapperEl: _angular_core.Signal<ElementRef<HTMLDivElement>>;
     private destroy$;
@@ -1849,15 +1827,14 @@ declare class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDe
     month: _angular_core.WritableSignal<string>;
     day: _angular_core.WritableSignal<string>;
     year: _angular_core.WritableSignal<string>;
-    constructor(overlay: Overlay, elementRef: ElementRef, viewContainerRef: ViewContainerRef);
     ngOnInit(): void;
     ngOnDestroy(): void;
     writeValue(value: Date | null): void;
     registerOnChange(fn: (value: Date | null) => void): void;
     registerOnTouched(fn: () => void): void;
     setDisabledState(isDisabled: boolean): void;
-    onSegmentFocus(segment: 'month' | 'day' | 'year'): void;
-    onSegmentBlur(segment: 'month' | 'day' | 'year'): void;
+    onSegmentFocus(_segment: 'month' | 'day' | 'year'): void;
+    onSegmentBlur(_segment: 'month' | 'day' | 'year'): void;
     onSegmentKeydown(event: KeyboardEvent, segment: 'month' | 'day' | 'year'): void;
     onDateSelected(date: Date): void;
     private updateDate;
@@ -1884,7 +1861,7 @@ declare class IxTimeInputComponent implements ControlValueAccessor {
     private onChange;
     private onTouched;
     _value: string | null;
-    timeSelectOptions: _angular_core.Signal<IxSelectOption[]>;
+    timeSelectOptions: _angular_core.Signal<IxSelectOption<string>[]>;
     writeValue(value: string): void;
     registerOnChange(fn: (value: string) => void): void;
     registerOnTouched(fn: () => void): void;
@@ -1895,13 +1872,20 @@ declare class IxTimeInputComponent implements ControlValueAccessor {
 }
 
 declare class IxSliderThumbDirective implements ControlValueAccessor, OnInit, OnDestroy {
-    private elementRef;
     disabled: _angular_core.WritableSignal<boolean>;
-    slider: any;
+    slider?: {
+        isDisabled: () => boolean;
+        min: () => number;
+        max: () => number;
+        step: () => number;
+        value: () => number;
+        updateValue: (value: number) => void;
+        getSliderRect: () => DOMRect;
+    };
+    onTouched: () => void;
     private onChangeCallback;
-    private onTouched;
     private isDragging;
-    constructor(elementRef: ElementRef<HTMLInputElement>);
+    private elementRef;
     ngOnInit(): void;
     ngOnDestroy(): void;
     writeValue(value: number): void;
@@ -1909,7 +1893,7 @@ declare class IxSliderThumbDirective implements ControlValueAccessor, OnInit, On
     registerOnTouched(fn: () => void): void;
     setDisabledState(isDisabled: boolean): void;
     onInput(event: Event): void;
-    onChange(event: Event): void;
+    onChange(_event: Event): void;
     onMouseDown(event: MouseEvent): void;
     onTouchStart(event: TouchEvent): void;
     private addGlobalListeners;
@@ -1972,17 +1956,16 @@ declare class IxSliderComponent implements ControlValueAccessor, OnDestroy, Afte
 }
 
 declare class IxSliderWithLabelDirective implements OnInit, OnDestroy {
+    enabled: _angular_core.InputSignal<string | boolean>;
     private _elementRef;
     private _slider;
-    enabled: _angular_core.InputSignal<string | boolean>;
-    constructor(_elementRef: ElementRef<HTMLElement>, _slider: IxSliderComponent);
     ngOnInit(): void;
     private _setupInteractionListeners;
     ngOnDestroy(): void;
     private _onInteractionStart;
     private _onInteractionEnd;
     private _cleanup;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxSliderWithLabelDirective, [null, { host: true; }]>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxSliderWithLabelDirective, never>;
     static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxSliderWithLabelDirective, "ix-slider[ixSliderWithLabel]", never, { "enabled": { "alias": "ixSliderWithLabel"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
@@ -1996,7 +1979,7 @@ declare class IxButtonToggleGroupComponent implements ControlValueAccessor {
     ariaLabelledby: _angular_core.InputSignal<string>;
     change: _angular_core.OutputEmitterRef<{
         source: IxButtonToggleComponent;
-        value: any;
+        value: unknown;
     }>;
     private selectedValue;
     private selectedValues;
@@ -2005,9 +1988,9 @@ declare class IxButtonToggleGroupComponent implements ControlValueAccessor {
     private onChange;
     private onTouched;
     constructor();
-    writeValue(value: any): void;
-    registerOnChange(fn: any): void;
-    registerOnTouched(fn: any): void;
+    writeValue(value: unknown): void;
+    registerOnChange(fn: (value: unknown) => void): void;
+    registerOnTouched(fn: () => void): void;
     setDisabledState(isDisabled: boolean): void;
     _onButtonToggleClick(clickedToggle: IxButtonToggleComponent): void;
     private handleSingleSelection;
@@ -2019,17 +2002,17 @@ declare class IxButtonToggleGroupComponent implements ControlValueAccessor {
 }
 
 declare class IxButtonToggleComponent implements ControlValueAccessor {
-    private cdr;
+    cdr: ChangeDetectorRef;
     private static _uniqueIdCounter;
     id: _angular_core.InputSignal<string>;
-    value: _angular_core.InputSignal<any>;
+    value: _angular_core.InputSignal<unknown>;
     disabled: _angular_core.InputSignal<boolean>;
     checked: _angular_core.WritableSignal<boolean>;
     ariaLabel: _angular_core.InputSignal<string>;
     ariaLabelledby: _angular_core.InputSignal<string>;
     change: _angular_core.OutputEmitterRef<{
         source: IxButtonToggleComponent;
-        value: any;
+        value: unknown;
     }>;
     buttonId: _angular_core.Signal<string>;
     buttonToggleGroup?: IxButtonToggleGroupComponent;
@@ -2037,10 +2020,9 @@ declare class IxButtonToggleComponent implements ControlValueAccessor {
     isDisabled: _angular_core.Signal<boolean>;
     private onChange;
     private onTouched;
-    constructor(cdr: ChangeDetectorRef);
-    writeValue(value: any): void;
-    registerOnChange(fn: any): void;
-    registerOnTouched(fn: any): void;
+    writeValue(value: boolean): void;
+    registerOnChange(fn: (value: boolean) => void): void;
+    registerOnTouched(fn: () => void): void;
     setDisabledState(isDisabled: boolean): void;
     toggle(): void;
     onFocus(): void;
@@ -2052,10 +2034,6 @@ declare class IxButtonToggleComponent implements ControlValueAccessor {
 
 type TooltipPosition = 'above' | 'below' | 'left' | 'right' | 'before' | 'after';
 declare class IxTooltipDirective implements OnInit, OnDestroy {
-    private _overlay;
-    private _elementRef;
-    private _viewContainerRef;
-    private _overlayPositionBuilder;
     message: _angular_core.InputSignal<string>;
     position: _angular_core.InputSignal<TooltipPosition>;
     disabled: _angular_core.InputSignal<boolean>;
@@ -2068,7 +2046,10 @@ declare class IxTooltipDirective implements OnInit, OnDestroy {
     private _hideTimeout;
     private _isTooltipVisible;
     private _ariaDescribedBy;
-    constructor(_overlay: Overlay, _elementRef: ElementRef<HTMLElement>, _viewContainerRef: ViewContainerRef, _overlayPositionBuilder: OverlayPositionBuilder);
+    private _overlay;
+    private _elementRef;
+    private _viewContainerRef;
+    private _overlayPositionBuilder;
     ngOnInit(): void;
     ngOnDestroy(): void;
     _onMouseEnter(): void;
@@ -2110,43 +2091,58 @@ interface IxDialogDefaults {
 }
 declare class IxDialog {
     private dialog;
-    open<C, D = unknown, R = unknown>(target: IxDialogOpenTarget<C>, config?: DialogConfig<D> & {
-        fullscreen?: boolean;
-    }): DialogRef<R, C>;
+    /**
+     * Open a dialog with the given component or template.
+     * Applies default configuration for panel class, max dimensions, and focus behavior.
+     */
+    open<C, D = unknown, R = unknown>(target: ComponentType<C> | TemplateRef<C>, config?: DialogConfig<D, DialogRef<R, C>>): DialogRef<R, C>;
+    /**
+     * Open a fullscreen dialog that takes over the entire viewport.
+     * Automatically applies fullscreen styling and dimensions.
+     */
+    openFullscreen<C, D = unknown, R = unknown>(target: ComponentType<C> | TemplateRef<C>, config?: DialogConfig<D, DialogRef<R, C>>): DialogRef<R, C>;
+    /**
+     * Open a confirmation dialog with customizable title, message, and button labels.
+     * Returns a promise that resolves to an Observable of the user's choice.
+     */
     confirm(opts: {
         title: string;
         message?: string;
         confirmText?: string;
         cancelText?: string;
         destructive?: boolean;
-        data?: any;
-    }): Promise<rxjs.Observable<unknown>>;
+    }): Promise<Observable<boolean | undefined>>;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxDialog, never>;
     static ɵprov: _angular_core.ɵɵInjectableDeclaration<IxDialog>;
 }
 
 declare class IxDialogShellComponent implements OnInit {
-    private ref;
-    private document;
-    private data?;
     title: _angular_core.InputSignal<string>;
     showFullscreenButton: _angular_core.InputSignal<boolean>;
     isFullscreen: _angular_core.WritableSignal<boolean>;
     private originalStyles;
-    constructor(ref: DialogRef, document: Document, data?: any | undefined);
+    private ref;
+    private document;
+    private data;
     ngOnInit(): void;
-    close(result?: any): void;
+    close(result?: unknown): void;
     toggleFullscreen(): void;
     private enterFullscreen;
     private exitFullscreen;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxDialogShellComponent, [null, null, { optional: true; }]>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxDialogShellComponent, never>;
     static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxDialogShellComponent, "ix-dialog-shell", never, { "title": { "alias": "title"; "required": false; "isSignal": true; }; "showFullscreenButton": { "alias": "showFullscreenButton"; "required": false; "isSignal": true; }; }, {}, never, ["*", "[ixDialogAction]"], true, never>;
 }
 
+interface IxConfirmDialogData {
+    title: string;
+    message?: string;
+    confirmText?: string;
+    cancelText?: string;
+    destructive?: boolean;
+}
 declare class IxConfirmDialogComponent {
-    ref: DialogRef<boolean>;
-    data: any;
-    constructor(ref: DialogRef<boolean>, data: any);
+    ref: DialogRef<boolean, unknown>;
+    data: IxConfirmDialogData;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxConfirmDialogComponent, never>;
     static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxConfirmDialogComponent, "ix-confirm-dialog", never, {}, {}, never, never, true, never>;
 }
@@ -2157,22 +2153,29 @@ declare class IxStepComponent {
     optional: _angular_core.InputSignal<boolean>;
     completed: _angular_core.InputSignal<boolean>;
     hasError: _angular_core.InputSignal<boolean>;
-    data: _angular_core.InputSignal<any>;
-    content: _angular_core.Signal<TemplateRef<any>>;
+    data: _angular_core.InputSignal<unknown>;
+    content: _angular_core.Signal<TemplateRef<unknown>>;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxStepComponent, never>;
     static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxStepComponent, "ix-step", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "icon": { "alias": "icon"; "required": false; "isSignal": true; }; "optional": { "alias": "optional"; "required": false; "isSignal": true; }; "completed": { "alias": "completed"; "required": false; "isSignal": true; }; "hasError": { "alias": "hasError"; "required": false; "isSignal": true; }; "data": { "alias": "data"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
 }
 
 declare class IxStepperComponent {
-    private cdr;
     orientation: _angular_core.InputSignal<"auto" | "horizontal" | "vertical">;
     linear: _angular_core.InputSignal<boolean>;
     selectedIndex: _angular_core.ModelSignal<number>;
-    selectionChange: _angular_core.OutputEmitterRef<any>;
-    completed: _angular_core.OutputEmitterRef<any>;
+    selectionChange: _angular_core.OutputEmitterRef<{
+        selectedIndex: number;
+        previouslySelectedIndex: number;
+    }>;
+    completed: _angular_core.OutputEmitterRef<{
+        label: string;
+        completed: boolean;
+        data: unknown;
+    }[]>;
     steps: _angular_core.Signal<readonly IxStepComponent[]>;
-    constructor(cdr: ChangeDetectorRef);
-    onWindowResize(event: any): void;
+    private cdr;
+    constructor();
+    onWindowResize(_event: Event): void;
     private _getStepData;
     isWideScreen: _angular_core.Signal<boolean>;
     selectStep(index: number): void;
@@ -2185,9 +2188,6 @@ declare class IxStepperComponent {
 }
 
 declare class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDestroy {
-    private overlay;
-    private elementRef;
-    private viewContainerRef;
     mode: _angular_core.InputSignal<FilePickerMode>;
     multiSelect: _angular_core.InputSignal<boolean>;
     allowCreate: _angular_core.InputSignal<boolean>;
@@ -2205,7 +2205,7 @@ declare class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnD
     createFolder: _angular_core.OutputEmitterRef<CreateFolderEvent>;
     error: _angular_core.OutputEmitterRef<FilePickerError>;
     wrapperEl: _angular_core.Signal<ElementRef<HTMLDivElement>>;
-    filePickerTemplate: _angular_core.Signal<TemplateRef<any>>;
+    filePickerTemplate: _angular_core.Signal<TemplateRef<unknown>>;
     private destroy$;
     private overlayRef?;
     private portal?;
@@ -2222,7 +2222,9 @@ declare class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnD
     isDisabled: _angular_core.Signal<boolean>;
     private onChange;
     private onTouched;
-    constructor(overlay: Overlay, elementRef: ElementRef, viewContainerRef: ViewContainerRef);
+    private overlay;
+    private elementRef;
+    private viewContainerRef;
     ngOnInit(): void;
     ngOnDestroy(): void;
     writeValue(value: string | string[]): void;
@@ -2256,7 +2258,6 @@ declare class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnD
 }
 
 declare class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterViewChecked {
-    private iconRegistry;
     mode: _angular_core.InputSignal<FilePickerMode>;
     multiSelect: _angular_core.InputSignal<boolean>;
     allowCreate: _angular_core.InputSignal<boolean>;
@@ -2268,7 +2269,8 @@ declare class IxFilePickerPopupComponent implements OnInit, AfterViewInit, After
     loading: _angular_core.InputSignal<boolean>;
     creationLoading: _angular_core.InputSignal<boolean>;
     fileExtensions: _angular_core.InputSignal<string[] | undefined>;
-    constructor(iconRegistry: IxIconRegistryService);
+    private iconRegistry;
+    constructor();
     /**
      * Register MDI icon library with all icons used by the file picker component
      * This makes the component self-contained with zero configuration required
@@ -2426,5 +2428,5 @@ declare class IxKeyboardShortcutService {
     static ɵprov: _angular_core.ɵɵInjectableDeclaration<IxKeyboardShortcutService>;
 }
 
-export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBannerComponent, IxBannerHarness, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconButtonComponent, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMenuComponent, IxMenuTriggerDirective, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxSpriteLoaderService, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TruenasIconsService, TruenasUiComponent, TruenasUiService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, iconMarker, libIconMarker, registerLucideIcons, setupLucideIntegration };
-export type { BannerHarnessFilters, CalendarCell, ChipColor, CreateFolderEvent, DateRange, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem, IconLibrary, IconLibraryType, IconResult, IconSize, IconSource, IxBannerType, IxButtonToggleType, IxCardAction, IxCardControl, IxCardFooterLink, IxCardHeaderStatus, IxDialogDefaults, IxDialogOpenTarget, IxFlatTreeNode, IxMenuItem, IxSelectOption, IxSelectOptionGroup, IxSelectionChange, IxTableDataSource, KeyCombination, LabelType, LucideIconOptions, PathSegment, PlatformType, ProgressBarMode, ResolvedIcon, ShortcutHandler, SlideToggleColor, SpinnerMode, SpriteConfig, TabChangeEvent, TooltipPosition, YearCell };
+export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBannerComponent, IxBannerHarness, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconButtonComponent, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMenuComponent, IxMenuTriggerDirective, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxSpriteLoaderService, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TruenasIconsService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, iconMarker, libIconMarker, registerLucideIcons, setupLucideIntegration };
+export type { BannerHarnessFilters, CalendarCell, ChipColor, CreateFolderEvent, DateRange, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem, IconLibrary, IconLibraryType, IconResult, IconSize, IconSource, IxBannerType, IxButtonToggleType, IxCardAction, IxCardControl, IxCardFooterLink, IxCardHeaderStatus, IxConfirmDialogData, IxDialogDefaults, IxDialogOpenTarget, IxFlatTreeNode, IxMenuItem, IxSelectOption, IxSelectOptionGroup, IxSelectionChange, IxTableDataSource, KeyCombination, LabelType, LucideIconOptions, PathSegment, PlatformType, ProgressBarMode, ResolvedIcon, ShortcutHandler, SlideToggleColor, SpinnerMode, SpriteConfig, TabChangeEvent, TooltipPosition, YearCell };

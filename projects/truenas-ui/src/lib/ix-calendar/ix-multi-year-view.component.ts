@@ -1,5 +1,5 @@
-import { Component, input, output, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, input, output, computed } from '@angular/core';
 
 export interface YearCell {
   value: number;
@@ -15,44 +15,7 @@ export interface YearCell {
   selector: 'ix-multi-year-view',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <table role="grid" class="ix-calendar-table">
-      <!-- Table body with year cells -->
-      <tbody class="ix-calendar-body">
-        <tr role="row" *ngFor="let row of yearRows(); let rowIndex = index; trackBy: trackByRow">
-          <td 
-            *ngFor="let cell of row; let colIndex = index; trackBy: trackByYear"
-            role="gridcell"
-            class="ix-calendar-body-cell-container"
-            [attr.data-ix-row]="rowIndex"
-            [attr.data-ix-col]="colIndex"
-            [style.width.%]="cellWidth"
-            [style.padding-top.%]="cellAspectRatio"
-            [style.padding-bottom.%]="cellAspectRatio">
-            <button 
-              type="button"
-              class="ix-calendar-body-cell"
-              [class.ix-calendar-body-selected]="cell.selected"
-              [class.ix-calendar-body-today]="cell.today"
-              [class.ix-calendar-body-active]="cell.selected"
-              [disabled]="!cell.enabled"
-              [attr.tabindex]="cell.selected ? 0 : -1"
-              [attr.aria-label]="cell.ariaLabel"
-              [attr.aria-pressed]="cell.selected"
-              [attr.aria-current]="cell.today ? 'date' : null"
-              (click)="onYearClicked(cell)">
-              <span class="ix-calendar-body-cell-content ix-focus-indicator"
-                    [class.ix-calendar-body-selected]="cell.selected"
-                    [class.ix-calendar-body-today]="cell.today">
-                {{ cell.value }}
-              </span>
-              <span aria-hidden="true" class="ix-calendar-body-cell-preview"></span>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  `,
+  templateUrl: './ix-multi-year-view.component.html',
   styleUrls: ['./ix-multi-year-view.component.scss']
 })
 export class IxMultiYearViewComponent {
@@ -103,12 +66,10 @@ export class IxMultiYearViewComponent {
   private createYearCell(year: number): YearCell {
     const today = new Date();
     const currentYear = today.getFullYear();
-    const activeYear = this.activeDate().getFullYear();
     const selectedYear = this.selected()?.getFullYear();
 
     const isToday = year === currentYear;
     const isSelected = year === selectedYear;
-    const isActive = year === activeYear;
     const enabled = this.isYearEnabled(year);
 
     return {
@@ -126,13 +87,13 @@ export class IxMultiYearViewComponent {
     const minDate = this.minDate();
     const maxDate = this.maxDate();
     const dateFilter = this.dateFilter();
-    if (minDate && year < minDate.getFullYear()) return false;
-    if (maxDate && year > maxDate.getFullYear()) return false;
+    if (minDate && year < minDate.getFullYear()) {return false;}
+    if (maxDate && year > maxDate.getFullYear()) {return false;}
 
     // If we have a date filter, test January 1st of that year
     if (dateFilter) {
       const testDate = new Date(year, 0, 1);
-      if (!dateFilter(testDate)) return false;
+      if (!dateFilter(testDate)) {return false;}
     }
 
     return true;
@@ -141,8 +102,8 @@ export class IxMultiYearViewComponent {
   private formatYearAriaLabel(year: number, isSelected: boolean, isToday: boolean): string {
     let label = year.toString();
     
-    if (isSelected) label += ' (selected)';
-    if (isToday) label += ' (current year)';
+    if (isSelected) {label += ' (selected)';}
+    if (isToday) {label += ' (current year)';}
     
     return label;
   }

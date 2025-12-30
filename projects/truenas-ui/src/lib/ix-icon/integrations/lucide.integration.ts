@@ -18,7 +18,8 @@
  */
 
 import { inject } from '@angular/core';
-import { IxIconRegistryService, IconLibrary } from '../ix-icon-registry.service';
+import type { IconLibrary } from '../ix-icon-registry.service';
+import { IxIconRegistryService } from '../ix-icon-registry.service';
 
 export interface LucideIconOptions {
   size?: number;
@@ -47,22 +48,23 @@ export interface LucideIconOptions {
  * ```
  */
 export function setupLucideIntegration(
-  lucideIcons: any,
+  lucideIcons: Record<string, unknown>,
   defaultOptions: LucideIconOptions = {}
 ): void {
   const registry = inject(IxIconRegistryService);
   
   const lucideLibrary: IconLibrary = {
     name: 'lucide',
-    resolver: (iconName: string, options: LucideIconOptions = {}) => {
+    resolver: (iconName: string, options?: unknown) => {
+      const typedOptions = (options as LucideIconOptions) || {};
       // Convert kebab-case to PascalCase (home-icon -> HomeIcon)
       const pascalCase = iconName
         .split('-')
         .map(part => part.charAt(0).toUpperCase() + part.slice(1))
         .join('');
-      
+
       const iconFunction = lucideIcons[pascalCase];
-      
+
       if (iconFunction && typeof iconFunction === 'function') {
         try {
           // Merge default options with provided options
@@ -71,7 +73,7 @@ export function setupLucideIntegration(
             color: 'currentColor',
             strokeWidth: 2,
             ...defaultOptions,
-            ...options
+            ...typedOptions
           };
           
           // Call the Lucide icon function to get SVG element
@@ -113,14 +115,15 @@ export function setupLucideIntegration(
  * ```
  */
 export function createLucideLibrary(
-  icons: Record<string, any>,
+  icons: Record<string, unknown>,
   defaultOptions: LucideIconOptions = {}
 ): IconLibrary {
   return {
     name: 'lucide',
-    resolver: (iconName: string, options: LucideIconOptions = {}) => {
+    resolver: (iconName: string, options?: unknown) => {
+      const typedOptions = (options as LucideIconOptions) || {};
       const iconFunction = icons[iconName];
-      
+
       if (iconFunction && typeof iconFunction === 'function') {
         try {
           const mergedOptions = {
@@ -128,7 +131,7 @@ export function createLucideLibrary(
             color: 'currentColor',
             strokeWidth: 2,
             ...defaultOptions,
-            ...options
+            ...typedOptions
           };
           
           const svgElement = iconFunction(mergedOptions);
@@ -165,7 +168,7 @@ export function createLucideLibrary(
  * });
  * ```
  */
-export function registerLucideIcons(icons: Record<string, any>): void {
+export function registerLucideIcons(icons: Record<string, unknown>): void {
   const registry = inject(IxIconRegistryService);
   
   Object.entries(icons).forEach(([name, iconFunction]) => {

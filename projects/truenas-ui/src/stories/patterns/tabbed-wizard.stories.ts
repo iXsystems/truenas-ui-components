@@ -1,232 +1,24 @@
-import type { Meta, StoryObj } from '@storybook/angular';
-import { Component } from '@angular/core';
 import { DialogRef } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import type { Meta, StoryObj } from '@storybook/angular';
 import { IxButtonComponent } from '../../lib/ix-button/ix-button.component';
+import { IxCheckboxComponent } from '../../lib/ix-checkbox/ix-checkbox.component';
 import { IxDialogShellComponent } from '../../lib/ix-dialog';
 import { IxDialog } from '../../lib/ix-dialog/ix-dialog.service';
-import { IxRadioComponent } from '../../lib/ix-radio/ix-radio.component';
-import { IxCheckboxComponent } from '../../lib/ix-checkbox/ix-checkbox.component';
 import { IxInputComponent } from '../../lib/ix-input/ix-input.component';
-import { IxSelectComponent, IxSelectOption } from '../../lib/ix-select/ix-select.component';
-import { IxTabsComponent } from '../../lib/ix-tabs/ix-tabs.component';
+import { IxRadioComponent } from '../../lib/ix-radio/ix-radio.component';
+import type { IxSelectOption } from '../../lib/ix-select/ix-select.component';
+import { IxSelectComponent } from '../../lib/ix-select/ix-select.component';
 import { IxTabComponent } from '../../lib/ix-tab/ix-tab.component';
 import { IxTabPanelComponent } from '../../lib/ix-tab-panel/ix-tab-panel.component';
+import { IxTabsComponent } from '../../lib/ix-tabs/ix-tabs.component';
 
 // VM Creation Tabbed Wizard Dialog Component  
 @Component({
   selector: 'tabbed-wizard-dialog',
-  template: `
-    <ix-dialog-shell title="Create Virtual Machine" [showFullscreenButton]="true">
-      <ix-tabs [selectedIndex]="0" orientation="vertical">
-        <ix-tab label="General"></ix-tab>
-        <ix-tab label="OS"></ix-tab>
-        <ix-tab label="System"></ix-tab>
-        <ix-tab label="Disks"></ix-tab>
-        <ix-tab label="CPU"></ix-tab>
-        <ix-tab label="Memory"></ix-tab>
-        <ix-tab label="Network"></ix-tab>
-
-        <ix-tab-panel>
-          <div style="padding: 0 16px;">
-            <h2 style="color: var(--fg2);">General</h2>
-            <p style="margin-bottom: 16px; color: var(--fg2);">Basic virtual machine identification and placement.</p>
-            
-            <div style="display: grid; gap: 16px;">
-              <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">VM Name</label>
-                <ix-input placeholder="my-virtual-machine" [(ngModel)]="vmConfig.general.name"></ix-input>
-              </div>
-              
-              <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Description</label>
-                <ix-input placeholder="Brief description of this VM" [(ngModel)]="vmConfig.general.description"></ix-input>
-              </div>
-              
-              <div>
-                <ix-checkbox label="Start on boot" [(ngModel)]="vmConfig.general.autoStart"></ix-checkbox>
-              </div>
-              
-              <div>
-                <ix-checkbox label="Enable VNC remote access" [(ngModel)]="vmConfig.general.enableVnc"></ix-checkbox>
-              </div>
-            </div>
-          </div>
-        </ix-tab-panel>
-
-        <ix-tab-panel>
-          <div style="padding: 0 16px;">
-            <h2 style="color: var(--fg2);">OS</h2>
-            <p style="margin-bottom: 16px; color: var(--fg2);">Operating system configuration and installation media.</p>
-            
-            <div style="display: grid; gap: 16px;">
-              <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Guest Operating System</label>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                  <ix-radio name="osType" value="linux" label="Linux" [(ngModel)]="vmConfig.os.type"></ix-radio>
-                  <ix-radio name="osType" value="windows" label="Windows" [(ngModel)]="vmConfig.os.type"></ix-radio>
-                  <ix-radio name="osType" value="freebsd" label="FreeBSD" [(ngModel)]="vmConfig.os.type"></ix-radio>
-                  <ix-radio name="osType" value="other" label="Other" [(ngModel)]="vmConfig.os.type"></ix-radio>
-                </div>
-              </div>
-              
-              <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Installation Media</label>
-                <ix-select [options]="isoOptions" placeholder="Select ISO image" [(ngModel)]="vmConfig.os.bootImage"></ix-select>
-              </div>
-              
-              <div>
-                <ix-checkbox label="Install from network" [(ngModel)]="vmConfig.os.networkInstall"></ix-checkbox>
-              </div>
-            </div>
-          </div>
-        </ix-tab-panel>
-
-        <ix-tab-panel>
-          <div style="padding: 0 16px;">
-            <h2 style="color: var(--fg2);">System</h2>
-            <p style="margin-bottom: 16px; color: var(--fg2);">Hardware abstraction and system firmware settings.</p>
-            
-            <div style="display: grid; gap: 16px;">
-              <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Machine Type</label>
-                <ix-select [options]="machineOptions" [(ngModel)]="vmConfig.system.machine"></ix-select>
-              </div>
-              
-              <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Boot Method</label>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                  <ix-radio name="bootMethod" value="uefi" label="UEFI" [(ngModel)]="vmConfig.system.bootMethod"></ix-radio>
-                  <ix-radio name="bootMethod" value="legacy" label="Legacy BIOS" [(ngModel)]="vmConfig.system.bootMethod"></ix-radio>
-                </div>
-              </div>
-              
-              <div>
-                <ix-checkbox label="Enable Secure Boot" [(ngModel)]="vmConfig.system.secureBoot" [disabled]="vmConfig.system.bootMethod !== 'uefi'"></ix-checkbox>
-              </div>
-            </div>
-          </div>
-        </ix-tab-panel>
-
-        <ix-tab-panel>
-          <div style="padding: 0 16px;">
-            <h2 style="color: var(--fg2);">Disks</h2>
-            <p style="margin-bottom: 16px; color: var(--fg2);">Storage configuration and disk settings.</p>
-            
-            <div style="display: grid; gap: 16px;">
-              <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Create new disk</label>
-                <ix-checkbox label="Create a new virtual disk" [(ngModel)]="vmConfig.disks.createNew"></ix-checkbox>
-              </div>
-              
-              <div *ngIf="vmConfig.disks.createNew">
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Disk Size (GB)</label>
-                <ix-input type="number" placeholder="20" [(ngModel)]="vmConfig.disks.size"></ix-input>
-              </div>
-              
-              <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Disk Type</label>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                  <ix-radio name="diskType" value="virtio" label="VirtIO (Recommended)" [(ngModel)]="vmConfig.disks.type"></ix-radio>
-                  <ix-radio name="diskType" value="ahci" label="AHCI" [(ngModel)]="vmConfig.disks.type"></ix-radio>
-                  <ix-radio name="diskType" value="ide" label="IDE (Legacy)" [(ngModel)]="vmConfig.disks.type"></ix-radio>
-                </div>
-              </div>
-            </div>
-          </div>
-        </ix-tab-panel>
-
-        <ix-tab-panel>
-          <div style="padding: 0 16px;">
-            <h2 style="color: var(--fg2);">CPU</h2>
-            <p style="margin-bottom: 16px; color: var(--fg2);">Processor configuration and CPU topology.</p>
-            
-            <div style="display: grid; gap: 16px;">
-              <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">CPU Cores</label>
-                <ix-input type="number" placeholder="2" [(ngModel)]="vmConfig.cpu.cores"></ix-input>
-              </div>
-              
-              <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">CPU Threads</label>
-                <ix-input type="number" placeholder="1" [(ngModel)]="vmConfig.cpu.threads"></ix-input>
-              </div>
-              
-              <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">CPU Mode</label>
-                <ix-select [options]="cpuModeOptions" [(ngModel)]="vmConfig.cpu.mode"></ix-select>
-              </div>
-              
-              <div>
-                <ix-checkbox label="Enable CPU hotplug" [(ngModel)]="vmConfig.cpu.hotplug"></ix-checkbox>
-              </div>
-            </div>
-          </div>
-        </ix-tab-panel>
-
-        <ix-tab-panel>
-          <div style="padding: 0 16px;">
-            <h2 style="color: var(--fg2);">Memory</h2>
-            <p style="margin-bottom: 16px; color: var(--fg2);">RAM allocation and memory ballooning configuration.</p>
-            
-            <div style="display: grid; gap: 16px;">
-              <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Memory Size (MB)</label>
-                <ix-input type="number" placeholder="4096" [(ngModel)]="vmConfig.memory.size"></ix-input>
-              </div>
-              
-              <div>
-                <ix-checkbox label="Enable memory ballooning" [(ngModel)]="vmConfig.memory.ballooning"></ix-checkbox>
-              </div>
-              
-              <div>
-                <ix-checkbox label="Enable memory hotplug" [(ngModel)]="vmConfig.memory.hotplug"></ix-checkbox>
-              </div>
-            </div>
-          </div>
-        </ix-tab-panel>
-
-        <ix-tab-panel>
-          <div style="padding: 0 16px;">
-            <h2 style="color: var(--fg2);">Network</h2>
-            <p style="margin-bottom: 16px; color: var(--fg2);">Network adapter configuration and connectivity settings.</p>
-            
-            <div style="display: grid; gap: 16px;">
-              <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Network Interface</label>
-                <ix-select [options]="networkOptions" [(ngModel)]="vmConfig.network.interface"></ix-select>
-              </div>
-              
-              <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">NIC Type</label>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                  <ix-radio name="nicType" value="virtio" label="VirtIO (Recommended)" [(ngModel)]="vmConfig.network.nicType"></ix-radio>
-                  <ix-radio name="nicType" value="e1000" label="Intel E1000" [(ngModel)]="vmConfig.network.nicType"></ix-radio>
-                  <ix-radio name="nicType" value="rtl8139" label="Realtek RTL8139" [(ngModel)]="vmConfig.network.nicType"></ix-radio>
-                </div>
-              </div>
-              
-              <div>
-                <ix-checkbox label="Attach to bridge" [(ngModel)]="vmConfig.network.bridge"></ix-checkbox>
-              </div>
-            </div>
-          </div>
-        </ix-tab-panel>
-      </ix-tabs>
-      
-      <div ixDialogAction>
-        <ix-button variant="outline" 
-                   label="Cancel"
-                   (click)="cancel()">
-        </ix-button>
-        <ix-button color="primary" 
-                   label="Create Virtual Machine"
-                   (click)="createVM()">
-        </ix-button>
-      </div>
-    </ix-dialog-shell>
-  `,
+  templateUrl: './tabbed-wizard.stories.html',
   standalone: true,
   imports: [
     IxDialogShellComponent,
@@ -307,7 +99,7 @@ class TabbedWizardDialogComponent {
     { value: 'hostonly', label: 'Host Only' }
   ];
 
-  constructor(public ref: DialogRef<any>) {}
+  ref = inject(DialogRef<unknown>);
 
   cancel() {
     this.ref.close();
@@ -321,31 +113,12 @@ class TabbedWizardDialogComponent {
 // Demo Component
 @Component({
   selector: 'tabbed-wizard-demo',
-  template: `
-    <div style="padding: 20px;">
-      <h1 style="margin-bottom: 8px; color: var(--fg1); font-family: var(--font-family-header);">Tabbed Wizard Pattern</h1>
-      <p style="margin-bottom: 16px; color: var(--fg2); font-style: italic; font-size: 14px;">For non-linear workflows</p>
-      <p style="margin-bottom: 16px; color: var(--fg2);">
-        The Tabbed Wizard pattern combines the ix-dialog and ix-tabs components to create non-linear, multi-section workflows. 
-        This VM creation example demonstrates how users can jump between different configuration sections freely, making it ideal 
-        for complex forms where step order doesn't matter.
-      </p>
-      <ix-button variant="primary" 
-                 label="Launch Tabbed Wizard"
-                 (click)="openTabbedWizard()">
-      </ix-button>
-      
-      <div style="margin-top: 24px; padding: 16px; border: 1px solid var(--lines); border-radius: 8px;" *ngIf="lastResult">
-        <h4>Last Result:</h4>
-        <pre style="margin: 8px 0 0 0; color: var(--fg2);">{{ lastResult | json }}</pre>
-      </div>
-    </div>
-  `,
+  templateUrl: './tabbed-wizard-2.stories.html',
   standalone: true,
   imports: [IxButtonComponent, CommonModule]
 })
 class TabbedWizardDemoComponent {
-  lastResult: any = null;
+  lastResult: unknown = null;
 
   constructor(private ixDialog: IxDialog) {}
 
@@ -355,7 +128,7 @@ class TabbedWizardDemoComponent {
       height: '600px'
     });
 
-    dialogRef.closed.subscribe((result: any) => {
+    dialogRef.closed.subscribe((result: unknown) => {
       this.lastResult = result || 'VM creation was cancelled';
     });
   }

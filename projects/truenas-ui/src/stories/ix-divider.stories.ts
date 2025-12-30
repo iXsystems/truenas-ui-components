@@ -1,7 +1,6 @@
+import { CommonModule } from '@angular/common';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
-import { CommonModule } from '@angular/common';
-
 import { IxDividerComponent } from '../lib/ix-divider/ix-divider.component';
 
 const meta: Meta<IxDividerComponent> = {

@@ -1,9 +1,9 @@
+import type { Meta, StoryObj } from '@storybook/angular';
+import { expect } from '@storybook/jest';
+import { within } from '@storybook/testing-library';
 import { DiskIconComponent } from '../lib/disk-icon/disk-icon.component';
 import { DiskType } from '../lib/enums/disk-type.enum';
 
-import type { Meta, StoryObj } from '@storybook/angular';
-import { within } from '@storybook/testing-library';
-import { expect } from '@storybook/jest';
 
 const meta: Meta<DiskIconComponent> = {
   title: 'Components/Disk Icon',

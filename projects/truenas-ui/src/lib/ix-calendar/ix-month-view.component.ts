@@ -1,6 +1,5 @@
-import { Component, input, output, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DateRange } from '../ix-date-range-input/ix-date-range-input.component';
+import { Component, input, output, computed } from '@angular/core';
 
 export interface CalendarCell {
   value: number;
@@ -21,59 +20,7 @@ export interface CalendarCell {
   selector: 'ix-month-view',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <table role="grid" class="ix-calendar-table">
-      <!-- Table header with day names -->
-      <thead class="ix-calendar-table-header">
-        <tr>
-          <th scope="col" *ngFor="let day of weekdays">
-            <span class="cdk-visually-hidden">{{ day.long }}</span>
-            <span aria-hidden="true">{{ day.short }}</span>
-          </th>
-        </tr>
-      </thead>
-
-      <!-- Table body with calendar cells -->
-      <tbody class="ix-calendar-body">
-        <!-- Calendar rows -->
-        <tr role="row" *ngFor="let row of calendarRows(); let rowIndex = index; trackBy: trackByRow">
-          <td 
-            *ngFor="let cell of row; let colIndex = index; trackBy: trackByDate"
-            role="gridcell"
-            class="ix-calendar-body-cell-container"
-            [attr.data-ix-row]="rowIndex"
-            [attr.data-ix-col]="colIndex">
-            <button 
-              *ngIf="cell.value > 0"
-              type="button"
-              class="ix-calendar-body-cell"
-              [class.ix-calendar-body-selected]="cell.selected"
-              [class.ix-calendar-body-today]="cell.today"
-              [class.ix-calendar-body-active]="cell.selected"
-              [class.ix-calendar-body-range-start]="cell.rangeStart"
-              [class.ix-calendar-body-range-end]="cell.rangeEnd"
-              [class.ix-calendar-body-in-range]="cell.inRange"
-              [disabled]="!cell.enabled"
-              [attr.tabindex]="cell.selected ? 0 : -1"
-              [attr.aria-label]="cell.ariaLabel"
-              [attr.aria-pressed]="cell.selected"
-              [attr.aria-current]="cell.today ? 'date' : null"
-              (click)="onCellClicked(cell)">
-              <span class="ix-calendar-body-cell-content ix-focus-indicator"
-                    [class.ix-calendar-body-selected]="cell.selected"
-                    [class.ix-calendar-body-today]="cell.today"
-                    [class.ix-calendar-body-range-start]="cell.rangeStart"
-                    [class.ix-calendar-body-range-end]="cell.rangeEnd"
-                    [class.ix-calendar-body-in-range]="cell.inRange">
-                {{ cell.value }}
-              </span>
-              <span aria-hidden="true" class="ix-calendar-body-cell-preview"></span>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  `,
+  templateUrl: './ix-month-view.component.html',
   styleUrls: ['./ix-month-view.component.scss']
 })
 export class IxMonthViewComponent {
@@ -105,10 +52,10 @@ export class IxMonthViewComponent {
 
   calendarRows = computed(() => {
     const activeDate = this.activeDate();
-    // Include selectedRange signal in the computed dependency so it recalculates when range changes
-    const currentSelectedRange = this.selectedRange();
+    // Track selectedRange signal so computed recalculates when range changes
+    this.selectedRange();
 
-    if (!activeDate) return [];
+    if (!activeDate) {return [];}
     
     const year = activeDate.getFullYear();
     const month = activeDate.getMonth();
@@ -203,9 +150,9 @@ export class IxMonthViewComponent {
     const minDate = this.minDate();
     const maxDate = this.maxDate();
     const dateFilter = this.dateFilter();
-    if (minDate && date < minDate) return false;
-    if (maxDate && date > maxDate) return false;
-    if (dateFilter && !dateFilter(date)) return false;
+    if (minDate && date < minDate) {return false;}
+    if (maxDate && date > maxDate) {return false;}
+    if (dateFilter && !dateFilter(date)) {return false;}
     return true;
   }
 
@@ -230,11 +177,11 @@ export class IxMonthViewComponent {
       day: 'numeric' 
     });
     
-    if (isSelected) label += ' (selected)';
-    if (isToday) label += ' (today)';
-    if (rangeStart) label += ' (range start)';
-    if (rangeEnd) label += ' (range end)';
-    if (inRange) label += ' (in range)';
+    if (isSelected) {label += ' (selected)';}
+    if (isToday) {label += ' (today)';}
+    if (rangeStart) {label += ' (range start)';}
+    if (rangeEnd) {label += ' (range end)';}
+    if (inRange) {label += ' (in range)';}
     
     return label;
   }

@@ -13,10 +13,10 @@
     <button
       type="button"
       class="ix-file-picker-toggle"
-      (click)="openFilePicker()"
+      aria-label="Open file picker"
       [disabled]="isDisabled()"
-      aria-label="Open file picker">
-      <ix-icon name="folder" library="mdi"></ix-icon>
+      (click)="openFilePicker()">
+      <ix-icon name="folder" library="mdi" />
     </button>
   </div>
   
@@ -43,7 +43,6 @@
       (clearSelection)="onClearSelection()"
       (submit)="onSubmit()"
       (cancel)="onCancel()"
-      (close)="close()">
-    </ix-file-picker-popup>
+      (close)="close()" />
   </ng-template>
 </div>

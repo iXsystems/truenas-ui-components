@@ -1,37 +1,18 @@
-import type { Meta, StoryObj } from '@storybook/angular';
-import { Component, Inject } from '@angular/core';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
-import { FormsModule } from '@angular/forms';
 import { JsonPipe } from '@angular/common';
+import { Component, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import type { Meta, StoryObj } from '@storybook/angular';
 import { IxButtonComponent } from '../lib/ix-button/ix-button.component';
+import { IxDialogShellComponent } from '../lib/ix-dialog/ix-dialog-shell.component';
+import { IxDialog } from '../lib/ix-dialog/ix-dialog.service';
 import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.component';
 import { IxInputComponent } from '../lib/ix-input/ix-input.component';
-import { IxDialog } from '../lib/ix-dialog/ix-dialog.service';
-import { IxDialogShellComponent } from '../lib/ix-dialog/ix-dialog-shell.component';
 
 // Example user edit dialog component
 @Component({
   selector: 'user-edit-dialog',
-  template: `
-    <ix-dialog-shell title="Edit User">
-      <form style="padding: var(--content-padding);">
-        <ix-form-field label="Name">
-          <ix-input [(ngModel)]="name" name="name" placeholder="Enter user name"></ix-input>
-        </ix-form-field>
-        <ix-form-field label="Email">  
-          <ix-input [(ngModel)]="email" name="email" placeholder="Enter email address"></ix-input>
-        </ix-form-field>
-        <ix-form-field label="Role">
-          <ix-input [(ngModel)]="role" name="role" placeholder="Enter user role"></ix-input>
-        </ix-form-field>
-      </form>
-      
-      <div ixDialogAction>
-        <ix-button type="button" variant="outline" label="Cancel" (click)="cancel()"></ix-button>
-        <ix-button type="button" color="primary" label="Save User" (click)="save()"></ix-button>
-      </div>
-    </ix-dialog-shell>
-  `,
+  templateUrl: './ix-dialog.stories.html',
   standalone: true,
   imports: [
     IxDialogShellComponent,
@@ -42,19 +23,13 @@ import { IxDialogShellComponent } from '../lib/ix-dialog/ix-dialog-shell.compone
   ]
 })
 class UserEditDialogComponent {
-  name = '';
-  email = '';
-  role = '';
+  ref = inject(DialogRef<{ name: string; email: string; role: string } | undefined>);
+  data = inject<{ userId: number; name?: string; email?: string; role?: string }>(DIALOG_DATA);
 
-  constructor(
-    public ref: DialogRef<any>, 
-    @Inject(DIALOG_DATA) public data: { userId: number; name?: string; email?: string; role?: string }
-  ) {
-    // Pre-fill form with existing data if available
-    this.name = data?.name || '';
-    this.email = data?.email || '';  
-    this.role = data?.role || '';
-  }
+  // Pre-fill form with existing data if available
+  name = this.data?.name || '';
+  email = this.data?.email || '';
+  role = this.data?.role || '';
 
   cancel() {
     this.ref.close();
@@ -69,236 +44,43 @@ class UserEditDialogComponent {
   }
 }
 
-// Scrollable content dialog component  
+// Scrollable content dialog component
 @Component({
   selector: 'system-settings-dialog',
-  template: `
-    <ix-dialog-shell title="System Settings" [showFullscreenButton]="true">
-      <div style="height: 800px; padding: var(--content-padding);">
-        <h3>Network Configuration</h3>
-        <p>Configure your network interfaces and routing settings. These settings will affect all network communication for your TrueNAS system.</p>
-        
-        <h4>Interface Configuration</h4>
-        <ul>
-          <li><strong>eth0:</strong> Primary ethernet interface (192.168.1.100/24)</li>
-          <li><strong>eth1:</strong> Secondary ethernet interface (10.0.0.100/8)</li>
-          <li><strong>wlan0:</strong> Wireless interface (disabled)</li>
-          <li><strong>lo:</strong> Loopback interface (127.0.0.1/8)</li>
-        </ul>
-        
-        <h3>Storage Configuration</h3>
-        <p>Manage your storage pools, datasets, and snapshots. Review current usage and configure automated tasks.</p>
-        
-        <h4>Current Pool Status</h4>
-        <ul>
-          <li><strong>pool1:</strong> 2.4 TB used of 4.0 TB (60% full) - HEALTHY</li>
-          <li><strong>pool2:</strong> 800 GB used of 2.0 TB (40% full) - HEALTHY</li>
-          <li><strong>backup-pool:</strong> 500 GB used of 1.0 TB (50% full) - HEALTHY</li>
-        </ul>
-        
-        <h3>System Services</h3>
-        <p>The following services are currently running on your TrueNAS system:</p>
-        
-        <h4>Core Services</h4>
-        <ul>
-          <li>SSH Server (Port 22) - Active since 2024-01-15 09:30:15</li>
-          <li>HTTP Server (Port 80) - Active since 2024-01-15 09:30:20</li>
-          <li>HTTPS Server (Port 443) - Active since 2024-01-15 09:30:25</li>
-          <li>SMB/CIFS Server (Ports 139, 445) - Active since 2024-01-15 09:30:30</li>
-          <li>NFS Server (Port 2049) - Active since 2024-01-15 09:30:35</li>
-          <li>FTP Server (Port 21) - Disabled</li>
-          <li>rsync Server (Port 873) - Active since 2024-01-15 09:30:40</li>
-        </ul>
-        
-        <h4>Background Services</h4>
-        <ul>
-          <li>Scrub Scheduler - Next scrub: Sunday 02:00 AM</li>
-          <li>Snapshot Manager - Taking snapshots every 4 hours</li>
-          <li>Replication Tasks - 3 active replication jobs</li>
-          <li>Cloud Sync - Syncing to AWS S3 every 6 hours</li>
-          <li>System Update Checker - Runs every 24 hours</li>
-          <li>Performance Metrics Collection - Real-time monitoring</li>
-          <li>Email Notifications - SMTP configured</li>
-          <li>UPS Monitor - Connected to CyberPower CP1500</li>
-        </ul>
-        
-        <h3>Security Settings</h3>
-        <p>Review and configure security policies, user access controls, and system hardening options.</p>
-        
-        <h4>Authentication & Access</h4>
-        <ul>
-          <li>Password complexity: Minimum 12 characters with mixed case</li>
-          <li>Two-factor authentication: Enabled for admin accounts</li>
-          <li>Failed login threshold: 5 attempts before lockout</li>
-          <li>Account lockout duration: 30 minutes</li>
-          <li>Session timeout: 4 hours of inactivity</li>
-          <li>API key rotation: Every 90 days</li>
-        </ul>
-        
-        <h4>System Hardening</h4>
-        <ul>
-          <li>Firewall: Enabled with default deny policy</li>
-          <li>Intrusion detection: Enabled with real-time monitoring</li>
-          <li>Audit logging: All administrative actions logged</li>
-          <li>Certificate management: Auto-renewal enabled</li>
-          <li>Secure boot: Enabled</li>
-          <li>Memory protection: ASLR and DEP enabled</li>
-        </ul>
-        
-        <p><strong>Important:</strong> Changes to security settings may require system restart and could temporarily affect system availability. Always test configuration changes in a non-production environment first.</p>
-      </div>
-      
-      <div ixDialogAction>
-        <ix-button type="button" variant="outline" label="Cancel" (click)="ref.close()"></ix-button>
-        <ix-button type="button" color="primary" label="Apply Settings" (click)="ref.close('apply')"></ix-button>
-      </div>
-    </ix-dialog-shell>
-  `,
+  templateUrl: './ix-dialog-2.stories.html',
   standalone: true,
   imports: [IxDialogShellComponent, IxButtonComponent]
 })
 class SystemSettingsDialogComponent {
-  constructor(public ref: DialogRef<string>) {}
+  ref = inject(DialogRef<string>);
 }
 
 // Fullscreen-only dialog component (no toggle button needed)
 @Component({
   selector: 'fullscreen-settings-dialog',
-  template: `
-    <ix-dialog-shell title="System Settings">
-      <div style="height: 800px; padding: var(--content-padding);">
-        <h3>Network Configuration</h3>
-        <p>Configure your network interfaces and routing settings. These settings will affect all network communication for your TrueNAS system.</p>
-        
-        <h4>Interface Configuration</h4>
-        <ul>
-          <li><strong>eth0:</strong> Primary ethernet interface (192.168.1.100/24)</li>
-          <li><strong>eth1:</strong> Secondary ethernet interface (10.0.0.100/8)</li>
-          <li><strong>wlan0:</strong> Wireless interface (disabled)</li>
-          <li><strong>lo:</strong> Loopback interface (127.0.0.1/8)</li>
-        </ul>
-        
-        <h3>Storage Configuration</h3>
-        <p>Manage your storage pools, datasets, and snapshots. Review current usage and configure automated tasks.</p>
-        
-        <h4>Current Pool Status</h4>
-        <ul>
-          <li><strong>pool1:</strong> 2.4 TB used of 4.0 TB (60% full) - HEALTHY</li>
-          <li><strong>pool2:</strong> 800 GB used of 2.0 TB (40% full) - HEALTHY</li>
-          <li><strong>backup-pool:</strong> 500 GB used of 1.0 TB (50% full) - HEALTHY</li>
-        </ul>
-        
-        <h3>System Services</h3>
-        <p>The following services are currently running on your TrueNAS system:</p>
-        
-        <h4>Core Services</h4>
-        <ul>
-          <li>SSH Server (Port 22) - Active since 2024-01-15 09:30:15</li>
-          <li>HTTP Server (Port 80) - Active since 2024-01-15 09:30:20</li>
-          <li>HTTPS Server (Port 443) - Active since 2024-01-15 09:30:25</li>
-          <li>SMB/CIFS Server (Ports 139, 445) - Active since 2024-01-15 09:30:30</li>
-          <li>NFS Server (Port 2049) - Active since 2024-01-15 09:30:35</li>
-          <li>FTP Server (Port 21) - Disabled</li>
-          <li>rsync Server (Port 873) - Active since 2024-01-15 09:30:40</li>
-        </ul>
-        
-        <h4>Background Services</h4>
-        <ul>
-          <li>Scrub Scheduler - Next scrub: Sunday 02:00 AM</li>
-          <li>Snapshot Manager - Taking snapshots every 4 hours</li>
-          <li>Replication Tasks - 3 active replication jobs</li>
-          <li>Cloud Sync - Syncing to AWS S3 every 6 hours</li>
-          <li>System Update Checker - Runs every 24 hours</li>
-          <li>Performance Metrics Collection - Real-time monitoring</li>
-          <li>Email Notifications - SMTP configured</li>
-          <li>UPS Monitor - Connected to CyberPower CP1500</li>
-        </ul>
-        
-        <h3>Security Settings</h3>
-        <p>Review and configure security policies, user access controls, and system hardening options.</p>
-        
-        <h4>Authentication & Access</h4>
-        <ul>
-          <li>Password complexity: Minimum 12 characters with mixed case</li>
-          <li>Two-factor authentication: Enabled for admin accounts</li>
-          <li>Failed login threshold: 5 attempts before lockout</li>
-          <li>Account lockout duration: 30 minutes</li>
-          <li>Session timeout: 4 hours of inactivity</li>
-          <li>API key rotation: Every 90 days</li>
-        </ul>
-        
-        <h4>System Hardening</h4>
-        <ul>
-          <li>Firewall: Enabled with default deny policy</li>
-          <li>Intrusion detection: Enabled with real-time monitoring</li>
-          <li>Audit logging: All administrative actions logged</li>
-          <li>Certificate management: Auto-renewal enabled</li>
-          <li>Secure boot: Enabled</li>
-          <li>Memory protection: ASLR and DEP enabled</li>
-        </ul>
-        
-        <p><strong>Important:</strong> Changes to security settings may require system restart and could temporarily affect system availability. Always test configuration changes in a non-production environment first.</p>
-      </div>
-      
-      <div ixDialogAction>
-        <ix-button type="button" variant="outline" label="Cancel" (click)="ref.close()"></ix-button>
-        <ix-button type="button" color="primary" label="Apply Settings" (click)="ref.close('apply')"></ix-button>
-      </div>
-    </ix-dialog-shell>
-  `,
+  templateUrl: './ix-dialog-3.stories.html',
   standalone: true,
   imports: [IxDialogShellComponent, IxButtonComponent]
 })
 class FullscreenSettingsDialogComponent {
-  constructor(public ref: DialogRef<string>) {}
+  ref = inject(DialogRef<string>);
 }
 
 // Story component that demonstrates opening dialogs
 @Component({
   selector: 'dialog-demo',
-  template: `
-    <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px;">
-      <ix-button 
-        type="button" 
-        label="Edit User" 
-        (click)="openUserDialog()">
-      </ix-button>
-      
-      <ix-button 
-        type="button" 
-        label="System Settings (Scrollable)" 
-        (click)="openSystemDialog()">
-      </ix-button>
-      
-      <ix-button 
-        type="button" 
-        label="Confirm Delete" 
-        (click)="openConfirmDialog()">
-      </ix-button>
-      
-      <ix-button 
-        type="button" 
-        label="Fullscreen Settings" 
-        (click)="openFullscreenDialog()">
-      </ix-button>
-    </div>
-    
-    <div style="padding: 16px;">
-      <h3 style="margin-top: 0;">Last Dialog Result:</h3>
-      <pre style="padding: 12px; border-radius: 4px; overflow-x: auto; border: 1px solid var(--lines, #e5e7eb);">{{ lastResult | json }}</pre>
-    </div>
-  `,
+  templateUrl: './ix-dialog-4.stories.html',
   standalone: true,
   imports: [IxButtonComponent, JsonPipe]
 })
 class DialogDemoComponent {
-  lastResult: any = null;
+  lastResult: unknown = null;
 
   constructor(private ixDialog: IxDialog) {}
 
   openUserDialog() {
     const dialogRef = this.ixDialog.open(UserEditDialogComponent, {
-      data: { 
+      data: {
         userId: 123,
         name: 'John Doe',
         email: 'john.doe@example.com',
@@ -307,7 +89,7 @@ class DialogDemoComponent {
       width: '500px'
     });
 
-    dialogRef.closed.subscribe((result: any) => {
+    dialogRef.closed.subscribe((result) => {
       this.lastResult = result || 'Dialog was cancelled';
     });
   }
@@ -318,31 +100,29 @@ class DialogDemoComponent {
       height: '600px'
     });
 
-    dialogRef.closed.subscribe((result: any) => {
+    dialogRef.closed.subscribe((result) => {
       this.lastResult = result || 'Dialog was cancelled';
     });
   }
 
   openConfirmDialog() {
-    this.ixDialog.confirm({
+    void this.ixDialog.confirm({
       title: 'Delete Dataset?',
       message: 'This will permanently delete the dataset "important-data" and all of its contents. This action cannot be undone.',
       confirmText: 'Delete',
       cancelText: 'Keep',
       destructive: true
     }).then(observable => {
-      observable.subscribe((confirmed: any) => {
+      observable.subscribe((confirmed) => {
         this.lastResult = confirmed ? 'User confirmed deletion' : 'User cancelled deletion';
       });
     });
   }
 
   openFullscreenDialog() {
-    const dialogRef = this.ixDialog.open(FullscreenSettingsDialogComponent, {
-      fullscreen: true
-    });
+    const dialogRef = this.ixDialog.openFullscreen(FullscreenSettingsDialogComponent);
 
-    dialogRef.closed.subscribe((result: any) => {
+    dialogRef.closed.subscribe((result) => {
       this.lastResult = result || 'Fullscreen dialog was cancelled';
     });
   }
@@ -510,8 +290,12 @@ this.ixDialog.open(MyDialogComponent, {
   maxHeight: '90vh',        // Maximum height
   disableClose: true,       // Prevent ESC/backdrop close
   data: { userId: 123 },    // Data to pass to dialog
-  panelClass: ['custom-dialog'], // Additional CSS classes
-  fullscreen: true          // Takes over entire viewport (100vw x 100vh)
+  panelClass: ['custom-dialog'] // Additional CSS classes
+});
+
+// For fullscreen dialogs, use openFullscreen() method
+this.ixDialog.openFullscreen(MyDialogComponent, {
+  data: { userId: 123 }
 });
 \`\`\`
 

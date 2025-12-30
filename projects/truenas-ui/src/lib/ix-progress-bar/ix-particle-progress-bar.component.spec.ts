@@ -1,11 +1,12 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import type { ComponentFixture} from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { IxParticleProgressBarComponent } from './ix-particle-progress-bar.component';
 
 describe('IxParticleProgressBarComponent', () => {
   let component: IxParticleProgressBarComponent;
   let fixture: ComponentFixture<IxParticleProgressBarComponent>;
-  let mockCanvas: any;
-  let mockContext: any;
+  let mockCanvas: Partial<HTMLCanvasElement>;
+  let mockContext: Partial<CanvasRenderingContext2D>;
 
   beforeEach(async () => {
     // Mock canvas context
@@ -18,11 +19,11 @@ describe('IxParticleProgressBarComponent', () => {
     };
 
     mockCanvas = {
-      getContext: jest.fn().mockReturnValue(mockContext)
+      getContext: jest.fn().mockReturnValue(mockContext as CanvasRenderingContext2D)
     };
 
     // Mock requestAnimationFrame to prevent infinite animation loop
-    jest.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+    jest.spyOn(window, 'requestAnimationFrame').mockImplementation((_callback) => {
       return 123; // Return mock animation ID
     });
 
@@ -174,13 +175,13 @@ describe('IxParticleProgressBarComponent', () => {
     // Mock DOM methods for color conversion
     const mockDiv = {
       style: { color: '' },
-    };
-    const mockGetComputedStyle = jest.fn().mockReturnValue({ color: 'rgb(0, 139, 209)' });
-    
-    jest.spyOn(document, 'createElement').mockReturnValue(mockDiv as any);
-    jest.spyOn(document.body, 'appendChild').mockImplementation(() => mockDiv as any);
-    jest.spyOn(document.body, 'removeChild').mockImplementation(() => mockDiv as any);
-    (global as any).getComputedStyle = mockGetComputedStyle;
+    } as HTMLDivElement;
+    const mockGetComputedStyle = jest.fn().mockReturnValue({ color: 'rgb(0, 139, 209)' } as CSSStyleDeclaration);
+
+    jest.spyOn(document, 'createElement').mockReturnValue(mockDiv);
+    jest.spyOn(document.body, 'appendChild').mockImplementation((): Node => mockDiv);
+    jest.spyOn(document.body, 'removeChild').mockImplementation((): Node => mockDiv);
+    (global as typeof globalThis).getComputedStyle = mockGetComputedStyle as typeof getComputedStyle;
 
     // Test HSLA input (should return as-is, bypassing DOM conversion)
     const hslaResult = component['convertToHSLA']('hsla(198, 100%, 42%, 1)');

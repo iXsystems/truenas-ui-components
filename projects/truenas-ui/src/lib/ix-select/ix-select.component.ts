@@ -1,16 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, output, forwardRef, ElementRef, ChangeDetectorRef, signal, computed, effect } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ElementRef, ChangeDetectorRef, Component, input, output, forwardRef, signal, computed, effect, inject } from '@angular/core';
+import type { ControlValueAccessor} from '@angular/forms';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
-export interface IxSelectOption {
-  value: any;
+export interface IxSelectOption<T = unknown> {
+  value: T;
   label: string;
   disabled?: boolean;
 }
 
-export interface IxSelectOptionGroup {
+export interface IxSelectOptionGroup<T = unknown> {
   label: string;
-  options: IxSelectOption[];
+  options: IxSelectOption<T>[];
   disabled?: boolean;
 }
 
@@ -28,30 +29,30 @@ export interface IxSelectOptionGroup {
   templateUrl: './ix-select.component.html',
   styleUrls: ['./ix-select.component.scss']
 })
-export class IxSelectComponent implements ControlValueAccessor {
-  options = input<IxSelectOption[]>([]);
-  optionGroups = input<IxSelectOptionGroup[]>([]);
+export class IxSelectComponent<T = unknown> implements ControlValueAccessor {
+  options = input<IxSelectOption<T>[]>([]);
+  optionGroups = input<IxSelectOptionGroup<T>[]>([]);
   placeholder = input<string>('Select an option');
   disabled = input<boolean>(false);
   testId = input<string>('');
 
-  selectionChange = output<any>();
+  selectionChange = output<T>();
 
   // Internal state signals
   protected isOpen = signal<boolean>(false);
-  protected selectedValue = signal<any>(null);
+  protected selectedValue = signal<T | null>(null);
   private formDisabled = signal<boolean>(false);
 
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
-  private onChange = (value: any) => {};
+  private onChange = (_value: T | null) => {};
   private onTouched = () => {};
 
-  constructor(
-    private elementRef: ElementRef,
-    private cdr: ChangeDetectorRef
-  ) {
+  private elementRef = inject(ElementRef);
+  private cdr = inject(ChangeDetectorRef);
+
+  constructor() {
     // Click-outside detection using effect
     effect(() => {
       if (this.isOpen()) {
@@ -76,15 +77,15 @@ export class IxSelectComponent implements ControlValueAccessor {
   }
 
   // ControlValueAccessor implementation
-  writeValue(value: any): void {
+  writeValue(value: T | null): void {
     this.selectedValue.set(value);
   }
 
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (value: T | null) => void): void {
     this.onChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.onTouched = fn;
   }
 
@@ -94,7 +95,7 @@ export class IxSelectComponent implements ControlValueAccessor {
 
   // Component methods
   toggleDropdown(): void {
-    if (this.isDisabled()) return;
+    if (this.isDisabled()) {return;}
     this.isOpen.set(!this.isOpen());
     if (!this.isOpen()) {
       this.onTouched();
@@ -106,12 +107,12 @@ export class IxSelectComponent implements ControlValueAccessor {
     this.onTouched();
   }
 
-  onOptionClick(option: IxSelectOption): void {
+  onOptionClick(option: IxSelectOption<T>): void {
     this.selectOption(option);
   }
 
-  selectOption(option: IxSelectOption): void {
-    if (option.disabled) return;
+  selectOption(option: IxSelectOption<T>): void {
+    if (option.disabled) {return;}
 
     this.selectedValue.set(option.value);
     this.onChange(option.value);
@@ -121,7 +122,7 @@ export class IxSelectComponent implements ControlValueAccessor {
   }
 
   // Computed properties
-  isSelected = computed(() => (option: IxSelectOption): boolean => {
+  isSelected = computed(() => (option: IxSelectOption<T>): boolean => {
     return this.compareValues(this.selectedValue(), option.value);
   });
 
@@ -134,15 +135,15 @@ export class IxSelectComponent implements ControlValueAccessor {
     return option ? option.label : value;
   });
 
-  private findOptionByValue(value: any): IxSelectOption | undefined {
+  private findOptionByValue(value: T | null): IxSelectOption<T> | undefined {
     // Search in regular options first
     const regularOption = this.options().find(opt => this.compareValues(opt.value, value));
-    if (regularOption) return regularOption;
+    if (regularOption) {return regularOption;}
 
     // Search in option groups
     for (const group of this.optionGroups()) {
       const groupOption = group.options.find(opt => this.compareValues(opt.value, value));
-      if (groupOption) return groupOption;
+      if (groupOption) {return groupOption;}
     }
 
     return undefined;
@@ -152,8 +153,8 @@ export class IxSelectComponent implements ControlValueAccessor {
     return this.options().length > 0 || this.optionGroups().length > 0;
   });
 
-  private compareValues(a: any, b: any): boolean {
-    if (a === b) return true;
+  private compareValues(a: T | null, b: T | null): boolean {
+    if (a === b) {return true;}
     if (typeof a === 'object' && typeof b === 'object' && a !== null && b !== null) {
       return JSON.stringify(a) === JSON.stringify(b);
     }

@@ -1,5 +1,6 @@
-import { Pipe, PipeTransform } from '@angular/core';
-import { PathSegment } from '../../ix-file-picker/ix-file-picker.interfaces';
+import type { PipeTransform } from '@angular/core';
+import { Pipe } from '@angular/core';
+import type { PathSegment } from '../../ix-file-picker/ix-file-picker.interfaces';
 
 @Pipe({
   name: 'ixTruncatePath',

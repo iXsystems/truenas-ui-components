@@ -1,16 +1,15 @@
 <button
   type="button"
-  (click)="onClick.emit($event)"
   [ngClass]="classes()"
   [disabled]="disabled()"
   [attr.aria-label]="effectiveAriaLabel()"
   [attr.title]="tooltip()"
+  (click)="onClick.emit($event)"
 >
   <ix-icon
     [name]="name()"
     [size]="size()"
     [color]="color()"
     [library]="library()"
-    [ariaLabel]="effectiveAriaLabel()">
-  </ix-icon>
+    [ariaLabel]="effectiveAriaLabel()" />
 </button>

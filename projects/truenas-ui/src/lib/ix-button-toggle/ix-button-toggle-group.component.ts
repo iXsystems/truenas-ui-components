@@ -1,7 +1,8 @@
-import { Component, contentChildren, input, output, signal, computed, forwardRef, ChangeDetectionStrategy, ViewEncapsulation, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
+import { CommonModule } from '@angular/common';
+import { Component, contentChildren, input, output, signal, computed, forwardRef, ChangeDetectionStrategy, ViewEncapsulation, effect } from '@angular/core';
+import type { ControlValueAccessor} from '@angular/forms';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { IxButtonToggleComponent } from './ix-button-toggle.component';
 
 export type IxButtonToggleType = 'checkbox' | 'radio';
@@ -17,14 +18,7 @@ export type IxButtonToggleType = 'checkbox' | 'radio';
       multi: true
     }
   ],
-  template: `
-    <div class="ix-button-toggle-group"
-         [attr.role]="multiple() ? 'group' : 'radiogroup'"
-         [attr.aria-label]="ariaLabel()"
-         [attr.aria-labelledby]="ariaLabelledby()">
-      <ng-content></ng-content>
-    </div>
-  `,
+  templateUrl: './ix-button-toggle-group.component.html',
   styleUrl: './ix-button-toggle-group.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
@@ -41,16 +35,16 @@ export class IxButtonToggleGroupComponent implements ControlValueAccessor {
   ariaLabel = input<string>('');
   ariaLabelledby = input<string>('');
 
-  change = output<{ source: IxButtonToggleComponent; value: any }>();
+  change = output<{ source: IxButtonToggleComponent; value: unknown }>();
 
-  private selectedValue = signal<any>(null);
-  private selectedValues = signal<any[]>([]);
+  private selectedValue = signal<unknown>(null);
+  private selectedValues = signal<unknown[]>([]);
   private formDisabled = signal<boolean>(false);
 
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
-  private onChange = (value: any) => {};
+  private onChange = (_value: unknown) => {};
   private onTouched = () => {};
 
   constructor() {
@@ -64,7 +58,7 @@ export class IxButtonToggleGroupComponent implements ControlValueAccessor {
   }
 
   // ControlValueAccessor implementation
-  writeValue(value: any): void {
+  writeValue(value: unknown): void {
     if (this.multiple()) {
       this.selectedValues.set(Array.isArray(value) ? value : []);
       this.updateTogglesFromValues();
@@ -74,11 +68,11 @@ export class IxButtonToggleGroupComponent implements ControlValueAccessor {
     }
   }
 
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (value: unknown) => void): void {
     this.onChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.onTouched = fn;
   }
 

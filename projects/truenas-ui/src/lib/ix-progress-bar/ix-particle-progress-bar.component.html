@@ -2,26 +2,26 @@
   <defs>
     <linearGradient id="fadeToPrimary" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="transparent" />
-      <stop [attr.offset]="gradientTransitionStart() + '%'" stop-color="transparent" />
+      <stop stop-color="transparent" [attr.offset]="gradientTransitionStart() + '%'" />
       <stop offset="100%" [attr.stop-color]="progressBarColor()" />
     </linearGradient>
   </defs>
 
   <!-- Background bar -->
-  <rect x="50" [attr.y]="height() / 2 - height() / 4" [attr.width]="width() - 100" [attr.height]="height() / 2" [attr.rx]="height() / 4" fill="rgba(0,0,0,0.1)" />
+  <rect x="50" fill="rgba(0,0,0,0.1)" [attr.y]="height() / 2 - height() / 4" [attr.width]="width() - 100" [attr.height]="height() / 2" [attr.rx]="height() / 4" />
 
   <!-- Fill bar -->
   <rect
     x="50"
+    fill="url(#fadeToPrimary)"
     [attr.y]="height() / 2 - height() / 4"
     [attr.width]="fill()"
     [attr.height]="height() / 2"
     [attr.rx]="height() / 4"
-    fill="url(#fadeToPrimary)"
   />
 
   <!-- Particle canvas -->
   <foreignObject x="0" y="0" [attr.width]="width()" [attr.height]="height()">
-    <canvas #canvas [attr.width]="width()" [attr.height]="height()" style="pointer-events: none;"></canvas>
+    <canvas #canvas style="pointer-events: none;" [attr.width]="width()" [attr.height]="height()"></canvas>
   </foreignObject>
 </svg>

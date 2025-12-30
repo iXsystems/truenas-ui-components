@@ -3,6 +3,7 @@
   @if (!multiline()) {
     <input
       #inputEl
+      class="ix-input"
       [id]="id"
       [value]="value"
       [type]="inputType()"
@@ -11,7 +12,6 @@
       [disabled]="isDisabled()"
       (input)="onValueChange($event)"
       (blur)="onBlur()"
-      class="ix-input"
     />
   }
 
@@ -19,6 +19,7 @@
   @if (multiline()) {
     <textarea
       #inputEl
+      class="ix-input ix-textarea"
       [id]="id"
       [value]="value"
       [attr.placeholder]="placeholder()"
@@ -27,7 +28,6 @@
       [disabled]="isDisabled()"
       (input)="onValueChange($event)"
       (blur)="onBlur()"
-      class="ix-input ix-textarea"
     ></textarea>
   }
 </div>

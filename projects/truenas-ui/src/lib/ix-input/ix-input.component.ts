@@ -1,7 +1,9 @@
-import { Component, viewChild, ElementRef, AfterViewInit, inject, input, computed, signal, forwardRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
+import { CommonModule } from '@angular/common';
+import type { ElementRef, AfterViewInit} from '@angular/core';
+import { Component, viewChild, inject, input, computed, signal, forwardRef } from '@angular/core';
+import type { ControlValueAccessor} from '@angular/forms';
+import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { InputType } from '../enums/input-type.enum';
 
 @Component({
@@ -35,7 +37,7 @@ export class IxInputComponent implements AfterViewInit, ControlValueAccessor {
   private formDisabled = signal<boolean>(false);
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
-  private onChange = (value: any) => {};
+  private onChange = (_value: string) => {};
   private onTouched = () => {};
   private focusMonitor = inject(FocusMonitor);
 
@@ -44,15 +46,15 @@ export class IxInputComponent implements AfterViewInit, ControlValueAccessor {
   }
 
   // ControlValueAccessor implementation
-  writeValue(value: any): void {
+  writeValue(value: string): void {
     this.value = value || '';
   }
 
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (value: string) => void): void {
     this.onChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.onTouched = fn;
   }
 

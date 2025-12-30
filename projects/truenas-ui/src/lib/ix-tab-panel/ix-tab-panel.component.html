@@ -1,14 +1,14 @@
 <div
+  role="tabpanel"
   [ngClass]="classes()"
   [attr.data-testid]="testId()"
   [attr.aria-hidden]="!isActive()"
   [attr.aria-labelledby]="'tab-' + index()"
-  role="tabpanel"
   [attr.tabindex]="isActive() ? 0 : -1"
 >
   @if (shouldRender()) {
     <div class="ix-tab-panel__content">
-      <ng-content></ng-content>
+      <ng-content />
     </div>
   }
 </div>

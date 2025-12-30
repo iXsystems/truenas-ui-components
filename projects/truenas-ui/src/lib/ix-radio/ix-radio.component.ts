@@ -1,7 +1,9 @@
-import { Component, viewChild, ElementRef, AfterViewInit, OnDestroy, inject, input, output, computed, signal, forwardRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
+import { CommonModule } from '@angular/common';
+import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
+import { Component, viewChild, inject, input, output, computed, signal, forwardRef } from '@angular/core';
+import type { ControlValueAccessor} from '@angular/forms';
+import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
   selector: 'ix-radio',
@@ -21,14 +23,14 @@ export class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
   radioEl = viewChild.required<ElementRef<HTMLInputElement>>('radioEl');
 
   label = input<string>('Radio');
-  value = input<any>('');
+  value = input<unknown>('');
   name = input<string | undefined>(undefined);
   disabled = input<boolean>(false);
   required = input<boolean>(false);
   testId = input<string | undefined>(undefined);
   error = input<string | null>(null);
 
-  change = output<any>();
+  change = output<unknown>();
 
   id = `ix-radio-${Math.random().toString(36).substr(2, 9)}`;
   checked = false;
@@ -38,14 +40,14 @@ export class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
   private focusMonitor = inject(FocusMonitor);
-  private onChange = (_: any) => {};
+  private onChange = (_: unknown) => {};
   private onTouched = () => {};
 
   ngAfterViewInit() {
     const radioEl = this.radioEl();
     if (radioEl) {
       this.focusMonitor.monitor(radioEl)
-        .subscribe(origin => {
+        .subscribe(() => {
           // Focus monitoring for accessibility
         });
     }
@@ -59,11 +61,11 @@ export class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
   }
 
   // ControlValueAccessor implementation
-  writeValue(value: any): void {
+  writeValue(value: unknown): void {
     this.checked = value !== null && value !== undefined && value === this.value();
   }
 
-  registerOnChange(fn: (value: any) => void): void {
+  registerOnChange(fn: (value: unknown) => void): void {
     this.onChange = fn;
   }
 

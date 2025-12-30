@@ -1,9 +1,8 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
+import type { ComponentFixture} from '@angular/core/testing';
+import { TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
 import { DomSanitizer } from '@angular/platform-browser';
-
-import { IxIconComponent } from './ix-icon.component';
 import { IxIconRegistryService } from './ix-icon-registry.service';
+import { IxIconComponent } from './ix-icon.component';
 import { IxSpriteLoaderService } from './ix-sprite-loader.service';
 
 describe('IxIconComponent - MDI Support', () => {
@@ -11,7 +10,6 @@ describe('IxIconComponent - MDI Support', () => {
   let fixture: ComponentFixture<IxIconComponent>;
   let iconRegistry: jest.Mocked<IxIconRegistryService>;
   let spriteLoader: jest.Mocked<IxSpriteLoaderService>;
-  let domSanitizer: jest.Mocked<DomSanitizer>;
 
   beforeEach(async () => {
     const spriteLoaderSpy = {
@@ -41,9 +39,9 @@ describe('IxIconComponent - MDI Support', () => {
     } as jest.Mocked<Partial<IxIconRegistryService>>;
 
     const domSanitizerSpy = {
-      bypassSecurityTrustHtml: jest.fn().mockImplementation((html: string) => html as any),
-      bypassSecurityTrustResourceUrl: jest.fn().mockImplementation((url: string) => url as any)
-    } as jest.Mocked<Partial<DomSanitizer>>;
+      bypassSecurityTrustHtml: jest.fn().mockImplementation((html: string) => html),
+      bypassSecurityTrustResourceUrl: jest.fn().mockImplementation((url: string) => url)
+    } as unknown as jest.Mocked<DomSanitizer>;
 
     await TestBed.configureTestingModule({
       imports: [IxIconComponent],
@@ -58,7 +56,6 @@ describe('IxIconComponent - MDI Support', () => {
     component = fixture.componentInstance;
     iconRegistry = TestBed.inject(IxIconRegistryService) as jest.Mocked<IxIconRegistryService>;
     spriteLoader = TestBed.inject(IxSpriteLoaderService) as jest.Mocked<IxSpriteLoaderService>;
-    domSanitizer = TestBed.inject(DomSanitizer) as jest.Mocked<DomSanitizer>;
   });
 
   it('should render material icon by default', fakeAsync(() => {
@@ -74,7 +71,7 @@ describe('IxIconComponent - MDI Support', () => {
 
   it('should render MDI icon when library="mdi"', fakeAsync(() => {
     spriteLoader.getIconUrl.mockReturnValue('#icon-mdi-harddisk');
-    spriteLoader.getSafeIconUrl.mockReturnValue('#icon-mdi-harddisk' as any);
+    spriteLoader.getSafeIconUrl.mockReturnValue('#icon-mdi-harddisk');
 
     fixture.componentRef.setInput('name', 'harddisk');
     fixture.componentRef.setInput('library', 'mdi');
@@ -144,9 +141,9 @@ describe('IxIconComponent - Error Handling', () => {
     } as jest.Mocked<Partial<IxIconRegistryService>>;
 
     const domSanitizerSpy = {
-      bypassSecurityTrustHtml: jest.fn().mockImplementation((html: string) => html as any),
-      bypassSecurityTrustResourceUrl: jest.fn().mockImplementation((url: string) => url as any)
-    } as jest.Mocked<Partial<DomSanitizer>>;
+      bypassSecurityTrustHtml: jest.fn().mockImplementation((html: string) => html),
+      bypassSecurityTrustResourceUrl: jest.fn().mockImplementation((url: string) => url)
+    } as unknown as jest.Mocked<DomSanitizer>;
 
     await TestBed.configureTestingModule({
       imports: [IxIconComponent],
@@ -196,7 +193,7 @@ describe('IxIconComponent - Error Handling', () => {
   it('should handle async MDI loading gracefully', fakeAsync(() => {
     spriteLoader.ensureSpriteLoaded.mockImplementation(() => Promise.resolve(true));
     spriteLoader.getIconUrl.mockReturnValue('#icon-mdi-harddisk');
-    spriteLoader.getSafeIconUrl.mockReturnValue('#icon-mdi-harddisk' as any);
+    spriteLoader.getSafeIconUrl.mockReturnValue('#icon-mdi-harddisk');
 
     fixture.componentRef.setInput('name', 'harddisk');
     fixture.componentRef.setInput('library', 'mdi');

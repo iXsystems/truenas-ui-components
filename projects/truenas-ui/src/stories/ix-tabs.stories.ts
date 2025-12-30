@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
-import { IxTabsComponent } from '../lib/ix-tabs/ix-tabs.component';
 import { IxTabComponent } from '../lib/ix-tab/ix-tab.component';
 import { IxTabPanelComponent } from '../lib/ix-tab-panel/ix-tab-panel.component';
+import { IxTabsComponent } from '../lib/ix-tabs/ix-tabs.component';
 
 const meta: Meta<IxTabsComponent> = {
   title: 'Components/Tabs',

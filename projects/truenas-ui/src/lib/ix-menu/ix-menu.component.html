@@ -1,7 +1,7 @@
 <!-- Context menu content slot -->
 @if (contextMenu()) {
   <div class="ix-menu-context-content" (contextmenu)="onContextMenu($event)">
-    <ng-content></ng-content>
+    <ng-content />
   </div>
 }
 
@@ -18,14 +18,14 @@
           @if (!item.children || item.children.length === 0) {
             <button
               cdkMenuItem
+              class="ix-menu-item"
+              type="button"
               [disabled]="item.disabled"
               [class.disabled]="item.disabled"
-              class="ix-menu-item"
               (click)="onMenuItemClick(item)"
-              type="button"
             >
               @if (item.icon) {
-                <ix-icon [name]="item.icon" [library]="item.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+                <ix-icon size="sm" class="ix-menu-item-icon" [name]="item.icon" [library]="item.iconLibrary" />
               }
               <span class="ix-menu-item-label">{{ item.label }}</span>
               @if (item.shortcut) {
@@ -35,14 +35,14 @@
           } @else {
             <button
               cdkMenuItem
+              class="ix-menu-item ix-menu-item--nested"
+              type="button"
               [cdkMenuTriggerFor]="nestedMenu"
               [disabled]="item.disabled"
               [class.disabled]="item.disabled"
-              class="ix-menu-item ix-menu-item--nested"
-              type="button"
             >
               @if (item.icon) {
-                <ix-icon [name]="item.icon" [library]="item.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+                <ix-icon size="sm" class="ix-menu-item-icon" [name]="item.icon" [library]="item.iconLibrary" />
               }
               <span class="ix-menu-item-label">{{ item.label }}</span>
               @if (item.shortcut) {
@@ -63,14 +63,14 @@
                     @if (!nestedItem.children || nestedItem.children.length === 0) {
                       <button
                         cdkMenuItem
+                        class="ix-menu-item"
+                        type="button"
                         [disabled]="nestedItem.disabled"
                         [class.disabled]="nestedItem.disabled"
-                        class="ix-menu-item"
                         (click)="onMenuItemClick(nestedItem)"
-                        type="button"
                       >
                         @if (nestedItem.icon) {
-                          <ix-icon [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+                          <ix-icon size="sm" class="ix-menu-item-icon" [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" />
                         }
                         <span class="ix-menu-item-label">{{ nestedItem.label }}</span>
                         @if (nestedItem.shortcut) {
@@ -80,14 +80,14 @@
                     } @else {
                       <button
                         cdkMenuItem
+                        class="ix-menu-item ix-menu-item--nested"
+                        type="button"
                         [cdkMenuTriggerFor]="deepNestedMenu"
                         [disabled]="nestedItem.disabled"
                         [class.disabled]="nestedItem.disabled"
-                        class="ix-menu-item ix-menu-item--nested"
-                        type="button"
                       >
                         @if (nestedItem.icon) {
-                          <ix-icon [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+                          <ix-icon size="sm" class="ix-menu-item-icon" [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" />
                         }
                         <span class="ix-menu-item-label">{{ nestedItem.label }}</span>
                         @if (nestedItem.shortcut) {
@@ -107,14 +107,14 @@
                             } @else {
                               <button
                                 cdkMenuItem
+                                class="ix-menu-item"
+                                type="button"
                                 [disabled]="deepNestedItem.disabled"
                                 [class.disabled]="deepNestedItem.disabled"
-                                class="ix-menu-item"
                                 (click)="onMenuItemClick(deepNestedItem)"
-                                type="button"
                               >
                                 @if (deepNestedItem.icon) {
-                                  <ix-icon [name]="deepNestedItem.icon" [library]="deepNestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+                                  <ix-icon size="sm" class="ix-menu-item-icon" [name]="deepNestedItem.icon" [library]="deepNestedItem.iconLibrary" />
                                 }
                                 <span class="ix-menu-item-label">{{ deepNestedItem.label }}</span>
                                 @if (deepNestedItem.shortcut) {
@@ -149,14 +149,14 @@
           @if (!item.children || item.children.length === 0) {
             <button
               cdkMenuItem
+              class="ix-menu-item"
+              type="button"
               [disabled]="item.disabled"
               [class.disabled]="item.disabled"
-              class="ix-menu-item"
               (click)="onMenuItemClick(item)"
-              type="button"
             >
               @if (item.icon) {
-                <ix-icon [name]="item.icon" [library]="item.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+                <ix-icon size="sm" class="ix-menu-item-icon" [name]="item.icon" [library]="item.iconLibrary" />
               }
               <span class="ix-menu-item-label">{{ item.label }}</span>
               @if (item.shortcut) {
@@ -166,14 +166,14 @@
           } @else {
             <button
               cdkMenuItem
+              class="ix-menu-item ix-menu-item--nested"
+              type="button"
               [cdkMenuTriggerFor]="nestedMenu"
               [disabled]="item.disabled"
               [class.disabled]="item.disabled"
-              class="ix-menu-item ix-menu-item--nested"
-              type="button"
             >
               @if (item.icon) {
-                <ix-icon [name]="item.icon" [library]="item.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+                <ix-icon size="sm" class="ix-menu-item-icon" [name]="item.icon" [library]="item.iconLibrary" />
               }
               <span class="ix-menu-item-label">{{ item.label }}</span>
               @if (item.shortcut) {
@@ -194,14 +194,14 @@
                     @if (!nestedItem.children || nestedItem.children.length === 0) {
                       <button
                         cdkMenuItem
+                        class="ix-menu-item"
+                        type="button"
                         [disabled]="nestedItem.disabled"
                         [class.disabled]="nestedItem.disabled"
-                        class="ix-menu-item"
                         (click)="onMenuItemClick(nestedItem)"
-                        type="button"
                       >
                         @if (nestedItem.icon) {
-                          <ix-icon [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+                          <ix-icon size="sm" class="ix-menu-item-icon" [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" />
                         }
                         <span class="ix-menu-item-label">{{ nestedItem.label }}</span>
                         @if (nestedItem.shortcut) {
@@ -211,14 +211,14 @@
                     } @else {
                       <button
                         cdkMenuItem
+                        class="ix-menu-item ix-menu-item--nested"
+                        type="button"
                         [cdkMenuTriggerFor]="deepNestedMenu"
                         [disabled]="nestedItem.disabled"
                         [class.disabled]="nestedItem.disabled"
-                        class="ix-menu-item ix-menu-item--nested"
-                        type="button"
                       >
                         @if (nestedItem.icon) {
-                          <ix-icon [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+                          <ix-icon size="sm" class="ix-menu-item-icon" [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" />
                         }
                         <span class="ix-menu-item-label">{{ nestedItem.label }}</span>
                         @if (nestedItem.shortcut) {
@@ -238,14 +238,14 @@
                             } @else {
                               <button
                                 cdkMenuItem
+                                class="ix-menu-item"
+                                type="button"
                                 [disabled]="deepNestedItem.disabled"
                                 [class.disabled]="deepNestedItem.disabled"
-                                class="ix-menu-item"
                                 (click)="onMenuItemClick(deepNestedItem)"
-                                type="button"
                               >
                                 @if (deepNestedItem.icon) {
-                                  <ix-icon [name]="deepNestedItem.icon" [library]="deepNestedItem.iconLibrary" size="sm" class="ix-menu-item-icon"></ix-icon>
+                                  <ix-icon size="sm" class="ix-menu-item-icon" [name]="deepNestedItem.icon" [library]="deepNestedItem.iconLibrary" />
                                 }
                                 <span class="ix-menu-item-label">{{ deepNestedItem.label }}</span>
                                 @if (deepNestedItem.shortcut) {

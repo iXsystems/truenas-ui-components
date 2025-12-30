@@ -19,8 +19,7 @@
         variant="outline"
         label="New Folder"
         [disabled]="isCreateDisabled()"
-        (onClick)="onCreateFolder()">
-      </ix-button>
+        (onClick)="onCreateFolder()" />
     }
   </div>
 </div>
@@ -28,7 +27,7 @@
 <!-- Loading indicator -->
 @if (loading()) {
   <div class="ix-file-picker-loading">
-    <ix-icon name="loading" library="mdi"></ix-icon>
+    <ix-icon name="loading" library="mdi" />
     <span>Loading...</span>
   </div>
 }
@@ -46,7 +45,7 @@
       <ng-template ixHeaderCellDef>
         <!-- Select all checkbox -->
       </ng-template>
-      <ng-template ixCellDef let-item>
+      <ng-template let-item ixCellDef>
         <input 
           type="checkbox" 
           [checked]="isSelected(item)"
@@ -60,7 +59,7 @@
     <!-- Name column -->
     <ng-container ixColumnDef="name">
       <ng-template ixHeaderCellDef>Name</ng-template>
-      <ng-template ixCellDef let-item>
+      <ng-template let-item ixCellDef>
 
         <!-- NORMAL MODE: Display name -->
         @if (!item.isCreating) {
@@ -68,21 +67,22 @@
                class="file-name-cell"
                [class.disabled]="!!item.disabled"
                [class.zfs-object]="isZfsObject(item)"
+               [attr.tabindex]="item.disabled ? null : 0"
+               [attr.role]="'button'"
                (click)="onItemClick(item)"
-               (dblclick)="onItemDoubleClick(item)">
+               (dblclick)="onItemDoubleClick(item)"
+               (keydown.enter)="onItemDoubleClick(item)"
+               (keydown.space)="onItemClick(item)">
             <ix-icon
               [name]="getItemIcon(item)"
               [library]="getItemIconLibrary(item)"
-              [class]="'file-icon-' + item.type"
-              class="file-icon">
-            </ix-icon>
+              [class]="'file-icon file-icon-' + item.type" />
             <span class="file-name">{{ item.name }}</span>
 
             <!-- ZFS badge -->
             @if (isZfsObject(item)) {
               <span
-                class="zfs-badge"
-                [class]="'zfs-badge-' + item.type">
+                [class]="'zfs-badge zfs-badge-' + item.type">
                 {{ getZfsBadge(item) }}
               </span>
             }
@@ -92,8 +92,7 @@
               <ix-icon
                 name="lock"
                 library="mdi"
-                class="permission-icon">
-              </ix-icon>
+                class="permission-icon" />
             }
           </div>
         }
@@ -105,37 +104,35 @@
               <ix-icon
                 name="folder"
                 library="mdi"
-                class="file-icon file-icon-folder">
-              </ix-icon>
+                class="file-icon file-icon-folder" />
               <input
                 #folderNameInput
                 type="text"
                 role="textbox"
                 aria-label="Folder name"
                 class="folder-name-input"
+                spellcheck="false"
+                autocomplete="off"
                 [class.error]="!!item.creationError"
                 [value]="item.name"
                 [disabled]="creationLoading()"
-                (keydown)="onFolderNameKeyDown($event, item)"
-                (blur)="onFolderNameInputBlur($event, item)"
                 [attr.data-autofocus]="true"
-                spellcheck="false"
-                autocomplete="off">
+                (keydown)="onFolderNameKeyDown($event, item)"
+                (blur)="onFolderNameInputBlur($event, item)">
 
               <!-- Loading indicator during submission -->
               @if (creationLoading()) {
                 <ix-icon
                   name="loading"
                   library="mdi"
-                  class="creation-loading-icon">
-                </ix-icon>
+                  class="creation-loading-icon" />
               }
             </div>
 
             <!-- Inline error message -->
             @if (item.creationError) {
               <div class="folder-creation-error">
-                <ix-icon name="alert-circle" library="mdi" class="error-icon"></ix-icon>
+                <ix-icon name="alert-circle" library="mdi" class="error-icon" />
                 <span class="error-text">{{ item.creationError }}</span>
               </div>
             }
@@ -148,7 +145,7 @@
     <!-- Size column -->
     <ng-container ixColumnDef="size">
       <ng-template ixHeaderCellDef>Size</ng-template>
-      <ng-template ixCellDef let-item>
+      <ng-template let-item ixCellDef>
         @if (item.size !== undefined) {
           <span>{{ item.size | ixFileSize }}</span>
         }
@@ -161,7 +158,7 @@
     <!-- Modified column -->
     <ng-container ixColumnDef="modified">
       <ng-template ixHeaderCellDef>Modified</ng-template>
-      <ng-template ixCellDef let-item>
+      <ng-template let-item ixCellDef>
         @if (item.modified) {
           <span>{{ formatDate(item.modified) }}</span>
         }
@@ -174,7 +171,7 @@
   <!-- Empty state -->
   @if (filteredFileItems().length === 0) {
     <div class="empty-state">
-      <ix-icon name="folder-open" library="mdi"></ix-icon>
+      <ix-icon name="folder-open" library="mdi" />
       <p>No items found</p>
     </div>
   }
@@ -198,8 +195,7 @@
       <ix-button
         label="Select"
         [disabled]="selectedItems().length === 0"
-        (onClick)="onSubmit()">
-      </ix-button>
+        (onClick)="onSubmit()" />
     </div>
   </div>
 }

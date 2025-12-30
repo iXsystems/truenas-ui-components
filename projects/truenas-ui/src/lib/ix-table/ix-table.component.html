@@ -8,8 +8,7 @@
           [attr.data-column]="column">
           @if (getColumnDef(column)?.headerTemplate()) {
             <ng-container
-              [ngTemplateOutlet]="getColumnDef(column)?.headerTemplate() || null">
-            </ng-container>
+              [ngTemplateOutlet]="getColumnDef(column)?.headerTemplate() || null" />
           }
           @if (!getColumnDef(column)?.headerTemplate()) {
             <span>{{ column }}</span>
@@ -30,11 +29,10 @@
             @if (getColumnDef(column)?.cellTemplate()) {
               <ng-container
                 [ngTemplateOutlet]="getColumnDef(column)?.cellTemplate() || null"
-                [ngTemplateOutletContext]="{ $implicit: row, column: column }">
-              </ng-container>
+                [ngTemplateOutletContext]="{ $implicit: row, column: column }" />
             }
             @if (!getColumnDef(column)?.cellTemplate()) {
-              <span>{{ row[column] }}</span>
+              <span>{{ getCellValue(row, column) }}</span>
             }
           </td>
         }

@@ -1,21 +1,26 @@
-import {
-  Directive,
-  ElementRef,
-  input,
-  OnDestroy,
-  HostListener,
-  ViewContainerRef,
-  OnInit,
-  TemplateRef,
-  ComponentRef
-} from '@angular/core';
+/* eslint-disable @angular-eslint/no-input-rename */
+// Input aliasing is intentional for directive API consistency (e.g., ixTooltip, ixTooltipPosition)
+// This follows the standard Angular pattern used by Material and other directive-based components
 import {
   Overlay,
-  OverlayRef,
-  ConnectedPosition,
+  type OverlayRef,
+  type ConnectedPosition,
   OverlayPositionBuilder
 } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
+import type {
+  OnDestroy,
+  OnInit,
+  ComponentRef
+} from '@angular/core';
+import {
+  Directive,
+  input,
+  HostListener,
+  ElementRef,
+  ViewContainerRef,
+  inject
+} from '@angular/core';
 import { IxTooltipComponent } from './ix-tooltip.component';
 
 export type TooltipPosition = 'above' | 'below' | 'left' | 'right' | 'before' | 'after';
@@ -37,17 +42,15 @@ export class IxTooltipDirective implements OnInit, OnDestroy {
 
   private _overlayRef: OverlayRef | null = null;
   private _tooltipInstance: ComponentRef<IxTooltipComponent> | null = null;
-  private _showTimeout: any;
-  private _hideTimeout: any;
+  private _showTimeout: ReturnType<typeof setTimeout> | null = null;
+  private _hideTimeout: ReturnType<typeof setTimeout> | null = null;
   private _isTooltipVisible = false;
   private _ariaDescribedBy: string | null = null;
 
-  constructor(
-    private _overlay: Overlay,
-    private _elementRef: ElementRef<HTMLElement>,
-    private _viewContainerRef: ViewContainerRef,
-    private _overlayPositionBuilder: OverlayPositionBuilder
-  ) {}
+  private _overlay = inject(Overlay);
+  private _elementRef = inject(ElementRef<HTMLElement>);
+  private _viewContainerRef = inject(ViewContainerRef);
+  private _overlayPositionBuilder = inject(OverlayPositionBuilder);
 
   ngOnInit() {
     // Generate unique ID for aria-describedby

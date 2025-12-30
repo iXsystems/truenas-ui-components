@@ -1,4 +1,5 @@
-import { ModifierKeys, WindowsModifierKeys, LinuxModifierKeys, PlatformType } from '../enums/modifier-keys.enum';
+import type { PlatformType } from '../enums/modifier-keys.enum';
+import { ModifierKeys, WindowsModifierKeys, LinuxModifierKeys } from '../enums/modifier-keys.enum';
 
 export class ShortcutBuilder {
   private keysList: string[] = [];

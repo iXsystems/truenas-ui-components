@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { inject, Injectable } from '@angular/core';
+import { DomSanitizer, type SafeResourceUrl } from '@angular/platform-browser';
 import { firstValueFrom } from 'rxjs';
 
 export interface SpriteConfig {
@@ -25,12 +25,12 @@ export class IxSpriteLoaderService {
   private spriteLoaded = false;
   private spriteLoadPromise?: Promise<void>;
 
-  constructor(
-    private http: HttpClient,
-    private sanitizer: DomSanitizer
-  ) {
-    // Start loading sprite immediately
-    this.loadSpriteConfig();
+  private http = inject(HttpClient);
+  private sanitizer = inject(DomSanitizer);
+
+  constructor() {
+    // Start loading sprite immediately (fire-and-forget)
+    void this.loadSpriteConfig();
   }
 
   /**

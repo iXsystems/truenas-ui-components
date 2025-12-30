@@ -1,9 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { userEvent, within } from '@storybook/testing-library';
 import { expect } from '@storybook/jest';
-import { IxMenuComponent, IxMenuItem } from '../lib/ix-menu/ix-menu.component';
-import { IxMenuTriggerDirective } from '../lib/ix-menu/ix-menu-trigger.directive';
+import { userEvent, within } from '@storybook/testing-library';
 import { IxButtonComponent } from '../lib/ix-button/ix-button.component';
+import { IxMenuTriggerDirective } from '../lib/ix-menu/ix-menu-trigger.directive';
+import type { IxMenuItem } from '../lib/ix-menu/ix-menu.component';
+import { IxMenuComponent } from '../lib/ix-menu/ix-menu.component';
 
 const meta: Meta<IxMenuComponent> = {
   title: 'Components/Menu',

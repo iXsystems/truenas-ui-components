@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxSpinnerComponent } from '../lib/ix-spinner/ix-spinner.component';
 import { IxBrandedSpinnerComponent } from '../lib/ix-spinner/ix-branded-spinner.component';
+import { IxSpinnerComponent } from '../lib/ix-spinner/ix-spinner.component';
 
 const meta: Meta<IxSpinnerComponent> = {
   title: 'Components/Spinner',
@@ -50,7 +50,7 @@ export const Indeterminate: Story = {
 
 // Branded Spinner Stories
 export const Branded = {
-  render: (args: any) => ({
+  render: (args: { ariaLabel: string }) => ({
     template: `<ix-branded-spinner [ariaLabel]="ariaLabel"></ix-branded-spinner>`,
     props: args,
     moduleMetadata: {

@@ -1,12 +1,12 @@
-import type { Meta, StoryObj } from '@storybook/angular';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import type { Meta, StoryObj } from '@storybook/angular';
+import { IxCheckboxComponent } from '../lib/ix-checkbox/ix-checkbox.component';
 import { IxFormFieldComponent } from '../lib/ix-form-field/ix-form-field.component';
 import { IxInputComponent } from '../lib/ix-input/ix-input.component';
-import { IxSelectComponent, IxSelectOption } from '../lib/ix-select/ix-select.component';
-import { IxCheckboxComponent } from '../lib/ix-checkbox/ix-checkbox.component';
 import { IxRadioComponent } from '../lib/ix-radio/ix-radio.component';
-import { InputType } from '../lib/enums/input-type.enum';
+import type { IxSelectOption } from '../lib/ix-select/ix-select.component';
+import { IxSelectComponent } from '../lib/ix-select/ix-select.component';
 
 const meta: Meta<IxFormFieldComponent> = {
   title: 'Components/Form Field',
