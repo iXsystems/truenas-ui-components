@@ -18,14 +18,7 @@ export type IxButtonToggleType = 'checkbox' | 'radio';
       multi: true
     }
   ],
-  template: `
-    <div class="ix-button-toggle-group"
-         [attr.role]="multiple() ? 'group' : 'radiogroup'"
-         [attr.aria-label]="ariaLabel()"
-         [attr.aria-labelledby]="ariaLabelledby()">
-      <ng-content />
-    </div>
-  `,
+  templateUrl: './ix-button-toggle-group.component.html',
   styleUrl: './ix-button-toggle-group.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,

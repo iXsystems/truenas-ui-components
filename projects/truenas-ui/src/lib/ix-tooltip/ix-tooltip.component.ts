@@ -5,15 +5,7 @@ import { Component, input, ChangeDetectionStrategy } from '@angular/core';
   selector: 'ix-tooltip',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div
-      class="ix-tooltip"
-      role="tooltip"
-      [id]="id()"
-      [attr.aria-hidden]="false">
-      {{ message() }}
-    </div>
-  `,
+  templateUrl: './ix-tooltip.component.html',
   styleUrl: './ix-tooltip.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {

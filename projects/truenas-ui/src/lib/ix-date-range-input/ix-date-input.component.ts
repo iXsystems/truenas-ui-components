@@ -24,65 +24,7 @@ import { IxInputDirective } from '../ix-input/ix-input.directive';
       multi: true
     }
   ],
-  template: `
-    <div class="ix-date-input-container">
-      <div #wrapper ixInput class="ix-date-input-wrapper" style="padding-right: 40px;">
-        <!-- Date segments MM/DD/YYYY -->
-        <div class="ix-date-segment-group">
-          <input
-            #monthInput
-            type="text"
-            class="ix-date-segment ix-date-segment-month"
-            placeholder="MM"
-            maxlength="2"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('month')"
-            (blur)="onSegmentBlur('month')"
-            (keydown)="onSegmentKeydown($event, 'month')">
-          <span class="ix-date-segment-separator">/</span>
-          <input
-            #dayInput
-            type="text"
-            class="ix-date-segment ix-date-segment-day"
-            placeholder="DD"
-            maxlength="2"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('day')"
-            (blur)="onSegmentBlur('day')"
-            (keydown)="onSegmentKeydown($event, 'day')">
-          <span class="ix-date-segment-separator">/</span>
-          <input
-            #yearInput
-            type="text"
-            class="ix-date-segment ix-date-segment-year"
-            placeholder="YYYY"
-            maxlength="4"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('year')"
-            (blur)="onSegmentBlur('year')"
-            (keydown)="onSegmentKeydown($event, 'year')">
-        </div>
-
-        <button
-          type="button"
-          class="ix-date-input-toggle"
-          aria-label="Open calendar"
-          [disabled]="isDisabled()"
-          (click)="openDatepicker()">
-          <span aria-hidden="true">📅</span>
-        </button>
-      </div>
-      
-      <ng-template #calendarTemplate>
-        <ix-calendar
-          class="ix-calendar"
-          [startView]="'month'"
-          [rangeMode]="false"
-          [selected]="value()"
-          (selectedChange)="onDateSelected($event)" />
-      </ng-template>
-    </div>
-  `,
+  templateUrl: './ix-date-input.component.html',
   styleUrl: './ix-date-input.component.scss',
   host: {
     'class': 'ix-date-input'

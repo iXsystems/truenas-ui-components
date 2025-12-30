@@ -5,28 +5,7 @@ import type { OnInit} from '@angular/core';
 
 @Component({
   selector: 'ix-dialog-shell',
-  template: `
-    <header class="ix-dialog__header">
-      <h2 class="ix-dialog__title">{{ title() }}</h2>
-      <button *ngIf="showFullscreenButton()"
-              type="button"
-              class="ix-dialog__fullscreen"
-              tabindex="-1"
-              [attr.aria-label]="isFullscreen() ? 'Exit fullscreen' : 'Enter fullscreen'"
-              (click)="toggleFullscreen()">
-        <span class="ix-dialog__fullscreen-icon">{{ isFullscreen() ? '⤓' : '⤢' }}</span>
-      </button>
-      <button type="button" class="ix-dialog__close" tabindex="-1" aria-label="Close dialog" (click)="close()">✕</button>
-    </header>
-
-    <section class="ix-dialog__content" cdkDialogContent>
-      <ng-content />
-    </section>
-
-    <footer class="ix-dialog__actions" cdkDialogActions>
-      <ng-content select="[ixDialogAction]" />
-    </footer>
-  `,
+  templateUrl: './ix-dialog-shell.component.html',
   standalone: true,
   imports: [CommonModule],
   host: {

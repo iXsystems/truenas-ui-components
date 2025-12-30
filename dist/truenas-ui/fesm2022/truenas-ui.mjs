@@ -8,7 +8,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom, BehaviorSubject, merge, Subject } from 'rxjs';
 import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
-import { FocusMonitor, A11yModule, LiveAnnouncer } from '@angular/cdk/a11y';
+import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
 import * as i1$3 from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR, NgControl } from '@angular/forms';
 import { Overlay, OverlayModule, OverlayPositionBuilder } from '@angular/cdk/overlay';
@@ -931,12 +931,7 @@ class IxChipComponent {
     onClick = output();
     focusMonitor = inject(FocusMonitor);
     ngAfterViewInit() {
-        this.focusMonitor.monitor(this.chipEl())
-            .subscribe(origin => {
-            if (origin) {
-                console.log(`Chip focused via: ${origin}`);
-            }
-        });
+        this.focusMonitor.monitor(this.chipEl());
     }
     ngOnDestroy() {
         this.focusMonitor.stopMonitoring(this.chipEl());
@@ -1751,7 +1746,6 @@ class IxTabsComponent {
     highlightBarHeight = signal(0, ...(ngDevMode ? [{ debugName: "highlightBarHeight" }] : []));
     highlightBarVisible = signal(false, ...(ngDevMode ? [{ debugName: "highlightBarVisible" }] : []));
     focusMonitor = inject(FocusMonitor);
-    liveAnnouncer = inject(LiveAnnouncer);
     cdr = inject(ChangeDetectorRef);
     constructor() {
         // Sync input to internal state
@@ -1815,12 +1809,7 @@ class IxTabsComponent {
             tab.tabsComponent = this;
             // Set up focus monitoring
             if (tab.elementRef) {
-                this.focusMonitor.monitor(tab.elementRef)
-                    .subscribe(origin => {
-                    if (origin) {
-                        console.log(`Tab ${index} focused via: ${origin}`);
-                    }
-                });
+                this.focusMonitor.monitor(tab.elementRef);
             }
             // Set up click handlers
             tab.selected.subscribe(() => {
@@ -2906,7 +2895,7 @@ class IxListOptionComponent {
         this.hasPrimaryTextDirective.set(!!(element.querySelector('[ixListItemTitle]') ||
             element.querySelector('[ixListItemPrimary]')));
     }
-    onClick(event) {
+    onClick(_event) {
         if (this.effectiveDisabled()) {
             return;
         }
@@ -4343,105 +4332,11 @@ class IxCalendarHeaderComponent {
         this.nextClicked.emit();
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxCalendarHeaderComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxCalendarHeaderComponent, isStandalone: true, selector: "ix-calendar-header", inputs: { currentDate: { classPropertyName: "currentDate", publicName: "currentDate", isSignal: true, isRequired: false, transformFunction: null }, currentView: { classPropertyName: "currentView", publicName: "currentView", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { monthSelected: "monthSelected", yearSelected: "yearSelected", viewChanged: "viewChanged", previousClicked: "previousClicked", nextClicked: "nextClicked" }, ngImport: i0, template: `
-    <div class="ix-calendar-header">
-      <div class="ix-calendar-controls">
-        <!-- Period label (visually hidden for screen readers) -->
-        <span aria-live="polite" class="cdk-visually-hidden" [id]="periodLabelId">
-          {{ periodLabel() }}
-        </span>
-
-        <!-- Period button (month/year selector) -->
-        <button 
-          type="button"
-          class="ix-calendar-period-button"
-          [attr.aria-label]="'Choose month and year'"
-          [attr.aria-describedby]="periodLabelId"
-          (click)="toggleView()">
-          <span [attr.aria-hidden]="true">{{ periodLabel() }}</span>
-          <svg viewBox="0 0 10 5" focusable="false" aria-hidden="true" class="ix-calendar-arrow">
-            <polygon points="0,0 5,5 10,0" />
-          </svg>
-        </button>
-
-        <!-- Spacer -->
-        <div class="ix-calendar-spacer"></div>
-
-        <!-- Previous button -->
-        <button 
-          type="button"
-          class="ix-calendar-previous-button"
-          [attr.aria-label]="previousLabel()"
-          (click)="onPreviousClick()">
-          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-            <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
-          </svg>
-        </button>
-
-        <!-- Next button -->
-        <button 
-          type="button"
-          class="ix-calendar-next-button"
-          [attr.aria-label]="nextLabel()"
-          (click)="onNextClick()">
-          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-            <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  `, isInline: true, styles: [".ix-calendar-header{display:flex;padding:16px}.ix-calendar-controls{display:flex;align-items:center;width:100%}.cdk-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}.ix-calendar-period-button{background:none;border:none;font-weight:600;font-size:16px;color:var(--fg1, #333);padding:8px 12px;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:background-color .2s ease}.ix-calendar-period-button:hover{background:var(--alt-bg2, #e8f4fd)}.ix-calendar-period-button:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px;background:var(--alt-bg2, #e8f4fd)}.ix-calendar-arrow{width:10px;height:5px;fill:currentColor}.ix-calendar-spacer{flex:1}.ix-calendar-previous-button,.ix-calendar-next-button{background:none;border:none;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--fg1, #333);transition:background-color .2s ease}.ix-calendar-previous-button svg,.ix-calendar-next-button svg{width:24px;height:24px;fill:currentColor}.ix-calendar-previous-button:hover:not(:disabled),.ix-calendar-next-button:hover:not(:disabled){background:var(--alt-bg2, #e8f4fd)}.ix-calendar-previous-button:focus,.ix-calendar-next-button:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px;background:var(--alt-bg2, #e8f4fd)}.ix-calendar-previous-button:disabled,.ix-calendar-next-button:disabled{color:var(--fg2, #666);opacity:.5;cursor:not-allowed}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxCalendarHeaderComponent, isStandalone: true, selector: "ix-calendar-header", inputs: { currentDate: { classPropertyName: "currentDate", publicName: "currentDate", isSignal: true, isRequired: false, transformFunction: null }, currentView: { classPropertyName: "currentView", publicName: "currentView", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { monthSelected: "monthSelected", yearSelected: "yearSelected", viewChanged: "viewChanged", previousClicked: "previousClicked", nextClicked: "nextClicked" }, ngImport: i0, template: "<div class=\"ix-calendar-header\">\n  <div class=\"ix-calendar-controls\">\n    <!-- Period label (visually hidden for screen readers) -->\n    <span aria-live=\"polite\" class=\"cdk-visually-hidden\" [id]=\"periodLabelId\">\n      {{ periodLabel() }}\n    </span>\n\n    <!-- Period button (month/year selector) -->\n    <button\n      type=\"button\"\n      class=\"ix-calendar-period-button\"\n      [attr.aria-label]=\"'Choose month and year'\"\n      [attr.aria-describedby]=\"periodLabelId\"\n      (click)=\"toggleView()\">\n      <span [attr.aria-hidden]=\"true\">{{ periodLabel() }}</span>\n      <svg viewBox=\"0 0 10 5\" focusable=\"false\" aria-hidden=\"true\" class=\"ix-calendar-arrow\">\n        <polygon points=\"0,0 5,5 10,0\" />\n      </svg>\n    </button>\n\n    <!-- Spacer -->\n    <div class=\"ix-calendar-spacer\"></div>\n\n    <!-- Previous button -->\n    <button\n      type=\"button\"\n      class=\"ix-calendar-previous-button\"\n      [attr.aria-label]=\"previousLabel()\"\n      (click)=\"onPreviousClick()\">\n      <svg viewBox=\"0 0 24 24\" focusable=\"false\" aria-hidden=\"true\">\n        <path d=\"M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z\" />\n      </svg>\n    </button>\n\n    <!-- Next button -->\n    <button\n      type=\"button\"\n      class=\"ix-calendar-next-button\"\n      [attr.aria-label]=\"nextLabel()\"\n      (click)=\"onNextClick()\">\n      <svg viewBox=\"0 0 24 24\" focusable=\"false\" aria-hidden=\"true\">\n        <path d=\"M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z\" />\n      </svg>\n    </button>\n  </div>\n</div>\n", styles: [".ix-calendar-header{display:flex;padding:16px}.ix-calendar-controls{display:flex;align-items:center;width:100%}.cdk-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}.ix-calendar-period-button{background:none;border:none;font-weight:600;font-size:16px;color:var(--fg1, #333);padding:8px 12px;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:background-color .2s ease}.ix-calendar-period-button:hover{background:var(--alt-bg2, #e8f4fd)}.ix-calendar-period-button:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px;background:var(--alt-bg2, #e8f4fd)}.ix-calendar-arrow{width:10px;height:5px;fill:currentColor}.ix-calendar-spacer{flex:1}.ix-calendar-previous-button,.ix-calendar-next-button{background:none;border:none;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--fg1, #333);transition:background-color .2s ease}.ix-calendar-previous-button svg,.ix-calendar-next-button svg{width:24px;height:24px;fill:currentColor}.ix-calendar-previous-button:hover:not(:disabled),.ix-calendar-next-button:hover:not(:disabled){background:var(--alt-bg2, #e8f4fd)}.ix-calendar-previous-button:focus,.ix-calendar-next-button:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px;background:var(--alt-bg2, #e8f4fd)}.ix-calendar-previous-button:disabled,.ix-calendar-next-button:disabled{color:var(--fg2, #666);opacity:.5;cursor:not-allowed}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxCalendarHeaderComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-calendar-header', standalone: true, imports: [CommonModule], template: `
-    <div class="ix-calendar-header">
-      <div class="ix-calendar-controls">
-        <!-- Period label (visually hidden for screen readers) -->
-        <span aria-live="polite" class="cdk-visually-hidden" [id]="periodLabelId">
-          {{ periodLabel() }}
-        </span>
-
-        <!-- Period button (month/year selector) -->
-        <button 
-          type="button"
-          class="ix-calendar-period-button"
-          [attr.aria-label]="'Choose month and year'"
-          [attr.aria-describedby]="periodLabelId"
-          (click)="toggleView()">
-          <span [attr.aria-hidden]="true">{{ periodLabel() }}</span>
-          <svg viewBox="0 0 10 5" focusable="false" aria-hidden="true" class="ix-calendar-arrow">
-            <polygon points="0,0 5,5 10,0" />
-          </svg>
-        </button>
-
-        <!-- Spacer -->
-        <div class="ix-calendar-spacer"></div>
-
-        <!-- Previous button -->
-        <button 
-          type="button"
-          class="ix-calendar-previous-button"
-          [attr.aria-label]="previousLabel()"
-          (click)="onPreviousClick()">
-          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-            <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
-          </svg>
-        </button>
-
-        <!-- Next button -->
-        <button 
-          type="button"
-          class="ix-calendar-next-button"
-          [attr.aria-label]="nextLabel()"
-          (click)="onNextClick()">
-          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-            <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  `, styles: [".ix-calendar-header{display:flex;padding:16px}.ix-calendar-controls{display:flex;align-items:center;width:100%}.cdk-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}.ix-calendar-period-button{background:none;border:none;font-weight:600;font-size:16px;color:var(--fg1, #333);padding:8px 12px;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:background-color .2s ease}.ix-calendar-period-button:hover{background:var(--alt-bg2, #e8f4fd)}.ix-calendar-period-button:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px;background:var(--alt-bg2, #e8f4fd)}.ix-calendar-arrow{width:10px;height:5px;fill:currentColor}.ix-calendar-spacer{flex:1}.ix-calendar-previous-button,.ix-calendar-next-button{background:none;border:none;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--fg1, #333);transition:background-color .2s ease}.ix-calendar-previous-button svg,.ix-calendar-next-button svg{width:24px;height:24px;fill:currentColor}.ix-calendar-previous-button:hover:not(:disabled),.ix-calendar-next-button:hover:not(:disabled){background:var(--alt-bg2, #e8f4fd)}.ix-calendar-previous-button:focus,.ix-calendar-next-button:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px;background:var(--alt-bg2, #e8f4fd)}.ix-calendar-previous-button:disabled,.ix-calendar-next-button:disabled{color:var(--fg2, #666);opacity:.5;cursor:not-allowed}\n"] }]
+            args: [{ selector: 'ix-calendar-header', standalone: true, imports: [CommonModule], template: "<div class=\"ix-calendar-header\">\n  <div class=\"ix-calendar-controls\">\n    <!-- Period label (visually hidden for screen readers) -->\n    <span aria-live=\"polite\" class=\"cdk-visually-hidden\" [id]=\"periodLabelId\">\n      {{ periodLabel() }}\n    </span>\n\n    <!-- Period button (month/year selector) -->\n    <button\n      type=\"button\"\n      class=\"ix-calendar-period-button\"\n      [attr.aria-label]=\"'Choose month and year'\"\n      [attr.aria-describedby]=\"periodLabelId\"\n      (click)=\"toggleView()\">\n      <span [attr.aria-hidden]=\"true\">{{ periodLabel() }}</span>\n      <svg viewBox=\"0 0 10 5\" focusable=\"false\" aria-hidden=\"true\" class=\"ix-calendar-arrow\">\n        <polygon points=\"0,0 5,5 10,0\" />\n      </svg>\n    </button>\n\n    <!-- Spacer -->\n    <div class=\"ix-calendar-spacer\"></div>\n\n    <!-- Previous button -->\n    <button\n      type=\"button\"\n      class=\"ix-calendar-previous-button\"\n      [attr.aria-label]=\"previousLabel()\"\n      (click)=\"onPreviousClick()\">\n      <svg viewBox=\"0 0 24 24\" focusable=\"false\" aria-hidden=\"true\">\n        <path d=\"M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z\" />\n      </svg>\n    </button>\n\n    <!-- Next button -->\n    <button\n      type=\"button\"\n      class=\"ix-calendar-next-button\"\n      [attr.aria-label]=\"nextLabel()\"\n      (click)=\"onNextClick()\">\n      <svg viewBox=\"0 0 24 24\" focusable=\"false\" aria-hidden=\"true\">\n        <path d=\"M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z\" />\n      </svg>\n    </button>\n  </div>\n</div>\n", styles: [".ix-calendar-header{display:flex;padding:16px}.ix-calendar-controls{display:flex;align-items:center;width:100%}.cdk-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}.ix-calendar-period-button{background:none;border:none;font-weight:600;font-size:16px;color:var(--fg1, #333);padding:8px 12px;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:background-color .2s ease}.ix-calendar-period-button:hover{background:var(--alt-bg2, #e8f4fd)}.ix-calendar-period-button:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px;background:var(--alt-bg2, #e8f4fd)}.ix-calendar-arrow{width:10px;height:5px;fill:currentColor}.ix-calendar-spacer{flex:1}.ix-calendar-previous-button,.ix-calendar-next-button{background:none;border:none;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--fg1, #333);transition:background-color .2s ease}.ix-calendar-previous-button svg,.ix-calendar-next-button svg{width:24px;height:24px;fill:currentColor}.ix-calendar-previous-button:hover:not(:disabled),.ix-calendar-next-button:hover:not(:disabled){background:var(--alt-bg2, #e8f4fd)}.ix-calendar-previous-button:focus,.ix-calendar-next-button:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px;background:var(--alt-bg2, #e8f4fd)}.ix-calendar-previous-button:disabled,.ix-calendar-next-button:disabled{color:var(--fg2, #666);opacity:.5;cursor:not-allowed}\n"] }]
         }] });
 
 class IxMonthViewComponent {
@@ -4604,115 +4499,11 @@ class IxMonthViewComponent {
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMonthViewComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxMonthViewComponent, isStandalone: true, selector: "ix-month-view", inputs: { activeDate: { classPropertyName: "activeDate", publicName: "activeDate", isSignal: true, isRequired: false, transformFunction: null }, selected: { classPropertyName: "selected", publicName: "selected", isSignal: true, isRequired: false, transformFunction: null }, minDate: { classPropertyName: "minDate", publicName: "minDate", isSignal: true, isRequired: false, transformFunction: null }, maxDate: { classPropertyName: "maxDate", publicName: "maxDate", isSignal: true, isRequired: false, transformFunction: null }, dateFilter: { classPropertyName: "dateFilter", publicName: "dateFilter", isSignal: true, isRequired: false, transformFunction: null }, rangeMode: { classPropertyName: "rangeMode", publicName: "rangeMode", isSignal: true, isRequired: false, transformFunction: null }, selectedRange: { classPropertyName: "selectedRange", publicName: "selectedRange", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectedChange: "selectedChange", activeDateChange: "activeDateChange" }, ngImport: i0, template: `
-    <table role="grid" class="ix-calendar-table">
-      <!-- Table header with day names -->
-      <thead class="ix-calendar-table-header">
-        <tr>
-          <th *ngFor="let day of weekdays" scope="col">
-            <span class="cdk-visually-hidden">{{ day.long }}</span>
-            <span aria-hidden="true">{{ day.short }}</span>
-          </th>
-        </tr>
-      </thead>
-
-      <!-- Table body with calendar cells -->
-      <tbody class="ix-calendar-body">
-        <!-- Calendar rows -->
-        <tr *ngFor="let row of calendarRows(); let rowIndex = index; trackBy: trackByRow" role="row">
-          <td 
-            *ngFor="let cell of row; let colIndex = index; trackBy: trackByDate"
-            role="gridcell"
-            class="ix-calendar-body-cell-container"
-            [attr.data-ix-row]="rowIndex"
-            [attr.data-ix-col]="colIndex">
-            <button 
-              *ngIf="cell.value > 0"
-              type="button"
-              class="ix-calendar-body-cell"
-              [class.ix-calendar-body-selected]="cell.selected"
-              [class.ix-calendar-body-today]="cell.today"
-              [class.ix-calendar-body-active]="cell.selected"
-              [class.ix-calendar-body-range-start]="cell.rangeStart"
-              [class.ix-calendar-body-range-end]="cell.rangeEnd"
-              [class.ix-calendar-body-in-range]="cell.inRange"
-              [disabled]="!cell.enabled"
-              [attr.tabindex]="cell.selected ? 0 : -1"
-              [attr.aria-label]="cell.ariaLabel"
-              [attr.aria-pressed]="cell.selected"
-              [attr.aria-current]="cell.today ? 'date' : null"
-              (click)="onCellClicked(cell)">
-              <span class="ix-calendar-body-cell-content ix-focus-indicator"
-                    [class.ix-calendar-body-selected]="cell.selected"
-                    [class.ix-calendar-body-today]="cell.today"
-                    [class.ix-calendar-body-range-start]="cell.rangeStart"
-                    [class.ix-calendar-body-range-end]="cell.rangeEnd"
-                    [class.ix-calendar-body-in-range]="cell.inRange">
-                {{ cell.value }}
-              </span>
-              <span aria-hidden="true" class="ix-calendar-body-cell-preview"></span>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  `, isInline: true, styles: [":host{--calendar-cell-size: 48px;--calendar-header-height: 40px;--calendar-cell-font-size: 16px;--calendar-header-font-size: 14px}.ix-calendar-table{width:calc(7 * var(--calendar-cell-size));border-spacing:0;border-collapse:separate}.ix-calendar-table-header th{text-align:center;height:var(--calendar-header-height);padding:8px 0;font-size:var(--calendar-header-font-size);font-weight:500;color:var(--fg2, #666)}.ix-calendar-table-header-divider{height:1px;border:0}.ix-calendar-body tr{border:0}.ix-calendar-body-cell-container{position:relative;border:0;outline:0;height:var(--calendar-cell-size);width:14.2857142857%}.ix-calendar-body-cell{position:absolute;inset:0;margin:auto;background:transparent;border:0;outline:0;cursor:pointer;color:var(--fg1, #333);width:var(--calendar-cell-size);height:var(--calendar-cell-size)}.ix-calendar-body-cell:not(:disabled):hover:not(.ix-calendar-body-selected):not(.ix-calendar-body-range-start):not(.ix-calendar-body-range-end):not(.ix-calendar-body-in-range){background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-calendar-body-cell:focus .ix-calendar-body-cell-content.ix-focus-indicator{background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:disabled{color:var(--fg2, #666);opacity:.5;cursor:default}.ix-calendar-body-cell.ix-calendar-body-today:not(.ix-calendar-body-selected){border:1px solid var(--primary, #007bff);color:var(--primary, #007bff)}.ix-calendar-body-cell.ix-calendar-body-selected,.ix-calendar-body-cell.ix-calendar-body-range-start,.ix-calendar-body-cell.ix-calendar-body-range-end,.ix-calendar-body-cell.ix-calendar-body-in-range{background:var(--primary, #007bff);color:#fff}.ix-calendar-body-cell-content{position:relative;display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;height:100%;font-size:var(--calendar-cell-font-size);font-weight:400;transition:background-color .2s cubic-bezier(.25,.8,.25,1)}.ix-calendar-body-cell-preview{position:absolute;inset:0;background:transparent}.cdk-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}.ix-focus-indicator{position:relative}.ix-focus-indicator:before{content:\"\";position:absolute;inset:0;opacity:0;background:currentColor;transition:opacity .2s cubic-bezier(.25,.8,.25,1)}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$1.NgForOf, selector: "[ngFor][ngForOf]", inputs: ["ngForOf", "ngForTrackBy", "ngForTemplate"] }, { kind: "directive", type: i1$1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxMonthViewComponent, isStandalone: true, selector: "ix-month-view", inputs: { activeDate: { classPropertyName: "activeDate", publicName: "activeDate", isSignal: true, isRequired: false, transformFunction: null }, selected: { classPropertyName: "selected", publicName: "selected", isSignal: true, isRequired: false, transformFunction: null }, minDate: { classPropertyName: "minDate", publicName: "minDate", isSignal: true, isRequired: false, transformFunction: null }, maxDate: { classPropertyName: "maxDate", publicName: "maxDate", isSignal: true, isRequired: false, transformFunction: null }, dateFilter: { classPropertyName: "dateFilter", publicName: "dateFilter", isSignal: true, isRequired: false, transformFunction: null }, rangeMode: { classPropertyName: "rangeMode", publicName: "rangeMode", isSignal: true, isRequired: false, transformFunction: null }, selectedRange: { classPropertyName: "selectedRange", publicName: "selectedRange", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectedChange: "selectedChange", activeDateChange: "activeDateChange" }, ngImport: i0, template: "<table role=\"grid\" class=\"ix-calendar-table\">\n  <!-- Table header with day names -->\n  <thead class=\"ix-calendar-table-header\">\n    <tr>\n      @for (day of weekdays; track day) {\n        <th scope=\"col\">\n          <span class=\"cdk-visually-hidden\">{{ day.long }}</span>\n          <span aria-hidden=\"true\">{{ day.short }}</span>\n        </th>\n      }\n    </tr>\n  </thead>\n\n  <!-- Table body with calendar cells -->\n  <tbody class=\"ix-calendar-body\">\n    <!-- Calendar rows -->\n    @for (row of calendarRows(); track trackByRow($index, row); let rowIndex = $index) {\n      <tr role=\"row\">\n        @for (cell of row; track trackByDate($index, cell); let colIndex = $index) {\n          <td\n            role=\"gridcell\"\n            class=\"ix-calendar-body-cell-container\"\n            [attr.data-ix-row]=\"rowIndex\"\n            [attr.data-ix-col]=\"colIndex\">\n            @if (cell.value > 0) {\n              <button\n                type=\"button\"\n                class=\"ix-calendar-body-cell\"\n                [class.ix-calendar-body-selected]=\"cell.selected\"\n                [class.ix-calendar-body-today]=\"cell.today\"\n                [class.ix-calendar-body-active]=\"cell.selected\"\n                [class.ix-calendar-body-range-start]=\"cell.rangeStart\"\n                [class.ix-calendar-body-range-end]=\"cell.rangeEnd\"\n                [class.ix-calendar-body-in-range]=\"cell.inRange\"\n                [disabled]=\"!cell.enabled\"\n                [attr.tabindex]=\"cell.selected ? 0 : -1\"\n                [attr.aria-label]=\"cell.ariaLabel\"\n                [attr.aria-pressed]=\"cell.selected\"\n                [attr.aria-current]=\"cell.today ? 'date' : null\"\n                (click)=\"onCellClicked(cell)\">\n                <span class=\"ix-calendar-body-cell-content ix-focus-indicator\"\n                      [class.ix-calendar-body-selected]=\"cell.selected\"\n                      [class.ix-calendar-body-today]=\"cell.today\"\n                      [class.ix-calendar-body-range-start]=\"cell.rangeStart\"\n                      [class.ix-calendar-body-range-end]=\"cell.rangeEnd\"\n                      [class.ix-calendar-body-in-range]=\"cell.inRange\">\n                  {{ cell.value }}\n                </span>\n                <span aria-hidden=\"true\" class=\"ix-calendar-body-cell-preview\"></span>\n              </button>\n            }\n          </td>\n        }\n      </tr>\n    }\n  </tbody>\n</table>\n", styles: [":host{--calendar-cell-size: 48px;--calendar-header-height: 40px;--calendar-cell-font-size: 16px;--calendar-header-font-size: 14px}.ix-calendar-table{width:calc(7 * var(--calendar-cell-size));border-spacing:0;border-collapse:separate}.ix-calendar-table-header th{text-align:center;height:var(--calendar-header-height);padding:8px 0;font-size:var(--calendar-header-font-size);font-weight:500;color:var(--fg2, #666)}.ix-calendar-table-header-divider{height:1px;border:0}.ix-calendar-body tr{border:0}.ix-calendar-body-cell-container{position:relative;border:0;outline:0;height:var(--calendar-cell-size);width:14.2857142857%}.ix-calendar-body-cell{position:absolute;inset:0;margin:auto;background:transparent;border:0;outline:0;cursor:pointer;color:var(--fg1, #333);width:var(--calendar-cell-size);height:var(--calendar-cell-size)}.ix-calendar-body-cell:not(:disabled):hover:not(.ix-calendar-body-selected):not(.ix-calendar-body-range-start):not(.ix-calendar-body-range-end):not(.ix-calendar-body-in-range){background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-calendar-body-cell:focus .ix-calendar-body-cell-content.ix-focus-indicator{background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:disabled{color:var(--fg2, #666);opacity:.5;cursor:default}.ix-calendar-body-cell.ix-calendar-body-today:not(.ix-calendar-body-selected){border:1px solid var(--primary, #007bff);color:var(--primary, #007bff)}.ix-calendar-body-cell.ix-calendar-body-selected,.ix-calendar-body-cell.ix-calendar-body-range-start,.ix-calendar-body-cell.ix-calendar-body-range-end,.ix-calendar-body-cell.ix-calendar-body-in-range{background:var(--primary, #007bff);color:#fff}.ix-calendar-body-cell-content{position:relative;display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;height:100%;font-size:var(--calendar-cell-font-size);font-weight:400;transition:background-color .2s cubic-bezier(.25,.8,.25,1)}.ix-calendar-body-cell-preview{position:absolute;inset:0;background:transparent}.cdk-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}.ix-focus-indicator{position:relative}.ix-focus-indicator:before{content:\"\";position:absolute;inset:0;opacity:0;background:currentColor;transition:opacity .2s cubic-bezier(.25,.8,.25,1)}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMonthViewComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-month-view', standalone: true, imports: [CommonModule], template: `
-    <table role="grid" class="ix-calendar-table">
-      <!-- Table header with day names -->
-      <thead class="ix-calendar-table-header">
-        <tr>
-          <th *ngFor="let day of weekdays" scope="col">
-            <span class="cdk-visually-hidden">{{ day.long }}</span>
-            <span aria-hidden="true">{{ day.short }}</span>
-          </th>
-        </tr>
-      </thead>
-
-      <!-- Table body with calendar cells -->
-      <tbody class="ix-calendar-body">
-        <!-- Calendar rows -->
-        <tr *ngFor="let row of calendarRows(); let rowIndex = index; trackBy: trackByRow" role="row">
-          <td 
-            *ngFor="let cell of row; let colIndex = index; trackBy: trackByDate"
-            role="gridcell"
-            class="ix-calendar-body-cell-container"
-            [attr.data-ix-row]="rowIndex"
-            [attr.data-ix-col]="colIndex">
-            <button 
-              *ngIf="cell.value > 0"
-              type="button"
-              class="ix-calendar-body-cell"
-              [class.ix-calendar-body-selected]="cell.selected"
-              [class.ix-calendar-body-today]="cell.today"
-              [class.ix-calendar-body-active]="cell.selected"
-              [class.ix-calendar-body-range-start]="cell.rangeStart"
-              [class.ix-calendar-body-range-end]="cell.rangeEnd"
-              [class.ix-calendar-body-in-range]="cell.inRange"
-              [disabled]="!cell.enabled"
-              [attr.tabindex]="cell.selected ? 0 : -1"
-              [attr.aria-label]="cell.ariaLabel"
-              [attr.aria-pressed]="cell.selected"
-              [attr.aria-current]="cell.today ? 'date' : null"
-              (click)="onCellClicked(cell)">
-              <span class="ix-calendar-body-cell-content ix-focus-indicator"
-                    [class.ix-calendar-body-selected]="cell.selected"
-                    [class.ix-calendar-body-today]="cell.today"
-                    [class.ix-calendar-body-range-start]="cell.rangeStart"
-                    [class.ix-calendar-body-range-end]="cell.rangeEnd"
-                    [class.ix-calendar-body-in-range]="cell.inRange">
-                {{ cell.value }}
-              </span>
-              <span aria-hidden="true" class="ix-calendar-body-cell-preview"></span>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  `, styles: [":host{--calendar-cell-size: 48px;--calendar-header-height: 40px;--calendar-cell-font-size: 16px;--calendar-header-font-size: 14px}.ix-calendar-table{width:calc(7 * var(--calendar-cell-size));border-spacing:0;border-collapse:separate}.ix-calendar-table-header th{text-align:center;height:var(--calendar-header-height);padding:8px 0;font-size:var(--calendar-header-font-size);font-weight:500;color:var(--fg2, #666)}.ix-calendar-table-header-divider{height:1px;border:0}.ix-calendar-body tr{border:0}.ix-calendar-body-cell-container{position:relative;border:0;outline:0;height:var(--calendar-cell-size);width:14.2857142857%}.ix-calendar-body-cell{position:absolute;inset:0;margin:auto;background:transparent;border:0;outline:0;cursor:pointer;color:var(--fg1, #333);width:var(--calendar-cell-size);height:var(--calendar-cell-size)}.ix-calendar-body-cell:not(:disabled):hover:not(.ix-calendar-body-selected):not(.ix-calendar-body-range-start):not(.ix-calendar-body-range-end):not(.ix-calendar-body-in-range){background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-calendar-body-cell:focus .ix-calendar-body-cell-content.ix-focus-indicator{background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:disabled{color:var(--fg2, #666);opacity:.5;cursor:default}.ix-calendar-body-cell.ix-calendar-body-today:not(.ix-calendar-body-selected){border:1px solid var(--primary, #007bff);color:var(--primary, #007bff)}.ix-calendar-body-cell.ix-calendar-body-selected,.ix-calendar-body-cell.ix-calendar-body-range-start,.ix-calendar-body-cell.ix-calendar-body-range-end,.ix-calendar-body-cell.ix-calendar-body-in-range{background:var(--primary, #007bff);color:#fff}.ix-calendar-body-cell-content{position:relative;display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;height:100%;font-size:var(--calendar-cell-font-size);font-weight:400;transition:background-color .2s cubic-bezier(.25,.8,.25,1)}.ix-calendar-body-cell-preview{position:absolute;inset:0;background:transparent}.cdk-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}.ix-focus-indicator{position:relative}.ix-focus-indicator:before{content:\"\";position:absolute;inset:0;opacity:0;background:currentColor;transition:opacity .2s cubic-bezier(.25,.8,.25,1)}\n"] }]
+            args: [{ selector: 'ix-month-view', standalone: true, imports: [CommonModule], template: "<table role=\"grid\" class=\"ix-calendar-table\">\n  <!-- Table header with day names -->\n  <thead class=\"ix-calendar-table-header\">\n    <tr>\n      @for (day of weekdays; track day) {\n        <th scope=\"col\">\n          <span class=\"cdk-visually-hidden\">{{ day.long }}</span>\n          <span aria-hidden=\"true\">{{ day.short }}</span>\n        </th>\n      }\n    </tr>\n  </thead>\n\n  <!-- Table body with calendar cells -->\n  <tbody class=\"ix-calendar-body\">\n    <!-- Calendar rows -->\n    @for (row of calendarRows(); track trackByRow($index, row); let rowIndex = $index) {\n      <tr role=\"row\">\n        @for (cell of row; track trackByDate($index, cell); let colIndex = $index) {\n          <td\n            role=\"gridcell\"\n            class=\"ix-calendar-body-cell-container\"\n            [attr.data-ix-row]=\"rowIndex\"\n            [attr.data-ix-col]=\"colIndex\">\n            @if (cell.value > 0) {\n              <button\n                type=\"button\"\n                class=\"ix-calendar-body-cell\"\n                [class.ix-calendar-body-selected]=\"cell.selected\"\n                [class.ix-calendar-body-today]=\"cell.today\"\n                [class.ix-calendar-body-active]=\"cell.selected\"\n                [class.ix-calendar-body-range-start]=\"cell.rangeStart\"\n                [class.ix-calendar-body-range-end]=\"cell.rangeEnd\"\n                [class.ix-calendar-body-in-range]=\"cell.inRange\"\n                [disabled]=\"!cell.enabled\"\n                [attr.tabindex]=\"cell.selected ? 0 : -1\"\n                [attr.aria-label]=\"cell.ariaLabel\"\n                [attr.aria-pressed]=\"cell.selected\"\n                [attr.aria-current]=\"cell.today ? 'date' : null\"\n                (click)=\"onCellClicked(cell)\">\n                <span class=\"ix-calendar-body-cell-content ix-focus-indicator\"\n                      [class.ix-calendar-body-selected]=\"cell.selected\"\n                      [class.ix-calendar-body-today]=\"cell.today\"\n                      [class.ix-calendar-body-range-start]=\"cell.rangeStart\"\n                      [class.ix-calendar-body-range-end]=\"cell.rangeEnd\"\n                      [class.ix-calendar-body-in-range]=\"cell.inRange\">\n                  {{ cell.value }}\n                </span>\n                <span aria-hidden=\"true\" class=\"ix-calendar-body-cell-preview\"></span>\n              </button>\n            }\n          </td>\n        }\n      </tr>\n    }\n  </tbody>\n</table>\n", styles: [":host{--calendar-cell-size: 48px;--calendar-header-height: 40px;--calendar-cell-font-size: 16px;--calendar-header-font-size: 14px}.ix-calendar-table{width:calc(7 * var(--calendar-cell-size));border-spacing:0;border-collapse:separate}.ix-calendar-table-header th{text-align:center;height:var(--calendar-header-height);padding:8px 0;font-size:var(--calendar-header-font-size);font-weight:500;color:var(--fg2, #666)}.ix-calendar-table-header-divider{height:1px;border:0}.ix-calendar-body tr{border:0}.ix-calendar-body-cell-container{position:relative;border:0;outline:0;height:var(--calendar-cell-size);width:14.2857142857%}.ix-calendar-body-cell{position:absolute;inset:0;margin:auto;background:transparent;border:0;outline:0;cursor:pointer;color:var(--fg1, #333);width:var(--calendar-cell-size);height:var(--calendar-cell-size)}.ix-calendar-body-cell:not(:disabled):hover:not(.ix-calendar-body-selected):not(.ix-calendar-body-range-start):not(.ix-calendar-body-range-end):not(.ix-calendar-body-in-range){background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-calendar-body-cell:focus .ix-calendar-body-cell-content.ix-focus-indicator{background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:disabled{color:var(--fg2, #666);opacity:.5;cursor:default}.ix-calendar-body-cell.ix-calendar-body-today:not(.ix-calendar-body-selected){border:1px solid var(--primary, #007bff);color:var(--primary, #007bff)}.ix-calendar-body-cell.ix-calendar-body-selected,.ix-calendar-body-cell.ix-calendar-body-range-start,.ix-calendar-body-cell.ix-calendar-body-range-end,.ix-calendar-body-cell.ix-calendar-body-in-range{background:var(--primary, #007bff);color:#fff}.ix-calendar-body-cell-content{position:relative;display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;height:100%;font-size:var(--calendar-cell-font-size);font-weight:400;transition:background-color .2s cubic-bezier(.25,.8,.25,1)}.ix-calendar-body-cell-preview{position:absolute;inset:0;background:transparent}.cdk-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}.ix-focus-indicator{position:relative}.ix-focus-indicator:before{content:\"\";position:absolute;inset:0;opacity:0;background:currentColor;transition:opacity .2s cubic-bezier(.25,.8,.25,1)}\n"] }]
         }] });
 
 class IxMultiYearViewComponent {
@@ -4810,85 +4601,11 @@ class IxMultiYearViewComponent {
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMultiYearViewComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxMultiYearViewComponent, isStandalone: true, selector: "ix-multi-year-view", inputs: { activeDate: { classPropertyName: "activeDate", publicName: "activeDate", isSignal: true, isRequired: false, transformFunction: null }, selected: { classPropertyName: "selected", publicName: "selected", isSignal: true, isRequired: false, transformFunction: null }, minDate: { classPropertyName: "minDate", publicName: "minDate", isSignal: true, isRequired: false, transformFunction: null }, maxDate: { classPropertyName: "maxDate", publicName: "maxDate", isSignal: true, isRequired: false, transformFunction: null }, dateFilter: { classPropertyName: "dateFilter", publicName: "dateFilter", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectedChange: "selectedChange", activeDateChange: "activeDateChange" }, ngImport: i0, template: `
-    <table role="grid" class="ix-calendar-table">
-      <!-- Table body with year cells -->
-      <tbody class="ix-calendar-body">
-        <tr *ngFor="let row of yearRows(); let rowIndex = index; trackBy: trackByRow" role="row">
-          <td 
-            *ngFor="let cell of row; let colIndex = index; trackBy: trackByYear"
-            role="gridcell"
-            class="ix-calendar-body-cell-container"
-            [attr.data-ix-row]="rowIndex"
-            [attr.data-ix-col]="colIndex"
-            [style.width.%]="cellWidth"
-            [style.padding-top.%]="cellAspectRatio"
-            [style.padding-bottom.%]="cellAspectRatio">
-            <button 
-              type="button"
-              class="ix-calendar-body-cell"
-              [class.ix-calendar-body-selected]="cell.selected"
-              [class.ix-calendar-body-today]="cell.today"
-              [class.ix-calendar-body-active]="cell.selected"
-              [disabled]="!cell.enabled"
-              [attr.tabindex]="cell.selected ? 0 : -1"
-              [attr.aria-label]="cell.ariaLabel"
-              [attr.aria-pressed]="cell.selected"
-              [attr.aria-current]="cell.today ? 'date' : null"
-              (click)="onYearClicked(cell)">
-              <span class="ix-calendar-body-cell-content ix-focus-indicator"
-                    [class.ix-calendar-body-selected]="cell.selected"
-                    [class.ix-calendar-body-today]="cell.today">
-                {{ cell.value }}
-              </span>
-              <span aria-hidden="true" class="ix-calendar-body-cell-preview"></span>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  `, isInline: true, styles: [".ix-calendar-table{width:100%;border-spacing:0;border-collapse:separate}.ix-calendar-table-header-divider{height:16px;border:none}.ix-calendar-body{min-width:224px}.ix-calendar-body-cell-container{position:relative;border:none}.ix-calendar-body-cell{position:absolute;top:5%;left:5%;width:90%;height:90%;border:none;background:transparent;color:var(--fg1, #333);cursor:pointer;font-size:14px;font-weight:500;transition:background-color .2s ease}.ix-calendar-body-cell:hover:not(:disabled){background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px;background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:disabled{color:var(--fg2, #666);opacity:.5;cursor:default}.ix-calendar-body-cell.ix-calendar-body-today:not(.ix-calendar-body-selected){border:1px solid var(--primary, #007bff);color:var(--primary, #007bff)}.ix-calendar-body-cell.ix-calendar-body-selected{background:var(--primary, #007bff);color:#fff}.ix-calendar-body-cell-content{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%;transition:background-color .2s cubic-bezier(.25,.8,.25,1)}.ix-focus-indicator{position:relative}.ix-focus-indicator:before{content:\"\";position:absolute;inset:0;opacity:0;background:currentColor;transition:opacity .2s cubic-bezier(.25,.8,.25,1)}.ix-calendar-body-cell-preview{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$1.NgForOf, selector: "[ngFor][ngForOf]", inputs: ["ngForOf", "ngForTrackBy", "ngForTemplate"] }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxMultiYearViewComponent, isStandalone: true, selector: "ix-multi-year-view", inputs: { activeDate: { classPropertyName: "activeDate", publicName: "activeDate", isSignal: true, isRequired: false, transformFunction: null }, selected: { classPropertyName: "selected", publicName: "selected", isSignal: true, isRequired: false, transformFunction: null }, minDate: { classPropertyName: "minDate", publicName: "minDate", isSignal: true, isRequired: false, transformFunction: null }, maxDate: { classPropertyName: "maxDate", publicName: "maxDate", isSignal: true, isRequired: false, transformFunction: null }, dateFilter: { classPropertyName: "dateFilter", publicName: "dateFilter", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectedChange: "selectedChange", activeDateChange: "activeDateChange" }, ngImport: i0, template: "<table role=\"grid\" class=\"ix-calendar-table\">\n  <!-- Table body with year cells -->\n  <tbody class=\"ix-calendar-body\">\n    @for (row of yearRows(); track trackByRow($index, row); let rowIndex = $index) {\n      <tr role=\"row\">\n        @for (cell of row; track trackByYear($index, cell); let colIndex = $index) {\n          <td\n            role=\"gridcell\"\n            class=\"ix-calendar-body-cell-container\"\n            [attr.data-ix-row]=\"rowIndex\"\n            [attr.data-ix-col]=\"colIndex\"\n            [style.width.%]=\"cellWidth\"\n            [style.padding-top.%]=\"cellAspectRatio\"\n            [style.padding-bottom.%]=\"cellAspectRatio\">\n            <button\n              type=\"button\"\n              class=\"ix-calendar-body-cell\"\n              [class.ix-calendar-body-selected]=\"cell.selected\"\n              [class.ix-calendar-body-today]=\"cell.today\"\n              [class.ix-calendar-body-active]=\"cell.selected\"\n              [disabled]=\"!cell.enabled\"\n              [attr.tabindex]=\"cell.selected ? 0 : -1\"\n              [attr.aria-label]=\"cell.ariaLabel\"\n              [attr.aria-pressed]=\"cell.selected\"\n              [attr.aria-current]=\"cell.today ? 'date' : null\"\n              (click)=\"onYearClicked(cell)\">\n              <span class=\"ix-calendar-body-cell-content ix-focus-indicator\"\n                    [class.ix-calendar-body-selected]=\"cell.selected\"\n                    [class.ix-calendar-body-today]=\"cell.today\">\n                {{ cell.value }}\n              </span>\n              <span aria-hidden=\"true\" class=\"ix-calendar-body-cell-preview\"></span>\n            </button>\n          </td>\n        }\n      </tr>\n    }\n  </tbody>\n</table>\n", styles: [".ix-calendar-table{width:100%;border-spacing:0;border-collapse:separate}.ix-calendar-table-header-divider{height:16px;border:none}.ix-calendar-body{min-width:224px}.ix-calendar-body-cell-container{position:relative;border:none}.ix-calendar-body-cell{position:absolute;top:5%;left:5%;width:90%;height:90%;border:none;background:transparent;color:var(--fg1, #333);cursor:pointer;font-size:14px;font-weight:500;transition:background-color .2s ease}.ix-calendar-body-cell:hover:not(:disabled){background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px;background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:disabled{color:var(--fg2, #666);opacity:.5;cursor:default}.ix-calendar-body-cell.ix-calendar-body-today:not(.ix-calendar-body-selected){border:1px solid var(--primary, #007bff);color:var(--primary, #007bff)}.ix-calendar-body-cell.ix-calendar-body-selected{background:var(--primary, #007bff);color:#fff}.ix-calendar-body-cell-content{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%;transition:background-color .2s cubic-bezier(.25,.8,.25,1)}.ix-focus-indicator{position:relative}.ix-focus-indicator:before{content:\"\";position:absolute;inset:0;opacity:0;background:currentColor;transition:opacity .2s cubic-bezier(.25,.8,.25,1)}.ix-calendar-body-cell-preview{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxMultiYearViewComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-multi-year-view', standalone: true, imports: [CommonModule], template: `
-    <table role="grid" class="ix-calendar-table">
-      <!-- Table body with year cells -->
-      <tbody class="ix-calendar-body">
-        <tr *ngFor="let row of yearRows(); let rowIndex = index; trackBy: trackByRow" role="row">
-          <td 
-            *ngFor="let cell of row; let colIndex = index; trackBy: trackByYear"
-            role="gridcell"
-            class="ix-calendar-body-cell-container"
-            [attr.data-ix-row]="rowIndex"
-            [attr.data-ix-col]="colIndex"
-            [style.width.%]="cellWidth"
-            [style.padding-top.%]="cellAspectRatio"
-            [style.padding-bottom.%]="cellAspectRatio">
-            <button 
-              type="button"
-              class="ix-calendar-body-cell"
-              [class.ix-calendar-body-selected]="cell.selected"
-              [class.ix-calendar-body-today]="cell.today"
-              [class.ix-calendar-body-active]="cell.selected"
-              [disabled]="!cell.enabled"
-              [attr.tabindex]="cell.selected ? 0 : -1"
-              [attr.aria-label]="cell.ariaLabel"
-              [attr.aria-pressed]="cell.selected"
-              [attr.aria-current]="cell.today ? 'date' : null"
-              (click)="onYearClicked(cell)">
-              <span class="ix-calendar-body-cell-content ix-focus-indicator"
-                    [class.ix-calendar-body-selected]="cell.selected"
-                    [class.ix-calendar-body-today]="cell.today">
-                {{ cell.value }}
-              </span>
-              <span aria-hidden="true" class="ix-calendar-body-cell-preview"></span>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  `, styles: [".ix-calendar-table{width:100%;border-spacing:0;border-collapse:separate}.ix-calendar-table-header-divider{height:16px;border:none}.ix-calendar-body{min-width:224px}.ix-calendar-body-cell-container{position:relative;border:none}.ix-calendar-body-cell{position:absolute;top:5%;left:5%;width:90%;height:90%;border:none;background:transparent;color:var(--fg1, #333);cursor:pointer;font-size:14px;font-weight:500;transition:background-color .2s ease}.ix-calendar-body-cell:hover:not(:disabled){background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px;background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:disabled{color:var(--fg2, #666);opacity:.5;cursor:default}.ix-calendar-body-cell.ix-calendar-body-today:not(.ix-calendar-body-selected){border:1px solid var(--primary, #007bff);color:var(--primary, #007bff)}.ix-calendar-body-cell.ix-calendar-body-selected{background:var(--primary, #007bff);color:#fff}.ix-calendar-body-cell-content{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%;transition:background-color .2s cubic-bezier(.25,.8,.25,1)}.ix-focus-indicator{position:relative}.ix-focus-indicator:before{content:\"\";position:absolute;inset:0;opacity:0;background:currentColor;transition:opacity .2s cubic-bezier(.25,.8,.25,1)}.ix-calendar-body-cell-preview{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}\n"] }]
+            args: [{ selector: 'ix-multi-year-view', standalone: true, imports: [CommonModule], template: "<table role=\"grid\" class=\"ix-calendar-table\">\n  <!-- Table body with year cells -->\n  <tbody class=\"ix-calendar-body\">\n    @for (row of yearRows(); track trackByRow($index, row); let rowIndex = $index) {\n      <tr role=\"row\">\n        @for (cell of row; track trackByYear($index, cell); let colIndex = $index) {\n          <td\n            role=\"gridcell\"\n            class=\"ix-calendar-body-cell-container\"\n            [attr.data-ix-row]=\"rowIndex\"\n            [attr.data-ix-col]=\"colIndex\"\n            [style.width.%]=\"cellWidth\"\n            [style.padding-top.%]=\"cellAspectRatio\"\n            [style.padding-bottom.%]=\"cellAspectRatio\">\n            <button\n              type=\"button\"\n              class=\"ix-calendar-body-cell\"\n              [class.ix-calendar-body-selected]=\"cell.selected\"\n              [class.ix-calendar-body-today]=\"cell.today\"\n              [class.ix-calendar-body-active]=\"cell.selected\"\n              [disabled]=\"!cell.enabled\"\n              [attr.tabindex]=\"cell.selected ? 0 : -1\"\n              [attr.aria-label]=\"cell.ariaLabel\"\n              [attr.aria-pressed]=\"cell.selected\"\n              [attr.aria-current]=\"cell.today ? 'date' : null\"\n              (click)=\"onYearClicked(cell)\">\n              <span class=\"ix-calendar-body-cell-content ix-focus-indicator\"\n                    [class.ix-calendar-body-selected]=\"cell.selected\"\n                    [class.ix-calendar-body-today]=\"cell.today\">\n                {{ cell.value }}\n              </span>\n              <span aria-hidden=\"true\" class=\"ix-calendar-body-cell-preview\"></span>\n            </button>\n          </td>\n        }\n      </tr>\n    }\n  </tbody>\n</table>\n", styles: [".ix-calendar-table{width:100%;border-spacing:0;border-collapse:separate}.ix-calendar-table-header-divider{height:16px;border:none}.ix-calendar-body{min-width:224px}.ix-calendar-body-cell-container{position:relative;border:none}.ix-calendar-body-cell{position:absolute;top:5%;left:5%;width:90%;height:90%;border:none;background:transparent;color:var(--fg1, #333);cursor:pointer;font-size:14px;font-weight:500;transition:background-color .2s ease}.ix-calendar-body-cell:hover:not(:disabled){background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:focus{outline:2px solid var(--primary, #007bff);outline-offset:2px;background:var(--alt-bg2, #e8f4fd)}.ix-calendar-body-cell:disabled{color:var(--fg2, #666);opacity:.5;cursor:default}.ix-calendar-body-cell.ix-calendar-body-today:not(.ix-calendar-body-selected){border:1px solid var(--primary, #007bff);color:var(--primary, #007bff)}.ix-calendar-body-cell.ix-calendar-body-selected{background:var(--primary, #007bff);color:#fff}.ix-calendar-body-cell-content{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%;transition:background-color .2s cubic-bezier(.25,.8,.25,1)}.ix-focus-indicator{position:relative}.ix-focus-indicator:before{content:\"\";position:absolute;inset:0;opacity:0;background:currentColor;transition:opacity .2s cubic-bezier(.25,.8,.25,1)}.ix-calendar-body-cell-preview{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}\n"] }]
         }] });
 
 class IxCalendarComponent {
@@ -5089,79 +4806,11 @@ class IxCalendarComponent {
         this.initializeRangeState();
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxCalendarComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxCalendarComponent, isStandalone: true, selector: "ix-calendar", inputs: { startView: { classPropertyName: "startView", publicName: "startView", isSignal: true, isRequired: false, transformFunction: null }, selected: { classPropertyName: "selected", publicName: "selected", isSignal: true, isRequired: false, transformFunction: null }, minDate: { classPropertyName: "minDate", publicName: "minDate", isSignal: true, isRequired: false, transformFunction: null }, maxDate: { classPropertyName: "maxDate", publicName: "maxDate", isSignal: true, isRequired: false, transformFunction: null }, dateFilter: { classPropertyName: "dateFilter", publicName: "dateFilter", isSignal: true, isRequired: false, transformFunction: null }, rangeMode: { classPropertyName: "rangeMode", publicName: "rangeMode", isSignal: true, isRequired: false, transformFunction: null }, selectedRange: { classPropertyName: "selectedRange", publicName: "selectedRange", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectedChange: "selectedChange", activeDateChange: "activeDateChange", viewChanged: "viewChanged", selectedRangeChange: "selectedRangeChange" }, ngImport: i0, template: `
-    <ix-calendar-header 
-      [currentDate]="currentDate()"
-      [currentView]="currentView()"
-      (monthSelected)="onMonthSelected($event)"
-      (yearSelected)="onYearSelected($event)"
-      (viewChanged)="onViewChanged($event)"
-      (previousClicked)="onPreviousClicked()"
-      (nextClicked)="onNextClicked()" />
-
-    <div class="ix-calendar-content" cdkMonitorSubtreeFocus tabindex="-1">
-      <ix-month-view
-        *ngIf="currentView() === 'month'"
-        [activeDate]="currentDate()"
-        [selected]="selected()"
-        [dateFilter]="dateFilter()"
-        [minDate]="minDate()"
-        [maxDate]="maxDate()"
-        [rangeMode]="rangeMode()"
-        [selectedRange]="rangeMode() ? rangeState() : undefined"
-        (selectedChange)="onSelectedChange($event)"
-        (activeDateChange)="onActiveDateChange($event)" />
-
-      <!-- Multi-year view -->
-      <ix-multi-year-view
-        *ngIf="currentView() === 'year'"
-        [activeDate]="currentDate()"
-        [selected]="selected()"
-        [dateFilter]="dateFilter()"
-        [minDate]="minDate()"
-        [maxDate]="maxDate()"
-        (selectedChange)="onYearSelectedFromView($event)"
-        (activeDateChange)="onActiveDateChange($event)" />
-    </div>
-  `, isInline: true, styles: [":host{display:block;background:var(--bg2, #f5f5f5);color:var(--fg1, #333);padding:0 8px 8px;box-shadow:0 4px 16px #0000001f,0 1px 4px #00000014}.ix-calendar-content{padding:8px;outline:none}.ix-year-view{text-align:center;padding:20px;color:var(--fg2, #666)}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "component", type: IxCalendarHeaderComponent, selector: "ix-calendar-header", inputs: ["currentDate", "currentView"], outputs: ["monthSelected", "yearSelected", "viewChanged", "previousClicked", "nextClicked"] }, { kind: "component", type: IxMonthViewComponent, selector: "ix-month-view", inputs: ["activeDate", "selected", "minDate", "maxDate", "dateFilter", "rangeMode", "selectedRange"], outputs: ["selectedChange", "activeDateChange"] }, { kind: "component", type: IxMultiYearViewComponent, selector: "ix-multi-year-view", inputs: ["activeDate", "selected", "minDate", "maxDate", "dateFilter"], outputs: ["selectedChange", "activeDateChange"] }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxCalendarComponent, isStandalone: true, selector: "ix-calendar", inputs: { startView: { classPropertyName: "startView", publicName: "startView", isSignal: true, isRequired: false, transformFunction: null }, selected: { classPropertyName: "selected", publicName: "selected", isSignal: true, isRequired: false, transformFunction: null }, minDate: { classPropertyName: "minDate", publicName: "minDate", isSignal: true, isRequired: false, transformFunction: null }, maxDate: { classPropertyName: "maxDate", publicName: "maxDate", isSignal: true, isRequired: false, transformFunction: null }, dateFilter: { classPropertyName: "dateFilter", publicName: "dateFilter", isSignal: true, isRequired: false, transformFunction: null }, rangeMode: { classPropertyName: "rangeMode", publicName: "rangeMode", isSignal: true, isRequired: false, transformFunction: null }, selectedRange: { classPropertyName: "selectedRange", publicName: "selectedRange", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { selectedChange: "selectedChange", activeDateChange: "activeDateChange", viewChanged: "viewChanged", selectedRangeChange: "selectedRangeChange" }, ngImport: i0, template: "<ix-calendar-header\n  [currentDate]=\"currentDate()\"\n  [currentView]=\"currentView()\"\n  (monthSelected)=\"onMonthSelected($event)\"\n  (yearSelected)=\"onYearSelected($event)\"\n  (viewChanged)=\"onViewChanged($event)\"\n  (previousClicked)=\"onPreviousClicked()\"\n  (nextClicked)=\"onNextClicked()\" />\n\n<div class=\"ix-calendar-content\" cdkMonitorSubtreeFocus tabindex=\"-1\">\n  @if (currentView() === 'month') {\n    <ix-month-view\n      [activeDate]=\"currentDate()\"\n      [selected]=\"selected()\"\n      [dateFilter]=\"dateFilter()\"\n      [minDate]=\"minDate()\"\n      [maxDate]=\"maxDate()\"\n      [rangeMode]=\"rangeMode()\"\n      [selectedRange]=\"rangeMode() ? rangeState() : undefined\"\n      (selectedChange)=\"onSelectedChange($event)\"\n      (activeDateChange)=\"onActiveDateChange($event)\" />\n  }\n\n  <!-- Multi-year view -->\n  @if (currentView() === 'year') {\n    <ix-multi-year-view\n      [activeDate]=\"currentDate()\"\n      [selected]=\"selected()\"\n      [dateFilter]=\"dateFilter()\"\n      [minDate]=\"minDate()\"\n      [maxDate]=\"maxDate()\"\n      (selectedChange)=\"onYearSelectedFromView($event)\"\n      (activeDateChange)=\"onActiveDateChange($event)\" />\n  }\n</div>\n", styles: [":host{display:block;background:var(--bg2, #f5f5f5);color:var(--fg1, #333);padding:0 8px 8px;box-shadow:0 4px 16px #0000001f,0 1px 4px #00000014}.ix-calendar-content{padding:8px;outline:none}.ix-year-view{text-align:center;padding:20px;color:var(--fg2, #666)}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "component", type: IxCalendarHeaderComponent, selector: "ix-calendar-header", inputs: ["currentDate", "currentView"], outputs: ["monthSelected", "yearSelected", "viewChanged", "previousClicked", "nextClicked"] }, { kind: "component", type: IxMonthViewComponent, selector: "ix-month-view", inputs: ["activeDate", "selected", "minDate", "maxDate", "dateFilter", "rangeMode", "selectedRange"], outputs: ["selectedChange", "activeDateChange"] }, { kind: "component", type: IxMultiYearViewComponent, selector: "ix-multi-year-view", inputs: ["activeDate", "selected", "minDate", "maxDate", "dateFilter"], outputs: ["selectedChange", "activeDateChange"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxCalendarComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-calendar', standalone: true, imports: [CommonModule, IxCalendarHeaderComponent, IxMonthViewComponent, IxMultiYearViewComponent], template: `
-    <ix-calendar-header 
-      [currentDate]="currentDate()"
-      [currentView]="currentView()"
-      (monthSelected)="onMonthSelected($event)"
-      (yearSelected)="onYearSelected($event)"
-      (viewChanged)="onViewChanged($event)"
-      (previousClicked)="onPreviousClicked()"
-      (nextClicked)="onNextClicked()" />
-
-    <div class="ix-calendar-content" cdkMonitorSubtreeFocus tabindex="-1">
-      <ix-month-view
-        *ngIf="currentView() === 'month'"
-        [activeDate]="currentDate()"
-        [selected]="selected()"
-        [dateFilter]="dateFilter()"
-        [minDate]="minDate()"
-        [maxDate]="maxDate()"
-        [rangeMode]="rangeMode()"
-        [selectedRange]="rangeMode() ? rangeState() : undefined"
-        (selectedChange)="onSelectedChange($event)"
-        (activeDateChange)="onActiveDateChange($event)" />
-
-      <!-- Multi-year view -->
-      <ix-multi-year-view
-        *ngIf="currentView() === 'year'"
-        [activeDate]="currentDate()"
-        [selected]="selected()"
-        [dateFilter]="dateFilter()"
-        [minDate]="minDate()"
-        [maxDate]="maxDate()"
-        (selectedChange)="onYearSelectedFromView($event)"
-        (activeDateChange)="onActiveDateChange($event)" />
-    </div>
-  `, styles: [":host{display:block;background:var(--bg2, #f5f5f5);color:var(--fg1, #333);padding:0 8px 8px;box-shadow:0 4px 16px #0000001f,0 1px 4px #00000014}.ix-calendar-content{padding:8px;outline:none}.ix-year-view{text-align:center;padding:20px;color:var(--fg2, #666)}\n"] }]
+            args: [{ selector: 'ix-calendar', standalone: true, imports: [CommonModule, IxCalendarHeaderComponent, IxMonthViewComponent, IxMultiYearViewComponent], template: "<ix-calendar-header\n  [currentDate]=\"currentDate()\"\n  [currentView]=\"currentView()\"\n  (monthSelected)=\"onMonthSelected($event)\"\n  (yearSelected)=\"onYearSelected($event)\"\n  (viewChanged)=\"onViewChanged($event)\"\n  (previousClicked)=\"onPreviousClicked()\"\n  (nextClicked)=\"onNextClicked()\" />\n\n<div class=\"ix-calendar-content\" cdkMonitorSubtreeFocus tabindex=\"-1\">\n  @if (currentView() === 'month') {\n    <ix-month-view\n      [activeDate]=\"currentDate()\"\n      [selected]=\"selected()\"\n      [dateFilter]=\"dateFilter()\"\n      [minDate]=\"minDate()\"\n      [maxDate]=\"maxDate()\"\n      [rangeMode]=\"rangeMode()\"\n      [selectedRange]=\"rangeMode() ? rangeState() : undefined\"\n      (selectedChange)=\"onSelectedChange($event)\"\n      (activeDateChange)=\"onActiveDateChange($event)\" />\n  }\n\n  <!-- Multi-year view -->\n  @if (currentView() === 'year') {\n    <ix-multi-year-view\n      [activeDate]=\"currentDate()\"\n      [selected]=\"selected()\"\n      [dateFilter]=\"dateFilter()\"\n      [minDate]=\"minDate()\"\n      [maxDate]=\"maxDate()\"\n      (selectedChange)=\"onYearSelectedFromView($event)\"\n      (activeDateChange)=\"onActiveDateChange($event)\" />\n  }\n</div>\n", styles: [":host{display:block;background:var(--bg2, #f5f5f5);color:var(--fg1, #333);padding:0 8px 8px;box-shadow:0 4px 16px #0000001f,0 1px 4px #00000014}.ix-calendar-content{padding:8px;outline:none}.ix-year-view{text-align:center;padding:20px;color:var(--fg2, #666)}\n"] }]
         }], ctorParameters: () => [] });
 
 class IxDateInputComponent {
@@ -5414,65 +5063,7 @@ class IxDateInputComponent {
                 useExisting: forwardRef(() => IxDateInputComponent),
                 multi: true
             }
-        ], viewQueries: [{ propertyName: "monthRef", first: true, predicate: ["monthInput"], descendants: true, isSignal: true }, { propertyName: "dayRef", first: true, predicate: ["dayInput"], descendants: true, isSignal: true }, { propertyName: "yearRef", first: true, predicate: ["yearInput"], descendants: true, isSignal: true }, { propertyName: "calendarTemplate", first: true, predicate: ["calendarTemplate"], descendants: true, isSignal: true }, { propertyName: "calendar", first: true, predicate: IxCalendarComponent, descendants: true, isSignal: true }, { propertyName: "wrapperEl", first: true, predicate: ["wrapper"], descendants: true, isSignal: true }], ngImport: i0, template: `
-    <div class="ix-date-input-container">
-      <div #wrapper ixInput class="ix-date-input-wrapper" style="padding-right: 40px;">
-        <!-- Date segments MM/DD/YYYY -->
-        <div class="ix-date-segment-group">
-          <input
-            #monthInput
-            type="text"
-            class="ix-date-segment ix-date-segment-month"
-            placeholder="MM"
-            maxlength="2"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('month')"
-            (blur)="onSegmentBlur('month')"
-            (keydown)="onSegmentKeydown($event, 'month')">
-          <span class="ix-date-segment-separator">/</span>
-          <input
-            #dayInput
-            type="text"
-            class="ix-date-segment ix-date-segment-day"
-            placeholder="DD"
-            maxlength="2"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('day')"
-            (blur)="onSegmentBlur('day')"
-            (keydown)="onSegmentKeydown($event, 'day')">
-          <span class="ix-date-segment-separator">/</span>
-          <input
-            #yearInput
-            type="text"
-            class="ix-date-segment ix-date-segment-year"
-            placeholder="YYYY"
-            maxlength="4"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('year')"
-            (blur)="onSegmentBlur('year')"
-            (keydown)="onSegmentKeydown($event, 'year')">
-        </div>
-
-        <button
-          type="button"
-          class="ix-date-input-toggle"
-          aria-label="Open calendar"
-          [disabled]="isDisabled()"
-          (click)="openDatepicker()">
-          <span aria-hidden="true">📅</span>
-        </button>
-      </div>
-      
-      <ng-template #calendarTemplate>
-        <ix-calendar
-          class="ix-calendar"
-          [startView]="'month'"
-          [rangeMode]="false"
-          [selected]="value()"
-          (selectedChange)="onDateSelected($event)" />
-      </ng-template>
-    </div>
-  `, isInline: true, styles: [":host{display:block;width:100%}.ix-date-input-container{position:relative;display:flex;align-items:center}.ix-date-input-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-date-segment-group{display:flex;align-items:center}.ix-date-segment{background:transparent;border:none;outline:none;font:inherit;color:inherit;padding:0;min-width:0;text-align:center;width:2.6ch}.ix-date-segment::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-date-segment:focus{outline:none;background:var(--bg2, rgba(0, 0, 0, .05));border-radius:2px}.ix-date-segment:focus::placeholder{opacity:0}.ix-date-segment.ix-date-segment-year{width:4ch}.ix-date-segment-separator{padding:0 2px;-webkit-user-select:none;user-select:none;color:var(--alt-fg1, #999)}.ix-date-input-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;font-size:16px}.ix-date-input-toggle:hover{background:var(--bg2, #f0f0f0);border-radius:4px}.ix-date-input-toggle:disabled{cursor:not-allowed;opacity:.5}:host ::ng-deep .ix-datepicker-overlay .ix-calendar{background:var(--bg1, white);border:1px solid var(--lines, #e0e0e0);border-radius:8px;box-shadow:0 4px 12px #00000026;padding:24px;min-width:380px;--calendar-cell-size: 48px;--calendar-header-height: 44px;--calendar-cell-font-size: 16px;--calendar-header-font-size: 14px}:host ::ng-deep .ix-datepicker-overlay .ix-calendar .ix-calendar-content{padding:0}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: IxInputDirective, selector: "input[ixInput], textarea[ixInput], div[ixInput]" }, { kind: "component", type: IxCalendarComponent, selector: "ix-calendar", inputs: ["startView", "selected", "minDate", "maxDate", "dateFilter", "rangeMode", "selectedRange"], outputs: ["selectedChange", "activeDateChange", "viewChanged", "selectedRangeChange"] }, { kind: "ngmodule", type: OverlayModule }, { kind: "ngmodule", type: PortalModule }, { kind: "ngmodule", type: A11yModule }] });
+        ], viewQueries: [{ propertyName: "monthRef", first: true, predicate: ["monthInput"], descendants: true, isSignal: true }, { propertyName: "dayRef", first: true, predicate: ["dayInput"], descendants: true, isSignal: true }, { propertyName: "yearRef", first: true, predicate: ["yearInput"], descendants: true, isSignal: true }, { propertyName: "calendarTemplate", first: true, predicate: ["calendarTemplate"], descendants: true, isSignal: true }, { propertyName: "calendar", first: true, predicate: IxCalendarComponent, descendants: true, isSignal: true }, { propertyName: "wrapperEl", first: true, predicate: ["wrapper"], descendants: true, isSignal: true }], ngImport: i0, template: "<div class=\"ix-date-input-container\">\n  <div #wrapper ixInput class=\"ix-date-input-wrapper\" style=\"padding-right: 40px;\">\n    <!-- Date segments MM/DD/YYYY -->\n    <div class=\"ix-date-segment-group\">\n      <input\n        #monthInput\n        type=\"text\"\n        class=\"ix-date-segment ix-date-segment-month\"\n        placeholder=\"MM\"\n        maxlength=\"2\"\n        [disabled]=\"isDisabled()\"\n        (focus)=\"onSegmentFocus('month')\"\n        (blur)=\"onSegmentBlur('month')\"\n        (keydown)=\"onSegmentKeydown($event, 'month')\">\n      <span class=\"ix-date-segment-separator\">/</span>\n      <input\n        #dayInput\n        type=\"text\"\n        class=\"ix-date-segment ix-date-segment-day\"\n        placeholder=\"DD\"\n        maxlength=\"2\"\n        [disabled]=\"isDisabled()\"\n        (focus)=\"onSegmentFocus('day')\"\n        (blur)=\"onSegmentBlur('day')\"\n        (keydown)=\"onSegmentKeydown($event, 'day')\">\n      <span class=\"ix-date-segment-separator\">/</span>\n      <input\n        #yearInput\n        type=\"text\"\n        class=\"ix-date-segment ix-date-segment-year\"\n        placeholder=\"YYYY\"\n        maxlength=\"4\"\n        [disabled]=\"isDisabled()\"\n        (focus)=\"onSegmentFocus('year')\"\n        (blur)=\"onSegmentBlur('year')\"\n        (keydown)=\"onSegmentKeydown($event, 'year')\">\n    </div>\n\n    <button\n      type=\"button\"\n      class=\"ix-date-input-toggle\"\n      aria-label=\"Open calendar\"\n      [disabled]=\"isDisabled()\"\n      (click)=\"openDatepicker()\">\n      <span aria-hidden=\"true\">\uD83D\uDCC5</span>\n    </button>\n  </div>\n\n  <ng-template #calendarTemplate>\n    <ix-calendar\n      class=\"ix-calendar\"\n      [startView]=\"'month'\"\n      [rangeMode]=\"false\"\n      [selected]=\"value()\"\n      (selectedChange)=\"onDateSelected($event)\" />\n  </ng-template>\n</div>\n", styles: [":host{display:block;width:100%}.ix-date-input-container{position:relative;display:flex;align-items:center}.ix-date-input-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-date-segment-group{display:flex;align-items:center}.ix-date-segment{background:transparent;border:none;outline:none;font:inherit;color:inherit;padding:0;min-width:0;text-align:center;width:2.6ch}.ix-date-segment::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-date-segment:focus{outline:none;background:var(--bg2, rgba(0, 0, 0, .05));border-radius:2px}.ix-date-segment:focus::placeholder{opacity:0}.ix-date-segment.ix-date-segment-year{width:4ch}.ix-date-segment-separator{padding:0 2px;-webkit-user-select:none;user-select:none;color:var(--alt-fg1, #999)}.ix-date-input-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;font-size:16px}.ix-date-input-toggle:hover{background:var(--bg2, #f0f0f0);border-radius:4px}.ix-date-input-toggle:disabled{cursor:not-allowed;opacity:.5}:host ::ng-deep .ix-datepicker-overlay .ix-calendar{background:var(--bg1, white);border:1px solid var(--lines, #e0e0e0);border-radius:8px;box-shadow:0 4px 12px #00000026;padding:24px;min-width:380px;--calendar-cell-size: 48px;--calendar-header-height: 44px;--calendar-cell-font-size: 16px;--calendar-header-font-size: 14px}:host ::ng-deep .ix-datepicker-overlay .ix-calendar .ix-calendar-content{padding:0}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: IxInputDirective, selector: "input[ixInput], textarea[ixInput], div[ixInput]" }, { kind: "component", type: IxCalendarComponent, selector: "ix-calendar", inputs: ["startView", "selected", "minDate", "maxDate", "dateFilter", "rangeMode", "selectedRange"], outputs: ["selectedChange", "activeDateChange", "viewChanged", "selectedRangeChange"] }, { kind: "ngmodule", type: OverlayModule }, { kind: "ngmodule", type: PortalModule }, { kind: "ngmodule", type: A11yModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxDateInputComponent, decorators: [{
             type: Component,
@@ -5482,67 +5073,9 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                             useExisting: forwardRef(() => IxDateInputComponent),
                             multi: true
                         }
-                    ], template: `
-    <div class="ix-date-input-container">
-      <div #wrapper ixInput class="ix-date-input-wrapper" style="padding-right: 40px;">
-        <!-- Date segments MM/DD/YYYY -->
-        <div class="ix-date-segment-group">
-          <input
-            #monthInput
-            type="text"
-            class="ix-date-segment ix-date-segment-month"
-            placeholder="MM"
-            maxlength="2"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('month')"
-            (blur)="onSegmentBlur('month')"
-            (keydown)="onSegmentKeydown($event, 'month')">
-          <span class="ix-date-segment-separator">/</span>
-          <input
-            #dayInput
-            type="text"
-            class="ix-date-segment ix-date-segment-day"
-            placeholder="DD"
-            maxlength="2"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('day')"
-            (blur)="onSegmentBlur('day')"
-            (keydown)="onSegmentKeydown($event, 'day')">
-          <span class="ix-date-segment-separator">/</span>
-          <input
-            #yearInput
-            type="text"
-            class="ix-date-segment ix-date-segment-year"
-            placeholder="YYYY"
-            maxlength="4"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('year')"
-            (blur)="onSegmentBlur('year')"
-            (keydown)="onSegmentKeydown($event, 'year')">
-        </div>
-
-        <button
-          type="button"
-          class="ix-date-input-toggle"
-          aria-label="Open calendar"
-          [disabled]="isDisabled()"
-          (click)="openDatepicker()">
-          <span aria-hidden="true">📅</span>
-        </button>
-      </div>
-      
-      <ng-template #calendarTemplate>
-        <ix-calendar
-          class="ix-calendar"
-          [startView]="'month'"
-          [rangeMode]="false"
-          [selected]="value()"
-          (selectedChange)="onDateSelected($event)" />
-      </ng-template>
-    </div>
-  `, host: {
+                    ], host: {
                         'class': 'ix-date-input'
-                    }, styles: [":host{display:block;width:100%}.ix-date-input-container{position:relative;display:flex;align-items:center}.ix-date-input-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-date-segment-group{display:flex;align-items:center}.ix-date-segment{background:transparent;border:none;outline:none;font:inherit;color:inherit;padding:0;min-width:0;text-align:center;width:2.6ch}.ix-date-segment::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-date-segment:focus{outline:none;background:var(--bg2, rgba(0, 0, 0, .05));border-radius:2px}.ix-date-segment:focus::placeholder{opacity:0}.ix-date-segment.ix-date-segment-year{width:4ch}.ix-date-segment-separator{padding:0 2px;-webkit-user-select:none;user-select:none;color:var(--alt-fg1, #999)}.ix-date-input-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;font-size:16px}.ix-date-input-toggle:hover{background:var(--bg2, #f0f0f0);border-radius:4px}.ix-date-input-toggle:disabled{cursor:not-allowed;opacity:.5}:host ::ng-deep .ix-datepicker-overlay .ix-calendar{background:var(--bg1, white);border:1px solid var(--lines, #e0e0e0);border-radius:8px;box-shadow:0 4px 12px #00000026;padding:24px;min-width:380px;--calendar-cell-size: 48px;--calendar-header-height: 44px;--calendar-cell-font-size: 16px;--calendar-header-font-size: 14px}:host ::ng-deep .ix-datepicker-overlay .ix-calendar .ix-calendar-content{padding:0}\n"] }]
+                    }, template: "<div class=\"ix-date-input-container\">\n  <div #wrapper ixInput class=\"ix-date-input-wrapper\" style=\"padding-right: 40px;\">\n    <!-- Date segments MM/DD/YYYY -->\n    <div class=\"ix-date-segment-group\">\n      <input\n        #monthInput\n        type=\"text\"\n        class=\"ix-date-segment ix-date-segment-month\"\n        placeholder=\"MM\"\n        maxlength=\"2\"\n        [disabled]=\"isDisabled()\"\n        (focus)=\"onSegmentFocus('month')\"\n        (blur)=\"onSegmentBlur('month')\"\n        (keydown)=\"onSegmentKeydown($event, 'month')\">\n      <span class=\"ix-date-segment-separator\">/</span>\n      <input\n        #dayInput\n        type=\"text\"\n        class=\"ix-date-segment ix-date-segment-day\"\n        placeholder=\"DD\"\n        maxlength=\"2\"\n        [disabled]=\"isDisabled()\"\n        (focus)=\"onSegmentFocus('day')\"\n        (blur)=\"onSegmentBlur('day')\"\n        (keydown)=\"onSegmentKeydown($event, 'day')\">\n      <span class=\"ix-date-segment-separator\">/</span>\n      <input\n        #yearInput\n        type=\"text\"\n        class=\"ix-date-segment ix-date-segment-year\"\n        placeholder=\"YYYY\"\n        maxlength=\"4\"\n        [disabled]=\"isDisabled()\"\n        (focus)=\"onSegmentFocus('year')\"\n        (blur)=\"onSegmentBlur('year')\"\n        (keydown)=\"onSegmentKeydown($event, 'year')\">\n    </div>\n\n    <button\n      type=\"button\"\n      class=\"ix-date-input-toggle\"\n      aria-label=\"Open calendar\"\n      [disabled]=\"isDisabled()\"\n      (click)=\"openDatepicker()\">\n      <span aria-hidden=\"true\">\uD83D\uDCC5</span>\n    </button>\n  </div>\n\n  <ng-template #calendarTemplate>\n    <ix-calendar\n      class=\"ix-calendar\"\n      [startView]=\"'month'\"\n      [rangeMode]=\"false\"\n      [selected]=\"value()\"\n      (selectedChange)=\"onDateSelected($event)\" />\n  </ng-template>\n</div>\n", styles: [":host{display:block;width:100%}.ix-date-input-container{position:relative;display:flex;align-items:center}.ix-date-input-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-date-segment-group{display:flex;align-items:center}.ix-date-segment{background:transparent;border:none;outline:none;font:inherit;color:inherit;padding:0;min-width:0;text-align:center;width:2.6ch}.ix-date-segment::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-date-segment:focus{outline:none;background:var(--bg2, rgba(0, 0, 0, .05));border-radius:2px}.ix-date-segment:focus::placeholder{opacity:0}.ix-date-segment.ix-date-segment-year{width:4ch}.ix-date-segment-separator{padding:0 2px;-webkit-user-select:none;user-select:none;color:var(--alt-fg1, #999)}.ix-date-input-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;font-size:16px}.ix-date-input-toggle:hover{background:var(--bg2, #f0f0f0);border-radius:4px}.ix-date-input-toggle:disabled{cursor:not-allowed;opacity:.5}:host ::ng-deep .ix-datepicker-overlay .ix-calendar{background:var(--bg1, white);border:1px solid var(--lines, #e0e0e0);border-radius:8px;box-shadow:0 4px 12px #00000026;padding:24px;min-width:380px;--calendar-cell-size: 48px;--calendar-header-height: 44px;--calendar-cell-font-size: 16px;--calendar-header-font-size: 14px}:host ::ng-deep .ix-datepicker-overlay .ix-calendar .ix-calendar-content{padding:0}\n"] }]
         }] });
 
 class IxDateRangeInputComponent {
@@ -5929,103 +5462,7 @@ class IxDateRangeInputComponent {
                 useExisting: forwardRef(() => IxDateRangeInputComponent),
                 multi: true
             }
-        ], viewQueries: [{ propertyName: "startMonthRef", first: true, predicate: ["startMonthInput"], descendants: true, isSignal: true }, { propertyName: "startDayRef", first: true, predicate: ["startDayInput"], descendants: true, isSignal: true }, { propertyName: "startYearRef", first: true, predicate: ["startYearInput"], descendants: true, isSignal: true }, { propertyName: "endMonthRef", first: true, predicate: ["endMonthInput"], descendants: true, isSignal: true }, { propertyName: "endDayRef", first: true, predicate: ["endDayInput"], descendants: true, isSignal: true }, { propertyName: "endYearRef", first: true, predicate: ["endYearInput"], descendants: true, isSignal: true }, { propertyName: "calendarTemplate", first: true, predicate: ["calendarTemplate"], descendants: true, isSignal: true }, { propertyName: "calendar", first: true, predicate: IxCalendarComponent, descendants: true, isSignal: true }, { propertyName: "wrapperEl", first: true, predicate: ["wrapper"], descendants: true, isSignal: true }], ngImport: i0, template: `
-    <div class="ix-date-range-container">
-      <div #wrapper ixInput class="ix-date-range-wrapper" style="padding-right: 40px;">
-        <!-- Start date segments -->
-        <div class="ix-date-segment-group">
-          <input 
-            #startMonthInput
-            type="text"
-            class="ix-date-segment ix-date-segment-month"
-            placeholder="MM"
-            maxlength="2"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('start', 'month')"
-            (blur)="onSegmentBlur('start', 'month')"
-            (keydown)="onSegmentKeydown($event, 'start', 'month')">
-          <span class="ix-date-segment-separator">/</span>
-          <input 
-            #startDayInput
-            type="text"
-            class="ix-date-segment ix-date-segment-day"
-            placeholder="DD"
-            maxlength="2"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('start', 'day')"
-            (blur)="onSegmentBlur('start', 'day')"
-            (keydown)="onSegmentKeydown($event, 'start', 'day')">
-          <span class="ix-date-segment-separator">/</span>
-          <input 
-            #startYearInput
-            type="text"
-            class="ix-date-segment ix-date-segment-year"
-            placeholder="YYYY"
-            maxlength="4"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('start', 'year')"
-            (blur)="onSegmentBlur('start', 'year')"
-            (keydown)="onSegmentKeydown($event, 'start', 'year')">
-        </div>
-        
-        <span class="ix-date-range-separator">–</span>
-        
-        <!-- End date segments -->
-        <div class="ix-date-segment-group">
-          <input 
-            #endMonthInput
-            type="text"
-            class="ix-date-segment ix-date-segment-month"
-            placeholder="MM"
-            maxlength="2"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('end', 'month')"
-            (blur)="onSegmentBlur('end', 'month')"
-            (keydown)="onSegmentKeydown($event, 'end', 'month')">
-          <span class="ix-date-segment-separator">/</span>
-          <input 
-            #endDayInput
-            type="text"
-            class="ix-date-segment ix-date-segment-day"
-            placeholder="DD"
-            maxlength="2"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('end', 'day')"
-            (blur)="onSegmentBlur('end', 'day')"
-            (keydown)="onSegmentKeydown($event, 'end', 'day')">
-          <span class="ix-date-segment-separator">/</span>
-          <input 
-            #endYearInput
-            type="text"
-            class="ix-date-segment ix-date-segment-year"
-            placeholder="YYYY"
-            maxlength="4"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('end', 'year')"
-            (blur)="onSegmentBlur('end', 'year')"
-            (keydown)="onSegmentKeydown($event, 'end', 'year')">
-        </div>
-        
-        <button 
-          type="button"
-          class="ix-date-range-toggle"
-          aria-label="Open calendar"
-          [disabled]="isDisabled()"
-          (click)="openDatepicker()">
-          <span aria-hidden="true">📅</span>
-        </button>
-      </div>
-      
-      <ng-template #calendarTemplate>
-        <ix-calendar
-          class="ix-calendar"
-          [startView]="'month'"
-          [rangeMode]="true"
-          [selectedRange]="initialRange()"
-          (selectedRangeChange)="onRangeSelected($event)" />
-      </ng-template>
-    </div>
-  `, isInline: true, styles: [":host{display:block;width:100%}.ix-date-range-container{position:relative;display:flex;align-items:center}.ix-date-range-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-date-segment-group{display:flex;align-items:center}.ix-date-segment{background:transparent;border:none;outline:none;font:inherit;color:inherit;padding:0;min-width:0;text-align:center;width:2.6ch}.ix-date-segment::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-date-segment:focus{outline:none;background:var(--bg2, rgba(0, 0, 0, .05));border-radius:2px}.ix-date-segment:focus::placeholder{opacity:0}.ix-date-segment.ix-date-segment-year{width:4ch}.ix-date-segment-separator{padding:0 2px;-webkit-user-select:none;user-select:none;color:var(--alt-fg1, #999)}.ix-date-range-separator{padding:0 .25em;-webkit-user-select:none;user-select:none;color:var(--fg2, #666);flex-shrink:0}.ix-date-range-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;font-size:16px}.ix-date-range-toggle:hover{background:var(--bg2, #f0f0f0);border-radius:4px}.ix-date-range-toggle:disabled{cursor:not-allowed;opacity:.5}:host ::ng-deep .ix-datepicker-overlay .ix-calendar{background:var(--bg1, white);border:1px solid var(--lines, #e0e0e0);border-radius:8px;box-shadow:0 4px 12px #00000026;padding:24px;min-width:380px;--calendar-cell-size: 48px;--calendar-header-height: 44px;--calendar-cell-font-size: 16px;--calendar-header-font-size: 14px}:host ::ng-deep .ix-datepicker-overlay .ix-calendar .ix-calendar-content{padding:0}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: IxInputDirective, selector: "input[ixInput], textarea[ixInput], div[ixInput]" }, { kind: "component", type: IxCalendarComponent, selector: "ix-calendar", inputs: ["startView", "selected", "minDate", "maxDate", "dateFilter", "rangeMode", "selectedRange"], outputs: ["selectedChange", "activeDateChange", "viewChanged", "selectedRangeChange"] }, { kind: "ngmodule", type: OverlayModule }, { kind: "ngmodule", type: PortalModule }, { kind: "ngmodule", type: A11yModule }] });
+        ], viewQueries: [{ propertyName: "startMonthRef", first: true, predicate: ["startMonthInput"], descendants: true, isSignal: true }, { propertyName: "startDayRef", first: true, predicate: ["startDayInput"], descendants: true, isSignal: true }, { propertyName: "startYearRef", first: true, predicate: ["startYearInput"], descendants: true, isSignal: true }, { propertyName: "endMonthRef", first: true, predicate: ["endMonthInput"], descendants: true, isSignal: true }, { propertyName: "endDayRef", first: true, predicate: ["endDayInput"], descendants: true, isSignal: true }, { propertyName: "endYearRef", first: true, predicate: ["endYearInput"], descendants: true, isSignal: true }, { propertyName: "calendarTemplate", first: true, predicate: ["calendarTemplate"], descendants: true, isSignal: true }, { propertyName: "calendar", first: true, predicate: IxCalendarComponent, descendants: true, isSignal: true }, { propertyName: "wrapperEl", first: true, predicate: ["wrapper"], descendants: true, isSignal: true }], ngImport: i0, template: "<div class=\"ix-date-range-container\">\n  <div #wrapper ixInput class=\"ix-date-range-wrapper\" style=\"padding-right: 40px;\">\n    <!-- Start date segments -->\n    <div class=\"ix-date-segment-group\">\n      <input\n        #startMonthInput\n        type=\"text\"\n        class=\"ix-date-segment ix-date-segment-month\"\n        placeholder=\"MM\"\n        maxlength=\"2\"\n        [disabled]=\"isDisabled()\"\n        (focus)=\"onSegmentFocus('start', 'month')\"\n        (blur)=\"onSegmentBlur('start', 'month')\"\n        (keydown)=\"onSegmentKeydown($event, 'start', 'month')\">\n      <span class=\"ix-date-segment-separator\">/</span>\n      <input\n        #startDayInput\n        type=\"text\"\n        class=\"ix-date-segment ix-date-segment-day\"\n        placeholder=\"DD\"\n        maxlength=\"2\"\n        [disabled]=\"isDisabled()\"\n        (focus)=\"onSegmentFocus('start', 'day')\"\n        (blur)=\"onSegmentBlur('start', 'day')\"\n        (keydown)=\"onSegmentKeydown($event, 'start', 'day')\">\n      <span class=\"ix-date-segment-separator\">/</span>\n      <input\n        #startYearInput\n        type=\"text\"\n        class=\"ix-date-segment ix-date-segment-year\"\n        placeholder=\"YYYY\"\n        maxlength=\"4\"\n        [disabled]=\"isDisabled()\"\n        (focus)=\"onSegmentFocus('start', 'year')\"\n        (blur)=\"onSegmentBlur('start', 'year')\"\n        (keydown)=\"onSegmentKeydown($event, 'start', 'year')\">\n    </div>\n\n    <span class=\"ix-date-range-separator\">\u2013</span>\n\n    <!-- End date segments -->\n    <div class=\"ix-date-segment-group\">\n      <input\n        #endMonthInput\n        type=\"text\"\n        class=\"ix-date-segment ix-date-segment-month\"\n        placeholder=\"MM\"\n        maxlength=\"2\"\n        [disabled]=\"isDisabled()\"\n        (focus)=\"onSegmentFocus('end', 'month')\"\n        (blur)=\"onSegmentBlur('end', 'month')\"\n        (keydown)=\"onSegmentKeydown($event, 'end', 'month')\">\n      <span class=\"ix-date-segment-separator\">/</span>\n      <input\n        #endDayInput\n        type=\"text\"\n        class=\"ix-date-segment ix-date-segment-day\"\n        placeholder=\"DD\"\n        maxlength=\"2\"\n        [disabled]=\"isDisabled()\"\n        (focus)=\"onSegmentFocus('end', 'day')\"\n        (blur)=\"onSegmentBlur('end', 'day')\"\n        (keydown)=\"onSegmentKeydown($event, 'end', 'day')\">\n      <span class=\"ix-date-segment-separator\">/</span>\n      <input\n        #endYearInput\n        type=\"text\"\n        class=\"ix-date-segment ix-date-segment-year\"\n        placeholder=\"YYYY\"\n        maxlength=\"4\"\n        [disabled]=\"isDisabled()\"\n        (focus)=\"onSegmentFocus('end', 'year')\"\n        (blur)=\"onSegmentBlur('end', 'year')\"\n        (keydown)=\"onSegmentKeydown($event, 'end', 'year')\">\n    </div>\n\n    <button\n      type=\"button\"\n      class=\"ix-date-range-toggle\"\n      aria-label=\"Open calendar\"\n      [disabled]=\"isDisabled()\"\n      (click)=\"openDatepicker()\">\n      <span aria-hidden=\"true\">\uD83D\uDCC5</span>\n    </button>\n  </div>\n\n  <ng-template #calendarTemplate>\n    <ix-calendar\n      class=\"ix-calendar\"\n      [startView]=\"'month'\"\n      [rangeMode]=\"true\"\n      [selectedRange]=\"initialRange()\"\n      (selectedRangeChange)=\"onRangeSelected($event)\" />\n  </ng-template>\n</div>\n", styles: [":host{display:block;width:100%}.ix-date-range-container{position:relative;display:flex;align-items:center}.ix-date-range-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-date-segment-group{display:flex;align-items:center}.ix-date-segment{background:transparent;border:none;outline:none;font:inherit;color:inherit;padding:0;min-width:0;text-align:center;width:2.6ch}.ix-date-segment::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-date-segment:focus{outline:none;background:var(--bg2, rgba(0, 0, 0, .05));border-radius:2px}.ix-date-segment:focus::placeholder{opacity:0}.ix-date-segment.ix-date-segment-year{width:4ch}.ix-date-segment-separator{padding:0 2px;-webkit-user-select:none;user-select:none;color:var(--alt-fg1, #999)}.ix-date-range-separator{padding:0 .25em;-webkit-user-select:none;user-select:none;color:var(--fg2, #666);flex-shrink:0}.ix-date-range-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;font-size:16px}.ix-date-range-toggle:hover{background:var(--bg2, #f0f0f0);border-radius:4px}.ix-date-range-toggle:disabled{cursor:not-allowed;opacity:.5}:host ::ng-deep .ix-datepicker-overlay .ix-calendar{background:var(--bg1, white);border:1px solid var(--lines, #e0e0e0);border-radius:8px;box-shadow:0 4px 12px #00000026;padding:24px;min-width:380px;--calendar-cell-size: 48px;--calendar-header-height: 44px;--calendar-cell-font-size: 16px;--calendar-header-font-size: 14px}:host ::ng-deep .ix-datepicker-overlay .ix-calendar .ix-calendar-content{padding:0}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: IxInputDirective, selector: "input[ixInput], textarea[ixInput], div[ixInput]" }, { kind: "component", type: IxCalendarComponent, selector: "ix-calendar", inputs: ["startView", "selected", "minDate", "maxDate", "dateFilter", "rangeMode", "selectedRange"], outputs: ["selectedChange", "activeDateChange", "viewChanged", "selectedRangeChange"] }, { kind: "ngmodule", type: OverlayModule }, { kind: "ngmodule", type: PortalModule }, { kind: "ngmodule", type: A11yModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxDateRangeInputComponent, decorators: [{
             type: Component,
@@ -6035,105 +5472,9 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                             useExisting: forwardRef(() => IxDateRangeInputComponent),
                             multi: true
                         }
-                    ], template: `
-    <div class="ix-date-range-container">
-      <div #wrapper ixInput class="ix-date-range-wrapper" style="padding-right: 40px;">
-        <!-- Start date segments -->
-        <div class="ix-date-segment-group">
-          <input 
-            #startMonthInput
-            type="text"
-            class="ix-date-segment ix-date-segment-month"
-            placeholder="MM"
-            maxlength="2"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('start', 'month')"
-            (blur)="onSegmentBlur('start', 'month')"
-            (keydown)="onSegmentKeydown($event, 'start', 'month')">
-          <span class="ix-date-segment-separator">/</span>
-          <input 
-            #startDayInput
-            type="text"
-            class="ix-date-segment ix-date-segment-day"
-            placeholder="DD"
-            maxlength="2"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('start', 'day')"
-            (blur)="onSegmentBlur('start', 'day')"
-            (keydown)="onSegmentKeydown($event, 'start', 'day')">
-          <span class="ix-date-segment-separator">/</span>
-          <input 
-            #startYearInput
-            type="text"
-            class="ix-date-segment ix-date-segment-year"
-            placeholder="YYYY"
-            maxlength="4"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('start', 'year')"
-            (blur)="onSegmentBlur('start', 'year')"
-            (keydown)="onSegmentKeydown($event, 'start', 'year')">
-        </div>
-        
-        <span class="ix-date-range-separator">–</span>
-        
-        <!-- End date segments -->
-        <div class="ix-date-segment-group">
-          <input 
-            #endMonthInput
-            type="text"
-            class="ix-date-segment ix-date-segment-month"
-            placeholder="MM"
-            maxlength="2"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('end', 'month')"
-            (blur)="onSegmentBlur('end', 'month')"
-            (keydown)="onSegmentKeydown($event, 'end', 'month')">
-          <span class="ix-date-segment-separator">/</span>
-          <input 
-            #endDayInput
-            type="text"
-            class="ix-date-segment ix-date-segment-day"
-            placeholder="DD"
-            maxlength="2"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('end', 'day')"
-            (blur)="onSegmentBlur('end', 'day')"
-            (keydown)="onSegmentKeydown($event, 'end', 'day')">
-          <span class="ix-date-segment-separator">/</span>
-          <input 
-            #endYearInput
-            type="text"
-            class="ix-date-segment ix-date-segment-year"
-            placeholder="YYYY"
-            maxlength="4"
-            [disabled]="isDisabled()"
-            (focus)="onSegmentFocus('end', 'year')"
-            (blur)="onSegmentBlur('end', 'year')"
-            (keydown)="onSegmentKeydown($event, 'end', 'year')">
-        </div>
-        
-        <button 
-          type="button"
-          class="ix-date-range-toggle"
-          aria-label="Open calendar"
-          [disabled]="isDisabled()"
-          (click)="openDatepicker()">
-          <span aria-hidden="true">📅</span>
-        </button>
-      </div>
-      
-      <ng-template #calendarTemplate>
-        <ix-calendar
-          class="ix-calendar"
-          [startView]="'month'"
-          [rangeMode]="true"
-          [selectedRange]="initialRange()"
-          (selectedRangeChange)="onRangeSelected($event)" />
-      </ng-template>
-    </div>
-  `, host: {
+                    ], host: {
                         'class': 'ix-date-range-input'
-                    }, styles: [":host{display:block;width:100%}.ix-date-range-container{position:relative;display:flex;align-items:center}.ix-date-range-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-date-segment-group{display:flex;align-items:center}.ix-date-segment{background:transparent;border:none;outline:none;font:inherit;color:inherit;padding:0;min-width:0;text-align:center;width:2.6ch}.ix-date-segment::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-date-segment:focus{outline:none;background:var(--bg2, rgba(0, 0, 0, .05));border-radius:2px}.ix-date-segment:focus::placeholder{opacity:0}.ix-date-segment.ix-date-segment-year{width:4ch}.ix-date-segment-separator{padding:0 2px;-webkit-user-select:none;user-select:none;color:var(--alt-fg1, #999)}.ix-date-range-separator{padding:0 .25em;-webkit-user-select:none;user-select:none;color:var(--fg2, #666);flex-shrink:0}.ix-date-range-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;font-size:16px}.ix-date-range-toggle:hover{background:var(--bg2, #f0f0f0);border-radius:4px}.ix-date-range-toggle:disabled{cursor:not-allowed;opacity:.5}:host ::ng-deep .ix-datepicker-overlay .ix-calendar{background:var(--bg1, white);border:1px solid var(--lines, #e0e0e0);border-radius:8px;box-shadow:0 4px 12px #00000026;padding:24px;min-width:380px;--calendar-cell-size: 48px;--calendar-header-height: 44px;--calendar-cell-font-size: 16px;--calendar-header-font-size: 14px}:host ::ng-deep .ix-datepicker-overlay .ix-calendar .ix-calendar-content{padding:0}\n"] }]
+                    }, template: "<div class=\"ix-date-range-container\">\n  <div #wrapper ixInput class=\"ix-date-range-wrapper\" style=\"padding-right: 40px;\">\n    <!-- Start date segments -->\n    <div class=\"ix-date-segment-group\">\n      <input\n        #startMonthInput\n        type=\"text\"\n        class=\"ix-date-segment ix-date-segment-month\"\n        placeholder=\"MM\"\n        maxlength=\"2\"\n        [disabled]=\"isDisabled()\"\n        (focus)=\"onSegmentFocus('start', 'month')\"\n        (blur)=\"onSegmentBlur('start', 'month')\"\n        (keydown)=\"onSegmentKeydown($event, 'start', 'month')\">\n      <span class=\"ix-date-segment-separator\">/</span>\n      <input\n        #startDayInput\n        type=\"text\"\n        class=\"ix-date-segment ix-date-segment-day\"\n        placeholder=\"DD\"\n        maxlength=\"2\"\n        [disabled]=\"isDisabled()\"\n        (focus)=\"onSegmentFocus('start', 'day')\"\n        (blur)=\"onSegmentBlur('start', 'day')\"\n        (keydown)=\"onSegmentKeydown($event, 'start', 'day')\">\n      <span class=\"ix-date-segment-separator\">/</span>\n      <input\n        #startYearInput\n        type=\"text\"\n        class=\"ix-date-segment ix-date-segment-year\"\n        placeholder=\"YYYY\"\n        maxlength=\"4\"\n        [disabled]=\"isDisabled()\"\n        (focus)=\"onSegmentFocus('start', 'year')\"\n        (blur)=\"onSegmentBlur('start', 'year')\"\n        (keydown)=\"onSegmentKeydown($event, 'start', 'year')\">\n    </div>\n\n    <span class=\"ix-date-range-separator\">\u2013</span>\n\n    <!-- End date segments -->\n    <div class=\"ix-date-segment-group\">\n      <input\n        #endMonthInput\n        type=\"text\"\n        class=\"ix-date-segment ix-date-segment-month\"\n        placeholder=\"MM\"\n        maxlength=\"2\"\n        [disabled]=\"isDisabled()\"\n        (focus)=\"onSegmentFocus('end', 'month')\"\n        (blur)=\"onSegmentBlur('end', 'month')\"\n        (keydown)=\"onSegmentKeydown($event, 'end', 'month')\">\n      <span class=\"ix-date-segment-separator\">/</span>\n      <input\n        #endDayInput\n        type=\"text\"\n        class=\"ix-date-segment ix-date-segment-day\"\n        placeholder=\"DD\"\n        maxlength=\"2\"\n        [disabled]=\"isDisabled()\"\n        (focus)=\"onSegmentFocus('end', 'day')\"\n        (blur)=\"onSegmentBlur('end', 'day')\"\n        (keydown)=\"onSegmentKeydown($event, 'end', 'day')\">\n      <span class=\"ix-date-segment-separator\">/</span>\n      <input\n        #endYearInput\n        type=\"text\"\n        class=\"ix-date-segment ix-date-segment-year\"\n        placeholder=\"YYYY\"\n        maxlength=\"4\"\n        [disabled]=\"isDisabled()\"\n        (focus)=\"onSegmentFocus('end', 'year')\"\n        (blur)=\"onSegmentBlur('end', 'year')\"\n        (keydown)=\"onSegmentKeydown($event, 'end', 'year')\">\n    </div>\n\n    <button\n      type=\"button\"\n      class=\"ix-date-range-toggle\"\n      aria-label=\"Open calendar\"\n      [disabled]=\"isDisabled()\"\n      (click)=\"openDatepicker()\">\n      <span aria-hidden=\"true\">\uD83D\uDCC5</span>\n    </button>\n  </div>\n\n  <ng-template #calendarTemplate>\n    <ix-calendar\n      class=\"ix-calendar\"\n      [startView]=\"'month'\"\n      [rangeMode]=\"true\"\n      [selectedRange]=\"initialRange()\"\n      (selectedRangeChange)=\"onRangeSelected($event)\" />\n  </ng-template>\n</div>\n", styles: [":host{display:block;width:100%}.ix-date-range-container{position:relative;display:flex;align-items:center}.ix-date-range-wrapper{display:flex;align-items:center;width:100%;position:relative}.ix-date-segment-group{display:flex;align-items:center}.ix-date-segment{background:transparent;border:none;outline:none;font:inherit;color:inherit;padding:0;min-width:0;text-align:center;width:2.6ch}.ix-date-segment::placeholder{color:var(--alt-fg1, #999);opacity:1}.ix-date-segment:focus{outline:none;background:var(--bg2, rgba(0, 0, 0, .05));border-radius:2px}.ix-date-segment:focus::placeholder{opacity:0}.ix-date-segment.ix-date-segment-year{width:4ch}.ix-date-segment-separator{padding:0 2px;-webkit-user-select:none;user-select:none;color:var(--alt-fg1, #999)}.ix-date-range-separator{padding:0 .25em;-webkit-user-select:none;user-select:none;color:var(--fg2, #666);flex-shrink:0}.ix-date-range-toggle{position:absolute;right:8px;z-index:2;pointer-events:auto;background:transparent;border:none;cursor:pointer;padding:4px;font-size:16px}.ix-date-range-toggle:hover{background:var(--bg2, #f0f0f0);border-radius:4px}.ix-date-range-toggle:disabled{cursor:not-allowed;opacity:.5}:host ::ng-deep .ix-datepicker-overlay .ix-calendar{background:var(--bg1, white);border:1px solid var(--lines, #e0e0e0);border-radius:8px;box-shadow:0 4px 12px #00000026;padding:24px;min-width:380px;--calendar-cell-size: 48px;--calendar-header-height: 44px;--calendar-cell-font-size: 16px;--calendar-header-font-size: 14px}:host ::ng-deep .ix-datepicker-overlay .ix-calendar .ix-calendar-content{padding:0}\n"] }]
         }] });
 
 class IxTimeInputComponent {
@@ -6201,15 +5542,7 @@ class IxTimeInputComponent {
                 useExisting: forwardRef(() => IxTimeInputComponent),
                 multi: true
             }
-        ], ngImport: i0, template: `
-    <ix-select
-      [options]="timeSelectOptions()"
-      [placeholder]="placeholder()"
-      [disabled]="isDisabled()"
-      [testId]="testId()"
-      [ngModel]="_value"
-      (selectionChange)="onSelectionChange($event)" />
-  `, isInline: true, styles: [":host{display:block;width:100%}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "ngmodule", type: FormsModule }, { kind: "directive", type: i1$3.NgControlStatus, selector: "[formControlName],[ngModel],[formControl]" }, { kind: "directive", type: i1$3.NgModel, selector: "[ngModel]:not([formControlName]):not([formControl])", inputs: ["name", "disabled", "ngModel", "ngModelOptions"], outputs: ["ngModelChange"], exportAs: ["ngModel"] }, { kind: "component", type: IxSelectComponent, selector: "ix-select", inputs: ["options", "optionGroups", "placeholder", "disabled", "testId"], outputs: ["selectionChange"] }] });
+        ], ngImport: i0, template: "<ix-select\n  [options]=\"timeSelectOptions()\"\n  [placeholder]=\"placeholder()\"\n  [disabled]=\"isDisabled()\"\n  [testId]=\"testId()\"\n  [ngModel]=\"_value\"\n  (selectionChange)=\"onSelectionChange($event)\" />\n", styles: [":host{display:block;width:100%}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "ngmodule", type: FormsModule }, { kind: "directive", type: i1$3.NgControlStatus, selector: "[formControlName],[ngModel],[formControl]" }, { kind: "directive", type: i1$3.NgModel, selector: "[ngModel]:not([formControlName]):not([formControl])", inputs: ["name", "disabled", "ngModel", "ngModelOptions"], outputs: ["ngModelChange"], exportAs: ["ngModel"] }, { kind: "component", type: IxSelectComponent, selector: "ix-select", inputs: ["options", "optionGroups", "placeholder", "disabled", "testId"], outputs: ["selectionChange"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTimeInputComponent, decorators: [{
             type: Component,
@@ -6219,17 +5552,9 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                             useExisting: forwardRef(() => IxTimeInputComponent),
                             multi: true
                         }
-                    ], template: `
-    <ix-select
-      [options]="timeSelectOptions()"
-      [placeholder]="placeholder()"
-      [disabled]="isDisabled()"
-      [testId]="testId()"
-      [ngModel]="_value"
-      (selectionChange)="onSelectionChange($event)" />
-  `, host: {
+                    ], host: {
                         'class': 'ix-time-input'
-                    }, styles: [":host{display:block;width:100%}\n"] }]
+                    }, template: "<ix-select\n  [options]=\"timeSelectOptions()\"\n  [placeholder]=\"placeholder()\"\n  [disabled]=\"isDisabled()\"\n  [testId]=\"testId()\"\n  [ngModel]=\"_value\"\n  (selectionChange)=\"onSelectionChange($event)\" />\n", styles: [":host{display:block;width:100%}\n"] }]
         }] });
 
 class IxSliderThumbDirective {
@@ -6576,52 +5901,13 @@ class IxSliderComponent {
         }
     };
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSliderComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.2.0", version: "20.3.4", type: IxSliderComponent, isStandalone: true, selector: "ix-slider", inputs: { min: { classPropertyName: "min", publicName: "min", isSignal: true, isRequired: false, transformFunction: null }, max: { classPropertyName: "max", publicName: "max", isSignal: true, isRequired: false, transformFunction: null }, step: { classPropertyName: "step", publicName: "step", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, labelPrefix: { classPropertyName: "labelPrefix", publicName: "labelPrefix", isSignal: true, isRequired: false, transformFunction: null }, labelSuffix: { classPropertyName: "labelSuffix", publicName: "labelSuffix", isSignal: true, isRequired: false, transformFunction: null }, labelType: { classPropertyName: "labelType", publicName: "labelType", isSignal: true, isRequired: false, transformFunction: null } }, host: { properties: { "attr.aria-disabled": "isDisabled()" }, classAttribute: "ix-slider" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxSliderComponent, isStandalone: true, selector: "ix-slider", inputs: { min: { classPropertyName: "min", publicName: "min", isSignal: true, isRequired: false, transformFunction: null }, max: { classPropertyName: "max", publicName: "max", isSignal: true, isRequired: false, transformFunction: null }, step: { classPropertyName: "step", publicName: "step", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, labelPrefix: { classPropertyName: "labelPrefix", publicName: "labelPrefix", isSignal: true, isRequired: false, transformFunction: null }, labelSuffix: { classPropertyName: "labelSuffix", publicName: "labelSuffix", isSignal: true, isRequired: false, transformFunction: null }, labelType: { classPropertyName: "labelType", publicName: "labelType", isSignal: true, isRequired: false, transformFunction: null } }, host: { properties: { "attr.aria-disabled": "isDisabled()" }, classAttribute: "ix-slider" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxSliderComponent),
                 multi: true
             }
-        ], queries: [{ propertyName: "thumbDirective", first: true, predicate: IxSliderThumbDirective, descendants: true, isSignal: true }], viewQueries: [{ propertyName: "sliderContainer", first: true, predicate: ["sliderContainer"], descendants: true, isSignal: true }, { propertyName: "thumbVisual", first: true, predicate: ["thumbVisual"], descendants: true, isSignal: true }], ngImport: i0, template: `
-    <div
-      #sliderContainer
-      class="ix-slider-container"
-      [attr.aria-disabled]="isDisabled()"
-      [attr.data-disabled]="isDisabled()"
-      (mousedown)="onTrackClick($event)"
-      (touchstart)="onTrackClick($event)">
-
-      <div class="ix-slider-track">
-        <div class="ix-slider-track-inactive"></div>
-        <div class="ix-slider-track-active">
-          <div
-            class="ix-slider-track-active-fill"
-            [style.transform]="'scaleX(' + fillScale() + ')'">
-          </div>
-        </div>
-        <div
-          *ngIf="(labelType() === 'track' || labelType() === 'both') && showLabel()"
-          class="ix-slider-track-label">
-          {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}
-        </div>
-      </div>
-
-      <div
-        #thumbVisual
-        class="ix-slider-thumb-visual"
-        [style.transform]="'translateX(' + thumbPosition() + 'px)'">
-        <div class="ix-slider-thumb-knob"></div>
-        <div
-          *ngIf="(labelType() === 'handle' || labelType() === 'both') && showLabel()"
-          class="ix-slider-thumb-label"
-          [class.visible]="labelVisible()">
-          {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}
-        </div>
-      </div>
-
-      <ng-content />
-    </div>
-  `, isInline: true, styles: [":host{display:block;width:100%;height:48px;position:relative;touch-action:pan-x}.ix-slider-container{position:relative;width:100%;height:100%;display:flex;align-items:center;cursor:pointer}.ix-slider-container[data-disabled=true]{cursor:not-allowed;opacity:.6}.ix-slider-track{position:relative;width:100%;height:4px}.ix-slider-track-inactive{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--lines, #e0e0e0);border-radius:2px}.ix-slider-track-active{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;border-radius:2px}.ix-slider-track-active-fill{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--primary, #007bff);border-radius:2px;transform-origin:left center;transition:transform .1s ease-out}:host ::ng-deep .ix-slider-thumb{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;margin:0;padding:0;cursor:pointer;z-index:2;-webkit-appearance:none;appearance:none;background:none;border:none;outline:none}:host ::ng-deep .ix-slider-thumb:disabled{cursor:not-allowed}:host ::ng-deep .ix-slider-thumb:focus{outline:none}:host ::ng-deep .ix-slider-thumb:focus-visible{outline:none}:host ::ng-deep .ix-slider-thumb:focus-visible+.ix-slider-visual-thumb{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-slider-thumb-visual{position:absolute;top:50%;left:0;pointer-events:none;z-index:3;transition:transform .1s ease-out}.ix-slider-thumb-knob{width:20px;height:24px;background:var(--primary, #007bff);border:2px solid var(--bg1, white);border-radius:4px;box-shadow:0 2px 4px #0003;transition:box-shadow .15s ease;transform:translateY(-50%)}.ix-slider-container:hover .ix-slider-thumb-knob{box-shadow:0 4px 8px #0000004d}.ix-slider-container[data-disabled=true] .ix-slider-thumb-knob{background:var(--fg2, #999);box-shadow:0 1px 2px #0000001a}.ix-slider-thumb-label{position:absolute;bottom:calc(100% + 16px);left:50%;transform:translate(-50%) translateY(-50%);padding:8px 12px;background:var(--primary, #007bff);color:var(--primary-txt, white);border-radius:6px;font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;opacity:0;pointer-events:none;-webkit-user-select:none;user-select:none;transition:opacity .15s ease;z-index:4;box-shadow:0 2px 8px #00000026}.ix-slider-thumb-label:after{content:\"\";position:absolute;top:100%;left:50%;transform:translate(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid var(--primary, #007bff)}.ix-slider-thumb-label.visible{opacity:1}.ix-slider-track-label{position:absolute;top:-28px;right:0;padding:4px 0;background:transparent;color:var(--fg1, #000);font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;-webkit-user-select:none;user-select:none;z-index:2}@media (prefers-reduced-motion: reduce){.ix-slider-track-active-fill,.ix-slider-thumb-visual,.ix-slider-thumb-knob,.ix-slider-thumb-label{transition:none}}@media (prefers-contrast: high){.ix-slider-track-inactive{border:1px solid var(--fg1, #000)}.ix-slider-thumb-knob{border-width:3px;border-color:var(--fg1, #000)}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "ngmodule", type: A11yModule }] });
+        ], queries: [{ propertyName: "thumbDirective", first: true, predicate: IxSliderThumbDirective, descendants: true, isSignal: true }], viewQueries: [{ propertyName: "sliderContainer", first: true, predicate: ["sliderContainer"], descendants: true, isSignal: true }, { propertyName: "thumbVisual", first: true, predicate: ["thumbVisual"], descendants: true, isSignal: true }], ngImport: i0, template: "<div\n  #sliderContainer\n  class=\"ix-slider-container\"\n  [attr.aria-disabled]=\"isDisabled()\"\n  [attr.data-disabled]=\"isDisabled()\"\n  (mousedown)=\"onTrackClick($event)\"\n  (touchstart)=\"onTrackClick($event)\">\n\n  <div class=\"ix-slider-track\">\n    <div class=\"ix-slider-track-inactive\"></div>\n    <div class=\"ix-slider-track-active\">\n      <div\n        class=\"ix-slider-track-active-fill\"\n        [style.transform]=\"'scaleX(' + fillScale() + ')'\">\n      </div>\n    </div>\n    @if ((labelType() === 'track' || labelType() === 'both') && showLabel()) {\n      <div class=\"ix-slider-track-label\">\n        {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}\n      </div>\n    }\n  </div>\n\n  <div\n    #thumbVisual\n    class=\"ix-slider-thumb-visual\"\n    [style.transform]=\"'translateX(' + thumbPosition() + 'px)'\">\n    <div class=\"ix-slider-thumb-knob\"></div>\n    @if ((labelType() === 'handle' || labelType() === 'both') && showLabel()) {\n      <div\n        class=\"ix-slider-thumb-label\"\n        [class.visible]=\"labelVisible()\">\n        {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}\n      </div>\n    }\n  </div>\n\n  <ng-content />\n</div>\n", styles: [":host{display:block;width:100%;height:48px;position:relative;touch-action:pan-x}.ix-slider-container{position:relative;width:100%;height:100%;display:flex;align-items:center;cursor:pointer}.ix-slider-container[data-disabled=true]{cursor:not-allowed;opacity:.6}.ix-slider-track{position:relative;width:100%;height:4px}.ix-slider-track-inactive{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--lines, #e0e0e0);border-radius:2px}.ix-slider-track-active{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;border-radius:2px}.ix-slider-track-active-fill{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--primary, #007bff);border-radius:2px;transform-origin:left center;transition:transform .1s ease-out}:host ::ng-deep .ix-slider-thumb{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;margin:0;padding:0;cursor:pointer;z-index:2;-webkit-appearance:none;appearance:none;background:none;border:none;outline:none}:host ::ng-deep .ix-slider-thumb:disabled{cursor:not-allowed}:host ::ng-deep .ix-slider-thumb:focus{outline:none}:host ::ng-deep .ix-slider-thumb:focus-visible{outline:none}:host ::ng-deep .ix-slider-thumb:focus-visible+.ix-slider-visual-thumb{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-slider-thumb-visual{position:absolute;top:50%;left:0;pointer-events:none;z-index:3;transition:transform .1s ease-out}.ix-slider-thumb-knob{width:20px;height:24px;background:var(--primary, #007bff);border:2px solid var(--bg1, white);border-radius:4px;box-shadow:0 2px 4px #0003;transition:box-shadow .15s ease;transform:translateY(-50%)}.ix-slider-container:hover .ix-slider-thumb-knob{box-shadow:0 4px 8px #0000004d}.ix-slider-container[data-disabled=true] .ix-slider-thumb-knob{background:var(--fg2, #999);box-shadow:0 1px 2px #0000001a}.ix-slider-thumb-label{position:absolute;bottom:calc(100% + 16px);left:50%;transform:translate(-50%) translateY(-50%);padding:8px 12px;background:var(--primary, #007bff);color:var(--primary-txt, white);border-radius:6px;font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;opacity:0;pointer-events:none;-webkit-user-select:none;user-select:none;transition:opacity .15s ease;z-index:4;box-shadow:0 2px 8px #00000026}.ix-slider-thumb-label:after{content:\"\";position:absolute;top:100%;left:50%;transform:translate(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid var(--primary, #007bff)}.ix-slider-thumb-label.visible{opacity:1}.ix-slider-track-label{position:absolute;top:-28px;right:0;padding:4px 0;background:transparent;color:var(--fg1, #000);font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;-webkit-user-select:none;user-select:none;z-index:2}@media (prefers-reduced-motion: reduce){.ix-slider-track-active-fill,.ix-slider-thumb-visual,.ix-slider-thumb-knob,.ix-slider-thumb-label{transition:none}}@media (prefers-contrast: high){.ix-slider-track-inactive{border:1px solid var(--fg1, #000)}.ix-slider-thumb-knob{border-width:3px;border-color:var(--fg1, #000)}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "ngmodule", type: A11yModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSliderComponent, decorators: [{
             type: Component,
@@ -6631,49 +5917,10 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                             useExisting: forwardRef(() => IxSliderComponent),
                             multi: true
                         }
-                    ], template: `
-    <div
-      #sliderContainer
-      class="ix-slider-container"
-      [attr.aria-disabled]="isDisabled()"
-      [attr.data-disabled]="isDisabled()"
-      (mousedown)="onTrackClick($event)"
-      (touchstart)="onTrackClick($event)">
-
-      <div class="ix-slider-track">
-        <div class="ix-slider-track-inactive"></div>
-        <div class="ix-slider-track-active">
-          <div
-            class="ix-slider-track-active-fill"
-            [style.transform]="'scaleX(' + fillScale() + ')'">
-          </div>
-        </div>
-        <div
-          *ngIf="(labelType() === 'track' || labelType() === 'both') && showLabel()"
-          class="ix-slider-track-label">
-          {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}
-        </div>
-      </div>
-
-      <div
-        #thumbVisual
-        class="ix-slider-thumb-visual"
-        [style.transform]="'translateX(' + thumbPosition() + 'px)'">
-        <div class="ix-slider-thumb-knob"></div>
-        <div
-          *ngIf="(labelType() === 'handle' || labelType() === 'both') && showLabel()"
-          class="ix-slider-thumb-label"
-          [class.visible]="labelVisible()">
-          {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}
-        </div>
-      </div>
-
-      <ng-content />
-    </div>
-  `, host: {
+                    ], host: {
                         'class': 'ix-slider',
                         '[attr.aria-disabled]': 'isDisabled()'
-                    }, styles: [":host{display:block;width:100%;height:48px;position:relative;touch-action:pan-x}.ix-slider-container{position:relative;width:100%;height:100%;display:flex;align-items:center;cursor:pointer}.ix-slider-container[data-disabled=true]{cursor:not-allowed;opacity:.6}.ix-slider-track{position:relative;width:100%;height:4px}.ix-slider-track-inactive{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--lines, #e0e0e0);border-radius:2px}.ix-slider-track-active{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;border-radius:2px}.ix-slider-track-active-fill{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--primary, #007bff);border-radius:2px;transform-origin:left center;transition:transform .1s ease-out}:host ::ng-deep .ix-slider-thumb{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;margin:0;padding:0;cursor:pointer;z-index:2;-webkit-appearance:none;appearance:none;background:none;border:none;outline:none}:host ::ng-deep .ix-slider-thumb:disabled{cursor:not-allowed}:host ::ng-deep .ix-slider-thumb:focus{outline:none}:host ::ng-deep .ix-slider-thumb:focus-visible{outline:none}:host ::ng-deep .ix-slider-thumb:focus-visible+.ix-slider-visual-thumb{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-slider-thumb-visual{position:absolute;top:50%;left:0;pointer-events:none;z-index:3;transition:transform .1s ease-out}.ix-slider-thumb-knob{width:20px;height:24px;background:var(--primary, #007bff);border:2px solid var(--bg1, white);border-radius:4px;box-shadow:0 2px 4px #0003;transition:box-shadow .15s ease;transform:translateY(-50%)}.ix-slider-container:hover .ix-slider-thumb-knob{box-shadow:0 4px 8px #0000004d}.ix-slider-container[data-disabled=true] .ix-slider-thumb-knob{background:var(--fg2, #999);box-shadow:0 1px 2px #0000001a}.ix-slider-thumb-label{position:absolute;bottom:calc(100% + 16px);left:50%;transform:translate(-50%) translateY(-50%);padding:8px 12px;background:var(--primary, #007bff);color:var(--primary-txt, white);border-radius:6px;font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;opacity:0;pointer-events:none;-webkit-user-select:none;user-select:none;transition:opacity .15s ease;z-index:4;box-shadow:0 2px 8px #00000026}.ix-slider-thumb-label:after{content:\"\";position:absolute;top:100%;left:50%;transform:translate(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid var(--primary, #007bff)}.ix-slider-thumb-label.visible{opacity:1}.ix-slider-track-label{position:absolute;top:-28px;right:0;padding:4px 0;background:transparent;color:var(--fg1, #000);font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;-webkit-user-select:none;user-select:none;z-index:2}@media (prefers-reduced-motion: reduce){.ix-slider-track-active-fill,.ix-slider-thumb-visual,.ix-slider-thumb-knob,.ix-slider-thumb-label{transition:none}}@media (prefers-contrast: high){.ix-slider-track-inactive{border:1px solid var(--fg1, #000)}.ix-slider-thumb-knob{border-width:3px;border-color:var(--fg1, #000)}}\n"] }]
+                    }, template: "<div\n  #sliderContainer\n  class=\"ix-slider-container\"\n  [attr.aria-disabled]=\"isDisabled()\"\n  [attr.data-disabled]=\"isDisabled()\"\n  (mousedown)=\"onTrackClick($event)\"\n  (touchstart)=\"onTrackClick($event)\">\n\n  <div class=\"ix-slider-track\">\n    <div class=\"ix-slider-track-inactive\"></div>\n    <div class=\"ix-slider-track-active\">\n      <div\n        class=\"ix-slider-track-active-fill\"\n        [style.transform]=\"'scaleX(' + fillScale() + ')'\">\n      </div>\n    </div>\n    @if ((labelType() === 'track' || labelType() === 'both') && showLabel()) {\n      <div class=\"ix-slider-track-label\">\n        {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}\n      </div>\n    }\n  </div>\n\n  <div\n    #thumbVisual\n    class=\"ix-slider-thumb-visual\"\n    [style.transform]=\"'translateX(' + thumbPosition() + 'px)'\">\n    <div class=\"ix-slider-thumb-knob\"></div>\n    @if ((labelType() === 'handle' || labelType() === 'both') && showLabel()) {\n      <div\n        class=\"ix-slider-thumb-label\"\n        [class.visible]=\"labelVisible()\">\n        {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}\n      </div>\n    }\n  </div>\n\n  <ng-content />\n</div>\n", styles: [":host{display:block;width:100%;height:48px;position:relative;touch-action:pan-x}.ix-slider-container{position:relative;width:100%;height:100%;display:flex;align-items:center;cursor:pointer}.ix-slider-container[data-disabled=true]{cursor:not-allowed;opacity:.6}.ix-slider-track{position:relative;width:100%;height:4px}.ix-slider-track-inactive{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--lines, #e0e0e0);border-radius:2px}.ix-slider-track-active{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;border-radius:2px}.ix-slider-track-active-fill{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--primary, #007bff);border-radius:2px;transform-origin:left center;transition:transform .1s ease-out}:host ::ng-deep .ix-slider-thumb{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;margin:0;padding:0;cursor:pointer;z-index:2;-webkit-appearance:none;appearance:none;background:none;border:none;outline:none}:host ::ng-deep .ix-slider-thumb:disabled{cursor:not-allowed}:host ::ng-deep .ix-slider-thumb:focus{outline:none}:host ::ng-deep .ix-slider-thumb:focus-visible{outline:none}:host ::ng-deep .ix-slider-thumb:focus-visible+.ix-slider-visual-thumb{outline:2px solid var(--primary, #007bff);outline-offset:2px}.ix-slider-thumb-visual{position:absolute;top:50%;left:0;pointer-events:none;z-index:3;transition:transform .1s ease-out}.ix-slider-thumb-knob{width:20px;height:24px;background:var(--primary, #007bff);border:2px solid var(--bg1, white);border-radius:4px;box-shadow:0 2px 4px #0003;transition:box-shadow .15s ease;transform:translateY(-50%)}.ix-slider-container:hover .ix-slider-thumb-knob{box-shadow:0 4px 8px #0000004d}.ix-slider-container[data-disabled=true] .ix-slider-thumb-knob{background:var(--fg2, #999);box-shadow:0 1px 2px #0000001a}.ix-slider-thumb-label{position:absolute;bottom:calc(100% + 16px);left:50%;transform:translate(-50%) translateY(-50%);padding:8px 12px;background:var(--primary, #007bff);color:var(--primary-txt, white);border-radius:6px;font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;opacity:0;pointer-events:none;-webkit-user-select:none;user-select:none;transition:opacity .15s ease;z-index:4;box-shadow:0 2px 8px #00000026}.ix-slider-thumb-label:after{content:\"\";position:absolute;top:100%;left:50%;transform:translate(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid var(--primary, #007bff)}.ix-slider-thumb-label.visible{opacity:1}.ix-slider-track-label{position:absolute;top:-28px;right:0;padding:4px 0;background:transparent;color:var(--fg1, #000);font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;-webkit-user-select:none;user-select:none;z-index:2}@media (prefers-reduced-motion: reduce){.ix-slider-track-active-fill,.ix-slider-thumb-visual,.ix-slider-thumb-knob,.ix-slider-thumb-label{transition:none}}@media (prefers-contrast: high){.ix-slider-track-inactive{border:1px solid var(--fg1, #000)}.ix-slider-thumb-knob{border-width:3px;border-color:var(--fg1, #000)}}\n"] }]
         }], ctorParameters: () => [] });
 
 class IxSliderWithLabelDirective {
@@ -6810,29 +6057,13 @@ class IxButtonToggleComponent {
         this.cdr.markForCheck();
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxButtonToggleComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxButtonToggleComponent, isStandalone: true, selector: "ix-button-toggle", inputs: { id: { classPropertyName: "id", publicName: "id", isSignal: true, isRequired: false, transformFunction: null }, value: { classPropertyName: "value", publicName: "value", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, ariaLabel: { classPropertyName: "ariaLabel", publicName: "ariaLabel", isSignal: true, isRequired: false, transformFunction: null }, ariaLabelledby: { classPropertyName: "ariaLabelledby", publicName: "ariaLabelledby", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { change: "change" }, host: { listeners: { "focus": "onFocus()" }, properties: { "attr.id": "id()", "class.ix-button-toggle--checked": "checked()", "class.ix-button-toggle--disabled": "isDisabled()", "class.ix-button-toggle--standalone": "!buttonToggleGroup" }, classAttribute: "ix-button-toggle" }, providers: [
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxButtonToggleComponent, isStandalone: true, selector: "ix-button-toggle", inputs: { id: { classPropertyName: "id", publicName: "id", isSignal: true, isRequired: false, transformFunction: null }, value: { classPropertyName: "value", publicName: "value", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null }, ariaLabel: { classPropertyName: "ariaLabel", publicName: "ariaLabel", isSignal: true, isRequired: false, transformFunction: null }, ariaLabelledby: { classPropertyName: "ariaLabelledby", publicName: "ariaLabelledby", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { change: "change" }, host: { listeners: { "focus": "onFocus()" }, properties: { "attr.id": "id()", "class.ix-button-toggle--checked": "checked()", "class.ix-button-toggle--disabled": "isDisabled()", "class.ix-button-toggle--standalone": "!buttonToggleGroup" }, classAttribute: "ix-button-toggle" }, providers: [
             {
                 provide: NG_VALUE_ACCESSOR,
                 useExisting: forwardRef(() => IxButtonToggleComponent),
                 multi: true
             }
-        ], ngImport: i0, template: `
-    <button
-      type="button"
-      class="ix-button-toggle__button"
-      [class.ix-button-toggle__button--checked]="checked()"
-      [disabled]="isDisabled()"
-      [attr.aria-pressed]="checked()"
-      [attr.aria-label]="ariaLabel() || null"
-      [attr.aria-labelledby]="ariaLabelledby()"
-      [attr.id]="buttonId()"
-      (click)="toggle()">
-      <span class="ix-button-toggle__label">
-        <span *ngIf="checked()" class="ix-button-toggle__check">✓</span>
-        <ng-content />
-      </span>
-    </button>
-  `, isInline: true, styles: [".ix-button-toggle{display:inline-block;position:relative}.ix-button-toggle:first-child .ix-button-toggle__button{border-radius:6px 0 0 6px}.ix-button-toggle:last-child .ix-button-toggle__button{border-radius:0 6px 6px 0}.ix-button-toggle:not(:first-child):not(:last-child) .ix-button-toggle__button{border-radius:0}.ix-button-toggle:first-child:last-child .ix-button-toggle__button{border-radius:6px}.ix-button-toggle:not(:first-child) .ix-button-toggle__button{margin-left:-1px}.ix-button-toggle--standalone .ix-button-toggle__button{border-radius:6px}.ix-button-toggle .ix-button-toggle__button{display:inline-flex;align-items:center;justify-content:center;min-width:64px;height:36px;padding:0 16px;border:1px solid var(--lines, #d1d5db);background:var(--bg1, #ffffff);color:var(--fg2, #6b7280);font-family:inherit;font-size:14px;font-weight:500;text-decoration:none;cursor:pointer;transition:all .25s cubic-bezier(.4,0,.2,1);outline:none;position:relative;z-index:1;overflow:hidden}.ix-button-toggle .ix-button-toggle__button:hover:not(:disabled){background:var(--alt-bg1, #f9fafb);z-index:2}.ix-button-toggle .ix-button-toggle__button:focus-visible{outline:2px solid var(--primary, #3b82f6);outline-offset:2px;z-index:3}.ix-button-toggle .ix-button-toggle__button:disabled{cursor:not-allowed!important;background:var(--alt-bg2, #f3f4f6)!important;color:var(--fg1, #000000)!important;opacity:.6!important}.ix-button-toggle .ix-button-toggle__button:disabled:hover{background:var(--alt-bg2, #f3f4f6)!important;cursor:not-allowed!important}.ix-button-toggle .ix-button-toggle__button--checked{background:var(--primary, #3b82f6);color:var(--primary-txt, #ffffff);border-color:var(--primary, #3b82f6);z-index:2;padding:0 20px}.ix-button-toggle .ix-button-toggle__button--checked:hover:not(:disabled){background:var(--primary, #3b82f6)}.ix-button-toggle .ix-button-toggle__label{display:flex;align-items:center;justify-content:center;gap:8px;pointer-events:none;line-height:1}.ix-button-toggle .ix-button-toggle__check{font-size:12px;font-weight:700;line-height:1;margin-right:4px;transform:translate(-4px) scale(.8);opacity:0;animation:checkmarkSlideIn .25s cubic-bezier(.4,0,.2,1) forwards}@keyframes checkmarkSlideIn{0%{transform:translate(-8px) scale(.8);opacity:0}50%{transform:translate(-2px) scale(1.1);opacity:.7}to{transform:translate(0) scale(1);opacity:1}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { kind: "ngmodule", type: A11yModule }], changeDetection: i0.ChangeDetectionStrategy.OnPush, encapsulation: i0.ViewEncapsulation.None });
+        ], ngImport: i0, template: "<button\n  type=\"button\"\n  class=\"ix-button-toggle__button\"\n  [class.ix-button-toggle__button--checked]=\"checked()\"\n  [disabled]=\"isDisabled()\"\n  [attr.aria-pressed]=\"checked()\"\n  [attr.aria-label]=\"ariaLabel() || null\"\n  [attr.aria-labelledby]=\"ariaLabelledby()\"\n  [attr.id]=\"buttonId()\"\n  (click)=\"toggle()\">\n  <span class=\"ix-button-toggle__label\">\n    @if (checked()) {\n      <span class=\"ix-button-toggle__check\">\u2713</span>\n    }\n    <ng-content />\n  </span>\n</button>\n", styles: [".ix-button-toggle{display:inline-block;position:relative}.ix-button-toggle:first-child .ix-button-toggle__button{border-radius:6px 0 0 6px}.ix-button-toggle:last-child .ix-button-toggle__button{border-radius:0 6px 6px 0}.ix-button-toggle:not(:first-child):not(:last-child) .ix-button-toggle__button{border-radius:0}.ix-button-toggle:first-child:last-child .ix-button-toggle__button{border-radius:6px}.ix-button-toggle:not(:first-child) .ix-button-toggle__button{margin-left:-1px}.ix-button-toggle--standalone .ix-button-toggle__button{border-radius:6px}.ix-button-toggle .ix-button-toggle__button{display:inline-flex;align-items:center;justify-content:center;min-width:64px;height:36px;padding:0 16px;border:1px solid var(--lines, #d1d5db);background:var(--bg1, #ffffff);color:var(--fg2, #6b7280);font-family:inherit;font-size:14px;font-weight:500;text-decoration:none;cursor:pointer;transition:all .25s cubic-bezier(.4,0,.2,1);outline:none;position:relative;z-index:1;overflow:hidden}.ix-button-toggle .ix-button-toggle__button:hover:not(:disabled){background:var(--alt-bg1, #f9fafb);z-index:2}.ix-button-toggle .ix-button-toggle__button:focus-visible{outline:2px solid var(--primary, #3b82f6);outline-offset:2px;z-index:3}.ix-button-toggle .ix-button-toggle__button:disabled{cursor:not-allowed!important;background:var(--alt-bg2, #f3f4f6)!important;color:var(--fg1, #000000)!important;opacity:.6!important}.ix-button-toggle .ix-button-toggle__button:disabled:hover{background:var(--alt-bg2, #f3f4f6)!important;cursor:not-allowed!important}.ix-button-toggle .ix-button-toggle__button--checked{background:var(--primary, #3b82f6);color:var(--primary-txt, #ffffff);border-color:var(--primary, #3b82f6);z-index:2;padding:0 20px}.ix-button-toggle .ix-button-toggle__button--checked:hover:not(:disabled){background:var(--primary, #3b82f6)}.ix-button-toggle .ix-button-toggle__label{display:flex;align-items:center;justify-content:center;gap:8px;pointer-events:none;line-height:1}.ix-button-toggle .ix-button-toggle__check{font-size:12px;font-weight:700;line-height:1;margin-right:4px;transform:translate(-4px) scale(.8);opacity:0;animation:checkmarkSlideIn .25s cubic-bezier(.4,0,.2,1) forwards}@keyframes checkmarkSlideIn{0%{transform:translate(-8px) scale(.8);opacity:0}50%{transform:translate(-2px) scale(1.1);opacity:.7}to{transform:translate(0) scale(1);opacity:1}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "ngmodule", type: A11yModule }], changeDetection: i0.ChangeDetectionStrategy.OnPush, encapsulation: i0.ViewEncapsulation.None });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxButtonToggleComponent, decorators: [{
             type: Component,
@@ -6842,30 +6073,14 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                             useExisting: forwardRef(() => IxButtonToggleComponent),
                             multi: true
                         }
-                    ], template: `
-    <button
-      type="button"
-      class="ix-button-toggle__button"
-      [class.ix-button-toggle__button--checked]="checked()"
-      [disabled]="isDisabled()"
-      [attr.aria-pressed]="checked()"
-      [attr.aria-label]="ariaLabel() || null"
-      [attr.aria-labelledby]="ariaLabelledby()"
-      [attr.id]="buttonId()"
-      (click)="toggle()">
-      <span class="ix-button-toggle__label">
-        <span *ngIf="checked()" class="ix-button-toggle__check">✓</span>
-        <ng-content />
-      </span>
-    </button>
-  `, changeDetection: ChangeDetectionStrategy.OnPush, encapsulation: ViewEncapsulation.None, host: {
+                    ], changeDetection: ChangeDetectionStrategy.OnPush, encapsulation: ViewEncapsulation.None, host: {
                         'class': 'ix-button-toggle',
                         '[attr.id]': 'id()',
                         '[class.ix-button-toggle--checked]': 'checked()',
                         '[class.ix-button-toggle--disabled]': 'isDisabled()',
                         '[class.ix-button-toggle--standalone]': '!buttonToggleGroup',
                         '(focus)': 'onFocus()'
-                    }, styles: [".ix-button-toggle{display:inline-block;position:relative}.ix-button-toggle:first-child .ix-button-toggle__button{border-radius:6px 0 0 6px}.ix-button-toggle:last-child .ix-button-toggle__button{border-radius:0 6px 6px 0}.ix-button-toggle:not(:first-child):not(:last-child) .ix-button-toggle__button{border-radius:0}.ix-button-toggle:first-child:last-child .ix-button-toggle__button{border-radius:6px}.ix-button-toggle:not(:first-child) .ix-button-toggle__button{margin-left:-1px}.ix-button-toggle--standalone .ix-button-toggle__button{border-radius:6px}.ix-button-toggle .ix-button-toggle__button{display:inline-flex;align-items:center;justify-content:center;min-width:64px;height:36px;padding:0 16px;border:1px solid var(--lines, #d1d5db);background:var(--bg1, #ffffff);color:var(--fg2, #6b7280);font-family:inherit;font-size:14px;font-weight:500;text-decoration:none;cursor:pointer;transition:all .25s cubic-bezier(.4,0,.2,1);outline:none;position:relative;z-index:1;overflow:hidden}.ix-button-toggle .ix-button-toggle__button:hover:not(:disabled){background:var(--alt-bg1, #f9fafb);z-index:2}.ix-button-toggle .ix-button-toggle__button:focus-visible{outline:2px solid var(--primary, #3b82f6);outline-offset:2px;z-index:3}.ix-button-toggle .ix-button-toggle__button:disabled{cursor:not-allowed!important;background:var(--alt-bg2, #f3f4f6)!important;color:var(--fg1, #000000)!important;opacity:.6!important}.ix-button-toggle .ix-button-toggle__button:disabled:hover{background:var(--alt-bg2, #f3f4f6)!important;cursor:not-allowed!important}.ix-button-toggle .ix-button-toggle__button--checked{background:var(--primary, #3b82f6);color:var(--primary-txt, #ffffff);border-color:var(--primary, #3b82f6);z-index:2;padding:0 20px}.ix-button-toggle .ix-button-toggle__button--checked:hover:not(:disabled){background:var(--primary, #3b82f6)}.ix-button-toggle .ix-button-toggle__label{display:flex;align-items:center;justify-content:center;gap:8px;pointer-events:none;line-height:1}.ix-button-toggle .ix-button-toggle__check{font-size:12px;font-weight:700;line-height:1;margin-right:4px;transform:translate(-4px) scale(.8);opacity:0;animation:checkmarkSlideIn .25s cubic-bezier(.4,0,.2,1) forwards}@keyframes checkmarkSlideIn{0%{transform:translate(-8px) scale(.8);opacity:0}50%{transform:translate(-2px) scale(1.1);opacity:.7}to{transform:translate(0) scale(1);opacity:1}}\n"] }]
+                    }, template: "<button\n  type=\"button\"\n  class=\"ix-button-toggle__button\"\n  [class.ix-button-toggle__button--checked]=\"checked()\"\n  [disabled]=\"isDisabled()\"\n  [attr.aria-pressed]=\"checked()\"\n  [attr.aria-label]=\"ariaLabel() || null\"\n  [attr.aria-labelledby]=\"ariaLabelledby()\"\n  [attr.id]=\"buttonId()\"\n  (click)=\"toggle()\">\n  <span class=\"ix-button-toggle__label\">\n    @if (checked()) {\n      <span class=\"ix-button-toggle__check\">\u2713</span>\n    }\n    <ng-content />\n  </span>\n</button>\n", styles: [".ix-button-toggle{display:inline-block;position:relative}.ix-button-toggle:first-child .ix-button-toggle__button{border-radius:6px 0 0 6px}.ix-button-toggle:last-child .ix-button-toggle__button{border-radius:0 6px 6px 0}.ix-button-toggle:not(:first-child):not(:last-child) .ix-button-toggle__button{border-radius:0}.ix-button-toggle:first-child:last-child .ix-button-toggle__button{border-radius:6px}.ix-button-toggle:not(:first-child) .ix-button-toggle__button{margin-left:-1px}.ix-button-toggle--standalone .ix-button-toggle__button{border-radius:6px}.ix-button-toggle .ix-button-toggle__button{display:inline-flex;align-items:center;justify-content:center;min-width:64px;height:36px;padding:0 16px;border:1px solid var(--lines, #d1d5db);background:var(--bg1, #ffffff);color:var(--fg2, #6b7280);font-family:inherit;font-size:14px;font-weight:500;text-decoration:none;cursor:pointer;transition:all .25s cubic-bezier(.4,0,.2,1);outline:none;position:relative;z-index:1;overflow:hidden}.ix-button-toggle .ix-button-toggle__button:hover:not(:disabled){background:var(--alt-bg1, #f9fafb);z-index:2}.ix-button-toggle .ix-button-toggle__button:focus-visible{outline:2px solid var(--primary, #3b82f6);outline-offset:2px;z-index:3}.ix-button-toggle .ix-button-toggle__button:disabled{cursor:not-allowed!important;background:var(--alt-bg2, #f3f4f6)!important;color:var(--fg1, #000000)!important;opacity:.6!important}.ix-button-toggle .ix-button-toggle__button:disabled:hover{background:var(--alt-bg2, #f3f4f6)!important;cursor:not-allowed!important}.ix-button-toggle .ix-button-toggle__button--checked{background:var(--primary, #3b82f6);color:var(--primary-txt, #ffffff);border-color:var(--primary, #3b82f6);z-index:2;padding:0 20px}.ix-button-toggle .ix-button-toggle__button--checked:hover:not(:disabled){background:var(--primary, #3b82f6)}.ix-button-toggle .ix-button-toggle__label{display:flex;align-items:center;justify-content:center;gap:8px;pointer-events:none;line-height:1}.ix-button-toggle .ix-button-toggle__check{font-size:12px;font-weight:700;line-height:1;margin-right:4px;transform:translate(-4px) scale(.8);opacity:0;animation:checkmarkSlideIn .25s cubic-bezier(.4,0,.2,1) forwards}@keyframes checkmarkSlideIn{0%{transform:translate(-8px) scale(.8);opacity:0}50%{transform:translate(-2px) scale(1.1);opacity:.7}to{transform:translate(0) scale(1);opacity:1}}\n"] }]
         }] });
 
 class IxButtonToggleGroupComponent {
@@ -6998,14 +6213,7 @@ class IxButtonToggleGroupComponent {
                 useExisting: forwardRef(() => IxButtonToggleGroupComponent),
                 multi: true
             }
-        ], queries: [{ propertyName: "buttonToggles", predicate: IxButtonToggleComponent, descendants: true, isSignal: true }], ngImport: i0, template: `
-    <div class="ix-button-toggle-group"
-         [attr.role]="multiple() ? 'group' : 'radiogroup'"
-         [attr.aria-label]="ariaLabel()"
-         [attr.aria-labelledby]="ariaLabelledby()">
-      <ng-content />
-    </div>
-  `, isInline: true, styles: [".ix-button-toggle-group{display:inline-flex;align-items:stretch;border-radius:6px;box-shadow:0 1px 2px #0000000d}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "ngmodule", type: A11yModule }], changeDetection: i0.ChangeDetectionStrategy.OnPush, encapsulation: i0.ViewEncapsulation.None });
+        ], queries: [{ propertyName: "buttonToggles", predicate: IxButtonToggleComponent, descendants: true, isSignal: true }], ngImport: i0, template: "<div class=\"ix-button-toggle-group\"\n     [attr.role]=\"multiple() ? 'group' : 'radiogroup'\"\n     [attr.aria-label]=\"ariaLabel()\"\n     [attr.aria-labelledby]=\"ariaLabelledby()\">\n  <ng-content />\n</div>\n", styles: [".ix-button-toggle-group{display:inline-flex;align-items:stretch;border-radius:6px;box-shadow:0 1px 2px #0000000d}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "ngmodule", type: A11yModule }], changeDetection: i0.ChangeDetectionStrategy.OnPush, encapsulation: i0.ViewEncapsulation.None });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxButtonToggleGroupComponent, decorators: [{
             type: Component,
@@ -7015,45 +6223,22 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                             useExisting: forwardRef(() => IxButtonToggleGroupComponent),
                             multi: true
                         }
-                    ], template: `
-    <div class="ix-button-toggle-group"
-         [attr.role]="multiple() ? 'group' : 'radiogroup'"
-         [attr.aria-label]="ariaLabel()"
-         [attr.aria-labelledby]="ariaLabelledby()">
-      <ng-content />
-    </div>
-  `, changeDetection: ChangeDetectionStrategy.OnPush, encapsulation: ViewEncapsulation.None, host: {
+                    ], changeDetection: ChangeDetectionStrategy.OnPush, encapsulation: ViewEncapsulation.None, host: {
                         'class': 'ix-button-toggle-group'
-                    }, styles: [".ix-button-toggle-group{display:inline-flex;align-items:stretch;border-radius:6px;box-shadow:0 1px 2px #0000000d}\n"] }]
+                    }, template: "<div class=\"ix-button-toggle-group\"\n     [attr.role]=\"multiple() ? 'group' : 'radiogroup'\"\n     [attr.aria-label]=\"ariaLabel()\"\n     [attr.aria-labelledby]=\"ariaLabelledby()\">\n  <ng-content />\n</div>\n", styles: [".ix-button-toggle-group{display:inline-flex;align-items:stretch;border-radius:6px;box-shadow:0 1px 2px #0000000d}\n"] }]
         }], ctorParameters: () => [] });
 
 class IxTooltipComponent {
     message = input('', ...(ngDevMode ? [{ debugName: "message" }] : []));
     id = input('', ...(ngDevMode ? [{ debugName: "id" }] : []));
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTooltipComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxTooltipComponent, isStandalone: true, selector: "ix-tooltip", inputs: { message: { classPropertyName: "message", publicName: "message", isSignal: true, isRequired: false, transformFunction: null }, id: { classPropertyName: "id", publicName: "id", isSignal: true, isRequired: false, transformFunction: null } }, host: { classAttribute: "ix-tooltip-component" }, ngImport: i0, template: `
-    <div
-      class="ix-tooltip"
-      role="tooltip"
-      [id]="id()"
-      [attr.aria-hidden]="false">
-      {{ message() }}
-    </div>
-  `, isInline: true, styles: [":host{display:block;pointer-events:none;z-index:1200}.ix-tooltip{background:#373737e6;color:#fff;padding:6px 8px;border-radius:4px;font-size:12px;font-weight:500;line-height:1.4;max-width:200px;word-wrap:break-word;white-space:pre-line;box-shadow:0 2px 8px #0003;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);animation:ix-tooltip-show .15s cubic-bezier(0,0,.2,1) forwards;transform-origin:center bottom}@keyframes ix-tooltip-show{0%{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}.ix-tooltip{position:relative}.ix-tooltip:after{content:\"\";position:absolute;width:0;height:0;border-style:solid;z-index:1}:host-context(.ix-tooltip-panel-above) .ix-tooltip:after{top:100%;left:50%;transform:translate(-50%);border-width:6px 6px 0 6px;border-color:rgba(55,55,55,.9) transparent transparent transparent}:host-context(.ix-tooltip-panel-below) .ix-tooltip:after{bottom:100%;left:50%;transform:translate(-50%);border-width:0 6px 6px 6px;border-color:transparent transparent rgba(55,55,55,.9) transparent}:host-context(.ix-tooltip-panel-left) .ix-tooltip:after,:host-context(.ix-tooltip-panel-before) .ix-tooltip:after{top:50%;left:100%;transform:translateY(-50%);border-width:6px 0 6px 6px;border-color:transparent transparent transparent rgba(55,55,55,.9)}:host-context(.ix-tooltip-panel-right) .ix-tooltip:after,:host-context(.ix-tooltip-panel-after) .ix-tooltip:after{top:50%;right:100%;transform:translateY(-50%);border-width:6px 6px 6px 0;border-color:transparent rgba(55,55,55,.9) transparent transparent}@media (prefers-contrast: high){.ix-tooltip{background:var(--fg1, #000);color:var(--bg1, #fff);border:1px solid var(--lines, #999)}:host-context(.ix-tooltip-panel-above) .ix-tooltip:after{border-top-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-below) .ix-tooltip:after{border-bottom-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-left) .ix-tooltip:after,:host-context(.ix-tooltip-panel-before) .ix-tooltip:after{border-left-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-right) .ix-tooltip:after,:host-context(.ix-tooltip-panel-after) .ix-tooltip:after{border-right-color:var(--fg1, #000)}}:host-context(.ix-slider-thumb-label) .ix-tooltip{font-size:11px;padding:4px 6px;font-weight:600;min-width:24px;text-align:center;background:#373737f2}@media (prefers-reduced-motion: reduce){.ix-tooltip{animation:none}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxTooltipComponent, isStandalone: true, selector: "ix-tooltip", inputs: { message: { classPropertyName: "message", publicName: "message", isSignal: true, isRequired: false, transformFunction: null }, id: { classPropertyName: "id", publicName: "id", isSignal: true, isRequired: false, transformFunction: null } }, host: { classAttribute: "ix-tooltip-component" }, ngImport: i0, template: "<div\n  class=\"ix-tooltip\"\n  role=\"tooltip\"\n  [id]=\"id()\"\n  [attr.aria-hidden]=\"false\">\n  {{ message() }}\n</div>\n", styles: [":host{display:block;pointer-events:none;z-index:1200}.ix-tooltip{background:#373737e6;color:#fff;padding:6px 8px;border-radius:4px;font-size:12px;font-weight:500;line-height:1.4;max-width:200px;word-wrap:break-word;white-space:pre-line;box-shadow:0 2px 8px #0003;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);animation:ix-tooltip-show .15s cubic-bezier(0,0,.2,1) forwards;transform-origin:center bottom}@keyframes ix-tooltip-show{0%{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}.ix-tooltip{position:relative}.ix-tooltip:after{content:\"\";position:absolute;width:0;height:0;border-style:solid;z-index:1}:host-context(.ix-tooltip-panel-above) .ix-tooltip:after{top:100%;left:50%;transform:translate(-50%);border-width:6px 6px 0 6px;border-color:rgba(55,55,55,.9) transparent transparent transparent}:host-context(.ix-tooltip-panel-below) .ix-tooltip:after{bottom:100%;left:50%;transform:translate(-50%);border-width:0 6px 6px 6px;border-color:transparent transparent rgba(55,55,55,.9) transparent}:host-context(.ix-tooltip-panel-left) .ix-tooltip:after,:host-context(.ix-tooltip-panel-before) .ix-tooltip:after{top:50%;left:100%;transform:translateY(-50%);border-width:6px 0 6px 6px;border-color:transparent transparent transparent rgba(55,55,55,.9)}:host-context(.ix-tooltip-panel-right) .ix-tooltip:after,:host-context(.ix-tooltip-panel-after) .ix-tooltip:after{top:50%;right:100%;transform:translateY(-50%);border-width:6px 6px 6px 0;border-color:transparent rgba(55,55,55,.9) transparent transparent}@media (prefers-contrast: high){.ix-tooltip{background:var(--fg1, #000);color:var(--bg1, #fff);border:1px solid var(--lines, #999)}:host-context(.ix-tooltip-panel-above) .ix-tooltip:after{border-top-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-below) .ix-tooltip:after{border-bottom-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-left) .ix-tooltip:after,:host-context(.ix-tooltip-panel-before) .ix-tooltip:after{border-left-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-right) .ix-tooltip:after,:host-context(.ix-tooltip-panel-after) .ix-tooltip:after{border-right-color:var(--fg1, #000)}}:host-context(.ix-slider-thumb-label) .ix-tooltip{font-size:11px;padding:4px 6px;font-weight:600;min-width:24px;text-align:center;background:#373737f2}@media (prefers-reduced-motion: reduce){.ix-tooltip{animation:none}}\n"], dependencies: [{ kind: "ngmodule", type: CommonModule }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxTooltipComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'ix-tooltip', standalone: true, imports: [CommonModule], template: `
-    <div
-      class="ix-tooltip"
-      role="tooltip"
-      [id]="id()"
-      [attr.aria-hidden]="false">
-      {{ message() }}
-    </div>
-  `, changeDetection: ChangeDetectionStrategy.OnPush, host: {
+            args: [{ selector: 'ix-tooltip', standalone: true, imports: [CommonModule], changeDetection: ChangeDetectionStrategy.OnPush, host: {
                         'class': 'ix-tooltip-component'
-                    }, styles: [":host{display:block;pointer-events:none;z-index:1200}.ix-tooltip{background:#373737e6;color:#fff;padding:6px 8px;border-radius:4px;font-size:12px;font-weight:500;line-height:1.4;max-width:200px;word-wrap:break-word;white-space:pre-line;box-shadow:0 2px 8px #0003;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);animation:ix-tooltip-show .15s cubic-bezier(0,0,.2,1) forwards;transform-origin:center bottom}@keyframes ix-tooltip-show{0%{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}.ix-tooltip{position:relative}.ix-tooltip:after{content:\"\";position:absolute;width:0;height:0;border-style:solid;z-index:1}:host-context(.ix-tooltip-panel-above) .ix-tooltip:after{top:100%;left:50%;transform:translate(-50%);border-width:6px 6px 0 6px;border-color:rgba(55,55,55,.9) transparent transparent transparent}:host-context(.ix-tooltip-panel-below) .ix-tooltip:after{bottom:100%;left:50%;transform:translate(-50%);border-width:0 6px 6px 6px;border-color:transparent transparent rgba(55,55,55,.9) transparent}:host-context(.ix-tooltip-panel-left) .ix-tooltip:after,:host-context(.ix-tooltip-panel-before) .ix-tooltip:after{top:50%;left:100%;transform:translateY(-50%);border-width:6px 0 6px 6px;border-color:transparent transparent transparent rgba(55,55,55,.9)}:host-context(.ix-tooltip-panel-right) .ix-tooltip:after,:host-context(.ix-tooltip-panel-after) .ix-tooltip:after{top:50%;right:100%;transform:translateY(-50%);border-width:6px 6px 6px 0;border-color:transparent rgba(55,55,55,.9) transparent transparent}@media (prefers-contrast: high){.ix-tooltip{background:var(--fg1, #000);color:var(--bg1, #fff);border:1px solid var(--lines, #999)}:host-context(.ix-tooltip-panel-above) .ix-tooltip:after{border-top-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-below) .ix-tooltip:after{border-bottom-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-left) .ix-tooltip:after,:host-context(.ix-tooltip-panel-before) .ix-tooltip:after{border-left-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-right) .ix-tooltip:after,:host-context(.ix-tooltip-panel-after) .ix-tooltip:after{border-right-color:var(--fg1, #000)}}:host-context(.ix-slider-thumb-label) .ix-tooltip{font-size:11px;padding:4px 6px;font-weight:600;min-width:24px;text-align:center;background:#373737f2}@media (prefers-reduced-motion: reduce){.ix-tooltip{animation:none}}\n"] }]
+                    }, template: "<div\n  class=\"ix-tooltip\"\n  role=\"tooltip\"\n  [id]=\"id()\"\n  [attr.aria-hidden]=\"false\">\n  {{ message() }}\n</div>\n", styles: [":host{display:block;pointer-events:none;z-index:1200}.ix-tooltip{background:#373737e6;color:#fff;padding:6px 8px;border-radius:4px;font-size:12px;font-weight:500;line-height:1.4;max-width:200px;word-wrap:break-word;white-space:pre-line;box-shadow:0 2px 8px #0003;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);animation:ix-tooltip-show .15s cubic-bezier(0,0,.2,1) forwards;transform-origin:center bottom}@keyframes ix-tooltip-show{0%{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}.ix-tooltip{position:relative}.ix-tooltip:after{content:\"\";position:absolute;width:0;height:0;border-style:solid;z-index:1}:host-context(.ix-tooltip-panel-above) .ix-tooltip:after{top:100%;left:50%;transform:translate(-50%);border-width:6px 6px 0 6px;border-color:rgba(55,55,55,.9) transparent transparent transparent}:host-context(.ix-tooltip-panel-below) .ix-tooltip:after{bottom:100%;left:50%;transform:translate(-50%);border-width:0 6px 6px 6px;border-color:transparent transparent rgba(55,55,55,.9) transparent}:host-context(.ix-tooltip-panel-left) .ix-tooltip:after,:host-context(.ix-tooltip-panel-before) .ix-tooltip:after{top:50%;left:100%;transform:translateY(-50%);border-width:6px 0 6px 6px;border-color:transparent transparent transparent rgba(55,55,55,.9)}:host-context(.ix-tooltip-panel-right) .ix-tooltip:after,:host-context(.ix-tooltip-panel-after) .ix-tooltip:after{top:50%;right:100%;transform:translateY(-50%);border-width:6px 6px 6px 0;border-color:transparent rgba(55,55,55,.9) transparent transparent}@media (prefers-contrast: high){.ix-tooltip{background:var(--fg1, #000);color:var(--bg1, #fff);border:1px solid var(--lines, #999)}:host-context(.ix-tooltip-panel-above) .ix-tooltip:after{border-top-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-below) .ix-tooltip:after{border-bottom-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-left) .ix-tooltip:after,:host-context(.ix-tooltip-panel-before) .ix-tooltip:after{border-left-color:var(--fg1, #000)}:host-context(.ix-tooltip-panel-right) .ix-tooltip:after,:host-context(.ix-tooltip-panel-after) .ix-tooltip:after{border-right-color:var(--fg1, #000)}}:host-context(.ix-slider-thumb-label) .ix-tooltip{font-size:11px;padding:4px 6px;font-weight:600;min-width:24px;text-align:center;background:#373737f2}@media (prefers-reduced-motion: reduce){.ix-tooltip{animation:none}}\n"] }]
         }] });
 
 class IxTooltipDirective {
@@ -7365,113 +6550,27 @@ class IxDialogShellComponent {
         }
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxDialogShellComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.1.0", version: "20.3.4", type: IxDialogShellComponent, isStandalone: true, selector: "ix-dialog-shell", inputs: { title: { classPropertyName: "title", publicName: "title", isSignal: true, isRequired: false, transformFunction: null }, showFullscreenButton: { classPropertyName: "showFullscreenButton", publicName: "showFullscreenButton", isSignal: true, isRequired: false, transformFunction: null } }, host: { classAttribute: "ix-dialog-shell" }, ngImport: i0, template: `
-    <header class="ix-dialog__header">
-      <h2 class="ix-dialog__title">{{ title() }}</h2>
-      <button *ngIf="showFullscreenButton()"
-              type="button"
-              class="ix-dialog__fullscreen"
-              tabindex="-1"
-              [attr.aria-label]="isFullscreen() ? 'Exit fullscreen' : 'Enter fullscreen'"
-              (click)="toggleFullscreen()">
-        <span class="ix-dialog__fullscreen-icon">{{ isFullscreen() ? '⤓' : '⤢' }}</span>
-      </button>
-      <button type="button" class="ix-dialog__close" tabindex="-1" aria-label="Close dialog" (click)="close()">✕</button>
-    </header>
-
-    <section class="ix-dialog__content" cdkDialogContent>
-      <ng-content />
-    </section>
-
-    <footer class="ix-dialog__actions" cdkDialogActions>
-      <ng-content select="[ixDialogAction]" />
-    </footer>
-  `, isInline: true, dependencies: [{ kind: "ngmodule", type: CommonModule }, { kind: "directive", type: i1$1.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "20.3.4", type: IxDialogShellComponent, isStandalone: true, selector: "ix-dialog-shell", inputs: { title: { classPropertyName: "title", publicName: "title", isSignal: true, isRequired: false, transformFunction: null }, showFullscreenButton: { classPropertyName: "showFullscreenButton", publicName: "showFullscreenButton", isSignal: true, isRequired: false, transformFunction: null } }, host: { classAttribute: "ix-dialog-shell" }, ngImport: i0, template: "<header class=\"ix-dialog__header\">\n  <h2 class=\"ix-dialog__title\">{{ title() }}</h2>\n  @if (showFullscreenButton()) {\n    <button\n      type=\"button\"\n      class=\"ix-dialog__fullscreen\"\n      tabindex=\"-1\"\n      [attr.aria-label]=\"isFullscreen() ? 'Exit fullscreen' : 'Enter fullscreen'\"\n      (click)=\"toggleFullscreen()\">\n      <span class=\"ix-dialog__fullscreen-icon\">{{ isFullscreen() ? '\u2913' : '\u2922' }}</span>\n    </button>\n  }\n  <button type=\"button\" class=\"ix-dialog__close\" tabindex=\"-1\" aria-label=\"Close dialog\" (click)=\"close()\">\u2715</button>\n</header>\n\n<section class=\"ix-dialog__content\" cdkDialogContent>\n  <ng-content />\n</section>\n\n<footer class=\"ix-dialog__actions\" cdkDialogActions>\n  <ng-content select=\"[ixDialogAction]\" />\n</footer>\n", dependencies: [{ kind: "ngmodule", type: CommonModule }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxDialogShellComponent, decorators: [{
             type: Component,
-            args: [{
-                    selector: 'ix-dialog-shell',
-                    template: `
-    <header class="ix-dialog__header">
-      <h2 class="ix-dialog__title">{{ title() }}</h2>
-      <button *ngIf="showFullscreenButton()"
-              type="button"
-              class="ix-dialog__fullscreen"
-              tabindex="-1"
-              [attr.aria-label]="isFullscreen() ? 'Exit fullscreen' : 'Enter fullscreen'"
-              (click)="toggleFullscreen()">
-        <span class="ix-dialog__fullscreen-icon">{{ isFullscreen() ? '⤓' : '⤢' }}</span>
-      </button>
-      <button type="button" class="ix-dialog__close" tabindex="-1" aria-label="Close dialog" (click)="close()">✕</button>
-    </header>
-
-    <section class="ix-dialog__content" cdkDialogContent>
-      <ng-content />
-    </section>
-
-    <footer class="ix-dialog__actions" cdkDialogActions>
-      <ng-content select="[ixDialogAction]" />
-    </footer>
-  `,
-                    standalone: true,
-                    imports: [CommonModule],
-                    host: {
+            args: [{ selector: 'ix-dialog-shell', standalone: true, imports: [CommonModule], host: {
                         'class': 'ix-dialog-shell'
-                    }
-                }]
+                    }, template: "<header class=\"ix-dialog__header\">\n  <h2 class=\"ix-dialog__title\">{{ title() }}</h2>\n  @if (showFullscreenButton()) {\n    <button\n      type=\"button\"\n      class=\"ix-dialog__fullscreen\"\n      tabindex=\"-1\"\n      [attr.aria-label]=\"isFullscreen() ? 'Exit fullscreen' : 'Enter fullscreen'\"\n      (click)=\"toggleFullscreen()\">\n      <span class=\"ix-dialog__fullscreen-icon\">{{ isFullscreen() ? '\u2913' : '\u2922' }}</span>\n    </button>\n  }\n  <button type=\"button\" class=\"ix-dialog__close\" tabindex=\"-1\" aria-label=\"Close dialog\" (click)=\"close()\">\u2715</button>\n</header>\n\n<section class=\"ix-dialog__content\" cdkDialogContent>\n  <ng-content />\n</section>\n\n<footer class=\"ix-dialog__actions\" cdkDialogActions>\n  <ng-content select=\"[ixDialogAction]\" />\n</footer>\n" }]
         }] });
 
 class IxConfirmDialogComponent {
     ref = inject((DialogRef));
     data = inject(DIALOG_DATA);
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxConfirmDialogComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxConfirmDialogComponent, isStandalone: true, selector: "ix-confirm-dialog", host: { properties: { "class.ix-dialog--destructive": "data.destructive" }, classAttribute: "ix-dialog-shell" }, ngImport: i0, template: `
-    <ix-dialog-shell [title]="data.title">
-      <p style="padding: var(--content-padding);">{{ data.message }}</p>
-      <div ixDialogAction>
-        <ix-button
-          type="button"
-          variant="outline"
-          [label]="data.cancelText || 'Cancel'"
-          (click)="ref.close(false)" />
-        <ix-button
-          type="button"
-          [color]="data.destructive ? 'warn' : 'primary'"
-          [label]="data.confirmText || 'OK'"
-          (click)="ref.close(true)" />
-      </div>
-    </ix-dialog-shell>
-  `, isInline: true, dependencies: [{ kind: "component", type: IxDialogShellComponent, selector: "ix-dialog-shell", inputs: ["title", "showFullscreenButton"] }, { kind: "component", type: IxButtonComponent, selector: "ix-button", inputs: ["primary", "color", "variant", "backgroundColor", "label", "disabled"], outputs: ["onClick"] }] });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "20.3.4", type: IxConfirmDialogComponent, isStandalone: true, selector: "ix-confirm-dialog", host: { properties: { "class.ix-dialog--destructive": "data.destructive" }, classAttribute: "ix-dialog-shell" }, ngImport: i0, template: "<ix-dialog-shell [title]=\"data.title\">\n  <p style=\"padding: var(--content-padding);\">{{ data.message }}</p>\n  <div ixDialogAction>\n    <ix-button\n      type=\"button\"\n      variant=\"outline\"\n      [label]=\"data.cancelText || 'Cancel'\"\n      (click)=\"ref.close(false)\" />\n    <ix-button\n      type=\"button\"\n      [color]=\"data.destructive ? 'warn' : 'primary'\"\n      [label]=\"data.confirmText || 'OK'\"\n      (click)=\"ref.close(true)\" />\n  </div>\n</ix-dialog-shell>\n", dependencies: [{ kind: "component", type: IxDialogShellComponent, selector: "ix-dialog-shell", inputs: ["title", "showFullscreenButton"] }, { kind: "component", type: IxButtonComponent, selector: "ix-button", inputs: ["primary", "color", "variant", "backgroundColor", "label", "disabled"], outputs: ["onClick"] }] });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxConfirmDialogComponent, decorators: [{
             type: Component,
-            args: [{
-                    selector: 'ix-confirm-dialog',
-                    template: `
-    <ix-dialog-shell [title]="data.title">
-      <p style="padding: var(--content-padding);">{{ data.message }}</p>
-      <div ixDialogAction>
-        <ix-button
-          type="button"
-          variant="outline"
-          [label]="data.cancelText || 'Cancel'"
-          (click)="ref.close(false)" />
-        <ix-button
-          type="button"
-          [color]="data.destructive ? 'warn' : 'primary'"
-          [label]="data.confirmText || 'OK'"
-          (click)="ref.close(true)" />
-      </div>
-    </ix-dialog-shell>
-  `,
-                    standalone: true,
-                    imports: [IxDialogShellComponent, IxButtonComponent],
-                    host: {
+            args: [{ selector: 'ix-confirm-dialog', standalone: true, imports: [IxDialogShellComponent, IxButtonComponent], host: {
                         'class': 'ix-dialog-shell',
                         '[class.ix-dialog--destructive]': 'data.destructive'
-                    }
-                }]
+                    }, template: "<ix-dialog-shell [title]=\"data.title\">\n  <p style=\"padding: var(--content-padding);\">{{ data.message }}</p>\n  <div ixDialogAction>\n    <ix-button\n      type=\"button\"\n      variant=\"outline\"\n      [label]=\"data.cancelText || 'Cancel'\"\n      (click)=\"ref.close(false)\" />\n    <ix-button\n      type=\"button\"\n      [color]=\"data.destructive ? 'warn' : 'primary'\"\n      [label]=\"data.confirmText || 'OK'\"\n      (click)=\"ref.close(true)\" />\n  </div>\n</ix-dialog-shell>\n" }]
         }] });
 
 var ixConfirmDialog_component = /*#__PURE__*/Object.freeze({

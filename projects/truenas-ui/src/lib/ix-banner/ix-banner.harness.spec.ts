@@ -14,12 +14,7 @@ import { IxSpriteLoaderService } from '../ix-icon/ix-sprite-loader.service';
   selector: 'ix-test-host',
   standalone: true,
   imports: [IxBannerComponent],
-  template: `
-    <ix-banner
-      [heading]="heading()"
-      [message]="message()"
-      [type]="type()" />
-  `
+  template: `<ix-banner [heading]="heading()" [message]="message()" [type]="type()" />`
 })
 class TestHostComponent {
   heading = signal('Test Heading');

@@ -17,23 +17,7 @@ import type { IxButtonToggleGroupComponent } from './ix-button-toggle-group.comp
       multi: true
     }
   ],
-  template: `
-    <button
-      type="button"
-      class="ix-button-toggle__button"
-      [class.ix-button-toggle__button--checked]="checked()"
-      [disabled]="isDisabled()"
-      [attr.aria-pressed]="checked()"
-      [attr.aria-label]="ariaLabel() || null"
-      [attr.aria-labelledby]="ariaLabelledby()"
-      [attr.id]="buttonId()"
-      (click)="toggle()">
-      <span class="ix-button-toggle__label">
-        <span *ngIf="checked()" class="ix-button-toggle__check">✓</span>
-        <ng-content />
-      </span>
-    </button>
-  `,
+  templateUrl: './ix-button-toggle.component.html',
   styleUrl: './ix-button-toggle.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,

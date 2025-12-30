@@ -10,41 +10,7 @@ import type { DateRange } from '../ix-date-range-input/ix-date-range-input.compo
   selector: 'ix-calendar',
   standalone: true,
   imports: [CommonModule, IxCalendarHeaderComponent, IxMonthViewComponent, IxMultiYearViewComponent],
-  template: `
-    <ix-calendar-header 
-      [currentDate]="currentDate()"
-      [currentView]="currentView()"
-      (monthSelected)="onMonthSelected($event)"
-      (yearSelected)="onYearSelected($event)"
-      (viewChanged)="onViewChanged($event)"
-      (previousClicked)="onPreviousClicked()"
-      (nextClicked)="onNextClicked()" />
-
-    <div class="ix-calendar-content" cdkMonitorSubtreeFocus tabindex="-1">
-      <ix-month-view
-        *ngIf="currentView() === 'month'"
-        [activeDate]="currentDate()"
-        [selected]="selected()"
-        [dateFilter]="dateFilter()"
-        [minDate]="minDate()"
-        [maxDate]="maxDate()"
-        [rangeMode]="rangeMode()"
-        [selectedRange]="rangeMode() ? rangeState() : undefined"
-        (selectedChange)="onSelectedChange($event)"
-        (activeDateChange)="onActiveDateChange($event)" />
-
-      <!-- Multi-year view -->
-      <ix-multi-year-view
-        *ngIf="currentView() === 'year'"
-        [activeDate]="currentDate()"
-        [selected]="selected()"
-        [dateFilter]="dateFilter()"
-        [minDate]="minDate()"
-        [maxDate]="maxDate()"
-        (selectedChange)="onYearSelectedFromView($event)"
-        (activeDateChange)="onActiveDateChange($event)" />
-    </div>
-  `,
+  templateUrl: './ix-calendar.component.html',
   styleUrls: ['./ix-calendar.component.scss']
 })
 export class IxCalendarComponent implements OnInit {

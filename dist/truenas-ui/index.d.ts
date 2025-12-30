@@ -528,7 +528,6 @@ declare class IxTabsComponent implements AfterContentInit, AfterViewInit, OnDest
     highlightBarHeight: _angular_core.WritableSignal<number>;
     highlightBarVisible: _angular_core.WritableSignal<boolean>;
     private focusMonitor;
-    private liveAnnouncer;
     private cdr;
     constructor();
     ngAfterContentInit(): void;
@@ -1130,7 +1129,7 @@ declare class IxListOptionComponent implements AfterContentInit {
     protected hasPrimaryTextDirective: _angular_core.WritableSignal<boolean>;
     ngAfterContentInit(): void;
     private checkContentProjection;
-    onClick(event: Event): void;
+    onClick(_event: Event): void;
     onKeydown(event: KeyboardEvent): void;
     toggle(): void;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxListOptionComponent, never>;

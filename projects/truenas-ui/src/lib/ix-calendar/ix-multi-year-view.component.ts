@@ -15,44 +15,7 @@ export interface YearCell {
   selector: 'ix-multi-year-view',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <table role="grid" class="ix-calendar-table">
-      <!-- Table body with year cells -->
-      <tbody class="ix-calendar-body">
-        <tr *ngFor="let row of yearRows(); let rowIndex = index; trackBy: trackByRow" role="row">
-          <td 
-            *ngFor="let cell of row; let colIndex = index; trackBy: trackByYear"
-            role="gridcell"
-            class="ix-calendar-body-cell-container"
-            [attr.data-ix-row]="rowIndex"
-            [attr.data-ix-col]="colIndex"
-            [style.width.%]="cellWidth"
-            [style.padding-top.%]="cellAspectRatio"
-            [style.padding-bottom.%]="cellAspectRatio">
-            <button 
-              type="button"
-              class="ix-calendar-body-cell"
-              [class.ix-calendar-body-selected]="cell.selected"
-              [class.ix-calendar-body-today]="cell.today"
-              [class.ix-calendar-body-active]="cell.selected"
-              [disabled]="!cell.enabled"
-              [attr.tabindex]="cell.selected ? 0 : -1"
-              [attr.aria-label]="cell.ariaLabel"
-              [attr.aria-pressed]="cell.selected"
-              [attr.aria-current]="cell.today ? 'date' : null"
-              (click)="onYearClicked(cell)">
-              <span class="ix-calendar-body-cell-content ix-focus-indicator"
-                    [class.ix-calendar-body-selected]="cell.selected"
-                    [class.ix-calendar-body-today]="cell.today">
-                {{ cell.value }}
-              </span>
-              <span aria-hidden="true" class="ix-calendar-body-cell-preview"></span>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  `,
+  templateUrl: './ix-multi-year-view.component.html',
   styleUrls: ['./ix-multi-year-view.component.scss']
 })
 export class IxMultiYearViewComponent {

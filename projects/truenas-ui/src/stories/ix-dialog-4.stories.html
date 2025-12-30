@@ -1,0 +1,26 @@
+<div style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px;">
+  <ix-button
+    type="button"
+    label="Edit User"
+    (click)="openUserDialog()" />
+
+  <ix-button
+    type="button"
+    label="System Settings (Scrollable)"
+    (click)="openSystemDialog()" />
+
+  <ix-button
+    type="button"
+    label="Confirm Delete"
+    (click)="openConfirmDialog()" />
+
+  <ix-button
+    type="button"
+    label="Fullscreen Settings"
+    (click)="openFullscreenDialog()" />
+</div>
+
+<div style="padding: 16px;">
+  <h3 style="margin-top: 0;">Last Dialog Result:</h3>
+  <pre style="padding: 12px; border-radius: 4px; overflow-x: auto; border: 1px solid var(--lines, #e5e7eb);">{{ lastResult | json }}</pre>
+</div>

@@ -19,46 +19,7 @@ export type LabelType = 'none' | 'handle' | 'track' | 'both';
       multi: true
     }
   ],
-  template: `
-    <div
-      #sliderContainer
-      class="ix-slider-container"
-      [attr.aria-disabled]="isDisabled()"
-      [attr.data-disabled]="isDisabled()"
-      (mousedown)="onTrackClick($event)"
-      (touchstart)="onTrackClick($event)">
-
-      <div class="ix-slider-track">
-        <div class="ix-slider-track-inactive"></div>
-        <div class="ix-slider-track-active">
-          <div
-            class="ix-slider-track-active-fill"
-            [style.transform]="'scaleX(' + fillScale() + ')'">
-          </div>
-        </div>
-        <div
-          *ngIf="(labelType() === 'track' || labelType() === 'both') && showLabel()"
-          class="ix-slider-track-label">
-          {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}
-        </div>
-      </div>
-
-      <div
-        #thumbVisual
-        class="ix-slider-thumb-visual"
-        [style.transform]="'translateX(' + thumbPosition() + 'px)'">
-        <div class="ix-slider-thumb-knob"></div>
-        <div
-          *ngIf="(labelType() === 'handle' || labelType() === 'both') && showLabel()"
-          class="ix-slider-thumb-label"
-          [class.visible]="labelVisible()">
-          {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}
-        </div>
-      </div>
-
-      <ng-content />
-    </div>
-  `,
+  templateUrl: './ix-slider.component.html',
   styleUrl: './ix-slider.component.scss',
   host: {
     'class': 'ix-slider',

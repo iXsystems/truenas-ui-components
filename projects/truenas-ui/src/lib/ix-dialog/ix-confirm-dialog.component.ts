@@ -14,23 +14,7 @@ export interface IxConfirmDialogData {
 
 @Component({
   selector: 'ix-confirm-dialog',
-  template: `
-    <ix-dialog-shell [title]="data.title">
-      <p style="padding: var(--content-padding);">{{ data.message }}</p>
-      <div ixDialogAction>
-        <ix-button
-          type="button"
-          variant="outline"
-          [label]="data.cancelText || 'Cancel'"
-          (click)="ref.close(false)" />
-        <ix-button
-          type="button"
-          [color]="data.destructive ? 'warn' : 'primary'"
-          [label]="data.confirmText || 'OK'"
-          (click)="ref.close(true)" />
-      </div>
-    </ix-dialog-shell>
-  `,
+  templateUrl: './ix-confirm-dialog.component.html',
   standalone: true,
   imports: [IxDialogShellComponent, IxButtonComponent],
   host: {

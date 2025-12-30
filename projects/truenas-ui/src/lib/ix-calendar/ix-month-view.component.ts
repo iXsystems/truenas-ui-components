@@ -20,59 +20,7 @@ export interface CalendarCell {
   selector: 'ix-month-view',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <table role="grid" class="ix-calendar-table">
-      <!-- Table header with day names -->
-      <thead class="ix-calendar-table-header">
-        <tr>
-          <th *ngFor="let day of weekdays" scope="col">
-            <span class="cdk-visually-hidden">{{ day.long }}</span>
-            <span aria-hidden="true">{{ day.short }}</span>
-          </th>
-        </tr>
-      </thead>
-
-      <!-- Table body with calendar cells -->
-      <tbody class="ix-calendar-body">
-        <!-- Calendar rows -->
-        <tr *ngFor="let row of calendarRows(); let rowIndex = index; trackBy: trackByRow" role="row">
-          <td 
-            *ngFor="let cell of row; let colIndex = index; trackBy: trackByDate"
-            role="gridcell"
-            class="ix-calendar-body-cell-container"
-            [attr.data-ix-row]="rowIndex"
-            [attr.data-ix-col]="colIndex">
-            <button 
-              *ngIf="cell.value > 0"
-              type="button"
-              class="ix-calendar-body-cell"
-              [class.ix-calendar-body-selected]="cell.selected"
-              [class.ix-calendar-body-today]="cell.today"
-              [class.ix-calendar-body-active]="cell.selected"
-              [class.ix-calendar-body-range-start]="cell.rangeStart"
-              [class.ix-calendar-body-range-end]="cell.rangeEnd"
-              [class.ix-calendar-body-in-range]="cell.inRange"
-              [disabled]="!cell.enabled"
-              [attr.tabindex]="cell.selected ? 0 : -1"
-              [attr.aria-label]="cell.ariaLabel"
-              [attr.aria-pressed]="cell.selected"
-              [attr.aria-current]="cell.today ? 'date' : null"
-              (click)="onCellClicked(cell)">
-              <span class="ix-calendar-body-cell-content ix-focus-indicator"
-                    [class.ix-calendar-body-selected]="cell.selected"
-                    [class.ix-calendar-body-today]="cell.today"
-                    [class.ix-calendar-body-range-start]="cell.rangeStart"
-                    [class.ix-calendar-body-range-end]="cell.rangeEnd"
-                    [class.ix-calendar-body-in-range]="cell.inRange">
-                {{ cell.value }}
-              </span>
-              <span aria-hidden="true" class="ix-calendar-body-cell-preview"></span>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  `,
+  templateUrl: './ix-month-view.component.html',
   styleUrls: ['./ix-month-view.component.scss']
 })
 export class IxMonthViewComponent {

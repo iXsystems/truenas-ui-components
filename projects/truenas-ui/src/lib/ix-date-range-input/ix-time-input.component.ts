@@ -16,15 +16,7 @@ import { IxSelectComponent } from '../ix-select/ix-select.component';
       multi: true
     }
   ],
-  template: `
-    <ix-select
-      [options]="timeSelectOptions()"
-      [placeholder]="placeholder()"
-      [disabled]="isDisabled()"
-      [testId]="testId()"
-      [ngModel]="_value"
-      (selectionChange)="onSelectionChange($event)" />
-  `,
+  templateUrl: './ix-time-input.component.html',
   styleUrl: './ix-time-input.component.scss',
   host: {
     'class': 'ix-time-input'
