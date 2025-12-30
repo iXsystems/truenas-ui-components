@@ -1,7 +1,28 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { Heart, Home, Menu, Search, Settings, Star, User } from 'lucide';
+import { iconMarker } from '../lib/ix-icon/icon-marker';
 import { IxIconRegistryService } from '../lib/ix-icon/ix-icon-registry.service';
 import { IxIconComponent } from '../lib/ix-icon/ix-icon.component';
+
+// Mark MDI icons for sprite generation (used in story templates)
+iconMarker('bell', 'mdi');
+iconMarker('close', 'mdi');
+iconMarker('cog', 'mdi');
+iconMarker('content-copy', 'mdi');
+iconMarker('database', 'mdi');
+iconMarker('delete', 'mdi');
+iconMarker('file', 'mdi');
+iconMarker('folder', 'mdi');
+iconMarker('harddisk', 'mdi');
+iconMarker('magnify', 'mdi');
+iconMarker('memory', 'mdi');
+iconMarker('menu', 'mdi');
+iconMarker('nas', 'mdi');
+iconMarker('network', 'mdi');
+iconMarker('pencil', 'mdi');
+iconMarker('refresh', 'mdi');
+iconMarker('server', 'mdi');
+iconMarker('star', 'mdi');
 
 const meta: Meta<IxIconComponent> = {
   title: 'Components/Icon',

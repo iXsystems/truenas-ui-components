@@ -12,6 +12,8 @@ import { IxTreeComponent, FlatTreeControl, IxTreeFlatDataSource, IxTreeFlattener
 // Ensure these icons are included in the library sprite
 // Using the new two-parameter API
 iconMarker('cpu-64-bit', 'mdi');
+iconMarker('file', 'mdi');
+iconMarker('folder', 'mdi');
 iconMarker('nas', 'mdi');
 iconMarker('share-variant', 'mdi');
 

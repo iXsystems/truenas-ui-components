@@ -3,6 +3,17 @@ import { inject, Injectable } from '@angular/core';
 import { DomSanitizer, type SafeResourceUrl } from '@angular/platform-browser';
 import { firstValueFrom } from 'rxjs';
 
+/**
+ * Default base path for sprite assets (namespaced to avoid collisions with consumer apps)
+ * This should match the value in sprite-config-interface.ts
+ */
+export const defaultSpriteBasePath = 'assets/truenas-ui-icons';
+
+/**
+ * Default path for the sprite configuration file.
+ */
+export const defaultSpriteConfigPath = `${defaultSpriteBasePath}/sprite-config.json`;
+
 export interface SpriteConfig {
   iconUrl: string;
   icons?: string[]; // List of available icon IDs in the sprite
@@ -44,7 +55,7 @@ export class IxSpriteLoaderService {
     this.spriteLoadPromise = (async () => {
       try {
         const config = await firstValueFrom(
-          this.http.get<SpriteConfig>('assets/icons/sprite-config.json')
+          this.http.get<SpriteConfig>(defaultSpriteConfigPath)
         );
         this.spriteConfig = config;
         this.spriteLoaded = true;
