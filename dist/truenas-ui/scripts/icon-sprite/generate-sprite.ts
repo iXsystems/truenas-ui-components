@@ -1,7 +1,6 @@
 import crypto from 'crypto';
 import fs from 'fs';
 import { resolve } from 'path';
-import { addCustomIcons } from './lib/add-custom-icons';
 import { buildSprite } from './lib/build-sprite';
 import { findIconsInTemplates } from './lib/find-icons-in-templates';
 import { findIconsWithMarker } from './lib/find-icons-with-marker';
@@ -94,7 +93,11 @@ export async function generateSprite(config: SpriteGeneratorConfig = {}): Promis
 
     // eslint-disable-next-line sonarjs/hashing
     const hash = crypto.createHash('md5').update(buffer).digest('hex').slice(0, 10);
-    const versionedUrl = `assets/icons/sprite.svg?v=${hash}`;
+
+    // Generate versioned URL relative to the project root (for use in Angular assets)
+    // The outputDir is absolute, so we use the original config value
+    const spriteRelativePath = resolved.outputDir.replace(/^\.\//, ''); // Remove leading ./
+    const versionedUrl = `${spriteRelativePath}/sprite.svg?v=${hash}`;
 
     fs.writeFileSync(configPath, JSON.stringify({
       iconUrl: versionedUrl,

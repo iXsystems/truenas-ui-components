@@ -1,4 +1,9 @@
 /**
+ * Default base path for sprite assets (namespaced to avoid collisions with consumer apps)
+ */
+export const defaultSpriteBasePath = 'assets/truenas-ui-icons';
+
+/**
  * Configuration options for icon sprite generation
  */
 export interface SpriteGeneratorConfig {
@@ -10,7 +15,7 @@ export interface SpriteGeneratorConfig {
 
   /**
    * Output directory for generated sprite files
-   * Defaults to './src/assets/icons'
+   * Defaults to `./${defaultSpriteBasePath}`
    */
   outputDir?: string;
 
@@ -46,7 +51,7 @@ export function resolveConfig(config: SpriteGeneratorConfig = {}): ResolvedSprit
   return {
     projectRoot,
     srcDirs: config.srcDirs || ['./src/lib', './src/app'],
-    outputDir: config.outputDir || './src/assets/icons',
+    outputDir: config.outputDir || `./${defaultSpriteBasePath}`,
     customIconsDir: config.customIconsDir || null,
   };
 }

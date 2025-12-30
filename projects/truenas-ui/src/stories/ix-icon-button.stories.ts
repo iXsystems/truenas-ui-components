@@ -2,7 +2,25 @@ import type { Meta, StoryObj } from '@storybook/angular';
 import { expect } from '@storybook/jest';
 import { within } from '@storybook/testing-library';
 import { IxCardComponent } from '../lib/ix-card/ix-card.component';
+import { iconMarker } from '../lib/ix-icon/icon-marker';
 import { IxIconButtonComponent } from '../lib/ix-icon-button/ix-icon-button.component';
+
+// Mark MDI icons for sprite generation (used in story templates)
+iconMarker('bell', 'mdi');
+iconMarker('close', 'mdi');
+iconMarker('cog', 'mdi');
+iconMarker('content-copy', 'mdi');
+iconMarker('delete', 'mdi');
+iconMarker('dots-vertical', 'mdi');
+iconMarker('heart', 'mdi');
+iconMarker('home', 'mdi');
+iconMarker('information', 'mdi');
+iconMarker('magnify', 'mdi');
+iconMarker('menu', 'mdi');
+iconMarker('pencil', 'mdi');
+iconMarker('refresh', 'mdi');
+iconMarker('share-variant', 'mdi');
+iconMarker('star', 'mdi');
 
 const meta: Meta<IxIconButtonComponent> = {
   title: 'Components/Icon Button',

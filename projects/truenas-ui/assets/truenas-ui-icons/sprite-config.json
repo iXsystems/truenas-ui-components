@@ -1,5 +1,5 @@
 {
-  "iconUrl": "assets/icons/sprite.svg?v=aa212d3c58",
+  "iconUrl": "assets/truenas-ui-icons/sprite.svg?v=87b60fca3d",
   "icons": [
     "ix-cloud-off",
     "ix-dataset",
@@ -43,17 +43,35 @@
     "ix-two-factor-auth",
     "mdi-alert",
     "mdi-alert-circle",
+    "mdi-bell",
     "mdi-check-circle",
     "mdi-chevron-down",
     "mdi-chevron-right",
+    "mdi-close",
+    "mdi-cog",
+    "mdi-content-copy",
     "mdi-cpu-64-bit",
+    "mdi-database",
+    "mdi-delete",
     "mdi-dots-vertical",
+    "mdi-file",
     "mdi-folder",
     "mdi-folder-open",
+    "mdi-harddisk",
+    "mdi-heart",
+    "mdi-home",
     "mdi-information",
     "mdi-loading",
     "mdi-lock",
+    "mdi-magnify",
+    "mdi-memory",
+    "mdi-menu",
     "mdi-nas",
-    "mdi-share-variant"
+    "mdi-network",
+    "mdi-pencil",
+    "mdi-refresh",
+    "mdi-server",
+    "mdi-share-variant",
+    "mdi-star"
   ]
 }

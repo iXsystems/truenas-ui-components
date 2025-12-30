@@ -18,8 +18,8 @@ async function makeSprite(): Promise<void> {
   await generateSprite({
     projectRoot,
     srcDirs: ['./src/lib', './src/stories'],
-    outputDir: './assets/icons',
-    customIconsDir: './assets/icons/custom',
+    // outputDir defaults to './assets/truenas-ui-icons' (namespaced to avoid collisions)
+    customIconsDir: './assets/truenas-ui-icons/custom',
   });
 }
 
