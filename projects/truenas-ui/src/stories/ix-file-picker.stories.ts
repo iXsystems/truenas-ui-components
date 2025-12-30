@@ -844,7 +844,7 @@ export const BasicInteraction: Story = {
     // Wait for picker to open and content to load
     // Note: Overlay content renders outside canvasElement, so use screen
     await waitFor(() => {
-      expect(screen.queryByText('readme.txt')).toBeInTheDocument();
+      void expect(screen.queryByText('readme.txt')).toBeInTheDocument();
     }, { timeout: 2000 });
 
     // Test 2: Click on file item to select it
@@ -854,7 +854,7 @@ export const BasicInteraction: Story = {
     // Test 3: Verify input field shows selected path (input is in canvasElement)
     const input = canvas.getByPlaceholderText('Select a file...');
     await waitFor(() => {
-      expect(input).toHaveValue('/showcase/readme.txt');
+      void expect(input).toHaveValue('/showcase/readme.txt');
     });
   },
   parameters: {
@@ -902,7 +902,7 @@ export const MultiSelectWorkflow: Story = {
 
     // Wait for content to load (overlay content is outside canvasElement)
     await waitFor(() => {
-      expect(screen.queryByText('readme.txt')).toBeInTheDocument();
+      void expect(screen.queryByText('readme.txt')).toBeInTheDocument();
     }, { timeout: 2000 });
 
     // Check multiple items
@@ -912,7 +912,7 @@ export const MultiSelectWorkflow: Story = {
 
     // Verify selection count appears in footer
     await waitFor(() => {
-      expect(screen.getByText(/2 items selected/i)).toBeInTheDocument();
+      void expect(screen.getByText(/2 items selected/i)).toBeInTheDocument();
     });
 
     // Test clear selection button
@@ -921,7 +921,7 @@ export const MultiSelectWorkflow: Story = {
 
     // Verify selection is cleared
     await waitFor(() => {
-      expect(screen.queryByText(/items selected/i)).not.toBeInTheDocument();
+      void expect(screen.queryByText(/items selected/i)).not.toBeInTheDocument();
     });
   },
   parameters: {
@@ -967,7 +967,7 @@ export const NavigationFlow: Story = {
 
     // Wait for initial content (overlay renders outside canvasElement)
     await waitFor(() => {
-      expect(screen.queryByText('MDI Icon Showcase')).toBeInTheDocument();
+      void expect(screen.queryByText('MDI Icon Showcase')).toBeInTheDocument();
     }, { timeout: 2000 });
 
     // Double-click folder to navigate into it
@@ -976,12 +976,12 @@ export const NavigationFlow: Story = {
 
     // Wait for navigation and new content
     await waitFor(() => {
-      expect(screen.queryByText('documents')).toBeInTheDocument();
+      void expect(screen.queryByText('documents')).toBeInTheDocument();
     }, { timeout: 2000 });
 
     // Verify breadcrumb updated
     const breadcrumb = screen.getByText('showcase');
-    expect(breadcrumb).toBeInTheDocument();
+    void expect(breadcrumb).toBeInTheDocument();
 
     // Click breadcrumb to navigate back up (using ".." parent navigation button)
     const parentNavButton = screen.getByText('..');
@@ -989,7 +989,7 @@ export const NavigationFlow: Story = {
 
     // Verify we're back at root
     await waitFor(() => {
-      expect(screen.queryByText('MDI Icon Showcase')).toBeInTheDocument();
+      void expect(screen.queryByText('MDI Icon Showcase')).toBeInTheDocument();
     }, { timeout: 2000 });
   },
   parameters: {
@@ -1038,7 +1038,7 @@ export const FolderCreation: Story = {
 
     // Wait for content
     await waitFor(() => {
-      expect(screen.queryByText('documents')).toBeInTheDocument();
+      void expect(screen.queryByText('documents')).toBeInTheDocument();
     }, { timeout: 3000 });
 
     // Pause to let developers see the initial state
@@ -1054,13 +1054,13 @@ export const FolderCreation: Story = {
     // Verify editable input appears with default name and is focused
     await waitFor(() => {
       const input = screen.getByRole('textbox', { name: 'Folder name' }) as HTMLInputElement;
-      expect(input).toBeInTheDocument();
-      expect(input.value).toBe('New Folder');
-      expect(input).toHaveFocus();
+      void expect(input).toBeInTheDocument();
+      void expect(input.value).toBe('New Folder');
+      void expect(input).toHaveFocus();
     }, { timeout: 3000 });
 
     // Verify New Folder button is disabled during creation
-    expect(newFolderButton).toBeDisabled();
+    void expect(newFolderButton).toBeDisabled();
 
     // Pause to let developers see the input field
     await new Promise(resolve => setTimeout(resolve, 800));
@@ -1076,7 +1076,7 @@ export const FolderCreation: Story = {
 
     // Should show duplicate error
     await waitFor(() => {
-      expect(screen.getByText(/already exists/i)).toBeInTheDocument();
+      void expect(screen.getByText(/already exists/i)).toBeInTheDocument();
     }, { timeout: 3000 });
 
     // Pause to let developers see the error
@@ -1084,7 +1084,7 @@ export const FolderCreation: Story = {
 
     // Verify input is still present and can be edited
     const input2 = screen.getByRole('textbox', { name: 'Folder name' }) as HTMLInputElement;
-    expect(input2).toBeInTheDocument();
+    void expect(input2).toBeInTheDocument();
 
     // TEST 2: Save folder with custom name
     await userEvent.clear(input2);
@@ -1097,16 +1097,16 @@ export const FolderCreation: Story = {
 
     // Wait for folder creation to complete (includes API delay of 800ms)
     await waitFor(() => {
-      expect(screen.getByText('My New Folder')).toBeInTheDocument();
+      void expect(screen.getByText('My New Folder')).toBeInTheDocument();
       // Input should be gone (no longer in edit mode)
-      expect(screen.queryByRole('textbox', { name: 'Folder name' })).not.toBeInTheDocument();
+      void expect(screen.queryByRole('textbox', { name: 'Folder name' })).not.toBeInTheDocument();
     }, { timeout: 3000 });
 
     // Pause to let developers see the success state
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Verify New Folder button is re-enabled
-    expect(newFolderButton).not.toBeDisabled();
+    void expect(newFolderButton).not.toBeDisabled();
   },
   parameters: {
     docs: {
@@ -1160,15 +1160,15 @@ export const SelectionModes: Story = {
 
     // Wait for content (overlay renders outside canvasElement)
     await waitFor(() => {
-      expect(screen.queryByText('readme.txt')).toBeInTheDocument();
+      void expect(screen.queryByText('readme.txt')).toBeInTheDocument();
     }, { timeout: 2000 });
 
     // Verify files are visible and folders are present but disabled
-    expect(screen.queryByText('readme.txt')).toBeInTheDocument();
-    expect(screen.queryByText('config.json')).toBeInTheDocument();
+    void expect(screen.queryByText('readme.txt')).toBeInTheDocument();
+    void expect(screen.queryByText('config.json')).toBeInTheDocument();
 
     // Folders should still be visible (for navigation) but disabled
-    expect(screen.queryByText('documents')).toBeInTheDocument();
+    void expect(screen.queryByText('documents')).toBeInTheDocument();
   },
   parameters: {
     docs: {
@@ -1207,7 +1207,7 @@ export const DisabledStates: Story = {
 
     // Verify folder button is disabled
     const folderButton = canvas.getByRole('button', { name: /open file picker/i });
-    expect(folderButton).toBeDisabled();
+    void expect(folderButton).toBeDisabled();
   },
   parameters: {
     docs: {
@@ -1250,13 +1250,13 @@ export const ZfsObjectDisplay: Story = {
 
     // Wait for content with ZFS objects (overlay renders outside canvasElement)
     await waitFor(() => {
-      expect(screen.queryByText('my-dataset')).toBeInTheDocument();
+      void expect(screen.queryByText('my-dataset')).toBeInTheDocument();
     }, { timeout: 2000 });
 
     // Verify ZFS badges are present
-    expect(screen.getByText('DS')).toBeInTheDocument(); // Dataset badge
-    expect(screen.getByText('ZV')).toBeInTheDocument(); // Zvol badge
-    expect(screen.getByText('MP')).toBeInTheDocument(); // Mountpoint badge
+    void expect(screen.getByText('DS')).toBeInTheDocument(); // Dataset badge
+    void expect(screen.getByText('ZV')).toBeInTheDocument(); // Zvol badge
+    void expect(screen.getByText('MP')).toBeInTheDocument(); // Mountpoint badge
   },
   parameters: {
     docs: {
@@ -1304,16 +1304,16 @@ export const LoadingStates: Story = {
 
     // Verify loading indicator appears (overlay renders outside canvasElement)
     await waitFor(() => {
-      expect(screen.getByText('Loading...')).toBeInTheDocument();
+      void expect(screen.getByText('Loading...')).toBeInTheDocument();
     }, { timeout: 500 });
 
     // Wait for content to load
     await waitFor(() => {
-      expect(screen.queryByText('readme.txt')).toBeInTheDocument();
+      void expect(screen.queryByText('readme.txt')).toBeInTheDocument();
     }, { timeout: 3000 });
 
     // Verify loading indicator is gone
-    expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+    void expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
   },
   parameters: {
     docs: {
@@ -1361,7 +1361,7 @@ export const PathInputValidation: Story = {
     // Wait for error state to appear (validation triggers on every keystroke)
     /*await waitFor(() => {
       const pickerElement = canvasElement.querySelector('ix-file-picker');
-      expect(pickerElement?.classList.contains('error')).toBe(true);
+      void expect(pickerElement?.classList.contains('error')).toBe(true);
     }, { timeout: 1500 });*/
 
     // Wait for all validations to complete and error timers to clear
@@ -1371,7 +1371,7 @@ export const PathInputValidation: Story = {
     // Verify error state has cleared after timeout
     /*await waitFor(() => {
       const pickerElement = canvasElement.querySelector('ix-file-picker');
-      expect(pickerElement?.classList.contains('error')).toBe(false);
+      void expect(pickerElement?.classList.contains('error')).toBe(false);
     }, { timeout: 500 });*/
 
     // Test 2: Enter a valid path and verify no error persists
@@ -1384,14 +1384,14 @@ export const PathInputValidation: Story = {
     // await new Promise(resolve => setTimeout(resolve, 500));
 
     // Verify the input has the correct value
-    // expect(input).toHaveValue('/showcase/documents');
+    // void expect(input).toHaveValue('/showcase/documents');
 
     // Wait for all error timers from intermediate keystrokes to clear (3+ seconds)
     // await new Promise(resolve => setTimeout(resolve, 3500));
 
     // Verify no error is present after all timers clear
     // const pickerElement = canvasElement.querySelector('ix-file-picker');
-    // expect(pickerElement?.classList.contains('error')).toBe(false);
+    // void expect(pickerElement?.classList.contains('error')).toBe(false);
   },
   parameters: {
     docs: {

@@ -1,7 +1,6 @@
-import { Injectable } from '@angular/core';
-import type { DomSanitizer} from '@angular/platform-browser';
-import { type SafeHtml } from '@angular/platform-browser';
-import type { IxSpriteLoaderService } from './ix-sprite-loader.service';
+import { inject, Injectable } from '@angular/core';
+import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
+import { IxSpriteLoaderService } from './ix-sprite-loader.service';
 
 export interface IconLibrary {
   name: string;
@@ -22,10 +21,17 @@ export class IxIconRegistryService {
   private libraries = new Map<string, IconLibrary>();
   private customIcons = new Map<string, string>();
 
+  private sanitizer: DomSanitizer;
+  private spriteLoader: IxSpriteLoaderService;
+
   constructor(
-    private sanitizer: DomSanitizer,
-    private spriteLoader: IxSpriteLoaderService
-  ) {}
+    sanitizer?: DomSanitizer,
+    spriteLoader?: IxSpriteLoaderService
+  ) {
+    // Support both DI and manual injection for testing
+    this.sanitizer = sanitizer ?? inject(DomSanitizer);
+    this.spriteLoader = spriteLoader ?? inject(IxSpriteLoaderService);
+  }
 
   /**
    * Register an icon library (like Lucide, Heroicons, etc.)

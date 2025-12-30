@@ -1,9 +1,8 @@
 import * as _angular_core from '@angular/core';
 import { AfterViewInit, ElementRef, OnDestroy, TemplateRef, AfterContentInit, ChangeDetectorRef, PipeTransform, OnInit, ViewContainerRef, AfterViewChecked } from '@angular/core';
 import { ComponentHarness, BaseHarnessFilters, HarnessPredicate } from '@angular/cdk/testing';
-import { SafeHtml, DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { SafeHtml, SafeResourceUrl, DomSanitizer } from '@angular/platform-browser';
 import { ControlValueAccessor, NgControl } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import * as i1 from '@angular/cdk/tree';
 import { CdkTree, FlatTreeControl, CdkTreeNode, CdkNestedTreeNode } from '@angular/cdk/tree';
 export { FlatTreeControl } from '@angular/cdk/tree';
@@ -687,12 +686,12 @@ interface SpriteConfig {
  * 3. Icons are resolved as SVG fragment identifiers (e.g., sprite.svg#icon-name)
  */
 declare class IxSpriteLoaderService {
-    private http;
-    private sanitizer;
     private spriteConfig?;
     private spriteLoaded;
     private spriteLoadPromise?;
-    constructor(http: HttpClient, sanitizer: DomSanitizer);
+    private http;
+    private sanitizer;
+    constructor();
     /**
      * Load the sprite configuration
      */
@@ -740,11 +739,11 @@ interface ResolvedIcon {
     spriteUrl?: string;
 }
 declare class IxIconRegistryService {
-    private sanitizer;
-    private spriteLoader;
     private libraries;
     private customIcons;
-    constructor(sanitizer: DomSanitizer, spriteLoader: IxSpriteLoaderService);
+    private sanitizer;
+    private spriteLoader;
+    constructor(sanitizer?: DomSanitizer, spriteLoader?: IxSpriteLoaderService);
     /**
      * Register an icon library (like Lucide, Heroicons, etc.)
      *

@@ -321,7 +321,7 @@ class DialogDemoComponent {
   }
 
   openConfirmDialog() {
-    this.ixDialog.confirm({
+    void this.ixDialog.confirm({
       title: 'Delete Dataset?',
       message: 'This will permanently delete the dataset "important-data" and all of its contents. This action cannot be undone.',
       confirmText: 'Delete',

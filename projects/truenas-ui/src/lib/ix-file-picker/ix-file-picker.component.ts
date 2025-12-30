@@ -159,7 +159,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
     this.createOverlay();
     this.isOpen.set(true);
-    this.loadDirectory(this.currentPath());
+    void this.loadDirectory(this.currentPath());
   }
 
   close(): void {
@@ -242,7 +242,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       console.warn('Cannot navigate while creating a folder');
       return;
     }
-    this.loadDirectory(path);
+    void this.loadDirectory(path);
   }
 
   onCreateFolder(): void {

@@ -1,13 +1,12 @@
 import * as i0 from '@angular/core';
-import { Injectable, Component, input, ChangeDetectionStrategy, viewChild, inject, ChangeDetectorRef, effect, computed, ViewEncapsulation, output, signal, forwardRef, Directive, ElementRef, ViewContainerRef, contentChild, contentChildren, HostListener, TemplateRef, IterableDiffers, Pipe, model } from '@angular/core';
+import { Injectable, Component, input, ChangeDetectionStrategy, inject, viewChild, ChangeDetectorRef, effect, computed, ViewEncapsulation, output, signal, forwardRef, Directive, ElementRef, ViewContainerRef, contentChild, contentChildren, HostListener, TemplateRef, IterableDiffers, Pipe, model } from '@angular/core';
 import * as i1$1 from '@angular/common';
 import { CommonModule, NgIf, DOCUMENT } from '@angular/common';
 import { mdiCheckCircle, mdiAlertCircle, mdiAlert, mdiInformation, mdiDotsVertical, mdiFolderOpen, mdiLock, mdiLoading, mdiFolderPlus, mdiFolderNetwork, mdiHarddisk, mdiDatabase, mdiFile, mdiFolder } from '@mdi/js';
-import * as i2 from '@angular/platform-browser';
+import * as i1 from '@angular/platform-browser';
 import { DomSanitizer } from '@angular/platform-browser';
-import { firstValueFrom, BehaviorSubject, merge, Subject } from 'rxjs';
-import * as i1 from '@angular/common/http';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom, BehaviorSubject, merge, Subject } from 'rxjs';
 import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
 import { FocusMonitor, A11yModule, LiveAnnouncer } from '@angular/cdk/a11y';
 import * as i1$3 from '@angular/forms';
@@ -77,16 +76,14 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * 3. Icons are resolved as SVG fragment identifiers (e.g., sprite.svg#icon-name)
  */
 class IxSpriteLoaderService {
-    http;
-    sanitizer;
     spriteConfig;
     spriteLoaded = false;
     spriteLoadPromise;
-    constructor(http, sanitizer) {
-        this.http = http;
-        this.sanitizer = sanitizer;
-        // Start loading sprite immediately
-        this.loadSpriteConfig();
+    http = inject(HttpClient);
+    sanitizer = inject(DomSanitizer);
+    constructor() {
+        // Start loading sprite immediately (fire-and-forget)
+        void this.loadSpriteConfig();
     }
     /**
      * Load the sprite configuration
@@ -160,7 +157,7 @@ class IxSpriteLoaderService {
     getSpriteConfig() {
         return this.spriteConfig;
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSpriteLoaderService, deps: [{ token: i1.HttpClient }, { token: i2.DomSanitizer }], target: i0.ɵɵFactoryTarget.Injectable });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSpriteLoaderService, deps: [], target: i0.ɵɵFactoryTarget.Injectable });
     static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSpriteLoaderService, providedIn: 'root' });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxSpriteLoaderService, decorators: [{
@@ -168,16 +165,17 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             args: [{
                     providedIn: 'root'
                 }]
-        }], ctorParameters: () => [{ type: i1.HttpClient }, { type: i2.DomSanitizer }] });
+        }], ctorParameters: () => [] });
 
 class IxIconRegistryService {
-    sanitizer;
-    spriteLoader;
     libraries = new Map();
     customIcons = new Map();
+    sanitizer;
+    spriteLoader;
     constructor(sanitizer, spriteLoader) {
-        this.sanitizer = sanitizer;
-        this.spriteLoader = spriteLoader;
+        // Support both DI and manual injection for testing
+        this.sanitizer = sanitizer ?? inject(DomSanitizer);
+        this.spriteLoader = spriteLoader ?? inject(IxSpriteLoaderService);
     }
     /**
      * Register an icon library (like Lucide, Heroicons, etc.)
@@ -394,7 +392,7 @@ class IxIconRegistryService {
             content: this.sanitizer.bypassSecurityTrustHtml(svgContent)
         };
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxIconRegistryService, deps: [{ token: i2.DomSanitizer }, { token: IxSpriteLoaderService }], target: i0.ɵɵFactoryTarget.Injectable });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxIconRegistryService, deps: [{ token: i1.DomSanitizer }, { token: IxSpriteLoaderService }], target: i0.ɵɵFactoryTarget.Injectable });
     static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxIconRegistryService, providedIn: 'root' });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: IxIconRegistryService, decorators: [{
@@ -402,7 +400,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
             args: [{
                     providedIn: 'root'
                 }]
-        }], ctorParameters: () => [{ type: i2.DomSanitizer }, { type: IxSpriteLoaderService }] });
+        }], ctorParameters: () => [{ type: i1.DomSanitizer }, { type: IxSpriteLoaderService }] });
 
 class IxIconComponent {
     name = input('', ...(ngDevMode ? [{ debugName: "name" }] : []));
@@ -3710,7 +3708,6 @@ const QuickShortcuts = {
     },
 };
 
-/* eslint-disable @typescript-eslint/naming-convention */
 const kb = 1000;
 const Mb = 1000 ** 2;
 const Gb = 1000 ** 3;
@@ -3720,7 +3717,6 @@ const Eb = 1000 ** 6;
 const Zb = 1000 ** 7;
 const Yb = 1000 ** 8;
 
-/* eslint-disable @typescript-eslint/naming-convention */
 const KiB = 1024;
 const MiB = 1024 ** 2;
 const GiB = 1024 ** 3;
@@ -7614,7 +7610,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * To regenerate this file, run:
  *   npm run generate-icons
  *
- * Generated: 2025-12-30T15:35:39.332Z
+ * Generated: 2025-12-30T16:06:48.722Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 /* eslint-disable */
@@ -8086,7 +8082,7 @@ class IxFilePickerComponent {
         }
         this.createOverlay();
         this.isOpen.set(true);
-        this.loadDirectory(this.currentPath());
+        void this.loadDirectory(this.currentPath());
     }
     close() {
         if (this.overlayRef) {
@@ -8164,7 +8160,7 @@ class IxFilePickerComponent {
             console.warn('Cannot navigate while creating a folder');
             return;
         }
-        this.loadDirectory(path);
+        void this.loadDirectory(path);
     }
     onCreateFolder() {
         // Prevent multiple simultaneous creations
