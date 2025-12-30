@@ -1,10 +1,10 @@
 import { A11yModule } from '@angular/cdk/a11y';
-import type { ConnectedPosition, Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { type ConnectedPosition, Overlay, type OverlayRef } from '@angular/cdk/overlay';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { PortalModule, TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
-import type { ElementRef, OnDestroy, OnInit, TemplateRef, ViewContainerRef } from '@angular/core';
-import { Component, computed, forwardRef, input, output, signal, viewChild } from '@angular/core';
+import type { OnDestroy, OnInit} from '@angular/core';
+import { ElementRef, type TemplateRef, ViewContainerRef, Component, computed, forwardRef, input, output, signal, viewChild, inject } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -61,7 +61,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   error = output<FilePickerError>();
 
   wrapperEl = viewChild.required<ElementRef<HTMLDivElement>>('wrapper');
-  filePickerTemplate = viewChild.required<TemplateRef<any>>('filePickerTemplate');
+  filePickerTemplate = viewChild.required<TemplateRef<unknown>>('filePickerTemplate');
 
   private destroy$ = new Subject<void>();
   private overlayRef?: OverlayRef;
@@ -86,11 +86,9 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   private onChange = (value: string | string[]) => {};
   private onTouched = () => {};
 
-  constructor(
-    private overlay: Overlay,
-    private elementRef: ElementRef,
-    private viewContainerRef: ViewContainerRef
-  ) {}
+  private overlay = inject(Overlay);
+  private elementRef = inject(ElementRef);
+  private viewContainerRef = inject(ViewContainerRef);
 
   ngOnInit(): void {
     this.currentPath.set(this.startPath());
@@ -319,11 +317,11 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       // Reload directory to show the newly created folder
       await this.loadDirectory(this.currentPath());
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to create folder:', err);
 
       // Show error inline, keep input editable for retry
-      const errorMessage = err.message || 'Failed to create folder';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create folder';
       this.updateCreatingItemError(tempId, errorMessage);
       this.emitError('creation', errorMessage, this.currentPath());
 
@@ -404,9 +402,9 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       this.fileItems.set(items || []);
       this.currentPath.set(path);
       this.pathChange.emit(path);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('❌ Error loading directory:', err);
-      this.emitError('navigation', err.message || 'Failed to load directory', path);
+      this.emitError('navigation', err instanceof Error ? err.message : 'Failed to load directory', path);
     } finally {
       this.loading.set(false);
     }

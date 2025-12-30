@@ -14,17 +14,17 @@ export class IxTabComponent implements AfterContentInit {
   label = input<string>('');
   disabled = input<boolean>(false);
   icon = input<string | undefined>(undefined);
-  iconTemplate = input<TemplateRef<any> | undefined>(undefined);
+  iconTemplate = input<TemplateRef<unknown> | undefined>(undefined);
   testId = input<string | undefined>(undefined);
 
   selected = output<void>();
 
-  iconContent = contentChild<TemplateRef<any>>('iconContent');
+  iconContent = contentChild<TemplateRef<unknown>>('iconContent');
 
   // Internal properties set by parent IxTabsComponent (public signals for parent control)
   index = signal<number>(0);
   isActive = signal<boolean>(false);
-  tabsComponent?: any; // Will be set by parent
+  tabsComponent?: { onKeydown: (event: KeyboardEvent, index: number) => void }; // Will be set by parent
 
   elementRef = inject(ElementRef<HTMLElement>);
 

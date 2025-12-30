@@ -55,8 +55,8 @@ export class IxTimeInputComponent implements ControlValueAccessor {
   _value: string | null = null;
   
   // Generate time options for ix-select
-  timeSelectOptions = computed((): IxSelectOption[] => {
-    const options: IxSelectOption[] = [];
+  timeSelectOptions = computed((): IxSelectOption<string>[] => {
+    const options: IxSelectOption<string>[] = [];
     const totalMinutes = 24 * 60; // Total minutes in a day
 
     for (let minutes = 0; minutes < totalMinutes; minutes += this.step()) {

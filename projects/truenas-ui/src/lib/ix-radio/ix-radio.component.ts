@@ -23,14 +23,14 @@ export class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
   radioEl = viewChild.required<ElementRef<HTMLInputElement>>('radioEl');
 
   label = input<string>('Radio');
-  value = input<any>('');
+  value = input<unknown>('');
   name = input<string | undefined>(undefined);
   disabled = input<boolean>(false);
   required = input<boolean>(false);
   testId = input<string | undefined>(undefined);
   error = input<string | null>(null);
 
-  change = output<any>();
+  change = output<unknown>();
 
   id = `ix-radio-${Math.random().toString(36).substr(2, 9)}`;
   checked = false;
@@ -40,7 +40,7 @@ export class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
   private focusMonitor = inject(FocusMonitor);
-  private onChange = (_: any) => {};
+  private onChange = (_: unknown) => {};
   private onTouched = () => {};
 
   ngAfterViewInit() {
@@ -61,11 +61,11 @@ export class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
   }
 
   // ControlValueAccessor implementation
-  writeValue(value: any): void {
+  writeValue(value: unknown): void {
     this.checked = value !== null && value !== undefined && value === this.value();
   }
 
-  registerOnChange(fn: (value: any) => void): void {
+  registerOnChange(fn: (value: unknown) => void): void {
     this.onChange = fn;
   }
 

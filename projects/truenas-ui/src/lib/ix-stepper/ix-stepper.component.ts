@@ -1,7 +1,6 @@
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
-import type { ChangeDetectorRef } from '@angular/core';
-import { Component, input, output, contentChildren, computed, effect, model } from '@angular/core';
+import { ChangeDetectorRef, Component, input, output, contentChildren, computed, effect, model, inject } from '@angular/core';
 import { IxStepComponent } from './ix-step.component';
 
 @Component({
@@ -27,12 +26,14 @@ export class IxStepperComponent {
   linear = input<boolean>(false);
   selectedIndex = model<number>(0);
 
-  selectionChange = output<any>();
-  completed = output<any>();
+  selectionChange = output<{ selectedIndex: number; previouslySelectedIndex: number }>();
+  completed = output<Array<{ label: string; completed: boolean; data: unknown }>>();
 
   steps = contentChildren(IxStepComponent, { descendants: true });
 
-  constructor(private cdr: ChangeDetectorRef) {
+  private cdr = inject(ChangeDetectorRef);
+
+  constructor() {
     // Effect to check if all steps are completed
     effect(() => {
       // Trigger on any step completion change
@@ -44,11 +45,11 @@ export class IxStepperComponent {
     });
   }
 
-  onWindowResize(event: any) {
+  onWindowResize(event: Event) {
     this.cdr.detectChanges();
   }
 
-  private _getStepData(): any[] {
+  private _getStepData(): Array<{ label: string; completed: boolean; data: unknown }> {
     return this.steps().map(step => ({
       label: step.label(),
       completed: step.completed(),

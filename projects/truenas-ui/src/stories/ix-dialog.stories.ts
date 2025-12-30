@@ -48,7 +48,7 @@ class UserEditDialogComponent {
   role = '';
 
   constructor(
-    public ref: DialogRef<any>, 
+    public ref: DialogRef<{ name: string; email: string; role: string } | undefined>,
     @Inject(DIALOG_DATA) public data: { userId: number; name?: string; email?: string; role?: string }
   ) {
     // Pre-fill form with existing data if available
@@ -289,13 +289,13 @@ class FullscreenSettingsDialogComponent {
   imports: [IxButtonComponent, JsonPipe]
 })
 class DialogDemoComponent {
-  lastResult: any = null;
+  lastResult: unknown = null;
 
   constructor(private ixDialog: IxDialog) {}
 
   openUserDialog() {
     const dialogRef = this.ixDialog.open(UserEditDialogComponent, {
-      data: { 
+      data: {
         userId: 123,
         name: 'John Doe',
         email: 'john.doe@example.com',
@@ -304,7 +304,7 @@ class DialogDemoComponent {
       width: '500px'
     });
 
-    dialogRef.closed.subscribe((result: any) => {
+    dialogRef.closed.subscribe((result) => {
       this.lastResult = result || 'Dialog was cancelled';
     });
   }
@@ -315,7 +315,7 @@ class DialogDemoComponent {
       height: '600px'
     });
 
-    dialogRef.closed.subscribe((result: any) => {
+    dialogRef.closed.subscribe((result) => {
       this.lastResult = result || 'Dialog was cancelled';
     });
   }
@@ -328,18 +328,16 @@ class DialogDemoComponent {
       cancelText: 'Keep',
       destructive: true
     }).then(observable => {
-      observable.subscribe((confirmed: any) => {
+      observable.subscribe((confirmed) => {
         this.lastResult = confirmed ? 'User confirmed deletion' : 'User cancelled deletion';
       });
     });
   }
 
   openFullscreenDialog() {
-    const dialogRef = this.ixDialog.open(FullscreenSettingsDialogComponent, {
-      fullscreen: true
-    });
+    const dialogRef = this.ixDialog.openFullscreen(FullscreenSettingsDialogComponent);
 
-    dialogRef.closed.subscribe((result: any) => {
+    dialogRef.closed.subscribe((result) => {
       this.lastResult = result || 'Fullscreen dialog was cancelled';
     });
   }
@@ -507,8 +505,12 @@ this.ixDialog.open(MyDialogComponent, {
   maxHeight: '90vh',        // Maximum height
   disableClose: true,       // Prevent ESC/backdrop close
   data: { userId: 123 },    // Data to pass to dialog
-  panelClass: ['custom-dialog'], // Additional CSS classes
-  fullscreen: true          // Takes over entire viewport (100vw x 100vh)
+  panelClass: ['custom-dialog'] // Additional CSS classes
+});
+
+// For fullscreen dialogs, use openFullscreen() method
+this.ixDialog.openFullscreen(MyDialogComponent, {
+  data: { userId: 123 }
 });
 \`\`\`
 

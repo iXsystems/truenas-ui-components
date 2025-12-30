@@ -16,7 +16,7 @@ export class IxStepComponent {
   optional = input<boolean>(false);
   completed = input<boolean>(false);
   hasError = input<boolean>(false);
-  data = input<any>(null);
+  data = input<unknown>(null);
 
-  content = viewChild.required<TemplateRef<any>>('content');
+  content = viewChild.required<TemplateRef<unknown>>('content');
 }

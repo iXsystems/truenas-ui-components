@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import type { ElementRef, AfterContentInit, ChangeDetectorRef } from '@angular/core';
+import type { AfterContentInit} from '@angular/core';
+import { ElementRef, ChangeDetectorRef, inject } from '@angular/core';
 import { Component, input, output, computed, signal, HostListener } from '@angular/core';
 import { IxCheckboxComponent } from '../ix-checkbox/ix-checkbox.component';
 
@@ -19,7 +20,10 @@ import { IxCheckboxComponent } from '../ix-checkbox/ix-checkbox.component';
   }
 })
 export class IxListOptionComponent implements AfterContentInit {
-  value = input<any>(undefined);
+  cdr = inject(ChangeDetectorRef);
+  elementRef = inject(ElementRef);
+
+  value = input<unknown>(undefined);
   selected = input<boolean>(false);
   disabled = input<boolean>(false);
   color = input<'primary' | 'accent' | 'warn'>('primary');
@@ -27,7 +31,7 @@ export class IxListOptionComponent implements AfterContentInit {
   selectionChange = output<boolean>();
 
   // Reference to parent selection list (set by parent)
-  selectionList?: any;
+  selectionList?: { onOptionSelectionChange: () => void };
 
   // Internal state for tracking selection (for uncontrolled usage)
   // Made public so parent ix-selection-list can control it
@@ -54,8 +58,6 @@ export class IxListOptionComponent implements AfterContentInit {
   protected hasLeadingContent = signal<boolean>(false);
   protected hasSecondaryTextContent = signal<boolean>(false);
   protected hasPrimaryTextDirective = signal<boolean>(false);
-
-  constructor(private elementRef: ElementRef, private cdr: ChangeDetectorRef) {}
 
   ngAfterContentInit(): void {
     this.checkContentProjection();

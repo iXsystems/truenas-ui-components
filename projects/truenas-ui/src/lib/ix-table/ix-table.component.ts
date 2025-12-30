@@ -1,10 +1,9 @@
 import { CommonModule } from '@angular/common';
-import type { ChangeDetectorRef } from '@angular/core';
-import { Component, input, contentChildren, computed, effect } from '@angular/core';
+import { ChangeDetectorRef, Component, input, contentChildren, computed, effect, inject } from '@angular/core';
 import { IxTableColumnDirective } from '../ix-table-column/ix-table-column.directive';
 
-export interface IxTableDataSource<T = any> {
-  data: T[];
+export interface IxTableDataSource<T = unknown> {
+  data?: T[];
   connect?(): T[];
   disconnect?(): void;
 }
@@ -19,15 +18,17 @@ export interface IxTableDataSource<T = any> {
     'class': 'ix-table'
   }
 })
-export class IxTableComponent {
-  dataSource = input<IxTableDataSource | any[]>([]);
+export class IxTableComponent<T = unknown> {
+  dataSource = input<IxTableDataSource<T> | T[]>([]);
   displayedColumns = input<string[]>([]);
 
   columnDefs = contentChildren(IxTableColumnDirective);
 
   private columnDefMap = new Map<string, IxTableColumnDirective>();
 
-  constructor(private cdr: ChangeDetectorRef) {
+  private cdr = inject(ChangeDetectorRef);
+
+  constructor() {
     // Effect to process column defs whenever they change
     effect(() => {
       const columns = this.columnDefs();
@@ -60,5 +61,9 @@ export class IxTableComponent {
 
   trackByIndex(index: number): number {
     return index;
+  }
+
+  getCellValue(row: T, column: string): unknown {
+    return (row as Record<string, unknown>)[column];
   }
 }

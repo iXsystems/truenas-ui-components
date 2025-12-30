@@ -2,7 +2,7 @@ import { A11yModule } from '@angular/cdk/a11y';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { CommonModule } from '@angular/common';
 import type { OnInit, AfterViewInit, AfterViewChecked} from '@angular/core';
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output, inject } from '@angular/core';
 import {
   mdiFolder,
   mdiFile,
@@ -18,7 +18,7 @@ import {
 import type { FileSystemItem, CreateFolderEvent, FilePickerMode } from './ix-file-picker.interfaces';
 import { IxButtonComponent } from '../ix-button/ix-button.component';
 import { registerTruenasIcons } from '../ix-custom-icons/generated-icons';
-import type { IxIconRegistryService } from '../ix-icon/ix-icon-registry.service';
+import { IxIconRegistryService } from '../ix-icon/ix-icon-registry.service';
 import { IxIconComponent } from '../ix-icon/ix-icon.component';
 import { IxTableComponent } from '../ix-table/ix-table.component';
 import { IxTableColumnDirective, IxHeaderCellDefDirective, IxCellDefDirective } from '../ix-table-column/ix-table-column.directive';
@@ -60,7 +60,9 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
   creationLoading = input<boolean>(false);
   fileExtensions = input<string[] | undefined>(undefined);
 
-  constructor(private iconRegistry: IxIconRegistryService) {
+  private iconRegistry = inject(IxIconRegistryService);
+
+  constructor() {
     // Register TrueNAS custom icons
     registerTruenasIcons(this.iconRegistry);
 

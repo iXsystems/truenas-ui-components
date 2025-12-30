@@ -1,10 +1,12 @@
 import { A11yModule } from '@angular/cdk/a11y';
-import type { Overlay, OverlayRef, ConnectedPosition } from '@angular/cdk/overlay';
+import type { OverlayRef, ConnectedPosition } from '@angular/cdk/overlay';
+import { Overlay } from '@angular/cdk/overlay';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { TemplatePortal, PortalModule } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
-import type { ElementRef, OnInit, ViewContainerRef, TemplateRef, OnDestroy } from '@angular/core';
-import { Component, input, forwardRef, signal, computed, viewChild } from '@angular/core';
+import type { ElementRef, OnInit, TemplateRef, OnDestroy } from '@angular/core';
+import { ViewContainerRef } from '@angular/core';
+import { Component, input, forwardRef, signal, computed, viewChild, inject } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -87,6 +89,9 @@ import { IxInputDirective } from '../ix-input/ix-input.directive';
   }
 })
 export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDestroy {
+  overlay = inject(Overlay);
+  viewContainerRef = inject(ViewContainerRef);
+
   disabled = input<boolean>(false);
   placeholder = input<string>('Select date');
   min = input<Date | undefined>(undefined);
@@ -99,7 +104,7 @@ export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDes
   monthRef = viewChild.required<ElementRef<HTMLInputElement>>('monthInput');
   dayRef = viewChild.required<ElementRef<HTMLInputElement>>('dayInput');
   yearRef = viewChild.required<ElementRef<HTMLInputElement>>('yearInput');
-  calendarTemplate = viewChild.required<TemplateRef<any>>('calendarTemplate');
+  calendarTemplate = viewChild.required<TemplateRef<unknown>>('calendarTemplate');
   calendar = viewChild.required<IxCalendarComponent>(IxCalendarComponent);
   wrapperEl = viewChild.required<ElementRef<HTMLDivElement>>('wrapper');
 
@@ -117,12 +122,6 @@ export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDes
   month = signal<string>('');
   day = signal<string>('');
   year = signal<string>('');
-  
-  constructor(
-    private overlay: Overlay, 
-    private elementRef: ElementRef,
-    private viewContainerRef: ViewContainerRef
-  ) {}
 
   ngOnInit() {
     // Initialize display values
@@ -142,11 +141,11 @@ export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDes
   }
 
   registerOnChange(fn: (value: Date | null) => void): void {
-    this.onChange = fn;
+    this.onChange = fn as (value: Date | null) => void;
   }
 
   registerOnTouched(fn: () => void): void {
-    this.onTouched = fn;
+    this.onTouched = fn as () => void;
   }
 
   setDisabledState(isDisabled: boolean): void {

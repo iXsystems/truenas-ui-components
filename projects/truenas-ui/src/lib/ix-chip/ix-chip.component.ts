@@ -77,7 +77,7 @@ export class IxChipComponent implements AfterViewInit, OnDestroy {
 
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      this.onClick.emit(event as any);
+      this.onClick.emit(event as unknown as MouseEvent);
     }
 
     if (this.closable() && (event.key === 'Delete' || event.key === 'Backspace')) {

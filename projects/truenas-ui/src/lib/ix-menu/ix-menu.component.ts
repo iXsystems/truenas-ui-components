@@ -1,9 +1,9 @@
 import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
-import type { Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
-import { Component, input, output, viewChild, computed } from '@angular/core';
-import type { TemplateRef, ViewContainerRef} from '@angular/core';
+import type { TemplateRef} from '@angular/core';
+import { Component, input, output, viewChild, computed, inject, ViewContainerRef } from '@angular/core';
 import { IxIconComponent } from '../ix-icon/ix-icon.component';
 
 export interface IxMenuItem {
@@ -33,15 +33,13 @@ export class IxMenuComponent {
   menuOpen = output<void>();
   menuClose = output<void>();
 
-  menuTemplate = viewChild.required<TemplateRef<any>>('menuTemplate');
-  contextMenuTemplate = viewChild.required<TemplateRef<any>>('contextMenuTemplate');
+  menuTemplate = viewChild.required<TemplateRef<unknown>>('menuTemplate');
+  contextMenuTemplate = viewChild.required<TemplateRef<unknown>>('contextMenuTemplate');
 
   private contextOverlayRef?: OverlayRef;
 
-  constructor(
-    private overlay: Overlay,
-    private viewContainerRef: ViewContainerRef
-  ) {}
+  private overlay = inject(Overlay);
+  private viewContainerRef = inject(ViewContainerRef);
 
   onMenuItemClick(item: IxMenuItem): void {
     if (!item.disabled && (!item.children || item.children.length === 0)) {
@@ -71,7 +69,7 @@ export class IxMenuComponent {
   /**
    * Get the menu template for use by the trigger directive
    */
-  getMenuTemplate(): TemplateRef<any> | null {
+  getMenuTemplate(): TemplateRef<unknown> | null {
     if (this.contextMenu()) {
       return this.contextMenuTemplate() || null;
     }

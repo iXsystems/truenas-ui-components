@@ -15,7 +15,7 @@ export class IxTabPanelComponent {
   lazyLoad = input<boolean>(false);
   testId = input<string | undefined>(undefined);
 
-  content = viewChild.required<TemplateRef<any>>('content');
+  content = viewChild.required<TemplateRef<unknown>>('content');
 
   // Internal properties set by parent IxTabsComponent (public signals for parent control)
   index = signal<number>(0);

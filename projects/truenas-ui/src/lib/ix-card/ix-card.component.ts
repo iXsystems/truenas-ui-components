@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, computed } from '@angular/core';
+import { Component, input, computed, inject } from '@angular/core';
 import { mdiDotsVertical } from '@mdi/js';
 import type {
   IxCardAction,
@@ -8,7 +8,7 @@ import type {
   IxCardFooterLink
 } from './ix-card.interfaces';
 import { IxButtonComponent } from '../ix-button/ix-button.component';
-import type { IxIconRegistryService } from '../ix-icon/ix-icon-registry.service';
+import { IxIconRegistryService } from '../ix-icon/ix-icon-registry.service';
 import { IxIconComponent } from '../ix-icon/ix-icon.component';
 import { IxIconButtonComponent } from '../ix-icon-button/ix-icon-button.component';
 import { IxMenuTriggerDirective } from '../ix-menu/ix-menu-trigger.directive';
@@ -24,7 +24,9 @@ import { IxSlideToggleComponent } from '../ix-slide-toggle/ix-slide-toggle.compo
   styleUrls: ['./ix-card.component.scss'],
 })
 export class IxCardComponent {
-  constructor(private iconRegistry: IxIconRegistryService) {
+  private iconRegistry = inject(IxIconRegistryService);
+
+  constructor() {
     // Register MDI icons used by this component
     this.registerMdiIcons();
   }

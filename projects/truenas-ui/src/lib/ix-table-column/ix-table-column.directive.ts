@@ -1,11 +1,11 @@
-import { Directive, TemplateRef, input, contentChild } from '@angular/core';
+import { Directive, TemplateRef, input, contentChild, inject } from '@angular/core';
 
 @Directive({
   selector: '[ixHeaderCellDef]',
   standalone: true
 })
 export class IxHeaderCellDefDirective {
-  constructor(public template: TemplateRef<any>) {}
+  template = inject(TemplateRef<unknown>);
 }
 
 @Directive({
@@ -13,7 +13,7 @@ export class IxHeaderCellDefDirective {
   standalone: true
 })
 export class IxCellDefDirective {
-  constructor(public template: TemplateRef<any>) {}
+  template = inject(TemplateRef<unknown>);
 }
 
 @Directive({

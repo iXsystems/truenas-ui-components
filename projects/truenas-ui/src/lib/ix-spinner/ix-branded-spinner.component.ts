@@ -1,5 +1,5 @@
-import type { OnInit, OnDestroy, ElementRef, AfterViewInit} from '@angular/core';
-import { Component, input, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
+import type { OnInit, OnDestroy, AfterViewInit} from '@angular/core';
+import { ElementRef, Component, input, ViewEncapsulation, ChangeDetectionStrategy, inject } from '@angular/core';
 
 @Component({
   selector: 'ix-branded-spinner',
@@ -23,11 +23,11 @@ export class IxBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewIn
 
   // Animation timing constants from reference implementation
   private readonly duration = 300; // time to draw each individual path
-  private readonly delayStep = 500; // delay between starting each path  
+  private readonly delayStep = 500; // delay between starting each path
   private readonly cyclePause = 1200; // pause after all paths are drawn
   private readonly emptyPause = 100; // brief pause with no strokes
 
-  constructor(private elementRef: ElementRef<HTMLElement>) {}
+  private elementRef = inject(ElementRef<HTMLElement>);
 
   ngOnInit(): void {
     this.isAnimating = true;

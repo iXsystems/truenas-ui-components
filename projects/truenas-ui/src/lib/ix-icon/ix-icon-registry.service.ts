@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
-import type { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import type { DomSanitizer} from '@angular/platform-browser';
+import { type SafeHtml } from '@angular/platform-browser';
 import type { IxSpriteLoaderService } from './ix-sprite-loader.service';
 
 export interface IconLibrary {
   name: string;
-  resolver: (iconName: string, options?: any) => string | HTMLElement | null;
-  defaultOptions?: any;
+  resolver: (iconName: string, options?: unknown) => string | HTMLElement | null;
+  defaultOptions?: unknown;
 }
 
 export interface ResolvedIcon {
@@ -131,7 +132,7 @@ export class IxIconRegistryService {
    * registry.resolveIcon('my-logo')
    * ```
    */
-  resolveIcon(name: string, options?: any): ResolvedIcon | null {
+  resolveIcon(name: string, options?: unknown): ResolvedIcon | null {
     // 1. Try sprite first (if loaded)
     const spriteIcon = this.resolveSpriteIcon(name);
     if (spriteIcon) {
@@ -212,7 +213,7 @@ export class IxIconRegistryService {
     return this.spriteLoader;
   }
 
-  private resolveLibraryIcon(libraryName: string, iconName: string, options?: any): ResolvedIcon | null {
+  private resolveLibraryIcon(libraryName: string, iconName: string, options?: unknown): ResolvedIcon | null {
     const library = this.libraries.get(libraryName);
     if (!library) {
       console.warn(`Icon library '${libraryName}' is not registered`);
@@ -220,7 +221,10 @@ export class IxIconRegistryService {
     }
 
     try {
-      const mergedOptions = { ...library.defaultOptions, ...options };
+      const mergedOptions = {
+        ...(library.defaultOptions && typeof library.defaultOptions === 'object' ? library.defaultOptions : {}),
+        ...(options && typeof options === 'object' ? options : {})
+      };
       const result = library.resolver(iconName, mergedOptions);
 
       if (!result) {

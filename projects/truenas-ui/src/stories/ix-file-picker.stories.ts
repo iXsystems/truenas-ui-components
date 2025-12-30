@@ -1419,7 +1419,7 @@ export const ErrorHandling: Story = {
           return !path.includes('invalid');
         }
       },
-      onError: (error: any) => {
+      onError: (error: { type: string; message: string; path?: string }) => {
         console.log('Error event:', error);
       }
     },

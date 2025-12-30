@@ -146,9 +146,9 @@ class BackupWizardDialogComponent {
     { value: 'local-nas', label: 'Local NAS Server' }
   ];
 
-  constructor(public ref: DialogRef<any>) {}
+  constructor(public ref: DialogRef<{ target: string; account: string; dataset: string; includeSnapshots: boolean } | undefined>) {}
 
-  onStepChange(event: any) {
+  onStepChange(event: { selectedIndex: number }): void {
     this.currentStep = event.selectedIndex;
   }
 
@@ -237,7 +237,7 @@ class BackupWizardDialogComponent {
   imports: [IxButtonComponent, CommonModule]
 })
 class SteppedWizardDemoComponent {
-  lastResult: any = null;
+  lastResult: unknown = null;
 
   constructor(private ixDialog: IxDialog) {}
 
@@ -247,7 +247,7 @@ class SteppedWizardDemoComponent {
       height: '700px'
     });
 
-    dialogRef.closed.subscribe((result: any) => {
+    dialogRef.closed.subscribe((result) => {
       this.lastResult = result || 'Backup wizard was cancelled';
     });
   }

@@ -1,6 +1,7 @@
 import type { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import type { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import type { DomSanitizer} from '@angular/platform-browser';
+import { type SafeResourceUrl } from '@angular/platform-browser';
 import { firstValueFrom } from 'rxjs';
 
 export interface SpriteConfig {

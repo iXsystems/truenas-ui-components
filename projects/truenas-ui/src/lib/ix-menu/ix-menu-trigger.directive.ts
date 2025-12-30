@@ -1,7 +1,6 @@
-import type { Overlay, OverlayRef, ConnectedPosition } from '@angular/cdk/overlay';
+import { Overlay, type OverlayRef, type ConnectedPosition } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import type { ElementRef, ViewContainerRef} from '@angular/core';
-import { Directive, input, signal } from '@angular/core';
+import { ElementRef, ViewContainerRef, Directive, input, signal, inject } from '@angular/core';
 import type { IxMenuComponent } from './ix-menu.component';
 
 /**
@@ -23,11 +22,9 @@ export class IxMenuTriggerDirective {
   private overlayRef?: OverlayRef;
   private isMenuOpen = signal<boolean>(false);
 
-  constructor(
-    private elementRef: ElementRef,
-    private overlay: Overlay,
-    private viewContainerRef: ViewContainerRef
-  ) {}
+  private elementRef = inject(ElementRef);
+  private overlay = inject(Overlay);
+  private viewContainerRef = inject(ViewContainerRef);
 
   onClick(): void {
     if (this.isMenuOpen()) {

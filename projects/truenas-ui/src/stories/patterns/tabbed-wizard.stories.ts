@@ -306,7 +306,7 @@ class TabbedWizardDialogComponent {
     { value: 'hostonly', label: 'Host Only' }
   ];
 
-  constructor(public ref: DialogRef<any>) {}
+  constructor(public ref: DialogRef<typeof this.vmConfig | undefined>) {}
 
   cancel() {
     this.ref.close();
@@ -343,7 +343,7 @@ class TabbedWizardDialogComponent {
   imports: [IxButtonComponent, CommonModule]
 })
 class TabbedWizardDemoComponent {
-  lastResult: any = null;
+  lastResult: unknown = null;
 
   constructor(private ixDialog: IxDialog) {}
 
@@ -353,7 +353,7 @@ class TabbedWizardDemoComponent {
       height: '600px'
     });
 
-    dialogRef.closed.subscribe((result: any) => {
+    dialogRef.closed.subscribe((result: unknown) => {
       this.lastResult = result || 'VM creation was cancelled';
     });
   }

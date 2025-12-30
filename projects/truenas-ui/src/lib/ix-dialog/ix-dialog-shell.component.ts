@@ -1,7 +1,6 @@
-import type { DialogRef} from '@angular/cdk/dialog';
-import { DIALOG_DATA } from '@angular/cdk/dialog';
+import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { DOCUMENT, CommonModule } from '@angular/common';
-import { Component, input, signal, Inject, Optional } from '@angular/core';
+import { Component, input, signal, inject } from '@angular/core';
 import type { OnInit} from '@angular/core';
 
 @Component({
@@ -41,11 +40,9 @@ export class IxDialogShellComponent implements OnInit {
   isFullscreen = signal<boolean>(false);
   private originalStyles: { [key: string]: string } = {};
 
-  constructor(
-    private ref: DialogRef,
-    @Inject(DOCUMENT) private document: Document,
-    @Optional() @Inject(DIALOG_DATA) private data?: any
-  ) {}
+  private ref = inject(DialogRef);
+  private document = inject(DOCUMENT);
+  private data = inject(DIALOG_DATA, { optional: true });
 
   ngOnInit() {
     // Check if dialog was opened in fullscreen mode by looking for existing fullscreen class
@@ -56,9 +53,9 @@ export class IxDialogShellComponent implements OnInit {
       }
     });
   }
-  
-  close(result?: any) { 
-    this.ref.close(result); 
+
+  close(result?: unknown): void {
+    this.ref.close(result);
   }
   
   toggleFullscreen() {

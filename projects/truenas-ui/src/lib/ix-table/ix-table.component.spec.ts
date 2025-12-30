@@ -13,10 +13,10 @@ describe('IxTableComponent', () => {
   function createMockQueryList(columns: IxTableColumnDirective[]): QueryList<IxTableColumnDirective> {
     const changesSubject = new Subject<void>();
     return {
-      forEach: (callback: Function) => columns.forEach(col => callback(col)),
+      forEach: (callback: (col: IxTableColumnDirective) => void) => columns.forEach(col => callback(col)),
       changes: changesSubject.asObservable(),
       _triggerChange: () => changesSubject.next()
-    } as any;
+    } as unknown as QueryList<IxTableColumnDirective>;
   }
 
   beforeEach(async () => {
@@ -60,7 +60,7 @@ describe('IxTableComponent', () => {
       const testData = [{ id: 1, name: 'Test' }];
       const connectSpy = jest.fn().mockReturnValue(testData);
       // Don't include data property to trigger connect() call
-      fixture.componentRef.setInput('dataSource', { connect: connectSpy } as any);
+      fixture.componentRef.setInput('dataSource', { connect: connectSpy } as IxTableDataSource);
 
       const result = component.data();
 
@@ -69,7 +69,7 @@ describe('IxTableComponent', () => {
     });
 
     it('should return empty array when dataSource is undefined', () => {
-      fixture.componentRef.setInput('dataSource', undefined as any);
+      fixture.componentRef.setInput('dataSource', undefined);
 
       expect(component.data()).toEqual([]);
     });

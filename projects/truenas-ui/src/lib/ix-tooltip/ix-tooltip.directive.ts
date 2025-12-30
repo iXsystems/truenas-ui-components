@@ -1,21 +1,22 @@
-import type {
+import {
   Overlay,
-  OverlayRef,
-  ConnectedPosition,
+  type OverlayRef,
+  type ConnectedPosition,
   OverlayPositionBuilder
 } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 import type {
-  ElementRef,
   OnDestroy,
-  ViewContainerRef,
   OnInit,
   ComponentRef
 } from '@angular/core';
 import {
   Directive,
   input,
-  HostListener
+  HostListener,
+  ElementRef,
+  ViewContainerRef,
+  inject
 } from '@angular/core';
 import { IxTooltipComponent } from './ix-tooltip.component';
 
@@ -38,17 +39,15 @@ export class IxTooltipDirective implements OnInit, OnDestroy {
 
   private _overlayRef: OverlayRef | null = null;
   private _tooltipInstance: ComponentRef<IxTooltipComponent> | null = null;
-  private _showTimeout: any;
-  private _hideTimeout: any;
+  private _showTimeout: ReturnType<typeof setTimeout> | null = null;
+  private _hideTimeout: ReturnType<typeof setTimeout> | null = null;
   private _isTooltipVisible = false;
   private _ariaDescribedBy: string | null = null;
 
-  constructor(
-    private _overlay: Overlay,
-    private _elementRef: ElementRef<HTMLElement>,
-    private _viewContainerRef: ViewContainerRef,
-    private _overlayPositionBuilder: OverlayPositionBuilder
-  ) {}
+  private _overlay = inject(Overlay);
+  private _elementRef = inject(ElementRef<HTMLElement>);
+  private _viewContainerRef = inject(ViewContainerRef);
+  private _overlayPositionBuilder = inject(OverlayPositionBuilder);
 
   ngOnInit() {
     // Generate unique ID for aria-describedby

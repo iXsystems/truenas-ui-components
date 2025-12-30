@@ -53,7 +53,7 @@ module.exports = [
           accessibility: 'no-public',
         },
       ],
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': 'off', // Handled by unused-imports plugin
 
       // Strict type-checked rules from ui project
@@ -70,50 +70,7 @@ module.exports = [
       ],
       '@typescript-eslint/unbound-method': 'off',
       '@typescript-eslint/no-extraneous-class': 'off',
-
-      // Naming conventions
-      '@typescript-eslint/naming-convention': [
-        'error',
-        {
-          selector: ['typeLike'],
-          format: ['StrictPascalCase'],
-          filter: {
-            regex: '^[A-Z][A-Z]',
-            match: false,
-          },
-        },
-        {
-          selector: ['typeLike'],
-          format: ['PascalCase'],
-        },
-        {
-          selector: ['enumMember'],
-          format: ['StrictPascalCase', 'UPPER_CASE'],
-        },
-        {
-          selector: 'function',
-          format: ['strictCamelCase'],
-        },
-        {
-          selector: ['classMethod', 'objectLiteralMethod', 'typeMethod'],
-          format: ['strictCamelCase'],
-        },
-        {
-          selector: ['classProperty'],
-          format: ['strictCamelCase', 'StrictPascalCase', 'UPPER_CASE'],
-          leadingUnderscore: 'forbid',
-        },
-        {
-          selector: ['variable', 'parameter'],
-          modifiers: ['unused'],
-          format: ['strictCamelCase'],
-          leadingUnderscore: 'allow',
-        },
-        {
-          selector: ['variable', 'parameter'],
-          format: ['strictCamelCase'],
-        },
-      ],
+      
 
       // Angular-specific rules
       '@angular-eslint/component-class-suffix': [

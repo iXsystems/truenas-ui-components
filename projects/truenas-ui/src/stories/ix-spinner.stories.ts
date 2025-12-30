@@ -50,7 +50,7 @@ export const Indeterminate: Story = {
 
 // Branded Spinner Stories
 export const Branded = {
-  render: (args: any) => ({
+  render: (args: { ariaLabel: string }) => ({
     template: `<ix-branded-spinner [ariaLabel]="ariaLabel"></ix-branded-spinner>`,
     props: args,
     moduleMetadata: {

@@ -30,7 +30,7 @@ interface FileFlatNode {
   level: number;
 }
 
-const meta: Meta<IxTreeComponent<any, any>> = {
+const meta: Meta<IxTreeComponent<FileNode, FileFlatNode>> = {
   title: 'Components/Tree',
   component: IxTreeComponent,
   decorators: [
@@ -57,7 +57,7 @@ const meta: Meta<IxTreeComponent<any, any>> = {
 };
 
 export default meta;
-type Story = StoryObj<IxTreeComponent<any, any>>;
+type Story = StoryObj<IxTreeComponent<FileNode, FileFlatNode>>;
 
 // Sample tree data
 const TREE_DATA: FileNode[] = [
@@ -210,25 +210,25 @@ export const TrueNASStorageTree: Story = {
         }
       ],
 
-      transformer: (node: any, level: number) => ({
+      transformer: (node: FileNode, level: number): FileFlatNode => ({
         expandable: !!node.children && node.children.length > 0,
         name: node.name,
         type: node.type,
         level: level,
       }),
 
-      hasChild: (_: number, node: any) => node.expandable,
-      getLevel: (node: any) => node.level,
-      isExpandable: (node: any) => node.expandable,
-      getChildren: (node: any) => node.children || [],
+      hasChild: (_: number, node: FileFlatNode): boolean => node.expandable,
+      getLevel: (node: FileFlatNode): number => node.level,
+      isExpandable: (node: FileFlatNode): boolean => node.expandable,
+      getChildren: (node: FileNode): FileNode[] => node.children || [],
 
-      treeControl: new FlatTreeControl<any>(
-        (node: any) => node.level,
-        (node: any) => node.expandable
+      treeControl: new FlatTreeControl<FileFlatNode>(
+        (node: FileFlatNode) => node.level,
+        (node: FileFlatNode) => node.expandable
       ),
 
       get treeFlattener() {
-        return new IxTreeFlattener<any, any>(
+        return new IxTreeFlattener<FileNode, FileFlatNode>(
           this['transformer'],
           this['getLevel'],
           this['isExpandable'],

@@ -1,13 +1,13 @@
 import type {
-  ElementRef,
   OnDestroy,
   OnInit} from '@angular/core';
 import {
   Directive,
   input,
-  Host
+  ElementRef,
+  inject
 } from '@angular/core';
-import type { IxSliderComponent } from './ix-slider.component';
+import { IxSliderComponent } from './ix-slider.component';
 
 @Directive({
   selector: 'ix-slider[ixSliderWithLabel]',
@@ -16,10 +16,8 @@ import type { IxSliderComponent } from './ix-slider.component';
 export class IxSliderWithLabelDirective implements OnInit, OnDestroy {
   enabled = input<boolean | string>(true, { alias: 'ixSliderWithLabel' });
 
-  constructor(
-    private _elementRef: ElementRef<HTMLElement>,
-    @Host() private _slider: IxSliderComponent
-  ) {}
+  private _elementRef = inject(ElementRef<HTMLElement>);
+  private _slider = inject(IxSliderComponent, { host: true });
 
   ngOnInit() {
     const enabled = this.enabled();

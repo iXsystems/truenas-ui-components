@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import type { ChangeDetectorRef, ElementRef, AfterViewInit} from '@angular/core';
+import type { ElementRef, AfterViewInit} from '@angular/core';
+import { ChangeDetectorRef} from '@angular/core';
 import { Component, input, computed, effect, ChangeDetectionStrategy, ViewEncapsulation, inject, viewChild } from '@angular/core';
-import type { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
 import { IxIconRegistryService } from './ix-icon-registry.service';
 
 export type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -36,11 +37,10 @@ export class IxIconComponent implements AfterViewInit {
   iconResult: IconResult = { source: 'text', content: '?' };
 
   private iconRegistry = inject(IxIconRegistryService);
+  private cdr = inject(ChangeDetectorRef);
+  private sanitizer = inject(DomSanitizer);
 
-  constructor(
-    private sanitizer: DomSanitizer,
-    private cdr: ChangeDetectorRef
-  ) {
+  constructor() {
     // Use effect to watch for changes in name or library
     effect(() => {
       const currentName = this.name();
@@ -72,8 +72,8 @@ export class IxIconComponent implements AfterViewInit {
     const content = this.iconResult.content;
 
     // Handle mock SafeHtml objects from Storybook
-    if (content && typeof content === 'object' && (content as any).changingThisBreaksApplicationSecurity) {
-      return (content as any).changingThisBreaksApplicationSecurity;
+    if (content && typeof content === 'object' && (content as { changingThisBreaksApplicationSecurity?: string }).changingThisBreaksApplicationSecurity) {
+      return (content as { changingThisBreaksApplicationSecurity: string }).changingThisBreaksApplicationSecurity;
     }
 
     return content;
@@ -124,8 +124,8 @@ export class IxIconComponent implements AfterViewInit {
     let registryResult = this.iconRegistry.resolveIcon(effectiveIconName, iconOptions);
 
     // Fallback to global registry for Storybook/demos (when DI doesn't work)
-    if (!registryResult && typeof window !== 'undefined' && (window as any).__storybookIconRegistry) {
-      const globalRegistry = (window as any).__storybookIconRegistry;
+    if (!registryResult && typeof window !== 'undefined' && (window as { __storybookIconRegistry?: IxIconRegistryService }).__storybookIconRegistry) {
+      const globalRegistry = (window as unknown as { __storybookIconRegistry: IxIconRegistryService }).__storybookIconRegistry;
       if (globalRegistry) {
         registryResult = globalRegistry.resolveIcon(effectiveIconName, iconOptions);
       }

@@ -13,6 +13,68 @@ import type { IxSelectOption } from '../../lib/ix-select/ix-select.component';
 import { IxSelectComponent } from '../../lib/ix-select/ix-select.component';
 import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
 
+// Wizard configuration type
+interface WizardConfig {
+  storage: {
+    disk1: boolean; disk2: boolean; disk3: boolean;
+    raidType: string;
+    poolName: string;
+    compression: boolean;
+    createMedia: boolean; createBackups: boolean; createVmStorage: boolean;
+    advancedOptions: boolean;
+    enableHotSpares: boolean;
+    slogDevice: string;
+    l2arcDevice: string;
+    metadataDevice: string;
+    enableEncryption: boolean;
+    enableDeduplication: boolean;
+  };
+  network: {
+    hostname: string;
+    domain: string;
+    ipType: string;
+    staticIp: string;
+    gateway: string;
+  };
+  admin: {
+    username: string;
+    password: string;
+    confirmPassword: string;
+    enableSsh: boolean;
+  };
+  services: {
+    enableSmb: boolean;
+    enableNfs: boolean;
+    enableFtp: boolean;
+    enableSmart: boolean;
+    autoUpdates: boolean;
+    enableFail2ban: boolean;
+    enableFirewall: boolean;
+  };
+  https: {
+    certType: string;
+    domain: string;
+    email: string;
+    redirectHttp: boolean;
+    enableHsts: boolean;
+  };
+  notifications: {
+    method: string;
+    email: string;
+    smtpServer: string;
+    slackWebhook: string;
+    systemHealth: boolean;
+    storageAlerts: boolean;
+    securityAlerts: boolean;
+    updateAlerts: boolean;
+  };
+  final: {
+    startServices: boolean;
+    launchWebInterface: boolean;
+    downloadConfig: boolean;
+  };
+}
+
 // Onboarding Wizard Dialog Component
 @Component({
   selector: 'onboarding-wizard-dialog',
@@ -363,7 +425,7 @@ class OnboardingWizardDialogComponent {
   step7Complete = false;
 
   // Configuration object to store all wizard data
-  config = {
+  config: WizardConfig = {
     storage: {
       disk1: false, disk2: false, disk3: false,
       raidType: 'mirror',
@@ -442,9 +504,9 @@ class OnboardingWizardDialogComponent {
     { value: 'sdf', label: 'sdf - 256GB SATA SSD' }
   ];
 
-  constructor(public ref: DialogRef<any>) {}
+  constructor(public ref: DialogRef<{ action: string; config?: WizardConfig; reason?: string } | undefined>) {}
 
-  onStepChange(event: any) {
+  onStepChange(event: { selectedIndex: number }): void {
     this.currentStep = event.selectedIndex;
   }
 
@@ -603,7 +665,7 @@ class OnboardingWizardDialogComponent {
   imports: [IxButtonComponent, CommonModule]
 })
 class CaptiveWizardDemoComponent {
-  lastResult: any = null;
+  lastResult: unknown = null;
 
   constructor(private ixDialog: IxDialog) {}
 
@@ -616,7 +678,7 @@ class CaptiveWizardDemoComponent {
       disableClose: true
     });
 
-    dialogRef.closed.subscribe((result: any) => {
+    dialogRef.closed.subscribe((result) => {
       this.lastResult = result || 'Captive wizard was cancelled';
     });
   }

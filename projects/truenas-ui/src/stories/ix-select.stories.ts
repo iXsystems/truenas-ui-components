@@ -91,7 +91,7 @@ export const Default: Story = {
   render: (args) => ({
     props: {
       ...args,
-      logSelection: (value: any) => {
+      logSelection: (value: unknown) => {
         console.log('Selected:', value);
       }
     },
@@ -126,7 +126,7 @@ export const WithOptionGroups: Story = {
   render: (args) => ({
     props: {
       ...args,
-      logSelection: (value: any) => {
+      logSelection: (value: unknown) => {
         console.log('Selected:', value);
       }
     },
@@ -160,7 +160,7 @@ export const MixedOptionsAndGroups: Story = {
   render: (args) => ({
     props: {
       ...args,
-      logSelection: (value: any) => {
+      logSelection: (value: unknown) => {
         console.log('Selected:', value);
       }
     },

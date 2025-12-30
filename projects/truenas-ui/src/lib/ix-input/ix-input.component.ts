@@ -37,7 +37,7 @@ export class IxInputComponent implements AfterViewInit, ControlValueAccessor {
   private formDisabled = signal<boolean>(false);
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
-  private onChange = (value: any) => {};
+  private onChange = (value: string) => {};
   private onTouched = () => {};
   private focusMonitor = inject(FocusMonitor);
 
@@ -46,15 +46,15 @@ export class IxInputComponent implements AfterViewInit, ControlValueAccessor {
   }
 
   // ControlValueAccessor implementation
-  writeValue(value: any): void {
+  writeValue(value: string): void {
     this.value = value || '';
   }
 
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (value: string) => void): void {
     this.onChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.onTouched = fn;
   }
 

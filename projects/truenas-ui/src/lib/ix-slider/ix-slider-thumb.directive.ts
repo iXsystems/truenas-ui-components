@@ -1,5 +1,5 @@
-import type { ElementRef, OnInit, OnDestroy} from '@angular/core';
-import { Directive, forwardRef, signal } from '@angular/core';
+import type { OnInit, OnDestroy} from '@angular/core';
+import { ElementRef, Directive, forwardRef, signal, inject } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
@@ -31,13 +31,21 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 export class IxSliderThumbDirective implements ControlValueAccessor, OnInit, OnDestroy {
   disabled = signal<boolean>(false);
 
-  slider: any; // Will be set by parent slider component
-  
+  slider?: {
+    isDisabled: () => boolean;
+    min: () => number;
+    max: () => number;
+    step: () => number;
+    value: () => number;
+    updateValue: (value: number) => void;
+    getSliderRect: () => DOMRect;
+  }; // Will be set by parent slider component
+
   private onChangeCallback = (value: number) => {};
   private onTouched = () => {};
   private isDragging = false;
 
-  constructor(private elementRef: ElementRef<HTMLInputElement>) {}
+  private elementRef = inject(ElementRef<HTMLInputElement>);
 
   ngOnInit() {
     // Make the native input visually hidden but still accessible

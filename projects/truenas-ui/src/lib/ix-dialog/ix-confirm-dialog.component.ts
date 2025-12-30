@@ -1,8 +1,16 @@
-import type { DialogRef} from '@angular/cdk/dialog';
+import { DialogRef} from '@angular/cdk/dialog';
 import { DIALOG_DATA } from '@angular/cdk/dialog';
-import { Component, Inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { IxDialogShellComponent } from './ix-dialog-shell.component';
 import { IxButtonComponent } from '../ix-button/ix-button.component';
+
+export interface IxConfirmDialogData {
+  title: string;
+  message?: string;
+  confirmText?: string;
+  cancelText?: string;
+  destructive?: boolean;
+}
 
 @Component({
   selector: 'ix-confirm-dialog',
@@ -10,15 +18,15 @@ import { IxButtonComponent } from '../ix-button/ix-button.component';
     <ix-dialog-shell [title]="data.title">
       <p style="padding: var(--content-padding);">{{ data.message }}</p>
       <div ixDialogAction>
-        <ix-button 
+        <ix-button
           type="button"
           variant="outline"
-          [label]="data.cancelText || 'Cancel'" 
+          [label]="data.cancelText || 'Cancel'"
           (click)="ref.close(false)" />
-        <ix-button 
-          type="button" 
+        <ix-button
+          type="button"
           [color]="data.destructive ? 'warn' : 'primary'"
-          [label]="data.confirmText || 'OK'" 
+          [label]="data.confirmText || 'OK'"
           (click)="ref.close(true)" />
       </div>
     </ix-dialog-shell>
@@ -31,8 +39,6 @@ import { IxButtonComponent } from '../ix-button/ix-button.component';
   }
 })
 export class IxConfirmDialogComponent {
-  constructor(
-    public ref: DialogRef<boolean>, 
-    @Inject(DIALOG_DATA) public data: any
-  ) {}
+  ref = inject(DialogRef<boolean>);
+  data = inject<IxConfirmDialogData>(DIALOG_DATA);
 }

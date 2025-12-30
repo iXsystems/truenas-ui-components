@@ -31,7 +31,14 @@ export class IxParticleProgressBarComponent implements AfterViewInit, OnDestroy 
   canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
 
   private ctx!: CanvasRenderingContext2D;
-  private particles: any[] = [];
+  private particles: Array<{
+    x: number;
+    y: number;
+    radius: number;
+    speed: number;
+    opacity: number;
+    color: string;
+  }> = [];
   private shades: string[] = [];
   private animationId?: number;
 

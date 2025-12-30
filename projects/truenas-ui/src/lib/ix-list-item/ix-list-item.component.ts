@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import type { ElementRef, AfterContentInit } from '@angular/core';
-import { Component, input, output, computed, signal } from '@angular/core';
+import type { AfterContentInit} from '@angular/core';
+import { ElementRef, Component, input, output, computed, signal, inject } from '@angular/core';
 
 @Component({
   selector: 'ix-list-item',
@@ -29,7 +29,7 @@ export class IxListItemComponent implements AfterContentInit {
   protected hasTrailingContent = signal<boolean>(false);
   protected hasPrimaryTextDirective = signal<boolean>(false);
 
-  constructor(private elementRef: ElementRef) {}
+  private elementRef = inject(ElementRef);
 
   ngAfterContentInit(): void {
     this.checkContentProjection();

@@ -156,7 +156,7 @@ export const ListWithSelection: Story = {
     props: {
       ...args,
       selectedItems: [],
-      onSelectionChange: (event: any) => {
+      onSelectionChange: (event: string[]) => {
         // Handle selection change
       }
     },

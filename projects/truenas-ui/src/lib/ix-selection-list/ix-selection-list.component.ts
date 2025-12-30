@@ -45,7 +45,7 @@ export class IxSelectionListComponent implements ControlValueAccessor {
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
-  private onChange = (_: any) => {};
+  private onChange = (_: unknown[]) => {};
   private onTouched = () => {};
 
   constructor() {
@@ -61,7 +61,7 @@ export class IxSelectionListComponent implements ControlValueAccessor {
   }
 
   // ControlValueAccessor implementation
-  writeValue(value: any[]): void {
+  writeValue(value: unknown[]): void {
     if (value) {
       const opts = this.options();
       opts.forEach(option => {
@@ -70,7 +70,7 @@ export class IxSelectionListComponent implements ControlValueAccessor {
     }
   }
 
-  registerOnChange(fn: (value: any[]) => void): void {
+  registerOnChange(fn: (value: unknown[]) => void): void {
     this.onChange = fn;
   }
 

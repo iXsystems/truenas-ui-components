@@ -1,10 +1,10 @@
 import { A11yModule } from '@angular/cdk/a11y';
-import type { Overlay, OverlayRef, ConnectedPosition } from '@angular/cdk/overlay';
+import { Overlay, type OverlayRef, type ConnectedPosition } from '@angular/cdk/overlay';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { TemplatePortal, PortalModule } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
-import type { ElementRef, OnInit, ViewContainerRef, TemplateRef, OnDestroy } from '@angular/core';
-import { Component, input, forwardRef, signal, computed, viewChild } from '@angular/core';
+import type { OnInit, TemplateRef, OnDestroy } from '@angular/core';
+import { Component, input, forwardRef, signal, computed, viewChild, ElementRef, ViewContainerRef, inject } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -142,7 +142,7 @@ export class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, 
   endMonthRef = viewChild.required<ElementRef<HTMLInputElement>>('endMonthInput');
   endDayRef = viewChild.required<ElementRef<HTMLInputElement>>('endDayInput');
   endYearRef = viewChild.required<ElementRef<HTMLInputElement>>('endYearInput');
-  calendarTemplate = viewChild.required<TemplateRef<any>>('calendarTemplate');
+  calendarTemplate = viewChild.required<TemplateRef<unknown>>('calendarTemplate');
   calendar = viewChild.required<IxCalendarComponent>(IxCalendarComponent);
   wrapperEl = viewChild.required<ElementRef<HTMLDivElement>>('wrapper');
 
@@ -170,11 +170,9 @@ export class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, 
     return this.value();
   });
 
-  constructor(
-    private overlay: Overlay, 
-    private elementRef: ElementRef,
-    private viewContainerRef: ViewContainerRef
-  ) {}
+  private overlay = inject(Overlay);
+  private elementRef = inject(ElementRef);
+  private viewContainerRef = inject(ViewContainerRef);
 
   ngOnInit() {
     // Initialize display values

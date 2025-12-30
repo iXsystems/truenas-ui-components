@@ -40,9 +40,9 @@ describe('IxIconComponent - MDI Support', () => {
     } as jest.Mocked<Partial<IxIconRegistryService>>;
 
     const domSanitizerSpy = {
-      bypassSecurityTrustHtml: jest.fn().mockImplementation((html: string) => html as any),
-      bypassSecurityTrustResourceUrl: jest.fn().mockImplementation((url: string) => url as any)
-    } as jest.Mocked<Partial<DomSanitizer>>;
+      bypassSecurityTrustHtml: jest.fn().mockImplementation((html: string) => html),
+      bypassSecurityTrustResourceUrl: jest.fn().mockImplementation((url: string) => url)
+    } as unknown as jest.Mocked<DomSanitizer>;
 
     await TestBed.configureTestingModule({
       imports: [IxIconComponent],
@@ -73,7 +73,7 @@ describe('IxIconComponent - MDI Support', () => {
 
   it('should render MDI icon when library="mdi"', fakeAsync(() => {
     spriteLoader.getIconUrl.mockReturnValue('#icon-mdi-harddisk');
-    spriteLoader.getSafeIconUrl.mockReturnValue('#icon-mdi-harddisk' as any);
+    spriteLoader.getSafeIconUrl.mockReturnValue('#icon-mdi-harddisk');
 
     fixture.componentRef.setInput('name', 'harddisk');
     fixture.componentRef.setInput('library', 'mdi');
@@ -143,9 +143,9 @@ describe('IxIconComponent - Error Handling', () => {
     } as jest.Mocked<Partial<IxIconRegistryService>>;
 
     const domSanitizerSpy = {
-      bypassSecurityTrustHtml: jest.fn().mockImplementation((html: string) => html as any),
-      bypassSecurityTrustResourceUrl: jest.fn().mockImplementation((url: string) => url as any)
-    } as jest.Mocked<Partial<DomSanitizer>>;
+      bypassSecurityTrustHtml: jest.fn().mockImplementation((html: string) => html),
+      bypassSecurityTrustResourceUrl: jest.fn().mockImplementation((url: string) => url)
+    } as unknown as jest.Mocked<DomSanitizer>;
 
     await TestBed.configureTestingModule({
       imports: [IxIconComponent],
@@ -195,7 +195,7 @@ describe('IxIconComponent - Error Handling', () => {
   it('should handle async MDI loading gracefully', fakeAsync(() => {
     spriteLoader.ensureSpriteLoaded.mockImplementation(() => Promise.resolve(true));
     spriteLoader.getIconUrl.mockReturnValue('#icon-mdi-harddisk');
-    spriteLoader.getSafeIconUrl.mockReturnValue('#icon-mdi-harddisk' as any);
+    spriteLoader.getSafeIconUrl.mockReturnValue('#icon-mdi-harddisk');
 
     fixture.componentRef.setInput('name', 'harddisk');
     fixture.componentRef.setInput('library', 'mdi');
