@@ -51,7 +51,7 @@ export class IxButtonToggleGroupComponent implements ControlValueAccessor {
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
-  private onChange = (value: unknown) => {};
+  private onChange = (_value: unknown) => {};
   private onTouched = () => {};
 
   constructor() {

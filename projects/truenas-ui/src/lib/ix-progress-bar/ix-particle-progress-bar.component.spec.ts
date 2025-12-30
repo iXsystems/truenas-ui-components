@@ -23,7 +23,7 @@ describe('IxParticleProgressBarComponent', () => {
     };
 
     // Mock requestAnimationFrame to prevent infinite animation loop
-    jest.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+    jest.spyOn(window, 'requestAnimationFrame').mockImplementation((_callback) => {
       return 123; // Return mock animation ID
     });
 

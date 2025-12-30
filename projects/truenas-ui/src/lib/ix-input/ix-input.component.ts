@@ -37,7 +37,7 @@ export class IxInputComponent implements AfterViewInit, ControlValueAccessor {
   private formDisabled = signal<boolean>(false);
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
-  private onChange = (value: string) => {};
+  private onChange = (_value: string) => {};
   private onTouched = () => {};
   private focusMonitor = inject(FocusMonitor);
 

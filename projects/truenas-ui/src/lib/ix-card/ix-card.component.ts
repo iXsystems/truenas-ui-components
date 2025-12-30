@@ -103,7 +103,7 @@ export class IxCardComponent {
     }
   }
 
-  onHeaderMenuItemClick(item: IxMenuItem): void {
+  onHeaderMenuItemClick(_item: IxMenuItem): void {
     // Handler is called automatically via IxMenuItem.action
   }
 

@@ -43,8 +43,9 @@ export class IxIconComponent implements AfterViewInit {
   constructor() {
     // Use effect to watch for changes in name or library
     effect(() => {
-      const currentName = this.name();
-      const currentLibrary = this.library();
+      // Track signals to re-run effect when they change
+      this.name();
+      this.library();
 
       // Trigger icon resolution when name or library changes
       this.resolveIcon()
@@ -262,7 +263,7 @@ export class IxIconComponent implements AfterViewInit {
     return name.substring(0, 2).toUpperCase();
   }
 
-  private cssClassExists(className: string): boolean {
+  private cssClassExists(_className: string): boolean {
     if (typeof document === 'undefined') {return false;}
     
     // For now, only return true for known CSS icon patterns

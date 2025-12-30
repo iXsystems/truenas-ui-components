@@ -8,7 +8,7 @@ import { IxIconComponent } from '../lib/ix-icon/ix-icon.component';
 
 // Mark icons used in stories for sprite generation
 // Using the new two-parameter API for clarity
-const STORY_ICONS = [
+[
   iconMarker('harddisk', 'mdi'),
   iconMarker('server', 'mdi'),
   iconMarker('nas', 'mdi'),

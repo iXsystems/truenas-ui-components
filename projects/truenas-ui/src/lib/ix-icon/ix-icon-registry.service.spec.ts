@@ -140,7 +140,7 @@ describe('IxIconRegistryService', () => {
     });
 
     it('should merge library default options with provided options', () => {
-      const resolverSpy = jest.fn((name, options) => `<svg></svg>`);
+      const resolverSpy = jest.fn((_name, _options) => `<svg></svg>`);
       const library: IconLibrary = {
         name: 'custom-lib',
         resolver: resolverSpy,

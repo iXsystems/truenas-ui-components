@@ -151,7 +151,7 @@ export class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, 
   private portal?: TemplatePortal;
   isOpen = signal<boolean>(false);
 
-  private onChange = (value: DateRange) => {};
+  private onChange = (_value: DateRange) => {};
   private onTouched = () => {};
 
   value = signal<DateRange>({ start: null, end: null });
@@ -204,11 +204,11 @@ export class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, 
   }
 
   // Segment event handlers
-  onSegmentFocus(range: 'start' | 'end', segment: 'month' | 'day' | 'year'): void {
+  onSegmentFocus(range: 'start' | 'end', _segment: 'month' | 'day' | 'year'): void {
     this.currentFocus = range;
   }
 
-  onSegmentBlur(range: 'start' | 'end', segment: 'month' | 'day' | 'year'): void {
+  onSegmentBlur(range: 'start' | 'end', _segment: 'month' | 'day' | 'year'): void {
     this.onTouched();
     // Only validate and update when we have complete values, don't clear partial entries
     const month = range === 'start' ? (this.startMonthRef()?.nativeElement?.value || '') : (this.endMonthRef()?.nativeElement?.value || '');

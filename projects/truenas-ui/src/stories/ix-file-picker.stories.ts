@@ -53,7 +53,7 @@ export const Default: Story = {
     props: {
       ...args,
       callbacks: mdiShowcaseCallbacks,
-      onSelectionChange: (selection: string | string[]) => {
+      onSelectionChange: (_selection: string | string[]) => {
         // Handle selection changes
       }
     },

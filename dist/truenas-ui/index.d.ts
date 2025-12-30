@@ -344,7 +344,7 @@ declare class IxCardComponent {
     hasFooter: _angular_core.Signal<boolean>;
     onTitleClick(): void;
     onControlChange(checked: boolean): void;
-    onHeaderMenuItemClick(item: IxMenuItem): void;
+    onHeaderMenuItemClick(_item: IxMenuItem): void;
     getStatusClass(type?: string): string;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxCardComponent, never>;
     static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxCardComponent, "ix-card", never, { "title": { "alias": "title"; "required": false; "isSignal": true; }; "titleLink": { "alias": "titleLink"; "required": false; "isSignal": true; }; "elevation": { "alias": "elevation"; "required": false; "isSignal": true; }; "padding": { "alias": "padding"; "required": false; "isSignal": true; }; "padContent": { "alias": "padContent"; "required": false; "isSignal": true; }; "bordered": { "alias": "bordered"; "required": false; "isSignal": true; }; "background": { "alias": "background"; "required": false; "isSignal": true; }; "headerStatus": { "alias": "headerStatus"; "required": false; "isSignal": true; }; "headerControl": { "alias": "headerControl"; "required": false; "isSignal": true; }; "headerMenu": { "alias": "headerMenu"; "required": false; "isSignal": true; }; "primaryAction": { "alias": "primaryAction"; "required": false; "isSignal": true; }; "secondaryAction": { "alias": "secondaryAction"; "required": false; "isSignal": true; }; "footerLink": { "alias": "footerLink"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
@@ -1656,8 +1656,8 @@ declare class IxDateRangeInputComponent implements ControlValueAccessor, OnInit,
     registerOnChange(fn: (value: DateRange) => void): void;
     registerOnTouched(fn: () => void): void;
     setDisabledState(isDisabled: boolean): void;
-    onSegmentFocus(range: 'start' | 'end', segment: 'month' | 'day' | 'year'): void;
-    onSegmentBlur(range: 'start' | 'end', segment: 'month' | 'day' | 'year'): void;
+    onSegmentFocus(range: 'start' | 'end', _segment: 'month' | 'day' | 'year'): void;
+    onSegmentBlur(range: 'start' | 'end', _segment: 'month' | 'day' | 'year'): void;
     onSegmentKeydown(event: KeyboardEvent, range: 'start' | 'end', segment: 'month' | 'day' | 'year'): void;
     onRangeSelected(range: DateRange): void;
     private updateRange;
@@ -1848,8 +1848,8 @@ declare class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDe
     registerOnChange(fn: (value: Date | null) => void): void;
     registerOnTouched(fn: () => void): void;
     setDisabledState(isDisabled: boolean): void;
-    onSegmentFocus(segment: 'month' | 'day' | 'year'): void;
-    onSegmentBlur(segment: 'month' | 'day' | 'year'): void;
+    onSegmentFocus(_segment: 'month' | 'day' | 'year'): void;
+    onSegmentBlur(_segment: 'month' | 'day' | 'year'): void;
     onSegmentKeydown(event: KeyboardEvent, segment: 'month' | 'day' | 'year'): void;
     onDateSelected(date: Date): void;
     private updateDate;

@@ -104,8 +104,8 @@ export class IxMonthViewComponent {
 
   calendarRows = computed(() => {
     const activeDate = this.activeDate();
-    // Include selectedRange signal in the computed dependency so it recalculates when range changes
-    const currentSelectedRange = this.selectedRange();
+    // Track selectedRange signal so computed recalculates when range changes
+    this.selectedRange();
 
     if (!activeDate) {return [];}
     

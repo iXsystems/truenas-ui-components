@@ -85,7 +85,8 @@ export class IxCalendarComponent implements OnInit {
   constructor() {
     // Watch for changes to selectedRange input
     effect(() => {
-      const selectedRange = this.selectedRange();
+      // Track signals to re-run effect when they change
+      this.selectedRange();
       const rangeMode = this.rangeMode();
       // Only update range state from external selectedRange if user hasn't interacted yet
       if (!this.userHasInteracted && rangeMode) {

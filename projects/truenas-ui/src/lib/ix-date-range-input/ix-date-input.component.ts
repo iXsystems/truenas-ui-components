@@ -113,7 +113,7 @@ export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDes
   private portal?: TemplatePortal;
   isOpen = signal<boolean>(false);
 
-  private onChange = (value: Date | null) => {};
+  private onChange = (_value: Date | null) => {};
   private onTouched = () => {};
 
   value = signal<Date | null>(null);
@@ -141,7 +141,7 @@ export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDes
   }
 
   registerOnChange(fn: (value: Date | null) => void): void {
-    this.onChange = fn as (value: Date | null) => void;
+    this.onChange = fn;
   }
 
   registerOnTouched(fn: () => void): void {
@@ -153,11 +153,11 @@ export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDes
   }
 
   // Segment event handlers
-  onSegmentFocus(segment: 'month' | 'day' | 'year'): void {
+  onSegmentFocus(_segment: 'month' | 'day' | 'year'): void {
     // Focus handling
   }
 
-  onSegmentBlur(segment: 'month' | 'day' | 'year'): void {
+  onSegmentBlur(_segment: 'month' | 'day' | 'year'): void {
     this.onTouched();
     // Only validate and update when we have complete values
     const month = this.monthRef()?.nativeElement?.value || '';
@@ -172,7 +172,7 @@ export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDes
 
   onSegmentKeydown(event: KeyboardEvent, segment: 'month' | 'day' | 'year'): void {
     const input = event.target as HTMLInputElement;
-    
+
     // Handle navigation between segments
     if (event.key === 'ArrowRight') {
       if (input.selectionStart === input.value.length) {

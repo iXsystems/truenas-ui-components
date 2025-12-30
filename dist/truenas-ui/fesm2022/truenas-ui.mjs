@@ -417,8 +417,9 @@ class IxIconComponent {
     constructor() {
         // Use effect to watch for changes in name or library
         effect(() => {
-            const currentName = this.name();
-            const currentLibrary = this.library();
+            // Track signals to re-run effect when they change
+            this.name();
+            this.library();
             // Trigger icon resolution when name or library changes
             this.resolveIcon()
                 .then(() => {
@@ -610,7 +611,7 @@ class IxIconComponent {
         // Default to first 2 characters
         return name.substring(0, 2).toUpperCase();
     }
-    cssClassExists(className) {
+    cssClassExists(_className) {
         if (typeof document === 'undefined') {
             return false;
         }
@@ -854,7 +855,7 @@ class IxInputComponent {
     // CVA disabled state management
     formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
     isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
-    onChange = (value) => { };
+    onChange = (_value) => { };
     onTouched = () => { };
     focusMonitor = inject(FocusMonitor);
     ngAfterViewInit() {
@@ -1209,7 +1210,7 @@ class IxSlideToggleComponent {
         const toggleEl = this.toggleEl();
         if (toggleEl) {
             this.focusMonitor.monitor(toggleEl)
-                .subscribe(origin => {
+                .subscribe(() => {
                 // Focus monitoring for accessibility
             });
         }
@@ -1353,7 +1354,7 @@ class IxCardComponent {
             control.handler(checked);
         }
     }
-    onHeaderMenuItemClick(item) {
+    onHeaderMenuItemClick(_item) {
         // Handler is called automatically via IxMenuItem.action
     }
     getStatusClass(type) {
@@ -1492,7 +1493,7 @@ class IxCheckboxComponent {
         const checkboxEl = this.checkboxEl();
         if (checkboxEl) {
             this.focusMonitor.monitor(checkboxEl)
-                .subscribe(origin => {
+                .subscribe(() => {
                 // Focus monitoring for accessibility
             });
         }
@@ -1581,7 +1582,7 @@ class IxRadioComponent {
         const radioEl = this.radioEl();
         if (radioEl) {
             this.focusMonitor.monitor(radioEl)
-                .subscribe(origin => {
+                .subscribe(() => {
                 // Focus monitoring for accessibility
             });
         }
@@ -2065,8 +2066,6 @@ class IxKeyboardShortcutComponent {
         if (!displayShortcut) {
             return [];
         }
-        // Split by common separators
-        const separators = ['+', ' ', ''];
         let keys = [];
         // For Mac-style shortcuts without separators
         if (displayShortcut.includes('⌘') || displayShortcut.includes('⌥') || displayShortcut.includes('⇧')) {
@@ -2191,7 +2190,7 @@ class IxSelectComponent {
     formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
     // Computed disabled state (combines input and form state)
     isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
-    onChange = (value) => { };
+    onChange = (_value) => { };
     onTouched = () => { };
     elementRef = inject(ElementRef);
     cdr = inject(ChangeDetectorRef);
@@ -3983,7 +3982,6 @@ class IxBrandedSpinnerComponent {
             return;
         }
         let startTime;
-        const totalDrawTime = (this.paths.length - 1) * this.delayStep + this.duration;
         const animate = (timestamp) => {
             if (!this.isAnimating) {
                 return;
@@ -4469,8 +4467,8 @@ class IxMonthViewComponent {
     // Cell sizing now controlled via CSS custom properties in the SCSS file
     calendarRows = computed(() => {
         const activeDate = this.activeDate();
-        // Include selectedRange signal in the computed dependency so it recalculates when range changes
-        const currentSelectedRange = this.selectedRange();
+        // Track selectedRange signal so computed recalculates when range changes
+        this.selectedRange();
         if (!activeDate) {
             return [];
         }
@@ -4754,11 +4752,9 @@ class IxMultiYearViewComponent {
     createYearCell(year) {
         const today = new Date();
         const currentYear = today.getFullYear();
-        const activeYear = this.activeDate().getFullYear();
         const selectedYear = this.selected()?.getFullYear();
         const isToday = year === currentYear;
         const isSelected = year === selectedYear;
-        const isActive = year === activeYear;
         const enabled = this.isYearEnabled(year);
         return {
             value: year,
@@ -4922,7 +4918,8 @@ class IxCalendarComponent {
     constructor() {
         // Watch for changes to selectedRange input
         effect(() => {
-            const selectedRange = this.selectedRange();
+            // Track signals to re-run effect when they change
+            this.selectedRange();
             const rangeMode = this.rangeMode();
             // Only update range state from external selectedRange if user hasn't interacted yet
             if (!this.userHasInteracted && rangeMode) {
@@ -5187,7 +5184,7 @@ class IxDateInputComponent {
     overlayRef;
     portal;
     isOpen = signal(false, ...(ngDevMode ? [{ debugName: "isOpen" }] : []));
-    onChange = (value) => { };
+    onChange = (_value) => { };
     onTouched = () => { };
     value = signal(null, ...(ngDevMode ? [{ debugName: "value" }] : []));
     // Individual segment signals
@@ -5218,10 +5215,10 @@ class IxDateInputComponent {
         this.formDisabled.set(isDisabled);
     }
     // Segment event handlers
-    onSegmentFocus(segment) {
+    onSegmentFocus(_segment) {
         // Focus handling
     }
-    onSegmentBlur(segment) {
+    onSegmentBlur(_segment) {
         this.onTouched();
         // Only validate and update when we have complete values
         const month = this.monthRef()?.nativeElement?.value || '';
@@ -5566,7 +5563,7 @@ class IxDateRangeInputComponent {
     overlayRef;
     portal;
     isOpen = signal(false, ...(ngDevMode ? [{ debugName: "isOpen" }] : []));
-    onChange = (value) => { };
+    onChange = (_value) => { };
     onTouched = () => { };
     value = signal({ start: null, end: null }, ...(ngDevMode ? [{ debugName: "value" }] : []));
     // Individual segment signals
@@ -5608,10 +5605,10 @@ class IxDateRangeInputComponent {
         this.formDisabled.set(isDisabled);
     }
     // Segment event handlers
-    onSegmentFocus(range, segment) {
+    onSegmentFocus(range, _segment) {
         this.currentFocus = range;
     }
-    onSegmentBlur(range, segment) {
+    onSegmentBlur(range, _segment) {
         this.onTouched();
         // Only validate and update when we have complete values, don't clear partial entries
         const month = range === 'start' ? (this.startMonthRef()?.nativeElement?.value || '') : (this.endMonthRef()?.nativeElement?.value || '');
@@ -6155,7 +6152,7 @@ class IxTimeInputComponent {
             default: return 15;
         }
     }, ...(ngDevMode ? [{ debugName: "step" }] : []));
-    onChange = (value) => { };
+    onChange = (_value) => { };
     onTouched = () => { };
     _value = null;
     // Generate time options for ix-select
@@ -6238,7 +6235,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
 class IxSliderThumbDirective {
     disabled = signal(false, ...(ngDevMode ? [{ debugName: "disabled" }] : []));
     slider; // Will be set by parent slider component
-    onChangeCallback = (value) => { };
+    onChangeCallback = (_value) => { };
     onTouched = () => { };
     isDragging = false;
     elementRef = inject((ElementRef));
@@ -6406,7 +6403,7 @@ class IxSliderComponent {
     thumbDirective = contentChild.required(IxSliderThumbDirective);
     sliderContainer = viewChild.required('sliderContainer');
     thumbVisual = viewChild.required('thumbVisual');
-    onChange = (value) => { };
+    onChange = (_value) => { };
     onTouched = () => { };
     value = signal(0, ...(ngDevMode ? [{ debugName: "value" }] : []));
     _showLabel = signal(false, ...(ngDevMode ? [{ debugName: "_showLabel" }] : []));
@@ -6884,7 +6881,7 @@ class IxButtonToggleGroupComponent {
     formDisabled = signal(false, ...(ngDevMode ? [{ debugName: "formDisabled" }] : []));
     // Computed disabled state (combines input and form state)
     isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
-    onChange = (value) => { };
+    onChange = (_value) => { };
     onTouched = () => { };
     constructor() {
         // Effect to update button toggles when content children change
@@ -7610,7 +7607,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * To regenerate this file, run:
  *   npm run generate-icons
  *
- * Generated: 2025-12-30T16:06:48.722Z
+ * Generated: 2025-12-30T16:49:52.668Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 /* eslint-disable */
@@ -8014,7 +8011,7 @@ class IxFilePickerComponent {
     // Computed disabled state (combines input and form state)
     isDisabled = computed(() => this.disabled() || this.formDisabled(), ...(ngDevMode ? [{ debugName: "isDisabled" }] : []));
     // ControlValueAccessor implementation
-    onChange = (value) => { };
+    onChange = (_value) => { };
     onTouched = () => { };
     overlay = inject(Overlay);
     elementRef = inject(ElementRef);
@@ -8213,7 +8210,7 @@ class IxFilePickerComponent {
         this.creationLoading.set(true);
         try {
             // Call the callback with parent path and user-entered name
-            const createdPath = await cb.createFolder(this.currentPath(), name.trim());
+            await cb.createFolder(this.currentPath(), name.trim());
             // Remove pending item
             this.removePendingItem(tempId);
             this.creatingItemTempId.set(null);

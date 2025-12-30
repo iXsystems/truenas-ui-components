@@ -37,7 +37,7 @@ export const Primary: Story = {
     variant: 'filled',
     label: 'Primary',
   },
-  play: async ({ canvasElement, args }) => {
+  play: async ({ canvasElement, args: _args }) => {
     const canvas = within(canvasElement);
     const primaryButton = canvas.getByRole('button');
 
@@ -52,7 +52,7 @@ export const Default: Story = {
     variant: 'filled',
     label: 'Default',
   },
-  play: async ({ canvasElement, args }) => {
+  play: async ({ canvasElement, args: _args }) => {
     const canvas = within(canvasElement);
     const defaultButton = canvas.getByRole('button');
 
@@ -67,7 +67,7 @@ export const OutlinePrimary: Story = {
     variant: 'outline',
     label: 'Outline Primary',
   },
-  play: async ({ canvasElement, args }) => {
+  play: async ({ canvasElement, args: _args }) => {
     const canvas = within(canvasElement);
     const outlineButton = canvas.getByRole('button');
 
@@ -82,7 +82,7 @@ export const OutlineDefault: Story = {
     variant: 'outline',
     label: 'Outline Default',
   },
-  play: async ({ canvasElement, args }) => {
+  play: async ({ canvasElement, args: _args }) => {
     const canvas = within(canvasElement);
     const outlineButton = canvas.getByRole('button');
 
@@ -97,7 +97,7 @@ export const Warn: Story = {
     variant: 'filled',
     label: 'Warning',
   },
-  play: async ({ canvasElement, args }) => {
+  play: async ({ canvasElement, args: _args }) => {
     const canvas = within(canvasElement);
     const warnButton = canvas.getByRole('button');
 
@@ -112,7 +112,7 @@ export const OutlineWarn: Story = {
     variant: 'outline',
     label: 'Outline Warning',
   },
-  play: async ({ canvasElement, args }) => {
+  play: async ({ canvasElement, args: _args }) => {
     const canvas = within(canvasElement);
     const outlineWarnButton = canvas.getByRole('button');
 

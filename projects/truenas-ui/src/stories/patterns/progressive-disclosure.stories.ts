@@ -621,7 +621,6 @@ class ZfsPoolSetupComponent {
   }
 
   getAvailableDriveIndexes(): number[] {
-    const requiredCount = this.getRequiredDriveCount();
     return [8, 9]; // Always show 2 available drives (sdi, sdj)
   }
 

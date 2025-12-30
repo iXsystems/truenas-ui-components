@@ -60,7 +60,6 @@ describe('IxBrandedSpinnerComponent', () => {
   });
 
   it('should cleanup animation on destroy', () => {
-    const cancelAnimationFrameSpy = jest.spyOn(window, 'cancelAnimationFrame');
     component.ngOnDestroy();
     // Should have stopped any running animations
     expect(component).toBeTruthy();

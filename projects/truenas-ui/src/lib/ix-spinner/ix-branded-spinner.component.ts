@@ -65,7 +65,6 @@ export class IxBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewIn
     if (!this.isAnimating) {return;}
 
     let startTime: number;
-    const totalDrawTime = (this.paths.length - 1) * this.delayStep + this.duration;
 
     const animate = (timestamp: number) => {
       if (!this.isAnimating) {return;}

@@ -83,7 +83,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
   // ControlValueAccessor implementation
-  private onChange = (value: string | string[]) => {};
+  private onChange = (_value: string | string[]) => {};
   private onTouched = () => {};
 
   private overlay = inject(Overlay);
@@ -305,7 +305,7 @@ export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
     try {
       // Call the callback with parent path and user-entered name
-      const createdPath = await cb.createFolder(
+      await cb.createFolder(
         this.currentPath(),
         name.trim()
       );

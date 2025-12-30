@@ -47,7 +47,7 @@ export class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
     const radioEl = this.radioEl();
     if (radioEl) {
       this.focusMonitor.monitor(radioEl)
-        .subscribe(origin => {
+        .subscribe(() => {
           // Focus monitoring for accessibility
         });
     }

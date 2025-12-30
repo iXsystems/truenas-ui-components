@@ -54,7 +54,7 @@ export class IxSlideToggleComponent implements AfterViewInit, OnDestroy, Control
     const toggleEl = this.toggleEl();
     if (toggleEl) {
       this.focusMonitor.monitor(toggleEl)
-        .subscribe(origin => {
+        .subscribe(() => {
           // Focus monitoring for accessibility
         });
     }

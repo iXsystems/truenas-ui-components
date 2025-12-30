@@ -10,7 +10,6 @@ describe('IxIconComponent - MDI Support', () => {
   let fixture: ComponentFixture<IxIconComponent>;
   let iconRegistry: jest.Mocked<IxIconRegistryService>;
   let spriteLoader: jest.Mocked<IxSpriteLoaderService>;
-  let domSanitizer: jest.Mocked<DomSanitizer>;
 
   beforeEach(async () => {
     const spriteLoaderSpy = {
@@ -57,7 +56,6 @@ describe('IxIconComponent - MDI Support', () => {
     component = fixture.componentInstance;
     iconRegistry = TestBed.inject(IxIconRegistryService) as jest.Mocked<IxIconRegistryService>;
     spriteLoader = TestBed.inject(IxSpriteLoaderService) as jest.Mocked<IxSpriteLoaderService>;
-    domSanitizer = TestBed.inject(DomSanitizer) as jest.Mocked<DomSanitizer>;
   });
 
   it('should render material icon by default', fakeAsync(() => {

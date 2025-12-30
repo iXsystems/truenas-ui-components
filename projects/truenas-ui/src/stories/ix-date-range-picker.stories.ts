@@ -45,7 +45,7 @@ export const DateRange: Story = {
 };
 
 export const TimePicker: Story = {
-  render: (args) => ({
+  render: () => ({
     template: `
       <div style="display: flex; gap: 20px; flex-direction: column;">
         <ix-form-field label="15 minute intervals (default)">

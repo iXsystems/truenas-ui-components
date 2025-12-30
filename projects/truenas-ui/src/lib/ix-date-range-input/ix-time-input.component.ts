@@ -49,7 +49,7 @@ export class IxTimeInputComponent implements ControlValueAccessor {
     }
   });
 
-  private onChange = (value: string) => {};
+  private onChange = (_value: string) => {};
   private onTouched = () => {};
 
   _value: string | null = null;

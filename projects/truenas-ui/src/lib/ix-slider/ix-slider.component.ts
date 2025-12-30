@@ -78,7 +78,7 @@ export class IxSliderComponent implements ControlValueAccessor, OnDestroy, After
   sliderContainer = viewChild.required<ElementRef<HTMLDivElement>>('sliderContainer');
   thumbVisual = viewChild.required<ElementRef<HTMLDivElement>>('thumbVisual');
 
-  private onChange = (value: number) => {};
+  private onChange = (_value: number) => {};
   private onTouched = () => {};
 
   value = signal<number>(0);

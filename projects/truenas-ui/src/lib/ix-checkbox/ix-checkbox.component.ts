@@ -50,7 +50,7 @@ export class IxCheckboxComponent implements AfterViewInit, OnDestroy, ControlVal
     const checkboxEl = this.checkboxEl();
     if (checkboxEl) {
       this.focusMonitor.monitor(checkboxEl)
-        .subscribe(origin => {
+        .subscribe(() => {
           // Focus monitoring for accessibility
         });
     }

@@ -1,7 +1,5 @@
-import type { QueryList } from '@angular/core';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import { Subject } from 'rxjs';
 import type { IxTableDataSource } from './ix-table.component';
 import { IxTableComponent } from './ix-table.component';
 import type { IxTableColumnDirective } from '../ix-table-column/ix-table-column.directive';
@@ -9,15 +7,6 @@ import type { IxTableColumnDirective } from '../ix-table-column/ix-table-column.
 describe('IxTableComponent', () => {
   let component: IxTableComponent;
   let fixture: ComponentFixture<IxTableComponent>;
-
-  function createMockQueryList(columns: IxTableColumnDirective[]): QueryList<IxTableColumnDirective> {
-    const changesSubject = new Subject<void>();
-    return {
-      forEach: (callback: (col: IxTableColumnDirective) => void) => columns.forEach(col => callback(col)),
-      changes: changesSubject.asObservable(),
-      _triggerChange: () => changesSubject.next()
-    } as unknown as QueryList<IxTableColumnDirective>;
-  }
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({

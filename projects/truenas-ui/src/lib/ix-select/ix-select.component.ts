@@ -46,7 +46,7 @@ export class IxSelectComponent<T = unknown> implements ControlValueAccessor {
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
-  private onChange = (value: T | null) => {};
+  private onChange = (_value: T | null) => {};
   private onTouched = () => {};
 
   private elementRef = inject(ElementRef);

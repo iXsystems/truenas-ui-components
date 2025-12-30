@@ -103,12 +103,10 @@ export class IxMultiYearViewComponent {
   private createYearCell(year: number): YearCell {
     const today = new Date();
     const currentYear = today.getFullYear();
-    const activeYear = this.activeDate().getFullYear();
     const selectedYear = this.selected()?.getFullYear();
 
     const isToday = year === currentYear;
     const isSelected = year === selectedYear;
-    const isActive = year === activeYear;
     const enabled = this.isYearEnabled(year);
 
     return {

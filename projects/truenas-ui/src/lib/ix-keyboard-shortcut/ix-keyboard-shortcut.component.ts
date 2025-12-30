@@ -59,8 +59,6 @@ export class IxKeyboardShortcutComponent {
     const displayShortcut = this.displayShortcut();
     if (!displayShortcut) {return [];}
 
-    // Split by common separators
-    const separators = ['+', ' ', ''];
     let keys: string[] = [];
 
     // For Mac-style shortcuts without separators
