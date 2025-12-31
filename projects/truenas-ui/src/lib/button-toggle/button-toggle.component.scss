@@ -39,9 +39,9 @@
     min-width: 64px;
     height: 36px;
     padding: 0 16px;
-    border: 1px solid var(--lines, #d1d5db);
-    background: var(--bg1, #ffffff);
-    color: var(--fg2, #6b7280);
+    border: 1px solid var(--tn-lines, #d1d5db);
+    background: var(--tn-bg1, #ffffff);
+    color: var(--tn-fg2, #6b7280);
     font-family: inherit;
     font-size: 14px;
     font-weight: 500;
@@ -54,37 +54,37 @@
     overflow: hidden;
 
     &:hover:not(:disabled) {
-      background: var(--alt-bg1, #f9fafb);
+      background: var(--tn-alt-bg1, #f9fafb);
       z-index: 2;
     }
 
     &:focus-visible {
-      outline: 2px solid var(--primary, #3b82f6);
+      outline: 2px solid var(--tn-primary, #3b82f6);
       outline-offset: 2px;
       z-index: 3;
     }
 
     &:disabled {
       cursor: not-allowed !important;
-      background: var(--alt-bg2, #f3f4f6) !important;
-      color: var(--fg1, #000000) !important;
+      background: var(--tn-alt-bg2, #f3f4f6) !important;
+      color: var(--tn-fg1, #000000) !important;
       opacity: 0.6 !important;
       
       &:hover {
-        background: var(--alt-bg2, #f3f4f6) !important;
+        background: var(--tn-alt-bg2, #f3f4f6) !important;
         cursor: not-allowed !important;
       }
     }
 
     &--checked {
-      background: var(--primary, #3b82f6);
-      color: var(--primary-txt, #ffffff);
-      border-color: var(--primary, #3b82f6);
+      background: var(--tn-primary, #3b82f6);
+      color: var(--tn-primary-txt, #ffffff);
+      border-color: var(--tn-primary, #3b82f6);
       z-index: 2;
       padding: 0 20px; // Expand padding to make room for checkmark
 
       &:hover:not(:disabled) {
-        background: var(--primary, #3b82f6);
+        background: var(--tn-primary, #3b82f6);
       }
     }
   }

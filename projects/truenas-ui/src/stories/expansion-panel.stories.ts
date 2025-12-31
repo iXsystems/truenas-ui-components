@@ -138,10 +138,10 @@ export const Embedded: Story = {
           <p>Your network is configured and running normally.</p>
           
           <div style="display: flex; align-items: center; gap: 12px; margin: 16px 0;">
-            <span style="color: var(--green, #4caf50); font-size: 20px;">✓</span>
+            <span style="color: var(--tn-green, #4caf50); font-size: 20px;">✓</span>
             <div>
               <div style="font-weight: 600;">Connection Status: Active</div>
-              <div style="color: var(--fg2, #666); font-size: 14px;">IP: 192.168.1.100 | Gateway: 192.168.1.1</div>
+              <div style="color: var(--tn-fg2, #666); font-size: 14px;">IP: 192.168.1.100 | Gateway: 192.168.1.1</div>
             </div>
           </div>
           
@@ -155,10 +155,10 @@ export const Embedded: Story = {
             [padding]="padding"
             [titleStyle]="titleStyle">
             <div style="margin-top: 12px; padding-top: 12px;">
-              <p style="margin: 0 0 12px 0; color: var(--fg2, #666); font-size: 14px;">
+              <p style="margin: 0 0 12px 0; color: var(--tn-fg2, #666); font-size: 14px;">
                 Additional network details and diagnostics information:
               </p>
-              <div style="background: var(--alt-bg1, #f8f9fa); padding: 12px; border-radius: 4px; font-size: 13px;">
+              <div style="background: var(--tn-alt-bg1, #f8f9fa); padding: 12px; border-radius: 4px; font-size: 13px;">
                 <div><strong>Interface:</strong> em0 (Intel Gigabit Ethernet)</div>
                 <div><strong>MAC Address:</strong> 00:1B:21:12:34:56</div>
                 <div><strong>Speed:</strong> 1000 Mbps Full Duplex</div>

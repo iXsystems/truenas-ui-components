@@ -23,11 +23,11 @@
   }
   
   &--bordered {
-    border: 1px solid var(--lines, #e5e7eb);
+    border: 1px solid var(--tn-lines, #e5e7eb);
   }
 
   &--background {
-    background-color: var(--bg2, #ffffff);
+    background-color: var(--tn-bg2, #ffffff);
   }
   
   &--padding-small {
@@ -83,7 +83,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  border-bottom: 1px solid var(--lines, #e5e7eb);
+  border-bottom: 1px solid var(--tn-lines, #e5e7eb);
 
   .tn-card:not(.tn-card--bordered) & {
     border-bottom-color: rgba(0, 0, 0, 0.1);
@@ -106,7 +106,7 @@
   margin: 0;
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--fg1, #1f2937);
+  color: var(--tn-fg1, #1f2937);
   line-height: 1.5;
 
   &--link {
@@ -114,7 +114,7 @@
     transition: color 0.2s ease;
 
     &:hover {
-      color: var(--primary, #2563eb);
+      color: var(--tn-primary, #2563eb);
     }
   }
 }
@@ -131,27 +131,27 @@
 
   &--success {
     background-color: rgba(16, 185, 129, 0.1);
-    color: var(--success, #10b981);
+    color: var(--tn-success, #10b981);
   }
 
   &--warning {
     background-color: rgba(245, 158, 11, 0.1);
-    color: var(--warning, #f59e0b);
+    color: var(--tn-warning, #f59e0b);
   }
 
   &--error {
     background-color: rgba(239, 68, 68, 0.1);
-    color: var(--error, #ef4444);
+    color: var(--tn-error, #ef4444);
   }
 
   &--info {
     background-color: rgba(59, 130, 246, 0.1);
-    color: var(--info, #3b82f6);
+    color: var(--tn-info, #3b82f6);
   }
 
   &--neutral {
     background-color: rgba(107, 114, 128, 0.1);
-    color: var(--fg2, #6b7280);
+    color: var(--tn-fg2, #6b7280);
   }
 }
 
@@ -170,7 +170,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  border-top: 1px solid var(--lines, #e5e7eb);
+  border-top: 1px solid var(--tn-lines, #e5e7eb);
   padding: 16px 24px;
 
   .tn-card--padding-small & {
@@ -201,7 +201,7 @@
 .tn-card__footer-link {
   border: none;
   background: transparent;
-  color: var(--primary, #2563eb);
+  color: var(--tn-primary, #2563eb);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -210,12 +210,12 @@
   transition: color 0.2s ease;
 
   &:hover {
-    color: var(--primary-dark, #1d4ed8);
+    color: var(--tn-primary-dark, #1d4ed8);
     text-decoration: underline;
   }
 
   &:focus {
-    outline: 2px solid var(--primary, #2563eb);
+    outline: 2px solid var(--tn-primary, #2563eb);
     outline-offset: 2px;
     border-radius: 2px;
   }

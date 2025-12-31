@@ -252,7 +252,7 @@ export const ReactiveForm: Story = {
     },
     template: `
       <div style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 400px;">
-        <h3 style="margin: 0; color: var(--fg1);">Application Settings</h3>
+        <h3 style="margin: 0; color: var(--tn-fg1);">Application Settings</h3>
         
         <tn-form-field 
           label="Notifications"
@@ -289,12 +289,12 @@ export const ReactiveForm: Story = {
           <button 
             type="button" 
             (click)="submitForm()"
-            style="padding: 0.5rem 1rem; background: var(--primary); color: white; border: none; border-radius: 0.25rem; cursor: pointer;">
+            style="padding: 0.5rem 1rem; background: var(--tn-primary); color: white; border: none; border-radius: 0.25rem; cursor: pointer;">
             Validate Form
           </button>
         </div>
 
-        <div style="padding: 1rem; background: var(--bg2); border-radius: 0.375rem; font-size: 0.875rem;">
+        <div style="padding: 1rem; background: var(--tn-bg2); border-radius: 0.375rem; font-size: 0.875rem;">
           <strong>Form Values:</strong><br>
           Notifications: {{ settingsForm.notifications.value }}<br>
           Auto Save: {{ settingsForm.autoSave.value }}<br>
@@ -319,7 +319,7 @@ export const ColorComparison: Story = {
     props: args,
     template: `
       <div style="display: flex; flex-direction: column; gap: 1rem; padding: 1rem;">
-        <h3 style="margin: 0; color: var(--fg1);">Color Variants</h3>
+        <h3 style="margin: 0; color: var(--tn-fg1);">Color Variants</h3>
         
         <div style="display: flex; flex-direction: column; gap: 0.75rem;">
           <tn-slide-toggle 
@@ -341,7 +341,7 @@ export const ColorComparison: Story = {
           </tn-slide-toggle>
         </div>
 
-        <h4 style="margin: 1rem 0 0.5rem 0; color: var(--fg1);">Disabled States</h4>
+        <h4 style="margin: 1rem 0 0.5rem 0; color: var(--tn-fg1);">Disabled States</h4>
         
         <div style="display: flex; flex-direction: column; gap: 0.75rem;">
           <tn-slide-toggle 

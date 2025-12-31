@@ -213,7 +213,7 @@ export const ChipInputExample: Story = {
         // Add focus styles to container
         const container = (event.target as HTMLElement).parentElement;
         if (container) {
-          container.style.borderColor = 'var(--primary, #007bff)';
+          container.style.borderColor = 'var(--tn-primary, #007bff)';
           container.style.boxShadow = '0 0 0 2px rgba(0, 123, 255, 0.25)';
         }
       },
@@ -222,7 +222,7 @@ export const ChipInputExample: Story = {
         // Remove focus styles from container
         const container = (event.target as HTMLElement).parentElement;
         if (container) {
-          container.style.borderColor = 'var(--lines, #d1d5db)';
+          container.style.borderColor = 'var(--tn-lines, #d1d5db)';
           container.style.boxShadow = 'none';
         }
       }
@@ -241,10 +241,10 @@ export const ChipInputExample: Story = {
                gap: 0.375rem;
                min-height: 2.5rem;
                padding: 0.5rem 0.75rem;
-               background-color: var(--bg1, #ffffff);
-               border: 1px solid var(--lines, #d1d5db);
+               background-color: var(--tn-bg1, #ffffff);
+               border: 1px solid var(--tn-lines, #d1d5db);
                border-radius: 0.375rem;
-               font-family: var(--font-family-body, 'Inter'), sans-serif;
+               font-family: var(--tn-font-family-body, 'Inter'), sans-serif;
                transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
                cursor: text;
              "
@@ -265,7 +265,7 @@ export const ChipInputExample: Story = {
           <!-- Persistent placeholder text -->
           @if (!inputValue) {
           <span style="
-                  color: var(--fg2, #6c757d);
+                  color: var(--tn-fg2, #6c757d);
                   font-style: italic;
                   font-size: 0.875rem;
                   pointer-events: none;
@@ -294,7 +294,7 @@ export const ChipInputExample: Story = {
               flex: 1;
               min-width: 120px;
               font-size: 1rem;
-              color: var(--fg1, #212529);
+              color: var(--tn-fg1, #212529);
             "
             type="text">
         </div>
@@ -355,7 +355,7 @@ export const ChipsWithFormField: Story = {
           </tn-chip>
           }
           @if (selectedTags.length === 0) {
-          <span style="color: var(--fg2, #6c757d); font-style: italic;">
+          <span style="color: var(--tn-fg2, #6c757d); font-style: italic;">
             No categories selected
           </span>
           }

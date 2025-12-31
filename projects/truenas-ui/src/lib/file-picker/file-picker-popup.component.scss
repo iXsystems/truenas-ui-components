@@ -1,17 +1,17 @@
 // File picker popup styles (matching tn-calendar pattern)
 :host {
   display: block;
-  background: var(--bg1, white);
-  color: var(--fg1, #333);
+  background: var(--tn-bg1, white);
+  color: var(--tn-fg1, #333);
   padding: 0;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.08);
   border-radius: 8px;
-  border: 1px solid var(--lines, #e0e0e0);
+  border: 1px solid var(--tn-lines, #e0e0e0);
   min-width: 400px;
   max-width: 600px;
   min-height: 500px;
   max-height: 600px;
-  font-family: var(--font-family-body);
+  font-family: var(--tn-font-family-body);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -22,9 +22,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--content-padding, 24px);
+  padding: var(--tn-content-padding, 24px);
   padding-bottom: 16px;
-  border-bottom: 1px solid var(--lines);
+  border-bottom: 1px solid var(--tn-lines);
 }
 
 .tn-file-picker-breadcrumb {
@@ -37,7 +37,7 @@
   .breadcrumb-segment {
     background: transparent;
     border: none;
-    color: var(--primary);
+    color: var(--tn-primary);
     cursor: pointer;
     padding: 4px 8px;
     border-radius: 4px;
@@ -46,12 +46,12 @@
     transition: background-color 0.15s ease-in-out;
 
     &:hover:not(:disabled) {
-      background: var(--bg2);
+      background: var(--tn-bg2);
     }
 
     &:disabled,
     &.current {
-      color: var(--fg1);
+      color: var(--tn-fg1);
       cursor: default;
       font-weight: 500;
     }
@@ -59,7 +59,7 @@
     &:not(:last-child)::after {
       content: '/';
       margin-left: 8px;
-      color: var(--alt-fg1);
+      color: var(--tn-alt-fg1);
     }
   }
 }
@@ -81,7 +81,7 @@
   justify-content: center;
   gap: 8px;
   padding: 40px;
-  color: var(--fg2);
+  color: var(--tn-fg2);
 
   tn-icon {
     animation: spin 1s linear infinite;
@@ -116,15 +116,15 @@ tn-table {
   th,
   .tn-table__header-cell {
     font-weight: 600;
-    color: var(--fg1);
+    color: var(--tn-fg1);
     padding: 12px 16px;
-    border-bottom: 2px solid var(--lines);
+    border-bottom: 2px solid var(--tn-lines);
   }
 
   td,
   .tn-table__cell {
     padding: 8px 16px;
-    border-bottom: 1px solid var(--lines);
+    border-bottom: 1px solid var(--tn-lines);
   }
 }
 
@@ -149,10 +149,10 @@ tn-table {
   // Disabled state styling
   &.disabled {
     opacity: 0.5;
-    color: var(--fg2, #757575);
+    color: var(--tn-fg2, #757575);
 
     .file-name {
-      color: var(--fg2, #757575);
+      color: var(--tn-fg2, #757575);
     }
 
     .file-icon {
@@ -183,35 +183,35 @@ tn-table {
 
     .folder-name-input {
       flex: 1;
-      border: 2px solid var(--primary, #0066cc);
+      border: 2px solid var(--tn-primary, #0066cc);
       padding: 4px 8px;
       font-size: inherit;
       font-family: inherit;
-      background: var(--bg1, white);
-      color: var(--fg1, black);
+      background: var(--tn-bg1, white);
+      color: var(--tn-fg1, black);
       outline: none;
       border-radius: 3px;
       min-width: 200px;
 
       &:focus {
-        border-color: var(--primary, #0066cc);
+        border-color: var(--tn-primary, #0066cc);
         box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
       }
 
       &.error {
-        border-color: var(--error, #d32f2f);
+        border-color: var(--tn-error, #d32f2f);
       }
 
       &:disabled {
         opacity: 0.6;
         cursor: not-allowed;
-        background: var(--bg2, #f5f5f5);
+        background: var(--tn-bg2, #f5f5f5);
       }
     }
 
     .creation-loading-icon {
       animation: spin 1s linear infinite;
-      color: var(--primary, #0066cc);
+      color: var(--tn-primary, #0066cc);
       flex-shrink: 0;
     }
   }
@@ -233,10 +233,10 @@ tn-table {
   padding-left: 36px; // Align with input (icon + gap)
   margin-bottom: 12px;
   background: rgba(211, 47, 47, 0.1);
-  border-left: 3px solid var(--error, #d32f2f);
+  border-left: 3px solid var(--tn-error, #d32f2f);
   border-radius: 3px;
   font-size: 0.875rem;
-  color: var(--error, #d32f2f);
+  color: var(--tn-error, #d32f2f);
 
   .error-icon {
     flex-shrink: 0;
@@ -253,26 +253,26 @@ tn-table {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--icon-md, 20px);
+  font-size: var(--tn-icon-md, 20px);
   flex-shrink: 0;
   line-height: 1;
 
   // Folder color
   &.file-icon-folder {
-    color: var(--primary);
+    color: var(--tn-primary);
   }
 
   // ZFS object type colors
   &.file-icon-dataset {
-    color: var(--blue, #007db3);
+    color: var(--tn-blue, #007db3);
   }
 
   &.file-icon-zvol {
-    color: var(--green, #71BF44);
+    color: var(--tn-green, #71BF44);
   }
 
   &.file-icon-mountpoint {
-    color: var(--orange, #E68D37);
+    color: var(--tn-orange, #E68D37);
   }
 }
 
@@ -285,8 +285,8 @@ tn-table {
 .zfs-badge {
   display: inline-flex;
   align-items: center;
-  background: var(--alt-bg2);
-  color: var(--alt-fg2);
+  background: var(--tn-alt-bg2);
+  color: var(--tn-alt-fg2);
   font-size: 0.625rem;
   font-weight: 600;
   padding: 2px 6px;
@@ -296,17 +296,17 @@ tn-table {
   line-height: 1;
 
   &.zfs-badge-dataset {
-    background: var(--blue);
+    background: var(--tn-blue);
     color: white;
   }
 
   &.zfs-badge-zvol {
-    background: var(--green);
+    background: var(--tn-green);
     color: white;
   }
 
   &.zfs-badge-mountpoint {
-    background: var(--orange);
+    background: var(--tn-orange);
     color: white;
   }
 }
@@ -315,8 +315,8 @@ tn-table {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--red);
-  font-size: var(--icon-sm, 16px);
+  color: var(--tn-red);
+  font-size: var(--tn-icon-sm, 16px);
   line-height: 1;
 }
 
@@ -327,33 +327,33 @@ tn-table {
   border-radius: 12px;
   
   &.type-folder {
-    background: var(--alt-bg1);
-    color: var(--alt-fg2);
+    background: var(--tn-alt-bg1);
+    color: var(--tn-alt-fg2);
   }
   
   &.type-file {
-    background: var(--bg2);
-    color: var(--fg2);
+    background: var(--tn-bg2);
+    color: var(--tn-fg2);
   }
   
   &.type-dataset {
     background: rgba(0, 125, 179, 0.1);
-    color: var(--blue);
+    color: var(--tn-blue);
   }
   
   &.type-zvol {
     background: rgba(113, 191, 68, 0.1);
-    color: var(--green);
+    color: var(--tn-green);
   }
   
   &.type-mountpoint {
     background: rgba(230, 141, 55, 0.1);
-    color: var(--orange);
+    color: var(--tn-orange);
   }
 }
 
 .folder-indicator {
-  color: var(--alt-fg1);
+  color: var(--tn-alt-fg1);
   font-style: italic;
 }
 
@@ -364,7 +364,7 @@ tn-table {
   align-items: center;
   justify-content: center;
   padding: 40px;
-  color: var(--alt-fg1);
+  color: var(--tn-alt-fg1);
   text-align: center;
 
   tn-icon {
@@ -384,16 +384,16 @@ tn-table {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px var(--content-padding, 24px);
-  border-top: 1px solid var(--lines);
-  background: var(--bg2);
+  padding: 16px var(--tn-content-padding, 24px);
+  border-top: 1px solid var(--tn-lines);
+  background: var(--tn-bg2);
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
 }
 
 .selection-count {
   font-size: 0.875rem;
-  color: var(--fg2);
+  color: var(--tn-fg2);
   font-weight: 500;
 }
 
@@ -423,12 +423,12 @@ tn-table {
   .file-item {
     &:hover,
     &.selected {
-      border: 2px solid var(--fg1);
+      border: 2px solid var(--tn-fg1);
     }
   }
 
   .zfs-badge {
-    border: 1px solid var(--fg1);
+    border: 1px solid var(--tn-fg1);
   }
 }
 

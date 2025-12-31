@@ -136,7 +136,7 @@ export const TableWithFiltering: Story = {
           return text;
         }
         const regex = new RegExp(`(${filter})`, 'gi');
-        return text.replace(regex, '<mark style="background-color: var(--yellow); padding: 0 2px;">$1</mark>');
+        return text.replace(regex, '<mark style="background-color: var(--tn-yellow); padding: 0 2px;">$1</mark>');
       }
     },
     template: `
@@ -198,7 +198,7 @@ export const TableWithFiltering: Story = {
       </tn-table>
 
       @if (filteredData.length === 0 && filterText.trim()) {
-      <div style="text-align: center; padding: 32px; color: var(--fg2);">
+      <div style="text-align: center; padding: 32px; color: var(--tn-fg2);">
         No results found for "{{ filterText }}"
       </div>
       }

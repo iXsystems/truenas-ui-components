@@ -18,7 +18,7 @@
   &__label-text {
     font-size: 14px;
     line-height: 1.4;
-    color: var(--fg1);
+    color: var(--tn-fg1);
     transition: color 0.2s ease;
 
     &--before {
@@ -39,7 +39,7 @@
     pointer-events: none;
 
     &:focus + .tn-slide-toggle__track {
-      box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 0, 123, 255), 0.2);
+      box-shadow: 0 0 0 2px rgba(var(--tn-primary-rgb, 0, 123, 255), 0.2);
     }
   }
 
@@ -55,7 +55,7 @@
     width: 52px;
     height: 32px;
     border-radius: 16px;
-    background-color: var(--lines);
+    background-color: var(--tn-lines);
     border: 1px solid transparent;
     transition: background-color 0.2s ease, border-color 0.2s ease;
     overflow: hidden;
@@ -68,7 +68,7 @@
     right: 0;
     bottom: 0;
     border-radius: inherit;
-    background-color: var(--primary, #007cba);
+    background-color: var(--tn-primary, #007cba);
     opacity: 0;
     transform: scaleX(0);
     transform-origin: left center;
@@ -91,8 +91,8 @@
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background-color: var(--bg2);
-    border: 1px solid var(--lines);
+    background-color: var(--tn-bg2);
+    border: 1px solid var(--tn-lines);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     display: flex;
@@ -125,13 +125,13 @@
   &__check-icon,
   &__minus-icon {
     transition: opacity 0.2s ease, transform 0.2s ease;
-    color: var(--fg2);
+    color: var(--tn-fg2);
   }
 
   // Hover states
   &:hover:not(.tn-slide-toggle--disabled) {
     .tn-slide-toggle__ripple {
-      background-color: var(--primary);
+      background-color: var(--tn-primary);
       opacity: 0.08;
     }
   }
@@ -139,7 +139,7 @@
   // Checked state
   &--checked {
     .tn-slide-toggle__track {
-      background-color: var(--primary);
+      background-color: var(--tn-primary);
       opacity: 0.5;
     }
 
@@ -153,17 +153,17 @@
     }
 
     .tn-slide-toggle__thumb {
-      background-color: var(--bg2);
-      border-color: var(--primary);
+      background-color: var(--tn-bg2);
+      border-color: var(--tn-primary);
     }
 
     .tn-slide-toggle__check-icon {
-      color: var(--primary);
+      color: var(--tn-primary);
     }
 
     &:hover:not(.tn-slide-toggle--disabled) {
       .tn-slide-toggle__ripple {
-        background-color: var(--primary);
+        background-color: var(--tn-primary);
         opacity: 0.12;
       }
     }
@@ -175,35 +175,35 @@
     opacity: 0.6;
 
     .tn-slide-toggle__label-text {
-      color: var(--alt-fg1);
+      color: var(--tn-alt-fg1);
     }
 
     .tn-slide-toggle__track {
-      background-color: var(--alt-bg1);
+      background-color: var(--tn-alt-bg1);
     }
 
     .tn-slide-toggle__thumb {
-      background-color: var(--alt-bg2);
-      border-color: var(--alt-bg1);
+      background-color: var(--tn-alt-bg2);
+      border-color: var(--tn-alt-bg1);
       box-shadow: none;
     }
 
     &.tn-slide-toggle--checked {
       .tn-slide-toggle__track {
-        background-color: var(--alt-bg1);
+        background-color: var(--tn-alt-bg1);
       }
 
       .tn-slide-toggle__track-fill {
-        background-color: var(--alt-bg1);
+        background-color: var(--tn-alt-bg1);
       }
 
       .tn-slide-toggle__thumb {
-        background-color: var(--alt-bg2);
-        border-color: var(--alt-bg1);
+        background-color: var(--tn-alt-bg2);
+        border-color: var(--tn-alt-bg1);
       }
 
       .tn-slide-toggle__check-icon {
-        color: var(--alt-fg1);
+        color: var(--tn-alt-fg1);
       }
     }
 
@@ -218,23 +218,23 @@
   }
 
   &--accent {
-    --primary: var(--accent);
+    --tn-primary: var(--tn-accent);
   }
 
   &--warn {
-    --primary: var(--red);
+    --tn-primary: var(--tn-red);
   }
 
   // Focus states
   .tn-slide-toggle__input:focus-visible + .tn-slide-toggle__track {
-    outline: 2px solid var(--primary);
+    outline: 2px solid var(--tn-primary);
     outline-offset: 2px;
   }
 
   // Active/pressed state
   &:active:not(.tn-slide-toggle--disabled) {
     .tn-slide-toggle__ripple {
-      background-color: var(--primary);
+      background-color: var(--tn-primary);
       opacity: 0.16;
       transform: translate(-50%, -50%) scale(1.1);
     }
@@ -243,7 +243,7 @@
   // High contrast mode support
   @media (prefers-contrast: high) {
     .tn-slide-toggle__track {
-      border-color: var(--fg1);
+      border-color: var(--tn-fg1);
     }
 
     .tn-slide-toggle__thumb {
@@ -253,7 +253,7 @@
     &--disabled {
       .tn-slide-toggle__track,
       .tn-slide-toggle__thumb {
-        border-color: var(--alt-fg1);
+        border-color: var(--tn-alt-fg1);
       }
     }
   }

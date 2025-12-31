@@ -59,7 +59,7 @@ export const Default: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <div style="width: 100%; height: 400px; border: 1px solid var(--lines); border-radius: 4px;">
+      <div style="width: 100%; height: 400px; border: 1px solid var(--tn-lines); border-radius: 4px;">
         <tn-tabs 
           [selectedIndex]="selectedIndex"
           (selectedIndexChange)="selectedIndexChange($event)"
@@ -94,7 +94,7 @@ export const WithDisabledTab: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <div style="width: 100%; height: 400px; border: 1px solid var(--lines); border-radius: 4px;">
+      <div style="width: 100%; height: 400px; border: 1px solid var(--tn-lines); border-radius: 4px;">
         <tn-tabs 
           [selectedIndex]="selectedIndex"
           (selectedIndexChange)="selectedIndexChange($event)"
@@ -134,7 +134,7 @@ export const WithTemplateIcons: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <div style="width: 100%; height: 400px; border: 1px solid var(--lines); border-radius: 4px;">
+      <div style="width: 100%; height: 400px; border: 1px solid var(--tn-lines); border-radius: 4px;">
         <tn-tabs 
           [selectedIndex]="selectedIndex"
           (selectedIndexChange)="selectedIndexChange($event)"
@@ -203,7 +203,7 @@ export const WithContentProjection: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <div style="width: 100%; height: 400px; border: 1px solid var(--lines); border-radius: 4px;">
+      <div style="width: 100%; height: 400px; border: 1px solid var(--tn-lines); border-radius: 4px;">
         <tn-tabs 
           [selectedIndex]="selectedIndex"
           (selectedIndexChange)="selectedIndexChange($event)"
@@ -263,7 +263,7 @@ export const Vertical: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <div style="width: 100%; height: 400px; border: 1px solid var(--lines); border-radius: 4px;">
+      <div style="width: 100%; height: 400px; border: 1px solid var(--tn-lines); border-radius: 4px;">
         <tn-tabs 
           [selectedIndex]="selectedIndex"
           [orientation]="orientation"
@@ -335,7 +335,7 @@ export const VerticalRightHighlight: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <div style="width: 100%; height: 400px; border: 1px solid var(--lines); border-radius: 4px;">
+      <div style="width: 100%; height: 400px; border: 1px solid var(--tn-lines); border-radius: 4px;">
         <tn-tabs 
           [selectedIndex]="selectedIndex"
           [orientation]="orientation"
@@ -406,7 +406,7 @@ export const VerticalLeftHighlight: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <div style="width: 100%; height: 400px; border: 1px solid var(--lines); border-radius: 4px;">
+      <div style="width: 100%; height: 400px; border: 1px solid var(--tn-lines); border-radius: 4px;">
         <tn-tabs 
           [selectedIndex]="selectedIndex"
           [orientation]="orientation"
@@ -468,7 +468,7 @@ export const HorizontalTopHighlight: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <div style="width: 100%; height: 400px; border: 1px solid var(--lines); border-radius: 4px;">
+      <div style="width: 100%; height: 400px; border: 1px solid var(--tn-lines); border-radius: 4px;">
         <tn-tabs 
           [selectedIndex]="selectedIndex"
           [orientation]="orientation"

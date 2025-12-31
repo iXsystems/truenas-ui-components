@@ -70,3 +70,6 @@ export * from './lib/dialog';
 export * from './lib/stepper';
 export * from './lib/file-picker';
 export * from './lib/services/keyboard-shortcut.service';
+export * from './lib/theme/theme.service';
+export * from './lib/theme/theme.interface';
+export * from './lib/theme/theme.constants';

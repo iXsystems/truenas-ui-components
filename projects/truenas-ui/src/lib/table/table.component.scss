@@ -10,14 +10,14 @@
     width: 100%;
     border-collapse: collapse;
     border-spacing: 0;
-    background-color: var(--bg2);
+    background-color: var(--tn-bg2);
     border-radius: 4px;
     overflow: hidden;
   }
 
   &__header {
-    background-color: var(--topbar);
-    color: var(--topbar-txt);
+    background-color: var(--tn-topbar);
+    color: var(--tn-topbar-txt);
   }
 
   &__header-row {
@@ -29,13 +29,13 @@
     text-align: left;
     font-weight: 600;
     font-size: 14px;
-    border-bottom: 1px solid var(--lines);
+    border-bottom: 1px solid var(--tn-lines);
     white-space: nowrap;
     vertical-align: middle;
   }
 
   &__body {
-    background-color: var(--bg2);
+    background-color: var(--tn-bg2);
   }
 
   &__row {
@@ -43,18 +43,18 @@
     transition: background-color 0.2s ease;
 
     &:hover {
-      background-color: var(--alt-bg1);
+      background-color: var(--tn-alt-bg1);
     }
 
     &:not(:last-child) {
-      border-bottom: 1px solid var(--lines);
+      border-bottom: 1px solid var(--tn-lines);
     }
   }
 
   &__cell {
     padding: 0 16px;
     font-size: 14px;
-    color: var(--fg1);
+    color: var(--tn-fg1);
     vertical-align: middle;
     white-space: nowrap;
     overflow: hidden;

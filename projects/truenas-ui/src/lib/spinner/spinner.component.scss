@@ -9,7 +9,7 @@
 }
 
 .tn-spinner-circle {
-  stroke: var(--primary, #007bff);
+  stroke: var(--tn-primary, #007bff);
   stroke-linecap: round;
   transition: stroke-dashoffset 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }

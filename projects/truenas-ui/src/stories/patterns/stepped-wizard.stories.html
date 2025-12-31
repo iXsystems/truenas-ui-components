@@ -1,5 +1,5 @@
 <tn-dialog-shell title="Backup Configuration Wizard" [showFullscreenButton]="true">
-    <div style="padding: 0 var(--content-padding); margin-top: var(--content-padding);">
+    <div style="padding: 0 var(--tn-content-padding); margin-top: var(--tn-content-padding);">
     <tn-stepper orientation="auto" [linear]="true" [selectedIndex]="currentStep" (selectionChange)="onStepChange($event)">
     
     <tn-step label="Backup Target">
@@ -7,7 +7,7 @@
         <p>Choose where you want to store your backup data.</p>
         <div style="margin-top: 16px;">
         <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">
             Backup Destination
             </label>
             <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -24,7 +24,7 @@
         <p>Select an existing account to use for your backup.</p>
         <div style="margin-top: 16px;">
         <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">
             Choose an account
             </label>
             <tn-select placeholder="Select an account"
@@ -39,7 +39,7 @@
         <p>Enter the dataset path you want to include in your backup.</p>
         <div style="margin-top: 16px;">
         <div style="margin-bottom: 12px;">
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">
             Dataset Path
             </label>
             <tn-input [placeholder]="'Enter dataset path (e.g., pool1/documents)'"
@@ -55,27 +55,27 @@
         <h4>Review Configuration</h4>
         <p>Please review your backup configuration before proceeding.</p>
         <div style="margin-top: 16px;">
-        <div style="background: var(--bg2); padding: 16px; border-radius: 8px; border: 1px solid var(--lines);">
+        <div style="background: var(--tn-bg2); padding: 16px; border-radius: 8px; border: 1px solid var(--tn-lines);">
             <div style="display: grid; gap: 12px;">
             <div>
-                <strong style="color: var(--fg1);">Backup Target:</strong>
-                <span style="margin-left: 8px; color: var(--fg2);">{{ getBackupTargetLabel(backupTarget) }}</span>
+                <strong style="color: var(--tn-fg1);">Backup Target:</strong>
+                <span style="margin-left: 8px; color: var(--tn-fg2);">{{ getBackupTargetLabel(backupTarget) }}</span>
             </div>
             <div>
-                <strong style="color: var(--fg1);">Account:</strong>
-                <span style="margin-left: 8px; color: var(--fg2);">{{ getAccountLabel(selectedAccount) }}</span>
+                <strong style="color: var(--tn-fg1);">Account:</strong>
+                <span style="margin-left: 8px; color: var(--tn-fg2);">{{ getAccountLabel(selectedAccount) }}</span>
             </div>
             <div>
-                <strong style="color: var(--fg1);">Dataset:</strong>
-                <span style="margin-left: 8px; color: var(--fg2);">{{ selectedDatasetPath || 'Not specified' }}</span>
+                <strong style="color: var(--tn-fg1);">Dataset:</strong>
+                <span style="margin-left: 8px; color: var(--tn-fg2);">{{ selectedDatasetPath || 'Not specified' }}</span>
             </div>
             <div>
-                <strong style="color: var(--fg1);">Include Snapshots:</strong>
-                <span style="margin-left: 8px; color: var(--fg2);">{{ includeSnapshots ? 'Yes' : 'No' }}</span>
+                <strong style="color: var(--tn-fg1);">Include Snapshots:</strong>
+                <span style="margin-left: 8px; color: var(--tn-fg2);">{{ includeSnapshots ? 'Yes' : 'No' }}</span>
             </div>
             </div>
         </div>
-        <div style="margin-top: 16px; padding: 12px; color:var(--green); border-radius: 4px; font-size: 14px;">
+        <div style="margin-top: 16px; padding: 12px; color:var(--tn-green); border-radius: 4px; font-size: 14px;">
             <strong>Ready to create backup task!</strong> All configuration is valid and complete.
         </div>
         </div>
