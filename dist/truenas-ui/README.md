@@ -23,14 +23,14 @@ npm install truenas-ui
 ### 1. Import Components
 
 ```typescript
-import { IxButtonComponent, IxIconComponent } from 'truenas-ui';
+import { TnButtonComponent, TnIconComponent } from 'truenas-ui';
 
 @Component({
   standalone: true,
-  imports: [IxButtonComponent, IxIconComponent],
+  imports: [TnButtonComponent, TnIconComponent],
   template: `
-    <ix-button variant="primary">Click me</ix-button>
-    <ix-icon name="folder" library="mdi"></ix-icon>
+    <tn-button variant="primary">Click me</tn-button>
+    <tn-icon name="folder" library="mdi"></tn-icon>
   `
 })
 export class MyComponent {}
@@ -62,14 +62,14 @@ The library includes an intelligent icon system that supports multiple icon sour
 
 ```html
 <!-- MDI icons from sprite (recommended) -->
-<ix-icon name="folder" library="mdi"></ix-icon>
-<ix-icon name="server" library="mdi" size="lg" color="#007acc"></ix-icon>
+<tn-icon name="folder" library="mdi"></tn-icon>
+<tn-icon name="server" library="mdi" size="lg" color="#007acc"></tn-icon>
 
 <!-- Lucide icons via registry -->
-<ix-icon name="home" library="lucide"></ix-icon>
+<tn-icon name="home" library="lucide"></tn-icon>
 
 <!-- Unicode fallbacks -->
-<ix-icon name="star"></ix-icon>  <!-- Shows ★ -->
+<tn-icon name="star"></tn-icon>  <!-- Shows ★ -->
 ```
 
 ### Icon Sizes
@@ -79,7 +79,7 @@ Available sizes: `xs`, `sm`, `md` (default), `lg`, `xl`
 ### Icons in Menus
 
 ```typescript
-const menuItems: IxMenuItem[] = [
+const menuItems: TnMenuItem[] = [
   { id: '1', label: 'Home', icon: 'home', iconLibrary: 'mdi' },
   { id: '2', label: 'Settings', icon: 'cog', iconLibrary: 'mdi' },
   { id: '3', label: 'Profile', icon: 'user', iconLibrary: 'lucide' },
@@ -109,7 +109,7 @@ npm run icons
 ```
 
 This will:
-- Scan your templates for `<ix-icon>` elements
+- Scan your templates for `<tn-icon>` elements
 - Detect icons marked with `iconMarker()` in TypeScript
 - Generate `src/assets/icons/sprite.svg` with only used icons
 - Create `src/assets/icons/sprite-config.json` with manifest
@@ -179,13 +179,13 @@ export class MyComponent {
 mkdir custom-icons
 ```
 
-2. **Add SVG files** (they'll be prefixed with `ix-` automatically):
+2. **Add SVG files** (they'll be prefixed with `tn-` automatically):
 
 ```
 custom-icons/
-  ├── logo.svg        → Available as "ix-logo"
-  ├── brand.svg       → Available as "ix-brand"
-  └── custom-icon.svg → Available as "ix-custom-icon"
+  ├── logo.svg        → Available as "tn-logo"
+  ├── brand.svg       → Available as "tn-brand"
+  └── custom-icon.svg → Available as "tn-custom-icon"
 ```
 
 3. **Configure sprite generation:**
@@ -206,7 +206,7 @@ npm run icons
 5. **Use your custom icons:**
 
 ```html
-<ix-icon name="ix-logo"></ix-icon>
+<tn-icon name="tn-logo"></tn-icon>
 ```
 
 ## Icon Registry (Advanced)
@@ -214,11 +214,11 @@ npm run icons
 For integrating third-party icon libraries like Lucide:
 
 ```typescript
-import { IxIconRegistryService } from 'truenas-ui';
+import { TnIconRegistryService } from 'truenas-ui';
 import * as LucideIcons from 'lucide';
 
 export function setupIcons() {
-  const iconRegistry = inject(IxIconRegistryService);
+  const iconRegistry = inject(TnIconRegistryService);
 
   // Register Lucide library
   iconRegistry.registerLibrary({
@@ -240,14 +240,14 @@ export function setupIcons() {
 Apply themes by adding a class to your root element:
 
 ```html
-<html class="ix-dark">
+<html class="tn-dark">
   <!-- Your app -->
 </html>
 ```
 
 Available themes:
-- `ix-dark` (default)
-- `ix-blue`
+- `tn-dark` (default)
+- `tn-blue`
 - `dracula`
 - `nord`
 - `paper`
