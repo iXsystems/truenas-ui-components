@@ -4,17 +4,109 @@ import { Meta } from '@storybook/addon-docs/blocks';
 
 # Theming in TrueNAS UI Library
 
-This library supports multiple themes. You can switch themes using the **Storybook toolbar**.
+This library provides a centralized theme system with multiple built-in themes. You can switch themes using the **Storybook toolbar** or programmatically via the **TnThemeService**.
 
 ## Available Themes
-- **iX Dark** (default)
-- **iX Blue**
+- **TN Dark** (default)
+- **TN Blue**
 - **Dracula**
 - **Nord**
 - **Paper**
 - **Solarized Dark**
 - **Midnight**
 - **High Contrast**
+
+## TnThemeService API
+
+The `TnThemeService` is a signal-based theme orchestration service that manages theme state, DOM updates, and localStorage persistence.
+
+### Basic Usage
+
+```typescript
+import { Component, inject, effect } from '@angular/core';
+import { TnThemeService, TnTheme } from 'truenas-ui';
+
+@Component({
+  selector: 'app-theme-switcher',
+  template: `
+    <select (change)="onThemeChange($event)">
+      @for (theme of themes; track theme.name) {
+        <option [value]="theme.name">{{ theme.label }}</option>
+      }
+    </select>
+  `
+})
+export class ThemeSwitcherComponent {
+  private themeService = inject(TnThemeService);
+
+  // Get all available themes
+  themes = this.themeService.availableThemes;
+
+  // React to theme changes
+  constructor() {
+    effect(() => {
+      const current = this.themeService.currentTheme();
+      console.log('Theme changed to:', current?.label);
+    });
+  }
+
+  onThemeChange(event: Event): void {
+    const themeName = (event.target as HTMLSelectElement).value as TnTheme;
+    this.themeService.setTheme(themeName);
+  }
+}
+```
+
+### API Reference
+
+#### Properties
+
+- **`currentTheme`**: `Signal<TnThemeDefinition | undefined>` - Reactive signal containing the current theme definition
+- **`currentThemeClass`**: `Signal<string>` - Reactive signal containing the current theme's CSS class name
+- **`availableThemes`**: `readonly TnThemeDefinition[]` - Array of all available theme definitions
+
+#### Methods
+
+- **`setTheme(theme: TnTheme): boolean`** - Sets the active theme. Returns `true` if successful, `false` if theme not found
+- **`getCurrentTheme(): TnTheme`** - Returns the current theme enum value
+- **`resetToDefault(): void`** - Resets to the default theme (TN Dark)
+- **`hasTheme(theme: TnTheme): boolean`** - Checks if a theme exists
+
+### Type-Safe Theme Enum
+
+Use the `TnTheme` enum for type-safe theme selection:
+
+```typescript
+import { TnTheme } from 'truenas-ui';
+
+// ✅ Type-safe with autocomplete
+themeService.setTheme(TnTheme.Dracula);
+themeService.setTheme(TnTheme.Nord);
+
+// ❌ Avoid hardcoded strings
+themeService.setTheme('tn-dracula'); // This works but no type safety
+```
+
+### Theme Definitions
+
+Each `TnThemeDefinition` contains:
+
+```typescript
+interface TnThemeDefinition {
+  name: TnTheme;           // Enum value (e.g., TnTheme.Dracula)
+  label: string;           // Display name (e.g., "Dracula")
+  className: string;       // CSS class (e.g., "tn-dracula")
+  description?: string;    // Optional description
+}
+```
+
+### Features
+
+- **Signal-based reactivity** - Use Angular signals for reactive theme state
+- **LocalStorage persistence** - Theme preference automatically saved to `localStorage` with key `tn-theme`
+- **Automatic DOM updates** - CSS class automatically applied to `<html>` element
+- **SSR-safe** - Platform checks ensure browser-only code doesn't run on server
+- **Type-safe API** - Use `TnTheme` enum instead of string literals
 
 ## Usage in Components
 Use CSS variables to apply theme styles:
@@ -32,154 +124,154 @@ Use CSS variables to apply theme styles:
 Each theme defines the following CSS custom properties:
 
 ### Core Colors
-- `--primary`: Primary brand color
-- `--primary-txt`: Text color for primary backgrounds
-- `--accent`: Accent color for highlights
-- `--topbar`: Top navigation bar background
-- `--topbar-txt`: Top navigation bar text
+- `--tn-primary`: Primary brand color
+- `--tn-primary-txt`: Text color for primary backgrounds
+- `--tn-accent`: Accent color for highlights
+- `--tn-topbar`: Top navigation bar background
+- `--tn-topbar-txt`: Top navigation bar text
 
 ### Background Colors
-- `--bg1`: Main background color
-- `--bg2`: Secondary background color (cards, panels)
-- `--alt-bg1`: Alternative background 1
-- `--alt-bg2`: Alternative background 2
+- `--tn-bg1`: Main background color
+- `--tn-bg2`: Secondary background color (cards, panels)
+- `--tn-alt-bg1`: Alternative background 1
+- `--tn-alt-bg2`: Alternative background 2
 
 ### Text Colors
-- `--fg1`: Primary text color
-- `--fg2`: Secondary text color
-- `--alt-fg1`: Alternative text color 1
-- `--alt-fg2`: Alternative text color 2
+- `--tn-fg1`: Primary text color
+- `--tn-fg2`: Secondary text color
+- `--tn-alt-fg1`: Alternative text color 1
+- `--tn-alt-fg2`: Alternative text color 2
 
 ### UI Elements
-- `--lines`: Border and divider color
-- `--btn-default-bg`: Default button background
-- `--btn-default-txt`: Default button text
+- `--tn-lines`: Border and divider color
+- `--tn-btn-default-bg`: Default button background
+- `--tn-btn-default-txt`: Default button text
 
 ### Status Colors
-- `--red`: Error/danger color
-- `--green`: Success color
-- `--yellow`: Warning color
-- `--blue`: Info color
-- `--orange`: Secondary warning
-- `--cyan`: Info accent
+- `--tn-red`: Error/danger color
+- `--tn-green`: Success color
+- `--tn-yellow`: Warning color
+- `--tn-blue`: Info color
+- `--tn-orange`: Secondary warning
+- `--tn-cyan`: Info accent
 
 ---
 
 ## Theme Definitions
 
-### iX Dark (Default)
+### TN Dark (Default)
 The default TrueNAS dark theme with blue accents.
 
 **Key Colors:**
-- `--primary`: #0095D5
-- `--accent`: #545454
-- `--bg1`: #1E1E1E
-- `--bg2`: #282828
-- `--fg1`: #ffffff
-- `--fg2`: rgba(255,255,255,0.85)
-- `--lines`: #383838
-- `--red`: #CE2929
-- `--green`: #71BF44
-- `--yellow`: #DED142
+- `--tn-primary`: #0095D5
+- `--tn-accent`: #545454
+- `--tn-bg1`: #1E1E1E
+- `--tn-bg2`: #282828
+- `--tn-fg1`: #ffffff
+- `--tn-fg2`: rgba(255,255,255,0.85)
+- `--tn-lines`: #383838
+- `--tn-red`: #CE2929
+- `--tn-green`: #71BF44
+- `--tn-yellow`: #DED142
 
-### iX Blue
-Official iX System colors on a light background.
+### TN Blue
+Official TrueNAS colors on a light background.
 
 **Key Colors:**
-- `--primary`: #0095D5
-- `--accent`: #DED142
-- `--bg1`: #f2f2f2
-- `--bg2`: #ffffff
-- `--fg1`: #585858
-- `--fg2`: #666666
-- `--lines`: #383838
+- `--tn-primary`: #0095D5
+- `--tn-accent`: #DED142
+- `--tn-bg1`: #f2f2f2
+- `--tn-bg2`: #ffffff
+- `--tn-fg1`: #585858
+- `--tn-fg2`: #666666
+- `--tn-lines`: #383838
 
 ### Dracula
 Popular dark theme with purple accents.
 
 **Key Colors:**
-- `--primary`: #6272a4
-- `--accent`: #bd93f9
-- `--bg1`: #181a26
-- `--bg2`: #282a36
-- `--fg1`: #efefef
-- `--fg2`: #cacac5
-- `--lines`: #383838
-- `--red`: #ff5555
-- `--green`: #50fa7b
-- `--yellow`: #f1fa8c
+- `--tn-primary`: #6272a4
+- `--tn-accent`: #bd93f9
+- `--tn-bg1`: #181a26
+- `--tn-bg2`: #282a36
+- `--tn-fg1`: #efefef
+- `--tn-fg2`: #cacac5
+- `--tn-lines`: #383838
+- `--tn-red`: #ff5555
+- `--tn-green`: #50fa7b
+- `--tn-yellow`: #f1fa8c
 
 ### Nord
 Inspired by the Nord color palette with cool blues and grays.
 
 **Key Colors:**
-- `--primary`: #88c0d0
-- `--accent`: #5e81aC
-- `--bg1`: #2e3440
-- `--bg2`: #3b4252
-- `--fg1`: #eceff4
-- `--fg2`: #e5e9f0
-- `--lines`: #383838
-- `--red`: #bf616a
-- `--green`: #a3be8c
-- `--yellow`: #ebcb8b
+- `--tn-primary`: #88c0d0
+- `--tn-accent`: #5e81aC
+- `--tn-bg1`: #2e3440
+- `--tn-bg2`: #3b4252
+- `--tn-fg1`: #eceff4
+- `--tn-fg2`: #e5e9f0
+- `--tn-lines`: #383838
+- `--tn-red`: #bf616a
+- `--tn-green`: #a3be8c
+- `--tn-yellow`: #ebcb8b
 
 ### Paper
 FreeNAS 11.2 default theme with light backgrounds and blue accents.
 
 **Key Colors:**
-- `--primary`: #0D5687
-- `--accent`: #f0cb00
-- `--bg1`: #F2F2F2
-- `--bg2`: #FAFAFA
-- `--fg1`: #3f3f3f
-- `--fg2`: #666666
-- `--lines`: #383838
-- `--red`: #ff0013
-- `--green`: #1F9642
+- `--tn-primary`: #0D5687
+- `--tn-accent`: #f0cb00
+- `--tn-bg1`: #F2F2F2
+- `--tn-bg2`: #FAFAFA
+- `--tn-fg1`: #3f3f3f
+- `--tn-fg2`: #666666
+- `--tn-lines`: #383838
+- `--tn-red`: #ff0013
+- `--tn-green`: #1F9642
 
 ### Solarized Dark
 Solarized dark color scheme with warm tones.
 
 **Key Colors:**
-- `--primary`: #586e75
-- `--accent`: #2aa198
-- `--bg1`: #002b36
-- `--bg2`: #073642
-- `--fg1`: #586e75
-- `--fg2`: #7f99a2
-- `--lines`: #383838
-- `--red`: #dc322f
-- `--green`: #859900
-- `--yellow`: #b58900
+- `--tn-primary`: #586e75
+- `--tn-accent`: #2aa198
+- `--tn-bg1`: #002b36
+- `--tn-bg2`: #073642
+- `--tn-fg1`: #586e75
+- `--tn-fg2`: #7f99a2
+- `--tn-lines`: #383838
+- `--tn-red`: #dc322f
+- `--tn-green`: #859900
+- `--tn-yellow`: #b58900
 
 ### Midnight
 Dark theme with blues and grays for a professional look.
 
 **Key Colors:**
-- `--primary`: #1274b5
-- `--accent`: #c17ecc
-- `--bg1`: #212a35
-- `--bg2`: #303d48
-- `--fg1`: #aaaaaa
-- `--fg2`: #cccccc
-- `--lines`: #383838
-- `--red`: #ff0013
-- `--green`: #1F9642
+- `--tn-primary`: #1274b5
+- `--tn-accent`: #c17ecc
+- `--tn-bg1`: #212a35
+- `--tn-bg2`: #303d48
+- `--tn-fg1`: #aaaaaa
+- `--tn-fg2`: #cccccc
+- `--tn-lines`: #383838
+- `--tn-red`: #ff0013
+- `--tn-green`: #1F9642
 
 ### High Contrast
 High contrast theme based on Legacy Django UI color scheme.
 
 **Key Colors:**
-- `--primary`: #4784ac
-- `--accent`: #d238ff
-- `--bg1`: #dddddd
-- `--bg2`: #ffffff
-- `--fg1`: #222222
-- `--fg2`: #333333
-- `--lines`: #383838
-- `--red`: #ff0013
-- `--green`: #59d600
+- `--tn-primary`: #4784ac
+- `--tn-accent`: #d238ff
+- `--tn-bg1`: #dddddd
+- `--tn-bg2`: #ffffff
+- `--tn-fg1`: #222222
+- `--tn-fg2`: #333333
+- `--tn-lines`: #383838
+- `--tn-red`: #ff0013
+- `--tn-green`: #59d600
 
 ## Implementation Notes
 
