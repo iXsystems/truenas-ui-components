@@ -1,9 +1,9 @@
 <div [ngClass]="classes()">
-  <label class="ix-checkbox__label" [for]="id">
+  <label class="tn-checkbox__label" [for]="id">
     <input
       #checkboxEl
       type="checkbox"
-      class="ix-checkbox__input"
+      class="tn-checkbox__input"
       [id]="id"
       [checked]="effectiveChecked()"
       [disabled]="isDisabled()"
@@ -14,15 +14,15 @@
       [attr.aria-invalid]="error() ? 'true' : null"
       (change)="onCheckboxChange($event)"
     />
-    <span class="ix-checkbox__checkmark"></span>
+    <span class="tn-checkbox__checkmark"></span>
     @if (!hideLabel()) {
-      <span class="ix-checkbox__text">{{ label() }}</span>
+      <span class="tn-checkbox__text">{{ label() }}</span>
     }
   </label>
 
   @if (error()) {
     <div
-      class="ix-checkbox__error"
+      class="tn-checkbox__error"
       role="alert"
       aria-live="polite"
       [id]="id + '-error'"

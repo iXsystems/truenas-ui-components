@@ -116,7 +116,7 @@ export class TnTreeFlatDataSource<T, F> extends DataSource<F> {
   templateUrl: './tree.component.html',
   styleUrl: './tree.component.scss',
   host: {
-    'class': 'ix-tree',
+    'class': 'tn-tree',
     'role': 'tree'
   },
   encapsulation: ViewEncapsulation.None,

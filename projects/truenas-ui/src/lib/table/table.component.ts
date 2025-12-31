@@ -15,7 +15,7 @@ export interface TnTableDataSource<T = unknown> {
   templateUrl: './table.component.html',
   styleUrl: './table.component.scss',
   host: {
-    'class': 'ix-table'
+    'class': 'tn-table'
   }
 })
 export class TnTableComponent<T = unknown> {

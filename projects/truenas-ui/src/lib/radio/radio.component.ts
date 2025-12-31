@@ -32,7 +32,7 @@ export class TnRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
 
   change = output<unknown>();
 
-  id = `ix-radio-${Math.random().toString(36).substr(2, 9)}`;
+  id = `tn-radio-${Math.random().toString(36).substr(2, 9)}`;
   checked = false;
 
   // CVA disabled state management
@@ -88,14 +88,14 @@ export class TnRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
   }
 
   classes = computed(() => {
-    const classes = ['ix-radio'];
+    const classes = ['tn-radio'];
 
     if (this.isDisabled()) {
-      classes.push('ix-radio--disabled');
+      classes.push('tn-radio--disabled');
     }
 
     if (this.error()) {
-      classes.push('ix-radio--error');
+      classes.push('tn-radio--error');
     }
 
     return classes;

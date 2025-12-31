@@ -23,7 +23,7 @@ export class TnCalendarHeaderComponent {
     'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
   ];
 
-  periodLabelId = `ix-calendar-period-label-${Math.floor(Math.random() * 10000)}`;
+  periodLabelId = `tn-calendar-period-label-${Math.floor(Math.random() * 10000)}`;
 
   periodLabel = computed(() => {
     const date = this.currentDate();

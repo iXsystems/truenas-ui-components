@@ -1,15 +1,15 @@
-<div class="ix-list-item__content">
+<div class="tn-list-item__content">
   <!-- Leading icon/avatar slot -->
   @if (hasLeadingContent()) {
-    <div class="ix-list-item__leading">
+    <div class="tn-list-item__leading">
       <ng-content select="[tnListIcon], [tnListAvatar]" />
     </div>
   }
 
   <!-- Text content -->
-  <div class="ix-list-item__text">
+  <div class="tn-list-item__text">
     <!-- Primary text -->
-    <div class="ix-list-item__primary-text">
+    <div class="tn-list-item__primary-text">
       <ng-content select="[tnListItemTitle], [tnListItemPrimary]" />
       @if (!hasPrimaryTextDirective()) {
         <ng-content />
@@ -18,7 +18,7 @@
 
     <!-- Secondary text -->
     @if (hasSecondaryTextContent()) {
-      <div class="ix-list-item__secondary-text">
+      <div class="tn-list-item__secondary-text">
         <ng-content select="[tnListItemLine], [tnListItemSecondary]" />
       </div>
     }
@@ -26,7 +26,7 @@
 
   <!-- Trailing content slot -->
   @if (hasTrailingContent()) {
-    <div class="ix-list-item__trailing">
+    <div class="tn-list-item__trailing">
       <ng-content select="[tnListItemTrailing]" />
     </div>
   }

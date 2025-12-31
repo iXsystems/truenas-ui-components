@@ -18,7 +18,7 @@ import {
   styleUrls: ['./particle-progress-bar.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    'class': 'ix-particle-progress-bar'
+    'class': 'tn-particle-progress-bar'
   }
 })
 export class TnParticleProgressBarComponent implements AfterViewInit, OnDestroy {

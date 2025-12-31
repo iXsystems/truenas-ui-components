@@ -8,8 +8,8 @@ import { Component, input } from '@angular/core';
   templateUrl: './list-subheader.component.html',
   styleUrl: './list-subheader.component.scss',
   host: {
-    'class': 'ix-list-subheader',
-    '[class.ix-list-subheader--inset]': 'inset()',
+    'class': 'tn-list-subheader',
+    '[class.tn-list-subheader--inset]': 'inset()',
     'role': 'heading',
     'aria-level': '3'
   }

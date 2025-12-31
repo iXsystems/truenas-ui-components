@@ -11,9 +11,9 @@ import { TnCheckboxComponent } from '../checkbox/checkbox.component';
   templateUrl: './list-option.component.html',
   styleUrl: './list-option.component.scss',
   host: {
-    'class': 'ix-list-option',
-    '[class.ix-list-option--selected]': 'effectiveSelected()',
-    '[class.ix-list-option--disabled]': 'effectiveDisabled()',
+    'class': 'tn-list-option',
+    '[class.tn-list-option--selected]': 'effectiveSelected()',
+    '[class.tn-list-option--disabled]': 'effectiveDisabled()',
     'role': 'option',
     '[attr.aria-selected]': 'effectiveSelected()',
     '[attr.aria-disabled]': 'effectiveDisabled()'

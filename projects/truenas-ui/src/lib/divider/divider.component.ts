@@ -8,9 +8,9 @@ import { Component, input } from '@angular/core';
   templateUrl: './divider.component.html',
   styleUrl: './divider.component.scss',
   host: {
-    'class': 'ix-divider',
-    '[class.ix-divider--vertical]': 'vertical()',
-    '[class.ix-divider--inset]': 'inset()',
+    'class': 'tn-divider',
+    '[class.tn-divider--vertical]': 'vertical()',
+    '[class.tn-divider--inset]': 'inset()',
     'role': 'separator',
     '[attr.aria-orientation]': 'vertical() ? "vertical" : "horizontal"'
   }

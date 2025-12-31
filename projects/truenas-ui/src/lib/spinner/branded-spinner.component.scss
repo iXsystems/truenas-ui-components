@@ -1,9 +1,9 @@
-.ix-branded-spinner {
+.tn-branded-spinner {
   display: inline-block;
   vertical-align: middle;
 }
 
-.ix-branded-spinner-container {
+.tn-branded-spinner-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -12,18 +12,18 @@
   min-height: 100px;
 }
 
-.ix-branded-spinner-logo {
+.tn-branded-spinner-logo {
   width: 100px;
   height: 100px;
 }
 
-.ix-branded-spinner-logo path.exploded {
+.tn-branded-spinner-logo path.exploded {
   fill-opacity: 0;
   stroke-width: 1px;
   stroke: var(--primary, #007bff);
 }
 
-.ix-branded-spinner-logo path#morph-target {
+.tn-branded-spinner-logo path#morph-target {
   fill-opacity: 0;
   fill: var(--primary, #007bff);
 }

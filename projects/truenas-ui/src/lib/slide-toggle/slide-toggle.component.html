@@ -1,10 +1,10 @@
 <div [ngClass]="classes()" [attr.data-testid]="testId()">
-  <label class="ix-slide-toggle__label" [for]="id">
+  <label class="tn-slide-toggle__label" [for]="id">
 
     <!-- Label before toggle -->
     @if (label() && labelPosition() === 'before') {
       <span
-        class="ix-slide-toggle__label-text ix-slide-toggle__label-text--before"
+        class="tn-slide-toggle__label-text ix-slide-toggle__label-text--before"
         tabindex="0"
         role="button"
         (click)="onLabelClick()"
@@ -15,11 +15,11 @@
     }
 
     <!-- Toggle track and thumb -->
-    <div class="ix-slide-toggle__bar">
+    <div class="tn-slide-toggle__bar">
       <input
         #toggleEl
         type="checkbox"
-        class="ix-slide-toggle__input"
+        class="tn-slide-toggle__input"
         [id]="id"
         [checked]="effectiveChecked()"
         [disabled]="isDisabled()"
@@ -29,18 +29,18 @@
         (change)="onToggleChange($event)"
       />
 
-      <div class="ix-slide-toggle__track">
-        <div class="ix-slide-toggle__track-fill"></div>
+      <div class="tn-slide-toggle__track">
+        <div class="tn-slide-toggle__track-fill"></div>
       </div>
 
-      <div class="ix-slide-toggle__thumb-container">
-        <div class="ix-slide-toggle__thumb">
-          <div class="ix-slide-toggle__ripple"></div>
+      <div class="tn-slide-toggle__thumb-container">
+        <div class="tn-slide-toggle__thumb">
+          <div class="tn-slide-toggle__ripple"></div>
           <!-- State icon -->
-          <div class="ix-slide-toggle__icon">
+          <div class="tn-slide-toggle__icon">
             @if (effectiveChecked()) {
               <svg
-                class="ix-slide-toggle__check-icon"
+                class="tn-slide-toggle__check-icon"
                 viewBox="0 0 24 24"
                 width="16"
                 height="16">
@@ -49,7 +49,7 @@
             }
             @if (!effectiveChecked()) {
               <svg
-                class="ix-slide-toggle__minus-icon"
+                class="tn-slide-toggle__minus-icon"
                 viewBox="0 0 24 24"
                 width="16"
                 height="16">
@@ -64,7 +64,7 @@
     <!-- Label after toggle -->
     @if (label() && labelPosition() === 'after') {
       <span
-        class="ix-slide-toggle__label-text ix-slide-toggle__label-text--after"
+        class="tn-slide-toggle__label-text ix-slide-toggle__label-text--after"
         tabindex="0"
         role="button"
         (click)="onLabelClick()"

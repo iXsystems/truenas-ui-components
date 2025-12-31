@@ -8,9 +8,9 @@ import { Component, input } from '@angular/core';
   templateUrl: './list.component.html',
   styleUrl: './list.component.scss',
   host: {
-    'class': 'ix-list',
-    '[class.ix-list--dense]': 'dense()',
-    '[class.ix-list--disabled]': 'disabled()',
+    'class': 'tn-list',
+    '[class.tn-list--dense]': 'dense()',
+    '[class.tn-list--disabled]': 'disabled()',
     'role': 'list'
   }
 })

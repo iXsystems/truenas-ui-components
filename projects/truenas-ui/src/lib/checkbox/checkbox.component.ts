@@ -33,7 +33,7 @@ export class TnCheckboxComponent implements AfterViewInit, OnDestroy, ControlVal
 
   change = output<boolean>();
 
-  id = `ix-checkbox-${Math.random().toString(36).substr(2, 9)}`;
+  id = `tn-checkbox-${Math.random().toString(36).substr(2, 9)}`;
 
   // Internal state for CVA
   private internalChecked = signal<boolean>(false);
@@ -93,18 +93,18 @@ export class TnCheckboxComponent implements AfterViewInit, OnDestroy, ControlVal
   }
 
   classes = computed(() => {
-    const classes = ['ix-checkbox'];
+    const classes = ['tn-checkbox'];
 
     if (this.isDisabled()) {
-      classes.push('ix-checkbox--disabled');
+      classes.push('tn-checkbox--disabled');
     }
 
     if (this.error()) {
-      classes.push('ix-checkbox--error');
+      classes.push('tn-checkbox--error');
     }
 
     if (this.indeterminate()) {
-      classes.push('ix-checkbox--indeterminate');
+      classes.push('tn-checkbox--indeterminate');
     }
 
     return classes;

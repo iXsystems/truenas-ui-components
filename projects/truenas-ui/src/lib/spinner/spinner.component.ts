@@ -12,9 +12,9 @@ export type SpinnerMode = 'determinate' | 'indeterminate';
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   host: {
-    'class': 'ix-spinner',
-    '[class.ix-spinner-indeterminate]': 'mode() === "indeterminate"',
-    '[class.ix-spinner-determinate]': 'mode() === "determinate"',
+    'class': 'tn-spinner',
+    '[class.tn-spinner-indeterminate]': 'mode() === "indeterminate"',
+    '[class.tn-spinner-determinate]': 'mode() === "determinate"',
     '[attr.aria-valuenow]': 'mode() === "determinate" ? value() : null',
     '[attr.aria-valuemin]': 'mode() === "determinate" ? 0 : null',
     '[attr.aria-valuemax]': 'mode() === "determinate" ? 100 : null',

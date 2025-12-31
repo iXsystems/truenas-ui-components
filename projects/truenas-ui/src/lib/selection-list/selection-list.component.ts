@@ -23,9 +23,9 @@ export interface TnSelectionChange {
     }
   ],
   host: {
-    'class': 'ix-selection-list',
-    '[class.ix-selection-list--dense]': 'dense()',
-    '[class.ix-selection-list--disabled]': 'isDisabled()',
+    'class': 'tn-selection-list',
+    '[class.tn-selection-list--dense]': 'dense()',
+    '[class.tn-selection-list--disabled]': 'isDisabled()',
     'role': 'listbox',
     '[attr.aria-multiselectable]': 'multiple()'
   }

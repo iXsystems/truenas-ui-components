@@ -3,25 +3,25 @@
   width: 100%;
 }
 
-.ix-date-input-container {
+.tn-date-input-container {
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.ix-date-input-wrapper {
+.tn-date-input-wrapper {
   display: flex;
   align-items: center;
   width: 100%;
   position: relative;
 }
 
-.ix-date-segment-group {
+.tn-date-segment-group {
   display: flex;
   align-items: center;
 }
 
-.ix-date-segment {
+.tn-date-segment {
   background: transparent;
   border: none;
   outline: none;
@@ -47,18 +47,18 @@
     }
   }
   
-  &.ix-date-segment-year {
+  &.tn-date-segment-year {
     width: 4ch; /* Width for YYYY based on 4 characters */
   }
 }
 
-.ix-date-segment-separator {
+.tn-date-segment-separator {
   padding: 0 2px;
   user-select: none;
   color: var(--alt-fg1, #999);
 }
 
-.ix-date-input-toggle {
+.tn-date-input-toggle {
   position: absolute;
   right: 8px;
   z-index: 2;
@@ -81,8 +81,8 @@
 }
 
 // Global overlay styles (these are applied to overlay container)
-:host ::ng-deep .ix-datepicker-overlay {
-  .ix-calendar {
+:host ::ng-deep .tn-datepicker-overlay {
+  .tn-calendar {
     background: var(--bg1, white);
     border: 1px solid var(--lines, #e0e0e0);
     border-radius: 8px;
@@ -96,7 +96,7 @@
     --calendar-cell-font-size: 16px;
     --calendar-header-font-size: 14px;
     
-    .ix-calendar-content {
+    .tn-calendar-content {
       padding: 0; // Remove default padding since we're adding it to the wrapper
     }
   }

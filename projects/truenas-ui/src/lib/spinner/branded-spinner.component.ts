@@ -9,7 +9,7 @@ import { ElementRef, Component, input, ViewEncapsulation, ChangeDetectionStrateg
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   host: {
-    'class': 'ix-branded-spinner',
+    'class': 'tn-branded-spinner',
     'role': 'progressbar',
     '[attr.aria-label]': 'ariaLabel() || "Loading..."'
   }

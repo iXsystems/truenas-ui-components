@@ -8,7 +8,7 @@
 }
 
 // Base buffer container
-.ix-progress-bar-buffer {
+.tn-progress-bar-buffer {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -17,12 +17,12 @@
 }
 
 // Buffer bar (deprecated - hidden in new implementation)
-.ix-progress-bar-buffer-bar {
+.tn-progress-bar-buffer-bar {
   display: none;
 }
 
 // Buffer dots pattern (for buffer mode)
-.ix-progress-bar-buffer-dots {
+.tn-progress-bar-buffer-dots {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -39,7 +39,7 @@
 }
 
 // Bar container
-.ix-progress-bar-bar {
+.tn-progress-bar-bar {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -49,7 +49,7 @@
 }
 
 // Bar inner element (the actual colored bar)
-.ix-progress-bar-bar-inner {
+.tn-progress-bar-bar-inner {
   display: block;
   position: absolute;
   top: 0;
@@ -62,23 +62,23 @@
 }
 
 // Primary bar (always present)
-.ix-progress-bar-primary-bar {
+.tn-progress-bar-primary-bar {
   z-index: 1;
 }
 
 // Secondary bar (indeterminate mode only)
-.ix-progress-bar-secondary-bar {
+.tn-progress-bar-secondary-bar {
   z-index: 0;
   display: none; // Hidden by default
   
-  .ix-progress-bar-bar-inner {
+  .tn-progress-bar-bar-inner {
     background-color: var(--primary, #3b82f6);
   }
 }
 
 // Indeterminate animations (simplified to match query but opposite direction)
-:host(.ix-progress-bar-indeterminate) {
-  .ix-progress-bar-primary-bar .ix-progress-bar-bar-inner {
+:host(.tn-progress-bar-indeterminate) {
+  .tn-progress-bar-primary-bar .tn-progress-bar-bar-inner {
     animation: ix-progress-bar-indeterminate 2000ms infinite linear;
     background-color: var(--primary, #3b82f6);
     opacity: 1 !important;
@@ -98,39 +98,39 @@
 
 
 // Buffer mode specific styles
-:host(.ix-progress-bar-buffer) {
-  .ix-progress-bar-buffer-bar {
+:host(.tn-progress-bar-buffer) {
+  .tn-progress-bar-buffer-bar {
     opacity: 1;
   }
   
-  .ix-progress-bar-buffer-dots {
+  .tn-progress-bar-buffer-dots {
     opacity: 1;
   }
 }
 
 // Hide elements based on mode
-:host(.ix-progress-bar-determinate) {
-  .ix-progress-bar-buffer-dots {
+:host(.tn-progress-bar-determinate) {
+  .tn-progress-bar-buffer-dots {
     display: none;
   }
   
-  .ix-progress-bar-secondary-bar {
+  .tn-progress-bar-secondary-bar {
     display: none;
   }
 }
 
-:host(.ix-progress-bar-buffer) {
-  .ix-progress-bar-secondary-bar {
+:host(.tn-progress-bar-buffer) {
+  .tn-progress-bar-secondary-bar {
     display: none;
   }
 }
 
-:host(.ix-progress-bar-indeterminate) {
-  .ix-progress-bar-buffer-dots {
+:host(.tn-progress-bar-indeterminate) {
+  .tn-progress-bar-buffer-dots {
     display: none;
   }
   
-  .ix-progress-bar-buffer-bar {
+  .tn-progress-bar-buffer-bar {
     display: none;
   }
 }

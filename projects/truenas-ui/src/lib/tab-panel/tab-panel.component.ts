@@ -25,14 +25,14 @@ export class TnTabPanelComponent {
   elementRef = inject(ElementRef<HTMLElement>);
 
   classes = computed(() => {
-    const classes = ['ix-tab-panel'];
+    const classes = ['tn-tab-panel'];
 
     if (this.isActive()) {
-      classes.push('ix-tab-panel--active');
+      classes.push('tn-tab-panel--active');
     }
 
     if (!this.isActive()) {
-      classes.push('ix-tab-panel--hidden');
+      classes.push('tn-tab-panel--hidden');
     }
 
     return classes.join(' ');

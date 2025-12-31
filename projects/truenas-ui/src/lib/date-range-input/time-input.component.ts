@@ -19,7 +19,7 @@ import { TnSelectComponent } from '../select/select.component';
   templateUrl: './time-input.component.html',
   styleUrl: './time-input.component.scss',
   host: {
-    'class': 'ix-time-input'
+    'class': 'tn-time-input'
   }
 })
 export class TnTimeInputComponent implements ControlValueAccessor {

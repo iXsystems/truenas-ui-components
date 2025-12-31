@@ -1,7 +1,7 @@
 // List Option Component Styles
 // Based on Angular Material Design patterns
 
-.ix-list-option {
+.tn-list-option {
   display: block;
   position: relative;
   min-height: 48px;
@@ -117,8 +117,8 @@
 }
 
 // Hover states using :host selector
-:host(:hover:not(.ix-list-option--disabled)) {
-  .ix-list-option__content {
+:host(:hover:not(.tn-list-option--disabled)) {
+  .tn-list-option__content {
     background-color: var(--alt-bg2);
   }
 }
@@ -126,7 +126,7 @@
 :host(:focus) {
   outline: none;
   
-  .ix-list-option__content {
+  .tn-list-option__content {
     background-color: var(--alt-bg2);
   }
 }

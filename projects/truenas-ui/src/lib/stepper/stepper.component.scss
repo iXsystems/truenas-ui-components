@@ -1,4 +1,4 @@
-.ix-stepper {
+.tn-stepper {
   display: flex;
   font-family: inherit;
   --step-diameter: 48px;
@@ -8,14 +8,14 @@
   &--horizontal {
     flex-direction: column;
 
-    .ix-stepper__header {
+    .tn-stepper__header {
       display: flex;
       justify-content: center;
       margin-bottom: 32px;
       padding: 0 16px;
     }
 
-    .ix-stepper__step-header {
+    .tn-stepper__step-header {
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -23,14 +23,14 @@
       cursor: pointer;
       transition: all 0.2s ease-in-out;
 
-      &:not(.ix-stepper__step-header--active):hover {
-        .ix-stepper__step-indicator {
+      &:not(.tn-stepper__step-header--active):hover {
+        .tn-stepper__step-indicator {
           transform: scale(0.95);
         }
       }
     }
 
-    .ix-stepper__connector {
+    .tn-stepper__connector {
       flex: 1;
       height: 2px;
       background: var(--lines, #e5e7eb);
@@ -43,7 +43,7 @@
   &--vertical {
     flex-direction: row;
 
-    .ix-stepper__header {
+    .tn-stepper__header {
       display: flex;
       flex-direction: column;
       width: 280px;
@@ -51,7 +51,7 @@
       border-right: 1px solid var(--lines, #e5e7eb);
     }
 
-    .ix-stepper__step-header {
+    .tn-stepper__step-header {
       display: flex;
       flex-direction: row;
       align-items: center;
@@ -62,19 +62,19 @@
       border-radius: 8px;
       margin-bottom: 8px;
 
-      &:not(.ix-stepper__step-header--active):hover {
-        .ix-stepper__step-indicator {
+      &:not(.tn-stepper__step-header--active):hover {
+        .tn-stepper__step-indicator {
           transform: scale(0.95);
         }
       }
 
-      .ix-stepper__step-label {
+      .tn-stepper__step-label {
         margin-left: 12px;
         margin-top: 0;
       }
     }
 
-    .ix-stepper__connector {
+    .tn-stepper__connector {
       width: 2px;
       height: 24px;
       background: var(--lines, #e5e7eb);
@@ -83,7 +83,7 @@
       margin-bottom: 8px;
     }
 
-    .ix-stepper__content {
+    .tn-stepper__content {
       flex: 1;
       padding: 16px;
     }
@@ -92,7 +92,7 @@
 }
 
 // Step Indicator Styling
-.ix-stepper__step-indicator {
+.tn-stepper__step-indicator {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -108,16 +108,16 @@
   transform: scale(0.65);
 }
 
-.ix-stepper__step-number {
+.tn-stepper__step-number {
   font-weight: normal;
 }
 
 // Step Label Styling
-.ix-stepper__step-label {
+.tn-stepper__step-label {
   margin-top: 8px;
 }
 
-.ix-stepper__step-title {
+.tn-stepper__step-title {
   display: block;
   font-weight: normal;
   font-size: 14px;
@@ -125,7 +125,7 @@
   line-height: 1.2;
 }
 
-.ix-stepper__step-subtitle {
+.tn-stepper__step-subtitle {
   display: block;
   font-size: 12px;
   color: var(--fg2, #6c757d);
@@ -133,67 +133,67 @@
 }
 
 // Active Step
-.ix-stepper__step-header--active {
-  .ix-stepper__step-indicator {
+.tn-stepper__step-header--active {
+  .tn-stepper__step-indicator {
     background: var(--primary, #007bff);
     color: var(--primary-txt, #ffffff);
     transform: scale(1.0);
   }
 
-  .ix-stepper__step-title {
+  .tn-stepper__step-title {
     color: var(--fg2, #6c757d);
     font-weight: 600;
   }
 }
 
 // Completed Step
-.ix-stepper__step-header--completed {
-  .ix-stepper__step-indicator {
+.tn-stepper__step-header--completed {
+  .tn-stepper__step-indicator {
     background: var(--green, #28a745);
     color: white;
   }
 
-  .ix-stepper__step-check {
+  .tn-stepper__step-check {
     font-size: 16px;
     font-weight: bold;
   }
 }
 
 // Error Step
-.ix-stepper__step-header--error {
-  .ix-stepper__step-indicator {
+.tn-stepper__step-header--error {
+  .tn-stepper__step-indicator {
     background: var(--red, #dc3545);
     color: white;
   }
 
-  .ix-stepper__step-error {
+  .tn-stepper__step-error {
     font-size: 18px;
     font-weight: bold;
   }
 
-  .ix-stepper__step-title {
+  .tn-stepper__step-title {
     color: var(--fg1, #000000);
   }
 }
 
 // Active error step - active styling takes precedence for text
-.ix-stepper__step-header--active.ix-stepper__step-header--error {
-  .ix-stepper__step-title {
+.tn-stepper__step-header--active.tn-stepper__step-header--error {
+  .tn-stepper__step-title {
     color: var(--fg2, #6c757d);
     font-weight: 600;
   }
 }
 
 // Optional Step
-.ix-stepper__step-header--optional {
-  .ix-stepper__step-indicator {
+.tn-stepper__step-header--optional {
+  .tn-stepper__step-indicator {
     border: 2px dashed var(--lines, #e5e7eb);
     background: transparent;
   }
 }
 
 // Connector Progress (only for horizontal steppers)
-.ix-stepper--horizontal .ix-stepper__step-header--completed + .ix-stepper__connector {
+.tn-stepper--horizontal .tn-stepper__step-header--completed + .tn-stepper__connector {
   background: var(--green, #28a745);
 
   &::after {
@@ -209,16 +209,16 @@
 }
 
 // Vertical connector progress (simpler styling)
-.ix-stepper--vertical .ix-stepper__step-header--completed + .ix-stepper__connector {
+.tn-stepper--vertical .tn-stepper__step-header--completed + .tn-stepper__connector {
   background: var(--green, #28a745);
 }
 
 // Content Styling
-.ix-stepper__content {
+.tn-stepper__content {
   min-height: 200px;
 }
 
-.ix-stepper__step-content {
+.tn-stepper__step-content {
   padding: 16px;
   background: var(--bg1, #ffffff);
   border-radius: 8px;
@@ -237,7 +237,7 @@
 }
 
 // Focus styles for accessibility
-.ix-stepper__step-header {
+.tn-stepper__step-header {
   &:focus {
     outline: 2px solid var(--primary, #007bff);
     outline-offset: 2px;
@@ -250,28 +250,28 @@
 
 // Tablet/mobile optimization for vertical stepper
 @media (max-width: 780px) {
-  .ix-stepper--vertical {
-    .ix-stepper__header {
+  .tn-stepper--vertical {
+    .tn-stepper__header {
       width: 180px;
       border-right: none;
       border-bottom: 1px solid var(--lines, #e5e7eb);
       padding: 16px 0;
     }
 
-    .ix-stepper__step-header {
+    .tn-stepper__step-header {
       flex-direction: column;
       align-items: center;
       text-align: center;
       min-width: 80px;
       padding: 8px 4px;
 
-      .ix-stepper__step-label {
+      .tn-stepper__step-label {
         margin-left: 0;
         margin-top: 8px;
       }
     }
 
-    .ix-stepper__connector {
+    .tn-stepper__connector {
       display: none;
     }
   }
@@ -279,14 +279,14 @@
 
 // Tablet and mobile screens - hide labels and make indicators smaller
 @media (max-width: 780px) {
-  .ix-stepper {
+  .tn-stepper {
     // Hide step labels on small screens
-    .ix-stepper__step-label {
+    .tn-stepper__step-label {
       display: none;
     }
 
     // Use smaller diameter for step indicators
-    .ix-stepper__step-indicator {
+    .tn-stepper__step-indicator {
       width: var(--step-diameter-sm);
       height: var(--step-diameter-sm);
       font-size: 12px;
@@ -294,29 +294,29 @@
   }
 
   // Horizontal stepper adjustments
-  .ix-stepper--horizontal {
-    .ix-stepper__header {
+  .tn-stepper--horizontal {
+    .tn-stepper__header {
       padding: 0 8px; // Reduce horizontal padding
     }
 
-    .ix-stepper__connector {
+    .tn-stepper__connector {
       top: calc(var(--step-diameter-sm) / 2); // Adjust connector position for smaller indicators
       margin: 0 8px; // Reduce connector margins
     }
   }
 
   // Vertical stepper adjustments
-  .ix-stepper--vertical {
-    .ix-stepper__header {
+  .tn-stepper--vertical {
+    .tn-stepper__header {
       width: 60px; // Further reduce header width
     }
 
-    .ix-stepper__step-header {
+    .tn-stepper__step-header {
       padding: 4px; // Reduce padding around step headers
       margin-bottom: 4px; // Reduce margin between steps
     }
 
-    .ix-stepper__connector {
+    .tn-stepper__connector {
       left: calc(var(--step-diameter-sm) / 2 + 4px); // Adjust connector position for smaller indicators and padding
       height: 16px; // Reduce connector height
       margin-bottom: 4px; // Reduce connector margin

@@ -1,6 +1,6 @@
 <!-- Header with breadcrumb navigation -->
-<div class="ix-file-picker-header">
-  <nav class="ix-file-picker-breadcrumb" aria-label="File path">
+<div class="tn-file-picker-header">
+  <nav class="tn-file-picker-breadcrumb" aria-label="File path">
     @for (segment of currentPath() | tnTruncatePath; track $index; let last = $last) {
       <button
         class="breadcrumb-segment"
@@ -13,7 +13,7 @@
     }
   </nav>
 
-  <div class="ix-file-picker-actions">
+  <div class="tn-file-picker-actions">
     @if (allowCreate()) {
       <tn-button
         variant="outline"
@@ -26,7 +26,7 @@
 
 <!-- Loading indicator -->
 @if (loading()) {
-  <div class="ix-file-picker-loading">
+  <div class="tn-file-picker-loading">
     <tn-icon name="loading" library="mdi" />
     <span>Loading...</span>
   </div>
@@ -34,7 +34,7 @@
 
 <!-- File table -->
 @if (!loading()) {
-  <div class="ix-file-picker-content">
+  <div class="tn-file-picker-content">
   <tn-table
     [dataSource]="filteredFileItems()"
     [displayedColumns]="multiSelect() ? displayedColumns : displayedColumns.slice(1)">
@@ -180,7 +180,7 @@
 
 <!-- Footer -->
 @if (!loading()) {
-  <div class="ix-file-picker-footer">
+  <div class="tn-file-picker-footer">
     @if (selectedItems().length > 0) {
       <span class="selection-count">
         {{ selectedItems().length }} item{{ selectedItems().length !== 1 ? 's' : '' }} selected

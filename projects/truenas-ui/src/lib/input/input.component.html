@@ -1,9 +1,9 @@
-<div class="ix-input-container">
+<div class="tn-input-container">
   <!-- Regular input field -->
   @if (!multiline()) {
     <input
       #inputEl
-      class="ix-input"
+      class="tn-input"
       [id]="id"
       [value]="value"
       [type]="inputType()"
@@ -19,7 +19,7 @@
   @if (multiline()) {
     <textarea
       #inputEl
-      class="ix-input ix-textarea"
+      class="tn-input ix-textarea"
       [id]="id"
       [value]="value"
       [attr.placeholder]="placeholder()"

@@ -1,24 +1,24 @@
-.ix-spinner {
+.tn-spinner {
   display: inline-block;
   vertical-align: middle;
 }
 
-.ix-spinner-svg {
+.tn-spinner-svg {
   animation: ix-spinner-rotate 2s linear infinite;
   transform-origin: center;
 }
 
-.ix-spinner-circle {
+.tn-spinner-circle {
   stroke: var(--primary, #007bff);
   stroke-linecap: round;
   transition: stroke-dashoffset 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.ix-spinner-indeterminate .ix-spinner-circle {
+.tn-spinner-indeterminate .tn-spinner-circle {
   animation: ix-spinner-dash 1.4s ease-in-out infinite;
 }
 
-.ix-spinner-determinate .ix-spinner-svg {
+.tn-spinner-determinate .tn-spinner-svg {
   animation: none;
   transform: rotate(-90deg);
 }

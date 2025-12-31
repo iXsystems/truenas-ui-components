@@ -1,4 +1,4 @@
-.ix-chip {
+.tn-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -29,7 +29,7 @@
     color: var(--primary-txt);
     border-color: var(--primary);
 
-    &:hover:not(.ix-chip--disabled) {
+    &:hover:not(.tn-chip--disabled) {
       background-color: var(--blue);
       border-color: var(--blue);
     }
@@ -40,7 +40,7 @@
     color: var(--alt-fg2);
     border-color: var(--alt-bg2);
 
-    &:hover:not(.ix-chip--disabled) {
+    &:hover:not(.tn-chip--disabled) {
       background-color: var(--alt-bg2);
       border-color: var(--accent);
     }
@@ -51,7 +51,7 @@
     color: var(--fg1);
     border-color: var(--accent);
 
-    &:hover:not(.ix-chip--disabled) {
+    &:hover:not(.tn-chip--disabled) {
       background-color: var(--alt-bg2);
       border-color: var(--alt-bg2);
     }
@@ -122,9 +122,9 @@
 }
 
 // Dark theme adjustments
-.ix-dark .ix-chip {
+.tn-dark .tn-chip {
   &--secondary {
-    .ix-chip__close {
+    .tn-chip__close {
       background-color: rgba(0, 0, 0, 0.2);
       
       &:hover:not(:disabled) {
@@ -135,7 +135,7 @@
 }
 
 // High contrast theme adjustments
-.high-contrast .ix-chip {
+.high-contrast .tn-chip {
   border-width: 2px;
   
   &:focus-visible {

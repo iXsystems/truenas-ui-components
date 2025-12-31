@@ -4,7 +4,7 @@
   z-index: 1200;
 }
 
-.ix-tooltip {
+.tn-tooltip {
   background: rgba(55, 55, 55, 0.9);
   color: white;
   padding: 6px 8px;
@@ -35,7 +35,7 @@
 }
 
 // Speech bubble pointer styling
-.ix-tooltip {
+.tn-tooltip {
   position: relative;
 
   // Create the speech bubble pointer
@@ -50,7 +50,7 @@
 }
 
 // Position-specific pointers
-:host-context(.ix-tooltip-panel-above) .ix-tooltip::after {
+:host-context(.tn-tooltip-panel-above) .tn-tooltip::after {
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
@@ -58,7 +58,7 @@
   border-color: rgba(55, 55, 55, 0.9) transparent transparent transparent;
 }
 
-:host-context(.ix-tooltip-panel-below) .ix-tooltip::after {
+:host-context(.tn-tooltip-panel-below) .tn-tooltip::after {
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
@@ -66,8 +66,8 @@
   border-color: transparent transparent rgba(55, 55, 55, 0.9) transparent;
 }
 
-:host-context(.ix-tooltip-panel-left) .ix-tooltip::after,
-:host-context(.ix-tooltip-panel-before) .ix-tooltip::after {
+:host-context(.tn-tooltip-panel-left) .tn-tooltip::after,
+:host-context(.tn-tooltip-panel-before) .tn-tooltip::after {
   top: 50%;
   left: 100%;
   transform: translateY(-50%);
@@ -75,8 +75,8 @@
   border-color: transparent transparent transparent rgba(55, 55, 55, 0.9);
 }
 
-:host-context(.ix-tooltip-panel-right) .ix-tooltip::after,
-:host-context(.ix-tooltip-panel-after) .ix-tooltip::after {
+:host-context(.tn-tooltip-panel-right) .tn-tooltip::after,
+:host-context(.tn-tooltip-panel-after) .tn-tooltip::after {
   top: 50%;
   right: 100%;
   transform: translateY(-50%);
@@ -86,33 +86,33 @@
 
 // High contrast mode support
 @media (prefers-contrast: high) {
-  .ix-tooltip {
+  .tn-tooltip {
     background: var(--fg1, #000);
     color: var(--bg1, #fff);
     border: 1px solid var(--lines, #999);
   }
 
-  :host-context(.ix-tooltip-panel-above) .ix-tooltip::after {
+  :host-context(.tn-tooltip-panel-above) .tn-tooltip::after {
     border-top-color: var(--fg1, #000);
   }
 
-  :host-context(.ix-tooltip-panel-below) .ix-tooltip::after {
+  :host-context(.tn-tooltip-panel-below) .tn-tooltip::after {
     border-bottom-color: var(--fg1, #000);
   }
 
-  :host-context(.ix-tooltip-panel-left) .ix-tooltip::after,
-  :host-context(.ix-tooltip-panel-before) .ix-tooltip::after {
+  :host-context(.tn-tooltip-panel-left) .tn-tooltip::after,
+  :host-context(.tn-tooltip-panel-before) .tn-tooltip::after {
     border-left-color: var(--fg1, #000);
   }
 
-  :host-context(.ix-tooltip-panel-right) .ix-tooltip::after,
-  :host-context(.ix-tooltip-panel-after) .ix-tooltip::after {
+  :host-context(.tn-tooltip-panel-right) .tn-tooltip::after,
+  :host-context(.tn-tooltip-panel-after) .tn-tooltip::after {
     border-right-color: var(--fg1, #000);
   }
 }
 
 // Slider thumb label specific styling
-:host-context(.ix-slider-thumb-label) .ix-tooltip {
+:host-context(.tn-slider-thumb-label) .tn-tooltip {
   font-size: 11px;
   padding: 4px 6px;
   font-weight: 600;
@@ -123,7 +123,7 @@
 
 // Reduced motion support
 @media (prefers-reduced-motion: reduce) {
-  .ix-tooltip {
+  .tn-tooltip {
     animation: none;
   }
 }

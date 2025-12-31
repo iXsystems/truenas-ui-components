@@ -9,7 +9,7 @@ import type { OnInit} from '@angular/core';
   standalone: true,
   imports: [CommonModule],
   host: {
-    'class': 'ix-dialog-shell'
+    'class': 'tn-dialog-shell'
   }
 })
 export class TnDialogShellComponent implements OnInit {
@@ -26,8 +26,8 @@ export class TnDialogShellComponent implements OnInit {
   ngOnInit() {
     // Check if dialog was opened in fullscreen mode by looking for existing fullscreen class
     setTimeout(() => {
-      const dialogPanel = this.document.querySelector('.ix-dialog-panel');
-      if (dialogPanel?.classList.contains('ix-dialog--fullscreen')) {
+      const dialogPanel = this.document.querySelector('.tn-dialog-panel');
+      if (dialogPanel?.classList.contains('tn-dialog--fullscreen')) {
         this.isFullscreen.set(true);
       }
     });
@@ -46,7 +46,7 @@ export class TnDialogShellComponent implements OnInit {
   }
 
   private enterFullscreen() {
-    const dialogPanel = this.document.querySelector('.ix-dialog-panel') as HTMLElement;
+    const dialogPanel = this.document.querySelector('.tn-dialog-panel') as HTMLElement;
 
     if (dialogPanel) {
       // Store original styles
@@ -66,14 +66,14 @@ export class TnDialogShellComponent implements OnInit {
       dialogPanel.style.borderRadius = '0';
 
       // Add fullscreen class
-      dialogPanel.classList.add('ix-dialog--fullscreen');
+      dialogPanel.classList.add('tn-dialog--fullscreen');
 
       this.isFullscreen.set(true);
     }
   }
 
   private exitFullscreen() {
-    const dialogPanel = this.document.querySelector('.ix-dialog-panel') as HTMLElement;
+    const dialogPanel = this.document.querySelector('.tn-dialog-panel') as HTMLElement;
 
     if (dialogPanel) {
       // Restore original styles
@@ -84,7 +84,7 @@ export class TnDialogShellComponent implements OnInit {
       dialogPanel.style.borderRadius = this.originalStyles['panelBorderRadius'] || '8px';
 
       // Remove fullscreen class
-      dialogPanel.classList.remove('ix-dialog--fullscreen');
+      dialogPanel.classList.remove('tn-dialog--fullscreen');
 
       this.isFullscreen.set(false);
     }

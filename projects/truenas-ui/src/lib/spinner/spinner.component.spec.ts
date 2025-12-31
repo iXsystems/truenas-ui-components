@@ -116,12 +116,12 @@ describe('TnSpinnerComponent', () => {
 
     fixture.componentRef.setInput('mode', 'indeterminate');
     fixture.detectChanges();
-    expect(element.classList.contains('ix-spinner-indeterminate')).toBe(true);
-    expect(element.classList.contains('ix-spinner-determinate')).toBe(false);
+    expect(element.classList.contains('tn-spinner-indeterminate')).toBe(true);
+    expect(element.classList.contains('tn-spinner-determinate')).toBe(false);
 
     fixture.componentRef.setInput('mode', 'determinate');
     fixture.detectChanges();
-    expect(element.classList.contains('ix-spinner-indeterminate')).toBe(false);
-    expect(element.classList.contains('ix-spinner-determinate')).toBe(true);
+    expect(element.classList.contains('tn-spinner-indeterminate')).toBe(false);
+    expect(element.classList.contains('tn-spinner-determinate')).toBe(true);
   });
 });

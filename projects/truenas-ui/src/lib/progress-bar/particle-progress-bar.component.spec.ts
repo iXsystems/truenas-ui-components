@@ -109,7 +109,7 @@ describe('TnParticleProgressBarComponent', () => {
 
   it('should have correct CSS class', () => {
     const element = fixture.nativeElement;
-    expect(element.classList.contains('ix-particle-progress-bar')).toBe(true);
+    expect(element.classList.contains('tn-particle-progress-bar')).toBe(true);
   });
 
   it('should clean up animation on destroy', () => {

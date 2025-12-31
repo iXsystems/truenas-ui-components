@@ -55,7 +55,7 @@ export const Default: Story = {
     const chip = canvas.getByTestId(args.testId!);
     
     await expect(chip).toBeInTheDocument();
-    await expect(chip).toHaveClass('ix-chip--primary');
+    await expect(chip).toHaveClass('tn-chip--primary');
     await userEvent.click(chip);
   },
 };
@@ -74,7 +74,7 @@ export const WithIcon: Story = {
     const chip = canvas.getByTestId(args.testId!);
     
     await expect(chip).toBeInTheDocument();
-    await expect(chip).toHaveClass('ix-chip--primary');
+    await expect(chip).toHaveClass('tn-chip--primary');
     
     // Check that the icon container exists
     const icon = chip.querySelector('.ix-chip__icon');
@@ -113,7 +113,7 @@ export const Disabled: Story = {
     const chip = canvas.getByTestId(args.testId!);
     
     await expect(chip).toBeInTheDocument();
-    await expect(chip).toHaveClass('ix-chip--disabled');
+    await expect(chip).toHaveClass('tn-chip--disabled');
     await expect(chip).toHaveAttribute('aria-disabled', 'true');
   },
 };
@@ -130,7 +130,7 @@ export const Primary: Story = {
     const canvas = within(canvasElement);
     const chip = canvas.getByTestId(args.testId!);
     
-    await expect(chip).toHaveClass('ix-chip--primary');
+    await expect(chip).toHaveClass('tn-chip--primary');
   },
 };
 
@@ -146,7 +146,7 @@ export const Secondary: Story = {
     const canvas = within(canvasElement);
     const chip = canvas.getByTestId(args.testId!);
     
-    await expect(chip).toHaveClass('ix-chip--secondary');
+    await expect(chip).toHaveClass('tn-chip--secondary');
   },
 };
 
@@ -162,7 +162,7 @@ export const Accent: Story = {
     const canvas = within(canvasElement);
     const chip = canvas.getByTestId(args.testId!);
     
-    await expect(chip).toHaveClass('ix-chip--accent');
+    await expect(chip).toHaveClass('tn-chip--accent');
   },
 };
 

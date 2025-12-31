@@ -1,8 +1,8 @@
 <div role="tablist" [ngClass]="classes()" [attr.aria-orientation]="orientation()">
-  <div #tabHeader class="ix-tabs__header">
+  <div #tabHeader class="tn-tabs__header">
     <ng-content select="ix-tab" />
     @if (highlightBarVisible()) {
-      <div class="ix-tabs__highlight-bar"
+      <div class="tn-tabs__highlight-bar"
            [style.left.px]="highlightBarLeft()"
            [style.width.px]="highlightBarWidth()"
            [style.top.px]="highlightBarTop()"
@@ -11,7 +11,7 @@
     }
   </div>
 
-  <div class="ix-tabs__content">
+  <div class="tn-tabs__content">
     <ng-content select="ix-tab-panel" />
   </div>
 </div>

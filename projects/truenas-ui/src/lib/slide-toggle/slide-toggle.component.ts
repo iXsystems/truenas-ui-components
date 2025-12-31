@@ -37,7 +37,7 @@ export class TnSlideToggleComponent implements AfterViewInit, OnDestroy, Control
   change = output<boolean>();
   toggleChange = output<boolean>();
 
-  id = `ix-slide-toggle-${Math.random().toString(36).substr(2, 9)}`;
+  id = `tn-slide-toggle-${Math.random().toString(36).substr(2, 9)}`;
 
   // Internal state for CVA
   private internalChecked = signal<boolean>(false);
@@ -108,18 +108,18 @@ export class TnSlideToggleComponent implements AfterViewInit, OnDestroy, Control
   }
 
   classes = computed(() => {
-    const classes = ['ix-slide-toggle'];
+    const classes = ['tn-slide-toggle'];
 
     if (this.isDisabled()) {
-      classes.push('ix-slide-toggle--disabled');
+      classes.push('tn-slide-toggle--disabled');
     }
 
     if (this.effectiveChecked()) {
-      classes.push('ix-slide-toggle--checked');
+      classes.push('tn-slide-toggle--checked');
     }
 
-    classes.push(`ix-slide-toggle--${this.color()}`);
-    classes.push(`ix-slide-toggle--label-${this.labelPosition()}`);
+    classes.push(`tn-slide-toggle--${this.color()}`);
+    classes.push(`tn-slide-toggle--label-${this.labelPosition()}`);
 
     return classes;
   });

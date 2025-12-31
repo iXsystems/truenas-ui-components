@@ -1,22 +1,22 @@
-<header class="ix-dialog__header">
-  <h2 class="ix-dialog__title">{{ title() }}</h2>
+<header class="tn-dialog__header">
+  <h2 class="tn-dialog__title">{{ title() }}</h2>
   @if (showFullscreenButton()) {
     <button
       type="button"
-      class="ix-dialog__fullscreen"
+      class="tn-dialog__fullscreen"
       tabindex="-1"
       [attr.aria-label]="isFullscreen() ? 'Exit fullscreen' : 'Enter fullscreen'"
       (click)="toggleFullscreen()">
-      <span class="ix-dialog__fullscreen-icon">{{ isFullscreen() ? '⤓' : '⤢' }}</span>
+      <span class="tn-dialog__fullscreen-icon">{{ isFullscreen() ? '⤓' : '⤢' }}</span>
     </button>
   }
-  <button type="button" class="ix-dialog__close" tabindex="-1" aria-label="Close dialog" (click)="close()">✕</button>
+  <button type="button" class="tn-dialog__close" tabindex="-1" aria-label="Close dialog" (click)="close()">✕</button>
 </header>
 
-<section class="ix-dialog__content" cdkDialogContent>
+<section class="tn-dialog__content" cdkDialogContent>
   <ng-content />
 </section>
 
-<footer class="ix-dialog__actions" cdkDialogActions>
+<footer class="tn-dialog__actions" cdkDialogActions>
   <ng-content select="[tnDialogAction]" />
 </footer>

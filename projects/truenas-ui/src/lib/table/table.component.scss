@@ -1,7 +1,7 @@
 // Table Component Styles
 // Based on Angular Material Design patterns
 
-.ix-table {
+.tn-table {
   display: block;
   width: 100%;
   overflow-x: auto;
@@ -63,16 +63,16 @@
 
   // Dense variant
   &--dense {
-    .ix-table__header-row {
+    .tn-table__header-row {
       height: 40px;
     }
 
-    .ix-table__row {
+    .tn-table__row {
       height: 32px;
     }
 
-    .ix-table__header-cell,
-    .ix-table__cell {
+    .tn-table__header-cell,
+    .tn-table__cell {
       padding: 0 12px;
       font-size: 13px;
     }

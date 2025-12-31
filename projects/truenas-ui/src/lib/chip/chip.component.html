@@ -10,18 +10,18 @@
   (keydown)="handleKeyDown($event)"
 >
   @if (icon()) {
-    <tn-icon class="ix-chip__icon" size="sm" [name]="icon()!" />
+    <tn-icon class="tn-chip__icon" size="sm" [name]="icon()!" />
   }
-  <span class="ix-chip__label">{{ label() }}</span>
+  <span class="tn-chip__label">{{ label() }}</span>
   @if (closable()) {
     <button
       type="button"
-      class="ix-chip__close"
+      class="tn-chip__close"
       [attr.aria-label]="'Remove ' + label()"
       [disabled]="disabled()"
       (click)="handleClose($event)"
     >
-      <span class="ix-chip__close-icon">×</span>
+      <span class="tn-chip__close-icon">×</span>
     </button>
   }
 </div>

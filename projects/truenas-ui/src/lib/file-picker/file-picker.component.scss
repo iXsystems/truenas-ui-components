@@ -5,14 +5,14 @@
   font-family: var(--font-family-body, 'Inter'), sans-serif;
 }
 
-.ix-file-picker-container {
+.tn-file-picker-container {
   position: relative;
   display: flex;
   align-items: center;
   width: 100%;
 }
 
-.ix-file-picker-wrapper {
+.tn-file-picker-wrapper {
   display: flex;
   align-items: center;
   width: 100%;
@@ -20,7 +20,7 @@
 }
 
 // Input field styling (matching ix-input)
-.ix-file-picker-input {
+.tn-file-picker-input {
   display: block;
   width: 100%;
   min-height: 2.5rem;
@@ -64,7 +64,7 @@
 }
 
 // Trigger button styling (matching date picker)
-.ix-file-picker-toggle {
+.tn-file-picker-toggle {
   position: absolute;
   right: 8px;
   z-index: 2;
@@ -99,7 +99,7 @@
 :host {
   // Focus state integration with form-field
   &:focus-within {
-    .ix-file-picker-input {
+    .tn-file-picker-input {
       border-color: var(--primary, #007bff);
       box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
     }
@@ -107,7 +107,7 @@
   
   // Error state integration
   &.error {
-    .ix-file-picker-input {
+    .tn-file-picker-input {
       border-color: var(--error, #dc3545);
       
       &:focus {
@@ -119,8 +119,8 @@
 }
 
 // Global overlay styles (applied to overlay container)
-:host ::ng-deep .ix-file-picker-overlay {
-  .ix-file-picker-popup {
+:host ::ng-deep .tn-file-picker-overlay {
+  .tn-file-picker-popup {
     // The popup component handles its own styling now
     // This matches how ix-datepicker-overlay works with ix-calendar
   }
@@ -129,21 +129,21 @@
 
 // Accessibility improvements
 @media (prefers-reduced-motion: reduce) {
-  .ix-file-picker-input,
-  .ix-file-picker-toggle,
+  .tn-file-picker-input,
+  .tn-file-picker-toggle,
   .file-item,
   .breadcrumb-segment {
     transition: none;
   }
 
-  .ix-file-picker-loading ix-icon {
+  .tn-file-picker-loading ix-icon {
     animation: none;
   }
 }
 
 // High contrast mode support
 @media (prefers-contrast: high) {
-  .ix-file-picker-input {
+  .tn-file-picker-input {
     border-width: 2px;
   }
 
@@ -161,21 +161,21 @@
 
 // Mobile responsive adjustments
 @media (max-width: 768px) {
-  :host ::ng-deep .ix-file-picker-overlay {
-    .ix-file-picker-dialog {
+  :host ::ng-deep .tn-file-picker-overlay {
+    .tn-file-picker-dialog {
       min-width: 300px;
       max-width: calc(100vw - 32px);
       max-height: calc(100vh - 64px);
     }
   }
 
-  .ix-file-picker-header {
+  .tn-file-picker-header {
     flex-direction: column;
     gap: 12px;
     align-items: stretch;
   }
 
-  .ix-file-picker-breadcrumb {
+  .tn-file-picker-breadcrumb {
     overflow-x: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;

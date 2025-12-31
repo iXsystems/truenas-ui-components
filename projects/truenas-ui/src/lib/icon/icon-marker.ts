@@ -57,22 +57,22 @@ export function iconMarker(
  * Marks an icon name for inclusion in the sprite generation with library namespace.
  * This function MUST be used by library component code for custom icons.
  *
- * The TypeScript type enforces that the icon name starts with 'ix-' prefix,
+ * The TypeScript type enforces that the icon name starts with 'tn-' prefix,
  * which reserves this namespace exclusively for library-provided custom icons.
  *
  * @example
  * ```typescript
  * // ✅ Correct - Library component code
- * const icon = libIconMarker('ix-dataset');
+ * const icon = libIconMarker('tn-dataset');
  *
  * // ❌ Wrong - Will cause TypeScript error
  * const icon = libIconMarker('dataset');
  * ```
  *
- * @param iconName - The icon name with 'ix-' prefix (enforced by TypeScript)
+ * @param iconName - The icon name with 'tn-' prefix (enforced by TypeScript)
  * @returns The same icon name (identity function)
  * @internal
  */
-export function libIconMarker(iconName: `ix-${string}`): string {
+export function libIconMarker(iconName: `tn-${string}`): string {
   return iconName;
 }

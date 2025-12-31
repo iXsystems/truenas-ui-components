@@ -40,12 +40,12 @@ describe('TnBrandedSpinnerComponent', () => {
 
   it('should have correct CSS class', () => {
     const element = fixture.nativeElement;
-    expect(element.classList.contains('ix-branded-spinner')).toBe(true);
+    expect(element.classList.contains('tn-branded-spinner')).toBe(true);
   });
 
   it('should contain TrueNAS logo SVG paths', () => {
-    const container = fixture.nativeElement.querySelector('.ix-branded-spinner-container');
-    const logo = fixture.nativeElement.querySelector('.ix-branded-spinner-logo');
+    const container = fixture.nativeElement.querySelector('.tn-branded-spinner-container');
+    const logo = fixture.nativeElement.querySelector('.tn-branded-spinner-logo');
     const explodedPaths = fixture.nativeElement.querySelectorAll('path.exploded');
 
     expect(container).toBeTruthy();

@@ -14,7 +14,7 @@ import { TnIconComponent } from '../icon/icon.component';
   templateUrl: './tree-node.component.html',
   styleUrl: './tree-node.component.scss',
   host: {
-    'class': 'ix-tree-node-wrapper',
+    'class': 'tn-tree-node-wrapper',
     '[attr.aria-level]': 'level + 1',
     '[attr.aria-expanded]': 'isExpandable ? isExpanded : null',
     'role': 'treeitem'

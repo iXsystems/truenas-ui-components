@@ -1,9 +1,9 @@
-.ix-calendar-header {
+.tn-calendar-header {
   display: flex;
   padding: 16px;
 }
 
-.ix-calendar-controls {
+.tn-calendar-controls {
   display: flex;
   align-items: center;
   width: 100%;
@@ -21,7 +21,7 @@
   border: 0 !important;
 }
 
-.ix-calendar-period-button {
+.tn-calendar-period-button {
   background: none;
   border: none;
   font-weight: 600;
@@ -46,18 +46,18 @@
   }
 }
 
-.ix-calendar-arrow {
+.tn-calendar-arrow {
   width: 10px;
   height: 5px;
   fill: currentColor;
 }
 
-.ix-calendar-spacer {
+.tn-calendar-spacer {
   flex: 1;
 }
 
-.ix-calendar-previous-button,
-.ix-calendar-next-button {
+.tn-calendar-previous-button,
+.tn-calendar-next-button {
   background: none;
   border: none;
   width: 40px;

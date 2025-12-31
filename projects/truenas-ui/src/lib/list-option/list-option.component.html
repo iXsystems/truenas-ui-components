@@ -1,14 +1,14 @@
-<div class="ix-list-option__content">
+<div class="tn-list-option__content">
   <!-- Leading content (icons, avatars) -->
   @if (hasLeadingContent()) {
-    <div class="ix-list-option__leading">
+    <div class="tn-list-option__leading">
       <ng-content select="[tnListIcon], [tnListAvatar]" />
     </div>
   }
 
   <!-- Text content -->
-  <div class="ix-list-option__text">
-    <div class="ix-list-option__primary-text">
+  <div class="tn-list-option__text">
+    <div class="tn-list-option__primary-text">
       <ng-content select="[tnListItemTitle], [tnListItemPrimary]" />
       @if (!hasPrimaryTextDirective()) {
         <ng-content />
@@ -16,14 +16,14 @@
     </div>
 
     @if (hasSecondaryTextContent()) {
-      <div class="ix-list-option__secondary-text">
+      <div class="tn-list-option__secondary-text">
         <ng-content select="[tnListItemLine], [tnListItemSecondary]" />
       </div>
     }
   </div>
 
   <!-- Checkbox on the right -->
-  <div class="ix-list-option__checkbox">
+  <div class="tn-list-option__checkbox">
     <tn-checkbox
       tabindex="-1"
       [checked]="effectiveSelected()"

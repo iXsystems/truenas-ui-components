@@ -1,4 +1,4 @@
-.ix-icon {
+.tn-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -82,7 +82,7 @@
 }
 
 // CSS Custom Properties for easy theming
-.ix-icon {
+.tn-icon {
   width: var(--ix-icon-size, var(--icon-md));
   height: var(--ix-icon-size, var(--icon-md));
   color: var(--ix-icon-color, currentColor);

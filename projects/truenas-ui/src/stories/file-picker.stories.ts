@@ -1360,7 +1360,7 @@ export const PathInputValidation: Story = {
 
     // Wait for error state to appear (validation triggers on every keystroke)
     /*await waitFor(() => {
-      const pickerElement = canvasElement.querySelector('ix-file-picker');
+      const pickerElement = canvasElement.querySelector('tn-file-picker');
       void expect(pickerElement?.classList.contains('error')).toBe(true);
     }, { timeout: 1500 });*/
 
@@ -1370,7 +1370,7 @@ export const PathInputValidation: Story = {
 
     // Verify error state has cleared after timeout
     /*await waitFor(() => {
-      const pickerElement = canvasElement.querySelector('ix-file-picker');
+      const pickerElement = canvasElement.querySelector('tn-file-picker');
       void expect(pickerElement?.classList.contains('error')).toBe(false);
     }, { timeout: 500 });*/
 
@@ -1390,7 +1390,7 @@ export const PathInputValidation: Story = {
     // await new Promise(resolve => setTimeout(resolve, 3500));
 
     // Verify no error is present after all timers clear
-    // const pickerElement = canvasElement.querySelector('ix-file-picker');
+    // const pickerElement = canvasElement.querySelector('tn-file-picker');
     // void expect(pickerElement?.classList.contains('error')).toBe(false);
   },
   parameters: {

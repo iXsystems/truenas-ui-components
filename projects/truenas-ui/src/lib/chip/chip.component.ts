@@ -37,14 +37,14 @@ export class TnChipComponent implements AfterViewInit, OnDestroy {
   }
 
   classes = computed(() => {
-    const classes = ['ix-chip', `ix-chip--${this.color()}`];
+    const classes = ['tn-chip', `tn-chip--${this.color()}`];
 
     if (this.disabled()) {
-      classes.push('ix-chip--disabled');
+      classes.push('tn-chip--disabled');
     }
 
     if (this.closable()) {
-      classes.push('ix-chip--closable');
+      classes.push('tn-chip--closable');
     }
 
     return classes;

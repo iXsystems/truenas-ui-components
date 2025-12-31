@@ -1,38 +1,38 @@
-.ix-button-toggle {
+.tn-button-toggle {
   display: inline-block;
   position: relative;
   
-  &:first-child .ix-button-toggle__button {
+  &:first-child .tn-button-toggle__button {
     border-top-left-radius: 6px;
     border-bottom-left-radius: 6px;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
   }
   
-  &:last-child .ix-button-toggle__button {
+  &:last-child .tn-button-toggle__button {
     border-top-right-radius: 6px;
     border-bottom-right-radius: 6px;
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
   }
 
-  &:not(:first-child):not(:last-child) .ix-button-toggle__button {
+  &:not(:first-child):not(:last-child) .tn-button-toggle__button {
     border-radius: 0;
   }
 
-  &:first-child:last-child .ix-button-toggle__button {
+  &:first-child:last-child .tn-button-toggle__button {
     border-radius: 6px;
   }
 
-  &:not(:first-child) .ix-button-toggle__button {
+  &:not(:first-child) .tn-button-toggle__button {
     margin-left: -1px;
   }
 
-  &--standalone .ix-button-toggle__button {
+  &--standalone .tn-button-toggle__button {
     border-radius: 6px;
   }
 
-  .ix-button-toggle__button {
+  .tn-button-toggle__button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -89,7 +89,7 @@
     }
   }
 
-  .ix-button-toggle__label {
+  .tn-button-toggle__label {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -98,7 +98,7 @@
     line-height: 1;
   }
 
-  .ix-button-toggle__check {
+  .tn-button-toggle__check {
     font-size: 12px;
     font-weight: bold;
     line-height: 1;

@@ -37,7 +37,7 @@ import { StripMntPrefixPipe } from '../pipes/strip-mnt-prefix/strip-mnt-prefix.p
   templateUrl: './file-picker.component.html',
   styleUrl: './file-picker.component.scss',
   host: {
-    'class': 'ix-file-picker',
+    'class': 'tn-file-picker',
     '[class.error]': 'hasError()'
   }
 })
@@ -528,7 +528,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       scrollStrategy: this.overlay.scrollStrategies.reposition(),
       hasBackdrop: true,
       backdropClass: 'cdk-overlay-transparent-backdrop',
-      panelClass: 'ix-file-picker-overlay'
+      panelClass: 'tn-file-picker-overlay'
     });
 
     this.overlayRef.backdropClick().subscribe(() => {

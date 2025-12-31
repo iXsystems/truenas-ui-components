@@ -19,7 +19,7 @@ export interface TnDialogDefaults {
 }
 
 const defaults: TnDialogDefaults = {
-  panelClass: ['ix-dialog-panel'],
+  panelClass: ['tn-dialog-panel'],
   maxWidth: '90vw',
   maxHeight: '90vh',
   role: 'dialog',
@@ -69,7 +69,7 @@ export class TnDialog {
       panelClass: [
         ...(defaults.panelClass as string[]),
         ...(Array.isArray(config?.panelClass) ? config.panelClass : config?.panelClass ? [config.panelClass] : []),
-        'ix-dialog--fullscreen'
+        'tn-dialog--fullscreen'
       ],
       autoFocus: config?.autoFocus ?? true,
       restoreFocus: config?.restoreFocus ?? true,
@@ -97,7 +97,7 @@ export class TnDialog {
           data: opts,
           role: 'alertdialog',
           disableClose: true,
-          panelClass: [opts.destructive ? 'ix-dialog--destructive' : ''].filter(Boolean),
+          panelClass: [opts.destructive ? 'tn-dialog--destructive' : ''].filter(Boolean),
         }
       );
       return dialogRef.closed as Observable<boolean | undefined>;

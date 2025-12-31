@@ -52,9 +52,9 @@
 
 
 /* ================================
-   iX Dark - TrueNAS default theme
+   TN Dark - TrueNAS default theme
    ================================ */
-.ix-dark {
+.tn-dark {
   --primary: var(--blue);
   --topbar: #111111;
   --topbar-txt: rgba(255,255,255,0.85);
@@ -85,9 +85,9 @@
 }
 
 /* ================================
-   iX Blue - Official iX System Colors on light
+   TN Blue - Official TrueNAS System Colors on light
    ================================ */
-.ix-blue {
+.tn-blue {
   --primary: var(--blue);
   --primary-txt: #ffffff;
   --topbar: #007db3;
@@ -332,10 +332,10 @@ textarea:-webkit-autofill,
 textarea:-webkit-autofill:hover,
 textarea:-webkit-autofill:focus,
 textarea:-webkit-autofill:active,
-.ix-input:-webkit-autofill,
-.ix-input:-webkit-autofill:hover,
-.ix-input:-webkit-autofill:focus,
-.ix-input:-webkit-autofill:active {
+.tn-input:-webkit-autofill,
+.tn-input:-webkit-autofill:hover,
+.tn-input:-webkit-autofill:focus,
+.tn-input:-webkit-autofill:active {
   /* Use a very long transition to effectively override the browser's background */
   -webkit-transition: background-color 5000s ease-in-out 0s;
   transition: background-color 5000s ease-in-out 0s;
@@ -349,7 +349,7 @@ textarea:-webkit-autofill:active,
 /* For Firefox and other browsers */
 input:-moz-autofill,
 textarea:-moz-autofill,
-.ix-input:-moz-autofill {
+.tn-input:-moz-autofill {
   background-color: var(--bg1) !important;
   color: var(--fg1) !important;
 }
@@ -357,9 +357,9 @@ textarea:-moz-autofill,
 /* ================================
   ixInput directive styles
   ================================ */
-.ix-input-directive,
-input.ix-input-directive,
-textarea.ix-input-directive {
+.tn-input-directive,
+input.tn-input-directive,
+textarea.tn-input-directive {
   display: block;
   width: 100%;
   min-height: 2.5rem;
@@ -375,44 +375,44 @@ textarea.ix-input-directive {
   font-family: var(--font-family-body, 'Inter'), sans-serif;
 }
 
-.ix-input-directive::placeholder,
-input.ix-input-directive::placeholder,
-textarea.ix-input-directive::placeholder {
+.tn-input-directive::placeholder,
+input.tn-input-directive::placeholder,
+textarea.tn-input-directive::placeholder {
   color: var(--fg2, #6c757d);
   opacity: 1;
 }
 
-.ix-input-directive:focus,
-input.ix-input-directive:focus,
-textarea.ix-input-directive:focus {
+.tn-input-directive:focus,
+input.tn-input-directive:focus,
+textarea.tn-input-directive:focus {
   border-color: var(--primary, #007bff);
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
-.ix-input-directive:disabled,
-input.ix-input-directive:disabled,
-textarea.ix-input-directive:disabled {
+.tn-input-directive:disabled,
+input.tn-input-directive:disabled,
+textarea.tn-input-directive:disabled {
   background-color: var(--alt-bg1, #f8f9fa);
   color: var(--fg2, #6c757d);
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-.ix-input-directive.error,
-input.ix-input-directive.error,
-textarea.ix-input-directive.error {
+.tn-input-directive.error,
+input.tn-input-directive.error,
+textarea.tn-input-directive.error {
   border-color: var(--red, #dc3545);
 }
 
-.ix-input-directive.error:focus,
-input.ix-input-directive.error:focus,
-textarea.ix-input-directive.error:focus {
+.tn-input-directive.error:focus,
+input.tn-input-directive.error:focus,
+textarea.tn-input-directive.error:focus {
   border-color: var(--red, #dc3545);
   box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
 }
 
 /* Textarea-specific styles */
-textarea.ix-input-directive {
+textarea.tn-input-directive {
   min-height: 6rem;
   resize: vertical;
   line-height: 1.4;
@@ -420,18 +420,18 @@ textarea.ix-input-directive {
 
 /* Accessibility improvements */
 @media (prefers-reduced-motion: reduce) {
-  .ix-input-directive,
-  input.ix-input-directive,
-  textarea.ix-input-directive {
+  .tn-input-directive,
+  input.tn-input-directive,
+  textarea.tn-input-directive {
     transition: none;
   }
 }
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
-  .ix-input-directive,
-  input.ix-input-directive,
-  textarea.ix-input-directive {
+  .tn-input-directive,
+  input.tn-input-directive,
+  textarea.tn-input-directive {
     border-width: 2px;
   }
 }
@@ -513,7 +513,7 @@ input:not([role="switch"]),
    ================================ */
 
 /* Dialog panel - the main dialog container */
-.ix-dialog-panel {
+.tn-dialog-panel {
   display: flex;
   flex-direction: column;
   /* make the panel fit the viewport without causing page scroll */
@@ -528,7 +528,7 @@ input:not([role="switch"]),
 }
 
 /* Shell component wrapper */
-ix-dialog-shell {
+tn-dialog-shell {
   display: flex;
   flex-direction: column;
   min-height: 0; /* allow inner area to shrink */
@@ -537,21 +537,21 @@ ix-dialog-shell {
 }
 
 /* Dialog header and actions - fixed size */
-.ix-dialog__header,
-.ix-dialog__actions {
+.tn-dialog__header,
+.tn-dialog__actions {
   flex: 0 0 auto;
   padding: 16px;
 }
 
 /* Dialog header styling */
-.ix-dialog__header {
+.tn-dialog__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--lines, #e5e7eb);
 }
 
-.ix-dialog__title {
+.tn-dialog__title {
   margin: 0;
   font-weight: 600;
   line-height: 1.5;
@@ -560,8 +560,8 @@ ix-dialog-shell {
 }
 
 /* Close button */
-.ix-dialog__close,
-.ix-dialog__fullscreen {
+.tn-dialog__close,
+.tn-dialog__fullscreen {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -580,22 +580,22 @@ ix-dialog-shell {
   margin-left: 16px; /* Space between title and button */
 }
 
-.ix-dialog__close:hover {
+.tn-dialog__close:hover {
   background: var(--alt-bg1, #f8f9fa);
   color: var(--fg1, #000000);
 }
 
-.ix-dialog__close:focus {
+.tn-dialog__close:focus {
   outline: 2px solid var(--primary, #007bff);
   outline-offset: 2px;
 }
 
-.ix-dialog__close:active {
+.tn-dialog__close:active {
   transform: scale(0.95);
 }
 
 /* Dialog content - the only scrolling area */
-.ix-dialog__content {
+.tn-dialog__content {
   /* the only scrolling area */
   flex: 1 1 auto;
   min-height: 0;           /* CRITICAL in flex parents */
@@ -605,22 +605,22 @@ ix-dialog-shell {
 }
 
 /* Dialog actions */
-.ix-dialog__actions {
+.tn-dialog__actions {
   border-top: 1px solid var(--lines, #e5e7eb);
   display: flex;
   justify-content: flex-end;
 }
 
-.ix-dialog__actions ix-button:not(:first-child) {
+.tn-dialog__actions ix-button:not(:first-child) {
   margin-left: 16px;
 }
 
 /* Destructive variant */
-.ix-dialog--destructive .ix-dialog__header {
+.tn-dialog--destructive .tn-dialog__header {
   border-bottom-color: var(--lines, #e5e7eb);
 }
 
-.ix-dialog--destructive .ix-dialog__title {
+.tn-dialog--destructive .tn-dialog__title {
   color: var(--red, #dc3545);
 }
 
@@ -639,7 +639,7 @@ ix-dialog-shell {
 }
 
 /* Fullscreen dialog support */
-.ix-dialog--fullscreen .cdk-dialog-container {
+.tn-dialog--fullscreen .cdk-dialog-container {
   position: fixed;
   top: 0;
   left: 0;
@@ -653,7 +653,7 @@ ix-dialog-shell {
   justify-content: stretch;
 }
 
-.ix-dialog--fullscreen .cdk-dialog-panel {
+.tn-dialog--fullscreen .cdk-dialog-panel {
   position: relative;
   width: 100%;
   height: 100%;

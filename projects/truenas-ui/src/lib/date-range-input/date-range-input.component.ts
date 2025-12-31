@@ -30,7 +30,7 @@ export interface DateRange {
   templateUrl: './date-range-input.component.html',
   styleUrl: './date-range-input.component.scss',
   host: {
-    'class': 'ix-date-range-input'
+    'class': 'tn-date-range-input'
   }
 })
 export class TnDateRangeInputComponent implements ControlValueAccessor, OnInit, OnDestroy {
@@ -346,7 +346,7 @@ export class TnDateRangeInputComponent implements ControlValueAccessor, OnInit, 
       scrollStrategy: this.overlay.scrollStrategies.reposition(),
       hasBackdrop: true,
       backdropClass: 'cdk-overlay-transparent-backdrop',
-      panelClass: 'ix-datepicker-overlay'
+      panelClass: 'tn-datepicker-overlay'
     });
 
     // Close datepicker when backdrop is clicked

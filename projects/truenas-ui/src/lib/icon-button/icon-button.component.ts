@@ -25,7 +25,7 @@ export class TnIconButtonComponent {
   onClick = output<MouseEvent>();
 
   classes = computed(() => {
-    return ['ix-icon-button'];
+    return ['tn-icon-button'];
   });
 
   effectiveAriaLabel = computed(() => {

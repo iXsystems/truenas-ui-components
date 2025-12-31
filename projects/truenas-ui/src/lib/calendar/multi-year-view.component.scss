@@ -1,26 +1,26 @@
 // Multi-year view specific styles following the theme system
 
-.ix-calendar-table {
+.tn-calendar-table {
   width: 100%;
   border-spacing: 0;
   border-collapse: separate;
 }
 
-.ix-calendar-table-header-divider {
+.tn-calendar-table-header-divider {
   height: 16px;
   border: none;
 }
 
-.ix-calendar-body {
+.tn-calendar-body {
   min-width: 224px; // Minimum width to accommodate 4 columns
 }
 
-.ix-calendar-body-cell-container {
+.tn-calendar-body-cell-container {
   position: relative;
   border: none;
 }
 
-.ix-calendar-body-cell {
+.tn-calendar-body-cell {
   position: absolute;
   top: 5%;
   left: 5%;
@@ -52,18 +52,18 @@
   }
 
   // Apply today border to the button itself for full coverage
-  &.ix-calendar-body-today:not(.ix-calendar-body-selected) {
+  &.tn-calendar-body-today:not(.tn-calendar-body-selected) {
     border: 1px solid var(--primary, #007bff);
     color: var(--primary, #007bff);
   }
 
-  &.ix-calendar-body-selected {
+  &.tn-calendar-body-selected {
     background: var(--primary, #007bff);
     color: white;
   }
 }
 
-.ix-calendar-body-cell-content {
+.tn-calendar-body-cell-content {
   position: relative;
   display: flex;
   align-items: center;
@@ -75,7 +75,7 @@
   // Remove these styles from content since they're now on the button
 }
 
-.ix-focus-indicator {
+.tn-focus-indicator {
   position: relative;
   
   &::before {
@@ -91,7 +91,7 @@
   }
 }
 
-.ix-calendar-body-cell-preview {
+.tn-calendar-body-cell-preview {
   position: absolute;
   top: 0;
   left: 0;

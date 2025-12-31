@@ -1,10 +1,10 @@
-.ix-input-container {
+.tn-input-container {
   position: relative;
   width: 100%;
   font-family: var(--font-family-body, 'Inter'), sans-serif;
 }
 
-.ix-input {
+.tn-input {
   display: block;
   width: 100%;
   min-height: 2.5rem;
@@ -47,7 +47,7 @@
 
 }
 
-.ix-textarea {
+.tn-textarea {
   min-height: 6rem;
   resize: vertical;
   line-height: 1.4;
@@ -55,14 +55,14 @@
 
 // Accessibility improvements
 @media (prefers-reduced-motion: reduce) {
-  .ix-input {
+  .tn-input {
     transition: none;
   }
 }
 
 // High contrast mode support
 @media (prefers-contrast: high) {
-  .ix-input {
+  .tn-input {
     border-width: 2px;
   }
 }

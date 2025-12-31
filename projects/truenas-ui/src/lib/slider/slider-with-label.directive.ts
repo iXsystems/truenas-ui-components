@@ -10,7 +10,7 @@ import {
 import { TnSliderComponent } from './slider.component';
 
 @Directive({
-  selector: 'ix-slider[tnSliderWithLabel]',
+  selector: 'tn-slider[tnSliderWithLabel]',
   standalone: true
 })
 export class TnSliderWithLabelDirective implements OnInit, OnDestroy {

@@ -3,7 +3,7 @@
   [ngClass]="classes()"
   [attr.role]="ariaRole()"
 >
-  <div class="ix-banner__icon">
+  <div class="tn-banner__icon">
     <tn-icon
       library="mdi"
       size="md"
@@ -12,13 +12,13 @@
     />
   </div>
 
-  <div class="ix-banner__content">
-    <div class="ix-banner__heading">
+  <div class="tn-banner__content">
+    <div class="tn-banner__heading">
       {{ heading() }}
     </div>
 
     @if (message()) {
-      <div class="ix-banner__message">
+      <div class="tn-banner__message">
         {{ message() }}
       </div>
     }

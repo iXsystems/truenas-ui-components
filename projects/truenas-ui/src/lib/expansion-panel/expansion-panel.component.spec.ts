@@ -59,10 +59,10 @@ describe('TnExpansionPanelComponent', () => {
 
     const classes = component.classes();
 
-    expect(classes).toContain('ix-expansion-panel');
-    expect(classes).toContain('ix-expansion-panel--elevation-high');
-    expect(classes).toContain('ix-expansion-panel--bordered');
-    expect(classes).toContain('ix-expansion-panel--expanded');
+    expect(classes).toContain('tn-expansion-panel');
+    expect(classes).toContain('tn-expansion-panel--elevation-high');
+    expect(classes).toContain('tn-expansion-panel--bordered');
+    expect(classes).toContain('tn-expansion-panel--expanded');
   });
 
   it('should apply none elevation class when elevation is none', () => {
@@ -71,7 +71,7 @@ describe('TnExpansionPanelComponent', () => {
 
     const classes = component.classes();
 
-    expect(classes).toContain('ix-expansion-panel--elevation-none');
+    expect(classes).toContain('tn-expansion-panel--elevation-none');
   });
 
   it('should apply correct title style classes', () => {
@@ -80,13 +80,13 @@ describe('TnExpansionPanelComponent', () => {
 
     const classes = component.classes();
 
-    expect(classes).toContain('ix-expansion-panel--title-link');
+    expect(classes).toContain('tn-expansion-panel--title-link');
   });
 
   it('should default to header title style', () => {
     const classes = component.classes();
 
-    expect(classes).toContain('ix-expansion-panel--title-header');
+    expect(classes).toContain('tn-expansion-panel--title-header');
   });
 
   it('should apply background class when background is true', () => {
@@ -95,7 +95,7 @@ describe('TnExpansionPanelComponent', () => {
 
     const classes = component.classes();
 
-    expect(classes).toContain('ix-expansion-panel--background');
+    expect(classes).toContain('tn-expansion-panel--background');
   });
 
   it('should not apply background class when background is false', () => {
@@ -104,7 +104,7 @@ describe('TnExpansionPanelComponent', () => {
 
     const classes = component.classes();
 
-    expect(classes).not.toContain('ix-expansion-panel--background');
+    expect(classes).not.toContain('tn-expansion-panel--background');
   });
 
   it('should apply disabled class when disabled is true', () => {
@@ -113,7 +113,7 @@ describe('TnExpansionPanelComponent', () => {
 
     const classes = component.classes();
 
-    expect(classes).toContain('ix-expansion-panel--disabled');
+    expect(classes).toContain('tn-expansion-panel--disabled');
   });
 
   it('should not apply disabled class when disabled is false', () => {
@@ -122,6 +122,6 @@ describe('TnExpansionPanelComponent', () => {
 
     const classes = component.classes();
 
-    expect(classes).not.toContain('ix-expansion-panel--disabled');
+    expect(classes).not.toContain('tn-expansion-panel--disabled');
   });
 });

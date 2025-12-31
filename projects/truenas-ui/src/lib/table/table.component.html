@@ -1,10 +1,10 @@
-<table class="ix-table__table">
+<table class="tn-table__table">
   <!-- Header Row -->
-  <thead class="ix-table__header">
-    <tr class="ix-table__header-row">
+  <thead class="tn-table__header">
+    <tr class="tn-table__header-row">
       @for (column of displayedColumns(); track $index) {
         <th
-          class="ix-table__header-cell"
+          class="tn-table__header-cell"
           [attr.data-column]="column">
           @if (getColumnDef(column)?.headerTemplate()) {
             <ng-container
@@ -19,12 +19,12 @@
   </thead>
 
   <!-- Data Rows -->
-  <tbody class="ix-table__body">
+  <tbody class="tn-table__body">
     @for (row of data(); track $index) {
-      <tr class="ix-table__row">
+      <tr class="tn-table__row">
         @for (column of displayedColumns(); track $index) {
           <td
-            class="ix-table__cell"
+            class="tn-table__cell"
             [attr.data-column]="column">
             @if (getColumnDef(column)?.cellTemplate()) {
               <ng-container

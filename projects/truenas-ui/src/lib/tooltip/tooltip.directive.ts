@@ -54,7 +54,7 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
 
   ngOnInit() {
     // Generate unique ID for aria-describedby
-    this._ariaDescribedBy = `ix-tooltip-${Math.random().toString(36).substr(2, 9)}`;
+    this._ariaDescribedBy = `tn-tooltip-${Math.random().toString(36).substr(2, 9)}`;
   }
 
   ngOnDestroy() {
@@ -146,7 +146,7 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
     this._overlayRef = this._overlay.create({
       positionStrategy,
       scrollStrategy: this._overlay.scrollStrategies.reposition({ scrollThrottle: 20 }),
-      panelClass: ['ix-tooltip-panel', `ix-tooltip-panel-${this.position()}`, this.tooltipClass()].filter(Boolean),
+      panelClass: ['tn-tooltip-panel', `tn-tooltip-panel-${this.position()}`, this.tooltipClass()].filter(Boolean),
     });
   }
 

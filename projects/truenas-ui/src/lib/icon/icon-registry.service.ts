@@ -128,7 +128,7 @@ export class TnIconRegistryService {
    * // Sprite icons (automatic from sprite.svg)
    * registry.resolveIcon('folder')        // Material Design icon
    * registry.resolveIcon('mdi-server')    // MDI icon
-   * registry.resolveIcon('ix-dataset')    // Custom TrueNAS icon
+   * registry.resolveIcon('tn-dataset')    // Custom TrueNAS icon
    *
    * // Library icons
    * registry.resolveIcon('lucide:home')

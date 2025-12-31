@@ -1,6 +1,6 @@
 <button
   type="button"
-  class="ix-button-toggle__button"
+  class="tn-button-toggle__button"
   [class.ix-button-toggle__button--checked]="checked()"
   [disabled]="isDisabled()"
   [attr.aria-pressed]="checked()"
@@ -8,9 +8,9 @@
   [attr.aria-labelledby]="ariaLabelledby()"
   [attr.id]="buttonId()"
   (click)="toggle()">
-  <span class="ix-button-toggle__label">
+  <span class="tn-button-toggle__label">
     @if (checked()) {
-      <span class="ix-button-toggle__check">✓</span>
+      <span class="tn-button-toggle__check">✓</span>
     }
     <ng-content />
   </span>

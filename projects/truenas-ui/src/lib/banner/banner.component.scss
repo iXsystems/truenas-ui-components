@@ -1,4 +1,4 @@
-.ix-banner {
+.tn-banner {
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -17,11 +17,11 @@
     border-left-color: var(--info, #3b82f6);
     background-color: var(--alt-bg1, #383838);
 
-    .ix-banner__heading {
+    .tn-banner__heading {
       color: var(--info, #3b82f6);
     }
 
-    .ix-banner__icon {
+    .tn-banner__icon {
       color: var(--info, #3b82f6);
     }
   }
@@ -31,11 +31,11 @@
     border-left-color: var(--warning, #f59e0b);
     background-color: var(--alt-bg1, #383838);
 
-    .ix-banner__heading {
+    .tn-banner__heading {
       color: var(--warning, #f59e0b);
     }
 
-    .ix-banner__icon {
+    .tn-banner__icon {
       color: var(--warning, #f59e0b);
     }
   }
@@ -45,11 +45,11 @@
     border-left-color: var(--error, #ef4444);
     background-color: var(--alt-bg1, #383838);
 
-    .ix-banner__heading {
+    .tn-banner__heading {
       color: var(--error, #ef4444);
     }
 
-    .ix-banner__icon {
+    .tn-banner__icon {
       color: var(--error, #ef4444);
     }
   }
@@ -59,11 +59,11 @@
     border-left-color: var(--success, #10b981);
     background-color: var(--alt-bg1, #383838);
 
-    .ix-banner__heading {
+    .tn-banner__heading {
       color: var(--success, #10b981);
     }
 
-    .ix-banner__icon {
+    .tn-banner__icon {
       color: var(--success, #10b981);
     }
   }

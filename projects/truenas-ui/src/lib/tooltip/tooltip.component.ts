@@ -9,7 +9,7 @@ import { Component, input, ChangeDetectionStrategy } from '@angular/core';
   styleUrl: './tooltip.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    'class': 'ix-tooltip-component'
+    'class': 'tn-tooltip-component'
   }
 })
 export class TnTooltipComponent {

@@ -18,8 +18,8 @@ export interface TnConfirmDialogData {
   standalone: true,
   imports: [TnDialogShellComponent, TnButtonComponent],
   host: {
-    'class': 'ix-dialog-shell',
-    '[class.ix-dialog--destructive]': 'data.destructive'
+    'class': 'tn-dialog-shell',
+    '[class.tn-dialog--destructive]': 'data.destructive'
   }
 })
 export class TnConfirmDialogComponent {

@@ -1,5 +1,5 @@
 <div
-  class="ix-icon"
+  class="tn-icon"
   role="img"
   [ngClass]="'ix-icon--' + size()"
   [style.color]="color()"
@@ -11,7 +11,7 @@
     <!-- Sprite icons (from generated sprite.svg) -->
     @case ('sprite') {
       <svg
-           class="ix-icon__sprite"
+           class="tn-icon__sprite"
            aria-hidden="true">
         <use [attr.href]="iconResult.spriteUrl" />
       </svg>
@@ -21,7 +21,7 @@
     @case ('svg') {
       <div
            #svgContainer
-           class="ix-icon__svg">
+           class="tn-icon__svg">
       </div>
     }
 
@@ -36,14 +36,14 @@
     <!-- Unicode characters -->
     @case ('unicode') {
       <span
-            class="ix-icon__unicode"
+            class="tn-icon__unicode"
             aria-hidden="true">{{ iconResult.content }}</span>
     }
 
     <!-- Text abbreviation fallback -->
     @default {
       <span
-            class="ix-icon__text"
+            class="tn-icon__text"
             aria-hidden="true">{{ iconResult.content }}</span>
     }
   }

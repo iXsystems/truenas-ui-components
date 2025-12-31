@@ -1,11 +1,11 @@
-.ix-form-field {
+.tn-form-field {
   display: block;
   width: 100%;
   margin-bottom: 1rem;
   font-family: var(--font-family-body, 'Inter'), sans-serif;
 }
 
-.ix-form-field-label {
+.tn-form-field-label {
   display: block;
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
@@ -21,7 +21,7 @@
   }
 }
 
-.ix-form-field-wrapper {
+.tn-form-field-wrapper {
   position: relative;
   width: 100%;
   
@@ -30,75 +30,75 @@
 
   // Remove margins from child form controls since form-field handles spacing
   :ng-deep {
-    .ix-select-container,
-    .ix-input-container {
+    .tn-select-container,
+    .tn-input-container {
       margin-bottom: 0;
     }
     
     // Remove label from child controls since form-field provides it
-    .ix-select-label,
-    .ix-input-label {
+    .tn-select-label,
+    .tn-input-label {
       display: none;
     }
     
     // Remove error display from child controls since form-field handles it
-    .ix-select-error,
-    .ix-input-error {
+    .tn-select-error,
+    .tn-input-error {
       display: none;
     }
     
     // Ensure select dropdown isn't clipped
-    .ix-select-dropdown {
+    .tn-select-dropdown {
       z-index: 1000;
     }
   }
 }
 
-.ix-form-field-subscript {
+.tn-form-field-subscript {
   min-height: 1.25rem;
   margin-top: 0.25rem;
   font-size: 0.75rem;
   line-height: 1.4;
 }
 
-.ix-form-field-error {
+.tn-form-field-error {
   color: var(--error, #dc3545);
   margin: 0;
 }
 
-.ix-form-field-hint {
+.tn-form-field-hint {
   color: var(--fg2, #6c757d);
   margin: 0;
 }
 
 // Focus state handling
-.ix-form-field-wrapper:has(:focus-visible) {
-  .ix-form-field-label {
+.tn-form-field-wrapper:has(:focus-visible) {
+  .tn-form-field-label {
     color: var(--primary, #007bff);
   }
 }
 
 // Error state handling
-.ix-form-field-wrapper:has(.error) {
-  .ix-form-field-label {
+.tn-form-field-wrapper:has(.error) {
+  .tn-form-field-label {
     color: var(--error, #dc3545);
   }
 }
 
 // Accessibility improvements
 @media (prefers-reduced-motion: reduce) {
-  .ix-form-field-label {
+  .tn-form-field-label {
     transition: none;
   }
 }
 
 // High contrast mode support
 @media (prefers-contrast: high) {
-  .ix-form-field-label {
+  .tn-form-field-label {
     font-weight: 600;
   }
   
-  .ix-form-field-error {
+  .tn-form-field-error {
     font-weight: 600;
   }
 }

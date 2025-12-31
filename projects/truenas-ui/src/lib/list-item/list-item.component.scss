@@ -1,7 +1,7 @@
 // List Item Component Styles
 // Based on Angular Material Design patterns
 
-.ix-list-item {
+.tn-list-item {
   display: block;
   position: relative;
   min-height: 48px;
@@ -67,7 +67,7 @@
   &--clickable {
     cursor: pointer;
 
-    &:hover:not(.ix-list-item--disabled) {
+    &:hover:not(.tn-list-item--disabled) {
       background-color: var(--alt-bg1);
     }
 
@@ -76,7 +76,7 @@
       background-color: var(--alt-bg1);
     }
 
-    &:active:not(.ix-list-item--disabled) {
+    &:active:not(.tn-list-item--disabled) {
       background-color: var(--alt-bg2);
     }
   }
@@ -85,12 +85,12 @@
   &--two-line {
     min-height: 64px;
 
-    .ix-list-item__primary-text {
+    .tn-list-item__primary-text {
       white-space: normal;
       line-height: 1.4;
     }
 
-    .ix-list-item__secondary-text {
+    .tn-list-item__secondary-text {
       white-space: normal;
       line-height: 1.3;
     }
@@ -100,17 +100,17 @@
   &--three-line {
     min-height: 88px;
 
-    .ix-list-item__text {
+    .tn-list-item__text {
       align-items: flex-start;
       padding: 8px 0;
     }
 
-    .ix-list-item__primary-text {
+    .tn-list-item__primary-text {
       white-space: normal;
       line-height: 1.4;
     }
 
-    .ix-list-item__secondary-text {
+    .tn-list-item__secondary-text {
       white-space: normal;
       line-height: 1.3;
       display: -webkit-box;

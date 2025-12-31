@@ -1,8 +1,8 @@
-<div class="ix-nested-tree-node__content">
+<div class="tn-nested-tree-node__content">
   <!-- Toggle button for expandable nodes (provided by component) -->
   @if (isExpandable) {
     <button
-      class="ix-nested-tree-node__toggle"
+      class="tn-nested-tree-node__toggle"
       cdkTreeNodeToggle
       type="button"
       [class.ix-nested-tree-node__toggle--expanded]="isExpanded"
@@ -17,7 +17,7 @@
 
   <!-- Spacer for non-expandable nodes to maintain alignment -->
   @if (!isExpandable) {
-    <div class="ix-nested-tree-node__spacer"></div>
+    <div class="tn-nested-tree-node__spacer"></div>
   }
 
   <!-- Consumer content -->
@@ -26,7 +26,7 @@
 
 <!-- Children container -->
 @if (isExpandable) {
-  <div class="ix-nested-tree-node-container" role="group" [class.ix-tree-invisible]="!isExpanded">
+  <div class="tn-nested-tree-node-container" role="group" [class.ix-tree-invisible]="!isExpanded">
     <ng-content select="[slot=children]" />
   </div>
 }

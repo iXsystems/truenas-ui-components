@@ -4,7 +4,7 @@ import { Directive } from '@angular/core';
   selector: 'input[tnInput], textarea[tnInput], div[tnInput]',
   standalone: true,
   host: {
-    'class': 'ix-input-directive'
+    'class': 'tn-input-directive'
   }
 })
 export class TnInputDirective {

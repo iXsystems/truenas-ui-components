@@ -701,7 +701,7 @@ declare class TnSpriteLoaderService {
      * Get the full URL for an icon in the sprite
      * Returns a URL like: assets/icons/sprite.svg?v=hash#icon-name
      *
-     * @param iconName The icon name (e.g., 'folder', 'mdi-server', 'ix-dataset')
+     * @param iconName The icon name (e.g., 'folder', 'mdi-server', 'tn-dataset')
      * @returns The fragment identifier URL for the icon, or null if sprite not loaded or icon not in sprite
      */
     getIconUrl(iconName: string): string | null;
@@ -809,7 +809,7 @@ declare class TnIconRegistryService {
      * // Sprite icons (automatic from sprite.svg)
      * registry.resolveIcon('folder')        // Material Design icon
      * registry.resolveIcon('mdi-server')    // MDI icon
-     * registry.resolveIcon('ix-dataset')    // Custom TrueNAS icon
+     * registry.resolveIcon('tn-dataset')    // Custom TrueNAS icon
      *
      * // Library icons
      * registry.resolveIcon('lucide:home')
@@ -902,23 +902,23 @@ declare function iconMarker(iconName: string, library?: 'mdi' | 'material' | 'cu
  * Marks an icon name for inclusion in the sprite generation with library namespace.
  * This function MUST be used by library component code for custom icons.
  *
- * The TypeScript type enforces that the icon name starts with 'ix-' prefix,
+ * The TypeScript type enforces that the icon name starts with 'tn-' prefix,
  * which reserves this namespace exclusively for library-provided custom icons.
  *
  * @example
  * ```typescript
  * // ✅ Correct - Library component code
- * const icon = libIconMarker('ix-dataset');
+ * const icon = libIconMarker('tn-dataset');
  *
  * // ❌ Wrong - Will cause TypeScript error
  * const icon = libIconMarker('dataset');
  * ```
  *
- * @param iconName - The icon name with 'ix-' prefix (enforced by TypeScript)
+ * @param iconName - The icon name with 'tn-' prefix (enforced by TypeScript)
  * @returns The same icon name (identity function)
  * @internal
  */
-declare function libIconMarker(iconName: `ix-${string}`): string;
+declare function libIconMarker(iconName: `tn-${string}`): string;
 
 /**
  * Lucide Icons Integration Helper
@@ -1095,7 +1095,7 @@ declare class TnListItemTrailingDirective {
 }
 declare class TnDividerDirective {
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnDividerDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnDividerDirective, "ix-divider, [tnDivider]", never, {}, {}, never, never, true, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnDividerDirective, "tn-divider, [tnDivider]", never, {}, {}, never, never, true, never>;
 }
 
 declare class TnDividerComponent {
@@ -1975,7 +1975,7 @@ declare class TnSliderWithLabelDirective implements OnInit, OnDestroy {
     private _onInteractionEnd;
     private _cleanup;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnSliderWithLabelDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnSliderWithLabelDirective, "ix-slider[tnSliderWithLabel]", never, { "enabled": { "alias": "tnSliderWithLabel"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnSliderWithLabelDirective, "tn-slider[tnSliderWithLabel]", never, { "enabled": { "alias": "tnSliderWithLabel"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
 type TnButtonToggleType = 'checkbox' | 'radio';

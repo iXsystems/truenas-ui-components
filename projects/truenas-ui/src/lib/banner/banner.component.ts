@@ -84,8 +84,8 @@ export class TnBannerComponent {
    */
   classes = computed(() => {
     return [
-      'ix-banner',
-      `ix-banner--${this.type()}`,
+      'tn-banner',
+      `tn-banner--${this.type()}`,
     ];
   });
 }

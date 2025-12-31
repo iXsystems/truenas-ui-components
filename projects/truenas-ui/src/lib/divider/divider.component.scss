@@ -10,7 +10,7 @@
   width: 100%;
 
   // Vertical divider
-  &.ix-divider--vertical {
+  &.tn-divider--vertical {
     display: inline-block;
     height: 100%;
     width: 1px;
@@ -19,7 +19,7 @@
   }
 
   // Inset divider (with left margin for lists)
-  &.ix-divider--inset {
+  &.tn-divider--inset {
     margin-left: 72px; // Standard Material Design inset (56px icon + 16px margin)
   }
 
@@ -29,7 +29,7 @@
   }
 
   // Dense list variant
-  &:host-context(.ix-list--dense) {
+  &:host-context(.tn-list--dense) {
     margin: 4px 0;
   }
 }

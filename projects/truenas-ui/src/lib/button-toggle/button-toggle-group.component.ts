@@ -23,7 +23,7 @@ export type TnButtonToggleType = 'checkbox' | 'radio';
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   host: {
-    'class': 'ix-button-toggle-group'
+    'class': 'tn-button-toggle-group'
   }
 })
 export class TnButtonToggleGroupComponent implements ControlValueAccessor {

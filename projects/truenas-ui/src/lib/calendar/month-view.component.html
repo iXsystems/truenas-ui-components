@@ -1,6 +1,6 @@
-<table role="grid" class="ix-calendar-table">
+<table role="grid" class="tn-calendar-table">
   <!-- Table header with day names -->
-  <thead class="ix-calendar-table-header">
+  <thead class="tn-calendar-table-header">
     <tr>
       @for (day of weekdays; track day) {
         <th scope="col">
@@ -12,20 +12,20 @@
   </thead>
 
   <!-- Table body with calendar cells -->
-  <tbody class="ix-calendar-body">
+  <tbody class="tn-calendar-body">
     <!-- Calendar rows -->
     @for (row of calendarRows(); track trackByRow($index, row); let rowIndex = $index) {
       <tr role="row">
         @for (cell of row; track trackByDate($index, cell); let colIndex = $index) {
           <td
             role="gridcell"
-            class="ix-calendar-body-cell-container"
+            class="tn-calendar-body-cell-container"
             [attr.data-ix-row]="rowIndex"
             [attr.data-ix-col]="colIndex">
             @if (cell.value > 0) {
               <button
                 type="button"
-                class="ix-calendar-body-cell"
+                class="tn-calendar-body-cell"
                 [class.ix-calendar-body-selected]="cell.selected"
                 [class.ix-calendar-body-today]="cell.today"
                 [class.ix-calendar-body-active]="cell.selected"
@@ -38,7 +38,7 @@
                 [attr.aria-pressed]="cell.selected"
                 [attr.aria-current]="cell.today ? 'date' : null"
                 (click)="onCellClicked(cell)">
-                <span class="ix-calendar-body-cell-content ix-focus-indicator"
+                <span class="tn-calendar-body-cell-content ix-focus-indicator"
                       [class.ix-calendar-body-selected]="cell.selected"
                       [class.ix-calendar-body-today]="cell.today"
                       [class.ix-calendar-body-range-start]="cell.rangeStart"
@@ -46,7 +46,7 @@
                       [class.ix-calendar-body-in-range]="cell.inRange">
                   {{ cell.value }}
                 </span>
-                <span aria-hidden="true" class="ix-calendar-body-cell-preview"></span>
+                <span aria-hidden="true" class="tn-calendar-body-cell-preview"></span>
               </button>
             }
           </td>

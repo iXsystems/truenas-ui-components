@@ -1,4 +1,4 @@
-.ix-checkbox {
+.tn-checkbox {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -14,8 +14,8 @@
     line-height: 1.5;
     color: var(--fg1, #333);
     
-    &:hover:not(.ix-checkbox--disabled) {
-      .ix-checkbox__checkmark {
+    &:hover:not(.tn-checkbox--disabled) {
+      .tn-checkbox__checkmark {
         border-color: var(--primary, #0095d5);
       }
     }
@@ -28,7 +28,7 @@
     height: 0;
     width: 0;
 
-    &:checked ~ .ix-checkbox__checkmark {
+    &:checked ~ .tn-checkbox__checkmark {
       background-color: var(--primary, #0095d5);
       border-color: var(--primary, #0095d5);
 
@@ -37,7 +37,7 @@
       }
     }
 
-    &:indeterminate ~ .ix-checkbox__checkmark {
+    &:indeterminate ~ .tn-checkbox__checkmark {
       background-color: var(--primary, #0095d5);
       border-color: var(--primary, #0095d5);
 
@@ -54,18 +54,18 @@
       }
     }
 
-    &:focus ~ .ix-checkbox__checkmark {
+    &:focus ~ .tn-checkbox__checkmark {
       outline: 2px solid var(--primary, #0095d5);
       outline-offset: 2px;
     }
 
-    &:disabled ~ .ix-checkbox__checkmark {
+    &:disabled ~ .tn-checkbox__checkmark {
       background-color: var(--bg2, #f5f5f5);
       border-color: var(--lines, #e0e0e0);
       cursor: not-allowed;
     }
 
-    &:disabled:checked ~ .ix-checkbox__checkmark {
+    &:disabled:checked ~ .tn-checkbox__checkmark {
       background-color: var(--lines, #e0e0e0);
       border-color: var(--lines, #e0e0e0);
     }
@@ -112,25 +112,25 @@
 
   // State modifiers
   &--disabled {
-    .ix-checkbox__label {
+    .tn-checkbox__label {
       cursor: not-allowed;
       color: var(--fg2, #666);
       opacity: 0.6;
     }
 
-    .ix-checkbox__text {
+    .tn-checkbox__text {
       color: var(--fg2, #666);
     }
   }
 
   &--error {
-    .ix-checkbox__checkmark {
+    .tn-checkbox__checkmark {
       border-color: var(--red, #dc2626);
     }
   }
 
   &--indeterminate {
-    .ix-checkbox__checkmark {
+    .tn-checkbox__checkmark {
       background-color: var(--primary, #0095d5);
       border-color: var(--primary, #0095d5);
     }
@@ -138,21 +138,21 @@
 }
 
 // Focus styles for better accessibility
-.ix-checkbox__input:focus-visible ~ .ix-checkbox__checkmark {
+.tn-checkbox__input:focus-visible ~ .tn-checkbox__checkmark {
   outline: 2px solid var(--primary, #0095d5);
   outline-offset: 2px;
 }
 
 // High contrast mode support
 @media (prefers-contrast: high) {
-  .ix-checkbox__checkmark {
+  .tn-checkbox__checkmark {
     border-width: 2px;
   }
 }
 
 // Reduced motion support
 @media (prefers-reduced-motion: reduce) {
-  .ix-checkbox__checkmark {
+  .tn-checkbox__checkmark {
     transition: none;
   }
 }

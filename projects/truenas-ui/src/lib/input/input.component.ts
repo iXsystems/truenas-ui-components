@@ -30,7 +30,7 @@ export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
   multiline = input<boolean>(false);
   rows = input<number>(3);
 
-  id = 'ix-input';
+  id = 'tn-input';
   value = '';
 
   // CVA disabled state management

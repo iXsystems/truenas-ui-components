@@ -27,7 +27,7 @@ import { TnInputDirective } from '../input/input.directive';
   templateUrl: './date-input.component.html',
   styleUrl: './date-input.component.scss',
   host: {
-    'class': 'ix-date-input'
+    'class': 'tn-date-input'
   }
 })
 export class TnDateInputComponent implements ControlValueAccessor, OnInit, OnDestroy {
@@ -276,7 +276,7 @@ export class TnDateInputComponent implements ControlValueAccessor, OnInit, OnDes
       scrollStrategy: this.overlay.scrollStrategies.reposition(),
       hasBackdrop: true,
       backdropClass: 'cdk-overlay-transparent-backdrop',
-      panelClass: 'ix-datepicker-overlay'
+      panelClass: 'tn-datepicker-overlay'
     });
 
     // Close datepicker when backdrop is clicked

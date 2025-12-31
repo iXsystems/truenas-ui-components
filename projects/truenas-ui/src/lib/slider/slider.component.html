@@ -1,21 +1,21 @@
 <div
   #sliderContainer
-  class="ix-slider-container"
+  class="tn-slider-container"
   [attr.aria-disabled]="isDisabled()"
   [attr.data-disabled]="isDisabled()"
   (mousedown)="onTrackClick($event)"
   (touchstart)="onTrackClick($event)">
 
-  <div class="ix-slider-track">
-    <div class="ix-slider-track-inactive"></div>
-    <div class="ix-slider-track-active">
+  <div class="tn-slider-track">
+    <div class="tn-slider-track-inactive"></div>
+    <div class="tn-slider-track-active">
       <div
-        class="ix-slider-track-active-fill"
+        class="tn-slider-track-active-fill"
         [style.transform]="'scaleX(' + fillScale() + ')'">
       </div>
     </div>
     @if ((labelType() === 'track' || labelType() === 'both') && showLabel()) {
-      <div class="ix-slider-track-label">
+      <div class="tn-slider-track-label">
         {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}
       </div>
     }
@@ -23,12 +23,12 @@
 
   <div
     #thumbVisual
-    class="ix-slider-thumb-visual"
+    class="tn-slider-thumb-visual"
     [style.transform]="'translateX(' + thumbPosition() + 'px)'">
-    <div class="ix-slider-thumb-knob"></div>
+    <div class="tn-slider-thumb-knob"></div>
     @if ((labelType() === 'handle' || labelType() === 'both') && showLabel()) {
       <div
-        class="ix-slider-thumb-label"
+        class="tn-slider-thumb-label"
         [class.visible]="labelVisible()">
         {{ labelPrefix() }}{{ value() }}{{ labelSuffix() }}
       </div>

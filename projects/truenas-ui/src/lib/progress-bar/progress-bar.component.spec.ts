@@ -130,22 +130,22 @@ describe('TnProgressBarComponent', () => {
 
     fixture.componentRef.setInput('mode', 'determinate');
     fixture.detectChanges();
-    expect(element.classList.contains('ix-progress-bar-determinate')).toBe(true);
-    expect(element.classList.contains('ix-progress-bar-indeterminate')).toBe(false);
+    expect(element.classList.contains('tn-progress-bar-determinate')).toBe(true);
+    expect(element.classList.contains('tn-progress-bar-indeterminate')).toBe(false);
 
     fixture.componentRef.setInput('mode', 'indeterminate');
     fixture.detectChanges();
-    expect(element.classList.contains('ix-progress-bar-determinate')).toBe(false);
-    expect(element.classList.contains('ix-progress-bar-indeterminate')).toBe(true);
+    expect(element.classList.contains('tn-progress-bar-determinate')).toBe(false);
+    expect(element.classList.contains('tn-progress-bar-indeterminate')).toBe(true);
 
     fixture.componentRef.setInput('mode', 'buffer');
     fixture.detectChanges();
-    expect(element.classList.contains('ix-progress-bar-buffer')).toBe(true);
+    expect(element.classList.contains('tn-progress-bar-buffer')).toBe(true);
 
   });
 
   it('should have correct base CSS class', () => {
     const element = fixture.nativeElement;
-    expect(element.classList.contains('ix-progress-bar')).toBe(true);
+    expect(element.classList.contains('tn-progress-bar')).toBe(true);
   });
 });

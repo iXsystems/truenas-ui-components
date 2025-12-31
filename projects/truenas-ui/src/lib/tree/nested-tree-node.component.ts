@@ -17,7 +17,7 @@ import { TnIconComponent } from '../icon/icon.component';
   templateUrl: './nested-tree-node.component.html',
   styleUrl: './nested-tree-node.component.scss',
   host: {
-    'class': 'ix-nested-tree-node-wrapper',
+    'class': 'tn-nested-tree-node-wrapper',
     '[attr.aria-level]': 'level + 1',
     '[attr.aria-expanded]': 'isExpandable ? isExpanded : null',
     'role': 'treeitem'

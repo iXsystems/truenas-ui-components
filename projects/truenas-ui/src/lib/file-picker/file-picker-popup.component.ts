@@ -44,7 +44,7 @@ import { TnTableColumnDirective, TnHeaderCellDefDirective, TnCellDefDirective } 
   templateUrl: './file-picker-popup.component.html',
   styleUrl: './file-picker-popup.component.scss',
   host: {
-    'class': 'ix-file-picker-popup'
+    'class': 'tn-file-picker-popup'
   }
 })
 export class TnFilePickerPopupComponent implements OnInit, AfterViewInit, AfterViewChecked {

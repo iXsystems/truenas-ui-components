@@ -47,14 +47,14 @@ export class TnTabComponent implements AfterContentInit {
   }
 
   classes = computed(() => {
-    const classes = ['ix-tab'];
+    const classes = ['tn-tab'];
 
     if (this.isActive()) {
-      classes.push('ix-tab--active');
+      classes.push('tn-tab--active');
     }
 
     if (this.disabled()) {
-      classes.push('ix-tab--disabled');
+      classes.push('tn-tab--disabled');
     }
 
     return classes.join(' ');

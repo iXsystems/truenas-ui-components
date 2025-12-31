@@ -1,11 +1,11 @@
 <div [ngClass]="classes()">
   <!-- Header section -->
   @if (hasHeader()) {
-    <div class="ix-card__header">
-      <div class="ix-card__header-left">
+    <div class="tn-card__header">
+      <div class="tn-card__header-left">
         @if (title()) {
           <h3
-            class="ix-card__title"
+            class="tn-card__title"
             [class.ix-card__title--link]="titleLink()"
             [attr.tabindex]="titleLink() ? 0 : null"
             [attr.role]="titleLink() ? 'button' : null"
@@ -17,11 +17,11 @@
         }
       </div>
 
-      <div class="ix-card__header-right">
+      <div class="tn-card__header-right">
         <!-- Header Status -->
         @if (headerStatus(); as status) {
           <div
-            class="ix-card__status"
+            class="tn-card__status"
             [ngClass]="getStatusClass(status?.type)">
             {{ status.label }}
           </div>
@@ -29,7 +29,7 @@
 
         <!-- Header Control (Slide Toggle) -->
         @if (headerControl(); as control) {
-          <div class="ix-card__control">
+          <div class="tn-card__control">
             <tn-slide-toggle
               [label]="control.label"
               [checked]="control.checked"
@@ -41,7 +41,7 @@
         <!-- Header Menu -->
         @if (headerMenu(); as menu) {
           @if (menu.length) {
-            <div class="ix-card__menu">
+            <div class="tn-card__menu">
               <tn-icon-button
                 name="dots-vertical"
                 library="mdi"
@@ -60,25 +60,25 @@
   }
 
   <!-- Content section -->
-  <div class="ix-card__content">
+  <div class="tn-card__content">
     <ng-content />
   </div>
 
   <!-- Footer section -->
   @if (hasFooter()) {
-    <div class="ix-card__footer">
-      <div class="ix-card__footer-left">
+    <div class="tn-card__footer">
+      <div class="tn-card__footer-left">
         @if (footerLink(); as link) {
           <button
             type="button"
-            class="ix-card__footer-link"
+            class="tn-card__footer-link"
             (click)="link.handler()">
             {{ link.label }}
           </button>
         }
       </div>
 
-      <div class="ix-card__footer-right">
+      <div class="tn-card__footer-right">
         @if (secondaryAction(); as action) {
           <tn-button
             variant="outline"

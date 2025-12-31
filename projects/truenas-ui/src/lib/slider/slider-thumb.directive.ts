@@ -15,7 +15,7 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
   ],
   host: {
     'type': 'range',
-    'class': 'ix-slider-thumb',
+    'class': 'tn-slider-thumb',
     '[disabled]': 'slider?.isDisabled()',
     '[attr.min]': 'slider?.min()',
     '[attr.max]': 'slider?.max()',

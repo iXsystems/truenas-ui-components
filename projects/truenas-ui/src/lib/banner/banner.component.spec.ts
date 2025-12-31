@@ -50,33 +50,33 @@ describe('TnBannerComponent', () => {
   describe('classes computed', () => {
     it('should include base class', () => {
       const classes = component.classes();
-      expect(classes).toContain('ix-banner');
+      expect(classes).toContain('tn-banner');
     });
 
     it('should include info type class by default', () => {
       const classes = component.classes();
-      expect(classes).toContain('ix-banner--info');
+      expect(classes).toContain('tn-banner--info');
     });
 
     it('should include warning type class', () => {
       fixture.componentRef.setInput('type', 'warning');
       fixture.detectChanges();
       const classes = component.classes();
-      expect(classes).toContain('ix-banner--warning');
+      expect(classes).toContain('tn-banner--warning');
     });
 
     it('should include error type class', () => {
       fixture.componentRef.setInput('type', 'error');
       fixture.detectChanges();
       const classes = component.classes();
-      expect(classes).toContain('ix-banner--error');
+      expect(classes).toContain('tn-banner--error');
     });
 
     it('should include success type class', () => {
       fixture.componentRef.setInput('type', 'success');
       fixture.detectChanges();
       const classes = component.classes();
-      expect(classes).toContain('ix-banner--success');
+      expect(classes).toContain('tn-banner--success');
     });
   });
 
@@ -130,7 +130,7 @@ describe('TnBannerComponent', () => {
 
   describe('DOM rendering', () => {
     it('should render heading text', () => {
-      const heading = fixture.nativeElement.querySelector('.ix-banner__heading');
+      const heading = fixture.nativeElement.querySelector('.tn-banner__heading');
       expect(heading.textContent.trim()).toBe('Test Heading');
     });
 
@@ -138,13 +138,13 @@ describe('TnBannerComponent', () => {
       fixture.componentRef.setInput('message', 'Test message');
       fixture.detectChanges();
 
-      const message = fixture.nativeElement.querySelector('.ix-banner__message');
+      const message = fixture.nativeElement.querySelector('.tn-banner__message');
       expect(message).toBeTruthy();
       expect(message.textContent.trim()).toBe('Test message');
     });
 
     it('should not render message when not provided', () => {
-      const message = fixture.nativeElement.querySelector('.ix-banner__message');
+      const message = fixture.nativeElement.querySelector('.tn-banner__message');
       expect(message).toBeNull();
     });
 
@@ -154,7 +154,7 @@ describe('TnBannerComponent', () => {
     });
 
     it('should apply correct ARIA role', () => {
-      const banner = fixture.nativeElement.querySelector('.ix-banner');
+      const banner = fixture.nativeElement.querySelector('.tn-banner');
       expect(banner.getAttribute('role')).toBe('status');
     });
 
@@ -162,7 +162,7 @@ describe('TnBannerComponent', () => {
       fixture.componentRef.setInput('type', 'error');
       fixture.detectChanges();
 
-      const banner = fixture.nativeElement.querySelector('.ix-banner');
+      const banner = fixture.nativeElement.querySelector('.tn-banner');
       expect(banner.getAttribute('role')).toBe('alert');
     });
   });

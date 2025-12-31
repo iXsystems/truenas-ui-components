@@ -1,7 +1,7 @@
 // Slide Toggle Component Styles
 // Based on Angular Material Design patterns
 
-.ix-slide-toggle {
+.tn-slide-toggle {
   display: inline-flex;
   align-items: center;
   cursor: pointer;
@@ -38,7 +38,7 @@
     margin: 0;
     pointer-events: none;
 
-    &:focus + .ix-slide-toggle__track {
+    &:focus + .tn-slide-toggle__track {
       box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 0, 123, 255), 0.2);
     }
   }
@@ -129,8 +129,8 @@
   }
 
   // Hover states
-  &:hover:not(.ix-slide-toggle--disabled) {
-    .ix-slide-toggle__ripple {
+  &:hover:not(.tn-slide-toggle--disabled) {
+    .tn-slide-toggle__ripple {
       background-color: var(--primary);
       opacity: 0.08;
     }
@@ -138,31 +138,31 @@
 
   // Checked state
   &--checked {
-    .ix-slide-toggle__track {
+    .tn-slide-toggle__track {
       background-color: var(--primary);
       opacity: 0.5;
     }
 
-    .ix-slide-toggle__track-fill {
+    .tn-slide-toggle__track-fill {
       opacity: 1;
       transform: scaleX(1);
     }
 
-    .ix-slide-toggle__thumb-container {
+    .tn-slide-toggle__thumb-container {
       transform: translateY(-50%) translateX(24px);
     }
 
-    .ix-slide-toggle__thumb {
+    .tn-slide-toggle__thumb {
       background-color: var(--bg2);
       border-color: var(--primary);
     }
 
-    .ix-slide-toggle__check-icon {
+    .tn-slide-toggle__check-icon {
       color: var(--primary);
     }
 
-    &:hover:not(.ix-slide-toggle--disabled) {
-      .ix-slide-toggle__ripple {
+    &:hover:not(.tn-slide-toggle--disabled) {
+      .tn-slide-toggle__ripple {
         background-color: var(--primary);
         opacity: 0.12;
       }
@@ -174,40 +174,40 @@
     cursor: not-allowed;
     opacity: 0.6;
 
-    .ix-slide-toggle__label-text {
+    .tn-slide-toggle__label-text {
       color: var(--alt-fg1);
     }
 
-    .ix-slide-toggle__track {
+    .tn-slide-toggle__track {
       background-color: var(--alt-bg1);
     }
 
-    .ix-slide-toggle__thumb {
+    .tn-slide-toggle__thumb {
       background-color: var(--alt-bg2);
       border-color: var(--alt-bg1);
       box-shadow: none;
     }
 
-    &.ix-slide-toggle--checked {
-      .ix-slide-toggle__track {
+    &.tn-slide-toggle--checked {
+      .tn-slide-toggle__track {
         background-color: var(--alt-bg1);
       }
 
-      .ix-slide-toggle__track-fill {
+      .tn-slide-toggle__track-fill {
         background-color: var(--alt-bg1);
       }
 
-      .ix-slide-toggle__thumb {
+      .tn-slide-toggle__thumb {
         background-color: var(--alt-bg2);
         border-color: var(--alt-bg1);
       }
 
-      .ix-slide-toggle__check-icon {
+      .tn-slide-toggle__check-icon {
         color: var(--alt-fg1);
       }
     }
 
-    &:hover .ix-slide-toggle__ripple {
+    &:hover .tn-slide-toggle__ripple {
       opacity: 0;
     }
   }
@@ -226,14 +226,14 @@
   }
 
   // Focus states
-  .ix-slide-toggle__input:focus-visible + .ix-slide-toggle__track {
+  .tn-slide-toggle__input:focus-visible + .tn-slide-toggle__track {
     outline: 2px solid var(--primary);
     outline-offset: 2px;
   }
 
   // Active/pressed state
-  &:active:not(.ix-slide-toggle--disabled) {
-    .ix-slide-toggle__ripple {
+  &:active:not(.tn-slide-toggle--disabled) {
+    .tn-slide-toggle__ripple {
       background-color: var(--primary);
       opacity: 0.16;
       transform: translate(-50%, -50%) scale(1.1);
@@ -242,17 +242,17 @@
 
   // High contrast mode support
   @media (prefers-contrast: high) {
-    .ix-slide-toggle__track {
+    .tn-slide-toggle__track {
       border-color: var(--fg1);
     }
 
-    .ix-slide-toggle__thumb {
+    .tn-slide-toggle__thumb {
       border-width: 2px;
     }
 
     &--disabled {
-      .ix-slide-toggle__track,
-      .ix-slide-toggle__thumb {
+      .tn-slide-toggle__track,
+      .tn-slide-toggle__thumb {
         border-color: var(--alt-fg1);
       }
     }
@@ -260,11 +260,11 @@
 
   // Reduced motion support
   @media (prefers-reduced-motion: reduce) {
-    .ix-slide-toggle__track,
-    .ix-slide-toggle__track-fill,
-    .ix-slide-toggle__thumb-container,
-    .ix-slide-toggle__thumb,
-    .ix-slide-toggle__ripple {
+    .tn-slide-toggle__track,
+    .tn-slide-toggle__track-fill,
+    .tn-slide-toggle__thumb-container,
+    .tn-slide-toggle__thumb,
+    .tn-slide-toggle__ripple {
       transition: none;
     }
   }

@@ -1,33 +1,33 @@
-<div class="ix-date-range-container">
-  <div #wrapper ixInput class="ix-date-range-wrapper" style="padding-right: 40px;">
+<div class="tn-date-range-container">
+  <div #wrapper ixInput class="tn-date-range-wrapper" style="padding-right: 40px;">
     <!-- Start date segments -->
-    <div class="ix-date-segment-group">
+    <div class="tn-date-segment-group">
       <input
         #startMonthInput
         type="text"
-        class="ix-date-segment ix-date-segment-month"
+        class="tn-date-segment ix-date-segment-month"
         placeholder="MM"
         maxlength="2"
         [disabled]="isDisabled()"
         (focus)="onSegmentFocus('start', 'month')"
         (blur)="onSegmentBlur('start', 'month')"
         (keydown)="onSegmentKeydown($event, 'start', 'month')">
-      <span class="ix-date-segment-separator">/</span>
+      <span class="tn-date-segment-separator">/</span>
       <input
         #startDayInput
         type="text"
-        class="ix-date-segment ix-date-segment-day"
+        class="tn-date-segment ix-date-segment-day"
         placeholder="DD"
         maxlength="2"
         [disabled]="isDisabled()"
         (focus)="onSegmentFocus('start', 'day')"
         (blur)="onSegmentBlur('start', 'day')"
         (keydown)="onSegmentKeydown($event, 'start', 'day')">
-      <span class="ix-date-segment-separator">/</span>
+      <span class="tn-date-segment-separator">/</span>
       <input
         #startYearInput
         type="text"
-        class="ix-date-segment ix-date-segment-year"
+        class="tn-date-segment ix-date-segment-year"
         placeholder="YYYY"
         maxlength="4"
         [disabled]="isDisabled()"
@@ -36,36 +36,36 @@
         (keydown)="onSegmentKeydown($event, 'start', 'year')">
     </div>
 
-    <span class="ix-date-range-separator">–</span>
+    <span class="tn-date-range-separator">–</span>
 
     <!-- End date segments -->
-    <div class="ix-date-segment-group">
+    <div class="tn-date-segment-group">
       <input
         #endMonthInput
         type="text"
-        class="ix-date-segment ix-date-segment-month"
+        class="tn-date-segment ix-date-segment-month"
         placeholder="MM"
         maxlength="2"
         [disabled]="isDisabled()"
         (focus)="onSegmentFocus('end', 'month')"
         (blur)="onSegmentBlur('end', 'month')"
         (keydown)="onSegmentKeydown($event, 'end', 'month')">
-      <span class="ix-date-segment-separator">/</span>
+      <span class="tn-date-segment-separator">/</span>
       <input
         #endDayInput
         type="text"
-        class="ix-date-segment ix-date-segment-day"
+        class="tn-date-segment ix-date-segment-day"
         placeholder="DD"
         maxlength="2"
         [disabled]="isDisabled()"
         (focus)="onSegmentFocus('end', 'day')"
         (blur)="onSegmentBlur('end', 'day')"
         (keydown)="onSegmentKeydown($event, 'end', 'day')">
-      <span class="ix-date-segment-separator">/</span>
+      <span class="tn-date-segment-separator">/</span>
       <input
         #endYearInput
         type="text"
-        class="ix-date-segment ix-date-segment-year"
+        class="tn-date-segment ix-date-segment-year"
         placeholder="YYYY"
         maxlength="4"
         [disabled]="isDisabled()"
@@ -76,7 +76,7 @@
 
     <button
       type="button"
-      class="ix-date-range-toggle"
+      class="tn-date-range-toggle"
       aria-label="Open calendar"
       [disabled]="isDisabled()"
       (click)="openDatepicker()">
@@ -86,7 +86,7 @@
 
   <ng-template #calendarTemplate>
     <tn-calendar
-      class="ix-calendar"
+      class="tn-calendar"
       [startView]="'month'"
       [rangeMode]="true"
       [selectedRange]="initialRange()"

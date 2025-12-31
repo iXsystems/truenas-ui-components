@@ -291,7 +291,7 @@ export const NestedTree: Story = {
           display: none;
         }
       </style>
-      <tn-tree [dataSource]="dataSource" [childrenAccessor]="childrenAccessor" class="ix-tree">
+      <tn-tree [dataSource]="dataSource" [childrenAccessor]="childrenAccessor" class="tn-tree">
         <!-- Node definition for leaf nodes -->
         <tn-nested-tree-node *cdkTreeNodeDef="let node">
           <tn-icon [name]="node.type === 'folder' ? 'folder' : 'file'" library="mdi" size="sm"></tn-icon>

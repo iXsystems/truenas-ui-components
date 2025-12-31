@@ -1,7 +1,7 @@
-<div class="ix-select-container" [attr.data-testid]="testId()">
+<div class="tn-select-container" [attr.data-testid]="testId()">
   <!-- Select Trigger -->
   <div
-    class="ix-select-trigger"
+    class="tn-select-trigger"
     role="combobox"
     tabindex="0"
     [class.disabled]="isDisabled()"
@@ -15,13 +15,13 @@
 
     <!-- Display Text -->
     <span
-      class="ix-select-text"
+      class="tn-select-text"
       [class.placeholder]="selectedValue() === null || selectedValue() === undefined">
       {{ getDisplayText() }}
     </span>
 
     <!-- Dropdown Arrow -->
-    <div class="ix-select-arrow" [class.open]="isOpen()">
+    <div class="tn-select-arrow" [class.open]="isOpen()">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polyline points="6,9 12,15 18,9" />
       </svg>
@@ -31,16 +31,16 @@
   <!-- Dropdown Menu -->
   @if (isOpen()) {
     <div
-      class="ix-select-dropdown"
+      class="tn-select-dropdown"
       role="listbox"
       [attr.id]="'ix-select-dropdown-' + testId()">
 
       <!-- Options List -->
-      <div class="ix-select-options">
+      <div class="tn-select-options">
         <!-- Regular Options -->
         @for (option of options(); track $index) {
           <div
-            class="ix-select-option"
+            class="tn-select-option"
             role="option"
             [attr.tabindex]="option.disabled ? null : 0"
             [class.selected]="isSelected()(option)"
@@ -61,14 +61,14 @@
           <!-- Group Separator (not shown before first group if we have regular options) -->
           @if (!isFirst || options().length > 0) {
             <div
-              class="ix-select-separator"
+              class="tn-select-separator"
               role="separator">
             </div>
           }
 
           <!-- Group Label -->
           <div
-            class="ix-select-group-label"
+            class="tn-select-group-label"
             [class.disabled]="group.disabled">
             {{ group.label }}
           </div>
@@ -76,7 +76,7 @@
           <!-- Group Options -->
           @for (option of group.options; track $index) {
             <div
-              class="ix-select-option"
+              class="tn-select-option"
               role="option"
               [attr.tabindex]="option.disabled || group.disabled ? null : 0"
               [class.selected]="isSelected()(option)"
@@ -95,7 +95,7 @@
 
         <!-- No Options Message -->
         @if (!hasAnyOptions()) {
-          <div class="ix-select-no-options">
+          <div class="tn-select-no-options">
             No options available
           </div>
         }

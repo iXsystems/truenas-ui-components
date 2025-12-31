@@ -79,7 +79,7 @@ export class TnSpriteLoaderService {
    * Get the full URL for an icon in the sprite
    * Returns a URL like: assets/icons/sprite.svg?v=hash#icon-name
    *
-   * @param iconName The icon name (e.g., 'folder', 'mdi-server', 'ix-dataset')
+   * @param iconName The icon name (e.g., 'folder', 'mdi-server', 'tn-dataset')
    * @returns The fragment identifier URL for the icon, or null if sprite not loaded or icon not in sprite
    */
   getIconUrl(iconName: string): string | null {

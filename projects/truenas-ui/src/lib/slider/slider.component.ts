@@ -22,7 +22,7 @@ export type LabelType = 'none' | 'handle' | 'track' | 'both';
   templateUrl: './slider.component.html',
   styleUrl: './slider.component.scss',
   host: {
-    'class': 'ix-slider',
+    'class': 'tn-slider',
     '[attr.aria-disabled]': 'isDisabled()'
   }
 })

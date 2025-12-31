@@ -55,7 +55,7 @@ export class TnExpansionPanelComponent {
     return internal !== null ? internal : this.expanded();
   });
 
-  readonly contentId = `ix-expansion-panel-content-${Math.random().toString(36).substr(2, 9)}`;
+  readonly contentId = `tn-expansion-panel-content-${Math.random().toString(36).substr(2, 9)}`;
 
   toggle(): void {
     if (this.disabled()) {
@@ -69,16 +69,16 @@ export class TnExpansionPanelComponent {
   }
 
   classes = computed(() => {
-    const elevationClass = `ix-expansion-panel--elevation-${this.elevation()}`;
-    const paddingClass = `ix-expansion-panel--padding-${this.padding()}`;
-    const borderedClass = this.bordered() ? 'ix-expansion-panel--bordered' : '';
-    const backgroundClass = this.background() ? 'ix-expansion-panel--background' : '';
-    const expandedClass = this.effectiveExpanded() ? 'ix-expansion-panel--expanded' : '';
-    const disabledClass = this.disabled() ? 'ix-expansion-panel--disabled' : '';
-    const titleStyleClass = `ix-expansion-panel--title-${this.titleStyle()}`;
+    const elevationClass = `tn-expansion-panel--elevation-${this.elevation()}`;
+    const paddingClass = `tn-expansion-panel--padding-${this.padding()}`;
+    const borderedClass = this.bordered() ? 'tn-expansion-panel--bordered' : '';
+    const backgroundClass = this.background() ? 'tn-expansion-panel--background' : '';
+    const expandedClass = this.effectiveExpanded() ? 'tn-expansion-panel--expanded' : '';
+    const disabledClass = this.disabled() ? 'tn-expansion-panel--disabled' : '';
+    const titleStyleClass = `tn-expansion-panel--title-${this.titleStyle()}`;
 
     return [
-      'ix-expansion-panel',
+      'tn-expansion-panel',
       elevationClass,
       paddingClass,
       borderedClass,

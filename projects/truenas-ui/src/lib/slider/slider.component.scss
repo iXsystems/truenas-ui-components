@@ -6,7 +6,7 @@
   touch-action: pan-x;
 }
 
-.ix-slider-container {
+.tn-slider-container {
   position: relative;
   width: 100%;
   height: 100%;
@@ -20,13 +20,13 @@
   }
 }
 
-.ix-slider-track {
+.tn-slider-track {
   position: relative;
   width: 100%;
   height: 4px;
 }
 
-.ix-slider-track-inactive {
+.tn-slider-track-inactive {
   position: absolute;
   top: 0;
   left: 0;
@@ -36,7 +36,7 @@
   border-radius: 2px;
 }
 
-.ix-slider-track-active {
+.tn-slider-track-active {
   position: absolute;
   top: 0;
   left: 0;
@@ -46,7 +46,7 @@
   border-radius: 2px;
 }
 
-.ix-slider-track-active-fill {
+.tn-slider-track-active-fill {
   position: absolute;
   top: 0;
   left: 0;
@@ -59,7 +59,7 @@
 }
 
 // Style for the thumb input (visually hidden but accessible)
-:host ::ng-deep .ix-slider-thumb {
+:host ::ng-deep .tn-slider-thumb {
   position: absolute;
   top: 0;
   left: 0;
@@ -90,7 +90,7 @@
   &:focus-visible {
     outline: none;
     
-    + .ix-slider-visual-thumb {
+    + .tn-slider-visual-thumb {
       outline: 2px solid var(--primary, #007bff);
       outline-offset: 2px;
     }
@@ -98,7 +98,7 @@
 }
 
 // Visual thumb indicator (real DOM element) - fader style
-.ix-slider-thumb-visual {
+.tn-slider-thumb-visual {
   position: absolute;
   top: 50%;
   left: 0;
@@ -107,7 +107,7 @@
   transition: transform 0.1s ease-out;
 }
 
-.ix-slider-thumb-knob {
+.tn-slider-thumb-knob {
   width: 20px;
   height: 24px;
   background: var(--primary, #007bff);
@@ -118,17 +118,17 @@
   transform: translateY(-50%);
 }
 
-.ix-slider-container:hover .ix-slider-thumb-knob {
+.tn-slider-container:hover .tn-slider-thumb-knob {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
-.ix-slider-container[data-disabled="true"] .ix-slider-thumb-knob {
+.tn-slider-container[data-disabled="true"] .tn-slider-thumb-knob {
   background: var(--fg2, #999);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 // Thumb label (tooltip-style) - matches ix-tooltip styling but with primary background
-.ix-slider-thumb-label {
+.tn-slider-thumb-label {
   position: absolute;
   bottom: calc(100% + 16px); // Position above the thumb knob with 16px gap
   left: 50%;
@@ -168,7 +168,7 @@
 }
 
 // Track label positioned at the right end above the track
-.ix-slider-track-label {
+.tn-slider-track-label {
   position: absolute;
   top: -28px; // Position above the track
   right: 0;   // Align to right end of track
@@ -186,21 +186,21 @@
 
 // Accessibility improvements
 @media (prefers-reduced-motion: reduce) {
-  .ix-slider-track-active-fill,
-  .ix-slider-thumb-visual,
-  .ix-slider-thumb-knob,
-  .ix-slider-thumb-label {
+  .tn-slider-track-active-fill,
+  .tn-slider-thumb-visual,
+  .tn-slider-thumb-knob,
+  .tn-slider-thumb-label {
     transition: none;
   }
 }
 
 // High contrast mode support
 @media (prefers-contrast: high) {
-  .ix-slider-track-inactive {
+  .tn-slider-track-inactive {
     border: 1px solid var(--fg1, #000);
   }
   
-  .ix-slider-thumb-knob {
+  .tn-slider-thumb-knob {
     border-width: 3px;
     border-color: var(--fg1, #000);
   }

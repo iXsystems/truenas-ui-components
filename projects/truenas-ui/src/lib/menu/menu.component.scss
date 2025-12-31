@@ -1,8 +1,8 @@
-.ix-menu-container {
+.tn-menu-container {
   display: inline-block;
   position: relative;
 
-  &.ix-menu-container--context {
+  &.tn-menu-container--context {
     display: block;
     width: 100%;
     height: 100%;
@@ -10,7 +10,7 @@
   }
 }
 
-.ix-menu-trigger {
+.tn-menu-trigger {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -39,16 +39,16 @@
   }
 }
 
-.ix-menu-arrow {
+.tn-menu-arrow {
   font-size: 12px;
   transition: transform 0.2s ease;
 
-  &.ix-menu-arrow--up {
+  &.tn-menu-arrow--up {
     transform: rotate(180deg);
   }
 }
 
-.ix-menu {
+.tn-menu {
   display: flex;
   flex-direction: column;
   background: var(--bg2, #f5f5f5);
@@ -61,7 +61,7 @@
   z-index: 1000;
 }
 
-.ix-menu-item {
+.tn-menu-item {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -98,20 +98,20 @@
   }
 }
 
-.ix-menu-item-icon {
+.tn-menu-item-icon {
   font-size: 16px;
   width: 16px;
   text-align: center;
 }
 
-.ix-menu-item-label {
+.tn-menu-item-label {
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.ix-menu-item-shortcut {
+.tn-menu-item-shortcut {
   font-size: 12px;
   color: var(--fg2, #666666);
   margin-left: auto;
@@ -121,7 +121,7 @@
   opacity: 0.7;
 }
 
-.ix-menu-item-arrow {
+.tn-menu-item-arrow {
   font-size: 10px;
   margin-left: 8px;
   color: var(--fg2, #666666);
@@ -129,27 +129,27 @@
   flex-shrink: 0;
 }
 
-.ix-menu-item--nested {
+.tn-menu-item--nested {
   position: relative;
   
-  &:hover .ix-menu-item-arrow {
+  &:hover .tn-menu-item-arrow {
     color: var(--fg1, #333333);
   }
 }
 
-.ix-menu-separator {
+.tn-menu-separator {
   height: 1px;
   background: var(--lines, #e0e0e0);
   margin: 4px 0;
 }
 
-.ix-menu--nested {
+.tn-menu--nested {
   margin-left: 4px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
   border-radius: 4px;
 }
 
-.ix-menu-context-content {
+.tn-menu-context-content {
   width: 100%;
   height: 100%;
   

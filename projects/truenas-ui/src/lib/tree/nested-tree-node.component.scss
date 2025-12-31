@@ -1,10 +1,10 @@
 
-.ix-nested-tree-node-wrapper {
+.tn-nested-tree-node-wrapper {
   display: block;
   width: 100%;
 }
 
-.ix-nested-tree-node {
+.tn-nested-tree-node {
   display: block;
   width: 100%;
   font-family: var(--font-family);
@@ -13,13 +13,13 @@
   color: var(--fg1);
 
   &--expandable {
-    .ix-nested-tree-node__content {
+    .tn-nested-tree-node__content {
       cursor: pointer;
     }
   }
 }
 
-.ix-nested-tree-node__content {
+.tn-nested-tree-node__content {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -40,11 +40,11 @@
 }
 
 // Ensure the invisible class works for show/hide
-.ix-tree-invisible {
+.tn-tree-invisible {
   display: none;
 }
 
-.ix-nested-tree-node__toggle {
+.tn-nested-tree-node__toggle {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -78,13 +78,13 @@
   }
 }
 
-.ix-nested-tree-node__spacer {
+.tn-nested-tree-node__spacer {
   width: 24px;
   height: 24px;
   flex-shrink: 0;
 }
 
-.ix-nested-tree-node__text {
+.tn-nested-tree-node__text {
   flex: 1;
   display: flex;
   align-items: center;
@@ -93,23 +93,23 @@
   color: var(--fg1);
 }
 
-div.ix-nested-tree-node-container {
+div.tn-nested-tree-node-container {
   padding-left: 40px;
 }
 
 
 // Accessibility improvements
 @media (prefers-reduced-motion: reduce) {
-  .ix-nested-tree-node__toggle svg,
-  .ix-nested-tree-node__content,
-  .ix-nested-tree-node__children {
+  .tn-nested-tree-node__toggle svg,
+  .tn-nested-tree-node__content,
+  .tn-nested-tree-node__children {
     transition: none;
   }
 }
 
 // High contrast mode support
 @media (prefers-contrast: high) {
-  .ix-nested-tree-node__content {
+  .tn-nested-tree-node__content {
     border: 1px solid transparent;
 
     &:hover,
@@ -118,7 +118,7 @@ div.ix-nested-tree-node-container {
     }
   }
 
-  .ix-nested-tree-node__toggle {
+  .tn-nested-tree-node__toggle {
     border: 1px solid var(--fg2);
 
     &:hover,

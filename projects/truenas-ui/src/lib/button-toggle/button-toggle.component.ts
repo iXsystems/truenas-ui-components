@@ -22,11 +22,11 @@ import type { TnButtonToggleGroupComponent } from './button-toggle-group.compone
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   host: {
-    'class': 'ix-button-toggle',
+    'class': 'tn-button-toggle',
     '[attr.id]': 'id()',
-    '[class.ix-button-toggle--checked]': 'checked()',
-    '[class.ix-button-toggle--disabled]': 'isDisabled()',
-    '[class.ix-button-toggle--standalone]': '!buttonToggleGroup',
+    '[class.tn-button-toggle--checked]': 'checked()',
+    '[class.tn-button-toggle--disabled]': 'isDisabled()',
+    '[class.tn-button-toggle--standalone]': '!buttonToggleGroup',
     '(focus)': 'onFocus()'
   }
 })
@@ -35,7 +35,7 @@ export class TnButtonToggleComponent implements ControlValueAccessor {
 
   private static _uniqueIdCounter = 0;
 
-  id = input<string>(`ix-button-toggle-${TnButtonToggleComponent._uniqueIdCounter++}`);
+  id = input<string>(`tn-button-toggle-${TnButtonToggleComponent._uniqueIdCounter++}`);
   value = input<unknown>(undefined);
   disabled = input<boolean>(false);
   checked = signal<boolean>(false);

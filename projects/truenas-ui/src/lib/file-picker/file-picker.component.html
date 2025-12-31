@@ -1,8 +1,8 @@
-<div class="ix-file-picker-container">
-  <div #wrapper ixInput class="ix-file-picker-wrapper" style="padding-right: 40px;">
+<div class="tn-file-picker-container">
+  <div #wrapper ixInput class="tn-file-picker-wrapper" style="padding-right: 40px;">
     <input
       type="text"
-      class="ix-file-picker-input"
+      class="tn-file-picker-input"
       [class.error]="hasError()"
       [value]="selectedPath() | tnStripMntPrefix"
       [placeholder]="placeholder()"
@@ -12,7 +12,7 @@
 
     <button
       type="button"
-      class="ix-file-picker-toggle"
+      class="tn-file-picker-toggle"
       aria-label="Open file picker"
       [disabled]="isDisabled()"
       (click)="openFilePicker()">
@@ -22,7 +22,7 @@
   
   <ng-template #filePickerTemplate>
     <tn-file-picker-popup
-      class="ix-file-picker-popup"
+      class="tn-file-picker-popup"
       [mode]="mode()"
       [multiSelect]="multiSelect()"
       [allowCreate]="allowCreate()"

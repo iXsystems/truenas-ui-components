@@ -72,13 +72,13 @@ export class TnCardComponent {
   }
 
   classes = computed(() => {
-    const elevationClass = `ix-card--elevation-${this.elevation()}`;
-    const paddingClass = `ix-card--padding-${this.padding()}`;
-    const contentPaddingClass = this.padContent() ? `ix-card--content-padding-${this.padding()}` : 'ix-card--content-padding-none';
-    const borderedClass = this.bordered() ? 'ix-card--bordered' : '';
-    const backgroundClass = this.background() ? 'ix-card--background' : '';
+    const elevationClass = `tn-card--elevation-${this.elevation()}`;
+    const paddingClass = `tn-card--padding-${this.padding()}`;
+    const contentPaddingClass = this.padContent() ? `tn-card--content-padding-${this.padding()}` : 'tn-card--content-padding-none';
+    const borderedClass = this.bordered() ? 'tn-card--bordered' : '';
+    const backgroundClass = this.background() ? 'tn-card--background' : '';
 
-    return ['ix-card', elevationClass, paddingClass, contentPaddingClass, borderedClass, backgroundClass].filter(Boolean);
+    return ['tn-card', elevationClass, paddingClass, contentPaddingClass, borderedClass, backgroundClass].filter(Boolean);
   });
 
   hasHeader = computed(() => {
@@ -108,6 +108,6 @@ export class TnCardComponent {
   }
 
   getStatusClass(type?: string): string {
-    return type ? `ix-card__status--${type}` : 'ix-card__status--neutral';
+    return type ? `tn-card__status--${type}` : 'tn-card__status--neutral';
   }
 }

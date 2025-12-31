@@ -9,11 +9,11 @@ import { ElementRef, Component, input, output, computed, signal, inject } from '
   templateUrl: './list-item.component.html',
   styleUrl: './list-item.component.scss',
   host: {
-    'class': 'ix-list-item',
-    '[class.ix-list-item--disabled]': 'disabled()',
-    '[class.ix-list-item--clickable]': 'clickable()',
-    '[class.ix-list-item--two-line]': 'hasSecondaryText()',
-    '[class.ix-list-item--three-line]': 'hasThirdText()',
+    'class': 'tn-list-item',
+    '[class.tn-list-item--disabled]': 'disabled()',
+    '[class.tn-list-item--clickable]': 'clickable()',
+    '[class.tn-list-item--two-line]': 'hasSecondaryText()',
+    '[class.tn-list-item--three-line]': 'hasThirdText()',
     'role': 'listitem',
     '(click)': 'onClick($event)'
   }

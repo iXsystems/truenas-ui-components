@@ -314,7 +314,7 @@ describe('TnFilePickerPopupComponent', () => {
       fixture.componentRef.setInput('loading', true);
       fixture.detectChanges();
 
-      const loadingElement = fixture.debugElement.query(By.css('.ix-file-picker-loading'));
+      const loadingElement = fixture.debugElement.query(By.css('.tn-file-picker-loading'));
       expect(loadingElement).toBeTruthy();
     });
 
@@ -322,7 +322,7 @@ describe('TnFilePickerPopupComponent', () => {
       fixture.componentRef.setInput('loading', true);
       fixture.detectChanges();
 
-      const contentElement = fixture.debugElement.query(By.css('.ix-file-picker-content'));
+      const contentElement = fixture.debugElement.query(By.css('.tn-file-picker-content'));
       expect(contentElement).toBeFalsy();
     });
   });

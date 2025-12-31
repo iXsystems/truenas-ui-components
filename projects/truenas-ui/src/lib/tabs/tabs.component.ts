@@ -318,16 +318,16 @@ export class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDestr
   }
 
   classes = computed(() => {
-    const classes = ['ix-tabs'];
+    const classes = ['tn-tabs'];
 
     if (this.orientation() === 'vertical') {
-      classes.push('ix-tabs--vertical');
+      classes.push('tn-tabs--vertical');
     } else {
-      classes.push('ix-tabs--horizontal');
+      classes.push('tn-tabs--horizontal');
     }
 
     // Add highlight position class
-    classes.push(`ix-tabs--highlight-${this.highlightPosition()}`);
+    classes.push(`tn-tabs--highlight-${this.highlightPosition()}`);
 
     return classes.join(' ');
   });
