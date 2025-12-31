@@ -32,7 +32,7 @@
     "lint": "eslint \"projects/truenas-ui/src/**/*.{ts,html}\" \"scripts/**/*.ts\"",
     "lint:fix": "eslint \"projects/truenas-ui/src/**/*.{ts,html}\" \"scripts/**/*.ts\" --fix",
     "copy-themes": "cp ./projects/truenas-ui/src/styles/themes.css ./projects/truenas-ui/.storybook/public/",
-    "copy-sprite": "cp ./projects/truenas-ui/assets/truenas-ui-icons/sprite.svg ./projects/truenas-ui/.storybook/public/assets/truenas-ui-icons/ && cp ./projects/truenas-ui/assets/truenas-ui-icons/sprite-config.json ./projects/truenas-ui/.storybook/public/assets/truenas-ui-icons/",
+    "copy-sprite": "cp ./projects/truenas-ui/assets/tn-icons/sprite.svg ./projects/truenas-ui/.storybook/public/assets/tn-icons/ && cp ./projects/truenas-ui/assets/tn-icons/sprite-config.json ./projects/truenas-ui/.storybook/public/assets/tn-icons/",
     "copy-assets": "yarn copy-themes && yarn copy-sprite",
     "storybook": "yarn generate-sprite && yarn copy-assets && yarn generate-harness-docs && ng run truenas-ui:storybook",
     "build-storybook": "yarn generate-sprite && yarn copy-assets && yarn generate-harness-docs && ng run truenas-ui:build-storybook",

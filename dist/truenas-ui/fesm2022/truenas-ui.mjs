@@ -49,7 +49,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * Default base path for sprite assets (namespaced to avoid collisions with consumer apps)
  * This should match the value in sprite-config-interface.ts
  */
-const defaultSpriteBasePath = 'assets/truenas-ui-icons';
+const defaultSpriteBasePath = 'assets/tn-icons';
 /**
  * Default path for the sprite configuration file.
  */
@@ -6633,7 +6633,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * To regenerate this file, run:
  *   npm run generate-icons
  *
- * Generated: 2025-12-31T20:08:44.987Z
+ * Generated: 2025-12-31T20:19:27.441Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 /* eslint-disable */

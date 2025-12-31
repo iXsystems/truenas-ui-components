@@ -7,7 +7,7 @@ import { firstValueFrom } from 'rxjs';
  * Default base path for sprite assets (namespaced to avoid collisions with consumer apps)
  * This should match the value in sprite-config-interface.ts
  */
-export const defaultSpriteBasePath = 'assets/truenas-ui-icons';
+export const defaultSpriteBasePath = 'assets/tn-icons';
 
 /**
  * Default path for the sprite configuration file.

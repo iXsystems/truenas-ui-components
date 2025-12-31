@@ -664,11 +664,11 @@ declare class TnSelectComponent<T = unknown> implements ControlValueAccessor {
  * Default base path for sprite assets (namespaced to avoid collisions with consumer apps)
  * This should match the value in sprite-config-interface.ts
  */
-declare const defaultSpriteBasePath = "assets/truenas-ui-icons";
+declare const defaultSpriteBasePath = "assets/tn-icons";
 /**
  * Default path for the sprite configuration file.
  */
-declare const defaultSpriteConfigPath = "assets/truenas-ui-icons/sprite-config.json";
+declare const defaultSpriteConfigPath = "assets/tn-icons/sprite-config.json";
 interface SpriteConfig {
     iconUrl: string;
     icons?: string[];
