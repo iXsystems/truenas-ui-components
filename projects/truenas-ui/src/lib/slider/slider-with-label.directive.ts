@@ -38,7 +38,7 @@ export class TnSliderWithLabelDirective implements OnInit, OnDestroy {
   }
 
   private _setupInteractionListeners(): void {
-    const sliderContainer = this._elementRef.nativeElement.querySelector('.ix-slider-container');
+    const sliderContainer = this._elementRef.nativeElement.querySelector('.tn-slider-container');
     const thumbInput = this._elementRef.nativeElement.querySelector('input[tnSliderThumb]');
     
     if (sliderContainer) {
@@ -72,7 +72,7 @@ export class TnSliderWithLabelDirective implements OnInit, OnDestroy {
     // Only clean up interaction listeners if they were set up for handle type
     const currentLabelType = this._slider.labelType();
     if (currentLabelType === 'handle' || currentLabelType === 'both') {
-      const sliderContainer = this._elementRef.nativeElement.querySelector('.ix-slider-container');
+      const sliderContainer = this._elementRef.nativeElement.querySelector('.tn-slider-container');
       const thumbInput = this._elementRef.nativeElement.querySelector('input[tnSliderThumb]');
 
       if (sliderContainer) {

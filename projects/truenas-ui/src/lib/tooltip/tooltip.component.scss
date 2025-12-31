@@ -19,11 +19,11 @@
   backdrop-filter: blur(4px);
   
   // Animation for smooth appearance
-  animation: ix-tooltip-show 150ms cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+  animation: tn-tooltip-show 150ms cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
   transform-origin: center bottom;
 }
 
-@keyframes ix-tooltip-show {
+@keyframes tn-tooltip-show {
   0% {
     opacity: 0;
     transform: scale(0.8);

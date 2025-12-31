@@ -10,14 +10,14 @@
 </div>
 
 <!-- Primary bar -->
-<div class="tn-progress-bar-bar ix-progress-bar-primary-bar" aria-hidden="true">
+<div class="tn-progress-bar-bar tn-progress-bar-primary-bar" aria-hidden="true">
   <span class="tn-progress-bar-bar-inner"
         [style.transform]="primaryTransform()"></span>
 </div>
 
 <!-- Secondary bar (for indeterminate mode) -->
 @if (mode() === 'indeterminate') {
-  <div class="tn-progress-bar-bar ix-progress-bar-secondary-bar" aria-hidden="true">
+  <div class="tn-progress-bar-bar tn-progress-bar-secondary-bar" aria-hidden="true">
     <span class="tn-progress-bar-bar-inner"></span>
   </div>
 }

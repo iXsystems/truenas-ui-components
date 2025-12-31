@@ -5,7 +5,7 @@
       class="tn-nested-tree-node__toggle"
       cdkTreeNodeToggle
       type="button"
-      [class.ix-nested-tree-node__toggle--expanded]="isExpanded"
+      [class.tn-nested-tree-node__toggle--expanded]="isExpanded"
       [attr.aria-label]="'Toggle node'">
       <tn-icon
         library="mdi"
@@ -26,7 +26,7 @@
 
 <!-- Children container -->
 @if (isExpandable) {
-  <div class="tn-nested-tree-node-container" role="group" [class.ix-tree-invisible]="!isExpanded">
+  <div class="tn-nested-tree-node-container" role="group" [class.tn-tree-invisible]="!isExpanded">
     <ng-content select="[slot=children]" />
   </div>
 }

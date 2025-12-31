@@ -83,7 +83,7 @@
 
 // CSS Custom Properties for easy theming
 .tn-icon {
-  width: var(--ix-icon-size, var(--icon-md));
-  height: var(--ix-icon-size, var(--icon-md));
-  color: var(--ix-icon-color, currentColor);
+  width: var(--tn-icon-size, var(--icon-md));
+  height: var(--tn-icon-size, var(--icon-md));
+  color: var(--tn-icon-color, currentColor);
 }

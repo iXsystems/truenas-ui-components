@@ -46,7 +46,7 @@ export class TnTimeInputComponent implements ControlValueAccessor {
 
   _value: string | null = null;
   
-  // Generate time options for ix-select
+  // Generate time options for tn-select
   timeSelectOptions = computed((): TnSelectOption<string>[] => {
     const options: TnSelectOption<string>[] = [];
     const totalMinutes = 24 * 60; // Total minutes in a day

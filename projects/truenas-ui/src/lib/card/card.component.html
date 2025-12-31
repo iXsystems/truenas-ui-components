@@ -6,7 +6,7 @@
         @if (title()) {
           <h3
             class="tn-card__title"
-            [class.ix-card__title--link]="titleLink()"
+            [class.tn-card__title--link]="titleLink()"
             [attr.tabindex]="titleLink() ? 0 : null"
             [attr.role]="titleLink() ? 'button' : null"
             (click)="onTitleClick()"

@@ -1,6 +1,6 @@
 <div class="tn-stepper"
-     [class.ix-stepper--horizontal]="orientation() === 'horizontal' || (orientation() === 'auto' && isWideScreen())"
-     [class.ix-stepper--vertical]="orientation() === 'vertical' || (orientation() === 'auto' && !isWideScreen())">
+     [class.tn-stepper--horizontal]="orientation() === 'horizontal' || (orientation() === 'auto' && isWideScreen())"
+     [class.tn-stepper--vertical]="orientation() === 'vertical' || (orientation() === 'auto' && !isWideScreen())">
 
   <!-- Step Headers -->
   <div class="tn-stepper__header">
@@ -8,10 +8,10 @@
       <div class="tn-stepper__step-header"
            tabindex="0"
            role="button"
-           [class.ix-stepper__step-header--active]="selectedIndex() === i"
-           [class.ix-stepper__step-header--completed]="step.completed()"
-           [class.ix-stepper__step-header--error]="step.hasError()"
-           [class.ix-stepper__step-header--optional]="step.optional()"
+           [class.tn-stepper__step-header--active]="selectedIndex() === i"
+           [class.tn-stepper__step-header--completed]="step.completed()"
+           [class.tn-stepper__step-header--error]="step.hasError()"
+           [class.tn-stepper__step-header--optional]="step.optional()"
            (click)="selectStep(i)"
            (keydown.enter)="selectStep(i)"
            (keydown.space)="selectStep(i)">

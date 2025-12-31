@@ -1,4 +1,4 @@
-/* IX Dialog Global Styles for CDK Dialog */
+/* TN Dialog Global Styles for CDK Dialog */
 
 /* CDK Dialog Container Styles */
 .cdk-dialog-container {
@@ -13,7 +13,7 @@
 
 /* Dialog Panel - this is the actual dialog box */
 .cdk-dialog-panel,
-.ix-dialog-panel {
+.tn-dialog-panel {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -46,7 +46,7 @@
 }
 
 /* Dialog title should be at the very top */
-.ix-dialog-title {
+.tn-dialog-title {
   box-sizing: border-box;
   display: block;
   flex-shrink: 0; /* Don't allow shrinking */
@@ -59,12 +59,12 @@
 }
 
 /* Reset margins for any heading elements inside the title */
-.ix-dialog-title h1, 
-.ix-dialog-title h2, 
-.ix-dialog-title h3, 
-.ix-dialog-title h4, 
-.ix-dialog-title h5, 
-.ix-dialog-title h6 {
+.tn-dialog-title h1, 
+.tn-dialog-title h2, 
+.tn-dialog-title h3, 
+.tn-dialog-title h4, 
+.tn-dialog-title h5, 
+.tn-dialog-title h6 {
   margin: 0;
   font-size: inherit;
   font-weight: inherit;
@@ -72,7 +72,7 @@
 }
 
 /* Dialog content should expand to fill available space between title and actions */
-.ix-dialog-content {
+.tn-dialog-content {
   flex-grow: 1;
   overflow: auto;
   box-sizing: border-box;
@@ -80,7 +80,7 @@
 }
 
 /* Dialog actions styling */
-.ix-dialog-actions {
+.tn-dialog-actions {
   box-sizing: border-box;
   display: flex !important;
   flex-shrink: 0; /* Don't allow shrinking - always visible */
@@ -94,7 +94,7 @@
 }
 
 /* Close button styling */
-.ix-dialog-close-btn {
+.tn-dialog-close-btn {
   position: absolute;
   top: 16px;
   right: 16px;
@@ -115,28 +115,28 @@
   z-index: 10;
 }
 
-.ix-dialog-close-btn:hover {
+.tn-dialog-close-btn:hover {
   background: var(--alt-bg1, #f8f9fa);
   color: var(--fg1, #000000);
 }
 
-.ix-dialog-close-btn:focus {
+.tn-dialog-close-btn:focus {
   outline: 2px solid var(--primary, #007bff);
   outline-offset: 2px;
 }
 
-.ix-dialog-close-btn:active {
+.tn-dialog-close-btn:active {
   transform: scale(0.95);
 }
 
-.ix-dialog-close-btn span {
+.tn-dialog-close-btn span {
   font-weight: normal;
 }
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   .cdk-dialog-panel,
-  .ix-dialog-panel {
+  .tn-dialog-panel {
     border: 1px solid var(--fg1, #000);
   }
 }
@@ -144,7 +144,7 @@
 /* Reduced motion support  */
 @media (prefers-reduced-motion: reduce) {
   .cdk-dialog-panel,
-  .ix-dialog-panel {
+  .tn-dialog-panel {
     /* Animations will be disabled by the animation trigger */
   }
 }

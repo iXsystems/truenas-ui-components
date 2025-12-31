@@ -1,4 +1,4 @@
-// File picker popup styles (matching ix-calendar pattern)
+// File picker popup styles (matching tn-calendar pattern)
 :host {
   display: block;
   background: var(--bg1, white);
@@ -69,7 +69,7 @@
   align-items: center;
   gap: 8px;
 
-  ix-button {
+  tn-button {
     font-size: 0.875rem;
   }
 }
@@ -83,7 +83,7 @@
   padding: 40px;
   color: var(--fg2);
 
-  ix-icon {
+  tn-icon {
     animation: spin 1s linear infinite;
   }
 }
@@ -110,7 +110,7 @@
 }
 
 // Table styling overrides
-ix-table {
+tn-table {
   width: 100%;
 
   th,
@@ -367,7 +367,7 @@ ix-table {
   color: var(--alt-fg1);
   text-align: center;
 
-  ix-icon {
+  tn-icon {
     font-size: 48px;
     margin-bottom: 16px;
     opacity: 0.5;
@@ -409,7 +409,7 @@ ix-table {
     transition: none;
   }
 
-  .tn-file-picker-loading ix-icon {
+  .tn-file-picker-loading tn-icon {
     animation: none;
   }
 }

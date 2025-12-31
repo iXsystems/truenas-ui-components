@@ -611,7 +611,7 @@ tn-dialog-shell {
   justify-content: flex-end;
 }
 
-.tn-dialog__actions ix-button:not(:first-child) {
+.tn-dialog__actions tn-button:not(:first-child) {
   margin-left: 16px;
 }
 

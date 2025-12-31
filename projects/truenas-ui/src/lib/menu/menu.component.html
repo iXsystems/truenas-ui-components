@@ -35,7 +35,7 @@
           } @else {
             <button
               cdkMenuItem
-              class="tn-menu-item ix-menu-item--nested"
+              class="tn-menu-item tn-menu-item--nested"
               type="button"
               [cdkMenuTriggerFor]="nestedMenu"
               [disabled]="item.disabled"
@@ -52,7 +52,7 @@
             </button>
 
             <ng-template #nestedMenu>
-              <div class="tn-menu ix-menu--nested" cdkMenu>
+              <div class="tn-menu tn-menu--nested" cdkMenu>
                 @for (nestedItem of item.children; track trackByItemId($index, nestedItem)) {
                   @if (nestedItem.separator) {
                     <div
@@ -80,7 +80,7 @@
                     } @else {
                       <button
                         cdkMenuItem
-                        class="tn-menu-item ix-menu-item--nested"
+                        class="tn-menu-item tn-menu-item--nested"
                         type="button"
                         [cdkMenuTriggerFor]="deepNestedMenu"
                         [disabled]="nestedItem.disabled"
@@ -97,7 +97,7 @@
                       </button>
 
                       <ng-template #deepNestedMenu>
-                        <div class="tn-menu ix-menu--nested" cdkMenu>
+                        <div class="tn-menu tn-menu--nested" cdkMenu>
                           @for (deepNestedItem of nestedItem.children; track trackByItemId($index, deepNestedItem)) {
                             @if (deepNestedItem.separator) {
                               <div
@@ -166,7 +166,7 @@
           } @else {
             <button
               cdkMenuItem
-              class="tn-menu-item ix-menu-item--nested"
+              class="tn-menu-item tn-menu-item--nested"
               type="button"
               [cdkMenuTriggerFor]="nestedMenu"
               [disabled]="item.disabled"
@@ -183,7 +183,7 @@
             </button>
 
             <ng-template #nestedMenu>
-              <div class="tn-menu ix-menu--nested" cdkMenu>
+              <div class="tn-menu tn-menu--nested" cdkMenu>
                 @for (nestedItem of item.children; track trackByItemId($index, nestedItem)) {
                   @if (nestedItem.separator) {
                     <div
@@ -211,7 +211,7 @@
                     } @else {
                       <button
                         cdkMenuItem
-                        class="tn-menu-item ix-menu-item--nested"
+                        class="tn-menu-item tn-menu-item--nested"
                         type="button"
                         [cdkMenuTriggerFor]="deepNestedMenu"
                         [disabled]="nestedItem.disabled"
@@ -228,7 +228,7 @@
                       </button>
 
                       <ng-template #deepNestedMenu>
-                        <div class="tn-menu ix-menu--nested" cdkMenu>
+                        <div class="tn-menu tn-menu--nested" cdkMenu>
                           @for (deepNestedItem of nestedItem.children; track trackByItemId($index, deepNestedItem)) {
                             @if (deepNestedItem.separator) {
                               <div

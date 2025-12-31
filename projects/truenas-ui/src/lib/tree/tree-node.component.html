@@ -1,7 +1,7 @@
 <div class="tn-tree-node"
      cdkTreeNodeToggle
      role="treeitem"
-     [class.ix-tree-node--expandable]="isExpandable"
+     [class.tn-tree-node--expandable]="isExpandable"
      [attr.aria-level]="level + 1"
      [attr.aria-expanded]="isExpandable ? isExpanded : null"
      [attr.aria-selected]="false"
@@ -12,7 +12,7 @@
     @if (isExpandable) {
       <div
         class="tn-tree-node__toggle"
-        [class.ix-tree-node__toggle--expanded]="isExpanded">
+        [class.tn-tree-node__toggle--expanded]="isExpanded">
         <tn-icon
           library="mdi"
           size="sm"

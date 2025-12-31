@@ -41,7 +41,7 @@ declare class TnBannerComponent {
     /**
      * Get the appropriate icon name based on banner type
      */
-    iconName: _angular_core.Signal<"alert-circle" | "information" | "alert" | "check-circle">;
+    iconName: _angular_core.Signal<"information" | "alert" | "alert-circle" | "check-circle">;
     /**
      * Get ARIA role based on banner type
      * Error/warning use 'alert' for immediate attention
@@ -313,7 +313,7 @@ declare class TnCardComponent {
     title: _angular_core.InputSignal<string | undefined>;
     titleLink: _angular_core.InputSignal<string | undefined>;
     elevation: _angular_core.InputSignal<"none" | "low" | "medium" | "high">;
-    padding: _angular_core.InputSignal<"small" | "large" | "medium">;
+    padding: _angular_core.InputSignal<"large" | "medium" | "small">;
     padContent: _angular_core.InputSignal<boolean>;
     bordered: _angular_core.InputSignal<boolean>;
     background: _angular_core.InputSignal<boolean>;
@@ -342,12 +342,12 @@ declare class TnCardComponent {
 declare class TnExpansionPanelComponent {
     title: _angular_core.InputSignal<string | undefined>;
     elevation: _angular_core.InputSignal<"none" | "low" | "medium" | "high">;
-    padding: _angular_core.InputSignal<"small" | "large" | "medium">;
+    padding: _angular_core.InputSignal<"large" | "medium" | "small">;
     bordered: _angular_core.InputSignal<boolean>;
     background: _angular_core.InputSignal<boolean>;
     expanded: _angular_core.InputSignal<boolean>;
     disabled: _angular_core.InputSignal<boolean>;
-    titleStyle: _angular_core.InputSignal<"body" | "header" | "link">;
+    titleStyle: _angular_core.InputSignal<"link" | "header" | "body">;
     expandedChange: _angular_core.OutputEmitterRef<boolean>;
     toggleEvent: _angular_core.OutputEmitterRef<void>;
     private internalExpanded;
@@ -533,7 +533,7 @@ declare class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDest
     private focusTab;
     classes: _angular_core.Signal<string>;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnTabsComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnTabsComponent, "tn-tabs", never, { "selectedIndex": { "alias": "selectedIndex"; "required": false; "isSignal": true; }; "orientation": { "alias": "orientation"; "required": false; "isSignal": true; }; "highlightPosition": { "alias": "highlightPosition"; "required": false; "isSignal": true; }; }, { "selectedIndexChange": "selectedIndexChange"; "tabChange": "tabChange"; }, ["tabs", "panels"], ["ix-tab", "ix-tab-panel"], true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnTabsComponent, "tn-tabs", never, { "selectedIndex": { "alias": "selectedIndex"; "required": false; "isSignal": true; }; "orientation": { "alias": "orientation"; "required": false; "isSignal": true; }; "highlightPosition": { "alias": "highlightPosition"; "required": false; "isSignal": true; }; }, { "selectedIndexChange": "selectedIndexChange"; "tabChange": "tabChange"; }, ["tabs", "panels"], ["tn-tab", "tn-tab-panel"], true, never>;
 }
 
 /**

@@ -34,7 +34,7 @@ export class TnListOptionComponent implements AfterContentInit {
   selectionList?: { onOptionSelectionChange: () => void };
 
   // Internal state for tracking selection (for uncontrolled usage)
-  // Made public so parent ix-selection-list can control it
+  // Made public so parent tn-selection-list can control it
   internalSelected = signal<boolean | null>(null);
   internalDisabled = signal<boolean | null>(null);
   internalColor = signal<'primary' | 'accent' | 'warn' | null>(null);

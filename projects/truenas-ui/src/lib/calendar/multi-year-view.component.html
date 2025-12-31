@@ -7,26 +7,26 @@
           <td
             role="gridcell"
             class="tn-calendar-body-cell-container"
-            [attr.data-ix-row]="rowIndex"
-            [attr.data-ix-col]="colIndex"
+            [attr.data-tn-row]="rowIndex"
+            [attr.data-tn-col]="colIndex"
             [style.width.%]="cellWidth"
             [style.padding-top.%]="cellAspectRatio"
             [style.padding-bottom.%]="cellAspectRatio">
             <button
               type="button"
               class="tn-calendar-body-cell"
-              [class.ix-calendar-body-selected]="cell.selected"
-              [class.ix-calendar-body-today]="cell.today"
-              [class.ix-calendar-body-active]="cell.selected"
+              [class.tn-calendar-body-selected]="cell.selected"
+              [class.tn-calendar-body-today]="cell.today"
+              [class.tn-calendar-body-active]="cell.selected"
               [disabled]="!cell.enabled"
               [attr.tabindex]="cell.selected ? 0 : -1"
               [attr.aria-label]="cell.ariaLabel"
               [attr.aria-pressed]="cell.selected"
               [attr.aria-current]="cell.today ? 'date' : null"
               (click)="onYearClicked(cell)">
-              <span class="tn-calendar-body-cell-content ix-focus-indicator"
-                    [class.ix-calendar-body-selected]="cell.selected"
-                    [class.ix-calendar-body-today]="cell.today">
+              <span class="tn-calendar-body-cell-content tn-focus-indicator"
+                    [class.tn-calendar-body-selected]="cell.selected"
+                    [class.tn-calendar-body-today]="cell.today">
                 {{ cell.value }}
               </span>
               <span aria-hidden="true" class="tn-calendar-body-cell-preview"></span>

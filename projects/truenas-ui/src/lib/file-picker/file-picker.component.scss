@@ -19,7 +19,7 @@
   position: relative;
 }
 
-// Input field styling (matching ix-input)
+// Input field styling (matching tn-input)
 .tn-file-picker-input {
   display: block;
   width: 100%;
@@ -90,7 +90,7 @@
     opacity: 0.5;
   }
 
-  ix-icon {
+  tn-icon {
     font-size: var(--icon-md, 20px);
   }
 }
@@ -122,7 +122,7 @@
 :host ::ng-deep .tn-file-picker-overlay {
   .tn-file-picker-popup {
     // The popup component handles its own styling now
-    // This matches how ix-datepicker-overlay works with ix-calendar
+    // This matches how tn-datepicker-overlay works with tn-calendar
   }
 }
 
@@ -136,7 +136,7 @@
     transition: none;
   }
 
-  .tn-file-picker-loading ix-icon {
+  .tn-file-picker-loading tn-icon {
     animation: none;
   }
 }

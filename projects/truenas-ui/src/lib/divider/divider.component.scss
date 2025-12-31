@@ -24,7 +24,7 @@
   }
 
   // When used in lists, apply proper spacing
-  &:host-context(ix-list) {
+  &:host-context(tn-list) {
     margin: 8px 0;
   }
 

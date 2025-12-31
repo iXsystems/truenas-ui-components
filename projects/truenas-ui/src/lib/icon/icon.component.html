@@ -1,7 +1,7 @@
 <div
   class="tn-icon"
   role="img"
-  [ngClass]="'ix-icon--' + size()"
+  [ngClass]="'tn-icon--' + size()"
   [style.color]="color()"
   [attr.aria-label]="effectiveAriaLabel()"
   [attr.title]="tooltip()">
@@ -29,7 +29,7 @@
     @case ('css') {
       <i
          aria-hidden="true"
-         [class]="'ix-icon__css ' + iconResult.content">
+         [class]="'tn-icon__css ' + iconResult.content">
       </i>
     }
 

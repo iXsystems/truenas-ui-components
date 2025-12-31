@@ -4,7 +4,7 @@
     <!-- Label before toggle -->
     @if (label() && labelPosition() === 'before') {
       <span
-        class="tn-slide-toggle__label-text ix-slide-toggle__label-text--before"
+        class="tn-slide-toggle__label-text tn-slide-toggle__label-text--before"
         tabindex="0"
         role="button"
         (click)="onLabelClick()"
@@ -64,7 +64,7 @@
     <!-- Label after toggle -->
     @if (label() && labelPosition() === 'after') {
       <span
-        class="tn-slide-toggle__label-text ix-slide-toggle__label-text--after"
+        class="tn-slide-toggle__label-text tn-slide-toggle__label-text--after"
         tabindex="0"
         role="button"
         (click)="onLabelClick()"
