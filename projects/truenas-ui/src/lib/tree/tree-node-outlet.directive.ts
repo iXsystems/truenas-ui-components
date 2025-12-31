@@ -10,4 +10,4 @@ import { Directive } from '@angular/core';
     outputs: []
   }]
 })
-export class IxTreeNodeOutletDirective {}
+export class TnTreeNodeOutletDirective {}

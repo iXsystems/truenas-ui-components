@@ -21,7 +21,7 @@ export interface ShortcutHandler {
 @Injectable({
   providedIn: 'root'
 })
-export class IxKeyboardShortcutService {
+export class TnKeyboardShortcutService {
   private shortcuts = new Map<string, ShortcutHandler>();
   private globalEnabled = true;
 

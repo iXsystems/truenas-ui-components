@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxBrandedSpinnerComponent } from '../lib/spinner/branded-spinner.component';
-import { IxSpinnerComponent } from '../lib/spinner/spinner.component';
+import { TnBrandedSpinnerComponent } from '../lib/spinner/branded-spinner.component';
+import { TnSpinnerComponent } from '../lib/spinner/spinner.component';
 
-const meta: Meta<IxSpinnerComponent> = {
+const meta: Meta<TnSpinnerComponent> = {
   title: 'Components/Spinner',
-  component: IxSpinnerComponent,
+  component: TnSpinnerComponent,
   tags: ['autodocs'],
   argTypes: {
     mode: {
@@ -27,7 +27,7 @@ const meta: Meta<IxSpinnerComponent> = {
 };
 
 export default meta;
-type Story = StoryObj<IxSpinnerComponent>;
+type Story = StoryObj<TnSpinnerComponent>;
 
 export const Determinate: Story = {
   args: {
@@ -54,7 +54,7 @@ export const Branded = {
     template: `<ix-branded-spinner [ariaLabel]="ariaLabel"></ix-branded-spinner>`,
     props: args,
     moduleMetadata: {
-      imports: [IxBrandedSpinnerComponent],
+      imports: [TnBrandedSpinnerComponent],
     },
   }),
   args: {

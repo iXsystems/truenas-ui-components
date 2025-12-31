@@ -1,13 +1,13 @@
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import type { IxMenuItem } from './menu.component';
-import { IxMenuComponent } from './menu.component';
+import type { TnMenuItem } from './menu.component';
+import { TnMenuComponent } from './menu.component';
 
-describe('IxMenuComponent', () => {
-  let component: IxMenuComponent;
-  let fixture: ComponentFixture<IxMenuComponent>;
+describe('TnMenuComponent', () => {
+  let component: TnMenuComponent;
+  let fixture: ComponentFixture<TnMenuComponent>;
 
-  const mockMenuItems: IxMenuItem[] = [
+  const mockMenuItems: TnMenuItem[] = [
     { id: '1', label: 'Item 1', icon: '🏠', shortcut: '⌘1' },
     { id: '2', label: 'Item 2', disabled: true, shortcut: '⌘2' },
     { id: '3', label: 'Item 3', separator: true },
@@ -20,10 +20,10 @@ describe('IxMenuComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IxMenuComponent],
+      imports: [TnMenuComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(IxMenuComponent);
+    fixture = TestBed.createComponent(TnMenuComponent);
     component = fixture.componentInstance;
     fixture.componentRef.setInput('items', mockMenuItems);
     fixture.detectChanges();

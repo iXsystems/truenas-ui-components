@@ -23,7 +23,7 @@ export type ProgressBarMode = 'determinate' | 'indeterminate' | 'buffer';
     '[attr.aria-labelledby]': 'ariaLabelledby() || null'
   }
 })
-export class IxProgressBarComponent {
+export class TnProgressBarComponent {
   mode = input<ProgressBarMode>('determinate');
   value = input<number>(0);
   bufferValue = input<number>(0);

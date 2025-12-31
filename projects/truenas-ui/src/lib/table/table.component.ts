@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, input, contentChildren, computed, effect, inject } from '@angular/core';
-import { IxTableColumnDirective } from '../table-column/table-column.directive';
+import { TnTableColumnDirective } from '../table-column/table-column.directive';
 
-export interface IxTableDataSource<T = unknown> {
+export interface TnTableDataSource<T = unknown> {
   data?: T[];
   connect?(): T[];
   disconnect?(): void;
@@ -18,13 +18,13 @@ export interface IxTableDataSource<T = unknown> {
     'class': 'ix-table'
   }
 })
-export class IxTableComponent<T = unknown> {
-  dataSource = input<IxTableDataSource<T> | T[]>([]);
+export class TnTableComponent<T = unknown> {
+  dataSource = input<TnTableDataSource<T> | T[]>([]);
   displayedColumns = input<string[]>([]);
 
-  columnDefs = contentChildren(IxTableColumnDirective);
+  columnDefs = contentChildren(TnTableColumnDirective);
 
-  private columnDefMap = new Map<string, IxTableColumnDirective>();
+  private columnDefMap = new Map<string, TnTableColumnDirective>();
 
   private cdr = inject(ChangeDetectorRef);
 
@@ -36,7 +36,7 @@ export class IxTableComponent<T = unknown> {
     });
   }
 
-  private processColumnDefs(columns: readonly IxTableColumnDirective[]): void {
+  private processColumnDefs(columns: readonly TnTableColumnDirective[]): void {
     this.columnDefMap.clear();
     columns.forEach(columnDef => {
       const name = columnDef.name();
@@ -55,7 +55,7 @@ export class IxTableComponent<T = unknown> {
     return source?.data || source?.connect?.() || [];
   });
 
-  getColumnDef(columnName: string): IxTableColumnDirective | undefined {
+  getColumnDef(columnName: string): TnTableColumnDirective | undefined {
     return this.columnDefMap.get(columnName);
   }
 

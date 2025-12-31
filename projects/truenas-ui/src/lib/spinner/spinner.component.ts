@@ -23,7 +23,7 @@ export type SpinnerMode = 'determinate' | 'indeterminate';
     '[attr.aria-labelledby]': 'ariaLabelledby() || null'
   }
 })
-export class IxSpinnerComponent {
+export class TnSpinnerComponent {
   mode = input<SpinnerMode>('indeterminate');
   value = input<number>(0);
   diameter = input<number>(40);

@@ -12,7 +12,7 @@ import type { OnInit} from '@angular/core';
     'class': 'ix-dialog-shell'
   }
 })
-export class IxDialogShellComponent implements OnInit {
+export class TnDialogShellComponent implements OnInit {
   title = input<string>('');
   showFullscreenButton = input<boolean>(false);
 

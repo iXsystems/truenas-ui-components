@@ -1,7 +1,7 @@
 import { Overlay, type OverlayRef, type ConnectedPosition } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { ElementRef, ViewContainerRef, Directive, input, signal, inject } from '@angular/core';
-import type { IxMenuComponent } from './menu.component';
+import type { TnMenuComponent } from './menu.component';
 
 /**
  * Directive that attaches a menu to any element.
@@ -15,8 +15,8 @@ import type { IxMenuComponent } from './menu.component';
     '(click)': 'onClick()'
   }
 })
-export class IxMenuTriggerDirective {
-  menu = input.required<IxMenuComponent>({ alias: 'ixMenuTriggerFor' });
+export class TnMenuTriggerDirective {
+  menu = input.required<TnMenuComponent>({ alias: 'ixMenuTriggerFor' });
   ixMenuPosition = input<'above' | 'below' | 'before' | 'after'>('below');
 
   private overlayRef?: OverlayRef;

@@ -1,12 +1,12 @@
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { InputType } from '../lib/enums/input-type.enum';
-import { IxFormFieldComponent } from '../lib/form-field/form-field.component';
-import { IxInputComponent } from '../lib/input/input.component';
+import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
+import { TnInputComponent } from '../lib/input/input.component';
 
-const meta: Meta<IxInputComponent> = {
+const meta: Meta<TnInputComponent> = {
   title: 'Components/Input',
-  component: IxInputComponent,
+  component: TnInputComponent,
   tags: ['autodocs'],
   argTypes: {
     inputType: {
@@ -38,7 +38,7 @@ const meta: Meta<IxInputComponent> = {
 };
 
 export default meta;
-type Story = StoryObj<IxInputComponent>;
+type Story = StoryObj<TnInputComponent>;
 
 export const Default: Story = {
   render: (args) => ({
@@ -58,7 +58,7 @@ export const Default: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent],
+      imports: [TnFormFieldComponent],
     },
   }),
   args: {
@@ -100,7 +100,7 @@ export const WithError: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent, ReactiveFormsModule],
+      imports: [TnFormFieldComponent, ReactiveFormsModule],
     },
   }),
   args: {
@@ -129,7 +129,7 @@ export const Multiline: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent],
+      imports: [TnFormFieldComponent],
     },
   }),
   args: {
@@ -158,7 +158,7 @@ export const Disabled: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent],
+      imports: [TnFormFieldComponent],
     },
   }),
   args: {

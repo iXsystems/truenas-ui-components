@@ -3,15 +3,15 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxButtonComponent } from '../../lib/button/button.component';
-import { IxCheckboxComponent } from '../../lib/checkbox/checkbox.component';
-import { IxDialogShellComponent } from '../../lib/dialog';
-import { IxDialog } from '../../lib/dialog/dialog.service';
-import { IxInputComponent } from '../../lib/input/input.component';
-import { IxRadioComponent } from '../../lib/radio/radio.component';
-import type { IxSelectOption } from '../../lib/select/select.component';
-import { IxSelectComponent } from '../../lib/select/select.component';
-import { IxStepperComponent, IxStepComponent } from '../../lib/stepper';
+import { TnButtonComponent } from '../../lib/button/button.component';
+import { TnCheckboxComponent } from '../../lib/checkbox/checkbox.component';
+import { TnDialogShellComponent } from '../../lib/dialog';
+import { TnDialog } from '../../lib/dialog/dialog.service';
+import { TnInputComponent } from '../../lib/input/input.component';
+import { TnRadioComponent } from '../../lib/radio/radio.component';
+import type { TnSelectOption } from '../../lib/select/select.component';
+import { TnSelectComponent } from '../../lib/select/select.component';
+import { TnStepperComponent, TnStepComponent } from '../../lib/stepper';
 
 // Backup Wizard Dialog Component
 @Component({
@@ -19,14 +19,14 @@ import { IxStepperComponent, IxStepComponent } from '../../lib/stepper';
   templateUrl: './stepped-wizard.stories.html',
   standalone: true,
   imports: [
-    IxDialogShellComponent,
-    IxStepperComponent,
-    IxStepComponent,
-    IxButtonComponent,
-    IxRadioComponent,
-    IxCheckboxComponent,
-    IxInputComponent,
-    IxSelectComponent,
+    TnDialogShellComponent,
+    TnStepperComponent,
+    TnStepComponent,
+    TnButtonComponent,
+    TnRadioComponent,
+    TnCheckboxComponent,
+    TnInputComponent,
+    TnSelectComponent,
     FormsModule,
     CommonModule
   ]
@@ -40,7 +40,7 @@ class BackupWizardDialogComponent {
   selectedDatasetPath = '';
   includeSnapshots = true;
 
-  accountOptions: IxSelectOption[] = [
+  accountOptions: TnSelectOption[] = [
     { value: 'aws-prod', label: 'AWS Production (S3)' },
     { value: 'azure-backup', label: 'Azure Backup Storage' },
     { value: 'gcs-cold', label: 'Google Cloud Storage (Coldline)' },
@@ -115,12 +115,12 @@ class BackupWizardDialogComponent {
   selector: 'stepped-wizard-demo',
   templateUrl: './stepped-wizard-2.stories.html',
   standalone: true,
-  imports: [IxButtonComponent, CommonModule]
+  imports: [TnButtonComponent, CommonModule]
 })
 class SteppedWizardDemoComponent {
   lastResult: unknown = null;
 
-  constructor(private ixDialog: IxDialog) {}
+  constructor(private ixDialog: TnDialog) {}
 
   openWizard() {
     const dialogRef = this.ixDialog.open(BackupWizardDialogComponent, {
@@ -181,18 +181,18 @@ export const SteppedWizard: Story = {
       imports: [
         SteppedWizardDemoComponent,
         BackupWizardDialogComponent,
-        IxDialogShellComponent,
-        IxStepperComponent,
-        IxStepComponent,
-        IxButtonComponent,
-        IxRadioComponent,
-        IxCheckboxComponent,
-        IxInputComponent,
-        IxSelectComponent,
+        TnDialogShellComponent,
+        TnStepperComponent,
+        TnStepComponent,
+        TnButtonComponent,
+        TnRadioComponent,
+        TnCheckboxComponent,
+        TnInputComponent,
+        TnSelectComponent,
         FormsModule
       ],
       providers: [
-        IxDialog
+        TnDialog
       ]
     },
   }),

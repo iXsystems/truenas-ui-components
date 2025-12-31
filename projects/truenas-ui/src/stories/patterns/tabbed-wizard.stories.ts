@@ -3,17 +3,17 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxButtonComponent } from '../../lib/button/button.component';
-import { IxCheckboxComponent } from '../../lib/checkbox/checkbox.component';
-import { IxDialogShellComponent } from '../../lib/dialog';
-import { IxDialog } from '../../lib/dialog/dialog.service';
-import { IxInputComponent } from '../../lib/input/input.component';
-import { IxRadioComponent } from '../../lib/radio/radio.component';
-import type { IxSelectOption } from '../../lib/select/select.component';
-import { IxSelectComponent } from '../../lib/select/select.component';
-import { IxTabComponent } from '../../lib/tab/tab.component';
-import { IxTabPanelComponent } from '../../lib/tab-panel/tab-panel.component';
-import { IxTabsComponent } from '../../lib/tabs/tabs.component';
+import { TnButtonComponent } from '../../lib/button/button.component';
+import { TnCheckboxComponent } from '../../lib/checkbox/checkbox.component';
+import { TnDialogShellComponent } from '../../lib/dialog';
+import { TnDialog } from '../../lib/dialog/dialog.service';
+import { TnInputComponent } from '../../lib/input/input.component';
+import { TnRadioComponent } from '../../lib/radio/radio.component';
+import type { TnSelectOption } from '../../lib/select/select.component';
+import { TnSelectComponent } from '../../lib/select/select.component';
+import { TnTabComponent } from '../../lib/tab/tab.component';
+import { TnTabPanelComponent } from '../../lib/tab-panel/tab-panel.component';
+import { TnTabsComponent } from '../../lib/tabs/tabs.component';
 
 // VM Creation Tabbed Wizard Dialog Component  
 @Component({
@@ -21,15 +21,15 @@ import { IxTabsComponent } from '../../lib/tabs/tabs.component';
   templateUrl: './tabbed-wizard.stories.html',
   standalone: true,
   imports: [
-    IxDialogShellComponent,
-    IxTabsComponent,
-    IxTabComponent,
-    IxTabPanelComponent,
-    IxButtonComponent,
-    IxRadioComponent,
-    IxCheckboxComponent,
-    IxInputComponent,
-    IxSelectComponent,
+    TnDialogShellComponent,
+    TnTabsComponent,
+    TnTabComponent,
+    TnTabPanelComponent,
+    TnButtonComponent,
+    TnRadioComponent,
+    TnCheckboxComponent,
+    TnInputComponent,
+    TnSelectComponent,
     FormsModule,
     CommonModule
   ]
@@ -75,25 +75,25 @@ class TabbedWizardDialogComponent {
     }
   };
 
-  isoOptions: IxSelectOption[] = [
+  isoOptions: TnSelectOption[] = [
     { value: 'ubuntu-22.04.iso', label: 'Ubuntu 22.04 LTS' },
     { value: 'windows-11.iso', label: 'Windows 11' },
     { value: 'freebsd-13.iso', label: 'FreeBSD 13.0' },
     { value: 'custom.iso', label: 'Custom ISO' }
   ];
 
-  machineOptions: IxSelectOption[] = [
+  machineOptions: TnSelectOption[] = [
     { value: 'q35', label: 'Q35' },
     { value: 'i440fx', label: 'i440FX' }
   ];
 
-  cpuModeOptions: IxSelectOption[] = [
+  cpuModeOptions: TnSelectOption[] = [
     { value: 'host-model', label: 'Host Model' },
     { value: 'host-passthrough', label: 'Host Passthrough' },
     { value: 'custom', label: 'Custom' }
   ];
 
-  networkOptions: IxSelectOption[] = [
+  networkOptions: TnSelectOption[] = [
     { value: 'bridge0', label: 'bridge0' },
     { value: 'nat', label: 'NAT' },
     { value: 'hostonly', label: 'Host Only' }
@@ -115,12 +115,12 @@ class TabbedWizardDialogComponent {
   selector: 'tabbed-wizard-demo',
   templateUrl: './tabbed-wizard-2.stories.html',
   standalone: true,
-  imports: [IxButtonComponent, CommonModule]
+  imports: [TnButtonComponent, CommonModule]
 })
 class TabbedWizardDemoComponent {
   lastResult: unknown = null;
 
-  constructor(private ixDialog: IxDialog) {}
+  constructor(private ixDialog: TnDialog) {}
 
   openTabbedWizard() {
     const dialogRef = this.ixDialog.open(TabbedWizardDialogComponent, {
@@ -181,19 +181,19 @@ export const TabbedWizard: Story = {
       imports: [
         TabbedWizardDemoComponent,
         TabbedWizardDialogComponent,
-        IxDialogShellComponent,
-        IxTabsComponent,
-        IxTabComponent,
-        IxTabPanelComponent,
-        IxButtonComponent,
-        IxRadioComponent,
-        IxCheckboxComponent,
-        IxInputComponent,
-        IxSelectComponent,
+        TnDialogShellComponent,
+        TnTabsComponent,
+        TnTabComponent,
+        TnTabPanelComponent,
+        TnButtonComponent,
+        TnRadioComponent,
+        TnCheckboxComponent,
+        TnInputComponent,
+        TnSelectComponent,
         FormsModule
       ],
       providers: [
-        IxDialog
+        TnDialog
       ]
     },
   }),

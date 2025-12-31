@@ -8,22 +8,22 @@ import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
  * @example
  * ```typescript
  * // Check for existence
- * const banner = await loader.getHarness(IxBannerHarness);
+ * const banner = await loader.getHarness(TnBannerHarness);
  *
  * // Find banner containing specific text
  * const errorBanner = await loader.getHarness(
- *   IxBannerHarness.with({ textContains: 'network error' })
+ *   TnBannerHarness.with({ textContains: 'network error' })
  * );
  *
  * // Check if banner exists with text
  * const hasBanner = await loader.hasHarness(
- *   IxBannerHarness.with({ textContains: /success/i })
+ *   TnBannerHarness.with({ textContains: /success/i })
  * );
  * ```
  */
-export class IxBannerHarness extends ComponentHarness {
+export class TnBannerHarness extends ComponentHarness {
   /**
-   * The selector for the host element of an `IxBannerComponent` instance.
+   * The selector for the host element of an `TnBannerComponent` instance.
    */
   static hostSelector = 'ix-banner';
 
@@ -38,17 +38,17 @@ export class IxBannerHarness extends ComponentHarness {
    * ```typescript
    * // Find banner containing specific text
    * const banner = await loader.getHarness(
-   *   IxBannerHarness.with({ textContains: 'error occurred' })
+   *   TnBannerHarness.with({ textContains: 'error occurred' })
    * );
    *
    * // Find banner with regex pattern
    * const banner = await loader.getHarness(
-   *   IxBannerHarness.with({ textContains: /Error:/ })
+   *   TnBannerHarness.with({ textContains: /Error:/ })
    * );
    * ```
    */
   static with(options: BannerHarnessFilters = {}) {
-    return new HarnessPredicate(IxBannerHarness, options)
+    return new HarnessPredicate(TnBannerHarness, options)
       .addOption('textContains', options.textContains, (harness, text) =>
         HarnessPredicate.stringMatches(harness.getText(), text)
       );
@@ -61,7 +61,7 @@ export class IxBannerHarness extends ComponentHarness {
    *
    * @example
    * ```typescript
-   * const banner = await loader.getHarness(IxBannerHarness);
+   * const banner = await loader.getHarness(TnBannerHarness);
    * const text = await banner.getText();
    * expect(text).toContain('Success');
    * ```
@@ -73,7 +73,7 @@ export class IxBannerHarness extends ComponentHarness {
 }
 
 /**
- * A set of criteria that can be used to filter a list of `IxBannerHarness` instances.
+ * A set of criteria that can be used to filter a list of `TnBannerHarness` instances.
  */
 export interface BannerHarnessFilters extends BaseHarnessFilters {
   /** Filters by text content within banner. Supports string or regex matching. */

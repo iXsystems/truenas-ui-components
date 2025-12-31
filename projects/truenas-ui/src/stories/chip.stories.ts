@@ -2,13 +2,13 @@ import { ReactiveFormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect } from '@storybook/jest';
 import { userEvent, within } from '@storybook/testing-library';
-import { IxChipComponent } from '../lib/chip/chip.component';
+import { TnChipComponent } from '../lib/chip/chip.component';
 import { InputType } from '../lib/enums/input-type.enum';
-import { IxFormFieldComponent } from '../lib/form-field/form-field.component';
+import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
 
-const meta: Meta<IxChipComponent> = {
+const meta: Meta<TnChipComponent> = {
   title: 'Components/Chip',
-  component: IxChipComponent,
+  component: TnChipComponent,
   tags: ['autodocs'],
   argTypes: {
     color: {
@@ -40,7 +40,7 @@ const meta: Meta<IxChipComponent> = {
 };
 
 export default meta;
-type Story = StoryObj<IxChipComponent>;
+type Story = StoryObj<TnChipComponent>;
 
 export const Default: Story = {
   args: {
@@ -301,7 +301,7 @@ export const ChipInputExample: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent, ReactiveFormsModule],
+      imports: [TnFormFieldComponent, ReactiveFormsModule],
     },
   }),
   args: {
@@ -363,7 +363,7 @@ export const ChipsWithFormField: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent],
+      imports: [TnFormFieldComponent],
     },
   }),
   args: {

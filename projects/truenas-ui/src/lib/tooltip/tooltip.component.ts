@@ -12,7 +12,7 @@ import { Component, input, ChangeDetectionStrategy } from '@angular/core';
     'class': 'ix-tooltip-component'
   }
 })
-export class IxTooltipComponent {
+export class TnTooltipComponent {
   message = input('');
   id = input('');
 }

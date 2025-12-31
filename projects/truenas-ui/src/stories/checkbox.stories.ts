@@ -1,11 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxCheckboxComponent } from '../lib/checkbox/checkbox.component';
+import { TnCheckboxComponent } from '../lib/checkbox/checkbox.component';
 
-const meta: Meta<IxCheckboxComponent> = {
+const meta: Meta<TnCheckboxComponent> = {
   title: 'Components/Checkbox',
-  component: IxCheckboxComponent,
+  component: TnCheckboxComponent,
   parameters: {
     layout: 'centered',
     docs: {
@@ -48,7 +48,7 @@ const meta: Meta<IxCheckboxComponent> = {
 };
 
 export default meta;
-type Story = StoryObj<IxCheckboxComponent>;
+type Story = StoryObj<TnCheckboxComponent>;
 
 export const Default: Story = {
   args: {

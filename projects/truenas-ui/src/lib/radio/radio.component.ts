@@ -14,12 +14,12 @@ import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => IxRadioComponent),
+      useExisting: forwardRef(() => TnRadioComponent),
       multi: true
     }
   ]
 })
-export class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
+export class TnRadioComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
   radioEl = viewChild.required<ElementRef<HTMLInputElement>>('radioEl');
 
   label = input<string>('Radio');

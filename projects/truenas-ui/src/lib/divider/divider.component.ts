@@ -15,7 +15,7 @@ import { Component, input } from '@angular/core';
     '[attr.aria-orientation]': 'vertical() ? "vertical" : "horizontal"'
   }
 })
-export class IxDividerComponent {
+export class TnDividerComponent {
   vertical = input<boolean>(false);
   inset = input<boolean>(false);
 }

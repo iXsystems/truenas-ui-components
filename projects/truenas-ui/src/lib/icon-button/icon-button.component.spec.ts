@@ -1,20 +1,20 @@
 import { provideHttpClient } from '@angular/common/http';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import { IxIconButtonComponent } from './icon-button.component';
+import { TnIconButtonComponent } from './icon-button.component';
 
-describe('IxIconButtonComponent', () => {
-  let component: IxIconButtonComponent;
-  let fixture: ComponentFixture<IxIconButtonComponent>;
+describe('TnIconButtonComponent', () => {
+  let component: TnIconButtonComponent;
+  let fixture: ComponentFixture<TnIconButtonComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IxIconButtonComponent],
+      imports: [TnIconButtonComponent],
       providers: [provideHttpClient()]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(IxIconButtonComponent);
+    fixture = TestBed.createComponent(TnIconButtonComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

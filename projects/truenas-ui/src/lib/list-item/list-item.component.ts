@@ -18,7 +18,7 @@ import { ElementRef, Component, input, output, computed, signal, inject } from '
     '(click)': 'onClick($event)'
   }
 })
-export class IxListItemComponent implements AfterContentInit {
+export class TnListItemComponent implements AfterContentInit {
   disabled = input<boolean>(false);
   clickable = input<boolean>(false);
 

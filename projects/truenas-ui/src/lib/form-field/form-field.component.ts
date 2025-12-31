@@ -10,7 +10,7 @@ import { NgControl } from '@angular/forms';
   templateUrl: './form-field.component.html',
   styleUrls: ['./form-field.component.scss']
 })
-export class IxFormFieldComponent implements AfterContentInit {
+export class TnFormFieldComponent implements AfterContentInit {
   label = input<string>('');
   hint = input<string>('');
   required = input<boolean>(false);

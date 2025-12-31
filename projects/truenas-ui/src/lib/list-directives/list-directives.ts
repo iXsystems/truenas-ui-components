@@ -7,7 +7,7 @@ import { Directive } from '@angular/core';
     'class': 'ix-list-icon'
   }
 })
-export class IxListIconDirective {}
+export class TnListIconDirective {}
 
 @Directive({
   selector: '[ixListAvatar]',
@@ -16,7 +16,7 @@ export class IxListIconDirective {}
     'class': 'ix-list-avatar'
   }
 })
-export class IxListAvatarDirective {}
+export class TnListAvatarDirective {}
 
 @Directive({
   selector: '[ixListItemTitle]',
@@ -25,7 +25,7 @@ export class IxListAvatarDirective {}
     'class': 'ix-list-item-title'
   }
 })
-export class IxListItemTitleDirective {}
+export class TnListItemTitleDirective {}
 
 @Directive({
   selector: '[ixListItemLine]',
@@ -34,7 +34,7 @@ export class IxListItemTitleDirective {}
     'class': 'ix-list-item-line'
   }
 })
-export class IxListItemLineDirective {}
+export class TnListItemLineDirective {}
 
 @Directive({
   selector: '[ixListItemPrimary]',
@@ -43,7 +43,7 @@ export class IxListItemLineDirective {}
     'class': 'ix-list-item-primary'
   }
 })
-export class IxListItemPrimaryDirective {}
+export class TnListItemPrimaryDirective {}
 
 @Directive({
   selector: '[ixListItemSecondary]',
@@ -52,7 +52,7 @@ export class IxListItemPrimaryDirective {}
     'class': 'ix-list-item-secondary'
   }
 })
-export class IxListItemSecondaryDirective {}
+export class TnListItemSecondaryDirective {}
 
 @Directive({
   selector: '[ixListItemTrailing]',
@@ -61,7 +61,7 @@ export class IxListItemSecondaryDirective {}
     'class': 'ix-list-item-trailing'
   }
 })
-export class IxListItemTrailingDirective {}
+export class TnListItemTrailingDirective {}
 
 @Directive({
   selector: 'ix-divider, [ixDivider]',
@@ -71,4 +71,4 @@ export class IxListItemTrailingDirective {}
     'role': 'separator'
   }
 })
-export class IxDividerDirective {}
+export class TnDividerDirective {}

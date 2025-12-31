@@ -1,16 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxCheckboxComponent } from '../lib/checkbox/checkbox.component';
-import { IxFormFieldComponent } from '../lib/form-field/form-field.component';
-import { IxInputComponent } from '../lib/input/input.component';
-import { IxRadioComponent } from '../lib/radio/radio.component';
-import type { IxSelectOption } from '../lib/select/select.component';
-import { IxSelectComponent } from '../lib/select/select.component';
+import { TnCheckboxComponent } from '../lib/checkbox/checkbox.component';
+import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
+import { TnInputComponent } from '../lib/input/input.component';
+import { TnRadioComponent } from '../lib/radio/radio.component';
+import type { TnSelectOption } from '../lib/select/select.component';
+import { TnSelectComponent } from '../lib/select/select.component';
 
-const meta: Meta<IxFormFieldComponent> = {
+const meta: Meta<TnFormFieldComponent> = {
   title: 'Components/Form Field',
-  component: IxFormFieldComponent,
+  component: TnFormFieldComponent,
   tags: ['autodocs'],
   parameters: {
     layout: 'padded',
@@ -66,9 +66,9 @@ When used with Angular reactive forms, the form field automatically:
 };
 
 export default meta;
-type Story = StoryObj<IxFormFieldComponent>;
+type Story = StoryObj<TnFormFieldComponent>;
 
-const selectOptions: IxSelectOption[] = [
+const selectOptions: TnSelectOption[] = [
   { value: 'small', label: 'Small' },
   { value: 'medium', label: 'Medium' },
   { value: 'large', label: 'Large' },
@@ -90,7 +90,7 @@ export const BasicInput: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxInputComponent],
+      imports: [TnInputComponent],
     },
   }),
   args: {
@@ -117,7 +117,7 @@ export const RequiredField: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxInputComponent],
+      imports: [TnInputComponent],
     },
   }),
   args: {
@@ -170,7 +170,7 @@ export const WithValidation: Story = {
       </div>
     `,
     moduleMetadata: {
-      imports: [IxInputComponent, ReactiveFormsModule],
+      imports: [TnInputComponent, ReactiveFormsModule],
     },
   }),
   args: {
@@ -200,7 +200,7 @@ export const WithSelect: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxSelectComponent],
+      imports: [TnSelectComponent],
     },
   }),
   args: {
@@ -226,7 +226,7 @@ export const WithCheckbox: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxCheckboxComponent],
+      imports: [TnCheckboxComponent],
     },
   }),
   args: {
@@ -266,7 +266,7 @@ export const WithRadioGroup: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxRadioComponent],
+      imports: [TnRadioComponent],
     },
   }),
   args: {
@@ -373,10 +373,10 @@ export const MultipleFields: Story = {
     `,
     moduleMetadata: {
       imports: [
-        IxInputComponent, 
-        IxSelectComponent, 
-        IxCheckboxComponent, 
-        IxRadioComponent, 
+        TnInputComponent, 
+        TnSelectComponent, 
+        TnCheckboxComponent, 
+        TnRadioComponent, 
         ReactiveFormsModule,
         CommonModule
       ],

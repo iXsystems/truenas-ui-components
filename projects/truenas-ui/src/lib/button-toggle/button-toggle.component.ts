@@ -4,7 +4,7 @@ import { ChangeDetectorRef } from '@angular/core';
 import { Component, input, output, signal, computed, forwardRef, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import type { IxButtonToggleGroupComponent } from './button-toggle-group.component';
+import type { TnButtonToggleGroupComponent } from './button-toggle-group.component';
 
 @Component({
   selector: 'ix-button-toggle',
@@ -13,7 +13,7 @@ import type { IxButtonToggleGroupComponent } from './button-toggle-group.compone
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => IxButtonToggleComponent),
+      useExisting: forwardRef(() => TnButtonToggleComponent),
       multi: true
     }
   ],
@@ -30,22 +30,22 @@ import type { IxButtonToggleGroupComponent } from './button-toggle-group.compone
     '(focus)': 'onFocus()'
   }
 })
-export class IxButtonToggleComponent implements ControlValueAccessor {
+export class TnButtonToggleComponent implements ControlValueAccessor {
   cdr = inject(ChangeDetectorRef);
 
   private static _uniqueIdCounter = 0;
 
-  id = input<string>(`ix-button-toggle-${IxButtonToggleComponent._uniqueIdCounter++}`);
+  id = input<string>(`ix-button-toggle-${TnButtonToggleComponent._uniqueIdCounter++}`);
   value = input<unknown>(undefined);
   disabled = input<boolean>(false);
   checked = signal<boolean>(false);
   ariaLabel = input<string>('');
   ariaLabelledby = input<string>('');
 
-  change = output<{ source: IxButtonToggleComponent; value: unknown }>();
+  change = output<{ source: TnButtonToggleComponent; value: unknown }>();
 
   buttonId = computed(() => this.id() + '-button');
-  buttonToggleGroup?: IxButtonToggleGroupComponent;
+  buttonToggleGroup?: TnButtonToggleGroupComponent;
 
   private formDisabled = signal<boolean>(false);
 

@@ -3,11 +3,11 @@ import { JsonPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxButtonComponent } from '../lib/button/button.component';
-import { IxDialogShellComponent } from '../lib/dialog/dialog-shell.component';
-import { IxDialog } from '../lib/dialog/dialog.service';
-import { IxFormFieldComponent } from '../lib/form-field/form-field.component';
-import { IxInputComponent } from '../lib/input/input.component';
+import { TnButtonComponent } from '../lib/button/button.component';
+import { TnDialogShellComponent } from '../lib/dialog/dialog-shell.component';
+import { TnDialog } from '../lib/dialog/dialog.service';
+import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
+import { TnInputComponent } from '../lib/input/input.component';
 
 // Example user edit dialog component
 @Component({
@@ -15,10 +15,10 @@ import { IxInputComponent } from '../lib/input/input.component';
   templateUrl: './dialog.stories.html',
   standalone: true,
   imports: [
-    IxDialogShellComponent,
-    IxButtonComponent,
-    IxFormFieldComponent,
-    IxInputComponent,
+    TnDialogShellComponent,
+    TnButtonComponent,
+    TnFormFieldComponent,
+    TnInputComponent,
     FormsModule
   ]
 })
@@ -49,7 +49,7 @@ class UserEditDialogComponent {
   selector: 'system-settings-dialog',
   templateUrl: './dialog-2.stories.html',
   standalone: true,
-  imports: [IxDialogShellComponent, IxButtonComponent]
+  imports: [TnDialogShellComponent, TnButtonComponent]
 })
 class SystemSettingsDialogComponent {
   ref = inject(DialogRef<string>);
@@ -60,7 +60,7 @@ class SystemSettingsDialogComponent {
   selector: 'fullscreen-settings-dialog',
   templateUrl: './dialog-3.stories.html',
   standalone: true,
-  imports: [IxDialogShellComponent, IxButtonComponent]
+  imports: [TnDialogShellComponent, TnButtonComponent]
 })
 class FullscreenSettingsDialogComponent {
   ref = inject(DialogRef<string>);
@@ -71,12 +71,12 @@ class FullscreenSettingsDialogComponent {
   selector: 'dialog-demo',
   templateUrl: './dialog-4.stories.html',
   standalone: true,
-  imports: [IxButtonComponent, JsonPipe]
+  imports: [TnButtonComponent, JsonPipe]
 })
 class DialogDemoComponent {
   lastResult: unknown = null;
 
-  constructor(private ixDialog: IxDialog) {}
+  constructor(private ixDialog: TnDialog) {}
 
   openUserDialog() {
     const dialogRef = this.ixDialog.open(UserEditDialogComponent, {
@@ -142,7 +142,7 @@ The IX Dialog system provides a clean, opinionated API built on top of CDK Dialo
 
 To use dialogs in your application, you need to:
 
-1. **Import the dialog service**: Import \`IxDialog\` from the library
+1. **Import the dialog service**: Import \`TnDialog\` from the library
 2. **Create dialog components**: Build standalone components that use \`ix-dialog-shell\`
 3. **Open dialogs**: Use the service to open your dialog components
 
@@ -155,8 +155,8 @@ First, import what you need in your component:
 \`\`\`typescript
 import { Component, Inject } from '@angular/core';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
-import { IxDialog } from 'truenas-ui';
-import { IxDialogShellComponent } from 'truenas-ui';
+import { TnDialog } from 'truenas-ui';
+import { TnDialogShellComponent } from 'truenas-ui';
 \`\`\`
 
 ### 2. Create Your Dialog Component
@@ -183,8 +183,8 @@ Every dialog component must be a standalone component that uses \`ix-dialog-shel
   \`,
   standalone: true,
   imports: [
-    IxDialogShellComponent,
-    IxButtonComponent,
+    TnDialogShellComponent,
+    TnButtonComponent,
     FormsModule // If using forms
   ]
 })
@@ -217,7 +217,7 @@ In the component that needs to open the dialog:
 
 \`\`\`typescript
 export class MyPageComponent {
-  constructor(private ixDialog: IxDialog) {}
+  constructor(private ixDialog: TnDialog) {}
 
   openMyDialog() {
     const dialogRef = this.ixDialog.open(MyCustomDialogComponent, {
@@ -348,14 +348,14 @@ export const Default: Story = {
         UserEditDialogComponent,
         SystemSettingsDialogComponent,
         FullscreenSettingsDialogComponent,
-        IxDialogShellComponent,
-        IxButtonComponent,
-        IxFormFieldComponent,
-        IxInputComponent,
+        TnDialogShellComponent,
+        TnButtonComponent,
+        TnFormFieldComponent,
+        TnInputComponent,
         JsonPipe
       ],
       providers: [
-        IxDialog
+        TnDialog
       ]
     },
   }),

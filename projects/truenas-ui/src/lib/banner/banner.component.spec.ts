@@ -1,19 +1,19 @@
 import { provideHttpClient } from '@angular/common/http';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import { IxBannerComponent } from './banner.component';
+import { TnBannerComponent } from './banner.component';
 
-describe('IxBannerComponent', () => {
-  let component: IxBannerComponent;
-  let fixture: ComponentFixture<IxBannerComponent>;
+describe('TnBannerComponent', () => {
+  let component: TnBannerComponent;
+  let fixture: ComponentFixture<TnBannerComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IxBannerComponent],
+      imports: [TnBannerComponent],
       providers: [provideHttpClient()]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(IxBannerComponent);
+    fixture = TestBed.createComponent(TnBannerComponent);
     component = fixture.componentInstance;
 
     // Set required input

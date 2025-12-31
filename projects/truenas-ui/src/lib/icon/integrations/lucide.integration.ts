@@ -19,7 +19,7 @@
 
 import { inject } from '@angular/core';
 import type { IconLibrary } from '../icon-registry.service';
-import { IxIconRegistryService } from '../icon-registry.service';
+import { TnIconRegistryService } from '../icon-registry.service';
 
 export interface LucideIconOptions {
   size?: number;
@@ -51,7 +51,7 @@ export function setupLucideIntegration(
   lucideIcons: Record<string, unknown>,
   defaultOptions: LucideIconOptions = {}
 ): void {
-  const registry = inject(IxIconRegistryService);
+  const registry = inject(TnIconRegistryService);
   
   const lucideLibrary: IconLibrary = {
     name: 'lucide',
@@ -169,7 +169,7 @@ export function createLucideLibrary(
  * ```
  */
 export function registerLucideIcons(icons: Record<string, unknown>): void {
-  const registry = inject(IxIconRegistryService);
+  const registry = inject(TnIconRegistryService);
   
   Object.entries(icons).forEach(([name, iconFunction]) => {
     if (typeof iconFunction === 'function') {

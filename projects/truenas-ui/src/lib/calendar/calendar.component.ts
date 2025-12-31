@@ -1,19 +1,19 @@
 import { CommonModule } from '@angular/common';
 import type { OnInit } from '@angular/core';
 import { Component, input, output, signal, effect } from '@angular/core';
-import { IxCalendarHeaderComponent } from './calendar-header.component';
-import { IxMonthViewComponent } from './month-view.component';
-import { IxMultiYearViewComponent } from './multi-year-view.component';
+import { TnCalendarHeaderComponent } from './calendar-header.component';
+import { TnMonthViewComponent } from './month-view.component';
+import { TnMultiYearViewComponent } from './multi-year-view.component';
 import type { DateRange } from '../date-range-input/date-range-input.component';
 
 @Component({
   selector: 'ix-calendar',
   standalone: true,
-  imports: [CommonModule, IxCalendarHeaderComponent, IxMonthViewComponent, IxMultiYearViewComponent],
+  imports: [CommonModule, TnCalendarHeaderComponent, TnMonthViewComponent, TnMultiYearViewComponent],
   templateUrl: './calendar.component.html',
   styleUrls: ['./calendar.component.scss']
 })
-export class IxCalendarComponent implements OnInit {
+export class TnCalendarComponent implements OnInit {
   startView = input<'month' | 'year'>('month');
   selected = input<Date | null | undefined>(undefined);
   minDate = input<Date | undefined>(undefined);

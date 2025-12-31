@@ -18,7 +18,7 @@ export const TRUENAS_ICONS: Record<string, string> = {
 
 /**
  * Register all TrueNAS custom icons with the icon registry
- * @param iconRegistry The IxIconRegistryService instance
+ * @param iconRegistry The TnIconRegistryService instance
  */
 export function registerTruenasIcons(iconRegistry: any): void {
   Object.entries(TRUENAS_ICONS).forEach(([name, svg]) => {

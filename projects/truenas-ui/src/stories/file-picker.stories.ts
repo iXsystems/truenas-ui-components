@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { userEvent, within, screen, expect, waitFor } from '@storybook/test';
-import { IxFilePickerComponent } from '../lib/file-picker/file-picker.component';
+import { TnFilePickerComponent } from '../lib/file-picker/file-picker.component';
 import type { FileSystemItem, FilePickerCallbacks } from '../lib/file-picker/file-picker.interfaces';
-import { IxFormFieldComponent } from '../lib/form-field/form-field.component';
+import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
 
-const meta: Meta<IxFilePickerComponent> = {
+const meta: Meta<TnFilePickerComponent> = {
   title: 'Components/File Picker',
-  component: IxFilePickerComponent,
+  component: TnFilePickerComponent,
   tags: ['autodocs'],
   parameters: {
     docs: {
@@ -45,7 +45,7 @@ const meta: Meta<IxFilePickerComponent> = {
 };
 
 export default meta;
-type Story = StoryObj<IxFilePickerComponent>;
+type Story = StoryObj<TnFilePickerComponent>;
 
 
 export const Default: Story = {
@@ -72,7 +72,7 @@ export const Default: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent, IxFilePickerComponent],
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
     }
   }),
   args: {
@@ -824,7 +824,7 @@ export const BasicInteraction: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent, IxFilePickerComponent],
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
     }
   }),
   args: {
@@ -884,7 +884,7 @@ export const MultiSelectWorkflow: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent, IxFilePickerComponent],
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
     }
   }),
   args: {
@@ -950,7 +950,7 @@ export const NavigationFlow: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent, IxFilePickerComponent],
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
     }
   }),
   args: {
@@ -1018,7 +1018,7 @@ export const FolderCreation: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent, IxFilePickerComponent],
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
     }
   }),
   args: {
@@ -1144,7 +1144,7 @@ export const SelectionModes: Story = {
       </div>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent, IxFilePickerComponent],
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
     }
   }),
   args: {
@@ -1195,7 +1195,7 @@ export const DisabledStates: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent, IxFilePickerComponent],
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
     }
   }),
   args: {
@@ -1234,7 +1234,7 @@ export const ZfsObjectDisplay: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent, IxFilePickerComponent],
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
     }
   }),
   args: {
@@ -1289,7 +1289,7 @@ export const LoadingStates: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent, IxFilePickerComponent],
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
     }
   }),
   args: {
@@ -1340,7 +1340,7 @@ export const PathInputValidation: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent, IxFilePickerComponent],
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
     }
   }),
   args: {
@@ -1434,7 +1434,7 @@ export const ErrorHandling: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent, IxFilePickerComponent],
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
     }
   }),
   args: {

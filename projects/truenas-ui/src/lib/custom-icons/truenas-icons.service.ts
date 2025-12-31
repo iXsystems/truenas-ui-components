@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { IxIconRegistryService } from '../icon/icon-registry.service';
+import { TnIconRegistryService } from '../icon/icon-registry.service';
 
 /**
  * Service for loading and registering TrueNAS custom icons
@@ -14,7 +14,7 @@ export class TruenasIconsService {
   private iconBasePath = 'truenas-ui/src/assets/icons/';
 
   private http = inject(HttpClient);
-  private iconRegistry = inject(IxIconRegistryService);
+  private iconRegistry = inject(TnIconRegistryService);
 
   /**
    * Load and register all TrueNAS custom icons

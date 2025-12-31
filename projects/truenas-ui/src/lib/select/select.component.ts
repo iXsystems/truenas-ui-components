@@ -3,15 +3,15 @@ import { ElementRef, ChangeDetectorRef, Component, input, output, forwardRef, si
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
-export interface IxSelectOption<T = unknown> {
+export interface TnSelectOption<T = unknown> {
   value: T;
   label: string;
   disabled?: boolean;
 }
 
-export interface IxSelectOptionGroup<T = unknown> {
+export interface TnSelectOptionGroup<T = unknown> {
   label: string;
-  options: IxSelectOption<T>[];
+  options: TnSelectOption<T>[];
   disabled?: boolean;
 }
 
@@ -22,16 +22,16 @@ export interface IxSelectOptionGroup<T = unknown> {
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => IxSelectComponent),
+      useExisting: forwardRef(() => TnSelectComponent),
       multi: true
     }
   ],
   templateUrl: './select.component.html',
   styleUrls: ['./select.component.scss']
 })
-export class IxSelectComponent<T = unknown> implements ControlValueAccessor {
-  options = input<IxSelectOption<T>[]>([]);
-  optionGroups = input<IxSelectOptionGroup<T>[]>([]);
+export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
+  options = input<TnSelectOption<T>[]>([]);
+  optionGroups = input<TnSelectOptionGroup<T>[]>([]);
   placeholder = input<string>('Select an option');
   disabled = input<boolean>(false);
   testId = input<string>('');
@@ -107,11 +107,11 @@ export class IxSelectComponent<T = unknown> implements ControlValueAccessor {
     this.onTouched();
   }
 
-  onOptionClick(option: IxSelectOption<T>): void {
+  onOptionClick(option: TnSelectOption<T>): void {
     this.selectOption(option);
   }
 
-  selectOption(option: IxSelectOption<T>): void {
+  selectOption(option: TnSelectOption<T>): void {
     if (option.disabled) {return;}
 
     this.selectedValue.set(option.value);
@@ -122,7 +122,7 @@ export class IxSelectComponent<T = unknown> implements ControlValueAccessor {
   }
 
   // Computed properties
-  isSelected = computed(() => (option: IxSelectOption<T>): boolean => {
+  isSelected = computed(() => (option: TnSelectOption<T>): boolean => {
     return this.compareValues(this.selectedValue(), option.value);
   });
 
@@ -135,7 +135,7 @@ export class IxSelectComponent<T = unknown> implements ControlValueAccessor {
     return option ? option.label : value;
   });
 
-  private findOptionByValue(value: T | null): IxSelectOption<T> | undefined {
+  private findOptionByValue(value: T | null): TnSelectOption<T> | undefined {
     // Search in regular options first
     const regularOption = this.options().find(opt => this.compareValues(opt.value, value));
     if (regularOption) {return regularOption;}

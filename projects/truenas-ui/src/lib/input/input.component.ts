@@ -13,14 +13,14 @@ import { InputType } from '../enums/input-type.enum';
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => IxInputComponent),
+      useExisting: forwardRef(() => TnInputComponent),
       multi: true
     }
   ],
   templateUrl: './input.component.html',
   styleUrl: './input.component.scss',
 })
-export class IxInputComponent implements AfterViewInit, ControlValueAccessor {
+export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
   inputEl = viewChild.required<ElementRef<HTMLInputElement | HTMLTextAreaElement>>('inputEl');
 
   inputType = input<InputType>(InputType.PlainText);

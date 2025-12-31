@@ -1,19 +1,19 @@
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import type { IxTableDataSource } from './table.component';
-import { IxTableComponent } from './table.component';
-import type { IxTableColumnDirective } from '../table-column/table-column.directive';
+import type { TnTableDataSource } from './table.component';
+import { TnTableComponent } from './table.component';
+import type { TnTableColumnDirective } from '../table-column/table-column.directive';
 
-describe('IxTableComponent', () => {
-  let component: IxTableComponent;
-  let fixture: ComponentFixture<IxTableComponent>;
+describe('TnTableComponent', () => {
+  let component: TnTableComponent;
+  let fixture: ComponentFixture<TnTableComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IxTableComponent]
+      imports: [TnTableComponent]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(IxTableComponent);
+    fixture = TestBed.createComponent(TnTableComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
@@ -38,7 +38,7 @@ describe('IxTableComponent', () => {
     });
 
     it('should return data array when dataSource.data is empty', () => {
-      fixture.componentRef.setInput('dataSource', { data: [] } as IxTableDataSource);
+      fixture.componentRef.setInput('dataSource', { data: [] } as TnTableDataSource);
 
       const result = component.data();
 
@@ -49,7 +49,7 @@ describe('IxTableComponent', () => {
       const testData = [{ id: 1, name: 'Test' }];
       const connectSpy = jest.fn().mockReturnValue(testData);
       // Don't include data property to trigger connect() call
-      fixture.componentRef.setInput('dataSource', { connect: connectSpy } as IxTableDataSource);
+      fixture.componentRef.setInput('dataSource', { connect: connectSpy } as TnTableDataSource);
 
       const result = component.data();
 
@@ -70,12 +70,12 @@ describe('IxTableComponent', () => {
         name: () => 'column1',
         headerTemplate: () => undefined,
         cellTemplate: () => undefined
-      } as unknown as IxTableColumnDirective;
+      } as unknown as TnTableColumnDirective;
       const mockColumnDef2 = {
         name: () => 'column2',
         headerTemplate: () => undefined,
         cellTemplate: () => undefined
-      } as unknown as IxTableColumnDirective;
+      } as unknown as TnTableColumnDirective;
 
       // Test processColumnDefs directly with mock data
       component['processColumnDefs']([mockColumnDef1, mockColumnDef2]);
@@ -93,12 +93,12 @@ describe('IxTableComponent', () => {
         name: () => 'column1',
         headerTemplate: () => undefined,
         cellTemplate: () => undefined
-      } as unknown as IxTableColumnDirective;
+      } as unknown as TnTableColumnDirective;
       const mockColumnDef2 = {
         name: () => 'column2',
         headerTemplate: () => undefined,
         cellTemplate: () => undefined
-      } as unknown as IxTableColumnDirective;
+      } as unknown as TnTableColumnDirective;
 
       // First processing
       component['processColumnDefs']([mockColumnDef1, mockColumnDef2]);
@@ -118,7 +118,7 @@ describe('IxTableComponent', () => {
         name: () => '',
         headerTemplate: () => undefined,
         cellTemplate: () => undefined
-      } as unknown as IxTableColumnDirective;
+      } as unknown as TnTableColumnDirective;
       component['processColumnDefs']([mockColumnDefWithoutName]);
 
       // Should not throw and should result in empty map

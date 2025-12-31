@@ -1,16 +1,16 @@
 import { Component } from '@angular/core';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { within, userEvent } from '@storybook/testing-library';
-import { IxButtonComponent } from '../../../lib/button/button.component';
+import { TnButtonComponent } from '../../../lib/button/button.component';
 import { InputType } from '../../../lib/enums/input-type.enum';
-import { IxInputComponent } from '../../../lib/input/input.component';
+import { TnInputComponent } from '../../../lib/input/input.component';
 
 @Component({
   selector: 'app-login-form-doc',
   templateUrl: './login.example.html',
   styleUrl: './login.example.scss',
   standalone: true,
-  imports: [IxInputComponent, IxButtonComponent],
+  imports: [TnInputComponent, TnButtonComponent],
 })
 class LoginFormDocComponent {
  InputType = InputType;

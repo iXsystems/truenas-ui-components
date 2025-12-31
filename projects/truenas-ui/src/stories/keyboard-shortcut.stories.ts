@@ -2,12 +2,12 @@ import type { OnDestroy } from '@angular/core';
 import { Component } from '@angular/core';
 import { action } from '@storybook/addon-actions';
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxKeyboardShortcutComponent } from '../lib/keyboard-shortcut/keyboard-shortcut.component';
+import { TnKeyboardShortcutComponent } from '../lib/keyboard-shortcut/keyboard-shortcut.component';
 
 @Component({
   selector: 'shortcut-test',
   standalone: true,
-  imports: [IxKeyboardShortcutComponent],
+  imports: [TnKeyboardShortcutComponent],
   templateUrl: './keyboard-shortcut.stories.html'
 })
 class ShortcutTestComponent implements OnDestroy {
@@ -26,7 +26,7 @@ class ShortcutTestComponent implements OnDestroy {
 <!-- Custom separator -->
 <ix-keyboard-shortcut shortcut="Ctrl+Alt+Delete" separator=" + "></ix-keyboard-shortcut>`;
 
-  importExample = `import { IxKeyboardShortcutComponent } from 'truenas-ui';
+  importExample = `import { TnKeyboardShortcutComponent } from 'truenas-ui';
 import { CommonShortcuts } from 'truenas-ui';`;
 
   constructor() {

@@ -2,17 +2,17 @@ import { CdkTree } from '@angular/cdk/tree';
 import { CdkNestedTreeNode, CdkTreeNode, CDK_TREE_NODE_OUTLET_NODE, CdkTreeModule } from '@angular/cdk/tree';
 import { CommonModule } from '@angular/common';
 import { ElementRef, ChangeDetectorRef, Component, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
-import { IxTreeNodeOutletDirective } from './tree-node-outlet.directive';
-import { IxIconComponent } from '../icon/icon.component';
+import { TnTreeNodeOutletDirective } from './tree-node-outlet.directive';
+import { TnIconComponent } from '../icon/icon.component';
 
 @Component({
   selector: 'ix-nested-tree-node',
   standalone: true,
-  imports: [CommonModule, CdkTreeModule, IxIconComponent, IxTreeNodeOutletDirective],
+  imports: [CommonModule, CdkTreeModule, TnIconComponent, TnTreeNodeOutletDirective],
   exportAs: 'ixNestedTreeNode',
   providers: [
-    { provide: CdkNestedTreeNode, useExisting: IxNestedTreeNodeComponent },
-    { provide: CdkTreeNode, useExisting: IxNestedTreeNodeComponent }
+    { provide: CdkNestedTreeNode, useExisting: TnNestedTreeNodeComponent },
+    { provide: CdkTreeNode, useExisting: TnNestedTreeNodeComponent }
   ],
   templateUrl: './nested-tree-node.component.html',
   styleUrl: './nested-tree-node.component.scss',
@@ -25,7 +25,7 @@ import { IxIconComponent } from '../icon/icon.component';
   encapsulation: ViewEncapsulation.Emulated,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class IxNestedTreeNodeComponent<T, K = T> extends CdkNestedTreeNode<T, K> {
+export class TnNestedTreeNodeComponent<T, K = T> extends CdkNestedTreeNode<T, K> {
   constructor() {
     super(
       inject(ElementRef<HTMLElement>),

@@ -16,26 +16,26 @@ import {
   mdiAlertCircle
 } from '@mdi/js';
 import type { FileSystemItem, CreateFolderEvent, FilePickerMode } from './file-picker.interfaces';
-import { IxButtonComponent } from '../button/button.component';
+import { TnButtonComponent } from '../button/button.component';
 import { registerTruenasIcons } from '../custom-icons/generated-icons';
-import { IxIconRegistryService } from '../icon/icon-registry.service';
-import { IxIconComponent } from '../icon/icon.component';
+import { TnIconRegistryService } from '../icon/icon-registry.service';
+import { TnIconComponent } from '../icon/icon.component';
 import { FileSizePipe } from '../pipes/file-size/file-size.pipe';
 import { TruncatePathPipe } from '../pipes/truncate-path/truncate-path.pipe';
-import { IxTableComponent } from '../table/table.component';
-import { IxTableColumnDirective, IxHeaderCellDefDirective, IxCellDefDirective } from '../table-column/table-column.directive';
+import { TnTableComponent } from '../table/table.component';
+import { TnTableColumnDirective, TnHeaderCellDefDirective, TnCellDefDirective } from '../table-column/table-column.directive';
 
 @Component({
   selector: 'ix-file-picker-popup',
   standalone: true,
   imports: [
     CommonModule,
-    IxIconComponent,
-    IxButtonComponent,
-    IxTableComponent,
-    IxTableColumnDirective,
-    IxHeaderCellDefDirective,
-    IxCellDefDirective,
+    TnIconComponent,
+    TnButtonComponent,
+    TnTableComponent,
+    TnTableColumnDirective,
+    TnHeaderCellDefDirective,
+    TnCellDefDirective,
     ScrollingModule,
     A11yModule,
     FileSizePipe,
@@ -47,7 +47,7 @@ import { IxTableColumnDirective, IxHeaderCellDefDirective, IxCellDefDirective } 
     'class': 'ix-file-picker-popup'
   }
 })
-export class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterViewChecked {
+export class TnFilePickerPopupComponent implements OnInit, AfterViewInit, AfterViewChecked {
   mode = input<FilePickerMode>('any');
   multiSelect = input<boolean>(false);
   allowCreate = input<boolean>(true);
@@ -60,7 +60,7 @@ export class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
   creationLoading = input<boolean>(false);
   fileExtensions = input<string[] | undefined>(undefined);
 
-  private iconRegistry = inject(IxIconRegistryService);
+  private iconRegistry = inject(TnIconRegistryService);
 
   constructor() {
     // Register TrueNAS custom icons

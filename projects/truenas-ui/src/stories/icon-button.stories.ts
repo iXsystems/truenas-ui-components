@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect } from '@storybook/jest';
 import { within } from '@storybook/testing-library';
-import { IxCardComponent } from '../lib/card/card.component';
+import { TnCardComponent } from '../lib/card/card.component';
 import { iconMarker } from '../lib/icon/icon-marker';
-import { IxIconButtonComponent } from '../lib/icon-button/icon-button.component';
+import { TnIconButtonComponent } from '../lib/icon-button/icon-button.component';
 
 // Mark MDI icons for sprite generation (used in story templates)
 iconMarker('bell', 'mdi');
@@ -22,9 +22,9 @@ iconMarker('refresh', 'mdi');
 iconMarker('share-variant', 'mdi');
 iconMarker('star', 'mdi');
 
-const meta: Meta<IxIconButtonComponent> = {
+const meta: Meta<TnIconButtonComponent> = {
   title: 'Components/Icon Button',
-  component: IxIconButtonComponent,
+  component: TnIconButtonComponent,
   tags: ['autodocs'],
   argTypes: {
     name: {
@@ -62,7 +62,7 @@ const meta: Meta<IxIconButtonComponent> = {
 };
 
 export default meta;
-type Story = StoryObj<IxIconButtonComponent>;
+type Story = StoryObj<TnIconButtonComponent>;
 
 export const Default: Story = {
   args: {
@@ -180,7 +180,7 @@ export const InCard: Story = {
       </ix-card>
     `,
     moduleMetadata: {
-      imports: [IxCardComponent],
+      imports: [TnCardComponent],
     },
   }),
 };

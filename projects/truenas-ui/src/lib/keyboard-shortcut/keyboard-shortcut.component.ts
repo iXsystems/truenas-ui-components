@@ -9,7 +9,7 @@ import type { PlatformType } from '../enums/modifier-keys.enum';
   templateUrl: './keyboard-shortcut.component.html',
   styleUrls: ['./keyboard-shortcut.component.scss'],
 })
-export class IxKeyboardShortcutComponent {
+export class TnKeyboardShortcutComponent {
   shortcut = input<string>('');
   platform = input<PlatformType>('auto');
   separator = input<string>('');

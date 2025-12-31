@@ -1,17 +1,17 @@
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import { IxBrandedSpinnerComponent } from './branded-spinner.component';
+import { TnBrandedSpinnerComponent } from './branded-spinner.component';
 
-describe('IxBrandedSpinnerComponent', () => {
-  let component: IxBrandedSpinnerComponent;
-  let fixture: ComponentFixture<IxBrandedSpinnerComponent>;
+describe('TnBrandedSpinnerComponent', () => {
+  let component: TnBrandedSpinnerComponent;
+  let fixture: ComponentFixture<TnBrandedSpinnerComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IxBrandedSpinnerComponent]
+      imports: [TnBrandedSpinnerComponent]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(IxBrandedSpinnerComponent);
+    fixture = TestBed.createComponent(TnBrandedSpinnerComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

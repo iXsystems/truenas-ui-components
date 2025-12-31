@@ -33,7 +33,7 @@ const expandCollapseAnimation = trigger('expandCollapse', [
   styleUrls: ['./expansion-panel.component.scss'],
   animations: [expandCollapseAnimation]
 })
-export class IxExpansionPanelComponent {
+export class TnExpansionPanelComponent {
   title = input<string | undefined>(undefined);
   elevation = input<'none' | 'low' | 'medium' | 'high'>('medium');
   padding = input<'small' | 'medium' | 'large'>('medium');

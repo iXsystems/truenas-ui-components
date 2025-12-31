@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/angular';
 import { expect } from '@storybook/jest';
 import { within } from '@storybook/testing-library';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
-import { IxBannerComponent } from '../lib/banner/banner.component';
+import { TnBannerComponent } from '../lib/banner/banner.component';
 import { iconMarker } from '../lib/icon/icon-marker';
 
 // Mark icons for sprite generation (since they're computed dynamically)
@@ -14,9 +14,9 @@ iconMarker('check-circle', 'mdi');
 // Load harness documentation
 const harnessDoc = loadHarnessDoc('ix-banner');
 
-const meta: Meta<IxBannerComponent> = {
+const meta: Meta<TnBannerComponent> = {
   title: 'Components/Banner',
-  component: IxBannerComponent,
+  component: TnBannerComponent,
   tags: ['autodocs'],
   parameters: {
     docs: {
@@ -43,7 +43,7 @@ const meta: Meta<IxBannerComponent> = {
 };
 
 export default meta;
-type Story = StoryObj<IxBannerComponent>;
+type Story = StoryObj<TnBannerComponent>;
 
 export const Default: Story = {
   args: {

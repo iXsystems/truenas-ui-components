@@ -1,15 +1,15 @@
 import { CdkTree, CdkTreeNode, CDK_TREE_NODE_OUTLET_NODE, CdkTreeModule } from '@angular/cdk/tree';
 import { CommonModule } from '@angular/common';
 import { ElementRef, ChangeDetectorRef, Component, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
-import { IxIconComponent } from '../icon/icon.component';
+import { TnIconComponent } from '../icon/icon.component';
 
 @Component({
   selector: 'ix-tree-node',
   standalone: true,
-  imports: [CommonModule, CdkTreeModule, IxIconComponent],
+  imports: [CommonModule, CdkTreeModule, TnIconComponent],
   exportAs: 'ixTreeNode',
   providers: [
-    { provide: CdkTreeNode, useExisting: IxTreeNodeComponent }
+    { provide: CdkTreeNode, useExisting: TnTreeNodeComponent }
   ],
   templateUrl: './tree-node.component.html',
   styleUrl: './tree-node.component.scss',
@@ -22,7 +22,7 @@ import { IxIconComponent } from '../icon/icon.component';
   encapsulation: ViewEncapsulation.Emulated,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class IxTreeNodeComponent<T, K = T> extends CdkTreeNode<T, K> {
+export class TnTreeNodeComponent<T, K = T> extends CdkTreeNode<T, K> {
   constructor() {
     super(
       inject(ElementRef<HTMLElement>),

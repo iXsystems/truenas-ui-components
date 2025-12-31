@@ -6,10 +6,10 @@ import {
   mdiAlertCircle,
   mdiCheckCircle,
 } from '@mdi/js';
-import { IxIconRegistryService } from '../icon/icon-registry.service';
-import { IxIconComponent } from '../icon/icon.component';
+import { TnIconRegistryService } from '../icon/icon-registry.service';
+import { TnIconComponent } from '../icon/icon.component';
 
-export type IxBannerType = 'info' | 'warning' | 'error' | 'success';
+export type TnBannerType = 'info' | 'warning' | 'error' | 'success';
 
 const ICON_MAP = {
   'info': 'information',
@@ -21,17 +21,17 @@ const ICON_MAP = {
 @Component({
   selector: 'ix-banner',
   standalone: true,
-  imports: [CommonModule, IxIconComponent],
+  imports: [CommonModule, TnIconComponent],
   templateUrl: './banner.component.html',
   styleUrls: ['./banner.component.scss'],
 })
-export class IxBannerComponent {
-  private iconRegistry = inject(IxIconRegistryService);
+export class TnBannerComponent {
+  private iconRegistry = inject(TnIconRegistryService);
 
   // Signal-based inputs (modern Angular 19+)
   heading = input.required<string>();
   message = input<string | undefined>(undefined);
-  type = input<IxBannerType>('info');
+  type = input<TnBannerType>('info');
 
   constructor() {
     this.registerMdiIcons();

@@ -1,7 +1,7 @@
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, input, output, contentChildren, computed, effect, model, inject } from '@angular/core';
-import { IxStepComponent } from './step.component';
+import { TnStepComponent } from './step.component';
 
 @Component({
   selector: 'ix-stepper',
@@ -21,7 +21,7 @@ import { IxStepComponent } from './step.component';
     '(window:resize)': 'onWindowResize($event)'
   }
 })
-export class IxStepperComponent {
+export class TnStepperComponent {
   orientation = input<'horizontal' | 'vertical' | 'auto'>('horizontal');
   linear = input<boolean>(false);
   selectedIndex = model<number>(0);
@@ -29,7 +29,7 @@ export class IxStepperComponent {
   selectionChange = output<{ selectedIndex: number; previouslySelectedIndex: number }>();
   completed = output<Array<{ label: string; completed: boolean; data: unknown }>>();
 
-  steps = contentChildren(IxStepComponent, { descendants: true });
+  steps = contentChildren(TnStepComponent, { descendants: true });
 
   private cdr = inject(ChangeDetectorRef);
 

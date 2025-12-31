@@ -1,15 +1,15 @@
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
 import { DomSanitizer } from '@angular/platform-browser';
-import { IxIconRegistryService } from './icon-registry.service';
-import { IxIconComponent } from './icon.component';
-import { IxSpriteLoaderService } from './sprite-loader.service';
+import { TnIconRegistryService } from './icon-registry.service';
+import { TnIconComponent } from './icon.component';
+import { TnSpriteLoaderService } from './sprite-loader.service';
 
-describe('IxIconComponent - MDI Support', () => {
-  let component: IxIconComponent;
-  let fixture: ComponentFixture<IxIconComponent>;
-  let iconRegistry: jest.Mocked<IxIconRegistryService>;
-  let spriteLoader: jest.Mocked<IxSpriteLoaderService>;
+describe('TnIconComponent - MDI Support', () => {
+  let component: TnIconComponent;
+  let fixture: ComponentFixture<TnIconComponent>;
+  let iconRegistry: jest.Mocked<TnIconRegistryService>;
+  let spriteLoader: jest.Mocked<TnSpriteLoaderService>;
 
   beforeEach(async () => {
     const spriteLoaderSpy = {
@@ -18,7 +18,7 @@ describe('IxIconComponent - MDI Support', () => {
       getSafeIconUrl: jest.fn(),
       isSpriteLoaded: jest.fn().mockReturnValue(true),
       getSpriteConfig: jest.fn()
-    } as jest.Mocked<Partial<IxSpriteLoaderService>>;
+    } as jest.Mocked<Partial<TnSpriteLoaderService>>;
 
     const iconRegistrySpy = {
       resolveIcon: jest.fn().mockImplementation((name: string) => {
@@ -36,7 +36,7 @@ describe('IxIconComponent - MDI Support', () => {
         return null;
       }),
       getSpriteLoader: jest.fn().mockReturnValue(spriteLoaderSpy)
-    } as jest.Mocked<Partial<IxIconRegistryService>>;
+    } as jest.Mocked<Partial<TnIconRegistryService>>;
 
     const domSanitizerSpy = {
       bypassSecurityTrustHtml: jest.fn().mockImplementation((html: string) => html),
@@ -44,18 +44,18 @@ describe('IxIconComponent - MDI Support', () => {
     } as unknown as jest.Mocked<DomSanitizer>;
 
     await TestBed.configureTestingModule({
-      imports: [IxIconComponent],
+      imports: [TnIconComponent],
       providers: [
-        { provide: IxIconRegistryService, useValue: iconRegistrySpy },
-        { provide: IxSpriteLoaderService, useValue: spriteLoaderSpy },
+        { provide: TnIconRegistryService, useValue: iconRegistrySpy },
+        { provide: TnSpriteLoaderService, useValue: spriteLoaderSpy },
         { provide: DomSanitizer, useValue: domSanitizerSpy }
       ]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(IxIconComponent);
+    fixture = TestBed.createComponent(TnIconComponent);
     component = fixture.componentInstance;
-    iconRegistry = TestBed.inject(IxIconRegistryService) as jest.Mocked<IxIconRegistryService>;
-    spriteLoader = TestBed.inject(IxSpriteLoaderService) as jest.Mocked<IxSpriteLoaderService>;
+    iconRegistry = TestBed.inject(TnIconRegistryService) as jest.Mocked<TnIconRegistryService>;
+    spriteLoader = TestBed.inject(TnSpriteLoaderService) as jest.Mocked<TnSpriteLoaderService>;
   });
 
   it('should render material icon by default', fakeAsync(() => {
@@ -107,11 +107,11 @@ describe('IxIconComponent - MDI Support', () => {
   });
 });
 
-describe('IxIconComponent - Error Handling', () => {
-  let component: IxIconComponent;
-  let fixture: ComponentFixture<IxIconComponent>;
-  let iconRegistry: jest.Mocked<IxIconRegistryService>;
-  let spriteLoader: jest.Mocked<IxSpriteLoaderService>;
+describe('TnIconComponent - Error Handling', () => {
+  let component: TnIconComponent;
+  let fixture: ComponentFixture<TnIconComponent>;
+  let iconRegistry: jest.Mocked<TnIconRegistryService>;
+  let spriteLoader: jest.Mocked<TnSpriteLoaderService>;
 
   beforeEach(async () => {
     const spriteLoaderSpy = {
@@ -120,7 +120,7 @@ describe('IxIconComponent - Error Handling', () => {
       getSafeIconUrl: jest.fn(),
       isSpriteLoaded: jest.fn().mockReturnValue(true),
       getSpriteConfig: jest.fn()
-    } as jest.Mocked<Partial<IxSpriteLoaderService>>;
+    } as jest.Mocked<Partial<TnSpriteLoaderService>>;
 
     const iconRegistrySpy = {
       resolveIcon: jest.fn().mockImplementation((name: string) => {
@@ -138,7 +138,7 @@ describe('IxIconComponent - Error Handling', () => {
         return null;
       }),
       getSpriteLoader: jest.fn().mockReturnValue(spriteLoaderSpy)
-    } as jest.Mocked<Partial<IxIconRegistryService>>;
+    } as jest.Mocked<Partial<TnIconRegistryService>>;
 
     const domSanitizerSpy = {
       bypassSecurityTrustHtml: jest.fn().mockImplementation((html: string) => html),
@@ -146,18 +146,18 @@ describe('IxIconComponent - Error Handling', () => {
     } as unknown as jest.Mocked<DomSanitizer>;
 
     await TestBed.configureTestingModule({
-      imports: [IxIconComponent],
+      imports: [TnIconComponent],
       providers: [
-        { provide: IxIconRegistryService, useValue: iconRegistrySpy },
-        { provide: IxSpriteLoaderService, useValue: spriteLoaderSpy },
+        { provide: TnIconRegistryService, useValue: iconRegistrySpy },
+        { provide: TnSpriteLoaderService, useValue: spriteLoaderSpy },
         { provide: DomSanitizer, useValue: domSanitizerSpy }
       ]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(IxIconComponent);
+    fixture = TestBed.createComponent(TnIconComponent);
     component = fixture.componentInstance;
-    iconRegistry = TestBed.inject(IxIconRegistryService) as jest.Mocked<IxIconRegistryService>;
-    spriteLoader = TestBed.inject(IxSpriteLoaderService) as jest.Mocked<IxSpriteLoaderService>;
+    iconRegistry = TestBed.inject(TnIconRegistryService) as jest.Mocked<TnIconRegistryService>;
+    spriteLoader = TestBed.inject(TnSpriteLoaderService) as jest.Mocked<TnSpriteLoaderService>;
   });
 
   it('should show fallback for unregistered MDI icon', fakeAsync(() => {

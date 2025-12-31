@@ -10,7 +10,7 @@ import { Component, input, viewChild } from '@angular/core';
   `,
   standalone: true
 })
-export class IxStepComponent {
+export class TnStepComponent {
   label = input<string>('');
   icon = input<string | undefined>(undefined);
   optional = input<boolean>(false);

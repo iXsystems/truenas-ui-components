@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxDateInputComponent } from '../lib/date-range-input/date-input.component';
-import { IxDateRangeInputComponent } from '../lib/date-range-input/date-range-input.component';
-import { IxTimeInputComponent } from '../lib/date-range-input/time-input.component';
-import { IxFormFieldComponent } from '../lib/form-field/form-field.component';
+import { TnDateInputComponent } from '../lib/date-range-input/date-input.component';
+import { TnDateRangeInputComponent } from '../lib/date-range-input/date-range-input.component';
+import { TnTimeInputComponent } from '../lib/date-range-input/time-input.component';
+import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
 
 const meta: Meta = {
   title: 'Components/Date Picker',
@@ -21,8 +21,8 @@ export const SingleDate: Story = {
     `,
     moduleMetadata: {
       imports: [
-        IxFormFieldComponent,
-        IxDateInputComponent
+        TnFormFieldComponent,
+        TnDateInputComponent
       ],
     },
   }),
@@ -37,8 +37,8 @@ export const DateRange: Story = {
     `,
     moduleMetadata: {
       imports: [
-        IxFormFieldComponent,
-        IxDateRangeInputComponent
+        TnFormFieldComponent,
+        TnDateRangeInputComponent
       ],
     },
   }),
@@ -71,8 +71,8 @@ export const TimePicker: Story = {
     `,
     moduleMetadata: {
       imports: [
-        IxFormFieldComponent,
-        IxTimeInputComponent
+        TnFormFieldComponent,
+        TnTimeInputComponent
       ],
     },
   }),

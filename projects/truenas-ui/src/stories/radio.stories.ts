@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxRadioComponent } from '../lib/radio/radio.component';
+import { TnRadioComponent } from '../lib/radio/radio.component';
 
-const meta: Meta<IxRadioComponent> = {
+const meta: Meta<TnRadioComponent> = {
   title: 'Components/Radio',
-  component: IxRadioComponent,
+  component: TnRadioComponent,
   tags: ['autodocs'],
   parameters: {
     layout: 'padded',
@@ -63,7 +63,7 @@ The component implements \`ControlValueAccessor\` and works seamlessly with Angu
 };
 
 export default meta;
-type Story = StoryObj<IxRadioComponent>;
+type Story = StoryObj<TnRadioComponent>;
 
 export const Default: Story = {
   args: {

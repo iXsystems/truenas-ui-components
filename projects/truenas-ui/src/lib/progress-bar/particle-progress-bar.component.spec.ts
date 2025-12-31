@@ -1,10 +1,10 @@
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import { IxParticleProgressBarComponent } from './particle-progress-bar.component';
+import { TnParticleProgressBarComponent } from './particle-progress-bar.component';
 
-describe('IxParticleProgressBarComponent', () => {
-  let component: IxParticleProgressBarComponent;
-  let fixture: ComponentFixture<IxParticleProgressBarComponent>;
+describe('TnParticleProgressBarComponent', () => {
+  let component: TnParticleProgressBarComponent;
+  let fixture: ComponentFixture<TnParticleProgressBarComponent>;
   let mockCanvas: Partial<HTMLCanvasElement>;
   let mockContext: Partial<CanvasRenderingContext2D>;
 
@@ -28,10 +28,10 @@ describe('IxParticleProgressBarComponent', () => {
     });
 
     await TestBed.configureTestingModule({
-      imports: [IxParticleProgressBarComponent]
+      imports: [TnParticleProgressBarComponent]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(IxParticleProgressBarComponent);
+    fixture = TestBed.createComponent(TnParticleProgressBarComponent);
     component = fixture.componentInstance;
 
     // Mock the canvas element by overriding the viewChild signal

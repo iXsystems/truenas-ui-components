@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxInputComponent } from '../lib/input/input.component';
-import { IxStepperComponent, IxStepComponent } from '../lib/stepper';
+import { TnInputComponent } from '../lib/input/input.component';
+import { TnStepperComponent, TnStepComponent } from '../lib/stepper';
 
 
-const meta: Meta<IxStepperComponent> = {
+const meta: Meta<TnStepperComponent> = {
   title: 'Components/Stepper',
-  component: IxStepperComponent,
+  component: TnStepperComponent,
   tags: ['autodocs'],
   argTypes: {
     orientation: {
@@ -143,7 +143,7 @@ The stepper component provides programmatic navigation:
 
 \`\`\`typescript
 // Access stepper instance
-stepper = viewChild.required(IxStepperComponent);
+stepper = viewChild.required(TnStepperComponent);
 
 // Navigate to specific step
 stepper().selectStep(2);
@@ -170,7 +170,7 @@ if (stepper().canSelectStep(3)) {
 };
 
 export default meta;
-type Story = StoryObj<IxStepperComponent>;
+type Story = StoryObj<TnStepperComponent>;
 
 export const Default: Story = {
   render: (args) => ({
@@ -225,7 +225,7 @@ export const Default: Story = {
     `,
     props: args,
     moduleMetadata: {
-      imports: [IxStepperComponent, IxStepComponent, IxInputComponent]
+      imports: [TnStepperComponent, TnStepComponent, TnInputComponent]
     }
   }),
   args: {
@@ -273,7 +273,7 @@ export const LinearMode: Story = {
       </ix-stepper>
     `,
     moduleMetadata: {
-      imports: [IxStepperComponent, IxStepComponent, IxInputComponent]
+      imports: [TnStepperComponent, TnStepComponent, TnInputComponent]
     }
   })
 };
@@ -329,7 +329,7 @@ export const StepStates: Story = {
       </ix-stepper>
     `,
     moduleMetadata: {
-      imports: [IxStepperComponent, IxStepComponent, IxInputComponent]
+      imports: [TnStepperComponent, TnStepComponent, TnInputComponent]
     }
   })
 };

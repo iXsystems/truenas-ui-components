@@ -1,14 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxFormFieldComponent } from '../lib/form-field/form-field.component';
-import { IxSliderThumbDirective } from '../lib/slider/slider-thumb.directive';
-import { IxSliderWithLabelDirective } from '../lib/slider/slider-with-label.directive';
+import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
+import { TnSliderThumbDirective } from '../lib/slider/slider-thumb.directive';
+import { TnSliderWithLabelDirective } from '../lib/slider/slider-with-label.directive';
 import type { LabelType } from '../lib/slider/slider.component';
-import { IxSliderComponent } from '../lib/slider/slider.component';
-import { IxTooltipComponent } from '../lib/tooltip/tooltip.component';
+import { TnSliderComponent } from '../lib/slider/slider.component';
+import { TnTooltipComponent } from '../lib/tooltip/tooltip.component';
 
-const meta: Meta<IxSliderComponent> = {
+const meta: Meta<TnSliderComponent> = {
   title: 'Components/Slider',
-  component: IxSliderComponent,
+  component: TnSliderComponent,
   tags: ['autodocs'],
   argTypes: {
     min: {
@@ -63,7 +63,7 @@ Use labelPrefix and labelSuffix to add units or currency symbols to the displaye
 };
 
 export default meta;
-type Story = StoryObj<IxSliderComponent>;
+type Story = StoryObj<TnSliderComponent>;
 
 export const Default: Story = {
   render: (args) => ({
@@ -84,11 +84,11 @@ export const Default: Story = {
     props: args,
     moduleMetadata: {
       imports: [
-        IxFormFieldComponent,
-        IxSliderComponent,
-        IxSliderThumbDirective,
-        IxSliderWithLabelDirective,
-        IxTooltipComponent
+        TnFormFieldComponent,
+        TnSliderComponent,
+        TnSliderThumbDirective,
+        TnSliderWithLabelDirective,
+        TnTooltipComponent
       ],
     },
   }),

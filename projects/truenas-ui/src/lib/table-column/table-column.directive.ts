@@ -4,7 +4,7 @@ import { Directive, TemplateRef, input, contentChild, inject } from '@angular/co
   selector: '[ixHeaderCellDef]',
   standalone: true
 })
-export class IxHeaderCellDefDirective {
+export class TnHeaderCellDefDirective {
   template = inject(TemplateRef<unknown>);
 }
 
@@ -12,7 +12,7 @@ export class IxHeaderCellDefDirective {
   selector: '[ixCellDef]',
   standalone: true
 })
-export class IxCellDefDirective {
+export class TnCellDefDirective {
   template = inject(TemplateRef<unknown>);
 }
 
@@ -21,10 +21,10 @@ export class IxCellDefDirective {
   standalone: true,
   exportAs: 'ixColumnDef'
 })
-export class IxTableColumnDirective {
+export class TnTableColumnDirective {
   name = input.required<string>({ alias: 'ixColumnDef' });
 
-  headerTemplate = contentChild(IxHeaderCellDefDirective, { read: TemplateRef });
+  headerTemplate = contentChild(TnHeaderCellDefDirective, { read: TemplateRef });
 
-  cellTemplate = contentChild(IxCellDefDirective, { read: TemplateRef });
+  cellTemplate = contentChild(TnCellDefDirective, { read: TemplateRef });
 }

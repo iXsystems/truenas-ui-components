@@ -3,7 +3,7 @@ import type { ElementRef, AfterViewInit} from '@angular/core';
 import { ChangeDetectorRef} from '@angular/core';
 import { Component, input, computed, effect, ChangeDetectionStrategy, ViewEncapsulation, inject, viewChild } from '@angular/core';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
-import { IxIconRegistryService } from './icon-registry.service';
+import { TnIconRegistryService } from './icon-registry.service';
 
 export type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 export type IconSource = 'svg' | 'css' | 'unicode' | 'text' | 'sprite';
@@ -24,7 +24,7 @@ export interface IconResult {
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None
 })
-export class IxIconComponent implements AfterViewInit {
+export class TnIconComponent implements AfterViewInit {
   name = input<string>('');
   size = input<IconSize>('md');
   color = input<string | undefined>(undefined);
@@ -36,7 +36,7 @@ export class IxIconComponent implements AfterViewInit {
 
   iconResult: IconResult = { source: 'text', content: '?' };
 
-  private iconRegistry = inject(IxIconRegistryService);
+  private iconRegistry = inject(TnIconRegistryService);
   private cdr = inject(ChangeDetectorRef);
   private sanitizer = inject(DomSanitizer);
 
@@ -125,8 +125,8 @@ export class IxIconComponent implements AfterViewInit {
     let registryResult = this.iconRegistry.resolveIcon(effectiveIconName, iconOptions);
 
     // Fallback to global registry for Storybook/demos (when DI doesn't work)
-    if (!registryResult && typeof window !== 'undefined' && (window as { __storybookIconRegistry?: IxIconRegistryService }).__storybookIconRegistry) {
-      const globalRegistry = (window as unknown as { __storybookIconRegistry: IxIconRegistryService }).__storybookIconRegistry;
+    if (!registryResult && typeof window !== 'undefined' && (window as { __storybookIconRegistry?: TnIconRegistryService }).__storybookIconRegistry) {
+      const globalRegistry = (window as unknown as { __storybookIconRegistry: TnIconRegistryService }).__storybookIconRegistry;
       if (globalRegistry) {
         registryResult = globalRegistry.resolveIcon(effectiveIconName, iconOptions);
       }

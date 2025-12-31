@@ -1,12 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxFormFieldComponent } from '../lib/form-field/form-field.component';
-import { IxSlideToggleComponent } from '../lib/slide-toggle/slide-toggle.component';
+import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
+import { TnSlideToggleComponent } from '../lib/slide-toggle/slide-toggle.component';
 
-const meta: Meta<IxSlideToggleComponent> = {
+const meta: Meta<TnSlideToggleComponent> = {
   title: 'Components/Slide Toggle',
-  component: IxSlideToggleComponent,
+  component: TnSlideToggleComponent,
   tags: ['autodocs'],
   parameters: {
     layout: 'padded',
@@ -75,7 +75,7 @@ The slide toggle can be used standalone or integrated with reactive forms. It su
 };
 
 export default meta;
-type Story = StoryObj<IxSlideToggleComponent>;
+type Story = StoryObj<TnSlideToggleComponent>;
 
 export const Default: Story = {
   args: {
@@ -224,7 +224,7 @@ export const WithFormField: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent],
+      imports: [TnFormFieldComponent],
     },
   }),
   args: {
@@ -308,7 +308,7 @@ export const ReactiveForm: Story = {
       </div>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent, ReactiveFormsModule, CommonModule],
+      imports: [TnFormFieldComponent, ReactiveFormsModule, CommonModule],
     },
   }),
   args: {},

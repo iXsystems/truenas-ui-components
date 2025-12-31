@@ -14,12 +14,12 @@ import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => IxCheckboxComponent),
+      useExisting: forwardRef(() => TnCheckboxComponent),
       multi: true
     }
   ]
 })
-export class IxCheckboxComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
+export class TnCheckboxComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
   checkboxEl = viewChild.required<ElementRef<HTMLInputElement>>('checkboxEl');
 
   label = input<string>('Checkbox');

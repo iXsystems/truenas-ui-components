@@ -7,17 +7,17 @@ import {
   ElementRef,
   inject
 } from '@angular/core';
-import { IxSliderComponent } from './slider.component';
+import { TnSliderComponent } from './slider.component';
 
 @Directive({
   selector: 'ix-slider[ixSliderWithLabel]',
   standalone: true
 })
-export class IxSliderWithLabelDirective implements OnInit, OnDestroy {
+export class TnSliderWithLabelDirective implements OnInit, OnDestroy {
   enabled = input<boolean | string>(true, { alias: 'ixSliderWithLabel' });
 
   private _elementRef = inject(ElementRef<HTMLElement>);
-  private _slider = inject(IxSliderComponent, { host: true });
+  private _slider = inject(TnSliderComponent, { host: true });
 
   ngOnInit() {
     const enabled = this.enabled();

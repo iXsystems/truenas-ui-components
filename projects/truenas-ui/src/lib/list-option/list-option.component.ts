@@ -2,12 +2,12 @@ import { CommonModule } from '@angular/common';
 import type { AfterContentInit} from '@angular/core';
 import { ElementRef, ChangeDetectorRef, inject } from '@angular/core';
 import { Component, input, output, computed, signal, HostListener } from '@angular/core';
-import { IxCheckboxComponent } from '../checkbox/checkbox.component';
+import { TnCheckboxComponent } from '../checkbox/checkbox.component';
 
 @Component({
   selector: 'ix-list-option',
   standalone: true,
-  imports: [CommonModule, IxCheckboxComponent],
+  imports: [CommonModule, TnCheckboxComponent],
   templateUrl: './list-option.component.html',
   styleUrl: './list-option.component.scss',
   host: {
@@ -19,7 +19,7 @@ import { IxCheckboxComponent } from '../checkbox/checkbox.component';
     '[attr.aria-disabled]': 'effectiveDisabled()'
   }
 })
-export class IxListOptionComponent implements AfterContentInit {
+export class TnListOptionComponent implements AfterContentInit {
   cdr = inject(ChangeDetectorRef);
   elementRef = inject(ElementRef);
 

@@ -14,7 +14,7 @@ import { Component, input } from '@angular/core';
     'role': 'list'
   }
 })
-export class IxListComponent {
+export class TnListComponent {
   dense = input<boolean>(false);
   disabled = input<boolean>(false);
 }

@@ -5,9 +5,9 @@ import type { TemplateRef } from '@angular/core';
 import { Injectable, inject } from '@angular/core';
 import type { Observable } from 'rxjs';
 
-export type IxDialogOpenTarget<C> = ComponentType<C> | TemplateRef<unknown>;
+export type TnDialogOpenTarget<C> = ComponentType<C> | TemplateRef<unknown>;
 
-export interface IxDialogDefaults {
+export interface TnDialogDefaults {
   panelClass?: string | string[];
   maxWidth?: string;
   maxHeight?: string;
@@ -18,7 +18,7 @@ export interface IxDialogDefaults {
   fullscreen?: boolean;
 }
 
-const defaults: IxDialogDefaults = {
+const defaults: TnDialogDefaults = {
   panelClass: ['ix-dialog-panel'],
   maxWidth: '90vw',
   maxHeight: '90vh',
@@ -26,7 +26,7 @@ const defaults: IxDialogDefaults = {
 };
 
 @Injectable({ providedIn: 'root' })
-export class IxDialog {
+export class TnDialog {
   private dialog = inject(Dialog);
 
   /**
@@ -92,7 +92,7 @@ export class IxDialog {
     // Import the confirm dialog component dynamically to avoid circular dependencies
     return import('./confirm-dialog.component').then(m => {
       const dialogRef = this.open(
-        m.IxConfirmDialogComponent,
+        m.TnConfirmDialogComponent,
         {
           data: opts,
           role: 'alertdialog',

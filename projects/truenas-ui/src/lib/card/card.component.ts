@@ -2,29 +2,29 @@ import { CommonModule } from '@angular/common';
 import { Component, input, computed, inject } from '@angular/core';
 import { mdiDotsVertical } from '@mdi/js';
 import type {
-  IxCardAction,
-  IxCardControl,
-  IxCardHeaderStatus,
-  IxCardFooterLink
+  TnCardAction,
+  TnCardControl,
+  TnCardHeaderStatus,
+  TnCardFooterLink
 } from './card.interfaces';
-import { IxButtonComponent } from '../button/button.component';
-import { IxIconRegistryService } from '../icon/icon-registry.service';
-import { IxIconComponent } from '../icon/icon.component';
-import { IxIconButtonComponent } from '../icon-button/icon-button.component';
-import { IxMenuTriggerDirective } from '../menu/menu-trigger.directive';
-import type { IxMenuItem } from '../menu/menu.component';
-import { IxMenuComponent } from '../menu/menu.component';
-import { IxSlideToggleComponent } from '../slide-toggle/slide-toggle.component';
+import { TnButtonComponent } from '../button/button.component';
+import { TnIconRegistryService } from '../icon/icon-registry.service';
+import { TnIconComponent } from '../icon/icon.component';
+import { TnIconButtonComponent } from '../icon-button/icon-button.component';
+import { TnMenuTriggerDirective } from '../menu/menu-trigger.directive';
+import type { TnMenuItem } from '../menu/menu.component';
+import { TnMenuComponent } from '../menu/menu.component';
+import { TnSlideToggleComponent } from '../slide-toggle/slide-toggle.component';
 
 @Component({
   selector: 'ix-card',
   standalone: true,
-  imports: [CommonModule, IxButtonComponent, IxIconComponent, IxIconButtonComponent, IxSlideToggleComponent, IxMenuComponent, IxMenuTriggerDirective],
+  imports: [CommonModule, TnButtonComponent, TnIconComponent, TnIconButtonComponent, TnSlideToggleComponent, TnMenuComponent, TnMenuTriggerDirective],
   templateUrl: './card.component.html',
   styleUrls: ['./card.component.scss'],
 })
-export class IxCardComponent {
-  private iconRegistry = inject(IxIconRegistryService);
+export class TnCardComponent {
+  private iconRegistry = inject(TnIconRegistryService);
 
   constructor() {
     // Register MDI icons used by this component
@@ -40,14 +40,14 @@ export class IxCardComponent {
   background = input<boolean>(true);
 
   // Header elements (top-right) - Always render in header
-  headerStatus = input<IxCardHeaderStatus | undefined>(undefined);
-  headerControl = input<IxCardControl | undefined>(undefined); // Slide toggle - ALWAYS in header
-  headerMenu = input<IxMenuItem[] | undefined>(undefined);
+  headerStatus = input<TnCardHeaderStatus | undefined>(undefined);
+  headerControl = input<TnCardControl | undefined>(undefined); // Slide toggle - ALWAYS in header
+  headerMenu = input<TnMenuItem[] | undefined>(undefined);
 
   // Footer elements (bottom-right) - Always render in footer
-  primaryAction = input<IxCardAction | undefined>(undefined);
-  secondaryAction = input<IxCardAction | undefined>(undefined);
-  footerLink = input<IxCardFooterLink | undefined>(undefined);
+  primaryAction = input<TnCardAction | undefined>(undefined);
+  secondaryAction = input<TnCardAction | undefined>(undefined);
+  footerLink = input<TnCardFooterLink | undefined>(undefined);
 
   /**
    * Register MDI icon library with all icons used by the card component
@@ -103,8 +103,8 @@ export class IxCardComponent {
     }
   }
 
-  onHeaderMenuItemClick(_item: IxMenuItem): void {
-    // Handler is called automatically via IxMenuItem.action
+  onHeaderMenuItemClick(_item: TnMenuItem): void {
+    // Handler is called automatically via TnMenuItem.action
   }
 
   getStatusClass(type?: string): string {

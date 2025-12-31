@@ -3,11 +3,11 @@ import { CommonModule } from '@angular/common';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
 import { iconMarker } from '../lib/icon/icon-marker';
-import { IxIconComponent } from '../lib/icon/icon.component';
-import { IxNestedTreeNodeComponent } from '../lib/tree/nested-tree-node.component';
-import { IxTreeNodeOutletDirective } from '../lib/tree/tree-node-outlet.directive';
-import { IxTreeNodeComponent } from '../lib/tree/tree-node.component';
-import { IxTreeComponent, FlatTreeControl, IxTreeFlatDataSource, IxTreeFlattener, ArrayDataSource } from '../lib/tree/tree.component';
+import { TnIconComponent } from '../lib/icon/icon.component';
+import { TnNestedTreeNodeComponent } from '../lib/tree/nested-tree-node.component';
+import { TnTreeNodeOutletDirective } from '../lib/tree/tree-node-outlet.directive';
+import { TnTreeNodeComponent } from '../lib/tree/tree-node.component';
+import { TnTreeComponent, FlatTreeControl, TnTreeFlatDataSource, IxTreeFlattener, ArrayDataSource } from '../lib/tree/tree.component';
 
 // Ensure these icons are included in the library sprite
 // Using the new two-parameter API
@@ -32,19 +32,19 @@ interface FileFlatNode {
   level: number;
 }
 
-const meta: Meta<IxTreeComponent<FileNode, FileFlatNode>> = {
+const meta: Meta<TnTreeComponent<FileNode, FileFlatNode>> = {
   title: 'Components/Tree',
-  component: IxTreeComponent,
+  component: TnTreeComponent,
   decorators: [
     moduleMetadata({
       imports: [
         CommonModule,
         CdkTreeModule,
-        IxTreeComponent,
-        IxTreeNodeComponent,
-        IxNestedTreeNodeComponent,
-        IxTreeNodeOutletDirective,
-        IxIconComponent
+        TnTreeComponent,
+        TnTreeNodeComponent,
+        TnNestedTreeNodeComponent,
+        TnTreeNodeOutletDirective,
+        TnIconComponent
       ],
     }),
   ],
@@ -59,7 +59,7 @@ const meta: Meta<IxTreeComponent<FileNode, FileFlatNode>> = {
 };
 
 export default meta;
-type Story = StoryObj<IxTreeComponent<FileNode, FileFlatNode>>;
+type Story = StoryObj<TnTreeComponent<FileNode, FileFlatNode>>;
 
 // Sample tree data
 const TREE_DATA: FileNode[] = [
@@ -136,7 +136,7 @@ export const FlatTree: Story = {
       },
 
       get dataSource() {
-        const dataSource = new IxTreeFlatDataSource(this['treeControl'], this['treeFlattener']);
+        const dataSource = new TnTreeFlatDataSource(this['treeControl'], this['treeFlattener']);
         dataSource.data = TREE_DATA;
         return dataSource;
       }
@@ -239,7 +239,7 @@ export const TrueNASStorageTree: Story = {
       },
 
       get dataSource() {
-        const dataSource = new IxTreeFlatDataSource(this['treeControl'], this['treeFlattener']);
+        const dataSource = new TnTreeFlatDataSource(this['treeControl'], this['treeFlattener']);
         dataSource.data = this['truenasData'];
         return dataSource;
       }

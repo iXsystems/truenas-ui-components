@@ -21,7 +21,7 @@ import {
   ViewContainerRef,
   inject
 } from '@angular/core';
-import { IxTooltipComponent } from './tooltip.component';
+import { TnTooltipComponent } from './tooltip.component';
 
 export type TooltipPosition = 'above' | 'below' | 'left' | 'right' | 'before' | 'after';
 
@@ -32,7 +32,7 @@ export type TooltipPosition = 'above' | 'below' | 'left' | 'right' | 'before' | 
     '[attr.aria-describedby]': '_ariaDescribedBy',
   }
 })
-export class IxTooltipDirective implements OnInit, OnDestroy {
+export class TnTooltipDirective implements OnInit, OnDestroy {
   message = input<string>('', { alias: 'ixTooltip' });
   position = input<TooltipPosition>('above', { alias: 'ixTooltipPosition' });
   disabled = input<boolean>(false, { alias: 'ixTooltipDisabled' });
@@ -41,7 +41,7 @@ export class IxTooltipDirective implements OnInit, OnDestroy {
   tooltipClass = input<string>('', { alias: 'ixTooltipClass' });
 
   private _overlayRef: OverlayRef | null = null;
-  private _tooltipInstance: ComponentRef<IxTooltipComponent> | null = null;
+  private _tooltipInstance: ComponentRef<TnTooltipComponent> | null = null;
   private _showTimeout: ReturnType<typeof setTimeout> | null = null;
   private _hideTimeout: ReturnType<typeof setTimeout> | null = null;
   private _isTooltipVisible = false;
@@ -156,7 +156,7 @@ export class IxTooltipDirective implements OnInit, OnDestroy {
     }
 
     if (!this._tooltipInstance) {
-      const portal = new ComponentPortal(IxTooltipComponent, this._viewContainerRef);
+      const portal = new ComponentPortal(TnTooltipComponent, this._viewContainerRef);
       this._tooltipInstance = this._overlayRef.attach(portal);
       this._tooltipInstance.setInput('message', this.message());
       this._tooltipInstance.setInput('id', this._ariaDescribedBy!);

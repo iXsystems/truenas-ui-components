@@ -1,15 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
-import { IxTabComponent } from '../lib/tab/tab.component';
-import { IxTabPanelComponent } from '../lib/tab-panel/tab-panel.component';
-import { IxTabsComponent } from '../lib/tabs/tabs.component';
+import { TnTabComponent } from '../lib/tab/tab.component';
+import { TnTabPanelComponent } from '../lib/tab-panel/tab-panel.component';
+import { TnTabsComponent } from '../lib/tabs/tabs.component';
 
-const meta: Meta<IxTabsComponent> = {
+const meta: Meta<TnTabsComponent> = {
   title: 'Components/Tabs',
-  component: IxTabsComponent,
+  component: TnTabsComponent,
   decorators: [
     moduleMetadata({
-      imports: [IxTabsComponent, IxTabComponent, IxTabPanelComponent]
+      imports: [TnTabsComponent, TnTabComponent, TnTabPanelComponent]
     })
   ],
   parameters: {
@@ -48,7 +48,7 @@ const meta: Meta<IxTabsComponent> = {
 };
 
 export default meta;
-type Story = StoryObj<IxTabsComponent>;
+type Story = StoryObj<TnTabsComponent>;
 
 export const Default: Story = {
   args: {

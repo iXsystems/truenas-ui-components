@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxButtonComponent } from '../lib/button/button.component';
-import { IxTooltipComponent } from '../lib/tooltip/tooltip.component';
+import { TnButtonComponent } from '../lib/button/button.component';
+import { TnTooltipComponent } from '../lib/tooltip/tooltip.component';
 import type { TooltipPosition } from '../lib/tooltip/tooltip.directive';
-import { IxTooltipDirective } from '../lib/tooltip/tooltip.directive';
+import { TnTooltipDirective } from '../lib/tooltip/tooltip.directive';
 
 const meta: Meta = {
   title: 'Components/Tooltip',
@@ -52,9 +52,9 @@ export const Default: Story = {
     props: args,
     moduleMetadata: {
       imports: [
-        IxButtonComponent,
-        IxTooltipDirective,
-        IxTooltipComponent
+        TnButtonComponent,
+        TnTooltipDirective,
+        TnTooltipComponent
       ],
     },
   }),
@@ -90,9 +90,9 @@ export const Positions: Story = {
     `,
     moduleMetadata: {
       imports: [
-        IxButtonComponent,
-        IxTooltipDirective,
-        IxTooltipComponent
+        TnButtonComponent,
+        TnTooltipDirective,
+        TnTooltipComponent
       ],
     },
   }),
@@ -124,9 +124,9 @@ export const WithDelays: Story = {
     `,
     moduleMetadata: {
       imports: [
-        IxButtonComponent,
-        IxTooltipDirective,
-        IxTooltipComponent
+        TnButtonComponent,
+        TnTooltipDirective,
+        TnTooltipComponent
       ],
     },
   }),
@@ -155,9 +155,9 @@ export const LongContent: Story = {
     `,
     moduleMetadata: {
       imports: [
-        IxButtonComponent,
-        IxTooltipDirective,
-        IxTooltipComponent
+        TnButtonComponent,
+        TnTooltipDirective,
+        TnTooltipComponent
       ],
     },
   }),
@@ -193,9 +193,9 @@ export const OnDifferentElements: Story = {
     `,
     moduleMetadata: {
       imports: [
-        IxButtonComponent,
-        IxTooltipDirective,
-        IxTooltipComponent
+        TnButtonComponent,
+        TnTooltipDirective,
+        TnTooltipComponent
       ],
     },
   }),
@@ -231,9 +231,9 @@ export const MultiLine: Story = {
     },
     moduleMetadata: {
       imports: [
-        IxButtonComponent,
-        IxTooltipDirective,
-        IxTooltipComponent
+        TnButtonComponent,
+        TnTooltipDirective,
+        TnTooltipComponent
       ],
     },
   }),

@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
 import type { IconLibrary } from './icon-registry.service';
-import { IxIconRegistryService } from './icon-registry.service';
-import { IxSpriteLoaderService, type SpriteConfig } from './sprite-loader.service';
+import { TnIconRegistryService } from './icon-registry.service';
+import { TnSpriteLoaderService, type SpriteConfig } from './sprite-loader.service';
 
-describe('IxIconRegistryService', () => {
-  let service: IxIconRegistryService;
+describe('TnIconRegistryService', () => {
+  let service: TnIconRegistryService;
   let mockSanitizer: jest.Mocked<DomSanitizer>;
-  let mockSpriteLoader: Partial<jest.Mocked<IxSpriteLoaderService>>;
+  let mockSpriteLoader: Partial<jest.Mocked<TnSpriteLoaderService>>;
 
   beforeEach(() => {
     mockSanitizer = {
@@ -29,13 +29,13 @@ describe('IxIconRegistryService', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        IxIconRegistryService,
+        TnIconRegistryService,
         { provide: DomSanitizer, useValue: mockSanitizer },
-        { provide: IxSpriteLoaderService, useValue: mockSpriteLoader }
+        { provide: TnSpriteLoaderService, useValue: mockSpriteLoader }
       ]
     });
 
-    service = TestBed.inject(IxIconRegistryService);
+    service = TestBed.inject(TnIconRegistryService);
   });
 
   it('should be created', () => {

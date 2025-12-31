@@ -1,18 +1,18 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxButtonToggleGroupComponent } from '../lib/button-toggle/button-toggle-group.component';
-import { IxButtonToggleComponent } from '../lib/button-toggle/button-toggle.component';
-import { IxFormFieldComponent } from '../lib/form-field/form-field.component';
+import { TnButtonToggleGroupComponent } from '../lib/button-toggle/button-toggle-group.component';
+import { TnButtonToggleComponent } from '../lib/button-toggle/button-toggle.component';
+import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
 
 @Component({
   selector: 'button-toggle-demo',
   templateUrl: './button-toggle-demo.component.html',
   standalone: true,
   imports: [
-    IxButtonToggleComponent,
-    IxButtonToggleGroupComponent,
-    IxFormFieldComponent,
+    TnButtonToggleComponent,
+    TnButtonToggleGroupComponent,
+    TnFormFieldComponent,
     FormsModule
   ]
 })
@@ -22,9 +22,9 @@ class ButtonToggleDemoComponent {
   featureEnabled: boolean = false;
 }
 
-const meta: Meta<IxButtonToggleComponent> = {
+const meta: Meta<TnButtonToggleComponent> = {
   title: 'Components/Button Toggle',
-  component: IxButtonToggleComponent,
+  component: TnButtonToggleComponent,
   tags: ['autodocs'],
   argTypes: {
     value: {
@@ -91,7 +91,7 @@ The IX Button Toggle component provides toggleable button functionality similar 
 };
 
 export default meta;
-type Story = StoryObj<IxButtonToggleComponent>;
+type Story = StoryObj<TnButtonToggleComponent>;
 
 export const Examples: Story = {
   render: () => ({
@@ -99,9 +99,9 @@ export const Examples: Story = {
     moduleMetadata: {
       imports: [
         ButtonToggleDemoComponent,
-        IxButtonToggleComponent,
-        IxButtonToggleGroupComponent,
-        IxFormFieldComponent,
+        TnButtonToggleComponent,
+        TnButtonToggleGroupComponent,
+        TnFormFieldComponent,
         FormsModule
       ]
     }
@@ -123,8 +123,8 @@ export const Playground: Story = {
     props: args,
     moduleMetadata: {
       imports: [
-        IxButtonToggleComponent,
-        IxFormFieldComponent
+        TnButtonToggleComponent,
+        TnFormFieldComponent
       ]
     }
   }),

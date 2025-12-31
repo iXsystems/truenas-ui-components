@@ -10,7 +10,7 @@ import { Component, input, output, ElementRef, inject, contentChild, computed, s
   templateUrl: './tab.component.html',
   styleUrl: './tab.component.scss'
 })
-export class IxTabComponent implements AfterContentInit {
+export class TnTabComponent implements AfterContentInit {
   label = input<string>('');
   disabled = input<boolean>(false);
   icon = input<string | undefined>(undefined);
@@ -21,7 +21,7 @@ export class IxTabComponent implements AfterContentInit {
 
   iconContent = contentChild<TemplateRef<unknown>>('iconContent');
 
-  // Internal properties set by parent IxTabsComponent (public signals for parent control)
+  // Internal properties set by parent TnTabsComponent (public signals for parent control)
   index = signal<number>(0);
   isActive = signal<boolean>(false);
   tabsComponent?: { onKeydown: (event: KeyboardEvent, index: number) => void }; // Will be set by parent

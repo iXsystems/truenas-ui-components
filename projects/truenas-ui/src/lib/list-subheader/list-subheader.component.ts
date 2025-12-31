@@ -14,6 +14,6 @@ import { Component, input } from '@angular/core';
     'aria-level': '3'
   }
 })
-export class IxListSubheaderComponent {
+export class TnListSubheaderComponent {
   inset = input<boolean>(false);
 }

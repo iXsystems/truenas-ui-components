@@ -2,18 +2,18 @@ import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
 import { CommonModule } from '@angular/common';
 import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
 import { Component, input, output, computed, viewChild, inject } from '@angular/core';
-import { IxIconComponent } from '../icon/icon.component';
+import { TnIconComponent } from '../icon/icon.component';
 
 export type ChipColor = 'primary' | 'secondary' | 'accent';
 
 @Component({
   selector: 'ix-chip',
   standalone: true,
-  imports: [CommonModule, A11yModule, IxIconComponent],
+  imports: [CommonModule, A11yModule, TnIconComponent],
   templateUrl: './chip.component.html',
   styleUrls: ['./chip.component.scss'],
 })
-export class IxChipComponent implements AfterViewInit, OnDestroy {
+export class TnChipComponent implements AfterViewInit, OnDestroy {
   chipEl = viewChild.required<ElementRef<HTMLElement>>('chipEl');
 
   label = input<string>('Chip');

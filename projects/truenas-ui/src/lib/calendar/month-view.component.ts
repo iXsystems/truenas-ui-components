@@ -23,7 +23,7 @@ export interface CalendarCell {
   templateUrl: './month-view.component.html',
   styleUrls: ['./month-view.component.scss']
 })
-export class IxMonthViewComponent {
+export class TnMonthViewComponent {
   activeDate = input<Date>(new Date());
   selected = input<Date | null | undefined>(undefined);
   minDate = input<Date | undefined>(undefined);

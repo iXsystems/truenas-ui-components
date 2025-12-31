@@ -2,17 +2,17 @@ import { CommonModule } from '@angular/common';
 import { Component, input, signal, forwardRef, computed } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR, FormsModule } from '@angular/forms';
-import type { IxSelectOption } from '../select/select.component';
-import { IxSelectComponent } from '../select/select.component';
+import type { TnSelectOption } from '../select/select.component';
+import { TnSelectComponent } from '../select/select.component';
 
 @Component({
   selector: 'ix-time-input',
   standalone: true,
-  imports: [CommonModule, FormsModule, IxSelectComponent],
+  imports: [CommonModule, FormsModule, TnSelectComponent],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => IxTimeInputComponent),
+      useExisting: forwardRef(() => TnTimeInputComponent),
       multi: true
     }
   ],
@@ -22,7 +22,7 @@ import { IxSelectComponent } from '../select/select.component';
     'class': 'ix-time-input'
   }
 })
-export class IxTimeInputComponent implements ControlValueAccessor {
+export class TnTimeInputComponent implements ControlValueAccessor {
   disabled = input<boolean>(false);
   format = input<'12h' | '24h'>('12h');
   granularity = input<'15m' | '30m' | '1h'>('15m');
@@ -47,8 +47,8 @@ export class IxTimeInputComponent implements ControlValueAccessor {
   _value: string | null = null;
   
   // Generate time options for ix-select
-  timeSelectOptions = computed((): IxSelectOption<string>[] => {
-    const options: IxSelectOption<string>[] = [];
+  timeSelectOptions = computed((): TnSelectOption<string>[] => {
+    const options: TnSelectOption<string>[] = [];
     const totalMinutes = 24 * 60; // Total minutes in a day
 
     for (let minutes = 0; minutes < totalMinutes; minutes += this.step()) {

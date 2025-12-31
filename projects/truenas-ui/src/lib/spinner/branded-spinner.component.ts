@@ -14,7 +14,7 @@ import { ElementRef, Component, input, ViewEncapsulation, ChangeDetectionStrateg
     '[attr.aria-label]': 'ariaLabel() || "Loading..."'
   }
 })
-export class IxBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewInit {
+export class TnBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewInit {
   ariaLabel = input<string | null>(null);
 
   private paths: SVGPathElement[] = [];

@@ -1,18 +1,18 @@
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { IxExpansionPanelComponent } from './expansion-panel.component';
+import { TnExpansionPanelComponent } from './expansion-panel.component';
 
-describe('IxExpansionPanelComponent', () => {
-  let component: IxExpansionPanelComponent;
-  let fixture: ComponentFixture<IxExpansionPanelComponent>;
+describe('TnExpansionPanelComponent', () => {
+  let component: TnExpansionPanelComponent;
+  let fixture: ComponentFixture<TnExpansionPanelComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IxExpansionPanelComponent, NoopAnimationsModule]
+      imports: [TnExpansionPanelComponent, NoopAnimationsModule]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(IxExpansionPanelComponent);
+    fixture = TestBed.createComponent(TnExpansionPanelComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

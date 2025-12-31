@@ -3,26 +3,26 @@ import { LEFT_ARROW, RIGHT_ARROW, UP_ARROW, DOWN_ARROW, HOME, END, ENTER, SPACE 
 import { CommonModule } from '@angular/common';
 import type { AfterContentInit, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { Component, contentChildren, input, output, ChangeDetectionStrategy, inject, ChangeDetectorRef, viewChild, signal, computed, effect } from '@angular/core';
-import { IxTabComponent } from '../tab/tab.component';
-import { IxTabPanelComponent } from '../tab-panel/tab-panel.component';
+import { TnTabComponent } from '../tab/tab.component';
+import { TnTabPanelComponent } from '../tab-panel/tab-panel.component';
 
 export interface TabChangeEvent {
   index: number;
-  tab: IxTabComponent;
+  tab: TnTabComponent;
   previousIndex: number;
 }
 
 @Component({
   selector: 'ix-tabs',
   standalone: true,
-  imports: [CommonModule, A11yModule, IxTabComponent, IxTabPanelComponent],
+  imports: [CommonModule, A11yModule, TnTabComponent, TnTabPanelComponent],
   templateUrl: './tabs.component.html',
   styleUrl: './tabs.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class IxTabsComponent implements AfterContentInit, AfterViewInit, OnDestroy {
-  tabs = contentChildren(IxTabComponent);
-  panels = contentChildren(IxTabPanelComponent);
+export class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDestroy {
+  tabs = contentChildren(TnTabComponent);
+  panels = contentChildren(TnTabPanelComponent);
   tabHeader = viewChild.required<ElementRef<HTMLElement>>('tabHeader');
 
   selectedIndex = input<number>(0);

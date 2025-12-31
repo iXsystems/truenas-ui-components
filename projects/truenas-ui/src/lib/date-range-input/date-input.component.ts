@@ -10,17 +10,17 @@ import { Component, input, forwardRef, signal, computed, viewChild, inject } fro
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { IxCalendarComponent } from '../calendar/calendar.component';
-import { IxInputDirective } from '../input/input.directive';
+import { TnCalendarComponent } from '../calendar/calendar.component';
+import { TnInputDirective } from '../input/input.directive';
 
 @Component({
   selector: 'ix-date-input',
   standalone: true,
-  imports: [CommonModule, IxInputDirective, IxCalendarComponent, OverlayModule, PortalModule, A11yModule],
+  imports: [CommonModule, TnInputDirective, TnCalendarComponent, OverlayModule, PortalModule, A11yModule],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => IxDateInputComponent),
+      useExisting: forwardRef(() => TnDateInputComponent),
       multi: true
     }
   ],
@@ -30,7 +30,7 @@ import { IxInputDirective } from '../input/input.directive';
     'class': 'ix-date-input'
   }
 })
-export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDestroy {
+export class TnDateInputComponent implements ControlValueAccessor, OnInit, OnDestroy {
   overlay = inject(Overlay);
   viewContainerRef = inject(ViewContainerRef);
 
@@ -47,7 +47,7 @@ export class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDes
   dayRef = viewChild.required<ElementRef<HTMLInputElement>>('dayInput');
   yearRef = viewChild.required<ElementRef<HTMLInputElement>>('yearInput');
   calendarTemplate = viewChild.required<TemplateRef<unknown>>('calendarTemplate');
-  calendar = viewChild.required<IxCalendarComponent>(IxCalendarComponent);
+  calendar = viewChild.required<TnCalendarComponent>(TnCalendarComponent);
   wrapperEl = viewChild.required<ElementRef<HTMLDivElement>>('wrapper');
 
   private destroy$ = new Subject<void>();

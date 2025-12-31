@@ -9,7 +9,7 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => IxSliderThumbDirective),
+      useExisting: forwardRef(() => TnSliderThumbDirective),
       multi: true
     }
   ],
@@ -28,7 +28,7 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
     '(touchstart)': 'onTouchStart($event)'
   }
 })
-export class IxSliderThumbDirective implements ControlValueAccessor, OnInit, OnDestroy {
+export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnDestroy {
   disabled = signal<boolean>(false);
 
   slider?: {

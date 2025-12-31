@@ -4,7 +4,7 @@ import type { ElementRef, OnDestroy, AfterViewInit} from '@angular/core';
 import { Component, contentChild, input, forwardRef, signal, computed, viewChild, effect } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { IxSliderThumbDirective } from './slider-thumb.directive';
+import { TnSliderThumbDirective } from './slider-thumb.directive';
 
 export type LabelType = 'none' | 'handle' | 'track' | 'both';
 
@@ -15,7 +15,7 @@ export type LabelType = 'none' | 'handle' | 'track' | 'both';
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => IxSliderComponent),
+      useExisting: forwardRef(() => TnSliderComponent),
       multi: true
     }
   ],
@@ -26,7 +26,7 @@ export type LabelType = 'none' | 'handle' | 'track' | 'both';
     '[attr.aria-disabled]': 'isDisabled()'
   }
 })
-export class IxSliderComponent implements ControlValueAccessor, OnDestroy, AfterViewInit {
+export class TnSliderComponent implements ControlValueAccessor, OnDestroy, AfterViewInit {
   min = input<number>(0);
   max = input<number>(100);
   step = input<number>(1);
@@ -35,7 +35,7 @@ export class IxSliderComponent implements ControlValueAccessor, OnDestroy, After
   labelSuffix = input<string>('');
   labelType = input<LabelType>('none');
 
-  thumbDirective = contentChild.required(IxSliderThumbDirective);
+  thumbDirective = contentChild.required(TnSliderThumbDirective);
   sliderContainer = viewChild.required<ElementRef<HTMLDivElement>>('sliderContainer');
   thumbVisual = viewChild.required<ElementRef<HTMLDivElement>>('thumbVisual');
 

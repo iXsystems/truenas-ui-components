@@ -12,7 +12,7 @@ export { FlatTreeControl } from '@angular/cdk/tree';
 export { ArrayDataSource } from '@angular/cdk/collections';
 
 /** Flat node with expandable and level information */
-export interface IxFlatTreeNode<T = unknown> {
+export interface TnFlatTreeNode<T = unknown> {
   data: T;
   expandable: boolean;
   level: number;
@@ -51,7 +51,7 @@ export class IxTreeFlattener<T, F> {
 /**
  * Data source for flat tree.
  */
-export class IxTreeFlatDataSource<T, F> extends DataSource<F> {
+export class TnTreeFlatDataSource<T, F> extends DataSource<F> {
   private _flattenedData = new BehaviorSubject<F[]>([]);
   private _expandedData = new BehaviorSubject<F[]>([]);
   private _data = new BehaviorSubject<T[]>([]);
@@ -111,7 +111,7 @@ export class IxTreeFlatDataSource<T, F> extends DataSource<F> {
   imports: [CommonModule, CdkTreeModule],
   exportAs: 'ixTree',
   providers: [
-    { provide: CdkTree, useExisting: IxTreeComponent }
+    { provide: CdkTree, useExisting: TnTreeComponent }
   ],
   templateUrl: './tree.component.html',
   styleUrl: './tree.component.scss',
@@ -122,7 +122,7 @@ export class IxTreeFlatDataSource<T, F> extends DataSource<F> {
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.Default,
 })
-export class IxTreeComponent<T, K = T> extends CdkTree<T, K> {
+export class TnTreeComponent<T, K = T> extends CdkTree<T, K> {
   constructor() {
     super(inject(IterableDiffers), inject(ChangeDetectorRef), inject(ViewContainerRef));
   }

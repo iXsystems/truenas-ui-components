@@ -1,10 +1,10 @@
 import { DialogRef} from '@angular/cdk/dialog';
 import { DIALOG_DATA } from '@angular/cdk/dialog';
 import { Component, inject } from '@angular/core';
-import { IxDialogShellComponent } from './dialog-shell.component';
-import { IxButtonComponent } from '../button/button.component';
+import { TnDialogShellComponent } from './dialog-shell.component';
+import { TnButtonComponent } from '../button/button.component';
 
-export interface IxConfirmDialogData {
+export interface TnConfirmDialogData {
   title: string;
   message?: string;
   confirmText?: string;
@@ -16,13 +16,13 @@ export interface IxConfirmDialogData {
   selector: 'ix-confirm-dialog',
   templateUrl: './confirm-dialog.component.html',
   standalone: true,
-  imports: [IxDialogShellComponent, IxButtonComponent],
+  imports: [TnDialogShellComponent, TnButtonComponent],
   host: {
     'class': 'ix-dialog-shell',
     '[class.ix-dialog--destructive]': 'data.destructive'
   }
 })
-export class IxConfirmDialogComponent {
+export class TnConfirmDialogComponent {
   ref = inject(DialogRef<boolean>);
-  data = inject<IxConfirmDialogData>(DIALOG_DATA);
+  data = inject<TnConfirmDialogData>(DIALOG_DATA);
 }

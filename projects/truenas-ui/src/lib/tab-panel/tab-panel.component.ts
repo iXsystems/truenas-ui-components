@@ -10,14 +10,14 @@ import { Component, input, viewChild, ElementRef, inject, computed, signal } fro
   templateUrl: './tab-panel.component.html',
   styleUrl: './tab-panel.component.scss'
 })
-export class IxTabPanelComponent {
+export class TnTabPanelComponent {
   label = input<string>('');
   lazyLoad = input<boolean>(false);
   testId = input<string | undefined>(undefined);
 
   content = viewChild.required<TemplateRef<unknown>>('content');
 
-  // Internal properties set by parent IxTabsComponent (public signals for parent control)
+  // Internal properties set by parent TnTabsComponent (public signals for parent control)
   index = signal<number>(0);
   isActive = signal<boolean>(false);
   hasBeenActive = signal<boolean>(false);

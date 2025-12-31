@@ -3,9 +3,9 @@ import { CommonModule } from '@angular/common';
 import { Component, contentChildren, input, output, signal, computed, forwardRef, ChangeDetectionStrategy, ViewEncapsulation, effect } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { IxButtonToggleComponent } from './button-toggle.component';
+import { TnButtonToggleComponent } from './button-toggle.component';
 
-export type IxButtonToggleType = 'checkbox' | 'radio';
+export type TnButtonToggleType = 'checkbox' | 'radio';
 
 @Component({
   selector: 'ix-button-toggle-group',
@@ -14,7 +14,7 @@ export type IxButtonToggleType = 'checkbox' | 'radio';
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => IxButtonToggleGroupComponent),
+      useExisting: forwardRef(() => TnButtonToggleGroupComponent),
       multi: true
     }
   ],
@@ -26,8 +26,8 @@ export type IxButtonToggleType = 'checkbox' | 'radio';
     'class': 'ix-button-toggle-group'
   }
 })
-export class IxButtonToggleGroupComponent implements ControlValueAccessor {
-  buttonToggles = contentChildren(IxButtonToggleComponent, { descendants: true });
+export class TnButtonToggleGroupComponent implements ControlValueAccessor {
+  buttonToggles = contentChildren(TnButtonToggleComponent, { descendants: true });
 
   multiple = input<boolean>(false);
   disabled = input<boolean>(false);
@@ -35,7 +35,7 @@ export class IxButtonToggleGroupComponent implements ControlValueAccessor {
   ariaLabel = input<string>('');
   ariaLabelledby = input<string>('');
 
-  change = output<{ source: IxButtonToggleComponent; value: unknown }>();
+  change = output<{ source: TnButtonToggleComponent; value: unknown }>();
 
   private selectedValue = signal<unknown>(null);
   private selectedValues = signal<unknown[]>([]);
@@ -84,7 +84,7 @@ export class IxButtonToggleGroupComponent implements ControlValueAccessor {
     });
   }
 
-  _onButtonToggleClick(clickedToggle: IxButtonToggleComponent): void {
+  _onButtonToggleClick(clickedToggle: TnButtonToggleComponent): void {
     if (this.isDisabled() || clickedToggle.isDisabled()) {
       return;
     }
@@ -102,7 +102,7 @@ export class IxButtonToggleGroupComponent implements ControlValueAccessor {
     });
   }
 
-  private handleSingleSelection(clickedToggle: IxButtonToggleComponent): void {
+  private handleSingleSelection(clickedToggle: TnButtonToggleComponent): void {
     // In radio mode, clicking the same toggle deselects it
     if (this.selectedValue() === clickedToggle.value) {
       this.selectedValue.set(null);
@@ -123,7 +123,7 @@ export class IxButtonToggleGroupComponent implements ControlValueAccessor {
     this.onChange(this.selectedValue());
   }
 
-  private handleMultipleSelection(clickedToggle: IxButtonToggleComponent): void {
+  private handleMultipleSelection(clickedToggle: TnButtonToggleComponent): void {
     const currentValues = [...this.selectedValues()];
     const index = currentValues.indexOf(clickedToggle.value);
 

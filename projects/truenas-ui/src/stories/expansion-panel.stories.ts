@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxCardComponent } from '../lib/card/card.component';
-import { IxExpansionPanelComponent } from '../lib/expansion-panel/expansion-panel.component';
+import { TnCardComponent } from '../lib/card/card.component';
+import { TnExpansionPanelComponent } from '../lib/expansion-panel/expansion-panel.component';
 
-const meta: Meta<IxExpansionPanelComponent> = {
+const meta: Meta<TnExpansionPanelComponent> = {
   title: 'Components/Expansion Panel',
-  component: IxExpansionPanelComponent,
+  component: TnExpansionPanelComponent,
   tags: ['autodocs'],
   parameters: {
     layout: 'padded',
@@ -58,7 +58,7 @@ const meta: Meta<IxExpansionPanelComponent> = {
 };
 
 export default meta;
-type Story = StoryObj<IxExpansionPanelComponent>;
+type Story = StoryObj<TnExpansionPanelComponent>;
 
 export const Default: Story = {
   render: (args) => ({
@@ -129,7 +129,7 @@ export const Embedded: Story = {
   render: (args) => ({
     props: args,
     moduleMetadata: {
-      imports: [IxCardComponent, IxExpansionPanelComponent]
+      imports: [TnCardComponent, TnExpansionPanelComponent]
     },
     template: `
       <ix-card elevation="medium" [bordered]="true" style="max-width: 600px;">

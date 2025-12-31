@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { Heart, Home, Menu, Search, Settings, Star, User } from 'lucide';
 import { iconMarker } from '../lib/icon/icon-marker';
-import { IxIconRegistryService } from '../lib/icon/icon-registry.service';
-import { IxIconComponent } from '../lib/icon/icon.component';
+import { TnIconRegistryService } from '../lib/icon/icon-registry.service';
+import { TnIconComponent } from '../lib/icon/icon.component';
 
 // Mark MDI icons for sprite generation (used in story templates)
 iconMarker('bell', 'mdi');
@@ -24,9 +24,9 @@ iconMarker('refresh', 'mdi');
 iconMarker('server', 'mdi');
 iconMarker('star', 'mdi');
 
-const meta: Meta<IxIconComponent> = {
+const meta: Meta<TnIconComponent> = {
   title: 'Components/Icon',
-  component: IxIconComponent,
+  component: TnIconComponent,
   tags: ['autodocs'],
   parameters: {
     layout: 'padded',
@@ -70,7 +70,7 @@ Run \`yarn icons\` to generate the sprite with only the icons you use.
 For icon libraries beyond MDI (like Lucide, Heroicons, Font Awesome), use the registry system:
 
 \`\`\`typescript
-import { IxIconRegistryService } from 'truenas-ui';
+import { TnIconRegistryService } from 'truenas-ui';
 import { Home, User, Settings } from 'lucide';
 
 // In your component or app initializer
@@ -142,7 +142,7 @@ Then use: \`<ix-icon name="home" library="lucide"></ix-icon>\`
           getSpriteConfig: () => undefined
         };
 
-        const iconRegistry = new IxIconRegistryService(mockSanitizer as never, mockSpriteLoader as never);
+        const iconRegistry = new TnIconRegistryService(mockSanitizer as never, mockSpriteLoader as never);
 
         // Register Lucide library
         iconRegistry.registerLibrary({
@@ -212,7 +212,7 @@ Then use: \`<ix-icon name="home" library="lucide"></ix-icon>\`
         });
 
         // Make it available globally for the component
-        (window as unknown as { __storybookIconRegistry: IxIconRegistryService }).__storybookIconRegistry = iconRegistry;
+        (window as unknown as { __storybookIconRegistry: TnIconRegistryService }).__storybookIconRegistry = iconRegistry;
       }
 
       return story();
@@ -221,7 +221,7 @@ Then use: \`<ix-icon name="home" library="lucide"></ix-icon>\`
 };
 
 export default meta;
-type Story = StoryObj<IxIconComponent>;
+type Story = StoryObj<TnIconComponent>;
 
 export const Default: Story = {
   args: {

@@ -16,12 +16,12 @@ export type SlideToggleColor = 'primary' | 'accent' | 'warn';
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => IxSlideToggleComponent),
+      useExisting: forwardRef(() => TnSlideToggleComponent),
       multi: true
     }
   ]
 })
-export class IxSlideToggleComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
+export class TnSlideToggleComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
   toggleEl = viewChild.required<ElementRef<HTMLInputElement>>('toggleEl');
 
   labelPosition = input<'before' | 'after'>('after');

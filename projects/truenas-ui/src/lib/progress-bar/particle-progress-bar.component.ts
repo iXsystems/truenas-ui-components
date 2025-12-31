@@ -21,7 +21,7 @@ import {
     'class': 'ix-particle-progress-bar'
   }
 })
-export class IxParticleProgressBarComponent implements AfterViewInit, OnDestroy {
+export class TnParticleProgressBarComponent implements AfterViewInit, OnDestroy {
   speed = input<'slow' | 'medium' | 'fast' | 'ludicrous'>('medium');
   color = input<string>('hsla(198, 100%, 42%, 1)');
   height = input<number>(40);

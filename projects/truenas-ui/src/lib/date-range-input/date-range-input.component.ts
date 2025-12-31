@@ -8,8 +8,8 @@ import { Component, input, forwardRef, signal, computed, viewChild, ViewContaine
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { IxCalendarComponent } from '../calendar/calendar.component';
-import { IxInputDirective } from '../input/input.directive';
+import { TnCalendarComponent } from '../calendar/calendar.component';
+import { TnInputDirective } from '../input/input.directive';
 
 export interface DateRange {
   start: Date | null;
@@ -19,11 +19,11 @@ export interface DateRange {
 @Component({
   selector: 'ix-date-range-input',
   standalone: true,
-  imports: [CommonModule, IxInputDirective, IxCalendarComponent, OverlayModule, PortalModule, A11yModule],
+  imports: [CommonModule, TnInputDirective, TnCalendarComponent, OverlayModule, PortalModule, A11yModule],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => IxDateRangeInputComponent),
+      useExisting: forwardRef(() => TnDateRangeInputComponent),
       multi: true
     }
   ],
@@ -33,7 +33,7 @@ export interface DateRange {
     'class': 'ix-date-range-input'
   }
 })
-export class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, OnDestroy {
+export class TnDateRangeInputComponent implements ControlValueAccessor, OnInit, OnDestroy {
   disabled = input<boolean>(false);
   placeholder = input<string>('Select date range');
 
@@ -47,7 +47,7 @@ export class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, 
   endDayRef = viewChild.required<ElementRef<HTMLInputElement>>('endDayInput');
   endYearRef = viewChild.required<ElementRef<HTMLInputElement>>('endYearInput');
   calendarTemplate = viewChild.required<TemplateRef<unknown>>('calendarTemplate');
-  calendar = viewChild.required<IxCalendarComponent>(IxCalendarComponent);
+  calendar = viewChild.required<TnCalendarComponent>(TnCalendarComponent);
   wrapperEl = viewChild.required<ElementRef<HTMLDivElement>>('wrapper');
 
   private destroy$ = new Subject<void>();

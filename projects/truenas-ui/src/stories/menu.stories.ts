@@ -1,14 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect } from '@storybook/jest';
 import { userEvent, within } from '@storybook/testing-library';
-import { IxButtonComponent } from '../lib/button/button.component';
-import { IxMenuTriggerDirective } from '../lib/menu/menu-trigger.directive';
-import type { IxMenuItem } from '../lib/menu/menu.component';
-import { IxMenuComponent } from '../lib/menu/menu.component';
+import { TnButtonComponent } from '../lib/button/button.component';
+import { TnMenuTriggerDirective } from '../lib/menu/menu-trigger.directive';
+import type { TnMenuItem } from '../lib/menu/menu.component';
+import { TnMenuComponent } from '../lib/menu/menu.component';
 
-const meta: Meta<IxMenuComponent> = {
+const meta: Meta<TnMenuComponent> = {
   title: 'Components/Menu',
-  component: IxMenuComponent,
+  component: TnMenuComponent,
   tags: ['autodocs'],
   argTypes: {
     contextMenu: {
@@ -22,9 +22,9 @@ const meta: Meta<IxMenuComponent> = {
 };
 
 export default meta;
-type Story = StoryObj<IxMenuComponent>;
+type Story = StoryObj<TnMenuComponent>;
 
-const defaultItems: IxMenuItem[] = [
+const defaultItems: TnMenuItem[] = [
   { id: '1', label: 'New File' },
   { id: '2', label: 'Open' },
   { id: '3', label: 'Save' },
@@ -51,7 +51,7 @@ export const Default: Story = {
       </ix-menu>
     `,
     moduleMetadata: {
-      imports: [IxMenuTriggerDirective, IxButtonComponent],
+      imports: [TnMenuTriggerDirective, TnButtonComponent],
     },
   }),
   play: async ({ canvasElement }) => {
@@ -102,7 +102,7 @@ export const WithIcons: Story = {
       </div>
     `,
     moduleMetadata: {
-      imports: [IxMenuTriggerDirective, IxButtonComponent],
+      imports: [TnMenuTriggerDirective, TnButtonComponent],
     },
   }),
   parameters: {
@@ -133,7 +133,7 @@ The \`iconLibrary\` property provides a clean, semantic API for icon specificati
 home, cog, server, database, folder, harddisk, nas, network, memory, file, star, heart, bell, delete, edit, close, information, lock, magnify, menu, pencil, refresh, share-variant, and many more.
 
 **Alternative Methods**
-- **Library prefix syntax**: \`icon: 'lucide:home'\` (requires library registration via \`IxIconRegistryService\`)
+- **Library prefix syntax**: \`icon: 'lucide:home'\` (requires library registration via \`TnIconRegistryService\`)
 - **Unicode fallback names**: \`icon: 'star'\` (maps to ★ if not in sprite)
         `,
       },
@@ -160,7 +160,7 @@ export const WithSeparators: Story = {
       <ix-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></ix-menu>
     `,
     moduleMetadata: {
-      imports: [IxMenuTriggerDirective, IxButtonComponent],
+      imports: [TnMenuTriggerDirective, TnButtonComponent],
     },
   }),
 };
@@ -181,7 +181,7 @@ export const WithDisabledItems: Story = {
       <ix-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></ix-menu>
     `,
     moduleMetadata: {
-      imports: [IxMenuTriggerDirective, IxButtonComponent],
+      imports: [TnMenuTriggerDirective, TnButtonComponent],
     },
   }),
 };
@@ -197,7 +197,7 @@ export const DisabledButton: Story = {
       <ix-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></ix-menu>
     `,
     moduleMetadata: {
-      imports: [IxMenuTriggerDirective, IxButtonComponent],
+      imports: [TnMenuTriggerDirective, TnButtonComponent],
     },
   }),
 };
@@ -225,7 +225,7 @@ export const PositionAbove: Story = {
       </div>
     `,
     moduleMetadata: {
-      imports: [IxMenuTriggerDirective, IxButtonComponent],
+      imports: [TnMenuTriggerDirective, TnButtonComponent],
     },
   }),
 };
@@ -283,7 +283,7 @@ export const NestedMenus: Story = {
       <ix-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></ix-menu>
     `,
     moduleMetadata: {
-      imports: [IxMenuTriggerDirective, IxButtonComponent],
+      imports: [TnMenuTriggerDirective, TnButtonComponent],
     },
   }),
 };
@@ -330,7 +330,7 @@ export const WithKeyboardShortcuts: Story = {
       </div>
     `,
     moduleMetadata: {
-      imports: [IxMenuTriggerDirective, IxButtonComponent],
+      imports: [TnMenuTriggerDirective, TnButtonComponent],
     },
   }),
 };

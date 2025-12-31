@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
-import { IxSpriteLoaderService } from './sprite-loader.service';
+import { TnSpriteLoaderService } from './sprite-loader.service';
 
 export interface IconLibrary {
   name: string;
@@ -17,20 +17,20 @@ export interface ResolvedIcon {
 @Injectable({
   providedIn: 'root'
 })
-export class IxIconRegistryService {
+export class TnIconRegistryService {
   private libraries = new Map<string, IconLibrary>();
   private customIcons = new Map<string, string>();
 
   private sanitizer: DomSanitizer;
-  private spriteLoader: IxSpriteLoaderService;
+  private spriteLoader: TnSpriteLoaderService;
 
   constructor(
     sanitizer?: DomSanitizer,
-    spriteLoader?: IxSpriteLoaderService
+    spriteLoader?: TnSpriteLoaderService
   ) {
     // Support both DI and manual injection for testing
     this.sanitizer = sanitizer ?? inject(DomSanitizer);
-    this.spriteLoader = spriteLoader ?? inject(IxSpriteLoaderService);
+    this.spriteLoader = spriteLoader ?? inject(TnSpriteLoaderService);
   }
 
   /**
@@ -215,7 +215,7 @@ export class IxIconRegistryService {
    * Get the sprite loader service
    * Useful for checking sprite status or manually resolving sprite icons
    */
-  getSpriteLoader(): IxSpriteLoaderService {
+  getSpriteLoader(): TnSpriteLoaderService {
     return this.spriteLoader;
   }
 

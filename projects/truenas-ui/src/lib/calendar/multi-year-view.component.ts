@@ -18,7 +18,7 @@ export interface YearCell {
   templateUrl: './multi-year-view.component.html',
   styleUrls: ['./multi-year-view.component.scss']
 })
-export class IxMultiYearViewComponent {
+export class TnMultiYearViewComponent {
   activeDate = input<Date>(new Date());
   selected = input<Date | null | undefined>(undefined);
   minDate = input<Date | undefined>(undefined);

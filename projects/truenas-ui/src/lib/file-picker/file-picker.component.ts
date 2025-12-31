@@ -8,10 +8,10 @@ import { ElementRef, type TemplateRef, ViewContainerRef, Component, computed, fo
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { IxFilePickerPopupComponent } from './file-picker-popup.component';
+import { TnFilePickerPopupComponent } from './file-picker-popup.component';
 import type { CreateFolderEvent, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem } from './file-picker.interfaces';
-import { IxIconComponent } from '../icon/icon.component';
-import { IxInputDirective } from '../input/input.directive';
+import { TnIconComponent } from '../icon/icon.component';
+import { TnInputDirective } from '../input/input.directive';
 import { StripMntPrefixPipe } from '../pipes/strip-mnt-prefix/strip-mnt-prefix.pipe';
 
 @Component({
@@ -19,9 +19,9 @@ import { StripMntPrefixPipe } from '../pipes/strip-mnt-prefix/strip-mnt-prefix.p
   standalone: true,
   imports: [
     CommonModule,
-    IxInputDirective,
-    IxIconComponent,
-    IxFilePickerPopupComponent,
+    TnInputDirective,
+    TnIconComponent,
+    TnFilePickerPopupComponent,
     OverlayModule,
     PortalModule,
     A11yModule,
@@ -30,7 +30,7 @@ import { StripMntPrefixPipe } from '../pipes/strip-mnt-prefix/strip-mnt-prefix.p
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => IxFilePickerComponent),
+      useExisting: forwardRef(() => TnFilePickerComponent),
       multi: true
     }
   ],
@@ -41,7 +41,7 @@ import { StripMntPrefixPipe } from '../pipes/strip-mnt-prefix/strip-mnt-prefix.p
     '[class.error]': 'hasError()'
   }
 })
-export class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDestroy {
+export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDestroy {
   mode = input<FilePickerMode>('any');
   multiSelect = input<boolean>(false);
   allowCreate = input<boolean>(true);

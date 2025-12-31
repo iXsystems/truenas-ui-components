@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxFormFieldComponent } from '../lib/form-field/form-field.component';
-import type { IxSelectOption, IxSelectOptionGroup } from '../lib/select/select.component';
-import { IxSelectComponent } from '../lib/select/select.component';
+import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
+import type { TnSelectOption, TnSelectOptionGroup } from '../lib/select/select.component';
+import { TnSelectComponent } from '../lib/select/select.component';
 
-const meta: Meta<IxSelectComponent> = {
+const meta: Meta<TnSelectComponent> = {
   title: 'Components/Select',
-  component: IxSelectComponent,
+  component: TnSelectComponent,
   tags: ['autodocs'],
   parameters: {
     layout: 'padded',
@@ -41,9 +41,9 @@ const meta: Meta<IxSelectComponent> = {
 };
 
 export default meta;
-type Story = StoryObj<IxSelectComponent>;
+type Story = StoryObj<TnSelectComponent>;
 
-const defaultOptions: IxSelectOption[] = [
+const defaultOptions: TnSelectOption[] = [
   { value: 'option1', label: 'Option 1' },
   { value: 'option2', label: 'Option 2' },
   { value: 'option3', label: 'Option 3' },
@@ -51,7 +51,7 @@ const defaultOptions: IxSelectOption[] = [
   { value: 'option5', label: 'Option 5' },
 ];
 
-const fruitOptions: IxSelectOption[] = [
+const fruitOptions: TnSelectOption[] = [
   { value: 'apple', label: 'Apple' },
   { value: 'banana', label: 'Banana' },
   { value: 'orange', label: 'Orange' },
@@ -59,7 +59,7 @@ const fruitOptions: IxSelectOption[] = [
   { value: 'strawberry', label: 'Strawberry' },
 ];
 
-const animalGroups: IxSelectOptionGroup[] = [
+const animalGroups: TnSelectOptionGroup[] = [
   {
     label: 'Mammals',
     options: [
@@ -110,7 +110,7 @@ export const Default: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent],
+      imports: [TnFormFieldComponent],
     },
   }),
   args: {
@@ -143,7 +143,7 @@ export const WithOptionGroups: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent],
+      imports: [TnFormFieldComponent],
     },
   }),
   args: {
@@ -176,7 +176,7 @@ export const MixedOptionsAndGroups: Story = {
       </ix-form-field>
     `,
     moduleMetadata: {
-      imports: [IxFormFieldComponent],
+      imports: [TnFormFieldComponent],
     },
   }),
   args: {

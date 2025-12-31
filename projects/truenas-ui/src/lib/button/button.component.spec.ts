@@ -1,17 +1,17 @@
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import { IxButtonComponent } from './button.component';
+import { TnButtonComponent } from './button.component';
 
-describe('IxButtonComponent', () => {
-  let component: IxButtonComponent;
-  let fixture: ComponentFixture<IxButtonComponent>;
+describe('TnButtonComponent', () => {
+  let component: TnButtonComponent;
+  let fixture: ComponentFixture<TnButtonComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IxButtonComponent]
+      imports: [TnButtonComponent]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(IxButtonComponent);
+    fixture = TestBed.createComponent(TnButtonComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

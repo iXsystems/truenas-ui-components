@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxParticleProgressBarComponent } from '../lib/progress-bar/particle-progress-bar.component';
+import { TnParticleProgressBarComponent } from '../lib/progress-bar/particle-progress-bar.component';
 
-const meta: Meta<IxParticleProgressBarComponent> = {
+const meta: Meta<TnParticleProgressBarComponent> = {
   title: 'Components/Particle Progress Bar',
-  component: IxParticleProgressBarComponent,
+  component: TnParticleProgressBarComponent,
   argTypes: {
     speed: {
       control: 'select',
@@ -25,7 +25,7 @@ const meta: Meta<IxParticleProgressBarComponent> = {
 };
 
 export default meta;
-type Story = StoryObj<IxParticleProgressBarComponent>;
+type Story = StoryObj<TnParticleProgressBarComponent>;
 
 export const Default: Story = {
   args: {

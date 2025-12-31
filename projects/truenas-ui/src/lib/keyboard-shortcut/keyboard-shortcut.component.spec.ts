@@ -1,17 +1,17 @@
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import { IxKeyboardShortcutComponent } from './keyboard-shortcut.component';
+import { TnKeyboardShortcutComponent } from './keyboard-shortcut.component';
 
-describe('IxKeyboardShortcutComponent', () => {
-  let component: IxKeyboardShortcutComponent;
-  let fixture: ComponentFixture<IxKeyboardShortcutComponent>;
+describe('TnKeyboardShortcutComponent', () => {
+  let component: TnKeyboardShortcutComponent;
+  let fixture: ComponentFixture<TnKeyboardShortcutComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IxKeyboardShortcutComponent],
+      imports: [TnKeyboardShortcutComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(IxKeyboardShortcutComponent);
+    fixture = TestBed.createComponent(TnKeyboardShortcutComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

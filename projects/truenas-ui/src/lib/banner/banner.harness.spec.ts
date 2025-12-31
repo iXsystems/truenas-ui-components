@@ -4,16 +4,16 @@ import { provideHttpClient } from '@angular/common/http';
 import { Component, signal } from '@angular/core';
 import { TestBed, fakeAsync, flush } from '@angular/core/testing';
 import type { ComponentFixture} from '@angular/core/testing';
-import { IxBannerComponent } from './banner.component';
-import { IxBannerHarness } from './banner.harness';
-import { IxIconRegistryService } from '../icon/icon-registry.service';
-import { IxSpriteLoaderService } from '../icon/sprite-loader.service';
+import { TnBannerComponent } from './banner.component';
+import { TnBannerHarness } from './banner.harness';
+import { TnIconRegistryService } from '../icon/icon-registry.service';
+import { TnSpriteLoaderService } from '../icon/sprite-loader.service';
 
 // Test host component for harness testing
 @Component({
   selector: 'ix-test-host',
   standalone: true,
-  imports: [IxBannerComponent],
+  imports: [TnBannerComponent],
   template: `<ix-banner [heading]="heading()" [message]="message()" [type]="type()" />`
 })
 class TestHostComponent {
@@ -22,7 +22,7 @@ class TestHostComponent {
   type = signal<'info' | 'warning' | 'error' | 'success'>('info');
 }
 
-describe('IxBannerHarness', () => {
+describe('TnBannerHarness', () => {
   let hostComponent: TestHostComponent;
   let fixture: ComponentFixture<TestHostComponent>;
   let loader: HarnessLoader;
@@ -31,7 +31,7 @@ describe('IxBannerHarness', () => {
     const spriteLoaderSpy = {
       ensureSpriteLoaded: jest.fn().mockResolvedValue(true),
       isSpriteLoaded: jest.fn().mockReturnValue(true),
-    } as jest.Mocked<Partial<IxSpriteLoaderService>>;
+    } as jest.Mocked<Partial<TnSpriteLoaderService>>;
 
     const iconRegistrySpy = {
       registerLibrary: jest.fn(),
@@ -40,14 +40,14 @@ describe('IxBannerHarness', () => {
         content: '<svg><path/></svg>'
       }),
       getSpriteLoader: jest.fn().mockReturnValue(spriteLoaderSpy)
-    } as jest.Mocked<Partial<IxIconRegistryService>>;
+    } as jest.Mocked<Partial<TnIconRegistryService>>;
 
     await TestBed.configureTestingModule({
       imports: [TestHostComponent],
       providers: [
         provideHttpClient(),
-        { provide: IxSpriteLoaderService, useValue: spriteLoaderSpy },
-        { provide: IxIconRegistryService, useValue: iconRegistrySpy }
+        { provide: TnSpriteLoaderService, useValue: spriteLoaderSpy },
+        { provide: TnIconRegistryService, useValue: iconRegistrySpy }
       ]
     }).compileComponents();
 
@@ -65,7 +65,7 @@ describe('IxBannerHarness', () => {
 
   it('should load harness', fakeAsync(async () => {
     flush();
-    const banner = await loader.getHarness(IxBannerHarness);
+    const banner = await loader.getHarness(TnBannerHarness);
     expect(banner).toBeTruthy();
   }));
 
@@ -75,7 +75,7 @@ describe('IxBannerHarness', () => {
     fixture.detectChanges();
     flush();
 
-    const banner = await loader.getHarness(IxBannerHarness);
+    const banner = await loader.getHarness(TnBannerHarness);
     const text = await banner.getText();
     expect(text).toContain('Error');
     expect(text).toContain('Connection failed');
@@ -86,7 +86,7 @@ describe('IxBannerHarness', () => {
     fixture.detectChanges();
     flush();
 
-    const banner = await loader.getHarness(IxBannerHarness);
+    const banner = await loader.getHarness(TnBannerHarness);
     expect(await banner.getText()).toBe('Success!');
   }));
 
@@ -96,7 +96,7 @@ describe('IxBannerHarness', () => {
     flush();
 
     const banner = await loader.getHarness(
-      IxBannerHarness.with({ textContains: 'Success' })
+      TnBannerHarness.with({ textContains: 'Success' })
     );
     expect(banner).toBeTruthy();
   }));
@@ -107,7 +107,7 @@ describe('IxBannerHarness', () => {
     flush();
 
     const banner = await loader.getHarness(
-      IxBannerHarness.with({ textContains: /Error:/ })
+      TnBannerHarness.with({ textContains: /Error:/ })
     );
     expect(banner).toBeTruthy();
   }));
@@ -118,7 +118,7 @@ describe('IxBannerHarness', () => {
     flush();
 
     const banner = await loader.getHarness(
-      IxBannerHarness.with({ textContains: /success/i })
+      TnBannerHarness.with({ textContains: /success/i })
     );
     expect(banner).toBeTruthy();
   }));
@@ -128,7 +128,7 @@ describe('IxBannerHarness', () => {
     fixture.detectChanges();
     flush();
 
-    expect(await loader.hasHarness(IxBannerHarness)).toBe(true);
+    expect(await loader.hasHarness(TnBannerHarness)).toBe(true);
   }));
 
   it('should return false when harness with text does not exist', fakeAsync(async () => {
@@ -136,9 +136,9 @@ describe('IxBannerHarness', () => {
     fixture.detectChanges();
     flush();
 
-    expect(await loader.hasHarness(IxBannerHarness)).toBe(true);
+    expect(await loader.hasHarness(TnBannerHarness)).toBe(true);
     expect(await loader.hasHarness(
-      IxBannerHarness.with({ textContains: 'NonExistentText12345' })
+      TnBannerHarness.with({ textContains: 'NonExistentText12345' })
     )).toBe(false);
   }));
 });

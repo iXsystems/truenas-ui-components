@@ -8,7 +8,7 @@ import { Component, input, output, computed } from '@angular/core';
   templateUrl: './calendar-header.component.html',
   styleUrls: ['./calendar-header.component.scss']
 })
-export class IxCalendarHeaderComponent {
+export class TnCalendarHeaderComponent {
   currentDate = input<Date>(new Date());
   currentView = input<'month' | 'year'>('month');
 

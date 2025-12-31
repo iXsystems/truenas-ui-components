@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxProgressBarComponent } from '../lib/progress-bar/progress-bar.component';
+import { TnProgressBarComponent } from '../lib/progress-bar/progress-bar.component';
 
-const meta: Meta<IxProgressBarComponent> = {
+const meta: Meta<TnProgressBarComponent> = {
   title: 'Components/Progress Bar',
-  component: IxProgressBarComponent,
+  component: TnProgressBarComponent,
   tags: ['autodocs'],
   argTypes: {
     mode: {
@@ -26,7 +26,7 @@ const meta: Meta<IxProgressBarComponent> = {
 };
 
 export default meta;
-type Story = StoryObj<IxProgressBarComponent>;
+type Story = StoryObj<TnProgressBarComponent>;
 
 export const Determinate: Story = {
   args: {

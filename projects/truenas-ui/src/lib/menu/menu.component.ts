@@ -4,9 +4,9 @@ import { TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
 import type { TemplateRef} from '@angular/core';
 import { Component, input, output, viewChild, computed, inject, ViewContainerRef } from '@angular/core';
-import { IxIconComponent } from '../icon/icon.component';
+import { TnIconComponent } from '../icon/icon.component';
 
-export interface IxMenuItem {
+export interface TnMenuItem {
   id: string;
   label: string;
   icon?: string;
@@ -14,22 +14,22 @@ export interface IxMenuItem {
   disabled?: boolean;
   separator?: boolean;
   action?: () => void;
-  children?: IxMenuItem[];
+  children?: TnMenuItem[];
   shortcut?: string;
 }
 
 @Component({
   selector: 'ix-menu',
   standalone: true,
-  imports: [CommonModule, CdkMenu, CdkMenuItem, CdkMenuTrigger, IxIconComponent],
+  imports: [CommonModule, CdkMenu, CdkMenuItem, CdkMenuTrigger, TnIconComponent],
   templateUrl: './menu.component.html',
   styleUrls: ['./menu.component.scss'],
 })
-export class IxMenuComponent {
-  items = input<IxMenuItem[]>([]);
+export class TnMenuComponent {
+  items = input<TnMenuItem[]>([]);
   contextMenu = input<boolean>(false); // Enable context menu mode (right-click)
 
-  menuItemClick = output<IxMenuItem>();
+  menuItemClick = output<TnMenuItem>();
   menuOpen = output<void>();
   menuClose = output<void>();
 
@@ -41,7 +41,7 @@ export class IxMenuComponent {
   private overlay = inject(Overlay);
   private viewContainerRef = inject(ViewContainerRef);
 
-  onMenuItemClick(item: IxMenuItem): void {
+  onMenuItemClick(item: TnMenuItem): void {
     if (!item.disabled && (!item.children || item.children.length === 0)) {
       this.menuItemClick.emit(item);
       if (item.action) {
@@ -54,7 +54,7 @@ export class IxMenuComponent {
     }
   }
 
-  hasChildren = computed(() => (item: IxMenuItem): boolean => {
+  hasChildren = computed(() => (item: TnMenuItem): boolean => {
     return !!(item.children && item.children.length > 0);
   });
 
@@ -130,7 +130,7 @@ export class IxMenuComponent {
     }
   }
 
-  trackByItemId(index: number, item: IxMenuItem): string {
+  trackByItemId(index: number, item: TnMenuItem): string {
     return item.id;
   }
 }

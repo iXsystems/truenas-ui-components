@@ -2,11 +2,11 @@ import { CommonModule } from '@angular/common';
 import { Component, input, output, contentChildren, signal, computed, forwardRef, effect } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { IxListOptionComponent } from '../list-option/list-option.component';
+import { TnListOptionComponent } from '../list-option/list-option.component';
 
-export interface IxSelectionChange {
-  source: IxSelectionListComponent;
-  options: IxListOptionComponent[];
+export interface TnSelectionChange {
+  source: TnSelectionListComponent;
+  options: TnListOptionComponent[];
 }
 
 @Component({
@@ -18,7 +18,7 @@ export interface IxSelectionChange {
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => IxSelectionListComponent),
+      useExisting: forwardRef(() => TnSelectionListComponent),
       multi: true
     }
   ],
@@ -30,15 +30,15 @@ export interface IxSelectionChange {
     '[attr.aria-multiselectable]': 'multiple()'
   }
 })
-export class IxSelectionListComponent implements ControlValueAccessor {
+export class TnSelectionListComponent implements ControlValueAccessor {
   dense = input<boolean>(false);
   disabled = input<boolean>(false);
   multiple = input<boolean>(true);
   color = input<'primary' | 'accent' | 'warn'>('primary');
 
-  selectionChange = output<IxSelectionChange>();
+  selectionChange = output<TnSelectionChange>();
 
-  options = contentChildren(IxListOptionComponent, { descendants: true });
+  options = contentChildren(TnListOptionComponent, { descendants: true });
 
   private formDisabled = signal<boolean>(false);
 
@@ -101,7 +101,7 @@ export class IxSelectionListComponent implements ControlValueAccessor {
     });
   }
 
-  get selectedOptions(): IxListOptionComponent[] {
+  get selectedOptions(): TnListOptionComponent[] {
     const opts = this.options();
     return opts.filter(option => option.effectiveSelected());
   }

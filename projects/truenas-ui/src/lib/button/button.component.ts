@@ -8,7 +8,7 @@ import { Component, input, output, computed } from '@angular/core';
   templateUrl: './button.component.html',
   styleUrls: ['./button.component.scss'],
 })
-export class IxButtonComponent {
+export class TnButtonComponent {
   size = 'large';
 
   primary = input<boolean>(false);

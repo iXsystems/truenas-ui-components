@@ -1,44 +1,44 @@
 import { CommonModule } from '@angular/common';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
-import { IxDividerComponent } from '../lib/divider/divider.component';
-import { IxListComponent } from '../lib/list/list.component';
+import { TnDividerComponent } from '../lib/divider/divider.component';
+import { TnListComponent } from '../lib/list/list.component';
 import { 
-  IxListIconDirective, 
-  IxListAvatarDirective, 
-  IxListItemTitleDirective, 
-  IxListItemLineDirective,
-  IxListItemPrimaryDirective,
-  IxListItemSecondaryDirective,
-  IxListItemTrailingDirective,
-  IxDividerDirective
+  TnListIconDirective, 
+  TnListAvatarDirective, 
+  TnListItemTitleDirective, 
+  TnListItemLineDirective,
+  TnListItemPrimaryDirective,
+  TnListItemSecondaryDirective,
+  TnListItemTrailingDirective,
+  TnDividerDirective
 } from '../lib/list-directives/list-directives';
-import { IxListItemComponent } from '../lib/list-item/list-item.component';
-import { IxListOptionComponent } from '../lib/list-option/list-option.component';
-import { IxListSubheaderComponent } from '../lib/list-subheader/list-subheader.component';
-import { IxSelectionListComponent } from '../lib/selection-list/selection-list.component';
+import { TnListItemComponent } from '../lib/list-item/list-item.component';
+import { TnListOptionComponent } from '../lib/list-option/list-option.component';
+import { TnListSubheaderComponent } from '../lib/list-subheader/list-subheader.component';
+import { TnSelectionListComponent } from '../lib/selection-list/selection-list.component';
 
-const meta: Meta<IxListComponent> = {
+const meta: Meta<TnListComponent> = {
   title: 'Components/List',
-  component: IxListComponent,
+  component: TnListComponent,
   decorators: [
     moduleMetadata({
       imports: [
         CommonModule,
-        IxListComponent,
-        IxListItemComponent,
-        IxListIconDirective,
-        IxListAvatarDirective,
-        IxListItemTitleDirective,
-        IxListItemLineDirective,
-        IxListItemPrimaryDirective,
-        IxListItemSecondaryDirective,
-        IxListItemTrailingDirective,
-        IxDividerDirective,
-        IxDividerComponent,
-        IxListSubheaderComponent,
-        IxSelectionListComponent,
-        IxListOptionComponent
+        TnListComponent,
+        TnListItemComponent,
+        TnListIconDirective,
+        TnListAvatarDirective,
+        TnListItemTitleDirective,
+        TnListItemLineDirective,
+        TnListItemPrimaryDirective,
+        TnListItemSecondaryDirective,
+        TnListItemTrailingDirective,
+        TnDividerDirective,
+        TnDividerComponent,
+        TnListSubheaderComponent,
+        TnSelectionListComponent,
+        TnListOptionComponent
       ],
     }),
   ],
@@ -63,7 +63,7 @@ const meta: Meta<IxListComponent> = {
 };
 
 export default meta;
-type Story = StoryObj<IxListComponent>;
+type Story = StoryObj<TnListComponent>;
 
 export const BasicList: Story = {
   args: {

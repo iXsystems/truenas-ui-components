@@ -31,7 +31,7 @@ export interface SpriteConfig {
 @Injectable({
   providedIn: 'root'
 })
-export class IxSpriteLoaderService {
+export class TnSpriteLoaderService {
   private spriteConfig?: SpriteConfig;
   private spriteLoaded = false;
   private spriteLoadPromise?: Promise<void>;

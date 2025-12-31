@@ -3,13 +3,13 @@ import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { IxFilePickerPopupComponent } from './file-picker-popup.component';
+import { TnFilePickerPopupComponent } from './file-picker-popup.component';
 import type { FileSystemItem } from './file-picker.interfaces';
 import { FileSizePipe } from '../pipes/file-size/file-size.pipe';
 
-describe('IxFilePickerPopupComponent', () => {
-  let component: IxFilePickerPopupComponent;
-  let fixture: ComponentFixture<IxFilePickerPopupComponent>;
+describe('TnFilePickerPopupComponent', () => {
+  let component: TnFilePickerPopupComponent;
+  let fixture: ComponentFixture<TnFilePickerPopupComponent>;
 
   const mockFileItems: FileSystemItem[] = [
     {
@@ -48,11 +48,11 @@ describe('IxFilePickerPopupComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IxFilePickerPopupComponent, NoopAnimationsModule, FileSizePipe],
+      imports: [TnFilePickerPopupComponent, NoopAnimationsModule, FileSizePipe],
       providers: [provideHttpClient()]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(IxFilePickerPopupComponent);
+    fixture = TestBed.createComponent(TnFilePickerPopupComponent);
     component = fixture.componentInstance;
     
     // Set up component with mock data
@@ -170,7 +170,7 @@ describe('IxFilePickerPopupComponent', () => {
   describe('File Filtering', () => {
     it('should filter by file mode', () => {
       // Create a fresh component instance for this test
-      const testFixture = TestBed.createComponent(IxFilePickerPopupComponent);
+      const testFixture = TestBed.createComponent(TnFilePickerPopupComponent);
       const testComponent = testFixture.componentInstance;
 
       testFixture.componentRef.setInput('mode', 'file');
@@ -186,7 +186,7 @@ describe('IxFilePickerPopupComponent', () => {
 
     it('should filter by folder mode', () => {
       // Create a fresh component instance for this test
-      const testFixture = TestBed.createComponent(IxFilePickerPopupComponent);
+      const testFixture = TestBed.createComponent(TnFilePickerPopupComponent);
       const testComponent = testFixture.componentInstance;
 
       testFixture.componentRef.setInput('mode', 'folder');
@@ -202,7 +202,7 @@ describe('IxFilePickerPopupComponent', () => {
 
     it('should filter by file extensions', () => {
       // Create a fresh component instance for this test
-      const testFixture = TestBed.createComponent(IxFilePickerPopupComponent);
+      const testFixture = TestBed.createComponent(TnFilePickerPopupComponent);
       const testComponent = testFixture.componentInstance;
 
       testFixture.componentRef.setInput('fileExtensions', ['.txt']);
@@ -217,7 +217,7 @@ describe('IxFilePickerPopupComponent', () => {
 
     it('should not filter when mode is "any"', () => {
       // Create a fresh component instance for this test
-      const testFixture = TestBed.createComponent(IxFilePickerPopupComponent);
+      const testFixture = TestBed.createComponent(TnFilePickerPopupComponent);
       const testComponent = testFixture.componentInstance;
 
       testFixture.componentRef.setInput('mode', 'any');

@@ -2,9 +2,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
-import { IxInputComponent } from '../lib/input/input.component';
-import { IxTableComponent } from '../lib/table/table.component';
-import { IxTableColumnDirective, IxHeaderCellDefDirective, IxCellDefDirective } from '../lib/table-column/table-column.directive';
+import { TnInputComponent } from '../lib/input/input.component';
+import { TnTableComponent } from '../lib/table/table.component';
+import { TnTableColumnDirective, TnHeaderCellDefDirective, TnCellDefDirective } from '../lib/table-column/table-column.directive';
 
 interface User {
   id: number;
@@ -14,19 +14,19 @@ interface User {
   status: 'active' | 'inactive';
 }
 
-const meta: Meta<IxTableComponent> = {
+const meta: Meta<TnTableComponent> = {
   title: 'Components/Table',
-  component: IxTableComponent,
+  component: TnTableComponent,
   decorators: [
     moduleMetadata({
       imports: [
         CommonModule,
         FormsModule,
-        IxTableComponent,
-        IxTableColumnDirective,
-        IxHeaderCellDefDirective,
-        IxCellDefDirective,
-        IxInputComponent
+        TnTableComponent,
+        TnTableColumnDirective,
+        TnHeaderCellDefDirective,
+        TnCellDefDirective,
+        TnInputComponent
       ],
     }),
   ],
@@ -51,7 +51,7 @@ const meta: Meta<IxTableComponent> = {
 };
 
 export default meta;
-type Story = StoryObj<IxTableComponent>;
+type Story = StoryObj<TnTableComponent>;
 
 const sampleData: User[] = [
   { id: 1, name: 'Alice Johnson', email: 'alice@example.com', role: 'Admin', status: 'active' },

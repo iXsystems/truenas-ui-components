@@ -7,6 +7,6 @@ import { Directive } from '@angular/core';
     'class': 'ix-input-directive'
   }
 })
-export class IxInputDirective {
+export class TnInputDirective {
   constructor() {}
 }

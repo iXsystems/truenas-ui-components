@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect } from '@storybook/jest';
 import { within } from '@storybook/testing-library';
-import { IxCardComponent } from '../lib/card/card.component';
+import { TnCardComponent } from '../lib/card/card.component';
 
-const meta: Meta<IxCardComponent> = {
+const meta: Meta<TnCardComponent> = {
   title: 'Components/Card',
-  component: IxCardComponent,
+  component: TnCardComponent,
   tags: ['autodocs'],
   argTypes: {
     elevation: {
@@ -48,7 +48,7 @@ const meta: Meta<IxCardComponent> = {
     },
     headerMenu: {
       control: 'object',
-      description: 'Array of IxMenuItem objects for header menu',
+      description: 'Array of TnMenuItem objects for header menu',
     },
     primaryAction: {
       control: 'object',
@@ -82,7 +82,7 @@ const meta: Meta<IxCardComponent> = {
 };
 
 export default meta;
-type Story = StoryObj<IxCardComponent>;
+type Story = StoryObj<TnCardComponent>;
 
 export const Default: Story = {
   args: {

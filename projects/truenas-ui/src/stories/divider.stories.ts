@@ -1,16 +1,16 @@
 import { CommonModule } from '@angular/common';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
-import { IxDividerComponent } from '../lib/divider/divider.component';
+import { TnDividerComponent } from '../lib/divider/divider.component';
 
-const meta: Meta<IxDividerComponent> = {
+const meta: Meta<TnDividerComponent> = {
   title: 'Components/Divider',
-  component: IxDividerComponent,
+  component: TnDividerComponent,
   decorators: [
     moduleMetadata({
       imports: [
         CommonModule,
-        IxDividerComponent
+        TnDividerComponent
       ],
     }),
   ],
@@ -35,7 +35,7 @@ const meta: Meta<IxDividerComponent> = {
 };
 
 export default meta;
-type Story = StoryObj<IxDividerComponent>;
+type Story = StoryObj<TnDividerComponent>;
 
 export const BasicDivider: Story = {
   args: {
