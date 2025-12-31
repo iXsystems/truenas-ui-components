@@ -3,17 +3,17 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxButtonComponent } from '../../lib/ix-button/ix-button.component';
-import { IxCheckboxComponent } from '../../lib/ix-checkbox/ix-checkbox.component';
-import { IxDialogShellComponent } from '../../lib/ix-dialog';
-import { IxDialog } from '../../lib/ix-dialog/ix-dialog.service';
-import { IxInputComponent } from '../../lib/ix-input/ix-input.component';
-import { IxRadioComponent } from '../../lib/ix-radio/ix-radio.component';
-import type { IxSelectOption } from '../../lib/ix-select/ix-select.component';
-import { IxSelectComponent } from '../../lib/ix-select/ix-select.component';
-import { IxTabComponent } from '../../lib/ix-tab/ix-tab.component';
-import { IxTabPanelComponent } from '../../lib/ix-tab-panel/ix-tab-panel.component';
-import { IxTabsComponent } from '../../lib/ix-tabs/ix-tabs.component';
+import { IxButtonComponent } from '../../lib/button/button.component';
+import { IxCheckboxComponent } from '../../lib/checkbox/checkbox.component';
+import { IxDialogShellComponent } from '../../lib/dialog';
+import { IxDialog } from '../../lib/dialog/dialog.service';
+import { IxInputComponent } from '../../lib/input/input.component';
+import { IxRadioComponent } from '../../lib/radio/radio.component';
+import type { IxSelectOption } from '../../lib/select/select.component';
+import { IxSelectComponent } from '../../lib/select/select.component';
+import { IxTabComponent } from '../../lib/tab/tab.component';
+import { IxTabPanelComponent } from '../../lib/tab-panel/tab-panel.component';
+import { IxTabsComponent } from '../../lib/tabs/tabs.component';
 
 // VM Creation Tabbed Wizard Dialog Component  
 @Component({

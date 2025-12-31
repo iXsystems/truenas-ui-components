@@ -6394,7 +6394,7 @@ class IxDialog {
      */
     confirm(opts) {
         // Import the confirm dialog component dynamically to avoid circular dependencies
-        return Promise.resolve().then(function () { return ixConfirmDialog_component; }).then(m => {
+        return Promise.resolve().then(function () { return confirmDialog_component; }).then(m => {
             const dialogRef = this.open(m.IxConfirmDialogComponent, {
                 data: opts,
                 role: 'alertdialog',
@@ -6500,7 +6500,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                     }, template: "<ix-dialog-shell [title]=\"data.title\">\n  <p style=\"padding: var(--content-padding);\">{{ data.message }}</p>\n  <div ixDialogAction>\n    <ix-button\n      type=\"button\"\n      variant=\"outline\"\n      [label]=\"data.cancelText || 'Cancel'\"\n      (click)=\"ref.close(false)\" />\n    <ix-button\n      type=\"button\"\n      [color]=\"data.destructive ? 'warn' : 'primary'\"\n      [label]=\"data.confirmText || 'OK'\"\n      (click)=\"ref.close(true)\" />\n  </div>\n</ix-dialog-shell>\n" }]
         }] });
 
-var ixConfirmDialog_component = /*#__PURE__*/Object.freeze({
+var confirmDialog_component = /*#__PURE__*/Object.freeze({
     __proto__: null,
     IxConfirmDialogComponent: IxConfirmDialogComponent
 });
@@ -6633,7 +6633,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * To regenerate this file, run:
  *   npm run generate-icons
  *
- * Generated: 2025-12-30T21:07:42.194Z
+ * Generated: 2025-12-31T18:06:22.787Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 /* eslint-disable */

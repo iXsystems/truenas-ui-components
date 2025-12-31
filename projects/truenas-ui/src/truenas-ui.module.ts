@@ -1,22 +1,22 @@
 import { NgModule } from '@angular/core';
+import { IxCalendarHeaderComponent } from './lib/calendar/calendar-header.component';
+import { IxCalendarComponent } from './lib/calendar/calendar.component';
+import { IxMonthViewComponent } from './lib/calendar/month-view.component';
+import { IxCardComponent } from './lib/card/card.component';
+import { IxCheckboxComponent } from './lib/checkbox/checkbox.component';
+import { IxChipComponent } from './lib/chip/chip.component';
+import { IxDateInputComponent } from './lib/date-range-input/date-input.component';
+import { IxDateRangeInputComponent } from './lib/date-range-input/date-range-input.component';
+import { IxTimeInputComponent } from './lib/date-range-input/time-input.component';
+import { IxConfirmDialogComponent } from './lib/dialog/confirm-dialog.component';
+import { IxDialogShellComponent } from './lib/dialog/dialog-shell.component';
 import { DiskIconComponent } from './lib/disk-icon/disk-icon.component';
-import { IxCalendarHeaderComponent } from './lib/ix-calendar/ix-calendar-header.component';
-import { IxCalendarComponent } from './lib/ix-calendar/ix-calendar.component';
-import { IxMonthViewComponent } from './lib/ix-calendar/ix-month-view.component';
-import { IxCardComponent } from './lib/ix-card/ix-card.component';
-import { IxCheckboxComponent } from './lib/ix-checkbox/ix-checkbox.component';
-import { IxChipComponent } from './lib/ix-chip/ix-chip.component';
-import { IxDateInputComponent } from './lib/ix-date-range-input/ix-date-input.component';
-import { IxDateRangeInputComponent } from './lib/ix-date-range-input/ix-date-range-input.component';
-import { IxTimeInputComponent } from './lib/ix-date-range-input/ix-time-input.component';
-import { IxConfirmDialogComponent } from './lib/ix-dialog/ix-confirm-dialog.component';
-import { IxDialogShellComponent } from './lib/ix-dialog/ix-dialog-shell.component';
-import { IxDividerComponent } from './lib/ix-divider/ix-divider.component';
-import { IxExpansionPanelComponent } from './lib/ix-expansion-panel/ix-expansion-panel.component';
-import { IxFilePickerComponent } from './lib/ix-file-picker/ix-file-picker.component';
-import { IxIconComponent } from './lib/ix-icon/ix-icon.component';
-import { IxKeyboardShortcutComponent } from './lib/ix-keyboard-shortcut/ix-keyboard-shortcut.component';
-import { IxListComponent } from './lib/ix-list/ix-list.component';
+import { IxDividerComponent } from './lib/divider/divider.component';
+import { IxExpansionPanelComponent } from './lib/expansion-panel/expansion-panel.component';
+import { IxFilePickerComponent } from './lib/file-picker/file-picker.component';
+import { IxIconComponent } from './lib/icon/icon.component';
+import { IxKeyboardShortcutComponent } from './lib/keyboard-shortcut/keyboard-shortcut.component';
+import { IxListComponent } from './lib/list/list.component';
 import { 
   IxListIconDirective, 
   IxListAvatarDirective, 
@@ -26,31 +26,31 @@ import {
   IxListItemSecondaryDirective,
   IxListItemTrailingDirective,
   IxDividerDirective
-} from './lib/ix-list-directives/ix-list-directives';
-import { IxListItemComponent } from './lib/ix-list-item/ix-list-item.component';
-import { IxListOptionComponent } from './lib/ix-list-option/ix-list-option.component';
-import { IxListSubheaderComponent } from './lib/ix-list-subheader/ix-list-subheader.component';
-import { IxMenuComponent } from './lib/ix-menu/ix-menu.component';
-import { IxProgressBarComponent } from './lib/ix-progress-bar/ix-progress-bar.component';
-import { IxRadioComponent } from './lib/ix-radio/ix-radio.component';
-import { IxSelectionListComponent } from './lib/ix-selection-list/ix-selection-list.component';
-import { IxSlideToggleComponent } from './lib/ix-slide-toggle/ix-slide-toggle.component';
-import { IxSliderThumbDirective } from './lib/ix-slider/ix-slider-thumb.directive';
-import { IxSliderWithLabelDirective } from './lib/ix-slider/ix-slider-with-label.directive';
-import { IxSliderComponent } from './lib/ix-slider/ix-slider.component';
-import { IxBrandedSpinnerComponent } from './lib/ix-spinner/ix-branded-spinner.component';
-import { IxSpinnerComponent } from './lib/ix-spinner/ix-spinner.component';
-import { IxStepComponent } from './lib/ix-stepper/ix-step.component';
-import { IxStepperComponent } from './lib/ix-stepper/ix-stepper.component';
-import { IxTabComponent } from './lib/ix-tab/ix-tab.component';
-import { IxTabPanelComponent } from './lib/ix-tab-panel/ix-tab-panel.component';
-import { IxTableComponent } from './lib/ix-table/ix-table.component';
-import { IxTableColumnDirective, IxHeaderCellDefDirective, IxCellDefDirective } from './lib/ix-table-column/ix-table-column.directive';
-import { IxTabsComponent } from './lib/ix-tabs/ix-tabs.component';
-import { IxTooltipComponent } from './lib/ix-tooltip/ix-tooltip.component';
-import { IxTooltipDirective } from './lib/ix-tooltip/ix-tooltip.directive';
-import { IxTreeNodeComponent } from './lib/ix-tree/ix-tree-node.component';
-import { IxTreeComponent } from './lib/ix-tree/ix-tree.component';
+} from './lib/list-directives/list-directives';
+import { IxListItemComponent } from './lib/list-item/list-item.component';
+import { IxListOptionComponent } from './lib/list-option/list-option.component';
+import { IxListSubheaderComponent } from './lib/list-subheader/list-subheader.component';
+import { IxMenuComponent } from './lib/menu/menu.component';
+import { IxProgressBarComponent } from './lib/progress-bar/progress-bar.component';
+import { IxRadioComponent } from './lib/radio/radio.component';
+import { IxSelectionListComponent } from './lib/selection-list/selection-list.component';
+import { IxSlideToggleComponent } from './lib/slide-toggle/slide-toggle.component';
+import { IxSliderThumbDirective } from './lib/slider/slider-thumb.directive';
+import { IxSliderWithLabelDirective } from './lib/slider/slider-with-label.directive';
+import { IxSliderComponent } from './lib/slider/slider.component';
+import { IxBrandedSpinnerComponent } from './lib/spinner/branded-spinner.component';
+import { IxSpinnerComponent } from './lib/spinner/spinner.component';
+import { IxStepComponent } from './lib/stepper/step.component';
+import { IxStepperComponent } from './lib/stepper/stepper.component';
+import { IxTabComponent } from './lib/tab/tab.component';
+import { IxTabPanelComponent } from './lib/tab-panel/tab-panel.component';
+import { IxTableComponent } from './lib/table/table.component';
+import { IxTableColumnDirective, IxHeaderCellDefDirective, IxCellDefDirective } from './lib/table-column/table-column.directive';
+import { IxTabsComponent } from './lib/tabs/tabs.component';
+import { IxTooltipComponent } from './lib/tooltip/tooltip.component';
+import { IxTooltipDirective } from './lib/tooltip/tooltip.directive';
+import { IxTreeNodeComponent } from './lib/tree/tree-node.component';
+import { IxTreeComponent } from './lib/tree/tree.component';
 
 @NgModule({
   declarations: [DiskIconComponent],

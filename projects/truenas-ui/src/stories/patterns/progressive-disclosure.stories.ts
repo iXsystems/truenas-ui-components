@@ -1,18 +1,18 @@
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { IxButtonComponent } from '../../lib/button/button.component';
+import { IxCardComponent } from '../../lib/card/card.component';
+import { IxCheckboxComponent } from '../../lib/checkbox/checkbox.component';
 import { DiskIconComponent } from '../../lib/disk-icon/disk-icon.component';
 import { DiskType } from '../../lib/enums/disk-type.enum';
-import { IxButtonComponent } from '../../lib/ix-button/ix-button.component';
-import { IxCardComponent } from '../../lib/ix-card/ix-card.component';
-import { IxCheckboxComponent } from '../../lib/ix-checkbox/ix-checkbox.component';
-import { IxExpansionPanelComponent } from '../../lib/ix-expansion-panel/ix-expansion-panel.component';
-import { IxFormFieldComponent } from '../../lib/ix-form-field/ix-form-field.component';
-import { IxInputComponent } from '../../lib/ix-input/ix-input.component';
-import { IxRadioComponent } from '../../lib/ix-radio/ix-radio.component';
-import { IxSelectComponent } from '../../lib/ix-select/ix-select.component';
-import { IxSlideToggleComponent } from '../../lib/ix-slide-toggle/ix-slide-toggle.component';
-import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
+import { IxExpansionPanelComponent } from '../../lib/expansion-panel/expansion-panel.component';
+import { IxFormFieldComponent } from '../../lib/form-field/form-field.component';
+import { IxInputComponent } from '../../lib/input/input.component';
+import { IxRadioComponent } from '../../lib/radio/radio.component';
+import { IxSelectComponent } from '../../lib/select/select.component';
+import { IxSlideToggleComponent } from '../../lib/slide-toggle/slide-toggle.component';
+import { IxStepperComponent, IxStepComponent } from '../../lib/stepper';
 
 @Component({
   selector: 'zfs-pool-setup-demo',

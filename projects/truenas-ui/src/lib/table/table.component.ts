@@ -1,0 +1,69 @@
+import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, input, contentChildren, computed, effect, inject } from '@angular/core';
+import { IxTableColumnDirective } from '../table-column/table-column.directive';
+
+export interface IxTableDataSource<T = unknown> {
+  data?: T[];
+  connect?(): T[];
+  disconnect?(): void;
+}
+
+@Component({
+  selector: 'ix-table',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './table.component.html',
+  styleUrl: './table.component.scss',
+  host: {
+    'class': 'ix-table'
+  }
+})
+export class IxTableComponent<T = unknown> {
+  dataSource = input<IxTableDataSource<T> | T[]>([]);
+  displayedColumns = input<string[]>([]);
+
+  columnDefs = contentChildren(IxTableColumnDirective);
+
+  private columnDefMap = new Map<string, IxTableColumnDirective>();
+
+  private cdr = inject(ChangeDetectorRef);
+
+  constructor() {
+    // Effect to process column defs whenever they change
+    effect(() => {
+      const columns = this.columnDefs();
+      this.processColumnDefs(columns);
+    });
+  }
+
+  private processColumnDefs(columns: readonly IxTableColumnDirective[]): void {
+    this.columnDefMap.clear();
+    columns.forEach(columnDef => {
+      const name = columnDef.name();
+      if (name) {
+        this.columnDefMap.set(name, columnDef);
+      }
+    });
+    this.cdr.detectChanges();
+  }
+
+  data = computed(() => {
+    const source = this.dataSource();
+    if (Array.isArray(source)) {
+      return source;
+    }
+    return source?.data || source?.connect?.() || [];
+  });
+
+  getColumnDef(columnName: string): IxTableColumnDirective | undefined {
+    return this.columnDefMap.get(columnName);
+  }
+
+  trackByIndex(index: number): number {
+    return index;
+  }
+
+  getCellValue(row: T, column: string): unknown {
+    return (row as Record<string, unknown>)[column];
+  }
+}

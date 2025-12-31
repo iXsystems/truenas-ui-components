@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { within, userEvent } from '@storybook/testing-library';
+import { IxButtonComponent } from '../../../lib/button/button.component';
 import { InputType } from '../../../lib/enums/input-type.enum';
-import { IxButtonComponent } from '../../../lib/ix-button/ix-button.component';
-import { IxInputComponent } from '../../../lib/ix-input/ix-input.component';
+import { IxInputComponent } from '../../../lib/input/input.component';
 
 @Component({
   selector: 'app-login-form-doc',
