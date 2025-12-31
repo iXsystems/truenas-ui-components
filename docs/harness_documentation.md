@@ -41,11 +41,11 @@ Harness files (`*.harness.ts`) contain TypeScript code with JSDoc comments:
 
 ```typescript
 /**
- * Harness for interacting with ix-banner in tests.
+ * Harness for interacting with tn-banner in tests.
  * Provides simple text-based querying for existence checks.
  */
-export class IxBannerHarness extends ComponentHarness {
-  static hostSelector = 'ix-banner';
+export class TnBannerHarness extends ComponentHarness {
+  static hostSelector = 'tn-banner';
 
   /**
    * Gets a HarnessPredicate that can be used to search for a banner
@@ -72,7 +72,7 @@ Stories import and display the documentation:
 ```typescript
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 
-const harnessDoc = loadHarnessDoc('ix-banner');
+const harnessDoc = loadHarnessDoc('tn-banner');
 
 export const ComponentHarness: Story = {
   parameters: {
@@ -112,19 +112,19 @@ For proper documentation generation, include JSDoc for:
 
 ```typescript
 /**
- * Harness for interacting with ix-tooltip in tests.
+ * Harness for interacting with tn-tooltip in tests.
  * Provides methods for opening tooltips and reading their content.
  *
  * @example
  * ```typescript
- * const tooltip = await loader.getHarness(IxTooltipHarness);
+ * const tooltip = await loader.getHarness(TnTooltipHarness);
  * await tooltip.show();
  * const text = await tooltip.getText();
  * ```
  */
-export class IxTooltipHarness extends ComponentHarness {
+export class TnTooltipHarness extends ComponentHarness {
   /**
-   * The selector for the host element of an `IxTooltipDirective` instance.
+   * The selector for the host element of an `TnTooltipDirective` instance.
    */
   static hostSelector = '[ixTooltip]';
 
@@ -136,7 +136,7 @@ export class IxTooltipHarness extends ComponentHarness {
    * @returns A HarnessPredicate configured with the given options
    */
   static with(options: TooltipHarnessFilters = {}) {
-    return new HarnessPredicate(IxTooltipHarness, options)
+    return new HarnessPredicate(TnTooltipHarness, options)
       .addOption('text', options.text, (harness, text) =>
         HarnessPredicate.stringMatches(harness.getText(), text)
       );
@@ -164,7 +164,7 @@ export class IxTooltipHarness extends ComponentHarness {
 }
 
 /**
- * A set of criteria that can be used to filter a list of `IxTooltipHarness` instances.
+ * A set of criteria that can be used to filter a list of `TnTooltipHarness` instances.
  */
 export interface TooltipHarnessFilters extends BaseHarnessFilters {
   /** Filters by text content within the tooltip. Supports string or regex matching. */
@@ -194,12 +194,12 @@ The system generates clean markdown tables:
 
 ### Class Header
 ```markdown
-#### Class: IxBannerHarness
+#### Class: TnBannerHarness
 
-Harness for interacting with ix-banner in tests.
+Harness for interacting with tn-banner in tests.
 Provides simple text-based querying for existence checks.
 
-**Host Selector**: `ix-banner`
+**Host Selector**: `tn-banner`
 ```
 
 ### Methods Table
@@ -208,7 +208,7 @@ Provides simple text-based querying for existence checks.
 
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
-| `with()` | `BannerHarnessFilters?` | `HarnessPredicate<IxBannerHarness>` | Gets a HarnessPredicate that can be used to search for a banner with specific text content. |
+| `with()` | `BannerHarnessFilters?` | `HarnessPredicate<TnBannerHarness>` | Gets a HarnessPredicate that can be used to search for a banner with specific text content. |
 | `getText()` | | `Promise<string>` | Gets all text content from the banner (heading + message combined). |
 ```
 
@@ -218,7 +218,7 @@ Provides simple text-based querying for existence checks.
 
 ##### BannerHarnessFilters
 
-A set of criteria that can be used to filter a list of `IxBannerHarness` instances.
+A set of criteria that can be used to filter a list of `TnBannerHarness` instances.
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -252,10 +252,10 @@ After imports, before the `meta` definition:
 
 ```typescript
 // Load harness documentation
-const harnessDoc = loadHarnessDoc('ix-component');
+const harnessDoc = loadHarnessDoc('tn-component');
 ```
 
-Replace `'ix-component'` with your component name (same as the harness filename without `.harness.ts`).
+Replace `'tn-component'` with your component name (same as the harness filename without `.harness.ts`).
 
 #### 3. Create ComponentHarness Story
 
@@ -469,8 +469,8 @@ If issues persist, check for:
 
 **Fix:** Ensure:
 ```typescript
-export class IxComponentHarness extends ComponentHarness {
-  static hostSelector = 'ix-component';
+export class TnComponentHarness extends ComponentHarness {
+  static hostSelector = 'tn-component';
 
   /**
    * At least one method with JSDoc.
@@ -483,9 +483,9 @@ export class IxComponentHarness extends ComponentHarness {
 
 ## Reference Implementation
 
-### Complete Example: ix-banner
+### Complete Example: tn-banner
 
-**Harness File**: `projects/truenas-ui/src/lib/ix-banner/ix-banner.harness.ts`
+**Harness File**: `projects/truenas-ui/src/lib/banner/tn-banner.harness.ts`
 
 See this file for a complete, working example of:
 - Class-level JSDoc with description
@@ -493,7 +493,7 @@ See this file for a complete, working example of:
 - Interface documentation
 - Filter property descriptions
 
-**Story File**: `projects/truenas-ui/src/stories/ix-banner.stories.ts`
+**Story File**: `projects/truenas-ui/src/stories/tn-banner.stories.ts`
 
 See this file for:
 - Import statement (line 6)
@@ -505,11 +505,11 @@ See this file for:
 ```typescript
 // In your harness file:
 /**
- * Harness for interacting with ix-yourcomponent in tests.
+ * Harness for interacting with tn-yourcomponent in tests.
  * Brief description of what this harness provides.
  */
-export class IxYourComponentHarness extends ComponentHarness {
-  static hostSelector = 'ix-yourcomponent';
+export class TnYourComponentHarness extends ComponentHarness {
+  static hostSelector = 'tn-yourcomponent';
 
   /**
    * Gets a predicate for filtering harness instances.
@@ -528,7 +528,7 @@ export class IxYourComponentHarness extends ComponentHarness {
 }
 
 /**
- * Filter options for IxYourComponentHarness.
+ * Filter options for TnYourComponentHarness.
  */
 export interface YourComponentHarnessFilters extends BaseHarnessFilters {
   /** Description of this filter property */
@@ -540,7 +540,7 @@ export interface YourComponentHarnessFilters extends BaseHarnessFilters {
 // In your stories file:
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 
-const harnessDoc = loadHarnessDoc('ix-yourcomponent');
+const harnessDoc = loadHarnessDoc('tn-yourcomponent');
 
 // ... meta definition ...
 

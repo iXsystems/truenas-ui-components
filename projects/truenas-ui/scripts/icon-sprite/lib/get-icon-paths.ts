@@ -26,12 +26,12 @@ export function getIconPaths(names: Set<string>, projectRoot: string = process.c
   const nodeModulesPath = findNodeModules(projectRoot);
 
   names.forEach((name) => {
-    // Library custom icons (ix- prefix) - ONLY from library package
-    if (name.startsWith('ix-')) {
+    // Library custom icons (tn- prefix) - ONLY from library package
+    if (name.startsWith('tn-')) {
       // When building the library itself, icons are in the source directory
       // When consuming the library, icons are in node_modules
-      const sourceLibraryPath = resolve(projectRoot, `assets/truenas-ui-icons/custom/${name.slice(3)}.svg`);
-      const installedLibraryPath = resolve(nodeModulesPath, `truenas-ui/dist/truenas-ui/assets/truenas-ui-icons/custom/${name.slice(3)}.svg`);
+      const sourceLibraryPath = resolve(projectRoot, `assets/tn-icons/custom/${name.slice(3)}.svg`);
+      const installedLibraryPath = resolve(nodeModulesPath, `truenas-ui/dist/truenas-ui/assets/tn-icons/custom/${name.slice(3)}.svg`);
 
       // Check source first (for library development), then installed package (for consumers)
       if (fs.existsSync(sourceLibraryPath)) {

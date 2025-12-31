@@ -1,0 +1,28 @@
+<button
+  role="tab"
+  type="button"
+  [ngClass]="classes()"
+  [attr.data-testid]="testId()"
+  [attr.aria-selected]="isActive()"
+  [attr.aria-disabled]="disabled()"
+  [attr.tabindex]="tabIndex()"
+  [disabled]="disabled()"
+  (click)="onClick()"
+  (keydown)="onKeydown($event)"
+>
+  @if (hasIcon()) {
+    <span class="tn-tab__icon">
+      @if (iconContent()) {
+        <ng-container *ngTemplateOutlet="iconContent()" />
+      } @else if (iconTemplate()) {
+        <ng-container *ngTemplateOutlet="iconTemplate()" />
+      } @else {
+        <span [innerHTML]="icon()"></span>
+      }
+    </span>
+  }
+  <span class="tn-tab__label">
+    {{ label() }}
+    <ng-content />
+  </span>
+</button>

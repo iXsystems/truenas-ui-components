@@ -1,0 +1,33 @@
+// List Component Styles
+// Based on Angular Material Design patterns
+
+.tn-list {
+  display: block;
+  padding: 8px 0;
+  margin: 0;
+  background-color: var(--bg2);
+  border-radius: 4px;
+
+  // Dense variant - reduced padding and smaller list items
+  &--dense {
+    padding: 4px 0;
+    
+    ::ng-deep .tn-list-item {
+      min-height: 40px;
+      padding: 4px 16px;
+    }
+  }
+
+  // Disabled state
+  &--disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+}
+
+// List dividers
+::ng-deep .tn-divider {
+  border-top: 1px solid var(--lines);
+  margin: 0;
+  height: 1px;
+}

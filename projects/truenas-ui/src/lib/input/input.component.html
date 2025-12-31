@@ -1,0 +1,33 @@
+<div class="tn-input-container">
+  <!-- Regular input field -->
+  @if (!multiline()) {
+    <input
+      #inputEl
+      class="tn-input"
+      [id]="id"
+      [value]="value"
+      [type]="inputType()"
+      [attr.placeholder]="placeholder()"
+      [attr.data-testid]="testId()"
+      [disabled]="isDisabled()"
+      (input)="onValueChange($event)"
+      (blur)="onBlur()"
+    />
+  }
+
+  <!-- Textarea field -->
+  @if (multiline()) {
+    <textarea
+      #inputEl
+      class="tn-input tn-textarea"
+      [id]="id"
+      [value]="value"
+      [attr.placeholder]="placeholder()"
+      [attr.data-testid]="testId()"
+      [rows]="rows()"
+      [disabled]="isDisabled()"
+      (input)="onValueChange($event)"
+      (blur)="onBlur()"
+    ></textarea>
+  }
+</div>

@@ -1,0 +1,35 @@
+// Divider Component Styles
+// Based on Angular Material Design patterns
+
+:host {
+  display: block;
+  margin: 0;
+  border: none;
+  background: var(--lines);
+  height: 1px;
+  width: 100%;
+
+  // Vertical divider
+  &.tn-divider--vertical {
+    display: inline-block;
+    height: 100%;
+    width: 1px;
+    vertical-align: middle;
+    min-height: 24px; // Ensure minimum visible height
+  }
+
+  // Inset divider (with left margin for lists)
+  &.tn-divider--inset {
+    margin-left: 72px; // Standard Material Design inset (56px icon + 16px margin)
+  }
+
+  // When used in lists, apply proper spacing
+  &:host-context(tn-list) {
+    margin: 8px 0;
+  }
+
+  // Dense list variant
+  &:host-context(.tn-list--dense) {
+    margin: 4px 0;
+  }
+}

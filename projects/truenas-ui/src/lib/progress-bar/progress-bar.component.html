@@ -1,0 +1,24 @@
+<!-- Background/buffer layer -->
+<div class="tn-progress-bar-buffer" aria-hidden="true">
+  <!-- Buffer bar hidden in new implementation -->
+  <!-- Buffer dots for buffer mode -->
+  @if (mode() === 'buffer') {
+    <div class="tn-progress-bar-buffer-dots"
+         [style.width]="bufferStyles().width"
+         [style.right]="bufferStyles().right"></div>
+  }
+</div>
+
+<!-- Primary bar -->
+<div class="tn-progress-bar-bar tn-progress-bar-primary-bar" aria-hidden="true">
+  <span class="tn-progress-bar-bar-inner"
+        [style.transform]="primaryTransform()"></span>
+</div>
+
+<!-- Secondary bar (for indeterminate mode) -->
+@if (mode() === 'indeterminate') {
+  <div class="tn-progress-bar-bar tn-progress-bar-secondary-bar" aria-hidden="true">
+    <span class="tn-progress-bar-bar-inner"></span>
+  </div>
+}
+

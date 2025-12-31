@@ -1,0 +1,34 @@
+<div class="tn-tree-node"
+     cdkTreeNodeToggle
+     role="treeitem"
+     [class.tn-tree-node--expandable]="isExpandable"
+     [attr.aria-level]="level + 1"
+     [attr.aria-expanded]="isExpandable ? isExpanded : null"
+     [attr.aria-selected]="false"
+     [style.cursor]="isExpandable ? 'pointer' : 'default'">
+  
+  <div class="tn-tree-node__content">
+    <!-- Arrow icon for expandable nodes -->
+    @if (isExpandable) {
+      <div
+        class="tn-tree-node__toggle"
+        [class.tn-tree-node__toggle--expanded]="isExpanded">
+        <tn-icon
+          library="mdi"
+          size="sm"
+          style="transition: transform 0.2s ease;"
+          [name]="isExpanded ? 'chevron-down' : 'chevron-right'" />
+      </div>
+    }
+
+    <!-- Spacer for non-expandable nodes -->
+    @if (!isExpandable) {
+      <div class="tn-tree-node__spacer"></div>
+    }
+    
+    <!-- Node content -->
+    <div class="tn-tree-node__text">
+      <ng-content />
+    </div>
+  </div>
+</div>

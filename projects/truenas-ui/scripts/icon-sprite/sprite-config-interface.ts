@@ -1,7 +1,7 @@
 /**
  * Default base path for sprite assets (namespaced to avoid collisions with consumer apps)
  */
-export const defaultSpriteBasePath = 'assets/truenas-ui-icons';
+export const defaultSpriteBasePath = 'assets/tn-icons';
 
 /**
  * Configuration options for icon sprite generation
@@ -21,7 +21,7 @@ export interface SpriteGeneratorConfig {
 
   /**
    * Optional directory containing custom SVG icons
-   * Custom icons will be automatically prefixed with 'ix-'
+   * Custom icons will be automatically prefixed with 'tn-'
    */
   customIconsDir?: string;
 

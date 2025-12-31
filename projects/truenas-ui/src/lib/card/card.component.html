@@ -1,0 +1,102 @@
+<div [ngClass]="classes()">
+  <!-- Header section -->
+  @if (hasHeader()) {
+    <div class="tn-card__header">
+      <div class="tn-card__header-left">
+        @if (title()) {
+          <h3
+            class="tn-card__title"
+            [class.tn-card__title--link]="titleLink()"
+            [attr.tabindex]="titleLink() ? 0 : null"
+            [attr.role]="titleLink() ? 'button' : null"
+            (click)="onTitleClick()"
+            (keydown.enter)="onTitleClick()"
+            (keydown.space)="onTitleClick()">
+            {{ title() }}
+          </h3>
+        }
+      </div>
+
+      <div class="tn-card__header-right">
+        <!-- Header Status -->
+        @if (headerStatus(); as status) {
+          <div
+            class="tn-card__status"
+            [ngClass]="getStatusClass(status?.type)">
+            {{ status.label }}
+          </div>
+        }
+
+        <!-- Header Control (Slide Toggle) -->
+        @if (headerControl(); as control) {
+          <div class="tn-card__control">
+            <tn-slide-toggle
+              [label]="control.label"
+              [checked]="control.checked"
+              [disabled]="control.disabled || false"
+              (change)="onControlChange($event)" />
+          </div>
+        }
+
+        <!-- Header Menu -->
+        @if (headerMenu(); as menu) {
+          @if (menu.length) {
+            <div class="tn-card__menu">
+              <tn-icon-button
+                name="dots-vertical"
+                library="mdi"
+                size="md"
+                ariaLabel="Card menu"
+                [tnMenuTriggerFor]="cardMenu" />
+              <tn-menu
+                #cardMenu
+                [items]="menu"
+                (menuItemClick)="onHeaderMenuItemClick($event)" />
+            </div>
+          }
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Content section -->
+  <div class="tn-card__content">
+    <ng-content />
+  </div>
+
+  <!-- Footer section -->
+  @if (hasFooter()) {
+    <div class="tn-card__footer">
+      <div class="tn-card__footer-left">
+        @if (footerLink(); as link) {
+          <button
+            type="button"
+            class="tn-card__footer-link"
+            (click)="link.handler()">
+            {{ link.label }}
+          </button>
+        }
+      </div>
+
+      <div class="tn-card__footer-right">
+        @if (secondaryAction(); as action) {
+          <tn-button
+            variant="outline"
+            color="default"
+            [label]="action.label"
+            [disabled]="action.disabled || false"
+            (click)="action.handler()" />
+        }
+
+        @if (primaryAction(); as action) {
+          <tn-button
+            variant="filled"
+            color="primary"
+            [label]="action.label"
+            [disabled]="action.disabled || false"
+            (click)="action.handler()" />
+        }
+      </div>
+    </div>
+  }
+</div>

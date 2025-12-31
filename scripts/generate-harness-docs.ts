@@ -427,7 +427,7 @@ function generateLoaderFile(docsRegistry: Record<string, string>): string {
  * Usage in story files:
  * \`\`\`typescript
  * import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
- * const harnessDoc = loadHarnessDoc('ix-component');
+ * const harnessDoc = loadHarnessDoc('component-name');
  * \`\`\`
  */
 
@@ -451,12 +451,12 @@ export const HARNESS_DOCS: Record<string, string> = {\n`;
 /**
  * Load harness documentation for a component.
  *
- * @param componentName - The component name (e.g., 'ix-banner', 'ix-button')
+ * @param componentName - The component name without prefix (e.g., 'banner', 'button')
  * @returns The markdown documentation string, or null if no harness doc exists
  *
  * @example
  * \`\`\`typescript
- * const harnessDoc = loadHarnessDoc('ix-banner');
+ * const harnessDoc = loadHarnessDoc('banner');
  *
  * if (harnessDoc) {
  *   // Include in story parameters

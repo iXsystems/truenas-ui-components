@@ -1,0 +1,21 @@
+// Selection List Component Styles
+// Based on Angular Material Design patterns
+
+.tn-selection-list {
+  display: block;
+  padding: 8px 0;
+  margin: 0;
+  background-color: var(--bg2);
+  border-radius: 4px;
+
+  // Dense variant - reduced padding
+  &--dense {
+    padding: 4px 0;
+  }
+
+  // Disabled state
+  &--disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+}

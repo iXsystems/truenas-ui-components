@@ -5,50 +5,50 @@ Naming rules, architecture decisions, and design patterns for TrueNAS UI Compone
 ## Naming Conventions
 
 ### Component Selector
-- **Format:** `ix-[name]` (lowercase, hyphenated)
-- **Prefix:** Always use `ix-` prefix
+- **Format:** `tn-[name]` (lowercase, hyphenated)
+- **Prefix:** Always use `tn-` prefix
 - **Examples:**
-  - `ix-button`
-  - `ix-card`
-  - `ix-expansion-panel`
-  - `ix-icon-button`
+  - `tn-button`
+  - `tn-card`
+  - `tn-expansion-panel`
+  - `tn-icon-button`
 
 ### Component Class Name
-- **Format:** `Ix[Name]Component` (PascalCase)
+- **Format:** `Tn[Name]Component` (PascalCase)
 - **Prefix:** `Ix`
 - **Suffix:** `Component`
 - **Examples:**
-  - `IxButtonComponent`
-  - `IxCardComponent`
-  - `IxExpansionPanelComponent`
-  - `IxIconButtonComponent`
+  - `TnButtonComponent`
+  - `TnCardComponent`
+  - `TnExpansionPanelComponent`
+  - `TnIconButtonComponent`
 
 ### File Names
 
 | File Type | Pattern | Example |
 |-----------|---------|---------|
-| Component | `ix-[name].component.ts` | `ix-button.component.ts` |
-| Template | `ix-[name].component.html` | `ix-button.component.html` |
-| Stylesheet | `ix-[name].component.scss` | `ix-button.component.scss` |
-| Test | `ix-[name].component.spec.ts` | `ix-button.component.spec.ts` |
-| Interfaces | `ix-[name].interfaces.ts` | `ix-card.interfaces.ts` |
-| Story | `ix-[name].stories.ts` | `ix-button.stories.ts` |
+| Component | `tn-[name].component.ts` | `tn-button.component.ts` |
+| Template | `tn-[name].component.html` | `tn-button.component.html` |
+| Stylesheet | `tn-[name].component.scss` | `tn-button.component.scss` |
+| Test | `tn-[name].component.spec.ts` | `tn-button.component.spec.ts` |
+| Interfaces | `tn-[name].interfaces.ts` | `tn-card.interfaces.ts` |
+| Story | `tn-[name].stories.ts` | `tn-button.stories.ts` |
 
 ### CSS Class Names (BEM)
 
 ```scss
-.ix-[component]                 // Block
-.ix-[component]__[element]      // Element
-.ix-[component]--[modifier]     // Modifier
+.tn-[component]                 // Block
+.tn-[component]__[element]      // Element
+.tn-[component]--[modifier]     // Modifier
 ```
 
 **Examples:**
 ```scss
-.ix-card                    // Block
-.ix-card__header            // Element
-.ix-card__title             // Element
-.ix-card--elevated          // Modifier
-.ix-card--primary           // Modifier
+.tn-card                    // Block
+.tn-card__header            // Element
+.tn-card__title             // Element
+.tn-card--elevated          // Modifier
+.tn-card--primary           // Modifier
 ```
 
 ### Input/Output Signals (Modern Angular)
@@ -71,7 +71,7 @@ Naming rules, architecture decisions, and design patterns for TrueNAS UI Compone
 ```typescript
 import { Component, input, output } from '@angular/core';
 
-export class IxComponent {
+export class TnComponent {
   // Input signals
   disabled = input<boolean>(false);
   variant = input<'default' | 'primary'>('default');
@@ -101,7 +101,7 @@ value = input<string>('');
 valueChange = output<string>();
 
 // Usage
-<ix-component [(value)]="myValue" />
+<tn-component [(value)]="myValue" />
 ```
 
 ## Architecture Decisions
@@ -120,7 +120,7 @@ valueChange = output<string>();
 **Implementation:**
 ```typescript
 @Component({
-  selector: 'ix-[name]',
+  selector: 'tn-[name]',
   standalone: true,  // Required!
   imports: [CommonModule, ...],
 })
@@ -182,7 +182,7 @@ import { ViewEncapsulation } from '@angular/core';
 ```typescript
 import { libIconMarker } from '../icon-marker';
 
-libIconMarker('ix-icon-name');
+libIconMarker('tn-icon-name');
 ```
 
 **In Stories/Tests:**
@@ -253,7 +253,7 @@ Use for structured, type-safe composition:
 
 ```typescript
 @Component({
-  imports: [IxButtonComponent, IxIconComponent],
+  imports: [TnButtonComponent, TnIconComponent],
 })
 ```
 
@@ -271,7 +271,7 @@ Use for behavior, not presentation:
   selector: '[ixMenuTrigger]',
   standalone: true,
 })
-export class IxMenuTriggerDirective {
+export class TnMenuTriggerDirective {
   // Adds behavior to host element
 }
 ```
@@ -289,7 +289,7 @@ Use writable signals for internal state:
 ```typescript
 import { signal } from '@angular/core';
 
-export class IxComponentComponent {
+export class TnComponentComponent {
   // Writable signals for internal state
   private _value = signal('');
   isOpen = signal(false);
@@ -308,7 +308,7 @@ Use signal-based inputs/outputs for parent-child communication:
 ```typescript
 import { input, output } from '@angular/core';
 
-export class IxComponentComponent {
+export class TnComponentComponent {
   // Input signal (read-only from parent)
   value = input<string>('');
 
@@ -331,7 +331,7 @@ import { input, output } from '@angular/core';
 checked = input<boolean>(false);
 checkedChange = output<boolean>();
 
-// Usage: <ix-checkbox [(checked)]="myValue"></ix-checkbox>
+// Usage: <tn-checkbox [(checked)]="myValue"></tn-checkbox>
 ```
 
 ## Form Integration
@@ -346,11 +346,11 @@ import { forwardRef } from '@angular/core';
 @Component({
   providers: [{
     provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => IxInputComponent),
+    useExisting: forwardRef(() => TnInputComponent),
     multi: true,
   }],
 })
-export class IxInputComponent implements ControlValueAccessor {
+export class TnInputComponent implements ControlValueAccessor {
   value: any;
   onChange: (value: any) => void = () => {};
   onTouched: () => void = () => {};
@@ -418,7 +418,7 @@ Support standard keys:
 Provide visible focus indicators:
 
 ```scss
-.ix-component {
+.tn-component {
   &:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
@@ -461,7 +461,7 @@ Defer loading of heavy components when possible.
 - Make components standalone
 - Use CSS custom properties
 - Follow BEM naming for CSS
-- Prefix components with `ix-`
+- Prefix components with `tn-`
 - Implement accessibility features
 - Write comprehensive tests
 - Use semantic HTML
@@ -481,29 +481,29 @@ Defer loading of heavy components when possible.
 ```
 projects/truenas-ui/src/
 ├── lib/
-│   ├── ix-button/
-│   │   ├── ix-button.component.ts
-│   │   ├── ix-button.component.html
-│   │   ├── ix-button.component.scss
-│   │   ├── ix-button.component.spec.ts
+│   ├── tn-button/
+│   │   ├── tn-button.component.ts
+│   │   ├── tn-button.component.html
+│   │   ├── tn-button.component.scss
+│   │   ├── tn-button.component.spec.ts
 │   │   └── index.ts (optional)
-│   └── ix-card/
-│       ├── ix-card.component.ts
-│       ├── ix-card.component.html
-│       ├── ix-card.component.scss
-│       ├── ix-card.component.spec.ts
-│       ├── ix-card.interfaces.ts
+│   └── tn-card/
+│       ├── tn-card.component.ts
+│       ├── tn-card.component.html
+│       ├── tn-card.component.scss
+│       ├── tn-card.component.spec.ts
+│       ├── tn-card.interfaces.ts
 │       └── index.ts
 ├── stories/
-│   ├── ix-button.stories.ts
-│   └── ix-card.stories.ts
+│   ├── tn-button.stories.ts
+│   └── tn-card.stories.ts
 └── public-api.ts
 ```
 
 ## Examples
 
 For real-world examples, examine:
-- **ix-button/** - Simple component pattern
-- **ix-card/** - Complex component with interfaces
-- **ix-menu/** - Component with directives
-- **ix-checkbox/** - Form control integration
+- **tn-button/** - Simple component pattern
+- **tn-card/** - Complex component with interfaces
+- **tn-menu/** - Component with directives
+- **tn-checkbox/** - Form control integration

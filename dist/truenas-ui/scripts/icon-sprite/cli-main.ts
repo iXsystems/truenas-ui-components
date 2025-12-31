@@ -41,7 +41,7 @@ Options:
                       Default: ./src/assets/icons
 
   --custom <dir>      Custom icons directory (optional)
-                      Icons will be prefixed with 'ix-'
+                      Icons will be prefixed with 'tn-'
 
   --config <file>     Configuration file path
                       Default: truenas-icons.config.js

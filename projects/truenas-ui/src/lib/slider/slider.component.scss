@@ -1,0 +1,207 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 48px;
+  position: relative;
+  touch-action: pan-x;
+}
+
+.tn-slider-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  
+  &[data-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.tn-slider-track {
+  position: relative;
+  width: 100%;
+  height: 4px;
+}
+
+.tn-slider-track-inactive {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--lines, #e0e0e0);
+  border-radius: 2px;
+}
+
+.tn-slider-track-active {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.tn-slider-track-active-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--primary, #007bff);
+  border-radius: 2px;
+  transform-origin: left center;
+  transition: transform 0.1s ease-out;
+}
+
+// Style for the thumb input (visually hidden but accessible)
+:host ::ng-deep .tn-slider-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  z-index: 2;
+  
+  // Remove default styling
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  border: none;
+  outline: none;
+  
+  &:disabled {
+    cursor: not-allowed;
+  }
+  
+  // Focus styles - show visual thumb when focused
+  &:focus {
+    outline: none;
+  }
+  
+  &:focus-visible {
+    outline: none;
+    
+    + .tn-slider-visual-thumb {
+      outline: 2px solid var(--primary, #007bff);
+      outline-offset: 2px;
+    }
+  }
+}
+
+// Visual thumb indicator (real DOM element) - fader style
+.tn-slider-thumb-visual {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  pointer-events: none;
+  z-index: 3;
+  transition: transform 0.1s ease-out;
+}
+
+.tn-slider-thumb-knob {
+  width: 20px;
+  height: 24px;
+  background: var(--primary, #007bff);
+  border: 2px solid var(--bg1, white);
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: box-shadow 0.15s ease;
+  transform: translateY(-50%);
+}
+
+.tn-slider-container:hover .tn-slider-thumb-knob {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.tn-slider-container[data-disabled="true"] .tn-slider-thumb-knob {
+  background: var(--fg2, #999);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+// Thumb label (tooltip-style) - matches tn-tooltip styling but with primary background
+.tn-slider-thumb-label {
+  position: absolute;
+  bottom: calc(100% + 16px); // Position above the thumb knob with 16px gap
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  padding: 8px 12px;
+  background: var(--primary, #007bff);
+  color: var(--primary-txt, white);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+  transition: opacity 0.15s ease;
+  z-index: 4;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+  // Speech bubble pointer
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid var(--primary, #007bff);
+  }
+
+  &.visible {
+    opacity: 1;
+  }
+}
+
+// Track label positioned at the right end above the track
+.tn-slider-track-label {
+  position: absolute;
+  top: -28px; // Position above the track
+  right: 0;   // Align to right end of track
+  padding: 4px 0;
+  background: transparent;
+  color: var(--fg1, #000);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  user-select: none;
+  z-index: 2;
+}
+
+
+// Accessibility improvements
+@media (prefers-reduced-motion: reduce) {
+  .tn-slider-track-active-fill,
+  .tn-slider-thumb-visual,
+  .tn-slider-thumb-knob,
+  .tn-slider-thumb-label {
+    transition: none;
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .tn-slider-track-inactive {
+    border: 1px solid var(--fg1, #000);
+  }
+  
+  .tn-slider-thumb-knob {
+    border-width: 3px;
+    border-color: var(--fg1, #000);
+  }
+}

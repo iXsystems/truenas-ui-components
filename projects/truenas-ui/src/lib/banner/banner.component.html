@@ -1,0 +1,26 @@
+<div
+  aria-live="polite"
+  [ngClass]="classes()"
+  [attr.role]="ariaRole()"
+>
+  <div class="tn-banner__icon">
+    <tn-icon
+      library="mdi"
+      size="md"
+      aria-hidden="true"
+      [name]="iconName()"
+    />
+  </div>
+
+  <div class="tn-banner__content">
+    <div class="tn-banner__heading">
+      {{ heading() }}
+    </div>
+
+    @if (message()) {
+      <div class="tn-banner__message">
+        {{ message() }}
+      </div>
+    }
+  </div>
+</div>

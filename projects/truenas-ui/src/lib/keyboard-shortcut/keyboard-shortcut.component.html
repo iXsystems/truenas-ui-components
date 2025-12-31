@@ -1,0 +1,8 @@
+<span class="tn-keyboard-shortcut" [attr.aria-label]="'Keyboard shortcut: ' + displayShortcut()">
+  @for (key of shortcutKeys(); track $index; let last = $last) {
+    <kbd class="tn-key">{{ key }}</kbd>
+    @if (!last) {
+      <span class="tn-key-separator">{{ separator() || '+' }}</span>
+    }
+  }
+</span>

@@ -1,8 +1,0 @@
-<span class="ix-keyboard-shortcut" [attr.aria-label]="'Keyboard shortcut: ' + displayShortcut()">
-  @for (key of shortcutKeys(); track $index; let last = $last) {
-    <kbd class="ix-key">{{ key }}</kbd>
-    @if (!last) {
-      <span class="ix-key-separator">{{ separator() || '+' }}</span>
-    }
-  }
-</span>

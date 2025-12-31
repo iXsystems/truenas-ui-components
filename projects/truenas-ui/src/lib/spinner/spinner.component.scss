@@ -1,0 +1,50 @@
+.tn-spinner {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.tn-spinner-svg {
+  animation: tn-spinner-rotate 2s linear infinite;
+  transform-origin: center;
+}
+
+.tn-spinner-circle {
+  stroke: var(--primary, #007bff);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tn-spinner-indeterminate .tn-spinner-circle {
+  animation: tn-spinner-dash 1.4s ease-in-out infinite;
+}
+
+.tn-spinner-determinate .tn-spinner-svg {
+  animation: none;
+  transform: rotate(-90deg);
+}
+
+@keyframes tn-spinner-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes tn-spinner-dash {
+  0% {
+    stroke-dasharray: 1, 200;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 100, 200;
+    stroke-dashoffset: -15;
+  }
+  100% {
+    stroke-dasharray: 100, 200;
+    stroke-dashoffset: -125;
+  }
+}
+
+

@@ -1,0 +1,33 @@
+<div [ngClass]="classes()">
+  <label class="tn-checkbox__label" [for]="id">
+    <input
+      #checkboxEl
+      type="checkbox"
+      class="tn-checkbox__input"
+      [id]="id"
+      [checked]="effectiveChecked()"
+      [disabled]="isDisabled()"
+      [required]="required()"
+      [indeterminate]="indeterminate()"
+      [attr.data-testid]="testId()"
+      [attr.aria-describedby]="error() ? id + '-error' : null"
+      [attr.aria-invalid]="error() ? 'true' : null"
+      (change)="onCheckboxChange($event)"
+    />
+    <span class="tn-checkbox__checkmark"></span>
+    @if (!hideLabel()) {
+      <span class="tn-checkbox__text">{{ label() }}</span>
+    }
+  </label>
+
+  @if (error()) {
+    <div
+      class="tn-checkbox__error"
+      role="alert"
+      aria-live="polite"
+      [id]="id + '-error'"
+    >
+      {{ error() }}
+    </div>
+  }
+</div>

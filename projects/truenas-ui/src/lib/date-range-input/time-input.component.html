@@ -1,0 +1,7 @@
+<tn-select
+  [options]="timeSelectOptions()"
+  [placeholder]="placeholder()"
+  [disabled]="isDisabled()"
+  [testId]="testId()"
+  [ngModel]="_value"
+  (selectionChange)="onSelectionChange($event)" />

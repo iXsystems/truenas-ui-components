@@ -1,8 +1,8 @@
-<ix-dialog-shell title="Backup Configuration Wizard" [showFullscreenButton]="true">
+<tn-dialog-shell title="Backup Configuration Wizard" [showFullscreenButton]="true">
     <div style="padding: 0 var(--content-padding); margin-top: var(--content-padding);">
-    <ix-stepper orientation="auto" [linear]="true" [selectedIndex]="currentStep" (selectionChange)="onStepChange($event)">
+    <tn-stepper orientation="auto" [linear]="true" [selectedIndex]="currentStep" (selectionChange)="onStepChange($event)">
     
-    <ix-step label="Backup Target">
+    <tn-step label="Backup Target">
         <h4>Select Backup Target</h4>
         <p>Choose where you want to store your backup data.</p>
         <div style="margin-top: 16px;">
@@ -11,15 +11,15 @@
             Backup Destination
             </label>
             <div style="display: flex; flex-direction: column; gap: 8px;">
-            <ix-radio name="backupTarget" value="local" label="Local Storage - Fast, no network required" [(ngModel)]="backupTarget" />
-            <ix-radio name="backupTarget" value="cloud" label="Cloud Storage - Off-site protection" [(ngModel)]="backupTarget" />
-            <ix-radio name="backupTarget" value="remote" label="Remote Server - Network attached storage" [(ngModel)]="backupTarget" />
+            <tn-radio name="backupTarget" value="local" label="Local Storage - Fast, no network required" [(ngModel)]="backupTarget" />
+            <tn-radio name="backupTarget" value="cloud" label="Cloud Storage - Off-site protection" [(ngModel)]="backupTarget" />
+            <tn-radio name="backupTarget" value="remote" label="Remote Server - Network attached storage" [(ngModel)]="backupTarget" />
             </div>
         </div>
         </div>
-    </ix-step>
+    </tn-step>
 
-    <ix-step label="Credentials">
+    <tn-step label="Credentials">
         <h4>Authentication & Credentials</h4>
         <p>Select an existing account to use for your backup.</p>
         <div style="margin-top: 16px;">
@@ -27,14 +27,14 @@
             <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">
             Choose an account
             </label>
-            <ix-select placeholder="Select an account"
+            <tn-select placeholder="Select an account"
                         [options]="accountOptions"
                         [(ngModel)]="selectedAccount" />
         </div>
         </div>
-    </ix-step>
+    </tn-step>
 
-    <ix-step label="Select Dataset">
+    <tn-step label="Select Dataset">
         <h4>Choose Dataset to Backup</h4>
         <p>Enter the dataset path you want to include in your backup.</p>
         <div style="margin-top: 16px;">
@@ -42,16 +42,16 @@
             <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">
             Dataset Path
             </label>
-            <ix-input [placeholder]="'Enter dataset path (e.g., pool1/documents)'"
+            <tn-input [placeholder]="'Enter dataset path (e.g., pool1/documents)'"
                     [(ngModel)]="selectedDatasetPath" />
         </div>
         <div>
-            <ix-checkbox label="Include snapshots in backup" [(ngModel)]="includeSnapshots" />
+            <tn-checkbox label="Include snapshots in backup" [(ngModel)]="includeSnapshots" />
         </div>
         </div>
-    </ix-step>
+    </tn-step>
 
-    <ix-step label="Review">
+    <tn-step label="Review">
         <h4>Review Configuration</h4>
         <p>Please review your backup configuration before proceeding.</p>
         <div style="margin-top: 16px;">
@@ -79,23 +79,23 @@
             <strong>Ready to create backup task!</strong> All configuration is valid and complete.
         </div>
         </div>
-    </ix-step>
+    </tn-step>
 
-    </ix-stepper>
+    </tn-stepper>
     </div>
     
-    <div ixDialogAction>
-    <ix-button variant="outline"
+    <div tnDialogAction>
+    <tn-button variant="outline"
                 label="Cancel"
                 (click)="cancel()" />
     @if (currentStep > 0) {
-    <ix-button variant="outline"
+    <tn-button variant="outline"
                 label="Back"
                 (click)="previousStep()" />
     }
-    <ix-button color="primary"
+    <tn-button color="primary"
                 [label]="getNextButtonLabel()"
                 [disabled]="!canProceed()"
                 (click)="nextStep()" />
     </div>
-</ix-dialog-shell>
+</tn-dialog-shell>

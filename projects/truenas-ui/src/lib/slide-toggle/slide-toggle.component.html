@@ -1,0 +1,78 @@
+<div [ngClass]="classes()" [attr.data-testid]="testId()">
+  <label class="tn-slide-toggle__label" [for]="id">
+
+    <!-- Label before toggle -->
+    @if (label() && labelPosition() === 'before') {
+      <span
+        class="tn-slide-toggle__label-text tn-slide-toggle__label-text--before"
+        tabindex="0"
+        role="button"
+        (click)="onLabelClick()"
+        (keydown.enter)="onLabelClick()"
+        (keydown.space)="onLabelClick()">
+        {{ label() }}
+      </span>
+    }
+
+    <!-- Toggle track and thumb -->
+    <div class="tn-slide-toggle__bar">
+      <input
+        #toggleEl
+        type="checkbox"
+        class="tn-slide-toggle__input"
+        [id]="id"
+        [checked]="effectiveChecked()"
+        [disabled]="isDisabled()"
+        [required]="required()"
+        [attr.aria-label]="effectiveAriaLabel()"
+        [attr.aria-labelledby]="ariaLabelledby()"
+        (change)="onToggleChange($event)"
+      />
+
+      <div class="tn-slide-toggle__track">
+        <div class="tn-slide-toggle__track-fill"></div>
+      </div>
+
+      <div class="tn-slide-toggle__thumb-container">
+        <div class="tn-slide-toggle__thumb">
+          <div class="tn-slide-toggle__ripple"></div>
+          <!-- State icon -->
+          <div class="tn-slide-toggle__icon">
+            @if (effectiveChecked()) {
+              <svg
+                class="tn-slide-toggle__check-icon"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor"/>
+              </svg>
+            }
+            @if (!effectiveChecked()) {
+              <svg
+                class="tn-slide-toggle__minus-icon"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16">
+                <path d="M19 13H5v-2h14v2z" fill="currentColor"/>
+              </svg>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Label after toggle -->
+    @if (label() && labelPosition() === 'after') {
+      <span
+        class="tn-slide-toggle__label-text tn-slide-toggle__label-text--after"
+        tabindex="0"
+        role="button"
+        (click)="onLabelClick()"
+        (keydown.enter)="onLabelClick()"
+        (keydown.space)="onLabelClick()">
+        {{ label() }}
+      </span>
+    }
+
+  </label>
+</div>

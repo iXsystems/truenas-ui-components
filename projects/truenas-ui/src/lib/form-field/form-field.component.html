@@ -1,0 +1,33 @@
+<div class="tn-form-field" [attr.data-testid]="testId()">
+  <!-- Label -->
+  @if (label()) {
+    <label class="tn-form-field-label" [class.required]="required()">
+      {{ label() }}
+      @if (required()) {
+        <span class="required-asterisk" aria-label="required">*</span>
+      }
+    </label>
+  }
+
+  <!-- Form Control Content -->
+  <div class="tn-form-field-wrapper">
+    <ng-content />
+  </div>
+
+  <!-- Hint or Error Message -->
+  <div class="tn-form-field-subscript">
+    @if (showError()) {
+      <div
+        class="tn-form-field-error"
+        role="alert"
+        aria-live="polite">
+        {{ errorMessage() }}
+      </div>
+    }
+    @if (showHint()) {
+      <div class="tn-form-field-hint">
+        {{ hint() }}
+      </div>
+    }
+  </div>
+</div>

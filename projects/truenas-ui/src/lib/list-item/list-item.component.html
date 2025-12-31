@@ -1,0 +1,33 @@
+<div class="tn-list-item__content">
+  <!-- Leading icon/avatar slot -->
+  @if (hasLeadingContent()) {
+    <div class="tn-list-item__leading">
+      <ng-content select="[tnListIcon], [tnListAvatar]" />
+    </div>
+  }
+
+  <!-- Text content -->
+  <div class="tn-list-item__text">
+    <!-- Primary text -->
+    <div class="tn-list-item__primary-text">
+      <ng-content select="[tnListItemTitle], [tnListItemPrimary]" />
+      @if (!hasPrimaryTextDirective()) {
+        <ng-content />
+      }
+    </div>
+
+    <!-- Secondary text -->
+    @if (hasSecondaryTextContent()) {
+      <div class="tn-list-item__secondary-text">
+        <ng-content select="[tnListItemLine], [tnListItemSecondary]" />
+      </div>
+    }
+  </div>
+
+  <!-- Trailing content slot -->
+  @if (hasTrailingContent()) {
+    <div class="tn-list-item__trailing">
+      <ng-content select="[tnListItemTrailing]" />
+    </div>
+  }
+</div>

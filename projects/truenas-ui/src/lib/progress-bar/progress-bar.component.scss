@@ -1,0 +1,136 @@
+:host {
+  display: block;
+  height: 4px;
+  overflow: hidden;
+  position: relative;
+  transition: opacity 250ms linear;
+  width: 100%;
+}
+
+// Base buffer container
+.tn-progress-bar-buffer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  background-color: var(--bg2, #e5e7eb);
+}
+
+// Buffer bar (deprecated - hidden in new implementation)
+.tn-progress-bar-buffer-bar {
+  display: none;
+}
+
+// Buffer dots pattern (for buffer mode)
+.tn-progress-bar-buffer-dots {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  background-image: radial-gradient(circle at center, var(--alt-bg2) 2px, transparent 2px);
+  background-size: 10px 4px;
+  background-repeat: repeat-x;
+  animation: tn-progress-bar-buffer-dots 250ms infinite linear;
+}
+
+@keyframes tn-progress-bar-buffer-dots {
+  0% { background-position-x: 0; }
+  100% { background-position-x: -10px; }
+}
+
+// Bar container
+.tn-progress-bar-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  transform-origin: left center;
+}
+
+// Bar inner element (the actual colored bar)
+.tn-progress-bar-bar-inner {
+  display: block;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: var(--primary, #3b82f6);
+  transform-origin: left center;
+  height: 100%;
+}
+
+// Primary bar (always present)
+.tn-progress-bar-primary-bar {
+  z-index: 1;
+}
+
+// Secondary bar (indeterminate mode only)
+.tn-progress-bar-secondary-bar {
+  z-index: 0;
+  display: none; // Hidden by default
+  
+  .tn-progress-bar-bar-inner {
+    background-color: var(--primary, #3b82f6);
+  }
+}
+
+// Indeterminate animations (simplified to match query but opposite direction)
+:host(.tn-progress-bar-indeterminate) {
+  .tn-progress-bar-primary-bar .tn-progress-bar-bar-inner {
+    animation: tn-progress-bar-indeterminate 2000ms infinite linear;
+    background-color: var(--primary, #3b82f6);
+    opacity: 1 !important;
+    z-index: 999 !important;
+  }
+}
+
+// Simple indeterminate animation (opposite of query mode)
+@keyframes tn-progress-bar-indeterminate {
+  0% {
+    transform: translateX(-100%) scaleX(0.3);
+  }
+  100% {
+    transform: translateX(100%) scaleX(0.3);
+  }
+}
+
+
+// Buffer mode specific styles
+:host(.tn-progress-bar-buffer) {
+  .tn-progress-bar-buffer-bar {
+    opacity: 1;
+  }
+  
+  .tn-progress-bar-buffer-dots {
+    opacity: 1;
+  }
+}
+
+// Hide elements based on mode
+:host(.tn-progress-bar-determinate) {
+  .tn-progress-bar-buffer-dots {
+    display: none;
+  }
+  
+  .tn-progress-bar-secondary-bar {
+    display: none;
+  }
+}
+
+:host(.tn-progress-bar-buffer) {
+  .tn-progress-bar-secondary-bar {
+    display: none;
+  }
+}
+
+:host(.tn-progress-bar-indeterminate) {
+  .tn-progress-bar-buffer-dots {
+    display: none;
+  }
+  
+  .tn-progress-bar-buffer-bar {
+    display: none;
+  }
+}

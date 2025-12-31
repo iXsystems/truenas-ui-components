@@ -1,0 +1,32 @@
+<div [ngClass]="classes()">
+  <label class="tn-radio__label" [for]="id">
+    <input
+      #radioEl
+      type="radio"
+      class="tn-radio__input"
+      [id]="id"
+      [name]="name()"
+      [value]="value()"
+      [checked]="checked"
+      [disabled]="isDisabled()"
+      [required]="required()"
+      [attr.data-testid]="testId()"
+      [attr.aria-describedby]="error() ? id + '-error' : null"
+      [attr.aria-invalid]="error() ? 'true' : null"
+      (change)="onRadioChange($event)"
+    />
+    <span class="tn-radio__checkmark"></span>
+    <span class="tn-radio__text">{{ label() }}</span>
+  </label>
+
+  @if (error()) {
+    <div
+      class="tn-radio__error"
+      role="alert"
+      aria-live="polite"
+      [id]="id + '-error'"
+    >
+      {{ error() }}
+    </div>
+  }
+</div>

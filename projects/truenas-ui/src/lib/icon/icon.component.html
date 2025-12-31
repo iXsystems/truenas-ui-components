@@ -1,0 +1,50 @@
+<div
+  class="tn-icon"
+  role="img"
+  [ngClass]="'tn-icon--' + size()"
+  [style.color]="color()"
+  [attr.aria-label]="effectiveAriaLabel()"
+  [attr.title]="tooltip()">
+  
+
+  @switch (iconResult.source) {
+    <!-- Sprite icons (from generated sprite.svg) -->
+    @case ('sprite') {
+      <svg
+           class="tn-icon__sprite"
+           aria-hidden="true">
+        <use [attr.href]="iconResult.spriteUrl" />
+      </svg>
+    }
+
+    <!-- SVG content (from third-party libraries or assets) -->
+    @case ('svg') {
+      <div
+           #svgContainer
+           class="tn-icon__svg">
+      </div>
+    }
+
+    <!-- CSS class icons (Font Awesome, Material Icons, etc.) -->
+    @case ('css') {
+      <i
+         aria-hidden="true"
+         [class]="'tn-icon__css ' + iconResult.content">
+      </i>
+    }
+
+    <!-- Unicode characters -->
+    @case ('unicode') {
+      <span
+            class="tn-icon__unicode"
+            aria-hidden="true">{{ iconResult.content }}</span>
+    }
+
+    <!-- Text abbreviation fallback -->
+    @default {
+      <span
+            class="tn-icon__text"
+            aria-hidden="true">{{ iconResult.content }}</span>
+    }
+  }
+</div>

@@ -1,0 +1,48 @@
+<div class="tn-file-picker-container">
+  <div #wrapper ixInput class="tn-file-picker-wrapper" style="padding-right: 40px;">
+    <input
+      type="text"
+      class="tn-file-picker-input"
+      [class.error]="hasError()"
+      [value]="selectedPath() | tnStripMntPrefix"
+      [placeholder]="placeholder()"
+      [readonly]="!allowManualInput()"
+      [disabled]="isDisabled()"
+      (input)="onPathInput($event)">
+
+    <button
+      type="button"
+      class="tn-file-picker-toggle"
+      aria-label="Open file picker"
+      [disabled]="isDisabled()"
+      (click)="openFilePicker()">
+      <tn-icon name="folder" library="mdi" />
+    </button>
+  </div>
+  
+  <ng-template #filePickerTemplate>
+    <tn-file-picker-popup
+      class="tn-file-picker-popup"
+      [mode]="mode()"
+      [multiSelect]="multiSelect()"
+      [allowCreate]="allowCreate()"
+      [allowDatasetCreate]="allowDatasetCreate()"
+      [allowZvolCreate]="allowZvolCreate()"
+      [currentPath]="currentPath()"
+      [fileItems]="fileItems()"
+      [selectedItems]="selectedItems()"
+      [loading]="loading()"
+      [creationLoading]="creationLoading()"
+      [fileExtensions]="fileExtensions()"
+      (itemClick)="onItemClick($event)"
+      (itemDoubleClick)="onItemDoubleClick($event)"
+      (pathNavigate)="navigateToPath($event)"
+      (createFolder)="onCreateFolder()"
+      (submitFolderName)="onSubmitFolderName($event.name, $event.tempId)"
+      (cancelFolderCreation)="onCancelFolderCreation($event)"
+      (clearSelection)="onClearSelection()"
+      (submit)="onSubmit()"
+      (cancel)="onCancel()"
+      (close)="close()" />
+  </ng-template>
+</div>

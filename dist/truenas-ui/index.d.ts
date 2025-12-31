@@ -23,15 +23,15 @@ declare class DiskIconComponent {
     readonly name: _angular_core.InputSignal<string>;
     protected readonly DiskType: typeof DiskType;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<DiskIconComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<DiskIconComponent, "ix-disk-icon", never, { "size": { "alias": "size"; "required": true; "isSignal": true; }; "type": { "alias": "type"; "required": true; "isSignal": true; }; "name": { "alias": "name"; "required": true; "isSignal": true; }; }, {}, never, never, true, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<DiskIconComponent, "tn-disk-icon", never, { "size": { "alias": "size"; "required": true; "isSignal": true; }; "type": { "alias": "type"; "required": true; "isSignal": true; }; "name": { "alias": "name"; "required": true; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
-type IxBannerType = 'info' | 'warning' | 'error' | 'success';
-declare class IxBannerComponent {
+type TnBannerType = 'info' | 'warning' | 'error' | 'success';
+declare class TnBannerComponent {
     private iconRegistry;
     heading: _angular_core.InputSignal<string>;
     message: _angular_core.InputSignal<string | undefined>;
-    type: _angular_core.InputSignal<IxBannerType>;
+    type: _angular_core.InputSignal<TnBannerType>;
     constructor();
     /**
      * Register all MDI icons used by the banner component
@@ -52,33 +52,33 @@ declare class IxBannerComponent {
      * Generate CSS classes using BEM methodology
      */
     classes: _angular_core.Signal<string[]>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxBannerComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxBannerComponent, "ix-banner", never, { "heading": { "alias": "heading"; "required": true; "isSignal": true; }; "message": { "alias": "message"; "required": false; "isSignal": true; }; "type": { "alias": "type"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnBannerComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnBannerComponent, "tn-banner", never, { "heading": { "alias": "heading"; "required": true; "isSignal": true; }; "message": { "alias": "message"; "required": false; "isSignal": true; }; "type": { "alias": "type"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
 /**
- * Harness for interacting with ix-banner in tests.
+ * Harness for interacting with tn-banner in tests.
  * Provides simple text-based querying for existence checks.
  *
  * @example
  * ```typescript
  * // Check for existence
- * const banner = await loader.getHarness(IxBannerHarness);
+ * const banner = await loader.getHarness(TnBannerHarness);
  *
  * // Find banner containing specific text
  * const errorBanner = await loader.getHarness(
- *   IxBannerHarness.with({ textContains: 'network error' })
+ *   TnBannerHarness.with({ textContains: 'network error' })
  * );
  *
  * // Check if banner exists with text
  * const hasBanner = await loader.hasHarness(
- *   IxBannerHarness.with({ textContains: /success/i })
+ *   TnBannerHarness.with({ textContains: /success/i })
  * );
  * ```
  */
-declare class IxBannerHarness extends ComponentHarness {
+declare class TnBannerHarness extends ComponentHarness {
     /**
-     * The selector for the host element of an `IxBannerComponent` instance.
+     * The selector for the host element of an `TnBannerComponent` instance.
      */
     static hostSelector: string;
     /**
@@ -92,16 +92,16 @@ declare class IxBannerHarness extends ComponentHarness {
      * ```typescript
      * // Find banner containing specific text
      * const banner = await loader.getHarness(
-     *   IxBannerHarness.with({ textContains: 'error occurred' })
+     *   TnBannerHarness.with({ textContains: 'error occurred' })
      * );
      *
      * // Find banner with regex pattern
      * const banner = await loader.getHarness(
-     *   IxBannerHarness.with({ textContains: /Error:/ })
+     *   TnBannerHarness.with({ textContains: /Error:/ })
      * );
      * ```
      */
-    static with(options?: BannerHarnessFilters): HarnessPredicate<IxBannerHarness>;
+    static with(options?: BannerHarnessFilters): HarnessPredicate<TnBannerHarness>;
     /**
      * Gets all text content from the banner (heading + message combined).
      *
@@ -109,7 +109,7 @@ declare class IxBannerHarness extends ComponentHarness {
      *
      * @example
      * ```typescript
-     * const banner = await loader.getHarness(IxBannerHarness);
+     * const banner = await loader.getHarness(TnBannerHarness);
      * const text = await banner.getText();
      * expect(text).toContain('Success');
      * ```
@@ -117,14 +117,14 @@ declare class IxBannerHarness extends ComponentHarness {
     getText(): Promise<string>;
 }
 /**
- * A set of criteria that can be used to filter a list of `IxBannerHarness` instances.
+ * A set of criteria that can be used to filter a list of `TnBannerHarness` instances.
  */
 interface BannerHarnessFilters extends BaseHarnessFilters {
     /** Filters by text content within banner. Supports string or regex matching. */
     textContains?: string | RegExp;
 }
 
-declare class IxButtonComponent {
+declare class TnButtonComponent {
     size: string;
     primary: _angular_core.InputSignal<boolean>;
     color: _angular_core.InputSignal<"primary" | "secondary" | "warn" | "default">;
@@ -134,8 +134,8 @@ declare class IxButtonComponent {
     disabled: _angular_core.InputSignal<boolean>;
     onClick: _angular_core.OutputEmitterRef<MouseEvent>;
     classes: _angular_core.Signal<string[]>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxButtonComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxButtonComponent, "ix-button", never, { "primary": { "alias": "primary"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; "variant": { "alias": "variant"; "required": false; "isSignal": true; }; "backgroundColor": { "alias": "backgroundColor"; "required": false; "isSignal": true; }; "label": { "alias": "label"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; }, { "onClick": "onClick"; }, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnButtonComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnButtonComponent, "tn-button", never, { "primary": { "alias": "primary"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; "variant": { "alias": "variant"; "required": false; "isSignal": true; }; "backgroundColor": { "alias": "backgroundColor"; "required": false; "isSignal": true; }; "label": { "alias": "label"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; }, { "onClick": "onClick"; }, never, never, true, never>;
 }
 
 type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -146,7 +146,7 @@ interface IconResult {
     content: string | SafeHtml;
     spriteUrl?: string;
 }
-declare class IxIconComponent implements AfterViewInit {
+declare class TnIconComponent implements AfterViewInit {
     name: _angular_core.InputSignal<string>;
     size: _angular_core.InputSignal<IconSize>;
     color: _angular_core.InputSignal<string | undefined>;
@@ -169,11 +169,11 @@ declare class IxIconComponent implements AfterViewInit {
     private tryUnicodeIcon;
     private generateTextAbbreviation;
     private cssClassExists;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxIconComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxIconComponent, "ix-icon", never, { "name": { "alias": "name"; "required": false; "isSignal": true; }; "size": { "alias": "size"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; "tooltip": { "alias": "tooltip"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "library": { "alias": "library"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnIconComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnIconComponent, "tn-icon", never, { "name": { "alias": "name"; "required": false; "isSignal": true; }; "size": { "alias": "size"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; "tooltip": { "alias": "tooltip"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "library": { "alias": "library"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
-declare class IxIconButtonComponent {
+declare class TnIconButtonComponent {
     disabled: _angular_core.InputSignal<boolean>;
     ariaLabel: _angular_core.InputSignal<string | undefined>;
     name: _angular_core.InputSignal<string>;
@@ -184,8 +184,8 @@ declare class IxIconButtonComponent {
     onClick: _angular_core.OutputEmitterRef<MouseEvent>;
     classes: _angular_core.Signal<string[]>;
     effectiveAriaLabel: _angular_core.Signal<string>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxIconButtonComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxIconButtonComponent, "ix-icon-button", never, { "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "name": { "alias": "name"; "required": false; "isSignal": true; }; "size": { "alias": "size"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; "tooltip": { "alias": "tooltip"; "required": false; "isSignal": true; }; "library": { "alias": "library"; "required": false; "isSignal": true; }; }, { "onClick": "onClick"; }, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnIconButtonComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnIconButtonComponent, "tn-icon-button", never, { "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "name": { "alias": "name"; "required": false; "isSignal": true; }; "size": { "alias": "size"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; "tooltip": { "alias": "tooltip"; "required": false; "isSignal": true; }; "library": { "alias": "library"; "required": false; "isSignal": true; }; }, { "onClick": "onClick"; }, never, never, true, never>;
 }
 
 declare enum InputType {
@@ -194,7 +194,7 @@ declare enum InputType {
     PlainText = "text"
 }
 
-declare class IxInputComponent implements AfterViewInit, ControlValueAccessor {
+declare class TnInputComponent implements AfterViewInit, ControlValueAccessor {
     inputEl: _angular_core.Signal<ElementRef<HTMLInputElement | HTMLTextAreaElement>>;
     inputType: _angular_core.InputSignal<InputType>;
     placeholder: _angular_core.InputSignal<string>;
@@ -216,18 +216,18 @@ declare class IxInputComponent implements AfterViewInit, ControlValueAccessor {
     setDisabledState(isDisabled: boolean): void;
     onValueChange(event: Event): void;
     onBlur(): void;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxInputComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxInputComponent, "ix-input", never, { "inputType": { "alias": "inputType"; "required": false; "isSignal": true; }; "placeholder": { "alias": "placeholder"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "multiline": { "alias": "multiline"; "required": false; "isSignal": true; }; "rows": { "alias": "rows"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnInputComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnInputComponent, "tn-input", never, { "inputType": { "alias": "inputType"; "required": false; "isSignal": true; }; "placeholder": { "alias": "placeholder"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "multiline": { "alias": "multiline"; "required": false; "isSignal": true; }; "rows": { "alias": "rows"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
-declare class IxInputDirective {
+declare class TnInputDirective {
     constructor();
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxInputDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxInputDirective, "input[ixInput], textarea[ixInput], div[ixInput]", never, {}, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnInputDirective, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnInputDirective, "input[tnInput], textarea[tnInput], div[tnInput]", never, {}, {}, never, never, true, never>;
 }
 
 type ChipColor = 'primary' | 'secondary' | 'accent';
-declare class IxChipComponent implements AfterViewInit, OnDestroy {
+declare class TnChipComponent implements AfterViewInit, OnDestroy {
     chipEl: _angular_core.Signal<ElementRef<HTMLElement>>;
     label: _angular_core.InputSignal<string>;
     icon: _angular_core.InputSignal<string | undefined>;
@@ -244,32 +244,32 @@ declare class IxChipComponent implements AfterViewInit, OnDestroy {
     handleClick(event: MouseEvent): void;
     handleClose(event: MouseEvent): void;
     handleKeyDown(event: KeyboardEvent): void;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxChipComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxChipComponent, "ix-chip", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "icon": { "alias": "icon"; "required": false; "isSignal": true; }; "closable": { "alias": "closable"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, { "onClose": "onClose"; "onClick": "onClick"; }, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnChipComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnChipComponent, "tn-chip", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "icon": { "alias": "icon"; "required": false; "isSignal": true; }; "closable": { "alias": "closable"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, { "onClose": "onClose"; "onClick": "onClick"; }, never, never, true, never>;
 }
 
-interface IxCardAction {
+interface TnCardAction {
     label: string;
     handler: () => void;
     disabled?: boolean;
     icon?: string;
 }
-interface IxCardControl {
+interface TnCardControl {
     label: string;
     checked: boolean;
     handler: (checked: boolean) => void;
     disabled?: boolean;
 }
-interface IxCardHeaderStatus {
+interface TnCardHeaderStatus {
     label: string;
     type?: 'success' | 'warning' | 'error' | 'info' | 'neutral';
 }
-interface IxCardFooterLink {
+interface TnCardFooterLink {
     label: string;
     handler: () => void;
 }
 
-interface IxMenuItem {
+interface TnMenuItem {
     id: string;
     label: string;
     icon?: string;
@@ -277,13 +277,13 @@ interface IxMenuItem {
     disabled?: boolean;
     separator?: boolean;
     action?: () => void;
-    children?: IxMenuItem[];
+    children?: TnMenuItem[];
     shortcut?: string;
 }
-declare class IxMenuComponent {
-    items: _angular_core.InputSignal<IxMenuItem[]>;
+declare class TnMenuComponent {
+    items: _angular_core.InputSignal<TnMenuItem[]>;
     contextMenu: _angular_core.InputSignal<boolean>;
-    menuItemClick: _angular_core.OutputEmitterRef<IxMenuItem>;
+    menuItemClick: _angular_core.OutputEmitterRef<TnMenuItem>;
     menuOpen: _angular_core.OutputEmitterRef<void>;
     menuClose: _angular_core.OutputEmitterRef<void>;
     menuTemplate: _angular_core.Signal<TemplateRef<unknown>>;
@@ -291,8 +291,8 @@ declare class IxMenuComponent {
     private contextOverlayRef?;
     private overlay;
     private viewContainerRef;
-    onMenuItemClick(item: IxMenuItem): void;
-    hasChildren: _angular_core.Signal<(item: IxMenuItem) => boolean>;
+    onMenuItemClick(item: TnMenuItem): void;
+    hasChildren: _angular_core.Signal<(item: TnMenuItem) => boolean>;
     onMenuOpen(): void;
     onMenuClose(): void;
     /**
@@ -302,12 +302,12 @@ declare class IxMenuComponent {
     openContextMenuAt(x: number, y: number): void;
     private closeContextMenu;
     onContextMenu(event: MouseEvent): void;
-    trackByItemId(index: number, item: IxMenuItem): string;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxMenuComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxMenuComponent, "ix-menu", never, { "items": { "alias": "items"; "required": false; "isSignal": true; }; "contextMenu": { "alias": "contextMenu"; "required": false; "isSignal": true; }; }, { "menuItemClick": "menuItemClick"; "menuOpen": "menuOpen"; "menuClose": "menuClose"; }, never, ["*"], true, never>;
+    trackByItemId(index: number, item: TnMenuItem): string;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnMenuComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnMenuComponent, "tn-menu", never, { "items": { "alias": "items"; "required": false; "isSignal": true; }; "contextMenu": { "alias": "contextMenu"; "required": false; "isSignal": true; }; }, { "menuItemClick": "menuItemClick"; "menuOpen": "menuOpen"; "menuClose": "menuClose"; }, never, ["*"], true, never>;
 }
 
-declare class IxCardComponent {
+declare class TnCardComponent {
     private iconRegistry;
     constructor();
     title: _angular_core.InputSignal<string | undefined>;
@@ -317,12 +317,12 @@ declare class IxCardComponent {
     padContent: _angular_core.InputSignal<boolean>;
     bordered: _angular_core.InputSignal<boolean>;
     background: _angular_core.InputSignal<boolean>;
-    headerStatus: _angular_core.InputSignal<IxCardHeaderStatus | undefined>;
-    headerControl: _angular_core.InputSignal<IxCardControl | undefined>;
-    headerMenu: _angular_core.InputSignal<IxMenuItem[] | undefined>;
-    primaryAction: _angular_core.InputSignal<IxCardAction | undefined>;
-    secondaryAction: _angular_core.InputSignal<IxCardAction | undefined>;
-    footerLink: _angular_core.InputSignal<IxCardFooterLink | undefined>;
+    headerStatus: _angular_core.InputSignal<TnCardHeaderStatus | undefined>;
+    headerControl: _angular_core.InputSignal<TnCardControl | undefined>;
+    headerMenu: _angular_core.InputSignal<TnMenuItem[] | undefined>;
+    primaryAction: _angular_core.InputSignal<TnCardAction | undefined>;
+    secondaryAction: _angular_core.InputSignal<TnCardAction | undefined>;
+    footerLink: _angular_core.InputSignal<TnCardFooterLink | undefined>;
     /**
      * Register MDI icon library with all icons used by the card component
      * This makes the component self-contained with zero configuration required
@@ -333,13 +333,13 @@ declare class IxCardComponent {
     hasFooter: _angular_core.Signal<boolean>;
     onTitleClick(): void;
     onControlChange(checked: boolean): void;
-    onHeaderMenuItemClick(_item: IxMenuItem): void;
+    onHeaderMenuItemClick(_item: TnMenuItem): void;
     getStatusClass(type?: string): string;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxCardComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxCardComponent, "ix-card", never, { "title": { "alias": "title"; "required": false; "isSignal": true; }; "titleLink": { "alias": "titleLink"; "required": false; "isSignal": true; }; "elevation": { "alias": "elevation"; "required": false; "isSignal": true; }; "padding": { "alias": "padding"; "required": false; "isSignal": true; }; "padContent": { "alias": "padContent"; "required": false; "isSignal": true; }; "bordered": { "alias": "bordered"; "required": false; "isSignal": true; }; "background": { "alias": "background"; "required": false; "isSignal": true; }; "headerStatus": { "alias": "headerStatus"; "required": false; "isSignal": true; }; "headerControl": { "alias": "headerControl"; "required": false; "isSignal": true; }; "headerMenu": { "alias": "headerMenu"; "required": false; "isSignal": true; }; "primaryAction": { "alias": "primaryAction"; "required": false; "isSignal": true; }; "secondaryAction": { "alias": "secondaryAction"; "required": false; "isSignal": true; }; "footerLink": { "alias": "footerLink"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnCardComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnCardComponent, "tn-card", never, { "title": { "alias": "title"; "required": false; "isSignal": true; }; "titleLink": { "alias": "titleLink"; "required": false; "isSignal": true; }; "elevation": { "alias": "elevation"; "required": false; "isSignal": true; }; "padding": { "alias": "padding"; "required": false; "isSignal": true; }; "padContent": { "alias": "padContent"; "required": false; "isSignal": true; }; "bordered": { "alias": "bordered"; "required": false; "isSignal": true; }; "background": { "alias": "background"; "required": false; "isSignal": true; }; "headerStatus": { "alias": "headerStatus"; "required": false; "isSignal": true; }; "headerControl": { "alias": "headerControl"; "required": false; "isSignal": true; }; "headerMenu": { "alias": "headerMenu"; "required": false; "isSignal": true; }; "primaryAction": { "alias": "primaryAction"; "required": false; "isSignal": true; }; "secondaryAction": { "alias": "secondaryAction"; "required": false; "isSignal": true; }; "footerLink": { "alias": "footerLink"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
 }
 
-declare class IxExpansionPanelComponent {
+declare class TnExpansionPanelComponent {
     title: _angular_core.InputSignal<string | undefined>;
     elevation: _angular_core.InputSignal<"none" | "low" | "medium" | "high">;
     padding: _angular_core.InputSignal<"large" | "medium" | "small">;
@@ -355,11 +355,11 @@ declare class IxExpansionPanelComponent {
     readonly contentId: string;
     toggle(): void;
     classes: _angular_core.Signal<string[]>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxExpansionPanelComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxExpansionPanelComponent, "ix-expansion-panel", never, { "title": { "alias": "title"; "required": false; "isSignal": true; }; "elevation": { "alias": "elevation"; "required": false; "isSignal": true; }; "padding": { "alias": "padding"; "required": false; "isSignal": true; }; "bordered": { "alias": "bordered"; "required": false; "isSignal": true; }; "background": { "alias": "background"; "required": false; "isSignal": true; }; "expanded": { "alias": "expanded"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "titleStyle": { "alias": "titleStyle"; "required": false; "isSignal": true; }; }, { "expandedChange": "expandedChange"; "toggleEvent": "toggleEvent"; }, never, ["[slot=title]", "*"], true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnExpansionPanelComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnExpansionPanelComponent, "tn-expansion-panel", never, { "title": { "alias": "title"; "required": false; "isSignal": true; }; "elevation": { "alias": "elevation"; "required": false; "isSignal": true; }; "padding": { "alias": "padding"; "required": false; "isSignal": true; }; "bordered": { "alias": "bordered"; "required": false; "isSignal": true; }; "background": { "alias": "background"; "required": false; "isSignal": true; }; "expanded": { "alias": "expanded"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "titleStyle": { "alias": "titleStyle"; "required": false; "isSignal": true; }; }, { "expandedChange": "expandedChange"; "toggleEvent": "toggleEvent"; }, never, ["[slot=title]", "*"], true, never>;
 }
 
-declare class IxCheckboxComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
+declare class TnCheckboxComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
     checkboxEl: _angular_core.Signal<ElementRef<HTMLInputElement>>;
     label: _angular_core.InputSignal<string>;
     hideLabel: _angular_core.InputSignal<boolean>;
@@ -386,11 +386,11 @@ declare class IxCheckboxComponent implements AfterViewInit, OnDestroy, ControlVa
     setDisabledState(isDisabled: boolean): void;
     onCheckboxChange(event: Event): void;
     classes: _angular_core.Signal<string[]>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxCheckboxComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxCheckboxComponent, "ix-checkbox", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "hideLabel": { "alias": "hideLabel"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "required": { "alias": "required"; "required": false; "isSignal": true; }; "indeterminate": { "alias": "indeterminate"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; "error": { "alias": "error"; "required": false; "isSignal": true; }; "checked": { "alias": "checked"; "required": false; "isSignal": true; }; }, { "change": "change"; }, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnCheckboxComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnCheckboxComponent, "tn-checkbox", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "hideLabel": { "alias": "hideLabel"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "required": { "alias": "required"; "required": false; "isSignal": true; }; "indeterminate": { "alias": "indeterminate"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; "error": { "alias": "error"; "required": false; "isSignal": true; }; "checked": { "alias": "checked"; "required": false; "isSignal": true; }; }, { "change": "change"; }, never, never, true, never>;
 }
 
-declare class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
+declare class TnRadioComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
     radioEl: _angular_core.Signal<ElementRef<HTMLInputElement>>;
     label: _angular_core.InputSignal<string>;
     value: _angular_core.InputSignal<unknown>;
@@ -415,12 +415,12 @@ declare class IxRadioComponent implements AfterViewInit, OnDestroy, ControlValue
     setDisabledState(isDisabled: boolean): void;
     onRadioChange(event: Event): void;
     classes: _angular_core.Signal<string[]>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxRadioComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxRadioComponent, "ix-radio", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "value": { "alias": "value"; "required": false; "isSignal": true; }; "name": { "alias": "name"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "required": { "alias": "required"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; "error": { "alias": "error"; "required": false; "isSignal": true; }; }, { "change": "change"; }, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnRadioComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnRadioComponent, "tn-radio", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "value": { "alias": "value"; "required": false; "isSignal": true; }; "name": { "alias": "name"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "required": { "alias": "required"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; "error": { "alias": "error"; "required": false; "isSignal": true; }; }, { "change": "change"; }, never, never, true, never>;
 }
 
 type SlideToggleColor = 'primary' | 'accent' | 'warn';
-declare class IxSlideToggleComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
+declare class TnSlideToggleComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
     toggleEl: _angular_core.Signal<ElementRef<HTMLInputElement>>;
     labelPosition: _angular_core.InputSignal<"after" | "before">;
     label: _angular_core.InputSignal<string | undefined>;
@@ -451,11 +451,11 @@ declare class IxSlideToggleComponent implements AfterViewInit, OnDestroy, Contro
     onLabelClick(): void;
     classes: _angular_core.Signal<string[]>;
     effectiveAriaLabel: _angular_core.Signal<string | undefined>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxSlideToggleComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxSlideToggleComponent, "ix-slide-toggle", never, { "labelPosition": { "alias": "labelPosition"; "required": false; "isSignal": true; }; "label": { "alias": "label"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "required": { "alias": "required"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "ariaLabelledby": { "alias": "ariaLabelledby"; "required": false; "isSignal": true; }; "checked": { "alias": "checked"; "required": false; "isSignal": true; }; }, { "change": "change"; "toggleChange": "toggleChange"; }, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnSlideToggleComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnSlideToggleComponent, "tn-slide-toggle", never, { "labelPosition": { "alias": "labelPosition"; "required": false; "isSignal": true; }; "label": { "alias": "label"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "required": { "alias": "required"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "ariaLabelledby": { "alias": "ariaLabelledby"; "required": false; "isSignal": true; }; "checked": { "alias": "checked"; "required": false; "isSignal": true; }; }, { "change": "change"; "toggleChange": "toggleChange"; }, never, never, true, never>;
 }
 
-declare class IxTabComponent implements AfterContentInit {
+declare class TnTabComponent implements AfterContentInit {
     label: _angular_core.InputSignal<string>;
     disabled: _angular_core.InputSignal<boolean>;
     icon: _angular_core.InputSignal<string | undefined>;
@@ -476,11 +476,11 @@ declare class IxTabComponent implements AfterContentInit {
     classes: _angular_core.Signal<string>;
     tabIndex: _angular_core.Signal<0 | -1>;
     hasIcon: _angular_core.Signal<boolean>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTabComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTabComponent, "ix-tab", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "icon": { "alias": "icon"; "required": false; "isSignal": true; }; "iconTemplate": { "alias": "iconTemplate"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, { "selected": "selected"; }, ["iconContent"], ["*"], true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnTabComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnTabComponent, "tn-tab", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "icon": { "alias": "icon"; "required": false; "isSignal": true; }; "iconTemplate": { "alias": "iconTemplate"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, { "selected": "selected"; }, ["iconContent"], ["*"], true, never>;
 }
 
-declare class IxTabPanelComponent {
+declare class TnTabPanelComponent {
     label: _angular_core.InputSignal<string>;
     lazyLoad: _angular_core.InputSignal<boolean>;
     testId: _angular_core.InputSignal<string | undefined>;
@@ -492,18 +492,18 @@ declare class IxTabPanelComponent {
     classes: _angular_core.Signal<string>;
     shouldRender: _angular_core.Signal<boolean>;
     onActivate(): void;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTabPanelComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTabPanelComponent, "ix-tab-panel", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "lazyLoad": { "alias": "lazyLoad"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnTabPanelComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnTabPanelComponent, "tn-tab-panel", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "lazyLoad": { "alias": "lazyLoad"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
 }
 
 interface TabChangeEvent {
     index: number;
-    tab: IxTabComponent;
+    tab: TnTabComponent;
     previousIndex: number;
 }
-declare class IxTabsComponent implements AfterContentInit, AfterViewInit, OnDestroy {
-    tabs: _angular_core.Signal<readonly IxTabComponent[]>;
-    panels: _angular_core.Signal<readonly IxTabPanelComponent[]>;
+declare class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDestroy {
+    tabs: _angular_core.Signal<readonly TnTabComponent[]>;
+    panels: _angular_core.Signal<readonly TnTabPanelComponent[]>;
     tabHeader: _angular_core.Signal<ElementRef<HTMLElement>>;
     selectedIndex: _angular_core.InputSignal<number>;
     orientation: _angular_core.InputSignal<"horizontal" | "vertical">;
@@ -532,17 +532,17 @@ declare class IxTabsComponent implements AfterContentInit, AfterViewInit, OnDest
     private getLastEnabledTabIndex;
     private focusTab;
     classes: _angular_core.Signal<string>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTabsComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTabsComponent, "ix-tabs", never, { "selectedIndex": { "alias": "selectedIndex"; "required": false; "isSignal": true; }; "orientation": { "alias": "orientation"; "required": false; "isSignal": true; }; "highlightPosition": { "alias": "highlightPosition"; "required": false; "isSignal": true; }; }, { "selectedIndexChange": "selectedIndexChange"; "tabChange": "tabChange"; }, ["tabs", "panels"], ["ix-tab", "ix-tab-panel"], true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnTabsComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnTabsComponent, "tn-tabs", never, { "selectedIndex": { "alias": "selectedIndex"; "required": false; "isSignal": true; }; "orientation": { "alias": "orientation"; "required": false; "isSignal": true; }; "highlightPosition": { "alias": "highlightPosition"; "required": false; "isSignal": true; }; }, { "selectedIndexChange": "selectedIndexChange"; "tabChange": "tabChange"; }, ["tabs", "panels"], ["tn-tab", "tn-tab-panel"], true, never>;
 }
 
 /**
  * Directive that attaches a menu to any element.
- * Usage: <button [ixMenuTriggerFor]="menu">Open Menu</button>
+ * Usage: <button [tnMenuTriggerFor]="menu">Open Menu</button>
  */
-declare class IxMenuTriggerDirective {
-    menu: _angular_core.InputSignal<IxMenuComponent>;
-    ixMenuPosition: _angular_core.InputSignal<"after" | "before" | "above" | "below">;
+declare class TnMenuTriggerDirective {
+    menu: _angular_core.InputSignal<TnMenuComponent>;
+    tnMenuPosition: _angular_core.InputSignal<"after" | "before" | "above" | "below">;
     private overlayRef?;
     private isMenuOpen;
     private elementRef;
@@ -552,8 +552,8 @@ declare class IxMenuTriggerDirective {
     openMenu(): void;
     closeMenu(): void;
     private getPositions;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxMenuTriggerDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxMenuTriggerDirective, "[ixMenuTriggerFor]", ["ixMenuTrigger"], { "menu": { "alias": "ixMenuTriggerFor"; "required": true; "isSignal": true; }; "ixMenuPosition": { "alias": "ixMenuPosition"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnMenuTriggerDirective, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnMenuTriggerDirective, "[tnMenuTriggerFor]", ["tnMenuTrigger"], { "menu": { "alias": "tnMenuTriggerFor"; "required": true; "isSignal": true; }; "tnMenuPosition": { "alias": "tnMenuPosition"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
 declare enum ModifierKeys {
@@ -586,7 +586,7 @@ declare enum LinuxModifierKeys {
 }
 type PlatformType = 'mac' | 'windows' | 'linux' | 'auto';
 
-declare class IxKeyboardShortcutComponent {
+declare class TnKeyboardShortcutComponent {
     shortcut: _angular_core.InputSignal<string>;
     platform: _angular_core.InputSignal<PlatformType>;
     separator: _angular_core.InputSignal<string>;
@@ -595,11 +595,11 @@ declare class IxKeyboardShortcutComponent {
     private detectPlatform;
     private convertToWindows;
     shortcutKeys: _angular_core.Signal<string[]>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxKeyboardShortcutComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxKeyboardShortcutComponent, "ix-keyboard-shortcut", never, { "shortcut": { "alias": "shortcut"; "required": false; "isSignal": true; }; "platform": { "alias": "platform"; "required": false; "isSignal": true; }; "separator": { "alias": "separator"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnKeyboardShortcutComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnKeyboardShortcutComponent, "tn-keyboard-shortcut", never, { "shortcut": { "alias": "shortcut"; "required": false; "isSignal": true; }; "platform": { "alias": "platform"; "required": false; "isSignal": true; }; "separator": { "alias": "separator"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
-declare class IxFormFieldComponent implements AfterContentInit {
+declare class TnFormFieldComponent implements AfterContentInit {
     label: _angular_core.InputSignal<string>;
     hint: _angular_core.InputSignal<string>;
     required: _angular_core.InputSignal<boolean>;
@@ -612,23 +612,23 @@ declare class IxFormFieldComponent implements AfterContentInit {
     private getErrorMessage;
     showError: _angular_core.Signal<boolean>;
     showHint: _angular_core.Signal<boolean>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxFormFieldComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxFormFieldComponent, "ix-form-field", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "hint": { "alias": "hint"; "required": false; "isSignal": true; }; "required": { "alias": "required"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, {}, ["control"], ["*"], true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnFormFieldComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnFormFieldComponent, "tn-form-field", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "hint": { "alias": "hint"; "required": false; "isSignal": true; }; "required": { "alias": "required"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, {}, ["control"], ["*"], true, never>;
 }
 
-interface IxSelectOption<T = unknown> {
+interface TnSelectOption<T = unknown> {
     value: T;
     label: string;
     disabled?: boolean;
 }
-interface IxSelectOptionGroup<T = unknown> {
+interface TnSelectOptionGroup<T = unknown> {
     label: string;
-    options: IxSelectOption<T>[];
+    options: TnSelectOption<T>[];
     disabled?: boolean;
 }
-declare class IxSelectComponent<T = unknown> implements ControlValueAccessor {
-    options: _angular_core.InputSignal<IxSelectOption<T>[]>;
-    optionGroups: _angular_core.InputSignal<IxSelectOptionGroup<T>[]>;
+declare class TnSelectComponent<T = unknown> implements ControlValueAccessor {
+    options: _angular_core.InputSignal<TnSelectOption<T>[]>;
+    optionGroups: _angular_core.InputSignal<TnSelectOptionGroup<T>[]>;
     placeholder: _angular_core.InputSignal<string>;
     disabled: _angular_core.InputSignal<boolean>;
     testId: _angular_core.InputSignal<string>;
@@ -648,27 +648,27 @@ declare class IxSelectComponent<T = unknown> implements ControlValueAccessor {
     setDisabledState(isDisabled: boolean): void;
     toggleDropdown(): void;
     closeDropdown(): void;
-    onOptionClick(option: IxSelectOption<T>): void;
-    selectOption(option: IxSelectOption<T>): void;
-    isSelected: _angular_core.Signal<(option: IxSelectOption<T>) => boolean>;
+    onOptionClick(option: TnSelectOption<T>): void;
+    selectOption(option: TnSelectOption<T>): void;
+    isSelected: _angular_core.Signal<(option: TnSelectOption<T>) => boolean>;
     getDisplayText: _angular_core.Signal<string | (T & {})>;
     private findOptionByValue;
     hasAnyOptions: _angular_core.Signal<boolean>;
     private compareValues;
     onKeydown(event: KeyboardEvent): void;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxSelectComponent<any>, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxSelectComponent<any>, "ix-select", never, { "options": { "alias": "options"; "required": false; "isSignal": true; }; "optionGroups": { "alias": "optionGroups"; "required": false; "isSignal": true; }; "placeholder": { "alias": "placeholder"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, { "selectionChange": "selectionChange"; }, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnSelectComponent<any>, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnSelectComponent<any>, "tn-select", never, { "options": { "alias": "options"; "required": false; "isSignal": true; }; "optionGroups": { "alias": "optionGroups"; "required": false; "isSignal": true; }; "placeholder": { "alias": "placeholder"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, { "selectionChange": "selectionChange"; }, never, never, true, never>;
 }
 
 /**
  * Default base path for sprite assets (namespaced to avoid collisions with consumer apps)
  * This should match the value in sprite-config-interface.ts
  */
-declare const defaultSpriteBasePath = "assets/truenas-ui-icons";
+declare const defaultSpriteBasePath = "assets/tn-icons";
 /**
  * Default path for the sprite configuration file.
  */
-declare const defaultSpriteConfigPath = "assets/truenas-ui-icons/sprite-config.json";
+declare const defaultSpriteConfigPath = "assets/tn-icons/sprite-config.json";
 interface SpriteConfig {
     iconUrl: string;
     icons?: string[];
@@ -682,7 +682,7 @@ interface SpriteConfig {
  * 2. The sprite includes both consumer icons and library-internal icons (chevrons, folder, etc.)
  * 3. Icons are resolved as SVG fragment identifiers (e.g., sprite.svg#icon-name)
  */
-declare class IxSpriteLoaderService {
+declare class TnSpriteLoaderService {
     private spriteConfig?;
     private spriteLoaded;
     private spriteLoadPromise?;
@@ -701,7 +701,7 @@ declare class IxSpriteLoaderService {
      * Get the full URL for an icon in the sprite
      * Returns a URL like: assets/icons/sprite.svg?v=hash#icon-name
      *
-     * @param iconName The icon name (e.g., 'folder', 'mdi-server', 'ix-dataset')
+     * @param iconName The icon name (e.g., 'folder', 'mdi-server', 'tn-dataset')
      * @returns The fragment identifier URL for the icon, or null if sprite not loaded or icon not in sprite
      */
     getIconUrl(iconName: string): string | null;
@@ -721,8 +721,8 @@ declare class IxSpriteLoaderService {
      * Get the sprite config if loaded
      */
     getSpriteConfig(): SpriteConfig | undefined;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxSpriteLoaderService, never>;
-    static ɵprov: _angular_core.ɵɵInjectableDeclaration<IxSpriteLoaderService>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnSpriteLoaderService, never>;
+    static ɵprov: _angular_core.ɵɵInjectableDeclaration<TnSpriteLoaderService>;
 }
 
 interface IconLibrary {
@@ -735,12 +735,12 @@ interface ResolvedIcon {
     content: string | SafeHtml;
     spriteUrl?: string;
 }
-declare class IxIconRegistryService {
+declare class TnIconRegistryService {
     private libraries;
     private customIcons;
     private sanitizer;
     private spriteLoader;
-    constructor(sanitizer?: DomSanitizer, spriteLoader?: IxSpriteLoaderService);
+    constructor(sanitizer?: DomSanitizer, spriteLoader?: TnSpriteLoaderService);
     /**
      * Register an icon library (like Lucide, Heroicons, etc.)
      *
@@ -809,7 +809,7 @@ declare class IxIconRegistryService {
      * // Sprite icons (automatic from sprite.svg)
      * registry.resolveIcon('folder')        // Material Design icon
      * registry.resolveIcon('mdi-server')    // MDI icon
-     * registry.resolveIcon('ix-dataset')    // Custom TrueNAS icon
+     * registry.resolveIcon('tn-dataset')    // Custom TrueNAS icon
      *
      * // Library icons
      * registry.resolveIcon('lucide:home')
@@ -852,11 +852,11 @@ declare class IxIconRegistryService {
      * Get the sprite loader service
      * Useful for checking sprite status or manually resolving sprite icons
      */
-    getSpriteLoader(): IxSpriteLoaderService;
+    getSpriteLoader(): TnSpriteLoaderService;
     private resolveLibraryIcon;
     private resolveCustomIcon;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxIconRegistryService, never>;
-    static ɵprov: _angular_core.ɵɵInjectableDeclaration<IxIconRegistryService>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnIconRegistryService, never>;
+    static ɵprov: _angular_core.ɵɵInjectableDeclaration<TnIconRegistryService>;
 }
 
 /**
@@ -871,17 +871,17 @@ declare class IxIconRegistryService {
  *
  * @example
  * // Static icon name - automatically detected from template
- * <ix-icon name="folder"></ix-icon>
+ * <tn-icon name="folder"></tn-icon>
  *
  * @example
  * // Dynamic MDI icon
  * const iconName = condition ? iconMarker("pencil", "mdi") : iconMarker("delete", "mdi");
- * <ix-icon [name]="iconName"></ix-icon>
+ * <tn-icon [name]="iconName"></tn-icon>
  *
  * @example
  * // Dynamic custom icon (consumer's own icon)
  * const logo = iconMarker("your-logo-name", "custom");
- * <ix-icon [name]="logo"></ix-icon>
+ * <tn-icon [name]="logo"></tn-icon>
  *
  * @example
  * // Array of dynamic icons
@@ -902,23 +902,23 @@ declare function iconMarker(iconName: string, library?: 'mdi' | 'material' | 'cu
  * Marks an icon name for inclusion in the sprite generation with library namespace.
  * This function MUST be used by library component code for custom icons.
  *
- * The TypeScript type enforces that the icon name starts with 'ix-' prefix,
+ * The TypeScript type enforces that the icon name starts with 'tn-' prefix,
  * which reserves this namespace exclusively for library-provided custom icons.
  *
  * @example
  * ```typescript
  * // ✅ Correct - Library component code
- * const icon = libIconMarker('ix-dataset');
+ * const icon = libIconMarker('tn-dataset');
  *
  * // ❌ Wrong - Will cause TypeScript error
  * const icon = libIconMarker('dataset');
  * ```
  *
- * @param iconName - The icon name with 'ix-' prefix (enforced by TypeScript)
+ * @param iconName - The icon name with 'tn-' prefix (enforced by TypeScript)
  * @returns The same icon name (identity function)
  * @internal
  */
-declare function libIconMarker(iconName: `ix-${string}`): string;
+declare function libIconMarker(iconName: `tn-${string}`): string;
 
 /**
  * Lucide Icons Integration Helper
@@ -934,8 +934,8 @@ declare function libIconMarker(iconName: `ix-${string}`): string;
  * setupLucideIntegration(LucideIcons);
  *
  * // Now you can use lucide icons in templates:
- * // <ix-icon name="lucide:home"></ix-icon>
- * // <ix-icon name="lucide:user-circle"></ix-icon>
+ * // <tn-icon name="lucide:home"></tn-icon>
+ * // <tn-icon name="lucide:user-circle"></tn-icon>
  * ```
  */
 
@@ -1034,14 +1034,14 @@ declare class TruenasIconsService {
     static ɵprov: _angular_core.ɵɵInjectableDeclaration<TruenasIconsService>;
 }
 
-declare class IxListComponent {
+declare class TnListComponent {
     dense: _angular_core.InputSignal<boolean>;
     disabled: _angular_core.InputSignal<boolean>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxListComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxListComponent, "ix-list", never, { "dense": { "alias": "dense"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnListComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnListComponent, "tn-list", never, { "dense": { "alias": "dense"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
 }
 
-declare class IxListItemComponent implements AfterContentInit {
+declare class TnListItemComponent implements AfterContentInit {
     disabled: _angular_core.InputSignal<boolean>;
     clickable: _angular_core.InputSignal<boolean>;
     itemClick: _angular_core.OutputEmitterRef<Event>;
@@ -1055,57 +1055,57 @@ declare class IxListItemComponent implements AfterContentInit {
     hasSecondaryText: _angular_core.Signal<boolean>;
     hasThirdText: _angular_core.Signal<boolean>;
     onClick(event: Event): void;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxListItemComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxListItemComponent, "ix-list-item", never, { "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "clickable": { "alias": "clickable"; "required": false; "isSignal": true; }; }, { "itemClick": "itemClick"; }, never, ["[ixListIcon], [ixListAvatar]", "[ixListItemTitle], [ixListItemPrimary]", "*", "[ixListItemLine], [ixListItemSecondary]", "[ixListItemTrailing]"], true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnListItemComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnListItemComponent, "tn-list-item", never, { "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "clickable": { "alias": "clickable"; "required": false; "isSignal": true; }; }, { "itemClick": "itemClick"; }, never, ["[tnListIcon], [tnListAvatar]", "[tnListItemTitle], [tnListItemPrimary]", "*", "[tnListItemLine], [tnListItemSecondary]", "[tnListItemTrailing]"], true, never>;
 }
 
-declare class IxListSubheaderComponent {
+declare class TnListSubheaderComponent {
     inset: _angular_core.InputSignal<boolean>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxListSubheaderComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxListSubheaderComponent, "ix-list-subheader", never, { "inset": { "alias": "inset"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnListSubheaderComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnListSubheaderComponent, "tn-list-subheader", never, { "inset": { "alias": "inset"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
 }
 
-declare class IxListIconDirective {
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxListIconDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxListIconDirective, "[ixListIcon]", never, {}, {}, never, never, true, never>;
+declare class TnListIconDirective {
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnListIconDirective, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnListIconDirective, "[tnListIcon]", never, {}, {}, never, never, true, never>;
 }
-declare class IxListAvatarDirective {
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxListAvatarDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxListAvatarDirective, "[ixListAvatar]", never, {}, {}, never, never, true, never>;
+declare class TnListAvatarDirective {
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnListAvatarDirective, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnListAvatarDirective, "[tnListAvatar]", never, {}, {}, never, never, true, never>;
 }
-declare class IxListItemTitleDirective {
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxListItemTitleDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxListItemTitleDirective, "[ixListItemTitle]", never, {}, {}, never, never, true, never>;
+declare class TnListItemTitleDirective {
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnListItemTitleDirective, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnListItemTitleDirective, "[tnListItemTitle]", never, {}, {}, never, never, true, never>;
 }
-declare class IxListItemLineDirective {
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxListItemLineDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxListItemLineDirective, "[ixListItemLine]", never, {}, {}, never, never, true, never>;
+declare class TnListItemLineDirective {
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnListItemLineDirective, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnListItemLineDirective, "[tnListItemLine]", never, {}, {}, never, never, true, never>;
 }
-declare class IxListItemPrimaryDirective {
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxListItemPrimaryDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxListItemPrimaryDirective, "[ixListItemPrimary]", never, {}, {}, never, never, true, never>;
+declare class TnListItemPrimaryDirective {
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnListItemPrimaryDirective, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnListItemPrimaryDirective, "[tnListItemPrimary]", never, {}, {}, never, never, true, never>;
 }
-declare class IxListItemSecondaryDirective {
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxListItemSecondaryDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxListItemSecondaryDirective, "[ixListItemSecondary]", never, {}, {}, never, never, true, never>;
+declare class TnListItemSecondaryDirective {
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnListItemSecondaryDirective, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnListItemSecondaryDirective, "[tnListItemSecondary]", never, {}, {}, never, never, true, never>;
 }
-declare class IxListItemTrailingDirective {
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxListItemTrailingDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxListItemTrailingDirective, "[ixListItemTrailing]", never, {}, {}, never, never, true, never>;
+declare class TnListItemTrailingDirective {
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnListItemTrailingDirective, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnListItemTrailingDirective, "[tnListItemTrailing]", never, {}, {}, never, never, true, never>;
 }
-declare class IxDividerDirective {
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxDividerDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxDividerDirective, "ix-divider, [ixDivider]", never, {}, {}, never, never, true, never>;
+declare class TnDividerDirective {
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnDividerDirective, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnDividerDirective, "tn-divider, [tnDivider]", never, {}, {}, never, never, true, never>;
 }
 
-declare class IxDividerComponent {
+declare class TnDividerComponent {
     vertical: _angular_core.InputSignal<boolean>;
     inset: _angular_core.InputSignal<boolean>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxDividerComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxDividerComponent, "ix-divider", never, { "vertical": { "alias": "vertical"; "required": false; "isSignal": true; }; "inset": { "alias": "inset"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnDividerComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnDividerComponent, "tn-divider", never, { "vertical": { "alias": "vertical"; "required": false; "isSignal": true; }; "inset": { "alias": "inset"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
-declare class IxListOptionComponent implements AfterContentInit {
+declare class TnListOptionComponent implements AfterContentInit {
     cdr: ChangeDetectorRef;
     elementRef: ElementRef<any>;
     value: _angular_core.InputSignal<unknown>;
@@ -1130,21 +1130,21 @@ declare class IxListOptionComponent implements AfterContentInit {
     onClick(_event: Event): void;
     onKeydown(event: KeyboardEvent): void;
     toggle(): void;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxListOptionComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxListOptionComponent, "ix-list-option", never, { "value": { "alias": "value"; "required": false; "isSignal": true; }; "selected": { "alias": "selected"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; }, { "selectionChange": "selectionChange"; }, never, ["[ixListIcon], [ixListAvatar]", "[ixListItemTitle], [ixListItemPrimary]", "*", "[ixListItemLine], [ixListItemSecondary]"], true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnListOptionComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnListOptionComponent, "tn-list-option", never, { "value": { "alias": "value"; "required": false; "isSignal": true; }; "selected": { "alias": "selected"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; }, { "selectionChange": "selectionChange"; }, never, ["[tnListIcon], [tnListAvatar]", "[tnListItemTitle], [tnListItemPrimary]", "*", "[tnListItemLine], [tnListItemSecondary]"], true, never>;
 }
 
-interface IxSelectionChange {
-    source: IxSelectionListComponent;
-    options: IxListOptionComponent[];
+interface TnSelectionChange {
+    source: TnSelectionListComponent;
+    options: TnListOptionComponent[];
 }
-declare class IxSelectionListComponent implements ControlValueAccessor {
+declare class TnSelectionListComponent implements ControlValueAccessor {
     dense: _angular_core.InputSignal<boolean>;
     disabled: _angular_core.InputSignal<boolean>;
     multiple: _angular_core.InputSignal<boolean>;
     color: _angular_core.InputSignal<"primary" | "warn" | "accent">;
-    selectionChange: _angular_core.OutputEmitterRef<IxSelectionChange>;
-    options: _angular_core.Signal<readonly IxListOptionComponent[]>;
+    selectionChange: _angular_core.OutputEmitterRef<TnSelectionChange>;
+    options: _angular_core.Signal<readonly TnListOptionComponent[]>;
     private formDisabled;
     isDisabled: _angular_core.Signal<boolean>;
     private onChange;
@@ -1155,52 +1155,52 @@ declare class IxSelectionListComponent implements ControlValueAccessor {
     registerOnTouched(fn: () => void): void;
     setDisabledState(isDisabled: boolean): void;
     onOptionSelectionChange(): void;
-    get selectedOptions(): IxListOptionComponent[];
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxSelectionListComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxSelectionListComponent, "ix-selection-list", never, { "dense": { "alias": "dense"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "multiple": { "alias": "multiple"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; }, { "selectionChange": "selectionChange"; }, ["options"], ["*"], true, never>;
+    get selectedOptions(): TnListOptionComponent[];
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnSelectionListComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnSelectionListComponent, "tn-selection-list", never, { "dense": { "alias": "dense"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "multiple": { "alias": "multiple"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; }, { "selectionChange": "selectionChange"; }, ["options"], ["*"], true, never>;
 }
 
-declare class IxHeaderCellDefDirective {
+declare class TnHeaderCellDefDirective {
     template: TemplateRef<any>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxHeaderCellDefDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxHeaderCellDefDirective, "[ixHeaderCellDef]", never, {}, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnHeaderCellDefDirective, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnHeaderCellDefDirective, "[tnHeaderCellDef]", never, {}, {}, never, never, true, never>;
 }
-declare class IxCellDefDirective {
+declare class TnCellDefDirective {
     template: TemplateRef<any>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxCellDefDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxCellDefDirective, "[ixCellDef]", never, {}, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnCellDefDirective, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnCellDefDirective, "[tnCellDef]", never, {}, {}, never, never, true, never>;
 }
-declare class IxTableColumnDirective {
+declare class TnTableColumnDirective {
     name: _angular_core.InputSignal<string>;
     headerTemplate: _angular_core.Signal<TemplateRef<any> | undefined>;
     cellTemplate: _angular_core.Signal<TemplateRef<any> | undefined>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTableColumnDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxTableColumnDirective, "[ixColumnDef]", ["ixColumnDef"], { "name": { "alias": "ixColumnDef"; "required": true; "isSignal": true; }; }, {}, ["headerTemplate", "cellTemplate"], never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnTableColumnDirective, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnTableColumnDirective, "[tnColumnDef]", ["tnColumnDef"], { "name": { "alias": "tnColumnDef"; "required": true; "isSignal": true; }; }, {}, ["headerTemplate", "cellTemplate"], never, true, never>;
 }
 
-interface IxTableDataSource<T = unknown> {
+interface TnTableDataSource<T = unknown> {
     data?: T[];
     connect?(): T[];
     disconnect?(): void;
 }
-declare class IxTableComponent<T = unknown> {
-    dataSource: _angular_core.InputSignal<IxTableDataSource<T> | T[]>;
+declare class TnTableComponent<T = unknown> {
+    dataSource: _angular_core.InputSignal<TnTableDataSource<T> | T[]>;
     displayedColumns: _angular_core.InputSignal<string[]>;
-    columnDefs: _angular_core.Signal<readonly IxTableColumnDirective[]>;
+    columnDefs: _angular_core.Signal<readonly TnTableColumnDirective[]>;
     private columnDefMap;
     private cdr;
     constructor();
     private processColumnDefs;
     data: _angular_core.Signal<T[]>;
-    getColumnDef(columnName: string): IxTableColumnDirective | undefined;
+    getColumnDef(columnName: string): TnTableColumnDirective | undefined;
     trackByIndex(index: number): number;
     getCellValue(row: T, column: string): unknown;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTableComponent<any>, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTableComponent<any>, "ix-table", never, { "dataSource": { "alias": "dataSource"; "required": false; "isSignal": true; }; "displayedColumns": { "alias": "displayedColumns"; "required": false; "isSignal": true; }; }, {}, ["columnDefs"], never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnTableComponent<any>, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnTableComponent<any>, "tn-table", never, { "dataSource": { "alias": "dataSource"; "required": false; "isSignal": true; }; "displayedColumns": { "alias": "displayedColumns"; "required": false; "isSignal": true; }; }, {}, ["columnDefs"], never, true, never>;
 }
 
 /** Flat node with expandable and level information */
-interface IxFlatTreeNode<T = unknown> {
+interface TnFlatTreeNode<T = unknown> {
     data: T;
     expandable: boolean;
     level: number;
@@ -1208,7 +1208,7 @@ interface IxFlatTreeNode<T = unknown> {
 /**
  * Tree flattener to convert normal type of node to node with children & level information.
  */
-declare class IxTreeFlattener<T, F> {
+declare class TnTreeFlattener<T, F> {
     transformFunction: (node: T, level: number) => F;
     getLevel: (node: F) => number;
     isExpandable: (node: F) => boolean;
@@ -1220,38 +1220,26 @@ declare class IxTreeFlattener<T, F> {
 /**
  * Data source for flat tree.
  */
-declare class IxTreeFlatDataSource<T, F> extends DataSource<F> {
+declare class TnTreeFlatDataSource<T, F> extends DataSource<F> {
     private _treeControl;
     private _treeFlattener;
     private _flattenedData;
     private _expandedData;
     private _data;
-    constructor(_treeControl: FlatTreeControl<F>, _treeFlattener: IxTreeFlattener<T, F>);
+    constructor(_treeControl: FlatTreeControl<F>, _treeFlattener: TnTreeFlattener<T, F>);
     get data(): T[];
     set data(value: T[]);
     connect(): Observable<F[]>;
     disconnect(): void;
     private _getExpandedNodesWithLevel;
 }
-declare class IxTreeComponent<T, K = T> extends CdkTree<T, K> {
+declare class TnTreeComponent<T, K = T> extends CdkTree<T, K> {
     constructor();
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTreeComponent<any, any>, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTreeComponent<any, any>, "ix-tree", ["ixTree"], {}, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnTreeComponent<any, any>, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnTreeComponent<any, any>, "tn-tree", ["tnTree"], {}, {}, never, never, true, never>;
 }
 
-declare class IxTreeNodeComponent<T, K = T> extends CdkTreeNode<T, K> {
-    constructor();
-    /** The tree node's level in the tree */
-    get level(): number;
-    /** Whether the tree node is expandable */
-    get isExpandable(): boolean;
-    /** Whether the tree node is expanded */
-    get isExpanded(): boolean;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTreeNodeComponent<any, any>, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTreeNodeComponent<any, any>, "ix-tree-node", ["ixTreeNode"], {}, {}, never, ["*"], true, never>;
-}
-
-declare class IxNestedTreeNodeComponent<T, K = T> extends CdkNestedTreeNode<T, K> {
+declare class TnTreeNodeComponent<T, K = T> extends CdkTreeNode<T, K> {
     constructor();
     /** The tree node's level in the tree */
     get level(): number;
@@ -1259,13 +1247,25 @@ declare class IxNestedTreeNodeComponent<T, K = T> extends CdkNestedTreeNode<T, K
     get isExpandable(): boolean;
     /** Whether the tree node is expanded */
     get isExpanded(): boolean;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxNestedTreeNodeComponent<any, any>, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxNestedTreeNodeComponent<any, any>, "ix-nested-tree-node", ["ixNestedTreeNode"], {}, {}, never, ["*", "[slot=children]"], true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnTreeNodeComponent<any, any>, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnTreeNodeComponent<any, any>, "tn-tree-node", ["tnTreeNode"], {}, {}, never, ["*"], true, never>;
 }
 
-declare class IxTreeNodeOutletDirective {
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTreeNodeOutletDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxTreeNodeOutletDirective, "[ixTreeNodeOutlet]", never, {}, {}, never, never, true, [{ directive: typeof i1.CdkTreeNodeOutlet; inputs: {}; outputs: {}; }]>;
+declare class TnNestedTreeNodeComponent<T, K = T> extends CdkNestedTreeNode<T, K> {
+    constructor();
+    /** The tree node's level in the tree */
+    get level(): number;
+    /** Whether the tree node is expandable */
+    get isExpandable(): boolean;
+    /** Whether the tree node is expanded */
+    get isExpanded(): boolean;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnNestedTreeNodeComponent<any, any>, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnNestedTreeNodeComponent<any, any>, "tn-nested-tree-node", ["tnNestedTreeNode"], {}, {}, never, ["*", "[slot=children]"], true, never>;
+}
+
+declare class TnTreeNodeOutletDirective {
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnTreeNodeOutletDirective, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnTreeNodeOutletDirective, "[tnTreeNodeOutlet]", never, {}, {}, never, never, true, [{ directive: typeof i1.CdkTreeNodeOutlet; inputs: {}; outputs: {}; }]>;
 }
 
 declare enum CommonShortcuts {
@@ -1461,13 +1461,13 @@ declare const QuickShortcuts: {
 declare class FileSizePipe implements PipeTransform {
     transform(value: number): string;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<FileSizePipe, never>;
-    static ɵpipe: _angular_core.ɵɵPipeDeclaration<FileSizePipe, "ixFileSize", true>;
+    static ɵpipe: _angular_core.ɵɵPipeDeclaration<FileSizePipe, "tnFileSize", true>;
 }
 
 declare class StripMntPrefixPipe implements PipeTransform {
     transform(path: string | null | undefined): string;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<StripMntPrefixPipe, never>;
-    static ɵpipe: _angular_core.ɵɵPipeDeclaration<StripMntPrefixPipe, "ixStripMntPrefix", true>;
+    static ɵpipe: _angular_core.ɵɵPipeDeclaration<StripMntPrefixPipe, "tnStripMntPrefix", true>;
 }
 
 interface FileSystemItem {
@@ -1508,11 +1508,11 @@ type FilePickerMode = 'file' | 'folder' | 'dataset' | 'zvol' | 'any';
 declare class TruncatePathPipe implements PipeTransform {
     transform(path: string): PathSegment[];
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<TruncatePathPipe, never>;
-    static ɵpipe: _angular_core.ɵɵPipeDeclaration<TruncatePathPipe, "ixTruncatePath", true>;
+    static ɵpipe: _angular_core.ɵɵPipeDeclaration<TruncatePathPipe, "tnTruncatePath", true>;
 }
 
 type SpinnerMode = 'determinate' | 'indeterminate';
-declare class IxSpinnerComponent {
+declare class TnSpinnerComponent {
     mode: _angular_core.InputSignal<SpinnerMode>;
     value: _angular_core.InputSignal<number>;
     diameter: _angular_core.InputSignal<number>;
@@ -1524,11 +1524,11 @@ declare class IxSpinnerComponent {
     strokeDasharray: _angular_core.Signal<string>;
     strokeDashoffset: _angular_core.Signal<number>;
     viewBox: _angular_core.Signal<string>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxSpinnerComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxSpinnerComponent, "ix-spinner", never, { "mode": { "alias": "mode"; "required": false; "isSignal": true; }; "value": { "alias": "value"; "required": false; "isSignal": true; }; "diameter": { "alias": "diameter"; "required": false; "isSignal": true; }; "strokeWidth": { "alias": "strokeWidth"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "ariaLabelledby": { "alias": "ariaLabelledby"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnSpinnerComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnSpinnerComponent, "tn-spinner", never, { "mode": { "alias": "mode"; "required": false; "isSignal": true; }; "value": { "alias": "value"; "required": false; "isSignal": true; }; "diameter": { "alias": "diameter"; "required": false; "isSignal": true; }; "strokeWidth": { "alias": "strokeWidth"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "ariaLabelledby": { "alias": "ariaLabelledby"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
-declare class IxBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewInit {
+declare class TnBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewInit {
     ariaLabel: _angular_core.InputSignal<string | null>;
     private paths;
     private animationId;
@@ -1544,12 +1544,12 @@ declare class IxBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewI
     private startProgressLoop;
     private animateSequence;
     private tween;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxBrandedSpinnerComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxBrandedSpinnerComponent, "ix-branded-spinner", never, { "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnBrandedSpinnerComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnBrandedSpinnerComponent, "tn-branded-spinner", never, { "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
 type ProgressBarMode = 'determinate' | 'indeterminate' | 'buffer';
-declare class IxProgressBarComponent {
+declare class TnProgressBarComponent {
     mode: _angular_core.InputSignal<ProgressBarMode>;
     value: _angular_core.InputSignal<number>;
     bufferValue: _angular_core.InputSignal<number>;
@@ -1570,11 +1570,11 @@ declare class IxProgressBarComponent {
      * Gets the transform value for the buffer progress bar (deprecated - use bufferStyles)
      */
     bufferTransform: _angular_core.Signal<string>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxProgressBarComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxProgressBarComponent, "ix-progress-bar", never, { "mode": { "alias": "mode"; "required": false; "isSignal": true; }; "value": { "alias": "value"; "required": false; "isSignal": true; }; "bufferValue": { "alias": "bufferValue"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "ariaLabelledby": { "alias": "ariaLabelledby"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnProgressBarComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnProgressBarComponent, "tn-progress-bar", never, { "mode": { "alias": "mode"; "required": false; "isSignal": true; }; "value": { "alias": "value"; "required": false; "isSignal": true; }; "bufferValue": { "alias": "bufferValue"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "ariaLabelledby": { "alias": "ariaLabelledby"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
-declare class IxParticleProgressBarComponent implements AfterViewInit, OnDestroy {
+declare class TnParticleProgressBarComponent implements AfterViewInit, OnDestroy {
     speed: _angular_core.InputSignal<"medium" | "slow" | "fast" | "ludicrous">;
     color: _angular_core.InputSignal<string>;
     height: _angular_core.InputSignal<number>;
@@ -1607,15 +1607,15 @@ declare class IxParticleProgressBarComponent implements AfterViewInit, OnDestroy
      * Generate darker shades of the input color for particle depth effect
      */
     private generateDarkerShades;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxParticleProgressBarComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxParticleProgressBarComponent, "ix-particle-progress-bar", never, { "speed": { "alias": "speed"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; "height": { "alias": "height"; "required": false; "isSignal": true; }; "width": { "alias": "width"; "required": false; "isSignal": true; }; "fill": { "alias": "fill"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnParticleProgressBarComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnParticleProgressBarComponent, "tn-particle-progress-bar", never, { "speed": { "alias": "speed"; "required": false; "isSignal": true; }; "color": { "alias": "color"; "required": false; "isSignal": true; }; "height": { "alias": "height"; "required": false; "isSignal": true; }; "width": { "alias": "width"; "required": false; "isSignal": true; }; "fill": { "alias": "fill"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
 interface DateRange {
     start: Date | null;
     end: Date | null;
 }
-declare class IxDateRangeInputComponent implements ControlValueAccessor, OnInit, OnDestroy {
+declare class TnDateRangeInputComponent implements ControlValueAccessor, OnInit, OnDestroy {
     disabled: _angular_core.InputSignal<boolean>;
     placeholder: _angular_core.InputSignal<string>;
     private formDisabled;
@@ -1627,7 +1627,7 @@ declare class IxDateRangeInputComponent implements ControlValueAccessor, OnInit,
     endDayRef: _angular_core.Signal<ElementRef<HTMLInputElement>>;
     endYearRef: _angular_core.Signal<ElementRef<HTMLInputElement>>;
     calendarTemplate: _angular_core.Signal<TemplateRef<unknown>>;
-    calendar: _angular_core.Signal<IxCalendarComponent>;
+    calendar: _angular_core.Signal<TnCalendarComponent>;
     wrapperEl: _angular_core.Signal<ElementRef<HTMLDivElement>>;
     private destroy$;
     private overlayRef?;
@@ -1665,11 +1665,11 @@ declare class IxDateRangeInputComponent implements ControlValueAccessor, OnInit,
     openDatepicker(): void;
     close(): void;
     private createOverlay;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxDateRangeInputComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxDateRangeInputComponent, "ix-date-range-input", never, { "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "placeholder": { "alias": "placeholder"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnDateRangeInputComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnDateRangeInputComponent, "tn-date-range-input", never, { "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "placeholder": { "alias": "placeholder"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
-declare class IxCalendarComponent implements OnInit {
+declare class TnCalendarComponent implements OnInit {
     startView: _angular_core.InputSignal<"month" | "year">;
     selected: _angular_core.InputSignal<Date | null | undefined>;
     minDate: _angular_core.InputSignal<Date | undefined>;
@@ -1705,11 +1705,11 @@ declare class IxCalendarComponent implements OnInit {
      * Reset the calendar to accept external range values - called when calendar reopens
      */
     resetInteractionState(): void;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxCalendarComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxCalendarComponent, "ix-calendar", never, { "startView": { "alias": "startView"; "required": false; "isSignal": true; }; "selected": { "alias": "selected"; "required": false; "isSignal": true; }; "minDate": { "alias": "minDate"; "required": false; "isSignal": true; }; "maxDate": { "alias": "maxDate"; "required": false; "isSignal": true; }; "dateFilter": { "alias": "dateFilter"; "required": false; "isSignal": true; }; "rangeMode": { "alias": "rangeMode"; "required": false; "isSignal": true; }; "selectedRange": { "alias": "selectedRange"; "required": false; "isSignal": true; }; }, { "selectedChange": "selectedChange"; "activeDateChange": "activeDateChange"; "viewChanged": "viewChanged"; "selectedRangeChange": "selectedRangeChange"; }, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnCalendarComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnCalendarComponent, "tn-calendar", never, { "startView": { "alias": "startView"; "required": false; "isSignal": true; }; "selected": { "alias": "selected"; "required": false; "isSignal": true; }; "minDate": { "alias": "minDate"; "required": false; "isSignal": true; }; "maxDate": { "alias": "maxDate"; "required": false; "isSignal": true; }; "dateFilter": { "alias": "dateFilter"; "required": false; "isSignal": true; }; "rangeMode": { "alias": "rangeMode"; "required": false; "isSignal": true; }; "selectedRange": { "alias": "selectedRange"; "required": false; "isSignal": true; }; }, { "selectedChange": "selectedChange"; "activeDateChange": "activeDateChange"; "viewChanged": "viewChanged"; "selectedRangeChange": "selectedRangeChange"; }, never, never, true, never>;
 }
 
-declare class IxCalendarHeaderComponent {
+declare class TnCalendarHeaderComponent {
     currentDate: _angular_core.InputSignal<Date>;
     currentView: _angular_core.InputSignal<"month" | "year">;
     monthSelected: _angular_core.OutputEmitterRef<number>;
@@ -1725,8 +1725,8 @@ declare class IxCalendarHeaderComponent {
     toggleView(): void;
     onPreviousClick(): void;
     onNextClick(): void;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxCalendarHeaderComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxCalendarHeaderComponent, "ix-calendar-header", never, { "currentDate": { "alias": "currentDate"; "required": false; "isSignal": true; }; "currentView": { "alias": "currentView"; "required": false; "isSignal": true; }; }, { "monthSelected": "monthSelected"; "yearSelected": "yearSelected"; "viewChanged": "viewChanged"; "previousClicked": "previousClicked"; "nextClicked": "nextClicked"; }, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnCalendarHeaderComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnCalendarHeaderComponent, "tn-calendar-header", never, { "currentDate": { "alias": "currentDate"; "required": false; "isSignal": true; }; "currentView": { "alias": "currentView"; "required": false; "isSignal": true; }; }, { "monthSelected": "monthSelected"; "yearSelected": "yearSelected"; "viewChanged": "viewChanged"; "previousClicked": "previousClicked"; "nextClicked": "nextClicked"; }, never, never, true, never>;
 }
 
 interface CalendarCell {
@@ -1743,7 +1743,7 @@ interface CalendarCell {
     rangeEnd?: boolean;
     inRange?: boolean;
 }
-declare class IxMonthViewComponent {
+declare class TnMonthViewComponent {
     activeDate: _angular_core.InputSignal<Date>;
     selected: _angular_core.InputSignal<Date | null | undefined>;
     minDate: _angular_core.InputSignal<Date | undefined>;
@@ -1770,8 +1770,8 @@ declare class IxMonthViewComponent {
     trackByDate(index: number, cell: CalendarCell): string;
     trackByRow(index: number, row: CalendarCell[]): string;
     onCellClicked(cell: CalendarCell): void;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxMonthViewComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxMonthViewComponent, "ix-month-view", never, { "activeDate": { "alias": "activeDate"; "required": false; "isSignal": true; }; "selected": { "alias": "selected"; "required": false; "isSignal": true; }; "minDate": { "alias": "minDate"; "required": false; "isSignal": true; }; "maxDate": { "alias": "maxDate"; "required": false; "isSignal": true; }; "dateFilter": { "alias": "dateFilter"; "required": false; "isSignal": true; }; "rangeMode": { "alias": "rangeMode"; "required": false; "isSignal": true; }; "selectedRange": { "alias": "selectedRange"; "required": false; "isSignal": true; }; }, { "selectedChange": "selectedChange"; "activeDateChange": "activeDateChange"; }, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnMonthViewComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnMonthViewComponent, "tn-month-view", never, { "activeDate": { "alias": "activeDate"; "required": false; "isSignal": true; }; "selected": { "alias": "selected"; "required": false; "isSignal": true; }; "minDate": { "alias": "minDate"; "required": false; "isSignal": true; }; "maxDate": { "alias": "maxDate"; "required": false; "isSignal": true; }; "dateFilter": { "alias": "dateFilter"; "required": false; "isSignal": true; }; "rangeMode": { "alias": "rangeMode"; "required": false; "isSignal": true; }; "selectedRange": { "alias": "selectedRange"; "required": false; "isSignal": true; }; }, { "selectedChange": "selectedChange"; "activeDateChange": "activeDateChange"; }, never, never, true, never>;
 }
 
 interface YearCell {
@@ -1783,7 +1783,7 @@ interface YearCell {
     selected: boolean;
     today: boolean;
 }
-declare class IxMultiYearViewComponent {
+declare class TnMultiYearViewComponent {
     activeDate: _angular_core.InputSignal<Date>;
     selected: _angular_core.InputSignal<Date | null | undefined>;
     minDate: _angular_core.InputSignal<Date | undefined>;
@@ -1806,11 +1806,11 @@ declare class IxMultiYearViewComponent {
     trackByYear(index: number, cell: YearCell): number;
     trackByRow(index: number, row: YearCell[]): string;
     onYearClicked(cell: YearCell): void;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxMultiYearViewComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxMultiYearViewComponent, "ix-multi-year-view", never, { "activeDate": { "alias": "activeDate"; "required": false; "isSignal": true; }; "selected": { "alias": "selected"; "required": false; "isSignal": true; }; "minDate": { "alias": "minDate"; "required": false; "isSignal": true; }; "maxDate": { "alias": "maxDate"; "required": false; "isSignal": true; }; "dateFilter": { "alias": "dateFilter"; "required": false; "isSignal": true; }; }, { "selectedChange": "selectedChange"; "activeDateChange": "activeDateChange"; }, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnMultiYearViewComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnMultiYearViewComponent, "tn-multi-year-view", never, { "activeDate": { "alias": "activeDate"; "required": false; "isSignal": true; }; "selected": { "alias": "selected"; "required": false; "isSignal": true; }; "minDate": { "alias": "minDate"; "required": false; "isSignal": true; }; "maxDate": { "alias": "maxDate"; "required": false; "isSignal": true; }; "dateFilter": { "alias": "dateFilter"; "required": false; "isSignal": true; }; }, { "selectedChange": "selectedChange"; "activeDateChange": "activeDateChange"; }, never, never, true, never>;
 }
 
-declare class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDestroy {
+declare class TnDateInputComponent implements ControlValueAccessor, OnInit, OnDestroy {
     overlay: Overlay;
     viewContainerRef: ViewContainerRef;
     disabled: _angular_core.InputSignal<boolean>;
@@ -1824,7 +1824,7 @@ declare class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDe
     dayRef: _angular_core.Signal<ElementRef<HTMLInputElement>>;
     yearRef: _angular_core.Signal<ElementRef<HTMLInputElement>>;
     calendarTemplate: _angular_core.Signal<TemplateRef<unknown>>;
-    calendar: _angular_core.Signal<IxCalendarComponent>;
+    calendar: _angular_core.Signal<TnCalendarComponent>;
     wrapperEl: _angular_core.Signal<ElementRef<HTMLDivElement>>;
     private destroy$;
     private overlayRef?;
@@ -1854,11 +1854,11 @@ declare class IxDateInputComponent implements ControlValueAccessor, OnInit, OnDe
     openDatepicker(): void;
     close(): void;
     private createOverlay;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxDateInputComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxDateInputComponent, "ix-date-input", never, { "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "placeholder": { "alias": "placeholder"; "required": false; "isSignal": true; }; "min": { "alias": "min"; "required": false; "isSignal": true; }; "max": { "alias": "max"; "required": false; "isSignal": true; }; "dateFilter": { "alias": "dateFilter"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnDateInputComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnDateInputComponent, "tn-date-input", never, { "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "placeholder": { "alias": "placeholder"; "required": false; "isSignal": true; }; "min": { "alias": "min"; "required": false; "isSignal": true; }; "max": { "alias": "max"; "required": false; "isSignal": true; }; "dateFilter": { "alias": "dateFilter"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
-declare class IxTimeInputComponent implements ControlValueAccessor {
+declare class TnTimeInputComponent implements ControlValueAccessor {
     disabled: _angular_core.InputSignal<boolean>;
     format: _angular_core.InputSignal<"12h" | "24h">;
     granularity: _angular_core.InputSignal<"15m" | "30m" | "1h">;
@@ -1870,17 +1870,17 @@ declare class IxTimeInputComponent implements ControlValueAccessor {
     private onChange;
     private onTouched;
     _value: string | null;
-    timeSelectOptions: _angular_core.Signal<IxSelectOption<string>[]>;
+    timeSelectOptions: _angular_core.Signal<TnSelectOption<string>[]>;
     writeValue(value: string): void;
     registerOnChange(fn: (value: string) => void): void;
     registerOnTouched(fn: () => void): void;
     setDisabledState(isDisabled: boolean): void;
     onSelectionChange(value: string): void;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTimeInputComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTimeInputComponent, "ix-time-input", never, { "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "format": { "alias": "format"; "required": false; "isSignal": true; }; "granularity": { "alias": "granularity"; "required": false; "isSignal": true; }; "placeholder": { "alias": "placeholder"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnTimeInputComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnTimeInputComponent, "tn-time-input", never, { "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "format": { "alias": "format"; "required": false; "isSignal": true; }; "granularity": { "alias": "granularity"; "required": false; "isSignal": true; }; "placeholder": { "alias": "placeholder"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
-declare class IxSliderThumbDirective implements ControlValueAccessor, OnInit, OnDestroy {
+declare class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnDestroy {
     disabled: _angular_core.WritableSignal<boolean>;
     slider?: {
         isDisabled: () => boolean;
@@ -1913,12 +1913,12 @@ declare class IxSliderThumbDirective implements ControlValueAccessor, OnInit, On
     private onGlobalTouchEnd;
     private updateValueFromPosition;
     private cleanup;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxSliderThumbDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxSliderThumbDirective, "input[ixSliderThumb]", never, {}, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnSliderThumbDirective, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnSliderThumbDirective, "input[tnSliderThumb]", never, {}, {}, never, never, true, never>;
 }
 
 type LabelType = 'none' | 'handle' | 'track' | 'both';
-declare class IxSliderComponent implements ControlValueAccessor, OnDestroy, AfterViewInit {
+declare class TnSliderComponent implements ControlValueAccessor, OnDestroy, AfterViewInit {
     min: _angular_core.InputSignal<number>;
     max: _angular_core.InputSignal<number>;
     step: _angular_core.InputSignal<number>;
@@ -1926,7 +1926,7 @@ declare class IxSliderComponent implements ControlValueAccessor, OnDestroy, Afte
     labelPrefix: _angular_core.InputSignal<string>;
     labelSuffix: _angular_core.InputSignal<string>;
     labelType: _angular_core.InputSignal<LabelType>;
-    thumbDirective: _angular_core.Signal<IxSliderThumbDirective>;
+    thumbDirective: _angular_core.Signal<TnSliderThumbDirective>;
     sliderContainer: _angular_core.Signal<ElementRef<HTMLDivElement>>;
     thumbVisual: _angular_core.Signal<ElementRef<HTMLDivElement>>;
     private onChange;
@@ -1960,11 +1960,11 @@ declare class IxSliderComponent implements ControlValueAccessor, OnDestroy, Afte
     private cleanupHandleInteractionListeners;
     private onInteractionStart;
     private onInteractionEnd;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxSliderComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxSliderComponent, "ix-slider", never, { "min": { "alias": "min"; "required": false; "isSignal": true; }; "max": { "alias": "max"; "required": false; "isSignal": true; }; "step": { "alias": "step"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "labelPrefix": { "alias": "labelPrefix"; "required": false; "isSignal": true; }; "labelSuffix": { "alias": "labelSuffix"; "required": false; "isSignal": true; }; "labelType": { "alias": "labelType"; "required": false; "isSignal": true; }; }, {}, ["thumbDirective"], ["*"], true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnSliderComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnSliderComponent, "tn-slider", never, { "min": { "alias": "min"; "required": false; "isSignal": true; }; "max": { "alias": "max"; "required": false; "isSignal": true; }; "step": { "alias": "step"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "labelPrefix": { "alias": "labelPrefix"; "required": false; "isSignal": true; }; "labelSuffix": { "alias": "labelSuffix"; "required": false; "isSignal": true; }; "labelType": { "alias": "labelType"; "required": false; "isSignal": true; }; }, {}, ["thumbDirective"], ["*"], true, never>;
 }
 
-declare class IxSliderWithLabelDirective implements OnInit, OnDestroy {
+declare class TnSliderWithLabelDirective implements OnInit, OnDestroy {
     enabled: _angular_core.InputSignal<string | boolean>;
     private _elementRef;
     private _slider;
@@ -1974,20 +1974,20 @@ declare class IxSliderWithLabelDirective implements OnInit, OnDestroy {
     private _onInteractionStart;
     private _onInteractionEnd;
     private _cleanup;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxSliderWithLabelDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxSliderWithLabelDirective, "ix-slider[ixSliderWithLabel]", never, { "enabled": { "alias": "ixSliderWithLabel"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnSliderWithLabelDirective, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnSliderWithLabelDirective, "tn-slider[tnSliderWithLabel]", never, { "enabled": { "alias": "tnSliderWithLabel"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
-type IxButtonToggleType = 'checkbox' | 'radio';
-declare class IxButtonToggleGroupComponent implements ControlValueAccessor {
-    buttonToggles: _angular_core.Signal<readonly IxButtonToggleComponent[]>;
+type TnButtonToggleType = 'checkbox' | 'radio';
+declare class TnButtonToggleGroupComponent implements ControlValueAccessor {
+    buttonToggles: _angular_core.Signal<readonly TnButtonToggleComponent[]>;
     multiple: _angular_core.InputSignal<boolean>;
     disabled: _angular_core.InputSignal<boolean>;
     name: _angular_core.InputSignal<string>;
     ariaLabel: _angular_core.InputSignal<string>;
     ariaLabelledby: _angular_core.InputSignal<string>;
     change: _angular_core.OutputEmitterRef<{
-        source: IxButtonToggleComponent;
+        source: TnButtonToggleComponent;
         value: unknown;
     }>;
     private selectedValue;
@@ -2001,16 +2001,16 @@ declare class IxButtonToggleGroupComponent implements ControlValueAccessor {
     registerOnChange(fn: (value: unknown) => void): void;
     registerOnTouched(fn: () => void): void;
     setDisabledState(isDisabled: boolean): void;
-    _onButtonToggleClick(clickedToggle: IxButtonToggleComponent): void;
+    _onButtonToggleClick(clickedToggle: TnButtonToggleComponent): void;
     private handleSingleSelection;
     private handleMultipleSelection;
     private updateTogglesFromValue;
     private updateTogglesFromValues;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxButtonToggleGroupComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxButtonToggleGroupComponent, "ix-button-toggle-group", never, { "multiple": { "alias": "multiple"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "name": { "alias": "name"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "ariaLabelledby": { "alias": "ariaLabelledby"; "required": false; "isSignal": true; }; }, { "change": "change"; }, ["buttonToggles"], ["*"], true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnButtonToggleGroupComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnButtonToggleGroupComponent, "tn-button-toggle-group", never, { "multiple": { "alias": "multiple"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "name": { "alias": "name"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "ariaLabelledby": { "alias": "ariaLabelledby"; "required": false; "isSignal": true; }; }, { "change": "change"; }, ["buttonToggles"], ["*"], true, never>;
 }
 
-declare class IxButtonToggleComponent implements ControlValueAccessor {
+declare class TnButtonToggleComponent implements ControlValueAccessor {
     cdr: ChangeDetectorRef;
     private static _uniqueIdCounter;
     id: _angular_core.InputSignal<string>;
@@ -2020,11 +2020,11 @@ declare class IxButtonToggleComponent implements ControlValueAccessor {
     ariaLabel: _angular_core.InputSignal<string>;
     ariaLabelledby: _angular_core.InputSignal<string>;
     change: _angular_core.OutputEmitterRef<{
-        source: IxButtonToggleComponent;
+        source: TnButtonToggleComponent;
         value: unknown;
     }>;
     buttonId: _angular_core.Signal<string>;
-    buttonToggleGroup?: IxButtonToggleGroupComponent;
+    buttonToggleGroup?: TnButtonToggleGroupComponent;
     private formDisabled;
     isDisabled: _angular_core.Signal<boolean>;
     private onChange;
@@ -2037,12 +2037,12 @@ declare class IxButtonToggleComponent implements ControlValueAccessor {
     onFocus(): void;
     _markForCheck(): void;
     _markForUncheck(): void;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxButtonToggleComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxButtonToggleComponent, "ix-button-toggle", never, { "id": { "alias": "id"; "required": false; "isSignal": true; }; "value": { "alias": "value"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "ariaLabelledby": { "alias": "ariaLabelledby"; "required": false; "isSignal": true; }; }, { "change": "change"; }, never, ["*"], true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnButtonToggleComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnButtonToggleComponent, "tn-button-toggle", never, { "id": { "alias": "id"; "required": false; "isSignal": true; }; "value": { "alias": "value"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "ariaLabel": { "alias": "ariaLabel"; "required": false; "isSignal": true; }; "ariaLabelledby": { "alias": "ariaLabelledby"; "required": false; "isSignal": true; }; }, { "change": "change"; }, never, ["*"], true, never>;
 }
 
 type TooltipPosition = 'above' | 'below' | 'left' | 'right' | 'before' | 'after';
-declare class IxTooltipDirective implements OnInit, OnDestroy {
+declare class TnTooltipDirective implements OnInit, OnDestroy {
     message: _angular_core.InputSignal<string>;
     position: _angular_core.InputSignal<TooltipPosition>;
     disabled: _angular_core.InputSignal<boolean>;
@@ -2076,19 +2076,19 @@ declare class IxTooltipDirective implements OnInit, OnDestroy {
     private _attachTooltip;
     private _getPositions;
     private _clearTimeouts;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTooltipDirective, never>;
-    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<IxTooltipDirective, "[ixTooltip]", never, { "message": { "alias": "ixTooltip"; "required": false; "isSignal": true; }; "position": { "alias": "ixTooltipPosition"; "required": false; "isSignal": true; }; "disabled": { "alias": "ixTooltipDisabled"; "required": false; "isSignal": true; }; "showDelay": { "alias": "ixTooltipShowDelay"; "required": false; "isSignal": true; }; "hideDelay": { "alias": "ixTooltipHideDelay"; "required": false; "isSignal": true; }; "tooltipClass": { "alias": "ixTooltipClass"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnTooltipDirective, never>;
+    static ɵdir: _angular_core.ɵɵDirectiveDeclaration<TnTooltipDirective, "[tnTooltip]", never, { "message": { "alias": "tnTooltip"; "required": false; "isSignal": true; }; "position": { "alias": "tnTooltipPosition"; "required": false; "isSignal": true; }; "disabled": { "alias": "tnTooltipDisabled"; "required": false; "isSignal": true; }; "showDelay": { "alias": "tnTooltipShowDelay"; "required": false; "isSignal": true; }; "hideDelay": { "alias": "tnTooltipHideDelay"; "required": false; "isSignal": true; }; "tooltipClass": { "alias": "tnTooltipClass"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
-declare class IxTooltipComponent {
+declare class TnTooltipComponent {
     message: _angular_core.InputSignal<string>;
     id: _angular_core.InputSignal<string>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxTooltipComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxTooltipComponent, "ix-tooltip", never, { "message": { "alias": "message"; "required": false; "isSignal": true; }; "id": { "alias": "id"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnTooltipComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnTooltipComponent, "tn-tooltip", never, { "message": { "alias": "message"; "required": false; "isSignal": true; }; "id": { "alias": "id"; "required": false; "isSignal": true; }; }, {}, never, never, true, never>;
 }
 
-type IxDialogOpenTarget<C> = ComponentType<C> | TemplateRef<unknown>;
-interface IxDialogDefaults {
+type TnDialogOpenTarget<C> = ComponentType<C> | TemplateRef<unknown>;
+interface TnDialogDefaults {
     panelClass?: string | string[];
     maxWidth?: string;
     maxHeight?: string;
@@ -2098,7 +2098,7 @@ interface IxDialogDefaults {
     role?: 'dialog' | 'alertdialog';
     fullscreen?: boolean;
 }
-declare class IxDialog {
+declare class TnDialog {
     private dialog;
     /**
      * Open a dialog with the given component or template.
@@ -2121,11 +2121,11 @@ declare class IxDialog {
         cancelText?: string;
         destructive?: boolean;
     }): Promise<Observable<boolean | undefined>>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxDialog, never>;
-    static ɵprov: _angular_core.ɵɵInjectableDeclaration<IxDialog>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnDialog, never>;
+    static ɵprov: _angular_core.ɵɵInjectableDeclaration<TnDialog>;
 }
 
-declare class IxDialogShellComponent implements OnInit {
+declare class TnDialogShellComponent implements OnInit {
     title: _angular_core.InputSignal<string>;
     showFullscreenButton: _angular_core.InputSignal<boolean>;
     isFullscreen: _angular_core.WritableSignal<boolean>;
@@ -2138,25 +2138,25 @@ declare class IxDialogShellComponent implements OnInit {
     toggleFullscreen(): void;
     private enterFullscreen;
     private exitFullscreen;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxDialogShellComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxDialogShellComponent, "ix-dialog-shell", never, { "title": { "alias": "title"; "required": false; "isSignal": true; }; "showFullscreenButton": { "alias": "showFullscreenButton"; "required": false; "isSignal": true; }; }, {}, never, ["*", "[ixDialogAction]"], true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnDialogShellComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnDialogShellComponent, "tn-dialog-shell", never, { "title": { "alias": "title"; "required": false; "isSignal": true; }; "showFullscreenButton": { "alias": "showFullscreenButton"; "required": false; "isSignal": true; }; }, {}, never, ["*", "[tnDialogAction]"], true, never>;
 }
 
-interface IxConfirmDialogData {
+interface TnConfirmDialogData {
     title: string;
     message?: string;
     confirmText?: string;
     cancelText?: string;
     destructive?: boolean;
 }
-declare class IxConfirmDialogComponent {
+declare class TnConfirmDialogComponent {
     ref: DialogRef<boolean, unknown>;
-    data: IxConfirmDialogData;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxConfirmDialogComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxConfirmDialogComponent, "ix-confirm-dialog", never, {}, {}, never, never, true, never>;
+    data: TnConfirmDialogData;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnConfirmDialogComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnConfirmDialogComponent, "tn-confirm-dialog", never, {}, {}, never, never, true, never>;
 }
 
-declare class IxStepComponent {
+declare class TnStepComponent {
     label: _angular_core.InputSignal<string>;
     icon: _angular_core.InputSignal<string | undefined>;
     optional: _angular_core.InputSignal<boolean>;
@@ -2164,11 +2164,11 @@ declare class IxStepComponent {
     hasError: _angular_core.InputSignal<boolean>;
     data: _angular_core.InputSignal<unknown>;
     content: _angular_core.Signal<TemplateRef<unknown>>;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxStepComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxStepComponent, "ix-step", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "icon": { "alias": "icon"; "required": false; "isSignal": true; }; "optional": { "alias": "optional"; "required": false; "isSignal": true; }; "completed": { "alias": "completed"; "required": false; "isSignal": true; }; "hasError": { "alias": "hasError"; "required": false; "isSignal": true; }; "data": { "alias": "data"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnStepComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnStepComponent, "tn-step", never, { "label": { "alias": "label"; "required": false; "isSignal": true; }; "icon": { "alias": "icon"; "required": false; "isSignal": true; }; "optional": { "alias": "optional"; "required": false; "isSignal": true; }; "completed": { "alias": "completed"; "required": false; "isSignal": true; }; "hasError": { "alias": "hasError"; "required": false; "isSignal": true; }; "data": { "alias": "data"; "required": false; "isSignal": true; }; }, {}, never, ["*"], true, never>;
 }
 
-declare class IxStepperComponent {
+declare class TnStepperComponent {
     orientation: _angular_core.InputSignal<"auto" | "horizontal" | "vertical">;
     linear: _angular_core.InputSignal<boolean>;
     selectedIndex: _angular_core.ModelSignal<number>;
@@ -2181,7 +2181,7 @@ declare class IxStepperComponent {
         completed: boolean;
         data: unknown;
     }[]>;
-    steps: _angular_core.Signal<readonly IxStepComponent[]>;
+    steps: _angular_core.Signal<readonly TnStepComponent[]>;
     private cdr;
     constructor();
     onWindowResize(_event: Event): void;
@@ -2192,11 +2192,11 @@ declare class IxStepperComponent {
     next(): void;
     previous(): void;
     _trackByStepIndex(index: number): number;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxStepperComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxStepperComponent, "ix-stepper", never, { "orientation": { "alias": "orientation"; "required": false; "isSignal": true; }; "linear": { "alias": "linear"; "required": false; "isSignal": true; }; "selectedIndex": { "alias": "selectedIndex"; "required": false; "isSignal": true; }; }, { "selectedIndex": "selectedIndexChange"; "selectionChange": "selectionChange"; "completed": "completed"; }, ["steps"], never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnStepperComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnStepperComponent, "tn-stepper", never, { "orientation": { "alias": "orientation"; "required": false; "isSignal": true; }; "linear": { "alias": "linear"; "required": false; "isSignal": true; }; "selectedIndex": { "alias": "selectedIndex"; "required": false; "isSignal": true; }; }, { "selectedIndex": "selectedIndexChange"; "selectionChange": "selectionChange"; "completed": "completed"; }, ["steps"], never, true, never>;
 }
 
-declare class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnDestroy {
+declare class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDestroy {
     mode: _angular_core.InputSignal<FilePickerMode>;
     multiSelect: _angular_core.InputSignal<boolean>;
     allowCreate: _angular_core.InputSignal<boolean>;
@@ -2262,11 +2262,11 @@ declare class IxFilePickerComponent implements ControlValueAccessor, OnInit, OnD
     private toFullPath;
     private emitError;
     private createOverlay;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxFilePickerComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxFilePickerComponent, "ix-file-picker", never, { "mode": { "alias": "mode"; "required": false; "isSignal": true; }; "multiSelect": { "alias": "multiSelect"; "required": false; "isSignal": true; }; "allowCreate": { "alias": "allowCreate"; "required": false; "isSignal": true; }; "allowDatasetCreate": { "alias": "allowDatasetCreate"; "required": false; "isSignal": true; }; "allowZvolCreate": { "alias": "allowZvolCreate"; "required": false; "isSignal": true; }; "allowManualInput": { "alias": "allowManualInput"; "required": false; "isSignal": true; }; "placeholder": { "alias": "placeholder"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "startPath": { "alias": "startPath"; "required": false; "isSignal": true; }; "rootPath": { "alias": "rootPath"; "required": false; "isSignal": true; }; "fileExtensions": { "alias": "fileExtensions"; "required": false; "isSignal": true; }; "callbacks": { "alias": "callbacks"; "required": false; "isSignal": true; }; }, { "selectionChange": "selectionChange"; "pathChange": "pathChange"; "createFolder": "createFolder"; "error": "error"; }, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnFilePickerComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnFilePickerComponent, "tn-file-picker", never, { "mode": { "alias": "mode"; "required": false; "isSignal": true; }; "multiSelect": { "alias": "multiSelect"; "required": false; "isSignal": true; }; "allowCreate": { "alias": "allowCreate"; "required": false; "isSignal": true; }; "allowDatasetCreate": { "alias": "allowDatasetCreate"; "required": false; "isSignal": true; }; "allowZvolCreate": { "alias": "allowZvolCreate"; "required": false; "isSignal": true; }; "allowManualInput": { "alias": "allowManualInput"; "required": false; "isSignal": true; }; "placeholder": { "alias": "placeholder"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "startPath": { "alias": "startPath"; "required": false; "isSignal": true; }; "rootPath": { "alias": "rootPath"; "required": false; "isSignal": true; }; "fileExtensions": { "alias": "fileExtensions"; "required": false; "isSignal": true; }; "callbacks": { "alias": "callbacks"; "required": false; "isSignal": true; }; }, { "selectionChange": "selectionChange"; "pathChange": "pathChange"; "createFolder": "createFolder"; "error": "error"; }, never, never, true, never>;
 }
 
-declare class IxFilePickerPopupComponent implements OnInit, AfterViewInit, AfterViewChecked {
+declare class TnFilePickerPopupComponent implements OnInit, AfterViewInit, AfterViewChecked {
     mode: _angular_core.InputSignal<FilePickerMode>;
     multiSelect: _angular_core.InputSignal<boolean>;
     allowCreate: _angular_core.InputSignal<boolean>;
@@ -2344,8 +2344,8 @@ declare class IxFilePickerPopupComponent implements OnInit, AfterViewInit, After
     formatFileSize(bytes: number): string;
     getTypeDisplayName(type: string): string;
     formatDate(date: Date): string;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxFilePickerPopupComponent, never>;
-    static ɵcmp: _angular_core.ɵɵComponentDeclaration<IxFilePickerPopupComponent, "ix-file-picker-popup", never, { "mode": { "alias": "mode"; "required": false; "isSignal": true; }; "multiSelect": { "alias": "multiSelect"; "required": false; "isSignal": true; }; "allowCreate": { "alias": "allowCreate"; "required": false; "isSignal": true; }; "allowDatasetCreate": { "alias": "allowDatasetCreate"; "required": false; "isSignal": true; }; "allowZvolCreate": { "alias": "allowZvolCreate"; "required": false; "isSignal": true; }; "currentPath": { "alias": "currentPath"; "required": false; "isSignal": true; }; "fileItems": { "alias": "fileItems"; "required": false; "isSignal": true; }; "selectedItems": { "alias": "selectedItems"; "required": false; "isSignal": true; }; "loading": { "alias": "loading"; "required": false; "isSignal": true; }; "creationLoading": { "alias": "creationLoading"; "required": false; "isSignal": true; }; "fileExtensions": { "alias": "fileExtensions"; "required": false; "isSignal": true; }; }, { "itemClick": "itemClick"; "itemDoubleClick": "itemDoubleClick"; "pathNavigate": "pathNavigate"; "createFolder": "createFolder"; "clearSelection": "clearSelection"; "close": "close"; "submit": "submit"; "cancel": "cancel"; "submitFolderName": "submitFolderName"; "cancelFolderCreation": "cancelFolderCreation"; }, never, never, true, never>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnFilePickerPopupComponent, never>;
+    static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnFilePickerPopupComponent, "tn-file-picker-popup", never, { "mode": { "alias": "mode"; "required": false; "isSignal": true; }; "multiSelect": { "alias": "multiSelect"; "required": false; "isSignal": true; }; "allowCreate": { "alias": "allowCreate"; "required": false; "isSignal": true; }; "allowDatasetCreate": { "alias": "allowDatasetCreate"; "required": false; "isSignal": true; }; "allowZvolCreate": { "alias": "allowZvolCreate"; "required": false; "isSignal": true; }; "currentPath": { "alias": "currentPath"; "required": false; "isSignal": true; }; "fileItems": { "alias": "fileItems"; "required": false; "isSignal": true; }; "selectedItems": { "alias": "selectedItems"; "required": false; "isSignal": true; }; "loading": { "alias": "loading"; "required": false; "isSignal": true; }; "creationLoading": { "alias": "creationLoading"; "required": false; "isSignal": true; }; "fileExtensions": { "alias": "fileExtensions"; "required": false; "isSignal": true; }; }, { "itemClick": "itemClick"; "itemDoubleClick": "itemDoubleClick"; "pathNavigate": "pathNavigate"; "createFolder": "createFolder"; "clearSelection": "clearSelection"; "close": "close"; "submit": "submit"; "cancel": "cancel"; "submitFolderName": "submitFolderName"; "cancelFolderCreation": "cancelFolderCreation"; }, never, never, true, never>;
 }
 
 interface KeyCombination {
@@ -2362,7 +2362,7 @@ interface ShortcutHandler {
     context?: string;
     enabled: boolean;
 }
-declare class IxKeyboardShortcutService {
+declare class TnKeyboardShortcutService {
     private shortcuts;
     private globalEnabled;
     /**
@@ -2433,9 +2433,9 @@ declare class IxKeyboardShortcutService {
      * Clear all shortcuts
      */
     clearAllShortcuts(): void;
-    static ɵfac: _angular_core.ɵɵFactoryDeclaration<IxKeyboardShortcutService, never>;
-    static ɵprov: _angular_core.ɵɵInjectableDeclaration<IxKeyboardShortcutService>;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnKeyboardShortcutService, never>;
+    static ɵprov: _angular_core.ɵɵInjectableDeclaration<TnKeyboardShortcutService>;
 }
 
-export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, IxBannerComponent, IxBannerHarness, IxBrandedSpinnerComponent, IxButtonComponent, IxButtonToggleComponent, IxButtonToggleGroupComponent, IxCalendarComponent, IxCalendarHeaderComponent, IxCardComponent, IxCellDefDirective, IxCheckboxComponent, IxChipComponent, IxConfirmDialogComponent, IxDateInputComponent, IxDateRangeInputComponent, IxDialog, IxDialogShellComponent, IxDividerComponent, IxDividerDirective, IxExpansionPanelComponent, IxFilePickerComponent, IxFilePickerPopupComponent, IxFormFieldComponent, IxHeaderCellDefDirective, IxIconButtonComponent, IxIconComponent, IxIconRegistryService, IxInputComponent, IxInputDirective, IxKeyboardShortcutComponent, IxKeyboardShortcutService, IxListAvatarDirective, IxListComponent, IxListIconDirective, IxListItemComponent, IxListItemLineDirective, IxListItemPrimaryDirective, IxListItemSecondaryDirective, IxListItemTitleDirective, IxListItemTrailingDirective, IxListOptionComponent, IxListSubheaderComponent, IxMenuComponent, IxMenuTriggerDirective, IxMonthViewComponent, IxMultiYearViewComponent, IxNestedTreeNodeComponent, IxParticleProgressBarComponent, IxProgressBarComponent, IxRadioComponent, IxSelectComponent, IxSelectionListComponent, IxSlideToggleComponent, IxSliderComponent, IxSliderThumbDirective, IxSliderWithLabelDirective, IxSpinnerComponent, IxSpriteLoaderService, IxStepComponent, IxStepperComponent, IxTabComponent, IxTabPanelComponent, IxTableColumnDirective, IxTableComponent, IxTabsComponent, IxTimeInputComponent, IxTooltipComponent, IxTooltipDirective, IxTreeComponent, IxTreeFlatDataSource, IxTreeFlattener, IxTreeNodeComponent, IxTreeNodeOutletDirective, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TruenasIconsService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, defaultSpriteBasePath, defaultSpriteConfigPath, iconMarker, libIconMarker, registerLucideIcons, setupLucideIntegration };
-export type { BannerHarnessFilters, CalendarCell, ChipColor, CreateFolderEvent, DateRange, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem, IconLibrary, IconLibraryType, IconResult, IconSize, IconSource, IxBannerType, IxButtonToggleType, IxCardAction, IxCardControl, IxCardFooterLink, IxCardHeaderStatus, IxConfirmDialogData, IxDialogDefaults, IxDialogOpenTarget, IxFlatTreeNode, IxMenuItem, IxSelectOption, IxSelectOptionGroup, IxSelectionChange, IxTableDataSource, KeyCombination, LabelType, LucideIconOptions, PathSegment, PlatformType, ProgressBarMode, ResolvedIcon, ShortcutHandler, SlideToggleColor, SpinnerMode, SpriteConfig, TabChangeEvent, TooltipPosition, YearCell };
+export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TnBannerComponent, TnBannerHarness, TnBrandedSpinnerComponent, TnButtonComponent, TnButtonToggleComponent, TnButtonToggleGroupComponent, TnCalendarComponent, TnCalendarHeaderComponent, TnCardComponent, TnCellDefDirective, TnCheckboxComponent, TnChipComponent, TnConfirmDialogComponent, TnDateInputComponent, TnDateRangeInputComponent, TnDialog, TnDialogShellComponent, TnDividerComponent, TnDividerDirective, TnExpansionPanelComponent, TnFilePickerComponent, TnFilePickerPopupComponent, TnFormFieldComponent, TnHeaderCellDefDirective, TnIconButtonComponent, TnIconComponent, TnIconRegistryService, TnInputComponent, TnInputDirective, TnKeyboardShortcutComponent, TnKeyboardShortcutService, TnListAvatarDirective, TnListComponent, TnListIconDirective, TnListItemComponent, TnListItemLineDirective, TnListItemPrimaryDirective, TnListItemSecondaryDirective, TnListItemTitleDirective, TnListItemTrailingDirective, TnListOptionComponent, TnListSubheaderComponent, TnMenuComponent, TnMenuTriggerDirective, TnMonthViewComponent, TnMultiYearViewComponent, TnNestedTreeNodeComponent, TnParticleProgressBarComponent, TnProgressBarComponent, TnRadioComponent, TnSelectComponent, TnSelectionListComponent, TnSlideToggleComponent, TnSliderComponent, TnSliderThumbDirective, TnSliderWithLabelDirective, TnSpinnerComponent, TnSpriteLoaderService, TnStepComponent, TnStepperComponent, TnTabComponent, TnTabPanelComponent, TnTableColumnDirective, TnTableComponent, TnTabsComponent, TnTimeInputComponent, TnTooltipComponent, TnTooltipDirective, TnTreeComponent, TnTreeFlatDataSource, TnTreeFlattener, TnTreeNodeComponent, TnTreeNodeOutletDirective, TruenasIconsService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, defaultSpriteBasePath, defaultSpriteConfigPath, iconMarker, libIconMarker, registerLucideIcons, setupLucideIntegration };
+export type { BannerHarnessFilters, CalendarCell, ChipColor, CreateFolderEvent, DateRange, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem, IconLibrary, IconLibraryType, IconResult, IconSize, IconSource, KeyCombination, LabelType, LucideIconOptions, PathSegment, PlatformType, ProgressBarMode, ResolvedIcon, ShortcutHandler, SlideToggleColor, SpinnerMode, SpriteConfig, TabChangeEvent, TnBannerType, TnButtonToggleType, TnCardAction, TnCardControl, TnCardFooterLink, TnCardHeaderStatus, TnConfirmDialogData, TnDialogDefaults, TnDialogOpenTarget, TnFlatTreeNode, TnMenuItem, TnSelectOption, TnSelectOptionGroup, TnSelectionChange, TnTableDataSource, TooltipPosition, YearCell };

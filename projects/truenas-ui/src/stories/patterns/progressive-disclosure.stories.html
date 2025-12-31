@@ -8,19 +8,19 @@
 
   @if (!showSuccess()) {
     <!-- Wizard Container -->
-    <ix-card elevation="low" [bordered]="true">
+    <tn-card elevation="low" [bordered]="true">
       <div style="padding: 24px;">
-        <ix-stepper orientation="horizontal" [linear]="true" [selectedIndex]="currentStep()">
+        <tn-stepper orientation="horizontal" [linear]="true" [selectedIndex]="currentStep()">
         
           <!-- Step 1: Name -->
-          <ix-step label="Name" [completed]="isStepCompleted(0)">
+          <tn-step label="Name" [completed]="isStepCompleted(0)">
             <div style="padding: 20px 0;">
               <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: var(--fg1);">Name Your Storage Pool</h3>
               <p style="margin: 0 0 20px 0; color: var(--fg2, #666); font-size: 14px;">Choose a name that describes what you'll store here</p>
               
-              <ix-form-field label="Pool Name" style="margin-bottom: 20px;">
-                <ix-input placeholder="e.g., family-photos, documents, backup" required [(ngModel)]="poolName" />
-              </ix-form-field>
+              <tn-form-field label="Pool Name" style="margin-bottom: 20px;">
+                <tn-input placeholder="e.g., family-photos, documents, backup" required [(ngModel)]="poolName" />
+              </tn-form-field>
               
               @if (poolName().trim().length === 0) {
                 <div style="margin-bottom: 16px; padding: 8px; background: var(--orange, #ff9800); color: white; border-radius: 4px; font-size: 13px;">
@@ -32,17 +32,17 @@
                 💡 <strong>Tip:</strong> Use descriptive names like "media-storage" or "backup-pool" to easily identify your storage later
               </div>
             </div>
-          </ix-step>
+          </tn-step>
 
           <!-- Step 2: Basic Settings -->
-          <ix-step label="Basic Settings" [completed]="isStepCompleted(1)">
+          <tn-step label="Basic Settings" [completed]="isStepCompleted(1)">
             <div style="padding: 20px 0;">
               <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: var(--fg1);">Choose Your Protection Level</h3>
               <p style="margin: 0 0 20px 0; color: var(--fg2, #666); font-size: 14px;">How safe should your data be if drives fail?</p>
               
               <div style="margin-bottom: 20px;">
                 <div style="margin-bottom: 16px;">
-                  <ix-radio 
+                  <tn-radio 
                     name="protectionType" 
                     value="raidz1" 
                     label="Basic Protection"
@@ -53,7 +53,7 @@
                 </div>
 
                 <div style="margin-bottom: 16px;">
-                  <ix-radio 
+                  <tn-radio 
                     name="protectionType" 
                     value="raidz2" 
                     label="Medium Protection"
@@ -64,7 +64,7 @@
                 </div>
 
                 <div style="margin-bottom: 16px;">
-                  <ix-radio 
+                  <tn-radio 
                     name="protectionType" 
                     value="raidz3" 
                     label="High Protection"
@@ -76,7 +76,7 @@
                 </div>
 
                 <div style="margin-bottom: 16px;">
-                  <ix-radio 
+                  <tn-radio 
                     name="protectionType" 
                     value="mirror" 
                     label="Maximum Protection"
@@ -91,7 +91,7 @@
               <div style="margin-bottom: 20px; padding: 12px; background: var(--alt-bg1, #f8f9fa); border-radius: 6px;">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                   <label style="font-weight: 500; color: var(--fg1); font-size: 14px;">Use all available disks</label>
-                  <ix-slide-toggle [(ngModel)]="useAllDisks" />
+                  <tn-slide-toggle [(ngModel)]="useAllDisks" />
                 </div>
                 <div style="font-size: 12px; color: var(--fg2, #666);">
                   When disabled, some disks are kept available for automatic hot spare configuration
@@ -99,7 +99,7 @@
               </div>
 
               <!-- Technical Summary (Expandable) -->
-              <ix-expansion-panel 
+              <tn-expansion-panel 
                 title="Technical Summary"
                 titleStyle="link"
                 elevation="none"
@@ -131,12 +131,12 @@
                     </div>
                   </div>
                 </div>
-              </ix-expansion-panel>
+              </tn-expansion-panel>
             </div>
-          </ix-step>
+          </tn-step>
 
           <!-- Step 3: Advanced Settings -->
-          <ix-step label="Advanced Settings" [completed]="isStepCompleted(2)">
+          <tn-step label="Advanced Settings" [completed]="isStepCompleted(2)">
             <div style="padding: 20px 0;">
               <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: var(--fg1);">Advanced Settings</h3>
               <p style="margin: 0 0 20px 0; color: var(--fg2, #666); font-size: 14px;">Optional optimizations and expert configurations - your pool works great with defaults!</p>
@@ -158,7 +158,7 @@
                 
                 <!-- Encryption -->
                 <div style="margin-bottom: 16px; padding: 12px; background: var(--bg2, #ffffff); border-radius: 6px; border: 1px solid var(--lines, #ddd);">
-                  <ix-checkbox 
+                  <tn-checkbox 
                     label="Enable Encryption (for sensitive data)"
                     style="margin-bottom: 8px;"
                     [(ngModel)]="enableEncryption" />
@@ -168,9 +168,9 @@
                   
                   @if (enableEncryption()) {
                     <div style="margin: 12px 0 0 24px; padding: 12px; background: var(--alt-bg1, #f8f9fa); border-radius: 4px;">
-                      <ix-form-field label="Encryption Passphrase">
-                        <ix-input type="password" placeholder="Enter secure passphrase" [(ngModel)]="encryptionKey" />
-                      </ix-form-field>
+                      <tn-form-field label="Encryption Passphrase">
+                        <tn-input type="password" placeholder="Enter secure passphrase" [(ngModel)]="encryptionKey" />
+                      </tn-form-field>
                       <div style="font-size: 11px; color: var(--fg2, #666); margin-top: 4px;">
                         ⚠️ Store this passphrase safely - you'll need it to access your data
                       </div>
@@ -186,7 +186,7 @@
                     <span style="margin-right: 8px; font-size: 16px;">⚙️</span>
                     <label style="font-weight: 500; color: var(--fg1); font-size: 14px;">Expert Optimizations</label>
                   </div>
-                  <ix-slide-toggle [(ngModel)]="enableAdvancedOptions" />
+                  <tn-slide-toggle [(ngModel)]="enableAdvancedOptions" />
                 </div>
                 <div style="font-size: 12px; color: var(--fg2, #666);">
                   Advanced tuning options for specific workloads - only modify if you know what these do
@@ -197,7 +197,7 @@
                   <div style="border-top: 1px solid var(--lines, #e5e7eb); padding-top: 16px; margin-top: 16px;">
                     
                     <!-- Performance Tuning -->
-                    <ix-expansion-panel 
+                    <tn-expansion-panel 
                       title="Performance Tuning"
                       titleStyle="link"
                       elevation="none"
@@ -205,26 +205,26 @@
                       [bordered]="true"
                       [background]="false">
                       <div style="padding: 12px; background: var(--bg2, #ffffff); border-radius: 4px; margin-top: 8px;">
-                        <ix-form-field label="Record Size" style="margin-bottom: 12px;">
-                          <ix-select [(ngModel)]="recordSize">
+                        <tn-form-field label="Record Size" style="margin-bottom: 12px;">
+                          <tn-select [(ngModel)]="recordSize">
                             <option value="128K">128K (Mixed workloads - default)</option>
                             <option value="64K">64K (Small files)</option>
                             <option value="1M">1M (Large files, video)</option>
-                          </ix-select>
-                        </ix-form-field>
+                          </tn-select>
+                        </tn-form-field>
                         
-                        <ix-form-field label="Sector Size (ashift)">
-                          <ix-select [(ngModel)]="ashiftValue">
+                        <tn-form-field label="Sector Size (ashift)">
+                          <tn-select [(ngModel)]="ashiftValue">
                             <option value="12">4K sectors (modern drives)</option>
                             <option value="9">512B sectors (legacy)</option>
-                          </ix-select>
-                        </ix-form-field>
+                          </tn-select>
+                        </tn-form-field>
                       </div>
-                    </ix-expansion-panel>
+                    </tn-expansion-panel>
 
                     <!-- Hot Spare -->
                     <div style="margin-bottom: 12px; padding: 12px; background: var(--bg2, #ffffff); border-radius: 4px; border: 1px solid var(--lines, #ddd);">
-                      <ix-checkbox 
+                      <tn-checkbox 
                         label="Add Hot Spare Drive"
                         [(ngModel)]="enableHotSpare" />
                       <div style="margin-top: 6px; margin-left: 24px; font-size: 12px; color: var(--fg2, #666);">
@@ -233,7 +233,7 @@
                     </div>
 
                     <!-- Expert Configuration -->
-                    <ix-expansion-panel 
+                    <tn-expansion-panel 
                       title="Expert Configuration"
                       titleStyle="link"
                       elevation="none"
@@ -245,8 +245,8 @@
                           <strong style="color: var(--orange, #ff9800);">Advanced Users Only</strong>
                         </div>
                         
-                        <ix-form-field label="Custom ZFS Properties" style="margin-bottom: 12px;">
-                          <ix-input 
+                        <tn-form-field label="Custom ZFS Properties" style="margin-bottom: 12px;">
+                          <tn-input 
                             placeholder="checksum=sha256, dedup=on, copies=2" 
                             multiline="true"
                             rows="3"
@@ -254,21 +254,21 @@
                           <div style="font-size: 11px; color: var(--fg2); margin-top: 4px;">
                             Override default ZFS properties (comma-separated)
                           </div>
-                        </ix-form-field>
+                        </tn-form-field>
 
-                        <ix-checkbox 
+                        <tn-checkbox 
                           label="Import existing pool instead of creating new"
                           [(ngModel)]="importExisting" />
                       </div>
-                    </ix-expansion-panel>
+                    </tn-expansion-panel>
                   </div>
                 }
               </div>
             </div>
-          </ix-step>
+          </tn-step>
 
           <!-- Step 4: Review -->
-          <ix-step label="Review" [completed]="isStepCompleted(3)">
+          <tn-step label="Review" [completed]="isStepCompleted(3)">
             <div style="padding: 20px 0;">
               <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: var(--fg1);">Review Your Storage Pool</h3>
               <p style="margin: 0 0 20px 0; color: var(--fg2, #666); font-size: 14px;">Final review of your storage configuration before creation</p>
@@ -287,7 +287,7 @@
                 <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; max-width: 600px; margin-left: auto; margin-right: auto;">
                   @for (driveIndex of getSelectedDriveIndexes(); track driveIndex) {
                     <div style="display: flex; flex-direction: column; align-items: center; padding: 8px; border: 2px solid var(--primary, #007bff); border-radius: 8px; background: var(--bg2, #ffffff);">
-                      <ix-disk-icon 
+                      <tn-disk-icon 
                         size="4TB" 
                         [name]="getDriveName(driveIndex)" 
                         [type]="DiskType.Ssd" />
@@ -299,7 +299,7 @@
                   @if (!useAllDisks()) {
                     @for (spareIndex of getHotSpareDriveIndexes(); track spareIndex) {
                       <div style="display: flex; flex-direction: column; align-items: center; padding: 8px; border: 2px solid var(--orange, #ff9800); border-radius: 8px; background: var(--bg2, #ffffff);">
-                        <ix-disk-icon 
+                        <tn-disk-icon 
                           size="4TB" 
                           [name]="getDriveName(spareIndex)" 
                           [type]="DiskType.Ssd" />
@@ -363,9 +363,9 @@
                 </div>
               </div>
             </div>
-          </ix-step>
+          </tn-step>
 
-        </ix-stepper>
+        </tn-stepper>
 
         <!-- Wizard Navigation -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--lines, #e5e7eb);">
@@ -388,7 +388,7 @@
             }
           </div>
           <div style="display: flex; gap: 12px;">
-            <ix-button 
+            <tn-button 
               color="secondary" 
               size="medium"
               label="Previous"
@@ -396,14 +396,14 @@
               (click)="previousStep()" />
             
             @if (currentStep() < 3) {
-              <ix-button 
+              <tn-button 
                 color="primary" 
                 size="medium"
                 label="Next"
                 [disabled]="!canProceedToNextStep()"
                 (click)="nextStep()" />
             } @else {
-              <ix-button 
+              <tn-button 
                 color="primary" 
                 size="medium"
                 label="Create Pool"
@@ -413,12 +413,12 @@
           </div>
         </div>
       </div>
-    </ix-card>
+    </tn-card>
   }
 
   <!-- Success State -->
   @if (showSuccess()) {
-    <ix-card elevation="low" [bordered]="true">
+    <tn-card elevation="low" [bordered]="true">
       <div style="padding: 32px; text-align: center;">
         <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 24px;">
           <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--green, #4caf50); display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
@@ -456,19 +456,19 @@
         
         <!-- Action Buttons -->
         <div style="display: flex; gap: 12px; justify-content: center;">
-          <ix-button 
+          <tn-button 
             color="primary" 
             size="large"
             label="Continue to Dataset Setup"
             (click)="continueToDatasets()" />
           
-          <ix-button 
+          <tn-button 
             color="secondary" 
             size="large"
             label="Create Another Pool"
             (click)="resetWizard()" />
         </div>
       </div>
-    </ix-card>
+    </tn-card>
   }
 </div>

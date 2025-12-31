@@ -1,0 +1,271 @@
+// Slide Toggle Component Styles
+// Based on Angular Material Design patterns
+
+.tn-slide-toggle {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  line-height: 1;
+  font-family: inherit;
+
+  &__label {
+    display: flex;
+    align-items: center;
+    cursor: inherit;
+  }
+
+  &__label-text {
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--fg1);
+    transition: color 0.2s ease;
+
+    &--before {
+      margin-right: 8px;
+    }
+
+    &--after {
+      margin-left: 8px;
+    }
+  }
+
+  &__input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    margin: 0;
+    pointer-events: none;
+
+    &:focus + .tn-slide-toggle__track {
+      box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 0, 123, 255), 0.2);
+    }
+  }
+
+  &__bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  &__track {
+    position: relative;
+    width: 52px;
+    height: 32px;
+    border-radius: 16px;
+    background-color: var(--lines);
+    border: 1px solid transparent;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    overflow: hidden;
+  }
+
+  &__track-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: inherit;
+    background-color: var(--primary, #007cba);
+    opacity: 0;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  &__thumb-container {
+    position: absolute;
+    top: 50%;
+    left: 4px;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    transition: transform 0.2s ease;
+    z-index: 1;
+  }
+
+  &__thumb {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--bg2);
+    border: 1px solid var(--lines);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__ripple {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: transparent;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+  }
+
+  &__icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  &__check-icon,
+  &__minus-icon {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    color: var(--fg2);
+  }
+
+  // Hover states
+  &:hover:not(.tn-slide-toggle--disabled) {
+    .tn-slide-toggle__ripple {
+      background-color: var(--primary);
+      opacity: 0.08;
+    }
+  }
+
+  // Checked state
+  &--checked {
+    .tn-slide-toggle__track {
+      background-color: var(--primary);
+      opacity: 0.5;
+    }
+
+    .tn-slide-toggle__track-fill {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+
+    .tn-slide-toggle__thumb-container {
+      transform: translateY(-50%) translateX(24px);
+    }
+
+    .tn-slide-toggle__thumb {
+      background-color: var(--bg2);
+      border-color: var(--primary);
+    }
+
+    .tn-slide-toggle__check-icon {
+      color: var(--primary);
+    }
+
+    &:hover:not(.tn-slide-toggle--disabled) {
+      .tn-slide-toggle__ripple {
+        background-color: var(--primary);
+        opacity: 0.12;
+      }
+    }
+  }
+
+  // Disabled state
+  &--disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+
+    .tn-slide-toggle__label-text {
+      color: var(--alt-fg1);
+    }
+
+    .tn-slide-toggle__track {
+      background-color: var(--alt-bg1);
+    }
+
+    .tn-slide-toggle__thumb {
+      background-color: var(--alt-bg2);
+      border-color: var(--alt-bg1);
+      box-shadow: none;
+    }
+
+    &.tn-slide-toggle--checked {
+      .tn-slide-toggle__track {
+        background-color: var(--alt-bg1);
+      }
+
+      .tn-slide-toggle__track-fill {
+        background-color: var(--alt-bg1);
+      }
+
+      .tn-slide-toggle__thumb {
+        background-color: var(--alt-bg2);
+        border-color: var(--alt-bg1);
+      }
+
+      .tn-slide-toggle__check-icon {
+        color: var(--alt-fg1);
+      }
+    }
+
+    &:hover .tn-slide-toggle__ripple {
+      opacity: 0;
+    }
+  }
+
+  // Color variants
+  &--primary {
+    // Uses default --primary from theme
+  }
+
+  &--accent {
+    --primary: var(--accent);
+  }
+
+  &--warn {
+    --primary: var(--red);
+  }
+
+  // Focus states
+  .tn-slide-toggle__input:focus-visible + .tn-slide-toggle__track {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  // Active/pressed state
+  &:active:not(.tn-slide-toggle--disabled) {
+    .tn-slide-toggle__ripple {
+      background-color: var(--primary);
+      opacity: 0.16;
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+  }
+
+  // High contrast mode support
+  @media (prefers-contrast: high) {
+    .tn-slide-toggle__track {
+      border-color: var(--fg1);
+    }
+
+    .tn-slide-toggle__thumb {
+      border-width: 2px;
+    }
+
+    &--disabled {
+      .tn-slide-toggle__track,
+      .tn-slide-toggle__thumb {
+        border-color: var(--alt-fg1);
+      }
+    }
+  }
+
+  // Reduced motion support
+  @media (prefers-reduced-motion: reduce) {
+    .tn-slide-toggle__track,
+    .tn-slide-toggle__track-fill,
+    .tn-slide-toggle__thumb-container,
+    .tn-slide-toggle__thumb,
+    .tn-slide-toggle__ripple {
+      transition: none;
+    }
+  }
+}

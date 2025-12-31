@@ -24,19 +24,19 @@ In your application's `package.json`:
 
 ```html
 <!-- MDI icons (7000+ Material Design Icons) -->
-<ix-icon name="folder" library="mdi"></ix-icon>
-<ix-icon name="server" library="mdi"></ix-icon>
+<tn-icon name="folder" library="mdi"></tn-icon>
+<tn-icon name="server" library="mdi"></tn-icon>
 
 <!-- Material Design icons (official Google icons) -->
-<ix-icon name="home" library="material"></ix-icon>
-<ix-icon name="settings" library="material"></ix-icon>
+<tn-icon name="home" library="material"></tn-icon>
+<tn-icon name="settings" library="material"></tn-icon>
 
 <!-- Library custom icons (TrueNAS-specific) -->
-<ix-icon name="dataset" library="custom"></ix-icon>
-<ix-icon name="zvol" library="custom"></ix-icon>
+<tn-icon name="dataset" library="custom"></tn-icon>
+<tn-icon name="zvol" library="custom"></tn-icon>
 
 <!-- Your app-specific custom icons -->
-<ix-icon name="your-icon" library="custom"></ix-icon>
+<tn-icon name="your-icon" library="custom"></tn-icon>
 ```
 
 ### 3. Generate the Sprite
@@ -64,7 +64,7 @@ iconMarker('folder', 'mdi');
 
 **Template:**
 ```html
-<ix-icon name="folder" library="mdi"></ix-icon>
+<tn-icon name="folder" library="mdi"></tn-icon>
 ```
 
 **Sprite name:** `mdi-folder`
@@ -80,32 +80,32 @@ iconMarker('home', 'material');
 
 **Template:**
 ```html
-<ix-icon name="home" library="material"></ix-icon>
+<tn-icon name="home" library="material"></tn-icon>
 ```
 
 **Sprite name:** `home` (no prefix)
 
 ### 3. Library Custom Icons (`library="custom"`)
 
-TrueNAS-specific icons included in the component library (ix- prefix)
+TrueNAS-specific icons included in the component library (tn- prefix)
 
 **Usage in library code:**
 ```typescript
 import { libIconMarker } from 'truenas-ui';
-libIconMarker('ix-dataset');
+libIconMarker('tn-dataset');
 ```
 
 **Usage in your app:**
 ```typescript
-iconMarker('dataset', 'custom');  // Resolves to ix-dataset
+iconMarker('dataset', 'custom');  // Resolves to tn-dataset
 ```
 
 **Template:**
 ```html
-<ix-icon name="dataset" library="custom"></ix-icon>
+<tn-icon name="dataset" library="custom"></tn-icon>
 ```
 
-**Sprite name:** `ix-dataset`
+**Sprite name:** `tn-dataset`
 
 ### 4. Consumer Custom Icons (`library="custom"`)
 
@@ -120,7 +120,7 @@ iconMarker('your-icon', 'custom');  // Resolves to app-your-icon
 
 **Template:**
 ```html
-<ix-icon name="your-icon" library="custom"></ix-icon>
+<tn-icon name="your-icon" library="custom"></tn-icon>
 ```
 
 **Sprite name:** `app-your-icon`
@@ -187,20 +187,20 @@ yarn icons
 ### Step 5: Use the Icon
 
 ```html
-<ix-icon name="my-logo" library="custom"></ix-icon>
+<tn-icon name="my-logo" library="custom"></tn-icon>
 ```
 
 ## Icon Component Props
 
 ```html
-<ix-icon
+<tn-icon
   name="folder"           <!-- Icon name (required) -->
   library="mdi"          <!-- Icon library: 'mdi', 'material', 'custom' -->
   size="md"              <!-- Size: 'xs', 'sm', 'md', 'lg', 'xl' -->
   color="#007acc"        <!-- Custom color (CSS color value) -->
   tooltip="Folder icon"  <!-- Tooltip text on hover -->
   ariaLabel="Open folder" <!-- Accessibility label -->
-></ix-icon>
+></tn-icon>
 ```
 
 ## How It Works
@@ -208,7 +208,7 @@ yarn icons
 The sprite generation system:
 
 1. **Scans TypeScript files** for `iconMarker()` and `libIconMarker()` calls
-2. **Scans HTML templates** for `<ix-icon>` component usage
+2. **Scans HTML templates** for `<tn-icon>` component usage
 3. **Resolves icon paths** based on library type and prefix rules
 4. **Generates sprite** with only the icons you use (tree-shaking)
 5. **Creates manifest** (`sprite-config.json`) for debugging
@@ -222,10 +222,10 @@ The system automatically applies prefixes to prevent naming conflicts:
 |---------|-----------|-------------|---------|
 | MDI | `iconMarker('folder', 'mdi')` | `mdi-folder` | @mdi/svg package |
 | Material | `iconMarker('home', 'material')` | `home` | @material-design-icons package |
-| Library Custom | `iconMarker('dataset', 'custom')` | `ix-dataset` | Library assets |
+| Library Custom | `iconMarker('dataset', 'custom')` | `tn-dataset` | Library assets |
 | Consumer Custom | `iconMarker('my-logo', 'custom')` | `app-my-logo` | Your app assets |
 
-This ensures library icons (`ix-*`) never conflict with your app icons (`app-*`).
+This ensures library icons (`tn-*`) never conflict with your app icons (`app-*`).
 
 ## Troubleshooting
 

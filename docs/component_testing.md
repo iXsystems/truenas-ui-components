@@ -13,18 +13,18 @@ Testing patterns and best practices for TrueNAS UI Components using Jest.
 
 ```typescript
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Ix[Name]Component } from './ix-[name].component';
+import { Tn[Name]Component } from './tn-[name].component';
 
-describe('Ix[Name]Component', () => {
-  let component: Ix[Name]Component;
-  let fixture: ComponentFixture<Ix[Name]Component>;
+describe('Tn[Name]Component', () => {
+  let component: Tn[Name]Component;
+  let fixture: ComponentFixture<Tn[Name]Component>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Ix[Name]Component]  // Standalone component
+      imports: [Tn[Name]Component]  // Standalone component
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Ix[Name]Component);
+    fixture = TestBed.createComponent(Tn[Name]Component);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
@@ -107,28 +107,28 @@ Test that correct classes are applied:
 describe('classes getter', () => {
   it('should include base class', () => {
     const classes = component.classes;
-    expect(classes).toContain('ix-component');
+    expect(classes).toContain('tn-component');
   });
 
   it('should include size modifier class', () => {
     fixture.componentRef.setInput('size', 'large');
     fixture.detectChanges();
     const classes = component.classes;
-    expect(classes).toContain('ix-component--large');
+    expect(classes).toContain('tn-component--large');
   });
 
   it('should include disabled class when disabled', () => {
     fixture.componentRef.setInput('disabled', true);
     fixture.detectChanges();
     const classes = component.classes;
-    expect(classes).toContain('ix-component--disabled');
+    expect(classes).toContain('tn-component--disabled');
   });
 
   it('should include variant class', () => {
     fixture.componentRef.setInput('variant', 'primary');
     fixture.detectChanges();
     const classes = component.classes;
-    expect(classes).toContain('ix-component--primary');
+    expect(classes).toContain('tn-component--primary');
   });
 });
 ```
@@ -165,7 +165,7 @@ describe('DOM rendering', () => {
     fixture.componentRef.setInput('label', 'Test Label');
     fixture.detectChanges();
 
-    const labelElement = fixture.nativeElement.querySelector('.ix-component__label');
+    const labelElement = fixture.nativeElement.querySelector('.tn-component__label');
     expect(labelElement.textContent).toBe('Test Label');
   });
 
@@ -173,7 +173,7 @@ describe('DOM rendering', () => {
     fixture.componentRef.setInput('hidden', true);
     fixture.detectChanges();
 
-    const element = fixture.nativeElement.querySelector('.ix-component');
+    const element = fixture.nativeElement.querySelector('.tn-component');
     expect(element).toBeNull();
   });
 
@@ -196,7 +196,7 @@ describe('conditional rendering', () => {
     fixture.componentRef.setInput('title', 'Test Title');
     fixture.detectChanges();
 
-    const header = fixture.nativeElement.querySelector('.ix-component__header');
+    const header = fixture.nativeElement.querySelector('.tn-component__header');
     expect(header).toBeTruthy();
   });
 
@@ -204,7 +204,7 @@ describe('conditional rendering', () => {
     fixture.componentRef.setInput('title', '');
     fixture.detectChanges();
 
-    const header = fixture.nativeElement.querySelector('.ix-component__header');
+    const header = fixture.nativeElement.querySelector('.tn-component__header');
     expect(header).toBeNull();
   });
 
@@ -212,7 +212,7 @@ describe('conditional rendering', () => {
     fixture.componentRef.setInput('items', ['Item 1', 'Item 2', 'Item 3']);
     fixture.detectChanges();
 
-    const items = fixture.nativeElement.querySelectorAll('.ix-component__item');
+    const items = fixture.nativeElement.querySelectorAll('.tn-component__item');
     expect(items.length).toBe(3);
   });
 });
@@ -224,12 +224,12 @@ describe('conditional rendering', () => {
 
 ```typescript
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Ix[Name]Component } from './ix-[name].component';
+import { Tn[Name]Component } from './tn-[name].component';
 import { MyService } from '../services/my.service';
 
-describe('Ix[Name]Component', () => {
-  let component: Ix[Name]Component;
-  let fixture: ComponentFixture<Ix[Name]Component>;
+describe('Tn[Name]Component', () => {
+  let component: Tn[Name]Component;
+  let fixture: ComponentFixture<Tn[Name]Component>;
   let mockService: jest.Mocked<MyService>;
 
   beforeEach(async () => {
@@ -240,13 +240,13 @@ describe('Ix[Name]Component', () => {
     } as any;
 
     await TestBed.configureTestingModule({
-      imports: [Ix[Name]Component],
+      imports: [Tn[Name]Component],
       providers: [
         { provide: MyService, useValue: mockService }
       ]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Ix[Name]Component);
+    fixture = TestBed.createComponent(Tn[Name]Component);
     component = fixture.componentInstance;
   });
 
@@ -261,19 +261,19 @@ describe('Ix[Name]Component', () => {
 
 ```typescript
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { IxCardComponent } from './ix-card.component';
-import { IxButtonComponent } from '../ix-button/ix-button.component';
+import { TnCardComponent } from './tn-card.component';
+import { TnButtonComponent } from '../tn-button/tn-button.component';
 
-describe('IxCardComponent', () => {
-  let component: IxCardComponent;
-  let fixture: ComponentFixture<IxCardComponent>;
+describe('TnCardComponent', () => {
+  let component: TnCardComponent;
+  let fixture: ComponentFixture<TnCardComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IxCardComponent, IxButtonComponent]  // Import child components
+      imports: [TnCardComponent, TnButtonComponent]  // Import child components
     }).compileComponents();
 
-    fixture = TestBed.createComponent(IxCardComponent);
+    fixture = TestBed.createComponent(TnCardComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
@@ -282,7 +282,7 @@ describe('IxCardComponent', () => {
     component.showButton = true;
     fixture.detectChanges();
 
-    const button = fixture.nativeElement.querySelector('ix-button');
+    const button = fixture.nativeElement.querySelector('tn-button');
     expect(button).toBeTruthy();
   });
 });
@@ -296,7 +296,7 @@ Add interaction tests to your stories:
 import type { Meta, StoryObj } from '@storybook/angular';
 import { userEvent, within } from '@storybook/testing-library';
 import { expect } from '@storybook/jest';
-import { IxButtonComponent } from '../lib/ix-button/ix-button.component';
+import { TnButtonComponent } from '../lib/tn-button/tn-button.component';
 
 export const Primary: Story = {
   args: {
@@ -336,7 +336,7 @@ describe('edge cases', () => {
   it('should handle undefined title', () => {
     fixture.componentRef.setInput('title', undefined);
     fixture.detectChanges();
-    const title = fixture.nativeElement.querySelector('.ix-component__title');
+    const title = fixture.nativeElement.querySelector('.tn-component__title');
     expect(title).toBeNull();
   });
 });
@@ -349,7 +349,7 @@ describe('empty values', () => {
   it('should handle empty array', () => {
     fixture.componentRef.setInput('items', []);
     fixture.detectChanges();
-    const items = fixture.nativeElement.querySelectorAll('.ix-component__item');
+    const items = fixture.nativeElement.querySelectorAll('.tn-component__item');
     expect(items.length).toBe(0);
   });
 
@@ -432,7 +432,7 @@ npm run test:watch
 npm run test:coverage
 
 # Run specific test file
-npm test -- ix-button.component.spec
+npm test -- tn-button.component.spec
 ```
 
 ## Test Coverage Goals
@@ -503,10 +503,10 @@ debugger;
 ## Examples
 
 See these test files for reference:
-- `ix-button.component.spec.ts` - Simple component tests
-- `ix-card.component.spec.ts` - Complex component with children
-- `ix-checkbox.component.spec.ts` - Form control tests
-- `ix-banner.component.spec.ts` - Harness testing examples
+- `tn-button.component.spec.ts` - Simple component tests
+- `tn-card.component.spec.ts` - Complex component with children
+- `tn-checkbox.component.spec.ts` - Form control tests
+- `tn-banner.component.spec.ts` - Harness testing examples
 
 ## Component Harness Testing
 
@@ -537,7 +537,7 @@ Test utilities from Angular CDK that provide a simple, stable API for querying c
 ```typescript
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { HarnessLoader } from '@angular/cdk/testing';
-import { IxBannerHarness } from './ix-banner.harness';
+import { TnBannerHarness } from './tn-banner.harness';
 
 describe('Component with Harness', () => {
   let loader: HarnessLoader;
@@ -561,12 +561,12 @@ describe('Component with Harness', () => {
 
 ```typescript
 it('should have banner', async () => {
-  const banner = await loader.getHarness(IxBannerHarness);
+  const banner = await loader.getHarness(TnBannerHarness);
   expect(banner).toBeTruthy();
 });
 
 it('should check if banner exists', async () => {
-  const hasBanner = await loader.hasHarness(IxBannerHarness);
+  const hasBanner = await loader.hasHarness(TnBannerHarness);
   expect(hasBanner).toBe(true);
 });
 ```
@@ -576,13 +576,13 @@ it('should check if banner exists', async () => {
 ```typescript
 it('should find banner with specific text', async () => {
   const errorBanner = await loader.getHarness(
-    IxBannerHarness.with({ textContains: 'network error' })
+    TnBannerHarness.with({ textContains: 'network error' })
   );
   expect(errorBanner).toBeTruthy();
 });
 
 it('should verify banner text', async () => {
-  const banner = await loader.getHarness(IxBannerHarness);
+  const banner = await loader.getHarness(TnBannerHarness);
   const text = await banner.getText();
   expect(text).toContain('Expected content');
 });
@@ -593,14 +593,14 @@ it('should verify banner text', async () => {
 ```typescript
 it('should match with regex pattern', async () => {
   const hasSuccess = await loader.hasHarness(
-    IxBannerHarness.with({ textContains: /success/i })
+    TnBannerHarness.with({ textContains: /success/i })
   );
   expect(hasSuccess).toBe(true);
 });
 
 it('should find error banner', async () => {
   const banner = await loader.getHarness(
-    IxBannerHarness.with({ textContains: /Error:/ })
+    TnBannerHarness.with({ textContains: /Error:/ })
   );
   expect(banner).toBeTruthy();
 });
@@ -610,13 +610,13 @@ it('should find error banner', async () => {
 
 ```typescript
 it('should get all banners', async () => {
-  const banners = await loader.getAllHarnesses(IxBannerHarness);
+  const banners = await loader.getAllHarnesses(TnBannerHarness);
   expect(banners.length).toBe(3);
 });
 
 it('should filter multiple banners', async () => {
   const errorBanners = await loader.getAllHarnesses(
-    IxBannerHarness.with({ textContains: /error/i })
+    TnBannerHarness.with({ textContains: /error/i })
   );
   expect(errorBanners.length).toBe(2);
 });
@@ -626,17 +626,17 @@ it('should filter multiple banners', async () => {
 
 - **String**: Exact substring match
   ```typescript
-  IxBannerHarness.with({ textContains: 'Success' })
+  TnBannerHarness.with({ textContains: 'Success' })
   ```
 
 - **Regex**: Pattern match
   ```typescript
-  IxBannerHarness.with({ textContains: /Error:/ })
+  TnBannerHarness.with({ textContains: /Error:/ })
   ```
 
 - **Case-insensitive**: Use regex with `i` flag
   ```typescript
-  IxBannerHarness.with({ textContains: /success/i })
+  TnBannerHarness.with({ textContains: /success/i })
   ```
 
 ### Important: Always Await
@@ -646,13 +646,13 @@ All harness methods are async. Always use `await`:
 ```typescript
 // ✅ Correct
 it('should get text', async () => {
-  const banner = await loader.getHarness(IxBannerHarness);
+  const banner = await loader.getHarness(TnBannerHarness);
   expect(await banner.getText()).toBe('Success');
 });
 
 // ❌ Wrong - forgot await
 it('should get text', async () => {
-  const banner = await loader.getHarness(IxBannerHarness);
+  const banner = await loader.getHarness(TnBannerHarness);
   expect(banner.getText()).toBe('Success'); // This will fail!
 });
 ```
@@ -663,13 +663,13 @@ it('should get text', async () => {
 it('should handle missing harness', async () => {
   // This throws if harness not found
   await expectAsync(
-    loader.getHarness(IxBannerHarness.with({ textContains: 'Not Found' }))
+    loader.getHarness(TnBannerHarness.with({ textContains: 'Not Found' }))
   ).toBeRejected();
 });
 
 it('should check existence instead', async () => {
   const exists = await loader.hasHarness(
-    IxBannerHarness.with({ textContains: 'Not Found' })
+    TnBannerHarness.with({ textContains: 'Not Found' })
   );
   expect(exists).toBe(false);
 });
@@ -678,7 +678,7 @@ it('should check existence instead', async () => {
 ### Consumer Integration Test Example
 
 ```typescript
-// Consumer's test for their component that uses ix-banner
+// Consumer's test for their component that uses tn-banner
 describe('My Component with TrueNAS Banner', () => {
   let fixture: ComponentFixture<MyComponent>;
   let loader: HarnessLoader;
@@ -700,7 +700,7 @@ describe('My Component with TrueNAS Banner', () => {
 
     // Verify error banner appears
     const hasError = await loader.hasHarness(
-      IxBannerHarness.with({ textContains: /error/i })
+      TnBannerHarness.with({ textContains: /error/i })
     );
     expect(hasError).toBe(true);
   });
@@ -711,7 +711,7 @@ describe('My Component with TrueNAS Banner', () => {
     fixture.detectChanges();
 
     const banner = await loader.getHarness(
-      IxBannerHarness.with({ textContains: /saved/i })
+      TnBannerHarness.with({ textContains: /saved/i })
     );
     const text = await banner.getText();
     expect(text).toContain('successfully saved');
@@ -737,6 +737,6 @@ describe('My Component with TrueNAS Banner', () => {
 
 ### Reference Implementation
 
-See `/Users/aaronervin/Projects/truenas-ui-components/projects/truenas-ui/src/lib/ix-banner/` for complete harness implementation:
-- `ix-banner.harness.ts` - Minimal harness definition
-- `ix-banner.component.spec.ts` - Harness usage examples
+See `/Users/aaronervin/Projects/truenas-ui-components/projects/truenas-ui/src/lib/banner/` for complete harness implementation:
+- `tn-banner.harness.ts` - Minimal harness definition
+- `tn-banner.component.spec.ts` - Harness usage examples

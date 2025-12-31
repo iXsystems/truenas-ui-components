@@ -11,7 +11,7 @@ export function findIconsInTemplates(path: string, skipIcons?: Set<string>): Set
     const content = fs.readFileSync(template, 'utf-8');
     const parsedTemplate = cheerio.load(content);
 
-    // Helper function to extract icon names from elements (used for both ix-icon and ix-icon-button)
+    // Helper function to extract icon names from elements (used for both tn-icon and tn-icon-button)
     const processIconElement = (iconTag: cheerio.Element) => {
       // Check both 'name' and '[name]' attributes (Angular binding syntax)
       const staticName = parsedTemplate(iconTag).attr('name');
@@ -74,7 +74,7 @@ export function findIconsInTemplates(path: string, skipIcons?: Set<string>): Set
         // Handle library attribute - prefix the icon name with library prefix
         if (library === 'mdi' && !iconName.startsWith('mdi-')) {
           finalIconName = `mdi-${iconName}`;
-        } else if (library === 'custom' && !iconName.startsWith('app-') && !iconName.startsWith('ix-')) {
+        } else if (library === 'custom' && !iconName.startsWith('app-') && !iconName.startsWith('tn-')) {
           // Consumer custom icons get app- prefix
           // (Library templates should never use library="custom", they use libIconMarker() instead)
           finalIconName = `app-${iconName}`;
@@ -93,13 +93,13 @@ export function findIconsInTemplates(path: string, skipIcons?: Set<string>): Set
       });
     };
 
-    // Scan ix-icon elements
-    parsedTemplate('ix-icon').each((_, iconTag) => {
+    // Scan tn-icon elements
+    parsedTemplate('tn-icon').each((_, iconTag) => {
       processIconElement(iconTag);
     });
 
-    // Scan ix-icon-button elements (they also have name and library attributes)
-    parsedTemplate('ix-icon-button').each((_, iconTag) => {
+    // Scan tn-icon-button elements (they also have name and library attributes)
+    parsedTemplate('tn-icon-button').each((_, iconTag) => {
       processIconElement(iconTag);
     });
   });

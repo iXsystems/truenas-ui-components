@@ -1,0 +1,97 @@
+.tn-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 6px;
+  border-left: 4px solid;
+  transition: opacity 0.2s ease;
+
+  // Reduce motion for accessibility
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+
+  // Info variant (default)
+  &--info {
+    border-left-color: var(--info, #3b82f6);
+    background-color: var(--alt-bg1, #383838);
+
+    .tn-banner__heading {
+      color: var(--info, #3b82f6);
+    }
+
+    .tn-banner__icon {
+      color: var(--info, #3b82f6);
+    }
+  }
+
+  // Warning variant
+  &--warning {
+    border-left-color: var(--warning, #f59e0b);
+    background-color: var(--alt-bg1, #383838);
+
+    .tn-banner__heading {
+      color: var(--warning, #f59e0b);
+    }
+
+    .tn-banner__icon {
+      color: var(--warning, #f59e0b);
+    }
+  }
+
+  // Error variant
+  &--error {
+    border-left-color: var(--error, #ef4444);
+    background-color: var(--alt-bg1, #383838);
+
+    .tn-banner__heading {
+      color: var(--error, #ef4444);
+    }
+
+    .tn-banner__icon {
+      color: var(--error, #ef4444);
+    }
+  }
+
+  // Success variant
+  &--success {
+    border-left-color: var(--success, #10b981);
+    background-color: var(--alt-bg1, #383838);
+
+    .tn-banner__heading {
+      color: var(--success, #10b981);
+    }
+
+    .tn-banner__icon {
+      color: var(--success, #10b981);
+    }
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px; // Optical alignment with heading
+  }
+
+  &__content {
+    flex: 1;
+    min-width: 0; // Allow text to wrap/truncate
+  }
+
+  &__heading {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  &__message {
+    font-size: 0.875rem;
+    color: var(--fg2, #6b7280);
+    line-height: 1.5;
+    margin-top: 4px;
+  }
+}

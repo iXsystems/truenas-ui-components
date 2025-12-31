@@ -6,14 +6,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export function addCustomIcons(usedIcons: Set<string>): Set<string> {
-  // Library structure: custom icons are in assets/icons/custom/ (not src/assets/)
-  const customIconsPath = resolve(__dirname, '../../../assets/icons/custom');
+  // Library structure: custom icons are in assets/tn-icons/custom/ (not src/assets/)
+  const customIconsPath = resolve(__dirname, '../../../assets/tn-icons/custom');
 
   const customIcons = new Set<string>();
   const unusedCustomIcons = new Set<string>();
 
   fs.readdirSync(customIconsPath).forEach((filename) => {
-    const icon = `ix-${filename.replace('.svg', '')}`;
+    const icon = `tn-${filename.replace('.svg', '')}`;
     if (!usedIcons.has(icon)) {
       unusedCustomIcons.add(icon);
     }

@@ -1,0 +1,104 @@
+.tn-form-field {
+  display: block;
+  width: 100%;
+  margin-bottom: 1rem;
+  font-family: var(--font-family-body, 'Inter'), sans-serif;
+}
+
+.tn-form-field-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--fg1, #333);
+  line-height: 1.4;
+
+  &.required {
+    .required-asterisk {
+      color: var(--error, #dc3545);
+      margin-left: 0.25rem;
+    }
+  }
+}
+
+.tn-form-field-wrapper {
+  position: relative;
+  width: 100%;
+  
+  // Ensure dropdowns can extend outside the wrapper
+  overflow: visible;
+
+  // Remove margins from child form controls since form-field handles spacing
+  :ng-deep {
+    .tn-select-container,
+    .tn-input-container {
+      margin-bottom: 0;
+    }
+    
+    // Remove label from child controls since form-field provides it
+    .tn-select-label,
+    .tn-input-label {
+      display: none;
+    }
+    
+    // Remove error display from child controls since form-field handles it
+    .tn-select-error,
+    .tn-input-error {
+      display: none;
+    }
+    
+    // Ensure select dropdown isn't clipped
+    .tn-select-dropdown {
+      z-index: 1000;
+    }
+  }
+}
+
+.tn-form-field-subscript {
+  min-height: 1.25rem;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.tn-form-field-error {
+  color: var(--error, #dc3545);
+  margin: 0;
+}
+
+.tn-form-field-hint {
+  color: var(--fg2, #6c757d);
+  margin: 0;
+}
+
+// Focus state handling
+.tn-form-field-wrapper:has(:focus-visible) {
+  .tn-form-field-label {
+    color: var(--primary, #007bff);
+  }
+}
+
+// Error state handling
+.tn-form-field-wrapper:has(.error) {
+  .tn-form-field-label {
+    color: var(--error, #dc3545);
+  }
+}
+
+// Accessibility improvements
+@media (prefers-reduced-motion: reduce) {
+  .tn-form-field-label {
+    transition: none;
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .tn-form-field-label {
+    font-weight: 600;
+  }
+  
+  .tn-form-field-error {
+    font-weight: 600;
+  }
+}

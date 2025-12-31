@@ -3,7 +3,7 @@ import { Pipe } from '@angular/core';
 import { buildNormalizedFileSize } from './file-size.utils';
 
 @Pipe({
-  name: 'ixFileSize',
+  name: 'tnFileSize',
   standalone: true,
 })
 export class FileSizePipe implements PipeTransform {

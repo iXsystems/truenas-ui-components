@@ -1,9 +1,9 @@
 import type { PipeTransform } from '@angular/core';
 import { Pipe } from '@angular/core';
-import type { PathSegment } from '../../ix-file-picker/ix-file-picker.interfaces';
+import type { PathSegment } from '../../file-picker/file-picker.interfaces';
 
 @Pipe({
-  name: 'ixTruncatePath',
+  name: 'tnTruncatePath',
   standalone: true,
 })
 export class TruncatePathPipe implements PipeTransform {

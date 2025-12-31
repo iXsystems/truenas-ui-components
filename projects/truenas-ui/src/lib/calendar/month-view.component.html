@@ -1,0 +1,57 @@
+<table role="grid" class="tn-calendar-table">
+  <!-- Table header with day names -->
+  <thead class="tn-calendar-table-header">
+    <tr>
+      @for (day of weekdays; track day) {
+        <th scope="col">
+          <span class="cdk-visually-hidden">{{ day.long }}</span>
+          <span aria-hidden="true">{{ day.short }}</span>
+        </th>
+      }
+    </tr>
+  </thead>
+
+  <!-- Table body with calendar cells -->
+  <tbody class="tn-calendar-body">
+    <!-- Calendar rows -->
+    @for (row of calendarRows(); track trackByRow($index, row); let rowIndex = $index) {
+      <tr role="row">
+        @for (cell of row; track trackByDate($index, cell); let colIndex = $index) {
+          <td
+            role="gridcell"
+            class="tn-calendar-body-cell-container"
+            [attr.data-tn-row]="rowIndex"
+            [attr.data-tn-col]="colIndex">
+            @if (cell.value > 0) {
+              <button
+                type="button"
+                class="tn-calendar-body-cell"
+                [class.tn-calendar-body-selected]="cell.selected"
+                [class.tn-calendar-body-today]="cell.today"
+                [class.tn-calendar-body-active]="cell.selected"
+                [class.tn-calendar-body-range-start]="cell.rangeStart"
+                [class.tn-calendar-body-range-end]="cell.rangeEnd"
+                [class.tn-calendar-body-in-range]="cell.inRange"
+                [disabled]="!cell.enabled"
+                [attr.tabindex]="cell.selected ? 0 : -1"
+                [attr.aria-label]="cell.ariaLabel"
+                [attr.aria-pressed]="cell.selected"
+                [attr.aria-current]="cell.today ? 'date' : null"
+                (click)="onCellClicked(cell)">
+                <span class="tn-calendar-body-cell-content tn-focus-indicator"
+                      [class.tn-calendar-body-selected]="cell.selected"
+                      [class.tn-calendar-body-today]="cell.today"
+                      [class.tn-calendar-body-range-start]="cell.rangeStart"
+                      [class.tn-calendar-body-range-end]="cell.rangeEnd"
+                      [class.tn-calendar-body-in-range]="cell.inRange">
+                  {{ cell.value }}
+                </span>
+                <span aria-hidden="true" class="tn-calendar-body-cell-preview"></span>
+              </button>
+            }
+          </td>
+        }
+      </tr>
+    }
+  </tbody>
+</table>

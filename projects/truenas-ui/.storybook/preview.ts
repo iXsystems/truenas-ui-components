@@ -20,8 +20,8 @@ export const parameters: Preview['parameters'] = {
 export const decorators: Decorator[] = [
   withThemeByClassName({
     themes: {
-      'iX Dark': 'ix-dark',
-      'iX Blue': 'ix-blue',
+      'TN Dark': 'tn-dark',
+      'TN Blue': 'tn-blue',
       'Dracula': 'dracula',
       'Nord': 'nord',
       'Paper': 'paper',
@@ -29,7 +29,7 @@ export const decorators: Decorator[] = [
       'Midnight': 'midnight',
       'High Contrast': 'high-contrast',
     },
-    defaultTheme: 'iX Dark',
+    defaultTheme: 'TN Dark',
   }),
   applicationConfig({
     providers: [

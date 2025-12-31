@@ -91,7 +91,7 @@ module.exports = [
         'error',
         {
           type: 'element',
-          prefix: 'ix',
+          prefix: 'tn',
           style: 'kebab-case',
         },
       ],
@@ -99,7 +99,7 @@ module.exports = [
         'error',
         {
           type: 'attribute',
-          prefix: 'ix',
+          prefix: 'tn',
           style: 'camelCase',
         },
       ],

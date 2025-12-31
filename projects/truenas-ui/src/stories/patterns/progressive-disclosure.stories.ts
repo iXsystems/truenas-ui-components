@@ -1,36 +1,36 @@
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { TnButtonComponent } from '../../lib/button/button.component';
+import { TnCardComponent } from '../../lib/card/card.component';
+import { TnCheckboxComponent } from '../../lib/checkbox/checkbox.component';
 import { DiskIconComponent } from '../../lib/disk-icon/disk-icon.component';
 import { DiskType } from '../../lib/enums/disk-type.enum';
-import { IxButtonComponent } from '../../lib/ix-button/ix-button.component';
-import { IxCardComponent } from '../../lib/ix-card/ix-card.component';
-import { IxCheckboxComponent } from '../../lib/ix-checkbox/ix-checkbox.component';
-import { IxExpansionPanelComponent } from '../../lib/ix-expansion-panel/ix-expansion-panel.component';
-import { IxFormFieldComponent } from '../../lib/ix-form-field/ix-form-field.component';
-import { IxInputComponent } from '../../lib/ix-input/ix-input.component';
-import { IxRadioComponent } from '../../lib/ix-radio/ix-radio.component';
-import { IxSelectComponent } from '../../lib/ix-select/ix-select.component';
-import { IxSlideToggleComponent } from '../../lib/ix-slide-toggle/ix-slide-toggle.component';
-import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
+import { TnExpansionPanelComponent } from '../../lib/expansion-panel/expansion-panel.component';
+import { TnFormFieldComponent } from '../../lib/form-field/form-field.component';
+import { TnInputComponent } from '../../lib/input/input.component';
+import { TnRadioComponent } from '../../lib/radio/radio.component';
+import { TnSelectComponent } from '../../lib/select/select.component';
+import { TnSlideToggleComponent } from '../../lib/slide-toggle/slide-toggle.component';
+import { TnStepperComponent, TnStepComponent } from '../../lib/stepper';
 
 @Component({
   selector: 'zfs-pool-setup-demo',
   standalone: true,
   imports: [
     FormsModule,
-    IxButtonComponent,
-    IxCardComponent,
-    IxRadioComponent,
-    IxFormFieldComponent,
-    IxInputComponent,
-    IxExpansionPanelComponent,
+    TnButtonComponent,
+    TnCardComponent,
+    TnRadioComponent,
+    TnFormFieldComponent,
+    TnInputComponent,
+    TnExpansionPanelComponent,
     DiskIconComponent,
-    IxSlideToggleComponent,
-    IxCheckboxComponent,
-    IxSelectComponent,
-    IxStepperComponent,
-    IxStepComponent
+    TnSlideToggleComponent,
+    TnCheckboxComponent,
+    TnSelectComponent,
+    TnStepperComponent,
+    TnStepComponent
   ],
   templateUrl: './progressive-disclosure.stories.html'
 })

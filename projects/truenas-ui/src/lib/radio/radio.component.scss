@@ -1,0 +1,99 @@
+.tn-radio {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  
+  &__label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    gap: 0.5rem;
+    
+    &:hover .tn-radio__checkmark {
+      border-color: var(--primary, #007cba);
+    }
+  }
+  
+  &__input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+    
+    &:focus + .tn-radio__checkmark {
+      outline: 2px solid var(--primary, #007cba);
+      outline-offset: 2px;
+    }
+    
+    &:checked + .tn-radio__checkmark {
+      border-color: var(--primary, #007cba);
+      background-color: var(--primary, #007cba);
+      
+      &::after {
+        display: block;
+      }
+    }
+    
+    &:disabled + .tn-radio__checkmark {
+      border-color: var(--lines, #e5e7eb);
+      background-color: var(--alt-bg1, #f8f9fa);
+      cursor: not-allowed;
+    }
+  }
+  
+  &__checkmark {
+    position: relative;
+    height: 18px;
+    width: 18px;
+    border: 2px solid var(--lines, #e5e7eb);
+    border-radius: 50%;
+    background-color: transparent;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      display: none;
+      top: 50%;
+      left: 50%;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: white;
+      transform: translate(-50%, -50%);
+    }
+  }
+  
+  &__text {
+    color: var(--fg1, #000000);
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  
+  &__error {
+    margin-top: 0.25rem;
+    font-size: 12px;
+    color: var(--red, #dc3545);
+  }
+  
+  // States
+  &--disabled {
+    .tn-radio__label {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    
+    .tn-radio__text {
+      color: var(--fg2, #6c757d);
+    }
+  }
+  
+  &--error {
+    .tn-radio__checkmark {
+      border-color: var(--red, #dc3545);
+    }
+  }
+  
+}

@@ -2,7 +2,7 @@ import { execSync } from 'node:child_process';
 
 export function findIconsWithMarker(path: string, skipIcons?: Set<string>): Set<string> {
   // Updated regex to capture iconMarker() and libIconMarker() calls with optional second parameter
-  // Matches: iconMarker('name') or iconMarker('name', 'library') or libIconMarker('ix-name')
+  // Matches: iconMarker('name') or iconMarker('name', 'library') or libIconMarker('tn-name')
   const command = `grep -rEo "(lib)?iconMarker\\\\('[^']+',?\\s*'?[^'\\)]*'?\\)" --include="*.ts" --include="*.html" ${path}`;
 
   const icons = new Set<string>();
@@ -40,7 +40,7 @@ export function findIconsWithMarker(path: string, skipIcons?: Set<string>): Set<
           iconName = `mat-${iconName}`;
         }
         // Material icons get mat- prefix
-        // libIconMarker already has ix- prefix, no transformation needed
+        // libIconMarker already has tn- prefix, no transformation needed
 
         // Skip if already provided by library
         if (skipIcons?.has(iconName)) {

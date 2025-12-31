@@ -1,0 +1,34 @@
+<div class="tn-list-option__content">
+  <!-- Leading content (icons, avatars) -->
+  @if (hasLeadingContent()) {
+    <div class="tn-list-option__leading">
+      <ng-content select="[tnListIcon], [tnListAvatar]" />
+    </div>
+  }
+
+  <!-- Text content -->
+  <div class="tn-list-option__text">
+    <div class="tn-list-option__primary-text">
+      <ng-content select="[tnListItemTitle], [tnListItemPrimary]" />
+      @if (!hasPrimaryTextDirective()) {
+        <ng-content />
+      }
+    </div>
+
+    @if (hasSecondaryTextContent()) {
+      <div class="tn-list-option__secondary-text">
+        <ng-content select="[tnListItemLine], [tnListItemSecondary]" />
+      </div>
+    }
+  </div>
+
+  <!-- Checkbox on the right -->
+  <div class="tn-list-option__checkbox">
+    <tn-checkbox
+      tabindex="-1"
+      [checked]="effectiveSelected()"
+      [disabled]="effectiveDisabled()"
+      [hideLabel]="true"
+      (click)="$event.stopPropagation()" />
+  </div>
+</div>

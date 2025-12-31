@@ -15,7 +15,7 @@ const path = require('path');
 
 // Paths
 const iconsDir = path.join(__dirname, '../projects/truenas-ui/src/assets/icons');
-const outputFile = path.join(__dirname, '../projects/truenas-ui/src/lib/ix-custom-icons/generated-icons.ts');
+const outputFile = path.join(__dirname, '../projects/truenas-ui/src/lib/custom-icons/generated-icons.ts');
 
 console.log('🔨 Generating icon constants from SVG files...');
 console.log(`📂 Source directory: ${iconsDir}`);

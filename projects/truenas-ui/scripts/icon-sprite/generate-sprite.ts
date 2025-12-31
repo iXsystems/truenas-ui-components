@@ -78,7 +78,7 @@ export async function generateSprite(config: SpriteGeneratorConfig = {}): Promis
     warnAboutDuplicates(allIcons);
 
     if (!allIcons.size) {
-      throw new Error('No icons found in the project. Make sure your templates include <ix-icon> elements or use iconMarker() for dynamic icons.');
+      throw new Error('No icons found in the project. Make sure your templates include <tn-icon> elements or use iconMarker() for dynamic icons.');
     }
 
     const icons = getIconPaths(allIcons, resolved.projectRoot);
@@ -129,7 +129,7 @@ function addCustomIconsFromPath(usedIcons: Set<string>, customIconsPath: string)
       return;
     }
 
-    const icon = `ix-${filename.replace('.svg', '')}`;
+    const icon = `tn-${filename.replace('.svg', '')}`;
     if (!usedIcons.has(icon)) {
       unusedCustomIcons.add(icon);
     }
@@ -154,7 +154,7 @@ function addCustomIconsFromPath(usedIcons: Set<string>, customIconsPath: string)
 function loadLibraryIcons(projectRoot: string): Set<string> {
   const librarySpritePath = resolve(
     projectRoot,
-    'node_modules/truenas-ui/dist/truenas-ui/assets/icons/sprite-config.json'
+    'node_modules/truenas-ui/dist/truenas-ui/assets/tn-icons/sprite-config.json'
   );
 
   // Skip if truenas-ui is not installed (e.g., when building the library itself)

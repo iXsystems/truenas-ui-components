@@ -3,15 +3,15 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
-import { IxButtonComponent } from '../../lib/ix-button/ix-button.component';
-import { IxCheckboxComponent } from '../../lib/ix-checkbox/ix-checkbox.component';
-import { IxDialogShellComponent } from '../../lib/ix-dialog';
-import { IxDialog } from '../../lib/ix-dialog/ix-dialog.service';
-import { IxInputComponent } from '../../lib/ix-input/ix-input.component';
-import { IxRadioComponent } from '../../lib/ix-radio/ix-radio.component';
-import type { IxSelectOption } from '../../lib/ix-select/ix-select.component';
-import { IxSelectComponent } from '../../lib/ix-select/ix-select.component';
-import { IxStepperComponent, IxStepComponent } from '../../lib/ix-stepper';
+import { TnButtonComponent } from '../../lib/button/button.component';
+import { TnCheckboxComponent } from '../../lib/checkbox/checkbox.component';
+import { TnDialogShellComponent } from '../../lib/dialog';
+import { TnDialog } from '../../lib/dialog/dialog.service';
+import { TnInputComponent } from '../../lib/input/input.component';
+import { TnRadioComponent } from '../../lib/radio/radio.component';
+import type { TnSelectOption } from '../../lib/select/select.component';
+import { TnSelectComponent } from '../../lib/select/select.component';
+import { TnStepperComponent, TnStepComponent } from '../../lib/stepper';
 
 // Wizard configuration type
 interface WizardConfig {
@@ -81,14 +81,14 @@ interface WizardConfig {
   templateUrl: './captive-wizard.stories.html',
   standalone: true,
   imports: [
-    IxDialogShellComponent,
-    IxStepperComponent,
-    IxStepComponent,
-    IxButtonComponent,
-    IxRadioComponent,
-    IxCheckboxComponent,
-    IxInputComponent,
-    IxSelectComponent,
+    TnDialogShellComponent,
+    TnStepperComponent,
+    TnStepComponent,
+    TnButtonComponent,
+    TnRadioComponent,
+    TnCheckboxComponent,
+    TnInputComponent,
+    TnSelectComponent,
     FormsModule,
     CommonModule
   ]
@@ -167,19 +167,19 @@ class OnboardingWizardDialogComponent {
     }
   };
 
-  slogDeviceOptions: IxSelectOption[] = [
+  slogDeviceOptions: TnSelectOption[] = [
     { value: '', label: 'None' },
     { value: 'nvme0n1', label: 'nvme0n1 - 256GB NVMe SSD' },
     { value: 'sdd', label: 'sdd - 128GB SATA SSD' }
   ];
   
-  cacheDeviceOptions: IxSelectOption[] = [
+  cacheDeviceOptions: TnSelectOption[] = [
     { value: '', label: 'None' },
     { value: 'nvme1n1', label: 'nvme1n1 - 512GB NVMe SSD' },
     { value: 'sde', label: 'sde - 1TB SATA SSD' }
   ];
   
-  metadataDeviceOptions: IxSelectOption[] = [
+  metadataDeviceOptions: TnSelectOption[] = [
     { value: '', label: 'None' },
     { value: 'nvme2n1', label: 'nvme2n1 - 128GB NVMe SSD' },
     { value: 'sdf', label: 'sdf - 256GB SATA SSD' }
@@ -325,12 +325,12 @@ class OnboardingWizardDialogComponent {
   selector: 'captive-wizard-demo',
   templateUrl: './captive-wizard-2.stories.html',
   standalone: true,
-  imports: [IxButtonComponent, CommonModule]
+  imports: [TnButtonComponent, CommonModule]
 })
 class CaptiveWizardDemoComponent {
   lastResult: unknown = null;
 
-  constructor(private ixDialog: IxDialog) {}
+  constructor(private ixDialog: TnDialog) {}
 
   openCaptiveWizard() {
     const dialogRef = this.ixDialog.open(OnboardingWizardDialogComponent, {
@@ -394,18 +394,18 @@ export const CaptiveWizard: Story = {
       imports: [
         CaptiveWizardDemoComponent,
         OnboardingWizardDialogComponent,
-        IxDialogShellComponent,
-        IxStepperComponent,
-        IxStepComponent,
-        IxButtonComponent,
-        IxRadioComponent,
-        IxCheckboxComponent,
-        IxInputComponent,
-        IxSelectComponent,
+        TnDialogShellComponent,
+        TnStepperComponent,
+        TnStepComponent,
+        TnButtonComponent,
+        TnRadioComponent,
+        TnCheckboxComponent,
+        TnInputComponent,
+        TnSelectComponent,
         FormsModule
       ],
       providers: [
-        IxDialog
+        TnDialog
       ]
     },
   }),

@@ -1,0 +1,105 @@
+<div class="tn-select-container" [attr.data-testid]="testId()">
+  <!-- Select Trigger -->
+  <div
+    class="tn-select-trigger"
+    role="combobox"
+    tabindex="0"
+    [class.disabled]="isDisabled()"
+    [class.open]="isOpen()"
+    [attr.aria-expanded]="isOpen()"
+    [attr.aria-haspopup]="true"
+    [attr.aria-controls]="isOpen() ? 'tn-select-dropdown-' + testId() : null"
+    [attr.aria-label]="placeholder()"
+    (click)="toggleDropdown()"
+    (keydown)="onKeydown($event)">
+
+    <!-- Display Text -->
+    <span
+      class="tn-select-text"
+      [class.placeholder]="selectedValue() === null || selectedValue() === undefined">
+      {{ getDisplayText() }}
+    </span>
+
+    <!-- Dropdown Arrow -->
+    <div class="tn-select-arrow" [class.open]="isOpen()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="6,9 12,15 18,9" />
+      </svg>
+    </div>
+  </div>
+
+  <!-- Dropdown Menu -->
+  @if (isOpen()) {
+    <div
+      class="tn-select-dropdown"
+      role="listbox"
+      [attr.id]="'tn-select-dropdown-' + testId()">
+
+      <!-- Options List -->
+      <div class="tn-select-options">
+        <!-- Regular Options -->
+        @for (option of options(); track $index) {
+          <div
+            class="tn-select-option"
+            role="option"
+            [attr.tabindex]="option.disabled ? null : 0"
+            [class.selected]="isSelected()(option)"
+            [class.disabled]="option.disabled"
+            [attr.aria-selected]="isSelected()(option)"
+            [attr.aria-disabled]="option.disabled"
+            (mousedown)="$event.preventDefault()"
+            (click)="onOptionClick(option)"
+            (keydown.enter)="onOptionClick(option)"
+            (keydown.space)="onOptionClick(option)">
+
+            {{ option.label }}
+          </div>
+        }
+
+        <!-- Option Groups -->
+        @for (group of optionGroups(); track $index; let isFirst = $first) {
+          <!-- Group Separator (not shown before first group if we have regular options) -->
+          @if (!isFirst || options().length > 0) {
+            <div
+              class="tn-select-separator"
+              role="separator">
+            </div>
+          }
+
+          <!-- Group Label -->
+          <div
+            class="tn-select-group-label"
+            [class.disabled]="group.disabled">
+            {{ group.label }}
+          </div>
+
+          <!-- Group Options -->
+          @for (option of group.options; track $index) {
+            <div
+              class="tn-select-option"
+              role="option"
+              [attr.tabindex]="option.disabled || group.disabled ? null : 0"
+              [class.selected]="isSelected()(option)"
+              [class.disabled]="option.disabled || group.disabled"
+              [attr.aria-selected]="isSelected()(option)"
+              [attr.aria-disabled]="option.disabled || group.disabled"
+              (mousedown)="$event.preventDefault()"
+              (click)="onOptionClick(option)"
+              (keydown.enter)="onOptionClick(option)"
+              (keydown.space)="onOptionClick(option)">
+
+              {{ option.label }}
+            </div>
+          }
+        }
+
+        <!-- No Options Message -->
+        @if (!hasAnyOptions()) {
+          <div class="tn-select-no-options">
+            No options available
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,144 @@
+.tn-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-family: var(--font-family-body);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  border: 1px solid transparent;
+  outline: none;
+  user-select: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  &:hover:not(&--disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  &--primary {
+    background-color: var(--primary);
+    color: var(--primary-txt);
+    border-color: var(--primary);
+
+    &:hover:not(.tn-chip--disabled) {
+      background-color: var(--blue);
+      border-color: var(--blue);
+    }
+  }
+
+  &--secondary {
+    background-color: var(--alt-bg1);
+    color: var(--alt-fg2);
+    border-color: var(--alt-bg2);
+
+    &:hover:not(.tn-chip--disabled) {
+      background-color: var(--alt-bg2);
+      border-color: var(--accent);
+    }
+  }
+
+  &--accent {
+    background-color: var(--accent);
+    color: var(--fg1);
+    border-color: var(--accent);
+
+    &:hover:not(.tn-chip--disabled) {
+      background-color: var(--alt-bg2);
+      border-color: var(--alt-bg2);
+    }
+  }
+
+  &--disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  &--closable {
+    padding-right: 8px;
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    font-size: 12px;
+  }
+
+  &__label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+
+  &__close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: inherit;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+    outline: none;
+
+    &:hover:not(:disabled) {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+
+    &:focus-visible {
+      outline: 1px solid currentColor;
+      outline-offset: 1px;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
+
+  &__close-icon {
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1;
+  }
+}
+
+// Dark theme adjustments
+.tn-dark .tn-chip {
+  &--secondary {
+    .tn-chip__close {
+      background-color: rgba(0, 0, 0, 0.2);
+      
+      &:hover:not(:disabled) {
+        background-color: rgba(0, 0, 0, 0.3);
+      }
+    }
+  }
+}
+
+// High contrast theme adjustments
+.high-contrast .tn-chip {
+  border-width: 2px;
+  
+  &:focus-visible {
+    outline-width: 3px;
+  }
+}
