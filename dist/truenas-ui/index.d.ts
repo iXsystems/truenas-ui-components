@@ -2437,5 +2437,159 @@ declare class TnKeyboardShortcutService {
     static ɵprov: _angular_core.ɵɵInjectableDeclaration<TnKeyboardShortcutService>;
 }
 
-export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TnBannerComponent, TnBannerHarness, TnBrandedSpinnerComponent, TnButtonComponent, TnButtonToggleComponent, TnButtonToggleGroupComponent, TnCalendarComponent, TnCalendarHeaderComponent, TnCardComponent, TnCellDefDirective, TnCheckboxComponent, TnChipComponent, TnConfirmDialogComponent, TnDateInputComponent, TnDateRangeInputComponent, TnDialog, TnDialogShellComponent, TnDividerComponent, TnDividerDirective, TnExpansionPanelComponent, TnFilePickerComponent, TnFilePickerPopupComponent, TnFormFieldComponent, TnHeaderCellDefDirective, TnIconButtonComponent, TnIconComponent, TnIconRegistryService, TnInputComponent, TnInputDirective, TnKeyboardShortcutComponent, TnKeyboardShortcutService, TnListAvatarDirective, TnListComponent, TnListIconDirective, TnListItemComponent, TnListItemLineDirective, TnListItemPrimaryDirective, TnListItemSecondaryDirective, TnListItemTitleDirective, TnListItemTrailingDirective, TnListOptionComponent, TnListSubheaderComponent, TnMenuComponent, TnMenuTriggerDirective, TnMonthViewComponent, TnMultiYearViewComponent, TnNestedTreeNodeComponent, TnParticleProgressBarComponent, TnProgressBarComponent, TnRadioComponent, TnSelectComponent, TnSelectionListComponent, TnSlideToggleComponent, TnSliderComponent, TnSliderThumbDirective, TnSliderWithLabelDirective, TnSpinnerComponent, TnSpriteLoaderService, TnStepComponent, TnStepperComponent, TnTabComponent, TnTabPanelComponent, TnTableColumnDirective, TnTableComponent, TnTabsComponent, TnTimeInputComponent, TnTooltipComponent, TnTooltipDirective, TnTreeComponent, TnTreeFlatDataSource, TnTreeFlattener, TnTreeNodeComponent, TnTreeNodeOutletDirective, TruenasIconsService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, defaultSpriteBasePath, defaultSpriteConfigPath, iconMarker, libIconMarker, registerLucideIcons, setupLucideIntegration };
-export type { BannerHarnessFilters, CalendarCell, ChipColor, CreateFolderEvent, DateRange, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem, IconLibrary, IconLibraryType, IconResult, IconSize, IconSource, KeyCombination, LabelType, LucideIconOptions, PathSegment, PlatformType, ProgressBarMode, ResolvedIcon, ShortcutHandler, SlideToggleColor, SpinnerMode, SpriteConfig, TabChangeEvent, TnBannerType, TnButtonToggleType, TnCardAction, TnCardControl, TnCardFooterLink, TnCardHeaderStatus, TnConfirmDialogData, TnDialogDefaults, TnDialogOpenTarget, TnFlatTreeNode, TnMenuItem, TnSelectOption, TnSelectOptionGroup, TnSelectionChange, TnTableDataSource, TooltipPosition, YearCell };
+/**
+ * Enum of available theme names.
+ * Use these constants instead of hardcoded strings.
+ *
+ * @example
+ * ```typescript
+ * themeService.setTheme(TnTheme.Dracula);
+ * ```
+ */
+declare enum TnTheme {
+    Dark = "tn-dark",
+    Blue = "tn-blue",
+    Dracula = "tn-dracula",
+    Nord = "tn-nord",
+    Paper = "tn-paper",
+    SolarizedDark = "tn-solarized-dark",
+    Midnight = "tn-midnight",
+    HighContrast = "tn-high-contrast"
+}
+/**
+ * Represents a theme definition/configuration.
+ */
+interface TnThemeDefinition {
+    /** Unique identifier/name for the theme (from TnTheme enum) */
+    name: TnTheme;
+    /** Human-readable display name */
+    label: string;
+    /** CSS class name to apply to document root */
+    className: string;
+    /** Optional description of the theme */
+    description?: string;
+}
+
+/**
+ * Service for managing themes in the TrueNAS UI Components library.
+ *
+ * Features:
+ * - Signal-based reactive theme state
+ * - LocalStorage persistence (key: 'tn-theme')
+ * - Automatic CSS class application to document root
+ * - SSR-safe (checks for browser platform)
+ *
+ * @example
+ * ```typescript
+ * import { Component, inject, effect } from '@angular/core';
+ * import { TnThemeService, TnTheme } from 'truenas-ui';
+ *
+ * @Component({...})
+ * export class MyComponent {
+ *   private themeService = inject(TnThemeService);
+ *
+ *   constructor() {
+ *     // Get available theme definitions
+ *     const themes = this.themeService.availableThemes;
+ *
+ *     // Get current theme (signal)
+ *     const currentTheme = this.themeService.currentTheme();
+ *
+ *     // Set theme using enum (recommended)
+ *     this.themeService.setTheme(TnTheme.Blue);
+ *
+ *     // React to theme changes
+ *     effect(() => {
+ *       console.log('Theme changed to:', this.themeService.currentTheme()?.label);
+ *     });
+ *   }
+ * }
+ * ```
+ */
+declare class TnThemeService {
+    private readonly platformId;
+    private readonly isBrowser;
+    /**
+     * Internal signal holding the current theme enum value
+     */
+    private readonly currentThemeSignal;
+    /**
+     * Computed signal that returns the full theme definition for the current theme
+     */
+    readonly currentTheme: _angular_core.Signal<TnThemeDefinition | undefined>;
+    /**
+     * Computed signal that returns the current theme's CSS class name
+     */
+    readonly currentThemeClass: _angular_core.Signal<string>;
+    /**
+     * All available theme definitions in the library (readonly array)
+     */
+    readonly availableThemes: readonly TnThemeDefinition[];
+    constructor();
+    /**
+     * Set the current theme.
+     * Updates the signal, which triggers effects to apply CSS and save to localStorage.
+     *
+     * @param theme - The theme to set (use TnTheme enum)
+     * @returns true if theme was found and set, false otherwise
+     *
+     * @example
+     * ```typescript
+     * themeService.setTheme(TnTheme.Dracula);
+     * ```
+     */
+    setTheme(theme: TnTheme): boolean;
+    /**
+     * Get the current theme enum value (reactive signal value)
+     */
+    getCurrentTheme(): TnTheme;
+    /**
+     * Reset theme to default
+     */
+    resetToDefault(): void;
+    /**
+     * Check if a theme exists
+     */
+    hasTheme(theme: TnTheme): boolean;
+    /**
+     * Initialize theme from localStorage or use default
+     */
+    private initializeTheme;
+    /**
+     * Apply theme CSS class to document root.
+     * Removes all other theme classes first to avoid conflicts.
+     *
+     * @param themeClass - CSS class name to apply (e.g., 'tn-dark')
+     */
+    private applyThemeToDOM;
+    /**
+     * Persist theme to localStorage.
+     * Colors are applied automatically via CSS classes from themes.css.
+     *
+     * @param theme - Theme definition to persist
+     */
+    private persistThemeToStorage;
+    static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnThemeService, never>;
+    static ɵprov: _angular_core.ɵɵInjectableDeclaration<TnThemeService>;
+}
+
+/**
+ * Default theme used when no theme is set
+ */
+declare const DEFAULT_THEME = TnTheme.Dark;
+/**
+ * localStorage key for storing the current theme name
+ */
+declare const THEME_STORAGE_KEY = "tn-theme";
+/**
+ * All available theme definitions in the TrueNAS UI Components library.
+ * These themes correspond to CSS classes defined in themes.css
+ */
+declare const TN_THEME_DEFINITIONS: readonly TnThemeDefinition[];
+/**
+ * Map of theme enum values to theme definition objects for quick lookup
+ */
+declare const THEME_MAP: Map<TnTheme, TnThemeDefinition>;
+
+export { CommonShortcuts, DEFAULT_THEME, DiskIconComponent, DiskType, FileSizePipe, InputType, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, THEME_MAP, THEME_STORAGE_KEY, TN_THEME_DEFINITIONS, TnBannerComponent, TnBannerHarness, TnBrandedSpinnerComponent, TnButtonComponent, TnButtonToggleComponent, TnButtonToggleGroupComponent, TnCalendarComponent, TnCalendarHeaderComponent, TnCardComponent, TnCellDefDirective, TnCheckboxComponent, TnChipComponent, TnConfirmDialogComponent, TnDateInputComponent, TnDateRangeInputComponent, TnDialog, TnDialogShellComponent, TnDividerComponent, TnDividerDirective, TnExpansionPanelComponent, TnFilePickerComponent, TnFilePickerPopupComponent, TnFormFieldComponent, TnHeaderCellDefDirective, TnIconButtonComponent, TnIconComponent, TnIconRegistryService, TnInputComponent, TnInputDirective, TnKeyboardShortcutComponent, TnKeyboardShortcutService, TnListAvatarDirective, TnListComponent, TnListIconDirective, TnListItemComponent, TnListItemLineDirective, TnListItemPrimaryDirective, TnListItemSecondaryDirective, TnListItemTitleDirective, TnListItemTrailingDirective, TnListOptionComponent, TnListSubheaderComponent, TnMenuComponent, TnMenuTriggerDirective, TnMonthViewComponent, TnMultiYearViewComponent, TnNestedTreeNodeComponent, TnParticleProgressBarComponent, TnProgressBarComponent, TnRadioComponent, TnSelectComponent, TnSelectionListComponent, TnSlideToggleComponent, TnSliderComponent, TnSliderThumbDirective, TnSliderWithLabelDirective, TnSpinnerComponent, TnSpriteLoaderService, TnStepComponent, TnStepperComponent, TnTabComponent, TnTabPanelComponent, TnTableColumnDirective, TnTableComponent, TnTabsComponent, TnTheme, TnThemeService, TnTimeInputComponent, TnTooltipComponent, TnTooltipDirective, TnTreeComponent, TnTreeFlatDataSource, TnTreeFlattener, TnTreeNodeComponent, TnTreeNodeOutletDirective, TruenasIconsService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, defaultSpriteBasePath, defaultSpriteConfigPath, iconMarker, libIconMarker, registerLucideIcons, setupLucideIntegration };
+export type { BannerHarnessFilters, CalendarCell, ChipColor, CreateFolderEvent, DateRange, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem, IconLibrary, IconLibraryType, IconResult, IconSize, IconSource, KeyCombination, LabelType, LucideIconOptions, PathSegment, PlatformType, ProgressBarMode, ResolvedIcon, ShortcutHandler, SlideToggleColor, SpinnerMode, SpriteConfig, TabChangeEvent, TnBannerType, TnButtonToggleType, TnCardAction, TnCardControl, TnCardFooterLink, TnCardHeaderStatus, TnConfirmDialogData, TnDialogDefaults, TnDialogOpenTarget, TnFlatTreeNode, TnMenuItem, TnSelectOption, TnSelectOptionGroup, TnSelectionChange, TnTableDataSource, TnThemeDefinition, TooltipPosition, YearCell };

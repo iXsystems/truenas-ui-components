@@ -1,7 +1,7 @@
 import * as i0 from '@angular/core';
-import { input, ChangeDetectionStrategy, Component, inject, Injectable, viewChild, ChangeDetectorRef, effect, computed, ViewEncapsulation, output, signal, forwardRef, Directive, ElementRef, ViewContainerRef, contentChild, contentChildren, HostListener, TemplateRef, IterableDiffers, Pipe, model } from '@angular/core';
+import { input, ChangeDetectionStrategy, Component, inject, Injectable, viewChild, ChangeDetectorRef, effect, computed, ViewEncapsulation, output, signal, forwardRef, Directive, ElementRef, ViewContainerRef, contentChild, contentChildren, HostListener, TemplateRef, IterableDiffers, Pipe, model, PLATFORM_ID } from '@angular/core';
 import * as i1$1 from '@angular/common';
-import { CommonModule, NgIf, DOCUMENT } from '@angular/common';
+import { CommonModule, NgIf, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { mdiCheckCircle, mdiAlertCircle, mdiAlert, mdiInformation, mdiDotsVertical, mdiFolderOpen, mdiLock, mdiLoading, mdiFolderPlus, mdiFolderNetwork, mdiHarddisk, mdiDatabase, mdiFile, mdiFolder } from '@mdi/js';
 import * as i1 from '@angular/platform-browser';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -6633,7 +6633,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * To regenerate this file, run:
  *   npm run generate-icons
  *
- * Generated: 2025-12-31T21:39:09.326Z
+ * Generated: 2025-12-31T21:56:45.992Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 /* eslint-disable */
@@ -7710,6 +7710,284 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
                 }]
         }] });
 
+/**
+ * Enum of available theme names.
+ * Use these constants instead of hardcoded strings.
+ *
+ * @example
+ * ```typescript
+ * themeService.setTheme(TnTheme.Dracula);
+ * ```
+ */
+var TnTheme;
+(function (TnTheme) {
+    TnTheme["Dark"] = "tn-dark";
+    TnTheme["Blue"] = "tn-blue";
+    TnTheme["Dracula"] = "tn-dracula";
+    TnTheme["Nord"] = "tn-nord";
+    TnTheme["Paper"] = "tn-paper";
+    TnTheme["SolarizedDark"] = "tn-solarized-dark";
+    TnTheme["Midnight"] = "tn-midnight";
+    TnTheme["HighContrast"] = "tn-high-contrast";
+})(TnTheme || (TnTheme = {}));
+
+/**
+ * Default theme used when no theme is set
+ */
+const DEFAULT_THEME = TnTheme.Dark;
+/**
+ * localStorage key for storing the current theme name
+ */
+const THEME_STORAGE_KEY = 'tn-theme';
+/**
+ * All available theme definitions in the TrueNAS UI Components library.
+ * These themes correspond to CSS classes defined in themes.css
+ */
+const TN_THEME_DEFINITIONS = [
+    {
+        name: TnTheme.Dark,
+        label: 'TN Dark',
+        className: 'tn-dark',
+        description: 'TrueNAS default dark theme',
+    },
+    {
+        name: TnTheme.Blue,
+        label: 'TN Blue',
+        className: 'tn-blue',
+        description: 'Official TrueNAS colors on light background',
+    },
+    {
+        name: TnTheme.Dracula,
+        label: 'Dracula',
+        className: 'tn-dracula',
+        description: 'Popular Dracula color scheme',
+    },
+    {
+        name: TnTheme.Nord,
+        label: 'Nord',
+        className: 'tn-nord',
+        description: 'Nord color palette inspired theme',
+    },
+    {
+        name: TnTheme.Paper,
+        label: 'Paper',
+        className: 'tn-paper',
+        description: 'FreeNAS 11.2 legacy theme',
+    },
+    {
+        name: TnTheme.SolarizedDark,
+        label: 'Solarized Dark',
+        className: 'tn-solarized-dark',
+        description: 'Solarized dark color scheme',
+    },
+    {
+        name: TnTheme.Midnight,
+        label: 'Midnight',
+        className: 'tn-midnight',
+        description: 'Dark theme with blues and greys',
+    },
+    {
+        name: TnTheme.HighContrast,
+        label: 'High Contrast',
+        className: 'tn-high-contrast',
+        description: 'High contrast theme for accessibility',
+    },
+];
+/**
+ * Map of theme enum values to theme definition objects for quick lookup
+ */
+const THEME_MAP = new Map(TN_THEME_DEFINITIONS.map((theme) => [theme.name, theme]));
+
+/**
+ * Service for managing themes in the TrueNAS UI Components library.
+ *
+ * Features:
+ * - Signal-based reactive theme state
+ * - LocalStorage persistence (key: 'tn-theme')
+ * - Automatic CSS class application to document root
+ * - SSR-safe (checks for browser platform)
+ *
+ * @example
+ * ```typescript
+ * import { Component, inject, effect } from '@angular/core';
+ * import { TnThemeService, TnTheme } from 'truenas-ui';
+ *
+ * @Component({...})
+ * export class MyComponent {
+ *   private themeService = inject(TnThemeService);
+ *
+ *   constructor() {
+ *     // Get available theme definitions
+ *     const themes = this.themeService.availableThemes;
+ *
+ *     // Get current theme (signal)
+ *     const currentTheme = this.themeService.currentTheme();
+ *
+ *     // Set theme using enum (recommended)
+ *     this.themeService.setTheme(TnTheme.Blue);
+ *
+ *     // React to theme changes
+ *     effect(() => {
+ *       console.log('Theme changed to:', this.themeService.currentTheme()?.label);
+ *     });
+ *   }
+ * }
+ * ```
+ */
+class TnThemeService {
+    platformId = inject(PLATFORM_ID);
+    isBrowser = isPlatformBrowser(this.platformId);
+    /**
+     * Internal signal holding the current theme enum value
+     */
+    currentThemeSignal = signal(DEFAULT_THEME, ...(ngDevMode ? [{ debugName: "currentThemeSignal" }] : []));
+    /**
+     * Computed signal that returns the full theme definition for the current theme
+     */
+    currentTheme = computed(() => {
+        const theme = this.currentThemeSignal();
+        return THEME_MAP.get(theme);
+    }, ...(ngDevMode ? [{ debugName: "currentTheme" }] : []));
+    /**
+     * Computed signal that returns the current theme's CSS class name
+     */
+    currentThemeClass = computed(() => {
+        return this.currentTheme()?.className ?? TnTheme.Dark;
+    }, ...(ngDevMode ? [{ debugName: "currentThemeClass" }] : []));
+    /**
+     * All available theme definitions in the library (readonly array)
+     */
+    availableThemes = TN_THEME_DEFINITIONS;
+    constructor() {
+        // Initialize theme from localStorage or default
+        this.initializeTheme();
+        // Effect to apply theme CSS class to document root whenever theme changes
+        effect(() => {
+            if (this.isBrowser) {
+                this.applyThemeToDOM(this.currentThemeClass());
+            }
+        });
+        // Effect to persist theme to localStorage whenever it changes
+        effect(() => {
+            if (this.isBrowser) {
+                const theme = this.currentTheme();
+                if (theme) {
+                    this.persistThemeToStorage(theme);
+                }
+            }
+        });
+    }
+    /**
+     * Set the current theme.
+     * Updates the signal, which triggers effects to apply CSS and save to localStorage.
+     *
+     * @param theme - The theme to set (use TnTheme enum)
+     * @returns true if theme was found and set, false otherwise
+     *
+     * @example
+     * ```typescript
+     * themeService.setTheme(TnTheme.Dracula);
+     * ```
+     */
+    setTheme(theme) {
+        const themeDefinition = THEME_MAP.get(theme);
+        if (themeDefinition) {
+            this.currentThemeSignal.set(theme);
+            return true;
+        }
+        console.warn(`[TnThemeService] Theme "${theme}" not found. Available themes:`, Array.from(THEME_MAP.keys()));
+        return false;
+    }
+    /**
+     * Get the current theme enum value (reactive signal value)
+     */
+    getCurrentTheme() {
+        return this.currentThemeSignal();
+    }
+    /**
+     * Reset theme to default
+     */
+    resetToDefault() {
+        this.setTheme(DEFAULT_THEME);
+    }
+    /**
+     * Check if a theme exists
+     */
+    hasTheme(theme) {
+        return THEME_MAP.has(theme);
+    }
+    /**
+     * Initialize theme from localStorage or use default
+     */
+    initializeTheme() {
+        if (!this.isBrowser) {
+            return;
+        }
+        try {
+            const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+            if (storedTheme && this.hasTheme(storedTheme)) {
+                this.currentThemeSignal.set(storedTheme);
+            }
+            else {
+                // If no valid stored theme, use default
+                this.currentThemeSignal.set(DEFAULT_THEME);
+            }
+        }
+        catch (error) {
+            console.error('[TnThemeService] Error reading from localStorage:', error);
+            this.currentThemeSignal.set(DEFAULT_THEME);
+        }
+    }
+    /**
+     * Apply theme CSS class to document root.
+     * Removes all other theme classes first to avoid conflicts.
+     *
+     * @param themeClass - CSS class name to apply (e.g., 'tn-dark')
+     */
+    applyThemeToDOM(themeClass) {
+        if (!this.isBrowser) {
+            return;
+        }
+        try {
+            const root = document.documentElement;
+            // Remove all existing theme classes
+            TN_THEME_DEFINITIONS.forEach((theme) => {
+                root.classList.remove(theme.className);
+            });
+            // Add the new theme class
+            root.classList.add(themeClass);
+        }
+        catch (error) {
+            console.error('[TnThemeService] Error applying theme to DOM:', error);
+        }
+    }
+    /**
+     * Persist theme to localStorage.
+     * Colors are applied automatically via CSS classes from themes.css.
+     *
+     * @param theme - Theme definition to persist
+     */
+    persistThemeToStorage(theme) {
+        if (!this.isBrowser) {
+            return;
+        }
+        try {
+            localStorage.setItem(THEME_STORAGE_KEY, theme.name);
+        }
+        catch (error) {
+            console.error('[TnThemeService] Error writing to localStorage:', error);
+        }
+    }
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: TnThemeService, deps: [], target: i0.ɵɵFactoryTarget.Injectable });
+    static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: TnThemeService, providedIn: 'root' });
+}
+i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImport: i0, type: TnThemeService, decorators: [{
+            type: Injectable,
+            args: [{
+                    providedIn: 'root',
+                }]
+        }], ctorParameters: () => [] });
+
 /*
  * Public API Surface of truenas-ui
  */
@@ -7718,5 +7996,5 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * Generated bundle index. Do not edit.
  */
 
-export { CommonShortcuts, DiskIconComponent, DiskType, FileSizePipe, InputType, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, TnBannerComponent, TnBannerHarness, TnBrandedSpinnerComponent, TnButtonComponent, TnButtonToggleComponent, TnButtonToggleGroupComponent, TnCalendarComponent, TnCalendarHeaderComponent, TnCardComponent, TnCellDefDirective, TnCheckboxComponent, TnChipComponent, TnConfirmDialogComponent, TnDateInputComponent, TnDateRangeInputComponent, TnDialog, TnDialogShellComponent, TnDividerComponent, TnDividerDirective, TnExpansionPanelComponent, TnFilePickerComponent, TnFilePickerPopupComponent, TnFormFieldComponent, TnHeaderCellDefDirective, TnIconButtonComponent, TnIconComponent, TnIconRegistryService, TnInputComponent, TnInputDirective, TnKeyboardShortcutComponent, TnKeyboardShortcutService, TnListAvatarDirective, TnListComponent, TnListIconDirective, TnListItemComponent, TnListItemLineDirective, TnListItemPrimaryDirective, TnListItemSecondaryDirective, TnListItemTitleDirective, TnListItemTrailingDirective, TnListOptionComponent, TnListSubheaderComponent, TnMenuComponent, TnMenuTriggerDirective, TnMonthViewComponent, TnMultiYearViewComponent, TnNestedTreeNodeComponent, TnParticleProgressBarComponent, TnProgressBarComponent, TnRadioComponent, TnSelectComponent, TnSelectionListComponent, TnSlideToggleComponent, TnSliderComponent, TnSliderThumbDirective, TnSliderWithLabelDirective, TnSpinnerComponent, TnSpriteLoaderService, TnStepComponent, TnStepperComponent, TnTabComponent, TnTabPanelComponent, TnTableColumnDirective, TnTableComponent, TnTabsComponent, TnTimeInputComponent, TnTooltipComponent, TnTooltipDirective, TnTreeComponent, TnTreeFlatDataSource, TnTreeFlattener, TnTreeNodeComponent, TnTreeNodeOutletDirective, TruenasIconsService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, defaultSpriteBasePath, defaultSpriteConfigPath, iconMarker, libIconMarker, registerLucideIcons, setupLucideIntegration };
+export { CommonShortcuts, DEFAULT_THEME, DiskIconComponent, DiskType, FileSizePipe, InputType, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, THEME_MAP, THEME_STORAGE_KEY, TN_THEME_DEFINITIONS, TnBannerComponent, TnBannerHarness, TnBrandedSpinnerComponent, TnButtonComponent, TnButtonToggleComponent, TnButtonToggleGroupComponent, TnCalendarComponent, TnCalendarHeaderComponent, TnCardComponent, TnCellDefDirective, TnCheckboxComponent, TnChipComponent, TnConfirmDialogComponent, TnDateInputComponent, TnDateRangeInputComponent, TnDialog, TnDialogShellComponent, TnDividerComponent, TnDividerDirective, TnExpansionPanelComponent, TnFilePickerComponent, TnFilePickerPopupComponent, TnFormFieldComponent, TnHeaderCellDefDirective, TnIconButtonComponent, TnIconComponent, TnIconRegistryService, TnInputComponent, TnInputDirective, TnKeyboardShortcutComponent, TnKeyboardShortcutService, TnListAvatarDirective, TnListComponent, TnListIconDirective, TnListItemComponent, TnListItemLineDirective, TnListItemPrimaryDirective, TnListItemSecondaryDirective, TnListItemTitleDirective, TnListItemTrailingDirective, TnListOptionComponent, TnListSubheaderComponent, TnMenuComponent, TnMenuTriggerDirective, TnMonthViewComponent, TnMultiYearViewComponent, TnNestedTreeNodeComponent, TnParticleProgressBarComponent, TnProgressBarComponent, TnRadioComponent, TnSelectComponent, TnSelectionListComponent, TnSlideToggleComponent, TnSliderComponent, TnSliderThumbDirective, TnSliderWithLabelDirective, TnSpinnerComponent, TnSpriteLoaderService, TnStepComponent, TnStepperComponent, TnTabComponent, TnTabPanelComponent, TnTableColumnDirective, TnTableComponent, TnTabsComponent, TnTheme, TnThemeService, TnTimeInputComponent, TnTooltipComponent, TnTooltipDirective, TnTreeComponent, TnTreeFlatDataSource, TnTreeFlattener, TnTreeNodeComponent, TnTreeNodeOutletDirective, TruenasIconsService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, defaultSpriteBasePath, defaultSpriteConfigPath, iconMarker, libIconMarker, registerLucideIcons, setupLucideIntegration };
 //# sourceMappingURL=truenas-ui.mjs.map
