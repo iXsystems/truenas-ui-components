@@ -2,7 +2,7 @@
   display: block;
   width: 100%;
   margin-bottom: 1rem;
-  font-family: var(--font-family-body, 'Inter'), sans-serif;
+  font-family: var(--tn-font-family-body, 'Inter'), sans-serif;
 }
 
 .tn-form-field-label {
@@ -10,12 +10,12 @@
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--fg1, #333);
+  color: var(--tn-fg1, #333);
   line-height: 1.4;
 
   &.required {
     .required-asterisk {
-      color: var(--error, #dc3545);
+      color: var(--tn-error, #dc3545);
       margin-left: 0.25rem;
     }
   }
@@ -62,26 +62,26 @@
 }
 
 .tn-form-field-error {
-  color: var(--error, #dc3545);
+  color: var(--tn-error, #dc3545);
   margin: 0;
 }
 
 .tn-form-field-hint {
-  color: var(--fg2, #6c757d);
+  color: var(--tn-fg2, #6c757d);
   margin: 0;
 }
 
 // Focus state handling
 .tn-form-field-wrapper:has(:focus-visible) {
   .tn-form-field-label {
-    color: var(--primary, #007bff);
+    color: var(--tn-primary, #007bff);
   }
 }
 
 // Error state handling
 .tn-form-field-wrapper:has(.error) {
   .tn-form-field-label {
-    color: var(--error, #dc3545);
+    color: var(--tn-error, #dc3545);
   }
 }
 

@@ -180,7 +180,7 @@ export const OnDifferentElements: Story = {
 
         <div
           ixTooltip="Any element can have a tooltip"
-          style="padding: 12px; border: 1px dashed var(--lines, #e0e0e0); border-radius: 4px; cursor: help;">
+          style="padding: 12px; border: 1px dashed var(--tn-lines, #e0e0e0); border-radius: 4px; cursor: help;">
           Tooltip on div element
         </div>
 

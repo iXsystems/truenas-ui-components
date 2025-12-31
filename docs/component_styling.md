@@ -9,44 +9,44 @@ All components MUST use CSS custom properties for theming. Never hardcode colors
 ### Background Colors
 
 ```scss
-var(--bg1)       // Primary background (main canvas)
-var(--bg2)       // Secondary background (cards, panels)
+var(--tn-bg1)       // Primary background (main canvas)
+var(--tn-bg2)       // Secondary background (cards, panels)
 var(--bg-hover)  // Hover state background
 ```
 
 ### Foreground Colors (Text)
 
 ```scss
-var(--fg1)       // Primary text color
-var(--fg2)       // Secondary text color (muted)
+var(--tn-fg1)       // Primary text color
+var(--tn-fg2)       // Secondary text color (muted)
 ```
 
 ### Interactive Colors
 
 ```scss
-var(--primary)   // Primary action color (buttons, links)
-var(--accent)    // Accent color (highlights, focus)
-var(--lines)     // Border/divider lines
+var(--tn-primary)   // Primary action color (buttons, links)
+var(--tn-accent)    // Accent color (highlights, focus)
+var(--tn-lines)     // Border/divider lines
 ```
 
 ### Status Colors
 
 ```scss
-var(--red)       // Error, danger, destructive actions
-var(--green)     // Success, positive states
-var(--yellow)    // Warning, caution
-var(--orange)    // Alert, attention needed
-var(--blue)      // Info, neutral information
+var(--tn-red)       // Error, danger, destructive actions
+var(--tn-green)     // Success, positive states
+var(--tn-yellow)    // Warning, caution
+var(--tn-orange)    // Alert, attention needed
+var(--tn-blue)      // Info, neutral information
 ```
 
 ### Icon Sizes
 
 ```scss
-var(--icon-xs)   // 12px - Very small icons
-var(--icon-sm)   // 16px - Small icons
-var(--icon-md)   // 24px - Medium icons (default)
-var(--icon-lg)   // 32px - Large icons
-var(--icon-xl)   // 48px - Extra large icons
+var(--tn-icon-xs)   // 12px - Very small icons
+var(--tn-icon-sm)   // 16px - Small icons
+var(--tn-icon-md)   // 24px - Medium icons (default)
+var(--tn-icon-lg)   // 32px - Large icons
+var(--tn-icon-xl)   // 48px - Extra large icons
 ```
 
 ## BEM Naming Convention
@@ -80,9 +80,9 @@ Use BEM (Block Element Modifier) for CSS class names:
   padding: 8px 16px;
 
   // Appearance (use CSS variables!)
-  background-color: var(--bg1);
-  color: var(--fg1);
-  border: 1px solid var(--lines);
+  background-color: var(--tn-bg1);
+  color: var(--tn-fg1);
+  border: 1px solid var(--tn-lines);
   border-radius: 4px;
 
   // Transitions
@@ -138,24 +138,24 @@ Use BEM (Block Element Modifier) for CSS class names:
   cursor: pointer;
 
   &--default {
-    background-color: var(--bg2);
-    color: var(--fg1);
-    border: 1px solid var(--lines);
+    background-color: var(--tn-bg2);
+    color: var(--tn-fg1);
+    border: 1px solid var(--tn-lines);
   }
 
   &--primary {
-    background-color: var(--primary);
-    color: var(--bg1);
+    background-color: var(--tn-primary);
+    color: var(--tn-bg1);
   }
 
   &--warn {
-    background-color: var(--red);
-    color: var(--bg1);
+    background-color: var(--tn-red);
+    color: var(--tn-bg1);
   }
 
   &--success {
-    background-color: var(--green);
-    color: var(--bg1);
+    background-color: var(--tn-green);
+    color: var(--tn-bg1);
   }
 }
 ```
@@ -164,7 +164,7 @@ Use BEM (Block Element Modifier) for CSS class names:
 
 ```scss
 .tn-card {
-  background-color: var(--bg2);
+  background-color: var(--tn-bg2);
   border-radius: 8px;
   padding: 16px;
 
@@ -173,18 +173,18 @@ Use BEM (Block Element Modifier) for CSS class names:
     justify-content: space-between;
     align-items: center;
     padding-bottom: 12px;
-    border-bottom: 1px solid var(--lines);
+    border-bottom: 1px solid var(--tn-lines);
   }
 
   &__title {
     font-size: 18px;
     font-weight: 600;
-    color: var(--fg1);
+    color: var(--tn-fg1);
   }
 
   &__content {
     padding: 16px 0;
-    color: var(--fg2);
+    color: var(--tn-fg2);
   }
 
   &__footer {
@@ -192,7 +192,7 @@ Use BEM (Block Element Modifier) for CSS class names:
     justify-content: flex-end;
     gap: 8px;
     padding-top: 12px;
-    border-top: 1px solid var(--lines);
+    border-top: 1px solid var(--tn-lines);
   }
 }
 ```
@@ -217,7 +217,7 @@ Use BEM (Block Element Modifier) for CSS class names:
   }
 
   &:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--tn-accent);
     outline-offset: 2px;
   }
 
@@ -233,8 +233,8 @@ Use BEM (Block Element Modifier) for CSS class names:
 
 ```scss
 .tn-card {
-  background-color: var(--bg2);
-  border: 1px solid var(--lines);
+  background-color: var(--tn-bg2);
+  border: 1px solid var(--tn-lines);
   border-radius: 8px;
   padding: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -257,29 +257,29 @@ Use BEM (Block Element Modifier) for CSS class names:
   padding: 8px 12px;
   font-size: 14px;
   font-family: inherit;
-  color: var(--fg1);
-  background-color: var(--bg1);
-  border: 1px solid var(--lines);
+  color: var(--tn-fg1);
+  background-color: var(--tn-bg1);
+  border: 1px solid var(--tn-lines);
   border-radius: 4px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
   &:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+    border-color: var(--tn-primary);
+    box-shadow: 0 0 0 3px rgba(var(--tn-primary-rgb), 0.1);
   }
 
   &:disabled {
-    background-color: var(--bg2);
+    background-color: var(--tn-bg2);
     cursor: not-allowed;
     opacity: 0.6;
   }
 
   &--error {
-    border-color: var(--red);
+    border-color: var(--tn-red);
 
     &:focus {
-      box-shadow: 0 0 0 3px rgba(var(--red-rgb), 0.1);
+      box-shadow: 0 0 0 3px rgba(var(--tn-red-rgb), 0.1);
     }
   }
 }
@@ -290,15 +290,15 @@ Use BEM (Block Element Modifier) for CSS class names:
 ```scss
 .tn-icon {
   display: inline-block;
-  width: var(--icon-md);
-  height: var(--icon-md);
+  width: var(--tn-icon-md);
+  height: var(--tn-icon-md);
   color: currentColor;
 
-  &--xs { width: var(--icon-xs); height: var(--icon-xs); }
-  &--sm { width: var(--icon-sm); height: var(--icon-sm); }
-  &--md { width: var(--icon-md); height: var(--icon-md); }
-  &--lg { width: var(--icon-lg); height: var(--icon-lg); }
-  &--xl { width: var(--icon-xl); height: var(--icon-xl); }
+  &--xs { width: var(--tn-icon-xs); height: var(--tn-icon-xs); }
+  &--sm { width: var(--tn-icon-sm); height: var(--tn-icon-sm); }
+  &--md { width: var(--tn-icon-md); height: var(--tn-icon-md); }
+  &--lg { width: var(--tn-icon-lg); height: var(--tn-icon-lg); }
+  &--xl { width: var(--tn-icon-xl); height: var(--tn-icon-xl); }
 }
 ```
 
@@ -391,7 +391,7 @@ Always provide visible focus indicators:
 ```scss
 .tn-button {
   &:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--tn-accent);
     outline-offset: 2px;
   }
 }
@@ -420,9 +420,9 @@ Components automatically work with all themes via CSS variables:
 
 - `tn-dark` - Dark theme
 - `tn-blue` - Blue theme
-- `dracula` - Dracula theme
-- `nord` - Nord theme
-- `high-contrast` - High contrast theme
+- `tn-dracula` - Dracula theme
+- `tn-nord` - Nord theme
+- `tn-high-contrast` - High contrast theme
 
 **No theme-specific code needed in components.** Just use CSS variables.
 

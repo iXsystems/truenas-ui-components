@@ -8,7 +8,7 @@
   padding: 0;
   cursor: default;
   text-decoration: none;
-  color: var(--fg1);
+  color: var(--tn-fg1);
   transition: background-color 0.2s ease;
 
   &__content {
@@ -39,7 +39,7 @@
     font-size: 16px;
     font-weight: normal;
     line-height: 1.5;
-    color: var(--fg1);
+    color: var(--tn-fg1);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -49,7 +49,7 @@
     font-size: 14px;
     font-weight: normal;
     line-height: 1.4;
-    color: var(--fg2);
+    color: var(--tn-fg2);
     margin-top: 2px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -68,16 +68,16 @@
     cursor: pointer;
 
     &:hover:not(.tn-list-item--disabled) {
-      background-color: var(--alt-bg1);
+      background-color: var(--tn-alt-bg1);
     }
 
     &:focus {
       outline: none;
-      background-color: var(--alt-bg1);
+      background-color: var(--tn-alt-bg1);
     }
 
     &:active:not(.tn-list-item--disabled) {
-      background-color: var(--alt-bg2);
+      background-color: var(--tn-alt-bg2);
     }
   }
 
@@ -133,7 +133,7 @@
   width: 24px;
   height: 24px;
   font-size: 24px;
-  color: var(--fg2);
+  color: var(--tn-fg2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -145,8 +145,8 @@
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
-  background-color: var(--alt-bg1);
-  color: var(--fg1);
+  background-color: var(--tn-alt-bg1);
+  color: var(--tn-fg1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -163,12 +163,12 @@
   display: block;
   margin-top: 4px;
   font-size: 14px;
-  color: var(--fg2);
+  color: var(--tn-fg2);
   line-height: 1.4;
 }
 
 // Trailing content styles
 ::ng-deep [ixListItemTrailing] {
-  color: var(--fg2);
+  color: var(--tn-fg2);
   font-size: 14px;
 }

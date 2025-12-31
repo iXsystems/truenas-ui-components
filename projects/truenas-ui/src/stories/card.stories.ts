@@ -191,7 +191,7 @@ export const FullWidthContent: Story = {
         [padContent]="padContent"
         [bordered]="bordered"
         [background]="background">
-        <div style="padding: 16px; margin: 0; border: 2px dashed var(--lines);">
+        <div style="padding: 16px; margin: 0; border: 2px dashed var(--tn-lines);">
           <p style="margin: 0;">This div has manual padding to show the content area has no built-in padding.</p>
           <p style="margin: 8px 0 0;">Use padContent="false" for tables, images, charts, or custom edge-to-edge layouts.</p>
         </div>

@@ -19,50 +19,50 @@
   }
 }
 .button-primary {
-  background-color: var(--primary);
-  color: var(--primary-txt);
+  background-color: var(--tn-primary);
+  color: var(--tn-primary-txt);
 }
 .button-default {
   box-shadow: rgba(0, 0, 0, 0.15) 0px 0px 0px 1px inset;
-  background-color: var(--btn-default-bg);
-  color: var(--btn-default-txt);
+  background-color: var(--tn-btn-default-bg);
+  color: var(--tn-btn-default-txt);
 }
 .button-outline-primary {
   background-color: transparent;
-  border: 1px solid var(--primary);
-  color: var(--primary);
+  border: 1px solid var(--tn-primary);
+  color: var(--tn-primary);
   transition: all 0.2s ease-in-out;
 }
 .button-outline-primary:hover {
-  background-color: var(--primary);
-  border: 1px solid var(--primary);
-  color: var(--primary-txt);
+  background-color: var(--tn-primary);
+  border: 1px solid var(--tn-primary);
+  color: var(--tn-primary-txt);
 }
 .button-outline-default {
   background-color: transparent;
-  border: 1px solid var(--lines, #e5e7eb);
-  color: var(--fg1, #000000);
+  border: 1px solid var(--tn-lines, #e5e7eb);
+  color: var(--tn-fg1, #000000);
   transition: all 0.2s ease-in-out;
 }
 .button-outline-default:hover {
-  background-color: var(--btn-default-bg);
-  border: 1px solid var(--btn-default-bg);
-  color: var(--btn-default-txt);
+  background-color: var(--tn-btn-default-bg);
+  border: 1px solid var(--tn-btn-default-bg);
+  color: var(--tn-btn-default-txt);
   box-shadow: rgba(0, 0, 0, 0.15) 0px 0px 0px 1px inset;
 }
 .button-warn {
-  background-color: var(--red);
+  background-color: var(--tn-red);
   color: white;
 }
 .button-outline-warn {
   background-color: transparent;
-  border: 1px solid var(--red);
-  color: var(--red);
+  border: 1px solid var(--tn-red);
+  color: var(--tn-red);
   transition: all 0.2s ease-in-out;
 }
 .button-outline-warn:hover {
-  background-color: var(--red);
-  border: 1px solid var(--red);
+  background-color: var(--tn-red);
+  border: 1px solid var(--tn-red);
   color: white;
 }
 .storybook-button--small {

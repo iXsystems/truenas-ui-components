@@ -87,27 +87,27 @@
 // High contrast mode support
 @media (prefers-contrast: high) {
   .tn-tooltip {
-    background: var(--fg1, #000);
-    color: var(--bg1, #fff);
-    border: 1px solid var(--lines, #999);
+    background: var(--tn-fg1, #000);
+    color: var(--tn-bg1, #fff);
+    border: 1px solid var(--tn-lines, #999);
   }
 
   :host-context(.tn-tooltip-panel-above) .tn-tooltip::after {
-    border-top-color: var(--fg1, #000);
+    border-top-color: var(--tn-fg1, #000);
   }
 
   :host-context(.tn-tooltip-panel-below) .tn-tooltip::after {
-    border-bottom-color: var(--fg1, #000);
+    border-bottom-color: var(--tn-fg1, #000);
   }
 
   :host-context(.tn-tooltip-panel-left) .tn-tooltip::after,
   :host-context(.tn-tooltip-panel-before) .tn-tooltip::after {
-    border-left-color: var(--fg1, #000);
+    border-left-color: var(--tn-fg1, #000);
   }
 
   :host-context(.tn-tooltip-panel-right) .tn-tooltip::after,
   :host-context(.tn-tooltip-panel-after) .tn-tooltip::after {
-    border-right-color: var(--fg1, #000);
+    border-right-color: var(--tn-fg1, #000);
   }
 }
 

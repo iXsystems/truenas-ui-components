@@ -35,7 +35,7 @@ Navigate to your new directory and create these required files:
 
 - [ ] **Component SCSS stylesheet**: `tn-[name].component.scss`
   - See `component_styling.md` for theme variables
-  - Use CSS custom properties (e.g., `var(--bg1)`)
+  - Use CSS custom properties (e.g., `var(--tn-bg1)`)
   - Follow BEM naming: `.tn-[name]`, `.tn-[name]--modifier`, `.tn-[name]__element`
 
 - [ ] **Component test file**: `tn-[name].component.spec.ts`

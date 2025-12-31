@@ -213,7 +213,7 @@ export const Group: Story = {
     },
     template: `
       <div style="display: flex; flex-direction: column; gap: 16px; max-width: 400px;">
-        <h3 style="margin: 0 0 8px 0; color: var(--fg1);">Notification Preferences</h3>
+        <h3 style="margin: 0 0 8px 0; color: var(--tn-fg1);">Notification Preferences</h3>
         
         <tn-checkbox 
           label="Push notifications"
@@ -235,9 +235,9 @@ export const Group: Story = {
           [(ngModel)]="preferences.marketing"
         ></tn-checkbox>
         
-        <div style="margin-top: 16px; padding: 12px; background: var(--bg2); border-radius: 4px;">
-          <h4 style="margin: 0 0 8px 0; color: var(--fg1);">Selected Preferences:</h4>
-          <ul style="margin: 0; padding-left: 20px; color: var(--fg2);">
+        <div style="margin-top: 16px; padding: 12px; background: var(--tn-bg2); border-radius: 4px;">
+          <h4 style="margin: 0 0 8px 0; color: var(--tn-fg1);">Selected Preferences:</h4>
+          <ul style="margin: 0; padding-left: 20px; color: var(--tn-fg2);">
             @if (preferences.notifications) {
             <li>Push notifications</li>
             }

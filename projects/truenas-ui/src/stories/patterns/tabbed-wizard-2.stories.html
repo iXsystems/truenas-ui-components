@@ -1,7 +1,7 @@
 <div style="padding: 20px;">
-    <h1 style="margin-bottom: 8px; color: var(--fg1); font-family: var(--font-family-header);">Tabbed Wizard Pattern</h1>
-    <p style="margin-bottom: 16px; color: var(--fg2); font-style: italic; font-size: 14px;">For non-linear workflows</p>
-    <p style="margin-bottom: 16px; color: var(--fg2);">
+    <h1 style="margin-bottom: 8px; color: var(--tn-fg1); font-family: var(--tn-font-family-header);">Tabbed Wizard Pattern</h1>
+    <p style="margin-bottom: 16px; color: var(--tn-fg2); font-style: italic; font-size: 14px;">For non-linear workflows</p>
+    <p style="margin-bottom: 16px; color: var(--tn-fg2);">
     The Tabbed Wizard pattern combines the tn-dialog and tn-tabs components to create non-linear, multi-section workflows. 
     This VM creation example demonstrates how users can jump between different configuration sections freely, making it ideal 
     for complex forms where step order doesn't matter.
@@ -11,9 +11,9 @@
                 (click)="openTabbedWizard()" />
     
     @if (lastResult) {
-    <div style="margin-top: 24px; padding: 16px; border: 1px solid var(--lines); border-radius: 8px;">
+    <div style="margin-top: 24px; padding: 16px; border: 1px solid var(--tn-lines); border-radius: 8px;">
     <h4>Last Result:</h4>
-    <pre style="margin: 8px 0 0 0; color: var(--fg2);">{{ lastResult | json }}</pre>
+    <pre style="margin: 8px 0 0 0; color: var(--tn-fg2);">{{ lastResult | json }}</pre>
     </div>
     }
 </div>

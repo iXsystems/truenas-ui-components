@@ -13,7 +13,7 @@
   top: 0;
   bottom: 0;
   width: 100%;
-  background-color: var(--bg2, #e5e7eb);
+  background-color: var(--tn-bg2, #e5e7eb);
 }
 
 // Buffer bar (deprecated - hidden in new implementation)
@@ -27,7 +27,7 @@
   top: 0;
   bottom: 0;
   width: 100%;
-  background-image: radial-gradient(circle at center, var(--alt-bg2) 2px, transparent 2px);
+  background-image: radial-gradient(circle at center, var(--tn-alt-bg2) 2px, transparent 2px);
   background-size: 10px 4px;
   background-repeat: repeat-x;
   animation: tn-progress-bar-buffer-dots 250ms infinite linear;
@@ -56,7 +56,7 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  background-color: var(--primary, #3b82f6);
+  background-color: var(--tn-primary, #3b82f6);
   transform-origin: left center;
   height: 100%;
 }
@@ -72,7 +72,7 @@
   display: none; // Hidden by default
   
   .tn-progress-bar-bar-inner {
-    background-color: var(--primary, #3b82f6);
+    background-color: var(--tn-primary, #3b82f6);
   }
 }
 
@@ -80,7 +80,7 @@
 :host(.tn-progress-bar-indeterminate) {
   .tn-progress-bar-primary-bar .tn-progress-bar-bar-inner {
     animation: tn-progress-bar-indeterminate 2000ms infinite linear;
-    background-color: var(--primary, #3b82f6);
+    background-color: var(--tn-primary, #3b82f6);
     opacity: 1 !important;
     z-index: 999 !important;
   }

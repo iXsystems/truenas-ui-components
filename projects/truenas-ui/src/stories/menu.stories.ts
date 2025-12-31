@@ -88,14 +88,14 @@ export const WithIcons: Story = {
         <tn-button [tnMenuTriggerFor]="menu">Icon Methods Demo</tn-button>
         <tn-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></tn-menu>
 
-        <div style="margin-top: 24px; padding: 16px; border: 1px solid var(--lines, #ddd); border-radius: 4px; font-size: 14px; color: var(--fg2, #666666);">
+        <div style="margin-top: 24px; padding: 16px; border: 1px solid var(--tn-lines, #ddd); border-radius: 4px; font-size: 14px; color: var(--tn-fg2, #666666);">
           <strong>Recommended Icon Usage:</strong>
           <ul style="margin: 8px 0; padding-left: 20px;">
             <li><strong>Unicode Character:</strong> <code>icon: '⌂'</code> - For simple symbols and emojis</li>
             <li><strong>MDI with iconLibrary:</strong> <code>icon: 'cog', iconLibrary: 'mdi'</code> - Clean, semantic names</li>
             <li><strong>Try changing:</strong> <code>icon</code> values in Controls → cog, home, folder, harddisk, nas, server, database, network, memory</li>
           </ul>
-          <div style="margin-top: 12px; padding: 8px; background: var(--bg2, #f0f0f0); border-radius: 4px;">
+          <div style="margin-top: 12px; padding: 8px; background: var(--tn-bg2, #f0f0f0); border-radius: 4px;">
             <strong>💡 Tip:</strong> The <code>iconLibrary</code> property keeps icon names clean and semantic. Available: home, cog, server, database, folder, harddisk, nas, network, memory, file, star, heart, bell, delete, edit, and more.
           </div>
         </div>
@@ -318,14 +318,14 @@ export const WithKeyboardShortcuts: Story = {
           (menuOpen)="menuOpen($event)"
           (menuClose)="menuClose($event)">
         </tn-menu>
-        <div style="margin-top: 24px; padding: 16px; border: 1px solid var(--lines, #ddd); border-radius: 4px; font-size: 14px; color: var(--fg2, #666666);">
+        <div style="margin-top: 24px; padding: 16px; border: 1px solid var(--tn-lines, #ddd); border-radius: 4px; font-size: 14px; color: var(--tn-fg2, #666666);">
           <strong>⚠️ Accessibility Warning</strong><br>
           Always use modifier keys (⌘, Ctrl, Alt, Shift) for keyboard shortcuts.
           Avoid single letters like H, K, T, F, B, L as they conflict with screen reader navigation.
           <br><br>
           <strong>Learn more:</strong>&nbsp;&nbsp;
-          <a href="https://www.w3.org/WAI/WCAG21/Understanding/character-key-shortcuts.html" target="_blank" rel="noopener" style="color: var(--primary, #007bff);">WCAG 2.1.4 Character Key Shortcuts</a> •
-          <a href="https://webaim.org/techniques/keyboard/" target="_blank" rel="noopener" style="color: var(--primary, #007bff);">WebAIM Keyboard Accessibility</a>
+          <a href="https://www.w3.org/WAI/WCAG21/Understanding/character-key-shortcuts.html" target="_blank" rel="noopener" style="color: var(--tn-primary, #007bff);">WCAG 2.1.4 Character Key Shortcuts</a> •
+          <a href="https://webaim.org/techniques/keyboard/" target="_blank" rel="noopener" style="color: var(--tn-primary, #007bff);">WebAIM Keyboard Accessibility</a>
         </div>
       </div>
     `,
@@ -354,7 +354,7 @@ export const ContextMenu: Story = {
       <div style="padding: 20px;">
         <h3>Context Menu Demo</h3>
         <p>Right-click anywhere in the area below to open the context menu:</p>
-        <div style="margin-top: 20px; padding: 40px; border: 2px dashed var(--lines, #ccc); border-radius: 8px; min-height: 200px; background: var(--bg1, #f9f9f9);">
+        <div style="margin-top: 20px; padding: 40px; border: 2px dashed var(--tn-lines, #ccc); border-radius: 8px; min-height: 200px; background: var(--tn-bg1, #f9f9f9);">
           <tn-menu
             [items]="items"
             [contextMenu]="contextMenu"
@@ -362,7 +362,7 @@ export const ContextMenu: Story = {
             (menuItemClick)="menuItemClick($event)"
             (menuOpen)="menuOpen($event)"
             (menuClose)="menuClose($event)">
-            <div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 16px; color: var(--fg2, #666);">
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 16px; color: var(--tn-fg2, #666);">
               <div style="text-align: center;">
                 <div style="font-size: 32px; margin-bottom: 8px;">🖱️</div>
                 <div>Right-click me!</div>
@@ -371,7 +371,7 @@ export const ContextMenu: Story = {
             </div>
           </tn-menu>
         </div>
-        <p style="margin-top: 20px; font-size: 14px; color: var(--fg2, #666);">
+        <p style="margin-top: 20px; font-size: 14px; color: var(--tn-fg2, #666);">
           <strong>Note:</strong> The context menu will appear at the exact position where you right-clicked and will stay open until you click elsewhere or select an item.
         </p>
       </div>

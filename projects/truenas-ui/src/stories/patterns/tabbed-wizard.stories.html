@@ -10,17 +10,17 @@
 
     <tn-tab-panel>
         <div style="padding: 0 16px;">
-        <h2 style="color: var(--fg2);">General</h2>
-        <p style="margin-bottom: 16px; color: var(--fg2);">Basic virtual machine identification and placement.</p>
+        <h2 style="color: var(--tn-fg2);">General</h2>
+        <p style="margin-bottom: 16px; color: var(--tn-fg2);">Basic virtual machine identification and placement.</p>
         
         <div style="display: grid; gap: 16px;">
             <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">VM Name</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">VM Name</label>
             <tn-input placeholder="my-virtual-machine" [(ngModel)]="vmConfig.general.name" />
             </div>
             
             <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Description</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Description</label>
             <tn-input placeholder="Brief description of this VM" [(ngModel)]="vmConfig.general.description" />
             </div>
             
@@ -37,12 +37,12 @@
 
     <tn-tab-panel>
         <div style="padding: 0 16px;">
-        <h2 style="color: var(--fg2);">OS</h2>
-        <p style="margin-bottom: 16px; color: var(--fg2);">Operating system configuration and installation media.</p>
+        <h2 style="color: var(--tn-fg2);">OS</h2>
+        <p style="margin-bottom: 16px; color: var(--tn-fg2);">Operating system configuration and installation media.</p>
         
         <div style="display: grid; gap: 16px;">
             <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Guest Operating System</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Guest Operating System</label>
             <div style="display: flex; flex-direction: column; gap: 8px;">
                 <tn-radio name="osType" value="linux" label="Linux" [(ngModel)]="vmConfig.os.type" />
                 <tn-radio name="osType" value="windows" label="Windows" [(ngModel)]="vmConfig.os.type" />
@@ -52,7 +52,7 @@
             </div>
             
             <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Installation Media</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Installation Media</label>
             <tn-select placeholder="Select ISO image" [options]="isoOptions" [(ngModel)]="vmConfig.os.bootImage" />
             </div>
             
@@ -65,17 +65,17 @@
 
     <tn-tab-panel>
         <div style="padding: 0 16px;">
-        <h2 style="color: var(--fg2);">System</h2>
-        <p style="margin-bottom: 16px; color: var(--fg2);">Hardware abstraction and system firmware settings.</p>
+        <h2 style="color: var(--tn-fg2);">System</h2>
+        <p style="margin-bottom: 16px; color: var(--tn-fg2);">Hardware abstraction and system firmware settings.</p>
         
         <div style="display: grid; gap: 16px;">
             <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Machine Type</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Machine Type</label>
             <tn-select [options]="machineOptions" [(ngModel)]="vmConfig.system.machine" />
             </div>
             
             <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Boot Method</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Boot Method</label>
             <div style="display: flex; flex-direction: column; gap: 8px;">
                 <tn-radio name="bootMethod" value="uefi" label="UEFI" [(ngModel)]="vmConfig.system.bootMethod" />
                 <tn-radio name="bootMethod" value="legacy" label="Legacy BIOS" [(ngModel)]="vmConfig.system.bootMethod" />
@@ -91,24 +91,24 @@
 
     <tn-tab-panel>
         <div style="padding: 0 16px;">
-        <h2 style="color: var(--fg2);">Disks</h2>
-        <p style="margin-bottom: 16px; color: var(--fg2);">Storage configuration and disk settings.</p>
+        <h2 style="color: var(--tn-fg2);">Disks</h2>
+        <p style="margin-bottom: 16px; color: var(--tn-fg2);">Storage configuration and disk settings.</p>
         
         <div style="display: grid; gap: 16px;">
             <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Create new disk</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Create new disk</label>
             <tn-checkbox label="Create a new virtual disk" [(ngModel)]="vmConfig.disks.createNew" />
             </div>
 
             @if (vmConfig.disks.createNew) {
             <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Disk Size (GB)</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Disk Size (GB)</label>
             <tn-input type="number" placeholder="20" [(ngModel)]="vmConfig.disks.size" />
             </div>
             }
             
             <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Disk Type</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Disk Type</label>
             <div style="display: flex; flex-direction: column; gap: 8px;">
                 <tn-radio name="diskType" value="virtio" label="VirtIO (Recommended)" [(ngModel)]="vmConfig.disks.type" />
                 <tn-radio name="diskType" value="ahci" label="AHCI" [(ngModel)]="vmConfig.disks.type" />
@@ -121,22 +121,22 @@
 
     <tn-tab-panel>
         <div style="padding: 0 16px;">
-        <h2 style="color: var(--fg2);">CPU</h2>
-        <p style="margin-bottom: 16px; color: var(--fg2);">Processor configuration and CPU topology.</p>
+        <h2 style="color: var(--tn-fg2);">CPU</h2>
+        <p style="margin-bottom: 16px; color: var(--tn-fg2);">Processor configuration and CPU topology.</p>
         
         <div style="display: grid; gap: 16px;">
             <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">CPU Cores</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">CPU Cores</label>
             <tn-input type="number" placeholder="2" [(ngModel)]="vmConfig.cpu.cores" />
             </div>
             
             <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">CPU Threads</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">CPU Threads</label>
             <tn-input type="number" placeholder="1" [(ngModel)]="vmConfig.cpu.threads" />
             </div>
             
             <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">CPU Mode</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">CPU Mode</label>
             <tn-select [options]="cpuModeOptions" [(ngModel)]="vmConfig.cpu.mode" />
             </div>
             
@@ -149,12 +149,12 @@
 
     <tn-tab-panel>
         <div style="padding: 0 16px;">
-        <h2 style="color: var(--fg2);">Memory</h2>
-        <p style="margin-bottom: 16px; color: var(--fg2);">RAM allocation and memory ballooning configuration.</p>
+        <h2 style="color: var(--tn-fg2);">Memory</h2>
+        <p style="margin-bottom: 16px; color: var(--tn-fg2);">RAM allocation and memory ballooning configuration.</p>
         
         <div style="display: grid; gap: 16px;">
             <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Memory Size (MB)</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Memory Size (MB)</label>
             <tn-input type="number" placeholder="4096" [(ngModel)]="vmConfig.memory.size" />
             </div>
             
@@ -171,17 +171,17 @@
 
     <tn-tab-panel>
         <div style="padding: 0 16px;">
-        <h2 style="color: var(--fg2);">Network</h2>
-        <p style="margin-bottom: 16px; color: var(--fg2);">Network adapter configuration and connectivity settings.</p>
+        <h2 style="color: var(--tn-fg2);">Network</h2>
+        <p style="margin-bottom: 16px; color: var(--tn-fg2);">Network adapter configuration and connectivity settings.</p>
         
         <div style="display: grid; gap: 16px;">
             <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Network Interface</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Network Interface</label>
             <tn-select [options]="networkOptions" [(ngModel)]="vmConfig.network.interface" />
             </div>
             
             <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">NIC Type</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">NIC Type</label>
             <div style="display: flex; flex-direction: column; gap: 8px;">
                 <tn-radio name="nicType" value="virtio" label="VirtIO (Recommended)" [(ngModel)]="vmConfig.network.nicType" />
                 <tn-radio name="nicType" value="e1000" label="Intel E1000" [(ngModel)]="vmConfig.network.nicType" />

@@ -251,8 +251,8 @@ export class Tn[Name]Component {
 .tn-[name] {
   display: block;
   padding: 8px 16px;
-  background-color: var(--bg1);
-  color: var(--fg1);
+  background-color: var(--tn-bg1);
+  color: var(--tn-fg1);
   border-radius: 4px;
 
   &--disabled {
@@ -290,19 +290,19 @@ export class Tn[Name]Component {
 
   // Color variants
   &--default {
-    background-color: var(--bg2);
-    color: var(--fg1);
-    border: 1px solid var(--lines);
+    background-color: var(--tn-bg2);
+    color: var(--tn-fg1);
+    border: 1px solid var(--tn-lines);
   }
 
   &--primary {
-    background-color: var(--primary);
-    color: var(--bg1);
+    background-color: var(--tn-primary);
+    color: var(--tn-bg1);
   }
 
   &--warn {
-    background-color: var(--red);
-    color: var(--bg1);
+    background-color: var(--tn-red);
+    color: var(--tn-bg1);
   }
 
   // State modifiers

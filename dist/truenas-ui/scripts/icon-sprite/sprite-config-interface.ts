@@ -21,7 +21,7 @@ export interface SpriteGeneratorConfig {
 
   /**
    * Optional directory containing custom SVG icons
-   * Custom icons will be automatically prefixed with 'ix-'
+   * Custom icons will be automatically prefixed with 'tn-'
    */
   customIconsDir?: string;
 

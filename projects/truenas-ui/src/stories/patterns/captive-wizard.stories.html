@@ -1,14 +1,14 @@
 <tn-dialog-shell title="TrueNAS System Onboarding" [showFullscreenButton]="false">
-    <div style="padding: 0 var(--content-padding); margin-top: var(--content-padding);">
+    <div style="padding: 0 var(--tn-content-padding); margin-top: var(--tn-content-padding);">
     <tn-stepper orientation="horizontal" [linear]="true" [selectedIndex]="currentStep" (selectionChange)="onStepChange($event)">
     
     <tn-step label="Storage Setup" [completed]="step1Complete">
-        <h2 style="color: var(--fg2); margin-top: unset;">Storage Setup</h2>
-        <p style="margin-bottom: 16px; color: var(--fg2);">Create at least one writable pool/dataset for your data.</p>
+        <h2 style="color: var(--tn-fg2); margin-top: unset;">Storage Setup</h2>
+        <p style="margin-bottom: 16px; color: var(--tn-fg2);">Create at least one writable pool/dataset for your data.</p>
         
         <div style="display: grid; gap: 16px; max-width: 600px;">
         <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Pool Name</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Pool Name</label>
             <tn-input placeholder="tank" [(ngModel)]="config.storage.poolName" />
         </div>
         
@@ -17,7 +17,7 @@
         </div>
         
         <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Create Starter Datasets</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Create Starter Datasets</label>
             <div style="display: grid; gap: 8px;">
             <tn-checkbox label="media - For photos, videos, music" [(ngModel)]="config.storage.createMedia" />
             <tn-checkbox label="backups - For backup storage" [(ngModel)]="config.storage.createBackups" />
@@ -26,11 +26,11 @@
         </div>
         
         <div style="margin-top: 16px;">
-            <h4 style="margin-bottom: 16px; color: var(--fg1); border-bottom: 1px solid var(--lines); padding-bottom: 8px;">Basic Pool Setup</h4>
+            <h4 style="margin-bottom: 16px; color: var(--tn-fg1); border-bottom: 1px solid var(--tn-lines); padding-bottom: 8px;">Basic Pool Setup</h4>
             
             <div style="display: grid; gap: 16px;">
             <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Available Disks</label>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Available Disks</label>
                 <div style="display: grid; gap: 8px;">
                 <tn-checkbox label="sda - 1TB WD Blue (Empty)" [(ngModel)]="config.storage.disk1" />
                 <tn-checkbox label="sdb - 1TB WD Blue (Empty)" [(ngModel)]="config.storage.disk2" />
@@ -39,7 +39,7 @@
             </div>
             
             <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">RAID/ZFS Layout</label>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">RAID/ZFS Layout</label>
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                 <tn-radio name="raidType" value="mirror" label="Mirror (RAID1) - Best redundancy" [(ngModel)]="config.storage.raidType" />
                 <tn-radio name="raidType" value="raidz1" label="RAIDZ1 - Good balance of space/redundancy (min 3 disks)" [(ngModel)]="config.storage.raidType" />
@@ -57,7 +57,7 @@
 
         @if (config.storage.advancedOptions) {
         <div style="margin-top: 16px;">
-            <h4 style="margin-bottom: 16px; color: var(--fg1); border-bottom: 1px solid var(--lines); padding-bottom: 8px;">Advanced Options</h4>
+            <h4 style="margin-bottom: 16px; color: var(--tn-fg1); border-bottom: 1px solid var(--tn-lines); padding-bottom: 8px;">Advanced Options</h4>
 
             <div style="display: grid; gap: 16px;">
             <div>
@@ -65,17 +65,17 @@
             </div>
 
             <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">SLOG Device (Optional)</label>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">SLOG Device (Optional)</label>
                 <tn-select placeholder="Select dedicated log device" [options]="slogDeviceOptions" [(ngModel)]="config.storage.slogDevice" />
             </div>
 
             <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">L2ARC Cache Device (Optional)</label>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">L2ARC Cache Device (Optional)</label>
                 <tn-select placeholder="Select cache device" [options]="cacheDeviceOptions" [(ngModel)]="config.storage.l2arcDevice" />
             </div>
 
             <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Metadata Special Device (Optional)</label>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Metadata Special Device (Optional)</label>
                 <tn-select placeholder="Select metadata device" [options]="metadataDeviceOptions" [(ngModel)]="config.storage.metadataDevice" />
             </div>
 
@@ -95,7 +95,7 @@
         </div>
         }
         
-        <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--lines);">
+        <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--tn-lines);">
             <tn-button variant="outline" 
                         color="warn"
                         label="Exit Wizard and Setup DRAID"
@@ -105,22 +105,22 @@
     </tn-step>
 
     <tn-step label="Identity & Network" [completed]="step2Complete">
-        <h2 style="color: var(--fg2); margin-top: unset;">Identity & Network</h2>
-        <p style="margin-bottom: 16px; color: var(--fg2);">Make your NAS reachable and properly identified on the network.</p>
+        <h2 style="color: var(--tn-fg2); margin-top: unset;">Identity & Network</h2>
+        <p style="margin-bottom: 16px; color: var(--tn-fg2);">Make your NAS reachable and properly identified on the network.</p>
         
         <div style="display: grid; gap: 16px; max-width: 600px;">
             <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Hostname</label>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Hostname</label>
                 <tn-input placeholder="truenas-server" [(ngModel)]="config.network.hostname" />
             </div>
             
             <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Domain</label>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Domain</label>
                 <tn-input placeholder="home.local" [(ngModel)]="config.network.domain" />
             </div>
             
             <div>
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Network Configuration</label>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Network Configuration</label>
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                 <tn-radio name="ipType" value="dhcp" label="DHCP (Automatic)" [(ngModel)]="config.network.ipType" />
                 <tn-radio name="ipType" value="static" label="Static IP Address" [(ngModel)]="config.network.ipType" />
@@ -129,14 +129,14 @@
 
             @if (config.network.ipType === 'static') {
                 <div>
-                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Static IP Address</label>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Static IP Address</label>
                     <tn-input placeholder="192.168.1.100/24" [(ngModel)]="config.network.staticIp" />
                 </div>
             }
 
             @if (config.network.ipType === 'static') {
                 <div>
-                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Gateway</label>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Gateway</label>
                     <tn-input placeholder="192.168.1.1" [(ngModel)]="config.network.gateway" />
                 </div>
             }
@@ -144,22 +144,22 @@
     </tn-step>
 
     <tn-step label="Administrator Account" [completed]="step3Complete">
-        <h2 style="color: var(--fg2); margin-top: unset;">Administrator Account</h2>
-        <p style="margin-bottom: 16px; color: var(--fg2);">Create the initial administrator account for your TrueNAS system.</p>
+        <h2 style="color: var(--tn-fg2); margin-top: unset;">Administrator Account</h2>
+        <p style="margin-bottom: 16px; color: var(--tn-fg2);">Create the initial administrator account for your TrueNAS system.</p>
         
         <div style="display: grid; gap: 16px; max-width: 600px;">
         <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Username</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Username</label>
             <tn-input placeholder="admin" [(ngModel)]="config.admin.username" />
         </div>
         
         <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Password</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Password</label>
             <tn-input type="password" placeholder="Enter secure password" [(ngModel)]="config.admin.password" />
         </div>
         
         <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Confirm Password</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Confirm Password</label>
             <tn-input type="password" placeholder="Confirm password" [(ngModel)]="config.admin.confirmPassword" />
         </div>
         
@@ -170,12 +170,12 @@
     </tn-step>
 
     <tn-step label="Services & Security" [completed]="step4Complete">
-        <h2 style="color: var(--fg2); margin-top: unset;">Services & Security</h2>
-        <p style="margin-bottom: 16px; color: var(--fg2);">Configure essential services and security settings for your TrueNAS system.</p>
+        <h2 style="color: var(--tn-fg2); margin-top: unset;">Services & Security</h2>
+        <p style="margin-bottom: 16px; color: var(--tn-fg2);">Configure essential services and security settings for your TrueNAS system.</p>
         
         <div style="display: grid; gap: 16px; max-width: 600px;">
         <div>
-            <h4 style="margin-bottom: 16px; color: var(--fg1); border-bottom: 1px solid var(--lines); padding-bottom: 8px;">Core Services</h4>
+            <h4 style="margin-bottom: 16px; color: var(--tn-fg1); border-bottom: 1px solid var(--tn-lines); padding-bottom: 8px;">Core Services</h4>
             <div style="display: grid; gap: 8px;">
             <tn-checkbox label="Enable SMB/CIFS file sharing" [(ngModel)]="config.services.enableSmb" />
             <tn-checkbox label="Enable NFS file sharing" [(ngModel)]="config.services.enableNfs" />
@@ -185,7 +185,7 @@
         </div>
         
         <div>
-            <h4 style="margin-bottom: 16px; color: var(--fg1); border-bottom: 1px solid var(--lines); padding-bottom: 8px;">Security Settings</h4>
+            <h4 style="margin-bottom: 16px; color: var(--tn-fg1); border-bottom: 1px solid var(--tn-lines); padding-bottom: 8px;">Security Settings</h4>
             <div style="display: grid; gap: 12px;">
             <tn-checkbox label="Enable automatic security updates" [(ngModel)]="config.services.autoUpdates" />
             <tn-checkbox label="Enable fail2ban intrusion prevention" [(ngModel)]="config.services.enableFail2ban" />
@@ -196,12 +196,12 @@
     </tn-step>
 
     <tn-step label="HTTPS & Certificates" [completed]="step5Complete">
-        <h2 style="color: var(--fg2); margin-top: unset;">HTTPS & Certificates</h2>
-        <p style="margin-bottom: 16px; color: var(--fg2);">Configure HTTPS access and SSL certificates for secure web interface access.</p>
+        <h2 style="color: var(--tn-fg2); margin-top: unset;">HTTPS & Certificates</h2>
+        <p style="margin-bottom: 16px; color: var(--tn-fg2);">Configure HTTPS access and SSL certificates for secure web interface access.</p>
         
         <div style="display: grid; gap: 16px; max-width: 600px;">
         <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Certificate Type</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Certificate Type</label>
             <div style="display: flex; flex-direction: column; gap: 8px;">
             <tn-radio name="certType" value="self-signed" label="Self-signed certificate (Quick setup)" [(ngModel)]="config.https.certType" />
             <tn-radio name="certType" value="letsencrypt" label="Let's Encrypt certificate (Requires domain)" [(ngModel)]="config.https.certType" />
@@ -211,14 +211,14 @@
 
         @if (config.https.certType === 'letsencrypt') {
         <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Domain Name</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Domain Name</label>
             <tn-input placeholder="truenas.example.com" [(ngModel)]="config.https.domain" />
         </div>
         }
 
         @if (config.https.certType === 'letsencrypt') {
         <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Email for Certificate Notifications</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Email for Certificate Notifications</label>
             <tn-input type="email" placeholder="admin@example.com" [(ngModel)]="config.https.email" />
         </div>
         }
@@ -234,12 +234,12 @@
     </tn-step>
 
     <tn-step label="Notifications" [completed]="step6Complete">
-        <h2 style="color: var(--fg2); margin-top: unset;">Notifications</h2>
-        <p style="margin-bottom: 16px; color: var(--fg2);">Configure how TrueNAS will notify you about system events and alerts.</p>
+        <h2 style="color: var(--tn-fg2); margin-top: unset;">Notifications</h2>
+        <p style="margin-bottom: 16px; color: var(--tn-fg2);">Configure how TrueNAS will notify you about system events and alerts.</p>
         
         <div style="display: grid; gap: 16px; max-width: 600px;">
         <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Notification Method</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Notification Method</label>
             <div style="display: flex; flex-direction: column; gap: 8px;">
             <tn-radio name="notifyMethod" value="email" label="Email notifications" [(ngModel)]="config.notifications.method" />
             <tn-radio name="notifyMethod" value="slack" label="Slack notifications" [(ngModel)]="config.notifications.method" />
@@ -250,27 +250,27 @@
 
         @if (config.notifications.method === 'email') {
         <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Email Address</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Email Address</label>
             <tn-input type="email" placeholder="admin@example.com" [(ngModel)]="config.notifications.email" />
         </div>
         }
 
         @if (config.notifications.method === 'email') {
         <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">SMTP Server</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">SMTP Server</label>
             <tn-input placeholder="smtp.gmail.com" [(ngModel)]="config.notifications.smtpServer" />
         </div>
         }
 
         @if (config.notifications.method === 'slack') {
         <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--fg1);">Slack Webhook URL</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--tn-fg1);">Slack Webhook URL</label>
             <tn-input placeholder="https://hooks.slack.com/services/..." [(ngModel)]="config.notifications.slackWebhook" />
         </div>
         }
         
         <div style="margin-top: 16px;">
-            <h4 style="margin-bottom: 12px; color: var(--fg1);">Alert Types</h4>
+            <h4 style="margin-bottom: 12px; color: var(--tn-fg1);">Alert Types</h4>
             <div style="display: grid; gap: 8px;">
             <tn-checkbox label="System health alerts" [(ngModel)]="config.notifications.systemHealth" />
             <tn-checkbox label="Storage alerts" [(ngModel)]="config.notifications.storageAlerts" />
@@ -282,13 +282,13 @@
     </tn-step>
 
     <tn-step label="Review & Finish" [completed]="step7Complete">
-        <h2 style="color: var(--fg2); margin-top: unset;">Review & Finish</h2>
-        <p style="margin-bottom: 16px; color: var(--fg2);">Review your configuration and complete the onboarding process.</p>
+        <h2 style="color: var(--tn-fg2); margin-top: unset;">Review & Finish</h2>
+        <p style="margin-bottom: 16px; color: var(--tn-fg2);">Review your configuration and complete the onboarding process.</p>
         
         <div style="display: grid; gap: 16px;">
-        <div style="background: var(--bg2); padding: 16px; border-radius: 8px; border: 1px solid var(--lines);">
-            <h4 style="margin: 0 0 12px 0; color: var(--fg1);">Configuration Summary</h4>
-            <div style="display: grid; gap: 8px; font-size: 14px; color: var(--fg2);">
+        <div style="background: var(--tn-bg2); padding: 16px; border-radius: 8px; border: 1px solid var(--tn-lines);">
+            <h4 style="margin: 0 0 12px 0; color: var(--tn-fg1);">Configuration Summary</h4>
+            <div style="display: grid; gap: 8px; font-size: 14px; color: var(--tn-fg2);">
             <div><strong>Storage Pool:</strong> {{ config.storage.poolName || 'Not specified' }} ({{ getRaidTypeLabel(config.storage.raidType) }})</div>
             <div><strong>Hostname:</strong> {{ config.network.hostname || 'Not specified' }}.{{ config.network.domain || 'home.local' }}</div>
             <div><strong>Network:</strong> {{ config.network.ipType === 'dhcp' ? 'DHCP' : 'Static IP (' + config.network.staticIp + ')' }}</div>

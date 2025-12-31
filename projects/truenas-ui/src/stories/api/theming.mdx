@@ -21,9 +21,9 @@ Use CSS variables to apply theme styles:
 
 ```scss
 .my-component {
-  background-color: var(--bg1);
-  color: var(--fg1);
-  border: 1px solid var(--lines);
+  background-color: var(--tn-bg1);
+  color: var(--tn-fg1);
+  border: 1px solid var(--tn-lines);
 }
 ```
 
@@ -188,8 +188,8 @@ Components should use the `--lines` variable for borders and dividers:
 
 ```scss
 .component {
-  border: 1px solid var(--lines);
-  border-bottom: 1px solid var(--lines);
+  border: 1px solid var(--tn-lines);
+  border-bottom: 1px solid var(--tn-lines);
 }
 ```
 
@@ -198,9 +198,9 @@ When using CSS variables, always provide fallback values for better compatibilit
 
 ```scss
 .component {
-  background-color: var(--bg1, #1E1E1E);
-  color: var(--fg1, #ffffff);
-  border: 1px solid var(--lines, #383838);
+  background-color: var(--tn-bg1, #1E1E1E);
+  color: var(--tn-fg1, #ffffff);
+  border: 1px solid var(--tn-lines, #383838);
 }
 ```
 

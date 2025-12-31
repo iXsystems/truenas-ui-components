@@ -157,11 +157,11 @@ export const WithValidation: Story = {
         <button 
           type="button" 
           (click)="markAsTouched()"
-          style="width: fit-content; padding: 0.5rem 1rem; background: var(--primary); color: white; border: none; border-radius: 0.25rem; cursor: pointer;">
+          style="width: fit-content; padding: 0.5rem 1rem; background: var(--tn-primary); color: white; border: none; border-radius: 0.25rem; cursor: pointer;">
           Trigger Validation
         </button>
         
-        <div style="font-size: 0.875rem; color: var(--fg2);">
+        <div style="font-size: 0.875rem; color: var(--tn-fg2);">
           <strong>Form State:</strong><br>
           Valid: {{ emailControl.valid }}<br>
           Touched: {{ emailControl.touched }}<br>
@@ -292,7 +292,7 @@ export const MultipleFields: Story = {
     },
     template: `
       <div style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 500px;">
-        <h3 style="margin: 0; color: var(--fg1);">User Information Form</h3>
+        <h3 style="margin: 0; color: var(--tn-fg1);">User Information Form</h3>
         
         <tn-form-field 
           label="Full Name"
@@ -360,7 +360,7 @@ export const MultipleFields: Story = {
           </div>
         </tn-form-field>
 
-        <div style="padding: 1rem; background: var(--bg2); border-radius: 0.375rem; font-size: 0.875rem;">
+        <div style="padding: 1rem; background: var(--tn-bg2); border-radius: 0.375rem; font-size: 0.875rem;">
           <strong>Form Values:</strong><br>
           Name: "{{ userForm.name.value }}"<br>
           Email: "{{ userForm.email.value }}"<br>

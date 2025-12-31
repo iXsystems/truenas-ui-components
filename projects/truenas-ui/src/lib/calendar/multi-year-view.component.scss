@@ -28,7 +28,7 @@
   height: 90%;
   border: none;
   background: transparent;
-  color: var(--fg1, #333);
+  color: var(--tn-fg1, #333);
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
@@ -36,29 +36,29 @@
   
   
   &:hover:not(:disabled) {
-    background: var(--alt-bg2, #e8f4fd);
+    background: var(--tn-alt-bg2, #e8f4fd);
   }
   
   &:focus {
-    outline: 2px solid var(--primary, #007bff);
+    outline: 2px solid var(--tn-primary, #007bff);
     outline-offset: 2px;
-    background: var(--alt-bg2, #e8f4fd);
+    background: var(--tn-alt-bg2, #e8f4fd);
   }
   
   &:disabled {
-    color: var(--fg2, #666);
+    color: var(--tn-fg2, #666);
     opacity: 0.5;
     cursor: default;
   }
 
   // Apply today border to the button itself for full coverage
   &.tn-calendar-body-today:not(.tn-calendar-body-selected) {
-    border: 1px solid var(--primary, #007bff);
-    color: var(--primary, #007bff);
+    border: 1px solid var(--tn-primary, #007bff);
+    color: var(--tn-primary, #007bff);
   }
 
   &.tn-calendar-body-selected {
-    background: var(--primary, #007bff);
+    background: var(--tn-primary, #007bff);
     color: white;
   }
 }
