@@ -4,7 +4,7 @@
       type="text"
       class="ix-file-picker-input"
       [class.error]="hasError()"
-      [value]="selectedPath() | ixStripMntPrefix"
+      [value]="selectedPath() | tnStripMntPrefix"
       [placeholder]="placeholder()"
       [readonly]="!allowManualInput()"
       [disabled]="isDisabled()"
@@ -16,12 +16,12 @@
       aria-label="Open file picker"
       [disabled]="isDisabled()"
       (click)="openFilePicker()">
-      <ix-icon name="folder" library="mdi" />
+      <tn-icon name="folder" library="mdi" />
     </button>
   </div>
   
   <ng-template #filePickerTemplate>
-    <ix-file-picker-popup
+    <tn-file-picker-popup
       class="ix-file-picker-popup"
       [mode]="mode()"
       [multiSelect]="multiSelect()"

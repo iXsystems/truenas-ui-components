@@ -4,10 +4,10 @@ import { ElementRef, ChangeDetectorRef, Component, ChangeDetectionStrategy, View
 import { TnIconComponent } from '../icon/icon.component';
 
 @Component({
-  selector: 'ix-tree-node',
+  selector: 'tn-tree-node',
   standalone: true,
   imports: [CommonModule, CdkTreeModule, TnIconComponent],
-  exportAs: 'ixTreeNode',
+  exportAs: 'tnTreeNode',
   providers: [
     { provide: CdkTreeNode, useExisting: TnTreeNodeComponent }
   ],

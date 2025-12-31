@@ -16,7 +16,7 @@ export interface TnSelectOptionGroup<T = unknown> {
 }
 
 @Component({
-  selector: 'ix-select',
+  selector: 'tn-select',
   standalone: true,
   imports: [CommonModule],
   providers: [

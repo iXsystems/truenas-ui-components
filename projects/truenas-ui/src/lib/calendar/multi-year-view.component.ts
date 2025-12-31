@@ -12,7 +12,7 @@ export interface YearCell {
 }
 
 @Component({
-  selector: 'ix-multi-year-view',
+  selector: 'tn-multi-year-view',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './multi-year-view.component.html',

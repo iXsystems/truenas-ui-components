@@ -106,10 +106,10 @@ export class TnTreeFlatDataSource<T, F> extends DataSource<F> {
 }
 
 @Component({
-  selector: 'ix-tree',
+  selector: 'tn-tree',
   standalone: true,
   imports: [CommonModule, CdkTreeModule],
-  exportAs: 'ixTree',
+  exportAs: 'tnTree',
   providers: [
     { provide: CdkTree, useExisting: TnTreeComponent }
   ],

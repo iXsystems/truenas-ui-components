@@ -68,8 +68,8 @@ type Story = StoryObj<TnSliderComponent>;
 export const Default: Story = {
   render: (args) => ({
     template: `
-      <ix-form-field label="Speed Control">
-        <ix-slider 
+      <tn-form-field label="Speed Control">
+        <tn-slider 
           [min]="min"
           [max]="max" 
           [step]="step"
@@ -78,8 +78,8 @@ export const Default: Story = {
           [labelPrefix]="labelPrefix"
           [labelSuffix]="labelSuffix">
           <input ixSliderThumb value="50">
-        </ix-slider>
-      </ix-form-field>
+        </tn-slider>
+      </tn-form-field>
     `,
     props: args,
     moduleMetadata: {

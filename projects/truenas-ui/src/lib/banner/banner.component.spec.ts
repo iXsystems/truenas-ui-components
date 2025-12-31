@@ -149,7 +149,7 @@ describe('TnBannerComponent', () => {
     });
 
     it('should render icon component', () => {
-      const icon = fixture.nativeElement.querySelector('ix-icon');
+      const icon = fixture.nativeElement.querySelector('tn-icon');
       expect(icon).toBeTruthy();
     });
 

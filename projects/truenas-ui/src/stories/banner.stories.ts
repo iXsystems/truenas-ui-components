@@ -12,7 +12,7 @@ iconMarker('alert-circle', 'mdi');
 iconMarker('check-circle', 'mdi');
 
 // Load harness documentation
-const harnessDoc = loadHarnessDoc('ix-banner');
+const harnessDoc = loadHarnessDoc('banner');
 
 const meta: Meta<TnBannerComponent> = {
   title: 'Components/Banner',
@@ -99,28 +99,28 @@ export const MultipleTypes: Story = {
   render: () => ({
     template: `
       <div style="display: flex; flex-direction: column; gap: 16px;">
-        <ix-banner
+        <tn-banner
           heading="Information"
           message="This is an info banner with helpful information.">
-        </ix-banner>
+        </tn-banner>
 
-        <ix-banner
+        <tn-banner
           heading="Warning"
           message="This is a warning banner that requires your attention."
           type="warning">
-        </ix-banner>
+        </tn-banner>
 
-        <ix-banner
+        <tn-banner
           heading="Error"
           message="This is an error banner indicating something went wrong."
           type="error">
-        </ix-banner>
+        </tn-banner>
 
-        <ix-banner
+        <tn-banner
           heading="Success"
           message="This is a success banner confirming a completed action."
           type="success">
-        </ix-banner>
+        </tn-banner>
       </div>
     `,
   }),

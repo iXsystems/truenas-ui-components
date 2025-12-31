@@ -1,7 +1,7 @@
 <!-- Header with breadcrumb navigation -->
 <div class="ix-file-picker-header">
   <nav class="ix-file-picker-breadcrumb" aria-label="File path">
-    @for (segment of currentPath() | ixTruncatePath; track $index; let last = $last) {
+    @for (segment of currentPath() | tnTruncatePath; track $index; let last = $last) {
       <button
         class="breadcrumb-segment"
         [class.current]="last"
@@ -15,7 +15,7 @@
 
   <div class="ix-file-picker-actions">
     @if (allowCreate()) {
-      <ix-button
+      <tn-button
         variant="outline"
         label="New Folder"
         [disabled]="isCreateDisabled()"
@@ -27,7 +27,7 @@
 <!-- Loading indicator -->
 @if (loading()) {
   <div class="ix-file-picker-loading">
-    <ix-icon name="loading" library="mdi" />
+    <tn-icon name="loading" library="mdi" />
     <span>Loading...</span>
   </div>
 }
@@ -35,17 +35,17 @@
 <!-- File table -->
 @if (!loading()) {
   <div class="ix-file-picker-content">
-  <ix-table
+  <tn-table
     [dataSource]="filteredFileItems()"
     [displayedColumns]="multiSelect() ? displayedColumns : displayedColumns.slice(1)">
 
     <!-- Selection column -->
     @if (multiSelect()) {
-      <ng-container ixColumnDef="select">
-      <ng-template ixHeaderCellDef>
+      <ng-container tnColumnDef="select">
+      <ng-template tnHeaderCellDef>
         <!-- Select all checkbox -->
       </ng-template>
-      <ng-template let-item ixCellDef>
+      <ng-template let-item tnCellDef>
         <input 
           type="checkbox" 
           [checked]="isSelected(item)"
@@ -57,9 +57,9 @@
     }
 
     <!-- Name column -->
-    <ng-container ixColumnDef="name">
-      <ng-template ixHeaderCellDef>Name</ng-template>
-      <ng-template let-item ixCellDef>
+    <ng-container tnColumnDef="name">
+      <ng-template tnHeaderCellDef>Name</ng-template>
+      <ng-template let-item tnCellDef>
 
         <!-- NORMAL MODE: Display name -->
         @if (!item.isCreating) {
@@ -73,7 +73,7 @@
                (dblclick)="onItemDoubleClick(item)"
                (keydown.enter)="onItemDoubleClick(item)"
                (keydown.space)="onItemClick(item)">
-            <ix-icon
+            <tn-icon
               [name]="getItemIcon(item)"
               [library]="getItemIconLibrary(item)"
               [class]="'file-icon file-icon-' + item.type" />
@@ -89,7 +89,7 @@
 
             <!-- Permission indicator -->
             @if (item.permissions === 'none') {
-              <ix-icon
+              <tn-icon
                 name="lock"
                 library="mdi"
                 class="permission-icon" />
@@ -101,7 +101,7 @@
         @if (item.isCreating) {
           <div class="file-name-cell-wrapper">
             <div class="file-name-cell editing" [class.has-error]="!!item.creationError">
-              <ix-icon
+              <tn-icon
                 name="folder"
                 library="mdi"
                 class="file-icon file-icon-folder" />
@@ -122,7 +122,7 @@
 
               <!-- Loading indicator during submission -->
               @if (creationLoading()) {
-                <ix-icon
+                <tn-icon
                   name="loading"
                   library="mdi"
                   class="creation-loading-icon" />
@@ -132,7 +132,7 @@
             <!-- Inline error message -->
             @if (item.creationError) {
               <div class="folder-creation-error">
-                <ix-icon name="alert-circle" library="mdi" class="error-icon" />
+                <tn-icon name="alert-circle" library="mdi" class="error-icon" />
                 <span class="error-text">{{ item.creationError }}</span>
               </div>
             }
@@ -143,11 +143,11 @@
     </ng-container>
 
     <!-- Size column -->
-    <ng-container ixColumnDef="size">
-      <ng-template ixHeaderCellDef>Size</ng-template>
-      <ng-template let-item ixCellDef>
+    <ng-container tnColumnDef="size">
+      <ng-template tnHeaderCellDef>Size</ng-template>
+      <ng-template let-item tnCellDef>
         @if (item.size !== undefined) {
-          <span>{{ item.size | ixFileSize }}</span>
+          <span>{{ item.size | tnFileSize }}</span>
         }
         @if (item.size === undefined && item.type === 'folder') {
           <span class="folder-indicator">--</span>
@@ -156,9 +156,9 @@
     </ng-container>
 
     <!-- Modified column -->
-    <ng-container ixColumnDef="modified">
-      <ng-template ixHeaderCellDef>Modified</ng-template>
-      <ng-template let-item ixCellDef>
+    <ng-container tnColumnDef="modified">
+      <ng-template tnHeaderCellDef>Modified</ng-template>
+      <ng-template let-item tnCellDef>
         @if (item.modified) {
           <span>{{ formatDate(item.modified) }}</span>
         }
@@ -166,12 +166,12 @@
     </ng-container>
 
 
-  </ix-table>
+  </tn-table>
 
   <!-- Empty state -->
   @if (filteredFileItems().length === 0) {
     <div class="empty-state">
-      <ix-icon name="folder-open" library="mdi" />
+      <tn-icon name="folder-open" library="mdi" />
       <p>No items found</p>
     </div>
   }
@@ -192,7 +192,7 @@
       </span>
     }
     <div class="footer-actions">
-      <ix-button
+      <tn-button
         label="Select"
         [disabled]="selectedItems().length === 0"
         (onClick)="onSubmit()" />

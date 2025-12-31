@@ -11,10 +11,10 @@ import { TnSpriteLoaderService } from '../icon/sprite-loader.service';
 
 // Test host component for harness testing
 @Component({
-  selector: 'ix-test-host',
+  selector: 'tn-test-host',
   standalone: true,
   imports: [TnBannerComponent],
-  template: `<ix-banner [heading]="heading()" [message]="message()" [type]="type()" />`
+  template: `<tn-banner [heading]="heading()" [message]="message()" [type]="type()" />`
 })
 class TestHostComponent {
   heading = signal('Test Heading');
@@ -59,7 +59,7 @@ describe('TnBannerHarness', () => {
   });
 
   it('should verify element exists in DOM', () => {
-    const bannerElement = fixture.nativeElement.querySelector('ix-banner');
+    const bannerElement = fixture.nativeElement.querySelector('tn-banner');
     expect(bannerElement).toBeTruthy();
   });
 

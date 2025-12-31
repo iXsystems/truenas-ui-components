@@ -1,4 +1,4 @@
-<ix-dialog-shell title="System Settings">
+<tn-dialog-shell title="System Settings">
   <div style="height: 800px; padding: var(--content-padding);">
     <h3>Network Configuration</h3>
     <p>Configure your network interfaces and routing settings. These settings will affect all network communication for your TrueNAS system.</p>
@@ -73,8 +73,8 @@
     <p><strong>Important:</strong> Changes to security settings may require system restart and could temporarily affect system availability. Always test configuration changes in a non-production environment first.</p>
   </div>
 
-  <div ixDialogAction>
-    <ix-button type="button" variant="outline" label="Cancel" (click)="ref.close()" />
-    <ix-button type="button" color="primary" label="Apply Settings" (click)="ref.close('apply')" />
+  <div tnDialogAction>
+    <tn-button type="button" variant="outline" label="Cancel" (click)="ref.close()" />
+    <tn-button type="button" color="primary" label="Apply Settings" (click)="ref.close('apply')" />
   </div>
-</ix-dialog-shell>
+</tn-dialog-shell>

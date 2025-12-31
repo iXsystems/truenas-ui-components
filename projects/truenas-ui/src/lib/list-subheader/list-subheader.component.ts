@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, input } from '@angular/core';
 
 @Component({
-  selector: 'ix-list-subheader',
+  selector: 'tn-list-subheader',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './list-subheader.component.html',

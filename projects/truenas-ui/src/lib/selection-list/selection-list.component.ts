@@ -10,7 +10,7 @@ export interface TnSelectionChange {
 }
 
 @Component({
-  selector: 'ix-selection-list',
+  selector: 'tn-selection-list',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './selection-list.component.html',

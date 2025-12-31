@@ -19,7 +19,7 @@ export interface TnMenuItem {
 }
 
 @Component({
-  selector: 'ix-menu',
+  selector: 'tn-menu',
   standalone: true,
   imports: [CommonModule, CdkMenu, CdkMenuItem, CdkMenuTrigger, TnIconComponent],
   templateUrl: './menu.component.html',

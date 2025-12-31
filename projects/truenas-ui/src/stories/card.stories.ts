@@ -66,7 +66,7 @@ const meta: Meta<TnCardComponent> = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-card
+      <tn-card
         [title]="title"
         [elevation]="elevation"
         [padding]="padding"
@@ -76,7 +76,7 @@ const meta: Meta<TnCardComponent> = {
       >
         <p>This is the card content. You can put any content here including other components, text, images, etc.</p>
         <p>The card provides a clean container with customizable elevation, padding, and optional borders.</p>
-      </ix-card>
+      </tn-card>
     `,
   }),
 };
@@ -184,7 +184,7 @@ export const FullWidthContent: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-card
+      <tn-card
         [title]="title"
         [elevation]="elevation"
         [padding]="padding"
@@ -195,7 +195,7 @@ export const FullWidthContent: Story = {
           <p style="margin: 0;">This div has manual padding to show the content area has no built-in padding.</p>
           <p style="margin: 8px 0 0;">Use padContent="false" for tables, images, charts, or custom edge-to-edge layouts.</p>
         </div>
-      </ix-card>
+      </tn-card>
     `,
   }),
 };
@@ -255,7 +255,7 @@ export const WithHeaderStatus: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-card
+      <tn-card
         [title]="title"
         [elevation]="elevation"
         [padding]="padding"
@@ -264,7 +264,7 @@ export const WithHeaderStatus: Story = {
         [background]="background"
         [headerStatus]="headerStatus">
         <p>This card includes a status badge in the header showing the current state.</p>
-      </ix-card>
+      </tn-card>
     `,
   }),
 };
@@ -284,7 +284,7 @@ export const WithHeaderControl: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-card
+      <tn-card
         [title]="title"
         [elevation]="elevation"
         [padding]="padding"
@@ -293,7 +293,7 @@ export const WithHeaderControl: Story = {
         [background]="background"
         [headerControl]="headerControl">
         <p>This card includes a slide toggle control in the header for quick enable/disable actions.</p>
-      </ix-card>
+      </tn-card>
     `,
   }),
 };
@@ -314,7 +314,7 @@ export const WithHeaderMenu: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-card
+      <tn-card
         [title]="title"
         [elevation]="elevation"
         [padding]="padding"
@@ -323,7 +323,7 @@ export const WithHeaderMenu: Story = {
         [background]="background"
         [headerMenu]="headerMenu">
         <p>This card includes a three-dot menu icon in the header with common actions. Click the dots to open the menu.</p>
-      </ix-card>
+      </tn-card>
     `,
   }),
 };
@@ -339,7 +339,7 @@ export const WithTitleLink: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-card
+      <tn-card
         [title]="title"
         [titleLink]="titleLink"
         [elevation]="elevation"
@@ -348,7 +348,7 @@ export const WithTitleLink: Story = {
         [bordered]="bordered"
         [background]="background">
         <p>This card has a clickable title that navigates to a detail page.</p>
-      </ix-card>
+      </tn-card>
     `,
   }),
 };
@@ -371,7 +371,7 @@ export const WithFooterActions: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-card
+      <tn-card
         [title]="title"
         [elevation]="elevation"
         [padding]="padding"
@@ -381,7 +381,7 @@ export const WithFooterActions: Story = {
         [primaryAction]="primaryAction"
         [secondaryAction]="secondaryAction">
         <p>This card includes action buttons in the footer for common operations.</p>
-      </ix-card>
+      </tn-card>
     `,
   }),
 };
@@ -404,7 +404,7 @@ export const WithFooterLink: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-card
+      <tn-card
         [title]="title"
         [elevation]="elevation"
         [padding]="padding"
@@ -414,7 +414,7 @@ export const WithFooterLink: Story = {
         [footerLink]="footerLink"
         [primaryAction]="primaryAction">
         <p>This card includes a footer link on the left and a primary action on the right.</p>
-      </ix-card>
+      </tn-card>
     `,
   }),
 };
@@ -455,7 +455,7 @@ export const CompleteExample: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-card
+      <tn-card
         [title]="title"
         [elevation]="elevation"
         [padding]="padding"
@@ -475,7 +475,7 @@ export const CompleteExample: Story = {
           <li>Real-time monitoring active</li>
           <li>Backup schedule configured</li>
         </ul>
-      </ix-card>
+      </tn-card>
     `,
   }),
 };

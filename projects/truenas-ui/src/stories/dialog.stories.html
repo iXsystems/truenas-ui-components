@@ -1,18 +1,18 @@
-<ix-dialog-shell title="Edit User">
+<tn-dialog-shell title="Edit User">
   <form style="padding: var(--content-padding);">
-    <ix-form-field label="Name">
-      <ix-input name="name" placeholder="Enter user name" [(ngModel)]="name" />
-    </ix-form-field>
-    <ix-form-field label="Email">
-      <ix-input name="email" placeholder="Enter email address" [(ngModel)]="email" />
-    </ix-form-field>
-    <ix-form-field label="Role">
-      <ix-input name="role" placeholder="Enter user role" [(ngModel)]="role" />
-    </ix-form-field>
+    <tn-form-field label="Name">
+      <tn-input name="name" placeholder="Enter user name" [(ngModel)]="name" />
+    </tn-form-field>
+    <tn-form-field label="Email">
+      <tn-input name="email" placeholder="Enter email address" [(ngModel)]="email" />
+    </tn-form-field>
+    <tn-form-field label="Role">
+      <tn-input name="role" placeholder="Enter user role" [(ngModel)]="role" />
+    </tn-form-field>
   </form>
 
-  <div ixDialogAction>
-    <ix-button type="button" variant="outline" label="Cancel" (click)="cancel()" />
-    <ix-button type="button" color="primary" label="Save User" (click)="save()" />
+  <div tnDialogAction>
+    <tn-button type="button" variant="outline" label="Cancel" (click)="cancel()" />
+    <tn-button type="button" color="primary" label="Save User" (click)="save()" />
   </div>
-</ix-dialog-shell>
+</tn-dialog-shell>

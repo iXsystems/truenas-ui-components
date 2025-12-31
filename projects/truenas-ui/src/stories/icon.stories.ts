@@ -45,13 +45,13 @@ The icon system supports 7000+ MDI icons, Material icons, library custom icons, 
 
 \`\`\`html
 <!-- MDI icons -->
-<ix-icon name="folder" library="mdi" size="lg"></ix-icon>
+<tn-icon name="folder" library="mdi" size="lg"></tn-icon>
 
 <!-- Material icons -->
-<ix-icon name="home" library="material"></ix-icon>
+<tn-icon name="home" library="material"></tn-icon>
 
 <!-- Library custom icons (TrueNAS-specific) -->
-<ix-icon name="dataset" library="custom"></ix-icon>
+<tn-icon name="dataset" library="custom"></tn-icon>
 \`\`\`
 
 Run \`yarn icons\` to generate the sprite with only the icons you use.
@@ -83,7 +83,7 @@ iconRegistry.registerLibrary({
 });
 \`\`\`
 
-Then use: \`<ix-icon name="home" library="lucide"></ix-icon>\`
+Then use: \`<tn-icon name="home" library="lucide"></tn-icon>\`
 
 **Note**: MDI icons use the sprite system (no registry needed). Other libraries require manual registration.
         `,
@@ -268,35 +268,35 @@ export const TrueNASIconShowcase: Story = {
     template: `
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; padding: 20px;">
         <div style="text-align: center;">
-          <ix-icon name="harddisk" library="mdi" size="lg" tooltip="Hard Disk"></ix-icon>
+          <tn-icon name="harddisk" library="mdi" size="lg" tooltip="Hard Disk"></tn-icon>
           <div style="margin-top: 8px; font-size: 12px;">Hard Disk</div>
         </div>
         <div style="text-align: center;">
-          <ix-icon name="server" library="mdi" size="lg" tooltip="Server"></ix-icon>
+          <tn-icon name="server" library="mdi" size="lg" tooltip="Server"></tn-icon>
           <div style="margin-top: 8px; font-size: 12px;">Server</div>
         </div>
         <div style="text-align: center;">
-          <ix-icon name="nas" library="mdi" size="lg" tooltip="NAS"></ix-icon>
+          <tn-icon name="nas" library="mdi" size="lg" tooltip="NAS"></tn-icon>
           <div style="margin-top: 8px; font-size: 12px;">NAS</div>
         </div>
         <div style="text-align: center;">
-          <ix-icon name="database" library="mdi" size="lg" tooltip="Database"></ix-icon>
+          <tn-icon name="database" library="mdi" size="lg" tooltip="Database"></tn-icon>
           <div style="margin-top: 8px; font-size: 12px;">Database</div>
         </div>
         <div style="text-align: center;">
-          <ix-icon name="memory" library="mdi" size="lg" tooltip="Memory"></ix-icon>
+          <tn-icon name="memory" library="mdi" size="lg" tooltip="Memory"></tn-icon>
           <div style="margin-top: 8px; font-size: 12px;">Memory</div>
         </div>
         <div style="text-align: center;">
-          <ix-icon name="network" library="mdi" size="lg" tooltip="Network"></ix-icon>
+          <tn-icon name="network" library="mdi" size="lg" tooltip="Network"></tn-icon>
           <div style="margin-top: 8px; font-size: 12px;">Network</div>
         </div>
         <div style="text-align: center;">
-          <ix-icon name="folder" library="mdi" size="lg" tooltip="Folder"></ix-icon>
+          <tn-icon name="folder" library="mdi" size="lg" tooltip="Folder"></tn-icon>
           <div style="margin-top: 8px; font-size: 12px;">Folder</div>
         </div>
         <div style="text-align: center;">
-          <ix-icon name="file" library="mdi" size="lg" tooltip="File"></ix-icon>
+          <tn-icon name="file" library="mdi" size="lg" tooltip="File"></tn-icon>
           <div style="margin-top: 8px; font-size: 12px;">File</div>
         </div>
       </div>
@@ -317,19 +317,19 @@ export const LibraryComparison: Story = {
       <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 20px;">
         <div style="text-align: center; border: 1px solid var(--border-color, #ccc); padding: 16px; border-radius: 8px;">
           <h4 style="margin-top: 0;">Material (Default)</h4>
-          <ix-icon name="home" size="lg" tooltip="Material Home"></ix-icon>
+          <tn-icon name="home" size="lg" tooltip="Material Home"></tn-icon>
           <div style="margin-top: 8px;">name="home"</div>
           <div style="font-size: 12px; color: var(--text-secondary, #666);">Unicode fallback</div>
         </div>
         <div style="text-align: center; border: 1px solid var(--border-color, #ccc); padding: 16px; border-radius: 8px;">
           <h4 style="margin-top: 0;">Lucide</h4>
-          <ix-icon name="home" library="lucide" size="lg" tooltip="Lucide Home"></ix-icon>
+          <tn-icon name="home" library="lucide" size="lg" tooltip="Lucide Home"></tn-icon>
           <div style="margin-top: 8px;">library="lucide"</div>
           <div style="font-size: 12px; color: var(--text-secondary, #666);">Library parameter</div>
         </div>
         <div style="text-align: center; border: 1px solid var(--border-color, #ccc); padding: 16px; border-radius: 8px;">
           <h4 style="margin-top: 0;">MDI</h4>
-          <ix-icon name="folder" library="mdi" size="lg" tooltip="MDI Folder"></ix-icon>
+          <tn-icon name="folder" library="mdi" size="lg" tooltip="MDI Folder"></tn-icon>
           <div style="margin-top: 8px;">library="mdi"</div>
           <div style="font-size: 12px; color: var(--text-secondary, #666);">Library parameter</div>
         </div>
@@ -342,9 +342,9 @@ export const LibraryComparison: Story = {
         story: `Comparison of different icon library approaches supported by the ix-icon component.
 
 All libraries use the consistent \`library\` parameter:
-- **MDI**: \`<ix-icon name="folder" library="mdi">\`
-- **Lucide**: \`<ix-icon name="home" library="lucide">\`
-- **Material**: \`<ix-icon name="home">\` (default, falls back to Unicode)
+- **MDI**: \`<tn-icon name="folder" library="mdi">\`
+- **Lucide**: \`<tn-icon name="home" library="lucide">\`
+- **Material**: \`<tn-icon name="home">\` (default, falls back to Unicode)
 
 **Note for Menu Items**: When using icons in \`ix-menu\`, use the \`iconLibrary\` property:
 \`\`\`typescript
@@ -363,20 +363,20 @@ export const SizesAndColors: Story = {
       <div style="padding: 20px;">
         <h4>Sizes</h4>
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
-          <ix-icon name="harddisk" library="mdi" size="xs"></ix-icon>
-          <ix-icon name="harddisk" library="mdi" size="sm"></ix-icon>
-          <ix-icon name="harddisk" library="mdi" size="md"></ix-icon>
-          <ix-icon name="harddisk" library="mdi" size="lg"></ix-icon>
-          <ix-icon name="harddisk" library="mdi" size="xl"></ix-icon>
+          <tn-icon name="harddisk" library="mdi" size="xs"></tn-icon>
+          <tn-icon name="harddisk" library="mdi" size="sm"></tn-icon>
+          <tn-icon name="harddisk" library="mdi" size="md"></tn-icon>
+          <tn-icon name="harddisk" library="mdi" size="lg"></tn-icon>
+          <tn-icon name="harddisk" library="mdi" size="xl"></tn-icon>
         </div>
         
         <h4>Colors</h4>
         <div style="display: flex; align-items: center; gap: 16px;">
-          <ix-icon name="server" library="mdi" size="lg" color="var(--primary, #007acc)"></ix-icon>
-          <ix-icon name="server" library="mdi" size="lg" color="var(--success, #28a745)"></ix-icon>
-          <ix-icon name="server" library="mdi" size="lg" color="var(--warning, #ffc107)"></ix-icon>
-          <ix-icon name="server" library="mdi" size="lg" color="var(--danger, #dc3545)"></ix-icon>
-          <ix-icon name="server" library="mdi" size="lg" color="#9c27b0"></ix-icon>
+          <tn-icon name="server" library="mdi" size="lg" color="var(--primary, #007acc)"></tn-icon>
+          <tn-icon name="server" library="mdi" size="lg" color="var(--success, #28a745)"></tn-icon>
+          <tn-icon name="server" library="mdi" size="lg" color="var(--warning, #ffc107)"></tn-icon>
+          <tn-icon name="server" library="mdi" size="lg" color="var(--danger, #dc3545)"></tn-icon>
+          <tn-icon name="server" library="mdi" size="lg" color="#9c27b0"></tn-icon>
         </div>
       </div>
     `,

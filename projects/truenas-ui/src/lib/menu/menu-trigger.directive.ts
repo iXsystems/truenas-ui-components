@@ -5,19 +5,19 @@ import type { TnMenuComponent } from './menu.component';
 
 /**
  * Directive that attaches a menu to any element.
- * Usage: <button [ixMenuTriggerFor]="menu">Open Menu</button>
+ * Usage: <button [tnMenuTriggerFor]="menu">Open Menu</button>
  */
 @Directive({
-  selector: '[ixMenuTriggerFor]',
+  selector: '[tnMenuTriggerFor]',
   standalone: true,
-  exportAs: 'ixMenuTrigger',
+  exportAs: 'tnMenuTrigger',
   host: {
     '(click)': 'onClick()'
   }
 })
 export class TnMenuTriggerDirective {
-  menu = input.required<TnMenuComponent>({ alias: 'ixMenuTriggerFor' });
-  ixMenuPosition = input<'above' | 'below' | 'before' | 'after'>('below');
+  menu = input.required<TnMenuComponent>({ alias: 'tnMenuTriggerFor' });
+  tnMenuPosition = input<'above' | 'below' | 'before' | 'after'>('below');
 
   private overlayRef?: OverlayRef;
   private isMenuOpen = signal<boolean>(false);
@@ -87,7 +87,7 @@ export class TnMenuTriggerDirective {
   }
 
   private getPositions(): ConnectedPosition[] {
-    switch (this.ixMenuPosition()) {
+    switch (this.tnMenuPosition()) {
       case 'above':
         return [
           { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom' }

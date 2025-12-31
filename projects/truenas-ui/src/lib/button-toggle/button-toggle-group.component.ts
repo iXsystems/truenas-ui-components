@@ -8,7 +8,7 @@ import { TnButtonToggleComponent } from './button-toggle.component';
 export type TnButtonToggleType = 'checkbox' | 'radio';
 
 @Component({
-  selector: 'ix-button-toggle-group',
+  selector: 'tn-button-toggle-group',
   standalone: true,
   imports: [CommonModule, A11yModule],
   providers: [

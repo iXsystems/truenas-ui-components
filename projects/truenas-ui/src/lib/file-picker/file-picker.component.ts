@@ -15,7 +15,7 @@ import { TnInputDirective } from '../input/input.directive';
 import { StripMntPrefixPipe } from '../pipes/strip-mnt-prefix/strip-mnt-prefix.pipe';
 
 @Component({
-  selector: 'ix-file-picker',
+  selector: 'tn-file-picker',
   standalone: true,
   imports: [
     CommonModule,

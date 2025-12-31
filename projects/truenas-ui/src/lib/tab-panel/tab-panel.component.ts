@@ -4,7 +4,7 @@ import type { TemplateRef} from '@angular/core';
 import { Component, input, viewChild, ElementRef, inject, computed, signal } from '@angular/core';
 
 @Component({
-  selector: 'ix-tab-panel',
+  selector: 'tn-tab-panel',
   standalone: true,
   imports: [CommonModule, A11yModule],
   templateUrl: './tab-panel.component.html',

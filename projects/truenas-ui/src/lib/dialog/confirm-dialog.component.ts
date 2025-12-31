@@ -13,7 +13,7 @@ export interface TnConfirmDialogData {
 }
 
 @Component({
-  selector: 'ix-confirm-dialog',
+  selector: 'tn-confirm-dialog',
   templateUrl: './confirm-dialog.component.html',
   standalone: true,
   imports: [TnDialogShellComponent, TnButtonComponent],

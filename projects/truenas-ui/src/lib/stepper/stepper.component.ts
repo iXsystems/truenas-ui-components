@@ -4,7 +4,7 @@ import { ChangeDetectorRef, Component, input, output, contentChildren, computed,
 import { TnStepComponent } from './step.component';
 
 @Component({
-  selector: 'ix-stepper',
+  selector: 'tn-stepper',
   templateUrl: './stepper.component.html',
   styleUrls: ['./stepper.component.scss'],
   standalone: true,

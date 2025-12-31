@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, input, output, computed } from '@angular/core';
 
 @Component({
-  selector: 'ix-button',
+  selector: 'tn-button',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './button.component.html',

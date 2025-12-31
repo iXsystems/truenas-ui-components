@@ -9,7 +9,7 @@ export interface TnTableDataSource<T = unknown> {
 }
 
 @Component({
-  selector: 'ix-table',
+  selector: 'tn-table',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './table.component.html',

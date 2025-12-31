@@ -4,7 +4,7 @@ import type { TemplateRef, AfterContentInit} from '@angular/core';
 import { Component, input, output, ElementRef, inject, contentChild, computed, signal } from '@angular/core';
 
 @Component({
-  selector: 'ix-tab',
+  selector: 'tn-tab',
   standalone: true,
   imports: [CommonModule, A11yModule],
   templateUrl: './tab.component.html',

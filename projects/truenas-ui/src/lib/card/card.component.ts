@@ -17,7 +17,7 @@ import { TnMenuComponent } from '../menu/menu.component';
 import { TnSlideToggleComponent } from '../slide-toggle/slide-toggle.component';
 
 @Component({
-  selector: 'ix-card',
+  selector: 'tn-card',
   standalone: true,
   imports: [CommonModule, TnButtonComponent, TnIconComponent, TnIconButtonComponent, TnSlideToggleComponent, TnMenuComponent, TnMenuTriggerDirective],
   templateUrl: './card.component.html',

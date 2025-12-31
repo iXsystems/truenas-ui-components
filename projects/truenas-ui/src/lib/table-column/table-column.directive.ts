@@ -1,7 +1,7 @@
 import { Directive, TemplateRef, input, contentChild, inject } from '@angular/core';
 
 @Directive({
-  selector: '[ixHeaderCellDef]',
+  selector: '[tnHeaderCellDef]',
   standalone: true
 })
 export class TnHeaderCellDefDirective {
@@ -9,7 +9,7 @@ export class TnHeaderCellDefDirective {
 }
 
 @Directive({
-  selector: '[ixCellDef]',
+  selector: '[tnCellDef]',
   standalone: true
 })
 export class TnCellDefDirective {
@@ -17,12 +17,12 @@ export class TnCellDefDirective {
 }
 
 @Directive({
-  selector: '[ixColumnDef]',
+  selector: '[tnColumnDef]',
   standalone: true,
-  exportAs: 'ixColumnDef'
+  exportAs: 'tnColumnDef'
 })
 export class TnTableColumnDirective {
-  name = input.required<string>({ alias: 'ixColumnDef' });
+  name = input.required<string>({ alias: 'tnColumnDef' });
 
   headerTemplate = contentChild(TnHeaderCellDefDirective, { read: TemplateRef });
 

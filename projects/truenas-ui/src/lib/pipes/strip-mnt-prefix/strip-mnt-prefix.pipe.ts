@@ -2,7 +2,7 @@ import type { PipeTransform } from '@angular/core';
 import { Pipe } from '@angular/core';
 
 @Pipe({
-  name: 'ixStripMntPrefix',
+  name: 'tnStripMntPrefix',
   standalone: true,
 })
 export class StripMntPrefixPipe implements PipeTransform {

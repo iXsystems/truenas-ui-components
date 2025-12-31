@@ -16,7 +16,7 @@ export interface IconResult {
 }
 
 @Component({
-  selector: 'ix-icon',
+  selector: 'tn-icon',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './icon.component.html',

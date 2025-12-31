@@ -69,41 +69,41 @@ export const BasicTable: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-table [dataSource]="dataSource" [displayedColumns]="displayedColumns">
+      <tn-table [dataSource]="dataSource" [displayedColumns]="displayedColumns">
         <!-- ID Column -->
-        <ng-container ixColumnDef="id">
-          <ng-template ixHeaderCellDef>ID</ng-template>
-          <ng-template ixCellDef let-user>{{ user.id }}</ng-template>
+        <ng-container tnColumnDef="id">
+          <ng-template tnHeaderCellDef>ID</ng-template>
+          <ng-template tnCellDef let-user>{{ user.id }}</ng-template>
         </ng-container>
 
         <!-- Name Column -->
-        <ng-container ixColumnDef="name">
-          <ng-template ixHeaderCellDef>Name</ng-template>
-          <ng-template ixCellDef let-user>{{ user.name }}</ng-template>
+        <ng-container tnColumnDef="name">
+          <ng-template tnHeaderCellDef>Name</ng-template>
+          <ng-template tnCellDef let-user>{{ user.name }}</ng-template>
         </ng-container>
 
         <!-- Email Column -->
-        <ng-container ixColumnDef="email">
-          <ng-template ixHeaderCellDef>Email</ng-template>
-          <ng-template ixCellDef let-user>{{ user.email }}</ng-template>
+        <ng-container tnColumnDef="email">
+          <ng-template tnHeaderCellDef>Email</ng-template>
+          <ng-template tnCellDef let-user>{{ user.email }}</ng-template>
         </ng-container>
 
         <!-- Role Column -->
-        <ng-container ixColumnDef="role">
-          <ng-template ixHeaderCellDef>Role</ng-template>
-          <ng-template ixCellDef let-user>{{ user.role }}</ng-template>
+        <ng-container tnColumnDef="role">
+          <ng-template tnHeaderCellDef>Role</ng-template>
+          <ng-template tnCellDef let-user>{{ user.role }}</ng-template>
         </ng-container>
 
         <!-- Status Column -->
-        <ng-container ixColumnDef="status">
-          <ng-template ixHeaderCellDef>Status</ng-template>
-          <ng-template ixCellDef let-user>
+        <ng-container tnColumnDef="status">
+          <ng-template tnHeaderCellDef>Status</ng-template>
+          <ng-template tnCellDef let-user>
             <span [style.color]="user.status === 'active' ? 'green' : 'red'">
               {{ user.status | titlecase }}
             </span>
           </ng-template>
         </ng-container>
-      </ix-table>
+      </tn-table>
     `
   }),
 };
@@ -141,13 +141,13 @@ export const TableWithFiltering: Story = {
     },
     template: `
       <div style="margin-bottom: 16px;">
-        <ix-input 
+        <tn-input 
           [(ngModel)]="filterText"
           (ngModelChange)="updateFilter()"
           placeholder="Filter users by name, email, role, or status..."
           label="Filter"
           style="width: 100%;">
-        </ix-input>
+        </tn-input>
         <style>
           .ix-input {
             width: calc(100% - 1.5rem) !important;
@@ -155,47 +155,47 @@ export const TableWithFiltering: Story = {
         </style>
       </div>
 
-      <ix-table [dataSource]="filteredData" [displayedColumns]="displayedColumns">
+      <tn-table [dataSource]="filteredData" [displayedColumns]="displayedColumns">
         <!-- ID Column -->
-        <ng-container ixColumnDef="id">
-          <ng-template ixHeaderCellDef>ID</ng-template>
-          <ng-template ixCellDef let-user>{{ user.id }}</ng-template>
+        <ng-container tnColumnDef="id">
+          <ng-template tnHeaderCellDef>ID</ng-template>
+          <ng-template tnCellDef let-user>{{ user.id }}</ng-template>
         </ng-container>
 
         <!-- Name Column -->
-        <ng-container ixColumnDef="name">
-          <ng-template ixHeaderCellDef>Name</ng-template>
-          <ng-template ixCellDef let-user>
+        <ng-container tnColumnDef="name">
+          <ng-template tnHeaderCellDef>Name</ng-template>
+          <ng-template tnCellDef let-user>
             <span [innerHTML]="highlightText(user.name, filterText)"></span>
           </ng-template>
         </ng-container>
 
         <!-- Email Column -->
-        <ng-container ixColumnDef="email">
-          <ng-template ixHeaderCellDef>Email</ng-template>
-          <ng-template ixCellDef let-user>
+        <ng-container tnColumnDef="email">
+          <ng-template tnHeaderCellDef>Email</ng-template>
+          <ng-template tnCellDef let-user>
             <span [innerHTML]="highlightText(user.email, filterText)"></span>
           </ng-template>
         </ng-container>
 
         <!-- Role Column -->
-        <ng-container ixColumnDef="role">
-          <ng-template ixHeaderCellDef>Role</ng-template>
-          <ng-template ixCellDef let-user>
+        <ng-container tnColumnDef="role">
+          <ng-template tnHeaderCellDef>Role</ng-template>
+          <ng-template tnCellDef let-user>
             <span [innerHTML]="highlightText(user.role, filterText)"></span>
           </ng-template>
         </ng-container>
 
         <!-- Status Column -->
-        <ng-container ixColumnDef="status">
-          <ng-template ixHeaderCellDef>Status</ng-template>
-          <ng-template ixCellDef let-user>
+        <ng-container tnColumnDef="status">
+          <ng-template tnHeaderCellDef>Status</ng-template>
+          <ng-template tnCellDef let-user>
             <span [style.color]="user.status === 'active' ? 'green' : 'red'"
                   [innerHTML]="highlightText(user.status, filterText)">
             </span>
           </ng-template>
         </ng-container>
-      </ix-table>
+      </tn-table>
 
       @if (filteredData.length === 0 && filterText.trim()) {
       <div style="text-align: center; padding: 32px; color: var(--fg2);">

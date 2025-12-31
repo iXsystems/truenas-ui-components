@@ -6,10 +6,10 @@ import { TnTreeNodeOutletDirective } from './tree-node-outlet.directive';
 import { TnIconComponent } from '../icon/icon.component';
 
 @Component({
-  selector: 'ix-nested-tree-node',
+  selector: 'tn-nested-tree-node',
   standalone: true,
   imports: [CommonModule, CdkTreeModule, TnIconComponent, TnTreeNodeOutletDirective],
-  exportAs: 'ixNestedTreeNode',
+  exportAs: 'tnNestedTreeNode',
   providers: [
     { provide: CdkNestedTreeNode, useExisting: TnNestedTreeNodeComponent },
     { provide: CdkTreeNode, useExisting: TnNestedTreeNodeComponent }

@@ -3,7 +3,7 @@ import type { AfterContentInit} from '@angular/core';
 import { ElementRef, Component, input, output, computed, signal, inject } from '@angular/core';
 
 @Component({
-  selector: 'ix-list-item',
+  selector: 'tn-list-item',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './list-item.component.html',
@@ -40,23 +40,23 @@ export class TnListItemComponent implements AfterContentInit {
 
     // Check for leading content (icons/avatars)
     this.hasLeadingContent.set(!!(
-      element.querySelector('[ixListIcon]') ||
-      element.querySelector('[ixListAvatar]')
+      element.querySelector('[tnListIcon]') ||
+      element.querySelector('[tnListAvatar]')
     ));
 
     // Check for secondary text content
     this.hasSecondaryTextContent.set(!!(
-      element.querySelector('[ixListItemLine]') ||
-      element.querySelector('[ixListItemSecondary]')
+      element.querySelector('[tnListItemLine]') ||
+      element.querySelector('[tnListItemSecondary]')
     ));
 
     // Check for trailing content
-    this.hasTrailingContent.set(!!element.querySelector('[ixListItemTrailing]'));
+    this.hasTrailingContent.set(!!element.querySelector('[tnListItemTrailing]'));
 
     // Check for primary text directive
     this.hasPrimaryTextDirective.set(!!(
-      element.querySelector('[ixListItemTitle]') ||
-      element.querySelector('[ixListItemPrimary]')
+      element.querySelector('[tnListItemTitle]') ||
+      element.querySelector('[tnListItemPrimary]')
     ));
   }
 
@@ -67,7 +67,7 @@ export class TnListItemComponent implements AfterContentInit {
   hasThirdText = computed(() => {
     // For now, we'll consider third line as having more than one secondary line
     const element = this.elementRef.nativeElement;
-    const secondaryElements = element.querySelectorAll('[ixListItemLine], [ixListItemSecondary]');
+    const secondaryElements = element.querySelectorAll('[tnListItemLine], [tnListItemSecondary]');
     return secondaryElements.length > 1;
   });
 

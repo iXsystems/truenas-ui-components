@@ -1,15 +1,15 @@
-<ix-dialog-shell [title]="data.title">
+<tn-dialog-shell [title]="data.title">
   <p style="padding: var(--content-padding);">{{ data.message }}</p>
-  <div ixDialogAction>
-    <ix-button
+  <div tnDialogAction>
+    <tn-button
       type="button"
       variant="outline"
       [label]="data.cancelText || 'Cancel'"
       (click)="ref.close(false)" />
-    <ix-button
+    <tn-button
       type="button"
       [color]="data.destructive ? 'warn' : 'primary'"
       [label]="data.confirmText || 'OK'"
       (click)="ref.close(true)" />
   </div>
-</ix-dialog-shell>
+</tn-dialog-shell>

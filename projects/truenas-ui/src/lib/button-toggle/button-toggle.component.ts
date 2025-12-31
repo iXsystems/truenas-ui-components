@@ -7,7 +7,7 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { TnButtonToggleGroupComponent } from './button-toggle-group.component';
 
 @Component({
-  selector: 'ix-button-toggle',
+  selector: 'tn-button-toggle',
   standalone: true,
   imports: [CommonModule, A11yModule],
   providers: [

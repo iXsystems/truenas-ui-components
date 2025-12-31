@@ -4,7 +4,7 @@ import { Component, input, computed, signal, contentChild } from '@angular/core'
 import { NgControl } from '@angular/forms';
 
 @Component({
-  selector: 'ix-form-field',
+  selector: 'tn-form-field',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './form-field.component.html',

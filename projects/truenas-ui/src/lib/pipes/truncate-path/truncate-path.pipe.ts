@@ -3,7 +3,7 @@ import { Pipe } from '@angular/core';
 import type { PathSegment } from '../../file-picker/file-picker.interfaces';
 
 @Pipe({
-  name: 'ixTruncatePath',
+  name: 'tnTruncatePath',
   standalone: true,
 })
 export class TruncatePathPipe implements PipeTransform {

@@ -8,7 +8,7 @@ import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 export type SlideToggleColor = 'primary' | 'accent' | 'warn';
 
 @Component({
-  selector: 'ix-slide-toggle',
+  selector: 'tn-slide-toggle',
   standalone: true,
   imports: [CommonModule, FormsModule, A11yModule],
   templateUrl: './slide-toggle.component.html',

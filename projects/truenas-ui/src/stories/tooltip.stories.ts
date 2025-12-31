@@ -39,14 +39,14 @@ export const Default: Story = {
   render: (args) => ({
     template: `
       <div style="padding: 50px; text-align: center;">
-        <ix-button
+        <tn-button
           label="Hover for tooltip"
-          [ixTooltip]="ixTooltip"
-          [ixTooltipPosition]="ixTooltipPosition"
-          [ixTooltipDisabled]="ixTooltipDisabled"
-          [ixTooltipShowDelay]="ixTooltipShowDelay"
-          [ixTooltipHideDelay]="ixTooltipHideDelay">
-        </ix-button>
+          [tnTooltip]="ixTooltip"
+          [tnTooltipPosition]="ixTooltipPosition"
+          [tnTooltipDisabled]="ixTooltipDisabled"
+          [tnTooltipShowDelay]="ixTooltipShowDelay"
+          [tnTooltipHideDelay]="ixTooltipHideDelay">
+        </tn-button>
       </div>
     `,
     props: args,
@@ -74,17 +74,17 @@ export const Positions: Story = {
 
         <!-- Above -->
         <div></div>
-        <ix-button label="Tooltip above" ixTooltip="Tooltip above" ixTooltipPosition="above"></ix-button>
+        <tn-button label="Tooltip above" ixTooltip="Tooltip above" ixTooltipPosition="above"></tn-button>
         <div></div>
 
         <!-- Left, Center, Right -->
-        <ix-button label="Tooltip left" ixTooltip="Tooltip on left" ixTooltipPosition="left"></ix-button>
-        <ix-button label="Default (above)" ixTooltip="Default position (above)"></ix-button>
-        <ix-button label="Tooltip right" ixTooltip="Tooltip on right" ixTooltipPosition="right"></ix-button>
+        <tn-button label="Tooltip left" ixTooltip="Tooltip on left" ixTooltipPosition="left"></tn-button>
+        <tn-button label="Default (above)" ixTooltip="Default position (above)"></tn-button>
+        <tn-button label="Tooltip right" ixTooltip="Tooltip on right" ixTooltipPosition="right"></tn-button>
 
         <!-- Below -->
         <div></div>
-        <ix-button label="Tooltip below" ixTooltip="Tooltip below" ixTooltipPosition="below"></ix-button>
+        <tn-button label="Tooltip below" ixTooltip="Tooltip below" ixTooltipPosition="below"></tn-button>
         <div></div>
       </div>
     `,
@@ -102,24 +102,24 @@ export const WithDelays: Story = {
   render: () => ({
     template: `
       <div style="padding: 50px; display: flex; gap: 20px; justify-content: center;">
-        <ix-button
+        <tn-button
           label="Instant tooltip"
           ixTooltip="Shows immediately"
-          [ixTooltipShowDelay]="0">
-        </ix-button>
+          [tnTooltipShowDelay]="0">
+        </tn-button>
 
-        <ix-button
+        <tn-button
           label="500ms show delay"
           ixTooltip="Shows after 500ms"
-          [ixTooltipShowDelay]="500">
-        </ix-button>
+          [tnTooltipShowDelay]="500">
+        </tn-button>
 
-        <ix-button
+        <tn-button
           label="1000ms show / 500ms hide"
           ixTooltip="Shows after 1000ms and hides after 500ms"
-          [ixTooltipShowDelay]="1000"
-          [ixTooltipHideDelay]="500">
-        </ix-button>
+          [tnTooltipShowDelay]="1000"
+          [tnTooltipHideDelay]="500">
+        </tn-button>
       </div>
     `,
     moduleMetadata: {
@@ -136,21 +136,21 @@ export const LongContent: Story = {
   render: () => ({
     template: `
       <div style="padding: 50px; display: flex; gap: 20px; justify-content: center;">
-        <ix-button
+        <tn-button
           label="Long wrapping tooltip"
           ixTooltip="This is a very long tooltip message that will wrap to multiple lines and test the max-width constraint of the tooltip component">
-        </ix-button>
+        </tn-button>
 
-        <ix-button
+        <tn-button
           label="Short tooltip"
           ixTooltip="Short tip">
-        </ix-button>
+        </tn-button>
 
-        <ix-button
+        <tn-button
           label="Tooltip disabled"
           ixTooltip="Disabled tooltip"
-          [ixTooltipDisabled]="true">
-        </ix-button>
+          [tnTooltipDisabled]="true">
+        </tn-button>
       </div>
     `,
     moduleMetadata: {
@@ -167,10 +167,10 @@ export const OnDifferentElements: Story = {
   render: () => ({
     template: `
       <div style="padding: 50px; display: flex; flex-direction: column; gap: 20px; align-items: center;">
-        <ix-button
+        <tn-button
           label="Tooltip on button"
           ixTooltip="Button tooltip">
-        </ix-button>
+        </tn-button>
 
         <input
           type="text"
@@ -205,25 +205,25 @@ export const MultiLine: Story = {
   render: () => ({
     template: `
       <div style="padding: 50px; display: flex; flex-direction: column; gap: 20px; align-items: center;">
-        <ix-button
+        <tn-button
           label="Static multi-line (&#10;)"
           ixTooltip="Line 1&#10;Line 2&#10;Line 3">
-        </ix-button>
+        </tn-button>
 
-        <ix-button
+        <tn-button
           label="Bound multi-line (\n)"
-          [ixTooltip]="multiLineText">
-        </ix-button>
+          [tnTooltip]="multiLineText">
+        </tn-button>
 
-        <ix-button
+        <tn-button
           label="Structured content"
           ixTooltip="Storage Pool Status:&#10;&#10;• Capacity: 2.5 TB&#10;• Used: 1.8 TB&#10;• Health: Online">
-        </ix-button>
+        </tn-button>
 
-        <ix-button
+        <tn-button
           label="Wrapping + line breaks"
           ixTooltip="First line is long and will wrap naturally when it exceeds the max-width&#10;Second line is short&#10;Third line is also short">
-        </ix-button>
+        </tn-button>
       </div>
     `,
     props: {
@@ -255,7 +255,7 @@ tooltipText = 'First line\\nSecond line\\nThird line';
 
 **In HTML templates (property binding):**
 \`\`\`html
-<button [ixTooltip]="tooltipText">Hover me</button>
+<button [tnTooltip]="tooltipText">Hover me</button>
 \`\`\`
 
 *Note: The Storybook controls UI doesn't support \\n escape sequences in text inputs. To test multi-line tooltips, refer to the examples shown in this story or press Enter in the control field to create actual line breaks.*

@@ -26,7 +26,7 @@ const expandCollapseAnimation = trigger('expandCollapse', [
 ]);
 
 @Component({
-  selector: 'ix-expansion-panel',
+  selector: 'tn-expansion-panel',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './expansion-panel.component.html',

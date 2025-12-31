@@ -94,7 +94,7 @@ export const Checked: Story = {
       checked: true,
     },
     template: `
-      <ix-slide-toggle 
+      <tn-slide-toggle 
         [label]="label"
         [labelPosition]="labelPosition"
         [disabled]="disabled"
@@ -104,7 +104,7 @@ export const Checked: Story = {
         [testId]="testId"
         (change)="change($event)"
         (toggleChange)="toggleChange($event)">
-      </ix-slide-toggle>
+      </tn-slide-toggle>
     `,
   }),
   args: {
@@ -133,7 +133,7 @@ export const DisabledChecked: Story = {
       checked: true,
     },
     template: `
-      <ix-slide-toggle 
+      <tn-slide-toggle 
         [label]="label"
         [labelPosition]="labelPosition"
         [disabled]="disabled"
@@ -143,7 +143,7 @@ export const DisabledChecked: Story = {
         [testId]="testId"
         (change)="change($event)"
         (toggleChange)="toggleChange($event)">
-      </ix-slide-toggle>
+      </tn-slide-toggle>
     `,
   }),
   args: {
@@ -209,10 +209,10 @@ export const WithFormField: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-form-field 
+      <tn-form-field 
         label="Notification Settings"
         hint="Enable to receive email notifications">
-        <ix-slide-toggle 
+        <tn-slide-toggle 
           label="Email notifications"
           [labelPosition]="labelPosition"
           [disabled]="disabled"
@@ -220,8 +220,8 @@ export const WithFormField: Story = {
           [testId]="testId"
           (change)="change($event)"
           (toggleChange)="toggleChange($event)">
-        </ix-slide-toggle>
-      </ix-form-field>
+        </tn-slide-toggle>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [TnFormFieldComponent],
@@ -254,36 +254,36 @@ export const ReactiveForm: Story = {
       <div style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 400px;">
         <h3 style="margin: 0; color: var(--fg1);">Application Settings</h3>
         
-        <ix-form-field 
+        <tn-form-field 
           label="Notifications"
           hint="Receive push notifications">
-          <ix-slide-toggle 
+          <tn-slide-toggle 
             label="Enable notifications"
             color="primary"
             [formControl]="settingsForm.notifications">
-          </ix-slide-toggle>
-        </ix-form-field>
+          </tn-slide-toggle>
+        </tn-form-field>
 
-        <ix-form-field 
+        <tn-form-field 
           label="Auto Save"
           hint="Automatically save your work">
-          <ix-slide-toggle 
+          <tn-slide-toggle 
             label="Enable auto-save"
             color="accent"
             [formControl]="settingsForm.autoSave">
-          </ix-slide-toggle>
-        </ix-form-field>
+          </tn-slide-toggle>
+        </tn-form-field>
 
-        <ix-form-field 
+        <tn-form-field 
           label="Dark Mode (Required)"
           hint="This setting is required"
           [required]="true">
-          <ix-slide-toggle 
+          <tn-slide-toggle 
             label="Enable dark mode"
             color="primary"
             [formControl]="settingsForm.darkMode">
-          </ix-slide-toggle>
-        </ix-form-field>
+          </tn-slide-toggle>
+        </tn-form-field>
 
         <div style="display: flex; gap: 1rem;">
           <button 
@@ -322,41 +322,41 @@ export const ColorComparison: Story = {
         <h3 style="margin: 0; color: var(--fg1);">Color Variants</h3>
         
         <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-          <ix-slide-toggle 
+          <tn-slide-toggle 
             label="Primary color (default)"
             color="primary"
             [checked]="true">
-          </ix-slide-toggle>
+          </tn-slide-toggle>
           
-          <ix-slide-toggle 
+          <tn-slide-toggle 
             label="Accent color"
             color="accent"
             [checked]="true">
-          </ix-slide-toggle>
+          </tn-slide-toggle>
           
-          <ix-slide-toggle 
+          <tn-slide-toggle 
             label="Warning color"
             color="warn"
             [checked]="true">
-          </ix-slide-toggle>
+          </tn-slide-toggle>
         </div>
 
         <h4 style="margin: 1rem 0 0.5rem 0; color: var(--fg1);">Disabled States</h4>
         
         <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-          <ix-slide-toggle 
+          <tn-slide-toggle 
             label="Disabled unchecked"
             color="primary"
             [disabled]="true"
             [checked]="false">
-          </ix-slide-toggle>
+          </tn-slide-toggle>
           
-          <ix-slide-toggle 
+          <tn-slide-toggle 
             label="Disabled checked"
             color="primary"
             [disabled]="true"
             [checked]="true">
-          </ix-slide-toggle>
+          </tn-slide-toggle>
         </div>
       </div>
     `,

@@ -58,8 +58,8 @@ export const Default: Story = {
       }
     },
     template: `
-      <ix-form-field label="TrueNAS File Picker">
-        <ix-file-picker
+      <tn-form-field label="TrueNAS File Picker">
+        <tn-file-picker
           [mode]="mode"
           [multiSelect]="multiSelect"
           [allowCreate]="allowCreate"
@@ -68,8 +68,8 @@ export const Default: Story = {
           [startPath]="startPath"
           [callbacks]="callbacks"
           (selectionChange)="onSelectionChange($event)">
-        </ix-file-picker>
-      </ix-form-field>
+        </tn-file-picker>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [TnFormFieldComponent, TnFilePickerComponent],
@@ -106,11 +106,11 @@ onFileSelected(path: string) {
 
 \`\`\`html
 <!-- In your template -->
-<ix-file-picker
+<tn-file-picker
   [callbacks]="filePickerCallbacks"
   placeholder="Select a file..."
   (selectionChange)="onFileSelected($event)">
-</ix-file-picker>
+</tn-file-picker>
 \`\`\`
 
 **Key Points:**
@@ -360,11 +360,11 @@ export class MyComponent {
 
 \`\`\`html
 <!-- Template -->
-<ix-file-picker
+<tn-file-picker
   mode="file"
   [callbacks]="callbacks"
   (selectionChange)="onFileSelected($event)">
-</ix-file-picker>
+</tn-file-picker>
 \`\`\`
 
 ### Dataset Selection with Creation
@@ -376,37 +376,37 @@ callbacks: FilePickerCallbacks = {
 \`\`\`
 
 \`\`\`html
-<ix-file-picker
+<tn-file-picker
   mode="dataset"
   [allowDatasetCreate]="true"
   [callbacks]="callbacks"
   startPath="/mnt"
   (selectionChange)="onDatasetSelected($event)">
-</ix-file-picker>
+</tn-file-picker>
 \`\`\`
 
 ### Multi-Select with File Filtering
 \`\`\`html
-<ix-file-picker
+<tn-file-picker
   mode="file"
   [multiSelect]="true"
   [fileExtensions]="['.log', '.txt', '.conf']"
   [callbacks]="callbacks"
   placeholder="Select log files..."
   (selectionChange)="onFilesSelected($event)">
-</ix-file-picker>
+</tn-file-picker>
 \`\`\`
 
 ### Folder Selection with Restrictions
 \`\`\`html
-<ix-file-picker
+<tn-file-picker
   mode="folder"
   [allowCreate]="true"
   startPath="/mnt/backups"
   rootPath="/mnt/backups"
   [callbacks]="callbacks"
   placeholder="Select backup destination">
-</ix-file-picker>
+</tn-file-picker>
 \`\`\`
 
 ---
@@ -812,16 +812,16 @@ export const BasicInteraction: Story = {
       callbacks: mdiShowcaseCallbacks
     },
     template: `
-      <ix-form-field label="Click to test basic interactions">
-        <ix-file-picker
+      <tn-form-field label="Click to test basic interactions">
+        <tn-file-picker
           [mode]="mode"
           [multiSelect]="multiSelect"
           [allowCreate]="allowCreate"
           [placeholder]="placeholder"
           [startPath]="startPath"
           [callbacks]="callbacks">
-        </ix-file-picker>
-      </ix-form-field>
+        </tn-file-picker>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [TnFormFieldComponent, TnFilePickerComponent],
@@ -873,15 +873,15 @@ export const MultiSelectWorkflow: Story = {
       callbacks: mdiShowcaseCallbacks
     },
     template: `
-      <ix-form-field label="Multi-select test">
-        <ix-file-picker
+      <tn-form-field label="Multi-select test">
+        <tn-file-picker
           [mode]="mode"
           [multiSelect]="multiSelect"
           [allowCreate]="allowCreate"
           [startPath]="startPath"
           [callbacks]="callbacks">
-        </ix-file-picker>
-      </ix-form-field>
+        </tn-file-picker>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [TnFormFieldComponent, TnFilePickerComponent],
@@ -940,14 +940,14 @@ export const NavigationFlow: Story = {
       callbacks: mdiShowcaseCallbacks
     },
     template: `
-      <ix-form-field label="Navigation test">
-        <ix-file-picker
+      <tn-form-field label="Navigation test">
+        <tn-file-picker
           [mode]="mode"
           [multiSelect]="multiSelect"
           [startPath]="startPath"
           [callbacks]="callbacks">
-        </ix-file-picker>
-      </ix-form-field>
+        </tn-file-picker>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [TnFormFieldComponent, TnFilePickerComponent],
@@ -1008,14 +1008,14 @@ export const FolderCreation: Story = {
       callbacks: mdiShowcaseCallbacks
     },
     template: `
-      <ix-form-field label="Folder creation test">
-        <ix-file-picker
+      <tn-form-field label="Folder creation test">
+        <tn-file-picker
           [mode]="mode"
           [allowCreate]="allowCreate"
           [startPath]="startPath"
           [callbacks]="callbacks">
-        </ix-file-picker>
-      </ix-form-field>
+        </tn-file-picker>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [TnFormFieldComponent, TnFilePickerComponent],
@@ -1125,22 +1125,22 @@ export const SelectionModes: Story = {
     },
     template: `
       <div>
-        <ix-form-field label="Example: Choose any file">
-          <ix-file-picker
+        <tn-form-field label="Example: Choose any file">
+          <tn-file-picker
             mode="file"
             [startPath]="startPath"
             [callbacks]="callbacks">
-          </ix-file-picker>
-        </ix-form-field>
+          </tn-file-picker>
+        </tn-form-field>
 
-        <ix-form-field label="Example: Choose .txt files">
-          <ix-file-picker
+        <tn-form-field label="Example: Choose .txt files">
+          <tn-file-picker
             mode="file"
             [fileExtensions]="fileExtensions"
             [startPath]="startPath"
             [callbacks]="callbacks">
-          </ix-file-picker>
-        </ix-form-field>
+          </tn-file-picker>
+        </tn-form-field>
       </div>
     `,
     moduleMetadata: {
@@ -1186,13 +1186,13 @@ export const DisabledStates: Story = {
       callbacks: mdiShowcaseCallbacks
     },
     template: `
-      <ix-form-field label="Disabled file picker">
-        <ix-file-picker
+      <tn-form-field label="Disabled file picker">
+        <tn-file-picker
           [disabled]="disabled"
           [startPath]="startPath"
           [callbacks]="callbacks">
-        </ix-file-picker>
-      </ix-form-field>
+        </tn-file-picker>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [TnFormFieldComponent, TnFilePickerComponent],
@@ -1225,13 +1225,13 @@ export const ZfsObjectDisplay: Story = {
       callbacks: mdiShowcaseCallbacks
     },
     template: `
-      <ix-form-field label="ZFS objects with badges">
-        <ix-file-picker
+      <tn-form-field label="ZFS objects with badges">
+        <tn-file-picker
           [mode]="mode"
           [startPath]="startPath"
           [callbacks]="callbacks">
-        </ix-file-picker>
-      </ix-form-field>
+        </tn-file-picker>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [TnFormFieldComponent, TnFilePickerComponent],
@@ -1281,12 +1281,12 @@ export const LoadingStates: Story = {
       }
     },
     template: `
-      <ix-form-field label="Slow loading test">
-        <ix-file-picker
+      <tn-form-field label="Slow loading test">
+        <tn-file-picker
           [startPath]="startPath"
           [callbacks]="callbacks">
-        </ix-file-picker>
-      </ix-form-field>
+        </tn-file-picker>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [TnFormFieldComponent, TnFilePickerComponent],
@@ -1331,13 +1331,13 @@ export const PathInputValidation: Story = {
       callbacks: mdiShowcaseCallbacks
     },
     template: `
-      <ix-form-field label="Path input validation test">
-        <ix-file-picker
+      <tn-form-field label="Path input validation test">
+        <tn-file-picker
           [allowManualInput]="allowManualInput"
           [startPath]="startPath"
           [callbacks]="callbacks">
-        </ix-file-picker>
-      </ix-form-field>
+        </tn-file-picker>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [TnFormFieldComponent, TnFilePickerComponent],
@@ -1424,14 +1424,14 @@ export const ErrorHandling: Story = {
       }
     },
     template: `
-      <ix-form-field label="Error handling test">
-        <ix-file-picker
+      <tn-form-field label="Error handling test">
+        <tn-file-picker
           [allowManualInput]="allowManualInput"
           [startPath]="startPath"
           [callbacks]="callbacks"
           (error)="onError($event)">
-        </ix-file-picker>
-      </ix-form-field>
+        </tn-file-picker>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [TnFormFieldComponent, TnFilePickerComponent],

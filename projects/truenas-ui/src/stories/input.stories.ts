@@ -44,18 +44,18 @@ export const Default: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-form-field 
+      <tn-form-field 
         label="Full Name"
         hint="Enter your first and last name">
-        <ix-input
+        <tn-input
           [inputType]="inputType"
           [placeholder]="placeholder"
           [disabled]="disabled"
           [testId]="testId"
           [multiline]="multiline"
           [rows]="rows">
-        </ix-input>
-      </ix-form-field>
+        </tn-input>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [TnFormFieldComponent],
@@ -86,18 +86,18 @@ export const WithError: Story = {
       })
     },
     template: `
-      <ix-form-field 
+      <tn-form-field 
         label="Email Address"
         hint="Must be a valid email format"
         [required]="true">
-        <ix-input
+        <tn-input
           [inputType]="inputType"
           [placeholder]="placeholder"
           [disabled]="disabled"
           [testId]="testId"
           [formControl]="emailControl">
-        </ix-input>
-      </ix-form-field>
+        </tn-input>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [TnFormFieldComponent, ReactiveFormsModule],
@@ -115,18 +115,18 @@ export const Multiline: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-form-field 
+      <tn-form-field 
         label="Comments"
         hint="Share your thoughts or feedback">
-        <ix-input
+        <tn-input
           [inputType]="inputType"
           [placeholder]="placeholder"
           [disabled]="disabled"
           [testId]="testId"
           [multiline]="multiline"
           [rows]="rows">
-        </ix-input>
-      </ix-form-field>
+        </tn-input>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [TnFormFieldComponent],
@@ -146,16 +146,16 @@ export const Disabled: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-form-field 
+      <tn-form-field 
         label="Disabled Input"
         hint="This input is disabled">
-        <ix-input
+        <tn-input
           [inputType]="inputType"
           [placeholder]="placeholder"
           [disabled]="disabled"
           [testId]="testId">
-        </ix-input>
-      </ix-form-field>
+        </tn-input>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [TnFormFieldComponent],

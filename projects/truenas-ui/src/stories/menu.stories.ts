@@ -41,14 +41,14 @@ export const Default: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-button [ixMenuTriggerFor]="menu">Menu</ix-button>
-      <ix-menu
+      <tn-button [tnMenuTriggerFor]="menu">Menu</tn-button>
+      <tn-menu
         #menu
         [items]="items"
         (menuItemClick)="menuItemClick($event)"
         (menuOpen)="menuOpen($event)"
         (menuClose)="menuClose($event)">
-      </ix-menu>
+      </tn-menu>
     `,
     moduleMetadata: {
       imports: [TnMenuTriggerDirective, TnButtonComponent],
@@ -85,8 +85,8 @@ export const WithIcons: Story = {
     },
     template: `
       <div style="padding: 20px;">
-        <ix-button [ixMenuTriggerFor]="menu">Icon Methods Demo</ix-button>
-        <ix-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></ix-menu>
+        <tn-button [tnMenuTriggerFor]="menu">Icon Methods Demo</tn-button>
+        <tn-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></tn-menu>
 
         <div style="margin-top: 24px; padding: 16px; border: 1px solid var(--lines, #ddd); border-radius: 4px; font-size: 14px; color: var(--fg2, #666666);">
           <strong>Recommended Icon Usage:</strong>
@@ -156,8 +156,8 @@ export const WithSeparators: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-button [ixMenuTriggerFor]="menu">User Menu</ix-button>
-      <ix-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></ix-menu>
+      <tn-button [tnMenuTriggerFor]="menu">User Menu</tn-button>
+      <tn-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></tn-menu>
     `,
     moduleMetadata: {
       imports: [TnMenuTriggerDirective, TnButtonComponent],
@@ -177,8 +177,8 @@ export const WithDisabledItems: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-button [ixMenuTriggerFor]="menu">Actions</ix-button>
-      <ix-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></ix-menu>
+      <tn-button [tnMenuTriggerFor]="menu">Actions</tn-button>
+      <tn-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></tn-menu>
     `,
     moduleMetadata: {
       imports: [TnMenuTriggerDirective, TnButtonComponent],
@@ -193,8 +193,8 @@ export const DisabledButton: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-button [ixMenuTriggerFor]="menu" [disabled]="true">Disabled Menu</ix-button>
-      <ix-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></ix-menu>
+      <tn-button [tnMenuTriggerFor]="menu" [disabled]="true">Disabled Menu</tn-button>
+      <tn-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></tn-menu>
     `,
     moduleMetadata: {
       imports: [TnMenuTriggerDirective, TnButtonComponent],
@@ -214,14 +214,14 @@ export const PositionAbove: Story = {
     props: args,
     template: `
       <div style="margin-top: 200px; padding: 20px;">
-        <ix-button [ixMenuTriggerFor]="menu" ixMenuPosition="above">Menu Above</ix-button>
-        <ix-menu
+        <tn-button [tnMenuTriggerFor]="menu" tnMenuPosition="above">Menu Above</tn-button>
+        <tn-menu
           #menu
           [items]="items"
           (menuItemClick)="menuItemClick($event)"
           (menuOpen)="menuOpen($event)"
           (menuClose)="menuClose($event)">
-        </ix-menu>
+        </tn-menu>
       </div>
     `,
     moduleMetadata: {
@@ -279,8 +279,8 @@ export const NestedMenus: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-button [ixMenuTriggerFor]="menu">Menu with Submenus</ix-button>
-      <ix-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></ix-menu>
+      <tn-button [tnMenuTriggerFor]="menu">Menu with Submenus</tn-button>
+      <tn-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></tn-menu>
     `,
     moduleMetadata: {
       imports: [TnMenuTriggerDirective, TnButtonComponent],
@@ -310,14 +310,14 @@ export const WithKeyboardShortcuts: Story = {
     props: args,
     template: `
       <div>
-        <ix-button [ixMenuTriggerFor]="menu">File Menu</ix-button>
-        <ix-menu
+        <tn-button [tnMenuTriggerFor]="menu">File Menu</tn-button>
+        <tn-menu
           #menu
           [items]="items"
           (menuItemClick)="menuItemClick($event)"
           (menuOpen)="menuOpen($event)"
           (menuClose)="menuClose($event)">
-        </ix-menu>
+        </tn-menu>
         <div style="margin-top: 24px; padding: 16px; border: 1px solid var(--lines, #ddd); border-radius: 4px; font-size: 14px; color: var(--fg2, #666666);">
           <strong>⚠️ Accessibility Warning</strong><br>
           Always use modifier keys (⌘, Ctrl, Alt, Shift) for keyboard shortcuts.
@@ -355,7 +355,7 @@ export const ContextMenu: Story = {
         <h3>Context Menu Demo</h3>
         <p>Right-click anywhere in the area below to open the context menu:</p>
         <div style="margin-top: 20px; padding: 40px; border: 2px dashed var(--lines, #ccc); border-radius: 8px; min-height: 200px; background: var(--bg1, #f9f9f9);">
-          <ix-menu
+          <tn-menu
             [items]="items"
             [contextMenu]="contextMenu"
             [disabled]="disabled"
@@ -369,7 +369,7 @@ export const ContextMenu: Story = {
                 <div style="font-size: 14px; margin-top: 4px;">Context menu will appear at cursor position</div>
               </div>
             </div>
-          </ix-menu>
+          </tn-menu>
         </div>
         <p style="margin-top: 20px; font-size: 14px; color: var(--fg2, #666);">
           <strong>Note:</strong> The context menu will appear at the exact position where you right-clicked and will stay open until you click elsewhere or select an item.

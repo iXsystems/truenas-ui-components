@@ -12,8 +12,8 @@
  * setupLucideIntegration(LucideIcons);
  * 
  * // Now you can use lucide icons in templates:
- * // <ix-icon name="lucide:home"></ix-icon>
- * // <ix-icon name="lucide:user-circle"></ix-icon>
+ * // <tn-icon name="lucide:home"></tn-icon>
+ * // <tn-icon name="lucide:user-circle"></tn-icon>
  * ```
  */
 

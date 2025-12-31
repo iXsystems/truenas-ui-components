@@ -15,9 +15,9 @@ type Story = StoryObj;
 export const SingleDate: Story = {
   render: () => ({
     template: `
-      <ix-form-field label="Enter a date">
-        <ix-date-input></ix-date-input>
-      </ix-form-field>
+      <tn-form-field label="Enter a date">
+        <tn-date-input></tn-date-input>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [
@@ -31,9 +31,9 @@ export const SingleDate: Story = {
 export const DateRange: Story = {
   render: () => ({
     template: `
-      <ix-form-field label="Enter a date range">
-        <ix-date-range-input></ix-date-range-input>
-      </ix-form-field>
+      <tn-form-field label="Enter a date range">
+        <tn-date-range-input></tn-date-range-input>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [
@@ -48,25 +48,25 @@ export const TimePicker: Story = {
   render: () => ({
     template: `
       <div style="display: flex; gap: 20px; flex-direction: column;">
-        <ix-form-field label="15 minute intervals (default)">
-          <ix-time-input granularity="15m"></ix-time-input>
-        </ix-form-field>
+        <tn-form-field label="15 minute intervals (default)">
+          <tn-time-input granularity="15m"></tn-time-input>
+        </tn-form-field>
         
-        <ix-form-field label="30 minute intervals">
-          <ix-time-input granularity="30m"></ix-time-input>
-        </ix-form-field>
+        <tn-form-field label="30 minute intervals">
+          <tn-time-input granularity="30m"></tn-time-input>
+        </tn-form-field>
         
-        <ix-form-field label="Hourly intervals">
-          <ix-time-input granularity="1h"></ix-time-input>
-        </ix-form-field>
+        <tn-form-field label="Hourly intervals">
+          <tn-time-input granularity="1h"></tn-time-input>
+        </tn-form-field>
         
-        <ix-form-field label="24-hour format (hourly)">
-          <ix-time-input format="24h" granularity="1h"></ix-time-input>
-        </ix-form-field>
+        <tn-form-field label="24-hour format (hourly)">
+          <tn-time-input format="24h" granularity="1h"></tn-time-input>
+        </tn-form-field>
         
-        <ix-form-field label="Custom placeholder">
-          <ix-time-input placeholder="Select time"></ix-time-input>
-        </ix-form-field>
+        <tn-form-field label="Custom placeholder">
+          <tn-time-input placeholder="Select time"></tn-time-input>
+        </tn-form-field>
       </div>
     `,
     moduleMetadata: {

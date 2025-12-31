@@ -7,7 +7,7 @@ import { TnIconComponent } from '../icon/icon.component';
 export type ChipColor = 'primary' | 'secondary' | 'accent';
 
 @Component({
-  selector: 'ix-chip',
+  selector: 'tn-chip',
   standalone: true,
   imports: [CommonModule, A11yModule, TnIconComponent],
   templateUrl: './chip.component.html',

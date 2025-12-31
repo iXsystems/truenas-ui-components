@@ -1,7 +1,7 @@
 import { Directive } from '@angular/core';
 
 @Directive({
-  selector: '[ixListIcon]',
+  selector: '[tnListIcon]',
   standalone: true,
   host: {
     'class': 'ix-list-icon'
@@ -10,7 +10,7 @@ import { Directive } from '@angular/core';
 export class TnListIconDirective {}
 
 @Directive({
-  selector: '[ixListAvatar]',
+  selector: '[tnListAvatar]',
   standalone: true,
   host: {
     'class': 'ix-list-avatar'
@@ -19,7 +19,7 @@ export class TnListIconDirective {}
 export class TnListAvatarDirective {}
 
 @Directive({
-  selector: '[ixListItemTitle]',
+  selector: '[tnListItemTitle]',
   standalone: true,
   host: {
     'class': 'ix-list-item-title'
@@ -28,7 +28,7 @@ export class TnListAvatarDirective {}
 export class TnListItemTitleDirective {}
 
 @Directive({
-  selector: '[ixListItemLine]',
+  selector: '[tnListItemLine]',
   standalone: true,
   host: {
     'class': 'ix-list-item-line'
@@ -37,7 +37,7 @@ export class TnListItemTitleDirective {}
 export class TnListItemLineDirective {}
 
 @Directive({
-  selector: '[ixListItemPrimary]',
+  selector: '[tnListItemPrimary]',
   standalone: true,
   host: {
     'class': 'ix-list-item-primary'
@@ -46,7 +46,7 @@ export class TnListItemLineDirective {}
 export class TnListItemPrimaryDirective {}
 
 @Directive({
-  selector: '[ixListItemSecondary]',
+  selector: '[tnListItemSecondary]',
   standalone: true,
   host: {
     'class': 'ix-list-item-secondary'
@@ -55,7 +55,7 @@ export class TnListItemPrimaryDirective {}
 export class TnListItemSecondaryDirective {}
 
 @Directive({
-  selector: '[ixListItemTrailing]',
+  selector: '[tnListItemTrailing]',
   standalone: true,
   host: {
     'class': 'ix-list-item-trailing'
@@ -64,7 +64,7 @@ export class TnListItemSecondaryDirective {}
 export class TnListItemTrailingDirective {}
 
 @Directive({
-  selector: 'ix-divider, [ixDivider]',
+  selector: 'ix-divider, [tnDivider]',
   standalone: true,
   host: {
     'class': 'ix-divider',

@@ -2,7 +2,7 @@ import type { TemplateRef} from '@angular/core';
 import { Component, input, viewChild } from '@angular/core';
 
 @Component({
-  selector: 'ix-step',
+  selector: 'tn-step',
   template: `
     <ng-template #content>
       <ng-content />

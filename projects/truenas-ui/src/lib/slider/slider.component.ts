@@ -9,7 +9,7 @@ import { TnSliderThumbDirective } from './slider-thumb.directive';
 export type LabelType = 'none' | 'handle' | 'track' | 'both';
 
 @Component({
-  selector: 'ix-slider',
+  selector: 'tn-slider',
   standalone: true,
   imports: [CommonModule, A11yModule],
   providers: [
@@ -196,7 +196,7 @@ export class TnSliderComponent implements ControlValueAccessor, OnDestroy, After
     const sliderContainer = this.sliderContainer();
     if (sliderContainer) {
       const containerEl = sliderContainer.nativeElement;
-      const thumbInput = containerEl.querySelector('input[ixSliderThumb]');
+      const thumbInput = containerEl.querySelector('input[tnSliderThumb]');
 
       containerEl.addEventListener('mousedown', this.onInteractionStart);
       containerEl.addEventListener('touchstart', this.onInteractionStart);
@@ -215,7 +215,7 @@ export class TnSliderComponent implements ControlValueAccessor, OnDestroy, After
     const sliderContainer = this.sliderContainer();
     if (sliderContainer) {
       const containerEl = sliderContainer.nativeElement;
-      const thumbInput = containerEl.querySelector('input[ixSliderThumb]');
+      const thumbInput = containerEl.querySelector('input[tnSliderThumb]');
 
       containerEl.removeEventListener('mousedown', this.onInteractionStart);
       containerEl.removeEventListener('touchstart', this.onInteractionStart);

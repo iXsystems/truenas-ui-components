@@ -7,7 +7,7 @@ import { TnMultiYearViewComponent } from './multi-year-view.component';
 import type { DateRange } from '../date-range-input/date-range-input.component';
 
 @Component({
-  selector: 'ix-calendar',
+  selector: 'tn-calendar',
   standalone: true,
   imports: [CommonModule, TnCalendarHeaderComponent, TnMonthViewComponent, TnMultiYearViewComponent],
   templateUrl: './calendar.component.html',

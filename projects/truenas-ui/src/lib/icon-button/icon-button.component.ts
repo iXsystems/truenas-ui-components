@@ -4,7 +4,7 @@ import type { IconSize, IconLibraryType } from '../icon/icon.component';
 import { TnIconComponent } from '../icon/icon.component';
 
 @Component({
-  selector: 'ix-icon-button',
+  selector: 'tn-icon-button',
   standalone: true,
   imports: [CommonModule, TnIconComponent],
   templateUrl: './icon-button.component.html',

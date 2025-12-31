@@ -64,7 +64,7 @@ export const Default: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-expansion-panel
+      <tn-expansion-panel
         [elevation]="elevation"
         [bordered]="bordered"
         [background]="background"
@@ -75,7 +75,7 @@ export const Default: Story = {
         [titleStyle]="titleStyle">
         <p>This is the default expansion panel with background, border, and medium elevation. It provides a clean, card-like appearance suitable for most use cases.</p>
         <p>Content can include forms, lists, buttons, or any other components you need to organize hierarchically.</p>
-      </ix-expansion-panel>
+      </tn-expansion-panel>
     `,
   }),
   args: {
@@ -94,7 +94,7 @@ export const Minimal: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <ix-expansion-panel
+      <tn-expansion-panel
         [elevation]="elevation"
         [bordered]="bordered"
         [background]="background"
@@ -110,7 +110,7 @@ export const Minimal: Story = {
           <li>Memory: 32GB (45% used)</li>
           <li>Storage: 2.4TB available</li>
         </ul>
-      </ix-expansion-panel>
+      </tn-expansion-panel>
     `,
   }),
   args: {
@@ -132,7 +132,7 @@ export const Embedded: Story = {
       imports: [TnCardComponent, TnExpansionPanelComponent]
     },
     template: `
-      <ix-card elevation="medium" [bordered]="true" style="max-width: 600px;">
+      <tn-card elevation="medium" [bordered]="true" style="max-width: 600px;">
         <div style="padding: 24px;">
           <h3 style="margin: 0 0 16px 0;">Network Configuration</h3>
           <p>Your network is configured and running normally.</p>
@@ -145,7 +145,7 @@ export const Embedded: Story = {
             </div>
           </div>
           
-          <ix-expansion-panel
+          <tn-expansion-panel
             [elevation]="elevation"
             [bordered]="bordered"
             [background]="background"
@@ -166,9 +166,9 @@ export const Embedded: Story = {
                 <div><strong>MTU:</strong> 1500 bytes</div>
               </div>
             </div>
-          </ix-expansion-panel>
+          </tn-expansion-panel>
         </div>
-      </ix-card>
+      </tn-card>
     `,
   }),
   args: {

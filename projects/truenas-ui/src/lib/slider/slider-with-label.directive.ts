@@ -10,11 +10,11 @@ import {
 import { TnSliderComponent } from './slider.component';
 
 @Directive({
-  selector: 'ix-slider[ixSliderWithLabel]',
+  selector: 'ix-slider[tnSliderWithLabel]',
   standalone: true
 })
 export class TnSliderWithLabelDirective implements OnInit, OnDestroy {
-  enabled = input<boolean | string>(true, { alias: 'ixSliderWithLabel' });
+  enabled = input<boolean | string>(true, { alias: 'tnSliderWithLabel' });
 
   private _elementRef = inject(ElementRef<HTMLElement>);
   private _slider = inject(TnSliderComponent, { host: true });
@@ -39,7 +39,7 @@ export class TnSliderWithLabelDirective implements OnInit, OnDestroy {
 
   private _setupInteractionListeners(): void {
     const sliderContainer = this._elementRef.nativeElement.querySelector('.ix-slider-container');
-    const thumbInput = this._elementRef.nativeElement.querySelector('input[ixSliderThumb]');
+    const thumbInput = this._elementRef.nativeElement.querySelector('input[tnSliderThumb]');
     
     if (sliderContainer) {
       sliderContainer.addEventListener('mousedown', this._onInteractionStart);
@@ -73,7 +73,7 @@ export class TnSliderWithLabelDirective implements OnInit, OnDestroy {
     const currentLabelType = this._slider.labelType();
     if (currentLabelType === 'handle' || currentLabelType === 'both') {
       const sliderContainer = this._elementRef.nativeElement.querySelector('.ix-slider-container');
-      const thumbInput = this._elementRef.nativeElement.querySelector('input[ixSliderThumb]');
+      const thumbInput = this._elementRef.nativeElement.querySelector('input[tnSliderThumb]');
 
       if (sliderContainer) {
         sliderContainer.removeEventListener('mousedown', this._onInteractionStart);

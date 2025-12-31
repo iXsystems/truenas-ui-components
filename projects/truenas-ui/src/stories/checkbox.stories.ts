@@ -74,7 +74,7 @@ export const Checked: Story = {
       checked: true
     },
     template: `
-      <ix-checkbox 
+      <tn-checkbox 
         [label]="label"
         [disabled]="disabled"
         [required]="required"
@@ -82,7 +82,7 @@ export const Checked: Story = {
         [error]="error"
         [checked]="checked"
         (change)="change($event)"
-      ></ix-checkbox>
+      ></tn-checkbox>
     `
   })
 };
@@ -111,7 +111,7 @@ export const DisabledChecked: Story = {
       checked: true
     },
     template: `
-      <ix-checkbox 
+      <tn-checkbox 
         [label]="label"
         [disabled]="disabled"
         [required]="required"
@@ -119,7 +119,7 @@ export const DisabledChecked: Story = {
         [error]="error"
         [checked]="checked"
         (change)="change($event)"
-      ></ix-checkbox>
+      ></tn-checkbox>
     `
   })
 };
@@ -182,7 +182,7 @@ export const Interactive: Story = {
     },
     template: `
       <div style="display: flex; flex-direction: column; gap: 16px;">
-        <ix-checkbox 
+        <tn-checkbox 
           [label]="label"
           [disabled]="disabled"
           [required]="required"
@@ -190,7 +190,7 @@ export const Interactive: Story = {
           [error]="error"
           [(ngModel)]="checked"
           (change)="change($event)"
-        ></ix-checkbox>
+        ></tn-checkbox>
         <button (click)="onToggle()">Toggle programmatically</button>
         <p>Current state: {{ checked ? 'Checked' : 'Unchecked' }}</p>
       </div>
@@ -215,25 +215,25 @@ export const Group: Story = {
       <div style="display: flex; flex-direction: column; gap: 16px; max-width: 400px;">
         <h3 style="margin: 0 0 8px 0; color: var(--fg1);">Notification Preferences</h3>
         
-        <ix-checkbox 
+        <tn-checkbox 
           label="Push notifications"
           [(ngModel)]="preferences.notifications"
-        ></ix-checkbox>
+        ></tn-checkbox>
         
-        <ix-checkbox 
+        <tn-checkbox 
           label="Email newsletter"
           [(ngModel)]="preferences.newsletter"
-        ></ix-checkbox>
+        ></tn-checkbox>
         
-        <ix-checkbox 
+        <tn-checkbox 
           label="Product updates"
           [(ngModel)]="preferences.updates"
-        ></ix-checkbox>
+        ></tn-checkbox>
         
-        <ix-checkbox 
+        <tn-checkbox 
           label="Marketing emails"
           [(ngModel)]="preferences.marketing"
-        ></ix-checkbox>
+        ></tn-checkbox>
         
         <div style="margin-top: 16px; padding: 12px; background: var(--bg2); border-radius: 4px;">
           <h4 style="margin: 0 0 8px 0; color: var(--fg1);">Selected Preferences:</h4>

@@ -4,7 +4,7 @@ import { Component, input, ChangeDetectionStrategy, ViewEncapsulation, computed 
 export type SpinnerMode = 'determinate' | 'indeterminate';
 
 @Component({
-  selector: 'ix-spinner',
+  selector: 'tn-spinner',
   standalone: true,
   imports: [NgIf],
   templateUrl: './spinner.component.html',

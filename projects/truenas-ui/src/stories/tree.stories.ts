@@ -142,19 +142,19 @@ export const FlatTree: Story = {
       }
     },
     template: `
-      <ix-tree [dataSource]="dataSource" [treeControl]="treeControl">
+      <tn-tree [dataSource]="dataSource" [treeControl]="treeControl">
         <!-- Node definition for leaf nodes -->
-        <ix-tree-node *cdkTreeNodeDef="let node" cdkTreeNodePadding>
-          <ix-icon [name]="node.type === 'folder' ? 'folder' : 'file'" library="mdi" size="sm" style="margin-right: 8px;"></ix-icon>
+        <tn-tree-node *cdkTreeNodeDef="let node" cdkTreeNodePadding>
+          <tn-icon [name]="node.type === 'folder' ? 'folder' : 'file'" library="mdi" size="sm" style="margin-right: 8px;"></tn-icon>
           {{ node.name }}
-        </ix-tree-node>
+        </tn-tree-node>
 
         <!-- Node definition for expandable nodes -->
-        <ix-tree-node *cdkTreeNodeDef="let node; when: hasChild" cdkTreeNodePadding>
-          <ix-icon [name]="node.type === 'folder' ? 'folder' : 'file'" library="mdi" size="sm" style="margin-right: 8px;"></ix-icon>
+        <tn-tree-node *cdkTreeNodeDef="let node; when: hasChild" cdkTreeNodePadding>
+          <tn-icon [name]="node.type === 'folder' ? 'folder' : 'file'" library="mdi" size="sm" style="margin-right: 8px;"></tn-icon>
           {{ node.name }}
-        </ix-tree-node>
-      </ix-tree>
+        </tn-tree-node>
+      </tn-tree>
     `
   }),
 };
@@ -245,19 +245,19 @@ export const TrueNASStorageTree: Story = {
       }
     },
     template: `
-      <ix-tree [dataSource]="dataSource" [treeControl]="treeControl" style="max-width: 400px;">
+      <tn-tree [dataSource]="dataSource" [treeControl]="treeControl" style="max-width: 400px;">
         <!-- Node definition for leaf nodes -->
-        <ix-tree-node *cdkTreeNodeDef="let node" cdkTreeNodePadding>
-          <ix-icon [name]="node.type" library="mdi" size="sm" style="margin-right: 8px;"></ix-icon>
+        <tn-tree-node *cdkTreeNodeDef="let node" cdkTreeNodePadding>
+          <tn-icon [name]="node.type" library="mdi" size="sm" style="margin-right: 8px;"></tn-icon>
           {{ node.name }}
-        </ix-tree-node>
+        </tn-tree-node>
 
         <!-- Node definition for expandable nodes -->
-        <ix-tree-node *cdkTreeNodeDef="let node; when: hasChild" cdkTreeNodePadding>
-          <ix-icon [name]="node.type" library="mdi" size="sm" style="margin-right: 8px;"></ix-icon>
+        <tn-tree-node *cdkTreeNodeDef="let node; when: hasChild" cdkTreeNodePadding>
+          <tn-icon [name]="node.type" library="mdi" size="sm" style="margin-right: 8px;"></tn-icon>
           {{ node.name }}
-        </ix-tree-node>
-      </ix-tree>
+        </tn-tree-node>
+      </tn-tree>
     `
   }),
 };
@@ -291,20 +291,20 @@ export const NestedTree: Story = {
           display: none;
         }
       </style>
-      <ix-tree [dataSource]="dataSource" [childrenAccessor]="childrenAccessor" class="ix-tree">
+      <tn-tree [dataSource]="dataSource" [childrenAccessor]="childrenAccessor" class="ix-tree">
         <!-- Node definition for leaf nodes -->
-        <ix-nested-tree-node *cdkTreeNodeDef="let node">
-          <ix-icon [name]="node.type === 'folder' ? 'folder' : 'file'" library="mdi" size="sm"></ix-icon>
+        <tn-nested-tree-node *cdkTreeNodeDef="let node">
+          <tn-icon [name]="node.type === 'folder' ? 'folder' : 'file'" library="mdi" size="sm"></tn-icon>
           {{ node.name }}
-        </ix-nested-tree-node>
+        </tn-nested-tree-node>
 
         <!-- Node definition for expandable nodes (component provides toggle arrow) -->
-        <ix-nested-tree-node *cdkTreeNodeDef="let node; when: hasChild" cdkTreeNodeToggle>
-          <ix-icon [name]="node.type === 'folder' ? 'folder' : 'file'" library="mdi" size="sm"></ix-icon>
+        <tn-nested-tree-node *cdkTreeNodeDef="let node; when: hasChild" cdkTreeNodeToggle>
+          <tn-icon [name]="node.type === 'folder' ? 'folder' : 'file'" library="mdi" size="sm"></tn-icon>
           {{ node.name }}
           <ng-container slot="children" ixTreeNodeOutlet></ng-container>
-        </ix-nested-tree-node>
-      </ix-tree>
+        </tn-nested-tree-node>
+      </tn-tree>
     `
   }),
 };

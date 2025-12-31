@@ -26,19 +26,19 @@ import { TnTooltipComponent } from './tooltip.component';
 export type TooltipPosition = 'above' | 'below' | 'left' | 'right' | 'before' | 'after';
 
 @Directive({
-  selector: '[ixTooltip]',
+  selector: '[tnTooltip]',
   standalone: true,
   host: {
     '[attr.aria-describedby]': '_ariaDescribedBy',
   }
 })
 export class TnTooltipDirective implements OnInit, OnDestroy {
-  message = input<string>('', { alias: 'ixTooltip' });
-  position = input<TooltipPosition>('above', { alias: 'ixTooltipPosition' });
-  disabled = input<boolean>(false, { alias: 'ixTooltipDisabled' });
-  showDelay = input<number>(0, { alias: 'ixTooltipShowDelay' });
-  hideDelay = input<number>(0, { alias: 'ixTooltipHideDelay' });
-  tooltipClass = input<string>('', { alias: 'ixTooltipClass' });
+  message = input<string>('', { alias: 'tnTooltip' });
+  position = input<TooltipPosition>('above', { alias: 'tnTooltipPosition' });
+  disabled = input<boolean>(false, { alias: 'tnTooltipDisabled' });
+  showDelay = input<number>(0, { alias: 'tnTooltipShowDelay' });
+  hideDelay = input<number>(0, { alias: 'tnTooltipHideDelay' });
+  tooltipClass = input<string>('', { alias: 'tnTooltipClass' });
 
   private _overlayRef: OverlayRef | null = null;
   private _tooltipInstance: ComponentRef<TnTooltipComponent> | null = null;

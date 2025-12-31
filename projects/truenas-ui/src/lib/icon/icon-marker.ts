@@ -10,17 +10,17 @@
  *
  * @example
  * // Static icon name - automatically detected from template
- * <ix-icon name="folder"></ix-icon>
+ * <tn-icon name="folder"></tn-icon>
  *
  * @example
  * // Dynamic MDI icon
  * const iconName = condition ? iconMarker("pencil", "mdi") : iconMarker("delete", "mdi");
- * <ix-icon [name]="iconName"></ix-icon>
+ * <tn-icon [name]="iconName"></tn-icon>
  *
  * @example
  * // Dynamic custom icon (consumer's own icon)
  * const logo = iconMarker("your-logo-name", "custom");
- * <ix-icon [name]="logo"></ix-icon>
+ * <tn-icon [name]="logo"></tn-icon>
  *
  * @example
  * // Array of dynamic icons

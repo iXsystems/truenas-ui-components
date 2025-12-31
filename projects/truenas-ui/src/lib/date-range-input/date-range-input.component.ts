@@ -17,7 +17,7 @@ export interface DateRange {
 }
 
 @Component({
-  selector: 'ix-date-range-input',
+  selector: 'tn-date-range-input',
   standalone: true,
   imports: [CommonModule, TnInputDirective, TnCalendarComponent, OverlayModule, PortalModule, A11yModule],
   providers: [

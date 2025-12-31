@@ -1,7 +1,7 @@
 import { Directive } from '@angular/core';
 
 @Directive({
-  selector: 'input[ixInput], textarea[ixInput], div[ixInput]',
+  selector: 'input[tnInput], textarea[tnInput], div[tnInput]',
   standalone: true,
   host: {
     'class': 'ix-input-directive'

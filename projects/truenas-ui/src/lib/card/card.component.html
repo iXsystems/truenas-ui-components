@@ -30,7 +30,7 @@
         <!-- Header Control (Slide Toggle) -->
         @if (headerControl(); as control) {
           <div class="ix-card__control">
-            <ix-slide-toggle
+            <tn-slide-toggle
               [label]="control.label"
               [checked]="control.checked"
               [disabled]="control.disabled || false"
@@ -42,13 +42,13 @@
         @if (headerMenu(); as menu) {
           @if (menu.length) {
             <div class="ix-card__menu">
-              <ix-icon-button
+              <tn-icon-button
                 name="dots-vertical"
                 library="mdi"
                 size="md"
                 ariaLabel="Card menu"
-                [ixMenuTriggerFor]="cardMenu" />
-              <ix-menu
+                [tnMenuTriggerFor]="cardMenu" />
+              <tn-menu
                 #cardMenu
                 [items]="menu"
                 (menuItemClick)="onHeaderMenuItemClick($event)" />
@@ -80,7 +80,7 @@
 
       <div class="ix-card__footer-right">
         @if (secondaryAction(); as action) {
-          <ix-button
+          <tn-button
             variant="outline"
             color="default"
             [label]="action.label"
@@ -89,7 +89,7 @@
         }
 
         @if (primaryAction(); as action) {
-          <ix-button
+          <tn-button
             variant="filled"
             color="primary"
             [label]="action.label"

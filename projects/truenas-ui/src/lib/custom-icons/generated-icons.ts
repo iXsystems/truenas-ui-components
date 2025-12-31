@@ -4,7 +4,7 @@
  * To regenerate this file, run:
  *   npm run generate-icons
  * 
- * Generated: 2025-12-31T18:06:22.787Z
+ * Generated: 2025-12-31T19:45:46.210Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 
@@ -18,7 +18,7 @@ export const TRUENAS_ICONS: Record<string, string> = {
 
 /**
  * Register all TrueNAS custom icons with the icon registry
- * @param iconRegistry The TnIconRegistryService instance
+ * @param iconRegistry The IxIconRegistryService instance
  */
 export function registerTruenasIcons(iconRegistry: any): void {
   Object.entries(TRUENAS_ICONS).forEach(([name, svg]) => {

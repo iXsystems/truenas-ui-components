@@ -26,7 +26,7 @@ import { TnTableComponent } from '../table/table.component';
 import { TnTableColumnDirective, TnHeaderCellDefDirective, TnCellDefDirective } from '../table-column/table-column.directive';
 
 @Component({
-  selector: 'ix-file-picker-popup',
+  selector: 'tn-file-picker-popup',
   standalone: true,
   imports: [
     CommonModule,

@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, input, output, computed } from '@angular/core';
 
 @Component({
-  selector: 'ix-calendar-header',
+  selector: 'tn-calendar-header',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './calendar-header.component.html',

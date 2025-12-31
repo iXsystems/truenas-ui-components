@@ -4,7 +4,7 @@ import {
 import { DiskType } from '../enums/disk-type.enum';
 
 @Component({
-  selector: 'ix-disk-icon',
+  selector: 'tn-disk-icon',
   templateUrl: './disk-icon.component.html',
   styleUrls: ['./disk-icon.component.scss'],
   standalone: true,

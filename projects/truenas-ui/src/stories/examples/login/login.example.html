@@ -1,7 +1,7 @@
 <form>
   <div class="form-control">
     <label for="username">Username</label>
-    <ix-input
+    <tn-input
       [inputType]="InputType.PlainText"
       [placeholder]="'Enter your Username'"
       [testId]="'username'"
@@ -9,13 +9,13 @@
   </div>
   <div class="form-control">
     <label for="password">Password</label>
-    <ix-input
+    <tn-input
       [inputType]="InputType.Password"
       [placeholder]="'Enter your password'"
       [testId]="'password'"
     />
   </div>
   <div class="form-control">
-    <ix-button [primary]="true" [label]="'Login'" />
+    <tn-button [primary]="true" [label]="'Login'" />
   </div>
 </form>

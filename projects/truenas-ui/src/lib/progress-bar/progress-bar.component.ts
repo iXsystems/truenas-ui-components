@@ -4,7 +4,7 @@ import { Component, input, ChangeDetectionStrategy, computed } from '@angular/co
 export type ProgressBarMode = 'determinate' | 'indeterminate' | 'buffer';
 
 @Component({
-  selector: 'ix-progress-bar',
+  selector: 'tn-progress-bar',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './progress-bar.component.html',

@@ -4,7 +4,7 @@ import { Component, input, signal, inject } from '@angular/core';
 import type { OnInit} from '@angular/core';
 
 @Component({
-  selector: 'ix-dialog-shell',
+  selector: 'tn-dialog-shell',
   templateUrl: './dialog-shell.component.html',
   standalone: true,
   imports: [CommonModule],

@@ -14,7 +14,7 @@ import { TnCalendarComponent } from '../calendar/calendar.component';
 import { TnInputDirective } from '../input/input.directive';
 
 @Component({
-  selector: 'ix-date-input',
+  selector: 'tn-date-input',
   standalone: true,
   imports: [CommonModule, TnInputDirective, TnCalendarComponent, OverlayModule, PortalModule, A11yModule],
   providers: [

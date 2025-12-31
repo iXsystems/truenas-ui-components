@@ -62,27 +62,27 @@ The IX Button Toggle component provides toggleable button functionality similar 
 
 ### Single Selection (Radio Mode)
 \`\`\`html
-<ix-button-toggle-group [(ngModel)]="selectedValue" name="options">
-  <ix-button-toggle value="option1">Option 1</ix-button-toggle>
-  <ix-button-toggle value="option2">Option 2</ix-button-toggle>
-  <ix-button-toggle value="option3">Option 3</ix-button-toggle>
-</ix-button-toggle-group>
+<tn-button-toggle-group [(ngModel)]="selectedValue" name="options">
+  <tn-button-toggle value="option1">Option 1</tn-button-toggle>
+  <tn-button-toggle value="option2">Option 2</tn-button-toggle>
+  <tn-button-toggle value="option3">Option 3</tn-button-toggle>
+</tn-button-toggle-group>
 \`\`\`
 
 ### Multiple Selection (Checkbox Mode)
 \`\`\`html
-<ix-button-toggle-group [(ngModel)]="selectedValues" [multiple]="true" name="options">
-  <ix-button-toggle value="option1">Option 1</ix-button-toggle>
-  <ix-button-toggle value="option2">Option 2</ix-button-toggle>
-  <ix-button-toggle value="option3">Option 3</ix-button-toggle>
-</ix-button-toggle-group>
+<tn-button-toggle-group [(ngModel)]="selectedValues" [multiple]="true" name="options">
+  <tn-button-toggle value="option1">Option 1</tn-button-toggle>
+  <tn-button-toggle value="option2">Option 2</tn-button-toggle>
+  <tn-button-toggle value="option3">Option 3</tn-button-toggle>
+</tn-button-toggle-group>
 \`\`\`
 
 ### Standalone Toggle
 \`\`\`html
-<ix-button-toggle [(ngModel)]="isEnabled" value="enabled">
+<tn-button-toggle [(ngModel)]="isEnabled" value="enabled">
   Enable Feature
-</ix-button-toggle>
+</tn-button-toggle>
 \`\`\`
         `
       }
@@ -111,14 +111,14 @@ export const Examples: Story = {
 export const Playground: Story = {
   render: (args) => ({
     template: `
-      <ix-form-field label="Interactive Toggle">
-        <ix-button-toggle
+      <tn-form-field label="Interactive Toggle">
+        <tn-button-toggle
           [value]="value"
           [disabled]="disabled"
           [ariaLabel]="ariaLabel">
           Toggle Me
-        </ix-button-toggle>
-      </ix-form-field>
+        </tn-button-toggle>
+      </tn-form-field>
     `,
     props: args,
     moduleMetadata: {

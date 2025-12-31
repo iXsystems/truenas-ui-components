@@ -6,7 +6,7 @@ import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
-  selector: 'ix-checkbox',
+  selector: 'tn-checkbox',
   standalone: true,
   imports: [CommonModule, FormsModule, A11yModule],
   templateUrl: './checkbox.component.html',

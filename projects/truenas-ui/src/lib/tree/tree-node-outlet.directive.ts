@@ -2,7 +2,7 @@ import { CdkTreeNodeOutlet } from '@angular/cdk/tree';
 import { Directive } from '@angular/core';
 
 @Directive({
-  selector: '[ixTreeNodeOutlet]',
+  selector: '[tnTreeNodeOutlet]',
   standalone: true,
   hostDirectives: [{
     directive: CdkTreeNodeOutlet,

@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, input } from '@angular/core';
 
 @Component({
-  selector: 'ix-divider',
+  selector: 'tn-divider',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './divider.component.html',

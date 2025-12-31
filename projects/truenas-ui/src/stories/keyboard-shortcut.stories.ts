@@ -15,16 +15,16 @@ class ShortcutTestComponent implements OnDestroy {
   private shortcutAction = action('keyboard-shortcut-triggered');
 
   basicUsageExample = `<!-- Basic usage -->
-<ix-keyboard-shortcut shortcut="⌘S" platform="auto"></ix-keyboard-shortcut>
+<tn-keyboard-shortcut shortcut="⌘S" platform="auto"></tn-keyboard-shortcut>
 
 <!-- Using enum values -->
-<ix-keyboard-shortcut [shortcut]="CommonShortcuts.SAVE" platform="auto"></ix-keyboard-shortcut>
+<tn-keyboard-shortcut [shortcut]="CommonShortcuts.SAVE" platform="auto"></tn-keyboard-shortcut>
 
 <!-- Platform-specific -->
-<ix-keyboard-shortcut shortcut="Ctrl+S" platform="windows"></ix-keyboard-shortcut>
+<tn-keyboard-shortcut shortcut="Ctrl+S" platform="windows"></tn-keyboard-shortcut>
 
 <!-- Custom separator -->
-<ix-keyboard-shortcut shortcut="Ctrl+Alt+Delete" separator=" + "></ix-keyboard-shortcut>`;
+<tn-keyboard-shortcut shortcut="Ctrl+Alt+Delete" separator=" + "></tn-keyboard-shortcut>`;
 
   importExample = `import { TnKeyboardShortcutComponent } from 'truenas-ui';
 import { CommonShortcuts } from 'truenas-ui';`;

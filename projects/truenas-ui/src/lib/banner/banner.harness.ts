@@ -2,7 +2,7 @@ import type { BaseHarnessFilters } from '@angular/cdk/testing';
 import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
 
 /**
- * Harness for interacting with ix-banner in tests.
+ * Harness for interacting with tn-banner in tests.
  * Provides simple text-based querying for existence checks.
  *
  * @example
@@ -25,7 +25,7 @@ export class TnBannerHarness extends ComponentHarness {
   /**
    * The selector for the host element of an `TnBannerComponent` instance.
    */
-  static hostSelector = 'ix-banner';
+  static hostSelector = 'tn-banner';
 
   /**
    * Gets a `HarnessPredicate` that can be used to search for a banner

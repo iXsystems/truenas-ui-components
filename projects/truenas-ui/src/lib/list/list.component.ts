@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, input } from '@angular/core';
 
 @Component({
-  selector: 'ix-list',
+  selector: 'tn-list',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './list.component.html',

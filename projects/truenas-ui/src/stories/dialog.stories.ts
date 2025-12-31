@@ -167,19 +167,19 @@ Every dialog component must be a standalone component that uses \`ix-dialog-shel
 @Component({
   selector: 'my-custom-dialog',
   template: \`
-    <ix-dialog-shell title="My Custom Dialog">
+    <tn-dialog-shell title="My Custom Dialog">
       <!-- Your content goes here -->
       <p>This is the dialog content area.</p>
       <form>
         <input [(ngModel)]="myValue" name="myValue">
       </form>
       
-      <!-- Action buttons go in a div with ixDialogAction -->
-      <div ixDialogAction>
-        <ix-button variant="outline" label="Cancel" (click)="cancel()"></ix-button>
-        <ix-button label="Save" color="primary" (click)="save()"></ix-button>
+      <!-- Action buttons go in a div with tnDialogAction -->
+      <div tnDialogAction>
+        <tn-button variant="outline" label="Cancel" (click)="cancel()"></tn-button>
+        <tn-button label="Save" color="primary" (click)="save()"></tn-button>
       </div>
-    </ix-dialog-shell>
+    </tn-dialog-shell>
   \`,
   standalone: true,
   imports: [
@@ -243,20 +243,20 @@ export class MyPageComponent {
 The \`ix-dialog-shell\` component provides the dialog layout structure:
 
 ### Required Structure
-- **Root**: \`<ix-dialog-shell title="Your Title">\`
+- **Root**: \`<tn-dialog-shell title="Your Title">\`
 - **Content**: Everything between the tags becomes scrollable content
-- **Actions**: Elements with \`ixDialogAction\` attribute become footer buttons
+- **Actions**: Elements with \`tnDialogAction\` attribute become footer buttons
 
 ### Key Features
 - **Automatic Layout**: Header with title and close button, scrollable content, footer actions
 - **Proper Scrolling**: Only the content area scrolls, header and footer stay fixed
 - **Close Button**: Automatically includes a close × button in the header
-- **Action Projection**: Use \`ixDialogAction\` to place buttons in the footer
+- **Action Projection**: Use \`tnDialogAction\` to place buttons in the footer
 
 ### Customization Options
 
 \`\`\`html
-<ix-dialog-shell title="Custom Dialog">
+<tn-dialog-shell title="Custom Dialog">
   <!-- Main content area - this will scroll if it overflows -->
   <div>
     <h3>Section 1</h3>
@@ -264,18 +264,18 @@ The \`ix-dialog-shell\` component provides the dialog layout structure:
     
     <h3>Section 2</h3>
     <form>
-      <ix-form-field label="Name">
-        <ix-input [(ngModel)]="name" name="name"></ix-input>
-      </ix-form-field>
+      <tn-form-field label="Name">
+        <tn-input [(ngModel)]="name" name="name"></tn-input>
+      </tn-form-field>
     </form>
   </div>
   
   <!-- Footer actions - these stay fixed at the bottom -->
-  <div ixDialogAction>
-    <ix-button variant="outline" label="Cancel" (click)="dialogRef.close()"></ix-button>
-    <ix-button label="Save" color="primary" (click)="save()"></ix-button>
+  <div tnDialogAction>
+    <tn-button variant="outline" label="Cancel" (click)="dialogRef.close()"></tn-button>
+    <tn-button label="Save" color="primary" (click)="save()"></tn-button>
   </div>
-</ix-dialog-shell>
+</tn-dialog-shell>
 \`\`\`
 
 ## Configuration Options

@@ -95,19 +95,19 @@ export const Default: Story = {
       }
     },
     template: `
-      <ix-form-field 
+      <tn-form-field 
         label="Choose an option"
         hint="Select from the available options"
         [required]="required">
-        <ix-select
+        <tn-select
           [options]="options"
           [optionGroups]="optionGroups"
           [placeholder]="placeholder"
           [disabled]="disabled"
           [testId]="testId"
           (selectionChange)="logSelection($event)">
-        </ix-select>
-      </ix-form-field>
+        </tn-select>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [TnFormFieldComponent],
@@ -129,18 +129,18 @@ export const WithOptionGroups: Story = {
       }
     },
     template: `
-      <ix-form-field 
+      <tn-form-field 
         label="Choose an animal"
         hint="Select from the categorized options">
-        <ix-select
+        <tn-select
           [options]="options"
           [optionGroups]="optionGroups"
           [placeholder]="placeholder"
           [disabled]="disabled"
           [testId]="testId"
           (selectionChange)="logSelection($event)">
-        </ix-select>
-      </ix-form-field>
+        </tn-select>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [TnFormFieldComponent],
@@ -162,18 +162,18 @@ export const MixedOptionsAndGroups: Story = {
       }
     },
     template: `
-      <ix-form-field 
+      <tn-form-field 
         label="Choose your favorite"
         hint="Mix of individual options and grouped options">
-        <ix-select
+        <tn-select
           [options]="options"
           [optionGroups]="optionGroups"
           [placeholder]="placeholder"
           [disabled]="disabled"
           [testId]="testId"
           (selectionChange)="logSelection($event)">
-        </ix-select>
-      </ix-form-field>
+        </tn-select>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [TnFormFieldComponent],

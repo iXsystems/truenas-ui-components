@@ -2,7 +2,7 @@ import type { OnInit, OnDestroy, AfterViewInit} from '@angular/core';
 import { ElementRef, Component, input, ViewEncapsulation, ChangeDetectionStrategy, inject } from '@angular/core';
 
 @Component({
-  selector: 'ix-branded-spinner',
+  selector: 'tn-branded-spinner',
   standalone: true,
   templateUrl: './branded-spinner.component.html',
   styleUrls: ['./branded-spinner.component.scss'],  

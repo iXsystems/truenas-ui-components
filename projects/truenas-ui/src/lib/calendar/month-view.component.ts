@@ -17,7 +17,7 @@ export interface CalendarCell {
 }
 
 @Component({
-  selector: 'ix-month-view',
+  selector: 'tn-month-view',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './month-view.component.html',

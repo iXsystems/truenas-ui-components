@@ -51,7 +51,7 @@ describe('TnIconButtonComponent', () => {
     fixture.componentRef.setInput('library', 'mdi');
     fixture.detectChanges();
 
-    const icon = fixture.nativeElement.querySelector('ix-icon');
+    const icon = fixture.nativeElement.querySelector('tn-icon');
     expect(icon).toBeTruthy();
 
     // Check component properties directly instead of DOM attributes

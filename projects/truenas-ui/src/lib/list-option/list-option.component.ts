@@ -5,7 +5,7 @@ import { Component, input, output, computed, signal, HostListener } from '@angul
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
 
 @Component({
-  selector: 'ix-list-option',
+  selector: 'tn-list-option',
   standalone: true,
   imports: [CommonModule, TnCheckboxComponent],
   templateUrl: './list-option.component.html',
@@ -68,20 +68,20 @@ export class TnListOptionComponent implements AfterContentInit {
 
     // Check for leading content (icons/avatars)
     this.hasLeadingContent.set(!!(
-      element.querySelector('[ixListIcon]') ||
-      element.querySelector('[ixListAvatar]')
+      element.querySelector('[tnListIcon]') ||
+      element.querySelector('[tnListAvatar]')
     ));
 
     // Check for secondary text content
     this.hasSecondaryTextContent.set(!!(
-      element.querySelector('[ixListItemLine]') ||
-      element.querySelector('[ixListItemSecondary]')
+      element.querySelector('[tnListItemLine]') ||
+      element.querySelector('[tnListItemSecondary]')
     ));
 
     // Check for primary text directive
     this.hasPrimaryTextDirective.set(!!(
-      element.querySelector('[ixListItemTitle]') ||
-      element.querySelector('[ixListItemPrimary]')
+      element.querySelector('[tnListItemTitle]') ||
+      element.querySelector('[tnListItemPrimary]')
     ));
   }
 

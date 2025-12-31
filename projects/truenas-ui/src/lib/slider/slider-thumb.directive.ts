@@ -4,7 +4,7 @@ import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Directive({
-  selector: 'input[ixSliderThumb]',
+  selector: 'input[tnSliderThumb]',
   standalone: true,
   providers: [
     {

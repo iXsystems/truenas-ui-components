@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 
 @Component({
-  selector: 'ix-particle-progress-bar',
+  selector: 'tn-particle-progress-bar',
   standalone: true,
   templateUrl: './particle-progress-bar.component.html',
   styleUrls: ['./particle-progress-bar.component.scss'],

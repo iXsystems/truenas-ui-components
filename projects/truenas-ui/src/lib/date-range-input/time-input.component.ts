@@ -6,7 +6,7 @@ import type { TnSelectOption } from '../select/select.component';
 import { TnSelectComponent } from '../select/select.component';
 
 @Component({
-  selector: 'ix-time-input',
+  selector: 'tn-time-input',
   standalone: true,
   imports: [CommonModule, FormsModule, TnSelectComponent],
   providers: [

@@ -13,7 +13,7 @@ export interface TabChangeEvent {
 }
 
 @Component({
-  selector: 'ix-tabs',
+  selector: 'tn-tabs',
   standalone: true,
   imports: [CommonModule, A11yModule, TnTabComponent, TnTabPanelComponent],
   templateUrl: './tabs.component.html',

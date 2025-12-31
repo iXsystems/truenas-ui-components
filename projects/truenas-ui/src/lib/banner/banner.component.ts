@@ -19,7 +19,7 @@ const ICON_MAP = {
 } as const;
 
 @Component({
-  selector: 'ix-banner',
+  selector: 'tn-banner',
   standalone: true,
   imports: [CommonModule, TnIconComponent],
   templateUrl: './banner.component.html',

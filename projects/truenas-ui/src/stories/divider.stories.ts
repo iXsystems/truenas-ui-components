@@ -47,7 +47,7 @@ export const BasicDivider: Story = {
     template: `
       <div style="padding: 20px;">
         <p>Content above the divider</p>
-        <ix-divider [vertical]="vertical" [inset]="inset"></ix-divider>
+        <tn-divider [vertical]="vertical" [inset]="inset"></tn-divider>
         <p>Content below the divider</p>
       </div>
     `

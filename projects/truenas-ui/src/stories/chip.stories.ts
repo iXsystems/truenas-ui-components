@@ -228,7 +228,7 @@ export const ChipInputExample: Story = {
       }
     },
     template: `
-      <ix-form-field 
+      <tn-form-field 
         label="Skills and Technologies"
         hint="Your technical skills and areas of expertise">
         
@@ -252,14 +252,14 @@ export const ChipInputExample: Story = {
 
           <!-- Chips inside the input area -->
           @for (tag of tags; track tag) {
-          <ix-chip
+          <tn-chip
             [label]="tag"
             [color]="color"
             [closable]="true"
             [disabled]="disabled"
             (onClose)="removeTag(tag)"
             style="flex-shrink: 0;">
-          </ix-chip>
+          </tn-chip>
           }
 
           <!-- Persistent placeholder text -->
@@ -298,7 +298,7 @@ export const ChipInputExample: Story = {
             "
             type="text">
         </div>
-      </ix-form-field>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [TnFormFieldComponent, ReactiveFormsModule],
@@ -341,18 +341,18 @@ export const ChipsWithFormField: Story = {
       }
     },
     template: `
-      <ix-form-field
+      <tn-form-field
         label="Selected Categories"
         hint="Your current selections">
         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; min-height: 2.5rem; align-items: center;">
           @for (tag of selectedTags; track tag) {
-          <ix-chip
+          <tn-chip
             [label]="tag"
             [color]="color"
             [closable]="closable"
             [disabled]="disabled"
             (onClose)="removeTag(tag)">
-          </ix-chip>
+          </tn-chip>
           }
           @if (selectedTags.length === 0) {
           <span style="color: var(--fg2, #6c757d); font-style: italic;">
@@ -360,7 +360,7 @@ export const ChipsWithFormField: Story = {
           </span>
           }
         </div>
-      </ix-form-field>
+      </tn-form-field>
     `,
     moduleMetadata: {
       imports: [TnFormFieldComponent],

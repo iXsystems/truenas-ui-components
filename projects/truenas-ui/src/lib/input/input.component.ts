@@ -7,7 +7,7 @@ import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { InputType } from '../enums/input-type.enum';
 
 @Component({
-  selector: 'ix-input',
+  selector: 'tn-input',
   standalone: true,
   imports: [CommonModule, FormsModule, A11yModule],
   providers: [

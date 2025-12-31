@@ -130,11 +130,11 @@ export const MenuButtons: Story = {
   render: () => ({
     template: `
       <div style="display: flex; gap: 8px; align-items: center;">
-        <ix-icon-button name="menu" library="mdi" size="md" ariaLabel="Menu"></ix-icon-button>
-        <ix-icon-button name="dots-vertical" library="mdi" size="md" ariaLabel="More options"></ix-icon-button>
-        <ix-icon-button name="magnify" library="mdi" size="md" ariaLabel="Search"></ix-icon-button>
-        <ix-icon-button name="bell" library="mdi" size="md" ariaLabel="Notifications"></ix-icon-button>
-        <ix-icon-button name="cog" library="mdi" size="md" ariaLabel="Settings"></ix-icon-button>
+        <tn-icon-button name="menu" library="mdi" size="md" ariaLabel="Menu"></tn-icon-button>
+        <tn-icon-button name="dots-vertical" library="mdi" size="md" ariaLabel="More options"></tn-icon-button>
+        <tn-icon-button name="magnify" library="mdi" size="md" ariaLabel="Search"></tn-icon-button>
+        <tn-icon-button name="bell" library="mdi" size="md" ariaLabel="Notifications"></tn-icon-button>
+        <tn-icon-button name="cog" library="mdi" size="md" ariaLabel="Settings"></tn-icon-button>
       </div>
     `,
   }),
@@ -144,10 +144,10 @@ export const ActionButtons: Story = {
   render: () => ({
     template: `
       <div style="display: flex; gap: 8px; align-items: center;">
-        <ix-icon-button name="pencil" library="mdi" size="md" ariaLabel="Edit" tooltip="Edit"></ix-icon-button>
-        <ix-icon-button name="content-copy" library="mdi" size="md" ariaLabel="Copy" tooltip="Copy"></ix-icon-button>
-        <ix-icon-button name="delete" library="mdi" size="md" ariaLabel="Delete" tooltip="Delete"></ix-icon-button>
-        <ix-icon-button name="share-variant" library="mdi" size="md" ariaLabel="Share" tooltip="Share"></ix-icon-button>
+        <tn-icon-button name="pencil" library="mdi" size="md" ariaLabel="Edit" tooltip="Edit"></tn-icon-button>
+        <tn-icon-button name="content-copy" library="mdi" size="md" ariaLabel="Copy" tooltip="Copy"></tn-icon-button>
+        <tn-icon-button name="delete" library="mdi" size="md" ariaLabel="Delete" tooltip="Delete"></tn-icon-button>
+        <tn-icon-button name="share-variant" library="mdi" size="md" ariaLabel="Share" tooltip="Share"></tn-icon-button>
       </div>
     `,
   }),
@@ -157,11 +157,11 @@ export const Sizes: Story = {
   render: () => ({
     template: `
       <div style="display: flex; gap: 16px; align-items: center;">
-        <ix-icon-button name="star" library="mdi" size="xs" ariaLabel="Extra small"></ix-icon-button>
-        <ix-icon-button name="star" library="mdi" size="sm" ariaLabel="Small"></ix-icon-button>
-        <ix-icon-button name="star" library="mdi" size="md" ariaLabel="Medium"></ix-icon-button>
-        <ix-icon-button name="star" library="mdi" size="lg" ariaLabel="Large"></ix-icon-button>
-        <ix-icon-button name="star" library="mdi" size="xl" ariaLabel="Extra large"></ix-icon-button>
+        <tn-icon-button name="star" library="mdi" size="xs" ariaLabel="Extra small"></tn-icon-button>
+        <tn-icon-button name="star" library="mdi" size="sm" ariaLabel="Small"></tn-icon-button>
+        <tn-icon-button name="star" library="mdi" size="md" ariaLabel="Medium"></tn-icon-button>
+        <tn-icon-button name="star" library="mdi" size="lg" ariaLabel="Large"></tn-icon-button>
+        <tn-icon-button name="star" library="mdi" size="xl" ariaLabel="Extra large"></tn-icon-button>
       </div>
     `,
   }),
@@ -170,14 +170,14 @@ export const Sizes: Story = {
 export const InCard: Story = {
   render: () => ({
     template: `
-      <ix-card title="Card with Icon Buttons" elevation="medium" padding="medium">
+      <tn-card title="Card with Icon Buttons" elevation="medium" padding="medium">
         <div style="display: flex; gap: 12px; align-items: center;">
           <p style="flex: 1; margin: 0;">Icon buttons work great in cards and headers</p>
-          <ix-icon-button name="refresh" library="mdi" size="md" ariaLabel="Refresh" tooltip="Refresh"></ix-icon-button>
-          <ix-icon-button name="cog" library="mdi" size="md" ariaLabel="Settings" tooltip="Settings"></ix-icon-button>
-          <ix-icon-button name="close" library="mdi" size="md" ariaLabel="Close" tooltip="Close"></ix-icon-button>
+          <tn-icon-button name="refresh" library="mdi" size="md" ariaLabel="Refresh" tooltip="Refresh"></tn-icon-button>
+          <tn-icon-button name="cog" library="mdi" size="md" ariaLabel="Settings" tooltip="Settings"></tn-icon-button>
+          <tn-icon-button name="close" library="mdi" size="md" ariaLabel="Close" tooltip="Close"></tn-icon-button>
         </div>
-      </ix-card>
+      </tn-card>
     `,
     moduleMetadata: {
       imports: [TnCardComponent],

@@ -106,30 +106,30 @@ export const RadioGroup: Story = {
     template: `
       <div style="display: flex; flex-direction: column; gap: 1rem;">
         <h3>Select your favorite color:</h3>
-        <ix-radio 
+        <tn-radio 
           label="Red" 
           value="red" 
           name="color"
           [disabled]="false">
-        </ix-radio>
-        <ix-radio 
+        </tn-radio>
+        <tn-radio 
           label="Blue" 
           value="blue" 
           name="color"
           [disabled]="false">
-        </ix-radio>
-        <ix-radio 
+        </tn-radio>
+        <tn-radio 
           label="Green" 
           value="green" 
           name="color"
           [disabled]="false">
-        </ix-radio>
-        <ix-radio 
+        </tn-radio>
+        <tn-radio 
           label="Yellow (Disabled)" 
           value="yellow" 
           name="color"
           [disabled]="true">
-        </ix-radio>
+        </tn-radio>
       </div>
     `,
   }),

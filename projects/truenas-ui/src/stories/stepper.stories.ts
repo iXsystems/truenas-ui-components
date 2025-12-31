@@ -43,60 +43,60 @@ The IX Stepper component provides a guided step-by-step interface for complex wo
 ### Simple Stepper
 
 \`\`\`html
-<ix-stepper>
-  <ix-step label="Step 1">
+<tn-stepper>
+  <tn-step label="Step 1">
     <p>First step content</p>
-  </ix-step>
-  <ix-step label="Step 2">
+  </tn-step>
+  <tn-step label="Step 2">
     <p>Second step content</p>
-  </ix-step>
-  <ix-step label="Step 3">
+  </tn-step>
+  <tn-step label="Step 3">
     <p>Final step content</p>
-  </ix-step>
-</ix-stepper>
+  </tn-step>
+</tn-stepper>
 \`\`\`
 
 ### Linear Stepper with Navigation
 
 \`\`\`html
-<ix-stepper [linear]="true" [selectedIndex]="currentStep" (selectionChange)="onStepChange($event)">
-  <ix-step label="Personal Info" [completed]="personalInfoComplete">
+<tn-stepper [linear]="true" [selectedIndex]="currentStep" (selectionChange)="onStepChange($event)">
+  <tn-step label="Personal Info" [completed]="personalInfoComplete">
     <!-- Form fields here -->
-    <ix-button (click)="completePersonalInfo()">Next</ix-button>
-  </ix-step>
+    <tn-button (click)="completePersonalInfo()">Next</tn-button>
+  </tn-step>
   
-  <ix-step label="Verification" [completed]="verificationComplete">
+  <tn-step label="Verification" [completed]="verificationComplete">
     <!-- Verification content -->
-    <ix-button (click)="stepper.previous()">Back</ix-button>
-    <ix-button (click)="completeVerification()">Verify</ix-button>
-  </ix-step>
-</ix-stepper>
+    <tn-button (click)="stepper.previous()">Back</tn-button>
+    <tn-button (click)="completeVerification()">Verify</tn-button>
+  </tn-step>
+</tn-stepper>
 \`\`\`
 
 ### Vertical Layout
 
 \`\`\`html
-<ix-stepper orientation="vertical">
-  <ix-step label="Setup" [completed]="true">
+<tn-stepper orientation="vertical">
+  <tn-step label="Setup" [completed]="true">
     <p>Setup completed successfully.</p>
-  </ix-step>
-  <ix-step label="Configuration">
+  </tn-step>
+  <tn-step label="Configuration">
     <p>Configure your settings.</p>
-  </ix-step>
-</ix-stepper>
+  </tn-step>
+</tn-stepper>
 \`\`\`
 
 ### Responsive Auto Layout
 
 \`\`\`html
-<ix-stepper orientation="auto">
-  <ix-step label="Setup" [completed]="true">
+<tn-stepper orientation="auto">
+  <tn-step label="Setup" [completed]="true">
     <p>Automatically switches between horizontal and vertical based on screen size.</p>
-  </ix-step>
-  <ix-step label="Configuration">
+  </tn-step>
+  <tn-step label="Configuration">
     <p>Desktop: Horizontal layout (steps in a row). Mobile: Vertical layout (stacked).</p>
-  </ix-step>
-</ix-stepper>
+  </tn-step>
+</tn-stepper>
 \`\`\`
 
 ## Configuration Options
@@ -175,8 +175,8 @@ type Story = StoryObj<TnStepperComponent>;
 export const Default: Story = {
   render: (args) => ({
     template: `
-      <ix-stepper [orientation]="orientation" [linear]="linear" [selectedIndex]="selectedIndex">
-        <ix-step label="Personal Info">
+      <tn-stepper [orientation]="orientation" [linear]="linear" [selectedIndex]="selectedIndex">
+        <tn-step label="Personal Info">
           <h4>Step 1: Personal Information</h4>
           <p>Enter your basic personal details to get started.</p>
           <div style="margin-top: 16px;">
@@ -184,18 +184,18 @@ export const Default: Story = {
               <label style="display: block; margin-bottom: 8px; font-weight: 500;">
                 First Name
               </label>
-              <ix-input placeholder="Enter your first name"></ix-input>
+              <tn-input placeholder="Enter your first name"></tn-input>
             </div>
             <div>
               <label style="display: block; margin-bottom: 8px; font-weight: 500;">
                 Last Name
               </label>
-              <ix-input placeholder="Enter your last name"></ix-input>
+              <tn-input placeholder="Enter your last name"></tn-input>
             </div>
           </div>
-        </ix-step>
+        </tn-step>
         
-        <ix-step label="Contact Details">
+        <tn-step label="Contact Details">
           <h4>Step 2: Contact Information</h4>
           <p>Provide your contact information for communication.</p>
           <div style="margin-top: 16px;">
@@ -203,25 +203,25 @@ export const Default: Story = {
               <label style="display: block; margin-bottom: 8px; font-weight: 500;">
                 Email
               </label>
-              <ix-input placeholder="Enter your email address"></ix-input>
+              <tn-input placeholder="Enter your email address"></tn-input>
             </div>
             <div>
               <label style="display: block; margin-bottom: 8px; font-weight: 500;">
                 Phone
               </label>
-              <ix-input placeholder="Enter your phone number"></ix-input>
+              <tn-input placeholder="Enter your phone number"></tn-input>
             </div>
           </div>
-        </ix-step>
+        </tn-step>
         
-        <ix-step label="Review & Submit">
+        <tn-step label="Review & Submit">
           <h4>Step 3: Review Your Information</h4>
           <p>Please review all information before submitting.</p>
           <div style="background: var(--alt-bg1, #f8f9fa); padding: 16px; border-radius: 8px; margin-top: 16px;">
             <p><strong>Ready to submit?</strong> Click submit when you're satisfied with your entries.</p>
           </div>
-        </ix-step>
-      </ix-stepper>
+        </tn-step>
+      </tn-stepper>
     `,
     props: args,
     moduleMetadata: {
@@ -241,8 +241,8 @@ export const LinearMode: Story = {
       <div style="margin-bottom: 16px; padding: 12px; background: var(--alt-bg1, #f8f9fa); border-radius: 8px;">
         <strong>Linear Mode:</strong> Steps must be completed in order. Try clicking on step 3 - it won't be selectable until step 2 is marked as completed.
       </div>
-      <ix-stepper [linear]="true" [selectedIndex]="1">
-        <ix-step label="Prerequisites" [completed]="true">
+      <tn-stepper [linear]="true" [selectedIndex]="1">
+        <tn-step label="Prerequisites" [completed]="true">
           <h4>✓ Prerequisites Completed</h4>
           <p>All system requirements have been verified and dependencies installed.</p>
           <ul>
@@ -250,8 +250,8 @@ export const LinearMode: Story = {
             <li>Disk space: ✓ 2.5GB available</li>
             <li>Network connectivity: ✓ Connected</li>
           </ul>
-        </ix-step>
-        <ix-step label="Installation">
+        </tn-step>
+        <tn-step label="Installation">
           <h4>Installing Application</h4>
           <p>Currently installing the application and configuring settings...</p>
           <div style="margin-top: 16px;">
@@ -262,15 +262,15 @@ export const LinearMode: Story = {
           <p style="margin-top: 8px; font-size: 14px; color: var(--fg2);">
             Step 3 will become available once installation completes.
           </p>
-        </ix-step>
-        <ix-step label="Configuration">
+        </tn-step>
+        <tn-step label="Configuration">
           <h4>Configuration Pending</h4>
           <p>This step will become available after installation completes.</p>
           <p style="color: var(--fg2); font-style: italic;">
             In linear mode, you cannot skip ahead to this step.
           </p>
-        </ix-step>
-      </ix-stepper>
+        </tn-step>
+      </tn-stepper>
     `,
     moduleMetadata: {
       imports: [TnStepperComponent, TnStepComponent, TnInputComponent]
@@ -284,16 +284,16 @@ export const StepStates: Story = {
       <div style="margin-bottom: 16px; padding: 12px; background: var(--alt-bg1, #f8f9fa); border-radius: 8px;">
         <strong>Step States:</strong> This example demonstrates all possible step states and visual indicators.
       </div>
-      <ix-stepper [selectedIndex]="2">
-        <ix-step label="Completed Step" [completed]="true">
+      <tn-stepper [selectedIndex]="2">
+        <tn-step label="Completed Step" [completed]="true">
           <h4>✓ Account Setup Complete</h4>
           <p>This step has been successfully completed and shows a green indicator with checkmark.</p>
           <div style="background: var(--green, #28a745); color: white; padding: 8px; border-radius: 4px; margin-top: 8px;">
             <strong>Status:</strong> Completed - Account created and verified
           </div>
-        </ix-step>
+        </tn-step>
         
-        <ix-step label="Error Step" [hasError]="true">
+        <tn-step label="Error Step" [hasError]="true">
           <h4>⚠ Profile Setup Failed</h4>
           <p style="color: var(--red, #dc3545);">
             There was an error during profile setup. Please review and try again.
@@ -301,32 +301,32 @@ export const StepStates: Story = {
           <div style="background: var(--red, #dc3545); color: white; padding: 8px; border-radius: 4px; margin-top: 8px;">
             <strong>Error:</strong> Email verification failed - please check your email address
           </div>
-        </ix-step>
+        </tn-step>
         
-        <ix-step label="Current Step">
+        <tn-step label="Current Step">
           <h4>📋 Review Information</h4>
           <p>This is the currently active step, highlighted with a blue indicator and larger size.</p>
           <div style="background: var(--primary, #007bff); color: white; padding: 8px; border-radius: 4px; margin-top: 8px;">
             <strong>Status:</strong> Active - Currently being processed
           </div>
-        </ix-step>
+        </tn-step>
         
-        <ix-step label="Optional Step" [optional]="true">
+        <tn-step label="Optional Step" [optional]="true">
           <h4>📱 Install Mobile App</h4>
           <p>This step is marked as optional and shows a dashed border indicator.</p>
           <div style="background: var(--alt-bg2, #6c757d); color: white; padding: 8px; border-radius: 4px; margin-top: 8px;">
             <strong>Status:</strong> Optional - Can be skipped if desired
           </div>
-        </ix-step>
+        </tn-step>
         
-        <ix-step label="Future Step">
+        <tn-step label="Future Step">
           <h4>🎉 Welcome & Onboarding</h4>
           <p>This step is pending and shows the default smaller gray indicator.</p>
           <div style="background: var(--alt-bg1, #f8f9fa); padding: 8px; border-radius: 4px; margin-top: 8px;">
             <strong>Status:</strong> Pending - Not yet started
           </div>
-        </ix-step>
-      </ix-stepper>
+        </tn-step>
+      </tn-stepper>
     `,
     moduleMetadata: {
       imports: [TnStepperComponent, TnStepComponent, TnInputComponent]

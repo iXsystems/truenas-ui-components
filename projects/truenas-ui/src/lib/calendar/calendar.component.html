@@ -1,4 +1,4 @@
-<ix-calendar-header
+<tn-calendar-header
   [currentDate]="currentDate()"
   [currentView]="currentView()"
   (monthSelected)="onMonthSelected($event)"
@@ -9,7 +9,7 @@
 
 <div class="ix-calendar-content" cdkMonitorSubtreeFocus tabindex="-1">
   @if (currentView() === 'month') {
-    <ix-month-view
+    <tn-month-view
       [activeDate]="currentDate()"
       [selected]="selected()"
       [dateFilter]="dateFilter()"
@@ -23,7 +23,7 @@
 
   <!-- Multi-year view -->
   @if (currentView() === 'year') {
-    <ix-multi-year-view
+    <tn-multi-year-view
       [activeDate]="currentDate()"
       [selected]="selected()"
       [dateFilter]="dateFilter()"
