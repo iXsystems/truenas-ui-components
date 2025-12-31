@@ -71,7 +71,7 @@ A design system where a first-time user can successfully configure basic storage
 
 ### TrueNAS Component Personalities
 
-#### **ix-card: The Information Hub**
+#### **tn-card: The Information Hub**
 **Personality**: Reliable information presenter that surfaces critical data while hiding complexity until needed.
 
 **Required Elements**:
@@ -89,7 +89,7 @@ A design system where a first-time user can successfully configure basic storage
 - Surfaces different information based on system health (problems get priority)
 - Evolves complexity as user demonstrates expertise
 
-#### **ix-wizard: The Guide**
+#### **tn-wizard: The Guide**
 **Personality**: Patient teacher that can accelerate for experts while providing comprehensive guidance for newcomers.
 
 **Required Elements**:
@@ -102,7 +102,7 @@ A design system where a first-time user can successfully configure basic storage
 - Advanced options and edge cases
 - Skip-ahead mechanisms for experts
 
-#### **ix-status-indicator: The Health Monitor**
+#### **tn-status-indicator: The Health Monitor**
 **Personality**: Vigilant sentinel that communicates system health through clear, actionable visual language.
 
 **Required Elements**:
@@ -146,26 +146,26 @@ groups of disks that work together to store your data safely.
 
 ### Educational Component Patterns
 
-#### **ix-concept-explanation: The Teacher**
+#### **tn-concept-explanation: The Teacher**
 **Purpose**: Inline educational content that doesn't interfere with expert workflows
 
 ```html
-<ix-concept-explanation term="ZFS Pool" level="beginner">
+<tn-concept-explanation term="ZFS Pool" level="beginner">
   A ZFS pool is like a digital filing cabinet made from multiple hard drives
   working together to keep your files safe.
-</ix-concept-explanation>
+</tn-concept-explanation>
 ```
 
-#### **ix-guided-action: The Mentor**
+#### **tn-guided-action: The Mentor**
 **Purpose**: Transform complex actions into guided experiences with expert shortcuts
 
 ```html
-<ix-guided-action
+<tn-guided-action
   action="create-dataset"
   difficulty="intermediate"
   expert-shortcut="true">
   <!-- Guided flow for beginners, single form for experts -->
-</ix-guided-action>
+</tn-guided-action>
 ```
 
 ---
@@ -287,22 +287,22 @@ To demonstrate how this design philosophy transforms real workflows, let's exami
 
 ### High-Fidelity Component Implementation
 
-This mockup shows how the task-oriented approach would look using actual ix-components from our library:
+This mockup shows how the task-oriented approach would look using actual tn-components from our library:
 
 ![High-Fidelity UI Mockup](/wireframes/high-fidelity-mockup.svg)
 
-#### Key ix-Components Demonstrated
+#### Key tn-Components Demonstrated
 
-**ix-card as Information Hub**: The main storage setup card adapts its personality to welcome beginners while providing clear paths to advanced features.
+**tn-card as Information Hub**: The main storage setup card adapts its personality to welcome beginners while providing clear paths to advanced features.
 
-**Progressive ix-button Components**: 
+**Progressive tn-button Components**: 
 - Primary action ("Set Up Protection") uses confident, task-oriented language
 - Secondary actions provide learning paths and expert shortcuts
 - Technical detail toggles reveal RAID terminology on demand
 
-**Smart ix-radio Selection**: Protection levels presented as user benefits rather than technical specifications, with progressive disclosure for VDEV details.
+**Smart tn-radio Selection**: Protection levels presented as user benefits rather than technical specifications, with progressive disclosure for VDEV details.
 
-**Contextual ix-alert Components**: Smart recommendations that analyze user's drives and suggest optimal configurations.
+**Contextual tn-alert Components**: Smart recommendations that analyze user's drives and suggest optimal configurations.
 
 **Mode Toggle System**: Global beginner/expert mode switching that transforms the entire interface personality while maintaining the same underlying functionality.
 
@@ -310,7 +310,7 @@ This mockup shows how the task-oriented approach would look using actual ix-comp
 
 This workflow demonstrates several key design principles:
 
-#### **ix-card as Information Hub**
+#### **tn-card as Information Hub**
 **Before**: Generic empty state with minimal context
 **After**: Rich educational content with clear next steps and visual learning
 
@@ -371,7 +371,7 @@ VDEV Configuration:
 
 1. **Same End Result**: Both approaches create the same storage pool
 2. **Different Journey**: Guided vs. direct based on user preference and expertise
-3. **Component Reuse**: Same underlying `ix-card`, `ix-wizard`, and `ix-form-field` components
+3. **Component Reuse**: Same underlying `tn-card`, `tn-wizard`, and `tn-form-field` components
 4. **Progressive Learning**: Beginner users can eventually access expert features
 5. **No Productivity Loss**: Experts can bypass guidance without friction
 
@@ -455,8 +455,8 @@ This approach transforms TrueNAS from "learn our technology first" to "accomplis
 - [ ] Design illustration and iconography system
 
 ### Phase 2: Core Components (Next Sprint)
-- [ ] Redesign ix-card with required/optional element structure
-- [ ] Implement ix-concept-explanation component
+- [ ] Redesign tn-card with required/optional element structure
+- [ ] Implement tn-concept-explanation component
 - [ ] Create smart empty state templates
 - [ ] Develop progressive disclosure utilities
 

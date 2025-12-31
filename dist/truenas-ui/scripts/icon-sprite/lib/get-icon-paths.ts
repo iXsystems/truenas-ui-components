@@ -26,8 +26,8 @@ export function getIconPaths(names: Set<string>, projectRoot: string = process.c
   const nodeModulesPath = findNodeModules(projectRoot);
 
   names.forEach((name) => {
-    // Library custom icons (ix- prefix) - ONLY from library package
-    if (name.startsWith('ix-')) {
+    // Library custom icons (tn- prefix) - ONLY from library package
+    if (name.startsWith('tn-')) {
       // When building the library itself, icons are in the source directory
       // When consuming the library, icons are in node_modules
       const sourceLibraryPath = resolve(projectRoot, `assets/tn-icons/custom/${name.slice(3)}.svg`);
