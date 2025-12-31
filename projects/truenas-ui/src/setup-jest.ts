@@ -7,8 +7,8 @@ console.error = (...args: unknown[]) => {
 
   // Suppress expected icon/sprite loader errors in test environment
   if (
-    message.includes('[IxSpriteLoader] Failed to load sprite config') ||
-    message.includes('[IxIcon] Resolution failed') ||
+    message.includes('[TnSpriteLoader] Failed to load sprite config') ||
+    message.includes('[TnIcon] Resolution failed') ||
     message.includes('Cannot log after tests are done')
   ) {
     return;

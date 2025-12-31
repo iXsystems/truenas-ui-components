@@ -87,7 +87,7 @@ class TnSpriteLoaderService {
                 this.spriteLoaded = true;
             }
             catch (error) {
-                console.error('[IxSpriteLoader] Failed to load sprite config. Icons may not work:', error);
+                console.error('[TnSpriteLoader] Failed to load sprite config. Icons may not work:', error);
             }
         })();
         return this.spriteLoadPromise;
@@ -108,7 +108,7 @@ class TnSpriteLoaderService {
      */
     getIconUrl(iconName) {
         if (!this.spriteConfig) {
-            console.warn(`[IxSpriteLoader] Icon sprite not loaded yet, cannot resolve: ${iconName}`);
+            console.warn(`[TnSpriteLoader] Icon sprite not loaded yet, cannot resolve: ${iconName}`);
             return null;
         }
         // Check if the icon exists in the sprite manifest
@@ -415,7 +415,7 @@ class TnIconComponent {
                 setTimeout(() => this.updateSvgContent(), 0);
             })
                 .catch((error) => {
-                console.error('[IxIcon] Resolution failed (onChange)', error);
+                console.error('[TnIcon] Resolution failed (onChange)', error);
                 this.iconResult = { source: 'text', content: '!' };
                 this.cdr.markForCheck();
             });
@@ -456,7 +456,7 @@ class TnIconComponent {
         }
         catch (error) {
             // Sprite loading failed, continue with other resolution methods
-            console.warn('[IxIcon] Sprite loading failed, falling back to other icon sources:', error);
+            console.warn('[TnIcon] Sprite loading failed, falling back to other icon sources:', error);
         }
         // Construct the effective icon name based on library attribute
         let effectiveIconName = this.name();
@@ -6633,7 +6633,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * To regenerate this file, run:
  *   npm run generate-icons
  *
- * Generated: 2025-12-31T20:19:27.441Z
+ * Generated: 2025-12-31T20:34:58.278Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 /* eslint-disable */

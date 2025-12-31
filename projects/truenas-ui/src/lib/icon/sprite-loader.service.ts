@@ -60,7 +60,7 @@ export class TnSpriteLoaderService {
         this.spriteConfig = config;
         this.spriteLoaded = true;
       } catch (error) {
-        console.error('[IxSpriteLoader] Failed to load sprite config. Icons may not work:', error);
+        console.error('[TnSpriteLoader] Failed to load sprite config. Icons may not work:', error);
       }
     })();
 
@@ -84,7 +84,7 @@ export class TnSpriteLoaderService {
    */
   getIconUrl(iconName: string): string | null {
     if (!this.spriteConfig) {
-      console.warn(`[IxSpriteLoader] Icon sprite not loaded yet, cannot resolve: ${iconName}`);
+      console.warn(`[TnSpriteLoader] Icon sprite not loaded yet, cannot resolve: ${iconName}`);
       return null;
     }
 

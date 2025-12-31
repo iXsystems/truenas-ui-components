@@ -54,7 +54,7 @@ export class TnIconComponent implements AfterViewInit {
           setTimeout(() => this.updateSvgContent(), 0);
         })
         .catch((error) => {
-          console.error('[IxIcon] Resolution failed (onChange)', error);
+          console.error('[TnIcon] Resolution failed (onChange)', error);
           this.iconResult = { source: 'text', content: '!' };
           this.cdr.markForCheck();
         });
@@ -102,7 +102,7 @@ export class TnIconComponent implements AfterViewInit {
       await this.iconRegistry.getSpriteLoader().ensureSpriteLoaded();
     } catch (error) {
       // Sprite loading failed, continue with other resolution methods
-      console.warn('[IxIcon] Sprite loading failed, falling back to other icon sources:', error);
+      console.warn('[TnIcon] Sprite loading failed, falling back to other icon sources:', error);
     }
 
     // Construct the effective icon name based on library attribute
