@@ -34,15 +34,15 @@ yarn install
 Import components in your Angular application:
 
 ```typescript
-import { IxButtonComponent, IxInputComponent } from 'truenas-ui';
+import { TnButtonComponent, TnInputComponent } from 'truenas-ui';
 
 @Component({
   selector: 'app-example',
   standalone: true,
-  imports: [IxButtonComponent, IxInputComponent],
+  imports: [TnButtonComponent, TnInputComponent],
   template: `
-    <ix-button variant="primary">Click me</ix-button>
-    <ix-input label="Username" placeholder="Enter username"></ix-input>
+    <tn-button variant="primary">Click me</tn-button>
+    <tn-input label="Username" placeholder="Enter username"></tn-input>
   `
 })
 export class ExampleComponent {}
@@ -64,10 +64,10 @@ Add the theme CSS to your `angular.json`:
 Apply a theme by adding the theme class to your document root:
 
 ```typescript
-document.documentElement.classList.add('ix-dark');
+document.documentElement.classList.add('tn-dark');
 ```
 
-**Available themes:** ix-dark, ix-blue, dracula, nord, paper, solarized-dark, midnight, high-contrast
+**Available themes:** tn-dark, tn-blue, dracula, nord, paper, solarized-dark, midnight, high-contrast
 
 ## Development
 
@@ -119,8 +119,8 @@ iconMarker('dataset', 'custom');
 Use icons in templates:
 
 ```html
-<ix-icon name="folder" library="mdi"></ix-icon>
-<ix-icon name="dataset" library="custom"></ix-icon>
+<tn-icon name="folder" library="mdi"></tn-icon>
+<tn-icon name="dataset" library="custom"></tn-icon>
 ```
 
 Generate the sprite in your application:

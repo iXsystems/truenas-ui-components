@@ -149,7 +149,7 @@ export const TableWithFiltering: Story = {
           style="width: 100%;">
         </tn-input>
         <style>
-          .ix-input {
+          .tn-input {
             width: calc(100% - 1.5rem) !important;
           }
         </style>

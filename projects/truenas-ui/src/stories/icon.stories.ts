@@ -60,7 +60,7 @@ Run \`yarn icons\` to generate the sprite with only the icons you use.
 
 - ✅ **7,000+ MDI icons** - Material Design Icons for general use
 - ✅ **Automatic sprite generation** - Bundles only icons you actually use
-- ✅ **40+ TrueNAS icons** - Storage, hardware, networking icons with \`ix-\` prefix
+- ✅ **40+ TrueNAS icons** - Storage, hardware, networking icons with \`tn-\` prefix
 - ✅ **Custom icon support** - Add your own SVG icons to your app
 - ✅ **Tree-shaking** - Optimal bundle size
 - ✅ **Cache-busting** - Versioned sprite URLs
@@ -339,14 +339,14 @@ export const LibraryComparison: Story = {
   parameters: {
     docs: {
       description: {
-        story: `Comparison of different icon library approaches supported by the ix-icon component.
+        story: `Comparison of different icon library approaches supported by the tn-icon component.
 
 All libraries use the consistent \`library\` parameter:
 - **MDI**: \`<tn-icon name="folder" library="mdi">\`
 - **Lucide**: \`<tn-icon name="home" library="lucide">\`
 - **Material**: \`<tn-icon name="home">\` (default, falls back to Unicode)
 
-**Note for Menu Items**: When using icons in \`ix-menu\`, use the \`iconLibrary\` property:
+**Note for Menu Items**: When using icons in \`tn-menu\`, use the \`iconLibrary\` property:
 \`\`\`typescript
 { id: '1', label: 'Home', icon: 'folder', iconLibrary: 'mdi' }
 { id: '2', label: 'User', icon: 'user', iconLibrary: 'lucide' }

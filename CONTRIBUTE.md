@@ -47,14 +47,14 @@ truenas-ui-components/
 ├── projects/truenas-ui/          # Main library source code
 │   ├── src/
 │   │   ├── lib/                  # Component source files
-│   │   │   ├── ix-button/       # Example component
-│   │   │   ├── ix-input/
+│   │   │   ├── button/       # Example component
+│   │   │   ├── input/
 │   │   │   └── ...
 │   │   ├── public-api.ts        # Public API exports
 │   │   └── styles/              # Theme CSS files
 │   ├── assets/                  # Library assets
 │   │   └── icons/
-│   │       ├── custom/          # Library custom icons (ix- prefix)
+│   │       ├── custom/          # Library custom icons (tn- prefix)
 │   │       └── sprite.svg       # Generated icon sprite
 │   ├── scripts/                 # Build scripts
 │   │   └── icon-sprite/         # Icon sprite generation
@@ -93,15 +93,15 @@ The library uses an automatic sprite generation system that scans your code for 
 
 **For Library Component Code:**
 
-Library components must use `libIconMarker()` with the `ix-` prefix:
+Library components must use `libIconMarker()` with the `tn-` prefix:
 
 ```typescript
 import { libIconMarker } from 'truenas-ui';
 
 // Mark icons used in your component
-libIconMarker('ix-dataset');
-libIconMarker('ix-zvol');
-libIconMarker('ix-snapshot');
+libIconMarker('tn-dataset');
+libIconMarker('tn-zvol');
+libIconMarker('tn-snapshot');
 ```
 
 **For Application Code (Stories, Tests, Consumer Apps):**
@@ -120,7 +120,7 @@ iconMarker('home', 'material');
 iconMarker('settings', 'material');
 
 // Library custom icons
-iconMarker('dataset', 'custom');  // Resolves to ix-dataset
+iconMarker('dataset', 'custom');  // Resolves to tn-dataset
 
 // Consumer custom icons (in your app)
 iconMarker('my-logo', 'custom');  // Resolves to app-my-logo
@@ -132,25 +132,25 @@ The system supports four icon sources:
 
 1. **MDI (Material Design Icons)**: 7000+ icons from @mdi/svg
    - Usage: `iconMarker('icon-name', 'mdi')`
-   - Rendered: `<ix-icon name="icon-name" library="mdi">`
+   - Rendered: `<tn-icon name="icon-name" library="mdi">`
    - Sprite name: `mdi-icon-name`
 
 2. **Material Design Icons**: Official Google Material icons
    - Usage: `iconMarker('icon-name', 'material')`
-   - Rendered: `<ix-icon name="icon-name" library="material">`
+   - Rendered: `<tn-icon name="icon-name" library="material">`
    - Sprite name: `icon-name` (no prefix)
 
 3. **Library Custom Icons**: TrueNAS-specific icons in the library
    - Location: `projects/truenas-ui/assets/icons/custom/`
-   - Usage in library: `libIconMarker('ix-icon-name')`
+   - Usage in library: `libIconMarker('tn-icon-name')`
    - Usage in stories: `iconMarker('icon-name', 'custom')`
-   - Rendered: `<ix-icon name="icon-name" library="custom">`
-   - Sprite name: `ix-icon-name`
+   - Rendered: `<tn-icon name="icon-name" library="custom">`
+   - Sprite name: `tn-icon-name`
 
 4. **Consumer Custom Icons**: Application-specific icons
    - Location: `src/assets/icons/custom/` (in your app)
    - Usage: `iconMarker('icon-name', 'custom')`
-   - Rendered: `<ix-icon name="icon-name" library="custom">`
+   - Rendered: `<tn-icon name="icon-name" library="custom">`
    - Sprite name: `app-icon-name`
 
 ### Adding Custom Icons to the Library
@@ -169,12 +169,12 @@ To add a new custom icon to the library:
    import { libIconMarker } from '../../icon-marker';
 
    // Mark the icon for sprite generation
-   libIconMarker('ix-my-icon');
+   libIconMarker('tn-my-icon');
    ```
 
 3. **Use in templates:**
    ```html
-   <ix-icon name="my-icon" library="custom"></ix-icon>
+   <tn-icon name="my-icon" library="custom"></tn-icon>
    ```
 
 4. **SVG Requirements:**
@@ -193,7 +193,7 @@ To add a new custom icon to the library:
 The sprite generation system automatically:
 
 1. **Scans your code** for `iconMarker()` and `libIconMarker()` calls
-2. **Scans templates** for `<ix-icon>` component usage
+2. **Scans templates** for `<tn-icon>` component usage
 3. **Resolves icon paths** based on library type and prefix
 4. **Generates a sprite** containing only the icons you use
 5. **Creates a manifest** (`sprite-config.json`) for debugging
@@ -217,9 +217,9 @@ cat src/assets/icons/sprite-config.json
 The pre-commit hook enforces proper icon marker usage:
 
 **Rules:**
-- Library component code must use `libIconMarker()` with `ix-` prefix
+- Library component code must use `libIconMarker()` with `tn-` prefix
 - Cannot use `iconMarker()` in library component code (only in tests/stories)
-- `libIconMarker()` calls must include `ix-` prefix
+- `libIconMarker()` calls must include `tn-` prefix
 
 **Example violations:**
 
@@ -231,7 +231,7 @@ export class MyComponent {
   }
 }
 
-// ❌ BAD - Missing ix- prefix
+// ❌ BAD - Missing tn- prefix
 export class MyComponent {
   constructor() {
     libIconMarker('dataset');  // Will fail pre-commit
@@ -241,7 +241,7 @@ export class MyComponent {
 // ✅ GOOD - Correct usage in library component
 export class MyComponent {
   constructor() {
-    libIconMarker('ix-dataset');
+    libIconMarker('tn-dataset');
   }
 }
 
@@ -257,33 +257,33 @@ iconMarker('dataset', 'custom');
 1. **Generate the component structure:**
    ```bash
    cd projects/truenas-ui/src/lib
-   mkdir ix-my-component
-   cd ix-my-component
+   mkdir tn-my-component
+   cd tn-my-component
    ```
 
 2. **Create component files:**
-   - `ix-my-component.component.ts` - Component logic
-   - `ix-my-component.component.html` - Template
-   - `ix-my-component.component.scss` - Styles
-   - `ix-my-component.component.spec.ts` - Tests
+   - `tn-my-component.component.ts` - Component logic
+   - `tn-my-component.component.html` - Template
+   - `tn-my-component.component.scss` - Styles
+   - `tn-my-component.component.spec.ts` - Tests
 
 3. **Follow naming conventions:**
-   - Component selector: `ix-my-component`
-   - Component class: `IxMyComponentComponent`
-   - Use `ix-` prefix for all selectors
+   - Component selector: `tn-my-component`
+   - Component class: `TnMyComponentComponent`
+   - Use `tn-` prefix for all selectors
 
 4. **Use standalone components:**
    ```typescript
    import { Component } from '@angular/core';
 
    @Component({
-     selector: 'ix-my-component',
+     selector: 'tn-my-component',
      standalone: true,
      imports: [],
-     templateUrl: './ix-my-component.component.html',
-     styleUrl: './ix-my-component.component.scss'
+     templateUrl: './tn-my-component.component.html',
+     styleUrl: './tn-my-component.component.scss'
    })
-   export class IxMyComponentComponent {
+   export class TnMyComponentComponent {
      // Component logic
    }
    ```
@@ -291,22 +291,22 @@ iconMarker('dataset', 'custom');
 5. **Export the component:**
    Add to `projects/truenas-ui/src/public-api.ts`:
    ```typescript
-   export * from './lib/ix-my-component/ix-my-component.component';
+   export * from './lib/tn-my-component/tn-my-component.component';
    ```
 
 6. **Add to module exports:**
    Update `projects/truenas-ui/src/lib/truenas-ui.module.ts`:
    ```typescript
-   import { IxMyComponentComponent } from './ix-my-component/ix-my-component.component';
+   import { TnMyComponentComponent } from './tn-my-component/tn-my-component.component';
 
    @NgModule({
      imports: [
        // ... other imports
-       IxMyComponentComponent
+       TnMyComponentComponent
      ],
      exports: [
        // ... other exports
-       IxMyComponentComponent
+       TnMyComponentComponent
      ]
    })
    export class TruenasUiModule {}
@@ -317,26 +317,26 @@ iconMarker('dataset', 'custom');
 1. **Create a story file:**
    ```bash
    # In projects/truenas-ui/src/stories/
-   touch ix-my-component.stories.ts
+   touch tn-my-component.stories.ts
    ```
 
 2. **Write the story:**
    ```typescript
    import type { Meta, StoryObj } from '@storybook/angular';
-   import { IxMyComponentComponent } from '../lib/ix-my-component/ix-my-component.component';
+   import { TnMyComponentComponent } from '../lib/tn-my-component/tn-my-component.component';
    import { iconMarker } from '../lib/icon-marker';
 
    // Mark any icons used in the story
    iconMarker('settings', 'mdi');
 
-   const meta: Meta<IxMyComponentComponent> = {
+   const meta: Meta<TnMyComponentComponent> = {
      title: 'Components/My Component',
-     component: IxMyComponentComponent,
+     component: TnMyComponentComponent,
      tags: ['autodocs'],
    };
 
    export default meta;
-   type Story = StoryObj<IxMyComponentComponent>;
+   type Story = StoryObj<TnMyComponentComponent>;
 
    export const Default: Story = {
      args: {
@@ -366,18 +366,18 @@ yarn test-coverage     # Run with coverage report
 
 ```typescript
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { IxMyComponentComponent } from './ix-my-component.component';
+import { TnMyComponentComponent } from './tn-my-component.component';
 
-describe('IxMyComponentComponent', () => {
-  let component: IxMyComponentComponent;
-  let fixture: ComponentFixture<IxMyComponentComponent>;
+describe('TnMyComponentComponent', () => {
+  let component: TnMyComponentComponent;
+  let fixture: ComponentFixture<TnMyComponentComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IxMyComponentComponent]
+      imports: [TnMyComponentComponent]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(IxMyComponentComponent);
+    fixture = TestBed.createComponent(TnMyComponentComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
@@ -414,7 +414,7 @@ Storybook includes the `@storybook/addon-a11y` addon for accessibility testing. 
 - Use signals for reactive state when appropriate
 - Use OnPush change detection strategy
 - Follow Angular style guide
-- Use `ix-` prefix for all component selectors
+- Use `tn-` prefix for all component selectors
 
 ### SCSS
 

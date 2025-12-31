@@ -123,7 +123,7 @@ onFileSelected(path: string) {
 
 ## Complete API Reference
 
-This is the authoritative API documentation for the \`ix-file-picker\` component.
+This is the authoritative API documentation for the \`tn-file-picker\` component.
 
 ---
 

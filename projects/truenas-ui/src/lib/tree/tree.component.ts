@@ -21,7 +21,7 @@ export interface TnFlatTreeNode<T = unknown> {
 /**
  * Tree flattener to convert normal type of node to node with children & level information.
  */
-export class IxTreeFlattener<T, F> {
+export class TnTreeFlattener<T, F> {
   constructor(
     public transformFunction: (node: T, level: number) => F,
     public getLevel: (node: F) => number,
@@ -58,7 +58,7 @@ export class TnTreeFlatDataSource<T, F> extends DataSource<F> {
 
   constructor(
     private _treeControl: FlatTreeControl<F>,
-    private _treeFlattener: IxTreeFlattener<T, F>
+    private _treeFlattener: TnTreeFlattener<T, F>
   ) {
     super();
   }

@@ -143,7 +143,7 @@ The IX Dialog system provides a clean, opinionated API built on top of CDK Dialo
 To use dialogs in your application, you need to:
 
 1. **Import the dialog service**: Import \`TnDialog\` from the library
-2. **Create dialog components**: Build standalone components that use \`ix-dialog-shell\`
+2. **Create dialog components**: Build standalone components that use \`tn-dialog-shell\`
 3. **Open dialogs**: Use the service to open your dialog components
 
 ## Step-by-Step Implementation
@@ -161,7 +161,7 @@ import { TnDialogShellComponent } from 'truenas-ui';
 
 ### 2. Create Your Dialog Component
 
-Every dialog component must be a standalone component that uses \`ix-dialog-shell\` as its root element:
+Every dialog component must be a standalone component that uses \`tn-dialog-shell\` as its root element:
 
 \`\`\`typescript
 @Component({
@@ -238,9 +238,9 @@ export class MyPageComponent {
 }
 \`\`\`
 
-## Understanding ix-dialog-shell
+## Understanding tn-dialog-shell
 
-The \`ix-dialog-shell\` component provides the dialog layout structure:
+The \`tn-dialog-shell\` component provides the dialog layout structure:
 
 ### Required Structure
 - **Root**: \`<tn-dialog-shell title="Your Title">\`

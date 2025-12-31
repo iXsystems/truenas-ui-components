@@ -104,9 +104,9 @@ Story templates are included in `component_templates.md` under "Storybook Story 
 **Meta Object:**
 Defines component metadata, title, controls, and tags
 ```typescript
-const meta: Meta<IxComponent> = {
+const meta: Meta<TnComponent> = {
   title: 'Components/ComponentName',
-  component: IxComponent,
+  component: TnComponent,
   tags: ['autodocs'],
   argTypes: { /* controls */ }
 };
@@ -137,9 +137,9 @@ iconMarker('icon-name', 'library-type');
 
 ### Existing Examples
 Look at these story files for reference:
-- `projects/truenas-ui/src/stories/ix-button.stories.ts`
-- `projects/truenas-ui/src/stories/ix-card.stories.ts`
-- `projects/truenas-ui/src/stories/ix-menu.stories.ts`
+- `projects/truenas-ui/src/stories/tn-button.stories.ts`
+- `projects/truenas-ui/src/stories/tn-card.stories.ts`
+- `projects/truenas-ui/src/stories/tn-menu.stories.ts`
 
 ## Important Notes for Agents
 
@@ -160,7 +160,7 @@ Look at these story files for reference:
 ## Quick Reference
 
 **Creating a component checklist:**
-1. Create directory: `projects/truenas-ui/src/lib/ix-[name]/`
+1. Create directory: `projects/truenas-ui/src/lib/tn-[name]/`
 2. Create 4 required files: `.component.ts`, `.component.html`, `.component.scss`, `.component.spec.ts`
 3. Export in `public-api.ts`
 4. Create story in `projects/truenas-ui/src/stories/`
@@ -169,7 +169,7 @@ Look at these story files for reference:
 
 **All components must be:**
 - Standalone (no NgModule)
-- Prefixed with `ix-` selector
+- Prefixed with `tn-` selector
 - Exported in public-api.ts
 - Have Storybook story with multiple variants
 - Have Jest tests

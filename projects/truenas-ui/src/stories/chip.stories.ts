@@ -77,7 +77,7 @@ export const WithIcon: Story = {
     await expect(chip).toHaveClass('tn-chip--primary');
     
     // Check that the icon container exists
-    const icon = chip.querySelector('.ix-chip__icon');
+    const icon = chip.querySelector('.tn-chip__icon');
     await expect(icon).toBeInTheDocument();
   },
 };
@@ -93,7 +93,7 @@ export const NotClosable: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     const chip = canvas.getByTestId(args.testId!);
-    const closeButton = chip.querySelector('.ix-chip__close');
+    const closeButton = chip.querySelector('.tn-chip__close');
     
     await expect(chip).toBeInTheDocument();
     await expect(closeButton).not.toBeInTheDocument();

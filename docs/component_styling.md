@@ -54,19 +54,19 @@ var(--icon-xl)   // 48px - Extra large icons
 Use BEM (Block Element Modifier) for CSS class names:
 
 ```scss
-.ix-[component]                    // Block
-.ix-[component]__[element]         // Element
-.ix-[component]--[modifier]        // Modifier
+.tn-[component]                    // Block
+.tn-[component]__[element]         // Element
+.tn-[component]--[modifier]        // Modifier
 ```
 
 ### Examples
 
 ```scss
-.ix-card                    // Block
-.ix-card__header            // Element
-.ix-card__title             // Element
-.ix-card--elevated          // Modifier
-.ix-card--primary           // Modifier
+.tn-card                    // Block
+.tn-card__header            // Element
+.tn-card__title             // Element
+.tn-card--elevated          // Modifier
+.tn-card--primary           // Modifier
 ```
 
 ## Component Stylesheet Template
@@ -74,7 +74,7 @@ Use BEM (Block Element Modifier) for CSS class names:
 ### Basic Pattern
 
 ```scss
-.ix-[name] {
+.tn-[name] {
   // Layout
   display: block;
   padding: 8px 16px;
@@ -105,7 +105,7 @@ Use BEM (Block Element Modifier) for CSS class names:
 ### With Size Variants
 
 ```scss
-.ix-[name] {
+.tn-[name] {
   display: inline-block;
   padding: 8px 16px;
   font-size: 14px;
@@ -131,7 +131,7 @@ Use BEM (Block Element Modifier) for CSS class names:
 ### With Color Variants
 
 ```scss
-.ix-[name] {
+.tn-[name] {
   padding: 8px 16px;
   border-radius: 4px;
   border: none;
@@ -163,7 +163,7 @@ Use BEM (Block Element Modifier) for CSS class names:
 ### With Child Elements
 
 ```scss
-.ix-card {
+.tn-card {
   background-color: var(--bg2);
   border-radius: 8px;
   padding: 16px;
@@ -202,7 +202,7 @@ Use BEM (Block Element Modifier) for CSS class names:
 ### Interactive Elements (Buttons, Links)
 
 ```scss
-.ix-button {
+.tn-button {
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
@@ -232,7 +232,7 @@ Use BEM (Block Element Modifier) for CSS class names:
 ### Cards/Containers
 
 ```scss
-.ix-card {
+.tn-card {
   background-color: var(--bg2);
   border: 1px solid var(--lines);
   border-radius: 8px;
@@ -252,7 +252,7 @@ Use BEM (Block Element Modifier) for CSS class names:
 ### Form Controls
 
 ```scss
-.ix-input {
+.tn-input {
   width: 100%;
   padding: 8px 12px;
   font-size: 14px;
@@ -288,7 +288,7 @@ Use BEM (Block Element Modifier) for CSS class names:
 ### Icons
 
 ```scss
-.ix-icon {
+.tn-icon {
   display: inline-block;
   width: var(--icon-md);
   height: var(--icon-md);
@@ -343,7 +343,7 @@ Most components should use default encapsulation:
 
 ```typescript
 @Component({
-  selector: 'ix-[name]',
+  selector: 'tn-[name]',
   // No encapsulation specified = Emulated (default)
 })
 ```
@@ -355,7 +355,7 @@ Only use when component needs to style projected content or global elements:
 import { ViewEncapsulation } from '@angular/core';
 
 @Component({
-  selector: 'ix-[name]',
+  selector: 'tn-[name]',
   encapsulation: ViewEncapsulation.None,
 })
 ```
@@ -368,7 +368,7 @@ Use standard breakpoints:
 
 ```scss
 // Mobile first approach
-.ix-component {
+.tn-component {
   padding: 8px;
 
   // Tablet
@@ -389,7 +389,7 @@ Use standard breakpoints:
 Always provide visible focus indicators:
 
 ```scss
-.ix-button {
+.tn-button {
   &:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
@@ -408,7 +408,7 @@ Test components in high contrast mode:
 
 ```scss
 @media (prefers-contrast: high) {
-  .ix-component {
+  .tn-component {
     border: 2px solid currentColor;
   }
 }
@@ -418,8 +418,8 @@ Test components in high contrast mode:
 
 Components automatically work with all themes via CSS variables:
 
-- `ix-dark` - Dark theme
-- `ix-blue` - Blue theme
+- `tn-dark` - Dark theme
+- `tn-blue` - Blue theme
 - `dracula` - Dracula theme
 - `nord` - Nord theme
 - `high-contrast` - High contrast theme
@@ -431,7 +431,7 @@ Components automatically work with all themes via CSS variables:
 Use subtle, performant animations:
 
 ```scss
-.ix-component {
+.tn-component {
   // Fast transitions for small changes
   transition: color 0.15s ease, background-color 0.15s ease;
 
@@ -444,7 +444,7 @@ Use subtle, performant animations:
 
 // Respect user preferences
 @media (prefers-reduced-motion: reduce) {
-  .ix-component {
+  .tn-component {
     transition: none;
     animation: none;
   }
@@ -472,7 +472,7 @@ Use subtle, performant animations:
 ## Examples from Existing Components
 
 See these components for reference:
-- **ix-button** - Simple component with variants
-- **ix-card** - Complex component with child elements
-- **ix-chip** - Small component with minimal styling
-- **ix-input** - Form control with states
+- **tn-button** - Simple component with variants
+- **tn-card** - Complex component with child elements
+- **tn-chip** - Small component with minimal styling
+- **tn-input** - Form control with states

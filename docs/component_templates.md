@@ -11,13 +11,13 @@ import { CommonModule } from '@angular/common';
 import { Component, input, output } from '@angular/core';
 
 @Component({
-  selector: 'ix-[name]',
+  selector: 'tn-[name]',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './ix-[name].component.html',
-  styleUrls: ['./ix-[name].component.scss'],
+  templateUrl: './tn-[name].component.html',
+  styleUrls: ['./tn-[name].component.scss'],
 })
-export class Ix[Name]Component {
+export class Tn[Name]Component {
   // Input signals
   label = input<string>('');
   disabled = input<boolean>(false);
@@ -27,8 +27,8 @@ export class Ix[Name]Component {
 
   public get classes(): string[] {
     return [
-      'ix-[name]',
-      this.disabled() ? 'ix-[name]--disabled' : '',
+      'tn-[name]',
+      this.disabled() ? 'tn-[name]--disabled' : '',
     ].filter(Boolean);
   }
 }
@@ -41,13 +41,13 @@ import { CommonModule } from '@angular/common';
 import { Component, input } from '@angular/core';
 
 @Component({
-  selector: 'ix-[name]',
+  selector: 'tn-[name]',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './ix-[name].component.html',
-  styleUrls: ['./ix-[name].component.scss'],
+  templateUrl: './tn-[name].component.html',
+  styleUrls: ['./tn-[name].component.scss'],
 })
-export class Ix[Name]Component {
+export class Tn[Name]Component {
   // Input signals with types
   size = input<'small' | 'medium' | 'large'>('medium');
   variant = input<'default' | 'primary' | 'warn'>('default');
@@ -55,10 +55,10 @@ export class Ix[Name]Component {
 
   public get classes(): string[] {
     return [
-      'ix-[name]',
-      `ix-[name]--${this.size()}`,
-      `ix-[name]--${this.variant()}`,
-      this.disabled() ? 'ix-[name]--disabled' : '',
+      'tn-[name]',
+      `tn-[name]--${this.size()}`,
+      `tn-[name]--${this.variant()}`,
+      this.disabled() ? 'tn-[name]--disabled' : '',
     ].filter(Boolean);
   }
 }
@@ -69,23 +69,23 @@ export class Ix[Name]Component {
 ```typescript
 import { CommonModule } from '@angular/common';
 import { Component, input } from '@angular/core';
-import { IxButtonComponent } from '../ix-button/ix-button.component';
-import { IxIconComponent } from '../ix-icon/ix-icon.component';
+import { TnButtonComponent } from '../tn-button/tn-button.component';
+import { TnIconComponent } from '../tn-icon/tn-icon.component';
 
 @Component({
-  selector: 'ix-[name]',
+  selector: 'tn-[name]',
   standalone: true,
-  imports: [CommonModule, IxButtonComponent, IxIconComponent],
-  templateUrl: './ix-[name].component.html',
-  styleUrls: ['./ix-[name].component.scss'],
+  imports: [CommonModule, TnButtonComponent, TnIconComponent],
+  templateUrl: './tn-[name].component.html',
+  styleUrls: ['./tn-[name].component.scss'],
 })
-export class Ix[Name]Component {
+export class Tn[Name]Component {
   // Input signals
   title = input<string | undefined>(undefined);
   showIcon = input<boolean>(true);
 
   public get classes(): string[] {
-    return ['ix-[name]'];
+    return ['tn-[name]'];
   }
 }
 ```
@@ -95,20 +95,20 @@ export class Ix[Name]Component {
 ```typescript
 import { CommonModule } from '@angular/common';
 import { Component, input, inject } from '@angular/core';
-import { IxIconComponent } from '../ix-icon/ix-icon.component';
-import { IxIconRegistryService } from '../ix-icon/ix-icon-registry.service';
+import { TnIconComponent } from '../tn-icon/tn-icon.component';
+import { TnIconRegistryService } from '../tn-icon/tn-icon-registry.service';
 import { mdiClose, mdiCheck } from '@mdi/js';
 
 @Component({
-  selector: 'ix-[name]',
+  selector: 'tn-[name]',
   standalone: true,
-  imports: [CommonModule, IxIconComponent],
-  templateUrl: './ix-[name].component.html',
-  styleUrls: ['./ix-[name].component.scss'],
+  imports: [CommonModule, TnIconComponent],
+  templateUrl: './tn-[name].component.html',
+  styleUrls: ['./tn-[name].component.scss'],
 })
-export class Ix[Name]Component {
+export class Tn[Name]Component {
   // Inject services (modern Angular dependency injection)
-  private iconRegistry = inject(IxIconRegistryService);
+  private iconRegistry = inject(TnIconRegistryService);
 
   // Input signals
   title = input<string>('');
@@ -144,14 +144,14 @@ import { CommonModule } from '@angular/common';
 import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
-  selector: 'ix-[name]',
+  selector: 'tn-[name]',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './ix-[name].component.html',
-  styleUrls: ['./ix-[name].component.scss'],
+  templateUrl: './tn-[name].component.html',
+  styleUrls: ['./tn-[name].component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Ix[Name]Component {
+export class Tn[Name]Component {
   // Input signals work perfectly with OnPush
   value = input<string>('');
 }
@@ -165,7 +165,7 @@ export class Ix[Name]Component {
 
 ```html
 <div [ngClass]="classes">
-  <span class="ix-[name]__label">{{ label }}</span>
+  <span class="tn-[name]__label">{{ label }}</span>
 </div>
 ```
 
@@ -174,11 +174,11 @@ export class Ix[Name]Component {
 ```html
 <div [ngClass]="classes">
   @if (title) {
-    <div class="ix-[name]__header">
+    <div class="tn-[name]__header">
       <h3>{{ title }}</h3>
     </div>
   }
-  <div class="ix-[name]__content">
+  <div class="tn-[name]__content">
     <ng-content></ng-content>
   </div>
 </div>
@@ -193,7 +193,7 @@ export class Ix[Name]Component {
   [disabled]="disabled"
   (click)="onClick.emit($event)"
 >
-  <span class="ix-[name]__label">{{ label }}</span>
+  <span class="tn-[name]__label">{{ label }}</span>
 </button>
 ```
 
@@ -201,16 +201,16 @@ export class Ix[Name]Component {
 
 ```html
 <div [ngClass]="classes">
-  <div class="ix-[name]__header">
+  <div class="tn-[name]__header">
     <ng-content select="[header]"></ng-content>
   </div>
 
-  <div class="ix-[name]__content">
+  <div class="tn-[name]__content">
     <ng-content></ng-content>
   </div>
 
   @if (showFooter) {
-    <div class="ix-[name]__footer">
+    <div class="tn-[name]__footer">
       <ng-content select="[footer]"></ng-content>
     </div>
   }
@@ -222,22 +222,22 @@ export class Ix[Name]Component {
 ```html
 <div [ngClass]="classes">
   @if (showIcon()) {
-    <div class="ix-[name]__icon">
-      <ix-icon [name]="iconName()" [library]="iconLibrary()"></ix-icon>
+    <div class="tn-[name]__icon">
+      <tn-icon [name]="iconName()" [library]="iconLibrary()"></tn-icon>
     </div>
   }
 
-  <div class="ix-[name]__content">
+  <div class="tn-[name]__content">
     {{ label() }}
   </div>
 
   @if (closable()) {
     <button
       type="button"
-      class="ix-[name]__close"
+      class="tn-[name]__close"
       (click)="onClose.emit()"
     >
-      <ix-icon name="close" library="mdi"></ix-icon>
+      <tn-icon name="close" library="mdi"></tn-icon>
     </button>
   }
 </div>
@@ -248,7 +248,7 @@ export class Ix[Name]Component {
 ### Basic Stylesheet
 
 ```scss
-.ix-[name] {
+.tn-[name] {
   display: block;
   padding: 8px 16px;
   background-color: var(--bg1);
@@ -265,7 +265,7 @@ export class Ix[Name]Component {
 ### Stylesheet with Variants
 
 ```scss
-.ix-[name] {
+.tn-[name] {
   display: inline-block;
   padding: 8px 16px;
   border-radius: 4px;
@@ -329,18 +329,18 @@ export class Ix[Name]Component {
 
 ```typescript
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Ix[Name]Component } from './ix-[name].component';
+import { Tn[Name]Component } from './tn-[name].component';
 
-describe('Ix[Name]Component', () => {
-  let component: Ix[Name]Component;
-  let fixture: ComponentFixture<Ix[Name]Component>;
+describe('Tn[Name]Component', () => {
+  let component: Tn[Name]Component;
+  let fixture: ComponentFixture<Tn[Name]Component>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Ix[Name]Component]
+      imports: [Tn[Name]Component]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Ix[Name]Component);
+    fixture = TestBed.createComponent(Tn[Name]Component);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
@@ -359,7 +359,7 @@ describe('Ix[Name]Component', () => {
     fixture.detectChanges();
 
     const classes = component.classes;
-    expect(classes).toContain('ix-[name]--disabled');
+    expect(classes).toContain('tn-[name]--disabled');
   });
 });
 ```
@@ -368,18 +368,18 @@ describe('Ix[Name]Component', () => {
 
 ```typescript
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Ix[Name]Component } from './ix-[name].component';
+import { Tn[Name]Component } from './tn-[name].component';
 
-describe('Ix[Name]Component', () => {
-  let component: Ix[Name]Component;
-  let fixture: ComponentFixture<Ix[Name]Component>;
+describe('Tn[Name]Component', () => {
+  let component: Tn[Name]Component;
+  let fixture: ComponentFixture<Tn[Name]Component>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Ix[Name]Component]
+      imports: [Tn[Name]Component]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Ix[Name]Component);
+    fixture = TestBed.createComponent(Tn[Name]Component);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
@@ -391,7 +391,7 @@ describe('Ix[Name]Component', () => {
   describe('classes getter', () => {
     it('should include base class', () => {
       const classes = component.classes;
-      expect(classes).toContain('ix-[name]');
+      expect(classes).toContain('tn-[name]');
     });
 
     it('should include variant class', () => {
@@ -399,7 +399,7 @@ describe('Ix[Name]Component', () => {
       fixture.detectChanges();
 
       const classes = component.classes;
-      expect(classes).toContain('ix-[name]--primary');
+      expect(classes).toContain('tn-[name]--primary');
     });
   });
 
@@ -425,11 +425,11 @@ describe('Ix[Name]Component', () => {
 import type { Meta, StoryObj } from '@storybook/angular';
 import { userEvent, within } from '@storybook/testing-library';
 import { expect } from '@storybook/jest';
-import { Ix[Name]Component } from '../lib/ix-[name]/ix-[name].component';
+import { Tn[Name]Component } from '../lib/tn-[name]/tn-[name].component';
 
-const meta: Meta<Ix[Name]Component> = {
+const meta: Meta<Tn[Name]Component> = {
   title: 'Components/[Name]',
-  component: Ix[Name]Component,
+  component: Tn[Name]Component,
   tags: ['autodocs'],
   argTypes: {
     label: {
@@ -445,7 +445,7 @@ const meta: Meta<Ix[Name]Component> = {
 };
 
 export default meta;
-type Story = StoryObj<Ix[Name]Component>;
+type Story = StoryObj<Tn[Name]Component>;
 
 export const Default: Story = {
   args: {
@@ -468,11 +468,11 @@ export const Disabled: Story = {
 import type { Meta, StoryObj } from '@storybook/angular';
 import { userEvent, within } from '@storybook/testing-library';
 import { expect } from '@storybook/jest';
-import { Ix[Name]Component } from '../lib/ix-[name]/ix-[name].component';
+import { Tn[Name]Component } from '../lib/tn-[name]/tn-[name].component';
 
-const meta: Meta<Ix[Name]Component> = {
+const meta: Meta<Tn[Name]Component> = {
   title: 'Components/[Name]',
-  component: Ix[Name]Component,
+  component: Tn[Name]Component,
   tags: ['autodocs'],
   argTypes: {
     size: {
@@ -494,7 +494,7 @@ const meta: Meta<Ix[Name]Component> = {
 };
 
 export default meta;
-type Story = StoryObj<Ix[Name]Component>;
+type Story = StoryObj<Tn[Name]Component>;
 
 export const Default: Story = {
   args: {
@@ -535,16 +535,16 @@ export const Large: Story = {
 
 ```typescript
 import type { Meta, StoryObj } from '@storybook/angular';
-import { Ix[Name]Component } from '../lib/ix-[name]/ix-[name].component';
+import { Tn[Name]Component } from '../lib/tn-[name]/tn-[name].component';
 import { iconMarker } from '../lib/icon-marker';
 
 // Mark icons for sprite generation
 iconMarker('close', 'mdi');
 iconMarker('check', 'mdi');
 
-const meta: Meta<Ix[Name]Component> = {
+const meta: Meta<Tn[Name]Component> = {
   title: 'Components/[Name]',
-  component: Ix[Name]Component,
+  component: Tn[Name]Component,
   tags: ['autodocs'],
   argTypes: {
     title: { control: 'text' },
@@ -552,7 +552,7 @@ const meta: Meta<Ix[Name]Component> = {
 };
 
 export default meta;
-type Story = StoryObj<Ix[Name]Component>;
+type Story = StoryObj<Tn[Name]Component>;
 
 export const Default: Story = {
   args: {
@@ -566,15 +566,15 @@ export const Default: Story = {
 ### Basic Interfaces
 
 ```typescript
-export interface Ix[Name]Config {
+export interface Tn[Name]Config {
   title: string;
   description?: string;
   variant: 'default' | 'primary' | 'warn';
 }
 
-export type Ix[Name]Size = 'small' | 'medium' | 'large';
+export type Tn[Name]Size = 'small' | 'medium' | 'large';
 
-export interface Ix[Name]Action {
+export interface Tn[Name]Action {
   label: string;
   handler: () => void;
   disabled?: boolean;
@@ -584,22 +584,22 @@ export interface Ix[Name]Action {
 ## Index File Template
 
 ```typescript
-export * from './ix-[name].component';
-export * from './ix-[name].interfaces';
+export * from './tn-[name].component';
+export * from './tn-[name].interfaces';
 ```
 
 ## Public API Export Examples
 
 ```typescript
 // Simple component (no index.ts)
-export * from './lib/ix-[name]/ix-[name].component';
+export * from './lib/tn-[name]/tn-[name].component';
 
 // With index.ts
-export * from './lib/ix-[name]';
+export * from './lib/tn-[name]';
 
 // Component + interfaces (no index.ts)
-export * from './lib/ix-[name]/ix-[name].component';
-export * from './lib/ix-[name]/ix-[name].interfaces';
+export * from './lib/tn-[name]/tn-[name].component';
+export * from './lib/tn-[name]/tn-[name].interfaces';
 ```
 
 ## Usage Examples
@@ -607,12 +607,12 @@ export * from './lib/ix-[name]/ix-[name].interfaces';
 After creating your component, consumers use it like:
 
 ```typescript
-import { Ix[Name]Component } from '@truenas/ui-components';
+import { Tn[Name]Component } from '@truenas/ui-components';
 
 @Component({
   standalone: true,
-  imports: [Ix[Name]Component],
-  template: `<ix-[name] label="Click me" (onClick)="handleClick()"></ix-[name]>`
+  imports: [Tn[Name]Component],
+  template: `<tn-[name] label="Click me" (onClick)="handleClick()"></tn-[name]>`
 })
 export class MyComponent {
   handleClick() {
@@ -635,25 +635,25 @@ Start with this minimal template - only add more methods if consumers explicitly
 import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
 
 /**
- * Harness for interacting with ix-[name] in tests.
+ * Harness for interacting with tn-[name] in tests.
  * Provides simple existence checks and text-based queries.
  *
  * @example
  * ```typescript
  * // Check existence
- * const component = await loader.getHarness(Ix[Name]Harness);
+ * const component = await loader.getHarness(Tn[Name]Harness);
  *
  * // Find by text content
  * const match = await loader.getHarness(
- *   Ix[Name]Harness.with({ textContains: 'my text' })
+ *   Tn[Name]Harness.with({ textContains: 'my text' })
  * );
  * ```
  */
-export class Ix[Name]Harness extends ComponentHarness {
+export class Tn[Name]Harness extends ComponentHarness {
   /**
-   * The selector for the host element of an `Ix[Name]Component` instance.
+   * The selector for the host element of an `Tn[Name]Component` instance.
    */
-  static hostSelector = 'ix-[name]';
+  static hostSelector = 'tn-[name]';
 
   /**
    * Gets a `HarnessPredicate` that can be used to search for a component
@@ -663,7 +663,7 @@ export class Ix[Name]Harness extends ComponentHarness {
    * @returns A `HarnessPredicate` configured with the given options.
    */
   static with(options: [Name]HarnessFilters = {}) {
-    return new HarnessPredicate(Ix[Name]Harness, options)
+    return new HarnessPredicate(Tn[Name]Harness, options)
       .addOption('textContains', options.textContains, (harness, text) =>
         HarnessPredicate.stringMatches(harness.getText(), text)
       );
@@ -693,23 +693,23 @@ export interface [Name]HarnessFilters {
 
 ```typescript
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Ix[Name]Harness } from '@truenas/ui-components';
+import { Tn[Name]Harness } from '@truenas/ui-components';
 
 // In your test
 const loader = TestbedHarnessEnvironment.loader(fixture);
 
 // Check existence
-const component = await loader.getHarness(Ix[Name]Harness);
+const component = await loader.getHarness(Tn[Name]Harness);
 expect(component).toBeTruthy();
 
 // Find by text content
 const match = await loader.getHarness(
-  Ix[Name]Harness.with({ textContains: 'my text' })
+  Tn[Name]Harness.with({ textContains: 'my text' })
 );
 
 // Check if exists
 const exists = await loader.hasHarness(
-  Ix[Name]Harness.with({ textContains: /pattern/i })
+  Tn[Name]Harness.with({ textContains: /pattern/i })
 );
 ```
 
@@ -739,4 +739,4 @@ const exists = await loader.hasHarness(
 
 ### Reference Implementation
 
-See `ix-banner.harness.ts` for a complete minimal harness example.
+See `tn-banner.harness.ts` for a complete minimal harness example.

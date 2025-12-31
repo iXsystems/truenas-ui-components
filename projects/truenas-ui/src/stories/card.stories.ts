@@ -168,7 +168,7 @@ export const Bordered: Story = {
 
 /**
  * Use padContent="false" for full-width content like:
- * - Tables (ix-table)
+ * - Tables (tn-table)
  * - Images (full-width)
  * - Charts/graphs
  * - Custom layouts that need edge-to-edge content

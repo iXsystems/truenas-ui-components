@@ -7,7 +7,7 @@ import { TnIconComponent } from '../lib/icon/icon.component';
 import { TnNestedTreeNodeComponent } from '../lib/tree/nested-tree-node.component';
 import { TnTreeNodeOutletDirective } from '../lib/tree/tree-node-outlet.directive';
 import { TnTreeNodeComponent } from '../lib/tree/tree-node.component';
-import { TnTreeComponent, FlatTreeControl, TnTreeFlatDataSource, IxTreeFlattener, ArrayDataSource } from '../lib/tree/tree.component';
+import { TnTreeComponent, FlatTreeControl, TnTreeFlatDataSource, TnTreeFlattener, ArrayDataSource } from '../lib/tree/tree.component';
 
 // Ensure these icons are included in the library sprite
 // Using the new two-parameter API
@@ -127,7 +127,7 @@ export const FlatTree: Story = {
       ),
 
       get treeFlattener() {
-        return new IxTreeFlattener<FileNode, FileFlatNode>(
+        return new TnTreeFlattener<FileNode, FileFlatNode>(
           this['transformer'],
           this['getLevel'],
           this['isExpandable'],
@@ -230,7 +230,7 @@ export const TrueNASStorageTree: Story = {
       ),
 
       get treeFlattener() {
-        return new IxTreeFlattener<FileNode, FileFlatNode>(
+        return new TnTreeFlattener<FileNode, FileFlatNode>(
           this['transformer'],
           this['getLevel'],
           this['isExpandable'],
@@ -287,7 +287,7 @@ export const NestedTree: Story = {
     },
     template: `
       <style>
-        .ix-tree-invisible {
+        .tn-tree-invisible {
           display: none;
         }
       </style>
