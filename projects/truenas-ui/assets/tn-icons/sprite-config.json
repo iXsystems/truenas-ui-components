@@ -1,6 +1,7 @@
 {
-  "iconUrl": "assets/tn-icons/sprite.svg?v=39b8a7eda2",
+  "iconUrl": "assets/tn-icons/sprite.svg?v=24b0e21b0c",
   "icons": [
+    "dataset",
     "mdi-alert",
     "mdi-alert-circle",
     "mdi-bell",

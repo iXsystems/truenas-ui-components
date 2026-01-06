@@ -1,28 +1,28 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { Heart, Home, Menu, Search, Settings, Star, User } from 'lucide';
-import { iconMarker } from '../lib/icon/icon-marker';
+import { tnIconMarker } from '../lib/icon/icon-marker';
 import { TnIconRegistryService } from '../lib/icon/icon-registry.service';
 import { TnIconComponent } from '../lib/icon/icon.component';
 
 // Mark MDI icons for sprite generation (used in story templates)
-iconMarker('bell', 'mdi');
-iconMarker('close', 'mdi');
-iconMarker('cog', 'mdi');
-iconMarker('content-copy', 'mdi');
-iconMarker('database', 'mdi');
-iconMarker('delete', 'mdi');
-iconMarker('file', 'mdi');
-iconMarker('folder', 'mdi');
-iconMarker('harddisk', 'mdi');
-iconMarker('magnify', 'mdi');
-iconMarker('memory', 'mdi');
-iconMarker('menu', 'mdi');
-iconMarker('nas', 'mdi');
-iconMarker('network', 'mdi');
-iconMarker('pencil', 'mdi');
-iconMarker('refresh', 'mdi');
-iconMarker('server', 'mdi');
-iconMarker('star', 'mdi');
+tnIconMarker('bell', 'mdi');
+tnIconMarker('close', 'mdi');
+tnIconMarker('cog', 'mdi');
+tnIconMarker('content-copy', 'mdi');
+tnIconMarker('database', 'mdi');
+tnIconMarker('delete', 'mdi');
+tnIconMarker('file', 'mdi');
+tnIconMarker('folder', 'mdi');
+tnIconMarker('harddisk', 'mdi');
+tnIconMarker('magnify', 'mdi');
+tnIconMarker('memory', 'mdi');
+tnIconMarker('menu', 'mdi');
+tnIconMarker('nas', 'mdi');
+tnIconMarker('network', 'mdi');
+tnIconMarker('pencil', 'mdi');
+tnIconMarker('refresh', 'mdi');
+tnIconMarker('server', 'mdi');
+tnIconMarker('star', 'mdi');
 
 const meta: Meta<TnIconComponent> = {
   title: 'Components/Icon',

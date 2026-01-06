@@ -1,9 +1,9 @@
 import { execSync } from 'node:child_process';
 
 export function findIconsWithMarker(path: string, skipIcons?: Set<string>): Set<string> {
-  // Updated regex to capture iconMarker() and libIconMarker() calls with optional second parameter
-  // Matches: iconMarker('name') or iconMarker('name', 'library') or libIconMarker('tn-name')
-  const command = `grep -rEo "(lib)?iconMarker\\\\('[^']+',?\\s*'?[^'\\)]*'?\\)" --include="*.ts" --include="*.html" ${path}`;
+  // Updated regex to capture tnIconMarker() and libIconMarker() calls with optional second parameter
+  // Matches: tnIconMarker('name') or tnIconMarker('name', 'library') or libIconMarker('tn-name')
+  const command = `grep -rEo "(tn|lib)IconMarker\\\\('[^']+',?\\s*'?[^'\\)]*'?\\)" --include="*.ts" --include="*.html" ${path}`;
 
   const icons = new Set<string>();
 
@@ -31,7 +31,7 @@ export function findIconsWithMarker(path: string, skipIcons?: Set<string>): Set<
         const libraryMatch = /,\s*'([^']+)'/.exec(match);
         const library = libraryMatch?.[1];
 
-        // Apply prefix transformation (matching runtime iconMarker() logic)
+        // Apply prefix transformation (matching runtime tnIconMarker() logic)
         if (library === 'mdi' && !iconName.startsWith('mdi-')) {
           iconName = `mdi-${iconName}`;
         } else if (library === 'custom' && !iconName.startsWith('app-')) {

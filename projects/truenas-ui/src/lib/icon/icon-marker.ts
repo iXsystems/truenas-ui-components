@@ -1,5 +1,5 @@
 /**
- * Marks an icon name for inclusion in the sprite generation.
+ * Marks an icon name for inclusion in the TrueNAS UI sprite generation.
  *
  * This function serves two purposes:
  * 1. At runtime: Applies library-specific prefixes (e.g., mdi-, app-)
@@ -14,19 +14,19 @@
  *
  * @example
  * // Dynamic MDI icon
- * const iconName = condition ? iconMarker("pencil", "mdi") : iconMarker("delete", "mdi");
+ * const iconName = condition ? tnIconMarker("pencil", "mdi") : tnIconMarker("delete", "mdi");
  * <tn-icon [name]="iconName"></tn-icon>
  *
  * @example
  * // Dynamic custom icon (consumer's own icon)
- * const logo = iconMarker("your-logo-name", "custom");
+ * const logo = tnIconMarker("your-logo-name", "custom");
  * <tn-icon [name]="logo"></tn-icon>
  *
  * @example
  * // Array of dynamic icons
  * const actions = [
- *   { name: "Save", icon: iconMarker("content-save", "mdi") },
- *   { name: "Cancel", icon: iconMarker("close", "mdi") }
+ *   { name: "Save", icon: tnIconMarker("content-save", "mdi") },
+ *   { name: "Cancel", icon: tnIconMarker("close", "mdi") }
  * ];
  *
  * @param iconName - The icon name to mark for sprite inclusion
@@ -34,7 +34,7 @@
  * @returns The icon name with appropriate prefix applied
  * @public
  */
-export function iconMarker(
+export function tnIconMarker(
   iconName: string,
   library?: 'mdi' | 'material' | 'custom'
 ): string {

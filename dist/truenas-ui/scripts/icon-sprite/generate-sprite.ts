@@ -78,7 +78,7 @@ export async function generateSprite(config: SpriteGeneratorConfig = {}): Promis
     warnAboutDuplicates(allIcons);
 
     if (!allIcons.size) {
-      throw new Error('No icons found in the project. Make sure your templates include <tn-icon> elements or use iconMarker() for dynamic icons.');
+      throw new Error('No icons found in the project. Make sure your templates include <tn-icon> elements or use tnIconMarker() for dynamic icons.');
     }
 
     const icons = getIconPaths(allIcons, resolved.projectRoot);

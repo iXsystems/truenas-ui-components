@@ -59,7 +59,7 @@ The system supports four icon sources with automatic namespace separation:
 
 **Usage:**
 ```typescript
-iconMarker('folder', 'mdi');
+tnIconMarker('folder', 'mdi');
 ```
 
 **Template:**
@@ -75,7 +75,7 @@ Official Google Material Design icons from @material-design-icons
 
 **Usage:**
 ```typescript
-iconMarker('home', 'material');
+tnIconMarker('home', 'material');
 ```
 
 **Template:**
@@ -97,7 +97,7 @@ libIconMarker('tn-dataset');
 
 **Usage in your app:**
 ```typescript
-iconMarker('dataset', 'custom');  // Resolves to tn-dataset
+tnIconMarker('dataset', 'custom');  // Resolves to tn-dataset
 ```
 
 **Template:**
@@ -115,7 +115,7 @@ Your application-specific custom icons (app- prefix)
 
 **Usage:**
 ```typescript
-iconMarker('your-icon', 'custom');  // Resolves to app-your-icon
+tnIconMarker('your-icon', 'custom');  // Resolves to app-your-icon
 ```
 
 **Template:**
@@ -127,15 +127,15 @@ iconMarker('your-icon', 'custom');  // Resolves to app-your-icon
 
 ## Dynamic Icons
 
-If you use icons dynamically in TypeScript (not directly in templates), mark them with `iconMarker()`:
+If you use icons dynamically in TypeScript (not directly in templates), mark them with `tnIconMarker()`:
 
 ```typescript
-import { iconMarker } from 'truenas-ui';
+import { tnIconMarker } from 'truenas-ui';
 
 // Mark icons for sprite generation
-iconMarker('code-json', 'mdi');
-iconMarker('language-typescript', 'mdi');
-iconMarker('file-document', 'mdi');
+tnIconMarker('code-json', 'mdi');
+tnIconMarker('language-typescript', 'mdi');
+tnIconMarker('file-document', 'mdi');
 
 // Then use them dynamically
 getFileIcon(filename: string): string {
@@ -173,9 +173,9 @@ Create your icon file (e.g., `my-logo.svg`) in `src/assets/icons/custom/`:
 ### Step 3: Mark the Icon
 
 ```typescript
-import { iconMarker } from 'truenas-ui';
+import { tnIconMarker } from 'truenas-ui';
 
-iconMarker('my-logo', 'custom');
+tnIconMarker('my-logo', 'custom');
 ```
 
 ### Step 4: Generate Sprite
@@ -207,7 +207,7 @@ yarn icons
 
 The sprite generation system:
 
-1. **Scans TypeScript files** for `iconMarker()` and `libIconMarker()` calls
+1. **Scans TypeScript files** for `tnIconMarker()` and `libIconMarker()` calls
 2. **Scans HTML templates** for `<tn-icon>` component usage
 3. **Resolves icon paths** based on library type and prefix rules
 4. **Generates sprite** with only the icons you use (tree-shaking)
@@ -220,10 +220,10 @@ The system automatically applies prefixes to prevent naming conflicts:
 
 | Library | Your Code | Sprite Name | Source |
 |---------|-----------|-------------|---------|
-| MDI | `iconMarker('folder', 'mdi')` | `mdi-folder` | @mdi/svg package |
-| Material | `iconMarker('home', 'material')` | `home` | @material-design-icons package |
-| Library Custom | `iconMarker('dataset', 'custom')` | `tn-dataset` | Library assets |
-| Consumer Custom | `iconMarker('my-logo', 'custom')` | `app-my-logo` | Your app assets |
+| MDI | `tnIconMarker('folder', 'mdi')` | `mdi-folder` | @mdi/svg package |
+| Material | `tnIconMarker('home', 'material')` | `home` | @material-design-icons package |
+| Library Custom | `tnIconMarker('dataset', 'custom')` | `tn-dataset` | Library assets |
+| Consumer Custom | `tnIconMarker('my-logo', 'custom')` | `app-my-logo` | Your app assets |
 
 This ensures library icons (`tn-*`) never conflict with your app icons (`app-*`).
 
@@ -252,12 +252,12 @@ The scanner may warn about icons used in documentation or comments. These warnin
 
 ### Dynamic icons not included?
 
-Make sure you've marked them with `iconMarker()` and run `yarn icons` after adding the marker.
+Make sure you've marked them with `tnIconMarker()` and run `yarn icons` after adding the marker.
 
 ## Best Practices
 
 1. **Use the sprite system for MDI and Material icons** - Don't register them manually
-2. **Mark dynamic icons** - Use `iconMarker()` for icons used in TypeScript logic
+2. **Mark dynamic icons** - Use `tnIconMarker()` for icons used in TypeScript logic
 3. **Regenerate after changes** - Run `yarn icons` when adding/removing icon usage
 4. **Use semantic naming** - Choose icon names that describe their purpose
 5. **Provide accessibility labels** - Use `ariaLabel` for icon-only buttons

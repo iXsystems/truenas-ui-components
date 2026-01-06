@@ -75,7 +75,7 @@ Navigate to your new directory and create these required files:
   - See `component_templates.md` for story templates
   - Include multiple variants (Default, Primary, Disabled, etc.)
   - Add interaction tests with `play` functions
-  - If using icons, add `iconMarker()` calls at top of file
+  - If using icons, add `tnIconMarker()` calls at top of file
 
 ### Phase 5: Testing & Validation
 

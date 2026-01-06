@@ -110,7 +110,7 @@ npm run icons
 
 This will:
 - Scan your templates for `<tn-icon>` elements
-- Detect icons marked with `iconMarker()` in TypeScript
+- Detect icons marked with `tnIconMarker()` in TypeScript
 - Generate `src/assets/icons/sprite.svg` with only used icons
 - Create `src/assets/icons/sprite-config.json` with manifest
 
@@ -149,25 +149,25 @@ npx truenas-icons generate --config ./my-config.js
 
 ### Marking Dynamic Icons
 
-For icons whose names are determined at runtime, use `iconMarker()` to ensure they're included in the sprite:
+For icons whose names are determined at runtime, use `tnIconMarker()` to ensure they're included in the sprite:
 
 ```typescript
-import { iconMarker } from 'truenas-ui';
+import { tnIconMarker } from 'truenas-ui';
 
 // In arrays or objects
 const actions = [
-  { name: 'Save', icon: iconMarker('mdi-content-save') },
-  { name: 'Delete', icon: iconMarker('mdi-delete') }
+  { name: 'Save', icon: tnIconMarker('mdi-content-save') },
+  { name: 'Delete', icon: tnIconMarker('mdi-delete') }
 ];
 
 // In conditional logic
 const icon = isEditing
-  ? iconMarker('mdi-pencil')
-  : iconMarker('mdi-eye');
+  ? tnIconMarker('mdi-pencil')
+  : tnIconMarker('mdi-eye');
 
 // In component properties
 export class MyComponent {
-  icon = iconMarker('mdi-database');
+  icon = tnIconMarker('mdi-database');
 }
 ```
 

@@ -2292,7 +2292,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
         }], ctorParameters: () => [] });
 
 /**
- * Marks an icon name for inclusion in the sprite generation.
+ * Marks an icon name for inclusion in the TrueNAS UI sprite generation.
  *
  * This function serves two purposes:
  * 1. At runtime: Applies library-specific prefixes (e.g., mdi-, app-)
@@ -2307,19 +2307,19 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  *
  * @example
  * // Dynamic MDI icon
- * const iconName = condition ? iconMarker("pencil", "mdi") : iconMarker("delete", "mdi");
+ * const iconName = condition ? tnIconMarker("pencil", "mdi") : tnIconMarker("delete", "mdi");
  * <tn-icon [name]="iconName"></tn-icon>
  *
  * @example
  * // Dynamic custom icon (consumer's own icon)
- * const logo = iconMarker("your-logo-name", "custom");
+ * const logo = tnIconMarker("your-logo-name", "custom");
  * <tn-icon [name]="logo"></tn-icon>
  *
  * @example
  * // Array of dynamic icons
  * const actions = [
- *   { name: "Save", icon: iconMarker("content-save", "mdi") },
- *   { name: "Cancel", icon: iconMarker("close", "mdi") }
+ *   { name: "Save", icon: tnIconMarker("content-save", "mdi") },
+ *   { name: "Cancel", icon: tnIconMarker("close", "mdi") }
  * ];
  *
  * @param iconName - The icon name to mark for sprite inclusion
@@ -2327,7 +2327,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * @returns The icon name with appropriate prefix applied
  * @public
  */
-function iconMarker(iconName, library) {
+function tnIconMarker(iconName, library) {
     // Apply library-specific prefixes
     if (library === 'mdi' && !iconName.startsWith('mdi-')) {
         return `mdi-${iconName}`;
@@ -7996,5 +7996,5 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * Generated bundle index. Do not edit.
  */
 
-export { CommonShortcuts, DEFAULT_THEME, DiskIconComponent, DiskType, FileSizePipe, InputType, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, THEME_MAP, THEME_STORAGE_KEY, TN_THEME_DEFINITIONS, TnBannerComponent, TnBannerHarness, TnBrandedSpinnerComponent, TnButtonComponent, TnButtonToggleComponent, TnButtonToggleGroupComponent, TnCalendarComponent, TnCalendarHeaderComponent, TnCardComponent, TnCellDefDirective, TnCheckboxComponent, TnChipComponent, TnConfirmDialogComponent, TnDateInputComponent, TnDateRangeInputComponent, TnDialog, TnDialogShellComponent, TnDividerComponent, TnDividerDirective, TnExpansionPanelComponent, TnFilePickerComponent, TnFilePickerPopupComponent, TnFormFieldComponent, TnHeaderCellDefDirective, TnIconButtonComponent, TnIconComponent, TnIconRegistryService, TnInputComponent, TnInputDirective, TnKeyboardShortcutComponent, TnKeyboardShortcutService, TnListAvatarDirective, TnListComponent, TnListIconDirective, TnListItemComponent, TnListItemLineDirective, TnListItemPrimaryDirective, TnListItemSecondaryDirective, TnListItemTitleDirective, TnListItemTrailingDirective, TnListOptionComponent, TnListSubheaderComponent, TnMenuComponent, TnMenuTriggerDirective, TnMonthViewComponent, TnMultiYearViewComponent, TnNestedTreeNodeComponent, TnParticleProgressBarComponent, TnProgressBarComponent, TnRadioComponent, TnSelectComponent, TnSelectionListComponent, TnSlideToggleComponent, TnSliderComponent, TnSliderThumbDirective, TnSliderWithLabelDirective, TnSpinnerComponent, TnSpriteLoaderService, TnStepComponent, TnStepperComponent, TnTabComponent, TnTabPanelComponent, TnTableColumnDirective, TnTableComponent, TnTabsComponent, TnTheme, TnThemeService, TnTimeInputComponent, TnTooltipComponent, TnTooltipDirective, TnTreeComponent, TnTreeFlatDataSource, TnTreeFlattener, TnTreeNodeComponent, TnTreeNodeOutletDirective, TruenasIconsService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, defaultSpriteBasePath, defaultSpriteConfigPath, iconMarker, libIconMarker, registerLucideIcons, setupLucideIntegration };
+export { CommonShortcuts, DEFAULT_THEME, DiskIconComponent, DiskType, FileSizePipe, InputType, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, THEME_MAP, THEME_STORAGE_KEY, TN_THEME_DEFINITIONS, TnBannerComponent, TnBannerHarness, TnBrandedSpinnerComponent, TnButtonComponent, TnButtonToggleComponent, TnButtonToggleGroupComponent, TnCalendarComponent, TnCalendarHeaderComponent, TnCardComponent, TnCellDefDirective, TnCheckboxComponent, TnChipComponent, TnConfirmDialogComponent, TnDateInputComponent, TnDateRangeInputComponent, TnDialog, TnDialogShellComponent, TnDividerComponent, TnDividerDirective, TnExpansionPanelComponent, TnFilePickerComponent, TnFilePickerPopupComponent, TnFormFieldComponent, TnHeaderCellDefDirective, TnIconButtonComponent, TnIconComponent, TnIconRegistryService, TnInputComponent, TnInputDirective, TnKeyboardShortcutComponent, TnKeyboardShortcutService, TnListAvatarDirective, TnListComponent, TnListIconDirective, TnListItemComponent, TnListItemLineDirective, TnListItemPrimaryDirective, TnListItemSecondaryDirective, TnListItemTitleDirective, TnListItemTrailingDirective, TnListOptionComponent, TnListSubheaderComponent, TnMenuComponent, TnMenuTriggerDirective, TnMonthViewComponent, TnMultiYearViewComponent, TnNestedTreeNodeComponent, TnParticleProgressBarComponent, TnProgressBarComponent, TnRadioComponent, TnSelectComponent, TnSelectionListComponent, TnSlideToggleComponent, TnSliderComponent, TnSliderThumbDirective, TnSliderWithLabelDirective, TnSpinnerComponent, TnSpriteLoaderService, TnStepComponent, TnStepperComponent, TnTabComponent, TnTabPanelComponent, TnTableColumnDirective, TnTableComponent, TnTabsComponent, TnTheme, TnThemeService, TnTimeInputComponent, TnTooltipComponent, TnTooltipDirective, TnTreeComponent, TnTreeFlatDataSource, TnTreeFlattener, TnTreeNodeComponent, TnTreeNodeOutletDirective, TruenasIconsService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, defaultSpriteBasePath, defaultSpriteConfigPath, libIconMarker, registerLucideIcons, setupLucideIntegration, tnIconMarker };
 //# sourceMappingURL=truenas-ui.mjs.map

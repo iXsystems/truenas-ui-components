@@ -2,7 +2,7 @@ import { CdkTreeModule } from '@angular/cdk/tree';
 import { CommonModule } from '@angular/common';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
-import { iconMarker } from '../lib/icon/icon-marker';
+import { tnIconMarker } from '../lib/icon/icon-marker';
 import { TnIconComponent } from '../lib/icon/icon.component';
 import { TnNestedTreeNodeComponent } from '../lib/tree/nested-tree-node.component';
 import { TnTreeNodeOutletDirective } from '../lib/tree/tree-node-outlet.directive';
@@ -11,11 +11,11 @@ import { TnTreeComponent, FlatTreeControl, TnTreeFlatDataSource, TnTreeFlattener
 
 // Ensure these icons are included in the library sprite
 // Using the new two-parameter API
-iconMarker('cpu-64-bit', 'mdi');
-iconMarker('file', 'mdi');
-iconMarker('folder', 'mdi');
-iconMarker('nas', 'mdi');
-iconMarker('share-variant', 'mdi');
+tnIconMarker('cpu-64-bit', 'mdi');
+tnIconMarker('file', 'mdi');
+tnIconMarker('folder', 'mdi');
+tnIconMarker('nas', 'mdi');
+tnIconMarker('share-variant', 'mdi');
 
 // Example data structure for CDK Tree integration
 interface FileNode {
