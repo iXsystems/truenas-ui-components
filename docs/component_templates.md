@@ -536,11 +536,11 @@ export const Large: Story = {
 ```typescript
 import type { Meta, StoryObj } from '@storybook/angular';
 import { Tn[Name]Component } from '../lib/tn-[name]/tn-[name].component';
-import { iconMarker } from '../lib/icon-marker';
+import { tnIconMarker } from '../lib/icon-marker';
 
 // Mark icons for sprite generation
-iconMarker('close', 'mdi');
-iconMarker('check', 'mdi');
+tnIconMarker('close', 'mdi');
+tnIconMarker('check', 'mdi');
 
 const meta: Meta<Tn[Name]Component> = {
   title: 'Components/[Name]',

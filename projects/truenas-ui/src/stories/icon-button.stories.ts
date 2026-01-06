@@ -2,25 +2,25 @@ import type { Meta, StoryObj } from '@storybook/angular';
 import { expect } from '@storybook/jest';
 import { within } from '@storybook/testing-library';
 import { TnCardComponent } from '../lib/card/card.component';
-import { iconMarker } from '../lib/icon/icon-marker';
+import { tnIconMarker } from '../lib/icon/icon-marker';
 import { TnIconButtonComponent } from '../lib/icon-button/icon-button.component';
 
 // Mark MDI icons for sprite generation (used in story templates)
-iconMarker('bell', 'mdi');
-iconMarker('close', 'mdi');
-iconMarker('cog', 'mdi');
-iconMarker('content-copy', 'mdi');
-iconMarker('delete', 'mdi');
-iconMarker('dots-vertical', 'mdi');
-iconMarker('heart', 'mdi');
-iconMarker('home', 'mdi');
-iconMarker('information', 'mdi');
-iconMarker('magnify', 'mdi');
-iconMarker('menu', 'mdi');
-iconMarker('pencil', 'mdi');
-iconMarker('refresh', 'mdi');
-iconMarker('share-variant', 'mdi');
-iconMarker('star', 'mdi');
+tnIconMarker('bell', 'mdi');
+tnIconMarker('close', 'mdi');
+tnIconMarker('cog', 'mdi');
+tnIconMarker('content-copy', 'mdi');
+tnIconMarker('delete', 'mdi');
+tnIconMarker('dots-vertical', 'mdi');
+tnIconMarker('heart', 'mdi');
+tnIconMarker('home', 'mdi');
+tnIconMarker('information', 'mdi');
+tnIconMarker('magnify', 'mdi');
+tnIconMarker('menu', 'mdi');
+tnIconMarker('pencil', 'mdi');
+tnIconMarker('refresh', 'mdi');
+tnIconMarker('share-variant', 'mdi');
+tnIconMarker('star', 'mdi');
 
 const meta: Meta<TnIconButtonComponent> = {
   title: 'Components/Icon Button',

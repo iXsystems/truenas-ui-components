@@ -132,7 +132,7 @@ play: async ({ canvasElement }) => {
 **Icon Marker:**
 For sprite generation in Storybook stories
 ```typescript
-iconMarker('icon-name', 'library-type');
+tnIconMarker('icon-name', 'library-type');
 ```
 
 ### Existing Examples

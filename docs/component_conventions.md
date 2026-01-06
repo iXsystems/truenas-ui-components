@@ -187,10 +187,10 @@ libIconMarker('tn-icon-name');
 
 **In Stories/Tests:**
 ```typescript
-import { iconMarker } from '../lib/icon-marker';
+import { tnIconMarker } from '../lib/icon-marker';
 
-iconMarker('close', 'mdi');
-iconMarker('check', 'material');
+tnIconMarker('close', 'mdi');
+tnIconMarker('check', 'material');
 ```
 
 **Available icon libraries:**

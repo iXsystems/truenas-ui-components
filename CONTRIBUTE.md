@@ -106,24 +106,24 @@ libIconMarker('tn-snapshot');
 
 **For Application Code (Stories, Tests, Consumer Apps):**
 
-Use the two-parameter `iconMarker()` API:
+Use the two-parameter `tnIconMarker()` API:
 
 ```typescript
-import { iconMarker } from 'truenas-ui';
+import { tnIconMarker } from 'truenas-ui';
 
 // MDI icons
-iconMarker('folder', 'mdi');
-iconMarker('server', 'mdi');
+tnIconMarker('folder', 'mdi');
+tnIconMarker('server', 'mdi');
 
 // Material Design icons
-iconMarker('home', 'material');
-iconMarker('settings', 'material');
+tnIconMarker('home', 'material');
+tnIconMarker('settings', 'material');
 
 // Library custom icons
-iconMarker('dataset', 'custom');  // Resolves to tn-dataset
+tnIconMarker('dataset', 'custom');  // Resolves to tn-dataset
 
 // Consumer custom icons (in your app)
-iconMarker('my-logo', 'custom');  // Resolves to app-my-logo
+tnIconMarker('my-logo', 'custom');  // Resolves to app-my-logo
 ```
 
 ### Icon Libraries
@@ -131,25 +131,25 @@ iconMarker('my-logo', 'custom');  // Resolves to app-my-logo
 The system supports four icon sources:
 
 1. **MDI (Material Design Icons)**: 7000+ icons from @mdi/svg
-   - Usage: `iconMarker('icon-name', 'mdi')`
+   - Usage: `tnIconMarker('icon-name', 'mdi')`
    - Rendered: `<tn-icon name="icon-name" library="mdi">`
    - Sprite name: `mdi-icon-name`
 
 2. **Material Design Icons**: Official Google Material icons
-   - Usage: `iconMarker('icon-name', 'material')`
+   - Usage: `tnIconMarker('icon-name', 'material')`
    - Rendered: `<tn-icon name="icon-name" library="material">`
    - Sprite name: `icon-name` (no prefix)
 
 3. **Library Custom Icons**: TrueNAS-specific icons in the library
    - Location: `projects/truenas-ui/assets/icons/custom/`
    - Usage in library: `libIconMarker('tn-icon-name')`
-   - Usage in stories: `iconMarker('icon-name', 'custom')`
+   - Usage in stories: `tnIconMarker('icon-name', 'custom')`
    - Rendered: `<tn-icon name="icon-name" library="custom">`
    - Sprite name: `tn-icon-name`
 
 4. **Consumer Custom Icons**: Application-specific icons
    - Location: `src/assets/icons/custom/` (in your app)
-   - Usage: `iconMarker('icon-name', 'custom')`
+   - Usage: `tnIconMarker('icon-name', 'custom')`
    - Rendered: `<tn-icon name="icon-name" library="custom">`
    - Sprite name: `app-icon-name`
 
@@ -192,7 +192,7 @@ To add a new custom icon to the library:
 
 The sprite generation system automatically:
 
-1. **Scans your code** for `iconMarker()` and `libIconMarker()` calls
+1. **Scans your code** for `tnIconMarker()` and `libIconMarker()` calls
 2. **Scans templates** for `<tn-icon>` component usage
 3. **Resolves icon paths** based on library type and prefix
 4. **Generates a sprite** containing only the icons you use
@@ -218,16 +218,16 @@ The pre-commit hook enforces proper icon marker usage:
 
 **Rules:**
 - Library component code must use `libIconMarker()` with `tn-` prefix
-- Cannot use `iconMarker()` in library component code (only in tests/stories)
+- Cannot use `tnIconMarker()` in library component code (only in tests/stories)
 - `libIconMarker()` calls must include `tn-` prefix
 
 **Example violations:**
 
 ```typescript
-// ❌ BAD - Using iconMarker() in library component code
+// ❌ BAD - Using tnIconMarker() in library component code
 export class MyComponent {
   constructor() {
-    iconMarker('dataset', 'custom');  // Will fail pre-commit
+    tnIconMarker('dataset', 'custom');  // Will fail pre-commit
   }
 }
 
@@ -245,9 +245,9 @@ export class MyComponent {
   }
 }
 
-// ✅ GOOD - Stories and tests can use iconMarker()
+// ✅ GOOD - Stories and tests can use tnIconMarker()
 // In my-component.stories.ts
-iconMarker('dataset', 'custom');
+tnIconMarker('dataset', 'custom');
 ```
 
 ## Component Development
@@ -324,10 +324,10 @@ iconMarker('dataset', 'custom');
    ```typescript
    import type { Meta, StoryObj } from '@storybook/angular';
    import { TnMyComponentComponent } from '../lib/tn-my-component/tn-my-component.component';
-   import { iconMarker } from '../lib/icon-marker';
+   import { tnIconMarker } from '../lib/icon-marker';
 
    // Mark any icons used in the story
-   iconMarker('settings', 'mdi');
+   tnIconMarker('settings', 'mdi');
 
    const meta: Meta<TnMyComponentComponent> = {
      title: 'Components/My Component',

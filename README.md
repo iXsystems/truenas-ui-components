@@ -104,16 +104,16 @@ The build output is located in `dist/truenas-ui/` and includes compiled modules,
 The library includes an automatic sprite generation system. Mark icons in your code and they'll be automatically included in the sprite:
 
 ```typescript
-import { iconMarker } from 'truenas-ui';
+import { tnIconMarker } from 'truenas-ui';
 
 // MDI icons
-iconMarker('folder', 'mdi');
+tnIconMarker('folder', 'mdi');
 
 // Material icons
-iconMarker('home', 'material');
+tnIconMarker('home', 'material');
 
 // Custom icons
-iconMarker('dataset', 'custom');
+tnIconMarker('dataset', 'custom');
 ```
 
 Use icons in templates:

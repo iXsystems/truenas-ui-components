@@ -3,13 +3,13 @@ import { expect } from '@storybook/jest';
 import { within } from '@storybook/testing-library';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnBannerComponent } from '../lib/banner/banner.component';
-import { iconMarker } from '../lib/icon/icon-marker';
+import { tnIconMarker } from '../lib/icon/icon-marker';
 
 // Mark icons for sprite generation (since they're computed dynamically)
-iconMarker('information', 'mdi');
-iconMarker('alert', 'mdi');
-iconMarker('alert-circle', 'mdi');
-iconMarker('check-circle', 'mdi');
+tnIconMarker('information', 'mdi');
+tnIconMarker('alert', 'mdi');
+tnIconMarker('alert-circle', 'mdi');
+tnIconMarker('check-circle', 'mdi');
 
 // Load harness documentation
 const harnessDoc = loadHarnessDoc('banner');
