@@ -9,6 +9,7 @@
  * Options:
  *   --src <dirs>        Comma-separated source directories to scan (default: ./src/lib,./src/app)
  *   --output <dir>      Output directory for sprite files (default: ./src/assets/icons)
+ *   --url <path>        Runtime URL path for sprite (defaults to output dir with './' stripped)
  *   --custom <dir>      Custom icons directory (optional)
  *   --config <file>     Configuration file path (default: truenas-icons.config.js)
  *   --help              Show help
@@ -39,6 +40,11 @@ Options:
 
   --output <dir>      Output directory for sprite files
                       Default: ./src/assets/icons
+
+  --url <path>        Runtime URL path for sprite (in sprite-config.json)
+                      Default: output dir with './' stripped
+                      Use when build transforms paths (e.g., Angular strips 'src/')
+                      Example: --output ./src/assets/tn-icons --url assets/tn-icons
 
   --custom <dir>      Custom icons directory (optional)
                       Icons will be prefixed with 'tn-'
@@ -77,6 +83,7 @@ function parseArgs() {
     command: null as string | null,
     srcDirs: null as string[] | null,
     outputDir: null as string | null,
+    spriteUrlPath: null as string | null,
     customIconsDir: null as string | null,
     configFile: 'truenas-icons.config.js',
     showHelp: false,
@@ -93,6 +100,8 @@ function parseArgs() {
       parsed.srcDirs = args[++i]?.split(',') || null;
     } else if (arg === '--output') {
       parsed.outputDir = args[++i] || null;
+    } else if (arg === '--url') {
+      parsed.spriteUrlPath = args[++i] || null;
     } else if (arg === '--custom') {
       parsed.customIconsDir = args[++i] || null;
     } else if (arg === '--config') {
@@ -148,6 +157,7 @@ async function main() {
     const config = {
       srcDirs: args.srcDirs || fileConfig.srcDirs,
       outputDir: args.outputDir || fileConfig.outputDir,
+      spriteUrlPath: args.spriteUrlPath || fileConfig.spriteUrlPath,
       customIconsDir: args.customIconsDir || fileConfig.customIconsDir,
       projectRoot: process.cwd(),
     };

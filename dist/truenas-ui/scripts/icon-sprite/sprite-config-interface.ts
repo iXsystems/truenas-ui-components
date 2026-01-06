@@ -20,6 +20,15 @@ export interface SpriteGeneratorConfig {
   outputDir?: string;
 
   /**
+   * Runtime URL path for the sprite (used in sprite-config.json)
+   * If not specified, defaults to outputDir with './' stripped
+   *
+   * Use this when your build process transforms paths (e.g., Angular strips 'src/')
+   * Example: outputDir='./src/assets/tn-icons', spriteUrlPath='assets/tn-icons'
+   */
+  spriteUrlPath?: string;
+
+  /**
    * Optional directory containing custom SVG icons
    * Custom icons will be automatically prefixed with 'tn-'
    */
@@ -38,6 +47,7 @@ export interface SpriteGeneratorConfig {
 export interface ResolvedSpriteConfig {
   srcDirs: string[];
   outputDir: string;
+  spriteUrlPath: string;
   customIconsDir: string | null;
   projectRoot: string;
 }
@@ -47,11 +57,16 @@ export interface ResolvedSpriteConfig {
  */
 export function resolveConfig(config: SpriteGeneratorConfig = {}): ResolvedSpriteConfig {
   const projectRoot = config.projectRoot || process.cwd();
+  const outputDir = config.outputDir || `./${defaultSpriteBasePath}`;
+
+  // If spriteUrlPath is not provided, derive it from outputDir by stripping './'
+  const spriteUrlPath = config.spriteUrlPath || outputDir.replace(/^\.\//, '');
 
   return {
     projectRoot,
     srcDirs: config.srcDirs || ['./src/lib', './src/app'],
-    outputDir: config.outputDir || `./${defaultSpriteBasePath}`,
+    outputDir,
+    spriteUrlPath,
     customIconsDir: config.customIconsDir || null,
   };
 }
