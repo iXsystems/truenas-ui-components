@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { Heart, Home, Menu, Search, Settings, Star, User } from 'lucide';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { tnIconMarker } from '../lib/icon/icon-marker';
 import { TnIconRegistryService } from '../lib/icon/icon-registry.service';
 import { TnIconComponent } from '../lib/icon/icon.component';
@@ -23,6 +24,9 @@ tnIconMarker('pencil', 'mdi');
 tnIconMarker('refresh', 'mdi');
 tnIconMarker('server', 'mdi');
 tnIconMarker('star', 'mdi');
+
+// Load harness documentation
+const harnessDoc = loadHarnessDoc('icon');
 
 const meta: Meta<TnIconComponent> = {
   title: 'Components/Icon',
@@ -369,7 +373,7 @@ export const SizesAndColors: Story = {
           <tn-icon name="harddisk" library="mdi" size="lg"></tn-icon>
           <tn-icon name="harddisk" library="mdi" size="xl"></tn-icon>
         </div>
-        
+
         <h4>Colors</h4>
         <div style="display: flex; align-items: center; gap: 16px;">
           <tn-icon name="server" library="mdi" size="lg" color="var(--tn-primary, #007acc)"></tn-icon>
@@ -388,4 +392,22 @@ export const SizesAndColors: Story = {
       },
     },
   },
+};
+
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      canvas: {
+        hidden: true,
+        sourceState: 'none'
+      },
+      description: {
+        story: harnessDoc || ''
+      }
+    },
+    controls: { disable: true },
+    layout: 'fullscreen'
+  },
+  render: () => ({ template: '' })
 };
