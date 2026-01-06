@@ -41,7 +41,7 @@ declare class TnBannerComponent {
     /**
      * Get the appropriate icon name based on banner type
      */
-    iconName: _angular_core.Signal<"alert-circle" | "information" | "alert" | "check-circle">;
+    iconName: _angular_core.Signal<"information" | "alert" | "alert-circle" | "check-circle">;
     /**
      * Get ARIA role based on banner type
      * Error/warning use 'alert' for immediate attention
@@ -313,7 +313,7 @@ declare class TnCardComponent {
     title: _angular_core.InputSignal<string | undefined>;
     titleLink: _angular_core.InputSignal<string | undefined>;
     elevation: _angular_core.InputSignal<"none" | "low" | "medium" | "high">;
-    padding: _angular_core.InputSignal<"small" | "large" | "medium">;
+    padding: _angular_core.InputSignal<"large" | "medium" | "small">;
     padContent: _angular_core.InputSignal<boolean>;
     bordered: _angular_core.InputSignal<boolean>;
     background: _angular_core.InputSignal<boolean>;
@@ -342,12 +342,12 @@ declare class TnCardComponent {
 declare class TnExpansionPanelComponent {
     title: _angular_core.InputSignal<string | undefined>;
     elevation: _angular_core.InputSignal<"none" | "low" | "medium" | "high">;
-    padding: _angular_core.InputSignal<"small" | "large" | "medium">;
+    padding: _angular_core.InputSignal<"large" | "medium" | "small">;
     bordered: _angular_core.InputSignal<boolean>;
     background: _angular_core.InputSignal<boolean>;
     expanded: _angular_core.InputSignal<boolean>;
     disabled: _angular_core.InputSignal<boolean>;
-    titleStyle: _angular_core.InputSignal<"body" | "header" | "link">;
+    titleStyle: _angular_core.InputSignal<"link" | "header" | "body">;
     expandedChange: _angular_core.OutputEmitterRef<boolean>;
     toggleEvent: _angular_core.OutputEmitterRef<void>;
     private internalExpanded;
@@ -658,6 +658,127 @@ declare class TnSelectComponent<T = unknown> implements ControlValueAccessor {
     onKeydown(event: KeyboardEvent): void;
     static ɵfac: _angular_core.ɵɵFactoryDeclaration<TnSelectComponent<any>, never>;
     static ɵcmp: _angular_core.ɵɵComponentDeclaration<TnSelectComponent<any>, "tn-select", never, { "options": { "alias": "options"; "required": false; "isSignal": true; }; "optionGroups": { "alias": "optionGroups"; "required": false; "isSignal": true; }; "placeholder": { "alias": "placeholder"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; "testId": { "alias": "testId"; "required": false; "isSignal": true; }; }, { "selectionChange": "selectionChange"; }, never, never, true, never>;
+}
+
+/**
+ * Harness for interacting with tn-icon in tests.
+ * Provides filtering by icon name and library for existence checks.
+ *
+ * @example
+ * ```typescript
+ * // Check for existence
+ * const icon = await loader.getHarness(TnIconHarness);
+ *
+ * // Find icon by name
+ * const folderIcon = await loader.getHarness(
+ *   TnIconHarness.with({ name: 'folder' })
+ * );
+ *
+ * // Find icon by name and library
+ * const mdiIcon = await loader.getHarness(
+ *   TnIconHarness.with({ name: 'account-circle', library: 'mdi' })
+ * );
+ *
+ * // Check if icon exists
+ * const hasIcon = await loader.hasHarness(
+ *   TnIconHarness.with({ name: 'check' })
+ * );
+ * ```
+ */
+declare class TnIconHarness extends ComponentHarness {
+    /**
+     * The selector for the host element of a `TnIconComponent` instance.
+     */
+    static hostSelector: string;
+    /**
+     * Gets a `HarnessPredicate` that can be used to search for an icon
+     * with specific attributes.
+     *
+     * @param options Options for filtering which icon instances are considered a match.
+     * @returns A `HarnessPredicate` configured with the given options.
+     *
+     * @example
+     * ```typescript
+     * // Find icon by name
+     * const icon = await loader.getHarness(
+     *   TnIconHarness.with({ name: 'home' })
+     * );
+     *
+     * // Find icon by library
+     * const customIcon = await loader.getHarness(
+     *   TnIconHarness.with({ library: 'custom' })
+     * );
+     *
+     * // Find icon with specific size
+     * const largeIcon = await loader.getHarness(
+     *   TnIconHarness.with({ size: 'lg' })
+     * );
+     * ```
+     */
+    static with(options?: IconHarnessFilters): HarnessPredicate<TnIconHarness>;
+    /**
+     * Gets the icon name.
+     *
+     * @returns Promise resolving to the icon name.
+     *
+     * @example
+     * ```typescript
+     * const icon = await loader.getHarness(TnIconHarness);
+     * const name = await icon.getName();
+     * expect(name).toBe('folder');
+     * ```
+     */
+    getName(): Promise<string | null>;
+    /**
+     * Gets the icon library.
+     *
+     * @returns Promise resolving to the icon library.
+     *
+     * @example
+     * ```typescript
+     * const icon = await loader.getHarness(TnIconHarness);
+     * const library = await icon.getLibrary();
+     * expect(library).toBe('mdi');
+     * ```
+     */
+    getLibrary(): Promise<string | null>;
+    /**
+     * Gets the icon size.
+     *
+     * @returns Promise resolving to the icon size.
+     *
+     * @example
+     * ```typescript
+     * const icon = await loader.getHarness(TnIconHarness);
+     * const size = await icon.getSize();
+     * expect(size).toBe('lg');
+     * ```
+     */
+    getSize(): Promise<string | null>;
+    /**
+     * Gets the icon color.
+     *
+     * @returns Promise resolving to the icon color.
+     *
+     * @example
+     * ```typescript
+     * const icon = await loader.getHarness(TnIconHarness);
+     * const color = await icon.getColor();
+     * expect(color).toBe('primary');
+     * ```
+     */
+    getColor(): Promise<string | null>;
+}
+/**
+ * A set of criteria that can be used to filter a list of `TnIconHarness` instances.
+ */
+interface IconHarnessFilters extends BaseHarnessFilters {
+    /** Filters by icon name. */
+    name?: string;
+    /** Filters by icon library (material, mdi, custom, lucide). */
+    library?: string;
+    /** Filters by icon size (xs, sm, md, lg, xl). */
+    size?: string;
 }
 
 /**
@@ -2591,5 +2712,5 @@ declare const TN_THEME_DEFINITIONS: readonly TnThemeDefinition[];
  */
 declare const THEME_MAP: Map<TnTheme, TnThemeDefinition>;
 
-export { CommonShortcuts, DEFAULT_THEME, DiskIconComponent, DiskType, FileSizePipe, InputType, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, THEME_MAP, THEME_STORAGE_KEY, TN_THEME_DEFINITIONS, TnBannerComponent, TnBannerHarness, TnBrandedSpinnerComponent, TnButtonComponent, TnButtonToggleComponent, TnButtonToggleGroupComponent, TnCalendarComponent, TnCalendarHeaderComponent, TnCardComponent, TnCellDefDirective, TnCheckboxComponent, TnChipComponent, TnConfirmDialogComponent, TnDateInputComponent, TnDateRangeInputComponent, TnDialog, TnDialogShellComponent, TnDividerComponent, TnDividerDirective, TnExpansionPanelComponent, TnFilePickerComponent, TnFilePickerPopupComponent, TnFormFieldComponent, TnHeaderCellDefDirective, TnIconButtonComponent, TnIconComponent, TnIconRegistryService, TnInputComponent, TnInputDirective, TnKeyboardShortcutComponent, TnKeyboardShortcutService, TnListAvatarDirective, TnListComponent, TnListIconDirective, TnListItemComponent, TnListItemLineDirective, TnListItemPrimaryDirective, TnListItemSecondaryDirective, TnListItemTitleDirective, TnListItemTrailingDirective, TnListOptionComponent, TnListSubheaderComponent, TnMenuComponent, TnMenuTriggerDirective, TnMonthViewComponent, TnMultiYearViewComponent, TnNestedTreeNodeComponent, TnParticleProgressBarComponent, TnProgressBarComponent, TnRadioComponent, TnSelectComponent, TnSelectionListComponent, TnSlideToggleComponent, TnSliderComponent, TnSliderThumbDirective, TnSliderWithLabelDirective, TnSpinnerComponent, TnSpriteLoaderService, TnStepComponent, TnStepperComponent, TnTabComponent, TnTabPanelComponent, TnTableColumnDirective, TnTableComponent, TnTabsComponent, TnTheme, TnThemeService, TnTimeInputComponent, TnTooltipComponent, TnTooltipDirective, TnTreeComponent, TnTreeFlatDataSource, TnTreeFlattener, TnTreeNodeComponent, TnTreeNodeOutletDirective, TruenasIconsService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, defaultSpriteBasePath, defaultSpriteConfigPath, libIconMarker, registerLucideIcons, setupLucideIntegration, tnIconMarker };
-export type { BannerHarnessFilters, CalendarCell, ChipColor, CreateFolderEvent, DateRange, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem, IconLibrary, IconLibraryType, IconResult, IconSize, IconSource, KeyCombination, LabelType, LucideIconOptions, PathSegment, PlatformType, ProgressBarMode, ResolvedIcon, ShortcutHandler, SlideToggleColor, SpinnerMode, SpriteConfig, TabChangeEvent, TnBannerType, TnButtonToggleType, TnCardAction, TnCardControl, TnCardFooterLink, TnCardHeaderStatus, TnConfirmDialogData, TnDialogDefaults, TnDialogOpenTarget, TnFlatTreeNode, TnMenuItem, TnSelectOption, TnSelectOptionGroup, TnSelectionChange, TnTableDataSource, TnThemeDefinition, TooltipPosition, YearCell };
+export { CommonShortcuts, DEFAULT_THEME, DiskIconComponent, DiskType, FileSizePipe, InputType, LinuxModifierKeys, LinuxShortcuts, ModifierKeys, QuickShortcuts, ShortcutBuilder, StripMntPrefixPipe, THEME_MAP, THEME_STORAGE_KEY, TN_THEME_DEFINITIONS, TnBannerComponent, TnBannerHarness, TnBrandedSpinnerComponent, TnButtonComponent, TnButtonToggleComponent, TnButtonToggleGroupComponent, TnCalendarComponent, TnCalendarHeaderComponent, TnCardComponent, TnCellDefDirective, TnCheckboxComponent, TnChipComponent, TnConfirmDialogComponent, TnDateInputComponent, TnDateRangeInputComponent, TnDialog, TnDialogShellComponent, TnDividerComponent, TnDividerDirective, TnExpansionPanelComponent, TnFilePickerComponent, TnFilePickerPopupComponent, TnFormFieldComponent, TnHeaderCellDefDirective, TnIconButtonComponent, TnIconComponent, TnIconHarness, TnIconRegistryService, TnInputComponent, TnInputDirective, TnKeyboardShortcutComponent, TnKeyboardShortcutService, TnListAvatarDirective, TnListComponent, TnListIconDirective, TnListItemComponent, TnListItemLineDirective, TnListItemPrimaryDirective, TnListItemSecondaryDirective, TnListItemTitleDirective, TnListItemTrailingDirective, TnListOptionComponent, TnListSubheaderComponent, TnMenuComponent, TnMenuTriggerDirective, TnMonthViewComponent, TnMultiYearViewComponent, TnNestedTreeNodeComponent, TnParticleProgressBarComponent, TnProgressBarComponent, TnRadioComponent, TnSelectComponent, TnSelectionListComponent, TnSlideToggleComponent, TnSliderComponent, TnSliderThumbDirective, TnSliderWithLabelDirective, TnSpinnerComponent, TnSpriteLoaderService, TnStepComponent, TnStepperComponent, TnTabComponent, TnTabPanelComponent, TnTableColumnDirective, TnTableComponent, TnTabsComponent, TnTheme, TnThemeService, TnTimeInputComponent, TnTooltipComponent, TnTooltipDirective, TnTreeComponent, TnTreeFlatDataSource, TnTreeFlattener, TnTreeNodeComponent, TnTreeNodeOutletDirective, TruenasIconsService, TruncatePathPipe, WindowsModifierKeys, WindowsShortcuts, createLucideLibrary, createShortcut, defaultSpriteBasePath, defaultSpriteConfigPath, libIconMarker, registerLucideIcons, setupLucideIntegration, tnIconMarker };
+export type { BannerHarnessFilters, CalendarCell, ChipColor, CreateFolderEvent, DateRange, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem, IconHarnessFilters, IconLibrary, IconLibraryType, IconResult, IconSize, IconSource, KeyCombination, LabelType, LucideIconOptions, PathSegment, PlatformType, ProgressBarMode, ResolvedIcon, ShortcutHandler, SlideToggleColor, SpinnerMode, SpriteConfig, TabChangeEvent, TnBannerType, TnButtonToggleType, TnCardAction, TnCardControl, TnCardFooterLink, TnCardHeaderStatus, TnConfirmDialogData, TnDialogDefaults, TnDialogOpenTarget, TnFlatTreeNode, TnMenuItem, TnSelectOption, TnSelectOptionGroup, TnSelectionChange, TnTableDataSource, TnThemeDefinition, TooltipPosition, YearCell };

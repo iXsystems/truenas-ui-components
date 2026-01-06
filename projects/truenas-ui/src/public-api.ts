@@ -23,6 +23,7 @@ export * from './lib/keyboard-shortcut/keyboard-shortcut.component';
 export * from './lib/form-field/form-field.component';
 export * from './lib/select/select.component';
 export * from './lib/icon/icon.component';
+export * from './lib/icon/icon.harness';
 export * from './lib/icon/icon-registry.service';
 export * from './lib/icon/sprite-loader.service';
 export * from './lib/icon/icon-marker';
