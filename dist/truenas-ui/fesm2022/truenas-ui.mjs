@@ -6633,7 +6633,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "20.3.4", ngImpor
  * To regenerate this file, run:
  *   npm run generate-icons
  *
- * Generated: 2025-12-31T21:56:45.992Z
+ * Generated: 2026-01-06T19:41:48.379Z
  * Source: projects/truenas-ui/src/assets/icons
  */
 /* eslint-disable */

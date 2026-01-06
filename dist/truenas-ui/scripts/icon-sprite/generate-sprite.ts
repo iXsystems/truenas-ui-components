@@ -94,10 +94,8 @@ export async function generateSprite(config: SpriteGeneratorConfig = {}): Promis
     // eslint-disable-next-line sonarjs/hashing
     const hash = crypto.createHash('md5').update(buffer).digest('hex').slice(0, 10);
 
-    // Generate versioned URL relative to the project root (for use in Angular assets)
-    // The outputDir is absolute, so we use the original config value
-    const spriteRelativePath = resolved.outputDir.replace(/^\.\//, ''); // Remove leading ./
-    const versionedUrl = `${spriteRelativePath}/sprite.svg?v=${hash}`;
+    // Use configured sprite URL path (allows consumers to specify runtime URL separately from output dir)
+    const versionedUrl = `${resolved.spriteUrlPath}/sprite.svg?v=${hash}`;
 
     fs.writeFileSync(configPath, JSON.stringify({
       iconUrl: versionedUrl,
