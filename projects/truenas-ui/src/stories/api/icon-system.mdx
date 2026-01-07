@@ -91,7 +91,7 @@ TrueNAS-specific icons included in the component library (tn- prefix)
 
 **Usage in library code:**
 ```typescript
-import { libIconMarker } from 'truenas-ui';
+import { libIconMarker } from '@ixsystems/truenas-ui';
 libIconMarker('tn-dataset');
 ```
 
@@ -130,7 +130,7 @@ tnIconMarker('your-icon', 'custom');  // Resolves to app-your-icon
 If you use icons dynamically in TypeScript (not directly in templates), mark them with `tnIconMarker()`:
 
 ```typescript
-import { tnIconMarker } from 'truenas-ui';
+import { tnIconMarker } from '@ixsystems/truenas-ui';
 
 // Mark icons for sprite generation
 tnIconMarker('code-json', 'mdi');
@@ -173,7 +173,7 @@ Create your icon file (e.g., `my-logo.svg`) in `src/assets/icons/custom/`:
 ### Step 3: Mark the Icon
 
 ```typescript
-import { tnIconMarker } from 'truenas-ui';
+import { tnIconMarker } from '@ixsystems/truenas-ui';
 
 tnIconMarker('my-logo', 'custom');
 ```
