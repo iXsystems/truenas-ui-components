@@ -1,6 +1,13 @@
 {
-  "name": "truenas-ui",
-  "version": "0.0.1",
+  "name": "@ixsystems/truenas-ui",
+  "version": "0.0.0",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iXsystems/truenas-ui-components.git"
+  },
   "scripts": {
     "icons": "tsx scripts/icon-sprite/make-sprite.ts"
   },

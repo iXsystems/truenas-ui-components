@@ -6,18 +6,30 @@ An Angular UI component library for TrueNAS and related software. Includes reusa
 
 ### For Consumers
 
-Install the library directly from GitHub:
+This library is published to GitHub Packages. Configure your project to use the `@ixsystems` scope:
 
-```bash
-# Install from main branch
-yarn add truenas-ui@git@github.com:iXsystems/truenas-ui-components.git
-
-# Install from a specific branch
-yarn add truenas-ui@git@github.com:iXsystems/truenas-ui-components.git#branch-name
-
-# Install from a specific commit
-yarn add truenas-ui@git@github.com:iXsystems/truenas-ui-components.git#commit-hash
+**Yarn (Berry/v4)** - Add to `.yarnrc.yml`:
+```yaml
+npmScopes:
+  ixsystems:
+    npmRegistryServer: "https://npm.pkg.github.com"
 ```
+
+**npm** - Add to `.npmrc`:
+```
+@ixsystems:registry=https://npm.pkg.github.com
+```
+
+Then install:
+```bash
+# Install latest version
+yarn add @ixsystems/truenas-ui
+
+# Install specific version
+yarn add @ixsystems/truenas-ui@0.1.0
+```
+
+> **Note:** You may need to authenticate with GitHub Packages. See [GitHub's documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#authenticating-to-github-packages) for details.
 
 ### For Contributors
 
@@ -34,7 +46,7 @@ yarn install
 Import components in your Angular application:
 
 ```typescript
-import { TnButtonComponent, TnInputComponent } from 'truenas-ui';
+import { TnButtonComponent, TnInputComponent } from '@ixsystems/truenas-ui';
 
 @Component({
   selector: 'app-example',
@@ -55,7 +67,7 @@ Add the theme CSS to your `angular.json`:
 ```json
 {
   "styles": [
-    "node_modules/truenas-ui/dist/truenas-ui/src/styles/themes.css",
+    "node_modules/@ixsystems/truenas-ui/src/styles/themes.css",
     "src/styles.css"
   ]
 }
@@ -104,7 +116,7 @@ The build output is located in `dist/truenas-ui/` and includes compiled modules,
 The library includes an automatic sprite generation system. Mark icons in your code and they'll be automatically included in the sprite:
 
 ```typescript
-import { tnIconMarker } from 'truenas-ui';
+import { tnIconMarker } from '@ixsystems/truenas-ui';
 
 // MDI icons
 tnIconMarker('folder', 'mdi');
@@ -182,12 +194,12 @@ This library requires Angular 20:
 
 ## Distribution
 
-The library is distributed via GitHub with pre-built artifacts:
+The library is published to [GitHub Packages](https://github.com/iXsystems/truenas-ui-components/packages):
 
-- The `dist/` directory is committed to the repository
-- Pre-commit hooks automatically build the library
-- No build step required in consuming applications
-- Simply install from GitHub and import components
+- Releases are created via GitHub Releases
+- CI automatically builds and publishes to GitHub Packages npm registry
+- Consumers install via `@ixsystems/truenas-ui` with proper registry configuration
+- Versioning follows semver (e.g., `0.1.0`, `1.0.0`)
 
 ## License
 

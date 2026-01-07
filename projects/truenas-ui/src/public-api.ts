@@ -28,7 +28,6 @@ export * from './lib/icon/icon-registry.service';
 export * from './lib/icon/sprite-loader.service';
 export * from './lib/icon/icon-marker';
 export * from './lib/icon/integrations/lucide.integration';
-export * from './lib/custom-icons/truenas-icons.service';
 export * from './lib/list/list.component';
 export * from './lib/list-item/list-item.component';
 export * from './lib/list-subheader/list-subheader.component';
