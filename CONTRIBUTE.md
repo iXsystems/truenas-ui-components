@@ -96,7 +96,7 @@ The library uses an automatic sprite generation system that scans your code for 
 Library components must use `libIconMarker()` with the `tn-` prefix:
 
 ```typescript
-import { libIconMarker } from 'truenas-ui';
+import { libIconMarker } from '@ixsystems/truenas-ui';
 
 // Mark icons used in your component
 libIconMarker('tn-dataset');
@@ -109,7 +109,7 @@ libIconMarker('tn-snapshot');
 Use the two-parameter `tnIconMarker()` API:
 
 ```typescript
-import { tnIconMarker } from 'truenas-ui';
+import { tnIconMarker } from '@ixsystems/truenas-ui';
 
 // MDI icons
 tnIconMarker('folder', 'mdi');
