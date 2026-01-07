@@ -52,18 +52,7 @@ if [ -n "$COMPONENT_FILES" ]; then
 fi
 
 echo ""
-echo "🧪 Running tests to prevent regressions..."
-yarn test --passWithNoTests
-
-if [ $? -ne 0 ]; then
-  echo ""
-  echo "❌ Error: Tests are failing. Please fix failing tests before committing."
-  echo ""
-  exit 1
-fi
-
-echo "✅ All tests passed"
+echo "ℹ️  Note: Tests and builds run in CI, not in pre-commit hook"
+echo "📦 Dist artifacts will be automatically generated after merge to main"
+echo "✅ Pre-commit checks passed"
 echo ""
-
-yarn build
-git add dist/

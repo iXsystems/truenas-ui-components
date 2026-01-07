@@ -85,6 +85,43 @@ yarn test-sb          # Run Storybook interaction tests
 yarn icons            # Generate icon sprite (runs automatically on build)
 ```
 
+### Build and Distribution Workflow
+
+The library uses an **automated build and commit process** via GitHub Actions:
+
+**When you create a Pull Request:**
+1. Commit only source files (library code, tests, stories)
+2. Push your changes to your branch
+3. CI automatically runs lint, tests, and build verification
+4. No need to commit `dist/` artifacts manually
+
+**After merging to main:**
+1. GitHub Actions automatically builds the library
+2. Dist artifacts are committed back to main (~2 minutes after merge)
+3. A bot commit appears: `build: update dist artifacts [skip-dist-build]`
+4. This commit is automatically skipped by CI (no redundant builds)
+
+**What this means for you:**
+- ✅ Fast local commits (no pre-commit build or tests)
+- ✅ No merge conflicts in dist files
+- ✅ Consistent builds from CI environment
+- ✅ Dist artifacts always up-to-date on main branch
+
+**Pre-commit hook:**
+- Only validates icon marker usage (fast check)
+- Does NOT run tests or builds locally
+- Tests and builds happen in CI instead
+
+**Testing your branch:**
+```bash
+# Your branch can be installed before the dist is committed
+yarn add truenas-ui@git@github.com:iXsystems/truenas-ui-components.git#your-branch
+
+# Wait ~2 minutes after merge for dist to be available
+# Or manually build locally if needed for immediate testing
+yarn build
+```
+
 ## Icon System
 
 The library uses an automatic sprite generation system that scans your code for icon usage and bundles only the icons you need.
@@ -212,14 +249,16 @@ cat projects/truenas-ui/assets/icons/sprite-config.json
 cat src/assets/icons/sprite-config.json
 ```
 
-### Git Hook Enforcement
+### Pre-commit Hook (Icon Marker Validation)
 
-The pre-commit hook enforces proper icon marker usage:
+The pre-commit hook performs fast validation of icon marker usage:
 
 **Rules:**
 - Library component code must use `libIconMarker()` with `tn-` prefix
 - Cannot use `tnIconMarker()` in library component code (only in tests/stories)
 - `libIconMarker()` calls must include `tn-` prefix
+
+**Note:** The hook does NOT run tests or builds. Those happen in CI to keep local commits fast.
 
 **Example violations:**
 

@@ -185,9 +185,21 @@ This library requires Angular 20:
 The library is distributed via GitHub with pre-built artifacts:
 
 - The `dist/` directory is committed to the repository
-- Pre-commit hooks automatically build the library
+- **GitHub Actions** automatically builds and commits dist artifacts when changes merge to main
 - No build step required in consuming applications
 - Simply install from GitHub and import components
+
+### For Contributors
+
+When you commit to a PR, only source files need to be committed. The CI will:
+1. Run tests and linting on your PR
+2. Build the library to verify compilation succeeds
+3. After merge to main, automatically build and commit dist artifacts (~2 minutes)
+
+This means:
+- Faster local commits (no pre-commit build)
+- Consistent builds (same environment every time)
+- Less merge conflicts in dist files
 
 ## License
 

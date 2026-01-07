@@ -1,0 +1,89 @@
+name: Build and Commit Distribution
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      # Only trigger on library source changes, not dist or stories
+      - 'projects/truenas-ui/src/lib/**'
+      - 'projects/truenas-ui/src/public-api.ts'
+      - 'projects/truenas-ui/src/styles/**'
+      - 'projects/truenas-ui/src/assets/**'
+      - 'projects/truenas-ui/assets/**'
+      - 'projects/truenas-ui/scripts/**'
+      - 'scripts/generate-icon-constants.js'
+      - 'package.json'
+      - 'yarn.lock'
+      - 'angular.json'
+      - 'projects/truenas-ui/ng-package.json'
+      - 'tsconfig*.json'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-dist-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-commit:
+    name: Build Library and Commit Dist
+    runs-on: ubuntu-latest
+
+    # Prevent running on bot commits to avoid infinite loops
+    if: "!contains(github.event.head_commit.message, '[skip-dist-build]')"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build library
+        run: yarn build
+
+      - name: Check for dist changes
+        id: check_changes
+        run: |
+          git add dist/
+          if git diff --cached --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No changes to dist/ detected"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Changes detected in dist/"
+          fi
+
+      - name: Commit and push dist changes
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git commit -m "build: update dist artifacts [skip-dist-build]
+
+          Auto-generated from ${{ github.sha }}
+
+          Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+
+          git push origin main
+
+      - name: No changes to commit
+        if: steps.check_changes.outputs.has_changes == 'false'
+        run: echo "✅ Dist artifacts are already up to date"
