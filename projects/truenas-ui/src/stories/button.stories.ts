@@ -2,6 +2,10 @@ import type { Meta, StoryObj } from '@storybook/angular';
 import { expect } from '@storybook/jest';
 import { userEvent, within } from '@storybook/testing-library';
 import { TnButtonComponent } from '../lib/button/button.component';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
+
+// Load harness documentation
+const harnessDoc = loadHarnessDoc('button');
 
 // More on how to set up stories at: https://storybook.js.org/docs/writing-stories
 const meta: Meta<TnButtonComponent> = {
@@ -119,4 +123,22 @@ export const OutlineWarn: Story = {
     await expect(outlineWarnButton.classList.contains('button-outline-warn')).toBe(true);
     await userEvent.click(outlineWarnButton);
   },
+};
+
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      canvas: {
+        hidden: true,
+        sourceState: 'none'
+      },
+      description: {
+        story: harnessDoc || ''
+      }
+    },
+    controls: { disable: true },
+    layout: 'fullscreen'
+  },
+  render: () => ({ template: '' })
 };
