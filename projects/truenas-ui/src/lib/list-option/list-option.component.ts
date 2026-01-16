@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import type { AfterContentInit} from '@angular/core';
 import { ElementRef, ChangeDetectorRef, inject } from '@angular/core';
 import { Component, input, output, computed, signal, HostListener } from '@angular/core';
@@ -7,7 +7,7 @@ import { TnCheckboxComponent } from '../checkbox/checkbox.component';
 @Component({
   selector: 'tn-list-option',
   standalone: true,
-  imports: [CommonModule, TnCheckboxComponent],
+  imports: [TnCheckboxComponent],
   templateUrl: './list-option.component.html',
   styleUrl: './list-option.component.scss',
   host: {

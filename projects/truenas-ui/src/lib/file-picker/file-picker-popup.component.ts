@@ -1,6 +1,6 @@
 import { A11yModule } from '@angular/cdk/a11y';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import { CommonModule } from '@angular/common';
+
 import type { OnInit, AfterViewInit, AfterViewChecked} from '@angular/core';
 import { Component, computed, input, output, inject } from '@angular/core';
 import {
@@ -29,7 +29,6 @@ import { TnTableColumnDirective, TnHeaderCellDefDirective, TnCellDefDirective } 
   selector: 'tn-file-picker-popup',
   standalone: true,
   imports: [
-    CommonModule,
     TnIconComponent,
     TnButtonComponent,
     TnTableComponent,
@@ -40,7 +39,7 @@ import { TnTableColumnDirective, TnHeaderCellDefDirective, TnCellDefDirective } 
     A11yModule,
     FileSizePipe,
     TruncatePathPipe
-  ],
+],
   templateUrl: './file-picker-popup.component.html',
   styleUrl: './file-picker-popup.component.scss',
   host: {

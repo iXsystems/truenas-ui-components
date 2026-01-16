@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, input, output, contentChildren, signal, computed, forwardRef, effect } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -12,7 +12,7 @@ export interface TnSelectionChange {
 @Component({
   selector: 'tn-selection-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './selection-list.component.html',
   styleUrl: './selection-list.component.scss',
   providers: [

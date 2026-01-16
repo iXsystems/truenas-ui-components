@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import type { OnInit } from '@angular/core';
 import { Component, input, output, signal, effect } from '@angular/core';
 import { TnCalendarHeaderComponent } from './calendar-header.component';
@@ -9,7 +9,7 @@ import type { DateRange } from '../date-range-input/date-range-input.component';
 @Component({
   selector: 'tn-calendar',
   standalone: true,
-  imports: [CommonModule, TnCalendarHeaderComponent, TnMonthViewComponent, TnMultiYearViewComponent],
+  imports: [TnCalendarHeaderComponent, TnMonthViewComponent, TnMultiYearViewComponent],
   templateUrl: './calendar.component.html',
   styleUrls: ['./calendar.component.scss']
 })

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, input, output, computed } from '@angular/core';
 
 export interface CalendarCell {
@@ -19,7 +19,7 @@ export interface CalendarCell {
 @Component({
   selector: 'tn-month-view',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './month-view.component.html',
   styleUrls: ['./month-view.component.scss']
 })

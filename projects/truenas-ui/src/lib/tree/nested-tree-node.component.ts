@@ -1,6 +1,6 @@
 import { CdkTree } from '@angular/cdk/tree';
 import { CdkNestedTreeNode, CdkTreeNode, CDK_TREE_NODE_OUTLET_NODE, CdkTreeModule } from '@angular/cdk/tree';
-import { CommonModule } from '@angular/common';
+
 import { ElementRef, ChangeDetectorRef, Component, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
 import { TnTreeNodeOutletDirective } from './tree-node-outlet.directive';
 import { TnIconComponent } from '../icon/icon.component';
@@ -8,7 +8,7 @@ import { TnIconComponent } from '../icon/icon.component';
 @Component({
   selector: 'tn-nested-tree-node',
   standalone: true,
-  imports: [CommonModule, CdkTreeModule, TnIconComponent, TnTreeNodeOutletDirective],
+  imports: [CdkTreeModule, TnIconComponent, TnTreeNodeOutletDirective],
   exportAs: 'tnNestedTreeNode',
   providers: [
     { provide: CdkNestedTreeNode, useExisting: TnNestedTreeNodeComponent },

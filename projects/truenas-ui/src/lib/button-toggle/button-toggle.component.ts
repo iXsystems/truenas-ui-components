@@ -1,5 +1,5 @@
 import { A11yModule } from '@angular/cdk/a11y';
-import { CommonModule } from '@angular/common';
+
 import { ChangeDetectorRef } from '@angular/core';
 import { Component, input, output, signal, computed, forwardRef, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
@@ -9,7 +9,7 @@ import type { TnButtonToggleGroupComponent } from './button-toggle-group.compone
 @Component({
   selector: 'tn-button-toggle',
   standalone: true,
-  imports: [CommonModule, A11yModule],
+  imports: [A11yModule],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

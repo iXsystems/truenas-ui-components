@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { ElementRef, ChangeDetectorRef, Component, input, output, forwardRef, signal, computed, effect, inject } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -18,7 +18,7 @@ export interface TnSelectOptionGroup<T = unknown> {
 @Component({
   selector: 'tn-select',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

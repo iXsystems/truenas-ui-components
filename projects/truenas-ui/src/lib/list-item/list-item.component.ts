@@ -1,11 +1,11 @@
-import { CommonModule } from '@angular/common';
+
 import type { AfterContentInit} from '@angular/core';
 import { ElementRef, Component, input, output, computed, signal, inject } from '@angular/core';
 
 @Component({
   selector: 'tn-list-item',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './list-item.component.html',
   styleUrl: './list-item.component.scss',
   host: {

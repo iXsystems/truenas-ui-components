@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, input, output, computed } from '@angular/core';
 
 export interface YearCell {
@@ -14,7 +14,7 @@ export interface YearCell {
 @Component({
   selector: 'tn-multi-year-view',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './multi-year-view.component.html',
   styleUrls: ['./multi-year-view.component.scss']
 })

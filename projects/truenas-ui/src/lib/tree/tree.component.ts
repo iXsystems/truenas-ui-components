@@ -1,7 +1,7 @@
 import { DataSource } from '@angular/cdk/collections';
 import { CdkTree, CdkTreeModule } from '@angular/cdk/tree';
 import type { FlatTreeControl } from '@angular/cdk/tree';
-import { CommonModule } from '@angular/common';
+
 import { ChangeDetectorRef, IterableDiffers, ViewContainerRef, Component, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
 import type { Observable} from 'rxjs';
 import { BehaviorSubject, merge } from 'rxjs';
@@ -108,7 +108,7 @@ export class TnTreeFlatDataSource<T, F> extends DataSource<F> {
 @Component({
   selector: 'tn-tree',
   standalone: true,
-  imports: [CommonModule, CdkTreeModule],
+  imports: [CdkTreeModule],
   exportAs: 'tnTree',
   providers: [
     { provide: CdkTree, useExisting: TnTreeComponent }

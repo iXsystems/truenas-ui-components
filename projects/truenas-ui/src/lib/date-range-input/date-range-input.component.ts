@@ -2,7 +2,7 @@ import { A11yModule } from '@angular/cdk/a11y';
 import { Overlay, type OverlayRef, type ConnectedPosition } from '@angular/cdk/overlay';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { TemplatePortal, PortalModule } from '@angular/cdk/portal';
-import { CommonModule } from '@angular/common';
+
 import type { OnInit, TemplateRef, OnDestroy , ElementRef} from '@angular/core';
 import { Component, input, forwardRef, signal, computed, viewChild, ViewContainerRef, inject } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
@@ -19,7 +19,7 @@ export interface DateRange {
 @Component({
   selector: 'tn-date-range-input',
   standalone: true,
-  imports: [CommonModule, TnInputDirective, TnCalendarComponent, OverlayModule, PortalModule, A11yModule],
+  imports: [TnInputDirective, TnCalendarComponent, OverlayModule, PortalModule, A11yModule],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
