@@ -1,7 +1,6 @@
 import { ReactiveFormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
-import { expect } from '@storybook/jest';
-import { userEvent, within } from '@storybook/testing-library';
+import { expect, userEvent, within } from 'storybook/test';
 import { TnChipComponent } from '../lib/chip/chip.component';
 import { InputType } from '../lib/enums/input-type.enum';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';

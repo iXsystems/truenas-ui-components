@@ -1,7 +1,7 @@
 import type { OnDestroy } from '@angular/core';
 import { Component } from '@angular/core';
-import { action } from '@storybook/addon-actions';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { action } from 'storybook/actions';
 import { TnKeyboardShortcutComponent } from '../lib/keyboard-shortcut/keyboard-shortcut.component';
 
 @Component({

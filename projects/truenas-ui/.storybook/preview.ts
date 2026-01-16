@@ -12,7 +12,7 @@ import { TnThemeService, TnTheme } from '../src/public-api';
  */
 export const parameters: Preview['parameters'] = {
   backgrounds: {
-    disable: true,
+    disabled: true,
   },
 };
 

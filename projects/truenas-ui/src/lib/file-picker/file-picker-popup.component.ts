@@ -1,6 +1,5 @@
 import { A11yModule } from '@angular/cdk/a11y';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-
 import type { OnInit, AfterViewInit, AfterViewChecked} from '@angular/core';
 import { Component, computed, input, output, inject } from '@angular/core';
 import {

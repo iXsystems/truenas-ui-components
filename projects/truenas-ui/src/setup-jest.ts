@@ -1,4 +1,8 @@
-import 'jest-preset-angular/setup-jest';
+import 'zone.js';
+import 'zone.js/testing';
+import { setupZoneTestEnv } from 'jest-preset-angular/setup-env/zone';
+
+setupZoneTestEnv();
 
 // Suppress expected console errors in test environment
 const originalConsoleError = console.error;

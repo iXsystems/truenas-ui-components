@@ -3,7 +3,6 @@ import type { OverlayRef, ConnectedPosition } from '@angular/cdk/overlay';
 import { Overlay } from '@angular/cdk/overlay';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { TemplatePortal, PortalModule } from '@angular/cdk/portal';
-
 import type { ElementRef, OnInit, TemplateRef, OnDestroy } from '@angular/core';
 import { ViewContainerRef } from '@angular/core';
 import { Component, input, forwardRef, signal, computed, viewChild, inject } from '@angular/core';

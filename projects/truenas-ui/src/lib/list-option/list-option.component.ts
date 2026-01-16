@@ -96,7 +96,7 @@ export class TnListOptionComponent implements AfterContentInit {
 
   @HostListener('keydown.space', ['$event'])
   @HostListener('keydown.enter', ['$event'])
-  onKeydown(event: KeyboardEvent): void {
+  onKeydown(event: Event): void {
     if (this.effectiveDisabled()) {
       return;
     }
