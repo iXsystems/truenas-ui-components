@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { userEvent, within, screen, expect, waitFor } from '@storybook/test';
+import { userEvent, within, screen, expect, waitFor } from 'storybook/test';
 import { TnFilePickerComponent } from '../lib/file-picker/file-picker.component';
 import type { FileSystemItem, FilePickerCallbacks } from '../lib/file-picker/file-picker.interfaces';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';

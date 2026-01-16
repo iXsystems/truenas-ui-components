@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, input, signal, forwardRef, computed } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR, FormsModule } from '@angular/forms';
@@ -8,7 +8,7 @@ import { TnSelectComponent } from '../select/select.component';
 @Component({
   selector: 'tn-time-input',
   standalone: true,
-  imports: [CommonModule, FormsModule, TnSelectComponent],
+  imports: [FormsModule, TnSelectComponent],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

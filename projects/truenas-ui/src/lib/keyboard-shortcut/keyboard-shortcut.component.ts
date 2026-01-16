@@ -1,11 +1,11 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, input, computed } from '@angular/core';
 import type { PlatformType } from '../enums/modifier-keys.enum';
 
 @Component({
   selector: 'tn-keyboard-shortcut',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './keyboard-shortcut.component.html',
   styleUrls: ['./keyboard-shortcut.component.scss'],
 })

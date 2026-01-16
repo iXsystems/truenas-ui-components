@@ -1,4 +1,4 @@
-import { NgIf } from '@angular/common';
+
 import { Component, input, ChangeDetectionStrategy, ViewEncapsulation, computed } from '@angular/core';
 
 export type SpinnerMode = 'determinate' | 'indeterminate';
@@ -6,7 +6,7 @@ export type SpinnerMode = 'determinate' | 'indeterminate';
 @Component({
   selector: 'tn-spinner',
   standalone: true,
-  imports: [NgIf],
+  imports: [],
   templateUrl: './spinner.component.html',
   styleUrls: ['./spinner.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

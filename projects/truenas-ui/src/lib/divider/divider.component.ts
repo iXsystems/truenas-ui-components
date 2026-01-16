@@ -1,10 +1,10 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, input } from '@angular/core';
 
 @Component({
   selector: 'tn-divider',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './divider.component.html',
   styleUrl: './divider.component.scss',
   host: {

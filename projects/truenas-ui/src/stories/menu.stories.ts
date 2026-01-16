@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { expect } from '@storybook/jest';
-import { userEvent, within } from '@storybook/testing-library';
+import { expect, userEvent, within } from 'storybook/test';
 import { TnButtonComponent } from '../lib/button/button.component';
 import { TnMenuTriggerDirective } from '../lib/menu/menu-trigger.directive';
 import type { TnMenuItem } from '../lib/menu/menu.component';

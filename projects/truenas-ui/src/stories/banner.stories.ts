@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { expect } from '@storybook/jest';
-import { within } from '@storybook/testing-library';
+import { expect, within } from 'storybook/test';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnBannerComponent } from '../lib/banner/banner.component';
 import { tnIconMarker } from '../lib/icon/icon-marker';

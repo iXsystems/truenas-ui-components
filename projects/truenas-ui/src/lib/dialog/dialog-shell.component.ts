@@ -1,5 +1,5 @@
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
-import { DOCUMENT, CommonModule } from '@angular/common';
+import { DOCUMENT } from '@angular/common';
 import { Component, input, signal, inject } from '@angular/core';
 import type { OnInit} from '@angular/core';
 
@@ -7,7 +7,7 @@ import type { OnInit} from '@angular/core';
   selector: 'tn-dialog-shell',
   templateUrl: './dialog-shell.component.html',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   host: {
     'class': 'tn-dialog-shell'
   }

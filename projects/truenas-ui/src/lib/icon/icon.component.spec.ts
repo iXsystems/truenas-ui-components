@@ -1,5 +1,5 @@
-import type { ComponentFixture} from '@angular/core/testing';
-import { TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
+import type { ComponentFixture } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TnIconRegistryService } from './icon-registry.service';
 import { TnIconComponent } from './icon.component';
@@ -58,49 +58,47 @@ describe('TnIconComponent - MDI Support', () => {
     spriteLoader = TestBed.inject(TnSpriteLoaderService) as jest.Mocked<TnSpriteLoaderService>;
   });
 
-  it('should render material icon by default', fakeAsync(() => {
+  it('should render material icon by default', async () => {
     fixture.componentRef.setInput('name', 'settings');
     fixture.detectChanges();
-    tick();
-    flush();
+    await fixture.whenStable();
 
     // Since we don't have Angular Material, we'll test for the fallback behavior
     // The component should use the existing icon registry resolution
     expect(iconRegistry.resolveIcon).toHaveBeenCalledWith('settings', expect.any(Object));
-  }));
+  });
 
-  it('should render MDI icon when library="mdi"', fakeAsync(() => {
+  it('should render MDI icon when library="mdi"', async () => {
     spriteLoader.getIconUrl.mockReturnValue('#icon-mdi-harddisk');
     spriteLoader.getSafeIconUrl.mockReturnValue('#icon-mdi-harddisk');
 
     fixture.componentRef.setInput('name', 'harddisk');
     fixture.componentRef.setInput('library', 'mdi');
     fixture.detectChanges();
-    tick();
-    flush();
+    await fixture.whenStable();
 
     // Should use sprite-based icon for MDI
     expect(spriteLoader.ensureSpriteLoaded).toHaveBeenCalled();
     expect(component.iconResult.source).toBe('sprite');
-  }));
+  });
 
-  it('should maintain backward compatibility', fakeAsync(() => {
+  it('should maintain backward compatibility', async () => {
     fixture.componentRef.setInput('name', 'delete');
     // No library specified - should default to existing behavior
     fixture.detectChanges();
-    tick();
-    flush();
+    await fixture.whenStable();
 
     expect(iconRegistry.resolveIcon).toHaveBeenCalledWith('delete', expect.any(Object));
-  }));
+  });
 
-  it('should handle library parameter with fallback', () => {
+  it('should handle library parameter with fallback', async () => {
     spriteLoader.getIconUrl.mockReturnValue(null);
     iconRegistry.resolveIcon.mockReturnValue(null); // Icon not found
 
     fixture.componentRef.setInput('name', 'unknown-icon');
     fixture.componentRef.setInput('library', 'mdi');
     fixture.detectChanges();
+    await fixture.whenStable();
 
     // Should try to load from sprite first, then fall back to registry
     expect(spriteLoader.ensureSpriteLoaded).toHaveBeenCalled();
@@ -160,37 +158,35 @@ describe('TnIconComponent - Error Handling', () => {
     spriteLoader = TestBed.inject(TnSpriteLoaderService) as jest.Mocked<TnSpriteLoaderService>;
   });
 
-  it('should show fallback for unregistered MDI icon', fakeAsync(() => {
+  it('should show fallback for unregistered MDI icon', async () => {
     spriteLoader.getIconUrl.mockReturnValue(null); // Icon not in sprite
     iconRegistry.resolveIcon.mockReturnValue(null); // Not found in registry
 
     fixture.componentRef.setInput('name', 'nonexistent');
     fixture.componentRef.setInput('library', 'mdi');
     fixture.detectChanges();
-    tick();
-    flush();
+    await fixture.whenStable();
 
     // Should fall back to text abbreviation
     expect(component.iconResult.source).toBe('text');
     expect(component.iconResult.content).toContain('MN'); // First 2 characters of 'mdi-nonexistent'
-  }));
+  });
 
-  it('should fallback to text for missing icons', fakeAsync(() => {
+  it('should fallback to text for missing icons', async () => {
     spriteLoader.getIconUrl.mockReturnValue(null); // Icon not in sprite
     iconRegistry.resolveIcon.mockReturnValue(null);
 
     fixture.componentRef.setInput('name', 'missing');
     fixture.componentRef.setInput('library', 'mdi');
     fixture.detectChanges();
-    tick();
-    flush();
+    await fixture.whenStable();
 
     // Should fall back to text abbreviation
     expect(component.iconResult.source).toBe('text');
     expect(component.iconResult.content).toBeTruthy();
-  }));
+  });
 
-  it('should handle async MDI loading gracefully', fakeAsync(() => {
+  it('should handle async MDI loading gracefully', async () => {
     spriteLoader.ensureSpriteLoaded.mockImplementation(() => Promise.resolve(true));
     spriteLoader.getIconUrl.mockReturnValue('#icon-mdi-harddisk');
     spriteLoader.getSafeIconUrl.mockReturnValue('#icon-mdi-harddisk');
@@ -198,12 +194,11 @@ describe('TnIconComponent - Error Handling', () => {
     fixture.componentRef.setInput('name', 'harddisk');
     fixture.componentRef.setInput('library', 'mdi');
     fixture.detectChanges();
-    tick();
-    flush();
+    await fixture.whenStable();
 
     // Should show loading state initially, then resolve
     fixture.detectChanges();
 
     expect(component.iconResult.source).toBe('sprite');
-  }));
+  });
 });

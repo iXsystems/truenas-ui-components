@@ -1,16 +1,17 @@
 /* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
 /* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
 {
-  "extends": "./tsconfig.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "es2015",
-    "types": ["jest", "node"],
+    "outDir": "../../dist/out-tsc/spec",
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "Node16",
     "esModuleInterop": true,
-    "emitDecoratorMetadata": true,
-    "allowJs": true
+    "isolatedModules": true,
+    "types": ["jest", "node"]
   },
-  "files": ["src/test-setup.ts"],
-  "include": ["**/*.spec.ts", "**/*.ts"]
+  "files": ["src/setup-jest.ts"],
+  "include": ["**/*.spec.ts", "**/*.d.ts"]
 }
 

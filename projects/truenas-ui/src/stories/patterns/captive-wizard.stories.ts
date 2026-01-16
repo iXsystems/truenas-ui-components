@@ -1,5 +1,4 @@
 import { DialogRef } from '@angular/cdk/dialog';
-import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
@@ -89,9 +88,8 @@ interface WizardConfig {
     TnCheckboxComponent,
     TnInputComponent,
     TnSelectComponent,
-    FormsModule,
-    CommonModule
-  ]
+    FormsModule
+]
 })
 class OnboardingWizardDialogComponent {
   currentStep = 0;
@@ -325,7 +323,7 @@ class OnboardingWizardDialogComponent {
   selector: 'captive-wizard-demo',
   templateUrl: './captive-wizard-2.stories.html',
   standalone: true,
-  imports: [TnButtonComponent, CommonModule]
+  imports: [TnButtonComponent]
 })
 class CaptiveWizardDemoComponent {
   lastResult: unknown = null;

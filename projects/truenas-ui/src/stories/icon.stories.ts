@@ -74,7 +74,7 @@ Run \`yarn icons\` to generate the sprite with only the icons you use.
 For icon libraries beyond MDI (like Lucide, Heroicons, Font Awesome), use the registry system:
 
 \`\`\`typescript
-import { TnIconRegistryService } from '@ixsystems/truenas-ui';
+import { TnIconRegistryService } from '@truenas/ui';
 import { Home, User, Settings } from 'lucide';
 
 // In your component or app initializer

@@ -1,5 +1,4 @@
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
-import { CommonModule } from '@angular/common';
 import type { ElementRef, AfterViewInit} from '@angular/core';
 import { Component, viewChild, inject, input, computed, signal, forwardRef } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
@@ -9,7 +8,7 @@ import { InputType } from '../enums/input-type.enum';
 @Component({
   selector: 'tn-input',
   standalone: true,
-  imports: [CommonModule, FormsModule, A11yModule],
+  imports: [FormsModule, A11yModule],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

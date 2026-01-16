@@ -5,7 +5,7 @@
  * Usage:
  * 
  * ```typescript
- * import { setupLucideIntegration } from '@ixsystems/truenas-ui';
+ * import { setupLucideIntegration } from '@truenas/ui';
  * import * as LucideIcons from 'lucide';
  * 
  * // In your app.module.ts or main.ts
@@ -38,7 +38,7 @@ export interface LucideIconOptions {
  * @example
  * ```typescript
  * import * as LucideIcons from 'lucide';
- * import { setupLucideIntegration } from '@ixsystems/truenas-ui';
+ * import { setupLucideIntegration } from '@truenas/ui';
  * 
  * setupLucideIntegration(LucideIcons, {
  *   size: 24,
@@ -102,7 +102,7 @@ export function setupLucideIntegration(
  * @example
  * ```typescript
  * import { Home, User, Settings } from 'lucide';
- * import { createLucideLibrary } from '@ixsystems/truenas-ui';
+ * import { createLucideLibrary } from '@truenas/ui';
  * 
  * const lucideLibrary = createLucideLibrary({
  *   home: Home,
@@ -157,7 +157,7 @@ export function createLucideLibrary(
  * @example
  * ```typescript
  * import { Home, User, Settings, Heart, Star } from 'lucide';
- * import { registerLucideIcons } from '@ixsystems/truenas-ui';
+ * import { registerLucideIcons } from '@truenas/ui';
  * 
  * registerLucideIcons({
  *   home: Home,

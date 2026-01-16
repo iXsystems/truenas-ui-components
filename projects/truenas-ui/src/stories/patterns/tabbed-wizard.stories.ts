@@ -1,5 +1,4 @@
 import { DialogRef } from '@angular/cdk/dialog';
-import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
@@ -30,9 +29,8 @@ import { TnTabsComponent } from '../../lib/tabs/tabs.component';
     TnCheckboxComponent,
     TnInputComponent,
     TnSelectComponent,
-    FormsModule,
-    CommonModule
-  ]
+    FormsModule
+]
 })
 class TabbedWizardDialogComponent {
   vmConfig = {
@@ -115,7 +113,7 @@ class TabbedWizardDialogComponent {
   selector: 'tabbed-wizard-demo',
   templateUrl: './tabbed-wizard-2.stories.html',
   standalone: true,
-  imports: [TnButtonComponent, CommonModule]
+  imports: [TnButtonComponent]
 })
 class TabbedWizardDemoComponent {
   lastResult: unknown = null;

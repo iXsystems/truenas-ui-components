@@ -1,5 +1,4 @@
 import { A11yModule } from '@angular/cdk/a11y';
-import { CommonModule } from '@angular/common';
 import { Component, contentChildren, input, output, signal, computed, forwardRef, ChangeDetectionStrategy, ViewEncapsulation, effect } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -10,7 +9,7 @@ export type TnButtonToggleType = 'checkbox' | 'radio';
 @Component({
   selector: 'tn-button-toggle-group',
   standalone: true,
-  imports: [CommonModule, A11yModule],
+  imports: [A11yModule],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

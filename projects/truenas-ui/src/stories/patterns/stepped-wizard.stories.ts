@@ -1,5 +1,4 @@
 import { DialogRef } from '@angular/cdk/dialog';
-import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
@@ -27,9 +26,8 @@ import { TnStepperComponent, TnStepComponent } from '../../lib/stepper';
     TnCheckboxComponent,
     TnInputComponent,
     TnSelectComponent,
-    FormsModule,
-    CommonModule
-  ]
+    FormsModule
+]
 })
 class BackupWizardDialogComponent {
   ref = inject(DialogRef<{ target: string; account: string; dataset: string; includeSnapshots: boolean } | undefined>);
@@ -115,7 +113,7 @@ class BackupWizardDialogComponent {
   selector: 'stepped-wizard-demo',
   templateUrl: './stepped-wizard-2.stories.html',
   standalone: true,
-  imports: [TnButtonComponent, CommonModule]
+  imports: [TnButtonComponent]
 })
 class SteppedWizardDemoComponent {
   lastResult: unknown = null;

@@ -1,12 +1,11 @@
 import { CdkTree, CdkTreeNode, CDK_TREE_NODE_OUTLET_NODE, CdkTreeModule } from '@angular/cdk/tree';
-import { CommonModule } from '@angular/common';
 import { ElementRef, ChangeDetectorRef, Component, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
 import { TnIconComponent } from '../icon/icon.component';
 
 @Component({
   selector: 'tn-tree-node',
   standalone: true,
-  imports: [CommonModule, CdkTreeModule, TnIconComponent],
+  imports: [CdkTreeModule, TnIconComponent],
   exportAs: 'tnTreeNode',
   providers: [
     { provide: CdkTreeNode, useExisting: TnTreeNodeComponent }

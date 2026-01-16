@@ -1,5 +1,4 @@
 import { A11yModule } from '@angular/cdk/a11y';
-import { CommonModule } from '@angular/common';
 import type { ElementRef, OnDestroy, AfterViewInit} from '@angular/core';
 import { Component, contentChild, input, forwardRef, signal, computed, viewChild, effect } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
@@ -11,7 +10,7 @@ export type LabelType = 'none' | 'handle' | 'track' | 'both';
 @Component({
   selector: 'tn-slider',
   standalone: true,
-  imports: [CommonModule, A11yModule],
+  imports: [A11yModule],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

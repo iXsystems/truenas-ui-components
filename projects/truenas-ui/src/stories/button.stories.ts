@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { expect } from '@storybook/jest';
-import { userEvent, within } from '@storybook/testing-library';
+import { expect, userEvent, within } from 'storybook/test';
 import { TnButtonComponent } from '../lib/button/button.component';
 
 // More on how to set up stories at: https://storybook.js.org/docs/writing-stories
