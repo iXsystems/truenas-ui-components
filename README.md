@@ -6,30 +6,16 @@ An Angular UI component library for TrueNAS and related software. Includes reusa
 
 ### For Consumers
 
-This library is published to GitHub Packages. Configure your project to use the `@ixsystems` scope:
-
-**Yarn (Berry/v4)** - Add to `.yarnrc.yml`:
-```yaml
-npmScopes:
-  ixsystems:
-    npmRegistryServer: "https://npm.pkg.github.com"
-```
-
-**npm** - Add to `.npmrc`:
-```
-@ixsystems:registry=https://npm.pkg.github.com
-```
-
-Then install:
 ```bash
 # Install latest version
-yarn add @ixsystems/truenas-ui
+npm install @truenas/ui
+
+# Or with yarn
+yarn add @truenas/ui
 
 # Install specific version
-yarn add @ixsystems/truenas-ui@0.1.0
+npm install @truenas/ui@1.0.0
 ```
-
-> **Note:** You may need to authenticate with GitHub Packages. See [GitHub's documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#authenticating-to-github-packages) for details.
 
 ### For Contributors
 
@@ -46,7 +32,7 @@ yarn install
 Import components in your Angular application:
 
 ```typescript
-import { TnButtonComponent, TnInputComponent } from '@ixsystems/truenas-ui';
+import { TnButtonComponent, TnInputComponent } from '@truenas/ui';
 
 @Component({
   selector: 'app-example',
@@ -67,7 +53,7 @@ Add the theme CSS to your `angular.json`:
 ```json
 {
   "styles": [
-    "node_modules/@ixsystems/truenas-ui/src/styles/themes.css",
+    "node_modules/@truenas/ui/src/styles/themes.css",
     "src/styles.css"
   ]
 }
@@ -116,7 +102,7 @@ The build output is located in `dist/truenas-ui/` and includes compiled modules,
 The library includes an automatic sprite generation system. Mark icons in your code and they'll be automatically included in the sprite:
 
 ```typescript
-import { tnIconMarker } from '@ixsystems/truenas-ui';
+import { tnIconMarker } from '@truenas/ui';
 
 // MDI icons
 tnIconMarker('folder', 'mdi');
@@ -194,12 +180,12 @@ This library requires Angular 20:
 
 ## Distribution
 
-The library is published to [GitHub Packages](https://github.com/iXsystems/truenas-ui-components/packages):
+The library is published to [npm](https://www.npmjs.com/package/@truenas/ui):
 
 - Releases are created via GitHub Releases
-- CI automatically builds and publishes to GitHub Packages npm registry
-- Consumers install via `@ixsystems/truenas-ui` with proper registry configuration
-- Versioning follows semver (e.g., `0.1.0`, `1.0.0`)
+- CI automatically builds and publishes to npm
+- Consumers install via `npm install @truenas/ui`
+- Versioning follows semver (e.g., `1.0.0`, `1.1.0`)
 
 ## License
 
