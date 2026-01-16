@@ -546,17 +546,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@angular/cdk@npm:^20.2.8":
-  version: 20.2.8
-  resolution: "@angular/cdk@npm:20.2.8"
+"@angular/cdk@npm:^21.1.0":
+  version: 21.1.0
+  resolution: "@angular/cdk@npm:21.1.0"
   dependencies:
     parse5: "npm:^8.0.0"
     tslib: "npm:^2.3.0"
   peerDependencies:
-    "@angular/common": ^20.0.0 || ^21.0.0
-    "@angular/core": ^20.0.0 || ^21.0.0
+    "@angular/common": ^21.0.0 || ^22.0.0
+    "@angular/core": ^21.0.0 || ^22.0.0
+    "@angular/platform-browser": ^21.0.0 || ^22.0.0
     rxjs: ^6.5.3 || ^7.4.0
-  checksum: 10c0/8f4e3121341783e99dece1b97097cadab55eb0ae78c5bf08a31e41ce53f13a3d504a209ba990cd533b6cde825063d113877180f415c1578f4cbdf49d08eff343
+  checksum: 10c0/0fce61350488bcd4a8d9c15596b694a44530a71fb977a87254875adec7b96ec8248d7f69912772e13f8aa6852305c73c8deeec6964560690b4e5444b93156591
   languageName: node
   linkType: hard
 
@@ -20177,7 +20178,7 @@ __metadata:
     "@angular-eslint/eslint-plugin-template": "npm:^21.1.0"
     "@angular-eslint/template-parser": "npm:^21.1.0"
     "@angular/animations": "npm:^21.1.0"
-    "@angular/cdk": "npm:^20.2.8"
+    "@angular/cdk": "npm:^21.1.0"
     "@angular/cli": "npm:^21.1.0"
     "@angular/common": "npm:^21.1.0"
     "@angular/compiler": "npm:^21.1.0"
@@ -20242,7 +20243,6 @@ __metadata:
     vinyl: "npm:~3.0.0"
     zone.js: "npm:^0.15.1"
   peerDependencies:
-    "@angular/cdk": ^20.0.0
     rxjs: ^7.5.0
     zone.js: ^0.15.0
   bin:
