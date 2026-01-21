@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, input, ChangeDetectionStrategy, computed } from '@angular/core';
 
 export type ProgressBarMode = 'determinate' | 'indeterminate' | 'buffer';
@@ -6,7 +6,7 @@ export type ProgressBarMode = 'determinate' | 'indeterminate' | 'buffer';
 @Component({
   selector: 'tn-progress-bar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './progress-bar.component.html',
   styleUrls: ['./progress-bar.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

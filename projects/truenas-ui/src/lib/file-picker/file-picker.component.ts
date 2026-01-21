@@ -2,7 +2,6 @@ import { A11yModule } from '@angular/cdk/a11y';
 import { type ConnectedPosition, Overlay, type OverlayRef } from '@angular/cdk/overlay';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { PortalModule, TemplatePortal } from '@angular/cdk/portal';
-import { CommonModule } from '@angular/common';
 import type { OnDestroy, OnInit} from '@angular/core';
 import { ElementRef, type TemplateRef, ViewContainerRef, Component, computed, forwardRef, input, output, signal, viewChild, inject } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
@@ -18,7 +17,6 @@ import { StripMntPrefixPipe } from '../pipes/strip-mnt-prefix/strip-mnt-prefix.p
   selector: 'tn-file-picker',
   standalone: true,
   imports: [
-    CommonModule,
     TnInputDirective,
     TnIconComponent,
     TnFilePickerPopupComponent,
@@ -26,7 +24,7 @@ import { StripMntPrefixPipe } from '../pipes/strip-mnt-prefix/strip-mnt-prefix.p
     PortalModule,
     A11yModule,
     StripMntPrefixPipe
-  ],
+],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

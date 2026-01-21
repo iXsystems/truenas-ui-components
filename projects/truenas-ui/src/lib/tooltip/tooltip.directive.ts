@@ -45,7 +45,7 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
   private _showTimeout: ReturnType<typeof setTimeout> | null = null;
   private _hideTimeout: ReturnType<typeof setTimeout> | null = null;
   private _isTooltipVisible = false;
-  private _ariaDescribedBy: string | null = null;
+  protected _ariaDescribedBy: string | null = null;
 
   private _overlay = inject(Overlay);
   private _elementRef = inject(ElementRef<HTMLElement>);

@@ -1,7 +1,7 @@
 import type { OnDestroy } from '@angular/core';
 import { Component } from '@angular/core';
-import { action } from '@storybook/addon-actions';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { action } from 'storybook/actions';
 import { TnKeyboardShortcutComponent } from '../lib/keyboard-shortcut/keyboard-shortcut.component';
 
 @Component({
@@ -26,8 +26,8 @@ class ShortcutTestComponent implements OnDestroy {
 <!-- Custom separator -->
 <tn-keyboard-shortcut shortcut="Ctrl+Alt+Delete" separator=" + "></tn-keyboard-shortcut>`;
 
-  importExample = `import { TnKeyboardShortcutComponent } from '@ixsystems/truenas-ui';
-import { CommonShortcuts } from '@ixsystems/truenas-ui';`;
+  importExample = `import { TnKeyboardShortcutComponent } from '@truenas/ui-components';
+import { CommonShortcuts } from '@truenas/ui-components';`;
 
   constructor() {
     // Add keyboard event listener

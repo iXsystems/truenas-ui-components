@@ -152,7 +152,7 @@ function addCustomIconsFromPath(usedIcons: Set<string>, customIconsPath: string)
 function loadLibraryIcons(projectRoot: string): Set<string> {
   const librarySpritePath = resolve(
     projectRoot,
-    'node_modules/@ixsystems/truenas-ui/assets/tn-icons/sprite-config.json'
+    'node_modules/@truenas/ui-components/assets/tn-icons/sprite-config.json'
   );
 
   // Skip if truenas-ui is not installed (e.g., when building the library itself)

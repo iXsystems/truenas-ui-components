@@ -24,7 +24,7 @@ The `TnThemeService` is a signal-based theme orchestration service that manages 
 
 ```typescript
 import { Component, inject, effect } from '@angular/core';
-import { TnThemeService, TnTheme } from '@ixsystems/truenas-ui';
+import { TnThemeService, TnTheme } from '@truenas/ui-components';
 
 @Component({
   selector: 'app-theme-switcher',
@@ -77,7 +77,7 @@ export class ThemeSwitcherComponent {
 Use the `TnTheme` enum for type-safe theme selection:
 
 ```typescript
-import { TnTheme } from '@ixsystems/truenas-ui';
+import { TnTheme } from '@truenas/ui-components';
 
 // ✅ Type-safe with autocomplete
 themeService.setTheme(TnTheme.Dracula);

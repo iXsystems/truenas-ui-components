@@ -1,10 +1,10 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, input, output, computed } from '@angular/core';
 
 @Component({
   selector: 'tn-calendar-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './calendar-header.component.html',
   styleUrls: ['./calendar-header.component.scss']
 })

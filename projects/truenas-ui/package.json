@@ -1,8 +1,9 @@
 {
-  "name": "@ixsystems/truenas-ui",
+  "name": "@truenas/ui-components",
   "version": "0.0.0",
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "repository": {
     "type": "git",
@@ -15,9 +16,9 @@
     "truenas-icons": "scripts/icon-sprite/cli.js"
   },
   "peerDependencies": {
-    "@angular/cdk": "^19.2.7",
-    "@angular/common": "^19.1.0",
-    "@angular/core": "^19.1.0",
+    "@angular/cdk": "^21.0.0",
+    "@angular/common": "^21.0.0",
+    "@angular/core": "^21.0.0",
     "@mdi/angular-material": "^7.2.96",
     "@mdi/js": "^7.4.47"
   },
@@ -34,8 +35,7 @@
   },
   "sideEffects": false,
   "devDependencies": {
-    "@storybook/jest": "^0.2.3",
     "@testing-library/jest-dom": "^6.6.3",
-    "lucide": "^0.526.0"
+    "lucide": "^0.545.0"
   }
 }

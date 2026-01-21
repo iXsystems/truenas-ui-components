@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import type { AfterContentInit } from '@angular/core';
 import { Component, input, computed, signal, contentChild } from '@angular/core';
 import { NgControl } from '@angular/forms';
@@ -6,7 +6,7 @@ import { NgControl } from '@angular/forms';
 @Component({
   selector: 'tn-form-field',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './form-field.component.html',
   styleUrls: ['./form-field.component.scss']
 })
