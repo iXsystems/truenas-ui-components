@@ -155,8 +155,8 @@ First, import what you need in your component:
 \`\`\`typescript
 import { Component, Inject } from '@angular/core';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
-import { TnDialog } from '@truenas/ui';
-import { TnDialogShellComponent } from '@truenas/ui';
+import { TnDialog } from '@truenas/ui-components';
+import { TnDialogShellComponent } from '@truenas/ui-components';
 \`\`\`
 
 ### 2. Create Your Dialog Component

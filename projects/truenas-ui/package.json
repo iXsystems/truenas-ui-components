@@ -1,5 +1,5 @@
 {
-  "name": "@truenas/ui",
+  "name": "@truenas/ui-components",
   "version": "0.0.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org",

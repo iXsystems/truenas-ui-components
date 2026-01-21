@@ -26,8 +26,8 @@ class ShortcutTestComponent implements OnDestroy {
 <!-- Custom separator -->
 <tn-keyboard-shortcut shortcut="Ctrl+Alt+Delete" separator=" + "></tn-keyboard-shortcut>`;
 
-  importExample = `import { TnKeyboardShortcutComponent } from '@truenas/ui';
-import { CommonShortcuts } from '@truenas/ui';`;
+  importExample = `import { TnKeyboardShortcutComponent } from '@truenas/ui-components';
+import { CommonShortcuts } from '@truenas/ui-components';`;
 
   constructor() {
     // Add keyboard event listener

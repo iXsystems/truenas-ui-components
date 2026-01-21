@@ -5,7 +5,7 @@ A comprehensive Angular component library for TrueNAS and related applications, 
 ## Installation
 
 ```bash
-npm install @truenas/ui
+npm install @truenas/ui-components
 ```
 
 ## Features
@@ -23,7 +23,7 @@ npm install @truenas/ui
 ### 1. Import Components
 
 ```typescript
-import { TnButtonComponent, TnIconComponent } from '@truenas/ui';
+import { TnButtonComponent, TnIconComponent } from '@truenas/ui-components';
 
 @Component({
   standalone: true,
@@ -43,7 +43,7 @@ Add to your `angular.json`:
 ```json
 {
   "styles": [
-    "node_modules/@truenas/ui/src/styles/themes.css"
+    "node_modules/@truenas/ui-components/src/styles/themes.css"
   ]
 }
 ```
@@ -51,7 +51,7 @@ Add to your `angular.json`:
 Or import in your main styles file:
 
 ```scss
-@import '@truenas/ui/src/styles/themes.css';
+@import '@truenas/ui-components/src/styles/themes.css';
 ```
 
 ## Icon System
@@ -152,7 +152,7 @@ npx truenas-icons generate --config ./my-config.js
 For icons whose names are determined at runtime, use `tnIconMarker()` to ensure they're included in the sprite:
 
 ```typescript
-import { tnIconMarker } from '@truenas/ui';
+import { tnIconMarker } from '@truenas/ui-components';
 
 // In arrays or objects
 const actions = [
@@ -214,7 +214,7 @@ npm run icons
 For integrating third-party icon libraries like Lucide:
 
 ```typescript
-import { TnIconRegistryService } from '@truenas/ui';
+import { TnIconRegistryService } from '@truenas/ui-components';
 import * as LucideIcons from 'lucide';
 
 export function setupIcons() {

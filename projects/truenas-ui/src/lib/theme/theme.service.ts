@@ -21,7 +21,7 @@ import { TnTheme } from './theme.interface';
  * @example
  * ```typescript
  * import { Component, inject, effect } from '@angular/core';
- * import { TnThemeService, TnTheme } from '@truenas/ui';
+ * import { TnThemeService, TnTheme } from '@truenas/ui-components';
  *
  * @Component({...})
  * export class MyComponent {

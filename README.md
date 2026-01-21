@@ -8,13 +8,13 @@ An Angular UI component library for TrueNAS and related software. Includes reusa
 
 ```bash
 # Install latest version
-npm install @truenas/ui
+npm install @truenas/ui-components
 
 # Or with yarn
-yarn add @truenas/ui
+yarn add @truenas/ui-components
 
 # Install specific version
-npm install @truenas/ui@1.0.0
+npm install @truenas/ui-components@1.0.0
 ```
 
 ### For Contributors
@@ -32,7 +32,7 @@ yarn install
 Import components in your Angular application:
 
 ```typescript
-import { TnButtonComponent, TnInputComponent } from '@truenas/ui';
+import { TnButtonComponent, TnInputComponent } from '@truenas/ui-components';
 
 @Component({
   selector: 'app-example',
@@ -53,7 +53,7 @@ Add the theme CSS to your `angular.json`:
 ```json
 {
   "styles": [
-    "node_modules/@truenas/ui/src/styles/themes.css",
+    "node_modules/@truenas/ui-components/src/styles/themes.css",
     "src/styles.css"
   ]
 }
@@ -102,7 +102,7 @@ The build output is located in `dist/truenas-ui/` and includes compiled modules,
 The library includes an automatic sprite generation system. Mark icons in your code and they'll be automatically included in the sprite:
 
 ```typescript
-import { tnIconMarker } from '@truenas/ui';
+import { tnIconMarker } from '@truenas/ui-components';
 
 // MDI icons
 tnIconMarker('folder', 'mdi');
@@ -180,11 +180,11 @@ This library requires Angular 20:
 
 ## Distribution
 
-The library is published to [npm](https://www.npmjs.com/package/@truenas/ui):
+The library is published to [npm](https://www.npmjs.com/package/@truenas/ui-components):
 
 - Releases are created via GitHub Releases
 - CI automatically builds and publishes to npm
-- Consumers install via `npm install @truenas/ui`
+- Consumers install via `npm install @truenas/ui-components`
 - Versioning follows semver (e.g., `1.0.0`, `1.1.0`)
 
 ## License
