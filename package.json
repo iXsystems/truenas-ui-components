@@ -31,7 +31,7 @@
     "test-sb": "test-storybook",
     "lint": "eslint \"projects/truenas-ui/src/**/*.{ts,html}\" \"scripts/**/*.ts\"",
     "lint:fix": "eslint \"projects/truenas-ui/src/**/*.{ts,html}\" \"scripts/**/*.ts\" --fix",
-    "copy-themes": "cp ./projects/truenas-ui/src/styles/themes.css ./projects/truenas-ui/.storybook/public/",
+    "copy-themes": "cp ./projects/truenas-ui/src/styles/themes.css ./projects/truenas-ui/.storybook/public/ && cp ./projects/truenas-ui/src/styles/themes-storybook.css ./projects/truenas-ui/.storybook/public/",
     "copy-sprite": "cp ./projects/truenas-ui/assets/tn-icons/sprite.svg ./projects/truenas-ui/.storybook/public/assets/tn-icons/ && cp ./projects/truenas-ui/assets/tn-icons/sprite-config.json ./projects/truenas-ui/.storybook/public/assets/tn-icons/",
     "copy-assets": "yarn copy-themes && yarn copy-sprite",
     "storybook": "yarn generate-sprite && yarn copy-assets && yarn generate-harness-docs && ng run truenas-ui:storybook",

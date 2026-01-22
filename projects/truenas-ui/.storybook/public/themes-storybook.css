@@ -1,0 +1,82 @@
+/* ================================
+   Storybook-Specific Theme Styles
+   ================================
+
+   This file contains styles that should ONLY be applied
+   in Storybook development environment.
+
+   DO NOT import this file in production builds.
+   It is imported only in .storybook/preview.ts
+   ================================ */
+
+/* ================================
+   Let's apply these variables to
+   the preview and story book docs elements
+   ================================ */
+
+html, body, #storybook-docs > .sbdocs-wrapper {
+  font-family: var(--tn-font-family-body);
+  color: var(--tn-fg2) !important;
+  background-color: var(--tn-bg1) !important;
+}
+
+h1, h2, h3,h4,
+.sbdocs-title h1, .sbdocs-title h2, .sbdocs-title h3,.sbdocs-title h4 {
+  font-family: var(--tn-font-family-header);
+  color: var(--tn-fg1) !important;
+}
+
+p, li, td {
+  color: var(--tn-fg2) !important;
+}
+
+.docs-story,
+.sb-bar,
+.sbdocs-wrapper td,
+.sbdocs-preview {
+  background-color: var(--tn-bg2) !important;
+  color: var(--tn-fg2) !important;
+}
+
+thead, th {
+  background-color: var(--tn-topbar);
+  color: var(--tn-topbar-txt) !important;
+}
+
+/* Form field styles */
+input:not([role="switch"]),
+.sbdocs-wrapper select,
+.sbdocs-wrapper textarea {
+  background-color: var(--tn-bg1) !important;
+  color: var(--tn-fg2) !important;
+}
+
+.docblock-code-toggle {
+  background-color: var(--tn-btn-default-bg) !important;
+  color: var(--tn-btn-default-txt) !important;
+}
+
+.docblock-argstable-body span {
+  color: var(--tn-fg1);
+  background-color: unset;
+  border: unset;
+}
+
+.docs-story > div {
+  background-color: unset;
+}
+
+.docblock-source > div {
+  background: #000000 !important;
+  color: #dedede;
+  border: unset;
+}
+
+.docblock-source button {
+  background: var(--tn-bg2) !important;
+  color: var(--tn-fg2);
+}
+
+.docblock-source {
+  border: solid 1px var(--tn-alt-bg2) !important;
+}
