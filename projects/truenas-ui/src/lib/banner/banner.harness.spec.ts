@@ -6,8 +6,7 @@ import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TnBannerComponent } from './banner.component';
 import { TnBannerHarness } from './banner.harness';
-import { TnIconRegistryService } from '../icon/icon-registry.service';
-import { TnSpriteLoaderService } from '../icon/sprite-loader.service';
+import { TnIconTesting } from '../icon/icon-testing';
 
 // Test host component for harness testing
 @Component({
@@ -28,26 +27,11 @@ describe('TnBannerHarness', () => {
   let loader: HarnessLoader;
 
   beforeEach(async () => {
-    const spriteLoaderSpy = {
-      ensureSpriteLoaded: jest.fn().mockResolvedValue(true),
-      isSpriteLoaded: jest.fn().mockReturnValue(true),
-    } as jest.Mocked<Partial<TnSpriteLoaderService>>;
-
-    const iconRegistrySpy = {
-      registerLibrary: jest.fn(),
-      resolveIcon: jest.fn().mockResolvedValue({
-        source: 'svg',
-        content: '<svg><path/></svg>'
-      }),
-      getSpriteLoader: jest.fn().mockReturnValue(spriteLoaderSpy)
-    } as jest.Mocked<Partial<TnIconRegistryService>>;
-
     await TestBed.configureTestingModule({
       imports: [TestHostComponent],
       providers: [
         provideHttpClient(),
-        { provide: TnSpriteLoaderService, useValue: spriteLoaderSpy },
-        { provide: TnIconRegistryService, useValue: iconRegistrySpy }
+        TnIconTesting.jest.providers()
       ]
     }).compileComponents();
 

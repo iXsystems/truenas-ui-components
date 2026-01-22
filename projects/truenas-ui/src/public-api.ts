@@ -28,6 +28,7 @@ export * from './lib/icon/icon.harness';
 export * from './lib/icon/icon-registry.service';
 export * from './lib/icon/sprite-loader.service';
 export * from './lib/icon/icon-marker';
+export * from './lib/icon/icon-testing';
 export * from './lib/icon/integrations/lucide.integration';
 export * from './lib/list/list.component';
 export * from './lib/list-item/list-item.component';

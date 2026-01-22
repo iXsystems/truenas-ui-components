@@ -254,6 +254,70 @@ The scanner may warn about icons used in documentation or comments. These warnin
 
 Make sure you've marked them with `tnIconMarker()` and run `yarn icons` after adding the marker.
 
+## Testing Components with Icons
+
+When testing components that use `tn-icon`, use the `TnIconTesting` utility to avoid manual mocking:
+
+### Basic Usage
+
+```typescript
+import { TnIconTesting } from '@truenas/ui-components';
+
+await TestBed.configureTestingModule({
+  imports: [YourComponent],
+  providers: [
+    TnIconTesting.jest.providers()
+  ]
+}).compileComponents();
+```
+
+This provides working mocks for:
+- `TnSpriteLoaderService` - Sprite loading and icon URLs
+- `TnIconRegistryService` - Icon registration and resolution
+
+**What you get:**
+- Icons render as simple SVG elements (no fallback text)
+- No errors from missing sprite files
+- Clean text content for assertions
+- All registry methods (registerLibrary, registerIcon, etc.) work
+
+### Advanced: Customizing Mocks
+
+If you need to customize icon behavior in tests, pass overrides to `providers()`:
+
+```typescript
+import { TnIconTesting } from '@truenas/ui-components';
+
+await TestBed.configureTestingModule({
+  imports: [YourComponent],
+  providers: [
+    TnIconTesting.jest.providers({
+      spriteLoader: {
+        getIconUrl: jest.fn(() => '#custom-icon')
+      },
+      iconRegistry: {
+        resolveIcon: jest.fn(() => ({
+          source: 'sprite',
+          spriteUrl: '#test-icon'
+        }))
+      }
+    })
+  ]
+}).compileComponents();
+```
+
+**Why this approach?**
+- Fresh mock instances on each call prevent test pollution
+- No shared state between tests
+- Partial overrides merge with sensible defaults
+
+### Framework Support
+
+Currently supports:
+- **Jest** - `TnIconTesting.jest.providers()`
+
+Future frameworks (Vitest, etc.) will follow the same pattern when added.
+
 ## Best Practices
 
 1. **Use the sprite system for MDI and Material icons** - Don't register them manually
@@ -262,6 +326,7 @@ Make sure you've marked them with `tnIconMarker()` and run `yarn icons` after ad
 4. **Use semantic naming** - Choose icon names that describe their purpose
 5. **Provide accessibility labels** - Use `ariaLabel` for icon-only buttons
 6. **Test custom icons** - Verify your SVG icons work with `currentColor`
+7. **Use TnIconTesting in tests** - Simplifies testing components with icons
 
 ## See Also
 

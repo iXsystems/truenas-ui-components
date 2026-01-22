@@ -3,12 +3,10 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
-import { DomSanitizer } from '@angular/platform-browser';
+import { TnIconTesting } from './icon-testing';
 import { TnIconComponent } from './icon.component';
 import type { IconLibraryType, IconSize } from './icon.component';
 import { TnIconHarness } from './icon.harness';
-import { TnIconRegistryService } from './icon-registry.service';
-import { TnSpriteLoaderService } from './sprite-loader.service';
 
 @Component({
   selector: 'tn-test-host',
@@ -29,30 +27,10 @@ describe('TnIconHarness', () => {
   let loader: HarnessLoader;
 
   beforeEach(async () => {
-    const spriteLoaderSpy = {
-      ensureSpriteLoaded: jest.fn().mockImplementation(() => Promise.resolve(true)),
-      getIconUrl: jest.fn(),
-      getSafeIconUrl: jest.fn(),
-      isSpriteLoaded: jest.fn().mockReturnValue(true),
-      getSpriteConfig: jest.fn()
-    } as jest.Mocked<Partial<TnSpriteLoaderService>>;
-
-    const iconRegistrySpy = {
-      resolveIcon: jest.fn().mockReturnValue(null),
-      getSpriteLoader: jest.fn().mockReturnValue(spriteLoaderSpy)
-    } as jest.Mocked<Partial<TnIconRegistryService>>;
-
-    const domSanitizerSpy = {
-      bypassSecurityTrustHtml: jest.fn().mockImplementation((html: string) => html),
-      bypassSecurityTrustResourceUrl: jest.fn().mockImplementation((url: string) => url)
-    } as unknown as jest.Mocked<DomSanitizer>;
-
     await TestBed.configureTestingModule({
       imports: [TestHostComponent],
       providers: [
-        { provide: TnIconRegistryService, useValue: iconRegistrySpy },
-        { provide: TnSpriteLoaderService, useValue: spriteLoaderSpy },
-        { provide: DomSanitizer, useValue: domSanitizerSpy }
+        TnIconTesting.jest.providers()
       ]
     }).compileComponents();
 

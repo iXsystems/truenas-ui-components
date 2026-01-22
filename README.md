@@ -150,6 +150,61 @@ yarn test-coverage     # Generate coverage report
 yarn test-sb           # Run Storybook interaction tests
 ```
 
+### Testing Components with Icons
+
+When testing components that use TnIconComponent, use `TnIconTesting.jest.providers()` to avoid manual mocking:
+
+```typescript
+import { TnIconTesting } from '@truenas/ui-components';
+
+await TestBed.configureTestingModule({
+  imports: [YourComponent],
+  providers: [
+    TnIconTesting.jest.providers()
+  ]
+}).compileComponents();
+```
+
+This replaces the need for manual mocking like:
+```typescript
+// ❌ Don't do this anymore
+mockProvider(TnSpriteLoaderService, {
+  ensureSpriteLoaded: jest.fn(() => Promise.resolve(true)),
+  getIconUrl: jest.fn(),
+  // ... more boilerplate
+}),
+```
+
+For advanced testing scenarios, you can customize the mocks by passing overrides:
+
+```typescript
+import { TnIconTesting } from '@truenas/ui-components';
+
+await TestBed.configureTestingModule({
+  imports: [YourComponent],
+  providers: [
+    TnIconTesting.jest.providers({
+      spriteLoader: {
+        getIconUrl: jest.fn(() => '#custom-icon')
+      },
+      iconRegistry: {
+        resolveIcon: jest.fn(() => ({
+          source: 'sprite',
+          spriteUrl: '#my-icon'
+        }))
+      }
+    })
+  ]
+}).compileComponents();
+```
+
+**Benefits:**
+- Creates fresh mock instances on each call (no test pollution)
+- Icons render as SVG (no fallback text interfering with assertions)
+- Simple API for the common case, flexible for advanced needs
+
+**Note:** The API is designed to support other testing frameworks in the future (e.g., `TnIconTesting.vitest.providers()`).
+
 ## Contributing
 
 See [CONTRIBUTE.md](./CONTRIBUTE.md) for detailed development guidelines, including:
