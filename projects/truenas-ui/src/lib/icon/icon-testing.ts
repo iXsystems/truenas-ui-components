@@ -1,5 +1,6 @@
+/// <reference types="jest" />
+
 import type { Provider } from '@angular/core';
-import { jest } from '@jest/globals';
 import { TnIconRegistryService } from './icon-registry.service';
 import { TnSpriteLoaderService } from './sprite-loader.service';
 
