@@ -2,7 +2,7 @@ import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { provideHttpClient } from '@angular/common/http';
 import { Component, signal } from '@angular/core';
-import { TestBed, fakeAsync, flush } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TnBannerComponent } from './banner.component';
 import { TnBannerHarness } from './banner.harness';
@@ -53,8 +53,6 @@ describe('TnBannerHarness', () => {
 
     fixture = TestBed.createComponent(TestHostComponent);
     hostComponent = fixture.componentInstance;
-    fixture.detectChanges();
-
     loader = TestbedHarnessEnvironment.loader(fixture);
   });
 
@@ -63,82 +61,72 @@ describe('TnBannerHarness', () => {
     expect(bannerElement).toBeTruthy();
   });
 
-  it('should load harness', fakeAsync(async () => {
-    flush();
+  it('should load harness', async () => {
     const banner = await loader.getHarness(TnBannerHarness);
     expect(banner).toBeTruthy();
-  }));
+  });
 
-  it('should get text content', fakeAsync(async () => {
+  it('should get text content', async () => {
     hostComponent.heading.set('Error');
     hostComponent.message.set('Connection failed');
-    fixture.detectChanges();
-    flush();
 
     const banner = await loader.getHarness(TnBannerHarness);
     const text = await banner.getText();
     expect(text).toContain('Error');
     expect(text).toContain('Connection failed');
-  }));
+  });
 
-  it('should get text with heading only', fakeAsync(async () => {
+  it('should get text with heading only', async () => {
     hostComponent.heading.set('Success!');
-    fixture.detectChanges();
-    flush();
 
     const banner = await loader.getHarness(TnBannerHarness);
     expect(await banner.getText()).toBe('Success!');
-  }));
+  });
 
-  it('should filter by text content', fakeAsync(async () => {
+  it('should filter by text content', async () => {
     hostComponent.heading.set('Success');
     fixture.detectChanges();
-    flush();
+    await fixture.whenStable();
 
     const banner = await loader.getHarness(
       TnBannerHarness.with({ textContains: 'Success' })
     );
     expect(banner).toBeTruthy();
-  }));
+  });
 
-  it('should support regex matching', fakeAsync(async () => {
+  it('should support regex matching', async () => {
     hostComponent.message.set('Error: timeout occurred');
     fixture.detectChanges();
-    flush();
 
     const banner = await loader.getHarness(
       TnBannerHarness.with({ textContains: /Error:/ })
     );
     expect(banner).toBeTruthy();
-  }));
+  });
 
-  it('should support case-insensitive regex', fakeAsync(async () => {
+  it('should support case-insensitive regex', async () => {
     hostComponent.heading.set('Success');
     fixture.detectChanges();
-    flush();
 
     const banner = await loader.getHarness(
       TnBannerHarness.with({ textContains: /success/i })
     );
     expect(banner).toBeTruthy();
-  }));
+  });
 
-  it('should check if harness exists', fakeAsync(async () => {
+  it('should check if harness exists', async () => {
     hostComponent.heading.set('Info');
-    fixture.detectChanges();
-    flush();
 
     expect(await loader.hasHarness(TnBannerHarness)).toBe(true);
-  }));
+  });
 
-  it('should return false when harness with text does not exist', fakeAsync(async () => {
+  it('should return false when harness with text does not exist', async () => {
     hostComponent.heading.set('Test');
     fixture.detectChanges();
-    flush();
 
     expect(await loader.hasHarness(TnBannerHarness)).toBe(true);
     expect(await loader.hasHarness(
       TnBannerHarness.with({ textContains: 'NonExistentText12345' })
     )).toBe(false);
-  }));
+  });
 });

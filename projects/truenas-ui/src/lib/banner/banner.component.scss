@@ -1,7 +1,6 @@
 .tn-banner {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
   padding: 16px;
   border-radius: 6px;
   border-left: 4px solid;
@@ -68,6 +67,14 @@
     }
   }
 
+  &__main {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+  }
+
   &__icon {
     flex-shrink: 0;
     display: flex;
@@ -93,5 +100,13 @@
     color: var(--tn-fg2, #6b7280);
     line-height: 1.5;
     margin-top: 4px;
+  }
+
+  &__action {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-left: auto;
+    padding-left: 16px;
   }
 }

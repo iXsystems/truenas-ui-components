@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, within } from 'storybook/test';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
-import { TnBannerComponent } from '../lib/banner/banner.component';
+import { TnBannerComponent, TnBannerActionDirective } from '../lib/banner/banner.component';
+import { TnButtonComponent } from '../lib/button/button.component';
 import { tnIconMarker } from '../lib/icon/icon-marker';
 
 // Mark icons for sprite generation (since they're computed dynamically)
@@ -92,6 +93,40 @@ export const LongContent: Story = {
     message: 'A new system update is available that includes critical security patches, performance improvements, and bug fixes. We recommend installing this update at your earliest convenience to ensure optimal system security and stability. The update process will take approximately 15-20 minutes and may require a system restart.',
     type: 'warning',
   },
+};
+
+export const WithActionButton: Story = {
+  render: () => ({
+    moduleMetadata: {
+      imports: [TnBannerComponent, TnBannerActionDirective, TnButtonComponent],
+    },
+    template: `
+      <tn-banner
+        heading="Disk Error Detected"
+        message="Pool 'tank' has degraded disks that need attention."
+        type="error">
+        <tn-button tnBannerAction label="Show Me" variant="outline" color="warn"></tn-button>
+      </tn-banner>
+    `,
+  }),
+};
+
+export const WithActionLink: Story = {
+  render: () => ({
+    moduleMetadata: {
+      imports: [TnBannerComponent, TnBannerActionDirective],
+    },
+    template: `
+      <tn-banner
+        heading="Learn More About Storage"
+        message="Explore our documentation for best practices."
+        type="info">
+        <a tnBannerAction href="#" style="color: var(--tn-info, #3b82f6); text-decoration: underline;">
+          View Documentation
+        </a>
+      </tn-banner>
+    `,
+  }),
 };
 
 export const MultipleTypes: Story = {
