@@ -19,8 +19,7 @@ class BannerWithActionTestComponent {}
   standalone: true,
   imports: [TnBannerComponent],
   template: `
-    <tn-banner heading="Test Heading">
-    </tn-banner>
+    <tn-banner heading="Test Heading" />
   `
 })
 class BannerWithoutActionTestComponent {}
