@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, inject, computed } from '@angular/core';
+import { Component, input, inject, computed, contentChildren, Directive } from '@angular/core';
 import {
   mdiInformation,
   mdiAlert,
@@ -10,6 +10,23 @@ import { TnIconRegistryService } from '../icon/icon-registry.service';
 import { TnIconComponent } from '../icon/icon.component';
 
 export type TnBannerType = 'info' | 'warning' | 'error' | 'success';
+
+/**
+ * Directive to mark an element as a banner action.
+ * Apply this to any element that should appear in the banner's action area.
+ *
+ * @example
+ * ```html
+ * <tn-banner heading="Error">
+ *   <button tnBannerAction>Fix Now</button>
+ * </tn-banner>
+ * ```
+ */
+@Directive({
+  selector: '[tnBannerAction]',
+  standalone: true,
+})
+export class TnBannerActionDirective {}
 
 const ICON_MAP = {
   'info': 'information',
@@ -27,6 +44,12 @@ const ICON_MAP = {
 })
 export class TnBannerComponent {
   private iconRegistry = inject(TnIconRegistryService);
+
+  /** Query for projected action content */
+  private actionContent = contentChildren(TnBannerActionDirective);
+
+  /** Signal indicating whether action content has been projected */
+  protected hasAction = computed(() => this.actionContent().length > 0);
 
   // Signal-based inputs (modern Angular 19+)
   heading = input.required<string>();
