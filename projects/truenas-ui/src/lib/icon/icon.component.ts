@@ -22,7 +22,13 @@ export interface IconResult {
   templateUrl: './icon.component.html',
   styleUrl: './icon.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
+  host: {
+    '[attr.name]': 'name()',
+    '[attr.library]': 'library()',
+    '[attr.size]': 'size()',
+    '[attr.color]': 'color()'
+  }
 })
 export class TnIconComponent implements AfterViewInit {
   name = input<string>('');
