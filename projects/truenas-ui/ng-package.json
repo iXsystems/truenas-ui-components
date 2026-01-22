@@ -2,7 +2,7 @@
   "$schema": "../../node_modules/ng-packagr/ng-package.schema.json",
   "dest": "../../dist/truenas-ui",
   "assets": [
-    "src/styles/*.css",
+    "src/styles/themes.css",
     "src/assets/**/*",
     "assets/**/*",
     "scripts/**/*"
