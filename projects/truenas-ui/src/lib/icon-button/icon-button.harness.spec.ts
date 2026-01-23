@@ -3,11 +3,12 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
-import { TnIconTesting } from '../icon/icon-testing';
-import type { IconLibraryType, IconSize } from '../icon/icon.component';
 import { TnIconButtonComponent } from './icon-button.component';
 import { TnIconButtonHarness } from './icon-button.harness';
+import { TnIconTesting } from '../icon/icon-testing';
+import type { IconLibraryType, IconSize } from '../icon/icon.component';
 
+/* eslint-disable @angular-eslint/component-max-inline-declarations */
 @Component({
   selector: 'tn-test-host',
   standalone: true,
@@ -21,6 +22,7 @@ import { TnIconButtonHarness } from './icon-button.harness';
     (onClick)="onButtonClick()"
   />`
 })
+/* eslint-enable @angular-eslint/component-max-inline-declarations */
 class TestHostComponent {
   name = signal('close');
   library = signal<IconLibraryType | undefined>(undefined);

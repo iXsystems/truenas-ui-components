@@ -8,6 +8,7 @@ import { TnIconComponent } from './icon.component';
 import type { IconLibraryType, IconSize } from './icon.component';
 import { TnIconHarness } from './icon.harness';
 
+/* eslint-disable @angular-eslint/component-max-inline-declarations */
 @Component({
   selector: 'tn-test-host',
   standalone: true,
@@ -20,6 +21,7 @@ import { TnIconHarness } from './icon.harness';
     (click)="onIconClick()"
   />`
 })
+/* eslint-enable @angular-eslint/component-max-inline-declarations */
 class TestHostComponent {
   name = signal('folder');
   library = signal<IconLibraryType | undefined>(undefined);
