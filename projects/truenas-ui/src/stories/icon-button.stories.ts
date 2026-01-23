@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, within } from 'storybook/test';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnCardComponent } from '../lib/card/card.component';
 import { tnIconMarker } from '../lib/icon/icon-marker';
 import { TnIconButtonComponent } from '../lib/icon-button/icon-button.component';
@@ -20,6 +21,9 @@ tnIconMarker('pencil', 'mdi');
 tnIconMarker('refresh', 'mdi');
 tnIconMarker('share-variant', 'mdi');
 tnIconMarker('star', 'mdi');
+
+// Load harness documentation
+const harnessDoc = loadHarnessDoc('icon-button');
 
 const meta: Meta<TnIconButtonComponent> = {
   title: 'Components/Icon Button',
@@ -182,4 +186,22 @@ export const InCard: Story = {
       imports: [TnCardComponent],
     },
   }),
+};
+
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      canvas: {
+        hidden: true,
+        sourceState: 'none'
+      },
+      description: {
+        story: harnessDoc || ''
+      }
+    },
+    controls: { disable: true },
+    layout: 'fullscreen'
+  },
+  render: () => ({ template: '' })
 };

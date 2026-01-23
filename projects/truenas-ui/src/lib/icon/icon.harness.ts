@@ -3,7 +3,7 @@ import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
 
 /**
  * Harness for interacting with tn-icon in tests.
- * Provides filtering by icon name and library for existence checks.
+ * Provides filtering by icon name and library for existence checks, as well as click interaction.
  *
  * @example
  * ```typescript
@@ -24,6 +24,12 @@ import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
  * const hasIcon = await loader.hasHarness(
  *   TnIconHarness.with({ name: 'check' })
  * );
+ *
+ * // Click an icon
+ * const closeIcon = await loader.getHarness(
+ *   TnIconHarness.with({ name: 'close' })
+ * );
+ * await closeIcon.click();
  * ```
  */
 export class TnIconHarness extends ComponentHarness {
@@ -136,6 +142,22 @@ export class TnIconHarness extends ComponentHarness {
   async getColor(): Promise<string | null> {
     const host = await this.host();
     return host.getAttribute('color');
+  }
+
+  /**
+   * Clicks the icon.
+   *
+   * @returns Promise that resolves when the click action is complete.
+   *
+   * @example
+   * ```typescript
+   * const icon = await loader.getHarness(TnIconHarness.with({ name: 'close' }));
+   * await icon.click();
+   * ```
+   */
+  async click(): Promise<void> {
+    const host = await this.host();
+    return host.click();
   }
 }
 

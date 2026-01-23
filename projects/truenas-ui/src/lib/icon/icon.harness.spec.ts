@@ -8,17 +8,30 @@ import { TnIconComponent } from './icon.component';
 import type { IconLibraryType, IconSize } from './icon.component';
 import { TnIconHarness } from './icon.harness';
 
+/* eslint-disable @angular-eslint/component-max-inline-declarations */
 @Component({
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnIconComponent],
-  template: `<tn-icon [name]="name()" [library]="library()" [size]="size()" [color]="color()" />`
+  template: `<tn-icon
+    [name]="name()"
+    [library]="library()"
+    [size]="size()"
+    [color]="color()"
+    (click)="onIconClick()"
+  />`
 })
+/* eslint-enable @angular-eslint/component-max-inline-declarations */
 class TestHostComponent {
   name = signal('folder');
   library = signal<IconLibraryType | undefined>(undefined);
   size = signal<IconSize>('md');
   color = signal<string | undefined>(undefined);
+  clickCount = 0;
+
+  onIconClick(): void {
+    this.clickCount++;
+  }
 }
 
 describe('TnIconHarness', () => {
@@ -227,6 +240,75 @@ describe('TnIconHarness', () => {
       fixture.detectChanges();
 
       expect(await loader.hasHarness(TnIconHarness.with({ library: 'custom' }))).toBe(false);
+    });
+  });
+
+  describe('click', () => {
+    it('should trigger click event', async () => {
+      const icon = await loader.getHarness(TnIconHarness);
+
+      expect(hostComponent.clickCount).toBe(0);
+
+      await icon.click();
+
+      expect(hostComponent.clickCount).toBe(1);
+    });
+
+    it('should trigger multiple clicks', async () => {
+      const icon = await loader.getHarness(TnIconHarness);
+
+      expect(hostComponent.clickCount).toBe(0);
+
+      await icon.click();
+      await icon.click();
+      await icon.click();
+
+      expect(hostComponent.clickCount).toBe(3);
+    });
+
+    it('should click specific icon by name', async () => {
+      hostComponent.name.set('settings');
+      fixture.detectChanges();
+
+      const icon = await loader.getHarness(TnIconHarness.with({ name: 'settings' }));
+
+      expect(hostComponent.clickCount).toBe(0);
+
+      await icon.click();
+
+      expect(hostComponent.clickCount).toBe(1);
+    });
+
+    it('should click specific icon by library', async () => {
+      hostComponent.library.set('mdi');
+      fixture.detectChanges();
+
+      const icon = await loader.getHarness(TnIconHarness.with({ library: 'mdi' }));
+
+      expect(hostComponent.clickCount).toBe(0);
+
+      await icon.click();
+
+      expect(hostComponent.clickCount).toBe(1);
+    });
+
+    it('should click icon with multiple filter criteria', async () => {
+      hostComponent.name.set('check');
+      hostComponent.library.set('lucide');
+      hostComponent.size.set('lg');
+      fixture.detectChanges();
+
+      const icon = await loader.getHarness(TnIconHarness.with({
+        name: 'check',
+        library: 'lucide',
+        size: 'lg'
+      }));
+
+      expect(hostComponent.clickCount).toBe(0);
+
+      await icon.click();
+
+      expect(hostComponent.clickCount).toBe(1);
     });
   });
 });
