@@ -1,7 +1,7 @@
 <div
   class="tn-icon"
   role="img"
-  [ngClass]="'tn-icon--' + size()"
+  [ngClass]="fullSize() ? 'tn-icon--full' : 'tn-icon--' + size()"
   [style.color]="color()"
   [attr.aria-label]="effectiveAriaLabel()"
   [attr.title]="tooltip()">

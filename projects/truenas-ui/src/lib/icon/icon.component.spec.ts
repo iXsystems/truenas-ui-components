@@ -1,7 +1,7 @@
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import { DomSanitizer } from '@angular/platform-browser';
 import { TnIconRegistryService } from './icon-registry.service';
+import { TnIconTesting } from './icon-testing';
 import { TnIconComponent } from './icon.component';
 import { TnSpriteLoaderService } from './sprite-loader.service';
 
@@ -12,44 +12,25 @@ describe('TnIconComponent - MDI Support', () => {
   let spriteLoader: jest.Mocked<TnSpriteLoaderService>;
 
   beforeEach(async () => {
-    const spriteLoaderSpy = {
-      ensureSpriteLoaded: jest.fn().mockImplementation(() => Promise.resolve(true)),
-      getIconUrl: jest.fn(),
-      getSafeIconUrl: jest.fn(),
-      isSpriteLoaded: jest.fn().mockReturnValue(true),
-      getSpriteConfig: jest.fn()
-    } as jest.Mocked<Partial<TnSpriteLoaderService>>;
-
-    const iconRegistrySpy = {
-      resolveIcon: jest.fn().mockImplementation((name: string) => {
-        // Mock sprite icon resolution for MDI icons
-        if (name.startsWith('mdi-') && spriteLoaderSpy.getIconUrl) {
-          const url = spriteLoaderSpy.getIconUrl(name);
-          if (url) {
-            return {
-              source: 'sprite',
-              content: '',
-              spriteUrl: url
-            };
-          }
-        }
-        return null;
-      }),
-      getSpriteLoader: jest.fn().mockReturnValue(spriteLoaderSpy)
-    } as jest.Mocked<Partial<TnIconRegistryService>>;
-
-    const domSanitizerSpy = {
-      bypassSecurityTrustHtml: jest.fn().mockImplementation((html: string) => html),
-      bypassSecurityTrustResourceUrl: jest.fn().mockImplementation((url: string) => url)
-    } as unknown as jest.Mocked<DomSanitizer>;
-
     await TestBed.configureTestingModule({
       imports: [TnIconComponent],
       providers: [
-        { provide: TnIconRegistryService, useValue: iconRegistrySpy },
-        { provide: TnSpriteLoaderService, useValue: spriteLoaderSpy },
-        { provide: DomSanitizer, useValue: domSanitizerSpy }
-      ]
+        TnIconTesting.jest.providers({
+          iconRegistry: {
+            resolveIcon: jest.fn().mockImplementation((name: string) => {
+              // Return sprite result only for MDI icons with URLs
+              if (name.startsWith('mdi-')) {
+                const loader = TestBed.inject(TnSpriteLoaderService) as jest.Mocked<TnSpriteLoaderService>;
+                const url = loader.getIconUrl(name);
+                if (url) {
+                  return { source: 'sprite', content: '', spriteUrl: url };
+                }
+              }
+              return null;
+            }),
+          },
+        }),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TnIconComponent);
@@ -63,28 +44,23 @@ describe('TnIconComponent - MDI Support', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    // Since we don't have Angular Material, we'll test for the fallback behavior
-    // The component should use the existing icon registry resolution
     expect(iconRegistry.resolveIcon).toHaveBeenCalledWith('settings', expect.any(Object));
   });
 
   it('should render MDI icon when library="mdi"', async () => {
     spriteLoader.getIconUrl.mockReturnValue('#icon-mdi-harddisk');
-    spriteLoader.getSafeIconUrl.mockReturnValue('#icon-mdi-harddisk');
 
     fixture.componentRef.setInput('name', 'harddisk');
     fixture.componentRef.setInput('library', 'mdi');
     fixture.detectChanges();
     await fixture.whenStable();
 
-    // Should use sprite-based icon for MDI
     expect(spriteLoader.ensureSpriteLoaded).toHaveBeenCalled();
     expect(component.iconResult.source).toBe('sprite');
   });
 
   it('should maintain backward compatibility', async () => {
     fixture.componentRef.setInput('name', 'delete');
-    // No library specified - should default to existing behavior
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -93,14 +69,13 @@ describe('TnIconComponent - MDI Support', () => {
 
   it('should handle library parameter with fallback', async () => {
     spriteLoader.getIconUrl.mockReturnValue(null);
-    iconRegistry.resolveIcon.mockReturnValue(null); // Icon not found
+    iconRegistry.resolveIcon.mockReturnValue(null);
 
     fixture.componentRef.setInput('name', 'unknown-icon');
     fixture.componentRef.setInput('library', 'mdi');
     fixture.detectChanges();
     await fixture.whenStable();
 
-    // Should try to load from sprite first, then fall back to registry
     expect(spriteLoader.ensureSpriteLoaded).toHaveBeenCalled();
   });
 });
@@ -112,44 +87,15 @@ describe('TnIconComponent - Error Handling', () => {
   let spriteLoader: jest.Mocked<TnSpriteLoaderService>;
 
   beforeEach(async () => {
-    const spriteLoaderSpy = {
-      ensureSpriteLoaded: jest.fn().mockImplementation(() => Promise.resolve(true)),
-      getIconUrl: jest.fn(),
-      getSafeIconUrl: jest.fn(),
-      isSpriteLoaded: jest.fn().mockReturnValue(true),
-      getSpriteConfig: jest.fn()
-    } as jest.Mocked<Partial<TnSpriteLoaderService>>;
-
-    const iconRegistrySpy = {
-      resolveIcon: jest.fn().mockImplementation((name: string) => {
-        // Mock sprite icon resolution for MDI icons
-        if (name.startsWith('mdi-') && spriteLoaderSpy.getIconUrl) {
-          const url = spriteLoaderSpy.getIconUrl(name);
-          if (url) {
-            return {
-              source: 'sprite',
-              content: '',
-              spriteUrl: url
-            };
-          }
-        }
-        return null;
-      }),
-      getSpriteLoader: jest.fn().mockReturnValue(spriteLoaderSpy)
-    } as jest.Mocked<Partial<TnIconRegistryService>>;
-
-    const domSanitizerSpy = {
-      bypassSecurityTrustHtml: jest.fn().mockImplementation((html: string) => html),
-      bypassSecurityTrustResourceUrl: jest.fn().mockImplementation((url: string) => url)
-    } as unknown as jest.Mocked<DomSanitizer>;
-
     await TestBed.configureTestingModule({
       imports: [TnIconComponent],
       providers: [
-        { provide: TnIconRegistryService, useValue: iconRegistrySpy },
-        { provide: TnSpriteLoaderService, useValue: spriteLoaderSpy },
-        { provide: DomSanitizer, useValue: domSanitizerSpy }
-      ]
+        TnIconTesting.jest.providers({
+          iconRegistry: {
+            resolveIcon: jest.fn().mockReturnValue(null),
+          },
+        }),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TnIconComponent);
@@ -159,46 +105,101 @@ describe('TnIconComponent - Error Handling', () => {
   });
 
   it('should show fallback for unregistered MDI icon', async () => {
-    spriteLoader.getIconUrl.mockReturnValue(null); // Icon not in sprite
-    iconRegistry.resolveIcon.mockReturnValue(null); // Not found in registry
-
     fixture.componentRef.setInput('name', 'nonexistent');
     fixture.componentRef.setInput('library', 'mdi');
     fixture.detectChanges();
     await fixture.whenStable();
 
-    // Should fall back to text abbreviation
     expect(component.iconResult.source).toBe('text');
-    expect(component.iconResult.content).toContain('MN'); // First 2 characters of 'mdi-nonexistent'
+    expect(component.iconResult.content).toContain('MN');
   });
 
   it('should fallback to text for missing icons', async () => {
-    spriteLoader.getIconUrl.mockReturnValue(null); // Icon not in sprite
-    iconRegistry.resolveIcon.mockReturnValue(null);
-
     fixture.componentRef.setInput('name', 'missing');
     fixture.componentRef.setInput('library', 'mdi');
     fixture.detectChanges();
     await fixture.whenStable();
 
-    // Should fall back to text abbreviation
     expect(component.iconResult.source).toBe('text');
     expect(component.iconResult.content).toBeTruthy();
   });
 
   it('should handle async MDI loading gracefully', async () => {
-    spriteLoader.ensureSpriteLoaded.mockImplementation(() => Promise.resolve(true));
     spriteLoader.getIconUrl.mockReturnValue('#icon-mdi-harddisk');
-    spriteLoader.getSafeIconUrl.mockReturnValue('#icon-mdi-harddisk');
+    iconRegistry.resolveIcon.mockReturnValue({
+      source: 'sprite',
+      content: '',
+      spriteUrl: '#icon-mdi-harddisk',
+    });
 
     fixture.componentRef.setInput('name', 'harddisk');
     fixture.componentRef.setInput('library', 'mdi');
     fixture.detectChanges();
     await fixture.whenStable();
 
-    // Should show loading state initially, then resolve
-    fixture.detectChanges();
-
     expect(component.iconResult.source).toBe('sprite');
+  });
+});
+
+describe('TnIconComponent - Full Size', () => {
+  let component: TnIconComponent;
+  let fixture: ComponentFixture<TnIconComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TnIconComponent],
+      providers: [TnIconTesting.jest.providers()],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TnIconComponent);
+    component = fixture.componentInstance;
+  });
+
+  it('should default to fullSize=false', () => {
+    fixture.detectChanges();
+    expect(component.fullSize()).toBe(false);
+  });
+
+  it('should set fullSize attribute on host when fullSize=true', async () => {
+    fixture.componentRef.setInput('name', 'test');
+    fixture.componentRef.setInput('fullSize', true);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const hostEl = fixture.nativeElement as HTMLElement;
+    expect(hostEl.getAttribute('full-size')).toBe('true');
+  });
+
+  it('should not set fullSize attribute when fullSize=false', async () => {
+    fixture.componentRef.setInput('name', 'test');
+    fixture.componentRef.setInput('fullSize', false);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const hostEl = fixture.nativeElement as HTMLElement;
+    expect(hostEl.getAttribute('full-size')).toBeNull();
+  });
+
+  it('should apply tn-icon--full class when fullSize=true', async () => {
+    fixture.componentRef.setInput('name', 'test');
+    fixture.componentRef.setInput('fullSize', true);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const iconDiv = fixture.nativeElement.querySelector('.tn-icon');
+    expect(iconDiv.classList.contains('tn-icon--full')).toBe(true);
+    expect(iconDiv.classList.contains('tn-icon--md')).toBe(false);
+  });
+
+  it('should apply size class when fullSize=false', async () => {
+    fixture.componentRef.setInput('name', 'test');
+    fixture.componentRef.setInput('fullSize', false);
+    fixture.componentRef.setInput('size', 'lg');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const iconDiv = fixture.nativeElement.querySelector('.tn-icon');
+    expect(iconDiv.classList.contains('tn-icon--lg')).toBe(true);
+    expect(iconDiv.classList.contains('tn-icon--full')).toBe(false);
   });
 });

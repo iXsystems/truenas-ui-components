@@ -18,6 +18,7 @@ import { TnIconHarness } from './icon.harness';
     [library]="library()"
     [size]="size()"
     [color]="color()"
+    [fullSize]="fullSize()"
     (click)="onIconClick()"
   />`
 })
@@ -27,6 +28,7 @@ class TestHostComponent {
   library = signal<IconLibraryType | undefined>(undefined);
   size = signal<IconSize>('md');
   color = signal<string | undefined>(undefined);
+  fullSize = signal(false);
   clickCount = 0;
 
   onIconClick(): void {
@@ -183,6 +185,37 @@ describe('TnIconHarness', () => {
     });
   });
 
+  describe('isFullSize', () => {
+    it('should return false when fullSize is not set', async () => {
+      hostComponent.fullSize.set(false);
+      fixture.detectChanges();
+
+      const icon = await loader.getHarness(TnIconHarness);
+      expect(await icon.isFullSize()).toBe(false);
+    });
+
+    it('should return true when fullSize is true', async () => {
+      hostComponent.fullSize.set(true);
+      fixture.detectChanges();
+
+      const icon = await loader.getHarness(TnIconHarness);
+      expect(await icon.isFullSize()).toBe(true);
+    });
+
+    it('should get updated fullSize after change', async () => {
+      hostComponent.fullSize.set(false);
+      fixture.detectChanges();
+
+      const icon = await loader.getHarness(TnIconHarness);
+      expect(await icon.isFullSize()).toBe(false);
+
+      hostComponent.fullSize.set(true);
+      fixture.detectChanges();
+
+      expect(await icon.isFullSize()).toBe(true);
+    });
+  });
+
   describe('with() filter', () => {
     it('should filter by exact name', async () => {
       hostComponent.name.set('check');
@@ -219,6 +252,22 @@ describe('TnIconHarness', () => {
         library: 'lucide',
         size: 'lg'
       }));
+      expect(icon).toBeTruthy();
+    });
+
+    it('should filter by fullSize', async () => {
+      hostComponent.fullSize.set(true);
+      fixture.detectChanges();
+
+      const icon = await loader.getHarness(TnIconHarness.with({ fullSize: true }));
+      expect(icon).toBeTruthy();
+    });
+
+    it('should filter by fullSize=false', async () => {
+      hostComponent.fullSize.set(false);
+      fixture.detectChanges();
+
+      const icon = await loader.getHarness(TnIconHarness.with({ fullSize: false }));
       expect(icon).toBeTruthy();
     });
   });

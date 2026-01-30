@@ -34,6 +34,12 @@
     height: var(--tn-icon-xl) !important;
     font-size: var(--tn-icon-xl) !important;
   }
+
+  // Full size - expands to fill container
+  &--full {
+    width: 100% !important;
+    height: 100% !important;
+  }
   
   // Icon content containers
   &__sprite {
