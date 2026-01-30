@@ -121,6 +121,10 @@ Then use: \`<tn-icon name="home" library="lucide"></tn-icon>\`
       control: 'text',
       description: 'Accessibility label for screen readers',
     },
+    fullSize: {
+      control: 'boolean',
+      description: 'When true, the icon expands to fill its container (100% width and height) instead of using the fixed size',
+    },
   },
   decorators: [
     (story) => {
@@ -389,6 +393,80 @@ export const SizesAndColors: Story = {
     docs: {
       description: {
         story: 'Demonstration of different sizes and color customization options for MDI icons.',
+      },
+    },
+  },
+};
+
+export const FullSize: Story = {
+  render: () => ({
+    template: `
+      <div style="padding: 20px;">
+        <h4>Full Size Mode</h4>
+        <p style="margin-bottom: 16px; color: var(--text-secondary, #666);">
+          When <code>[fullSize]="true"</code>, the icon expands to fill its container instead of using fixed dimensions.
+          This is useful for logos, splash screens, or when you need the icon to scale with its parent element.
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 24px;">
+          <div style="text-align: center;">
+            <div style="width: 48px; height: 48px; border: 2px dashed var(--border-color, #ccc); display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+              <tn-icon name="harddisk" library="mdi" [fullSize]="true"></tn-icon>
+            </div>
+            <div style="margin-top: 8px; font-size: 12px;">48×48 container</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="width: 80px; height: 80px; border: 2px dashed var(--border-color, #ccc); display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+              <tn-icon name="harddisk" library="mdi" [fullSize]="true"></tn-icon>
+            </div>
+            <div style="margin-top: 8px; font-size: 12px;">80×80 container</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="width: 120px; height: 120px; border: 2px dashed var(--border-color, #ccc); display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+              <tn-icon name="harddisk" library="mdi" [fullSize]="true"></tn-icon>
+            </div>
+            <div style="margin-top: 8px; font-size: 12px;">120×120 container</div>
+          </div>
+        </div>
+
+        <h4>Comparison: Fixed Size vs Full Size</h4>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;">
+          <div style="text-align: center; border: 1px solid var(--border-color, #ccc); padding: 16px; border-radius: 8px;">
+            <h5 style="margin-top: 0;">Fixed Size (default)</h5>
+            <div style="width: 100px; height: 100px; border: 2px dashed var(--border-color, #ccc); display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+              <tn-icon name="server" library="mdi" size="lg"></tn-icon>
+            </div>
+            <code style="display: block; margin-top: 8px; font-size: 11px;">size="lg"</code>
+            <div style="font-size: 12px; color: var(--text-secondary, #666);">Icon stays at fixed lg size</div>
+          </div>
+          <div style="text-align: center; border: 1px solid var(--border-color, #ccc); padding: 16px; border-radius: 8px;">
+            <h5 style="margin-top: 0;">Full Size</h5>
+            <div style="width: 100px; height: 100px; border: 2px dashed var(--border-color, #ccc); display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+              <tn-icon name="server" library="mdi" [fullSize]="true"></tn-icon>
+            </div>
+            <code style="display: block; margin-top: 8px; font-size: 11px;">[fullSize]="true"</code>
+            <div style="font-size: 12px; color: var(--text-secondary, #666);">Icon fills container</div>
+          </div>
+        </div>
+      </div>
+    `,
+  }),
+  parameters: {
+    docs: {
+      description: {
+        story: `The \`fullSize\` input allows the icon to expand to fill its container (100% width and height) instead of using a fixed size.
+
+**Use cases:**
+- Logo displays in headers or splash screens
+- Icons that need to scale with responsive containers
+- Card or tile icons that should fill their allocated space
+
+**Usage:**
+\`\`\`html
+<tn-icon name="harddisk" library="mdi" [fullSize]="true"></tn-icon>
+\`\`\`
+
+**Note:** When \`fullSize\` is true, the \`size\` input is ignored.`,
       },
     },
   },

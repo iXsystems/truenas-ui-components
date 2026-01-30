@@ -73,6 +73,9 @@ export class TnIconHarness extends ComponentHarness {
       })
       .addOption('size', options.size, async (harness, size) => {
         return (await harness.getSize()) === size;
+      })
+      .addOption('fullSize', options.fullSize, async (harness, fullSize) => {
+        return (await harness.isFullSize()) === fullSize;
       });
   }
 
@@ -145,6 +148,24 @@ export class TnIconHarness extends ComponentHarness {
   }
 
   /**
+   * Checks if the icon is in full-size mode.
+   *
+   * @returns Promise resolving to true if the icon is full-size, false otherwise.
+   *
+   * @example
+   * ```typescript
+   * const icon = await loader.getHarness(TnIconHarness);
+   * const isFullSize = await icon.isFullSize();
+   * expect(isFullSize).toBe(true);
+   * ```
+   */
+  async isFullSize(): Promise<boolean> {
+    const host = await this.host();
+    const fullSizeAttr = await host.getAttribute('full-size');
+    return fullSizeAttr === 'true';
+  }
+
+  /**
    * Clicks the icon.
    *
    * @returns Promise that resolves when the click action is complete.
@@ -171,4 +192,6 @@ export interface IconHarnessFilters extends BaseHarnessFilters {
   library?: string;
   /** Filters by icon size (xs, sm, md, lg, xl). */
   size?: string;
+  /** Filters by full-size mode. */
+  fullSize?: boolean;
 }

@@ -27,7 +27,8 @@ export interface IconResult {
     '[attr.name]': 'name()',
     '[attr.library]': 'library()',
     '[attr.size]': 'size()',
-    '[attr.color]': 'color()'
+    '[attr.color]': 'color()',
+    '[attr.full-size]': 'fullSize() || null'
   }
 })
 export class TnIconComponent implements AfterViewInit {
@@ -37,6 +38,12 @@ export class TnIconComponent implements AfterViewInit {
   tooltip = input<string | undefined>(undefined);
   ariaLabel = input<string | undefined>(undefined);
   library = input<IconLibraryType | undefined>(undefined);
+
+  /**
+   * When true, the icon will expand to fill its container (100% width and height)
+   * instead of using the fixed size from the `size` input.
+   */
+  fullSize = input(false);
 
   svgContainer = viewChild<ElementRef<HTMLDivElement>>('svgContainer');
 
