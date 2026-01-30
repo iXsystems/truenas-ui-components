@@ -73,6 +73,7 @@
     "tn-truenas-logo-mark-color",
     "tn-truenas-logo-type",
     "tn-truenas-logo-type-color",
-    "tn-two-factor-auth"
+    "tn-two-factor-auth",
+    "tn-webshare"
   ]
 }
