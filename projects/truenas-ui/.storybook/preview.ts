@@ -6,6 +6,8 @@ import { withThemeByClassName } from '@storybook/addon-themes';
 import { APP_INITIALIZER } from '@angular/core';
 import 'zone.js';
 import { TnThemeService, TnTheme } from '../src/public-api';
+import { TnIconRegistryService } from '../src/lib/icon/icon-registry.service';
+import { TnSpriteLoaderService } from '../src/lib/icon/sprite-loader.service';
 
 /**
  * Register themes using Storybook's built-in theme switcher.
@@ -100,6 +102,8 @@ export const decorators: Decorator[] = [
       provideHttpClient(),
       Dialog,
       TnThemeService,
+      TnIconRegistryService,
+      TnSpriteLoaderService,
       {
         provide: APP_INITIALIZER,
         useFactory: (themeService: TnThemeService) => {
@@ -111,6 +115,15 @@ export const decorators: Decorator[] = [
           };
         },
         deps: [TnThemeService],
+        multi: true,
+      },
+      {
+        provide: APP_INITIALIZER,
+        useFactory: (spriteLoader: TnSpriteLoaderService) => {
+          // Ensure sprite is loaded before Storybook stories render
+          return () => spriteLoader.ensureSpriteLoaded();
+        },
+        deps: [TnSpriteLoaderService],
         multi: true,
       },
     ]
