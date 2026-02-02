@@ -55,8 +55,7 @@ describe('TnIconComponent - MDI Support', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(spriteLoader.ensureSpriteLoaded).toHaveBeenCalled();
-    expect(component.iconResult.source).toBe('sprite');
+    expect(component.iconResult().source).toBe('sprite');
   });
 
   it('should maintain backward compatibility', async () => {
@@ -76,7 +75,8 @@ describe('TnIconComponent - MDI Support', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(spriteLoader.ensureSpriteLoaded).toHaveBeenCalled();
+    // Icon should fall back to text abbreviation when sprite and registry don't resolve
+    expect(component.iconResult().source).toBe('text');
   });
 });
 
@@ -110,8 +110,8 @@ describe('TnIconComponent - Error Handling', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(component.iconResult.source).toBe('text');
-    expect(component.iconResult.content).toContain('MN');
+    expect(component.iconResult().source).toBe('text');
+    expect(component.iconResult().content).toContain('MN');
   });
 
   it('should fallback to text for missing icons', async () => {
@@ -120,8 +120,8 @@ describe('TnIconComponent - Error Handling', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(component.iconResult.source).toBe('text');
-    expect(component.iconResult.content).toBeTruthy();
+    expect(component.iconResult().source).toBe('text');
+    expect(component.iconResult().content).toBeTruthy();
   });
 
   it('should handle async MDI loading gracefully', async () => {
@@ -137,7 +137,7 @@ describe('TnIconComponent - Error Handling', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(component.iconResult.source).toBe('sprite');
+    expect(component.iconResult().source).toBe('sprite');
   });
 });
 

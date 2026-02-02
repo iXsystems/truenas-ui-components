@@ -7,13 +7,13 @@
   [attr.title]="tooltip()">
   
 
-  @switch (iconResult.source) {
+  @switch (iconResult().source) {
     <!-- Sprite icons (from generated sprite.svg) -->
     @case ('sprite') {
       <svg
            class="tn-icon__sprite"
            aria-hidden="true">
-        <use [attr.href]="iconResult.spriteUrl" />
+        <use [attr.href]="iconResult().spriteUrl" />
       </svg>
     }
 
@@ -29,7 +29,7 @@
     @case ('css') {
       <i
          aria-hidden="true"
-         [class]="'tn-icon__css ' + iconResult.content">
+         [class]="'tn-icon__css ' + iconResult().content">
       </i>
     }
 
@@ -37,14 +37,14 @@
     @case ('unicode') {
       <span
             class="tn-icon__unicode"
-            aria-hidden="true">{{ iconResult.content }}</span>
+            aria-hidden="true">{{ iconResult().content }}</span>
     }
 
     <!-- Text abbreviation fallback -->
     @default {
       <span
             class="tn-icon__text"
-            aria-hidden="true">{{ iconResult.content }}</span>
+            aria-hidden="true">{{ iconResult().content }}</span>
     }
   }
 </div>

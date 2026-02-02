@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
-import type { ElementRef, AfterViewInit} from '@angular/core';
-import { ChangeDetectorRef} from '@angular/core';
-import { Component, input, computed, effect, ChangeDetectionStrategy, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import type { ElementRef } from '@angular/core';
+import { Component, input, computed, effect, signal, ChangeDetectionStrategy, ViewEncapsulation, inject, viewChild } from '@angular/core';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
 import { TnIconRegistryService } from './icon-registry.service';
 
@@ -31,7 +30,7 @@ export interface IconResult {
     '[attr.full-size]': 'fullSize() || null'
   }
 })
-export class TnIconComponent implements AfterViewInit {
+export class TnIconComponent {
   name = input<string>('');
   size = input<IconSize>('md');
   color = input<string | undefined>(undefined);
@@ -47,35 +46,31 @@ export class TnIconComponent implements AfterViewInit {
 
   svgContainer = viewChild<ElementRef<HTMLDivElement>>('svgContainer');
 
-  iconResult: IconResult = { source: 'text', content: '?' };
+  iconResult = signal<IconResult>({ source: 'text', content: '?' });
 
   private iconRegistry = inject(TnIconRegistryService);
-  private cdr = inject(ChangeDetectorRef);
   private sanitizer = inject(DomSanitizer);
 
   constructor() {
-    // Use effect to watch for changes in name or library
+    // Effect 1: Resolve icons when name or library changes
     effect(() => {
-      // Track signals to re-run effect when they change
-      this.name();
-      this.library();
-
-      // Trigger icon resolution when name or library changes
-      this.resolveIcon()
-        .then(() => {
-          this.cdr.markForCheck();
-          setTimeout(() => this.updateSvgContent(), 0);
-        })
-        .catch((error) => {
-          console.error('[TnIcon] Resolution failed (onChange)', error);
-          this.iconResult = { source: 'text', content: '!' };
-          this.cdr.markForCheck();
-        });
+      const name = this.name();
+      const library = this.library();
+      const result = this.resolveIcon(name, library);
+      this.iconResult.set(result);
     });
-  }
 
-  ngAfterViewInit(): void {
-    this.updateSvgContent();
+    // Effect 2: Update SVG DOM when container is available and content changes
+    effect(() => {
+      const container = this.svgContainer();
+      const content = this.sanitizedContent();
+      const result = this.iconResult();
+
+      if (result.source === 'svg' && container && typeof content === 'string') {
+        // Bypass Angular's sanitization by setting innerHTML directly
+        container.nativeElement.innerHTML = content;
+      }
+    });
   }
 
   effectiveAriaLabel = computed(() => {
@@ -83,7 +78,7 @@ export class TnIconComponent implements AfterViewInit {
   });
 
   sanitizedContent = computed(() => {
-    const content = this.iconResult.content;
+    const content = this.iconResult().content;
 
     // Handle mock SafeHtml objects from Storybook
     if (content && typeof content === 'object' && (content as { changingThisBreaksApplicationSecurity?: string }).changingThisBreaksApplicationSecurity) {
@@ -93,41 +88,21 @@ export class TnIconComponent implements AfterViewInit {
     return content;
   });
 
-  private updateSvgContent(): void {
-    const svgContainer = this.svgContainer();
-    if (this.iconResult.source === 'svg' && svgContainer) {
-      const content = this.sanitizedContent();
-      if (typeof content === 'string') {
-        // Bypass Angular's sanitization by setting innerHTML directly
-        svgContainer.nativeElement.innerHTML = content;
-      }
-    }
-  }
-
-  private async resolveIcon(): Promise<void> {
-    if (!this.name()) {
-      this.iconResult = { source: 'text', content: '?' };
-      return;
-    }
-
-    // Wait for sprite to load (if it's being loaded)
-    try {
-      await this.iconRegistry.getSpriteLoader().ensureSpriteLoaded();
-    } catch (error) {
-      // Sprite loading failed, continue with other resolution methods
-      console.warn('[TnIcon] Sprite loading failed, falling back to other icon sources:', error);
+  private resolveIcon(name: string, library?: IconLibraryType): IconResult {
+    if (!name) {
+      return { source: 'text', content: '?' };
     }
 
     // Construct the effective icon name based on library attribute
-    let effectiveIconName = this.name();
-    if (this.library() === 'mdi' && !this.name().startsWith('mdi-')) {
-      effectiveIconName = `mdi-${this.name()}`;
-    } else if (this.library() === 'material' && !this.name().startsWith('mat-')) {
+    let effectiveIconName = name;
+    if (library === 'mdi' && !name.startsWith('mdi-')) {
+      effectiveIconName = `mdi-${name}`;
+    } else if (library === 'material' && !name.startsWith('mat-')) {
       // Material icons get mat- prefix in sprite
-      effectiveIconName = `mat-${this.name()}`;
-    } else if (this.library() === 'lucide' && !this.name().includes(':')) {
+      effectiveIconName = `mat-${name}`;
+    } else if (library === 'lucide' && !name.includes(':')) {
       // Convert to registry format for Lucide icons
-      effectiveIconName = `lucide:${this.name()}`;
+      effectiveIconName = `lucide:${name}`;
     }
 
     // 1. Try icon registry (libraries and custom icons)
@@ -146,33 +121,29 @@ export class TnIconComponent implements AfterViewInit {
     }
 
     if (registryResult) {
-      this.iconResult = registryResult;
-      return;
+      return registryResult;
     }
 
     // 2. Try built-in third-party patterns (deprecated - use registry instead)
     const thirdPartyResult = this.tryThirdPartyIcon(effectiveIconName);
     if (thirdPartyResult) {
-      this.iconResult = thirdPartyResult;
-      return;
+      return thirdPartyResult;
     }
 
     // 3. Try CSS class (Font Awesome, Material Icons, etc.)
     const cssResult = this.tryCssIcon(effectiveIconName);
     if (cssResult) {
-      this.iconResult = cssResult;
-      return;
+      return cssResult;
     }
 
     // 4. Try Unicode mapping
     const unicodeResult = this.tryUnicodeIcon(effectiveIconName);
     if (unicodeResult) {
-      this.iconResult = unicodeResult;
-      return;
+      return unicodeResult;
     }
 
     // 5. Fallback to text abbreviation
-    this.iconResult = {
+    return {
       source: 'text',
       content: this.generateTextAbbreviation(effectiveIconName)
     };
@@ -224,14 +195,6 @@ export class TnIconComponent implements AfterViewInit {
       };
     }
 
-    // Check if class exists in document
-    if (this.cssClassExists(name)) {
-      return {
-        source: 'css',
-        content: name
-      };
-    }
-
     return null;
   }
 
@@ -262,7 +225,7 @@ export class TnIconComponent implements AfterViewInit {
 
   private generateTextAbbreviation(name: string): string {
     if (!name) {return '?';}
-    
+
     // Handle hyphenated names (e.g., 'arrow-left' -> 'AL')
     if (name.includes('-')) {
       const parts = name.split('-');
@@ -274,13 +237,5 @@ export class TnIconComponent implements AfterViewInit {
 
     // Default to first 2 characters
     return name.substring(0, 2).toUpperCase();
-  }
-
-  private cssClassExists(_className: string): boolean {
-    if (typeof document === 'undefined') {return false;}
-    
-    // For now, only return true for known CSS icon patterns
-    // In real implementation, consumers would override this method
-    return false; // Disable generic CSS class checking for now
   }
 }
