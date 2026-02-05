@@ -6,6 +6,7 @@ Thank you for your interest in contributing to the TrueNAS-UI component library!
 
 - [Getting Started](#getting-started)
 - [Development Workflow](#development-workflow)
+- [Commit Messages & Releases](#commit-messages--releases)
 - [Icon System](#icon-system)
 - [Component Development](#component-development)
 - [Testing](#testing)
@@ -84,6 +85,75 @@ yarn test-sb          # Run Storybook interaction tests
 ```bash
 yarn icons            # Generate icon sprite (runs automatically on build)
 ```
+
+## Commit Messages & Releases
+
+### Conventional Commit Format
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) and [Semantic Release](https://semantic-release.gitbook.io/semantic-release/) for automated versioning and publishing. Every PR title **must** follow this format:
+
+```
+type(scope): description
+```
+
+- **type** — Required. See the table below.
+- **scope** — Optional. The area of the codebase (e.g., `button`, `icon`, `ci`).
+- **description** — Required. A short summary of the change in imperative mood.
+
+Examples:
+```
+feat: add dropdown component
+fix(button): correct focus ring on disabled state
+refactor: simplify icon resolution logic
+docs: update contributing guide
+chore: upgrade Angular to v21
+```
+
+### Why It Matters
+
+When a PR is **squash-merged**, GitHub uses the PR title as the commit message. Semantic Release analyzes these commit messages to automatically determine version bumps and generate release notes. A non-conventional PR title means the commit won't be categorized correctly.
+
+CI will reject PRs that don't have a valid conventional commit title.
+
+### Commit Type Reference
+
+| Type | Description | Triggers Release? |
+|---|---|---|
+| `feat` | New component, input/output, or public API | Yes (patch) |
+| `fix` | Bug fix in existing component behavior | Yes (patch) |
+| `refactor` | Code change that doesn't add features or fix bugs | Yes (patch) |
+| `perf` | Performance improvement | Yes (patch) |
+| `docs` | Documentation only | No |
+| `test` | Adding or updating tests | No |
+| `chore` | Tooling, dependencies, config | No |
+| `ci` | CI/CD changes | No |
+| `style` | Formatting, whitespace | No |
+| `build` | Build system changes | No |
+| `revert` | Revert a previous commit | Depends on reverted type |
+
+### Breaking Changes
+
+To signal a breaking change (bumps minor version, e.g., `0.1.x → 0.2.0`), use one of:
+
+- **`!` suffix on the type:** `feat!: remove deprecated button API`
+- **`BREAKING CHANGE:` footer:**
+  ```
+  feat: redesign icon component
+
+  BREAKING CHANGE: The `icon` input has been renamed to `name`.
+  ```
+
+Breaking changes signal to consumers that they need to update their version constraints.
+
+### How Auto-Publishing Works
+
+1. You open a PR with a conventional commit-style title
+2. CI validates the PR title
+3. PR is reviewed and **squash-merged** to `main`
+4. CI runs lint, test, and build — all must pass
+5. A path check verifies that published library files actually changed (not just docs, tests, or CI config)
+6. Semantic Release determines the version bump from the commit type, publishes to npm, and creates a GitHub Release
+7. If the commit type is non-releasable (`chore`, `docs`, `ci`, `test`, `style`, `build`) or no library files changed, no release happens
 
 ## Icon System
 
