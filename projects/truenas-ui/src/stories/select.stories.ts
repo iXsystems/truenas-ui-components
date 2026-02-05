@@ -1,7 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
 import type { TnSelectOption, TnSelectOptionGroup } from '../lib/select/select.component';
 import { TnSelectComponent } from '../lib/select/select.component';
+
+// Load harness documentation
+const harnessDoc = loadHarnessDoc('select');
 
 const meta: Meta<TnSelectComponent> = {
   title: 'Components/Select',
@@ -185,5 +189,24 @@ export const MixedOptionsAndGroups: Story = {
     placeholder: 'Select your favorite',
     disabled: false,
   },
+};
+
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      story: { height: 'auto' },
+      canvas: {
+        hidden: true,
+        sourceState: 'none'
+      },
+      description: {
+        story: harnessDoc || ''
+      }
+    },
+    controls: { disable: true },
+    layout: 'fullscreen'
+  },
+  render: () => ({ template: '' })
 };
 
