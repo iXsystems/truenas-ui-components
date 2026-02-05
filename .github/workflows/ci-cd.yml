@@ -7,12 +7,10 @@ on:
   pull_request:
     branches:
       - main
-  release:
-    types: [published]
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   packages: write
   pages: write
   id-token: write
@@ -133,42 +131,69 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-  publish:
-    name: Publish to npm
+  release:
+    name: Release
     runs-on: ubuntu-latest
     needs: [lint, test, build]
-    if: github.event_name == 'release'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for library file changes
+        id: changes
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            echo "No previous release tag found — treating as first release"
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Comparing against last release tag: $LAST_TAG"
+
+          CHANGED=$(git diff --name-only "$LAST_TAG"..HEAD -- \
+            'projects/truenas-ui/src/lib/**' \
+            'projects/truenas-ui/src/public-api.ts' \
+            'projects/truenas-ui/src/styles/**' \
+            'projects/truenas-ui/assets/**' \
+            'projects/truenas-ui/scripts/**' \
+            'projects/truenas-ui/package.json' \
+            'projects/truenas-ui/ng-package.json')
+
+          if [ -z "$CHANGED" ]; then
+            echo "No library files changed since $LAST_TAG — skipping release"
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Library files changed:"
+            echo "$CHANGED"
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Enable Corepack
+        if: steps.changes.outputs.has_changes == 'true'
         run: corepack enable
 
       - name: Setup Node.js
+        if: steps.changes.outputs.has_changes == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'yarn'
-          registry-url: 'https://registry.npmjs.org'
-          scope: '@truenas'
 
       - name: Install dependencies
+        if: steps.changes.outputs.has_changes == 'true'
         run: yarn install --immutable
 
       - name: Build library
+        if: steps.changes.outputs.has_changes == 'true'
         run: yarn build
 
-      - name: Set version from release tag
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "Publishing version: $VERSION"
-          cd dist/truenas-ui
-          npm version $VERSION --no-git-tag-version --allow-same-version
-
-      - name: Publish to npm
-        run: |
-          cd dist/truenas-ui
-          npm publish
+      - name: Run semantic-release
+        if: steps.changes.outputs.has_changes == 'true'
+        run: npx semantic-release
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

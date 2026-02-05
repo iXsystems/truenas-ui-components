@@ -237,10 +237,11 @@ This library requires Angular 20:
 
 The library is published to [npm](https://www.npmjs.com/package/@truenas/ui-components):
 
-- Releases are created via GitHub Releases
-- CI automatically builds and publishes to npm
+- Releases are **automated** — merging a PR to `main` with library code changes triggers a new npm publish
+- Version bumps are determined by conventional commit types in PR titles (e.g., `feat:`, `fix:`)
+- GitHub Releases with release notes are created automatically via [Semantic Release](https://semantic-release.gitbook.io/semantic-release/)
 - Consumers install via `npm install @truenas/ui-components`
-- Versioning follows semver (e.g., `1.0.0`, `1.1.0`)
+- See [CONTRIBUTE.md](./CONTRIBUTE.md#commit-messages--releases) for the full commit message guide
 
 ## License
 
