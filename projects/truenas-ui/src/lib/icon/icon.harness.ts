@@ -76,6 +76,9 @@ export class TnIconHarness extends ComponentHarness {
       })
       .addOption('fullSize', options.fullSize, async (harness, fullSize) => {
         return (await harness.isFullSize()) === fullSize;
+      })
+      .addOption('customSize', options.customSize, async (harness, customSize) => {
+        return (await harness.getCustomSize()) === customSize;
       });
   }
 
@@ -166,6 +169,40 @@ export class TnIconHarness extends ComponentHarness {
   }
 
   /**
+   * Gets the icon custom size.
+   *
+   * @returns Promise resolving to the custom size value, or null if not set.
+   *
+   * @example
+   * ```typescript
+   * const icon = await loader.getHarness(TnIconHarness);
+   * const customSize = await icon.getCustomSize();
+   * expect(customSize).toBe('64px');
+   * ```
+   */
+  async getCustomSize(): Promise<string | null> {
+    const host = await this.host();
+    return host.getAttribute('custom-size');
+  }
+
+  /**
+   * Checks if the icon is using a custom size.
+   *
+   * @returns Promise resolving to true if a custom size is set, false otherwise.
+   *
+   * @example
+   * ```typescript
+   * const icon = await loader.getHarness(TnIconHarness);
+   * const hasCustomSize = await icon.hasCustomSize();
+   * expect(hasCustomSize).toBe(true);
+   * ```
+   */
+  async hasCustomSize(): Promise<boolean> {
+    const customSize = await this.getCustomSize();
+    return customSize !== null;
+  }
+
+  /**
    * Clicks the icon.
    *
    * @returns Promise that resolves when the click action is complete.
@@ -194,4 +231,6 @@ export interface IconHarnessFilters extends BaseHarnessFilters {
   size?: string;
   /** Filters by full-size mode. */
   fullSize?: boolean;
+  /** Filters by custom size value. */
+  customSize?: string;
 }

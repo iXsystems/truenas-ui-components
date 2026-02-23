@@ -19,6 +19,7 @@ import { TnIconHarness } from './icon.harness';
     [size]="size()"
     [color]="color()"
     [fullSize]="fullSize()"
+    [customSize]="customSize()"
     (click)="onIconClick()"
   />`
 })
@@ -29,6 +30,7 @@ class TestHostComponent {
   size = signal<IconSize>('md');
   color = signal<string | undefined>(undefined);
   fullSize = signal(false);
+  customSize = signal<string | undefined>(undefined);
   clickCount = 0;
 
   onIconClick(): void {
@@ -216,6 +218,29 @@ describe('TnIconHarness', () => {
     });
   });
 
+  describe('getCustomSize', () => {
+    it('should get custom size when set', async () => {
+      hostComponent.customSize.set('64px');
+      fixture.detectChanges();
+
+      const icon = await loader.getHarness(TnIconHarness);
+      expect(await icon.getCustomSize()).toBe('64px');
+    });
+
+    it('should get updated customSize after change', async () => {
+      hostComponent.customSize.set('32px');
+      fixture.detectChanges();
+
+      const icon = await loader.getHarness(TnIconHarness);
+      expect(await icon.getCustomSize()).toBe('32px');
+
+      hostComponent.customSize.set('2rem');
+      fixture.detectChanges();
+
+      expect(await icon.getCustomSize()).toBe('2rem');
+    });
+  });
+
   describe('with() filter', () => {
     it('should filter by exact name', async () => {
       hostComponent.name.set('check');
@@ -268,6 +293,14 @@ describe('TnIconHarness', () => {
       fixture.detectChanges();
 
       const icon = await loader.getHarness(TnIconHarness.with({ fullSize: false }));
+      expect(icon).toBeTruthy();
+    });
+
+    it('should filter by customSize', async () => {
+      hostComponent.customSize.set('64px');
+      fixture.detectChanges();
+
+      const icon = await loader.getHarness(TnIconHarness.with({ customSize: '64px' }));
       expect(icon).toBeTruthy();
     });
   });

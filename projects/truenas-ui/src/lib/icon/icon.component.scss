@@ -1,46 +1,59 @@
-.tn-icon {
+// Host element sizing
+// Display and layout properties are set via CSS here.
+// Dimensions use attribute selectors for size presets, with inline style
+// overrides for customSize and fullSize (set via Angular host bindings).
+tn-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   vertical-align: middle;
-  
-  // Size variants using global CSS variables
-  &--xs {
-    width: var(--tn-icon-xs) !important;
-    height: var(--tn-icon-xs) !important;
-    font-size: var(--tn-icon-xs) !important;
-  }
-  
-  &--sm {
-    width: var(--tn-icon-sm) !important;
-    height: var(--tn-icon-sm) !important;
-    font-size: var(--tn-icon-sm) !important;
-  }
-  
-  &--md {
-    width: var(--tn-icon-md) !important;
-    height: var(--tn-icon-md) !important;
-    font-size: var(--tn-icon-md) !important;
-  }
-  
-  &--lg {
-    width: var(--tn-icon-lg) !important;
-    height: var(--tn-icon-lg) !important;
-    font-size: var(--tn-icon-lg) !important;
-  }
-  
-  &--xl {
-    width: var(--tn-icon-xl) !important;
-    height: var(--tn-icon-xl) !important;
-    font-size: var(--tn-icon-xl) !important;
+  color: var(--tn-icon-color, currentColor);
+
+  // Default sizing (fallback when no size attribute matches)
+  width: var(--tn-icon-size, var(--tn-icon-md));
+  height: var(--tn-icon-size, var(--tn-icon-md));
+  font-size: var(--tn-icon-size, var(--tn-icon-md));
+
+  // Size presets via attribute selectors
+  &[size="xs"] {
+    width: var(--tn-icon-xs);
+    height: var(--tn-icon-xs);
+    font-size: var(--tn-icon-xs);
   }
 
-  // Full size - expands to fill container
-  &--full {
-    width: 100% !important;
-    height: 100% !important;
+  &[size="sm"] {
+    width: var(--tn-icon-sm);
+    height: var(--tn-icon-sm);
+    font-size: var(--tn-icon-sm);
   }
-  
+
+  &[size="md"] {
+    width: var(--tn-icon-md);
+    height: var(--tn-icon-md);
+    font-size: var(--tn-icon-md);
+  }
+
+  &[size="lg"] {
+    width: var(--tn-icon-lg);
+    height: var(--tn-icon-lg);
+    font-size: var(--tn-icon-lg);
+  }
+
+  &[size="xl"] {
+    width: var(--tn-icon-xl);
+    height: var(--tn-icon-xl);
+    font-size: var(--tn-icon-xl);
+  }
+}
+
+// Inner container - pass-through that fills the host
+.tn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+
   // Icon content containers
   &__sprite {
     width: 100%;
@@ -63,20 +76,20 @@
       color: inherit;
     }
   }
-  
+
   &__css {
     font-size: inherit;
     line-height: 1;
     color: inherit;
   }
-  
+
   &__unicode {
     font-size: inherit;
     line-height: 1;
     color: inherit;
     text-align: center;
   }
-  
+
   &__text {
     font-size: 0.75em;
     font-weight: 600;
@@ -85,11 +98,4 @@
     text-align: center;
     opacity: 0.7;
   }
-}
-
-// CSS Custom Properties for easy theming
-.tn-icon {
-  width: var(--tn-icon-size, var(--tn-icon-md));
-  height: var(--tn-icon-size, var(--tn-icon-md));
-  color: var(--tn-icon-color, currentColor);
 }

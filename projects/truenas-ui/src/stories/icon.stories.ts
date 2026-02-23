@@ -125,6 +125,10 @@ Then use: \`<tn-icon name="home" library="lucide"></tn-icon>\`
       control: 'boolean',
       description: 'When true, the icon expands to fill its container (100% width and height) instead of using the fixed size',
     },
+    customSize: {
+      control: 'text',
+      description: 'Custom size for the icon. Accepts any valid CSS size value (e.g., "64px", "2rem"). Overrides both size and fullSize when set.',
+    },
   },
   decorators: [
     (story) => {
@@ -467,6 +471,74 @@ export const FullSize: Story = {
 \`\`\`
 
 **Note:** When \`fullSize\` is true, the \`size\` input is ignored.`,
+      },
+    },
+  },
+};
+
+export const CustomSize: Story = {
+  render: () => ({
+    template: `
+      <div style="padding: 20px;">
+        <h4>Custom Size</h4>
+        <p style="margin-bottom: 16px; color: var(--text-secondary, #666);">
+          Use <code>customSize</code> to set an explicit size using any valid CSS value.
+          This overrides both <code>size</code> presets and <code>fullSize</code>.
+        </p>
+
+        <div style="display: flex; align-items: end; gap: 24px; margin-bottom: 24px;">
+          <div style="text-align: center;">
+            <tn-icon name="harddisk" library="mdi" customSize="16px"></tn-icon>
+            <div style="margin-top: 8px; font-size: 12px;">16px</div>
+          </div>
+          <div style="text-align: center;">
+            <tn-icon name="harddisk" library="mdi" customSize="32px"></tn-icon>
+            <div style="margin-top: 8px; font-size: 12px;">32px</div>
+          </div>
+          <div style="text-align: center;">
+            <tn-icon name="harddisk" library="mdi" customSize="48px"></tn-icon>
+            <div style="margin-top: 8px; font-size: 12px;">48px</div>
+          </div>
+          <div style="text-align: center;">
+            <tn-icon name="harddisk" library="mdi" customSize="64px"></tn-icon>
+            <div style="margin-top: 8px; font-size: 12px;">64px</div>
+          </div>
+          <div style="text-align: center;">
+            <tn-icon name="harddisk" library="mdi" customSize="96px"></tn-icon>
+            <div style="margin-top: 8px; font-size: 12px;">96px</div>
+          </div>
+        </div>
+
+        <h4>Other CSS Units</h4>
+        <div style="display: flex; align-items: end; gap: 24px;">
+          <div style="text-align: center;">
+            <tn-icon name="server" library="mdi" customSize="2rem"></tn-icon>
+            <div style="margin-top: 8px; font-size: 12px;">2rem</div>
+          </div>
+          <div style="text-align: center;">
+            <tn-icon name="server" library="mdi" customSize="3em"></tn-icon>
+            <div style="margin-top: 8px; font-size: 12px;">3em</div>
+          </div>
+          <div style="text-align: center;">
+            <tn-icon name="server" library="mdi" customSize="5vw"></tn-icon>
+            <div style="margin-top: 8px; font-size: 12px;">5vw</div>
+          </div>
+        </div>
+      </div>
+    `,
+  }),
+  parameters: {
+    docs: {
+      description: {
+        story: `The \`customSize\` input allows setting an explicit icon size using any valid CSS value.
+
+**Usage:**
+\`\`\`html
+<tn-icon name="harddisk" library="mdi" customSize="64px"></tn-icon>
+<tn-icon name="harddisk" library="mdi" customSize="2rem"></tn-icon>
+\`\`\`
+
+**Priority chain:** \`customSize\` > \`fullSize\` > \`size\` preset > default (md)`,
       },
     },
   },
