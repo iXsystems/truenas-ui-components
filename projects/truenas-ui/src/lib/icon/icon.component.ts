@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import type { ElementRef } from '@angular/core';
 import { Component, input, computed, effect, signal, ChangeDetectionStrategy, ViewEncapsulation, inject, viewChild } from '@angular/core';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
@@ -17,7 +16,6 @@ export interface IconResult {
 @Component({
   selector: 'tn-icon',
   standalone: true,
-  imports: [CommonModule],
   templateUrl: './icon.component.html',
   styleUrl: './icon.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,7 +25,12 @@ export interface IconResult {
     '[attr.library]': 'library()',
     '[attr.size]': 'size()',
     '[attr.color]': 'color()',
-    '[attr.full-size]': 'fullSize() || null'
+    '[attr.full-size]': 'fullSize() || null',
+    '[attr.custom-size]': 'customSize() || null',
+    '[style.width]': 'hostDimension()',
+    '[style.height]': 'hostDimension()',
+    '[style.font-size]': 'hostFontSize()',
+    '[style.color]': 'color() || null',
   }
 })
 export class TnIconComponent {
@@ -43,6 +46,12 @@ export class TnIconComponent {
    * instead of using the fixed size from the `size` input.
    */
   fullSize = input(false);
+
+  /**
+   * Custom size for the icon. Accepts any valid CSS size value (e.g., '64px', '2rem', '3em').
+   * When set, this overrides both the `size` preset and `fullSize` inputs.
+   */
+  customSize = input<string | undefined>(undefined);
 
   svgContainer = viewChild<ElementRef<HTMLDivElement>>('svgContainer');
 
@@ -72,6 +81,19 @@ export class TnIconComponent {
       }
     });
   }
+
+  hostDimension = computed(() => {
+    const custom = this.customSize();
+    if (custom) {return custom;}
+    if (this.fullSize()) {return '100%';}
+    return null;
+  });
+
+  hostFontSize = computed(() => {
+    const custom = this.customSize();
+    if (custom) {return custom;}
+    return null;
+  });
 
   effectiveAriaLabel = computed(() => {
     return this.ariaLabel() || this.name() || 'Icon';

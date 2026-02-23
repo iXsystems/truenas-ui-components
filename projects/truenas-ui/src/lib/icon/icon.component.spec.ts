@@ -180,26 +180,63 @@ describe('TnIconComponent - Full Size', () => {
     expect(hostEl.getAttribute('full-size')).toBeNull();
   });
 
-  it('should apply tn-icon--full class when fullSize=true', async () => {
+  it('should set host width and height to 100% when fullSize=true', async () => {
     fixture.componentRef.setInput('name', 'test');
     fixture.componentRef.setInput('fullSize', true);
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const iconDiv = fixture.nativeElement.querySelector('.tn-icon');
-    expect(iconDiv.classList.contains('tn-icon--full')).toBe(true);
-    expect(iconDiv.classList.contains('tn-icon--md')).toBe(false);
+    const hostEl = fixture.nativeElement as HTMLElement;
+    expect(hostEl.style.width).toBe('100%');
+    expect(hostEl.style.height).toBe('100%');
   });
 
-  it('should apply size class when fullSize=false', async () => {
+  it('should not set inline width/height when fullSize=false', async () => {
     fixture.componentRef.setInput('name', 'test');
     fixture.componentRef.setInput('fullSize', false);
     fixture.componentRef.setInput('size', 'lg');
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const iconDiv = fixture.nativeElement.querySelector('.tn-icon');
-    expect(iconDiv.classList.contains('tn-icon--lg')).toBe(true);
-    expect(iconDiv.classList.contains('tn-icon--full')).toBe(false);
+    const hostEl = fixture.nativeElement as HTMLElement;
+    expect(hostEl.style.width).toBe('');
+    expect(hostEl.style.height).toBe('');
+  });
+});
+
+describe('TnIconComponent - Custom Size', () => {
+  let fixture: ComponentFixture<TnIconComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TnIconComponent],
+      providers: [TnIconTesting.jest.providers()],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TnIconComponent);
+  });
+
+  it('should set host inline width, height, and font-size from customSize', async () => {
+    fixture.componentRef.setInput('name', 'test');
+    fixture.componentRef.setInput('customSize', '48px');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const hostEl = fixture.nativeElement as HTMLElement;
+    expect(hostEl.style.width).toBe('48px');
+    expect(hostEl.style.height).toBe('48px');
+    expect(hostEl.style.fontSize).toBe('48px');
+  });
+
+  it('should override fullSize when both are set', async () => {
+    fixture.componentRef.setInput('name', 'test');
+    fixture.componentRef.setInput('fullSize', true);
+    fixture.componentRef.setInput('customSize', '48px');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const hostEl = fixture.nativeElement as HTMLElement;
+    expect(hostEl.style.width).toBe('48px');
+    expect(hostEl.style.height).toBe('48px');
   });
 });
