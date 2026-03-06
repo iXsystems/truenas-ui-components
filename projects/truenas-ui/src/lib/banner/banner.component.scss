@@ -1,5 +1,6 @@
 .tn-banner {
-  display: flex;
+  display: grid;
+  gap: 8px;
   align-items: center;
   padding: 16px;
   border-radius: 6px;
@@ -105,9 +106,7 @@
   &__action {
     display: flex;
     align-items: center;
-    flex-shrink: 0;
-    margin-left: auto;
-    padding-left: 16px;
-    gap: 16px;
+    gap: 8px 16px;
+    justify-content: flex-end;
   }
 }
