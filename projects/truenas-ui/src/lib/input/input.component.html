@@ -1,4 +1,19 @@
-<div class="tn-input-container">
+<div
+  class="tn-input-container"
+  [class.tn-input-container--has-prefix]="hasPrefixIcon()"
+  [class.tn-input-container--has-suffix]="hasSuffixIcon()"
+>
+  <!-- Prefix icon -->
+  @if (hasPrefixIcon()) {
+    <tn-icon
+      class="tn-input__prefix-icon"
+      [name]="prefixIcon()!"
+      [library]="prefixIconLibrary()"
+      size="sm"
+      aria-hidden="true"
+    />
+  }
+
   <!-- Regular input field -->
   @if (!multiline()) {
     <input
@@ -29,5 +44,22 @@
       (input)="onValueChange($event)"
       (blur)="onBlur()"
     ></textarea>
+  }
+
+  <!-- Suffix icon action button -->
+  @if (hasSuffixIcon()) {
+    <button
+      type="button"
+      class="tn-input__suffix-action"
+      [attr.aria-label]="suffixIconAriaLabel()"
+      [disabled]="isDisabled()"
+      (click)="onSuffixAction.emit($event)"
+    >
+      <tn-icon
+        [name]="suffixIcon()!"
+        [library]="suffixIconLibrary()"
+        size="sm"
+      />
+    </button>
   }
 </div>

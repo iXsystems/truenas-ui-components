@@ -10,6 +10,7 @@ export * from './lib/button/button.harness';
 export * from './lib/icon-button/icon-button.component';
 export * from './lib/icon-button/icon-button.harness';
 export * from './lib/input/input.component';
+export * from './lib/input/input.harness';
 export * from './lib/input/input.directive';
 export * from './lib/chip/chip.component';
 export * from './lib/card';
