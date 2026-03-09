@@ -3,8 +3,8 @@ import type { Meta, StoryObj } from '@storybook/angular';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { InputType } from '../lib/enums/input-type.enum';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
-import { TnInputComponent } from '../lib/input/input.component';
 import { tnIconMarker } from '../lib/icon/icon-marker';
+import { TnInputComponent } from '../lib/input/input.component';
 
 const harnessDoc = loadHarnessDoc('input');
 
@@ -235,7 +235,7 @@ export const WithSuffixAction: Story = {
   render: (args) => ({
     props: {
       ...args,
-      handleSuffixAction: () => console.log('Suffix action clicked'),
+      handleSuffixAction: () => {},
     },
     template: `
       <tn-form-field
@@ -270,7 +270,7 @@ export const WithPrefixAndSuffix: Story = {
   render: (args) => ({
     props: {
       ...args,
-      handleSuffixAction: () => console.log('Suffix action clicked'),
+      handleSuffixAction: () => {},
     },
     template: `
       <tn-form-field

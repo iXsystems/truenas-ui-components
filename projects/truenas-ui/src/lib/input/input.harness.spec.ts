@@ -5,8 +5,8 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnInputComponent } from './input.component';
 import { TnInputHarness } from './input.harness';
-import { TnIconTesting } from '../icon/icon-testing';
 import { InputType } from '../enums/input-type.enum';
+import { TnIconTesting } from '../icon/icon-testing';
 import type { IconLibraryType } from '../icon/icon.component';
 
 /* eslint-disable @angular-eslint/component-max-inline-declarations */

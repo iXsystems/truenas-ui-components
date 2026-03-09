@@ -134,7 +134,7 @@ export class TnInputHarness extends ComponentHarness {
    */
   async getPrefixIcon(): Promise<TnIconHarness | null> {
     const el = await this.prefixIconEl();
-    if (!el) return null;
+    if (!el) {return null;}
     const allIcons = await this.locatorForAll(TnIconHarness)();
     for (const icon of allIcons) {
       const host = await icon.host();

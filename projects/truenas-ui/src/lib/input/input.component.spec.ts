@@ -1,10 +1,10 @@
+import { Component } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { Component } from '@angular/core';
 import { TnInputComponent } from './input.component';
-import { TnIconTesting } from '../icon/icon-testing';
 import { InputType } from '../enums/input-type.enum';
+import { TnIconTesting } from '../icon/icon-testing';
 
 describe('TnInputComponent', () => {
   let component: TnInputComponent;
@@ -228,7 +228,7 @@ describe('TnInputComponent', () => {
   });
 });
 
-/* eslint-disable @angular-eslint/component-max-inline-declarations */
+ 
 @Component({
   selector: 'tn-test-cva-host',
   standalone: true,
@@ -238,7 +238,7 @@ describe('TnInputComponent', () => {
 class TestCvaHostComponent {
   control = new FormControl('');
 }
-/* eslint-enable @angular-eslint/component-max-inline-declarations */
+ 
 
 describe('TnInputComponent with FormControl', () => {
   let fixture: ComponentFixture<TestCvaHostComponent>;

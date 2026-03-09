@@ -7,10 +7,10 @@
   @if (hasPrefixIcon()) {
     <tn-icon
       class="tn-input__prefix-icon"
-      [name]="prefixIcon()!"
-      [library]="prefixIconLibrary()"
       size="sm"
       aria-hidden="true"
+      [name]="prefixIcon()!"
+      [library]="prefixIconLibrary()"
     />
   }
 
@@ -56,9 +56,9 @@
       (click)="onSuffixAction.emit($event)"
     >
       <tn-icon
+        size="sm"
         [name]="suffixIcon()!"
         [library]="suffixIconLibrary()"
-        size="sm"
       />
     </button>
   }
