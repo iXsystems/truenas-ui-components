@@ -1,8 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnTabComponent } from '../lib/tab/tab.component';
 import { TnTabPanelComponent } from '../lib/tab-panel/tab-panel.component';
 import { TnTabsComponent } from '../lib/tabs/tabs.component';
+
+const harnessDoc = loadHarnessDoc('tabs');
 
 const meta: Meta<TnTabsComponent> = {
   title: 'Components/Tabs',
@@ -469,7 +472,7 @@ export const HorizontalTopHighlight: Story = {
     props: args,
     template: `
       <div style="width: 100%; height: 400px; border: 1px solid var(--tn-lines); border-radius: 4px;">
-        <tn-tabs 
+        <tn-tabs
           [selectedIndex]="selectedIndex"
           [orientation]="orientation"
           [highlightPosition]="highlightPosition"
@@ -511,19 +514,19 @@ export const HorizontalTopHighlight: Story = {
               </svg>
             </ng-template>
           </tn-tab>
-          
+
           <tn-tab-panel>
             <h3>Dashboard Panel</h3>
           </tn-tab-panel>
-          
+
           <tn-tab-panel>
             <h3>Analytics Panel</h3>
           </tn-tab-panel>
-          
+
           <tn-tab-panel>
             <h3>Reports Panel</h3>
           </tn-tab-panel>
-          
+
           <tn-tab-panel>
             <h3>Settings Panel</h3>
           </tn-tab-panel>
@@ -531,5 +534,18 @@ export const HorizontalTopHighlight: Story = {
       </div>
     `
   })
+};
+
+export const TabsComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      canvas: { hidden: true, sourceState: 'none' },
+      description: { story: harnessDoc || '' }
+    },
+    controls: { disable: true },
+    layout: 'fullscreen'
+  },
+  render: () => ({ template: '' })
 };
 
