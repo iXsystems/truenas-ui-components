@@ -24,7 +24,10 @@ export class TnTabComponent implements AfterContentInit {
   // Internal properties set by parent TnTabsComponent (public signals for parent control)
   index = signal<number>(0);
   isActive = signal<boolean>(false);
-  tabsComponent?: { onKeydown: (event: KeyboardEvent, index: number) => void }; // Will be set by parent
+  tabsComponent?: {
+    onKeydown: (event: KeyboardEvent, index: number) => void;
+    selectTab: (index: number) => void;
+  };
 
   elementRef = inject(ElementRef<HTMLElement>);
 
@@ -35,8 +38,8 @@ export class TnTabComponent implements AfterContentInit {
   }
 
   onClick() {
-    if (!this.disabled()) {
-      this.selected.emit();
+    if (!this.disabled() && this.tabsComponent) {
+      this.tabsComponent.selectTab(this.index());
     }
   }
 

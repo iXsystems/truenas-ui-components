@@ -43,7 +43,6 @@ export class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDestr
 
   private focusMonitor = inject(FocusMonitor);
   private cdr = inject(ChangeDetectorRef);
-
   constructor() {
     // Sync input to internal state
     effect(() => {
@@ -73,11 +72,6 @@ export class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDestr
 
       this.cdr.detectChanges();
     });
-  }
-
-  ngAfterContentInit() {
-    this.initializeTabs();
-    this.selectTab(this.internalSelectedIndex());
 
     // Listen for tab changes
     effect(() => {
@@ -88,6 +82,11 @@ export class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDestr
         this.updateHighlightBar();
       }
     });
+  }
+
+  ngAfterContentInit() {
+    this.initializeTabs();
+    this.selectTab(this.internalSelectedIndex());
   }
 
   ngAfterViewInit() {
@@ -120,13 +119,6 @@ export class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDestr
       if (tab.elementRef) {
         this.focusMonitor.monitor(tab.elementRef);
       }
-
-      // Set up click handlers
-      tab.selected.subscribe(() => {
-        if (!tab.disabled()) {
-          this.selectTab(index);
-        }
-      });
     });
 
     this.panels().forEach((panel, index) => {

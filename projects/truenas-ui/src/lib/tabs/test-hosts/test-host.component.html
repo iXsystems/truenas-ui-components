@@ -1,0 +1,14 @@
+<tn-tabs
+  [selectedIndex]="selectedIndex()"
+  [orientation]="orientation()"
+  (selectedIndexChange)="onIndexChange($event)"
+  (tabChange)="onTabChange($event)"
+>
+  <tn-tab label="Tab 1" />
+  <tn-tab label="Tab 2" [disabled]="tab2Disabled()" />
+  <tn-tab label="Tab 3" />
+
+  <tn-tab-panel>Panel 1 content</tn-tab-panel>
+  <tn-tab-panel>Panel 2 content</tn-tab-panel>
+  <tn-tab-panel>Panel 3 content</tn-tab-panel>
+</tn-tabs>

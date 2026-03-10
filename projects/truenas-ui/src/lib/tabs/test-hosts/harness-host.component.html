@@ -1,0 +1,12 @@
+<tn-tabs
+  [selectedIndex]="selectedIndex()"
+  [orientation]="orientation()"
+>
+  <tn-tab label="Overview" />
+  <tn-tab label="Details" />
+  <tn-tab label="Settings" [disabled]="disabledTab()" />
+
+  <tn-tab-panel>Overview content</tn-tab-panel>
+  <tn-tab-panel>Details content</tn-tab-panel>
+  <tn-tab-panel>Settings content</tn-tab-panel>
+</tn-tabs>
