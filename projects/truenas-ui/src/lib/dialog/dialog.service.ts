@@ -95,6 +95,7 @@ export class TnDialog {
         m.TnConfirmDialogComponent,
         {
           data: opts,
+          width: '488px',
           role: 'alertdialog',
           disableClose: true,
           panelClass: [opts.destructive ? 'tn-dialog--destructive' : ''].filter(Boolean),

@@ -47,7 +47,13 @@
   --tn-icon-xl: 32px;
 
   /* Dialog content padding */
-  --tn-content-padding: 24px;
+  --tn-content-padding: 16px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --tn-content-padding: 24px;
+  }
 }
 
 
@@ -530,6 +536,7 @@ tn-dialog-shell {
   overflow-y: auto;
   overflow-x: hidden;
   box-sizing: border-box;
+  padding: var(--tn-content-padding, 16px);
 }
 
 /* Dialog actions */
