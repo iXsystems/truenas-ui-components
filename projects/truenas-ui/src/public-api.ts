@@ -75,6 +75,7 @@ export * from './lib/button-toggle';
 export * from './lib/tooltip/tooltip.directive';
 export * from './lib/tooltip/tooltip.component';
 export * from './lib/dialog';
+export * from './lib/side-panel';
 export * from './lib/stepper';
 export * from './lib/file-picker';
 export * from './lib/services/keyboard-shortcut.service';
