@@ -1,14 +1,16 @@
+// Host is just an invisible anchor; the overlay is portaled to body
 :host {
+  display: contents;
+}
+
+// Overlay wrapper (always portaled to document.body)
+.tn-side-panel__overlay {
   position: fixed;
   inset: 0;
   z-index: 1000;
   pointer-events: none;
 
-  &.tn-side-panel--contained {
-    position: absolute;
-  }
-
-  &.tn-side-panel--open {
+  &--open {
     pointer-events: auto;
 
     .tn-side-panel__backdrop {
@@ -26,7 +28,11 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
   opacity: 0;
-  transition: opacity 200ms ease;
+
+  // Only enable transitions after initialization
+  .tn-side-panel__overlay--initialized & {
+    transition: opacity 200ms ease;
+  }
 }
 
 .tn-side-panel__panel {
@@ -42,7 +48,11 @@
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.3);
   outline: none;
   transform: translateX(100%);
-  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  // Only enable transitions after initialization to prevent flash on first render
+  .tn-side-panel__overlay--initialized & {
+    transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
 
 // Header

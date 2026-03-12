@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { componentWrapperDecorator } from '@storybook/angular';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
 import { tnIconMarker } from '../lib/icon/icon-marker';
@@ -15,10 +14,6 @@ const labelStyle = 'display: block; font-weight: 600; margin-bottom: 6px; color:
 const sectionStyle = 'padding: 16px; background: var(--tn-bg1); border-radius: 6px; border: 1px solid var(--tn-lines);';
 const rowStyle = 'display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border: 1px solid var(--tn-lines); border-radius: 6px;';
 const textareaStyle = 'width: 100%; padding: 10px 12px; border: 1px solid var(--tn-lines); border-radius: 4px; background: var(--tn-bg1); color: var(--tn-fg1); box-sizing: border-box; font-size: 0.875rem; font-family: inherit; resize: vertical; min-height: 80px;';
-
-const tallCanvas = [
-  componentWrapperDecorator((story) => `<div style="min-height: 80vh;">${story}</div>`),
-];
 
 const meta: Meta<TnSidePanelComponent> = {
   title: 'Components/Side Panel',
@@ -39,18 +34,6 @@ A side panel (drawer) that slides in from the right edge of the viewport. Provid
 
   <tn-button tnSidePanelAction label="Save" color="primary" />
 </tn-side-panel>
-\`\`\`
-
-## Contained Mode
-
-Use \`[contained]="true"\` to scope the panel within a positioned ancestor instead of the full viewport. This is useful when the panel should appear below an app header:
-
-\`\`\`html
-<main style="position: relative; height: calc(100dvh - 64px);">
-  <tn-side-panel [(open)]="isOpen" title="Details" [contained]="true">
-    ...
-  </tn-side-panel>
-</main>
 \`\`\`
 
 ## Nested Panels
@@ -83,10 +66,6 @@ Panels can be nested for drill-down workflows:
       control: 'text',
       description: 'Panel width as a CSS value.',
     },
-    contained: {
-      control: 'boolean',
-      description: 'When true, uses `position: absolute` to fill the nearest positioned ancestor instead of the viewport.',
-    },
     hasBackdrop: {
       control: 'boolean',
       description: 'Whether to show a semi-transparent backdrop overlay.',
@@ -104,7 +83,6 @@ Panels can be nested for drill-down workflows:
     open: false,
     title: 'Side Panel',
     width: '480px',
-    contained: false,
     hasBackdrop: true,
     closeOnBackdropClick: true,
     closeOnEscape: true,
@@ -115,7 +93,7 @@ export default meta;
 type Story = StoryObj<TnSidePanelComponent>;
 
 export const Default: Story = {
-  decorators: tallCanvas,
+
   render: (args) => ({
     props: {
       ...args,
@@ -235,7 +213,7 @@ export const Default: Story = {
 };
 
 export const WithActions: Story = {
-  decorators: tallCanvas,
+
   render: (args) => ({
     props: {
       ...args,
@@ -329,149 +307,8 @@ export const WithActions: Story = {
   }),
 };
 
-export const Contained: Story = {
-  decorators: tallCanvas,
-  render: (args) => ({
-    props: {
-      ...args,
-      isOpen: false,
-    },
-    moduleMetadata: {
-      imports: [TnSidePanelComponent, TnSidePanelActionDirective, TnButtonComponent],
-    },
-    template: `
-      <header style="height: 64px; background: var(--tn-primary); color: var(--tn-primary-txt, #fff); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font-weight: 600; font-size: 1.1rem; z-index: 1001; position: relative;">
-        <span>TrueNAS SCALE</span>
-        <div style="display: flex; gap: 16px; align-items: center;">
-          <span style="font-size: 0.8125rem; font-weight: 400; opacity: 0.85;">admin@truenas.local</span>
-          <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 0.75rem;">A</div>
-        </div>
-      </header>
-
-      <main style="position: relative; height: calc(100vh - 64px); overflow: hidden; display: flex;">
-        <nav style="width: 220px; flex-shrink: 0; background: var(--tn-bg1); border-right: 1px solid var(--tn-lines); padding: 16px 0;">
-          <div style="padding: 10px 20px; color: var(--tn-fg2); font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Storage</div>
-          <div style="padding: 10px 20px; color: var(--tn-primary); background: rgba(0,125,179,0.1); font-size: 0.875rem; font-weight: 500; border-left: 3px solid var(--tn-primary);">Pools</div>
-          <div style="padding: 10px 20px; color: var(--tn-fg1); font-size: 0.875rem;">Datasets</div>
-          <div style="padding: 10px 20px; color: var(--tn-fg1); font-size: 0.875rem;">Snapshots</div>
-          <div style="padding: 10px 20px; color: var(--tn-fg1); font-size: 0.875rem;">Disks</div>
-          <div style="padding: 10px 20px; color: var(--tn-fg2); font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 16px;">Sharing</div>
-          <div style="padding: 10px 20px; color: var(--tn-fg1); font-size: 0.875rem;">SMB</div>
-          <div style="padding: 10px 20px; color: var(--tn-fg1); font-size: 0.875rem;">NFS</div>
-          <div style="padding: 10px 20px; color: var(--tn-fg1); font-size: 0.875rem;">iSCSI</div>
-        </nav>
-
-        <div style="flex: 1; padding: 32px; overflow-y: auto;">
-          <h2 style="margin: 0 0 8px 0; color: var(--tn-fg1);">Pools</h2>
-          <p style="color: var(--tn-fg2); margin: 0 0 24px 0;">The panel opens below the app header. Try clicking the header while the panel is open.</p>
-
-          <div style="display: flex; flex-direction: column; gap: 12px;">
-            <div style="${rowStyle}">
-              <div>
-                <div style="font-weight: 600; color: var(--tn-fg1);">tank</div>
-                <div style="font-size: 0.8125rem; color: var(--tn-fg2);">RAIDZ2 &middot; 6 x 8TB &middot; 1.2 TB used of 4 TB</div>
-              </div>
-              <tn-button label="Details" variant="outline" (onClick)="isOpen = true" />
-            </div>
-            <div style="${rowStyle}">
-              <div>
-                <div style="font-weight: 600; color: var(--tn-fg1);">backup</div>
-                <div style="font-size: 0.8125rem; color: var(--tn-fg2);">Mirror &middot; 2 x 4TB &middot; 800 GB used of 2 TB</div>
-              </div>
-              <tn-button label="Details" variant="outline" />
-            </div>
-            <div style="${rowStyle}">
-              <div>
-                <div style="font-weight: 600; color: var(--tn-fg1);">ssd-cache</div>
-                <div style="font-size: 0.8125rem; color: var(--tn-fg2);">Stripe &middot; 2 x 1TB NVMe &middot; 450 GB used of 1 TB</div>
-              </div>
-              <tn-button label="Details" variant="outline" />
-            </div>
-          </div>
-        </div>
-
-        <tn-side-panel [(open)]="isOpen" title="Pool: tank" [contained]="true" [width]="width">
-          <div style="display: flex; flex-direction: column; gap: 24px;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="width: 40px; height: 40px; border-radius: 8px; background: var(--tn-green, #4caf50); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 1.1rem;">OK</div>
-              <div>
-                <div style="font-weight: 600; color: var(--tn-fg1);">Pool is healthy</div>
-                <div style="font-size: 0.8125rem; color: var(--tn-fg2);">Last scrub: 2 days ago &middot; No errors found</div>
-              </div>
-            </div>
-
-            <div style="${sectionStyle}">
-              <div style="font-weight: 600; color: var(--tn-fg1); margin-bottom: 12px;">Configuration</div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                <div style="font-size: 0.875rem; color: var(--tn-fg2);">Layout</div>
-                <div style="font-size: 0.875rem; color: var(--tn-fg1);">RAIDZ2</div>
-                <div style="font-size: 0.875rem; color: var(--tn-fg2);">Disks</div>
-                <div style="font-size: 0.875rem; color: var(--tn-fg1);">6 x 8 TB</div>
-                <div style="font-size: 0.875rem; color: var(--tn-fg2);">Raw Capacity</div>
-                <div style="font-size: 0.875rem; color: var(--tn-fg1);">48 TB</div>
-                <div style="font-size: 0.875rem; color: var(--tn-fg2);">Usable</div>
-                <div style="font-size: 0.875rem; color: var(--tn-fg1);">32 TB</div>
-                <div style="font-size: 0.875rem; color: var(--tn-fg2);">Ashift</div>
-                <div style="font-size: 0.875rem; color: var(--tn-fg1);">12</div>
-                <div style="font-size: 0.875rem; color: var(--tn-fg2);">Autoexpand</div>
-                <div style="font-size: 0.875rem; color: var(--tn-fg1);">Off</div>
-              </div>
-            </div>
-
-            <div style="${sectionStyle}">
-              <div style="font-weight: 600; color: var(--tn-fg1); margin-bottom: 12px;">Space Usage</div>
-              <div style="margin-bottom: 12px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                  <span style="font-size: 0.875rem; color: var(--tn-fg2);">1.2 TB used</span>
-                  <span style="font-size: 0.875rem; color: var(--tn-fg2);">4 TB total</span>
-                </div>
-                <div style="height: 8px; background: var(--tn-lines); border-radius: 4px; overflow: hidden;">
-                  <div style="height: 100%; width: 30%; background: var(--tn-primary); border-radius: 4px;"></div>
-                </div>
-              </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                <div style="font-size: 0.875rem; color: var(--tn-fg2);">Allocated</div>
-                <div style="font-size: 0.875rem; color: var(--tn-fg1);">1.2 TiB</div>
-                <div style="font-size: 0.875rem; color: var(--tn-fg2);">Free</div>
-                <div style="font-size: 0.875rem; color: var(--tn-fg1);">2.8 TiB</div>
-                <div style="font-size: 0.875rem; color: var(--tn-fg2);">Fragmentation</div>
-                <div style="font-size: 0.875rem; color: var(--tn-fg1);">3%</div>
-              </div>
-            </div>
-
-            <div style="${sectionStyle}">
-              <div style="font-weight: 600; color: var(--tn-fg1); margin-bottom: 12px;">Top-level Datasets</div>
-              <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
-                  <span style="color: var(--tn-fg1);">tank/media</span>
-                  <span style="color: var(--tn-fg2);">856 GiB</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
-                  <span style="color: var(--tn-fg1);">tank/documents</span>
-                  <span style="color: var(--tn-fg2);">124 GiB</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
-                  <span style="color: var(--tn-fg1);">tank/backups</span>
-                  <span style="color: var(--tn-fg2);">220 GiB</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
-                  <span style="color: var(--tn-fg1);">tank/vms</span>
-                  <span style="color: var(--tn-fg2);">48 GiB</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <tn-button tnSidePanelAction variant="outline" label="Export/Disconnect" />
-          <tn-button tnSidePanelAction color="primary" label="Edit Pool" />
-        </tn-side-panel>
-      </main>
-    `,
-  }),
-};
-
 export const NestedPanels: Story = {
-  decorators: tallCanvas,
+
   render: (args) => ({
     props: {
       ...args,
@@ -595,7 +432,7 @@ export const NestedPanels: Story = {
 };
 
 export const NoBackdrop: Story = {
-  decorators: tallCanvas,
+
   render: (args) => ({
     props: {
       ...args,
@@ -707,7 +544,7 @@ export const NoBackdrop: Story = {
 };
 
 export const WidePanel: Story = {
-  decorators: tallCanvas,
+
   render: (args) => ({
     props: {
       ...args,
@@ -860,7 +697,7 @@ export const WidePanel: Story = {
 };
 
 export const ScrollableContent: Story = {
-  decorators: tallCanvas,
+
   render: (args) => ({
     props: {
       ...args,

@@ -158,26 +158,26 @@ describe('TnSidePanelHarness', () => {
   describe('content projection', () => {
     it('should render footer when actions are projected', () => {
       fixture.detectChanges();
-      const panelEl = fixture.nativeElement.querySelector('tn-side-panel');
-      const footer = panelEl.querySelector('.tn-side-panel__actions');
+      const overlay = document.querySelector('.tn-side-panel__overlay')!;
+      const footer = overlay.querySelector('.tn-side-panel__actions');
       expect(footer).toBeTruthy();
     });
 
     it('should project action buttons into footer', () => {
       fixture.detectChanges();
-      const panelEl = fixture.nativeElement.querySelector('tn-side-panel');
-      const actions = panelEl.querySelectorAll('[tnSidePanelAction]');
+      const overlay = document.querySelector('.tn-side-panel__overlay')!;
+      const actions = overlay.querySelectorAll('[tnSidePanelAction]');
       expect(actions.length).toBe(2);
-      expect(actions[0].textContent.trim()).toBe('Cancel');
-      expect(actions[1].textContent.trim()).toBe('Save');
+      expect(actions[0].textContent!.trim()).toBe('Cancel');
+      expect(actions[1].textContent!.trim()).toBe('Save');
     });
 
     it('should project header actions', () => {
       fixture.detectChanges();
-      const panelEl = fixture.nativeElement.querySelector('tn-side-panel');
-      const headerAction = panelEl.querySelector('[tnSidePanelHeaderAction]');
+      const overlay = document.querySelector('.tn-side-panel__overlay')!;
+      const headerAction = overlay.querySelector('[tnSidePanelHeaderAction]');
       expect(headerAction).toBeTruthy();
-      expect(headerAction.textContent.trim()).toBe('Fullscreen');
+      expect(headerAction!.textContent!.trim()).toBe('Fullscreen');
     });
   });
 });

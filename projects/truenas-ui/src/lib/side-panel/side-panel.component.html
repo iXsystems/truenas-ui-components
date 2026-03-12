@@ -1,45 +1,58 @@
-<!-- Backdrop -->
-@if (hasBackdrop()) {
-  <div
-    class="tn-side-panel__backdrop"
-    aria-hidden="true"
-    (click)="onBackdropClick()">
-  </div>
-}
-
-<!-- Panel -->
+<!-- Overlay wrapper: portaled to document.body -->
 <div
-  class="tn-side-panel__panel"
-  tabindex="-1"
-  cdkTrapFocus
-  [style.width]="width()"
-  [cdkTrapFocusAutoCapture]="open()"
-  (transitionend)="onTransitionEnd($event)"
-  (keydown)="onKeydown($event)">
+  #overlay
+  class="tn-side-panel__overlay"
+  role="dialog"
+  [attr.data-tn-panel]="panelId"
+  [class.tn-side-panel__overlay--initialized]="initialized()"
+  [class.tn-side-panel__overlay--open]="open()"
+  [attr.aria-modal]="open() ? 'true' : null"
+  [attr.aria-labelledby]="open() ? titleId : null"
+  [attr.aria-hidden]="!open() ? 'true' : null">
 
-  <!-- Header -->
-  <header class="tn-side-panel__header">
-    <h2 class="tn-side-panel__title" [id]="titleId">{{ title() }}</h2>
-    <div class="tn-side-panel__header-actions">
-      <ng-content select="[tnSidePanelHeaderAction]" />
-      <tn-icon-button
-        name="close"
-        library="mdi"
-        size="sm"
-        ariaLabel="Dismiss"
-        (onClick)="dismiss()" />
+  <!-- Backdrop -->
+  @if (hasBackdrop()) {
+    <div
+      class="tn-side-panel__backdrop"
+      aria-hidden="true"
+      (click)="onBackdropClick()">
     </div>
-  </header>
-
-  <!-- Content -->
-  <section class="tn-side-panel__content">
-    <ng-content />
-  </section>
-
-  <!-- Actions -->
-  @if (hasActions()) {
-    <footer class="tn-side-panel__actions">
-      <ng-content select="[tnSidePanelAction]" />
-    </footer>
   }
+
+  <!-- Panel -->
+  <div
+    class="tn-side-panel__panel"
+    tabindex="-1"
+    cdkTrapFocus
+    [style.width]="width()"
+    [cdkTrapFocusAutoCapture]="open()"
+    (transitionend)="onTransitionEnd($event)"
+    (keydown)="onKeydown($event)">
+
+    <!-- Header -->
+    <header class="tn-side-panel__header">
+      <h2 class="tn-side-panel__title" [id]="titleId">{{ title() }}</h2>
+      <div class="tn-side-panel__header-actions">
+        <ng-content select="[tnSidePanelHeaderAction]" />
+        <tn-icon-button
+          name="close"
+          library="mdi"
+          size="sm"
+          ariaLabel="Dismiss"
+          (onClick)="dismiss()" />
+      </div>
+    </header>
+
+    <!-- Content -->
+    <section class="tn-side-panel__content">
+      <ng-content />
+    </section>
+
+    <!-- Actions -->
+    @if (hasActions()) {
+      <footer class="tn-side-panel__actions">
+        <ng-content select="[tnSidePanelAction]" />
+      </footer>
+    }
+  </div>
 </div>

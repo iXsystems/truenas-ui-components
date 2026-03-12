@@ -1,8 +1,10 @@
 import { A11yModule } from '@angular/cdk/a11y';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import {
-  Component, Directive, input, output, computed, effect, inject, contentChildren, ElementRef,
+  Component, Directive, input, output, model, computed, effect, inject, signal,
+  contentChildren, viewChild, afterNextRender,
 } from '@angular/core';
+import type { ElementRef, OnDestroy } from '@angular/core';
 import { mdiClose } from '@mdi/js';
 import { TnIconRegistryService } from '../icon/icon-registry.service';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
@@ -48,30 +50,27 @@ export class TnSidePanelHeaderActionDirective {}
   styleUrls: ['./side-panel.component.scss'],
   host: {
     'class': 'tn-side-panel',
-    '[class.tn-side-panel--open]': 'open()',
-    '[class.tn-side-panel--contained]': 'contained()',
-    'role': 'dialog',
-    '[attr.aria-modal]': 'open() ? "true" : null',
-    '[attr.aria-labelledby]': 'open() ? titleId : null',
-    '[attr.aria-hidden]': '!open() ? "true" : null',
+    '[attr.data-tn-panel]': 'panelId',
   },
 })
-export class TnSidePanelComponent {
+export class TnSidePanelComponent implements OnDestroy {
   private iconRegistry = inject(TnIconRegistryService);
   private document = inject(DOCUMENT);
-  private elementRef = inject(ElementRef);
+
+  private overlayRef = viewChild.required<ElementRef>('overlay');
+  protected initialized = signal(false);
+
+  // Two-way bindable via [(open)]
+  open = model<boolean>(false);
 
   // Inputs
-  open = input<boolean>(false);
   title = input<string>('');
   width = input<string>('480px');
-  contained = input<boolean>(false);
   hasBackdrop = input<boolean>(true);
   closeOnBackdropClick = input<boolean>(true);
   closeOnEscape = input<boolean>(true);
 
   // Outputs
-  openChange = output<boolean>();
   opened = output<void>();
   closed = output<void>();
 
@@ -79,8 +78,9 @@ export class TnSidePanelComponent {
   private actionContent = contentChildren(TnSidePanelActionDirective);
   protected hasActions = computed(() => this.actionContent().length > 0);
 
-  // Unique ID for aria-labelledby
-  readonly titleId = `tn-side-panel-title-${Math.random().toString(36).substring(2, 9)}`;
+  // Unique IDs for aria-labelledby and portal correlation
+  readonly panelId = `tn-side-panel-${Math.random().toString(36).substring(2, 9)}`;
+  readonly titleId = `${this.panelId}-title`;
 
   // Focus restoration
   private previouslyFocusedElement: HTMLElement | null = null;
@@ -93,10 +93,19 @@ export class TnSidePanelComponent {
         this.previouslyFocusedElement = this.document.activeElement as HTMLElement;
       }
     });
+
+    afterNextRender(() => {
+      this.document.body.appendChild(this.overlayRef().nativeElement);
+      this.initialized.set(true);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.overlayRef().nativeElement.remove();
   }
 
   protected dismiss(): void {
-    this.openChange.emit(false);
+    this.open.set(false);
   }
 
   protected onBackdropClick(): void {
@@ -113,7 +122,6 @@ export class TnSidePanelComponent {
   }
 
   protected onTransitionEnd(event: TransitionEvent): void {
-    // Only react to the panel's own transform transition, not child transitions
     if (event.propertyName !== 'transform' || event.target !== event.currentTarget) {
       return;
     }
