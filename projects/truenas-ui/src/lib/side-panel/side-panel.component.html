@@ -3,7 +3,6 @@
   <div
     class="tn-side-panel__backdrop"
     aria-hidden="true"
-    [@backdrop]="backdropState()"
     (click)="onBackdropClick()">
   </div>
 }
@@ -14,9 +13,8 @@
   tabindex="-1"
   cdkTrapFocus
   [style.width]="width()"
-  [@slidePanel]="animationState()"
   [cdkTrapFocusAutoCapture]="open()"
-  (@slidePanel.done)="onAnimationDone($event)"
+  (transitionend)="onTransitionEnd($event)"
   (keydown)="onKeydown($event)">
 
   <!-- Header -->

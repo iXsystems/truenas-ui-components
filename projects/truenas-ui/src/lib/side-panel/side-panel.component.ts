@@ -1,9 +1,7 @@
-import { trigger, state, style, transition, animate } from '@angular/animations';
-import type { AnimationEvent } from '@angular/animations';
 import { A11yModule } from '@angular/cdk/a11y';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import {
-  Component, Directive, input, output, computed, effect, inject, contentChildren,
+  Component, Directive, input, output, computed, effect, inject, contentChildren, ElementRef,
 } from '@angular/core';
 import { mdiClose } from '@mdi/js';
 import { TnIconRegistryService } from '../icon/icon-registry.service';
@@ -42,31 +40,12 @@ export class TnSidePanelActionDirective {}
 })
 export class TnSidePanelHeaderActionDirective {}
 
-const slidePanelAnimation = trigger('slidePanel', [
-  state('closed', style({ transform: 'translateX(100%)' })),
-  state('open', style({ transform: 'translateX(0)' })),
-  transition('closed => open', [
-    animate('300ms cubic-bezier(0.4, 0, 0.2, 1)'),
-  ]),
-  transition('open => closed', [
-    animate('250ms cubic-bezier(0.4, 0, 0.2, 1)'),
-  ]),
-]);
-
-const backdropAnimation = trigger('backdrop', [
-  state('hidden', style({ opacity: 0 })),
-  state('visible', style({ opacity: 1 })),
-  transition('hidden => visible', animate('200ms ease')),
-  transition('visible => hidden', animate('200ms ease')),
-]);
-
 @Component({
   selector: 'tn-side-panel',
   standalone: true,
   imports: [CommonModule, A11yModule, TnIconButtonComponent],
   templateUrl: './side-panel.component.html',
   styleUrls: ['./side-panel.component.scss'],
-  animations: [slidePanelAnimation, backdropAnimation],
   host: {
     'class': 'tn-side-panel',
     '[class.tn-side-panel--open]': 'open()',
@@ -80,6 +59,7 @@ const backdropAnimation = trigger('backdrop', [
 export class TnSidePanelComponent {
   private iconRegistry = inject(TnIconRegistryService);
   private document = inject(DOCUMENT);
+  private elementRef = inject(ElementRef);
 
   // Inputs
   open = input<boolean>(false);
@@ -101,10 +81,6 @@ export class TnSidePanelComponent {
 
   // Unique ID for aria-labelledby
   readonly titleId = `tn-side-panel-title-${Math.random().toString(36).substring(2, 9)}`;
-
-  // Animation state
-  protected animationState = computed(() => this.open() ? 'open' : 'closed');
-  protected backdropState = computed(() => this.open() ? 'visible' : 'hidden');
 
   // Focus restoration
   private previouslyFocusedElement: HTMLElement | null = null;
@@ -136,10 +112,15 @@ export class TnSidePanelComponent {
     }
   }
 
-  protected onAnimationDone(event: AnimationEvent): void {
-    if (event.toState === 'open') {
+  protected onTransitionEnd(event: TransitionEvent): void {
+    // Only react to the panel's own transform transition, not child transitions
+    if (event.propertyName !== 'transform' || event.target !== event.currentTarget) {
+      return;
+    }
+
+    if (this.open()) {
       this.opened.emit();
-    } else if (event.toState === 'closed') {
+    } else {
       this.closed.emit();
       this.restoreFocus();
     }

@@ -1,7 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { TnSidePanelComponent } from './side-panel.component';
 
 describe('TnSidePanelComponent', () => {
@@ -11,7 +10,7 @@ describe('TnSidePanelComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TnSidePanelComponent],
-      providers: [provideHttpClient(), provideNoopAnimations()],
+      providers: [provideHttpClient()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TnSidePanelComponent);

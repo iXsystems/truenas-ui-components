@@ -4,7 +4,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { Component, signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import {
   TnSidePanelComponent,
   TnSidePanelActionDirective,
@@ -66,7 +65,6 @@ describe('TnSidePanelHarness', () => {
       imports: [TestHostComponent, MultiPanelHostComponent],
       providers: [
         provideHttpClient(),
-        provideNoopAnimations(),
         TnIconTesting.jest.providers(),
       ],
     }).compileComponents();
