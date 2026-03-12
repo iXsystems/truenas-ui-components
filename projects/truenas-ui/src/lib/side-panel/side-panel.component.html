@@ -1,0 +1,47 @@
+<!-- Backdrop -->
+@if (hasBackdrop()) {
+  <div
+    class="tn-side-panel__backdrop"
+    aria-hidden="true"
+    [@backdrop]="backdropState()"
+    (click)="onBackdropClick()">
+  </div>
+}
+
+<!-- Panel -->
+<div
+  class="tn-side-panel__panel"
+  tabindex="-1"
+  cdkTrapFocus
+  [style.width]="width()"
+  [@slidePanel]="animationState()"
+  [cdkTrapFocusAutoCapture]="open()"
+  (@slidePanel.done)="onAnimationDone($event)"
+  (keydown)="onKeydown($event)">
+
+  <!-- Header -->
+  <header class="tn-side-panel__header">
+    <h2 class="tn-side-panel__title" [id]="titleId">{{ title() }}</h2>
+    <div class="tn-side-panel__header-actions">
+      <ng-content select="[tnSidePanelHeaderAction]" />
+      <tn-icon-button
+        name="close"
+        library="mdi"
+        size="sm"
+        ariaLabel="Dismiss"
+        (onClick)="dismiss()" />
+    </div>
+  </header>
+
+  <!-- Content -->
+  <section class="tn-side-panel__content">
+    <ng-content />
+  </section>
+
+  <!-- Actions -->
+  @if (hasActions()) {
+    <footer class="tn-side-panel__actions">
+      <ng-content select="[tnSidePanelAction]" />
+    </footer>
+  }
+</div>
