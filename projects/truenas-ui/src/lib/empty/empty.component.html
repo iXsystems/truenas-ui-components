@@ -1,0 +1,31 @@
+@if (icon()) {
+  <div class="tn-empty__icon">
+    <tn-icon
+      aria-hidden="true"
+      [name]="icon()!"
+      [library]="iconLibrary()"
+      [size]="iconSize()"
+    />
+  </div>
+}
+
+<div class="tn-empty__title">
+  {{ title() }}
+</div>
+
+@if (description()) {
+  <div class="tn-empty__description">
+    {{ description() }}
+  </div>
+}
+
+@if (hasAction()) {
+  <div class="tn-empty__action">
+    <tn-button
+      color="primary"
+      variant="outline"
+      [label]="actionText()!"
+      (onClick)="onAction.emit()"
+    />
+  </div>
+}

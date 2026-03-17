@@ -78,6 +78,8 @@ export * from './lib/dialog';
 export * from './lib/side-panel';
 export * from './lib/stepper';
 export * from './lib/file-picker';
+export * from './lib/empty/empty.component';
+export * from './lib/empty/empty.harness';
 export * from './lib/services/keyboard-shortcut.service';
 export * from './lib/theme/theme.service';
 export * from './lib/theme/theme.interface';
