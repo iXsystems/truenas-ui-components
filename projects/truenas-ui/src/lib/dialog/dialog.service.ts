@@ -3,7 +3,8 @@ import { Dialog } from '@angular/cdk/dialog';
 import type { ComponentType } from '@angular/cdk/portal';
 import type { TemplateRef } from '@angular/core';
 import { Injectable, inject } from '@angular/core';
-import type { Observable } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
+import { TnConfirmDialogComponent } from './confirm-dialog.component';
 
 export type TnDialogOpenTarget<C> = ComponentType<C> | TemplateRef<unknown>;
 
@@ -79,29 +80,26 @@ export class TnDialog {
   }
 
   /**
-   * Open a confirmation dialog with customizable title, message, and button labels.
-   * Returns a promise that resolves to an Observable of the user's choice.
+   * Open a confirmation dialog. Resolves to true if confirmed, false otherwise.
    */
-  confirm(opts: {
+  async confirm(opts: {
     title: string;
     message?: string;
     confirmText?: string;
     cancelText?: string;
     destructive?: boolean;
-  }): Promise<Observable<boolean | undefined>> {
-    // Import the confirm dialog component dynamically to avoid circular dependencies
-    return import('./confirm-dialog.component').then(m => {
-      const dialogRef = this.open(
-        m.TnConfirmDialogComponent,
-        {
-          data: opts,
-          width: '488px',
-          role: 'alertdialog',
-          disableClose: true,
-          panelClass: [opts.destructive ? 'tn-dialog--destructive' : ''].filter(Boolean),
-        }
-      );
-      return dialogRef.closed as Observable<boolean | undefined>;
-    });
+  }): Promise<boolean> {
+    const dialogRef = this.open(
+      TnConfirmDialogComponent,
+      {
+        data: opts,
+        width: '488px',
+        role: 'alertdialog',
+        disableClose: true,
+        panelClass: [opts.destructive ? 'tn-dialog--destructive' : ''].filter(Boolean),
+      }
+    );
+    const result = await firstValueFrom(dialogRef.closed);
+    return !!result;
   }
 }
