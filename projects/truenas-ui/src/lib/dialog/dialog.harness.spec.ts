@@ -3,11 +3,11 @@ import type { HarnessLoader } from '@angular/cdk/testing';
 import { Component, inject } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import { TnButtonComponent } from '../button/button.component';
 import { TnDialogShellComponent } from './dialog-shell.component';
-import { TnDialog } from './dialog.service';
-import { TnDialogHarness } from './dialog.harness';
 import { TnDialogTesting } from './dialog-testing';
+import { TnDialogHarness } from './dialog.harness';
+import { TnDialog } from './dialog.service';
+import { TnButtonComponent } from '../button/button.component';
 
 /* eslint-disable @angular-eslint/component-max-inline-declarations */
 

@@ -3,12 +3,12 @@ import { JsonPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
 import { TnDialogShellComponent } from '../lib/dialog/dialog-shell.component';
 import { TnDialog } from '../lib/dialog/dialog.service';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
 import { TnInputComponent } from '../lib/input/input.component';
-import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 
 const harnessDoc = loadHarnessDoc('dialog');
 
