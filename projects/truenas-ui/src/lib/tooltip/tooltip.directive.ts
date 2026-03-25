@@ -5,6 +5,7 @@ import {
   Overlay,
   type OverlayRef,
   type ConnectedPosition,
+  type FlexibleConnectedPositionStrategy,
   OverlayPositionBuilder
 } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
@@ -21,6 +22,7 @@ import {
   ViewContainerRef,
   inject
 } from '@angular/core';
+import type { Subscription } from 'rxjs';
 import { TnTooltipComponent } from './tooltip.component';
 
 export type TooltipPosition = 'above' | 'below' | 'left' | 'right' | 'before' | 'after';
@@ -45,6 +47,7 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
   private _showTimeout: ReturnType<typeof setTimeout> | null = null;
   private _hideTimeout: ReturnType<typeof setTimeout> | null = null;
   private _isTooltipVisible = false;
+  private _positionSub: Subscription | null = null;
   protected _ariaDescribedBy: string | null = null;
 
   private _overlay = inject(Overlay);
@@ -60,7 +63,8 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
   ngOnDestroy() {
     this._clearTimeouts();
     this.hide(0);
-    
+    this._positionSub?.unsubscribe();
+
     if (this._overlayRef) {
       this._overlayRef.dispose();
       this._overlayRef = null;
@@ -148,6 +152,36 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
       scrollStrategy: this._overlay.scrollStrategies.reposition({ scrollThrottle: 20 }),
       panelClass: ['tn-tooltip-panel', `tn-tooltip-panel-${this.position()}`, this.tooltipClass()].filter(Boolean),
     });
+
+    this._positionSub = (positionStrategy as FlexibleConnectedPositionStrategy).positionChanges
+      .subscribe((change) => {
+        const panel = this._overlayRef?.overlayElement?.parentElement;
+        if (!panel) {
+          return;
+        }
+
+        const actual = this._resolvePosition(change.connectionPair);
+        const allPositionClasses = [
+          'tn-tooltip-panel-above', 'tn-tooltip-panel-below',
+          'tn-tooltip-panel-left', 'tn-tooltip-panel-right',
+          'tn-tooltip-panel-before', 'tn-tooltip-panel-after',
+        ];
+        panel.classList.remove(...allPositionClasses);
+        panel.classList.add(`tn-tooltip-panel-${actual}`);
+      });
+  }
+
+  private _resolvePosition(pair: ConnectedPosition): TooltipPosition {
+    if (pair.overlayY === 'bottom') {
+      return 'above';
+    }
+    if (pair.overlayY === 'top') {
+      return 'below';
+    }
+    if (pair.overlayX === 'end') {
+      return 'left';
+    }
+    return 'right';
   }
 
   private _attachTooltip(): void {
