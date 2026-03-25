@@ -1,6 +1,6 @@
 import { Overlay, type OverlayRef, type ConnectedPosition } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { ElementRef, ViewContainerRef, Directive, input, signal, inject } from '@angular/core';
+import { ElementRef, ViewContainerRef, Directive, input, signal, inject, type OutputRefSubscription } from '@angular/core';
 import type { TnMenuComponent } from './menu.component';
 
 /**
@@ -21,6 +21,7 @@ export class TnMenuTriggerDirective {
 
   private overlayRef?: OverlayRef;
   private isMenuOpen = signal<boolean>(false);
+  private itemClickSub?: OutputRefSubscription;
 
   private elementRef = inject(ElementRef);
   private overlay = inject(Overlay);
@@ -73,11 +74,18 @@ export class TnMenuTriggerDirective {
       this.closeMenu();
     });
 
+    // Close menu when a leaf item is selected
+    this.itemClickSub = menuComponent.menuItemClick.subscribe(() => {
+      this.closeMenu();
+    });
+
     // Notify menu component
     menuComponent.onMenuOpen();
   }
 
   closeMenu(): void {
+    this.itemClickSub?.unsubscribe();
+    this.itemClickSub = undefined;
     if (this.overlayRef) {
       this.overlayRef.dispose();
       this.overlayRef = undefined;
