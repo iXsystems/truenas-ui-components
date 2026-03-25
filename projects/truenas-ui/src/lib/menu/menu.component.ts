@@ -2,9 +2,38 @@ import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
-import type { TemplateRef} from '@angular/core';
-import { Component, input, output, viewChild, computed, inject, ViewContainerRef } from '@angular/core';
+import type { AfterContentInit, TemplateRef } from '@angular/core';
+import { Component, Directive, ElementRef, input, output, viewChild, computed, inject, ViewContainerRef } from '@angular/core';
 import { TnIconComponent } from '../icon/icon.component';
+
+/**
+ * Activates CDK menu hover-to-open behavior for menus opened via custom overlays.
+ *
+ * CDK's hover-to-open for submenu triggers is guarded by `!menuStack.isEmpty()`.
+ * When a CdkMenu is opened via TnMenuTriggerDirective (custom overlay) instead of
+ * CDK's own CdkMenuTrigger, the menu is considered "inline" and doesn't register
+ * with the stack, disabling hover for its submenu triggers.
+ *
+ * This directive pushes the CdkMenu to its own stack and focuses the element
+ * (to trigger the CdkMenu's focusin host listener, preventing the hasFocus
+ * auto-close subscription from immediately clearing the stack).
+ */
+@Directive({
+  selector: '[tnMenuActivateHover]',
+  standalone: true,
+})
+export class TnMenuActivateHoverDirective implements AfterContentInit {
+  private cdkMenu = inject(CdkMenu);
+  private elementRef = inject(ElementRef);
+
+  ngAfterContentInit(): void {
+    const stack = this.cdkMenu.menuStack;
+    if (stack.isEmpty()) {
+      stack.push(this.cdkMenu);
+      this.elementRef.nativeElement.focus({ preventScroll: true });
+    }
+  }
+}
 
 export interface TnMenuItem {
   id: string;
@@ -21,7 +50,7 @@ export interface TnMenuItem {
 @Component({
   selector: 'tn-menu',
   standalone: true,
-  imports: [CommonModule, CdkMenu, CdkMenuItem, CdkMenuTrigger, TnIconComponent],
+  imports: [CommonModule, CdkMenu, CdkMenuItem, CdkMenuTrigger, TnIconComponent, TnMenuActivateHoverDirective],
   templateUrl: './menu.component.html',
   styleUrls: ['./menu.component.scss'],
 })

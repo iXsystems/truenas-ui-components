@@ -7,7 +7,7 @@
 
   <!-- Context menu template for overlay -->
   <ng-template #contextMenuTemplate>
-    <div class="tn-menu" cdkMenu>
+    <div class="tn-menu" cdkMenu tnMenuActivateHover>
       @for (item of items(); track trackByItemId($index, item)) {
         @if (item.separator) {
           <div
@@ -138,7 +138,7 @@
 
   <!-- Regular menu template -->
   <ng-template #menuTemplate>
-    <div class="tn-menu" cdkMenu>
+    <div class="tn-menu" cdkMenu tnMenuActivateHover>
       @for (item of items(); track trackByItemId($index, item)) {
         @if (item.separator) {
           <div
