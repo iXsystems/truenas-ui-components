@@ -21,7 +21,8 @@ yarn-error.log
 *.launch
 .settings/
 *.sublime-workspace
-/.claude
+/.claude/*
+!/.claude/review-prompt.md
 
 # Visual Studio Code
 .vscode/*
