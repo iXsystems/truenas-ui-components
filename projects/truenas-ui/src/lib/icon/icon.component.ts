@@ -125,6 +125,8 @@ export class TnIconComponent {
     } else if (library === 'lucide' && !name.includes(':')) {
       // Convert to registry format for Lucide icons
       effectiveIconName = `lucide:${name}`;
+    } else if (library === 'custom' && !name.startsWith('app-')) {
+      effectiveIconName = `app-${name}`;
     }
 
     // 1. Try icon registry (libraries and custom icons)

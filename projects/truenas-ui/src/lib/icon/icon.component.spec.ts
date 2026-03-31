@@ -66,6 +66,39 @@ describe('TnIconComponent - MDI Support', () => {
     expect(iconRegistry.resolveIcon).toHaveBeenCalledWith('delete', expect.any(Object));
   });
 
+  it('should resolve custom library icon with app- prefix', async () => {
+    iconRegistry.resolveIcon.mockImplementation((name: string) => {
+      if (name.startsWith('app-')) {
+        return { source: 'sprite', content: '', spriteUrl: `#icon-${name}` };
+      }
+      return null;
+    });
+
+    fixture.componentRef.setInput('name', 'hdd');
+    fixture.componentRef.setInput('library', 'custom');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(iconRegistry.resolveIcon).toHaveBeenCalledWith('app-hdd', expect.any(Object));
+    expect(component.iconResult().source).toBe('sprite');
+  });
+
+  it('should not double-prefix custom icons already starting with app-', async () => {
+    iconRegistry.resolveIcon.mockImplementation((name: string) => {
+      if (name === 'app-hdd') {
+        return { source: 'sprite', content: '', spriteUrl: '#icon-app-hdd' };
+      }
+      return null;
+    });
+
+    fixture.componentRef.setInput('name', 'app-hdd');
+    fixture.componentRef.setInput('library', 'custom');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(iconRegistry.resolveIcon).toHaveBeenCalledWith('app-hdd', expect.any(Object));
+  });
+
   it('should handle library parameter with fallback', async () => {
     spriteLoader.getIconUrl.mockReturnValue(null);
     iconRegistry.resolveIcon.mockReturnValue(null);
