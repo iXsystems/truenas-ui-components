@@ -22,29 +22,29 @@ Step-by-step guide for creating new components in TrueNAS UI Components library.
 
 Navigate to your new directory and create these required files:
 
-- [ ] **Component TypeScript file**: `tn-[name].component.ts`
+- [ ] **Component TypeScript file**: `[name].component.ts`
   - See `component_templates.md` for templates
   - Must be standalone component
   - Use `tn-[name]` selector
   - Class name: `Tn[Name]Component`
 
-- [ ] **Component HTML template**: `tn-[name].component.html`
+- [ ] **Component HTML template**: `[name].component.html`
   - See `component_templates.md` for templates
   - Use semantic HTML
   - Include ARIA attributes for accessibility
 
-- [ ] **Component SCSS stylesheet**: `tn-[name].component.scss`
+- [ ] **Component SCSS stylesheet**: `[name].component.scss`
   - See `component_styling.md` for theme variables
   - Use CSS custom properties (e.g., `var(--tn-bg1)`)
   - Follow BEM naming: `.tn-[name]`, `.tn-[name]--modifier`, `.tn-[name]__element`
 
-- [ ] **Component test file**: `tn-[name].component.spec.ts`
+- [ ] **Component test file**: `[name].component.spec.ts`
   - See `component_testing.md` for patterns
   - Test creation, inputs, outputs, and classes
   - Use Jest syntax
   - Include both traditional and harness-based tests
 
-- [ ] **Component harness file** (REQUIRED for NEW components): `tn-[name].harness.ts`
+- [ ] **Component harness file** (REQUIRED for NEW components): `[name].harness.ts`
   - See `component_templates.md` for harness template
   - Extend `ComponentHarness` from `@angular/cdk/testing`
   - Implement minimal API: `getText()` and `with({ containsText })`
@@ -53,25 +53,25 @@ Navigate to your new directory and create these required files:
 
 ### Phase 3: Optional Files
 
-- [ ] **Interfaces file** (if needed): `tn-[name].interfaces.ts`
+- [ ] **Interfaces file** (if needed): `[name].interfaces.ts`
   - Create if component uses complex types
   - Export interfaces and types
 
 - [ ] **Index file** (if needed): `index.ts`
   - Create if you have multiple exports (component + interfaces)
-  - Barrel export pattern: `export * from './tn-[name].component';`
+  - Barrel export pattern: `export * from './[name].component';`
 
 ### Phase 4: Integration
 
 - [ ] **Export in public API**
   - Open: `projects/truenas-ui/src/public-api.ts`
-  - Add: `export * from './lib/tn-[name]/tn-[name].component';`
-  - Add: `export * from './lib/tn-[name]/tn-[name].harness';` ← REQUIRED for new components
-  - If using index.ts: `export * from './lib/tn-[name]';`
-  - If interfaces exist: `export * from './lib/tn-[name]/tn-[name].interfaces';`
+  - Add: `export * from './lib/[name]/[name].component';`
+  - Add: `export * from './lib/[name]/[name].harness';` ← REQUIRED for new components
+  - If using index.ts: `export * from './lib/[name]';`
+  - If interfaces exist: `export * from './lib/[name]/[name].interfaces';`
 
 - [ ] **Create Storybook story**
-  - Create: `projects/truenas-ui/src/stories/tn-[name].stories.ts`
+  - Create: `projects/truenas-ui/src/stories/[name].stories.ts`
   - See `component_templates.md` for story templates
   - Include multiple variants (Default, Primary, Disabled, etc.)
   - Add interaction tests with `play` functions
@@ -81,14 +81,14 @@ Navigate to your new directory and create these required files:
 
 - [ ] **Run unit tests**
   ```bash
-  npm test
+  yarn test
   ```
   - All tests must pass
   - Verify your component tests run
 
 - [ ] **View in Storybook**
   ```bash
-  npm run storybook
+  yarn storybook
   ```
   - Navigate to Components/[Your Component]
   - Test all variants and interactions
@@ -114,21 +114,21 @@ Navigate to your new directory and create these required files:
 After completion, your component should look like:
 
 ```
-projects/truenas-ui/src/lib/tn-[name]/
-├── tn-[name].component.ts         # Component logic
-├── tn-[name].component.html       # Template
-├── tn-[name].component.scss       # Styles
-├── tn-[name].component.spec.ts    # Tests
-├── tn-[name].harness.ts           # Test harness (REQUIRED for new components)
-├── tn-[name].interfaces.ts        # (Optional) Types
-└── index.ts                       # (Optional) Barrel export
+projects/truenas-ui/src/lib/[name]/
+├── [name].component.ts         # Component logic
+├── [name].component.html       # Template
+├── [name].component.scss       # Styles
+├── [name].component.spec.ts    # Tests
+├── [name].harness.ts           # Test harness (REQUIRED for new components)
+├── [name].interfaces.ts        # (Optional) Types
+└── index.ts                    # (Optional) Barrel export
 
 projects/truenas-ui/src/stories/
-└── tn-[name].stories.ts           # Storybook story
+└── [name].stories.ts           # Storybook story
 
 projects/truenas-ui/src/public-api.ts
-├── export * from './lib/tn-[name]/tn-[name].component';
-└── export * from './lib/tn-[name]/tn-[name].harness';  # Public harness export
+├── export * from './lib/[name]/[name].component';
+└── export * from './lib/[name]/[name].harness';  # Public harness export
 ```
 
 ## Where to Find Templates
@@ -162,30 +162,27 @@ projects/truenas-ui/src/public-api.ts
 mkdir projects/truenas-ui/src/lib/[name]
 
 # Run tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
+yarn test
 
 # Start Storybook
-npm run storybook
+yarn storybook
 
 # Build library
-npm run build
+yarn build
 
 # Run all checks (like pre-commit)
-npm test && npm run build
+yarn test && yarn build
 ```
 
 ## Examples
 
 For reference, look at these existing components:
 
-- **Simple component**: `tn-button/`
-- **Complex component**: `tn-card/`
-- **Form control**: `tn-checkbox/`
-- **With directives**: `tn-menu/`
-- **Harness reference**: `tn-banner/` - Complete harness implementation with minimal API
+- **Simple component**: `button/`
+- **Complex component**: `card/`
+- **Form control**: `checkbox/`
+- **With directives**: `menu/`
+- **Harness reference**: `banner/` - Complete harness implementation with minimal API
 
 ## Next Steps
 

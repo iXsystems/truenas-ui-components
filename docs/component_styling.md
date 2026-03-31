@@ -11,7 +11,8 @@ All components MUST use CSS custom properties for theming. Never hardcode colors
 ```scss
 var(--tn-bg1)       // Primary background (main canvas)
 var(--tn-bg2)       // Secondary background (cards, panels)
-var(--bg-hover)  // Hover state background
+var(--tn-alt-bg1)   // Alternate background (hover states, subtle contrast)
+var(--tn-alt-bg2)   // Alternate background 2 (active states)
 ```
 
 ### Foreground Colors (Text)
@@ -44,9 +45,9 @@ var(--tn-blue)      // Info, neutral information
 ```scss
 var(--tn-icon-xs)   // 12px - Very small icons
 var(--tn-icon-sm)   // 16px - Small icons
-var(--tn-icon-md)   // 24px - Medium icons (default)
-var(--tn-icon-lg)   // 32px - Large icons
-var(--tn-icon-xl)   // 48px - Extra large icons
+var(--tn-icon-md)   // 20px - Medium icons (default)
+var(--tn-icon-lg)   // 24px - Large icons
+var(--tn-icon-xl)   // 32px - Extra large icons
 ```
 
 ## BEM Naming Convention
@@ -90,7 +91,7 @@ Use BEM (Block Element Modifier) for CSS class names:
 
   // Hover state
   &:hover {
-    background-color: var(--bg-hover);
+    background-color: var(--tn-alt-bg1);
   }
 
   // Disabled state
@@ -418,10 +419,13 @@ Test components in high contrast mode:
 
 Components automatically work with all themes via CSS variables:
 
-- `tn-dark` - Dark theme
+- `tn-dark` - Dark theme (TrueNAS default)
 - `tn-blue` - Blue theme
 - `tn-dracula` - Dracula theme
 - `tn-nord` - Nord theme
+- `tn-paper` - Paper (light) theme
+- `tn-solarized-dark` - Solarized Dark theme
+- `tn-midnight` - Midnight theme
 - `tn-high-contrast` - High contrast theme
 
 **No theme-specific code needed in components.** Just use CSS variables.
