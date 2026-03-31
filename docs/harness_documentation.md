@@ -303,8 +303,8 @@ The harness documentation will appear:
 The harness documentation regenerates automatically when you:
 
 ```bash
-npm run storybook          # Starts dev server (with docs generation)
-npm run build-storybook    # Builds static Storybook (with docs generation)
+yarn storybook          # Starts dev server (with docs generation)
+yarn build-storybook    # Builds static Storybook (with docs generation)
 ```
 
 ### Manual Generation
@@ -312,7 +312,7 @@ npm run build-storybook    # Builds static Storybook (with docs generation)
 To regenerate docs without starting Storybook:
 
 ```bash
-npm run generate-harness-docs
+yarn generate-harness-docs
 ```
 
 ### Build Scripts
@@ -375,9 +375,9 @@ They're listed in `.gitignore` as build artifacts.
 ### When Documentation Updates
 
 Documentation regenerates when:
-1. You start Storybook (`npm run storybook`)
-2. You build Storybook (`npm run build-storybook`)
-3. You run the generator manually (`npm run generate-harness-docs`)
+1. You start Storybook (`yarn storybook`)
+2. You build Storybook (`yarn build-storybook`)
+3. You run the generator manually (`yarn generate-harness-docs`)
 
 ### What Triggers Regeneration
 
@@ -444,7 +444,7 @@ If issues persist, check for:
 
 ### Build Errors During Generation
 
-**Problem**: `npm run generate-harness-docs` fails with TypeScript errors
+**Problem**: `yarn generate-harness-docs` fails with TypeScript errors
 
 **Causes:**
 - Syntax errors in `*.harness.ts` files
@@ -454,7 +454,7 @@ If issues persist, check for:
 **Fix:**
 1. Check the error message for the file path
 2. Open the harness file and fix TypeScript errors
-3. Run `npm run generate-harness-docs` again
+3. Run `yarn generate-harness-docs` again
 
 **Tip:** The generator uses TypeScript's compiler API, so it validates syntax strictly.
 
@@ -485,7 +485,7 @@ export class TnComponentHarness extends ComponentHarness {
 
 ### Complete Example: tn-banner
 
-**Harness File**: `projects/truenas-ui/src/lib/banner/tn-banner.harness.ts`
+**Harness File**: `projects/truenas-ui/src/lib/banner/banner.harness.ts`
 
 See this file for a complete, working example of:
 - Class-level JSDoc with description
@@ -493,7 +493,7 @@ See this file for a complete, working example of:
 - Interface documentation
 - Filter property descriptions
 
-**Story File**: `projects/truenas-ui/src/stories/tn-banner.stories.ts`
+**Story File**: `projects/truenas-ui/src/stories/banner.stories.ts`
 
 See this file for:
 - Import statement (line 6)

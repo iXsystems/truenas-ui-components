@@ -48,13 +48,13 @@ truenas-ui-components/
 ├── projects/truenas-ui/          # Main library source code
 │   ├── src/
 │   │   ├── lib/                  # Component source files
-│   │   │   ├── button/       # Example component
+│   │   │   ├── button/           # Example component
 │   │   │   ├── input/
 │   │   │   └── ...
 │   │   ├── public-api.ts        # Public API exports
 │   │   └── styles/              # Theme CSS files
 │   ├── assets/                  # Library assets
-│   │   └── icons/
+│   │   └── tn-icons/
 │   │       ├── custom/          # Library custom icons (tn- prefix)
 │   │       └── sprite.svg       # Generated icon sprite
 │   ├── scripts/                 # Build scripts
@@ -83,7 +83,7 @@ yarn test-sb          # Run Storybook interaction tests
 
 **Icon Sprite Generation:**
 ```bash
-yarn icons            # Generate icon sprite (runs automatically on build)
+yarn generate-sprite  # Generate icon sprite (runs automatically on build)
 ```
 
 ## Commit Messages & Releases
@@ -230,7 +230,7 @@ To add a new custom icon to the library:
 1. **Add the SVG file:**
    ```bash
    # Place your icon in the library's custom icon directory
-   projects/truenas-ui/assets/icons/custom/my-icon.svg
+   projects/truenas-ui/assets/tn-icons/custom/my-icon.svg
    ```
 
 2. **Use the icon in library code:**
@@ -270,16 +270,13 @@ The sprite generation system automatically:
 
 **Manual sprite generation:**
 ```bash
-yarn icons
+yarn generate-sprite
 ```
 
 **View the generated sprite:**
 ```bash
 # Library sprite
-cat projects/truenas-ui/assets/icons/sprite-config.json
-
-# Consumer app sprite (after running yarn icons in your app)
-cat src/assets/icons/sprite-config.json
+cat projects/truenas-ui/assets/tn-icons/sprite-config.json
 ```
 
 ### Git Hook Enforcement
@@ -327,20 +324,21 @@ tnIconMarker('dataset', 'custom');
 1. **Generate the component structure:**
    ```bash
    cd projects/truenas-ui/src/lib
-   mkdir tn-my-component
-   cd tn-my-component
+   mkdir my-component
+   cd my-component
    ```
 
 2. **Create component files:**
-   - `tn-my-component.component.ts` - Component logic
-   - `tn-my-component.component.html` - Template
-   - `tn-my-component.component.scss` - Styles
-   - `tn-my-component.component.spec.ts` - Tests
+   - `my-component.component.ts` - Component logic
+   - `my-component.component.html` - Template
+   - `my-component.component.scss` - Styles
+   - `my-component.component.spec.ts` - Tests
+   - `my-component.harness.ts` - Test harness (required for new components)
 
 3. **Follow naming conventions:**
-   - Component selector: `tn-my-component`
+   - Component selector: `tn-my-component` (selectors use `tn-` prefix)
    - Component class: `TnMyComponentComponent`
-   - Use `tn-` prefix for all selectors
+   - File/directory names do **not** use the `tn-` prefix
 
 4. **Use standalone components:**
    ```typescript
@@ -350,8 +348,8 @@ tnIconMarker('dataset', 'custom');
      selector: 'tn-my-component',
      standalone: true,
      imports: [],
-     templateUrl: './tn-my-component.component.html',
-     styleUrl: './tn-my-component.component.scss'
+     templateUrl: './my-component.component.html',
+     styleUrl: './my-component.component.scss'
    })
    export class TnMyComponentComponent {
      // Component logic
@@ -361,25 +359,8 @@ tnIconMarker('dataset', 'custom');
 5. **Export the component:**
    Add to `projects/truenas-ui/src/public-api.ts`:
    ```typescript
-   export * from './lib/tn-my-component/tn-my-component.component';
-   ```
-
-6. **Add to module exports:**
-   Update `projects/truenas-ui/src/lib/truenas-ui.module.ts`:
-   ```typescript
-   import { TnMyComponentComponent } from './tn-my-component/tn-my-component.component';
-
-   @NgModule({
-     imports: [
-       // ... other imports
-       TnMyComponentComponent
-     ],
-     exports: [
-       // ... other exports
-       TnMyComponentComponent
-     ]
-   })
-   export class TruenasUiModule {}
+   export * from './lib/my-component/my-component.component';
+   export * from './lib/my-component/my-component.harness';
    ```
 
 ### Creating Storybook Stories
@@ -387,14 +368,14 @@ tnIconMarker('dataset', 'custom');
 1. **Create a story file:**
    ```bash
    # In projects/truenas-ui/src/stories/
-   touch tn-my-component.stories.ts
+   touch my-component.stories.ts
    ```
 
 2. **Write the story:**
    ```typescript
    import type { Meta, StoryObj } from '@storybook/angular';
-   import { TnMyComponentComponent } from '../lib/tn-my-component/tn-my-component.component';
-   import { tnIconMarker } from '../lib/icon-marker';
+   import { TnMyComponentComponent } from '../lib/my-component/my-component.component';
+   import { tnIconMarker } from '../lib/icon/icon-marker';
 
    // Mark any icons used in the story
    tnIconMarker('settings', 'mdi');
@@ -436,7 +417,7 @@ yarn test-coverage     # Run with coverage report
 
 ```typescript
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TnMyComponentComponent } from './tn-my-component.component';
+import { TnMyComponentComponent } from './my-component.component';
 
 describe('TnMyComponentComponent', () => {
   let component: TnMyComponentComponent;
@@ -480,7 +461,7 @@ Storybook includes the `@storybook/addon-a11y` addon for accessibility testing. 
 
 ### Angular
 
-- Use standalone components (Angular 19+)
+- Use standalone components (Angular 21+)
 - Use signals for reactive state when appropriate
 - Use OnPush change detection strategy
 - Follow Angular style guide
@@ -494,9 +475,9 @@ Storybook includes the `@storybook/addon-a11y` addon for accessibility testing. 
 - Use the theme variables:
   ```scss
   .my-component {
-    background: var(--bg1);
-    color: var(--fg1);
-    border-color: var(--border);
+    background: var(--tn-bg1);
+    color: var(--tn-fg1);
+    border-color: var(--tn-lines);
   }
   ```
 

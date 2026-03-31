@@ -30,12 +30,12 @@ This file helps coding agents quickly find the right documentation for working o
 
 | File | Purpose | Read When | Size |
 |------|---------|-----------|------|
-| `component_creation_checklist.md` | Step-by-step component creation workflow | Creating any new component | ~80 lines |
-| `component_templates.md` | Copy-paste boilerplate code for all file types | Need template code for .ts/.html/.scss/.spec/.stories files | ~400 lines |
-| `component_styling.md` | CSS patterns, theme variables, responsive design | Working on styles or appearance | ~150 lines |
-| `component_testing.md` | Testing patterns, Jest examples, mocking | Writing or debugging tests | ~120 lines |
-| `component_conventions.md` | Naming rules, architecture decisions, patterns | Understanding project structure or design choices | ~100 lines |
-| `harness_documentation.md` | Auto-generating harness API docs in Storybook | Creating harness documentation or integrating into stories | ~650 lines |
+| `component_creation_checklist.md` | Step-by-step component creation workflow | Creating any new component | ~200 lines |
+| `component_templates.md` | Copy-paste boilerplate code for all file types | Need template code for .ts/.html/.scss/.spec/.stories files | ~740 lines |
+| `component_styling.md` | CSS patterns, theme variables, responsive design | Working on styles or appearance | ~480 lines |
+| `component_testing.md` | Testing patterns, Jest examples, mocking | Writing or debugging tests | ~740 lines |
+| `component_conventions.md` | Naming rules, architecture decisions, patterns | Understanding project structure or design choices | ~510 lines |
+| `harness_documentation.md` | Auto-generating harness API docs in Storybook | Creating harness documentation or integrating into stories | ~570 lines |
 
 ## Common Usage Patterns
 
@@ -84,10 +84,10 @@ Storybook is a tool for building and testing UI components in isolation. It prov
 ### Quick Storybook Commands
 ```bash
 # Start Storybook dev server
-npm run storybook
+yarn storybook
 
 # Build Storybook for production
-npm run build-storybook
+yarn build-storybook
 ```
 
 ### Story File Templates
@@ -132,14 +132,16 @@ play: async ({ canvasElement }) => {
 **Icon Marker:**
 For sprite generation in Storybook stories
 ```typescript
+import { tnIconMarker } from '../lib/icon/icon-marker';
+
 tnIconMarker('icon-name', 'library-type');
 ```
 
 ### Existing Examples
 Look at these story files for reference:
-- `projects/truenas-ui/src/stories/tn-button.stories.ts`
-- `projects/truenas-ui/src/stories/tn-card.stories.ts`
-- `projects/truenas-ui/src/stories/tn-menu.stories.ts`
+- `projects/truenas-ui/src/stories/button.stories.ts`
+- `projects/truenas-ui/src/stories/card.stories.ts`
+- `projects/truenas-ui/src/stories/menu.stories.ts`
 
 ## Important Notes for Agents
 
@@ -152,7 +154,6 @@ Look at these story files for reference:
 ## Additional Resources
 
 - `CONTRIBUTE.md` - General contribution guidelines, git workflow, icon system
-- `README.md` - Library usage, installation, consumer documentation
 - `projects/truenas-ui/src/lib/` - Existing component examples
 - `projects/truenas-ui/src/stories/` - Storybook examples
 - **Storybook Docs:** https://storybook.js.org/docs
@@ -160,12 +161,12 @@ Look at these story files for reference:
 ## Quick Reference
 
 **Creating a component checklist:**
-1. Create directory: `projects/truenas-ui/src/lib/tn-[name]/`
-2. Create 4 required files: `.component.ts`, `.component.html`, `.component.scss`, `.component.spec.ts`
+1. Create directory: `projects/truenas-ui/src/lib/[name]/`
+2. Create required files: `[name].component.ts`, `.component.html`, `.component.scss`, `.component.spec.ts`
 3. Export in `public-api.ts`
 4. Create story in `projects/truenas-ui/src/stories/`
-5. Run tests: `npm test`
-6. View in Storybook: `npm run storybook`
+5. Run tests: `yarn test`
+6. View in Storybook: `yarn storybook`
 
 **All components must be:**
 - Standalone (no NgModule)

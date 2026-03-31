@@ -13,7 +13,7 @@ Testing patterns and best practices for TrueNAS UI Components using Jest.
 
 ```typescript
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Tn[Name]Component } from './tn-[name].component';
+import { Tn[Name]Component } from './[name].component';
 
 describe('Tn[Name]Component', () => {
   let component: Tn[Name]Component;
@@ -188,7 +188,7 @@ describe('DOM rendering', () => {
 ```
 
 ### 7. Conditional Rendering
-Test *ngIf and *ngFor:
+Test `@if` and `@for` control flow:
 
 ```typescript
 describe('conditional rendering', () => {
@@ -224,7 +224,7 @@ describe('conditional rendering', () => {
 
 ```typescript
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Tn[Name]Component } from './tn-[name].component';
+import { Tn[Name]Component } from './[name].component';
 import { MyService } from '../services/my.service';
 
 describe('Tn[Name]Component', () => {
@@ -423,16 +423,16 @@ expect(fn).toHaveBeenCalledWith('arg1', 'arg2');
 
 ```bash
 # Run all tests
-npm test
+yarn test
 
-# Run tests in watch mode
-npm run test:watch
+# Clear cache and run tests
+yarn test-cc
 
 # Run tests with coverage
-npm run test:coverage
+yarn test-coverage
 
 # Run specific test file
-npm test -- tn-button.component.spec
+yarn test --testPathPatterns="button.component.spec"
 ```
 
 ## Test Coverage Goals
@@ -503,10 +503,10 @@ debugger;
 ## Examples
 
 See these test files for reference:
-- `tn-button.component.spec.ts` - Simple component tests
-- `tn-card.component.spec.ts` - Complex component with children
-- `tn-checkbox.component.spec.ts` - Form control tests
-- `tn-banner.component.spec.ts` - Harness testing examples
+- `button.component.spec.ts` - Simple component tests
+- `card.component.spec.ts` - Complex component with children
+- `checkbox.component.spec.ts` - Form control tests
+- `banner.component.spec.ts` - Harness testing examples
 
 ## Component Harness Testing
 
@@ -537,7 +537,7 @@ Test utilities from Angular CDK that provide a simple, stable API for querying c
 ```typescript
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { HarnessLoader } from '@angular/cdk/testing';
-import { TnBannerHarness } from './tn-banner.harness';
+import { TnBannerHarness } from './banner.harness';
 
 describe('Component with Harness', () => {
   let loader: HarnessLoader;
@@ -737,6 +737,6 @@ describe('My Component with TrueNAS Banner', () => {
 
 ### Reference Implementation
 
-See `/Users/aaronervin/Projects/truenas-ui-components/projects/truenas-ui/src/lib/banner/` for complete harness implementation:
-- `tn-banner.harness.ts` - Minimal harness definition
-- `tn-banner.component.spec.ts` - Harness usage examples
+See `projects/truenas-ui/src/lib/banner/` for complete harness implementation:
+- `banner.harness.ts` - Minimal harness definition
+- `banner.component.spec.ts` - Harness usage examples

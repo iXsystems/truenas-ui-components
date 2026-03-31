@@ -1,6 +1,8 @@
 # Component Templates
 
-Copy-paste templates for creating TrueNAS UI components. Replace `[name]` with your component name (lowercase) and `[Name]` with PascalCase version.
+Copy-paste templates for creating TrueNAS UI components. Replace `[name]` with your component name (lowercase, hyphenated) and `[Name]` with PascalCase version.
+
+**Note:** Component selectors use the `tn-` prefix (e.g., `tn-button`) but file and directory names do **not** (e.g., `button/button.component.ts`).
 
 ## TypeScript Component Templates
 
@@ -14,8 +16,8 @@ import { Component, input, output } from '@angular/core';
   selector: 'tn-[name]',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './tn-[name].component.html',
-  styleUrls: ['./tn-[name].component.scss'],
+  templateUrl: './[name].component.html',
+  styleUrls: ['./[name].component.scss'],
 })
 export class Tn[Name]Component {
   // Input signals
@@ -44,8 +46,8 @@ import { Component, input } from '@angular/core';
   selector: 'tn-[name]',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './tn-[name].component.html',
-  styleUrls: ['./tn-[name].component.scss'],
+  templateUrl: './[name].component.html',
+  styleUrls: ['./[name].component.scss'],
 })
 export class Tn[Name]Component {
   // Input signals with types
@@ -69,15 +71,15 @@ export class Tn[Name]Component {
 ```typescript
 import { CommonModule } from '@angular/common';
 import { Component, input } from '@angular/core';
-import { TnButtonComponent } from '../tn-button/tn-button.component';
-import { TnIconComponent } from '../tn-icon/tn-icon.component';
+import { TnButtonComponent } from '../button/button.component';
+import { TnIconComponent } from '../icon/icon.component';
 
 @Component({
   selector: 'tn-[name]',
   standalone: true,
   imports: [CommonModule, TnButtonComponent, TnIconComponent],
-  templateUrl: './tn-[name].component.html',
-  styleUrls: ['./tn-[name].component.scss'],
+  templateUrl: './[name].component.html',
+  styleUrls: ['./[name].component.scss'],
 })
 export class Tn[Name]Component {
   // Input signals
@@ -95,16 +97,16 @@ export class Tn[Name]Component {
 ```typescript
 import { CommonModule } from '@angular/common';
 import { Component, input, inject } from '@angular/core';
-import { TnIconComponent } from '../tn-icon/tn-icon.component';
-import { TnIconRegistryService } from '../tn-icon/tn-icon-registry.service';
+import { TnIconComponent } from '../icon/icon.component';
+import { TnIconRegistryService } from '../icon/icon-registry.service';
 import { mdiClose, mdiCheck } from '@mdi/js';
 
 @Component({
   selector: 'tn-[name]',
   standalone: true,
   imports: [CommonModule, TnIconComponent],
-  templateUrl: './tn-[name].component.html',
-  styleUrls: ['./tn-[name].component.scss'],
+  templateUrl: './[name].component.html',
+  styleUrls: ['./[name].component.scss'],
 })
 export class Tn[Name]Component {
   // Inject services (modern Angular dependency injection)
@@ -147,8 +149,8 @@ import { Component, input, ChangeDetectionStrategy } from '@angular/core';
   selector: 'tn-[name]',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './tn-[name].component.html',
-  styleUrls: ['./tn-[name].component.scss'],
+  templateUrl: './[name].component.html',
+  styleUrls: ['./[name].component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Tn[Name]Component {
@@ -329,7 +331,7 @@ export class Tn[Name]Component {
 
 ```typescript
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Tn[Name]Component } from './tn-[name].component';
+import { Tn[Name]Component } from './[name].component';
 
 describe('Tn[Name]Component', () => {
   let component: Tn[Name]Component;
@@ -368,7 +370,7 @@ describe('Tn[Name]Component', () => {
 
 ```typescript
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Tn[Name]Component } from './tn-[name].component';
+import { Tn[Name]Component } from './[name].component';
 
 describe('Tn[Name]Component', () => {
   let component: Tn[Name]Component;
@@ -425,7 +427,7 @@ describe('Tn[Name]Component', () => {
 import type { Meta, StoryObj } from '@storybook/angular';
 import { userEvent, within } from '@storybook/testing-library';
 import { expect } from '@storybook/jest';
-import { Tn[Name]Component } from '../lib/tn-[name]/tn-[name].component';
+import { Tn[Name]Component } from '../lib/[name]/[name].component';
 
 const meta: Meta<Tn[Name]Component> = {
   title: 'Components/[Name]',
@@ -468,7 +470,7 @@ export const Disabled: Story = {
 import type { Meta, StoryObj } from '@storybook/angular';
 import { userEvent, within } from '@storybook/testing-library';
 import { expect } from '@storybook/jest';
-import { Tn[Name]Component } from '../lib/tn-[name]/tn-[name].component';
+import { Tn[Name]Component } from '../lib/[name]/[name].component';
 
 const meta: Meta<Tn[Name]Component> = {
   title: 'Components/[Name]',
@@ -535,8 +537,8 @@ export const Large: Story = {
 
 ```typescript
 import type { Meta, StoryObj } from '@storybook/angular';
-import { Tn[Name]Component } from '../lib/tn-[name]/tn-[name].component';
-import { tnIconMarker } from '../lib/icon-marker';
+import { Tn[Name]Component } from '../lib/[name]/[name].component';
+import { tnIconMarker } from '../lib/icon/icon-marker';
 
 // Mark icons for sprite generation
 tnIconMarker('close', 'mdi');
@@ -584,22 +586,22 @@ export interface Tn[Name]Action {
 ## Index File Template
 
 ```typescript
-export * from './tn-[name].component';
-export * from './tn-[name].interfaces';
+export * from './[name].component';
+export * from './[name].interfaces';
 ```
 
 ## Public API Export Examples
 
 ```typescript
 // Simple component (no index.ts)
-export * from './lib/tn-[name]/tn-[name].component';
+export * from './lib/[name]/[name].component';
 
 // With index.ts
-export * from './lib/tn-[name]';
+export * from './lib/[name]';
 
 // Component + interfaces (no index.ts)
-export * from './lib/tn-[name]/tn-[name].component';
-export * from './lib/tn-[name]/tn-[name].interfaces';
+export * from './lib/[name]/[name].component';
+export * from './lib/[name]/[name].interfaces';
 ```
 
 ## Usage Examples
@@ -739,4 +741,4 @@ const exists = await loader.hasHarness(
 
 ### Reference Implementation
 
-See `tn-banner.harness.ts` for a complete minimal harness example.
+See `banner.harness.ts` for a complete minimal harness example.

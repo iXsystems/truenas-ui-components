@@ -15,7 +15,7 @@ Naming rules, architecture decisions, and design patterns for TrueNAS UI Compone
 
 ### Component Class Name
 - **Format:** `Tn[Name]Component` (PascalCase)
-- **Prefix:** `Ix`
+- **Prefix:** `Tn`
 - **Suffix:** `Component`
 - **Examples:**
   - `TnButtonComponent`
@@ -27,12 +27,15 @@ Naming rules, architecture decisions, and design patterns for TrueNAS UI Compone
 
 | File Type | Pattern | Example |
 |-----------|---------|---------|
-| Component | `tn-[name].component.ts` | `tn-button.component.ts` |
-| Template | `tn-[name].component.html` | `tn-button.component.html` |
-| Stylesheet | `tn-[name].component.scss` | `tn-button.component.scss` |
-| Test | `tn-[name].component.spec.ts` | `tn-button.component.spec.ts` |
-| Interfaces | `tn-[name].interfaces.ts` | `tn-card.interfaces.ts` |
-| Story | `tn-[name].stories.ts` | `tn-button.stories.ts` |
+| Component | `[name].component.ts` | `button.component.ts` |
+| Template | `[name].component.html` | `button.component.html` |
+| Stylesheet | `[name].component.scss` | `button.component.scss` |
+| Test | `[name].component.spec.ts` | `button.component.spec.ts` |
+| Harness | `[name].harness.ts` | `button.harness.ts` |
+| Interfaces | `[name].interfaces.ts` | `card.interfaces.ts` |
+| Story | `[name].stories.ts` | `button.stories.ts` |
+
+**Note:** The `tn-` prefix is used for component **selectors** (e.g., `tn-button`), not for file or directory names.
 
 ### CSS Class Names (BEM)
 
@@ -111,7 +114,7 @@ valueChange = output<string>();
 **Decision:** All components MUST be standalone.
 
 **Rationale:**
-- Angular 19+ best practice
+- Angular 21+ best practice
 - Simpler imports for consumers
 - No NgModule boilerplate
 - Better tree-shaking
@@ -268,7 +271,7 @@ Use for behavior, not presentation:
 
 ```typescript
 @Directive({
-  selector: '[ixMenuTrigger]',
+  selector: '[tnMenuTrigger]',
   standalone: true,
 })
 export class TnMenuTriggerDirective {
@@ -437,19 +440,13 @@ Use for performance-critical components:
 })
 ```
 
-### TrackBy for *ngFor
-Optimize list rendering:
-
-```typescript
-trackById(index: number, item: any): any {
-  return item.id;
-}
-```
+### Track Expression for @for
+Optimize list rendering with the built-in `track` expression:
 
 ```html
-<div *ngFor="let item of items; trackBy: trackById">
-  {{ item.name }}
-</div>
+@for (item of items(); track item.id) {
+  <div>{{ item.name }}</div>
+}
 ```
 
 ### Lazy Loading
@@ -481,29 +478,29 @@ Defer loading of heavy components when possible.
 ```
 projects/truenas-ui/src/
 ├── lib/
-│   ├── tn-button/
-│   │   ├── tn-button.component.ts
-│   │   ├── tn-button.component.html
-│   │   ├── tn-button.component.scss
-│   │   ├── tn-button.component.spec.ts
+│   ├── button/
+│   │   ├── button.component.ts
+│   │   ├── button.component.html
+│   │   ├── button.component.scss
+│   │   ├── button.component.spec.ts
+│   │   ├── button.harness.ts
 │   │   └── index.ts (optional)
-│   └── tn-card/
-│       ├── tn-card.component.ts
-│       ├── tn-card.component.html
-│       ├── tn-card.component.scss
-│       ├── tn-card.component.spec.ts
-│       ├── tn-card.interfaces.ts
+│   └── card/
+│       ├── card.component.ts
+│       ├── card.component.html
+│       ├── card.component.scss
+│       ├── card.interfaces.ts
 │       └── index.ts
 ├── stories/
-│   ├── tn-button.stories.ts
-│   └── tn-card.stories.ts
+│   ├── button.stories.ts
+│   └── card.stories.ts
 └── public-api.ts
 ```
 
 ## Examples
 
 For real-world examples, examine:
-- **tn-button/** - Simple component pattern
-- **tn-card/** - Complex component with interfaces
-- **tn-menu/** - Component with directives
-- **tn-checkbox/** - Form control integration
+- **button/** - Simple component pattern
+- **card/** - Complex component with interfaces
+- **menu/** - Component with directives
+- **checkbox/** - Form control integration
