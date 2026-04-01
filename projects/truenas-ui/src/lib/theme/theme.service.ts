@@ -1,9 +1,10 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Injectable, signal, computed, effect, PLATFORM_ID, inject } from '@angular/core';
+import { DestroyRef, Injectable, signal, computed, effect, PLATFORM_ID, inject } from '@angular/core';
 import {
   TN_THEME_DEFINITIONS,
   THEME_MAP,
   DEFAULT_THEME,
+  LIGHT_THEME,
   THEME_STORAGE_KEY,
 } from './theme.constants';
 import type { TnThemeDefinition } from './theme.interface';
@@ -14,7 +15,8 @@ import { TnTheme } from './theme.interface';
  *
  * Features:
  * - Signal-based reactive theme state
- * - LocalStorage persistence (key: 'tn-theme')
+ * - OS color scheme detection (prefers-color-scheme)
+ * - LocalStorage persistence for explicit user choices (key: 'tn-theme')
  * - Automatic CSS class application to document root
  * - SSR-safe (checks for browser platform)
  *
@@ -34,8 +36,11 @@ import { TnTheme } from './theme.interface';
  *     // Get current theme (signal)
  *     const currentTheme = this.themeService.currentTheme();
  *
- *     // Set theme using enum (recommended)
+ *     // Set theme using enum (recommended) — persists to localStorage
  *     this.themeService.setTheme(TnTheme.Blue);
+ *
+ *     // Clear user preference and follow OS theme
+ *     this.themeService.clearPreference();
  *
  *     // React to theme changes
  *     effect(() => {
@@ -51,11 +56,32 @@ import { TnTheme } from './theme.interface';
 export class TnThemeService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
+  private readonly destroyRef = inject(DestroyRef);
 
   /**
    * Internal signal holding the current theme enum value
    */
   private readonly currentThemeSignal = signal<TnTheme>(DEFAULT_THEME);
+
+  /**
+   * Whether the user has explicitly selected a theme (vs OS-detected default).
+   * When true, theme is persisted to localStorage and OS changes are ignored.
+   */
+  private readonly userSelected = signal(false);
+
+  /**
+   * Reference to the prefers-color-scheme media query for cleanup
+   */
+  private colorSchemeQuery: MediaQueryList | null = null;
+
+  /**
+   * Bound listener reference for cleanup
+   */
+  private readonly colorSchemeListener = (event: MediaQueryListEvent): void => {
+    if (!this.userSelected()) {
+      this.currentThemeSignal.set(event.matches ? DEFAULT_THEME : LIGHT_THEME);
+    }
+  };
 
   /**
    * Computed signal that returns the full theme definition for the current theme
@@ -73,12 +99,17 @@ export class TnThemeService {
   });
 
   /**
+   * Whether the current theme is based on OS preference (no explicit user choice)
+   */
+  readonly isUsingSystemTheme = computed<boolean>(() => !this.userSelected());
+
+  /**
    * All available theme definitions in the library (readonly array)
    */
   readonly availableThemes: readonly TnThemeDefinition[] = TN_THEME_DEFINITIONS;
 
   constructor() {
-    // Initialize theme from localStorage or default
+    // Initialize theme from localStorage or OS preference
     this.initializeTheme();
 
     // Effect to apply theme CSS class to document root whenever theme changes
@@ -88,9 +119,9 @@ export class TnThemeService {
       }
     });
 
-    // Effect to persist theme to localStorage whenever it changes
+    // Effect to persist theme to localStorage only for explicit user choices
     effect(() => {
-      if (this.isBrowser) {
+      if (this.isBrowser && this.userSelected()) {
         const theme = this.currentTheme();
         if (theme) {
           this.persistThemeToStorage(theme);
@@ -101,7 +132,8 @@ export class TnThemeService {
 
   /**
    * Set the current theme.
-   * Updates the signal, which triggers effects to apply CSS and save to localStorage.
+   * Marks this as an explicit user choice, persists to localStorage,
+   * and stops following OS color scheme changes.
    *
    * @param theme - The theme to set (use TnTheme enum)
    * @returns true if theme was found and set, false otherwise
@@ -114,6 +146,7 @@ export class TnThemeService {
   setTheme(theme: TnTheme): boolean {
     const themeDefinition = THEME_MAP.get(theme);
     if (themeDefinition) {
+      this.userSelected.set(true);
       this.currentThemeSignal.set(theme);
       return true;
     }
@@ -129,10 +162,27 @@ export class TnThemeService {
   }
 
   /**
-   * Reset theme to default
+   * Reset theme to default by clearing user preference and reverting to OS detection.
    */
   resetToDefault(): void {
-    this.setTheme(DEFAULT_THEME);
+    this.clearPreference();
+  }
+
+  /**
+   * Clear user preference and revert to OS-based theme detection.
+   * Removes the stored theme from localStorage and follows the OS color scheme.
+   */
+  clearPreference(): void {
+    if (this.isBrowser) {
+      try {
+        localStorage.removeItem(THEME_STORAGE_KEY);
+      } catch (error) {
+        console.error('[TnThemeService] Error removing from localStorage:', error);
+      }
+    }
+    this.userSelected.set(false);
+    this.applySystemTheme();
+    this.listenForColorSchemeChanges();
   }
 
   /**
@@ -143,7 +193,7 @@ export class TnThemeService {
   }
 
   /**
-   * Initialize theme from localStorage or use default
+   * Initialize theme from localStorage or OS color scheme preference
    */
   private initializeTheme(): void {
     if (!this.isBrowser) {
@@ -153,14 +203,53 @@ export class TnThemeService {
     try {
       const storedTheme = localStorage.getItem(THEME_STORAGE_KEY) as TnTheme;
       if (storedTheme && this.hasTheme(storedTheme)) {
+        this.userSelected.set(true);
         this.currentThemeSignal.set(storedTheme);
       } else {
-        // If no valid stored theme, use default
-        this.currentThemeSignal.set(DEFAULT_THEME);
+        // No valid stored theme — detect from OS preference
+        this.applySystemTheme();
+        this.listenForColorSchemeChanges();
       }
     } catch (error) {
       console.error('[TnThemeService] Error reading from localStorage:', error);
+      this.applySystemTheme();
+      this.listenForColorSchemeChanges();
+    }
+  }
+
+  /**
+   * Detect OS color scheme preference and apply corresponding theme
+   */
+  private applySystemTheme(): void {
+    if (!this.isBrowser) {
+      return;
+    }
+
+    try {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      this.currentThemeSignal.set(prefersDark ? DEFAULT_THEME : LIGHT_THEME);
+    } catch {
       this.currentThemeSignal.set(DEFAULT_THEME);
+    }
+  }
+
+  /**
+   * Listen for OS color scheme changes and apply them when no user preference is set
+   */
+  private listenForColorSchemeChanges(): void {
+    if (!this.isBrowser || this.colorSchemeQuery) {
+      return;
+    }
+
+    try {
+      this.colorSchemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      this.colorSchemeQuery.addEventListener('change', this.colorSchemeListener);
+
+      this.destroyRef.onDestroy(() => {
+        this.colorSchemeQuery?.removeEventListener('change', this.colorSchemeListener);
+      });
+    } catch {
+      // matchMedia not supported — fall through silently
     }
   }
 

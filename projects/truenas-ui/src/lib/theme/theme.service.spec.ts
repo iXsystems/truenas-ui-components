@@ -1,11 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { DEFAULT_THEME, THEME_STORAGE_KEY, TN_THEME_DEFINITIONS } from './theme.constants';
+import { DEFAULT_THEME, LIGHT_THEME, THEME_STORAGE_KEY, TN_THEME_DEFINITIONS } from './theme.constants';
 import { TnTheme } from './theme.interface';
 import { TnThemeService } from './theme.service';
 
 describe('TnThemeService', () => {
   let service: TnThemeService;
   let localStorageMock: { [key: string]: string };
+  let matchMediaListeners: Map<string, ((event: MediaQueryListEvent) => void)[]>;
+  let prefersDarkMatch: boolean;
 
   const setupLocalStorageMock = () => {
     localStorageMock = {};
@@ -27,18 +29,55 @@ describe('TnThemeService', () => {
     });
   };
 
+  const setupMatchMediaMock = () => {
+    matchMediaListeners = new Map();
+    prefersDarkMatch = true;
+
+    Object.defineProperty(window, 'matchMedia', {
+      value: (query: string) => ({
+        matches: query === '(prefers-color-scheme: dark)' ? prefersDarkMatch : false,
+        media: query,
+        addEventListener: (_event: string, listener: (event: MediaQueryListEvent) => void) => {
+          const listeners = matchMediaListeners.get(query) ?? [];
+          listeners.push(listener);
+          matchMediaListeners.set(query, listeners);
+        },
+        removeEventListener: (_event: string, listener: (event: MediaQueryListEvent) => void) => {
+          const listeners = matchMediaListeners.get(query) ?? [];
+          matchMediaListeners.set(query, listeners.filter((l) => l !== listener));
+        },
+      }),
+      writable: true,
+    });
+  };
+
+  const fireColorSchemeChange = (prefersDark: boolean) => {
+    const listeners = matchMediaListeners.get('(prefers-color-scheme: dark)') ?? [];
+    listeners.forEach((listener) => {
+      listener({ matches: prefersDark } as MediaQueryListEvent);
+    });
+  };
+
+  const createService = () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [TnThemeService],
+    });
+    return TestBed.inject(TnThemeService);
+  };
+
   beforeEach(() => {
     setupLocalStorageMock();
+    setupMatchMediaMock();
 
     TestBed.configureTestingModule({
-      providers: [TnThemeService]
+      providers: [TnThemeService],
     });
 
     service = TestBed.inject(TnThemeService);
   });
 
   afterEach(() => {
-    // Clean up DOM classes after each test
     TN_THEME_DEFINITIONS.forEach((theme) => {
       document.documentElement.classList.remove(theme.className);
     });
@@ -49,7 +88,7 @@ describe('TnThemeService', () => {
       expect(service).toBeTruthy();
     });
 
-    it('should initialize with default theme', () => {
+    it('should initialize with default theme when OS prefers dark', () => {
       expect(service.getCurrentTheme()).toBe(DEFAULT_THEME);
     });
 
@@ -60,38 +99,103 @@ describe('TnThemeService', () => {
   });
 
   describe('Theme Initialization', () => {
-    it('should use default theme when localStorage is empty', () => {
-      const currentTheme = service.currentTheme();
-      expect(currentTheme?.name).toBe(DEFAULT_THEME);
+    it('should use dark theme when OS prefers dark and localStorage is empty', () => {
+      prefersDarkMatch = true;
+      const newService = createService();
+      expect(newService.getCurrentTheme()).toBe(DEFAULT_THEME);
+      expect(newService.isUsingSystemTheme()).toBe(true);
+    });
+
+    it('should use light theme when OS prefers light and localStorage is empty', () => {
+      prefersDarkMatch = false;
+      const newService = createService();
+      expect(newService.getCurrentTheme()).toBe(LIGHT_THEME);
+      expect(newService.isUsingSystemTheme()).toBe(true);
     });
 
     it('should restore theme from localStorage if available', () => {
-      // Set up localStorage before creating service
       localStorageMock[THEME_STORAGE_KEY] = TnTheme.Dracula;
+      const newService = createService();
 
-      // Reset and reconfigure TestBed with new localStorage state
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        providers: [TnThemeService]
-      });
+      expect(newService.getCurrentTheme()).toBe(TnTheme.Dracula);
+      expect(newService.isUsingSystemTheme()).toBe(false);
+    });
 
-      const newService = TestBed.inject(TnThemeService);
+    it('should use OS preference if localStorage contains invalid theme', () => {
+      localStorageMock[THEME_STORAGE_KEY] = 'invalid-theme';
+      prefersDarkMatch = false;
+      const newService = createService();
 
+      expect(newService.getCurrentTheme()).toBe(LIGHT_THEME);
+      expect(newService.isUsingSystemTheme()).toBe(true);
+    });
+
+    it('should not persist OS-detected theme to localStorage', () => {
+      prefersDarkMatch = true;
+      const newService = createService();
+
+      expect(newService.isUsingSystemTheme()).toBe(true);
+      TestBed.flushEffects();
+      expect(localStorageMock[THEME_STORAGE_KEY]).toBeUndefined();
+    });
+  });
+
+  describe('OS Color Scheme Changes', () => {
+    it('should follow OS changes when no user preference is set', () => {
+      prefersDarkMatch = true;
+      const newService = createService();
+      expect(newService.getCurrentTheme()).toBe(DEFAULT_THEME);
+
+      fireColorSchemeChange(false);
+      expect(newService.getCurrentTheme()).toBe(LIGHT_THEME);
+
+      fireColorSchemeChange(true);
+      expect(newService.getCurrentTheme()).toBe(DEFAULT_THEME);
+    });
+
+    it('should ignore OS changes after user explicitly sets a theme', () => {
+      prefersDarkMatch = true;
+      const newService = createService();
+      expect(newService.isUsingSystemTheme()).toBe(true);
+
+      newService.setTheme(TnTheme.Dracula);
+      expect(newService.isUsingSystemTheme()).toBe(false);
+
+      fireColorSchemeChange(false);
       expect(newService.getCurrentTheme()).toBe(TnTheme.Dracula);
     });
 
-    it('should use default theme if localStorage contains invalid theme', () => {
-      // Set up localStorage with invalid theme before creating service
-      localStorageMock[THEME_STORAGE_KEY] = 'invalid-theme';
+    it('should resume following OS changes after clearPreference()', () => {
+      prefersDarkMatch = true;
+      const newService = createService();
 
-      // Reset and reconfigure TestBed with new localStorage state
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        providers: [TnThemeService]
-      });
+      newService.setTheme(TnTheme.Nord);
+      expect(newService.isUsingSystemTheme()).toBe(false);
 
-      const newService = TestBed.inject(TnThemeService);
+      newService.clearPreference();
+      expect(newService.isUsingSystemTheme()).toBe(true);
+      expect(newService.getCurrentTheme()).toBe(DEFAULT_THEME);
 
+      fireColorSchemeChange(false);
+      expect(newService.getCurrentTheme()).toBe(LIGHT_THEME);
+    });
+
+    it('should follow OS changes after clearPreference() when service started with stored theme', () => {
+      prefersDarkMatch = true;
+      localStorageMock[THEME_STORAGE_KEY] = TnTheme.Dracula;
+      const newService = createService();
+
+      expect(newService.getCurrentTheme()).toBe(TnTheme.Dracula);
+      expect(newService.isUsingSystemTheme()).toBe(false);
+
+      newService.clearPreference();
+      expect(newService.isUsingSystemTheme()).toBe(true);
+      expect(newService.getCurrentTheme()).toBe(DEFAULT_THEME);
+
+      fireColorSchemeChange(false);
+      expect(newService.getCurrentTheme()).toBe(LIGHT_THEME);
+
+      fireColorSchemeChange(true);
       expect(newService.getCurrentTheme()).toBe(DEFAULT_THEME);
     });
   });
@@ -123,43 +227,40 @@ describe('TnThemeService', () => {
       const result = service.setTheme('non-existent-theme' as TnTheme);
 
       expect(result).toBe(false);
-      expect(service.getCurrentTheme()).toBe(DEFAULT_THEME);
     });
 
-    it('should persist theme to localStorage', (done) => {
+    it('should mark theme as user-selected', () => {
+      expect(service.isUsingSystemTheme()).toBe(true);
+
       service.setTheme(TnTheme.SolarizedDark);
 
-      // Effects run asynchronously, wait for next tick
-      setTimeout(() => {
-        expect(localStorageMock[THEME_STORAGE_KEY]).toBe(TnTheme.SolarizedDark);
-        done();
-      }, 0);
+      expect(service.isUsingSystemTheme()).toBe(false);
     });
 
-    it('should apply CSS class to document root', (done) => {
+    it('should persist theme to localStorage', () => {
+      service.setTheme(TnTheme.SolarizedDark);
+      TestBed.flushEffects();
+
+      expect(localStorageMock[THEME_STORAGE_KEY]).toBe(TnTheme.SolarizedDark);
+    });
+
+    it('should apply CSS class to document root', () => {
       service.setTheme(TnTheme.Midnight);
+      TestBed.flushEffects();
 
-      // Effects run asynchronously, wait for next tick
-      setTimeout(() => {
-        const root = document.documentElement;
-        expect(root.classList.contains('tn-midnight')).toBe(true);
-        done();
-      }, 0);
+      expect(document.documentElement.classList.contains('tn-midnight')).toBe(true);
     });
 
-    it('should remove previous theme class when switching themes', (done) => {
+    it('should remove previous theme class when switching themes', () => {
       service.setTheme(TnTheme.Dracula);
+      TestBed.flushEffects();
 
-      setTimeout(() => {
-        service.setTheme(TnTheme.Nord);
+      service.setTheme(TnTheme.Nord);
+      TestBed.flushEffects();
 
-        setTimeout(() => {
-          const root = document.documentElement;
-          expect(root.classList.contains('tn-dracula')).toBe(false);
-          expect(root.classList.contains('tn-nord')).toBe(true);
-          done();
-        }, 0);
-      }, 0);
+      const root = document.documentElement;
+      expect(root.classList.contains('tn-dracula')).toBe(false);
+      expect(root.classList.contains('tn-nord')).toBe(true);
     });
 
     it('should handle all 8 theme options', () => {
@@ -200,40 +301,65 @@ describe('TnThemeService', () => {
   });
 
   describe('resetToDefault()', () => {
-    it('should reset theme to default', () => {
+    it('should reset theme to OS-detected default', () => {
       service.setTheme(TnTheme.Dracula);
       service.resetToDefault();
 
       expect(service.getCurrentTheme()).toBe(DEFAULT_THEME);
     });
 
-    it('should persist default theme to localStorage', (done) => {
+    it('should clear localStorage and revert to OS detection', () => {
       service.setTheme(TnTheme.Nord);
+      TestBed.flushEffects();
+      expect(localStorageMock[THEME_STORAGE_KEY]).toBe(TnTheme.Nord);
 
-      setTimeout(() => {
-        service.resetToDefault();
+      service.resetToDefault();
+      TestBed.flushEffects();
 
-        setTimeout(() => {
-          expect(localStorageMock[THEME_STORAGE_KEY]).toBe(DEFAULT_THEME);
-          done();
-        }, 0);
-      }, 0);
+      expect(localStorageMock[THEME_STORAGE_KEY]).toBeUndefined();
+      expect(service.isUsingSystemTheme()).toBe(true);
     });
 
-    it('should apply default theme CSS class to DOM', (done) => {
+    it('should apply default theme CSS class to DOM', () => {
       service.setTheme(TnTheme.Paper);
+      TestBed.flushEffects();
 
-      setTimeout(() => {
-        service.resetToDefault();
+      service.resetToDefault();
+      TestBed.flushEffects();
 
-        setTimeout(() => {
-          const root = document.documentElement;
-          const defaultThemeClass = service.currentTheme()?.className;
-          expect(root.classList.contains(defaultThemeClass!)).toBe(true);
-          expect(root.classList.contains('tn-paper')).toBe(false);
-          done();
-        }, 0);
-      }, 0);
+      const root = document.documentElement;
+      expect(root.classList.contains(service.currentTheme()!.className)).toBe(true);
+      expect(root.classList.contains('tn-paper')).toBe(false);
+    });
+  });
+
+  describe('clearPreference()', () => {
+    it('should remove theme from localStorage', () => {
+      service.setTheme(TnTheme.Dracula);
+      TestBed.flushEffects();
+
+      service.clearPreference();
+
+      expect(localStorageMock[THEME_STORAGE_KEY]).toBeUndefined();
+    });
+
+    it('should revert to OS-detected theme', () => {
+      prefersDarkMatch = false;
+      const newService = createService();
+
+      newService.setTheme(TnTheme.Midnight);
+      expect(newService.getCurrentTheme()).toBe(TnTheme.Midnight);
+
+      newService.clearPreference();
+      expect(newService.getCurrentTheme()).toBe(LIGHT_THEME);
+    });
+
+    it('should mark theme as system-detected', () => {
+      service.setTheme(TnTheme.Nord);
+      expect(service.isUsingSystemTheme()).toBe(false);
+
+      service.clearPreference();
+      expect(service.isUsingSystemTheme()).toBe(true);
     });
   });
 
@@ -268,91 +394,87 @@ describe('TnThemeService', () => {
       expect(class1).not.toBe(class2);
       expect(class2).toBe('tn-high-contrast');
     });
-
   });
 
   describe('LocalStorage Persistence', () => {
-    it('should save theme preference on every theme change', (done) => {
+    it('should save theme preference on every explicit theme change', () => {
       service.setTheme(TnTheme.Blue);
+      TestBed.flushEffects();
+      expect(localStorageMock[THEME_STORAGE_KEY]).toBe(TnTheme.Blue);
 
-      setTimeout(() => {
-        expect(localStorageMock[THEME_STORAGE_KEY]).toBe(TnTheme.Blue);
+      service.setTheme(TnTheme.Nord);
+      TestBed.flushEffects();
+      expect(localStorageMock[THEME_STORAGE_KEY]).toBe(TnTheme.Nord);
 
-        service.setTheme(TnTheme.Nord);
+      service.setTheme(TnTheme.Paper);
+      TestBed.flushEffects();
+      expect(localStorageMock[THEME_STORAGE_KEY]).toBe(TnTheme.Paper);
+    });
 
-        setTimeout(() => {
-          expect(localStorageMock[THEME_STORAGE_KEY]).toBe(TnTheme.Nord);
+    it('should not persist OS-triggered theme changes', () => {
+      prefersDarkMatch = true;
+      const newService = createService();
+      TestBed.flushEffects();
 
-          service.setTheme(TnTheme.Paper);
+      expect(localStorageMock[THEME_STORAGE_KEY]).toBeUndefined();
 
-          setTimeout(() => {
-            expect(localStorageMock[THEME_STORAGE_KEY]).toBe(TnTheme.Paper);
-            done();
-          }, 10);
-        }, 10);
-      }, 10);
+      fireColorSchemeChange(false);
+      TestBed.flushEffects();
+
+      expect(localStorageMock[THEME_STORAGE_KEY]).toBeUndefined();
+      expect(newService.getCurrentTheme()).toBe(LIGHT_THEME);
     });
 
     it('should handle localStorage errors gracefully', () => {
-      // Override setItem to throw an error
       const originalSetItem = localStorage.setItem;
       localStorage.setItem = () => {
         throw new Error('localStorage is full');
       };
 
-      // Should not throw
       expect(() => service.setTheme(TnTheme.Dracula)).not.toThrow();
 
-      // Restore original
       localStorage.setItem = originalSetItem;
     });
   });
 
   describe('DOM Manipulation', () => {
-    it('should apply only one theme class at a time', (done) => {
+    it('should apply only one theme class at a time', () => {
       service.setTheme(TnTheme.Dracula);
+      TestBed.flushEffects();
 
-      setTimeout(() => {
-        const root = document.documentElement;
-        const appliedThemeClasses = TN_THEME_DEFINITIONS.filter((theme) =>
-          root.classList.contains(theme.className)
-        );
+      const root = document.documentElement;
+      const appliedThemeClasses = TN_THEME_DEFINITIONS.filter((theme) =>
+        root.classList.contains(theme.className)
+      );
 
-        expect(appliedThemeClasses.length).toBe(1);
-        expect(appliedThemeClasses[0].className).toBe('tn-dracula');
-        done();
-      }, 0);
+      expect(appliedThemeClasses.length).toBe(1);
+      expect(appliedThemeClasses[0].className).toBe('tn-dracula');
     });
 
-    it('should clean up all theme classes before applying new one', (done) => {
-      // Manually add multiple theme classes to simulate a dirty state
+    it('should clean up all theme classes before applying new one', () => {
       document.documentElement.classList.add('tn-nord', 'tn-paper', 'tn-midnight');
 
       service.setTheme(TnTheme.HighContrast);
+      TestBed.flushEffects();
 
-      setTimeout(() => {
-        const root = document.documentElement;
-        expect(root.classList.contains('tn-nord')).toBe(false);
-        expect(root.classList.contains('tn-paper')).toBe(false);
-        expect(root.classList.contains('tn-midnight')).toBe(false);
-        expect(root.classList.contains('tn-high-contrast')).toBe(true);
-        done();
-      }, 0);
+      const root = document.documentElement;
+      expect(root.classList.contains('tn-nord')).toBe(false);
+      expect(root.classList.contains('tn-paper')).toBe(false);
+      expect(root.classList.contains('tn-midnight')).toBe(false);
+      expect(root.classList.contains('tn-high-contrast')).toBe(true);
     });
   });
 
   describe('Edge Cases', () => {
-    it('should handle rapid theme changes', (done) => {
+    it('should handle rapid theme changes', () => {
       service.setTheme(TnTheme.Dracula);
       service.setTheme(TnTheme.Nord);
       service.setTheme(TnTheme.Paper);
       service.setTheme(TnTheme.Midnight);
+      TestBed.flushEffects();
 
-      setTimeout(() => {
-        expect(service.getCurrentTheme()).toBe(TnTheme.Midnight);
-        expect(service.currentThemeClass()).toBe('tn-midnight');
-        done();
-      }, 50);
+      expect(service.getCurrentTheme()).toBe(TnTheme.Midnight);
+      expect(service.currentThemeClass()).toBe('tn-midnight');
     });
 
     it('should handle setting the same theme multiple times', () => {

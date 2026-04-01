@@ -7,6 +7,11 @@ import { TnTheme } from './theme.interface';
 export const DEFAULT_THEME = TnTheme.Dark;
 
 /**
+ * Light theme used when OS preference is light
+ */
+export const LIGHT_THEME = TnTheme.Blue;
+
+/**
  * localStorage key for storing the current theme name
  */
 export const THEME_STORAGE_KEY = 'tn-theme';
