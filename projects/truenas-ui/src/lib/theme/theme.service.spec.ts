@@ -1,11 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { DEFAULT_THEME, THEME_STORAGE_KEY, TN_THEME_DEFINITIONS } from './theme.constants';
+import { DEFAULT_THEME, LIGHT_THEME, THEME_STORAGE_KEY, TN_THEME_DEFINITIONS } from './theme.constants';
 import { TnTheme } from './theme.interface';
 import { TnThemeService } from './theme.service';
 
 describe('TnThemeService', () => {
   let service: TnThemeService;
   let localStorageMock: { [key: string]: string };
+  let matchMediaListeners: Map<string, ((event: MediaQueryListEvent) => void)[]>;
+  let prefersDarkMatch: boolean;
 
   const setupLocalStorageMock = () => {
     localStorageMock = {};
@@ -27,11 +29,49 @@ describe('TnThemeService', () => {
     });
   };
 
+  const setupMatchMediaMock = () => {
+    matchMediaListeners = new Map();
+    prefersDarkMatch = true;
+
+    Object.defineProperty(window, 'matchMedia', {
+      value: (query: string) => ({
+        matches: query === '(prefers-color-scheme: dark)' ? prefersDarkMatch : false,
+        media: query,
+        addEventListener: (_event: string, listener: (event: MediaQueryListEvent) => void) => {
+          const listeners = matchMediaListeners.get(query) ?? [];
+          listeners.push(listener);
+          matchMediaListeners.set(query, listeners);
+        },
+        removeEventListener: (_event: string, listener: (event: MediaQueryListEvent) => void) => {
+          const listeners = matchMediaListeners.get(query) ?? [];
+          matchMediaListeners.set(query, listeners.filter((l) => l !== listener));
+        },
+      }),
+      writable: true,
+    });
+  };
+
+  const fireColorSchemeChange = (prefersDark: boolean) => {
+    const listeners = matchMediaListeners.get('(prefers-color-scheme: dark)') ?? [];
+    listeners.forEach((listener) => {
+      listener({ matches: prefersDark } as MediaQueryListEvent);
+    });
+  };
+
+  const createService = () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [TnThemeService],
+    });
+    return TestBed.inject(TnThemeService);
+  };
+
   beforeEach(() => {
     setupLocalStorageMock();
+    setupMatchMediaMock();
 
     TestBed.configureTestingModule({
-      providers: [TnThemeService]
+      providers: [TnThemeService],
     });
 
     service = TestBed.inject(TnThemeService);
@@ -49,7 +89,7 @@ describe('TnThemeService', () => {
       expect(service).toBeTruthy();
     });
 
-    it('should initialize with default theme', () => {
+    it('should initialize with default theme when OS prefers dark', () => {
       expect(service.getCurrentTheme()).toBe(DEFAULT_THEME);
     });
 
@@ -60,39 +100,88 @@ describe('TnThemeService', () => {
   });
 
   describe('Theme Initialization', () => {
-    it('should use default theme when localStorage is empty', () => {
-      const currentTheme = service.currentTheme();
-      expect(currentTheme?.name).toBe(DEFAULT_THEME);
+    it('should use dark theme when OS prefers dark and localStorage is empty', () => {
+      prefersDarkMatch = true;
+      const newService = createService();
+      expect(newService.getCurrentTheme()).toBe(DEFAULT_THEME);
+      expect(newService.isUsingSystemTheme()).toBe(true);
+    });
+
+    it('should use light theme when OS prefers light and localStorage is empty', () => {
+      prefersDarkMatch = false;
+      const newService = createService();
+      expect(newService.getCurrentTheme()).toBe(LIGHT_THEME);
+      expect(newService.isUsingSystemTheme()).toBe(true);
     });
 
     it('should restore theme from localStorage if available', () => {
-      // Set up localStorage before creating service
       localStorageMock[THEME_STORAGE_KEY] = TnTheme.Dracula;
+      const newService = createService();
 
-      // Reset and reconfigure TestBed with new localStorage state
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        providers: [TnThemeService]
-      });
+      expect(newService.getCurrentTheme()).toBe(TnTheme.Dracula);
+      expect(newService.isUsingSystemTheme()).toBe(false);
+    });
 
-      const newService = TestBed.inject(TnThemeService);
+    it('should use OS preference if localStorage contains invalid theme', () => {
+      localStorageMock[THEME_STORAGE_KEY] = 'invalid-theme';
+      prefersDarkMatch = false;
+      const newService = createService();
 
+      expect(newService.getCurrentTheme()).toBe(LIGHT_THEME);
+      expect(newService.isUsingSystemTheme()).toBe(true);
+    });
+
+    it('should not persist OS-detected theme to localStorage', (done) => {
+      prefersDarkMatch = true;
+      const newService = createService();
+
+      expect(newService.isUsingSystemTheme()).toBe(true);
+
+      setTimeout(() => {
+        expect(localStorageMock[THEME_STORAGE_KEY]).toBeUndefined();
+        done();
+      }, 0);
+    });
+  });
+
+  describe('OS Color Scheme Changes', () => {
+    it('should follow OS changes when no user preference is set', () => {
+      prefersDarkMatch = true;
+      const newService = createService();
+      expect(newService.getCurrentTheme()).toBe(DEFAULT_THEME);
+
+      fireColorSchemeChange(false);
+      expect(newService.getCurrentTheme()).toBe(LIGHT_THEME);
+
+      fireColorSchemeChange(true);
+      expect(newService.getCurrentTheme()).toBe(DEFAULT_THEME);
+    });
+
+    it('should ignore OS changes after user explicitly sets a theme', () => {
+      prefersDarkMatch = true;
+      const newService = createService();
+      expect(newService.isUsingSystemTheme()).toBe(true);
+
+      newService.setTheme(TnTheme.Dracula);
+      expect(newService.isUsingSystemTheme()).toBe(false);
+
+      fireColorSchemeChange(false);
       expect(newService.getCurrentTheme()).toBe(TnTheme.Dracula);
     });
 
-    it('should use default theme if localStorage contains invalid theme', () => {
-      // Set up localStorage with invalid theme before creating service
-      localStorageMock[THEME_STORAGE_KEY] = 'invalid-theme';
+    it('should resume following OS changes after clearPreference()', () => {
+      prefersDarkMatch = true;
+      const newService = createService();
 
-      // Reset and reconfigure TestBed with new localStorage state
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        providers: [TnThemeService]
-      });
+      newService.setTheme(TnTheme.Nord);
+      expect(newService.isUsingSystemTheme()).toBe(false);
 
-      const newService = TestBed.inject(TnThemeService);
-
+      newService.clearPreference();
+      expect(newService.isUsingSystemTheme()).toBe(true);
       expect(newService.getCurrentTheme()).toBe(DEFAULT_THEME);
+
+      fireColorSchemeChange(false);
+      expect(newService.getCurrentTheme()).toBe(LIGHT_THEME);
     });
   });
 
@@ -123,13 +212,19 @@ describe('TnThemeService', () => {
       const result = service.setTheme('non-existent-theme' as TnTheme);
 
       expect(result).toBe(false);
-      expect(service.getCurrentTheme()).toBe(DEFAULT_THEME);
+    });
+
+    it('should mark theme as user-selected', () => {
+      expect(service.isUsingSystemTheme()).toBe(true);
+
+      service.setTheme(TnTheme.SolarizedDark);
+
+      expect(service.isUsingSystemTheme()).toBe(false);
     });
 
     it('should persist theme to localStorage', (done) => {
       service.setTheme(TnTheme.SolarizedDark);
 
-      // Effects run asynchronously, wait for next tick
       setTimeout(() => {
         expect(localStorageMock[THEME_STORAGE_KEY]).toBe(TnTheme.SolarizedDark);
         done();
@@ -139,7 +234,6 @@ describe('TnThemeService', () => {
     it('should apply CSS class to document root', (done) => {
       service.setTheme(TnTheme.Midnight);
 
-      // Effects run asynchronously, wait for next tick
       setTimeout(() => {
         const root = document.documentElement;
         expect(root.classList.contains('tn-midnight')).toBe(true);
@@ -237,6 +331,36 @@ describe('TnThemeService', () => {
     });
   });
 
+  describe('clearPreference()', () => {
+    it('should remove theme from localStorage', () => {
+      service.setTheme(TnTheme.Dracula);
+      localStorageMock[THEME_STORAGE_KEY] = TnTheme.Dracula;
+
+      service.clearPreference();
+
+      expect(localStorageMock[THEME_STORAGE_KEY]).toBeUndefined();
+    });
+
+    it('should revert to OS-detected theme', () => {
+      prefersDarkMatch = false;
+      const newService = createService();
+
+      newService.setTheme(TnTheme.Midnight);
+      expect(newService.getCurrentTheme()).toBe(TnTheme.Midnight);
+
+      newService.clearPreference();
+      expect(newService.getCurrentTheme()).toBe(LIGHT_THEME);
+    });
+
+    it('should mark theme as system-detected', () => {
+      service.setTheme(TnTheme.Nord);
+      expect(service.isUsingSystemTheme()).toBe(false);
+
+      service.clearPreference();
+      expect(service.isUsingSystemTheme()).toBe(true);
+    });
+  });
+
   describe('hasTheme()', () => {
     it('should return true for valid themes', () => {
       expect(service.hasTheme(TnTheme.Dark)).toBe(true);
@@ -268,11 +392,10 @@ describe('TnThemeService', () => {
       expect(class1).not.toBe(class2);
       expect(class2).toBe('tn-high-contrast');
     });
-
   });
 
   describe('LocalStorage Persistence', () => {
-    it('should save theme preference on every theme change', (done) => {
+    it('should save theme preference on every explicit theme change', (done) => {
       service.setTheme(TnTheme.Blue);
 
       setTimeout(() => {
@@ -291,6 +414,25 @@ describe('TnThemeService', () => {
           }, 10);
         }, 10);
       }, 10);
+    });
+
+    it('should not persist OS-triggered theme changes', (done) => {
+      prefersDarkMatch = true;
+      const newService = createService();
+
+      // OS-detected theme should not be persisted
+      setTimeout(() => {
+        expect(localStorageMock[THEME_STORAGE_KEY]).toBeUndefined();
+
+        // OS change event should not persist either
+        fireColorSchemeChange(false);
+
+        setTimeout(() => {
+          expect(localStorageMock[THEME_STORAGE_KEY]).toBeUndefined();
+          expect(newService.getCurrentTheme()).toBe(LIGHT_THEME);
+          done();
+        }, 0);
+      }, 0);
     });
 
     it('should handle localStorage errors gracefully', () => {
