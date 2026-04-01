@@ -162,10 +162,10 @@ export class TnThemeService {
   }
 
   /**
-   * Reset theme to default
+   * Reset theme to default by clearing user preference and reverting to OS detection.
    */
   resetToDefault(): void {
-    this.setTheme(DEFAULT_THEME);
+    this.clearPreference();
   }
 
   /**
@@ -182,6 +182,7 @@ export class TnThemeService {
     }
     this.userSelected.set(false);
     this.applySystemTheme();
+    this.listenForColorSchemeChanges();
   }
 
   /**
@@ -236,7 +237,7 @@ export class TnThemeService {
    * Listen for OS color scheme changes and apply them when no user preference is set
    */
   private listenForColorSchemeChanges(): void {
-    if (!this.isBrowser) {
+    if (!this.isBrowser || this.colorSchemeQuery) {
       return;
     }
 

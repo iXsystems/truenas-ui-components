@@ -183,6 +183,27 @@ describe('TnThemeService', () => {
       fireColorSchemeChange(false);
       expect(newService.getCurrentTheme()).toBe(LIGHT_THEME);
     });
+
+    it('should follow OS changes after clearPreference() when service started with stored theme', () => {
+      prefersDarkMatch = true;
+      localStorageMock[THEME_STORAGE_KEY] = TnTheme.Dracula;
+      const newService = createService();
+
+      // Service initialized from localStorage — no OS listener attached
+      expect(newService.getCurrentTheme()).toBe(TnTheme.Dracula);
+      expect(newService.isUsingSystemTheme()).toBe(false);
+
+      // clearPreference() should re-subscribe to OS changes
+      newService.clearPreference();
+      expect(newService.isUsingSystemTheme()).toBe(true);
+      expect(newService.getCurrentTheme()).toBe(DEFAULT_THEME);
+
+      fireColorSchemeChange(false);
+      expect(newService.getCurrentTheme()).toBe(LIGHT_THEME);
+
+      fireColorSchemeChange(true);
+      expect(newService.getCurrentTheme()).toBe(DEFAULT_THEME);
+    });
   });
 
   describe('setTheme()', () => {
@@ -301,14 +322,17 @@ describe('TnThemeService', () => {
       expect(service.getCurrentTheme()).toBe(DEFAULT_THEME);
     });
 
-    it('should persist default theme to localStorage', (done) => {
+    it('should clear localStorage and revert to OS detection', (done) => {
       service.setTheme(TnTheme.Nord);
 
       setTimeout(() => {
+        expect(localStorageMock[THEME_STORAGE_KEY]).toBe(TnTheme.Nord);
+
         service.resetToDefault();
 
         setTimeout(() => {
-          expect(localStorageMock[THEME_STORAGE_KEY]).toBe(DEFAULT_THEME);
+          expect(localStorageMock[THEME_STORAGE_KEY]).toBeUndefined();
+          expect(service.isUsingSystemTheme()).toBe(true);
           done();
         }, 0);
       }, 0);
