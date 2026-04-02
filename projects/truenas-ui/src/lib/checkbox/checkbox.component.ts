@@ -1,9 +1,26 @@
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
 import { CommonModule } from '@angular/common';
 import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
-import { Component, viewChild, inject, input, output, computed, signal, forwardRef } from '@angular/core';
+import { Component, viewChild, inject, input, output, computed, signal, forwardRef, contentChildren, Directive } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
+
+/**
+ * Directive to mark content for projection into the checkbox label area.
+ * Use when the label needs rich content (links, icons, etc.) instead of plain text.
+ *
+ * @example
+ * ```html
+ * <tn-checkbox formControlName="terms">
+ *   <span tnCheckboxLabel>I agree to the <a href="/terms">Terms</a></span>
+ * </tn-checkbox>
+ * ```
+ */
+@Directive({
+  selector: '[tnCheckboxLabel]',
+  standalone: true,
+})
+export class TnCheckboxLabelDirective {}
 
 @Component({
   selector: 'tn-checkbox',
@@ -32,6 +49,9 @@ export class TnCheckboxComponent implements AfterViewInit, OnDestroy, ControlVal
   checked = input<boolean>(false);
 
   change = output<boolean>();
+
+  private labelContent = contentChildren(TnCheckboxLabelDirective);
+  protected hasProjectedLabel = computed(() => this.labelContent().length > 0);
 
   id = `tn-checkbox-${Math.random().toString(36).substr(2, 9)}`;
 
