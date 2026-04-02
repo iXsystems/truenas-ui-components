@@ -10,13 +10,20 @@
       [required]="required()"
       [indeterminate]="indeterminate()"
       [attr.data-testid]="testId()"
+      [attr.aria-label]="hasProjectedLabel() ? label() : null"
       [attr.aria-describedby]="error() ? id + '-error' : null"
       [attr.aria-invalid]="error() ? 'true' : null"
       (change)="onCheckboxChange($event)"
     />
     <span class="tn-checkbox__checkmark"></span>
     @if (!hideLabel()) {
-      <span class="tn-checkbox__text">{{ label() }}</span>
+      <span class="tn-checkbox__text">
+        @if (hasProjectedLabel()) {
+          <ng-content select="[tnCheckboxLabel]" />
+        } @else {
+          {{ label() }}
+        }
+      </span>
     }
   </label>
 

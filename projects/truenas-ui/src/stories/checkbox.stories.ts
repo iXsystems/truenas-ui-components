@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
-import { TnCheckboxComponent } from '../lib/checkbox/checkbox.component';
+import { TnCheckboxComponent, TnCheckboxLabelDirective } from '../lib/checkbox/checkbox.component';
 
 const meta: Meta<TnCheckboxComponent> = {
   title: 'Components/Checkbox',
@@ -199,6 +199,42 @@ export const Interactive: Story = {
       imports: [FormsModule, CommonModule]
     }
   })
+};
+
+export const RichLabel: Story = {
+  render: () => ({
+    template: `
+      <div style="display: flex; flex-direction: column; gap: 16px; max-width: 400px;">
+        <tn-checkbox label="I agree to the Terms of Service">
+          <span tnCheckboxLabel>
+            I have read and agree to the
+            <a href="https://example.com/terms" target="_blank"
+              style="color: var(--tn-primary); text-decoration: underline;">
+              Terms of Service
+            </a>
+          </span>
+        </tn-checkbox>
+
+        <tn-checkbox label="Privacy policy">
+          <span tnCheckboxLabel>
+            I accept the
+            <a href="https://example.com/privacy" target="_blank"
+              style="color: var(--tn-primary); text-decoration: underline;">
+              Privacy Policy
+            </a>
+            and
+            <a href="https://example.com/cookies" target="_blank"
+              style="color: var(--tn-primary); text-decoration: underline;">
+              Cookie Policy
+            </a>
+          </span>
+        </tn-checkbox>
+      </div>
+    `,
+    moduleMetadata: {
+      imports: [TnCheckboxLabelDirective],
+    },
+  }),
 };
 
 export const Group: Story = {

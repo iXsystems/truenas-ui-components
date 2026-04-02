@@ -18,6 +18,7 @@ export * from './lib/chip/chip.component';
 export * from './lib/card';
 export * from './lib/expansion-panel/expansion-panel.component';
 export * from './lib/checkbox/checkbox.component';
+export * from './lib/checkbox/checkbox.harness';
 export * from './lib/radio/radio.component';
 export * from './lib/slide-toggle/slide-toggle.component';
 export * from './lib/tabs/tabs.component';
