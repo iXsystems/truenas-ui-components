@@ -30,7 +30,7 @@
   &:focus-visible,
   &.open {
     border-color: var(--tn-primary, #007bff);
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--tn-primary, #007bff) 25%, transparent);
   }
 
   &.disabled {

@@ -13,6 +13,8 @@ import {
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
+let nextId = 0;
+
 @Component({
   selector: 'tn-autocomplete',
   standalone: true,
@@ -29,6 +31,9 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 })
 export class TnAutocompleteComponent<T = unknown> implements ControlValueAccessor {
   private readonly elementRef = inject(ElementRef);
+
+  /** Unique instance ID for ARIA linkage */
+  protected readonly uid = `tn-autocomplete-${nextId++}`;
 
   /** All available options */
   options = input<T[]>([]);
@@ -171,32 +176,29 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   }
 
   onBlur(): void {
-    // Delay to allow option click to register before closing
-    setTimeout(() => {
-      if (this.requireSelection()) {
-        const term = this.searchTerm();
-        const display = this.displayWith();
-        const match = this.options().find(
-          (opt) => display(opt).toLowerCase() === term.toLowerCase()
-        );
+    if (this.requireSelection()) {
+      const term = this.searchTerm();
+      const display = this.displayWith();
+      const match = this.options().find(
+        (opt) => display(opt).toLowerCase() === term.toLowerCase()
+      );
 
-        if (match) {
-          this.selectOption(match);
+      if (match) {
+        this.selectOption(match);
+      } else {
+        // Revert to last valid selection or clear
+        const current = this.selectedValue();
+        if (current !== null && current !== undefined) {
+          this.searchTerm.set(display(current));
         } else {
-          // Revert to last valid selection or clear
-          const current = this.selectedValue();
-          if (current !== null && current !== undefined) {
-            this.searchTerm.set(display(current));
-          } else {
-            this.searchTerm.set('');
-            this.onChange(null);
-          }
+          this.searchTerm.set('');
+          this.onChange(null);
         }
       }
+    }
 
-      this.close();
-      this.onTouched();
-    }, 150);
+    this.close();
+    this.onTouched();
   }
 
   onOptionClick(option: T): void {

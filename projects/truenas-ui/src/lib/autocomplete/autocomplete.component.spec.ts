@@ -275,31 +275,25 @@ describe('TnAutocompleteComponent', () => {
       fixture.detectChanges();
     });
 
-    it('should revert to last valid selection on blur with invalid text', (done) => {
+    it('should revert to last valid selection on blur with invalid text', () => {
       focusInput();
       getOptions()[0].click();
       fixture.detectChanges();
 
       typeInInput('garbage');
       getInput().dispatchEvent(new Event('blur'));
+      fixture.detectChanges();
 
-      setTimeout(() => {
-        fixture.detectChanges();
-        expect(getInput().value).toBe('United States');
-        done();
-      }, 200);
+      expect(getInput().value).toBe('United States');
     });
 
-    it('should clear when no prior selection and invalid text', (done) => {
+    it('should clear when no prior selection and invalid text', () => {
       typeInInput('garbage');
       getInput().dispatchEvent(new Event('blur'));
+      fixture.detectChanges();
 
-      setTimeout(() => {
-        fixture.detectChanges();
-        expect(getInput().value).toBe('');
-        expect(host.control.value).toBeNull();
-        done();
-      }, 200);
+      expect(getInput().value).toBe('');
+      expect(host.control.value).toBeNull();
     });
   });
 });

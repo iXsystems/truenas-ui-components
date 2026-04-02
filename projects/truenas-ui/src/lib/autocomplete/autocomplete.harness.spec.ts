@@ -198,9 +198,6 @@ describe('TnAutocompleteHarness', () => {
       await ac.setInputValue('xyz');
       await ac.blur();
 
-      // Wait for blur timeout
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
       expect(await ac.getInputValue()).toBe('Apple');
     });
 
@@ -210,8 +207,6 @@ describe('TnAutocompleteHarness', () => {
       const ac = await loader.getHarness(TnAutocompleteHarness);
       await ac.setInputValue('xyz');
       await ac.blur();
-
-      await new Promise((resolve) => setTimeout(resolve, 200));
 
       expect(await ac.getInputValue()).toBe('');
     });

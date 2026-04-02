@@ -12,8 +12,8 @@
     [value]="searchTerm()"
     [attr.aria-expanded]="isOpen()"
     [attr.aria-autocomplete]="'list'"
-    [attr.aria-controls]="isOpen() ? 'tn-autocomplete-dropdown-' + testId() : null"
-    [attr.aria-activedescendant]="highlightedIndex() >= 0 ? 'tn-autocomplete-option-' + highlightedIndex() : null"
+    [attr.aria-controls]="isOpen() ? uid + '-dropdown' : null"
+    [attr.aria-activedescendant]="highlightedIndex() >= 0 ? uid + '-option-' + highlightedIndex() : null"
     (input)="onInput($event)"
     (focus)="onFocus()"
     (blur)="onBlur()"
@@ -23,7 +23,7 @@
     <div
       class="tn-autocomplete__dropdown"
       role="listbox"
-      [attr.id]="'tn-autocomplete-dropdown-' + testId()">
+      [attr.id]="uid + '-dropdown'">
 
       @if (hasResults()) {
         @for (option of filteredOptions(); track $index) {
@@ -32,7 +32,7 @@
             role="option"
             tabindex="-1"
             [class.highlighted]="highlightedIndex() === $index"
-            [attr.id]="'tn-autocomplete-option-' + $index"
+            [attr.id]="uid + '-option-' + $index"
             [attr.aria-selected]="highlightedIndex() === $index"
             (mousedown)="$event.preventDefault()"
             (click)="onOptionClick(option)"
