@@ -1,0 +1,50 @@
+<div class="tn-autocomplete" [attr.data-testid]="testId()">
+  <input
+    #inputEl
+    type="text"
+    class="tn-autocomplete__input"
+    role="combobox"
+    autocomplete="off"
+    [class.open]="isOpen()"
+    [class.disabled]="isDisabled()"
+    [placeholder]="placeholder()"
+    [disabled]="isDisabled()"
+    [value]="searchTerm()"
+    [attr.aria-expanded]="isOpen()"
+    [attr.aria-autocomplete]="'list'"
+    [attr.aria-controls]="isOpen() ? uid + '-dropdown' : null"
+    [attr.aria-activedescendant]="highlightedIndex() >= 0 ? uid + '-option-' + highlightedIndex() : null"
+    (input)="onInput($event)"
+    (focus)="onFocus()"
+    (blur)="onBlur()"
+    (keydown)="onKeydown($event)" />
+
+  @if (isOpen()) {
+    <div
+      class="tn-autocomplete__dropdown"
+      role="listbox"
+      [attr.id]="uid + '-dropdown'">
+
+      @if (hasResults()) {
+        @for (option of filteredOptions(); track $index) {
+          <div
+            class="tn-autocomplete__option"
+            role="option"
+            tabindex="-1"
+            [class.highlighted]="highlightedIndex() === $index"
+            [attr.id]="uid + '-option-' + $index"
+            [attr.aria-selected]="highlightedIndex() === $index"
+            (mousedown)="$event.preventDefault()"
+            (click)="onOptionClick(option)"
+            (keydown.enter)="onOptionClick(option)">
+            {{ displayWith()(option) }}
+          </div>
+        }
+      } @else {
+        <div class="tn-autocomplete__no-results">
+          {{ noResultsText() }}
+        </div>
+      }
+    </div>
+  }
+</div>
