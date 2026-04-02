@@ -265,7 +265,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       '.tn-autocomplete__dropdown'
     );
     const options = dropdown?.querySelectorAll('.tn-autocomplete__option');
-    if (options?.[idx]) {
+    if (options?.[idx]?.scrollIntoView) {
       options[idx].scrollIntoView({ block: 'nearest' });
     }
   }
