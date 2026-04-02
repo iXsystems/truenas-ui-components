@@ -10,6 +10,7 @@
       [required]="required()"
       [indeterminate]="indeterminate()"
       [attr.data-testid]="testId()"
+      [attr.aria-label]="hasProjectedLabel() ? label() : null"
       [attr.aria-describedby]="error() ? id + '-error' : null"
       [attr.aria-invalid]="error() ? 'true' : null"
       (change)="onCheckboxChange($event)"

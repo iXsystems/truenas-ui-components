@@ -57,6 +57,7 @@ export class TnCheckboxComponent implements AfterViewInit, OnDestroy, ControlVal
 
   // Internal state for CVA
   private internalChecked = signal<boolean>(false);
+  private cvaControlled = signal(false);
 
   // CVA disabled state management
   private formDisabled = signal<boolean>(false);
@@ -83,11 +84,14 @@ export class TnCheckboxComponent implements AfterViewInit, OnDestroy, ControlVal
     }
   }
 
-  // Computed for effective checked state (input or CVA-controlled)
-  effectiveChecked = computed(() => this.internalChecked() || this.checked());
+  // CVA takes precedence once a form control has written a value
+  effectiveChecked = computed(() =>
+    this.cvaControlled() ? this.internalChecked() : this.checked()
+  );
 
   // ControlValueAccessor implementation
   writeValue(value: boolean): void {
+    this.cvaControlled.set(true);
     this.internalChecked.set(value !== null && value !== undefined ? value : false);
   }
 
