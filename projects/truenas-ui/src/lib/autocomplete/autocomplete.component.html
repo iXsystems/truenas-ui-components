@@ -30,11 +30,13 @@
           <div
             class="tn-autocomplete__option"
             role="option"
+            tabindex="-1"
             [class.highlighted]="highlightedIndex() === $index"
             [attr.id]="'tn-autocomplete-option-' + $index"
             [attr.aria-selected]="highlightedIndex() === $index"
             (mousedown)="$event.preventDefault()"
-            (click)="onOptionClick(option)">
+            (click)="onOptionClick(option)"
+            (keydown.enter)="onOptionClick(option)">
             {{ displayWith()(option) }}
           </div>
         }
