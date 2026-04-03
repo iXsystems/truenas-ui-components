@@ -55,7 +55,7 @@ export default meta;
 type Story = StoryObj<TnDrawerComponent>;
 
 const navTemplate = `
-  <div style="width: 240px; padding: 16px; color: var(--tn-fg1);">
+  <div style="padding: 16px; color: var(--tn-fg1);">
     <p style="font-weight: 600; margin-bottom: 12px;">Navigation</p>
     <tn-divider />
     <a style="display: flex; align-items: center; gap: 8px; padding: 8px 0; color: var(--tn-fg1); text-decoration: none; cursor: pointer;">
@@ -97,7 +97,7 @@ export const SideMode: Story = {
     },
     template: `
       <tn-drawer-container style="height: 400px; border: 1px solid var(--tn-lines);">
-        <tn-drawer [mode]="'side'" [(opened)]="opened" [position]="position">
+        <tn-drawer [mode]="'side'" [(opened)]="opened" [position]="position" width="240px">
           ${navTemplate}
         </tn-drawer>
         <tn-drawer-content>
@@ -128,7 +128,7 @@ export const OverMode: Story = {
     },
     template: `
       <tn-drawer-container style="height: 400px; border: 1px solid var(--tn-lines);">
-        <tn-drawer [mode]="'over'" [(opened)]="isOpen">
+        <tn-drawer [mode]="'over'" [(opened)]="isOpen" width="280px">
           ${navTemplate}
         </tn-drawer>
         <tn-drawer-content>
@@ -161,8 +161,8 @@ export const EndPosition: Story = {
             <tn-button label="Toggle Drawer" (onClick)="opened = !opened" />
           </div>
         </tn-drawer-content>
-        <tn-drawer [mode]="'side'" [position]="'end'" [(opened)]="opened">
-          <div style="width: 240px; padding: 16px; color: var(--tn-fg1);">
+        <tn-drawer [mode]="'side'" [position]="'end'" [(opened)]="opened" width="240px">
+          <div style="padding: 16px; color: var(--tn-fg1);">
             <p style="font-weight: 600; margin-bottom: 12px;">Details Panel</p>
             <tn-divider />
             <p style="font-size: 14px; color: var(--tn-fg2);">Additional content on the right side.</p>
@@ -192,7 +192,7 @@ export const Responsive: Story = {
         Current mode: <strong style="color: var(--tn-fg1);">{{ mode }}</strong>
       </div>
       <tn-drawer-container style="height: 360px;">
-        <tn-drawer [mode]="mode" [(opened)]="isOpen">
+        <tn-drawer [mode]="mode" [(opened)]="isOpen" width="240px">
           ${navTemplate}
         </tn-drawer>
         <tn-drawer-content>

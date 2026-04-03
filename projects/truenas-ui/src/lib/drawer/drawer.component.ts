@@ -7,6 +7,7 @@ import {
   model,
   output,
   signal,
+  afterNextRender,
 } from '@angular/core';
 
 export type TnDrawerMode = 'side' | 'over';
@@ -20,6 +21,12 @@ let nextId = 0;
   imports: [A11yModule],
   templateUrl: './drawer.component.html',
   styleUrl: './drawer.component.scss',
+  host: {
+    '[class.tn-drawer--open]': 'opened()',
+    '[class.tn-drawer--over]': 'mode() === "over"',
+    '[class.tn-drawer--initialized]': 'initialized()',
+    '[style.width]': 'mode() !== "over" && opened() ? width() : null',
+  },
 })
 export class TnDrawerComponent {
   /** Whether the drawer sits alongside content ('side') or overlays it ('over') */
@@ -31,6 +38,9 @@ export class TnDrawerComponent {
   /** Prevent closing via backdrop click or Escape */
   disableClose = input<boolean>(false);
 
+  /** Width of the drawer panel (must be a concrete CSS value for smooth transition) */
+  width = input<string>('256px');
+
   /** Which side the drawer appears on */
   position = input<TnDrawerPosition>('start');
 
@@ -38,7 +48,7 @@ export class TnDrawerComponent {
   ariaLabel = input<string | undefined>(undefined);
 
   /** Fires after the open transition completes */
-  openedEvent = output<void>();
+  openedComplete = output<void>();
 
   /** Fires after the close transition completes */
   closed = output<void>();
@@ -68,18 +78,20 @@ export class TnDrawerComponent {
   /** Whether to show the backdrop */
   protected showBackdrop = computed(() => this.mode() === 'over' && this.opened());
 
-  /** Previous focus element for restoration */
+  /** Previous focus element for restoration (only captured in over mode) */
   private previousFocus: HTMLElement | null = null;
 
   constructor() {
+    // Capture focus before opening in over mode for later restoration
     effect(() => {
       if (this.mode() === 'over' && this.opened()) {
         this.previousFocus = document.activeElement as HTMLElement;
       }
     });
 
-    // Delay initialization to prevent transition flash on first render
-    setTimeout(() => this.initialized.set(true), 0);
+    afterNextRender(() => {
+      this.initialized.set(true);
+    });
   }
 
   /** Open the drawer */
@@ -94,7 +106,6 @@ export class TnDrawerComponent {
       return Promise.resolve();
     }
     this.opened.set(false);
-    this.restoreFocus();
     return Promise.resolve();
   }
 
@@ -118,15 +129,16 @@ export class TnDrawerComponent {
     }
   }
 
-  /** Handle transition end — emit opened/closed after animation completes */
+  /** Handle transition end — emit events and restore focus after animation completes */
   protected onTransitionEnd(event: TransitionEvent): void {
     if (event.propertyName !== 'transform' || event.target !== event.currentTarget) {
       return;
     }
     if (this.opened()) {
-      this.openedEvent.emit();
+      this.openedComplete.emit();
     } else {
       this.closed.emit();
+      this.restoreFocus();
     }
   }
 

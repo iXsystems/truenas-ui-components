@@ -9,6 +9,7 @@
 <div
   tabindex="-1"
   [class]="drawerClasses()"
+  [style.width]="width()"
   [attr.role]="panelRole()"
   [attr.aria-modal]="mode() === 'over' && opened() ? 'true' : null"
   [attr.aria-hidden]="!opened() ? 'true' : null"

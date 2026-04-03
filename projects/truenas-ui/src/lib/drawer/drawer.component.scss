@@ -1,31 +1,46 @@
+// Host element controls flex sizing in the container
 :host {
   display: block;
   position: relative;
+  height: 100%;
+  flex-shrink: 0;
+  width: 0;
+  overflow: hidden;
+
+  // Transition width for smooth content reflow (side mode only)
+  &.tn-drawer--initialized:not(.tn-drawer--over) {
+    transition: width 0.3s ease;
+  }
+
+  // In over mode, host takes no space in the layout
+  &.tn-drawer--over {
+    width: 0 !important;
+    overflow: visible;
+  }
+
+  // When open in side mode, overflow visible so panel content shows
+  &.tn-drawer--open:not(.tn-drawer--over) {
+    overflow: visible;
+  }
 }
 
 .tn-drawer__panel {
   height: 100%;
   overflow-y: auto;
-  background-color: var(--tn-bg2, #1e1e1e);
+  background-color: var(--tn-bg2);
   z-index: 100;
 
-  // Only enable transitions after first render to prevent flash
   &.tn-drawer__panel--initialized {
     transition: transform 0.3s ease;
   }
 
-  // Side mode: in-flow, hidden via width collapse
+  // Side mode: slides in/out
   &:not(.tn-drawer__panel--over) {
     position: relative;
-    flex-shrink: 0;
     transform: translateX(-100%);
-    width: 0;
-    overflow: hidden;
 
     &.tn-drawer__panel--open {
       transform: translateX(0);
-      width: auto;
-      overflow-y: auto;
     }
 
     &.tn-drawer__panel--end {
@@ -73,6 +88,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  :host.tn-drawer--initialized {
+    transition: none;
+  }
+
   .tn-drawer__panel.tn-drawer__panel--initialized {
     transition: none;
   }
