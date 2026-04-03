@@ -1,11 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
 import { TnDividerComponent } from '../lib/divider/divider.component';
 import { TnDrawerContainerComponent } from '../lib/drawer/drawer-container.component';
 import { TnDrawerContentComponent } from '../lib/drawer/drawer-content.component';
 import { TnDrawerComponent } from '../lib/drawer/drawer.component';
-import { TnIconComponent } from '../lib/icon/icon.component';
 import { tnIconMarker } from '../lib/icon/icon-marker';
+import { TnIconComponent } from '../lib/icon/icon.component';
+
+const harnessDoc = loadHarnessDoc('drawer');
 
 const navIcons = {
   dashboard: tnIconMarker('view-dashboard', 'mdi'),
@@ -213,4 +216,23 @@ export const Responsive: Story = {
       imports: sharedImports,
     },
   }),
+};
+
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      story: { height: 'auto' },
+      canvas: {
+        hidden: true,
+        sourceState: 'none',
+      },
+      description: {
+        story: harnessDoc || '',
+      },
+    },
+    controls: { disable: true },
+    layout: 'fullscreen',
+  },
+  render: () => ({ template: '' }),
 };
