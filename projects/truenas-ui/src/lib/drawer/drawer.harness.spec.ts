@@ -50,19 +50,32 @@ describe('TnDrawerHarness', () => {
     loader = TestbedHarnessEnvironment.loader(fixture);
   });
 
+  afterEach(() => {
+    document.body.querySelectorAll('.tn-drawer__panel--over').forEach((el) => el.remove());
+    document.body.querySelectorAll('.tn-drawer__backdrop').forEach((el) => el.remove());
+  });
+
   it('should load harness', async () => {
     const drawer = await loader.getHarness(TnDrawerHarness);
     expect(drawer).toBeTruthy();
   });
 
   describe('isOpen', () => {
-    it('should return false when closed', async () => {
+    it('should return false when closed (side mode)', async () => {
       const drawer = await loader.getHarness(TnDrawerHarness);
       expect(await drawer.isOpen()).toBe(false);
     });
 
-    it('should return true when opened', async () => {
+    it('should return true when opened (side mode)', async () => {
       host.opened.set(true);
+      const drawer = await loader.getHarness(TnDrawerHarness);
+      expect(await drawer.isOpen()).toBe(true);
+    });
+
+    it('should return true when opened (over mode)', async () => {
+      host.mode.set('over');
+      host.opened.set(true);
+      fixture.detectChanges();
       const drawer = await loader.getHarness(TnDrawerHarness);
       expect(await drawer.isOpen()).toBe(true);
     });
@@ -77,6 +90,7 @@ describe('TnDrawerHarness', () => {
 
     it('should return false in over mode when closed', async () => {
       host.mode.set('over');
+      fixture.detectChanges();
       const drawer = await loader.getHarness(TnDrawerHarness);
       expect(await drawer.hasBackdrop()).toBe(false);
     });
@@ -84,6 +98,7 @@ describe('TnDrawerHarness', () => {
     it('should return true in over mode when open', async () => {
       host.mode.set('over');
       host.opened.set(true);
+      fixture.detectChanges();
       const drawer = await loader.getHarness(TnDrawerHarness);
       expect(await drawer.hasBackdrop()).toBe(true);
     });
@@ -93,9 +108,11 @@ describe('TnDrawerHarness', () => {
     it('should close the drawer on backdrop click', async () => {
       host.mode.set('over');
       host.opened.set(true);
+      fixture.detectChanges();
       const drawer = await loader.getHarness(TnDrawerHarness);
 
       await drawer.clickBackdrop();
+      fixture.detectChanges();
       expect(await drawer.isOpen()).toBe(false);
     });
 
@@ -103,18 +120,20 @@ describe('TnDrawerHarness', () => {
       host.mode.set('over');
       host.opened.set(true);
       host.disableClose.set(true);
+      fixture.detectChanges();
       const drawer = await loader.getHarness(TnDrawerHarness);
 
       await drawer.clickBackdrop();
+      fixture.detectChanges();
       expect(await drawer.isOpen()).toBe(true);
     });
 
-    it('should throw when no backdrop is present', async () => {
+    it('should throw when no visible backdrop', async () => {
       host.opened.set(true);
       const drawer = await loader.getHarness(TnDrawerHarness);
 
       await expect(drawer.clickBackdrop()).rejects.toThrow(
-        'No backdrop found'
+        'No visible backdrop found'
       );
     });
   });

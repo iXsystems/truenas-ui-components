@@ -38,14 +38,20 @@ describe('TnDrawerComponent', () => {
   let fixture: ComponentFixture<TestHostComponent>;
   let host: TestHostComponent;
 
+  // Side mode: panel is inline in the fixture
   const getPanel = (): HTMLElement =>
     fixture.nativeElement.querySelector('.tn-drawer__panel');
 
+  // Over mode: panel is portaled to document.body
+  const getOverPanel = (): HTMLElement | null =>
+    document.body.querySelector('.tn-drawer__panel--over');
+
   const getBackdrop = (): HTMLElement | null =>
-    fixture.nativeElement.querySelector('.tn-drawer__backdrop');
+    document.body.querySelector('.tn-drawer__backdrop');
 
   const pressEscape = () => {
-    getPanel().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    const panel = getOverPanel();
+    panel?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     fixture.detectChanges();
   };
 
@@ -59,6 +65,12 @@ describe('TnDrawerComponent', () => {
     fixture.detectChanges();
   });
 
+  afterEach(() => {
+    // Clean up portaled elements
+    document.body.querySelectorAll('.tn-drawer__panel--over').forEach((el) => el.remove());
+    document.body.querySelectorAll('.tn-drawer__backdrop').forEach((el) => el.remove());
+  });
+
   describe('basic rendering', () => {
     it('should render drawer panel', () => {
       expect(getPanel()).toBeTruthy();
@@ -70,6 +82,11 @@ describe('TnDrawerComponent', () => {
 
     it('should render main content', () => {
       expect(fixture.nativeElement.textContent).toContain('Main content');
+    });
+
+    it('should have static tn-drawer class on host', () => {
+      const drawerHost = fixture.nativeElement.querySelector('tn-drawer');
+      expect(drawerHost.classList.contains('tn-drawer')).toBe(true);
     });
   });
 
@@ -96,28 +113,28 @@ describe('TnDrawerComponent', () => {
   });
 
   describe('open/close/toggle methods', () => {
-    it('should open via open()', async () => {
-      await host.drawer().open();
+    it('should open via open()', () => {
+      host.drawer().open();
       fixture.detectChanges();
 
       expect(getPanel().classList.contains('tn-drawer__panel--open')).toBe(true);
     });
 
-    it('should close via close()', async () => {
-      await host.drawer().open();
+    it('should close via close()', () => {
+      host.drawer().open();
       fixture.detectChanges();
-      await host.drawer().close();
+      host.drawer().close();
       fixture.detectChanges();
 
       expect(getPanel().classList.contains('tn-drawer__panel--open')).toBe(false);
     });
 
-    it('should toggle via toggle()', async () => {
-      await host.drawer().toggle();
+    it('should toggle via toggle()', () => {
+      host.drawer().toggle();
       fixture.detectChanges();
       expect(getPanel().classList.contains('tn-drawer__panel--open')).toBe(true);
 
-      await host.drawer().toggle();
+      host.drawer().toggle();
       fixture.detectChanges();
       expect(getPanel().classList.contains('tn-drawer__panel--open')).toBe(false);
     });
@@ -149,22 +166,26 @@ describe('TnDrawerComponent', () => {
       fixture.detectChanges();
     });
 
+    it('should render backdrop', () => {
+      expect(getBackdrop()).toBeTruthy();
+    });
+
     it('should show backdrop when open', () => {
       host.opened.set(true);
       fixture.detectChanges();
 
-      expect(getBackdrop()).toBeTruthy();
+      expect(getBackdrop()?.classList.contains('tn-drawer__backdrop--visible')).toBe(true);
     });
 
-    it('should not show backdrop when closed', () => {
-      expect(getBackdrop()).toBeNull();
+    it('should hide backdrop when closed', () => {
+      expect(getBackdrop()?.classList.contains('tn-drawer__backdrop--visible')).toBe(false);
     });
 
     it('should have over class', () => {
       host.opened.set(true);
       fixture.detectChanges();
 
-      expect(getPanel().classList.contains('tn-drawer__panel--over')).toBe(true);
+      expect(getOverPanel()?.classList.contains('tn-drawer__panel--over')).toBe(true);
     });
 
     it('should close on backdrop click', () => {
@@ -174,7 +195,7 @@ describe('TnDrawerComponent', () => {
       getBackdrop()!.click();
       fixture.detectChanges();
 
-      expect(getPanel().classList.contains('tn-drawer__panel--open')).toBe(false);
+      expect(getOverPanel()?.classList.contains('tn-drawer__panel--open')).toBe(false);
     });
 
     it('should not close on backdrop click when disableClose is true', () => {
@@ -185,15 +206,16 @@ describe('TnDrawerComponent', () => {
       getBackdrop()!.click();
       fixture.detectChanges();
 
-      expect(getPanel().classList.contains('tn-drawer__panel--open')).toBe(true);
+      expect(getOverPanel()?.classList.contains('tn-drawer__panel--open')).toBe(true);
     });
 
     it('should have role="dialog" and aria-modal', () => {
       host.opened.set(true);
       fixture.detectChanges();
 
-      expect(getPanel().getAttribute('role')).toBe('dialog');
-      expect(getPanel().getAttribute('aria-modal')).toBe('true');
+      const panel = getOverPanel();
+      expect(panel?.getAttribute('role')).toBe('dialog');
+      expect(panel?.getAttribute('aria-modal')).toBe('true');
     });
 
     it('should close on Escape key', () => {
@@ -202,7 +224,7 @@ describe('TnDrawerComponent', () => {
 
       pressEscape();
 
-      expect(getPanel().classList.contains('tn-drawer__panel--open')).toBe(false);
+      expect(getOverPanel()?.classList.contains('tn-drawer__panel--open')).toBe(false);
     });
 
     it('should not close on Escape when disableClose is true', () => {
@@ -212,7 +234,7 @@ describe('TnDrawerComponent', () => {
 
       pressEscape();
 
-      expect(getPanel().classList.contains('tn-drawer__panel--open')).toBe(true);
+      expect(getOverPanel()?.classList.contains('tn-drawer__panel--open')).toBe(true);
     });
   });
 
@@ -247,22 +269,22 @@ describe('TnDrawerComponent', () => {
   });
 
   describe('disableClose', () => {
-    it('should prevent close() when disableClose is true', async () => {
+    it('should prevent close() when disableClose is true', () => {
       host.disableClose.set(true);
-      await host.drawer().open();
+      host.drawer().open();
       fixture.detectChanges();
 
-      await host.drawer().close();
+      host.drawer().close();
       fixture.detectChanges();
 
       expect(getPanel().classList.contains('tn-drawer__panel--open')).toBe(true);
     });
 
-    it('should allow close() when disableClose is false', async () => {
-      await host.drawer().open();
+    it('should allow close() when disableClose is false', () => {
+      host.drawer().open();
       fixture.detectChanges();
 
-      await host.drawer().close();
+      host.drawer().close();
       fixture.detectChanges();
 
       expect(getPanel().classList.contains('tn-drawer__panel--open')).toBe(false);

@@ -1,34 +1,39 @@
 import { A11yModule } from '@angular/cdk/a11y';
+import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
+import type { ElementRef, OnDestroy } from '@angular/core';
 import {
   Component,
   computed,
   effect,
+  inject,
   input,
   model,
   output,
   signal,
+  viewChild,
   afterNextRender,
 } from '@angular/core';
 
 export type TnDrawerMode = 'side' | 'over';
 export type TnDrawerPosition = 'start' | 'end';
 
-let nextId = 0;
-
 @Component({
   selector: 'tn-drawer',
   standalone: true,
-  imports: [A11yModule],
+  imports: [A11yModule, NgTemplateOutlet],
   templateUrl: './drawer.component.html',
   styleUrl: './drawer.component.scss',
   host: {
+    'class': 'tn-drawer',
     '[class.tn-drawer--open]': 'opened()',
     '[class.tn-drawer--over]': 'mode() === "over"',
     '[class.tn-drawer--initialized]': 'initialized()',
     '[style.width]': 'mode() !== "over" && opened() ? width() : null',
   },
 })
-export class TnDrawerComponent {
+export class TnDrawerComponent implements OnDestroy {
+  private readonly document = inject(DOCUMENT);
+
   /** Whether the drawer sits alongside content ('side') or overlays it ('over') */
   mode = input<TnDrawerMode>('side');
 
@@ -53,17 +58,20 @@ export class TnDrawerComponent {
   /** Fires after the close transition completes */
   closed = output<void>();
 
-  /** Unique instance ID for ARIA linkage */
-  protected readonly uid = `tn-drawer-${nextId++}`;
-
   /** Whether the component has rendered (prevents transition flash on load) */
   protected initialized = signal(false);
+
+  /** Reference to the overlay element (portaled to body in over mode) */
+  protected overlayRef = viewChild<ElementRef>('overlay');
 
   /** Focus trap should be active only in 'over' mode when open */
   protected trapFocus = computed(() => this.mode() === 'over' && this.opened());
 
   /** Role depends on mode: navigation for side, dialog for over */
   protected panelRole = computed(() => this.mode() === 'over' ? 'dialog' : 'navigation');
+
+  /** Whether to show the backdrop */
+  protected showBackdrop = computed(() => this.mode() === 'over');
 
   /** CSS classes for the drawer panel */
   protected drawerClasses = computed(() => {
@@ -75,9 +83,6 @@ export class TnDrawerComponent {
     return classes;
   });
 
-  /** Whether to show the backdrop */
-  protected showBackdrop = computed(() => this.mode() === 'over' && this.opened());
-
   /** Previous focus element for restoration (only captured in over mode) */
   private previousFocus: HTMLElement | null = null;
 
@@ -85,47 +90,62 @@ export class TnDrawerComponent {
     // Capture focus before opening in over mode for later restoration
     effect(() => {
       if (this.mode() === 'over' && this.opened()) {
-        this.previousFocus = document.activeElement as HTMLElement;
+        this.previousFocus = this.document.activeElement as HTMLElement;
       }
     });
 
+    // Portal overlay to document.body in over mode to avoid clipping
     afterNextRender(() => {
       this.initialized.set(true);
+      const overlay = this.overlayRef()?.nativeElement;
+      if (overlay) {
+        this.document.body.appendChild(overlay);
+      }
     });
   }
 
+  ngOnDestroy(): void {
+    this.overlayRef()?.nativeElement?.remove();
+  }
+
   /** Open the drawer */
-  open(): Promise<void> {
+  open(): void {
     this.opened.set(true);
-    return Promise.resolve();
   }
 
   /** Close the drawer */
-  close(): Promise<void> {
+  close(): void {
     if (this.disableClose()) {
-      return Promise.resolve();
+      return;
     }
     this.opened.set(false);
-    return Promise.resolve();
   }
 
   /** Toggle the drawer open/closed */
-  toggle(): Promise<void> {
-    return this.opened() ? this.close() : this.open();
+  toggle(): void {
+    if (this.opened()) {
+      this.close();
+    } else {
+      this.open();
+    }
   }
 
   /** Handle backdrop click */
   protected onBackdropClick(): void {
     if (!this.disableClose()) {
-      void this.close();
+      this.close();
     }
   }
 
-  /** Handle Escape key in over mode */
+  /**
+   * Handle Escape key in over mode.
+   * Side mode drawers are persistent navigation — Escape is not expected
+   * to dismiss them. The header toggle button is the intended control.
+   */
   protected onKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape' && this.mode() === 'over' && this.opened() && !this.disableClose()) {
       event.stopPropagation();
-      void this.close();
+      this.close();
     }
   }
 
