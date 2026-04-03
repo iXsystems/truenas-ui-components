@@ -1,0 +1,16 @@
+@if (showBackdrop()) {
+  <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+  <div
+    class="tn-drawer__backdrop"
+    aria-hidden="true"
+    (click)="onBackdropClick()"></div>
+}
+
+<div
+  role="navigation"
+  [class]="drawerClasses()"
+  [cdkTrapFocus]="trapFocus()"
+  [cdkTrapFocusAutoCapture]="trapFocus()"
+  (transitionend)="onTransitionEnd($event)">
+  <ng-content />
+</div>

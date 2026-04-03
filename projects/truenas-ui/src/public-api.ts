@@ -4,6 +4,10 @@
 
 export * from './lib/autocomplete/autocomplete.component';
 export * from './lib/autocomplete/autocomplete.harness';
+export * from './lib/drawer/drawer.component';
+export * from './lib/drawer/drawer-container.component';
+export * from './lib/drawer/drawer-content.component';
+export * from './lib/drawer/drawer.harness';
 export * from './lib/disk-icon/disk-icon.component';
 export * from './lib/banner/banner.component';
 export * from './lib/banner/banner.harness';

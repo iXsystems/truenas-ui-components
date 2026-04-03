@@ -1,0 +1,75 @@
+:host {
+  display: block;
+  position: relative;
+}
+
+.tn-drawer__panel {
+  height: 100%;
+  overflow-y: auto;
+  background-color: var(--tn-bg2, #1e1e1e);
+  transition: transform 0.3s ease;
+  z-index: 100;
+
+  // Side mode: in-flow, hidden via width collapse
+  &:not(.tn-drawer__panel--over) {
+    position: relative;
+    flex-shrink: 0;
+    transform: translateX(-100%);
+    width: 0;
+    overflow: hidden;
+
+    &.tn-drawer__panel--open {
+      transform: translateX(0);
+      width: auto;
+      overflow-y: auto;
+    }
+
+    &.tn-drawer__panel--end {
+      transform: translateX(100%);
+
+      &.tn-drawer__panel--open {
+        transform: translateX(0);
+      }
+    }
+  }
+
+  // Over mode: fixed overlay
+  &.tn-drawer__panel--over {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    z-index: 1001;
+
+    &.tn-drawer__panel--open {
+      transform: translateX(0);
+    }
+
+    &.tn-drawer__panel--end {
+      left: auto;
+      right: 0;
+      transform: translateX(100%);
+
+      &.tn-drawer__panel--open {
+        transform: translateX(0);
+      }
+    }
+  }
+}
+
+.tn-drawer__backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tn-drawer__panel {
+    transition: none;
+  }
+}
