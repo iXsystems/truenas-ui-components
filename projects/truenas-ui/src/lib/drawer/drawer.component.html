@@ -1,0 +1,45 @@
+<!-- Capture projected content into a reusable template -->
+<ng-template #drawerContent>
+  <ng-content />
+</ng-template>
+
+<!-- Side mode: panel renders inline -->
+@if (mode() !== 'over') {
+  <div
+    tabindex="-1"
+    [class]="drawerClasses()"
+    [style.width]="width()"
+    [attr.role]="panelRole()"
+    [attr.aria-hidden]="!opened() ? 'true' : null"
+    [attr.aria-label]="ariaLabel()"
+    (transitionend)="onTransitionEnd($event)">
+    <ng-container *ngTemplateOutlet="drawerContent" />
+  </div>
+}
+
+<!-- Over mode: portaled to document.body to avoid clipping -->
+<div #overlay>
+  @if (mode() === 'over') {
+     
+    <div
+      class="tn-drawer__backdrop"
+      aria-hidden="true"
+      [class.tn-drawer__backdrop--visible]="opened()"
+      (click)="onBackdropClick()"></div>
+
+    <div
+      tabindex="-1"
+      [class]="drawerClasses()"
+      [style.width]="width()"
+      [attr.role]="panelRole()"
+      [attr.aria-modal]="opened() ? 'true' : null"
+      [attr.aria-hidden]="!opened() ? 'true' : null"
+      [attr.aria-label]="ariaLabel()"
+      [cdkTrapFocus]="trapFocus()"
+      [cdkTrapFocusAutoCapture]="trapFocus()"
+      (keydown)="onKeydown($event)"
+      (transitionend)="onTransitionEnd($event)">
+      <ng-container *ngTemplateOutlet="drawerContent" />
+    </div>
+  }
+</div>

@@ -1,0 +1,13 @@
+:host {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  transition: flex 0.3s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host {
+    transition: none;
+  }
+}
