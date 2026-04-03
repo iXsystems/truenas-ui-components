@@ -12,6 +12,8 @@ import {
 export type TnDrawerMode = 'side' | 'over';
 export type TnDrawerPosition = 'start' | 'end';
 
+let nextId = 0;
+
 @Component({
   selector: 'tn-drawer',
   standalone: true,
@@ -26,20 +28,32 @@ export class TnDrawerComponent {
   /** Whether the drawer is open. Two-way bindable via [(opened)] */
   opened = model<boolean>(false);
 
-  /** Prevent closing via backdrop click (useful for persistent side mode) */
+  /** Prevent closing via backdrop click or Escape */
   disableClose = input<boolean>(false);
 
   /** Which side the drawer appears on */
   position = input<TnDrawerPosition>('start');
 
-  /** Fires when the close transition begins */
-  closedStart = output<void>();
+  /** Accessible label for the drawer panel */
+  ariaLabel = input<string | undefined>(undefined);
 
-  /** Whether the drawer is currently animating */
-  private animating = signal(false);
+  /** Fires after the open transition completes */
+  openedEvent = output<void>();
+
+  /** Fires after the close transition completes */
+  closed = output<void>();
+
+  /** Unique instance ID for ARIA linkage */
+  protected readonly uid = `tn-drawer-${nextId++}`;
+
+  /** Whether the component has rendered (prevents transition flash on load) */
+  protected initialized = signal(false);
 
   /** Focus trap should be active only in 'over' mode when open */
   protected trapFocus = computed(() => this.mode() === 'over' && this.opened());
+
+  /** Role depends on mode: navigation for side, dialog for over */
+  protected panelRole = computed(() => this.mode() === 'over' ? 'dialog' : 'navigation');
 
   /** CSS classes for the drawer panel */
   protected drawerClasses = computed(() => {
@@ -47,6 +61,7 @@ export class TnDrawerComponent {
     if (this.opened()) {classes.push('tn-drawer__panel--open');}
     if (this.position() === 'end') {classes.push('tn-drawer__panel--end');}
     if (this.mode() === 'over') {classes.push('tn-drawer__panel--over');}
+    if (this.initialized()) {classes.push('tn-drawer__panel--initialized');}
     return classes;
   });
 
@@ -62,6 +77,9 @@ export class TnDrawerComponent {
         this.previousFocus = document.activeElement as HTMLElement;
       }
     });
+
+    // Delay initialization to prevent transition flash on first render
+    setTimeout(() => this.initialized.set(true), 0);
   }
 
   /** Open the drawer */
@@ -75,7 +93,6 @@ export class TnDrawerComponent {
     if (this.disableClose()) {
       return Promise.resolve();
     }
-    this.closedStart.emit();
     this.opened.set(false);
     this.restoreFocus();
     return Promise.resolve();
@@ -93,10 +110,23 @@ export class TnDrawerComponent {
     }
   }
 
-  /** Handle transition end for animation tracking */
+  /** Handle Escape key in over mode */
+  protected onKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape' && this.mode() === 'over' && this.opened() && !this.disableClose()) {
+      event.stopPropagation();
+      void this.close();
+    }
+  }
+
+  /** Handle transition end — emit opened/closed after animation completes */
   protected onTransitionEnd(event: TransitionEvent): void {
-    if (event.propertyName === 'transform') {
-      this.animating.set(false);
+    if (event.propertyName !== 'transform' || event.target !== event.currentTarget) {
+      return;
+    }
+    if (this.opened()) {
+      this.openedEvent.emit();
+    } else {
+      this.closed.emit();
     }
   }
 

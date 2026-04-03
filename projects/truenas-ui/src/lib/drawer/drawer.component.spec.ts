@@ -44,6 +44,11 @@ describe('TnDrawerComponent', () => {
   const getBackdrop = (): HTMLElement | null =>
     fixture.nativeElement.querySelector('.tn-drawer__backdrop');
 
+  const pressEscape = () => {
+    getPanel().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+  };
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TestHostComponent],
@@ -132,6 +137,10 @@ describe('TnDrawerComponent', () => {
 
       expect(getPanel().classList.contains('tn-drawer__panel--over')).toBe(false);
     });
+
+    it('should have role="navigation"', () => {
+      expect(getPanel().getAttribute('role')).toBe('navigation');
+    });
   });
 
   describe('mode: over', () => {
@@ -178,6 +187,46 @@ describe('TnDrawerComponent', () => {
 
       expect(getPanel().classList.contains('tn-drawer__panel--open')).toBe(true);
     });
+
+    it('should have role="dialog" and aria-modal', () => {
+      host.opened.set(true);
+      fixture.detectChanges();
+
+      expect(getPanel().getAttribute('role')).toBe('dialog');
+      expect(getPanel().getAttribute('aria-modal')).toBe('true');
+    });
+
+    it('should close on Escape key', () => {
+      host.opened.set(true);
+      fixture.detectChanges();
+
+      pressEscape();
+
+      expect(getPanel().classList.contains('tn-drawer__panel--open')).toBe(false);
+    });
+
+    it('should not close on Escape when disableClose is true', () => {
+      host.disableClose.set(true);
+      host.opened.set(true);
+      fixture.detectChanges();
+
+      pressEscape();
+
+      expect(getPanel().classList.contains('tn-drawer__panel--open')).toBe(true);
+    });
+  });
+
+  describe('aria-hidden', () => {
+    it('should have aria-hidden="true" when closed', () => {
+      expect(getPanel().getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('should not have aria-hidden when open', () => {
+      host.opened.set(true);
+      fixture.detectChanges();
+
+      expect(getPanel().getAttribute('aria-hidden')).toBeNull();
+    });
   });
 
   describe('position', () => {
@@ -217,33 +266,6 @@ describe('TnDrawerComponent', () => {
       fixture.detectChanges();
 
       expect(getPanel().classList.contains('tn-drawer__panel--open')).toBe(false);
-    });
-  });
-
-  describe('closedStart output', () => {
-    it('should emit closedStart when closing', async () => {
-      const closedStartSpy = jest.fn();
-      host.drawer().closedStart.subscribe(closedStartSpy);
-
-      await host.drawer().open();
-      fixture.detectChanges();
-      await host.drawer().close();
-      fixture.detectChanges();
-
-      expect(closedStartSpy).toHaveBeenCalled();
-    });
-
-    it('should not emit closedStart when disableClose prevents close', async () => {
-      host.disableClose.set(true);
-      const closedStartSpy = jest.fn();
-      host.drawer().closedStart.subscribe(closedStartSpy);
-
-      await host.drawer().open();
-      fixture.detectChanges();
-      await host.drawer().close();
-      fixture.detectChanges();
-
-      expect(closedStartSpy).not.toHaveBeenCalled();
     });
   });
 });

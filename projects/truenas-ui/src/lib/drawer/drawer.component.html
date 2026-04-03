@@ -7,10 +7,16 @@
 }
 
 <div
-  role="navigation"
+  tabindex="-1"
   [class]="drawerClasses()"
+  [attr.role]="panelRole()"
+  [attr.aria-modal]="mode() === 'over' && opened() ? 'true' : null"
+  [attr.aria-hidden]="!opened() ? 'true' : null"
+  [attr.aria-label]="ariaLabel()"
+  [attr.aria-labelledby]="!ariaLabel() ? uid + '-title' : null"
   [cdkTrapFocus]="trapFocus()"
   [cdkTrapFocusAutoCapture]="trapFocus()"
+  (keydown)="onKeydown($event)"
   (transitionend)="onTransitionEnd($event)">
   <ng-content />
 </div>
