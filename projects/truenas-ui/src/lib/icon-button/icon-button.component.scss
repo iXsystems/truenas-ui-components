@@ -24,6 +24,15 @@
     background-color: var(--tn-bg3, #e5e7eb);
   }
 
+  // When an explicit color is set, don't override it on hover
+  &.tn-icon-button--custom-color {
+    &:hover:not(:disabled),
+    &:active:not(:disabled) {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: inherit;
+    }
+  }
+
   &:focus-visible {
     outline: 2px solid var(--tn-primary, #2563eb);
     outline-offset: 2px;
