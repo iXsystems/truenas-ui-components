@@ -34,6 +34,7 @@ export * from './lib/tab-panel/tab-panel.harness';
 export * from './lib/menu';
 export * from './lib/keyboard-shortcut/keyboard-shortcut.component';
 export * from './lib/form-field/form-field.component';
+export * from './lib/form-field/form-field.harness';
 export * from './lib/select/select.component';
 export * from './lib/select/select.harness';
 export * from './lib/icon/icon.component';

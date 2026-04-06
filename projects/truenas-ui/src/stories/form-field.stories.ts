@@ -1,12 +1,15 @@
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnCheckboxComponent } from '../lib/checkbox/checkbox.component';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
 import { TnInputComponent } from '../lib/input/input.component';
 import { TnRadioComponent } from '../lib/radio/radio.component';
 import type { TnSelectOption } from '../lib/select/select.component';
 import { TnSelectComponent } from '../lib/select/select.component';
+
+const harnessDoc = loadHarnessDoc('form-field');
 
 const meta: Meta<TnFormFieldComponent> = {
   title: 'Components/Form Field',
@@ -383,4 +386,22 @@ export const MultipleFields: Story = {
     },
   }),
   args: {},
+};
+
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      canvas: {
+        hidden: true,
+        sourceState: 'none'
+      },
+      description: {
+        story: harnessDoc || ''
+      }
+    },
+    controls: { disable: true },
+    layout: 'fullscreen'
+  },
+  render: () => ({ template: '' })
 };
