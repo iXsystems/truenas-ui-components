@@ -57,8 +57,13 @@ export class TnFormFieldComponent implements AfterContentInit {
     if (errors['min']) {return `Minimum value is ${errors['min'].min}`;}
     if (errors['max']) {return `Maximum value is ${errors['max'].max}`;}
 
-    // Return custom error message if available
-    return Object.keys(errors)[0] || 'Invalid input';
+    // Return custom error message if the value is a string, otherwise use the key
+    const firstKey = Object.keys(errors)[0];
+    if (firstKey) {
+      const value = errors[firstKey];
+      return typeof value === 'string' ? value : firstKey;
+    }
+    return 'Invalid input';
   }
 
   showError = computed(() => {

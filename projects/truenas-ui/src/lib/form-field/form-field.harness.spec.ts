@@ -3,6 +3,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
+import type { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TnFormFieldComponent } from './form-field.component';
 import { TnFormFieldHarness } from './form-field.harness';
@@ -25,12 +26,27 @@ import { TnInputComponent } from '../input/input.component';
     <tn-form-field label="Optional" testId="optional-field">
       <tn-input [formControl]="optionalControl" />
     </tn-form-field>
+
+    <tn-form-field label="Custom" testId="custom-field">
+      <tn-input [formControl]="customControl" />
+    </tn-form-field>
   `
 })
 class TestHostComponent {
   nameControl = new FormControl('', Validators.required);
   emailControl = new FormControl('', [Validators.required, Validators.email]);
   optionalControl = new FormControl('');
+  customControl = new FormControl('', customValidator());
+}
+
+function customValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value as string;
+    if (value && !/\d/.test(value)) {
+      return { customPolicy: 'Must contain at least one number' };
+    }
+    return null;
+  };
 }
 
 describe('TnFormFieldHarness', () => {
@@ -77,7 +93,7 @@ describe('TnFormFieldHarness', () => {
 
     it('should find all form fields', async () => {
       const fields = await loader.getAllHarnesses(TnFormFieldHarness);
-      expect(fields.length).toBe(3);
+      expect(fields.length).toBe(4);
     });
   });
 
@@ -198,6 +214,20 @@ describe('TnFormFieldHarness', () => {
         TnFormFieldHarness.with({ label: 'Name' })
       );
       expect(await field.hasError()).toBe(false);
+    });
+
+    it('should display custom validator error message string', async () => {
+      const host = fixture.componentInstance;
+      host.customControl.setValue('abc');
+      host.customControl.markAsTouched();
+      host.customControl.updateValueAndValidity();
+      fixture.detectChanges();
+
+      const field = await loader.getHarness(
+        TnFormFieldHarness.with({ label: 'Custom' })
+      );
+      expect(await field.hasError()).toBe(true);
+      expect(await field.getErrorMessage()).toBe('Must contain at least one number');
     });
   });
 
