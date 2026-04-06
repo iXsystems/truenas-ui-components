@@ -16,7 +16,7 @@
     <!-- Display Text -->
     <span
       class="tn-select-text"
-      [class.placeholder]="selectedValue() === null || selectedValue() === undefined">
+      [class.placeholder]="multiple() ? selectedValues().length === 0 : (selectedValue() === null || selectedValue() === undefined)">
       {{ getDisplayText() }}
     </span>
 
@@ -33,6 +33,7 @@
     <div
       class="tn-select-dropdown"
       role="listbox"
+      [attr.aria-multiselectable]="multiple()"
       [attr.id]="'tn-select-dropdown-' + testId()">
 
       <!-- Options List -->
@@ -43,15 +44,22 @@
             class="tn-select-option"
             role="option"
             [attr.tabindex]="option.disabled ? null : 0"
-            [class.selected]="isSelected()(option)"
+            [class.selected]="isOptionSelected(option)"
             [class.disabled]="option.disabled"
-            [attr.aria-selected]="isSelected()(option)"
+            [attr.aria-selected]="isOptionSelected(option)"
             [attr.aria-disabled]="option.disabled"
             (mousedown)="$event.preventDefault()"
             (click)="onOptionClick(option)"
             (keydown.enter)="onOptionClick(option)"
             (keydown.space)="onOptionClick(option)">
-
+            @if (multiple()) {
+              <tn-checkbox
+                class="tn-select-check"
+                label=""
+                [checked]="isOptionSelected(option)"
+                [disabled]="true"
+                [hideLabel]="true" />
+            }
             {{ option.label }}
           </div>
         }
@@ -66,31 +74,41 @@
             </div>
           }
 
-          <!-- Group Label -->
-          <div
-            class="tn-select-group-label"
-            [class.disabled]="group.disabled">
-            {{ group.label }}
-          </div>
-
-          <!-- Group Options -->
-          @for (option of group.options; track $index) {
+          <div role="group" [attr.aria-labelledby]="'tn-select-group-' + testId() + '-' + $index">
+            <!-- Group Label -->
             <div
-              class="tn-select-option"
-              role="option"
-              [attr.tabindex]="option.disabled || group.disabled ? null : 0"
-              [class.selected]="isSelected()(option)"
-              [class.disabled]="option.disabled || group.disabled"
-              [attr.aria-selected]="isSelected()(option)"
-              [attr.aria-disabled]="option.disabled || group.disabled"
-              (mousedown)="$event.preventDefault()"
-              (click)="onOptionClick(option)"
-              (keydown.enter)="onOptionClick(option)"
-              (keydown.space)="onOptionClick(option)">
-
-              {{ option.label }}
+              class="tn-select-group-label"
+              [attr.id]="'tn-select-group-' + testId() + '-' + $index"
+              [class.disabled]="group.disabled">
+              {{ group.label }}
             </div>
-          }
+
+            <!-- Group Options -->
+            @for (option of group.options; track $index) {
+              <div
+                class="tn-select-option"
+                role="option"
+                [attr.tabindex]="option.disabled || group.disabled ? null : 0"
+                [class.selected]="isOptionSelected(option)"
+                [class.disabled]="option.disabled || group.disabled"
+                [attr.aria-selected]="isOptionSelected(option)"
+                [attr.aria-disabled]="option.disabled || group.disabled"
+                (mousedown)="$event.preventDefault()"
+                (click)="onOptionClick(option, !!group.disabled)"
+                (keydown.enter)="onOptionClick(option, !!group.disabled)"
+                (keydown.space)="onOptionClick(option, !!group.disabled)">
+                @if (multiple()) {
+                  <tn-checkbox
+                    class="tn-select-check"
+                    label=""
+                    [checked]="isOptionSelected(option)"
+                    [disabled]="true"
+                    [hideLabel]="true" />
+                }
+                {{ option.label }}
+              </div>
+            }
+          </div>
         }
 
         <!-- No Options Message -->
