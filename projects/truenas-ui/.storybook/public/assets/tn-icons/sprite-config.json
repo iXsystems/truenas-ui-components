@@ -1,7 +1,11 @@
 {
-  "iconUrl": "assets/tn-icons/sprite.svg?v=ff1bf3961a",
+  "iconUrl": "assets/tn-icons/sprite.svg?v=0c28e4251c",
   "icons": [
     "dataset",
+    "mat-check_circle",
+    "mat-error",
+    "mat-info",
+    "mat-warning",
     "mdi-alert",
     "mdi-alert-circle",
     "mdi-alert-circle-outline",
