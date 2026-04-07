@@ -191,6 +191,62 @@ export const MixedOptionsAndGroups: Story = {
   },
 };
 
+export const MultipleSelection: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      logSelection: (_value: unknown) => {
+      }
+    },
+    template: `
+      <tn-form-field
+        label="Select fruits"
+        hint="You can select multiple options">
+        <tn-select
+          placeholder="Choose fruits"
+          [options]="options"
+          [multiple]="true"
+          (multiSelectionChange)="logSelection($event)">
+        </tn-select>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  args: {
+    options: fruitOptions,
+  },
+};
+
+export const MultipleWithGroups: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      logSelection: (_value: unknown) => {
+      }
+    },
+    template: `
+      <tn-form-field
+        label="Select animals"
+        hint="Choose one or more from each category">
+        <tn-select
+          placeholder="Choose animals"
+          [optionGroups]="optionGroups"
+          [multiple]="true"
+          (multiSelectionChange)="logSelection($event)">
+        </tn-select>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  args: {
+    optionGroups: animalGroups,
+  },
+};
+
 export const ComponentHarness: Story = {
   tags: ['!dev'],
   parameters: {
