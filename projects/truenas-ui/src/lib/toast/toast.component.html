@@ -1,0 +1,20 @@
+<div
+  class="tn-toast"
+  role="alert"
+  aria-live="polite"
+  [class.tn-toast--visible]="visible()"
+  [class.tn-toast--info]="type() === 'info'"
+  [class.tn-toast--success]="type() === 'success'"
+  [class.tn-toast--warning]="type() === 'warning'"
+  [class.tn-toast--error]="type() === 'error'">
+  <tn-icon class="tn-toast__icon" size="sm" [name]="icon()" />
+  <span class="tn-toast__message">{{ message() }}</span>
+  @if (action()) {
+    <button
+      class="tn-toast__action"
+      type="button"
+      (click)="onAction()">
+      {{ action() }}
+    </button>
+  }
+</div>
