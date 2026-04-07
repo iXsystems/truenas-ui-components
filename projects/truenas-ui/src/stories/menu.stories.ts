@@ -1,9 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, userEvent, within } from 'storybook/test';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
 import { TnMenuTriggerDirective } from '../lib/menu/menu-trigger.directive';
 import type { TnMenuItem } from '../lib/menu/menu.component';
 import { TnMenuComponent } from '../lib/menu/menu.component';
+
+const harnessDoc = loadHarnessDoc('menu');
 
 const meta: Meta<TnMenuComponent> = {
   title: 'Components/Menu',
@@ -383,5 +386,23 @@ export const ContextMenu: Story = {
       },
     },
   },
+};
+
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      canvas: {
+        hidden: true,
+        sourceState: 'none'
+      },
+      description: {
+        story: harnessDoc || ''
+      }
+    },
+    controls: { disable: true },
+    layout: 'fullscreen'
+  },
+  render: () => ({ template: '' })
 };
 
