@@ -1,8 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
 import { TnSlideToggleComponent } from '../lib/slide-toggle/slide-toggle.component';
+
+const harnessDoc = loadHarnessDoc('slide-toggle');
 
 const meta: Meta<TnSlideToggleComponent> = {
   title: 'Components/Slide Toggle',
@@ -362,4 +365,22 @@ export const ColorComparison: Story = {
     `,
   }),
   args: {},
+};
+
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      canvas: {
+        hidden: true,
+        sourceState: 'none'
+      },
+      description: {
+        story: harnessDoc || ''
+      }
+    },
+    controls: { disable: true },
+    layout: 'fullscreen'
+  },
+  render: () => ({ template: '' })
 };
