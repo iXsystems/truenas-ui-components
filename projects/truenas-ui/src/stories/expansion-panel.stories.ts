@@ -1,6 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnCardComponent } from '../lib/card/card.component';
 import { TnExpansionPanelComponent } from '../lib/expansion-panel/expansion-panel.component';
+
+const harnessDoc = loadHarnessDoc('expansion-panel');
 
 const meta: Meta<TnExpansionPanelComponent> = {
   title: 'Components/Expansion Panel',
@@ -181,4 +184,22 @@ export const Embedded: Story = {
     padding: 'medium',
     titleStyle: 'link',
   },
+};
+
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      canvas: {
+        hidden: true,
+        sourceState: 'none'
+      },
+      description: {
+        story: harnessDoc || ''
+      }
+    },
+    controls: { disable: true },
+    layout: 'fullscreen'
+  },
+  render: () => ({ template: '' })
 };

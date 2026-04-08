@@ -1,5 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnRadioComponent } from '../lib/radio/radio.component';
+
+const harnessDoc = loadHarnessDoc('radio');
 
 const meta: Meta<TnRadioComponent> = {
   title: 'Components/Radio',
@@ -106,27 +109,27 @@ export const RadioGroup: Story = {
     template: `
       <div style="display: flex; flex-direction: column; gap: 1rem;">
         <h3>Select your favorite color:</h3>
-        <tn-radio 
-          label="Red" 
-          value="red" 
+        <tn-radio
+          label="Red"
+          value="red"
           name="color"
           [disabled]="false">
         </tn-radio>
-        <tn-radio 
-          label="Blue" 
-          value="blue" 
+        <tn-radio
+          label="Blue"
+          value="blue"
           name="color"
           [disabled]="false">
         </tn-radio>
-        <tn-radio 
-          label="Green" 
-          value="green" 
+        <tn-radio
+          label="Green"
+          value="green"
           name="color"
           [disabled]="false">
         </tn-radio>
-        <tn-radio 
-          label="Yellow (Disabled)" 
-          value="yellow" 
+        <tn-radio
+          label="Yellow (Disabled)"
+          value="yellow"
           name="color"
           [disabled]="true">
         </tn-radio>
@@ -134,5 +137,23 @@ export const RadioGroup: Story = {
     `,
   }),
   args: {},
+};
+
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      canvas: {
+        hidden: true,
+        sourceState: 'none'
+      },
+      description: {
+        story: harnessDoc || ''
+      }
+    },
+    controls: { disable: true },
+    layout: 'fullscreen'
+  },
+  render: () => ({ template: '' })
 };
 

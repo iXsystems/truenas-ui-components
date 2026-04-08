@@ -1,9 +1,12 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonToggleGroupComponent } from '../lib/button-toggle/button-toggle-group.component';
 import { TnButtonToggleComponent } from '../lib/button-toggle/button-toggle.component';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
+
+const harnessDoc = loadHarnessDoc('button-toggle');
 
 @Component({
   selector: 'button-toggle-demo',
@@ -133,4 +136,22 @@ export const Playground: Story = {
     disabled: false,
     ariaLabel: 'Toggle button'
   }
+};
+
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      canvas: {
+        hidden: true,
+        sourceState: 'none'
+      },
+      description: {
+        story: harnessDoc || ''
+      }
+    },
+    controls: { disable: true },
+    layout: 'fullscreen'
+  },
+  render: () => ({ template: '' })
 };
