@@ -94,7 +94,7 @@ export class TnToastService {
 
     const duration = resolvedConfig.duration ?? 4000;
     const type = resolvedConfig.type ?? TnToastType.Info;
-    const position = resolvedConfig.position ?? TnToastPosition.Bottom;
+    const position = resolvedConfig.position ?? TnToastPosition.Top;
 
     // Create ref
     const ref = new TnToastRef();
