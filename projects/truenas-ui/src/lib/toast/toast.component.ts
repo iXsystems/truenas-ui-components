@@ -28,7 +28,7 @@ export class TnToastComponent {
   message = signal('');
   action = signal<string | null>(null);
   type = signal<TnToastType>(TnToastType.Info);
-  position = signal<TnToastPosition>(TnToastPosition.Bottom);
+  position = signal<TnToastPosition>(TnToastPosition.Top);
   visible = signal(false);
 
   icon = computed(() => TOAST_ICONS[this.type()]);

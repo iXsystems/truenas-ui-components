@@ -146,11 +146,11 @@ describe('TnToastService', () => {
     expect(toast?.classList.contains('tn-toast--info')).toBe(true);
   });
 
-  it('should default to bottom position', () => {
+  it('should default to top position', () => {
     service.open('Test');
     detectChanges();
     const host = document.querySelector('tn-toast');
-    expect(host?.classList.contains('tn-toast--bottom')).toBe(true);
+    expect(host?.classList.contains('tn-toast--top')).toBe(true);
   });
 
   it('should support top position', () => {

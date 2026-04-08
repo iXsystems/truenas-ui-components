@@ -32,11 +32,10 @@ class ToastDemoComponent {
 class ToastPositionDemoComponent {
   toast = inject(TnToastService);
 
-  showBottom() { this.toast.open('This appears at the bottom'); }
-  showTop() { this.toast.open('This appears at the top', { position: TnToastPosition.Top }); }
+  showTop() { this.toast.open('This appears at the top'); }
+  showBottom() { this.toast.open('This appears at the bottom', { position: TnToastPosition.Bottom }); }
   showTopAction() {
     this.toast.open('Connection lost', 'Reconnect', {
-      position: TnToastPosition.Top,
       type: TnToastType.Error,
       duration: 0,
     });
@@ -51,7 +50,7 @@ const meta: Meta<ToastDemoComponent> = {
     docs: {
       description: {
         component: `
-The Toast service provides lightweight, non-intrusive notifications that appear at the bottom of the viewport.
+The Toast service provides lightweight, non-intrusive notifications that appear at the top of the viewport.
 
 ## Features
 

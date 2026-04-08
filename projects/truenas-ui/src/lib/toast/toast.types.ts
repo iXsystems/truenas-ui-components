@@ -15,6 +15,6 @@ export interface TnToastConfig {
   duration?: number;
   /** Visual style of the toast. Default: TnToastType.Info. */
   type?: TnToastType;
-  /** Vertical position. Default: TnToastPosition.Bottom. */
+  /** Vertical position. Default: TnToastPosition.Top. */
   position?: TnToastPosition;
 }
