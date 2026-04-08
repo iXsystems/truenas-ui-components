@@ -25,6 +25,7 @@ export * from './lib/checkbox/checkbox.component';
 export * from './lib/checkbox/checkbox.harness';
 export * from './lib/radio/radio.component';
 export * from './lib/slide-toggle/slide-toggle.component';
+export * from './lib/slide-toggle/slide-toggle.harness';
 export * from './lib/tabs/tabs.component';
 export * from './lib/tabs/tabs.harness';
 export * from './lib/tab/tab.component';
