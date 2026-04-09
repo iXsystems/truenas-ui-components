@@ -1,6 +1,6 @@
 import type { BaseHarnessFilters } from '@angular/cdk/testing';
 import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
-import { formatDateParts, getInputValue, setInputValue } from './date-harness-helpers';
+import { formatDateParts, getInputValue, selectCalendarDate, setInputValue } from './date-harness-helpers';
 
 /**
  * Harness for interacting with `tn-date-range-input` in tests.
@@ -128,6 +128,32 @@ export class TnDateRangeInputHarness extends ComponentHarness {
   async isCalendarOpen(): Promise<boolean> {
     const overlay = await this.documentRootLocatorFactory().locatorForOptional('.tn-datepicker-overlay')();
     return overlay !== null;
+  }
+
+  /**
+   * Selects a date range via the calendar popup. Opens the calendar if not
+   * already open, navigates to each target month, and clicks the day cells.
+   *
+   * @param range An object with `start` and `end` dates.
+   *
+   * @example
+   * ```typescript
+   * const rangeInput = await loader.getHarness(TnDateRangeInputHarness);
+   * await rangeInput.selectRange({
+   *   start: new Date(2026, 0, 1),
+   *   end: new Date(2026, 0, 31),
+   * });
+   * expect(await rangeInput.getStartText()).toBe('01/01/2026');
+   * expect(await rangeInput.getEndText()).toBe('01/31/2026');
+   * ```
+   */
+  async selectRange(range: { start: Date; end: Date }): Promise<void> {
+    if (!(await this.isCalendarOpen())) {
+      await this.openCalendar();
+    }
+    const rootLocator = this.documentRootLocatorFactory();
+    await selectCalendarDate(rootLocator, range.start);
+    await selectCalendarDate(rootLocator, range.end);
   }
 }
 
