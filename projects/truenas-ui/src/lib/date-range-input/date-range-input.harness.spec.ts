@@ -93,4 +93,15 @@ describe('TnDateRangeInputHarness', () => {
     await harness.openCalendar();
     expect(await harness.isCalendarOpen()).toBe(true);
   });
+
+  it('should select a date range via the calendar popup', async () => {
+    const harness = await loader.getHarness(TnDateRangeInputHarness);
+    await harness.selectRange({
+      start: new Date(2026, 3, 1),
+      end: new Date(2026, 3, 20),
+    });
+
+    expect(await harness.getStartText()).toBe('04/01/2026');
+    expect(await harness.getEndText()).toBe('04/20/2026');
+  });
 });

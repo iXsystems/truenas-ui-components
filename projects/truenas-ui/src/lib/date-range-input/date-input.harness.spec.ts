@@ -81,4 +81,14 @@ describe('TnDateInputHarness', () => {
     await harness.openCalendar();
     expect(await harness.isCalendarOpen()).toBe(true);
   });
+
+  it('should select a date via the calendar popup', async () => {
+    const harness = await loader.getHarness(TnDateInputHarness);
+    await harness.selectDate(new Date(2026, 3, 15));
+
+    expect(component.control.value?.getFullYear()).toBe(2026);
+    expect(component.control.value?.getMonth()).toBe(3);
+    expect(component.control.value?.getDate()).toBe(15);
+    expect(await harness.getDisplayText()).toBe('04/15/2026');
+  });
 });
