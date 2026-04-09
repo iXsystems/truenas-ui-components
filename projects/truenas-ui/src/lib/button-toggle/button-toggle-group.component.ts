@@ -103,7 +103,7 @@ export class TnButtonToggleGroupComponent implements ControlValueAccessor {
 
   private handleSingleSelection(clickedToggle: TnButtonToggleComponent): void {
     // In radio mode, clicking the same toggle deselects it
-    if (this.selectedValue() === clickedToggle.value) {
+    if (this.selectedValue() === clickedToggle.value()) {
       this.selectedValue.set(null);
       clickedToggle._markForUncheck();
     } else {
@@ -115,7 +115,7 @@ export class TnButtonToggleGroupComponent implements ControlValueAccessor {
         }
       });
 
-      this.selectedValue.set(clickedToggle.value);
+      this.selectedValue.set(clickedToggle.value());
       clickedToggle._markForCheck();
     }
 
@@ -124,7 +124,7 @@ export class TnButtonToggleGroupComponent implements ControlValueAccessor {
 
   private handleMultipleSelection(clickedToggle: TnButtonToggleComponent): void {
     const currentValues = [...this.selectedValues()];
-    const index = currentValues.indexOf(clickedToggle.value);
+    const index = currentValues.indexOf(clickedToggle.value());
 
     if (index > -1) {
       // Remove from selection
@@ -132,7 +132,7 @@ export class TnButtonToggleGroupComponent implements ControlValueAccessor {
       clickedToggle._markForUncheck();
     } else {
       // Add to selection
-      currentValues.push(clickedToggle.value);
+      currentValues.push(clickedToggle.value());
       clickedToggle._markForCheck();
     }
 
@@ -145,7 +145,7 @@ export class TnButtonToggleGroupComponent implements ControlValueAccessor {
     const value = this.selectedValue();
 
     toggles.forEach(toggle => {
-      if (toggle.value === value) {
+      if (toggle.value() === value) {
         toggle._markForCheck();
       } else {
         toggle._markForUncheck();
@@ -158,7 +158,7 @@ export class TnButtonToggleGroupComponent implements ControlValueAccessor {
     const values = this.selectedValues();
 
     toggles.forEach(toggle => {
-      if (values.includes(toggle.value)) {
+      if (values.includes(toggle.value())) {
         toggle._markForCheck();
       } else {
         toggle._markForUncheck();
