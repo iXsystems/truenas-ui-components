@@ -1,7 +1,8 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Component } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TnButtonToggleGroupComponent } from './button-toggle-group.component';
 import { TnButtonToggleComponent } from './button-toggle.component';
 import { TnButtonToggleHarness, TnButtonToggleGroupHarness } from './button-toggle.harness';
@@ -172,5 +173,103 @@ describe('TnButtonToggleGroupHarness', () => {
       expect(checked).not.toBeNull();
       expect(await checked!.getLabelText()).toContain('Bold');
     });
+  });
+});
+
+// --- ControlValueAccessor integration tests ---
+
+@Component({
+  selector: 'tn-button-toggle-cva-test',
+  standalone: true,
+  imports: [TnButtonToggleComponent, TnButtonToggleGroupComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-button-toggle-group [formControl]="control">
+      <tn-button-toggle value="bold">Bold</tn-button-toggle>
+      <tn-button-toggle value="italic">Italic</tn-button-toggle>
+      <tn-button-toggle value="underline">Underline</tn-button-toggle>
+    </tn-button-toggle-group>
+
+    <tn-button-toggle-group [formControl]="multiControl" [multiple]="true">
+      <tn-button-toggle value="a">A</tn-button-toggle>
+      <tn-button-toggle value="b">B</tn-button-toggle>
+      <tn-button-toggle value="c">C</tn-button-toggle>
+    </tn-button-toggle-group>
+  `,
+})
+class ButtonToggleCvaTestComponent {
+  control = new FormControl<string | null>(null);
+  multiControl = new FormControl<string[]>([]);
+}
+
+describe('TnButtonToggleGroup — ControlValueAccessor', () => {
+  let fixture: ComponentFixture<ButtonToggleCvaTestComponent>;
+  let component: ButtonToggleCvaTestComponent;
+  let loader: HarnessLoader;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ButtonToggleCvaTestComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ButtonToggleCvaTestComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    loader = TestbedHarnessEnvironment.loader(fixture);
+  });
+
+  it('should propagate the primitive value to FormControl on click', async () => {
+    const bold = await loader.getHarness(TnButtonToggleHarness.with({ label: 'Bold' }));
+    await bold.check();
+    fixture.detectChanges();
+
+    expect(component.control.value).toBe('bold');
+  });
+
+  it('should update the checked toggle when FormControl value changes programmatically', async () => {
+    component.control.setValue('italic');
+    fixture.detectChanges();
+
+    const group = await loader.getHarness(TnButtonToggleGroupHarness);
+    const checked = await group.getCheckedToggle();
+    expect(checked).not.toBeNull();
+    expect(await checked!.getLabelText()).toContain('Italic');
+  });
+
+  it('should set FormControl to null when the selected toggle is deselected', async () => {
+    const bold = await loader.getHarness(TnButtonToggleHarness.with({ label: 'Bold' }));
+    await bold.check();
+    fixture.detectChanges();
+    expect(component.control.value).toBe('bold');
+
+    // Click again to deselect in radio mode
+    await bold.toggle();
+    fixture.detectChanges();
+    expect(component.control.value).toBeNull();
+  });
+
+  it('should replace the previous value when a different toggle is clicked', async () => {
+    const bold = await loader.getHarness(TnButtonToggleHarness.with({ label: 'Bold' }));
+    const italic = await loader.getHarness(TnButtonToggleHarness.with({ label: 'Italic' }));
+
+    await bold.check();
+    fixture.detectChanges();
+    expect(component.control.value).toBe('bold');
+
+    await italic.check();
+    fixture.detectChanges();
+    expect(component.control.value).toBe('italic');
+  });
+
+  it('should propagate an array of primitive values in multiple mode', async () => {
+    const groups = await loader.getAllHarnesses(TnButtonToggleGroupHarness);
+    const multiGroup = groups[1];
+    const toggles = await multiGroup.getToggles();
+
+    await toggles[0].check(); // A
+    await toggles[2].check(); // C
+    fixture.detectChanges();
+
+    expect(component.multiControl.value).toEqual(['a', 'c']);
   });
 });
