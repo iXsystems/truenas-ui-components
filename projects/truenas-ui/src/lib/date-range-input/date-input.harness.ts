@@ -1,6 +1,6 @@
 import type { BaseHarnessFilters } from '@angular/cdk/testing';
 import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
-import { formatDateParts, getInputValue, setInputValue } from './date-harness-helpers';
+import { formatDateParts, getInputValue, selectCalendarDate, setInputValue } from './date-harness-helpers';
 
 /**
  * Harness for interacting with `tn-date-input` in tests.
@@ -100,6 +100,26 @@ export class TnDateInputHarness extends ComponentHarness {
   async isCalendarOpen(): Promise<boolean> {
     const overlay = await this.documentRootLocatorFactory().locatorForOptional('.tn-datepicker-overlay')();
     return overlay !== null;
+  }
+
+  /**
+   * Selects a date via the calendar popup. Opens the calendar if not already
+   * open, navigates to the target month, and clicks the day cell.
+   *
+   * @param date The date to select.
+   *
+   * @example
+   * ```typescript
+   * const dateInput = await loader.getHarness(TnDateInputHarness);
+   * await dateInput.selectDate(new Date(2026, 3, 15));
+   * expect(await dateInput.getDisplayText()).toBe('04/15/2026');
+   * ```
+   */
+  async selectDate(date: Date): Promise<void> {
+    if (!(await this.isCalendarOpen())) {
+      await this.openCalendar();
+    }
+    await selectCalendarDate(this.documentRootLocatorFactory(), date);
   }
 }
 

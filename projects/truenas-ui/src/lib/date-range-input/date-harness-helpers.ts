@@ -1,4 +1,4 @@
-import type { TestElement } from '@angular/cdk/testing';
+import type { LocatorFactory, TestElement } from '@angular/cdk/testing';
 
 /**
  * Formats a Date into zero-padded month, day, and year strings.
@@ -43,4 +43,85 @@ export async function setInputValue(
     await el.sendKeys(value);
   }
   await el.blur();
+}
+
+const MONTHS = [
+  'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
+];
+
+/**
+ * Navigates the calendar overlay to the target month/year, then clicks the day cell.
+ * Assumes the calendar popup is already open.
+ *
+ * @param rootLocator The document root locator factory (for finding overlay elements).
+ * @param date The target date to select.
+ */
+export async function selectCalendarDate(
+  rootLocator: LocatorFactory,
+  date: Date
+): Promise<void> {
+  await navigateCalendarTo(rootLocator, date);
+
+  const dayStr = date.getDate().toString();
+  const cells = await rootLocator.locatorForAll(
+    '.tn-calendar-body-cell:not([disabled])'
+  )();
+
+  for (const cell of cells) {
+    if ((await cell.text()).trim() === dayStr) {
+      await cell.click();
+      return;
+    }
+  }
+
+  throw new Error(
+    `Could not find enabled calendar cell for day ${dayStr}`
+  );
+}
+
+/**
+ * Navigates the calendar to show the month/year of the target date by
+ * clicking previous/next buttons as needed.
+ */
+async function navigateCalendarTo(
+  rootLocator: LocatorFactory,
+  date: Date
+): Promise<void> {
+  const targetLabel = `${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+
+  // Safety limit to prevent infinite loops
+  for (let i = 0; i < 120; i++) {
+    const periodButton = await rootLocator.locatorFor(
+      '.tn-calendar-period-button'
+    )();
+    const currentLabel = (await periodButton.text()).trim();
+
+    if (currentLabel === targetLabel) {
+      return;
+    }
+
+    const currentDate = parseCalendarLabel(currentLabel);
+    const targetTime = date.getFullYear() * 12 + date.getMonth();
+    const currentTime = currentDate.year * 12 + currentDate.month;
+
+    const navSelector = targetTime > currentTime
+      ? '.tn-calendar-next-button'
+      : '.tn-calendar-previous-button';
+
+    const navButton = await rootLocator.locatorFor(navSelector)();
+    await navButton.click();
+  }
+
+  throw new Error(`Could not navigate calendar to ${targetLabel}`);
+}
+
+function parseCalendarLabel(label: string): {
+  year: number;
+  month: number;
+} {
+  const parts = label.split(' ');
+  const monthIndex = MONTHS.indexOf(parts[0]);
+  const year = parseInt(parts[1], 10);
+  return { year, month: monthIndex >= 0 ? monthIndex : 0 };
 }
