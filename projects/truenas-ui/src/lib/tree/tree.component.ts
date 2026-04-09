@@ -119,7 +119,7 @@ export class TnTreeFlatDataSource<T, F> extends DataSource<F> {
     'role': 'tree'
   },
   encapsulation: ViewEncapsulation.None,
-  changeDetection: ChangeDetectionStrategy.Default,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TnTreeComponent<T, K = T> extends CdkTree<T, K> {
   constructor() {
