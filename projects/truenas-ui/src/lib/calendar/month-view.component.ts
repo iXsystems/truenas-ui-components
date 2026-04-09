@@ -187,11 +187,12 @@ export class TnMonthViewComponent {
   }
 
   trackByDate(index: number, cell: CalendarCell): string {
-    return cell.date.toISOString();
+    if (cell.value === 0) { return `empty-${index}`; }
+    return `${cell.date.getFullYear()}-${cell.date.getMonth()}-${cell.date.getDate()}`;
   }
 
-  trackByRow(index: number, row: CalendarCell[]): string {
-    return row.map(cell => cell.date.toISOString()).join(',');
+  trackByRow(index: number): number {
+    return index;
   }
 
   onCellClicked(cell: CalendarCell): void {

@@ -14,7 +14,7 @@
   <!-- Table body with calendar cells -->
   <tbody class="tn-calendar-body">
     <!-- Calendar rows -->
-    @for (row of calendarRows(); track trackByRow($index, row); let rowIndex = $index) {
+    @for (row of calendarRows(); track trackByRow($index); let rowIndex = $index) {
       <tr role="row">
         @for (cell of row; track trackByDate($index, cell); let colIndex = $index) {
           <td
