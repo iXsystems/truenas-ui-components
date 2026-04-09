@@ -1,8 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnDateInputComponent } from '../lib/date-range-input/date-input.component';
 import { TnDateRangeInputComponent } from '../lib/date-range-input/date-range-input.component';
 import { TnTimeInputComponent } from '../lib/date-range-input/time-input.component';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
+
+const dateInputHarnessDoc = loadHarnessDoc('date-input');
+const dateRangeInputHarnessDoc = loadHarnessDoc('date-range-input');
 
 const meta: Meta = {
   title: 'Components/Date Picker',
@@ -102,5 +106,35 @@ export const TimePicker: Story = {
     placeholder: 'Pick a time',
     disabled: false
   }
+};
+
+export const DateInputHarness: Story = {
+  name: 'Date Input Harness',
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      story: { height: 'auto' },
+      canvas: { hidden: true, sourceState: 'none' },
+      description: { story: dateInputHarnessDoc || '' },
+    },
+    controls: { disable: true },
+    layout: 'fullscreen',
+  },
+  render: () => ({ template: '' }),
+};
+
+export const DateRangeInputHarness: Story = {
+  name: 'Date Range Input Harness',
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      story: { height: 'auto' },
+      canvas: { hidden: true, sourceState: 'none' },
+      description: { story: dateRangeInputHarnessDoc || '' },
+    },
+    controls: { disable: true },
+    layout: 'fullscreen',
+  },
+  render: () => ({ template: '' }),
 };
 
