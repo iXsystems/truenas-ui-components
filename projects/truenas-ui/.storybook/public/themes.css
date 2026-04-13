@@ -14,6 +14,8 @@
   --tn-bg3: #333333;
   --tn-fg1: #ffffff;
   --tn-fg2: rgba(255,255,255,0.85);
+  --tn-fg3: rgba(255,255,255,0.55);
+  --tn-fg4: rgba(255,255,255,0.35);
   --tn-alt-bg1: #383838;
   --tn-alt-bg2: #545454;
   --tn-alt-fg1: rgba(194,194,194,0.5);
@@ -71,6 +73,8 @@
   --tn-bg3: #333333;
   --tn-fg1: #e0e0e0;
   --tn-fg2: rgba(255,255,255,0.85);
+  --tn-fg3: rgba(255,255,255,0.55);
+  --tn-fg4: rgba(255,255,255,0.35);
   --tn-alt-bg1: #383838;
   --tn-alt-bg2: #545454;
   --tn-alt-fg1: rgba(194,194,194,0.5);
@@ -105,6 +109,8 @@
   --tn-bg3: #e8e8e8;
   --tn-fg1: #585858;
   --tn-fg2: #666666;
+  --tn-fg3: #888888;
+  --tn-fg4: #909090;
   --tn-alt-bg1: #f0f0f0;
   --tn-alt-bg2: #e8e8e8;
   --tn-alt-fg1: #181a26;
@@ -140,6 +146,8 @@
   --tn-bg3: #343746;
   --tn-fg1: #efefef;
   --tn-fg2: #cacac5;
+  --tn-fg3: #9a9a95;
+  --tn-fg4: #7a7a75;
   --tn-alt-bg1: #3a3d4a;
   --tn-alt-bg2: #44475a;
   --tn-alt-fg1: #f8f8f2;
@@ -175,6 +183,8 @@
   --tn-bg3: #454d5e;
   --tn-fg1: #eceff4;
   --tn-fg2: #e5e9f0;
+  --tn-fg3: #a0a8b4;
+  --tn-fg4: #7b8394;
   --tn-alt-bg1: #434c5e;
   --tn-alt-bg2: #4c566a;
   --tn-alt-fg1: #d8dee9;
@@ -209,6 +219,8 @@
   --tn-bg3: #e8e8e8;
   --tn-fg1: #3f3f3f;
   --tn-fg2: #666666;
+  --tn-fg3: #888888;
+  --tn-fg4: #909090;
   --tn-alt-bg1: #f0f0f0;
   --tn-alt-bg2: #e8e8e8;
   --tn-alt-fg1: #181a26;
@@ -246,6 +258,8 @@
   --tn-bg3: #0a4050;
   --tn-fg1: #586e75;
   --tn-fg2: #7f99a2;
+  --tn-fg3: #4a5e65;
+  --tn-fg4: #3a4d53;
   --tn-alt-bg1: #0e4853;
   --tn-alt-bg2: #155a68;
   --tn-alt-fg1: #839496;
@@ -282,6 +296,8 @@
   --tn-bg3: #3d4a55;
   --tn-fg1: #aaaaaa;
   --tn-fg2: #cccccc;
+  --tn-fg3: #888888;
+  --tn-fg4: #666666;
   --tn-alt-bg1: #3d4a55;
   --tn-alt-bg2: #4a5762;
   --tn-alt-fg1: #c1c1c1;
@@ -315,6 +331,8 @@
   --tn-bg3: #d0d0d0;
   --tn-fg1: #222222;
   --tn-fg2: #333333;
+  --tn-fg3: #666666;
+  --tn-fg4: #777777;
   --tn-alt-bg1: #f0f0f0;
   --tn-alt-bg2: #e8e8e8;
   --tn-alt-fg1: #181a26;
