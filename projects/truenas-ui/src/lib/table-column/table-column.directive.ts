@@ -24,6 +24,7 @@ export class TnCellDefDirective {
 export class TnTableColumnDirective {
   name = input.required<string>({ alias: 'tnColumnDef' });
   sortable = input<boolean>(false);
+  width = input<string | undefined>(undefined);
 
   headerTemplate = contentChild(TnHeaderCellDefDirective, {
     read: TemplateRef,

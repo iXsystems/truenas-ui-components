@@ -343,6 +343,37 @@ export const TableWithFiltering: Story = {
   }),
 };
 
+export const ColumnWidths: Story = {
+  render: () => ({
+    props: {
+      tableData: sampleData,
+      tableColumns: ['id', 'name', 'email', 'actions'],
+    },
+    template: `
+      <tn-table
+        [dataSource]="tableData"
+        [displayedColumns]="tableColumns">
+        <ng-container tnColumnDef="id" width="60px">
+          <ng-template tnHeaderCellDef>ID</ng-template>
+          <ng-template let-user tnCellDef>{{ user.id }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="name">
+          <ng-template tnHeaderCellDef>Name</ng-template>
+          <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="email">
+          <ng-template tnHeaderCellDef>Email</ng-template>
+          <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="actions" width="48px">
+          <ng-template tnHeaderCellDef></ng-template>
+          <ng-template let-user tnCellDef>⋮</ng-template>
+        </ng-container>
+      </tn-table>
+    `,
+  }),
+};
+
 export const EmptyTable: Story = {
   render: () => ({
     props: {

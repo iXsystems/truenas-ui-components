@@ -27,6 +27,7 @@
             class="tn-table__header-cell"
             [class.tn-table__header-cell--sortable]="getColumnDef(column)?.sortable()"
             [class.tn-table__header-cell--sorted]="isSorted(column)"
+            [style.width]="getColumnDef(column)?.width()"
             [attr.aria-sort]="
               isSorted(column)
                 ? sortDirection() === 'asc' ? 'ascending' : 'descending'
@@ -93,6 +94,7 @@
           } @else {
             <td
               class="tn-table__cell"
+              [style.width]="getColumnDef(column)?.width()"
               [attr.data-column]="column">
               @if (getColumnDef(column)?.cellTemplate(); as tmpl) {
                 <ng-container
