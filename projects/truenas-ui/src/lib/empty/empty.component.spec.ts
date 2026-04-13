@@ -20,6 +20,7 @@ import { TnIconHarness } from '../icon/icon.harness';
     [icon]="icon()"
     [iconLibrary]="iconLibrary()"
     [actionText]="actionText()"
+    [bordered]="bordered()"
     [size]="size()"
     (onAction)="onActionTriggered()"
   />`
@@ -31,7 +32,8 @@ class TestHostComponent {
   icon = signal<string | undefined>(undefined);
   iconLibrary = signal('mdi');
   actionText = signal<string | undefined>(undefined);
-  size = signal<TnEmptySize>('default');
+  bordered = signal(false);
+  size = signal<TnEmptySize>('compact');
   actionCount = 0;
 
   onActionTriggered(): void {
@@ -67,17 +69,25 @@ describe('TnEmptyComponent', () => {
       expect(emptyEl.classList.contains('tn-empty')).toBe(true);
     });
 
-    it('should not have compact class by default', () => {
+    it('should have compact class by default', () => {
+      const emptyEl = fixture.nativeElement.querySelector('tn-empty');
+      expect(emptyEl.classList.contains('tn-empty--compact')).toBe(true);
+    });
+
+    it('should not have compact class when size is default', () => {
+      hostComponent.size.set('default');
+      fixture.detectChanges();
+
       const emptyEl = fixture.nativeElement.querySelector('tn-empty');
       expect(emptyEl.classList.contains('tn-empty--compact')).toBe(false);
     });
 
-    it('should have compact class when size is compact', () => {
-      hostComponent.size.set('compact');
+    it('should have bordered class when bordered is true', () => {
+      hostComponent.bordered.set(true);
       fixture.detectChanges();
 
       const emptyEl = fixture.nativeElement.querySelector('tn-empty');
-      expect(emptyEl.classList.contains('tn-empty--compact')).toBe(true);
+      expect(emptyEl.classList.contains('tn-empty--bordered')).toBe(true);
     });
 
     it('should have status role for accessibility', () => {
@@ -140,20 +150,20 @@ describe('TnEmptyComponent', () => {
       expect(hasIcon).toBe(true);
     });
 
-    it('should use xl size for default empty size', async () => {
+    it('should use lg size for compact empty size (default)', async () => {
       hostComponent.icon.set('inbox');
-      fixture.detectChanges();
-
-      const hasIcon = await loader.hasHarness(TnIconHarness.with({ size: 'xl' }));
-      expect(hasIcon).toBe(true);
-    });
-
-    it('should use lg size for compact empty size', async () => {
-      hostComponent.icon.set('inbox');
-      hostComponent.size.set('compact');
       fixture.detectChanges();
 
       const hasIcon = await loader.hasHarness(TnIconHarness.with({ size: 'lg' }));
+      expect(hasIcon).toBe(true);
+    });
+
+    it('should use xl size when size is default', async () => {
+      hostComponent.icon.set('inbox');
+      hostComponent.size.set('default');
+      fixture.detectChanges();
+
+      const hasIcon = await loader.hasHarness(TnIconHarness.with({ size: 'xl' }));
       expect(hasIcon).toBe(true);
     });
   });

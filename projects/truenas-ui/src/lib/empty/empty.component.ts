@@ -14,6 +14,7 @@ export type TnEmptySize = 'default' | 'compact';
   host: {
     'class': 'tn-empty',
     '[class.tn-empty--compact]': 'size() === "compact"',
+    '[class.tn-empty--bordered]': 'bordered()',
     'role': 'status',
   },
 })
@@ -23,7 +24,8 @@ export class TnEmptyComponent {
   icon = input<string>();
   iconLibrary = input<IconLibraryType>('mdi');
   actionText = input<string>();
-  size = input<TnEmptySize>('default');
+  bordered = input<boolean>(false);
+  size = input<TnEmptySize>('compact');
 
   onAction = output<void>();
 
