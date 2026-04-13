@@ -5,8 +5,10 @@ import { TnEmptyComponent } from '../lib/empty/empty.component';
 import { tnIconMarker } from '../lib/icon/icon-marker';
 
 tnIconMarker('inbox', 'mdi');
+tnIconMarker('key-plus', 'mdi');
 tnIconMarker('magnify', 'mdi');
 tnIconMarker('folder-open', 'mdi');
+tnIconMarker('tag', 'mdi');
 tnIconMarker('alert-circle-outline', 'mdi');
 
 const harnessDoc = loadHarnessDoc('empty');
@@ -116,6 +118,24 @@ export const WithoutIcon: Story = {
   args: {
     title: 'No data available',
     description: 'There is currently no data to display in this view.',
+  },
+};
+
+export const Bordered: Story = {
+  args: {
+    icon: 'key-plus',
+    title: 'Keyring Not Created',
+    description: 'The TrueNAS Connect Keyring has not been created.',
+    bordered: true,
+    size: 'default',
+  },
+};
+
+export const BorderedCompact: Story = {
+  args: {
+    icon: 'tag',
+    title: 'No tags found',
+    bordered: true,
   },
 };
 

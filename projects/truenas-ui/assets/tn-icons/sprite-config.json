@@ -1,5 +1,5 @@
 {
-  "iconUrl": "assets/tn-icons/sprite.svg?v=db82a5e615",
+  "iconUrl": "assets/tn-icons/sprite.svg?v=36306c7a43",
   "icons": [
     "dataset",
     "mat-arrow_downward",
@@ -38,6 +38,7 @@
     "mdi-home",
     "mdi-inbox",
     "mdi-information",
+    "mdi-key-plus",
     "mdi-loading",
     "mdi-lock",
     "mdi-magnify",
@@ -52,6 +53,7 @@
     "mdi-share-variant",
     "mdi-star",
     "mdi-sync",
+    "mdi-tag",
     "mdi-view-dashboard",
     "tn-cloud-off",
     "tn-dataset",

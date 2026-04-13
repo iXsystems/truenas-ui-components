@@ -6,6 +6,11 @@
   text-align: center;
   gap: 8px;
   padding: 48px 24px;
+  border-radius: 8px;
+}
+
+:host(.tn-empty--bordered) {
+  border: 1px solid var(--tn-lines);
 }
 
 :host(.tn-empty--compact) {

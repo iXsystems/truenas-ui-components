@@ -31,7 +31,7 @@
   background-color: transparent;
   border: 1px solid var(--tn-primary);
   color: var(--tn-primary);
-  transition: all 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 .button-outline-primary:hover {
   background-color: var(--tn-primary);
@@ -42,7 +42,7 @@
   background-color: transparent;
   border: 1px solid var(--tn-lines, #e5e7eb);
   color: var(--tn-fg1, #000000);
-  transition: all 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 .button-outline-default:hover {
   background-color: var(--tn-btn-default-bg);
@@ -58,7 +58,7 @@
   background-color: transparent;
   border: 1px solid var(--tn-red);
   color: var(--tn-red);
-  transition: all 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 .button-outline-warn:hover {
   background-color: var(--tn-red);
