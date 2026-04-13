@@ -55,6 +55,7 @@ export * from './lib/divider/divider.component';
 export * from './lib/selection-list/selection-list.component';
 export * from './lib/list-option/list-option.component';
 export * from './lib/table/table.component';
+export * from './lib/table/table.harness';
 export * from './lib/table-column/table-column.directive';
 export { TnTreeComponent, FlatTreeControl, TnTreeFlatDataSource, TnTreeFlattener, TnFlatTreeNode } from './lib/tree/tree.component';
 export { TnTreeNodeComponent } from './lib/tree/tree-node.component';

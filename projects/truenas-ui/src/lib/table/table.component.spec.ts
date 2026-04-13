@@ -2,7 +2,6 @@ import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import type { TnTableDataSource } from './table.component';
 import { TnTableComponent } from './table.component';
-import type { TnTableColumnDirective } from '../table-column/table-column.directive';
 
 describe('TnTableComponent', () => {
   let component: TnTableComponent;
@@ -65,72 +64,22 @@ describe('TnTableComponent', () => {
   });
 
   describe('column definitions', () => {
-    it('should process column definitions via effect', () => {
-      const mockColumnDef1 = {
-        name: () => 'column1',
-        headerTemplate: () => undefined,
-        cellTemplate: () => undefined
-      } as unknown as TnTableColumnDirective;
-      const mockColumnDef2 = {
-        name: () => 'column2',
-        headerTemplate: () => undefined,
-        cellTemplate: () => undefined
-      } as unknown as TnTableColumnDirective;
-
-      // Test processColumnDefs directly with mock data
-      component['processColumnDefs']([mockColumnDef1, mockColumnDef2]);
-
-      expect(component.getColumnDef('column1')).toBeDefined();
-      expect(component.getColumnDef('column2')).toBeDefined();
-    });
-
     it('should return undefined for non-existent column', () => {
       expect(component.getColumnDef('nonExistent')).toBeUndefined();
     });
-
-    it('should clear and rebuild column map when processing', () => {
-      const mockColumnDef1 = {
-        name: () => 'column1',
-        headerTemplate: () => undefined,
-        cellTemplate: () => undefined
-      } as unknown as TnTableColumnDirective;
-      const mockColumnDef2 = {
-        name: () => 'column2',
-        headerTemplate: () => undefined,
-        cellTemplate: () => undefined
-      } as unknown as TnTableColumnDirective;
-
-      // First processing
-      component['processColumnDefs']([mockColumnDef1, mockColumnDef2]);
-
-      expect(component.getColumnDef('column1')).toBeDefined();
-      expect(component.getColumnDef('column2')).toBeDefined();
-
-      // Second processing with only column2
-      component['processColumnDefs']([mockColumnDef2]);
-
-      expect(component.getColumnDef('column1')).toBeUndefined();
-      expect(component.getColumnDef('column2')).toBeDefined();
-    });
-
-    it('should handle column definitions without names', () => {
-      const mockColumnDefWithoutName = {
-        name: () => '',
-        headerTemplate: () => undefined,
-        cellTemplate: () => undefined
-      } as unknown as TnTableColumnDirective;
-      component['processColumnDefs']([mockColumnDefWithoutName]);
-
-      // Should not throw and should result in empty map
-      expect(component.getColumnDef('')).toBeUndefined();
-    });
   });
 
-  describe('trackByIndex', () => {
-    it('should return the index', () => {
-      expect(component.trackByIndex(0)).toBe(0);
-      expect(component.trackByIndex(5)).toBe(5);
-      expect(component.trackByIndex(100)).toBe(100);
+  describe('trackByFn', () => {
+    it('should default to index-based tracking', () => {
+      const fn = component.trackByFn();
+      expect(fn(0, {} as never)).toBe(0);
+      expect(fn(5, {} as never)).toBe(5);
+    });
+
+    it('should use custom trackBy when provided', () => {
+      fixture.componentRef.setInput('trackBy', (_: number, item: { id: number }) => item.id);
+      const fn = component.trackByFn();
+      expect(fn(0, { id: 42 } as never)).toBe(42);
     });
   });
 
@@ -142,6 +91,119 @@ describe('TnTableComponent', () => {
     it('should accept displayedColumns input', () => {
       fixture.componentRef.setInput('displayedColumns', ['col1', 'col2']);
       expect(component.displayedColumns()).toEqual(['col1', 'col2']);
+    });
+  });
+
+  describe('effectiveDisplayedColumns', () => {
+    it('should prepend __select when selectable', () => {
+      fixture.componentRef.setInput('displayedColumns', ['col1', 'col2']);
+      fixture.componentRef.setInput('selectable', true);
+      fixture.detectChanges();
+      expect(component.effectiveDisplayedColumns()[0]).toBe('__select');
+      expect(component.effectiveDisplayedColumns().length).toBe(3);
+    });
+
+    it('should not modify columns when not selectable or expandable', () => {
+      fixture.componentRef.setInput('displayedColumns', ['col1', 'col2']);
+      fixture.detectChanges();
+      expect(component.effectiveDisplayedColumns()).toEqual(['col1', 'col2']);
+    });
+  });
+
+  describe('sort state', () => {
+    it('should start with no sort', () => {
+      expect(component.sortColumn()).toBe('');
+      expect(component.sortDirection()).toBe('');
+    });
+
+    it('should return SORT_ICON_NONE for unsorted columns', () => {
+      expect(component.getSortIcon('anything')).toContain('unfold_more');
+    });
+
+    it('should report isSorted false when no sort active', () => {
+      expect(component.isSorted('col1')).toBe(false);
+    });
+  });
+
+  describe('selection', () => {
+    const testData = [{ id: 1 }, { id: 2 }, { id: 3 }];
+
+    beforeEach(() => {
+      fixture.componentRef.setInput('dataSource', testData);
+      fixture.componentRef.setInput('selectable', true);
+      fixture.detectChanges();
+    });
+
+    it('should toggle individual row selection', () => {
+      component.toggleRowSelection(testData[0]);
+      expect(component.isRowSelected(testData[0])).toBe(true);
+      expect(component.isRowSelected(testData[1])).toBe(false);
+    });
+
+    it('should select all rows', () => {
+      component.toggleSelectAll();
+      expect(component.isAllSelected()).toBe(true);
+      expect(component.selection.selected.length).toBe(3);
+    });
+
+    it('should deselect all when all are selected', () => {
+      component.toggleSelectAll();
+      expect(component.isAllSelected()).toBe(true);
+
+      component.toggleSelectAll();
+      expect(component.selection.selected.length).toBe(0);
+      expect(component.isAllSelected()).toBe(false);
+    });
+
+    it('should report indeterminate when some selected', () => {
+      component.toggleRowSelection(testData[0]);
+      expect(component.isIndeterminate()).toBe(true);
+      expect(component.isAllSelected()).toBe(false);
+    });
+
+    it('should emit selectionChange', () => {
+      const spy = jest.fn();
+      component.selectionChange.subscribe(spy);
+      component.toggleRowSelection(testData[0]);
+      expect(spy).toHaveBeenCalledWith([testData[0]]);
+    });
+  });
+
+  describe('expansion', () => {
+    const testData = [{ id: 1 }, { id: 2 }];
+
+    beforeEach(() => {
+      fixture.componentRef.setInput('dataSource', testData);
+      fixture.componentRef.setInput('expandable', true);
+      fixture.detectChanges();
+    });
+
+    it('should toggle row expansion', () => {
+      component.toggleRowExpansion(testData[0]);
+      expect(component.isRowExpanded(testData[0])).toBe(true);
+      expect(component.isRowExpanded(testData[1])).toBe(false);
+    });
+
+    it('should collapse on second toggle', () => {
+      component.toggleRowExpansion(testData[0]);
+      expect(component.isRowExpanded(testData[0])).toBe(true);
+
+      component.toggleRowExpansion(testData[0]);
+      expect(component.isRowExpanded(testData[0])).toBe(false);
+    });
+
+    it('should allow multiple rows expanded', () => {
+      component.toggleRowExpansion(testData[0]);
+      component.toggleRowExpansion(testData[1]);
+      expect(component.isRowExpanded(testData[0])).toBe(true);
+      expect(component.isRowExpanded(testData[1])).toBe(true);
+    });
+
+    it('should not expand when expandable is false', () => {
+      fixture.componentRef.setInput('expandable', false);
+      fixture.detectChanges();
+      component.toggleRowExpansion(testData[0]);
+      expect(component.isRowExpanded(testData[0])).toBe(false);
     });
   });
 });

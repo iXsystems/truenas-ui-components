@@ -1,6 +1,3 @@
-// Table Component Styles
-// Based on Angular Material Design patterns
-
 .tn-table {
   display: block;
   width: 100%;
@@ -32,6 +29,34 @@
     border-bottom: 1px solid var(--tn-lines);
     white-space: nowrap;
     vertical-align: middle;
+
+    &--sortable {
+      cursor: pointer;
+      user-select: none;
+
+      &:hover {
+        background-color: var(--tn-alt-bg1);
+      }
+    }
+  }
+
+  &__sort-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &__sort-icon {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+
+    .tn-table__header-cell--sortable:hover & {
+      opacity: 0.5;
+    }
+
+    .tn-table__header-cell--sorted & {
+      opacity: 1;
+    }
   }
 
   &__body {
@@ -49,6 +74,14 @@
     &:not(:last-child) {
       border-bottom: 1px solid var(--tn-lines);
     }
+
+    &--expandable {
+      // No cursor: pointer — expansion is via the dedicated button
+    }
+
+    &--expanded {
+      background-color: var(--tn-alt-bg1);
+    }
   }
 
   &__cell {
@@ -59,6 +92,55 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  &__select-cell {
+    width: 48px;
+    padding: 0 8px 0 16px;
+    cursor: pointer;
+  }
+
+  &__checkbox {
+    pointer-events: none;
+  }
+
+  &__expand-cell {
+    width: 48px;
+    padding: 0 16px 0 8px;
+    text-align: center;
+  }
+
+  &__expand-button {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    color: var(--tn-fg2);
+
+    &:hover {
+      background-color: var(--tn-alt-bg1);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--tn-primary);
+      outline-offset: 2px;
+    }
+  }
+
+  &__expand-icon {
+    transition: transform 0.2s ease;
+  }
+
+  &__detail-row {
+    background-color: var(--tn-alt-bg1);
+    border-bottom: 1px solid var(--tn-lines);
+  }
+
+  &__detail-cell {
+    padding: 16px;
   }
 
   // Dense variant
@@ -78,7 +160,6 @@
     }
   }
 
-  // Responsive behavior
   @media (max-width: 768px) {
     &__table {
       font-size: 12px;
@@ -87,6 +168,18 @@
     &__header-cell,
     &__cell {
       padding: 0 8px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &__sort-icon,
+    &__expand-icon,
+    &__row {
+      transition: none;
+    }
+
+    &__detail-row {
+      animation: none;
     }
   }
 }

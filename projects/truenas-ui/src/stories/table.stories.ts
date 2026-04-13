@@ -1,10 +1,23 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
+import { TnCheckboxComponent } from '../lib/checkbox/checkbox.component';
+import { tnIconMarker } from '../lib/icon/icon-marker';
+import { TnIconComponent } from '../lib/icon/icon.component';
 import { TnInputComponent } from '../lib/input/input.component';
+import type { TnSortEvent } from '../lib/table/table.component';
 import { TnTableComponent } from '../lib/table/table.component';
-import { TnTableColumnDirective, TnHeaderCellDefDirective, TnCellDefDirective } from '../lib/table-column/table-column.directive';
+import {
+  TnTableColumnDirective,
+  TnHeaderCellDefDirective,
+  TnCellDefDirective,
+  TnDetailRowDefDirective,
+} from '../lib/table-column/table-column.directive';
+
+const harnessDoc = loadHarnessDoc('table');
 
 interface User {
   id: number;
@@ -14,6 +27,14 @@ interface User {
   status: 'active' | 'inactive';
 }
 
+const sampleData: User[] = [
+  { id: 1, name: 'Alice Johnson', email: 'alice@example.com', role: 'Admin', status: 'active' },
+  { id: 2, name: 'Bob Smith', email: 'bob@example.com', role: 'User', status: 'active' },
+  { id: 3, name: 'Carol Williams', email: 'carol@example.com', role: 'Editor', status: 'inactive' },
+  { id: 4, name: 'David Brown', email: 'david@example.com', role: 'User', status: 'active' },
+  { id: 5, name: 'Eve Davis', email: 'eve@example.com', role: 'Admin', status: 'active' },
+];
+
 const meta: Meta<TnTableComponent> = {
   title: 'Components/Table',
   component: TnTableComponent,
@@ -22,11 +43,15 @@ const meta: Meta<TnTableComponent> = {
       imports: [
         CommonModule,
         FormsModule,
+        NoopAnimationsModule,
         TnTableComponent,
         TnTableColumnDirective,
         TnHeaderCellDefDirective,
         TnCellDefDirective,
-        TnInputComponent
+        TnDetailRowDefDirective,
+        TnCheckboxComponent,
+        TnIconComponent,
+        TnInputComponent,
       ],
     }),
   ],
@@ -34,174 +59,330 @@ const meta: Meta<TnTableComponent> = {
   parameters: {
     docs: {
       description: {
-        component: 'A flexible table component inspired by Angular Material\'s mat-table. Supports column definitions, custom cell templates, and data binding.'
-      }
-    }
+        component:
+          'A flexible table component with sorting, row selection, and expandable detail rows. All features are opt-in — set `[sortable]` on columns, `[selectable]` or `[expandable]` on the table.',
+      },
+    },
   },
   argTypes: {
-    dataSource: {
-      description: 'The data source for the table - can be an array or a data source object',
-      control: false
-    },
-    displayedColumns: {
-      description: 'Array of column names to display in order',
-      control: false
-    }
-  }
+    dataSource: { description: 'Data array or TnTableDataSource object', control: false },
+    displayedColumns: { description: 'Column names to display in order', control: false },
+    selectable: { description: 'Show checkbox column for row selection', control: 'boolean' },
+    expandable: { description: 'Enable click-to-expand detail rows', control: 'boolean' },
+  },
 };
 
 export default meta;
 type Story = StoryObj<TnTableComponent>;
 
-const sampleData: User[] = [
-  { id: 1, name: 'Alice Johnson', email: 'alice@example.com', role: 'Admin', status: 'active' },
-  { id: 2, name: 'Bob Smith', email: 'bob@example.com', role: 'User', status: 'active' },
-  { id: 3, name: 'Carol Williams', email: 'carol@example.com', role: 'Editor', status: 'inactive' },
-  { id: 4, name: 'David Brown', email: 'david@example.com', role: 'User', status: 'active' },
-  { id: 5, name: 'Eve Davis', email: 'eve@example.com', role: 'Admin', status: 'active' }
-];
-
 export const BasicTable: Story = {
   args: {
     dataSource: sampleData,
-    displayedColumns: ['id', 'name', 'email', 'role', 'status']
+    displayedColumns: ['id', 'name', 'email', 'role', 'status'],
   },
   render: (args) => ({
     props: args,
     template: `
       <tn-table [dataSource]="dataSource" [displayedColumns]="displayedColumns">
-        <!-- ID Column -->
         <ng-container tnColumnDef="id">
           <ng-template tnHeaderCellDef>ID</ng-template>
-          <ng-template tnCellDef let-user>{{ user.id }}</ng-template>
+          <ng-template let-user tnCellDef>{{ user.id }}</ng-template>
         </ng-container>
-
-        <!-- Name Column -->
         <ng-container tnColumnDef="name">
           <ng-template tnHeaderCellDef>Name</ng-template>
-          <ng-template tnCellDef let-user>{{ user.name }}</ng-template>
+          <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
         </ng-container>
-
-        <!-- Email Column -->
         <ng-container tnColumnDef="email">
           <ng-template tnHeaderCellDef>Email</ng-template>
-          <ng-template tnCellDef let-user>{{ user.email }}</ng-template>
+          <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
         </ng-container>
-
-        <!-- Role Column -->
         <ng-container tnColumnDef="role">
           <ng-template tnHeaderCellDef>Role</ng-template>
-          <ng-template tnCellDef let-user>{{ user.role }}</ng-template>
+          <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
         </ng-container>
-
-        <!-- Status Column -->
         <ng-container tnColumnDef="status">
           <ng-template tnHeaderCellDef>Status</ng-template>
-          <ng-template tnCellDef let-user>
-            <span [style.color]="user.status === 'active' ? 'green' : 'red'">
-              {{ user.status | titlecase }}
+          <ng-template let-user tnCellDef>
+            <span [style.color]="user.status === 'active' ? 'var(--tn-green)' : 'var(--tn-red)'">
+              {{ user.status }}
             </span>
           </ng-template>
         </ng-container>
       </tn-table>
-    `
+    `,
+  }),
+};
+
+export const SortableTable: Story = {
+  render: () => ({
+    props: {
+      tableData: [...sampleData],
+      tableColumns: ['name', 'email', 'role'],
+      onSort(event: TnSortEvent) {
+        if (!event.direction) {
+          this['tableData'] = [...sampleData];
+          return;
+        }
+        this['tableData'] = [...sampleData].sort((a, b) => {
+          const key = event.column as keyof User;
+          const cmp = String(a[key]).localeCompare(String(b[key]));
+          return event.direction === 'asc' ? cmp : -cmp;
+        });
+      },
+    },
+    template: `
+      <tn-table
+        [dataSource]="tableData"
+        [displayedColumns]="tableColumns"
+        (sortChange)="onSort($event)">
+        <ng-container tnColumnDef="name" [sortable]="true">
+          <ng-template tnHeaderCellDef>Name</ng-template>
+          <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="email" [sortable]="true">
+          <ng-template tnHeaderCellDef>Email</ng-template>
+          <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="role" [sortable]="true">
+          <ng-template tnHeaderCellDef>Role</ng-template>
+          <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
+        </ng-container>
+      </tn-table>
+    `,
+  }),
+};
+
+export const SelectableTable: Story = {
+  render: () => ({
+    props: {
+      tableData: sampleData,
+      tableColumns: ['name', 'email', 'role'],
+      selectedCount: 0,
+      onSelect(users: User[]) {
+        this['selectedCount'] = users.length;
+      },
+    },
+    template: `
+      <p style="margin-bottom: 8px;">Selected: {{ selectedCount }}</p>
+      <tn-table
+        [dataSource]="tableData"
+        [displayedColumns]="tableColumns"
+        [selectable]="true"
+        (selectionChange)="onSelect($event)">
+        <ng-container tnColumnDef="name">
+          <ng-template tnHeaderCellDef>Name</ng-template>
+          <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="email">
+          <ng-template tnHeaderCellDef>Email</ng-template>
+          <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="role">
+          <ng-template tnHeaderCellDef>Role</ng-template>
+          <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
+        </ng-container>
+      </tn-table>
+    `,
+  }),
+};
+
+export const ExpandableTable: Story = {
+  render: () => ({
+    props: {
+      tableData: sampleData,
+      tableColumns: ['name', 'email', 'role'],
+    },
+    template: `
+      <tn-table
+        [dataSource]="tableData"
+        [displayedColumns]="tableColumns"
+        [expandable]="true">
+        <ng-container tnColumnDef="name">
+          <ng-template tnHeaderCellDef>Name</ng-template>
+          <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="email">
+          <ng-template tnHeaderCellDef>Email</ng-template>
+          <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="role">
+          <ng-template tnHeaderCellDef>Role</ng-template>
+          <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
+        </ng-container>
+
+        <ng-template let-user tnDetailRowDef>
+          <div style="padding: 8px 0;">
+            <strong>{{ user.name }}</strong> — {{ user.email }}<br>
+            Role: {{ user.role }} · Status: {{ user.status }}
+          </div>
+        </ng-template>
+      </tn-table>
+    `,
+  }),
+};
+
+export const FullFeaturedTable: Story = {
+  render: () => ({
+    props: {
+      tableData: [...sampleData],
+      tableColumns: ['name', 'email', 'role'],
+      selectedCount: 0,
+      onSort(event: TnSortEvent) {
+        if (!event.direction) {
+          this['tableData'] = [...sampleData];
+          return;
+        }
+        this['tableData'] = [...sampleData].sort((a, b) => {
+          const key = event.column as keyof User;
+          const cmp = String(a[key]).localeCompare(String(b[key]));
+          return event.direction === 'asc' ? cmp : -cmp;
+        });
+      },
+      onSelect(users: User[]) {
+        this['selectedCount'] = users.length;
+      },
+    },
+    template: `
+      <p style="margin-bottom: 8px;">Selected: {{ selectedCount }}</p>
+      <tn-table
+        [dataSource]="tableData"
+        [displayedColumns]="tableColumns"
+        [selectable]="true"
+        [expandable]="true"
+        (sortChange)="onSort($event)"
+        (selectionChange)="onSelect($event)">
+        <ng-container tnColumnDef="name" [sortable]="true">
+          <ng-template tnHeaderCellDef>Name</ng-template>
+          <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="email" [sortable]="true">
+          <ng-template tnHeaderCellDef>Email</ng-template>
+          <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="role" [sortable]="true">
+          <ng-template tnHeaderCellDef>Role</ng-template>
+          <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
+        </ng-container>
+
+        <ng-template let-user tnDetailRowDef>
+          <div style="padding: 8px 0;">
+            <strong>{{ user.name }}</strong> — {{ user.email }}<br>
+            Role: {{ user.role }} · Status: {{ user.status }}
+          </div>
+        </ng-template>
+      </tn-table>
+    `,
   }),
 };
 
 export const TableWithFiltering: Story = {
-  args: {
-    dataSource: sampleData,
-    displayedColumns: ['id', 'name', 'email', 'role', 'status']
-  },
-  render: (args) => ({
+  render: () => ({
     props: {
-      ...args,
-      filterText: '',
+      allData: sampleData,
       filteredData: sampleData,
-      updateFilter: function() {
+      tableColumns: ['id', 'name', 'email', 'role', 'status'],
+      filterText: '',
+      updateFilter: function () {
         if (!this['filterText'].trim()) {
-          this['filteredData'] = this['dataSource'];
+          this['filteredData'] = this['allData'];
         } else {
           const filter = this['filterText'].toLowerCase();
-          this['filteredData'] = this['dataSource'].filter((user: User) => 
-            user.name.toLowerCase().includes(filter) ||
-            user.email.toLowerCase().includes(filter) ||
-            user.role.toLowerCase().includes(filter) ||
-            user.status.toLowerCase().includes(filter)
+          this['filteredData'] = this['allData'].filter(
+            (user: User) =>
+              user.name.toLowerCase().includes(filter) ||
+              user.email.toLowerCase().includes(filter) ||
+              user.role.toLowerCase().includes(filter) ||
+              user.status.toLowerCase().includes(filter)
           );
         }
       },
-      highlightText: (text: string, filter: string) => {
-        if (!filter.trim()) {
-          return text;
-        }
-        const regex = new RegExp(`(${filter})`, 'gi');
-        return text.replace(regex, '<mark style="background-color: var(--tn-yellow); padding: 0 2px;">$1</mark>');
-      }
     },
     template: `
       <div style="margin-bottom: 16px;">
-        <tn-input 
+        <tn-input
           [(ngModel)]="filterText"
           (ngModelChange)="updateFilter()"
-          placeholder="Filter users by name, email, role, or status..."
+          placeholder="Filter users..."
           label="Filter"
-          style="width: 100%;">
-        </tn-input>
-        <style>
-          .tn-input {
-            width: calc(100% - 1.5rem) !important;
-          }
-        </style>
+          style="width: 100%;" />
       </div>
 
-      <tn-table [dataSource]="filteredData" [displayedColumns]="displayedColumns">
-        <!-- ID Column -->
+      <tn-table [dataSource]="filteredData" [displayedColumns]="tableColumns">
         <ng-container tnColumnDef="id">
           <ng-template tnHeaderCellDef>ID</ng-template>
-          <ng-template tnCellDef let-user>{{ user.id }}</ng-template>
+          <ng-template let-user tnCellDef>{{ user.id }}</ng-template>
         </ng-container>
-
-        <!-- Name Column -->
         <ng-container tnColumnDef="name">
           <ng-template tnHeaderCellDef>Name</ng-template>
-          <ng-template tnCellDef let-user>
-            <span [innerHTML]="highlightText(user.name, filterText)"></span>
-          </ng-template>
+          <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
         </ng-container>
-
-        <!-- Email Column -->
         <ng-container tnColumnDef="email">
           <ng-template tnHeaderCellDef>Email</ng-template>
-          <ng-template tnCellDef let-user>
-            <span [innerHTML]="highlightText(user.email, filterText)"></span>
-          </ng-template>
+          <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
         </ng-container>
-
-        <!-- Role Column -->
         <ng-container tnColumnDef="role">
           <ng-template tnHeaderCellDef>Role</ng-template>
-          <ng-template tnCellDef let-user>
-            <span [innerHTML]="highlightText(user.role, filterText)"></span>
-          </ng-template>
+          <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
         </ng-container>
-
-        <!-- Status Column -->
         <ng-container tnColumnDef="status">
           <ng-template tnHeaderCellDef>Status</ng-template>
-          <ng-template tnCellDef let-user>
-            <span [style.color]="user.status === 'active' ? 'green' : 'red'"
-                  [innerHTML]="highlightText(user.status, filterText)">
+          <ng-template let-user tnCellDef>
+            <span [style.color]="user.status === 'active' ? 'var(--tn-green)' : 'var(--tn-red)'">
+              {{ user.status }}
             </span>
           </ng-template>
         </ng-container>
       </tn-table>
 
       @if (filteredData.length === 0 && filterText.trim()) {
-      <div style="text-align: center; padding: 32px; color: var(--tn-fg2);">
-        No results found for "{{ filterText }}"
-      </div>
+        <div style="text-align: center; padding: 32px; color: var(--tn-fg2);">
+          No results found for "{{ filterText }}"
+        </div>
       }
-    `
+    `,
   }),
+};
+
+export const EmptyTable: Story = {
+  render: () => ({
+    props: {
+      tableData: [],
+      tableColumns: ['name', 'email', 'role'],
+      emptyIcon: tnIconMarker('account-group', 'mdi'),
+    },
+    template: `
+      <tn-table
+        [dataSource]="tableData"
+        [displayedColumns]="tableColumns"
+        emptyMessage="No users found"
+        [emptyIcon]="emptyIcon">
+        <ng-container tnColumnDef="name">
+          <ng-template tnHeaderCellDef>Name</ng-template>
+          <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="email">
+          <ng-template tnHeaderCellDef>Email</ng-template>
+          <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="role">
+          <ng-template tnHeaderCellDef>Role</ng-template>
+          <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
+        </ng-container>
+      </tn-table>
+    `,
+  }),
+};
+
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      story: { height: 'auto' },
+      canvas: { hidden: true, sourceState: 'none' },
+      description: { story: harnessDoc || '' },
+    },
+    controls: { disable: true },
+    layout: 'fullscreen',
+  },
+  render: () => ({ template: '' }),
 };
