@@ -133,7 +133,8 @@ npm run icons
 ```
 
 This will:
-- Scan your templates for `<tn-icon>` elements
+- Scan your templates for `<tn-icon>` and `<tn-icon-button>` elements
+- Detect icons passed to forwarding components (e.g., `<tn-empty icon="inbox">`)
 - Detect icons marked with `tnIconMarker()` in TypeScript
 - Generate `src/assets/icons/sprite.svg` with only used icons
 - Create `src/assets/icons/sprite-config.json` with manifest
@@ -193,6 +194,32 @@ const icon = isEditing
 export class MyComponent {
   icon = tnIconMarker('mdi-database');
 }
+```
+
+### Icon Forwarding Components
+
+Some library components accept icon inputs and forward them to an internal `<tn-icon>`. The sprite generator automatically detects icons passed to these components:
+
+```html
+<!-- These icons are automatically included in the sprite -->
+<tn-empty icon="inbox" iconLibrary="mdi" title="No messages"></tn-empty>
+<tn-input prefixIcon="search" prefixIconLibrary="mdi"></tn-input>
+<tn-chip icon="star"></tn-chip>
+```
+
+No `tnIconMarker()` is needed for static icon attributes on forwarding components.
+
+The library ships a `forwarding-mappings.json` manifest that tells the scanner which components forward icons. If your app has its own forwarding components, you can create a `forwarding-mappings.json` in your source directory:
+
+```json
+[
+  {
+    "selector": "app-status-badge",
+    "iconSlots": [
+      { "iconAttribute": "icon", "libraryAttribute": "iconLibrary", "defaultLibrary": "mdi" }
+    ]
+  }
+]
 ```
 
 ### Custom Icons

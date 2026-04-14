@@ -76,6 +76,7 @@ Navigate to your new directory and create these required files:
   - Include multiple variants (Default, Primary, Disabled, etc.)
   - Add interaction tests with `play` functions
   - If using icons, add `tnIconMarker()` calls at top of file
+  - If the component forwards icon inputs to `<tn-icon>`, add an entry to `assets/tn-icons/forwarding-mappings.json` (see CONTRIBUTE.md)
 
 ### Phase 5: Testing & Validation
 

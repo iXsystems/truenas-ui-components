@@ -1,77 +1,182 @@
+import fs from 'fs';
+import os from 'os';
 import path from 'path';
-import { findForwardingComponentMappings } from './find-icons-in-forwarding-components';
+import { discoverForwardingMappings } from './find-icons-in-forwarding-components';
+import type { ForwardingComponentMapping } from './find-icons-in-forwarding-components';
 
-const FIXTURES_DIR = path.resolve(__dirname, '../__fixtures__/forwarding-components');
+function writeManifest(dir: string, mappings: ForwardingComponentMapping[]): void {
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(
+    path.join(dir, 'forwarding-mappings.json'),
+    JSON.stringify(mappings),
+  );
+}
 
-describe('findForwardingComponentMappings', () => {
-  it('should discover components implementing TnIconForwardingComponent', () => {
-    const mappings = findForwardingComponentMappings([FIXTURES_DIR]);
-    const selectors = mappings.map(m => m.selector).sort();
-    expect(selectors).toEqual(['tn-chip', 'tn-empty', 'tn-input']);
+describe('discoverForwardingMappings', () => {
+  let tempDir: string;
+
+  beforeEach(() => {
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fwd-mappings-'));
   });
 
-  it('should not discover components that do not implement the interface', () => {
-    const mappings = findForwardingComponentMappings([FIXTURES_DIR]);
-    const selectors = mappings.map(m => m.selector);
-    expect(selectors).not.toContain('tn-button');
+  afterEach(() => {
+    fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
-  it('should extract single icon slot with library from tn-empty', () => {
-    const mappings = findForwardingComponentMappings([FIXTURES_DIR]);
-    const empty = mappings.find(m => m.selector === 'tn-empty');
+  describe('library manifest loading', () => {
+    it('should load mappings from the installed library manifest', () => {
+      const manifestDir = path.join(tempDir, 'node_modules/@truenas/ui-components/assets/tn-icons');
+      writeManifest(manifestDir, [
+        {
+          selector: 'tn-empty',
+          iconSlots: [{ iconAttribute: 'icon', libraryAttribute: 'iconLibrary', defaultLibrary: 'mdi' }],
+        },
+        {
+          selector: 'tn-chip',
+          iconSlots: [{ iconAttribute: 'icon' }],
+        },
+      ]);
 
-    expect(empty).toBeDefined();
-    expect(empty!.iconSlots).toHaveLength(1);
-    expect(empty!.iconSlots[0]).toEqual({
-      iconAttribute: 'icon',
-      libraryAttribute: 'iconLibrary',
-      defaultLibrary: 'mdi',
+      const mappings = discoverForwardingMappings([], tempDir);
+      expect(mappings).toHaveLength(2);
+
+      const selectors = mappings.map(m => m.selector).sort();
+      expect(selectors).toEqual(['tn-chip', 'tn-empty']);
+    });
+
+    it('should extract icon slot details from manifest', () => {
+      const manifestDir = path.join(tempDir, 'node_modules/@truenas/ui-components/assets/tn-icons');
+      writeManifest(manifestDir, [
+        {
+          selector: 'tn-empty',
+          iconSlots: [{ iconAttribute: 'icon', libraryAttribute: 'iconLibrary', defaultLibrary: 'mdi' }],
+        },
+      ]);
+
+      const mappings = discoverForwardingMappings([], tempDir);
+      expect(mappings[0].iconSlots[0]).toEqual({
+        iconAttribute: 'icon',
+        libraryAttribute: 'iconLibrary',
+        defaultLibrary: 'mdi',
+      });
+    });
+
+    it('should return empty array when library is not installed', () => {
+      const mappings = discoverForwardingMappings([], tempDir);
+      expect(mappings).toEqual([]);
+    });
+
+    it('should handle corrupt library manifest gracefully', () => {
+      const manifestDir = path.join(tempDir, 'node_modules/@truenas/ui-components/assets/tn-icons');
+      fs.mkdirSync(manifestDir, { recursive: true });
+      fs.writeFileSync(path.join(manifestDir, 'forwarding-mappings.json'), 'not valid json');
+
+      const mappings = discoverForwardingMappings([], tempDir);
+      expect(mappings).toEqual([]);
+    });
+
+    it('should handle manifest with non-array content gracefully', () => {
+      const manifestDir = path.join(tempDir, 'node_modules/@truenas/ui-components/assets/tn-icons');
+      fs.mkdirSync(manifestDir, { recursive: true });
+      fs.writeFileSync(path.join(manifestDir, 'forwarding-mappings.json'), '{"not": "an array"}');
+
+      const mappings = discoverForwardingMappings([], tempDir);
+      expect(mappings).toEqual([]);
     });
   });
 
-  it('should extract multiple icon slots from tn-input', () => {
-    const mappings = findForwardingComponentMappings([FIXTURES_DIR]);
-    const input = mappings.find(m => m.selector === 'tn-input');
+  describe('consumer manifest loading', () => {
+    it('should load mappings from a consumer source directory', () => {
+      const consumerSrc = path.join(tempDir, 'src/app');
+      writeManifest(consumerSrc, [
+        {
+          selector: 'app-status',
+          iconSlots: [{ iconAttribute: 'statusIcon', libraryAttribute: 'statusIconLibrary' }],
+        },
+      ]);
 
-    expect(input).toBeDefined();
-    expect(input!.iconSlots).toHaveLength(2);
+      const mappings = discoverForwardingMappings([consumerSrc], tempDir);
+      expect(mappings).toHaveLength(1);
+      expect(mappings[0].selector).toBe('app-status');
+    });
 
-    const attrNames = input!.iconSlots.map(s => s.iconAttribute).sort();
-    expect(attrNames).toEqual(['prefixIcon', 'suffixIcon']);
+    it('should ignore source dirs without a manifest', () => {
+      const emptySrc = path.join(tempDir, 'src/app');
+      fs.mkdirSync(emptySrc, { recursive: true });
 
-    const prefix = input!.iconSlots.find(s => s.iconAttribute === 'prefixIcon');
-    expect(prefix!.libraryAttribute).toBe('prefixIconLibrary');
+      const mappings = discoverForwardingMappings([emptySrc], tempDir);
+      expect(mappings).toEqual([]);
+    });
 
-    const suffix = input!.iconSlots.find(s => s.iconAttribute === 'suffixIcon');
-    expect(suffix!.libraryAttribute).toBe('suffixIconLibrary');
+    it('should handle non-existent source dirs', () => {
+      const mappings = discoverForwardingMappings(['/non/existent/path'], tempDir);
+      expect(mappings).toEqual([]);
+    });
   });
 
-  it('should handle component with no library attribute (tn-chip)', () => {
-    const mappings = findForwardingComponentMappings([FIXTURES_DIR]);
-    const chip = mappings.find(m => m.selector === 'tn-chip');
+  describe('merging library and consumer manifests', () => {
+    it('should merge mappings from library and consumer', () => {
+      // Library provides tn-empty
+      const libraryDir = path.join(tempDir, 'node_modules/@truenas/ui-components/assets/tn-icons');
+      writeManifest(libraryDir, [
+        {
+          selector: 'tn-empty',
+          iconSlots: [{ iconAttribute: 'icon', libraryAttribute: 'iconLibrary', defaultLibrary: 'mdi' }],
+        },
+      ]);
 
-    expect(chip).toBeDefined();
-    expect(chip!.iconSlots).toHaveLength(1);
-    expect(chip!.iconSlots[0].iconAttribute).toBe('icon');
-    expect(chip!.iconSlots[0].libraryAttribute).toBeUndefined();
-    expect(chip!.iconSlots[0].defaultLibrary).toBeUndefined();
-  });
+      // Consumer provides app-status
+      const consumerSrc = path.join(tempDir, 'src/app');
+      writeManifest(consumerSrc, [
+        {
+          selector: 'app-status',
+          iconSlots: [{ iconAttribute: 'statusIcon' }],
+        },
+      ]);
 
-  it('should return empty array for directory with no forwarding components', () => {
-    const mappings = findForwardingComponentMappings([path.resolve(__dirname, '../__fixtures__/custom-icons')]);
-    expect(mappings).toEqual([]);
-  });
+      const mappings = discoverForwardingMappings([consumerSrc], tempDir);
+      const selectors = mappings.map(m => m.selector).sort();
+      expect(selectors).toEqual(['app-status', 'tn-empty']);
+    });
 
-  it('should return empty array for non-existent directory', () => {
-    const mappings = findForwardingComponentMappings(['/non/existent/path']);
-    expect(mappings).toEqual([]);
-  });
+    it('should allow consumer to override a library mapping by selector', () => {
+      // Library defines tn-empty with defaultLibrary: 'mdi'
+      const libraryDir = path.join(tempDir, 'node_modules/@truenas/ui-components/assets/tn-icons');
+      writeManifest(libraryDir, [
+        {
+          selector: 'tn-empty',
+          iconSlots: [{ iconAttribute: 'icon', libraryAttribute: 'iconLibrary', defaultLibrary: 'mdi' }],
+        },
+      ]);
 
-  it('should deduplicate results from overlapping search paths', () => {
-    // Pass the same path twice — duplicates should be removed by selector
-    const mappings = findForwardingComponentMappings([FIXTURES_DIR, FIXTURES_DIR]);
-    expect(mappings).toHaveLength(3);
-    const selectors = mappings.map(m => m.selector).sort();
-    expect(selectors).toEqual(['tn-chip', 'tn-empty', 'tn-input']);
+      // Consumer overrides tn-empty with a different default
+      const consumerSrc = path.join(tempDir, 'src/app');
+      writeManifest(consumerSrc, [
+        {
+          selector: 'tn-empty',
+          iconSlots: [{ iconAttribute: 'icon', libraryAttribute: 'iconLibrary', defaultLibrary: 'material' }],
+        },
+      ]);
+
+      const mappings = discoverForwardingMappings([consumerSrc], tempDir);
+      expect(mappings).toHaveLength(1);
+      expect(mappings[0].iconSlots[0].defaultLibrary).toBe('material');
+    });
+
+    it('should merge manifests from multiple consumer source dirs', () => {
+      const srcApp = path.join(tempDir, 'src/app');
+      writeManifest(srcApp, [
+        { selector: 'app-foo', iconSlots: [{ iconAttribute: 'icon' }] },
+      ]);
+
+      const srcLib = path.join(tempDir, 'src/lib');
+      writeManifest(srcLib, [
+        { selector: 'app-bar', iconSlots: [{ iconAttribute: 'barIcon' }] },
+      ]);
+
+      const mappings = discoverForwardingMappings([srcApp, srcLib], tempDir);
+      const selectors = mappings.map(m => m.selector).sort();
+      expect(selectors).toEqual(['app-bar', 'app-foo']);
+    });
   });
 });
