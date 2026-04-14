@@ -3,6 +3,8 @@ import type { AfterContentInit } from '@angular/core';
 import { Component, input, computed, signal, contentChild } from '@angular/core';
 import { NgControl } from '@angular/forms';
 
+export type SubscriptSizing = 'fixed' | 'dynamic';
+
 @Component({
   selector: 'tn-form-field',
   standalone: true,
@@ -15,6 +17,7 @@ export class TnFormFieldComponent implements AfterContentInit {
   hint = input<string>('');
   required = input<boolean>(false);
   testId = input<string>('');
+  subscriptSizing = input<SubscriptSizing>('dynamic');
 
   control = contentChild(NgControl);
 
@@ -72,5 +75,9 @@ export class TnFormFieldComponent implements AfterContentInit {
 
   showHint = computed(() => {
     return !!this.hint() && !this.showError();
+  });
+
+  protected showSubscript = computed(() => {
+    return this.subscriptSizing() === 'fixed' || this.showError() || this.showHint();
   });
 }

@@ -65,6 +65,11 @@ When used with Angular reactive forms, the form field automatically:
       control: 'text',
       description: 'Test ID for automated testing',
     },
+    subscriptSizing: {
+      control: 'radio',
+      options: ['fixed', 'dynamic'],
+      description: 'Controls whether the subscript area reserves space when empty. "fixed" always reserves space (prevents layout shift), "dynamic" collapses when empty.',
+    },
   },
 };
 
@@ -85,7 +90,8 @@ export const BasicInput: Story = {
         [label]="label"
         [hint]="hint"
         [required]="required"
-        [testId]="testId">
+        [testId]="testId"
+        [subscriptSizing]="subscriptSizing">
         <tn-input
           inputType="text"
           placeholder="Enter your name">
@@ -112,7 +118,8 @@ export const RequiredField: Story = {
         [label]="label"
         [hint]="hint"
         [required]="required"
-        [testId]="testId">
+        [testId]="testId"
+        [subscriptSizing]="subscriptSizing">
         <tn-input
           inputType="email"
           placeholder="Enter your email address">
@@ -195,7 +202,8 @@ export const WithSelect: Story = {
         [label]="label"
         [hint]="hint"
         [required]="required"
-        [testId]="testId">
+        [testId]="testId"
+        [subscriptSizing]="subscriptSizing">
         <tn-select
           [options]="options"
           placeholder="Choose a size">
@@ -222,7 +230,8 @@ export const WithCheckbox: Story = {
         [label]="label"
         [hint]="hint"
         [required]="required"
-        [testId]="testId">
+        [testId]="testId"
+        [subscriptSizing]="subscriptSizing">
         <tn-checkbox
           label="I agree to the terms and conditions">
         </tn-checkbox>
@@ -248,7 +257,8 @@ export const WithRadioGroup: Story = {
         [label]="label"
         [hint]="hint"
         [required]="required"
-        [testId]="testId">
+        [testId]="testId"
+        [subscriptSizing]="subscriptSizing">
         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
           <tn-radio
             name="priority"
@@ -386,6 +396,40 @@ export const MultipleFields: Story = {
     },
   }),
   args: {},
+};
+
+export const SubscriptSizing: Story = {
+  render: () => ({
+    props: {
+      fixedControl: new FormControl('', Validators.required),
+      dynamicControl: new FormControl('', Validators.required),
+    },
+    template: `
+      <div style="display: flex; gap: 2rem; max-width: 800px;">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 1rem;">
+          <h4 style="margin: 0; color: var(--tn-fg1);">Fixed (reserves space)</h4>
+          <tn-form-field label="Name" subscriptSizing="fixed" [required]="true">
+            <tn-input [formControl]="fixedControl" placeholder="Enter name" />
+          </tn-form-field>
+          <tn-form-field label="No Validation" subscriptSizing="fixed">
+            <tn-input placeholder="Notice space below" />
+          </tn-form-field>
+        </div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 1rem;">
+          <h4 style="margin: 0; color: var(--tn-fg1);">Dynamic (collapses when empty)</h4>
+          <tn-form-field label="Name" subscriptSizing="dynamic" [required]="true">
+            <tn-input [formControl]="dynamicControl" placeholder="Enter name" />
+          </tn-form-field>
+          <tn-form-field label="No Validation" subscriptSizing="dynamic">
+            <tn-input placeholder="No extra space below" />
+          </tn-form-field>
+        </div>
+      </div>
+    `,
+    moduleMetadata: {
+      imports: [TnInputComponent, ReactiveFormsModule],
+    },
+  }),
 };
 
 export const ComponentHarness: Story = {
