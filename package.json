@@ -26,6 +26,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "jest --config ./projects/truenas-ui/jest.config.ts",
+    "test:scripts": "jest --config ./projects/truenas-ui/scripts/icon-sprite/jest.config.ts --rootDir ./projects/truenas-ui/scripts/icon-sprite",
     "test-cc": "yarn jest --clearCache && yarn jest --config ./projects/truenas-ui/jest.config.ts",
     "test-coverage": "yarn jest --clearCache && yarn jest --config ./projects/truenas-ui/jest.config.ts --coverage",
     "test-sb": "test-storybook",

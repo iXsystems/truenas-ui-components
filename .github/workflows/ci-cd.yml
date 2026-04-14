@@ -61,8 +61,11 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Run tests
+      - name: Run component tests
         run: yarn test
+
+      - name: Run script tests
+        run: yarn test:scripts
 
   build:
     name: Build Library

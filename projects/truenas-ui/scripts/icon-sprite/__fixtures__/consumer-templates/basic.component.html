@@ -1,0 +1,30 @@
+<!-- Static tn-icon -->
+<tn-icon name="folder" library="mdi"></tn-icon>
+
+<!-- Bound tn-icon with ternary -->
+<tn-icon [name]="expanded ? 'chevron-down' : 'chevron-right'" library="mdi"></tn-icon>
+
+<!-- Material icon -->
+<tn-icon name="check_circle" library="material"></tn-icon>
+
+<!-- Registry format (should be skipped) -->
+<tn-icon name="lucide:home"></tn-icon>
+
+<!-- tn-icon-button -->
+<tn-icon-button name="close" library="mdi"></tn-icon-button>
+
+<!-- Forwarding: tn-empty with static icon -->
+<tn-empty icon="inbox" iconLibrary="mdi" title="No messages"></tn-empty>
+
+<!-- Forwarding: tn-empty with bound icon ternary -->
+<tn-empty [icon]="hasData ? 'check' : 'alert'" title="Status"></tn-empty>
+
+<!-- Forwarding: tn-input with prefix/suffix icons -->
+<tn-input prefixIcon="search" prefixIconLibrary="mdi"></tn-input>
+<tn-input suffixIcon="eye" suffixIconLibrary="material"></tn-input>
+
+<!-- Forwarding: tn-chip (no library, no default) -->
+<tn-chip icon="star"></tn-chip>
+
+<!-- Dynamic binding (not extractable) -->
+<tn-empty [icon]="dynamicIcon()" title="Dynamic"></tn-empty>

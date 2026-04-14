@@ -37,10 +37,13 @@ export function findIconsInTemplates(
       defaultLibrary: string | undefined,
     ) => {
       // Check both static and [bound] attributes (Angular binding syntax)
-      const staticName = parsedTemplate(el).attr(iconAttr);
-      const boundName = parsedTemplate(el).attr(`[${iconAttr}]`);
-      const library = libraryAttr
-        ? parsedTemplate(el).attr(libraryAttr) || parsedTemplate(el).attr(`[${libraryAttr}]`)
+      // Cheerio lowercases HTML attribute names, so look up the lowercase form
+      const iconAttrLower = iconAttr.toLowerCase();
+      const staticName = parsedTemplate(el).attr(iconAttrLower);
+      const boundName = parsedTemplate(el).attr(`[${iconAttrLower}]`);
+      const libraryAttrLower = libraryAttr?.toLowerCase();
+      const library = libraryAttrLower
+        ? parsedTemplate(el).attr(libraryAttrLower) || parsedTemplate(el).attr(`[${libraryAttrLower}]`)
         : undefined;
 
       // Resolve library: use explicit value, fall back to default
