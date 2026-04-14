@@ -2,6 +2,8 @@ import crypto from 'crypto';
 import fs from 'fs';
 import { resolve } from 'path';
 import { buildSprite } from './lib/build-sprite';
+import { findForwardingComponentMappings } from './lib/find-icons-in-forwarding-components';
+import type { ForwardingComponentMapping } from './lib/find-icons-in-forwarding-components';
 import { findIconsInTemplates } from './lib/find-icons-in-templates';
 import { findIconsWithMarker } from './lib/find-icons-with-marker';
 import { getIconPaths } from './lib/get-icon-paths';
@@ -35,17 +37,27 @@ export async function generateSprite(config: SpriteGeneratorConfig = {}): Promis
       console.info(`Loaded ${libraryIcons.size} icon(s) from truenas-ui library`);
     }
 
+    // Discover icon-forwarding components from source dirs AND from the library
+    const forwardingMappings = discoverForwardingMappings(srcDirs, resolved.projectRoot);
+    if (forwardingMappings.length > 0) {
+      console.info(`Discovered ${forwardingMappings.length} icon-forwarding component(s):`);
+      for (const mapping of forwardingMappings) {
+        const slots = mapping.iconSlots.map(s => s.iconAttribute).join(', ');
+        console.info(`  ${mapping.selector} → [${slots}]`);
+      }
+    }
+
     // Scan all source directories for icon usage, skipping icons already in library
     const templateIcons = new Set<string>();
     const markerIcons = new Set<string>();
 
     for (const srcDir of srcDirs) {
       if (fs.existsSync(srcDir)) {
-        const dirTemplateIcons = findIconsInTemplates(srcDir, libraryIcons);
-        const dirMarkerIcons = findIconsWithMarker(srcDir, libraryIcons);
+        const dirTemplateResult = findIconsInTemplates(srcDir, libraryIcons, forwardingMappings);
+        const dirMarkerResult = findIconsWithMarker(srcDir, libraryIcons);
 
-        dirTemplateIcons.forEach(icon => templateIcons.add(icon));
-        dirMarkerIcons.forEach(icon => markerIcons.add(icon));
+        dirTemplateResult.icons.forEach(icon => templateIcons.add(icon));
+        dirMarkerResult.icons.forEach(icon => markerIcons.add(icon));
       } else {
         console.warn(`Source directory not found, skipping: ${srcDir}`);
       }
@@ -109,6 +121,23 @@ export async function generateSprite(config: SpriteGeneratorConfig = {}): Promis
     console.error('Error when building the icon sprite:', error);
     throw error;
   }
+}
+
+/**
+ * Discover icon-forwarding component mappings from multiple sources:
+ * 1. The library itself (in node_modules, if installed as a dependency)
+ * 2. Consumer source directories
+ */
+function discoverForwardingMappings(srcDirs: string[], projectRoot: string): ForwardingComponentMapping[] {
+  const searchPaths = [...srcDirs];
+
+  // Also search the installed library source for forwarding components
+  const libSrcPath = resolve(projectRoot, 'node_modules/@truenas/ui-components/src/lib');
+  if (fs.existsSync(libSrcPath)) {
+    searchPaths.push(libSrcPath);
+  }
+
+  return findForwardingComponentMappings(searchPaths);
 }
 
 /**

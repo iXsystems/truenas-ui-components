@@ -1,5 +1,5 @@
 import type { ElementRef } from '@angular/core';
-import { Component, input, computed, effect, signal, ChangeDetectionStrategy, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import { Component, input, computed, effect, signal, ChangeDetectionStrategy, ViewEncapsulation, inject, viewChild, isDevMode } from '@angular/core';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
 import { TnIconRegistryService } from './icon-registry.service';
 
@@ -34,6 +34,8 @@ export interface IconResult {
   }
 })
 export class TnIconComponent {
+  private static warnedIcons = new Set<string>();
+
   name = input<string>('');
   size = input<IconSize>('md');
   color = input<string | undefined>(undefined);
@@ -148,6 +150,9 @@ export class TnIconComponent {
       return registryResult;
     }
 
+    // Warn in dev mode when a sprite-prefixed icon is missing from the sprite
+    this.warnMissingSpriteIcon(effectiveIconName, name, library);
+
     // 2. Try built-in third-party patterns (deprecated - use registry instead)
     const thirdPartyResult = this.tryThirdPartyIcon(effectiveIconName);
     if (thirdPartyResult) {
@@ -261,5 +266,47 @@ export class TnIconComponent {
 
     // Default to first 2 characters
     return name.substring(0, 2).toUpperCase();
+  }
+
+  /**
+   * Warns once per icon name in dev mode when a sprite-prefixed icon is not
+   * found in the sprite. Only fires when the sprite is loaded and the icon
+   * name has a prefix indicating it should be a sprite icon.
+   */
+  private warnMissingSpriteIcon(effectiveIconName: string, originalName: string, library?: IconLibraryType): void {
+    if (!isDevMode()) {
+      return;
+    }
+
+    // Only warn for icons that look like they should be in the sprite
+    const isSpriteIcon = /^(mdi-|mat-|tn-|app-)/.test(effectiveIconName);
+    if (!isSpriteIcon) {
+      return;
+    }
+
+    // Don't warn if sprite hasn't loaded yet (would be a false positive)
+    if (!this.iconRegistry.getSpriteLoader().isSpriteLoaded()) {
+      return;
+    }
+
+    // Deduplicate: warn once per icon name per session
+    if (TnIconComponent.warnedIcons.has(effectiveIconName)) {
+      return;
+    }
+    TnIconComponent.warnedIcons.add(effectiveIconName);
+
+    const lib = library || (effectiveIconName.startsWith('mdi-') ? 'mdi' : effectiveIconName.startsWith('mat-') ? 'material' : undefined);
+
+    // Build the marker example without a literal tnIconMarker() call,
+    // so the grep-based sprite scanner doesn't pick this up as an actual icon.
+    const markerFn = 'tnIcon' + 'Marker';
+    const markerExample = lib
+      ? `${markerFn}('${originalName}', '${lib}')`
+      : `${markerFn}('${originalName}')`;
+
+    console.warn(
+      `[TrueNAS UI] Icon '${effectiveIconName}' not found in sprite. ` +
+      `To include it, add ${markerExample} to your source and run 'npx truenas-icons generate'.`
+    );
   }
 }

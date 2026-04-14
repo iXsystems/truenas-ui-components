@@ -1,31 +1,66 @@
 import fs from 'fs';
 import fg from 'fast-glob';
 import * as cheerio from 'cheerio';
+import type { ForwardingComponentMapping } from './find-icons-in-forwarding-components';
 
-export function findIconsInTemplates(path: string, skipIcons?: Set<string>): Set<string> {
+export interface ScanResult {
+  icons: Set<string>;
+  sources: Map<string, string[]>;
+}
+
+export function findIconsInTemplates(
+  path: string,
+  skipIcons?: Set<string>,
+  forwardingMappings?: ForwardingComponentMapping[],
+): ScanResult {
   const iconNames = new Set<string>();
+  const sources = new Map<string, string[]>();
 
   const templates = fg.sync(`${path}/**/*.html`);
+
+  const addIcon = (iconName: string, templateFile: string) => {
+    iconNames.add(iconName);
+    const existing = sources.get(iconName) || [];
+    existing.push(templateFile);
+    sources.set(iconName, existing);
+  };
 
   templates.forEach((template) => {
     const content = fs.readFileSync(template, 'utf-8');
     const parsedTemplate = cheerio.load(content);
 
-    // Helper function to extract icon names from elements (used for both tn-icon and tn-icon-button)
-    const processIconElement = (iconTag: cheerio.Element) => {
-      // Check both 'name' and '[name]' attributes (Angular binding syntax)
-      const staticName = parsedTemplate(iconTag).attr('name');
-      const boundName = parsedTemplate(iconTag).attr('[name]');
-      const library = parsedTemplate(iconTag).attr('library');
+    // Generic function to extract icon names from an element's attributes
+    const processElement = (
+      el: cheerio.Element,
+      iconAttr: string,
+      libraryAttr: string | undefined,
+      defaultLibrary: string | undefined,
+    ) => {
+      // Check both static and [bound] attributes (Angular binding syntax)
+      const staticName = parsedTemplate(el).attr(iconAttr);
+      const boundName = parsedTemplate(el).attr(`[${iconAttr}]`);
+      const library = libraryAttr
+        ? parsedTemplate(el).attr(libraryAttr) || parsedTemplate(el).attr(`[${libraryAttr}]`)
+        : undefined;
+
+      // Resolve library: use explicit value, fall back to default
+      let resolvedLibrary = defaultLibrary;
+      if (library) {
+        // Handle both static library="mdi" and bound [library]="'mdi'"
+        const staticLib = library.replace(/^['"]|['"]$/g, '');
+        if (/^[a-z]+$/.test(staticLib)) {
+          resolvedLibrary = staticLib;
+        }
+      }
 
       const extractedNames: string[] = [];
 
-      // Handle static name attribute: name="folder"
+      // Handle static name attribute: icon="folder"
       if (staticName) {
         extractedNames.push(staticName);
       }
 
-      // Handle bound name attribute: [name]="expression"
+      // Handle bound name attribute: [icon]="expression"
       // Extract string literals from the expression
       if (boundName) {
         // Match string literals that are values, not comparison operands
@@ -46,7 +81,7 @@ export function findIconsInTemplates(path: string, skipIcons?: Set<string>): Set
         }
 
         // Also handle simple string literals (no ternary, no comparison)
-        // e.g., [name]="'folder'" (though this is unusual)
+        // e.g., [icon]="'folder'" (though this is unusual)
         if (!boundName.includes('?') && !boundName.includes('=')) {
           const simpleStringRegex = /^['"]([^'"]+)['"]$/;
           const simpleMatch = boundName.match(simpleStringRegex);
@@ -72,13 +107,13 @@ export function findIconsInTemplates(path: string, skipIcons?: Set<string>): Set
         let finalIconName: string;
 
         // Handle library attribute - prefix the icon name with library prefix
-        if (library === 'mdi' && !iconName.startsWith('mdi-')) {
+        if (resolvedLibrary === 'mdi' && !iconName.startsWith('mdi-')) {
           finalIconName = `mdi-${iconName}`;
-        } else if (library === 'custom' && !iconName.startsWith('app-') && !iconName.startsWith('tn-')) {
+        } else if (resolvedLibrary === 'custom' && !iconName.startsWith('app-') && !iconName.startsWith('tn-')) {
           // Consumer custom icons get app- prefix
           // (Library templates should never use library="custom", they use libIconMarker() instead)
           finalIconName = `app-${iconName}`;
-        } else if (library === 'material' && !iconName.startsWith('mat-')) {
+        } else if (resolvedLibrary === 'material' && !iconName.startsWith('mat-')) {
           finalIconName = `mat-${iconName}`; // Material icons get mat- prefix
         } else {
           finalIconName = iconName;
@@ -89,20 +124,31 @@ export function findIconsInTemplates(path: string, skipIcons?: Set<string>): Set
           return;
         }
 
-        iconNames.add(finalIconName);
+        addIcon(finalIconName, template);
       });
     };
 
     // Scan tn-icon elements
     parsedTemplate('tn-icon').each((_, iconTag) => {
-      processIconElement(iconTag);
+      processElement(iconTag, 'name', 'library', undefined);
     });
 
     // Scan tn-icon-button elements (they also have name and library attributes)
     parsedTemplate('tn-icon-button').each((_, iconTag) => {
-      processIconElement(iconTag);
+      processElement(iconTag, 'name', 'library', undefined);
     });
+
+    // Scan icon-forwarding components
+    if (forwardingMappings) {
+      for (const mapping of forwardingMappings) {
+        parsedTemplate(mapping.selector).each((_, el) => {
+          for (const slot of mapping.iconSlots) {
+            processElement(el, slot.iconAttribute, slot.libraryAttribute, slot.defaultLibrary);
+          }
+        });
+      }
+    }
   });
 
-  return iconNames;
+  return { icons: iconNames, sources };
 }

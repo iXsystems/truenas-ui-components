@@ -5,6 +5,7 @@
  *
  * Usage:
  *   npx truenas-icons generate [options]
+ *   npx truenas-icons validate [options]
  *
  * Options:
  *   --src <dirs>        Comma-separated source directories to scan (default: ./src/lib,./src/app)
@@ -25,6 +26,8 @@
  */
 
 import { generateSprite } from './generate-sprite.js';
+import { validateIcons, printValidationReport } from './lib/validate-icons.js';
+import { resolveConfig } from './sprite-config-interface.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -33,6 +36,11 @@ truenas-icons - Icon sprite generation for TrueNAS UI components
 
 Usage:
   npx truenas-icons generate [options]
+  npx truenas-icons validate [options]
+
+Commands:
+  generate            Scan source files and generate the icon sprite
+  validate            Check for missing or stale icons without rebuilding
 
 Options:
   --src <dirs>        Comma-separated source directories to scan
@@ -67,6 +75,9 @@ Examples:
   # Generate with defaults
   npx truenas-icons generate
 
+  # Validate current sprite against code
+  npx truenas-icons validate
+
   # Specify custom source directories
   npx truenas-icons generate --src ./src,./app
 
@@ -94,8 +105,8 @@ function parseArgs() {
 
     if (arg === '--help' || arg === '-h') {
       parsed.showHelp = true;
-    } else if (arg === 'generate') {
-      parsed.command = 'generate';
+    } else if (arg === 'generate' || arg === 'validate') {
+      parsed.command = arg;
     } else if (arg === '--src') {
       parsed.srcDirs = args[++i]?.split(',') || null;
     } else if (arg === '--output') {
@@ -143,8 +154,8 @@ async function main() {
     process.exit(0);
   }
 
-  if (!args.command || args.command !== 'generate') {
-    console.error('Error: No command specified. Use "generate" to create icon sprite.');
+  if (!args.command || !['generate', 'validate'].includes(args.command)) {
+    console.error('Error: No command specified. Use "generate" or "validate".');
     console.log('\nRun "truenas-icons --help" for usage information.');
     process.exit(1);
   }
@@ -162,11 +173,19 @@ async function main() {
       projectRoot: process.cwd(),
     };
 
-    console.log('Generating icon sprite...\n');
-    await generateSprite(config);
-    console.log('\nIcon sprite generated successfully!');
+    if (args.command === 'generate') {
+      console.log('Generating icon sprite...\n');
+      await generateSprite(config);
+      console.log('\nIcon sprite generated successfully!');
+    } else if (args.command === 'validate') {
+      console.log('Validating icon sprite...\n');
+      const resolved = resolveConfig(config);
+      const result = validateIcons(resolved);
+      const exitCode = printValidationReport(result);
+      process.exit(exitCode);
+    }
   } catch (error: any) {
-    console.error('\nError generating sprite:', error.message);
+    console.error('\nError:', error.message);
     process.exit(1);
   }
 }

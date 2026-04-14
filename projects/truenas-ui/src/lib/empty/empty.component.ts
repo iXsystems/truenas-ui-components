@@ -1,5 +1,6 @@
 import { Component, input, output, computed } from '@angular/core';
 import { TnButtonComponent } from '../button/button.component';
+import type { TnIconForwardingComponent } from '../icon/icon-forwarding';
 import { TnIconComponent } from '../icon/icon.component';
 import type { IconLibraryType } from '../icon/icon.component';
 
@@ -18,7 +19,7 @@ export type TnEmptySize = 'default' | 'compact';
     'role': 'status',
   },
 })
-export class TnEmptyComponent {
+export class TnEmptyComponent implements TnIconForwardingComponent {
   title = input.required<string>();
   description = input<string>();
   icon = input<string>();
