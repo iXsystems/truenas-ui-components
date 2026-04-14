@@ -4,7 +4,6 @@ import { Component, viewChild, inject, input, output, computed, signal, forwardR
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { InputType } from '../enums/input-type.enum';
-import type { TnIconForwardingComponent } from '../icon/icon-forwarding';
 import type { IconLibraryType } from '../icon/icon.component';
 import { TnIconComponent } from '../icon/icon.component';
 
@@ -22,7 +21,7 @@ import { TnIconComponent } from '../icon/icon.component';
   templateUrl: './input.component.html',
   styleUrl: './input.component.scss',
 })
-export class TnInputComponent implements TnIconForwardingComponent, AfterViewInit, ControlValueAccessor {
+export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
   inputEl = viewChild.required<ElementRef<HTMLInputElement | HTMLTextAreaElement>>('inputEl');
 
   inputType = input<InputType>(InputType.PlainText);

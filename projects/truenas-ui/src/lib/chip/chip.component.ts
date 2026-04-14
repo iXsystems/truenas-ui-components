@@ -2,7 +2,6 @@ import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
 import { CommonModule } from '@angular/common';
 import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
 import { Component, input, output, computed, viewChild, inject } from '@angular/core';
-import type { TnIconForwardingComponent } from '../icon/icon-forwarding';
 import { TnIconComponent } from '../icon/icon.component';
 
 export type ChipColor = 'primary' | 'secondary' | 'accent';
@@ -14,7 +13,7 @@ export type ChipColor = 'primary' | 'secondary' | 'accent';
   templateUrl: './chip.component.html',
   styleUrls: ['./chip.component.scss'],
 })
-export class TnChipComponent implements TnIconForwardingComponent, AfterViewInit, OnDestroy {
+export class TnChipComponent implements AfterViewInit, OnDestroy {
   chipEl = viewChild.required<ElementRef<HTMLElement>>('chipEl');
 
   label = input<string>('Chip');

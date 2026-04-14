@@ -263,10 +263,11 @@ To add a new custom icon to the library:
 The sprite generation system automatically:
 
 1. **Scans your code** for `tnIconMarker()` and `libIconMarker()` calls
-2. **Scans templates** for `<tn-icon>` component usage
-3. **Resolves icon paths** based on library type and prefix
-4. **Generates a sprite** containing only the icons you use
-5. **Creates a manifest** (`sprite-config.json`) for debugging
+2. **Scans templates** for `<tn-icon>` and `<tn-icon-button>` usage
+3. **Scans forwarding components** (e.g., `<tn-empty icon="inbox">`) using the `forwarding-mappings.json` manifest
+4. **Resolves icon paths** based on library type and prefix
+5. **Generates a sprite** containing only the icons you use
+6. **Creates a manifest** (`sprite-config.json`) for debugging
 
 **Manual sprite generation:**
 ```bash
@@ -278,6 +279,36 @@ yarn generate-sprite
 # Library sprite
 cat projects/truenas-ui/assets/tn-icons/sprite-config.json
 ```
+
+### Icon Forwarding Mappings
+
+Some components accept icon inputs and forward them to an internal `<tn-icon>`. These are tracked in `forwarding-mappings.json` so the sprite generator can detect icons passed via their attributes.
+
+**Library manifest:** `projects/truenas-ui/assets/tn-icons/forwarding-mappings.json`
+
+When adding a new library component that forwards icon inputs to `<tn-icon>`, add an entry to this manifest:
+
+```json
+{
+  "selector": "tn-my-component",
+  "iconSlots": [
+    {
+      "iconAttribute": "icon",
+      "libraryAttribute": "iconLibrary",
+      "defaultLibrary": "mdi"
+    }
+  ]
+}
+```
+
+Fields:
+- `selector` — The component's CSS selector (e.g., `tn-empty`)
+- `iconSlots` — Array of icon input mappings on the component
+  - `iconAttribute` — The input name that accepts the icon name (e.g., `icon`, `prefixIcon`)
+  - `libraryAttribute` — (optional) The input name that accepts the icon library
+  - `defaultLibrary` — (optional) Default library when no library attribute is provided
+
+The manifest is a static file shipped in the published package, so consumer apps can detect forwarding components without access to library source code.
 
 ### Git Hook Enforcement
 

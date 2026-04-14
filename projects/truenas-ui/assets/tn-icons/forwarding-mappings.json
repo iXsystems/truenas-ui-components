@@ -1,0 +1,33 @@
+[
+  {
+    "selector": "tn-empty",
+    "iconSlots": [
+      {
+        "iconAttribute": "icon",
+        "libraryAttribute": "iconLibrary",
+        "defaultLibrary": "mdi"
+      }
+    ]
+  },
+  {
+    "selector": "tn-input",
+    "iconSlots": [
+      {
+        "iconAttribute": "prefixIcon",
+        "libraryAttribute": "prefixIconLibrary"
+      },
+      {
+        "iconAttribute": "suffixIcon",
+        "libraryAttribute": "suffixIconLibrary"
+      }
+    ]
+  },
+  {
+    "selector": "tn-chip",
+    "iconSlots": [
+      {
+        "iconAttribute": "icon"
+      }
+    ]
+  }
+]
