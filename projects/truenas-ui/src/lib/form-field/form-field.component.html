@@ -15,19 +15,21 @@
   </div>
 
   <!-- Hint or Error Message -->
-  <div class="tn-form-field-subscript">
-    @if (showError()) {
-      <div
-        class="tn-form-field-error"
-        role="alert"
-        aria-live="polite">
-        {{ errorMessage() }}
-      </div>
-    }
-    @if (showHint()) {
-      <div class="tn-form-field-hint">
-        {{ hint() }}
-      </div>
-    }
-  </div>
+  @if (showSubscript()) {
+    <div class="tn-form-field-subscript" [class.tn-form-field-subscript-dynamic]="subscriptSizing() === 'dynamic'">
+      @if (showError()) {
+        <div
+          class="tn-form-field-error"
+          role="alert"
+          aria-live="polite">
+          {{ errorMessage() }}
+        </div>
+      }
+      @if (showHint()) {
+        <div class="tn-form-field-hint">
+          {{ hint() }}
+        </div>
+      }
+    </div>
+  }
 </div>

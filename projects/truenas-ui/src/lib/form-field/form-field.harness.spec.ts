@@ -30,6 +30,14 @@ import { TnInputComponent } from '../input/input.component';
     <tn-form-field label="Custom" testId="custom-field">
       <tn-input [formControl]="customControl" />
     </tn-form-field>
+
+    <tn-form-field label="Fixed" testId="fixed-field" subscriptSizing="fixed">
+      <tn-input [formControl]="fixedControl" />
+    </tn-form-field>
+
+    <tn-form-field label="Dynamic" testId="dynamic-field" subscriptSizing="dynamic" hint="A dynamic hint">
+      <tn-input [formControl]="dynamicControl" />
+    </tn-form-field>
   `
 })
 class TestHostComponent {
@@ -37,6 +45,8 @@ class TestHostComponent {
   emailControl = new FormControl('', [Validators.required, Validators.email]);
   optionalControl = new FormControl('');
   customControl = new FormControl('', customValidator());
+  fixedControl = new FormControl('');
+  dynamicControl = new FormControl('', Validators.required);
 }
 
 function customValidator(): ValidatorFn {
@@ -93,7 +103,7 @@ describe('TnFormFieldHarness', () => {
 
     it('should find all form fields', async () => {
       const fields = await loader.getAllHarnesses(TnFormFieldHarness);
-      expect(fields.length).toBe(4);
+      expect(fields.length).toBe(6);
     });
   });
 
@@ -237,6 +247,47 @@ describe('TnFormFieldHarness', () => {
         TnFormFieldHarness.with({ label: 'Name' })
       );
       expect(await field.getTestId()).toBe('name-field');
+    });
+  });
+
+  describe('subscriptSizing', () => {
+    it('should default to dynamic mode with no subscript when empty', async () => {
+      const field = await loader.getHarness(
+        TnFormFieldHarness.with({ label: 'Optional' })
+      );
+      expect(await field.hasSubscript()).toBe(false);
+      expect(await field.getSubscriptSizing()).toBe('dynamic');
+    });
+
+    it('should always render subscript in fixed mode', async () => {
+      const field = await loader.getHarness(
+        TnFormFieldHarness.with({ testId: 'fixed-field' })
+      );
+      expect(await field.hasSubscript()).toBe(true);
+      expect(await field.getSubscriptSizing()).toBe('fixed');
+    });
+
+    it('should render subscript in dynamic mode when hint is present', async () => {
+      const field = await loader.getHarness(
+        TnFormFieldHarness.with({ testId: 'dynamic-field' })
+      );
+      expect(await field.hasSubscript()).toBe(true);
+      expect(await field.getSubscriptSizing()).toBe('dynamic');
+      expect(await field.getHint()).toBe('A dynamic hint');
+    });
+
+    it('should show error in dynamic mode', async () => {
+      const host = fixture.componentInstance;
+      host.dynamicControl.markAsTouched();
+      host.dynamicControl.updateValueAndValidity();
+      fixture.detectChanges();
+
+      const field = await loader.getHarness(
+        TnFormFieldHarness.with({ testId: 'dynamic-field' })
+      );
+      expect(await field.hasSubscript()).toBe(true);
+      expect(await field.hasError()).toBe(true);
+      expect(await field.getErrorMessage()).toBe('This field is required');
     });
   });
 });

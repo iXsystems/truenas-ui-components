@@ -162,6 +162,42 @@ export class TnFormFieldHarness extends ComponentHarness {
     const root = await this.locatorFor('.tn-form-field')();
     return root.getAttribute('data-testid');
   }
+
+  /**
+   * Checks whether the subscript wrapper is currently rendered.
+   *
+   * @returns Promise resolving to true if the subscript area is present in the DOM.
+   *
+   * @example
+   * ```typescript
+   * const field = await loader.getHarness(TnFormFieldHarness.with({ label: 'Name' }));
+   * expect(await field.hasSubscript()).toBe(false);
+   * ```
+   */
+  async hasSubscript(): Promise<boolean> {
+    const subscript = await this.locatorForOptional('.tn-form-field-subscript')();
+    return subscript !== null;
+  }
+
+  /**
+   * Gets the current subscript sizing mode.
+   *
+   * @returns Promise resolving to `'fixed'` or `'dynamic'`.
+   *
+   * @example
+   * ```typescript
+   * const field = await loader.getHarness(TnFormFieldHarness.with({ label: 'Name' }));
+   * expect(await field.getSubscriptSizing()).toBe('dynamic');
+   * ```
+   */
+  async getSubscriptSizing(): Promise<string> {
+    const subscript = await this.locatorForOptional('.tn-form-field-subscript')();
+    if (!subscript) {
+      return 'dynamic';
+    }
+    const isDynamic = await subscript.hasClass('tn-form-field-subscript-dynamic');
+    return isDynamic ? 'dynamic' : 'fixed';
+  }
 }
 
 /**
