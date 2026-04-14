@@ -1,10 +1,10 @@
-import { execSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import type { ScanResult } from './find-icons-in-templates';
 
 export function findIconsWithMarker(path: string, skipIcons?: Set<string>): ScanResult {
   // Updated regex to capture tnIconMarker() and libIconMarker() calls with optional second parameter
   // Matches: tnIconMarker('name') or tnIconMarker('name', 'library') or libIconMarker('tn-name')
-  const command = `grep -rEo "(tn|lib)IconMarker\\\\('[^']+',?\\s*'?[^'\\)]*'?\\)" --include="*.ts" --include="*.html" ${path}`;
+  const pattern = "(tn|lib)IconMarker\\('[^']+',?\\s*'?[^'\\)]*'?\\)";
 
   const icons = new Set<string>();
   const sources = new Map<string, string[]>();
@@ -16,12 +16,24 @@ export function findIconsWithMarker(path: string, skipIcons?: Set<string>): Scan
     sources.set(iconName, existing);
   };
 
-  try {
-    const output = execSync(command, { encoding: 'utf-8' });
-    output
-      .split('\n')
-      .filter(Boolean)
-      .forEach((line) => {
+  const result = spawnSync(
+    'grep',
+    ['-rEo', pattern, '--include=*.ts', '--include=*.html', path],
+    { encoding: 'utf-8' },
+  );
+
+  if (result.status === 1 && !result.stderr) {
+    // grep returns exit code 1 when no matches found
+    return { icons, sources };
+  }
+  if (result.status !== 0 && result.status !== 1) {
+    throw new Error(`grep failed: ${result.stderr}`);
+  }
+
+  result.stdout
+    .split('\n')
+    .filter(Boolean)
+    .forEach((line) => {
         // grep output format: "filepath:match"
         const colonIdx = line.indexOf(':');
         if (colonIdx === -1) {
@@ -61,15 +73,6 @@ export function findIconsWithMarker(path: string, skipIcons?: Set<string>): Scan
 
         addIcon(iconName, sourceFile);
       });
-  } catch (error: any) {
-    // grep returns exit code 1 when no matches are found, which is not an error
-    if (error.status === 1 && !error.stderr) {
-      // No matches found, return empty set
-      return { icons, sources };
-    }
-    // Re-throw actual errors
-    throw error;
-  }
 
   return { icons, sources };
 }

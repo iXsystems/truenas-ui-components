@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { resolve } from 'path';
-import { findForwardingComponentMappings } from './find-icons-in-forwarding-components';
+import { discoverForwardingMappings } from './find-icons-in-forwarding-components';
 import { findIconsInTemplates } from './find-icons-in-templates';
 import type { ScanResult } from './find-icons-in-templates';
 import { findIconsWithMarker } from './find-icons-with-marker';
@@ -27,12 +27,7 @@ export function validateIcons(resolved: ResolvedSpriteConfig): ValidationResult 
   const libraryIcons = loadLibraryIconsForValidation(resolved.projectRoot);
 
   // Discover forwarding component mappings
-  const searchPaths = [...srcDirs];
-  const libSrcPath = resolve(resolved.projectRoot, 'node_modules/@truenas/ui-components/src/lib');
-  if (fs.existsSync(libSrcPath)) {
-    searchPaths.push(libSrcPath);
-  }
-  const forwardingMappings = findForwardingComponentMappings(searchPaths);
+  const forwardingMappings = discoverForwardingMappings(srcDirs, resolved.projectRoot);
 
   // Scan all source directories
   const allSources = new Map<string, string[]>();

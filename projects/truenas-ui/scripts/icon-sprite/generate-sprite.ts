@@ -2,8 +2,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import { resolve } from 'path';
 import { buildSprite } from './lib/build-sprite';
-import { findForwardingComponentMappings } from './lib/find-icons-in-forwarding-components';
-import type { ForwardingComponentMapping } from './lib/find-icons-in-forwarding-components';
+import { discoverForwardingMappings } from './lib/find-icons-in-forwarding-components';
 import { findIconsInTemplates } from './lib/find-icons-in-templates';
 import { findIconsWithMarker } from './lib/find-icons-with-marker';
 import { getIconPaths } from './lib/get-icon-paths';
@@ -121,23 +120,6 @@ export async function generateSprite(config: SpriteGeneratorConfig = {}): Promis
     console.error('Error when building the icon sprite:', error);
     throw error;
   }
-}
-
-/**
- * Discover icon-forwarding component mappings from multiple sources:
- * 1. The library itself (in node_modules, if installed as a dependency)
- * 2. Consumer source directories
- */
-function discoverForwardingMappings(srcDirs: string[], projectRoot: string): ForwardingComponentMapping[] {
-  const searchPaths = [...srcDirs];
-
-  // Also search the installed library source for forwarding components
-  const libSrcPath = resolve(projectRoot, 'node_modules/@truenas/ui-components/src/lib');
-  if (fs.existsSync(libSrcPath)) {
-    searchPaths.push(libSrcPath);
-  }
-
-  return findForwardingComponentMappings(searchPaths);
 }
 
 /**

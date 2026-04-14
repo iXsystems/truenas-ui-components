@@ -1,6 +1,7 @@
-import { execSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import fs from 'fs';
 import path from 'path';
+import { resolve } from 'path';
 import * as cheerio from 'cheerio';
 
 export interface IconSlotMapping {
@@ -26,17 +27,32 @@ export interface ForwardingComponentMapping {
  * 5. Extract default library values from input declarations in the TS file
  */
 export function findForwardingComponentMappings(searchPaths: string[]): ForwardingComponentMapping[] {
-  const mappings: ForwardingComponentMapping[] = [];
+  const bySelector = new Map<string, ForwardingComponentMapping>();
   const componentFiles = findForwardingComponentFiles(searchPaths);
 
   for (const filePath of componentFiles) {
     const mapping = extractMappingFromComponent(filePath);
-    if (mapping) {
-      mappings.push(mapping);
+    if (mapping && !bySelector.has(mapping.selector)) {
+      bySelector.set(mapping.selector, mapping);
     }
   }
 
-  return mappings;
+  return [...bySelector.values()];
+}
+
+/**
+ * Discover icon-forwarding component mappings from consumer source dirs
+ * and the installed library (if present in node_modules).
+ */
+export function discoverForwardingMappings(srcDirs: string[], projectRoot: string): ForwardingComponentMapping[] {
+  const searchPaths = [...srcDirs];
+
+  const libSrcPath = resolve(projectRoot, 'node_modules/@truenas/ui-components/src/lib');
+  if (fs.existsSync(libSrcPath)) {
+    searchPaths.push(libSrcPath);
+  }
+
+  return findForwardingComponentMappings(searchPaths);
 }
 
 /**
@@ -51,20 +67,24 @@ function findForwardingComponentFiles(searchPaths: string[]): string[] {
       continue;
     }
 
-    try {
-      const command = `grep -rl "implements.*TnIconForwardingComponent" --include="*.ts" ${searchPath}`;
-      const output = execSync(command, { encoding: 'utf-8' });
-      output
-        .split('\n')
-        .filter(Boolean)
-        .forEach((file) => files.push(file));
-    } catch (error: any) {
+    const result = spawnSync(
+      'grep',
+      ['-rl', 'implements.*TnIconForwardingComponent', '--include=*.ts', searchPath],
+      { encoding: 'utf-8' },
+    );
+
+    if (result.status === 1 && !result.stderr) {
       // grep returns exit code 1 when no matches found
-      if (error.status === 1 && !error.stderr) {
-        continue;
-      }
-      throw error;
+      continue;
     }
+    if (result.status !== 0 && result.status !== 1) {
+      throw new Error(`grep failed: ${result.stderr}`);
+    }
+
+    result.stdout
+      .split('\n')
+      .filter(Boolean)
+      .forEach((file) => files.push(file));
   }
 
   return files;

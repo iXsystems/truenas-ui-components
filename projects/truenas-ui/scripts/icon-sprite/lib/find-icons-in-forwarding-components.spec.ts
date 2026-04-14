@@ -67,11 +67,11 @@ describe('findForwardingComponentMappings', () => {
     expect(mappings).toEqual([]);
   });
 
-  it('should merge results from multiple search paths', () => {
-    // Pass the same path twice — should still deduplicate by finding same files
+  it('should deduplicate results from overlapping search paths', () => {
+    // Pass the same path twice — duplicates should be removed by selector
     const mappings = findForwardingComponentMappings([FIXTURES_DIR, FIXTURES_DIR]);
-    // Each component appears twice (once per path scan)
-    // This is expected behavior — generate-sprite deduplicates via Set
-    expect(mappings.length).toBeGreaterThanOrEqual(3);
+    expect(mappings).toHaveLength(3);
+    const selectors = mappings.map(m => m.selector).sort();
+    expect(selectors).toEqual(['tn-chip', 'tn-empty', 'tn-input']);
   });
 });
