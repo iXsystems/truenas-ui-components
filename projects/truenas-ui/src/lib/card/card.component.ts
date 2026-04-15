@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, input, computed, inject, contentChild } from '@angular/core';
 import { mdiDotsVertical } from '@mdi/js';
+import { TnCardHeaderDirective } from './card-header.directive';
 import type {
   TnCardAction,
   TnCardControl,
@@ -15,7 +16,6 @@ import { TnMenuTriggerDirective } from '../menu/menu-trigger.directive';
 import type { TnMenuItem } from '../menu/menu.component';
 import { TnMenuComponent } from '../menu/menu.component';
 import { TnSlideToggleComponent } from '../slide-toggle/slide-toggle.component';
-import { TnCardHeaderDirective } from './card-header.directive';
 
 @Component({
   selector: 'tn-card',

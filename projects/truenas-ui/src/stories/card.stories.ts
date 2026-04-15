@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, within } from 'storybook/test';
-import { TnCardComponent } from '../lib/card/card.component';
 import { TnCardHeaderDirective } from '../lib/card/card-header.directive';
+import { TnCardComponent } from '../lib/card/card.component';
 
 const meta: Meta<TnCardComponent> = {
   title: 'Components/Card',
@@ -438,13 +438,13 @@ export const WithProjectedHeader: Story = {
         [padContent]="padContent"
         [bordered]="bordered"
         [background]="background">
-        <div tn-card-header style="display: flex; align-items: center; gap: 12px;">
+        <div tnCardHeader style="display: flex; align-items: center; gap: 12px;">
           <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
           <h3 style="margin: 0; font-size: 1.125rem; font-weight: 600;">Custom Header Content</h3>
           <span style="font-size: 0.75rem; color: #6b7280;">— with icon and subtitle</span>
         </div>
         <p>This card uses projected header content instead of a simple title string.</p>
-        <p>You can put any content in the header using the <code>tn-card-header</code> attribute.</p>
+        <p>You can put any content in the header using the <code>tnCardHeader</code> attribute.</p>
       </tn-card>
     `,
   }),

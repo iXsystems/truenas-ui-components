@@ -3,7 +3,7 @@
   @if (hasHeader()) {
     <div class="tn-card__header">
       <div class="tn-card__header-left">
-        <ng-content select="[tn-card-header]" />
+        <ng-content select="[tnCardHeader]" />
         @if (!projectedHeader() && title()) {
           <h3
             class="tn-card__title"
