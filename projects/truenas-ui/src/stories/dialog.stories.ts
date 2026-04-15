@@ -221,7 +221,6 @@ export class MyPageComponent {
   openMyDialog() {
     const dialogRef = this.ixDialog.open(MyCustomDialogComponent, {
       width: '500px',
-      height: '400px',
       data: { initialValue: 'Hello' } // Optional data to pass
     });
 
@@ -284,9 +283,8 @@ When opening dialogs, you can configure:
 \`\`\`typescript
 this.ixDialog.open(MyDialogComponent, {
   width: '600px',           // Dialog width
-  height: '500px',          // Dialog height  
-  maxWidth: '90vw',         // Maximum width
-  maxHeight: '90vh',        // Maximum height
+  maxWidth: '90vw',         // Maximum width (default: 90vw)
+  maxHeight: '90vh',        // Maximum height (default: 90vh)
   disableClose: true,       // Prevent ESC/backdrop close
   data: { userId: 123 },    // Data to pass to dialog
   panelClass: ['custom-dialog'] // Additional CSS classes
