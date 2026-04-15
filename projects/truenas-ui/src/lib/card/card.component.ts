@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, computed, inject } from '@angular/core';
+import { Component, input, computed, inject, contentChild } from '@angular/core';
 import { mdiDotsVertical } from '@mdi/js';
+import { TnCardHeaderDirective } from './card-header.directive';
 import type {
   TnCardAction,
   TnCardControl,
@@ -30,6 +31,8 @@ export class TnCardComponent {
     // Register MDI icons used by this component
     this.registerMdiIcons();
   }
+
+  projectedHeader = contentChild(TnCardHeaderDirective);
 
   title = input<string | undefined>(undefined);
   titleLink = input<string | undefined>(undefined); // Makes title navigable
@@ -82,7 +85,7 @@ export class TnCardComponent {
   });
 
   hasHeader = computed(() => {
-    return !!(this.title() || this.headerStatus() || this.headerControl() || this.headerMenu());
+    return !!(this.projectedHeader() || this.title() || this.headerStatus() || this.headerControl() || this.headerMenu());
   });
 
   hasFooter = computed(() => {
