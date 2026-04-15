@@ -1,5 +1,5 @@
 import { A11yModule } from '@angular/cdk/a11y';
-import { Component, contentChildren, input, output, signal, computed, forwardRef, ChangeDetectionStrategy, ViewEncapsulation, effect } from '@angular/core';
+import { Component, contentChildren, input, output, signal, computed, forwardRef, ChangeDetectionStrategy, ViewEncapsulation, effect, untracked } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TnButtonToggleComponent } from './button-toggle.component';
@@ -56,11 +56,13 @@ export class TnButtonToggleGroupComponent implements ControlValueAccessor {
 
       // Re-apply stored value to toggles that weren't available during writeValue
       if (toggles.length > 0) {
-        if (this.multiple()) {
-          this.updateTogglesFromValues();
-        } else {
-          this.updateTogglesFromValue();
-        }
+        untracked(() => {
+          if (this.multiple()) {
+            this.updateTogglesFromValues();
+          } else {
+            this.updateTogglesFromValue();
+          }
+        });
       }
     });
   }
