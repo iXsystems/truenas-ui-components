@@ -99,8 +99,7 @@ class DialogDemoComponent {
 
   openSystemDialog() {
     const dialogRef = this.ixDialog.open(SystemSettingsDialogComponent, {
-      width: '700px',
-      height: '600px'
+      width: '700px'
     });
 
     dialogRef.closed.subscribe((result) => {

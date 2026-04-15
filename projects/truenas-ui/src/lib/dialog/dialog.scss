@@ -10,9 +10,34 @@
   border-radius: 8px;
   background: var(--bg1, #ffffff);
   color: var(--fg1, #000000);
+  overflow: hidden; /* enforce max-height boundary */
   box-shadow: 0 11px 15px -7px rgba(0, 0, 0, 0.2),
               0 24px 38px 3px rgba(0, 0, 0, 0.14),
               0 9px 46px 8px rgba(0, 0, 0, 0.12);
+}
+
+/*
+ * Propagate the flex / height constraint from .tn-dialog-panel through
+ * the two CDK-generated wrapper elements so tn-dialog-shell can size
+ * itself correctly and .tn-dialog__content can scroll.
+ *
+ *   .tn-dialog-panel  (flex column, max-height 90vh)
+ *     > cdk-dialog-container
+ *       > <user-component>
+ *         > tn-dialog-shell
+ */
+.tn-dialog-panel > .cdk-dialog-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.tn-dialog-panel > .cdk-dialog-container > :first-child {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 /* Shell component wrapper */
@@ -137,15 +162,6 @@ tn-dialog-shell {
   background: rgba(0, 0, 0, 0.5);
 }
 
-/* Container positioning */
-.cdk-dialog-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 20px;
-  box-sizing: border-box;
-}
 
 /* Fullscreen mode styles */
 .tn-dialog--fullscreen {
