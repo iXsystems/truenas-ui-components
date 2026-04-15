@@ -39,6 +39,10 @@ const meta: Meta<TnBannerComponent> = {
       options: ['info', 'warning', 'error', 'success'],
       description: 'Banner severity level (defaults to info)',
     },
+    bordered: {
+      control: 'boolean',
+      description: 'Adds top, right, and bottom borders (defaults to false)',
+    },
   },
 };
 
@@ -129,6 +133,23 @@ export const WithActionLink: Story = {
   }),
 };
 
+export const Bordered: Story = {
+  args: {
+    heading: 'MPIO Configuration',
+    message: 'MPIO is supported. Each Fibre Channel port must use a unique physical port.',
+    bordered: true,
+  },
+};
+
+export const BorderedWarning: Story = {
+  args: {
+    heading: 'Warning: Action Required',
+    message: 'Your storage pool is approaching capacity. Consider adding more storage.',
+    type: 'warning',
+    bordered: true,
+  },
+};
+
 export const MultipleTypes: Story = {
   render: () => ({
     template: `
@@ -154,6 +175,41 @@ export const MultipleTypes: Story = {
           heading="Success"
           message="This is a success banner confirming a completed action."
           type="success">
+        </tn-banner>
+      </div>
+    `,
+  }),
+};
+
+export const MultipleBorderedTypes: Story = {
+  render: () => ({
+    template: `
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <tn-banner
+          heading="Information"
+          message="This is a bordered info banner."
+          [bordered]="true">
+        </tn-banner>
+
+        <tn-banner
+          heading="Warning"
+          message="This is a bordered warning banner."
+          type="warning"
+          [bordered]="true">
+        </tn-banner>
+
+        <tn-banner
+          heading="Error"
+          message="This is a bordered error banner."
+          type="error"
+          [bordered]="true">
+        </tn-banner>
+
+        <tn-banner
+          heading="Success"
+          message="This is a bordered success banner."
+          type="success"
+          [bordered]="true">
         </tn-banner>
       </div>
     `,

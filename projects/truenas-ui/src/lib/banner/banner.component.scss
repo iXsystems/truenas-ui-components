@@ -68,6 +68,13 @@
     }
   }
 
+  // Bordered variant — adds top, right, and bottom borders
+  &--bordered {
+    border-top: 1px solid var(--tn-lines, #404040);
+    border-right: 1px solid var(--tn-lines, #404040);
+    border-bottom: 1px solid var(--tn-lines, #404040);
+  }
+
   &__main {
     display: flex;
     align-items: flex-start;
