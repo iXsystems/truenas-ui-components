@@ -94,6 +94,17 @@ describe('TnBannerComponent', () => {
       const classes = component.classes();
       expect(classes).toContain('tn-banner--success');
     });
+
+    it('should not include bordered class by default', () => {
+      const classes = component.classes();
+      expect(classes).not.toContain('tn-banner--bordered');
+    });
+
+    it('should include bordered class when bordered is true', () => {
+      fixture.componentRef.setInput('bordered', true);
+      const classes = component.classes();
+      expect(classes).toContain('tn-banner--bordered');
+    });
   });
 
   describe('iconName computed', () => {

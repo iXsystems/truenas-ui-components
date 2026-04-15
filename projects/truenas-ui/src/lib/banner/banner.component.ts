@@ -55,6 +55,7 @@ export class TnBannerComponent {
   heading = input.required<string>();
   message = input<string | undefined>(undefined);
   type = input<TnBannerType>('info');
+  bordered = input<boolean>(false);
 
   constructor() {
     this.registerMdiIcons();
@@ -106,9 +107,13 @@ export class TnBannerComponent {
    * Generate CSS classes using BEM methodology
    */
   classes = computed(() => {
-    return [
+    const result = [
       'tn-banner',
       `tn-banner--${this.type()}`,
     ];
+    if (this.bordered()) {
+      result.push('tn-banner--bordered');
+    }
+    return result;
   });
 }
