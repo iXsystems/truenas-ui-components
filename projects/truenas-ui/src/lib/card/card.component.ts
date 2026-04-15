@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, computed, inject } from '@angular/core';
+import { Component, input, computed, inject, contentChild } from '@angular/core';
 import { mdiDotsVertical } from '@mdi/js';
 import type {
   TnCardAction,
@@ -15,6 +15,7 @@ import { TnMenuTriggerDirective } from '../menu/menu-trigger.directive';
 import type { TnMenuItem } from '../menu/menu.component';
 import { TnMenuComponent } from '../menu/menu.component';
 import { TnSlideToggleComponent } from '../slide-toggle/slide-toggle.component';
+import { TnCardHeaderDirective } from './card-header.directive';
 
 @Component({
   selector: 'tn-card',
@@ -30,6 +31,8 @@ export class TnCardComponent {
     // Register MDI icons used by this component
     this.registerMdiIcons();
   }
+
+  projectedHeader = contentChild(TnCardHeaderDirective);
 
   title = input<string | undefined>(undefined);
   titleLink = input<string | undefined>(undefined); // Makes title navigable
@@ -82,7 +85,7 @@ export class TnCardComponent {
   });
 
   hasHeader = computed(() => {
-    return !!(this.title() || this.headerStatus() || this.headerControl() || this.headerMenu());
+    return !!(this.projectedHeader() || this.title() || this.headerStatus() || this.headerControl() || this.headerMenu());
   });
 
   hasFooter = computed(() => {
