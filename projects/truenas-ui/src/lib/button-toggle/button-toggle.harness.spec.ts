@@ -202,6 +202,30 @@ class ButtonToggleCvaTestComponent {
   multiControl = new FormControl<string[]>([]);
 }
 
+@Component({
+  selector: 'tn-button-toggle-initial-value-test',
+  standalone: true,
+  imports: [TnButtonToggleComponent, TnButtonToggleGroupComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-button-toggle-group [formControl]="control">
+      <tn-button-toggle value="alert">Alert</tn-button-toggle>
+      <tn-button-toggle value="warn">Warn</tn-button-toggle>
+      <tn-button-toggle value="info">Info</tn-button-toggle>
+    </tn-button-toggle-group>
+
+    <tn-button-toggle-group [formControl]="multiControl" [multiple]="true">
+      <tn-button-toggle value="x">X</tn-button-toggle>
+      <tn-button-toggle value="y">Y</tn-button-toggle>
+      <tn-button-toggle value="z">Z</tn-button-toggle>
+    </tn-button-toggle-group>
+  `,
+})
+class ButtonToggleInitialValueTestComponent {
+  control = new FormControl<string | null>('alert');
+  multiControl = new FormControl<string[]>(['x', 'z']);
+}
+
 describe('TnButtonToggleGroup — ControlValueAccessor', () => {
   let fixture: ComponentFixture<ButtonToggleCvaTestComponent>;
   let component: ButtonToggleCvaTestComponent;
@@ -271,5 +295,45 @@ describe('TnButtonToggleGroup — ControlValueAccessor', () => {
     fixture.detectChanges();
 
     expect(component.multiControl.value).toEqual(['a', 'c']);
+  });
+});
+
+describe('TnButtonToggleGroup — initial FormControl value', () => {
+  let fixture: ComponentFixture<ButtonToggleInitialValueTestComponent>;
+  let loader: HarnessLoader;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ButtonToggleInitialValueTestComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ButtonToggleInitialValueTestComponent);
+    fixture.detectChanges();
+    loader = TestbedHarnessEnvironment.loader(fixture);
+  });
+
+  it('should check the correct toggle when FormControl has an initial value', async () => {
+    const group = (await loader.getAllHarnesses(TnButtonToggleGroupHarness))[0];
+    const checked = await group.getCheckedToggle();
+    expect(checked).not.toBeNull();
+    expect(await checked!.getLabelText()).toContain('Alert');
+  });
+
+  it('should leave other toggles unchecked when FormControl has an initial value', async () => {
+    const group = (await loader.getAllHarnesses(TnButtonToggleGroupHarness))[0];
+    const toggles = await group.getToggles();
+
+    expect(await toggles[0].isChecked()).toBe(true);
+    expect(await toggles[1].isChecked()).toBe(false);
+    expect(await toggles[2].isChecked()).toBe(false);
+  });
+
+  it('should check the correct toggles when multiple FormControl has initial values', async () => {
+    const group = (await loader.getAllHarnesses(TnButtonToggleGroupHarness))[1];
+    const toggles = await group.getToggles();
+
+    expect(await toggles[0].isChecked()).toBe(true);  // X
+    expect(await toggles[1].isChecked()).toBe(false);  // Y
+    expect(await toggles[2].isChecked()).toBe(true);   // Z
   });
 });

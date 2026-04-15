@@ -53,6 +53,15 @@ export class TnButtonToggleGroupComponent implements ControlValueAccessor {
       toggles.forEach(toggle => {
         toggle.buttonToggleGroup = this;
       });
+
+      // Re-apply stored value to toggles that weren't available during writeValue
+      if (toggles.length > 0) {
+        if (this.multiple()) {
+          this.updateTogglesFromValues();
+        } else {
+          this.updateTogglesFromValue();
+        }
+      }
     });
   }
 
