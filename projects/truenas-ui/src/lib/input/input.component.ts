@@ -25,7 +25,7 @@ export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
   inputEl = viewChild.required<ElementRef<HTMLInputElement | HTMLTextAreaElement>>('inputEl');
 
   inputType = input<InputType>(InputType.PlainText);
-  placeholder = input<string>('Enter your name');
+  placeholder = input<string>('');
   testId = input<string | undefined>(undefined);
   disabled = input<boolean>(false);
   multiline = input<boolean>(false);
