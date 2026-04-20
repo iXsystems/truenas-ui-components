@@ -30,7 +30,7 @@ import type { IconLibraryType } from '../icon/icon.component';
 })
 class TestHostComponent {
   inputType = signal<InputType>(InputType.PlainText);
-  placeholder = signal('Enter your name');
+  placeholder = signal('Enter your name here');
   disabled = signal(false);
   multiline = signal(false);
   rows = signal(3);
@@ -110,7 +110,7 @@ describe('TnInputHarness', () => {
   describe('getPlaceholder', () => {
     it('should return the placeholder text', async () => {
       const input = await loader.getHarness(TnInputHarness);
-      expect(await input.getPlaceholder()).toBe('Enter your name');
+      expect(await input.getPlaceholder()).toBe('Enter your name here');
     });
 
     it('should reflect updated placeholder', async () => {
