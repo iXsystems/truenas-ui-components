@@ -66,6 +66,7 @@ function getExpandDuration(): string {
   ],
   host: {
     class: 'tn-table',
+    '[class.tn-table--bordered]': 'bordered()',
   },
 })
 export class TnTableComponent<T = unknown> implements OnInit {
@@ -82,6 +83,7 @@ export class TnTableComponent<T = unknown> implements OnInit {
   // --- Feature inputs (all opt-in) ---
   selectable = input<boolean>(false);
   expandable = input<boolean>(false);
+  bordered = input<boolean>(false);
 
   // --- Outputs ---
   sortChange = output<TnSortEvent>();

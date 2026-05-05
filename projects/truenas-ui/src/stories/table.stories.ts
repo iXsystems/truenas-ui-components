@@ -69,6 +69,7 @@ const meta: Meta<TnTableComponent> = {
     displayedColumns: { description: 'Column names to display in order', control: false },
     selectable: { description: 'Show checkbox column for row selection', control: 'boolean' },
     expandable: { description: 'Enable click-to-expand detail rows', control: 'boolean' },
+    bordered: { description: 'Adds an outer border around the table', control: 'boolean' },
   },
 };
 
@@ -275,6 +276,48 @@ export const FullFeaturedTable: Story = {
   }),
 };
 
+export const BorderedTable: Story = {
+  args: {
+    dataSource: sampleData,
+    displayedColumns: ['id', 'name', 'email', 'role', 'status'],
+    bordered: true,
+  },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-table
+        [dataSource]="dataSource"
+        [displayedColumns]="displayedColumns"
+        [bordered]="bordered">
+        <ng-container tnColumnDef="id">
+          <ng-template tnHeaderCellDef>ID</ng-template>
+          <ng-template let-user tnCellDef>{{ user.id }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="name">
+          <ng-template tnHeaderCellDef>Name</ng-template>
+          <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="email">
+          <ng-template tnHeaderCellDef>Email</ng-template>
+          <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="role">
+          <ng-template tnHeaderCellDef>Role</ng-template>
+          <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="status">
+          <ng-template tnHeaderCellDef>Status</ng-template>
+          <ng-template let-user tnCellDef>
+            <span [style.color]="user.status === 'active' ? 'var(--tn-green)' : 'var(--tn-red)'">
+              {{ user.status }}
+            </span>
+          </ng-template>
+        </ng-container>
+      </tn-table>
+    `,
+  }),
+};
+
 export const TableWithFiltering: Story = {
   render: () => ({
     props: {
@@ -375,6 +418,10 @@ export const ColumnWidths: Story = {
 };
 
 export const EmptyTable: Story = {
+  args: {
+    bordered: true
+  },
+
   render: () => ({
     props: {
       tableData: [],
@@ -401,7 +448,7 @@ export const EmptyTable: Story = {
         </ng-container>
       </tn-table>
     `,
-  }),
+  })
 };
 
 export const ComponentHarness: Story = {
