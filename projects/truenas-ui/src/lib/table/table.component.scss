@@ -1,3 +1,14 @@
+// Host-scoped rules — :host is required for emulated encapsulation to actually
+// reach the host element. Plain `.tn-table` selectors don't match the host.
+:host {
+  display: block;
+}
+
+:host(.tn-table--bordered) {
+  border: 1px solid var(--tn-lines);
+  border-radius: 4px;
+}
+
 .tn-table {
   display: block;
   width: 100%;
