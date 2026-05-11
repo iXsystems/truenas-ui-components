@@ -38,6 +38,7 @@ export class TnMenuActivateHoverDirective implements AfterContentInit {
 export interface TnMenuItem {
   id: string;
   label: string;
+  testId?: string;
   icon?: string;
   iconLibrary?: 'material' | 'mdi' | 'custom' | 'lucide';
   disabled?: boolean;
