@@ -205,6 +205,55 @@ describe('tn-menu with trigger', () => {
     expect(disabledItems.length).toBe(1);
   });
 
+  // -- data-testid forwarding --------------------------------------------
+
+  it('should render default data-testid as "menu-item-<id>" for each item', () => {
+    triggerButton.click();
+    fixture.detectChanges();
+
+    const ids = getMenuItems().map(el => el.getAttribute('data-testid'));
+    expect(ids).toEqual(
+      expect.arrayContaining([
+        'menu-item-cut',
+        'menu-item-copy',
+        'menu-item-disabled',
+        'menu-item-more',
+      ]),
+    );
+  });
+
+  it('should use the item.testId override when provided', () => {
+    host.items = [
+      { id: 'cut', label: 'Cut', testId: 'custom-cut' },
+      { id: 'copy', label: 'Copy' },
+    ];
+    fixture.detectChanges();
+
+    triggerButton.click();
+    fixture.detectChanges();
+
+    const ids = getMenuItems().map(el => el.getAttribute('data-testid'));
+    expect(ids).toContain('custom-cut');
+    expect(ids).toContain('menu-item-copy');
+    expect(ids).not.toContain('menu-item-cut');
+  });
+
+  it('should render data-testid on nested child items', () => {
+    triggerButton.click();
+    fixture.detectChanges();
+
+    const moreButton = getMenuItems().find(
+      el => el.textContent?.includes('More'),
+    )!;
+    moreButton.click();
+    fixture.detectChanges();
+
+    const ids = getMenuItems().map(el => el.getAttribute('data-testid'));
+    expect(ids).toEqual(
+      expect.arrayContaining(['menu-item-child-1', 'menu-item-child-2']),
+    );
+  });
+
   // -- Selection ----------------------------------------------------------
 
   it('should emit selected item and close menu on leaf item click', () => {
