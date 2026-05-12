@@ -16,11 +16,21 @@ import { TnMenuTriggerDirective } from '../menu/menu-trigger.directive';
 import type { TnMenuItem } from '../menu/menu.component';
 import { TnMenuComponent } from '../menu/menu.component';
 import { TnSlideToggleComponent } from '../slide-toggle/slide-toggle.component';
+import { TnTestIdDirective } from '../test-id';
 
 @Component({
   selector: 'tn-card',
   standalone: true,
-  imports: [CommonModule, TnButtonComponent, TnIconComponent, TnIconButtonComponent, TnSlideToggleComponent, TnMenuComponent, TnMenuTriggerDirective],
+  imports: [
+    CommonModule,
+    TnButtonComponent,
+    TnIconComponent,
+    TnIconButtonComponent,
+    TnSlideToggleComponent,
+    TnMenuComponent,
+    TnMenuTriggerDirective,
+    TnTestIdDirective,
+  ],
   templateUrl: './card.component.html',
   styleUrls: ['./card.component.scss'],
 })
@@ -46,6 +56,12 @@ export class TnCardComponent {
   headerStatus = input<TnCardHeaderStatus | undefined>(undefined);
   headerControl = input<TnCardControl | undefined>(undefined); // Slide toggle - ALWAYS in header
   headerMenu = input<TnMenuItem[] | undefined>(undefined);
+  /**
+   * Test-id applied to the kebab-menu trigger button rendered when `headerMenu` is set.
+   * Rendered under whichever attribute name is configured via `TN_TEST_ATTR`
+   * (default `data-testid`).
+   */
+  headerMenuTriggerTestId = input<string | undefined>(undefined);
 
   // Footer elements (bottom-right) - Always render in footer
   primaryAction = input<TnCardAction | undefined>(undefined);
