@@ -9,7 +9,7 @@
       [disabled]="isDisabled()"
       [required]="required()"
       [indeterminate]="indeterminate()"
-      [attr.data-testid]="testId()"
+      [tnTestId]="testId()"
       [attr.aria-label]="hasProjectedLabel() ? label() : null"
       [attr.aria-describedby]="error() ? id + '-error' : null"
       [attr.aria-invalid]="error() ? 'true' : null"

@@ -2,11 +2,12 @@ import { A11yModule } from '@angular/cdk/a11y';
 import { CommonModule } from '@angular/common';
 import type { TemplateRef} from '@angular/core';
 import { Component, input, viewChild, ElementRef, inject, computed, signal } from '@angular/core';
+import { TnTestIdDirective } from '../test-id';
 
 @Component({
   selector: 'tn-tab-panel',
   standalone: true,
-  imports: [CommonModule, A11yModule],
+  imports: [CommonModule, A11yModule, TnTestIdDirective],
   templateUrl: './tab-panel.component.html',
   styleUrl: './tab-panel.component.scss'
 })

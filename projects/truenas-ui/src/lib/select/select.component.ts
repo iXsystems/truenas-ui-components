@@ -3,6 +3,7 @@ import { ChangeDetectorRef, Component, computed, effect, ElementRef, forwardRef,
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
+import { TnTestIdDirective } from '../test-id';
 
 export interface TnSelectOption<T = unknown> {
   value: T;
@@ -19,7 +20,7 @@ export interface TnSelectOptionGroup<T = unknown> {
 @Component({
   selector: 'tn-select',
   standalone: true,
-  imports: [TnCheckboxComponent],
+  imports: [TnCheckboxComponent, TnTestIdDirective],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
