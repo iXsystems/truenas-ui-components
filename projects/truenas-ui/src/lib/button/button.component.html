@@ -3,8 +3,8 @@
   [ngClass]="classes()"
   [ngStyle]="{ 'background-color': backgroundColor() }"
   [disabled]="disabled()"
+  [tnTestId]="testId()"
   (click)="onClick.emit($event)"
 >
   {{ label() }}
 </button>
-

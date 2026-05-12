@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, input, output, computed } from '@angular/core';
+import { TnTestIdDirective } from '../test-id';
 
 @Component({
   selector: 'tn-button',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TnTestIdDirective],
   templateUrl: './button.component.html',
   styleUrls: ['./button.component.scss'],
 })
@@ -17,6 +18,11 @@ export class TnButtonComponent {
   backgroundColor = input<string | undefined>(undefined);
   label = input<string>('Button');
   disabled = input<boolean>(false);
+  /**
+   * Test-id applied to the rendered `<button>` element. Rendered under whichever attribute
+   * name is configured via `TN_TEST_ATTR` (default `data-testid`).
+   */
+  testId = input<string | undefined>(undefined);
 
   onClick = output<MouseEvent>();
 
