@@ -93,7 +93,7 @@ export class TnTabPanelHarness extends ComponentHarness {
    */
   async getTestId(): Promise<string | null> {
     const panel = await this._panel();
-    return panel.getAttribute('data-testid');
+    return (await panel.getAttribute('data-test')) ?? (await panel.getAttribute('data-testid'));
   }
 }
 

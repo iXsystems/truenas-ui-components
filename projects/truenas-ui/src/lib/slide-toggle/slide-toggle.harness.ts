@@ -80,7 +80,7 @@ export class TnSlideToggleHarness extends ComponentHarness {
    */
   async getTestId(): Promise<string | null> {
     const root = await this.locatorFor('.tn-slide-toggle')();
-    return root.getAttribute('data-testid');
+    return (await root.getAttribute('data-test')) ?? (await root.getAttribute('data-testid'));
   }
 
   /**
