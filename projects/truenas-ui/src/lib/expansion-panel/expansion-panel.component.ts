@@ -1,6 +1,7 @@
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { Component, input, output, computed, signal } from '@angular/core';
+import { TnTestIdDirective } from '../test-id';
 
 const expandCollapseAnimation = trigger('expandCollapse', [
   state('collapsed', style({
@@ -28,7 +29,7 @@ const expandCollapseAnimation = trigger('expandCollapse', [
 @Component({
   selector: 'tn-expansion-panel',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TnTestIdDirective],
   templateUrl: './expansion-panel.component.html',
   styleUrls: ['./expansion-panel.component.scss'],
   animations: [expandCollapseAnimation]
@@ -42,6 +43,15 @@ export class TnExpansionPanelComponent {
   expanded = input<boolean>(false);
   disabled = input<boolean>(false);
   titleStyle = input<'header' | 'body' | 'link'>('header');
+  /**
+   * Test-id applied to the panel's root element. Rendered under whichever attribute name
+   * is configured via `TN_TEST_ATTR` (default `data-testid`).
+   */
+  testId = input<string | undefined>(undefined);
+  /**
+   * Test-id applied to the expand/collapse toggle header button.
+   */
+  toggleTestId = input<string | undefined>(undefined);
 
   expandedChange = output<boolean>();
   toggleEvent = output<void>();

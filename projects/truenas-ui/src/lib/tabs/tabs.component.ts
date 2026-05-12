@@ -5,6 +5,7 @@ import type { AfterContentInit, ElementRef, AfterViewInit, OnDestroy } from '@an
 import { Component, contentChildren, input, output, ChangeDetectionStrategy, inject, ChangeDetectorRef, viewChild, signal, computed, effect } from '@angular/core';
 import { TnTabComponent } from '../tab/tab.component';
 import { TnTabPanelComponent } from '../tab-panel/tab-panel.component';
+import { TnTestIdDirective } from '../test-id';
 
 export interface TabChangeEvent {
   index: number;
@@ -15,7 +16,7 @@ export interface TabChangeEvent {
 @Component({
   selector: 'tn-tabs',
   standalone: true,
-  imports: [CommonModule, A11yModule, TnTabComponent, TnTabPanelComponent],
+  imports: [CommonModule, A11yModule, TnTabComponent, TnTabPanelComponent, TnTestIdDirective],
   templateUrl: './tabs.component.html',
   styleUrl: './tabs.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -28,6 +29,11 @@ export class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDestr
   selectedIndex = input<number>(0);
   orientation = input<'horizontal' | 'vertical'>('horizontal');
   highlightPosition = input<'left' | 'right' | 'top' | 'bottom'>('bottom');
+  /**
+   * Test-id applied to the tablist root element. Rendered under whichever attribute name
+   * is configured via `TN_TEST_ATTR` (default `data-testid`).
+   */
+  testId = input<string | undefined>(undefined);
 
   selectedIndexChange = output<number>();
   tabChange = output<TabChangeEvent>();

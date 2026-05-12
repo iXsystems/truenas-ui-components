@@ -1,6 +1,7 @@
 <div
   #sliderContainer
   class="tn-slider-container"
+  [tnTestId]="testId()"
   [attr.aria-disabled]="isDisabled()"
   [attr.data-disabled]="isDisabled()"
   (mousedown)="onTrackClick($event)"

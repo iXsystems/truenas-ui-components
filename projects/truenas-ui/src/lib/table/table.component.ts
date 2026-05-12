@@ -22,6 +22,7 @@ import {
   TnDetailRowDefDirective,
   TnTableColumnDirective,
 } from '../table-column/table-column.directive';
+import { TnTestIdDirective } from '../test-id';
 
 const SORT_ICON_ASC = tnIconMarker('arrow_upward', 'material');
 const SORT_ICON_DESC = tnIconMarker('arrow_downward', 'material');
@@ -64,6 +65,7 @@ function getExpandDuration(): string {
       transition('expanded <=> collapsed', animate(getExpandDuration())),
     ]),
   ],
+  hostDirectives: [{ directive: TnTestIdDirective, inputs: ['tnTestId: testId'] }],
   host: {
     class: 'tn-table',
     '[class.tn-table--bordered]': 'bordered()',

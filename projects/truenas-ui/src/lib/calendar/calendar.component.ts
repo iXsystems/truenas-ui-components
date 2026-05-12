@@ -5,11 +5,13 @@ import { TnCalendarHeaderComponent } from './calendar-header.component';
 import { TnMonthViewComponent } from './month-view.component';
 import { TnMultiYearViewComponent } from './multi-year-view.component';
 import type { DateRange } from '../date-range-input/date-range-input.component';
+import { TnTestIdDirective } from '../test-id';
 
 @Component({
   selector: 'tn-calendar',
   standalone: true,
   imports: [TnCalendarHeaderComponent, TnMonthViewComponent, TnMultiYearViewComponent],
+  hostDirectives: [{ directive: TnTestIdDirective, inputs: ['tnTestId: testId'] }],
   templateUrl: './calendar.component.html',
   styleUrls: ['./calendar.component.scss']
 })

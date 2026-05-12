@@ -1,6 +1,7 @@
 <div class="tn-stepper"
      [class.tn-stepper--horizontal]="orientation() === 'horizontal' || (orientation() === 'auto' && isWideScreen())"
-     [class.tn-stepper--vertical]="orientation() === 'vertical' || (orientation() === 'auto' && !isWideScreen())">
+     [class.tn-stepper--vertical]="orientation() === 'vertical' || (orientation() === 'auto' && !isWideScreen())"
+     [tnTestId]="testId()">
 
   <!-- Step Headers -->
   <div class="tn-stepper__header">

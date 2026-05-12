@@ -13,6 +13,7 @@ import {
   viewChild,
   afterNextRender,
 } from '@angular/core';
+import { TnTestIdDirective } from '../test-id';
 
 export type TnDrawerMode = 'side' | 'over';
 export type TnDrawerPosition = 'start' | 'end';
@@ -20,7 +21,7 @@ export type TnDrawerPosition = 'start' | 'end';
 @Component({
   selector: 'tn-drawer',
   standalone: true,
-  imports: [A11yModule, NgTemplateOutlet],
+  imports: [A11yModule, NgTemplateOutlet, TnTestIdDirective],
   templateUrl: './drawer.component.html',
   styleUrl: './drawer.component.scss',
   host: {
@@ -51,6 +52,12 @@ export class TnDrawerComponent implements OnDestroy {
 
   /** Accessible label for the drawer panel */
   ariaLabel = input<string | undefined>(undefined);
+
+  /**
+   * Test-id applied to the drawer panel. Rendered under whichever attribute name is
+   * configured via `TN_TEST_ATTR` (default `data-testid`).
+   */
+  testId = input<string | undefined>(undefined);
 
   /** Fires after the open transition completes */
   openedComplete = output<void>();

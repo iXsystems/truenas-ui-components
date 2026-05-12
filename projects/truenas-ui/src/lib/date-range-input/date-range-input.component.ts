@@ -9,6 +9,7 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { TnCalendarComponent } from '../calendar/calendar.component';
 import { TnInputDirective } from '../input/input.directive';
+import { TnTestIdDirective } from '../test-id';
 
 export interface DateRange {
   start: Date | null;
@@ -18,7 +19,7 @@ export interface DateRange {
 @Component({
   selector: 'tn-date-range-input',
   standalone: true,
-  imports: [TnInputDirective, TnCalendarComponent, OverlayModule, PortalModule, A11yModule],
+  imports: [TnInputDirective, TnCalendarComponent, OverlayModule, PortalModule, A11yModule, TnTestIdDirective],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -35,6 +36,11 @@ export interface DateRange {
 export class TnDateRangeInputComponent implements ControlValueAccessor, OnInit, OnDestroy {
   disabled = input<boolean>(false);
   placeholder = input<string>('Select date range');
+  /**
+   * Test-id applied to the date-range-input container. Rendered under whichever attribute name
+   * is configured via `TN_TEST_ATTR` (default `data-testid`).
+   */
+  testId = input<string | undefined>(undefined);
 
   private formDisabled = signal<boolean>(false);
   isDisabled = computed(() => this.disabled() || this.formDisabled());

@@ -12,6 +12,7 @@
     [attr.role]="panelRole()"
     [attr.aria-hidden]="!opened() ? 'true' : null"
     [attr.aria-label]="ariaLabel()"
+    [tnTestId]="testId()"
     (transitionend)="onTransitionEnd($event)">
     <ng-container *ngTemplateOutlet="drawerContent" />
   </div>
@@ -20,7 +21,7 @@
 <!-- Over mode: portaled to document.body to avoid clipping -->
 <div #overlay>
   @if (mode() === 'over') {
-     
+
     <div
       class="tn-drawer__backdrop"
       aria-hidden="true"
@@ -35,6 +36,7 @@
       [attr.aria-modal]="opened() ? 'true' : null"
       [attr.aria-hidden]="!opened() ? 'true' : null"
       [attr.aria-label]="ariaLabel()"
+      [tnTestId]="testId()"
       [cdkTrapFocus]="trapFocus()"
       [cdkTrapFocusAutoCapture]="trapFocus()"
       (keydown)="onKeydown($event)"

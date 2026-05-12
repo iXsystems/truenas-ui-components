@@ -1,9 +1,10 @@
-<div [ngClass]="classes()">
+<div [ngClass]="classes()" [tnTestId]="testId()">
   <button class="tn-expansion-panel__header"
           [disabled]="disabled()"
           [attr.aria-expanded]="effectiveExpanded()"
           [attr.aria-controls]="contentId"
           [attr.aria-disabled]="disabled()"
+          [tnTestId]="toggleTestId()"
           (click)="toggle()">
     @if (title()) {
       <div class="tn-expansion-panel__title">
