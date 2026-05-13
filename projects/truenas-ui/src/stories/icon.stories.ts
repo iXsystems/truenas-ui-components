@@ -20,6 +20,7 @@ tnIconMarker('memory', 'mdi');
 tnIconMarker('menu', 'mdi');
 tnIconMarker('nas', 'mdi');
 tnIconMarker('network', 'mdi');
+tnIconMarker('pause', 'mdi');
 tnIconMarker('pencil', 'mdi');
 tnIconMarker('refresh', 'mdi');
 tnIconMarker('server', 'mdi');
@@ -310,6 +311,10 @@ export const TrueNASIconShowcase: Story = {
         <div style="text-align: center;">
           <tn-icon name="file" library="mdi" size="lg" tooltip="File"></tn-icon>
           <div style="margin-top: 8px; font-size: 12px;">File</div>
+        </div>
+        <div style="text-align: center;">
+          <tn-icon name="pause" library="mdi" size="lg" tooltip="Pause"></tn-icon>
+          <div style="margin-top: 8px; font-size: 12px;">Pause</div>
         </div>
       </div>
     `,

@@ -1,5 +1,5 @@
 {
-  "iconUrl": "assets/tn-icons/sprite.svg?v=36306c7a43",
+  "iconUrl": "assets/tn-icons/sprite.svg?v=9e27516916",
   "icons": [
     "dataset",
     "mat-arrow_downward",
@@ -46,6 +46,7 @@
     "mdi-menu",
     "mdi-nas",
     "mdi-network",
+    "mdi-pause",
     "mdi-pencil",
     "mdi-refresh",
     "mdi-server",
