@@ -35,4 +35,9 @@ export interface TnCardHeaderStatus {
 export interface TnCardFooterLink {
   label: string;
   handler: () => void;
+  /**
+   * Test-id applied to the rendered footer link button. Rendered under whichever attribute name
+   * is configured via `TN_TEST_ATTR` (default `data-testid`).
+   */
+  testId?: string;
 }

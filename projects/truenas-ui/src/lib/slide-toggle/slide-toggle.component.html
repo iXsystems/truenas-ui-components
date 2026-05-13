@@ -1,4 +1,4 @@
-<div [ngClass]="classes()" [tnTestId]="testId()">
+<div [ngClass]="classes()">
   <label class="tn-slide-toggle__label" [for]="id">
 
     <!-- Label before toggle -->
@@ -24,6 +24,7 @@
         [checked]="effectiveChecked()"
         [disabled]="isDisabled()"
         [required]="required()"
+        [tnTestId]="testId()"
         [attr.aria-label]="effectiveAriaLabel()"
         [attr.aria-labelledby]="ariaLabelledby()"
         (change)="onToggleChange($event)"

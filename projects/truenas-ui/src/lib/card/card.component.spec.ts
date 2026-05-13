@@ -5,6 +5,7 @@ import { TnCardComponent } from './card.component';
 import type {
   TnCardAction,
   TnCardControl,
+  TnCardFooterLink,
   TnCardHeaderStatus,
 } from './card.interfaces';
 import type { TnMenuItem } from '../menu/menu.component';
@@ -12,7 +13,7 @@ import type { TnMenuItem } from '../menu/menu.component';
 @Component({
   standalone: true,
   imports: [TnCardComponent],
-  template: `<tn-card [headerStatus]="status()" [headerControl]="control()" [headerMenu]="menu()" [headerMenuTriggerTestId]="menuTriggerTestId()" [primaryAction]="primary()" [secondaryAction]="secondary()">Content</tn-card>`,
+  template: `<tn-card [headerStatus]="status()" [headerControl]="control()" [headerMenu]="menu()" [headerMenuTriggerTestId]="menuTriggerTestId()" [primaryAction]="primary()" [secondaryAction]="secondary()" [footerLink]="footerLink()">Content</tn-card>`,
 })
 class HostComponent {
   status = signal<TnCardHeaderStatus | undefined>(undefined);
@@ -21,6 +22,7 @@ class HostComponent {
   menuTriggerTestId = signal<string | undefined>(undefined);
   primary = signal<TnCardAction | undefined>(undefined);
   secondary = signal<TnCardAction | undefined>(undefined);
+  footerLink = signal<TnCardFooterLink | undefined>(undefined);
 }
 
 function createHost(providers: unknown[] = []) {
@@ -122,6 +124,20 @@ describe('TnCardComponent testId support', () => {
     expect(secondaryBtn.getAttribute('data-test')).toBe('s-id');
     expect(kebabBtn.getAttribute('data-test')).toBe('k-id');
     expect(pill.getAttribute('data-test')).toBe('st-id');
+  });
+
+  it('applies testId from footerLink to the rendered link button', () => {
+    const fixture = createHost();
+    fixture.componentInstance.footerLink.set({
+      label: 'View details',
+      handler: () => {},
+      testId: 'link-view-details',
+    });
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector('.tn-card__footer-link') as HTMLElement;
+    expect(link).toBeTruthy();
+    expect(link.getAttribute('data-testid')).toBe('link-view-details');
   });
 
   it('does not render data-testid when testId is omitted on actions / status / trigger', () => {

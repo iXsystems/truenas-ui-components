@@ -124,18 +124,18 @@ export interface TnCardAction {
 
 ## Harness conventions
 
-Component harnesses with a `testId` filter (`with({ testId })`) and a `getTestId()` accessor read **both** attributes:
+Component harnesses with a `testId` filter (`with({ testId })`) and a `getTestId()` accessor read **both** attributes, preferring `data-testid` (the library's default emit target) and falling through to `data-test`:
 
 ```typescript
 async getTestId(): Promise<string | null> {
-  const root = await this.locatorFor('.tn-foo')();
-  return (await root.getAttribute('data-test')) ?? (await root.getAttribute('data-testid'));
+  const input = await this._input();
+  return (await input.getAttribute('data-testid')) ?? (await input.getAttribute('data-test'));
 }
 ```
 
-This keeps the harness API stable regardless of which attribute the consumer configures.
+This keeps the harness API stable regardless of which attribute the consumer configures via `TN_TEST_ATTR`.
 
-When writing a new harness, follow the same fall-through pattern.
+**Precedence rationale.** If both attributes are present on the same element (e.g. the library wrote one and a legacy consumer-side directive wrote the other), the harness prefers the library's default attribute. Consumers who deliberately opted into `data-test` via the token only have one attribute present and the fall-through resolves to it. When writing a new harness, follow the same `data-testid ?? data-test` order. The location the harness reads from should also be the actual interactive element (e.g. the inner `<input>` for form controls), not just the component's outer wrapper — this matches where the component renders the attribute and makes assertions like `await harness.host()` consistent with `getTestId()`.
 
 ## Value-string conventions
 
@@ -160,7 +160,7 @@ Every interactive component listed below supports `testId`:
 | `tn-button-toggle` | `testId` input | inner `<button>` |
 | `tn-button-toggle-group` | `testId` input | group root `<div>` |
 | `tn-calendar` | `hostDirectives` | host element |
-| `tn-card` | `TnCardAction.testId`, `TnCardHeaderStatus.testId`, `TnCardControl.testId`, `headerMenuTriggerTestId` input | each rendered slot |
+| `tn-card` | `TnCardAction.testId`, `TnCardHeaderStatus.testId`, `TnCardControl.testId`, `TnCardFooterLink.testId`, `headerMenuTriggerTestId` input | each rendered slot |
 | `tn-checkbox` | `testId` input | inner `<input>` |
 | `tn-chip` | `testId` input | chip root |
 | `tn-date-input` | `testId` input | `.tn-date-input-container` |
@@ -176,7 +176,7 @@ Every interactive component listed below supports `testId`:
 | `tn-select` | `testId` input | `.tn-select-container` |
 | `tn-selection-list` | `hostDirectives` | host element |
 | `tn-side-panel` | `testId` input + `closeButtonTestId` input | panel root + close `<button>` |
-| `tn-slide-toggle` | `testId` input | toggle root |
+| `tn-slide-toggle` | `testId` input | inner `<input>` |
 | `tn-slider` | `testId` input | `.tn-slider-container` |
 | `tn-stepper` | `testId` input | stepper root |
 | `tn-tab` | `testId` input | tab `<button>` |
