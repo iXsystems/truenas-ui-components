@@ -116,7 +116,7 @@ export class TnRadioHarness extends ComponentHarness {
    */
   async getTestId(): Promise<string | null> {
     const input = await this._input();
-    return input.getAttribute('data-testid');
+    return (await input.getAttribute('data-testid')) ?? (await input.getAttribute('data-test'));
   }
 
   /**

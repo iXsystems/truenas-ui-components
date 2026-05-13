@@ -20,7 +20,7 @@
               cdkMenuItem
               class="tn-menu-item"
               type="button"
-              [attr.data-testid]="item.testId ?? 'menu-item-' + item.id"
+              [tnTestId]="item.testId ?? 'menu-item-' + item.id"
               [disabled]="item.disabled"
               [class.disabled]="item.disabled"
               (click)="onMenuItemClick(item)"
@@ -38,7 +38,7 @@
               cdkMenuItem
               class="tn-menu-item tn-menu-item--nested"
               type="button"
-              [attr.data-testid]="item.testId ?? 'menu-item-' + item.id"
+              [tnTestId]="item.testId ?? 'menu-item-' + item.id"
               [cdkMenuTriggerFor]="nestedMenu"
               [disabled]="item.disabled"
               [class.disabled]="item.disabled"
@@ -67,7 +67,7 @@
                         cdkMenuItem
                         class="tn-menu-item"
                         type="button"
-                        [attr.data-testid]="nestedItem.testId ?? 'menu-item-' + nestedItem.id"
+                        [tnTestId]="nestedItem.testId ?? 'menu-item-' + nestedItem.id"
                         [disabled]="nestedItem.disabled"
                         [class.disabled]="nestedItem.disabled"
                         (click)="onMenuItemClick(nestedItem)"
@@ -85,7 +85,7 @@
                         cdkMenuItem
                         class="tn-menu-item tn-menu-item--nested"
                         type="button"
-                        [attr.data-testid]="nestedItem.testId ?? 'menu-item-' + nestedItem.id"
+                        [tnTestId]="nestedItem.testId ?? 'menu-item-' + nestedItem.id"
                         [cdkMenuTriggerFor]="deepNestedMenu"
                         [disabled]="nestedItem.disabled"
                         [class.disabled]="nestedItem.disabled"
@@ -113,7 +113,7 @@
                                 cdkMenuItem
                                 class="tn-menu-item"
                                 type="button"
-                                [attr.data-testid]="deepNestedItem.testId ?? 'menu-item-' + deepNestedItem.id"
+                                [tnTestId]="deepNestedItem.testId ?? 'menu-item-' + deepNestedItem.id"
                                 [disabled]="deepNestedItem.disabled"
                                 [class.disabled]="deepNestedItem.disabled"
                                 (click)="onMenuItemClick(deepNestedItem)"
@@ -156,7 +156,7 @@
               cdkMenuItem
               class="tn-menu-item"
               type="button"
-              [attr.data-testid]="item.testId ?? 'menu-item-' + item.id"
+              [tnTestId]="item.testId ?? 'menu-item-' + item.id"
               [disabled]="item.disabled"
               [class.disabled]="item.disabled"
               (click)="onMenuItemClick(item)"
@@ -174,7 +174,7 @@
               cdkMenuItem
               class="tn-menu-item tn-menu-item--nested"
               type="button"
-              [attr.data-testid]="item.testId ?? 'menu-item-' + item.id"
+              [tnTestId]="item.testId ?? 'menu-item-' + item.id"
               [cdkMenuTriggerFor]="nestedMenu"
               [disabled]="item.disabled"
               [class.disabled]="item.disabled"
@@ -203,7 +203,7 @@
                         cdkMenuItem
                         class="tn-menu-item"
                         type="button"
-                        [attr.data-testid]="nestedItem.testId ?? 'menu-item-' + nestedItem.id"
+                        [tnTestId]="nestedItem.testId ?? 'menu-item-' + nestedItem.id"
                         [disabled]="nestedItem.disabled"
                         [class.disabled]="nestedItem.disabled"
                         (click)="onMenuItemClick(nestedItem)"
@@ -221,7 +221,7 @@
                         cdkMenuItem
                         class="tn-menu-item tn-menu-item--nested"
                         type="button"
-                        [attr.data-testid]="nestedItem.testId ?? 'menu-item-' + nestedItem.id"
+                        [tnTestId]="nestedItem.testId ?? 'menu-item-' + nestedItem.id"
                         [cdkMenuTriggerFor]="deepNestedMenu"
                         [disabled]="nestedItem.disabled"
                         [class.disabled]="nestedItem.disabled"
@@ -249,7 +249,7 @@
                                 cdkMenuItem
                                 class="tn-menu-item"
                                 type="button"
-                                [attr.data-testid]="deepNestedItem.testId ?? 'menu-item-' + deepNestedItem.id"
+                                [tnTestId]="deepNestedItem.testId ?? 'menu-item-' + deepNestedItem.id"
                                 [disabled]="deepNestedItem.disabled"
                                 [class.disabled]="deepNestedItem.disabled"
                                 (click)="onMenuItemClick(deepNestedItem)"

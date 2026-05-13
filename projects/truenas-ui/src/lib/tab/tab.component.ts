@@ -2,11 +2,12 @@ import { A11yModule } from '@angular/cdk/a11y';
 import { CommonModule } from '@angular/common';
 import type { TemplateRef, AfterContentInit} from '@angular/core';
 import { Component, input, output, ElementRef, inject, contentChild, computed, signal } from '@angular/core';
+import { TnTestIdDirective } from '../test-id';
 
 @Component({
   selector: 'tn-tab',
   standalone: true,
-  imports: [CommonModule, A11yModule],
+  imports: [CommonModule, A11yModule, TnTestIdDirective],
   templateUrl: './tab.component.html',
   styleUrl: './tab.component.scss'
 })

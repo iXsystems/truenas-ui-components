@@ -126,7 +126,7 @@ export class TnTabHarness extends ComponentHarness {
    */
   async getTestId(): Promise<string | null> {
     const button = await this._button();
-    return button.getAttribute('data-testid');
+    return (await button.getAttribute('data-testid')) ?? (await button.getAttribute('data-test'));
   }
 }
 

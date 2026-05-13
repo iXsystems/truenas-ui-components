@@ -99,6 +99,7 @@ export * from './lib/toast/toast.service';
 export * from './lib/toast/toast.component';
 export * from './lib/toast/toast-testing';
 export * from './lib/services/keyboard-shortcut.service';
+export * from './lib/test-id';
 export * from './lib/theme/theme.service';
 export * from './lib/theme/theme.interface';
 export * from './lib/theme/theme.constants';

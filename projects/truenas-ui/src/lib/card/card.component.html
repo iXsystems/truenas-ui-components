@@ -23,7 +23,8 @@
         @if (headerStatus(); as status) {
           <div
             class="tn-card__status"
-            [ngClass]="getStatusClass(status?.type)">
+            [ngClass]="getStatusClass(status?.type)"
+            [tnTestId]="status.testId">
             {{ status.label }}
           </div>
         }
@@ -35,6 +36,7 @@
               [label]="control.label"
               [checked]="control.checked"
               [disabled]="control.disabled || false"
+              [testId]="control.testId"
               (change)="onControlChange($event)" />
           </div>
         }
@@ -48,6 +50,7 @@
                 library="mdi"
                 size="md"
                 ariaLabel="Card menu"
+                [testId]="headerMenuTriggerTestId()"
                 [tnMenuTriggerFor]="cardMenu" />
               <tn-menu
                 #cardMenu
@@ -73,6 +76,7 @@
           <button
             type="button"
             class="tn-card__footer-link"
+            [tnTestId]="link.testId"
             (click)="link.handler()">
             {{ link.label }}
           </button>
@@ -86,6 +90,7 @@
             color="default"
             [label]="action.label"
             [disabled]="action.disabled || false"
+            [testId]="action.testId"
             (click)="action.handler()" />
         }
 
@@ -95,6 +100,7 @@
             color="primary"
             [label]="action.label"
             [disabled]="action.disabled || false"
+            [testId]="action.testId"
             (click)="action.handler()" />
         }
       </div>

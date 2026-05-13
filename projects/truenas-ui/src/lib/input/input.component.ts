@@ -6,11 +6,12 @@ import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { InputType } from '../enums/input-type.enum';
 import type { IconLibraryType } from '../icon/icon.component';
 import { TnIconComponent } from '../icon/icon.component';
+import { TnTestIdDirective } from '../test-id';
 
 @Component({
   selector: 'tn-input',
   standalone: true,
-  imports: [FormsModule, A11yModule, TnIconComponent],
+  imports: [FormsModule, A11yModule, TnIconComponent, TnTestIdDirective],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

@@ -12,13 +12,14 @@ import {
 } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { TnTestIdDirective } from '../test-id';
 
 let nextId = 0;
 
 @Component({
   selector: 'tn-autocomplete',
   standalone: true,
-  imports: [],
+  imports: [TnTestIdDirective],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

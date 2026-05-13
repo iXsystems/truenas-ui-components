@@ -1,7 +1,7 @@
 <div
   role="tabpanel"
   [ngClass]="classes()"
-  [attr.data-testid]="testId()"
+  [tnTestId]="testId()"
   [attr.aria-hidden]="!isActive()"
   [attr.aria-labelledby]="'tab-' + index()"
   [attr.tabindex]="isActive() ? 0 : -1"

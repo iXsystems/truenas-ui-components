@@ -1,6 +1,7 @@
 import { CdkTree, CdkTreeNode, CDK_TREE_NODE_OUTLET_NODE, CdkTreeModule } from '@angular/cdk/tree';
 import { ElementRef, ChangeDetectorRef, Component, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
 import { TnIconComponent } from '../icon/icon.component';
+import { TnTestIdDirective } from '../test-id';
 
 @Component({
   selector: 'tn-tree-node',
@@ -12,6 +13,7 @@ import { TnIconComponent } from '../icon/icon.component';
   ],
   templateUrl: './tree-node.component.html',
   styleUrl: './tree-node.component.scss',
+  hostDirectives: [{ directive: TnTestIdDirective, inputs: ['tnTestId: testId'] }],
   host: {
     'class': 'tn-tree-node-wrapper',
     '[attr.aria-level]': 'level + 1',

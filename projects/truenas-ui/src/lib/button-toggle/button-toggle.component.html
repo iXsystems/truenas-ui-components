@@ -7,6 +7,7 @@
   [attr.aria-label]="ariaLabel() || null"
   [attr.aria-labelledby]="ariaLabelledby()"
   [attr.id]="buttonId()"
+  [tnTestId]="testId()"
   (click)="toggle()">
   <span class="tn-button-toggle__label">
     @if (checked()) {

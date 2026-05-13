@@ -11,11 +11,12 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { TnCalendarComponent } from '../calendar/calendar.component';
 import { TnInputDirective } from '../input/input.directive';
+import { TnTestIdDirective } from '../test-id';
 
 @Component({
   selector: 'tn-date-input',
   standalone: true,
-  imports: [TnInputDirective, TnCalendarComponent, OverlayModule, PortalModule, A11yModule],
+  imports: [TnInputDirective, TnCalendarComponent, OverlayModule, PortalModule, A11yModule, TnTestIdDirective],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -38,6 +39,11 @@ export class TnDateInputComponent implements ControlValueAccessor, OnInit, OnDes
   min = input<Date | undefined>(undefined);
   max = input<Date | undefined>(undefined);
   dateFilter = input<((date: Date) => boolean) | undefined>(undefined);
+  /**
+   * Test-id applied to the date-input container. Rendered under whichever attribute name
+   * is configured via `TN_TEST_ATTR` (default `data-testid`).
+   */
+  testId = input<string | undefined>(undefined);
 
   private formDisabled = signal<boolean>(false);
   isDisabled = computed(() => this.disabled() || this.formDisabled());

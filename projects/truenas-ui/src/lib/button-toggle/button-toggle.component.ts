@@ -4,11 +4,12 @@ import { Component, input, output, signal, computed, forwardRef, ChangeDetection
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { TnButtonToggleGroupComponent } from './button-toggle-group.component';
+import { TnTestIdDirective } from '../test-id';
 
 @Component({
   selector: 'tn-button-toggle',
   standalone: true,
-  imports: [A11yModule],
+  imports: [A11yModule, TnTestIdDirective],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -40,6 +41,11 @@ export class TnButtonToggleComponent implements ControlValueAccessor {
   checked = signal<boolean>(false);
   ariaLabel = input<string>('');
   ariaLabelledby = input<string>('');
+  /**
+   * Test-id applied to the rendered toggle button. Rendered under whichever attribute name
+   * is configured via `TN_TEST_ATTR` (default `data-testid`).
+   */
+  testId = input<string | undefined>(undefined);
 
   change = output<{ source: TnButtonToggleComponent; value: unknown }>();
 

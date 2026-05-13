@@ -2,13 +2,14 @@
 import type { AfterContentInit } from '@angular/core';
 import { Component, input, computed, signal, contentChild } from '@angular/core';
 import { NgControl } from '@angular/forms';
+import { TnTestIdDirective } from '../test-id';
 
 export type SubscriptSizing = 'fixed' | 'dynamic';
 
 @Component({
   selector: 'tn-form-field',
   standalone: true,
-  imports: [],
+  imports: [TnTestIdDirective],
   templateUrl: './form-field.component.html',
   styleUrls: ['./form-field.component.scss']
 })

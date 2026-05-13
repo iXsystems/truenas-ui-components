@@ -3,6 +3,7 @@ import { Component, input, output, contentChildren, signal, computed, forwardRef
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TnListOptionComponent } from '../list-option/list-option.component';
+import { TnTestIdDirective } from '../test-id';
 
 export interface TnSelectionChange {
   source: TnSelectionListComponent;
@@ -22,6 +23,7 @@ export interface TnSelectionChange {
       multi: true
     }
   ],
+  hostDirectives: [{ directive: TnTestIdDirective, inputs: ['tnTestId: testId'] }],
   host: {
     'class': 'tn-selection-list',
     '[class.tn-selection-list--dense]': 'dense()',

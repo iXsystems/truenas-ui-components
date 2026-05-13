@@ -2,13 +2,14 @@ import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, input, output, contentChildren, computed, effect, model, inject } from '@angular/core';
 import { TnStepComponent } from './step.component';
+import { TnTestIdDirective } from '../test-id';
 
 @Component({
   selector: 'tn-stepper',
   templateUrl: './stepper.component.html',
   styleUrls: ['./stepper.component.scss'],
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TnTestIdDirective],
   animations: [
     trigger('stepTransition', [
       transition(':enter', [
@@ -25,6 +26,11 @@ export class TnStepperComponent {
   orientation = input<'horizontal' | 'vertical' | 'auto'>('horizontal');
   linear = input<boolean>(false);
   selectedIndex = model<number>(0);
+  /**
+   * Test-id applied to the stepper root. Rendered under whichever attribute name
+   * is configured via `TN_TEST_ATTR` (default `data-testid`).
+   */
+  testId = input<string | undefined>(undefined);
 
   selectionChange = output<{ selectedIndex: number; previouslySelectedIndex: number }>();
   completed = output<Array<{ label: string; completed: boolean; data: unknown }>>();

@@ -4,6 +4,7 @@
   [disabled]="disabled()"
   [attr.aria-label]="effectiveAriaLabel()"
   [attr.title]="tooltip()"
+  [tnTestId]="testId()"
   (click)="onClick.emit($event)"
 >
   <tn-icon

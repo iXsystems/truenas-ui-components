@@ -3,13 +3,14 @@ import { Component, contentChildren, input, output, signal, computed, forwardRef
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TnButtonToggleComponent } from './button-toggle.component';
+import { TnTestIdDirective } from '../test-id';
 
 export type TnButtonToggleType = 'checkbox' | 'radio';
 
 @Component({
   selector: 'tn-button-toggle-group',
   standalone: true,
-  imports: [A11yModule],
+  imports: [A11yModule, TnTestIdDirective],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -33,6 +34,11 @@ export class TnButtonToggleGroupComponent implements ControlValueAccessor {
   name = input<string>('');
   ariaLabel = input<string>('');
   ariaLabelledby = input<string>('');
+  /**
+   * Test-id applied to the group root. Rendered under whichever attribute name
+   * is configured via `TN_TEST_ATTR` (default `data-testid`).
+   */
+  testId = input<string | undefined>(undefined);
 
   change = output<{ source: TnButtonToggleComponent; value: unknown }>();
 

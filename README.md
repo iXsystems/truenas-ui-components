@@ -127,6 +127,40 @@ Generate the sprite in your application:
 yarn icons
 ```
 
+## Test IDs
+
+Most interactive components expose a `testId` input (or a `testId` field on configuration interfaces like `TnCardAction`, `TnMenuItem`) that the library renders onto the actual interactive DOM element — the inner `<button>` of `tn-button`, each rendered menu item, the close-X of `tn-side-panel`, etc.
+
+```html
+<tn-button label="Save" testId="save-button" />
+<tn-input testId="username-input" />
+```
+
+```typescript
+const menu: TnMenuItem[] = [
+  { id: 'edit', label: 'Edit', testId: 'row-edit', action: () => /* ... */ },
+];
+```
+
+### Attribute name
+
+By default the library renders `data-testid="..."` (industry convention). Consumers with an existing `data-test` convention can override at the application root via the `TN_TEST_ATTR` injection token — every component-level `testId` input and the internal `[tnTestId]` directive will respect it:
+
+```typescript
+import { bootstrapApplication } from '@angular/platform-browser';
+import { TN_TEST_ATTR } from '@truenas/ui-components';
+
+bootstrapApplication(AppComponent, {
+  providers: [
+    { provide: TN_TEST_ATTR, useValue: 'data-test' },
+  ],
+});
+```
+
+The harnesses shipped with the library read both attributes, so `with({ testId: 'foo' })` filters match the same value regardless of which the consumer renders.
+
+For more depth (when to use the `[tnTestId]` directive directly, how `hostDirectives` apply it to container components, conventions for value strings), see [`docs/test_ids.md`](./docs/test_ids.md).
+
 ## Storybook
 
 View component documentation and examples:

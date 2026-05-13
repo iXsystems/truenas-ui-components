@@ -8,6 +8,7 @@ import type { ElementRef, OnDestroy } from '@angular/core';
 import { mdiClose } from '@mdi/js';
 import { TnIconRegistryService } from '../icon/icon-registry.service';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
+import { TnTestIdDirective } from '../test-id';
 
 /**
  * Directive to mark an element as a side-panel footer action.
@@ -45,7 +46,7 @@ export class TnSidePanelHeaderActionDirective {}
 @Component({
   selector: 'tn-side-panel',
   standalone: true,
-  imports: [CommonModule, A11yModule, TnIconButtonComponent],
+  imports: [CommonModule, A11yModule, TnIconButtonComponent, TnTestIdDirective],
   templateUrl: './side-panel.component.html',
   styleUrls: ['./side-panel.component.scss'],
   host: {
@@ -69,6 +70,15 @@ export class TnSidePanelComponent implements OnDestroy {
   hasBackdrop = input<boolean>(true);
   closeOnBackdropClick = input<boolean>(true);
   closeOnEscape = input<boolean>(true);
+  /**
+   * Test-id applied to the panel's root overlay element. Rendered under whichever attribute
+   * name is configured via `TN_TEST_ATTR` (default `data-testid`).
+   */
+  testId = input<string | undefined>(undefined);
+  /**
+   * Test-id applied to the panel's close (×) button.
+   */
+  closeButtonTestId = input<string | undefined>(undefined);
 
   // Outputs
   opened = output<void>();

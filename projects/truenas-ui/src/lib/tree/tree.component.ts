@@ -5,6 +5,7 @@ import { ChangeDetectorRef, IterableDiffers, ViewContainerRef, Component, Change
 import type { Observable} from 'rxjs';
 import { BehaviorSubject, merge } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { TnTestIdDirective } from '../test-id';
 
 // Re-export CDK Tree types for convenience
 export { FlatTreeControl } from '@angular/cdk/tree';
@@ -114,6 +115,7 @@ export class TnTreeFlatDataSource<T, F> extends DataSource<F> {
   ],
   templateUrl: './tree.component.html',
   styleUrl: './tree.component.scss',
+  hostDirectives: [{ directive: TnTestIdDirective, inputs: ['tnTestId: testId'] }],
   host: {
     'class': 'tn-tree',
     'role': 'tree'

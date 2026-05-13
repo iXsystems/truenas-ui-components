@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import type { AfterContentInit, TemplateRef } from '@angular/core';
 import { Component, Directive, ElementRef, input, output, viewChild, computed, inject, ViewContainerRef } from '@angular/core';
 import { TnIconComponent } from '../icon/icon.component';
+import { TnTestIdDirective } from '../test-id';
 
 /**
  * Activates CDK menu hover-to-open behavior for menus opened via custom overlays.
@@ -51,7 +52,7 @@ export interface TnMenuItem {
 @Component({
   selector: 'tn-menu',
   standalone: true,
-  imports: [CommonModule, CdkMenu, CdkMenuItem, CdkMenuTrigger, TnIconComponent, TnMenuActivateHoverDirective],
+  imports: [CommonModule, CdkMenu, CdkMenuItem, CdkMenuTrigger, TnIconComponent, TnMenuActivateHoverDirective, TnTestIdDirective],
   templateUrl: './menu.component.html',
   styleUrls: ['./menu.component.scss'],
 })

@@ -4,6 +4,7 @@
   class="tn-side-panel__overlay"
   role="dialog"
   [attr.data-tn-panel]="panelId"
+  [tnTestId]="testId()"
   [class.tn-side-panel__overlay--initialized]="initialized()"
   [class.tn-side-panel__overlay--open]="open()"
   [attr.aria-modal]="open() ? 'true' : null"
@@ -39,6 +40,7 @@
           library="mdi"
           size="sm"
           ariaLabel="Dismiss"
+          [testId]="closeButtonTestId()"
           (onClick)="dismiss()" />
       </div>
     </header>

@@ -160,7 +160,7 @@ export class TnFormFieldHarness extends ComponentHarness {
    */
   async getTestId(): Promise<string | null> {
     const root = await this.locatorFor('.tn-form-field')();
-    return root.getAttribute('data-testid');
+    return (await root.getAttribute('data-testid')) ?? (await root.getAttribute('data-test'));
   }
 
   /**

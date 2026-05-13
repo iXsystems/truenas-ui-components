@@ -4,13 +4,14 @@ import { Component, contentChild, input, forwardRef, signal, computed, viewChild
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TnSliderThumbDirective } from './slider-thumb.directive';
+import { TnTestIdDirective } from '../test-id';
 
 export type LabelType = 'none' | 'handle' | 'track' | 'both';
 
 @Component({
   selector: 'tn-slider',
   standalone: true,
-  imports: [A11yModule],
+  imports: [A11yModule, TnTestIdDirective],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -33,6 +34,11 @@ export class TnSliderComponent implements ControlValueAccessor, OnDestroy, After
   labelPrefix = input<string>('');
   labelSuffix = input<string>('');
   labelType = input<LabelType>('none');
+  /**
+   * Test-id applied to the slider's root container. Rendered under whichever attribute name
+   * is configured via `TN_TEST_ATTR` (default `data-testid`).
+   */
+  testId = input<string | undefined>(undefined);
 
   thumbDirective = contentChild.required(TnSliderThumbDirective);
   sliderContainer = viewChild.required<ElementRef<HTMLDivElement>>('sliderContainer');
