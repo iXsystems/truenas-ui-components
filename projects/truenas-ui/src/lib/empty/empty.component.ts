@@ -23,6 +23,12 @@ export class TnEmptyComponent {
   description = input<string>();
   icon = input<string>();
   iconLibrary = input<IconLibraryType>('mdi');
+  /**
+   * Overrides the icon size derived from `size`. Accepts any valid CSS size value
+   * (e.g. `'48px'`, `'3rem'`). Use this when the variant presets are too small for an
+   * empty-state illustration. When unset, the icon falls back to the `size`-based preset.
+   */
+  iconSize = input<string>();
   actionText = input<string>();
   bordered = input<boolean>(false);
   size = input<TnEmptySize>('compact');
@@ -31,7 +37,7 @@ export class TnEmptyComponent {
 
   protected hasAction = computed(() => !!this.actionText());
 
-  iconSize = computed(() => {
+  protected iconSizePreset = computed(() => {
     return this.size() === 'compact' ? 'lg' : 'xl';
   });
 }

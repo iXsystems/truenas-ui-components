@@ -19,6 +19,7 @@ import { TnIconHarness } from '../icon/icon.harness';
     [description]="description()"
     [icon]="icon()"
     [iconLibrary]="iconLibrary()"
+    [iconSize]="iconSize()"
     [actionText]="actionText()"
     [bordered]="bordered()"
     [size]="size()"
@@ -31,6 +32,7 @@ class TestHostComponent {
   description = signal<string | undefined>(undefined);
   icon = signal<string | undefined>(undefined);
   iconLibrary = signal('mdi');
+  iconSize = signal<string | undefined>(undefined);
   actionText = signal<string | undefined>(undefined);
   bordered = signal(false);
   size = signal<TnEmptySize>('compact');
@@ -165,6 +167,23 @@ describe('TnEmptyComponent', () => {
 
       const hasIcon = await loader.hasHarness(TnIconHarness.with({ size: 'xl' }));
       expect(hasIcon).toBe(true);
+    });
+
+    it('should apply a custom icon size when iconSize is set', async () => {
+      hostComponent.icon.set('inbox');
+      hostComponent.iconSize.set('48px');
+      fixture.detectChanges();
+
+      const icon = await loader.getHarness(TnIconHarness);
+      expect(await icon.getCustomSize()).toBe('48px');
+    });
+
+    it('should not set a custom icon size when iconSize is unset', async () => {
+      hostComponent.icon.set('inbox');
+      fixture.detectChanges();
+
+      const icon = await loader.getHarness(TnIconHarness);
+      expect(await icon.getCustomSize()).toBeNull();
     });
   });
 
