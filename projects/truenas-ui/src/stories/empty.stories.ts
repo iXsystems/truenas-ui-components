@@ -42,6 +42,10 @@ const meta: Meta<TnEmptyComponent> = {
       options: ['mdi', 'material', 'lucide'],
       description: 'Icon library (defaults to mdi)',
     },
+    iconSize: {
+      control: 'text',
+      description: 'Optional CSS size override for the icon (e.g. "48px"). Falls back to the size-based preset when unset.',
+    },
     actionText: {
       control: 'text',
       description: 'Optional CTA button label. Renders a primary outline button when set.',
@@ -136,6 +140,15 @@ export const BorderedCompact: Story = {
     icon: 'tag',
     title: 'No tags found',
     bordered: true,
+  },
+};
+
+export const LargeIcon: Story = {
+  args: {
+    icon: 'inbox',
+    title: 'No messages',
+    description: 'The icon size is overridden via the iconSize input.',
+    iconSize: '64px',
   },
 };
 
