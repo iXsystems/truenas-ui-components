@@ -26,6 +26,17 @@ const meta: Meta<TnButtonComponent> = {
     primary: {
       control: 'boolean',
     },
+    href: {
+      control: 'text',
+      description: 'When set, renders as <a> with this href',
+    },
+    routerLink: {
+      control: 'text',
+      description: 'When set, renders as <a routerLink>. Takes precedence over href.',
+    },
+    target: {
+      control: 'text',
+    },
     onClick: { action: "clicked" },
   },
 };
@@ -121,6 +132,57 @@ export const OutlineWarn: Story = {
 
     await expect(outlineWarnButton.classList.contains('button-outline-warn')).toBe(true);
     await userEvent.click(outlineWarnButton);
+  },
+};
+
+export const AsLink: Story = {
+  args: {
+    color: 'primary',
+    variant: 'outline',
+    label: 'Audit Settings',
+    href: 'https://www.truenas.com/docs/',
+    target: '_blank',
+    rel: 'noopener',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const link = canvas.getByRole('link', { name: /Audit Settings/i });
+
+    await expect(link.tagName.toLowerCase()).toBe('a');
+    await expect(link.getAttribute('href')).toBe('https://www.truenas.com/docs/');
+  },
+};
+
+export const AsRouterLink: Story = {
+  args: {
+    color: 'primary',
+    variant: 'filled',
+    label: 'Open audit page',
+    routerLink: '/audit/settings',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const link = canvas.getByRole('link', { name: /Open audit page/i });
+
+    await expect(link.tagName.toLowerCase()).toBe('a');
+    await expect(link.getAttribute('href')).toBe('/audit/settings');
+  },
+};
+
+export const DisabledLink: Story = {
+  args: {
+    color: 'primary',
+    variant: 'outline',
+    label: 'Audit Settings (disabled)',
+    href: 'https://www.truenas.com/docs/',
+    disabled: true,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const link = canvas.getByRole('link', { name: /Audit Settings/i });
+
+    await expect(link.getAttribute('aria-disabled')).toBe('true');
+    await expect(link.hasAttribute('href')).toBe(false);
   },
 };
 

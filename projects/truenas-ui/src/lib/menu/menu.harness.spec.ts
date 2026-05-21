@@ -98,4 +98,35 @@ describe('TnMenuHarness', () => {
     expect(await menu.isItemDisabled({ label: 'Edit' })).toBe(false);
     expect(await menu.isItemDisabled({ label: 'Locked' })).toBe(true);
   });
+
+  it('reports isItemSelected for items marked selected', async () => {
+    hostComponent.items = [
+      { id: 'csv', label: 'CSV' },
+      { id: 'json', label: 'JSON', selected: true },
+    ];
+    fixture.detectChanges();
+    openMenu();
+
+    const menu = await rootLoader.getHarness(TnMenuHarness);
+    expect(await menu.isItemSelected({ label: 'JSON' })).toBe(true);
+    expect(await menu.isItemSelected({ label: 'CSV' })).toBe(false);
+  });
+
+  it('returns the label of the currently-selected item', async () => {
+    hostComponent.items = [
+      { id: 'csv', label: 'CSV' },
+      { id: 'json', label: 'JSON', selected: true },
+    ];
+    fixture.detectChanges();
+    openMenu();
+
+    const menu = await rootLoader.getHarness(TnMenuHarness);
+    expect(await menu.getSelectedItemLabel()).toBe('JSON');
+  });
+
+  it('returns null from getSelectedItemLabel when no item is selected', async () => {
+    openMenu();
+    const menu = await rootLoader.getHarness(TnMenuHarness);
+    expect(await menu.getSelectedItemLabel()).toBeNull();
+  });
 });

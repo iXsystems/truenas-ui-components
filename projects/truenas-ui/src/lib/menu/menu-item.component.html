@@ -1,0 +1,24 @@
+<button
+  class="tn-menu-item"
+  type="button"
+  role="menuitem"
+  [tnTestId]="resolvedTestId()"
+  [disabled]="disabled()"
+  [class.disabled]="disabled()"
+  [class.tn-menu-item--selected]="selected()"
+  [attr.aria-current]="selected() ? 'true' : null"
+  [attr.tabindex]="disabled() ? -1 : 0"
+  (click)="handleClick($event)"
+>
+  @if (label() !== undefined) {
+    @if (icon()) {
+      <tn-icon size="sm" class="tn-menu-item-icon" [name]="icon()!" [library]="iconLibrary()" />
+    }
+    <span class="tn-menu-item-label">{{ label() }}</span>
+    @if (shortcut()) {
+      <span class="tn-menu-item-shortcut">{{ shortcut() }}</span>
+    }
+  } @else {
+    <ng-content />
+  }
+</button>

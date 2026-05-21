@@ -1,4 +1,4 @@
-<!-- Context menu content slot -->
+<!-- Context menu content slot: anything that isn't a projected <tn-menu-item> -->
 @if (contextMenu()) {
   <div class="tn-menu-context-content" (contextmenu)="onContextMenu($event)">
     <ng-content />
@@ -23,6 +23,8 @@
               [tnTestId]="item.testId ?? 'menu-item-' + item.id"
               [disabled]="item.disabled"
               [class.disabled]="item.disabled"
+              [class.tn-menu-item--selected]="item.selected"
+              [attr.aria-current]="item.selected ? 'true' : null"
               (click)="onMenuItemClick(item)"
             >
               @if (item.icon) {
@@ -42,6 +44,8 @@
               [cdkMenuTriggerFor]="nestedMenu"
               [disabled]="item.disabled"
               [class.disabled]="item.disabled"
+              [class.tn-menu-item--selected]="item.selected"
+              [attr.aria-current]="item.selected ? 'true' : null"
             >
               @if (item.icon) {
                 <tn-icon size="sm" class="tn-menu-item-icon" [name]="item.icon" [library]="item.iconLibrary" />
@@ -70,6 +74,8 @@
                         [tnTestId]="nestedItem.testId ?? 'menu-item-' + nestedItem.id"
                         [disabled]="nestedItem.disabled"
                         [class.disabled]="nestedItem.disabled"
+                        [class.tn-menu-item--selected]="nestedItem.selected"
+                        [attr.aria-current]="nestedItem.selected ? 'true' : null"
                         (click)="onMenuItemClick(nestedItem)"
                       >
                         @if (nestedItem.icon) {
@@ -89,6 +95,8 @@
                         [cdkMenuTriggerFor]="deepNestedMenu"
                         [disabled]="nestedItem.disabled"
                         [class.disabled]="nestedItem.disabled"
+                        [class.tn-menu-item--selected]="nestedItem.selected"
+                        [attr.aria-current]="nestedItem.selected ? 'true' : null"
                       >
                         @if (nestedItem.icon) {
                           <tn-icon size="sm" class="tn-menu-item-icon" [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" />
@@ -116,6 +124,8 @@
                                 [tnTestId]="deepNestedItem.testId ?? 'menu-item-' + deepNestedItem.id"
                                 [disabled]="deepNestedItem.disabled"
                                 [class.disabled]="deepNestedItem.disabled"
+                                [class.tn-menu-item--selected]="deepNestedItem.selected"
+                                [attr.aria-current]="deepNestedItem.selected ? 'true' : null"
                                 (click)="onMenuItemClick(deepNestedItem)"
                               >
                                 @if (deepNestedItem.icon) {
@@ -144,6 +154,8 @@
   <!-- Regular menu template -->
   <ng-template #menuTemplate>
     <div class="tn-menu" cdkMenu tnMenuActivateHover>
+      <!-- Projected <tn-menu-item> children render here, mixed with the items() array below. -->
+      <ng-content select="tn-menu-item, .tn-menu-separator" />
       @for (item of items(); track trackByItemId($index, item)) {
         @if (item.separator) {
           <div
@@ -159,6 +171,8 @@
               [tnTestId]="item.testId ?? 'menu-item-' + item.id"
               [disabled]="item.disabled"
               [class.disabled]="item.disabled"
+              [class.tn-menu-item--selected]="item.selected"
+              [attr.aria-current]="item.selected ? 'true' : null"
               (click)="onMenuItemClick(item)"
             >
               @if (item.icon) {
@@ -178,6 +192,8 @@
               [cdkMenuTriggerFor]="nestedMenu"
               [disabled]="item.disabled"
               [class.disabled]="item.disabled"
+              [class.tn-menu-item--selected]="item.selected"
+              [attr.aria-current]="item.selected ? 'true' : null"
             >
               @if (item.icon) {
                 <tn-icon size="sm" class="tn-menu-item-icon" [name]="item.icon" [library]="item.iconLibrary" />
@@ -206,6 +222,8 @@
                         [tnTestId]="nestedItem.testId ?? 'menu-item-' + nestedItem.id"
                         [disabled]="nestedItem.disabled"
                         [class.disabled]="nestedItem.disabled"
+                        [class.tn-menu-item--selected]="nestedItem.selected"
+                        [attr.aria-current]="nestedItem.selected ? 'true' : null"
                         (click)="onMenuItemClick(nestedItem)"
                       >
                         @if (nestedItem.icon) {
@@ -225,6 +243,8 @@
                         [cdkMenuTriggerFor]="deepNestedMenu"
                         [disabled]="nestedItem.disabled"
                         [class.disabled]="nestedItem.disabled"
+                        [class.tn-menu-item--selected]="nestedItem.selected"
+                        [attr.aria-current]="nestedItem.selected ? 'true' : null"
                       >
                         @if (nestedItem.icon) {
                           <tn-icon size="sm" class="tn-menu-item-icon" [name]="nestedItem.icon" [library]="nestedItem.iconLibrary" />
@@ -252,6 +272,8 @@
                                 [tnTestId]="deepNestedItem.testId ?? 'menu-item-' + deepNestedItem.id"
                                 [disabled]="deepNestedItem.disabled"
                                 [class.disabled]="deepNestedItem.disabled"
+                                [class.tn-menu-item--selected]="deepNestedItem.selected"
+                                [attr.aria-current]="deepNestedItem.selected ? 'true' : null"
                                 (click)="onMenuItemClick(deepNestedItem)"
                               >
                                 @if (deepNestedItem.icon) {

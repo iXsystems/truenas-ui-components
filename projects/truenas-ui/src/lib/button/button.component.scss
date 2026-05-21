@@ -12,11 +12,17 @@
   line-height: 1;
   font-family: 'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 
-  &:disabled {
+  &:disabled,
+  &.is-disabled {
     opacity: 0.5;
     cursor: not-allowed;
     pointer-events: none;
   }
+}
+
+a.storybook-button {
+  text-decoration: none;
+  text-align: center;
 }
 .button-primary {
   background-color: var(--tn-primary);

@@ -8,12 +8,20 @@ import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
 class TnMenuItemHarness extends ComponentHarness {
   static hostSelector = '.tn-menu-item';
 
-  private _label = this.locatorFor('.tn-menu-item-label');
+  private _label = this.locatorForOptional('.tn-menu-item-label');
 
-  /** Gets the label text of this menu item. */
+  /**
+   * Gets the label text of this menu item. Reads `.tn-menu-item-label` when
+   * present (the default layout), otherwise falls back to the host text so
+   * fully-projected `<tn-menu-item>` content still resolves a label.
+   */
   async getLabel(): Promise<string> {
     const label = await this._label();
-    return (await label.text()).trim();
+    if (label) {
+      return (await label.text()).trim();
+    }
+    const host = await this.host();
+    return (await host.text()).trim();
   }
 
   /** Checks whether this menu item is disabled via the native `disabled` attribute. */
@@ -21,6 +29,12 @@ class TnMenuItemHarness extends ComponentHarness {
     const host = await this.host();
     const disabled = await host.getProperty<boolean>('disabled');
     return !!disabled;
+  }
+
+  /** Checks whether this menu item is marked as the currently-selected option. */
+  async isSelected(): Promise<boolean> {
+    const host = await this.host();
+    return (await host.getAttribute('aria-current')) === 'true';
   }
 
   /** Clicks this menu item. */
@@ -164,6 +178,44 @@ export class TnMenuHarness extends ComponentHarness {
    */
   async getItemCount(): Promise<number> {
     return (await this._items()).length;
+  }
+
+  /**
+   * Checks whether a menu item is marked as the currently-selected option
+   * (i.e. has `aria-current="true"`).
+   *
+   * @example
+   * ```typescript
+   * const menu = await rootLoader.getHarness(TnMenuHarness);
+   * expect(await menu.isItemSelected({ label: 'JSON' })).toBe(true);
+   * ```
+   */
+  async isItemSelected(filter: { label: string | RegExp }): Promise<boolean> {
+    const items = await this._items();
+    for (const item of items) {
+      const text = await item.getLabel();
+      const matches = filter.label instanceof RegExp
+        ? filter.label.test(text)
+        : text === filter.label;
+      if (matches) {
+        return item.isSelected();
+      }
+    }
+    throw new Error(`Could not find menu item with label "${String(filter.label)}"`);
+  }
+
+  /**
+   * Gets the label of the currently-selected item, or `null` when no item is
+   * marked as selected.
+   */
+  async getSelectedItemLabel(): Promise<string | null> {
+    const items = await this._items();
+    for (const item of items) {
+      if (await item.isSelected()) {
+        return item.getLabel();
+      }
+    }
+    return null;
   }
 }
 

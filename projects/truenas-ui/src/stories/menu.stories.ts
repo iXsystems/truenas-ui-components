@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, userEvent, within } from 'storybook/test';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
+import { TnMenuItemComponent } from '../lib/menu/menu-item.component';
 import { TnMenuTriggerDirective } from '../lib/menu/menu-trigger.directive';
 import type { TnMenuItem } from '../lib/menu/menu.component';
 import { TnMenuComponent } from '../lib/menu/menu.component';
@@ -383,6 +384,100 @@ export const ContextMenu: Story = {
     docs: {
       description: {
         story: 'Context menu mode allows the menu to be triggered by right-clicking anywhere within the component area. The menu will appear at the exact cursor position.',
+      },
+    },
+  },
+};
+
+export const WithSelectedItem: Story = {
+  args: {
+    items: [
+      { id: 'csv', label: 'CSV' },
+      { id: 'json', label: 'JSON', selected: true },
+      { id: 'yaml', label: 'YAML' },
+    ],
+  },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-button [tnMenuTriggerFor]="menu">Export Format</tn-button>
+      <tn-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></tn-menu>
+    `,
+    moduleMetadata: {
+      imports: [TnMenuTriggerDirective, TnButtonComponent],
+    },
+  }),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Set `selected: true` on a `TnMenuItem` to mark the currently-chosen option. The selected item gets the `tn-menu-item--selected` class and `aria-current="true"`, mirroring the `mat-menu` `[class.selected]` pattern (e.g. format/sort pickers).',
+      },
+    },
+  },
+};
+
+export const TemplatedItems: Story = {
+  render: () => ({
+    props: {
+      format: 'json',
+      setFormat(this: { format: string }, value: string) {
+        this.format = value;
+      },
+    },
+    template: `
+      <tn-button [tnMenuTriggerFor]="menu">Export as {{ format | uppercase }}</tn-button>
+      <tn-menu #menu>
+        <tn-menu-item id="csv"  label="CSV"  [selected]="format === 'csv'"  (itemClick)="setFormat('csv')" />
+        <tn-menu-item id="json" label="JSON" [selected]="format === 'json'" (itemClick)="setFormat('json')" />
+        <tn-menu-item id="yaml" label="YAML" [selected]="format === 'yaml'" (itemClick)="setFormat('yaml')" />
+      </tn-menu>
+    `,
+    moduleMetadata: {
+      imports: [TnMenuTriggerDirective, TnButtonComponent, TnMenuItemComponent],
+    },
+  }),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Authoring with projected `<tn-menu-item>` children instead of the `items` array. Useful when each item needs its own click handler or arbitrary layout. Mix-and-match with `items` is supported.',
+      },
+    },
+  },
+};
+
+export const TemplatedItemsCustomLayout: Story = {
+  render: () => ({
+    template: `
+      <tn-button [tnMenuTriggerFor]="menu">Notifications</tn-button>
+      <tn-menu #menu>
+        <tn-menu-item id="inbox">
+          <span style="display:flex;align-items:center;gap:12px;width:100%;">
+            <span style="flex:1;">Inbox</span>
+            <span style="background:var(--tn-primary,#007bff);color:white;border-radius:10px;padding:2px 8px;font-size:12px;font-weight:600;">12</span>
+          </span>
+        </tn-menu-item>
+        <tn-menu-item id="archived">
+          <span style="display:flex;align-items:center;gap:12px;width:100%;">
+            <span style="flex:1;">Archived</span>
+            <span style="background:var(--tn-bg2,#eee);color:var(--tn-fg2,#666);border-radius:10px;padding:2px 8px;font-size:12px;font-weight:600;">3</span>
+          </span>
+        </tn-menu-item>
+        <tn-menu-item id="drafts">
+          <span style="display:flex;flex-direction:column;align-items:flex-start;">
+            <strong>Drafts</strong>
+            <small style="opacity:0.7;">Auto-saved 2 minutes ago</small>
+          </span>
+        </tn-menu-item>
+      </tn-menu>
+    `,
+    moduleMetadata: {
+      imports: [TnMenuTriggerDirective, TnButtonComponent, TnMenuItemComponent],
+    },
+  }),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Omit the `label` input on `<tn-menu-item>` to project arbitrary content (badges, two-line layouts, etc.).',
       },
     },
   },

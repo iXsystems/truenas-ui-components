@@ -25,7 +25,7 @@ export class TnButtonHarness extends ComponentHarness {
    */
   static hostSelector = 'tn-button';
 
-  private _button = this.locatorFor('button');
+  private _button = this.locatorFor('button, a');
 
   /**
    * Gets a `HarnessPredicate` that can be used to search for a button
@@ -80,7 +80,31 @@ export class TnButtonHarness extends ComponentHarness {
    */
   async isDisabled(): Promise<boolean> {
     const button = await this._button();
+    const tagName = (await button.getProperty<string>('tagName')).toLowerCase();
+    if (tagName === 'a') {
+      return (await button.getAttribute('aria-disabled')) === 'true';
+    }
     return (await button.getProperty<boolean>('disabled')) ?? false;
+  }
+
+  /**
+   * Gets the resolved URL of the rendered element. Returns the `href` for
+   * anchor-mode renders (both plain `href` and `routerLink`) and `null` for
+   * button-mode renders.
+   *
+   * @example
+   * ```typescript
+   * const link = await loader.getHarness(TnButtonHarness.with({ label: 'Audit Settings' }));
+   * expect(await link.getHref()).toContain('/audit/settings');
+   * ```
+   */
+  async getHref(): Promise<string | null> {
+    const button = await this._button();
+    const tagName = (await button.getProperty<string>('tagName')).toLowerCase();
+    if (tagName !== 'a') {
+      return null;
+    }
+    return button.getAttribute('href');
   }
 
   /**

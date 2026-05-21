@@ -1,6 +1,7 @@
 import { Preview, Decorator, applicationConfig } from '@storybook/angular';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideHttpClient } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
 import { Dialog } from '@angular/cdk/dialog';
 import { withThemeByClassName } from '@storybook/addon-themes';
 import { APP_INITIALIZER } from '@angular/core';
@@ -100,6 +101,7 @@ export const decorators: Decorator[] = [
     providers: [
       provideAnimationsAsync(),
       provideHttpClient(),
+      provideRouter([]),
       Dialog,
       TnThemeService,
       TnIconRegistryService,

@@ -1,6 +1,7 @@
-import { Component, viewChild } from '@angular/core';
+import { Component, signal, viewChild } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed, fakeAsync, flush } from '@angular/core/testing';
+import { TnMenuItemComponent } from './menu-item.component';
 import { TnMenuTriggerDirective } from './menu-trigger.directive';
 import type { TnMenuItem } from './menu.component';
 import { TnMenuComponent } from './menu.component';
@@ -403,4 +404,203 @@ describe('tn-menu as context menu', () => {
     expect(getMenuPanel()).toBeFalsy();
     expect(host.closed).toBe(true);
   }));
+});
+
+// ===========================================================================
+// Selected state (TnMenuItem.selected)
+// ===========================================================================
+/* eslint-disable @angular-eslint/component-max-inline-declarations */
+@Component({
+  standalone: true,
+  imports: [TnMenuComponent, TnMenuTriggerDirective],
+  template: `
+    <button class="trigger" [tnMenuTriggerFor]="menu">Open</button>
+    <tn-menu #menu [items]="items" />
+  `,
+})
+class SelectedItemsHostComponent {
+  items: TnMenuItem[] = [
+    { id: 'csv', label: 'CSV' },
+    { id: 'json', label: 'JSON', selected: true },
+    { id: 'yaml', label: 'YAML' },
+  ];
+  trigger = viewChild.required(TnMenuTriggerDirective);
+}
+
+describe('tn-menu selected items', () => {
+  let fixture: ComponentFixture<SelectedItemsHostComponent>;
+  let host: SelectedItemsHostComponent;
+  let triggerButton: HTMLElement;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [SelectedItemsHostComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(SelectedItemsHostComponent);
+    host = fixture.componentInstance;
+    fixture.detectChanges();
+    triggerButton = fixture.nativeElement.querySelector('.trigger');
+  });
+
+  afterEach(() => host.trigger().closeMenu());
+
+  it('applies the tn-menu-item--selected class to the selected item only', () => {
+    triggerButton.click();
+    fixture.detectChanges();
+
+    const selected = document.querySelectorAll('.tn-menu-item--selected');
+    expect(selected.length).toBe(1);
+    expect(selected[0].textContent?.trim()).toBe('JSON');
+  });
+
+  it('applies aria-current="true" on the selected item', () => {
+    triggerButton.click();
+    fixture.detectChanges();
+
+    const currentItems = Array.from(getMenuItems()).filter(
+      (el) => el.getAttribute('aria-current') === 'true',
+    );
+    expect(currentItems.length).toBe(1);
+    expect(currentItems[0].textContent).toContain('JSON');
+  });
+
+  it('does not set aria-current on unselected items', () => {
+    triggerButton.click();
+    fixture.detectChanges();
+
+    const items = getMenuItems();
+    const withoutCurrent = items.filter((el) => !el.hasAttribute('aria-current'));
+    expect(withoutCurrent.length).toBe(2);
+  });
+});
+
+// ===========================================================================
+// Projected <tn-menu-item> items
+// ===========================================================================
+@Component({
+  standalone: true,
+  imports: [TnMenuComponent, TnMenuItemComponent, TnMenuTriggerDirective],
+  template: `
+    <button class="trigger" [tnMenuTriggerFor]="menu">Open</button>
+    <tn-menu #menu (menuItemClick)="menuClicked = true">
+      <tn-menu-item
+        id="csv"
+        label="CSV"
+        [selected]="format() === 'csv'"
+        (itemClick)="setFormat('csv')"
+      />
+      <tn-menu-item
+        id="json"
+        label="JSON"
+        [selected]="format() === 'json'"
+        (itemClick)="setFormat('json')"
+      />
+      <tn-menu-item id="disabled-item" label="Disabled" [disabled]="true" />
+      <tn-menu-item id="custom">
+        <span class="custom-content">Custom <strong>Badge</strong></span>
+      </tn-menu-item>
+    </tn-menu>
+  `,
+})
+class ProjectedItemsHostComponent {
+  format = signal<'csv' | 'json'>('json');
+  menuClicked = false;
+
+  setFormat(value: 'csv' | 'json'): void {
+    this.format.set(value);
+  }
+
+  trigger = viewChild.required(TnMenuTriggerDirective);
+}
+
+describe('tn-menu with projected <tn-menu-item>', () => {
+  let fixture: ComponentFixture<ProjectedItemsHostComponent>;
+  let host: ProjectedItemsHostComponent;
+  let triggerButton: HTMLElement;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ProjectedItemsHostComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ProjectedItemsHostComponent);
+    host = fixture.componentInstance;
+    fixture.detectChanges();
+    triggerButton = fixture.nativeElement.querySelector('.trigger');
+  });
+
+  afterEach(() => host.trigger().closeMenu());
+
+  it('renders projected items in the overlay', () => {
+    triggerButton.click();
+    fixture.detectChanges();
+
+    const labels = getMenuItems().map((el) => el.textContent?.trim());
+    expect(labels).toEqual(expect.arrayContaining(['CSV', 'JSON', 'Disabled']));
+  });
+
+  it('renders custom content when label is omitted', () => {
+    triggerButton.click();
+    fixture.detectChanges();
+
+    const custom = document.querySelector('.custom-content');
+    expect(custom).toBeTruthy();
+    expect(custom?.textContent?.trim()).toBe('Custom Badge');
+  });
+
+  it('marks the selected projected item with aria-current and modifier class', () => {
+    triggerButton.click();
+    fixture.detectChanges();
+
+    const selectedEl = document.querySelector('.tn-menu-item--selected');
+    expect(selectedEl?.getAttribute('aria-current')).toBe('true');
+    expect(selectedEl?.textContent).toContain('JSON');
+  });
+
+  it('emits per-item itemClick and updates the selection', () => {
+    triggerButton.click();
+    fixture.detectChanges();
+
+    const csvItem = getMenuItems().find((el) => el.textContent?.includes('CSV'))!;
+    csvItem.click();
+    fixture.detectChanges();
+
+    expect(host.format()).toBe('csv');
+  });
+
+  it('closes the trigger overlay after projected-item click (via menuItemClick re-emit)', () => {
+    triggerButton.click();
+    fixture.detectChanges();
+    expect(getMenuPanel()).toBeTruthy();
+
+    const jsonItem = getMenuItems().find((el) => el.textContent?.trim() === 'JSON')!;
+    jsonItem.click();
+    fixture.detectChanges();
+
+    expect(getMenuPanel()).toBeFalsy();
+    expect(host.menuClicked).toBe(true);
+  });
+
+  it('does not emit itemClick when a disabled projected item is clicked', () => {
+    triggerButton.click();
+    fixture.detectChanges();
+
+    const initialFormat = host.format();
+    const disabledItem = getMenuItems().find((el) => el.textContent?.includes('Disabled'))!;
+    disabledItem.click();
+    fixture.detectChanges();
+
+    expect(host.format()).toBe(initialFormat);
+  });
+
+  it('renders default data-testid based on id input', () => {
+    triggerButton.click();
+    fixture.detectChanges();
+
+    const ids = getMenuItems().map((el) => el.getAttribute('data-testid'));
+    expect(ids).toEqual(
+      expect.arrayContaining(['menu-item-csv', 'menu-item-json', 'menu-item-disabled-item']),
+    );
+  });
 });
