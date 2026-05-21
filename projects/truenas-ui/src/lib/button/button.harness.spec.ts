@@ -3,6 +3,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { TnButtonComponent } from './button.component';
 import { TnButtonHarness } from './button.harness';
 
@@ -20,6 +21,29 @@ class TestHostComponent {
   handleClick(_event: MouseEvent): void {
     this.clickCount++;
   }
+}
+
+@Component({
+  selector: 'tn-link-host',
+  standalone: true,
+  imports: [TnButtonComponent],
+  template: `<tn-button [label]="label()" [href]="href()" [disabled]="disabled()" />`
+})
+class LinkHostComponent {
+  label = signal('Audit Settings');
+  href = signal<string | undefined>('https://truenas.com/docs');
+  disabled = signal(false);
+}
+
+@Component({
+  selector: 'tn-router-host',
+  standalone: true,
+  imports: [TnButtonComponent],
+  template: `<tn-button [label]="label()" [routerLink]="routerLink()" />`
+})
+class RouterHostComponent {
+  label = signal('Audit');
+  routerLink = signal<string | unknown[] | undefined>(['/audit', 'settings']);
 }
 
 describe('TnButtonHarness', () => {
@@ -137,6 +161,82 @@ describe('TnButtonHarness', () => {
       hostComponent.label.set('Save');
 
       expect(await loader.hasHarness(TnButtonHarness.with({ label: 'NonExistent' }))).toBe(false);
+    });
+  });
+});
+
+describe('TnButtonHarness — anchor variants', () => {
+  describe('href mode', () => {
+    let hostComponent: LinkHostComponent;
+    let fixture: ComponentFixture<LinkHostComponent>;
+    let loader: HarnessLoader;
+
+    beforeEach(async () => {
+      await TestBed.configureTestingModule({
+        imports: [LinkHostComponent]
+      }).compileComponents();
+      fixture = TestBed.createComponent(LinkHostComponent);
+      hostComponent = fixture.componentInstance;
+      loader = TestbedHarnessEnvironment.loader(fixture);
+    });
+
+    it('resolves harness against an <a> host element', async () => {
+      const harness = await loader.getHarness(TnButtonHarness);
+      expect(harness).toBeTruthy();
+    });
+
+    it('reads the label from the anchor', async () => {
+      const harness = await loader.getHarness(TnButtonHarness.with({ label: 'Audit Settings' }));
+      expect(await harness.getLabel()).toBe('Audit Settings');
+    });
+
+    it('returns the href via getHref', async () => {
+      const harness = await loader.getHarness(TnButtonHarness);
+      expect(await harness.getHref()).toBe('https://truenas.com/docs');
+    });
+
+    it('reports disabled when aria-disabled is set', async () => {
+      hostComponent.disabled.set(true);
+      const harness = await loader.getHarness(TnButtonHarness);
+      expect(await harness.isDisabled()).toBe(true);
+      expect(await harness.getHref()).toBeNull();
+    });
+  });
+
+  describe('routerLink mode', () => {
+    let fixture: ComponentFixture<RouterHostComponent>;
+    let loader: HarnessLoader;
+
+    beforeEach(async () => {
+      await TestBed.configureTestingModule({
+        imports: [RouterHostComponent],
+        providers: [provideRouter([])]
+      }).compileComponents();
+      fixture = TestBed.createComponent(RouterHostComponent);
+      loader = TestbedHarnessEnvironment.loader(fixture);
+    });
+
+    it('resolves harness and returns the resolved URL', async () => {
+      const harness = await loader.getHarness(TnButtonHarness);
+      expect(await harness.getHref()).toBe('/audit/settings');
+    });
+  });
+
+  describe('button mode (regression)', () => {
+    let fixture: ComponentFixture<TestHostComponent>;
+    let loader: HarnessLoader;
+
+    beforeEach(async () => {
+      await TestBed.configureTestingModule({
+        imports: [TestHostComponent]
+      }).compileComponents();
+      fixture = TestBed.createComponent(TestHostComponent);
+      loader = TestbedHarnessEnvironment.loader(fixture);
+    });
+
+    it('returns null from getHref for button-mode renders', async () => {
+      const harness = await loader.getHarness(TnButtonHarness);
+      expect(await harness.getHref()).toBeNull();
     });
   });
 });

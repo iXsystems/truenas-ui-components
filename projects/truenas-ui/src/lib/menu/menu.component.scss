@@ -88,6 +88,12 @@
     background: var(--tn-alt-bg2, #e8f4fd);
   }
 
+  &.tn-menu-item--selected {
+    background: var(--tn-alt-bg2, #e8f4fd);
+    font-weight: 600;
+    color: var(--tn-primary, #007bff);
+  }
+
   &.disabled {
     opacity: 0.5;
     cursor: not-allowed;

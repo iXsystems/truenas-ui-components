@@ -3,9 +3,10 @@ import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
 import type { AfterContentInit, TemplateRef } from '@angular/core';
-import { Component, Directive, ElementRef, input, output, viewChild, computed, inject, ViewContainerRef } from '@angular/core';
+import { Component, Directive, ElementRef, contentChildren, effect, input, output, viewChild, computed, inject, ViewContainerRef } from '@angular/core';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective } from '../test-id';
+import { TnMenuItemComponent } from './menu-item.component';
 
 /**
  * Activates CDK menu hover-to-open behavior for menus opened via custom overlays.
@@ -47,6 +48,12 @@ export interface TnMenuItem {
   action?: () => void;
   children?: TnMenuItem[];
   shortcut?: string;
+  /**
+   * Marks this item as the currently-chosen option (e.g. the active sort key
+   * or export format). Applies the `tn-menu-item--selected` class and an
+   * `aria-current="true"` attribute. Visually distinct from focus/hover.
+   */
+  selected?: boolean;
 }
 
 @Component({
@@ -83,6 +90,27 @@ export class TnMenuComponent {
         this.closeContextMenu();
       }
     }
+  }
+
+  private contentItems = contentChildren(TnMenuItemComponent);
+
+  constructor() {
+    // Forward projected `<tn-menu-item>` clicks to `menuItemClick` so trigger-
+    // driven menus close uniformly. The synthetic emission mirrors the input
+    // shape; consumers wanting per-item behavior should bind to the projected
+    // item's own `itemClick` output.
+    effect((onCleanup) => {
+      const items = this.contentItems();
+      const subs = items.map((item) =>
+        item.itemClick.subscribe(() => {
+          this.menuItemClick.emit({ id: item.id() ?? '', label: item.label() ?? '' });
+          if (this.contextOverlayRef) {
+            this.closeContextMenu();
+          }
+        }),
+      );
+      onCleanup(() => subs.forEach((s) => s.unsubscribe()));
+    });
   }
 
   hasChildren = computed(() => (item: TnMenuItem): boolean => {
