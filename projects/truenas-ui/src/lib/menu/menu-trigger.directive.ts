@@ -1,6 +1,6 @@
 import { Overlay, type OverlayRef, type ConnectedPosition } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { ElementRef, ViewContainerRef, Directive, input, signal, inject, type OutputRefSubscription } from '@angular/core';
+import { ElementRef, ViewContainerRef, Directive, input, signal, inject, type OnDestroy, type OutputRefSubscription } from '@angular/core';
 import type { TnMenuComponent } from './menu.component';
 
 /**
@@ -16,7 +16,7 @@ import type { TnMenuComponent } from './menu.component';
     '(keydown.arrowDown)': 'onArrowDown($event)',
   },
 })
-export class TnMenuTriggerDirective {
+export class TnMenuTriggerDirective implements OnDestroy {
   menu = input.required<TnMenuComponent>({ alias: 'tnMenuTriggerFor' });
   tnMenuPosition = input<'above' | 'below' | 'before' | 'after'>('below');
 
@@ -125,6 +125,16 @@ export class TnMenuTriggerDirective {
       this.menu().onMenuClose();
       this.restoreFocusToTrigger();
     }
+  }
+
+  ngOnDestroy(): void {
+    // If the host is destroyed while the menu is open, closeMenu() never runs.
+    // Dispose directly without trying to restore focus or notify the menu — the
+    // surrounding view is being torn down anyway.
+    this.itemClickSub?.unsubscribe();
+    this.itemClickSub = undefined;
+    this.overlayRef?.dispose();
+    this.overlayRef = undefined;
   }
 
   /**

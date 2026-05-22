@@ -70,8 +70,7 @@
         [class.tn-table__row--active]="isRowActive(row)"
         [class.tn-table__row--clickable]="clickable()"
         [attr.tabindex]="clickable() ? 0 : null"
-        [attr.role]="clickable() ? 'button' : null"
-        [attr.aria-pressed]="clickable() ? isRowActive(row) : null"
+        [attr.aria-selected]="clickable() ? isRowActive(row) : null"
         (click)="onRowClick(row)"
         (keydown)="onRowKeydown($event, row)">
         @for (column of effectiveDisplayedColumns(); track $index) {

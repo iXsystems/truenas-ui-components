@@ -203,14 +203,16 @@
   }
 
   // Loading overlay — sits on top of the table body so existing rows stay
-  // visible (dimmed) during reloads.
+  // visible (dimmed) during reloads. Derive the dim from the table background
+  // so it adapts across light/dark themes instead of relying on a hardcoded
+  // black tint.
   &__loading-overlay {
     position: absolute;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(0, 0, 0, 0.35);
+    background-color: color-mix(in srgb, var(--tn-bg2, #282828) 65%, transparent);
     backdrop-filter: blur(1px);
     pointer-events: all;
     z-index: 1;

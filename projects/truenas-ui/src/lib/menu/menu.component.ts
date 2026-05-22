@@ -2,8 +2,9 @@ import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
-import type { AfterContentInit, TemplateRef } from '@angular/core';
+import type { AfterContentInit, OnDestroy, TemplateRef } from '@angular/core';
 import { Component, Directive, contentChildren, input, output, viewChild, computed, inject, ViewContainerRef } from '@angular/core';
+import type { Subscription } from 'rxjs';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective } from '../test-id';
 import { TnMenuItemComponent } from './menu-item.component';
@@ -85,7 +86,7 @@ export interface TnMenuItem {
   templateUrl: './menu.component.html',
   styleUrls: ['./menu.component.scss'],
 })
-export class TnMenuComponent {
+export class TnMenuComponent implements OnDestroy {
   items = input<TnMenuItem[]>([]);
   contextMenu = input<boolean>(false); // Enable context menu mode (right-click)
 
@@ -97,6 +98,7 @@ export class TnMenuComponent {
   contextMenuTemplate = viewChild.required<TemplateRef<unknown>>('contextMenuTemplate');
 
   private contextOverlayRef?: OverlayRef;
+  private contextBackdropSub?: Subscription;
 
   private overlay = inject(Overlay);
   private viewContainerRef = inject(ViewContainerRef);
@@ -181,8 +183,9 @@ export class TnMenuComponent {
       const portal = new TemplatePortal(contextMenuTemplate, this.viewContainerRef);
       this.contextOverlayRef.attach(portal);
 
-      // Handle backdrop click to close menu
-      this.contextOverlayRef.backdropClick().subscribe(() => {
+      // Handle backdrop click to close menu — keep the subscription so we can
+      // unsubscribe explicitly on close/destroy rather than leaving it dangling.
+      this.contextBackdropSub = this.contextOverlayRef.backdropClick().subscribe(() => {
         this.closeContextMenu();
       });
 
@@ -191,11 +194,21 @@ export class TnMenuComponent {
   }
 
   private closeContextMenu(): void {
+    this.contextBackdropSub?.unsubscribe();
+    this.contextBackdropSub = undefined;
     if (this.contextOverlayRef) {
       this.contextOverlayRef.dispose();
       this.contextOverlayRef = undefined;
       this.onMenuClose();
     }
+  }
+
+  ngOnDestroy(): void {
+    // Component destroyed while context menu open → clean up without notifying.
+    this.contextBackdropSub?.unsubscribe();
+    this.contextBackdropSub = undefined;
+    this.contextOverlayRef?.dispose();
+    this.contextOverlayRef = undefined;
   }
 
   onContextMenu(event: MouseEvent): void {

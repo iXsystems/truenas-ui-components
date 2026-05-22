@@ -241,7 +241,11 @@ describe('TnTableComponent', () => {
       expect(rows.length).toBeGreaterThan(0);
       for (const row of rows) {
         expect(row.getAttribute('tabindex')).toBe('0');
-        expect(row.getAttribute('role')).toBe('button');
+        // Native <tr> role is preserved; selection state is conveyed via
+        // aria-selected (not aria-pressed / role=button — those would
+        // override the row's native table semantics).
+        expect(row.getAttribute('role')).toBeNull();
+        expect(row.hasAttribute('aria-selected')).toBe(true);
       }
     });
 

@@ -2,7 +2,7 @@
 import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { ChangeDetectorRef, Component, computed, ElementRef, forwardRef, inject, input, output, signal, viewChild, ViewContainerRef } from '@angular/core';
-import type { TemplateRef } from '@angular/core';
+import type { OnDestroy, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { Subscription } from 'rxjs';
@@ -35,13 +35,27 @@ export interface TnSelectOptionGroup<T = unknown> {
   templateUrl: './select.component.html',
   styleUrls: ['./select.component.scss']
 })
-export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
+export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnDestroy {
   options = input<TnSelectOption<T>[]>([]);
   optionGroups = input<TnSelectOptionGroup<T>[]>([]);
   placeholder = input<string>('Select an option');
   disabled = input<boolean>(false);
   testId = input<string>('');
   multiple = input<boolean>(false);
+
+  /**
+   * Custom comparator for matching option values against the selected value(s).
+   *
+   * When the option values are objects, **provide this** — the built-in
+   * fallback uses `JSON.stringify`, which is key-order dependent and can
+   * produce false negatives for structurally equal objects. For primitives the
+   * default identity check is fine.
+   *
+   * @example
+   * ```ts
+   * compareWith = (a, b) => a?.id === b?.id;
+   * ```
+   */
   compareWith = input<(a: T | null, b: T | null) => boolean>();
 
   selectionChange = output<T>();
@@ -245,6 +259,12 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
     this.overlayRef = undefined;
   }
 
+  ngOnDestroy(): void {
+    // If the component is destroyed while the dropdown is open (e.g. router
+    // navigates away), closeDropdown() never runs — clean up directly here.
+    this.detachOverlay();
+  }
+
   /**
    * Closes the dropdown.
    *
@@ -346,6 +366,12 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
     return this.options().length > 0 || this.optionGroups().length > 0;
   });
 
+  /**
+   * Compares two option values for equality. Uses `compareWith` if provided,
+   * otherwise identity (`===`). For object values it falls back to
+   * `JSON.stringify`, which is key-order dependent — consumers with object
+   * values should provide `compareWith` to avoid subtle bugs.
+   */
   private compareValues(a: T | null, b: T | null): boolean {
     const customCompare = this.compareWith();
     if (customCompare) {
