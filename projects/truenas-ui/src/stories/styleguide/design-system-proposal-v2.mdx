@@ -1,8 +1,9 @@
-import { Meta } from '@storybook/addon-docs/blocks';
+import { Meta } from "@storybook/addon-docs/blocks";
 
 <Meta title="Style Guide/Design System (WIP)" />
 
 # Design System Proposal v2
+
 ## Evolving TrueNAS UI for Accessibility and Growth
 
 ---
@@ -10,15 +11,18 @@ import { Meta } from '@storybook/addon-docs/blocks';
 ## Executive Summary
 
 ### Goal Statement
+
 Transform the TrueNAS UI from expert-only to **accessible-yet-powerful**, adopting Airbnb's "living organism" design philosophy while serving storage administration use cases. This proposal outlines a path to welcome new users without compromising the technical depth that experts require.
 
 ### Core Philosophy
+
 - **Components as Living Organisms**: Each component has personality, function, and clear purpose
 - **Progressive Disclosure**: Start simple, reveal complexity as needed
 - **Educational Integration**: Built-in guidance and infographics for new users
 - **Technical Depth**: Maintain power-user capabilities through thoughtful information architecture
 
 ### Vision
+
 A design system where a first-time user can successfully configure basic storage while an expert can efficiently manage complex enterprise deployments - often using the same components at different disclosure levels.
 
 ---
@@ -26,30 +30,35 @@ A design system where a first-time user can successfully configure basic storage
 ## High-Level Changes Overview
 
 ### 🧬 Component Personality System
+
 - **Required Elements**: Every component defines its essential information (status, title, key data)
 - **Optional Elements**: Progressive disclosure of advanced features and detailed information
 - **Living Organism Approach**: Components have clear function and personality rather than generic flexibility
 - **Context-Aware**: Components adapt their presentation based on user experience level and current task
 
 ### 📚 Educational Content Integration
+
 - **Smart Empty States**: Transform empty screens into learning opportunities with infographics and guided actions
 - **Contextual Help**: Inline explanations and tooltips that don't clutter the expert experience
 - **Progressive Onboarding**: Wizard-like experiences for complex tasks with optional skip-ahead for experts
 - **Visual Learning**: Diagrams and illustrations integrated into the component system
 
 ### 🏗️ Information Architecture Revolution
+
 - **Status-First Design**: Critical system health and alerts take visual priority
 - **Hierarchical Clarity**: Clear visual relationships between pools → datasets → shares → files
 - **Scannable Layouts**: Quick visual scanning for system overview before detail drilling
 - **Action Proximity**: Related actions grouped contextually rather than hidden in menus
 
 ### 🎨 Visual Design Language
+
 - **Approachable Aesthetics**: Softer visual language while maintaining professional credibility
 - **Educational Illustrations**: Custom iconography and illustrations for storage concepts
 - **Progressive Visual Complexity**: Simple views for beginners, detailed views for experts
 - **Consistent Visual Hierarchy**: Clear information prioritization across all interfaces
 
 ### 🔄 Interaction Patterns
+
 - **Novice → Expert Progression**: Interfaces that grow with user knowledge
 - **Contextual Complexity**: Show advanced options only when relevant to current task
 - **Confirmation Flows**: Clear, educational confirmation for critical actions
@@ -64,6 +73,7 @@ A design system where a first-time user can successfully configure basic storage
 **Traditional Atomic Design** breaks interfaces into smallest possible pieces that can be infinitely recombined.
 
 **Living Organism Design** treats each component as a purposeful entity with:
+
 - **Personality**: Clear character and function in the ecosystem
 - **Required Elements**: Core information that defines the component's purpose
 - **Optional Elements**: Contextual additions that enhance but don't define
@@ -72,44 +82,54 @@ A design system where a first-time user can successfully configure basic storage
 ### TrueNAS Component Personalities
 
 #### **tn-card: The Information Hub**
+
 **Personality**: Reliable information presenter that surfaces critical data while hiding complexity until needed.
 
 **Required Elements**:
+
 - System status indicator (health/alert state)
 - Primary title/identification
 - Key metric or current state
 
 **Optional Elements**:
+
 - Secondary metrics and details
 - Contextual actions (edit, configure, troubleshoot)
 - Educational content for empty/error states
 
 **Living Organism Traits**:
+
 - Adapts visual density based on available space and user context
 - Surfaces different information based on system health (problems get priority)
 - Evolves complexity as user demonstrates expertise
 
 #### **tn-wizard: The Guide**
+
 **Personality**: Patient teacher that can accelerate for experts while providing comprehensive guidance for newcomers.
 
 **Required Elements**:
+
 - Clear progress indication
 - Current step context
 - Next action clarity
 
 **Optional Elements**:
+
 - Educational content and explanations
 - Advanced options and edge cases
 - Skip-ahead mechanisms for experts
 
 #### **tn-status-indicator: The Health Monitor**
+
 **Personality**: Vigilant sentinel that communicates system health through clear, actionable visual language.
 
 **Required Elements**:
+
 - Current state (healthy, warning, error, unknown)
 - Contextual meaning (what the status refers to)
 
 **Optional Elements**:
+
 - Historical trends
 - Related metrics
 - Diagnostic actions
@@ -119,10 +139,12 @@ A design system where a first-time user can successfully configure basic storage
 ## Educational Content Integration Patterns
 
 ### Smart Empty States
+
 **Traditional Approach**: "No data available" with minimal guidance
 **New Approach**: Educational opportunity with clear next steps
 
 #### Example: Empty Pool Dashboard
+
 ```
 [Illustration of storage concepts]
 
@@ -139,6 +161,7 @@ groups of disks that work together to store your data safely.
 ```
 
 ### Contextual Learning Integration
+
 - **Inline Definitions**: Hover/click definitions for technical terms
 - **Progressive Tooltips**: Basic explanation → detailed explanation → expert details
 - **Visual Concept Maps**: Diagrams showing relationships between storage concepts
@@ -147,6 +170,7 @@ groups of disks that work together to store your data safely.
 ### Educational Component Patterns
 
 #### **tn-concept-explanation: The Teacher**
+
 **Purpose**: Inline educational content that doesn't interfere with expert workflows
 
 ```html
@@ -157,13 +181,15 @@ groups of disks that work together to store your data safely.
 ```
 
 #### **tn-guided-action: The Mentor**
+
 **Purpose**: Transform complex actions into guided experiences with expert shortcuts
 
 ```html
 <tn-guided-action
   action="create-dataset"
   difficulty="intermediate"
-  expert-shortcut="true">
+  expert-shortcut="true"
+>
   <!-- Guided flow for beginners, single form for experts -->
 </tn-guided-action>
 ```
@@ -173,19 +199,23 @@ groups of disks that work together to store your data safely.
 ## Information Architecture Principles
 
 ### Status-First Hierarchy
+
 1. **System Health** (critical alerts, failures)
 2. **Operational Status** (running tasks, active processes)
 3. **Configuration State** (current settings, applied policies)
 4. **Historical Information** (logs, trends, analytics)
 
 ### Visual Information Density
+
 - **Novice View**: Key information only, generous spacing, explanatory text
 - **Intermediate View**: Balanced detail with progressive disclosure options
 - **Expert View**: Dense, tabular, maximum information per screen
 
 ### Contextual Action Grouping
+
 **Instead of**: Generic action menus (Edit, Delete, Configure, Clone, etc.)
 **Use**: Task-context groupings:
+
 - **Health Actions**: Diagnose, Repair, Monitor
 - **Data Actions**: Backup, Snapshot, Replicate
 - **Access Actions**: Share, Permissions, Security
@@ -196,6 +226,7 @@ groups of disks that work together to store your data safely.
 ## Visual Design Language Updates
 
 ### Color Psychology for Storage Administration
+
 - **Green Spectrum**: Healthy, operational, confirmed actions
 - **Blue Spectrum**: Informational, configuration, in-progress
 - **Yellow/Orange Spectrum**: Attention needed, warnings, pending actions
@@ -203,9 +234,10 @@ groups of disks that work together to store your data safely.
 - **Gray Spectrum**: Disabled, historical, reference information
 
 ### Typography Hierarchy
+
 ```css
 /* Status and Alert Text */
---font-size-status: 0.875rem;
+--font-size-status: 1rem;
 --font-weight-status: 600;
 
 /* Primary Information */
@@ -213,16 +245,17 @@ groups of disks that work together to store your data safely.
 --font-weight-primary: 500;
 
 /* Secondary Information */
---font-size-secondary: 0.875rem;
+--font-size-secondary: 1rem;
 --font-weight-secondary: 400;
 
 /* Educational Content */
---font-size-educational: 0.875rem;
+--font-size-educational: 1rem;
 --font-weight-educational: 400;
 --font-style-educational: normal;
 ```
 
 ### Illustration Integration
+
 - **Storage Concept Diagrams**: Visual representations of pools, datasets, snapshots
 - **Process Flow Illustrations**: Step-by-step visual guides for complex tasks
 - **Status Visualizations**: Health indicators that tell a story about system state
@@ -235,18 +268,21 @@ groups of disks that work together to store your data safely.
 ### Adaptive Interface Complexity
 
 #### **Beginner Mode** (Default for new users)
+
 - Simplified language and extensive explanations
 - Guided workflows with clear next steps
 - Safety confirmations with educational context
 - Limited options with "Show advanced" progressions
 
 #### **Intermediate Mode** (Activated by user behavior)
+
 - Balanced detail with optional deep-dives
 - Keyboard shortcuts become visible
 - Advanced options available but not prominent
 - Contextual help becomes more technical
 
 #### **Expert Mode** (Activated by explicit choice or demonstrated proficiency)
+
 - Maximum information density
 - Keyboard-first interactions
 - Advanced options prominent
@@ -255,18 +291,22 @@ groups of disks that work together to store your data safely.
 ### Progressive Disclosure Patterns
 
 #### **Three-Layer Information Architecture**
+
 1. **Surface Layer**: Essential information always visible
 2. **Detail Layer**: Additional context available on hover/click
 3. **Deep Layer**: Comprehensive information and advanced options
 
 #### **Contextual Complexity**
+
 Components show different levels of detail based on:
+
 - **User's demonstrated expertise level**
 - **Current task complexity**
 - **System health status** (more detail during problems)
 - **Available screen real estate**
 
 #### **Learning Path Integration**
+
 - **Discovery Mode**: Highlight new features and capabilities
 - **Mastery Tracking**: Remember user's demonstrated competencies
 - **Adaptive Suggestions**: Recommend next learning steps based on usage patterns
@@ -295,7 +335,8 @@ This mockup shows how the task-oriented approach would look using actual tn-comp
 
 **tn-card as Information Hub**: The main storage setup card adapts its personality to welcome beginners while providing clear paths to advanced features.
 
-**Progressive tn-button Components**: 
+**Progressive tn-button Components**:
+
 - Primary action ("Set Up Protection") uses confident, task-oriented language
 - Secondary actions provide learning paths and expert shortcuts
 - Technical detail toggles reveal RAID terminology on demand
@@ -311,15 +352,18 @@ This mockup shows how the task-oriented approach would look using actual tn-comp
 This workflow demonstrates several key design principles:
 
 #### **tn-card as Information Hub**
+
 **Before**: Generic empty state with minimal context
 **After**: Rich educational content with clear next steps and visual learning
 
 #### **Progressive Disclosure Pattern**
+
 **Layer 1 (Surface)**: Welcome message and primary action
 **Layer 2 (Detail)**: Educational content and concept explanation
 **Layer 3 (Deep)**: Expert mode toggle and advanced options
 
 #### **Living Organism Behavior**
+
 - **Personality**: Helpful guide that adapts to user confidence level
 - **Required Elements**: Current state, primary action, progress indication
 - **Optional Elements**: Educational content, expert shortcuts, detailed explanations
@@ -328,11 +372,13 @@ This workflow demonstrates several key design principles:
 ### Workflow Progression Example
 
 #### **Step 1: Welcome & Education** (Always shown)
+
 - Visual storage concept illustration
 - Plain-language explanation of storage pools
 - Clear primary action with confidence-building language
 
 #### **Step 2: Guided Creation** (Beginner path)
+
 ```
 Pool Creation Wizard
 
@@ -351,6 +397,7 @@ Step 1 of 3: Choose Protection Level
 ```
 
 #### **Step 3: Expert Alternative** (Expert path)
+
 ```
 Pool Manager - Expert Mode
 ===========================
@@ -382,12 +429,14 @@ This example shows how the design system philosophy creates **inclusive interfac
 Based on the actual TrueNAS storage interface analysis, here are specific examples of how technical terminology would be translated to task-oriented language with progressive disclosure:
 
 #### **Storage Pool Creation**
+
 ```
 Current: "Create Pool" → "Pool Manager" → "Configure VDEVs"
 Proposed: "Set Up Safe Storage" → "Choose Your Protection" → [Technical Toggle: "Pool/VDEV Configuration"]
 ```
 
 #### **VDEV Configuration**
+
 ```
 Current: "Data VDEVs", "Metadata VDEVs", "Log VDEVs", "Cache VDEVs", "Spare VDEVs", "Dedup VDEVs"
 Proposed:
@@ -398,6 +447,7 @@ Proposed:
 ```
 
 #### **Storage Actions**
+
 ```
 Current: "Export/Disconnect", "Expand", "Scrub"
 Proposed:
@@ -407,6 +457,7 @@ Proposed:
 ```
 
 #### **Navigation Structure**
+
 ```
 Current: "Pools", "Datasets", "Snapshots"
 Proposed:
@@ -416,26 +467,28 @@ Proposed:
 ```
 
 #### **Component Implementation Pattern**
+
 ```typescript
 interface TaskOrientedComponent {
   // Always visible (Required elements)
-  taskTitle: string;           // "Set Up Safe Storage"
-  taskDescription: string;     // "Protect your files automatically"
-  primaryAction: string;       // "Set Up Protection"
+  taskTitle: string; // "Set Up Safe Storage"
+  taskDescription: string; // "Protect your files automatically"
+  primaryAction: string; // "Set Up Protection"
 
   // Progressive disclosure (Optional elements)
   technicalDetails?: {
-    terminology: string;       // "Pool/VDEV Configuration"
-    expertView: boolean;       // Show technical interface
-    advancedOptions: any[];    // Technical configuration
+    terminology: string; // "Pool/VDEV Configuration"
+    expertView: boolean; // Show technical interface
+    advancedOptions: any[]; // Technical configuration
   };
 
   // Mode toggle
-  showTechnicalMode: boolean;  // Progressive disclosure state
+  showTechnicalMode: boolean; // Progressive disclosure state
 }
 ```
 
 #### **Benefits Demonstrated**
+
 1. **Same Functionality**: Both approaches create identical storage configurations
 2. **Different Entry Points**: Task language welcomes beginners, tech toggle satisfies experts
 3. **Progressive Learning**: Users naturally discover technical terms through task context
@@ -449,24 +502,28 @@ This approach transforms TrueNAS from "learn our technology first" to "accomplis
 ## Implementation Roadmap
 
 ### Phase 1: Foundation (Immediate)
+
 - [ ] Establish component personality definitions
 - [ ] Create educational content component library
 - [ ] Implement adaptive interface complexity system
 - [ ] Design illustration and iconography system
 
 ### Phase 2: Core Components (Next Sprint)
+
 - [ ] Redesign tn-card with required/optional element structure
 - [ ] Implement tn-concept-explanation component
 - [ ] Create smart empty state templates
 - [ ] Develop progressive disclosure utilities
 
 ### Phase 3: User Experience (Following Sprint)
+
 - [ ] Implement beginner/intermediate/expert mode switching
 - [ ] Create contextual help system
 - [ ] Develop guided workflow components
 - [ ] Implement adaptive information density
 
 ### Phase 4: Content Integration (Final Phase)
+
 - [ ] Create storage concept illustration library
 - [ ] Develop educational content for all major workflows
 - [ ] Implement contextual learning recommendations
@@ -477,12 +534,14 @@ This approach transforms TrueNAS from "learn our technology first" to "accomplis
 ## Success Metrics
 
 ### User Experience Metrics
+
 - **Time to First Successful Configuration**: Measure how quickly new users achieve basic storage setup
 - **Feature Discovery Rate**: Track how users progress from basic to advanced features
 - **Error Recovery Success**: Monitor how effectively users resolve configuration mistakes
 - **Expert Efficiency Maintenance**: Ensure power users don't lose productivity
 
 ### Component Health Metrics
+
 - **Component Reusability**: Measure how often components are successfully reused across different contexts
 - **Maintenance Burden**: Track development time for component updates and bug fixes
 - **Consistency Score**: Monitor visual and behavioral consistency across interfaces

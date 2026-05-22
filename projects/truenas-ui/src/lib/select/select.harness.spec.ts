@@ -366,7 +366,9 @@ describe('TnSelectHarness - multiple mode', () => {
     const select = await loader.getHarness(TnSelectHarness);
     await select.selectOption('Apple');
     await select.open();
-    const checkboxes = await select.locatorForAll('tn-checkbox')();
+    // Checkboxes live inside the overlay panel (rendered into document.body
+    // via CDK Overlay), not inside the select's host subtree.
+    const checkboxes = document.querySelectorAll('tn-checkbox');
     expect(checkboxes.length).toBe(3);
   });
 });
@@ -422,9 +424,10 @@ describe('TnSelectHarness - group disabled', () => {
   it('should not select an option from a disabled group', async () => {
     const select = await loader.getHarness(TnSelectHarness);
     await select.open();
-    const options = await select.locatorForAll('.tn-select-option')();
+    // Options live in the overlay container; query the document directly.
+    const options = document.querySelectorAll<HTMLElement>('.tn-select-option');
     // Click the disabled group option (Option B)
-    await options[1].click();
+    options[1].click();
     expect(hostComponent.selectedValue).toBeNull();
   });
 
@@ -473,5 +476,177 @@ describe('TnSelectHarness - multiSelectionChange output', () => {
 
     await select.selectOption('X');
     expect(hostComponent.lastArray).toEqual(['y']);
+  });
+});
+
+describe('TnSelectComponent - keyboard navigation', () => {
+  let fixture: ComponentFixture<TestHostComponent>;
+  let hostComponent: TestHostComponent;
+  let trigger: HTMLElement;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TestHostComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestHostComponent);
+    hostComponent = fixture.componentInstance;
+    fixture.detectChanges();
+    trigger = fixture.nativeElement.querySelector('.tn-select-trigger') as HTMLElement;
+  });
+
+  function press(key: string): KeyboardEvent {
+    const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+    trigger.dispatchEvent(event);
+    fixture.detectChanges();
+    return event;
+  }
+
+  function focusedOptionLabel(): string | null {
+    // Options live in the CDK overlay container, not the fixture subtree.
+    const focused = document.querySelector('.tn-select-option.focused');
+    return focused ? (focused.textContent ?? '').trim() : null;
+  }
+
+  it('opens the dropdown on ArrowDown when closed', () => {
+    expect(document.querySelector('.tn-select-dropdown')).toBeNull();
+
+    press('ArrowDown');
+
+    expect(document.querySelector('.tn-select-dropdown')).toBeTruthy();
+    expect(focusedOptionLabel()).toBe('Apple');
+  });
+
+  it('opens with last option focused on ArrowUp', () => {
+    press('ArrowUp');
+    expect(focusedOptionLabel()).toBe('Cherry');
+  });
+
+  it('moves focus down with ArrowDown and wraps at the end', () => {
+    press('ArrowDown'); // Apple
+    press('ArrowDown'); // Banana
+    expect(focusedOptionLabel()).toBe('Banana');
+    press('ArrowDown'); // Cherry
+    expect(focusedOptionLabel()).toBe('Cherry');
+    press('ArrowDown'); // wraps to Apple
+    expect(focusedOptionLabel()).toBe('Apple');
+  });
+
+  it('moves focus up with ArrowUp and wraps at the start', () => {
+    press('ArrowDown'); // Apple
+    press('ArrowUp'); // wraps to Cherry
+    expect(focusedOptionLabel()).toBe('Cherry');
+    press('ArrowUp');
+    expect(focusedOptionLabel()).toBe('Banana');
+  });
+
+  it('Home jumps to the first option, End to the last', () => {
+    press('ArrowDown');
+    press('ArrowDown');
+    press('Home');
+    expect(focusedOptionLabel()).toBe('Apple');
+    press('End');
+    expect(focusedOptionLabel()).toBe('Cherry');
+  });
+
+  it('Enter selects the focused option', () => {
+    press('ArrowDown'); // open + focus Apple
+    press('ArrowDown'); // Banana
+    press('Enter');
+
+    expect(hostComponent.selectedValue).toBe('banana');
+    expect(document.querySelector('.tn-select-dropdown')).toBeNull();
+  });
+
+  it('Space selects the focused option', () => {
+    press('ArrowDown');
+    press('ArrowDown');
+    press(' ');
+    expect(hostComponent.selectedValue).toBe('banana');
+  });
+
+  it('Escape closes the dropdown without selecting', () => {
+    press('ArrowDown');
+    press('Escape');
+    expect(document.querySelector('.tn-select-dropdown')).toBeNull();
+    expect(hostComponent.selectedValue).toBeNull();
+  });
+
+  it('skips disabled options when moving focus', () => {
+    hostComponent.options.set([
+      { value: 'a', label: 'A' },
+      { value: 'b', label: 'B', disabled: true },
+      { value: 'c', label: 'C' },
+    ]);
+    fixture.detectChanges();
+
+    press('ArrowDown'); // A
+    press('ArrowDown'); // skips B → C
+    expect(focusedOptionLabel()).toBe('C');
+  });
+
+  it('exposes the focused option via aria-activedescendant on the trigger', () => {
+    press('ArrowDown');
+    const id = trigger.getAttribute('aria-activedescendant');
+    expect(id).toBeTruthy();
+    const focused = document.querySelector('.tn-select-option.focused');
+    expect(focused?.id).toBe(id);
+  });
+
+  it('calls preventDefault on navigation keys so the page does not scroll', () => {
+    const event = press('ArrowDown');
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it('does nothing when the select is disabled', () => {
+    hostComponent.disabled.set(true);
+    fixture.detectChanges();
+
+    press('ArrowDown');
+    expect(document.querySelector('.tn-select-dropdown')).toBeNull();
+  });
+
+  it('keeps focus on the trigger after Escape closes the dropdown', () => {
+    trigger.focus();
+    press('ArrowDown'); // open
+    expect(document.querySelector('.tn-select-dropdown')).toBeTruthy();
+
+    press('Escape');
+
+    expect(document.querySelector('.tn-select-dropdown')).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it('keeps focus on the trigger after Enter selects an option', () => {
+    trigger.focus();
+    press('ArrowDown'); // open + focus Apple
+    press('Enter'); // select Apple, close
+
+    expect(hostComponent.selectedValue).toBe('apple');
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it('Tab closes the dropdown without refocusing the trigger', () => {
+    // Pressing Tab from the trigger should let the natural Tab advance move
+    // focus to the next element — closeDropdown must not yank it back.
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = 'Next';
+    document.body.appendChild(nextBtn);
+
+    try {
+      trigger.focus();
+      press('ArrowDown'); // open
+      press('Tab');
+
+      // Move focus to the next element (Tab's natural behaviour, which we
+      // can't simulate via dispatchEvent — just assert closeDropdown didn't
+      // re-grab focus, so the natural advance succeeds.)
+      nextBtn.focus();
+
+      expect(document.querySelector('.tn-select-dropdown')).toBeNull();
+      expect(document.activeElement).toBe(nextBtn);
+    } finally {
+      nextBtn.remove();
+    }
   });
 });

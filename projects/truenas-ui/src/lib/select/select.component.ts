@@ -1,7 +1,11 @@
 
-import { ChangeDetectorRef, Component, computed, effect, ElementRef, forwardRef, inject, input, output, signal } from '@angular/core';
+import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
+import { TemplatePortal } from '@angular/cdk/portal';
+import { ChangeDetectorRef, Component, computed, ElementRef, forwardRef, inject, input, output, signal, viewChild, ViewContainerRef } from '@angular/core';
+import type { TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import type { Subscription } from 'rxjs';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
 import { TnTestIdDirective } from '../test-id';
 
@@ -50,38 +54,75 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
   protected selectedValues = signal<T[]>([]);
   private formDisabled = signal<boolean>(false);
 
+  // Index into navigableOptions() of the option currently highlighted by
+  // keyboard navigation (-1 = none). Exposed to the template via the
+  // aria-activedescendant / .focused bindings; never represents real DOM focus.
+  protected focusedIndex = signal<number>(-1);
+
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
+
+  /**
+   * Selectable, non-disabled options in display order (regular options first,
+   * then groups). Used by keyboard navigation so we can skip disabled
+   * entries and group headers without a separate filter pass.
+   */
+  navigableOptions = computed(() => {
+    const result: { option: TnSelectOption<T>; id: string }[] = [];
+    const baseId = `tn-select-opt-${this.testId() || 'anon'}`;
+    let i = 0;
+    for (const opt of this.options()) {
+      if (!opt.disabled) {
+        result.push({ option: opt, id: `${baseId}-${i}` });
+      }
+      i++;
+    }
+    for (const group of this.optionGroups()) {
+      for (const opt of group.options) {
+        if (!opt.disabled && !group.disabled) {
+          result.push({ option: opt, id: `${baseId}-${i}` });
+        }
+        i++;
+      }
+    }
+    return result;
+  });
+
+  /** Stable DOM id of the currently-highlighted option, for aria-activedescendant. */
+  focusedOptionId = computed(() => {
+    const idx = this.focusedIndex();
+    const nav = this.navigableOptions();
+    return idx >= 0 && idx < nav.length ? nav[idx].id : null;
+  });
+
+  /** Stable DOM id for an option; matches what navigableOptions() assigns. */
+  optionId(option: TnSelectOption<T>): string | null {
+    const entry = this.navigableOptions().find((x) => x.option === option);
+    return entry?.id ?? null;
+  }
+
+  /** Whether `option` is the keyboard-highlighted item. */
+  isOptionFocused(option: TnSelectOption<T>): boolean {
+    const idx = this.focusedIndex();
+    const nav = this.navigableOptions();
+    return idx >= 0 && idx < nav.length && nav[idx].option === option;
+  }
 
   private onChange = (_value: T | T[] | null) => {};
   private onTouched = () => {};
 
   private elementRef = inject(ElementRef);
   private cdr = inject(ChangeDetectorRef);
+  private overlay = inject(Overlay);
+  private viewContainerRef = inject(ViewContainerRef);
+  private triggerEl = viewChild.required<ElementRef<HTMLElement>>('triggerEl');
+  private dropdownTemplate = viewChild.required<TemplateRef<unknown>>('dropdownTemplate');
 
-  constructor() {
-    // Click-outside detection using effect
-    effect(() => {
-      if (this.isOpen()) {
-        const clickListener = (event: Event) => {
-          if (!this.elementRef.nativeElement.contains(event.target as Node)) {
-            this.closeDropdown();
-          }
-        };
+  private overlayRef?: OverlayRef;
+  private overlaySubs: Subscription[] = [];
 
-        // Add listener after a small delay to avoid immediate closure
-        setTimeout(() => {
-          document.addEventListener('click', clickListener);
-        }, 0);
-
-        // Cleanup function
-        return () => {
-          document.removeEventListener('click', clickListener);
-        };
-      }
-      return undefined;
-    });
-  }
+  // CDK Overlay handles outside-click detection and Escape; no constructor
+  // wiring needed. See openDropdown/closeDropdown.
 
   // ControlValueAccessor implementation
   writeValue(value: T | T[] | null): void {
@@ -111,15 +152,116 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
   // Component methods
   toggleDropdown(): void {
     if (this.isDisabled()) {return;}
-    this.isOpen.set(!this.isOpen());
-    if (!this.isOpen()) {
-      this.onTouched();
+    if (this.isOpen()) {
+      this.closeDropdown();
+    } else {
+      this.openDropdown();
     }
   }
 
-  closeDropdown(): void {
+  openDropdown(): void {
+    if (this.isDisabled() || this.isOpen()) {return;}
+    this.isOpen.set(true);
+
+    // Seed keyboard focus at the current selection when there is one;
+    // otherwise leave it unset so the next ArrowDown lands on the first item.
+    const selected = this.selectedValue();
+    if (selected !== null && selected !== undefined) {
+      const idx = this.navigableOptions().findIndex((x) =>
+        this.compareValues(x.option.value, selected),
+      );
+      this.focusedIndex.set(idx);
+    } else {
+      this.focusedIndex.set(-1);
+    }
+
+    this.attachOverlay();
+  }
+
+  /**
+   * Attach the dropdown panel as a CDK overlay anchored to the trigger.
+   *
+   * Why an overlay (vs. an inline absolutely-positioned panel):
+   *   - Escapes parent `overflow: hidden`/clipping in surrounding layouts.
+   *   - `outsidePointerEvents()` notifies on outside pointerdown WITHOUT
+   *     intercepting the click (no backdrop) — so the user's click reaches
+   *     the underlying target while the select closes silently.
+   *   - Position is recomputed on scroll so the panel stays attached.
+   *   - Width is matched to the trigger so the panel doesn't jump in size.
+   */
+  private attachOverlay(): void {
+    const trigger = this.triggerEl().nativeElement;
+    const positionStrategy = this.overlay
+      .position()
+      .flexibleConnectedTo(trigger)
+      .withPositions([
+        { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
+        { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
+      ]);
+
+    this.overlayRef = this.overlay.create({
+      positionStrategy,
+      scrollStrategy: this.overlay.scrollStrategies.reposition(),
+      hasBackdrop: false,
+      width: trigger.offsetWidth,
+    });
+
+    const portal = new TemplatePortal(this.dropdownTemplate(), this.viewContainerRef);
+    this.overlayRef.attach(portal);
+
+    // Click-outside (non-intercepting). The pointer event still reaches the
+    // element the user clicked; we just notice and close.
+    //
+    // Important: ignore events whose target is inside the select host. A
+    // pointerdown on the trigger is "outside the overlay" from CDK's POV but
+    // it's our own toggle target — letting closeDropdown fire here races the
+    // trigger's click handler and the dropdown immediately reopens.
+    this.overlaySubs.push(
+      this.overlayRef.outsidePointerEvents().subscribe((event: MouseEvent) => {
+        const target = event.target as Node | null;
+        if (target && this.elementRef.nativeElement.contains(target)) {
+          return;
+        }
+        this.closeDropdown(false);
+      }),
+    );
+
+    // Escape as a fallback (the trigger keydown handler covers the common case,
+    // but if focus ever moves into the panel, this catches it too).
+    this.overlaySubs.push(
+      this.overlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {
+          event.preventDefault();
+          this.closeDropdown(true);
+        }
+      }),
+    );
+  }
+
+  private detachOverlay(): void {
+    this.overlaySubs.forEach((s) => s.unsubscribe());
+    this.overlaySubs = [];
+    this.overlayRef?.dispose();
+    this.overlayRef = undefined;
+  }
+
+  /**
+   * Closes the dropdown.
+   *
+   * @param restoreFocus When `true` (the default), returns focus to the
+   *   trigger. Used for explicit closes — Escape, Enter/Space activation,
+   *   option click — where the user is still interacting with the select.
+   *   Pass `false` for click-outside / blur paths so we don't steal focus
+   *   from the element the user actually navigated to.
+   */
+  closeDropdown(restoreFocus = true): void {
     this.isOpen.set(false);
+    this.focusedIndex.set(-1);
+    this.detachOverlay();
     this.onTouched();
+    if (restoreFocus) {
+      this.triggerEl().nativeElement.focus({ preventScroll: true });
+    }
   }
 
   onOptionClick(option: TnSelectOption<T>, groupDisabled = false): void {
@@ -216,30 +358,118 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
     return false;
   }
 
-  // Keyboard navigation
-  // TODO: Add ArrowUp/ArrowDown option navigation, Enter/Space toggle,
-  // and aria-activedescendant tracking for full keyboard accessibility.
+  /**
+   * Keyboard navigation for the combobox trigger.
+   *
+   * - **ArrowDown / ArrowUp** opens the dropdown if closed; otherwise moves
+   *   the keyboard-focus highlight (via aria-activedescendant) up/down,
+   *   skipping disabled options and group headers.
+   * - **Home / End** jump to the first / last enabled option.
+   * - **Enter / Space** opens the dropdown if closed; if open and an option
+   *   is highlighted, selects that option (in single mode) or toggles it
+   *   (in multiple mode).
+   * - **Escape** closes the dropdown without changing the selection.
+   *
+   * All navigation keys call `event.preventDefault()` so the page does not
+   * scroll while the user is moving through options.
+   */
   onKeydown(event: KeyboardEvent): void {
+    if (this.isDisabled()) {return;}
+
     switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        if (!this.isOpen()) {
+          this.openDropdown();
+          if (this.focusedIndex() < 0) {this.moveFocus('first');}
+        } else {
+          this.moveFocus(1);
+        }
+        break;
+
+      case 'ArrowUp':
+        event.preventDefault();
+        if (!this.isOpen()) {
+          this.openDropdown();
+          this.moveFocus('last');
+        } else {
+          this.moveFocus(-1);
+        }
+        break;
+
+      case 'Home':
+        if (this.isOpen()) {
+          event.preventDefault();
+          this.moveFocus('first');
+        }
+        break;
+
+      case 'End':
+        if (this.isOpen()) {
+          event.preventDefault();
+          this.moveFocus('last');
+        }
+        break;
+
       case 'Enter':
       case ' ':
+        event.preventDefault();
         if (!this.isOpen()) {
-          this.toggleDropdown();
-          event.preventDefault();
+          this.openDropdown();
+        } else {
+          this.activateFocusedOption();
         }
         break;
+
       case 'Escape':
         if (this.isOpen()) {
-          this.closeDropdown();
           event.preventDefault();
+          this.closeDropdown();
         }
         break;
-      case 'ArrowDown':
-        if (!this.isOpen()) {
-          this.toggleDropdown();
-        }
-        event.preventDefault();
+
+      case 'Tab':
+        // Standard combobox: Tab moves focus out of the select; close first
+        // so the trigger stays a clean tab stop. Don't refocus — that would
+        // fight the natural Tab advance to the next focusable element.
+        if (this.isOpen()) {this.closeDropdown(false);}
         break;
     }
+  }
+
+  private moveFocus(target: 1 | -1 | 'first' | 'last'): void {
+    const count = this.navigableOptions().length;
+    if (count === 0) {return;}
+
+    let next: number;
+    if (target === 'first') {
+      next = 0;
+    } else if (target === 'last') {
+      next = count - 1;
+    } else {
+      const current = this.focusedIndex();
+      const start = current < 0 ? (target === 1 ? -1 : count) : current;
+      next = (start + target + count) % count;
+    }
+    this.focusedIndex.set(next);
+    this.scrollFocusedIntoView();
+  }
+
+  private activateFocusedOption(): void {
+    const idx = this.focusedIndex();
+    const nav = this.navigableOptions();
+    if (idx < 0 || idx >= nav.length) {return;}
+    this.onOptionClick(nav[idx].option);
+  }
+
+  private scrollFocusedIntoView(): void {
+    const id = this.focusedOptionId();
+    if (!id) {return;}
+    // Defer to next tick so the DOM has updated with the new .focused class.
+    queueMicrotask(() => {
+      const host = this.elementRef.nativeElement as HTMLElement;
+      const el = host.querySelector<HTMLElement>(`#${CSS.escape(id)}`);
+      el?.scrollIntoView({ block: 'nearest' });
+    });
   }
 }

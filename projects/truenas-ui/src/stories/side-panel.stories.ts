@@ -9,11 +9,11 @@ tnIconMarker('close', 'mdi');
 const harnessDoc = loadHarnessDoc('side-panel');
 
 // Shared inline styles to keep templates readable
-const inputStyle = 'width: 100%; padding: 10px 12px; border: 1px solid var(--tn-lines); border-radius: 4px; background: var(--tn-bg1); color: var(--tn-fg1); box-sizing: border-box; font-size: 0.875rem;';
-const labelStyle = 'display: block; font-weight: 600; margin-bottom: 6px; color: var(--tn-fg1); font-size: 0.875rem;';
+const inputStyle = 'width: 100%; padding: 10px 12px; border: 1px solid var(--tn-lines); border-radius: 4px; background: var(--tn-bg1); color: var(--tn-fg1); box-sizing: border-box; font-size: 1rem;';
+const labelStyle = 'display: block; font-weight: 600; margin-bottom: 6px; color: var(--tn-fg1); font-size: 1rem;';
 const sectionStyle = 'padding: 16px; background: var(--tn-bg1); border-radius: 6px; border: 1px solid var(--tn-lines);';
 const rowStyle = 'display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border: 1px solid var(--tn-lines); border-radius: 6px;';
-const textareaStyle = 'width: 100%; padding: 10px 12px; border: 1px solid var(--tn-lines); border-radius: 4px; background: var(--tn-bg1); color: var(--tn-fg1); box-sizing: border-box; font-size: 0.875rem; font-family: inherit; resize: vertical; min-height: 80px;';
+const textareaStyle = 'width: 100%; padding: 10px 12px; border: 1px solid var(--tn-lines); border-radius: 4px; background: var(--tn-bg1); color: var(--tn-fg1); box-sizing: border-box; font-size: 1rem; font-family: inherit; resize: vertical; min-height: 80px;';
 
 const meta: Meta<TnSidePanelComponent> = {
   title: 'Components/Side Panel',
@@ -110,13 +110,13 @@ export const Default: Story = {
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
           <div style="${sectionStyle}">
             <div style="font-weight: 600; color: var(--tn-fg1); margin-bottom: 8px;">Pool: tank</div>
-            <div style="font-size: 0.875rem; color: var(--tn-fg2);">Status: ONLINE</div>
-            <div style="font-size: 0.875rem; color: var(--tn-fg2);">Used: 1.2 TB / 4 TB</div>
+            <div style="font-size: 1rem; color: var(--tn-fg2);">Status: ONLINE</div>
+            <div style="font-size: 1rem; color: var(--tn-fg2);">Used: 1.2 TB / 4 TB</div>
           </div>
           <div style="${sectionStyle}">
             <div style="font-weight: 600; color: var(--tn-fg1); margin-bottom: 8px;">Pool: backup</div>
-            <div style="font-size: 0.875rem; color: var(--tn-fg2);">Status: ONLINE</div>
-            <div style="font-size: 0.875rem; color: var(--tn-fg2);">Used: 800 GB / 2 TB</div>
+            <div style="font-size: 1rem; color: var(--tn-fg2);">Status: ONLINE</div>
+            <div style="font-size: 1rem; color: var(--tn-fg2);">Used: 800 GB / 2 TB</div>
           </div>
         </div>
 
@@ -134,7 +134,7 @@ export const Default: Story = {
         <div style="display: flex; flex-direction: column; gap: 24px;">
           <div>
             <h4 style="margin: 0 0 12px 0; color: var(--tn-fg1);">Dataset: tank/media</h4>
-            <p style="color: var(--tn-fg2); font-size: 0.875rem; margin: 0;">
+            <p style="color: var(--tn-fg2); font-size: 1rem; margin: 0;">
               This dataset stores media files including photos, videos, and music. It uses LZ4 compression and has snapshots enabled.
             </p>
           </div>
@@ -142,51 +142,51 @@ export const Default: Story = {
           <div style="${sectionStyle}">
             <div style="font-weight: 600; color: var(--tn-fg1); margin-bottom: 12px;">Properties</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Type</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">FILESYSTEM</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Compression</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">LZ4</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Sync</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">Standard</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Deduplication</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">Off</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Record Size</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">128 KiB</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Case Sensitivity</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">Sensitive</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Type</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">FILESYSTEM</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Compression</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">LZ4</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Sync</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">Standard</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Deduplication</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">Off</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Record Size</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">128 KiB</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Case Sensitivity</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">Sensitive</div>
             </div>
           </div>
 
           <div style="${sectionStyle}">
             <div style="font-weight: 600; color: var(--tn-fg1); margin-bottom: 12px;">Space Usage</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Used</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">856 GiB</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Available</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">2.14 TiB</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Referenced</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">840 GiB</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Quota</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">None</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Used</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">856 GiB</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Available</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">2.14 TiB</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Referenced</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">840 GiB</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Quota</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">None</div>
             </div>
           </div>
 
           <div style="${sectionStyle}">
             <div style="font-weight: 600; color: var(--tn-fg1); margin-bottom: 12px;">Recent Snapshots</div>
             <div style="display: flex; flex-direction: column; gap: 8px;">
-              <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+              <div style="display: flex; justify-content: space-between; font-size: 1rem;">
                 <span style="color: var(--tn-fg1);">auto-2024-01-15-00:00</span>
                 <span style="color: var(--tn-fg2);">12 GiB</span>
               </div>
-              <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+              <div style="display: flex; justify-content: space-between; font-size: 1rem;">
                 <span style="color: var(--tn-fg1);">auto-2024-01-14-00:00</span>
                 <span style="color: var(--tn-fg2);">11.8 GiB</span>
               </div>
-              <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+              <div style="display: flex; justify-content: space-between; font-size: 1rem;">
                 <span style="color: var(--tn-fg1);">auto-2024-01-13-00:00</span>
                 <span style="color: var(--tn-fg2);">11.5 GiB</span>
               </div>
-              <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+              <div style="display: flex; justify-content: space-between; font-size: 1rem;">
                 <span style="color: var(--tn-fg1);">manual-pre-upgrade</span>
                 <span style="color: var(--tn-fg2);">15.2 GiB</span>
               </div>
@@ -196,14 +196,14 @@ export const Default: Story = {
           <div style="${sectionStyle}">
             <div style="font-weight: 600; color: var(--tn-fg1); margin-bottom: 12px;">Permissions</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Owner</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">root</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Group</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">wheel</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Mode</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">755</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">ACL Type</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">POSIX</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Owner</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">root</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Group</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">wheel</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Mode</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">755</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">ACL Type</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">POSIX</div>
             </div>
           </div>
         </div>
@@ -483,58 +483,58 @@ export const NoBackdrop: Story = {
           <div style="${sectionStyle}">
             <div style="font-weight: 600; color: var(--tn-fg1); margin-bottom: 12px;">General</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Driver</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">igb</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">MAC Address</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">00:1B:21:12:34:56</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">MTU</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">1500</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Media Type</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">Ethernet</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Driver</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">igb</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">MAC Address</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">00:1B:21:12:34:56</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">MTU</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">1500</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Media Type</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">Ethernet</div>
             </div>
           </div>
 
           <div style="${sectionStyle}">
             <div style="font-weight: 600; color: var(--tn-fg1); margin-bottom: 12px;">IPv4 Configuration</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Address</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">192.168.1.100</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Netmask</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">255.255.255.0</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Gateway</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">192.168.1.1</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">DHCP</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">No (Static)</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Address</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">192.168.1.100</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Netmask</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">255.255.255.0</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Gateway</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">192.168.1.1</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">DHCP</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">No (Static)</div>
             </div>
           </div>
 
           <div style="${sectionStyle}">
             <div style="font-weight: 600; color: var(--tn-fg1); margin-bottom: 12px;">DNS</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Primary</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">8.8.8.8</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Secondary</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">8.8.4.4</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Domain</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">local</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Primary</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">8.8.8.8</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Secondary</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">8.8.4.4</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Domain</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">local</div>
             </div>
           </div>
 
           <div style="${sectionStyle}">
             <div style="font-weight: 600; color: var(--tn-fg1); margin-bottom: 12px;">Traffic Statistics</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">RX Bytes</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">142.3 GiB</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">TX Bytes</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">89.7 GiB</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">RX Packets</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">98,432,100</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">TX Packets</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">76,218,450</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Errors</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">0</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg2);">Drops</div>
-              <div style="font-size: 0.875rem; color: var(--tn-fg1);">12</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">RX Bytes</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">142.3 GiB</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">TX Bytes</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">89.7 GiB</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">RX Packets</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">98,432,100</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">TX Packets</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">76,218,450</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Errors</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">0</div>
+              <div style="font-size: 1rem; color: var(--tn-fg2);">Drops</div>
+              <div style="font-size: 1rem; color: var(--tn-fg1);">12</div>
             </div>
           </div>
         </div>
@@ -582,27 +582,27 @@ export const WidePanel: Story = {
             <div style="font-weight: 600; color: var(--tn-fg1); margin-bottom: 16px;">Services</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
               <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 4px; background: var(--tn-bg2);">
-                <span style="font-size: 0.875rem; color: var(--tn-fg1);">SMB</span>
+                <span style="font-size: 1rem; color: var(--tn-fg1);">SMB</span>
                 <span style="padding: 2px 8px; border-radius: 10px; background: rgba(76,175,80,0.15); color: var(--tn-green, #4caf50); font-size: 0.75rem; font-weight: 600;">Running</span>
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 4px; background: var(--tn-bg2);">
-                <span style="font-size: 0.875rem; color: var(--tn-fg1);">NFS</span>
+                <span style="font-size: 1rem; color: var(--tn-fg1);">NFS</span>
                 <span style="padding: 2px 8px; border-radius: 10px; background: rgba(76,175,80,0.15); color: var(--tn-green, #4caf50); font-size: 0.75rem; font-weight: 600;">Running</span>
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 4px; background: var(--tn-bg2);">
-                <span style="font-size: 0.875rem; color: var(--tn-fg1);">SSH</span>
+                <span style="font-size: 1rem; color: var(--tn-fg1);">SSH</span>
                 <span style="padding: 2px 8px; border-radius: 10px; background: rgba(76,175,80,0.15); color: var(--tn-green, #4caf50); font-size: 0.75rem; font-weight: 600;">Running</span>
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 4px; background: var(--tn-bg2);">
-                <span style="font-size: 0.875rem; color: var(--tn-fg1);">iSCSI</span>
+                <span style="font-size: 1rem; color: var(--tn-fg1);">iSCSI</span>
                 <span style="padding: 2px 8px; border-radius: 10px; background: rgba(108,117,125,0.15); color: var(--tn-fg2); font-size: 0.75rem; font-weight: 600;">Stopped</span>
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 4px; background: var(--tn-bg2);">
-                <span style="font-size: 0.875rem; color: var(--tn-fg1);">FTP</span>
+                <span style="font-size: 1rem; color: var(--tn-fg1);">FTP</span>
                 <span style="padding: 2px 8px; border-radius: 10px; background: rgba(108,117,125,0.15); color: var(--tn-fg2); font-size: 0.75rem; font-weight: 600;">Stopped</span>
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 4px; background: var(--tn-bg2);">
-                <span style="font-size: 0.875rem; color: var(--tn-fg1);">S3</span>
+                <span style="font-size: 1rem; color: var(--tn-fg1);">S3</span>
                 <span style="padding: 2px 8px; border-radius: 10px; background: rgba(108,117,125,0.15); color: var(--tn-fg2); font-size: 0.75rem; font-weight: 600;">Stopped</span>
               </div>
             </div>
@@ -612,23 +612,23 @@ export const WidePanel: Story = {
             <div style="${sectionStyle}">
               <div style="font-weight: 600; color: var(--tn-fg1); margin-bottom: 12px;">Hardware</div>
               <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 1rem;">
                   <span style="color: var(--tn-fg2);">Platform</span>
                   <span style="color: var(--tn-fg1);">Supermicro X11</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 1rem;">
                   <span style="color: var(--tn-fg2);">CPU</span>
                   <span style="color: var(--tn-fg1);">Xeon E-2278G</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 1rem;">
                   <span style="color: var(--tn-fg2);">Cores</span>
                   <span style="color: var(--tn-fg1);">8C / 16T</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 1rem;">
                   <span style="color: var(--tn-fg2);">Memory</span>
                   <span style="color: var(--tn-fg1);">64 GB ECC</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 1rem;">
                   <span style="color: var(--tn-fg2);">Boot Device</span>
                   <span style="color: var(--tn-fg1);">NVMe 256 GB</span>
                 </div>
@@ -638,23 +638,23 @@ export const WidePanel: Story = {
             <div style="${sectionStyle}">
               <div style="font-weight: 600; color: var(--tn-fg1); margin-bottom: 12px;">Network</div>
               <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 1rem;">
                   <span style="color: var(--tn-fg2);">Hostname</span>
                   <span style="color: var(--tn-fg1);">truenas.local</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 1rem;">
                   <span style="color: var(--tn-fg2);">IPv4</span>
                   <span style="color: var(--tn-fg1);">192.168.1.100</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 1rem;">
                   <span style="color: var(--tn-fg2);">Gateway</span>
                   <span style="color: var(--tn-fg1);">192.168.1.1</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 1rem;">
                   <span style="color: var(--tn-fg2);">DNS</span>
                   <span style="color: var(--tn-fg1);">8.8.8.8</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 1rem;">
                   <span style="color: var(--tn-fg2);">Domain</span>
                   <span style="color: var(--tn-fg1);">local</span>
                 </div>
@@ -668,21 +668,21 @@ export const WidePanel: Story = {
               <div style="display: flex; gap: 12px; align-items: flex-start; padding: 10px; border-radius: 4px; background: var(--tn-bg2);">
                 <span style="color: var(--tn-green, #4caf50); font-size: 1.1rem;">&#10003;</span>
                 <div>
-                  <div style="font-size: 0.875rem; color: var(--tn-fg1);">Scrub of pool "tank" completed</div>
+                  <div style="font-size: 1rem; color: var(--tn-fg1);">Scrub of pool "tank" completed</div>
                   <div style="font-size: 0.75rem; color: var(--tn-fg2);">2 days ago &middot; No errors found</div>
                 </div>
               </div>
               <div style="display: flex; gap: 12px; align-items: flex-start; padding: 10px; border-radius: 4px; background: var(--tn-bg2);">
                 <span style="color: var(--tn-yellow, #ffc107); font-size: 1.1rem;">&#9888;</span>
                 <div>
-                  <div style="font-size: 0.875rem; color: var(--tn-fg1);">Update available: TrueNAS 24.10.1</div>
+                  <div style="font-size: 1rem; color: var(--tn-fg1);">Update available: TrueNAS 24.10.1</div>
                   <div style="font-size: 0.75rem; color: var(--tn-fg2);">5 days ago &middot; Security fixes included</div>
                 </div>
               </div>
               <div style="display: flex; gap: 12px; align-items: flex-start; padding: 10px; border-radius: 4px; background: var(--tn-bg2);">
                 <span style="color: var(--tn-green, #4caf50); font-size: 1.1rem;">&#10003;</span>
                 <div>
-                  <div style="font-size: 0.875rem; color: var(--tn-fg1);">Cloud sync to Backblaze B2 completed</div>
+                  <div style="font-size: 1rem; color: var(--tn-fg1);">Cloud sync to Backblaze B2 completed</div>
                   <div style="font-size: 0.75rem; color: var(--tn-fg2);">1 week ago &middot; 24.5 GiB transferred</div>
                 </div>
               </div>
@@ -729,7 +729,7 @@ export const ScrollableContent: Story = {
             return `
           <div style="padding: 12px 14px; border: 1px solid var(--tn-lines); border-radius: 6px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <div style="font-weight: 600; color: var(--tn-fg1); font-size: 0.875rem;">${action}</div>
+              <div style="font-weight: 600; color: var(--tn-fg1); font-size: 1rem;">${action}</div>
               <div style="font-size: 0.75rem; color: ${sevColor}; text-transform: uppercase; font-weight: 600;">${severity}</div>
             </div>
             <div style="font-size: 0.8125rem; color: var(--tn-fg2);">

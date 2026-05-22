@@ -287,7 +287,7 @@ export class Tn[Name]Component {
 
   &--large {
     padding: 12px 24px;
-    font-size: 16px;
+    font-size: 1rem;
   }
 
   // Color variants

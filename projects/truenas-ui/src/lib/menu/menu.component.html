@@ -22,6 +22,7 @@
               type="button"
               [tnTestId]="item.testId ?? 'menu-item-' + item.id"
               [disabled]="item.disabled"
+              [cdkMenuItemDisabled]="!!item.disabled"
               [class.disabled]="item.disabled"
               [class.tn-menu-item--selected]="item.selected"
               [attr.aria-current]="item.selected ? 'true' : null"
@@ -43,6 +44,7 @@
               [tnTestId]="item.testId ?? 'menu-item-' + item.id"
               [cdkMenuTriggerFor]="nestedMenu"
               [disabled]="item.disabled"
+              [cdkMenuItemDisabled]="!!item.disabled"
               [class.disabled]="item.disabled"
               [class.tn-menu-item--selected]="item.selected"
               [attr.aria-current]="item.selected ? 'true' : null"
@@ -73,6 +75,7 @@
                         type="button"
                         [tnTestId]="nestedItem.testId ?? 'menu-item-' + nestedItem.id"
                         [disabled]="nestedItem.disabled"
+                        [cdkMenuItemDisabled]="!!nestedItem.disabled"
                         [class.disabled]="nestedItem.disabled"
                         [class.tn-menu-item--selected]="nestedItem.selected"
                         [attr.aria-current]="nestedItem.selected ? 'true' : null"
@@ -94,6 +97,7 @@
                         [tnTestId]="nestedItem.testId ?? 'menu-item-' + nestedItem.id"
                         [cdkMenuTriggerFor]="deepNestedMenu"
                         [disabled]="nestedItem.disabled"
+                        [cdkMenuItemDisabled]="!!nestedItem.disabled"
                         [class.disabled]="nestedItem.disabled"
                         [class.tn-menu-item--selected]="nestedItem.selected"
                         [attr.aria-current]="nestedItem.selected ? 'true' : null"
@@ -123,6 +127,7 @@
                                 type="button"
                                 [tnTestId]="deepNestedItem.testId ?? 'menu-item-' + deepNestedItem.id"
                                 [disabled]="deepNestedItem.disabled"
+                                [cdkMenuItemDisabled]="!!deepNestedItem.disabled"
                                 [class.disabled]="deepNestedItem.disabled"
                                 [class.tn-menu-item--selected]="deepNestedItem.selected"
                                 [attr.aria-current]="deepNestedItem.selected ? 'true' : null"
@@ -154,8 +159,37 @@
   <!-- Regular menu template -->
   <ng-template #menuTemplate>
     <div class="tn-menu" cdkMenu tnMenuActivateHover>
-      <!-- Projected <tn-menu-item> children render here, mixed with the items() array below. -->
-      <ng-content select="tn-menu-item, .tn-menu-separator" />
+      <!--
+        Projected <tn-menu-item> entries are re-rendered here inside the
+        overlay so they participate in CdkMenu's keyboard navigation (arrow
+        keys, Home/End, type-ahead) alongside the items() array below.
+      -->
+      @for (projected of contentItems(); track projected) {
+        <button
+          cdkMenuItem
+          class="tn-menu-item"
+          type="button"
+          [tnTestId]="projected.resolvedTestId()"
+          [disabled]="projected.disabled()"
+          [cdkMenuItemDisabled]="projected.disabled()"
+          [class.disabled]="projected.disabled()"
+          [class.tn-menu-item--selected]="projected.selected()"
+          [attr.aria-current]="projected.selected() ? 'true' : null"
+          (click)="onProjectedItemClick(projected, $event)"
+        >
+          @if (projected.label() !== undefined) {
+            @if (projected.icon()) {
+              <tn-icon size="sm" class="tn-menu-item-icon" [name]="projected.icon()!" [library]="projected.iconLibrary()" />
+            }
+            <span class="tn-menu-item-label">{{ projected.label() }}</span>
+            @if (projected.shortcut()) {
+              <span class="tn-menu-item-shortcut">{{ projected.shortcut() }}</span>
+            }
+          } @else {
+            <ng-container [ngTemplateOutlet]="projected.content()" />
+          }
+        </button>
+      }
       @for (item of items(); track trackByItemId($index, item)) {
         @if (item.separator) {
           <div
@@ -170,6 +204,7 @@
               type="button"
               [tnTestId]="item.testId ?? 'menu-item-' + item.id"
               [disabled]="item.disabled"
+              [cdkMenuItemDisabled]="!!item.disabled"
               [class.disabled]="item.disabled"
               [class.tn-menu-item--selected]="item.selected"
               [attr.aria-current]="item.selected ? 'true' : null"
@@ -191,6 +226,7 @@
               [tnTestId]="item.testId ?? 'menu-item-' + item.id"
               [cdkMenuTriggerFor]="nestedMenu"
               [disabled]="item.disabled"
+              [cdkMenuItemDisabled]="!!item.disabled"
               [class.disabled]="item.disabled"
               [class.tn-menu-item--selected]="item.selected"
               [attr.aria-current]="item.selected ? 'true' : null"
@@ -221,6 +257,7 @@
                         type="button"
                         [tnTestId]="nestedItem.testId ?? 'menu-item-' + nestedItem.id"
                         [disabled]="nestedItem.disabled"
+                        [cdkMenuItemDisabled]="!!nestedItem.disabled"
                         [class.disabled]="nestedItem.disabled"
                         [class.tn-menu-item--selected]="nestedItem.selected"
                         [attr.aria-current]="nestedItem.selected ? 'true' : null"
@@ -242,6 +279,7 @@
                         [tnTestId]="nestedItem.testId ?? 'menu-item-' + nestedItem.id"
                         [cdkMenuTriggerFor]="deepNestedMenu"
                         [disabled]="nestedItem.disabled"
+                        [cdkMenuItemDisabled]="!!nestedItem.disabled"
                         [class.disabled]="nestedItem.disabled"
                         [class.tn-menu-item--selected]="nestedItem.selected"
                         [attr.aria-current]="nestedItem.selected ? 'true' : null"
@@ -271,6 +309,7 @@
                                 type="button"
                                 [tnTestId]="deepNestedItem.testId ?? 'menu-item-' + deepNestedItem.id"
                                 [disabled]="deepNestedItem.disabled"
+                                [cdkMenuItemDisabled]="!!deepNestedItem.disabled"
                                 [class.disabled]="deepNestedItem.disabled"
                                 [class.tn-menu-item--selected]="deepNestedItem.selected"
                                 [attr.aria-current]="deepNestedItem.selected ? 'true' : null"

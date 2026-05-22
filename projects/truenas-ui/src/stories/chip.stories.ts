@@ -52,7 +52,7 @@ export const Default: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     const chip = canvas.getByTestId(args.testId!);
-    
+
     await expect(chip).toBeInTheDocument();
     await expect(chip).toHaveClass('tn-chip--primary');
     await userEvent.click(chip);
@@ -71,10 +71,10 @@ export const WithIcon: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     const chip = canvas.getByTestId(args.testId!);
-    
+
     await expect(chip).toBeInTheDocument();
     await expect(chip).toHaveClass('tn-chip--primary');
-    
+
     // Check that the icon container exists
     const icon = chip.querySelector('.tn-chip__icon');
     await expect(icon).toBeInTheDocument();
@@ -93,7 +93,7 @@ export const NotClosable: Story = {
     const canvas = within(canvasElement);
     const chip = canvas.getByTestId(args.testId!);
     const closeButton = chip.querySelector('.tn-chip__close');
-    
+
     await expect(chip).toBeInTheDocument();
     await expect(closeButton).not.toBeInTheDocument();
   },
@@ -110,7 +110,7 @@ export const Disabled: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     const chip = canvas.getByTestId(args.testId!);
-    
+
     await expect(chip).toBeInTheDocument();
     await expect(chip).toHaveClass('tn-chip--disabled');
     await expect(chip).toHaveAttribute('aria-disabled', 'true');
@@ -128,7 +128,7 @@ export const Primary: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     const chip = canvas.getByTestId(args.testId!);
-    
+
     await expect(chip).toHaveClass('tn-chip--primary');
   },
 };
@@ -144,7 +144,7 @@ export const Secondary: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     const chip = canvas.getByTestId(args.testId!);
-    
+
     await expect(chip).toHaveClass('tn-chip--secondary');
   },
 };
@@ -160,7 +160,7 @@ export const Accent: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     const chip = canvas.getByTestId(args.testId!);
-    
+
     await expect(chip).toHaveClass('tn-chip--accent');
   },
 };
@@ -174,18 +174,18 @@ export const ChipInputExample: Story = {
       inputType: InputType.PlainText,
       placeholder: 'Type a skill and press Enter to add it as a tag',
       testId: 'chip-input',
-      
+
       addTag: function(value: string) {
         if (value && value.trim() && !this['tags'].includes(value.trim())) {
           this['tags'] = [...this['tags'], value.trim()];
           this['inputValue'] = '';
         }
       },
-      
+
       removeTag: function(tagToRemove: string) {
         this['tags'] = this['tags'].filter((tag: string) => tag !== tagToRemove);
       },
-      
+
       onKeyDown: function(event: KeyboardEvent) {
         if (event.key === 'Enter') {
           event.preventDefault();
@@ -194,12 +194,12 @@ export const ChipInputExample: Story = {
           this['removeTag'](this['tags'][this['tags'].length - 1]);
         }
       },
-      
+
       onInputChange: function(event: Event) {
         const target = event.target as HTMLInputElement;
         this['inputValue'] = target.value;
       },
-      
+
       focusInput: function() {
         // Focus the input when the container is clicked
         setTimeout(() => {
@@ -207,7 +207,7 @@ export const ChipInputExample: Story = {
           if (input) {input.focus();}
         }, 0);
       },
-      
+
       onInputFocus: function(event: FocusEvent) {
         // Add focus styles to container
         const container = (event.target as HTMLElement).parentElement;
@@ -216,7 +216,7 @@ export const ChipInputExample: Story = {
           container.style.boxShadow = '0 0 0 2px rgba(0, 123, 255, 0.25)';
         }
       },
-      
+
       onInputBlur: function(event: FocusEvent) {
         // Remove focus styles from container
         const container = (event.target as HTMLElement).parentElement;
@@ -227,12 +227,12 @@ export const ChipInputExample: Story = {
       }
     },
     template: `
-      <tn-form-field 
+      <tn-form-field
         label="Skills and Technologies"
         hint="Your technical skills and areas of expertise">
-        
+
         <!-- Custom chip input container that mimics input styling -->
-        <div class="chip-input-container" 
+        <div class="chip-input-container"
              style="
                display: flex;
                flex-wrap: wrap;
@@ -266,7 +266,7 @@ export const ChipInputExample: Story = {
           <span style="
                   color: var(--tn-fg2, #6c757d);
                   font-style: italic;
-                  font-size: 0.875rem;
+                  font-size: 1rem;
                   pointer-events: none;
                   user-select: none;
                   flex-shrink: 0;
@@ -275,7 +275,7 @@ export const ChipInputExample: Story = {
             {{ placeholder }}
           </span>
           }
-          
+
           <!-- Inline input field -->
           <input
             #chipInput
@@ -312,15 +312,15 @@ export const ChipInputExample: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const input = canvas.getByTestId('chip-input');
-    
+
     // Test adding a new tag
     await userEvent.type(input, 'React');
     await userEvent.keyboard('{Enter}');
-    
+
     // Verify the chip was added
     const chips = canvas.getAllByText('React');
     await expect(chips[0]).toBeInTheDocument();
-    
+
     // Test removing a tag
     const closeButtons = canvas.getAllByLabelText(/Remove/);
     if (closeButtons.length > 0) {
@@ -334,7 +334,7 @@ export const ChipsWithFormField: Story = {
     props: {
       ...args,
       selectedTags: ['Frontend', 'Backend', 'DevOps'],
-      
+
       removeTag: function(tagToRemove: string) {
         this['selectedTags'] = this['selectedTags'].filter((tag: string) => tag !== tagToRemove);
       }
@@ -383,10 +383,10 @@ export const KeyboardNavigation: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     const chip = canvas.getByTestId(args.testId!);
-    
+
     await expect(chip).toHaveAttribute('tabindex', '0');
     await expect(chip).toHaveAttribute('role', 'button');
-    
+
     // Test keyboard interaction
     chip.focus();
     await userEvent.keyboard('{Enter}');

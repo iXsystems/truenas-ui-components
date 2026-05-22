@@ -3,7 +3,7 @@ import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
 import type { AfterContentInit, TemplateRef } from '@angular/core';
-import { Component, Directive, ElementRef, contentChildren, effect, input, output, viewChild, computed, inject, ViewContainerRef } from '@angular/core';
+import { Component, Directive, contentChildren, input, output, viewChild, computed, inject, ViewContainerRef } from '@angular/core';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective } from '../test-id';
 import { TnMenuItemComponent } from './menu-item.component';
@@ -26,14 +26,36 @@ import { TnMenuItemComponent } from './menu-item.component';
 })
 export class TnMenuActivateHoverDirective implements AfterContentInit {
   private cdkMenu = inject(CdkMenu);
-  private elementRef = inject(ElementRef);
 
   ngAfterContentInit(): void {
     const stack = this.cdkMenu.menuStack;
     if (stack.isEmpty()) {
       stack.push(this.cdkMenu);
-      this.elementRef.nativeElement.focus({ preventScroll: true });
     }
+
+    // CdkMenu installs its FocusKeyManager with `.skipPredicate(() => false)`,
+    // which deliberately makes ArrowUp/Down stop on disabled items so screen
+    // readers can announce them. We want the more common app-menu behavior of
+    // skipping disabled entries entirely (matches what mat-menu users expect),
+    // so we override the predicate after CdkMenu's own ngAfterContentInit has
+    // run. Skip-by-disabled also fixes the "first ArrowDown is a no-op when
+    // item #2 is disabled" symptom — without it the manager visits the
+    // disabled entry on press #1 and only advances on press #2.
+    //
+    // `keyManager` is `protected` on CdkMenuBase; reach in deliberately. If
+    // CDK ever exposes a sanctioned hook (e.g. an input on CdkMenu) we should
+    // switch to it.
+    type WithKeyManager = {
+      keyManager: { skipPredicate: (fn: (item: { disabled: boolean }) => boolean) => unknown };
+    };
+    (this.cdkMenu as unknown as WithKeyManager).keyManager.skipPredicate(
+      (item) => item.disabled,
+    );
+
+    // Set the active index to the first enabled item so the next ArrowDown
+    // advances correctly (instead of being a no-op while the manager "catches
+    // up" to where DOM focus already is).
+    this.cdkMenu.focusFirstItem('keyboard');
   }
 }
 
@@ -92,25 +114,22 @@ export class TnMenuComponent {
     }
   }
 
-  private contentItems = contentChildren(TnMenuItemComponent);
+  contentItems = contentChildren(TnMenuItemComponent);
 
-  constructor() {
-    // Forward projected `<tn-menu-item>` clicks to `menuItemClick` so trigger-
-    // driven menus close uniformly. The synthetic emission mirrors the input
-    // shape; consumers wanting per-item behavior should bind to the projected
-    // item's own `itemClick` output.
-    effect((onCleanup) => {
-      const items = this.contentItems();
-      const subs = items.map((item) =>
-        item.itemClick.subscribe(() => {
-          this.menuItemClick.emit({ id: item.id() ?? '', label: item.label() ?? '' });
-          if (this.contextOverlayRef) {
-            this.closeContextMenu();
-          }
-        }),
-      );
-      onCleanup(() => subs.forEach((s) => s.unsubscribe()));
-    });
+  /**
+   * Click handler for projected `<tn-menu-item>` entries. Emits the item's own
+   * `itemClick` output, re-emits a synthetic entry on `menuItemClick` so
+   * trigger-driven menus close uniformly, and closes any open context menu.
+   */
+  onProjectedItemClick(item: TnMenuItemComponent, event: MouseEvent): void {
+    if (item.disabled()) {
+      return;
+    }
+    item.itemClick.emit(event);
+    this.menuItemClick.emit({ id: item.id() ?? '', label: item.label() ?? '' });
+    if (this.contextOverlayRef) {
+      this.closeContextMenu();
+    }
   }
 
   hasChildren = computed(() => (item: TnMenuItem): boolean => {

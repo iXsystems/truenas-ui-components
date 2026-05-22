@@ -16,19 +16,22 @@ import {
 import type { OnInit } from '@angular/core';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
 import { TnEmptyComponent } from '../empty/empty.component';
-import { tnIconMarker } from '../icon/icon-marker';
 import { TnIconComponent } from '../icon/icon.component';
+import { TnSpinnerComponent } from '../spinner/spinner.component';
 import {
   TnDetailRowDefDirective,
   TnTableColumnDirective,
 } from '../table-column/table-column.directive';
 import { TnTestIdDirective } from '../test-id';
 
-const SORT_ICON_ASC = tnIconMarker('arrow_upward', 'material');
-const SORT_ICON_DESC = tnIconMarker('arrow_downward', 'material');
-const SORT_ICON_NONE = tnIconMarker('unfold_more', 'material');
-const EXPAND_ICON_DOWN = tnIconMarker('keyboard_arrow_down', 'material');
-const EXPAND_ICON_UP = tnIconMarker('keyboard_arrow_up', 'material');
+// Material icons render via the `material-icons` CSS font (see icon.component.ts),
+// so they don't need sprite scanning — the literal `mat-` prefix matches what
+// the runtime icon resolver would produce from a Material library name.
+const SORT_ICON_ASC = 'mat-arrow_upward';
+const SORT_ICON_DESC = 'mat-arrow_downward';
+const SORT_ICON_NONE = 'mat-unfold_more';
+const EXPAND_ICON_DOWN = 'mat-keyboard_arrow_down';
+const EXPAND_ICON_UP = 'mat-keyboard_arrow_up';
 
 export interface TnTableDataSource<T = unknown> {
   data?: T[];
@@ -55,7 +58,7 @@ function getExpandDuration(): string {
 @Component({
   selector: 'tn-table',
   standalone: true,
-  imports: [CommonModule, TnCheckboxComponent, TnEmptyComponent, TnIconComponent],
+  imports: [CommonModule, TnCheckboxComponent, TnEmptyComponent, TnIconComponent, TnSpinnerComponent],
   templateUrl: './table.component.html',
   styleUrl: './table.component.scss',
   animations: [
@@ -69,6 +72,9 @@ function getExpandDuration(): string {
   host: {
     class: 'tn-table',
     '[class.tn-table--bordered]': 'bordered()',
+    '[class.tn-table--loading]': 'loading()',
+    '[style.--tn-table-active-bg]': 'activeBg()',
+    '[style.--tn-table-active-indicator]': 'activeIndicator()',
   },
 })
 export class TnTableComponent<T = unknown> implements OnInit {
@@ -87,9 +93,48 @@ export class TnTableComponent<T = unknown> implements OnInit {
   expandable = input<boolean>(false);
   bordered = input<boolean>(false);
 
+  /**
+   * Marks a single row as "active" — adds the `tn-table__row--active` class
+   * and a left-side indicator bar. Matched by object identity against rows in
+   * `dataSource`. Set to `null` (default) to clear.
+   */
+  activeRow = input<T | null>(null);
+
+  /**
+   * Overrides the active-row background color. Accepts any CSS color value
+   * (`#hex`, `rgb()`, `var(--token)`). Defaults to `--tn-bg3` when null.
+   */
+  activeBg = input<string | null>(null);
+
+  /**
+   * Overrides the left-side active-row indicator color. Defaults to
+   * `--tn-primary` when null.
+   */
+  activeIndicator = input<string | null>(null);
+
+  /**
+   * When true, shows a spinner overlay over the table. Existing rows remain
+   * visible (dimmed) so reloads don't cause layout jumps; if there are no rows
+   * yet, the spinner replaces the empty state.
+   */
+  loading = input<boolean>(false);
+
+  /** Accessible label announced while loading. */
+  loadingMessage = input<string>('Loading...');
+
+  /**
+   * When true, rows become keyboard-focusable (tabindex=0) and clicking or
+   * pressing Enter/Space emits `rowClick`. Use this for "click row to view
+   * details" patterns. Independent of `selectable` (checkbox) and `expandable`.
+   */
+  clickable = input<boolean>(false);
+
   // --- Outputs ---
   sortChange = output<TnSortEvent>();
   selectionChange = output<T[]>();
+
+  /** Emits the row when a clickable row is activated (click or Enter/Space). */
+  rowClick = output<T>();
 
   // --- Content queries ---
   columnDefs = contentChildren(TnTableColumnDirective);
@@ -246,6 +291,28 @@ export class TnTableComponent<T = unknown> implements OnInit {
 
   isRowExpanded(row: T): boolean {
     return this.expandedRows().has(row);
+  }
+
+  // --- Active row ---
+
+  isRowActive(row: T): boolean {
+    const active = this.activeRow();
+    return active !== null && active === row;
+  }
+
+  // --- Row click ---
+
+  onRowClick(row: T): void {
+    if (!this.clickable()) { return; }
+    this.rowClick.emit(row);
+  }
+
+  onRowKeydown(event: KeyboardEvent, row: T): void {
+    if (!this.clickable()) { return; }
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.rowClick.emit(row);
+    }
   }
 
   // --- Selection methods ---

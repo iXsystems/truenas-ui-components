@@ -42,8 +42,12 @@ const TEST_USERS: User[] = [
       [displayedColumns]="['name', 'email']"
       [selectable]="selectable"
       [expandable]="expandable"
+      [activeRow]="activeRow"
+      [loading]="loading"
+      [clickable]="clickable"
       (sortChange)="onSort($event)"
-      (selectionChange)="selectedUsers = $event">
+      (selectionChange)="selectedUsers = $event"
+      (rowClick)="lastClickedRow = $event">
       <ng-container tnColumnDef="name" [sortable]="true">
         <ng-template tnHeaderCellDef>Name</ng-template>
         <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
@@ -66,6 +70,10 @@ class TableHarnessTestComponent {
   tableData: User[] = [...TEST_USERS];
   selectable = false;
   expandable = false;
+  activeRow: User | null = null;
+  loading = false;
+  clickable = false;
+  lastClickedRow: User | null = null;
   lastSort: TnSortEvent | null = null;
   selectedUsers: User[] = [];
 
@@ -252,6 +260,93 @@ describe('TnTableHarness', () => {
       await table.toggleRowExpansion(0);
       await table.toggleRowExpansion(2);
       expect(await table.getExpandedRowCount()).toBe(2);
+    });
+  });
+
+  describe('clickable rows', () => {
+    beforeEach(() => {
+      component.clickable = true;
+      fixture.detectChanges();
+    });
+
+    it('should report rows as focusable', async () => {
+      const table = await loader.getHarness(TnTableHarness);
+      expect(await table.isRowFocusable(0)).toBe(true);
+      expect(await table.isRowFocusable(2)).toBe(true);
+    });
+
+    it('should emit rowClick on click', async () => {
+      const table = await loader.getHarness(TnTableHarness);
+      await table.clickRow(1);
+      expect(component.lastClickedRow?.name).toBe('Bob');
+    });
+
+    it('should emit rowClick on Enter key', async () => {
+      const table = await loader.getHarness(TnTableHarness);
+      await table.pressKeyOnRow(0, 'enter');
+      expect(component.lastClickedRow?.name).toBe('Alice');
+    });
+  });
+
+  describe('non-clickable rows', () => {
+    it('should not be focusable', async () => {
+      const table = await loader.getHarness(TnTableHarness);
+      expect(await table.isRowFocusable(0)).toBe(false);
+    });
+  });
+
+  describe('loading state', () => {
+    it('should report not loading by default', async () => {
+      const table = await loader.getHarness(TnTableHarness);
+      expect(await table.isLoading()).toBe(false);
+    });
+
+    it('should report loading when enabled', async () => {
+      component.loading = true;
+      fixture.detectChanges();
+
+      const table = await loader.getHarness(TnTableHarness);
+      expect(await table.isLoading()).toBe(true);
+    });
+
+    it('should keep existing rows visible while loading', async () => {
+      component.loading = true;
+      fixture.detectChanges();
+
+      const table = await loader.getHarness(TnTableHarness);
+      expect(await table.getRowCount()).toBe(3);
+    });
+  });
+
+  describe('active row', () => {
+    it('should report no active row by default', async () => {
+      const table = await loader.getHarness(TnTableHarness);
+      expect(await table.getActiveRowIndex()).toBeNull();
+      expect(await table.isRowActive(0)).toBe(false);
+    });
+
+    it('should mark the matching row as active', async () => {
+      component.activeRow = component.tableData[1];
+      fixture.detectChanges();
+
+      const table = await loader.getHarness(TnTableHarness);
+      expect(await table.isRowActive(0)).toBe(false);
+      expect(await table.isRowActive(1)).toBe(true);
+      expect(await table.isRowActive(2)).toBe(false);
+      expect(await table.getActiveRowIndex()).toBe(1);
+    });
+
+    it('should clear active state when set to null', async () => {
+      component.activeRow = component.tableData[0];
+      fixture.detectChanges();
+
+      const table = await loader.getHarness(TnTableHarness);
+      expect(await table.isRowActive(0)).toBe(true);
+
+      component.activeRow = null;
+      fixture.detectChanges();
+      expect(await table.isRowActive(0)).toBe(false);
+      expect(await table.getActiveRowIndex()).toBeNull();
     });
   });
 

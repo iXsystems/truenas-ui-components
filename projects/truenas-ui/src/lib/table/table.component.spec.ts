@@ -169,6 +169,180 @@ describe('TnTableComponent', () => {
     });
   });
 
+  describe('clickable rows', () => {
+    const testData = [{ id: 1 }, { id: 2 }, { id: 3 }];
+
+    beforeEach(() => {
+      fixture.componentRef.setInput('dataSource', testData);
+      fixture.detectChanges();
+    });
+
+    it('should default to not clickable', () => {
+      expect(component.clickable()).toBe(false);
+    });
+
+    it('should not emit rowClick when not clickable', () => {
+      const spy = jest.fn();
+      component.rowClick.subscribe(spy);
+      component.onRowClick(testData[0]);
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('should emit rowClick when clickable', () => {
+      fixture.componentRef.setInput('clickable', true);
+      const spy = jest.fn();
+      component.rowClick.subscribe(spy);
+
+      component.onRowClick(testData[1]);
+      expect(spy).toHaveBeenCalledWith(testData[1]);
+    });
+
+    it('should emit rowClick on Enter keydown', () => {
+      fixture.componentRef.setInput('clickable', true);
+      const spy = jest.fn();
+      component.rowClick.subscribe(spy);
+
+      const event = new KeyboardEvent('keydown', { key: 'Enter' });
+      jest.spyOn(event, 'preventDefault');
+      component.onRowKeydown(event, testData[0]);
+
+      expect(spy).toHaveBeenCalledWith(testData[0]);
+      expect(event.preventDefault).toHaveBeenCalled();
+    });
+
+    it('should emit rowClick on Space keydown', () => {
+      fixture.componentRef.setInput('clickable', true);
+      const spy = jest.fn();
+      component.rowClick.subscribe(spy);
+
+      const event = new KeyboardEvent('keydown', { key: ' ' });
+      jest.spyOn(event, 'preventDefault');
+      component.onRowKeydown(event, testData[0]);
+
+      expect(spy).toHaveBeenCalledWith(testData[0]);
+      expect(event.preventDefault).toHaveBeenCalled();
+    });
+
+    it('should ignore unrelated keys', () => {
+      fixture.componentRef.setInput('clickable', true);
+      const spy = jest.fn();
+      component.rowClick.subscribe(spy);
+
+      component.onRowKeydown(new KeyboardEvent('keydown', { key: 'a' }), testData[0]);
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('should render rows with tabindex=0 when clickable', () => {
+      fixture.componentRef.setInput('clickable', true);
+      fixture.componentRef.setInput('displayedColumns', ['id']);
+      fixture.detectChanges();
+
+      const rows = fixture.nativeElement.querySelectorAll('.tn-table__row');
+      expect(rows.length).toBeGreaterThan(0);
+      for (const row of rows) {
+        expect(row.getAttribute('tabindex')).toBe('0');
+        expect(row.getAttribute('role')).toBe('button');
+      }
+    });
+
+    it('should not set tabindex when not clickable', () => {
+      fixture.componentRef.setInput('displayedColumns', ['id']);
+      fixture.detectChanges();
+
+      const rows = fixture.nativeElement.querySelectorAll('.tn-table__row');
+      for (const row of rows) {
+        expect(row.getAttribute('tabindex')).toBeNull();
+      }
+    });
+  });
+
+  describe('loading state', () => {
+    it('should default to not loading', () => {
+      expect(component.loading()).toBe(false);
+    });
+
+    it('should accept loading input', () => {
+      fixture.componentRef.setInput('loading', true);
+      expect(component.loading()).toBe(true);
+    });
+
+    it('should default loadingMessage to "Loading..."', () => {
+      expect(component.loadingMessage()).toBe('Loading...');
+    });
+
+    it('should render overlay element when loading', () => {
+      fixture.componentRef.setInput('loading', true);
+      fixture.detectChanges();
+      const overlay = fixture.nativeElement.querySelector('.tn-table__loading-overlay');
+      expect(overlay).not.toBeNull();
+    });
+
+    it('should not render overlay when not loading', () => {
+      fixture.componentRef.setInput('loading', false);
+      fixture.detectChanges();
+      const overlay = fixture.nativeElement.querySelector('.tn-table__loading-overlay');
+      expect(overlay).toBeNull();
+    });
+
+    it('should hide empty state while loading', () => {
+      fixture.componentRef.setInput('dataSource', []);
+      fixture.componentRef.setInput('loading', true);
+      fixture.detectChanges();
+      const empty = fixture.nativeElement.querySelector('tn-empty');
+      expect(empty).toBeNull();
+    });
+  });
+
+  describe('active row', () => {
+    const testData = [{ id: 1 }, { id: 2 }, { id: 3 }];
+
+    beforeEach(() => {
+      fixture.componentRef.setInput('dataSource', testData);
+      fixture.detectChanges();
+    });
+
+    it('should report no active row by default', () => {
+      expect(component.isRowActive(testData[0])).toBe(false);
+      expect(component.isRowActive(testData[1])).toBe(false);
+    });
+
+    it('should mark only the matching row as active', () => {
+      fixture.componentRef.setInput('activeRow', testData[1]);
+      expect(component.isRowActive(testData[0])).toBe(false);
+      expect(component.isRowActive(testData[1])).toBe(true);
+      expect(component.isRowActive(testData[2])).toBe(false);
+    });
+
+    it('should match by object identity, not by value', () => {
+      fixture.componentRef.setInput('activeRow', { id: 1 });
+      expect(component.isRowActive(testData[0])).toBe(false);
+    });
+
+    it('should clear active state when set to null', () => {
+      fixture.componentRef.setInput('activeRow', testData[0]);
+      expect(component.isRowActive(testData[0])).toBe(true);
+
+      fixture.componentRef.setInput('activeRow', null);
+      expect(component.isRowActive(testData[0])).toBe(false);
+    });
+
+    it('should leave active style CSS vars unset by default', () => {
+      const host = fixture.nativeElement as HTMLElement;
+      expect(host.style.getPropertyValue('--tn-table-active-bg')).toBe('');
+      expect(host.style.getPropertyValue('--tn-table-active-indicator')).toBe('');
+    });
+
+    it('should set active style CSS vars from inputs', () => {
+      fixture.componentRef.setInput('activeBg', 'var(--tn-bg2)');
+      fixture.componentRef.setInput('activeIndicator', '#71BF44');
+      fixture.detectChanges();
+
+      const host = fixture.nativeElement as HTMLElement;
+      expect(host.style.getPropertyValue('--tn-table-active-bg')).toBe('var(--tn-bg2)');
+      expect(host.style.getPropertyValue('--tn-table-active-indicator')).toBe('#71BF44');
+    });
+  });
+
   describe('expansion', () => {
     const testData = [{ id: 1 }, { id: 2 }];
 

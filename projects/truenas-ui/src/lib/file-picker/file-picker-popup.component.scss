@@ -41,7 +41,7 @@
     cursor: pointer;
     padding: 4px 8px;
     border-radius: 4px;
-    font-size: 0.875rem;
+    font-size: 1rem;
     white-space: nowrap;
     transition: background-color 0.15s ease-in-out;
 
@@ -70,7 +70,7 @@
   gap: 8px;
 
   tn-button {
-    font-size: 0.875rem;
+    font-size: 1rem;
   }
 }
 
@@ -235,7 +235,7 @@ tn-table {
   background: rgba(211, 47, 47, 0.1);
   border-left: 3px solid var(--tn-error, #d32f2f);
   border-radius: 3px;
-  font-size: 0.875rem;
+  font-size: 1rem;
   color: var(--tn-error, #d32f2f);
 
   .error-icon {
@@ -322,30 +322,30 @@ tn-table {
 
 // Type column styling
 .file-type {
-  font-size: 0.875rem;
+  font-size: 1rem;
   padding: 2px 8px;
   border-radius: 12px;
-  
+
   &.type-folder {
     background: var(--tn-alt-bg1);
     color: var(--tn-alt-fg2);
   }
-  
+
   &.type-file {
     background: var(--tn-bg2);
     color: var(--tn-fg2);
   }
-  
+
   &.type-dataset {
     background: rgba(0, 125, 179, 0.1);
     color: var(--tn-blue);
   }
-  
+
   &.type-zvol {
     background: rgba(113, 191, 68, 0.1);
     color: var(--tn-green);
   }
-  
+
   &.type-mountpoint {
     background: rgba(230, 141, 55, 0.1);
     color: var(--tn-orange);
@@ -374,7 +374,7 @@ tn-table {
 
   p {
     margin: 0;
-    font-size: 0.875rem;
+    font-size: 1rem;
   }
 }
 
@@ -391,7 +391,7 @@ tn-table {
 }
 
 .selection-count {
-  font-size: 0.875rem;
+  font-size: 1rem;
   color: var(--tn-fg2);
   font-weight: 500;
 }
@@ -461,6 +461,6 @@ tn-table {
   }
 
   .file-info {
-    font-size: 0.875rem;
+    font-size: 1rem;
   }
 }

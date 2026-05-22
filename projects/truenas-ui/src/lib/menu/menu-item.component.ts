@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, input, output } from '@angular/core';
-import { TnIconComponent } from '../icon/icon.component';
-import { TnTestIdDirective } from '../test-id';
+import type { TemplateRef } from '@angular/core';
+import { Component, computed, input, output, viewChild } from '@angular/core';
 
 /**
  * Projection-based menu item for use inside `<tn-menu>`.
@@ -14,17 +13,19 @@ import { TnTestIdDirective } from '../test-id';
  *
  * Existing `<tn-menu [items]="...">` consumers don't need this component;
  * the items-array API continues to work unchanged. Items-array entries and
- * projected `<tn-menu-item>` children render together inside one `<tn-menu>`.
+ * projected `<tn-menu-item>` children render together inside one `<tn-menu>`,
+ * share keyboard navigation, and look identical.
  *
- * Subscribe to either the projected item's own `itemClick` output (preferred,
- * per-item handlers) or the parent menu's `menuItemClick` (uniform handler).
- * Trigger-driven menus close automatically on projected-item click.
+ * **How it works:** the component itself renders nothing visible — it acts as
+ * a configuration declaration. The parent `<tn-menu>` collects projected items
+ * via `contentChildren`, re-renders them inside the CDK overlay alongside
+ * items-array entries (with `cdkMenuItem` for full arrow-key navigation), and
+ * routes clicks back to each item's `itemClick` output.
  *
- * **Note on keyboard navigation:** projected items render as `role="menuitem"`
- * buttons but do not participate in `CdkMenu` arrow-key navigation (CdkMenuItem
- * requires its parent `CdkMenu` in the same injector tree, which projection
- * breaks). For menus that depend on arrow-key navigation between options, use
- * the `items` input form. Tab/Shift+Tab and Enter/Space activation still work.
+ * **Accessibility:** because items are re-rendered inside the parent's
+ * `CdkMenu`, all keyboard semantics from `@angular/cdk/menu` apply uniformly:
+ * Arrow Up/Down/Home/End to move focus, Enter/Space to activate, Esc to
+ * close, type-ahead search. Disabled items are skipped.
  *
  * @example
  * ```html
@@ -39,8 +40,9 @@ import { TnTestIdDirective } from '../test-id';
 @Component({
   selector: 'tn-menu-item',
   standalone: true,
-  imports: [CommonModule, TnIconComponent, TnTestIdDirective],
+  imports: [CommonModule],
   templateUrl: './menu-item.component.html',
+  host: { style: 'display: none;' },
 })
 export class TnMenuItemComponent {
   id = input<string | undefined>(undefined);
@@ -54,12 +56,8 @@ export class TnMenuItemComponent {
 
   itemClick = output<MouseEvent>();
 
-  resolvedTestId = computed(() => this.testId() ?? (this.id() ? `menu-item-${this.id()}` : undefined));
+  /** Template capturing whatever the consumer projected as item content. */
+  content = viewChild.required<TemplateRef<unknown>>('content');
 
-  handleClick(event: MouseEvent): void {
-    if (this.disabled()) {
-      return;
-    }
-    this.itemClick.emit(event);
-  }
+  resolvedTestId = computed(() => this.testId() ?? (this.id() ? `menu-item-${this.id()}` : undefined));
 }

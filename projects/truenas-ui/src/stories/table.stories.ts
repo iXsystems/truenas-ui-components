@@ -70,6 +70,12 @@ const meta: Meta<TnTableComponent> = {
     selectable: { description: 'Show checkbox column for row selection', control: 'boolean' },
     expandable: { description: 'Enable click-to-expand detail rows', control: 'boolean' },
     bordered: { description: 'Adds an outer border around the table', control: 'boolean' },
+    activeRow: { description: 'Row reference to mark with the active-row indicator (left bar)', control: false },
+    activeBg: { description: 'Override for the active-row background color (any CSS color or var())', control: 'text' },
+    activeIndicator: { description: 'Override for the left-side indicator color (any CSS color or var())', control: 'text' },
+    loading: { description: 'Shows a spinner overlay over the table while reloading data', control: 'boolean' },
+    loadingMessage: { description: 'Accessible label announced while loading', control: 'text' },
+    clickable: { description: 'Makes rows keyboard-focusable (tabindex=0); Enter/Space emit rowClick', control: 'boolean' },
   },
 };
 
@@ -271,6 +277,147 @@ export const FullFeaturedTable: Story = {
             Role: {{ user.role }} · Status: {{ user.status }}
           </div>
         </ng-template>
+      </tn-table>
+    `,
+  }),
+};
+
+export const LoadingTable: Story = {
+  render: () => ({
+    props: {
+      tableData: sampleData,
+      tableColumns: ['name', 'email', 'role'],
+      loading: true,
+    },
+    template: `
+      <p style="margin-bottom: 8px;">
+        Toggle <code>[loading]</code> to see the overlay over the existing data.
+      </p>
+      <tn-table
+        [dataSource]="tableData"
+        [displayedColumns]="tableColumns"
+        [loading]="loading">
+        <ng-container tnColumnDef="name">
+          <ng-template tnHeaderCellDef>Name</ng-template>
+          <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="email">
+          <ng-template tnHeaderCellDef>Email</ng-template>
+          <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="role">
+          <ng-template tnHeaderCellDef>Role</ng-template>
+          <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
+        </ng-container>
+      </tn-table>
+    `,
+  }),
+};
+
+export const LoadingEmptyTable: Story = {
+  render: () => ({
+    props: {
+      tableData: [],
+      tableColumns: ['name', 'email', 'role'],
+      loading: true,
+    },
+    template: `
+      <p style="margin-bottom: 8px;">
+        Initial load: no rows yet, spinner replaces the empty state.
+      </p>
+      <tn-table
+        [dataSource]="tableData"
+        [displayedColumns]="tableColumns"
+        [loading]="loading"
+        emptyMessage="No data yet">
+        <ng-container tnColumnDef="name">
+          <ng-template tnHeaderCellDef>Name</ng-template>
+          <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="email">
+          <ng-template tnHeaderCellDef>Email</ng-template>
+          <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="role">
+          <ng-template tnHeaderCellDef>Role</ng-template>
+          <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
+        </ng-container>
+      </tn-table>
+    `,
+  }),
+};
+
+export const ActiveRow: Story = {
+  render: () => ({
+    props: {
+      tableData: sampleData,
+      tableColumns: ['name', 'email', 'role'],
+      activeUser: sampleData[1],
+      setActive(user: User) {
+        this['activeUser'] = user;
+      },
+    },
+    template: `
+      <p style="margin-bottom: 8px;">
+        Active: {{ activeUser?.name }} — click a row (or focus + Enter) to change
+      </p>
+      <tn-table
+        [dataSource]="tableData"
+        [displayedColumns]="tableColumns"
+        [activeRow]="activeUser"
+        [clickable]="true"
+        (rowClick)="setActive($event)">
+        <ng-container tnColumnDef="name">
+          <ng-template tnHeaderCellDef>Name</ng-template>
+          <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="email">
+          <ng-template tnHeaderCellDef>Email</ng-template>
+          <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="role">
+          <ng-template tnHeaderCellDef>Role</ng-template>
+          <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
+        </ng-container>
+      </tn-table>
+    `,
+  }),
+};
+
+export const CustomActiveColors: Story = {
+  render: () => ({
+    props: {
+      tableData: sampleData,
+      tableColumns: ['name', 'email', 'role'],
+      activeUser: sampleData[1],
+      setActive(user: User) {
+        this['activeUser'] = user;
+      },
+    },
+    template: `
+      <p style="margin-bottom: 8px;">
+        Custom active row bg (green tint) and indicator (green).
+      </p>
+      <tn-table
+        [dataSource]="tableData"
+        [displayedColumns]="tableColumns"
+        [activeRow]="activeUser"
+        [clickable]="true"
+        activeBg="rgba(113, 191, 68, 0.15)"
+        activeIndicator="var(--tn-green)"
+        (rowClick)="setActive($event)">
+        <ng-container tnColumnDef="name">
+          <ng-template tnHeaderCellDef>Name</ng-template>
+          <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="email">
+          <ng-template tnHeaderCellDef>Email</ng-template>
+          <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="role">
+          <ng-template tnHeaderCellDef>Role</ng-template>
+          <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
+        </ng-container>
       </tn-table>
     `,
   }),

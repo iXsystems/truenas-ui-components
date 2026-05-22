@@ -7,7 +7,7 @@
 .tn-select-label {
   display: block;
   margin-bottom: 0.5rem;
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--tn-fg1, #333);
   line-height: 1.4;
@@ -97,12 +97,9 @@
 }
 
 .tn-select-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  margin-top: 0.25rem;
+  // No position / top / left here on purpose: the panel is rendered inside a
+  // CDK overlay pane that handles positioning. Adding `position: absolute`
+  // collapses the pane to zero height and the panel never becomes visible.
   background-color: var(--tn-bg2, #f5f5f5);
   border: 1px solid var(--tn-lines, #d1d5db);
   border-radius: 0.375rem;
@@ -124,7 +121,7 @@
   cursor: pointer;
   color: var(--tn-fg1, #212529);
   transition: background-color 0.15s ease-in-out;
-  
+
   // Make sure options are clickable
   pointer-events: auto;
   position: relative;
@@ -141,6 +138,13 @@
     &:hover {
       background-color: var(--tn-alt-bg2, #f8f9fa) !important;
     }
+  }
+
+  // Keyboard-focus highlight (aria-activedescendant). Distinct from hover and
+  // from .selected so the user can tell which option ArrowDown/Up will activate.
+  &.focused {
+    background-color: var(--tn-alt-bg2, #e8f4fd) !important;
+    box-shadow: inset 2px 0 0 var(--tn-primary, #007bff);
   }
 
   &.disabled {

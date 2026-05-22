@@ -97,7 +97,7 @@ export const Checked: Story = {
       checked: true,
     },
     template: `
-      <tn-slide-toggle 
+      <tn-slide-toggle
         [label]="label"
         [labelPosition]="labelPosition"
         [disabled]="disabled"
@@ -136,7 +136,7 @@ export const DisabledChecked: Story = {
       checked: true,
     },
     template: `
-      <tn-slide-toggle 
+      <tn-slide-toggle
         [label]="label"
         [labelPosition]="labelPosition"
         [disabled]="disabled"
@@ -212,10 +212,10 @@ export const WithFormField: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <tn-form-field 
+      <tn-form-field
         label="Notification Settings"
         hint="Enable to receive email notifications">
-        <tn-slide-toggle 
+        <tn-slide-toggle
           label="Email notifications"
           [labelPosition]="labelPosition"
           [disabled]="disabled"
@@ -256,32 +256,32 @@ export const ReactiveForm: Story = {
     template: `
       <div style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 400px;">
         <h3 style="margin: 0; color: var(--tn-fg1);">Application Settings</h3>
-        
-        <tn-form-field 
+
+        <tn-form-field
           label="Notifications"
           hint="Receive push notifications">
-          <tn-slide-toggle 
+          <tn-slide-toggle
             label="Enable notifications"
             color="primary"
             [formControl]="settingsForm.notifications">
           </tn-slide-toggle>
         </tn-form-field>
 
-        <tn-form-field 
+        <tn-form-field
           label="Auto Save"
           hint="Automatically save your work">
-          <tn-slide-toggle 
+          <tn-slide-toggle
             label="Enable auto-save"
             color="accent"
             [formControl]="settingsForm.autoSave">
           </tn-slide-toggle>
         </tn-form-field>
 
-        <tn-form-field 
+        <tn-form-field
           label="Dark Mode (Required)"
           hint="This setting is required"
           [required]="true">
-          <tn-slide-toggle 
+          <tn-slide-toggle
             label="Enable dark mode"
             color="primary"
             [formControl]="settingsForm.darkMode">
@@ -289,23 +289,23 @@ export const ReactiveForm: Story = {
         </tn-form-field>
 
         <div style="display: flex; gap: 1rem;">
-          <button 
-            type="button" 
+          <button
+            type="button"
             (click)="submitForm()"
             style="padding: 0.5rem 1rem; background: var(--tn-primary); color: white; border: none; border-radius: 0.25rem; cursor: pointer;">
             Validate Form
           </button>
         </div>
 
-        <div style="padding: 1rem; background: var(--tn-bg2); border-radius: 0.375rem; font-size: 0.875rem;">
+        <div style="padding: 1rem; background: var(--tn-bg2); border-radius: 0.375rem; font-size: 1rem;">
           <strong>Form Values:</strong><br>
           Notifications: {{ settingsForm.notifications.value }}<br>
           Auto Save: {{ settingsForm.autoSave.value }}<br>
           Dark Mode: {{ settingsForm.darkMode.value }}<br><br>
-          <strong>Form Valid:</strong> {{ 
-            settingsForm.notifications.valid && 
-            settingsForm.autoSave.valid && 
-            settingsForm.darkMode.valid 
+          <strong>Form Valid:</strong> {{
+            settingsForm.notifications.valid &&
+            settingsForm.autoSave.valid &&
+            settingsForm.darkMode.valid
           }}
         </div>
       </div>
@@ -323,21 +323,21 @@ export const ColorComparison: Story = {
     template: `
       <div style="display: flex; flex-direction: column; gap: 1rem; padding: 1rem;">
         <h3 style="margin: 0; color: var(--tn-fg1);">Color Variants</h3>
-        
+
         <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-          <tn-slide-toggle 
+          <tn-slide-toggle
             label="Primary color (default)"
             color="primary"
             [checked]="true">
           </tn-slide-toggle>
-          
-          <tn-slide-toggle 
+
+          <tn-slide-toggle
             label="Accent color"
             color="accent"
             [checked]="true">
           </tn-slide-toggle>
-          
-          <tn-slide-toggle 
+
+          <tn-slide-toggle
             label="Warning color"
             color="warn"
             [checked]="true">
@@ -345,16 +345,16 @@ export const ColorComparison: Story = {
         </div>
 
         <h4 style="margin: 1rem 0 0.5rem 0; color: var(--tn-fg1);">Disabled States</h4>
-        
+
         <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-          <tn-slide-toggle 
+          <tn-slide-toggle
             label="Disabled unchecked"
             color="primary"
             [disabled]="true"
             [checked]="false">
           </tn-slide-toggle>
-          
-          <tn-slide-toggle 
+
+          <tn-slide-toggle
             label="Disabled checked"
             color="primary"
             [disabled]="true"

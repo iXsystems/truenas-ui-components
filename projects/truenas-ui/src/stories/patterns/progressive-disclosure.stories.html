@@ -1,5 +1,5 @@
 <div style="padding: 24px; max-width: 900px;">
-  
+
   <!-- Header Section -->
   <div style="margin-bottom: 32px;">
     <h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 600;">Create Storage Pool</h1>
@@ -11,23 +11,23 @@
     <tn-card elevation="low" [bordered]="true">
       <div style="padding: 24px;">
         <tn-stepper orientation="horizontal" [linear]="true" [selectedIndex]="currentStep()">
-        
+
           <!-- Step 1: Name -->
           <tn-step label="Name" [completed]="isStepCompleted(0)">
             <div style="padding: 20px 0;">
               <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: var(--tn-fg1);">Name Your Storage Pool</h3>
               <p style="margin: 0 0 20px 0; color: var(--tn-fg2, #666); font-size: 14px;">Choose a name that describes what you'll store here</p>
-              
+
               <tn-form-field label="Pool Name" style="margin-bottom: 20px;">
                 <tn-input placeholder="e.g., family-photos, documents, backup" required [(ngModel)]="poolName" />
               </tn-form-field>
-              
+
               @if (poolName().trim().length === 0) {
                 <div style="margin-bottom: 16px; padding: 8px; background: var(--tn-orange, #ff9800); color: white; border-radius: 4px; font-size: 13px;">
                   ⚠️ Pool name is required to continue
                 </div>
               }
-              
+
               <div style="margin-top: 16px; padding: 12px; background: var(--tn-alt-bg1, #f8f9fa); border-radius: 6px; font-size: 13px; color: var(--tn-fg2, #666);">
                 💡 <strong>Tip:</strong> Use descriptive names like "media-storage" or "backup-pool" to easily identify your storage later
               </div>
@@ -39,12 +39,12 @@
             <div style="padding: 20px 0;">
               <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: var(--tn-fg1);">Choose Your Protection Level</h3>
               <p style="margin: 0 0 20px 0; color: var(--tn-fg2, #666); font-size: 14px;">How safe should your data be if drives fail?</p>
-              
+
               <div style="margin-bottom: 20px;">
                 <div style="margin-bottom: 16px;">
-                  <tn-radio 
-                    name="protectionType" 
-                    value="raidz1" 
+                  <tn-radio
+                    name="protectionType"
+                    value="raidz1"
                     label="Basic Protection"
                     [(ngModel)]="selectedStorageType" />
                   <div style="margin: 4px 0 0 24px; font-size: 13px; color: var(--tn-fg2, #666);">
@@ -53,9 +53,9 @@
                 </div>
 
                 <div style="margin-bottom: 16px;">
-                  <tn-radio 
-                    name="protectionType" 
-                    value="raidz2" 
+                  <tn-radio
+                    name="protectionType"
+                    value="raidz2"
                     label="Medium Protection"
                     [(ngModel)]="selectedStorageType" />
                   <div style="margin: 4px 0 0 24px; font-size: 13px; color: var(--tn-fg2, #666);">
@@ -64,9 +64,9 @@
                 </div>
 
                 <div style="margin-bottom: 16px;">
-                  <tn-radio 
-                    name="protectionType" 
-                    value="raidz3" 
+                  <tn-radio
+                    name="protectionType"
+                    value="raidz3"
                     label="High Protection"
                     [(ngModel)]="selectedStorageType" />
                   <div style="margin: 4px 0 0 24px; font-size: 13px; color: var(--tn-fg2, #666);">
@@ -76,9 +76,9 @@
                 </div>
 
                 <div style="margin-bottom: 16px;">
-                  <tn-radio 
-                    name="protectionType" 
-                    value="mirror" 
+                  <tn-radio
+                    name="protectionType"
+                    value="mirror"
                     label="Maximum Protection"
                     [(ngModel)]="selectedStorageType" />
                   <div style="margin: 4px 0 0 24px; font-size: 13px; color: var(--tn-fg2, #666);">
@@ -99,7 +99,7 @@
               </div>
 
               <!-- Technical Summary (Expandable) -->
-              <tn-expansion-panel 
+              <tn-expansion-panel
                 title="Technical Summary"
                 titleStyle="link"
                 elevation="none"
@@ -140,7 +140,7 @@
             <div style="padding: 20px 0;">
               <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: var(--tn-fg1);">Advanced Settings</h3>
               <p style="margin: 0 0 20px 0; color: var(--tn-fg2, #666); font-size: 14px;">Optional optimizations and expert configurations - your pool works great with defaults!</p>
-              
+
               <!-- Default Notice -->
               <div style="margin-bottom: 24px; padding: 16px; background: var(--tn-alt-bg1, #e8f5e8); border-radius: 8px; border-left: 4px solid var(--tn-green, #2e7d32);">
                 <div style="display: flex; align-items: center; margin-bottom: 8px;">
@@ -154,18 +154,18 @@
 
               <!-- Optional Security Enhancement -->
               <div style="margin-bottom: 20px;">
-                <h4 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 500; color: var(--tn-fg1);">Security Enhancement</h4>
-                
+                <h4 style="margin: 0 0 12px 0; font-size: 1rem; font-weight: 500; color: var(--tn-fg1);">Security Enhancement</h4>
+
                 <!-- Encryption -->
                 <div style="margin-bottom: 16px; padding: 12px; background: var(--tn-bg2, #ffffff); border-radius: 6px; border: 1px solid var(--tn-lines, #ddd);">
-                  <tn-checkbox 
+                  <tn-checkbox
                     label="Enable Encryption (for sensitive data)"
                     style="margin-bottom: 8px;"
                     [(ngModel)]="enableEncryption" />
                   <div style="font-size: 12px; color: var(--tn-fg2, #666); margin-left: 24px;">
                     Only enable if you store sensitive data that requires encryption at rest
                   </div>
-                  
+
                   @if (enableEncryption()) {
                     <div style="margin: 12px 0 0 24px; padding: 12px; background: var(--tn-alt-bg1, #f8f9fa); border-radius: 4px;">
                       <tn-form-field label="Encryption Passphrase">
@@ -183,7 +183,7 @@
               <div style="margin-bottom: 20px; padding: 12px; background: var(--tn-alt-bg1, #f8f9fa); border-radius: 6px; border-left: 3px solid var(--tn-orange, #ff9800);">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                   <div style="display: flex; align-items: center;">
-                    <span style="margin-right: 8px; font-size: 16px;">⚙️</span>
+                    <span style="margin-right: 8px; font-size: 1rem;">⚙️</span>
                     <label style="font-weight: 500; color: var(--tn-fg1); font-size: 14px;">Expert Optimizations</label>
                   </div>
                   <tn-slide-toggle [(ngModel)]="enableAdvancedOptions" />
@@ -195,9 +195,9 @@
                 @if (enableAdvancedOptions()) {
                   <!-- Advanced Options Content -->
                   <div style="border-top: 1px solid var(--tn-lines, #e5e7eb); padding-top: 16px; margin-top: 16px;">
-                    
+
                     <!-- Performance Tuning -->
-                    <tn-expansion-panel 
+                    <tn-expansion-panel
                       title="Performance Tuning"
                       titleStyle="link"
                       elevation="none"
@@ -212,7 +212,7 @@
                             <option value="1M">1M (Large files, video)</option>
                           </tn-select>
                         </tn-form-field>
-                        
+
                         <tn-form-field label="Sector Size (ashift)">
                           <tn-select [(ngModel)]="ashiftValue">
                             <option value="12">4K sectors (modern drives)</option>
@@ -224,7 +224,7 @@
 
                     <!-- Hot Spare -->
                     <div style="margin-bottom: 12px; padding: 12px; background: var(--tn-bg2, #ffffff); border-radius: 4px; border: 1px solid var(--tn-lines, #ddd);">
-                      <tn-checkbox 
+                      <tn-checkbox
                         label="Add Hot Spare Drive"
                         [(ngModel)]="enableHotSpare" />
                       <div style="margin-top: 6px; margin-left: 24px; font-size: 12px; color: var(--tn-fg2, #666);">
@@ -233,7 +233,7 @@
                     </div>
 
                     <!-- Expert Configuration -->
-                    <tn-expansion-panel 
+                    <tn-expansion-panel
                       title="Expert Configuration"
                       titleStyle="link"
                       elevation="none"
@@ -244,10 +244,10 @@
                           <span style="font-size: 18px; margin-right: 8px;">⚠️</span>
                           <strong style="color: var(--tn-orange, #ff9800);">Advanced Users Only</strong>
                         </div>
-                        
+
                         <tn-form-field label="Custom ZFS Properties" style="margin-bottom: 12px;">
-                          <tn-input 
-                            placeholder="checksum=sha256, dedup=on, copies=2" 
+                          <tn-input
+                            placeholder="checksum=sha256, dedup=on, copies=2"
                             multiline="true"
                             rows="3"
                             [(ngModel)]="advancedProperties" />
@@ -256,7 +256,7 @@
                           </div>
                         </tn-form-field>
 
-                        <tn-checkbox 
+                        <tn-checkbox
                           label="Import existing pool instead of creating new"
                           [(ngModel)]="importExisting" />
                       </div>
@@ -272,7 +272,7 @@
             <div style="padding: 20px 0;">
               <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: var(--tn-fg1);">Review Your Storage Pool</h3>
               <p style="margin: 0 0 20px 0; color: var(--tn-fg2, #666); font-size: 14px;">Final review of your storage configuration before creation</p>
-              
+
               <!-- Storage Visualization -->
               <div style="background: var(--tn-alt-bg1, #f8f9fa); border-radius: 12px; padding: 24px; margin-bottom: 20px;">
                 <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
@@ -282,33 +282,33 @@
                     <div style="font-size: 12px; color: var(--tn-fg2, #666);">{{ getSimpleStorageTypeLabel() }} Storage Pool</div>
                   </div>
                 </div>
-                
+
                 <!-- Drive Visualization with wrapping -->
                 <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; max-width: 600px; margin-left: auto; margin-right: auto;">
                   @for (driveIndex of getSelectedDriveIndexes(); track driveIndex) {
                     <div style="display: flex; flex-direction: column; align-items: center; padding: 8px; border: 2px solid var(--tn-primary, #007bff); border-radius: 8px; background: var(--tn-bg2, #ffffff);">
-                      <tn-disk-icon 
-                        size="4TB" 
-                        [name]="getDriveName(driveIndex)" 
+                      <tn-disk-icon
+                        size="4TB"
+                        [name]="getDriveName(driveIndex)"
                         [type]="DiskType.Ssd" />
                       <div style="font-size: 9px; color: var(--tn-primary, #007bff); margin-top: 2px; font-weight: 500;">4TB SSD</div>
                     </div>
                   }
-                  
+
                   <!-- Hot Spare Drives -->
                   @if (!useAllDisks()) {
                     @for (spareIndex of getHotSpareDriveIndexes(); track spareIndex) {
                       <div style="display: flex; flex-direction: column; align-items: center; padding: 8px; border: 2px solid var(--tn-orange, #ff9800); border-radius: 8px; background: var(--tn-bg2, #ffffff);">
-                        <tn-disk-icon 
-                          size="4TB" 
-                          [name]="getDriveName(spareIndex)" 
+                        <tn-disk-icon
+                          size="4TB"
+                          [name]="getDriveName(spareIndex)"
                           [type]="DiskType.Ssd" />
                         <div style="font-size: 9px; color: var(--tn-orange, #ff9800); margin-top: 2px; font-weight: 500;">Hot Spare</div>
                       </div>
                     }
                   }
                 </div>
-                
+
                 <!-- Protection Visualization -->
                 <div style="text-align: center; padding: 12px; background: var(--tn-bg2, #ffffff); border-radius: 8px;">
                   <div style="font-size: 14px; color: var(--tn-fg1); font-weight: 500; margin-bottom: 4px;">
@@ -322,19 +322,19 @@
                   </div>
                 </div>
               </div>
-              
+
               <!-- Configuration Summary -->
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                 <div style="padding: 12px; background: var(--tn-bg2, #ffffff); border-radius: 6px; border: 1px solid var(--tn-lines, #ddd);">
                   <div style="font-size: 12px; color: var(--tn-fg2, #666); margin-bottom: 4px;">Total Capacity</div>
-                  <div style="font-size: 16px; font-weight: 500; color: var(--tn-fg1);">{{ getTotalCapacity() }}</div>
+                  <div style="font-size: 1rem; font-weight: 500; color: var(--tn-fg1);">{{ getTotalCapacity() }}</div>
                 </div>
                 <div style="padding: 12px; background: var(--tn-bg2, #ffffff); border-radius: 6px; border: 1px solid var(--tn-lines, #ddd);">
                   <div style="font-size: 12px; color: var(--tn-fg2, #666); margin-bottom: 4px;">Usable Space</div>
-                  <div style="font-size: 16px; font-weight: 500; color: var(--tn-green, #2e7d32);">{{ getUsableCapacity() }}</div>
+                  <div style="font-size: 1rem; font-weight: 500; color: var(--tn-green, #2e7d32);">{{ getUsableCapacity() }}</div>
                 </div>
               </div>
-              
+
               <!-- Advanced Settings Summary -->
               @if (enableEncryption() || enableHotSpare() || !useAllDisks()) {
                 <div style="margin-bottom: 16px; padding: 12px; background: var(--tn-bg2, #ffffff); border-radius: 6px; border: 1px solid var(--tn-lines, #ddd);">
@@ -352,7 +352,7 @@
                   </div>
                 </div>
               }
-              
+
               <!-- Success Message -->
               <div style="padding: 12px; background: var(--tn-alt-bg1, #e8f5e8); border-radius: 6px; border-left: 4px solid var(--tn-green, #2e7d32);">
                 <div style="display: flex; align-items: center;">
@@ -388,23 +388,23 @@
             }
           </div>
           <div style="display: flex; gap: 12px;">
-            <tn-button 
-              color="secondary" 
+            <tn-button
+              color="secondary"
               size="medium"
               label="Previous"
               [disabled]="currentStep() === 0"
               (click)="previousStep()" />
-            
+
             @if (currentStep() < 3) {
-              <tn-button 
-                color="primary" 
+              <tn-button
+                color="primary"
                 size="medium"
                 label="Next"
                 [disabled]="!canProceedToNextStep()"
                 (click)="nextStep()" />
             } @else {
-              <tn-button 
-                color="primary" 
+              <tn-button
+                color="primary"
                 size="medium"
                 label="Create Pool"
                 [disabled]="!canCreatePool()"
@@ -425,11 +425,11 @@
             <span style="font-size: 40px; color: white;">✓</span>
           </div>
           <h2 style="margin: 0 0 8px 0; color: var(--tn-fg1); font-size: 24px; font-weight: 600;">Storage Pool Created!</h2>
-          <div style="color: var(--tn-fg2, #666); font-size: 16px; max-width: 500px;">
+          <div style="color: var(--tn-fg2, #666); font-size: 1rem; max-width: 500px;">
             Your storage pool "{{ poolName() }}" is now ready and available for use. All your chosen settings have been applied.
           </div>
         </div>
-        
+
         <!-- Configuration Summary -->
         <div style="background: var(--tn-alt-bg1, #f8f9fa); border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: left;">
           <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: var(--tn-fg1);">Configuration Summary</h3>
@@ -445,25 +445,25 @@
               <div style="margin-bottom: 8px;"><strong style="color: var(--tn-fg1);">Encryption:</strong> {{ enableEncryption() ? 'Enabled' : 'Disabled' }}</div>
             </div>
           </div>
-          
+
           @if (enableHotSpare()) {
             <div style="margin-top: 16px; padding: 8px; background: var(--tn-bg2, #ffffff); border-radius: 4px; font-size: 13px; color: var(--tn-fg2);">
               <strong style="color: var(--tn-green);">✓ Hot Spare:</strong> Additional drive configured for automatic failure recovery
             </div>
           }
-          
+
         </div>
-        
+
         <!-- Action Buttons -->
         <div style="display: flex; gap: 12px; justify-content: center;">
-          <tn-button 
-            color="primary" 
+          <tn-button
+            color="primary"
             size="large"
             label="Continue to Dataset Setup"
             (click)="continueToDatasets()" />
-          
-          <tn-button 
-            color="secondary" 
+
+          <tn-button
+            color="secondary"
             size="large"
             label="Create Another Pool"
             (click)="resetWizard()" />

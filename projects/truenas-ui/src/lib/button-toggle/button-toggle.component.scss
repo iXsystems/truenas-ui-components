@@ -76,15 +76,19 @@
       }
     }
 
+    // Defaults can be overridden via the parent group's `checkedBg`/
+    // `checkedColor`/`checkedBorder` inputs (which set these CSS custom
+    // properties on the group host element and cascade to children), or by
+    // setting the variables directly on any ancestor.
     &--checked {
-      background: var(--tn-primary, #3b82f6);
-      color: var(--tn-primary-txt, #ffffff);
-      border-color: var(--tn-primary, #3b82f6);
+      background: var(--tn-button-toggle-checked-bg, var(--tn-alt-bg2, #545454));
+      color: var(--tn-button-toggle-checked-color, var(--tn-fg1, #ffffff));
+      border-color: var(--tn-button-toggle-checked-border, var(--tn-lines, #383838));
       z-index: 2;
       padding: 0 20px; // Expand padding to make room for checkmark
 
       &:hover:not(:disabled) {
-        background: var(--tn-primary, #3b82f6);
+        background: var(--tn-button-toggle-checked-bg, var(--tn-alt-bg2, #545454));
       }
     }
   }

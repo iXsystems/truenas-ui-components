@@ -21,7 +21,7 @@ tn-toast {
   padding: 0.75rem 1.25rem;
   border-radius: 0.5rem;
   font-family: var(--tn-font-family-body, 'Inter'), sans-serif;
-  font-size: 0.875rem;
+  font-size: 1rem;
   line-height: 1.4;
   pointer-events: auto;
   background-color: var(--tn-bg2, #333);
@@ -84,7 +84,7 @@ tn-toast {
   border: none;
   color: var(--tn-primary, #3b82f6);
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   padding: 0.25rem 0.5rem;
