@@ -46,9 +46,15 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
 
   // Internal state signals
   protected isOpen = signal<boolean>(false);
+  protected dropdownPosition = signal<'below' | 'above'>('below');
   protected selectedValue = signal<T | null>(null);
   protected selectedValues = signal<T[]>([]);
   private formDisabled = signal<boolean>(false);
+
+  // Approximate max-height of the dropdown (kept in sync with the
+  // .tn-select-dropdown rule). Used to decide whether to flip above when the
+  // trigger sits near the viewport bottom.
+  private static readonly DROPDOWN_MAX_HEIGHT = 200;
 
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
@@ -111,8 +117,12 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
   // Component methods
   toggleDropdown(): void {
     if (this.isDisabled()) {return;}
-    this.isOpen.set(!this.isOpen());
-    if (!this.isOpen()) {
+    const willOpen = !this.isOpen();
+    if (willOpen) {
+      this.dropdownPosition.set(this.computeDropdownPosition());
+    }
+    this.isOpen.set(willOpen);
+    if (!willOpen) {
       this.onTouched();
     }
   }
@@ -120,6 +130,27 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
   closeDropdown(): void {
     this.isOpen.set(false);
     this.onTouched();
+  }
+
+  /**
+   * Decide whether the dropdown should open above or below the trigger.
+   * Opens above when there isn't enough space below the trigger AND there is
+   * more space above — otherwise stays below. Falls back to `'below'` when no
+   * trigger element is found yet.
+   */
+  private computeDropdownPosition(): 'below' | 'above' {
+    if (typeof window === 'undefined') { return 'below'; }
+    const trigger = (this.elementRef.nativeElement as HTMLElement).querySelector(
+      '.tn-select-trigger',
+    );
+    if (!trigger) { return 'below'; }
+    const rect = trigger.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    if (spaceBelow < TnSelectComponent.DROPDOWN_MAX_HEIGHT && spaceAbove > spaceBelow) {
+      return 'above';
+    }
+    return 'below';
   }
 
   onOptionClick(option: TnSelectOption<T>, groupDisabled = false): void {

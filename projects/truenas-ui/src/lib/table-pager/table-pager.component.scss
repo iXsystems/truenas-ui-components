@@ -1,0 +1,43 @@
+.tn-table-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 10px;
+  background-color: var(--tn-bg2, #282828);
+  border: 1px solid var(--tn-lines, #383838);
+  color: var(--tn-fg2, rgba(255, 255, 255, 0.85));
+
+  &__page-size {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  &__label {
+    white-space: nowrap;
+  }
+
+  &__size-select {
+    min-width: 84px;
+  }
+
+  &__range {
+    white-space: nowrap;
+  }
+
+  &__buttons {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  @media (max-width: 600px) {
+    gap: 8px;
+
+    &__page-size {
+      gap: 4px;
+    }
+  }
+}

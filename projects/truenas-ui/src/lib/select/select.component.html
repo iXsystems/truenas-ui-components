@@ -33,6 +33,7 @@
     <div
       class="tn-select-dropdown"
       role="listbox"
+      [class.tn-select-dropdown--above]="dropdownPosition() === 'above'"
       [attr.aria-multiselectable]="multiple()"
       [attr.id]="'tn-select-dropdown-' + testId()">
 

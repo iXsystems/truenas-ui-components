@@ -1,0 +1,44 @@
+<div class="tn-table-pager__page-size">
+  <span class="tn-table-pager__label">{{ itemsPerPageLabel() }}:</span>
+  <tn-select
+    class="tn-table-pager__size-select"
+    [options]="pageSizeSelectOptions()"
+    [ngModel]="pageSize()"
+    (selectionChange)="onPageSizeChange($event)" />
+</div>
+
+<span class="tn-table-pager__range">
+  @if (lastItemOnPage() > firstItemOnPage()) {
+    {{ firstItemOnPage() }} – {{ lastItemOnPage() }}
+  } @else {
+    {{ lastItemOnPage() }}
+  }
+  {{ ofLabel() }} {{ totalItems() }}
+</span>
+
+<div class="tn-table-pager__buttons">
+  <tn-icon-button
+    name="page-first"
+    library="mdi"
+    [ariaLabel]="firstPageLabel()"
+    [disabled]="isFirstPageDisabled()"
+    (onClick)="goToPage(1)" />
+  <tn-icon-button
+    name="chevron-left"
+    library="mdi"
+    [ariaLabel]="previousPageLabel()"
+    [disabled]="isFirstPageDisabled()"
+    (onClick)="previousPage()" />
+  <tn-icon-button
+    name="chevron-right"
+    library="mdi"
+    [ariaLabel]="nextPageLabel()"
+    [disabled]="isLastPageDisabled()"
+    (onClick)="nextPage()" />
+  <tn-icon-button
+    name="page-last"
+    library="mdi"
+    [ariaLabel]="lastPageLabel()"
+    [disabled]="isLastPageDisabled()"
+    (onClick)="goToPage(totalPages())" />
+</div>

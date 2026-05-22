@@ -232,6 +232,36 @@ describe('TnSelectHarness', () => {
       await select.close();
       expect(await select.isOpen()).toBe(false);
     });
+
+    it('should open below by default when there is room', async () => {
+      const select = await loader.getHarness(TnSelectHarness);
+      // jsdom defaults to a tall enough viewport that there's plenty of room.
+      await select.open();
+      const dropdown = fixture.nativeElement.querySelector('.tn-select-dropdown');
+      expect(dropdown).not.toBeNull();
+      expect(dropdown.classList.contains('tn-select-dropdown--above')).toBe(false);
+    });
+
+    it('should flip above when there is no room below', async () => {
+      const trigger = fixture.nativeElement.querySelector('.tn-select-trigger');
+      // Pin the trigger to the bottom of the viewport so spaceBelow is ~0.
+      jest.spyOn(trigger, 'getBoundingClientRect').mockReturnValue({
+        top: window.innerHeight - 30,
+        bottom: window.innerHeight - 5,
+        left: 0,
+        right: 200,
+        width: 200,
+        height: 25,
+        x: 0,
+        y: window.innerHeight - 30,
+        toJSON: () => ({}),
+      } as DOMRect);
+
+      const select = await loader.getHarness(TnSelectHarness);
+      await select.open();
+      const dropdown = fixture.nativeElement.querySelector('.tn-select-dropdown');
+      expect(dropdown.classList.contains('tn-select-dropdown--above')).toBe(true);
+    });
   });
 
   describe('selectOption', () => {

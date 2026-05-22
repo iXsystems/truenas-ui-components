@@ -109,6 +109,16 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   max-height: 200px;
   overflow: hidden;
+
+  // Flip-up variant — anchor to the trigger's top edge so the dropdown grows
+  // upward instead of spilling past the viewport bottom. Keep the static
+  // DROPDOWN_MAX_HEIGHT in select.component.ts in sync with max-height.
+  &--above {
+    top: auto;
+    bottom: 100%;
+    margin-top: 0;
+    margin-bottom: 0.25rem;
+  }
 }
 
 .tn-select-options {
