@@ -104,6 +104,10 @@ export class TnCardComponent {
     return !!(this.projectedHeader() || this.title() || this.headerStatus() || this.headerControl() || this.headerMenu());
   });
 
+  hasHeaderRight = computed(() => {
+    return !!(this.headerStatus() || this.headerControl() || this.headerMenu()?.length);
+  });
+
   hasFooter = computed(() => {
     return !!(this.primaryAction() || this.secondaryAction() || this.footerLink());
   });
