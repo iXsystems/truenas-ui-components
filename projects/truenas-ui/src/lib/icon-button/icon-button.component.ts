@@ -36,7 +36,7 @@ export class TnIconButtonComponent implements AfterViewInit {
 
   classes = computed(() => {
     const result = ['tn-icon-button'];
-    if (this.color()) {result.push('tn-icon-button--custom-color')}
+    if (this.color()) {result.push('tn-icon-button--custom-color');}
     return result;
   });
 
@@ -61,6 +61,14 @@ export class TnIconButtonComponent implements AfterViewInit {
     // override the focus call silently no-ops and users see the focus ring
     // disappear after a menu closes. Forwarding to the inner button keeps the
     // public DOM API behaving like a native button.
+    //
+    // Intentionally per-instance, not on the prototype: each host owns its own
+    // inner button ref. We don't restore the original `focus` on destroy
+    // because the host element is destroyed at the same time.
+    //
+    // If this component is ever moved to `ViewEncapsulation.ShadowDom`, drop
+    // this override and rely on the shadow root's `delegatesFocus: true`
+    // option, which is the platform-native equivalent.
     const host = this.hostRef.nativeElement as HTMLElement;
     const inner = this.buttonRef().nativeElement;
     host.focus = (options?: FocusOptions) => inner.focus(options);

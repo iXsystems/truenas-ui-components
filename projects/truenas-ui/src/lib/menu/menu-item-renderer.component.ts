@@ -21,6 +21,11 @@ import { TnMenuComponent } from './menu.component';
  * `MENU_STACK`, which is provided per-`CdkMenu`. A real component's DI walks
  * up through its host element instead, so each renderer instance sees the
  * `CdkMenu` it's actually rendered under (root or any nested submenu).
+ *
+ * @internal Exported only so the public barrel matches the rest of the
+ * library convention; this component is an implementation detail of
+ * `<tn-menu>` and depends on injecting `TnMenuComponent`, so it cannot be
+ * used standalone. Do not rely on it from outside the menu package.
  */
 @Component({
   selector: 'tn-menu-item-renderer',

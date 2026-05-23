@@ -45,14 +45,14 @@ export class TnMenuActivateHoverDirective implements AfterContentInit {
     // disabled entry on press #1 and only advances on press #2.
     //
     // `keyManager` is `protected` on CdkMenuBase; reach in deliberately. If
-    // CDK ever exposes a sanctioned hook (e.g. an input on CdkMenu) we should
-    // switch to it.
+    // CDK ever renames/restructures it, the optional-chain below degrades to
+    // "disabled items aren't skipped" rather than a runtime crash. The CDK
+    // guard test (menu.component.spec) will turn red so we notice and adapt.
     type WithKeyManager = {
-      keyManager: { skipPredicate: (fn: (item: { disabled: boolean }) => boolean) => unknown };
+      keyManager?: { skipPredicate?: (fn: (item: { disabled: boolean }) => boolean) => unknown };
     };
-    (this.cdkMenu as unknown as WithKeyManager).keyManager.skipPredicate(
-      (item) => item.disabled,
-    );
+    const km = (this.cdkMenu as unknown as WithKeyManager).keyManager;
+    km?.skipPredicate?.((item) => item.disabled);
 
     // Set the active index to the first enabled item so the next ArrowDown
     // advances correctly (instead of being a no-op while the manager "catches

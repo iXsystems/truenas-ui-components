@@ -1,7 +1,7 @@
 
 import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { ChangeDetectorRef, Component, computed, ElementRef, forwardRef, inject, input, isDevMode, output, signal, viewChild, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, Component, computed, ElementRef, forwardRef, inject, input, output, signal, viewChild, ViewContainerRef } from '@angular/core';
 import type { OnDestroy, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -371,7 +371,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     return this.options().length > 0 || this.optionGroups().length > 0;
   });
 
-  /** One-shot guard so the dev-mode object-compare warning fires at most once per instance. */
+  /** One-shot guard so the object-compare warning fires at most once per instance. */
   private warnedAboutObjectCompare = false;
 
   /**
@@ -380,10 +380,15 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    * - Uses `compareWith` when provided (the supported path for object values).
    * - Falls back to strict identity (`===`) — adequate for primitives.
    * - For object values WITHOUT `compareWith` we return `false` (no
-   *   structural compare) and emit a one-time dev-mode warning. The previous
+   *   structural compare) and emit a one-time warning. The previous
    *   `JSON.stringify` fallback was key-order sensitive and produced silent
    *   false-negatives that were hard to diagnose; returning `false` makes the
    *   misuse loud (selection won't match) and the warning points to the fix.
+   *
+   * The warning is **unconditional** (not gated on `isDevMode()`) so prod
+   * monitoring picks it up — consumers relying on the old stringify fallback
+   * would otherwise see selections silently stop matching after upgrade with
+   * no signal in production logs.
    */
   private compareValues(a: T | null, b: T | null): boolean {
     const customCompare = this.compareWith();
@@ -392,7 +397,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     }
     if (a === b) {return true;}
     if (typeof a === 'object' && typeof b === 'object' && a !== null && b !== null) {
-      if (isDevMode() && !this.warnedAboutObjectCompare) {
+      if (!this.warnedAboutObjectCompare) {
         this.warnedAboutObjectCompare = true;
         console.warn(
           '[tn-select] Comparing object option values without a `compareWith` input. ' +
@@ -512,12 +517,16 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
   private scrollFocusedIntoView(): void {
     const id = this.focusedOptionId();
     if (!id) {return;}
+    const overlayEl = this.overlayRef?.overlayElement;
+    if (!overlayEl) {return;}
     // Defer to next tick so the DOM has updated with the new .focused class.
     // The dropdown panel is rendered in a CDK overlay outside the host, so we
-    // query `document` rather than `elementRef.nativeElement` — querying the
-    // host would silently miss the option and turn this into a no-op.
+    // scope the query to the overlay element rather than the host (which
+    // would silently miss the option) or `document` (which would pick the
+    // wrong option if two tn-select instances with the same testId are open
+    // simultaneously, and couples the component to a global).
     queueMicrotask(() => {
-      const el = document.querySelector<HTMLElement>(`#${CSS.escape(id)}`);
+      const el = overlayEl.querySelector<HTMLElement>(`#${CSS.escape(id)}`);
       el?.scrollIntoView({ block: 'nearest' });
     });
   }

@@ -27,6 +27,16 @@ import { Component, computed, input, output, viewChild } from '@angular/core';
  * Arrow Up/Down/Home/End to move focus, Enter/Space to activate, Esc to
  * close, type-ahead search. Disabled items are skipped.
  *
+ * **Limitation — custom content & keyboard nav:** the projected
+ * `<ng-content>` (custom-content mode) is rendered inside a `<button
+ * cdkMenuItem>` wrapper that owns Enter/Space/Arrow handling. Interactive
+ * elements inside the projection (a nested `<button>`, link, toggle, etc.)
+ * receive clicks but **do not** participate in CDK arrow-key navigation —
+ * the wrapper button is the only keyboard-reachable target. Prefer
+ * display-only content (icons, badges, two-line text); for cases that need
+ * an extra interactive control, build a custom menu host with `cdkMenu`
+ * directly instead of `<tn-menu>`.
+ *
  * @example
  * ```html
  * <tn-menu>

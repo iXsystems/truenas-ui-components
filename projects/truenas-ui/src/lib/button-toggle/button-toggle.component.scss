@@ -80,15 +80,21 @@
     // `checkedColor`/`checkedBorder` inputs (which set these CSS custom
     // properties on the group host element and cascade to children), or by
     // setting the variables directly on any ancestor.
+    //
+    // Hard-coded fallbacks must be light-theme-safe — they only render when
+    // neither the override nor the underlying `--tn-*` token is defined, and
+    // light theme is the safer default for unstyled consumers. The values
+    // match the other fallbacks in this file (alt-bg2 = #f3f4f6,
+    // lines = #d1d5db) so the rendered state is internally consistent.
     &--checked {
-      background: var(--tn-button-toggle-checked-bg, var(--tn-alt-bg2, #545454));
-      color: var(--tn-button-toggle-checked-color, var(--tn-fg1, #ffffff));
-      border-color: var(--tn-button-toggle-checked-border, var(--tn-lines, #383838));
+      background: var(--tn-button-toggle-checked-bg, var(--tn-alt-bg2, #f3f4f6));
+      color: var(--tn-button-toggle-checked-color, var(--tn-fg1, #1f2937));
+      border-color: var(--tn-button-toggle-checked-border, var(--tn-lines, #d1d5db));
       z-index: 2;
       padding: 0 20px; // Expand padding to make room for checkmark
 
       &:hover:not(:disabled) {
-        background: var(--tn-button-toggle-checked-bg, var(--tn-alt-bg2, #545454));
+        background: var(--tn-button-toggle-checked-bg, var(--tn-alt-bg2, #f3f4f6));
       }
     }
   }
