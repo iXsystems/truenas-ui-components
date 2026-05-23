@@ -1,7 +1,7 @@
 
 import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { ChangeDetectorRef, Component, computed, ElementRef, forwardRef, inject, input, output, signal, viewChild, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, Component, computed, ElementRef, forwardRef, inject, input, isDevMode, output, signal, viewChild, ViewContainerRef } from '@angular/core';
 import type { OnDestroy, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -280,7 +280,12 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     this.detachOverlay();
     this.onTouched();
     if (restoreFocus) {
-      this.triggerEl().nativeElement.focus({ preventScroll: true });
+      // `focusVisible: true` (Chrome/Firefox) keeps the :focus-visible outline
+      // on the trigger after Escape / Enter / option-pick — without it,
+      // programmatic .focus() is treated as non-keyboard and the focus ring
+      // silently disappears, which users perceive as "focus lost". Safari
+      // ignores the option and falls back to its heuristic.
+      this.triggerEl().nativeElement.focus({ preventScroll: true, focusVisible: true } as FocusOptions);
     }
   }
 
@@ -366,11 +371,19 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     return this.options().length > 0 || this.optionGroups().length > 0;
   });
 
+  /** One-shot guard so the dev-mode object-compare warning fires at most once per instance. */
+  private warnedAboutObjectCompare = false;
+
   /**
-   * Compares two option values for equality. Uses `compareWith` if provided,
-   * otherwise identity (`===`). For object values it falls back to
-   * `JSON.stringify`, which is key-order dependent — consumers with object
-   * values should provide `compareWith` to avoid subtle bugs.
+   * Compares two option values for equality.
+   *
+   * - Uses `compareWith` when provided (the supported path for object values).
+   * - Falls back to strict identity (`===`) — adequate for primitives.
+   * - For object values WITHOUT `compareWith` we return `false` (no
+   *   structural compare) and emit a one-time dev-mode warning. The previous
+   *   `JSON.stringify` fallback was key-order sensitive and produced silent
+   *   false-negatives that were hard to diagnose; returning `false` makes the
+   *   misuse loud (selection won't match) and the warning points to the fix.
    */
   private compareValues(a: T | null, b: T | null): boolean {
     const customCompare = this.compareWith();
@@ -379,7 +392,15 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     }
     if (a === b) {return true;}
     if (typeof a === 'object' && typeof b === 'object' && a !== null && b !== null) {
-      return JSON.stringify(a) === JSON.stringify(b);
+      if (isDevMode() && !this.warnedAboutObjectCompare) {
+        this.warnedAboutObjectCompare = true;
+        console.warn(
+          '[tn-select] Comparing object option values without a `compareWith` input. ' +
+          'Identity comparison will not match structurally-equal objects from different ' +
+          'references. Provide `[compareWith]="(a, b) => a?.id === b?.id"` (or similar).',
+        );
+      }
+      return false;
     }
     return false;
   }
@@ -492,9 +513,11 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     const id = this.focusedOptionId();
     if (!id) {return;}
     // Defer to next tick so the DOM has updated with the new .focused class.
+    // The dropdown panel is rendered in a CDK overlay outside the host, so we
+    // query `document` rather than `elementRef.nativeElement` — querying the
+    // host would silently miss the option and turn this into a no-op.
     queueMicrotask(() => {
-      const host = this.elementRef.nativeElement as HTMLElement;
-      const el = host.querySelector<HTMLElement>(`#${CSS.escape(id)}`);
+      const el = document.querySelector<HTMLElement>(`#${CSS.escape(id)}`);
       el?.scrollIntoView({ block: 'nearest' });
     });
   }

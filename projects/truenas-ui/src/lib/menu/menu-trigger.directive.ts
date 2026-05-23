@@ -1,6 +1,7 @@
 import { Overlay, type OverlayRef, type ConnectedPosition } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { ElementRef, ViewContainerRef, Directive, input, signal, inject, type OnDestroy, type OutputRefSubscription } from '@angular/core';
+import type { Subscription } from 'rxjs';
 import type { TnMenuComponent } from './menu.component';
 
 /**
@@ -23,6 +24,13 @@ export class TnMenuTriggerDirective implements OnDestroy {
   private overlayRef?: OverlayRef;
   private isMenuOpen = signal<boolean>(false);
   private itemClickSub?: OutputRefSubscription;
+  /**
+   * RxJS subscriptions for the current overlay's `backdropClick()` and
+   * `keydownEvents()`. Each `openMenu()` creates a fresh overlay (and fresh
+   * subscriptions), so we collect them here and tear them down in `closeMenu`
+   * / `ngOnDestroy` to keep open→close cycles leak-free.
+   */
+  private overlaySubs: Subscription[] = [];
 
   private elementRef = inject(ElementRef);
   private overlay = inject(Overlay);
@@ -77,10 +85,14 @@ export class TnMenuTriggerDirective implements OnDestroy {
 
     this.isMenuOpen.set(true);
 
-    // Handle backdrop click
-    this.overlayRef.backdropClick().subscribe(() => {
-      this.closeMenu();
-    });
+    // Handle backdrop click. Track the subscription so a future close/open
+    // cycle (or component destroy) tears it down explicitly instead of relying
+    // on the overlay's GC.
+    this.overlaySubs.push(
+      this.overlayRef.backdropClick().subscribe(() => {
+        this.closeMenu();
+      }),
+    );
 
     // Escape and Tab both close the menu. CdkMenu has handlers for both, but
     // they only tell the menu stack to close — our overlay lifecycle isn't
@@ -93,15 +105,17 @@ export class TnMenuTriggerDirective implements OnDestroy {
     //   preventDefault — the browser's default Tab action then advances focus
     //   from the trigger to the next/previous focusable element on the page,
     //   which is what the user wanted by pressing Tab.
-    this.overlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
-      const hasMod = event.altKey || event.ctrlKey || event.metaKey;
-      if (event.key === 'Escape' && !hasMod) {
-        event.preventDefault();
-        this.closeMenu();
-      } else if (event.key === 'Tab' && !event.altKey && !event.ctrlKey && !event.metaKey) {
-        this.closeMenu();
-      }
-    });
+    this.overlaySubs.push(
+      this.overlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+        const hasMod = event.altKey || event.ctrlKey || event.metaKey;
+        if (event.key === 'Escape' && !hasMod) {
+          event.preventDefault();
+          this.closeMenu();
+        } else if (event.key === 'Tab' && !event.altKey && !event.ctrlKey && !event.metaKey) {
+          this.closeMenu();
+        }
+      }),
+    );
 
     // Close menu when a leaf item is selected
     this.itemClickSub = menuComponent.menuItemClick.subscribe(() => {
@@ -118,6 +132,7 @@ export class TnMenuTriggerDirective implements OnDestroy {
   closeMenu(): void {
     this.itemClickSub?.unsubscribe();
     this.itemClickSub = undefined;
+    this.disposeOverlaySubs();
     if (this.overlayRef) {
       this.overlayRef.dispose();
       this.overlayRef = undefined;
@@ -133,24 +148,38 @@ export class TnMenuTriggerDirective implements OnDestroy {
     // surrounding view is being torn down anyway.
     this.itemClickSub?.unsubscribe();
     this.itemClickSub = undefined;
+    this.disposeOverlaySubs();
     this.overlayRef?.dispose();
     this.overlayRef = undefined;
+  }
+
+  private disposeOverlaySubs(): void {
+    for (const sub of this.overlaySubs) {
+      sub.unsubscribe();
+    }
+    this.overlaySubs.length = 0;
   }
 
   /**
    * Return focus to the trigger element so keyboard users land somewhere
    * sensible after the menu closes (Escape, item click, or backdrop click).
    *
-   * The host might be a custom-element wrapper like `<tn-button>` whose host
-   * element isn't itself focusable — focus lives on the inner `<button>` or
-   * `<a>`. We focus the host if it's focusable; otherwise we drill into the
-   * first focusable descendant.
+   * The host might be a custom-element wrapper like `<tn-button>` /
+   * `<tn-icon-button>` whose host element isn't itself focusable — focus
+   * lives on the inner `<button>` or `<a>`. We focus the host if it's
+   * focusable; otherwise we drill into the first focusable descendant.
+   *
+   * Passes `focusVisible: true` (Chrome/Firefox) so the `:focus-visible`
+   * outline reappears on the restored trigger — without it, browsers treat a
+   * programmatic `.focus()` as non-keyboard and skip the focus ring, which
+   * looks to users like focus has been lost. Safari ignores the option and
+   * falls back to its heuristic; that's acceptable.
    */
   private restoreFocusToTrigger(): void {
     const host = this.elementRef.nativeElement as HTMLElement;
     const FOCUSABLE = 'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
     const target = host.matches(FOCUSABLE) ? host : host.querySelector<HTMLElement>(FOCUSABLE);
-    target?.focus({ preventScroll: true });
+    target?.focus({ preventScroll: true, focusVisible: true } as FocusOptions);
   }
 
   private getPositions(): ConnectedPosition[] {

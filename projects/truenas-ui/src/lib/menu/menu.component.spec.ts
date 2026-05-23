@@ -1,4 +1,5 @@
-import { Component, signal, viewChild } from '@angular/core';
+import { CdkMenu } from '@angular/cdk/menu';
+import { Component, getDebugNode, signal, viewChild } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed, fakeAsync, flush } from '@angular/core/testing';
 import { TnMenuItemComponent } from './menu-item.component';
@@ -6,6 +7,7 @@ import { TnMenuTriggerDirective } from './menu-trigger.directive';
 import type { TnMenuItem } from './menu.component';
 import { TnMenuComponent } from './menu.component';
 import { TnButtonComponent } from '../button/button.component';
+import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 
 /**
  * Helper: query all menu items currently in the DOM (inside the CDK overlay).
@@ -261,6 +263,26 @@ describe('tn-menu with trigger', () => {
       (el) => el.textContent?.includes('Disabled'),
     )!;
     expect(item.getAttribute('aria-disabled')).toBe('true');
+  });
+
+  // Guard against CDK API changes: TnMenuActivateHoverDirective reaches into
+  // the (protected) `keyManager` field on CdkMenu to install a skip-disabled
+  // predicate. If a CDK upgrade renames or removes the field, the cast in the
+  // directive will silently degrade skip-disabled navigation. This test fails
+  // loudly in that case so the upgrade surfaces the break immediately.
+  it('exposes CdkMenu.keyManager with skipPredicate (required by tnMenuActivateHover)', () => {
+    triggerButton.click();
+    fixture.detectChanges();
+
+    const menuEl = document.querySelector('.tn-menu') as HTMLElement;
+    expect(menuEl).toBeTruthy();
+
+    const cdkMenu = getDebugNode(menuEl)?.injector.get(CdkMenu, null);
+    expect(cdkMenu).toBeTruthy();
+
+    const km = (cdkMenu as unknown as { keyManager?: { skipPredicate?: unknown } }).keyManager;
+    expect(km).toBeTruthy();
+    expect(typeof km!.skipPredicate).toBe('function');
   });
 
   // -- data-testid forwarding --------------------------------------------
@@ -688,6 +710,22 @@ class WrapperTriggerHostComponent {
   trigger = viewChild.required(TnMenuTriggerDirective);
 }
 
+@Component({
+  standalone: true,
+  imports: [TnIconButtonComponent, TnMenuComponent, TnMenuItemComponent, TnMenuTriggerDirective],
+  template: `
+    <tn-icon-button name="menu-down" library="mdi" ariaLabel="Open menu" [tnMenuTriggerFor]="menu" />
+    <tn-menu #menu>
+      <tn-menu-item label="CSV" (itemClick)="selected = 'csv'" />
+      <tn-menu-item label="JSON" (itemClick)="selected = 'json'" />
+    </tn-menu>
+  `,
+})
+class IconButtonTriggerHostComponent {
+  selected: string | null = null;
+  trigger = viewChild.required(TnMenuTriggerDirective);
+}
+
 describe('tn-menu focus restoration with <tn-button> trigger', () => {
   let fixture: ComponentFixture<WrapperTriggerHostComponent>;
   let host: WrapperTriggerHostComponent;
@@ -717,6 +755,49 @@ describe('tn-menu focus restoration with <tn-button> trigger', () => {
     xItem.click();
     fixture.detectChanges();
 
+    expect(document.activeElement).toBe(innerButton);
+  });
+
+  it('restores focus to the inner <button> on Escape', () => {
+    innerButton.click();
+    fixture.detectChanges();
+
+    const escEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    document.querySelector('.tn-menu')!.dispatchEvent(escEvent);
+    fixture.detectChanges();
+
+    expect(document.activeElement).toBe(innerButton);
+  });
+});
+
+describe('tn-menu focus restoration with <tn-icon-button> trigger', () => {
+  let fixture: ComponentFixture<IconButtonTriggerHostComponent>;
+  let host: IconButtonTriggerHostComponent;
+  let innerButton: HTMLButtonElement;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [IconButtonTriggerHostComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(IconButtonTriggerHostComponent);
+    host = fixture.componentInstance;
+    fixture.detectChanges();
+    innerButton = fixture.nativeElement.querySelector('tn-icon-button button');
+  });
+
+  afterEach(() => host.trigger().closeMenu());
+
+  it('restores focus to the inner <button> after a projected item is clicked', () => {
+    innerButton.click();
+    fixture.detectChanges();
+
+    const csvItem = Array.from(document.querySelectorAll<HTMLElement>('.tn-menu-item'))
+      .find((el) => el.textContent?.includes('CSV'))!;
+    csvItem.click();
+    fixture.detectChanges();
+
+    expect(host.selected).toBe('csv');
     expect(document.activeElement).toBe(innerButton);
   });
 

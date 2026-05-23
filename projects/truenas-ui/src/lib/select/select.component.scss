@@ -40,12 +40,12 @@
 
   &:focus-visible {
     border-color: var(--tn-primary, #007bff);
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--tn-primary, #007bff) 25%, transparent);
   }
 
   &.open {
     border-color: var(--tn-primary, #007bff);
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--tn-primary, #007bff) 25%, transparent);
   }
 
   &.error {
@@ -54,7 +54,7 @@
     &:focus-visible,
     &.open {
       border-color: var(--tn-error, #dc3545);
-      box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--tn-error, #dc3545) 25%, transparent);
     }
   }
 

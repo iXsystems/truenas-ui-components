@@ -7,6 +7,7 @@ import { Component, Directive, contentChildren, input, output, viewChild, comput
 import type { Subscription } from 'rxjs';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective } from '../test-id';
+import { TnMenuItemRendererComponent } from './menu-item-renderer.component';
 import { TnMenuItemComponent } from './menu-item.component';
 
 /**
@@ -82,7 +83,7 @@ export interface TnMenuItem {
 @Component({
   selector: 'tn-menu',
   standalone: true,
-  imports: [CommonModule, CdkMenu, CdkMenuItem, CdkMenuTrigger, TnIconComponent, TnMenuActivateHoverDirective, TnTestIdDirective],
+  imports: [CommonModule, CdkMenu, CdkMenuItem, CdkMenuTrigger, TnIconComponent, TnMenuActivateHoverDirective, TnMenuItemRendererComponent, TnTestIdDirective],
   templateUrl: './menu.component.html',
   styleUrls: ['./menu.component.scss'],
 })

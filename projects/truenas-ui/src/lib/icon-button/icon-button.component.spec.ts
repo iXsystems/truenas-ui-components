@@ -23,6 +23,30 @@ describe('TnIconButtonComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  describe('focus delegation', () => {
+    it('forwards host.focus() to the inner native <button>', () => {
+      // External triggers (MatMenuTrigger, CDK FocusMonitor, etc.) call .focus()
+      // on the component's host element. The host custom element isn't
+      // focusable on its own, so without delegation the call would silently
+      // no-op — observable as "focus disappears" after a menu closes.
+      const host = fixture.nativeElement as HTMLElement;
+      const inner = host.querySelector('button') as HTMLButtonElement;
+
+      host.focus();
+
+      expect(document.activeElement).toBe(inner);
+    });
+
+    it('component.focus() focuses the inner native <button>', () => {
+      const host = fixture.nativeElement as HTMLElement;
+      const inner = host.querySelector('button') as HTMLButtonElement;
+
+      component.focus();
+
+      expect(document.activeElement).toBe(inner);
+    });
+  });
+
   it('should emit onClick event when clicked', () => {
     const clickSpy = jest.fn();
     component.onClick.subscribe(clickSpy);

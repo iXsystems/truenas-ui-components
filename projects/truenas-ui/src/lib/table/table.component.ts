@@ -45,8 +45,17 @@ export interface TnSortEvent {
 }
 
 /**
- * Determines the animation duration for detail row expand/collapse.
- * Respects prefers-reduced-motion by using 0ms when the user prefers reduced motion.
+ * Animation duration for detail row expand/collapse.
+ *
+ * Evaluated once when the `@Component` decorator runs (at module load), so the
+ * value is frozen for the lifetime of the app: if the user toggles their OS
+ * "reduce motion" preference at runtime, this duration will NOT update for
+ * already-loaded components. Angular animations don't expose a per-trigger
+ * dynamic duration, so live updates would require switching from
+ * `@detailExpand` to plain CSS transitions (already used elsewhere in the SCSS,
+ * which respects the live preference via `@media (prefers-reduced-motion)`).
+ * Acceptable tradeoff: the OS preference rarely flips mid-session, and the
+ * surrounding CSS transitions continue to react live.
  */
 function getExpandDuration(): string {
   if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
