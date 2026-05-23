@@ -20,7 +20,7 @@
     <span
       class="tn-select-text"
       [class.placeholder]="multiple() ? selectedValues().length === 0 : (selectedValue() === null || selectedValue() === undefined)">
-      {{ getDisplayText() }}
+      {{ displayText() }}
     </span>
 
     <!-- Dropdown Arrow -->
@@ -120,7 +120,7 @@
         }
 
         <!-- No Options Message -->
-        @if (!hasAnyOptions()) {
+        @if (!anyOptionsPresent()) {
           <div class="tn-select-no-options">
             {{ noOptionsLabel() }}
           </div>

@@ -16,7 +16,6 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Observable, Subscription } from 'rxjs';
-import { skip } from 'rxjs/operators';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnSelectComponent, type TnSelectOption } from '../select/select.component';
 import { TnTestIdDirective } from '../test-id';
@@ -93,13 +92,10 @@ export interface TnTableDataProvider {
    * provider that only emits on `pageNumber` won't surface row-count updates
    * to the displayed range.
    *
-   * **Replay semantics**: this stream is expected to behave like a
-   * `BehaviorSubject` — i.e. emit its current value synchronously on
-   * subscribe. The pager subscribes with `skip(1)` to swallow that initial
-   * replay (which would otherwise echo the pagination the pager just pushed
-   * via `setPagination`). A plain `Subject` (no replay) or `ReplaySubject(0)`
-   * will cause the **first real emission to be silently dropped**. Use
-   * `BehaviorSubject` or `ReplaySubject(1)` here.
+   * Any stream type (`Subject`, `BehaviorSubject`, `ReplaySubject`, …) works —
+   * the pager guards against feedback loops by remembering the last pagination
+   * it pushed and treating a matching emission as its own echo. Replay
+   * semantics are therefore harmless but not required.
    */
   currentPage$: Observable<unknown>;
   /** Pushes new pagination to the data layer; typically triggers a data refresh. */
@@ -220,15 +216,23 @@ export class TnTablePagerComponent {
    * to `totalItems` input otherwise — see `effectiveTotalItems`.
    */
   private providerTotalItems = signal(0);
+  // The fields below are intentionally plain mutable state, not signals: they
+  // back the provider binding's imperative lifecycle (current ref, current
+  // subscription, last-pushed echo guard) and are only ever written from
+  // inside the bind effect or the syncFromProvider/pushToProvider helpers.
+  // Reading them never needs to participate in the reactive graph — exposing
+  // them as signals would invite spurious re-evaluation without buying us
+  // anything.
   /** The provider reference we're currently bound to (used to detect swaps). */
   private currentProvider: TnTableDataProvider | null = null;
   /** Subscription to the current provider's `currentPage$` — torn down on swap. */
   private providerSub: Subscription | null = null;
   /**
-   * Last pagination value we pushed to the provider. Used to recognise the
+   * Last pagination value we pushed to the provider. Used to recognize the
    * provider's resulting emission as our own echo and break the feedback loop
    * (setPagination → provider emits → syncFromProvider → setPagination …)
-   * without relying on synchronous execution of `setPagination`.
+   * regardless of whether the provider emits synchronously or asynchronously,
+   * and regardless of whether its stream replays on subscribe.
    */
   private lastPushedPagination: TnTablePagination | null = null;
 
@@ -291,11 +295,13 @@ export class TnTablePagerComponent {
         this.pushToProvider();
         this.providerTotalItems.set(provider.totalRows);
       });
-      // Skip the BehaviorSubject's replay (which carries the value pushed by
-      // setPagination above) — otherwise we'd immediately re-sync ourselves.
-      this.providerSub = provider.currentPage$
-        .pipe(skip(1))
-        .subscribe(() => this.syncFromProvider());
+      // No skip() here: if currentPage$ replays (BehaviorSubject), the replay
+      // value matches what pushToProvider() just recorded in
+      // lastPushedPagination, so syncFromProvider treats it as our own echo
+      // and short-circuits. A plain Subject (no replay) still gets every real
+      // emission — earlier we used skip(1), which silently dropped the first
+      // real emission for non-replaying streams.
+      this.providerSub = provider.currentPage$.subscribe(() => this.syncFromProvider());
     });
   }
 
@@ -368,7 +374,7 @@ export class TnTablePagerComponent {
   private pushToProvider(): void {
     const provider = this.dataProvider();
     if (!provider) { return; }
-    // Recording the value before pushing lets syncFromProvider recognise the
+    // Recording the value before pushing lets syncFromProvider recognize the
     // resulting emission as our own echo (independent of whether the provider
     // emits synchronously from setPagination).
     const pagination: TnTablePagination = {

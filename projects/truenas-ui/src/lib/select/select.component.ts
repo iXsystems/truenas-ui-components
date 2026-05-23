@@ -87,8 +87,10 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
   // Per-instance suffix used to namespace DOM ids when `testId` is empty.
   // Without this, two `<tn-select>` elements with no testId would emit
   // colliding option/dropdown/group ids, breaking aria-activedescendant.
-  private static instanceCounter = 0;
-  private readonly fallbackId = `auto-${++TnSelectComponent.instanceCounter}`;
+  // A random suffix is preferred over a monotonic counter so id values stay
+  // stable from test file to test file (a counter would grow unpredictably
+  // across suites and break snapshot tests).
+  private readonly fallbackId = `auto-${Math.random().toString(36).slice(2, 10)}`;
   protected uniqueId = computed(() => this.testId() || this.fallbackId);
 
   // Computed disabled state (combines input and form state)
@@ -142,11 +144,13 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
     // callback (returning a function from `effect()` does *not* register one) —
     // which fires both when the effect re-runs and when the component's
     // injector is destroyed, so the listener is removed even if the host is
-    // torn down while the dropdown is still open. The setTimeout id is also
-    // tracked so a teardown inside the deferral window doesn't leak a listener
-    // that hasn't been added yet.
+    // torn down while the dropdown is still open. The `disposed` flag prevents
+    // the listener from being attached at all if teardown races the deferred
+    // setTimeout — without it, a cleanup that fires between the timeout firing
+    // and addEventListener executing could leak a permanent listener.
     effect((onCleanup) => {
       if (!this.isOpen()) { return; }
+      let disposed = false;
       const clickListener = (event: Event) => {
         if (!this.elementRef.nativeElement.contains(event.target as Node)) {
           // Click outside → close, but don't steal focus from whatever the
@@ -157,9 +161,11 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
       // Deferred so the click that opened the dropdown doesn't immediately
       // close it on its bubble back up to the document.
       const timeoutId = setTimeout(() => {
+        if (disposed) { return; }
         document.addEventListener('click', clickListener);
       }, 0);
       onCleanup(() => {
+        disposed = true;
         clearTimeout(timeoutId);
         document.removeEventListener('click', clickListener);
       });
@@ -349,7 +355,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
     return `tn-select-${this.uniqueId()}-option-${index}`;
   }
 
-  getDisplayText = computed(() => {
+  protected displayText = computed(() => {
     if (this.multiple()) {
       const values = this.selectedValues();
       if (values.length === 0) {
@@ -383,7 +389,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
     return undefined;
   }
 
-  hasAnyOptions = computed(() => {
+  protected anyOptionsPresent = computed(() => {
     return this.options().length > 0 || this.optionGroups().length > 0;
   });
 

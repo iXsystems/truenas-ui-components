@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
 import type { TnSelectOption, TnSelectOptionGroup } from '../lib/select/select.component';
@@ -244,6 +245,149 @@ export const MultipleWithGroups: Story = {
   }),
   args: {
     optionGroups: animalGroups,
+  },
+};
+
+// Object values demand a custom comparator — the built-in fallback uses
+// JSON.stringify, which is key-order dependent and can produce false negatives.
+interface AnimalValue {
+  id: number;
+  species: string;
+}
+
+const animalObjectOptions: TnSelectOption<AnimalValue>[] = [
+  { value: { id: 1, species: 'dog' }, label: 'Dog' },
+  { value: { id: 2, species: 'cat' }, label: 'Cat' },
+  { value: { id: 3, species: 'parrot' }, label: 'Parrot' },
+];
+
+export const CustomCompareWith: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      // Compare object values by `id` so selections survive reference changes
+      // (a fresh fetch returns new object identities for the same logical row).
+      compareById: (a: AnimalValue | null, b: AnimalValue | null) => a?.id === b?.id,
+      logSelection: (_value: unknown) => {},
+    },
+    template: `
+      <tn-form-field
+        label="Choose an animal"
+        hint="Option values are objects — compareWith matches them by id">
+        <tn-select
+          [options]="options"
+          [compareWith]="compareById"
+          placeholder="Pick an animal"
+          (selectionChange)="logSelection($event)">
+        </tn-select>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  args: {
+    options: animalObjectOptions,
+  },
+};
+
+// Spacer pushes the trigger near the bottom of the viewport so the dropdown's
+// flip-up heuristic kicks in. Resize the docs canvas to see the effect.
+export const FlipUpDropdown: Story = {
+  parameters: {
+    docs: { story: { height: '500px' } },
+  },
+  render: (args) => ({
+    props: {
+      ...args,
+      logSelection: (_value: unknown) => {},
+    },
+    template: `
+      <div style="height: 440px;"></div>
+      <tn-form-field
+        label="Page size"
+        hint="Trigger sits near the viewport bottom — the dropdown opens upward">
+        <tn-select
+          [options]="options"
+          placeholder="Choose a page size"
+          ariaLabel="Items per page"
+          (selectionChange)="logSelection($event)">
+        </tn-select>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  args: {
+    options: [10, 20, 50, 100].map((n) => ({ value: n, label: String(n) })),
+  },
+};
+
+export const EmptyWithCustomMessage: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      logSelection: (_value: unknown) => {},
+    },
+    template: `
+      <tn-form-field
+        label="Filter results"
+        hint="No options are available — the dropdown shows the custom message">
+        <tn-select
+          [options]="[]"
+          placeholder="No filters configured"
+          noOptionsLabel="No filters match your query"
+          (selectionChange)="logSelection($event)">
+        </tn-select>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+};
+
+export const KeyboardNavigation: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      logSelection: (_value: unknown) => {},
+    },
+    template: `
+      <tn-form-field
+        label="Choose a fruit"
+        hint="Open with the keyboard (Enter / ArrowDown), navigate with arrows, select with Enter">
+        <tn-select
+          [options]="options"
+          placeholder="Pick one"
+          (selectionChange)="logSelection($event)">
+        </tn-select>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  args: {
+    options: fruitOptions,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const trigger = canvas.getByRole('combobox');
+
+    trigger.focus();
+    await userEvent.keyboard('{ArrowDown}');
+    await waitFor(() => expect(trigger.getAttribute('aria-expanded')).toBe('true'));
+
+    // Opening the dropdown should expose the focused option to AT.
+    await waitFor(() => expect(trigger.getAttribute('aria-activedescendant')).not.toBeNull());
+
+    await userEvent.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+    await waitFor(() => expect(trigger.getAttribute('aria-expanded')).toBe('false'));
+
+    // Trigger now displays the third option's label.
+    await expect(trigger.textContent?.trim()).toContain('Orange');
   },
 };
 
