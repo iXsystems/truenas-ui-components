@@ -125,7 +125,7 @@ describe('TnTablePagerComponent', () => {
       const spy = jest.fn();
       component.pageChange.subscribe(spy);
 
-      component.previousPage();
+      component['previousPage']();
 
       expect(component.currentPage()).toBe(2);
       expect(spy).toHaveBeenCalledWith(2);
@@ -135,7 +135,7 @@ describe('TnTablePagerComponent', () => {
       const spy = jest.fn();
       component.pageChange.subscribe(spy);
 
-      component.previousPage();
+      component['previousPage']();
 
       expect(component.currentPage()).toBe(1);
       expect(spy).not.toHaveBeenCalled();
@@ -145,7 +145,7 @@ describe('TnTablePagerComponent', () => {
       const spy = jest.fn();
       component.pageChange.subscribe(spy);
 
-      component.nextPage();
+      component['nextPage']();
 
       expect(component.currentPage()).toBe(2);
       expect(spy).toHaveBeenCalledWith(2);
@@ -156,7 +156,7 @@ describe('TnTablePagerComponent', () => {
       const spy = jest.fn();
       component.pageChange.subscribe(spy);
 
-      component.nextPage();
+      component['nextPage']();
 
       expect(component.currentPage()).toBe(5);
       expect(spy).not.toHaveBeenCalled();
@@ -199,7 +199,7 @@ describe('TnTablePagerComponent', () => {
       component.pageSizeChange.subscribe(sizeSpy);
       component.pageChange.subscribe(pageSpy);
 
-      component.onPageSizeChange(50);
+      component['onPageSizeChange'](50);
 
       expect(component.pageSize()).toBe(50);
       expect(component.currentPage()).toBe(1);
@@ -213,7 +213,7 @@ describe('TnTablePagerComponent', () => {
       component.pageSizeChange.subscribe(sizeSpy);
       component.pageChange.subscribe(pageSpy);
 
-      component.onPageSizeChange(20);
+      component['onPageSizeChange'](20);
 
       expect(sizeSpy).not.toHaveBeenCalled();
       expect(pageSpy).not.toHaveBeenCalled();
@@ -316,7 +316,7 @@ describe('TnTablePagerComponent — dataProvider mode', () => {
     component.currentPage.set(3);
     setPaginationSpy.mockClear();
 
-    component.onPageSizeChange(50);
+    component['onPageSizeChange'](50);
 
     expect(component.pageSize()).toBe(50);
     expect(component.currentPage()).toBe(1);
@@ -388,5 +388,84 @@ describe('TnTablePagerComponent — dataProvider mode', () => {
     const rangeText = (fixture.nativeElement.querySelector('.tn-table-pager__range') as HTMLElement)
       .textContent?.replace(/\s+/g, ' ').trim();
     expect(rangeText).toBe('1 – 10 of 47');
+  });
+
+  it('should re-initialize when the dataProvider reference changes', () => {
+    const first = createProvider({ totalRows: 100 });
+    const second = createProvider({ totalRows: 50 });
+
+    fixture.componentRef.setInput('dataProvider', first.provider);
+    fixture.componentRef.setInput('pageSize', 20);
+    fixture.detectChanges();
+
+    expect(first.setPaginationSpy).toHaveBeenCalledWith({ pageNumber: 1, pageSize: 20 });
+    expect(component['effectiveTotalItems']()).toBe(100);
+
+    fixture.componentRef.setInput('dataProvider', second.provider);
+    fixture.detectChanges();
+
+    expect(second.setPaginationSpy).toHaveBeenCalledWith({ pageNumber: 1, pageSize: 20 });
+    expect(component['effectiveTotalItems']()).toBe(50);
+  });
+
+  it('should stop reacting to the previous provider after a swap', () => {
+    const first = createProvider({ totalRows: 100 });
+    const second = createProvider({ totalRows: 100 });
+
+    fixture.componentRef.setInput('dataProvider', first.provider);
+    fixture.componentRef.setInput('pageSize', 20);
+    fixture.detectChanges();
+
+    fixture.componentRef.setInput('dataProvider', second.provider);
+    fixture.detectChanges();
+
+    // An emission from the OLD provider must not move the pager — the new
+    // provider is the source of truth now.
+    first.emit(100, { pageNumber: 4, pageSize: 20 });
+
+    expect(component.currentPage()).toBe(1);
+  });
+
+  it('should reset effectiveTotalItems to 0 when the provider is cleared', () => {
+    const { provider } = createProvider({ totalRows: 100 });
+    fixture.componentRef.setInput('dataProvider', provider);
+    fixture.componentRef.setInput('pageSize', 20);
+    fixture.detectChanges();
+    expect(component['effectiveTotalItems']()).toBe(100);
+
+    fixture.componentRef.setInput('dataProvider', undefined);
+    fixture.detectChanges();
+
+    expect(component['effectiveTotalItems']()).toBe(0);
+  });
+});
+
+describe('TnTablePagerComponent — host a11y', () => {
+  it('should expose role="navigation" and an aria-label on the host', async () => {
+    await TestBed.configureTestingModule({
+      imports: [TnTablePagerComponent, NoopAnimationsModule],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(TnTablePagerComponent);
+    fixture.componentRef.setInput('totalItems', 10);
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.getAttribute('role')).toBe('navigation');
+    expect(host.getAttribute('aria-label')).toBe('Table pagination');
+  });
+
+  it('should let the tablePaginationLabel input override the default landmark label', async () => {
+    await TestBed.configureTestingModule({
+      imports: [TnTablePagerComponent, NoopAnimationsModule],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(TnTablePagerComponent);
+    fixture.componentRef.setInput('totalItems', 10);
+    fixture.componentRef.setInput('tablePaginationLabel', 'Paginering van de tabel');
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).getAttribute('aria-label'))
+      .toBe('Paginering van de tabel');
   });
 });

@@ -2,6 +2,11 @@ import { FormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
+import { BehaviorSubject } from 'rxjs';
+import type {
+  TnTableDataProvider,
+  TnTablePagination,
+} from '../lib/table-pager/table-pager.component';
 import { TnTablePagerComponent } from '../lib/table-pager/table-pager.component';
 
 const meta: Meta<TnTablePagerComponent> = {
@@ -119,7 +124,50 @@ export const LocalizedLabels: Story = {
         firstPageLabel="Eerste pagina"
         previousPageLabel="Vorige pagina"
         nextPageLabel="Volgende pagina"
-        lastPageLabel="Laatste pagina" />
+        lastPageLabel="Laatste pagina"
+        tablePaginationLabel="Paginering van de tabel" />
+    `,
+  }),
+};
+
+/**
+ * Builds a minimal in-memory `TnTableDataProvider` for stories. Real consumers
+ * usually wire this to a service that hits the backend.
+ */
+function makeDemoProvider(totalRows: number, pageSize = 20): TnTableDataProvider {
+  const subject = new BehaviorSubject<unknown>(null);
+  const state: { totalRows: number; pagination: TnTablePagination } = {
+    totalRows,
+    pagination: { pageNumber: 1, pageSize },
+  };
+  return {
+    get totalRows() { return state.totalRows; },
+    get pagination() { return state.pagination; },
+    currentPage$: subject,
+    setPagination(p: TnTablePagination): void {
+      state.pagination = p;
+      subject.next(null);
+    },
+  };
+}
+
+/**
+ * Drives a `TnTableDataProvider` instead of dumb input bindings: the pager
+ * pushes pagination changes into the provider via `setPagination`, mirrors
+ * `totalRows`, and reacts to provider-side emissions.
+ */
+export const DataProviderMode: Story = {
+  render: () => ({
+    props: {
+      provider: makeDemoProvider(247),
+    },
+    template: `
+      <tn-table-pager [dataProvider]="provider" />
+      <p style="margin-top: 12px;">
+        Provider state — page <strong>{{ provider.pagination.pageNumber }}</strong>,
+        size <strong>{{ provider.pagination.pageSize }}</strong>,
+        total <strong>{{ provider.totalRows }}</strong>
+      </p>
     `,
   }),
 };

@@ -35,6 +35,13 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
   options = input<TnSelectOption<T>[]>([]);
   optionGroups = input<TnSelectOptionGroup<T>[]>([]);
   placeholder = input<string>('Select an option');
+  /**
+   * Accessible label for the select trigger. When set, this is used as the
+   * trigger's `aria-label` instead of the visible `placeholder` — useful in
+   * contexts (e.g. a pager's page-size dropdown) where the placeholder text
+   * doesn't accurately describe the field's purpose to screen readers.
+   */
+  ariaLabel = input<string | undefined>(undefined);
   disabled = input<boolean>(false);
   testId = input<string>('');
   multiple = input<boolean>(false);

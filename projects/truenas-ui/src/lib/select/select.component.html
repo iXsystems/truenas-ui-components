@@ -12,7 +12,7 @@
     [attr.aria-controls]="isOpen() ? 'tn-select-dropdown-' + testId() : null"
     [attr.aria-activedescendant]="activeOptionId()"
     [attr.aria-disabled]="isDisabled()"
-    [attr.aria-label]="placeholder()"
+    [attr.aria-label]="ariaLabel() ?? placeholder()"
     (click)="toggleDropdown()"
     (keydown)="onKeydown($event)">
 

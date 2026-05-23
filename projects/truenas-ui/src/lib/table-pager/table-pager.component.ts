@@ -4,7 +4,6 @@ import {
   DestroyRef,
   InjectionToken,
   type Signal,
-  ViewEncapsulation,
   computed,
   effect,
   inject,
@@ -15,9 +14,8 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import type { Observable } from 'rxjs';
+import type { Observable, Subscription } from 'rxjs';
 import { skip } from 'rxjs/operators';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnSelectComponent, type TnSelectOption } from '../select/select.component';
@@ -37,6 +35,8 @@ export interface TnTablePagerLabels {
   previousPage: string;
   nextPage: string;
   lastPage: string;
+  /** Accessible label applied to the pager's `navigation` landmark. */
+  tablePagination: string;
 }
 
 /** English defaults used when no `TN_TABLE_PAGER_LABELS` provider is registered. */
@@ -47,6 +47,7 @@ export const TN_TABLE_PAGER_DEFAULT_LABELS: TnTablePagerLabels = {
   previousPage: 'Previous page',
   nextPage: 'Next page',
   lastPage: 'Last page',
+  tablePagination: 'Table pagination',
 };
 
 /**
@@ -124,9 +125,10 @@ export interface TnTableDataProvider {
   templateUrl: './table-pager.component.html',
   styleUrls: ['./table-pager.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None,
   host: {
-    class: 'tn-table-pager',
+    'class': 'tn-table-pager',
+    'role': 'navigation',
+    '[attr.aria-label]': 'resolvedTablePaginationLabel()',
   },
   hostDirectives: [{ directive: TnTestIdDirective, inputs: ['tnTestId: testId'] }],
 })
@@ -177,6 +179,7 @@ export class TnTablePagerComponent {
   previousPageLabel = input<string | undefined>(undefined);
   nextPageLabel = input<string | undefined>(undefined);
   lastPageLabel = input<string | undefined>(undefined);
+  tablePaginationLabel = input<string | undefined>(undefined);
 
   /** Resolved labels: explicit input takes precedence over the DI default. */
   protected resolvedItemsPerPageLabel = computed(() => this.itemsPerPageLabel() ?? this.defaultLabels().itemsPerPage);
@@ -185,6 +188,9 @@ export class TnTablePagerComponent {
   protected resolvedPreviousPageLabel = computed(() => this.previousPageLabel() ?? this.defaultLabels().previousPage);
   protected resolvedNextPageLabel = computed(() => this.nextPageLabel() ?? this.defaultLabels().nextPage);
   protected resolvedLastPageLabel = computed(() => this.lastPageLabel() ?? this.defaultLabels().lastPage);
+  protected resolvedTablePaginationLabel = computed(
+    () => this.tablePaginationLabel() ?? this.defaultLabels().tablePagination,
+  );
 
   /** Emits the new 1-based page number whenever the user navigates. */
   pageChange = output<number>();
@@ -197,13 +203,17 @@ export class TnTablePagerComponent {
    * to `totalItems` input otherwise — see `effectiveTotalItems`.
    */
   private providerTotalItems = signal(0);
-  /** Tracks whether the provider has been initialized yet (one-time). */
-  private providerInitialized = false;
+  /** The provider reference we're currently bound to (used to detect swaps). */
+  private currentProvider: TnTableDataProvider | null = null;
+  /** Subscription to the current provider's `currentPage$` — torn down on swap. */
+  private providerSub: Subscription | null = null;
   /**
-   * Guard against the feedback loop:
-   * setPagination → provider emits → syncFromProvider → setPagination …
+   * Last pagination value we pushed to the provider. Used to recognise the
+   * provider's resulting emission as our own echo and break the feedback loop
+   * (setPagination → provider emits → syncFromProvider → setPagination …)
+   * without relying on synchronous execution of `setPagination`.
    */
-  private syncingFromProvider = false;
+  private lastPushedPagination: TnTablePagination | null = null;
 
   protected effectiveTotalItems = computed(() =>
     this.dataProvider() ? this.providerTotalItems() : this.totalItems(),
@@ -239,49 +249,63 @@ export class TnTablePagerComponent {
     const provided = inject(TN_TABLE_PAGER_LABELS);
     this.defaultLabels = isSignal(provided) ? provided : signal(provided).asReadonly();
 
-    // When a dataProvider becomes available, push the current pagination to it
-    // once and subscribe to its updates. `untracked` keeps the provider's
-    // imperative reads out of the reactive graph so this effect only re-runs
-    // when the provider reference itself changes.
+    // Re-bind when the dataProvider reference changes (including swap to a
+    // different instance or clearing back to undefined). `untracked` keeps the
+    // provider's imperative reads out of the reactive graph so this effect only
+    // re-runs when the provider reference itself changes.
+    this.destroyRef.onDestroy(() => this.providerSub?.unsubscribe());
     effect(() => {
-      const provider = this.dataProvider();
-      if (!provider || this.providerInitialized) { return; }
-      this.providerInitialized = true;
+      const provider = this.dataProvider() ?? null;
+      if (provider === this.currentProvider) { return; }
+
+      // Tear down any previous binding before attaching to the new provider so
+      // a swap doesn't leave the old subscription running against destroyRef.
+      this.providerSub?.unsubscribe();
+      this.providerSub = null;
+      this.lastPushedPagination = null;
+      this.currentProvider = provider;
+
+      if (!provider) {
+        this.providerTotalItems.set(0);
+        return;
+      }
+
       untracked(() => {
-        provider.setPagination({
-          pageNumber: this.currentPage(),
-          pageSize: this.pageSize(),
-        });
+        this.pushToProvider();
         this.providerTotalItems.set(provider.totalRows);
       });
       // Skip the BehaviorSubject's replay (which carries the value pushed by
       // setPagination above) — otherwise we'd immediately re-sync ourselves.
-      provider.currentPage$
-        .pipe(skip(1), takeUntilDestroyed(this.destroyRef))
+      this.providerSub = provider.currentPage$
+        .pipe(skip(1))
         .subscribe(() => this.syncFromProvider());
     });
   }
 
   private syncFromProvider(): void {
-    if (this.syncingFromProvider) { return; }
     const provider = this.dataProvider();
     if (!provider) { return; }
 
     this.providerTotalItems.set(provider.totalRows);
 
-    const providerPage = provider.pagination.pageNumber;
-    if (providerPage !== null && providerPage !== this.currentPage()) {
-      this.currentPage.set(providerPage);
-      return;
+    const p = provider.pagination;
+    const isEcho = this.lastPushedPagination !== null
+      && p.pageNumber === this.lastPushedPagination.pageNumber
+      && p.pageSize === this.lastPushedPagination.pageSize;
+
+    if (!isEcho) {
+      const providerPage = p.pageNumber;
+      if (providerPage !== null && providerPage !== this.currentPage()) {
+        this.currentPage.set(providerPage);
+        return;
+      }
     }
 
+    // Whether or not this was an echo, an updated totalRows can leave us on an
+    // out-of-range page — reset and push the corrected pagination back.
     if (this.currentPage() > this.totalPages() && this.currentPage() !== 1) {
-      // Total just dropped below the current page — reset to page 1 and push
-      // that back to the provider, guarding against the resulting emission.
-      this.syncingFromProvider = true;
       this.currentPage.set(1);
-      provider.setPagination({ pageNumber: 1, pageSize: this.pageSize() });
-      this.syncingFromProvider = false;
+      this.pushToProvider();
     }
   }
 
@@ -294,15 +318,15 @@ export class TnTablePagerComponent {
     this.pushToProvider();
   }
 
-  previousPage(): void {
+  protected previousPage(): void {
     this.goToPage(this.currentPage() - 1);
   }
 
-  nextPage(): void {
+  protected nextPage(): void {
     this.goToPage(this.currentPage() + 1);
   }
 
-  onPageSizeChange(value: number): void {
+  protected onPageSizeChange(value: number): void {
     if (value === this.pageSize()) { return; }
     this.pageSize.set(value);
     this.pageSizeChange.emit(value);
@@ -317,13 +341,14 @@ export class TnTablePagerComponent {
   private pushToProvider(): void {
     const provider = this.dataProvider();
     if (!provider) { return; }
-    // Use the syncing guard so the provider's resulting currentPage$ emission
-    // doesn't bounce back through syncFromProvider().
-    this.syncingFromProvider = true;
-    provider.setPagination({
+    // Recording the value before pushing lets syncFromProvider recognise the
+    // resulting emission as our own echo (independent of whether the provider
+    // emits synchronously from setPagination).
+    const pagination: TnTablePagination = {
       pageNumber: this.currentPage(),
       pageSize: this.pageSize(),
-    });
-    this.syncingFromProvider = false;
+    };
+    this.lastPushedPagination = pagination;
+    provider.setPagination(pagination);
   }
 }

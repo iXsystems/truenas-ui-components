@@ -3,8 +3,9 @@
   <tn-select
     class="tn-table-pager__size-select"
     [options]="pageSizeSelectOptions()"
+    [ariaLabel]="resolvedItemsPerPageLabel()"
     [ngModel]="pageSize()"
-    (selectionChange)="onPageSizeChange($event)" />
+    (ngModelChange)="onPageSizeChange($event)" />
 </div>
 
 <span class="tn-table-pager__range">
