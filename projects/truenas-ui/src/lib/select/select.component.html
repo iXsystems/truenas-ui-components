@@ -9,7 +9,7 @@
     [class.open]="isOpen()"
     [attr.aria-expanded]="isOpen()"
     [attr.aria-haspopup]="'listbox'"
-    [attr.aria-controls]="isOpen() ? 'tn-select-dropdown-' + testId() : null"
+    [attr.aria-controls]="isOpen() ? 'tn-select-dropdown-' + uniqueId() : null"
     [attr.aria-activedescendant]="activeOptionId()"
     [attr.aria-disabled]="isDisabled()"
     [attr.aria-label]="ariaLabel() ?? placeholder()"
@@ -38,7 +38,7 @@
       role="listbox"
       [class.tn-select-dropdown--above]="dropdownPosition() === 'above'"
       [attr.aria-multiselectable]="multiple()"
-      [attr.id]="'tn-select-dropdown-' + testId()">
+      [attr.id]="'tn-select-dropdown-' + uniqueId()">
 
       <!-- Options List -->
       <!-- Options follow the WAI-ARIA combobox pattern: focus stays on the
@@ -82,11 +82,11 @@
             </div>
           }
 
-          <div role="group" [attr.aria-labelledby]="'tn-select-group-' + testId() + '-' + groupIdx">
+          <div role="group" [attr.aria-labelledby]="'tn-select-group-' + uniqueId() + '-' + groupIdx">
             <!-- Group Label -->
             <div
               class="tn-select-group-label"
-              [attr.id]="'tn-select-group-' + testId() + '-' + groupIdx"
+              [attr.id]="'tn-select-group-' + uniqueId() + '-' + groupIdx"
               [class.disabled]="group.disabled">
               {{ group.label }}
             </div>

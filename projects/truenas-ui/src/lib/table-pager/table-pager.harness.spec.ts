@@ -72,6 +72,17 @@ describe('TnTablePagerHarness', () => {
     expect(await pager.getRangeText()).toBe('41 – 47 of 47');
   });
 
+  it('should round-trip to the last page and back to the first', async () => {
+    const pager = await loader.getHarness(TnTablePagerHarness);
+    await pager.goToLastPage();
+    expect(host.currentPage()).toBe(3);
+
+    await pager.goToFirstPage();
+    expect(host.currentPage()).toBe(1);
+    expect(host.pageChanges).toEqual([3, 1]);
+    expect(await pager.getRangeText()).toBe('1 – 20 of 47');
+  });
+
   it('should disable next/last on the final page', async () => {
     const pager = await loader.getHarness(TnTablePagerHarness);
     await pager.goToLastPage();

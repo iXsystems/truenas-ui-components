@@ -1,5 +1,5 @@
 
-import { ChangeDetectorRef, Component, computed, effect, ElementRef, forwardRef, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, ElementRef, forwardRef, inject, input, output, signal, viewChild } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
@@ -29,7 +29,8 @@ export interface TnSelectOptionGroup<T = unknown> {
     }
   ],
   templateUrl: './select.component.html',
-  styleUrls: ['./select.component.scss']
+  styleUrls: ['./select.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
   options = input<TnSelectOption<T>[]>([]);
@@ -69,10 +70,20 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
   protected focusedIndex = signal<number>(-1);
   private formDisabled = signal<boolean>(false);
 
-  // Approximate max-height of the dropdown (kept in sync with the
-  // .tn-select-dropdown rule). Used to decide whether to flip above when the
-  // trigger sits near the viewport bottom.
-  private static readonly DROPDOWN_MAX_HEIGHT = 200;
+  // Name of the CSS custom property that defines the dropdown's max-height
+  // (set in select.component.scss). Reading it via getComputedStyle keeps the
+  // flip-up heuristic in sync with the stylesheet — no duplicated constant.
+  private static readonly DROPDOWN_MAX_HEIGHT_VAR = '--tn-select-dropdown-max-height';
+  // Fallback used when getComputedStyle can't resolve the variable (older
+  // browsers, jsdom in some test configs).
+  private static readonly DROPDOWN_MAX_HEIGHT_FALLBACK = 200;
+
+  // Per-instance suffix used to namespace DOM ids when `testId` is empty.
+  // Without this, two `<tn-select>` elements with no testId would emit
+  // colliding option/dropdown/group ids, breaking aria-activedescendant.
+  private static instanceCounter = 0;
+  private readonly fallbackId = `auto-${++TnSelectComponent.instanceCounter}`;
+  protected uniqueId = computed(() => this.testId() || this.fallbackId);
 
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
@@ -121,28 +132,31 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
   protected triggerEl = viewChild<ElementRef<HTMLElement>>('trigger');
 
   constructor() {
-    // Click-outside detection using effect
-    effect(() => {
-      if (this.isOpen()) {
-        const clickListener = (event: Event) => {
-          if (!this.elementRef.nativeElement.contains(event.target as Node)) {
-            // Click outside → close, but don't steal focus from whatever the
-            // user clicked on.
-            this.closeDropdown({ restoreFocus: false });
-          }
-        };
-
-        // Add listener after a small delay to avoid immediate closure
-        setTimeout(() => {
-          document.addEventListener('click', clickListener);
-        }, 0);
-
-        // Cleanup function
-        return () => {
-          document.removeEventListener('click', clickListener);
-        };
-      }
-      return undefined;
+    // Click-outside detection. Cleanup is registered via the `onCleanup`
+    // callback (returning a function from `effect()` does *not* register one) —
+    // which fires both when the effect re-runs and when the component's
+    // injector is destroyed, so the listener is removed even if the host is
+    // torn down while the dropdown is still open. The setTimeout id is also
+    // tracked so a teardown inside the deferral window doesn't leak a listener
+    // that hasn't been added yet.
+    effect((onCleanup) => {
+      if (!this.isOpen()) { return; }
+      const clickListener = (event: Event) => {
+        if (!this.elementRef.nativeElement.contains(event.target as Node)) {
+          // Click outside → close, but don't steal focus from whatever the
+          // user clicked on.
+          this.closeDropdown({ restoreFocus: false });
+        }
+      };
+      // Deferred so the click that opened the dropdown doesn't immediately
+      // close it on its bubble back up to the document.
+      const timeoutId = setTimeout(() => {
+        document.addEventListener('click', clickListener);
+      }, 0);
+      onCleanup(() => {
+        clearTimeout(timeoutId);
+        document.removeEventListener('click', clickListener);
+      });
     });
 
     // When the dropdown opens, scroll the focused option into view.
@@ -259,10 +273,25 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
     const rect = trigger.getBoundingClientRect();
     const spaceBelow = window.innerHeight - rect.bottom;
     const spaceAbove = rect.top;
-    if (spaceBelow < TnSelectComponent.DROPDOWN_MAX_HEIGHT && spaceAbove > spaceBelow) {
+    if (spaceBelow < this.readDropdownMaxHeight(trigger) && spaceAbove > spaceBelow) {
       return 'above';
     }
     return 'below';
+  }
+
+  /**
+   * Reads the dropdown's max-height from the CSS custom property set in
+   * select.component.scss. Single source of truth for the flip-up threshold —
+   * if the stylesheet changes, the heuristic follows automatically.
+   */
+  private readDropdownMaxHeight(trigger: Element): number {
+    const raw = getComputedStyle(trigger)
+      .getPropertyValue(TnSelectComponent.DROPDOWN_MAX_HEIGHT_VAR)
+      .trim();
+    const parsed = parseFloat(raw);
+    return Number.isFinite(parsed) && parsed > 0
+      ? parsed
+      : TnSelectComponent.DROPDOWN_MAX_HEIGHT_FALLBACK;
   }
 
   onOptionClick(option: TnSelectOption<T>, groupDisabled = false): void {
@@ -311,7 +340,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
 
   /** Build a stable DOM id for the option at `index` for aria-activedescendant. */
   protected optionId(index: number): string {
-    return `tn-select-${this.testId() || 'default'}-option-${index}`;
+    return `tn-select-${this.uniqueId()}-option-${index}`;
   }
 
   getDisplayText = computed(() => {

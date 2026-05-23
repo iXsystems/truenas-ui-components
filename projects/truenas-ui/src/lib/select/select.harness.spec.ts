@@ -581,6 +581,42 @@ describe('TnSelectHarness - group disabled', () => {
   });
 });
 
+@Component({
+  selector: 'tn-test-twin-host',
+  standalone: true,
+  imports: [TnSelectComponent],
+  template: `
+    <tn-select [options]="options" />
+    <tn-select [options]="options" />
+  `,
+})
+class TestTwinHostComponent {
+  options: TnSelectOption<string>[] = [
+    { value: 'apple', label: 'Apple' },
+    { value: 'banana', label: 'Banana' },
+  ];
+}
+
+describe('TnSelectComponent — id uniqueness without testId', () => {
+  it('should give each select instance a distinct option-id namespace', async () => {
+    await TestBed.configureTestingModule({ imports: [TestTwinHostComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(TestTwinHostComponent);
+    fixture.detectChanges();
+
+    const triggers = fixture.nativeElement.querySelectorAll('.tn-select-trigger') as NodeListOf<HTMLElement>;
+    triggers.forEach((t) => t.click());
+    fixture.detectChanges();
+
+    const ids = Array.from(
+      fixture.nativeElement.querySelectorAll('.tn-select-option') as NodeListOf<HTMLElement>,
+    ).map((el) => el.id);
+
+    // Two selects × two options each → four ids, all distinct.
+    expect(ids).toHaveLength(4);
+    expect(new Set(ids).size).toBe(4);
+  });
+});
+
 describe('TnSelectHarness - multiSelectionChange output', () => {
   let fixture: ComponentFixture<TestMultiOutputHostComponent>;
   let loader: HarnessLoader;

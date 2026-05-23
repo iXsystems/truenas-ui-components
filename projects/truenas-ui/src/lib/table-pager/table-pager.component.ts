@@ -80,9 +80,18 @@ export interface TnTableDataProvider {
   /** The data layer's current pagination state. */
   pagination: TnTablePagination;
   /**
-   * Emits whenever the data layer's page (or related state) changes. The pager
-   * uses this as a "something on the provider changed" notification —
-   * the emitted value itself isn't read.
+   * Emits whenever the data layer's state changes in a way the pager should
+   * react to. The emitted value itself isn't read — it's purely a "something
+   * changed, re-read me" notification.
+   *
+   * **Implementations must emit on**:
+   *   - page-number changes (the canonical case),
+   *   - page-size changes the data layer applies on its own, and
+   *   - **`totalRows` changes** (e.g. after a filter/refresh).
+   *
+   * The pager reads `totalRows` imperatively inside its sync handler, so a
+   * provider that only emits on `pageNumber` won't surface row-count updates
+   * to the displayed range.
    */
   currentPage$: Observable<unknown>;
   /** Pushes new pagination to the data layer; typically triggers a data refresh. */

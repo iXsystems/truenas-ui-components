@@ -9,12 +9,13 @@
 </div>
 
 <span class="tn-table-pager__range">
-  @if (lastItemOnPage() > firstItemOnPage()) {
-    {{ firstItemOnPage() }} – {{ lastItemOnPage() }}
+  @if (effectiveTotalItems() === 0) {
+    – {{ resolvedOfLabel() }} 0
+  } @else if (lastItemOnPage() > firstItemOnPage()) {
+    {{ firstItemOnPage() }} – {{ lastItemOnPage() }} {{ resolvedOfLabel() }} {{ effectiveTotalItems() }}
   } @else {
-    {{ lastItemOnPage() }}
+    {{ lastItemOnPage() }} {{ resolvedOfLabel() }} {{ effectiveTotalItems() }}
   }
-  {{ resolvedOfLabel() }} {{ effectiveTotalItems() }}
 </span>
 
 <div class="tn-table-pager__buttons">
