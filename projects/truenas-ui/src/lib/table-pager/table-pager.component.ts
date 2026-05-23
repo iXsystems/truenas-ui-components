@@ -92,6 +92,14 @@ export interface TnTableDataProvider {
    * The pager reads `totalRows` imperatively inside its sync handler, so a
    * provider that only emits on `pageNumber` won't surface row-count updates
    * to the displayed range.
+   *
+   * **Replay semantics**: this stream is expected to behave like a
+   * `BehaviorSubject` — i.e. emit its current value synchronously on
+   * subscribe. The pager subscribes with `skip(1)` to swallow that initial
+   * replay (which would otherwise echo the pagination the pager just pushed
+   * via `setPagination`). A plain `Subject` (no replay) or `ReplaySubject(0)`
+   * will cause the **first real emission to be silently dropped**. Use
+   * `BehaviorSubject` or `ReplaySubject(1)` here.
    */
   currentPage$: Observable<unknown>;
   /** Pushes new pagination to the data layer; typically triggers a data refresh. */
@@ -311,13 +319,23 @@ export class TnTablePagerComponent {
     }
 
     // Whether or not this was an echo, an updated totalRows can leave us on an
-    // out-of-range page — reset and push the corrected pagination back.
+    // out-of-range page — reset, emit pageChange (so consumers see the auto-
+    // correction symmetrically with user-initiated navigation), and push the
+    // corrected pagination back.
     if (this.currentPage() > this.totalPages() && this.currentPage() !== 1) {
       this.currentPage.set(1);
+      this.pageChange.emit(1);
       this.pushToProvider();
     }
   }
 
+  /**
+   * Public navigation API: jump to a specific 1-based page. Used both by the
+   * template (first/last buttons) and by consumers who want to drive the pager
+   * programmatically. Out-of-range values and no-op transitions are silently
+   * ignored. Sibling helpers `previousPage` / `nextPage` are template-only and
+   * therefore `protected` — `goToPage` is intentionally part of the public API.
+   */
   goToPage(pageNumber: number): void {
     const total = this.totalPages();
     if (pageNumber < 1 || (total > 0 && pageNumber > total)) { return; }

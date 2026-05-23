@@ -346,7 +346,7 @@ describe('TnTablePagerComponent — dataProvider mode', () => {
     expect(component.currentPage()).toBe(4);
   });
 
-  it('should reset to page 1 when totalRows drops below the current page', () => {
+  it('should reset to page 1 (and emit pageChange) when totalRows drops below the current page', () => {
     const { provider, emit, setPaginationSpy } = createProvider({ totalRows: 100 });
     fixture.componentRef.setInput('dataProvider', provider);
     fixture.componentRef.setInput('pageSize', 20);
@@ -354,11 +354,14 @@ describe('TnTablePagerComponent — dataProvider mode', () => {
 
     component.goToPage(4);
     setPaginationSpy.mockClear();
+    const pageSpy = jest.fn();
+    component.pageChange.subscribe(pageSpy);
 
     // Total shrinks so the current page (4) no longer exists.
     emit(2, { pageNumber: 4, pageSize: 20 });
 
     expect(component.currentPage()).toBe(1);
+    expect(pageSpy).toHaveBeenCalledWith(1);
     expect(setPaginationSpy).toHaveBeenCalledWith({ pageNumber: 1, pageSize: 20 });
   });
 

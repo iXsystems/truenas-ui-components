@@ -43,6 +43,12 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
    * doesn't accurately describe the field's purpose to screen readers.
    */
   ariaLabel = input<string | undefined>(undefined);
+  /**
+   * Message shown inside the dropdown when no options (and no option groups)
+   * are available. Defaults to the English `'No options available'`; consumers
+   * with i18n requirements can pass a translated string.
+   */
+  noOptionsLabel = input<string>('No options available');
   disabled = input<boolean>(false);
   testId = input<string>('');
   multiple = input<boolean>(false);
