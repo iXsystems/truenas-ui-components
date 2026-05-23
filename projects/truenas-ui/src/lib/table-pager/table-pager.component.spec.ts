@@ -375,4 +375,18 @@ describe('TnTablePagerComponent — dataProvider mode', () => {
 
     expect(component['effectiveTotalItems']()).toBe(10);
   });
+
+  it('should render the provider total in the "of N" label (not the unused totalItems input)', () => {
+    // Regression: previously the template read `totalItems()` for the "of N"
+    // label, which stayed at 0 when consumers only bound [dataProvider] —
+    // producing "1 – 10 of 0".
+    const { provider } = createProvider({ totalRows: 47 });
+    fixture.componentRef.setInput('dataProvider', provider);
+    fixture.componentRef.setInput('pageSize', 10);
+    fixture.detectChanges();
+
+    const rangeText = (fixture.nativeElement.querySelector('.tn-table-pager__range') as HTMLElement)
+      .textContent?.replace(/\s+/g, ' ').trim();
+    expect(rangeText).toBe('1 – 10 of 47');
+  });
 });

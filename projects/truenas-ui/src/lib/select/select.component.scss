@@ -144,6 +144,15 @@
     background-color: var(--tn-alt-bg2, #f8f9fa) !important;
   }
 
+  // Keyboard cursor — driven by `focusedIndex` in the component, surfaced to
+  // screen readers via aria-activedescendant on the trigger. Visually distinct
+  // from `.selected` (which is the persistent picked value).
+  &.focused {
+    background-color: var(--tn-alt-bg1, #f1f3f5) !important;
+    outline: 2px solid var(--tn-primary, #007bff);
+    outline-offset: -2px;
+  }
+
   &.selected {
     background-color: var(--tn-alt-bg1, #f8f9fa) !important;
     color: var(--tn-fg1, #212529);

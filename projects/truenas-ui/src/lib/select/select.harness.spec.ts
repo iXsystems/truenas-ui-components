@@ -264,6 +264,122 @@ describe('TnSelectHarness', () => {
     });
   });
 
+  describe('keyboard navigation', () => {
+    beforeEach(() => {
+      // The outer beforeEach intentionally skips this for the harness suites
+      // (the harness `open()` runs CD internally). Keyboard tests dispatch raw
+      // events instead, so we need inputs propagated upfront.
+      fixture.detectChanges();
+    });
+
+    function pressKey(key: string): void {
+      const trigger = fixture.nativeElement.querySelector('.tn-select-trigger') as HTMLElement;
+      trigger.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+      fixture.detectChanges();
+    }
+
+    function focusedOptionLabel(): string | null {
+      const focused = fixture.nativeElement.querySelector('.tn-select-option.focused');
+      return focused?.textContent?.trim() ?? null;
+    }
+
+    it('should open on ArrowDown and focus the first option', () => {
+      pressKey('ArrowDown');
+      expect(fixture.nativeElement.querySelector('.tn-select-dropdown')).not.toBeNull();
+      expect(focusedOptionLabel()).toBe('Apple');
+    });
+
+    it('should focus the selected option when opening with a current value', () => {
+      hostComponent.selectedValue = 'cherry';
+      // Simulate writeValue via setting selected via component public API by
+      // toggling through the trigger after picking from the existing options.
+      // Easier: directly drive via host's options + open.
+      const inst = fixture.debugElement.children[0].componentInstance as { writeValue: (v: string) => void };
+      inst.writeValue('cherry');
+      fixture.detectChanges();
+
+      pressKey('Enter'); // open
+      expect(focusedOptionLabel()).toBe('Cherry');
+    });
+
+    it('should move focus with ArrowDown / ArrowUp', () => {
+      pressKey('ArrowDown'); // opens, focuses Apple
+      pressKey('ArrowDown'); // Banana
+      expect(focusedOptionLabel()).toBe('Banana');
+      pressKey('ArrowDown'); // Cherry
+      expect(focusedOptionLabel()).toBe('Cherry');
+      pressKey('ArrowUp');   // Banana
+      expect(focusedOptionLabel()).toBe('Banana');
+    });
+
+    it('should wrap when moving past the ends', () => {
+      pressKey('ArrowDown');
+      pressKey('ArrowUp'); // wraps to last
+      expect(focusedOptionLabel()).toBe('Cherry');
+      pressKey('ArrowDown'); // wraps back to first
+      expect(focusedOptionLabel()).toBe('Apple');
+    });
+
+    it('should jump with Home / End', () => {
+      pressKey('ArrowDown'); // open + Apple
+      pressKey('End');
+      expect(focusedOptionLabel()).toBe('Cherry');
+      pressKey('Home');
+      expect(focusedOptionLabel()).toBe('Apple');
+    });
+
+    it('should select the focused option on Enter and close', () => {
+      pressKey('ArrowDown'); // open + Apple
+      pressKey('ArrowDown'); // Banana
+      pressKey('Enter');
+
+      expect(fixture.nativeElement.querySelector('.tn-select-dropdown')).toBeNull();
+      expect(hostComponent.selectedValue).toBe('banana');
+    });
+
+    it('should close and restore focus on Escape', () => {
+      const trigger = fixture.nativeElement.querySelector('.tn-select-trigger') as HTMLElement;
+      const focusSpy = jest.spyOn(trigger, 'focus');
+
+      pressKey('ArrowDown'); // open
+      expect(fixture.nativeElement.querySelector('.tn-select-dropdown')).not.toBeNull();
+
+      pressKey('Escape');
+      expect(fixture.nativeElement.querySelector('.tn-select-dropdown')).toBeNull();
+      expect(focusSpy).toHaveBeenCalled();
+    });
+
+    it('should restore focus to trigger after option selection', () => {
+      const trigger = fixture.nativeElement.querySelector('.tn-select-trigger') as HTMLElement;
+      const focusSpy = jest.spyOn(trigger, 'focus');
+
+      pressKey('ArrowDown');
+      pressKey('Enter');
+
+      expect(focusSpy).toHaveBeenCalled();
+    });
+
+    it('should expose the focused option via aria-activedescendant', () => {
+      pressKey('ArrowDown'); // open + Apple
+      const trigger = fixture.nativeElement.querySelector('.tn-select-trigger');
+      const activeId = trigger.getAttribute('aria-activedescendant');
+      expect(activeId).not.toBeNull();
+      const target = fixture.nativeElement.querySelector(`#${activeId}`);
+      expect(target?.textContent?.trim()).toBe('Apple');
+    });
+
+    it('should close (without restoring focus) on Tab so the next element gets it', () => {
+      const trigger = fixture.nativeElement.querySelector('.tn-select-trigger') as HTMLElement;
+      const focusSpy = jest.spyOn(trigger, 'focus');
+
+      pressKey('ArrowDown');
+      pressKey('Tab');
+
+      expect(fixture.nativeElement.querySelector('.tn-select-dropdown')).toBeNull();
+      expect(focusSpy).not.toHaveBeenCalled();
+    });
+  });
+
   describe('selectOption', () => {
     it('should select an option by exact text', async () => {
       const select = await loader.getHarness(TnSelectHarness);

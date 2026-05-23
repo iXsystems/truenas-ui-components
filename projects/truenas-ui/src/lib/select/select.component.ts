@@ -1,5 +1,5 @@
 
-import { ChangeDetectorRef, Component, computed, effect, ElementRef, forwardRef, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, computed, effect, ElementRef, forwardRef, inject, input, output, signal, viewChild } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
@@ -38,6 +38,15 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
   disabled = input<boolean>(false);
   testId = input<string>('');
   multiple = input<boolean>(false);
+
+  /**
+   * Custom comparator for matching option values against the selected value(s).
+   *
+   * When the option values are objects, **provide this** — the built-in
+   * fallback uses `JSON.stringify`, which is key-order dependent and can
+   * produce false negatives for structurally equal objects. For primitives the
+   * default identity check is fine.
+   */
   compareWith = input<(a: T | null, b: T | null) => boolean>();
 
   selectionChange = output<T>();
@@ -49,6 +58,8 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
   protected dropdownPosition = signal<'below' | 'above'>('below');
   protected selectedValue = signal<T | null>(null);
   protected selectedValues = signal<T[]>([]);
+  /** Index into `flatOptions` of the keyboard-focused row (-1 when none). */
+  protected focusedIndex = signal<number>(-1);
   private formDisabled = signal<boolean>(false);
 
   // Approximate max-height of the dropdown (kept in sync with the
@@ -59,11 +70,48 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
+  /**
+   * Flattened option list (ungrouped + grouped, in render order). The keyboard
+   * navigation walks this list — entries from disabled groups are kept but
+   * marked disabled so the cursor skips over them correctly.
+   */
+  protected flatOptions = computed<TnSelectOption<T>[]>(() => {
+    const flat: TnSelectOption<T>[] = [...this.options()];
+    for (const group of this.optionGroups()) {
+      for (const opt of group.options) {
+        flat.push({ ...opt, disabled: opt.disabled || group.disabled });
+      }
+    }
+    return flat;
+  });
+
+  /**
+   * Starting flat-index of each option group, used by the template to
+   * translate a (group, option) pair into the matching `flatOptions` index.
+   */
+  protected groupOffsets = computed<number[]>(() => {
+    const offsets: number[] = [];
+    let offset = this.options().length;
+    for (const group of this.optionGroups()) {
+      offsets.push(offset);
+      offset += group.options.length;
+    }
+    return offsets;
+  });
+
+  /** `aria-activedescendant` id for the focused option (or null). */
+  protected activeOptionId = computed<string | null>(() => {
+    const idx = this.focusedIndex();
+    if (idx < 0 || !this.isOpen()) { return null; }
+    return this.optionId(idx);
+  });
+
   private onChange = (_value: T | T[] | null) => {};
   private onTouched = () => {};
 
   private elementRef = inject(ElementRef);
   private cdr = inject(ChangeDetectorRef);
+  protected triggerEl = viewChild<ElementRef<HTMLElement>>('trigger');
 
   constructor() {
     // Click-outside detection using effect
@@ -71,7 +119,9 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
       if (this.isOpen()) {
         const clickListener = (event: Event) => {
           if (!this.elementRef.nativeElement.contains(event.target as Node)) {
-            this.closeDropdown();
+            // Click outside → close, but don't steal focus from whatever the
+            // user clicked on.
+            this.closeDropdown({ restoreFocus: false });
           }
         };
 
@@ -86,6 +136,14 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
         };
       }
       return undefined;
+    });
+
+    // When the dropdown opens, scroll the focused option into view.
+    effect(() => {
+      if (!this.isOpen()) { return; }
+      const idx = this.focusedIndex();
+      if (idx < 0) { return; }
+      queueMicrotask(() => this.scrollFocusedIntoView());
     });
   }
 
@@ -117,19 +175,66 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
   // Component methods
   toggleDropdown(): void {
     if (this.isDisabled()) {return;}
-    const willOpen = !this.isOpen();
-    if (willOpen) {
-      this.dropdownPosition.set(this.computeDropdownPosition());
-    }
-    this.isOpen.set(willOpen);
-    if (!willOpen) {
-      this.onTouched();
+    if (this.isOpen()) {
+      this.closeDropdown();
+    } else {
+      this.openDropdown();
     }
   }
 
-  closeDropdown(): void {
+  /**
+   * Open the dropdown, seed the keyboard cursor on the currently-selected
+   * option (or the first focusable one), and decide whether to flip up.
+   */
+  private openDropdown(): void {
+    if (this.isDisabled()) { return; }
+    this.dropdownPosition.set(this.computeDropdownPosition());
+    this.isOpen.set(true);
+    this.focusedIndex.set(this.initialFocusIndex());
+  }
+
+  /**
+   * Close the dropdown.
+   *
+   * @param restoreFocus When `true` (default), return focus to the trigger so
+   *   keyboard users land somewhere sensible. Pass `false` for click-outside
+   *   so we don't steal focus from the element the user just navigated to.
+   */
+  closeDropdown(options: { restoreFocus?: boolean } = {}): void {
+    const restoreFocus = options.restoreFocus ?? true;
+    if (!this.isOpen()) { return; }
     this.isOpen.set(false);
+    this.focusedIndex.set(-1);
     this.onTouched();
+    if (restoreFocus) {
+      this.triggerEl()?.nativeElement.focus({ preventScroll: true });
+    }
+  }
+
+  /** Picks the initial focused-row index when the dropdown opens. */
+  private initialFocusIndex(): number {
+    const flat = this.flatOptions();
+    if (flat.length === 0) { return -1; }
+
+    // Prefer the currently selected option (or first selected in multi mode).
+    if (this.multiple()) {
+      const values = this.selectedValues();
+      if (values.length > 0) {
+        const idx = flat.findIndex((opt) =>
+          values.some((v) => this.compareValues(v, opt.value)),
+        );
+        if (idx >= 0 && !flat[idx].disabled) { return idx; }
+      }
+    } else {
+      const value = this.selectedValue();
+      if (value !== null && value !== undefined) {
+        const idx = flat.findIndex((opt) => this.compareValues(opt.value, value));
+        if (idx >= 0 && !flat[idx].disabled) { return idx; }
+      }
+    }
+
+    // Otherwise the first non-disabled option.
+    return flat.findIndex((opt) => !opt.disabled);
   }
 
   /**
@@ -197,6 +302,11 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
     return this.compareValues(this.selectedValue(), option.value);
   }
 
+  /** Build a stable DOM id for the option at `index` for aria-activedescendant. */
+  protected optionId(index: number): string {
+    return `tn-select-${this.testId() || 'default'}-option-${index}`;
+  }
+
   getDisplayText = computed(() => {
     if (this.multiple()) {
       const values = this.selectedValues();
@@ -235,6 +345,12 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
     return this.options().length > 0 || this.optionGroups().length > 0;
   });
 
+  /**
+   * Compares two option values for equality. Uses `compareWith` if provided,
+   * otherwise identity (`===`). For object values it falls back to
+   * `JSON.stringify`, which is key-order dependent — consumers with object
+   * values should provide `compareWith` to avoid subtle bugs.
+   */
   private compareValues(a: T | null, b: T | null): boolean {
     const customCompare = this.compareWith();
     if (customCompare) {
@@ -247,17 +363,30 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
     return false;
   }
 
-  // Keyboard navigation
-  // TODO: Add ArrowUp/ArrowDown option navigation, Enter/Space toggle,
-  // and aria-activedescendant tracking for full keyboard accessibility.
+  /**
+   * Keyboard handling on the trigger (focus stays on the trigger while the
+   * dropdown is open — options use mousedown-preventDefault to avoid stealing
+   * it). Implements the WAI-ARIA combobox pattern subset we need:
+   *
+   * - **Enter / Space**: open closed dropdown, or select the focused row
+   *   (toggle in multi-mode).
+   * - **ArrowDown / ArrowUp**: move the focused row; opens the dropdown first
+   *   if it's closed.
+   * - **Home / End**: jump to first / last focusable row (when open).
+   * - **Escape**: close and restore focus to the trigger.
+   * - **Tab**: close without preventing default so focus moves to the next
+   *   element naturally.
+   */
   onKeydown(event: KeyboardEvent): void {
     switch (event.key) {
       case 'Enter':
       case ' ':
-        if (!this.isOpen()) {
-          this.toggleDropdown();
-          event.preventDefault();
+        if (this.isOpen()) {
+          this.selectFocused();
+        } else {
+          this.openDropdown();
         }
+        event.preventDefault();
         break;
       case 'Escape':
         if (this.isOpen()) {
@@ -267,10 +396,95 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
         break;
       case 'ArrowDown':
         if (!this.isOpen()) {
-          this.toggleDropdown();
+          this.openDropdown();
+        } else {
+          this.moveFocus(1);
         }
         event.preventDefault();
         break;
+      case 'ArrowUp':
+        if (!this.isOpen()) {
+          this.openDropdown();
+        } else {
+          this.moveFocus(-1);
+        }
+        event.preventDefault();
+        break;
+      case 'Home':
+        if (this.isOpen()) {
+          this.moveFocusTo(0, 1);
+          event.preventDefault();
+        }
+        break;
+      case 'End':
+        if (this.isOpen()) {
+          this.moveFocusTo(this.flatOptions().length - 1, -1);
+          event.preventDefault();
+        }
+        break;
+      case 'Tab':
+        // Let the browser move focus to the next element; just close.
+        if (this.isOpen()) {
+          this.closeDropdown({ restoreFocus: false });
+        }
+        break;
     }
+  }
+
+  /** Step the focused row by ±1 (or more), skipping disabled options. */
+  private moveFocus(delta: 1 | -1): void {
+    const flat = this.flatOptions();
+    if (flat.length === 0) { return; }
+    let idx = this.focusedIndex();
+    for (let i = 0; i < flat.length; i++) {
+      idx = (idx + delta + flat.length) % flat.length;
+      if (!flat[idx].disabled) {
+        this.focusedIndex.set(idx);
+        this.scrollFocusedIntoView();
+        return;
+      }
+    }
+  }
+
+  /** Move focus to a specific index, scanning forward/backward to skip disabled. */
+  private moveFocusTo(start: number, step: 1 | -1): void {
+    const flat = this.flatOptions();
+    if (flat.length === 0) { return; }
+    let idx = start;
+    while (idx >= 0 && idx < flat.length) {
+      if (!flat[idx].disabled) {
+        this.focusedIndex.set(idx);
+        this.scrollFocusedIntoView();
+        return;
+      }
+      idx += step;
+    }
+  }
+
+  /** Select (or toggle, in multi-mode) the currently keyboard-focused row. */
+  private selectFocused(): void {
+    const idx = this.focusedIndex();
+    const flat = this.flatOptions();
+    if (idx < 0 || idx >= flat.length) { return; }
+    const opt = flat[idx];
+    if (opt.disabled) { return; }
+    if (this.multiple()) {
+      this.toggleOption(opt);
+    } else {
+      this.selectOption(opt);
+    }
+  }
+
+  /** Scrolls the keyboard-focused option into view if it's outside the dropdown's viewport. */
+  private scrollFocusedIntoView(): void {
+    const idx = this.focusedIndex();
+    if (idx < 0) { return; }
+    const host = this.elementRef.nativeElement as HTMLElement;
+    // Use attribute-equality instead of #id selectors so we don't need
+    // CSS.escape (unavailable in jsdom for tests) — option ids may contain
+    // characters that require escaping in #id form.
+    const el = host.querySelector<HTMLElement>(`[id="${this.optionId(idx)}"]`);
+    // jsdom doesn't implement scrollIntoView — guard so tests don't crash.
+    el?.scrollIntoView?.({ block: 'nearest' });
   }
 }

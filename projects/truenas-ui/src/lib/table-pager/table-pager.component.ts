@@ -3,11 +3,13 @@ import {
   Component,
   DestroyRef,
   InjectionToken,
+  type Signal,
   ViewEncapsulation,
   computed,
   effect,
   inject,
   input,
+  isSignal,
   model,
   output,
   signal,
@@ -48,11 +50,13 @@ export const TN_TABLE_PAGER_DEFAULT_LABELS: TnTablePagerLabels = {
 };
 
 /**
- * DI token for app-wide default labels. Provide it at the root injector to
- * supply translated strings — `tn-table-pager` reads from it once and uses each
- * value as the default for the corresponding label input.
+ * DI token for app-wide default labels. Provide either a static object or a
+ * `Signal<TnTablePagerLabels>` — the latter lets the pager react to language
+ * changes when the consumer wires it up to an i18n service.
+ *
+ * Explicit input bindings on `<tn-table-pager>` still win over these defaults.
  */
-export const TN_TABLE_PAGER_LABELS = new InjectionToken<TnTablePagerLabels>(
+export const TN_TABLE_PAGER_LABELS = new InjectionToken<TnTablePagerLabels | Signal<TnTablePagerLabels>>(
   'TN_TABLE_PAGER_LABELS',
   { providedIn: 'root', factory: () => TN_TABLE_PAGER_DEFAULT_LABELS },
 );
@@ -128,7 +132,13 @@ export interface TnTableDataProvider {
 })
 export class TnTablePagerComponent {
   private destroyRef = inject(DestroyRef);
-  private defaultLabels = inject(TN_TABLE_PAGER_LABELS);
+
+  /**
+   * Normalize the injected token into a Signal so consumers can supply either
+   * a plain object or a reactive signal (e.g. derived from a TranslateService's
+   * onLangChange) and the pager re-renders when labels change.
+   */
+  private readonly defaultLabels: Signal<TnTablePagerLabels>;
 
   /** 1-based index of the currently displayed page. */
   currentPage = model<number>(1);
@@ -155,17 +165,26 @@ export class TnTablePagerComponent {
    */
   dataProvider = input<TnTableDataProvider | undefined>(undefined);
 
-  /** Localized label rendered next to the page-size dropdown. */
-  itemsPerPageLabel = input<string>(this.defaultLabels.itemsPerPage);
+  /**
+   * Label inputs are nullable on purpose: the template reads the resolved
+   * `*Label` computed signals below, which fall back to the DI-provided default
+   * (a signal — so language changes propagate live). An explicit input binding
+   * always wins.
+   */
+  itemsPerPageLabel = input<string | undefined>(undefined);
+  ofLabel = input<string | undefined>(undefined);
+  firstPageLabel = input<string | undefined>(undefined);
+  previousPageLabel = input<string | undefined>(undefined);
+  nextPageLabel = input<string | undefined>(undefined);
+  lastPageLabel = input<string | undefined>(undefined);
 
-  /** Localized "of" connector between the range and the total. */
-  ofLabel = input<string>(this.defaultLabels.of);
-
-  /** Localized aria-labels for the four nav buttons. */
-  firstPageLabel = input<string>(this.defaultLabels.firstPage);
-  previousPageLabel = input<string>(this.defaultLabels.previousPage);
-  nextPageLabel = input<string>(this.defaultLabels.nextPage);
-  lastPageLabel = input<string>(this.defaultLabels.lastPage);
+  /** Resolved labels: explicit input takes precedence over the DI default. */
+  protected resolvedItemsPerPageLabel = computed(() => this.itemsPerPageLabel() ?? this.defaultLabels().itemsPerPage);
+  protected resolvedOfLabel = computed(() => this.ofLabel() ?? this.defaultLabels().of);
+  protected resolvedFirstPageLabel = computed(() => this.firstPageLabel() ?? this.defaultLabels().firstPage);
+  protected resolvedPreviousPageLabel = computed(() => this.previousPageLabel() ?? this.defaultLabels().previousPage);
+  protected resolvedNextPageLabel = computed(() => this.nextPageLabel() ?? this.defaultLabels().nextPage);
+  protected resolvedLastPageLabel = computed(() => this.lastPageLabel() ?? this.defaultLabels().lastPage);
 
   /** Emits the new 1-based page number whenever the user navigates. */
   pageChange = output<number>();
@@ -217,6 +236,9 @@ export class TnTablePagerComponent {
   );
 
   constructor() {
+    const provided = inject(TN_TABLE_PAGER_LABELS);
+    this.defaultLabels = isSignal(provided) ? provided : signal(provided).asReadonly();
+
     // When a dataProvider becomes available, push the current pagination to it
     // once and subscribe to its updates. `untracked` keeps the provider's
     // imperative reads out of the reactive graph so this effect only re-runs
