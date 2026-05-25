@@ -1,0 +1,45 @@
+:host {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 10px;
+  background-color: var(--tn-bg2);
+  border: 1px solid var(--tn-lines);
+  color: var(--tn-fg2);
+}
+
+.tn-table-pager__page-size {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tn-table-pager__label {
+  white-space: nowrap;
+}
+
+.tn-table-pager__size-select {
+  min-width: 84px;
+}
+
+.tn-table-pager__range {
+  white-space: nowrap;
+}
+
+.tn-table-pager__buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+@media (max-width: 600px) {
+  :host {
+    gap: 8px;
+  }
+
+  .tn-table-pager__page-size {
+    gap: 4px;
+  }
+}

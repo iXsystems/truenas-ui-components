@@ -232,6 +232,152 @@ describe('TnSelectHarness', () => {
       await select.close();
       expect(await select.isOpen()).toBe(false);
     });
+
+    it('should open below by default when there is room', async () => {
+      const select = await loader.getHarness(TnSelectHarness);
+      // jsdom defaults to a tall enough viewport that there's plenty of room.
+      await select.open();
+      const dropdown = fixture.nativeElement.querySelector('.tn-select-dropdown');
+      expect(dropdown).not.toBeNull();
+      expect(dropdown.classList.contains('tn-select-dropdown--above')).toBe(false);
+    });
+
+    it('should flip above when there is no room below', async () => {
+      const trigger = fixture.nativeElement.querySelector('.tn-select-trigger');
+      // Pin the trigger to the bottom of the viewport so spaceBelow is ~0.
+      jest.spyOn(trigger, 'getBoundingClientRect').mockReturnValue({
+        top: window.innerHeight - 30,
+        bottom: window.innerHeight - 5,
+        left: 0,
+        right: 200,
+        width: 200,
+        height: 25,
+        x: 0,
+        y: window.innerHeight - 30,
+        toJSON: () => ({}),
+      } as DOMRect);
+
+      const select = await loader.getHarness(TnSelectHarness);
+      await select.open();
+      const dropdown = fixture.nativeElement.querySelector('.tn-select-dropdown');
+      expect(dropdown.classList.contains('tn-select-dropdown--above')).toBe(true);
+    });
+  });
+
+  describe('keyboard navigation', () => {
+    beforeEach(() => {
+      // The outer beforeEach intentionally skips this for the harness suites
+      // (the harness `open()` runs CD internally). Keyboard tests dispatch raw
+      // events instead, so we need inputs propagated upfront.
+      fixture.detectChanges();
+    });
+
+    function pressKey(key: string): void {
+      const trigger = fixture.nativeElement.querySelector('.tn-select-trigger') as HTMLElement;
+      trigger.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+      fixture.detectChanges();
+    }
+
+    function focusedOptionLabel(): string | null {
+      const focused = fixture.nativeElement.querySelector('.tn-select-option.focused');
+      return focused?.textContent?.trim() ?? null;
+    }
+
+    it('should open on ArrowDown and focus the first option', () => {
+      pressKey('ArrowDown');
+      expect(fixture.nativeElement.querySelector('.tn-select-dropdown')).not.toBeNull();
+      expect(focusedOptionLabel()).toBe('Apple');
+    });
+
+    it('should focus the selected option when opening with a current value', () => {
+      hostComponent.selectedValue = 'cherry';
+      // Simulate writeValue via setting selected via component public API by
+      // toggling through the trigger after picking from the existing options.
+      // Easier: directly drive via host's options + open.
+      const inst = fixture.debugElement.children[0].componentInstance as { writeValue: (v: string) => void };
+      inst.writeValue('cherry');
+      fixture.detectChanges();
+
+      pressKey('Enter'); // open
+      expect(focusedOptionLabel()).toBe('Cherry');
+    });
+
+    it('should move focus with ArrowDown / ArrowUp', () => {
+      pressKey('ArrowDown'); // opens, focuses Apple
+      pressKey('ArrowDown'); // Banana
+      expect(focusedOptionLabel()).toBe('Banana');
+      pressKey('ArrowDown'); // Cherry
+      expect(focusedOptionLabel()).toBe('Cherry');
+      pressKey('ArrowUp');   // Banana
+      expect(focusedOptionLabel()).toBe('Banana');
+    });
+
+    it('should wrap when moving past the ends', () => {
+      pressKey('ArrowDown');
+      pressKey('ArrowUp'); // wraps to last
+      expect(focusedOptionLabel()).toBe('Cherry');
+      pressKey('ArrowDown'); // wraps back to first
+      expect(focusedOptionLabel()).toBe('Apple');
+    });
+
+    it('should jump with Home / End', () => {
+      pressKey('ArrowDown'); // open + Apple
+      pressKey('End');
+      expect(focusedOptionLabel()).toBe('Cherry');
+      pressKey('Home');
+      expect(focusedOptionLabel()).toBe('Apple');
+    });
+
+    it('should select the focused option on Enter and close', () => {
+      pressKey('ArrowDown'); // open + Apple
+      pressKey('ArrowDown'); // Banana
+      pressKey('Enter');
+
+      expect(fixture.nativeElement.querySelector('.tn-select-dropdown')).toBeNull();
+      expect(hostComponent.selectedValue).toBe('banana');
+    });
+
+    it('should close and restore focus on Escape', () => {
+      const trigger = fixture.nativeElement.querySelector('.tn-select-trigger') as HTMLElement;
+      const focusSpy = jest.spyOn(trigger, 'focus');
+
+      pressKey('ArrowDown'); // open
+      expect(fixture.nativeElement.querySelector('.tn-select-dropdown')).not.toBeNull();
+
+      pressKey('Escape');
+      expect(fixture.nativeElement.querySelector('.tn-select-dropdown')).toBeNull();
+      expect(focusSpy).toHaveBeenCalled();
+    });
+
+    it('should restore focus to trigger after option selection', () => {
+      const trigger = fixture.nativeElement.querySelector('.tn-select-trigger') as HTMLElement;
+      const focusSpy = jest.spyOn(trigger, 'focus');
+
+      pressKey('ArrowDown');
+      pressKey('Enter');
+
+      expect(focusSpy).toHaveBeenCalled();
+    });
+
+    it('should expose the focused option via aria-activedescendant', () => {
+      pressKey('ArrowDown'); // open + Apple
+      const trigger = fixture.nativeElement.querySelector('.tn-select-trigger');
+      const activeId = trigger.getAttribute('aria-activedescendant');
+      expect(activeId).not.toBeNull();
+      const target = fixture.nativeElement.querySelector(`#${activeId}`);
+      expect(target?.textContent?.trim()).toBe('Apple');
+    });
+
+    it('should close (without restoring focus) on Tab so the next element gets it', () => {
+      const trigger = fixture.nativeElement.querySelector('.tn-select-trigger') as HTMLElement;
+      const focusSpy = jest.spyOn(trigger, 'focus');
+
+      pressKey('ArrowDown');
+      pressKey('Tab');
+
+      expect(fixture.nativeElement.querySelector('.tn-select-dropdown')).toBeNull();
+      expect(focusSpy).not.toHaveBeenCalled();
+    });
   });
 
   describe('selectOption', () => {
@@ -432,6 +578,42 @@ describe('TnSelectHarness - group disabled', () => {
     const select = await loader.getHarness(TnSelectHarness);
     await select.selectOption('Option A');
     expect(hostComponent.selectedValue).toBe('a');
+  });
+});
+
+@Component({
+  selector: 'tn-test-twin-host',
+  standalone: true,
+  imports: [TnSelectComponent],
+  template: `
+    <tn-select [options]="options" />
+    <tn-select [options]="options" />
+  `,
+})
+class TestTwinHostComponent {
+  options: TnSelectOption<string>[] = [
+    { value: 'apple', label: 'Apple' },
+    { value: 'banana', label: 'Banana' },
+  ];
+}
+
+describe('TnSelectComponent — id uniqueness without testId', () => {
+  it('should give each select instance a distinct option-id namespace', async () => {
+    await TestBed.configureTestingModule({ imports: [TestTwinHostComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(TestTwinHostComponent);
+    fixture.detectChanges();
+
+    const triggers = fixture.nativeElement.querySelectorAll('.tn-select-trigger') as NodeListOf<HTMLElement>;
+    triggers.forEach((t) => t.click());
+    fixture.detectChanges();
+
+    const ids = Array.from(
+      fixture.nativeElement.querySelectorAll('.tn-select-option') as NodeListOf<HTMLElement>,
+    ).map((el) => el.id);
+
+    // Two selects × two options each → four ids, all distinct.
+    expect(ids).toHaveLength(4);
+    expect(new Set(ids).size).toBe(4);
   });
 });
 

@@ -1,15 +1,18 @@
 <div class="tn-select-container" [tnTestId]="testId()">
   <!-- Select Trigger -->
   <div
+    #trigger
     class="tn-select-trigger"
     role="combobox"
-    tabindex="0"
+    [attr.tabindex]="isDisabled() ? -1 : 0"
     [class.disabled]="isDisabled()"
     [class.open]="isOpen()"
     [attr.aria-expanded]="isOpen()"
-    [attr.aria-haspopup]="true"
-    [attr.aria-controls]="isOpen() ? 'tn-select-dropdown-' + testId() : null"
-    [attr.aria-label]="placeholder()"
+    [attr.aria-haspopup]="'listbox'"
+    [attr.aria-controls]="isOpen() ? 'tn-select-dropdown-' + uniqueId() : null"
+    [attr.aria-activedescendant]="activeOptionId()"
+    [attr.aria-disabled]="isDisabled()"
+    [attr.aria-label]="ariaLabel() ?? placeholder()"
     (click)="toggleDropdown()"
     (keydown)="onKeydown($event)">
 
@@ -17,7 +20,7 @@
     <span
       class="tn-select-text"
       [class.placeholder]="multiple() ? selectedValues().length === 0 : (selectedValue() === null || selectedValue() === undefined)">
-      {{ getDisplayText() }}
+      {{ displayText() }}
     </span>
 
     <!-- Dropdown Arrow -->
@@ -33,25 +36,30 @@
     <div
       class="tn-select-dropdown"
       role="listbox"
+      [class.tn-select-dropdown--above]="dropdownPosition() === 'above'"
       [attr.aria-multiselectable]="multiple()"
-      [attr.id]="'tn-select-dropdown-' + testId()">
+      [attr.id]="'tn-select-dropdown-' + uniqueId()">
 
       <!-- Options List -->
+      <!-- Options follow the WAI-ARIA combobox pattern: focus stays on the
+           trigger, navigation is via the trigger's keydown handler and
+           aria-activedescendant. Options handle click only, by design — they
+           must not steal focus on mousedown. -->
       <div class="tn-select-options">
         <!-- Regular Options -->
-        @for (option of options(); track $index) {
+        @for (option of options(); track $index; let i = $index) {
+          <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
           <div
             class="tn-select-option"
             role="option"
-            [attr.tabindex]="option.disabled ? null : 0"
+            [id]="optionId(i)"
             [class.selected]="isOptionSelected(option)"
             [class.disabled]="option.disabled"
+            [class.focused]="focusedIndex() === i"
             [attr.aria-selected]="isOptionSelected(option)"
             [attr.aria-disabled]="option.disabled"
             (mousedown)="$event.preventDefault()"
-            (click)="onOptionClick(option)"
-            (keydown.enter)="onOptionClick(option)"
-            (keydown.space)="onOptionClick(option)">
+            (click)="onOptionClick(option)">
             @if (multiple()) {
               <tn-checkbox
                 class="tn-select-check"
@@ -65,7 +73,7 @@
         }
 
         <!-- Option Groups -->
-        @for (group of optionGroups(); track $index; let isFirst = $first) {
+        @for (group of optionGroups(); track $index; let groupIdx = $index; let isFirst = $first) {
           <!-- Group Separator (not shown before first group if we have regular options) -->
           @if (!isFirst || options().length > 0) {
             <div
@@ -74,29 +82,29 @@
             </div>
           }
 
-          <div role="group" [attr.aria-labelledby]="'tn-select-group-' + testId() + '-' + $index">
+          <div role="group" [attr.aria-labelledby]="'tn-select-group-' + uniqueId() + '-' + groupIdx">
             <!-- Group Label -->
             <div
               class="tn-select-group-label"
-              [attr.id]="'tn-select-group-' + testId() + '-' + $index"
+              [attr.id]="'tn-select-group-' + uniqueId() + '-' + groupIdx"
               [class.disabled]="group.disabled">
               {{ group.label }}
             </div>
 
             <!-- Group Options -->
-            @for (option of group.options; track $index) {
+            @for (option of group.options; track $index; let optIdx = $index) {
+              <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
               <div
                 class="tn-select-option"
                 role="option"
-                [attr.tabindex]="option.disabled || group.disabled ? null : 0"
+                [id]="optionId(groupOffsets()[groupIdx] + optIdx)"
                 [class.selected]="isOptionSelected(option)"
                 [class.disabled]="option.disabled || group.disabled"
+                [class.focused]="focusedIndex() === groupOffsets()[groupIdx] + optIdx"
                 [attr.aria-selected]="isOptionSelected(option)"
                 [attr.aria-disabled]="option.disabled || group.disabled"
                 (mousedown)="$event.preventDefault()"
-                (click)="onOptionClick(option, !!group.disabled)"
-                (keydown.enter)="onOptionClick(option, !!group.disabled)"
-                (keydown.space)="onOptionClick(option, !!group.disabled)">
+                (click)="onOptionClick(option, !!group.disabled)">
                 @if (multiple()) {
                   <tn-checkbox
                     class="tn-select-check"
@@ -112,9 +120,9 @@
         }
 
         <!-- No Options Message -->
-        @if (!hasAnyOptions()) {
+        @if (!anyOptionsPresent()) {
           <div class="tn-select-no-options">
-            No options available
+            {{ noOptionsLabel() }}
           </div>
         }
       </div>
