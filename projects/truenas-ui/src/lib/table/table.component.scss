@@ -125,6 +125,17 @@
                     inset 0 0 0 2px var(--tn-primary);
       }
     }
+
+    // When a row is both --active and --clickable:focus-visible, both the
+    // active indicator and the focus ring target box-shadow on the first
+    // cell — without this compound rule the focus-visible rule above wins
+    // outright and the active indicator bar silently disappears. Compose
+    // both shadows here so the user can still see which row is active while
+    // it has keyboard focus.
+    &--active#{&}--clickable:focus-visible > .tn-table__cell:first-child {
+      box-shadow: inset 3px 0 0 0 var(--tn-table-active-indicator, var(--tn-primary, #007db3)),
+                  inset 0 0 0 2px var(--tn-primary);
+    }
   }
 
   &__cell {
