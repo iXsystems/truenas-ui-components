@@ -3,7 +3,7 @@ import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
 import type { AfterContentInit, OnDestroy, TemplateRef } from '@angular/core';
-import { Component, Directive, contentChildren, input, output, viewChild, computed, inject, ViewContainerRef } from '@angular/core';
+import { Component, Directive, ElementRef, contentChildren, input, output, viewChild, computed, inject, ViewContainerRef } from '@angular/core';
 import type { Subscription } from 'rxjs';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective } from '../test-id';
@@ -28,6 +28,7 @@ import { TnMenuItemComponent } from './menu-item.component';
 })
 export class TnMenuActivateHoverDirective implements AfterContentInit {
   private cdkMenu = inject(CdkMenu);
+  private elementRef = inject(ElementRef<HTMLElement>);
 
   ngAfterContentInit(): void {
     const stack = this.cdkMenu.menuStack;
@@ -49,15 +50,35 @@ export class TnMenuActivateHoverDirective implements AfterContentInit {
     // "disabled items aren't skipped" rather than a runtime crash. The CDK
     // guard test (menu.component.spec) will turn red so we notice and adapt.
     type WithKeyManager = {
-      keyManager?: { skipPredicate?: (fn: (item: { disabled: boolean }) => boolean) => unknown };
+      keyManager?: {
+        skipPredicate?: (fn: (item: { disabled: boolean }) => boolean) => unknown;
+        setActiveItem?: (index: number) => void;
+      };
     };
     const km = (this.cdkMenu as unknown as WithKeyManager).keyManager;
     km?.skipPredicate?.((item) => item.disabled);
 
-    // Set the active index to the first enabled item so the next ArrowDown
-    // advances correctly (instead of being a no-op while the manager "catches
-    // up" to where DOM focus already is).
-    this.cdkMenu.focusFirstItem('keyboard');
+    // Prefer the marked "selected" item when one exists — matches user
+    // expectation for option pickers (export format, sort key, etc.) where
+    // reopening the menu should land focus on the current choice, not always
+    // the first entry. Falls back to the first enabled item.
+    const host = this.elementRef.nativeElement as HTMLElement;
+    const items: HTMLElement[] = Array.from(
+      host.querySelectorAll('[cdkMenuItem]'),
+    ) as HTMLElement[];
+    const selectedIndex = items.findIndex(
+      (el: HTMLElement) => el.classList.contains('tn-menu-item--selected') && !el.hasAttribute('disabled'),
+    );
+    const selectedItem: HTMLElement | undefined = selectedIndex >= 0 ? items[selectedIndex] : undefined;
+    if (selectedItem && km?.setActiveItem) {
+      km.setActiveItem(selectedIndex);
+      selectedItem.focus();
+    } else {
+      // Set the active index to the first enabled item so the next ArrowDown
+      // advances correctly (instead of being a no-op while the manager "catches
+      // up" to where DOM focus already is).
+      this.cdkMenu.focusFirstItem('keyboard');
+    }
   }
 }
 

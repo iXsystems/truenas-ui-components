@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, output, computed } from '@angular/core';
+import type { AfterViewInit } from '@angular/core';
+import { Component, ElementRef, computed, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TnTestIdDirective } from '../test-id';
 
@@ -10,7 +11,7 @@ import { TnTestIdDirective } from '../test-id';
   templateUrl: './button.component.html',
   styleUrls: ['./button.component.scss'],
 })
-export class TnButtonComponent {
+export class TnButtonComponent implements AfterViewInit {
   size = 'large';
 
   primary = input<boolean>(false);
@@ -84,5 +85,32 @@ export class TnButtonComponent {
       return;
     }
     this.onClick.emit(event);
+  }
+
+  private hostRef = inject(ElementRef<HTMLElement>);
+
+  ngAfterViewInit(): void {
+    // The wrapped <button>/<a> is natively focusable. If a consumer also places
+    // the <tn-button> host into the tab order (commonly `tabindex="0"` for
+    // card-style focus management), both elements become tab stops — the user
+    // perceives a "double focus" on the same logical button.
+    //
+    // Forward any tabindex set on the host to the inner element and clear it
+    // from the host, so the button is a single tab stop with the focus ring
+    // landing on the styled inner element (the host has no visual styling).
+    // Also delegate `host.focus()` to the inner element so callers holding a
+    // ref to the host (FocusMonitor, MatMenuTrigger restore, etc.) focus
+    // something visible — same pattern used in TnIconButtonComponent.
+    const host = this.hostRef.nativeElement as HTMLElement;
+    const inner = host.querySelector(':scope > button, :scope > a') as HTMLElement | null;
+    if (!inner) {return;}
+
+    if (host.hasAttribute('tabindex')) {
+      const ti = host.getAttribute('tabindex');
+      if (ti !== null) {inner.setAttribute('tabindex', ti);}
+      host.removeAttribute('tabindex');
+    }
+
+    host.focus = (options?: FocusOptions) => inner.focus(options);
   }
 }
