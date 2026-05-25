@@ -90,6 +90,14 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
   private static instanceCounter = 0;
   private instanceId = `i${++TnSelectComponent.instanceCounter}`;
 
+  /**
+   * Id namespace used by all DOM ids the template emits (dropdown panel,
+   * option rows, group labels). Prefers `testId` when set so tests can target
+   * specific instances; otherwise falls back to a per-instance counter so two
+   * `<tn-select>`s on the same page never collide on `aria-controls`/group ids.
+   */
+  protected idNamespace = computed(() => this.testId() || this.instanceId);
+
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
@@ -100,7 +108,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    */
   navigableOptions = computed(() => {
     const result: { option: TnSelectOption<T>; id: string }[] = [];
-    const baseId = `tn-select-opt-${this.testId() || this.instanceId}`;
+    const baseId = `tn-select-opt-${this.idNamespace()}`;
     let i = 0;
     for (const opt of this.options()) {
       if (!opt.disabled) {
@@ -488,7 +496,6 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
         } else {
           this.activateFocusedOption();
         }
-        event.preventDefault();
         break;
 
       case 'Escape':

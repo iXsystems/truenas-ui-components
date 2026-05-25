@@ -111,15 +111,6 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   max-height: var(--tn-select-dropdown-max-height);
   overflow: hidden;
-
-  // Flip-up variant — anchor to the trigger's top edge so the dropdown grows
-  // upward instead of spilling past the viewport bottom.
-  &--above {
-    top: auto;
-    bottom: 100%;
-    margin-top: 0;
-    margin-bottom: 0.25rem;
-  }
 }
 
 .tn-select-options {
@@ -157,19 +148,11 @@
   }
 
   // Keyboard cursor — driven by `focusedIndex` in the component, surfaced to
-  // screen readers via aria-activedescendant on the trigger. Visually distinct
-  // from `.selected` via the outline; the background matches the selected
-  // shade intentionally.
+  // screen readers via aria-activedescendant on the trigger. Distinct from
+  // hover and from `.selected` so the user can tell which option
+  // ArrowDown/Up will activate.
   &.focused {
-    background-color: var(--tn-alt-bg1, #f1f3f5);
-    outline: 2px solid var(--tn-primary, #007bff);
-    outline-offset: -2px;
-  }
-
-  // Keyboard-focus highlight (aria-activedescendant). Distinct from hover and
-  // from .selected so the user can tell which option ArrowDown/Up will activate.
-  &.focused {
-    background-color: var(--tn-alt-bg2, #e8f4fd) !important;
+    background-color: var(--tn-alt-bg2, #e8f4fd);
     box-shadow: inset 2px 0 0 var(--tn-primary, #007bff);
   }
 

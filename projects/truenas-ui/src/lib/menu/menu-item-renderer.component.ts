@@ -22,10 +22,9 @@ import { TnMenuComponent } from './menu.component';
  * up through its host element instead, so each renderer instance sees the
  * `CdkMenu` it's actually rendered under (root or any nested submenu).
  *
- * @internal Exported only so the public barrel matches the rest of the
- * library convention; this component is an implementation detail of
- * `<tn-menu>` and depends on injecting `TnMenuComponent`, so it cannot be
- * used standalone. Do not rely on it from outside the menu package.
+ * @internal Implementation detail of `<tn-menu>`. Not re-exported from the
+ * menu barrel or `public-api.ts` because it depends on injecting
+ * `TnMenuComponent` from the host DI scope and cannot be used standalone.
  */
 @Component({
   selector: 'tn-menu-item-renderer',

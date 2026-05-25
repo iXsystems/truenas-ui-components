@@ -104,8 +104,17 @@ export class TnTableComponent<T = unknown> implements OnInit {
 
   /**
    * Marks a single row as "active" — adds the `tn-table__row--active` class
-   * and a left-side indicator bar. Matched by object identity against rows in
-   * `dataSource`. Set to `null` (default) to clear.
+   * and a left-side indicator bar. Set to `null` (default) to clear.
+   *
+   * **Matched by object identity (`===`)** against the row references in
+   * `dataSource`. Pass the exact reference you got from the data source (e.g.
+   * via the `rowClick` event or a lookup into `dataSource()`), not a
+   * structurally-equal copy — `{ id: 1 } !== { id: 1 }` and the row will not
+   * highlight. This differs from `tn-select`, which supports a `compareWith`
+   * input for object values; the table intentionally does not, because the
+   * common use case (clicking a row to mark it active) already gives the
+   * caller the original reference. If you need structural equality, look up
+   * the row by id in your data source before assigning here.
    */
   activeRow = input<T | null>(null);
 
