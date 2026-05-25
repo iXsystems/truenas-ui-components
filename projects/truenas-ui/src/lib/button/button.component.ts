@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, output, computed } from '@angular/core';
+import type { AfterViewInit } from '@angular/core';
+import { Component, ElementRef, computed, inject, input, output, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TnTestIdDirective } from '../test-id';
 
@@ -10,7 +11,7 @@ import { TnTestIdDirective } from '../test-id';
   templateUrl: './button.component.html',
   styleUrls: ['./button.component.scss'],
 })
-export class TnButtonComponent {
+export class TnButtonComponent implements AfterViewInit {
   size = 'large';
 
   primary = input<boolean>(false);
@@ -84,5 +85,37 @@ export class TnButtonComponent {
       return;
     }
     this.onClick.emit(event);
+  }
+
+  private hostRef = inject(ElementRef<HTMLElement>);
+  // The template renders exactly one of `<a [routerLink]>`, `<a [href]>`, or
+  // `<button>` via `@if/@else`, and each carries the `#button` ref — so this
+  // resolves to whichever variant is active. Using a viewChild instead of a
+  // `:scope > button, :scope > a` querySelector keeps the wiring resilient if
+  // the template ever wraps the inner element in an extra container.
+  private innerRef = viewChild.required<ElementRef<HTMLElement>>('button');
+
+  ngAfterViewInit(): void {
+    // The wrapped <button>/<a> is natively focusable. If a consumer also places
+    // the <tn-button> host into the tab order (commonly `tabindex="0"` for
+    // card-style focus management), both elements become tab stops — the user
+    // perceives a "double focus" on the same logical button.
+    //
+    // Forward any tabindex set on the host to the inner element and clear it
+    // from the host, so the button is a single tab stop with the focus ring
+    // landing on the styled inner element (the host has no visual styling).
+    // Also delegate `host.focus()` to the inner element so callers holding a
+    // ref to the host (FocusMonitor, MatMenuTrigger restore, etc.) focus
+    // something visible — same pattern used in TnIconButtonComponent.
+    const host = this.hostRef.nativeElement as HTMLElement;
+    const inner = this.innerRef().nativeElement;
+
+    if (host.hasAttribute('tabindex')) {
+      const ti = host.getAttribute('tabindex');
+      if (ti !== null) {inner.setAttribute('tabindex', ti);}
+      host.removeAttribute('tabindex');
+    }
+
+    host.focus = (options?: FocusOptions) => inner.focus(options);
   }
 }

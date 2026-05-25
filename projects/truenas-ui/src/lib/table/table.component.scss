@@ -2,6 +2,7 @@
 // reach the host element. Plain `.tn-table` selectors don't match the host.
 :host {
   display: block;
+  position: relative;
 }
 
 :host(.tn-table--bordered) {
@@ -45,8 +46,11 @@
       cursor: pointer;
       user-select: none;
 
+      // Derive hover from the topbar itself so contrast with --tn-topbar-txt is
+      // preserved across all themes (including blue/paper/high-contrast where
+      // --tn-alt-bg1 is near-white and would clash with light topbar text).
       &:hover {
-        background-color: var(--tn-alt-bg1);
+        background-color: color-mix(in srgb, var(--tn-topbar) 85%, var(--tn-topbar-txt));
       }
     }
   }
@@ -93,6 +97,45 @@
     &--expanded {
       background-color: var(--tn-alt-bg1);
     }
+
+    // Active row: lighter background + left-side colored bar. The bar is drawn
+    // as an inset shadow on the first cell so it avoids `position: relative`
+    // quirks on <tr>. Both colors are customizable via CSS custom properties
+    // (set by the `activeBg`/`activeIndicator` inputs on tn-table, or any
+    // ancestor) — defaults are `--tn-bg3` and `--tn-primary`.
+    &--active {
+      background-color: var(--tn-table-active-bg, var(--tn-bg3, #333333));
+    }
+
+    &--active > .tn-table__cell:first-child {
+      box-shadow: inset 3px 0 0 0 var(--tn-table-active-indicator, var(--tn-primary, #007db3));
+    }
+
+    &--clickable {
+      cursor: pointer;
+
+      &:focus-visible {
+        outline: none;
+      }
+
+      // Focus ring is drawn on the first cell so it doesn't clash with
+      // border-collapse and the active-row indicator.
+      &:focus-visible > .tn-table__cell:first-child {
+        box-shadow: inset 3px 0 0 0 var(--tn-primary),
+                    inset 0 0 0 2px var(--tn-primary);
+      }
+    }
+
+    // When a row is both --active and --clickable:focus-visible, both the
+    // active indicator and the focus ring target box-shadow on the first
+    // cell — without this compound rule the focus-visible rule above wins
+    // outright and the active indicator bar silently disappears. Compose
+    // both shadows here so the user can still see which row is active while
+    // it has keyboard focus.
+    &--active#{&}--clickable:focus-visible > .tn-table__cell:first-child {
+      box-shadow: inset 3px 0 0 0 var(--tn-table-active-indicator, var(--tn-primary, #007db3)),
+                  inset 0 0 0 2px var(--tn-primary);
+    }
   }
 
   &__cell {
@@ -100,9 +143,25 @@
     font-size: 14px;
     color: var(--tn-fg1);
     vertical-align: middle;
+    overflow: hidden;
+  }
+
+  // Inner flex container ensures cell content is vertically centered even when
+  // consumers wrap content in block-level elements or when adjacent cells make
+  // the row taller (wrapped text in one cell shouldn't push other cells to the
+  // top). Single-line content stays centered; multi-line content centers as a
+  // block.
+  &__cell-content {
+    display: flex;
+    align-items: center;
+    min-height: 24px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+
+    > * {
+      min-width: 0;
+    }
   }
 
   &__select-cell {
@@ -152,6 +211,29 @@
 
   &__detail-cell {
     padding: 16px;
+  }
+
+  // Loading overlay — sits on top of the table body so existing rows stay
+  // visible (dimmed) during reloads. Derive the dim from the table background
+  // so it adapts across light/dark themes instead of relying on a hardcoded
+  // black tint.
+  &__loading-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: color-mix(in srgb, var(--tn-bg2, #282828) 65%, transparent);
+    backdrop-filter: blur(1px);
+    pointer-events: all;
+    z-index: 1;
+    border-radius: 4px;
+  }
+
+  // While loading, prevent interaction with the table behind the overlay.
+  &--loading .tn-table__table {
+    pointer-events: none;
+    user-select: none;
   }
 
   // Dense variant

@@ -226,6 +226,28 @@ class ButtonToggleInitialValueTestComponent {
   multiControl = new FormControl<string[]>(['x', 'z']);
 }
 
+@Component({
+  selector: 'tn-button-toggle-for-loop-test',
+  standalone: true,
+  imports: [TnButtonToggleComponent, TnButtonToggleGroupComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-button-toggle-group [formControl]="control">
+      @for (option of options; track option.value) {
+        <tn-button-toggle [value]="option.value">{{ option.label }}</tn-button-toggle>
+      }
+    </tn-button-toggle-group>
+  `,
+})
+class ButtonToggleForLoopTestComponent {
+  control = new FormControl<string | null>('alert');
+  options = [
+    { value: 'alert', label: 'Alert' },
+    { value: 'warn', label: 'Warn' },
+    { value: 'info', label: 'Info' },
+  ];
+}
+
 describe('TnButtonToggleGroup — ControlValueAccessor', () => {
   let fixture: ComponentFixture<ButtonToggleCvaTestComponent>;
   let component: ButtonToggleCvaTestComponent;
@@ -335,5 +357,89 @@ describe('TnButtonToggleGroup — initial FormControl value', () => {
     expect(await toggles[0].isChecked()).toBe(true);  // X
     expect(await toggles[1].isChecked()).toBe(false);  // Y
     expect(await toggles[2].isChecked()).toBe(true);   // Z
+  });
+});
+
+describe('TnButtonToggleGroup — initial FormControl value with @for loop', () => {
+  let loader: HarnessLoader;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ButtonToggleForLoopTestComponent],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(ButtonToggleForLoopTestComponent);
+    fixture.detectChanges();
+    loader = TestbedHarnessEnvironment.loader(fixture);
+  });
+
+  it('should check the correct toggle when toggles are produced by @for', async () => {
+    const group = await loader.getHarness(TnButtonToggleGroupHarness);
+    const checked = await group.getCheckedToggle();
+    expect(checked).not.toBeNull();
+    expect(await checked!.getLabelText()).toContain('Alert');
+  });
+});
+
+@Component({
+  selector: 'tn-button-toggle-checked-style-test',
+  standalone: true,
+  imports: [TnButtonToggleComponent, TnButtonToggleGroupComponent],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-button-toggle-group
+      [checkedBg]="bg"
+      [checkedColor]="color"
+      [checkedBorder]="border">
+      <tn-button-toggle value="a">A</tn-button-toggle>
+      <tn-button-toggle value="b">B</tn-button-toggle>
+    </tn-button-toggle-group>
+  `,
+})
+class ButtonToggleCheckedStyleTestComponent {
+  bg: string | null = null;
+  color: string | null = null;
+  border: string | null = null;
+}
+
+describe('TnButtonToggleGroup — checked style inputs', () => {
+  let fixture: ComponentFixture<ButtonToggleCheckedStyleTestComponent>;
+  let component: ButtonToggleCheckedStyleTestComponent;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ButtonToggleCheckedStyleTestComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ButtonToggleCheckedStyleTestComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should leave CSS custom properties unset when inputs are null', () => {
+    const groupEl = fixture.nativeElement.querySelector('tn-button-toggle-group') as HTMLElement;
+    expect(groupEl.style.getPropertyValue('--tn-button-toggle-checked-bg')).toBe('');
+    expect(groupEl.style.getPropertyValue('--tn-button-toggle-checked-color')).toBe('');
+    expect(groupEl.style.getPropertyValue('--tn-button-toggle-checked-border')).toBe('');
+  });
+
+  it('should set the CSS custom properties from inputs', () => {
+    component.bg = '#71BF44';
+    component.color = '#ffffff';
+    component.border = '#5fa036';
+    fixture.detectChanges();
+
+    const groupEl = fixture.nativeElement.querySelector('tn-button-toggle-group') as HTMLElement;
+    expect(groupEl.style.getPropertyValue('--tn-button-toggle-checked-bg')).toBe('#71BF44');
+    expect(groupEl.style.getPropertyValue('--tn-button-toggle-checked-color')).toBe('#ffffff');
+    expect(groupEl.style.getPropertyValue('--tn-button-toggle-checked-border')).toBe('#5fa036');
+  });
+
+  it('should accept CSS var() references', () => {
+    component.bg = 'var(--tn-primary)';
+    fixture.detectChanges();
+
+    const groupEl = fixture.nativeElement.querySelector('tn-button-toggle-group') as HTMLElement;
+    expect(groupEl.style.getPropertyValue('--tn-button-toggle-checked-bg')).toBe('var(--tn-primary)');
   });
 });

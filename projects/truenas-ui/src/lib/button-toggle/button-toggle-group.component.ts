@@ -23,7 +23,10 @@ export type TnButtonToggleType = 'checkbox' | 'radio';
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   host: {
-    'class': 'tn-button-toggle-group'
+    'class': 'tn-button-toggle-group',
+    '[style.--tn-button-toggle-checked-bg]': 'checkedBg()',
+    '[style.--tn-button-toggle-checked-color]': 'checkedColor()',
+    '[style.--tn-button-toggle-checked-border]': 'checkedBorder()'
   }
 })
 export class TnButtonToggleGroupComponent implements ControlValueAccessor {
@@ -34,6 +37,25 @@ export class TnButtonToggleGroupComponent implements ControlValueAccessor {
   name = input<string>('');
   ariaLabel = input<string>('');
   ariaLabelledby = input<string>('');
+
+  /**
+   * Overrides the background color of checked toggles in this group. Accepts
+   * any CSS color value (`#hex`, `rgb()`, `var(--token)`, etc.). When null
+   * (default), falls back to `--tn-alt-bg2`.
+   */
+  checkedBg = input<string | null>(null);
+
+  /**
+   * Overrides the text color of checked toggles in this group. Defaults to
+   * `--tn-fg1` when null.
+   */
+  checkedColor = input<string | null>(null);
+
+  /**
+   * Overrides the border color of checked toggles in this group. Defaults to
+   * `--tn-lines` when null.
+   */
+  checkedBorder = input<string | null>(null);
   /**
    * Test-id applied to the group root. Rendered under whichever attribute name
    * is configured via `TN_TEST_ATTR` (default `data-testid`).
@@ -58,6 +80,10 @@ export class TnButtonToggleGroupComponent implements ControlValueAccessor {
       const toggles = this.buttonToggles();
       toggles.forEach(toggle => {
         toggle.buttonToggleGroup = this;
+        // Track each toggle's value signal so the effect re-runs after @for-driven
+        // bindings resolve. Without this, an initial value written before child
+        // value signals have propagated would never reach the toggles.
+        toggle.value();
       });
 
       // Re-apply stored value to toggles that weren't available during writeValue

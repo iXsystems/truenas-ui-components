@@ -66,7 +66,13 @@
         class="tn-table__row"
         [attr.data-row-index]="rowIdx"
         [class.tn-table__row--expandable]="expandable()"
-        [class.tn-table__row--expanded]="isRowExpanded(row)">
+        [class.tn-table__row--expanded]="isRowExpanded(row)"
+        [class.tn-table__row--active]="isRowActive(row)"
+        [class.tn-table__row--clickable]="clickable()"
+        [attr.tabindex]="clickable() ? 0 : null"
+        [attr.aria-selected]="clickable() ? isRowActive(row) : null"
+        (click)="onRowClick(row)"
+        (keydown)="onRowKeydown($event, row)">
         @for (column of effectiveDisplayedColumns(); track $index) {
           @if (column === '__select') {
             <td class="tn-table__cell tn-table__select-cell"
@@ -96,13 +102,15 @@
               class="tn-table__cell"
               [style.width]="getColumnDef(column)?.width()"
               [attr.data-column]="column">
-              @if (getColumnDef(column)?.cellTemplate(); as tmpl) {
-                <ng-container
-                  [ngTemplateOutlet]="tmpl"
-                  [ngTemplateOutletContext]="{ $implicit: row, column: column }" />
-              } @else {
-                <span>{{ getCellValue(row, column) }}</span>
-              }
+              <div class="tn-table__cell-content">
+                @if (getColumnDef(column)?.cellTemplate(); as tmpl) {
+                  <ng-container
+                    [ngTemplateOutlet]="tmpl"
+                    [ngTemplateOutletContext]="{ $implicit: row, column: column }" />
+                } @else {
+                  <span>{{ getCellValue(row, column) }}</span>
+                }
+              </div>
             </td>
           }
         }
@@ -124,9 +132,19 @@
   </tbody>
 </table>
 
-@if (data().length === 0) {
+@if (data().length === 0 && !loading()) {
   <tn-empty
     size="compact"
     [title]="emptyMessage()"
     [icon]="emptyIcon()" />
+}
+
+@if (loading()) {
+  <div
+    class="tn-table__loading-overlay"
+    role="status"
+    aria-live="polite"
+    [attr.aria-label]="loadingMessage()">
+    <tn-spinner [ariaLabel]="loadingMessage()" />
+  </div>
 }

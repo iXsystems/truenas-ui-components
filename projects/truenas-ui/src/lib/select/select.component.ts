@@ -1,7 +1,11 @@
 
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, ElementRef, forwardRef, inject, input, output, signal, viewChild } from '@angular/core';
+import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
+import { TemplatePortal } from '@angular/cdk/portal';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, ElementRef, forwardRef, inject, input, output, signal, viewChild, ViewContainerRef } from '@angular/core';
+import type { OnDestroy, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import type { Subscription } from 'rxjs';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
 import { TnTestIdDirective } from '../test-id';
 
@@ -32,7 +36,7 @@ export interface TnSelectOptionGroup<T = unknown> {
   styleUrls: ['./select.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
+export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnDestroy {
   options = input<TnSelectOption<T>[]>([]);
   optionGroups = input<TnSelectOptionGroup<T>[]>([]);
   placeholder = input<string>('Select an option');
@@ -60,6 +64,11 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
    * fallback uses `JSON.stringify`, which is key-order dependent and can
    * produce false negatives for structurally equal objects. For primitives the
    * default identity check is fine.
+   *
+   * @example
+   * ```ts
+   * compareWith = (a, b) => a?.id === b?.id;
+   * ```
    */
   compareWith = input<(a: T | null, b: T | null) => boolean>();
 
@@ -76,109 +85,83 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
   protected focusedIndex = signal<number>(-1);
   private formDisabled = signal<boolean>(false);
 
-  // Name of the CSS custom property that defines the dropdown's max-height
-  // (set in select.component.scss). Reading it via getComputedStyle keeps the
-  // flip-up heuristic in sync with the stylesheet — no duplicated constant.
-  private static readonly DROPDOWN_MAX_HEIGHT_VAR = '--tn-select-dropdown-max-height';
-  // Fallback used when getComputedStyle can't resolve the variable (older
-  // browsers, jsdom in some test configs).
-  private static readonly DROPDOWN_MAX_HEIGHT_FALLBACK = 200;
+  // Per-instance fallback id namespace so aria-activedescendant ids stay
+  // unique across selects when no `testId` is provided.
+  private static instanceCounter = 0;
+  private instanceId = `i${++TnSelectComponent.instanceCounter}`;
 
-  // Per-instance suffix used to namespace DOM ids when `testId` is empty.
-  // Without this, two `<tn-select>` elements with no testId would emit
-  // colliding option/dropdown/group ids, breaking aria-activedescendant.
-  // A random suffix is preferred over a monotonic counter so id values stay
-  // stable from test file to test file (a counter would grow unpredictably
-  // across suites and break snapshot tests).
-  private readonly fallbackId = `auto-${Math.random().toString(36).slice(2, 10)}`;
-  protected uniqueId = computed(() => this.testId() || this.fallbackId);
+  /**
+   * Id namespace used by all DOM ids the template emits (dropdown panel,
+   * option rows, group labels). Prefers `testId` when set so tests can target
+   * specific instances; otherwise falls back to a per-instance counter so two
+   * `<tn-select>`s on the same page never collide on `aria-controls`/group ids.
+   */
+  protected idNamespace = computed(() => this.testId() || this.instanceId);
 
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
   /**
-   * Flattened option list (ungrouped + grouped, in render order). The keyboard
-   * navigation walks this list — entries from disabled groups are kept but
-   * marked disabled so the cursor skips over them correctly.
+   * Selectable, non-disabled options in display order (regular options first,
+   * then groups). Used by keyboard navigation so we can skip disabled
+   * entries and group headers without a separate filter pass.
    */
-  protected flatOptions = computed<TnSelectOption<T>[]>(() => {
-    const flat: TnSelectOption<T>[] = [...this.options()];
+  navigableOptions = computed(() => {
+    const result: { option: TnSelectOption<T>; id: string }[] = [];
+    const baseId = `tn-select-opt-${this.idNamespace()}`;
+    let i = 0;
+    for (const opt of this.options()) {
+      if (!opt.disabled) {
+        result.push({ option: opt, id: `${baseId}-${i}` });
+      }
+      i++;
+    }
     for (const group of this.optionGroups()) {
       for (const opt of group.options) {
-        flat.push({ ...opt, disabled: opt.disabled || group.disabled });
+        if (!opt.disabled && !group.disabled) {
+          result.push({ option: opt, id: `${baseId}-${i}` });
+        }
+        i++;
       }
     }
-    return flat;
+    return result;
   });
 
-  /**
-   * Starting flat-index of each option group, used by the template to
-   * translate a (group, option) pair into the matching `flatOptions` index.
-   */
-  protected groupOffsets = computed<number[]>(() => {
-    const offsets: number[] = [];
-    let offset = this.options().length;
-    for (const group of this.optionGroups()) {
-      offsets.push(offset);
-      offset += group.options.length;
-    }
-    return offsets;
-  });
-
-  /** `aria-activedescendant` id for the focused option (or null). */
-  protected activeOptionId = computed<string | null>(() => {
+  /** Stable DOM id of the currently-highlighted option, for aria-activedescendant. */
+  focusedOptionId = computed(() => {
     const idx = this.focusedIndex();
-    if (idx < 0 || !this.isOpen()) { return null; }
-    return this.optionId(idx);
+    const nav = this.navigableOptions();
+    return idx >= 0 && idx < nav.length ? nav[idx].id : null;
   });
+
+  /** Stable DOM id for an option; matches what navigableOptions() assigns. */
+  optionId(option: TnSelectOption<T>): string | null {
+    const entry = this.navigableOptions().find((x) => x.option === option);
+    return entry?.id ?? null;
+  }
+
+  /** Whether `option` is the keyboard-highlighted item. */
+  isOptionFocused(option: TnSelectOption<T>): boolean {
+    const idx = this.focusedIndex();
+    const nav = this.navigableOptions();
+    return idx >= 0 && idx < nav.length && nav[idx].option === option;
+  }
 
   private onChange = (_value: T | T[] | null) => {};
   private onTouched = () => {};
 
   private elementRef = inject(ElementRef);
   private cdr = inject(ChangeDetectorRef);
-  protected triggerEl = viewChild<ElementRef<HTMLElement>>('trigger');
+  private overlay = inject(Overlay);
+  private viewContainerRef = inject(ViewContainerRef);
+  private triggerEl = viewChild.required<ElementRef<HTMLElement>>('triggerEl');
+  private dropdownTemplate = viewChild.required<TemplateRef<unknown>>('dropdownTemplate');
 
-  constructor() {
-    // Click-outside detection. Cleanup is registered via the `onCleanup`
-    // callback (returning a function from `effect()` does *not* register one) —
-    // which fires both when the effect re-runs and when the component's
-    // injector is destroyed, so the listener is removed even if the host is
-    // torn down while the dropdown is still open. The `disposed` flag prevents
-    // the listener from being attached at all if teardown races the deferred
-    // setTimeout — without it, a cleanup that fires between the timeout firing
-    // and addEventListener executing could leak a permanent listener.
-    effect((onCleanup) => {
-      if (!this.isOpen()) { return; }
-      let disposed = false;
-      const clickListener = (event: Event) => {
-        if (!this.elementRef.nativeElement.contains(event.target as Node)) {
-          // Click outside → close, but don't steal focus from whatever the
-          // user clicked on.
-          this.closeDropdown({ restoreFocus: false });
-        }
-      };
-      // Deferred so the click that opened the dropdown doesn't immediately
-      // close it on its bubble back up to the document.
-      const timeoutId = setTimeout(() => {
-        if (disposed) { return; }
-        document.addEventListener('click', clickListener);
-      }, 0);
-      onCleanup(() => {
-        disposed = true;
-        clearTimeout(timeoutId);
-        document.removeEventListener('click', clickListener);
-      });
-    });
+  private overlayRef?: OverlayRef;
+  private overlaySubs: Subscription[] = [];
 
-    // When the dropdown opens, scroll the focused option into view.
-    effect(() => {
-      if (!this.isOpen()) { return; }
-      const idx = this.focusedIndex();
-      if (idx < 0) { return; }
-      queueMicrotask(() => this.scrollFocusedIntoView());
-    });
-  }
+  // CDK Overlay handles outside-click detection and Escape; no constructor
+  // wiring needed. See openDropdown/closeDropdown.
 
   // ControlValueAccessor implementation
   writeValue(value: T | T[] | null): void {
@@ -215,95 +198,120 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
     }
   }
 
-  /**
-   * Open the dropdown, seed the keyboard cursor on the currently-selected
-   * option (or the first focusable one), and decide whether to flip up.
-   */
-  private openDropdown(): void {
-    if (this.isDisabled()) { return; }
-    this.dropdownPosition.set(this.computeDropdownPosition());
+  openDropdown(): void {
+    if (this.isDisabled() || this.isOpen()) {return;}
     this.isOpen.set(true);
-    this.focusedIndex.set(this.initialFocusIndex());
+
+    // Seed keyboard focus at the current selection when there is one;
+    // otherwise leave it unset so the next ArrowDown lands on the first item.
+    const selected = this.selectedValue();
+    if (selected !== null && selected !== undefined) {
+      const idx = this.navigableOptions().findIndex((x) =>
+        this.compareValues(x.option.value, selected),
+      );
+      this.focusedIndex.set(idx);
+    } else {
+      this.focusedIndex.set(-1);
+    }
+
+    this.attachOverlay();
   }
 
   /**
-   * Close the dropdown.
+   * Attach the dropdown panel as a CDK overlay anchored to the trigger.
    *
-   * @param restoreFocus When `true` (default), return focus to the trigger so
-   *   keyboard users land somewhere sensible. Pass `false` for click-outside
-   *   so we don't steal focus from the element the user just navigated to.
+   * Why an overlay (vs. an inline absolutely-positioned panel):
+   *   - Escapes parent `overflow: hidden`/clipping in surrounding layouts.
+   *   - `outsidePointerEvents()` notifies on outside pointerdown WITHOUT
+   *     intercepting the click (no backdrop) — so the user's click reaches
+   *     the underlying target while the select closes silently.
+   *   - Position is recomputed on scroll so the panel stays attached.
+   *   - Width is matched to the trigger so the panel doesn't jump in size.
    */
-  closeDropdown(options: { restoreFocus?: boolean } = {}): void {
-    const restoreFocus = options.restoreFocus ?? true;
-    if (!this.isOpen()) { return; }
+  private attachOverlay(): void {
+    const trigger = this.triggerEl().nativeElement;
+    const positionStrategy = this.overlay
+      .position()
+      .flexibleConnectedTo(trigger)
+      .withPositions([
+        { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
+        { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
+      ]);
+
+    this.overlayRef = this.overlay.create({
+      positionStrategy,
+      scrollStrategy: this.overlay.scrollStrategies.reposition(),
+      hasBackdrop: false,
+      width: trigger.offsetWidth,
+    });
+
+    const portal = new TemplatePortal(this.dropdownTemplate(), this.viewContainerRef);
+    this.overlayRef.attach(portal);
+
+    // Click-outside (non-intercepting). The pointer event still reaches the
+    // element the user clicked; we just notice and close.
+    //
+    // Important: ignore events whose target is inside the select host. A
+    // pointerdown on the trigger is "outside the overlay" from CDK's POV but
+    // it's our own toggle target — letting closeDropdown fire here races the
+    // trigger's click handler and the dropdown immediately reopens.
+    this.overlaySubs.push(
+      this.overlayRef.outsidePointerEvents().subscribe((event: MouseEvent) => {
+        const target = event.target as Node | null;
+        if (target && this.elementRef.nativeElement.contains(target)) {
+          return;
+        }
+        this.closeDropdown(false);
+      }),
+    );
+
+    // Escape as a fallback (the trigger keydown handler covers the common case,
+    // but if focus ever moves into the panel, this catches it too).
+    this.overlaySubs.push(
+      this.overlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {
+          event.preventDefault();
+          this.closeDropdown(true);
+        }
+      }),
+    );
+  }
+
+  private detachOverlay(): void {
+    this.overlaySubs.forEach((s) => s.unsubscribe());
+    this.overlaySubs = [];
+    this.overlayRef?.dispose();
+    this.overlayRef = undefined;
+  }
+
+  ngOnDestroy(): void {
+    // If the component is destroyed while the dropdown is open (e.g. router
+    // navigates away), closeDropdown() never runs — clean up directly here.
+    this.detachOverlay();
+  }
+
+  /**
+   * Closes the dropdown.
+   *
+   * @param restoreFocus When `true` (the default), returns focus to the
+   *   trigger. Used for explicit closes — Escape, Enter/Space activation,
+   *   option click — where the user is still interacting with the select.
+   *   Pass `false` for click-outside / blur paths so we don't steal focus
+   *   from the element the user actually navigated to.
+   */
+  closeDropdown(restoreFocus = true): void {
     this.isOpen.set(false);
     this.focusedIndex.set(-1);
+    this.detachOverlay();
     this.onTouched();
     if (restoreFocus) {
-      this.triggerEl()?.nativeElement.focus({ preventScroll: true });
+      // `focusVisible: true` (Chrome/Firefox) keeps the :focus-visible outline
+      // on the trigger after Escape / Enter / option-pick — without it,
+      // programmatic .focus() is treated as non-keyboard and the focus ring
+      // silently disappears, which users perceive as "focus lost". Safari
+      // ignores the option and falls back to its heuristic.
+      this.triggerEl().nativeElement.focus({ preventScroll: true, focusVisible: true } as FocusOptions);
     }
-  }
-
-  /** Picks the initial focused-row index when the dropdown opens. */
-  private initialFocusIndex(): number {
-    const flat = this.flatOptions();
-    if (flat.length === 0) { return -1; }
-
-    // Prefer the currently selected option (or first selected in multi mode).
-    if (this.multiple()) {
-      const values = this.selectedValues();
-      if (values.length > 0) {
-        const idx = flat.findIndex((opt) =>
-          values.some((v) => this.compareValues(v, opt.value)),
-        );
-        if (idx >= 0 && !flat[idx].disabled) { return idx; }
-      }
-    } else {
-      const value = this.selectedValue();
-      if (value !== null && value !== undefined) {
-        const idx = flat.findIndex((opt) => this.compareValues(opt.value, value));
-        if (idx >= 0 && !flat[idx].disabled) { return idx; }
-      }
-    }
-
-    // Otherwise the first non-disabled option.
-    return flat.findIndex((opt) => !opt.disabled);
-  }
-
-  /**
-   * Decide whether the dropdown should open above or below the trigger.
-   * Opens above when there isn't enough space below the trigger AND there is
-   * more space above — otherwise stays below. Falls back to `'below'` when no
-   * trigger element is found yet.
-   */
-  private computeDropdownPosition(): 'below' | 'above' {
-    if (typeof window === 'undefined') { return 'below'; }
-    const trigger = (this.elementRef.nativeElement as HTMLElement).querySelector(
-      '.tn-select-trigger',
-    );
-    if (!trigger) { return 'below'; }
-    const rect = trigger.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const spaceAbove = rect.top;
-    if (spaceBelow < this.readDropdownMaxHeight(trigger) && spaceAbove > spaceBelow) {
-      return 'above';
-    }
-    return 'below';
-  }
-
-  /**
-   * Reads the dropdown's max-height from the CSS custom property set in
-   * select.component.scss. Single source of truth for the flip-up threshold —
-   * if the stylesheet changes, the heuristic follows automatically.
-   */
-  private readDropdownMaxHeight(trigger: Element): number {
-    const raw = getComputedStyle(trigger)
-      .getPropertyValue(TnSelectComponent.DROPDOWN_MAX_HEIGHT_VAR)
-      .trim();
-    const parsed = parseFloat(raw);
-    return Number.isFinite(parsed) && parsed > 0
-      ? parsed
-      : TnSelectComponent.DROPDOWN_MAX_HEIGHT_FALLBACK;
   }
 
   onOptionClick(option: TnSelectOption<T>, groupDisabled = false): void {
@@ -350,11 +358,6 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
     return this.compareValues(this.selectedValue(), option.value);
   }
 
-  /** Build a stable DOM id for the option at `index` for aria-activedescendant. */
-  protected optionId(index: number): string {
-    return `tn-select-${this.uniqueId()}-option-${index}`;
-  }
-
   protected displayText = computed(() => {
     if (this.multiple()) {
       const values = this.selectedValues();
@@ -389,15 +392,28 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
     return undefined;
   }
 
-  protected anyOptionsPresent = computed(() => {
+  protected hasAnyOptions = computed(() => {
     return this.options().length > 0 || this.optionGroups().length > 0;
   });
 
+  /** One-shot guard so the object-compare warning fires at most once per instance. */
+  private warnedAboutObjectCompare = false;
+
   /**
-   * Compares two option values for equality. Uses `compareWith` if provided,
-   * otherwise identity (`===`). For object values it falls back to
-   * `JSON.stringify`, which is key-order dependent — consumers with object
-   * values should provide `compareWith` to avoid subtle bugs.
+   * Compares two option values for equality.
+   *
+   * - Uses `compareWith` when provided (the supported path for object values).
+   * - Falls back to strict identity (`===`) — adequate for primitives.
+   * - For object values WITHOUT `compareWith` we return `false` (no
+   *   structural compare) and emit a one-time warning. The previous
+   *   `JSON.stringify` fallback was key-order sensitive and produced silent
+   *   false-negatives that were hard to diagnose; returning `false` makes the
+   *   misuse loud (selection won't match) and the warning points to the fix.
+   *
+   * The warning is **unconditional** (not gated on `isDevMode()`) so prod
+   * monitoring picks it up — consumers relying on the old stringify fallback
+   * would otherwise see selections silently stop matching after upgrade with
+   * no signal in production logs.
    */
   private compareValues(a: T | null, b: T | null): boolean {
     const customCompare = this.compareWith();
@@ -406,133 +422,137 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor {
     }
     if (a === b) {return true;}
     if (typeof a === 'object' && typeof b === 'object' && a !== null && b !== null) {
-      return JSON.stringify(a) === JSON.stringify(b);
+      if (!this.warnedAboutObjectCompare) {
+        this.warnedAboutObjectCompare = true;
+        console.warn(
+          '[tn-select] Comparing object option values without a `compareWith` input. ' +
+          'Identity comparison will not match structurally-equal objects from different ' +
+          'references. Provide `[compareWith]="(a, b) => a?.id === b?.id"` (or similar).',
+        );
+      }
+      return false;
     }
     return false;
   }
 
   /**
-   * Keyboard handling on the trigger (focus stays on the trigger while the
-   * dropdown is open — options use mousedown-preventDefault to avoid stealing
-   * it). Implements the WAI-ARIA combobox pattern subset we need:
+   * Keyboard navigation for the combobox trigger.
    *
-   * - **Enter / Space**: open closed dropdown, or select the focused row
-   *   (toggle in multi-mode).
-   * - **ArrowDown / ArrowUp**: move the focused row; opens the dropdown first
-   *   if it's closed.
-   * - **Home / End**: jump to first / last focusable row (when open).
-   * - **Escape**: close and restore focus to the trigger.
-   * - **Tab**: close without preventing default so focus moves to the next
-   *   element naturally.
+   * - **ArrowDown / ArrowUp** opens the dropdown if closed; otherwise moves
+   *   the keyboard-focus highlight (via aria-activedescendant) up/down,
+   *   skipping disabled options and group headers.
+   * - **Home / End** jump to the first / last enabled option.
+   * - **Enter / Space** opens the dropdown if closed; if open and an option
+   *   is highlighted, selects that option (in single mode) or toggles it
+   *   (in multiple mode).
+   * - **Escape** closes the dropdown without changing the selection.
+   *
+   * All navigation keys call `event.preventDefault()` so the page does not
+   * scroll while the user is moving through options.
    */
   onKeydown(event: KeyboardEvent): void {
+    if (this.isDisabled()) {return;}
+
     switch (event.key) {
-      case 'Enter':
-      case ' ':
-        if (this.isOpen()) {
-          this.selectFocused();
-        } else {
-          this.openDropdown();
-        }
-        event.preventDefault();
-        break;
-      case 'Escape':
-        if (this.isOpen()) {
-          this.closeDropdown();
-          event.preventDefault();
-        }
-        break;
       case 'ArrowDown':
+        event.preventDefault();
         if (!this.isOpen()) {
           this.openDropdown();
+          if (this.focusedIndex() < 0) {this.moveFocus('first');}
         } else {
           this.moveFocus(1);
         }
-        event.preventDefault();
         break;
+
       case 'ArrowUp':
+        event.preventDefault();
         if (!this.isOpen()) {
           this.openDropdown();
+          this.moveFocus('last');
         } else {
           this.moveFocus(-1);
         }
-        event.preventDefault();
         break;
+
       case 'Home':
         if (this.isOpen()) {
-          this.moveFocusTo(0, 1);
           event.preventDefault();
+          this.moveFocus('first');
         }
         break;
+
       case 'End':
         if (this.isOpen()) {
-          this.moveFocusTo(this.flatOptions().length - 1, -1);
           event.preventDefault();
+          this.moveFocus('last');
         }
         break;
-      case 'Tab':
-        // Let the browser move focus to the next element; just close.
+
+      case 'Enter':
+      case ' ':
+        event.preventDefault();
+        if (!this.isOpen()) {
+          this.openDropdown();
+        } else {
+          this.activateFocusedOption();
+        }
+        break;
+
+      case 'Escape':
         if (this.isOpen()) {
-          this.closeDropdown({ restoreFocus: false });
+          event.preventDefault();
+          this.closeDropdown();
         }
+        break;
+
+      case 'Tab':
+        // Standard combobox: Tab moves focus out of the select; close first
+        // so the trigger stays a clean tab stop. Don't refocus — that would
+        // fight the natural Tab advance to the next focusable element.
+        if (this.isOpen()) {this.closeDropdown(false);}
         break;
     }
   }
 
-  /** Step the focused row by ±1 (or more), skipping disabled options. */
-  private moveFocus(delta: 1 | -1): void {
-    const flat = this.flatOptions();
-    if (flat.length === 0) { return; }
-    let idx = this.focusedIndex();
-    for (let i = 0; i < flat.length; i++) {
-      idx = (idx + delta + flat.length) % flat.length;
-      if (!flat[idx].disabled) {
-        this.focusedIndex.set(idx);
-        this.scrollFocusedIntoView();
-        return;
-      }
-    }
-  }
+  private moveFocus(target: 1 | -1 | 'first' | 'last'): void {
+    const count = this.navigableOptions().length;
+    if (count === 0) {return;}
 
-  /** Move focus to a specific index, scanning forward/backward to skip disabled. */
-  private moveFocusTo(start: number, step: 1 | -1): void {
-    const flat = this.flatOptions();
-    if (flat.length === 0) { return; }
-    let idx = start;
-    while (idx >= 0 && idx < flat.length) {
-      if (!flat[idx].disabled) {
-        this.focusedIndex.set(idx);
-        this.scrollFocusedIntoView();
-        return;
-      }
-      idx += step;
-    }
-  }
-
-  /** Select (or toggle, in multi-mode) the currently keyboard-focused row. */
-  private selectFocused(): void {
-    const idx = this.focusedIndex();
-    const flat = this.flatOptions();
-    if (idx < 0 || idx >= flat.length) { return; }
-    const opt = flat[idx];
-    if (opt.disabled) { return; }
-    if (this.multiple()) {
-      this.toggleOption(opt);
+    let next: number;
+    if (target === 'first') {
+      next = 0;
+    } else if (target === 'last') {
+      next = count - 1;
     } else {
-      this.selectOption(opt);
+      const current = this.focusedIndex();
+      const start = current < 0 ? (target === 1 ? -1 : count) : current;
+      next = (start + target + count) % count;
     }
+    this.focusedIndex.set(next);
+    this.scrollFocusedIntoView();
   }
 
-  /** Scrolls the keyboard-focused option into view if it's outside the dropdown's viewport. */
-  private scrollFocusedIntoView(): void {
+  private activateFocusedOption(): void {
     const idx = this.focusedIndex();
-    if (idx < 0) { return; }
-    const host = this.elementRef.nativeElement as HTMLElement;
-    // Use attribute-equality instead of #id selectors so we don't need
-    // CSS.escape (unavailable in jsdom for tests) — option ids may contain
-    // characters that require escaping in #id form.
-    const el = host.querySelector<HTMLElement>(`[id="${this.optionId(idx)}"]`);
-    // jsdom doesn't implement scrollIntoView — guard so tests don't crash.
-    el?.scrollIntoView?.({ block: 'nearest' });
+    const nav = this.navigableOptions();
+    if (idx < 0 || idx >= nav.length) {return;}
+    this.onOptionClick(nav[idx].option);
+  }
+
+  private scrollFocusedIntoView(): void {
+    const id = this.focusedOptionId();
+    if (!id) {return;}
+    const overlayEl = this.overlayRef?.overlayElement;
+    if (!overlayEl) {return;}
+    // Defer to next tick so the DOM has updated with the new .focused class.
+    // The dropdown panel is rendered in a CDK overlay outside the host, so we
+    // scope the query to the overlay element rather than the host (which
+    // would silently miss the option) or `document` (which would pick the
+    // wrong option if two tn-select instances with the same testId are open
+    // simultaneously, and couples the component to a global).
+    queueMicrotask(() => {
+      const el = overlayEl.querySelector<HTMLElement>(`#${CSS.escape(id)}`);
+      el?.scrollIntoView({ block: 'nearest' });
+    });
   }
 }

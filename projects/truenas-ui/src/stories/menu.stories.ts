@@ -365,7 +365,7 @@ export const ContextMenu: Story = {
             (menuItemClick)="menuItemClick($event)"
             (menuOpen)="menuOpen($event)"
             (menuClose)="menuClose($event)">
-            <div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 16px; color: var(--tn-fg2, #666);">
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 1rem; color: var(--tn-fg2, #666);">
               <div style="text-align: center;">
                 <div style="font-size: 32px; margin-bottom: 8px;">🖱️</div>
                 <div>Right-click me!</div>

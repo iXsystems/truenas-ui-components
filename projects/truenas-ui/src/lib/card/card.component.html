@@ -18,6 +18,7 @@
         }
       </div>
 
+      @if (hasHeaderRight()) {
       <div class="tn-card__header-right">
         <!-- Header Status -->
         @if (headerStatus(); as status) {
@@ -60,6 +61,7 @@
           }
         }
       </div>
+      }
     </div>
   }
 

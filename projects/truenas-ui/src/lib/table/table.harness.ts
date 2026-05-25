@@ -1,5 +1,5 @@
 import type { BaseHarnessFilters } from '@angular/cdk/testing';
-import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
+import { ComponentHarness, HarnessPredicate, TestKey } from '@angular/cdk/testing';
 import { TnCheckboxHarness } from '../checkbox/checkbox.harness';
 
 /**
@@ -231,6 +231,93 @@ export class TnTableHarness extends ComponentHarness {
       `.tn-table__row[data-row-index="${rowIndex}"]`
     )();
     return row.hasClass('tn-table__row--expanded');
+  }
+
+  // --- Clickable rows ---
+
+  /**
+   * Clicks a row (for tables with `clickable` enabled).
+   *
+   * @param rowIndex Zero-based index of the data row.
+   */
+  async clickRow(rowIndex: number): Promise<void> {
+    await this.assertRowExists(rowIndex);
+    const row = await this.locatorFor(
+      `.tn-table__row[data-row-index="${rowIndex}"]`
+    )();
+    await row.click();
+  }
+
+  /**
+   * Sends a keyboard event to a row (Enter/Space activate clickable rows).
+   *
+   * @param rowIndex Zero-based index of the data row.
+   * @param key Which key to press — Enter or Space.
+   */
+  async pressKeyOnRow(rowIndex: number, key: 'enter' | 'space'): Promise<void> {
+    await this.assertRowExists(rowIndex);
+    const row = await this.locatorFor(
+      `.tn-table__row[data-row-index="${rowIndex}"]`
+    )();
+    await row.focus();
+    if (key === 'enter') {
+      await row.sendKeys(TestKey.ENTER);
+    } else {
+      await row.sendKeys(' ');
+    }
+  }
+
+  /**
+   * Checks if a row is keyboard-focusable (tabindex=0).
+   *
+   * @param rowIndex Zero-based index of the data row.
+   */
+  async isRowFocusable(rowIndex: number): Promise<boolean> {
+    await this.assertRowExists(rowIndex);
+    const row = await this.locatorFor(
+      `.tn-table__row[data-row-index="${rowIndex}"]`
+    )();
+    return (await row.getAttribute('tabindex')) === '0';
+  }
+
+  // --- Loading ---
+
+  /**
+   * Checks whether the table is currently in the loading state.
+   *
+   * @returns Promise resolving to true if the loading overlay is visible.
+   */
+  async isLoading(): Promise<boolean> {
+    const overlay = await this.locatorForOptional('.tn-table__loading-overlay')();
+    return overlay !== null;
+  }
+
+  // --- Active row ---
+
+  /**
+   * Checks if a data row is currently marked active.
+   *
+   * @param rowIndex Zero-based index of the data row.
+   * @returns Promise resolving to true if the row has the active class.
+   */
+  async isRowActive(rowIndex: number): Promise<boolean> {
+    await this.assertRowExists(rowIndex);
+    const row = await this.locatorFor(
+      `.tn-table__row[data-row-index="${rowIndex}"]`
+    )();
+    return row.hasClass('tn-table__row--active');
+  }
+
+  /**
+   * Gets the index of the currently active row, or null if none is active.
+   *
+   * @returns Promise resolving to the active row index or null.
+   */
+  async getActiveRowIndex(): Promise<number | null> {
+    const row = await this.locatorForOptional('.tn-table__row--active')();
+    if (!row) { return null; }
+    const attr = await row.getAttribute('data-row-index');
+    return attr === null ? null : Number(attr);
   }
 
   /**

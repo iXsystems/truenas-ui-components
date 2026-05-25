@@ -138,6 +138,56 @@ export const Playground: Story = {
   }
 };
 
+export const CustomCheckedColors: Story = {
+  render: () => ({
+    template: `
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div>
+          <p style="margin: 0 0 8px;">Default (uses theme tokens)</p>
+          <tn-button-toggle-group [ngModel]="'a'">
+            <tn-button-toggle value="a">Option A</tn-button-toggle>
+            <tn-button-toggle value="b">Option B</tn-button-toggle>
+            <tn-button-toggle value="c">Option C</tn-button-toggle>
+          </tn-button-toggle-group>
+        </div>
+
+        <div>
+          <p style="margin: 0 0 8px;">Primary brand color</p>
+          <tn-button-toggle-group
+            [ngModel]="'a'"
+            checkedBg="var(--tn-primary)"
+            checkedColor="var(--tn-primary-txt)"
+            checkedBorder="var(--tn-primary)">
+            <tn-button-toggle value="a">Option A</tn-button-toggle>
+            <tn-button-toggle value="b">Option B</tn-button-toggle>
+            <tn-button-toggle value="c">Option C</tn-button-toggle>
+          </tn-button-toggle-group>
+        </div>
+
+        <div>
+          <p style="margin: 0 0 8px;">Custom hex</p>
+          <tn-button-toggle-group
+            [ngModel]="'a'"
+            checkedBg="#71BF44"
+            checkedColor="#ffffff"
+            checkedBorder="#5fa036">
+            <tn-button-toggle value="a">Option A</tn-button-toggle>
+            <tn-button-toggle value="b">Option B</tn-button-toggle>
+            <tn-button-toggle value="c">Option C</tn-button-toggle>
+          </tn-button-toggle-group>
+        </div>
+      </div>
+    `,
+    moduleMetadata: {
+      imports: [
+        TnButtonToggleComponent,
+        TnButtonToggleGroupComponent,
+        FormsModule,
+      ]
+    }
+  })
+};
+
 export const ComponentHarness: Story = {
   tags: ['!dev'],
   parameters: {

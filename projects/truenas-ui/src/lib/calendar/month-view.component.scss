@@ -2,7 +2,7 @@
   // Calendar cell sizing custom properties - control all sizing from here
   --calendar-cell-size: 48px;
   --calendar-header-height: 40px;
-  --calendar-cell-font-size: 16px;
+  --calendar-cell-font-size: 1rem;
   --calendar-header-font-size: 14px;
 }
 
@@ -55,11 +55,11 @@
   outline: 0;
   cursor: pointer;
   color: var(--tn-fg1, #333);
-  
+
   // Use custom property for consistent sizing
   width: var(--calendar-cell-size);
   height: var(--calendar-cell-size);
-  
+
   &:not(:disabled) {
     &:hover:not(.tn-calendar-body-selected):not(.tn-calendar-body-range-start):not(.tn-calendar-body-range-end):not(.tn-calendar-body-in-range) {
       background: var(--tn-alt-bg2, #e8f4fd);
@@ -69,7 +69,7 @@
   &:focus {
     outline: 2px solid var(--tn-primary, #007bff);
     outline-offset: 2px;
-    
+
     .tn-calendar-body-cell-content.tn-focus-indicator {
       background: var(--tn-alt-bg2, #e8f4fd);
     }
@@ -145,7 +145,7 @@
 
 .tn-focus-indicator {
   position: relative;
-  
+
   &::before {
     content: '';
     position: absolute;

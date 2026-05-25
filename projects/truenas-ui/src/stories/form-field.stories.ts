@@ -34,7 +34,7 @@ The Form Field component provides a consistent wrapper for form controls with la
 
 The form field automatically detects and works with any component that implements \`ControlValueAccessor\`:
 - Input components
-- Select dropdowns  
+- Select dropdowns
 - Checkboxes and radio buttons
 - Custom form controls
 
@@ -86,7 +86,7 @@ export const BasicInput: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <tn-form-field 
+      <tn-form-field
         [label]="label"
         [hint]="hint"
         [required]="required"
@@ -114,7 +114,7 @@ export const RequiredField: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <tn-form-field 
+      <tn-form-field
         [label]="label"
         [hint]="hint"
         [required]="required"
@@ -152,7 +152,7 @@ export const WithValidation: Story = {
     },
     template: `
       <div style="display: flex; flex-direction: column; gap: 1rem;">
-        <tn-form-field 
+        <tn-form-field
           [label]="label"
           [hint]="hint"
           [required]="required"
@@ -163,15 +163,15 @@ export const WithValidation: Story = {
             [formControl]="emailControl">
           </tn-input>
         </tn-form-field>
-        
-        <button 
-          type="button" 
+
+        <button
+          type="button"
           (click)="markAsTouched()"
           style="width: fit-content; padding: 0.5rem 1rem; background: var(--tn-primary); color: white; border: none; border-radius: 0.25rem; cursor: pointer;">
           Trigger Validation
         </button>
-        
-        <div style="font-size: 0.875rem; color: var(--tn-fg2);">
+
+        <div style="font-size: 1rem; color: var(--tn-fg2);">
           <strong>Form State:</strong><br>
           Valid: {{ emailControl.valid }}<br>
           Touched: {{ emailControl.touched }}<br>
@@ -198,7 +198,7 @@ export const WithSelect: Story = {
       options: selectOptions,
     },
     template: `
-      <tn-form-field 
+      <tn-form-field
         [label]="label"
         [hint]="hint"
         [required]="required"
@@ -226,7 +226,7 @@ export const WithCheckbox: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <tn-form-field 
+      <tn-form-field
         [label]="label"
         [hint]="hint"
         [required]="required"
@@ -253,7 +253,7 @@ export const WithRadioGroup: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <tn-form-field 
+      <tn-form-field
         [label]="label"
         [hint]="hint"
         [required]="required"
@@ -306,8 +306,8 @@ export const MultipleFields: Story = {
     template: `
       <div style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 500px;">
         <h3 style="margin: 0; color: var(--tn-fg1);">User Information Form</h3>
-        
-        <tn-form-field 
+
+        <tn-form-field
           label="Full Name"
           hint="Enter your first and last name"
           [required]="true">
@@ -318,7 +318,7 @@ export const MultipleFields: Story = {
           </tn-input>
         </tn-form-field>
 
-        <tn-form-field 
+        <tn-form-field
           label="Email Address"
           hint="We'll use this to contact you"
           [required]="true">
@@ -329,7 +329,7 @@ export const MultipleFields: Story = {
           </tn-input>
         </tn-form-field>
 
-        <tn-form-field 
+        <tn-form-field
           label="Preferred Size"
           hint="Choose your preferred option size">
           <tn-select
@@ -339,7 +339,7 @@ export const MultipleFields: Story = {
           </tn-select>
         </tn-form-field>
 
-        <tn-form-field 
+        <tn-form-field
           label="Notifications"
           hint="Receive email notifications about updates">
           <tn-checkbox
@@ -348,7 +348,7 @@ export const MultipleFields: Story = {
           </tn-checkbox>
         </tn-form-field>
 
-        <tn-form-field 
+        <tn-form-field
           label="Priority Level"
           hint="How important is this request?">
           <div style="display: flex; flex-direction: column; gap: 0.5rem;">
@@ -373,7 +373,7 @@ export const MultipleFields: Story = {
           </div>
         </tn-form-field>
 
-        <div style="padding: 1rem; background: var(--tn-bg2); border-radius: 0.375rem; font-size: 0.875rem;">
+        <div style="padding: 1rem; background: var(--tn-bg2); border-radius: 0.375rem; font-size: 1rem;">
           <strong>Form Values:</strong><br>
           Name: "{{ userForm.name.value }}"<br>
           Email: "{{ userForm.email.value }}"<br>
@@ -386,10 +386,10 @@ export const MultipleFields: Story = {
     `,
     moduleMetadata: {
       imports: [
-        TnInputComponent, 
-        TnSelectComponent, 
-        TnCheckboxComponent, 
-        TnRadioComponent, 
+        TnInputComponent,
+        TnSelectComponent,
+        TnCheckboxComponent,
+        TnRadioComponent,
         ReactiveFormsModule,
         CommonModule
       ],

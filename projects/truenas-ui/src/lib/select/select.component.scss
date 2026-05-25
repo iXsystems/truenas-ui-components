@@ -12,7 +12,7 @@
 .tn-select-label {
   display: block;
   margin-bottom: 0.5rem;
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--tn-fg1, #333);
   line-height: 1.4;
@@ -45,12 +45,12 @@
 
   &:focus-visible {
     border-color: var(--tn-primary, #007bff);
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--tn-primary, #007bff) 25%, transparent);
   }
 
   &.open {
     border-color: var(--tn-primary, #007bff);
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--tn-primary, #007bff) 25%, transparent);
   }
 
   &.error {
@@ -59,7 +59,7 @@
     &:focus-visible,
     &.open {
       border-color: var(--tn-error, #dc3545);
-      box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--tn-error, #dc3545) 25%, transparent);
     }
   }
 
@@ -102,27 +102,15 @@
 }
 
 .tn-select-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  margin-top: 0.25rem;
+  // No position / top / left here on purpose: the panel is rendered inside a
+  // CDK overlay pane that handles positioning. Adding `position: absolute`
+  // collapses the pane to zero height and the panel never becomes visible.
   background-color: var(--tn-bg2, #f5f5f5);
   border: 1px solid var(--tn-lines, #d1d5db);
   border-radius: 0.375rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   max-height: var(--tn-select-dropdown-max-height);
   overflow: hidden;
-
-  // Flip-up variant — anchor to the trigger's top edge so the dropdown grows
-  // upward instead of spilling past the viewport bottom.
-  &--above {
-    top: auto;
-    bottom: 100%;
-    margin-top: 0;
-    margin-bottom: 0.25rem;
-  }
 }
 
 .tn-select-options {
@@ -160,13 +148,12 @@
   }
 
   // Keyboard cursor — driven by `focusedIndex` in the component, surfaced to
-  // screen readers via aria-activedescendant on the trigger. Visually distinct
-  // from `.selected` via the outline; the background matches the selected
-  // shade intentionally.
+  // screen readers via aria-activedescendant on the trigger. Distinct from
+  // hover and from `.selected` so the user can tell which option
+  // ArrowDown/Up will activate.
   &.focused {
-    background-color: var(--tn-alt-bg1, #f1f3f5);
-    outline: 2px solid var(--tn-primary, #007bff);
-    outline-offset: -2px;
+    background-color: var(--tn-alt-bg2, #e8f4fd);
+    box-shadow: inset 2px 0 0 var(--tn-primary, #007bff);
   }
 
   &.disabled {

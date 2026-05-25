@@ -124,7 +124,7 @@ Use BEM (Block Element Modifier) for CSS class names:
 
   &--large {
     padding: 12px 24px;
-    font-size: 16px;
+    font-size: 1rem;
   }
 }
 ```

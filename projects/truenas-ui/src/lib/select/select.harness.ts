@@ -165,7 +165,9 @@ export class TnSelectHarness extends ComponentHarness {
    */
   async selectOption(filter: string | RegExp): Promise<void> {
     await this.open();
-    const options = await this.locatorForAll('.tn-select-option')();
+    // Dropdown panel is rendered in a CDK overlay (outside the host element),
+    // so we search the document root rather than the harness-local subtree.
+    const options = await this.documentRootLocatorFactory().locatorForAll('.tn-select-option')();
 
     for (const option of options) {
       const text = (await option.text()).trim();
@@ -196,7 +198,9 @@ export class TnSelectHarness extends ComponentHarness {
    */
   async getOptions(): Promise<string[]> {
     await this.open();
-    const options = await this.locatorForAll('.tn-select-option')();
+    // Dropdown panel is rendered in a CDK overlay (outside the host element),
+    // so we search the document root rather than the harness-local subtree.
+    const options = await this.documentRootLocatorFactory().locatorForAll('.tn-select-option')();
     const labels: string[] = [];
 
     for (const option of options) {
