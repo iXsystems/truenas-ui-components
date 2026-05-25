@@ -4,7 +4,7 @@
     #triggerEl
     class="tn-select-trigger"
     role="combobox"
-    tabindex="0"
+    [attr.tabindex]="isDisabled() ? -1 : 0"
     [class.disabled]="isDisabled()"
     [class.open]="isOpen()"
     [attr.aria-expanded]="isOpen()"
@@ -19,7 +19,7 @@
     <span
       class="tn-select-text"
       [class.placeholder]="multiple() ? selectedValues().length === 0 : (selectedValue() === null || selectedValue() === undefined)">
-      {{ getDisplayText() }}
+      {{ displayText() }}
     </span>
 
     <!-- Dropdown Arrow -->

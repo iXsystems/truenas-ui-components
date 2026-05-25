@@ -1,5 +1,5 @@
 {
-  "iconUrl": "assets/tn-icons/sprite.svg?v=9e27516916",
+  "iconUrl": "assets/tn-icons/sprite.svg?v=d7abd208a7",
   "icons": [
     "dataset",
     "mat-arrow_downward",
@@ -18,6 +18,7 @@
     "mdi-bell",
     "mdi-check-circle",
     "mdi-chevron-down",
+    "mdi-chevron-left",
     "mdi-chevron-right",
     "mdi-close",
     "mdi-close-circle",
@@ -46,6 +47,8 @@
     "mdi-menu",
     "mdi-nas",
     "mdi-network",
+    "mdi-page-first",
+    "mdi-page-last",
     "mdi-pause",
     "mdi-pencil",
     "mdi-refresh",

@@ -57,6 +57,8 @@ export * from './lib/list-option/list-option.component';
 export * from './lib/table/table.component';
 export * from './lib/table/table.harness';
 export * from './lib/table-column/table-column.directive';
+export * from './lib/table-pager/table-pager.component';
+export * from './lib/table-pager/table-pager.harness';
 export { TnTreeComponent, FlatTreeControl, TnTreeFlatDataSource, TnTreeFlattener, TnFlatTreeNode } from './lib/tree/tree.component';
 export { TnTreeNodeComponent } from './lib/tree/tree-node.component';
 export { TnNestedTreeNodeComponent } from './lib/tree/nested-tree-node.component';

@@ -232,6 +232,16 @@ describe('TnSelectHarness', () => {
       await select.close();
       expect(await select.isOpen()).toBe(false);
     });
+
+    it('should render the dropdown into the overlay container when opened', async () => {
+      const select = await loader.getHarness(TnSelectHarness);
+      await select.open();
+      // Dropdown is rendered via CDK overlay into document.body, not the host
+      // subtree. Positioning is delegated to CDK's flexibleConnectedTo strategy
+      // (flip above when there's no room below), which doesn't add a custom
+      // class for us to assert on — covered by CDK's own tests.
+      expect(document.querySelector('.tn-select-dropdown')).not.toBeNull();
+    });
   });
 
   describe('selectOption', () => {
@@ -435,6 +445,53 @@ describe('TnSelectHarness - group disabled', () => {
     const select = await loader.getHarness(TnSelectHarness);
     await select.selectOption('Option A');
     expect(hostComponent.selectedValue).toBe('a');
+  });
+});
+
+@Component({
+  selector: 'tn-test-twin-host',
+  standalone: true,
+  imports: [TnSelectComponent],
+  template: `
+    <tn-select [options]="options" />
+    <tn-select [options]="options" />
+  `,
+})
+class TestTwinHostComponent {
+  options: TnSelectOption<string>[] = [
+    { value: 'apple', label: 'Apple' },
+    { value: 'banana', label: 'Banana' },
+  ];
+}
+
+describe('TnSelectComponent — id uniqueness without testId', () => {
+  it('should give each select instance a distinct option-id namespace', async () => {
+    await TestBed.configureTestingModule({ imports: [TestTwinHostComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(TestTwinHostComponent);
+    fixture.detectChanges();
+
+    // Open each select in turn and collect the option ids it produces.
+    // (Opening one closes the other via outside-click semantics in real DOM;
+    // we don't rely on both being open simultaneously — we just need to verify
+    // the id namespaces don't collide across instances.)
+    const triggers = fixture.nativeElement.querySelectorAll('.tn-select-trigger') as NodeListOf<HTMLElement>;
+    const idsPerInstance: string[][] = [];
+    for (const trigger of Array.from(triggers)) {
+      trigger.click();
+      fixture.detectChanges();
+      idsPerInstance.push(
+        Array.from(document.querySelectorAll('.tn-select-option') as NodeListOf<HTMLElement>)
+          .map((el) => el.id),
+      );
+      trigger.click(); // close so the next iteration starts clean
+      fixture.detectChanges();
+    }
+
+    const [first, second] = idsPerInstance;
+    expect(first).toHaveLength(2);
+    expect(second).toHaveLength(2);
+    // No id appears in both instances' namespaces.
+    expect(first.some((id) => second.includes(id))).toBe(false);
   });
 });
 

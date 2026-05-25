@@ -1,7 +1,7 @@
 
 import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { ChangeDetectorRef, Component, computed, ElementRef, forwardRef, inject, input, output, signal, viewChild, ViewContainerRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, ElementRef, forwardRef, inject, input, output, signal, viewChild, ViewContainerRef } from '@angular/core';
 import type { OnDestroy, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -33,12 +33,26 @@ export interface TnSelectOptionGroup<T = unknown> {
     }
   ],
   templateUrl: './select.component.html',
-  styleUrls: ['./select.component.scss']
+  styleUrls: ['./select.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnDestroy {
   options = input<TnSelectOption<T>[]>([]);
   optionGroups = input<TnSelectOptionGroup<T>[]>([]);
   placeholder = input<string>('Select an option');
+  /**
+   * Accessible label for the select trigger. When set, this is used as the
+   * trigger's `aria-label` instead of the visible `placeholder` — useful in
+   * contexts (e.g. a pager's page-size dropdown) where the placeholder text
+   * doesn't accurately describe the field's purpose to screen readers.
+   */
+  ariaLabel = input<string | undefined>(undefined);
+  /**
+   * Message shown inside the dropdown when no options (and no option groups)
+   * are available. Defaults to the English `'No options available'`; consumers
+   * with i18n requirements can pass a translated string.
+   */
+  noOptionsLabel = input<string>('No options available');
   disabled = input<boolean>(false);
   testId = input<string>('');
   multiple = input<boolean>(false);
@@ -64,14 +78,17 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
 
   // Internal state signals
   protected isOpen = signal<boolean>(false);
+  protected dropdownPosition = signal<'below' | 'above'>('below');
   protected selectedValue = signal<T | null>(null);
   protected selectedValues = signal<T[]>([]);
+  /** Index into `flatOptions` of the keyboard-focused row (-1 when none). */
+  protected focusedIndex = signal<number>(-1);
   private formDisabled = signal<boolean>(false);
 
-  // Index into navigableOptions() of the option currently highlighted by
-  // keyboard navigation (-1 = none). Exposed to the template via the
-  // aria-activedescendant / .focused bindings; never represents real DOM focus.
-  protected focusedIndex = signal<number>(-1);
+  // Per-instance fallback id namespace so aria-activedescendant ids stay
+  // unique across selects when no `testId` is provided.
+  private static instanceCounter = 0;
+  private instanceId = `i${++TnSelectComponent.instanceCounter}`;
 
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
@@ -83,7 +100,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    */
   navigableOptions = computed(() => {
     const result: { option: TnSelectOption<T>; id: string }[] = [];
-    const baseId = `tn-select-opt-${this.testId() || 'anon'}`;
+    const baseId = `tn-select-opt-${this.testId() || this.instanceId}`;
     let i = 0;
     for (const opt of this.options()) {
       if (!opt.disabled) {
@@ -333,7 +350,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     return this.compareValues(this.selectedValue(), option.value);
   }
 
-  getDisplayText = computed(() => {
+  protected displayText = computed(() => {
     if (this.multiple()) {
       const values = this.selectedValues();
       if (values.length === 0) {
@@ -367,7 +384,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     return undefined;
   }
 
-  hasAnyOptions = computed(() => {
+  protected hasAnyOptions = computed(() => {
     return this.options().length > 0 || this.optionGroups().length > 0;
   });
 
@@ -471,6 +488,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
         } else {
           this.activateFocusedOption();
         }
+        event.preventDefault();
         break;
 
       case 'Escape':
