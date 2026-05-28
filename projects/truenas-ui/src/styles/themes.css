@@ -591,10 +591,16 @@ tn-dialog-shell {
   border-top: 1px solid var(--tn-lines, #e5e7eb);
   display: flex;
   justify-content: flex-end;
+  gap: 16px;
 }
 
-.tn-dialog__actions tn-button:not(:first-child) {
-  margin-left: 16px;
+/* Buttons are projected inside a [tnDialogAction] wrapper, so the gap must
+   live on the wrapper to separate them — the footer gap only spaces the
+   wrapper itself. */
+.tn-dialog__actions [tnDialogAction] {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 /* Destructive variant */

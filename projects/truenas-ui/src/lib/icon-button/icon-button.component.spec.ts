@@ -1,7 +1,9 @@
 import { provideHttpClient } from '@angular/common/http';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { TnIconButtonComponent } from './icon-button.component';
+import { TnTooltipDirective } from '../tooltip/tooltip.directive';
 
 describe('TnIconButtonComponent', () => {
   let component: TnIconButtonComponent;
@@ -100,11 +102,36 @@ describe('TnIconButtonComponent', () => {
     expect(button.getAttribute('aria-label')).toBe('settings');
   });
 
-  it('should apply tooltip', () => {
+  it('wires the tooltip into the styled tnTooltip directive', () => {
     fixture.componentRef.setInput('tooltip', 'Click me');
     fixture.detectChanges();
 
     const button = fixture.nativeElement.querySelector('button');
-    expect(button.getAttribute('title')).toBe('Click me');
+    // The styled tooltip is an overlay, not a native title attribute.
+    expect(button.getAttribute('title')).toBeNull();
+
+    const tooltip = fixture.debugElement.query(By.directive(TnTooltipDirective))
+      .injector.get(TnTooltipDirective);
+    expect(tooltip.message()).toBe('Click me');
+  });
+
+  it('applies the dense modifier class when dense', () => {
+    const button = fixture.nativeElement.querySelector('button');
+    expect(button.classList).not.toContain('tn-icon-button--dense');
+
+    fixture.componentRef.setInput('dense', true);
+    fixture.detectChanges();
+
+    expect(button.classList).toContain('tn-icon-button--dense');
+  });
+
+  it('reflects aria-expanded onto the inner button', () => {
+    const button = fixture.nativeElement.querySelector('button');
+    expect(button.getAttribute('aria-expanded')).toBeNull();
+
+    fixture.componentRef.setInput('ariaExpanded', true);
+    fixture.detectChanges();
+
+    expect(button.getAttribute('aria-expanded')).toBe('true');
   });
 });

@@ -155,7 +155,11 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
 
     this._positionSub = (positionStrategy as FlexibleConnectedPositionStrategy).positionChanges
       .subscribe((change) => {
-        const panel = this._overlayRef?.overlayElement?.parentElement;
+        // The position panelClass is applied to the overlay pane (overlayElement), so the
+        // resolved-position class must be toggled on that same element. Updating the parent
+        // instead left the stale initial class on the pane, so after a flip both the original
+        // and resolved classes matched :host-context and the arrow rendered incorrectly.
+        const panel = this._overlayRef?.overlayElement;
         if (!panel) {
           return;
         }

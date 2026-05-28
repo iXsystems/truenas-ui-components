@@ -4,6 +4,7 @@
 }
 
 .tn-icon-button {
+  position: relative; // anchor for projected badges
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -31,6 +32,12 @@
       background-color: rgba(255, 255, 255, 0.1);
       color: inherit;
     }
+  }
+
+  // Compact variant for dense contexts (e.g. toolbars): with a 24px (lg) icon
+  // this yields a 30px button to match other dense toolbar controls.
+  &--dense {
+    padding: 3px;
   }
 
   &:focus-visible {
