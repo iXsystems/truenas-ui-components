@@ -115,6 +115,17 @@ describe('TnIconButtonComponent', () => {
     expect(tooltip.message()).toBe('Click me');
   });
 
+  it('only sets aria-describedby when a tooltip is present', () => {
+    const button = fixture.nativeElement.querySelector('button');
+    // No tooltip → no dangling reference to an unrendered tooltip element.
+    expect(button.getAttribute('aria-describedby')).toBeNull();
+
+    fixture.componentRef.setInput('tooltip', 'Click me');
+    fixture.detectChanges();
+
+    expect(button.getAttribute('aria-describedby')).toBeTruthy();
+  });
+
   it('applies the dense modifier class when dense', () => {
     const button = fixture.nativeElement.querySelector('button');
     expect(button.classList).not.toContain('tn-icon-button--dense');

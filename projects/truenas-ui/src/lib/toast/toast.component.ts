@@ -1,20 +1,22 @@
 import { ChangeDetectionStrategy, Component, computed, signal, ViewEncapsulation } from '@angular/core';
 import { TnToastPosition, TnToastType } from './toast.types';
-import { tnIconMarker } from '../icon/icon-marker';
 import { TnIconComponent } from '../icon/icon.component';
+import { TnTestIdDirective } from '../test-id';
 
-// Mark icons for sprite inclusion (dynamic names aren't detected by the scanner)
+// Material icons render via the `material-icons` CSS font (see icon.component.ts),
+// so they don't need sprite scanning — the literal `mat-` prefix matches what
+// the runtime icon resolver would produce from a Material library name.
 const TOAST_ICONS = {
-  [TnToastType.Info]: tnIconMarker('info', 'material'),
-  [TnToastType.Success]: tnIconMarker('check_circle', 'material'),
-  [TnToastType.Warning]: tnIconMarker('warning', 'material'),
-  [TnToastType.Error]: tnIconMarker('error', 'material'),
+  [TnToastType.Info]: 'mat-info',
+  [TnToastType.Success]: 'mat-check_circle',
+  [TnToastType.Warning]: 'mat-warning',
+  [TnToastType.Error]: 'mat-error',
 };
 
 @Component({
   selector: 'tn-toast',
   standalone: true,
-  imports: [TnIconComponent],
+  imports: [TnIconComponent, TnTestIdDirective],
   templateUrl: './toast.component.html',
   styleUrl: './toast.component.scss',
   encapsulation: ViewEncapsulation.None,
@@ -27,6 +29,7 @@ const TOAST_ICONS = {
 export class TnToastComponent {
   message = signal('');
   action = signal<string | null>(null);
+  actionTestId = signal<string | undefined>(undefined);
   type = signal<TnToastType>(TnToastType.Info);
   position = signal<TnToastPosition>(TnToastPosition.Top);
   visible = signal(false);

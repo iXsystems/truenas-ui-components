@@ -48,7 +48,16 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
   private _hideTimeout: ReturnType<typeof setTimeout> | null = null;
   private _isTooltipVisible = false;
   private _positionSub: Subscription | null = null;
-  protected _ariaDescribedBy: string | null = null;
+  private _tooltipId = '';
+
+  /**
+   * Only point `aria-describedby` at the tooltip when there is actually a message to
+   * describe. Otherwise every host (e.g. an icon button with no tooltip) would carry a
+   * dangling reference to a tooltip element that is never rendered.
+   */
+  protected get _ariaDescribedBy(): string | null {
+    return !this.disabled() && this.message() ? this._tooltipId : null;
+  }
 
   private _overlay = inject(Overlay);
   private _elementRef = inject(ElementRef<HTMLElement>);
@@ -57,7 +66,7 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
 
   ngOnInit() {
     // Generate unique ID for aria-describedby
-    this._ariaDescribedBy = `tn-tooltip-${Math.random().toString(36).substr(2, 9)}`;
+    this._tooltipId = `tn-tooltip-${Math.random().toString(36).substr(2, 9)}`;
   }
 
   ngOnDestroy() {
@@ -197,7 +206,7 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
       const portal = new ComponentPortal(TnTooltipComponent, this._viewContainerRef);
       this._tooltipInstance = this._overlayRef.attach(portal);
       this._tooltipInstance.setInput('message', this.message());
-      this._tooltipInstance.setInput('id', this._ariaDescribedBy!);
+      this._tooltipInstance.setInput('id', this._tooltipId);
       this._isTooltipVisible = true;
     }
   }
