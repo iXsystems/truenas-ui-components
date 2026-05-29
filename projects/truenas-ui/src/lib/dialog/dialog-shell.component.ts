@@ -1,7 +1,9 @@
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { DOCUMENT } from '@angular/common';
-import { Component, input, signal, inject } from '@angular/core';
+import { Component, ElementRef, effect, input, signal, inject } from '@angular/core';
 import type { OnInit} from '@angular/core';
+
+let nextUniqueId = 0;
 
 @Component({
   selector: 'tn-dialog-shell',
@@ -16,12 +18,29 @@ export class TnDialogShellComponent implements OnInit {
   title = input<string>('');
   showFullscreenButton = input<boolean>(false);
 
+  /** Stable id for the title heading, referenced by the dialog's aria-labelledby. */
+  readonly titleId = `tn-dialog-title-${nextUniqueId++}`;
+
   isFullscreen = signal<boolean>(false);
   private originalStyles: { [key: string]: string } = {};
 
   private ref = inject(DialogRef);
   private document = inject(DOCUMENT);
+  private host = inject<ElementRef<HTMLElement>>(ElementRef);
   private data = inject(DIALOG_DATA, { optional: true });
+
+  constructor() {
+    // Give the CDK dialog container an accessible name by pointing its
+    // aria-labelledby at the visible title heading. Tracked in an effect so a
+    // title set after init is still reflected.
+    effect(() => {
+      if (!this.title()) {
+        return;
+      }
+      const container = this.host.nativeElement.closest('cdk-dialog-container');
+      container?.setAttribute('aria-labelledby', this.titleId);
+    });
+  }
 
   ngOnInit() {
     // Check if dialog was opened in fullscreen mode by looking for existing fullscreen class

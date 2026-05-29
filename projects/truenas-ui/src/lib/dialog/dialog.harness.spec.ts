@@ -176,6 +176,42 @@ describe('TnDialogHarness', () => {
     });
   });
 
+  describe('accessibility', () => {
+    beforeEach(() => {
+      tnDialog.open(TestDialogComponent, {
+        data: { title: 'Accessible Dialog', showFullscreen: true },
+      });
+      fixture.detectChanges();
+    });
+
+    it('keeps the close button in the tab order', async () => {
+      const dialog = await dialogLoader.getHarness(TnDialogHarness);
+      expect(await dialog.getCloseButtonTabIndex()).toBeNull();
+    });
+
+    it('keeps the fullscreen button in the tab order', async () => {
+      const dialog = await dialogLoader.getHarness(TnDialogHarness);
+      expect(await dialog.getFullscreenButtonTabIndex()).toBeNull();
+    });
+
+    it('gives the dialog an accessible name via aria-labelledby', () => {
+      const container = document.querySelector('cdk-dialog-container');
+      const labelledBy = container?.getAttribute('aria-labelledby');
+      expect(labelledBy).toBeTruthy();
+
+      const title = document.getElementById(labelledBy as string);
+      expect(title?.textContent?.trim()).toBe('Accessible Dialog');
+    });
+
+    it('hides decorative icon glyphs from assistive tech', () => {
+      const closeIcon = document.querySelector('.tn-dialog__close-icon');
+      expect(closeIcon?.getAttribute('aria-hidden')).toBe('true');
+
+      const fullscreenIcon = document.querySelector('.tn-dialog__fullscreen-icon');
+      expect(fullscreenIcon?.getAttribute('aria-hidden')).toBe('true');
+    });
+  });
+
   describe('with() filter', () => {
     it('should filter by exact title', async () => {
       tnDialog.open(TestDialogComponent, { data: { title: 'First Dialog' } });

@@ -4,18 +4,24 @@ import { Component, ElementRef, computed, inject, input, output, viewChild } fro
 import type { IconSize, IconLibraryType } from '../icon/icon.component';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective } from '../test-id';
+import type { TooltipPosition } from '../tooltip/tooltip.directive';
+import { TnTooltipDirective } from '../tooltip/tooltip.directive';
 
 @Component({
   selector: 'tn-icon-button',
   standalone: true,
-  imports: [CommonModule, TnIconComponent, TnTestIdDirective],
+  imports: [CommonModule, TnIconComponent, TnTestIdDirective, TnTooltipDirective],
   templateUrl: './icon-button.component.html',
   styleUrls: ['./icon-button.component.scss'],
 })
 export class TnIconButtonComponent implements AfterViewInit {
   // Button-related inputs
   disabled = input<boolean>(false);
+  /** Compact variant with reduced padding, for dense contexts like toolbars. */
+  dense = input<boolean>(false);
   ariaLabel = input<string | undefined>(undefined);
+  /** Reflects an expanded/collapsed state (e.g. toggling a panel) onto the inner button. */
+  ariaExpanded = input<boolean | undefined>(undefined);
   /**
    * Test-id applied to the rendered `<button>` element. Rendered under whichever attribute
    * name is configured via `TN_TEST_ATTR` (default `data-testid`).
@@ -27,7 +33,11 @@ export class TnIconButtonComponent implements AfterViewInit {
   size = input<IconSize>('md');
   color = input<string | undefined>(undefined);
   tooltip = input<string | undefined>(undefined);
+  /** Position of the styled tooltip relative to the button. */
+  tooltipPosition = input<TooltipPosition>('above');
   library = input<IconLibraryType | undefined>(undefined);
+  /** Extra class(es) applied to the inner icon, e.g. for animations or state colors. */
+  iconClass = input<string>('');
 
   onClick = output<MouseEvent>();
 
@@ -37,6 +47,7 @@ export class TnIconButtonComponent implements AfterViewInit {
   classes = computed(() => {
     const result = ['tn-icon-button'];
     if (this.color()) {result.push('tn-icon-button--custom-color');}
+    if (this.dense()) {result.push('tn-icon-button--dense');}
     return result;
   });
 
