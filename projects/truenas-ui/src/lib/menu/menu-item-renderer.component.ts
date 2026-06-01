@@ -40,6 +40,14 @@ import { TnMenuComponent } from './menu.component';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './menu-item-renderer.component.html',
+  // Shares `<tn-menu>`'s stylesheet so the buttons this component renders
+  // (the items-array API) are styled identically to the projected
+  // `<tn-menu-item>` entries that `<tn-menu>` renders itself. Because this is
+  // a separate component, Angular's emulated encapsulation scopes styles per
+  // component — without its own copy of these rules, `.tn-menu-item` here
+  // wouldn't match the selectors scoped to `<tn-menu>` and the buttons would
+  // fall back to default browser styling.
+  styleUrls: ['./menu.component.scss'],
 })
 export class TnMenuItemRendererComponent {
   item = input.required<TnMenuItem>();
