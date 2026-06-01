@@ -152,8 +152,8 @@ export class TnCheckboxHarness extends ComponentHarness {
    * ```
    */
   async getTestId(): Promise<string | null> {
-    const input = await this._input();
-    return (await input.getAttribute('data-testid')) ?? (await input.getAttribute('data-test'));
+    const label = await this._label();
+    return (await label.getAttribute('data-testid')) ?? (await label.getAttribute('data-test'));
   }
 
   /**

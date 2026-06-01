@@ -1,5 +1,5 @@
 <div [ngClass]="classes()">
-  <label class="tn-radio__label" [for]="id">
+  <label class="tn-radio__label" [for]="id" [tnTestId]="testId()">
     <input
       #radioEl
       type="radio"
@@ -10,7 +10,6 @@
       [checked]="checked"
       [disabled]="isDisabled()"
       [required]="required()"
-      [tnTestId]="testId()"
       [attr.aria-describedby]="error() ? id + '-error' : null"
       [attr.aria-invalid]="error() ? 'true' : null"
       (change)="onRadioChange($event)"

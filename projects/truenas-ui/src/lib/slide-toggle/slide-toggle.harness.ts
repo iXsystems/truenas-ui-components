@@ -17,6 +17,7 @@ export class TnSlideToggleHarness extends ComponentHarness {
   static hostSelector = 'tn-slide-toggle';
 
   private _input = this.locatorFor('.tn-slide-toggle__input');
+  private _labelEl = this.locatorFor('.tn-slide-toggle__label');
   private _label = this.locatorForOptional('.tn-slide-toggle__label-text');
 
   /**
@@ -79,8 +80,8 @@ export class TnSlideToggleHarness extends ComponentHarness {
    * Gets the test ID attribute value.
    */
   async getTestId(): Promise<string | null> {
-    const input = await this._input();
-    return (await input.getAttribute('data-testid')) ?? (await input.getAttribute('data-test'));
+    const label = await this._labelEl();
+    return (await label.getAttribute('data-testid')) ?? (await label.getAttribute('data-test'));
   }
 
   /**

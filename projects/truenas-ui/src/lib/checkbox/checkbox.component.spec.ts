@@ -44,9 +44,12 @@ describe('TnCheckboxComponent', () => {
     fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
 
   const getWrapper = (testId = 'main'): HTMLElement => {
-    const input = getCheckbox(testId);
-    return input.closest('.tn-checkbox') as HTMLElement;
+    const label = getCheckbox(testId);
+    return label.closest('.tn-checkbox') as HTMLElement;
   };
+
+  const getInput = (testId = 'main'): HTMLInputElement =>
+    getWrapper(testId).querySelector('.tn-checkbox__input') as HTMLInputElement;
 
   const getLabelText = (testId = 'main'): HTMLElement | null =>
     getWrapper(testId).querySelector('.tn-checkbox__text');
@@ -148,11 +151,11 @@ describe('TnCheckboxComponent', () => {
       host.error.set('Error');
       fixture.detectChanges();
 
-      expect(getCheckbox().getAttribute('aria-invalid')).toBe('true');
+      expect(getInput().getAttribute('aria-invalid')).toBe('true');
     });
 
     it('should not set aria-invalid when no error', () => {
-      expect(getCheckbox().getAttribute('aria-invalid')).toBeNull();
+      expect(getInput().getAttribute('aria-invalid')).toBeNull();
     });
   });
 
@@ -161,28 +164,28 @@ describe('TnCheckboxComponent', () => {
       host.control.setValue(true);
       fixture.detectChanges();
 
-      expect((getCheckbox() as HTMLInputElement).checked).toBe(true);
+      expect(getInput().checked).toBe(true);
     });
 
     it('should handle null writeValue gracefully', () => {
       host.control.setValue(null);
       fixture.detectChanges();
 
-      expect((getCheckbox() as HTMLInputElement).checked).toBe(false);
+      expect(getInput().checked).toBe(false);
     });
 
     it('should handle undefined writeValue gracefully', () => {
       host.control.setValue(undefined as unknown as boolean);
       fixture.detectChanges();
 
-      expect((getCheckbox() as HTMLInputElement).checked).toBe(false);
+      expect(getInput().checked).toBe(false);
     });
 
     it('should disable via form control', () => {
       host.control.disable();
       fixture.detectChanges();
 
-      expect((getCheckbox() as HTMLInputElement).disabled).toBe(true);
+      expect(getInput().disabled).toBe(true);
       expect(getWrapper().classList.contains('tn-checkbox--disabled')).toBe(true);
     });
 
@@ -192,7 +195,7 @@ describe('TnCheckboxComponent', () => {
       host.control.enable();
       fixture.detectChanges();
 
-      expect((getCheckbox() as HTMLInputElement).disabled).toBe(false);
+      expect(getInput().disabled).toBe(false);
     });
 
     it('should update form control on click', () => {
@@ -209,14 +212,14 @@ describe('TnCheckboxComponent', () => {
       host.required.set(true);
       fixture.detectChanges();
 
-      expect((getCheckbox() as HTMLInputElement).required).toBe(true);
+      expect(getInput().required).toBe(true);
     });
 
     it('should set indeterminate property', () => {
       host.indeterminate.set(true);
       fixture.detectChanges();
 
-      expect((getCheckbox() as HTMLInputElement).indeterminate).toBe(true);
+      expect(getInput().indeterminate).toBe(true);
     });
 
     it('should set data-testid attribute', () => {
