@@ -1,4 +1,4 @@
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { InputType } from '../lib/enums/input-type.enum';
@@ -40,6 +40,10 @@ const meta: Meta<TnInputComponent> = {
     rows: {
       control: 'number',
       description: 'Number of rows for textarea',
+    },
+    step: {
+      control: 'number',
+      description: 'Step (number type). A whole-number step switches the field to integer-only mode.',
     },
     testId: {
       control: 'text',
@@ -141,6 +145,45 @@ export const WithError: Story = {
     placeholder: 'Enter your email',
     testId: 'error-input',
     disabled: false,
+  },
+};
+
+export const Number: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      // Range enforcement is the consumer's job; these validators work because
+      // tn-input emits a real number (not a string) in number mode.
+      portControl: new FormControl<number | null>(443, [Validators.min(1), Validators.max(65535)]),
+    },
+    template: `
+      <tn-form-field
+        label="Port"
+        hint="Integer mode — empty clears to null, value is emitted as a number">
+        <tn-input
+          [inputType]="inputType"
+          [placeholder]="placeholder"
+          [disabled]="disabled"
+          [testId]="testId"
+          [step]="step"
+          [formControl]="portControl">
+        </tn-input>
+      </tn-form-field>
+      <p style="margin-top: 12px; font-family: monospace;">
+        model: {{ portControl.value === null ? 'null' : portControl.value }}
+        ({{ portControl.value === null ? 'object' : 'number' }})
+      </p>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, ReactiveFormsModule],
+    },
+  }),
+  args: {
+    inputType: InputType.Number,
+    placeholder: 'Enter a port',
+    testId: 'number-input',
+    disabled: false,
+    step: 1,
   },
 };
 

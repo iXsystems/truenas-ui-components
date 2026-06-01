@@ -32,6 +32,13 @@ export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
   multiline = input<boolean>(false);
   rows = input<number>(3);
 
+  // Numeric input (only meaningful when inputType is InputType.Number).
+  // `step` doubles as the integer/decimal switch: a whole-number step (e.g. 1)
+  // puts the field in integer mode; otherwise it accepts decimals.
+  // Range enforcement is intentionally left to the consumer's form validators
+  // (e.g. Validators.min/max), which work because the control emits real numbers.
+  step = input<number | undefined>(undefined);
+
   // Icon inputs
   prefixIcon = input<string | undefined>(undefined);
   prefixIconLibrary = input<IconLibraryType | undefined>(undefined);
@@ -44,6 +51,23 @@ export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
   hasPrefixIcon = computed(() => !!this.prefixIcon());
   hasSuffixIcon = computed(() => !!this.suffixIcon());
 
+  // Numeric mode state
+  isNumeric = computed(() => this.inputType() === InputType.Number);
+  /** True when the field only accepts whole numbers (driven by a whole-number `step`). */
+  integerOnly = computed(() => {
+    const s = this.step();
+    return s !== undefined && Number.isInteger(s);
+  });
+  /** The `type` attribute actually rendered. Number mode uses a text input + inputmode to avoid the native type="number" footguns. */
+  resolvedType = computed(() => (this.isNumeric() ? InputType.PlainText : this.inputType()));
+  /** `inputmode` hint: numeric keypad for integers, decimal keypad otherwise. Null (omitted) when not in number mode. */
+  numericInputMode = computed<'numeric' | 'decimal' | null>(() => {
+    if (!this.isNumeric()) {return null;}
+    return this.integerOnly() ? 'numeric' : 'decimal';
+  });
+  /** Number mode is always single-line; it wins over `multiline` if both are set. */
+  showTextarea = computed(() => this.multiline() && !this.isNumeric());
+
   id = 'tn-input';
   value = '';
 
@@ -51,7 +75,7 @@ export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
   private formDisabled = signal<boolean>(false);
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
-  private onChange = (_value: string) => {};
+  private onChange: (value: string | number | null) => void = () => {};
   private onTouched = () => {};
   private focusMonitor = inject(FocusMonitor);
 
@@ -60,11 +84,15 @@ export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
   }
 
   // ControlValueAccessor implementation
-  writeValue(value: string): void {
-    this.value = value || '';
+  writeValue(value: string | number | null): void {
+    // Display the model verbatim via String(); do NOT sanitize here. Sanitizing a
+    // canonical number string corrupts values JS renders in exponential notation
+    // (1e21 -> "1e+21" -> "121") or fractions in integer mode (3.5 -> "35"), which
+    // would silently diverge the displayed value from the form model.
+    this.value = value === null || value === undefined ? '' : String(value);
   }
 
-  registerOnChange(fn: (value: string) => void): void {
+  registerOnChange(fn: (value: string | number | null) => void): void {
     this.onChange = fn;
   }
 
@@ -79,11 +107,60 @@ export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
   // Component methods
   onValueChange(event: Event): void {
     const target = event.target as HTMLInputElement | HTMLTextAreaElement;
+
+    if (this.isNumeric()) {
+      const el = target as HTMLInputElement;
+      const sanitized = this.sanitizeNumeric(el.value);
+      // Reflect the cleaned string back into the DOM when we stripped something
+      // (e.g. the user typed "e", "+" or a second "."), keeping the field honest.
+      if (sanitized !== el.value) {
+        // Preserve the caret: its new position is however many characters survive
+        // sanitization up to the old caret (sanitizeNumeric is a left-to-right filter).
+        const caret = this.sanitizeNumeric(
+          el.value.slice(0, el.selectionStart ?? el.value.length)
+        ).length;
+        el.value = sanitized;
+        el.setSelectionRange(caret, caret);
+      }
+      this.value = sanitized;
+      this.onChange(this.parseNumeric(sanitized));
+      return;
+    }
+
     this.value = target.value;
     this.onChange(this.value);
   }
 
   onBlur(): void {
     this.onTouched();
+  }
+
+  /** Strips any character that can't appear in the current numeric mode (single leading '-', single '.' for decimals). */
+  private sanitizeNumeric(raw: string): string {
+    const allowDecimal = !this.integerOnly();
+    let result = '';
+    let hasDot = false;
+
+    for (const char of raw) {
+      if (char >= '0' && char <= '9') {
+        result += char;
+      } else if (char === '-' && result.length === 0) {
+        result += char;
+      } else if (char === '.' && allowDecimal && !hasDot) {
+        hasDot = true;
+        result += char;
+      }
+    }
+
+    return result;
+  }
+
+  /** Parses a sanitized string to a number, mapping empty/partial input to null (never 0). */
+  private parseNumeric(value: string): number | null {
+    if (value === '' || value === '-' || value === '.' || value === '-.') {
+      return null;
+    }
+    const parsed = this.integerOnly() ? parseInt(value, 10) : parseFloat(value);
+    return Number.isNaN(parsed) ? null : parsed;
   }
 }

@@ -20,6 +20,7 @@ import type { IconLibraryType } from '../icon/icon.component';
     [disabled]="disabled()"
     [multiline]="multiline()"
     [rows]="rows()"
+    [step]="step()"
     [prefixIcon]="prefixIcon()"
     [prefixIconLibrary]="prefixIconLibrary()"
     [suffixIcon]="suffixIcon()"
@@ -34,6 +35,7 @@ class TestHostComponent {
   disabled = signal(false);
   multiline = signal(false);
   rows = signal(3);
+  step = signal<number | undefined>(undefined);
   prefixIcon = signal<string | undefined>(undefined);
   prefixIconLibrary = signal<IconLibraryType | undefined>(undefined);
   suffixIcon = signal<string | undefined>(undefined);
@@ -188,6 +190,45 @@ describe('TnInputHarness', () => {
 
       const input = await loader.getHarness(TnInputHarness);
       expect(await input.isDisabled()).toBe(true);
+    });
+  });
+
+  describe('number type', () => {
+    beforeEach(() => {
+      hostComponent.inputType.set(InputType.Number);
+      fixture.detectChanges();
+    });
+
+    it('should expose decimal inputmode by default', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getInputMode()).toBe('decimal');
+    });
+
+    it('should expose numeric inputmode in integer mode', async () => {
+      hostComponent.step.set(1);
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getInputMode()).toBe('numeric');
+    });
+
+    it('should expose the step attribute', async () => {
+      hostComponent.step.set(1);
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getStep()).toBe('1');
+    });
+
+    it('should read the value as a number', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      await input.setValue('42');
+      expect(await input.getNumericValue()).toBe(42);
+    });
+
+    it('should read an empty value as null', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getNumericValue()).toBeNull();
     });
   });
 

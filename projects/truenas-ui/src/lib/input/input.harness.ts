@@ -80,6 +80,43 @@ export class TnInputHarness extends ComponentHarness {
   }
 
   /**
+   * Gets the current value parsed as a number, mirroring what the control emits in number mode.
+   * Empty or non-numeric input resolves to null (never 0).
+   *
+   * @returns Promise resolving to the numeric value, or null.
+   */
+  async getNumericValue(): Promise<number | null> {
+    const raw = await this.getValue();
+    if (raw === '' || raw === '-' || raw === '.' || raw === '-.') {
+      return null;
+    }
+    // parseFloat (rather than Number) to mirror the control's own parse family and
+    // avoid Number()'s coercions (e.g. hex/whitespace) that the control never emits.
+    const parsed = parseFloat(raw);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  /**
+   * Gets the `inputmode` attribute (e.g. 'numeric' or 'decimal' in number mode).
+   *
+   * @returns Promise resolving to the inputmode string, or null if unset.
+   */
+  async getInputMode(): Promise<string | null> {
+    const input = await this.inputEl();
+    return input.getAttribute('inputmode');
+  }
+
+  /**
+   * Gets the `step` attribute.
+   *
+   * @returns Promise resolving to the step string, or null if unset.
+   */
+  async getStep(): Promise<string | null> {
+    const input = await this.inputEl();
+    return input.getAttribute('step');
+  }
+
+  /**
    * Gets the placeholder text.
    *
    * @returns Promise resolving to the placeholder string.

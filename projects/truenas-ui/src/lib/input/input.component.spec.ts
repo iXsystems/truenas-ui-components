@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TnInputComponent } from './input.component';
 import { InputType } from '../enums/input-type.enum';
 import { TnIconTesting } from '../icon/icon-testing';
@@ -102,6 +102,171 @@ describe('TnInputComponent', () => {
       input.dispatchEvent(new Event('blur'));
 
       expect(touchedSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('number type', () => {
+    beforeEach(() => {
+      fixture.componentRef.setInput('inputType', InputType.Number);
+      fixture.detectChanges();
+    });
+
+    it('should render a text input (not native type=number) with decimal inputmode', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      expect(input.type).toBe('text');
+      expect(input.getAttribute('inputmode')).toBe('decimal');
+    });
+
+    it('should use numeric inputmode when step is a whole number', () => {
+      fixture.componentRef.setInput('step', 1);
+      fixture.detectChanges();
+
+      const input = fixture.nativeElement.querySelector('input');
+      expect(input.getAttribute('inputmode')).toBe('numeric');
+    });
+
+    it('should reflect the step attribute', () => {
+      fixture.componentRef.setInput('step', 1);
+      fixture.detectChanges();
+
+      const input = fixture.nativeElement.querySelector('input');
+      expect(input.getAttribute('step')).toBe('1');
+    });
+
+    it('should emit a number on input', () => {
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = '42';
+      input.dispatchEvent(new Event('input'));
+
+      expect(changeSpy).toHaveBeenCalledWith(42);
+      expect(typeof changeSpy.mock.calls[0][0]).toBe('number');
+    });
+
+    it('should emit a decimal number when decimals are allowed', () => {
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = '3.5';
+      input.dispatchEvent(new Event('input'));
+
+      expect(changeSpy).toHaveBeenCalledWith(3.5);
+    });
+
+    it('should emit null for empty input (not 0)', () => {
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = '';
+      input.dispatchEvent(new Event('input'));
+
+      expect(changeSpy).toHaveBeenCalledWith(null);
+    });
+
+    it('should strip non-numeric characters like e and +', () => {
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = '1e+5';
+      input.dispatchEvent(new Event('input'));
+
+      expect(input.value).toBe('15');
+      expect(changeSpy).toHaveBeenCalledWith(15);
+    });
+
+    it('should strip the decimal point in integer mode', () => {
+      fixture.componentRef.setInput('step', 1);
+      fixture.detectChanges();
+
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = '3.5';
+      input.dispatchEvent(new Event('input'));
+
+      expect(input.value).toBe('35');
+      expect(changeSpy).toHaveBeenCalledWith(35);
+    });
+
+    it('should keep a single leading minus sign', () => {
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = '-1-2';
+      input.dispatchEvent(new Event('input'));
+
+      expect(input.value).toBe('-12');
+      expect(changeSpy).toHaveBeenCalledWith(-12);
+    });
+
+    it('should emit null for a lone minus sign', () => {
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = '-';
+      input.dispatchEvent(new Event('input'));
+
+      expect(changeSpy).toHaveBeenCalledWith(null);
+    });
+
+    it('should display a numeric value written from the form', () => {
+      component.writeValue(8080);
+      expect(component.value).toBe('8080');
+    });
+
+    it('should display empty string when null is written', () => {
+      component.writeValue(null);
+      expect(component.value).toBe('');
+    });
+
+    it('should display zero (not blank) when 0 is written', () => {
+      component.writeValue(0);
+      expect(component.value).toBe('0');
+    });
+
+    it('should display large numbers faithfully without corrupting exponential notation', () => {
+      component.writeValue(1e21);
+      expect(component.value).toBe('1e+21');
+    });
+
+    it('should not mangle a fractional value written in integer mode', () => {
+      fixture.componentRef.setInput('step', 1);
+      fixture.detectChanges();
+
+      component.writeValue(3.5);
+      // Display must mirror the model verbatim, not strip the dot to "35".
+      expect(component.value).toBe('3.5');
+    });
+
+    it('should preserve the caret position when a stripped character is removed', () => {
+      const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+      input.value = '1234';
+      input.dispatchEvent(new Event('input'));
+
+      // Place the caret between '1' and '2', then insert a rejected character.
+      input.value = '1e234';
+      input.setSelectionRange(2, 2);
+      input.dispatchEvent(new Event('input'));
+
+      expect(input.value).toBe('1234');
+      // Caret stays right after '1', not jumped to the end.
+      expect(input.selectionStart).toBe(1);
+    });
+
+    it('should not render a textarea even when multiline is set', () => {
+      fixture.componentRef.setInput('multiline', true);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('textarea')).toBeNull();
+      expect(fixture.nativeElement.querySelector('input')).toBeTruthy();
     });
   });
 
@@ -288,5 +453,109 @@ describe('TnInputComponent with FormControl', () => {
 
     const input = fixture.nativeElement.querySelector('input');
     expect(input.disabled).toBe(false);
+  });
+});
+
+
+@Component({
+  selector: 'tn-test-number-cva-host',
+  standalone: true,
+  imports: [TnInputComponent, ReactiveFormsModule],
+  template: `<tn-input [inputType]="numberType" [formControl]="control" />`
+})
+class TestNumberCvaHostComponent {
+  numberType = InputType.Number;
+  control = new FormControl<number | null>(null);
+}
+
+
+describe('TnInputComponent number type with FormControl', () => {
+  let fixture: ComponentFixture<TestNumberCvaHostComponent>;
+  let hostComponent: TestNumberCvaHostComponent;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TestNumberCvaHostComponent],
+      providers: [TnIconTesting.jest.providers()],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestNumberCvaHostComponent);
+    hostComponent = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should put a real number in the form model when the user types', () => {
+    const input = fixture.nativeElement.querySelector('input');
+    input.value = '443';
+    input.dispatchEvent(new Event('input'));
+
+    expect(hostComponent.control.value).toBe(443);
+    expect(typeof hostComponent.control.value).toBe('number');
+  });
+
+  it('should set the form model to null when the field is cleared', () => {
+    const input = fixture.nativeElement.querySelector('input');
+    input.value = '443';
+    input.dispatchEvent(new Event('input'));
+    input.value = '';
+    input.dispatchEvent(new Event('input'));
+
+    expect(hostComponent.control.value).toBeNull();
+  });
+
+  it('should display a numeric value set on the FormControl', () => {
+    hostComponent.control.setValue(22);
+    fixture.detectChanges();
+
+    const input = fixture.nativeElement.querySelector('input');
+    expect(input.value).toBe('22');
+  });
+});
+
+
+@Component({
+  selector: 'tn-test-number-validators-host',
+  standalone: true,
+  imports: [TnInputComponent, ReactiveFormsModule],
+  template: `<tn-input [inputType]="numberType" [formControl]="control" />`
+})
+class TestNumberValidatorsHostComponent {
+  numberType = InputType.Number;
+  // Range enforcement lives with the consumer's FormControl, not the component.
+  // These validators work precisely because the control emits real numbers.
+  control = new FormControl<number | null>(null, [Validators.min(1), Validators.max(50)]);
+}
+
+
+describe('TnInputComponent number type with consumer validators', () => {
+  let fixture: ComponentFixture<TestNumberValidatorsHostComponent>;
+  let hostComponent: TestNumberValidatorsHostComponent;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TestNumberValidatorsHostComponent],
+      providers: [TnIconTesting.jest.providers()],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestNumberValidatorsHostComponent);
+    hostComponent = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should be valid within range', () => {
+    const input = fixture.nativeElement.querySelector('input');
+    input.value = '25';
+    input.dispatchEvent(new Event('input'));
+
+    expect(hostComponent.control.valid).toBe(true);
+  });
+
+  it('should fail Validators.max because the emitted value is a real number', () => {
+    const input = fixture.nativeElement.querySelector('input');
+    input.value = '60';
+    input.dispatchEvent(new Event('input'));
+
+    expect(hostComponent.control.valid).toBe(false);
+    expect(hostComponent.control.errors).toEqual({ max: { max: 50, actual: 60 } });
   });
 });
