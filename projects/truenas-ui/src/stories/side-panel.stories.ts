@@ -49,6 +49,18 @@ Panels can be nested for drill-down workflows:
   </tn-side-panel>
 </tn-side-panel>
 \`\`\`
+
+## Guarding Close (Unsaved Changes)
+
+Pass \`closeGuard\` to veto a user-initiated close (× button, backdrop, or Escape).
+The guard is a \`() => Observable<boolean>\` — resolve \`false\` to keep the panel open.
+This is the panel-host equivalent of the slide-in's \`requireConfirmationWhen\`: combine
+the dirty check and a confirm dialog into one observable. Programmatic \`open\` changes
+made by the host (e.g. closing after a successful save) bypass the guard.
+
+\`\`\`ts
+closeGuard = () => this.form.dirty ? this.unsavedChanges.showConfirmDialog() : of(true);
+\`\`\`
         `,
       },
     },
@@ -77,6 +89,10 @@ Panels can be nested for drill-down workflows:
     closeOnEscape: {
       control: 'boolean',
       description: 'Whether pressing Escape closes the panel.',
+    },
+    closeGuard: {
+      control: false,
+      description: 'Optional `() => Observable<boolean>` run before a user-initiated close (× / backdrop / Escape). Resolve `false` to veto the close — e.g. to confirm discarding unsaved changes. Programmatic `open` changes bypass it.',
     },
   },
   args: {

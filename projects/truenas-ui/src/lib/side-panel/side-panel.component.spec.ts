@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
+import { of, Subject } from 'rxjs';
 import { TnSidePanelComponent } from './side-panel.component';
 
 describe('TnSidePanelComponent', () => {
@@ -163,6 +164,66 @@ describe('TnSidePanelComponent', () => {
       panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
 
       expect(component.open()).toBe(true);
+    });
+  });
+
+  describe('closeGuard', () => {
+    function openWithGuard(guard: () => ReturnType<typeof of<boolean>>): void {
+      fixture.componentRef.setInput('open', true);
+      fixture.componentRef.setInput('closeGuard', guard);
+      fixture.detectChanges();
+    }
+
+    function clickDismiss(): void {
+      (getOverlay().querySelector('tn-icon-button button') as HTMLElement).click();
+    }
+
+    it('closes when the guard allows it', () => {
+      openWithGuard(() => of(true));
+
+      clickDismiss();
+
+      expect(component.open()).toBe(false);
+    });
+
+    it('keeps the panel open when the guard vetoes the close', () => {
+      const guard = jest.fn(() => of(false));
+      openWithGuard(guard);
+
+      clickDismiss();
+
+      expect(guard).toHaveBeenCalledTimes(1);
+      expect(component.open()).toBe(true);
+    });
+
+    it('applies the guard to backdrop clicks', () => {
+      openWithGuard(() => of(false));
+
+      (getOverlay().querySelector('.tn-side-panel__backdrop') as HTMLElement).click();
+
+      expect(component.open()).toBe(true);
+    });
+
+    it('applies the guard to the Escape key', () => {
+      openWithGuard(() => of(false));
+
+      getOverlay().querySelector('.tn-side-panel__panel')!
+        .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+      expect(component.open()).toBe(true);
+    });
+
+    it('waits for an async guard before closing', () => {
+      const gate = new Subject<boolean>();
+      fixture.componentRef.setInput('open', true);
+      fixture.componentRef.setInput('closeGuard', () => gate);
+      fixture.detectChanges();
+
+      clickDismiss();
+      expect(component.open()).toBe(true);
+
+      gate.next(true);
+      expect(component.open()).toBe(false);
     });
   });
 });

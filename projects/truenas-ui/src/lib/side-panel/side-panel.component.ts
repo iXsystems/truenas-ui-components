@@ -2,10 +2,13 @@ import { A11yModule } from '@angular/cdk/a11y';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import {
   Component, Directive, input, output, model, computed, effect, inject, signal,
-  contentChildren, viewChild, afterNextRender,
+  contentChildren, viewChild, afterNextRender, DestroyRef,
 } from '@angular/core';
 import type { ElementRef, OnDestroy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { mdiClose } from '@mdi/js';
+import { take } from 'rxjs';
+import type { Observable } from 'rxjs';
 import { TnIconRegistryService } from '../icon/icon-registry.service';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnTestIdDirective } from '../test-id';
@@ -57,6 +60,7 @@ export class TnSidePanelHeaderActionDirective {}
 export class TnSidePanelComponent implements OnDestroy {
   private iconRegistry = inject(TnIconRegistryService);
   private document = inject(DOCUMENT);
+  private destroyRef = inject(DestroyRef);
 
   private overlayRef = viewChild.required<ElementRef>('overlay');
   protected initialized = signal(false);
@@ -70,6 +74,14 @@ export class TnSidePanelComponent implements OnDestroy {
   hasBackdrop = input<boolean>(true);
   closeOnBackdropClick = input<boolean>(true);
   closeOnEscape = input<boolean>(true);
+  /**
+   * Optional gate evaluated before a user-initiated close (× button, backdrop click,
+   * or Escape). Return an observable resolving to `false` to veto the close — e.g. to
+   * prompt about unsaved changes and keep the panel open if the user cancels. The
+   * observable is expected to emit once. Programmatic `open` changes made by the host
+   * bypass this guard; when unset, the panel closes immediately.
+   */
+  closeGuard = input<(() => Observable<boolean>) | undefined>(undefined);
   /**
    * Test-id applied to the panel's root overlay element. Rendered under whichever attribute
    * name is configured via `TN_TEST_ATTR` (default `data-testid`).
@@ -115,7 +127,19 @@ export class TnSidePanelComponent implements OnDestroy {
   }
 
   protected dismiss(): void {
-    this.open.set(false);
+    const guard = this.closeGuard();
+    if (!guard) {
+      this.open.set(false);
+      return;
+    }
+
+    guard()
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe((canClose) => {
+        if (canClose) {
+          this.open.set(false);
+        }
+      });
   }
 
   protected onBackdropClick(): void {
