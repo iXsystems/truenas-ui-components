@@ -102,14 +102,11 @@ export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
   // ControlValueAccessor implementation
   writeValue(value: string | number | null): void {
     // Display the model verbatim via String(); do NOT sanitize here. Sanitizing a
-    // canonical number string corrupts values JS renders in exponential notation
-    // (1e21 -> "1e+21" -> "121") or fractions in integer mode (3.5 -> "35"), which
-    // would silently diverge the displayed value from the form model.
+    // canonical number string would corrupt fractions in integer mode (3.5 -> "35"),
+    // silently diverging the display from the form model.
     //
-    // Caveat: a value JS stringifies with an exponent (|x| >= 1e21 or < 1e-6) is
-    // shown in exponential form, which this field can't represent — the first edit
-    // sanitizes the 'e'/'+' away and collapses it (1e+21 -> 121), changing the
-    // model. Avoid programmatically setting values outside the plain-decimal range.
+    // Scientific notation is out of scope: users can't type 'e' (it's stripped), and
+    // exponential-range values aren't meaningful for the fields this control targets.
     this.value = value === null || value === undefined ? '' : String(value);
   }
 
