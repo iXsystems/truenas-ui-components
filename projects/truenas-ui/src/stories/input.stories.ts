@@ -187,6 +187,45 @@ export const Number: Story = {
   },
 };
 
+export const NumberDecimal: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      // A non-whole step keeps the field in decimal mode, so '.' is accepted
+      // and the value is emitted via parseFloat.
+      weightControl: new FormControl<number | null>(1.5, [Validators.min(0)]),
+    },
+    template: `
+      <tn-form-field
+        label="Weight (kg)"
+        hint="Decimal mode — accepts a single decimal point; empty clears to null">
+        <tn-input
+          [inputType]="inputType"
+          [placeholder]="placeholder"
+          [disabled]="disabled"
+          [testId]="testId"
+          [step]="step"
+          [formControl]="weightControl">
+        </tn-input>
+      </tn-form-field>
+      <p style="margin-top: 12px; font-family: monospace;">
+        model: {{ weightControl.value === null ? 'null' : weightControl.value }}
+        ({{ weightControl.value === null ? 'object' : 'number' }})
+      </p>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, ReactiveFormsModule],
+    },
+  }),
+  args: {
+    inputType: InputType.Number,
+    placeholder: 'Enter a weight',
+    testId: 'number-decimal-input',
+    disabled: false,
+    step: 0.1,
+  },
+};
+
 export const Multiline: Story = {
   render: (args) => ({
     props: args,

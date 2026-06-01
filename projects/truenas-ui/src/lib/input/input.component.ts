@@ -68,7 +68,10 @@ export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
   /** Number mode is always single-line; it wins over `multiline` if both are set. */
   showTextarea = computed(() => this.multiline() && !this.isNumeric());
 
-  id = 'tn-input';
+  // Unique per instance: a hard-coded id produced duplicate ids when multiple
+  // tn-inputs share a page (invalid HTML, and it breaks any future label `for=`,
+  // aria-describedby, or getElementById targeting this input).
+  id = `tn-input-${Math.random().toString(36).slice(2, 11)}`;
   value = '';
 
   // CVA disabled state management
