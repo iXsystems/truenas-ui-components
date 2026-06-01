@@ -1,5 +1,5 @@
 <div [ngClass]="classes()">
-  <label class="tn-checkbox__label" [for]="id">
+  <label class="tn-checkbox__label" [for]="id" [tnTestId]="testId()">
     <input
       #checkboxEl
       type="checkbox"
@@ -9,7 +9,6 @@
       [disabled]="isDisabled()"
       [required]="required()"
       [indeterminate]="indeterminate()"
-      [tnTestId]="testId()"
       [attr.aria-label]="hasProjectedLabel() ? label() : null"
       [attr.aria-describedby]="error() ? id + '-error' : null"
       [attr.aria-invalid]="error() ? 'true' : null"
