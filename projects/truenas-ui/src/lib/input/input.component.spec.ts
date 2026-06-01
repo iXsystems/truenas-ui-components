@@ -25,6 +25,12 @@ describe('TnInputComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('should assign a unique id per instance', () => {
+    const other = TestBed.createComponent(TnInputComponent).componentInstance;
+    expect(component.id).toMatch(/^tn-input-\d+$/);
+    expect(component.id).not.toBe(other.id);
+  });
+
   describe('rendering', () => {
     it('should render an input element by default', () => {
       const input = fixture.nativeElement.querySelector('input.tn-input');

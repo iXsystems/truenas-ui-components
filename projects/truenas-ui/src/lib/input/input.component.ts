@@ -8,6 +8,11 @@ import type { IconLibraryType } from '../icon/icon.component';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective } from '../test-id';
 
+// Module-level counter for deterministic, unique instance ids (matches the
+// tn-autocomplete convention). Deterministic ids are SSR/hydration-safe and
+// stable across snapshots, unlike a Math.random() seed.
+let nextId = 0;
+
 @Component({
   selector: 'tn-input',
   standalone: true,
@@ -71,7 +76,7 @@ export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
   // Unique per instance: a hard-coded id produced duplicate ids when multiple
   // tn-inputs share a page (invalid HTML, and it breaks any future label `for=`,
   // aria-describedby, or getElementById targeting this input).
-  id = `tn-input-${Math.random().toString(36).slice(2, 11)}`;
+  id = `tn-input-${nextId++}`;
   value = '';
 
   // CVA disabled state management
