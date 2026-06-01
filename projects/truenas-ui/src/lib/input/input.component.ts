@@ -37,11 +37,19 @@ export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
   multiline = input<boolean>(false);
   rows = input<number>(3);
 
-  // Numeric input (only meaningful when inputType is InputType.Number).
-  // `step` doubles as the integer/decimal switch: a whole-number step (e.g. 1)
-  // puts the field in integer mode; otherwise it accepts decimals.
-  // Range enforcement is intentionally left to the consumer's form validators
-  // (e.g. Validators.min/max), which work because the control emits real numbers.
+  /**
+   * Numeric step — only meaningful when `inputType` is `InputType.Number`.
+   *
+   * `step` doubles as the integer/decimal switch:
+   * - **unset (default) or a fractional step → decimal mode**: accepts a single
+   *   `.` and emits via `parseFloat`. A `Number` field therefore accepts `"3.5"`
+   *   out of the box; opt into integers by passing a whole-number step.
+   * - **a whole-number step (e.g. `1`, `2`) → integer mode**: strips `.` and
+   *   emits via `parseInt`.
+   *
+   * Range enforcement is intentionally left to the consumer's form validators
+   * (e.g. `Validators.min`/`max`), which work because the control emits real numbers.
+   */
   step = input<number | undefined>(undefined);
 
   // Icon inputs
@@ -97,6 +105,11 @@ export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
     // canonical number string corrupts values JS renders in exponential notation
     // (1e21 -> "1e+21" -> "121") or fractions in integer mode (3.5 -> "35"), which
     // would silently diverge the displayed value from the form model.
+    //
+    // Caveat: a value JS stringifies with an exponent (|x| >= 1e21 or < 1e-6) is
+    // shown in exponential form, which this field can't represent — the first edit
+    // sanitizes the 'e'/'+' away and collapses it (1e+21 -> 121), changing the
+    // model. Avoid programmatically setting values outside the plain-decimal range.
     this.value = value === null || value === undefined ? '' : String(value);
   }
 
