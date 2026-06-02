@@ -41,9 +41,9 @@ const meta: Meta<TnInputComponent> = {
       control: 'number',
       description: 'Number of rows for textarea',
     },
-    step: {
-      control: 'number',
-      description: 'Step (number type). A whole-number step switches the field to integer-only mode.',
+    allowDecimals: {
+      control: 'boolean',
+      description: 'Number type: whether decimals are accepted. Set false for integer-only mode.',
     },
     testId: {
       control: 'text',
@@ -165,7 +165,7 @@ export const Number: Story = {
           [placeholder]="placeholder"
           [disabled]="disabled"
           [testId]="testId"
-          [step]="step"
+          [allowDecimals]="allowDecimals"
           [formControl]="portControl">
         </tn-input>
       </tn-form-field>
@@ -183,7 +183,7 @@ export const Number: Story = {
     placeholder: 'Enter a port',
     testId: 'number-input',
     disabled: false,
-    step: 1,
+    allowDecimals: false,
   },
 };
 
@@ -191,8 +191,7 @@ export const NumberDecimal: Story = {
   render: (args) => ({
     props: {
       ...args,
-      // A non-whole step keeps the field in decimal mode, so '.' is accepted
-      // and the value is emitted via parseFloat.
+      // Decimal mode (the default) accepts a single '.' and emits via parseFloat.
       weightControl: new FormControl<number | null>(1.5, [Validators.min(0)]),
     },
     template: `
@@ -204,7 +203,7 @@ export const NumberDecimal: Story = {
           [placeholder]="placeholder"
           [disabled]="disabled"
           [testId]="testId"
-          [step]="step"
+          [allowDecimals]="allowDecimals"
           [formControl]="weightControl">
         </tn-input>
       </tn-form-field>
@@ -222,7 +221,7 @@ export const NumberDecimal: Story = {
     placeholder: 'Enter a weight',
     testId: 'number-decimal-input',
     disabled: false,
-    step: 0.1,
+    allowDecimals: true,
   },
 };
 

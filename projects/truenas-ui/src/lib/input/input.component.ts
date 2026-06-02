@@ -38,19 +38,16 @@ export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
   rows = input<number>(3);
 
   /**
-   * Numeric step — only meaningful when `inputType` is `InputType.Number`.
+   * Integer/decimal switch — only meaningful when `inputType` is `InputType.Number`.
    *
-   * `step` doubles as the integer/decimal switch:
-   * - **unset (default) or a fractional step → decimal mode**: accepts a single
-   *   `.` and emits via `parseFloat`. A `Number` field therefore accepts `"3.5"`
-   *   out of the box; opt into integers by passing a whole-number step.
-   * - **a whole-number step (e.g. `1`, `2`) → integer mode**: strips `.` and
-   *   emits via `parseInt`.
+   * - **`true` (default) → decimal mode**: accepts a single `.` and emits via
+   *   `parseFloat`, so a `Number` field accepts `"3.5"` out of the box.
+   * - **`false` → integer mode**: strips `.` and emits via `parseInt`.
    *
    * Range enforcement is intentionally left to the consumer's form validators
    * (e.g. `Validators.min`/`max`), which work because the control emits real numbers.
    */
-  step = input<number | undefined>(undefined);
+  allowDecimals = input<boolean>(true);
 
   // Icon inputs
   prefixIcon = input<string | undefined>(undefined);
@@ -66,11 +63,8 @@ export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
 
   // Numeric mode state
   isNumeric = computed(() => this.inputType() === InputType.Number);
-  /** True when the field only accepts whole numbers (driven by a whole-number `step`). */
-  integerOnly = computed(() => {
-    const s = this.step();
-    return s !== undefined && Number.isInteger(s);
-  });
+  /** True when the field only accepts whole numbers (i.e. `allowDecimals` is false). */
+  integerOnly = computed(() => !this.allowDecimals());
   /** The `type` attribute actually rendered. Number mode uses a text input + inputmode to avoid the native type="number" footguns. */
   resolvedType = computed(() => (this.isNumeric() ? InputType.PlainText : this.inputType()));
   /** `inputmode` hint: numeric keypad for integers, decimal keypad otherwise. Null (omitted) when not in number mode. */

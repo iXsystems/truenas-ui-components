@@ -107,16 +107,6 @@ export class TnInputHarness extends ComponentHarness {
   }
 
   /**
-   * Gets the `step` attribute.
-   *
-   * @returns Promise resolving to the step string, or null if unset.
-   */
-  async getStep(): Promise<string | null> {
-    const input = await this.inputEl();
-    return input.getAttribute('step');
-  }
-
-  /**
    * Gets the placeholder text.
    *
    * @returns Promise resolving to the placeholder string.

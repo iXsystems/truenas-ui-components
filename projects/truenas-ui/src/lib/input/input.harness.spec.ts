@@ -20,7 +20,7 @@ import type { IconLibraryType } from '../icon/icon.component';
     [disabled]="disabled()"
     [multiline]="multiline()"
     [rows]="rows()"
-    [step]="step()"
+    [allowDecimals]="allowDecimals()"
     [prefixIcon]="prefixIcon()"
     [prefixIconLibrary]="prefixIconLibrary()"
     [suffixIcon]="suffixIcon()"
@@ -35,7 +35,7 @@ class TestHostComponent {
   disabled = signal(false);
   multiline = signal(false);
   rows = signal(3);
-  step = signal<number | undefined>(undefined);
+  allowDecimals = signal(true);
   prefixIcon = signal<string | undefined>(undefined);
   prefixIconLibrary = signal<IconLibraryType | undefined>(undefined);
   suffixIcon = signal<string | undefined>(undefined);
@@ -205,19 +205,11 @@ describe('TnInputHarness', () => {
     });
 
     it('should expose numeric inputmode in integer mode', async () => {
-      hostComponent.step.set(1);
+      hostComponent.allowDecimals.set(false);
       fixture.detectChanges();
 
       const input = await loader.getHarness(TnInputHarness);
       expect(await input.getInputMode()).toBe('numeric');
-    });
-
-    it('should expose the step attribute', async () => {
-      hostComponent.step.set(1);
-      fixture.detectChanges();
-
-      const input = await loader.getHarness(TnInputHarness);
-      expect(await input.getStep()).toBe('1');
     });
 
     it('should read the value as a number', async () => {

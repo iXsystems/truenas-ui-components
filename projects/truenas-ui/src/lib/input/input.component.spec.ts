@@ -123,20 +123,12 @@ describe('TnInputComponent', () => {
       expect(input.getAttribute('inputmode')).toBe('decimal');
     });
 
-    it('should use numeric inputmode when step is a whole number', () => {
-      fixture.componentRef.setInput('step', 1);
+    it('should use numeric inputmode when decimals are disallowed', () => {
+      fixture.componentRef.setInput('allowDecimals', false);
       fixture.detectChanges();
 
       const input = fixture.nativeElement.querySelector('input');
       expect(input.getAttribute('inputmode')).toBe('numeric');
-    });
-
-    it('should reflect the step attribute', () => {
-      fixture.componentRef.setInput('step', 1);
-      fixture.detectChanges();
-
-      const input = fixture.nativeElement.querySelector('input');
-      expect(input.getAttribute('step')).toBe('1');
     });
 
     it('should emit a number on input', () => {
@@ -186,7 +178,7 @@ describe('TnInputComponent', () => {
     });
 
     it('should strip the decimal point in integer mode', () => {
-      fixture.componentRef.setInput('step', 1);
+      fixture.componentRef.setInput('allowDecimals', false);
       fixture.detectChanges();
 
       const changeSpy = jest.fn();
@@ -244,7 +236,7 @@ describe('TnInputComponent', () => {
     });
 
     it('should not mangle a fractional value written in integer mode', () => {
-      fixture.componentRef.setInput('step', 1);
+      fixture.componentRef.setInput('allowDecimals', false);
       fixture.detectChanges();
 
       component.writeValue(3.5);
