@@ -88,6 +88,28 @@ describe('TnInputComponent', () => {
       const input = fixture.nativeElement.querySelector('input');
       expect(input.disabled).toBe(true);
     });
+
+    it('should not render aria-label by default', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      expect(input.hasAttribute('aria-label')).toBe(false);
+    });
+
+    it('should apply aria-label when set', () => {
+      fixture.componentRef.setInput('ariaLabel', 'Port number');
+      fixture.detectChanges();
+
+      const input = fixture.nativeElement.querySelector('input');
+      expect(input.getAttribute('aria-label')).toBe('Port number');
+    });
+
+    it('should apply aria-label to the textarea when multiline', () => {
+      fixture.componentRef.setInput('multiline', true);
+      fixture.componentRef.setInput('ariaLabel', 'Description');
+      fixture.detectChanges();
+
+      const textarea = fixture.nativeElement.querySelector('textarea');
+      expect(textarea.getAttribute('aria-label')).toBe('Description');
+    });
   });
 
   describe('value changes', () => {
@@ -97,7 +119,7 @@ describe('TnInputComponent', () => {
       input.dispatchEvent(new Event('input'));
       fixture.detectChanges();
 
-      expect(component.value).toBe('new value');
+      expect(component['value']).toBe('new value');
     });
 
     it('should call onTouched on blur', () => {
@@ -217,22 +239,22 @@ describe('TnInputComponent', () => {
 
     it('should display a numeric value written from the form', () => {
       component.writeValue(8080);
-      expect(component.value).toBe('8080');
+      expect(component['value']).toBe('8080');
     });
 
     it('should display empty string when null is written', () => {
       component.writeValue(null);
-      expect(component.value).toBe('');
+      expect(component['value']).toBe('');
     });
 
     it('should display zero (not blank) when 0 is written', () => {
       component.writeValue(0);
-      expect(component.value).toBe('0');
+      expect(component['value']).toBe('0');
     });
 
     it('should display large numbers faithfully without corrupting exponential notation', () => {
       component.writeValue(1e21);
-      expect(component.value).toBe('1e+21');
+      expect(component['value']).toBe('1e+21');
     });
 
     it('should not mangle a fractional value written in integer mode', () => {
@@ -241,7 +263,7 @@ describe('TnInputComponent', () => {
 
       component.writeValue(3.5);
       // Display must mirror the model verbatim, not strip the dot to "35".
-      expect(component.value).toBe('3.5');
+      expect(component['value']).toBe('3.5');
     });
 
     it('should preserve the caret position when a stripped character is removed', () => {
@@ -362,12 +384,12 @@ describe('TnInputComponent', () => {
   describe('ControlValueAccessor', () => {
     it('should write value', () => {
       component.writeValue('test');
-      expect(component.value).toBe('test');
+      expect(component['value']).toBe('test');
     });
 
     it('should write empty string for null', () => {
       component.writeValue(null as unknown as string);
-      expect(component.value).toBe('');
+      expect(component['value']).toBe('');
     });
 
     it('should call onChange when value changes', () => {

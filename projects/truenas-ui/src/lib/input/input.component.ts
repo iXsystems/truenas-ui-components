@@ -38,6 +38,15 @@ export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
   rows = input<number>(3);
 
   /**
+   * Accessible name for the control. Rendered as `aria-label` on the input/textarea.
+   *
+   * Leave unset when the input is wrapped in a `tn-form-field` (or otherwise has a
+   * visible `<label>`); set it for standalone usage so the control isn't unnamed in
+   * the a11y tree.
+   */
+  ariaLabel = input<string | undefined>(undefined);
+
+  /**
    * Integer/decimal switch — only meaningful when `inputType` is `InputType.Number`.
    *
    * - **`true` (default) → decimal mode**: accepts a single `.` and emits via
@@ -79,7 +88,9 @@ export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
   // tn-inputs share a page (invalid HTML, and it breaks any future label `for=`,
   // aria-describedby, or getElementById targeting this input).
   id = `tn-input-${nextId++}`;
-  value = '';
+  // Protected: the display string is owned by the component and driven through the
+  // CVA flow (writeValue / onValueChange). External writes would bypass that flow.
+  protected value = '';
 
   // CVA disabled state management
   private formDisabled = signal<boolean>(false);
@@ -116,8 +127,8 @@ export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
     this.formDisabled.set(isDisabled);
   }
 
-  // Component methods
-  onValueChange(event: Event): void {
+  // Component methods (template-bound; protected — not part of the public API)
+  protected onValueChange(event: Event): void {
     const target = event.target as HTMLInputElement | HTMLTextAreaElement;
 
     if (this.isNumeric()) {
@@ -143,7 +154,7 @@ export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
     this.onChange(this.value);
   }
 
-  onBlur(): void {
+  protected onBlur(): void {
     this.onTouched();
   }
 

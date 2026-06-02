@@ -21,6 +21,7 @@ import type { IconLibraryType } from '../icon/icon.component';
     [multiline]="multiline()"
     [rows]="rows()"
     [allowDecimals]="allowDecimals()"
+    [ariaLabel]="ariaLabel()"
     [prefixIcon]="prefixIcon()"
     [prefixIconLibrary]="prefixIconLibrary()"
     [suffixIcon]="suffixIcon()"
@@ -36,6 +37,7 @@ class TestHostComponent {
   multiline = signal(false);
   rows = signal(3);
   allowDecimals = signal(true);
+  ariaLabel = signal<string | undefined>(undefined);
   prefixIcon = signal<string | undefined>(undefined);
   prefixIconLibrary = signal<IconLibraryType | undefined>(undefined);
   suffixIcon = signal<string | undefined>(undefined);
@@ -221,6 +223,36 @@ describe('TnInputHarness', () => {
     it('should read an empty value as null', async () => {
       const input = await loader.getHarness(TnInputHarness);
       expect(await input.getNumericValue()).toBeNull();
+    });
+
+    it('should mirror the control and parse as an integer in integer mode', async () => {
+      hostComponent.allowDecimals.set(false);
+      fixture.detectChanges();
+
+      // Put a fractional string into the field without going through keystroke
+      // sanitization (mirrors a writeValue from the form model). In integer mode the
+      // control parses this via parseInt -> 3, so the harness must agree rather than
+      // returning 3.5 via parseFloat.
+      const inputEl = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+      inputEl.value = '3.5';
+
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getNumericValue()).toBe(3);
+    });
+  });
+
+  describe('aria-label', () => {
+    it('should return null when unset', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getAriaLabel()).toBeNull();
+    });
+
+    it('should expose the aria-label when set', async () => {
+      hostComponent.ariaLabel.set('Full name');
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getAriaLabel()).toBe('Full name');
     });
   });
 

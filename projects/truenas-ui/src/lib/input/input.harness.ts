@@ -90,9 +90,13 @@ export class TnInputHarness extends ComponentHarness {
     if (raw === '' || raw === '-' || raw === '.' || raw === '-.') {
       return null;
     }
-    // parseFloat (rather than Number) to mirror the control's own parse family and
-    // avoid Number()'s coercions (e.g. hex/whitespace) that the control never emits.
-    const parsed = parseFloat(raw);
+    // Mirror the control's parse exactly: integer mode (inputmode="numeric") parses
+    // via parseInt, decimal mode via parseFloat. Reading inputmode rather than always
+    // using parseFloat keeps the harness and component from disagreeing on a string
+    // like "3.5" in integer mode (component emits 3; parseFloat would say 3.5).
+    // Both avoid Number()'s coercions (hex/whitespace) the control never emits.
+    const integerMode = (await this.getInputMode()) === 'numeric';
+    const parsed = integerMode ? parseInt(raw, 10) : parseFloat(raw);
     return Number.isNaN(parsed) ? null : parsed;
   }
 
@@ -104,6 +108,20 @@ export class TnInputHarness extends ComponentHarness {
   async getInputMode(): Promise<string | null> {
     const input = await this.inputEl();
     return input.getAttribute('inputmode');
+  }
+
+  /**
+   * Gets the `aria-label` (accessible name set via the `ariaLabel` input).
+   *
+   * @returns Promise resolving to the aria-label string, or null if unset.
+   */
+  async getAriaLabel(): Promise<string | null> {
+    if (await this.isMultiline()) {
+      const textarea = await this.textareaEl();
+      return textarea.getAttribute('aria-label');
+    }
+    const input = await this.inputEl();
+    return input.getAttribute('aria-label');
   }
 
   /**
