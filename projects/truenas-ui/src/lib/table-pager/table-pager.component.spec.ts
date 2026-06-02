@@ -231,6 +231,21 @@ describe('TnTablePagerComponent', () => {
     });
   });
 
+  describe('test ids', () => {
+    it('should expose a stable test id on the page-size select', () => {
+      const host = fixture.nativeElement as HTMLElement;
+      expect(host.querySelector('[data-testid="select-page-size"]')).toBeTruthy();
+    });
+
+    it('should expose stable test ids on the navigation buttons', () => {
+      const host = fixture.nativeElement as HTMLElement;
+      expect(host.querySelector('[data-testid="button-max-left"]')).toBeTruthy();
+      expect(host.querySelector('[data-testid="button-left"]')).toBeTruthy();
+      expect(host.querySelector('[data-testid="button-right"]')).toBeTruthy();
+      expect(host.querySelector('[data-testid="button-max-right"]')).toBeTruthy();
+    });
+  });
+
   describe('select options', () => {
     it('should map pageSizeOptions to TnSelectOption shape', () => {
       fixture.componentRef.setInput('pageSizeOptions', [5, 25, 100]);
