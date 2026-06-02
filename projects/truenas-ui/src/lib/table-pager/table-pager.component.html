@@ -2,6 +2,7 @@
   <span class="tn-table-pager__label">{{ resolvedItemsPerPageLabel() }}:</span>
   <tn-select
     class="tn-table-pager__size-select"
+    testId="select-page-size"
     [options]="pageSizeSelectOptions()"
     [ariaLabel]="resolvedItemsPerPageLabel()"
     [ngModel]="pageSize()"
@@ -10,7 +11,7 @@
 
 <span class="tn-table-pager__range">
   @if (effectiveTotalItems() === 0) {
-    – {{ resolvedOfLabel() }} 0
+    0 {{ resolvedOfLabel() }} 0
   } @else if (lastItemOnPage() > firstItemOnPage()) {
     {{ firstItemOnPage() }} – {{ lastItemOnPage() }} {{ resolvedOfLabel() }} {{ effectiveTotalItems() }}
   } @else {
@@ -22,24 +23,28 @@
   <tn-icon-button
     name="page-first"
     library="mdi"
+    testId="button-first-page"
     [ariaLabel]="resolvedFirstPageLabel()"
     [disabled]="isFirstPageDisabled()"
     (onClick)="goToPage(1)" />
   <tn-icon-button
     name="chevron-left"
     library="mdi"
+    testId="button-previous-page"
     [ariaLabel]="resolvedPreviousPageLabel()"
     [disabled]="isFirstPageDisabled()"
     (onClick)="previousPage()" />
   <tn-icon-button
     name="chevron-right"
     library="mdi"
+    testId="button-next-page"
     [ariaLabel]="resolvedNextPageLabel()"
     [disabled]="isLastPageDisabled()"
     (onClick)="nextPage()" />
   <tn-icon-button
     name="page-last"
     library="mdi"
+    testId="button-last-page"
     [ariaLabel]="resolvedLastPageLabel()"
     [disabled]="isLastPageDisabled()"
     (onClick)="goToPage(totalPages())" />
