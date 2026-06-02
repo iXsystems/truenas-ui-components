@@ -111,6 +111,18 @@ export class TnInputHarness extends ComponentHarness {
   }
 
   /**
+   * Whether the field is in integer-only mode (i.e. `allowDecimals` is false).
+   *
+   * Derived from `inputmode`: number mode renders `numeric` for integers and
+   * `decimal` otherwise. A convenience wrapper so tests need not know that mapping.
+   *
+   * @returns Promise resolving to true when only whole numbers are accepted.
+   */
+  async isIntegerOnly(): Promise<boolean> {
+    return (await this.getInputMode()) === 'numeric';
+  }
+
+  /**
    * Gets the `aria-label` (accessible name set via the `ariaLabel` input).
    *
    * @returns Promise resolving to the aria-label string, or null if unset.

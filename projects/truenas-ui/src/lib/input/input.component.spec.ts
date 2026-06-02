@@ -1,3 +1,4 @@
+import { FocusMonitor } from '@angular/cdk/a11y';
 import { Component } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
@@ -388,7 +389,12 @@ describe('TnInputComponent', () => {
     });
 
     it('should write empty string for null', () => {
-      component.writeValue(null as unknown as string);
+      component.writeValue(null);
+      expect(component['value']).toBe('');
+    });
+
+    it('should write empty string for undefined', () => {
+      component.writeValue(undefined);
       expect(component['value']).toBe('');
     });
 
@@ -409,6 +415,17 @@ describe('TnInputComponent', () => {
 
       const input = fixture.nativeElement.querySelector('input');
       expect(input.disabled).toBe(true);
+    });
+  });
+
+  describe('lifecycle', () => {
+    it('should stop monitoring focus on destroy', () => {
+      const focusMonitor = TestBed.inject(FocusMonitor);
+      const stopSpy = jest.spyOn(focusMonitor, 'stopMonitoring');
+
+      fixture.destroy();
+
+      expect(stopSpy).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -214,6 +214,19 @@ describe('TnInputHarness', () => {
       expect(await input.getInputMode()).toBe('numeric');
     });
 
+    it('should report isIntegerOnly false in decimal mode', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.isIntegerOnly()).toBe(false);
+    });
+
+    it('should report isIntegerOnly true when decimals are disallowed', async () => {
+      hostComponent.allowDecimals.set(false);
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.isIntegerOnly()).toBe(true);
+    });
+
     it('should read the value as a number', async () => {
       const input = await loader.getHarness(TnInputHarness);
       await input.setValue('42');

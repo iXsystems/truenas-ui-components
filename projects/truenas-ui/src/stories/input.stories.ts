@@ -148,7 +148,9 @@ export const WithError: Story = {
   },
 };
 
-export const Number: Story = {
+// Named NumberInteger (not Number) to pair with NumberDecimal and to avoid
+// shadowing the global Number constructor in this module.
+export const NumberInteger: Story = {
   render: (args) => ({
     props: {
       ...args,

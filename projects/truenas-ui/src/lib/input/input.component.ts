@@ -1,5 +1,5 @@
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
-import type { ElementRef, AfterViewInit} from '@angular/core';
+import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
 import { Component, viewChild, inject, input, output, computed, signal, forwardRef } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -27,7 +27,7 @@ let nextId = 0;
   templateUrl: './input.component.html',
   styleUrl: './input.component.scss',
 })
-export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
+export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
   inputEl = viewChild.required<ElementRef<HTMLInputElement | HTMLTextAreaElement>>('inputEl');
 
   inputType = input<InputType>(InputType.PlainText);
@@ -99,13 +99,28 @@ export class TnInputComponent implements AfterViewInit, ControlValueAccessor {
   private onChange: (value: string | number | null) => void = () => {};
   private onTouched = () => {};
   private focusMonitor = inject(FocusMonitor);
+  // The element handed to FocusMonitor, captured so ngOnDestroy can stop monitoring
+  // exactly what it started — without re-reading the required viewChild on a
+  // component that may be destroyed before its view ever initialized.
+  private monitoredEl?: ElementRef<HTMLInputElement | HTMLTextAreaElement>;
 
   ngAfterViewInit() {
-    this.focusMonitor.monitor(this.inputEl());
+    this.monitoredEl = this.inputEl();
+    this.focusMonitor.monitor(this.monitoredEl);
+  }
+
+  ngOnDestroy() {
+    // Stop the FocusMonitor we started in ngAfterViewInit; otherwise it keeps a
+    // DOM observer alive on a detached element.
+    if (this.monitoredEl) {
+      this.focusMonitor.stopMonitoring(this.monitoredEl);
+    }
   }
 
   // ControlValueAccessor implementation
-  writeValue(value: string | number | null): void {
+  // Accepts undefined as well as the declared types: Angular may hand writeValue an
+  // undefined model at init, and it maps to the empty display like null.
+  writeValue(value: string | number | null | undefined): void {
     // Display the model verbatim via String(); do NOT sanitize here. Sanitizing a
     // canonical number string would corrupt fractions in integer mode (3.5 -> "35"),
     // silently diverging the display from the form model.
