@@ -222,12 +222,12 @@ describe('TnTablePagerComponent', () => {
   });
 
   describe('empty-state range', () => {
-    it('should render a dash placeholder when totalItems is 0', () => {
+    it('should render "0 of 0" when totalItems is 0', () => {
       fixture.componentRef.setInput('totalItems', 0);
       fixture.detectChanges();
       const rangeText = (fixture.nativeElement.querySelector('.tn-table-pager__range') as HTMLElement)
         .textContent?.replace(/\s+/g, ' ').trim();
-      expect(rangeText).toBe('– of 0');
+      expect(rangeText).toBe('0 of 0');
     });
   });
 

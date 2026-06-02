@@ -10,7 +10,7 @@
 
 <span class="tn-table-pager__range">
   @if (effectiveTotalItems() === 0) {
-    – {{ resolvedOfLabel() }} 0
+    0 {{ resolvedOfLabel() }} 0
   } @else if (lastItemOnPage() > firstItemOnPage()) {
     {{ firstItemOnPage() }} – {{ lastItemOnPage() }} {{ resolvedOfLabel() }} {{ effectiveTotalItems() }}
   } @else {
