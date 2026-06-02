@@ -237,12 +237,14 @@ describe('TnTablePagerComponent', () => {
       expect(host.querySelector('[data-testid="select-page-size"]')).toBeTruthy();
     });
 
-    it('should expose stable test ids on the navigation buttons', () => {
+    it.each([
+      'button-first-page',
+      'button-previous-page',
+      'button-next-page',
+      'button-last-page',
+    ])('should expose a stable test id on the %s navigation button', (testId) => {
       const host = fixture.nativeElement as HTMLElement;
-      expect(host.querySelector('[data-testid="button-max-left"]')).toBeTruthy();
-      expect(host.querySelector('[data-testid="button-left"]')).toBeTruthy();
-      expect(host.querySelector('[data-testid="button-right"]')).toBeTruthy();
-      expect(host.querySelector('[data-testid="button-max-right"]')).toBeTruthy();
+      expect(host.querySelector(`[data-testid="${testId}"]`)).toBeTruthy();
     });
   });
 
