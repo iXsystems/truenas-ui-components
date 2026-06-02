@@ -1,4 +1,4 @@
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { InputType } from '../lib/enums/input-type.enum';
@@ -40,6 +40,10 @@ const meta: Meta<TnInputComponent> = {
     rows: {
       control: 'number',
       description: 'Number of rows for textarea',
+    },
+    allowDecimals: {
+      control: 'boolean',
+      description: 'Number type: whether decimals are accepted. Set false for integer-only mode.',
     },
     testId: {
       control: 'text',
@@ -141,6 +145,85 @@ export const WithError: Story = {
     placeholder: 'Enter your email',
     testId: 'error-input',
     disabled: false,
+  },
+};
+
+// Named NumberInteger (not Number) to pair with NumberDecimal and to avoid
+// shadowing the global Number constructor in this module.
+export const NumberInteger: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      // Range enforcement is the consumer's job; these validators work because
+      // tn-input emits a real number (not a string) in number mode.
+      portControl: new FormControl<number | null>(443, [Validators.min(1), Validators.max(65535)]),
+    },
+    template: `
+      <tn-form-field
+        label="Port"
+        hint="Integer mode — empty clears to null, value is emitted as a number">
+        <tn-input
+          [inputType]="inputType"
+          [placeholder]="placeholder"
+          [disabled]="disabled"
+          [testId]="testId"
+          [allowDecimals]="allowDecimals"
+          [formControl]="portControl">
+        </tn-input>
+      </tn-form-field>
+      <p style="margin-top: 12px; font-family: monospace;">
+        model: {{ portControl.value === null ? 'null' : portControl.value }}
+        ({{ portControl.value === null ? 'object' : 'number' }})
+      </p>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, ReactiveFormsModule],
+    },
+  }),
+  args: {
+    inputType: InputType.Number,
+    placeholder: 'Enter a port',
+    testId: 'number-input',
+    disabled: false,
+    allowDecimals: false,
+  },
+};
+
+export const NumberDecimal: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      // Decimal mode (the default) accepts a single '.' and emits via parseFloat.
+      weightControl: new FormControl<number | null>(1.5, [Validators.min(0)]),
+    },
+    template: `
+      <tn-form-field
+        label="Weight (kg)"
+        hint="Decimal mode — accepts a single decimal point; empty clears to null">
+        <tn-input
+          [inputType]="inputType"
+          [placeholder]="placeholder"
+          [disabled]="disabled"
+          [testId]="testId"
+          [allowDecimals]="allowDecimals"
+          [formControl]="weightControl">
+        </tn-input>
+      </tn-form-field>
+      <p style="margin-top: 12px; font-family: monospace;">
+        model: {{ weightControl.value === null ? 'null' : weightControl.value }}
+        ({{ weightControl.value === null ? 'object' : 'number' }})
+      </p>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, ReactiveFormsModule],
+    },
+  }),
+  args: {
+    inputType: InputType.Number,
+    placeholder: 'Enter a weight',
+    testId: 'number-decimal-input',
+    disabled: false,
+    allowDecimals: true,
   },
 };
 

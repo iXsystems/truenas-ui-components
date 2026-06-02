@@ -80,6 +80,63 @@ export class TnInputHarness extends ComponentHarness {
   }
 
   /**
+   * Gets the current value parsed as a number, mirroring what the control emits in number mode.
+   * Empty or non-numeric input resolves to null (never 0).
+   *
+   * @returns Promise resolving to the numeric value, or null.
+   */
+  async getNumericValue(): Promise<number | null> {
+    const raw = await this.getValue();
+    if (raw === '' || raw === '-' || raw === '.' || raw === '-.') {
+      return null;
+    }
+    // Mirror the control's parse exactly: integer mode (inputmode="numeric") parses
+    // via parseInt, decimal mode via parseFloat. Reading inputmode rather than always
+    // using parseFloat keeps the harness and component from disagreeing on a string
+    // like "3.5" in integer mode (component emits 3; parseFloat would say 3.5).
+    // Both avoid Number()'s coercions (hex/whitespace) the control never emits.
+    const integerMode = (await this.getInputMode()) === 'numeric';
+    const parsed = integerMode ? parseInt(raw, 10) : parseFloat(raw);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  /**
+   * Gets the `inputmode` attribute (e.g. 'numeric' or 'decimal' in number mode).
+   *
+   * @returns Promise resolving to the inputmode string, or null if unset.
+   */
+  async getInputMode(): Promise<string | null> {
+    const input = await this.inputEl();
+    return input.getAttribute('inputmode');
+  }
+
+  /**
+   * Whether the field is in integer-only mode (i.e. `allowDecimals` is false).
+   *
+   * Derived from `inputmode`: number mode renders `numeric` for integers and
+   * `decimal` otherwise. A convenience wrapper so tests need not know that mapping.
+   *
+   * @returns Promise resolving to true when only whole numbers are accepted.
+   */
+  async isIntegerOnly(): Promise<boolean> {
+    return (await this.getInputMode()) === 'numeric';
+  }
+
+  /**
+   * Gets the `aria-label` (accessible name set via the `ariaLabel` input).
+   *
+   * @returns Promise resolving to the aria-label string, or null if unset.
+   */
+  async getAriaLabel(): Promise<string | null> {
+    if (await this.isMultiline()) {
+      const textarea = await this.textareaEl();
+      return textarea.getAttribute('aria-label');
+    }
+    const input = await this.inputEl();
+    return input.getAttribute('aria-label');
+  }
+
+  /**
    * Gets the placeholder text.
    *
    * @returns Promise resolving to the placeholder string.

@@ -15,13 +15,15 @@
   }
 
   <!-- Regular input field -->
-  @if (!multiline()) {
+  @if (!showTextarea()) {
     <input
       #inputEl
       class="tn-input"
       [id]="id"
       [value]="value"
-      [type]="inputType()"
+      [type]="resolvedType()"
+      [attr.inputmode]="numericInputMode()"
+      [attr.aria-label]="ariaLabel()"
       [attr.placeholder]="placeholder()"
       [tnTestId]="testId()"
       [disabled]="isDisabled()"
@@ -31,12 +33,13 @@
   }
 
   <!-- Textarea field -->
-  @if (multiline()) {
+  @if (showTextarea()) {
     <textarea
       #inputEl
       class="tn-input tn-textarea"
       [id]="id"
       [value]="value"
+      [attr.aria-label]="ariaLabel()"
       [attr.placeholder]="placeholder()"
       [tnTestId]="testId()"
       [rows]="rows()"
