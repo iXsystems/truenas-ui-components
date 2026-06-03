@@ -41,6 +41,12 @@
   &:focus-visible {
     color: var(--tn-primary, #007bff);
   }
+
+  &:focus-visible {
+    outline: 2px solid var(--tn-primary, #007bff);
+    outline-offset: 2px;
+    border-radius: 50%;
+  }
 }
 
 .tn-form-field-wrapper {
