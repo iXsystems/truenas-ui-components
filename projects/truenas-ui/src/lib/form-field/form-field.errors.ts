@@ -90,15 +90,23 @@ export function defaultErrorMessage(
     case 'email':
       return 'Please enter a valid email address';
     case 'minlength':
-      return `Minimum length is ${detail['requiredLength'] ?? ''}`.trim();
+      return detail['requiredLength'] == null
+        ? 'Value is too short'
+        : `Minimum length is ${detail['requiredLength']}`;
     case 'maxlength':
-      return `Maximum length is ${detail['requiredLength'] ?? ''}`.trim();
+      return detail['requiredLength'] == null
+        ? 'Value is too long'
+        : `Maximum length is ${detail['requiredLength']}`;
     case 'pattern':
       return 'Please enter a valid format';
     case 'min':
-      return `Minimum value is ${detail['min'] ?? ''}`.trim();
+      return detail['min'] == null
+        ? 'Value is too small'
+        : `Minimum value is ${detail['min']}`;
     case 'max':
-      return `Maximum value is ${detail['max'] ?? ''}`.trim();
+      return detail['max'] == null
+        ? 'Value is too large'
+        : `Maximum value is ${detail['max']}`;
     default:
       return null;
   }

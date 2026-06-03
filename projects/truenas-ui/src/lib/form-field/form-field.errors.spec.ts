@@ -43,10 +43,17 @@ describe('defaultErrorMessage', () => {
     expect(defaultErrorMessage('customPolicy', 'x')).toBeNull();
   });
 
-  it('does not crash on malformed error detail shapes', () => {
+  it('handles the requiredLength: 0 edge case', () => {
+    expect(defaultErrorMessage('minlength', { requiredLength: 0 })).toBe('Minimum length is 0');
+    expect(defaultErrorMessage('min', { min: 0 })).toBe('Minimum value is 0');
+  });
+
+  it('falls back to a complete sentence on malformed error detail shapes', () => {
     // A custom validator could set a non-object value for a built-in key.
     expect(() => defaultErrorMessage('minlength', true)).not.toThrow();
-    expect(defaultErrorMessage('minlength', true)).toBe('Minimum length is');
-    expect(defaultErrorMessage('min', null)).toBe('Minimum value is');
+    expect(defaultErrorMessage('minlength', true)).toBe('Value is too short');
+    expect(defaultErrorMessage('maxlength', true)).toBe('Value is too long');
+    expect(defaultErrorMessage('min', null)).toBe('Value is too small');
+    expect(defaultErrorMessage('max', undefined)).toBe('Value is too large');
   });
 });

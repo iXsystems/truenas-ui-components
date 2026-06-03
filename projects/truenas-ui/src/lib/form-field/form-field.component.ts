@@ -1,6 +1,6 @@
 
 import type { AfterContentInit } from '@angular/core';
-import { Component, input, computed, signal, contentChild, inject, DestroyRef } from '@angular/core';
+import { Component, input, computed, signal, contentChild, inject, isDevMode, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgControl } from '@angular/forms';
 import type { ValidationErrors } from '@angular/forms';
@@ -16,6 +16,13 @@ import { TnTooltipDirective } from '../tooltip/tooltip.directive';
 import type { TooltipPosition } from '../tooltip/tooltip.directive';
 
 export type SubscriptSizing = 'fixed' | 'dynamic';
+
+/** Snapshot of the projected control's validation state. */
+interface ControlStateSnapshot {
+  invalid: boolean;
+  interacted: boolean;
+  errors: ValidationErrors | null;
+}
 
 @Component({
   selector: 'tn-form-field',
@@ -60,7 +67,7 @@ export class TnFormFieldComponent implements AfterContentInit {
    * stream because `NgControl` itself is not signal-based; downstream `computed`s
    * read this so the derived state stays reactive.
    */
-  private controlState = signal<{ invalid: boolean; interacted: boolean; errors: ValidationErrors | null }>({
+  private controlState = signal<ControlStateSnapshot>({
     invalid: false,
     interacted: false,
     errors: null,
@@ -114,14 +121,22 @@ export class TnFormFieldComponent implements AfterContentInit {
 
     const value = errors[key];
 
-    // 1. Per-field override (string or factory).
+    // 1. Per-field override (string or factory). A throwing factory must not
+    //    break change detection, so fall through to the next layer instead.
     const override = this.errorMessages()[key];
     if (override != null) {
-      return typeof override === 'function' ? override(value) : override;
+      const message = this.runGuarded(
+        () => (typeof override === 'function' ? override(value) : override),
+        `errorMessages["${key}"]`
+      );
+      if (message != null) {return message;}
     }
 
     // 2. App-wide resolver (e.g. wired to a translation service).
-    const resolved = this.errorResolver?.(key, value, this.control()?.control ?? null);
+    const resolved = this.runGuarded(
+      () => this.errorResolver?.(key, value, this.control()?.control ?? null),
+      'TN_FORM_FIELD_ERRORS resolver'
+    );
     if (resolved != null) {return resolved;}
 
     // 3. Built-in default messages for standard validators.
@@ -133,6 +148,22 @@ export class TnFormFieldComponent implements AfterContentInit {
 
     // 5. Last resort: the raw error key.
     return key;
+  }
+
+  /**
+   * Runs a caller-supplied message provider, swallowing any throw so a buggy
+   * override or resolver cannot break change detection. Logs in dev mode and
+   * returns null so resolution falls through to the next layer.
+   */
+  private runGuarded(provider: () => string | null | undefined, context: string): string | null {
+    try {
+      return provider() ?? null;
+    } catch (error) {
+      if (isDevMode()) {
+        console.error(`[tn-form-field] ${context} threw while resolving a validation message`, error);
+      }
+      return null;
+    }
   }
 
   showError = computed(() => {

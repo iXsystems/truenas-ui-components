@@ -329,12 +329,17 @@ describe('TnFormFieldHarness', () => {
     <tn-form-field label="Unrelated" testId="unrelated-field" [errorMessages]="unrelatedMessages">
       <tn-input [formControl]="unrelatedControl" />
     </tn-form-field>
+
+    <tn-form-field label="Throwing" testId="throwing-field" [errorMessages]="throwingMessages">
+      <tn-input [formControl]="throwingControl" />
+    </tn-form-field>
   `
 })
 class ErrorMessagesHostComponent {
   nameControl = new FormControl('', Validators.required);
   passwordControl = new FormControl('', Validators.minLength(8));
   unrelatedControl = new FormControl('', Validators.required);
+  throwingControl = new FormControl('', Validators.required);
 
   stringMessages: TnFormFieldErrorMessages = {
     required: 'Please enter a name',
@@ -347,6 +352,12 @@ class ErrorMessagesHostComponent {
 
   unrelatedMessages: TnFormFieldErrorMessages = {
     somethingElse: 'Never shown',
+  };
+
+  throwingMessages: TnFormFieldErrorMessages = {
+    required: () => {
+      throw new Error('boom');
+    },
   };
 }
 
@@ -418,6 +429,22 @@ describe('TnFormField per-field errorMessages', () => {
     fixture.detectChanges();
 
     expect(await field.getErrorMessage()).toBe('Updated message');
+  });
+
+  it('should fall through to the built-in default when an override factory throws', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const host = fixture.componentInstance;
+    host.throwingControl.markAsTouched();
+    host.throwingControl.updateValueAndValidity();
+    fixture.detectChanges();
+
+    const field = await loader.getHarness(
+      TnFormFieldHarness.with({ testId: 'throwing-field' })
+    );
+    expect(await field.hasError()).toBe(true);
+    expect(await field.getErrorMessage()).toBe('This field is required');
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 });
 
