@@ -15,7 +15,7 @@ import { TnInputComponent } from '../input/input.component';
   imports: [TnFormFieldComponent, TnInputComponent, ReactiveFormsModule],
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
-    <tn-form-field label="Name" testId="name-field" [required]="true">
+    <tn-form-field label="Name" testId="name-field" tooltip="Your full legal name" [required]="true">
       <tn-input [formControl]="nameControl" />
     </tn-form-field>
 
@@ -138,6 +138,24 @@ describe('TnFormFieldHarness', () => {
         TnFormFieldHarness.with({ label: 'Optional' })
       );
       expect(await field.isRequired()).toBe(false);
+    });
+  });
+
+  describe('tooltip', () => {
+    it('should report a tooltip when provided', async () => {
+      const field = await loader.getHarness(
+        TnFormFieldHarness.with({ testId: 'name-field' })
+      );
+      expect(await field.hasTooltip()).toBe(true);
+      expect(await field.getTooltip()).toBe('Your full legal name');
+    });
+
+    it('should report no tooltip when absent', async () => {
+      const field = await loader.getHarness(
+        TnFormFieldHarness.with({ label: 'Email' })
+      );
+      expect(await field.hasTooltip()).toBe(false);
+      expect(await field.getTooltip()).toBeNull();
     });
   });
 

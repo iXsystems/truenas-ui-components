@@ -33,6 +33,7 @@ export class TnFormFieldHarness extends ComponentHarness {
   private _label = this.locatorForOptional('.tn-form-field-label');
   private _error = this.locatorForOptional('.tn-form-field-error');
   private _hint = this.locatorForOptional('.tn-form-field-hint');
+  private _tooltip = this.locatorForOptional('.tn-form-field-tooltip');
 
   /**
    * Gets a `HarnessPredicate` that can be used to search for a form field
@@ -128,6 +129,38 @@ export class TnFormFieldHarness extends ComponentHarness {
   async getHint(): Promise<string | null> {
     const hint = await this._hint();
     return hint ? (await hint.text()).trim() : null;
+  }
+
+  /**
+   * Checks whether the form field has a tooltip help icon.
+   *
+   * @returns Promise resolving to true if the tooltip trigger is present.
+   *
+   * @example
+   * ```typescript
+   * const field = await loader.getHarness(TnFormFieldHarness.with({ label: 'Purpose' }));
+   * expect(await field.hasTooltip()).toBe(true);
+   * ```
+   */
+  async hasTooltip(): Promise<boolean> {
+    const tooltip = await this._tooltip();
+    return tooltip !== null;
+  }
+
+  /**
+   * Gets the tooltip message (read from the trigger's accessible label).
+   *
+   * @returns Promise resolving to the tooltip text, or null if no tooltip.
+   *
+   * @example
+   * ```typescript
+   * const field = await loader.getHarness(TnFormFieldHarness.with({ label: 'Purpose' }));
+   * expect(await field.getTooltip()).toBe('What this share is used for');
+   * ```
+   */
+  async getTooltip(): Promise<string | null> {
+    const tooltip = await this._tooltip();
+    return tooltip ? tooltip.getAttribute('aria-label') : null;
   }
 
   /**

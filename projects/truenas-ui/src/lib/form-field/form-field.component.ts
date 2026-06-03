@@ -2,14 +2,17 @@
 import type { AfterContentInit } from '@angular/core';
 import { Component, input, computed, signal, contentChild } from '@angular/core';
 import { NgControl } from '@angular/forms';
+import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective } from '../test-id';
+import { TnTooltipDirective } from '../tooltip/tooltip.directive';
+import type { TooltipPosition } from '../tooltip/tooltip.directive';
 
 export type SubscriptSizing = 'fixed' | 'dynamic';
 
 @Component({
   selector: 'tn-form-field',
   standalone: true,
-  imports: [TnTestIdDirective],
+  imports: [TnTestIdDirective, TnIconComponent, TnTooltipDirective],
   templateUrl: './form-field.component.html',
   styleUrls: ['./form-field.component.scss']
 })
@@ -19,6 +22,11 @@ export class TnFormFieldComponent implements AfterContentInit {
   required = input<boolean>(false);
   testId = input<string>('');
   subscriptSizing = input<SubscriptSizing>('dynamic');
+
+  /** Optional tooltip shown via a help icon next to the label. */
+  tooltip = input<string>('');
+  /** Placement of the tooltip relative to its help icon. */
+  tooltipPosition = input<TooltipPosition>('above');
 
   control = contentChild(NgControl);
 
