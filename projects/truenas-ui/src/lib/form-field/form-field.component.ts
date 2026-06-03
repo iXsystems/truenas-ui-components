@@ -2,6 +2,7 @@
 import type { AfterContentInit } from '@angular/core';
 import { Component, input, computed, signal, contentChild, inject } from '@angular/core';
 import { NgControl } from '@angular/forms';
+import type { ValidationErrors } from '@angular/forms';
 import {
   TN_FORM_FIELD_ERRORS,
   activeErrorKey,
@@ -46,35 +47,58 @@ export class TnFormFieldComponent implements AfterContentInit {
 
   private errorResolver = inject(TN_FORM_FIELD_ERRORS, { optional: true });
 
-  protected hasError = signal<boolean>(false);
-  protected errorMessage = signal<string>('');
+  /**
+   * Snapshot of the relevant control state. Updated from the control's status
+   * stream because `NgControl` itself is not signal-based; downstream `computed`s
+   * read this so the derived state stays reactive.
+   */
+  private controlState = signal<{ invalid: boolean; interacted: boolean; errors: ValidationErrors | null }>({
+    invalid: false,
+    interacted: false,
+    errors: null,
+  });
+
+  protected hasError = computed(() => {
+    const state = this.controlState();
+    return state.invalid && state.interacted;
+  });
+
+  protected errorMessage = computed(() => {
+    const { errors } = this.controlState();
+    return errors ? this.resolveErrorMessage(errors) : '';
+  });
 
   ngAfterContentInit(): void {
     const control = this.control();
     if (control) {
       // Listen for control status changes
       control.statusChanges?.subscribe(() => {
-        this.updateErrorState();
+        this.syncControlState();
       });
 
       // Initial error state check
-      this.updateErrorState();
+      this.syncControlState();
     }
   }
 
-  private updateErrorState(): void {
+  private syncControlState(): void {
     const control = this.control();
     if (control) {
-      this.hasError.set(!!(control.invalid && (control.dirty || control.touched)));
-      this.errorMessage.set(this.getErrorMessage());
+      this.controlState.set({
+        invalid: !!control.invalid,
+        interacted: !!(control.dirty || control.touched),
+        errors: control.errors ?? null,
+      });
     }
   }
 
-  private getErrorMessage(): string {
-    const control = this.control();
-    if (!control?.errors) {return '';}
-
-    const errors = control.errors;
+  /**
+   * Resolves a user-facing message for the active error. Reads the
+   * `errorMessages` input (and the injected resolver), so it is reactive: the
+   * displayed message updates when either the control errors or the overrides
+   * change — e.g. a runtime locale switch.
+   */
+  private resolveErrorMessage(errors: ValidationErrors): string {
     const key = activeErrorKey(errors);
     if (!key) {return 'Invalid input';}
 
@@ -87,7 +111,7 @@ export class TnFormFieldComponent implements AfterContentInit {
     }
 
     // 2. App-wide resolver (e.g. wired to a translation service).
-    const resolved = this.errorResolver?.(key, value, control.control ?? null);
+    const resolved = this.errorResolver?.(key, value, this.control()?.control ?? null);
     if (resolved != null) {return resolved;}
 
     // 3. Built-in default messages for standard validators.

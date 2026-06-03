@@ -325,11 +325,16 @@ describe('TnFormFieldHarness', () => {
     <tn-form-field label="Password" testId="password-field" [errorMessages]="fnMessages">
       <tn-input [formControl]="passwordControl" />
     </tn-form-field>
+
+    <tn-form-field label="Unrelated" testId="unrelated-field" [errorMessages]="unrelatedMessages">
+      <tn-input [formControl]="unrelatedControl" />
+    </tn-form-field>
   `
 })
 class ErrorMessagesHostComponent {
   nameControl = new FormControl('', Validators.required);
   passwordControl = new FormControl('', Validators.minLength(8));
+  unrelatedControl = new FormControl('', Validators.required);
 
   stringMessages: TnFormFieldErrorMessages = {
     required: 'Please enter a name',
@@ -338,6 +343,10 @@ class ErrorMessagesHostComponent {
   fnMessages: TnFormFieldErrorMessages = {
     minlength: (err) =>
       `Needs ${(err as { requiredLength: number }).requiredLength} characters`,
+  };
+
+  unrelatedMessages: TnFormFieldErrorMessages = {
+    somethingElse: 'Never shown',
   };
 }
 
@@ -378,6 +387,37 @@ describe('TnFormField per-field errorMessages', () => {
       TnFormFieldHarness.with({ testId: 'password-field' })
     );
     expect(await field.getErrorMessage()).toBe('Needs 8 characters');
+  });
+
+  it('should fall back to the built-in default when errorMessages has no matching key', async () => {
+    const host = fixture.componentInstance;
+    host.unrelatedControl.markAsTouched();
+    host.unrelatedControl.updateValueAndValidity();
+    fixture.detectChanges();
+
+    const field = await loader.getHarness(
+      TnFormFieldHarness.with({ testId: 'unrelated-field' })
+    );
+    expect(await field.hasError()).toBe(true);
+    expect(await field.getErrorMessage()).toBe('This field is required');
+  });
+
+  it('should re-resolve the message when errorMessages changes while the error is shown', async () => {
+    const host = fixture.componentInstance;
+    host.nameControl.markAsTouched();
+    host.nameControl.updateValueAndValidity();
+    fixture.detectChanges();
+
+    const field = await loader.getHarness(
+      TnFormFieldHarness.with({ testId: 'name-field' })
+    );
+    expect(await field.getErrorMessage()).toBe('Please enter a name');
+
+    // Change only the overrides (e.g. a locale switch) — no control status change.
+    host.stringMessages = { required: 'Updated message' };
+    fixture.detectChanges();
+
+    expect(await field.getErrorMessage()).toBe('Updated message');
   });
 });
 

@@ -25,7 +25,7 @@ export type TnFormFieldErrorMessage =
  * }">
  * ```
  */
-export type TnFormFieldErrorMessages = Record<string, TnFormFieldErrorMessage>;
+export type TnFormFieldErrorMessages = Partial<Record<string, TnFormFieldErrorMessage>>;
 
 /**
  * App-wide resolver for validation messages. Register one with the
@@ -85,15 +85,15 @@ export function defaultErrorMessage(
     case 'email':
       return 'Please enter a valid email address';
     case 'minlength':
-      return `Minimum length is ${errors['minlength'].requiredLength}`;
+      return `Minimum length is ${errors['minlength']?.requiredLength ?? ''}`.trim();
     case 'maxlength':
-      return `Maximum length is ${errors['maxlength'].requiredLength}`;
+      return `Maximum length is ${errors['maxlength']?.requiredLength ?? ''}`.trim();
     case 'pattern':
       return 'Please enter a valid format';
     case 'min':
-      return `Minimum value is ${errors['min'].min}`;
+      return `Minimum value is ${errors['min']?.min ?? ''}`.trim();
     case 'max':
-      return `Maximum value is ${errors['max'].max}`;
+      return `Maximum value is ${errors['max']?.max ?? ''}`.trim();
     default:
       return null;
   }

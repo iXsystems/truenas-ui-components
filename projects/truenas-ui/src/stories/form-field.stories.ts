@@ -214,23 +214,31 @@ export const CustomErrorMessages: Story = {
       description: {
         story:
           'Override validation messages per field with the `errorMessages` map. ' +
-          'Values may be a string or a function that receives the error detail ' +
-          '(used here for `minlength`). For app-wide wording or i18n, provide a ' +
-          '`TN_FORM_FIELD_ERRORS` resolver instead; per-field entries still win.',
+          'Edit the `errorMessages` control to see overrides apply — keys that do ' +
+          'not match the active error (e.g. removing `required`) fall back to the ' +
+          'built-in default. Values may also be functions that receive the error ' +
+          'detail (e.g. `minlength: (e) => "At least " + e.requiredLength`); for ' +
+          'app-wide wording or i18n, provide a `TN_FORM_FIELD_ERRORS` resolver ' +
+          'instead, which per-field entries still win over.',
       },
     },
   },
-  render: () => ({
+  args: {
+    label: 'Username',
+    required: true,
+    testId: 'username-field',
+    errorMessages: {
+      required: 'Pick a username',
+      minlength: 'Use at least 4 characters',
+    },
+  },
+  render: (args) => ({
     props: {
+      ...args,
       usernameControl: new FormControl('', [
         Validators.required,
         Validators.minLength(4),
       ]),
-      errorMessages: {
-        required: 'Pick a username',
-        minlength: (err: { requiredLength: number }) =>
-          `Use at least ${err.requiredLength} characters`,
-      },
       markAsTouched(this: { usernameControl: FormControl }) {
         this.usernameControl.markAsTouched();
         this.usernameControl.updateValueAndValidity();
@@ -239,10 +247,11 @@ export const CustomErrorMessages: Story = {
     template: `
       <div style="display: flex; flex-direction: column; gap: 1rem; max-width: 400px;">
         <tn-form-field
-          label="Username"
-          [required]="true"
+          [label]="label"
+          [required]="required"
+          [testId]="testId"
           [errorMessages]="errorMessages">
-          <tn-input placeholder="Type a short value, then blur" [formControl]="usernameControl" />
+          <tn-input placeholder="Type 1-3 chars, then click Trigger" [formControl]="usernameControl" />
         </tn-form-field>
 
         <button
@@ -251,10 +260,18 @@ export const CustomErrorMessages: Story = {
           style="width: fit-content; padding: 0.5rem 1rem; background: var(--tn-primary); color: white; border: none; border-radius: 0.25rem; cursor: pointer;">
           Trigger Validation
         </button>
+
+        <div style="font-size: 1rem; color: var(--tn-fg2);">
+          <strong>Form State:</strong><br>
+          Valid: {{ usernameControl.valid }}<br>
+          Touched: {{ usernameControl.touched }}<br>
+          Value: "{{ usernameControl.value }}"<br>
+          Errors: {{ usernameControl.errors | json }}
+        </div>
       </div>
     `,
     moduleMetadata: {
-      imports: [TnInputComponent, ReactiveFormsModule],
+      imports: [TnInputComponent, ReactiveFormsModule, CommonModule],
     },
   }),
 };
