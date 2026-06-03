@@ -27,26 +27,26 @@ describe('activeErrorKey', () => {
 
 describe('defaultErrorMessage', () => {
   it('returns fixed strings for required, email and pattern', () => {
-    expect(defaultErrorMessage('required', { required: true })).toBe('This field is required');
-    expect(defaultErrorMessage('email', { email: true })).toBe('Please enter a valid email address');
-    expect(defaultErrorMessage('pattern', { pattern: true })).toBe('Please enter a valid format');
+    expect(defaultErrorMessage('required', true)).toBe('This field is required');
+    expect(defaultErrorMessage('email', true)).toBe('Please enter a valid email address');
+    expect(defaultErrorMessage('pattern', true)).toBe('Please enter a valid format');
   });
 
   it('interpolates length and value metadata', () => {
-    expect(defaultErrorMessage('minlength', { minlength: { requiredLength: 8 } })).toBe('Minimum length is 8');
-    expect(defaultErrorMessage('maxlength', { maxlength: { requiredLength: 20 } })).toBe('Maximum length is 20');
-    expect(defaultErrorMessage('min', { min: { min: 1 } })).toBe('Minimum value is 1');
-    expect(defaultErrorMessage('max', { max: { max: 10 } })).toBe('Maximum value is 10');
+    expect(defaultErrorMessage('minlength', { requiredLength: 8 })).toBe('Minimum length is 8');
+    expect(defaultErrorMessage('maxlength', { requiredLength: 20 })).toBe('Maximum length is 20');
+    expect(defaultErrorMessage('min', { min: 1 })).toBe('Minimum value is 1');
+    expect(defaultErrorMessage('max', { max: 10 })).toBe('Maximum value is 10');
   });
 
   it('returns null for unknown keys', () => {
-    expect(defaultErrorMessage('customPolicy', { customPolicy: 'x' })).toBeNull();
+    expect(defaultErrorMessage('customPolicy', 'x')).toBeNull();
   });
 
   it('does not crash on malformed error detail shapes', () => {
     // A custom validator could set a non-object value for a built-in key.
-    expect(() => defaultErrorMessage('minlength', { minlength: true as unknown as object })).not.toThrow();
-    expect(defaultErrorMessage('minlength', { minlength: true as unknown as object })).toBe('Minimum length is');
-    expect(defaultErrorMessage('min', { min: null as unknown as object })).toBe('Minimum value is');
+    expect(() => defaultErrorMessage('minlength', true)).not.toThrow();
+    expect(defaultErrorMessage('minlength', true)).toBe('Minimum length is');
+    expect(defaultErrorMessage('min', null)).toBe('Minimum value is');
   });
 });

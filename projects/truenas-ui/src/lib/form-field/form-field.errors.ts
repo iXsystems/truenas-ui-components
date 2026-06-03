@@ -73,42 +73,54 @@ export const TN_FORM_FIELD_ERRORS = new InjectionToken<TnFormFieldErrorResolver>
  * resolver supplies a message. English-only by design — override the others for
  * localization.
  *
+ * @param errorKey   The active validation error key.
+ * @param errorValue The detail Angular stored for that key (e.g.
+ *                   `{ requiredLength: 8 }` for `minlength`). Tolerates malformed
+ *                   shapes so a bad validator can't crash rendering.
  * @internal
  */
 export function defaultErrorMessage(
   errorKey: string,
-  errors: ValidationErrors
+  errorValue: unknown
 ): string | null {
+  const detail = (errorValue ?? {}) as Record<string, unknown>;
   switch (errorKey) {
     case 'required':
       return 'This field is required';
     case 'email':
       return 'Please enter a valid email address';
     case 'minlength':
-      return `Minimum length is ${errors['minlength']?.requiredLength ?? ''}`.trim();
+      return `Minimum length is ${detail['requiredLength'] ?? ''}`.trim();
     case 'maxlength':
-      return `Maximum length is ${errors['maxlength']?.requiredLength ?? ''}`.trim();
+      return `Maximum length is ${detail['requiredLength'] ?? ''}`.trim();
     case 'pattern':
       return 'Please enter a valid format';
     case 'min':
-      return `Minimum value is ${errors['min']?.min ?? ''}`.trim();
+      return `Minimum value is ${detail['min'] ?? ''}`.trim();
     case 'max':
-      return `Maximum value is ${errors['max']?.max ?? ''}`.trim();
+      return `Maximum value is ${detail['max'] ?? ''}`.trim();
     default:
       return null;
   }
 }
 
 /**
+ * Order in which built-in validator errors are surfaced when a control reports
+ * more than one at once.
+ */
+const BUILT_IN_ERROR_PRIORITY = [
+  'required', 'email', 'minlength', 'maxlength', 'pattern', 'min', 'max',
+] as const;
+
+/**
  * Picks which error to display when a control has more than one. Built-in keys
- * are preferred in a stable priority order; any remaining custom key falls back
- * to insertion order.
+ * are preferred in {@link BUILT_IN_ERROR_PRIORITY} order; any remaining custom
+ * key falls back to insertion order.
  *
  * @internal
  */
 export function activeErrorKey(errors: ValidationErrors): string | null {
-  const priority = ['required', 'email', 'minlength', 'maxlength', 'pattern', 'min', 'max'];
-  for (const key of priority) {
+  for (const key of BUILT_IN_ERROR_PRIORITY) {
     if (errors[key] != null) {
       return key;
     }

@@ -1,6 +1,7 @@
 
 import type { AfterContentInit } from '@angular/core';
-import { Component, input, computed, signal, contentChild, inject } from '@angular/core';
+import { Component, input, computed, signal, contentChild, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgControl } from '@angular/forms';
 import type { ValidationErrors } from '@angular/forms';
 import {
@@ -45,6 +46,13 @@ export class TnFormFieldComponent implements AfterContentInit {
 
   control = contentChild(NgControl);
 
+  private destroyRef = inject(DestroyRef);
+
+  /**
+   * App-wide message resolver, captured once at construction. Unlike the
+   * `errorMessages` input it is not reactive — swapping the provided function at
+   * runtime will not be picked up by an already-created field.
+   */
   private errorResolver = inject(TN_FORM_FIELD_ERRORS, { optional: true });
 
   /**
@@ -72,9 +80,11 @@ export class TnFormFieldComponent implements AfterContentInit {
     const control = this.control();
     if (control) {
       // Listen for control status changes
-      control.statusChanges?.subscribe(() => {
-        this.syncControlState();
-      });
+      control.statusChanges
+        ?.pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => {
+          this.syncControlState();
+        });
 
       // Initial error state check
       this.syncControlState();
@@ -115,7 +125,7 @@ export class TnFormFieldComponent implements AfterContentInit {
     if (resolved != null) {return resolved;}
 
     // 3. Built-in default messages for standard validators.
-    const builtIn = defaultErrorMessage(key, errors);
+    const builtIn = defaultErrorMessage(key, value);
     if (builtIn != null) {return builtIn;}
 
     // 4. A custom validator that returned its own message string.
