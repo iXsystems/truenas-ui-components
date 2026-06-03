@@ -67,7 +67,12 @@ const meta: Meta<TnAutocompleteComponent<unknown>> = {
     },
     maxResults: {
       control: 'number',
-      description: 'Maximum number of options to render',
+      description: 'Maximum number of options to render (defaults to Infinity)',
+    },
+    panelMaxHeight: {
+      control: 'text',
+      description:
+        'Max height of the dropdown panel before it scrolls (number = px, or any CSS length)',
     },
     optionSelected: { action: 'optionSelected' },
   },

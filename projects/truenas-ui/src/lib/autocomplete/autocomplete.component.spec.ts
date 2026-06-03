@@ -1,3 +1,4 @@
+import { OverlayContainer } from '@angular/cdk/overlay';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
@@ -50,18 +51,22 @@ class TestHostComponent {
 describe('TnAutocompleteComponent', () => {
   let fixture: ComponentFixture<TestHostComponent>;
   let host: TestHostComponent;
+  let overlayContainer: OverlayContainer;
+  let overlayEl: HTMLElement;
 
   const getInput = (): HTMLInputElement =>
     fixture.nativeElement.querySelector('.tn-autocomplete__input');
 
+  // The dropdown panel is portaled into the CDK overlay container (on
+  // document.body), not the component host, so all panel queries go there.
   const getDropdown = (): HTMLElement | null =>
-    fixture.nativeElement.querySelector('.tn-autocomplete__dropdown');
+    overlayEl.querySelector('.tn-autocomplete__dropdown');
 
   const getOptions = (): HTMLElement[] =>
-    Array.from(fixture.nativeElement.querySelectorAll('.tn-autocomplete__option'));
+    Array.from(overlayEl.querySelectorAll('.tn-autocomplete__option'));
 
   const getHighlighted = (): HTMLElement | null =>
-    fixture.nativeElement.querySelector('.tn-autocomplete__option.highlighted');
+    overlayEl.querySelector('.tn-autocomplete__option.highlighted');
 
   const typeInInput = (value: string) => {
     const input = getInput();
@@ -87,7 +92,14 @@ describe('TnAutocompleteComponent', () => {
 
     fixture = TestBed.createComponent(TestHostComponent);
     host = fixture.componentInstance;
+    overlayContainer = TestBed.inject(OverlayContainer);
+    overlayEl = overlayContainer.getContainerElement();
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    // Dispose any overlay left attached so panels don't leak between specs.
+    overlayContainer.ngOnDestroy();
   });
 
   describe('dropdown visibility', () => {
@@ -141,7 +153,7 @@ describe('TnAutocompleteComponent', () => {
 
     it('should show no-results message when nothing matches', () => {
       typeInInput('xyz');
-      const noResults = fixture.nativeElement.querySelector('.tn-autocomplete__no-results');
+      const noResults = overlayEl.querySelector('.tn-autocomplete__no-results');
       expect(noResults).toBeTruthy();
       expect(noResults.textContent?.trim()).toBe('No results found');
     });

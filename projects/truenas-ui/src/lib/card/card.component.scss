@@ -4,7 +4,10 @@
   flex-direction: column;
   border-radius: 8px;
   transition: box-shadow 0.3s ease;
-  overflow: hidden;
+  // `clip` (not `hidden`) still enforces border-radius clipping of visual
+  // overflow, but doesn't create a scroll container — so absolutely-positioned
+  // descendants and CDK-overlay anchors aren't trapped inside the card.
+  overflow: clip;
 
   &--elevation-none {
     box-shadow: none;
