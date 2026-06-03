@@ -1,7 +1,13 @@
 
 import type { AfterContentInit } from '@angular/core';
-import { Component, input, computed, signal, contentChild } from '@angular/core';
+import { Component, input, computed, signal, contentChild, inject } from '@angular/core';
 import { NgControl } from '@angular/forms';
+import {
+  TN_FORM_FIELD_ERRORS,
+  activeErrorKey,
+  defaultErrorMessage,
+} from './form-field.errors';
+import type { TnFormFieldErrorMessages } from './form-field.errors';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 import { TnTooltipDirective } from '../tooltip/tooltip.directive';
@@ -28,7 +34,17 @@ export class TnFormFieldComponent implements AfterContentInit {
   /** Placement of the tooltip relative to its help icon. */
   tooltipPosition = input<TooltipPosition>('above');
 
+  /**
+   * Per-field overrides for validation messages, keyed by error key. Values may
+   * be a string or a function that receives the error's detail value. Takes
+   * precedence over the app-wide {@link TN_FORM_FIELD_ERRORS} resolver and the
+   * built-in defaults.
+   */
+  errorMessages = input<TnFormFieldErrorMessages>({});
+
   control = contentChild(NgControl);
+
+  private errorResolver = inject(TN_FORM_FIELD_ERRORS, { optional: true });
 
   protected hasError = signal<boolean>(false);
   protected errorMessage = signal<string>('');
@@ -59,23 +75,30 @@ export class TnFormFieldComponent implements AfterContentInit {
     if (!control?.errors) {return '';}
 
     const errors = control.errors;
+    const key = activeErrorKey(errors);
+    if (!key) {return 'Invalid input';}
 
-    // Return the first error message found
-    if (errors['required']) {return 'This field is required';}
-    if (errors['email']) {return 'Please enter a valid email address';}
-    if (errors['minlength']) {return `Minimum length is ${errors['minlength'].requiredLength}`;}
-    if (errors['maxlength']) {return `Maximum length is ${errors['maxlength'].requiredLength}`;}
-    if (errors['pattern']) {return 'Please enter a valid format';}
-    if (errors['min']) {return `Minimum value is ${errors['min'].min}`;}
-    if (errors['max']) {return `Maximum value is ${errors['max'].max}`;}
+    const value = errors[key];
 
-    // Return custom error message if the value is a string, otherwise use the key
-    const firstKey = Object.keys(errors)[0];
-    if (firstKey) {
-      const value = errors[firstKey];
-      return typeof value === 'string' ? value : firstKey;
+    // 1. Per-field override (string or factory).
+    const override = this.errorMessages()[key];
+    if (override != null) {
+      return typeof override === 'function' ? override(value) : override;
     }
-    return 'Invalid input';
+
+    // 2. App-wide resolver (e.g. wired to a translation service).
+    const resolved = this.errorResolver?.(key, value, control.control ?? null);
+    if (resolved != null) {return resolved;}
+
+    // 3. Built-in default messages for standard validators.
+    const builtIn = defaultErrorMessage(key, errors);
+    if (builtIn != null) {return builtIn;}
+
+    // 4. A custom validator that returned its own message string.
+    if (typeof value === 'string') {return value;}
+
+    // 5. Last resort: the raw error key.
+    return key;
   }
 
   showError = computed(() => {

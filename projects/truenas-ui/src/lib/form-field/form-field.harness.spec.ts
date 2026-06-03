@@ -6,6 +6,8 @@ import type { ComponentFixture } from '@angular/core/testing';
 import type { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TnFormFieldComponent } from './form-field.component';
+import { TN_FORM_FIELD_ERRORS } from './form-field.errors';
+import type { TnFormFieldErrorMessages, TnFormFieldErrorResolver } from './form-field.errors';
 import { TnFormFieldHarness } from './form-field.harness';
 import { TnInputComponent } from '../input/input.component';
 
@@ -307,5 +309,141 @@ describe('TnFormFieldHarness', () => {
       expect(await field.hasError()).toBe(true);
       expect(await field.getErrorMessage()).toBe('This field is required');
     });
+  });
+});
+
+@Component({
+  selector: 'tn-error-messages-host',
+  standalone: true,
+  imports: [TnFormFieldComponent, TnInputComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-form-field label="Name" testId="name-field" [errorMessages]="stringMessages">
+      <tn-input [formControl]="nameControl" />
+    </tn-form-field>
+
+    <tn-form-field label="Password" testId="password-field" [errorMessages]="fnMessages">
+      <tn-input [formControl]="passwordControl" />
+    </tn-form-field>
+  `
+})
+class ErrorMessagesHostComponent {
+  nameControl = new FormControl('', Validators.required);
+  passwordControl = new FormControl('', Validators.minLength(8));
+
+  stringMessages: TnFormFieldErrorMessages = {
+    required: 'Please enter a name',
+  };
+
+  fnMessages: TnFormFieldErrorMessages = {
+    minlength: (err) =>
+      `Needs ${(err as { requiredLength: number }).requiredLength} characters`,
+  };
+}
+
+describe('TnFormField per-field errorMessages', () => {
+  let fixture: ComponentFixture<ErrorMessagesHostComponent>;
+  let loader: HarnessLoader;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ErrorMessagesHostComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ErrorMessagesHostComponent);
+    fixture.detectChanges();
+    loader = TestbedHarnessEnvironment.loader(fixture);
+  });
+
+  it('should use a per-field string override instead of the built-in default', async () => {
+    const host = fixture.componentInstance;
+    host.nameControl.markAsTouched();
+    host.nameControl.updateValueAndValidity();
+    fixture.detectChanges();
+
+    const field = await loader.getHarness(
+      TnFormFieldHarness.with({ testId: 'name-field' })
+    );
+    expect(await field.getErrorMessage()).toBe('Please enter a name');
+  });
+
+  it('should use a per-field function override with interpolated error detail', async () => {
+    const host = fixture.componentInstance;
+    host.passwordControl.setValue('short');
+    host.passwordControl.markAsTouched();
+    host.passwordControl.updateValueAndValidity();
+    fixture.detectChanges();
+
+    const field = await loader.getHarness(
+      TnFormFieldHarness.with({ testId: 'password-field' })
+    );
+    expect(await field.getErrorMessage()).toBe('Needs 8 characters');
+  });
+});
+
+@Component({
+  selector: 'tn-resolver-host',
+  standalone: true,
+  imports: [TnFormFieldComponent, TnInputComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-form-field label="Resolved" testId="resolved-field">
+      <tn-input [formControl]="resolvedControl" />
+    </tn-form-field>
+
+    <tn-form-field label="Overridden" testId="overridden-field" [errorMessages]="overrides">
+      <tn-input [formControl]="overriddenControl" />
+    </tn-form-field>
+  `
+})
+class ResolverHostComponent {
+  resolvedControl = new FormControl('', Validators.required);
+  overriddenControl = new FormControl('', Validators.required);
+
+  overrides: TnFormFieldErrorMessages = {
+    required: 'Field-level wins',
+  };
+}
+
+describe('TnFormField global error resolver', () => {
+  let fixture: ComponentFixture<ResolverHostComponent>;
+  let loader: HarnessLoader;
+
+  const resolver: TnFormFieldErrorResolver = (key) =>
+    key === 'required' ? 'Resolved from token' : null;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ResolverHostComponent],
+      providers: [{ provide: TN_FORM_FIELD_ERRORS, useValue: resolver }],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ResolverHostComponent);
+    fixture.detectChanges();
+    loader = TestbedHarnessEnvironment.loader(fixture);
+  });
+
+  it('should use the resolver message instead of the built-in default', async () => {
+    const host = fixture.componentInstance;
+    host.resolvedControl.markAsTouched();
+    host.resolvedControl.updateValueAndValidity();
+    fixture.detectChanges();
+
+    const field = await loader.getHarness(
+      TnFormFieldHarness.with({ testId: 'resolved-field' })
+    );
+    expect(await field.getErrorMessage()).toBe('Resolved from token');
+  });
+
+  it('should let a per-field override take precedence over the resolver', async () => {
+    const host = fixture.componentInstance;
+    host.overriddenControl.markAsTouched();
+    host.overriddenControl.updateValueAndValidity();
+    fixture.detectChanges();
+
+    const field = await loader.getHarness(
+      TnFormFieldHarness.with({ testId: 'overridden-field' })
+    );
+    expect(await field.getErrorMessage()).toBe('Field-level wins');
   });
 });

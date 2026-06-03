@@ -83,6 +83,10 @@ When used with Angular reactive forms, the form field automatically:
       options: ['above', 'below', 'left', 'right', 'before', 'after'],
       description: 'Placement of the tooltip relative to its help icon.',
     },
+    errorMessages: {
+      control: 'object',
+      description: 'Per-field overrides for validation messages, keyed by error key. Values are a string or a function receiving the error detail. Takes precedence over the app-wide TN_FORM_FIELD_ERRORS resolver and the built-in defaults.',
+    },
   },
 };
 
@@ -202,6 +206,57 @@ export const WithValidation: Story = {
     required: true,
     testId: 'validation-field',
   },
+};
+
+export const CustomErrorMessages: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Override validation messages per field with the `errorMessages` map. ' +
+          'Values may be a string or a function that receives the error detail ' +
+          '(used here for `minlength`). For app-wide wording or i18n, provide a ' +
+          '`TN_FORM_FIELD_ERRORS` resolver instead; per-field entries still win.',
+      },
+    },
+  },
+  render: () => ({
+    props: {
+      usernameControl: new FormControl('', [
+        Validators.required,
+        Validators.minLength(4),
+      ]),
+      errorMessages: {
+        required: 'Pick a username',
+        minlength: (err: { requiredLength: number }) =>
+          `Use at least ${err.requiredLength} characters`,
+      },
+      markAsTouched(this: { usernameControl: FormControl }) {
+        this.usernameControl.markAsTouched();
+        this.usernameControl.updateValueAndValidity();
+      },
+    },
+    template: `
+      <div style="display: flex; flex-direction: column; gap: 1rem; max-width: 400px;">
+        <tn-form-field
+          label="Username"
+          [required]="true"
+          [errorMessages]="errorMessages">
+          <tn-input placeholder="Type a short value, then blur" [formControl]="usernameControl" />
+        </tn-form-field>
+
+        <button
+          type="button"
+          (click)="markAsTouched()"
+          style="width: fit-content; padding: 0.5rem 1rem; background: var(--tn-primary); color: white; border: none; border-radius: 0.25rem; cursor: pointer;">
+          Trigger Validation
+        </button>
+      </div>
+    `,
+    moduleMetadata: {
+      imports: [TnInputComponent, ReactiveFormsModule],
+    },
+  }),
 };
 
 export const WithSelect: Story = {
