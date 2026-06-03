@@ -3,10 +3,7 @@
   @if (label() || tooltip()) {
     <div class="tn-form-field-label-row">
       @if (label()) {
-        <label
-          class="tn-form-field-label"
-          [class.required]="required()"
-          [attr.aria-describedby]="tooltip() ? tooltipId : null">
+        <label class="tn-form-field-label" [class.required]="required()">
           {{ label() }}
           @if (required()) {
             <span class="required-asterisk" aria-label="required">*</span>
@@ -17,7 +14,6 @@
         <button
           type="button"
           class="tn-form-field-tooltip"
-          [id]="tooltipId"
           [attr.aria-label]="tooltip()"
           [tnTooltip]="tooltip()"
           [tnTooltipPosition]="tooltipPosition()">

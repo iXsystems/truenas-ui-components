@@ -28,10 +28,6 @@ export class TnFormFieldComponent implements AfterContentInit {
   /** Placement of the tooltip relative to its help icon. */
   tooltipPosition = input<TooltipPosition>('above');
 
-  private static nextId = 0;
-  /** Stable id for the tooltip trigger so the label can describe the relationship. */
-  protected tooltipId = `tn-form-field-tooltip-${TnFormFieldComponent.nextId++}`;
-
   control = contentChild(NgControl);
 
   protected hasError = signal<boolean>(false);
