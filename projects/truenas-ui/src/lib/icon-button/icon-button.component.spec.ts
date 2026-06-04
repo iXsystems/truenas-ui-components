@@ -25,6 +25,20 @@ describe('TnIconButtonComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  describe('testId (library owns the element-type prefix)', () => {
+    it('prepends "button-" to the semantic base on the inner button', () => {
+      fixture.componentRef.setInput('testId', 'first-page');
+      fixture.detectChanges();
+      const button = fixture.nativeElement.querySelector('button') as HTMLElement;
+      expect(button.getAttribute('data-testid')).toBe('button-first-page');
+    });
+
+    it('emits NO test-id attribute when testId is unset', () => {
+      const button = fixture.nativeElement.querySelector('button') as HTMLElement;
+      expect(button.hasAttribute('data-testid')).toBe(false);
+    });
+  });
+
   describe('focus delegation', () => {
     it('forwards host.focus() to the inner native <button>', () => {
       // External triggers (MatMenuTrigger, CDK FocusMonitor, etc.) call .focus()

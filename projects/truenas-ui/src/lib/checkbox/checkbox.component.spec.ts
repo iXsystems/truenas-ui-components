@@ -40,24 +40,24 @@ describe('TnCheckboxComponent', () => {
   let fixture: ComponentFixture<TestHostComponent>;
   let host: TestHostComponent;
 
-  const getCheckbox = (testId = 'main'): HTMLElement =>
+  const getCheckbox = (testId = 'checkbox-main'): HTMLElement =>
     fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
 
-  const getWrapper = (testId = 'main'): HTMLElement => {
+  const getWrapper = (testId = 'checkbox-main'): HTMLElement => {
     const label = getCheckbox(testId);
     return label.closest('.tn-checkbox') as HTMLElement;
   };
 
-  const getInput = (testId = 'main'): HTMLInputElement =>
+  const getInput = (testId = 'checkbox-main'): HTMLInputElement =>
     getWrapper(testId).querySelector('.tn-checkbox__input') as HTMLInputElement;
 
-  const getLabelText = (testId = 'main'): HTMLElement | null =>
+  const getLabelText = (testId = 'checkbox-main'): HTMLElement | null =>
     getWrapper(testId).querySelector('.tn-checkbox__text');
 
-  const getError = (testId = 'main'): HTMLElement | null =>
+  const getError = (testId = 'checkbox-main'): HTMLElement | null =>
     getWrapper(testId).querySelector('.tn-checkbox__error');
 
-  const clickLabel = (testId = 'main') => {
+  const clickLabel = (testId = 'checkbox-main') => {
     const label = getWrapper(testId).querySelector('.tn-checkbox__label') as HTMLElement;
     label.click();
     fixture.detectChanges();
@@ -86,7 +86,7 @@ describe('TnCheckboxComponent', () => {
     });
 
     it('should render projected content via tnCheckboxLabel', () => {
-      const text = getLabelText('projected');
+      const text = getLabelText('checkbox-projected');
       expect(text?.textContent).toContain('I agree to the');
       expect(text?.querySelector('a')).toBeTruthy();
     });
@@ -223,18 +223,18 @@ describe('TnCheckboxComponent', () => {
     });
 
     it('should set data-testid attribute', () => {
-      expect(getCheckbox().getAttribute('data-testid')).toBe('main');
+      expect(getCheckbox().getAttribute('data-testid')).toBe('checkbox-main');
     });
   });
 
   describe('content projection', () => {
     it('should update form control when projected-label checkbox is clicked', () => {
-      clickLabel('projected');
+      clickLabel('checkbox-projected');
       expect(host.projectedControl.value).toBe(true);
     });
 
     it('should render link inside projected label', () => {
-      const link = getLabelText('projected')?.querySelector('a');
+      const link = getLabelText('checkbox-projected')?.querySelector('a');
       expect(link).toBeTruthy();
       expect(link?.getAttribute('href')).toBe('/terms');
     });

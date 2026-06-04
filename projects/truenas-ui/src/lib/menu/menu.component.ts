@@ -112,6 +112,15 @@ export class TnMenuComponent implements OnDestroy {
   items = input<TnMenuItem[]>([]);
   contextMenu = input<boolean>(false); // Enable context menu mode (right-click)
 
+  /**
+   * Semantic base that scopes the test ids of this menu's items. Each item
+   * resolves to `menu-item-${testId}-${item.id}` (e.g. menu `testId="actions"`
+   * + item `id="edit"` → `menu-item-actions-edit`), which keeps ids unique when
+   * several menus render on one page. Omit it and items fall back to the
+   * unscoped `menu-item-${item.id}`. A per-item `testId` overrides both.
+   */
+  testId = input<string | undefined>(undefined);
+
   menuItemClick = output<TnMenuItem>();
   menuOpen = output<void>();
   menuClose = output<void>();

@@ -6,7 +6,11 @@ import { TnTestIdDirective } from './test-id.directive';
 @Component({
   standalone: true,
   imports: [TnTestIdDirective],
-  template: `<button [tnTestId]="value">click</button>`,
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <!-- eslint-disable-next-line tn-local/require-tn-testid-type -- exercises verbatim (no tnTestIdType) directive behavior -->
+    <button [tnTestId]="value">click</button>
+  `,
 })
 class HostComponent {
   value: string | null | undefined = 'my-id';
@@ -70,11 +74,37 @@ describe('TnTestIdDirective', () => {
     expect(button.getAttribute('data-testid')).toBeNull();
   });
 
+  it('prepends the component-declared type when tnTestIdType is set', () => {
+    @Component({
+      standalone: true,
+      imports: [TnTestIdDirective],
+      template: `<button tnTestIdType="button" [tnTestId]="value">click</button>`,
+    })
+    class TypedHostComponent {
+      value: string | (string | number)[] = 'save';
+    }
+
+    TestBed.configureTestingModule({ imports: [TypedHostComponent] });
+    const fixture = TestBed.createComponent(TypedHostComponent);
+    fixture.detectChanges();
+    const button = fixture.nativeElement.querySelector('button') as HTMLElement;
+
+    expect(button.getAttribute('data-testid')).toBe('button-save');
+
+    fixture.componentInstance.value = ['username', 'Jane Doe'];
+    fixture.detectChanges();
+    expect(button.getAttribute('data-testid')).toBe('button-username-jane-doe');
+  });
+
   it('does not add an empty attribute when no value is set initially', () => {
     @Component({
       standalone: true,
       imports: [TnTestIdDirective],
-      template: `<button [tnTestId]="value">click</button>`,
+      // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <!-- eslint-disable-next-line tn-local/require-tn-testid-type -- exercises verbatim (no tnTestIdType) directive behavior -->
+    <button [tnTestId]="value">click</button>
+  `,
     })
     class EmptyHostComponent {
       value: string | undefined = undefined;

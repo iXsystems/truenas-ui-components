@@ -1,5 +1,6 @@
-<div [ngClass]="classes()" [tnTestId]="testId()">
+<div tnTestIdType="expansion-panel" [ngClass]="classes()" [tnTestId]="testId()">
   <button class="tn-expansion-panel__header"
+          tnTestIdType="button"
           [disabled]="disabled()"
           [attr.aria-expanded]="effectiveExpanded()"
           [attr.aria-controls]="contentId"

@@ -23,6 +23,7 @@
       keys, Home/End, type-ahead) alongside the items() array below.
     -->
     @for (projected of contentItems(); track projected) {
+      <!-- eslint-disable-next-line tn-local/require-tn-testid-type -- full id composed in TS via resolvedTestId() -->
       <button
         cdkMenuItem
         class="tn-menu-item"

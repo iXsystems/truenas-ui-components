@@ -3,7 +3,7 @@ import type { AfterViewInit } from '@angular/core';
 import { Component, ElementRef, computed, inject, input, output, viewChild } from '@angular/core';
 import type { IconSize, IconLibraryType } from '../icon/icon.component';
 import { TnIconComponent } from '../icon/icon.component';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 import type { TooltipPosition } from '../tooltip/tooltip.directive';
 import { TnTooltipDirective } from '../tooltip/tooltip.directive';
 
@@ -23,10 +23,12 @@ export class TnIconButtonComponent implements AfterViewInit {
   /** Reflects an expanded/collapsed state (e.g. toggling a panel) onto the inner button. */
   ariaExpanded = input<boolean | undefined>(undefined);
   /**
-   * Test-id applied to the rendered `<button>` element. Rendered under whichever attribute
-   * name is configured via `TN_TEST_ATTR` (default `data-testid`).
+   * Semantic test-id base for the rendered `<button>`. The library prepends the
+   * element type (`button`) and renders the result under whichever attribute
+   * name is configured via `TN_TEST_ATTR` (default `data-testid`) — e.g.
+   * `testId="first-page"` → `button-first-page`.
    */
-  testId = input<string | undefined>(undefined);
+  testId = input<TnTestIdValue>(undefined);
 
   // Icon-related inputs
   name = input<string>('');

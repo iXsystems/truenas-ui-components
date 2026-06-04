@@ -1,4 +1,4 @@
-<div class="tn-select-container" [tnTestId]="testId()">
+<div class="tn-select-container" tnTestIdType="select" [tnTestId]="testId()">
   <!-- Select Trigger -->
   <div
     #triggerEl
@@ -52,6 +52,8 @@
           class="tn-select-option"
           role="option"
           tabindex="-1"
+          tnTestIdType="option"
+          [tnTestId]="optionTestIdParts(option)"
           [attr.id]="optionId(option)"
           [class.selected]="isOptionSelected(option)"
           [class.focused]="isOptionFocused(option)"
@@ -98,6 +100,8 @@
               class="tn-select-option"
               role="option"
               tabindex="-1"
+              tnTestIdType="option"
+              [tnTestId]="optionTestIdParts(option)"
               [attr.id]="optionId(option)"
               [class.selected]="isOptionSelected(option)"
               [class.focused]="isOptionFocused(option)"

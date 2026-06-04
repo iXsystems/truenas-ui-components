@@ -6,7 +6,7 @@ import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { InputType } from '../enums/input-type.enum';
 import type { IconLibraryType } from '../icon/icon.component';
 import { TnIconComponent } from '../icon/icon.component';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 // Module-level counter for deterministic, unique instance ids (matches the
 // tn-autocomplete convention). Deterministic ids are SSR/hydration-safe and
@@ -32,7 +32,7 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
 
   inputType = input<InputType>(InputType.PlainText);
   placeholder = input<string>('');
-  testId = input<string | undefined>(undefined);
+  testId = input<TnTestIdValue>(undefined);
   disabled = input<boolean>(false);
   multiline = input<boolean>(false);
   rows = input<number>(3);

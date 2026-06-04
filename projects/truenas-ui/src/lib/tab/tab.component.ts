@@ -2,7 +2,7 @@ import { A11yModule } from '@angular/cdk/a11y';
 import { CommonModule } from '@angular/common';
 import type { TemplateRef, AfterContentInit} from '@angular/core';
 import { Component, input, output, ElementRef, inject, contentChild, computed, signal } from '@angular/core';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 @Component({
   selector: 'tn-tab',
@@ -16,7 +16,7 @@ export class TnTabComponent implements AfterContentInit {
   disabled = input<boolean>(false);
   icon = input<string | undefined>(undefined);
   iconTemplate = input<TemplateRef<unknown> | undefined>(undefined);
-  testId = input<string | undefined>(undefined);
+  testId = input<TnTestIdValue>(undefined);
 
   selected = output<void>();
 

@@ -1,8 +1,8 @@
 import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { CommonModule } from '@angular/common';
-import { Component, ChangeDetectionStrategy, forwardRef, inject, input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, forwardRef, inject, input } from '@angular/core';
 import { TnIconComponent } from '../icon/icon.component';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, composeTestId } from '../test-id';
 import type { TnMenuItem } from './menu.component';
 import { TnMenuComponent } from './menu.component';
 
@@ -57,6 +57,16 @@ export class TnMenuItemRendererComponent {
   // still walks back to the host `<tn-menu>` component, which means inject()
   // here resolves it correctly.
   private menu = inject(TnMenuComponent);
+
+  /**
+   * The item's own `testId` wins verbatim; otherwise derive
+   * `menu-item-${menuBase}-${item.id}`, scoped by the parent `<tn-menu>`'s
+   * `testId`. With no menu base this is `menu-item-${item.id}` (unchanged from
+   * the pre-scoping behavior).
+   */
+  protected resolvedTestId = computed(
+    () => this.item().testId ?? composeTestId('menu-item', [this.menu.testId(), this.item().id]),
+  );
 
   protected onClick(): void {
     this.menu.onMenuItemClick(this.item());

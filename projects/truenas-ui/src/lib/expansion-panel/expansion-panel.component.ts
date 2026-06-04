@@ -1,7 +1,7 @@
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { Component, input, output, computed, signal } from '@angular/core';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 const expandCollapseAnimation = trigger('expandCollapse', [
   state('collapsed', style({
@@ -47,11 +47,11 @@ export class TnExpansionPanelComponent {
    * Test-id applied to the panel's root element. Rendered under whichever attribute name
    * is configured via `TN_TEST_ATTR` (default `data-testid`).
    */
-  testId = input<string | undefined>(undefined);
+  testId = input<TnTestIdValue>(undefined);
   /**
    * Test-id applied to the expand/collapse toggle header button.
    */
-  toggleTestId = input<string | undefined>(undefined);
+  toggleTestId = input<TnTestIdValue>(undefined);
 
   expandedChange = output<boolean>();
   toggleEvent = output<void>();

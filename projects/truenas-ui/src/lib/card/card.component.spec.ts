@@ -38,10 +38,13 @@ function createHost(providers: unknown[] = []) {
 describe('TnCardComponent testId support', () => {
   it('applies testId from primaryAction to the rendered button', () => {
     const fixture = createHost();
+    // The card forwards the action's testId into <tn-button>, which now owns
+    // the `button-` element-type prefix — so the config carries the *semantic*
+    // id ('smb-share-add') and the rendered DOM gets 'button-smb-share-add'.
     fixture.componentInstance.primary.set({
       label: 'Add',
       handler: () => {},
-      testId: 'button-smb-share-add',
+      testId: 'smb-share-add',
     });
     fixture.detectChanges();
 
@@ -59,7 +62,7 @@ describe('TnCardComponent testId support', () => {
     fixture.componentInstance.secondary.set({
       label: 'Open',
       handler: () => {},
-      testId: 'button-webshare-open',
+      testId: 'webshare-open', // semantic; <tn-button> adds the `button-` prefix
     });
     fixture.detectChanges();
 
@@ -90,7 +93,9 @@ describe('TnCardComponent testId support', () => {
     fixture.componentInstance.menu.set([
       { id: 'a', label: 'Action A' },
     ]);
-    fixture.componentInstance.menuTriggerTestId.set('button-4-actions-menu');
+    // kebab trigger renders via <tn-icon-button>, which owns the `button-`
+    // prefix — config passes the semantic id, DOM gets 'button-4-actions-menu'.
+    fixture.componentInstance.menuTriggerTestId.set('4-actions-menu');
     fixture.detectChanges();
 
     const trigger = fixture.nativeElement.querySelector('.tn-card__menu button') as HTMLElement;
@@ -118,11 +123,14 @@ describe('TnCardComponent testId support', () => {
     const kebabBtn = fixture.nativeElement.querySelector('.tn-card__menu button') as HTMLElement;
     const pill = fixture.nativeElement.querySelector('.tn-card__status') as HTMLElement;
 
-    expect(primaryBtn.getAttribute('data-test')).toBe('p-id');
+    // primary/secondary (<tn-button>) and the kebab trigger (<tn-icon-button>)
+    // own the `button-` prefix; the status pill is a raw [tnTestId] (not typed
+    // yet), so it stays verbatim.
+    expect(primaryBtn.getAttribute('data-test')).toBe('button-p-id');
     expect(primaryBtn.getAttribute('data-testid')).toBeNull();
 
-    expect(secondaryBtn.getAttribute('data-test')).toBe('s-id');
-    expect(kebabBtn.getAttribute('data-test')).toBe('k-id');
+    expect(secondaryBtn.getAttribute('data-test')).toBe('button-s-id');
+    expect(kebabBtn.getAttribute('data-test')).toBe('button-k-id');
     expect(pill.getAttribute('data-test')).toBe('st-id');
   });
 
@@ -131,7 +139,7 @@ describe('TnCardComponent testId support', () => {
     fixture.componentInstance.footerLink.set({
       label: 'View details',
       handler: () => {},
-      testId: 'link-view-details',
+      testId: 'view-details', // semantic; <button> footer link adds the `link-` prefix
     });
     fixture.detectChanges();
 

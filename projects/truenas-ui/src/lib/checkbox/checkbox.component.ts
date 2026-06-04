@@ -4,7 +4,7 @@ import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
 import { Component, viewChild, inject, input, output, computed, signal, forwardRef, contentChildren, Directive } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 /**
  * Directive to mark content for projection into the checkbox label area.
@@ -45,7 +45,7 @@ export class TnCheckboxComponent implements AfterViewInit, OnDestroy, ControlVal
   disabled = input<boolean>(false);
   required = input<boolean>(false);
   indeterminate = input<boolean>(false);
-  testId = input<string | undefined>(undefined);
+  testId = input<TnTestIdValue>(undefined);
   error = input<string | null>(null);
   checked = input<boolean>(false);
 
