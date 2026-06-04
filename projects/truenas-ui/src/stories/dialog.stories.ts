@@ -373,3 +373,45 @@ export const ComponentHarness: Story = {
   },
   render: () => ({ template: '' })
 };
+
+@Component({
+  selector: 'tn-dialog-testid-demo',
+  standalone: true,
+  imports: [TnButtonComponent],
+  template: `<tn-button label="Open confirm dialog" (onClick)="open()" />`,
+})
+class DialogTestIdDemoComponent {
+  private dialog = inject(TnDialog);
+  open(): void {
+    void this.dialog.confirm({
+      title: 'Delete user?',
+      message: 'This action cannot be undone.',
+      confirmText: 'Delete',
+      cancelText: 'Keep',
+      confirmTestId: 'delete-user',
+      cancelTestId: 'keep-user',
+    });
+  }
+}
+
+/**
+ * **Test IDs.** Dialogs are service-driven and render in a portaled overlay, so
+ * their button ids aren't capturable inline — the library owns them:
+ *
+ * | Element | Emitted id |
+ * |---|---|
+ * | shell close (✕) | `button-close` (or `button-<shell testId>-close`) |
+ * | shell fullscreen | `button-fullscreen` |
+ * | confirm-dialog confirm | `button-<confirmTestId>` (default `button-confirm`) |
+ * | confirm-dialog cancel | `button-<cancelTestId>` (default `button-cancel`) |
+ *
+ * Under `data-testid` (default) / `data-test`. The demo runs
+ * `dialog.confirm({ confirmTestId: 'delete-user', cancelTestId: 'keep-user' })`
+ * → `button-delete-user` / `button-keep-user`. Click, then inspect the dialog.
+ */
+export const TestIds: Story = {
+  render: () => ({
+    moduleMetadata: { imports: [DialogTestIdDemoComponent] },
+    template: '<tn-dialog-testid-demo />',
+  }),
+};
