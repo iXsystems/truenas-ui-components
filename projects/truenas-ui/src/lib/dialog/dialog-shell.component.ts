@@ -2,7 +2,7 @@ import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { DOCUMENT } from '@angular/common';
 import { Component, ElementRef, effect, input, signal, inject } from '@angular/core';
 import type { OnInit} from '@angular/core';
-import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import { TnTestIdDirective } from '../test-id';
 
 let nextUniqueId = 0;
 
@@ -24,7 +24,7 @@ export class TnDialogShellComponent implements OnInit {
    * or `button-<testId>-close` / `-fullscreen` when a base is provided (useful
    * when more than one dialog can be open).
    */
-  testId = input<TnTestIdValue>(undefined);
+  testId = input<string | undefined>(undefined);
 
   /** Stable id for the title heading, referenced by the dialog's aria-labelledby. */
   readonly titleId = `tn-dialog-title-${nextUniqueId++}`;

@@ -18,7 +18,7 @@ import { FormsModule } from '@angular/forms';
 import type { Observable, Subscription } from 'rxjs';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnSelectComponent, type TnSelectOption } from '../select/select.component';
-import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import { TnTestIdDirective } from '../test-id';
 
 /**
  * Default labels rendered inside `tn-table-pager`. Consumers can override any
@@ -155,10 +155,17 @@ export class TnTablePagerComponent {
   // etc.; with no base they stay `select-page-size` / `button-first-page`.
   private readonly testIdDirective = inject(TnTestIdDirective);
 
-  /** Build a child control's test-id base: `[<pager testId…>, suffix]`. */
-  protected childTestId(suffix: string): TnTestIdValue {
+  /**
+   * Build a child control's test-id base by joining the pager's `testId` with
+   * `suffix` into a single string (kebab-joined). Returning a string keeps it
+   * assignable to both `tn-select`'s `string` testId and `tn-icon-button`'s
+   * `TnTestIdValue` testId.
+   */
+  protected childTestId(suffix: string): string {
     const base = this.testIdDirective.testId();
-    return Array.isArray(base) ? [...base, suffix] : [base, suffix];
+    const parts = (Array.isArray(base) ? base : [base])
+      .filter((part): part is string | number => part !== null && part !== undefined && part !== '');
+    return [...parts, suffix].join('-');
   }
 
   /**
