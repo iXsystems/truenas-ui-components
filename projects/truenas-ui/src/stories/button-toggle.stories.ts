@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonToggleGroupComponent } from '../lib/button-toggle/button-toggle-group.component';
 import { TnButtonToggleComponent } from '../lib/button-toggle/button-toggle.component';
@@ -204,4 +205,41 @@ export const ComponentHarness: Story = {
     layout: 'fullscreen'
   },
   render: () => ({ template: '' })
+};
+
+/**
+ * **Test IDs (default).** The group emits `button-toggle-group-<base>` on its
+ * root and each toggle emits `button-toggle-<base>` on its `<button>`, under
+ * `data-testid` (default) / `data-test`. Table read live.
+ */
+export const TestIds: Story = {
+  render: () => ({
+    template: `
+      <tn-testid-inspector>
+        <tn-button-toggle-group testId="format">
+          <tn-button-toggle testId="bold" value="bold">Bold</tn-button-toggle>
+          <tn-button-toggle testId="italic" value="italic">Italic</tn-button-toggle>
+        </tn-button-toggle-group>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnButtonToggleGroupComponent, TnButtonToggleComponent, TestIdInspectorComponent] },
+  }),
+};
+
+/**
+ * **Scoped test ids.** Array bases namespace each id — group
+ * `['editor','format']` → `button-toggle-group-editor-format`, toggle
+ * `['editor','bold']` → `button-toggle-editor-bold`.
+ */
+export const ScopedTestIds: Story = {
+  render: () => ({
+    template: `
+      <tn-testid-inspector>
+        <tn-button-toggle-group [testId]="['editor','format']">
+          <tn-button-toggle [testId]="['editor','bold']" value="bold">Bold</tn-button-toggle>
+        </tn-button-toggle-group>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnButtonToggleGroupComponent, TnButtonToggleComponent, TestIdInspectorComponent] },
+  }),
 };
