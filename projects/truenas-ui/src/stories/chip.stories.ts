@@ -1,6 +1,7 @@
 import { ReactiveFormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, userEvent, within } from 'storybook/test';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { TnChipComponent } from '../lib/chip/chip.component';
 import { InputType } from '../lib/enums/input-type.enum';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
@@ -392,4 +393,40 @@ export const KeyboardNavigation: Story = {
     await userEvent.keyboard('{Enter}');
     await userEvent.keyboard('{Delete}');
   },
+};
+
+/**
+ * **Test IDs (default).** `tn-chip` emits the `chip-` prefix on its
+ * `role="button"` host, under `data-testid` (default) / `data-test`.
+ * `testId="production"` → `chip-production`. With no `testId`, nothing is
+ * emitted. Table read live.
+ */
+export const TestIds: Story = {
+  args: { testId: 'production' },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-chip label="Production" [testId]="testId" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnChipComponent, TestIdInspectorComponent] },
+  }),
+};
+
+/**
+ * **Scoped test id.** An array base namespaces the id —
+ * `[testId]="['filters','active']"` → `chip-filters-active`.
+ */
+export const ScopedTestIds: Story = {
+  args: { testId: ['filters', 'active'] },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-chip label="Active" [testId]="testId" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnChipComponent, TestIdInspectorComponent] },
+  }),
 };
