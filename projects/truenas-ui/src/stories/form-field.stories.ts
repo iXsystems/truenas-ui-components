@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnCheckboxComponent } from '../lib/checkbox/checkbox.component';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
@@ -448,4 +449,40 @@ export const ComponentHarness: Story = {
     layout: 'fullscreen'
   },
   render: () => ({ template: '' })
+};
+
+/**
+ * **Test IDs (default).** `tn-form-field` emits `form-field-<base>` on its
+ * wrapper, under `data-testid` (default) / `data-test`. The projected control
+ * carries its own id independently (set its `testId`). `testId="email"` →
+ * `form-field-email`.
+ */
+export const TestIds: Story = {
+  render: () => ({
+    template: `
+      <tn-testid-inspector>
+        <tn-form-field testId="email" label="Email">
+          <tn-input placeholder="you@example.com" />
+        </tn-form-field>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnFormFieldComponent, TnInputComponent, TestIdInspectorComponent] },
+  }),
+};
+
+/**
+ * **Scoped test id.** An array base namespaces the id —
+ * `[testId]="['login','email']"` → `form-field-login-email`.
+ */
+export const ScopedTestIds: Story = {
+  render: () => ({
+    template: `
+      <tn-testid-inspector>
+        <tn-form-field [testId]="['login','email']" label="Email">
+          <tn-input placeholder="you@example.com" />
+        </tn-form-field>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnFormFieldComponent, TnInputComponent, TestIdInspectorComponent] },
+  }),
 };
