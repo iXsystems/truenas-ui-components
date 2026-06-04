@@ -88,6 +88,11 @@ describe('TnDialogHarness', () => {
       expect(dialog).toBeTruthy();
     });
 
+    it('emits a library-owned test id on the close (✕) button', () => {
+      // close button is library-rendered chrome — consumer can't reach it
+      expect(document.querySelector('[data-testid="button-close"]')).toBeTruthy();
+    });
+
     it('should get title text', async () => {
       const dialog = await dialogLoader.getHarness(TnDialogHarness);
       expect(await dialog.getTitle()).toBe('Edit User');
@@ -359,6 +364,20 @@ describe('TnDialogHarness', () => {
         const buttons = await dialog.getActionButtons();
         expect(await buttons[0].getLabel()).toBe('Cancel');
         expect(await buttons[1].getLabel()).toBe('OK');
+      });
+
+      it('emits button-cancel / button-confirm on the config-rendered action buttons', () => {
+        void tnDialog.confirm({ title: 'Delete?' });
+        fixture.detectChanges();
+        expect(document.querySelector('[data-testid="button-cancel"]')).toBeTruthy();
+        expect(document.querySelector('[data-testid="button-confirm"]')).toBeTruthy();
+      });
+
+      it('honors confirmTestId / cancelTestId overrides', () => {
+        void tnDialog.confirm({ title: 'Delete?', confirmTestId: 'delete-dataset', cancelTestId: 'keep-dataset' });
+        fixture.detectChanges();
+        expect(document.querySelector('[data-testid="button-delete-dataset"]')).toBeTruthy();
+        expect(document.querySelector('[data-testid="button-keep-dataset"]')).toBeTruthy();
       });
 
       it('should show custom button labels', async () => {

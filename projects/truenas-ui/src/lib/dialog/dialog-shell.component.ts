@@ -2,6 +2,7 @@ import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { DOCUMENT } from '@angular/common';
 import { Component, ElementRef, effect, input, signal, inject } from '@angular/core';
 import type { OnInit} from '@angular/core';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 let nextUniqueId = 0;
 
@@ -9,7 +10,7 @@ let nextUniqueId = 0;
   selector: 'tn-dialog-shell',
   templateUrl: './dialog-shell.component.html',
   standalone: true,
-  imports: [],
+  imports: [TnTestIdDirective],
   host: {
     'class': 'tn-dialog-shell'
   }
@@ -17,6 +18,13 @@ let nextUniqueId = 0;
 export class TnDialogShellComponent implements OnInit {
   title = input<string>('');
   showFullscreenButton = input<boolean>(false);
+  /**
+   * Optional semantic base that scopes the shell's chrome buttons. The close
+   * and fullscreen buttons emit `button-close` / `button-fullscreen` by default,
+   * or `button-<testId>-close` / `-fullscreen` when a base is provided (useful
+   * when more than one dialog can be open).
+   */
+  testId = input<TnTestIdValue>(undefined);
 
   /** Stable id for the title heading, referenced by the dialog's aria-labelledby. */
   readonly titleId = `tn-dialog-title-${nextUniqueId++}`;
