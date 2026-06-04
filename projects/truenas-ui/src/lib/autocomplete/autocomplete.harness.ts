@@ -119,8 +119,11 @@ export class TnAutocompleteHarness extends ComponentHarness {
    * ```
    */
   async isOpen(): Promise<boolean> {
-    const dropdown = await this.locatorForOptional('.tn-autocomplete__dropdown')();
-    return dropdown !== null;
+    // The dropdown panel is rendered in a CDK overlay (outside the host), so we
+    // read the open state from the `.open` class the input carries while the
+    // panel is attached rather than looking for the panel in the host subtree.
+    const input = await this._input();
+    return input.hasClass('open');
   }
 
   /**
@@ -154,7 +157,9 @@ export class TnAutocompleteHarness extends ComponentHarness {
    * ```
    */
   async getOptions(): Promise<string[]> {
-    const options = await this.locatorForAll('.tn-autocomplete__option')();
+    // Options render inside a CDK overlay (outside the host element), so search
+    // the document root rather than the harness-local subtree.
+    const options = await this.documentRootLocatorFactory().locatorForAll('.tn-autocomplete__option')();
     const labels: string[] = [];
     for (const option of options) {
       labels.push((await option.text()).trim());
@@ -184,7 +189,9 @@ export class TnAutocompleteHarness extends ComponentHarness {
     const input = await this._input();
     await input.focus();
 
-    const options = await this.locatorForAll('.tn-autocomplete__option')();
+    // Options render inside a CDK overlay (outside the host element), so search
+    // the document root rather than the harness-local subtree.
+    const options = await this.documentRootLocatorFactory().locatorForAll('.tn-autocomplete__option')();
     for (const option of options) {
       const text = (await option.text()).trim();
       const matches = filter instanceof RegExp ? filter.test(text) : text === filter;

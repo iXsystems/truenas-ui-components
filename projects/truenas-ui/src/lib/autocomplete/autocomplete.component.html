@@ -13,38 +13,43 @@
     [attr.aria-expanded]="isOpen()"
     [attr.aria-autocomplete]="'list'"
     [attr.aria-controls]="isOpen() ? uid + '-dropdown' : null"
+    [attr.aria-owns]="isOpen() ? uid + '-dropdown' : null"
     [attr.aria-activedescendant]="highlightedIndex() >= 0 ? uid + '-option-' + highlightedIndex() : null"
     (input)="onInput($event)"
     (focus)="onFocus()"
     (blur)="onBlur()"
     (keydown)="onKeydown($event)" />
+</div>
 
-  @if (isOpen()) {
-    <div
-      class="tn-autocomplete__dropdown"
-      role="listbox"
-      [attr.id]="uid + '-dropdown'">
+<!-- Dropdown panel — portaled via CDK Overlay so it escapes parent
+     overflow/clipping. Attach/detach (driven by open()/close()) controls
+     visibility; the input keeps DOM focus throughout. -->
+<ng-template #dropdownTemplate>
+  <div
+    class="tn-autocomplete__dropdown"
+    role="listbox"
+    [style.--tn-autocomplete-panel-max-height]="panelMaxHeightValue()"
+    [attr.id]="uid + '-dropdown'">
 
-      @if (hasResults()) {
-        @for (option of filteredOptions(); track $index) {
-          <div
-            class="tn-autocomplete__option"
-            role="option"
-            tabindex="-1"
-            [class.highlighted]="highlightedIndex() === $index"
-            [attr.id]="uid + '-option-' + $index"
-            [attr.aria-selected]="highlightedIndex() === $index"
-            (mousedown)="$event.preventDefault()"
-            (click)="onOptionClick(option)"
-            (keydown.enter)="onOptionClick(option)">
-            {{ displayWith()(option) }}
-          </div>
-        }
-      } @else {
-        <div class="tn-autocomplete__no-results">
-          {{ noResultsText() }}
+    @if (hasResults()) {
+      @for (option of filteredOptions(); track $index) {
+        <div
+          class="tn-autocomplete__option"
+          role="option"
+          tabindex="-1"
+          [class.highlighted]="highlightedIndex() === $index"
+          [attr.id]="uid + '-option-' + $index"
+          [attr.aria-selected]="highlightedIndex() === $index"
+          (mousedown)="$event.preventDefault()"
+          (click)="onOptionClick(option)"
+          (keydown.enter)="onOptionClick(option)">
+          {{ displayWith()(option) }}
         </div>
       }
-    </div>
-  }
-</div>
+    } @else {
+      <div class="tn-autocomplete__no-results">
+        {{ noResultsText() }}
+      </div>
+    }
+  </div>
+</ng-template>

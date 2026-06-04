@@ -1,8 +1,10 @@
+import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
+import { TemplatePortal } from '@angular/cdk/portal';
 import {
   Component,
   ElementRef,
+  ViewContainerRef,
   computed,
-  effect,
   forwardRef,
   inject,
   input,
@@ -10,8 +12,10 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import type { OnDestroy, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import type { Subscription } from 'rxjs';
 import { TnTestIdDirective } from '../test-id';
 
 let nextId = 0;
@@ -30,8 +34,10 @@ let nextId = 0;
   templateUrl: './autocomplete.component.html',
   styleUrl: './autocomplete.component.scss',
 })
-export class TnAutocompleteComponent<T = unknown> implements ControlValueAccessor {
+export class TnAutocompleteComponent<T = unknown> implements ControlValueAccessor, OnDestroy {
   private readonly elementRef = inject(ElementRef);
+  private readonly overlay = inject(Overlay);
+  private readonly viewContainerRef = inject(ViewContainerRef);
 
   /** Unique instance ID for ARIA linkage */
   protected readonly uid = `tn-autocomplete-${nextId++}`;
@@ -57,8 +63,22 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   /** Text shown when no options match the search */
   noResultsText = input<string>('No results found');
 
-  /** Maximum number of options to render */
-  maxResults = input<number>(100);
+  /**
+   * Maximum number of options to render.
+   *
+   * Defaults to `Infinity` so browsing the open dropdown without a search term
+   * never silently truncates a long list. Pass an explicit cap if you want to
+   * limit how many filtered results are rendered at once.
+   */
+  maxResults = input<number>(Infinity);
+
+  /**
+   * Max height of the dropdown panel before it scrolls. Accepts a number
+   * (interpreted as `px`) or any CSS length string (e.g. `'320px'`,
+   * `'min(320px, 40vh)'`). Surfaced as the `--tn-autocomplete-panel-max-height`
+   * custom property so it can also be themed in CSS.
+   */
+  panelMaxHeight = input<string | number>('320px');
 
   /** Test ID attribute */
   testId = input<string>('');
@@ -68,6 +88,15 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
 
   /** Reference to the input element */
   inputEl = viewChild<ElementRef<HTMLInputElement>>('inputEl');
+
+  /** Template for the dropdown panel, portaled into a CDK overlay on open. */
+  private dropdownTemplate = viewChild.required<TemplateRef<unknown>>('dropdownTemplate');
+
+  /** Normalized panel max-height as a CSS length string. */
+  protected panelMaxHeightValue = computed(() => {
+    const value = this.panelMaxHeight();
+    return typeof value === 'number' ? `${value}px` : value;
+  });
 
   /** Current search term typed by the user */
   protected searchTerm = signal('');
@@ -113,26 +142,15 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   private onChange = (_value: T | null) => {};
   private onTouched = () => {};
 
-  constructor() {
-    // Click-outside detection
-    effect(() => {
-      if (this.isOpen()) {
-        const listener = (event: Event) => {
-          if (!this.elementRef.nativeElement.contains(event.target as Node)) {
-            this.close();
-          }
-        };
+  /** Live overlay holding the dropdown panel, or undefined when closed. */
+  private overlayRef?: OverlayRef;
+  /** Subscriptions tied to the current overlay; torn down on close. */
+  private overlaySubs: Subscription[] = [];
 
-        setTimeout(() => {
-          document.addEventListener('click', listener);
-        }, 0);
-
-        return () => {
-          document.removeEventListener('click', listener);
-        };
-      }
-      return undefined;
-    });
+  ngOnDestroy(): void {
+    // If the component is destroyed while the dropdown is open (e.g. router
+    // navigates away), close() never runs — clean up the overlay directly.
+    this.detachOverlay();
   }
 
   // ── ControlValueAccessor ──
@@ -166,13 +184,17 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     this.highlightedIndex.set(-1);
 
     if (!this.isOpen()) {
-      this.isOpen.set(true);
+      this.open();
+    } else {
+      // Filtering changes the panel's height; nudge CDK to re-evaluate the
+      // anchored position so it stays attached to the input.
+      this.overlayRef?.updatePosition();
     }
   }
 
   onFocus(): void {
     if (!this.isDisabled()) {
-      this.isOpen.set(true);
+      this.open();
     }
   }
 
@@ -213,7 +235,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       case 'ArrowDown':
         event.preventDefault();
         if (!this.isOpen()) {
-          this.isOpen.set(true);
+          this.open();
         } else {
           this.highlightedIndex.update((i) =>
             i < options.length - 1 ? i + 1 : 0
@@ -257,17 +279,79 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     this.close();
   }
 
+  private open(): void {
+    if (this.isDisabled() || this.isOpen()) {
+      return;
+    }
+    this.isOpen.set(true);
+    this.attachOverlay();
+  }
+
   private close(): void {
     this.isOpen.set(false);
     this.highlightedIndex.set(-1);
+    this.detachOverlay();
+  }
+
+  /**
+   * Attach the dropdown panel as a CDK overlay anchored to the input.
+   *
+   * Why an overlay (vs. an inline absolutely-positioned panel): the panel is
+   * appended to the overlay container on `document.body`, so it can never be
+   * clipped by an ancestor's `overflow: hidden`/`auto` (e.g. a surrounding
+   * card). CDK also flips the panel above the input near the viewport edge and
+   * matches its width to the input. Mirrors TnSelectComponent's approach.
+   */
+  private attachOverlay(): void {
+    const anchor = this.inputEl()?.nativeElement;
+    if (!anchor) {
+      return;
+    }
+
+    const positionStrategy = this.overlay
+      .position()
+      .flexibleConnectedTo(anchor)
+      .withPositions([
+        { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
+        { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
+      ]);
+
+    this.overlayRef = this.overlay.create({
+      positionStrategy,
+      scrollStrategy: this.overlay.scrollStrategies.reposition(),
+      hasBackdrop: false,
+      width: anchor.offsetWidth,
+    });
+
+    this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate(), this.viewContainerRef));
+
+    // Non-intercepting click-outside: the pointer event still reaches whatever
+    // the user clicked; we just notice and close. Ignore targets inside the
+    // host (the input itself) so we don't fight the focus/typing handlers.
+    this.overlaySubs.push(
+      this.overlayRef.outsidePointerEvents().subscribe((event: MouseEvent) => {
+        const target = event.target as Node | null;
+        if (target && this.elementRef.nativeElement.contains(target)) {
+          return;
+        }
+        this.close();
+      })
+    );
+  }
+
+  private detachOverlay(): void {
+    this.overlaySubs.forEach((sub) => sub.unsubscribe());
+    this.overlaySubs = [];
+    this.overlayRef?.dispose();
+    this.overlayRef = undefined;
   }
 
   private scrollToHighlighted(): void {
     const idx = this.highlightedIndex();
-    const dropdown = this.elementRef.nativeElement.querySelector(
-      '.tn-autocomplete__dropdown'
-    );
-    const options = dropdown?.querySelectorAll('.tn-autocomplete__option');
+    // The panel lives in the CDK overlay (outside the host), so scope the query
+    // to the overlay element rather than the host element.
+    const overlayEl = this.overlayRef?.overlayElement;
+    const options = overlayEl?.querySelectorAll<HTMLElement>('.tn-autocomplete__option');
     if (options?.[idx]?.scrollIntoView) {
       options[idx].scrollIntoView({ block: 'nearest' });
     }
