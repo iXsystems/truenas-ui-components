@@ -44,6 +44,27 @@ describe('composeTestId', () => {
     expect(composeTestId('', '')).toBe('');
   });
 
+  describe('idempotent guard (anti-double-prefix)', () => {
+    it('does not re-prefix a base that already carries the type prefix', () => {
+      expect(composeTestId('button', 'button-first-page')).toBe('button-first-page');
+      expect(composeTestId('select', 'select-page-size')).toBe('select-page-size');
+      expect(composeTestId('option', ['option', 'username', 'x'])).toBe('option-username-x');
+    });
+
+    it('still prefixes a plain semantic base', () => {
+      expect(composeTestId('button', 'first-page')).toBe('button-first-page');
+    });
+
+    it('returns the base alone when it exactly equals the prefix', () => {
+      expect(composeTestId('button', 'button')).toBe('button');
+    });
+
+    it('only guards on a hyphen boundary, not a coincidental prefix substring', () => {
+      // "buttons-list" does NOT start with "button-", so it still gets prefixed
+      expect(composeTestId('button', 'buttons-list')).toBe('button-buttons-list');
+    });
+  });
+
   it('reproduces representative legacy webui ixTest value shapes', () => {
     // <button ixTest="save"> → button-save
     expect(composeTestId('button', 'save')).toBe('button-save');

@@ -45,6 +45,7 @@ export function kebabTestSegment(part: string | number): string {
  * composeTestId('menu-item', [undefined, 'edit'])  // 'menu-item-edit'  (no base → unscoped)
  * composeTestId('menu-item', ['actions', 'edit'])  // 'menu-item-actions-edit'
  * composeTestId(undefined, 'already-made')         // 'already-made'    (verbatim passthrough)
+ * composeTestId('button', 'button-first-page')     // 'button-first-page' (idempotent — not doubled)
  */
 export function composeTestId(type: string | null | undefined, value: TnTestIdValue): string {
   const segments = (Array.isArray(value) ? value : [value])
@@ -60,6 +61,21 @@ export function composeTestId(type: string | null | undefined, value: TnTestIdVa
     return '';
   }
 
+  const body = segments.join('-');
   const prefix = type ? kebabTestSegment(type) : '';
-  return (prefix ? [prefix, ...segments] : segments).join('-');
+  if (!prefix) {
+    return body;
+  }
+
+  // Idempotent guard: if the base already starts with the computed type prefix
+  // (e.g. a not-yet-migrated value like `button-first-page`, or `select-x` from
+  // a consumer that hasn't dropped its manual prefix yet), don't prefix again —
+  // `button-first-page`, not `button-button-first-page`. This makes the
+  // webui → TNC migration order-independent: the library can emit correct ids
+  // immediately while consumers strip redundant prefixes at their own pace.
+  if (body === prefix || body.startsWith(`${prefix}-`)) {
+    return body;
+  }
+
+  return `${prefix}-${body}`;
 }
