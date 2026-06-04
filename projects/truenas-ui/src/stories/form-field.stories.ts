@@ -5,10 +5,13 @@ import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnCheckboxComponent } from '../lib/checkbox/checkbox.component';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
+import { tnIconMarker } from '../lib/icon/icon-marker';
 import { TnInputComponent } from '../lib/input/input.component';
 import { TnRadioComponent } from '../lib/radio/radio.component';
 import type { TnSelectOption } from '../lib/select/select.component';
 import { TnSelectComponent } from '../lib/select/select.component';
+
+tnIconMarker('help-circle', 'mdi');
 
 const harnessDoc = loadHarnessDoc('form-field');
 
@@ -70,6 +73,15 @@ When used with Angular reactive forms, the form field automatically:
       control: 'radio',
       options: ['fixed', 'dynamic'],
       description: 'Controls whether the subscript area reserves space when empty. "fixed" always reserves space (prevents layout shift), "dynamic" collapses when empty.',
+    },
+    tooltip: {
+      control: 'text',
+      description: 'Optional tooltip shown via a help icon next to the label.',
+    },
+    tooltipPosition: {
+      control: 'radio',
+      options: ['above', 'below', 'left', 'right', 'before', 'after'],
+      description: 'Placement of the tooltip relative to its help icon.',
     },
   },
 };
@@ -220,6 +232,40 @@ export const WithSelect: Story = {
     hint: 'Select the appropriate size for your needs',
     required: false,
     testId: 'size-field',
+  },
+};
+
+export const WithTooltip: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      options: selectOptions,
+    },
+    template: `
+      <tn-form-field
+        [label]="label"
+        [hint]="hint"
+        [required]="required"
+        [testId]="testId"
+        [tooltip]="tooltip"
+        [tooltipPosition]="tooltipPosition"
+        [subscriptSizing]="subscriptSizing">
+        <tn-select
+          [options]="options"
+          placeholder="Multi-Protocol Share">
+        </tn-select>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnSelectComponent],
+    },
+  }),
+  args: {
+    label: 'Purpose',
+    required: true,
+    tooltip: 'Describes how this share will be accessed and what it is used for.',
+    tooltipPosition: "below",
+    testId: 'purpose-field',
   },
 };
 

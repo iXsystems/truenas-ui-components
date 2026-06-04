@@ -1,12 +1,26 @@
 <div class="tn-form-field" tnTestIdType="form-field" [tnTestId]="testId()">
   <!-- Label -->
-  @if (label()) {
-    <label class="tn-form-field-label" [class.required]="required()">
-      {{ label() }}
-      @if (required()) {
-        <span class="required-asterisk" aria-label="required">*</span>
+  @if (label() || tooltip()) {
+    <div class="tn-form-field-label-row">
+      @if (label()) {
+        <label class="tn-form-field-label" [class.required]="required()">
+          {{ label() }}
+          @if (required()) {
+            <span class="required-asterisk" aria-label="required">*</span>
+          }
+        </label>
       }
-    </label>
+      @if (tooltip()) {
+        <button
+          type="button"
+          class="tn-form-field-tooltip"
+          [attr.aria-label]="tooltip()"
+          [tnTooltip]="tooltip()"
+          [tnTooltipPosition]="tooltipPosition()">
+          <tn-icon name="help-circle" library="mdi" size="sm" />
+        </button>
+      }
+    </div>
   }
 
   <!-- Form Control Content -->
