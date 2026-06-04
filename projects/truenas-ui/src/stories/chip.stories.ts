@@ -51,7 +51,7 @@ export const Default: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toBeInTheDocument();
     await expect(chip).toHaveClass('tn-chip--primary');
@@ -70,7 +70,7 @@ export const WithIcon: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toBeInTheDocument();
     await expect(chip).toHaveClass('tn-chip--primary');
@@ -91,7 +91,7 @@ export const NotClosable: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
     const closeButton = chip.querySelector('.tn-chip__close');
 
     await expect(chip).toBeInTheDocument();
@@ -109,7 +109,7 @@ export const Disabled: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toBeInTheDocument();
     await expect(chip).toHaveClass('tn-chip--disabled');
@@ -127,7 +127,7 @@ export const Primary: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toHaveClass('tn-chip--primary');
   },
@@ -143,7 +143,7 @@ export const Secondary: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toHaveClass('tn-chip--secondary');
   },
@@ -159,7 +159,7 @@ export const Accent: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toHaveClass('tn-chip--accent');
   },
@@ -382,7 +382,7 @@ export const KeyboardNavigation: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toHaveAttribute('tabindex', '0');
     await expect(chip).toHaveAttribute('role', 'button');

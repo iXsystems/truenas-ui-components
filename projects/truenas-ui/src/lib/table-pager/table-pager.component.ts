@@ -18,7 +18,7 @@ import { FormsModule } from '@angular/forms';
 import type { Observable, Subscription } from 'rxjs';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnSelectComponent, type TnSelectOption } from '../select/select.component';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 /**
  * Default labels rendered inside `tn-table-pager`. Consumers can override any
@@ -147,6 +147,19 @@ export interface TnTableDataProvider {
 })
 export class TnTablePagerComponent {
   private destroyRef = inject(DestroyRef);
+
+  // The pager's `testId` (applied to the host via hostDirectives) also scopes
+  // each child control, so multiple pagers on one page don't collide on
+  // `select-page-size` / `button-first-page`. With a base of `storage` the
+  // children become `select-storage-page-size`, `button-storage-first-page`,
+  // etc.; with no base they stay `select-page-size` / `button-first-page`.
+  private readonly testIdDirective = inject(TnTestIdDirective);
+
+  /** Build a child control's test-id base: `[<pager testId…>, suffix]`. */
+  protected childTestId(suffix: string): TnTestIdValue {
+    const base = this.testIdDirective.testId();
+    return Array.isArray(base) ? [...base, suffix] : [base, suffix];
+  }
 
   /**
    * Normalize the injected token into a Signal so consumers can supply either

@@ -1,9 +1,11 @@
-<div class="tn-select-container" tnTestIdType="select" [tnTestId]="testId()">
+<div class="tn-select-container">
   <!-- Select Trigger -->
   <div
     #triggerEl
     class="tn-select-trigger"
     role="combobox"
+    tnTestIdType="select"
+    [tnTestId]="testId()"
     [attr.tabindex]="isDisabled() ? -1 : 0"
     [class.disabled]="isDisabled()"
     [class.open]="isOpen()"

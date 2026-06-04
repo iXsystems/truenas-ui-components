@@ -1,10 +1,12 @@
-<div class="tn-autocomplete" tnTestIdType="autocomplete" [tnTestId]="testId()">
+<div class="tn-autocomplete">
   <input
     #inputEl
     type="text"
     class="tn-autocomplete__input"
     role="combobox"
+    tnTestIdType="autocomplete"
     autocomplete="off"
+    [tnTestId]="testId()"
     [class.open]="isOpen()"
     [class.disabled]="isDisabled()"
     [placeholder]="placeholder()"

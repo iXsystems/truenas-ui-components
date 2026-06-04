@@ -754,6 +754,13 @@ describe('TnSelectComponent — per-option test ids', () => {
       .map((el) => el.getAttribute('data-testid'));
   }
 
+  it('applies the select test id to the interactive trigger, not the container wrapper', () => {
+    const trigger = fixture.nativeElement.querySelector('.tn-select-trigger') as HTMLElement;
+    const container = fixture.nativeElement.querySelector('.tn-select-container') as HTMLElement;
+    expect(trigger.getAttribute('data-testid')).toBe('select-quick-filters');
+    expect(container.hasAttribute('data-testid')).toBe(false);
+  });
+
   it('scopes each option with the select base: option-<base>-<value>', () => {
     expect(openAndGetOptionTestIds()).toEqual(['option-quick-filters-ssd', 'option-quick-filters-hdd']);
   });
