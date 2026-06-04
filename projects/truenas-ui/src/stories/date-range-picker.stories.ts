@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnDateInputComponent } from '../lib/date-range-input/date-input.component';
 import { TnDateRangeInputComponent } from '../lib/date-range-input/date-range-input.component';
@@ -136,5 +137,31 @@ export const DateRangeInputHarness: Story = {
     layout: 'fullscreen',
   },
   render: () => ({ template: '' }),
+};
+
+/**
+ * **Test IDs.** Each container emits its own id (shown live):
+ *
+ * | Component | Emitted id |
+ * |---|---|
+ * | `tn-date-input` (`testId="start"`) | `date-input-start` |
+ * | `tn-date-range-input` (`testId="window"`) | `date-range-window` |
+ * | `tn-time-input` (`testId="alarm"`) | `select-alarm` (delegates to its inner `tn-select`) |
+ *
+ * Under `data-testid` (default) / `data-test`. **Known gap:** the individual
+ * day/month/year segment `<input>`s and the calendar popup (portaled) are not
+ * individually targetable yet — a compound-component follow-up.
+ */
+export const TestIds: Story = {
+  render: () => ({
+    template: `
+      <tn-testid-inspector>
+        <tn-date-input testId="start" />
+        <tn-date-range-input testId="window" />
+        <tn-time-input testId="alarm" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnDateInputComponent, TnDateRangeInputComponent, TnTimeInputComponent, TestIdInspectorComponent] },
+  }),
 };
 
