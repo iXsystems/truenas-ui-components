@@ -773,3 +773,22 @@ export const ComponentHarness: Story = {
   },
   render: () => ({ template: '' }),
 };
+
+/**
+ * **Test IDs.** The side panel renders in a portaled overlay, so its ids aren't
+ * capturable inline. The panel root emits `side-panel-<base>` (`testId`) and the
+ * close (✕) button emits `button-<base>` (`closeButtonTestId`), under
+ * `data-testid` (default) / `data-test`. Example: `testId="edit-user"` →
+ * `side-panel-edit-user`, `closeButtonTestId="close"` → `button-close`. The
+ * panel below is open — inspect its root and the ✕ button.
+ */
+export const TestIds: Story = {
+  render: () => ({
+    template: `
+      <tn-side-panel [open]="true" title="Edit User" testId="edit-user" closeButtonTestId="close">
+        <p style="padding:16px;">Panel content.</p>
+      </tn-side-panel>
+    `,
+    moduleMetadata: { imports: [TnSidePanelComponent] },
+  }),
+};
