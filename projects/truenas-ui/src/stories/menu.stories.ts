@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, userEvent, within } from 'storybook/test';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
 import { TnMenuItemComponent } from '../lib/menu/menu-item.component';
@@ -499,5 +500,31 @@ export const ComponentHarness: Story = {
     layout: 'fullscreen'
   },
   render: () => ({ template: '' })
+};
+
+/**
+ * **Test IDs.** The menu **trigger** carries its own id (here a `tn-button` →
+ * `button-<base>`, shown live in the table). Menu **items** render in a portaled
+ * overlay (not in the table until opened); the menu's `testId` scopes them as
+ * `menu-item-<base>-<id>` — e.g. menu `testId="row"` + item `id="edit"` →
+ * `menu-item-row-edit`. A per-item `testId` overrides that. With no menu base,
+ * items fall back to `menu-item-<id>`. Under `data-testid` (default) / `data-test`.
+ */
+export const TestIds: Story = {
+  render: () => ({
+    props: {
+      items: [
+        { id: 'edit', label: 'Edit' },
+        { id: 'delete', label: 'Delete' },
+      ] as TnMenuItem[],
+    },
+    template: `
+      <tn-testid-inspector>
+        <tn-button label="Actions" testId="row-actions" [tnMenuTriggerFor]="menu" />
+        <tn-menu #menu testId="row" [items]="items" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnButtonComponent, TnMenuComponent, TnMenuTriggerDirective, TestIdInspectorComponent] },
+  }),
 };
 
