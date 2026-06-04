@@ -36,6 +36,11 @@ const simpleOptions = [
   'Mango', 'Nectarine', 'Orange', 'Papaya', 'Quince',
 ];
 
+const manyOptions = Array.from(
+  { length: 150 },
+  (_, i) => `Option ${String(i + 1).padStart(3, '0')}`
+);
+
 const meta: Meta<TnAutocompleteComponent<unknown>> = {
   title: 'Components/Autocomplete',
   component: TnAutocompleteComponent,
@@ -246,6 +251,32 @@ export const MaxResults: Story = {
       imports: [TnFormFieldComponent],
     },
   }),
+};
+
+export const LongList: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      options: manyOptions,
+    },
+    template: `
+      <tn-form-field
+        label="Item (150 options)"
+        hint="Open without typing — every option renders and the panel scrolls">
+        <tn-autocomplete
+          [options]="options"
+          [placeholder]="placeholder"
+          (optionSelected)="optionSelected($event)">
+        </tn-autocomplete>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  args: {
+    placeholder: 'Type or scroll through 150 options...',
+  },
 };
 
 export const ComponentHarness: Story = {
