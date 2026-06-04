@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnAutocompleteComponent } from '../lib/autocomplete/autocomplete.component';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
@@ -260,4 +261,21 @@ export const ComponentHarness: Story = {
     layout: 'fullscreen',
   },
   render: () => ({ template: '' }),
+};
+
+/**
+ * **Test IDs.** The autocomplete **input** (`role="combobox"`) emits
+ * `autocomplete-<base>` — shown live in the table. Suggestion options render in
+ * a portaled overlay while typing. `testId="country"` → `autocomplete-country`,
+ * under `data-testid` (default) / `data-test`.
+ */
+export const TestIds: Story = {
+  render: () => ({
+    template: `
+      <tn-testid-inspector>
+        <tn-autocomplete testId="country" placeholder="Search countries" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnAutocompleteComponent, TestIdInspectorComponent] },
+  }),
 };
