@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { moduleMetadata } from '@storybook/angular';
 import { expect, userEvent, within } from 'storybook/test';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
 
@@ -184,6 +186,48 @@ export const DisabledLink: Story = {
     await expect(link.getAttribute('aria-disabled')).toBe('true');
     await expect(link.hasAttribute('href')).toBe(false);
   },
+};
+
+/**
+ * **Test IDs (default).** `tn-button` owns the `button-` element-type prefix:
+ * pass a semantic base via `testId` and the library emits the full id on the
+ * rendered `<button>` (or `<a>` in link mode), under `data-testid` (default) or
+ * `data-test` (when the app provides `{ provide: TN_TEST_ATTR, useValue: 'data-test' }`).
+ * Here `testId="save"` → `button-save`.
+ *
+ * With **no** `testId`, nothing is emitted — the library never auto-invents an
+ * id, so test hooks are opt-in per element. The table below is read live.
+ */
+export const TestIds: Story = {
+  args: { color: 'primary', variant: 'filled', label: 'Save', testId: 'save' },
+  decorators: [moduleMetadata({ imports: [TnButtonComponent, TestIdInspectorComponent] })],
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-button [color]="color" [variant]="variant" [label]="label" [testId]="testId" />
+      </tn-testid-inspector>
+    `,
+  }),
+};
+
+/**
+ * **Scoped test id.** Pass an array base to namespace the id — e.g. scope a
+ * button to the form it belongs to. `[testId]="['user-form','submit']"` →
+ * `button-user-form-submit`. The library kebab-joins the segments and prepends
+ * the `button-` type.
+ */
+export const ScopedTestIds: Story = {
+  args: { color: 'primary', variant: 'filled', label: 'Submit', testId: ['user-form', 'submit'] },
+  decorators: [moduleMetadata({ imports: [TnButtonComponent, TestIdInspectorComponent] })],
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-button [color]="color" [variant]="variant" [label]="label" [testId]="testId" />
+      </tn-testid-inspector>
+    `,
+  }),
 };
 
 export const ComponentHarness: Story = {
