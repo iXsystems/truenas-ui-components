@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { TnCheckboxComponent, TnCheckboxLabelDirective } from '../lib/checkbox/checkbox.component';
 
 const meta: Meta<TnCheckboxComponent> = {
@@ -294,4 +295,41 @@ export const Group: Story = {
       imports: [FormsModule, CommonModule]
     }
   })
+};
+
+/**
+ * **Test IDs (default).** `tn-checkbox` emits the `checkbox-` prefix on its
+ * visible `<label>` — the native `<input>` is intentionally hidden, so the
+ * label is the real click/hit target for automation. `testId="terms"` →
+ * `checkbox-terms` (under `data-testid` by default / `data-test`). With no
+ * `testId`, nothing is emitted. Table read live.
+ */
+export const TestIds: Story = {
+  args: { testId: 'terms' },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-checkbox label="I agree to the terms" [testId]="testId" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnCheckboxComponent, TestIdInspectorComponent] },
+  }),
+};
+
+/**
+ * **Scoped test id.** An array base namespaces the id —
+ * `[testId]="['signup','terms']"` → `checkbox-signup-terms`.
+ */
+export const ScopedTestIds: Story = {
+  args: { testId: ['signup', 'terms'] },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-checkbox label="I agree to the terms" [testId]="testId" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnCheckboxComponent, TestIdInspectorComponent] },
+  }),
 };
