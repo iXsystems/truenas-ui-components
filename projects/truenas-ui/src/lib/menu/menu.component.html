@@ -7,49 +7,10 @@
 
 <!-- Context menu template for overlay -->
 <ng-template #contextMenuTemplate>
-  <div class="tn-menu" cdkMenu tnMenuActivateHover>
-    @for (item of items(); track trackByItemId($index, item)) {
-      <tn-menu-item-renderer [item]="item" />
-    }
-  </div>
+  <tn-menu-panel [items]="items()" />
 </ng-template>
 
 <!-- Regular menu template -->
 <ng-template #menuTemplate>
-  <div class="tn-menu" cdkMenu tnMenuActivateHover>
-    <!--
-      Projected <tn-menu-item> entries are re-rendered here inside the
-      overlay so they participate in CdkMenu's keyboard navigation (arrow
-      keys, Home/End, type-ahead) alongside the items() array below.
-    -->
-    @for (projected of contentItems(); track projected) {
-      <button
-        cdkMenuItem
-        class="tn-menu-item"
-        type="button"
-        [tnTestId]="projected.resolvedTestId()"
-        [disabled]="projected.disabled()"
-        [cdkMenuItemDisabled]="projected.disabled()"
-        [class.disabled]="projected.disabled()"
-        [class.tn-menu-item--selected]="projected.selected()"
-        [attr.aria-current]="projected.selected() ? 'true' : null"
-        (click)="onProjectedItemClick(projected, $event)"
-      >
-        @if (projected.label() !== undefined) {
-          @if (projected.icon()) {
-            <tn-icon size="sm" class="tn-menu-item-icon" [name]="projected.icon()!" [library]="projected.iconLibrary()" />
-          }
-          <span class="tn-menu-item-label">{{ projected.label() }}</span>
-          @if (projected.shortcut()) {
-            <span class="tn-menu-item-shortcut">{{ projected.shortcut() }}</span>
-          }
-        } @else {
-          <ng-container [ngTemplateOutlet]="projected.content()" />
-        }
-      </button>
-    }
-    @for (item of items(); track trackByItemId($index, item)) {
-      <tn-menu-item-renderer [item]="item" />
-    }
-  </div>
+  <tn-menu-panel [items]="items()" [projectedItems]="contentItems()" />
 </ng-template>
