@@ -1,0 +1,89 @@
+<div class="tn-menu" cdkMenu tnMenuActivateHover [class.tn-menu--nested]="nested()">
+  <!--
+    Projected <tn-menu-item> entries (root panel only) render as sibling
+    cdkMenuItem buttons so they participate in CdkMenu's keyboard navigation
+    (arrow keys, Home/End, type-ahead) alongside the items() array below.
+  -->
+  @for (projected of projectedItems(); track projected) {
+    <!-- eslint-disable-next-line tn-local/require-tn-testid-type -- full id composed in TS via resolvedTestId() -->
+    <button
+      cdkMenuItem
+      class="tn-menu-item"
+      type="button"
+      [tnTestId]="projected.resolvedTestId()"
+      [disabled]="projected.disabled()"
+      [cdkMenuItemDisabled]="projected.disabled()"
+      [class.disabled]="projected.disabled()"
+      [class.tn-menu-item--selected]="projected.selected()"
+      [attr.aria-current]="projected.selected() ? 'true' : null"
+      (click)="onProjectedClick(projected, $event)"
+    >
+      @if (projected.label() !== undefined) {
+        @if (projected.icon()) {
+          <tn-icon size="sm" class="tn-menu-item-icon" [name]="projected.icon()!" [library]="projected.iconLibrary()" />
+        }
+        <span class="tn-menu-item-label">{{ projected.label() }}</span>
+        @if (projected.shortcut()) {
+          <span class="tn-menu-item-shortcut">{{ projected.shortcut() }}</span>
+        }
+      } @else {
+        <ng-container [ngTemplateOutlet]="projected.content()" />
+      }
+    </button>
+  }
+
+  @for (item of items(); track trackByItemId($index, item)) {
+    @if (item.separator) {
+      <div class="tn-menu-separator" role="separator"></div>
+    } @else if (!item.children || item.children.length === 0) {
+      <!-- eslint-disable-next-line tn-local/require-tn-testid-type -- full id composed in TS via resolvedItemTestId() -->
+      <button
+        cdkMenuItem
+        class="tn-menu-item"
+        type="button"
+        [tnTestId]="resolvedItemTestId(item)"
+        [disabled]="item.disabled"
+        [cdkMenuItemDisabled]="!!item.disabled"
+        [class.disabled]="item.disabled"
+        [class.tn-menu-item--selected]="item.selected"
+        [attr.aria-current]="item.selected ? 'true' : null"
+        (click)="onItemClick(item)"
+      >
+        @if (item.icon) {
+          <tn-icon size="sm" class="tn-menu-item-icon" [name]="item.icon!" [library]="item.iconLibrary" />
+        }
+        <span class="tn-menu-item-label">{{ item.label }}</span>
+        @if (item.shortcut) {
+          <span class="tn-menu-item-shortcut">{{ item.shortcut }}</span>
+        }
+      </button>
+    } @else {
+      <!-- eslint-disable-next-line tn-local/require-tn-testid-type -- full id composed in TS via resolvedItemTestId() -->
+      <button
+        cdkMenuItem
+        class="tn-menu-item tn-menu-item--nested"
+        type="button"
+        [tnTestId]="resolvedItemTestId(item)"
+        [cdkMenuTriggerFor]="submenuTpl"
+        [disabled]="item.disabled"
+        [cdkMenuItemDisabled]="!!item.disabled"
+        [class.disabled]="item.disabled"
+        [class.tn-menu-item--selected]="item.selected"
+        [attr.aria-current]="item.selected ? 'true' : null"
+      >
+        @if (item.icon) {
+          <tn-icon size="sm" class="tn-menu-item-icon" [name]="item.icon!" [library]="item.iconLibrary" />
+        }
+        <span class="tn-menu-item-label">{{ item.label }}</span>
+        @if (item.shortcut) {
+          <span class="tn-menu-item-shortcut">{{ item.shortcut }}</span>
+        }
+        <span class="tn-menu-item-arrow">▶</span>
+      </button>
+
+      <ng-template #submenuTpl>
+        <tn-menu-panel [items]="item.children!" [nested]="true" />
+      </ng-template>
+    }
+  }
+</div>
