@@ -86,7 +86,11 @@ export class TnFormFieldComponent implements AfterContentInit {
   ngAfterContentInit(): void {
     const control = this.control();
     if (control) {
-      // Listen for control status changes
+      // Listen for control status changes.
+      // NOTE: `statusChanges` does not emit on touched/pristine-only transitions
+      // (e.g. `markAsTouched()` / `markAllAsTouched()` on blur or submit), so an
+      // error may not surface until the next value/status change. Reacting to
+      // those via `control.control?.events` is tracked as a follow-up.
       control.statusChanges
         ?.pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(() => {
@@ -157,7 +161,11 @@ export class TnFormFieldComponent implements AfterContentInit {
    */
   private runGuarded(provider: () => string | null | undefined, context: string): string | null {
     try {
-      return provider() ?? null;
+      // Treat a blank message as "no answer" so it falls through to the next
+      // layer instead of hiding the error — e.g. a translation service that
+      // returns '' for a missing key.
+      const message = provider();
+      return message != null && message.trim() !== '' ? message : null;
     } catch (error) {
       if (isDevMode()) {
         console.error(`[tn-form-field] ${context} threw while resolving a validation message`, error);
