@@ -5,11 +5,11 @@
     (arrow keys, Home/End, type-ahead) alongside the items() array below.
   -->
   @for (projected of projectedItems(); track projected) {
-    <!-- eslint-disable-next-line tn-local/require-tn-testid-type -- full id composed in TS via resolvedTestId() -->
     <button
       cdkMenuItem
       class="tn-menu-item"
       type="button"
+      tnTestIdType="button"
       [tnTestId]="projected.resolvedTestId()"
       [disabled]="projected.disabled()"
       [cdkMenuItemDisabled]="projected.disabled()"
@@ -36,11 +36,11 @@
     @if (item.separator) {
       <div class="tn-menu-separator" role="separator"></div>
     } @else if (!item.children || item.children.length === 0) {
-      <!-- eslint-disable-next-line tn-local/require-tn-testid-type -- full id composed in TS via resolvedItemTestId() -->
       <button
         cdkMenuItem
         class="tn-menu-item"
         type="button"
+        tnTestIdType="button"
         [tnTestId]="resolvedItemTestId(item)"
         [disabled]="item.disabled"
         [cdkMenuItemDisabled]="!!item.disabled"
@@ -58,11 +58,11 @@
         }
       </button>
     } @else {
-      <!-- eslint-disable-next-line tn-local/require-tn-testid-type -- full id composed in TS via resolvedItemTestId() -->
       <button
         cdkMenuItem
         class="tn-menu-item tn-menu-item--nested"
         type="button"
+        tnTestIdType="button"
         [tnTestId]="resolvedItemTestId(item)"
         [cdkMenuTriggerFor]="submenuTpl"
         [disabled]="item.disabled"

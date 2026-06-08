@@ -505,10 +505,11 @@ export const ComponentHarness: Story = {
 /**
  * **Test IDs.** The menu **trigger** carries its own id (here a `tn-button` →
  * `button-<base>`, shown live in the table). Menu **items** render in a portaled
- * overlay (not in the table until opened); the menu's `testId` scopes them as
- * `menu-item-<base>-<id>` — e.g. menu `testId="row"` + item `id="edit"` →
- * `menu-item-row-edit`. A per-item `testId` overrides that. With no menu base,
- * items fall back to `menu-item-<id>`. Under `data-testid` (default) / `data-test`.
+ * overlay (not in the table until opened); items render as `<button>`s, so the
+ * menu's `testId` scopes them as `button-<base>-<id>` — e.g. menu `testId="row"`
+ * + item `id="edit"` → `button-row-edit`. A per-item `testId` overrides the base
+ * (composed with the same `button-` prefix). With no menu base, items fall back
+ * to `button-<id>`. Under `data-testid` (default) / `data-test`.
  */
 export const TestIds: Story = {
   render: () => ({

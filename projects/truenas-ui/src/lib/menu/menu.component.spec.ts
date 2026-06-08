@@ -287,22 +287,22 @@ describe('tn-menu with trigger', () => {
 
   // -- data-testid forwarding --------------------------------------------
 
-  it('should render default data-testid as "menu-item-<id>" for each item', () => {
+  it('should render default data-testid as "button-<id>" for each item', () => {
     triggerButton.click();
     fixture.detectChanges();
 
     const ids = getMenuItems().map(el => el.getAttribute('data-testid'));
     expect(ids).toEqual(
       expect.arrayContaining([
-        'menu-item-cut',
-        'menu-item-copy',
-        'menu-item-disabled',
-        'menu-item-more',
+        'button-cut',
+        'button-copy',
+        'button-disabled',
+        'button-more',
       ]),
     );
   });
 
-  it('should use the item.testId override when provided', () => {
+  it('composes the item.testId override with the button prefix when provided', () => {
     host.items = [
       { id: 'cut', label: 'Cut', testId: 'custom-cut' },
       { id: 'copy', label: 'Copy' },
@@ -313,9 +313,9 @@ describe('tn-menu with trigger', () => {
     fixture.detectChanges();
 
     const ids = getMenuItems().map(el => el.getAttribute('data-testid'));
-    expect(ids).toContain('custom-cut');
-    expect(ids).toContain('menu-item-copy');
-    expect(ids).not.toContain('menu-item-cut');
+    expect(ids).toContain('button-custom-cut');
+    expect(ids).toContain('button-copy');
+    expect(ids).not.toContain('button-cut');
   });
 
   it('should render data-testid on nested child items', () => {
@@ -330,7 +330,7 @@ describe('tn-menu with trigger', () => {
 
     const ids = getMenuItems().map(el => el.getAttribute('data-testid'));
     expect(ids).toEqual(
-      expect.arrayContaining(['menu-item-child-1', 'menu-item-child-2']),
+      expect.arrayContaining(['button-child-1', 'button-child-2']),
     );
   });
 
@@ -679,7 +679,7 @@ describe('tn-menu with projected <tn-menu-item>', () => {
 
     const ids = getMenuItems().map((el) => el.getAttribute('data-testid'));
     expect(ids).toEqual(
-      expect.arrayContaining(['menu-item-csv', 'menu-item-json', 'menu-item-disabled-item']),
+      expect.arrayContaining(['button-csv', 'button-json', 'button-disabled-item']),
     );
   });
 
@@ -809,13 +809,13 @@ describe('tn-menu base-scoped test ids', () => {
 
   afterEach(() => host.trigger().closeMenu());
 
-  it('scopes each item id with the menu base: menu-item-<base>-<id>', () => {
+  it('scopes each item id with the menu base: button-<base>-<id>', () => {
     triggerButton.click();
     fixture.detectChanges();
 
     const ids = getMenuItems().map((el) => el.getAttribute('data-testid'));
     expect(ids).toEqual(
-      expect.arrayContaining(['menu-item-actions-edit', 'menu-item-actions-delete', 'menu-item-actions-more']),
+      expect.arrayContaining(['button-actions-edit', 'button-actions-delete', 'button-actions-more']),
     );
   });
 
@@ -828,10 +828,10 @@ describe('tn-menu base-scoped test ids', () => {
     fixture.detectChanges();
 
     const ids = getMenuItems().map((el) => el.getAttribute('data-testid'));
-    expect(ids).toContain('menu-item-actions-rename');
+    expect(ids).toContain('button-actions-rename');
   });
 
-  it('falls back to the unscoped menu-item-<id> when no base is set', () => {
+  it('falls back to the unscoped button-<id> when no base is set', () => {
     host.testId = undefined;
     fixture.detectChanges();
 
@@ -839,10 +839,10 @@ describe('tn-menu base-scoped test ids', () => {
     fixture.detectChanges();
 
     const ids = getMenuItems().map((el) => el.getAttribute('data-testid'));
-    expect(ids).toEqual(expect.arrayContaining(['menu-item-edit', 'menu-item-delete']));
+    expect(ids).toEqual(expect.arrayContaining(['button-edit', 'button-delete']));
   });
 
-  it('lets a per-item testId override the scoped derivation (verbatim)', () => {
+  it('composes a per-item testId override with the button prefix', () => {
     host.items = [
       { id: 'edit', label: 'Edit', testId: 'totally-custom' },
       { id: 'delete', label: 'Delete' },
@@ -853,9 +853,9 @@ describe('tn-menu base-scoped test ids', () => {
     fixture.detectChanges();
 
     const ids = getMenuItems().map((el) => el.getAttribute('data-testid'));
-    expect(ids).toContain('totally-custom');
-    expect(ids).toContain('menu-item-actions-delete');
-    expect(ids).not.toContain('menu-item-actions-edit');
+    expect(ids).toContain('button-totally-custom');
+    expect(ids).toContain('button-actions-delete');
+    expect(ids).not.toContain('button-actions-edit');
   });
 });
 

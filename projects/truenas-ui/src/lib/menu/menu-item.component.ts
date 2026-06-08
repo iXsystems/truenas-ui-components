@@ -69,5 +69,12 @@ export class TnMenuItemComponent {
   /** Template capturing whatever the consumer projected as item content. */
   content = viewChild.required<TemplateRef<unknown>>('content');
 
-  resolvedTestId = computed(() => this.testId() ?? (this.id() ? `menu-item-${this.id()}` : undefined));
+  /**
+   * Semantic *base* for the test id — either the explicit `testId` or the `id`.
+   * The owning `<tn-menu-panel>` button declares `tnTestIdType="button"`, so
+   * `TnTestIdDirective` composes the final `button-…` id (and is idempotent, so
+   * an already-`button-`-prefixed value is not doubled). Returns `undefined`
+   * when neither is set, which composes to no attribute.
+   */
+  resolvedTestId = computed(() => this.testId() ?? this.id());
 }

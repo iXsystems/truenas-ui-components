@@ -43,10 +43,12 @@ export class TnMenuComponent implements OnDestroy {
 
   /**
    * Semantic base that scopes the test ids of this menu's items. Each item
-   * resolves to `menu-item-${testId}-${item.id}` (e.g. menu `testId="actions"`
-   * + item `id="edit"` → `menu-item-actions-edit`), which keeps ids unique when
+   * resolves to `button-${testId}-${item.id}` (e.g. menu `testId="actions"`
+   * + item `id="edit"` → `button-actions-edit`), which keeps ids unique when
    * several menus render on one page. Omit it and items fall back to the
-   * unscoped `menu-item-${item.id}`. A per-item `testId` overrides both.
+   * unscoped `button-${item.id}`. A per-item `testId` overrides the base and is
+   * composed with the same `button-` prefix (idempotently, so an already
+   * `button-`-prefixed value is not doubled).
    */
   testId = input<string | undefined>(undefined);
 
