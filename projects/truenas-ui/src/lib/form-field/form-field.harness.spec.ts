@@ -9,6 +9,7 @@ import { TnFormFieldComponent } from './form-field.component';
 import { TN_FORM_FIELD_ERRORS } from './form-field.errors';
 import type { TnFormFieldErrorMessages, TnFormFieldErrorResolver } from './form-field.errors';
 import { TnFormFieldHarness } from './form-field.harness';
+import { TnIconTesting } from '../icon/icon-testing';
 import { TnInputComponent } from '../input/input.component';
 
 @Component({
@@ -68,6 +69,7 @@ describe('TnFormFieldHarness', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TestHostComponent],
+      providers: [TnIconTesting.jest.providers()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TestHostComponent);
@@ -318,19 +320,19 @@ describe('TnFormFieldHarness', () => {
   imports: [TnFormFieldComponent, TnInputComponent, ReactiveFormsModule],
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
-    <tn-form-field label="Name" testId="name-field" [errorMessages]="stringMessages">
+    <tn-form-field label="Name" testId="name" [errorMessages]="stringMessages">
       <tn-input [formControl]="nameControl" />
     </tn-form-field>
 
-    <tn-form-field label="Password" testId="password-field" [errorMessages]="fnMessages">
+    <tn-form-field label="Password" testId="password" [errorMessages]="fnMessages">
       <tn-input [formControl]="passwordControl" />
     </tn-form-field>
 
-    <tn-form-field label="Unrelated" testId="unrelated-field" [errorMessages]="unrelatedMessages">
+    <tn-form-field label="Unrelated" testId="unrelated" [errorMessages]="unrelatedMessages">
       <tn-input [formControl]="unrelatedControl" />
     </tn-form-field>
 
-    <tn-form-field label="Throwing" testId="throwing-field" [errorMessages]="throwingMessages">
+    <tn-form-field label="Throwing" testId="throwing" [errorMessages]="throwingMessages">
       <tn-input [formControl]="throwingControl" />
     </tn-form-field>
   `
@@ -368,6 +370,7 @@ describe('TnFormField per-field errorMessages', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ErrorMessagesHostComponent],
+      providers: [TnIconTesting.jest.providers()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ErrorMessagesHostComponent);
@@ -382,7 +385,7 @@ describe('TnFormField per-field errorMessages', () => {
     fixture.detectChanges();
 
     const field = await loader.getHarness(
-      TnFormFieldHarness.with({ testId: 'name-field' })
+      TnFormFieldHarness.with({ testId: 'form-field-name' })
     );
     expect(await field.getErrorMessage()).toBe('Please enter a name');
   });
@@ -395,7 +398,7 @@ describe('TnFormField per-field errorMessages', () => {
     fixture.detectChanges();
 
     const field = await loader.getHarness(
-      TnFormFieldHarness.with({ testId: 'password-field' })
+      TnFormFieldHarness.with({ testId: 'form-field-password' })
     );
     expect(await field.getErrorMessage()).toBe('Needs 8 characters');
   });
@@ -407,7 +410,7 @@ describe('TnFormField per-field errorMessages', () => {
     fixture.detectChanges();
 
     const field = await loader.getHarness(
-      TnFormFieldHarness.with({ testId: 'unrelated-field' })
+      TnFormFieldHarness.with({ testId: 'form-field-unrelated' })
     );
     expect(await field.hasError()).toBe(true);
     expect(await field.getErrorMessage()).toBe('This field is required');
@@ -420,7 +423,7 @@ describe('TnFormField per-field errorMessages', () => {
     fixture.detectChanges();
 
     const field = await loader.getHarness(
-      TnFormFieldHarness.with({ testId: 'name-field' })
+      TnFormFieldHarness.with({ testId: 'form-field-name' })
     );
     expect(await field.getErrorMessage()).toBe('Please enter a name');
 
@@ -439,12 +442,27 @@ describe('TnFormField per-field errorMessages', () => {
     fixture.detectChanges();
 
     const field = await loader.getHarness(
-      TnFormFieldHarness.with({ testId: 'throwing-field' })
+      TnFormFieldHarness.with({ testId: 'form-field-throwing' })
     );
     expect(await field.hasError()).toBe(true);
     expect(await field.getErrorMessage()).toBe('This field is required');
     expect(consoleError).toHaveBeenCalled();
     consoleError.mockRestore();
+  });
+
+  it('should fall through to the built-in default when an override resolves to a blank string', async () => {
+    const host = fixture.componentInstance;
+    // e.g. a translation service returning '' for a missing key.
+    host.stringMessages = { required: '   ' };
+    host.nameControl.markAsTouched();
+    host.nameControl.updateValueAndValidity();
+    fixture.detectChanges();
+
+    const field = await loader.getHarness(
+      TnFormFieldHarness.with({ testId: 'form-field-name' })
+    );
+    expect(await field.hasError()).toBe(true);
+    expect(await field.getErrorMessage()).toBe('This field is required');
   });
 });
 
@@ -454,11 +472,11 @@ describe('TnFormField per-field errorMessages', () => {
   imports: [TnFormFieldComponent, TnInputComponent, ReactiveFormsModule],
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
-    <tn-form-field label="Resolved" testId="resolved-field">
+    <tn-form-field label="Resolved" testId="resolved">
       <tn-input [formControl]="resolvedControl" />
     </tn-form-field>
 
-    <tn-form-field label="Overridden" testId="overridden-field" [errorMessages]="overrides">
+    <tn-form-field label="Overridden" testId="overridden" [errorMessages]="overrides">
       <tn-input [formControl]="overriddenControl" />
     </tn-form-field>
   `
@@ -482,7 +500,10 @@ describe('TnFormField global error resolver', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ResolverHostComponent],
-      providers: [{ provide: TN_FORM_FIELD_ERRORS, useValue: resolver }],
+      providers: [
+        TnIconTesting.jest.providers(),
+        { provide: TN_FORM_FIELD_ERRORS, useValue: resolver },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ResolverHostComponent);
@@ -497,7 +518,7 @@ describe('TnFormField global error resolver', () => {
     fixture.detectChanges();
 
     const field = await loader.getHarness(
-      TnFormFieldHarness.with({ testId: 'resolved-field' })
+      TnFormFieldHarness.with({ testId: 'form-field-resolved' })
     );
     expect(await field.getErrorMessage()).toBe('Resolved from token');
   });
@@ -509,7 +530,7 @@ describe('TnFormField global error resolver', () => {
     fixture.detectChanges();
 
     const field = await loader.getHarness(
-      TnFormFieldHarness.with({ testId: 'overridden-field' })
+      TnFormFieldHarness.with({ testId: 'form-field-overridden' })
     );
     expect(await field.getErrorMessage()).toBe('Field-level wins');
   });
