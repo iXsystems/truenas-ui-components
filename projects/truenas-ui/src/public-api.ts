@@ -37,7 +37,12 @@ export * from './lib/tab-panel/tab-panel.harness';
 export * from './lib/menu';
 export * from './lib/keyboard-shortcut/keyboard-shortcut.component';
 export * from './lib/form-field/form-field.component';
-export * from './lib/form-field/form-field.errors';
+export { TN_FORM_FIELD_ERRORS } from './lib/form-field/form-field.errors';
+export type {
+  TnFormFieldErrorMessage,
+  TnFormFieldErrorMessages,
+  TnFormFieldErrorResolver,
+} from './lib/form-field/form-field.errors';
 export * from './lib/form-field/form-field.harness';
 export * from './lib/select/select.component';
 export * from './lib/select/select.harness';
