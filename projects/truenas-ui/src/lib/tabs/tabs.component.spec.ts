@@ -430,3 +430,31 @@ describe('TnTabsComponent (lazy loading)', () => {
     expect(lazyPanelContent).toBeTruthy();
   });
 });
+
+@Component({
+  standalone: true,
+  imports: [TnTabsComponent, TnTabComponent, TnTabPanelComponent],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-tabs testId="settings">
+      <tn-tab testId="general" label="General" />
+      <tn-tab-panel testId="general" label="General">Content</tn-tab-panel>
+    </tn-tabs>
+  `,
+})
+class TabsTestIdHostComponent {}
+
+describe('TnTabs test-id prefixes', () => {
+  it('prefixes tablist (tabs-), tab (tab-), and panel (tab-panel-)', async () => {
+    await TestBed.configureTestingModule({ imports: [TabsTestIdHostComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(TabsTestIdHostComponent);
+    fixture.detectChanges();
+
+    const tablist = fixture.nativeElement.querySelector('[role="tablist"]') as HTMLElement;
+    const tab = fixture.nativeElement.querySelector('[role="tab"]') as HTMLElement;
+    const panel = fixture.nativeElement.querySelector('[role="tabpanel"]') as HTMLElement;
+    expect(tablist.getAttribute('data-testid')).toBe('tabs-settings');
+    expect(tab.getAttribute('data-testid')).toBe('tab-general');
+    expect(panel.getAttribute('data-testid')).toBe('tab-panel-general');
+  });
+});

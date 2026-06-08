@@ -4,7 +4,7 @@ import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
 import { Component, viewChild, inject, input, output, computed, signal, forwardRef } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 @Component({
   selector: 'tn-radio',
@@ -28,7 +28,7 @@ export class TnRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
   name = input<string | undefined>(undefined);
   disabled = input<boolean>(false);
   required = input<boolean>(false);
-  testId = input<string | undefined>(undefined);
+  testId = input<TnTestIdValue>(undefined);
   error = input<string | null>(null);
 
   change = output<unknown>();

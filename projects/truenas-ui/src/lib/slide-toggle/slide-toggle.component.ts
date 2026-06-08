@@ -4,7 +4,7 @@ import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
 import { Component, viewChild, inject, input, output, computed, signal, forwardRef } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 export type SlideToggleColor = 'primary' | 'accent' | 'warn';
 
@@ -30,7 +30,7 @@ export class TnSlideToggleComponent implements AfterViewInit, OnDestroy, Control
   disabled = input<boolean>(false);
   required = input<boolean>(false);
   color = input<SlideToggleColor>('primary');
-  testId = input<string | undefined>(undefined);
+  testId = input<TnTestIdValue>(undefined);
   ariaLabel = input<string | undefined>(undefined);
   ariaLabelledby = input<string | undefined>(undefined);
   checked = input<boolean>(false);

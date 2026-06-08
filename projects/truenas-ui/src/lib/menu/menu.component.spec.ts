@@ -770,6 +770,95 @@ describe('tn-menu focus restoration with <tn-button> trigger', () => {
   });
 });
 
+// ===========================================================================
+// Base-scoped test ids (menu testId scopes each item's data-testid)
+// ===========================================================================
+@Component({
+  standalone: true,
+  imports: [TnMenuComponent, TnMenuTriggerDirective],
+  template: `
+    <button class="trigger" [tnMenuTriggerFor]="menu">Open</button>
+    <tn-menu #menu [items]="items" [testId]="testId" />
+  `,
+})
+class BaseScopedMenuHostComponent {
+  items: TnMenuItem[] = [
+    { id: 'edit', label: 'Edit' },
+    { id: 'delete', label: 'Delete' },
+    { id: 'more', label: 'More', children: [{ id: 'rename', label: 'Rename' }] },
+  ];
+  testId: string | undefined = 'actions';
+  trigger = viewChild.required(TnMenuTriggerDirective);
+}
+
+describe('tn-menu base-scoped test ids', () => {
+  let fixture: ComponentFixture<BaseScopedMenuHostComponent>;
+  let host: BaseScopedMenuHostComponent;
+  let triggerButton: HTMLElement;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [BaseScopedMenuHostComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(BaseScopedMenuHostComponent);
+    host = fixture.componentInstance;
+    fixture.detectChanges();
+    triggerButton = fixture.nativeElement.querySelector('.trigger');
+  });
+
+  afterEach(() => host.trigger().closeMenu());
+
+  it('scopes each item id with the menu base: menu-item-<base>-<id>', () => {
+    triggerButton.click();
+    fixture.detectChanges();
+
+    const ids = getMenuItems().map((el) => el.getAttribute('data-testid'));
+    expect(ids).toEqual(
+      expect.arrayContaining(['menu-item-actions-edit', 'menu-item-actions-delete', 'menu-item-actions-more']),
+    );
+  });
+
+  it('scopes nested child items with the same base', () => {
+    triggerButton.click();
+    fixture.detectChanges();
+
+    const moreButton = getMenuItems().find((el) => el.textContent?.includes('More'))!;
+    moreButton.click();
+    fixture.detectChanges();
+
+    const ids = getMenuItems().map((el) => el.getAttribute('data-testid'));
+    expect(ids).toContain('menu-item-actions-rename');
+  });
+
+  it('falls back to the unscoped menu-item-<id> when no base is set', () => {
+    host.testId = undefined;
+    fixture.detectChanges();
+
+    triggerButton.click();
+    fixture.detectChanges();
+
+    const ids = getMenuItems().map((el) => el.getAttribute('data-testid'));
+    expect(ids).toEqual(expect.arrayContaining(['menu-item-edit', 'menu-item-delete']));
+  });
+
+  it('lets a per-item testId override the scoped derivation (verbatim)', () => {
+    host.items = [
+      { id: 'edit', label: 'Edit', testId: 'totally-custom' },
+      { id: 'delete', label: 'Delete' },
+    ];
+    fixture.detectChanges();
+
+    triggerButton.click();
+    fixture.detectChanges();
+
+    const ids = getMenuItems().map((el) => el.getAttribute('data-testid'));
+    expect(ids).toContain('totally-custom');
+    expect(ids).toContain('menu-item-actions-delete');
+    expect(ids).not.toContain('menu-item-actions-edit');
+  });
+});
+
 describe('tn-menu focus restoration with <tn-icon-button> trigger', () => {
   let fixture: ComponentFixture<IconButtonTriggerHostComponent>;
   let host: IconButtonTriggerHostComponent;

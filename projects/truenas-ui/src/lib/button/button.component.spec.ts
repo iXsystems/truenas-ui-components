@@ -183,4 +183,54 @@ describe('TnButtonComponent', () => {
       expect(anchor.getAttribute('href')).toBe('/audit');
     });
   });
+
+  describe('testId (library owns the element-type prefix)', () => {
+    it('prepends "button-" to the semantic base on the inner button', () => {
+      fixture.componentRef.setInput('testId', 'save');
+      fixture.detectChanges();
+      const button = fixture.nativeElement.querySelector('button');
+      expect(button.getAttribute('data-testid')).toBe('button-save');
+    });
+
+    it('prefixes the inner anchor too when rendered as a link', () => {
+      fixture.componentRef.setInput('href', 'https://truenas.com');
+      fixture.componentRef.setInput('testId', 'visit-forums');
+      fixture.detectChanges();
+      const anchor = fixture.nativeElement.querySelector('a');
+      expect(anchor.getAttribute('data-testid')).toBe('button-visit-forums');
+    });
+
+    it('emits NO test-id attribute when testId is unset (type alone is never an id)', () => {
+      // guards against every untagged button collapsing to data-testid="button"
+      const button = fixture.nativeElement.querySelector('button');
+      expect(button.hasAttribute('data-testid')).toBe(false);
+      expect(button.hasAttribute('data-test')).toBe(false);
+    });
+
+    it('supports an array base for scoped ids', () => {
+      fixture.componentRef.setInput('testId', ['service-status', 'smb']);
+      fixture.detectChanges();
+      const button = fixture.nativeElement.querySelector('button');
+      expect(button.getAttribute('data-testid')).toBe('button-service-status-smb');
+    });
+  });
+
+  describe('testId under the data-test convention (webui consumers)', () => {
+    it('emits the same value under data-test when TN_TEST_ATTR is overridden', async () => {
+      const { TN_TEST_ATTR } = await import('../test-id');
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({
+        imports: [TnButtonComponent],
+        providers: [provideRouter([]), { provide: TN_TEST_ATTR, useValue: 'data-test' }],
+      }).compileComponents();
+
+      const local = TestBed.createComponent(TnButtonComponent);
+      local.componentRef.setInput('testId', 'save');
+      local.detectChanges();
+
+      const button = local.nativeElement.querySelector('button');
+      expect(button.getAttribute('data-test')).toBe('button-save');
+      expect(button.getAttribute('data-testid')).toBeNull();
+    });
+  });
 });

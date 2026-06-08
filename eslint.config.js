@@ -6,6 +6,7 @@ const angularTemplateParser = require('@angular-eslint/template-parser');
 const angularTemplateEslint = require('@angular-eslint/eslint-plugin-template');
 const unusedImports = require('eslint-plugin-unused-imports');
 const importPlugin = require('eslint-plugin-import');
+const requireTnTestIdType = require('./eslint-rules/require-tn-testid-type');
 
 module.exports = [
   {
@@ -224,8 +225,15 @@ module.exports = [
     },
     plugins: {
       '@angular-eslint/template': angularTemplateEslint,
+      'tn-local': { rules: { 'require-tn-testid-type': requireTnTestIdType } },
     },
     rules: {
+      // Guardrail for the "library owns the test-id prefix" scheme: an
+      // interactive native element binding [tnTestId] must declare tnTestIdType
+      // (or suppress the rule when the full id is composed in TS). Now that all
+      // such elements are typed/annotated, this is enforced as an error.
+      'tn-local/require-tn-testid-type': 'error',
+
       // Basic template rules
       '@angular-eslint/template/banana-in-box': 'error',
       '@angular-eslint/template/no-negated-async': 'error',

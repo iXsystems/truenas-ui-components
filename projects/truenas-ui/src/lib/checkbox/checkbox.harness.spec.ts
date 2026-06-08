@@ -14,7 +14,7 @@ import { TnCheckboxHarness } from './checkbox.harness';
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-checkbox
-      testId="test-checkbox"
+      testId="test"
       [label]="label()"
       [disabled]="disabled()"
       [required]="required()"
@@ -26,10 +26,10 @@ import { TnCheckboxHarness } from './checkbox.harness';
 
     <tn-checkbox
       label="Second checkbox"
-      testId="second-checkbox"
+      testId="second"
       [formControl]="secondControl" />
 
-    <tn-checkbox testId="terms-checkbox" [formControl]="termsControl">
+    <tn-checkbox testId="terms" [formControl]="termsControl">
       <span tnCheckboxLabel>I agree to the <a href="/terms">Terms</a></span>
     </tn-checkbox>
   `
@@ -84,7 +84,7 @@ describe('TnCheckboxHarness', () => {
 
     it('should filter by testId', async () => {
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'second-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-second' })
       );
       expect(await checkbox.getLabelText()).toBe('Second checkbox');
     });
@@ -93,14 +93,14 @@ describe('TnCheckboxHarness', () => {
   describe('getLabelText', () => {
     it('should return the label text', async () => {
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'test-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-test' })
       );
       expect(await checkbox.getLabelText()).toBe('Accept terms');
     });
 
     it('should return projected label content', async () => {
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'terms-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-terms' })
       );
       const text = await checkbox.getLabelText();
       expect(text).toContain('I agree to the');
@@ -110,7 +110,7 @@ describe('TnCheckboxHarness', () => {
     it('should reflect updated label', async () => {
       hostComponent.label.set('New label');
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'test-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-test' })
       );
       expect(await checkbox.getLabelText()).toBe('New label');
     });
@@ -119,14 +119,14 @@ describe('TnCheckboxHarness', () => {
   describe('isChecked / check / uncheck / toggle', () => {
     it('should be unchecked initially', async () => {
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'test-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-test' })
       );
       expect(await checkbox.isChecked()).toBe(false);
     });
 
     it('should check the checkbox', async () => {
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'test-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-test' })
       );
       await checkbox.check();
       expect(await checkbox.isChecked()).toBe(true);
@@ -134,7 +134,7 @@ describe('TnCheckboxHarness', () => {
 
     it('should uncheck the checkbox', async () => {
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'test-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-test' })
       );
       await checkbox.check();
       await checkbox.uncheck();
@@ -143,7 +143,7 @@ describe('TnCheckboxHarness', () => {
 
     it('should toggle the checkbox', async () => {
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'test-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-test' })
       );
       await checkbox.toggle();
       expect(await checkbox.isChecked()).toBe(true);
@@ -153,7 +153,7 @@ describe('TnCheckboxHarness', () => {
 
     it('should be a no-op when checking an already checked checkbox', async () => {
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'test-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-test' })
       );
       await checkbox.check();
       await checkbox.check();
@@ -162,7 +162,7 @@ describe('TnCheckboxHarness', () => {
 
     it('should be a no-op when unchecking an already unchecked checkbox', async () => {
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'test-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-test' })
       );
       await checkbox.uncheck();
       expect(await checkbox.isChecked()).toBe(false);
@@ -170,7 +170,7 @@ describe('TnCheckboxHarness', () => {
 
     it('should update form control value', async () => {
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'test-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-test' })
       );
       await checkbox.check();
       expect(hostComponent.control.value).toBe(true);
@@ -184,7 +184,7 @@ describe('TnCheckboxHarness', () => {
   describe('isDisabled', () => {
     it('should return false when enabled', async () => {
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'test-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-test' })
       );
       expect(await checkbox.isDisabled()).toBe(false);
     });
@@ -192,7 +192,7 @@ describe('TnCheckboxHarness', () => {
     it('should return true when disabled via input', async () => {
       hostComponent.disabled.set(true);
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'test-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-test' })
       );
       expect(await checkbox.isDisabled()).toBe(true);
     });
@@ -200,7 +200,7 @@ describe('TnCheckboxHarness', () => {
     it('should return true when disabled via form control', async () => {
       hostComponent.control.disable();
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'test-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-test' })
       );
       expect(await checkbox.isDisabled()).toBe(true);
     });
@@ -209,7 +209,7 @@ describe('TnCheckboxHarness', () => {
   describe('isRequired', () => {
     it('should return false by default', async () => {
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'test-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-test' })
       );
       expect(await checkbox.isRequired()).toBe(false);
     });
@@ -217,7 +217,7 @@ describe('TnCheckboxHarness', () => {
     it('should return true when required', async () => {
       hostComponent.required.set(true);
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'test-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-test' })
       );
       expect(await checkbox.isRequired()).toBe(true);
     });
@@ -226,7 +226,7 @@ describe('TnCheckboxHarness', () => {
   describe('isIndeterminate', () => {
     it('should return false by default', async () => {
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'test-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-test' })
       );
       expect(await checkbox.isIndeterminate()).toBe(false);
     });
@@ -234,7 +234,7 @@ describe('TnCheckboxHarness', () => {
     it('should return true when indeterminate', async () => {
       hostComponent.indeterminate.set(true);
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'test-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-test' })
       );
       expect(await checkbox.isIndeterminate()).toBe(true);
     });
@@ -245,14 +245,14 @@ describe('TnCheckboxHarness', () => {
       const checkbox = await loader.getHarness(
         TnCheckboxHarness.with({ label: 'Accept terms' })
       );
-      expect(await checkbox.getTestId()).toBe('test-checkbox');
+      expect(await checkbox.getTestId()).toBe('checkbox-test');
     });
   });
 
   describe('getErrorText', () => {
     it('should return null when no error', async () => {
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'test-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-test' })
       );
       expect(await checkbox.getErrorText()).toBeNull();
     });
@@ -260,7 +260,7 @@ describe('TnCheckboxHarness', () => {
     it('should return error message when error is set', async () => {
       hostComponent.error.set('You must accept the terms');
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'test-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-test' })
       );
       expect(await checkbox.getErrorText()).toBe('You must accept the terms');
     });
@@ -269,7 +269,7 @@ describe('TnCheckboxHarness', () => {
   describe('content projection', () => {
     it('should render projected label content with tnCheckboxLabel', async () => {
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'terms-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-terms' })
       );
       const text = await checkbox.getLabelText();
       expect(text).toContain('Terms');
@@ -277,7 +277,7 @@ describe('TnCheckboxHarness', () => {
 
     it('should update form control when checkbox with projected label is toggled', async () => {
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'terms-checkbox' })
+        TnCheckboxHarness.with({ testId: 'checkbox-terms' })
       );
       await checkbox.check();
       expect(hostComponent.termsControl.value).toBe(true);

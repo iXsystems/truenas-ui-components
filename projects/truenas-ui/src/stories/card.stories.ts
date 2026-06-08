@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, within } from 'storybook/test';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { TnCardHeaderDirective } from '../lib/card/card-header.directive';
 import { TnCardComponent } from '../lib/card/card.component';
 
@@ -513,5 +514,49 @@ export const CompleteExample: Story = {
         </ul>
       </tn-card>
     `,
+  }),
+};
+
+/**
+ * **Test IDs.** Card slots are data-driven, so each slot's id comes from its
+ * own config field rather than a single base (under `data-testid` by default /
+ * `data-test`):
+ *
+ * | Slot | Config field | Emitted id |
+ * |---|---|---|
+ * | primary action (`tn-button`) | `primaryAction.testId='save'` | `button-save` |
+ * | secondary action (`tn-button`) | `secondaryAction.testId='cancel'` | `button-cancel` |
+ * | footer link (`<button>`) | `footerLink.testId='view-details'` | `link-view-details` |
+ * | header kebab trigger (`tn-icon-button`) | `headerMenuTriggerTestId='actions'` | `button-actions` |
+ * | header status pill (non-interactive `<span>`) | `headerStatus.testId='status-active'` | `status-active` (verbatim — no type prefix) |
+ *
+ * Each forwarded id is type-prefixed by the inner component it lands on; the
+ * status pill is verbatim because it isn't an interactive control. Table below
+ * is read from the live DOM (the kebab *menu items* only exist once opened).
+ */
+export const TestIds: Story = {
+  render: () => ({
+    props: {
+      primary: { label: 'Save', testId: 'save', handler: () => {} },
+      secondary: { label: 'Cancel', testId: 'cancel', handler: () => {} },
+      footer: { label: 'View details', testId: 'view-details', handler: () => {} },
+      status: { label: 'Active', type: 'success', testId: 'status-active' },
+      menu: [{ id: 'edit', label: 'Edit' }],
+    },
+    template: `
+      <tn-testid-inspector>
+        <tn-card
+          title="Server"
+          [headerStatus]="status"
+          [headerMenu]="menu"
+          headerMenuTriggerTestId="actions"
+          [primaryAction]="primary"
+          [secondaryAction]="secondary"
+          [footerLink]="footer">
+          <p>Card content</p>
+        </tn-card>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnCardComponent, TestIdInspectorComponent] },
   }),
 };

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
 import { TnSliderThumbDirective } from '../lib/slider/slider-thumb.directive';
 import { TnSliderWithLabelDirective } from '../lib/slider/slider-with-label.directive';
@@ -101,6 +102,46 @@ export const Default: Story = {
     labelPrefix: '',
     labelSuffix: ' km/h'
   }
+};
+
+/**
+ * **Test IDs (default).** `tn-slider` emits the `slider-` prefix on its
+ * container (which owns the track-click handlers), under `data-testid`
+ * (default) / `data-test`. `testId="volume"` → `slider-volume`. With no
+ * `testId`, nothing is emitted. Table read live.
+ */
+export const TestIds: Story = {
+  args: { testId: 'volume' },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-slider [min]="0" [max]="100" [testId]="testId">
+          <input ixSliderThumb value="50">
+        </tn-slider>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnSliderComponent, TnSliderThumbDirective, TestIdInspectorComponent] },
+  }),
+};
+
+/**
+ * **Scoped test id.** An array base namespaces the id —
+ * `[testId]="['audio','volume']"` → `slider-audio-volume`.
+ */
+export const ScopedTestIds: Story = {
+  args: { testId: ['audio', 'volume'] },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-slider [min]="0" [max]="100" [testId]="testId">
+          <input ixSliderThumb value="50">
+        </tn-slider>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnSliderComponent, TnSliderThumbDirective, TestIdInspectorComponent] },
+  }),
 };
 
 

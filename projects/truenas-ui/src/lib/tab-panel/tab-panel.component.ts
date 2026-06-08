@@ -2,7 +2,7 @@ import { A11yModule } from '@angular/cdk/a11y';
 import { CommonModule } from '@angular/common';
 import type { TemplateRef} from '@angular/core';
 import { Component, input, viewChild, ElementRef, inject, computed, signal } from '@angular/core';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 @Component({
   selector: 'tn-tab-panel',
@@ -14,7 +14,7 @@ import { TnTestIdDirective } from '../test-id';
 export class TnTabPanelComponent {
   label = input<string>('');
   lazyLoad = input<boolean>(false);
-  testId = input<string | undefined>(undefined);
+  testId = input<TnTestIdValue>(undefined);
 
   content = viewChild.required<TemplateRef<unknown>>('content');
 

@@ -74,12 +74,13 @@ describe('TnInputComponent', () => {
       expect(input.type).toBe('email');
     });
 
-    it('should apply data-testid', () => {
+    it('should apply data-testid with the library-owned "input-" prefix', () => {
+      // testId is the semantic base; the library prepends the element type.
       fixture.componentRef.setInput('testId', 'my-input');
       fixture.detectChanges();
 
       const input = fixture.nativeElement.querySelector('input');
-      expect(input.getAttribute('data-testid')).toBe('my-input');
+      expect(input.getAttribute('data-testid')).toBe('input-my-input');
     });
 
     it('should disable the input', () => {

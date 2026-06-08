@@ -58,6 +58,19 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
   multiple = input<boolean>(false);
 
   /**
+   * Optional extractor for the per-option test-id discriminator. Defaults to
+   * the option's `value` (when a string/number) or its `label`. Provide this
+   * when option values are objects, or to pick a more stable/unique key —
+   * mirrors webui's `[ixTest]="[controlName, option.<field>]"` discriminator.
+   *
+   * @example
+   * ```html
+   * <tn-select testId="user" [optionTestIdKey]="(o) => o.value.id" ... />
+   * ```
+   */
+  optionTestIdKey = input<(option: TnSelectOption<T>) => string | number | null | undefined>();
+
+  /**
    * Custom comparator for matching option values against the selected value(s).
    *
    * When the option values are objects, **provide this** — the built-in
@@ -145,6 +158,27 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     const idx = this.focusedIndex();
     const nav = this.navigableOptions();
     return idx >= 0 && idx < nav.length && nav[idx].option === option;
+  }
+
+  /**
+   * Test-id segments for an option row, consumed by `[tnTestId]` with
+   * `tnTestIdType="option"`. The select's `testId` scopes each option so ids
+   * stay unique across selects: base `quick-filters` + option value `ssd` →
+   * `option-quick-filters-ssd`; with no base → `option-ssd`. The discriminator
+   * comes from `optionTestIdKey` when provided, else the option's primitive
+   * `value`, else its `label`.
+   */
+  protected optionTestIdParts(option: TnSelectOption<T>): (string | number | null | undefined)[] {
+    const extractor = this.optionTestIdKey();
+    let key: string | number | null | undefined;
+    if (extractor) {
+      key = extractor(option);
+    } else if (typeof option.value === 'string' || typeof option.value === 'number') {
+      key = option.value;
+    } else {
+      key = option.label;
+    }
+    return [this.testId(), key];
   }
 
   private onChange = (_value: T | T[] | null) => {};

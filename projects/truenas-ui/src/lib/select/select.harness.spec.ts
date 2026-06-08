@@ -707,3 +707,85 @@ describe('TnSelectComponent - keyboard navigation', () => {
     }
   });
 });
+
+// ===========================================================================
+// Per-option test ids (data-driven children scoped by the select's testId)
+// ===========================================================================
+@Component({
+  selector: 'tn-test-optionid-host',
+  standalone: true,
+  imports: [TnSelectComponent],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-select
+      [testId]="testId()"
+      [options]="options()"
+      [optionGroups]="groups()"
+      [optionTestIdKey]="keyFn()" />
+  `,
+})
+class OptionTestIdHostComponent {
+  testId = signal<string>('quick-filters');
+  options = signal<TnSelectOption<string>[]>([
+    { value: 'ssd', label: 'SSD' },
+    { value: 'hdd', label: 'Spinning Disk' },
+  ]);
+  groups = signal<TnSelectOptionGroup<string>[]>([]);
+  keyFn = signal<((o: TnSelectOption<string>) => string | number) | undefined>(undefined);
+}
+
+describe('TnSelectComponent — per-option test ids', () => {
+  let fixture: ComponentFixture<OptionTestIdHostComponent>;
+  let host: OptionTestIdHostComponent;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({ imports: [OptionTestIdHostComponent] }).compileComponents();
+    fixture = TestBed.createComponent(OptionTestIdHostComponent);
+    host = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  afterEach(() => fixture.destroy());
+
+  function openAndGetOptionTestIds(): (string | null)[] {
+    (fixture.nativeElement.querySelector('.tn-select-trigger') as HTMLElement).click();
+    fixture.detectChanges();
+    return Array.from(document.querySelectorAll<HTMLElement>('.tn-select-option'))
+      .map((el) => el.getAttribute('data-testid'));
+  }
+
+  it('applies the select test id to the interactive trigger, not the container wrapper', () => {
+    const trigger = fixture.nativeElement.querySelector('.tn-select-trigger') as HTMLElement;
+    const container = fixture.nativeElement.querySelector('.tn-select-container') as HTMLElement;
+    expect(trigger.getAttribute('data-testid')).toBe('select-quick-filters');
+    expect(container.hasAttribute('data-testid')).toBe(false);
+  });
+
+  it('scopes each option with the select base: option-<base>-<value>', () => {
+    expect(openAndGetOptionTestIds()).toEqual(['option-quick-filters-ssd', 'option-quick-filters-hdd']);
+  });
+
+  it('falls back to option-<value> when the select has no base', () => {
+    host.testId.set('');
+    fixture.detectChanges();
+    expect(openAndGetOptionTestIds()).toEqual(['option-ssd', 'option-hdd']);
+  });
+
+  it('uses optionTestIdKey to pick the discriminator (e.g. label over value)', () => {
+    host.keyFn.set((o) => o.label);
+    fixture.detectChanges();
+    expect(openAndGetOptionTestIds()).toEqual([
+      'option-quick-filters-ssd',
+      'option-quick-filters-spinning-disk',
+    ]);
+  });
+
+  it('scopes grouped options the same way', () => {
+    host.options.set([]);
+    host.groups.set([
+      { label: 'Local', options: [{ value: 'ssd', label: 'SSD' }, { value: 'hdd', label: 'HDD' }] },
+    ]);
+    fixture.detectChanges();
+    expect(openAndGetOptionTestIds()).toEqual(['option-quick-filters-ssd', 'option-quick-filters-hdd']);
+  });
+});

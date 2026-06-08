@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { userEvent, within, screen, expect, waitFor } from 'storybook/test';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { TnFilePickerComponent } from '../lib/file-picker/file-picker.component';
 import type { FileSystemItem, FilePickerCallbacks } from '../lib/file-picker/file-picker.interfaces';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
@@ -1463,4 +1464,22 @@ export const ErrorHandling: Story = {
       }
     }
   }
+};
+
+/**
+ * **Test IDs.** The file-picker **container** (the inline trigger field) emits
+ * `file-picker-<base>` — shown live in the table. The browse popup renders in a
+ * portaled overlay. `testId="backup-target"` → `file-picker-backup-target`,
+ * under `data-testid` (default) / `data-test`.
+ */
+export const TestIds: Story = {
+  render: () => ({
+    props: { callbacks: { listDirectory: () => Promise.resolve([]) } as FilePickerCallbacks },
+    template: `
+      <tn-testid-inspector>
+        <tn-file-picker testId="backup-target" [callbacks]="callbacks" placeholder="Choose a path" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnFilePickerComponent, TestIdInspectorComponent] },
+  }),
 };

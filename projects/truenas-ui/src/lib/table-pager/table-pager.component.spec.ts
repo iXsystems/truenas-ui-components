@@ -246,6 +246,20 @@ describe('TnTablePagerComponent', () => {
       const host = fixture.nativeElement as HTMLElement;
       expect(host.querySelector(`[data-testid="${testId}"]`)).toBeTruthy();
     });
+
+    it('scopes child test ids with the pager testId base so multiple pagers do not collide', () => {
+      fixture.componentRef.setInput('testId', 'storage');
+      fixture.detectChanges();
+      const host = fixture.nativeElement as HTMLElement;
+
+      // host carries the base verbatim (via hostDirectives); children are scoped under it
+      expect(host.getAttribute('data-testid')).toBe('storage');
+      expect(host.querySelector('[data-testid="select-storage-page-size"]')).toBeTruthy();
+      expect(host.querySelector('[data-testid="button-storage-first-page"]')).toBeTruthy();
+      expect(host.querySelector('[data-testid="button-storage-last-page"]')).toBeTruthy();
+      // the unscoped id is gone once a base is set
+      expect(host.querySelector('[data-testid="select-page-size"]')).toBeNull();
+    });
   });
 
   describe('select options', () => {

@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import type { AfterViewInit } from '@angular/core';
 import { Component, ElementRef, computed, inject, input, output, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 @Component({
   selector: 'tn-button',
@@ -21,10 +21,13 @@ export class TnButtonComponent implements AfterViewInit {
   label = input<string>('Button');
   disabled = input<boolean>(false);
   /**
-   * Test-id applied to the rendered element. Rendered under whichever attribute
-   * name is configured via `TN_TEST_ATTR` (default `data-testid`).
+   * Semantic test-id base for the rendered element. The library prepends the
+   * element type (`button`) and renders the result under whichever attribute
+   * name is configured via `TN_TEST_ATTR` (default `data-testid`) — e.g.
+   * `testId="save"` → `button-save`. Accepts an array of segments to scope the
+   * id (e.g. `[formControlName, 'submit']`).
    */
-  testId = input<string | undefined>(undefined);
+  testId = input<TnTestIdValue>(undefined);
 
   /**
    * Renders the button as an `<a>` with a plain `href` attribute.

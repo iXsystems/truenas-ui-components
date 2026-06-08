@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
 import { Component, input, output, computed, viewChild, inject } from '@angular/core';
 import { TnIconComponent } from '../icon/icon.component';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 export type ChipColor = 'primary' | 'secondary' | 'accent';
 
@@ -22,7 +22,7 @@ export class TnChipComponent implements AfterViewInit, OnDestroy {
   closable = input<boolean>(true);
   disabled = input<boolean>(false);
   color = input<ChipColor>('primary');
-  testId = input<string | undefined>(undefined);
+  testId = input<TnTestIdValue>(undefined);
 
   onClose = output<void>();
   onClick = output<MouseEvent>();

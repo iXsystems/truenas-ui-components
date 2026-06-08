@@ -148,6 +148,26 @@ export interface TnTableDataProvider {
 export class TnTablePagerComponent {
   private destroyRef = inject(DestroyRef);
 
+  // The pager's `testId` (applied to the host via hostDirectives) also scopes
+  // each child control, so multiple pagers on one page don't collide on
+  // `select-page-size` / `button-first-page`. With a base of `storage` the
+  // children become `select-storage-page-size`, `button-storage-first-page`,
+  // etc.; with no base they stay `select-page-size` / `button-first-page`.
+  private readonly testIdDirective = inject(TnTestIdDirective);
+
+  /**
+   * Build a child control's test-id base by joining the pager's `testId` with
+   * `suffix` into a single string (kebab-joined). Returning a string keeps it
+   * assignable to both `tn-select`'s `string` testId and `tn-icon-button`'s
+   * `TnTestIdValue` testId.
+   */
+  protected childTestId(suffix: string): string {
+    const base = this.testIdDirective.testId();
+    const parts = (Array.isArray(base) ? base : [base])
+      .filter((part): part is string | number => part !== null && part !== undefined && part !== '');
+    return [...parts, suffix].join('-');
+  }
+
   /**
    * Normalize the injected token into a Signal so consumers can supply either
    * a plain object or a reactive signal (e.g. derived from a TranslateService's

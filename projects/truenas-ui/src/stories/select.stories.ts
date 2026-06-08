@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
 import type { TnSelectOption, TnSelectOptionGroup } from '../lib/select/select.component';
@@ -408,5 +409,38 @@ export const ComponentHarness: Story = {
     layout: 'fullscreen'
   },
   render: () => ({ template: '' })
+};
+
+/**
+ * **Test IDs.** The select **trigger** (the `role="combobox"` element) emits
+ * `select-<base>` — shown live in the table below. Each **option** lives in a
+ * portaled overlay (so it's not in the table until the dropdown is open) and
+ * emits `option-<base>-<value>`:
+ *
+ * | Element | Emitted id (base `disk-type`) |
+ * |---|---|
+ * | trigger | `select-disk-type` |
+ * | option (value `ssd`) | `option-disk-type-ssd` |
+ * | option (value `hdd`) | `option-disk-type-hdd` |
+ *
+ * The option discriminator defaults to the option's `value` (else `label`);
+ * override it with `[optionTestIdKey]="(o) => o.value.id"`. Under `data-testid`
+ * by default / `data-test`. Open the dropdown to see the option ids in the DOM.
+ */
+export const TestIds: Story = {
+  render: () => ({
+    props: {
+      options: [
+        { value: 'ssd', label: 'SSD' },
+        { value: 'hdd', label: 'Spinning Disk' },
+      ] as TnSelectOption[],
+    },
+    template: `
+      <tn-testid-inspector>
+        <tn-select testId="disk-type" [options]="options" placeholder="Select a disk type" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnSelectComponent, TestIdInspectorComponent] },
+  }),
 };
 

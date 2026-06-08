@@ -1,5 +1,6 @@
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { InputType } from '../lib/enums/input-type.enum';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
@@ -404,4 +405,40 @@ export const ComponentHarness: Story = {
     layout: 'fullscreen'
   },
   render: () => ({ template: '' })
+};
+
+/**
+ * **Test IDs (default).** `tn-input` emits the `input-` prefix on the native
+ * `<input>` (or `textarea-` on the `<textarea>` in multiline mode), under
+ * `data-testid` (default) / `data-test`. `testId="username"` → `input-username`.
+ * With no `testId`, nothing is emitted. Table read live.
+ */
+export const TestIds: Story = {
+  args: { testId: 'username' },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-input placeholder="Username" [testId]="testId" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnInputComponent, TestIdInspectorComponent] },
+  }),
+};
+
+/**
+ * **Scoped test id.** An array base namespaces the id —
+ * `[testId]="['login-form','username']"` → `input-login-form-username`.
+ */
+export const ScopedTestIds: Story = {
+  args: { testId: ['login-form', 'username'] },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-input placeholder="Username" [testId]="testId" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnInputComponent, TestIdInspectorComponent] },
+  }),
 };

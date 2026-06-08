@@ -2,7 +2,7 @@ import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { CommonModule } from '@angular/common';
 import { Component, ChangeDetectionStrategy, forwardRef, inject, input } from '@angular/core';
 import { TnIconComponent } from '../icon/icon.component';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, composeTestId } from '../test-id';
 import { TnMenuActivateHoverDirective } from './menu-activate-hover.directive';
 import type { TnMenuItemComponent } from './menu-item.component';
 import type { TnMenuItem } from './menu.component';
@@ -71,6 +71,16 @@ export class TnMenuPanelComponent {
   // template is declared inside `<tn-menu>` — so the view-DI chain still walks
   // back to the host `<tn-menu>` component and inject() resolves it.
   private menu = inject(TnMenuComponent);
+
+  /**
+   * The item's own `testId` wins verbatim; otherwise derive
+   * `menu-item-${menuBase}-${item.id}`, scoped by the host `<tn-menu>`'s
+   * `testId`. Nested panels resolve the same host menu via DI, so child items
+   * share the root base. With no menu base this is `menu-item-${item.id}`.
+   */
+  protected resolvedItemTestId(item: TnMenuItem): string {
+    return item.testId ?? composeTestId('menu-item', [this.menu.testId(), item.id]);
+  }
 
   protected onItemClick(item: TnMenuItem): void {
     this.menu.onMenuItemClick(item);

@@ -15,12 +15,12 @@ import { TnSlideToggleHarness } from './slide-toggle.harness';
   template: `
     <tn-slide-toggle
       label="Notifications"
-      testId="test-toggle"
+      testId="test"
       [formControl]="control" />
 
     <tn-slide-toggle
       label="Disabled toggle"
-      testId="disabled-toggle"
+      testId="disabled"
       [disabled]="true"
       [checked]="true" />
   `
@@ -66,7 +66,7 @@ describe('TnSlideToggleHarness', () => {
 
     it('should filter by testId', async () => {
       const toggle = await loader.getHarness(
-        TnSlideToggleHarness.with({ testId: 'disabled-toggle' })
+        TnSlideToggleHarness.with({ testId: 'toggle-disabled' })
       );
       expect(await toggle.getLabelText()).toBe('Disabled toggle');
     });

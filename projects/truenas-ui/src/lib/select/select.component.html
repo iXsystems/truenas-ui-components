@@ -1,9 +1,11 @@
-<div class="tn-select-container" [tnTestId]="testId()">
+<div class="tn-select-container">
   <!-- Select Trigger -->
   <div
     #triggerEl
     class="tn-select-trigger"
     role="combobox"
+    tnTestIdType="select"
+    [tnTestId]="testId()"
     [attr.tabindex]="isDisabled() ? -1 : 0"
     [class.disabled]="isDisabled()"
     [class.open]="isOpen()"
@@ -52,6 +54,8 @@
           class="tn-select-option"
           role="option"
           tabindex="-1"
+          tnTestIdType="option"
+          [tnTestId]="optionTestIdParts(option)"
           [attr.id]="optionId(option)"
           [class.selected]="isOptionSelected(option)"
           [class.focused]="isOptionFocused(option)"
@@ -98,6 +102,8 @@
               class="tn-select-option"
               role="option"
               tabindex="-1"
+              tnTestIdType="option"
+              [tnTestId]="optionTestIdParts(option)"
               [attr.id]="optionId(option)"
               [class.selected]="isOptionSelected(option)"
               [class.focused]="isOptionFocused(option)"

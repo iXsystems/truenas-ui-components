@@ -1,6 +1,7 @@
 import { ReactiveFormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, userEvent, within } from 'storybook/test';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { TnChipComponent } from '../lib/chip/chip.component';
 import { InputType } from '../lib/enums/input-type.enum';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
@@ -51,7 +52,7 @@ export const Default: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toBeInTheDocument();
     await expect(chip).toHaveClass('tn-chip--primary');
@@ -70,7 +71,7 @@ export const WithIcon: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toBeInTheDocument();
     await expect(chip).toHaveClass('tn-chip--primary');
@@ -91,7 +92,7 @@ export const NotClosable: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
     const closeButton = chip.querySelector('.tn-chip__close');
 
     await expect(chip).toBeInTheDocument();
@@ -109,7 +110,7 @@ export const Disabled: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toBeInTheDocument();
     await expect(chip).toHaveClass('tn-chip--disabled');
@@ -127,7 +128,7 @@ export const Primary: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toHaveClass('tn-chip--primary');
   },
@@ -143,7 +144,7 @@ export const Secondary: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toHaveClass('tn-chip--secondary');
   },
@@ -159,7 +160,7 @@ export const Accent: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toHaveClass('tn-chip--accent');
   },
@@ -382,7 +383,7 @@ export const KeyboardNavigation: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toHaveAttribute('tabindex', '0');
     await expect(chip).toHaveAttribute('role', 'button');
@@ -392,4 +393,40 @@ export const KeyboardNavigation: Story = {
     await userEvent.keyboard('{Enter}');
     await userEvent.keyboard('{Delete}');
   },
+};
+
+/**
+ * **Test IDs (default).** `tn-chip` emits the `chip-` prefix on its
+ * `role="button"` host, under `data-testid` (default) / `data-test`.
+ * `testId="production"` → `chip-production`. With no `testId`, nothing is
+ * emitted. Table read live.
+ */
+export const TestIds: Story = {
+  args: { testId: 'production' },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-chip label="Production" [testId]="testId" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnChipComponent, TestIdInspectorComponent] },
+  }),
+};
+
+/**
+ * **Scoped test id.** An array base namespaces the id —
+ * `[testId]="['filters','active']"` → `chip-filters-active`.
+ */
+export const ScopedTestIds: Story = {
+  args: { testId: ['filters', 'active'] },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-chip label="Active" [testId]="testId" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnChipComponent, TestIdInspectorComponent] },
+  }),
 };

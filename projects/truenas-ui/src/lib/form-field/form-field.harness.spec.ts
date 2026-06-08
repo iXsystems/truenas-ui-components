@@ -15,27 +15,27 @@ import { TnInputComponent } from '../input/input.component';
   imports: [TnFormFieldComponent, TnInputComponent, ReactiveFormsModule],
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
-    <tn-form-field label="Name" testId="name-field" tooltip="Your full legal name" [required]="true">
+    <tn-form-field label="Name" testId="name" tooltip="Your full legal name" [required]="true">
       <tn-input [formControl]="nameControl" />
     </tn-form-field>
 
-    <tn-form-field label="Email" testId="email-field" hint="We'll never share your email">
+    <tn-form-field label="Email" testId="email" hint="We'll never share your email">
       <tn-input [formControl]="emailControl" />
     </tn-form-field>
 
-    <tn-form-field label="Optional" testId="optional-field">
+    <tn-form-field label="Optional" testId="optional">
       <tn-input [formControl]="optionalControl" />
     </tn-form-field>
 
-    <tn-form-field label="Custom" testId="custom-field">
+    <tn-form-field label="Custom" testId="custom">
       <tn-input [formControl]="customControl" />
     </tn-form-field>
 
-    <tn-form-field label="Fixed" testId="fixed-field" subscriptSizing="fixed">
+    <tn-form-field label="Fixed" testId="fixed" subscriptSizing="fixed">
       <tn-input [formControl]="fixedControl" />
     </tn-form-field>
 
-    <tn-form-field label="Dynamic" testId="dynamic-field" subscriptSizing="dynamic" hint="A dynamic hint">
+    <tn-form-field label="Dynamic" testId="dynamic" subscriptSizing="dynamic" hint="A dynamic hint">
       <tn-input [formControl]="dynamicControl" />
     </tn-form-field>
   `
@@ -96,7 +96,7 @@ describe('TnFormFieldHarness', () => {
 
     it('should filter by testId', async () => {
       const field = await loader.getHarness(
-        TnFormFieldHarness.with({ testId: 'email-field' })
+        TnFormFieldHarness.with({ testId: 'form-field-email' })
       );
       expect(await field.getLabel()).toBe('Email');
     });
@@ -110,14 +110,14 @@ describe('TnFormFieldHarness', () => {
   describe('getLabel', () => {
     it('should return the label text', async () => {
       const field = await loader.getHarness(
-        TnFormFieldHarness.with({ testId: 'name-field' })
+        TnFormFieldHarness.with({ testId: 'form-field-name' })
       );
       expect(await field.getLabel()).toBe('Name');
     });
 
     it('should strip required asterisk from label text', async () => {
       const field = await loader.getHarness(
-        TnFormFieldHarness.with({ testId: 'name-field' })
+        TnFormFieldHarness.with({ testId: 'form-field-name' })
       );
       const label = await field.getLabel();
       expect(label).not.toContain('*');
@@ -144,7 +144,7 @@ describe('TnFormFieldHarness', () => {
   describe('tooltip', () => {
     it('should report a tooltip when provided', async () => {
       const field = await loader.getHarness(
-        TnFormFieldHarness.with({ testId: 'name-field' })
+        TnFormFieldHarness.with({ testId: 'form-field-name' })
       );
       expect(await field.hasTooltip()).toBe(true);
       expect(await field.getTooltip()).toBe('Your full legal name');
@@ -264,7 +264,7 @@ describe('TnFormFieldHarness', () => {
       const field = await loader.getHarness(
         TnFormFieldHarness.with({ label: 'Name' })
       );
-      expect(await field.getTestId()).toBe('name-field');
+      expect(await field.getTestId()).toBe('form-field-name');
     });
   });
 
@@ -279,7 +279,7 @@ describe('TnFormFieldHarness', () => {
 
     it('should always render subscript in fixed mode', async () => {
       const field = await loader.getHarness(
-        TnFormFieldHarness.with({ testId: 'fixed-field' })
+        TnFormFieldHarness.with({ testId: 'form-field-fixed' })
       );
       expect(await field.hasSubscript()).toBe(true);
       expect(await field.getSubscriptSizing()).toBe('fixed');
@@ -287,7 +287,7 @@ describe('TnFormFieldHarness', () => {
 
     it('should render subscript in dynamic mode when hint is present', async () => {
       const field = await loader.getHarness(
-        TnFormFieldHarness.with({ testId: 'dynamic-field' })
+        TnFormFieldHarness.with({ testId: 'form-field-dynamic' })
       );
       expect(await field.hasSubscript()).toBe(true);
       expect(await field.getSubscriptSizing()).toBe('dynamic');
@@ -301,7 +301,7 @@ describe('TnFormFieldHarness', () => {
       fixture.detectChanges();
 
       const field = await loader.getHarness(
-        TnFormFieldHarness.with({ testId: 'dynamic-field' })
+        TnFormFieldHarness.with({ testId: 'form-field-dynamic' })
       );
       expect(await field.hasSubscript()).toBe(true);
       expect(await field.hasError()).toBe(true);

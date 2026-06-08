@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { TnInputComponent } from '../lib/input/input.component';
 import { TnStepperComponent, TnStepComponent } from '../lib/stepper';
 
@@ -332,4 +333,39 @@ export const StepStates: Story = {
       imports: [TnStepperComponent, TnStepComponent, TnInputComponent]
     }
   })
+};
+
+/**
+ * **Test IDs (default).** `tn-stepper` emits `stepper-<base>` on its root, under
+ * `data-testid` (default) / `data-test`. `testId="checkout"` → `stepper-checkout`.
+ */
+export const TestIds: Story = {
+  render: () => ({
+    template: `
+      <tn-testid-inspector>
+        <tn-stepper testId="checkout">
+          <tn-step label="Cart"><p>Cart</p></tn-step>
+          <tn-step label="Payment"><p>Payment</p></tn-step>
+        </tn-stepper>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnStepperComponent, TnStepComponent, TestIdInspectorComponent] },
+  }),
+};
+
+/**
+ * **Scoped test id.** An array base namespaces the id —
+ * `[testId]="['order','checkout']"` → `stepper-order-checkout`.
+ */
+export const ScopedTestIds: Story = {
+  render: () => ({
+    template: `
+      <tn-testid-inspector>
+        <tn-stepper [testId]="['order','checkout']">
+          <tn-step label="Cart"><p>Cart</p></tn-step>
+        </tn-stepper>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnStepperComponent, TnStepComponent, TestIdInspectorComponent] },
+  }),
 };

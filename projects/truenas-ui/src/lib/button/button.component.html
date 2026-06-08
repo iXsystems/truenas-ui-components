@@ -1,6 +1,7 @@
 @if (isRouterLink()) {
   <a
     #button
+    tnTestIdType="button"
     [ngClass]="classes()"
     [ngStyle]="{ 'background-color': backgroundColor() }"
     [routerLink]="disabled() ? null : routerLink()"
@@ -20,6 +21,7 @@
 } @else if (isAnchor()) {
   <a
     #button
+    tnTestIdType="button"
     [ngClass]="classes()"
     [ngStyle]="{ 'background-color': backgroundColor() }"
     [attr.href]="disabled() ? null : href()"
@@ -38,6 +40,7 @@
   <button
     #button
     type="button"
+    tnTestIdType="button"
     [ngClass]="classes()"
     [ngStyle]="{ 'background-color': backgroundColor() }"
     [disabled]="disabled()"

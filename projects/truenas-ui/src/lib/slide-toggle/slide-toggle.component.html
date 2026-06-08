@@ -1,5 +1,5 @@
 <div [ngClass]="classes()">
-  <label class="tn-slide-toggle__label" [for]="id" [tnTestId]="testId()">
+  <label class="tn-slide-toggle__label" tnTestIdType="toggle" [for]="id" [tnTestId]="testId()">
 
     <!-- Label before toggle -->
     @if (label() && labelPosition() === 'before') {

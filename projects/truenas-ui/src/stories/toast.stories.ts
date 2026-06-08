@@ -42,6 +42,19 @@ class ToastPositionDemoComponent {
   }
 }
 
+@Component({
+  selector: 'tn-toast-testid-demo',
+  standalone: true,
+  imports: [TnButtonComponent],
+  template: `<tn-button label="Show toast with action" (onClick)="show()" />`,
+})
+class ToastTestIdDemoComponent {
+  private toast = inject(TnToastService);
+  show(): void {
+    this.toast.open('Item deleted', 'Undo', { actionTestId: 'undo-delete' });
+  }
+}
+
 const meta: Meta<ToastDemoComponent> = {
   title: 'Components/Toast',
   component: ToastDemoComponent,
@@ -94,5 +107,24 @@ export const Position: Story = {
     props: {},
     moduleMetadata: { imports: [ToastPositionDemoComponent] },
     template: '<tn-toast-position-demo />',
+  }),
+};
+
+/**
+ * **Test IDs.** Toast is service-driven and renders in an overlay, so its action
+ * button's id is set through the toast **config**, not a template input. Pass
+ * `actionTestId` to `toast.open(message, action, { actionTestId })` and the
+ * action button emits `button-<actionTestId>` (typed `button`), under
+ * `data-testid` by default / `data-test`.
+ *
+ * The example below runs
+ * `toast.open('Item deleted', 'Undo', { actionTestId: 'undo-delete' })` →
+ * the Undo button emits **`button-undo-delete`**. (No live table here — the
+ * toast is portaled to `document.body`; click the trigger and inspect the toast.)
+ */
+export const TestIds: Story = {
+  render: () => ({
+    moduleMetadata: { imports: [ToastTestIdDemoComponent] },
+    template: '<tn-toast-testid-demo />',
   }),
 };
