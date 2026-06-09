@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import type { TemplateRef } from '@angular/core';
 import { Component, computed, input, output, viewChild } from '@angular/core';
+import type { TnTestIdValue } from '../test-id';
 
 /**
  * Projection-based menu item for use inside `<tn-menu>`.
@@ -62,7 +63,12 @@ export class TnMenuItemComponent {
   shortcut = input<string | undefined>(undefined);
   disabled = input<boolean>(false);
   selected = input<boolean>(false);
-  testId = input<string | undefined>(undefined);
+  /**
+   * Semantic test-id base. Accepts a single token or an array of segments
+   * (e.g. `['format', format]`) to scope dynamic/repeated items. The owning
+   * `<tn-menu-panel>` prepends the `button` element type.
+   */
+  testId = input<TnTestIdValue>(undefined);
 
   itemClick = output<MouseEvent>();
 

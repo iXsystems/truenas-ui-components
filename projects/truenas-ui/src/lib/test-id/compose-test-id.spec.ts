@@ -1,4 +1,4 @@
-import { composeTestId, kebabTestSegment } from './compose-test-id';
+import { composeTestId, kebabTestSegment, scopeTestId } from './compose-test-id';
 
 describe('kebabTestSegment', () => {
   it.each([
@@ -12,6 +12,29 @@ describe('kebabTestSegment', () => {
     [42, '42'],
   ])('normalizes %p to %p', (input, expected) => {
     expect(kebabTestSegment(input)).toBe(expected);
+  });
+});
+
+describe('scopeTestId', () => {
+  it('flattens a single-token base and appends the suffix', () => {
+    expect(scopeTestId('actions', 'edit')).toEqual(['actions', 'edit']);
+  });
+
+  it('flattens an array base and appends the suffix', () => {
+    expect(scopeTestId(['menu', 'main'], 'edit')).toEqual(['menu', 'main', 'edit']);
+  });
+
+  it('preserves a falsy base (composeTestId applies the drop/scoping rules)', () => {
+    expect(scopeTestId(undefined, 'close')).toEqual([undefined, 'close']);
+    expect(composeTestId('button', scopeTestId(undefined, 'close'))).toBe('button-close');
+  });
+
+  it('appends multiple suffix segments', () => {
+    expect(scopeTestId('base', 'a', 'b')).toEqual(['base', 'a', 'b']);
+  });
+
+  it('round-trips through composeTestId to a scoped id', () => {
+    expect(composeTestId('option', scopeTestId('username', 'Jane Doe'))).toBe('option-username-jane-doe');
   });
 });
 

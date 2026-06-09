@@ -7,7 +7,7 @@ import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { Subscription } from 'rxjs';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, composeTestId, scopeTestId, type TnTestIdValue } from '../test-id';
 
 export interface TnSelectOption<T = unknown> {
   value: T;
@@ -54,7 +54,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    */
   noOptionsLabel = input<string>('No options available');
   disabled = input<boolean>(false);
-  testId = input<string>('');
+  testId = input<TnTestIdValue>(undefined);
   multiple = input<boolean>(false);
 
   /**
@@ -109,7 +109,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    * specific instances; otherwise falls back to a per-instance counter so two
    * `<tn-select>`s on the same page never collide on `aria-controls`/group ids.
    */
-  protected idNamespace = computed(() => this.testId() || this.instanceId);
+  protected idNamespace = computed(() => composeTestId(undefined, this.testId()) || this.instanceId);
 
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
@@ -178,7 +178,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     } else {
       key = option.label;
     }
-    return [this.testId(), key];
+    return scopeTestId(this.testId(), key);
   }
 
   private onChange = (_value: T | T[] | null) => {};

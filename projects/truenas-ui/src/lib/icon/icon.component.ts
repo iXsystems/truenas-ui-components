@@ -1,6 +1,7 @@
 import type { ElementRef } from '@angular/core';
 import { Component, input, computed, effect, signal, ChangeDetectionStrategy, ViewEncapsulation, inject, viewChild, isDevMode } from '@angular/core';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 import { TnIconRegistryService } from './icon-registry.service';
 
 export type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -16,6 +17,7 @@ export interface IconResult {
 @Component({
   selector: 'tn-icon',
   standalone: true,
+  imports: [TnTestIdDirective],
   templateUrl: './icon.component.html',
   styleUrl: './icon.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -42,6 +44,15 @@ export class TnIconComponent {
   tooltip = input<string | undefined>(undefined);
   ariaLabel = input<string | undefined>(undefined);
   library = input<IconLibraryType | undefined>(undefined);
+
+  /**
+   * Semantic test-id base for the icon. The library prepends the element type
+   * (`icon`) and renders the result under whichever attribute name is configured
+   * via `TN_TEST_ATTR` (default `data-testid`) — e.g. `testId="close"` →
+   * `icon-close`. Accepts an array of segments to scope the id (e.g.
+   * `['tooltip', header()]`). Unset emits no attribute.
+   */
+  testId = input<TnTestIdValue>(undefined);
 
   /**
    * When true, the icon will expand to fill its container (100% width and height)

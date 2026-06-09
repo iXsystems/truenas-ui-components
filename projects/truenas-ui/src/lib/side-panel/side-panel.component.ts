@@ -11,7 +11,7 @@ import { take } from 'rxjs';
 import type { Observable } from 'rxjs';
 import { TnIconRegistryService } from '../icon/icon-registry.service';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 /**
  * Directive to mark an element as a side-panel footer action.
@@ -86,7 +86,7 @@ export class TnSidePanelComponent implements OnDestroy {
    * Test-id applied to the panel's root overlay element. Rendered under whichever attribute
    * name is configured via `TN_TEST_ATTR` (default `data-testid`).
    */
-  testId = input<string | undefined>(undefined);
+  testId = input<TnTestIdValue>(undefined);
   /**
    * Test-id applied to the panel's close (×) button.
    */
