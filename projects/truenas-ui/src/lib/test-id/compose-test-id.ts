@@ -33,20 +33,24 @@ export function kebabTestSegment(part: string | number): string {
  * Normalizes the base — a single token or an array of segments — into a flat
  * segment array and appends the suffixes, producing a value that is itself a
  * valid {@link TnTestIdValue}. This is the canonical "derive a per-child id from
- * a parent base" operation, e.g. a dialog's close button (`[base, 'close']`) or
- * a select's per-option id (`[base, option.label]`). Centralizing it keeps the
- * `string | array` flattening contract in one place rather than re-implemented
- * at each call site.
+ * a parent base" operation, e.g. a select's per-option id
+ * (`[base, option.label]`) or a menu item's id (`[base, item.id]`). Centralizing
+ * it keeps the `string | array` flattening contract in one place rather than
+ * re-implemented at each call site.
+ *
+ * Note this is *base-first*: the suffix trails the base. Fixed chrome whose role
+ * should lead (e.g. `tn-dialog-shell`'s `button-close-<base>`) prepends the role
+ * manually instead of calling this.
  *
  * Falsy segments are preserved here (not filtered) so `composeTestId` can apply
- * its own drop/scoping rules — `scopeTestId(undefined, 'close')` yields
- * `[undefined, 'close']`, which `composeTestId('button', …)` renders as the
- * unscoped `button-close`.
+ * its own drop/scoping rules — `scopeTestId(undefined, 'edit')` yields
+ * `[undefined, 'edit']`, which `composeTestId('menu-item', …)` renders as the
+ * unscoped `menu-item-edit`.
  *
  * @example
  * scopeTestId('actions', 'edit')        // ['actions', 'edit']
  * scopeTestId(['menu', 'main'], 'edit') // ['menu', 'main', 'edit']
- * scopeTestId(undefined, 'close')       // [undefined, 'close']
+ * scopeTestId(undefined, 'edit')        // [undefined, 'edit']
  */
 export function scopeTestId(base: TnTestIdValue, ...suffix: (string | number | null | undefined)[]): (string | number | null | undefined)[] {
   return [...(Array.isArray(base) ? base : [base]), ...suffix];
