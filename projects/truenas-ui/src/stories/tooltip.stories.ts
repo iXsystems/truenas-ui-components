@@ -10,7 +10,7 @@ const meta: Meta = {
   argTypes: {
     tnTooltip: {
       control: 'text',
-      description: 'Tooltip message text. For multi-line tooltips in this control, press Enter to create line breaks (typing \\n won\'t work in Storybook UI). See the MultiLine story for code examples.'
+      description: 'Tooltip content. Rendered as HTML, so markup like <b> or <br> is supported (sanitized by Angular; <script> and event handlers are stripped). Plain newlines still produce line breaks via white-space: pre-line. For multi-line tooltips in this control, press Enter to create line breaks (typing \\n won\'t work in Storybook UI). See the MultiLine and HtmlContent stories for code examples.'
     },
     tnTooltipPosition: {
       control: { type: 'select' },
@@ -199,6 +199,56 @@ export const OnDifferentElements: Story = {
       ],
     },
   }),
+};
+
+export const HtmlContent: Story = {
+  render: () => ({
+    template: `
+      <div style="padding: 50px; display: flex; flex-direction: column; gap: 20px; align-items: center;">
+        <tn-button
+          label="Bold and emphasis"
+          tnTooltip="<b>Online</b> &mdash; all disks <i>healthy</i>">
+        </tn-button>
+
+        <tn-button
+          label="Line breaks via <br>"
+          tnTooltip="Capacity: 2.5 TB<br>Used: 1.8 TB<br>Health: Online">
+        </tn-button>
+
+        <tn-button
+          label="List markup"
+          tnTooltip="Status:<ul style='margin:4px 0 0;padding-left:18px;'><li>Pool: tank</li><li>State: ONLINE</li></ul>">
+        </tn-button>
+
+        <tn-button
+          label="Sanitized (script stripped)"
+          tnTooltip="Safe text <script>alert('xss')</script> after">
+        </tn-button>
+      </div>
+    `,
+    moduleMetadata: {
+      imports: [
+        TnButtonComponent,
+        TnTooltipDirective,
+        TnTooltipComponent
+      ],
+    },
+  }),
+  parameters: {
+    docs: {
+      description: {
+        story: `
+Tooltip content is rendered as HTML, so you can pass markup such as \`<b>\`, \`<br>\`, or lists.
+
+\`\`\`html
+<button tnTooltip="Capacity: 2.5 TB<br>Used: 1.8 TB<br>Health: <b>Online</b>">Hover me</button>
+\`\`\`
+
+Content is sanitized by Angular's built-in DOM sanitizer: \`<script>\` tags, inline event handlers, and other unsafe constructs are stripped automatically. Plain newline characters continue to render as line breaks via \`white-space: pre-line\`.
+        `,
+      },
+    },
+  },
 };
 
 export const MultiLine: Story = {
