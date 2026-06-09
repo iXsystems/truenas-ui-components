@@ -52,32 +52,18 @@ if [ -n "$COMPONENT_FILES" ]; then
 fi
 
 echo ""
-echo "🔎 Linting (same command CI runs) to catch lint errors before they reach CI..."
-yarn lint
+echo "🔎 Linting + testing staged files (lint-staged)..."
+# Runs eslint --fix and jest --findRelatedTests on staged files only, so commits
+# stay fast and only touch what changed. eslint auto-fixes (e.g. import order)
+# are re-staged automatically; unfixable lint errors or failing related tests
+# abort the commit. Full lint/test/build still run in CI.
+yarn lint-staged
 
 if [ $? -ne 0 ]; then
   echo ""
-  echo "❌ Error: Lint failed. Run 'yarn lint:fix' to auto-fix, then re-stage and commit."
+  echo "❌ Error: lint-staged failed. Fix the reported lint errors / failing tests, then re-stage and commit."
   echo ""
   exit 1
 fi
 
-echo "✅ Lint passed"
-echo ""
-
-echo "🧪 Running tests to prevent regressions..."
-yarn test --passWithNoTests
-
-if [ $? -ne 0 ]; then
-  echo ""
-  echo "❌ Error: Tests are failing. Please fix failing tests before committing."
-  echo ""
-  exit 1
-fi
-
-echo "✅ All tests passed"
-echo ""
-
-# Build as a compile-time safety check. `dist/` is gitignored and never
-# committed, so we don't stage it (a bare `git add dist/` would fail the hook).
-yarn build
+echo "✅ Staged files passed lint + related tests"
