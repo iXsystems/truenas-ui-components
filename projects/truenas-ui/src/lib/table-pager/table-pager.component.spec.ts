@@ -1,7 +1,9 @@
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { BehaviorSubject } from 'rxjs';
+import { TnSelectHarness } from '../select/select.harness';
 import type { TnTableDataProvider, TnTablePagination } from './table-pager.component';
 import { TnTablePagerComponent } from './table-pager.component';
 
@@ -245,6 +247,32 @@ describe('TnTablePagerComponent', () => {
     ])('should expose a stable test id on the %s navigation button', (testId) => {
       const host = fixture.nativeElement as HTMLElement;
       expect(host.querySelector(`[data-testid="${testId}"]`)).toBeTruthy();
+    });
+
+    it.each([
+      [10, 'option-page-size-10'],
+      [20, 'option-page-size-20'],
+      [50, 'option-page-size-50'],
+      [100, 'option-page-size-100'],
+    ])('exposes a stable test id on the %i page-size option', async (_value, testId) => {
+      const loader = TestbedHarnessEnvironment.loader(fixture);
+      const select = await loader.getHarness(TnSelectHarness);
+      await select.open();
+
+      // The dropdown options are rendered in a CDK overlay, outside the host element.
+      expect(document.querySelector(`[data-testid="${testId}"]`)).toBeTruthy();
+    });
+
+    it('scopes page-size option test ids with the pager testId base', async () => {
+      fixture.componentRef.setInput('testId', 'storage');
+      fixture.detectChanges();
+
+      const loader = TestbedHarnessEnvironment.loader(fixture);
+      const select = await loader.getHarness(TnSelectHarness);
+      await select.open();
+
+      expect(document.querySelector('[data-testid="option-storage-page-size-10"]')).toBeTruthy();
+      expect(document.querySelector('[data-testid="option-page-size-10"]')).toBeNull();
     });
 
     it('scopes child test ids with the pager testId base so multiple pagers do not collide', () => {

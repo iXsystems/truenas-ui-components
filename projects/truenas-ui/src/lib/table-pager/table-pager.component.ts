@@ -2,7 +2,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
   InjectionToken,
+  Renderer2,
   type Signal,
   computed,
   effect,
@@ -18,7 +20,7 @@ import { FormsModule } from '@angular/forms';
 import type { Observable, Subscription } from 'rxjs';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnSelectComponent, type TnSelectOption } from '../select/select.component';
-import { TnTestIdDirective, scopeTestId } from '../test-id';
+import { TN_TEST_ATTR, composeTestId, scopeTestId, type TnTestIdValue } from '../test-id';
 
 /**
  * Default labels rendered inside `tn-table-pager`. Consumers can override any
@@ -134,7 +136,7 @@ export interface TnTableDataProvider {
 @Component({
   selector: 'tn-table-pager',
   standalone: true,
-  imports: [FormsModule, TnIconButtonComponent, TnSelectComponent, TnTestIdDirective],
+  imports: [FormsModule, TnIconButtonComponent, TnSelectComponent],
   templateUrl: './table-pager.component.html',
   styleUrls: ['./table-pager.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -143,17 +145,26 @@ export interface TnTableDataProvider {
     'role': 'navigation',
     '[attr.aria-label]': 'resolvedTablePaginationLabel()',
   },
-  hostDirectives: [{ directive: TnTestIdDirective, inputs: ['tnTestId: testId'] }],
 })
 export class TnTablePagerComponent {
   private destroyRef = inject(DestroyRef);
+  private renderer = inject(Renderer2);
+  private hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
+  private testAttrName = inject(TN_TEST_ATTR);
 
-  // The pager's `testId` (applied to the host via hostDirectives) also scopes
-  // each child control, so multiple pagers on one page don't collide on
-  // `select-page-size` / `button-first-page`. With a base of `storage` the
-  // children become `select-storage-page-size`, `button-storage-first-page`,
-  // etc.; with no base they stay `select-page-size` / `button-first-page`.
-  private readonly testIdDirective = inject(TnTestIdDirective);
+  /**
+   * Semantic base applied to the host (via the `tnTestId` host directive) and
+   * used to scope each child control, so multiple pagers on one page don't
+   * collide on `select-page-size` / `button-first-page`. With a base of
+   * `storage` the children become `select-storage-page-size`,
+   * `button-storage-first-page`, etc.; with no base they stay
+   * `select-page-size` / `button-first-page`.
+   *
+   * The page-size dropdown also scopes each option by its value, so individual
+   * sizes are addressable: `option-page-size-10` / `-20` / `-50` / `-100` (or
+   * `option-storage-page-size-10` under a base).
+   */
+  testId = input<TnTestIdValue>(undefined);
 
   /**
    * Build a child control's test-id base by joining the pager's `testId` with
@@ -162,7 +173,7 @@ export class TnTablePagerComponent {
    * `TnTestIdValue` testId.
    */
   protected childTestId(suffix: string): string {
-    return scopeTestId(this.testIdDirective.testId(), suffix)
+    return scopeTestId(this.testId(), suffix)
       .filter((part): part is string | number => part !== null && part !== undefined && part !== '')
       .join('-');
   }
@@ -288,6 +299,20 @@ export class TnTablePagerComponent {
   constructor() {
     const provided = inject(TN_TABLE_PAGER_LABELS);
     this.defaultLabels = isSignal(provided) ? provided : signal(provided).asReadonly();
+
+    // Write the pager's own test-id to the host. We replicate `TnTestIdDirective`
+    // inline rather than applying it via `hostDirectives`: the pager also needs
+    // to read this base back (see `childTestId`), and injecting a host directive
+    // to read its input signal is unreliable in the AOT-linked package build.
+    effect(() => {
+      const composed = composeTestId(undefined, this.testId());
+      const element = this.hostRef.nativeElement;
+      if (composed) {
+        this.renderer.setAttribute(element, this.testAttrName, composed);
+      } else {
+        this.renderer.removeAttribute(element, this.testAttrName);
+      }
+    });
 
     // Re-bind when the dataProvider reference changes (including swap to a
     // different instance or clearing back to undefined). `untracked` keeps the
