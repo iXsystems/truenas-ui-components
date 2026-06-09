@@ -20,7 +20,7 @@ import { FormsModule } from '@angular/forms';
 import type { Observable, Subscription } from 'rxjs';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnSelectComponent, type TnSelectOption } from '../select/select.component';
-import { TN_TEST_ATTR, composeTestId, scopeTestId, type TnTestIdValue } from '../test-id';
+import { TN_TEST_ATTR, composeTestId, scopeTestId, writeTestId, type TnTestIdValue } from '../test-id';
 
 /**
  * Default labels rendered inside `tn-table-pager`. Consumers can override any
@@ -300,18 +300,14 @@ export class TnTablePagerComponent {
     const provided = inject(TN_TABLE_PAGER_LABELS);
     this.defaultLabels = isSignal(provided) ? provided : signal(provided).asReadonly();
 
-    // Write the pager's own test-id to the host. We replicate `TnTestIdDirective`
-    // inline rather than applying it via `hostDirectives`: the pager also needs
+    // Write the pager's own test-id to the host. We write it imperatively rather
+    // than applying `TnTestIdDirective` via `hostDirectives`: the pager also needs
     // to read this base back (see `childTestId`), and injecting a host directive
-    // to read its input signal is unreliable in the AOT-linked package build.
+    // to read its input signal is unreliable in the AOT-linked package build. The
+    // set/remove semantics are shared with the directive via `writeTestId`.
     effect(() => {
       const composed = composeTestId(undefined, this.testId());
-      const element = this.hostRef.nativeElement;
-      if (composed) {
-        this.renderer.setAttribute(element, this.testAttrName, composed);
-      } else {
-        this.renderer.removeAttribute(element, this.testAttrName);
-      }
+      writeTestId(this.renderer, this.hostRef.nativeElement, this.testAttrName, composed);
     });
 
     // Re-bind when the dataProvider reference changes (including swap to a
