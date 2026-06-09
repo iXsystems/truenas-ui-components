@@ -3,6 +3,7 @@ import { TemplatePortal } from '@angular/cdk/portal';
 import type { OnDestroy, TemplateRef } from '@angular/core';
 import { Component, contentChildren, input, output, viewChild, computed, inject, ViewContainerRef } from '@angular/core';
 import type { Subscription } from 'rxjs';
+import type { TnTestIdValue } from '../test-id';
 import { TnMenuItemComponent } from './menu-item.component';
 import { TnMenuPanelComponent } from './menu-panel.component';
 
@@ -14,7 +15,7 @@ export { TnMenuActivateHoverDirective } from './menu-activate-hover.directive';
 export interface TnMenuItem {
   id: string;
   label: string;
-  testId?: string;
+  testId?: TnTestIdValue;
   icon?: string;
   iconLibrary?: 'material' | 'mdi' | 'custom' | 'lucide';
   disabled?: boolean;
@@ -50,7 +51,7 @@ export class TnMenuComponent implements OnDestroy {
    * composed with the same `button-` prefix (idempotently, so an already
    * `button-`-prefixed value is not doubled).
    */
-  testId = input<string | undefined>(undefined);
+  testId = input<TnTestIdValue>(undefined);
 
   menuItemClick = output<TnMenuItem>();
   menuOpen = output<void>();

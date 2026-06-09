@@ -12,7 +12,7 @@ import type { CreateFolderEvent, FilePickerCallbacks, FilePickerError, FilePicke
 import { TnIconComponent } from '../icon/icon.component';
 import { TnInputDirective } from '../input/input.directive';
 import { StripMntPrefixPipe } from '../pipes/strip-mnt-prefix/strip-mnt-prefix.pipe';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 @Component({
   selector: 'tn-file-picker',
@@ -54,7 +54,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
    * Test-id applied to the file-picker container. Rendered under whichever attribute name
    * is configured via `TN_TEST_ATTR` (default `data-testid`).
    */
-  testId = input<string | undefined>(undefined);
+  testId = input<TnTestIdValue>(undefined);
   startPath = input<string>('/mnt');
   rootPath = input<string | undefined>(undefined);
   fileExtensions = input<string[] | undefined>(undefined);

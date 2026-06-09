@@ -83,7 +83,8 @@ export class TnMenuPanelComponent {
    * child items share the root base. With no menu base this is `button-${item.id}`.
    */
   protected resolvedItemTestId(item: TnMenuItem): TnTestIdValue {
-    return item.testId ?? [this.menu.testId(), item.id];
+    const base = this.menu.testId();
+    return item.testId ?? [...(Array.isArray(base) ? base : [base]), item.id];
   }
 
   protected onItemClick(item: TnMenuItem): void {

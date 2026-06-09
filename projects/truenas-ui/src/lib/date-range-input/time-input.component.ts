@@ -4,6 +4,7 @@ import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR, FormsModule } from '@angular/forms';
 import type { TnSelectOption } from '../select/select.component';
 import { TnSelectComponent } from '../select/select.component';
+import type { TnTestIdValue } from '../test-id';
 
 @Component({
   selector: 'tn-time-input',
@@ -27,7 +28,7 @@ export class TnTimeInputComponent implements ControlValueAccessor {
   format = input<'12h' | '24h'>('12h');
   granularity = input<'15m' | '30m' | '1h'>('15m');
   placeholder = input<string>('Pick a time');
-  testId = input<string>('');
+  testId = input<TnTestIdValue>(undefined);
 
   private formDisabled = signal<boolean>(false);
   isDisabled = computed(() => this.disabled() || this.formDisabled());

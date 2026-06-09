@@ -20,7 +20,7 @@ export class TnFormFieldComponent implements AfterContentInit {
   label = input<string>('');
   hint = input<string>('');
   required = input<boolean>(false);
-  testId = input<TnTestIdValue>('');
+  testId = input<TnTestIdValue>(undefined);
   subscriptSizing = input<SubscriptSizing>('dynamic');
 
   /** Optional tooltip shown via a help icon next to the label. */

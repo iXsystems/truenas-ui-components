@@ -16,7 +16,7 @@ import type { OnDestroy, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { Subscription } from 'rxjs';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 let nextId = 0;
 
@@ -81,7 +81,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   panelMaxHeight = input<string | number>('320px');
 
   /** Test ID attribute */
-  testId = input<string>('');
+  testId = input<TnTestIdValue>(undefined);
 
   /** Emits when an option is selected */
   optionSelected = output<T>();
