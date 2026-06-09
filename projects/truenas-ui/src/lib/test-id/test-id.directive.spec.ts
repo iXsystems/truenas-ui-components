@@ -6,7 +6,6 @@ import { TnTestIdDirective } from './test-id.directive';
 @Component({
   standalone: true,
   imports: [TnTestIdDirective],
-  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <!-- eslint-disable-next-line tn-local/require-tn-testid-type -- exercises verbatim (no tnTestIdType) directive behavior -->
     <button [tnTestId]="value">click</button>
@@ -100,7 +99,6 @@ describe('TnTestIdDirective', () => {
     @Component({
       standalone: true,
       imports: [TnTestIdDirective],
-      // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <!-- eslint-disable-next-line tn-local/require-tn-testid-type -- exercises verbatim (no tnTestIdType) directive behavior -->
     <button [tnTestId]="value">click</button>

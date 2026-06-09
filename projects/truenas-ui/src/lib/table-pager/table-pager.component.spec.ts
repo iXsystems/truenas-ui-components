@@ -3,9 +3,9 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { BehaviorSubject } from 'rxjs';
-import { TnSelectHarness } from '../select/select.harness';
 import type { TnTableDataProvider, TnTablePagination } from './table-pager.component';
 import { TnTablePagerComponent } from './table-pager.component';
+import { TnSelectHarness } from '../select/select.harness';
 
 describe('TnTablePagerComponent', () => {
   let fixture: ComponentFixture<TnTablePagerComponent>;
