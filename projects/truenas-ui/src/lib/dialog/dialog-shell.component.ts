@@ -2,7 +2,7 @@ import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { DOCUMENT } from '@angular/common';
 import { Component, ElementRef, computed, effect, input, signal, inject } from '@angular/core';
 import type { OnInit} from '@angular/core';
-import { TnTestIdDirective, scopeTestId, type TnTestIdValue } from '../test-id';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 let nextUniqueId = 0;
 
@@ -21,15 +21,34 @@ export class TnDialogShellComponent implements OnInit {
   /**
    * Optional semantic base that scopes the shell's chrome buttons. The close
    * and fullscreen buttons emit `button-close` / `button-fullscreen` by default,
-   * or `button-<testId>-close` / `-fullscreen` when a base is provided (useful
-   * when more than one dialog can be open).
+   * or `button-close-<testId>` / `button-fullscreen-<testId>` when a base is
+   * provided (useful when more than one dialog can be open).
    */
   testId = input<TnTestIdValue>(undefined);
 
-  /** Scoped test-id segments for the close button (`button-[<base>-]close`). */
-  protected closeTestId = computed(() => scopeTestId(this.testId(), 'close'));
-  /** Scoped test-id segments for the fullscreen button (`button-[<base>-]fullscreen`). */
-  protected fullscreenTestId = computed(() => scopeTestId(this.testId(), 'fullscreen'));
+  /**
+   * The `testId` base normalized to a flat segment array. Nothing is dropped
+   * here — `composeTestId` (via the `[tnTestId]` directive) filters falsy
+   * segments, so an unset base collapses to the bare role (`button-close`).
+   */
+  private readonly baseSegments = computed<(string | number | null | undefined)[]>(() => {
+    const base = this.testId();
+    return Array.isArray(base) ? base : [base];
+  });
+
+  /**
+   * Role-first test-id segments for the close button: `button-close[-<base>]`.
+   *
+   * The close and fullscreen buttons are fixed dialog chrome, not content
+   * children, so the role leads rather than the base (content children are
+   * base-first via `scopeTestId`). This keeps every dialog's close button under
+   * a shared `button-close-*` prefix — it matches webui's established
+   * close-button ids and lets automation target "all close buttons" with one
+   * selector.
+   */
+  protected closeTestId = computed(() => ['close', ...this.baseSegments()]);
+  /** Role-first test-id segments for the fullscreen button: `button-fullscreen[-<base>]`. */
+  protected fullscreenTestId = computed(() => ['fullscreen', ...this.baseSegments()]);
 
   /** Stable id for the title heading, referenced by the dialog's aria-labelledby. */
   readonly titleId = `tn-dialog-title-${nextUniqueId++}`;

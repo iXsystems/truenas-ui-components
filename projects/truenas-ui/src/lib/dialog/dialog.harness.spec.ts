@@ -18,6 +18,7 @@ import { TnButtonComponent } from '../button/button.component';
   template: `
     <tn-dialog-shell
       [title]="data?.title ?? 'Test Dialog'"
+      [testId]="data?.testId"
       [showFullscreenButton]="data?.showFullscreen ?? false">
       <p>{{ data?.content ?? 'Dialog content' }}</p>
       <div tnDialogAction>
@@ -214,6 +215,44 @@ describe('TnDialogHarness', () => {
 
       const fullscreenIcon = document.querySelector('.tn-dialog__fullscreen-icon');
       expect(fullscreenIcon?.getAttribute('aria-hidden')).toBe('true');
+    });
+  });
+
+  describe('chrome button test ids', () => {
+    it('scopes the close button role-first as button-close-<testId>', () => {
+      tnDialog.open(TestDialogComponent, {
+        data: { title: 'Feedback', testId: 'feedback-dialog' },
+      });
+      fixture.detectChanges();
+
+      // role leads, base trails — every dialog's close shares the button-close-* prefix
+      expect(document.querySelector('[data-testid="button-close-feedback-dialog"]')).toBeTruthy();
+      expect(document.querySelector('[data-testid="button-feedback-dialog-close"]')).toBeFalsy();
+    });
+
+    it('scopes the fullscreen button role-first as button-fullscreen-<testId>', () => {
+      tnDialog.open(TestDialogComponent, {
+        data: { title: 'Feedback', testId: 'feedback-dialog', showFullscreen: true },
+      });
+      fixture.detectChanges();
+
+      expect(document.querySelector('[data-testid="button-fullscreen-feedback-dialog"]')).toBeTruthy();
+    });
+
+    it('falls back to the bare role when no testId is set', () => {
+      tnDialog.open(TestDialogComponent, { data: { title: 'No base' } });
+      fixture.detectChanges();
+
+      expect(document.querySelector('[data-testid="button-close"]')).toBeTruthy();
+    });
+
+    it('flattens an array testId without nesting', () => {
+      tnDialog.open(TestDialogComponent, {
+        data: { title: 'Array base', testId: ['feedback', 'dialog'] },
+      });
+      fixture.detectChanges();
+
+      expect(document.querySelector('[data-testid="button-close-feedback-dialog"]')).toBeTruthy();
     });
   });
 
