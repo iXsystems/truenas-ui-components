@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { composeTestId, type TnTestIdValue } from './compose-test-id';
 import { TN_TEST_ATTR } from './test-attr.token';
+import { writeTestId } from './write-test-id';
 
 /**
  * Writes a composed `testId` value to whichever attribute name is configured via
@@ -54,12 +55,7 @@ export class TnTestIdDirective {
   constructor() {
     effect(() => {
       const composed = composeTestId(this.tnTestIdType(), this.testId());
-      const element = this.host.nativeElement;
-      if (composed) {
-        this.renderer.setAttribute(element, this.attrName, composed);
-      } else {
-        this.renderer.removeAttribute(element, this.attrName);
-      }
+      writeTestId(this.renderer, this.host.nativeElement, this.attrName, composed);
     });
   }
 }

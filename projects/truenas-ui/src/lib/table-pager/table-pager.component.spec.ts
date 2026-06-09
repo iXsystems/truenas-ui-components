@@ -1,9 +1,11 @@
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { BehaviorSubject } from 'rxjs';
 import type { TnTableDataProvider, TnTablePagination } from './table-pager.component';
 import { TnTablePagerComponent } from './table-pager.component';
+import { TnSelectHarness } from '../select/select.harness';
 
 describe('TnTablePagerComponent', () => {
   let fixture: ComponentFixture<TnTablePagerComponent>;
@@ -247,18 +249,56 @@ describe('TnTablePagerComponent', () => {
       expect(host.querySelector(`[data-testid="${testId}"]`)).toBeTruthy();
     });
 
+    it.each([
+      [10, 'option-page-size-10'],
+      [20, 'option-page-size-20'],
+      [50, 'option-page-size-50'],
+      [100, 'option-page-size-100'],
+    ])('exposes a stable test id on the %i page-size option', async (_value, testId) => {
+      const loader = TestbedHarnessEnvironment.loader(fixture);
+      const select = await loader.getHarness(TnSelectHarness);
+      await select.open();
+
+      // The dropdown options are rendered in a CDK overlay, outside the host element.
+      expect(document.querySelector(`[data-testid="${testId}"]`)).toBeTruthy();
+    });
+
+    it('scopes page-size option test ids with the pager testId base', async () => {
+      fixture.componentRef.setInput('testId', 'storage');
+      fixture.detectChanges();
+
+      const loader = TestbedHarnessEnvironment.loader(fixture);
+      const select = await loader.getHarness(TnSelectHarness);
+      await select.open();
+
+      expect(document.querySelector('[data-testid="option-storage-page-size-10"]')).toBeTruthy();
+      expect(document.querySelector('[data-testid="option-page-size-10"]')).toBeNull();
+    });
+
     it('scopes child test ids with the pager testId base so multiple pagers do not collide', () => {
       fixture.componentRef.setInput('testId', 'storage');
       fixture.detectChanges();
       const host = fixture.nativeElement as HTMLElement;
 
-      // host carries the base verbatim (via hostDirectives); children are scoped under it
+      // host carries the base verbatim (written imperatively by the pager); children are scoped under it
       expect(host.getAttribute('data-testid')).toBe('storage');
       expect(host.querySelector('[data-testid="select-storage-page-size"]')).toBeTruthy();
       expect(host.querySelector('[data-testid="button-storage-first-page"]')).toBeTruthy();
       expect(host.querySelector('[data-testid="button-storage-last-page"]')).toBeTruthy();
       // the unscoped id is gone once a base is set
       expect(host.querySelector('[data-testid="select-page-size"]')).toBeNull();
+    });
+
+    it('removes the host test-id attribute when the base is cleared', () => {
+      const host = fixture.nativeElement as HTMLElement;
+
+      fixture.componentRef.setInput('testId', 'storage');
+      fixture.detectChanges();
+      expect(host.getAttribute('data-testid')).toBe('storage');
+
+      fixture.componentRef.setInput('testId', undefined);
+      fixture.detectChanges();
+      expect(host.hasAttribute('data-testid')).toBe(false);
     });
   });
 
