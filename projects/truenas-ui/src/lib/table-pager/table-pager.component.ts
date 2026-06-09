@@ -18,7 +18,7 @@ import { FormsModule } from '@angular/forms';
 import type { Observable, Subscription } from 'rxjs';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnSelectComponent, type TnSelectOption } from '../select/select.component';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, scopeTestId } from '../test-id';
 
 /**
  * Default labels rendered inside `tn-table-pager`. Consumers can override any
@@ -162,10 +162,9 @@ export class TnTablePagerComponent {
    * `TnTestIdValue` testId.
    */
   protected childTestId(suffix: string): string {
-    const base = this.testIdDirective.testId();
-    const parts = (Array.isArray(base) ? base : [base])
-      .filter((part): part is string | number => part !== null && part !== undefined && part !== '');
-    return [...parts, suffix].join('-');
+    return scopeTestId(this.testIdDirective.testId(), suffix)
+      .filter((part): part is string | number => part !== null && part !== undefined && part !== '')
+      .join('-');
   }
 
   /**

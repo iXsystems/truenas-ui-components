@@ -2,7 +2,7 @@ import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { DOCUMENT } from '@angular/common';
 import { Component, ElementRef, computed, effect, input, signal, inject } from '@angular/core';
 import type { OnInit} from '@angular/core';
-import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import { TnTestIdDirective, scopeTestId, type TnTestIdValue } from '../test-id';
 
 let nextUniqueId = 0;
 
@@ -26,16 +26,10 @@ export class TnDialogShellComponent implements OnInit {
    */
   testId = input<TnTestIdValue>(undefined);
 
-  /** Base segments (a single token or array), flattened so a per-button suffix can be appended. */
-  private testIdSegments = computed(() => {
-    const base = this.testId();
-    return Array.isArray(base) ? base : [base];
-  });
-
   /** Scoped test-id segments for the close button (`button-[<base>-]close`). */
-  protected closeTestId = computed(() => [...this.testIdSegments(), 'close']);
+  protected closeTestId = computed(() => scopeTestId(this.testId(), 'close'));
   /** Scoped test-id segments for the fullscreen button (`button-[<base>-]fullscreen`). */
-  protected fullscreenTestId = computed(() => [...this.testIdSegments(), 'fullscreen']);
+  protected fullscreenTestId = computed(() => scopeTestId(this.testId(), 'fullscreen'));
 
   /** Stable id for the title heading, referenced by the dialog's aria-labelledby. */
   readonly titleId = `tn-dialog-title-${nextUniqueId++}`;

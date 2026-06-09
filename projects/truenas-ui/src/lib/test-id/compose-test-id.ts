@@ -28,6 +28,31 @@ export function kebabTestSegment(part: string | number): string {
 }
 
 /**
+ * Scope a test-id base with one or more trailing suffix segments.
+ *
+ * Normalizes the base — a single token or an array of segments — into a flat
+ * segment array and appends the suffixes, producing a value that is itself a
+ * valid {@link TnTestIdValue}. This is the canonical "derive a per-child id from
+ * a parent base" operation, e.g. a dialog's close button (`[base, 'close']`) or
+ * a select's per-option id (`[base, option.label]`). Centralizing it keeps the
+ * `string | array` flattening contract in one place rather than re-implemented
+ * at each call site.
+ *
+ * Falsy segments are preserved here (not filtered) so `composeTestId` can apply
+ * its own drop/scoping rules — `scopeTestId(undefined, 'close')` yields
+ * `[undefined, 'close']`, which `composeTestId('button', …)` renders as the
+ * unscoped `button-close`.
+ *
+ * @example
+ * scopeTestId('actions', 'edit')        // ['actions', 'edit']
+ * scopeTestId(['menu', 'main'], 'edit') // ['menu', 'main', 'edit']
+ * scopeTestId(undefined, 'close')       // [undefined, 'close']
+ */
+export function scopeTestId(base: TnTestIdValue, ...suffix: (string | number | null | undefined)[]): (string | number | null | undefined)[] {
+  return [...(Array.isArray(base) ? base : [base]), ...suffix];
+}
+
+/**
  * Compose the canonical test-id string: `${type}-${...segments}`.
  *
  * - `type` is the element-type prefix the component declares (e.g. `'button'`,

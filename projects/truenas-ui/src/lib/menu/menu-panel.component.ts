@@ -2,7 +2,7 @@ import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { CommonModule } from '@angular/common';
 import { Component, ChangeDetectionStrategy, forwardRef, inject, input } from '@angular/core';
 import { TnIconComponent } from '../icon/icon.component';
-import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import { TnTestIdDirective, scopeTestId, type TnTestIdValue } from '../test-id';
 import { TnMenuActivateHoverDirective } from './menu-activate-hover.directive';
 import type { TnMenuItemComponent } from './menu-item.component';
 import type { TnMenuItem } from './menu.component';
@@ -83,8 +83,7 @@ export class TnMenuPanelComponent {
    * child items share the root base. With no menu base this is `button-${item.id}`.
    */
   protected resolvedItemTestId(item: TnMenuItem): TnTestIdValue {
-    const base = this.menu.testId();
-    return item.testId ?? [...(Array.isArray(base) ? base : [base]), item.id];
+    return item.testId ?? scopeTestId(this.menu.testId(), item.id);
   }
 
   protected onItemClick(item: TnMenuItem): void {
