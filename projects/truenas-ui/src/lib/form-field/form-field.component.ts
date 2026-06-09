@@ -1,13 +1,28 @@
 
 import type { AfterContentInit } from '@angular/core';
-import { Component, input, computed, signal, contentChild } from '@angular/core';
+import { Component, input, computed, signal, contentChild, inject, isDevMode, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgControl } from '@angular/forms';
+import type { ValidationErrors } from '@angular/forms';
+import {
+  TN_FORM_FIELD_ERRORS,
+  activeErrorKey,
+  defaultErrorMessage,
+} from './form-field.errors';
+import type { TnFormFieldErrorMessages } from './form-field.errors';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 import { TnTooltipDirective } from '../tooltip/tooltip.directive';
 import type { TooltipPosition } from '../tooltip/tooltip.directive';
 
 export type SubscriptSizing = 'fixed' | 'dynamic';
+
+/** Snapshot of the projected control's validation state. */
+interface ControlStateSnapshot {
+  invalid: boolean;
+  interacted: boolean;
+  errors: ValidationErrors | null;
+}
 
 @Component({
   selector: 'tn-form-field',
@@ -28,54 +43,135 @@ export class TnFormFieldComponent implements AfterContentInit {
   /** Placement of the tooltip relative to its help icon. */
   tooltipPosition = input<TooltipPosition>('above');
 
+  /**
+   * Per-field overrides for validation messages, keyed by error key. Values may
+   * be a string or a function that receives the error's detail value. Takes
+   * precedence over the app-wide {@link TN_FORM_FIELD_ERRORS} resolver and the
+   * built-in defaults.
+   */
+  errorMessages = input<TnFormFieldErrorMessages>({});
+
   control = contentChild(NgControl);
 
-  protected hasError = signal<boolean>(false);
-  protected errorMessage = signal<string>('');
+  private destroyRef = inject(DestroyRef);
+
+  /**
+   * App-wide message resolver, captured once at construction. Unlike the
+   * `errorMessages` input it is not reactive — swapping the provided function at
+   * runtime will not be picked up by an already-created field.
+   */
+  private errorResolver = inject(TN_FORM_FIELD_ERRORS, { optional: true });
+
+  /**
+   * Snapshot of the relevant control state. Updated from the control's status
+   * stream because `NgControl` itself is not signal-based; downstream `computed`s
+   * read this so the derived state stays reactive.
+   */
+  private controlState = signal<ControlStateSnapshot>({
+    invalid: false,
+    interacted: false,
+    errors: null,
+  });
+
+  protected hasError = computed(() => {
+    const state = this.controlState();
+    return state.invalid && state.interacted;
+  });
+
+  protected errorMessage = computed(() => {
+    const { errors } = this.controlState();
+    return errors ? this.resolveErrorMessage(errors) : '';
+  });
 
   ngAfterContentInit(): void {
     const control = this.control();
     if (control) {
-      // Listen for control status changes
-      control.statusChanges?.subscribe(() => {
-        this.updateErrorState();
-      });
+      // Listen for control status changes.
+      // NOTE: `statusChanges` does not emit on touched/pristine-only transitions
+      // (e.g. `markAsTouched()` / `markAllAsTouched()` on blur or submit), so an
+      // error may not surface until the next value/status change. Reacting to
+      // those via `control.control?.events` is tracked as a follow-up.
+      control.statusChanges
+        ?.pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => {
+          this.syncControlState();
+        });
 
       // Initial error state check
-      this.updateErrorState();
+      this.syncControlState();
     }
   }
 
-  private updateErrorState(): void {
+  private syncControlState(): void {
     const control = this.control();
     if (control) {
-      this.hasError.set(!!(control.invalid && (control.dirty || control.touched)));
-      this.errorMessage.set(this.getErrorMessage());
+      this.controlState.set({
+        invalid: !!control.invalid,
+        interacted: !!(control.dirty || control.touched),
+        errors: control.errors ?? null,
+      });
     }
   }
 
-  private getErrorMessage(): string {
-    const control = this.control();
-    if (!control?.errors) {return '';}
+  /**
+   * Resolves a user-facing message for the active error. Reads the
+   * `errorMessages` input (and the injected resolver), so it is reactive: the
+   * displayed message updates when either the control errors or the overrides
+   * change — e.g. a runtime locale switch.
+   */
+  private resolveErrorMessage(errors: ValidationErrors): string {
+    const key = activeErrorKey(errors);
+    if (!key) {return 'Invalid input';}
 
-    const errors = control.errors;
+    const value = errors[key];
 
-    // Return the first error message found
-    if (errors['required']) {return 'This field is required';}
-    if (errors['email']) {return 'Please enter a valid email address';}
-    if (errors['minlength']) {return `Minimum length is ${errors['minlength'].requiredLength}`;}
-    if (errors['maxlength']) {return `Maximum length is ${errors['maxlength'].requiredLength}`;}
-    if (errors['pattern']) {return 'Please enter a valid format';}
-    if (errors['min']) {return `Minimum value is ${errors['min'].min}`;}
-    if (errors['max']) {return `Maximum value is ${errors['max'].max}`;}
-
-    // Return custom error message if the value is a string, otherwise use the key
-    const firstKey = Object.keys(errors)[0];
-    if (firstKey) {
-      const value = errors[firstKey];
-      return typeof value === 'string' ? value : firstKey;
+    // 1. Per-field override (string or factory). A throwing factory must not
+    //    break change detection, so fall through to the next layer instead.
+    const override = this.errorMessages()[key];
+    if (override != null) {
+      const message = this.runGuarded(
+        () => (typeof override === 'function' ? override(value) : override),
+        `errorMessages["${key}"]`
+      );
+      if (message != null) {return message;}
     }
-    return 'Invalid input';
+
+    // 2. App-wide resolver (e.g. wired to a translation service).
+    const resolved = this.runGuarded(
+      () => this.errorResolver?.(key, value, this.control()?.control ?? null),
+      'TN_FORM_FIELD_ERRORS resolver'
+    );
+    if (resolved != null) {return resolved;}
+
+    // 3. Built-in default messages for standard validators.
+    const builtIn = defaultErrorMessage(key, value);
+    if (builtIn != null) {return builtIn;}
+
+    // 4. A custom validator that returned its own message string.
+    if (typeof value === 'string') {return value;}
+
+    // 5. Last resort: the raw error key.
+    return key;
+  }
+
+  /**
+   * Runs a caller-supplied message provider, swallowing any throw so a buggy
+   * override or resolver cannot break change detection. Logs in dev mode and
+   * returns null so resolution falls through to the next layer.
+   */
+  private runGuarded(provider: () => string | null | undefined, context: string): string | null {
+    try {
+      // Treat a blank message as "no answer" so it falls through to the next
+      // layer instead of hiding the error — e.g. a translation service that
+      // returns '' for a missing key.
+      const message = provider();
+      return message != null && message.trim() !== '' ? message : null;
+    } catch (error) {
+      if (isDevMode()) {
+        console.error(`[tn-form-field] ${context} threw while resolving a validation message`, error);
+      }
+      return null;
+    }
   }
 
   showError = computed(() => {
