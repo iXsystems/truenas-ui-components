@@ -4,6 +4,7 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TnInputComponent } from './input.component';
+import { parseSize } from './size-conversion';
 import { InputType } from '../enums/input-type.enum';
 import { TnIconTesting } from '../icon/icon-testing';
 
@@ -281,6 +282,142 @@ describe('TnInputComponent', () => {
       expect(input.value).toBe('1234');
       // Caret stays right after '1', not jumped to the end.
       expect(input.selectionStart).toBe(1);
+    });
+
+    it('should not render a textarea even when multiline is set', () => {
+      fixture.componentRef.setInput('multiline', true);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('textarea')).toBeNull();
+      expect(fixture.nativeElement.querySelector('input')).toBeTruthy();
+    });
+  });
+
+  describe('size type', () => {
+    beforeEach(() => {
+      fixture.componentRef.setInput('inputType', InputType.Size);
+      fixture.detectChanges();
+    });
+
+    it('should render a text input (accepts unit letters) with no numeric inputmode', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      expect(input.type).toBe('text');
+      expect(input.hasAttribute('inputmode')).toBe(false);
+    });
+
+    it('should display a byte-count model as a human-readable string', () => {
+      component.writeValue(2 * 1024 ** 3);
+      expect(component['value']).toBe('2 GiB');
+    });
+
+    it('should display empty string for null/undefined', () => {
+      component.writeValue(null);
+      expect(component['value']).toBe('');
+      component.writeValue(undefined);
+      expect(component['value']).toBe('');
+    });
+
+    it('should emit a byte count as the user types', () => {
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = '2 GiB';
+      input.dispatchEvent(new Event('input'));
+
+      expect(changeSpy).toHaveBeenCalledWith(2 * 1024 ** 3);
+    });
+
+    it('should keep the raw text in the field while typing', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = '2 gi';
+      input.dispatchEvent(new Event('input'));
+
+      expect(component['value']).toBe('2 gi');
+    });
+
+    it('should emit null for unparseable input (not 0)', () => {
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = 'abc';
+      input.dispatchEvent(new Event('input'));
+
+      expect(changeSpy).toHaveBeenCalledWith(null);
+    });
+
+    it('should assume the configured default unit for a bare number', () => {
+      fixture.componentRef.setInput('sizeDefaultUnit', 'KiB');
+      fixture.detectChanges();
+
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = '200';
+      input.dispatchEvent(new Event('input'));
+
+      expect(changeSpy).toHaveBeenCalledWith(200 * 1024);
+    });
+
+    it('should canonicalize the display on blur', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = '2048 KiB';
+      input.dispatchEvent(new Event('input'));
+      input.dispatchEvent(new Event('blur'));
+
+      expect(component['value']).toBe('2 MiB');
+    });
+
+    it('should re-sync the model to the canonicalized display on blur (lossy rounding)', () => {
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = fixture.nativeElement.querySelector('input');
+      // 1.755 GiB does not round-trip through a 2-decimal display.
+      input.value = '1.755 GiB';
+      input.dispatchEvent(new Event('input'));
+      input.dispatchEvent(new Event('blur'));
+
+      const display = component['value'];
+      const model = changeSpy.mock.calls.at(-1)![0];
+      // The invariant that matters: re-parsing what the user sees yields the model.
+      expect(parseSize(display, 'MiB', 'iec')).toBe(model);
+      // ...and the display is itself the canonical render of that model (stable).
+      expect(display).toBe(component['value']);
+    });
+
+    it('should not emit on blur when a pre-filled value is unchanged (no spurious dirty)', () => {
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+      // Pre-populate from the model (as a consumer form would), then tab in/out
+      // with no edit. The canonical form equals the displayed text, so the control
+      // must stay pristine — no onChange.
+      component.writeValue(200 * 1024 ** 4);
+
+      const input = fixture.nativeElement.querySelector('input');
+      input.dispatchEvent(new Event('blur'));
+
+      expect(changeSpy).not.toHaveBeenCalled();
+      expect(component['value']).toBe('200 TiB');
+    });
+
+    it('should leave unparseable text untouched on blur', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = 'not a size';
+      input.dispatchEvent(new Event('input'));
+      input.dispatchEvent(new Event('blur'));
+
+      expect(component['value']).toBe('not a size');
+    });
+
+    it('should use the SI standard when configured', () => {
+      fixture.componentRef.setInput('sizeStandard', 'si');
+      fixture.detectChanges();
+
+      component.writeValue(2_000_000_000);
+      expect(component['value']).toBe('2 GB');
     });
 
     it('should not render a textarea even when multiline is set', () => {
@@ -595,5 +732,74 @@ describe('TnInputComponent number type with consumer validators', () => {
 
     expect(hostComponent.control.valid).toBe(false);
     expect(hostComponent.control.errors).toEqual({ max: { max: 50, actual: 60 } });
+  });
+});
+
+
+@Component({
+  selector: 'tn-test-size-cva-host',
+  standalone: true,
+  imports: [TnInputComponent, ReactiveFormsModule],
+  template: `<tn-input [inputType]="sizeType" [formControl]="control" />`
+})
+class TestSizeCvaHostComponent {
+  sizeType = InputType.Size;
+  // The form model holds a byte count; the field shows a human-readable string.
+  control = new FormControl<number | null>(null);
+}
+
+
+describe('TnInputComponent size type with FormControl', () => {
+  let fixture: ComponentFixture<TestSizeCvaHostComponent>;
+  let hostComponent: TestSizeCvaHostComponent;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TestSizeCvaHostComponent],
+      providers: [TnIconTesting.jest.providers()],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestSizeCvaHostComponent);
+    hostComponent = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should put a byte count in the form model when the user types a size', () => {
+    const input = fixture.nativeElement.querySelector('input');
+    input.value = '2 GiB';
+    input.dispatchEvent(new Event('input'));
+
+    expect(hostComponent.control.value).toBe(2 * 1024 ** 3);
+    expect(typeof hostComponent.control.value).toBe('number');
+  });
+
+  it('should display a byte-count model as a human-readable string', () => {
+    hostComponent.control.setValue(200 * 1024 ** 4);
+    fixture.detectChanges();
+
+    const input = fixture.nativeElement.querySelector('input');
+    expect(input.value).toBe('200 TiB');
+  });
+
+  it('should set the form model to null when the field is cleared', () => {
+    const input = fixture.nativeElement.querySelector('input');
+    input.value = '2 GiB';
+    input.dispatchEvent(new Event('input'));
+    input.value = '';
+    input.dispatchEvent(new Event('input'));
+
+    expect(hostComponent.control.value).toBeNull();
+  });
+
+  it('should keep the form model in lockstep with the canonicalized display on blur', () => {
+    const input = fixture.nativeElement.querySelector('input');
+    input.value = '1.755 GiB';
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new Event('blur'));
+    // Flush the [value] binding so the DOM reflects the canonicalized display.
+    fixture.detectChanges();
+
+    // What the user sees parses back to exactly what's stored — no divergence.
+    expect(parseSize(input.value, 'MiB', 'iec')).toBe(hostComponent.control.value);
   });
 });

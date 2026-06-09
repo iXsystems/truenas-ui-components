@@ -46,6 +46,19 @@ const meta: Meta<TnInputComponent> = {
       control: 'boolean',
       description: 'Number type: whether decimals are accepted. Set false for integer-only mode.',
     },
+    sizeStandard: {
+      control: { type: 'inline-radio' },
+      options: ['iec', 'si'],
+      description: 'Size type: unit standard — iec (KiB/MiB, base-2) or si (kB/MB, base-10).',
+    },
+    sizeDefaultUnit: {
+      control: 'text',
+      description: 'Size type: unit assumed when the user types a bare number (e.g. MiB).',
+    },
+    sizeRound: {
+      control: 'number',
+      description: 'Size type: decimal places used when formatting the value for display.',
+    },
     testId: {
       control: 'text',
       description: 'Test ID for the input component',
@@ -225,6 +238,53 @@ export const NumberDecimal: Story = {
     testId: 'number-decimal-input',
     disabled: false,
     allowDecimals: true,
+  },
+};
+
+/**
+ * **Size mode.** The form model holds a raw byte count; the field displays and
+ * accepts a human-readable string (`2 GiB`, `500M`, `2 TB`). Bare numbers use
+ * `sizeDefaultUnit`. The display canonicalizes on blur (`2048 KiB` → `2 MiB`).
+ */
+export const Size: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      // The model is bytes; 200 TiB shown below as the initial human-readable value.
+      sizeControl: new FormControl<number | null>(200 * 1024 ** 4, [Validators.min(0)]),
+    },
+    template: `
+      <tn-form-field
+        label="Local User Upload Bandwidth"
+        hint="Examples: 500 KiB, 500M, 2 TB">
+        <tn-input
+          [inputType]="inputType"
+          [placeholder]="placeholder"
+          [disabled]="disabled"
+          [testId]="testId"
+          [sizeStandard]="sizeStandard"
+          [sizeDefaultUnit]="sizeDefaultUnit"
+          [sizeRound]="sizeRound"
+          [formControl]="sizeControl">
+        </tn-input>
+      </tn-form-field>
+      <p style="margin-top: 12px; font-family: monospace;">
+        model (bytes): {{ sizeControl.value === null ? 'null' : sizeControl.value }}
+        ({{ sizeControl.value === null ? 'object' : 'number' }})
+      </p>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, ReactiveFormsModule],
+    },
+  }),
+  args: {
+    inputType: InputType.Size,
+    placeholder: 'e.g. 2 GiB',
+    testId: 'size-input',
+    disabled: false,
+    sizeStandard: 'iec',
+    sizeDefaultUnit: 'MiB',
+    sizeRound: 2,
   },
 };
 

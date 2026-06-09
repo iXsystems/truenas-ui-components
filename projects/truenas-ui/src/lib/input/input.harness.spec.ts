@@ -254,6 +254,36 @@ describe('TnInputHarness', () => {
     });
   });
 
+  describe('size type', () => {
+    beforeEach(() => {
+      hostComponent.inputType.set(InputType.Size);
+      fixture.detectChanges();
+    });
+
+    it('should read the displayed value as a byte count', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      await input.setValue('2 GiB');
+      expect(await input.getByteValue()).toBe(2 * 1024 ** 3);
+    });
+
+    it('should read an empty value as null', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getByteValue()).toBeNull();
+    });
+
+    it('should honor a custom default unit for a bare number', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      await input.setValue('200');
+      expect(await input.getByteValue('iec', 'KiB')).toBe(200 * 1024);
+    });
+
+    it('should read SI-standard values when told', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      await input.setValue('2 GB');
+      expect(await input.getByteValue('si')).toBe(2_000_000_000);
+    });
+  });
+
   describe('aria-label', () => {
     it('should return null when unset', async () => {
       const input = await loader.getHarness(TnInputHarness);
