@@ -112,12 +112,14 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
   isPassword = computed(() => this.inputType() === InputType.Password);
   /**
    * Whether the password is currently revealed. Not exposed as an input so a
-   * reveal is always an explicit user gesture, and linked to `isPassword` so
-   * entering/leaving password mode resets to masked — a field that flips back
-   * to `Password` must not come back already revealed.
+   * reveal is always an explicit user gesture, and linked to the toggle's own
+   * availability so a revealed value never outlives the control that revealed
+   * it: whenever the toggle goes away (the field leaves password mode,
+   * `showPasswordToggle` flips off, a `suffixIcon` replaces it) or the field
+   * is disabled, the field snaps back to masked.
    */
   protected passwordVisible = linkedSignal({
-    source: this.isPassword,
+    source: () => this.hasPasswordToggle() && !this.isDisabled(),
     computation: () => false,
   });
   /** The `type` attribute actually rendered. Number and size modes use a text input: number avoids the native type="number" footguns, size must accept unit letters. A revealed password renders as text — flipping the type attribute is the standard reveal mechanism and preserves value and caret. */
