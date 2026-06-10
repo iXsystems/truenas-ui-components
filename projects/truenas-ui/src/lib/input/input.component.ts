@@ -7,6 +7,7 @@ import { InputType } from '../enums/input-type.enum';
 import type { IconLibraryType } from '../icon/icon.component';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import { formatSize, parseSize, type SizeStandard } from './size-conversion';
 
 // Module-level counter for deterministic, unique instance ids (matches the
 // tn-autocomplete convention). Deterministic ids are SSR/hydration-safe and
@@ -58,6 +59,27 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
    */
   allowDecimals = input<boolean>(true);
 
+  /**
+   * Unit standard for the `Size` input type — `iec` (base-2, `KiB`/`MiB`) or
+   * `si` (base-10, `kB`/`MB`). Drives both the formatted display and how bare
+   * numbers are scaled when parsing. Ignored unless `inputType` is `Size`.
+   */
+  sizeStandard = input<SizeStandard>('iec');
+
+  /**
+   * Unit assumed when a user types a bare number (no unit) into a `Size` field —
+   * e.g. with the default `MiB`, typing `200` yields 200 MiB. Accepts IEC
+   * (`KiB`), short (`KB`), or human (`K`) spellings. Ignored unless `inputType`
+   * is `Size`.
+   */
+  sizeDefaultUnit = input<string>('MiB');
+
+  /**
+   * Decimal places used when formatting a `Size` field's value for display
+   * (e.g. `1.5 GiB`). Ignored unless `inputType` is `Size`.
+   */
+  sizeRound = input<number>(2);
+
   // Icon inputs
   prefixIcon = input<string | undefined>(undefined);
   prefixIconLibrary = input<IconLibraryType | undefined>(undefined);
@@ -72,17 +94,19 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
 
   // Numeric mode state
   isNumeric = computed(() => this.inputType() === InputType.Number);
+  /** True when the field is in data-size mode (human-readable string ⇄ byte-count model). */
+  isSize = computed(() => this.inputType() === InputType.Size);
   /** True when the field only accepts whole numbers (i.e. `allowDecimals` is false). */
   integerOnly = computed(() => !this.allowDecimals());
-  /** The `type` attribute actually rendered. Number mode uses a text input + inputmode to avoid the native type="number" footguns. */
-  resolvedType = computed(() => (this.isNumeric() ? InputType.PlainText : this.inputType()));
-  /** `inputmode` hint: numeric keypad for integers, decimal keypad otherwise. Null (omitted) when not in number mode. */
+  /** The `type` attribute actually rendered. Number and size modes use a text input: number avoids the native type="number" footguns, size must accept unit letters. */
+  resolvedType = computed(() => (this.isNumeric() || this.isSize() ? InputType.PlainText : this.inputType()));
+  /** `inputmode` hint: numeric keypad for integers, decimal keypad otherwise. Null (omitted) outside number mode — size fields accept unit letters, so they keep the full keyboard. */
   numericInputMode = computed<'numeric' | 'decimal' | null>(() => {
     if (!this.isNumeric()) {return null;}
     return this.integerOnly() ? 'numeric' : 'decimal';
   });
-  /** Number mode is always single-line; it wins over `multiline` if both are set. */
-  showTextarea = computed(() => this.multiline() && !this.isNumeric());
+  /** Number and size modes are always single-line; they win over `multiline` if both are set. */
+  showTextarea = computed(() => this.multiline() && !this.isNumeric() && !this.isSize());
 
   // Unique per instance: a hard-coded id produced duplicate ids when multiple
   // tn-inputs share a page (invalid HTML, and it breaks any future label `for=`,
@@ -121,6 +145,12 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
   // Accepts undefined as well as the declared types: Angular may hand writeValue an
   // undefined model at init, and it maps to the empty display like null.
   writeValue(value: string | number | null | undefined): void {
+    if (this.isSize()) {
+      // The model is a byte count; show it as a human-readable string. Empty/null
+      // stays blank, and a non-numeric model maps to blank (formatSize returns '').
+      this.value = formatSize(value, this.sizeStandard(), this.sizeRound());
+      return;
+    }
     // Display the model verbatim via String(); do NOT sanitize here. Sanitizing a
     // canonical number string would corrupt fractions in integer mode (3.5 -> "35"),
     // silently diverging the display from the form model.
@@ -146,6 +176,14 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
   protected onValueChange(event: Event): void {
     const target = event.target as HTMLInputElement | HTMLTextAreaElement;
 
+    if (this.isSize()) {
+      // Keep the raw text in the field as the user types (unit letters and all);
+      // emit the parsed byte count, mapping invalid/partial input to null (never 0).
+      this.value = target.value;
+      this.onChange(parseSize(this.value, this.sizeDefaultUnit(), this.sizeStandard()));
+      return;
+    }
+
     if (this.isNumeric()) {
       const el = target as HTMLInputElement;
       const sanitized = this.sanitizeNumeric(el.value);
@@ -170,6 +208,26 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
   }
 
   protected onBlur(): void {
+    if (this.isSize() && this.value !== '') {
+      // Canonicalize the display on blur: "2048 KiB" -> "2 MiB", "200tib" -> "200 TiB".
+      // Leave unparseable text in place so the consumer's validators can flag it.
+      const bytes = parseSize(this.value, this.sizeDefaultUnit(), this.sizeStandard());
+      if (bytes !== null) {
+        const canonical = formatSize(bytes, this.sizeStandard(), this.sizeRound());
+        // Only rewrite + re-emit when the canonical form actually differs from what
+        // the user left in the field. This both:
+        //  (a) skips a no-op onChange that would mark an untouched, pre-filled
+        //      control dirty (falsely tripping "unsaved changes" guards), and
+        //  (b) still re-syncs the model when rounding is lossy — e.g. an edited
+        //      "1.755 GiB" canonicalizes to a different string, so it emits the
+        //      byte count parsed back from the rounded display, keeping
+        //      parseSize(display) === model.
+        if (canonical !== this.value) {
+          this.value = canonical;
+          this.onChange(parseSize(canonical, this.sizeDefaultUnit(), this.sizeStandard()));
+        }
+      }
+    }
     this.onTouched();
   }
 

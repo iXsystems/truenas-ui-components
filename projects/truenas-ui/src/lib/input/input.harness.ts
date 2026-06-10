@@ -1,5 +1,6 @@
 import type { BaseHarnessFilters } from '@angular/cdk/testing';
 import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
+import { parseSize, type SizeStandard } from './size-conversion';
 import { TnIconHarness } from '../icon/icon.harness';
 
 /**
@@ -98,6 +99,23 @@ export class TnInputHarness extends ComponentHarness {
     const integerMode = (await this.getInputMode()) === 'numeric';
     const parsed = integerMode ? parseInt(raw, 10) : parseFloat(raw);
     return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  /**
+   * Gets the displayed value of a `Size`-type input parsed into a byte count,
+   * mirroring what the control emits to the form model.
+   *
+   * The harness reads only the DOM, so it can't see the component's configured
+   * `sizeStandard`/`sizeDefaultUnit` — pass them here to match the field under
+   * test. Defaults to IEC base-2 with a `MiB` default unit (the component
+   * defaults). Empty/invalid input resolves to `null`.
+   *
+   * @param standard Unit standard the field uses (defaults to `'iec'`).
+   * @param defaultUnit Unit assumed for bare numbers (defaults to `'MiB'`).
+   * @returns Promise resolving to the byte count, or null.
+   */
+  async getByteValue(standard: SizeStandard = 'iec', defaultUnit = 'MiB'): Promise<number | null> {
+    return parseSize(await this.getValue(), defaultUnit, standard);
   }
 
   /**
