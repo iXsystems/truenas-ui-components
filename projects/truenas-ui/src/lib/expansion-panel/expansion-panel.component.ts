@@ -1,38 +1,13 @@
-import { trigger, state, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { Component, input, output, computed, signal } from '@angular/core';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
-
-const expandCollapseAnimation = trigger('expandCollapse', [
-  state('collapsed', style({
-    height: '0px',
-    opacity: 0,
-    overflow: 'hidden',
-    display: 'none'
-  })),
-  state('expanded', style({
-    height: '*',
-    opacity: 1,
-    overflow: 'visible',
-    display: 'block'
-  })),
-  transition('collapsed => expanded', [
-    style({ display: 'block', height: '0px', opacity: 0 }),
-    animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ height: '*', opacity: 1 }))
-  ]),
-  transition('expanded => collapsed', [
-    animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ height: '0px', opacity: 0 })),
-    style({ display: 'none' })
-  ])
-]);
 
 @Component({
   selector: 'tn-expansion-panel',
   standalone: true,
   imports: [CommonModule, TnTestIdDirective],
   templateUrl: './expansion-panel.component.html',
-  styleUrls: ['./expansion-panel.component.scss'],
-  animations: [expandCollapseAnimation]
+  styleUrls: ['./expansion-panel.component.scss']
 })
 export class TnExpansionPanelComponent {
   title = input<string | undefined>(undefined);

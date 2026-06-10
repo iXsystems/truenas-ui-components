@@ -1,5 +1,6 @@
 <div tnTestIdType="expansion-panel" [ngClass]="classes()" [tnTestId]="testId()">
   <button class="tn-expansion-panel__header"
+          type="button"
           tnTestIdType="button"
           [disabled]="disabled()"
           [attr.aria-expanded]="effectiveExpanded()"
@@ -22,9 +23,11 @@
   </button>
 
   <div class="tn-expansion-panel__content"
+       [class.tn-expansion-panel__content--collapsed]="!effectiveExpanded()"
        [id]="contentId"
-       [attr.aria-hidden]="!effectiveExpanded()"
-       [@expandCollapse]="effectiveExpanded() ? 'expanded' : 'collapsed'">
-    <ng-content />
+       [attr.aria-hidden]="!effectiveExpanded()">
+    <div class="tn-expansion-panel__content-inner">
+      <ng-content />
+    </div>
   </div>
 </div>
