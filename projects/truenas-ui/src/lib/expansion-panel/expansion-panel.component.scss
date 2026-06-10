@@ -137,11 +137,9 @@
   font-family: inherit;
   text-align: left;
   transition: background-color 0.2s ease;
+  // The header divider shows in both states; the content collapse no longer
+  // toggles it, so a single bordered rule covers expanded and collapsed alike.
   .tn-expansion-panel--bordered & {
-    border-bottom: 1px solid var(--tn-lines, #e5e7eb);
-  }
-  
-  .tn-expansion-panel--bordered.tn-expansion-panel--expanded & {
     border-bottom: 1px solid var(--tn-lines, #e5e7eb);
   }
 
@@ -194,4 +192,18 @@
 .tn-expansion-panel__content-inner {
   min-height: 0;
   overflow: hidden;
+}
+
+// Honor reduced-motion now that the collapse is CSS-driven: snap open/closed and
+// drop the chrome transitions instead of animating. The panel still toggles
+// correctly (grid-template-rows 0fr/1fr), just without the easing.
+@media (prefers-reduced-motion: reduce) {
+  .tn-expansion-panel,
+  .tn-expansion-panel__header,
+  .tn-expansion-panel__title,
+  .tn-expansion-panel__indicator,
+  .tn-expansion-panel__indicator svg,
+  .tn-expansion-panel__content {
+    transition: none;
+  }
 }

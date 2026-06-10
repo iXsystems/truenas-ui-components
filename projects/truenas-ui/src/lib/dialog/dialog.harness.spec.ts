@@ -49,6 +49,17 @@ class TestDialogComponent {
 })
 class TestHostComponent {}
 
+// Projects nothing into the content / actions slots, so each `<ng-content>`
+// leaves only a comment anchor — which `:empty` ignores — letting the theme's
+// `:empty { display: none }` rule hide the otherwise-empty bars.
+@Component({
+  selector: 'tn-empty-dialog',
+  standalone: true,
+  imports: [TnDialogShellComponent],
+  template: `<tn-dialog-shell [title]="'Empty'" />`,
+})
+class EmptyDialogComponent {}
+
 /* eslint-enable @angular-eslint/component-max-inline-declarations */
 
 describe('TnDialogHarness', () => {
@@ -59,7 +70,7 @@ describe('TnDialogHarness', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TestHostComponent, TestDialogComponent],
+      imports: [TestHostComponent, TestDialogComponent, EmptyDialogComponent],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TestHostComponent);
@@ -192,6 +203,20 @@ describe('TnDialogHarness', () => {
       fixture.detectChanges();
       expect(document.querySelector('.tn-dialog__content')?.classList).not.toContain('tn-dialog__content--hidden');
       expect(document.querySelector('.tn-dialog__actions')?.classList).not.toContain('tn-dialog__actions--hidden');
+    });
+
+    it('leaves the content/actions slots :empty when nothing is projected (theme hides them)', () => {
+      tnDialog.open(EmptyDialogComponent);
+      fixture.detectChanges();
+
+      const content = document.querySelector('.tn-dialog__content');
+      const actions = document.querySelector('.tn-dialog__actions');
+      expect(content).toBeTruthy();
+      expect(actions).toBeTruthy();
+      // `:empty` ignores the ng-content comment anchor, so the theme's
+      // `:empty { display: none }` rule applies and the empty bars don't render.
+      expect(content?.matches(':empty')).toBe(true);
+      expect(actions?.matches(':empty')).toBe(true);
     });
   });
 

@@ -51,6 +51,20 @@ describe('TnExpansionPanelComponent', () => {
     expect(component.effectiveExpanded()).toBe(initialState);
   });
 
+  it('marks the content inert and collapsed when not expanded, and clears both when expanded', () => {
+    const content = fixture.nativeElement.querySelector('.tn-expansion-panel__content') as HTMLElement;
+
+    // collapsed by default → inert (out of tab order + a11y tree) and zero-height
+    expect(content.classList).toContain('tn-expansion-panel__content--collapsed');
+    expect(content.hasAttribute('inert')).toBe(true);
+
+    fixture.componentRef.setInput('expanded', true);
+    fixture.detectChanges();
+
+    expect(content.classList).not.toContain('tn-expansion-panel__content--collapsed');
+    expect(content.hasAttribute('inert')).toBe(false);
+  });
+
   it('should apply correct classes', () => {
     fixture.componentRef.setInput('elevation', 'high');
     fixture.componentRef.setInput('bordered', true);
