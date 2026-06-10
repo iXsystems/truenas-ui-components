@@ -185,6 +185,33 @@ export class TnSelectHarness extends ComponentHarness {
   }
 
   /**
+   * Clears the selection by picking the empty option. Only available when
+   * the select has `allowEmpty` set (single mode); throws otherwise.
+   * Opens the dropdown if needed.
+   *
+   * @returns Promise that resolves when the selection has been cleared.
+   *
+   * @example
+   * ```typescript
+   * const select = await loader.getHarness(TnSelectHarness);
+   * await select.selectOption('Banana');
+   * await select.clear();
+   * expect(await select.getDisplayText()).toBe('Select a fruit'); // placeholder
+   * ```
+   */
+  async clear(): Promise<void> {
+    await this.open();
+    // Dropdown panel is rendered in a CDK overlay (outside the host element),
+    // so we search the document root rather than the harness-local subtree.
+    const emptyOption = await this.documentRootLocatorFactory()
+      .locatorForOptional('.tn-select-empty-option')();
+    if (!emptyOption) {
+      throw new Error('Select has no empty option — set `allowEmpty` to make it clearable.');
+    }
+    await emptyOption.click();
+  }
+
+  /**
    * Gets the labels of all available options. Opens the dropdown if needed.
    *
    * @returns Promise resolving to an array of option label strings.

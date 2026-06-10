@@ -38,6 +38,14 @@ const meta: Meta<TnSelectComponent> = {
       control: 'boolean',
       description: 'Whether the select is disabled',
     },
+    allowEmpty: {
+      control: 'boolean',
+      description: 'Prepends an empty option that clears the selection (single mode only)',
+    },
+    emptyLabel: {
+      control: 'text',
+      description: 'Label of the empty option shown when allowEmpty is set',
+    },
     testId: {
       control: 'text',
       description: 'Test ID for the select component',
@@ -347,6 +355,66 @@ export const EmptyWithCustomMessage: Story = {
       imports: [TnFormFieldComponent],
     },
   }),
+};
+
+/**
+ * `allowEmpty` prepends a synthetic empty option (`--` by default, override
+ * with `emptyLabel`) so users can unset a chosen value. Picking it resets the
+ * field to the placeholder and emits `null` via `selectionChange` / the bound
+ * form control. Ignored in `multiple` mode.
+ */
+export const ClearableWithAllowEmpty: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      logSelection: (_value: unknown) => {},
+    },
+    template: `
+      <tn-form-field
+        label="Choose a fruit"
+        hint="Pick the -- option to clear the selection">
+        <tn-select
+          [options]="options"
+          [allowEmpty]="allowEmpty"
+          [emptyLabel]="emptyLabel"
+          [placeholder]="placeholder"
+          (selectionChange)="logSelection($event)">
+        </tn-select>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  args: {
+    options: fruitOptions,
+    allowEmpty: true,
+    emptyLabel: '--',
+    placeholder: 'No fruit selected',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const trigger = canvas.getByRole('combobox');
+
+    // Select a value, then clear it through the empty option.
+    await userEvent.click(trigger);
+    const banana = await waitFor(() => {
+      const option = document.querySelector('[data-testid="option-banana"]');
+      if (!option) {throw new Error('option not rendered yet');}
+      return option as HTMLElement;
+    });
+    await userEvent.click(banana);
+    await waitFor(() => expect(trigger.textContent?.trim()).toContain('Banana'));
+
+    await userEvent.click(trigger);
+    const empty = await waitFor(() => {
+      const option = document.querySelector('[data-testid="option-empty"]');
+      if (!option) {throw new Error('empty option not rendered yet');}
+      return option as HTMLElement;
+    });
+    await userEvent.click(empty);
+    await waitFor(() => expect(trigger.textContent?.trim()).toContain('No fruit selected'));
+  },
 };
 
 export const KeyboardNavigation: Story = {

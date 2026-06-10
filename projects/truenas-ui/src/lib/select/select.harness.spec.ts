@@ -30,7 +30,7 @@ class TestHostComponent {
   disabled = signal(false);
   selectedValue: string | null = null;
 
-  handleSelection(value: string): void {
+  handleSelection(value: string | null): void {
     this.selectedValue = value;
   }
 }
@@ -45,6 +45,7 @@ class TestHostComponent {
       placeholder="Select fruits"
       [options]="options()"
       [multiple]="true"
+      [allowEmpty]="true"
       (selectionChange)="handleSelection($event)" />
   `
 })
@@ -54,9 +55,9 @@ class TestMultiHostComponent {
     { value: 'banana', label: 'Banana' },
     { value: 'cherry', label: 'Cherry' },
   ]);
-  selectedValues: string[] = [];
+  selectedValues: (string | null)[] = [];
 
-  handleSelection(value: string): void {
+  handleSelection(value: string | null): void {
     this.selectedValues.push(value);
   }
 }
@@ -83,7 +84,7 @@ class TestCompareHostComponent {
   compareFn = (a: { id: number } | null, b: { id: number } | null) =>
     a?.id === b?.id;
 
-  handleSelection(value: { id: number; name: string }): void {
+  handleSelection(value: { id: number; name: string } | null): void {
     this.selectedValue = value;
   }
 }
@@ -117,7 +118,7 @@ class TestGroupDisabledHostComponent {
   ]);
   selectedValue: string | null = null;
 
-  handleSelection(value: string): void {
+  handleSelection(value: string | null): void {
     this.selectedValue = value;
   }
 }
@@ -143,6 +144,35 @@ class TestMultiOutputHostComponent {
   ]);
   lastItem: string | null = null;
   lastArray: string[] = [];
+}
+
+@Component({
+  selector: 'tn-test-allow-empty-host',
+  standalone: true,
+  imports: [TnSelectComponent],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-select
+      testId="fruit"
+      placeholder="Select a fruit"
+      [options]="options()"
+      [allowEmpty]="allowEmpty()"
+      [emptyLabel]="emptyLabel()"
+      (selectionChange)="handleSelection($event)" />
+  `
+})
+class TestAllowEmptyHostComponent {
+  options = signal<TnSelectOption<string>[]>([
+    { value: 'apple', label: 'Apple' },
+    { value: 'banana', label: 'Banana' },
+  ]);
+  allowEmpty = signal(true);
+  emptyLabel = signal('--');
+  selections: (string | null)[] = [];
+
+  handleSelection(value: string | null): void {
+    this.selections.push(value);
+  }
 }
 
 describe('TnSelectHarness', () => {
@@ -269,6 +299,15 @@ describe('TnSelectHarness', () => {
     });
   });
 
+  describe('clear', () => {
+    it('should throw when the select has no empty option', async () => {
+      const select = await loader.getHarness(TnSelectHarness);
+      await expect(select.clear()).rejects.toThrow(
+        'Select has no empty option — set `allowEmpty` to make it clearable.'
+      );
+    });
+  });
+
   describe('getOptions', () => {
     it('should return all option labels', async () => {
       const select = await loader.getHarness(TnSelectHarness);
@@ -380,6 +419,11 @@ describe('TnSelectHarness - multiple mode', () => {
     // via CDK Overlay), not inside the select's host subtree.
     const checkboxes = document.querySelectorAll('tn-checkbox');
     expect(checkboxes.length).toBe(3);
+  });
+
+  it('should ignore allowEmpty in multiple mode', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    expect(await select.getOptions()).toEqual(['Apple', 'Banana', 'Cherry']);
   });
 });
 
@@ -787,5 +831,109 @@ describe('TnSelectComponent — per-option test ids', () => {
     ]);
     fixture.detectChanges();
     expect(openAndGetOptionTestIds()).toEqual(['option-quick-filters-ssd', 'option-quick-filters-hdd']);
+  });
+});
+
+// ===========================================================================
+// allowEmpty — synthetic clear option
+// ===========================================================================
+describe('TnSelectComponent - allowEmpty', () => {
+  let fixture: ComponentFixture<TestAllowEmptyHostComponent>;
+  let hostComponent: TestAllowEmptyHostComponent;
+  let loader: HarnessLoader;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TestAllowEmptyHostComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestAllowEmptyHostComponent);
+    hostComponent = fixture.componentInstance;
+    loader = TestbedHarnessEnvironment.loader(fixture);
+  });
+
+  it('should render the empty option first', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    expect(await select.getOptions()).toEqual(['--', 'Apple', 'Banana']);
+  });
+
+  it('should not render the empty option when allowEmpty is false', async () => {
+    hostComponent.allowEmpty.set(false);
+
+    const select = await loader.getHarness(TnSelectHarness);
+    expect(await select.getOptions()).toEqual(['Apple', 'Banana']);
+  });
+
+  it('should use a custom emptyLabel', async () => {
+    hostComponent.emptyLabel.set('(none)');
+
+    const select = await loader.getHarness(TnSelectHarness);
+    expect(await select.getOptions()).toEqual(['(none)', 'Apple', 'Banana']);
+  });
+
+  it('should clear the selection and emit null via harness clear()', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.selectOption('Banana');
+    expect(await select.getDisplayText()).toBe('Banana');
+
+    await select.clear();
+
+    expect(await select.getDisplayText()).toBe('Select a fruit');
+    expect(hostComponent.selections).toEqual(['banana', null]);
+    expect(await select.isOpen()).toBe(false);
+  });
+
+  it('should clear the selection when the empty option is picked by label', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.selectOption('Apple');
+    await select.selectOption('--');
+
+    expect(await select.getDisplayText()).toBe('Select a fruit');
+    expect(hostComponent.selections).toEqual(['apple', null]);
+  });
+
+  it('should mark the empty option as selected when no value is set', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.open();
+
+    const empty = document.querySelector('.tn-select-empty-option');
+    expect(empty?.classList.contains('selected')).toBe(true);
+    expect(empty?.getAttribute('aria-selected')).toBe('true');
+  });
+
+  it('should emit a stable test id for the empty option', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.open();
+
+    const empty = document.querySelector('.tn-select-empty-option');
+    expect(empty?.getAttribute('data-testid')).toBe('option-fruit-empty');
+  });
+
+  it('should seed keyboard focus on the empty option when nothing is selected', () => {
+    fixture.detectChanges();
+    const trigger = fixture.nativeElement.querySelector('.tn-select-trigger') as HTMLElement;
+    trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+
+    const focused = document.querySelector('.tn-select-option.focused');
+    expect(focused?.classList.contains('tn-select-empty-option')).toBe(true);
+  });
+
+  it('should clear the selection with Enter on the empty option', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.selectOption('Apple');
+
+    const trigger = fixture.nativeElement.querySelector('.tn-select-trigger') as HTMLElement;
+    const press = (key: string) => {
+      trigger.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+      fixture.detectChanges();
+    };
+
+    press('ArrowDown'); // open, focus seeded at the selected option (Apple)
+    press('Home');      // jump to the empty option
+    press('Enter');
+
+    expect(await select.getDisplayText()).toBe('Select a fruit');
+    expect(hostComponent.selections).toEqual(['apple', null]);
   });
 });
