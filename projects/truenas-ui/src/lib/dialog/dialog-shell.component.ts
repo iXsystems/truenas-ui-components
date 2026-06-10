@@ -19,6 +19,22 @@ export class TnDialogShellComponent implements OnInit {
   title = input<string>('');
   showFullscreenButton = input<boolean>(false);
   /**
+   * Show the header close (X) button. Disable for dialogs that must not be
+   * dismissed from the chrome — e.g. a running job that can only be minimized.
+   */
+  showCloseButton = input<boolean>(true);
+  /**
+   * Hide the content section. Use when the body is projected through an
+   * always-present wrapper whose contents are conditional, so the section is
+   * never truly `:empty` (consumers cannot project from inside an `@if`, see
+   * the dialog docs). An empty section with no wrapper is hidden automatically
+   * via the `:empty` rule in the theme, so this input is only needed for the
+   * wrapper case.
+   */
+  hideContent = input<boolean>(false);
+  /** Hide the actions footer. Same wrapper-case rationale as {@link hideContent}. */
+  hideActions = input<boolean>(false);
+  /**
    * Optional semantic base that scopes the shell's chrome buttons. The close
    * and fullscreen buttons emit `button-close` / `button-fullscreen` by default,
    * or `button-close-<testId>` / `button-fullscreen-<testId>` when a base is

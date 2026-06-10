@@ -19,7 +19,10 @@ import { TnButtonComponent } from '../button/button.component';
     <tn-dialog-shell
       [title]="data?.title ?? 'Test Dialog'"
       [testId]="data?.testId"
-      [showFullscreenButton]="data?.showFullscreen ?? false">
+      [showFullscreenButton]="data?.showFullscreen ?? false"
+      [showCloseButton]="data?.showCloseButton ?? true"
+      [hideContent]="data?.hideContent ?? false"
+      [hideActions]="data?.hideActions ?? false">
       <p>{{ data?.content ?? 'Dialog content' }}</p>
       <div tnDialogAction>
         <tn-button
@@ -156,6 +159,39 @@ describe('TnDialogHarness', () => {
       await expect(dialog.toggleFullscreen()).rejects.toThrow(
         'Dialog does not have a fullscreen button',
       );
+    });
+  });
+
+  describe('slot visibility inputs', () => {
+    it('renders the close button by default', () => {
+      tnDialog.open(TestDialogComponent, { data: { title: 'Closable' } });
+      fixture.detectChanges();
+      expect(document.querySelector('.tn-dialog__close')).toBeTruthy();
+    });
+
+    it('omits the close button when showCloseButton is false', () => {
+      tnDialog.open(TestDialogComponent, { data: { title: 'Minimize only', showCloseButton: false } });
+      fixture.detectChanges();
+      expect(document.querySelector('.tn-dialog__close')).toBeNull();
+    });
+
+    it('marks the content section hidden when hideContent is true', () => {
+      tnDialog.open(TestDialogComponent, { data: { title: 'No body', hideContent: true } });
+      fixture.detectChanges();
+      expect(document.querySelector('.tn-dialog__content')?.classList).toContain('tn-dialog__content--hidden');
+    });
+
+    it('marks the actions footer hidden when hideActions is true', () => {
+      tnDialog.open(TestDialogComponent, { data: { title: 'No footer', hideActions: true } });
+      fixture.detectChanges();
+      expect(document.querySelector('.tn-dialog__actions')?.classList).toContain('tn-dialog__actions--hidden');
+    });
+
+    it('keeps both slots visible by default', () => {
+      tnDialog.open(TestDialogComponent, { data: { title: 'Default' } });
+      fixture.detectChanges();
+      expect(document.querySelector('.tn-dialog__content')?.classList).not.toContain('tn-dialog__content--hidden');
+      expect(document.querySelector('.tn-dialog__actions')?.classList).not.toContain('tn-dialog__actions--hidden');
     });
   });
 

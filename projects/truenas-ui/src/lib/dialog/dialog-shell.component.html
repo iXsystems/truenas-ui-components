@@ -11,15 +11,17 @@
       <span class="tn-dialog__fullscreen-icon" aria-hidden="true">{{ isFullscreen() ? '⤓' : '⤢' }}</span>
     </button>
   }
-  <button type="button" class="tn-dialog__close" aria-label="Close dialog" tnTestIdType="button" [tnTestId]="closeTestId()" (click)="close()">
-    <span class="tn-dialog__close-icon" aria-hidden="true">✕</span>
-  </button>
+  @if (showCloseButton()) {
+    <button type="button" class="tn-dialog__close" aria-label="Close dialog" tnTestIdType="button" [tnTestId]="closeTestId()" (click)="close()">
+      <span class="tn-dialog__close-icon" aria-hidden="true">✕</span>
+    </button>
+  }
 </header>
 
-<section class="tn-dialog__content" cdkDialogContent>
+<section class="tn-dialog__content" cdkDialogContent [class.tn-dialog__content--hidden]="hideContent()">
   <ng-content />
 </section>
 
-<footer class="tn-dialog__actions" cdkDialogActions>
+<footer class="tn-dialog__actions" cdkDialogActions [class.tn-dialog__actions--hidden]="hideActions()">
   <ng-content select="[tnDialogAction]" />
 </footer>
