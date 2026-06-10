@@ -34,6 +34,12 @@ interface ControlStateSnapshot {
 export class TnFormFieldComponent implements AfterContentInit {
   label = input<string>('');
   hint = input<string>('');
+  /**
+   * Renders the visual `*` required indicator next to the label. This is purely
+   * visual — pair it with the projected control's own `required` input (e.g.
+   * `tn-input`'s, which renders the native attribute) so assistive technology
+   * agrees with the visible label.
+   */
   required = input<boolean>(false);
   testId = input<TnTestIdValue>(undefined);
   subscriptSizing = input<SubscriptSizing>('dynamic');
