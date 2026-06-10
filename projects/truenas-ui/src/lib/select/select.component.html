@@ -46,8 +46,8 @@
 
     <!-- Options List -->
     <div class="tn-select-options">
-      <!-- Regular Options -->
-      @for (option of options(); track $index) {
+      <!-- Regular Options (preceded by the synthetic empty option when allowEmpty is set) -->
+      @for (option of displayOptions(); track $index) {
         <!-- Option activation lives on the trigger via aria-activedescendant; options have tabindex="-1" and never receive DOM focus. -->
         <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events -->
         <div
@@ -55,6 +55,7 @@
           role="option"
           tabindex="-1"
           tnTestIdType="option"
+          [class.tn-select-empty-option]="isEmptyOption(option)"
           [tnTestId]="optionTestIdParts(option)"
           [attr.id]="optionId(option)"
           [class.selected]="isOptionSelected(option)"
@@ -79,7 +80,7 @@
       <!-- Option Groups -->
       @for (group of optionGroups(); track $index; let isFirst = $first) {
         <!-- Group Separator (not shown before first group if we have regular options) -->
-        @if (!isFirst || options().length > 0) {
+        @if (!isFirst || displayOptions().length > 0) {
           <div
             class="tn-select-separator"
             role="separator">

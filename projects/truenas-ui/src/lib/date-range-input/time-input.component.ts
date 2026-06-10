@@ -89,9 +89,11 @@ export class TnTimeInputComponent implements ControlValueAccessor {
   }
 
   // Event handlers
-  onSelectionChange(value: string): void {
+  onSelectionChange(value: string | null): void {
+    // The inner select never sets allowEmpty, so `null` cannot occur here —
+    // the widened type only satisfies tn-select's `selectionChange` contract.
     this._value = value;
-    this.onChange(value);
+    this.onChange(value ?? '');
     this.onTouched();
   }
 }

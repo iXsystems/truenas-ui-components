@@ -1,7 +1,7 @@
 <div
   class="tn-input-container"
   [class.tn-input-container--has-prefix]="hasPrefixIcon()"
-  [class.tn-input-container--has-suffix]="hasSuffixIcon()"
+  [class.tn-input-container--has-suffix]="hasSuffixIcon() || hasPasswordToggle()"
 >
   <!-- Prefix icon -->
   @if (hasPrefixIcon()) {
@@ -26,8 +26,12 @@
       [attr.inputmode]="numericInputMode()"
       [attr.aria-label]="ariaLabel()"
       [attr.placeholder]="placeholder()"
+      [attr.autocomplete]="autocomplete()"
+      [attr.name]="name()"
       [tnTestId]="testId()"
       [disabled]="isDisabled()"
+      [readonly]="readonly()"
+      [required]="required()"
       (input)="onValueChange($event)"
       (blur)="onBlur()"
     />
@@ -43,9 +47,13 @@
       [value]="value"
       [attr.aria-label]="ariaLabel()"
       [attr.placeholder]="placeholder()"
+      [attr.autocomplete]="autocomplete()"
+      [attr.name]="name()"
       [tnTestId]="testId()"
       [rows]="rows()"
       [disabled]="isDisabled()"
+      [readonly]="readonly()"
+      [required]="required()"
       (input)="onValueChange($event)"
       (blur)="onBlur()"
     ></textarea>
@@ -56,6 +64,8 @@
     <button
       type="button"
       class="tn-input__suffix-action"
+      tnTestIdType="button"
+      [tnTestId]="suffixActionTestId()"
       [attr.aria-label]="suffixIconAriaLabel()"
       [disabled]="isDisabled()"
       (click)="onSuffixAction.emit($event)"
@@ -65,6 +75,23 @@
         [name]="suffixIcon()!"
         [library]="suffixIconLibrary()"
       />
+    </button>
+  }
+
+  <!-- Password visibility toggle. State is conveyed via the swapping
+       aria-label alone — no aria-pressed, which would contradict a label that
+       already names the action ("Hide password, pressed" is ambiguous). -->
+  @if (hasPasswordToggle()) {
+    <button
+      type="button"
+      class="tn-input__visibility-toggle"
+      tnTestIdType="button"
+      [tnTestId]="passwordToggleTestId()"
+      [attr.aria-label]="passwordVisible() ? 'Hide password' : 'Show password'"
+      [disabled]="isDisabled()"
+      (click)="togglePasswordVisibility()"
+    >
+      <tn-icon size="sm" aria-hidden="true" [name]="passwordToggleIcon()" />
     </button>
   }
 </div>

@@ -22,6 +22,10 @@ import type { IconLibraryType } from '../icon/icon.component';
     [rows]="rows()"
     [allowDecimals]="allowDecimals()"
     [ariaLabel]="ariaLabel()"
+    [autocomplete]="autocomplete()"
+    [name]="name()"
+    [readonly]="readonly()"
+    [required]="required()"
     [prefixIcon]="prefixIcon()"
     [prefixIconLibrary]="prefixIconLibrary()"
     [suffixIcon]="suffixIcon()"
@@ -38,6 +42,10 @@ class TestHostComponent {
   rows = signal(3);
   allowDecimals = signal(true);
   ariaLabel = signal<string | undefined>(undefined);
+  autocomplete = signal<string | undefined>(undefined);
+  name = signal<string | undefined>(undefined);
+  readonly = signal(false);
+  required = signal(false);
   prefixIcon = signal<string | undefined>(undefined);
   prefixIconLibrary = signal<IconLibraryType | undefined>(undefined);
   suffixIcon = signal<string | undefined>(undefined);
@@ -254,6 +262,36 @@ describe('TnInputHarness', () => {
     });
   });
 
+  describe('size type', () => {
+    beforeEach(() => {
+      hostComponent.inputType.set(InputType.Size);
+      fixture.detectChanges();
+    });
+
+    it('should read the displayed value as a byte count', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      await input.setValue('2 GiB');
+      expect(await input.getByteValue()).toBe(2 * 1024 ** 3);
+    });
+
+    it('should read an empty value as null', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getByteValue()).toBeNull();
+    });
+
+    it('should honor a custom default unit for a bare number', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      await input.setValue('200');
+      expect(await input.getByteValue('iec', 'KiB')).toBe(200 * 1024);
+    });
+
+    it('should read SI-standard values when told', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      await input.setValue('2 GB');
+      expect(await input.getByteValue('si')).toBe(2_000_000_000);
+    });
+  });
+
   describe('aria-label', () => {
     it('should return null when unset', async () => {
       const input = await loader.getHarness(TnInputHarness);
@@ -387,6 +425,58 @@ describe('TnInputHarness', () => {
     });
   });
 
+  describe('password visibility toggle', () => {
+    beforeEach(() => {
+      hostComponent.inputType.set(InputType.Password);
+      fixture.detectChanges();
+    });
+
+    it('should report the toggle on password fields', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.hasPasswordToggle()).toBe(true);
+    });
+
+    it('should not report the toggle on non-password fields', async () => {
+      hostComponent.inputType.set(InputType.PlainText);
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.hasPasswordToggle()).toBe(false);
+    });
+
+    it('should start masked and reveal/mask on toggle', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.isPasswordRevealed()).toBe(false);
+
+      await input.togglePasswordVisibility();
+      expect(await input.isPasswordRevealed()).toBe(true);
+
+      await input.togglePasswordVisibility();
+      expect(await input.isPasswordRevealed()).toBe(false);
+    });
+
+    it('should preserve the value across toggles', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      await input.setValue('hunter2');
+
+      await input.togglePasswordVisibility();
+      expect(await input.getValue()).toBe('hunter2');
+    });
+
+    it('should not confuse the toggle with a suffix action', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.hasSuffixAction()).toBe(false);
+    });
+
+    it('should throw when toggling a field without a toggle', async () => {
+      hostComponent.inputType.set(InputType.PlainText);
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness);
+      await expect(input.togglePasswordVisibility()).rejects.toThrow('No password visibility toggle found on this input.');
+    });
+  });
+
   describe('focus / blur', () => {
     it('should focus the input', async () => {
       const input = await loader.getHarness(TnInputHarness);
@@ -414,6 +504,63 @@ describe('TnInputHarness', () => {
 
       const activeEl = fixture.nativeElement.querySelector(':focus');
       expect(activeEl?.tagName).toBe('TEXTAREA');
+    });
+  });
+
+  describe('native attributes', () => {
+    it('gets the name and autocomplete attributes', async () => {
+      hostComponent.name.set('username');
+      hostComponent.autocomplete.set('username');
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getName()).toBe('username');
+      expect(await input.getAutocomplete()).toBe('username');
+    });
+
+    it('resolves null when name and autocomplete are unset', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getName()).toBeNull();
+      expect(await input.getAutocomplete()).toBeNull();
+    });
+
+    it('reports readonly and required state', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.isReadonly()).toBe(false);
+      expect(await input.isRequired()).toBe(false);
+
+      hostComponent.readonly.set(true);
+      hostComponent.required.set(true);
+      fixture.detectChanges();
+
+      expect(await input.isReadonly()).toBe(true);
+      expect(await input.isRequired()).toBe(true);
+    });
+
+    it('filters by name', async () => {
+      hostComponent.name.set('password');
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness.with({ name: 'password' }));
+      expect(await input.getName()).toBe('password');
+
+      const noMatch = await loader.getHarnessOrNull(TnInputHarness.with({ name: 'other' }));
+      expect(noMatch).toBeNull();
+    });
+
+    it('reads native attributes from the textarea when multiline', async () => {
+      hostComponent.multiline.set(true);
+      hostComponent.name.set('notes');
+      hostComponent.autocomplete.set('off');
+      hostComponent.readonly.set(true);
+      hostComponent.required.set(true);
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getName()).toBe('notes');
+      expect(await input.getAutocomplete()).toBe('off');
+      expect(await input.isReadonly()).toBe(true);
+      expect(await input.isRequired()).toBe(true);
     });
   });
 });

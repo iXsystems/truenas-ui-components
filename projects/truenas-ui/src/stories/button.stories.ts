@@ -25,6 +25,11 @@ const meta: Meta<TnButtonComponent> = {
       control: 'select',
       options: ['filled', 'outline'],
     },
+    type: {
+      control: 'select',
+      options: ['button', 'submit', 'reset'],
+      description: 'Native button type. Use "submit" for a form\'s save button so Enter in a field submits the form.',
+    },
     primary: {
       control: 'boolean',
     },
@@ -185,6 +190,45 @@ export const DisabledLink: Story = {
 
     await expect(link.getAttribute('aria-disabled')).toBe('true');
     await expect(link.hasAttribute('href')).toBe(false);
+  },
+};
+
+/**
+ * **Form submit.** `tn-button` renders `type="button"` by default, so it never
+ * submits an enclosing form. For a form's save button, set `type="submit"` —
+ * that is what makes pressing Enter in any form field fire the form's
+ * `(submit)`/`(ngSubmit)` handler. Wiring only `(onClick)` on the save button
+ * leaves Enter a no-op and the form's `(submit)` binding dead.
+ */
+export const FormSubmit: Story = {
+  args: { color: 'primary', variant: 'filled', label: 'Save', type: 'submit' },
+  decorators: [moduleMetadata({ imports: [TnButtonComponent] })],
+  render: (args) => ({
+    props: { ...args, onSubmit: (event: Event) => event.preventDefault() },
+    template: `
+      <form (submit)="onSubmit($event)">
+        <input name="username" placeholder="Username" style="display: block; margin-bottom: 8px;" />
+        <tn-button [color]="color" [variant]="variant" [label]="label" [type]="type" />
+      </form>
+    `,
+  }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const form = canvasElement.querySelector('form')!;
+    let submitCount = 0;
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      submitCount++;
+    });
+
+    // Enter inside a field submits the form because the save button is type="submit"
+    const field = canvas.getByPlaceholderText('Username');
+    await userEvent.type(field, 'admin{enter}');
+    await expect(submitCount).toBe(1);
+
+    // Clicking the save button submits too
+    await userEvent.click(canvas.getByRole('button', { name: 'Save' }));
+    await expect(submitCount).toBe(2);
   },
 };
 

@@ -4,6 +4,7 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TnInputComponent } from './input.component';
+import { parseSize } from './size-conversion';
 import { InputType } from '../enums/input-type.enum';
 import { TnIconTesting } from '../icon/icon-testing';
 
@@ -111,6 +112,202 @@ describe('TnInputComponent', () => {
 
       const textarea = fixture.nativeElement.querySelector('textarea');
       expect(textarea.getAttribute('aria-label')).toBe('Description');
+    });
+
+    it('should not render native attributes by default', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      expect(input.hasAttribute('autocomplete')).toBe(false);
+      expect(input.hasAttribute('name')).toBe(false);
+      expect(input.readOnly).toBe(false);
+      expect(input.required).toBe(false);
+    });
+
+    it('should apply autocomplete and name when set', () => {
+      fixture.componentRef.setInput('autocomplete', 'current-password');
+      fixture.componentRef.setInput('name', 'password');
+      fixture.detectChanges();
+
+      const input = fixture.nativeElement.querySelector('input');
+      expect(input.getAttribute('autocomplete')).toBe('current-password');
+      expect(input.getAttribute('name')).toBe('password');
+    });
+
+    it('should apply readonly when set', () => {
+      fixture.componentRef.setInput('readonly', true);
+      fixture.detectChanges();
+
+      const input = fixture.nativeElement.querySelector('input');
+      expect(input.readOnly).toBe(true);
+      // Readonly is not disabled: the field stays focusable and submittable.
+      expect(input.disabled).toBe(false);
+    });
+
+    it('should apply required when set', () => {
+      fixture.componentRef.setInput('required', true);
+      fixture.detectChanges();
+
+      const input = fixture.nativeElement.querySelector('input');
+      expect(input.required).toBe(true);
+    });
+
+    it('should apply native attributes to the textarea when multiline', () => {
+      fixture.componentRef.setInput('multiline', true);
+      fixture.componentRef.setInput('autocomplete', 'off');
+      fixture.componentRef.setInput('name', 'notes');
+      fixture.componentRef.setInput('readonly', true);
+      fixture.componentRef.setInput('required', true);
+      fixture.detectChanges();
+
+      const textarea = fixture.nativeElement.querySelector('textarea');
+      expect(textarea.getAttribute('autocomplete')).toBe('off');
+      expect(textarea.getAttribute('name')).toBe('notes');
+      expect(textarea.readOnly).toBe(true);
+      expect(textarea.required).toBe(true);
+    });
+  });
+
+  describe('password visibility toggle', () => {
+    const getToggle = (): HTMLButtonElement | null =>
+      fixture.nativeElement.querySelector('.tn-input__visibility-toggle');
+
+    beforeEach(() => {
+      fixture.componentRef.setInput('inputType', InputType.Password);
+      fixture.detectChanges();
+    });
+
+    it('should render the toggle on password fields', () => {
+      expect(getToggle()).toBeTruthy();
+    });
+
+    it('should not render the toggle on non-password fields', () => {
+      fixture.componentRef.setInput('inputType', InputType.PlainText);
+      fixture.detectChanges();
+
+      expect(getToggle()).toBeNull();
+    });
+
+    it('should not render the toggle when showPasswordToggle is false', () => {
+      fixture.componentRef.setInput('showPasswordToggle', false);
+      fixture.detectChanges();
+
+      expect(getToggle()).toBeNull();
+    });
+
+    it('should yield to a consumer-provided suffix icon', () => {
+      fixture.componentRef.setInput('suffixIcon', 'close-circle');
+      fixture.detectChanges();
+
+      expect(getToggle()).toBeNull();
+      expect(fixture.nativeElement.querySelector('.tn-input__suffix-action')).toBeTruthy();
+    });
+
+    it('should come back masked when the field leaves and re-enters password mode', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      getToggle()!.click();
+      fixture.detectChanges();
+      expect(input.type).toBe('text');
+
+      fixture.componentRef.setInput('inputType', InputType.PlainText);
+      fixture.detectChanges();
+      fixture.componentRef.setInput('inputType', InputType.Password);
+      fixture.detectChanges();
+
+      expect(input.type).toBe('password');
+      expect(getToggle()!.getAttribute('aria-label')).toBe('Show password');
+    });
+
+    it('should re-mask when showPasswordToggle is turned off while revealed', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      getToggle()!.click();
+      fixture.detectChanges();
+      expect(input.type).toBe('text');
+
+      fixture.componentRef.setInput('showPasswordToggle', false);
+      fixture.detectChanges();
+
+      expect(getToggle()).toBeNull();
+      expect(input.type).toBe('password');
+    });
+
+    it('should re-mask when a suffix icon replaces the toggle while revealed', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      getToggle()!.click();
+      fixture.detectChanges();
+      expect(input.type).toBe('text');
+
+      fixture.componentRef.setInput('suffixIcon', 'close-circle');
+      fixture.detectChanges();
+
+      expect(getToggle()).toBeNull();
+      expect(input.type).toBe('password');
+    });
+
+    it('should re-mask when the field is disabled while revealed', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      getToggle()!.click();
+      fixture.detectChanges();
+      expect(input.type).toBe('text');
+
+      fixture.componentRef.setInput('disabled', true);
+      fixture.detectChanges();
+
+      expect(input.type).toBe('password');
+    });
+
+    it('should flip the input type between password and text on click', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      expect(input.type).toBe('password');
+
+      getToggle()!.click();
+      fixture.detectChanges();
+      expect(input.type).toBe('text');
+
+      getToggle()!.click();
+      fixture.detectChanges();
+      expect(input.type).toBe('password');
+    });
+
+    it('should reflect the state in the aria-label, without aria-pressed', () => {
+      const toggle = getToggle()!;
+      expect(toggle.getAttribute('aria-label')).toBe('Show password');
+      // No aria-pressed: it would contradict a label that names the action.
+      expect(toggle.hasAttribute('aria-pressed')).toBe(false);
+
+      toggle.click();
+      fixture.detectChanges();
+      expect(toggle.getAttribute('aria-label')).toBe('Hide password');
+      expect(toggle.hasAttribute('aria-pressed')).toBe(false);
+    });
+
+    it('should emit a role-first test id scoped by the testId base', () => {
+      fixture.componentRef.setInput('testId', 'login-password');
+      fixture.detectChanges();
+
+      expect(getToggle()!.getAttribute('data-testid')).toBe('button-toggle-password-login-password');
+    });
+
+    it('should emit the bare role test id when no testId is set', () => {
+      expect(getToggle()!.getAttribute('data-testid')).toBe('button-toggle-password');
+    });
+
+    it('should disable the toggle with the input', () => {
+      fixture.componentRef.setInput('disabled', true);
+      fixture.detectChanges();
+
+      expect(getToggle()!.disabled).toBe(true);
+    });
+
+    it('should preserve the value while toggling', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = 'hunter2';
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      getToggle()!.click();
+      fixture.detectChanges();
+
+      expect(input.value).toBe('hunter2');
+      expect(input.type).toBe('text');
     });
   });
 
@@ -292,6 +489,142 @@ describe('TnInputComponent', () => {
     });
   });
 
+  describe('size type', () => {
+    beforeEach(() => {
+      fixture.componentRef.setInput('inputType', InputType.Size);
+      fixture.detectChanges();
+    });
+
+    it('should render a text input (accepts unit letters) with no numeric inputmode', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      expect(input.type).toBe('text');
+      expect(input.hasAttribute('inputmode')).toBe(false);
+    });
+
+    it('should display a byte-count model as a human-readable string', () => {
+      component.writeValue(2 * 1024 ** 3);
+      expect(component['value']).toBe('2 GiB');
+    });
+
+    it('should display empty string for null/undefined', () => {
+      component.writeValue(null);
+      expect(component['value']).toBe('');
+      component.writeValue(undefined);
+      expect(component['value']).toBe('');
+    });
+
+    it('should emit a byte count as the user types', () => {
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = '2 GiB';
+      input.dispatchEvent(new Event('input'));
+
+      expect(changeSpy).toHaveBeenCalledWith(2 * 1024 ** 3);
+    });
+
+    it('should keep the raw text in the field while typing', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = '2 gi';
+      input.dispatchEvent(new Event('input'));
+
+      expect(component['value']).toBe('2 gi');
+    });
+
+    it('should emit null for unparseable input (not 0)', () => {
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = 'abc';
+      input.dispatchEvent(new Event('input'));
+
+      expect(changeSpy).toHaveBeenCalledWith(null);
+    });
+
+    it('should assume the configured default unit for a bare number', () => {
+      fixture.componentRef.setInput('sizeDefaultUnit', 'KiB');
+      fixture.detectChanges();
+
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = '200';
+      input.dispatchEvent(new Event('input'));
+
+      expect(changeSpy).toHaveBeenCalledWith(200 * 1024);
+    });
+
+    it('should canonicalize the display on blur', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = '2048 KiB';
+      input.dispatchEvent(new Event('input'));
+      input.dispatchEvent(new Event('blur'));
+
+      expect(component['value']).toBe('2 MiB');
+    });
+
+    it('should re-sync the model to the canonicalized display on blur (lossy rounding)', () => {
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = fixture.nativeElement.querySelector('input');
+      // 1.755 GiB does not round-trip through a 2-decimal display.
+      input.value = '1.755 GiB';
+      input.dispatchEvent(new Event('input'));
+      input.dispatchEvent(new Event('blur'));
+
+      const display = component['value'];
+      const model = changeSpy.mock.calls.at(-1)![0];
+      // The invariant that matters: re-parsing what the user sees yields the model.
+      expect(parseSize(display, 'MiB', 'iec')).toBe(model);
+      // ...and the display is itself the canonical render of that model (stable).
+      expect(display).toBe(component['value']);
+    });
+
+    it('should not emit on blur when a pre-filled value is unchanged (no spurious dirty)', () => {
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+      // Pre-populate from the model (as a consumer form would), then tab in/out
+      // with no edit. The canonical form equals the displayed text, so the control
+      // must stay pristine — no onChange.
+      component.writeValue(200 * 1024 ** 4);
+
+      const input = fixture.nativeElement.querySelector('input');
+      input.dispatchEvent(new Event('blur'));
+
+      expect(changeSpy).not.toHaveBeenCalled();
+      expect(component['value']).toBe('200 TiB');
+    });
+
+    it('should leave unparseable text untouched on blur', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = 'not a size';
+      input.dispatchEvent(new Event('input'));
+      input.dispatchEvent(new Event('blur'));
+
+      expect(component['value']).toBe('not a size');
+    });
+
+    it('should use the SI standard when configured', () => {
+      fixture.componentRef.setInput('sizeStandard', 'si');
+      fixture.detectChanges();
+
+      component.writeValue(2_000_000_000);
+      expect(component['value']).toBe('2 GB');
+    });
+
+    it('should not render a textarea even when multiline is set', () => {
+      fixture.componentRef.setInput('multiline', true);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('textarea')).toBeNull();
+      expect(fixture.nativeElement.querySelector('input')).toBeTruthy();
+    });
+  });
+
   describe('prefix icon', () => {
     it('should not render prefix icon by default', () => {
       expect(fixture.nativeElement.querySelector('.tn-input__prefix-icon')).toBeNull();
@@ -341,6 +674,23 @@ describe('TnInputComponent', () => {
       const icon = button.querySelector('tn-icon');
       expect(icon.getAttribute('name')).toBe('close-circle');
       expect(icon.getAttribute('library')).toBe('mdi');
+    });
+
+    it('should not render a test id on the suffix button by default', () => {
+      fixture.componentRef.setInput('suffixIcon', 'close-circle');
+      fixture.detectChanges();
+
+      const button = fixture.nativeElement.querySelector('.tn-input__suffix-action');
+      expect(button.hasAttribute('data-testid')).toBe(false);
+    });
+
+    it('should apply data-testid to the suffix button with the library-owned "button-" prefix', () => {
+      fixture.componentRef.setInput('suffixIcon', 'eye');
+      fixture.componentRef.setInput('suffixActionTestId', 'toggle-password');
+      fixture.detectChanges();
+
+      const button = fixture.nativeElement.querySelector('.tn-input__suffix-action');
+      expect(button.getAttribute('data-testid')).toBe('button-toggle-password');
     });
 
     it('should add has-suffix class to container', () => {
@@ -595,5 +945,74 @@ describe('TnInputComponent number type with consumer validators', () => {
 
     expect(hostComponent.control.valid).toBe(false);
     expect(hostComponent.control.errors).toEqual({ max: { max: 50, actual: 60 } });
+  });
+});
+
+
+@Component({
+  selector: 'tn-test-size-cva-host',
+  standalone: true,
+  imports: [TnInputComponent, ReactiveFormsModule],
+  template: `<tn-input [inputType]="sizeType" [formControl]="control" />`
+})
+class TestSizeCvaHostComponent {
+  sizeType = InputType.Size;
+  // The form model holds a byte count; the field shows a human-readable string.
+  control = new FormControl<number | null>(null);
+}
+
+
+describe('TnInputComponent size type with FormControl', () => {
+  let fixture: ComponentFixture<TestSizeCvaHostComponent>;
+  let hostComponent: TestSizeCvaHostComponent;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TestSizeCvaHostComponent],
+      providers: [TnIconTesting.jest.providers()],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestSizeCvaHostComponent);
+    hostComponent = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should put a byte count in the form model when the user types a size', () => {
+    const input = fixture.nativeElement.querySelector('input');
+    input.value = '2 GiB';
+    input.dispatchEvent(new Event('input'));
+
+    expect(hostComponent.control.value).toBe(2 * 1024 ** 3);
+    expect(typeof hostComponent.control.value).toBe('number');
+  });
+
+  it('should display a byte-count model as a human-readable string', () => {
+    hostComponent.control.setValue(200 * 1024 ** 4);
+    fixture.detectChanges();
+
+    const input = fixture.nativeElement.querySelector('input');
+    expect(input.value).toBe('200 TiB');
+  });
+
+  it('should set the form model to null when the field is cleared', () => {
+    const input = fixture.nativeElement.querySelector('input');
+    input.value = '2 GiB';
+    input.dispatchEvent(new Event('input'));
+    input.value = '';
+    input.dispatchEvent(new Event('input'));
+
+    expect(hostComponent.control.value).toBeNull();
+  });
+
+  it('should keep the form model in lockstep with the canonicalized display on blur', () => {
+    const input = fixture.nativeElement.querySelector('input');
+    input.value = '1.755 GiB';
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new Event('blur'));
+    // Flush the [value] binding so the DOM reflects the canonicalized display.
+    fixture.detectChanges();
+
+    // What the user sees parses back to exactly what's stored — no divergence.
+    expect(parseSize(input.value, 'MiB', 'iec')).toBe(hostComponent.control.value);
   });
 });
