@@ -305,6 +305,8 @@ describe('TnSelectHarness', () => {
       await expect(select.clear()).rejects.toThrow(
         'Select has no empty option — set `allowEmpty` to make it clearable.'
       );
+      // The probe open must not leak past the error.
+      expect(await select.isOpen()).toBe(false);
     });
   });
 

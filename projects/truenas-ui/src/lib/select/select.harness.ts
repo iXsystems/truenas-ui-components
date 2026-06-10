@@ -200,12 +200,17 @@ export class TnSelectHarness extends ComponentHarness {
    * ```
    */
   async clear(): Promise<void> {
+    // Options only render into the overlay once the dropdown is open, so the
+    // empty option can't be checked for from the closed state.
     await this.open();
     // Dropdown panel is rendered in a CDK overlay (outside the host element),
     // so we search the document root rather than the harness-local subtree.
     const emptyOption = await this.documentRootLocatorFactory()
       .locatorForOptional('.tn-select-empty-option')();
     if (!emptyOption) {
+      // Close again so the misuse error doesn't leave the dropdown open as a
+      // side effect for tests that catch it and keep asserting.
+      await this.close();
       throw new Error('Select has no empty option — set `allowEmpty` to make it clearable.');
     }
     await emptyOption.click();
