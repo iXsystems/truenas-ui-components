@@ -48,6 +48,35 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
   ariaLabel = input<string | undefined>(undefined);
 
   /**
+   * Native `autocomplete` hint rendered on the input/textarea. Pass the standard
+   * autofill tokens (`'username'`, `'current-password'`, `'new-password'`,
+   * `'one-time-code'`, ...) so browsers and password managers can identify and
+   * fill the field.
+   */
+  autocomplete = input<string | undefined>(undefined);
+
+  /**
+   * Native `name` attribute rendered on the input/textarea. Browsers and password
+   * managers use it to identify the field; typically mirrors the form control name.
+   */
+  name = input<string | undefined>(undefined);
+
+  /**
+   * Renders the native `readonly` attribute: the value is visible, focusable and
+   * selectable but not editable. Unlike `disabled`, a readonly field stays in the
+   * tab order and its form control stays enabled.
+   */
+  readonly = input<boolean>(false);
+
+  /**
+   * Renders the native `required` attribute so browsers and assistive technology
+   * expose the field as required. Validation itself stays with the consumer's form
+   * validators (e.g. `Validators.required`); forms that fully own validation UX
+   * should also set `novalidate` to suppress native submit blocking.
+   */
+  required = input<boolean>(false);
+
+  /**
    * Integer/decimal switch — only meaningful when `inputType` is `InputType.Number`.
    *
    * - **`true` (default) → decimal mode**: accepts a single `.` and emits via
@@ -86,6 +115,14 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
   suffixIcon = input<string | undefined>(undefined);
   suffixIconLibrary = input<IconLibraryType | undefined>(undefined);
   suffixIconAriaLabel = input<string | undefined>(undefined);
+
+  /**
+   * Semantic test-id base for the suffix-action button. The library prepends the
+   * element type (`button`) and renders the result under whichever attribute name
+   * is configured via `TN_TEST_ATTR` (default `data-testid`) — e.g.
+   * `suffixActionTestId="toggle-password"` → `button-toggle-password`.
+   */
+  suffixActionTestId = input<TnTestIdValue>(undefined);
 
   onSuffixAction = output<MouseEvent>();
 
