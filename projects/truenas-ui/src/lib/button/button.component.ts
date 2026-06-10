@@ -21,6 +21,14 @@ export class TnButtonComponent implements AfterViewInit {
   label = input<string>('Button');
   disabled = input<boolean>(false);
   /**
+   * Native `type` of the rendered `<button>`. Defaults to `button` so stray
+   * clicks never submit an enclosing form. Set to `submit` for a form's save
+   * button — this is what makes pressing Enter in a form field fire the
+   * form's `(submit)`/`(ngSubmit)` handler; a `(onClick)` binding alone does
+   * not. Ignored in anchor mode (`href`/`routerLink`).
+   */
+  type = input<'button' | 'submit' | 'reset'>('button');
+  /**
    * Semantic test-id base for the rendered element. The library prepends the
    * element type (`button`) and renders the result under whichever attribute
    * name is configured via `TN_TEST_ATTR` (default `data-testid`) — e.g.

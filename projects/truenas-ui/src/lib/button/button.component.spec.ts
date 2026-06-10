@@ -111,6 +111,35 @@ describe('TnButtonComponent', () => {
     });
   });
 
+  describe('type', () => {
+    it('defaults to type="button" so it never submits an enclosing form by accident', () => {
+      const button = fixture.nativeElement.querySelector('button');
+      expect(button.getAttribute('type')).toBe('button');
+    });
+
+    it('renders type="submit" when requested', () => {
+      fixture.componentRef.setInput('type', 'submit');
+      fixture.detectChanges();
+      const button = fixture.nativeElement.querySelector('button');
+      expect(button.getAttribute('type')).toBe('submit');
+    });
+
+    it('submits an enclosing form when a submit-typed button is clicked', () => {
+      const form = document.createElement('form');
+      form.appendChild(fixture.nativeElement);
+      document.body.appendChild(form);
+      const submitSpy = jest.fn((event: Event) => event.preventDefault());
+      form.addEventListener('submit', submitSpy);
+
+      fixture.componentRef.setInput('type', 'submit');
+      fixture.detectChanges();
+      fixture.nativeElement.querySelector('button').click();
+
+      expect(submitSpy).toHaveBeenCalledTimes(1);
+      form.remove();
+    });
+  });
+
   describe('onClick event', () => {
     it('should emit onClick event when clicked', () => {
       const clickSpy = jest.fn();
