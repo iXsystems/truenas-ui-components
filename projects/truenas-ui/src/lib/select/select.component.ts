@@ -53,6 +53,17 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    * with i18n requirements can pass a translated string.
    */
   noOptionsLabel = input<string>('No options available');
+  /**
+   * When `true` (single-select mode only), prepends a synthetic "empty"
+   * option to the dropdown so users can unset a chosen value: picking it
+   * resets the selection to `null`, shows the placeholder again, and emits
+   * `null` via `selectionChange` (and to any bound form control). Mirrors
+   * webui ix-select's `--` option. Ignored when `multiple` is set — there,
+   * values are cleared by toggling them off individually.
+   */
+  allowEmpty = input<boolean>(false);
+  /** Label of the empty option rendered when `allowEmpty` is set. */
+  emptyLabel = input<string>('--');
   disabled = input<boolean>(false);
   testId = input<TnTestIdValue>(undefined);
   multiple = input<boolean>(false);
@@ -85,7 +96,11 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    */
   compareWith = input<(a: T | null, b: T | null) => boolean>();
 
-  selectionChange = output<T>();
+  /**
+   * Emits the picked value on each selection in single mode. Emits `null`
+   * when the user picks the `allowEmpty` empty option to clear the field.
+   */
+  selectionChange = output<T | null>();
   /** Emits the full array of selected values after each toggle in multiple mode. */
   multiSelectionChange = output<T[]>();
 
@@ -115,6 +130,28 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
   /**
+   * The synthetic clear-selection option (`allowEmpty`, single mode only).
+   * Its value is `null` cast to `T` so it flows through the same selection
+   * path as real options — `selectedValue`/`writeValue` already model "no
+   * selection" as `null`, so picking it clears the field for free.
+   */
+  protected emptyOption = computed<TnSelectOption<T> | null>(() => {
+    if (!this.allowEmpty() || this.multiple()) {return null;}
+    return { value: null as unknown as T, label: this.emptyLabel() };
+  });
+
+  /** Ungrouped options as rendered: the empty option (when enabled) first. */
+  protected displayOptions = computed<TnSelectOption<T>[]>(() => {
+    const empty = this.emptyOption();
+    return empty ? [empty, ...this.options()] : this.options();
+  });
+
+  /** Whether `option` is the synthetic `allowEmpty` clear option. */
+  protected isEmptyOption(option: TnSelectOption<T>): boolean {
+    return option === this.emptyOption();
+  }
+
+  /**
    * Selectable, non-disabled options in display order (regular options first,
    * then groups). Used by keyboard navigation so we can skip disabled
    * entries and group headers without a separate filter pass.
@@ -123,7 +160,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     const result: { option: TnSelectOption<T>; id: string }[] = [];
     const baseId = `tn-select-opt-${this.idNamespace()}`;
     let i = 0;
-    for (const opt of this.options()) {
+    for (const opt of this.displayOptions()) {
       if (!opt.disabled) {
         result.push({ option: opt, id: `${baseId}-${i}` });
       }
@@ -169,6 +206,12 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    * `value`, else its `label`.
    */
   protected optionTestIdParts(option: TnSelectOption<T>): (string | number | null | undefined)[] {
+    // The synthetic empty option gets a fixed `empty` discriminator — its
+    // label (`--` by default) would be stripped entirely by kebab
+    // normalization, leaving a non-unique id.
+    if (this.isEmptyOption(option)) {
+      return scopeTestId(this.testId(), 'empty');
+    }
     const extractor = this.optionTestIdKey();
     let key: string | number | null | undefined;
     if (extractor) {
@@ -244,6 +287,10 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
         this.compareValues(x.option.value, selected),
       );
       this.focusedIndex.set(idx);
+    } else if (this.emptyOption()) {
+      // A cleared value means the empty option (always first) is the current
+      // selection — seed keyboard focus there.
+      this.focusedIndex.set(0);
     } else {
       this.focusedIndex.set(-1);
     }
