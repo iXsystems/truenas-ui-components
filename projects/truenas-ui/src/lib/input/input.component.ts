@@ -1,9 +1,10 @@
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
 import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
-import { Component, viewChild, inject, input, output, computed, signal, forwardRef } from '@angular/core';
+import { Component, viewChild, inject, input, output, computed, signal, linkedSignal, forwardRef } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { InputType } from '../enums/input-type.enum';
+import { tnIconMarker } from '../icon/icon-marker';
 import type { IconLibraryType } from '../icon/icon.component';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
@@ -114,6 +115,15 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
    */
   sizeRound = input<number>(2);
 
+  /**
+   * Whether a `Password` field renders the built-in visibility toggle — the eye
+   * button that switches the field between masked and plain-text display.
+   * Defaults to true; set false for secrets that must never be revealed.
+   * Setting `suffixIcon` suppresses the toggle automatically (a custom suffix
+   * control replaces it). Ignored unless `inputType` is `Password`.
+   */
+  showPasswordToggle = input<boolean>(true);
+
   // Icon inputs
   prefixIcon = input<string | undefined>(undefined);
   prefixIconLibrary = input<IconLibraryType | undefined>(undefined);
@@ -140,8 +150,26 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
   isSize = computed(() => this.inputType() === InputType.Size);
   /** True when the field only accepts whole numbers (i.e. `allowDecimals` is false). */
   integerOnly = computed(() => !this.allowDecimals());
-  /** The `type` attribute actually rendered. Number and size modes use a text input: number avoids the native type="number" footguns, size must accept unit letters. */
-  resolvedType = computed(() => (this.isNumeric() || this.isSize() ? InputType.PlainText : this.inputType()));
+  /** True when the field is a password field. */
+  isPassword = computed(() => this.inputType() === InputType.Password);
+  /**
+   * Whether the password is currently revealed. Not exposed as an input so a
+   * reveal is always an explicit user gesture, and linked to the toggle's own
+   * availability so a revealed value never outlives the control that revealed
+   * it: whenever the toggle goes away (the field leaves password mode,
+   * `showPasswordToggle` flips off, a `suffixIcon` replaces it) or the field
+   * is disabled, the field snaps back to masked.
+   */
+  protected passwordVisible = linkedSignal({
+    source: () => this.hasPasswordToggle() && !this.isDisabled(),
+    computation: () => false,
+  });
+  /** The `type` attribute actually rendered. Number and size modes use a text input: number avoids the native type="number" footguns, size must accept unit letters. A revealed password renders as text — flipping the type attribute is the standard reveal mechanism and preserves value and caret. */
+  resolvedType = computed(() => {
+    if (this.isNumeric() || this.isSize()) {return InputType.PlainText;}
+    if (this.isPassword() && this.passwordVisible()) {return InputType.PlainText;}
+    return this.inputType();
+  });
   /** `inputmode` hint: numeric keypad for integers, decimal keypad otherwise. Null (omitted) outside number mode — size fields accept unit letters, so they keep the full keyboard. */
   numericInputMode = computed<'numeric' | 'decimal' | null>(() => {
     if (!this.isNumeric()) {return null;}
@@ -149,6 +177,34 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
   });
   /** Number and size modes are always single-line; they win over `multiline` if both are set. */
   showTextarea = computed(() => this.multiline() && !this.isNumeric() && !this.isSize());
+  /**
+   * The visibility toggle renders only on single-line password fields (a
+   * password+multiline combo renders a textarea, which has no `type` to flip),
+   * and yields to a consumer-provided `suffixIcon` — a custom suffix control
+   * replaces the built-in toggle rather than stacking a second button.
+   */
+  protected hasPasswordToggle = computed(() =>
+    this.isPassword() && this.showPasswordToggle() && !this.showTextarea() && !this.hasSuffixIcon()
+  );
+  /**
+   * Icon for the visibility toggle, mirroring the field's current state: a
+   * slashed eye while masked, an open eye while revealed. The literal
+   * `tnIconMarker` calls double as build-time markers that pull both icons
+   * into the sprite.
+   */
+  protected passwordToggleIcon = computed(() =>
+    this.passwordVisible() ? tnIconMarker('eye', 'mdi') : tnIconMarker('eye-off', 'mdi')
+  );
+  /**
+   * Role-first test-id segments for the visibility toggle:
+   * `button-toggle-password[-<testId>]`. The toggle is fixed field chrome, so
+   * the role leads (matching the dialog-shell close/fullscreen convention) and
+   * automation can target every password toggle with one prefix selector.
+   */
+  protected passwordToggleTestId = computed<(string | number | null | undefined)[]>(() => {
+    const base = this.testId();
+    return ['toggle-password', ...(Array.isArray(base) ? base : [base])];
+  });
 
   // Unique per instance: a hard-coded id produced duplicate ids when multiple
   // tn-inputs share a page (invalid HTML, and it breaks any future label `for=`,
@@ -271,6 +327,10 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
       }
     }
     this.onTouched();
+  }
+
+  protected togglePasswordVisibility(): void {
+    this.passwordVisible.update((visible) => !visible);
   }
 
   /** Strips any character that can't appear in the current numeric mode (single leading '-', single '.' for decimals). */

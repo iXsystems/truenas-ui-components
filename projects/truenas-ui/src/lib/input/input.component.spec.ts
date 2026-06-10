@@ -166,6 +166,151 @@ describe('TnInputComponent', () => {
     });
   });
 
+  describe('password visibility toggle', () => {
+    const getToggle = (): HTMLButtonElement | null =>
+      fixture.nativeElement.querySelector('.tn-input__visibility-toggle');
+
+    beforeEach(() => {
+      fixture.componentRef.setInput('inputType', InputType.Password);
+      fixture.detectChanges();
+    });
+
+    it('should render the toggle on password fields', () => {
+      expect(getToggle()).toBeTruthy();
+    });
+
+    it('should not render the toggle on non-password fields', () => {
+      fixture.componentRef.setInput('inputType', InputType.PlainText);
+      fixture.detectChanges();
+
+      expect(getToggle()).toBeNull();
+    });
+
+    it('should not render the toggle when showPasswordToggle is false', () => {
+      fixture.componentRef.setInput('showPasswordToggle', false);
+      fixture.detectChanges();
+
+      expect(getToggle()).toBeNull();
+    });
+
+    it('should yield to a consumer-provided suffix icon', () => {
+      fixture.componentRef.setInput('suffixIcon', 'close-circle');
+      fixture.detectChanges();
+
+      expect(getToggle()).toBeNull();
+      expect(fixture.nativeElement.querySelector('.tn-input__suffix-action')).toBeTruthy();
+    });
+
+    it('should come back masked when the field leaves and re-enters password mode', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      getToggle()!.click();
+      fixture.detectChanges();
+      expect(input.type).toBe('text');
+
+      fixture.componentRef.setInput('inputType', InputType.PlainText);
+      fixture.detectChanges();
+      fixture.componentRef.setInput('inputType', InputType.Password);
+      fixture.detectChanges();
+
+      expect(input.type).toBe('password');
+      expect(getToggle()!.getAttribute('aria-label')).toBe('Show password');
+    });
+
+    it('should re-mask when showPasswordToggle is turned off while revealed', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      getToggle()!.click();
+      fixture.detectChanges();
+      expect(input.type).toBe('text');
+
+      fixture.componentRef.setInput('showPasswordToggle', false);
+      fixture.detectChanges();
+
+      expect(getToggle()).toBeNull();
+      expect(input.type).toBe('password');
+    });
+
+    it('should re-mask when a suffix icon replaces the toggle while revealed', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      getToggle()!.click();
+      fixture.detectChanges();
+      expect(input.type).toBe('text');
+
+      fixture.componentRef.setInput('suffixIcon', 'close-circle');
+      fixture.detectChanges();
+
+      expect(getToggle()).toBeNull();
+      expect(input.type).toBe('password');
+    });
+
+    it('should re-mask when the field is disabled while revealed', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      getToggle()!.click();
+      fixture.detectChanges();
+      expect(input.type).toBe('text');
+
+      fixture.componentRef.setInput('disabled', true);
+      fixture.detectChanges();
+
+      expect(input.type).toBe('password');
+    });
+
+    it('should flip the input type between password and text on click', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      expect(input.type).toBe('password');
+
+      getToggle()!.click();
+      fixture.detectChanges();
+      expect(input.type).toBe('text');
+
+      getToggle()!.click();
+      fixture.detectChanges();
+      expect(input.type).toBe('password');
+    });
+
+    it('should reflect the state in the aria-label, without aria-pressed', () => {
+      const toggle = getToggle()!;
+      expect(toggle.getAttribute('aria-label')).toBe('Show password');
+      // No aria-pressed: it would contradict a label that names the action.
+      expect(toggle.hasAttribute('aria-pressed')).toBe(false);
+
+      toggle.click();
+      fixture.detectChanges();
+      expect(toggle.getAttribute('aria-label')).toBe('Hide password');
+      expect(toggle.hasAttribute('aria-pressed')).toBe(false);
+    });
+
+    it('should emit a role-first test id scoped by the testId base', () => {
+      fixture.componentRef.setInput('testId', 'login-password');
+      fixture.detectChanges();
+
+      expect(getToggle()!.getAttribute('data-testid')).toBe('button-toggle-password-login-password');
+    });
+
+    it('should emit the bare role test id when no testId is set', () => {
+      expect(getToggle()!.getAttribute('data-testid')).toBe('button-toggle-password');
+    });
+
+    it('should disable the toggle with the input', () => {
+      fixture.componentRef.setInput('disabled', true);
+      fixture.detectChanges();
+
+      expect(getToggle()!.disabled).toBe(true);
+    });
+
+    it('should preserve the value while toggling', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = 'hunter2';
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      getToggle()!.click();
+      fixture.detectChanges();
+
+      expect(input.value).toBe('hunter2');
+      expect(input.type).toBe('text');
+    });
+  });
+
   describe('value changes', () => {
     it('should update value on input event', () => {
       const input = fixture.nativeElement.querySelector('input');
