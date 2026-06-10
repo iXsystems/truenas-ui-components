@@ -77,8 +77,10 @@
   pointer-events: none;
 }
 
-// Suffix action button
-.tn-input__suffix-action {
+// Suffix action button & password visibility toggle (distinct classes so
+// tests/harnesses can target each, same visual treatment)
+.tn-input__suffix-action,
+.tn-input__visibility-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -117,7 +119,8 @@
 // Accessibility improvements
 @media (prefers-reduced-motion: reduce) {
   .tn-input-container,
-  .tn-input__suffix-action {
+  .tn-input__suffix-action,
+  .tn-input__visibility-toggle {
     transition: none;
   }
 }

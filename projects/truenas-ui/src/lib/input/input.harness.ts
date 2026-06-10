@@ -34,6 +34,7 @@ export class TnInputHarness extends ComponentHarness {
   private prefixIconEl = this.locatorForOptional('tn-icon.tn-input__prefix-icon');
   private suffixButton = this.locatorForOptional('.tn-input__suffix-action');
   private suffixIconEl = this.locatorForOptional(TnIconHarness.with({ ancestor: '.tn-input__suffix-action' }));
+  private visibilityToggle = this.locatorForOptional('.tn-input__visibility-toggle');
 
   /**
    * Gets a `HarnessPredicate` that can be used to search for an input
@@ -250,6 +251,46 @@ export class TnInputHarness extends ComponentHarness {
       throw new Error('No suffix action button found on this input.');
     }
     return button.click();
+  }
+
+  /**
+   * Checks whether the password visibility toggle is present.
+   *
+   * @returns Promise resolving to true if the toggle button exists.
+   */
+  async hasPasswordToggle(): Promise<boolean> {
+    const toggle = await this.visibilityToggle();
+    return toggle !== null;
+  }
+
+  /**
+   * Whether the password is currently revealed (the field renders as plain text).
+   *
+   * Only meaningful on password-type inputs; resolves false while masked.
+   *
+   * @returns Promise resolving to true when the value is shown in plain text.
+   */
+  async isPasswordRevealed(): Promise<boolean> {
+    const toggle = await this.visibilityToggle();
+    if (!toggle) {
+      return false;
+    }
+    const input = await this.inputEl();
+    return (await input.getProperty<string>('type')) === 'text';
+  }
+
+  /**
+   * Clicks the password visibility toggle, switching between masked and
+   * plain-text display.
+   *
+   * @returns Promise that resolves when the click action is complete.
+   */
+  async togglePasswordVisibility(): Promise<void> {
+    const toggle = await this.visibilityToggle();
+    if (!toggle) {
+      throw new Error('No password visibility toggle found on this input.');
+    }
+    return toggle.click();
   }
 
   /**

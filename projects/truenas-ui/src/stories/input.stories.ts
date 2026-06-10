@@ -15,6 +15,7 @@ tnIconMarker('close-circle', 'mdi');
 tnIconMarker('email', 'mdi');
 tnIconMarker('eye', 'mdi');
 tnIconMarker('eye-off', 'mdi');
+tnIconMarker('lock', 'mdi');
 
 const meta: Meta<TnInputComponent> = {
   title: 'Components/Input',
@@ -58,6 +59,10 @@ const meta: Meta<TnInputComponent> = {
     sizeRound: {
       control: 'number',
       description: 'Size type: decimal places used when formatting the value for display.',
+    },
+    showPasswordToggle: {
+      control: 'boolean',
+      description: 'Password type: whether the built-in visibility toggle (eye button) is rendered. Defaults to true.',
     },
     testId: {
       control: 'text',
@@ -159,6 +164,47 @@ export const WithError: Story = {
     placeholder: 'Enter your email',
     testId: 'error-input',
     disabled: false,
+  },
+};
+
+/**
+ * **Password.** `inputType="password"` renders a built-in visibility toggle:
+ * an eye button that switches the field between masked and plain-text display.
+ * The field always starts masked. Set `showPasswordToggle` to `false` to omit
+ * the toggle (e.g. for secrets that must never be revealed).
+ */
+export const Password: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      passwordControl: new FormControl('foobar'),
+    },
+    template: `
+      <tn-form-field label="Password">
+        <tn-input
+          [inputType]="inputType"
+          [placeholder]="placeholder"
+          [disabled]="disabled"
+          [testId]="testId"
+          [showPasswordToggle]="showPasswordToggle"
+          [prefixIcon]="prefixIcon"
+          [prefixIconLibrary]="prefixIconLibrary"
+          [formControl]="passwordControl">
+        </tn-input>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, ReactiveFormsModule],
+    },
+  }),
+  args: {
+    inputType: InputType.Password,
+    placeholder: 'Enter your password',
+    testId: 'password-input',
+    disabled: false,
+    showPasswordToggle: true,
+    prefixIcon: 'lock',
+    prefixIconLibrary: 'mdi' as const,
   },
 };
 

@@ -1,7 +1,7 @@
 <div
   class="tn-input-container"
   [class.tn-input-container--has-prefix]="hasPrefixIcon()"
-  [class.tn-input-container--has-suffix]="hasSuffixIcon()"
+  [class.tn-input-container--has-suffix]="hasSuffixIcon() || hasPasswordToggle()"
 >
   <!-- Prefix icon -->
   @if (hasPrefixIcon()) {
@@ -65,6 +65,22 @@
         [name]="suffixIcon()!"
         [library]="suffixIconLibrary()"
       />
+    </button>
+  }
+
+  <!-- Password visibility toggle -->
+  @if (hasPasswordToggle()) {
+    <button
+      type="button"
+      class="tn-input__visibility-toggle"
+      tnTestIdType="button"
+      [tnTestId]="passwordToggleTestId()"
+      [attr.aria-label]="passwordVisible() ? 'Hide password' : 'Show password'"
+      [attr.aria-pressed]="passwordVisible()"
+      [disabled]="isDisabled()"
+      (click)="togglePasswordVisibility()"
+    >
+      <tn-icon size="sm" aria-hidden="true" [name]="passwordToggleIcon()" />
     </button>
   }
 </div>

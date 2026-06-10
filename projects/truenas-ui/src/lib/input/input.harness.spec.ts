@@ -417,6 +417,58 @@ describe('TnInputHarness', () => {
     });
   });
 
+  describe('password visibility toggle', () => {
+    beforeEach(() => {
+      hostComponent.inputType.set(InputType.Password);
+      fixture.detectChanges();
+    });
+
+    it('should report the toggle on password fields', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.hasPasswordToggle()).toBe(true);
+    });
+
+    it('should not report the toggle on non-password fields', async () => {
+      hostComponent.inputType.set(InputType.PlainText);
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.hasPasswordToggle()).toBe(false);
+    });
+
+    it('should start masked and reveal/mask on toggle', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.isPasswordRevealed()).toBe(false);
+
+      await input.togglePasswordVisibility();
+      expect(await input.isPasswordRevealed()).toBe(true);
+
+      await input.togglePasswordVisibility();
+      expect(await input.isPasswordRevealed()).toBe(false);
+    });
+
+    it('should preserve the value across toggles', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      await input.setValue('hunter2');
+
+      await input.togglePasswordVisibility();
+      expect(await input.getValue()).toBe('hunter2');
+    });
+
+    it('should not confuse the toggle with a suffix action', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.hasSuffixAction()).toBe(false);
+    });
+
+    it('should throw when toggling a field without a toggle', async () => {
+      hostComponent.inputType.set(InputType.PlainText);
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness);
+      await expect(input.togglePasswordVisibility()).rejects.toThrow('No password visibility toggle found on this input.');
+    });
+  });
+
   describe('focus / blur', () => {
     it('should focus the input', async () => {
       const input = await loader.getHarness(TnInputHarness);
