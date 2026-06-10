@@ -113,6 +113,57 @@ describe('TnInputComponent', () => {
       const textarea = fixture.nativeElement.querySelector('textarea');
       expect(textarea.getAttribute('aria-label')).toBe('Description');
     });
+
+    it('should not render native attributes by default', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      expect(input.hasAttribute('autocomplete')).toBe(false);
+      expect(input.hasAttribute('name')).toBe(false);
+      expect(input.readOnly).toBe(false);
+      expect(input.required).toBe(false);
+    });
+
+    it('should apply autocomplete and name when set', () => {
+      fixture.componentRef.setInput('autocomplete', 'current-password');
+      fixture.componentRef.setInput('name', 'password');
+      fixture.detectChanges();
+
+      const input = fixture.nativeElement.querySelector('input');
+      expect(input.getAttribute('autocomplete')).toBe('current-password');
+      expect(input.getAttribute('name')).toBe('password');
+    });
+
+    it('should apply readonly when set', () => {
+      fixture.componentRef.setInput('readonly', true);
+      fixture.detectChanges();
+
+      const input = fixture.nativeElement.querySelector('input');
+      expect(input.readOnly).toBe(true);
+      // Readonly is not disabled: the field stays focusable and submittable.
+      expect(input.disabled).toBe(false);
+    });
+
+    it('should apply required when set', () => {
+      fixture.componentRef.setInput('required', true);
+      fixture.detectChanges();
+
+      const input = fixture.nativeElement.querySelector('input');
+      expect(input.required).toBe(true);
+    });
+
+    it('should apply native attributes to the textarea when multiline', () => {
+      fixture.componentRef.setInput('multiline', true);
+      fixture.componentRef.setInput('autocomplete', 'off');
+      fixture.componentRef.setInput('name', 'notes');
+      fixture.componentRef.setInput('readonly', true);
+      fixture.componentRef.setInput('required', true);
+      fixture.detectChanges();
+
+      const textarea = fixture.nativeElement.querySelector('textarea');
+      expect(textarea.getAttribute('autocomplete')).toBe('off');
+      expect(textarea.getAttribute('name')).toBe('notes');
+      expect(textarea.readOnly).toBe(true);
+      expect(textarea.required).toBe(true);
+    });
   });
 
   describe('value changes', () => {
@@ -478,6 +529,23 @@ describe('TnInputComponent', () => {
       const icon = button.querySelector('tn-icon');
       expect(icon.getAttribute('name')).toBe('close-circle');
       expect(icon.getAttribute('library')).toBe('mdi');
+    });
+
+    it('should not render a test id on the suffix button by default', () => {
+      fixture.componentRef.setInput('suffixIcon', 'close-circle');
+      fixture.detectChanges();
+
+      const button = fixture.nativeElement.querySelector('.tn-input__suffix-action');
+      expect(button.hasAttribute('data-testid')).toBe(false);
+    });
+
+    it('should apply data-testid to the suffix button with the library-owned "button-" prefix', () => {
+      fixture.componentRef.setInput('suffixIcon', 'eye');
+      fixture.componentRef.setInput('suffixActionTestId', 'toggle-password');
+      fixture.detectChanges();
+
+      const button = fixture.nativeElement.querySelector('.tn-input__suffix-action');
+      expect(button.getAttribute('data-testid')).toBe('button-toggle-password');
     });
 
     it('should add has-suffix class to container', () => {

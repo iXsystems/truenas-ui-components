@@ -46,6 +46,9 @@ export class TnInputHarness extends ComponentHarness {
     return new HarnessPredicate(TnInputHarness, options)
       .addOption('placeholder', options.placeholder, async (harness, placeholder) => {
         return (await harness.getPlaceholder()) === placeholder;
+      })
+      .addOption('name', options.name, async (harness, name) => {
+        return (await harness.getName()) === name;
       });
   }
 
@@ -152,6 +155,62 @@ export class TnInputHarness extends ComponentHarness {
     }
     const input = await this.inputEl();
     return input.getAttribute('aria-label');
+  }
+
+  /**
+   * Gets the native `name` attribute (set via the `name` input).
+   *
+   * @returns Promise resolving to the name string, or null if unset.
+   */
+  async getName(): Promise<string | null> {
+    if (await this.isMultiline()) {
+      const textarea = await this.textareaEl();
+      return textarea.getAttribute('name');
+    }
+    const input = await this.inputEl();
+    return input.getAttribute('name');
+  }
+
+  /**
+   * Gets the native `autocomplete` attribute (set via the `autocomplete` input).
+   *
+   * @returns Promise resolving to the autocomplete token, or null if unset.
+   */
+  async getAutocomplete(): Promise<string | null> {
+    if (await this.isMultiline()) {
+      const textarea = await this.textareaEl();
+      return textarea.getAttribute('autocomplete');
+    }
+    const input = await this.inputEl();
+    return input.getAttribute('autocomplete');
+  }
+
+  /**
+   * Checks whether the input is readonly (set via the `readonly` input).
+   *
+   * @returns Promise resolving to true if the input is readonly.
+   */
+  async isReadonly(): Promise<boolean> {
+    if (await this.isMultiline()) {
+      const textarea = await this.textareaEl();
+      return (await textarea.getProperty<boolean>('readOnly')) ?? false;
+    }
+    const input = await this.inputEl();
+    return (await input.getProperty<boolean>('readOnly')) ?? false;
+  }
+
+  /**
+   * Checks whether the input is marked required (set via the `required` input).
+   *
+   * @returns Promise resolving to true if the input is required.
+   */
+  async isRequired(): Promise<boolean> {
+    if (await this.isMultiline()) {
+      const textarea = await this.textareaEl();
+      return (await textarea.getProperty<boolean>('required')) ?? false;
+    }
+    const input = await this.inputEl();
+    return (await input.getProperty<boolean>('required')) ?? false;
   }
 
   /**
@@ -287,4 +346,6 @@ export class TnInputHarness extends ComponentHarness {
 export interface InputHarnessFilters extends BaseHarnessFilters {
   /** Filters by placeholder text. */
   placeholder?: string;
+  /** Filters by the native `name` attribute (typically the form control name). */
+  name?: string;
 }

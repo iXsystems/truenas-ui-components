@@ -3,9 +3,9 @@
   @if (label() || tooltip()) {
     <div class="tn-form-field-label-row">
       @if (label()) {
-        <label class="tn-form-field-label" [class.required]="required()">
+        <label class="tn-form-field-label" [class.required]="showRequired()">
           {{ label() }}
-          @if (required()) {
+          @if (showRequired()) {
             <span class="required-asterisk" aria-label="required">*</span>
           }
         </label>

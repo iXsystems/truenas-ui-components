@@ -46,6 +46,22 @@ const meta: Meta<TnInputComponent> = {
       control: 'boolean',
       description: 'Number type: whether decimals are accepted. Set false for integer-only mode.',
     },
+    autocomplete: {
+      control: 'text',
+      description: 'Native autocomplete token (username, current-password, one-time-code, ...) for browser/password-manager autofill',
+    },
+    name: {
+      control: 'text',
+      description: 'Native name attribute; typically mirrors the form control name',
+    },
+    readonly: {
+      control: 'boolean',
+      description: 'Whether the input is readonly (visible and focusable, but not editable)',
+    },
+    required: {
+      control: 'boolean',
+      description: 'Renders the native required attribute for assistive technology',
+    },
     sizeStandard: {
       control: { type: 'inline-radio' },
       options: ['iec', 'si'],
@@ -343,6 +359,39 @@ export const Disabled: Story = {
     placeholder: 'This field is disabled',
     testId: 'disabled-input',
     disabled: true,
+  },
+};
+
+export const NativeAttributes: Story = {
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-form-field
+        label="Username"
+        hint="Autofill-friendly: name + autocomplete reach the native input">
+        <tn-input
+          [inputType]="inputType"
+          [placeholder]="placeholder"
+          [autocomplete]="autocomplete"
+          [name]="name"
+          [readonly]="readonly"
+          [required]="required"
+          [testId]="testId">
+        </tn-input>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  args: {
+    inputType: InputType.PlainText,
+    placeholder: 'Username',
+    autocomplete: 'username',
+    name: 'username',
+    readonly: false,
+    required: true,
+    testId: 'username-input',
   },
 };
 

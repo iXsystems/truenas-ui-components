@@ -22,6 +22,10 @@ import type { IconLibraryType } from '../icon/icon.component';
     [rows]="rows()"
     [allowDecimals]="allowDecimals()"
     [ariaLabel]="ariaLabel()"
+    [autocomplete]="autocomplete()"
+    [name]="name()"
+    [readonly]="readonly()"
+    [required]="required()"
     [prefixIcon]="prefixIcon()"
     [prefixIconLibrary]="prefixIconLibrary()"
     [suffixIcon]="suffixIcon()"
@@ -38,6 +42,10 @@ class TestHostComponent {
   rows = signal(3);
   allowDecimals = signal(true);
   ariaLabel = signal<string | undefined>(undefined);
+  autocomplete = signal<string | undefined>(undefined);
+  name = signal<string | undefined>(undefined);
+  readonly = signal(false);
+  required = signal(false);
   prefixIcon = signal<string | undefined>(undefined);
   prefixIconLibrary = signal<IconLibraryType | undefined>(undefined);
   suffixIcon = signal<string | undefined>(undefined);
@@ -444,6 +452,63 @@ describe('TnInputHarness', () => {
 
       const activeEl = fixture.nativeElement.querySelector(':focus');
       expect(activeEl?.tagName).toBe('TEXTAREA');
+    });
+  });
+
+  describe('native attributes', () => {
+    it('gets the name and autocomplete attributes', async () => {
+      hostComponent.name.set('username');
+      hostComponent.autocomplete.set('username');
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getName()).toBe('username');
+      expect(await input.getAutocomplete()).toBe('username');
+    });
+
+    it('resolves null when name and autocomplete are unset', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getName()).toBeNull();
+      expect(await input.getAutocomplete()).toBeNull();
+    });
+
+    it('reports readonly and required state', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.isReadonly()).toBe(false);
+      expect(await input.isRequired()).toBe(false);
+
+      hostComponent.readonly.set(true);
+      hostComponent.required.set(true);
+      fixture.detectChanges();
+
+      expect(await input.isReadonly()).toBe(true);
+      expect(await input.isRequired()).toBe(true);
+    });
+
+    it('filters by name', async () => {
+      hostComponent.name.set('password');
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness.with({ name: 'password' }));
+      expect(await input.getName()).toBe('password');
+
+      const noMatch = await loader.getHarnessOrNull(TnInputHarness.with({ name: 'other' }));
+      expect(noMatch).toBeNull();
+    });
+
+    it('reads native attributes from the textarea when multiline', async () => {
+      hostComponent.multiline.set(true);
+      hostComponent.name.set('notes');
+      hostComponent.autocomplete.set('off');
+      hostComponent.readonly.set(true);
+      hostComponent.required.set(true);
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getName()).toBe('notes');
+      expect(await input.getAutocomplete()).toBe('off');
+      expect(await input.isReadonly()).toBe(true);
+      expect(await input.isRequired()).toBe(true);
     });
   });
 });

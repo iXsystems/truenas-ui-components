@@ -130,9 +130,18 @@ describe('TnFormFieldHarness', () => {
   });
 
   describe('isRequired', () => {
-    it('should return true for required fields', async () => {
+    it('should return true for fields forced required via the input', async () => {
       const field = await loader.getHarness(
         TnFormFieldHarness.with({ label: 'Name' })
+      );
+      expect(await field.isRequired()).toBe(true);
+    });
+
+    it('should infer required from the projected control\'s Validators.required', async () => {
+      // The Email field sets no [required] input; the indicator comes from the
+      // control's validators alone.
+      const field = await loader.getHarness(
+        TnFormFieldHarness.with({ label: 'Email' })
       );
       expect(await field.isRequired()).toBe(true);
     });
@@ -141,6 +150,21 @@ describe('TnFormFieldHarness', () => {
       const field = await loader.getHarness(
         TnFormFieldHarness.with({ label: 'Optional' })
       );
+      expect(await field.isRequired()).toBe(false);
+    });
+
+    it('should follow validators added and removed at runtime', async () => {
+      const field = await loader.getHarness(
+        TnFormFieldHarness.with({ label: 'Optional' })
+      );
+      expect(await field.isRequired()).toBe(false);
+
+      fixture.componentInstance.optionalControl.addValidators(Validators.required);
+      fixture.componentInstance.optionalControl.updateValueAndValidity();
+      expect(await field.isRequired()).toBe(true);
+
+      fixture.componentInstance.optionalControl.removeValidators(Validators.required);
+      fixture.componentInstance.optionalControl.updateValueAndValidity();
       expect(await field.isRequired()).toBe(false);
     });
   });
