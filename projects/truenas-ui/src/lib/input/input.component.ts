@@ -74,10 +74,10 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
    * validators (e.g. `Validators.required`); forms that fully own validation UX
    * should also set `novalidate` to suppress native submit blocking.
    *
-   * Note: this drives only the native/a11y semantics. The visual `*` indicator is
-   * rendered by `tn-form-field`'s own independent `required` input — when wrapping
-   * this input in a form field, set both so the a11y tree and the visible label
-   * agree.
+   * Note: this drives only the native/a11y semantics. When wrapped in a
+   * `tn-form-field`, the visual `*` indicator is inferred automatically from the
+   * control's `Validators.required`; only validator-less setups need the form
+   * field's own `required` input alongside this one.
    */
   required = input<boolean>(false);
 

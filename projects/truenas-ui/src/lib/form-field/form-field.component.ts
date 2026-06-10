@@ -2,7 +2,7 @@
 import type { AfterContentInit } from '@angular/core';
 import { Component, input, computed, signal, contentChild, inject, isDevMode, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NgControl } from '@angular/forms';
+import { NgControl, Validators } from '@angular/forms';
 import type { ValidationErrors } from '@angular/forms';
 import {
   TN_FORM_FIELD_ERRORS,
@@ -22,6 +22,7 @@ interface ControlStateSnapshot {
   invalid: boolean;
   interacted: boolean;
   errors: ValidationErrors | null;
+  required: boolean;
 }
 
 @Component({
@@ -35,10 +36,15 @@ export class TnFormFieldComponent implements AfterContentInit {
   label = input<string>('');
   hint = input<string>('');
   /**
-   * Renders the visual `*` required indicator next to the label. This is purely
-   * visual — pair it with the projected control's own `required` input (e.g.
-   * `tn-input`'s, which renders the native attribute) so assistive technology
-   * agrees with the visible label.
+   * Forces the visual `*` required indicator next to the label. Usually
+   * unnecessary: the indicator is inferred automatically when the projected
+   * control carries `Validators.required`. Set this only when inference can't
+   * see the requirement — e.g. a validator wrapped in `Validators.compose(...)`
+   * or a custom validator that emits a `required`-style error.
+   *
+   * The indicator is purely visual — for native/a11y semantics pair it with the
+   * projected control's own `required` input (e.g. `tn-input`'s, which renders
+   * the native attribute).
    */
   required = input<boolean>(false);
   testId = input<TnTestIdValue>(undefined);
@@ -77,7 +83,16 @@ export class TnFormFieldComponent implements AfterContentInit {
     invalid: false,
     interacted: false,
     errors: null,
+    required: false,
   });
+
+  /**
+   * Whether the required indicator renders: forced via the `required` input, or
+   * inferred from the projected control's validators (mirrors Angular Material's
+   * `hasValidator(Validators.required)` approach — reference equality, so composed
+   * or custom required-like validators need the explicit input).
+   */
+  protected showRequired = computed(() => this.required() || this.controlState().required);
 
   protected hasError = computed(() => {
     const state = this.controlState();
@@ -115,6 +130,7 @@ export class TnFormFieldComponent implements AfterContentInit {
         invalid: !!control.invalid,
         interacted: !!(control.dirty || control.touched),
         errors: control.errors ?? null,
+        required: !!control.control?.hasValidator(Validators.required),
       });
     }
   }
