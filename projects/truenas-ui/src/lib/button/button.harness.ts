@@ -88,6 +88,25 @@ export class TnButtonHarness extends ComponentHarness {
   }
 
   /**
+   * Gets the native `type` of the rendered `<button>` (`button`, `submit`, or
+   * `reset`). Returns `null` for anchor-mode renders.
+   *
+   * @example
+   * ```typescript
+   * const saveBtn = await loader.getHarness(TnButtonHarness.with({ label: 'Save' }));
+   * expect(await saveBtn.getType()).toBe('submit');
+   * ```
+   */
+  async getType(): Promise<string | null> {
+    const button = await this._button();
+    const tagName = (await button.getProperty<string>('tagName')).toLowerCase();
+    if (tagName !== 'button') {
+      return null;
+    }
+    return button.getAttribute('type');
+  }
+
+  /**
    * Gets the resolved URL of the rendered element. Returns the `href` for
    * anchor-mode renders (both plain `href` and `routerLink`) and `null` for
    * button-mode renders.

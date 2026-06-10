@@ -39,8 +39,8 @@
 } @else {
   <button
     #button
-    type="button"
     tnTestIdType="button"
+    [attr.type]="type()"
     [ngClass]="classes()"
     [ngStyle]="{ 'background-color': backgroundColor() }"
     [disabled]="disabled()"
