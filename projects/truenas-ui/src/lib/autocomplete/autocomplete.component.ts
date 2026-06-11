@@ -5,9 +5,11 @@ import {
   ElementRef,
   ViewContainerRef,
   computed,
+  effect,
   forwardRef,
   inject,
   input,
+  isDevMode,
   output,
   signal,
   viewChild,
@@ -16,6 +18,7 @@ import type { OnDestroy, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { Subscription } from 'rxjs';
+import { TnSpinnerComponent } from '../spinner/spinner.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 let nextId = 0;
@@ -23,7 +26,7 @@ let nextId = 0;
 @Component({
   selector: 'tn-autocomplete',
   standalone: true,
-  imports: [TnTestIdDirective],
+  imports: [TnSpinnerComponent, TnTestIdDirective],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -57,6 +60,24 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   /** Require the user to select from the dropdown — reverts on blur if no match */
   requireSelection = input<boolean>(false);
 
+  /**
+   * Commit free text as the value: on blur or Enter, an unmatched search term
+   * becomes the control value instead of being discarded. For string-valued
+   * autocompletes (the typed text IS the value) — e.g. a device path picker
+   * where known devices are suggested but any path is acceptable. Mutually
+   * exclusive with `requireSelection`, which reverts unmatched text.
+   */
+  allowCustomValue = input<boolean>(false);
+
+  /**
+   * Show a loading row in the dropdown panel while options are being fetched.
+   * Pair with `searchChange`/`loadMore` for server-driven options.
+   */
+  loading = input<boolean>(false);
+
+  /** Text shown next to the spinner while `loading` is set. */
+  loadingText = input<string>('Loading...');
+
   /** Custom filter function. Defaults to case-insensitive includes on displayWith text */
   filterFn = input<((option: T, searchTerm: string) => boolean) | undefined>(undefined);
 
@@ -85,6 +106,23 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
 
   /** Emits when an option is selected */
   optionSelected = output<T>();
+
+  /**
+   * Emits the search term as the user types (not on programmatic writes or
+   * option selection). Drive server-side filtering from this: fetch matches
+   * and update `options`. The component still applies its client-side filter
+   * on top — for pre-filtered server results, pass `[filterFn]` that returns
+   * `true`. Emissions are not debounced; debounce in the consumer if the
+   * lookup is expensive.
+   */
+  searchChange = output<string>();
+
+  /**
+   * Emits when the open dropdown is scrolled near its bottom — append the
+   * next page to `options` (and use `loading` while it fetches). Suppressed
+   * until `options` changes so a slow consumer is not spammed.
+   */
+  loadMore = output<void>();
 
   /** Reference to the input element */
   inputEl = viewChild<ElementRef<HTMLInputElement>>('inputEl');
@@ -147,6 +185,39 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   /** Subscriptions tied to the current overlay; torn down on close. */
   private overlaySubs: Subscription[] = [];
 
+  /** Set after a loadMore emission; cleared when `options` changes. */
+  private loadMorePending = false;
+
+  /** Scroll distance (px) from the panel bottom that triggers `loadMore`. */
+  private static readonly loadMoreThresholdPx = 48;
+
+  constructor() {
+    // New options mean the consumer answered the last loadMore (or swapped the
+    // list entirely) — allow the next bottom-scroll to emit again.
+    effect(() => {
+      this.options();
+      this.loadMorePending = false;
+    });
+
+    // Async option/loading changes resize the open panel without any input
+    // event; nudge CDK so the anchored position tracks the new height.
+    effect(() => {
+      this.filteredOptions();
+      this.loading();
+      this.overlayRef?.updatePosition();
+    });
+
+    if (isDevMode()) {
+      effect(() => {
+        if (this.requireSelection() && this.allowCustomValue()) {
+          console.warn(
+            '[tn-autocomplete] requireSelection and allowCustomValue are mutually exclusive; allowCustomValue wins.'
+          );
+        }
+      });
+    }
+  }
+
   ngOnDestroy(): void {
     // If the component is destroyed while the dropdown is open (e.g. router
     // navigates away), close() never runs — clean up the overlay directly.
@@ -182,6 +253,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     const value = (event.target as HTMLInputElement).value;
     this.searchTerm.set(value);
     this.highlightedIndex.set(-1);
+    this.searchChange.emit(value);
 
     if (!this.isOpen()) {
       this.open();
@@ -199,6 +271,13 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   }
 
   onBlur(): void {
+    if (this.allowCustomValue()) {
+      this.commitCustomValue();
+      this.close();
+      this.onTouched();
+      return;
+    }
+
     if (this.requireSelection()) {
       const term = this.searchTerm();
       const display = this.displayWith();
@@ -254,13 +333,17 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
         }
         break;
 
-      case 'Enter':
+      case 'Enter': {
         event.preventDefault();
         const idx = this.highlightedIndex();
         if (this.isOpen() && idx >= 0 && idx < options.length) {
           this.selectOption(options[idx]);
+        } else if (this.allowCustomValue()) {
+          this.commitCustomValue();
+          this.close();
         }
         break;
+      }
 
       case 'Escape':
         event.preventDefault();
@@ -269,7 +352,38 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     }
   }
 
+  onPanelScroll(event: Event): void {
+    if (this.loadMorePending) {
+      return;
+    }
+    const el = event.target as HTMLElement;
+    const nearBottom = el.scrollTop + el.clientHeight
+      >= el.scrollHeight - TnAutocompleteComponent.loadMoreThresholdPx;
+    if (nearBottom) {
+      this.loadMorePending = true;
+      this.loadMore.emit();
+    }
+  }
+
   // ── Internal ──
+
+  /**
+   * Commit the current search term as the value (allowCustomValue mode). An
+   * exact display match commits the matching option instead, so picking an
+   * existing entry by typing its full text behaves like clicking it.
+   */
+  private commitCustomValue(): void {
+    const term = this.searchTerm();
+    const display = this.displayWith();
+    const match = this.options().find((opt) => display(opt) === term);
+    if (match) {
+      this.selectOption(match);
+      return;
+    }
+    const value = term === '' ? null : (term as unknown as T);
+    this.selectedValue.set(value);
+    this.onChange(value);
+  }
 
   private selectOption(option: T): void {
     this.selectedValue.set(option);

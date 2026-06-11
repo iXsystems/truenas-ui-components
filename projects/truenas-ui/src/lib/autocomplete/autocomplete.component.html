@@ -31,7 +31,8 @@
     class="tn-autocomplete__dropdown"
     role="listbox"
     [style.--tn-autocomplete-panel-max-height]="panelMaxHeightValue()"
-    [attr.id]="uid + '-dropdown'">
+    [attr.id]="uid + '-dropdown'"
+    (scroll)="onPanelScroll($event)">
 
     @if (hasResults()) {
       @for (option of filteredOptions(); track $index) {
@@ -48,7 +49,14 @@
           {{ displayWith()(option) }}
         </div>
       }
-    } @else {
+    }
+
+    @if (loading()) {
+      <div class="tn-autocomplete__loading" role="status">
+        <tn-spinner [diameter]="16" [strokeWidth]="2" [ariaLabel]="loadingText()" />
+        <span>{{ loadingText() }}</span>
+      </div>
+    } @else if (!hasResults()) {
       <div class="tn-autocomplete__no-results">
         {{ noResultsText() }}
       </div>

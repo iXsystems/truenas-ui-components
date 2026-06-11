@@ -87,3 +87,12 @@
     transition: none;
   }
 }
+
+.tn-autocomplete__loading {
+  align-items: center;
+  color: var(--tn-fg2, #6c757d);
+  display: flex;
+  font-size: 0.875rem;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}

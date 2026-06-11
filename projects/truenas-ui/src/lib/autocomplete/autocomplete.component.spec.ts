@@ -48,6 +48,29 @@ class TestHostComponent {
   displayCountry = displayCountry;
 }
 
+@Component({
+  selector: 'tn-async-test-host',
+  standalone: true,
+  imports: [TnAutocompleteComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-autocomplete
+      [options]="options()"
+      [loading]="loading()"
+      [allowCustomValue]="true"
+      [formControl]="control"
+      (searchChange)="searchTerms.push($event)"
+      (loadMore)="loadMoreCount = loadMoreCount + 1" />
+  `
+})
+class AsyncTestHostComponent {
+  options = signal(['alpha', 'beta', 'gamma']);
+  loading = signal(false);
+  control = new FormControl<string | null>(null);
+  searchTerms: string[] = [];
+  loadMoreCount = 0;
+}
+
 describe('TnAutocompleteComponent', () => {
   let fixture: ComponentFixture<TestHostComponent>;
   let host: TestHostComponent;
@@ -306,6 +329,103 @@ describe('TnAutocompleteComponent', () => {
 
       expect(getInput().value).toBe('');
       expect(host.control.value).toBeNull();
+    });
+  });
+
+  describe('async loading & custom values', () => {
+    let asyncFixture: ComponentFixture<AsyncTestHostComponent>;
+    let asyncHost: AsyncTestHostComponent;
+
+    const getAsyncInput = (): HTMLInputElement =>
+      asyncFixture.nativeElement.querySelector('.tn-autocomplete__input');
+
+    const typeAsync = (value: string) => {
+      const input = getAsyncInput();
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+      asyncFixture.detectChanges();
+    };
+
+    beforeEach(() => {
+      asyncFixture = TestBed.createComponent(AsyncTestHostComponent);
+      asyncHost = asyncFixture.componentInstance;
+      asyncFixture.detectChanges();
+    });
+
+    it('emits searchChange as the user types', () => {
+      typeAsync('al');
+      typeAsync('alp');
+
+      expect(asyncHost.searchTerms).toEqual(['al', 'alp']);
+    });
+
+    it('does not emit searchChange on programmatic writes', () => {
+      asyncHost.control.setValue('beta');
+      asyncFixture.detectChanges();
+
+      expect(asyncHost.searchTerms).toEqual([]);
+    });
+
+    it('shows the loading row instead of no-results while loading', () => {
+      asyncHost.options.set([]);
+      asyncHost.loading.set(true);
+      asyncFixture.detectChanges();
+      typeAsync('zz');
+
+      expect(overlayEl.querySelector('.tn-autocomplete__loading')).toBeTruthy();
+      expect(overlayEl.querySelector('.tn-autocomplete__no-results')).toBeNull();
+    });
+
+    it('emits loadMore once per options page when scrolled to the bottom', () => {
+      typeAsync('a');
+      const dropdown = overlayEl.querySelector('.tn-autocomplete__dropdown');
+      expect(dropdown).toBeTruthy();
+
+      dropdown?.dispatchEvent(new Event('scroll'));
+      dropdown?.dispatchEvent(new Event('scroll'));
+      expect(asyncHost.loadMoreCount).toBe(1);
+
+      // Appending the next page re-arms the emitter.
+      asyncHost.options.set([...asyncHost.options(), 'delta']);
+      asyncFixture.detectChanges();
+      dropdown?.dispatchEvent(new Event('scroll'));
+      expect(asyncHost.loadMoreCount).toBe(2);
+    });
+
+    it('commits typed text as the value on blur', () => {
+      typeAsync('/my-custom-port');
+      getAsyncInput().dispatchEvent(new Event('blur'));
+      asyncFixture.detectChanges();
+
+      expect(asyncHost.control.value).toBe('/my-custom-port');
+      expect(getAsyncInput().value).toBe('/my-custom-port');
+    });
+
+    it('commits typed text as the value on Enter when nothing is highlighted', () => {
+      typeAsync('typed-value');
+      getAsyncInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+      asyncFixture.detectChanges();
+
+      expect(asyncHost.control.value).toBe('typed-value');
+    });
+
+    it('commits the matching option when typed text equals an option display', () => {
+      typeAsync('beta');
+      getAsyncInput().dispatchEvent(new Event('blur'));
+      asyncFixture.detectChanges();
+
+      expect(asyncHost.control.value).toBe('beta');
+    });
+
+    it('clears the value when the text is emptied', () => {
+      asyncHost.control.setValue('beta');
+      asyncFixture.detectChanges();
+
+      typeAsync('');
+      getAsyncInput().dispatchEvent(new Event('blur'));
+      asyncFixture.detectChanges();
+
+      expect(asyncHost.control.value).toBeNull();
     });
   });
 });

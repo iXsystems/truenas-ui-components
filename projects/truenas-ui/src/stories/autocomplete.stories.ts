@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
@@ -277,6 +278,79 @@ export const LongList: Story = {
   }),
   args: {
     placeholder: 'Type or scroll through 150 options...',
+  },
+};
+
+/**
+ * **Server-driven options with pagination and custom values.** The component
+ * emits `searchChange` as the user types and `loadMore` when the open panel is
+ * scrolled to the bottom; the consumer fetches and updates `[options]`, holding
+ * `[loading]` while a request is in flight. `[filterFn]` returns `true` because
+ * the server already filtered the page. `allowCustomValue` commits free text
+ * (e.g. \`/my-custom-port\`) as the value on blur or Enter — for pickers where
+ * known entries are suggested but any value is acceptable.
+ *
+ * This story simulates a 600 ms backend with 100 entries served in pages of 20.
+ */
+export const AsyncOptions: Story = {
+  render: () => ({
+    // Signal-driven so async mutations render under zoneless change detection.
+    props: (() => {
+      const options = signal<string[]>([]);
+      const loading = signal(false);
+      const value = signal<string | null>(null);
+      let term = '';
+      let page = 0;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+
+      const fetchPage = (newTerm: string, newPage: number) => {
+        term = newTerm;
+        page = newPage;
+        loading.set(true);
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          const all = Array.from({ length: 100 }, (unused, i) => `device-${String(i).padStart(3, '0')}`);
+          const matches = all.filter((name) => name.includes(term));
+          options.set(matches.slice(0, (page + 1) * 20));
+          loading.set(false);
+        }, 600);
+      };
+
+      return {
+        options,
+        loading,
+        value,
+        passthroughFilter: () => true,
+        onSearch: (newTerm: string) => fetchPage(newTerm, 0),
+        onLoadMore: () => fetchPage(term, page + 1),
+        onSelected: (selected: string) => value.set(selected),
+      };
+    })(),
+    template: `
+      <tn-form-field
+        label="Port or Hostname"
+        hint="Pick a detected device or type a custom path">
+        <tn-autocomplete
+          [options]="options()"
+          [loading]="loading()"
+          [allowCustomValue]="true"
+          [filterFn]="passthroughFilter"
+          placeholder="Type to search devices..."
+          (searchChange)="onSearch($event)"
+          (loadMore)="onLoadMore()"
+          (optionSelected)="onSelected($event)">
+        </tn-autocomplete>
+      </tn-form-field>
+      @if (value()) {
+        <p style="margin-top: 1rem; font-size: 0.875rem;">Selected: <code>{{ value() }}</code></p>
+      }
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  parameters: {
+    controls: { disable: true },
   },
 };
 
