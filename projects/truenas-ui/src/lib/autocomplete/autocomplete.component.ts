@@ -12,6 +12,7 @@ import {
   isDevMode,
   output,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import type { OnDestroy, TemplateRef } from '@angular/core';
@@ -185,18 +186,35 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   /** Subscriptions tied to the current overlay; torn down on close. */
   private overlaySubs: Subscription[] = [];
 
-  /** Set after a loadMore emission; cleared when `options` changes. */
+  /** Set after a loadMore emission; cleared when the options count changes. */
   private loadMorePending = false;
+
+  /** Options count at the last effect run — length changes re-arm `loadMore`. */
+  private lastOptionsCount: number | null = null;
 
   /** Scroll distance (px) from the panel bottom that triggers `loadMore`. */
   private static readonly loadMoreThresholdPx = 48;
 
   constructor() {
-    // New options mean the consumer answered the last loadMore (or swapped the
-    // list entirely) — allow the next bottom-scroll to emit again.
+    // A changed options COUNT means the consumer answered the last loadMore
+    // (or a new result set landed) — re-arm the emitter and request another
+    // page if the rows still don't fill the panel. Re-arming on length (not
+    // identity) is what makes auto-fill loop-safe: an exhausted source that
+    // answers loadMore with the same rows leaves the count unchanged, so no
+    // further request is made. Also triggered by the panel opening, when the
+    // already-loaded first page may be too short. Only these two signals are
+    // tracked — everything else is read untracked so e.g. a loading()
+    // transition alone never re-fires the check.
     effect(() => {
-      this.options();
-      this.loadMorePending = false;
+      const count = this.options().length;
+      this.isOpen();
+      untracked(() => {
+        if (count !== this.lastOptionsCount) {
+          this.lastOptionsCount = count;
+          this.loadMorePending = false;
+        }
+        this.checkUnderfill();
+      });
     });
 
     // Async option/loading changes resize the open panel without any input
@@ -253,6 +271,8 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     const value = (event.target as HTMLInputElement).value;
     this.searchTerm.set(value);
     this.highlightedIndex.set(-1);
+    // A new term is a new pagination context — don't hold back its first page.
+    this.loadMorePending = false;
     this.searchChange.emit(value);
 
     if (!this.isOpen()) {
@@ -349,6 +369,27 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
         event.preventDefault();
         this.close();
         break;
+    }
+  }
+
+  /**
+   * `loadMore` normally fires from a scroll event, which never happens when
+   * the current page is too short to overflow the panel — pagination would
+   * dead-end with data still available. When new rows land (or the panel
+   * opens), emit once more if the panel has no scrollbar.
+   */
+  private checkUnderfill(): void {
+    if (!this.isOpen() || this.loading() || this.loadMorePending) {
+      return;
+    }
+    if (this.filteredOptions().length === 0) {
+      return;
+    }
+    const panel = this.overlayRef?.overlayElement
+      ?.querySelector<HTMLElement>('.tn-autocomplete__dropdown');
+    if (panel && panel.scrollHeight <= panel.clientHeight) {
+      this.loadMorePending = true;
+      this.loadMore.emit();
     }
   }
 

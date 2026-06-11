@@ -14,8 +14,8 @@
     [value]="searchTerm()"
     [attr.aria-expanded]="isOpen()"
     [attr.aria-autocomplete]="'list'"
-    [attr.aria-controls]="isOpen() && hasResults() ? uid + '-dropdown' : null"
-    [attr.aria-owns]="isOpen() && hasResults() ? uid + '-dropdown' : null"
+    [attr.aria-controls]="isOpen() ? uid + '-dropdown' : null"
+    [attr.aria-owns]="isOpen() ? uid + '-dropdown' : null"
     [attr.aria-activedescendant]="highlightedIndex() >= 0 ? uid + '-option-' + highlightedIndex() : null"
     (input)="onInput($event)"
     (focus)="onFocus()"
@@ -33,9 +33,12 @@
     (scroll)="onPanelScroll($event)">
 
     <!-- Per ARIA, a listbox may only contain option/group children, so the
-         loading and no-results rows live OUTSIDE it as live-region siblings. -->
-    @if (hasResults()) {
-      <div role="listbox" [attr.id]="uid + '-dropdown'">
+         loading and no-results rows live OUTSIDE it as live-region siblings.
+         The listbox itself stays rendered (possibly empty) the whole time the
+         panel is open, so the input's aria-controls always points at a real
+         element — including the loading-with-no-results-yet state. -->
+    <div role="listbox" [attr.id]="uid + '-dropdown'" [attr.aria-busy]="loading() ? true : null">
+      @if (hasResults()) {
         @for (option of filteredOptions(); track $index) {
           <div
             class="tn-autocomplete__option"
@@ -50,8 +53,8 @@
             {{ displayWith()(option) }}
           </div>
         }
-      </div>
-    }
+      }
+    </div>
 
     <div role="status">
       @if (loading()) {

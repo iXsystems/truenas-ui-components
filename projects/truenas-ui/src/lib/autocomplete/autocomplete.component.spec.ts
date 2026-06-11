@@ -434,8 +434,31 @@ describe('TnAutocompleteComponent', () => {
       asyncHost.options.set([]);
       asyncHost.loading.set(true);
       asyncFixture.detectChanges();
-      expect(overlayEl.querySelector('[role="listbox"]')).toBeNull();
+
+      // The listbox stays rendered (empty, busy) so aria-controls never dangles.
+      const emptyListbox = overlayEl.querySelector('[role="listbox"]');
+      expect(emptyListbox).toBeTruthy();
+      expect(emptyListbox?.querySelectorAll('[role="option"]')).toHaveLength(0);
+      expect(emptyListbox?.getAttribute('aria-busy')).toBe('true');
       expect(overlayEl.querySelector('[role="status"] .tn-autocomplete__loading')).toBeTruthy();
+    });
+
+    it('requests another page when the rendered page does not fill the panel', () => {
+      // jsdom reports scrollHeight === clientHeight === 0, i.e. an underfilled
+      // panel — exactly the no-scrollbar case the auto-check exists for.
+      typeAsync('a');
+      expect(asyncHost.loadMoreCount).toBe(1);
+
+      // Source exhausted: the consumer answers with the same count — no re-arm,
+      // no further requests (loop safety).
+      asyncHost.options.set([...asyncHost.options()]);
+      asyncFixture.detectChanges();
+      expect(asyncHost.loadMoreCount).toBe(1);
+
+      // A grown page re-arms and, still underfilled, requests the next one.
+      asyncHost.options.set([...asyncHost.options(), 'delta']);
+      asyncFixture.detectChanges();
+      expect(asyncHost.loadMoreCount).toBe(2);
     });
 
     it('clears the value when the text is emptied', () => {
