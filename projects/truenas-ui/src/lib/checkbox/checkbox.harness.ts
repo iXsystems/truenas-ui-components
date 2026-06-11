@@ -30,6 +30,7 @@ export class TnCheckboxHarness extends ComponentHarness {
   private _label = this.locatorFor('.tn-checkbox__label');
   private _text = this.locatorForOptional('.tn-checkbox__text');
   private _error = this.locatorForOptional('.tn-checkbox__error');
+  private _tooltip = this.locatorForOptional('.tn-checkbox__tooltip');
 
   /**
    * Gets a `HarnessPredicate` that can be used to search for a checkbox
@@ -170,6 +171,22 @@ export class TnCheckboxHarness extends ComponentHarness {
   async getErrorText(): Promise<string | null> {
     const error = await this._error();
     return error ? (await error.text()).trim() : null;
+  }
+
+  /**
+   * Gets the tooltip text shown via the help icon, if any.
+   *
+   * @returns Promise resolving to the tooltip text, or null if no tooltip.
+   *
+   * @example
+   * ```typescript
+   * const checkbox = await loader.getHarness(TnCheckboxHarness);
+   * expect(await checkbox.getTooltipText()).toBe('Enables advanced options');
+   * ```
+   */
+  async getTooltipText(): Promise<string | null> {
+    const tooltip = await this._tooltip();
+    return tooltip ? tooltip.getAttribute('aria-label') : null;
   }
 
   /**

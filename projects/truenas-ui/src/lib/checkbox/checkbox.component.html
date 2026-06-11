@@ -1,30 +1,43 @@
 <div [ngClass]="classes()">
-  <label class="tn-checkbox__label" tnTestIdType="checkbox" [for]="id" [tnTestId]="testId()">
-    <input
-      #checkboxEl
-      type="checkbox"
-      class="tn-checkbox__input"
-      [id]="id"
-      [checked]="effectiveChecked()"
-      [disabled]="isDisabled()"
-      [required]="required()"
-      [indeterminate]="indeterminate()"
-      [attr.aria-label]="hasProjectedLabel() ? label() : null"
-      [attr.aria-describedby]="error() ? id + '-error' : null"
-      [attr.aria-invalid]="error() ? 'true' : null"
-      (change)="onCheckboxChange($event)"
-    />
-    <span class="tn-checkbox__checkmark"></span>
-    @if (!hideLabel()) {
-      <span class="tn-checkbox__text">
-        @if (hasProjectedLabel()) {
-          <ng-content select="[tnCheckboxLabel]" />
-        } @else {
-          {{ label() }}
-        }
-      </span>
+  <div class="tn-checkbox__control-row">
+    <label class="tn-checkbox__label" tnTestIdType="checkbox" [for]="id" [tnTestId]="testId()">
+      <input
+        #checkboxEl
+        type="checkbox"
+        class="tn-checkbox__input"
+        [id]="id"
+        [checked]="effectiveChecked()"
+        [disabled]="isDisabled()"
+        [required]="required()"
+        [indeterminate]="indeterminate()"
+        [attr.aria-label]="hasProjectedLabel() ? label() : null"
+        [attr.aria-describedby]="error() ? id + '-error' : null"
+        [attr.aria-invalid]="error() ? 'true' : null"
+        (change)="onCheckboxChange($event)"
+      />
+      <span class="tn-checkbox__checkmark"></span>
+      @if (!hideLabel()) {
+        <span class="tn-checkbox__text">
+          @if (hasProjectedLabel()) {
+            <ng-content select="[tnCheckboxLabel]" />
+          } @else {
+            {{ label() }}
+          }
+        </span>
+      }
+    </label>
+
+    @if (tooltip()) {
+      <button
+        type="button"
+        class="tn-checkbox__tooltip"
+        [attr.aria-label]="tooltip()"
+        [tnTooltip]="tooltip()"
+        [tnTooltipPosition]="tooltipPosition()">
+        <tn-icon name="help-circle" library="mdi" size="sm" />
+      </button>
     }
-  </label>
+  </div>
 
   @if (error()) {
     <div

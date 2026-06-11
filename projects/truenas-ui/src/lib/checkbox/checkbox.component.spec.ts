@@ -18,6 +18,7 @@ import { TnCheckboxComponent, TnCheckboxLabelDirective } from './checkbox.compon
       [indeterminate]="indeterminate()"
       [error]="error()"
       [hideLabel]="hideLabel()"
+      [tooltip]="tooltip()"
       [formControl]="control" />
 
     <tn-checkbox testId="projected" [formControl]="projectedControl">
@@ -32,6 +33,7 @@ class TestHostComponent {
   indeterminate = signal(false);
   hideLabel = signal(false);
   error = signal<string | null>(null);
+  tooltip = signal('');
   control = new FormControl(false);
   projectedControl = new FormControl(false);
 }
@@ -56,6 +58,9 @@ describe('TnCheckboxComponent', () => {
 
   const getError = (testId = 'checkbox-main'): HTMLElement | null =>
     getWrapper(testId).querySelector('.tn-checkbox__error');
+
+  const getTooltip = (testId = 'checkbox-main'): HTMLElement | null =>
+    getWrapper(testId).querySelector('.tn-checkbox__tooltip');
 
   const clickLabel = (testId = 'checkbox-main') => {
     const label = getWrapper(testId).querySelector('.tn-checkbox__label') as HTMLElement;
@@ -224,6 +229,30 @@ describe('TnCheckboxComponent', () => {
 
     it('should set data-testid attribute', () => {
       expect(getCheckbox().getAttribute('data-testid')).toBe('checkbox-main');
+    });
+  });
+
+  describe('tooltip', () => {
+    it('should not render the help icon when no tooltip is set', () => {
+      expect(getTooltip()).toBeFalsy();
+    });
+
+    it('should render the help icon with the tooltip text when set', () => {
+      host.tooltip.set('Enables advanced options');
+      fixture.detectChanges();
+
+      const tooltip = getTooltip();
+      expect(tooltip).toBeTruthy();
+      expect(tooltip?.getAttribute('aria-label')).toBe('Enables advanced options');
+    });
+
+    it('should keep the help icon outside the label so it does not toggle the checkbox', () => {
+      host.tooltip.set('Enables advanced options');
+      fixture.detectChanges();
+
+      getTooltip()?.click();
+      fixture.detectChanges();
+      expect(host.control.value).toBe(false);
     });
   });
 
