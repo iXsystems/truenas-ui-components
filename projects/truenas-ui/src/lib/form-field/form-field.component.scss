@@ -82,6 +82,14 @@
   }
 }
 
+// Label-less mode: the help icon sits inline after the projected control
+// (which renders its own label, e.g. tn-checkbox).
+.tn-form-field-wrapper--inline-tooltip {
+  align-items: center;
+  display: flex;
+  gap: 0.375rem;
+}
+
 .tn-form-field-subscript {
   min-height: 1.25rem;
   margin-top: 0.25rem;

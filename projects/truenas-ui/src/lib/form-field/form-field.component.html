@@ -1,31 +1,27 @@
 <div class="tn-form-field" tnTestIdType="form-field" [tnTestId]="testId()">
   <!-- Label -->
-  @if (label() || tooltip()) {
+  @if (label()) {
     <div class="tn-form-field-label-row">
-      @if (label()) {
-        <label class="tn-form-field-label" [class.required]="showRequired()">
-          {{ label() }}
-          @if (showRequired()) {
-            <span class="required-asterisk" aria-label="required">*</span>
-          }
-        </label>
-      }
+      <label class="tn-form-field-label" [class.required]="showRequired()">
+        {{ label() }}
+        @if (showRequired()) {
+          <span class="required-asterisk" aria-label="required">*</span>
+        }
+      </label>
       @if (tooltip()) {
-        <button
-          type="button"
-          class="tn-form-field-tooltip"
-          [attr.aria-label]="tooltip()"
-          [tnTooltip]="tooltip()"
-          [tnTooltipPosition]="tooltipPosition()">
-          <tn-icon name="help-circle" library="mdi" size="sm" />
-        </button>
+        <ng-container [ngTemplateOutlet]="tooltipButton" />
       }
     </div>
   }
 
   <!-- Form Control Content -->
-  <div class="tn-form-field-wrapper">
+  <div
+    class="tn-form-field-wrapper"
+    [class.tn-form-field-wrapper--inline-tooltip]="showInlineTooltip()">
     <ng-content />
+    @if (showInlineTooltip()) {
+      <ng-container [ngTemplateOutlet]="tooltipButton" />
+    }
   </div>
 
   <!-- Hint or Error Message -->
@@ -47,3 +43,14 @@
     </div>
   }
 </div>
+
+<ng-template #tooltipButton>
+  <button
+    type="button"
+    class="tn-form-field-tooltip"
+    [attr.aria-label]="tooltip()"
+    [tnTooltip]="tooltip()"
+    [tnTooltipPosition]="tooltipPosition()">
+    <tn-icon name="help-circle" library="mdi" size="sm" />
+  </button>
+</ng-template>

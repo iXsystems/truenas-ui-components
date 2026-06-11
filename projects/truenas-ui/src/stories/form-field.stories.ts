@@ -350,6 +350,8 @@ export const WithCheckbox: Story = {
         [hint]="hint"
         [required]="required"
         [testId]="testId"
+        [tooltip]="tooltip"
+        [tooltipPosition]="tooltipPosition"
         [subscriptSizing]="subscriptSizing">
         <tn-checkbox
           label="I agree to the terms and conditions">
@@ -365,6 +367,41 @@ export const WithCheckbox: Story = {
     hint: 'Please review our terms before proceeding',
     required: true,
     testId: 'terms-field',
+  },
+};
+
+export const CheckboxWithInlineTooltip: Story = {
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-form-field
+        [tooltip]="tooltip"
+        [tooltipPosition]="tooltipPosition"
+        [testId]="testId"
+        [subscriptSizing]="subscriptSizing">
+        <tn-checkbox
+          label="Enable FXP">
+        </tn-checkbox>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnCheckboxComponent],
+    },
+  }),
+  args: {
+    tooltip: 'FXP allows direct server-to-server file transfers. It is disabled by default for security.',
+    tooltipPosition: 'above',
+    testId: 'enable-fxp-field',
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'When no `label` is set, the tooltip help icon renders inline after the projected control '
+          + 'instead of in the label row — for controls that carry their own label, like `tn-checkbox`. '
+          + 'The field still surfaces validation errors and hints in the subscript area.',
+      },
+    },
   },
 };
 

@@ -1,4 +1,5 @@
 
+import { NgTemplateOutlet } from '@angular/common';
 import type { AfterContentInit } from '@angular/core';
 import { Component, input, computed, signal, contentChild, inject, isDevMode, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -28,7 +29,7 @@ interface ControlStateSnapshot {
 @Component({
   selector: 'tn-form-field',
   standalone: true,
-  imports: [TnTestIdDirective, TnIconComponent, TnTooltipDirective],
+  imports: [NgTemplateOutlet, TnTestIdDirective, TnIconComponent, TnTooltipDirective],
   templateUrl: './form-field.component.html',
   styleUrls: ['./form-field.component.scss']
 })
@@ -50,7 +51,14 @@ export class TnFormFieldComponent implements AfterContentInit {
   testId = input<TnTestIdValue>(undefined);
   subscriptSizing = input<SubscriptSizing>('dynamic');
 
-  /** Optional tooltip shown via a help icon next to the label. */
+  /**
+   * Optional tooltip shown via a help icon.
+   *
+   * With a `label`, the icon renders next to the label in the label row. Without
+   * one, the icon renders inline after the projected control instead — for
+   * controls that carry their own label (e.g. `tn-checkbox`), where a detached
+   * icon row above the control would look orphaned.
+   */
   tooltip = input<string>('');
   /** Placement of the tooltip relative to its help icon. */
   tooltipPosition = input<TooltipPosition>('above');
@@ -93,6 +101,12 @@ export class TnFormFieldComponent implements AfterContentInit {
    * or custom required-like validators need the explicit input).
    */
   protected showRequired = computed(() => this.required() || this.controlState().required);
+
+  /**
+   * Whether the tooltip icon renders inline after the projected control rather
+   * than in the label row — true when a tooltip is set but no label is.
+   */
+  protected showInlineTooltip = computed(() => !!this.tooltip() && !this.label());
 
   protected hasError = computed(() => {
     const state = this.controlState();
