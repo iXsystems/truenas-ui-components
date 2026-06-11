@@ -121,7 +121,9 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   /**
    * Emits when the open dropdown is scrolled near its bottom — append the
    * next page to `options` (and use `loading` while it fetches). Suppressed
-   * until `options` changes so a slow consumer is not spammed.
+   * until the `options` COUNT changes so a slow consumer is not spammed —
+   * which also means replacing the array with a same-length page (e.g. a
+   * fixed-size window) does not re-arm the emitter; pagination must append.
    */
   loadMore = output<void>();
 
@@ -210,13 +212,16 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     // page if the rows still don't fill the panel. Re-arming on length (not
     // identity) is what makes auto-fill loop-safe: an exhausted source that
     // answers loadMore with the same rows leaves the count unchanged, so no
-    // further request is made. Also triggered by the panel opening, when the
-    // already-loaded first page may be too short. Only these two signals are
-    // tracked — everything else is read untracked so e.g. a loading()
-    // transition alone never re-fires the check.
+    // further request is made. Also triggered by the panel opening (the
+    // already-loaded first page may be too short) and by loading() clearing —
+    // a consumer may update options while still loading and only clear the
+    // flag in a later tick, and without the loading() dependency that page's
+    // underfill check would be skipped (checkUnderfill bails while loading)
+    // and never re-run.
     effect(() => {
       const count = this.options().length;
       this.isOpen();
+      this.loading();
       untracked(() => {
         if (count !== this.lastOptionsCount) {
           this.lastOptionsCount = count;
@@ -374,10 +379,19 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
         break;
       }
 
-      case 'Escape':
+      case 'Escape': {
         event.preventDefault();
+        if (this.allowCustomValue()) {
+          // Escape means "cancel the draft": revert to the committed value's
+          // text so the upcoming blur doesn't commit the abandoned term.
+          const current = this.selectedValue();
+          this.searchTerm.set(
+            current !== null && current !== undefined ? this.displayWith()(current) : ''
+          );
+        }
         this.close();
         break;
+      }
     }
   }
 
@@ -391,7 +405,11 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     if (!this.isOpen() || this.loading() || this.loadMorePending) {
       return;
     }
-    if (this.filteredOptions().length === 0) {
+    // No rows to measure, or rendering is capped by maxResults — more data
+    // could never fill the panel, so requesting it would loop until the
+    // source is exhausted.
+    const filteredCount = this.filteredOptions().length;
+    if (filteredCount === 0 || filteredCount >= this.maxResults()) {
       return;
     }
     // The portaled rows may not have been change-detected yet when this runs
@@ -407,7 +425,9 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   }
 
   onPanelScroll(event: Event): void {
-    if (this.loadMorePending) {
+    // While loading, the rendered rows belong to the previous page/term —
+    // scrolling them must not request a page of data that hasn't landed yet.
+    if (this.loadMorePending || this.loading()) {
       return;
     }
     const el = event.target as HTMLElement;

@@ -58,6 +58,7 @@ class TestHostComponent {
       [options]="options()"
       [loading]="loading()"
       [allowCustomValue]="true"
+      [maxResults]="maxResults()"
       [formControl]="control"
       (searchChange)="searchTerms.push($event)"
       (loadMore)="loadMoreCount = loadMoreCount + 1"
@@ -67,6 +68,7 @@ class TestHostComponent {
 class AsyncTestHostComponent {
   options = signal(['alpha', 'beta', 'gamma']);
   loading = signal(false);
+  maxResults = signal(Infinity);
   control = new FormControl<string | null>(null);
   searchTerms: string[] = [];
   loadMoreCount = 0;
@@ -477,6 +479,62 @@ describe('TnAutocompleteComponent', () => {
       asyncHost.options.set([...asyncHost.options(), 'delta']);
       asyncFixture.detectChanges();
       expect(asyncHost.loadMoreCount).toBe(2);
+    });
+
+    it('ignores scrolls of stale rows while a page is loading', () => {
+      typeAsync('a');
+      expect(asyncHost.loadMoreCount).toBe(1);
+
+      // A page landed but the consumer is still loading — the visible rows
+      // are stale, so scrolling them must not request yet another page.
+      asyncHost.loading.set(true);
+      asyncHost.options.set([...asyncHost.options(), 'delta']);
+      asyncFixture.detectChanges();
+
+      const dropdown = overlayEl.querySelector('.tn-autocomplete__dropdown');
+      dropdown?.dispatchEvent(new Event('scroll'));
+      expect(asyncHost.loadMoreCount).toBe(1);
+    });
+
+    it('re-runs the underfill check when loading clears after options land', () => {
+      typeAsync('a');
+      expect(asyncHost.loadMoreCount).toBe(1);
+
+      // The page lands while loading is still set — the check is deferred...
+      asyncHost.loading.set(true);
+      asyncHost.options.set([...asyncHost.options(), 'delta']);
+      asyncFixture.detectChanges();
+      expect(asyncHost.loadMoreCount).toBe(1);
+
+      // ...and runs once loading clears in a later tick, keeping pagination alive.
+      asyncHost.loading.set(false);
+      asyncFixture.detectChanges();
+      expect(asyncHost.loadMoreCount).toBe(2);
+    });
+
+    it('does not auto-paginate past a maxResults rendering cap', () => {
+      asyncHost.maxResults.set(3);
+      asyncFixture.detectChanges();
+
+      // The panel is underfilled (jsdom: zero heights) but rendering is already
+      // capped at the 3 loaded rows — more data could never fill it.
+      getAsyncInput().dispatchEvent(new Event('focus'));
+      asyncFixture.detectChanges();
+      expect(asyncHost.loadMoreCount).toBe(0);
+    });
+
+    it('reverts the draft text on Escape so blur does not commit it', () => {
+      asyncHost.control.setValue('beta');
+      asyncFixture.detectChanges();
+
+      typeAsync('abandoned-draft');
+      getAsyncInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      asyncFixture.detectChanges();
+      getAsyncInput().dispatchEvent(new Event('blur'));
+      asyncFixture.detectChanges();
+
+      expect(asyncHost.control.value).toBe('beta');
+      expect(getAsyncInput().value).toBe('beta');
     });
 
     it('clears the value when the text is emptied', () => {
