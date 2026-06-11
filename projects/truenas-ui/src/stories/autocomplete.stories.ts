@@ -81,7 +81,22 @@ const meta: Meta<TnAutocompleteComponent<unknown>> = {
       description:
         'Max height of the dropdown panel before it scrolls (number = px, or any CSS length)',
     },
+    loading: {
+      control: 'boolean',
+      description: 'Show a loading row in the panel while options are being fetched',
+    },
+    loadingText: {
+      control: 'text',
+      description: 'Text shown next to the spinner while loading',
+    },
+    allowCustomValue: {
+      control: 'boolean',
+      description: 'Commit unmatched free text as the value on blur or Enter',
+    },
     optionSelected: { action: 'optionSelected' },
+    searchChange: { action: 'searchChange' },
+    loadMore: { action: 'loadMore' },
+    opened: { action: 'opened' },
   },
 };
 
@@ -283,7 +298,8 @@ export const LongList: Story = {
 
 /**
  * **Server-driven options with pagination and custom values.** The component
- * emits `searchChange` as the user types and `loadMore` when the open panel is
+ * emits `opened` when the panel opens (prime the first page before any typing),
+ * `searchChange` as the user types, and `loadMore` when the open panel is
  * scrolled to the bottom; the consumer fetches and updates `[options]`, holding
  * `[loading]` while a request is in flight. `[filterFn]` returns `true` because
  * the server already filtered the page. `allowCustomValue` commits free text
@@ -321,6 +337,12 @@ export const AsyncOptions: Story = {
         loading,
         value,
         passthroughFilter: () => true,
+        onOpened: () => {
+          // Click-to-suggest: prime the first page before the user types.
+          if (options().length === 0 && !loading()) {
+            fetchPage(term, 0);
+          }
+        },
         onSearch: (newTerm: string) => fetchPage(newTerm, 0),
         onLoadMore: () => fetchPage(term, page + 1),
         onSelected: (selected: string) => value.set(selected),
@@ -336,6 +358,7 @@ export const AsyncOptions: Story = {
           [allowCustomValue]="true"
           [filterFn]="passthroughFilter"
           placeholder="Type to search devices..."
+          (opened)="onOpened()"
           (searchChange)="onSearch($event)"
           (loadMore)="onLoadMore()"
           (optionSelected)="onSelected($event)">

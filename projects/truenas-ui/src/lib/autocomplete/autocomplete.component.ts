@@ -15,7 +15,7 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import type { OnDestroy, TemplateRef } from '@angular/core';
+import type { EmbeddedViewRef, OnDestroy, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { Subscription } from 'rxjs';
@@ -125,6 +125,13 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    */
   loadMore = output<void>();
 
+  /**
+   * Emits every time the panel opens (focus, click, typing, ArrowDown). For
+   * click-to-suggest pickers, prime the first page from here when `options`
+   * is still empty — `searchChange` alone never fires until the user types.
+   */
+  opened = output<void>();
+
   /** Reference to the input element */
   inputEl = viewChild<ElementRef<HTMLInputElement>>('inputEl');
 
@@ -183,6 +190,8 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
 
   /** Live overlay holding the dropdown panel, or undefined when closed. */
   private overlayRef?: OverlayRef;
+  /** Embedded view of the portaled panel — re-rendered before underfill measurement. */
+  private panelViewRef?: EmbeddedViewRef<unknown>;
   /** Subscriptions tied to the current overlay; torn down on close. */
   private overlaySubs: Subscription[] = [];
 
@@ -385,6 +394,10 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     if (this.filteredOptions().length === 0) {
       return;
     }
+    // The portaled rows may not have been change-detected yet when this runs
+    // (effect timing vs. embedded-view refresh) — render them first so the
+    // measurement below never sees a stale, shorter panel.
+    this.panelViewRef?.detectChanges();
     const panel = this.overlayRef?.overlayElement
       ?.querySelector<HTMLElement>('.tn-autocomplete__dropdown');
     if (panel && panel.scrollHeight <= panel.clientHeight) {
@@ -448,6 +461,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     }
     this.isOpen.set(true);
     this.attachOverlay();
+    this.opened.emit();
   }
 
   private close(): void {
@@ -486,7 +500,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       width: anchor.offsetWidth,
     });
 
-    this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate(), this.viewContainerRef));
+    this.panelViewRef = this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate(), this.viewContainerRef));
 
     // Non-intercepting click-outside: the pointer event still reaches whatever
     // the user clicked; we just notice and close. Ignore targets inside the
@@ -507,6 +521,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     this.overlaySubs = [];
     this.overlayRef?.dispose();
     this.overlayRef = undefined;
+    this.panelViewRef = undefined;
   }
 
   private scrollToHighlighted(): void {

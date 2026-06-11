@@ -60,7 +60,8 @@ class TestHostComponent {
       [allowCustomValue]="true"
       [formControl]="control"
       (searchChange)="searchTerms.push($event)"
-      (loadMore)="loadMoreCount = loadMoreCount + 1" />
+      (loadMore)="loadMoreCount = loadMoreCount + 1"
+      (opened)="openedCount = openedCount + 1" />
   `
 })
 class AsyncTestHostComponent {
@@ -69,6 +70,7 @@ class AsyncTestHostComponent {
   control = new FormControl<string | null>(null);
   searchTerms: string[] = [];
   loadMoreCount = 0;
+  openedCount = 0;
 }
 
 describe('TnAutocompleteComponent', () => {
@@ -350,6 +352,22 @@ describe('TnAutocompleteComponent', () => {
       asyncFixture = TestBed.createComponent(AsyncTestHostComponent);
       asyncHost = asyncFixture.componentInstance;
       asyncFixture.detectChanges();
+    });
+
+    it('emits opened when the panel opens so consumers can prime the first page', () => {
+      getAsyncInput().dispatchEvent(new Event('focus'));
+      asyncFixture.detectChanges();
+      expect(asyncHost.openedCount).toBe(1);
+
+      // Already open — typing doesn't re-emit.
+      typeAsync('a');
+      expect(asyncHost.openedCount).toBe(1);
+
+      getAsyncInput().dispatchEvent(new Event('blur'));
+      asyncFixture.detectChanges();
+      getAsyncInput().dispatchEvent(new Event('focus'));
+      asyncFixture.detectChanges();
+      expect(asyncHost.openedCount).toBe(2);
     });
 
     it('emits searchChange as the user types', () => {
