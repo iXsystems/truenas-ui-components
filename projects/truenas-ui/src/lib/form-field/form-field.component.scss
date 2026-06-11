@@ -82,6 +82,20 @@
   }
 }
 
+// Label-less mode: the required asterisk and help icon sit inline after the
+// projected control (which renders its own label, e.g. tn-checkbox). This
+// targets compact, self-labeled controls — a full-width control would shrink
+// toward its content width in the flex row; give such fields a label instead.
+.tn-form-field-wrapper--inline {
+  align-items: center;
+  display: flex;
+  gap: 0.375rem;
+
+  .required-asterisk {
+    color: var(--tn-error, #dc3545);
+  }
+}
+
 .tn-form-field-subscript {
   min-height: 1.25rem;
   margin-top: 0.25rem;

@@ -9,13 +9,14 @@ import { TnFormFieldComponent } from './form-field.component';
 import { TN_FORM_FIELD_ERRORS } from './form-field.errors';
 import type { TnFormFieldErrorMessages, TnFormFieldErrorResolver } from './form-field.errors';
 import { TnFormFieldHarness } from './form-field.harness';
+import { TnCheckboxComponent } from '../checkbox/checkbox.component';
 import { TnIconTesting } from '../icon/icon-testing';
 import { TnInputComponent } from '../input/input.component';
 
 @Component({
   selector: 'tn-test-host',
   standalone: true,
-  imports: [TnFormFieldComponent, TnInputComponent, ReactiveFormsModule],
+  imports: [TnFormFieldComponent, TnInputComponent, TnCheckboxComponent, ReactiveFormsModule],
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-form-field label="Name" testId="name" tooltip="Your full legal name" [required]="true">
@@ -41,6 +42,10 @@ import { TnInputComponent } from '../input/input.component';
     <tn-form-field label="Dynamic" testId="dynamic" subscriptSizing="dynamic" hint="A dynamic hint">
       <tn-input [formControl]="dynamicControl" />
     </tn-form-field>
+
+    <tn-form-field testId="agree" tooltip="Why we need your consent">
+      <tn-checkbox label="I agree" [formControl]="agreeControl" />
+    </tn-form-field>
   `
 })
 class TestHostComponent {
@@ -50,6 +55,7 @@ class TestHostComponent {
   customControl = new FormControl('', customValidator());
   fixedControl = new FormControl('');
   dynamicControl = new FormControl('', Validators.required);
+  agreeControl = new FormControl(false, Validators.requiredTrue);
 }
 
 function customValidator(): ValidatorFn {
@@ -107,7 +113,7 @@ describe('TnFormFieldHarness', () => {
 
     it('should find all form fields', async () => {
       const fields = await loader.getAllHarnesses(TnFormFieldHarness);
-      expect(fields.length).toBe(6);
+      expect(fields.length).toBe(7);
     });
   });
 
@@ -184,6 +190,46 @@ describe('TnFormFieldHarness', () => {
       );
       expect(await field.hasTooltip()).toBe(false);
       expect(await field.getTooltip()).toBeNull();
+    });
+
+    it('should render the tooltip in the label row when a label is set', async () => {
+      const field = await loader.getHarness(
+        TnFormFieldHarness.with({ testId: 'form-field-name' })
+      );
+      expect(await field.hasTooltip()).toBe(true);
+      expect(await field.isTooltipInline()).toBe(false);
+    });
+
+    it('should render the tooltip inline after the control when no label is set', async () => {
+      const field = await loader.getHarness(
+        TnFormFieldHarness.with({ testId: 'form-field-agree' })
+      );
+      expect(await field.getLabel()).toBe('');
+      expect(await field.hasTooltip()).toBe(true);
+      expect(await field.isTooltipInline()).toBe(true);
+      expect(await field.getTooltip()).toBe('Why we need your consent');
+    });
+  });
+
+  describe('label-less control', () => {
+    it('should render the required asterisk inline when no label is set', async () => {
+      const field = await loader.getHarness(
+        TnFormFieldHarness.with({ testId: 'form-field-agree' })
+      );
+      expect(await field.isRequired()).toBe(true);
+    });
+
+    it('should surface validation errors from a projected checkbox', async () => {
+      const field = await loader.getHarness(
+        TnFormFieldHarness.with({ testId: 'form-field-agree' })
+      );
+      expect(await field.hasError()).toBe(false);
+
+      fixture.componentInstance.agreeControl.markAsTouched();
+      fixture.componentInstance.agreeControl.updateValueAndValidity();
+      fixture.detectChanges();
+
+      expect(await field.hasError()).toBe(true);
     });
   });
 
