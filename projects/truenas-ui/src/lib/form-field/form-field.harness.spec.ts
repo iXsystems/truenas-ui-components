@@ -212,6 +212,13 @@ describe('TnFormFieldHarness', () => {
   });
 
   describe('label-less control', () => {
+    it('should render the required asterisk inline when no label is set', async () => {
+      const field = await loader.getHarness(
+        TnFormFieldHarness.with({ testId: 'form-field-agree' })
+      );
+      expect(await field.isRequired()).toBe(true);
+    });
+
     it('should surface validation errors from a projected checkbox', async () => {
       const field = await loader.getHarness(
         TnFormFieldHarness.with({ testId: 'form-field-agree' })

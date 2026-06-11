@@ -17,8 +17,11 @@
   <!-- Form Control Content -->
   <div
     class="tn-form-field-wrapper"
-    [class.tn-form-field-wrapper--inline-tooltip]="showInlineTooltip()">
+    [class.tn-form-field-wrapper--inline]="showInlineExtras()">
     <ng-content />
+    @if (showInlineRequired()) {
+      <span class="required-asterisk" aria-label="required">*</span>
+    }
     @if (showInlineTooltip()) {
       <ng-container [ngTemplateOutlet]="tooltipButton" />
     }

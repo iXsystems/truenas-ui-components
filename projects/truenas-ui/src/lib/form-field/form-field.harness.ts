@@ -193,8 +193,10 @@ export class TnFormFieldHarness extends ComponentHarness {
    */
   async isRequired(): Promise<boolean> {
     const label = await this._label();
-    if (!label) { return false; }
-    return label.hasClass('required');
+    if (label) { return label.hasClass('required'); }
+    // Label-less mode renders the asterisk inline after the projected control.
+    const inlineAsterisk = await this.locatorForOptional('.tn-form-field-wrapper .required-asterisk')();
+    return inlineAsterisk !== null;
   }
 
   /**

@@ -58,6 +58,10 @@ export class TnFormFieldComponent implements AfterContentInit {
    * one, the icon renders inline after the projected control instead — for
    * controls that carry their own label (e.g. `tn-checkbox`), where a detached
    * icon row above the control would look orphaned.
+   *
+   * Inline mode targets compact, self-labeled controls: the wrapper becomes a
+   * flex row, so a full-width control (e.g. a label-less `tn-input`) would
+   * shrink toward its content width. Give such fields a `label` instead.
    */
   tooltip = input<string>('');
   /** Placement of the tooltip relative to its help icon. */
@@ -97,8 +101,9 @@ export class TnFormFieldComponent implements AfterContentInit {
   /**
    * Whether the required indicator renders: forced via the `required` input, or
    * inferred from the projected control's validators (mirrors Angular Material's
-   * `hasValidator(Validators.required)` approach — reference equality, so composed
-   * or custom required-like validators need the explicit input).
+   * `hasValidator(Validators.required)` approach, extended to `requiredTrue` for
+   * boolean controls — reference equality, so composed or custom required-like
+   * validators need the explicit input).
    */
   protected showRequired = computed(() => this.required() || this.controlState().required);
 
@@ -107,6 +112,16 @@ export class TnFormFieldComponent implements AfterContentInit {
    * than in the label row — true when a tooltip is set but no label is.
    */
   protected showInlineTooltip = computed(() => !!this.tooltip() && !this.label());
+
+  /**
+   * Whether the required indicator renders inline after the projected control —
+   * with no label there is no label row to host the asterisk, so a required
+   * self-labeled control (e.g. a consent `tn-checkbox`) still gets one.
+   */
+  protected showInlineRequired = computed(() => !this.label() && this.showRequired());
+
+  /** Whether the wrapper hosts any inline extras and lays out as a flex row. */
+  protected showInlineExtras = computed(() => this.showInlineTooltip() || this.showInlineRequired());
 
   protected hasError = computed(() => {
     const state = this.controlState();
@@ -144,7 +159,8 @@ export class TnFormFieldComponent implements AfterContentInit {
         invalid: !!control.invalid,
         interacted: !!(control.dirty || control.touched),
         errors: control.errors ?? null,
-        required: !!control.control?.hasValidator(Validators.required),
+        required: !!(control.control?.hasValidator(Validators.required)
+          || control.control?.hasValidator(Validators.requiredTrue)),
       });
     }
   }
