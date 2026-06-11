@@ -417,6 +417,27 @@ describe('TnAutocompleteComponent', () => {
       expect(asyncHost.control.value).toBe('beta');
     });
 
+    it('matches options case-insensitively before committing a custom value', () => {
+      typeAsync('BETA');
+      getAsyncInput().dispatchEvent(new Event('blur'));
+      asyncFixture.detectChanges();
+
+      expect(asyncHost.control.value).toBe('beta');
+    });
+
+    it('keeps loading and no-results rows outside the listbox', () => {
+      typeAsync('a');
+      const listbox = overlayEl.querySelector('[role="listbox"]');
+      expect(listbox).toBeTruthy();
+      expect(listbox?.querySelectorAll(':scope > :not([role="option"])')).toHaveLength(0);
+
+      asyncHost.options.set([]);
+      asyncHost.loading.set(true);
+      asyncFixture.detectChanges();
+      expect(overlayEl.querySelector('[role="listbox"]')).toBeNull();
+      expect(overlayEl.querySelector('[role="status"] .tn-autocomplete__loading')).toBeTruthy();
+    });
+
     it('clears the value when the text is emptied', () => {
       asyncHost.control.setValue('beta');
       asyncFixture.detectChanges();

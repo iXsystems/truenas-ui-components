@@ -14,8 +14,8 @@
     [value]="searchTerm()"
     [attr.aria-expanded]="isOpen()"
     [attr.aria-autocomplete]="'list'"
-    [attr.aria-controls]="isOpen() ? uid + '-dropdown' : null"
-    [attr.aria-owns]="isOpen() ? uid + '-dropdown' : null"
+    [attr.aria-controls]="isOpen() && hasResults() ? uid + '-dropdown' : null"
+    [attr.aria-owns]="isOpen() && hasResults() ? uid + '-dropdown' : null"
     [attr.aria-activedescendant]="highlightedIndex() >= 0 ? uid + '-option-' + highlightedIndex() : null"
     (input)="onInput($event)"
     (focus)="onFocus()"
@@ -29,37 +29,41 @@
 <ng-template #dropdownTemplate>
   <div
     class="tn-autocomplete__dropdown"
-    role="listbox"
     [style.--tn-autocomplete-panel-max-height]="panelMaxHeightValue()"
-    [attr.id]="uid + '-dropdown'"
     (scroll)="onPanelScroll($event)">
 
+    <!-- Per ARIA, a listbox may only contain option/group children, so the
+         loading and no-results rows live OUTSIDE it as live-region siblings. -->
     @if (hasResults()) {
-      @for (option of filteredOptions(); track $index) {
-        <div
-          class="tn-autocomplete__option"
-          role="option"
-          tabindex="-1"
-          [class.highlighted]="highlightedIndex() === $index"
-          [attr.id]="uid + '-option-' + $index"
-          [attr.aria-selected]="highlightedIndex() === $index"
-          (mousedown)="$event.preventDefault()"
-          (click)="onOptionClick(option)"
-          (keydown.enter)="onOptionClick(option)">
-          {{ displayWith()(option) }}
-        </div>
-      }
+      <div role="listbox" [attr.id]="uid + '-dropdown'">
+        @for (option of filteredOptions(); track $index) {
+          <div
+            class="tn-autocomplete__option"
+            role="option"
+            tabindex="-1"
+            [class.highlighted]="highlightedIndex() === $index"
+            [attr.id]="uid + '-option-' + $index"
+            [attr.aria-selected]="highlightedIndex() === $index"
+            (mousedown)="$event.preventDefault()"
+            (click)="onOptionClick(option)"
+            (keydown.enter)="onOptionClick(option)">
+            {{ displayWith()(option) }}
+          </div>
+        }
+      </div>
     }
 
-    @if (loading()) {
-      <div class="tn-autocomplete__loading" role="status">
-        <tn-spinner [diameter]="16" [strokeWidth]="2" [ariaLabel]="loadingText()" />
-        <span>{{ loadingText() }}</span>
-      </div>
-    } @else if (!hasResults()) {
-      <div class="tn-autocomplete__no-results">
-        {{ noResultsText() }}
-      </div>
-    }
+    <div role="status">
+      @if (loading()) {
+        <div class="tn-autocomplete__loading">
+          <tn-spinner [diameter]="16" [strokeWidth]="2" [ariaLabel]="loadingText()" />
+          <span>{{ loadingText() }}</span>
+        </div>
+      } @else if (!hasResults()) {
+        <div class="tn-autocomplete__no-results">
+          {{ noResultsText() }}
+        </div>
+      }
+    </div>
   </div>
 </ng-template>

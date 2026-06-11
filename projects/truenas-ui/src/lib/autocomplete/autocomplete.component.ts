@@ -368,17 +368,25 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   // ── Internal ──
 
   /**
-   * Commit the current search term as the value (allowCustomValue mode). An
-   * exact display match commits the matching option instead, so picking an
-   * existing entry by typing its full text behaves like clicking it.
+   * Commit the current search term as the value (allowCustomValue mode). A
+   * display match (case-insensitive, same as the requireSelection path)
+   * commits the matching option instead, so picking an existing entry by
+   * typing its full text behaves like clicking it.
    */
   private commitCustomValue(): void {
     const term = this.searchTerm();
     const display = this.displayWith();
-    const match = this.options().find((opt) => display(opt) === term);
+    const lowerTerm = term.toLowerCase();
+    const match = this.options().find((opt) => display(opt).toLowerCase() === lowerTerm);
     if (match) {
       this.selectOption(match);
       return;
+    }
+    if (isDevMode() && term !== '' && this.options().some((opt) => typeof opt !== 'string')) {
+      console.warn(
+        '[tn-autocomplete] allowCustomValue committed free text into a control whose options are '
+        + 'not strings — custom values are only sound for string-valued autocompletes.'
+      );
     }
     const value = term === '' ? null : (term as unknown as T);
     this.selectedValue.set(value);
