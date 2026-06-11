@@ -4,10 +4,7 @@ import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
 import { Component, viewChild, inject, input, output, computed, signal, forwardRef, contentChildren, Directive } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
-import { TnTooltipDirective } from '../tooltip/tooltip.directive';
-import type { TooltipPosition } from '../tooltip/tooltip.directive';
 
 /**
  * Directive to mark content for projection into the checkbox label area.
@@ -29,7 +26,7 @@ export class TnCheckboxLabelDirective {}
 @Component({
   selector: 'tn-checkbox',
   standalone: true,
-  imports: [CommonModule, FormsModule, A11yModule, TnTestIdDirective, TnIconComponent, TnTooltipDirective],
+  imports: [CommonModule, FormsModule, A11yModule, TnTestIdDirective],
   templateUrl: './checkbox.component.html',
   styleUrl: './checkbox.component.scss',
   providers: [
@@ -51,10 +48,6 @@ export class TnCheckboxComponent implements AfterViewInit, OnDestroy, ControlVal
   testId = input<TnTestIdValue>(undefined);
   error = input<string | null>(null);
   checked = input<boolean>(false);
-  /** Optional tooltip shown via a help icon next to the label. */
-  tooltip = input<string>('');
-  /** Placement of the tooltip relative to its help icon. */
-  tooltipPosition = input<TooltipPosition>('above');
 
   change = output<boolean>();
 
