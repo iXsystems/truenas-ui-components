@@ -1,6 +1,6 @@
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { JsonPipe } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
@@ -69,6 +69,23 @@ class FullscreenSettingsDialogComponent {
   ref = inject(DialogRef<string>);
 }
 
+// Minimize-only job dialog demonstrating the chrome inputs: showCloseButton,
+// hideContent, hideActions. The content/actions toggles are cross-placed in the
+// template (content toggles in the footer, footer toggle in content) so the
+// dialog can never collapse both regions at once and strand the user.
+@Component({
+  selector: 'job-progress-dialog',
+  templateUrl: './dialog-5.stories.html',
+  standalone: true,
+  imports: [TnDialogShellComponent, TnButtonComponent]
+})
+class JobProgressDialogComponent {
+  ref = inject(DialogRef<string>);
+  canClose = signal(false);
+  contentHidden = signal(false);
+  actionsHidden = signal(false);
+}
+
 // Story component that demonstrates opening dialogs
 @Component({
   selector: 'dialog-demo',
@@ -123,6 +140,16 @@ class DialogDemoComponent {
 
     dialogRef.closed.subscribe((result) => {
       this.lastResult = result || 'Fullscreen dialog was cancelled';
+    });
+  }
+
+  openJobDialog() {
+    const dialogRef = this.ixDialog.open(JobProgressDialogComponent, {
+      width: '520px'
+    });
+
+    dialogRef.closed.subscribe((result) => {
+      this.lastResult = result || 'Job dialog was cancelled';
     });
   }
 }
@@ -342,6 +369,7 @@ export const Default: Story = {
         UserEditDialogComponent,
         SystemSettingsDialogComponent,
         FullscreenSettingsDialogComponent,
+        JobProgressDialogComponent,
         TnDialogShellComponent,
         TnButtonComponent,
         TnFormFieldComponent,
@@ -413,5 +441,39 @@ export const TestIds: Story = {
   render: () => ({
     moduleMetadata: { imports: [DialogTestIdDemoComponent] },
     template: '<tn-dialog-testid-demo />',
+  }),
+};
+
+@Component({
+  selector: 'tn-dialog-job-demo',
+  standalone: true,
+  imports: [TnButtonComponent],
+  template: `<tn-button type="button" label="Open job dialog" (click)="open()" />`,
+})
+class DialogJobDemoComponent {
+  private dialog = inject(TnDialog);
+  open(): void {
+    this.dialog.open(JobProgressDialogComponent, { width: '520px' });
+  }
+}
+
+/**
+ * **Chrome inputs.** `tn-dialog-shell` exposes three inputs for trimming its
+ * chrome, demonstrated here with a minimize-only export job:
+ *
+ * | Input | Effect | Use when |
+ * |---|---|---|
+ * | `showCloseButton` (default `true`) | Shows/hides the header close (✕) | The dialog must not be dismissed from the chrome — e.g. a running job that can only be minimized. |
+ * | `hideContent` (default `false`) | Collapses the content section | The body is projected through an always-present wrapper, so the section is never truly `:empty` and won't auto-hide. |
+ * | `hideActions` (default `false`) | Collapses the actions footer | Same always-present-wrapper rationale as `hideContent`. |
+ *
+ * An empty content/actions slot with no wrapper hides itself via the `:empty`
+ * rule in the theme — these inputs are only needed for the wrapper case. Open
+ * the dialog and toggle the buttons to preview each state.
+ */
+export const ChromeInputs: Story = {
+  render: () => ({
+    moduleMetadata: { imports: [DialogJobDemoComponent] },
+    template: '<tn-dialog-job-demo />',
   }),
 };

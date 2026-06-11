@@ -1,5 +1,6 @@
 <div tnTestIdType="expansion-panel" [ngClass]="classes()" [tnTestId]="testId()">
   <button class="tn-expansion-panel__header"
+          type="button"
           tnTestIdType="button"
           [disabled]="disabled()"
           [attr.aria-expanded]="effectiveExpanded()"
@@ -21,10 +22,16 @@
     </div>
   </button>
 
+  <!-- `inert` (not aria-hidden) when collapsed: it removes the content from both
+       the tab order and the a11y tree, so interactive children aren't keyboard-
+       reachable while hidden. aria-hidden alone would leave them focusable, which
+       is also an ARIA violation (aria-hidden must not contain focusable elements). -->
   <div class="tn-expansion-panel__content"
+       [class.tn-expansion-panel__content--collapsed]="!effectiveExpanded()"
        [id]="contentId"
-       [attr.aria-hidden]="!effectiveExpanded()"
-       [@expandCollapse]="effectiveExpanded() ? 'expanded' : 'collapsed'">
-    <ng-content />
+       [attr.inert]="!effectiveExpanded() ? '' : null">
+    <div class="tn-expansion-panel__content-inner">
+      <ng-content />
+    </div>
   </div>
 </div>

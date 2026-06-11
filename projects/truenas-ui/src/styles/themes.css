@@ -603,6 +603,21 @@ tn-dialog-shell {
   gap: 16px;
 }
 
+/* Hide a content section / actions footer that has nothing to show, so it
+   doesn't render as an empty bordered, padded bar.
+   - `:empty` covers dialogs that project nothing into the slot (the ng-content
+     comment anchor is ignored by `:empty`, but real text/elements are not).
+   - The `--hidden` modifier (driven by the [hideContent]/[hideActions] inputs)
+     covers slots that always project a wrapper element whose contents are
+     conditional, so the slot is never truly `:empty`.
+   Declared after the layout rules above so it wins on equal specificity. */
+.tn-dialog__content:empty,
+.tn-dialog__content--hidden,
+.tn-dialog__actions:empty,
+.tn-dialog__actions--hidden {
+  display: none;
+}
+
 /* Destructive variant */
 .tn-dialog--destructive .tn-dialog__header {
   border-bottom-color: var(--tn-lines, #e5e7eb);

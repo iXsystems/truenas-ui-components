@@ -19,7 +19,10 @@ import { TnButtonComponent } from '../button/button.component';
     <tn-dialog-shell
       [title]="data?.title ?? 'Test Dialog'"
       [testId]="data?.testId"
-      [showFullscreenButton]="data?.showFullscreen ?? false">
+      [showFullscreenButton]="data?.showFullscreen ?? false"
+      [showCloseButton]="data?.showCloseButton ?? true"
+      [hideContent]="data?.hideContent ?? false"
+      [hideActions]="data?.hideActions ?? false">
       <p>{{ data?.content ?? 'Dialog content' }}</p>
       <div tnDialogAction>
         <tn-button
@@ -46,6 +49,17 @@ class TestDialogComponent {
 })
 class TestHostComponent {}
 
+// Projects nothing into the content / actions slots, so each `<ng-content>`
+// leaves only a comment anchor — which `:empty` ignores — letting the theme's
+// `:empty { display: none }` rule hide the otherwise-empty bars.
+@Component({
+  selector: 'tn-empty-dialog',
+  standalone: true,
+  imports: [TnDialogShellComponent],
+  template: `<tn-dialog-shell [title]="'Empty'" />`,
+})
+class EmptyDialogComponent {}
+
 /* eslint-enable @angular-eslint/component-max-inline-declarations */
 
 describe('TnDialogHarness', () => {
@@ -56,7 +70,7 @@ describe('TnDialogHarness', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TestHostComponent, TestDialogComponent],
+      imports: [TestHostComponent, TestDialogComponent, EmptyDialogComponent],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TestHostComponent);
@@ -156,6 +170,53 @@ describe('TnDialogHarness', () => {
       await expect(dialog.toggleFullscreen()).rejects.toThrow(
         'Dialog does not have a fullscreen button',
       );
+    });
+  });
+
+  describe('slot visibility inputs', () => {
+    it('renders the close button by default', () => {
+      tnDialog.open(TestDialogComponent, { data: { title: 'Closable' } });
+      fixture.detectChanges();
+      expect(document.querySelector('.tn-dialog__close')).toBeTruthy();
+    });
+
+    it('omits the close button when showCloseButton is false', () => {
+      tnDialog.open(TestDialogComponent, { data: { title: 'Minimize only', showCloseButton: false } });
+      fixture.detectChanges();
+      expect(document.querySelector('.tn-dialog__close')).toBeNull();
+    });
+
+    it('marks the content section hidden when hideContent is true', () => {
+      tnDialog.open(TestDialogComponent, { data: { title: 'No body', hideContent: true } });
+      fixture.detectChanges();
+      expect(document.querySelector('.tn-dialog__content')?.classList).toContain('tn-dialog__content--hidden');
+    });
+
+    it('marks the actions footer hidden when hideActions is true', () => {
+      tnDialog.open(TestDialogComponent, { data: { title: 'No footer', hideActions: true } });
+      fixture.detectChanges();
+      expect(document.querySelector('.tn-dialog__actions')?.classList).toContain('tn-dialog__actions--hidden');
+    });
+
+    it('keeps both slots visible by default', () => {
+      tnDialog.open(TestDialogComponent, { data: { title: 'Default' } });
+      fixture.detectChanges();
+      expect(document.querySelector('.tn-dialog__content')?.classList).not.toContain('tn-dialog__content--hidden');
+      expect(document.querySelector('.tn-dialog__actions')?.classList).not.toContain('tn-dialog__actions--hidden');
+    });
+
+    it('leaves the content/actions slots :empty when nothing is projected (theme hides them)', () => {
+      tnDialog.open(EmptyDialogComponent);
+      fixture.detectChanges();
+
+      const content = document.querySelector('.tn-dialog__content');
+      const actions = document.querySelector('.tn-dialog__actions');
+      expect(content).toBeTruthy();
+      expect(actions).toBeTruthy();
+      // `:empty` ignores the ng-content comment anchor, so the theme's
+      // `:empty { display: none }` rule applies and the empty bars don't render.
+      expect(content?.matches(':empty')).toBe(true);
+      expect(actions?.matches(':empty')).toBe(true);
     });
   });
 
