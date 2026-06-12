@@ -1,3 +1,5 @@
+@use '../pipes/label-markup/label-markup' as label-markup;
+
 .tn-checkbox {
   display: flex;
   flex-direction: column;
@@ -98,6 +100,8 @@
   &__text {
     flex: 1;
     min-width: 0;
+
+    @include label-markup.inline-code;
   }
 
   &__error {

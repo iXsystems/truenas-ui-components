@@ -1,3 +1,5 @@
+@use '../pipes/label-markup/label-markup' as label-markup;
+
 .tn-select-container {
   position: relative;
   width: 100%;
@@ -72,6 +74,8 @@
 }
 
 .tn-select-text {
+  @include label-markup.inline-code;
+
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
@@ -120,6 +124,8 @@
 }
 
 .tn-select-option {
+  @include label-markup.inline-code;
+
   display: flex;
   align-items: center;
   padding: 0.5rem 0.75rem;
@@ -182,6 +188,8 @@
 }
 
 .tn-select-group-label {
+  @include label-markup.inline-code;
+
   padding: 0.375rem 0.75rem;
   font-size: 0.75rem;
   font-weight: 600;

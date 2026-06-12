@@ -1,3 +1,5 @@
+@use '../pipes/label-markup/label-markup' as label-markup;
+
 .tn-form-field {
   display: block;
   width: 100%;
@@ -19,6 +21,8 @@
   font-weight: 400;
   color: var(--tn-fg1, #333);
   line-height: 1.4;
+
+  @include label-markup.inline-code;
 
   &.required {
     .required-asterisk {
