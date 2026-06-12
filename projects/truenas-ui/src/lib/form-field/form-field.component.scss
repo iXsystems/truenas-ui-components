@@ -14,7 +14,9 @@
 .tn-form-field-label {
   display: block;
   font-size: 1rem;
-  font-weight: 500;
+  // Regular weight so **bold** label markup (default 700) stands out;
+  // at the previous 500 the contrast was too subtle.
+  font-weight: 400;
   color: var(--tn-fg1, #333);
   line-height: 1.4;
 

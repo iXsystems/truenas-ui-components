@@ -3,7 +3,7 @@
   @if (label()) {
     <div class="tn-form-field-label-row">
       <label class="tn-form-field-label" [class.required]="showRequired()">
-        {{ label() }}
+        <span [innerHTML]="label() | tnLabelMarkup"></span>
         @if (showRequired()) {
           <span class="required-asterisk" aria-label="required">*</span>
         }

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
 import { Component, input, output, computed, viewChild, inject } from '@angular/core';
 import { TnIconComponent } from '../icon/icon.component';
+import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
+import { LabelTextPipe } from '../pipes/label-markup/label-text.pipe';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 export type ChipColor = 'primary' | 'secondary' | 'accent';
@@ -10,7 +12,7 @@ export type ChipColor = 'primary' | 'secondary' | 'accent';
 @Component({
   selector: 'tn-chip',
   standalone: true,
-  imports: [CommonModule, A11yModule, TnIconComponent, TnTestIdDirective],
+  imports: [CommonModule, A11yModule, TnIconComponent, TnTestIdDirective, LabelMarkupPipe, LabelTextPipe],
   templateUrl: './chip.component.html',
   styleUrls: ['./chip.component.scss'],
 })

@@ -21,8 +21,8 @@
     <!-- Display Text -->
     <span
       class="tn-select-text"
-      [class.placeholder]="multiple() ? selectedValues().length === 0 : (selectedValue() === null || selectedValue() === undefined)">
-      {{ displayText() }}
+      [class.placeholder]="multiple() ? selectedValues().length === 0 : (selectedValue() === null || selectedValue() === undefined)"
+      [innerHTML]="displayText() | tnLabelMarkup">
     </span>
 
     <!-- Dropdown Arrow -->
@@ -73,7 +73,7 @@
               [disabled]="true"
               [hideLabel]="true" />
           }
-          {{ option.label }}
+          <span [innerHTML]="option.label | tnLabelMarkup"></span>
         </div>
       }
 
@@ -92,8 +92,8 @@
           <div
             class="tn-select-group-label"
             [attr.id]="'tn-select-group-' + idNamespace() + '-' + $index"
-            [class.disabled]="group.disabled">
-            {{ group.label }}
+            [class.disabled]="group.disabled"
+            [innerHTML]="group.label | tnLabelMarkup">
           </div>
 
           <!-- Group Options -->
@@ -121,7 +121,7 @@
                   [disabled]="true"
                   [hideLabel]="true" />
               }
-              {{ option.label }}
+              <span [innerHTML]="option.label | tnLabelMarkup"></span>
             </div>
           }
         </div>

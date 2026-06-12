@@ -37,7 +37,7 @@
 
         <!-- Step Label -->
         <div class="tn-stepper__step-label">
-          <div class="tn-stepper__step-title">{{ step.label() }}</div>
+          <div class="tn-stepper__step-title" [innerHTML]="step.label() | tnLabelMarkup"></div>
           @if (step.optional()) {
             <span class="tn-stepper__step-subtitle">Optional</span>
           }

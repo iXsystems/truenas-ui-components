@@ -7,6 +7,7 @@ import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { Subscription } from 'rxjs';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
+import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { TnTestIdDirective, composeTestId, scopeTestId, type TnTestIdValue } from '../test-id';
 
 export interface TnSelectOption<T = unknown> {
@@ -24,7 +25,7 @@ export interface TnSelectOptionGroup<T = unknown> {
 @Component({
   selector: 'tn-select',
   standalone: true,
-  imports: [TnCheckboxComponent, TnTestIdDirective],
+  imports: [TnCheckboxComponent, TnTestIdDirective, LabelMarkupPipe],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

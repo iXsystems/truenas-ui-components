@@ -2,6 +2,7 @@ import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, input, output, contentChildren, computed, effect, model, inject } from '@angular/core';
 import { TnStepComponent } from './step.component';
+import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 @Component({
@@ -9,7 +10,7 @@ import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
   templateUrl: './stepper.component.html',
   styleUrls: ['./stepper.component.scss'],
   standalone: true,
-  imports: [CommonModule, TnTestIdDirective],
+  imports: [CommonModule, TnTestIdDirective, LabelMarkupPipe],
   animations: [
     trigger('stepTransition', [
       transition(':enter', [

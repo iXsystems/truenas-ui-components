@@ -16,7 +16,7 @@
     [tnTestId]="testId()"
     (click)="handleAnchorClick($event)"
   >
-    {{ label() }}
+    <span [innerHTML]="label() | tnLabelMarkup"></span>
   </a>
 } @else if (isAnchor()) {
   <a
@@ -34,7 +34,7 @@
     [tnTestId]="testId()"
     (click)="handleAnchorClick($event)"
   >
-    {{ label() }}
+    <span [innerHTML]="label() | tnLabelMarkup"></span>
   </a>
 } @else {
   <button
@@ -48,6 +48,6 @@
     [tnTestId]="testId()"
     (click)="onClick.emit($event)"
   >
-    {{ label() }}
+    <span [innerHTML]="label() | tnLabelMarkup"></span>
   </button>
 }

@@ -4,6 +4,8 @@ import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
 import { Component, viewChild, inject, input, output, computed, signal, forwardRef, contentChildren, Directive } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
+import { LabelTextPipe } from '../pipes/label-markup/label-text.pipe';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 /**
@@ -26,7 +28,7 @@ export class TnCheckboxLabelDirective {}
 @Component({
   selector: 'tn-checkbox',
   standalone: true,
-  imports: [CommonModule, FormsModule, A11yModule, TnTestIdDirective],
+  imports: [CommonModule, FormsModule, A11yModule, TnTestIdDirective, LabelMarkupPipe, LabelTextPipe],
   templateUrl: './checkbox.component.html',
   styleUrl: './checkbox.component.scss',
   providers: [

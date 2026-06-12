@@ -15,7 +15,7 @@
       (change)="onRadioChange($event)"
     />
     <span class="tn-radio__checkmark"></span>
-    <span class="tn-radio__text">{{ label() }}</span>
+    <span class="tn-radio__text" [innerHTML]="label() | tnLabelMarkup"></span>
   </label>
 
   @if (error()) {

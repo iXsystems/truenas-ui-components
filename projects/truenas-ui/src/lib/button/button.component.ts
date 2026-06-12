@@ -2,12 +2,13 @@ import { CommonModule } from '@angular/common';
 import type { AfterViewInit } from '@angular/core';
 import { Component, ElementRef, computed, inject, input, output, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 @Component({
   selector: 'tn-button',
   standalone: true,
-  imports: [CommonModule, RouterLink, TnTestIdDirective],
+  imports: [CommonModule, RouterLink, TnTestIdDirective, LabelMarkupPipe],
   templateUrl: './button.component.html',
   styleUrls: ['./button.component.scss'],
 })
