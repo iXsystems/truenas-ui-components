@@ -1,0 +1,18 @@
+// Shared styling for inline elements produced by the tnLabelMarkup pipe.
+//
+// <strong> and <em> intentionally keep browser defaults (bold/italic).
+// <code> needs explicit styling: the theme monospace font, and an explicit
+// size because a bare `monospace` family triggers the browser's smaller
+// default monospace size. ::ng-deep is required because the pipe renders
+// through [innerHTML], so the generated nodes carry no _ngcontent attribute
+// and component-scoped selectors can't reach them otherwise.
+@mixin inline-code {
+  ::ng-deep code {
+    font-family: var(--tn-font-family-monospace, monospace);
+    font-size: 0.875em;
+    background: var(--tn-bg2, #f5f5f5);
+    border: 1px solid var(--tn-lines, #ccc);
+    border-radius: 4px;
+    padding: 0.125em 0.45em;
+  }
+}

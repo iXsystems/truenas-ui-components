@@ -4,7 +4,7 @@
   tnTestIdType="chip"
   [ngClass]="classes()"
   [tnTestId]="testId()"
-  [attr.aria-label]="label()"
+  [attr.aria-label]="label() | tnLabelText"
   [attr.aria-disabled]="disabled()"
   [attr.tabindex]="disabled() ? -1 : 0"
   (click)="handleClick($event)"
@@ -13,12 +13,12 @@
   @if (icon()) {
     <tn-icon class="tn-chip__icon" size="sm" [name]="icon()!" />
   }
-  <span class="tn-chip__label">{{ label() }}</span>
+  <span class="tn-chip__label" [innerHTML]="label() | tnLabelMarkup"></span>
   @if (closable()) {
     <button
       type="button"
       class="tn-chip__close"
-      [attr.aria-label]="'Remove ' + label()"
+      [attr.aria-label]="'Remove ' + (label() | tnLabelText)"
       [disabled]="disabled()"
       (click)="handleClose($event)"
     >

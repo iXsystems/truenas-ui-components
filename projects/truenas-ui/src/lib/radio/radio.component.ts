@@ -4,12 +4,13 @@ import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
 import { Component, viewChild, inject, input, output, computed, signal, forwardRef } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 @Component({
   selector: 'tn-radio',
   standalone: true,
-  imports: [CommonModule, FormsModule, A11yModule, TnTestIdDirective],
+  imports: [CommonModule, FormsModule, A11yModule, TnTestIdDirective, LabelMarkupPipe],
   templateUrl: './radio.component.html',
   styleUrl: './radio.component.scss',
   providers: [

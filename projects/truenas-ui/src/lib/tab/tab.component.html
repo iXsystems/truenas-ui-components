@@ -23,7 +23,7 @@
     </span>
   }
   <span class="tn-tab__label">
-    {{ label() }}
+    <span [innerHTML]="label() | tnLabelMarkup"></span>
     <ng-content />
   </span>
 </button>

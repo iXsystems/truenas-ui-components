@@ -1,3 +1,5 @@
+@use '../pipes/label-markup/label-markup' as label-markup;
+
 :host {
   display: inline-block;
   width: fit-content;
@@ -5,6 +7,8 @@
 }
 
 .storybook-button {
+  @include label-markup.inline-code;
+
   display: inline-block;
   cursor: pointer;
   border: 0;

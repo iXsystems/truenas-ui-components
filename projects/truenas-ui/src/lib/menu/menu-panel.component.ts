@@ -2,6 +2,7 @@ import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { CommonModule } from '@angular/common';
 import { Component, ChangeDetectionStrategy, forwardRef, inject, input } from '@angular/core';
 import { TnIconComponent } from '../icon/icon.component';
+import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { TnTestIdDirective, scopeTestId, type TnTestIdValue } from '../test-id';
 import { TnMenuActivateHoverDirective } from './menu-activate-hover.directive';
 import type { TnMenuItemComponent } from './menu-item.component';
@@ -51,6 +52,7 @@ import { TnMenuComponent } from './menu.component';
     TnIconComponent,
     TnTestIdDirective,
     TnMenuActivateHoverDirective,
+    LabelMarkupPipe,
     forwardRef(() => TnMenuPanelComponent),
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

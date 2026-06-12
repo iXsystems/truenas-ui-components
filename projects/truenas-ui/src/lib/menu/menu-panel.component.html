@@ -22,7 +22,7 @@
         @if (projected.icon()) {
           <tn-icon size="sm" class="tn-menu-item-icon" [name]="projected.icon()!" [library]="projected.iconLibrary()" />
         }
-        <span class="tn-menu-item-label">{{ projected.label() }}</span>
+        <span class="tn-menu-item-label" [innerHTML]="projected.label() | tnLabelMarkup"></span>
         @if (projected.shortcut()) {
           <span class="tn-menu-item-shortcut">{{ projected.shortcut() }}</span>
         }
@@ -52,7 +52,7 @@
         @if (item.icon) {
           <tn-icon size="sm" class="tn-menu-item-icon" [name]="item.icon!" [library]="item.iconLibrary" />
         }
-        <span class="tn-menu-item-label">{{ item.label }}</span>
+        <span class="tn-menu-item-label" [innerHTML]="item.label | tnLabelMarkup"></span>
         @if (item.shortcut) {
           <span class="tn-menu-item-shortcut">{{ item.shortcut }}</span>
         }
@@ -74,7 +74,7 @@
         @if (item.icon) {
           <tn-icon size="sm" class="tn-menu-item-icon" [name]="item.icon!" [library]="item.iconLibrary" />
         }
-        <span class="tn-menu-item-label">{{ item.label }}</span>
+        <span class="tn-menu-item-label" [innerHTML]="item.label | tnLabelMarkup"></span>
         @if (item.shortcut) {
           <span class="tn-menu-item-shortcut">{{ item.shortcut }}</span>
         }

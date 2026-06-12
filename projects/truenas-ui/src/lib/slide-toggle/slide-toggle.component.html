@@ -7,10 +7,10 @@
         class="tn-slide-toggle__label-text tn-slide-toggle__label-text--before"
         tabindex="0"
         role="button"
+        [innerHTML]="label() | tnLabelMarkup"
         (click)="onLabelClick()"
         (keydown.enter)="onLabelClick()"
         (keydown.space)="onLabelClick()">
-        {{ label() }}
       </span>
     }
 
@@ -67,10 +67,10 @@
         class="tn-slide-toggle__label-text tn-slide-toggle__label-text--after"
         tabindex="0"
         role="button"
+        [innerHTML]="label() | tnLabelMarkup"
         (click)="onLabelClick()"
         (keydown.enter)="onLabelClick()"
         (keydown.space)="onLabelClick()">
-        {{ label() }}
       </span>
     }
 

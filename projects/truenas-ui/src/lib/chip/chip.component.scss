@@ -1,3 +1,5 @@
+@use '../pipes/label-markup/label-markup' as label-markup;
+
 .tn-chip {
   display: inline-flex;
   align-items: center;
@@ -77,6 +79,8 @@
   }
 
   &__label {
+    @include label-markup.inline-code;
+
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

@@ -12,6 +12,7 @@ import {
 } from './form-field.errors';
 import type { TnFormFieldErrorMessages } from './form-field.errors';
 import { TnIconComponent } from '../icon/icon.component';
+import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 import { TnTooltipDirective } from '../tooltip/tooltip.directive';
 import type { TooltipPosition } from '../tooltip/tooltip.directive';
@@ -29,7 +30,7 @@ interface ControlStateSnapshot {
 @Component({
   selector: 'tn-form-field',
   standalone: true,
-  imports: [NgTemplateOutlet, TnTestIdDirective, TnIconComponent, TnTooltipDirective],
+  imports: [NgTemplateOutlet, TnTestIdDirective, TnIconComponent, TnTooltipDirective, LabelMarkupPipe],
   templateUrl: './form-field.component.html',
   styleUrls: ['./form-field.component.scss']
 })

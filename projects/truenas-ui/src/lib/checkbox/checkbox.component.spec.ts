@@ -78,6 +78,24 @@ describe('TnCheckboxComponent', () => {
       expect(getLabelText()?.textContent?.trim()).toBe('Accept');
     });
 
+    it('should render label markup as bold text', () => {
+      host.label.set('Accept the **Terms**');
+      fixture.detectChanges();
+
+      const text = getLabelText();
+      expect(text?.querySelector('strong')?.textContent).toBe('Terms');
+      expect(text?.textContent?.trim()).toBe('Accept the Terms');
+    });
+
+    it('should escape HTML in the label instead of rendering it', () => {
+      host.label.set('Accept <strong>now</strong>');
+      fixture.detectChanges();
+
+      const text = getLabelText();
+      expect(text?.querySelector('strong')).toBeNull();
+      expect(text?.textContent?.trim()).toBe('Accept <strong>now</strong>');
+    });
+
     it('should hide label when hideLabel is true', () => {
       host.hideLabel.set(true);
       fixture.detectChanges();

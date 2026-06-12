@@ -155,6 +155,35 @@ export const RequiredField: Story = {
   },
 };
 
+export const LabelMarkup: Story = {
+  render: (args) => ({
+    props: args,
+    template: `
+      <div style="display: flex; flex-direction: column; gap: 16px; max-width: 400px;">
+        <tn-form-field [label]="label" hint="**bold**, *italic* and \`code\` are supported in labels">
+          <tn-input inputType="text" placeholder="foo"></tn-input>
+        </tn-form-field>
+        <tn-checkbox label="I accept the **Terms of Service**"></tn-checkbox>
+        <tn-radio name="markup-demo" value="a" label="Use the *default* pool"></tn-radio>
+        <tn-radio name="markup-demo" value="b" label="Run \`zpool import\` manually"></tn-radio>
+      </div>
+    `,
+    moduleMetadata: {
+      imports: [TnInputComponent, TnCheckboxComponent, TnRadioComponent],
+    },
+  }),
+  args: {
+    label: 'Type **foo** below',
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Labels accept lightweight markup: `**bold**`, `*italic*` and `` `code` ``. Markers adjacent to whitespace (e.g. `2 * 3`, `*.tar`) are left as literal text, and `\\*` escapes a marker. HTML in labels is always escaped, never rendered.',
+      },
+    },
+  },
+};
+
 export const WithValidation: Story = {
   render: (args) => ({
     props: {
