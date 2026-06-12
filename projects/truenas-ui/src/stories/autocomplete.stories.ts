@@ -111,10 +111,20 @@ type Story = StoryObj<TnAutocompleteComponent<unknown>>;
 
 export const Default: Story = {
   render: (args) => ({
-    props: {
-      ...args,
-      options: simpleOptions,
-    },
+    // The committed value lives on the form control (custom commits flow
+    // through the CVA, not optionSelected) — bind one and mirror it into a
+    // signal so the story can show what actually landed.
+    props: (() => {
+      const control = new FormControl<string | null>(null);
+      const committed = signal<string | null>(control.value);
+      control.valueChanges.subscribe((value) => committed.set(value));
+      return {
+        ...args,
+        options: simpleOptions,
+        control,
+        committed,
+      };
+    })(),
     template: `
       <tn-form-field
         label="Favorite fruit"
@@ -124,20 +134,30 @@ export const Default: Story = {
           [placeholder]="placeholder"
           [disabled]="disabled"
           [requireSelection]="requireSelection"
+          [allowCustomValue]="allowCustomValue"
+          [loading]="loading"
+          [loadingText]="loadingText"
           [noResultsText]="noResultsText"
           [maxResults]="maxResults"
+          [formControl]="control"
           (optionSelected)="optionSelected($event)">
         </tn-autocomplete>
       </tn-form-field>
+      @if (committed() !== null) {
+        <p style="margin-top: 1rem; font-size: 0.875rem;">Committed value: <code>{{ committed() }}</code></p>
+      }
     `,
     moduleMetadata: {
-      imports: [TnFormFieldComponent],
+      imports: [TnFormFieldComponent, ReactiveFormsModule],
     },
   }),
   args: {
     placeholder: 'Type to search fruits...',
     disabled: false,
     requireSelection: false,
+    allowCustomValue: false,
+    loading: false,
+    loadingText: 'Loading...',
     noResultsText: 'No fruits found',
     maxResults: 100,
   },
@@ -372,10 +392,16 @@ export const AsyncOptions: Story = {
         }, 600);
       };
 
+      // Custom commits flow through the CVA (onChange), not optionSelected —
+      // bind a real FormControl so they are observable in the story.
+      const control = new FormControl<string | null>(null);
+      control.valueChanges.subscribe((committed) => value.set(committed));
+
       return {
         options,
         loading,
         value,
+        control,
         passthroughFilter: () => true,
         onOpened: () => {
           // Click-to-suggest: prime the first page before the user types.
@@ -385,31 +411,30 @@ export const AsyncOptions: Story = {
         },
         onSearch: (newTerm: string) => fetchPage(newTerm, 0),
         onLoadMore: () => fetchPage(term, page + 1),
-        onSelected: (selected: { value: string }) => value.set(selected.value),
       };
     })(),
     template: `
       <tn-form-field
         label="Port or Hostname"
-        hint="Pick a detected device or type a custom path">
+        hint="Pick a detected device or type a custom path (committed on blur or Enter)">
         <tn-autocomplete
           [options]="options()"
           [loading]="loading()"
           [allowCustomValue]="true"
           [filterFn]="passthroughFilter"
+          [formControl]="control"
           placeholder="Type to search devices..."
           (opened)="onOpened()"
           (searchChange)="onSearch($event)"
-          (loadMore)="onLoadMore()"
-          (optionSelected)="onSelected($event)">
+          (loadMore)="onLoadMore()">
         </tn-autocomplete>
       </tn-form-field>
       @if (value()) {
-        <p style="margin-top: 1rem; font-size: 0.875rem;">Selected: <code>{{ value() }}</code></p>
+        <p style="margin-top: 1rem; font-size: 0.875rem;">Committed value: <code>{{ value() }}</code></p>
       }
     `,
     moduleMetadata: {
-      imports: [TnFormFieldComponent],
+      imports: [TnFormFieldComponent, ReactiveFormsModule],
     },
   }),
   parameters: {
