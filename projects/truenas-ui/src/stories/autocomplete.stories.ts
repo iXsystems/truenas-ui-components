@@ -31,17 +31,22 @@ const countries: Country[] = [
   { code: 'NL', name: 'Netherlands' },
 ];
 
-const displayCountry = (country: Country): string => country.name;
+const countryOptions = countries.map((country) => ({ label: country.name, value: country.code }));
 
-const simpleOptions = [
+const simpleFruits = [
   'Apple', 'Banana', 'Cherry', 'Date', 'Elderberry',
   'Fig', 'Grape', 'Honeydew', 'Kiwi', 'Lemon',
   'Mango', 'Nectarine', 'Orange', 'Papaya', 'Quince',
 ];
 
+const simpleOptions = simpleFruits.map((fruit) => ({ label: fruit, value: fruit }));
+
 const manyOptions = Array.from(
   { length: 150 },
-  (_, i) => `Option ${String(i + 1).padStart(3, '0')}`
+  (_, i) => {
+    const name = `Option ${String(i + 1).padStart(3, '0')}`;
+    return { label: name, value: name };
+  }
 );
 
 const meta: Meta<TnAutocompleteComponent<unknown>> = {
@@ -138,21 +143,19 @@ export const Default: Story = {
   },
 };
 
-export const WithDisplayWith: Story = {
+export const LabelValuePairs: Story = {
   render: (args) => ({
     props: {
       ...args,
-      countries,
-      displayCountry,
+      options: countryOptions,
     },
     template: `
       <tn-form-field
         label="Country"
-        hint="Search by country name"
+        hint="Displays the name, commits the ISO code"
         [required]="true">
         <tn-autocomplete
-          [options]="countries"
-          [displayWith]="displayCountry"
+          [options]="options"
           [placeholder]="placeholder"
           [requireSelection]="requireSelection"
           (optionSelected)="optionSelected($event)">
@@ -223,18 +226,16 @@ export const CustomFilter: Story = {
   render: (args) => ({
     props: {
       ...args,
-      countries,
-      displayCountry,
-      startsWithFilter: (option: Country, term: string) =>
-        option.name.toLowerCase().startsWith(term.toLowerCase()),
+      options: countryOptions,
+      startsWithFilter: (option: { label: string }, term: string) =>
+        option.label.toLowerCase().startsWith(term.toLowerCase()),
     },
     template: `
       <tn-form-field
         label="Country (starts-with filter)"
         hint="Only matches from the beginning of the name">
         <tn-autocomplete
-          [options]="countries"
-          [displayWith]="displayCountry"
+          [options]="options"
           [filterFn]="startsWithFilter"
           placeholder="Type to search..."
           (optionSelected)="optionSelected($event)">
@@ -298,24 +299,10 @@ export const LongList: Story = {
 };
 
 /**
- * **Server-driven options with pagination and custom values.** The component
- * emits `opened` when the panel opens (prime the first page before any typing),
- * `searchChange` as the user types, and `loadMore` when the open panel is
- * scrolled to the bottom; the consumer fetches and updates `[options]`, holding
- * `[loading]` while a request is in flight. `[filterFn]` returns `true` because
- * the server already filtered the page. `allowCustomValue` commits free text
- * (e.g. \`/my-custom-port\`) as the value on blur or Enter — for pickers where
- * known entries are suggested but any value is acceptable.
- *
- * This story simulates a 600 ms backend with 100 entries served in pages of 20.
- */
-/**
- * **Label/value separation.** `valueWith` maps the selected option to the value
- * committed to the form control — here a country option commits its two-letter
- * code while the input displays the full name. The bound `FormControl` starts
- * at `'DE'`, so the input renders "Germany" on load: written values resolve
- * back to their option's label (falling back to the raw value until options
- * load).
+ * **CVA round-tripping with written values.** The bound `FormControl` starts at
+ * `'DE'`, so the input renders "Germany" on load: a written value resolves
+ * back to its option's label (falling back to the raw value until options
+ * load), and selections commit the option's `value`.
  */
 export const ValueMapping: Story = {
   render: () => ({
@@ -324,9 +311,7 @@ export const ValueMapping: Story = {
       const committed = signal<string | null>(control.value);
       control.valueChanges.subscribe((value) => committed.set(value));
       return {
-        options: countries,
-        displayCountry,
-        countryCode: (c: Country) => c.code,
+        options: countryOptions,
         control,
         committed,
       };
@@ -335,8 +320,6 @@ export const ValueMapping: Story = {
       <tn-form-field label="Country" hint="Commits the ISO code, displays the name">
         <tn-autocomplete
           [options]="options"
-          [displayWith]="displayCountry"
-          [valueWith]="countryCode"
           [requireSelection]="true"
           [formControl]="control"
           placeholder="Type to search countries...">
@@ -353,11 +336,23 @@ export const ValueMapping: Story = {
   },
 };
 
+/**
+ * **Server-driven options with pagination and custom values.** The component
+ * emits `opened` when the panel opens (prime the first page before any typing),
+ * `searchChange` as the user types, and `loadMore` when the open panel is
+ * scrolled to the bottom; the consumer fetches and updates `[options]`, holding
+ * `[loading]` while a request is in flight. `[filterFn]` returns `true` because
+ * the server already filtered the page. `allowCustomValue` commits free text
+ * (e.g. \`/my-custom-port\`) as the value on blur or Enter — for pickers where
+ * known entries are suggested but any value is acceptable.
+ *
+ * This story simulates a 600 ms backend with 100 entries served in pages of 20.
+ */
 export const AsyncOptions: Story = {
   render: () => ({
     // Signal-driven so async mutations render under zoneless change detection.
     props: (() => {
-      const options = signal<string[]>([]);
+      const options = signal<{ label: string; value: string }[]>([]);
       const loading = signal(false);
       const value = signal<string | null>(null);
       let term = '';
@@ -372,7 +367,7 @@ export const AsyncOptions: Story = {
         timer = setTimeout(() => {
           const all = Array.from({ length: 100 }, (unused, i) => `device-${String(i).padStart(3, '0')}`);
           const matches = all.filter((name) => name.includes(term));
-          options.set(matches.slice(0, (page + 1) * 20));
+          options.set(matches.slice(0, (page + 1) * 20).map((name) => ({ label: name, value: name })));
           loading.set(false);
         }, 600);
       };
@@ -390,7 +385,7 @@ export const AsyncOptions: Story = {
         },
         onSearch: (newTerm: string) => fetchPage(newTerm, 0),
         onLoadMore: () => fetchPage(term, page + 1),
-        onSelected: (selected: string) => value.set(selected),
+        onSelected: (selected: { value: string }) => value.set(selected.value),
       };
     })(),
     template: `

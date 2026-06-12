@@ -19,8 +19,16 @@ import type { EmbeddedViewRef, OnDestroy, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { Subscription } from 'rxjs';
+import type { TnSelectOption } from '../select/select.component';
 import { TnSpinnerComponent } from '../spinner/spinner.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+
+/**
+ * Option shape for `tn-autocomplete` — the `label` is displayed, the `value`
+ * is committed to the form control. Structurally identical to
+ * `TnSelectOption`, so the same data sources feed both dropdown components.
+ */
+export type TnAutocompleteOption<T = unknown> = TnSelectOption<T>;
 
 let nextId = 0;
 
@@ -38,7 +46,7 @@ let nextId = 0;
   templateUrl: './autocomplete.component.html',
   styleUrl: './autocomplete.component.scss',
 })
-export class TnAutocompleteComponent<T = unknown, V = T> implements ControlValueAccessor, OnDestroy {
+export class TnAutocompleteComponent<T = unknown> implements ControlValueAccessor, OnDestroy {
   private readonly elementRef = inject(ElementRef);
   private readonly overlay = inject(Overlay);
   private readonly viewContainerRef = inject(ViewContainerRef);
@@ -46,26 +54,21 @@ export class TnAutocompleteComponent<T = unknown, V = T> implements ControlValue
   /** Unique instance ID for ARIA linkage */
   protected readonly uid = `tn-autocomplete-${nextId++}`;
 
-  /** All available options */
-  options = input<T[]>([]);
-
-  /** Transform a value to its display string */
-  displayWith = input<(value: T) => string>((v: T) => String(v));
+  /**
+   * All available options. The `label` is displayed; the `value` is committed
+   * to the form control. A written value is resolved back to its option's
+   * label for display — falling back to `String(value)` until the matching
+   * option is available, and upgraded once an async option load lands.
+   */
+  options = input<TnAutocompleteOption<T>[]>([]);
 
   /**
-   * Maps a selected option to the value committed to the form control. By
-   * default the option itself is the value. Provide this when options are
-   * objects but the control should hold a derived primitive (e.g.
-   * `option.value`): written values are resolved back to their option for
-   * display — falling back to `String(value)` until the matching option is
-   * available — and re-resolved when `options` later changes, so an async
-   * option load upgrades the raw fallback to its label.
-   *
-   * Mapped values are matched by identity (`===`), so they must be
-   * primitives: a mapper that returns a fresh object per call never matches
-   * and the display stays on the raw fallback.
+   * Custom comparator for matching a written control value against option
+   * values during display resolution. Defaults to identity (`===`), which is
+   * right for primitive values; provide this when option values are objects.
+   * Mirrors `tn-select`'s `compareWith`.
    */
-  valueWith = input<((option: T) => V) | undefined>(undefined);
+  compareWith = input<((a: T | null, b: T | null) => boolean) | undefined>(undefined);
 
   /** Placeholder text for the input */
   placeholder = input<string>('Type to search...');
@@ -94,8 +97,8 @@ export class TnAutocompleteComponent<T = unknown, V = T> implements ControlValue
   /** Text shown next to the spinner while `loading` is set. */
   loadingText = input<string>('Loading...');
 
-  /** Custom filter function. Defaults to case-insensitive includes on displayWith text */
-  filterFn = input<((option: T, searchTerm: string) => boolean) | undefined>(undefined);
+  /** Custom filter function. Defaults to case-insensitive includes on the option label */
+  filterFn = input<((option: TnAutocompleteOption<T>, searchTerm: string) => boolean) | undefined>(undefined);
 
   /** Text shown when no options match the search */
   noResultsText = input<string>('No results found');
@@ -120,8 +123,8 @@ export class TnAutocompleteComponent<T = unknown, V = T> implements ControlValue
   /** Test ID attribute */
   testId = input<TnTestIdValue>(undefined);
 
-  /** Emits when an option is selected */
-  optionSelected = output<T>();
+  /** Emits the full option (label + value) when one is selected */
+  optionSelected = output<TnAutocompleteOption<T>>();
 
   /**
    * Emits the search term as the user types (not on programmatic writes or
@@ -170,8 +173,8 @@ export class TnAutocompleteComponent<T = unknown, V = T> implements ControlValue
   /** Index of the currently highlighted option for keyboard nav */
   protected highlightedIndex = signal(-1);
 
-  /** The currently committed value (the option itself, or its `valueWith` mapping) */
-  private selectedValue = signal<V | null>(null);
+  /** The currently committed value (an option's `value`, or a custom-typed one) */
+  private selectedValue = signal<T | null>(null);
 
   /** CVA disabled state from the form */
   private formDisabled = signal(false);
@@ -184,7 +187,6 @@ export class TnAutocompleteComponent<T = unknown, V = T> implements ControlValue
     const term = this.searchTerm();
     const all = this.options();
     const customFilter = this.filterFn();
-    const display = this.displayWith();
     const max = this.maxResults();
 
     if (!term) {
@@ -194,7 +196,7 @@ export class TnAutocompleteComponent<T = unknown, V = T> implements ControlValue
     const lowerTerm = term.toLowerCase();
     const filtered = customFilter
       ? all.filter((opt) => customFilter(opt, term))
-      : all.filter((opt) => display(opt).toLowerCase().includes(lowerTerm));
+      : all.filter((opt) => opt.label.toLowerCase().includes(lowerTerm));
 
     return filtered.slice(0, max);
   });
@@ -202,7 +204,7 @@ export class TnAutocompleteComponent<T = unknown, V = T> implements ControlValue
   /** Whether there are any results to show */
   protected hasResults = computed(() => this.filteredOptions().length > 0);
 
-  private onChange = (_value: V | null) => {};
+  private onChange = (_value: T | null) => {};
   private onTouched = () => {};
 
   /** Live overlay holding the dropdown panel, or undefined when closed. */
@@ -222,30 +224,26 @@ export class TnAutocompleteComponent<T = unknown, V = T> implements ControlValue
   private static readonly loadMoreThresholdPx = 48;
 
   constructor() {
-    // With `valueWith`, a value written before its option loaded displays as
-    // the raw fallback — once options arrive, upgrade the text to the option's
-    // label. UPGRADE-ONLY: when no option matches (e.g. a server-search picker
-    // replaced `options` after a selection), the current text is left alone
-    // rather than downgraded back to the raw value. Skipped while the panel is
-    // open so active typing isn't clobbered.
+    // A value written before its option loaded displays as the raw fallback —
+    // once options arrive (or are relabeled, e.g. a locale change), upgrade
+    // the text to the option's label. UPGRADE-ONLY: when no option matches
+    // (e.g. a server-search picker replaced `options` after a selection), the
+    // current text is left alone rather than downgraded back to the raw
+    // value. Skipped while the panel is open so active typing isn't clobbered.
     effect(() => {
       this.options();
-      this.valueWith();
-      // Tracked so a swapped display function (e.g. locale change) re-renders
-      // the committed label without waiting for options to change.
-      this.displayWith();
+      this.compareWith();
       untracked(() => {
-        const mapper = this.valueWith();
-        if (this.isOpen() || !mapper) {
+        if (this.isOpen()) {
           return;
         }
         const value = this.selectedValue();
         if (value === null || value === undefined) {
           return;
         }
-        const match = this.options().find((opt) => mapper(opt) === value);
+        const match = this.options().find((opt) => this.valueMatches(opt.value, value));
         if (match) {
-          this.searchTerm.set(this.displayWith()(match));
+          this.searchTerm.set(match.label);
         }
       });
     });
@@ -289,12 +287,6 @@ export class TnAutocompleteComponent<T = unknown, V = T> implements ControlValue
             '[tn-autocomplete] requireSelection and allowCustomValue are mutually exclusive; allowCustomValue wins.'
           );
         }
-        if (this.valueWith() && this.allowCustomValue()) {
-          console.warn(
-            '[tn-autocomplete] valueWith and allowCustomValue are contradictory: a custom commit stores '
-            + 'the raw typed text (the display string), not a valueWith-mapped value.'
-          );
-        }
       });
     }
   }
@@ -307,7 +299,7 @@ export class TnAutocompleteComponent<T = unknown, V = T> implements ControlValue
 
   // ── ControlValueAccessor ──
 
-  writeValue(value: V | null): void {
+  writeValue(value: T | null): void {
     this.selectedValue.set(value);
     if (value !== null && value !== undefined) {
       this.searchTerm.set(this.displayValue(value));
@@ -316,7 +308,7 @@ export class TnAutocompleteComponent<T = unknown, V = T> implements ControlValue
     }
   }
 
-  registerOnChange(fn: (value: V | null) => void): void {
+  registerOnChange(fn: (value: T | null) => void): void {
     this.onChange = fn;
   }
 
@@ -363,9 +355,8 @@ export class TnAutocompleteComponent<T = unknown, V = T> implements ControlValue
 
     if (this.requireSelection()) {
       const term = this.searchTerm();
-      const display = this.displayWith();
       const match = this.options().find(
-        (opt) => display(opt).toLowerCase() === term.toLowerCase()
+        (opt) => opt.label.toLowerCase() === term.toLowerCase()
       );
 
       if (match) {
@@ -386,7 +377,7 @@ export class TnAutocompleteComponent<T = unknown, V = T> implements ControlValue
     this.onTouched();
   }
 
-  onOptionClick(option: T): void {
+  onOptionClick(option: TnAutocompleteOption<T>): void {
     this.selectOption(option);
   }
 
@@ -498,49 +489,42 @@ export class TnAutocompleteComponent<T = unknown, V = T> implements ControlValue
    */
   private commitCustomValue(): void {
     const term = this.searchTerm();
-    const display = this.displayWith();
     const lowerTerm = term.toLowerCase();
-    const match = this.options().find((opt) => display(opt).toLowerCase() === lowerTerm);
+    const match = this.options().find((opt) => opt.label.toLowerCase() === lowerTerm);
     if (match) {
       this.selectOption(match);
       return;
     }
-    if (isDevMode() && term !== '' && this.options().some((opt) => typeof this.toValue(opt) !== 'string')) {
+    if (isDevMode() && term !== '' && this.options().some((opt) => typeof opt.value !== 'string')) {
       console.warn(
-        '[tn-autocomplete] allowCustomValue committed free text into a control whose committed '
+        '[tn-autocomplete] allowCustomValue committed free text into a control whose option '
         + 'values are not strings — custom values are only sound for string-valued autocompletes.'
       );
     }
-    const value = term === '' ? null : (term as unknown as V);
+    const value = term === '' ? null : (term as unknown as T);
     this.selectedValue.set(value);
     this.onChange(value);
-  }
-
-  /** The value a given option commits: its `valueWith` mapping, or the option itself. */
-  private toValue(option: T): V {
-    const mapper = this.valueWith();
-    return mapper ? mapper(option) : (option as unknown as V);
   }
 
   /**
-   * Resolves a committed value back to its display text. Without `valueWith`
-   * the value IS the option; with it, find the option that maps to the value
-   * and fall back to the raw value's string until that option is available.
+   * Resolves a committed value back to its option's display label, falling
+   * back to the raw value's string until the matching option is available.
    */
-  private displayValue(value: V): string {
-    const mapper = this.valueWith();
-    if (!mapper) {
-      return this.displayWith()(value as unknown as T);
-    }
-    const match = this.options().find((opt) => mapper(opt) === value);
-    return match ? this.displayWith()(match) : String(value);
+  private displayValue(value: T): string {
+    const match = this.options().find((opt) => this.valueMatches(opt.value, value));
+    return match ? match.label : String(value);
   }
 
-  private selectOption(option: T): void {
-    const value = this.toValue(option);
-    this.selectedValue.set(value);
-    this.searchTerm.set(this.displayWith()(option));
-    this.onChange(value);
+  /** Compares option values, honoring `compareWith` when provided. */
+  private valueMatches(a: T | null, b: T | null): boolean {
+    const comparator = this.compareWith();
+    return comparator ? comparator(a, b) : a === b;
+  }
+
+  private selectOption(option: TnAutocompleteOption<T>): void {
+    this.selectedValue.set(option.value);
+    this.searchTerm.set(option.label);
+    this.onChange(option.value);
     this.optionSelected.emit(option);
     this.close();
   }

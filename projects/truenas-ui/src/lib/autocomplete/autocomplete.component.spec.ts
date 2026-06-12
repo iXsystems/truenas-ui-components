@@ -3,7 +3,7 @@ import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { TnAutocompleteComponent } from './autocomplete.component';
+import { TnAutocompleteComponent, type TnAutocompleteOption } from './autocomplete.component';
 
 interface Country {
   code: string;
@@ -18,7 +18,7 @@ const countries: Country[] = [
   { code: 'DE', name: 'Germany' },
 ];
 
-const displayCountry = (c: Country): string => c.name;
+const countryOptions = countries.map((c) => ({ label: c.name, value: c.code }));
 
 @Component({
   selector: 'tn-test-host',
@@ -28,7 +28,6 @@ const displayCountry = (c: Country): string => c.name;
   template: `
     <tn-autocomplete
       [options]="options()"
-      [displayWith]="displayCountry"
       [placeholder]="placeholder()"
       [disabled]="disabled()"
       [requireSelection]="requireSelection()"
@@ -38,14 +37,13 @@ const displayCountry = (c: Country): string => c.name;
   `
 })
 class TestHostComponent {
-  options = signal(countries);
+  options = signal(countryOptions);
   placeholder = signal('Search...');
   disabled = signal(false);
   requireSelection = signal(false);
   maxResults = signal(100);
-  control = new FormControl<Country | null>(null);
-  selected: Country | null = null;
-  displayCountry = displayCountry;
+  control = new FormControl<string | null>(null);
+  selected: TnAutocompleteOption<string> | null = null;
 }
 
 @Component({
@@ -66,7 +64,7 @@ class TestHostComponent {
   `
 })
 class AsyncTestHostComponent {
-  options = signal(['alpha', 'beta', 'gamma']);
+  options = signal(['alpha', 'beta', 'gamma'].map((name) => ({ label: name, value: name })));
   loading = signal(false);
   maxResults = signal(Infinity);
   control = new FormControl<string | null>(null);
@@ -76,46 +74,21 @@ class AsyncTestHostComponent {
 }
 
 @Component({
-  selector: 'tn-value-with-test-host',
+  selector: 'tn-label-value-test-host',
   standalone: true,
   imports: [TnAutocompleteComponent, ReactiveFormsModule],
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-autocomplete
       [options]="options()"
-      [displayWith]="displayFn()"
-      [valueWith]="countryCode"
       [requireSelection]="requireSelection()"
       [formControl]="control" />
   `
 })
-class ValueWithHostComponent {
-  options = signal(countries);
+class LabelValueHostComponent {
+  options = signal(countryOptions);
   requireSelection = signal(false);
   control = new FormControl<string | null>(null);
-  displayFn = signal<(c: Country) => string>(displayCountry);
-  countryCode = (c: Country): string => c.code;
-}
-
-@Component({
-  selector: 'tn-value-with-custom-value-host',
-  standalone: true,
-  imports: [TnAutocompleteComponent, ReactiveFormsModule],
-  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
-  template: `
-    <tn-autocomplete
-      [options]="options()"
-      [displayWith]="displayCountry"
-      [valueWith]="countryCode"
-      [allowCustomValue]="true"
-      [formControl]="control" />
-  `
-})
-class ValueWithCustomValueHostComponent {
-  options = signal(countries);
-  control = new FormControl<string | null>(null);
-  displayCountry = displayCountry;
-  countryCode = (c: Country): string => c.code;
 }
 
 describe('TnAutocompleteComponent', () => {
@@ -210,7 +183,7 @@ describe('TnAutocompleteComponent', () => {
       expect(getOptions().length).toBe(5);
     });
 
-    it('should filter by displayWith text', () => {
+    it('should filter by option label text', () => {
       typeInInput('can');
       expect(getOptions().length).toBe(1);
       expect(getOptions()[0].textContent?.trim()).toBe('Canada');
@@ -253,7 +226,7 @@ describe('TnAutocompleteComponent', () => {
       getOptions()[2].click();
       fixture.detectChanges();
 
-      expect(host.selected).toEqual({ code: 'MX', name: 'Mexico' });
+      expect(host.selected).toEqual({ label: 'Mexico', value: 'MX' });
     });
 
     it('should update form control value', () => {
@@ -261,7 +234,7 @@ describe('TnAutocompleteComponent', () => {
       getOptions()[0].click();
       fixture.detectChanges();
 
-      expect(host.control.value).toEqual({ code: 'US', name: 'United States' });
+      expect(host.control.value).toBe('US');
     });
 
     it('should close dropdown after selection', () => {
@@ -320,7 +293,7 @@ describe('TnAutocompleteComponent', () => {
       pressKey('ArrowDown');
       pressKey('Enter');
 
-      expect(host.control.value).toEqual({ code: 'CA', name: 'Canada' });
+      expect(host.control.value).toBe('CA');
       expect(getDropdown()).toBeNull();
     });
 
@@ -334,14 +307,14 @@ describe('TnAutocompleteComponent', () => {
 
   describe('writeValue (CVA)', () => {
     it('should display value set programmatically via form control', () => {
-      host.control.setValue({ code: 'DE', name: 'Germany' });
+      host.control.setValue('DE');
       fixture.detectChanges();
 
       expect(getInput().value).toBe('Germany');
     });
 
     it('should clear input when form control is reset', () => {
-      host.control.setValue({ code: 'GB', name: 'United Kingdom' });
+      host.control.setValue('GB');
       fixture.detectChanges();
       expect(getInput().value).toBe('United Kingdom');
 
@@ -379,9 +352,9 @@ describe('TnAutocompleteComponent', () => {
     });
   });
 
-  describe('valueWith', () => {
-    let vwFixture: ComponentFixture<ValueWithHostComponent>;
-    let vwHost: ValueWithHostComponent;
+  describe('label/value resolution', () => {
+    let vwFixture: ComponentFixture<LabelValueHostComponent>;
+    let vwHost: LabelValueHostComponent;
 
     const getVwInput = (): HTMLInputElement =>
       vwFixture.nativeElement.querySelector('.tn-autocomplete__input');
@@ -394,12 +367,12 @@ describe('TnAutocompleteComponent', () => {
     };
 
     beforeEach(() => {
-      vwFixture = TestBed.createComponent(ValueWithHostComponent);
+      vwFixture = TestBed.createComponent(LabelValueHostComponent);
       vwHost = vwFixture.componentInstance;
       vwFixture.detectChanges();
     });
 
-    it('commits the mapped value when an option is selected', () => {
+    it('commits the option value when an option is selected', () => {
       typeVw('United S');
       const option = overlayEl.querySelector<HTMLElement>('.tn-autocomplete__option');
       option?.click();
@@ -424,28 +397,20 @@ describe('TnAutocompleteComponent', () => {
       vwFixture.detectChanges();
       expect(getVwInput().value).toBe('MX');
 
-      vwHost.options.set(countries);
+      vwHost.options.set(countryOptions);
       vwFixture.detectChanges();
       expect(getVwInput().value).toBe('Mexico');
     });
 
-    it('re-renders the committed label when displayWith is swapped', () => {
+    it('updates the committed label when options are relabeled', () => {
       vwHost.control.setValue('CA');
       vwFixture.detectChanges();
       expect(getVwInput().value).toBe('Canada');
 
-      vwHost.displayFn.set((c: Country) => `${c.name} (${c.code})`);
+      // e.g. a locale change re-emits the same values with new labels.
+      vwHost.options.set(countryOptions.map((opt) => ({ ...opt, label: `${opt.label} (${opt.value})` })));
       vwFixture.detectChanges();
       expect(getVwInput().value).toBe('Canada (CA)');
-    });
-
-    it('warns in dev mode when valueWith is combined with allowCustomValue', () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-      const fixture2 = TestBed.createComponent(ValueWithCustomValueHostComponent);
-      fixture2.detectChanges();
-
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('valueWith and allowCustomValue are contradictory'));
-      warnSpy.mockRestore();
     });
 
     it('does not downgrade a resolved label when options are later replaced', () => {
@@ -460,7 +425,7 @@ describe('TnAutocompleteComponent', () => {
       expect(getVwInput().value).toBe('Canada');
     });
 
-    it('commits the mapped value when requireSelection matches typed text on blur', () => {
+    it('commits the option value when requireSelection matches typed text on blur', () => {
       vwHost.requireSelection.set(true);
       vwFixture.detectChanges();
 
@@ -556,7 +521,7 @@ describe('TnAutocompleteComponent', () => {
       expect(asyncHost.loadMoreCount).toBe(1);
 
       // Appending the next page re-arms the emitter.
-      asyncHost.options.set([...asyncHost.options(), 'delta']);
+      asyncHost.options.set([...asyncHost.options(), { label: 'delta', value: 'delta' }]);
       asyncFixture.detectChanges();
       dropdown?.dispatchEvent(new Event('scroll'));
       expect(asyncHost.loadMoreCount).toBe(2);
@@ -626,7 +591,7 @@ describe('TnAutocompleteComponent', () => {
       expect(asyncHost.loadMoreCount).toBe(1);
 
       // A grown page re-arms and, still underfilled, requests the next one.
-      asyncHost.options.set([...asyncHost.options(), 'delta']);
+      asyncHost.options.set([...asyncHost.options(), { label: 'delta', value: 'delta' }]);
       asyncFixture.detectChanges();
       expect(asyncHost.loadMoreCount).toBe(2);
     });
@@ -638,7 +603,7 @@ describe('TnAutocompleteComponent', () => {
       // A page landed but the consumer is still loading — the visible rows
       // are stale, so scrolling them must not request yet another page.
       asyncHost.loading.set(true);
-      asyncHost.options.set([...asyncHost.options(), 'delta']);
+      asyncHost.options.set([...asyncHost.options(), { label: 'delta', value: 'delta' }]);
       asyncFixture.detectChanges();
 
       const dropdown = overlayEl.querySelector('.tn-autocomplete__dropdown');
@@ -652,7 +617,7 @@ describe('TnAutocompleteComponent', () => {
 
       // The page lands while loading is still set — the check is deferred...
       asyncHost.loading.set(true);
-      asyncHost.options.set([...asyncHost.options(), 'delta']);
+      asyncHost.options.set([...asyncHost.options(), { label: 'delta', value: 'delta' }]);
       asyncFixture.detectChanges();
       expect(asyncHost.loadMoreCount).toBe(1);
 
