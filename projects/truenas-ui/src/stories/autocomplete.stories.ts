@@ -1,4 +1,5 @@
 import { signal } from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
@@ -311,19 +312,23 @@ export const LongList: Story = {
 /**
  * **Label/value separation.** `valueWith` maps the selected option to the value
  * committed to the form control — here a country option commits its two-letter
- * code while the input displays the full name. Written values resolve back to
- * their option's label (falling back to the raw value until options load).
+ * code while the input displays the full name. The bound `FormControl` starts
+ * at `'DE'`, so the input renders "Germany" on load: written values resolve
+ * back to their option's label (falling back to the raw value until options
+ * load).
  */
 export const ValueMapping: Story = {
   render: () => ({
     props: (() => {
-      const value = signal<string | null>('DE');
+      const control = new FormControl<string | null>('DE');
+      const committed = signal<string | null>(control.value);
+      control.valueChanges.subscribe((value) => committed.set(value));
       return {
         options: countries,
         displayCountry,
         countryCode: (c: Country) => c.code,
-        value,
-        onSelected: (c: Country) => value.set(c.code),
+        control,
+        committed,
       };
     })(),
     template: `
@@ -333,14 +338,14 @@ export const ValueMapping: Story = {
           [displayWith]="displayCountry"
           [valueWith]="countryCode"
           [requireSelection]="true"
-          placeholder="Type to search countries..."
-          (optionSelected)="onSelected($event)">
+          [formControl]="control"
+          placeholder="Type to search countries...">
         </tn-autocomplete>
       </tn-form-field>
-      <p style="margin-top: 1rem; font-size: 0.875rem;">Committed value: <code>{{ value() }}</code></p>
+      <p style="margin-top: 1rem; font-size: 0.875rem;">Committed value: <code>{{ committed() }}</code></p>
     `,
     moduleMetadata: {
-      imports: [TnFormFieldComponent],
+      imports: [TnFormFieldComponent, ReactiveFormsModule],
     },
   }),
   parameters: {

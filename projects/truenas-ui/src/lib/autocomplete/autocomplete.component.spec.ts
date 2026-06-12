@@ -408,6 +408,18 @@ describe('TnAutocompleteComponent', () => {
       expect(getVwInput().value).toBe('Mexico');
     });
 
+    it('does not downgrade a resolved label when options are later replaced', () => {
+      vwHost.control.setValue('CA');
+      vwFixture.detectChanges();
+      expect(getVwInput().value).toBe('Canada');
+
+      // A server-search picker may replace options after selection — the
+      // committed label must not flip back to the raw 'CA'.
+      vwHost.options.set([]);
+      vwFixture.detectChanges();
+      expect(getVwInput().value).toBe('Canada');
+    });
+
     it('commits the mapped value when requireSelection matches typed text on blur', () => {
       vwHost.requireSelection.set(true);
       vwFixture.detectChanges();

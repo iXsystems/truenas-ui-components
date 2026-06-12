@@ -60,6 +60,10 @@ export class TnAutocompleteComponent<T = unknown, V = T> implements ControlValue
    * display — falling back to `String(value)` until the matching option is
    * available — and re-resolved when `options` later changes, so an async
    * option load upgrades the raw fallback to its label.
+   *
+   * Mapped values are matched by identity (`===`), so they must be
+   * primitives: a mapper that returns a fresh object per call never matches
+   * and the display stays on the raw fallback.
    */
   valueWith = input<((option: T) => V) | undefined>(undefined);
 
@@ -220,17 +224,25 @@ export class TnAutocompleteComponent<T = unknown, V = T> implements ControlValue
   constructor() {
     // With `valueWith`, a value written before its option loaded displays as
     // the raw fallback — once options arrive, upgrade the text to the option's
-    // label. Skipped while the panel is open so active typing isn't clobbered.
+    // label. UPGRADE-ONLY: when no option matches (e.g. a server-search picker
+    // replaced `options` after a selection), the current text is left alone
+    // rather than downgraded back to the raw value. Skipped while the panel is
+    // open so active typing isn't clobbered.
     effect(() => {
       this.options();
       this.valueWith();
       untracked(() => {
-        if (this.isOpen() || !this.valueWith()) {
+        const mapper = this.valueWith();
+        if (this.isOpen() || !mapper) {
           return;
         }
         const value = this.selectedValue();
-        if (value !== null && value !== undefined) {
-          this.searchTerm.set(this.displayValue(value));
+        if (value === null || value === undefined) {
+          return;
+        }
+        const match = this.options().find((opt) => mapper(opt) === value);
+        if (match) {
+          this.searchTerm.set(this.displayWith()(match));
         }
       });
     });
