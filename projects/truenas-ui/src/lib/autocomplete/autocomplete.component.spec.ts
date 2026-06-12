@@ -75,6 +75,28 @@ class AsyncTestHostComponent {
   openedCount = 0;
 }
 
+@Component({
+  selector: 'tn-value-with-test-host',
+  standalone: true,
+  imports: [TnAutocompleteComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-autocomplete
+      [options]="options()"
+      [displayWith]="displayCountry"
+      [valueWith]="countryCode"
+      [requireSelection]="requireSelection()"
+      [formControl]="control" />
+  `
+})
+class ValueWithHostComponent {
+  options = signal(countries);
+  requireSelection = signal(false);
+  control = new FormControl<string | null>(null);
+  displayCountry = displayCountry;
+  countryCode = (c: Country): string => c.code;
+}
+
 describe('TnAutocompleteComponent', () => {
   let fixture: ComponentFixture<TestHostComponent>;
   let host: TestHostComponent;
@@ -333,6 +355,82 @@ describe('TnAutocompleteComponent', () => {
 
       expect(getInput().value).toBe('');
       expect(host.control.value).toBeNull();
+    });
+  });
+
+  describe('valueWith', () => {
+    let vwFixture: ComponentFixture<ValueWithHostComponent>;
+    let vwHost: ValueWithHostComponent;
+
+    const getVwInput = (): HTMLInputElement =>
+      vwFixture.nativeElement.querySelector('.tn-autocomplete__input');
+
+    const typeVw = (value: string) => {
+      const input = getVwInput();
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+      vwFixture.detectChanges();
+    };
+
+    beforeEach(() => {
+      vwFixture = TestBed.createComponent(ValueWithHostComponent);
+      vwHost = vwFixture.componentInstance;
+      vwFixture.detectChanges();
+    });
+
+    it('commits the mapped value when an option is selected', () => {
+      typeVw('United S');
+      const option = overlayEl.querySelector<HTMLElement>('.tn-autocomplete__option');
+      option?.click();
+      vwFixture.detectChanges();
+
+      expect(vwHost.control.value).toBe('US');
+      expect(getVwInput().value).toBe('United States');
+    });
+
+    it('displays the matching option label for a written value', () => {
+      vwHost.control.setValue('CA');
+      vwFixture.detectChanges();
+
+      expect(getVwInput().value).toBe('Canada');
+    });
+
+    it('upgrades a raw written value to its label once options load', () => {
+      vwHost.options.set([]);
+      vwFixture.detectChanges();
+
+      vwHost.control.setValue('MX');
+      vwFixture.detectChanges();
+      expect(getVwInput().value).toBe('MX');
+
+      vwHost.options.set(countries);
+      vwFixture.detectChanges();
+      expect(getVwInput().value).toBe('Mexico');
+    });
+
+    it('commits the mapped value when requireSelection matches typed text on blur', () => {
+      vwHost.requireSelection.set(true);
+      vwFixture.detectChanges();
+
+      typeVw('germany');
+      getVwInput().dispatchEvent(new Event('blur'));
+      vwFixture.detectChanges();
+
+      expect(vwHost.control.value).toBe('DE');
+      expect(getVwInput().value).toBe('Germany');
+    });
+
+    it('reverts to the committed value display when requireSelection rejects text', () => {
+      vwHost.requireSelection.set(true);
+      vwHost.control.setValue('US');
+      vwFixture.detectChanges();
+
+      typeVw('garbage');
+      getVwInput().dispatchEvent(new Event('blur'));
+      vwFixture.detectChanges();
+
+      expect(vwHost.control.value).toBe('US');
+      expect(getVwInput().value).toBe('United States');
     });
   });
 

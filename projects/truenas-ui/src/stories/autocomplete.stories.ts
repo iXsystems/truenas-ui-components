@@ -308,6 +308,46 @@ export const LongList: Story = {
  *
  * This story simulates a 600 ms backend with 100 entries served in pages of 20.
  */
+/**
+ * **Label/value separation.** `valueWith` maps the selected option to the value
+ * committed to the form control — here a country option commits its two-letter
+ * code while the input displays the full name. Written values resolve back to
+ * their option's label (falling back to the raw value until options load).
+ */
+export const ValueMapping: Story = {
+  render: () => ({
+    props: (() => {
+      const value = signal<string | null>('DE');
+      return {
+        options: countries,
+        displayCountry,
+        countryCode: (c: Country) => c.code,
+        value,
+        onSelected: (c: Country) => value.set(c.code),
+      };
+    })(),
+    template: `
+      <tn-form-field label="Country" hint="Commits the ISO code, displays the name">
+        <tn-autocomplete
+          [options]="options"
+          [displayWith]="displayCountry"
+          [valueWith]="countryCode"
+          [requireSelection]="true"
+          placeholder="Type to search countries..."
+          (optionSelected)="onSelected($event)">
+        </tn-autocomplete>
+      </tn-form-field>
+      <p style="margin-top: 1rem; font-size: 0.875rem;">Committed value: <code>{{ value() }}</code></p>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  parameters: {
+    controls: { disable: true },
+  },
+};
+
 export const AsyncOptions: Story = {
   render: () => ({
     // Signal-driven so async mutations render under zoneless change detection.

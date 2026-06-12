@@ -38,7 +38,7 @@ let nextId = 0;
   templateUrl: './autocomplete.component.html',
   styleUrl: './autocomplete.component.scss',
 })
-export class TnAutocompleteComponent<T = unknown> implements ControlValueAccessor, OnDestroy {
+export class TnAutocompleteComponent<T = unknown, V = T> implements ControlValueAccessor, OnDestroy {
   private readonly elementRef = inject(ElementRef);
   private readonly overlay = inject(Overlay);
   private readonly viewContainerRef = inject(ViewContainerRef);
@@ -51,6 +51,17 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
 
   /** Transform a value to its display string */
   displayWith = input<(value: T) => string>((v: T) => String(v));
+
+  /**
+   * Maps a selected option to the value committed to the form control. By
+   * default the option itself is the value. Provide this when options are
+   * objects but the control should hold a derived primitive (e.g.
+   * `option.value`): written values are resolved back to their option for
+   * display — falling back to `String(value)` until the matching option is
+   * available — and re-resolved when `options` later changes, so an async
+   * option load upgrades the raw fallback to its label.
+   */
+  valueWith = input<((option: T) => V) | undefined>(undefined);
 
   /** Placeholder text for the input */
   placeholder = input<string>('Type to search...');
@@ -155,8 +166,8 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   /** Index of the currently highlighted option for keyboard nav */
   protected highlightedIndex = signal(-1);
 
-  /** The currently selected value */
-  private selectedValue = signal<T | null>(null);
+  /** The currently committed value (the option itself, or its `valueWith` mapping) */
+  private selectedValue = signal<V | null>(null);
 
   /** CVA disabled state from the form */
   private formDisabled = signal(false);
@@ -187,7 +198,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   /** Whether there are any results to show */
   protected hasResults = computed(() => this.filteredOptions().length > 0);
 
-  private onChange = (_value: T | null) => {};
+  private onChange = (_value: V | null) => {};
   private onTouched = () => {};
 
   /** Live overlay holding the dropdown panel, or undefined when closed. */
@@ -207,6 +218,23 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   private static readonly loadMoreThresholdPx = 48;
 
   constructor() {
+    // With `valueWith`, a value written before its option loaded displays as
+    // the raw fallback — once options arrive, upgrade the text to the option's
+    // label. Skipped while the panel is open so active typing isn't clobbered.
+    effect(() => {
+      this.options();
+      this.valueWith();
+      untracked(() => {
+        if (this.isOpen() || !this.valueWith()) {
+          return;
+        }
+        const value = this.selectedValue();
+        if (value !== null && value !== undefined) {
+          this.searchTerm.set(this.displayValue(value));
+        }
+      });
+    });
+
     // A changed options COUNT means the consumer answered the last loadMore
     // (or a new result set landed) — re-arm the emitter and request another
     // page if the rows still don't fill the panel. Re-arming on length (not
@@ -258,16 +286,16 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
 
   // ── ControlValueAccessor ──
 
-  writeValue(value: T | null): void {
+  writeValue(value: V | null): void {
     this.selectedValue.set(value);
     if (value !== null && value !== undefined) {
-      this.searchTerm.set(this.displayWith()(value));
+      this.searchTerm.set(this.displayValue(value));
     } else {
       this.searchTerm.set('');
     }
   }
 
-  registerOnChange(fn: (value: T | null) => void): void {
+  registerOnChange(fn: (value: V | null) => void): void {
     this.onChange = fn;
   }
 
@@ -325,7 +353,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
         // Revert to last valid selection or clear
         const current = this.selectedValue();
         if (current !== null && current !== undefined) {
-          this.searchTerm.set(display(current));
+          this.searchTerm.set(this.displayValue(current));
         } else {
           this.searchTerm.set('');
           this.onChange(null);
@@ -386,7 +414,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
           // text so the upcoming blur doesn't commit the abandoned term.
           const current = this.selectedValue();
           this.searchTerm.set(
-            current !== null && current !== undefined ? this.displayWith()(current) : ''
+            current !== null && current !== undefined ? this.displayValue(current) : ''
           );
         }
         this.close();
@@ -456,21 +484,42 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       this.selectOption(match);
       return;
     }
-    if (isDevMode() && term !== '' && this.options().some((opt) => typeof opt !== 'string')) {
+    if (isDevMode() && term !== '' && this.options().some((opt) => typeof this.toValue(opt) !== 'string')) {
       console.warn(
-        '[tn-autocomplete] allowCustomValue committed free text into a control whose options are '
-        + 'not strings — custom values are only sound for string-valued autocompletes.'
+        '[tn-autocomplete] allowCustomValue committed free text into a control whose committed '
+        + 'values are not strings — custom values are only sound for string-valued autocompletes.'
       );
     }
-    const value = term === '' ? null : (term as unknown as T);
+    const value = term === '' ? null : (term as unknown as V);
     this.selectedValue.set(value);
     this.onChange(value);
   }
 
+  /** The value a given option commits: its `valueWith` mapping, or the option itself. */
+  private toValue(option: T): V {
+    const mapper = this.valueWith();
+    return mapper ? mapper(option) : (option as unknown as V);
+  }
+
+  /**
+   * Resolves a committed value back to its display text. Without `valueWith`
+   * the value IS the option; with it, find the option that maps to the value
+   * and fall back to the raw value's string until that option is available.
+   */
+  private displayValue(value: V): string {
+    const mapper = this.valueWith();
+    if (!mapper) {
+      return this.displayWith()(value as unknown as T);
+    }
+    const match = this.options().find((opt) => mapper(opt) === value);
+    return match ? this.displayWith()(match) : String(value);
+  }
+
   private selectOption(option: T): void {
-    this.selectedValue.set(option);
+    const value = this.toValue(option);
+    this.selectedValue.set(value);
     this.searchTerm.set(this.displayWith()(option));
-    this.onChange(option);
+    this.onChange(value);
     this.optionSelected.emit(option);
     this.close();
   }
