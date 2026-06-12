@@ -238,6 +238,24 @@ export class TnAutocompleteHarness extends ComponentHarness {
     const input = await this._input();
     return input.blur();
   }
+
+  /**
+   * Checks whether the dropdown panel is showing the loading row.
+   *
+   * @returns Promise resolving to true if the loading indicator is visible.
+   *
+   * @example
+   * ```typescript
+   * const ac = await loader.getHarness(TnAutocompleteHarness);
+   * await ac.focus();
+   * expect(await ac.isLoading()).toBe(true);
+   * ```
+   */
+  async isLoading(): Promise<boolean> {
+    const loading = await this.documentRootLocatorFactory()
+      .locatorForOptional('.tn-autocomplete__loading')();
+    return loading !== null;
+  }
 }
 
 /**

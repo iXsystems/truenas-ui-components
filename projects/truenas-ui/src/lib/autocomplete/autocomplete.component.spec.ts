@@ -48,6 +48,33 @@ class TestHostComponent {
   displayCountry = displayCountry;
 }
 
+@Component({
+  selector: 'tn-async-test-host',
+  standalone: true,
+  imports: [TnAutocompleteComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-autocomplete
+      [options]="options()"
+      [loading]="loading()"
+      [allowCustomValue]="true"
+      [maxResults]="maxResults()"
+      [formControl]="control"
+      (searchChange)="searchTerms.push($event)"
+      (loadMore)="loadMoreCount = loadMoreCount + 1"
+      (opened)="openedCount = openedCount + 1" />
+  `
+})
+class AsyncTestHostComponent {
+  options = signal(['alpha', 'beta', 'gamma']);
+  loading = signal(false);
+  maxResults = signal(Infinity);
+  control = new FormControl<string | null>(null);
+  searchTerms: string[] = [];
+  loadMoreCount = 0;
+  openedCount = 0;
+}
+
 describe('TnAutocompleteComponent', () => {
   let fixture: ComponentFixture<TestHostComponent>;
   let host: TestHostComponent;
@@ -306,6 +333,219 @@ describe('TnAutocompleteComponent', () => {
 
       expect(getInput().value).toBe('');
       expect(host.control.value).toBeNull();
+    });
+  });
+
+  describe('async loading & custom values', () => {
+    let asyncFixture: ComponentFixture<AsyncTestHostComponent>;
+    let asyncHost: AsyncTestHostComponent;
+
+    const getAsyncInput = (): HTMLInputElement =>
+      asyncFixture.nativeElement.querySelector('.tn-autocomplete__input');
+
+    const typeAsync = (value: string) => {
+      const input = getAsyncInput();
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+      asyncFixture.detectChanges();
+    };
+
+    beforeEach(() => {
+      asyncFixture = TestBed.createComponent(AsyncTestHostComponent);
+      asyncHost = asyncFixture.componentInstance;
+      asyncFixture.detectChanges();
+    });
+
+    it('emits opened when the panel opens so consumers can prime the first page', () => {
+      getAsyncInput().dispatchEvent(new Event('focus'));
+      asyncFixture.detectChanges();
+      expect(asyncHost.openedCount).toBe(1);
+
+      // Already open — typing doesn't re-emit.
+      typeAsync('a');
+      expect(asyncHost.openedCount).toBe(1);
+
+      getAsyncInput().dispatchEvent(new Event('blur'));
+      asyncFixture.detectChanges();
+      getAsyncInput().dispatchEvent(new Event('focus'));
+      asyncFixture.detectChanges();
+      expect(asyncHost.openedCount).toBe(2);
+    });
+
+    it('emits searchChange as the user types', () => {
+      typeAsync('al');
+      typeAsync('alp');
+
+      expect(asyncHost.searchTerms).toEqual(['al', 'alp']);
+    });
+
+    it('does not emit searchChange on programmatic writes', () => {
+      asyncHost.control.setValue('beta');
+      asyncFixture.detectChanges();
+
+      expect(asyncHost.searchTerms).toEqual([]);
+    });
+
+    it('shows the loading row instead of no-results while loading', () => {
+      asyncHost.options.set([]);
+      asyncHost.loading.set(true);
+      asyncFixture.detectChanges();
+      typeAsync('zz');
+
+      expect(overlayEl.querySelector('.tn-autocomplete__loading')).toBeTruthy();
+      expect(overlayEl.querySelector('.tn-autocomplete__no-results')).toBeNull();
+    });
+
+    it('emits loadMore once per options page when scrolled to the bottom', () => {
+      typeAsync('a');
+      const dropdown = overlayEl.querySelector('.tn-autocomplete__dropdown');
+      expect(dropdown).toBeTruthy();
+
+      dropdown?.dispatchEvent(new Event('scroll'));
+      dropdown?.dispatchEvent(new Event('scroll'));
+      expect(asyncHost.loadMoreCount).toBe(1);
+
+      // Appending the next page re-arms the emitter.
+      asyncHost.options.set([...asyncHost.options(), 'delta']);
+      asyncFixture.detectChanges();
+      dropdown?.dispatchEvent(new Event('scroll'));
+      expect(asyncHost.loadMoreCount).toBe(2);
+    });
+
+    it('commits typed text as the value on blur', () => {
+      typeAsync('/my-custom-port');
+      getAsyncInput().dispatchEvent(new Event('blur'));
+      asyncFixture.detectChanges();
+
+      expect(asyncHost.control.value).toBe('/my-custom-port');
+      expect(getAsyncInput().value).toBe('/my-custom-port');
+    });
+
+    it('commits typed text as the value on Enter when nothing is highlighted', () => {
+      typeAsync('typed-value');
+      getAsyncInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+      asyncFixture.detectChanges();
+
+      expect(asyncHost.control.value).toBe('typed-value');
+    });
+
+    it('commits the matching option when typed text equals an option display', () => {
+      typeAsync('beta');
+      getAsyncInput().dispatchEvent(new Event('blur'));
+      asyncFixture.detectChanges();
+
+      expect(asyncHost.control.value).toBe('beta');
+    });
+
+    it('matches options case-insensitively before committing a custom value', () => {
+      typeAsync('BETA');
+      getAsyncInput().dispatchEvent(new Event('blur'));
+      asyncFixture.detectChanges();
+
+      expect(asyncHost.control.value).toBe('beta');
+    });
+
+    it('keeps loading and no-results rows outside the listbox', () => {
+      typeAsync('a');
+      const listbox = overlayEl.querySelector('[role="listbox"]');
+      expect(listbox).toBeTruthy();
+      expect(listbox?.querySelectorAll(':scope > :not([role="option"])')).toHaveLength(0);
+
+      asyncHost.options.set([]);
+      asyncHost.loading.set(true);
+      asyncFixture.detectChanges();
+
+      // The listbox stays rendered (empty, busy) so aria-controls never dangles.
+      const emptyListbox = overlayEl.querySelector('[role="listbox"]');
+      expect(emptyListbox).toBeTruthy();
+      expect(emptyListbox?.querySelectorAll('[role="option"]')).toHaveLength(0);
+      expect(emptyListbox?.getAttribute('aria-busy')).toBe('true');
+      expect(overlayEl.querySelector('[role="status"] .tn-autocomplete__loading')).toBeTruthy();
+    });
+
+    it('requests another page when the rendered page does not fill the panel', () => {
+      // jsdom reports scrollHeight === clientHeight === 0, i.e. an underfilled
+      // panel — exactly the no-scrollbar case the auto-check exists for.
+      typeAsync('a');
+      expect(asyncHost.loadMoreCount).toBe(1);
+
+      // Source exhausted: the consumer answers with the same count — no re-arm,
+      // no further requests (loop safety).
+      asyncHost.options.set([...asyncHost.options()]);
+      asyncFixture.detectChanges();
+      expect(asyncHost.loadMoreCount).toBe(1);
+
+      // A grown page re-arms and, still underfilled, requests the next one.
+      asyncHost.options.set([...asyncHost.options(), 'delta']);
+      asyncFixture.detectChanges();
+      expect(asyncHost.loadMoreCount).toBe(2);
+    });
+
+    it('ignores scrolls of stale rows while a page is loading', () => {
+      typeAsync('a');
+      expect(asyncHost.loadMoreCount).toBe(1);
+
+      // A page landed but the consumer is still loading — the visible rows
+      // are stale, so scrolling them must not request yet another page.
+      asyncHost.loading.set(true);
+      asyncHost.options.set([...asyncHost.options(), 'delta']);
+      asyncFixture.detectChanges();
+
+      const dropdown = overlayEl.querySelector('.tn-autocomplete__dropdown');
+      dropdown?.dispatchEvent(new Event('scroll'));
+      expect(asyncHost.loadMoreCount).toBe(1);
+    });
+
+    it('re-runs the underfill check when loading clears after options land', () => {
+      typeAsync('a');
+      expect(asyncHost.loadMoreCount).toBe(1);
+
+      // The page lands while loading is still set — the check is deferred...
+      asyncHost.loading.set(true);
+      asyncHost.options.set([...asyncHost.options(), 'delta']);
+      asyncFixture.detectChanges();
+      expect(asyncHost.loadMoreCount).toBe(1);
+
+      // ...and runs once loading clears in a later tick, keeping pagination alive.
+      asyncHost.loading.set(false);
+      asyncFixture.detectChanges();
+      expect(asyncHost.loadMoreCount).toBe(2);
+    });
+
+    it('does not auto-paginate past a maxResults rendering cap', () => {
+      asyncHost.maxResults.set(3);
+      asyncFixture.detectChanges();
+
+      // The panel is underfilled (jsdom: zero heights) but rendering is already
+      // capped at the 3 loaded rows — more data could never fill it.
+      getAsyncInput().dispatchEvent(new Event('focus'));
+      asyncFixture.detectChanges();
+      expect(asyncHost.loadMoreCount).toBe(0);
+    });
+
+    it('reverts the draft text on Escape so blur does not commit it', () => {
+      asyncHost.control.setValue('beta');
+      asyncFixture.detectChanges();
+
+      typeAsync('abandoned-draft');
+      getAsyncInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      asyncFixture.detectChanges();
+      getAsyncInput().dispatchEvent(new Event('blur'));
+      asyncFixture.detectChanges();
+
+      expect(asyncHost.control.value).toBe('beta');
+      expect(getAsyncInput().value).toBe('beta');
+    });
+
+    it('clears the value when the text is emptied', () => {
+      asyncHost.control.setValue('beta');
+      asyncFixture.detectChanges();
+
+      typeAsync('');
+      getAsyncInput().dispatchEvent(new Event('blur'));
+      asyncFixture.detectChanges();
+
+      expect(asyncHost.control.value).toBeNull();
     });
   });
 });

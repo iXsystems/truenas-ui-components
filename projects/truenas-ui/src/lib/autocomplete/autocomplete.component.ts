@@ -5,17 +5,21 @@ import {
   ElementRef,
   ViewContainerRef,
   computed,
+  effect,
   forwardRef,
   inject,
   input,
+  isDevMode,
   output,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
-import type { OnDestroy, TemplateRef } from '@angular/core';
+import type { EmbeddedViewRef, OnDestroy, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { Subscription } from 'rxjs';
+import { TnSpinnerComponent } from '../spinner/spinner.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 let nextId = 0;
@@ -23,7 +27,7 @@ let nextId = 0;
 @Component({
   selector: 'tn-autocomplete',
   standalone: true,
-  imports: [TnTestIdDirective],
+  imports: [TnSpinnerComponent, TnTestIdDirective],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -57,6 +61,24 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   /** Require the user to select from the dropdown — reverts on blur if no match */
   requireSelection = input<boolean>(false);
 
+  /**
+   * Commit free text as the value: on blur or Enter, an unmatched search term
+   * becomes the control value instead of being discarded. For string-valued
+   * autocompletes (the typed text IS the value) — e.g. a device path picker
+   * where known devices are suggested but any path is acceptable. Mutually
+   * exclusive with `requireSelection`, which reverts unmatched text.
+   */
+  allowCustomValue = input<boolean>(false);
+
+  /**
+   * Show a loading row in the dropdown panel while options are being fetched.
+   * Pair with `searchChange`/`loadMore` for server-driven options.
+   */
+  loading = input<boolean>(false);
+
+  /** Text shown next to the spinner while `loading` is set. */
+  loadingText = input<string>('Loading...');
+
   /** Custom filter function. Defaults to case-insensitive includes on displayWith text */
   filterFn = input<((option: T, searchTerm: string) => boolean) | undefined>(undefined);
 
@@ -85,6 +107,32 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
 
   /** Emits when an option is selected */
   optionSelected = output<T>();
+
+  /**
+   * Emits the search term as the user types (not on programmatic writes or
+   * option selection). Drive server-side filtering from this: fetch matches
+   * and update `options`. The component still applies its client-side filter
+   * on top — for pre-filtered server results, pass `[filterFn]` that returns
+   * `true`. Emissions are not debounced; debounce in the consumer if the
+   * lookup is expensive.
+   */
+  searchChange = output<string>();
+
+  /**
+   * Emits when the open dropdown is scrolled near its bottom — append the
+   * next page to `options` (and use `loading` while it fetches). Suppressed
+   * until the `options` COUNT changes so a slow consumer is not spammed —
+   * which also means replacing the array with a same-length page (e.g. a
+   * fixed-size window) does not re-arm the emitter; pagination must append.
+   */
+  loadMore = output<void>();
+
+  /**
+   * Emits every time the panel opens (focus, click, typing, ArrowDown). For
+   * click-to-suggest pickers, prime the first page from here when `options`
+   * is still empty — `searchChange` alone never fires until the user types.
+   */
+  opened = output<void>();
 
   /** Reference to the input element */
   inputEl = viewChild<ElementRef<HTMLInputElement>>('inputEl');
@@ -144,8 +192,63 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
 
   /** Live overlay holding the dropdown panel, or undefined when closed. */
   private overlayRef?: OverlayRef;
+  /** Embedded view of the portaled panel — re-rendered before underfill measurement. */
+  private panelViewRef?: EmbeddedViewRef<unknown>;
   /** Subscriptions tied to the current overlay; torn down on close. */
   private overlaySubs: Subscription[] = [];
+
+  /** Set after a loadMore emission; cleared when the options count changes. */
+  private loadMorePending = false;
+
+  /** Options count at the last effect run — length changes re-arm `loadMore`. */
+  private lastOptionsCount: number | null = null;
+
+  /** Scroll distance (px) from the panel bottom that triggers `loadMore`. */
+  private static readonly loadMoreThresholdPx = 48;
+
+  constructor() {
+    // A changed options COUNT means the consumer answered the last loadMore
+    // (or a new result set landed) — re-arm the emitter and request another
+    // page if the rows still don't fill the panel. Re-arming on length (not
+    // identity) is what makes auto-fill loop-safe: an exhausted source that
+    // answers loadMore with the same rows leaves the count unchanged, so no
+    // further request is made. Also triggered by the panel opening (the
+    // already-loaded first page may be too short) and by loading() clearing —
+    // a consumer may update options while still loading and only clear the
+    // flag in a later tick, and without the loading() dependency that page's
+    // underfill check would be skipped (checkUnderfill bails while loading)
+    // and never re-run.
+    effect(() => {
+      const count = this.options().length;
+      this.isOpen();
+      this.loading();
+      untracked(() => {
+        if (count !== this.lastOptionsCount) {
+          this.lastOptionsCount = count;
+          this.loadMorePending = false;
+        }
+        this.checkUnderfill();
+      });
+    });
+
+    // Async option/loading changes resize the open panel without any input
+    // event; nudge CDK so the anchored position tracks the new height.
+    effect(() => {
+      this.filteredOptions();
+      this.loading();
+      this.overlayRef?.updatePosition();
+    });
+
+    if (isDevMode()) {
+      effect(() => {
+        if (this.requireSelection() && this.allowCustomValue()) {
+          console.warn(
+            '[tn-autocomplete] requireSelection and allowCustomValue are mutually exclusive; allowCustomValue wins.'
+          );
+        }
+      });
+    }
+  }
 
   ngOnDestroy(): void {
     // If the component is destroyed while the dropdown is open (e.g. router
@@ -182,6 +285,9 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     const value = (event.target as HTMLInputElement).value;
     this.searchTerm.set(value);
     this.highlightedIndex.set(-1);
+    // A new term is a new pagination context — don't hold back its first page.
+    this.loadMorePending = false;
+    this.searchChange.emit(value);
 
     if (!this.isOpen()) {
       this.open();
@@ -199,6 +305,13 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   }
 
   onBlur(): void {
+    if (this.allowCustomValue()) {
+      this.commitCustomValue();
+      this.close();
+      this.onTouched();
+      return;
+    }
+
     if (this.requireSelection()) {
       const term = this.searchTerm();
       const display = this.displayWith();
@@ -254,22 +367,105 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
         }
         break;
 
-      case 'Enter':
+      case 'Enter': {
         event.preventDefault();
         const idx = this.highlightedIndex();
         if (this.isOpen() && idx >= 0 && idx < options.length) {
           this.selectOption(options[idx]);
+        } else if (this.allowCustomValue()) {
+          this.commitCustomValue();
+          this.close();
         }
         break;
+      }
 
-      case 'Escape':
+      case 'Escape': {
         event.preventDefault();
+        if (this.allowCustomValue()) {
+          // Escape means "cancel the draft": revert to the committed value's
+          // text so the upcoming blur doesn't commit the abandoned term.
+          const current = this.selectedValue();
+          this.searchTerm.set(
+            current !== null && current !== undefined ? this.displayWith()(current) : ''
+          );
+        }
         this.close();
         break;
+      }
+    }
+  }
+
+  /**
+   * `loadMore` normally fires from a scroll event, which never happens when
+   * the current page is too short to overflow the panel — pagination would
+   * dead-end with data still available. When new rows land (or the panel
+   * opens), emit once more if the panel has no scrollbar.
+   */
+  private checkUnderfill(): void {
+    if (!this.isOpen() || this.loading() || this.loadMorePending) {
+      return;
+    }
+    // No rows to measure, or rendering is capped by maxResults — more data
+    // could never fill the panel, so requesting it would loop until the
+    // source is exhausted.
+    const filteredCount = this.filteredOptions().length;
+    if (filteredCount === 0 || filteredCount >= this.maxResults()) {
+      return;
+    }
+    // The portaled rows may not have been change-detected yet when this runs
+    // (effect timing vs. embedded-view refresh) — render them first so the
+    // measurement below never sees a stale, shorter panel.
+    this.panelViewRef?.detectChanges();
+    const panel = this.overlayRef?.overlayElement
+      ?.querySelector<HTMLElement>('.tn-autocomplete__dropdown');
+    if (panel && panel.scrollHeight <= panel.clientHeight) {
+      this.loadMorePending = true;
+      this.loadMore.emit();
+    }
+  }
+
+  onPanelScroll(event: Event): void {
+    // While loading, the rendered rows belong to the previous page/term —
+    // scrolling them must not request a page of data that hasn't landed yet.
+    if (this.loadMorePending || this.loading()) {
+      return;
+    }
+    const el = event.target as HTMLElement;
+    const nearBottom = el.scrollTop + el.clientHeight
+      >= el.scrollHeight - TnAutocompleteComponent.loadMoreThresholdPx;
+    if (nearBottom) {
+      this.loadMorePending = true;
+      this.loadMore.emit();
     }
   }
 
   // ── Internal ──
+
+  /**
+   * Commit the current search term as the value (allowCustomValue mode). A
+   * display match (case-insensitive, same as the requireSelection path)
+   * commits the matching option instead, so picking an existing entry by
+   * typing its full text behaves like clicking it.
+   */
+  private commitCustomValue(): void {
+    const term = this.searchTerm();
+    const display = this.displayWith();
+    const lowerTerm = term.toLowerCase();
+    const match = this.options().find((opt) => display(opt).toLowerCase() === lowerTerm);
+    if (match) {
+      this.selectOption(match);
+      return;
+    }
+    if (isDevMode() && term !== '' && this.options().some((opt) => typeof opt !== 'string')) {
+      console.warn(
+        '[tn-autocomplete] allowCustomValue committed free text into a control whose options are '
+        + 'not strings — custom values are only sound for string-valued autocompletes.'
+      );
+    }
+    const value = term === '' ? null : (term as unknown as T);
+    this.selectedValue.set(value);
+    this.onChange(value);
+  }
 
   private selectOption(option: T): void {
     this.selectedValue.set(option);
@@ -285,6 +481,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     }
     this.isOpen.set(true);
     this.attachOverlay();
+    this.opened.emit();
   }
 
   private close(): void {
@@ -323,7 +520,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       width: anchor.offsetWidth,
     });
 
-    this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate(), this.viewContainerRef));
+    this.panelViewRef = this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate(), this.viewContainerRef));
 
     // Non-intercepting click-outside: the pointer event still reaches whatever
     // the user clicked; we just notice and close. Ignore targets inside the
@@ -344,6 +541,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     this.overlaySubs = [];
     this.overlayRef?.dispose();
     this.overlayRef = undefined;
+    this.panelViewRef = undefined;
   }
 
   private scrollToHighlighted(): void {
