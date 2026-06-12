@@ -51,7 +51,7 @@
             (mousedown)="$event.preventDefault()"
             (click)="onOptionClick(option)"
             (keydown.enter)="onOptionClick(option)">
-            {{ displayWith()(option) }}
+            {{ option.label }}
           </div>
         }
       }
