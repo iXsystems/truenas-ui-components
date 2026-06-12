@@ -33,6 +33,18 @@ const meta: Meta<TnButtonComponent> = {
     primary: {
       control: 'boolean',
     },
+    icon: {
+      control: 'text',
+      description: 'Optional icon name rendered alongside the label, resolved through tn-icon.',
+    },
+    iconLibrary: {
+      control: 'select',
+      options: ['material', 'mdi', 'custom', 'lucide'],
+    },
+    iconPosition: {
+      control: 'select',
+      options: ['start', 'end'],
+    },
     href: {
       control: 'text',
       description: 'When set, renders as <a> with this href',
@@ -190,6 +202,47 @@ export const DisabledLink: Story = {
 
     await expect(link.getAttribute('aria-disabled')).toBe('true');
     await expect(link.hasAttribute('href')).toBe(false);
+  },
+};
+
+/**
+ * **Icon.** Set `icon` (and `iconLibrary`) to render a leading icon next to
+ * the label. The icon is decorative (`aria-hidden`) — the label remains the
+ * accessible name. Use `iconPosition="end"` for a trailing icon.
+ */
+export const WithIcon: Story = {
+  args: {
+    color: 'default',
+    variant: 'filled',
+    label: 'Edit',
+    icon: 'pencil',
+    iconLibrary: 'mdi',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole('button', { name: 'Edit' });
+
+    const icon = button.querySelector('tn-icon');
+    await expect(icon).toBeTruthy();
+    await expect(icon!.getAttribute('name')).toBe('pencil');
+    await expect(icon!.getAttribute('aria-hidden')).toBe('true');
+  },
+};
+
+export const WithTrailingIcon: Story = {
+  args: {
+    color: 'primary',
+    variant: 'outline',
+    label: 'Open',
+    icon: 'open-in-new',
+    iconLibrary: 'mdi',
+    iconPosition: 'end',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole('button', { name: 'Open' });
+
+    await expect(button.classList.contains('storybook-button--icon-end')).toBe(true);
   },
 };
 

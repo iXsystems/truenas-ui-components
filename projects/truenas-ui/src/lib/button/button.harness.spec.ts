@@ -11,11 +11,12 @@ import { TnButtonHarness } from './button.harness';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnButtonComponent],
-  template: `<tn-button [label]="label()" [disabled]="disabled()" (onClick)="handleClick($event)" />`
+  template: `<tn-button [label]="label()" [disabled]="disabled()" [icon]="icon()" (onClick)="handleClick($event)" />`
 })
 class TestHostComponent {
   label = signal('Test Button');
   disabled = signal(false);
+  icon = signal<string | undefined>(undefined);
   clickCount = 0;
 
   handleClick(_event: MouseEvent): void {
@@ -161,6 +162,22 @@ describe('TnButtonHarness', () => {
       hostComponent.label.set('Save');
 
       expect(await loader.hasHarness(TnButtonHarness.with({ label: 'NonExistent' }))).toBe(false);
+    });
+  });
+
+  describe('hasIcon / getIconName', () => {
+    it('reports no icon by default', async () => {
+      const button = await loader.getHarness(TnButtonHarness);
+      expect(await button.hasIcon()).toBe(false);
+      expect(await button.getIconName()).toBeNull();
+    });
+
+    it('returns the icon name when an icon is set', async () => {
+      hostComponent.icon.set('pencil');
+
+      const button = await loader.getHarness(TnButtonHarness);
+      expect(await button.hasIcon()).toBe(true);
+      expect(await button.getIconName()).toBe('pencil');
     });
   });
 });

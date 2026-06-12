@@ -16,6 +16,15 @@
     [tnTestId]="testId()"
     (click)="handleAnchorClick($event)"
   >
+    @if (icon(); as iconName) {
+      <tn-icon
+        class="button-icon"
+        size="sm"
+        aria-hidden="true"
+        [name]="iconName"
+        [library]="iconLibrary()"
+      />
+    }
     <span [innerHTML]="label() | tnLabelMarkup"></span>
   </a>
 } @else if (isAnchor()) {
@@ -34,6 +43,15 @@
     [tnTestId]="testId()"
     (click)="handleAnchorClick($event)"
   >
+    @if (icon(); as iconName) {
+      <tn-icon
+        class="button-icon"
+        size="sm"
+        aria-hidden="true"
+        [name]="iconName"
+        [library]="iconLibrary()"
+      />
+    }
     <span [innerHTML]="label() | tnLabelMarkup"></span>
   </a>
 } @else {
@@ -48,6 +66,15 @@
     [tnTestId]="testId()"
     (click)="onClick.emit($event)"
   >
+    @if (icon(); as iconName) {
+      <tn-icon
+        class="button-icon"
+        size="sm"
+        aria-hidden="true"
+        [name]="iconName"
+        [library]="iconLibrary()"
+      />
+    }
     <span [innerHTML]="label() | tnLabelMarkup"></span>
   </button>
 }

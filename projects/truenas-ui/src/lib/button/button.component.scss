@@ -87,3 +87,13 @@ a.storybook-button {
   padding: 12px 24px;
   font-size: 1rem;
 }
+.storybook-button--with-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  &.storybook-button--icon-end {
+    flex-direction: row-reverse;
+  }
+}

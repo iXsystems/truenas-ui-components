@@ -262,4 +262,46 @@ describe('TnButtonComponent', () => {
       expect(button.getAttribute('data-testid')).toBeNull();
     });
   });
+
+  describe('icon', () => {
+    it('renders no icon by default', () => {
+      expect(fixture.nativeElement.querySelector('tn-icon')).toBeNull();
+    });
+
+    it('renders a decorative tn-icon with the given name and library', () => {
+      fixture.componentRef.setInput('icon', 'pencil');
+      fixture.componentRef.setInput('iconLibrary', 'mdi');
+      fixture.detectChanges();
+      const icon = fixture.nativeElement.querySelector('button tn-icon');
+      expect(icon).toBeTruthy();
+      expect(icon.getAttribute('name')).toBe('pencil');
+      expect(icon.getAttribute('library')).toBe('mdi');
+      expect(icon.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('applies the with-icon layout class only when an icon is set', () => {
+      expect(component.classes()).not.toContain('storybook-button--with-icon');
+      fixture.componentRef.setInput('icon', 'pencil');
+      fixture.detectChanges();
+      expect(component.classes()).toContain('storybook-button--with-icon');
+      expect(component.classes()).not.toContain('storybook-button--icon-end');
+    });
+
+    it('applies the icon-end class when iconPosition is end', () => {
+      fixture.componentRef.setInput('icon', 'pencil');
+      fixture.componentRef.setInput('iconPosition', 'end');
+      fixture.detectChanges();
+      expect(component.classes()).toContain('storybook-button--icon-end');
+    });
+
+    it('renders the icon in anchor mode too', () => {
+      fixture.componentRef.setInput('href', 'https://truenas.com');
+      fixture.componentRef.setInput('icon', 'open-in-new');
+      fixture.componentRef.setInput('iconLibrary', 'mdi');
+      fixture.detectChanges();
+      const icon = fixture.nativeElement.querySelector('a tn-icon');
+      expect(icon).toBeTruthy();
+      expect(icon.getAttribute('name')).toBe('open-in-new');
+    });
+  });
 });

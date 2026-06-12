@@ -1,5 +1,6 @@
 import type { BaseHarnessFilters } from '@angular/cdk/testing';
 import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
+import { TnIconHarness } from '../icon/icon.harness';
 
 /**
  * Harness for interacting with tn-button in tests.
@@ -26,6 +27,7 @@ export class TnButtonHarness extends ComponentHarness {
   static hostSelector = 'tn-button';
 
   private _button = this.locatorFor('button, a');
+  private _icon = this.locatorForOptional(TnIconHarness);
 
   /**
    * Gets a `HarnessPredicate` that can be used to search for a button
@@ -124,6 +126,34 @@ export class TnButtonHarness extends ComponentHarness {
       return null;
     }
     return button.getAttribute('href');
+  }
+
+  /**
+   * Whether the button renders an icon next to its label.
+   *
+   * @example
+   * ```typescript
+   * const editBtn = await loader.getHarness(TnButtonHarness.with({ label: 'Edit' }));
+   * expect(await editBtn.hasIcon()).toBe(true);
+   * ```
+   */
+  async hasIcon(): Promise<boolean> {
+    return (await this._icon()) !== null;
+  }
+
+  /**
+   * Gets the name of the icon rendered next to the label, or `null` when the
+   * button has no icon.
+   *
+   * @example
+   * ```typescript
+   * const editBtn = await loader.getHarness(TnButtonHarness.with({ label: 'Edit' }));
+   * expect(await editBtn.getIconName()).toBe('pencil');
+   * ```
+   */
+  async getIconName(): Promise<string | null> {
+    const icon = await this._icon();
+    return icon ? icon.getName() : null;
   }
 
   /**

@@ -2,13 +2,15 @@ import { CommonModule } from '@angular/common';
 import type { AfterViewInit } from '@angular/core';
 import { Component, ElementRef, computed, inject, input, output, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import type { IconLibraryType } from '../icon/icon.component';
+import { TnIconComponent } from '../icon/icon.component';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 @Component({
   selector: 'tn-button',
   standalone: true,
-  imports: [CommonModule, RouterLink, TnTestIdDirective, LabelMarkupPipe],
+  imports: [CommonModule, RouterLink, TnIconComponent, TnTestIdDirective, LabelMarkupPipe],
   templateUrl: './button.component.html',
   styleUrls: ['./button.component.scss'],
 })
@@ -20,6 +22,16 @@ export class TnButtonComponent implements AfterViewInit {
   variant = input<'filled' | 'outline'>('filled');
   backgroundColor = input<string | undefined>(undefined);
   label = input<string>('Button');
+  /**
+   * Name of an optional icon rendered alongside the label, resolved through
+   * `tn-icon` (same names and libraries apply). The icon is decorative —
+   * the visible `label` remains the accessible name.
+   */
+  icon = input<string | undefined>(undefined);
+  /** Icon library the `icon` name belongs to. Mirrors `tn-icon`'s `library` input. */
+  iconLibrary = input<IconLibraryType | undefined>(undefined);
+  /** Which side of the label the icon renders on. */
+  iconPosition = input<'start' | 'end'>('start');
   disabled = input<boolean>(false);
   /**
    * Native `type` of the rendered `<button>`. Defaults to `button` so stray
@@ -87,7 +99,14 @@ export class TnButtonComponent implements AfterViewInit {
       }
     }
 
-    return ['storybook-button', `storybook-button--${this.size}`, mode];
+    const classes = ['storybook-button', `storybook-button--${this.size}`, mode];
+    if (this.icon()) {
+      classes.push('storybook-button--with-icon');
+      if (this.iconPosition() === 'end') {
+        classes.push('storybook-button--icon-end');
+      }
+    }
+    return classes;
   });
 
   handleAnchorClick(event: MouseEvent): void {
