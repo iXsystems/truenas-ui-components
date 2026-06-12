@@ -83,7 +83,7 @@ class AsyncTestHostComponent {
   template: `
     <tn-autocomplete
       [options]="options()"
-      [displayWith]="displayCountry"
+      [displayWith]="displayFn()"
       [valueWith]="countryCode"
       [requireSelection]="requireSelection()"
       [formControl]="control" />
@@ -92,6 +92,27 @@ class AsyncTestHostComponent {
 class ValueWithHostComponent {
   options = signal(countries);
   requireSelection = signal(false);
+  control = new FormControl<string | null>(null);
+  displayFn = signal<(c: Country) => string>(displayCountry);
+  countryCode = (c: Country): string => c.code;
+}
+
+@Component({
+  selector: 'tn-value-with-custom-value-host',
+  standalone: true,
+  imports: [TnAutocompleteComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-autocomplete
+      [options]="options()"
+      [displayWith]="displayCountry"
+      [valueWith]="countryCode"
+      [allowCustomValue]="true"
+      [formControl]="control" />
+  `
+})
+class ValueWithCustomValueHostComponent {
+  options = signal(countries);
   control = new FormControl<string | null>(null);
   displayCountry = displayCountry;
   countryCode = (c: Country): string => c.code;
@@ -406,6 +427,25 @@ describe('TnAutocompleteComponent', () => {
       vwHost.options.set(countries);
       vwFixture.detectChanges();
       expect(getVwInput().value).toBe('Mexico');
+    });
+
+    it('re-renders the committed label when displayWith is swapped', () => {
+      vwHost.control.setValue('CA');
+      vwFixture.detectChanges();
+      expect(getVwInput().value).toBe('Canada');
+
+      vwHost.displayFn.set((c: Country) => `${c.name} (${c.code})`);
+      vwFixture.detectChanges();
+      expect(getVwInput().value).toBe('Canada (CA)');
+    });
+
+    it('warns in dev mode when valueWith is combined with allowCustomValue', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      const fixture2 = TestBed.createComponent(ValueWithCustomValueHostComponent);
+      fixture2.detectChanges();
+
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('valueWith and allowCustomValue are contradictory'));
+      warnSpy.mockRestore();
     });
 
     it('does not downgrade a resolved label when options are later replaced', () => {

@@ -231,6 +231,9 @@ export class TnAutocompleteComponent<T = unknown, V = T> implements ControlValue
     effect(() => {
       this.options();
       this.valueWith();
+      // Tracked so a swapped display function (e.g. locale change) re-renders
+      // the committed label without waiting for options to change.
+      this.displayWith();
       untracked(() => {
         const mapper = this.valueWith();
         if (this.isOpen() || !mapper) {
@@ -284,6 +287,12 @@ export class TnAutocompleteComponent<T = unknown, V = T> implements ControlValue
         if (this.requireSelection() && this.allowCustomValue()) {
           console.warn(
             '[tn-autocomplete] requireSelection and allowCustomValue are mutually exclusive; allowCustomValue wins.'
+          );
+        }
+        if (this.valueWith() && this.allowCustomValue()) {
+          console.warn(
+            '[tn-autocomplete] valueWith and allowCustomValue are contradictory: a custom commit stores '
+            + 'the raw typed text (the display string), not a valueWith-mapped value.'
           );
         }
       });
