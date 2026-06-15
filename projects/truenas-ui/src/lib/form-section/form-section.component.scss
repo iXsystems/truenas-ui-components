@@ -1,0 +1,63 @@
+@use '../pipes/label-markup/label-markup' as label-markup;
+
+.tn-form-section {
+  // Stack the legend and projected fields with consistent vertical rhythm.
+  // `gap` lives on the container, so it spaces projected children regardless
+  // of their own style encapsulation — no `::ng-deep` reach-in required.
+  // Note: this lays the section out as a single column; consumers needing a
+  // multi-column field grid should wrap their fields in their own layout child.
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  border: none;
+  margin: 0;
+  padding: 0;
+
+  // Allow flexbox children with `white-space: nowrap` to shrink instead of
+  // forcing the fieldset wider than its container.
+  min-width: 0;
+}
+
+// The <legend> itself is the flex row hosting the heading text and tooltip.
+.tn-form-section__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.tn-form-section__legend {
+  color: var(--tn-fg1, #333);
+  font-family: var(--tn-font-family-body, 'Inter'), sans-serif;
+  font-size: 0.9375rem; // 15px
+  font-weight: 600;
+  line-height: 1.4;
+
+  @include label-markup.inline-code;
+}
+
+.tn-form-section__tooltip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--tn-fg2, #6c757d);
+  cursor: help;
+  line-height: 0;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--tn-primary, #007bff);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tn-primary, #007bff);
+    outline-offset: 2px;
+    border-radius: 50%;
+  }
+}

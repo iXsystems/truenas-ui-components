@@ -1,0 +1,28 @@
+<fieldset class="tn-form-section" tnTestIdType="form-section" [tnTestId]="testId()">
+  @if (heading()) {
+    <!--
+      The <legend> must be a *direct* child of the <fieldset> to act as the
+      group's accessible caption, so the heading text and tooltip live inside
+      it (laid out as a flex row) rather than in a wrapper div.
+    -->
+    <legend class="tn-form-section__header">
+      <span
+        class="tn-form-section__legend"
+        [innerHTML]="heading() | tnLabelMarkup"
+      ></span>
+
+      @if (tooltip()) {
+        <button
+          type="button"
+          class="tn-form-section__tooltip"
+          [attr.aria-label]="tooltip()"
+          [tnTooltip]="tooltip()"
+          [tnTooltipPosition]="tooltipPosition()">
+          <tn-icon name="help-circle" library="mdi" size="sm" />
+        </button>
+      }
+    </legend>
+  }
+
+  <ng-content />
+</fieldset>
