@@ -2,9 +2,12 @@ import { ReactiveFormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, userEvent, within } from 'storybook/test';
 import { TestIdInspectorComponent } from './testid-inspector.component';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnChipComponent } from '../lib/chip/chip.component';
 import { InputType } from '../lib/enums/input-type.enum';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
+
+const harnessDoc = loadHarnessDoc('chip');
 
 const meta: Meta<TnChipComponent> = {
   title: 'Components/Chip',
@@ -429,4 +432,26 @@ export const ScopedTestIds: Story = {
     `,
     moduleMetadata: { imports: [TnChipComponent, TestIdInspectorComponent] },
   }),
+};
+
+/**
+ * Harness API reference for `TnChipHarness`. Documentation is generated from the
+ * JSDoc in `chip.harness.ts`.
+ */
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      canvas: {
+        hidden: true,
+        sourceState: 'none'
+      },
+      description: {
+        story: harnessDoc || ''
+      }
+    },
+    controls: { disable: true },
+    layout: 'fullscreen'
+  },
+  render: () => ({ template: '' })
 };
