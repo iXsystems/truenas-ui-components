@@ -25,8 +25,10 @@ import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 /**
  * Option shape for `tn-autocomplete` — the `label` is displayed, the `value`
- * is committed to the form control. Structurally identical to
- * `TnSelectOption`, so the same data sources feed both dropdown components.
+ * is committed to the form control, and a truthy `disabled` keeps the row
+ * visible but non-selectable (skipped by keyboard nav, click, and text-match
+ * commits). Structurally identical to `TnSelectOption`, so the same data
+ * sources feed both dropdown components.
  */
 export type TnAutocompleteOption<T = unknown> = TnSelectOption<T>;
 
@@ -356,7 +358,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     if (this.requireSelection()) {
       const term = this.searchTerm();
       const match = this.options().find(
-        (opt) => opt.label.toLowerCase() === term.toLowerCase()
+        (opt) => !opt.disabled && opt.label.toLowerCase() === term.toLowerCase()
       );
 
       if (match) {
@@ -378,6 +380,9 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   }
 
   onOptionClick(option: TnAutocompleteOption<T>): void {
+    if (option.disabled) {
+      return;
+    }
     this.selectOption(option);
   }
 
@@ -390,27 +395,29 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
         if (!this.isOpen()) {
           this.open();
         } else {
-          this.highlightedIndex.update((i) =>
-            i < options.length - 1 ? i + 1 : 0
-          );
-          this.scrollToHighlighted();
+          const next = this.nextEnabledIndex(this.highlightedIndex(), 1);
+          if (next >= 0) {
+            this.highlightedIndex.set(next);
+            this.scrollToHighlighted();
+          }
         }
         break;
 
       case 'ArrowUp':
         event.preventDefault();
         if (this.isOpen()) {
-          this.highlightedIndex.update((i) =>
-            i > 0 ? i - 1 : options.length - 1
-          );
-          this.scrollToHighlighted();
+          const prev = this.nextEnabledIndex(this.highlightedIndex(), -1);
+          if (prev >= 0) {
+            this.highlightedIndex.set(prev);
+            this.scrollToHighlighted();
+          }
         }
         break;
 
       case 'Enter': {
         event.preventDefault();
         const idx = this.highlightedIndex();
-        if (this.isOpen() && idx >= 0 && idx < options.length) {
+        if (this.isOpen() && idx >= 0 && idx < options.length && !options[idx].disabled) {
           this.selectOption(options[idx]);
         } else if (this.allowCustomValue()) {
           this.commitCustomValue();
@@ -482,6 +489,28 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   // ── Internal ──
 
   /**
+   * Next selectable option index from `from` in `direction` (+1 down, -1 up),
+   * skipping disabled rows and wrapping around. `from` of -1 ("nothing
+   * highlighted") lands on the first row going down, the last going up.
+   * Returns -1 when every visible option is disabled.
+   */
+  private nextEnabledIndex(from: number, direction: 1 | -1): number {
+    const options = this.filteredOptions();
+    const count = options.length;
+    if (count === 0) {
+      return -1;
+    }
+    const start = from < 0 ? (direction === 1 ? -1 : 0) : from;
+    for (let step = 1; step <= count; step++) {
+      const idx = (((start + direction * step) % count) + count) % count;
+      if (!options[idx].disabled) {
+        return idx;
+      }
+    }
+    return -1;
+  }
+
+  /**
    * Commit the current search term as the value (allowCustomValue mode). A
    * display match (case-insensitive, same as the requireSelection path)
    * commits the matching option instead, so picking an existing entry by
@@ -490,11 +519,15 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   private commitCustomValue(): void {
     const term = this.searchTerm();
     const lowerTerm = term.toLowerCase();
-    const match = this.options().find((opt) => opt.label.toLowerCase() === lowerTerm);
+    const match = this.options().find(
+      (opt) => !opt.disabled && opt.label.toLowerCase() === lowerTerm
+    );
     if (match) {
       this.selectOption(match);
       return;
     }
+    // Best-effort guard: silent when options haven't loaded yet (the common
+    // async + allowCustomValue case), where the value type can't be known.
     if (isDevMode() && term !== '' && this.options().some((opt) => typeof opt.value !== 'string')) {
       console.warn(
         '[tn-autocomplete] allowCustomValue committed free text into a control whose option '

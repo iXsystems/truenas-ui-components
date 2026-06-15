@@ -91,6 +91,33 @@ class LabelValueHostComponent {
   control = new FormControl<string | null>(null);
 }
 
+@Component({
+  selector: 'tn-disabled-options-test-host',
+  standalone: true,
+  imports: [TnAutocompleteComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-autocomplete
+      [options]="options()"
+      [requireSelection]="requireSelection()"
+      [allowCustomValue]="allowCustomValue()"
+      [formControl]="control"
+      (optionSelected)="selected = $event" />
+  `
+})
+class DisabledOptionsHostComponent {
+  // Banana is disabled — it stays visible but must not be selectable.
+  options = signal<TnAutocompleteOption<string>[]>([
+    { label: 'Apple', value: 'apple' },
+    { label: 'Banana', value: 'banana', disabled: true },
+    { label: 'Cherry', value: 'cherry' },
+  ]);
+  requireSelection = signal(false);
+  allowCustomValue = signal(false);
+  control = new FormControl<string | null>(null);
+  selected: TnAutocompleteOption<string> | null = null;
+}
+
 describe('TnAutocompleteComponent', () => {
   let fixture: ComponentFixture<TestHostComponent>;
   let host: TestHostComponent;
@@ -448,6 +475,98 @@ describe('TnAutocompleteComponent', () => {
 
       expect(vwHost.control.value).toBe('US');
       expect(getVwInput().value).toBe('United States');
+    });
+  });
+
+  describe('disabled options', () => {
+    let dFixture: ComponentFixture<DisabledOptionsHostComponent>;
+    let dHost: DisabledOptionsHostComponent;
+
+    const getDInput = (): HTMLInputElement =>
+      dFixture.nativeElement.querySelector('.tn-autocomplete__input');
+
+    const getDOptions = (): HTMLElement[] =>
+      Array.from(overlayEl.querySelectorAll('.tn-autocomplete__option'));
+
+    const focusD = () => {
+      getDInput().dispatchEvent(new Event('focus'));
+      dFixture.detectChanges();
+    };
+
+    const pressDKey = (key: string) => {
+      getDInput().dispatchEvent(new KeyboardEvent('keydown', { key }));
+      dFixture.detectChanges();
+    };
+
+    beforeEach(() => {
+      dFixture = TestBed.createComponent(DisabledOptionsHostComponent);
+      dHost = dFixture.componentInstance;
+      dFixture.detectChanges();
+    });
+
+    it('renders a disabled option with the disabled class and aria-disabled', () => {
+      focusD();
+      const banana = getDOptions()[1];
+      expect(banana.classList).toContain('disabled');
+      expect(banana.getAttribute('aria-disabled')).toBe('true');
+    });
+
+    it('does not commit a disabled option on click', () => {
+      focusD();
+      getDOptions()[1].click();
+      dFixture.detectChanges();
+
+      expect(dHost.control.value).toBeNull();
+      expect(dHost.selected).toBeNull();
+    });
+
+    it('skips disabled options during keyboard navigation', () => {
+      focusD();
+      pressDKey('ArrowDown'); // Apple
+      pressDKey('ArrowDown'); // skips Banana → Cherry
+      pressDKey('Enter');
+
+      expect(dHost.control.value).toBe('cherry');
+    });
+
+    it('wraps past a disabled option going up', () => {
+      focusD();
+      pressDKey('ArrowUp'); // from nothing → last (Cherry)
+      pressDKey('ArrowUp'); // skips Banana → Apple
+      pressDKey('Enter');
+
+      expect(dHost.control.value).toBe('apple');
+    });
+
+    it('rejects a disabled option label under requireSelection', () => {
+      dHost.requireSelection.set(true);
+      dFixture.detectChanges();
+
+      const input = getDInput();
+      input.value = 'banana';
+      input.dispatchEvent(new Event('input'));
+      dFixture.detectChanges();
+      input.dispatchEvent(new Event('blur'));
+      dFixture.detectChanges();
+
+      expect(dHost.control.value).toBeNull();
+      expect(getDInput().value).toBe('');
+    });
+
+    it('treats a disabled option label as a custom value under allowCustomValue', () => {
+      dHost.allowCustomValue.set(true);
+      dFixture.detectChanges();
+
+      const input = getDInput();
+      input.value = 'Banana';
+      input.dispatchEvent(new Event('input'));
+      dFixture.detectChanges();
+      input.dispatchEvent(new Event('blur'));
+      dFixture.detectChanges();
+
+      // Committed as free text, not resolved to the disabled option.
+      expect(dHost.control.value).toBe('Banana');
+      expect(dHost.selected).toBeNull();
     });
   });
 

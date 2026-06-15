@@ -192,6 +192,41 @@ export const LabelValuePairs: Story = {
   },
 };
 
+/**
+ * **Disabled options.** Options carrying `disabled: true` stay visible but are
+ * non-selectable — dimmed, skipped by keyboard navigation, and ignored by
+ * click and text-match commits.
+ */
+export const DisabledOptions: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      options: simpleFruits.map((fruit, i) => ({
+        label: fruit,
+        value: fruit,
+        disabled: i % 3 === 1,
+      })),
+    },
+    template: `
+      <tn-form-field
+        label="Fruit"
+        hint="Every third fruit is unavailable">
+        <tn-autocomplete
+          [options]="options"
+          placeholder="Type to search fruits..."
+          (optionSelected)="optionSelected($event)">
+        </tn-autocomplete>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  parameters: {
+    controls: { disable: true },
+  },
+};
+
 export const RequireSelection: Story = {
   render: (args) => ({
     props: {
