@@ -12,7 +12,7 @@ import { TnFormSectionHarness } from './form-section.harness';
   imports: [TnFormSectionComponent],
   template: `
     <tn-form-section [heading]="heading" [tooltip]="tooltip">
-      <input class="projected" />
+      <p class="projected">Projected field content</p>
     </tn-form-section>
   `,
 })
@@ -44,7 +44,7 @@ describe('TnFormSectionComponent', () => {
   it('renders a native fieldset that projects its content', () => {
     const fieldset = fixture.debugElement.query(By.css('fieldset.tn-form-section'));
     expect(fieldset).toBeTruthy();
-    expect(fieldset.query(By.css('input.projected'))).toBeTruthy();
+    expect(fieldset.query(By.css('.projected'))).toBeTruthy();
   });
 
   it('renders the heading in a legend', () => {
@@ -59,6 +59,28 @@ describe('TnFormSectionComponent', () => {
     );
     expect(legend).toBeTruthy();
     expect(legend.nativeElement.textContent.trim()).toContain('Network Settings');
+  });
+
+  it('names the group from the heading alone, not the tooltip text', () => {
+    host.tooltip = 'A long help sentence that must not pollute the group name.';
+    fixture.detectChanges();
+
+    const fieldset = fixture.debugElement.query(By.css('fieldset.tn-form-section')).nativeElement;
+    const heading = fixture.debugElement.query(By.css('.tn-form-section__legend')).nativeElement;
+
+    // aria-labelledby points only at the heading, so the help button's
+    // aria-label is excluded from the group's accessible name.
+    const labelledBy = fieldset.getAttribute('aria-labelledby');
+    expect(labelledBy).toBe(heading.id);
+    expect(heading.id).toBeTruthy();
+    expect(heading.textContent.trim()).toBe('Network Settings');
+  });
+
+  it('drops aria-labelledby when there is no heading', () => {
+    host.heading = '';
+    fixture.detectChanges();
+    const fieldset = fixture.debugElement.query(By.css('fieldset.tn-form-section')).nativeElement;
+    expect(fieldset.getAttribute('aria-labelledby')).toBeNull();
   });
 
   it('omits the legend when no heading is set', () => {
@@ -98,6 +120,13 @@ describe('TnFormSectionComponent', () => {
       host.tooltip = 'More info';
       fixture.detectChanges();
       expect(await section.hasTooltip()).toBe(true);
+    });
+
+    it('returns the full section text including projected content', async () => {
+      const section = await loader.getHarness(TnFormSectionHarness);
+      const text = await section.getText();
+      expect(text).toContain('Network Settings');
+      expect(text).toContain('Projected field content');
     });
 
     it('filters by heading via with()', async () => {

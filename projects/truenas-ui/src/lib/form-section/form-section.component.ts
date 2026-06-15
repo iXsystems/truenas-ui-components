@@ -5,6 +5,9 @@ import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 import { TnTooltipDirective } from '../tooltip/tooltip.directive';
 import type { TooltipPosition } from '../tooltip/tooltip.directive';
 
+/** Per-instance counter for generating unique heading ids. */
+let nextUniqueId = 0;
+
 /**
  * Semantic grouping for a related set of form fields. Renders a native
  * `<fieldset>` with an optional `<legend>` heading and help tooltip, and
@@ -34,4 +37,12 @@ export class TnFormSectionComponent {
 
   /** Test id applied to the host for harness/e2e selection. */
   testId = input<TnTestIdValue>(undefined);
+
+  /**
+   * Stable id linking the fieldset to its heading via `aria-labelledby`. This
+   * names the group from the heading text alone — without it the legend's
+   * accessible name would also absorb the tooltip button's `aria-label`,
+   * announcing the whole tooltip sentence on every control in the group.
+   */
+  protected readonly headingId = `tn-form-section-${nextUniqueId++}`;
 }
