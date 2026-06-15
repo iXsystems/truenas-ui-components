@@ -19,8 +19,18 @@ import type { EmbeddedViewRef, OnDestroy, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { Subscription } from 'rxjs';
+import type { TnSelectOption } from '../select/select.component';
 import { TnSpinnerComponent } from '../spinner/spinner.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+
+/**
+ * Option shape for `tn-autocomplete` — the `label` is displayed, the `value`
+ * is committed to the form control, and a truthy `disabled` keeps the row
+ * visible but non-selectable (skipped by keyboard nav, click, and text-match
+ * commits). Structurally identical to `TnSelectOption`, so the same data
+ * sources feed both dropdown components.
+ */
+export type TnAutocompleteOption<T = unknown> = TnSelectOption<T>;
 
 let nextId = 0;
 
@@ -46,11 +56,21 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   /** Unique instance ID for ARIA linkage */
   protected readonly uid = `tn-autocomplete-${nextId++}`;
 
-  /** All available options */
-  options = input<T[]>([]);
+  /**
+   * All available options. The `label` is displayed; the `value` is committed
+   * to the form control. A written value is resolved back to its option's
+   * label for display — falling back to `String(value)` until the matching
+   * option is available, and upgraded once an async option load lands.
+   */
+  options = input<TnAutocompleteOption<T>[]>([]);
 
-  /** Transform a value to its display string */
-  displayWith = input<(value: T) => string>((v: T) => String(v));
+  /**
+   * Custom comparator for matching a written control value against option
+   * values during display resolution. Defaults to identity (`===`), which is
+   * right for primitive values; provide this when option values are objects.
+   * Mirrors `tn-select`'s `compareWith`.
+   */
+  compareWith = input<((a: T | null, b: T | null) => boolean) | undefined>(undefined);
 
   /** Placeholder text for the input */
   placeholder = input<string>('Type to search...');
@@ -79,8 +99,8 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   /** Text shown next to the spinner while `loading` is set. */
   loadingText = input<string>('Loading...');
 
-  /** Custom filter function. Defaults to case-insensitive includes on displayWith text */
-  filterFn = input<((option: T, searchTerm: string) => boolean) | undefined>(undefined);
+  /** Custom filter function. Defaults to case-insensitive includes on the option label */
+  filterFn = input<((option: TnAutocompleteOption<T>, searchTerm: string) => boolean) | undefined>(undefined);
 
   /** Text shown when no options match the search */
   noResultsText = input<string>('No results found');
@@ -105,8 +125,8 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   /** Test ID attribute */
   testId = input<TnTestIdValue>(undefined);
 
-  /** Emits when an option is selected */
-  optionSelected = output<T>();
+  /** Emits the full option (label + value) when one is selected */
+  optionSelected = output<TnAutocompleteOption<T>>();
 
   /**
    * Emits the search term as the user types (not on programmatic writes or
@@ -155,7 +175,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   /** Index of the currently highlighted option for keyboard nav */
   protected highlightedIndex = signal(-1);
 
-  /** The currently selected value */
+  /** The currently committed value (an option's `value`, or a custom-typed one) */
   private selectedValue = signal<T | null>(null);
 
   /** CVA disabled state from the form */
@@ -169,7 +189,6 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     const term = this.searchTerm();
     const all = this.options();
     const customFilter = this.filterFn();
-    const display = this.displayWith();
     const max = this.maxResults();
 
     if (!term) {
@@ -179,7 +198,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     const lowerTerm = term.toLowerCase();
     const filtered = customFilter
       ? all.filter((opt) => customFilter(opt, term))
-      : all.filter((opt) => display(opt).toLowerCase().includes(lowerTerm));
+      : all.filter((opt) => opt.label.toLowerCase().includes(lowerTerm));
 
     return filtered.slice(0, max);
   });
@@ -206,7 +225,34 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   /** Scroll distance (px) from the panel bottom that triggers `loadMore`. */
   private static readonly loadMoreThresholdPx = 48;
 
+  /** Guards the object-without-compareWith warning so it fires only once. */
+  private warnedAboutObjectCompare = false;
+
   constructor() {
+    // A value written before its option loaded displays as the raw fallback —
+    // once options arrive (or are relabeled, e.g. a locale change), upgrade
+    // the text to the option's label. UPGRADE-ONLY: when no option matches
+    // (e.g. a server-search picker replaced `options` after a selection), the
+    // current text is left alone rather than downgraded back to the raw
+    // value. Skipped while the panel is open so active typing isn't clobbered.
+    effect(() => {
+      this.options();
+      this.compareWith();
+      untracked(() => {
+        if (this.isOpen()) {
+          return;
+        }
+        const value = this.selectedValue();
+        if (value === null || value === undefined) {
+          return;
+        }
+        const match = this.options().find((opt) => this.valueMatches(opt.value, value));
+        if (match) {
+          this.searchTerm.set(match.label);
+        }
+      });
+    });
+
     // A changed options COUNT means the consumer answered the last loadMore
     // (or a new result set landed) — re-arm the emitter and request another
     // page if the rows still don't fill the panel. Re-arming on length (not
@@ -261,7 +307,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   writeValue(value: T | null): void {
     this.selectedValue.set(value);
     if (value !== null && value !== undefined) {
-      this.searchTerm.set(this.displayWith()(value));
+      this.searchTerm.set(this.displayValue(value));
     } else {
       this.searchTerm.set('');
     }
@@ -284,7 +330,6 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   onInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     this.searchTerm.set(value);
-    this.highlightedIndex.set(-1);
     // A new term is a new pagination context — don't hold back its first page.
     this.loadMorePending = false;
     this.searchChange.emit(value);
@@ -296,6 +341,9 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       // anchored position so it stays attached to the input.
       this.overlayRef?.updatePosition();
     }
+    // Typing is a fresh search, not navigation — no row is pre-highlighted.
+    // Set after open() so it overrides the committed-option seed below.
+    this.highlightedIndex.set(-1);
   }
 
   onFocus(): void {
@@ -314,9 +362,8 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
 
     if (this.requireSelection()) {
       const term = this.searchTerm();
-      const display = this.displayWith();
       const match = this.options().find(
-        (opt) => display(opt).toLowerCase() === term.toLowerCase()
+        (opt) => !opt.disabled && opt.label.toLowerCase() === term.toLowerCase()
       );
 
       if (match) {
@@ -325,7 +372,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
         // Revert to last valid selection or clear
         const current = this.selectedValue();
         if (current !== null && current !== undefined) {
-          this.searchTerm.set(display(current));
+          this.searchTerm.set(this.displayValue(current));
         } else {
           this.searchTerm.set('');
           this.onChange(null);
@@ -337,7 +384,10 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     this.onTouched();
   }
 
-  onOptionClick(option: T): void {
+  onOptionClick(option: TnAutocompleteOption<T>): void {
+    if (option.disabled) {
+      return;
+    }
     this.selectOption(option);
   }
 
@@ -350,27 +400,29 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
         if (!this.isOpen()) {
           this.open();
         } else {
-          this.highlightedIndex.update((i) =>
-            i < options.length - 1 ? i + 1 : 0
-          );
-          this.scrollToHighlighted();
+          const next = this.nextEnabledIndex(this.highlightedIndex(), 1);
+          if (next >= 0) {
+            this.highlightedIndex.set(next);
+            this.scrollToHighlighted();
+          }
         }
         break;
 
       case 'ArrowUp':
         event.preventDefault();
         if (this.isOpen()) {
-          this.highlightedIndex.update((i) =>
-            i > 0 ? i - 1 : options.length - 1
-          );
-          this.scrollToHighlighted();
+          const prev = this.nextEnabledIndex(this.highlightedIndex(), -1);
+          if (prev >= 0) {
+            this.highlightedIndex.set(prev);
+            this.scrollToHighlighted();
+          }
         }
         break;
 
       case 'Enter': {
         event.preventDefault();
         const idx = this.highlightedIndex();
-        if (this.isOpen() && idx >= 0 && idx < options.length) {
+        if (this.isOpen() && idx >= 0 && idx < options.length && !options[idx].disabled) {
           this.selectOption(options[idx]);
         } else if (this.allowCustomValue()) {
           this.commitCustomValue();
@@ -386,7 +438,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
           // text so the upcoming blur doesn't commit the abandoned term.
           const current = this.selectedValue();
           this.searchTerm.set(
-            current !== null && current !== undefined ? this.displayWith()(current) : ''
+            current !== null && current !== undefined ? this.displayValue(current) : ''
           );
         }
         this.close();
@@ -439,7 +491,57 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     }
   }
 
+  /**
+   * Whether `option` carries the committed value — drives `aria-selected` so
+   * assistive tech announces the current choice independently of the keyboard
+   * cursor (which is conveyed via `aria-activedescendant`).
+   */
+  protected isOptionSelected(option: TnAutocompleteOption<T>): boolean {
+    const value = this.selectedValue();
+    if (value === null || value === undefined) {
+      return false;
+    }
+    return this.valueMatches(option.value, value);
+  }
+
   // ── Internal ──
+
+  /**
+   * Index of the committed value's option in the visible list, or -1 when
+   * nothing is committed or the match is absent/disabled. Used to seed the
+   * keyboard cursor when the panel opens.
+   */
+  private selectedOptionIndex(): number {
+    const value = this.selectedValue();
+    if (value === null || value === undefined) {
+      return -1;
+    }
+    return this.filteredOptions().findIndex(
+      (opt) => !opt.disabled && this.valueMatches(opt.value, value)
+    );
+  }
+
+  /**
+   * Next selectable option index from `from` in `direction` (+1 down, -1 up),
+   * skipping disabled rows and wrapping around. `from` of -1 ("nothing
+   * highlighted") lands on the first row going down, the last going up.
+   * Returns -1 when every visible option is disabled.
+   */
+  private nextEnabledIndex(from: number, direction: 1 | -1): number {
+    const options = this.filteredOptions();
+    const count = options.length;
+    if (count === 0) {
+      return -1;
+    }
+    const start = from < 0 ? (direction === 1 ? -1 : 0) : from;
+    for (let step = 1; step <= count; step++) {
+      const idx = (((start + direction * step) % count) + count) % count;
+      if (!options[idx].disabled) {
+        return idx;
+      }
+    }
+    return -1;
+  }
 
   /**
    * Commit the current search term as the value (allowCustomValue mode). A
@@ -449,17 +551,20 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    */
   private commitCustomValue(): void {
     const term = this.searchTerm();
-    const display = this.displayWith();
     const lowerTerm = term.toLowerCase();
-    const match = this.options().find((opt) => display(opt).toLowerCase() === lowerTerm);
+    const match = this.options().find(
+      (opt) => !opt.disabled && opt.label.toLowerCase() === lowerTerm
+    );
     if (match) {
       this.selectOption(match);
       return;
     }
-    if (isDevMode() && term !== '' && this.options().some((opt) => typeof opt !== 'string')) {
+    // Best-effort guard: silent when options haven't loaded yet (the common
+    // async + allowCustomValue case), where the value type can't be known.
+    if (isDevMode() && term !== '' && this.options().some((opt) => typeof opt.value !== 'string')) {
       console.warn(
-        '[tn-autocomplete] allowCustomValue committed free text into a control whose options are '
-        + 'not strings — custom values are only sound for string-valued autocompletes.'
+        '[tn-autocomplete] allowCustomValue committed free text into a control whose option '
+        + 'values are not strings — custom values are only sound for string-valued autocompletes.'
       );
     }
     const value = term === '' ? null : (term as unknown as T);
@@ -467,10 +572,49 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     this.onChange(value);
   }
 
-  private selectOption(option: T): void {
-    this.selectedValue.set(option);
-    this.searchTerm.set(this.displayWith()(option));
-    this.onChange(option);
+  /**
+   * Resolves a committed value back to its option's display label, falling
+   * back to the raw value's string until the matching option is available.
+   */
+  private displayValue(value: T): string {
+    const match = this.options().find((opt) => this.valueMatches(opt.value, value));
+    return match ? match.label : String(value);
+  }
+
+  /**
+   * Compares option values, honoring `compareWith` when provided. Without one,
+   * falls back to identity (`===`) — which never matches structurally-equal
+   * objects from different references, so display resolution and selection
+   * silently fail. Warn once on that misuse (unconditional, like `tn-select`,
+   * so prod monitoring catches it) and return `false` to make it loud.
+   */
+  private valueMatches(a: T | null, b: T | null): boolean {
+    const comparator = this.compareWith();
+    if (comparator) {
+      return comparator(a, b);
+    }
+    if (a === b) {
+      return true;
+    }
+    if (typeof a === 'object' && typeof b === 'object' && a !== null && b !== null) {
+      if (!this.warnedAboutObjectCompare) {
+        this.warnedAboutObjectCompare = true;
+        console.warn(
+          '[tn-autocomplete] Comparing object option values without a `compareWith` input. ' +
+          'Identity comparison will not match structurally-equal objects from different ' +
+          'references, so the committed value will not resolve to its label. ' +
+          'Provide `[compareWith]="(a, b) => a?.id === b?.id"` (or similar).'
+        );
+      }
+      return false;
+    }
+    return false;
+  }
+
+  private selectOption(option: TnAutocompleteOption<T>): void {
+    this.selectedValue.set(option.value);
+    this.searchTerm.set(option.label);
+    this.onChange(option.value);
     this.optionSelected.emit(option);
     this.close();
   }
@@ -480,7 +624,13 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       return;
     }
     this.isOpen.set(true);
+    // Seed the keyboard cursor on the committed option so ArrowDown resumes
+    // from the current value (and it scrolls into view). -1 when nothing is
+    // committed or the value has no visible, enabled option — e.g. a custom
+    // free-text value, or a value whose option hasn't loaded yet.
+    this.highlightedIndex.set(this.selectedOptionIndex());
     this.attachOverlay();
+    this.scrollToHighlighted();
     this.opened.emit();
   }
 

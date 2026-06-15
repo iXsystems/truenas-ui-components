@@ -65,12 +65,18 @@
   color: var(--tn-fg1, #212529);
   transition: background-color 0.15s ease-in-out;
 
-  &:hover {
+  &:hover:not(.disabled) {
     background-color: var(--tn-alt-bg2, #f8f9fa);
   }
 
   &.highlighted {
     background-color: var(--tn-alt-bg1, #f8f9fa);
+  }
+
+  &.disabled {
+    color: var(--tn-fg2, #6c757d);
+    cursor: not-allowed;
+    opacity: 0.6;
   }
 }
 

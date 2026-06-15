@@ -1,4 +1,5 @@
 import { signal } from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
@@ -30,17 +31,22 @@ const countries: Country[] = [
   { code: 'NL', name: 'Netherlands' },
 ];
 
-const displayCountry = (country: Country): string => country.name;
+const countryOptions = countries.map((country) => ({ label: country.name, value: country.code }));
 
-const simpleOptions = [
+const simpleFruits = [
   'Apple', 'Banana', 'Cherry', 'Date', 'Elderberry',
   'Fig', 'Grape', 'Honeydew', 'Kiwi', 'Lemon',
   'Mango', 'Nectarine', 'Orange', 'Papaya', 'Quince',
 ];
 
+const simpleOptions = simpleFruits.map((fruit) => ({ label: fruit, value: fruit }));
+
 const manyOptions = Array.from(
   { length: 150 },
-  (_, i) => `Option ${String(i + 1).padStart(3, '0')}`
+  (_, i) => {
+    const name = `Option ${String(i + 1).padStart(3, '0')}`;
+    return { label: name, value: name };
+  }
 );
 
 const meta: Meta<TnAutocompleteComponent<unknown>> = {
@@ -105,10 +111,20 @@ type Story = StoryObj<TnAutocompleteComponent<unknown>>;
 
 export const Default: Story = {
   render: (args) => ({
-    props: {
-      ...args,
-      options: simpleOptions,
-    },
+    // The committed value lives on the form control (custom commits flow
+    // through the CVA, not optionSelected) — bind one and mirror it into a
+    // signal so the story can show what actually landed.
+    props: (() => {
+      const control = new FormControl<string | null>(null);
+      const committed = signal<string | null>(control.value);
+      control.valueChanges.subscribe((value) => committed.set(value));
+      return {
+        ...args,
+        options: simpleOptions,
+        control,
+        committed,
+      };
+    })(),
     template: `
       <tn-form-field
         label="Favorite fruit"
@@ -118,40 +134,48 @@ export const Default: Story = {
           [placeholder]="placeholder"
           [disabled]="disabled"
           [requireSelection]="requireSelection"
+          [allowCustomValue]="allowCustomValue"
+          [loading]="loading"
+          [loadingText]="loadingText"
           [noResultsText]="noResultsText"
           [maxResults]="maxResults"
+          [formControl]="control"
           (optionSelected)="optionSelected($event)">
         </tn-autocomplete>
       </tn-form-field>
+      @if (committed() !== null) {
+        <p style="margin-top: 1rem; font-size: 0.875rem;">Committed value: <code>{{ committed() }}</code></p>
+      }
     `,
     moduleMetadata: {
-      imports: [TnFormFieldComponent],
+      imports: [TnFormFieldComponent, ReactiveFormsModule],
     },
   }),
   args: {
     placeholder: 'Type to search fruits...',
     disabled: false,
     requireSelection: false,
+    allowCustomValue: false,
+    loading: false,
+    loadingText: 'Loading...',
     noResultsText: 'No fruits found',
     maxResults: 100,
   },
 };
 
-export const WithDisplayWith: Story = {
+export const LabelValuePairs: Story = {
   render: (args) => ({
     props: {
       ...args,
-      countries,
-      displayCountry,
+      options: countryOptions,
     },
     template: `
       <tn-form-field
         label="Country"
-        hint="Search by country name"
+        hint="Displays the name, commits the ISO code"
         [required]="true">
         <tn-autocomplete
-          [options]="countries"
-          [displayWith]="displayCountry"
+          [options]="options"
           [placeholder]="placeholder"
           [requireSelection]="requireSelection"
           (optionSelected)="optionSelected($event)">
@@ -165,6 +189,41 @@ export const WithDisplayWith: Story = {
   args: {
     placeholder: 'Type to search countries...',
     requireSelection: true,
+  },
+};
+
+/**
+ * **Disabled options.** Options carrying `disabled: true` stay visible but are
+ * non-selectable — dimmed, skipped by keyboard navigation, and ignored by
+ * click and text-match commits.
+ */
+export const DisabledOptions: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      options: simpleFruits.map((fruit, i) => ({
+        label: fruit,
+        value: fruit,
+        disabled: i % 3 === 1,
+      })),
+    },
+    template: `
+      <tn-form-field
+        label="Fruit"
+        hint="Every third fruit is unavailable">
+        <tn-autocomplete
+          [options]="options"
+          placeholder="Type to search fruits..."
+          (optionSelected)="optionSelected($event)">
+        </tn-autocomplete>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  parameters: {
+    controls: { disable: true },
   },
 };
 
@@ -222,18 +281,16 @@ export const CustomFilter: Story = {
   render: (args) => ({
     props: {
       ...args,
-      countries,
-      displayCountry,
-      startsWithFilter: (option: Country, term: string) =>
-        option.name.toLowerCase().startsWith(term.toLowerCase()),
+      options: countryOptions,
+      startsWithFilter: (option: { label: string }, term: string) =>
+        option.label.toLowerCase().startsWith(term.toLowerCase()),
     },
     template: `
       <tn-form-field
         label="Country (starts-with filter)"
         hint="Only matches from the beginning of the name">
         <tn-autocomplete
-          [options]="countries"
-          [displayWith]="displayCountry"
+          [options]="options"
           [filterFn]="startsWithFilter"
           placeholder="Type to search..."
           (optionSelected)="optionSelected($event)">
@@ -297,6 +354,44 @@ export const LongList: Story = {
 };
 
 /**
+ * **CVA round-tripping with written values.** The bound `FormControl` starts at
+ * `'DE'`, so the input renders "Germany" on load: a written value resolves
+ * back to its option's label (falling back to the raw value until options
+ * load), and selections commit the option's `value`.
+ */
+export const ValueMapping: Story = {
+  render: () => ({
+    props: (() => {
+      const control = new FormControl<string | null>('DE');
+      const committed = signal<string | null>(control.value);
+      control.valueChanges.subscribe((value) => committed.set(value));
+      return {
+        options: countryOptions,
+        control,
+        committed,
+      };
+    })(),
+    template: `
+      <tn-form-field label="Country" hint="Commits the ISO code, displays the name">
+        <tn-autocomplete
+          [options]="options"
+          [requireSelection]="true"
+          [formControl]="control"
+          placeholder="Type to search countries...">
+        </tn-autocomplete>
+      </tn-form-field>
+      <p style="margin-top: 1rem; font-size: 0.875rem;">Committed value: <code>{{ committed() }}</code></p>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, ReactiveFormsModule],
+    },
+  }),
+  parameters: {
+    controls: { disable: true },
+  },
+};
+
+/**
  * **Server-driven options with pagination and custom values.** The component
  * emits `opened` when the panel opens (prime the first page before any typing),
  * `searchChange` as the user types, and `loadMore` when the open panel is
@@ -312,7 +407,7 @@ export const AsyncOptions: Story = {
   render: () => ({
     // Signal-driven so async mutations render under zoneless change detection.
     props: (() => {
-      const options = signal<string[]>([]);
+      const options = signal<{ label: string; value: string }[]>([]);
       const loading = signal(false);
       const value = signal<string | null>(null);
       let term = '';
@@ -327,15 +422,21 @@ export const AsyncOptions: Story = {
         timer = setTimeout(() => {
           const all = Array.from({ length: 100 }, (unused, i) => `device-${String(i).padStart(3, '0')}`);
           const matches = all.filter((name) => name.includes(term));
-          options.set(matches.slice(0, (page + 1) * 20));
+          options.set(matches.slice(0, (page + 1) * 20).map((name) => ({ label: name, value: name })));
           loading.set(false);
         }, 600);
       };
+
+      // Custom commits flow through the CVA (onChange), not optionSelected —
+      // bind a real FormControl so they are observable in the story.
+      const control = new FormControl<string | null>(null);
+      control.valueChanges.subscribe((committed) => value.set(committed));
 
       return {
         options,
         loading,
         value,
+        control,
         passthroughFilter: () => true,
         onOpened: () => {
           // Click-to-suggest: prime the first page before the user types.
@@ -345,31 +446,30 @@ export const AsyncOptions: Story = {
         },
         onSearch: (newTerm: string) => fetchPage(newTerm, 0),
         onLoadMore: () => fetchPage(term, page + 1),
-        onSelected: (selected: string) => value.set(selected),
       };
     })(),
     template: `
       <tn-form-field
         label="Port or Hostname"
-        hint="Pick a detected device or type a custom path">
+        hint="Pick a detected device or type a custom path (committed on blur or Enter)">
         <tn-autocomplete
           [options]="options()"
           [loading]="loading()"
           [allowCustomValue]="true"
           [filterFn]="passthroughFilter"
+          [formControl]="control"
           placeholder="Type to search devices..."
           (opened)="onOpened()"
           (searchChange)="onSearch($event)"
-          (loadMore)="onLoadMore()"
-          (optionSelected)="onSelected($event)">
+          (loadMore)="onLoadMore()">
         </tn-autocomplete>
       </tn-form-field>
       @if (value()) {
-        <p style="margin-top: 1rem; font-size: 0.875rem;">Selected: <code>{{ value() }}</code></p>
+        <p style="margin-top: 1rem; font-size: 0.875rem;">Committed value: <code>{{ value() }}</code></p>
       }
     `,
     moduleMetadata: {
-      imports: [TnFormFieldComponent],
+      imports: [TnFormFieldComponent, ReactiveFormsModule],
     },
   }),
   parameters: {
