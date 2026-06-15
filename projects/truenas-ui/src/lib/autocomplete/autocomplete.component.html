@@ -48,7 +48,7 @@
             [class.highlighted]="highlightedIndex() === $index"
             [class.disabled]="option.disabled"
             [attr.id]="uid + '-option-' + $index"
-            [attr.aria-selected]="highlightedIndex() === $index"
+            [attr.aria-selected]="isOptionSelected(option)"
             [attr.aria-disabled]="option.disabled ? true : null"
             (mousedown)="$event.preventDefault()"
             (click)="onOptionClick(option)"

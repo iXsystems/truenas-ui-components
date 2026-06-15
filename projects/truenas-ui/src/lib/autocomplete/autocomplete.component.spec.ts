@@ -476,6 +476,57 @@ describe('TnAutocompleteComponent', () => {
       expect(vwHost.control.value).toBe('US');
       expect(getVwInput().value).toBe('United States');
     });
+
+    const focusVw = () => {
+      getVwInput().dispatchEvent(new Event('focus'));
+      vwFixture.detectChanges();
+    };
+
+    const getVwOptions = (): HTMLElement[] =>
+      Array.from(overlayEl.querySelectorAll('.tn-autocomplete__option'));
+
+    it('marks the committed option with aria-selected, independent of the cursor', () => {
+      vwHost.control.setValue('CA');
+      vwFixture.detectChanges();
+      focusVw();
+
+      const selected = getVwOptions().filter(
+        (opt) => opt.getAttribute('aria-selected') === 'true'
+      );
+      expect(selected.length).toBe(1);
+      expect(selected[0].textContent?.trim()).toBe('Canada');
+    });
+
+    it('pre-highlights the committed option on open so ArrowDown resumes from it', () => {
+      vwHost.control.setValue('CA');
+      vwFixture.detectChanges();
+      focusVw();
+
+      const highlighted = overlayEl.querySelector('.tn-autocomplete__option.highlighted');
+      expect(highlighted?.textContent?.trim()).toBe('Canada');
+
+      getVwInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+      vwFixture.detectChanges();
+      expect(vwHost.control.value).toBe('CA');
+    });
+
+    it('does not pre-highlight when nothing is committed', () => {
+      // All options visible, but no committed value to seed the cursor.
+      focusVw();
+
+      expect(getVwOptions().length).toBeGreaterThan(0);
+      expect(overlayEl.querySelector('.tn-autocomplete__option.highlighted')).toBeNull();
+    });
+
+    it('clears the pre-highlight once the user starts typing', () => {
+      vwHost.control.setValue('CA');
+      vwFixture.detectChanges();
+      focusVw();
+      expect(overlayEl.querySelector('.tn-autocomplete__option.highlighted')).toBeTruthy();
+
+      typeVw('united');
+      expect(overlayEl.querySelector('.tn-autocomplete__option.highlighted')).toBeNull();
+    });
   });
 
   describe('disabled options', () => {

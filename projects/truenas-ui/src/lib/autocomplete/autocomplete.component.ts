@@ -327,7 +327,6 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   onInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     this.searchTerm.set(value);
-    this.highlightedIndex.set(-1);
     // A new term is a new pagination context — don't hold back its first page.
     this.loadMorePending = false;
     this.searchChange.emit(value);
@@ -339,6 +338,9 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       // anchored position so it stays attached to the input.
       this.overlayRef?.updatePosition();
     }
+    // Typing is a fresh search, not navigation — no row is pre-highlighted.
+    // Set after open() so it overrides the committed-option seed below.
+    this.highlightedIndex.set(-1);
   }
 
   onFocus(): void {
@@ -486,7 +488,35 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     }
   }
 
+  /**
+   * Whether `option` carries the committed value — drives `aria-selected` so
+   * assistive tech announces the current choice independently of the keyboard
+   * cursor (which is conveyed via `aria-activedescendant`).
+   */
+  protected isOptionSelected(option: TnAutocompleteOption<T>): boolean {
+    const value = this.selectedValue();
+    if (value === null || value === undefined) {
+      return false;
+    }
+    return this.valueMatches(option.value, value);
+  }
+
   // ── Internal ──
+
+  /**
+   * Index of the committed value's option in the visible list, or -1 when
+   * nothing is committed or the match is absent/disabled. Used to seed the
+   * keyboard cursor when the panel opens.
+   */
+  private selectedOptionIndex(): number {
+    const value = this.selectedValue();
+    if (value === null || value === undefined) {
+      return -1;
+    }
+    return this.filteredOptions().findIndex(
+      (opt) => !opt.disabled && this.valueMatches(opt.value, value)
+    );
+  }
 
   /**
    * Next selectable option index from `from` in `direction` (+1 down, -1 up),
@@ -567,7 +597,13 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       return;
     }
     this.isOpen.set(true);
+    // Seed the keyboard cursor on the committed option so ArrowDown resumes
+    // from the current value (and it scrolls into view). -1 when nothing is
+    // committed or the value has no visible, enabled option — e.g. a custom
+    // free-text value, or a value whose option hasn't loaded yet.
+    this.highlightedIndex.set(this.selectedOptionIndex());
     this.attachOverlay();
+    this.scrollToHighlighted();
     this.opened.emit();
   }
 
