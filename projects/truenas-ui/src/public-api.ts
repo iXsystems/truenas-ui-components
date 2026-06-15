@@ -20,6 +20,7 @@ export * from './lib/input/input.harness';
 export * from './lib/input/input.directive';
 export * from './lib/input/size-conversion';
 export * from './lib/chip/chip.component';
+export * from './lib/chip/chip.harness';
 export * from './lib/card';
 export * from './lib/expansion-panel/expansion-panel.component';
 export * from './lib/expansion-panel/expansion-panel.harness';
