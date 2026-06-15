@@ -118,6 +118,29 @@ class DisabledOptionsHostComponent {
   selected: TnAutocompleteOption<string> | null = null;
 }
 
+interface City { id: string; }
+
+@Component({
+  selector: 'tn-object-value-test-host',
+  standalone: true,
+  imports: [TnAutocompleteComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-autocomplete
+      [options]="options"
+      [compareWith]="compareWith()"
+      [formControl]="control" />
+  `
+})
+class ObjectValueHostComponent {
+  options: TnAutocompleteOption<City>[] = [
+    { label: 'Lisbon', value: { id: 'lis' } },
+    { label: 'Porto', value: { id: 'opo' } },
+  ];
+  compareWith = signal<((a: City | null, b: City | null) => boolean) | undefined>(undefined);
+  control = new FormControl<City | null>(null);
+}
+
 describe('TnAutocompleteComponent', () => {
   let fixture: ComponentFixture<TestHostComponent>;
   let host: TestHostComponent;
@@ -618,6 +641,48 @@ describe('TnAutocompleteComponent', () => {
       // Committed as free text, not resolved to the disabled option.
       expect(dHost.control.value).toBe('Banana');
       expect(dHost.selected).toBeNull();
+    });
+  });
+
+  describe('object values without compareWith', () => {
+    let oFixture: ComponentFixture<ObjectValueHostComponent>;
+    let oHost: ObjectValueHostComponent;
+    let warnSpy: jest.SpyInstance;
+
+    const getOInput = (): HTMLInputElement =>
+      oFixture.nativeElement.querySelector('.tn-autocomplete__input');
+
+    beforeEach(() => {
+      warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      oFixture = TestBed.createComponent(ObjectValueHostComponent);
+      oHost = oFixture.componentInstance;
+      oFixture.detectChanges();
+    });
+
+    afterEach(() => {
+      warnSpy.mockRestore();
+    });
+
+    it('warns once and fails to resolve the label when comparing objects by identity', () => {
+      // A structurally-equal but distinct reference — identity won't match.
+      oHost.control.setValue({ id: 'lis' });
+      oFixture.detectChanges();
+
+      expect(getOInput().value).toBe(String({ id: 'lis' }));
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(warnSpy.mock.calls[0][0]).toContain('[tn-autocomplete]');
+      expect(warnSpy.mock.calls[0][0]).toContain('compareWith');
+    });
+
+    it('resolves the label and stays silent when compareWith is provided', () => {
+      oHost.compareWith.set((a, b) => a?.id === b?.id);
+      oFixture.detectChanges();
+
+      oHost.control.setValue({ id: 'opo' });
+      oFixture.detectChanges();
+
+      expect(getOInput().value).toBe('Porto');
+      expect(warnSpy).not.toHaveBeenCalled();
     });
   });
 

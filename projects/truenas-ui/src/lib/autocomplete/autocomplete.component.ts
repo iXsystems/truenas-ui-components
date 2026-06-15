@@ -225,6 +225,9 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   /** Scroll distance (px) from the panel bottom that triggers `loadMore`. */
   private static readonly loadMoreThresholdPx = 48;
 
+  /** Guards the object-without-compareWith warning so it fires only once. */
+  private warnedAboutObjectCompare = false;
+
   constructor() {
     // A value written before its option loaded displays as the raw fallback —
     // once options arrive (or are relabeled, e.g. a locale change), upgrade
@@ -578,10 +581,34 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     return match ? match.label : String(value);
   }
 
-  /** Compares option values, honoring `compareWith` when provided. */
+  /**
+   * Compares option values, honoring `compareWith` when provided. Without one,
+   * falls back to identity (`===`) — which never matches structurally-equal
+   * objects from different references, so display resolution and selection
+   * silently fail. Warn once on that misuse (unconditional, like `tn-select`,
+   * so prod monitoring catches it) and return `false` to make it loud.
+   */
   private valueMatches(a: T | null, b: T | null): boolean {
     const comparator = this.compareWith();
-    return comparator ? comparator(a, b) : a === b;
+    if (comparator) {
+      return comparator(a, b);
+    }
+    if (a === b) {
+      return true;
+    }
+    if (typeof a === 'object' && typeof b === 'object' && a !== null && b !== null) {
+      if (!this.warnedAboutObjectCompare) {
+        this.warnedAboutObjectCompare = true;
+        console.warn(
+          '[tn-autocomplete] Comparing object option values without a `compareWith` input. ' +
+          'Identity comparison will not match structurally-equal objects from different ' +
+          'references, so the committed value will not resolve to its label. ' +
+          'Provide `[compareWith]="(a, b) => a?.id === b?.id"` (or similar).'
+        );
+      }
+      return false;
+    }
+    return false;
   }
 
   private selectOption(option: TnAutocompleteOption<T>): void {
