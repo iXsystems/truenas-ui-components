@@ -1,15 +1,6 @@
 @use '../pipes/label-markup/label-markup' as label-markup;
 
 .tn-form-section {
-  // Stack the legend and projected fields with consistent vertical rhythm.
-  // `gap` lives on the container, so it spaces projected children regardless
-  // of their own style encapsulation — no `::ng-deep` reach-in required.
-  // Note: this lays the section out as a single column; consumers needing a
-  // multi-column field grid should wrap their fields in their own layout child.
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-
   border: none;
   margin: 0;
   padding: 0;
@@ -20,13 +11,28 @@
 }
 
 // The <legend> itself is the flex row hosting the heading text and tooltip.
+// It is the fieldset's natively-rendered caption, so it does not participate
+// in the body's flex layout — its own margin provides the gap to the fields.
 .tn-form-section__header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   width: 100%;
   padding: 0;
-  margin: 0;
+  margin: 0 0 1.25rem;
+}
+
+// Stack the projected fields with consistent vertical rhythm. Spacing lives on
+// this wrapper rather than on the <fieldset> so the native <legend> rendering
+// stays intact and we avoid fieldset/legend flex quirks. `gap` spaces projected
+// children regardless of their own style encapsulation (no `::ng-deep`).
+// Note: this lays the fields out as a single column; consumers needing a
+// multi-column grid should wrap their fields in their own layout child.
+.tn-form-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
 }
 
 .tn-form-section__legend {
