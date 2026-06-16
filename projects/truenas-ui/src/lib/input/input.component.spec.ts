@@ -757,6 +757,15 @@ describe('TnInputComponent', () => {
       expect(input.value).toBe('reflected');
     });
 
+    it('reflects a written value into the rendered textarea when multiline', () => {
+      fixture.componentRef.setInput('multiline', true);
+      component.writeValue('reflected');
+      fixture.detectChanges();
+
+      const textarea = fixture.nativeElement.querySelector('textarea.tn-input') as HTMLTextAreaElement;
+      expect(textarea.value).toBe('reflected');
+    });
+
     it('should call onChange when value changes', () => {
       const changeSpy = jest.fn();
       component.registerOnChange(changeSpy);
