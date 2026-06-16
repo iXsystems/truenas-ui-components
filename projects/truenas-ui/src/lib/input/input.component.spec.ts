@@ -318,7 +318,7 @@ describe('TnInputComponent', () => {
       input.dispatchEvent(new Event('input'));
       fixture.detectChanges();
 
-      expect(component['value']).toBe('new value');
+      expect(component['value']()).toBe('new value');
     });
 
     it('should call onTouched on blur', () => {
@@ -438,22 +438,22 @@ describe('TnInputComponent', () => {
 
     it('should display a numeric value written from the form', () => {
       component.writeValue(8080);
-      expect(component['value']).toBe('8080');
+      expect(component['value']()).toBe('8080');
     });
 
     it('should display empty string when null is written', () => {
       component.writeValue(null);
-      expect(component['value']).toBe('');
+      expect(component['value']()).toBe('');
     });
 
     it('should display zero (not blank) when 0 is written', () => {
       component.writeValue(0);
-      expect(component['value']).toBe('0');
+      expect(component['value']()).toBe('0');
     });
 
     it('should display large numbers faithfully without corrupting exponential notation', () => {
       component.writeValue(1e21);
-      expect(component['value']).toBe('1e+21');
+      expect(component['value']()).toBe('1e+21');
     });
 
     it('should not mangle a fractional value written in integer mode', () => {
@@ -462,7 +462,7 @@ describe('TnInputComponent', () => {
 
       component.writeValue(3.5);
       // Display must mirror the model verbatim, not strip the dot to "35".
-      expect(component['value']).toBe('3.5');
+      expect(component['value']()).toBe('3.5');
     });
 
     it('should preserve the caret position when a stripped character is removed', () => {
@@ -503,14 +503,14 @@ describe('TnInputComponent', () => {
 
     it('should display a byte-count model as a human-readable string', () => {
       component.writeValue(2 * 1024 ** 3);
-      expect(component['value']).toBe('2 GiB');
+      expect(component['value']()).toBe('2 GiB');
     });
 
     it('should display empty string for null/undefined', () => {
       component.writeValue(null);
-      expect(component['value']).toBe('');
+      expect(component['value']()).toBe('');
       component.writeValue(undefined);
-      expect(component['value']).toBe('');
+      expect(component['value']()).toBe('');
     });
 
     it('should emit a byte count as the user types', () => {
@@ -529,7 +529,7 @@ describe('TnInputComponent', () => {
       input.value = '2 gi';
       input.dispatchEvent(new Event('input'));
 
-      expect(component['value']).toBe('2 gi');
+      expect(component['value']()).toBe('2 gi');
     });
 
     it('should emit null for unparseable input (not 0)', () => {
@@ -563,7 +563,7 @@ describe('TnInputComponent', () => {
       input.dispatchEvent(new Event('input'));
       input.dispatchEvent(new Event('blur'));
 
-      expect(component['value']).toBe('2 MiB');
+      expect(component['value']()).toBe('2 MiB');
     });
 
     it('should re-sync the model to the canonicalized display on blur (lossy rounding)', () => {
@@ -576,12 +576,12 @@ describe('TnInputComponent', () => {
       input.dispatchEvent(new Event('input'));
       input.dispatchEvent(new Event('blur'));
 
-      const display = component['value'];
+      const display = component['value']();
       const model = changeSpy.mock.calls.at(-1)![0];
       // The invariant that matters: re-parsing what the user sees yields the model.
       expect(parseSize(display, 'MiB', 'iec')).toBe(model);
       // ...and the display is itself the canonical render of that model (stable).
-      expect(display).toBe(component['value']);
+      expect(display).toBe(component['value']());
     });
 
     it('should not emit on blur when a pre-filled value is unchanged (no spurious dirty)', () => {
@@ -596,7 +596,7 @@ describe('TnInputComponent', () => {
       input.dispatchEvent(new Event('blur'));
 
       expect(changeSpy).not.toHaveBeenCalled();
-      expect(component['value']).toBe('200 TiB');
+      expect(component['value']()).toBe('200 TiB');
     });
 
     it('should leave unparseable text untouched on blur', () => {
@@ -605,7 +605,7 @@ describe('TnInputComponent', () => {
       input.dispatchEvent(new Event('input'));
       input.dispatchEvent(new Event('blur'));
 
-      expect(component['value']).toBe('not a size');
+      expect(component['value']()).toBe('not a size');
     });
 
     it('should use the SI standard when configured', () => {
@@ -613,7 +613,7 @@ describe('TnInputComponent', () => {
       fixture.detectChanges();
 
       component.writeValue(2_000_000_000);
-      expect(component['value']).toBe('2 GB');
+      expect(component['value']()).toBe('2 GB');
     });
 
     it('should not render a textarea even when multiline is set', () => {
@@ -736,17 +736,34 @@ describe('TnInputComponent', () => {
   describe('ControlValueAccessor', () => {
     it('should write value', () => {
       component.writeValue('test');
-      expect(component['value']).toBe('test');
+      expect(component['value']()).toBe('test');
     });
 
     it('should write empty string for null', () => {
       component.writeValue(null);
-      expect(component['value']).toBe('');
+      expect(component['value']()).toBe('');
     });
 
     it('should write empty string for undefined', () => {
       component.writeValue(undefined);
-      expect(component['value']).toBe('');
+      expect(component['value']()).toBe('');
+    });
+
+    it('reflects a written value into the rendered input, not just the internal value', () => {
+      component.writeValue('reflected');
+      fixture.detectChanges();
+
+      const input = fixture.nativeElement.querySelector('input.tn-input') as HTMLInputElement;
+      expect(input.value).toBe('reflected');
+    });
+
+    it('reflects a written value into the rendered textarea when multiline', () => {
+      fixture.componentRef.setInput('multiline', true);
+      component.writeValue('reflected');
+      fixture.detectChanges();
+
+      const textarea = fixture.nativeElement.querySelector('textarea.tn-input') as HTMLTextAreaElement;
+      expect(textarea.value).toBe('reflected');
     });
 
     it('should call onChange when value changes', () => {
