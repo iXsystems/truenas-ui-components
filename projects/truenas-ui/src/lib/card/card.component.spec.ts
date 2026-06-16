@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { TN_TEST_ATTR } from '../test-id';
+import { TnCardFooterActionsDirective, TnCardHeaderActionsDirective } from './card-action.directive';
 import { TnCardComponent } from './card.component';
 import type {
   TnCardAction,
@@ -165,5 +166,71 @@ describe('TnCardComponent testId support', () => {
     expect(primaryBtn.hasAttribute('data-testid')).toBe(false);
     expect(pill.hasAttribute('data-testid')).toBe(false);
     expect(kebabBtn.hasAttribute('data-testid')).toBe(false);
+  });
+});
+
+@Component({
+  standalone: true,
+  imports: [TnCardComponent, TnCardHeaderActionsDirective, TnCardFooterActionsDirective],
+  template: `<tn-card [primaryAction]="primary()">`
+    + `@if (showHeaderAction()) {<ng-template tnCardHeaderActions><button type="button" class="projected-header-action">Toggle</button></ng-template>}`
+    + `@if (showFooterAction()) {<ng-template tnCardFooterActions><button type="button" class="projected-footer-action">Add</button></ng-template>}`
+    + `Content</tn-card>`,
+})
+class ProjectedActionsHostComponent {
+  showHeaderAction = signal(false);
+  showFooterAction = signal(false);
+  primary = signal<TnCardAction | undefined>(undefined);
+}
+
+describe('TnCardComponent projected action templates', () => {
+  function createProjectedHost() {
+    TestBed.configureTestingModule({ imports: [ProjectedActionsHostComponent] });
+    const fixture = TestBed.createComponent(ProjectedActionsHostComponent);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('renders projected footer actions inside the footer, and shows the footer when only a projected action is present', () => {
+    const fixture = createProjectedHost();
+    expect(fixture.nativeElement.querySelector('.tn-card__footer')).toBeNull();
+
+    fixture.componentInstance.showFooterAction.set(true);
+    fixture.detectChanges();
+
+    const footer = fixture.nativeElement.querySelector('.tn-card__footer') as HTMLElement;
+    expect(footer).toBeTruthy();
+    expect(footer.querySelector('.projected-footer-action')).toBeTruthy();
+  });
+
+  it('renders projected header actions inside the header-right, and shows the header when only a projected action is present', () => {
+    const fixture = createProjectedHost();
+    expect(fixture.nativeElement.querySelector('.tn-card__header')).toBeNull();
+
+    fixture.componentInstance.showHeaderAction.set(true);
+    fixture.detectChanges();
+
+    const headerRight = fixture.nativeElement.querySelector('.tn-card__header-right') as HTMLElement;
+    expect(headerRight).toBeTruthy();
+    expect(headerRight.querySelector('.projected-header-action')).toBeTruthy();
+  });
+
+  it('renders the projected footer action as a direct child of the footer flex row, alongside a declarative primaryAction', () => {
+    const fixture = createProjectedHost();
+    fixture.componentInstance.primary.set({ label: 'Primary', handler: () => {} });
+    fixture.componentInstance.showFooterAction.set(true);
+    fixture.detectChanges();
+
+    const footerRight = fixture.nativeElement.querySelector('.tn-card__footer-right') as HTMLElement;
+    const projected = footerRight.querySelector('.projected-footer-action') as HTMLElement;
+    // No wrapper element: the projected button sits directly in the flex row so it
+    // aligns identically to the declarative <tn-button>.
+    expect(projected).toBeTruthy();
+    expect(projected.parentElement).toBe(footerRight);
+    // Declarative action renders too — projected actions are additive, not a replacement.
+    const primaryBtn = Array.from(footerRight.querySelectorAll('button')).find(
+      (b) => (b as HTMLElement).textContent?.trim() === 'Primary',
+    );
+    expect(primaryBtn).toBeTruthy();
   });
 });

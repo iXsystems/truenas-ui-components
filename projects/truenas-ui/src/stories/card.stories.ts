@@ -1,6 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, within } from 'storybook/test';
 import { TestIdInspectorComponent } from './testid-inspector.component';
+import { TnButtonComponent } from '../lib/button/button.component';
+import {
+  TnCardFooterActionsDirective,
+  TnCardHeaderActionsDirective,
+} from '../lib/card/card-action.directive';
 import { TnCardHeaderDirective } from '../lib/card/card-header.directive';
 import { TnCardComponent } from '../lib/card/card.component';
 
@@ -453,6 +458,80 @@ export const WithProjectedHeader: Story = {
     const canvas = within(canvasElement);
     const header = canvas.getByText('Custom Header Content');
     await expect(header).toBeInTheDocument();
+  },
+};
+
+export const WithProjectedFooterActions: Story = {
+  args: {
+    title: 'Shares',
+    elevation: 'medium',
+    padding: 'medium',
+    padContent: true,
+    bordered: true,
+  },
+  render: (args) => ({
+    props: args,
+    moduleMetadata: {
+      imports: [TnCardFooterActionsDirective, TnButtonComponent],
+    },
+    // Escape hatch for actions the declarative `primaryAction` config can't express
+    // (e.g. a button wrapped in a structural directive for permission gating). The
+    // buttons inside the <ng-template> render as direct children of the footer flex
+    // row — same orientation as a declarative primaryAction, no wrapper or styling.
+    template: `
+      <tn-card
+        [title]="title"
+        [elevation]="elevation"
+        [padding]="padding"
+        [padContent]="padContent"
+        [bordered]="bordered"
+        [background]="background">
+        <p>This card declares its footer actions as projected buttons.</p>
+        <ng-template tnCardFooterActions>
+          <tn-button variant="outline" color="default" label="Import" />
+          <tn-button variant="filled" color="primary" label="Add" />
+        </ng-template>
+      </tn-card>
+    `,
+  }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText('Add')).toBeInTheDocument();
+    await expect(canvas.getByText('Import')).toBeInTheDocument();
+  },
+};
+
+export const WithProjectedHeaderActions: Story = {
+  args: {
+    title: 'Shares',
+    elevation: 'medium',
+    padding: 'medium',
+    padContent: true,
+    bordered: true,
+  },
+  render: (args) => ({
+    props: args,
+    moduleMetadata: {
+      imports: [TnCardHeaderActionsDirective, TnButtonComponent],
+    },
+    template: `
+      <tn-card
+        [title]="title"
+        [elevation]="elevation"
+        [padding]="padding"
+        [padContent]="padContent"
+        [bordered]="bordered"
+        [background]="background">
+        <ng-template tnCardHeaderActions>
+          <tn-button variant="outline" color="default" label="Refresh" />
+        </ng-template>
+        <p>Header actions render top-right, between the header control and the kebab menu.</p>
+      </tn-card>
+    `,
+  }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText('Refresh')).toBeInTheDocument();
   },
 };
 
