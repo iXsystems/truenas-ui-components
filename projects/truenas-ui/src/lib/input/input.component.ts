@@ -212,7 +212,10 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
   id = `tn-input-${nextId++}`;
   // Protected: the display string is owned by the component and driven through the
   // CVA flow (writeValue / onValueChange). External writes would bypass that flow.
-  protected value = '';
+  // A signal so the `[value]` binding reflects writeValue reactively — a plain field
+  // doesn't repaint when the model is written after (re)creation (e.g. a control that
+  // mounts with a pre-set value), since writeValue runs outside the binding's CD pass.
+  protected value = signal('');
 
   // CVA disabled state management
   private formDisabled = signal<boolean>(false);
@@ -246,7 +249,7 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
     if (this.isSize()) {
       // The model is a byte count; show it as a human-readable string. Empty/null
       // stays blank, and a non-numeric model maps to blank (formatSize returns '').
-      this.value = formatSize(value, this.sizeStandard(), this.sizeRound());
+      this.value.set(formatSize(value, this.sizeStandard(), this.sizeRound()));
       return;
     }
     // Display the model verbatim via String(); do NOT sanitize here. Sanitizing a
@@ -255,7 +258,7 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
     //
     // Scientific notation is out of scope: users can't type 'e' (it's stripped), and
     // exponential-range values aren't meaningful for the fields this control targets.
-    this.value = value === null || value === undefined ? '' : String(value);
+    this.value.set(value === null || value === undefined ? '' : String(value));
   }
 
   registerOnChange(fn: (value: string | number | null) => void): void {
@@ -277,8 +280,8 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
     if (this.isSize()) {
       // Keep the raw text in the field as the user types (unit letters and all);
       // emit the parsed byte count, mapping invalid/partial input to null (never 0).
-      this.value = target.value;
-      this.onChange(parseSize(this.value, this.sizeDefaultUnit(), this.sizeStandard()));
+      this.value.set(target.value);
+      this.onChange(parseSize(this.value(), this.sizeDefaultUnit(), this.sizeStandard()));
       return;
     }
 
@@ -296,20 +299,20 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
         el.value = sanitized;
         el.setSelectionRange(caret, caret);
       }
-      this.value = sanitized;
+      this.value.set(sanitized);
       this.onChange(this.parseNumeric(sanitized));
       return;
     }
 
-    this.value = target.value;
-    this.onChange(this.value);
+    this.value.set(target.value);
+    this.onChange(this.value());
   }
 
   protected onBlur(): void {
-    if (this.isSize() && this.value !== '') {
+    if (this.isSize() && this.value() !== '') {
       // Canonicalize the display on blur: "2048 KiB" -> "2 MiB", "200tib" -> "200 TiB".
       // Leave unparseable text in place so the consumer's validators can flag it.
-      const bytes = parseSize(this.value, this.sizeDefaultUnit(), this.sizeStandard());
+      const bytes = parseSize(this.value(), this.sizeDefaultUnit(), this.sizeStandard());
       if (bytes !== null) {
         const canonical = formatSize(bytes, this.sizeStandard(), this.sizeRound());
         // Only rewrite + re-emit when the canonical form actually differs from what
@@ -320,8 +323,8 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
         //      "1.755 GiB" canonicalizes to a different string, so it emits the
         //      byte count parsed back from the rounded display, keeping
         //      parseSize(display) === model.
-        if (canonical !== this.value) {
-          this.value = canonical;
+        if (canonical !== this.value()) {
+          this.value.set(canonical);
           this.onChange(parseSize(canonical, this.sizeDefaultUnit(), this.sizeStandard()));
         }
       }
