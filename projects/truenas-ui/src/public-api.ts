@@ -46,6 +46,8 @@ export type {
   TnFormFieldErrorResolver,
 } from './lib/form-field/form-field.errors';
 export * from './lib/form-field/form-field.harness';
+export * from './lib/form-section/form-section.component';
+export * from './lib/form-section/form-section.harness';
 export * from './lib/select/select.component';
 export * from './lib/select/select.harness';
 export * from './lib/icon/icon.component';
