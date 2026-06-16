@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, computed, inject, contentChild } from '@angular/core';
+import { Component, input, computed, inject, contentChild, TemplateRef } from '@angular/core';
 import { mdiDotsVertical } from '@mdi/js';
+import { TnCardFooterActionsDirective, TnCardHeaderActionsDirective } from './card-action.directive';
 import { TnCardHeaderDirective } from './card-header.directive';
 import type {
   TnCardAction,
@@ -43,6 +44,13 @@ export class TnCardComponent {
   }
 
   projectedHeader = contentChild(TnCardHeaderDirective);
+
+  // Projected action templates (escape hatch for actions the declarative config can't
+  // express, e.g. a permission-gated control wrapped in a structural directive). Rendered
+  // via ngTemplateOutlet so the buttons inside become direct children of the header/footer
+  // flex rows — same orientation as the declarative action buttons, no wrapper needed.
+  protected headerActions = contentChild(TnCardHeaderActionsDirective, { read: TemplateRef });
+  protected footerActions = contentChild(TnCardFooterActionsDirective, { read: TemplateRef });
 
   title = input<string | undefined>(undefined);
   titleLink = input<string | undefined>(undefined); // Makes title navigable
@@ -101,15 +109,24 @@ export class TnCardComponent {
   });
 
   hasHeader = computed(() => {
-    return !!(this.projectedHeader() || this.title() || this.headerStatus() || this.headerControl() || this.headerMenu());
+    return !!(
+      this.projectedHeader() || this.title() || this.headerStatus()
+      || this.headerControl() || this.headerMenu() || this.headerActions()
+    );
   });
 
   hasHeaderRight = computed(() => {
-    return !!(this.headerStatus() || this.headerControl() || this.headerMenu()?.length);
+    return !!(
+      this.headerStatus() || this.headerControl()
+      || this.headerMenu()?.length || this.headerActions()
+    );
   });
 
   hasFooter = computed(() => {
-    return !!(this.primaryAction() || this.secondaryAction() || this.footerLink());
+    return !!(
+      this.primaryAction() || this.secondaryAction()
+      || this.footerLink() || this.footerActions()
+    );
   });
 
   onTitleClick(): void {

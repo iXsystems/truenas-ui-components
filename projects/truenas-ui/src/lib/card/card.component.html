@@ -42,6 +42,11 @@
           </div>
         }
 
+        <!-- Projected header actions (escape hatch for custom/permission-gated controls) -->
+        @if (headerActions(); as actions) {
+          <ng-container [ngTemplateOutlet]="actions" />
+        }
+
         <!-- Header Menu -->
         @if (headerMenu(); as menu) {
           @if (menu.length) {
@@ -105,6 +110,11 @@
             [disabled]="action.disabled || false"
             [testId]="action.testId"
             (click)="action.handler()" />
+        }
+
+        <!-- Projected footer actions (escape hatch for custom/permission-gated controls) -->
+        @if (footerActions(); as actions) {
+          <ng-container [ngTemplateOutlet]="actions" />
         }
       </div>
     </div>
