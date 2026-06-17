@@ -1,0 +1,69 @@
+<!-- Click-to-focus is a pointer affordance only; keyboard users Tab straight to
+     the real <input> inside, so the container itself is not a focus target. -->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+<div
+  #container
+  class="tn-chip-input"
+  [class.tn-chip-input--disabled]="isDisabled()"
+  (click)="focusInput()"
+>
+  @for (value of values(); track $index) {
+    <tn-chip
+      class="tn-chip-input__chip"
+      color="secondary"
+      [label]="value"
+      [closable]="!isDisabled()"
+      [disabled]="isDisabled()"
+      [testId]="chipTestId(value)"
+      (onClose)="removeChip($index)"
+    />
+  }
+
+  <input
+    #inputEl
+    type="text"
+    class="tn-chip-input__field"
+    role="combobox"
+    autocomplete="off"
+    tnTestIdType="chip-input"
+    [tnTestId]="testId()"
+    [placeholder]="placeholder()"
+    [disabled]="isDisabled()"
+    [attr.aria-label]="ariaLabel()"
+    [attr.aria-expanded]="isOpen()"
+    [attr.aria-controls]="isOpen() ? uid + '-listbox' : null"
+    [attr.aria-activedescendant]="highlightedIndex() >= 0 ? uid + '-option-' + highlightedIndex() : null"
+    (input)="onInput($event)"
+    (focus)="onFocus()"
+    (blur)="onBlur()"
+    (keydown)="onKeydown($event)"
+  />
+</div>
+
+<!-- Suggestion dropdown — portaled via CDK overlay so it escapes ancestor
+     overflow/clipping. Attach/detach is driven by open()/close(). -->
+<ng-template #dropdownTemplate>
+  <div
+    class="tn-chip-input__dropdown"
+    role="listbox"
+    [attr.id]="uid + '-listbox'"
+  >
+    @for (suggestion of filteredSuggestions(); track suggestion) {
+      <div
+        class="tn-chip-input__option"
+        role="option"
+        tabindex="-1"
+        tnTestIdType="option"
+        [tnTestId]="chipTestId(suggestion)"
+        [class.highlighted]="highlightedIndex() === $index"
+        [attr.id]="uid + '-option-' + $index"
+        [attr.aria-selected]="highlightedIndex() === $index"
+        (mousedown)="onSuggestionMousedown($event)"
+        (click)="onSuggestionClick(suggestion)"
+        (keydown.enter)="onSuggestionClick(suggestion)"
+      >
+        {{ suggestion }}
+      </div>
+    }
+  </div>
+</ng-template>
