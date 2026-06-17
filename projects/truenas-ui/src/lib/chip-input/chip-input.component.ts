@@ -200,6 +200,9 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
   // ── ControlValueAccessor ──
 
   writeValue(value: string[] | null | undefined): void {
+    // Reflect the model verbatim — deliberately NOT clamped to maxChips. A form
+    // may legitimately seed more values than the cap; silently dropping them
+    // would lose data. The cap only blocks further user-driven additions.
     this.values.set(Array.isArray(value) ? [...value] : []);
   }
 
@@ -250,6 +253,13 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
   }
 
   protected onKeydown(event: KeyboardEvent): void {
+    // Mid-IME-composition (Japanese/Chinese/Korean), the Enter that confirms a
+    // candidate also fires keydown with isComposing=true — committing here would
+    // swallow the confirmation and chip a half-composed value. Let it through.
+    if (event.isComposing) {
+      return;
+    }
+
     const suggestions = this.filteredSuggestions();
 
     if (event.key === 'ArrowDown') {

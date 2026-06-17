@@ -1,3 +1,4 @@
+import { TestKey } from '@angular/cdk/testing';
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Component, signal } from '@angular/core';
@@ -20,6 +21,8 @@ import { TnChipInputHarness } from './chip-input.harness';
       [suggestions]="suggestions()"
       [disabled]="disabled()"
       [allowDuplicates]="allowDuplicates()"
+      [addOnBlur]="addOnBlur()"
+      [separatorKeys]="separatorKeys()"
       [maxChips]="maxChips()" />
   `,
 })
@@ -28,6 +31,8 @@ class TestHostComponent {
   suggestions = signal<string[]>(['Angular', 'React', 'Vue']);
   disabled = signal(false);
   allowDuplicates = signal(false);
+  addOnBlur = signal(false);
+  separatorKeys = signal<string[]>(['Enter', ',']);
   maxChips = signal<number | undefined>(undefined);
 }
 
@@ -145,6 +150,42 @@ describe('TnChipInputHarness', () => {
     await chipInput.removeChip('one');
 
     expect(await chipInput.isInputFocused()).toBe(true);
+  });
+
+  it('removes the last chip on Backspace when the field is empty', async () => {
+    hostComponent.control.setValue(['one', 'two']);
+    const chipInput = await loader.getHarness(TnChipInputHarness);
+    await chipInput.focus();
+    await chipInput.pressKey(TestKey.BACKSPACE);
+
+    expect(await chipInput.getChips()).toEqual(['one']);
+  });
+
+  it('commits a pending value on blur when addOnBlur is set', async () => {
+    hostComponent.addOnBlur.set(true);
+    const chipInput = await loader.getHarness(TnChipInputHarness);
+    await chipInput.typeText('committed');
+    await chipInput.blur();
+
+    expect(await chipInput.getChips()).toEqual(['committed']);
+  });
+
+  it('commits on a configured separator key', async () => {
+    hostComponent.separatorKeys.set(['Enter', ' ']);
+    const chipInput = await loader.getHarness(TnChipInputHarness);
+    await chipInput.typeText('spaced');
+    await chipInput.pressKey(' ');
+
+    expect(await chipInput.getChips()).toEqual(['spaced']);
+  });
+
+  it('commits the highlighted suggestion via ArrowDown + Enter', async () => {
+    const chipInput = await loader.getHarness(TnChipInputHarness);
+    await chipInput.typeText('e'); // matches React and Vue
+    await chipInput.pressKey(TestKey.DOWN_ARROW);
+    await chipInput.pressKey(TestKey.ENTER);
+
+    expect(await chipInput.getChips()).toEqual(['React']);
   });
 
   it('reflects the disabled state', async () => {

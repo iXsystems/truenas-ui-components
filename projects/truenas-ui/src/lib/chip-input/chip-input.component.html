@@ -50,6 +50,11 @@
     [attr.id]="uid + '-listbox'"
   >
     @for (suggestion of filteredSuggestions(); track suggestion) {
+      <!-- Options are tabindex="-1" and never focused: keyboard selection goes
+           through the input's aria-activedescendant + the Enter branch in
+           onKeydown, so a key handler here would be dead code. Click is a
+           pointer-only affordance. -->
+      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events -->
       <div
         class="tn-chip-input__option"
         role="option"
@@ -61,7 +66,6 @@
         [attr.aria-selected]="highlightedIndex() === $index"
         (mousedown)="onSuggestionMousedown($event)"
         (click)="onSuggestionClick(suggestion)"
-        (keydown.enter)="onSuggestionClick(suggestion)"
       >
         {{ suggestion }}
       </div>

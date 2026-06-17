@@ -64,6 +64,21 @@ export class TnChipInputHarness extends ComponentHarness {
     return (await this._input()).isFocused();
   }
 
+  /** Focuses the text field (opens the dropdown when there are suggestions). */
+  async focus(): Promise<void> {
+    await (await this._input()).focus();
+  }
+
+  /** Blurs the text field. */
+  async blur(): Promise<void> {
+    await (await this._input()).blur();
+  }
+
+  /** Sends a key (or `TestKey`) to the focused field — e.g. Backspace, arrows, a separator. */
+  async pressKey(key: TestKey | string): Promise<void> {
+    await (await this._input()).sendKeys(key);
+  }
+
   /** Types `value`, then commits the matching suggestion from the dropdown. */
   async selectSuggestion(value: string): Promise<void> {
     const input = await this._input();
