@@ -83,6 +83,17 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
   addOnBlur = input<boolean>(false);
 
   /**
+   * Whether free text not present in `suggestions` may be committed. Defaults to
+   * `true` — any typed value becomes a chip. Set `false` to restrict the field
+   * to its suggestion list (a "pick from the list" control): a commit only
+   * succeeds when the text matches a suggestion (case-insensitively, committing
+   * the suggestion's canonical casing); unmatched text is discarded. Mirrors
+   * `tn-autocomplete`'s `allowCustomValue`. With no `suggestions`, nothing can be
+   * added.
+   */
+  allowCustomValue = input<boolean>(true);
+
+  /**
    * Allow the same value to be added more than once. Off by default.
    * Duplicate detection is exact-match (case-sensitive), so with this off
    * `Angular` and `angular` are still distinct values — only suggestion
@@ -354,9 +365,19 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
   }
 
   private addChip(raw: string): void {
-    const value = (raw ?? '').trim();
+    let value = (raw ?? '').trim();
     if (!value || this.isDisabled() || !this.canAddMore()) {
       return;
+    }
+    if (!this.allowCustomValue()) {
+      // Restricted to the suggestion list: commit the canonical suggestion when
+      // the text matches one (case-insensitively), otherwise discard it.
+      const match = this.suggestions().find((suggestion) => suggestion.toLowerCase() === value.toLowerCase());
+      if (!match) {
+        this.clearInput();
+        return;
+      }
+      value = match;
     }
     if (!this.allowDuplicates() && this.values().includes(value)) {
       this.clearInput();

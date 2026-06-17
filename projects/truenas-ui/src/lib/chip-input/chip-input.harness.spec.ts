@@ -21,6 +21,7 @@ import { TnChipInputHarness } from './chip-input.harness';
       [suggestions]="suggestions()"
       [disabled]="disabled()"
       [allowDuplicates]="allowDuplicates()"
+      [allowCustomValue]="allowCustomValue()"
       [addOnBlur]="addOnBlur()"
       [separatorKeys]="separatorKeys()"
       [maxChips]="maxChips()" />
@@ -31,6 +32,7 @@ class TestHostComponent {
   suggestions = signal<string[]>(['Angular', 'React', 'Vue']);
   disabled = signal(false);
   allowDuplicates = signal(false);
+  allowCustomValue = signal(true);
   addOnBlur = signal(false);
   separatorKeys = signal<string[]>(['Enter', ',']);
   maxChips = signal<number | undefined>(undefined);
@@ -186,6 +188,22 @@ describe('TnChipInputHarness', () => {
     await chipInput.pressKey(TestKey.ENTER);
 
     expect(await chipInput.getChips()).toEqual(['React']);
+  });
+
+  it('rejects free text not in suggestions when allowCustomValue is false', async () => {
+    hostComponent.allowCustomValue.set(false);
+    const chipInput = await loader.getHarness(TnChipInputHarness);
+    await chipInput.addChip('NotASuggestion');
+
+    expect(await chipInput.getChips()).toEqual([]);
+  });
+
+  it('commits a matching suggestion (canonical casing) when allowCustomValue is false', async () => {
+    hostComponent.allowCustomValue.set(false);
+    const chipInput = await loader.getHarness(TnChipInputHarness);
+    await chipInput.addChip('angular');
+
+    expect(await chipInput.getChips()).toEqual(['Angular']);
   });
 
   it('reflects the disabled state', async () => {
