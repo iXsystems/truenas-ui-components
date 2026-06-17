@@ -116,6 +116,20 @@ describe('TnChipInputHarness', () => {
     expect(await chipInput.getChips()).toEqual(['Angular', 'Vue']);
   });
 
+  it('opens the dropdown when async suggestions arrive after typing', async () => {
+    hostComponent.suggestions.set([]);
+    const chipInput = await loader.getHarness(TnChipInputHarness);
+
+    await chipInput.typeText('an');
+    expect(await chipInput.getSuggestions()).toEqual([]);
+
+    // Results land a tick later — the panel should re-open on its own.
+    hostComponent.suggestions.set(['Angular', 'Vue']);
+    fixture.detectChanges();
+
+    expect(await chipInput.getSuggestions()).toEqual(['Angular']);
+  });
+
   it('keeps the dropdown closed once maxChips is reached', async () => {
     hostComponent.maxChips.set(1);
     const chipInput = await loader.getHarness(TnChipInputHarness);

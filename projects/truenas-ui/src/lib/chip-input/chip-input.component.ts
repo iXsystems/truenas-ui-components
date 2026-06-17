@@ -5,11 +5,13 @@ import {
   Component,
   ViewContainerRef,
   computed,
+  effect,
   forwardRef,
   inject,
   input,
   output,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
@@ -137,6 +139,9 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
   /** Index of the keyboard-highlighted suggestion, or -1. */
   protected highlightedIndex = signal(-1);
 
+  /** Whether the text field currently holds focus — gates async re-opening. */
+  private focused = signal(false);
+
   /** CVA disabled state pushed by the form. */
   private formDisabled = signal(false);
 
@@ -166,6 +171,27 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
 
   private overlayRef?: OverlayRef;
   private overlaySubs: Subscription[] = [];
+
+  constructor() {
+    // Async suggestions: when the user types, onInput runs syncDropdown()
+    // against the still-stale list and leaves the panel closed; results land a
+    // tick later via [suggestions]. Re-open the panel once fresh matches arrive
+    // while the field is focused and actively searching. This only ever opens
+    // (never closes), so it doesn't fight Escape, blur, or the post-commit close
+    // — those stay shut until the suggestion set next changes.
+    effect(() => {
+      const hasMatches = this.filteredSuggestions().length > 0;
+      untracked(() => {
+        const activelySearching = this.focused()
+          && this.inputValue().trim() !== ''
+          && this.canAddMore()
+          && !this.isDisabled();
+        if (hasMatches && activelySearching) {
+          this.open();
+        }
+      });
+    });
+  }
 
   ngOnDestroy(): void {
     this.detachOverlay();
@@ -210,10 +236,12 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
   }
 
   protected onFocus(): void {
+    this.focused.set(true);
     this.syncDropdown();
   }
 
   protected onBlur(): void {
+    this.focused.set(false);
     if (this.addOnBlur()) {
       this.addChip(this.inputValue());
     }

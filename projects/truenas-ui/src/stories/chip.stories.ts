@@ -1,10 +1,8 @@
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, userEvent, within } from 'storybook/test';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnChipComponent } from '../lib/chip/chip.component';
-import { TnChipInputComponent } from '../lib/chip-input/chip-input.component';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
 
 const harnessDoc = loadHarnessDoc('chip');
@@ -167,29 +165,6 @@ export const Accent: Story = {
 
     await expect(chip).toHaveClass('tn-chip--accent');
   },
-};
-
-export const ChipInputExample: Story = {
-  render: () => ({
-    props: {
-      skills: new FormControl<string[]>(['JavaScript', 'TypeScript', 'Angular']),
-      suggestions: ['React', 'Vue', 'Svelte', 'Node.js', 'Rust', 'Go'],
-    },
-    template: `
-      <tn-form-field
-        label="Skills and Technologies"
-        hint="Your technical skills and areas of expertise">
-        <tn-chip-input
-          placeholder="Type a skill and press Enter to add it as a tag"
-          testId="skills"
-          [formControl]="skills"
-          [suggestions]="suggestions" />
-      </tn-form-field>
-    `,
-    moduleMetadata: {
-      imports: [TnFormFieldComponent, TnChipInputComponent, ReactiveFormsModule],
-    },
-  }),
 };
 
 export const ChipsWithFormField: Story = {
