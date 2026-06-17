@@ -32,6 +32,7 @@ const meta: Meta<TnChipInputComponent> = {
     disabled: { control: 'boolean', description: 'Disables the whole control' },
     addOnBlur: { control: 'boolean', description: 'Commit a pending value when the field loses focus' },
     allowDuplicates: { control: 'boolean', description: 'Allow the same value to be added more than once' },
+    allowCustomValue: { control: 'boolean', description: 'Allow free text not in the suggestion list (off = pick-from-list)' },
     maxChips: { control: 'number', description: 'Maximum number of chips (undefined = no limit)' },
     chipAdded: { action: 'chipAdded' },
     chipRemoved: { action: 'chipRemoved' },
@@ -78,6 +79,28 @@ export const Default: Story = {
     addOnBlur: false,
     allowDuplicates: false,
   },
+};
+
+/**
+ * **Pick from list (`allowCustomValue=false`).** Only values from `suggestions`
+ * can be committed — typing something off-list and pressing Enter discards it; a
+ * matching entry commits with the suggestion's canonical casing.
+ */
+export const RestrictedToSuggestions: Story = {
+  render: () => ({
+    props: { control: new FormControl<string[]>([]), suggestions: frameworks },
+    template: `
+      <tn-form-field label="Frameworks" hint="Choose from the list — custom values are rejected">
+        <tn-chip-input
+          [formControl]="control"
+          [suggestions]="suggestions"
+          [allowCustomValue]="false"
+          placeholder="Pick a framework…" />
+      </tn-form-field>
+    `,
+    moduleMetadata: { imports: [TnFormFieldComponent, ReactiveFormsModule] },
+  }),
+  parameters: { controls: { disable: true } },
 };
 
 /** No suggestion list — a free-form tag entry that accepts any typed value. */
