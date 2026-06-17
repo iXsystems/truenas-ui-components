@@ -51,6 +51,19 @@ export class TnChipInputHarness extends ComponentHarness {
     await input.sendKeys(TestKey.ENTER);
   }
 
+  /** Types `value` into the field without committing it. */
+  async typeText(value: string): Promise<void> {
+    const input = await this._input();
+    await input.focus();
+    await input.setInputValue(value);
+    await input.dispatchEvent('input');
+  }
+
+  /** Whether the text field currently holds DOM focus. */
+  async isInputFocused(): Promise<boolean> {
+    return (await this._input()).isFocused();
+  }
+
   /** Types `value`, then commits the matching suggestion from the dropdown. */
   async selectSuggestion(value: string): Promise<void> {
     const input = await this._input();

@@ -80,7 +80,12 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
   /** Commit a pending (non-empty) text value as a chip when the field loses focus. */
   addOnBlur = input<boolean>(false);
 
-  /** Allow the same value to be added more than once. Off by default. */
+  /**
+   * Allow the same value to be added more than once. Off by default.
+   * Duplicate detection is exact-match (case-sensitive), so with this off
+   * `Angular` and `angular` are still distinct values — only suggestion
+   * *filtering* is case-insensitive.
+   */
   allowDuplicates = input<boolean>(false);
 
   /** Hard cap on the number of chips; `undefined` means no limit. */
@@ -220,10 +225,11 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
     const suggestions = this.filteredSuggestions();
 
     if (event.key === 'ArrowDown') {
-      if (suggestions.length) {
+      if (suggestions.length && this.canAddMore()) {
         event.preventDefault();
         this.open();
         this.highlightedIndex.set((this.highlightedIndex() + 1) % suggestions.length);
+        this.scrollToHighlighted();
       }
       return;
     }
@@ -233,6 +239,7 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
         event.preventDefault();
         const next = this.highlightedIndex() - 1;
         this.highlightedIndex.set(next < 0 ? suggestions.length - 1 : next);
+        this.scrollToHighlighted();
       }
       return;
     }
@@ -286,6 +293,10 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
     this.onChange(this.values());
     this.onTouched();
     this.chipRemoved.emit(removed);
+    // Removing via a chip's close button leaves focus on the (now-destroyed)
+    // button; return it to the field so keyboard users stay oriented. The
+    // Backspace path is already focused here, so this is a harmless no-op there.
+    this.inputEl().nativeElement.focus();
     this.syncDropdown();
   }
 
@@ -326,13 +337,25 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
     this.close();
   }
 
-  /** Opens the dropdown when there is something to show, closes it otherwise. */
+  /**
+   * Opens the dropdown when there is something to show, closes it otherwise.
+   * Stays closed once the chip cap is reached — suggesting rows that
+   * `addChip()` would reject is misleading.
+   */
   private syncDropdown(): void {
-    if (this.filteredSuggestions().length > 0 && !this.isDisabled()) {
+    if (this.filteredSuggestions().length > 0 && this.canAddMore() && !this.isDisabled()) {
       this.open();
     } else {
       this.close();
     }
+  }
+
+  /** Keeps the keyboard-highlighted suggestion visible within the scrolling panel. */
+  private scrollToHighlighted(): void {
+    const idx = this.highlightedIndex();
+    const options = this.overlayRef?.overlayElement
+      ?.querySelectorAll<HTMLElement>('.tn-chip-input__option');
+    options?.[idx]?.scrollIntoView({ block: 'nearest' });
   }
 
   private open(): void {

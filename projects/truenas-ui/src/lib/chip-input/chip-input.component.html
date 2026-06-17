@@ -30,6 +30,7 @@
     [placeholder]="placeholder()"
     [disabled]="isDisabled()"
     [attr.aria-label]="ariaLabel()"
+    [attr.aria-autocomplete]="'list'"
     [attr.aria-expanded]="isOpen()"
     [attr.aria-controls]="isOpen() ? uid + '-listbox' : null"
     [attr.aria-activedescendant]="highlightedIndex() >= 0 ? uid + '-option-' + highlightedIndex() : null"

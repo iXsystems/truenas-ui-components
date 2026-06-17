@@ -116,6 +116,23 @@ describe('TnChipInputHarness', () => {
     expect(await chipInput.getChips()).toEqual(['Angular', 'Vue']);
   });
 
+  it('keeps the dropdown closed once maxChips is reached', async () => {
+    hostComponent.maxChips.set(1);
+    const chipInput = await loader.getHarness(TnChipInputHarness);
+    await chipInput.addChip('Angular');
+    await chipInput.typeText('Vue');
+
+    expect(await chipInput.getSuggestions()).toEqual([]);
+  });
+
+  it('returns focus to the field after removing a chip', async () => {
+    hostComponent.control.setValue(['one', 'two']);
+    const chipInput = await loader.getHarness(TnChipInputHarness);
+    await chipInput.removeChip('one');
+
+    expect(await chipInput.isInputFocused()).toBe(true);
+  });
+
   it('reflects the disabled state', async () => {
     hostComponent.disabled.set(true);
     const chipInput = await loader.getHarness(TnChipInputHarness);
