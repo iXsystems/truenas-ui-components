@@ -20,8 +20,8 @@ const meta: Meta<TnChipInputComponent> = {
       story: { height: '320px' },
       description: {
         component:
-          'An editable, multi-value chip input — the composite Material\'s `mat-chip-grid` '
-          + 'provided, built from `tn-chip`s plus an inline field. A `ControlValueAccessor` over '
+          'An editable, multi-value chip input — tokenized entry where typed text becomes '
+          + 'removable `tn-chip`s alongside an inline field. A `ControlValueAccessor` over '
           + '`string[]`; commits on Enter (or a configurable separator), removes the last chip on '
           + 'Backspace, and offers optional (static or async) suggestions in a dropdown.',
       },

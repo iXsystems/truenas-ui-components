@@ -23,10 +23,10 @@ import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 let nextId = 0;
 
 /**
- * An editable, multi-value chip input — the composite Angular Material's
- * `mat-chip-grid` provided, built from `tn-chip`s plus an inline text field.
- * Typed text is committed to removable chips on Enter (or a configurable
- * separator key); Backspace on an empty field removes the last chip.
+ * An editable, multi-value chip input — tokenized entry where typed text
+ * becomes removable `tn-chip`s alongside an inline text field. Text is
+ * committed to a chip on Enter (or a configurable separator key); Backspace on
+ * an empty field removes the last chip.
  *
  * It is a `ControlValueAccessor` over `string[]`, so it drops into a reactive
  * or template-driven form (`[formControl]`, `[(ngModel)]`) and slots into a
