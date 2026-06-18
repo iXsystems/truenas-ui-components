@@ -1,136 +1,295 @@
-<table class="tn-table__table">
-  <!-- Header Row -->
-  <thead class="tn-table__header">
-    <tr class="tn-table__header-row">
-      @for (column of effectiveDisplayedColumns(); track $index) {
-        @if (column === '__select') {
-          <th class="tn-table__header-cell tn-table__select-cell"
-            role="checkbox"
-            tabindex="0"
-            [attr.aria-checked]="isAllSelected()"
-            (click)="toggleSelectAll()"
-            (keydown.enter)="toggleSelectAll()"
-            (keydown.space)="toggleSelectAll(); $event.preventDefault()">
-            <tn-checkbox
-              class="tn-table__checkbox"
-              label="Select all rows"
-              [hideLabel]="true"
-              [checked]="isAllSelected()"
-              [indeterminate]="isIndeterminate()" />
-          </th>
-        } @else if (column === '__expand') {
-          <th class="tn-table__header-cell tn-table__expand-cell">
-            <span class="cdk-visually-hidden">Expand</span>
-          </th>
-        } @else {
-          <th
-            class="tn-table__header-cell"
-            [class.tn-table__header-cell--sortable]="getColumnDef(column)?.sortable()"
-            [class.tn-table__header-cell--sorted]="isSorted(column)"
-            [style.width]="getColumnDef(column)?.width()"
-            [attr.aria-sort]="
-              isSorted(column)
-                ? sortDirection() === 'asc' ? 'ascending' : 'descending'
-                : null
-            "
-            [attr.tabindex]="getColumnDef(column)?.sortable() ? 0 : null"
-            [attr.data-column]="column"
-            (click)="getColumnDef(column)?.sortable() && onSortClick(column)"
-            (keydown.enter)="onSortClick(column)"
-            (keydown.space)="onSortClick(column); $event.preventDefault()">
-            <span class="tn-table__sort-container">
-              <span class="tn-table__header-text">
-                @if (getColumnDef(column)?.headerTemplate(); as tmpl) {
-                  <ng-container [ngTemplateOutlet]="tmpl" />
-                } @else {
-                  {{ column }}
-                }
-              </span>
-              @if (getColumnDef(column)?.sortable()) {
-                <tn-icon
-                  class="tn-table__sort-icon"
-                  size="sm"
-                  [name]="getSortIcon(column)" />
-              }
-            </span>
-          </th>
-        }
+@if (isCardMode()) {
+  <!-- Card layout (narrow container) -->
+  @if (selectable() || sortableColumns().length > 0) {
+    <div class="tn-table__cards-toolbar">
+      @if (selectable()) {
+        <label class="tn-table__cards-selectall">
+          <tn-checkbox
+            class="tn-table__checkbox"
+            label="Select all rows"
+            [hideLabel]="true"
+            [checked]="isAllSelected()"
+            [indeterminate]="isIndeterminate()"
+            (click)="toggleSelectAll(); $event.preventDefault()" />
+          <span>Select all</span>
+        </label>
       }
-    </tr>
-  </thead>
+      @if (sortableColumns().length > 0) {
+        <div class="tn-table__cards-sort">
+          <tn-icon name="mat-sort" size="sm" />
+          <select
+            class="tn-table__cards-sort-select"
+            aria-label="Sort by"
+            [value]="sortColumn()"
+            (change)="onSortSelectChange($event)">
+            <option value="">Unsorted</option>
+            @for (column of sortableColumns(); track column) {
+              <option [value]="column">{{ getCardLabel(column) }}</option>
+            }
+          </select>
+          @if (sortColumn()) {
+            <button
+              type="button"
+              class="tn-table__cards-sort-dir"
+              [attr.aria-label]="sortDirection() === 'desc' ? 'Sort ascending' : 'Sort descending'"
+              (click)="toggleSortDirection()">
+              <tn-icon
+                size="sm"
+                [name]="sortDirection() === 'desc' ? 'mat-arrow_downward' : 'mat-arrow_upward'" />
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
 
-  <!-- Data Rows -->
-  <tbody class="tn-table__body">
+  <div class="tn-table__cards" role="list">
     @for (row of data(); track trackByFn()($index, row); let rowIdx = $index) {
-      <tr
-        class="tn-table__row"
+      <div
+        class="tn-table__card"
+        role="listitem"
         [attr.data-row-index]="rowIdx"
-        [class.tn-table__row--expandable]="expandable()"
-        [class.tn-table__row--expanded]="isRowExpanded(row)"
-        [class.tn-table__row--active]="isRowActive(row)"
-        [class.tn-table__row--clickable]="clickable()"
+        [class.tn-table__card--active]="isRowActive(row)"
+        [class.tn-table__card--clickable]="clickable()"
         [attr.tabindex]="clickable() ? 0 : null"
         [attr.aria-selected]="clickable() ? isRowActive(row) : null"
-        (click)="onRowClick(row)"
-        (keydown)="onRowKeydown($event, row)">
-        @for (column of effectiveDisplayedColumns(); track $index) {
-          @if (column === '__select') {
-            <td class="tn-table__cell tn-table__select-cell"
-              (click)="toggleRowSelection(row); $event.stopPropagation()">
+        (click)="onCardClick($event, row)"
+        (keydown)="onCardKeydown($event, row)">
+        <div class="tn-table__card-header">
+          @if (selectable()) {
+            <label class="tn-table__card-select">
               <tn-checkbox
                 class="tn-table__checkbox"
                 [label]="'Select row ' + (rowIdx + 1)"
                 [hideLabel]="true"
-                [checked]="isRowSelected(row)" />
-            </td>
-          } @else if (column === '__expand') {
-            <td class="tn-table__cell tn-table__expand-cell"
-              (click)="$event.stopPropagation()">
-              <button
-                type="button"
-                class="tn-table__expand-button"
-                [attr.aria-expanded]="isRowExpanded(row)"
-                [attr.aria-label]="isRowExpanded(row) ? 'Collapse row' : 'Expand row'"
-                (click)="toggleRowExpansion(row)">
-                <tn-icon
-                  class="tn-table__expand-icon"
-                  [name]="getExpandIcon(row)" />
-              </button>
-            </td>
-          } @else {
-            <td
-              class="tn-table__cell"
-              [style.width]="getColumnDef(column)?.width()"
-              [attr.data-column]="column">
-              <div class="tn-table__cell-content">
+                [checked]="isRowSelected(row)"
+                (click)="toggleRowSelection(row); $event.preventDefault(); $event.stopPropagation()" />
+            </label>
+          }
+          <span class="tn-table__card-title">
+            @if (getColumnDef(cardTitleColumn())?.cellTemplate(); as tmpl) {
+              <ng-container
+                [ngTemplateOutlet]="tmpl"
+                [ngTemplateOutletContext]="{ $implicit: row, column: cardTitleColumn() }" />
+            } @else {
+              {{ getCellValue(row, cardTitleColumn()) }}
+            }
+          </span>
+          @if (rowActionsDef()) {
+            <div class="tn-table__card-actions">
+              <ng-container
+                [ngTemplateOutlet]="rowActionsDef()!.template"
+                [ngTemplateOutletContext]="{ $implicit: row }" />
+            </div>
+          }
+        </div>
+
+        <dl class="tn-table__card-fields">
+          @for (column of cardPrimaryColumns(); track column) {
+            <div class="tn-table__card-field" [attr.data-column]="column">
+              <dt class="tn-table__card-field-label">{{ getCardLabel(column) }}</dt>
+              <dd class="tn-table__card-field-value">
                 @if (getColumnDef(column)?.cellTemplate(); as tmpl) {
                   <ng-container
                     [ngTemplateOutlet]="tmpl"
                     [ngTemplateOutletContext]="{ $implicit: row, column: column }" />
                 } @else {
-                  <span>{{ getCellValue(row, column) }}</span>
+                  {{ getCellValue(row, column) }}
                 }
+              </dd>
+            </div>
+          }
+          @if (cardSecondaryColumns().length > 0) {
+            <details class="tn-table__card-more">
+              <summary class="tn-table__card-more-summary">More fields</summary>
+              @for (column of cardSecondaryColumns(); track column) {
+                <div class="tn-table__card-field" [attr.data-column]="column">
+                  <dt class="tn-table__card-field-label">{{ getCardLabel(column) }}</dt>
+                  <dd class="tn-table__card-field-value">
+                    @if (getColumnDef(column)?.cellTemplate(); as tmpl) {
+                      <ng-container
+                        [ngTemplateOutlet]="tmpl"
+                        [ngTemplateOutletContext]="{ $implicit: row, column: column }" />
+                    } @else {
+                      {{ getCellValue(row, column) }}
+                    }
+                  </dd>
+                </div>
+              }
+            </details>
+          }
+        </dl>
+
+        @if (expandable() && detailRowDef()) {
+          <button
+            type="button"
+            class="tn-table__card-detail-toggle"
+            [attr.aria-expanded]="isRowExpanded(row)"
+            (click)="toggleRowExpansion(row); $event.stopPropagation()">
+            <span>Details</span>
+            <tn-icon size="sm" [name]="getExpandIcon(row)" />
+          </button>
+          @if (isRowExpanded(row)) {
+            <div class="tn-table__card-detail">
+              <ng-container
+                [ngTemplateOutlet]="detailRowDef()!.template"
+                [ngTemplateOutletContext]="{ $implicit: row }" />
+            </div>
+          }
+        }
+      </div>
+    }
+  </div>
+} @else {
+  <table class="tn-table__table">
+    <!-- Header Row -->
+    <thead class="tn-table__header">
+      <tr class="tn-table__header-row">
+        @for (column of effectiveDisplayedColumns(); track $index) {
+          @if (column === '__select') {
+            <th class="tn-table__header-cell tn-table__select-cell"
+              role="checkbox"
+              tabindex="0"
+              [attr.aria-checked]="isAllSelected()"
+              (click)="toggleSelectAll()"
+              (keydown.enter)="toggleSelectAll()"
+              (keydown.space)="toggleSelectAll(); $event.preventDefault()">
+              <tn-checkbox
+                class="tn-table__checkbox"
+                label="Select all rows"
+                [hideLabel]="true"
+                [checked]="isAllSelected()"
+                [indeterminate]="isIndeterminate()" />
+            </th>
+          } @else if (column === '__expand') {
+            <th class="tn-table__header-cell tn-table__expand-cell">
+              <span class="cdk-visually-hidden">Expand</span>
+            </th>
+          } @else {
+            <th
+              class="tn-table__header-cell"
+              [class.tn-table__header-cell--sortable]="getColumnDef(column)?.sortable()"
+              [class.tn-table__header-cell--sorted]="isSorted(column)"
+              [style.width]="getColumnDef(column)?.width()"
+              [attr.aria-sort]="
+                isSorted(column)
+                  ? sortDirection() === 'asc' ? 'ascending' : 'descending'
+                  : null
+              "
+              [attr.tabindex]="getColumnDef(column)?.sortable() ? 0 : null"
+              [attr.data-column]="column"
+              (click)="getColumnDef(column)?.sortable() && onSortClick(column)"
+              (keydown.enter)="onSortClick(column)"
+              (keydown.space)="onSortClick(column); $event.preventDefault()">
+              <span class="tn-table__sort-container">
+                <span class="tn-table__header-text">
+                  @if (getColumnDef(column)?.headerTemplate(); as tmpl) {
+                    <ng-container [ngTemplateOutlet]="tmpl" />
+                  } @else {
+                    {{ getColumnDef(column)?.label() ?? column }}
+                  }
+                </span>
+                @if (getColumnDef(column)?.sortable()) {
+                  <tn-icon
+                    class="tn-table__sort-icon"
+                    size="sm"
+                    [name]="getSortIcon(column)" />
+                }
+              </span>
+            </th>
+          }
+        }
+        @if (rowActionsDef()) {
+          <th class="tn-table__header-cell tn-table__actions-cell">
+            <span class="cdk-visually-hidden">Actions</span>
+          </th>
+        }
+      </tr>
+    </thead>
+
+    <!-- Data Rows -->
+    <tbody class="tn-table__body">
+      @for (row of data(); track trackByFn()($index, row); let rowIdx = $index) {
+        <tr
+          class="tn-table__row"
+          [attr.data-row-index]="rowIdx"
+          [class.tn-table__row--expandable]="expandable()"
+          [class.tn-table__row--expanded]="isRowExpanded(row)"
+          [class.tn-table__row--active]="isRowActive(row)"
+          [class.tn-table__row--clickable]="clickable()"
+          [attr.tabindex]="clickable() ? 0 : null"
+          [attr.aria-selected]="clickable() ? isRowActive(row) : null"
+          (click)="onRowClick(row)"
+          (keydown)="onRowKeydown($event, row)">
+          @for (column of effectiveDisplayedColumns(); track $index) {
+            @if (column === '__select') {
+              <td class="tn-table__cell tn-table__select-cell"
+                (click)="toggleRowSelection(row); $event.stopPropagation()">
+                <tn-checkbox
+                  class="tn-table__checkbox"
+                  [label]="'Select row ' + (rowIdx + 1)"
+                  [hideLabel]="true"
+                  [checked]="isRowSelected(row)" />
+              </td>
+            } @else if (column === '__expand') {
+              <td class="tn-table__cell tn-table__expand-cell"
+                (click)="$event.stopPropagation()">
+                <button
+                  type="button"
+                  class="tn-table__expand-button"
+                  [attr.aria-expanded]="isRowExpanded(row)"
+                  [attr.aria-label]="isRowExpanded(row) ? 'Collapse row' : 'Expand row'"
+                  (click)="toggleRowExpansion(row)">
+                  <tn-icon
+                    class="tn-table__expand-icon"
+                    [name]="getExpandIcon(row)" />
+                </button>
+              </td>
+            } @else {
+              <td
+                class="tn-table__cell"
+                [style.width]="getColumnDef(column)?.width()"
+                [attr.data-column]="column">
+                <div class="tn-table__cell-content">
+                  @if (getColumnDef(column)?.cellTemplate(); as tmpl) {
+                    <ng-container
+                      [ngTemplateOutlet]="tmpl"
+                      [ngTemplateOutletContext]="{ $implicit: row, column: column }" />
+                  } @else {
+                    <span>{{ getCellValue(row, column) }}</span>
+                  }
+                </div>
+              </td>
+            }
+          }
+          @if (rowActionsDef()) {
+            <td class="tn-table__cell tn-table__actions-cell"
+              (click)="$event.stopPropagation()">
+              <div class="tn-table__actions-content">
+                <ng-container
+                  [ngTemplateOutlet]="rowActionsDef()!.template"
+                  [ngTemplateOutletContext]="{ $implicit: row }" />
               </div>
             </td>
           }
-        }
-      </tr>
-
-      <!-- Detail / Expanded Row -->
-      @if (expandable() && detailRowDef() && isRowExpanded(row)) {
-        <tr class="tn-table__detail-row" [@detailExpand]="'expanded'">
-          <td
-            class="tn-table__detail-cell"
-            [attr.colspan]="effectiveDisplayedColumns().length">
-            <ng-container
-              [ngTemplateOutlet]="detailRowDef()!.template"
-              [ngTemplateOutletContext]="{ $implicit: row }" />
-          </td>
         </tr>
+
+        <!-- Detail / Expanded Row -->
+        @if (expandable() && detailRowDef() && isRowExpanded(row)) {
+          <tr class="tn-table__detail-row" [@detailExpand]="'expanded'">
+            <td
+              class="tn-table__detail-cell"
+              [attr.colspan]="effectiveDisplayedColumns().length + (rowActionsDef() ? 1 : 0)">
+              <ng-container
+                [ngTemplateOutlet]="detailRowDef()!.template"
+                [ngTemplateOutletContext]="{ $implicit: row }" />
+            </td>
+          </tr>
+        }
       }
-    }
-  </tbody>
-</table>
+    </tbody>
+  </table>
+}
 
 @if (data().length === 0 && !loading()) {
   <tn-empty

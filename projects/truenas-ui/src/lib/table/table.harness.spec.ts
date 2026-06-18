@@ -2,6 +2,7 @@ import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Component } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import type { TnSortEvent } from './table.component';
 import { TnTableComponent } from './table.component';
@@ -45,6 +46,7 @@ const TEST_USERS: User[] = [
       [activeRow]="activeRow"
       [loading]="loading"
       [clickable]="clickable"
+      [mobileLayout]="mobileLayout"
       (sortChange)="onSort($event)"
       (selectionChange)="selectedUsers = $event"
       (rowClick)="lastClickedRow = $event">
@@ -70,6 +72,7 @@ class TableHarnessTestComponent {
   tableData: User[] = [...TEST_USERS];
   selectable = false;
   expandable = false;
+  mobileLayout: 'cards' | 'scroll' = 'scroll';
   activeRow: User | null = null;
   loading = false;
   clickable = false;
@@ -372,6 +375,66 @@ describe('TnTableHarness', () => {
 
       expect(await table.isRowSelected(0)).toBe(true);
       expect(await table.isRowExpanded(0)).toBe(true);
+    });
+  });
+
+  describe('card layout selection', () => {
+    // jsdom reports a 0px host width, so card mode never engages on its own.
+    // `mobileLayout` is opted into via the host (below); here we just force the
+    // observed container width under the breakpoint to render cards.
+    function forceCardMode(): TnTableComponent {
+      const table = fixture.debugElement.query(By.directive(TnTableComponent))
+        .componentInstance as TnTableComponent;
+      (table as unknown as { containerWidth: { set(n: number): void } }).containerWidth.set(320);
+      fixture.detectChanges();
+      return table;
+    }
+
+    // Click the checkbox host, which carries the `(click)` toggle handler (with
+    // preventDefault to avoid the shared checkbox's `<label for>` + nested-input
+    // double-activation). A host click fires that handler exactly once —
+    // deterministic, and the same path a real user click takes.
+    function clickCardCheckbox(scopeSelector: string): void {
+      const host = fixture.nativeElement.querySelector(
+        `${scopeSelector} tn-checkbox`
+      ) as HTMLElement;
+      host.click();
+      fixture.detectChanges();
+    }
+
+    beforeEach(() => {
+      component.selectable = true;
+      component.mobileLayout = 'cards';
+      fixture.detectChanges();
+    });
+
+    it('renders cards below the breakpoint', () => {
+      const table = forceCardMode();
+      expect(table.isCardMode()).toBe(true);
+      expect(fixture.nativeElement.querySelectorAll('.tn-table__card').length).toBe(3);
+    });
+
+    it('selects a single row from its card checkbox', () => {
+      forceCardMode();
+      clickCardCheckbox('.tn-table__card[data-row-index="0"]');
+
+      expect(component.selectedUsers).toEqual([TEST_USERS[0]]);
+    });
+
+    it('deselects a row when its card checkbox is clicked again', () => {
+      forceCardMode();
+      clickCardCheckbox('.tn-table__card[data-row-index="1"]');
+      expect(component.selectedUsers).toEqual([TEST_USERS[1]]);
+
+      clickCardCheckbox('.tn-table__card[data-row-index="1"]');
+      expect(component.selectedUsers).toEqual([]);
+    });
+
+    it('selects every row from the card toolbar "select all" checkbox', () => {
+      forceCardMode();
+      clickCardCheckbox('.tn-table__cards-selectall');
+
+      expect(component.selectedUsers).toHaveLength(3);
     });
   });
 });
