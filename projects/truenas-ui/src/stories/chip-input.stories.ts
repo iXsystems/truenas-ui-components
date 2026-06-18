@@ -219,6 +219,45 @@ export const AsyncSuggestions: Story = {
   parameters: { controls: { disable: true } },
 };
 
+/**
+ * **Value mode (`[options]`).** Chips display each option's `label` while the
+ * form control holds its `value` — here, group names are shown but numeric ids
+ * are committed. A written value resolves back to its label; pair with
+ * `[compareWith]` when values are objects. `allowCustomValue=false` keeps the
+ * field restricted to the option list.
+ */
+export const ValueMode: Story = {
+  render: () => ({
+    props: (() => {
+      const control = new FormControl<number[]>([1]);
+      const committed = signal<number[]>(control.value ?? []);
+      control.valueChanges.subscribe((value) => committed.set(value ?? []));
+      return {
+        control,
+        committed,
+        options: [
+          { label: 'Administrators', value: 1 },
+          { label: 'Users', value: 2 },
+          { label: 'Guests', value: 3 },
+          { label: 'Operators', value: 4 },
+        ],
+      };
+    })(),
+    template: `
+      <tn-form-field label="Groups" hint="Shows names, commits ids">
+        <tn-chip-input
+          [formControl]="control"
+          [options]="options"
+          [allowCustomValue]="false"
+          placeholder="Add a group…" />
+      </tn-form-field>
+      <p style="margin-top: 1rem; font-size: 0.875rem;">Committed value: <code>{{ committed() | json }}</code></p>
+    `,
+    moduleMetadata: { imports: [TnFormFieldComponent, ReactiveFormsModule] },
+  }),
+  parameters: { controls: { disable: true } },
+};
+
 export const ComponentHarness: Story = {
   tags: ['!dev'],
   parameters: {
