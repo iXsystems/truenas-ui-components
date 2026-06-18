@@ -384,4 +384,150 @@ describe('TnTableComponent', () => {
       expect(component.isRowExpanded(testData[0])).toBe(false);
     });
   });
+
+  describe('responsive (card) mode', () => {
+    it('should default to scroll layout with a 640px breakpoint', () => {
+      expect(component.mobileLayout()).toBe('scroll');
+      expect(component.cardBreakpoint()).toBe(640);
+      expect(component.cardPrimaryCount()).toBe(3);
+    });
+
+    it('should not be in card or scroll mode at a wide container width', () => {
+      // ResizeObserver is unavailable under jsdom, so containerWidth stays
+      // Infinity — the table renders normally regardless of mobileLayout.
+      fixture.componentRef.setInput('mobileLayout', 'cards');
+      fixture.detectChanges();
+      expect(component.isCardMode()).toBe(false);
+      expect(component.isScrollMode()).toBe(false);
+    });
+
+    describe('card column computeds (no column defs)', () => {
+      beforeEach(() => {
+        fixture.componentRef.setInput('displayedColumns', ['name', 'email', 'role', 'status', 'id']);
+        fixture.detectChanges();
+      });
+
+      it('should fall back to the first displayed column as the title', () => {
+        expect(component.cardTitleColumn()).toBe('name');
+      });
+
+      it('should list field columns excluding the title, preserving order without priorities', () => {
+        expect(component.cardFieldColumns()).toEqual(['email', 'role', 'status', 'id']);
+      });
+
+      it('should split fields into primary and secondary by cardPrimaryCount', () => {
+        expect(component.cardPrimaryColumns()).toEqual(['email', 'role', 'status']);
+        expect(component.cardSecondaryColumns()).toEqual(['id']);
+
+        fixture.componentRef.setInput('cardPrimaryCount', 2);
+        fixture.detectChanges();
+        expect(component.cardPrimaryColumns()).toEqual(['email', 'role']);
+        expect(component.cardSecondaryColumns()).toEqual(['status', 'id']);
+      });
+
+      it('should default the card label to the column name with no defs', () => {
+        expect(component.getCardLabel('email')).toBe('email');
+      });
+    });
+
+    describe('getCardLabel precedence', () => {
+      function fakeDef(opts: { cardLabel?: string; label?: string }): void {
+        jest.spyOn(component, 'getColumnDef').mockReturnValue({
+          cardLabel: () => opts.cardLabel,
+          label: () => opts.label,
+        } as never);
+      }
+
+      it('should prefer cardLabel over label and name', () => {
+        fakeDef({ cardLabel: 'Email address', label: 'Email' });
+        expect(component.getCardLabel('email')).toBe('Email address');
+      });
+
+      it('should fall back to the shared label when cardLabel is unset', () => {
+        fakeDef({ label: 'Email' });
+        expect(component.getCardLabel('email')).toBe('Email');
+      });
+
+      it('should fall back to the column name when neither is set', () => {
+        fakeDef({});
+        expect(component.getCardLabel('email')).toBe('email');
+      });
+    });
+
+    describe('card-mode sort', () => {
+      it('should set the sort column to ascending and emit', () => {
+        const emit = jest.spyOn(component.sortChange, 'emit');
+        component.setSortColumn('name');
+        expect(component.sortColumn()).toBe('name');
+        expect(component.sortDirection()).toBe('asc');
+        expect(emit).toHaveBeenCalledWith({ column: 'name', direction: 'asc' });
+      });
+
+      it('should clear the sort when passed an empty column', () => {
+        component.setSortColumn('name');
+        component.setSortColumn('');
+        expect(component.sortColumn()).toBe('');
+        expect(component.sortDirection()).toBe('');
+      });
+
+      it('should toggle the sort direction', () => {
+        component.setSortColumn('name');
+        component.toggleSortDirection();
+        expect(component.sortDirection()).toBe('desc');
+        component.toggleSortDirection();
+        expect(component.sortDirection()).toBe('asc');
+      });
+
+      it('should not toggle direction when no column is sorted', () => {
+        component.toggleSortDirection();
+        expect(component.sortDirection()).toBe('');
+      });
+
+      it('should set the sort column from a <select> change event', () => {
+        const target = document.createElement('select');
+        const option = document.createElement('option');
+        option.value = 'email';
+        target.append(option);
+        target.value = 'email';
+        component.onSortSelectChange({ target } as unknown as Event);
+        expect(component.sortColumn()).toBe('email');
+      });
+    });
+
+    describe('card activation', () => {
+      const row = { id: 1 };
+
+      function clickEventFrom(html: string): Event {
+        const host = document.createElement('div');
+        host.innerHTML = html;
+        const target = host.firstElementChild as HTMLElement;
+        return { target } as unknown as Event;
+      }
+
+      it('should emit rowClick when a clickable card body is activated', () => {
+        fixture.componentRef.setInput('clickable', true);
+        fixture.detectChanges();
+        const emit = jest.spyOn(component.rowClick, 'emit');
+        component.onCardClick(clickEventFrom('<span class="tn-table__card-title">x</span>'), row);
+        expect(emit).toHaveBeenCalledWith(row);
+      });
+
+      it('should not emit rowClick when the activation came from a card control', () => {
+        fixture.componentRef.setInput('clickable', true);
+        fixture.detectChanges();
+        const emit = jest.spyOn(component.rowClick, 'emit');
+        component.onCardClick(
+          clickEventFrom('<div class="tn-table__card-actions"><button>edit</button></div>'),
+          row
+        );
+        expect(emit).not.toHaveBeenCalled();
+      });
+
+      it('should not emit rowClick when not clickable', () => {
+        const emit = jest.spyOn(component.rowClick, 'emit');
+        component.onCardClick(clickEventFrom('<span class="tn-table__card-title">x</span>'), row);
+        expect(emit).not.toHaveBeenCalled();
+      });
+    });
+  });
 });

@@ -2,12 +2,14 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
 import { SelectionModel } from '@angular/cdk/collections';
 import { CommonModule } from '@angular/common';
 import {
+  afterNextRender,
   Component,
   computed,
   contentChild,
   contentChildren,
   DestroyRef,
   effect,
+  ElementRef,
   inject,
   input,
   output,
@@ -20,6 +22,7 @@ import { TnIconComponent } from '../icon/icon.component';
 import { TnSpinnerComponent } from '../spinner/spinner.component';
 import {
   TnDetailRowDefDirective,
+  TnRowActionsDefDirective,
   TnTableColumnDirective,
 } from '../table-column/table-column.directive';
 import { TnTestIdDirective } from '../test-id';
@@ -43,6 +46,17 @@ export interface TnSortEvent {
   column: string;
   direction: 'asc' | 'desc' | '';
 }
+
+/**
+ * How the table adapts when its container is narrower than `cardBreakpoint`:
+ * - `scroll` — the table keeps its columns and scrolls horizontally, with the
+ *   first column and the actions column pinned in place. Default — preserves the
+ *   existing horizontal-scroll behavior, so card mode is strictly opt-in.
+ * - `cards`  — each row collapses into a stacked card (title + actions header,
+ *   priority-ranked label/value fields, optional detail content).
+ * Above the breakpoint both modes render the regular table.
+ */
+export type TnTableMobileLayout = 'cards' | 'scroll';
 
 /**
  * Animation duration for detail row expand/collapse.
@@ -82,12 +96,15 @@ function getExpandDuration(): string {
     class: 'tn-table',
     '[class.tn-table--bordered]': 'bordered()',
     '[class.tn-table--loading]': 'loading()',
+    '[class.tn-table--cards]': 'isCardMode()',
+    '[class.tn-table--scroll]': 'isScrollMode()',
     '[style.--tn-table-active-bg]': 'activeBg()',
     '[style.--tn-table-active-indicator]': 'activeIndicator()',
   },
 })
 export class TnTableComponent<T = unknown> implements OnInit {
   private destroyRef = inject(DestroyRef);
+  private elementRef = inject(ElementRef<HTMLElement>);
 
   // --- Core inputs ---
   dataSource = input<TnTableDataSource<T> | T[]>([]);
@@ -147,6 +164,29 @@ export class TnTableComponent<T = unknown> implements OnInit {
    */
   clickable = input<boolean>(false);
 
+  // --- Responsive (card) inputs ---
+
+  /**
+   * How the table adapts when its container is narrower than `cardBreakpoint`.
+   * See {@link TnTableMobileLayout}. Defaults to `scroll`, which preserves the
+   * existing horizontal-scroll behavior; set to `cards` to opt into the stacked
+   * card layout.
+   */
+  mobileLayout = input<TnTableMobileLayout>('scroll');
+
+  /**
+   * Container width (px) below which `mobileLayout` takes effect. The component
+   * observes its own host width (via `ResizeObserver`), so this responds to the
+   * available container — a table in a narrow sidebar adapts on a wide screen.
+   */
+  cardBreakpoint = input<number>(640);
+
+  /**
+   * Number of fields shown directly on each card before the rest fold under a
+   * "More fields" disclosure. The title column is not counted. Defaults to `3`.
+   */
+  cardPrimaryCount = input<number>(3);
+
   // --- Outputs ---
   sortChange = output<TnSortEvent>();
   selectionChange = output<T[]>();
@@ -157,6 +197,12 @@ export class TnTableComponent<T = unknown> implements OnInit {
   // --- Content queries ---
   columnDefs = contentChildren(TnTableColumnDirective);
   detailRowDef = contentChild(TnDetailRowDefDirective);
+  rowActionsDef = contentChild(TnRowActionsDefDirective);
+
+  // --- Responsive state ---
+  /** Observed host width in px; drives the switch into card mode. */
+  private containerWidth = signal<number>(Infinity);
+  private resizeObserver?: ResizeObserver;
 
   // --- Sort state ---
   sortColumn = signal<string>('');
@@ -205,16 +251,52 @@ export class TnTableComponent<T = unknown> implements OnInit {
         this.expandedRows.set(new Set());
       }
     });
+
+    // Measure the host width to drive card/scroll mode. The initial read is
+    // taken in `afterNextRender` (guaranteed post-layout, so we get the real
+    // width rather than a pre-layout 0), then a `ResizeObserver` keeps it in
+    // sync as the container resizes. Both are browser-only — `afterNextRender`
+    // does not run during SSR and `ResizeObserver` is feature-detected.
+    afterNextRender(() => {
+      const host = this.elementRef.nativeElement;
+      this.measureContainer(host);
+      if (typeof ResizeObserver !== 'undefined') {
+        this.resizeObserver = new ResizeObserver((entries) => {
+          const width = entries[0]?.contentRect.width;
+          if (typeof width === 'number') {
+            this.containerWidth.set(width);
+          }
+        });
+        this.resizeObserver.observe(host);
+      }
+    });
+  }
+
+  /** Reads the host's current width into `containerWidth`. */
+  private measureContainer(host: HTMLElement): void {
+    this.containerWidth.set(host.getBoundingClientRect().width || Infinity);
   }
 
   ngOnInit(): void {
     this.initialized = true;
 
-    // Clean up SelectionModel on destroy
     this.destroyRef.onDestroy(() => {
       this.selection.clear();
+      this.resizeObserver?.disconnect();
     });
   }
+
+  // --- Responsive computeds ---
+
+  /** True when the layout should collapse rows into cards. */
+  isCardMode = computed(
+    () => this.mobileLayout() === 'cards' && this.containerWidth() < this.cardBreakpoint()
+  );
+
+  /** True when the layout should keep the table but pin edge columns and scroll. */
+  isScrollMode = computed(
+    () => this.mobileLayout() === 'scroll' && this.containerWidth() < this.cardBreakpoint()
+  );
 
   // --- Computed ---
 
@@ -333,6 +415,37 @@ export class TnTableComponent<T = unknown> implements OnInit {
     }
   }
 
+  // --- Card activation ---
+  // Cards reuse `rowClick`, but the card header embeds its own controls
+  // (selection checkbox, row actions, "more"/detail toggles). Activating the
+  // card must ignore clicks/keys that originate from those controls so a tap on
+  // an action button doesn't also fire `rowClick`.
+
+  onCardClick(event: Event, row: T): void {
+    if (!this.clickable() || this.isCardControlTarget(event)) { return; }
+    this.rowClick.emit(row);
+  }
+
+  onCardKeydown(event: KeyboardEvent, row: T): void {
+    if (!this.clickable()) { return; }
+    if (event.key !== 'Enter' && event.key !== ' ') { return; }
+    if (this.isCardControlTarget(event)) { return; }
+    event.preventDefault();
+    this.rowClick.emit(row);
+  }
+
+  private isCardControlTarget(event: Event): boolean {
+    const target = event.target as HTMLElement | null;
+    return !!target?.closest(
+      '.tn-table__card-actions, .tn-table__card-select, .tn-table__card-more, .tn-table__card-detail-toggle'
+    );
+  }
+
+  /** Handles the card-mode sort `<select>` change. */
+  onSortSelectChange(event: Event): void {
+    this.setSortColumn((event.target as HTMLSelectElement).value);
+  }
+
   // --- Selection methods ---
 
   toggleSelectAll(): void {
@@ -355,10 +468,87 @@ export class TnTableComponent<T = unknown> implements OnInit {
     return this.selection.isSelected(row);
   }
 
+  // --- Card-mode computeds ---
+
+  /**
+   * The column rendered as the card title. The first `displayedColumns` entry
+   * whose def sets `cardTitle`, falling back to the first displayed column.
+   */
+  cardTitleColumn = computed<string>(() => {
+    const cols = this.displayedColumns();
+    const explicit = cols.find((c) => this.getColumnDef(c)?.cardTitle());
+    return explicit ?? cols[0] ?? '';
+  });
+
+  /**
+   * Columns rendered as label/value fields in a card, ordered by descending
+   * `priority` (ties keep `displayedColumns` order). Excludes the title column
+   * and any `cardHidden` columns.
+   */
+  cardFieldColumns = computed<string[]>(() => {
+    const title = this.cardTitleColumn();
+    const fields = this.displayedColumns()
+      .map((name, index) => ({ name, index }))
+      .filter(({ name }) => name !== title && !this.getColumnDef(name)?.cardHidden());
+    fields.sort((a, b) => {
+      const pa = this.getColumnDef(a.name)?.priority() ?? 0;
+      const pb = this.getColumnDef(b.name)?.priority() ?? 0;
+      return pb - pa || a.index - b.index;
+    });
+    return fields.map((f) => f.name);
+  });
+
+  /** Fields shown directly on the card (up to `cardPrimaryCount`). */
+  cardPrimaryColumns = computed<string[]>(() =>
+    this.cardFieldColumns().slice(0, this.cardPrimaryCount())
+  );
+
+  /** Fields tucked behind the "More fields" disclosure. */
+  cardSecondaryColumns = computed<string[]>(() =>
+    this.cardFieldColumns().slice(this.cardPrimaryCount())
+  );
+
+  /** Displayed columns that are sortable — populates the card-mode sort menu. */
+  sortableColumns = computed<string[]>(() =>
+    this.displayedColumns().filter((c) => this.getColumnDef(c)?.sortable())
+  );
+
+  // --- Card-mode sort ---
+
+  /** Sets (or clears, when passed `''`) the active sort column for card mode. */
+  setSortColumn(column: string): void {
+    if (!column) {
+      this.sortColumn.set('');
+      this.sortDirection.set('');
+    } else {
+      this.sortColumn.set(column);
+      if (this.sortDirection() === '') {
+        this.sortDirection.set('asc');
+      }
+    }
+    this.sortChange.emit({ column: this.sortColumn(), direction: this.sortDirection() });
+  }
+
+  /** Flips the active sort direction between ascending and descending. */
+  toggleSortDirection(): void {
+    if (!this.sortColumn()) { return; }
+    this.sortDirection.set(this.sortDirection() === 'desc' ? 'asc' : 'desc');
+    this.sortChange.emit({ column: this.sortColumn(), direction: this.sortDirection() });
+  }
+
   // --- Column helpers ---
 
   getColumnDef(columnName: string): TnTableColumnDirective | undefined {
     return this.columnDefMap().get(columnName);
+  }
+
+  /**
+   * Field label for a column in card mode. Precedence: `cardLabel` override →
+   * shared `label` → the column name.
+   */
+  getCardLabel(column: string): string {
+    const def = this.getColumnDef(column);
+    return def?.cardLabel() ?? def?.label() ?? column;
   }
 
   getCellValue(row: T, column: string): unknown {
