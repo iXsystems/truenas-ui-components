@@ -155,6 +155,13 @@ describe('TnButtonComponent', () => {
       expect(icon.getAttribute('name')).toBe('check');
     });
 
+    it('marks the icon as aria-hidden so its name does not leak into the button accessible name', () => {
+      fixture.componentRef.setInput('icon', 'check');
+      fixture.detectChanges();
+      const icon = fixture.nativeElement.querySelector('tn-icon');
+      expect(icon.getAttribute('aria-hidden')).toBe('true');
+    });
+
     it('adds the has-icon class when an icon is present', () => {
       fixture.componentRef.setInput('icon', 'check');
       fixture.detectChanges();

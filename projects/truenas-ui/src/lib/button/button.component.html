@@ -1,10 +1,10 @@
 <ng-template #content>
   @if (icon() && iconPosition() === 'left') {
-    <tn-icon class="storybook-button__icon" size="sm" [name]="icon()!" />
+    <tn-icon class="storybook-button__icon" size="sm" aria-hidden="true" [name]="icon()!" />
   }
   <span class="storybook-button__label" [innerHTML]="label() | tnLabelMarkup"></span>
   @if (icon() && iconPosition() === 'right') {
-    <tn-icon class="storybook-button__icon" size="sm" [name]="icon()!" />
+    <tn-icon class="storybook-button__icon" size="sm" aria-hidden="true" [name]="icon()!" />
   }
 </ng-template>
 
