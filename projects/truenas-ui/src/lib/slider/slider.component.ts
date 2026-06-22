@@ -1,5 +1,5 @@
 import { A11yModule } from '@angular/cdk/a11y';
-import type { ElementRef, OnDestroy, AfterViewInit} from '@angular/core';
+import type { ElementRef, OnDestroy, AfterViewInit, AfterContentInit} from '@angular/core';
 import { Component, contentChild, input, forwardRef, signal, computed, viewChild, effect } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -26,7 +26,17 @@ export type LabelType = 'none' | 'handle' | 'track' | 'both';
     '[attr.aria-disabled]': 'isDisabled()'
   }
 })
-export class TnSliderComponent implements ControlValueAccessor, OnDestroy, AfterViewInit {
+/**
+ * Range slider with an optional value label.
+ *
+ * Form binding: both this component and the inner `input[tnSliderThumb]`
+ * directive are `NG_VALUE_ACCESSOR` providers, so a `formControl`/`ngModel` can
+ * be attached to either element. Bind to the `tn-slider` host for the simplest
+ * usage; binding to the inner thumb input also works and the slider adopts that
+ * value on init (see {@link ngAfterViewInit}). Avoid binding to both at once —
+ * pick one element per control to keep a single source of truth.
+ */
+export class TnSliderComponent implements ControlValueAccessor, OnDestroy, AfterContentInit, AfterViewInit {
   min = input<number>(0);
   max = input<number>(100);
   step = input<number>(1);
@@ -89,17 +99,25 @@ export class TnSliderComponent implements ControlValueAccessor, OnDestroy, After
     });
   }
 
-  ngAfterViewInit() {
-    // Initialize thumb directive if present
+  ngAfterContentInit() {
+    // Link the projected thumb directive. Done in AfterContentInit (not
+    // AfterViewInit) so the link exists before the thumb's host bindings settle,
+    // avoiding a null→value flip on its [disabled]/[min]/[value] bindings.
     const thumbDirective = this.thumbDirective();
     if (thumbDirective) {
       thumbDirective.slider = this;
-      // The form's initial writeValue() runs before this link exists, so adopt the
-      // value the thumb already received — otherwise the slider keeps its default 0
-      // and the thumb/fill render at the wrong (e.g. negative) position.
-      this.value.set(this.clampValue(thumbDirective.getValue()));
+      // When the form is bound to the inner thumb input, its initial writeValue()
+      // may run before this link exists, so adopt the value the thumb received —
+      // otherwise the slider keeps its default 0 and the thumb/fill render at the
+      // wrong position. Only adopt when the thumb was actually written to, so a
+      // value bound directly on the slider isn't clobbered by the thumb's default.
+      if (thumbDirective.hasFormValue()) {
+        this.value.set(this.clampValue(thumbDirective.getValue()));
+      }
     }
+  }
 
+  ngAfterViewInit() {
     // Set up handle interaction listeners if labelType is handle or both
     const currentLabelType = this.labelType();
     if ((currentLabelType === 'handle' || currentLabelType === 'both') && this._showLabel()) {

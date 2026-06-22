@@ -97,18 +97,24 @@
   }
 }
 
+// Knob width — shared so the visual thumb's centering offset stays in sync with it.
+$knob-width: 20px;
+
 // Visual thumb indicator (real DOM element) - fader style
 .tn-slider-thumb-visual {
   position: absolute;
   top: 50%;
   left: 0;
+  // Center on the knob's own half-width (kept off `transform` so `left` can
+  // animate value changes instead of snapping).
+  margin-left: -$knob-width * 0.5;
   pointer-events: none;
   z-index: 3;
-  transition: transform 0.1s ease-out;
+  transition: left 0.1s ease-out;
 }
 
 .tn-slider-thumb-knob {
-  width: 20px;
+  width: $knob-width;
   height: 24px;
   background: var(--tn-primary, #007bff);
   border: 2px solid var(--tn-bg1, white);

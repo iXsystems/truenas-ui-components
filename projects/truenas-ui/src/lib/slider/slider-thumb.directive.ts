@@ -46,9 +46,13 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
   private onChangeCallback = (_value: number) => {};
   private isDragging = false;
   // Last value written by the form. Retained so the parent slider can pick it up
-  // once the (later) ngAfterViewInit link is established — writeValue often runs
-  // before the slider sets `this.slider`.
+  // once it links the thumb (ngAfterContentInit) — writeValue can run before the
+  // slider sets `this.slider`.
   private currentValue = 0;
+  // Whether the form has actually written a value to this thumb. Lets the parent
+  // slider distinguish "form wrote 0" from "thumb never bound" so it doesn't
+  // clobber its own form value with this default. See getValue()/hasFormValue().
+  private hasWrittenValue = false;
 
   private elementRef = inject(ElementRef<HTMLInputElement>);
 
@@ -74,16 +78,33 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
     return this.currentValue;
   }
 
+  /**
+   * Whether the form has written a value to this thumb. The slider checks this
+   * before adopting getValue() so an unbound thumb's default 0 never overwrites
+   * a value bound directly on the slider.
+   */
+  hasFormValue(): boolean {
+    return this.hasWrittenValue;
+  }
+
   // ControlValueAccessor implementation
   writeValue(value: number): void {
     const nextValue = value ?? 0;
-    this.currentValue = nextValue;
-    if (this.elementRef.nativeElement) {
-      this.elementRef.nativeElement.value = nextValue.toString();
-    }
+    this.hasWrittenValue = true;
     // Propagate to the parent slider so its value signal (and thus the thumb
     // position / track fill) reflects the form value, not just the native input.
-    this.slider?.updateValue(nextValue);
+    // When linked, mirror the slider's clamped/stepped result so currentValue and
+    // the native input agree with it; otherwise retain the raw value for the
+    // slider to adopt (and clamp) once it links the thumb in ngAfterContentInit.
+    if (this.slider) {
+      this.slider.updateValue(nextValue);
+      this.currentValue = this.slider.value();
+    } else {
+      this.currentValue = nextValue;
+    }
+    if (this.elementRef.nativeElement) {
+      this.elementRef.nativeElement.value = this.currentValue.toString();
+    }
   }
 
   registerOnChange(fn: (value: number) => void): void {
@@ -102,9 +123,15 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
   }
 
   onInput(event: Event): void {
+    // While dragging, the global pointer handlers (updateValueFromPosition) own
+    // value commits; the native range also fires input here, so skip it to avoid
+    // a redundant double emit. Keyboard/click changes don't set isDragging and
+    // still flow through here.
+    if (this.isDragging) {return;}
+
     const input = event.target as HTMLInputElement;
     const value = parseFloat(input.value);
-    
+
     if (this.slider) {
       this.slider.updateValue(value);
     }
