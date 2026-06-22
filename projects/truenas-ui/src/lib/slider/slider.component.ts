@@ -153,6 +153,16 @@ export class TnSliderComponent implements ControlValueAccessor, OnDestroy, After
     this.onTouched = fn;
   }
 
+  /**
+   * Marks a slider-host-bound control as touched. The inner thumb is the only
+   * interactive element, so it forwards its touch events here (on blur / pointer
+   * release) — otherwise a control bound to the `tn-slider` host would never
+   * transition to touched and touched-gated validation would never show.
+   */
+  markTouched(): void {
+    this.onTouched();
+  }
+
   setDisabledState(isDisabled: boolean): void {
     this.formDisabled.set(isDisabled);
   }

@@ -26,7 +26,7 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
     '[attr.aria-labelledby]': 'ariaLabelledby()',
     '(input)': 'onInput($event)',
     '(change)': 'onChange($event)',
-    '(blur)': 'onTouched()',
+    '(blur)': 'notifyTouched()',
     '(mousedown)': 'onMouseDown($event)',
     '(touchstart)': 'onTouchStart($event)'
   }
@@ -45,6 +45,7 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
     ariaLabel: () => string | undefined;
     ariaLabelledby: () => string | undefined;
     updateValue: (value: number) => void;
+    markTouched: () => void;
     getSliderRect: () => DOMRect;
   }; // Will be set by parent slider component
 
@@ -176,7 +177,18 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
   }
 
   onChange(_event: Event): void {
+    this.notifyTouched();
+  }
+
+  /**
+   * Marks the bound control touched. Calls the thumb's own `onTouched` (for a
+   * thumb-bound control) and forwards to the linked slider (for a
+   * slider-host-bound control) — the thumb is the only interactive element, so
+   * the slider relies on it to ever become touched.
+   */
+  notifyTouched(): void {
     this.onTouched();
+    this.slider?.markTouched();
   }
 
   onMouseDown(event: MouseEvent): void {
@@ -218,7 +230,7 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
     if (this.isPointerDown) {
       this.isPointerDown = false;
       this.isDragging = false;
-      this.onTouched();
+      this.notifyTouched();
       this.removeGlobalListeners();
     }
   };
@@ -235,7 +247,7 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
     if (this.isPointerDown) {
       this.isPointerDown = false;
       this.isDragging = false;
-      this.onTouched();
+      this.notifyTouched();
       this.removeGlobalListeners();
     }
   };
