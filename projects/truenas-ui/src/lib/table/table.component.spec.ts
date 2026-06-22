@@ -416,6 +416,33 @@ describe('TnTableComponent', () => {
         fixture.detectChanges();
         expect(component.canExpandRow(testData[0])).toBe(false);
       });
+
+      it('should prune an expanded row once the predicate stops allowing it', () => {
+        component.toggleRowExpansion(testData[0]);
+        expect(component.isRowExpanded(testData[0])).toBe(true);
+
+        // Predicate now disallows the already-expanded row.
+        fixture.componentRef.setInput('isRowExpandable', (row: { id: number }) => row.id !== 1);
+        fixture.detectChanges();
+
+        expect(component.isRowExpanded(testData[0])).toBe(false);
+
+        // It does not silently reappear expanded when the predicate allows it again.
+        fixture.componentRef.setInput('isRowExpandable', () => true);
+        fixture.detectChanges();
+        expect(component.isRowExpanded(testData[0])).toBe(false);
+      });
+
+      it('should keep expanded rows the predicate still allows', () => {
+        component.toggleRowExpansion(testData[0]);
+        component.toggleRowExpansion(testData[1]);
+
+        fixture.componentRef.setInput('isRowExpandable', (row: { id: number }) => row.id === 1);
+        fixture.detectChanges();
+
+        expect(component.isRowExpanded(testData[0])).toBe(true);
+        expect(component.isRowExpanded(testData[1])).toBe(false);
+      });
     });
   });
 });

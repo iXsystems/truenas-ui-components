@@ -12,6 +12,7 @@ import {
   input,
   output,
   signal,
+  untracked,
 } from '@angular/core';
 import type { OnInit } from '@angular/core';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
@@ -106,9 +107,13 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * Optional per-row predicate deciding whether an individual row can expand.
    * When omitted, every row is expandable (provided `expandable` is true and a
    * `tnDetailRowDef` is present). Rows for which it returns `false` render no
-   * expand control and cannot be toggled by the chevron, a row click, or the
-   * keyboard, and never render a detail row. Has no effect unless `expandable`
-   * is true. Re-evaluated on each change detection, so it may depend on signals.
+   * expand control, cannot be toggled, and never render a detail row. Has no
+   * effect unless `expandable` is true. Re-evaluated on each change detection,
+   * so it may depend on signals — keep it cheap and pure.
+   *
+   * If the predicate stops allowing an already-expanded row (e.g. it is driven
+   * by dynamic row state), that row is pruned from the expanded set, so it will
+   * not silently reappear expanded should the predicate allow it again later.
    */
   isRowExpandable = input<((row: T) => boolean) | undefined>(undefined);
 
@@ -213,6 +218,25 @@ export class TnTableComponent<T = unknown> implements OnInit {
     effect(() => {
       if (!this.expandable()) {
         this.expandedRows.set(new Set());
+      }
+    });
+
+    // Prune rows the predicate no longer allows from the expanded set, so a row
+    // that flips expandable -> non-expandable -> expandable does not silently
+    // reappear already expanded. Calling the predicate here tracks any signals
+    // it reads, so the prune re-runs when its result changes; the expanded set
+    // is read/written untracked to keep this effect off its own dependency list.
+    effect(() => {
+      const predicate = this.isRowExpandable();
+      if (!predicate) { return; }
+      const expanded = untracked(this.expandedRows);
+      if (expanded.size === 0) { return; }
+      const next = new Set<unknown>();
+      for (const row of expanded) {
+        if (predicate(row as T)) { next.add(row); }
+      }
+      if (next.size !== expanded.size) {
+        untracked(() => this.expandedRows.set(next));
       }
     });
   }
