@@ -67,14 +67,6 @@ export class TnSliderComponent implements ControlValueAccessor, OnDestroy, After
     return this.fillPercentage() / 100;
   });
 
-  // Computed position for thumb (in pixels from left)
-  thumbPosition = computed(() => {
-    const containerWidth = this.sliderContainer()?.nativeElement?.offsetWidth || 0;
-    const percentage = this.fillPercentage();
-    // Center the thumb (20px width, so -10px offset)
-    return (containerWidth * percentage / 100) - 10;
-  });
-
   // Public signals for label management
   showLabel = this._showLabel.asReadonly();
   labelVisible = this._labelVisible.asReadonly();
@@ -102,8 +94,11 @@ export class TnSliderComponent implements ControlValueAccessor, OnDestroy, After
     const thumbDirective = this.thumbDirective();
     if (thumbDirective) {
       thumbDirective.slider = this;
+      // The form's initial writeValue() runs before this link exists, so adopt the
+      // value the thumb already received — otherwise the slider keeps its default 0
+      // and the thumb/fill render at the wrong (e.g. negative) position.
+      this.value.set(this.clampValue(thumbDirective.getValue()));
     }
-    this.updateThumbPosition();
 
     // Set up handle interaction listeners if labelType is handle or both
     const currentLabelType = this.labelType();

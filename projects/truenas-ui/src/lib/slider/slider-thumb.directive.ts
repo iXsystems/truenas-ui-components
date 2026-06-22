@@ -45,6 +45,10 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
 
   private onChangeCallback = (_value: number) => {};
   private isDragging = false;
+  // Last value written by the form. Retained so the parent slider can pick it up
+  // once the (later) ngAfterViewInit link is established — writeValue often runs
+  // before the slider sets `this.slider`.
+  private currentValue = 0;
 
   private elementRef = inject(ElementRef<HTMLInputElement>);
 
@@ -65,11 +69,21 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
     this.cleanup();
   }
 
+  /** Value last written by the form, for the slider to read once linked. */
+  getValue(): number {
+    return this.currentValue;
+  }
+
   // ControlValueAccessor implementation
   writeValue(value: number): void {
+    const nextValue = value ?? 0;
+    this.currentValue = nextValue;
     if (this.elementRef.nativeElement) {
-      this.elementRef.nativeElement.value = value?.toString() || '0';
+      this.elementRef.nativeElement.value = nextValue.toString();
     }
+    // Propagate to the parent slider so its value signal (and thus the thumb
+    // position / track fill) reflects the form value, not just the native input.
+    this.slider?.updateValue(nextValue);
   }
 
   registerOnChange(fn: (value: number) => void): void {
@@ -168,6 +182,15 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
     const newValue = minVal + (percentage * (maxVal - minVal));
 
     this.slider.updateValue(newValue);
+    // updateValue only moves the visual thumb; commit the (clamped/stepped) value
+    // to the form and native input so dragging actually emits changes — otherwise
+    // only click (native input event) updates the model.
+    const committed = this.slider.value();
+    this.currentValue = committed;
+    if (this.elementRef.nativeElement) {
+      this.elementRef.nativeElement.value = committed.toString();
+    }
+    this.onChangeCallback(committed);
   }
 
   private cleanup(): void {

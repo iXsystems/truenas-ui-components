@@ -26,7 +26,8 @@
   <div
     #thumbVisual
     class="tn-slider-thumb-visual"
-    [style.transform]="'translateX(' + thumbPosition() + 'px)'">
+    [style.left.%]="fillPercentage()"
+    [style.transform]="'translateX(-10px)'">
     <div class="tn-slider-thumb-knob"></div>
     @if ((labelType() === 'handle' || labelType() === 'both') && showLabel()) {
       <div
