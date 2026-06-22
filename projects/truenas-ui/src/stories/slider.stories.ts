@@ -131,9 +131,8 @@ export const ReactiveForm: Story = {
 
 /**
  * **Test IDs (default).** `tn-slider` emits the `slider-` prefix on its
- * container (which owns the track-click handlers), under `data-testid`
- * (default) / `data-test`. `testId="volume"` → `slider-volume`. With no
- * `testId`, nothing is emitted. Table read live.
+ * container, under `data-testid` (default) / `data-test`. `testId="volume"` →
+ * `slider-volume`. With no `testId`, nothing is emitted. Table read live.
  */
 export const TestIds: Story = {
   args: { testId: 'volume' },

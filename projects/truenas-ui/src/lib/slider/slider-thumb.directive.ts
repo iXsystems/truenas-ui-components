@@ -22,6 +22,8 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
     '[attr.step]': 'slider?.step()',
     '[value]': 'slider?.value()',
     '[attr.aria-valuetext]': 'ariaValueText()',
+    '[attr.aria-label]': 'ariaLabel()',
+    '[attr.aria-labelledby]': 'ariaLabelledby()',
     '(input)': 'onInput($event)',
     '(change)': 'onChange($event)',
     '(blur)': 'onTouched()',
@@ -40,6 +42,8 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
     value: () => number;
     labelPrefix: () => string;
     labelSuffix: () => string;
+    ariaLabel: () => string | undefined;
+    ariaLabelledby: () => string | undefined;
     updateValue: (value: number) => void;
     getSliderRect: () => DOMRect;
   }; // Will be set by parent slider component
@@ -65,9 +69,18 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
 
   private elementRef = inject(ElementRef<HTMLInputElement>);
 
+  // An accessible name set directly on the <input tnSliderThumb> (e.g.
+  // aria-label="Volume"). Captured up front so the host's [attr.aria-label]
+  // binding can fall back to it instead of clobbering it when the parent slider
+  // doesn't supply one. See ariaLabel()/ariaLabelledby().
+  private fallbackAriaLabel: string | null = null;
+  private fallbackAriaLabelledby: string | null = null;
+
   ngOnInit() {
     // Make the native input visually hidden but still accessible
     const input = this.elementRef.nativeElement;
+    this.fallbackAriaLabel = input.getAttribute('aria-label');
+    this.fallbackAriaLabelledby = input.getAttribute('aria-labelledby');
     input.style.opacity = '0';
     input.style.position = 'absolute';
     input.style.width = '100%';
@@ -244,11 +257,25 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
   }
 
   /**
-   * Commit a value that originated outside the native input (a thumb drag, or a
-   * track click routed here by the parent slider). Syncs `currentValue`, the
-   * native input, and emits to the form. The slider's own `onChange` only reaches
-   * a slider-bound control, so a thumb-bound control relies on this to stay in
-   * sync. Expects an already clamped/stepped value (slider.value()).
+   * Resolve the accessible name for the range input: the parent slider's
+   * `aria-label`/`aria-labelledby` input when set, otherwise a value placed
+   * directly on the `<input tnSliderThumb>`. Returning the fallback keeps the
+   * host binding from wiping a directly-set label. Null removes the attribute.
+   */
+  ariaLabel(): string | null {
+    return this.slider?.ariaLabel() ?? this.fallbackAriaLabel;
+  }
+
+  ariaLabelledby(): string | null {
+    return this.slider?.ariaLabelledby() ?? this.fallbackAriaLabelledby;
+  }
+
+  /**
+   * Commit a value that originated outside the native input (a thumb drag).
+   * Syncs `currentValue`, the native input, and emits to the form. The slider's
+   * own `onChange` only reaches a slider-bound control, so a thumb-bound control
+   * relies on this to stay in sync. Expects an already clamped/stepped value
+   * (slider.value()).
    */
   commit(value: number): void {
     this.currentValue = value;

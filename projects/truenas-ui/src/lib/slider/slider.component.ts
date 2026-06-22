@@ -49,6 +49,16 @@ export class TnSliderComponent implements ControlValueAccessor, OnDestroy, After
    * is configured via `TN_TEST_ATTR` (default `data-testid`).
    */
   testId = input<TnTestIdValue>(undefined);
+  /**
+   * Accessible name forwarded to the inner range input — the focusable element
+   * screen readers actually announce. Set this (or `aria-labelledby`) when the
+   * slider isn't already labelled by a `tn-form-field`/`<label>`, otherwise a
+   * standalone `<tn-slider><input tnSliderThumb></tn-slider>` announces only
+   * "slider". A label set directly on the `input[tnSliderThumb]` is used as a
+   * fallback when neither is provided here.
+   */
+  ariaLabel = input<string | undefined>(undefined, { alias: 'aria-label' });
+  ariaLabelledby = input<string | undefined>(undefined, { alias: 'aria-labelledby' });
 
   thumbDirective = contentChild.required(TnSliderThumbDirective);
   sliderContainer = viewChild.required<ElementRef<HTMLDivElement>>('sliderContainer');
@@ -168,26 +178,6 @@ export class TnSliderComponent implements ControlValueAccessor, OnDestroy, After
 
   getSliderRect(): DOMRect {
     return this.sliderContainer().nativeElement.getBoundingClientRect();
-  }
-
-  onTrackClick(event: MouseEvent | TouchEvent): void {
-    if (this.isDisabled()) {return;}
-
-    event.preventDefault();
-    const rect = this.getSliderRect();
-    const clientX = event instanceof MouseEvent ? event.clientX : event.touches[0].clientX;
-    const percentage = (clientX - rect.left) / rect.width;
-    const minVal = this.min();
-    const maxVal = this.max();
-    const newValue = minVal + (percentage * (maxVal - minVal));
-
-    this.updateValue(newValue);
-    // updateValue emits via this slider's onChange, which only reaches a
-    // slider-bound control. When the form is bound to the inner thumb input
-    // instead, route the committed value through the thumb so its form control,
-    // native input, and currentValue stay in sync — same path drag uses.
-    this.thumbDirective().commit(this.value());
-    this.onTouched();
   }
 
   private clampValue(value: number): number {

@@ -37,6 +37,36 @@ class SliderBoundHostComponent {
   control = new FormControl<number>(60);
 }
 
+// Label declared on the slider; thumb input has none of its own.
+@Component({
+  selector: 'tn-test-host-aria-slider',
+  standalone: true,
+  imports: [TnSliderComponent, TnSliderThumbDirective],
+  template: `
+    <tn-slider [aria-label]="sliderLabel()">
+      <input tnSliderThumb />
+    </tn-slider>
+  `
+})
+class AriaSliderHostComponent {
+  sliderLabel = signal<string | undefined>(undefined);
+}
+
+// Label set directly on the thumb input (static attribute); slider's is toggled.
+@Component({
+  selector: 'tn-test-host-aria-input',
+  standalone: true,
+  imports: [TnSliderComponent, TnSliderThumbDirective],
+  template: `
+    <tn-slider [aria-label]="sliderLabel()">
+      <input tnSliderThumb aria-label="Brightness" />
+    </tn-slider>
+  `
+})
+class AriaInputHostComponent {
+  sliderLabel = signal<string | undefined>(undefined);
+}
+
 describe('TnSliderComponent', () => {
   describe('value-accessor binding on the thumb input', () => {
     let fixture: ComponentFixture<ThumbBoundHostComponent>;
@@ -111,25 +141,6 @@ describe('TnSliderComponent', () => {
       expect(slider().value()).toBe(70);
     });
 
-    it('commits a track click to the thumb-bound form control', () => {
-      // Regression: track clicks route through the slider's updateValue, whose
-      // onChange is a noop when the form is bound to the inner thumb. The click
-      // must reach the thumb's commit path so control.value updates too.
-      const sliderEl = slider();
-      const container = fixture.nativeElement.querySelector('.tn-slider-container') as HTMLElement;
-      jest.spyOn(sliderEl, 'getSliderRect').mockReturnValue({
-        left: 0,
-        width: 200,
-      } as DOMRect);
-
-      // Click at 50% of a 0–100 slider → 50.
-      container.dispatchEvent(new MouseEvent('mousedown', { clientX: 100 }));
-      fixture.detectChanges();
-
-      expect(host.control.value).toBe(50);
-      expect(sliderEl.value()).toBe(50);
-    });
-
     it('treats a null form value as 0 rather than throwing', () => {
       host.control.setValue(null);
       fixture.detectChanges();
@@ -156,6 +167,41 @@ describe('TnSliderComponent', () => {
       // Regression: ngAfterContentInit must not adopt the thumb's default 0 when the
       // form is bound to the slider host instead of the thumb input.
       expect(slider().value()).toBe(60);
+    });
+  });
+
+  describe('accessible name passthrough', () => {
+    const thumbInput = (fixture: ComponentFixture<unknown>): HTMLInputElement =>
+      fixture.nativeElement.querySelector('input[tnSliderThumb]') as HTMLInputElement;
+
+    it('forwards the slider aria-label onto the focusable range input', async () => {
+      await TestBed.configureTestingModule({ imports: [AriaSliderHostComponent] }).compileComponents();
+      const fixture = TestBed.createComponent(AriaSliderHostComponent);
+      fixture.componentInstance.sliderLabel.set('Volume');
+      fixture.detectChanges();
+      expect(thumbInput(fixture).getAttribute('aria-label')).toBe('Volume');
+    });
+
+    it('sets no aria-label when neither the slider nor the input provides one', async () => {
+      await TestBed.configureTestingModule({ imports: [AriaSliderHostComponent] }).compileComponents();
+      const fixture = TestBed.createComponent(AriaSliderHostComponent);
+      fixture.detectChanges();
+      expect(thumbInput(fixture).hasAttribute('aria-label')).toBe(false);
+    });
+
+    it('leaves a label set directly on the input intact when the slider has none', async () => {
+      await TestBed.configureTestingModule({ imports: [AriaInputHostComponent] }).compileComponents();
+      const fixture = TestBed.createComponent(AriaInputHostComponent);
+      fixture.detectChanges();
+      expect(thumbInput(fixture).getAttribute('aria-label')).toBe('Brightness');
+    });
+
+    it('prefers the slider aria-label over one set directly on the input', async () => {
+      await TestBed.configureTestingModule({ imports: [AriaInputHostComponent] }).compileComponents();
+      const fixture = TestBed.createComponent(AriaInputHostComponent);
+      fixture.componentInstance.sliderLabel.set('Volume');
+      fixture.detectChanges();
+      expect(thumbInput(fixture).getAttribute('aria-label')).toBe('Volume');
     });
   });
 });
