@@ -104,6 +104,10 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
     // slider to adopt (and clamp) once it links the thumb in ngAfterContentInit.
     if (this.slider) {
       this.slider.updateValue(nextValue);
+      // Note: we don't emit the clamped result back to the form control, so an
+      // out-of-range write (e.g. setValue(143) on a 0–100 slider) leaves the model
+      // holding 143 while the slider renders 100. This mirrors native
+      // <input type="range">, which also doesn't reconcile the bound value.
       this.currentValue = this.slider.value();
     } else {
       this.currentValue = nextValue;

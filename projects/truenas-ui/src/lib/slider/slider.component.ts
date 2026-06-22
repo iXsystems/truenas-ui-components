@@ -52,7 +52,6 @@ export class TnSliderComponent implements ControlValueAccessor, OnDestroy, After
 
   thumbDirective = contentChild.required(TnSliderThumbDirective);
   sliderContainer = viewChild.required<ElementRef<HTMLDivElement>>('sliderContainer');
-  thumbVisual = viewChild.required<ElementRef<HTMLDivElement>>('thumbVisual');
 
   private onChange = (_value: number) => {};
   private onTouched = () => {};
