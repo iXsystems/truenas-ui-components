@@ -57,7 +57,7 @@ describe('TnSliderComponent', () => {
 
     it('adopts the form control value written before the thumb is linked', () => {
       // The control's initial value (35) is written via the thumb's writeValue
-      // before ngAfterViewInit links it; the slider must end up reflecting it.
+      // before ngAfterContentInit links it; the slider must end up reflecting it.
       expect(slider().value()).toBe(35);
       expect(slider().fillPercentage()).toBe(35);
     });
@@ -96,6 +96,21 @@ describe('TnSliderComponent', () => {
       expect(slider().value()).toBe(42);
     });
 
+    it('commits a plain click (mousedown + input with no movement)', () => {
+      // Regression: mousedown must not pre-set the drag flag, otherwise the
+      // native input fired by a click-to-set is swallowed and the value reverts.
+      const input = fixture.nativeElement.querySelector('input[tnSliderThumb]') as HTMLInputElement;
+
+      input.dispatchEvent(new MouseEvent('mousedown'));
+      input.value = '70';
+      input.dispatchEvent(new Event('input'));
+      document.dispatchEvent(new MouseEvent('mouseup'));
+      fixture.detectChanges();
+
+      expect(host.control.value).toBe(70);
+      expect(slider().value()).toBe(70);
+    });
+
     it('treats a null form value as 0 rather than throwing', () => {
       host.control.setValue(null);
       fixture.detectChanges();
@@ -119,7 +134,7 @@ describe('TnSliderComponent', () => {
     });
 
     it('keeps the slider-bound value and is not clobbered by the unbound thumb default', () => {
-      // Regression: ngAfterViewInit must not adopt the thumb's default 0 when the
+      // Regression: ngAfterContentInit must not adopt the thumb's default 0 when the
       // form is bound to the slider host instead of the thumb input.
       expect(slider().value()).toBe(60);
     });

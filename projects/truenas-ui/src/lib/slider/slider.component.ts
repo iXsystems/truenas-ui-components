@@ -33,7 +33,7 @@ export type LabelType = 'none' | 'handle' | 'track' | 'both';
  * directive are `NG_VALUE_ACCESSOR` providers, so a `formControl`/`ngModel` can
  * be attached to either element. Bind to the `tn-slider` host for the simplest
  * usage; binding to the inner thumb input also works and the slider adopts that
- * value on init (see {@link ngAfterViewInit}). Avoid binding to both at once —
+ * value on init (see {@link ngAfterContentInit}). Avoid binding to both at once —
  * pick one element per control to keep a single source of truth.
  */
 export class TnSliderComponent implements ControlValueAccessor, OnDestroy, AfterContentInit, AfterViewInit {
@@ -153,7 +153,6 @@ export class TnSliderComponent implements ControlValueAccessor, OnDestroy, After
     const clampedValue = this.clampValue(newValue);
     this.value.set(clampedValue);
     this.onChange(clampedValue);
-    this.updateThumbPosition();
   }
 
   enableLabel(): void {
@@ -185,11 +184,6 @@ export class TnSliderComponent implements ControlValueAccessor, OnDestroy, After
 
     this.updateValue(newValue);
     this.onTouched();
-  }
-
-  private updateThumbPosition(): void {
-    // Thumb position is now handled by computed signal and template binding
-    // No manual DOM manipulation needed
   }
 
   private clampValue(value: number): number {

@@ -44,6 +44,12 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
   onTouched = () => {};
 
   private onChangeCallback = (_value: number) => {};
+  // Pointer is held down on the thumb (set on mousedown/touchstart). Drives the
+  // global move/up listeners.
+  private isPointerDown = false;
+  // The pointer has actually moved since going down — i.e. a genuine drag. Only
+  // set once movement occurs (onGlobalMouseMove/onGlobalTouchMove), never on the
+  // initial press, so a plain click still commits through onInput. See onInput.
   private isDragging = false;
   // Last value written by the form. Retained so the parent slider can pick it up
   // once it links the thumb (ngAfterContentInit) — writeValue can run before the
@@ -123,10 +129,11 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
   }
 
   onInput(event: Event): void {
-    // While dragging, the global pointer handlers (updateValueFromPosition) own
-    // value commits; the native range also fires input here, so skip it to avoid
-    // a redundant double emit. Keyboard/click changes don't set isDragging and
-    // still flow through here.
+    // Once a drag is underway, the global pointer handlers
+    // (updateValueFromPosition) own value commits; the native range also fires
+    // input here, so skip it to avoid a redundant double emit. A plain click sets
+    // isPointerDown but not isDragging (no movement), so its native input commits
+    // here; keyboard changes set neither and also flow through.
     if (this.isDragging) {return;}
 
     const input = event.target as HTMLInputElement;
@@ -144,14 +151,14 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
 
   onMouseDown(event: MouseEvent): void {
     if (this.disabled()) {return;}
-    this.isDragging = true;
+    this.isPointerDown = true;
     this.addGlobalListeners();
     event.stopPropagation(); // Prevent track click
   }
 
   onTouchStart(event: TouchEvent): void {
     if (this.disabled()) {return;}
-    this.isDragging = true;
+    this.isPointerDown = true;
     this.addGlobalListeners();
     event.stopPropagation(); // Prevent track click
   }
@@ -171,13 +178,15 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
   }
 
   private onGlobalMouseMove = (event: MouseEvent): void => {
-    if (!this.isDragging || this.disabled()) {return;}
+    if (!this.isPointerDown || this.disabled()) {return;}
+    this.isDragging = true;
     event.preventDefault();
     this.updateValueFromPosition(event.clientX);
   };
 
   private onGlobalMouseUp = (): void => {
-    if (this.isDragging) {
+    if (this.isPointerDown) {
+      this.isPointerDown = false;
       this.isDragging = false;
       this.onTouched();
       this.removeGlobalListeners();
@@ -185,14 +194,16 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
   };
 
   private onGlobalTouchMove = (event: TouchEvent): void => {
-    if (!this.isDragging || this.disabled()) {return;}
+    if (!this.isPointerDown || this.disabled()) {return;}
+    this.isDragging = true;
     event.preventDefault();
     const touch = event.touches[0];
     this.updateValueFromPosition(touch.clientX);
   };
 
   private onGlobalTouchEnd = (): void => {
-    if (this.isDragging) {
+    if (this.isPointerDown) {
+      this.isPointerDown = false;
       this.isDragging = false;
       this.onTouched();
       this.removeGlobalListeners();
