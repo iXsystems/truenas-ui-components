@@ -140,6 +140,59 @@ describe('TnButtonComponent', () => {
     });
   });
 
+  describe('icon', () => {
+    it('renders no icon by default', () => {
+      const icon = fixture.nativeElement.querySelector('tn-icon');
+      expect(icon).toBeNull();
+      expect(component.classes()).not.toContain('storybook-button--has-icon');
+    });
+
+    it('renders a tn-icon with the given name when icon is set', () => {
+      fixture.componentRef.setInput('icon', 'check');
+      fixture.detectChanges();
+      const icon = fixture.nativeElement.querySelector('tn-icon');
+      expect(icon).toBeTruthy();
+      expect(icon.getAttribute('name')).toBe('check');
+    });
+
+    it('adds the has-icon class when an icon is present', () => {
+      fixture.componentRef.setInput('icon', 'check');
+      fixture.detectChanges();
+      expect(component.classes()).toContain('storybook-button--has-icon');
+    });
+
+    it('renders the icon before the label by default (left)', () => {
+      fixture.componentRef.setInput('icon', 'check');
+      fixture.componentRef.setInput('label', 'Save');
+      fixture.detectChanges();
+      const children = Array.from(fixture.nativeElement.querySelector('button').children);
+      const iconIndex = children.findIndex((el) => (el as Element).tagName.toLowerCase() === 'tn-icon');
+      const labelIndex = children.findIndex((el) => (el as Element).classList.contains('storybook-button__label'));
+      expect(iconIndex).toBeGreaterThanOrEqual(0);
+      expect(iconIndex).toBeLessThan(labelIndex);
+    });
+
+    it('renders the icon after the label when iconPosition is right', () => {
+      fixture.componentRef.setInput('icon', 'check');
+      fixture.componentRef.setInput('iconPosition', 'right');
+      fixture.componentRef.setInput('label', 'Save');
+      fixture.detectChanges();
+      const children = Array.from(fixture.nativeElement.querySelector('button').children);
+      const iconIndex = children.findIndex((el) => (el as Element).tagName.toLowerCase() === 'tn-icon');
+      const labelIndex = children.findIndex((el) => (el as Element).classList.contains('storybook-button__label'));
+      expect(iconIndex).toBeGreaterThan(labelIndex);
+    });
+
+    it('renders the icon in anchor (href) mode too', () => {
+      fixture.componentRef.setInput('href', 'https://truenas.com');
+      fixture.componentRef.setInput('icon', 'open-in-new');
+      fixture.detectChanges();
+      const icon = fixture.nativeElement.querySelector('a tn-icon');
+      expect(icon).toBeTruthy();
+      expect(icon.getAttribute('name')).toBe('open-in-new');
+    });
+  });
+
   describe('onClick event', () => {
     it('should emit onClick event when clicked', () => {
       const clickSpy = jest.fn();

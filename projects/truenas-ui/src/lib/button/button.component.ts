@@ -2,13 +2,14 @@ import { CommonModule } from '@angular/common';
 import type { AfterViewInit } from '@angular/core';
 import { Component, ElementRef, computed, inject, input, output, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TnIconComponent } from '../icon/icon.component';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 @Component({
   selector: 'tn-button',
   standalone: true,
-  imports: [CommonModule, RouterLink, TnTestIdDirective, LabelMarkupPipe],
+  imports: [CommonModule, RouterLink, TnTestIdDirective, LabelMarkupPipe, TnIconComponent],
   templateUrl: './button.component.html',
   styleUrls: ['./button.component.scss'],
 })
@@ -20,6 +21,17 @@ export class TnButtonComponent implements AfterViewInit {
   variant = input<'filled' | 'outline'>('filled');
   backgroundColor = input<string | undefined>(undefined);
   label = input<string>('Button');
+  /**
+   * Optional icon rendered alongside the label. Accepts any name resolvable by
+   * `tn-icon` (sprite/registry/library). Use `iconPosition` to place it before
+   * or after the label.
+   */
+  icon = input<string | undefined>(undefined);
+  /**
+   * Side of the label the `icon` sits on. `left` (default) renders the icon
+   * before the label; `right` renders it after. No effect when `icon` is unset.
+   */
+  iconPosition = input<'left' | 'right'>('left');
   disabled = input<boolean>(false);
   /**
    * Native `type` of the rendered `<button>`. Defaults to `button` so stray
@@ -87,7 +99,11 @@ export class TnButtonComponent implements AfterViewInit {
       }
     }
 
-    return ['storybook-button', `storybook-button--${this.size}`, mode];
+    const classes = ['storybook-button', `storybook-button--${this.size}`, mode];
+    if (this.icon()) {
+      classes.push('storybook-button--has-icon');
+    }
+    return classes;
   });
 
   handleAnchorClick(event: MouseEvent): void {

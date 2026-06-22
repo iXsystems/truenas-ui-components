@@ -26,6 +26,8 @@ export class TnButtonHarness extends ComponentHarness {
   static hostSelector = 'tn-button';
 
   private _button = this.locatorFor('button, a');
+  private _label = this.locatorForOptional('.storybook-button__label');
+  private _icon = this.locatorForOptional('tn-icon');
 
   /**
    * Gets a `HarnessPredicate` that can be used to search for a button
@@ -63,8 +65,46 @@ export class TnButtonHarness extends ComponentHarness {
    * ```
    */
   async getLabel(): Promise<string> {
+    // Prefer the dedicated label span so a rendered icon's text content (sprite
+    // fallback glyphs) never leaks into the label. Fall back to the full
+    // element text for resilience if the span is ever absent.
+    const label = await this._label();
+    if (label) {
+      return (await label.text()).trim();
+    }
     const button = await this._button();
     return (await button.text()).trim();
+  }
+
+  /**
+   * Gets the `name` of the icon rendered inside the button, or `null` when the
+   * button has no icon.
+   *
+   * @example
+   * ```typescript
+   * const saveBtn = await loader.getHarness(TnButtonHarness.with({ label: 'Save' }));
+   * expect(await saveBtn.getIconName()).toBe('check');
+   * ```
+   */
+  async getIconName(): Promise<string | null> {
+    const icon = await this._icon();
+    if (!icon) {
+      return null;
+    }
+    return icon.getAttribute('name');
+  }
+
+  /**
+   * Reports whether the button renders an icon.
+   *
+   * @example
+   * ```typescript
+   * const saveBtn = await loader.getHarness(TnButtonHarness.with({ label: 'Save' }));
+   * expect(await saveBtn.hasIcon()).toBe(true);
+   * ```
+   */
+  async hasIcon(): Promise<boolean> {
+    return (await this._icon()) !== null;
   }
 
   /**
