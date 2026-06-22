@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import type { TnTableDataSource } from './table.component';
@@ -430,6 +431,26 @@ describe('TnTableComponent', () => {
         // It does not silently reappear expanded when the predicate allows it again.
         fixture.componentRef.setInput('isRowExpandable', () => true);
         fixture.detectChanges();
+        expect(component.isRowExpanded(testData[0])).toBe(false);
+      });
+
+      it('should prune an expanded row when a signal the predicate reads changes', () => {
+        // The predicate's allowed set lives in a separate signal rather than
+        // being swapped via setInput, exercising the effect's signal tracking.
+        const allowedIds = signal(new Set([1, 2]));
+        fixture.componentRef.setInput(
+          'isRowExpandable',
+          (row: { id: number }) => allowedIds().has(row.id),
+        );
+        fixture.detectChanges();
+
+        component.toggleRowExpansion(testData[0]);
+        expect(component.isRowExpanded(testData[0])).toBe(true);
+
+        // Disallow the expanded row purely through the signal.
+        allowedIds.set(new Set([2]));
+        fixture.detectChanges();
+
         expect(component.isRowExpanded(testData[0])).toBe(false);
       });
 

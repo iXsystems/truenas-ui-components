@@ -12,7 +12,6 @@ import {
   input,
   output,
   signal,
-  untracked,
 } from '@angular/core';
 import type { OnInit } from '@angular/core';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
@@ -223,20 +222,22 @@ export class TnTableComponent<T = unknown> implements OnInit {
 
     // Prune rows the predicate no longer allows from the expanded set, so a row
     // that flips expandable -> non-expandable -> expandable does not silently
-    // reappear already expanded. Calling the predicate here tracks any signals
-    // it reads, so the prune re-runs when its result changes; the expanded set
-    // is read/written untracked to keep this effect off its own dependency list.
+    // reappear already expanded. Reading expandedRows tracked re-runs this on
+    // every toggle, which keeps the predicate's own signal dependencies fresh
+    // (e.g. a predicate like (row) => allowedIds().includes(row.id)) even while
+    // the set is empty. The next.size !== expanded.size guard makes the
+    // self-write converge after one extra run, so there is no infinite loop.
     effect(() => {
       const predicate = this.isRowExpandable();
       if (!predicate) { return; }
-      const expanded = untracked(this.expandedRows);
+      const expanded = this.expandedRows();
       if (expanded.size === 0) { return; }
       const next = new Set<unknown>();
       for (const row of expanded) {
         if (predicate(row as T)) { next.add(row); }
       }
       if (next.size !== expanded.size) {
-        untracked(() => this.expandedRows.set(next));
+        this.expandedRows.set(next);
       }
     });
   }
