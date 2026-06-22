@@ -182,6 +182,11 @@ export class TnSliderComponent implements ControlValueAccessor, OnDestroy, After
     const newValue = minVal + (percentage * (maxVal - minVal));
 
     this.updateValue(newValue);
+    // updateValue emits via this slider's onChange, which only reaches a
+    // slider-bound control. When the form is bound to the inner thumb input
+    // instead, route the committed value through the thumb so its form control,
+    // native input, and currentValue stay in sync — same path drag uses.
+    this.thumbDirective().commit(this.value());
     this.onTouched();
   }
 

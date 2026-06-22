@@ -21,6 +21,7 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
     '[attr.max]': 'slider?.max()',
     '[attr.step]': 'slider?.step()',
     '[value]': 'slider?.value()',
+    '[attr.aria-valuetext]': 'ariaValueText()',
     '(input)': 'onInput($event)',
     '(change)': 'onChange($event)',
     '(blur)': 'onTouched()',
@@ -37,6 +38,8 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
     max: () => number;
     step: () => number;
     value: () => number;
+    labelPrefix: () => string;
+    labelSuffix: () => string;
     updateValue: (value: number) => void;
     getSliderRect: () => DOMRect;
   }; // Will be set by parent slider component
@@ -109,11 +112,17 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
       // holding 143 while the slider renders 100. This mirrors native
       // <input type="range">, which also doesn't reconcile the bound value.
       this.currentValue = this.slider.value();
+      // When linked, the host `[value]="slider?.value()"` binding writes the
+      // native input on the next change-detection pass, so a manual write here
+      // would only be re-overwritten — leave it to the binding to keep one source
+      // of truth.
     } else {
       this.currentValue = nextValue;
-    }
-    if (this.elementRef.nativeElement) {
-      this.elementRef.nativeElement.value = this.currentValue.toString();
+      // Unlinked: no host binding value yet (slider?.value() is undefined), so set
+      // the native input directly until the slider links and takes over.
+      if (this.elementRef.nativeElement) {
+        this.elementRef.nativeElement.value = this.currentValue.toString();
+      }
     }
   }
 
@@ -142,6 +151,10 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
 
     const input = event.target as HTMLInputElement;
     const value = parseFloat(input.value);
+    // An empty/garbage value parses to NaN, which clampValue can't sanitize
+    // (Math.max/min with NaN stay NaN). Native range inputs shouldn't produce
+    // this, but guard so a NaN never reaches the form or slider value.
+    if (!Number.isFinite(value)) {return;}
 
     if (this.slider) {
       this.slider.updateValue(value);
@@ -227,12 +240,35 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
     // updateValue only moves the visual thumb; commit the (clamped/stepped) value
     // to the form and native input so dragging actually emits changes — otherwise
     // only click (native input event) updates the model.
-    const committed = this.slider.value();
-    this.currentValue = committed;
+    this.commit(this.slider.value());
+  }
+
+  /**
+   * Commit a value that originated outside the native input (a thumb drag, or a
+   * track click routed here by the parent slider). Syncs `currentValue`, the
+   * native input, and emits to the form. The slider's own `onChange` only reaches
+   * a slider-bound control, so a thumb-bound control relies on this to stay in
+   * sync. Expects an already clamped/stepped value (slider.value()).
+   */
+  commit(value: number): void {
+    this.currentValue = value;
     if (this.elementRef.nativeElement) {
-      this.elementRef.nativeElement.value = committed.toString();
+      this.elementRef.nativeElement.value = value.toString();
     }
-    this.onChangeCallback(committed);
+    this.onChangeCallback(value);
+  }
+
+  /**
+   * Builds an aria-valuetext when the slider has a label prefix/suffix so screen
+   * readers announce "50 km/h" rather than the bare number. Returns null when
+   * neither is set, letting the native range's valuenow announcement stand.
+   */
+  ariaValueText(): string | null {
+    if (!this.slider) {return null;}
+    const prefix = this.slider.labelPrefix();
+    const suffix = this.slider.labelSuffix();
+    if (!prefix && !suffix) {return null;}
+    return `${prefix}${this.slider.value()}${suffix}`;
   }
 
   private cleanup(): void {

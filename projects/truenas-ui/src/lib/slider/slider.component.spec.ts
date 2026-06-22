@@ -111,6 +111,25 @@ describe('TnSliderComponent', () => {
       expect(slider().value()).toBe(70);
     });
 
+    it('commits a track click to the thumb-bound form control', () => {
+      // Regression: track clicks route through the slider's updateValue, whose
+      // onChange is a noop when the form is bound to the inner thumb. The click
+      // must reach the thumb's commit path so control.value updates too.
+      const sliderEl = slider();
+      const container = fixture.nativeElement.querySelector('.tn-slider-container') as HTMLElement;
+      jest.spyOn(sliderEl, 'getSliderRect').mockReturnValue({
+        left: 0,
+        width: 200,
+      } as DOMRect);
+
+      // Click at 50% of a 0–100 slider → 50.
+      container.dispatchEvent(new MouseEvent('mousedown', { clientX: 100 }));
+      fixture.detectChanges();
+
+      expect(host.control.value).toBe(50);
+      expect(sliderEl.value()).toBe(50);
+    });
+
     it('treats a null form value as 0 rather than throwing', () => {
       host.control.setValue(null);
       fixture.detectChanges();
