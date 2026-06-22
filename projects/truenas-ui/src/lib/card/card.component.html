@@ -5,15 +5,39 @@
       <div class="tn-card__header-left">
         <ng-content select="[tnCardHeader]" />
         @if (!projectedHeader() && title()) {
-          <h3
-            class="tn-card__title"
-            [class.tn-card__title--link]="titleLink()"
-            [attr.tabindex]="titleLink() ? 0 : null"
-            [attr.role]="titleLink() ? 'button' : null"
-            (click)="onTitleClick()"
-            (keydown.enter)="onTitleClick()"
-            (keydown.space)="onTitleClick()">
-            {{ title() }}
+          <h3 class="tn-card__title">
+            @if (isTitleRouterLink()) {
+              <a
+                class="tn-card__title-link"
+                [routerLink]="titleRouterLink()"
+                [queryParams]="titleQueryParams()">
+                {{ title() }}
+                <tn-icon class="tn-card__title-link-icon" name="open-in-new" library="mdi" size="sm" [attr.aria-hidden]="true" />
+              </a>
+            } @else if (titleLink()) {
+              <span
+                class="tn-card__title-link"
+                role="button"
+                tabindex="0"
+                (click)="onTitleClick()"
+                (keydown.enter)="onTitleClick()"
+                (keydown.space)="onTitleClick()">
+                {{ title() }}
+                <tn-icon class="tn-card__title-link-icon" name="open-in-new" library="mdi" size="sm" [attr.aria-hidden]="true" />
+              </span>
+            } @else {
+              {{ title() }}
+            }
+
+            @if (titleTooltip(); as tooltip) {
+              <button
+                type="button"
+                class="tn-card__title-tooltip"
+                [attr.aria-label]="tooltip"
+                [tnTooltip]="tooltip">
+                <tn-icon name="help-circle" library="mdi" size="sm" [attr.aria-hidden]="true" />
+              </button>
+            }
           </h3>
         }
       </div>

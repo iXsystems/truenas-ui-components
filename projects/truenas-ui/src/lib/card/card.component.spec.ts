@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { TN_TEST_ATTR } from '../test-id';
 import { TnCardFooterActionsDirective, TnCardHeaderActionsDirective } from './card-action.directive';
 import { TnCardComponent } from './card.component';
@@ -232,5 +233,69 @@ describe('TnCardComponent projected action templates', () => {
       (b) => (b as HTMLElement).textContent?.trim() === 'Primary',
     );
     expect(primaryBtn).toBeTruthy();
+  });
+});
+
+@Component({
+  standalone: true,
+  imports: [TnCardComponent],
+  template: `<tn-card [title]="title()" [titleRouterLink]="routerLink()" [titleTooltip]="tooltip()">Content</tn-card>`,
+})
+class TitleHostComponent {
+  title = signal<string | undefined>('Recent Orders');
+  routerLink = signal<string | unknown[] | undefined>(undefined);
+  tooltip = signal<string | undefined>(undefined);
+}
+
+describe('TnCardComponent title router link & tooltip', () => {
+  function createTitleHost() {
+    TestBed.configureTestingModule({
+      imports: [TitleHostComponent],
+      providers: [provideRouter([])],
+    });
+    const fixture = TestBed.createComponent(TitleHostComponent);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('renders the title as a routerLink anchor with a trailing link icon when titleRouterLink is set', () => {
+    const fixture = createTitleHost();
+    fixture.componentInstance.routerLink.set(['/orders', 'recent']);
+    fixture.detectChanges();
+
+    const anchor = fixture.nativeElement.querySelector('.tn-card__title a') as HTMLAnchorElement | null;
+    expect(anchor).toBeTruthy();
+    // RouterLink resolves the commands array to a client-side href.
+    expect(anchor?.getAttribute('href')).toBe('/orders/recent');
+    expect(anchor?.textContent).toContain('Recent Orders');
+    // The link carries a trailing icon so it reads visually as a link...
+    const linkIcon = anchor?.querySelector('.tn-card__title-link-icon');
+    expect(linkIcon).toBeTruthy();
+    // ...but the icon is decorative: hidden from the a11y tree so it does not
+    // pollute the link's accessible name (which stays just "Recent Orders").
+    expect(linkIcon?.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('renders a plain h3 with no link or link icon when titleRouterLink is absent', () => {
+    const fixture = createTitleHost();
+
+    const title = fixture.nativeElement.querySelector('.tn-card__title') as HTMLElement;
+    expect(title.tagName.toLowerCase()).toBe('h3');
+    expect(title.querySelector('a')).toBeNull();
+    expect(title.querySelector('.tn-card__title-link-icon')).toBeNull();
+  });
+
+  it('renders titleTooltip as a separate help-icon button (not on the title text) only when set', () => {
+    const fixture = createTitleHost();
+
+    // No tooltip: no help affordance is rendered.
+    expect(fixture.nativeElement.querySelector('.tn-card__title-tooltip')).toBeNull();
+
+    fixture.componentInstance.tooltip.set('Open the full orders page');
+    fixture.detectChanges();
+
+    const tooltipButton = fixture.nativeElement.querySelector('.tn-card__title-tooltip') as HTMLElement | null;
+    expect(tooltipButton).toBeTruthy();
+    expect(tooltipButton?.getAttribute('aria-label')).toBe('Open the full orders page');
   });
 });
