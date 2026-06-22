@@ -103,6 +103,16 @@ export class TnTableComponent<T = unknown> implements OnInit {
   bordered = input<boolean>(false);
 
   /**
+   * Optional per-row predicate deciding whether an individual row can expand.
+   * When omitted, every row is expandable (provided `expandable` is true and a
+   * `tnDetailRowDef` is present). Rows for which it returns `false` render no
+   * expand control and cannot be toggled by the chevron, a row click, or the
+   * keyboard, and never render a detail row. Has no effect unless `expandable`
+   * is true. Re-evaluated on each change detection, so it may depend on signals.
+   */
+  isRowExpandable = input<((row: T) => boolean) | undefined>(undefined);
+
+  /**
    * Marks a single row as "active" — adds the `tn-table__row--active` class
    * and a left-side indicator bar. Set to `null` (default) to clear.
    *
@@ -296,8 +306,21 @@ export class TnTableComponent<T = unknown> implements OnInit {
 
   // --- Expansion methods ---
 
+  /**
+   * Whether a specific row may currently be expanded. True when `expandable` is
+   * set and — when an `isRowExpandable` predicate is provided — that predicate
+   * returns true for the row. Drives the expand control's visibility and gates
+   * every expansion entry point (chevron, row click, keyboard). The `__expand`
+   * column and the detail row are additionally gated on `detailRowDef()`.
+   */
+  canExpandRow(row: T): boolean {
+    if (!this.expandable()) { return false; }
+    const predicate = this.isRowExpandable();
+    return predicate ? predicate(row) : true;
+  }
+
   toggleRowExpansion(row: T): void {
-    if (!this.expandable()) { return; }
+    if (!this.canExpandRow(row)) { return; }
     const expanded = new Set(this.expandedRows());
     if (expanded.has(row)) {
       expanded.delete(row);

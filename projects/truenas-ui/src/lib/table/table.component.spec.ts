@@ -383,5 +383,39 @@ describe('TnTableComponent', () => {
       component.toggleRowExpansion(testData[0]);
       expect(component.isRowExpanded(testData[0])).toBe(false);
     });
+
+    describe('isRowExpandable predicate', () => {
+      it('should treat every row as expandable when no predicate is set', () => {
+        expect(component.canExpandRow(testData[0])).toBe(true);
+        expect(component.canExpandRow(testData[1])).toBe(true);
+      });
+
+      it('should report only rows allowed by the predicate as expandable', () => {
+        fixture.componentRef.setInput('isRowExpandable', (row: { id: number }) => row.id === 1);
+        fixture.detectChanges();
+        expect(component.canExpandRow(testData[0])).toBe(true);
+        expect(component.canExpandRow(testData[1])).toBe(false);
+      });
+
+      it('should not toggle a row the predicate disallows', () => {
+        fixture.componentRef.setInput('isRowExpandable', (row: { id: number }) => row.id === 1);
+        fixture.detectChanges();
+        component.toggleRowExpansion(testData[1]);
+        expect(component.isRowExpanded(testData[1])).toBe(false);
+      });
+
+      it('should still toggle a row the predicate allows', () => {
+        fixture.componentRef.setInput('isRowExpandable', (row: { id: number }) => row.id === 1);
+        fixture.detectChanges();
+        component.toggleRowExpansion(testData[0]);
+        expect(component.isRowExpanded(testData[0])).toBe(true);
+      });
+
+      it('should report no row as expandable when expandable is false', () => {
+        fixture.componentRef.setInput('expandable', false);
+        fixture.detectChanges();
+        expect(component.canExpandRow(testData[0])).toBe(false);
+      });
+    });
   });
 });

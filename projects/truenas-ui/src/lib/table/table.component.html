@@ -86,16 +86,18 @@
           } @else if (column === '__expand') {
             <td class="tn-table__cell tn-table__expand-cell"
               (click)="$event.stopPropagation()">
-              <button
-                type="button"
-                class="tn-table__expand-button"
-                [attr.aria-expanded]="isRowExpanded(row)"
-                [attr.aria-label]="isRowExpanded(row) ? 'Collapse row' : 'Expand row'"
-                (click)="toggleRowExpansion(row)">
-                <tn-icon
-                  class="tn-table__expand-icon"
-                  [name]="getExpandIcon(row)" />
-              </button>
+              @if (canExpandRow(row)) {
+                <button
+                  type="button"
+                  class="tn-table__expand-button"
+                  [attr.aria-expanded]="isRowExpanded(row)"
+                  [attr.aria-label]="isRowExpanded(row) ? 'Collapse row' : 'Expand row'"
+                  (click)="toggleRowExpansion(row)">
+                  <tn-icon
+                    class="tn-table__expand-icon"
+                    [name]="getExpandIcon(row)" />
+                </button>
+              }
             </td>
           } @else {
             <td
@@ -117,7 +119,7 @@
       </tr>
 
       <!-- Detail / Expanded Row -->
-      @if (expandable() && detailRowDef() && isRowExpanded(row)) {
+      @if (detailRowDef() && canExpandRow(row) && isRowExpanded(row)) {
         <tr class="tn-table__detail-row" [@detailExpand]="'expanded'">
           <td
             class="tn-table__detail-cell"
