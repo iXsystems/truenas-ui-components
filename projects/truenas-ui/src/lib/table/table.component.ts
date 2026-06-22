@@ -222,11 +222,13 @@ export class TnTableComponent<T = unknown> implements OnInit {
 
     // Prune rows the predicate no longer allows from the expanded set, so a row
     // that flips expandable -> non-expandable -> expandable does not silently
-    // reappear already expanded. Reading expandedRows tracked re-runs this on
-    // every toggle, which keeps the predicate's own signal dependencies fresh
-    // (e.g. a predicate like (row) => allowedIds().includes(row.id)) even while
-    // the set is empty. The next.size !== expanded.size guard makes the
-    // self-write converge after one extra run, so there is no infinite loop.
+    // reappear already expanded. While the set is non-empty the predicate runs,
+    // so any signals it reads (e.g. (row) => allowedIds().includes(row.id)) are
+    // tracked and re-prune as they change. When the set is empty we return early
+    // before the predicate runs — there is nothing to prune, and the next toggle
+    // re-runs this effect and re-tracks the predicate's signals. The
+    // next.size !== expanded.size guard makes the self-write converge after one
+    // extra run, so there is no infinite loop.
     effect(() => {
       const predicate = this.isRowExpandable();
       if (!predicate) { return; }

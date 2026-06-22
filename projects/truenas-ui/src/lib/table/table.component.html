@@ -65,7 +65,7 @@
       <tr
         class="tn-table__row"
         [attr.data-row-index]="rowIdx"
-        [class.tn-table__row--expandable]="expandable()"
+        [class.tn-table__row--expandable]="canExpandRow(row)"
         [class.tn-table__row--expanded]="canExpandRow(row) && isRowExpanded(row)"
         [class.tn-table__row--active]="isRowActive(row)"
         [class.tn-table__row--clickable]="clickable()"
