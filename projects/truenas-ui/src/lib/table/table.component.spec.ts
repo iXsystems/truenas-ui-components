@@ -1,8 +1,59 @@
-import { signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import type { TnTableDataSource } from './table.component';
 import { TnTableComponent } from './table.component';
+import {
+  TnCellDefDirective,
+  TnDetailRowDefDirective,
+  TnHeaderCellDefDirective,
+  TnTableColumnDirective,
+} from '../table-column/table-column.directive';
+
+// Host with a single sortable column, for asserting the rendered sort-icon name.
+@Component({
+  standalone: true,
+  imports: [TnTableComponent, TnTableColumnDirective, TnHeaderCellDefDirective, TnCellDefDirective],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-table [dataSource]="data" [displayedColumns]="['name']">
+      <ng-container tnColumnDef="name" [sortable]="true">
+        <ng-template tnHeaderCellDef>Name</ng-template>
+        <ng-template let-row tnCellDef>{{ row.name }}</ng-template>
+      </ng-container>
+    </tn-table>
+  `,
+})
+class SortableHostComponent {
+  data = [{ name: 'Alice' }];
+}
+
+// Host with an expandable column + detail row, for asserting the expand-icon name.
+@Component({
+  standalone: true,
+  imports: [
+    TnTableComponent,
+    TnTableColumnDirective,
+    TnHeaderCellDefDirective,
+    TnCellDefDirective,
+    TnDetailRowDefDirective,
+  ],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-table [dataSource]="data" [displayedColumns]="['name']" [expandable]="true">
+      <ng-container tnColumnDef="name">
+        <ng-template tnHeaderCellDef>Name</ng-template>
+        <ng-template let-row tnCellDef>{{ row.name }}</ng-template>
+      </ng-container>
+      <ng-template let-row tnDetailRowDef>{{ row.name }} details</ng-template>
+    </tn-table>
+  `,
+})
+class ExpandableHostComponent {
+  data = [{ name: 'Alice' }];
+}
 
 describe('TnTableComponent', () => {
   let component: TnTableComponent;
@@ -117,12 +168,73 @@ describe('TnTableComponent', () => {
       expect(component.sortDirection()).toBe('');
     });
 
-    it('should return SORT_ICON_NONE for unsorted columns', () => {
-      expect(component.getSortIcon('anything')).toContain('unfold_more');
-    });
-
     it('should report isSorted false when no sort active', () => {
       expect(component.isSorted('col1')).toBe(false);
+    });
+  });
+
+  // The icon names are string literals in the template (so the sprite scanner
+  // finds them); assert they actually reach the rendered <tn-icon name="...">.
+  describe('sort icon rendering', () => {
+    let sortFixture: ComponentFixture<SortableHostComponent>;
+    let table: TnTableComponent;
+
+    const sortIconName = (): string | null =>
+      (sortFixture.nativeElement.querySelector('.tn-table__sort-icon') as HTMLElement | null)?.getAttribute(
+        'name',
+      ) ?? null;
+
+    beforeEach(async () => {
+      // The outer beforeEach already instantiated a module; reset before
+      // reconfiguring with the host component.
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({ imports: [SortableHostComponent] }).compileComponents();
+      sortFixture = TestBed.createComponent(SortableHostComponent);
+      table = sortFixture.debugElement.query(By.directive(TnTableComponent)).componentInstance;
+      sortFixture.detectChanges();
+    });
+
+    it('shows the neutral icon when unsorted', () => {
+      expect(sortIconName()).toBe('mat-unfold_more');
+    });
+
+    it('shows ascending after one sort and descending after two', () => {
+      table.onSortClick('name');
+      sortFixture.detectChanges();
+      expect(sortIconName()).toBe('mat-arrow_upward');
+
+      table.onSortClick('name');
+      sortFixture.detectChanges();
+      expect(sortIconName()).toBe('mat-arrow_downward');
+    });
+  });
+
+  describe('expand icon rendering', () => {
+    let expandFixture: ComponentFixture<ExpandableHostComponent>;
+    let table: TnTableComponent;
+
+    const expandIconName = (): string | null =>
+      (expandFixture.nativeElement.querySelector('.tn-table__expand-icon') as HTMLElement | null)?.getAttribute(
+        'name',
+      ) ?? null;
+
+    beforeEach(async () => {
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({
+        imports: [ExpandableHostComponent],
+        providers: [provideNoopAnimations()],
+      }).compileComponents();
+      expandFixture = TestBed.createComponent(ExpandableHostComponent);
+      table = expandFixture.debugElement.query(By.directive(TnTableComponent)).componentInstance;
+      expandFixture.detectChanges();
+    });
+
+    it('renders the down chevron collapsed and the up chevron when expanded', () => {
+      expect(expandIconName()).toBe('mat-keyboard_arrow_down');
+
+      table.toggleRowExpansion(table.data()[0]);
+      expandFixture.detectChanges();
+      expect(expandIconName()).toBe('mat-keyboard_arrow_up');
     });
   });
 

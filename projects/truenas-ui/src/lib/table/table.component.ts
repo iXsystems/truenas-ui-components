@@ -24,14 +24,12 @@ import {
 } from '../table-column/table-column.directive';
 import { TnTestIdDirective } from '../test-id';
 
-// Material icons render via the `material-icons` CSS font (see icon.component.ts),
-// so they don't need sprite scanning — the literal `mat-` prefix matches what
-// the runtime icon resolver would produce from a Material library name.
-const SORT_ICON_ASC = 'mat-arrow_upward';
-const SORT_ICON_DESC = 'mat-arrow_downward';
-const SORT_ICON_NONE = 'mat-unfold_more';
-const EXPAND_ICON_DOWN = 'mat-keyboard_arrow_down';
-const EXPAND_ICON_UP = 'mat-keyboard_arrow_up';
+// NOTE: the sort/expand icon names (mat-arrow_upward, mat-keyboard_arrow_down,
+// etc.) are written as string literals directly in the template's `[name]`
+// ternaries, NOT computed here. The icon-sprite scanner only discovers icons
+// from template literals or marker calls; a name returned from a component
+// getter is invisible to it, so the icons would be dropped from the generated
+// sprite and render as nothing. Keep the literals in the template.
 
 export interface TnTableDataSource<T = unknown> {
   data?: T[];
@@ -314,17 +312,6 @@ export class TnTableComponent<T = unknown> implements OnInit {
       column: this.sortColumn() || column,
       direction: this.sortDirection(),
     });
-  }
-
-  getSortIcon(column: string): string {
-    if (this.sortColumn() !== column || this.sortDirection() === '') {
-      return SORT_ICON_NONE;
-    }
-    return this.sortDirection() === 'asc' ? SORT_ICON_ASC : SORT_ICON_DESC;
-  }
-
-  getExpandIcon(row: T): string {
-    return this.isRowExpanded(row) ? EXPAND_ICON_UP : EXPAND_ICON_DOWN;
   }
 
   isSorted(column: string): boolean {

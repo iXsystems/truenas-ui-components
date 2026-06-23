@@ -50,7 +50,11 @@
                 <tn-icon
                   class="tn-table__sort-icon"
                   size="sm"
-                  [name]="getSortIcon(column)" />
+                  [name]="
+                    isSorted(column)
+                      ? (sortDirection() === 'asc' ? 'mat-arrow_upward' : 'mat-arrow_downward')
+                      : 'mat-unfold_more'
+                  " />
               }
             </span>
           </th>
@@ -95,7 +99,7 @@
                   (click)="toggleRowExpansion(row)">
                   <tn-icon
                     class="tn-table__expand-icon"
-                    [name]="getExpandIcon(row)" />
+                    [name]="isRowExpanded(row) ? 'mat-keyboard_arrow_up' : 'mat-keyboard_arrow_down'" />
                 </button>
               }
             </td>
