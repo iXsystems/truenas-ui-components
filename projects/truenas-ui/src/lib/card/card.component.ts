@@ -148,7 +148,7 @@ export class TnCardComponent {
     );
   });
 
-  isTitleRouterLink = computed(() => this.titleRouterLink() !== undefined);
+  isTitleRouterLink = computed(() => !!this.titleRouterLink());
 
   onTitleClick(): void {
     const link = this.titleLink();

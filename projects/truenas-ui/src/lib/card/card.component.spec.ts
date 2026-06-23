@@ -296,6 +296,8 @@ describe('TnCardComponent title router link & tooltip', () => {
 
     const tooltipButton = fixture.nativeElement.querySelector('.tn-card__title-tooltip') as HTMLElement | null;
     expect(tooltipButton).toBeTruthy();
-    expect(tooltipButton?.getAttribute('aria-label')).toBe('Open the full orders page');
+    // The button's accessible name is generic; the tooltip text is exposed as the
+    // description (aria-describedby) so a screen reader doesn't read it twice.
+    expect(tooltipButton?.getAttribute('aria-label')).toBe('More information');
   });
 });

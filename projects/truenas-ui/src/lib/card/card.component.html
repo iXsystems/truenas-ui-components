@@ -21,7 +21,7 @@
                 tabindex="0"
                 (click)="onTitleClick()"
                 (keydown.enter)="onTitleClick()"
-                (keydown.space)="onTitleClick()">
+                (keydown.space)="onTitleClick(); $event.preventDefault()">
                 {{ title() }}
                 <tn-icon class="tn-card__title-link-icon" name="open-in-new" library="mdi" size="sm" [attr.aria-hidden]="true" />
               </span>
@@ -33,7 +33,7 @@
               <button
                 type="button"
                 class="tn-card__title-tooltip"
-                [attr.aria-label]="tooltip"
+                aria-label="More information"
                 [tnTooltip]="tooltip">
                 <tn-icon name="help-circle" library="mdi" size="sm" [attr.aria-hidden]="true" />
               </button>

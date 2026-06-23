@@ -150,8 +150,9 @@ export const TitleRouterLinkAndTooltip: Story = {
     // RouterLink resolves the href to an absolute URL in the browser, so just
     // assert the link is a real anchor with an href rather than an exact value.
     await expect(link).toHaveAttribute('href');
-    // The tooltip is a separate help affordance, not folded into the title text.
-    await expect(canvas.getByRole('button', { name: 'Open the full orders page' })).toBeInTheDocument();
+    // The tooltip is a separate help affordance (generic name; the tooltip text
+    // is its description), not folded into the title text.
+    await expect(canvas.getByRole('button', { name: 'More information' })).toBeInTheDocument();
   },
 };
 
