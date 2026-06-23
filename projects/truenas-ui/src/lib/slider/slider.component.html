@@ -1,12 +1,18 @@
+<!--
+  Pointer interaction (click-to-position and press-drag, anywhere on the track)
+  is handled by the projected native range input, which overlays the whole
+  container (see TnSliderThumbDirective): a click jumps the thumb and fires
+  `input` → onInput; a press-and-move runs the directive's global drag handlers.
+  No container-level click handler is needed — and one wouldn't fire anyway, as
+  the overlay calls stopPropagation() on its own pointer events.
+-->
 <div
   #sliderContainer
   class="tn-slider-container"
   tnTestIdType="slider"
   [tnTestId]="testId()"
   [attr.aria-disabled]="isDisabled()"
-  [attr.data-disabled]="isDisabled()"
-  (mousedown)="onTrackClick($event)"
-  (touchstart)="onTrackClick($event)">
+  [attr.data-disabled]="isDisabled()">
 
   <div class="tn-slider-track">
     <div class="tn-slider-track-inactive"></div>
@@ -24,9 +30,8 @@
   </div>
 
   <div
-    #thumbVisual
     class="tn-slider-thumb-visual"
-    [style.transform]="'translateX(' + thumbPosition() + 'px)'">
+    [style.left.%]="fillPercentage()">
     <div class="tn-slider-thumb-knob"></div>
     @if ((labelType() === 'handle' || labelType() === 'both') && showLabel()) {
       <div
