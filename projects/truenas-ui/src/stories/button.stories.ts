@@ -4,9 +4,14 @@ import { expect, userEvent, within } from 'storybook/test';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
+import { tnIconMarker } from '../lib/icon/icon-marker';
 
 // Load harness documentation
 const harnessDoc = loadHarnessDoc('button');
+
+// Register icons used in the icon stories so they are included in the sprite.
+const iconCheck = tnIconMarker('check', 'mdi');
+const iconArrowRight = tnIconMarker('arrow-right', 'mdi');
 
 // More on how to set up stories at: https://storybook.js.org/docs/writing-stories
 const meta: Meta<TnButtonComponent> = {
@@ -32,6 +37,15 @@ const meta: Meta<TnButtonComponent> = {
     },
     primary: {
       control: 'boolean',
+    },
+    icon: {
+      control: 'text',
+      description: 'Optional icon rendered alongside the label (any tn-icon name).',
+    },
+    iconPosition: {
+      control: 'inline-radio',
+      options: ['left', 'right'],
+      description: 'Side of the label the icon sits on. No effect when icon is unset.',
     },
     href: {
       control: 'text',
@@ -139,6 +153,54 @@ export const OutlineWarn: Story = {
 
     await expect(outlineWarnButton.classList.contains('button-outline-warn')).toBe(true);
     await userEvent.click(outlineWarnButton);
+  },
+};
+
+/**
+ * **Icon (left).** Set `icon` to render a `tn-icon` alongside the label.
+ * `iconPosition` defaults to `left`, placing the icon before the label.
+ */
+export const IconLeft: Story = {
+  args: {
+    color: 'primary',
+    variant: 'filled',
+    label: 'Save',
+    icon: iconCheck,
+    iconPosition: 'left',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole('button');
+    const icon = button.querySelector('tn-icon');
+    const label = button.querySelector('.storybook-button__label');
+
+    await expect(icon).toBeTruthy();
+    // Icon precedes the label in the DOM for left placement.
+    await expect(icon!.compareDocumentPosition(label!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  },
+};
+
+/**
+ * **Icon (right).** Set `iconPosition="right"` to render the icon after the
+ * label — useful for "next"/"continue" affordances.
+ */
+export const IconRight: Story = {
+  args: {
+    color: 'primary',
+    variant: 'outline',
+    label: 'Next',
+    icon: iconArrowRight,
+    iconPosition: 'right',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole('button');
+    const icon = button.querySelector('tn-icon');
+    const label = button.querySelector('.storybook-button__label');
+
+    await expect(icon).toBeTruthy();
+    // Icon follows the label in the DOM for right placement.
+    await expect(label!.compareDocumentPosition(icon!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   },
 };
 

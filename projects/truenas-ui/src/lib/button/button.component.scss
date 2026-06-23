@@ -24,6 +24,20 @@
   }
 }
 
+.storybook-button--has-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.storybook-button__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 a.storybook-button {
   text-decoration: none;
   text-align: center;
