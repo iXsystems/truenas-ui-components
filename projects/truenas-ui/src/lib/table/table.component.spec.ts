@@ -1,7 +1,59 @@
+import { Component, signal } from '@angular/core';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import type { TnTableDataSource } from './table.component';
 import { TnTableComponent } from './table.component';
+import {
+  TnCellDefDirective,
+  TnDetailRowDefDirective,
+  TnHeaderCellDefDirective,
+  TnTableColumnDirective,
+} from '../table-column/table-column.directive';
+
+// Host with a single sortable column, for asserting the rendered sort-icon name.
+@Component({
+  standalone: true,
+  imports: [TnTableComponent, TnTableColumnDirective, TnHeaderCellDefDirective, TnCellDefDirective],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-table [dataSource]="data" [displayedColumns]="['name']">
+      <ng-container tnColumnDef="name" [sortable]="true">
+        <ng-template tnHeaderCellDef>Name</ng-template>
+        <ng-template let-row tnCellDef>{{ row.name }}</ng-template>
+      </ng-container>
+    </tn-table>
+  `,
+})
+class SortableHostComponent {
+  data = [{ name: 'Alice' }];
+}
+
+// Host with an expandable column + detail row, for asserting the expand-icon name.
+@Component({
+  standalone: true,
+  imports: [
+    TnTableComponent,
+    TnTableColumnDirective,
+    TnHeaderCellDefDirective,
+    TnCellDefDirective,
+    TnDetailRowDefDirective,
+  ],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-table [dataSource]="data" [displayedColumns]="['name']" [expandable]="true">
+      <ng-container tnColumnDef="name">
+        <ng-template tnHeaderCellDef>Name</ng-template>
+        <ng-template let-row tnCellDef>{{ row.name }}</ng-template>
+      </ng-container>
+      <ng-template let-row tnDetailRowDef>{{ row.name }} details</ng-template>
+    </tn-table>
+  `,
+})
+class ExpandableHostComponent {
+  data = [{ name: 'Alice' }];
+}
 
 describe('TnTableComponent', () => {
   let component: TnTableComponent;
@@ -116,12 +168,73 @@ describe('TnTableComponent', () => {
       expect(component.sortDirection()).toBe('');
     });
 
-    it('should return SORT_ICON_NONE for unsorted columns', () => {
-      expect(component.getSortIcon('anything')).toContain('unfold_more');
-    });
-
     it('should report isSorted false when no sort active', () => {
       expect(component.isSorted('col1')).toBe(false);
+    });
+  });
+
+  // The icon names are string literals in the template (so the sprite scanner
+  // finds them); assert they actually reach the rendered <tn-icon name="...">.
+  describe('sort icon rendering', () => {
+    let sortFixture: ComponentFixture<SortableHostComponent>;
+    let table: TnTableComponent;
+
+    const sortIconName = (): string | null =>
+      (sortFixture.nativeElement.querySelector('.tn-table__sort-icon') as HTMLElement | null)?.getAttribute(
+        'name',
+      ) ?? null;
+
+    beforeEach(async () => {
+      // The outer beforeEach already instantiated a module; reset before
+      // reconfiguring with the host component.
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({ imports: [SortableHostComponent] }).compileComponents();
+      sortFixture = TestBed.createComponent(SortableHostComponent);
+      table = sortFixture.debugElement.query(By.directive(TnTableComponent)).componentInstance;
+      sortFixture.detectChanges();
+    });
+
+    it('shows the neutral icon when unsorted', () => {
+      expect(sortIconName()).toBe('mat-unfold_more');
+    });
+
+    it('shows ascending after one sort and descending after two', () => {
+      table.onSortClick('name');
+      sortFixture.detectChanges();
+      expect(sortIconName()).toBe('mat-arrow_upward');
+
+      table.onSortClick('name');
+      sortFixture.detectChanges();
+      expect(sortIconName()).toBe('mat-arrow_downward');
+    });
+  });
+
+  describe('expand icon rendering', () => {
+    let expandFixture: ComponentFixture<ExpandableHostComponent>;
+    let table: TnTableComponent;
+
+    const expandIconName = (): string | null =>
+      (expandFixture.nativeElement.querySelector('.tn-table__expand-icon') as HTMLElement | null)?.getAttribute(
+        'name',
+      ) ?? null;
+
+    beforeEach(async () => {
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({
+        imports: [ExpandableHostComponent],
+        providers: [provideNoopAnimations()],
+      }).compileComponents();
+      expandFixture = TestBed.createComponent(ExpandableHostComponent);
+      table = expandFixture.debugElement.query(By.directive(TnTableComponent)).componentInstance;
+      expandFixture.detectChanges();
+    });
+
+    it('renders the down chevron collapsed and the up chevron when expanded', () => {
+      expect(expandIconName()).toBe('mat-keyboard_arrow_down');
+
+      table.toggleRowExpansion(table.data()[0]);
+      expandFixture.detectChanges();
+      expect(expandIconName()).toBe('mat-keyboard_arrow_up');
     });
   });
 
@@ -382,6 +495,87 @@ describe('TnTableComponent', () => {
       fixture.detectChanges();
       component.toggleRowExpansion(testData[0]);
       expect(component.isRowExpanded(testData[0])).toBe(false);
+    });
+
+    describe('isRowExpandable predicate', () => {
+      it('should treat every row as expandable when no predicate is set', () => {
+        expect(component.canExpandRow(testData[0])).toBe(true);
+        expect(component.canExpandRow(testData[1])).toBe(true);
+      });
+
+      it('should report only rows allowed by the predicate as expandable', () => {
+        fixture.componentRef.setInput('isRowExpandable', (row: { id: number }) => row.id === 1);
+        fixture.detectChanges();
+        expect(component.canExpandRow(testData[0])).toBe(true);
+        expect(component.canExpandRow(testData[1])).toBe(false);
+      });
+
+      it('should not toggle a row the predicate disallows', () => {
+        fixture.componentRef.setInput('isRowExpandable', (row: { id: number }) => row.id === 1);
+        fixture.detectChanges();
+        component.toggleRowExpansion(testData[1]);
+        expect(component.isRowExpanded(testData[1])).toBe(false);
+      });
+
+      it('should still toggle a row the predicate allows', () => {
+        fixture.componentRef.setInput('isRowExpandable', (row: { id: number }) => row.id === 1);
+        fixture.detectChanges();
+        component.toggleRowExpansion(testData[0]);
+        expect(component.isRowExpanded(testData[0])).toBe(true);
+      });
+
+      it('should report no row as expandable when expandable is false', () => {
+        fixture.componentRef.setInput('expandable', false);
+        fixture.detectChanges();
+        expect(component.canExpandRow(testData[0])).toBe(false);
+      });
+
+      it('should prune an expanded row once the predicate stops allowing it', () => {
+        component.toggleRowExpansion(testData[0]);
+        expect(component.isRowExpanded(testData[0])).toBe(true);
+
+        // Predicate now disallows the already-expanded row.
+        fixture.componentRef.setInput('isRowExpandable', (row: { id: number }) => row.id !== 1);
+        fixture.detectChanges();
+
+        expect(component.isRowExpanded(testData[0])).toBe(false);
+
+        // It does not silently reappear expanded when the predicate allows it again.
+        fixture.componentRef.setInput('isRowExpandable', () => true);
+        fixture.detectChanges();
+        expect(component.isRowExpanded(testData[0])).toBe(false);
+      });
+
+      it('should prune an expanded row when a signal the predicate reads changes', () => {
+        // The predicate's allowed set lives in a separate signal rather than
+        // being swapped via setInput, exercising the effect's signal tracking.
+        const allowedIds = signal(new Set([1, 2]));
+        fixture.componentRef.setInput(
+          'isRowExpandable',
+          (row: { id: number }) => allowedIds().has(row.id),
+        );
+        fixture.detectChanges();
+
+        component.toggleRowExpansion(testData[0]);
+        expect(component.isRowExpanded(testData[0])).toBe(true);
+
+        // Disallow the expanded row purely through the signal.
+        allowedIds.set(new Set([2]));
+        fixture.detectChanges();
+
+        expect(component.isRowExpanded(testData[0])).toBe(false);
+      });
+
+      it('should keep expanded rows the predicate still allows', () => {
+        component.toggleRowExpansion(testData[0]);
+        component.toggleRowExpansion(testData[1]);
+
+        fixture.componentRef.setInput('isRowExpandable', (row: { id: number }) => row.id === 1);
+        fixture.detectChanges();
+
+        expect(component.isRowExpanded(testData[0])).toBe(true);
+        expect(component.isRowExpanded(testData[1])).toBe(false);
+      });
     });
   });
 });
