@@ -119,10 +119,14 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
    * Optional model→display transform, applied on the standard text path (it is
    * ignored in `Size`/`Number` modes, which own their own formatting). Mirrors
    * ix-input's `format`: the form model is rendered through this function — e.g.
-   * a byte count shown as `2 GiB`. Pairs with `parse`, which converts the typed
-   * text back to the model. Only truthy models are formatted; null/empty render
-   * blank. On blur the display is re-derived through this function so it shows
-   * the canonical form.
+   * a byte count shown as `2 GiB`. Only truthy models are formatted; null/empty
+   * render blank. On blur the display is re-derived through this function so it
+   * shows the canonical form.
+   *
+   * Intended to be paired with `parse` (the inverse transform). On its own,
+   * `format` only canonicalizes the display on blur while the model keeps the
+   * raw typed text, so display and model diverge (`"2 MiB"` shown, `"2"` stored);
+   * supply `parse` whenever the formatted display isn't already a valid model.
    */
   format = input<((value: string | number | null) => string) | undefined>(undefined);
 
@@ -384,12 +388,22 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
       const parse = this.parse();
       const format = this.format();
       const model = parse ? parse(this.value()) : this.value();
-      const canonical = format
+      // Render the model back to display through `format`, but only for a truthy
+      // model — the same guard writeValue applies, so a formatter written to that
+      // contract is never handed null/0/'' on either path (parse can legitimately
+      // return null for unparseable text). A falsy model blanks the field (null/
+      // undefined) or shows its String() form; without `format`, the parsed model
+      // is shown verbatim (e.g. stringAsUrlParsing surfacing the protocol it added).
+      const canonical = format && model
         ? format(model)
         : model === null || model === undefined ? '' : String(model);
       if (canonical !== this.value()) {
         this.value.set(canonical);
-        this.onChange(parse ? parse(canonical) : model);
+        // Re-emit so parse(display) === model holds for the canonicalized text.
+        // This assumes parse is idempotent over its own formatted output
+        // (parse(format(x)) === x), matching the Size branch. Never parse('')
+        // (the input-path contract): a blank canonical re-emits the model as-is.
+        this.onChange(parse && canonical ? parse(canonical) : model);
       }
     }
     this.onTouched();

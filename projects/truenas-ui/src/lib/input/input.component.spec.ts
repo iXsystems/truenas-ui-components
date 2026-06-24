@@ -1134,6 +1134,37 @@ describe('TnInputComponent with format/parse transforms', () => {
     expect(input.value).toBe('2 MiB');
   });
 
+  it('should not hand `format` a falsy model nor call parse(\'\') on blur', () => {
+    // Strict transforms that assume the writeValue/input-path contract: `format`
+    // is only ever given a truthy model, `parse` is never given ''. They throw if
+    // that contract is violated, so a blur over unparseable text (parse -> null)
+    // must not trip them.
+    const strictFormat = jest.fn((value: string | number | null) => {
+      if (!value) { throw new Error(`format called with falsy value: ${value}`); }
+      return `${Number(value) / 1024 ** 2} MiB`;
+    });
+    const strictParse = jest.fn((value: string) => {
+      if (value === '') { throw new Error('parse called with empty string'); }
+      const match = value.trim().match(/^(\d+(?:\.\d+)?)/);
+      return match ? Math.round(Number(match[1]) * 1024 ** 2) : null;
+    });
+    hostComponent.format = strictFormat;
+    hostComponent.parse = strictParse;
+    fixture.detectChanges();
+
+    const input = fixture.nativeElement.querySelector('input');
+    input.value = 'abc'; // unparseable -> strictParse returns null
+    input.dispatchEvent(new Event('input'));
+    expect(() => input.dispatchEvent(new Event('blur'))).not.toThrow();
+    fixture.detectChanges();
+
+    // The unparseable text emits a null model; crucially, format was never handed
+    // that null model and parse was never re-invoked on the resulting empty string.
+    expect(hostComponent.control.value).toBeNull();
+    expect(strictFormat).not.toHaveBeenCalledWith(null);
+    expect(strictParse).not.toHaveBeenCalledWith('');
+  });
+
   it('should support a parse-only transform and surface it on blur (URL case)', () => {
     hostComponent.format = undefined;
     hostComponent.parse = parseUrl;
