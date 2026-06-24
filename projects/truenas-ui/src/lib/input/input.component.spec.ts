@@ -1033,3 +1033,127 @@ describe('TnInputComponent size type with FormControl', () => {
     expect(parseSize(input.value, 'MiB', 'iec')).toBe(hostComponent.control.value);
   });
 });
+
+
+// Stand-ins for the real ix-formatter transforms the forms pass, kept simple so
+// the tests assert the wiring (format/parse plumbing) rather than re-test the
+// formatters themselves.
+//  - bytes <-> "<n> MiB": a model→display formatter paired with a display→model parser
+//  - host -> "https://host": a parse-only transform with no formatter (the URL case)
+function formatMib(value: string | number | null): string {
+  if (value === null || value === '') { return ''; }
+  return `${Number(value) / 1024 ** 2} MiB`;
+}
+function parseMib(value: string): number | null {
+  const match = value.trim().match(/^(\d+(?:\.\d+)?)/);
+  return match ? Math.round(Number(match[1]) * 1024 ** 2) : null;
+}
+function parseUrl(value: string): string {
+  return value.startsWith('http') ? value : `https://${value}`;
+}
+
+@Component({
+  selector: 'tn-test-transform-cva-host',
+  standalone: true,
+  imports: [TnInputComponent, ReactiveFormsModule],
+  template: `<tn-input [format]="format" [parse]="parse" [formControl]="control" />`
+})
+class TestTransformCvaHostComponent {
+  format: ((value: string | number | null) => string) | undefined = formatMib;
+  parse: ((value: string) => string | number | null) | undefined = parseMib;
+  control = new FormControl<string | number | null>(null);
+}
+
+
+describe('TnInputComponent with format/parse transforms', () => {
+  let fixture: ComponentFixture<TestTransformCvaHostComponent>;
+  let hostComponent: TestTransformCvaHostComponent;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TestTransformCvaHostComponent],
+      providers: [TnIconTesting.jest.providers()],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestTransformCvaHostComponent);
+    hostComponent = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should render the model through `format` when written', () => {
+    hostComponent.control.setValue(2 * 1024 ** 2);
+    fixture.detectChanges();
+
+    const input = fixture.nativeElement.querySelector('input');
+    expect(input.value).toBe('2 MiB');
+  });
+
+  it('should emit the `parse`d model while keeping the typed text visible', () => {
+    const input = fixture.nativeElement.querySelector('input');
+    input.value = '3 MiB';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(hostComponent.control.value).toBe(3 * 1024 ** 2);
+    // Display is left as typed until blur.
+    expect(input.value).toBe('3 MiB');
+  });
+
+  it('should canonicalize the display through `format` on blur', () => {
+    const input = fixture.nativeElement.querySelector('input');
+    input.value = '3'; // bare number; the stub parser treats it as MiB
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+
+    // parse("3") -> 3 MiB in bytes; format(...) -> "3 MiB" (canonical display)
+    expect(hostComponent.control.value).toBe(3 * 1024 ** 2);
+    expect(input.value).toBe('3 MiB');
+  });
+
+  it('should emit \'\' without calling parse when the field is cleared', () => {
+    const input = fixture.nativeElement.querySelector('input');
+    input.value = '3 MiB';
+    input.dispatchEvent(new Event('input'));
+    input.value = '';
+    input.dispatchEvent(new Event('input'));
+
+    expect(hostComponent.control.value).toBe('');
+  });
+
+  it('should not re-emit on blur for an untouched pre-filled control (no false dirty)', () => {
+    hostComponent.control.setValue(2 * 1024 ** 2);
+    fixture.detectChanges();
+    expect(hostComponent.control.dirty).toBe(false);
+
+    const input = fixture.nativeElement.querySelector('input');
+    input.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+
+    expect(hostComponent.control.dirty).toBe(false);
+    expect(input.value).toBe('2 MiB');
+  });
+
+  it('should support a parse-only transform and surface it on blur (URL case)', () => {
+    hostComponent.format = undefined;
+    hostComponent.parse = parseUrl;
+    hostComponent.control = new FormControl<string | number | null>(null);
+    fixture.detectChanges();
+
+    const input = fixture.nativeElement.querySelector('input');
+    input.value = 'example.com';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    // Model gets the protocol; display stays as typed until blur.
+    expect(hostComponent.control.value).toBe('https://example.com');
+    expect(input.value).toBe('example.com');
+
+    input.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+
+    // On blur the display surfaces the parsed (protocol-prefixed) value.
+    expect(input.value).toBe('https://example.com');
+    expect(hostComponent.control.value).toBe('https://example.com');
+  });
+});

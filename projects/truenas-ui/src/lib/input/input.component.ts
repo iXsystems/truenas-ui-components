@@ -116,6 +116,28 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
   sizeRound = input<number>(2);
 
   /**
+   * Optional model→display transform, applied on the standard text path (it is
+   * ignored in `Size`/`Number` modes, which own their own formatting). Mirrors
+   * ix-input's `format`: the form model is rendered through this function — e.g.
+   * a byte count shown as `2 GiB`. Pairs with `parse`, which converts the typed
+   * text back to the model. Only truthy models are formatted; null/empty render
+   * blank. On blur the display is re-derived through this function so it shows
+   * the canonical form.
+   */
+  format = input<((value: string | number | null) => string) | undefined>(undefined);
+
+  /**
+   * Optional display→model transform, applied on the standard text path (it is
+   * ignored in `Size`/`Number` modes). Mirrors ix-input's `parse`: the typed
+   * text is emitted to the form model through this function — e.g. `2 GiB` → a
+   * byte count, or a bare host → a full URL. The field keeps showing what the
+   * user typed until blur, when the display is canonicalized via `format` (if
+   * set) or replaced by the parsed model. An empty field emits `''` without
+   * calling `parse`.
+   */
+  parse = input<((value: string) => string | number | null) | undefined>(undefined);
+
+  /**
    * Whether a `Password` field renders the built-in visibility toggle — the eye
    * button that switches the field between masked and plain-text display.
    * Defaults to true; set false for secrets that must never be revealed.
@@ -152,6 +174,12 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
   integerOnly = computed(() => !this.allowDecimals());
   /** True when the field is a password field. */
   isPassword = computed(() => this.inputType() === InputType.Password);
+  /** True when a custom `format` (model→display) transform is provided. */
+  hasFormat = computed(() => !!this.format());
+  /** True when a custom `parse` (display→model) transform is provided. */
+  hasParse = computed(() => !!this.parse());
+  /** True when either custom transform is provided — i.e. the value-transform text path is active. */
+  hasValueTransform = computed(() => this.hasFormat() || this.hasParse());
   /**
    * Whether the password is currently revealed. Not exposed as an input so a
    * reveal is always an explicit user gesture, and linked to the toggle's own
@@ -252,6 +280,17 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
       this.value.set(formatSize(value, this.sizeStandard(), this.sizeRound()));
       return;
     }
+    // Custom value transform (mirrors ix-input's `format`): render the model
+    // through the consumer's formatter, e.g. a byte count shown as "2 GiB".
+    // Guarded on a truthy value to match the formatters' own contract (they
+    // return '' for falsy) and avoid format(0)/format('') surprises; null/empty
+    // fall through to the blank display below. Skipped in Number mode, which
+    // owns its own display.
+    const format = this.format();
+    if (format && value && !this.isNumeric()) {
+      this.value.set(format(value));
+      return;
+    }
     // Display the model verbatim via String(); do NOT sanitize here. Sanitizing a
     // canonical number string would corrupt fractions in integer mode (3.5 -> "35"),
     // silently diverging the display from the form model.
@@ -304,8 +343,14 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
       return;
     }
 
-    this.value.set(target.value);
-    this.onChange(this.value());
+    // Standard text path. With a custom `parse` (mirrors ix-input): keep the
+    // typed text visible and emit the parsed model. An empty field emits '' as
+    // is — never parse('') — so clearing the field clears the model. Without a
+    // transform this collapses to emitting the raw text.
+    const raw = target.value;
+    this.value.set(raw);
+    const parse = this.parse();
+    this.onChange(parse && raw ? parse(raw) : raw);
   }
 
   protected onBlur(): void {
@@ -327,6 +372,24 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
           this.value.set(canonical);
           this.onChange(parseSize(canonical, this.sizeDefaultUnit(), this.sizeStandard()));
         }
+      }
+    } else if (this.hasValueTransform() && this.value() !== '' && !this.isNumeric()) {
+      // Canonicalize the display on blur, mirroring both the Size branch and
+      // ix-input's blur: re-derive the model from the shown text (via `parse`,
+      // if any) then re-render it — through `format` when set, otherwise show
+      // the parsed model verbatim (e.g. stringAsUrlParsing surfacing the
+      // protocol it prepended). Only rewrite + re-emit when the canonical form
+      // actually differs, so an untouched pre-filled control isn't falsely
+      // marked dirty (the same guard the Size branch uses).
+      const parse = this.parse();
+      const format = this.format();
+      const model = parse ? parse(this.value()) : this.value();
+      const canonical = format
+        ? format(model)
+        : model === null || model === undefined ? '' : String(model);
+      if (canonical !== this.value()) {
+        this.value.set(canonical);
+        this.onChange(parse ? parse(canonical) : model);
       }
     }
     this.onTouched();

@@ -80,6 +80,16 @@ const meta: Meta<TnInputComponent> = {
       control: 'boolean',
       description: 'Password type: whether the built-in visibility toggle (eye button) is rendered. Defaults to true.',
     },
+    format: {
+      // A function input — not settable from the controls panel; see the
+      // "With Format And Parse" story for a live example.
+      control: false,
+      description: 'Text path: optional model→display transform (e.g. byte count → "2 GiB"). Pairs with parse. Ignored in Size/Number modes.',
+    },
+    parse: {
+      control: false,
+      description: 'Text path: optional display→model transform (e.g. "2 GiB" → byte count, or bare host → full URL). Pairs with format. Ignored in Size/Number modes.',
+    },
     testId: {
       control: 'text',
       description: 'Test ID for the input component',
@@ -348,6 +358,58 @@ export const Size: Story = {
     sizeDefaultUnit: 'MiB',
     sizeRound: 2,
   },
+};
+
+/**
+ * **Custom transforms (`format` / `parse`).** A generic escape hatch for the
+ * text path: `format` renders the form model for display, `parse` converts the
+ * typed text back to the model. The field shows what the user types until blur,
+ * when the display is canonicalized through `format`. Use it when the built-in
+ * `Size` mode doesn't fit — e.g. a parse-only transform that has no display
+ * counterpart (the URL field below prepends a protocol on blur).
+ *
+ * This mirrors the `ix-input` `format`/`parse` API, so forms migrating off
+ * `ix-input` can pass the same formatter functions unchanged.
+ */
+export const WithFormatAndParse: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      // Byte count <-> "<n> MiB". Stand-in for IxFormatterService.memorySize*.
+      bytesControl: new FormControl<number | null>(2 * 1024 ** 2),
+      formatMib: (value: string | number | null) =>
+        (value === null || value === '') ? '' : `${Number(value) / 1024 ** 2} MiB`,
+      parseMib: (value: string) => {
+        const match = value.trim().match(/^(\d+(?:\.\d+)?)/);
+        return match ? Math.round(Number(match[1]) * 1024 ** 2) : null;
+      },
+      // Parse-only: bare host -> full URL. Stand-in for stringAsUrlParsing.
+      urlControl: new FormControl<string | null>(''),
+      parseUrl: (value: string) => (value.startsWith('http') ? value : `https://${value}`),
+    },
+    template: `
+      <tn-form-field
+        label="Memory Size"
+        hint="format/parse: model is a byte count, field shows MiB; canonicalizes on blur">
+        <tn-input [format]="formatMib" [parse]="parseMib" [formControl]="bytesControl" />
+      </tn-form-field>
+      <p style="margin: 8px 0 20px; font-family: monospace;">
+        model (bytes): {{ bytesControl.value === null ? 'null' : bytesControl.value }}
+      </p>
+
+      <tn-form-field
+        label="Server URL"
+        hint="parse-only: type a bare host (example.com); protocol is prepended on blur">
+        <tn-input [parse]="parseUrl" [formControl]="urlControl" placeholder="example.com" />
+      </tn-form-field>
+      <p style="margin-top: 8px; font-family: monospace;">
+        model: {{ urlControl.value === '' ? "''" : urlControl.value }}
+      </p>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, ReactiveFormsModule],
+    },
+  }),
 };
 
 export const Multiline: Story = {
