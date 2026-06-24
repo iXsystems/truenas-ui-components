@@ -178,12 +178,8 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
   integerOnly = computed(() => !this.allowDecimals());
   /** True when the field is a password field. */
   isPassword = computed(() => this.inputType() === InputType.Password);
-  /** True when a custom `format` (model→display) transform is provided. */
-  hasFormat = computed(() => !!this.format());
-  /** True when a custom `parse` (display→model) transform is provided. */
-  hasParse = computed(() => !!this.parse());
   /** True when either custom transform is provided — i.e. the value-transform text path is active. */
-  hasValueTransform = computed(() => this.hasFormat() || this.hasParse());
+  hasValueTransform = computed(() => !!this.format() || !!this.parse());
   /**
    * Whether the password is currently revealed. Not exposed as an input so a
    * reveal is always an explicit user gesture, and linked to the toggle's own
@@ -388,22 +384,26 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
       const parse = this.parse();
       const format = this.format();
       const model = parse ? parse(this.value()) : this.value();
-      // Render the model back to display through `format`, but only for a truthy
-      // model — the same guard writeValue applies, so a formatter written to that
-      // contract is never handed null/0/'' on either path (parse can legitimately
-      // return null for unparseable text). A falsy model blanks the field (null/
-      // undefined) or shows its String() form; without `format`, the parsed model
-      // is shown verbatim (e.g. stringAsUrlParsing surfacing the protocol it added).
-      const canonical = format && model
-        ? format(model)
-        : model === null || model === undefined ? '' : String(model);
-      if (canonical !== this.value()) {
-        this.value.set(canonical);
-        // Re-emit so parse(display) === model holds for the canonicalized text.
-        // This assumes parse is idempotent over its own formatted output
-        // (parse(format(x)) === x), matching the Size branch. Never parse('')
-        // (the input-path contract): a blank canonical re-emits the model as-is.
-        this.onChange(parse && canonical ? parse(canonical) : model);
+      // Only canonicalize a truthy model. A falsy model means the typed text didn't
+      // parse (parse legitimately returns null/'' for unparseable input), so — like
+      // the Size branch leaving text untouched when parseSize returns null — keep the
+      // text the user typed so their input isn't silently wiped and the consumer's
+      // validators can flag it. The model was already emitted while typing, so there's
+      // nothing to re-emit here. This truthy guard also matches the one writeValue and
+      // `format` apply, so a formatter written to the ''-for-falsy contract is never
+      // handed null/0/''.
+      if (model) {
+        // Render the model back to display through `format` when set; otherwise show
+        // it verbatim (e.g. stringAsUrlParsing surfacing the protocol it prepended).
+        const canonical = format ? format(model) : String(model);
+        if (canonical !== this.value()) {
+          this.value.set(canonical);
+          // Re-emit the model directly rather than re-parsing the canonical display:
+          // parse is assumed idempotent over its own formatted output
+          // (parse(format(x)) === x, matching the Size branch), so parse(canonical)
+          // would just reproduce `model` — and emitting it avoids a second parse call.
+          this.onChange(model);
+        }
       }
     }
     this.onTouched();

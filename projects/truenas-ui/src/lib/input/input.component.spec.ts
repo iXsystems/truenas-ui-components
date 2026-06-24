@@ -1163,6 +1163,9 @@ describe('TnInputComponent with format/parse transforms', () => {
     expect(hostComponent.control.value).toBeNull();
     expect(strictFormat).not.toHaveBeenCalledWith(null);
     expect(strictParse).not.toHaveBeenCalledWith('');
+    // And the unparseable text is left exactly as typed (mirroring the Size branch),
+    // so a typo isn't silently wiped on blur — the consumer's validators can flag it.
+    expect(input.value).toBe('abc');
   });
 
   it('should support a parse-only transform and surface it on blur (URL case)', () => {
