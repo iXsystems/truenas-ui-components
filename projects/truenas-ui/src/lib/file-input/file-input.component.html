@@ -1,0 +1,26 @@
+<div class="tn-file-input__container" tnTestIdType="file-input" [tnTestId]="testId()">
+  <input
+    #fileInput
+    type="file"
+    class="tn-file-input__native"
+    tabindex="-1"
+    aria-hidden="true"
+    [accept]="accept()"
+    [multiple]="multiple()"
+    [disabled]="isDisabled()"
+    (change)="onFilesSelected($event)">
+
+  <button
+    type="button"
+    class="tn-file-input__button"
+    [disabled]="isDisabled()"
+    (click)="openFileDialog()">
+    {{ buttonLabel() }}
+  </button>
+
+  @if (showFileName()) {
+    <span class="tn-file-input__filename" [class.tn-file-input__filename--empty]="!hasFiles()">
+      {{ hasFiles() ? fileNames() : noFileText() }}
+    </span>
+  }
+</div>

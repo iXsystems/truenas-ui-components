@@ -1,0 +1,54 @@
+:host {
+  display: inline-block;
+}
+
+.tn-file-input__container {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+// Visually hidden, but still focusable target for the native dialog.
+.tn-file-input__native {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.tn-file-input__button {
+  display: inline-block;
+  cursor: pointer;
+  border: 0;
+  font-weight: 500;
+  line-height: 1;
+  font-family: 'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  padding: 11px 20px;
+  box-shadow: rgba(0, 0, 0, 0.15) 0 0 0 1px inset;
+  background-color: var(--tn-btn-default-bg);
+  color: var(--tn-btn-default-txt);
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+.tn-file-input__filename {
+  font-size: 14px;
+  color: var(--tn-fg1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &--empty {
+    color: var(--tn-fg2);
+  }
+}
