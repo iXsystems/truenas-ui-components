@@ -2,6 +2,7 @@ import type { ElementRef } from '@angular/core';
 import { Component, computed, forwardRef, input, output, signal, viewChild } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { TnButtonComponent } from '../button/button.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 /**
@@ -28,7 +29,7 @@ import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 @Component({
   selector: 'tn-file-input',
   standalone: true,
-  imports: [TnTestIdDirective],
+  imports: [TnButtonComponent, TnTestIdDirective],
   templateUrl: './file-input.component.html',
   styleUrl: './file-input.component.scss',
   providers: [
@@ -60,13 +61,25 @@ export class TnFileInputComponent implements ControlValueAccessor {
   /** Text shown beside the button when no file is selected. */
   noFileText = input<string>('No file chosen');
   /**
+   * Accessible label for the trigger button, forwarded to `tn-button`. Set this
+   * when the visible "Choose File" text alone doesn't convey what is being
+   * uploaded — e.g. pass the field label so a screen reader announces
+   * "Update File" rather than just "Choose File". (`tn-form-field`'s `<label>`
+   * is not programmatically associated with the projected control.)
+   */
+  ariaLabel = input<string | undefined>(undefined);
+  /**
    * Semantic test-id base. Rendered under whichever attribute name is configured
    * via `TN_TEST_ATTR` (default `data-testid`).
    */
   testId = input<TnTestIdValue>(undefined);
 
-  /** Emitted whenever the selection changes. `null` when the input is cleared. */
-  change = output<File | File[] | null>();
+  /**
+   * Emitted whenever the selection changes. `null` when the input is cleared.
+   * Named `selectionChange` (not `change`) to avoid colliding with the native
+   * `change` event bubbling from the inner file input.
+   */
+  selectionChange = output<File | File[] | null>();
 
   // Selected files, kept for display and for the form value.
   protected selectedFiles = signal<File[]>([]);
@@ -117,7 +130,7 @@ export class TnFileInputComponent implements ControlValueAccessor {
     const value = this.toValue(files);
     this.onChange(value);
     this.onTouched();
-    this.change.emit(value);
+    this.selectionChange.emit(value);
   }
 
   private toValue(files: File[]): File | File[] | null {

@@ -29,8 +29,9 @@ const meta: Meta<TnFileInputComponent> = {
     disabled: { control: 'boolean', description: 'Whether the control is disabled' },
     showFileName: { control: 'boolean', description: 'Show the selected file name(s) beside the button' },
     noFileText: { control: 'text', description: 'Text shown when no file is selected' },
+    ariaLabel: { control: 'text', description: 'Accessible label forwarded to the trigger button' },
     testId: { control: 'text', description: 'Test ID for automated testing' },
-    change: { action: 'change', description: 'Emitted when the selection changes' },
+    selectionChange: { action: 'selectionChange', description: 'Emitted when the selection changes' },
   },
   tags: ['autodocs'],
 };
@@ -55,6 +56,7 @@ export const InFormField: Story = {
     template: `
       <tn-form-field label="Update File" [required]="true" tooltip="Upload a .tar update file">
         <tn-file-input
+          ariaLabel="Update File"
           [buttonLabel]="buttonLabel"
           [accept]="accept"
           [multiple]="multiple"

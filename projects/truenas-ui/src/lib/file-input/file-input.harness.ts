@@ -16,7 +16,8 @@ export class TnFileInputHarness extends ComponentHarness {
   /** The selector for the host element of a `TnFileInputComponent` instance. */
   static hostSelector = 'tn-file-input';
 
-  private _button = this.locatorFor('.tn-file-input__button');
+  // The trigger is a `tn-button`; target its rendered `<button>` element.
+  private _button = this.locatorFor('.tn-file-input__button .storybook-button');
   private _native = this.locatorFor('input[type="file"]');
   private _filename = this.locatorForOptional('.tn-file-input__filename');
 

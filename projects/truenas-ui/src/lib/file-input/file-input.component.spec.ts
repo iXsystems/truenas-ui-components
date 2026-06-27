@@ -21,7 +21,7 @@ import { TnFileInputHarness } from './file-input.harness';
       [disabled]="disabled()"
       [showFileName]="showFileName()"
       [formControl]="control"
-      (change)="onChange($event)" />
+      (selectionChange)="onSelectionChange($event)" />
   `
 })
 class TestHostComponent {
@@ -32,7 +32,7 @@ class TestHostComponent {
   showFileName = signal(true);
   control = new FormControl<File | File[] | null>(null);
   lastEmitted: File | File[] | null | undefined = undefined;
-  onChange(value: File | File[] | null): void {
+  onSelectionChange(value: File | File[] | null): void {
     this.lastEmitted = value;
   }
 }
@@ -54,7 +54,7 @@ describe('TnFileInputComponent', () => {
     fixture.nativeElement.querySelector('[data-testid="file-input-main"]');
 
   const getButton = (): HTMLButtonElement =>
-    getContainer().querySelector('.tn-file-input__button') as HTMLButtonElement;
+    getContainer().querySelector('.tn-file-input__button .storybook-button') as HTMLButtonElement;
 
   const getNative = (): HTMLInputElement =>
     getContainer().querySelector('input[type="file"]') as HTMLInputElement;

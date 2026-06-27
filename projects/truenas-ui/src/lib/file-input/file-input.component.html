@@ -10,13 +10,13 @@
     [disabled]="isDisabled()"
     (change)="onFilesSelected($event)">
 
-  <button
-    type="button"
+  <tn-button
     class="tn-file-input__button"
+    color="default"
+    [label]="buttonLabel()"
     [disabled]="isDisabled()"
-    (click)="openFileDialog()">
-    {{ buttonLabel() }}
-  </button>
+    [ariaLabel]="ariaLabel()"
+    (onClick)="openFileDialog()" />
 
   @if (showFileName()) {
     <span class="tn-file-input__filename" [class.tn-file-input__filename--empty]="!hasFiles()">
