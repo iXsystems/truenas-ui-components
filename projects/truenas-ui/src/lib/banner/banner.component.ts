@@ -51,8 +51,17 @@ export class TnBannerComponent {
   /** Signal indicating whether action content has been projected */
   protected hasAction = computed(() => this.actionContent().length > 0);
 
+  /**
+   * Signal indicating whether the built-in structured layout (icon + heading/message)
+   * should be rendered. When neither heading nor message is provided, the banner
+   * instead renders arbitrary projected content from the default slot.
+   */
+  protected hasStructuredContent = computed(
+    () => !!this.heading() || !!this.message()
+  );
+
   // Signal-based inputs (modern Angular 19+)
-  heading = input.required<string>();
+  heading = input<string | undefined>(undefined);
   message = input<string | undefined>(undefined);
   type = input<TnBannerType>('info');
   bordered = input<boolean>(false);
