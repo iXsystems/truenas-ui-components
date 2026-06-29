@@ -161,6 +161,24 @@ describe('TnFileInputComponent', () => {
     expect(getNative().disabled).toBe(true);
   });
 
+  it('marks the control as touched when focus leaves it', () => {
+    expect(host.control.touched).toBe(false);
+    getContainer().dispatchEvent(new FocusEvent('focusout'));
+    expect(host.control.touched).toBe(true);
+  });
+
+  it('clears the native value before opening so re-picking the same file fires change', () => {
+    const native = getNative();
+    const clickSpy = jest.spyOn(native, 'click');
+    const valueSetter = jest.fn();
+    Object.defineProperty(native, 'value', { configurable: true, get: () => '', set: valueSetter });
+
+    getButton().click();
+
+    expect(valueSetter).toHaveBeenCalledWith('');
+    expect(clickSpy).toHaveBeenCalled();
+  });
+
   describe('harness', () => {
     let loader: HarnessLoader;
 

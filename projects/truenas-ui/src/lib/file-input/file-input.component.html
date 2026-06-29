@@ -1,4 +1,4 @@
-<div class="tn-file-input__container" tnTestIdType="file-input" [tnTestId]="testId()">
+<div class="tn-file-input__container" tnTestIdType="file-input" [tnTestId]="testId()" (focusout)="onBlur()">
   <input
     #fileInput
     type="file"
@@ -19,7 +19,7 @@
     (onClick)="openFileDialog()" />
 
   @if (showFileName()) {
-    <span class="tn-file-input__filename" [class.tn-file-input__filename--empty]="!hasFiles()">
+    <span class="tn-file-input__filename" aria-live="polite" [class.tn-file-input__filename--empty]="!hasFiles()">
       {{ hasFiles() ? fileNames() : noFileText() }}
     </span>
   }

@@ -15,9 +15,10 @@ import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
  * asterisk and help tooltip.
  *
  * Like every native file input, the browser forbids programmatically setting
- * the chosen files for security reasons. Writing a non-`null` value via a form
- * control therefore only updates the displayed name; writing `null`/`''` clears
- * the control. User selection is the only way to populate real `File` objects.
+ * the chosen files for security reasons. Writing a non-empty value via a form
+ * control therefore only updates the displayed name; writing `null` (or an empty
+ * array) clears the control. User selection is the only way to populate real
+ * `File` objects.
  *
  * @example
  * ```html
@@ -97,7 +98,7 @@ export class TnFileInputComponent implements ControlValueAccessor {
   writeValue(value: File | File[] | null): void {
     // Native file inputs cannot be populated programmatically; we only mirror
     // the value for display and treat null/empty as a clear of the control.
-    if (value === null || value === undefined || (typeof value === 'string' && value === '')) {
+    if (value == null || (Array.isArray(value) && value.length === 0)) {
       this.selectedFiles.set([]);
       this.fileInputEl().nativeElement.value = '';
     } else {
@@ -119,7 +120,15 @@ export class TnFileInputComponent implements ControlValueAccessor {
 
   protected openFileDialog(): void {
     if (this.isDisabled()) {return;}
+    // Clear the native value first so re-picking the same file still fires
+    // `change` (browsers suppress it when the selection is identical).
+    this.fileInputEl().nativeElement.value = '';
     this.fileInputEl().nativeElement.click();
+  }
+
+  /** Marks the control as touched when focus leaves it (e.g. for validation). */
+  protected onBlur(): void {
+    this.onTouched();
   }
 
   protected onFilesSelected(event: Event): void {

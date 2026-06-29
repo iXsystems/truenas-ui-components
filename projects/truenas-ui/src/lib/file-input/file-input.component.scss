@@ -30,6 +30,7 @@
 .tn-file-input__filename {
   font-size: 14px;
   color: var(--tn-fg1);
+  max-width: 30ch;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
