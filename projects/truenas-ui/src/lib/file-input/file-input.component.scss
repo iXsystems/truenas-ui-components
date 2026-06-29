@@ -8,8 +8,10 @@
   gap: 12px;
 }
 
-// Visually hidden, but still focusable target for the native dialog.
-.tn-file-input__native {
+// Visually hidden: the native input (a focusable dialog target) and the
+// screen-reader announcer for selection changes.
+.tn-file-input__native,
+.tn-file-input__announcer {
   position: absolute;
   width: 1px;
   height: 1px;

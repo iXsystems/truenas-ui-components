@@ -19,8 +19,16 @@
     (onClick)="openFileDialog()" />
 
   @if (showFileName()) {
-    <span class="tn-file-input__filename" aria-live="polite" [class.tn-file-input__filename--empty]="!hasFiles()">
+    <span class="tn-file-input__filename" [class.tn-file-input__filename--empty]="!hasFiles()">
       {{ hasFiles() ? fileNames() : noFileText() }}
     </span>
   }
+
+  <!--
+    Always-present live region so screen readers are told what was picked even
+    when the visible file name is suppressed (showFileName=false).
+  -->
+  <span class="tn-file-input__announcer" aria-live="polite">
+    {{ hasFiles() ? fileNames() : '' }}
+  </span>
 </div>

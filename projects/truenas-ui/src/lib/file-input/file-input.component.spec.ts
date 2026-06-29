@@ -62,6 +62,9 @@ describe('TnFileInputComponent', () => {
   const getFilename = (): HTMLElement | null =>
     getContainer().querySelector('.tn-file-input__filename');
 
+  const getAnnouncer = (): HTMLElement =>
+    getContainer().querySelector('.tn-file-input__announcer') as HTMLElement;
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TestHostComponent],
@@ -100,6 +103,17 @@ describe('TnFileInputComponent', () => {
     host.showFileName.set(false);
     fixture.detectChanges();
     expect(getFilename()).toBeNull();
+  });
+
+  it('announces the selection to screen readers even when the file name is hidden', () => {
+    host.showFileName.set(false);
+    fixture.detectChanges();
+    expect(getAnnouncer().getAttribute('aria-live')).toBe('polite');
+    expect(getAnnouncer().textContent?.trim()).toBe('');
+
+    selectFiles(getNative(), [new File(['data'], 'report.pdf')]);
+    fixture.detectChanges();
+    expect(getAnnouncer().textContent?.trim()).toBe('report.pdf');
   });
 
   it('opens the native dialog when the button is clicked', () => {
