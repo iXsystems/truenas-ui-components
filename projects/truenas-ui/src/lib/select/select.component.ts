@@ -7,7 +7,7 @@ import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { Subscription } from 'rxjs';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
-import { TnTestIdDirective, composeTestId, scopeTestId, type TnTestIdValue } from '../test-id';
+import { TnTestIdDirective, composeTestId, controlTestId, scopeTestId, type TnTestIdValue } from '../test-id';
 
 export interface TnSelectOption<T = unknown> {
   value: T;
@@ -66,6 +66,8 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
   emptyLabel = input<string>('--');
   disabled = input<boolean>(false);
   testId = input<TnTestIdValue>(undefined);
+  /** Test-id base, falling back to the bound control name when `testId` is unset. */
+  protected resolvedTestId = controlTestId(this.testId);
   multiple = input<boolean>(false);
 
   /**

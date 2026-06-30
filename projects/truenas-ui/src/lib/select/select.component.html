@@ -5,7 +5,7 @@
     class="tn-select-trigger"
     role="combobox"
     tnTestIdType="select"
-    [tnTestId]="testId()"
+    [tnTestId]="resolvedTestId()"
     [attr.tabindex]="isDisabled() ? -1 : 0"
     [class.disabled]="isDisabled()"
     [class.open]="isOpen()"
