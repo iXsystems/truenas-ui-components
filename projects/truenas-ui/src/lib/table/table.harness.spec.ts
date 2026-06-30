@@ -2,6 +2,7 @@ import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Component } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import type { TnSortEvent } from './table.component';
 import { TnTableComponent } from './table.component';
@@ -46,6 +47,7 @@ const TEST_USERS: User[] = [
       [activeRow]="activeRow"
       [loading]="loading"
       [clickable]="clickable"
+      [mobileLayout]="mobileLayout"
       (sortChange)="onSort($event)"
       (selectionChange)="selectedUsers = $event"
       (rowClick)="lastClickedRow = $event">
@@ -71,6 +73,7 @@ class TableHarnessTestComponent {
   tableData: User[] = [...TEST_USERS];
   selectable = false;
   expandable = false;
+  mobileLayout: 'cards' | 'scroll' = 'scroll';
   isRowExpandable: ((row: User) => boolean) | undefined = undefined;
   activeRow: User | null = null;
   loading = false;
@@ -93,12 +96,36 @@ class TableHarnessTestComponent {
   }
 }
 
+// jsdom has no ResizeObserver, so tn-table can't measure its container on its
+// own. This mock captures the observer the component creates and lets a test
+// push a width through the real callback path — no reaching into private state.
+class MockResizeObserver {
+  static instances: MockResizeObserver[] = [];
+  constructor(private cb: ResizeObserverCallback) {
+    MockResizeObserver.instances.push(this);
+  }
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+  emitWidth(width: number): void {
+    this.cb(
+      [{ contentRect: { width } } as ResizeObserverEntry],
+      this as unknown as ResizeObserver
+    );
+  }
+}
+
 describe('TnTableHarness', () => {
   let fixture: ComponentFixture<TableHarnessTestComponent>;
   let component: TableHarnessTestComponent;
   let loader: HarnessLoader;
+  let originalResizeObserver: typeof ResizeObserver | undefined;
 
   beforeEach(async () => {
+    originalResizeObserver = globalThis.ResizeObserver;
+    MockResizeObserver.instances = [];
+    globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+
     await TestBed.configureTestingModule({
       imports: [TableHarnessTestComponent, NoopAnimationsModule],
     }).compileComponents();
@@ -107,6 +134,10 @@ describe('TnTableHarness', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
     loader = TestbedHarnessEnvironment.loader(fixture);
+  });
+
+  afterEach(() => {
+    globalThis.ResizeObserver = originalResizeObserver as typeof ResizeObserver;
   });
 
   describe('basic queries', () => {
@@ -391,6 +422,65 @@ describe('TnTableHarness', () => {
 
       expect(await table.isRowSelected(0)).toBe(true);
       expect(await table.isRowExpanded(0)).toBe(true);
+    });
+  });
+
+  describe('card layout selection', () => {
+    // jsdom reports a 0px host width, so card mode never engages on its own.
+    // `mobileLayout` is opted into via the host (below); here we push a sub-
+    // breakpoint width through the component's ResizeObserver (mocked above).
+    function forceCardMode(): TnTableComponent {
+      MockResizeObserver.instances.forEach((o) => o.emitWidth(320));
+      fixture.detectChanges();
+      return fixture.debugElement.query(By.directive(TnTableComponent))
+        .componentInstance as TnTableComponent;
+    }
+
+    // Click the checkbox host, which carries the `(click)` toggle handler (with
+    // preventDefault to avoid the shared checkbox's `<label for>` + nested-input
+    // double-activation). A host click fires that handler exactly once —
+    // deterministic, and the same path a real user click takes.
+    function clickCardCheckbox(scopeSelector: string): void {
+      const host = fixture.nativeElement.querySelector(
+        `${scopeSelector} tn-checkbox`
+      ) as HTMLElement;
+      host.click();
+      fixture.detectChanges();
+    }
+
+    beforeEach(() => {
+      component.selectable = true;
+      component.mobileLayout = 'cards';
+      fixture.detectChanges();
+    });
+
+    it('renders cards below the breakpoint', () => {
+      const table = forceCardMode();
+      expect(table.isCardMode()).toBe(true);
+      expect(fixture.nativeElement.querySelectorAll('.tn-table__card').length).toBe(3);
+    });
+
+    it('selects a single row from its card checkbox', () => {
+      forceCardMode();
+      clickCardCheckbox('.tn-table__card[data-row-index="0"]');
+
+      expect(component.selectedUsers).toEqual([TEST_USERS[0]]);
+    });
+
+    it('deselects a row when its card checkbox is clicked again', () => {
+      forceCardMode();
+      clickCardCheckbox('.tn-table__card[data-row-index="1"]');
+      expect(component.selectedUsers).toEqual([TEST_USERS[1]]);
+
+      clickCardCheckbox('.tn-table__card[data-row-index="1"]');
+      expect(component.selectedUsers).toEqual([]);
+    });
+
+    it('selects every row from the card toolbar "select all" checkbox', () => {
+      forceCardMode();
+      clickCardCheckbox('.tn-table__cards-selectall');
+
+      expect(component.selectedUsers).toHaveLength(3);
     });
   });
 });

@@ -7,6 +7,7 @@ import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnCheckboxComponent } from '../lib/checkbox/checkbox.component';
 import { tnIconMarker } from '../lib/icon/icon-marker';
 import { TnIconComponent } from '../lib/icon/icon.component';
+import { TnIconButtonComponent } from '../lib/icon-button/icon-button.component';
 import { TnInputComponent } from '../lib/input/input.component';
 import type { TnSortEvent } from '../lib/table/table.component';
 import { TnTableComponent } from '../lib/table/table.component';
@@ -15,6 +16,7 @@ import {
   TnHeaderCellDefDirective,
   TnCellDefDirective,
   TnDetailRowDefDirective,
+  TnRowActionsDefDirective,
 } from '../lib/table-column/table-column.directive';
 
 const harnessDoc = loadHarnessDoc('table');
@@ -49,8 +51,10 @@ const meta: Meta<TnTableComponent> = {
         TnHeaderCellDefDirective,
         TnCellDefDirective,
         TnDetailRowDefDirective,
+        TnRowActionsDefDirective,
         TnCheckboxComponent,
         TnIconComponent,
+        TnIconButtonComponent,
         TnInputComponent,
       ],
     }),
@@ -637,6 +641,59 @@ export const EmptyTable: Story = {
       </tn-table>
     `,
   })
+};
+
+export const ResponsiveCards: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'When the table container is narrower than `cardBreakpoint` and `mobileLayout="cards"` (the default), each row collapses into a card. The `cardTitle` column anchors the card header alongside any `[tnRowActionsDef]` controls; remaining columns become priority-ranked fields, with lower-priority ones folded under "More fields". This story constrains the table to 380px to force card mode; resize the canvas to see the regular table return above the breakpoint.',
+      },
+    },
+  },
+  args: {
+    dataSource: sampleData,
+    displayedColumns: ['name', 'email', 'role', 'status'],
+    selectable: true,
+  },
+  render: (args) => ({
+    props: {
+      ...args,
+      editIcon: tnIconMarker('pencil', 'mdi'),
+      deleteIcon: tnIconMarker('delete', 'mdi'),
+    },
+    template: `
+      <div style="max-width: 380px;">
+        <tn-table
+          [dataSource]="dataSource"
+          [displayedColumns]="displayedColumns"
+          [selectable]="selectable"
+          mobileLayout="cards">
+          <ng-container tnColumnDef="name" label="Name" [cardTitle]="true" [sortable]="true">
+            <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
+          </ng-container>
+          <ng-container tnColumnDef="status" label="Status" [priority]="100" [sortable]="true">
+            <ng-template let-user tnCellDef>
+              <span [style.color]="user.status === 'active' ? 'var(--tn-green)' : 'var(--tn-red)'">
+                {{ user.status }}
+              </span>
+            </ng-template>
+          </ng-container>
+          <ng-container tnColumnDef="role" label="Role" [priority]="80">
+            <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
+          </ng-container>
+          <ng-container tnColumnDef="email" label="Email" cardLabel="Email address" [priority]="20">
+            <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+          </ng-container>
+          <ng-template tnRowActionsDef let-user>
+            <tn-icon-button [name]="editIcon" size="lg" ariaLabel="Edit" />
+            <tn-icon-button [name]="deleteIcon" size="lg" ariaLabel="Delete" />
+          </ng-template>
+        </tn-table>
+      </div>
+    `,
+  }),
 };
 
 export const ComponentHarness: Story = {
