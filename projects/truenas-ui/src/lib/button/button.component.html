@@ -1,3 +1,13 @@
+<ng-template #content>
+  @if (icon() && iconPosition() === 'left') {
+    <tn-icon class="storybook-button__icon" size="sm" aria-hidden="true" [name]="icon()!" />
+  }
+  <span class="storybook-button__label" [innerHTML]="label() | tnLabelMarkup"></span>
+  @if (icon() && iconPosition() === 'right') {
+    <tn-icon class="storybook-button__icon" size="sm" aria-hidden="true" [name]="icon()!" />
+  }
+</ng-template>
+
 @if (isRouterLink()) {
   <a
     #button
@@ -16,7 +26,7 @@
     [tnTestId]="testId()"
     (click)="handleAnchorClick($event)"
   >
-    <span [innerHTML]="label() | tnLabelMarkup"></span>
+    <ng-container [ngTemplateOutlet]="content" />
   </a>
 } @else if (isAnchor()) {
   <a
@@ -34,7 +44,7 @@
     [tnTestId]="testId()"
     (click)="handleAnchorClick($event)"
   >
-    <span [innerHTML]="label() | tnLabelMarkup"></span>
+    <ng-container [ngTemplateOutlet]="content" />
   </a>
 } @else {
   <button
@@ -48,6 +58,6 @@
     [tnTestId]="testId()"
     (click)="onClick.emit($event)"
   >
-    <span [innerHTML]="label() | tnLabelMarkup"></span>
+    <ng-container [ngTemplateOutlet]="content" />
   </button>
 }

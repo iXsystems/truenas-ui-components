@@ -224,6 +224,17 @@ describe('TnIconComponent - Full Size', () => {
     expect(hostEl.style.height).toBe('100%');
   });
 
+  it('should relax host min-width/min-height to 0 when fullSize=true', async () => {
+    fixture.componentRef.setInput('name', 'test');
+    fixture.componentRef.setInput('fullSize', true);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const hostEl = fixture.nativeElement as HTMLElement;
+    expect(hostEl.style.minWidth).toBe('0');
+    expect(hostEl.style.minHeight).toBe('0');
+  });
+
   it('should not set inline width/height when fullSize=false', async () => {
     fixture.componentRef.setInput('name', 'test');
     fixture.componentRef.setInput('fullSize', false);
@@ -234,6 +245,8 @@ describe('TnIconComponent - Full Size', () => {
     const hostEl = fixture.nativeElement as HTMLElement;
     expect(hostEl.style.width).toBe('');
     expect(hostEl.style.height).toBe('');
+    expect(hostEl.style.minWidth).toBe('');
+    expect(hostEl.style.minHeight).toBe('');
   });
 });
 
@@ -258,6 +271,8 @@ describe('TnIconComponent - Custom Size', () => {
     const hostEl = fixture.nativeElement as HTMLElement;
     expect(hostEl.style.width).toBe('48px');
     expect(hostEl.style.height).toBe('48px');
+    expect(hostEl.style.minWidth).toBe('48px');
+    expect(hostEl.style.minHeight).toBe('48px');
     expect(hostEl.style.fontSize).toBe('48px');
   });
 

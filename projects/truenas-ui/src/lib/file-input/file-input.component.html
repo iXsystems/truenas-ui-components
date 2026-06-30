@@ -1,0 +1,34 @@
+<div class="tn-file-input__container" tnTestIdType="file-input" [tnTestId]="testId()" (focusout)="onBlur()">
+  <input
+    #fileInput
+    type="file"
+    class="tn-file-input__native"
+    tabindex="-1"
+    aria-hidden="true"
+    [accept]="accept()"
+    [multiple]="multiple()"
+    [disabled]="isDisabled()"
+    (change)="onFilesSelected($event)">
+
+  <tn-button
+    class="tn-file-input__button"
+    color="default"
+    [label]="buttonLabel()"
+    [disabled]="isDisabled()"
+    [ariaLabel]="ariaLabel()"
+    (onClick)="openFileDialog()" />
+
+  @if (showFileName()) {
+    <span class="tn-file-input__filename" [class.tn-file-input__filename--empty]="!hasFiles()">
+      {{ hasFiles() ? fileNames() : noFileText() }}
+    </span>
+  }
+
+  <!--
+    Always-present live region so screen readers are told what was picked even
+    when the visible file name is suppressed (showFileName=false).
+  -->
+  <span class="tn-file-input__announcer" aria-live="polite">
+    {{ hasFiles() ? fileNames() : '' }}
+  </span>
+</div>

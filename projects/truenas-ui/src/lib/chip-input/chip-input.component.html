@@ -11,7 +11,7 @@
     <tn-chip
       class="tn-chip-input__chip"
       color="secondary"
-      [label]="value"
+      [label]="displayLabel(value)"
       [closable]="!isDisabled()"
       [disabled]="isDisabled()"
       [testId]="chipTestId(value)"
@@ -49,7 +49,7 @@
     role="listbox"
     [attr.id]="uid + '-listbox'"
   >
-    @for (suggestion of filteredSuggestions(); track suggestion) {
+    @for (suggestion of filteredSuggestions(); track $index) {
       <!-- Options are tabindex="-1" and never focused: keyboard selection goes
            through the input's aria-activedescendant + the Enter branch in
            onKeydown, so a key handler here would be dead code. Click is a
@@ -60,14 +60,14 @@
         role="option"
         tabindex="-1"
         tnTestIdType="option"
-        [tnTestId]="chipTestId(suggestion)"
+        [tnTestId]="chipTestId(suggestion.value)"
         [class.highlighted]="highlightedIndex() === $index"
         [attr.id]="uid + '-option-' + $index"
         [attr.aria-selected]="highlightedIndex() === $index"
         (mousedown)="onSuggestionMousedown($event)"
         (click)="onSuggestionClick(suggestion)"
       >
-        {{ suggestion }}
+        {{ suggestion.label }}
       </div>
     }
   </div>

@@ -18,7 +18,16 @@ import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { Subscription } from 'rxjs';
 import { TnChipComponent } from '../chip/chip.component';
+import type { TnSelectOption } from '../select/select.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+
+/**
+ * Option shape for `tn-chip-input`'s value mode — the `label` is displayed on
+ * the chip, the `value` is committed to the form control. Structurally
+ * identical to `TnSelectOption`/`TnAutocompleteOption`, so the same data sources
+ * feed all three.
+ */
+export type TnChipInputOption<T = unknown> = TnSelectOption<T>;
 
 let nextId = 0;
 
@@ -28,20 +37,37 @@ let nextId = 0;
  * committed to a chip on Enter (or a configurable separator key); Backspace on
  * an empty field removes the last chip.
  *
- * It is a `ControlValueAccessor` over `string[]`, so it drops into a reactive
- * or template-driven form (`[formControl]`, `[(ngModel)]`) and slots into a
- * `tn-form-field` as a real projected control — the field's required/error
- * inference reads this control directly.
+ * It is a `ControlValueAccessor` over `T[]` (defaulting to `string[]`), so it
+ * drops into a reactive or template-driven form (`[formControl]`, `[(ngModel)]`)
+ * and slots into a `tn-form-field` as a real projected control — the field's
+ * required/error inference reads this control directly.
  *
- * Suggestions are optional: pass `[suggestions]` for a static list, or drive
- * them asynchronously by listening to `(searchChange)` and updating
- * `[suggestions]` as results arrive. The dropdown is portaled through a CDK
- * overlay so it escapes any ancestor `overflow: hidden` (cards, side panels).
+ * **String mode (default).** Pass `[suggestions]` (a `string[]`) for typeahead;
+ * the typed/picked string is the value. Set `allowCustomValue=false` to restrict
+ * commits to the suggestion list.
+ *
+ * **Value mode.** Pass `[options]` (`{ label, value }[]`) to display labels while
+ * committing values — the model becomes `T[]`. A written value resolves to its
+ * option's label (falling back to `String(value)` until the option is
+ * available). Provide `[compareWith]` when the values are objects. Committing a
+ * typed string matches an option by label (case-insensitive); free text that
+ * matches no option is only accepted when `allowCustomValue` is `true` (which is
+ * only sound for string-valued inputs).
+ *
+ * Either source can be driven asynchronously by listening to `(searchChange)`
+ * and updating `[suggestions]`/`[options]` as results arrive. The dropdown is
+ * portaled through a CDK overlay so it escapes any ancestor `overflow: hidden`.
  *
  * @example
  * ```html
+ * <!-- string mode -->
  * <tn-form-field label="Tags">
- *   <tn-chip-input [formControl]="tags" placeholder="Add a tag…" />
+ *   <tn-chip-input [formControl]="tags" [suggestions]="tagSuggestions" />
+ * </tn-form-field>
+ *
+ * <!-- value mode: shows names, commits ids -->
+ * <tn-form-field label="Groups">
+ *   <tn-chip-input [formControl]="groupIds" [options]="groupOptions" [allowCustomValue]="false" />
  * </tn-form-field>
  * ```
  */
@@ -59,7 +85,7 @@ let nextId = 0;
   templateUrl: './chip-input.component.html',
   styleUrl: './chip-input.component.scss',
 })
-export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
+export class TnChipInputComponent<T = string> implements ControlValueAccessor, OnDestroy {
   private readonly overlay = inject(Overlay);
   private readonly viewContainerRef = inject(ViewContainerRef);
 
@@ -83,21 +109,21 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
   addOnBlur = input<boolean>(false);
 
   /**
-   * Whether free text not present in `suggestions` may be committed. Defaults to
-   * `true` — any typed value becomes a chip. Set `false` to restrict the field
-   * to its suggestion list (a "pick from the list" control): a commit only
-   * succeeds when the text matches a suggestion (case-insensitively, committing
-   * the suggestion's canonical casing); unmatched text is discarded. Mirrors
-   * `tn-autocomplete`'s `allowCustomValue`. With no `suggestions`, nothing can be
-   * added.
+   * Whether free text not matching any option/suggestion may be committed.
+   * Defaults to `true` — any typed value becomes a chip. Set `false` to restrict
+   * the field to its list (a "pick from the list" control): a commit only
+   * succeeds when the text matches an option/suggestion label (case-insensitive,
+   * committing the canonical entry); unmatched text is discarded. Mirrors
+   * `tn-autocomplete`'s `allowCustomValue`. In value mode, leave this `false` —
+   * fabricating a typed string as a non-string value is unsound.
    */
   allowCustomValue = input<boolean>(true);
 
   /**
    * Allow the same value to be added more than once. Off by default.
-   * Duplicate detection is exact-match (case-sensitive), so with this off
-   * `Angular` and `angular` are still distinct values — only suggestion
-   * *filtering* is case-insensitive.
+   * Duplicate detection uses `compareWith` (or identity); string-mode matching
+   * is exact (case-sensitive), so `Angular` and `angular` are distinct — only
+   * the *filtering* of suggestions is case-insensitive.
    */
   allowDuplicates = input<boolean>(false);
 
@@ -105,11 +131,25 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
   maxChips = input<number | undefined>(undefined);
 
   /**
-   * Optional suggestion list. When non-empty, a dropdown offers entries that
-   * match the typed text and are not already selected. For async sources,
-   * update this in response to `(searchChange)`.
+   * String-mode suggestion list. When non-empty, a dropdown offers entries that
+   * match the typed text and are not already selected. Ignored when `options`
+   * is provided. For async sources, update this in response to `(searchChange)`.
    */
   suggestions = input<string[]>([]);
+
+  /**
+   * Value-mode option list (`{ label, value }`). When non-empty, chips display
+   * the resolved `label` while the form model holds `value`s. Takes precedence
+   * over `suggestions`. For async sources, update in response to `(searchChange)`.
+   */
+  options = input<TnChipInputOption<T>[]>([]);
+
+  /**
+   * Comparator for value equality — used for de-duplication, display resolution
+   * and the selected-set. Defaults to identity (`===`), correct for primitives;
+   * provide this when values are objects (e.g. `(a, b) => a?.id === b?.id`).
+   */
+  compareWith = input<((a: T | null, b: T | null) => boolean) | undefined>(undefined);
 
   /** Accessible name for the text field. Leave unset inside a `tn-form-field`. */
   ariaLabel = input<string | undefined>(undefined);
@@ -122,10 +162,10 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
   testId = input<TnTestIdValue>(undefined);
 
   /** Emits the committed value whenever a chip is added. */
-  chipAdded = output<string>();
+  chipAdded = output<T>();
 
   /** Emits the removed value whenever a chip is removed. */
-  chipRemoved = output<string>();
+  chipRemoved = output<T>();
 
   /**
    * Emits the current text as the user types (not on programmatic writes or
@@ -139,7 +179,7 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
   private readonly dropdownTemplate = viewChild.required<TemplateRef<unknown>>('dropdownTemplate');
 
   /** Committed chip values — the form model. */
-  protected values = signal<string[]>([]);
+  protected values = signal<T[]>([]);
 
   /** Current text in the field. */
   protected inputValue = signal('');
@@ -165,19 +205,30 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
     return max === undefined || this.values().length < max;
   });
 
-  /** Suggestions that match the typed text and are not already selected. */
-  protected filteredSuggestions = computed(() => {
-    const selected = new Set(this.values());
+  /**
+   * Unified option list. Value-mode `options` win; otherwise string-mode
+   * `suggestions` are lifted into `{ label: s, value: s }`.
+   */
+  protected optionList = computed<TnChipInputOption<T>[]>(() => {
+    const opts = this.options();
+    if (opts.length) {
+      return opts;
+    }
+    return this.suggestions().map((suggestion) => ({ label: suggestion, value: suggestion as unknown as T }));
+  });
+
+  /** Options matching the typed text and not already selected. */
+  protected filteredSuggestions = computed<TnChipInputOption<T>[]>(() => {
     const term = this.inputValue().trim().toLowerCase();
-    return this.suggestions().filter((suggestion) => {
-      if (selected.has(suggestion)) {
+    return this.optionList().filter((option) => {
+      if (this.valuesIncludes(option.value)) {
         return false;
       }
-      return term === '' || suggestion.toLowerCase().includes(term);
+      return term === '' || option.label.toLowerCase().includes(term);
     });
   });
 
-  private onChange: (value: string[]) => void = () => {};
+  private onChange: (value: T[]) => void = () => {};
   private onTouched = () => {};
 
   private overlayRef?: OverlayRef;
@@ -186,10 +237,10 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
   constructor() {
     // Async suggestions: when the user types, onInput runs syncDropdown()
     // against the still-stale list and leaves the panel closed; results land a
-    // tick later via [suggestions]. Re-open the panel once fresh matches arrive
-    // while the field is focused and actively searching. This only ever opens
-    // (never closes), so it doesn't fight Escape, blur, or the post-commit close
-    // — those stay shut until the suggestion set next changes.
+    // tick later via [suggestions]/[options]. Re-open the panel once fresh
+    // matches arrive while the field is focused and actively searching. This
+    // only ever opens (never closes), so it doesn't fight Escape, blur, or the
+    // post-commit close — those stay shut until the option set next changes.
     effect(() => {
       const hasMatches = this.filteredSuggestions().length > 0;
       untracked(() => {
@@ -210,14 +261,14 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
 
   // ── ControlValueAccessor ──
 
-  writeValue(value: string[] | null | undefined): void {
+  writeValue(value: T[] | null | undefined): void {
     // Reflect the model verbatim — deliberately NOT clamped to maxChips. A form
     // may legitimately seed more values than the cap; silently dropping them
     // would lose data. The cap only blocks further user-driven additions.
     this.values.set(Array.isArray(value) ? [...value] : []);
   }
 
-  registerOnChange(fn: (value: string[]) => void): void {
+  registerOnChange(fn: (value: T[]) => void): void {
     this.onChange = fn;
   }
 
@@ -257,7 +308,7 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
   protected onBlur(): void {
     this.focused.set(false);
     if (this.addOnBlur()) {
-      this.addChip(this.inputValue());
+      this.commitText(this.inputValue());
     }
     this.close();
     this.onTouched();
@@ -305,9 +356,9 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
       event.preventDefault();
       const idx = this.highlightedIndex();
       if (this.isOpen() && idx >= 0 && idx < suggestions.length) {
-        this.addChip(suggestions[idx]);
+        this.commitValue(suggestions[idx].value);
       } else {
-        this.addChip(this.inputValue());
+        this.commitText(this.inputValue());
       }
       return;
     }
@@ -320,8 +371,8 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
     }
   }
 
-  protected onSuggestionClick(suggestion: string): void {
-    this.addChip(suggestion);
+  protected onSuggestionClick(option: TnChipInputOption<T>): void {
+    this.commitValue(option.value);
     this.inputEl().nativeElement.focus();
   }
 
@@ -335,7 +386,7 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
       return;
     }
     const removed = this.values()[index];
-    if (removed === undefined) {
+    if (index < 0 || index >= this.values().length) {
       return;
     }
     this.values.update((values) => values.filter((_, i) => i !== index));
@@ -349,13 +400,19 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
     this.syncDropdown();
   }
 
+  /** The label shown on a chip for a committed value. */
+  protected displayLabel(value: T): string {
+    const match = this.optionList().find((option) => this.valueMatches(option.value, value));
+    return match ? match.label : String(value);
+  }
+
   /** Scopes a per-chip test id beneath the component's base. */
-  protected chipTestId(value: string): TnTestIdValue {
+  protected chipTestId(value: T): TnTestIdValue {
     const base = this.testId();
     if (base === undefined) {
       return undefined;
     }
-    return [...(Array.isArray(base) ? base : [base]), value];
+    return [...(Array.isArray(base) ? base : [base]), value as unknown as string];
   }
 
   // ── Internal ──
@@ -364,22 +421,30 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
     return event.key === 'Enter' || this.separatorKeys().includes(event.key);
   }
 
-  private addChip(raw: string): void {
-    let value = (raw ?? '').trim();
-    if (!value || this.isDisabled() || !this.canAddMore()) {
+  /** Commits typed text: resolve it to an option's value, else accept as custom. */
+  private commitText(raw: string): void {
+    const text = (raw ?? '').trim();
+    if (!text) {
       return;
     }
-    if (!this.allowCustomValue()) {
-      // Restricted to the suggestion list: commit the canonical suggestion when
-      // the text matches one (case-insensitively), otherwise discard it.
-      const match = this.suggestions().find((suggestion) => suggestion.toLowerCase() === value.toLowerCase());
-      if (!match) {
-        this.clearInput();
-        return;
-      }
-      value = match;
+    const match = this.optionList().find((option) => option.label.toLowerCase() === text.toLowerCase());
+    if (match) {
+      this.commitValue(match.value);
+      return;
     }
-    if (!this.allowDuplicates() && this.values().includes(value)) {
+    if (this.allowCustomValue()) {
+      this.commitValue(text as unknown as T);
+      return;
+    }
+    this.clearInput();
+  }
+
+  /** Commits a resolved value, honouring duplicate and cap rules. */
+  private commitValue(value: T): void {
+    if (this.isDisabled() || !this.canAddMore()) {
+      return;
+    }
+    if (!this.allowDuplicates() && this.valuesIncludes(value)) {
       this.clearInput();
       return;
     }
@@ -388,6 +453,15 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
     this.onTouched();
     this.chipAdded.emit(value);
     this.clearInput();
+  }
+
+  private valuesIncludes(value: T): boolean {
+    return this.values().some((existing) => this.valueMatches(existing, value));
+  }
+
+  private valueMatches(a: T | null, b: T | null): boolean {
+    const comparator = this.compareWith();
+    return comparator ? comparator(a, b) : a === b;
   }
 
   private clearInput(): void {
@@ -399,7 +473,7 @@ export class TnChipInputComponent implements ControlValueAccessor, OnDestroy {
   /**
    * Opens the dropdown when there is something to show, closes it otherwise.
    * Stays closed once the chip cap is reached — suggesting rows that
-   * `addChip()` would reject is misleading.
+   * `commitValue()` would reject is misleading.
    */
   private syncDropdown(): void {
     if (this.filteredSuggestions().length > 0 && this.canAddMore() && !this.isDisabled()) {

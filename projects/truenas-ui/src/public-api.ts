@@ -19,6 +19,8 @@ export * from './lib/input/input.component';
 export * from './lib/input/input.harness';
 export * from './lib/input/input.directive';
 export * from './lib/input/size-conversion';
+export * from './lib/file-input/file-input.component';
+export * from './lib/file-input/file-input.harness';
 export * from './lib/chip/chip.component';
 export * from './lib/chip/chip.harness';
 export * from './lib/chip-input/chip-input.component';

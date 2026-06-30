@@ -233,6 +233,21 @@ export class TnTableHarness extends ComponentHarness {
     return row.hasClass('tn-table__row--expanded');
   }
 
+  /**
+   * Checks whether a row exposes an expand control. Returns false for rows made
+   * non-expandable via the table's `isRowExpandable` predicate.
+   *
+   * @param rowIndex Zero-based index of the data row.
+   * @returns Promise resolving to true if the row has an expand button.
+   */
+  async hasExpandControl(rowIndex: number): Promise<boolean> {
+    await this.assertRowExists(rowIndex);
+    const button = await this.locatorForOptional(
+      `.tn-table__row[data-row-index="${rowIndex}"] .tn-table__expand-button`
+    )();
+    return button !== null;
+  }
+
   // --- Clickable rows ---
 
   /**

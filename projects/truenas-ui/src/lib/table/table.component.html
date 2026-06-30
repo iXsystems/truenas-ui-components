@@ -120,14 +120,16 @@
           }
         </dl>
 
-        @if (expandable() && detailRowDef()) {
+        @if (canExpandRow(row) && detailRowDef()) {
           <button
             type="button"
             class="tn-table__card-detail-toggle"
             [attr.aria-expanded]="isRowExpanded(row)"
             (click)="toggleRowExpansion(row); $event.stopPropagation()">
             <span>Details</span>
-            <tn-icon size="sm" [name]="getExpandIcon(row)" />
+            <tn-icon
+              size="sm"
+              [name]="isRowExpanded(row) ? 'mat-keyboard_arrow_up' : 'mat-keyboard_arrow_down'" />
           </button>
           @if (isRowExpanded(row)) {
             <div class="tn-table__card-detail">
@@ -193,7 +195,11 @@
                   <tn-icon
                     class="tn-table__sort-icon"
                     size="sm"
-                    [name]="getSortIcon(column)" />
+                    [name]="
+                      isSorted(column)
+                        ? (sortDirection() === 'asc' ? 'mat-arrow_upward' : 'mat-arrow_downward')
+                        : 'mat-unfold_more'
+                    " />
                 }
               </span>
             </th>
@@ -213,8 +219,8 @@
         <tr
           class="tn-table__row"
           [attr.data-row-index]="rowIdx"
-          [class.tn-table__row--expandable]="expandable()"
-          [class.tn-table__row--expanded]="isRowExpanded(row)"
+          [class.tn-table__row--expandable]="canExpandRow(row)"
+          [class.tn-table__row--expanded]="canExpandRow(row) && isRowExpanded(row)"
           [class.tn-table__row--active]="isRowActive(row)"
           [class.tn-table__row--clickable]="clickable()"
           [attr.tabindex]="clickable() ? 0 : null"
@@ -234,16 +240,18 @@
             } @else if (column === '__expand') {
               <td class="tn-table__cell tn-table__expand-cell"
                 (click)="$event.stopPropagation()">
-                <button
-                  type="button"
-                  class="tn-table__expand-button"
-                  [attr.aria-expanded]="isRowExpanded(row)"
-                  [attr.aria-label]="isRowExpanded(row) ? 'Collapse row' : 'Expand row'"
-                  (click)="toggleRowExpansion(row)">
-                  <tn-icon
-                    class="tn-table__expand-icon"
-                    [name]="getExpandIcon(row)" />
-                </button>
+                @if (canExpandRow(row)) {
+                  <button
+                    type="button"
+                    class="tn-table__expand-button"
+                    [attr.aria-expanded]="isRowExpanded(row)"
+                    [attr.aria-label]="isRowExpanded(row) ? 'Collapse row' : 'Expand row'"
+                    (click)="toggleRowExpansion(row)">
+                    <tn-icon
+                      class="tn-table__expand-icon"
+                      [name]="isRowExpanded(row) ? 'mat-keyboard_arrow_up' : 'mat-keyboard_arrow_down'" />
+                  </button>
+                }
               </td>
             } @else {
               <td
@@ -275,7 +283,7 @@
         </tr>
 
         <!-- Detail / Expanded Row -->
-        @if (expandable() && detailRowDef() && isRowExpanded(row)) {
+        @if (detailRowDef() && canExpandRow(row) && isRowExpanded(row)) {
           <tr class="tn-table__detail-row" [@detailExpand]="'expanded'">
             <td
               class="tn-table__detail-cell"

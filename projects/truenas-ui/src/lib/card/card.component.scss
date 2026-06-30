@@ -100,19 +100,53 @@
 }
 
 .tn-card__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   margin: 0;
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--tn-fg1, #1f2937);
   line-height: 1.5;
+}
 
-  &--link {
-    cursor: pointer;
-    transition: color 0.2s ease;
+// Clickable title — an `<a [routerLink]>` for `titleRouterLink`, or a
+// role="button" span for the legacy `titleLink`. Inherits the title typography
+// and adds link affordances plus the trailing "open" icon.
+.tn-card__title-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s ease;
 
-    &:hover {
-      color: var(--tn-primary, #2563eb);
-    }
+  &:hover {
+    color: var(--tn-primary, #2563eb);
+  }
+}
+
+.tn-card__title-link-icon {
+  flex-shrink: 0;
+}
+
+// Separate help affordance: a button carrying the title tooltip, rendered as an
+// icon next to the title rather than attached to the title text itself.
+.tn-card__title-tooltip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--tn-fg2, #6c757d);
+  cursor: help;
+  line-height: 0;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--tn-fg1, #1f2937);
   }
 }
 

@@ -5,7 +5,7 @@ import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { TnChipInputComponent } from './chip-input.component';
+import { TnChipInputComponent, type TnChipInputOption } from './chip-input.component';
 import { TnChipInputHarness } from './chip-input.harness';
 
 @Component({
@@ -211,5 +211,88 @@ describe('TnChipInputHarness', () => {
     const chipInput = await loader.getHarness(TnChipInputHarness);
 
     expect(await chipInput.isDisabled()).toBe(true);
+  });
+});
+
+@Component({
+  selector: 'tn-value-host',
+  standalone: true,
+  imports: [TnChipInputComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-chip-input
+      testId="groups"
+      [formControl]="control"
+      [options]="options()"
+      [allowCustomValue]="false" />
+  `,
+})
+class ValueHostComponent {
+  control = new FormControl<number[]>([]);
+  options = signal<TnChipInputOption<number>[]>([
+    { label: 'Admins', value: 1 },
+    { label: 'Users', value: 2 },
+    { label: 'Guests', value: 3 },
+  ]);
+}
+
+describe('TnChipInputComponent value mode', () => {
+  let hostComponent: ValueHostComponent;
+  let fixture: ComponentFixture<ValueHostComponent>;
+  let loader: HarnessLoader;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ValueHostComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ValueHostComponent);
+    hostComponent = fixture.componentInstance;
+    loader = TestbedHarnessEnvironment.loader(fixture);
+  });
+
+  it('displays option labels for written values', async () => {
+    hostComponent.control.setValue([1, 3]);
+    const chipInput = await loader.getHarness(TnChipInputHarness);
+
+    expect(await chipInput.getChips()).toEqual(['Admins', 'Guests']);
+  });
+
+  it('commits the option value when its label is typed', async () => {
+    const chipInput = await loader.getHarness(TnChipInputHarness);
+    await chipInput.addChip('Users');
+
+    expect(await chipInput.getChips()).toEqual(['Users']);
+    expect(hostComponent.control.value).toEqual([2]);
+  });
+
+  it('resolves a typed label case-insensitively to its value', async () => {
+    const chipInput = await loader.getHarness(TnChipInputHarness);
+    await chipInput.addChip('admins');
+
+    expect(hostComponent.control.value).toEqual([1]);
+  });
+
+  it('rejects a typed label that matches no option', async () => {
+    const chipInput = await loader.getHarness(TnChipInputHarness);
+    await chipInput.addChip('Nope');
+
+    expect(hostComponent.control.value).toEqual([]);
+  });
+
+  it('commits the value when a suggestion is picked', async () => {
+    const chipInput = await loader.getHarness(TnChipInputHarness);
+    await chipInput.selectSuggestion('Guests');
+
+    expect(hostComponent.control.value).toEqual([3]);
+  });
+
+  it('excludes already-selected values from the suggestions', async () => {
+    hostComponent.control.setValue([1]);
+    const chipInput = await loader.getHarness(TnChipInputHarness);
+    await chipInput.typeText('s');
+
+    // Admins (value 1) is selected; only Users and Guests remain matching "s".
+    expect(await chipInput.getSuggestions()).toEqual(['Users', 'Guests']);
   });
 });

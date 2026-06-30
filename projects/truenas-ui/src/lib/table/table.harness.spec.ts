@@ -43,6 +43,7 @@ const TEST_USERS: User[] = [
       [displayedColumns]="['name', 'email']"
       [selectable]="selectable"
       [expandable]="expandable"
+      [isRowExpandable]="isRowExpandable"
       [activeRow]="activeRow"
       [loading]="loading"
       [clickable]="clickable"
@@ -73,6 +74,7 @@ class TableHarnessTestComponent {
   selectable = false;
   expandable = false;
   mobileLayout: 'cards' | 'scroll' = 'scroll';
+  isRowExpandable: ((row: User) => boolean) | undefined = undefined;
   activeRow: User | null = null;
   loading = false;
   clickable = false;
@@ -263,6 +265,23 @@ describe('TnTableHarness', () => {
       await table.toggleRowExpansion(0);
       await table.toggleRowExpansion(2);
       expect(await table.getExpandedRowCount()).toBe(2);
+    });
+
+    it('should render an expand control on every row by default', async () => {
+      const table = await loader.getHarness(TnTableHarness);
+      expect(await table.hasExpandControl(0)).toBe(true);
+      expect(await table.hasExpandControl(1)).toBe(true);
+      expect(await table.hasExpandControl(2)).toBe(true);
+    });
+
+    it('should not render an expand control on rows the predicate disallows', async () => {
+      component.isRowExpandable = (user) => user.id === 1;
+      fixture.detectChanges();
+
+      const table = await loader.getHarness(TnTableHarness);
+      expect(await table.hasExpandControl(0)).toBe(true);
+      expect(await table.hasExpandControl(1)).toBe(false);
+      expect(await table.hasExpandControl(2)).toBe(false);
     });
   });
 

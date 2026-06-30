@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, input, computed, inject, contentChild, TemplateRef } from '@angular/core';
-import { mdiDotsVertical } from '@mdi/js';
+import { RouterLink } from '@angular/router';
+import { mdiDotsVertical, mdiHelpCircle, mdiOpenInNew } from '@mdi/js';
 import { TnCardFooterActionsDirective, TnCardHeaderActionsDirective } from './card-action.directive';
 import { TnCardHeaderDirective } from './card-header.directive';
 import type {
@@ -18,12 +19,14 @@ import type { TnMenuItem } from '../menu/menu.component';
 import { TnMenuComponent } from '../menu/menu.component';
 import { TnSlideToggleComponent } from '../slide-toggle/slide-toggle.component';
 import { TnTestIdDirective } from '../test-id';
+import { TnTooltipDirective } from '../tooltip/tooltip.directive';
 
 @Component({
   selector: 'tn-card',
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     TnButtonComponent,
     TnIconComponent,
     TnIconButtonComponent,
@@ -31,6 +34,7 @@ import { TnTestIdDirective } from '../test-id';
     TnMenuComponent,
     TnMenuTriggerDirective,
     TnTestIdDirective,
+    TnTooltipDirective,
   ],
   templateUrl: './card.component.html',
   styleUrls: ['./card.component.scss'],
@@ -53,7 +57,20 @@ export class TnCardComponent {
   protected footerActions = contentChild(TnCardFooterActionsDirective, { read: TemplateRef });
 
   title = input<string | undefined>(undefined);
-  titleLink = input<string | undefined>(undefined); // Makes title navigable
+  titleLink = input<string | undefined>(undefined); // External href: navigates via window.location
+
+  /**
+   * Angular router commands for a title that navigates within the app. When set,
+   * the title renders as an `<a [routerLink]>` so it participates in client-side
+   * (SPA) routing — unlike `titleLink`, which performs a full-page
+   * `window.location` navigation. Same accepted shapes as `[routerLink]`
+   * (`string | unknown[]`). Takes precedence over `titleLink`.
+   */
+  titleRouterLink = input<string | unknown[] | undefined>(undefined);
+  titleQueryParams = input<Record<string, unknown> | undefined>(undefined);
+
+  /** Help/hover text shown on the title via the tooltip directive. */
+  titleTooltip = input<string | undefined>(undefined);
   elevation = input<'none' | 'low' | 'medium' | 'high'>('medium');
   padding = input<'small' | 'medium' | 'large'>('medium');
   padContent = input<boolean>(true);
@@ -83,6 +100,8 @@ export class TnCardComponent {
   private registerMdiIcons(): void {
     const mdiIcons: Record<string, string> = {
       'dots-vertical': mdiDotsVertical,
+      'help-circle': mdiHelpCircle,
+      'open-in-new': mdiOpenInNew,
     };
 
     // Register MDI library with resolver for card icons
@@ -128,6 +147,8 @@ export class TnCardComponent {
       || this.footerLink() || this.footerActions()
     );
   });
+
+  isTitleRouterLink = computed(() => !!this.titleRouterLink());
 
   onTitleClick(): void {
     const link = this.titleLink();

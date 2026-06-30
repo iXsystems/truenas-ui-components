@@ -1,3 +1,5 @@
+import { provideRouter } from '@angular/router';
+import { applicationConfig } from '@storybook/angular';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, within } from 'storybook/test';
 import { TestIdInspectorComponent } from './testid-inspector.component';
@@ -42,7 +44,15 @@ const meta: Meta<TnCardComponent> = {
     },
     titleLink: {
       control: 'text',
-      description: 'URL to navigate to when title is clicked',
+      description: 'External URL; navigates via window.location when the title is clicked',
+    },
+    titleRouterLink: {
+      control: 'text',
+      description: 'Angular router commands; renders the title as an in-app (SPA) link',
+    },
+    titleTooltip: {
+      control: 'text',
+      description: 'Help/hover text shown on the title',
     },
     headerStatus: {
       control: 'object',
@@ -103,6 +113,46 @@ export const Default: Story = {
     const canvas = within(canvasElement);
     const card = canvas.getByText('Card Title');
     await expect(card).toBeInTheDocument();
+  },
+};
+
+export const TitleRouterLinkAndTooltip: Story = {
+  decorators: [applicationConfig({ providers: [provideRouter([])] })],
+  args: {
+    title: 'Recent Orders',
+    titleRouterLink: '/orders',
+    titleTooltip: 'Open the full orders page',
+    elevation: 'medium',
+    padding: 'medium',
+    padContent: true,
+  },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-card
+        [title]="title"
+        [titleRouterLink]="titleRouterLink"
+        [titleTooltip]="titleTooltip"
+        [elevation]="elevation"
+        [padding]="padding"
+        [padContent]="padContent"
+      >
+        <p>The title is an in-app router link (client-side navigation) and carries a tooltip.</p>
+      </tn-card>
+    `,
+  }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    // The decorative open-in-new icon is aria-hidden, so the link's accessible
+    // name stays just the title text (not "Recent Orders open-in-new").
+    const link = canvas.getByRole('link', { name: 'Recent Orders' });
+    await expect(link).toBeInTheDocument();
+    // RouterLink resolves the href to an absolute URL in the browser, so just
+    // assert the link is a real anchor with an href rather than an exact value.
+    await expect(link).toHaveAttribute('href');
+    // The tooltip is a separate help affordance (generic name; the tooltip text
+    // is its description), not folded into the title text.
+    await expect(canvas.getByRole('button', { name: 'More information' })).toBeInTheDocument();
   },
 };
 

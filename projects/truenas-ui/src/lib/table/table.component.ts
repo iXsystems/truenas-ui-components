@@ -27,14 +27,12 @@ import {
 } from '../table-column/table-column.directive';
 import { TnTestIdDirective } from '../test-id';
 
-// Material icons render via the `material-icons` CSS font (see icon.component.ts),
-// so they don't need sprite scanning — the literal `mat-` prefix matches what
-// the runtime icon resolver would produce from a Material library name.
-const SORT_ICON_ASC = 'mat-arrow_upward';
-const SORT_ICON_DESC = 'mat-arrow_downward';
-const SORT_ICON_NONE = 'mat-unfold_more';
-const EXPAND_ICON_DOWN = 'mat-keyboard_arrow_down';
-const EXPAND_ICON_UP = 'mat-keyboard_arrow_up';
+// NOTE: the sort/expand icon names (mat-arrow_upward, mat-keyboard_arrow_down,
+// etc.) are written as string literals directly in the template's `[name]`
+// ternaries, NOT computed here. The icon-sprite scanner only discovers icons
+// from template literals or marker calls; a name returned from a component
+// getter is invisible to it, so the icons would be dropped from the generated
+// sprite and render as nothing. Keep the literals in the template.
 
 export interface TnTableDataSource<T = unknown> {
   data?: T[];
@@ -118,6 +116,20 @@ export class TnTableComponent<T = unknown> implements OnInit {
   selectable = input<boolean>(false);
   expandable = input<boolean>(false);
   bordered = input<boolean>(false);
+
+  /**
+   * Optional per-row predicate deciding whether an individual row can expand.
+   * When omitted, every row is expandable (provided `expandable` is true and a
+   * `tnDetailRowDef` is present). Rows for which it returns `false` render no
+   * expand control, cannot be toggled, and never render a detail row. Has no
+   * effect unless `expandable` is true. Re-evaluated on each change detection,
+   * so it may depend on signals — keep it cheap and pure.
+   *
+   * If the predicate stops allowing an already-expanded row (e.g. it is driven
+   * by dynamic row state), that row is pruned from the expanded set, so it will
+   * not silently reappear expanded should the predicate allow it again later.
+   */
+  isRowExpandable = input<((row: T) => boolean) | undefined>(undefined);
 
   /**
    * Marks a single row as "active" — adds the `tn-table__row--active` class
@@ -252,6 +264,29 @@ export class TnTableComponent<T = unknown> implements OnInit {
       }
     });
 
+    // Prune rows the predicate no longer allows from the expanded set, so a row
+    // that flips expandable -> non-expandable -> expandable does not silently
+    // reappear already expanded. While the set is non-empty the predicate runs,
+    // so any signals it reads (e.g. (row) => allowedIds().includes(row.id)) are
+    // tracked and re-prune as they change. When the set is empty we return early
+    // before the predicate runs — there is nothing to prune, and the next toggle
+    // re-runs this effect and re-tracks the predicate's signals. The
+    // next.size !== expanded.size guard makes the self-write converge after one
+    // extra run, so there is no infinite loop.
+    effect(() => {
+      const predicate = this.isRowExpandable();
+      if (!predicate) { return; }
+      const expanded = this.expandedRows();
+      if (expanded.size === 0) { return; }
+      const next = new Set<unknown>();
+      for (const row of expanded) {
+        if (predicate(row as T)) { next.add(row); }
+      }
+      if (next.size !== expanded.size) {
+        this.expandedRows.set(next);
+      }
+    });
+
     // Measure the host width to drive card/scroll mode. The initial read is
     // taken in `afterNextRender` (guaranteed post-layout, so we get the real
     // width rather than a pre-layout 0), then a `ResizeObserver` keeps it in
@@ -361,25 +396,27 @@ export class TnTableComponent<T = unknown> implements OnInit {
     });
   }
 
-  getSortIcon(column: string): string {
-    if (this.sortColumn() !== column || this.sortDirection() === '') {
-      return SORT_ICON_NONE;
-    }
-    return this.sortDirection() === 'asc' ? SORT_ICON_ASC : SORT_ICON_DESC;
-  }
-
-  getExpandIcon(row: T): string {
-    return this.isRowExpanded(row) ? EXPAND_ICON_UP : EXPAND_ICON_DOWN;
-  }
-
   isSorted(column: string): boolean {
     return this.sortColumn() === column && this.sortDirection() !== '';
   }
 
   // --- Expansion methods ---
 
+  /**
+   * Whether a specific row may currently be expanded. True when `expandable` is
+   * set and — when an `isRowExpandable` predicate is provided — that predicate
+   * returns true for the row. Drives the expand control's visibility and gates
+   * every expansion entry point (chevron, row click, keyboard). The `__expand`
+   * column and the detail row are additionally gated on `detailRowDef()`.
+   */
+  canExpandRow(row: T): boolean {
+    if (!this.expandable()) { return false; }
+    const predicate = this.isRowExpandable();
+    return predicate ? predicate(row) : true;
+  }
+
   toggleRowExpansion(row: T): void {
-    if (!this.expandable()) { return; }
+    if (!this.canExpandRow(row)) { return; }
     const expanded = new Set(this.expandedRows());
     if (expanded.has(row)) {
       expanded.delete(row);
