@@ -3,6 +3,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import type { TnSelectOption, TnSelectOptionGroup } from './select.component';
 import { TnSelectComponent } from './select.component';
 import { TnSelectHarness } from './select.harness';
@@ -833,6 +834,59 @@ describe('TnSelectComponent — per-option test ids', () => {
     ]);
     fixture.detectChanges();
     expect(openAndGetOptionTestIds()).toEqual(['option-quick-filters-ssd', 'option-quick-filters-hdd']);
+  });
+});
+
+// ===========================================================================
+// Control-name fallback — an unset testId scopes the whole select (trigger,
+// options, DOM-id namespace) by the bound formControlName, not just the trigger.
+// ===========================================================================
+@Component({
+  selector: 'tn-test-optionid-form-host',
+  standalone: true,
+  imports: [TnSelectComponent, ReactiveFormsModule],
+   
+  template: `
+    <form [formGroup]="form">
+      <tn-select formControlName="disk" [options]="options" />
+    </form>
+  `,
+})
+class OptionTestIdFormHostComponent {
+  form = new FormGroup({ disk: new FormControl('') });
+  options: TnSelectOption<string>[] = [
+    { value: 'ssd', label: 'SSD' },
+    { value: 'hdd', label: 'Spinning Disk' },
+  ];
+}
+
+describe('TnSelectComponent — control-name test-id fallback', () => {
+  let fixture: ComponentFixture<OptionTestIdFormHostComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({ imports: [OptionTestIdFormHostComponent] }).compileComponents();
+    fixture = TestBed.createComponent(OptionTestIdFormHostComponent);
+    fixture.detectChanges();
+  });
+
+  afterEach(() => fixture.destroy());
+
+  it('scopes the trigger AND the option rows by the control name', () => {
+    const trigger = fixture.nativeElement.querySelector('.tn-select-trigger') as HTMLElement;
+    expect(trigger.getAttribute('data-testid')).toBe('select-disk');
+
+    trigger.click();
+    fixture.detectChanges();
+    const optionTestIds = Array.from(document.querySelectorAll<HTMLElement>('.tn-select-option'))
+      .map((el) => el.getAttribute('data-testid'));
+    expect(optionTestIds).toEqual(['option-disk-ssd', 'option-disk-hdd']);
+  });
+
+  it('derives the DOM-id namespace from the control name (not the instance counter)', () => {
+    const trigger = fixture.nativeElement.querySelector('.tn-select-trigger') as HTMLElement;
+    trigger.click(); // aria-controls (→ panel id, built from the namespace) is only set while open.
+    fixture.detectChanges();
+    expect(trigger.getAttribute('aria-controls')).toBe('tn-select-dropdown-disk');
   });
 });
 

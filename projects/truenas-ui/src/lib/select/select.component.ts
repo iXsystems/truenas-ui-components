@@ -122,11 +122,12 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
 
   /**
    * Id namespace used by all DOM ids the template emits (dropdown panel,
-   * option rows, group labels). Prefers `testId` when set so tests can target
-   * specific instances; otherwise falls back to a per-instance counter so two
+   * option rows, group labels). Prefers the resolved test-id base (explicit
+   * `testId`, else the bound control name) so tests can target specific
+   * instances; otherwise falls back to a per-instance counter so two
    * `<tn-select>`s on the same page never collide on `aria-controls`/group ids.
    */
-  protected idNamespace = computed(() => composeTestId(undefined, this.testId()) || this.instanceId);
+  protected idNamespace = computed(() => composeTestId(undefined, this.resolvedTestId()) || this.instanceId);
 
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
@@ -201,18 +202,18 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
 
   /**
    * Test-id segments for an option row, consumed by `[tnTestId]` with
-   * `tnTestIdType="option"`. The select's `testId` scopes each option so ids
-   * stay unique across selects: base `quick-filters` + option value `ssd` →
-   * `option-quick-filters-ssd`; with no base → `option-ssd`. The discriminator
-   * comes from `optionTestIdKey` when provided, else the option's primitive
-   * `value`, else its `label`.
+   * `tnTestIdType="option"`. The select's resolved base (explicit `testId`, else
+   * the bound control name) scopes each option so ids stay unique across selects:
+   * base `quick-filters` + option value `ssd` → `option-quick-filters-ssd`; with
+   * no base → `option-ssd`. The discriminator comes from `optionTestIdKey` when
+   * provided, else the option's primitive `value`, else its `label`.
    */
   protected optionTestIdParts(option: TnSelectOption<T>): (string | number | null | undefined)[] {
     // The synthetic empty option gets a fixed `empty` discriminator — its
     // label (`--` by default) would be stripped entirely by kebab
     // normalization, leaving a non-unique id.
     if (this.isEmptyOption(option)) {
-      return scopeTestId(this.testId(), 'empty');
+      return scopeTestId(this.resolvedTestId(), 'empty');
     }
     const extractor = this.optionTestIdKey();
     let key: string | number | null | undefined;
@@ -223,7 +224,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     } else {
       key = option.label;
     }
-    return scopeTestId(this.testId(), key);
+    return scopeTestId(this.resolvedTestId(), key);
   }
 
   private onChange = (_value: T | T[] | null) => {};
