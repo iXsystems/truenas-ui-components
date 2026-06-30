@@ -722,6 +722,29 @@ describe('TnTableComponent', () => {
         component.onCardClick(clickEventFrom('<span class="tn-table__card-title">x</span>'), row);
         expect(emit).not.toHaveBeenCalled();
       });
+
+      it('should emit rowClick when a value folded under "More fields" is clicked', () => {
+        fixture.componentRef.setInput('clickable', true);
+        fixture.detectChanges();
+        const host = document.createElement('div');
+        host.innerHTML =
+          '<details class="tn-table__card-more"><dd class="tn-table__card-field-value">x</dd></details>';
+        const target = host.querySelector('.tn-table__card-field-value') as HTMLElement;
+        const emit = jest.spyOn(component.rowClick, 'emit');
+        component.onCardClick({ target } as unknown as Event, row);
+        expect(emit).toHaveBeenCalledWith(row);
+      });
+
+      it('should not emit rowClick when the "More fields" summary toggle is clicked', () => {
+        fixture.componentRef.setInput('clickable', true);
+        fixture.detectChanges();
+        const emit = jest.spyOn(component.rowClick, 'emit');
+        component.onCardClick(
+          clickEventFrom('<summary class="tn-table__card-more-summary">More fields</summary>'),
+          row
+        );
+        expect(emit).not.toHaveBeenCalled();
+      });
     });
   });
 });

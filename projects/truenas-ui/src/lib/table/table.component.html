@@ -43,6 +43,21 @@
     </div>
   }
 
+  <ng-template #cardField let-column let-row="row">
+    <div class="tn-table__card-field" [attr.data-column]="column">
+      <dt class="tn-table__card-field-label">{{ getCardLabel(column) }}</dt>
+      <dd class="tn-table__card-field-value">
+        @if (getColumnDef(column)?.cellTemplate(); as tmpl) {
+          <ng-container
+            [ngTemplateOutlet]="tmpl"
+            [ngTemplateOutletContext]="{ $implicit: row, column: column }" />
+        } @else {
+          {{ getCellValue(row, column) }}
+        }
+      </dd>
+    </div>
+  </ng-template>
+
   <div class="tn-table__cards" role="list">
     @for (row of data(); track trackByFn()($index, row); let rowIdx = $index) {
       <div
@@ -52,7 +67,6 @@
         [class.tn-table__card--active]="isRowActive(row)"
         [class.tn-table__card--clickable]="clickable()"
         [attr.tabindex]="clickable() ? 0 : null"
-        [attr.aria-selected]="clickable() ? isRowActive(row) : null"
         (click)="onCardClick($event, row)"
         (keydown)="onCardKeydown($event, row)">
         <div class="tn-table__card-header">
@@ -86,35 +100,17 @@
 
         <dl class="tn-table__card-fields">
           @for (column of cardPrimaryColumns(); track column) {
-            <div class="tn-table__card-field" [attr.data-column]="column">
-              <dt class="tn-table__card-field-label">{{ getCardLabel(column) }}</dt>
-              <dd class="tn-table__card-field-value">
-                @if (getColumnDef(column)?.cellTemplate(); as tmpl) {
-                  <ng-container
-                    [ngTemplateOutlet]="tmpl"
-                    [ngTemplateOutletContext]="{ $implicit: row, column: column }" />
-                } @else {
-                  {{ getCellValue(row, column) }}
-                }
-              </dd>
-            </div>
+            <ng-container
+              [ngTemplateOutlet]="cardField"
+              [ngTemplateOutletContext]="{ $implicit: column, row: row }" />
           }
           @if (cardSecondaryColumns().length > 0) {
             <details class="tn-table__card-more">
               <summary class="tn-table__card-more-summary">More fields</summary>
               @for (column of cardSecondaryColumns(); track column) {
-                <div class="tn-table__card-field" [attr.data-column]="column">
-                  <dt class="tn-table__card-field-label">{{ getCardLabel(column) }}</dt>
-                  <dd class="tn-table__card-field-value">
-                    @if (getColumnDef(column)?.cellTemplate(); as tmpl) {
-                      <ng-container
-                        [ngTemplateOutlet]="tmpl"
-                        [ngTemplateOutletContext]="{ $implicit: row, column: column }" />
-                    } @else {
-                      {{ getCellValue(row, column) }}
-                    }
-                  </dd>
-                </div>
+                <ng-container
+                  [ngTemplateOutlet]="cardField"
+                  [ngTemplateOutletContext]="{ $implicit: column, row: row }" />
               }
             </details>
           }

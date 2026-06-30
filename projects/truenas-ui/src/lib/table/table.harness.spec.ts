@@ -96,12 +96,36 @@ class TableHarnessTestComponent {
   }
 }
 
+// jsdom has no ResizeObserver, so tn-table can't measure its container on its
+// own. This mock captures the observer the component creates and lets a test
+// push a width through the real callback path — no reaching into private state.
+class MockResizeObserver {
+  static instances: MockResizeObserver[] = [];
+  constructor(private cb: ResizeObserverCallback) {
+    MockResizeObserver.instances.push(this);
+  }
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+  emitWidth(width: number): void {
+    this.cb(
+      [{ contentRect: { width } } as ResizeObserverEntry],
+      this as unknown as ResizeObserver
+    );
+  }
+}
+
 describe('TnTableHarness', () => {
   let fixture: ComponentFixture<TableHarnessTestComponent>;
   let component: TableHarnessTestComponent;
   let loader: HarnessLoader;
+  let originalResizeObserver: typeof ResizeObserver | undefined;
 
   beforeEach(async () => {
+    originalResizeObserver = globalThis.ResizeObserver;
+    MockResizeObserver.instances = [];
+    globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+
     await TestBed.configureTestingModule({
       imports: [TableHarnessTestComponent, NoopAnimationsModule],
     }).compileComponents();
@@ -110,6 +134,10 @@ describe('TnTableHarness', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
     loader = TestbedHarnessEnvironment.loader(fixture);
+  });
+
+  afterEach(() => {
+    globalThis.ResizeObserver = originalResizeObserver as typeof ResizeObserver;
   });
 
   describe('basic queries', () => {
@@ -399,14 +427,13 @@ describe('TnTableHarness', () => {
 
   describe('card layout selection', () => {
     // jsdom reports a 0px host width, so card mode never engages on its own.
-    // `mobileLayout` is opted into via the host (below); here we just force the
-    // observed container width under the breakpoint to render cards.
+    // `mobileLayout` is opted into via the host (below); here we push a sub-
+    // breakpoint width through the component's ResizeObserver (mocked above).
     function forceCardMode(): TnTableComponent {
-      const table = fixture.debugElement.query(By.directive(TnTableComponent))
-        .componentInstance as TnTableComponent;
-      (table as unknown as { containerWidth: { set(n: number): void } }).containerWidth.set(320);
+      MockResizeObserver.instances.forEach((o) => o.emitWidth(320));
       fixture.detectChanges();
-      return table;
+      return fixture.debugElement.query(By.directive(TnTableComponent))
+        .componentInstance as TnTableComponent;
     }
 
     // Click the checkbox host, which carries the `(click)` toggle handler (with

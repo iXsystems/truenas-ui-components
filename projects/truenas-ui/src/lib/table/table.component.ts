@@ -473,8 +473,11 @@ export class TnTableComponent<T = unknown> implements OnInit {
 
   private isCardControlTarget(event: Event): boolean {
     const target = event.target as HTMLElement | null;
+    // Only the interactive controls suppress card activation — notably the
+    // "More fields" summary toggle, NOT the whole <details>, so clicking a field
+    // value behaves the same whether it's a primary field or folded under it.
     return !!target?.closest(
-      '.tn-table__card-actions, .tn-table__card-select, .tn-table__card-more, .tn-table__card-detail-toggle'
+      '.tn-table__card-actions, .tn-table__card-select, .tn-table__card-more-summary, .tn-table__card-detail-toggle'
     );
   }
 
