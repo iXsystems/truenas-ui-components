@@ -272,6 +272,23 @@ describe('TnSelectHarness', () => {
       // class for us to assert on — covered by CDK's own tests.
       expect(document.querySelector('.tn-select-dropdown')).not.toBeNull();
     });
+
+    it('should close when the backdrop (outside click) is clicked', async () => {
+      const select = await loader.getHarness(TnSelectHarness);
+      await select.open();
+      expect(await select.isOpen()).toBe(true);
+
+      // A click anywhere outside the panel lands on the transparent backdrop
+      // that CDK renders over the viewport. This is the dismiss path that was
+      // previously broken: the backdrop-less overlay only closed on clicks
+      // strictly outside the (oversized) pane, so clicks in the empty area
+      // beside a narrow panel never dismissed it.
+      const backdrop = document.querySelector<HTMLElement>('.cdk-overlay-backdrop');
+      expect(backdrop).not.toBeNull();
+      backdrop!.click();
+
+      expect(await select.isOpen()).toBe(false);
+    });
   });
 
   describe('selectOption', () => {
