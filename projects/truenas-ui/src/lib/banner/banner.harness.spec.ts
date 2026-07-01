@@ -113,4 +113,14 @@ describe('TnBannerHarness', () => {
       TnBannerHarness.with({ textContains: 'NonExistentText12345' })
     )).toBe(false);
   });
+
+  it('should partial match with strings', async () => {
+    hostComponent.message.set('Error: timeout occurred');
+    fixture.detectChanges();
+
+    const banner = await loader.getHarness(
+      TnBannerHarness.with({ textContains: 'Error:' })
+    );
+    expect(banner).toBeTruthy();
+  });
 });
