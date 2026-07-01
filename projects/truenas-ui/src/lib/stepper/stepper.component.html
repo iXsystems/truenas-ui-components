@@ -17,7 +17,7 @@
          [class.tn-stepper__step-header--optional]="step.optional()"
          (click)="selectStep(i)"
          (keydown.enter)="selectStep(i)"
-         (keydown.space)="selectStep(i)">
+         (keydown.space)="$event.preventDefault(); selectStep(i)">
 
       <!-- Step Number/Icon -->
       <div class="tn-stepper__step-indicator"

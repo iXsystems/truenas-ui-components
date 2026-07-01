@@ -188,11 +188,10 @@
   }
 }
 
-// Icon-based indicators (completed / error) carry their own shape and colour,
-// so drop the circular background and render the icon at full step diameter.
-// The `.tn-stepper__step-indicator` selector below keeps specificity above the
-// active-step background rule, so an active *and* completed step (the current
-// step once its form is valid) shows the icon, not a filled circle behind it.
+// The error indicator carries its own shape and colour, so drop the circular
+// background and render the icon at full step diameter. This selector keeps
+// specificity above the active-step background rule, so an active step in an
+// error state shows the icon, not a filled circle behind it.
 .tn-stepper__step-indicator.tn-stepper__step-indicator--glyph {
   background: transparent;
   transform: scale(1);
@@ -258,6 +257,12 @@
   &:focus:not(:focus-visible) {
     outline: none;
   }
+}
+
+// Linear-gated steps are a no-op on click (see aria-disabled in the template);
+// signal that they aren't actionable rather than keeping the pointer cursor.
+.tn-stepper__step-header[aria-disabled='true'] {
+  cursor: not-allowed;
 }
 
 // Tablet and mobile screens - shrink the horizontal stepper (vertical mode already

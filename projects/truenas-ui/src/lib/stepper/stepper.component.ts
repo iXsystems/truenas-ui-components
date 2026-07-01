@@ -1,7 +1,7 @@
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import {
-  ChangeDetectorRef, Component, input, output, contentChildren, computed, effect, model, signal, inject,
+  Component, input, output, contentChildren, computed, effect, model, signal,
 } from '@angular/core';
 import { TnStepComponent } from './step.component';
 import { TnIconComponent } from '../icon/icon.component';
@@ -23,7 +23,7 @@ import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
     ])
   ],
   host: {
-    '(window:resize)': 'onWindowResize($event)'
+    '(window:resize)': 'onWindowResize()'
   }
 })
 export class TnStepperComponent {
@@ -46,8 +46,6 @@ export class TnStepperComponent {
   // default but never reached stays a plain number.
   readonly maxReachedIndex = signal(0);
 
-  private cdr = inject(ChangeDetectorRef);
-
   constructor() {
     effect(() => {
       const index = this.selectedIndex();
@@ -65,8 +63,8 @@ export class TnStepperComponent {
     });
   }
 
-  onWindowResize(_event: Event) {
-    this.cdr.detectChanges();
+  onWindowResize(): void {
+    this.isWideScreen.set(window.innerWidth > 768);
   }
 
   private _getStepData(): Array<{ label: string; completed: boolean; data: unknown }> {
@@ -77,10 +75,10 @@ export class TnStepperComponent {
     }));
   }
 
-  isWideScreen = computed(() => {
-    // Note: This will only update on window resize due to ChangeDetectorRef trigger
-    return window.innerWidth > 768;
-  });
+  // Tracks whether the viewport is wide enough for the horizontal layout. A signal
+  // (not a computed over `window.innerWidth`, which is non-reactive and would freeze on
+  // first read) so `onWindowResize` can `.set()` it and `auto` orientation re-evaluates.
+  private isWideScreen = signal(window.innerWidth > 768);
 
   // Vertical mode lays the active step's content out inline beneath its header
   // (mat-vertical-stepper style), so it fits narrow containers such as side panels.
@@ -99,11 +97,6 @@ export class TnStepperComponent {
       (step, index) => !!step.completed() && index <= max && index !== current,
     );
   });
-
-  /** Whether the step at `index` shows the edit (pencil) affordance. */
-  isStepEditable(index: number): boolean {
-    return this.stepEditable()[index] ?? false;
-  }
 
   // Per-index "gated" flags for linear mode: a step is gated (not yet selectable) while
   // any prior step is incomplete. Memoized so the header's aria-disabled / tabindex

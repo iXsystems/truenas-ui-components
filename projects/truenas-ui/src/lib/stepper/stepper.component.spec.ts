@@ -73,6 +73,18 @@ describe('TnStepperComponent', () => {
     loader = TestbedHarnessEnvironment.loader(fixture);
   });
 
+  // Restore jsdom's default width so a resize test can't leak a narrow viewport into
+  // sibling tests (the component seeds isWideScreen from window.innerWidth at creation).
+  afterEach(() => {
+    setViewportWidth(1024);
+  });
+
+  /** Overrides window.innerWidth and dispatches the resize event the component listens for. */
+  function setViewportWidth(width: number): void {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: width });
+    window.dispatchEvent(new Event('resize'));
+  }
+
   /** Clicks the first `<tn-button>` whose visible label matches `text`. */
   function clickButton(text: string): void {
     const buttons = Array.from(
@@ -205,6 +217,20 @@ describe('TnStepperComponent', () => {
 
       const stepper = await loader.getHarness(TnStepperHarness);
       expect(await stepper.getOrientation()).toBe('horizontal');
+    });
+
+    it('re-evaluates "auto" orientation when the viewport is resized', async () => {
+      host.orientation.set('auto');
+      fixture.detectChanges();
+
+      const stepper = await loader.getHarness(TnStepperHarness);
+      expect(await stepper.getOrientation()).toBe('horizontal');
+
+      // Shrink below the 768px breakpoint and fire the resize the host listens for.
+      setViewportWidth(500);
+      fixture.detectChanges();
+
+      expect(await stepper.getOrientation()).toBe('vertical');
     });
   });
 

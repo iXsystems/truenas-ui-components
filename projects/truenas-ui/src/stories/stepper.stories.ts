@@ -140,7 +140,7 @@ The IX Stepper component provides a guided step-by-step interface for complex wo
 Steps can have different visual states:
 
 - **Active**: Currently selected step (blue indicator)
-- **Completed**: Finished step (green indicator with checkmark)
+- **Completed**: Finished step. Once visited and left, its number is replaced by an edit (pencil) affordance so the user can go back and revise it
 - **Error**: Step with validation errors (red indicator with exclamation)
 - **Optional**: Non-required step (dashed border)
 - **Disabled**: Cannot be selected in linear mode
@@ -295,7 +295,7 @@ export const StepStates: Story = {
       <tn-stepper [selectedIndex]="2">
         <tn-step label="Completed Step" [completed]="true">
           <h4>✓ Account Setup Complete</h4>
-          <p>This step has been successfully completed and shows a green indicator with checkmark.</p>
+          <p>This step is complete. Once it has been visited and left, its number is replaced by an edit (pencil) affordance so you can go back and change it.</p>
           <div style="background: var(--tn-green, #28a745); color: white; padding: 8px; border-radius: 4px; margin-top: 8px;">
             <strong>Status:</strong> Completed - Account created and verified
           </div>
