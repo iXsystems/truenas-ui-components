@@ -7,8 +7,10 @@
   <!-- Shared step header (indicator + label) -->
   <ng-template #stepHeader let-step="step" let-i="i">
     <div class="tn-stepper__step-header"
-         tabindex="0"
          role="button"
+         [attr.tabindex]="stepGated()[i] ? -1 : 0"
+         [attr.aria-current]="selectedIndex() === i ? 'step' : null"
+         [attr.aria-disabled]="stepGated()[i] ? 'true' : null"
          [class.tn-stepper__step-header--active]="selectedIndex() === i"
          [class.tn-stepper__step-header--completed]="step.completed()"
          [class.tn-stepper__step-header--error]="step.hasError()"
@@ -22,7 +24,7 @@
            [class.tn-stepper__step-indicator--glyph]="step.hasError()">
         @if (step.hasError()) {
           <tn-icon class="tn-stepper__step-error" name="alert" library="mdi" [attr.aria-hidden]="true" />
-        } @else if (isStepEditable(i)) {
+        } @else if (stepEditable()[i]) {
           <tn-icon class="tn-stepper__step-edit" name="pencil" library="mdi" [attr.aria-hidden]="true" />
         } @else if (step.icon()) {
           <span class="tn-stepper__step-icon">{{ step.icon() }}</span>

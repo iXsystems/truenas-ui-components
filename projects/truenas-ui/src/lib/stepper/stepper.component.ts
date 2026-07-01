@@ -88,12 +88,32 @@ export class TnStepperComponent {
     return this.orientation() === 'vertical' || (this.orientation() === 'auto' && !this.isWideScreen());
   });
 
-  // A step shows the "edit" (pencil) icon once it has been visited and is valid but is
-  // not the current step — signalling the user can go back and change it.
+  // Per-index "editable" flags. A step shows the "edit" (pencil) icon once it has been
+  // visited and is valid (completed) but isn't the current step — signalling the user can
+  // go back and change it. Computed (not a per-call method) so it's evaluated once per
+  // change-detection cycle and cheaply indexed in the template, even as step counts grow.
+  readonly stepEditable = computed<boolean[]>(() => {
+    const max = this.maxReachedIndex();
+    const current = this.selectedIndex();
+    return this.steps().map(
+      (step, index) => !!step.completed() && index <= max && index !== current,
+    );
+  });
+
+  /** Whether the step at `index` shows the edit (pencil) affordance. */
   isStepEditable(index: number): boolean {
-    const step = this.steps()[index];
-    return !!step?.completed() && index <= this.maxReachedIndex() && index !== this.selectedIndex();
+    return this.stepEditable()[index] ?? false;
   }
+
+  // Per-index "gated" flags for linear mode: a step is gated (not yet selectable) while
+  // any prior step is incomplete. Memoized so the header's aria-disabled / tabindex
+  // bindings don't re-run canSelectStep() for every step on each change-detection cycle.
+  readonly stepGated = computed<boolean[]>(() => {
+    if (!this.linear()) {
+      return this.steps().map(() => false);
+    }
+    return this.steps().map((_step, index) => !this.canSelectStep(index));
+  });
 
   selectStep(index: number): void {
     if (!this.linear() || this.canSelectStep(index)) {
