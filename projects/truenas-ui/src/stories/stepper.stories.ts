@@ -1,7 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { userEvent, within } from 'storybook/test';
 import { TestIdInspectorComponent } from './testid-inspector.component';
+import { TnButtonComponent } from '../lib/button/button.component';
 import { TnInputComponent } from '../lib/input/input.component';
-import { TnStepperComponent, TnStepComponent } from '../lib/stepper';
+import {
+  TnStepperComponent,
+  TnStepComponent,
+  TnStepperNextDirective,
+  TnStepperPreviousDirective,
+} from '../lib/stepper';
 
 
 const meta: Meta<TnStepperComponent> = {
@@ -133,7 +140,7 @@ The IX Stepper component provides a guided step-by-step interface for complex wo
 Steps can have different visual states:
 
 - **Active**: Currently selected step (blue indicator)
-- **Completed**: Finished step (green indicator with checkmark)
+- **Completed**: Finished step. Once visited and left, its number is replaced by an edit (pencil) affordance so the user can go back and revise it
 - **Error**: Step with validation errors (red indicator with exclamation)
 - **Optional**: Non-required step (dashed border)
 - **Disabled**: Cannot be selected in linear mode
@@ -288,7 +295,7 @@ export const StepStates: Story = {
       <tn-stepper [selectedIndex]="2">
         <tn-step label="Completed Step" [completed]="true">
           <h4>✓ Account Setup Complete</h4>
-          <p>This step has been successfully completed and shows a green indicator with checkmark.</p>
+          <p>This step is complete. Once it has been visited and left, its number is replaced by an edit (pencil) affordance so you can go back and change it.</p>
           <div style="background: var(--tn-green, #28a745); color: white; padding: 8px; border-radius: 4px; margin-top: 8px;">
             <strong>Status:</strong> Completed - Account created and verified
           </div>
@@ -333,6 +340,87 @@ export const StepStates: Story = {
       imports: [TnStepperComponent, TnStepComponent, TnInputComponent]
     }
   })
+};
+
+/**
+ * **Vertical wizard with navigation directives.** In `vertical` orientation the
+ * active step's content lays out inline beneath its header (mat-vertical-stepper
+ * style), so the stepper fits narrow containers like side panels.
+ *
+ * Navigation is driven declaratively by `tnStepperNext` / `tnStepperPrevious` on
+ * buttons inside the step content — no need to wire up `(click)="stepper.next()"`
+ * or hold a `viewChild` reference. The directives resolve the ancestor stepper
+ * through DI, so a `[disabled]` Next button naturally gates progression.
+ *
+ * Once a completed step has been visited it shows the **edit (pencil)**
+ * affordance instead of its number — click the header to jump back and revise
+ * it. The middle step demonstrates the error state with a step-level
+ * `errorMessage`.
+ */
+export const VerticalWizard: Story = {
+  render: () => ({
+    template: `
+      <div style="max-width: 420px;">
+        <tn-stepper orientation="vertical">
+          <tn-step label="Pool name" [completed]="true">
+            <p>Give the storage pool a unique name.</p>
+            <div style="margin: 12px 0;">
+              <tn-input placeholder="e.g. tank"></tn-input>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <tn-button tnStepperNext label="Next"></tn-button>
+            </div>
+          </tn-step>
+
+          <tn-step
+            label="Configure"
+            [hasError]="true"
+            errorMessage="Select at least two disks for redundancy">
+            <p>Choose the disks and topology for this pool.</p>
+            <div style="margin: 12px 0;">
+              <tn-input placeholder="Disks (comma separated)"></tn-input>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <tn-button tnStepperPrevious label="Back"></tn-button>
+              <tn-button tnStepperNext label="Next"></tn-button>
+            </div>
+          </tn-step>
+
+          <tn-step label="Review">
+            <p>Confirm the configuration and create the pool.</p>
+            <div style="display: flex; gap: 8px;">
+              <tn-button tnStepperPrevious label="Back"></tn-button>
+              <tn-button label="Create pool"></tn-button>
+            </div>
+          </tn-step>
+        </tn-stepper>
+      </div>
+    `,
+    moduleMetadata: {
+      imports: [
+        TnStepperComponent,
+        TnStepComponent,
+        TnStepperNextDirective,
+        TnStepperPreviousDirective,
+        TnButtonComponent,
+        TnInputComponent,
+      ],
+    },
+  }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    // Start on the first step (only the active step's content is rendered).
+    await canvas.findByText('Give the storage pool a unique name.');
+
+    // tnStepperNext advances the stepper.
+    await userEvent.click(canvas.getByRole('button', { name: 'Next' }));
+    await canvas.findByText('Choose the disks and topology for this pool.');
+
+    // tnStepperPrevious moves back.
+    await userEvent.click(canvas.getByRole('button', { name: 'Back' }));
+    await canvas.findByText('Give the storage pool a unique name.');
+  },
 };
 
 /**
