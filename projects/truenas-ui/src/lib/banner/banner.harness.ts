@@ -50,7 +50,13 @@ export class TnBannerHarness extends ComponentHarness {
   static with(options: BannerHarnessFilters = {}) {
     return new HarnessPredicate(TnBannerHarness, options)
       .addOption('textContains', options.textContains, (harness, text) =>
-        HarnessPredicate.stringMatches(harness.getText(), text)
+        HarnessPredicate.stringMatches(
+          harness.getText(),
+          // strings trigger exact matching in `stringMatches`, but since we call the option
+          // `textContains`, this would be misleading. here, we convert strings to a Regex
+          // to trigger partial matching behavior on `stringMatches`.
+          typeof text === 'string' ? new RegExp(text) : text
+        )
       );
   }
 
