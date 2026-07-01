@@ -7,7 +7,7 @@ import { InputType } from '../enums/input-type.enum';
 import { tnIconMarker } from '../icon/icon-marker';
 import type { IconLibraryType } from '../icon/icon.component';
 import { TnIconComponent } from '../icon/icon.component';
-import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import { TnTestIdDirective, controlTestId, type TnTestIdValue } from '../test-id';
 import { formatSize, parseSize, type SizeStandard } from './size-conversion';
 
 // Module-level counter for deterministic, unique instance ids (matches the
@@ -35,6 +35,8 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
   inputType = input<InputType>(InputType.PlainText);
   placeholder = input<string>('');
   testId = input<TnTestIdValue>(undefined);
+  /** Test-id base, falling back to the bound control name when `testId` is unset. */
+  protected resolvedTestId = controlTestId(this.testId);
   disabled = input<boolean>(false);
   multiline = input<boolean>(false);
   rows = input<number>(3);

@@ -5,7 +5,7 @@ import { Component, viewChild, inject, input, output, computed, signal, forwardR
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
-import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import { TnTestIdDirective, controlTestId, type TnTestIdValue } from '../test-id';
 
 @Component({
   selector: 'tn-radio',
@@ -30,6 +30,8 @@ export class TnRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
   disabled = input<boolean>(false);
   required = input<boolean>(false);
   testId = input<TnTestIdValue>(undefined);
+  /** Test-id base, falling back to the bound control name when `testId` is unset. */
+  protected resolvedTestId = controlTestId(this.testId);
   error = input<string | null>(null);
 
   change = output<unknown>();

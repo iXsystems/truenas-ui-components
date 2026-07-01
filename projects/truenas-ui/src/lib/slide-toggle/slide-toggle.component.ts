@@ -5,7 +5,7 @@ import { Component, viewChild, inject, input, output, computed, signal, forwardR
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
-import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import { TnTestIdDirective, controlTestId, type TnTestIdValue } from '../test-id';
 
 export type SlideToggleColor = 'primary' | 'accent' | 'warn';
 
@@ -32,6 +32,8 @@ export class TnSlideToggleComponent implements AfterViewInit, OnDestroy, Control
   required = input<boolean>(false);
   color = input<SlideToggleColor>('primary');
   testId = input<TnTestIdValue>(undefined);
+  /** Test-id base, falling back to the bound control name when `testId` is unset. */
+  protected resolvedTestId = controlTestId(this.testId);
   ariaLabel = input<string | undefined>(undefined);
   ariaLabelledby = input<string | undefined>(undefined);
   checked = input<boolean>(false);
