@@ -1,7 +1,10 @@
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, input, output, contentChildren, computed, effect, model, inject } from '@angular/core';
+import {
+  ChangeDetectorRef, Component, input, output, contentChildren, computed, effect, model, signal, inject,
+} from '@angular/core';
 import { TnStepComponent } from './step.component';
+import { TnIconComponent } from '../icon/icon.component';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
@@ -10,7 +13,7 @@ import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
   templateUrl: './stepper.component.html',
   styleUrls: ['./stepper.component.scss'],
   standalone: true,
-  imports: [CommonModule, TnTestIdDirective, LabelMarkupPipe],
+  imports: [CommonModule, TnTestIdDirective, LabelMarkupPipe, TnIconComponent],
   animations: [
     trigger('stepTransition', [
       transition(':enter', [
@@ -38,9 +41,19 @@ export class TnStepperComponent {
 
   steps = contentChildren(TnStepComponent, { descendants: true });
 
+  // Highest step index the user has navigated to. Used to reveal the "edit" (pencil)
+  // affordance only on steps that have actually been visited — a step that is valid by
+  // default but never reached stays a plain number.
+  readonly maxReachedIndex = signal(0);
+
   private cdr = inject(ChangeDetectorRef);
 
   constructor() {
+    effect(() => {
+      const index = this.selectedIndex();
+      this.maxReachedIndex.update((max) => Math.max(max, index));
+    });
+
     // Effect to check if all steps are completed
     effect(() => {
       // Trigger on any step completion change
@@ -68,6 +81,19 @@ export class TnStepperComponent {
     // Note: This will only update on window resize due to ChangeDetectorRef trigger
     return window.innerWidth > 768;
   });
+
+  // Vertical mode lays the active step's content out inline beneath its header
+  // (mat-vertical-stepper style), so it fits narrow containers such as side panels.
+  isVertical = computed(() => {
+    return this.orientation() === 'vertical' || (this.orientation() === 'auto' && !this.isWideScreen());
+  });
+
+  // A step shows the "edit" (pencil) icon once it has been visited and is valid but is
+  // not the current step — signalling the user can go back and change it.
+  isStepEditable(index: number): boolean {
+    const step = this.steps()[index];
+    return !!step?.completed() && index <= this.maxReachedIndex() && index !== this.selectedIndex();
+  }
 
   selectStep(index: number): void {
     if (!this.linear() || this.canSelectStep(index)) {

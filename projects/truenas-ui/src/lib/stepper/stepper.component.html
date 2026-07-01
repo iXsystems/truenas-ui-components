@@ -1,65 +1,86 @@
 <div class="tn-stepper"
      tnTestIdType="stepper"
-     [class.tn-stepper--horizontal]="orientation() === 'horizontal' || (orientation() === 'auto' && isWideScreen())"
-     [class.tn-stepper--vertical]="orientation() === 'vertical' || (orientation() === 'auto' && !isWideScreen())"
+     [class.tn-stepper--horizontal]="!isVertical()"
+     [class.tn-stepper--vertical]="isVertical()"
      [tnTestId]="testId()">
 
-  <!-- Step Headers -->
-  <div class="tn-stepper__header">
-    @for (step of steps(); track $index; let i = $index) {
-      <div class="tn-stepper__step-header"
-           tabindex="0"
-           role="button"
-           [class.tn-stepper__step-header--active]="selectedIndex() === i"
-           [class.tn-stepper__step-header--completed]="step.completed()"
-           [class.tn-stepper__step-header--error]="step.hasError()"
-           [class.tn-stepper__step-header--optional]="step.optional()"
-           (click)="selectStep(i)"
-           (keydown.enter)="selectStep(i)"
-           (keydown.space)="selectStep(i)">
+  <!-- Shared step header (indicator + label) -->
+  <ng-template #stepHeader let-step="step" let-i="i">
+    <div class="tn-stepper__step-header"
+         tabindex="0"
+         role="button"
+         [class.tn-stepper__step-header--active]="selectedIndex() === i"
+         [class.tn-stepper__step-header--completed]="step.completed()"
+         [class.tn-stepper__step-header--error]="step.hasError()"
+         [class.tn-stepper__step-header--optional]="step.optional()"
+         (click)="selectStep(i)"
+         (keydown.enter)="selectStep(i)"
+         (keydown.space)="selectStep(i)">
 
-        <!-- Step Number/Icon -->
-        <div class="tn-stepper__step-indicator">
-          @if (step.completed() && !step.hasError()) {
-            <span class="tn-stepper__step-check">✓</span>
-          }
-          @if (step.hasError()) {
-            <span class="tn-stepper__step-error">!</span>
-          }
-          @if (!step.completed() && !step.hasError()) {
-            @if (step.icon()) {
-              <span class="tn-stepper__step-icon">{{ step.icon() }}</span>
-            } @else {
-              <span class="tn-stepper__step-number">{{ i + 1 }}</span>
-            }
-          }
-        </div>
-
-        <!-- Step Label -->
-        <div class="tn-stepper__step-label">
-          <div class="tn-stepper__step-title" [innerHTML]="step.label() | tnLabelMarkup"></div>
-          @if (step.optional()) {
-            <span class="tn-stepper__step-subtitle">Optional</span>
-          }
-        </div>
+      <!-- Step Number/Icon -->
+      <div class="tn-stepper__step-indicator"
+           [class.tn-stepper__step-indicator--glyph]="step.hasError()">
+        @if (step.hasError()) {
+          <tn-icon class="tn-stepper__step-error" name="alert" library="mdi" [attr.aria-hidden]="true" />
+        } @else if (isStepEditable(i)) {
+          <tn-icon class="tn-stepper__step-edit" name="pencil" library="mdi" [attr.aria-hidden]="true" />
+        } @else if (step.icon()) {
+          <span class="tn-stepper__step-icon">{{ step.icon() }}</span>
+        } @else {
+          <span class="tn-stepper__step-number">{{ i + 1 }}</span>
+        }
       </div>
 
-      <!-- Connector Line (except for last step) -->
-      @if (i < steps().length - 1) {
-        <div class="tn-stepper__connector"></div>
-      }
-    }
-  </div>
+      <!-- Step Label -->
+      <div class="tn-stepper__step-label">
+        <div class="tn-stepper__step-title" [innerHTML]="step.label() | tnLabelMarkup"></div>
+        @if (step.hasError() && step.errorMessage()) {
+          <span class="tn-stepper__step-error-message">{{ step.errorMessage() }}</span>
+        } @else if (step.optional()) {
+          <span class="tn-stepper__step-subtitle">Optional</span>
+        }
+      </div>
+    </div>
+  </ng-template>
 
-  <!-- Step Content -->
-  <div class="tn-stepper__content">
-    @for (step of steps(); track $index; let i = $index) {
-      @if (selectedIndex() === i) {
-        <div class="tn-stepper__step-content"
-             [@stepTransition]="selectedIndex()">
-          <ng-container *ngTemplateOutlet="step.content()" />
+  @if (isVertical()) {
+    <!-- Vertical: content renders inline beneath the active step's header -->
+    <div class="tn-stepper__header">
+      @for (step of steps(); track $index; let i = $index) {
+        <div class="tn-stepper__step" [class.tn-stepper__step--last]="i === steps().length - 1">
+          <ng-container *ngTemplateOutlet="stepHeader; context: { step, i }" />
+
+          <div class="tn-stepper__step-body">
+            @if (selectedIndex() === i) {
+              <div class="tn-stepper__step-content" [@stepTransition]="selectedIndex()">
+                <ng-container *ngTemplateOutlet="step.content()" />
+              </div>
+            }
+          </div>
         </div>
       }
-    }
-  </div>
+    </div>
+  } @else {
+    <!-- Horizontal: headers in a row, active content below -->
+    <div class="tn-stepper__header">
+      @for (step of steps(); track $index; let i = $index) {
+        <ng-container *ngTemplateOutlet="stepHeader; context: { step, i }" />
+
+        @if (i < steps().length - 1) {
+          <div class="tn-stepper__connector"></div>
+        }
+      }
+    </div>
+
+    <div class="tn-stepper__content">
+      @for (step of steps(); track $index; let i = $index) {
+        @if (selectedIndex() === i) {
+          <div class="tn-stepper__step-content"
+               [@stepTransition]="selectedIndex()">
+            <ng-container *ngTemplateOutlet="step.content()" />
+          </div>
+        }
+      }
+    </div>
+  }
 </div>
