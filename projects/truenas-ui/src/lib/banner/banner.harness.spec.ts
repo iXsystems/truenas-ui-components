@@ -123,4 +123,14 @@ describe('TnBannerHarness', () => {
     );
     expect(banner).toBeTruthy();
   });
+
+  it('should partial match on  strings containing special characters', async () => {
+    hostComponent.message.set('Look! I\'m calling a function: fxn()');
+    fixture.detectChanges();
+
+    const banner = await loader.getHarness(
+      TnBannerHarness.with({ textContains: 'fxn()' })
+    );
+    expect(banner).toBeTruthy();
+  });
 });

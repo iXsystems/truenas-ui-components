@@ -55,7 +55,7 @@ export class TnBannerHarness extends ComponentHarness {
           // strings trigger exact matching in `stringMatches`, but since we call the option
           // `textContains`, this would be misleading. here, we convert strings to a Regex
           // to trigger partial matching behavior on `stringMatches`.
-          typeof text === 'string' ? new RegExp(text) : text
+          typeof text === 'string' ? new RegExp(RegExp.escape(text)) : text
         )
       );
   }
