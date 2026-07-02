@@ -1,0 +1,37 @@
+@if (scrollWindow()) {
+  <cdk-virtual-scroll-viewport
+    scrollWindow
+    [itemSize]="itemSize()"
+    [minBufferPx]="minBufferPx()"
+    [maxBufferPx]="maxBufferPx()"
+  >
+    <ng-container *cdkVirtualFor="let item of nodes$ | async; trackBy: innerTrackBy()">
+      <ng-template tnTreeVirtualScrollNodeOutlet [data]="item" />
+    </ng-container>
+  </cdk-virtual-scroll-viewport>
+} @else {
+  <cdk-virtual-scroll-viewport
+    class="tn-tree-virtual-scroll-view__viewport"
+    [itemSize]="itemSize()"
+    [minBufferPx]="minBufferPx()"
+    [maxBufferPx]="maxBufferPx()"
+  >
+    <ng-container *cdkVirtualFor="let item of nodes$ | async; trackBy: innerTrackBy()">
+      <ng-template tnTreeVirtualScrollNodeOutlet [data]="item" />
+    </ng-container>
+  </cdk-virtual-scroll-viewport>
+}
+
+<ng-container cdkTreeNodeOutlet />
+
+@if (isScrollTopButtonVisible) {
+  <tn-icon-button
+    name="arrow-up"
+    library="mdi"
+    class="tn-tree-virtual-scroll-view__scroll-top"
+    testId="scroll-to-top"
+    [ariaLabel]="scrollToTopLabel()"
+    [tooltip]="scrollToTopLabel()"
+    (onClick)="scrollToTop()"
+  />
+}

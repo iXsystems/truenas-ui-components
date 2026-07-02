@@ -1,0 +1,17 @@
+:host {
+  display: block;
+  position: relative;
+  width: 100%;
+}
+
+.tn-tree-virtual-scroll-view__viewport {
+  height: 100%;
+  width: 100%;
+}
+
+.tn-tree-virtual-scroll-view__scroll-top {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2;
+}
