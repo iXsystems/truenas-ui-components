@@ -657,3 +657,102 @@ tn-dialog-shell {
   box-shadow: none;
   margin: 0;
 }
+
+/* ================================
+   CDK Overlay base styles
+   ================================
+   Mirrors @angular/cdk/overlay-prebuilt.css. These structural rules are
+   REQUIRED for any component built on the CDK connected-position overlay
+   (tn-select, tn-autocomplete, tn-tooltip, tn-file-picker, tn-date-input…).
+   Consuming apps that only import this themes.css would otherwise never load
+   them, with two visible symptoms:
+
+     1. pointer-events: none on the overlay container is INHERITED by the
+        connected-position bounding box (a flex column anchored to the trigger
+        that is typically far wider/taller than the visible panel). Without it
+        the bounding box keeps the default `auto` and silently eats clicks in
+        the empty area around the panel — so a no-backdrop dropdown like
+        tn-select can't be dismissed by clicking "outside" it (the click lands
+        on the bounding box, which is technically inside the overlay, so CDK's
+        outsidePointerEvents() never fires).
+     2. .cdk-overlay-pane { max-height: 100% } keeps panels constrained to the
+        viewport so their internal `overflow-y: auto` regions actually scroll.
+
+   Only .cdk-overlay-pane re-enables pointer-events: auto, so the panel itself
+   stays interactive while everything around it is click-through. */
+.cdk-overlay-container,
+.cdk-global-overlay-wrapper {
+  pointer-events: none;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.cdk-overlay-container {
+  position: fixed;
+  z-index: 1000;
+}
+
+.cdk-overlay-container:empty {
+  display: none;
+}
+
+.cdk-global-overlay-wrapper {
+  display: flex;
+  position: absolute;
+  z-index: 1000;
+}
+
+.cdk-overlay-pane {
+  position: absolute;
+  pointer-events: auto;
+  box-sizing: border-box;
+  display: flex;
+  max-width: 100%;
+  max-height: 100%;
+  z-index: 1000;
+}
+
+.cdk-overlay-connected-position-bounding-box {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  min-width: 1px;
+  min-height: 1px;
+  z-index: 1000;
+}
+
+.cdk-overlay-backdrop {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  opacity: 0;
+  z-index: 1000;
+  transition: opacity 400ms cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.cdk-overlay-backdrop-showing {
+  opacity: 1;
+}
+
+.cdk-overlay-transparent-backdrop {
+  transition: visibility 1ms linear, opacity 1ms linear;
+  visibility: hidden;
+  opacity: 1;
+}
+
+.cdk-overlay-transparent-backdrop.cdk-overlay-backdrop-showing {
+  opacity: 0;
+  visibility: visible;
+}
+
+.cdk-global-scrollblock {
+  position: fixed;
+  width: 100%;
+  overflow-y: scroll;
+}

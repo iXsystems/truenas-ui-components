@@ -1,8 +1,8 @@
 
 import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, ElementRef, forwardRef, inject, input, output, signal, viewChild, ViewContainerRef } from '@angular/core';
-import type { OnDestroy, TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, forwardRef, inject, input, output, signal, viewChild, ViewContainerRef } from '@angular/core';
+import type { ElementRef, OnDestroy, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { Subscription } from 'rxjs';
@@ -230,7 +230,6 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
   private onChange = (_value: T | T[] | null) => {};
   private onTouched = () => {};
 
-  private elementRef = inject(ElementRef);
   private cdr = inject(ChangeDetectorRef);
   private overlay = inject(Overlay);
   private viewContainerRef = inject(ViewContainerRef);
@@ -306,11 +305,19 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    *
    * Why an overlay (vs. an inline absolutely-positioned panel):
    *   - Escapes parent `overflow: hidden`/clipping in surrounding layouts.
-   *   - `outsidePointerEvents()` notifies on outside pointerdown WITHOUT
-   *     intercepting the click (no backdrop) — so the user's click reaches
-   *     the underlying target while the select closes silently.
    *   - Position is recomputed on scroll so the panel stays attached.
-   *   - Width is matched to the trigger so the panel doesn't jump in size.
+   *
+   * Dismissal uses a transparent, full-viewport backdrop (`backdropClick()`).
+   * We previously ran backdrop-less with `outsidePointerEvents()`, but that
+   * only closes when the click lands strictly OUTSIDE the overlay pane — and
+   * the pane was sized to the (often full-width) trigger while the panel itself
+   * is only as wide as its content. The empty pane area to the right of the
+   * options stayed `pointer-events: auto`, so clicks there never counted as
+   * "outside" and the dropdown wouldn't close. A transparent backdrop closes on
+   * ANY click outside the panel regardless of pane geometry — the standard
+   * pattern used by native `<select>` and Material's `mat-select`. We therefore
+   * also drop the explicit `width`: the pane sizes to the panel content so the
+   * clickable surface matches what the user sees.
    */
   private attachOverlay(): void {
     const trigger = this.triggerEl().nativeElement;
@@ -325,28 +332,20 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     this.overlayRef = this.overlay.create({
       positionStrategy,
       scrollStrategy: this.overlay.scrollStrategies.reposition(),
-      hasBackdrop: false,
-      width: trigger.offsetWidth,
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-transparent-backdrop',
     });
 
     const portal = new TemplatePortal(this.dropdownTemplate(), this.viewContainerRef);
     this.overlayRef.attach(portal);
 
-    // Click-outside (non-intercepting). The pointer event still reaches the
-    // element the user clicked; we just notice and close.
-    //
-    // Important: ignore events whose target is inside the select host. A
-    // pointerdown on the trigger is "outside the overlay" from CDK's POV but
-    // it's our own toggle target — letting closeDropdown fire here races the
-    // trigger's click handler and the dropdown immediately reopens.
+    // Dismiss on any click outside the panel. The transparent backdrop spans
+    // the viewport and captures the click, so this fires no matter where the
+    // user clicks (including the empty area beside a narrow panel). Clicking
+    // the trigger while open also hits the backdrop — it closes here and the
+    // trigger's own click never fires, so there's no reopen race.
     this.overlaySubs.push(
-      this.overlayRef.outsidePointerEvents().subscribe((event: MouseEvent) => {
-        const target = event.target as Node | null;
-        if (target && this.elementRef.nativeElement.contains(target)) {
-          return;
-        }
-        this.closeDropdown(false);
-      }),
+      this.overlayRef.backdropClick().subscribe(() => this.closeDropdown(false)),
     );
 
     // Escape as a fallback (the trigger keydown handler covers the common case,
