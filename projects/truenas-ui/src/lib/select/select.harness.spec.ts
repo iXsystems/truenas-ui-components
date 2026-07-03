@@ -64,6 +64,31 @@ class TestMultiHostComponent {
 }
 
 @Component({
+  selector: 'tn-test-select-all-host',
+  standalone: true,
+  imports: [TnSelectComponent],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-select
+      testId="fruit"
+      placeholder="Select fruits"
+      [options]="options()"
+      [multiple]="true"
+      [showSelectAll]="true"
+      (multiSelectionChange)="lastArray = $event" />
+  `
+})
+class TestSelectAllHostComponent {
+  // Cherry is disabled — select-all must skip it.
+  options = signal<TnSelectOption<string>[]>([
+    { value: 'apple', label: 'Apple' },
+    { value: 'banana', label: 'Banana' },
+    { value: 'cherry', label: 'Cherry', disabled: true },
+  ]);
+  lastArray: string[] = [];
+}
+
+@Component({
   selector: 'tn-test-compare-host',
   standalone: true,
   imports: [TnSelectComponent],
@@ -444,6 +469,76 @@ describe('TnSelectHarness - multiple mode', () => {
   it('should ignore allowEmpty in multiple mode', async () => {
     const select = await loader.getHarness(TnSelectHarness);
     expect(await select.getOptions()).toEqual(['Apple', 'Banana', 'Cherry']);
+  });
+});
+
+describe('TnSelectHarness - select all', () => {
+  let fixture: ComponentFixture<TestSelectAllHostComponent>;
+  let hostComponent: TestSelectAllHostComponent;
+  let loader: HarnessLoader;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TestSelectAllHostComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestSelectAllHostComponent);
+    hostComponent = fixture.componentInstance;
+    loader = TestbedHarnessEnvironment.loader(fixture);
+  });
+
+  it('should not list the select-all row among the options', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    expect(await select.getOptions()).toEqual(['Apple', 'Banana', 'Cherry']);
+  });
+
+  it('should select every enabled option, skipping disabled ones', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.toggleSelectAll();
+    // Cherry is disabled, so it stays out of the selection.
+    expect(hostComponent.lastArray).toEqual(['apple', 'banana']);
+    expect(await select.getDisplayText()).toBe('Apple, Banana');
+    expect(await select.isSelectAllChecked()).toBe(true);
+  });
+
+  it('should clear the selection when toggled while all selected', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.toggleSelectAll();
+    await select.toggleSelectAll();
+    expect(hostComponent.lastArray).toEqual([]);
+    expect(await select.getDisplayText()).toBe('Select fruits');
+    expect(await select.isSelectAllChecked()).toBe(false);
+  });
+
+  it('should read as unchecked when only some options are selected', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.selectOption('Apple');
+    // Partial selection: the row is neither fully checked nor cleared.
+    expect(await select.isSelectAllChecked()).toBe(false);
+    const indeterminate = document.querySelector(
+      '.tn-select-select-all .tn-checkbox--indeterminate',
+    );
+    expect(indeterminate).not.toBeNull();
+  });
+
+  it('should keep the dropdown open after toggling', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.toggleSelectAll();
+    expect(await select.isOpen()).toBe(true);
+  });
+
+  it('should carry a scoped test id on the select-all row', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.open();
+    const row = document.querySelector('.tn-select-select-all');
+    expect(row?.getAttribute('data-testid')).toBe('option-fruit-select-all');
+  });
+
+  it('should throw from toggleSelectAll when the row is absent', async () => {
+    const plain = TestBed.createComponent(TestMultiHostComponent);
+    const plainLoader = TestbedHarnessEnvironment.loader(plain);
+    const select = await plainLoader.getHarness(TnSelectHarness);
+    await expect(select.toggleSelectAll()).rejects.toThrow('no select-all row');
   });
 });
 

@@ -166,6 +166,12 @@
   }
 }
 
+// Select-all row — a regular option row, but weighted so it reads as the
+// aggregate toggle rather than one of the choices below it.
+.tn-select-select-all {
+  font-weight: 600;
+}
+
 .tn-select-check {
   margin-right: 0.5rem;
   flex-shrink: 0;
