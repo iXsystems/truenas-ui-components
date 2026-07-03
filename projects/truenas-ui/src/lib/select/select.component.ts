@@ -332,9 +332,9 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
       .flexibleConnectedTo(trigger)
       .withFlexibleDimensions(false)
       .withPush(true)
-      // Push can only rescue a panel narrower than the viewport; the panel's
-      // max-width: calc(100vw - 16px) in the SCSS covers the wider-than-viewport
-      // case. The margin here and that 16px are paired — keep in sync.
+      // Push can only rescue a panel narrower than the narrowed viewport
+      // (clientWidth - 2 * margin); the pane maxWidth below covers the
+      // wider-than-viewport case. Its 16px is 2 * this margin — keep in sync.
       .withViewportMargin(8)
       .withPositions([
         { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
@@ -348,6 +348,13 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
       scrollStrategy: this.overlay.scrollStrategies.reposition(),
       hasBackdrop: true,
       backdropClass: 'cdk-overlay-transparent-backdrop',
+      // Cap the pane so option labels wrap instead of clipping when they are
+      // wider than the viewport. Percentage, not 100vw: the pane resolves %
+      // against the overlay container, which CDK sizes to clientWidth
+      // (scrollbar excluded) — the same base its position math uses — so the
+      // capped pane always fits the push viewport exactly. 100vw includes the
+      // scrollbar and would overshoot by its width. 16px = 2 * viewport margin.
+      maxWidth: 'calc(100% - 16px)',
     });
 
     const portal = new TemplatePortal(this.dropdownTemplate(), this.viewContainerRef);
