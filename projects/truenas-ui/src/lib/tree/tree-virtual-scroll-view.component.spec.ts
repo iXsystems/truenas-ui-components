@@ -143,6 +143,26 @@ describe('TnTreeVirtualScrollViewComponent', () => {
     expect(spec.componentInstance.showScrollToTop()).toBe(true);
   });
 
+  it('derives default buffers from itemSize (so they scale) and honours overrides', () => {
+    const spec = TestBed.createComponent(TnTreeVirtualScrollViewComponent);
+    const buffers = spec.componentInstance as unknown as {
+      resolvedMinBufferPx: () => number;
+      resolvedMaxBufferPx: () => number;
+    };
+    // Default itemSize → 4- and 8-row buffers.
+    expect(buffers.resolvedMinBufferPx()).toBe(defaultTreeItemSize * 4);
+    expect(buffers.resolvedMaxBufferPx()).toBe(defaultTreeItemSize * 8);
+
+    // A taller row scales the defaults with it, rather than staying pinned to 48px.
+    spec.componentRef.setInput('itemSize', 120);
+    expect(buffers.resolvedMinBufferPx()).toBe(120 * 4);
+    expect(buffers.resolvedMaxBufferPx()).toBe(120 * 8);
+
+    // An explicit px value overrides the derived default.
+    spec.componentRef.setInput('maxBufferPx', 1000);
+    expect(buffers.resolvedMaxBufferPx()).toBe(1000);
+  });
+
   it('renders only the collapsed top-level nodes as tree items initially', async () => {
     await render();
     // Only roots are visible while collapsed: the expandable "pool" and the leaf "other".

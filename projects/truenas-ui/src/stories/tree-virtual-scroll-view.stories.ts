@@ -78,7 +78,16 @@ const meta: Meta<TnTreeVirtualScrollViewComponent<DemoNode, DemoFlatNode>> = {
           'A `tn-tree` variant that renders through a `cdk-virtual-scroll-viewport`, so only the '
           + 'rows currently in view are created in the DOM. Use it for large trees (thousands of '
           + 'nodes) where the plain `tn-tree` would render every node. Rows are a fixed height '
-          + '(`itemSize`); provide a `TnTreeFlatDataSource` + `FlatTreeControl` exactly as for `tn-tree`.',
+          + '(`itemSize`); provide a `TnTreeFlatDataSource` + `FlatTreeControl` exactly as for `tn-tree`.'
+          + '\n\n### Accessibility / keyboard\n'
+          + 'Because rows are materialised and recycled by the viewport (not registered with '
+          + "CdkTree's node outlet), CDK's `TreeKeyManager` can't drive them, so **roving arrow-key / "
+          + 'Home / End navigation between nodes is not supported** here. Expandable rows are made '
+          + 'tab-focusable and expand/collapse with **Enter/Space**; move between rows with **Tab**. '
+          + 'Note this means an expanded tree exposes one Tab stop per expandable row rather than the '
+          + 'single-stop + arrow-roving of the WAI-ARIA tree pattern, and leaf rows are only reachable '
+          + 'if the row template contains a focusable element. If full roving keyboard navigation is '
+          + 'required, use the non-virtual `tn-tree` instead.',
       },
     },
   },

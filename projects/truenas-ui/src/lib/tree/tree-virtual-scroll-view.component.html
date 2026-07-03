@@ -2,8 +2,8 @@
   <cdk-virtual-scroll-viewport
     scrollWindow
     [itemSize]="itemSize()"
-    [minBufferPx]="minBufferPx()"
-    [maxBufferPx]="maxBufferPx()"
+    [minBufferPx]="resolvedMinBufferPx()"
+    [maxBufferPx]="resolvedMaxBufferPx()"
   >
     <ng-container *cdkVirtualFor="let item of nodes$ | async; trackBy: innerTrackBy()">
       <ng-template tnTreeVirtualScrollNodeOutlet [data]="item" />
@@ -13,8 +13,8 @@
   <cdk-virtual-scroll-viewport
     class="tn-tree-virtual-scroll-view__viewport"
     [itemSize]="itemSize()"
-    [minBufferPx]="minBufferPx()"
-    [maxBufferPx]="maxBufferPx()"
+    [minBufferPx]="resolvedMinBufferPx()"
+    [maxBufferPx]="resolvedMaxBufferPx()"
   >
     <ng-container *cdkVirtualFor="let item of nodes$ | async; trackBy: innerTrackBy()">
       <ng-template tnTreeVirtualScrollNodeOutlet [data]="item" />

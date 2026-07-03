@@ -23,11 +23,12 @@ import { TnTreeVirtualScrollNodeOutletDirective } from './tree-virtual-scroll-no
 export const defaultTreeItemSize = 48;
 
 /**
- * Row-count multiplier for the default `maxBufferPx` (how many extra rows of
- * content the viewport renders past the visible area) and for the distance the
- * user must scroll before the scroll-to-top button appears. Expressed in rows so
- * both scale with `itemSize`.
+ * Row counts for the default buffer sizes (how many extra rows of content the viewport
+ * renders past the visible area) and for the distance the user must scroll before the
+ * scroll-to-top button appears. Expressed in rows and multiplied by `itemSize()` at
+ * runtime (see resolvedMin/MaxBufferPx) so the defaults scale with a custom row height.
  */
+const defaultMinBufferRows = 4;
 const defaultBufferRows = 8;
 const scrollToTopThresholdRows = 8;
 
@@ -106,8 +107,19 @@ export class TnTreeVirtualScrollViewComponent<T, K = T> extends CdkTree<T, K>
 
   /** Fixed row height in px. Must match the actual rendered node height. */
   readonly itemSize = input(defaultTreeItemSize);
-  readonly minBufferPx = input(defaultTreeItemSize * 4);
-  readonly maxBufferPx = input(defaultTreeItemSize * defaultBufferRows);
+  /**
+   * Viewport buffer sizes (px). Leave at 0 (the default) to derive them from `itemSize()`
+   * — {@link defaultMinBufferRows} / {@link defaultBufferRows} rows — so the buffers scale
+   * with a custom row height; pass an explicit px value to override. (A fixed px default
+   * would under-buffer a tall `itemSize`, even failing to buffer a single row when
+   * `itemSize > maxBufferPx`.)
+   */
+  readonly minBufferPx = input(0);
+  readonly maxBufferPx = input(0);
+  /** `minBufferPx` resolved to px, falling back to a row-count default that tracks `itemSize()`. */
+  protected readonly resolvedMinBufferPx = computed(() => this.minBufferPx() || this.itemSize() * defaultMinBufferRows);
+  /** `maxBufferPx` resolved to px, falling back to a row-count default that tracks `itemSize()`. */
+  protected readonly resolvedMaxBufferPx = computed(() => this.maxBufferPx() || this.itemSize() * defaultBufferRows);
   /**
    * When true the viewport scrolls with the window instead of an internal scroll area.
    * `booleanAttribute` so the bare presence form (`<... scrollWindow>`) coerces to `true`
