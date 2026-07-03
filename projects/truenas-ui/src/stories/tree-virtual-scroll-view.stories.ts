@@ -2,6 +2,7 @@ import { CdkTreeModule, FlatTreeControl } from '@angular/cdk/tree';
 import { CommonModule } from '@angular/common';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { tnIconMarker } from '../lib/icon/icon-marker';
 import { TnIconComponent } from '../lib/icon/icon.component';
 import { TnTreeNodeComponent } from '../lib/tree/tree-node.component';
@@ -13,6 +14,8 @@ import { TnTreeFlatDataSource, TnTreeFlattener } from '../lib/tree/tree.componen
 // Ensure these icons are bundled into the sprite for the story.
 tnIconMarker('folder', 'mdi');
 tnIconMarker('file', 'mdi');
+
+const harnessDoc = loadHarnessDoc('tree-virtual-scroll-view');
 
 interface DemoNode {
   name: string;
@@ -208,4 +211,23 @@ export const StickyHeader: Story = {
       </div>
     `,
   }),
+};
+
+/**
+ * Auto-generated API documentation for `TnTreeVirtualScrollViewHarness`, rendered in the
+ * Docs tab. Use the harness to drive the tree in consumer tests (query rows, expand/collapse,
+ * read sibling-scoped aria, operate the scroll-to-top button).
+ */
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      story: { height: 'auto' },
+      canvas: { hidden: true, sourceState: 'none' },
+      description: { story: harnessDoc || '' },
+    },
+    controls: { disable: true },
+    layout: 'fullscreen',
+  },
+  render: () => ({ template: '' }),
 };
