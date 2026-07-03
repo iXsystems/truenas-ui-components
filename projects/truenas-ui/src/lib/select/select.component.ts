@@ -556,10 +556,18 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    * Toggles every selectable option: clears them all when they're all already
    * selected, otherwise selects them all. Preserves the multi-select "open"
    * behaviour — the dropdown stays open so the user can keep adjusting.
+   *
+   * Disabled-but-selected values (e.g. a disabled option pre-selected via
+   * `writeValue`) are preserved on both paths: the user can't toggle those
+   * rows individually, so select-all must not silently discard them either.
    */
   protected toggleSelectAll(): void {
     if (this.isDisabled()) {return;}
-    const updated = this.allSelected() ? [] : [...this.selectableValues()];
+    const selectable = this.selectableValues();
+    const preserved = this.selectedValues().filter(
+      (v) => !selectable.some((s) => this.compareValues(s, v)),
+    );
+    const updated = this.allSelected() ? preserved : [...preserved, ...selectable];
     this.selectedValues.set(updated);
     this.onChange(updated);
     this.multiSelectionChange.emit(updated);

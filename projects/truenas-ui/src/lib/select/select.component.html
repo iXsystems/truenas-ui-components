@@ -60,6 +60,7 @@
           [class.selected]="allSelected()"
           [class.focused]="isSelectAllFocused()"
           [attr.aria-selected]="allSelected()"
+          [attr.aria-checked]="selectAllIndeterminate() ? 'mixed' : allSelected()"
           (mousedown)="$event.preventDefault()"
           (click)="toggleSelectAll()">
           <tn-checkbox

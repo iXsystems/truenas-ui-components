@@ -89,6 +89,30 @@ class TestSelectAllHostComponent {
 }
 
 @Component({
+  selector: 'tn-test-select-all-preselected-host',
+  standalone: true,
+  imports: [TnSelectComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-select
+      placeholder="Select fruits"
+      [options]="options()"
+      [multiple]="true"
+      [showSelectAll]="true"
+      [formControl]="control" />
+  `
+})
+class TestSelectAllPreselectedHostComponent {
+  // Cherry is disabled but pre-selected — select-all must not discard it.
+  options = signal<TnSelectOption<string>[]>([
+    { value: 'apple', label: 'Apple' },
+    { value: 'banana', label: 'Banana' },
+    { value: 'cherry', label: 'Cherry', disabled: true },
+  ]);
+  control = new FormControl<string[]>(['cherry']);
+}
+
+@Component({
   selector: 'tn-test-compare-host',
   standalone: true,
   imports: [TnSelectComponent],
@@ -539,6 +563,39 @@ describe('TnSelectHarness - select all', () => {
     const plainLoader = TestbedHarnessEnvironment.loader(plain);
     const select = await plainLoader.getHarness(TnSelectHarness);
     await expect(select.toggleSelectAll()).rejects.toThrow('no select-all row');
+  });
+});
+
+describe('TnSelectHarness - select all with pre-selected disabled option', () => {
+  let fixture: ComponentFixture<TestSelectAllPreselectedHostComponent>;
+  let hostComponent: TestSelectAllPreselectedHostComponent;
+  let loader: HarnessLoader;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TestSelectAllPreselectedHostComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestSelectAllPreselectedHostComponent);
+    hostComponent = fixture.componentInstance;
+    loader = TestbedHarnessEnvironment.loader(fixture);
+  });
+
+  it('should keep the disabled selection when selecting all', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.toggleSelectAll();
+    // Cherry (disabled, pre-selected) survives alongside the newly selected enabled options.
+    expect(hostComponent.control.value).toEqual(['cherry', 'apple', 'banana']);
+    expect(await select.isSelectAllChecked()).toBe(true);
+  });
+
+  it('should keep the disabled selection when clearing all', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    // First select-all, then toggle again to clear — the disabled value must remain.
+    await select.toggleSelectAll();
+    await select.toggleSelectAll();
+    expect(hostComponent.control.value).toEqual(['cherry']);
+    expect(await select.isSelectAllChecked()).toBe(false);
   });
 });
 
