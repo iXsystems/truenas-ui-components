@@ -21,6 +21,10 @@ export interface TnSelectOptionGroup<T = unknown> {
   disabled?: boolean;
 }
 
+// Minimum gap the dropdown panel keeps from each viewport edge. Also derives
+// the pane's maxWidth (viewport minus both margins) — see attachOverlay().
+const VIEWPORT_MARGIN_PX = 8;
+
 @Component({
   selector: 'tn-select',
   standalone: true,
@@ -334,8 +338,8 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
       .withPush(true)
       // Push can only rescue a panel narrower than the narrowed viewport
       // (clientWidth - 2 * margin); the pane maxWidth below covers the
-      // wider-than-viewport case. Its 16px is 2 * this margin — keep in sync.
-      .withViewportMargin(8)
+      // wider-than-viewport case.
+      .withViewportMargin(VIEWPORT_MARGIN_PX)
       .withPositions([
         { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
         { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
@@ -353,8 +357,8 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
       // against the overlay container, which CDK sizes to clientWidth
       // (scrollbar excluded) — the same base its position math uses — so the
       // capped pane always fits the push viewport exactly. 100vw includes the
-      // scrollbar and would overshoot by its width. 16px = 2 * viewport margin.
-      maxWidth: 'calc(100% - 16px)',
+      // scrollbar and would overshoot by its width.
+      maxWidth: `calc(100% - ${2 * VIEWPORT_MARGIN_PX}px)`,
     });
 
     const portal = new TemplatePortal(this.dropdownTemplate(), this.viewContainerRef);
