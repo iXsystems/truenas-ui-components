@@ -21,6 +21,10 @@ export interface TnSelectOptionGroup<T = unknown> {
   disabled?: boolean;
 }
 
+// Minimum gap the dropdown panel keeps from each viewport edge. Also derives
+// the pane's maxWidth (viewport minus both margins) — see attachOverlay().
+const VIEWPORT_MARGIN_PX = 8;
+
 @Component({
   selector: 'tn-select',
   standalone: true,
@@ -321,12 +325,26 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    */
   private attachOverlay(): void {
     const trigger = this.triggerEl().nativeElement;
+    // Flexible dimensions must stay OFF: with them on, CDK treats a panel
+    // squeezed against the viewport edge as a valid "flexible fit" (no
+    // minWidth is set, so any width fits), never falls through to the
+    // end-aligned positions or push, and the panel content gets clipped at
+    // the screen edge. Rigid dimensions + push keep the panel fully visible;
+    // height is already capped by the panel's own max-height.
     const positionStrategy = this.overlay
       .position()
       .flexibleConnectedTo(trigger)
+      .withFlexibleDimensions(false)
+      .withPush(true)
+      // Push can only rescue a panel narrower than the narrowed viewport
+      // (clientWidth - 2 * margin); the pane maxWidth below covers the
+      // wider-than-viewport case.
+      .withViewportMargin(VIEWPORT_MARGIN_PX)
       .withPositions([
         { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
         { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
+        { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 4 },
+        { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom', offsetY: -4 },
       ]);
 
     this.overlayRef = this.overlay.create({
@@ -334,6 +352,13 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
       scrollStrategy: this.overlay.scrollStrategies.reposition(),
       hasBackdrop: true,
       backdropClass: 'cdk-overlay-transparent-backdrop',
+      // Cap the pane so option labels wrap instead of clipping when they are
+      // wider than the viewport. Percentage, not 100vw: the pane resolves %
+      // against the overlay container, which CDK sizes to clientWidth
+      // (scrollbar excluded) — the same base its position math uses — so the
+      // capped pane always fits the push viewport exactly. 100vw includes the
+      // scrollbar and would overshoot by its width.
+      maxWidth: `calc(100% - ${2 * VIEWPORT_MARGIN_PX}px)`,
     });
 
     const portal = new TemplatePortal(this.dropdownTemplate(), this.viewContainerRef);

@@ -333,6 +333,64 @@ export const FlipUpDropdown: Story = {
   },
 };
 
+// Trigger hugs the right viewport edge while the options are much wider than
+// the trigger — the panel must right-align (or push left) instead of spilling
+// past the screen edge and getting clipped.
+export const NearRightEdge: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      logSelection: (_value: unknown) => {},
+    },
+    template: `
+      <div style="display: flex; justify-content: flex-end;">
+        <div style="width: 120px;">
+          <tn-form-field
+            label="Category"
+            hint="Trigger sits at the right edge — the panel stays on screen">
+            <tn-select
+              [options]="options"
+              placeholder="Tasks"
+              (selectionChange)="logSelection($event)">
+            </tn-select>
+          </tn-form-field>
+        </div>
+      </div>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  args: {
+    options: [
+      { value: 'applications', label: 'Applications' },
+      { value: 'kmip', label: 'Key Management Interoperability Protocol' },
+      { value: 'network', label: 'Network' },
+      { value: 'connect', label: 'TrueNAS Connect Service' },
+      { value: 'ups', label: 'UPS' },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const trigger = canvas.getByRole('combobox');
+
+    await userEvent.click(trigger);
+    const panel = await waitFor(() => {
+      const el = document.querySelector('.tn-select-dropdown');
+      if (!el) {throw new Error('dropdown panel not rendered yet');}
+      return el as HTMLElement;
+    });
+
+    // The whole panel must sit within the viewport — a right edge beyond the
+    // window width means options are clipped off screen.
+    await waitFor(async () => {
+      const rect = panel.getBoundingClientRect();
+      await expect(rect.right).toBeLessThanOrEqual(document.documentElement.clientWidth);
+      await expect(rect.left).toBeGreaterThanOrEqual(0);
+    });
+  },
+};
+
 export const EmptyWithCustomMessage: Story = {
   render: (args) => ({
     props: {

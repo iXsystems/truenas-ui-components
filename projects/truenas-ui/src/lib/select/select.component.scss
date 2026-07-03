@@ -120,6 +120,12 @@
   display: flex;
   align-items: center;
   padding: 0.5rem 0.75rem;
+
+  // When the panel hits the overlay pane's maxWidth (set in attachOverlay()),
+  // wrap labels rather than overflow — ellipsis here could make same-prefix
+  // options indistinguishable. `anywhere` also breaks space-less tokens
+  // (paths, ids).
+  overflow-wrap: anywhere;
   cursor: pointer;
   color: var(--tn-fg1, #212529);
   transition: background-color 0.15s ease-in-out;
