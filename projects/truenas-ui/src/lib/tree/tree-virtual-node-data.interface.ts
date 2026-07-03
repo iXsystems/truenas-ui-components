@@ -15,8 +15,8 @@ export interface TnTreeVirtualNodeData<T> {
   context: CdkTreeNodeOutletContext<T>;
   /** The matched node definition whose template renders this row. */
   nodeDef: CdkTreeNodeDef<T>;
-  /** 1-based position within the currently-visible node set, for `aria-posinset`. */
+  /** 1-based position within the node's SIBLING set (same parent/level), for `aria-posinset`. */
   posInSet: number;
-  /** Size of the currently-visible node set, for `aria-setsize`. */
+  /** Size of the node's SIBLING set (same parent/level), for `aria-setsize`. */
   setSize: number;
 }

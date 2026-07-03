@@ -33,6 +33,7 @@ const dataset: ExampleNode[] = [
       [dataSource]="dataSource"
       [treeControl]="treeControl"
       [itemSize]="52"
+      [scrollWindow]="scrollWindow"
       [nodeTrackBy]="trackByName"
     >
       <tn-tree-node *cdkTreeNodeDef="let node">{{ node.name }}</tn-tree-node>
@@ -41,6 +42,8 @@ const dataset: ExampleNode[] = [
 })
 class HostComponent {
   readonly tree = viewChild.required(TnTreeVirtualScrollViewComponent);
+
+  scrollWindow = false;
 
   readonly treeControl = new FlatTreeControl<ExampleFlatNode>(
     (node) => node.level,
@@ -98,14 +101,25 @@ describe('TnTreeVirtualScrollViewComponent', () => {
    * the expanded rows are present from the first paint — expanding mid-test races the
    * viewport's async row stream and is needlessly flaky.
    */
-  async function render({ expandRoot = false } = {}): Promise<void> {
+  async function render({ expandRoot = false, scrollWindow = false } = {}): Promise<void> {
     fixture = TestBed.createComponent(HostComponent);
     host = fixture.componentInstance;
+    host.scrollWindow = scrollWindow;
     if (expandRoot) {
       host.treeControl.expand(host.treeControl.dataNodes[0]);
     }
     fixture.detectChanges();
     await settle();
+  }
+
+  /** The floating scroll-to-top button, if currently rendered. */
+  function scrollTopButton(): HTMLElement | null {
+    return fixture.nativeElement.querySelector<HTMLElement>('.tn-tree-virtual-scroll-view__scroll-top');
+  }
+
+  /** Flush one animation frame — the scroll handler coalesces its work into a rAF. */
+  function flushFrame(): Promise<void> {
+    return new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
   }
 
   beforeEach(async () => {
@@ -145,12 +159,16 @@ describe('TnTreeVirtualScrollViewComponent', () => {
     expect(levels).toEqual(['1', '2', '2', '1']);
   });
 
-  it('exposes aria-posinset / aria-setsize across the visible node set', async () => {
+  it('scopes aria-posinset / aria-setsize to each node\'s siblings, not the flat list', async () => {
     await render({ expandRoot: true });
 
+    // Visible rows: pool, pool/a, pool/b, other.
+    // Roots (pool, other) form a sibling set of 2; the expanded children (pool/a, pool/b)
+    // form their own sibling set of 2 — NOT a flat "1..4 of 4".
     const rows = rowElements();
-    expect(rows.map((el) => el.getAttribute('aria-setsize'))).toEqual(['4', '4', '4', '4']);
-    expect(rows.map((el) => el.getAttribute('aria-posinset'))).toEqual(['1', '2', '3', '4']);
+    expect(rowLabels()).toEqual(['pool', 'pool/a', 'pool/b', 'other']);
+    expect(rows.map((el) => el.getAttribute('aria-setsize'))).toEqual(['2', '2', '2', '2']);
+    expect(rows.map((el) => el.getAttribute('aria-posinset'))).toEqual(['1', '1', '2', '2']);
   });
 
   it('marks the virtual-scroll wrappers as presentational so rows stay tree children', async () => {
@@ -171,8 +189,68 @@ describe('TnTreeVirtualScrollViewComponent', () => {
     viewport.dispatchEvent(new Event('scroll'));
 
     // The handler coalesces its work into an animation frame, so flush one before asserting.
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    await flushFrame();
 
     expect(spy).toHaveBeenCalledWith(42);
+  });
+
+  it('shows the scroll-to-top button only once scrolled past the row threshold', async () => {
+    await render();
+    const tree = host.tree();
+    const viewport = tree.virtualScrollViewport();
+    const scrollSource = viewport.scrollable.getElementRef().nativeElement;
+    // Threshold is itemSize (52) * 8 rows; start above it, then drop back to the top.
+    const measure = jest.spyOn(viewport, 'measureScrollOffset');
+
+    expect(scrollTopButton()).toBeFalsy();
+
+    measure.mockReturnValue(52 * 8 + 1);
+    scrollSource.dispatchEvent(new Event('scroll'));
+    await flushFrame();
+    fixture.detectChanges();
+    expect(scrollTopButton()).toBeTruthy();
+
+    measure.mockReturnValue(0);
+    scrollSource.dispatchEvent(new Event('scroll'));
+    await flushFrame();
+    fixture.detectChanges();
+    expect(scrollTopButton()).toBeFalsy();
+  });
+
+  it('emits viewportResized when the observed content resizes', async () => {
+    const callbacks: ResizeObserverCallback[] = [];
+    class MockResizeObserver {
+      constructor(cb: ResizeObserverCallback) { callbacks.push(cb); }
+      observe(): void {}
+      unobserve(): void {}
+      disconnect(): void {}
+    }
+    const globals = globalThis as { ResizeObserver?: unknown };
+    const original = globals.ResizeObserver;
+    globals.ResizeObserver = MockResizeObserver;
+
+    try {
+      await render();
+      const spy = jest.fn();
+      host.tree().viewportResized.subscribe(spy);
+
+      const cb = callbacks[callbacks.length - 1];
+      cb([{ contentRect: { width: 300, height: 400 } } as ResizeObserverEntry], {} as ResizeObserver);
+
+      expect(spy).toHaveBeenCalledWith({ width: 300, height: 400 });
+    } finally {
+      globals.ResizeObserver = original;
+    }
+  });
+
+  it('renders through the window scroll strategy in scrollWindow mode', async () => {
+    await render({ scrollWindow: true });
+
+    // Alternate template branch renders the same collapsed roots...
+    expect(rowLabels()).toEqual(['pool', 'other']);
+    // ...and the scroll source resolves to an external scrollable (the window), not the
+    // viewport element itself (which does not scroll in this mode).
+    const viewport = host.tree().virtualScrollViewport();
+    expect(viewport.scrollable).not.toBe(viewport);
   });
 });

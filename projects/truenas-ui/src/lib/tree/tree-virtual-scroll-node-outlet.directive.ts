@@ -52,10 +52,12 @@ export class TnTreeVirtualScrollNodeOutletDirective<T> implements OnChanges, DoC
         : null;
 
       // Bind the freshly-created CdkTreeNode to this row's data. `mostRecentTreeNode`
-      // is a global CDK static set synchronously while `createEmbeddedView` above
-      // instantiates the node template. This mirrors CDK's own internal wiring and
-      // assumes the node def's template contains exactly one CdkTreeNode; it is
-      // fragile under view recycling, hence the shape check that gates recreation.
+      // is a global CDK static (verified against @angular/cdk 21.x) set synchronously
+      // while `createEmbeddedView` above instantiates the node template. This mirrors
+      // CDK's own internal wiring and assumes the node def's template contains exactly
+      // one CdkTreeNode; it is fragile under view recycling, hence the shape check that
+      // gates recreation. A CDK upgrade that changes this static would stop rows from
+      // binding their data — covered by the outlet's rendering tests.
       if (CdkTreeNode.mostRecentTreeNode && this._viewRef) {
         CdkTreeNode.mostRecentTreeNode.data = this.data().data;
       }
@@ -76,13 +78,25 @@ export class TnTreeVirtualScrollNodeOutletDirective<T> implements OnChanges, DoC
     return prevValue?.data !== currValue?.data;
   }
 
-  /** Reflect posinset/setsize onto the row element so screen readers can announce "item N of total". */
+  /**
+   * Reflect posinset/setsize onto the row element so screen readers can announce
+   * "item N of M". Runs on every `ngDoCheck` (the hot CD path), so only write when the
+   * attribute actually differs — skipping the redundant `setAttribute` on the common
+   * pass where nothing changed.
+   */
   private applyAriaPosition(): void {
     const root = this._viewRef?.rootNodes?.[0] as HTMLElement | undefined;
     const data = this.data();
-    if (root?.setAttribute && data) {
-      root.setAttribute('aria-setsize', String(data.setSize));
-      root.setAttribute('aria-posinset', String(data.posInSet));
+    if (!root?.setAttribute || !data) {
+      return;
+    }
+    const setSize = String(data.setSize);
+    const posInSet = String(data.posInSet);
+    if (root.getAttribute('aria-setsize') !== setSize) {
+      root.setAttribute('aria-setsize', setSize);
+    }
+    if (root.getAttribute('aria-posinset') !== posInSet) {
+      root.setAttribute('aria-posinset', posInSet);
     }
   }
 

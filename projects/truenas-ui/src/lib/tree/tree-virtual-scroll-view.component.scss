@@ -16,6 +16,9 @@
 // flex box with `align-items: center`, so zeroing the vertical padding keeps the
 // content centred within the fixed height.
 .tn-tree-virtual-scroll-view {
+  // Fallback only: the host binding always sets --tn-tree-item-size from itemSize(),
+  // so this is used solely if that binding is ever absent. Keep in sync with
+  // `defaultTreeItemSize` (48) in tree-virtual-scroll-view.component.ts.
   --tn-tree-item-size: 48px;
 
   .tn-tree-node__content {

@@ -50,10 +50,11 @@ const scrollFrameScheduler = typeof requestAnimationFrame !== 'undefined' ? anim
  * ```
  *
  * Accessibility: rows are exposed with `role="treeitem"` plus `aria-level`,
- * `aria-posinset` and `aria-setsize` (the latter two relative to the currently
- * expanded/visible node set), and the virtual-scroll wrappers are marked
- * `role="presentation"` so assistive tech still sees the items as children of the
- * `role="tree"` host.
+ * `aria-posinset` and `aria-setsize` (the latter two relative to the node's
+ * siblings — nodes sharing the same parent/level — per the WAI-ARIA tree
+ * pattern, not the flattened list of all visible rows), and the virtual-scroll
+ * wrappers are marked `role="presentation"` so assistive tech still sees the
+ * items as children of the `role="tree"` host.
  *
  * Known limitation: because rows are materialised (and recycled) by the virtual
  * scroll viewport rather than registered with CdkTree's node outlet, the CDK
@@ -219,22 +220,86 @@ export class TnTreeVirtualScrollViewComponent<T, K = T> extends CdkTree<T, K>
     this.renderNodeChanges$.next(data);
   }
 
-  private createNode(nodeData: T, index: number, setSize: number): TnTreeVirtualNodeData<T> {
-    const nodeDef = this._getNodeDef(nodeData, index);
-    const context = new CdkTreeNodeOutletContext<T>(nodeData);
-    context.level = this.treeControl?.getLevel ? this.treeControl.getLevel(nodeData) : 0;
-    // posInSet/setSize let a screen reader announce "item N of total" even though
-    // only a slice of rows exists in the DOM at any time. They are relative to the
-    // full set of currently-visible (expanded) nodes, which is what `data` holds.
-    return {
-      data: nodeData, context, nodeDef, posInSet: index + 1, setSize,
+  private getNodeLevel(nodeData: T): number {
+    return this.treeControl?.getLevel ? this.treeControl.getLevel(nodeData) : 0;
+  }
+
+  /**
+   * Compute per-row `aria-posinset` / `aria-setsize` scoped to each node's SIBLINGS
+   * (same parent / same level), as the WAI-ARIA tree pattern requires — not the flat
+   * list of all visible rows. The flat node set is depth-first ordered and each node
+   * carries a level, so siblings at level L are the consecutive level-L nodes bounded
+   * by any shallower node (level < L = a parent boundary); deeper nodes in between are
+   * descendants of an earlier sibling and don't split the group. One pass, tracking the
+   * open sibling group at each level.
+   */
+  private computeAriaPositions(levels: readonly number[]): { posInSet: number; setSize: number }[] {
+    const posInSet = new Array<number>(levels.length);
+    const setSize = new Array<number>(levels.length);
+    // groups[level] = indices of the currently-open sibling group at that depth.
+    const groups: number[][] = [];
+
+    // Close (and stamp setSize on) every group deeper than `level`, because reaching a
+    // node at `level` ends any sibling groups nested under the previous sibling.
+    const finalizeDeeperThan = (level: number): void => {
+      for (let l = groups.length - 1; l > level; l--) {
+        const group = groups[l];
+        if (group?.length) {
+          for (const idx of group) {
+            setSize[idx] = group.length;
+          }
+        }
+      }
+      groups.length = level + 1;
     };
+
+    for (let i = 0; i < levels.length; i++) {
+      const level = levels[i];
+      finalizeDeeperThan(level);
+      (groups[level] ??= []).push(i);
+      posInSet[i] = groups[level].length;
+    }
+    // Close the groups still open at the end of the list.
+    finalizeDeeperThan(-1);
+
+    return levels.map((_, i) => ({ posInSet: posInSet[i], setSize: setSize[i] }));
+  }
+
+  private createNode(
+    nodeData: T, index: number, level: number, posInSet: number, setSize: number,
+  ): TnTreeVirtualNodeData<T> {
+    // `_getNodeDef` is a private CdkTree API (verified against @angular/cdk 21.x). Assert
+    // it resolves so a CDK upgrade that renames/removes it fails loudly here rather than
+    // silently rendering a blank tree at runtime.
+    const nodeDef = this._getNodeDef(nodeData, index);
+    if (!nodeDef) {
+      throw new Error(
+        'TnTreeVirtualScrollView: CdkTree._getNodeDef returned no node definition. '
+        + 'This private @angular/cdk API (expected ^21.1.0) may have changed — verify tree compatibility.',
+      );
+    }
+    const context = new CdkTreeNodeOutletContext<T>(nodeData);
+    context.level = level;
+    // posInSet/setSize let a screen reader announce "item N of M" even though only a
+    // slice of rows exists in the DOM at any time. They are scoped to this node's
+    // siblings (see computeAriaPositions), per the WAI-ARIA tree pattern.
+    return {
+      data: nodeData, context, nodeDef, posInSet, setSize,
+    };
+  }
+
+  private buildVirtualNodes(data: readonly T[]): TnTreeVirtualNodeData<T>[] {
+    const levels = data.map((node) => this.getNodeLevel(node));
+    const positions = this.computeAriaPositions(levels);
+    return data.map(
+      (node, index) => this.createNode(node, index, levels[index], positions[index].posInSet, positions[index].setSize),
+    );
   }
 
   private listenForNodeChanges(): void {
     this.renderNodeChanges$.pipe(
       auditTime(0, scrollFrameScheduler),
-      map((data) => [...data].map((node, index) => this.createNode(node, index, data.length))),
+      map((data) => this.buildVirtualNodes(data)),
       takeUntilDestroyed(this.destroyRef),
     ).subscribe((nodes) => {
       this.nodes$.next(nodes);
