@@ -1,7 +1,10 @@
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, input, output, contentChildren, computed, effect, model, inject } from '@angular/core';
+import {
+  Component, input, output, contentChildren, computed, effect, model, signal,
+} from '@angular/core';
 import { TnStepComponent } from './step.component';
+import { TnIconComponent } from '../icon/icon.component';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
@@ -10,7 +13,7 @@ import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
   templateUrl: './stepper.component.html',
   styleUrls: ['./stepper.component.scss'],
   standalone: true,
-  imports: [CommonModule, TnTestIdDirective, LabelMarkupPipe],
+  imports: [CommonModule, TnTestIdDirective, LabelMarkupPipe, TnIconComponent],
   animations: [
     trigger('stepTransition', [
       transition(':enter', [
@@ -20,7 +23,7 @@ import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
     ])
   ],
   host: {
-    '(window:resize)': 'onWindowResize($event)'
+    '(window:resize)': 'onWindowResize()'
   }
 })
 export class TnStepperComponent {
@@ -38,9 +41,17 @@ export class TnStepperComponent {
 
   steps = contentChildren(TnStepComponent, { descendants: true });
 
-  private cdr = inject(ChangeDetectorRef);
+  // Highest step index the user has navigated to. Used to reveal the "edit" (pencil)
+  // affordance only on steps that have actually been visited — a step that is valid by
+  // default but never reached stays a plain number.
+  readonly maxReachedIndex = signal(0);
 
   constructor() {
+    effect(() => {
+      const index = this.selectedIndex();
+      this.maxReachedIndex.update((max) => Math.max(max, index));
+    });
+
     // Effect to check if all steps are completed
     effect(() => {
       // Trigger on any step completion change
@@ -52,8 +63,8 @@ export class TnStepperComponent {
     });
   }
 
-  onWindowResize(_event: Event) {
-    this.cdr.detectChanges();
+  onWindowResize(): void {
+    this.isWideScreen.set(window.innerWidth > 768);
   }
 
   private _getStepData(): Array<{ label: string; completed: boolean; data: unknown }> {
@@ -64,9 +75,37 @@ export class TnStepperComponent {
     }));
   }
 
-  isWideScreen = computed(() => {
-    // Note: This will only update on window resize due to ChangeDetectorRef trigger
-    return window.innerWidth > 768;
+  // Tracks whether the viewport is wide enough for the horizontal layout. A signal
+  // (not a computed over `window.innerWidth`, which is non-reactive and would freeze on
+  // first read) so `onWindowResize` can `.set()` it and `auto` orientation re-evaluates.
+  private isWideScreen = signal(window.innerWidth > 768);
+
+  // Vertical mode lays the active step's content out inline beneath its header
+  // (mat-vertical-stepper style), so it fits narrow containers such as side panels.
+  isVertical = computed(() => {
+    return this.orientation() === 'vertical' || (this.orientation() === 'auto' && !this.isWideScreen());
+  });
+
+  // Per-index "editable" flags. A step shows the "edit" (pencil) icon once it has been
+  // visited and is valid (completed) but isn't the current step — signalling the user can
+  // go back and change it. Computed (not a per-call method) so it's evaluated once per
+  // change-detection cycle and cheaply indexed in the template, even as step counts grow.
+  readonly stepEditable = computed<boolean[]>(() => {
+    const max = this.maxReachedIndex();
+    const current = this.selectedIndex();
+    return this.steps().map(
+      (step, index) => !!step.completed() && index <= max && index !== current,
+    );
+  });
+
+  // Per-index "gated" flags for linear mode: a step is gated (not yet selectable) while
+  // any prior step is incomplete. Memoized so the header's aria-disabled / tabindex
+  // bindings don't re-run canSelectStep() for every step on each change-detection cycle.
+  readonly stepGated = computed<boolean[]>(() => {
+    if (!this.linear()) {
+      return this.steps().map(() => false);
+    }
+    return this.steps().map((_step, index) => !this.canSelectStep(index));
   });
 
   selectStep(index: number): void {
