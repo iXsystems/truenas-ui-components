@@ -105,10 +105,10 @@ export const LargeTree: Story = {
         <tn-tree-virtual-scroll-view
           [dataSource]="dataSource"
           [treeControl]="treeControl"
-          [itemSize]="40"
+          [itemSize]="48"
           [nodeTrackBy]="trackByName"
         >
-          <tn-tree-node *cdkTreeNodeDef="let node" cdkTreeNodePadding style="height: 40px;">
+          <tn-tree-node *cdkTreeNodeDef="let node" cdkTreeNodePadding>
             <tn-icon [name]="node.expandable ? 'folder' : 'file'" library="mdi" size="sm" style="margin-right: 8px;"></tn-icon>
             {{ node.name }}
           </tn-tree-node>

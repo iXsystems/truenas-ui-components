@@ -62,6 +62,11 @@ const scrollFrameScheduler = typeof requestAnimationFrame !== 'undefined' ? anim
   host: {
     'class': 'tn-tree tn-tree-virtual-scroll-view',
     'role': 'tree',
+    // Expose itemSize to CSS so each row can be pinned to exactly this height
+    // (see the .scss) — virtual scrolling needs the painted row height to match
+    // the height the viewport assumes per item, otherwise hover/selection
+    // backgrounds bleed across neighbouring rows.
+    '[style.--tn-tree-item-size.px]': 'itemSize()',
   },
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -9,6 +9,24 @@
   width: 100%;
 }
 
+// Pin every row to exactly `itemSize` (surfaced as --tn-tree-item-size by the
+// host). tn-tree-node's default `min-height: 48px` + vertical padding otherwise
+// makes rows taller than the height the virtual viewport assumes per item, so
+// the hover/selection background overflows into neighbouring rows. The row is a
+// flex box with `align-items: center`, so zeroing the vertical padding keeps the
+// content centred within the fixed height.
+.tn-tree-virtual-scroll-view {
+  --tn-tree-item-size: 48px;
+
+  .tn-tree-node__content {
+    height: var(--tn-tree-item-size);
+    min-height: var(--tn-tree-item-size);
+    padding-top: 0;
+    padding-bottom: 0;
+    box-sizing: border-box;
+  }
+}
+
 .tn-tree-virtual-scroll-view__scroll-top {
   position: absolute;
   right: 16px;
