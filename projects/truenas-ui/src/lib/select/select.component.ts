@@ -321,12 +321,23 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    */
   private attachOverlay(): void {
     const trigger = this.triggerEl().nativeElement;
+    // Flexible dimensions must stay OFF: with them on, CDK treats a panel
+    // squeezed against the viewport edge as a valid "flexible fit" (no
+    // minWidth is set, so any width fits), never falls through to the
+    // end-aligned positions or push, and the panel content gets clipped at
+    // the screen edge. Rigid dimensions + push keep the panel fully visible;
+    // height is already capped by the panel's own max-height.
     const positionStrategy = this.overlay
       .position()
       .flexibleConnectedTo(trigger)
+      .withFlexibleDimensions(false)
+      .withPush(true)
+      .withViewportMargin(8)
       .withPositions([
         { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
         { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
+        { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 4 },
+        { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom', offsetY: -4 },
       ]);
 
     this.overlayRef = this.overlay.create({
