@@ -332,6 +332,9 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
       .flexibleConnectedTo(trigger)
       .withFlexibleDimensions(false)
       .withPush(true)
+      // Push can only rescue a panel narrower than the viewport; the panel's
+      // max-width: calc(100vw - 16px) in the SCSS covers the wider-than-viewport
+      // case. The margin here and that 16px are paired — keep in sync.
       .withViewportMargin(8)
       .withPositions([
         { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },

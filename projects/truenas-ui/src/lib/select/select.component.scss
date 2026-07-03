@@ -108,6 +108,12 @@
   border-radius: 0.375rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   max-height: var(--tn-select-dropdown-max-height);
+
+  // The overlay's push-on-screen behavior can only slide a panel that is
+  // narrower than the viewport; a wider one would still clip at the edge.
+  // Cap the width so long option labels wrap instead. The 16px mirrors the
+  // 8px-per-side withViewportMargin(8) in attachOverlay() — keep in sync.
+  max-width: calc(100vw - 16px);
 }
 
 .tn-select-options {
@@ -120,6 +126,11 @@
   display: flex;
   align-items: center;
   padding: 0.5rem 0.75rem;
+
+  // When the panel hits its viewport-capped max-width, wrap labels rather
+  // than overflow — ellipsis here could make same-prefix options
+  // indistinguishable. `anywhere` also breaks space-less tokens (paths, ids).
+  overflow-wrap: anywhere;
   cursor: pointer;
   color: var(--tn-fg1, #212529);
   transition: background-color 0.15s ease-in-out;

@@ -383,10 +383,10 @@ export const NearRightEdge: Story = {
 
     // The whole panel must sit within the viewport — a right edge beyond the
     // window width means options are clipped off screen.
-    await waitFor(() => {
+    await waitFor(async () => {
       const rect = panel.getBoundingClientRect();
-      expect(rect.right).toBeLessThanOrEqual(document.documentElement.clientWidth);
-      expect(rect.left).toBeGreaterThanOrEqual(0);
+      await expect(rect.right).toBeLessThanOrEqual(document.documentElement.clientWidth);
+      await expect(rect.left).toBeGreaterThanOrEqual(0);
     });
   },
 };
