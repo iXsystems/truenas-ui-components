@@ -1,3 +1,7 @@
+<!-- The two branches are intentionally near-identical: `scrollWindow` is a structural
+     directive (CdkVirtualScrollableWindow) selected by the bare attribute's presence, so
+     it can't be toggled via a property binding on a single viewport. Don't DRY this into
+     one element — dropping the attribute selection breaks window-scroll mode. -->
 @if (scrollWindow()) {
   <cdk-virtual-scroll-viewport
     scrollWindow

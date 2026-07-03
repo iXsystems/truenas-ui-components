@@ -214,6 +214,29 @@ describe('TnTreeVirtualScrollViewComponent', () => {
     expect(spy).toHaveBeenCalledWith(42);
   });
 
+  it('does not re-emit viewportScrolled when scrollLeft is unchanged (vertical scroll)', async () => {
+    await render();
+    const spy = jest.fn();
+    const viewport = host.tree().virtualScrollViewport().elementRef.nativeElement;
+
+    Object.defineProperty(viewport, 'scrollLeft', { value: 42, configurable: true });
+    viewport.dispatchEvent(new Event('scroll'));
+    await flushFrame();
+    host.tree().viewportScrolled.subscribe(spy);
+
+    // A subsequent scroll where scrollLeft did not change (e.g. a pure vertical scroll)
+    // must not push another identical value to a sticky-header consumer.
+    viewport.dispatchEvent(new Event('scroll'));
+    await flushFrame();
+    expect(spy).not.toHaveBeenCalled();
+
+    // A real horizontal change still emits.
+    Object.defineProperty(viewport, 'scrollLeft', { value: 100, configurable: true });
+    viewport.dispatchEvent(new Event('scroll'));
+    await flushFrame();
+    expect(spy).toHaveBeenCalledWith(100);
+  });
+
   it('shows the scroll-to-top button only once scrolled past the row threshold', async () => {
     await render();
     const tree = host.tree();

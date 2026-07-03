@@ -81,7 +81,7 @@ export {
   TnTreeVirtualScrollViewComponent, defaultTreeItemSize,
 } from './lib/tree/tree-virtual-scroll-view.component';
 export { TnTreeVirtualScrollNodeOutletDirective } from './lib/tree/tree-virtual-scroll-node-outlet.directive';
-export { TnTreeVirtualNodeData } from './lib/tree/tree-virtual-node-data.interface';
+export type { TnTreeVirtualNodeData } from './lib/tree/tree-virtual-node-data.interface';
 export * from './lib/enums/disk-type.enum';
 export * from './lib/enums/input-type.enum';
 export * from './lib/enums/modifier-keys.enum';

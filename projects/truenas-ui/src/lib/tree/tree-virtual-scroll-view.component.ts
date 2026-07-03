@@ -145,8 +145,19 @@ export class TnTreeVirtualScrollViewComponent<T, K = T> extends CdkTree<T, K>
 
   /** Emits the viewport's horizontal `scrollLeft` (used to sync a sticky column header). */
   readonly viewportScrolled = output<number>();
-  /** Emits the viewport content size whenever it changes (used to size a sticky header). */
+  /**
+   * Emits the observed content size whenever it changes (used to size a sticky header).
+   * `width` is the full rendered content width — including horizontal overflow past the
+   * viewport — which is what a horizontally-synced header needs. `height` is the observed
+   * content wrapper's height: the visible viewport height in internal-scroll mode, but the
+   * FULL content height (row count × `itemSize`) in `scrollWindow` mode, where the wrapper
+   * grows with the document. Consumers wanting the visible viewport height should not rely
+   * on this field in window mode.
+   */
   readonly viewportResized = output<{ width: number; height: number }>();
+
+  /** Last `scrollLeft` emitted via {@link viewportScrolled}; used to skip redundant emits. */
+  private lastEmittedScrollLeft = 0;
 
   protected nodes$ = new BehaviorSubject<TnTreeVirtualNodeData<T>[]>([]);
   protected readonly innerTrackBy = computed<TrackByFunction<TnTreeVirtualNodeData<T>>>(() => {
@@ -389,8 +400,15 @@ export class TnTreeVirtualScrollViewComponent<T, K = T> extends CdkTree<T, K>
       this.scrollFrameSubscription = null;
       // Read scrollLeft from the actual scroll source, not the viewport element: in
       // scrollWindow mode the viewport itself does not scroll (the window/external
-      // element does), so the viewport's own scrollLeft would always be 0.
-      this.viewportScrolled.emit(this.scrollViewportElement?.scrollLeft ?? 0);
+      // element does), so the viewport's own scrollLeft would always be 0. Only emit when
+      // it actually changed — this fires on vertical scrolls too, where scrollLeft is
+      // unchanged, and a consumer syncing a sticky header would otherwise re-apply the
+      // same translateX on every vertical scroll frame of a large tree.
+      const left = this.scrollViewportElement?.scrollLeft ?? 0;
+      if (left !== this.lastEmittedScrollLeft) {
+        this.lastEmittedScrollLeft = left;
+        this.viewportScrolled.emit(left);
+      }
       // Re-evaluate the scroll-to-top button on every scroll (the scroll source may be an
       // external, OnPush-detached container, so nothing else marks this view dirty).
       this.updateScrollTopButtonVisibility();
