@@ -56,12 +56,13 @@ const scrollFrameScheduler = typeof requestAnimationFrame !== 'undefined' ? anim
  * wrappers are marked `role="presentation"` so assistive tech still sees the
  * items as children of the `role="tree"` host.
  *
- * Known limitation: because rows are materialised (and recycled) by the virtual
- * scroll viewport rather than registered with CdkTree's node outlet, the CDK
- * `TreeKeyManager` has no stable node set to drive. Roving arrow-key / Home / End
- * keyboard navigation is therefore NOT supported here — unlike the plain
- * `tn-tree`. Use the non-virtual `tn-tree` when full keyboard navigation is
- * required, or drive selection/expansion from the consumer.
+ * Keyboard: expandable rows are focusable and expand/collapse with Enter/Space (see
+ * {@link onTreeKeydown}), so a keyboard/AT user can operate the `aria-expanded` that
+ * each expandable `treeitem` advertises. Roving arrow-key / Home / End navigation
+ * BETWEEN nodes is NOT supported here, though — because rows are materialised (and
+ * recycled) by the virtual scroll viewport rather than registered with CdkTree's node
+ * outlet, the CDK `TreeKeyManager` has no stable node set to drive. Use Tab to move
+ * between rows, or the non-virtual `tn-tree` when full roving navigation is required.
  */
 @Component({
   selector: 'tn-tree-virtual-scroll-view',
@@ -91,6 +92,7 @@ const scrollFrameScheduler = typeof requestAnimationFrame !== 'undefined' ? anim
     // the height the viewport assumes per item, otherwise hover/selection
     // backgrounds bleed across neighbouring rows.
     '[style.--tn-tree-item-size.px]': 'itemSize()',
+    '(keydown)': 'onTreeKeydown($event)',
   },
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -110,6 +112,10 @@ export class TnTreeVirtualScrollViewComponent<T, K = T> extends CdkTree<T, K>
    * When true the viewport scrolls with the window instead of an internal scroll area.
    * `booleanAttribute` so the bare presence form (`<... scrollWindow>`) coerces to `true`
    * rather than the empty-string (falsy) an un-transformed input would receive.
+   *
+   * Set once at initialisation — NOT reactive. The scroll listener, presentational roles
+   * and ResizeObserver are wired in `ngAfterViewInit` against the viewport that this input
+   * selected; toggling it later re-renders the viewport but does not re-run that wiring.
    */
   readonly scrollWindow = input(false, { transform: booleanAttribute });
   /** Whether to show the floating "scroll to top" button once scrolled down. */
@@ -117,7 +123,12 @@ export class TnTreeVirtualScrollViewComponent<T, K = T> extends CdkTree<T, K>
   /** Accessible label / tooltip for the scroll-to-top button (i18n is the consumer's job). */
   readonly scrollToTopLabel = input('Scroll to top');
 
-  /** Per-row trackBy over the ORIGINAL data node (not the internal wrapper). */
+  /**
+   * Per-row trackBy over the ORIGINAL data node (not the internal wrapper). Strongly
+   * recommended: without it rows track by index, so the recycling viewport reuses a
+   * detached view for whatever node lands at that index on data changes. Pass a stable
+   * key (e.g. `(_, node) => node.id`) as the stories do.
+   */
   readonly nodeTrackBy = input<TrackByFunction<T>>();
 
   /** Emits the viewport's horizontal `scrollLeft` (used to sync a sticky column header). */
@@ -211,6 +222,31 @@ export class TnTreeVirtualScrollViewComponent<T, K = T> extends CdkTree<T, K>
     // external scroll container back to the top.
     this.virtualScrollViewport().scrollToOffset(0, 'smooth');
     this.cdr.markForCheck();
+  }
+
+  /**
+   * Enter/Space on a focused expandable row toggles its expansion. The virtual viewport
+   * recycles rows so CDK's `TreeKeyManager` can't drive them (see class docs); this keeps
+   * the expand/collapse that each `aria-expanded` row advertises keyboard-operable, via
+   * event delegation on the `role="tree"` host that reuses the row's `cdkTreeNodeToggle`
+   * click handler. Ignored when focus is on an inner control (e.g. a `routerLink` anchor)
+   * so that element keeps its own Enter/Space behaviour.
+   */
+  protected onTreeKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar') {
+      return;
+    }
+    const target = event.target as HTMLElement | null;
+    const row = target?.closest?.('.tn-tree-node-wrapper[role="treeitem"]') as HTMLElement | null;
+    if (!row || row !== target || !row.hasAttribute('aria-expanded')) {
+      return;
+    }
+    const toggle = row.querySelector<HTMLElement>('[cdkTreeNodeToggle]');
+    if (toggle) {
+      // Prevent Space from scrolling the page; reuse the toggle's existing click handler.
+      event.preventDefault();
+      toggle.click();
+    }
   }
 
   private updateScrollTopButtonVisibility(): void {

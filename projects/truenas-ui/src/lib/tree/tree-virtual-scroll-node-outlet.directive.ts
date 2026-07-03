@@ -34,6 +34,7 @@ export class TnTreeVirtualScrollNodeOutletDirective<T> implements OnChanges, DoC
    */
   ngDoCheck(): void {
     this.applyAriaPosition();
+    this.applyKeyboardAffordance();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -97,6 +98,30 @@ export class TnTreeVirtualScrollNodeOutletDirective<T> implements OnChanges, DoC
     }
     if (root.getAttribute('aria-posinset') !== posInSet) {
       root.setAttribute('aria-posinset', posInSet);
+    }
+  }
+
+  /**
+   * Make expandable rows keyboard-focusable so a user can Tab to a pool/branch and
+   * expand it with Enter/Space (the host `TnTreeVirtualScrollViewComponent` handles the
+   * key). The virtual viewport recycles a row's view between expandable and leaf nodes,
+   * so this reconciles every check; leaf rows are left to the consumer's own interactive
+   * content (e.g. a `routerLink` anchor). Expandability is read from `aria-expanded`,
+   * which `tn-tree-node` sets only on expandable nodes. Only touch the DOM on change —
+   * this runs on the hot CD path.
+   */
+  private applyKeyboardAffordance(): void {
+    const root = this._viewRef?.rootNodes?.[0] as HTMLElement | undefined;
+    if (!root?.setAttribute) {
+      return;
+    }
+    const expandable = root.hasAttribute('aria-expanded');
+    if (expandable) {
+      if (root.getAttribute('tabindex') !== '0') {
+        root.setAttribute('tabindex', '0');
+      }
+    } else if (root.getAttribute('tabindex') === '0') {
+      root.removeAttribute('tabindex');
     }
   }
 

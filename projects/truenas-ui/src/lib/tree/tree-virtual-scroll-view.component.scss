@@ -41,4 +41,11 @@
   right: 16px;
   bottom: 16px;
   z-index: 2;
+
+  // In scrollWindow mode the host grows to the full content height, so an absolutely
+  // positioned button would anchor to the bottom of the whole tree (off-screen while
+  // scrolling). Pin it to the viewport instead.
+  &--fixed {
+    position: fixed;
+  }
 }

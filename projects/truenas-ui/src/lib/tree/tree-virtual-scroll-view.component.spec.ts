@@ -254,6 +254,40 @@ describe('TnTreeVirtualScrollViewComponent', () => {
     expect(viewport.scrollable).not.toBe(viewport);
   });
 
+  it('makes expandable rows tab-focusable but not leaf rows', async () => {
+    await render();
+    const [poolRow, otherRow] = rowElements();
+    // "pool" is expandable (advertises aria-expanded) → reachable with Tab (tabindex 0);
+    // "other" is a leaf → left out of the tab order (CDK's default -1).
+    expect(poolRow.getAttribute('aria-expanded')).toBe('false');
+    expect(poolRow.getAttribute('tabindex')).toBe('0');
+    expect(otherRow.getAttribute('tabindex')).not.toBe('0');
+  });
+
+  it('expands a focused row on Enter and collapses it on Space', async () => {
+    await render();
+    expect(rowLabels()).toEqual(['pool', 'other']);
+
+    rowElements()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await settle();
+    expect(rowLabels()).toEqual(['pool', 'pool/a', 'pool/b', 'other']);
+
+    rowElements()[0].dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+    await settle();
+    expect(rowLabels()).toEqual(['pool', 'other']);
+  });
+
+  it('does not double-toggle when the key event originates from the inner toggle', async () => {
+    await render();
+    // The chevron sits inside `cdkTreeNodeToggle`, whose own keydown.Enter already toggles.
+    // The host handler must NOT fire a second time for the same event (guarded by
+    // row !== target), so a single Enter nets exactly one toggle (collapsed → expanded).
+    const innerToggle = rowElements()[0].querySelector<HTMLElement>('.tn-tree-node__toggle');
+    innerToggle?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await settle();
+    expect(rowLabels()).toEqual(['pool', 'pool/a', 'pool/b', 'other']);
+  });
+
   it('coerces the bare `scrollWindow` presence attribute to true', async () => {
     // Regression: with a plain `input(false)` the bare attribute form (which the stories
     // and real consumers use) binds an empty string — falsy — so the internal-scroll
