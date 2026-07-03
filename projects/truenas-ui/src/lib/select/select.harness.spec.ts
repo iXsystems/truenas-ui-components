@@ -174,6 +174,40 @@ class TestGroupDisabledHostComponent {
 }
 
 @Component({
+  selector: 'tn-test-select-all-dup-host',
+  standalone: true,
+  imports: [TnSelectComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-select
+      placeholder="Select fruits"
+      [options]="options()"
+      [optionGroups]="groups()"
+      [multiple]="true"
+      [showSelectAll]="true"
+      [formControl]="control" />
+  `
+})
+class TestSelectAllDuplicateHostComponent {
+  // 'apple' appears both ungrouped and inside a group — select-all must not
+  // add it twice.
+  options = signal<TnSelectOption<string>[]>([
+    { value: 'apple', label: 'Apple' },
+    { value: 'banana', label: 'Banana' },
+  ]);
+  groups = signal<TnSelectOptionGroup<string>[]>([
+    {
+      label: 'More',
+      options: [
+        { value: 'apple', label: 'Apple (again)' },
+        { value: 'cherry', label: 'Cherry' },
+      ]
+    },
+  ]);
+  control = new FormControl<string[]>([]);
+}
+
+@Component({
   selector: 'tn-test-multi-output-host',
   standalone: true,
   imports: [TnSelectComponent],
@@ -596,6 +630,31 @@ describe('TnSelectHarness - select all with pre-selected disabled option', () =>
     await select.toggleSelectAll();
     expect(hostComponent.control.value).toEqual(['cherry']);
     expect(await select.isSelectAllChecked()).toBe(false);
+  });
+});
+
+describe('TnSelectHarness - select all with duplicate value across group', () => {
+  let fixture: ComponentFixture<TestSelectAllDuplicateHostComponent>;
+  let hostComponent: TestSelectAllDuplicateHostComponent;
+  let loader: HarnessLoader;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TestSelectAllDuplicateHostComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestSelectAllDuplicateHostComponent);
+    hostComponent = fixture.componentInstance;
+    loader = TestbedHarnessEnvironment.loader(fixture);
+  });
+
+  it('should not add a value twice when it appears ungrouped and in a group', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.toggleSelectAll();
+    // 'apple' is present in both the ungrouped options and the group, but the
+    // selection must contain it exactly once — matching toggleOption's behaviour.
+    expect(hostComponent.control.value).toEqual(['apple', 'banana', 'cherry']);
+    expect(await select.isSelectAllChecked()).toBe(true);
   });
 });
 

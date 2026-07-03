@@ -509,16 +509,23 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    * and enabled groups. This is the set the select-all row operates on —
    * disabled options and options in disabled groups are excluded because they
    * can't be toggled individually either.
+   *
+   * Values are deduped with `compareValues` so a value that appears both
+   * ungrouped and inside a group isn't pushed twice — that would make
+   * select-all diverge from `toggleOption()`, which never produces duplicates.
    */
   protected selectableValues = computed<T[]>(() => {
     const values: T[] = [];
+    const push = (value: T): void => {
+      if (!values.some((v) => this.compareValues(v, value))) {values.push(value);}
+    };
     for (const opt of this.options()) {
-      if (!opt.disabled) {values.push(opt.value);}
+      if (!opt.disabled) {push(opt.value);}
     }
     for (const group of this.optionGroups()) {
       if (group.disabled) {continue;}
       for (const opt of group.options) {
-        if (!opt.disabled) {values.push(opt.value);}
+        if (!opt.disabled) {push(opt.value);}
       }
     }
     return values;
