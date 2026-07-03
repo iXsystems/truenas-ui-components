@@ -170,6 +170,9 @@ describe('TnTreeVirtualScrollViewComponent', () => {
     Object.defineProperty(viewport, 'scrollLeft', { value: 42, configurable: true });
     viewport.dispatchEvent(new Event('scroll'));
 
+    // The handler coalesces its work into an animation frame, so flush one before asserting.
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
     expect(spy).toHaveBeenCalledWith(42);
   });
 });

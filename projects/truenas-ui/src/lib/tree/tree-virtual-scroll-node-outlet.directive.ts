@@ -65,26 +65,15 @@ export class TnTreeVirtualScrollNodeOutletDirective<T> implements OnChanges, DoC
   }
 
   /**
-   * Whether the row must be re-instantiated (vs. patched in place). Compares the
-   * wrapper object's own keys — always `data`/`context`/`nodeDef`/`posInSet`/`setSize`
-   * — and, when they match, falls back to a reference check on the raw data node. A
-   * changed key set or a different data reference means a genuinely different row.
+   * Whether the row must be re-instantiated (vs. patched in place). Every wrapper
+   * carries the same fixed key set (`data`/`context`/`nodeDef`/`posInSet`/`setSize`),
+   * so recreation comes down to whether the raw data node is a different reference —
+   * that is what marks a genuinely different row (a missing wrapper also recreates).
    */
   private shouldRecreateView(dataChange: SimpleChange): boolean {
     const prevValue = dataChange.previousValue as TnTreeVirtualNodeData<T> | undefined;
     const currValue = dataChange.currentValue as TnTreeVirtualNodeData<T> | undefined;
-    const prevKeys = Object.keys(prevValue || {});
-    const currKeys = Object.keys(currValue || {});
-
-    if (prevKeys.length === currKeys.length) {
-      for (const propName of currKeys) {
-        if (!prevKeys.includes(propName)) {
-          return true;
-        }
-      }
-      return prevValue?.data !== currValue?.data;
-    }
-    return true;
+    return prevValue?.data !== currValue?.data;
   }
 
   /** Reflect posinset/setsize onto the row element so screen readers can announce "item N of total". */

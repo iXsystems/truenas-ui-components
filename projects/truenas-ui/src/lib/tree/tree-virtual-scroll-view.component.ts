@@ -12,6 +12,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, Iter
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { animationFrameScheduler, asapScheduler, BehaviorSubject } from 'rxjs';
+import type { Subscription } from 'rxjs';
 import { auditTime, map } from 'rxjs/operators';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnTestIdDirective } from '../test-id';
@@ -130,6 +131,7 @@ export class TnTreeVirtualScrollViewComponent<T, K = T> extends CdkTree<T, K>
   private renderNodeChanges$ = new BehaviorSubject<readonly T[]>([]);
   private resizeObserver: ResizeObserver | null = null;
   private scrollViewportElement: HTMLElement | null = null;
+  private scrollFrameSubscription: Subscription | null = null;
 
   constructor() {
     super(inject(IterableDiffers), inject(ChangeDetectorRef), inject(ViewContainerRef));
@@ -181,6 +183,8 @@ export class TnTreeVirtualScrollViewComponent<T, K = T> extends CdkTree<T, K>
     super.ngOnDestroy();
     this.scrollViewportElement?.removeEventListener('scroll', this.onViewportScroll);
     this.scrollViewportElement = null;
+    this.scrollFrameSubscription?.unsubscribe();
+    this.scrollFrameSubscription = null;
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
   }
@@ -240,16 +244,35 @@ export class TnTreeVirtualScrollViewComponent<T, K = T> extends CdkTree<T, K>
       // now-detached element. Schedule one more check so the outlet's ngDoCheck
       // reconciles the aria attributes onto the settled elements.
       queueMicrotask(() => this.cdr.markForCheck());
+      // The visible node set just changed (e.g. a large branch was collapsed), which can
+      // shrink the scrollable content and clamp the scroll offset without firing a scroll
+      // event. Re-evaluate the scroll-to-top button after layout settles so it can't linger
+      // over content that is no longer scrollable. Guarded by the live element ref so a
+      // frame scheduled just before destroy doesn't measure a torn-down viewport.
+      scrollFrameScheduler.schedule(() => {
+        if (this.scrollViewportElement) {
+          this.updateScrollTopButtonVisibility();
+        }
+      });
     });
   }
 
   private readonly onViewportScroll = (): void => {
-    // Read scrollLeft from the actual scroll source, not the viewport element: in
-    // scrollWindow mode the viewport itself does not scroll (the window/external
-    // element does), so the viewport's own scrollLeft would always be 0.
-    this.viewportScrolled.emit(this.scrollViewportElement?.scrollLeft ?? 0);
-    // Re-evaluate the scroll-to-top button on every scroll (the scroll source may be an
-    // external, OnPush-detached container, so nothing else marks this view dirty).
-    this.updateScrollTopButtonVisibility();
+    // Scroll events can fire several times per frame. Coalesce the work — a
+    // horizontal-offset emit and `measureScrollOffset` (a layout-forcing read) — into a
+    // single animation frame so fast scrolls don't trigger repeated forced reflows.
+    if (this.scrollFrameSubscription) {
+      return;
+    }
+    this.scrollFrameSubscription = scrollFrameScheduler.schedule(() => {
+      this.scrollFrameSubscription = null;
+      // Read scrollLeft from the actual scroll source, not the viewport element: in
+      // scrollWindow mode the viewport itself does not scroll (the window/external
+      // element does), so the viewport's own scrollLeft would always be 0.
+      this.viewportScrolled.emit(this.scrollViewportElement?.scrollLeft ?? 0);
+      // Re-evaluate the scroll-to-top button on every scroll (the scroll source may be an
+      // external, OnPush-detached container, so nothing else marks this view dirty).
+      this.updateScrollTopButtonVisibility();
+    });
   };
 }

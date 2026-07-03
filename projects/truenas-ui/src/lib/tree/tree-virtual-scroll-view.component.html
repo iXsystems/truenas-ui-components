@@ -22,6 +22,8 @@
   </cdk-virtual-scroll-viewport>
 }
 
+<!-- Required so CdkTree finds a node outlet during init, but intentionally left
+     empty: rows are rendered through the virtual scroll viewport above, not here. -->
 <ng-container cdkTreeNodeOutlet />
 
 @if (isScrollTopButtonVisible) {
