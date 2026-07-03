@@ -67,19 +67,59 @@ describe('TnTreeVirtualScrollViewComponent', () => {
   let fixture: ComponentFixture<HostComponent>;
   let host: HostComponent;
 
+  /** Distinct visible rows (the row template renders a `role="treeitem"` element per node). */
+  function rowElements(): HTMLElement[] {
+    return Array.from(
+      fixture.nativeElement.querySelectorAll<HTMLElement>('.tn-tree-node-wrapper[role="treeitem"]'),
+    );
+  }
+
+  function rowLabels(): string[] {
+    // Read the node's text cell only (the wrapper's textContent also picks up the
+    // expand-chevron icon glyph).
+    return rowElements().map((el) => el.querySelector('.tn-tree-node__text')?.textContent?.trim() ?? '');
+  }
+
+  /**
+   * Drive several change-detection passes to let the node stream (async `auditTime`)
+   * emit and the DOM settle. The viewport's recycling repeater can reshuffle rows, so
+   * the outlet's self-healing `ngDoCheck` reconciles aria attributes over the next
+   * pass or two — mirroring how zone-driven CD settles in the browser.
+   */
+  async function settle(passes = 3): Promise<void> {
+    for (let i = 0; i < passes; i++) {
+      await fixture.whenStable();
+      fixture.detectChanges();
+    }
+  }
+
+  /**
+   * Render the tree. `expandRoot` expands the first root BEFORE the initial render so
+   * the expanded rows are present from the first paint — expanding mid-test races the
+   * viewport's async row stream and is needlessly flaky.
+   */
+  async function render({ expandRoot = false } = {}): Promise<void> {
+    fixture = TestBed.createComponent(HostComponent);
+    host = fixture.componentInstance;
+    if (expandRoot) {
+      host.treeControl.expand(host.treeControl.dataNodes[0]);
+    }
+    fixture.detectChanges();
+    await settle();
+  }
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [HostComponent],
     }).compileComponents();
-
-    fixture = TestBed.createComponent(HostComponent);
-    host = fixture.componentInstance;
-    fixture.detectChanges();
   });
 
-  it('instantiates and applies the fixed row height', () => {
+  it('instantiates and applies the fixed row height', async () => {
+    await render();
     expect(host.tree()).toBeTruthy();
     expect(host.tree().itemSize()).toBe(52);
+    const treeEl = fixture.nativeElement.querySelector<HTMLElement>('.tn-tree-virtual-scroll-view');
+    expect(treeEl?.style.getPropertyValue('--tn-tree-item-size')).toBe('52px');
   });
 
   it('exposes sensible defaults', () => {
@@ -89,27 +129,40 @@ describe('TnTreeVirtualScrollViewComponent', () => {
     expect(spec.componentInstance.showScrollToTop()).toBe(true);
   });
 
-  it('wraps a rendered node into virtual node data, matching the node def and level', () => {
-    const tree = host.tree() as unknown as {
-      createNode(data: ExampleFlatNode, index: number): {
-        data: ExampleFlatNode;
-        context: { level: number };
-        nodeDef: unknown;
-      };
-    };
-
-    const child = tree.createNode({ name: 'pool/a', level: 1, expandable: false }, 0);
-    expect(child.data.name).toBe('pool/a');
-    // Level is taken from the tree control's getLevel.
-    expect(child.context.level).toBe(1);
-    // The default *cdkTreeNodeDef template is resolved for the row.
-    expect(child.nodeDef).toBeTruthy();
-
-    const root = tree.createNode({ name: 'pool', level: 0, expandable: true }, 1);
-    expect(root.context.level).toBe(0);
+  it('renders only the collapsed top-level nodes as tree items initially', async () => {
+    await render();
+    // Only roots are visible while collapsed: the expandable "pool" and the leaf "other".
+    expect(rowLabels()).toEqual(['pool', 'other']);
   });
 
-  it('emits the viewport scrollLeft when the viewport scrolls', () => {
+  it('renders children with the correct aria-level when a node is expanded', async () => {
+    await render({ expandRoot: true });
+
+    expect(rowLabels()).toEqual(['pool', 'pool/a', 'pool/b', 'other']);
+
+    const levels = rowElements().map((el) => el.getAttribute('aria-level'));
+    // aria-level is 1-based: root nodes at 1, the two expanded children at 2.
+    expect(levels).toEqual(['1', '2', '2', '1']);
+  });
+
+  it('exposes aria-posinset / aria-setsize across the visible node set', async () => {
+    await render({ expandRoot: true });
+
+    const rows = rowElements();
+    expect(rows.map((el) => el.getAttribute('aria-setsize'))).toEqual(['4', '4', '4', '4']);
+    expect(rows.map((el) => el.getAttribute('aria-posinset'))).toEqual(['1', '2', '3', '4']);
+  });
+
+  it('marks the virtual-scroll wrappers as presentational so rows stay tree children', async () => {
+    await render();
+    const viewport = fixture.nativeElement.querySelector('cdk-virtual-scroll-viewport');
+    const wrapper = fixture.nativeElement.querySelector('.cdk-virtual-scroll-content-wrapper');
+    expect(viewport?.getAttribute('role')).toBe('presentation');
+    expect(wrapper?.getAttribute('role')).toBe('presentation');
+  });
+
+  it('emits the scroll source scrollLeft when the viewport scrolls', async () => {
+    await render();
     const spy = jest.fn();
     host.tree().viewportScrolled.subscribe(spy);
 

@@ -1,6 +1,6 @@
 import type { CdkTreeNodeOutletContext } from '@angular/cdk/tree';
 import { CdkTreeNode } from '@angular/cdk/tree';
-import type { OnChanges, SimpleChange, SimpleChanges, EmbeddedViewRef} from '@angular/core';
+import type { DoCheck, OnChanges, SimpleChange, SimpleChanges, EmbeddedViewRef} from '@angular/core';
 import {
   Directive, ViewContainerRef, input, inject,
 } from '@angular/core';
@@ -19,15 +19,26 @@ import type { TnTreeVirtualNodeData } from './tree-virtual-node-data.interface';
   selector: '[tnTreeVirtualScrollNodeOutlet]',
   standalone: true,
 })
-export class TnTreeVirtualScrollNodeOutletDirective<T> implements OnChanges {
+export class TnTreeVirtualScrollNodeOutletDirective<T> implements OnChanges, DoCheck {
   private _viewContainerRef = inject(ViewContainerRef);
 
   private _viewRef: EmbeddedViewRef<unknown> | null = null;
   readonly data = input.required<TnTreeVirtualNodeData<T>>();
 
+  /**
+   * Re-assert the row's aria position every check. The viewport's recycling view
+   * repeater can swap the underlying DOM view for a different row without our
+   * `ngOnChanges` writing the new `aria-setsize`/`aria-posinset` in a way that
+   * survives the swap, so we reconcile the current element against the current data
+   * on each change-detection pass (two cheap attribute writes) — self-healing.
+   */
+  ngDoCheck(): void {
+    this.applyAriaPosition();
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
-    const ctxChange = changes['data'];
-    const recreateView = ctxChange ? this.hasContextShapeChanged(ctxChange) : false;
+    const dataChange = changes['data'];
+    const recreateView = dataChange ? this.shouldRecreateView(dataChange) : false;
 
     if (recreateView) {
       const viewContainerRef = this._viewContainerRef;
@@ -40,6 +51,11 @@ export class TnTreeVirtualScrollNodeOutletDirective<T> implements OnChanges {
         ? viewContainerRef.createEmbeddedView(this.data().nodeDef.template, this.data().context)
         : null;
 
+      // Bind the freshly-created CdkTreeNode to this row's data. `mostRecentTreeNode`
+      // is a global CDK static set synchronously while `createEmbeddedView` above
+      // instantiates the node template. This mirrors CDK's own internal wiring and
+      // assumes the node def's template contains exactly one CdkTreeNode; it is
+      // fragile under view recycling, hence the shape check that gates recreation.
       if (CdkTreeNode.mostRecentTreeNode && this._viewRef) {
         CdkTreeNode.mostRecentTreeNode.data = this.data().data;
       }
@@ -48,21 +64,37 @@ export class TnTreeVirtualScrollNodeOutletDirective<T> implements OnChanges {
     }
   }
 
-  private hasContextShapeChanged(ctxChange: SimpleChange): boolean {
-    const prevValue = ctxChange.previousValue as TnTreeVirtualNodeData<T> | undefined;
-    const currValue = ctxChange.currentValue as TnTreeVirtualNodeData<T> | undefined;
-    const prevCtxKeys = Object.keys(prevValue || {});
-    const currCtxKeys = Object.keys(currValue || {});
+  /**
+   * Whether the row must be re-instantiated (vs. patched in place). Compares the
+   * wrapper object's own keys — always `data`/`context`/`nodeDef`/`posInSet`/`setSize`
+   * — and, when they match, falls back to a reference check on the raw data node. A
+   * changed key set or a different data reference means a genuinely different row.
+   */
+  private shouldRecreateView(dataChange: SimpleChange): boolean {
+    const prevValue = dataChange.previousValue as TnTreeVirtualNodeData<T> | undefined;
+    const currValue = dataChange.currentValue as TnTreeVirtualNodeData<T> | undefined;
+    const prevKeys = Object.keys(prevValue || {});
+    const currKeys = Object.keys(currValue || {});
 
-    if (prevCtxKeys.length === currCtxKeys.length) {
-      for (const propName of currCtxKeys) {
-        if (!prevCtxKeys.includes(propName)) {
+    if (prevKeys.length === currKeys.length) {
+      for (const propName of currKeys) {
+        if (!prevKeys.includes(propName)) {
           return true;
         }
       }
       return prevValue?.data !== currValue?.data;
     }
     return true;
+  }
+
+  /** Reflect posinset/setsize onto the row element so screen readers can announce "item N of total". */
+  private applyAriaPosition(): void {
+    const root = this._viewRef?.rootNodes?.[0] as HTMLElement | undefined;
+    const data = this.data();
+    if (root?.setAttribute && data) {
+      root.setAttribute('aria-setsize', String(data.setSize));
+      root.setAttribute('aria-posinset', String(data.posInSet));
+    }
   }
 
   private updateExistingContext(ctx: CdkTreeNodeOutletContext<T>): void {

@@ -21,6 +21,15 @@ import { TnTreeVirtualScrollNodeOutletDirective } from './tree-virtual-scroll-no
 /** Default fixed row height (px) used by the virtual scroll viewport. */
 export const defaultTreeItemSize = 48;
 
+/**
+ * Row-count multiplier for the default `maxBufferPx` (how many extra rows of
+ * content the viewport renders past the visible area) and for the distance the
+ * user must scroll before the scroll-to-top button appears. Expressed in rows so
+ * both scale with `itemSize`.
+ */
+const defaultBufferRows = 8;
+const scrollToTopThresholdRows = 8;
+
 const scrollFrameScheduler = typeof requestAnimationFrame !== 'undefined' ? animationFrameScheduler : asapScheduler;
 
 /**
@@ -38,6 +47,19 @@ const scrollFrameScheduler = typeof requestAnimationFrame !== 'undefined' ? anim
  *   </tn-tree-node>
  * </tn-tree-virtual-scroll-view>
  * ```
+ *
+ * Accessibility: rows are exposed with `role="treeitem"` plus `aria-level`,
+ * `aria-posinset` and `aria-setsize` (the latter two relative to the currently
+ * expanded/visible node set), and the virtual-scroll wrappers are marked
+ * `role="presentation"` so assistive tech still sees the items as children of the
+ * `role="tree"` host.
+ *
+ * Known limitation: because rows are materialised (and recycled) by the virtual
+ * scroll viewport rather than registered with CdkTree's node outlet, the CDK
+ * `TreeKeyManager` has no stable node set to drive. Roving arrow-key / Home / End
+ * keyboard navigation is therefore NOT supported here — unlike the plain
+ * `tn-tree`. Use the non-virtual `tn-tree` when full keyboard navigation is
+ * required, or drive selection/expansion from the consumer.
  */
 @Component({
   selector: 'tn-tree-virtual-scroll-view',
@@ -81,7 +103,7 @@ export class TnTreeVirtualScrollViewComponent<T, K = T> extends CdkTree<T, K>
   /** Fixed row height in px. Must match the actual rendered node height. */
   readonly itemSize = input(defaultTreeItemSize);
   readonly minBufferPx = input(defaultTreeItemSize * 4);
-  readonly maxBufferPx = input(defaultTreeItemSize * 8);
+  readonly maxBufferPx = input(defaultTreeItemSize * defaultBufferRows);
   /** When true the viewport scrolls with the window instead of an internal scroll area. */
   readonly scrollWindow = input(false);
   /** Whether to show the floating "scroll to top" button once scrolled down. */
@@ -135,6 +157,13 @@ export class TnTreeVirtualScrollViewComponent<T, K = T> extends CdkTree<T, K>
     const contentWrapper = element.querySelector('.cdk-virtual-scroll-content-wrapper');
     const observed = (contentWrapper as HTMLElement | null) ?? element;
 
+    // The CDK viewport + content wrapper sit between the host `role="tree"` and the
+    // `role="treeitem"` rows. Mark them presentational so assistive tech collapses
+    // them and still sees the rows as direct tree items (ARIA requires treeitems to
+    // be children of the tree, optionally through a presentational container).
+    element.setAttribute('role', 'presentation');
+    (contentWrapper as HTMLElement | null)?.setAttribute('role', 'presentation');
+
     // Guarded for non-browser environments (SSR, jsdom-based unit tests) where
     // ResizeObserver is absent; the resize output simply does not emit there.
     if (typeof ResizeObserver !== 'undefined') {
@@ -156,12 +185,12 @@ export class TnTreeVirtualScrollViewComponent<T, K = T> extends CdkTree<T, K>
     this.resizeObserver = null;
   }
 
-  get isScrollTopButtonVisible(): boolean {
-    if (!this.showScrollToTop()) {
-      return false;
-    }
-    return this.virtualScrollViewport().measureScrollOffset('top') > this.itemSize() * 8;
-  }
+  /**
+   * Cached visibility of the scroll-to-top button. Recomputed only on scroll (see
+   * {@link onViewportScroll}) rather than read as a getter every change-detection
+   * pass, so `measureScrollOffset` — a layout-forcing read — is not called each cycle.
+   */
+  protected isScrollTopButtonVisible = false;
 
   scrollToTop(): void {
     // Use scrollToOffset (which delegates to the viewport's scrollable) rather than
@@ -171,34 +200,56 @@ export class TnTreeVirtualScrollViewComponent<T, K = T> extends CdkTree<T, K>
     this.cdr.markForCheck();
   }
 
+  private updateScrollTopButtonVisibility(): void {
+    const visible = this.showScrollToTop()
+      && this.virtualScrollViewport().measureScrollOffset('top') > this.itemSize() * scrollToTopThresholdRows;
+    if (visible !== this.isScrollTopButtonVisible) {
+      this.isScrollTopButtonVisible = visible;
+      this.cdr.markForCheck();
+    }
+  }
+
   // CdkTree calls this with the full set of currently-visible nodes. Instead of
   // rendering them into the outlet, feed them to the virtual scroll pipeline.
   override renderNodeChanges(data: readonly T[]): void {
     this.renderNodeChanges$.next(data);
   }
 
-  private createNode(nodeData: T, index: number): TnTreeVirtualNodeData<T> {
+  private createNode(nodeData: T, index: number, setSize: number): TnTreeVirtualNodeData<T> {
     const nodeDef = this._getNodeDef(nodeData, index);
     const context = new CdkTreeNodeOutletContext<T>(nodeData);
     context.level = this.treeControl?.getLevel ? this.treeControl.getLevel(nodeData) : 0;
-    return { data: nodeData, context, nodeDef };
+    // posInSet/setSize let a screen reader announce "item N of total" even though
+    // only a slice of rows exists in the DOM at any time. They are relative to the
+    // full set of currently-visible (expanded) nodes, which is what `data` holds.
+    return {
+      data: nodeData, context, nodeDef, posInSet: index + 1, setSize,
+    };
   }
 
   private listenForNodeChanges(): void {
     this.renderNodeChanges$.pipe(
       auditTime(0, scrollFrameScheduler),
-      map((data) => [...data].map((node, index) => this.createNode(node, index))),
+      map((data) => [...data].map((node, index) => this.createNode(node, index, data.length))),
       takeUntilDestroyed(this.destroyRef),
     ).subscribe((nodes) => {
       this.nodes$.next(nodes);
       this.cdr.markForCheck();
+      // The viewport's recycling repeater may swap a row's DOM view during the render
+      // triggered above, leaving the outlet's aria-posinset/aria-setsize written to a
+      // now-detached element. Schedule one more check so the outlet's ngDoCheck
+      // reconciles the aria attributes onto the settled elements.
+      queueMicrotask(() => this.cdr.markForCheck());
     });
   }
 
   private readonly onViewportScroll = (): void => {
-    this.viewportScrolled.emit(this.virtualScrollViewport().elementRef.nativeElement.scrollLeft);
-    // Re-evaluate isScrollTopButtonVisible on every scroll (the scroll source may be an
+    // Read scrollLeft from the actual scroll source, not the viewport element: in
+    // scrollWindow mode the viewport itself does not scroll (the window/external
+    // element does), so the viewport's own scrollLeft would always be 0.
+    this.viewportScrolled.emit(this.scrollViewportElement?.scrollLeft ?? 0);
+    // Re-evaluate the scroll-to-top button on every scroll (the scroll source may be an
     // external, OnPush-detached container, so nothing else marks this view dirty).
-    this.cdr.markForCheck();
+    this.updateScrollTopButtonVisibility();
   };
 }

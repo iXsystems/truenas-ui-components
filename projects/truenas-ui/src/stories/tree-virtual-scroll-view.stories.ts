@@ -35,6 +35,27 @@ function buildLargeTree(rootCount: number, childrenPerRoot: number): DemoNode[] 
 
 const LARGE_TREE = buildLargeTree(200, 25); // 200 roots × 25 children + 200 = ~5200 nodes
 
+// Shared props factory so every story wires up an identical data source / tree control.
+function treeProps(data: DemoNode[]): Record<string, unknown> {
+  const treeControl = new FlatTreeControl<DemoFlatNode>(
+    (node: DemoFlatNode) => node.level,
+    (node: DemoFlatNode) => node.expandable,
+  );
+  const treeFlattener = new TnTreeFlattener<DemoNode, DemoFlatNode>(
+    (node: DemoNode, level: number) => ({ name: node.name, level, expandable: !!node.children?.length }),
+    (node: DemoFlatNode) => node.level,
+    (node: DemoFlatNode) => node.expandable,
+    (node: DemoNode) => node.children,
+  );
+  const dataSource = new TnTreeFlatDataSource(treeControl, treeFlattener);
+  dataSource.data = data;
+  return {
+    treeControl,
+    dataSource,
+    trackByName: (_: number, node: DemoFlatNode) => node.name,
+  };
+}
+
 const meta: Meta<TnTreeVirtualScrollViewComponent<DemoNode, DemoFlatNode>> = {
   title: 'Components/Tree/VirtualScroll',
   component: TnTreeVirtualScrollViewComponent,
@@ -70,36 +91,13 @@ export const LargeTree: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'A ~5,200-node tree. Scroll the list — the DOM only ever holds the visible rows plus a small buffer.',
+        story: 'A ~5,200-node tree. Scroll the list — the DOM only ever holds the visible rows plus a small '
+          + 'buffer. Scroll down far enough and the floating "scroll to top" button appears.',
       },
     },
   },
   render: () => ({
-    props: {
-      hasChild: (_: number, node: DemoFlatNode) => node.expandable,
-      trackByName: (_: number, node: DemoFlatNode) => node.name,
-      treeControl: new FlatTreeControl<DemoFlatNode>(
-        (node: DemoFlatNode) => node.level,
-        (node: DemoFlatNode) => node.expandable,
-      ),
-      get treeFlattener() {
-        return new TnTreeFlattener<DemoNode, DemoFlatNode>(
-          (node: DemoNode, level: number) => ({
-            name: node.name,
-            level,
-            expandable: !!node.children?.length,
-          }),
-          (node: DemoFlatNode) => node.level,
-          (node: DemoFlatNode) => node.expandable,
-          (node: DemoNode) => node.children,
-        );
-      },
-      get dataSource() {
-        const dataSource = new TnTreeFlatDataSource(this['treeControl'], this['treeFlattener']);
-        dataSource.data = LARGE_TREE;
-        return dataSource;
-      },
-    },
+    props: treeProps(LARGE_TREE),
     template: `
       <div style="height: 420px; border: 1px solid var(--tn-lines); border-radius: 6px;">
         <tn-tree-virtual-scroll-view
@@ -111,6 +109,91 @@ export const LargeTree: Story = {
           <tn-tree-node *cdkTreeNodeDef="let node" cdkTreeNodePadding>
             <tn-icon [name]="node.expandable ? 'folder' : 'file'" library="mdi" size="sm" style="margin-right: 8px;"></tn-icon>
             {{ node.name }}
+          </tn-tree-node>
+        </tn-tree-virtual-scroll-view>
+      </div>
+    `,
+  }),
+};
+
+export const WindowScroll: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'With `scrollWindow`, the viewport scrolls with the page instead of an internal scroll area. '
+          + 'Use this when the tree is the main content of a route and should grow with the document. The '
+          + 'scroll-to-top button and `viewportScrolled` output react to the window scroll offset.',
+      },
+    },
+  },
+  render: () => ({
+    props: treeProps(LARGE_TREE),
+    template: `
+      <div style="border: 1px solid var(--tn-lines); border-radius: 6px;">
+        <tn-tree-virtual-scroll-view
+          scrollWindow
+          [dataSource]="dataSource"
+          [treeControl]="treeControl"
+          [itemSize]="48"
+          [nodeTrackBy]="trackByName"
+        >
+          <tn-tree-node *cdkTreeNodeDef="let node" cdkTreeNodePadding>
+            <tn-icon [name]="node.expandable ? 'folder' : 'file'" library="mdi" size="sm" style="margin-right: 8px;"></tn-icon>
+            {{ node.name }}
+          </tn-tree-node>
+        </tn-tree-virtual-scroll-view>
+      </div>
+    `,
+  }),
+};
+
+export const StickyHeader: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'A sticky column header kept in horizontal sync with the rows via the `viewportScrolled` output. '
+          + 'The rows are wider than the viewport, so scrolling right shifts both the rows and the header. '
+          + '`viewportResized` reports the content size for sizing such a header.',
+      },
+    },
+  },
+  render: () => ({
+    props: {
+      ...treeProps(LARGE_TREE),
+      headerScrollLeft: 0,
+      onViewportScrolled(this: { headerScrollLeft: number }, left: number): void {
+        this.headerScrollLeft = left;
+      },
+    },
+    template: `
+      <div style="height: 420px; border: 1px solid var(--tn-lines); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column;">
+        <div style="overflow: hidden; border-bottom: 1px solid var(--tn-lines); background: var(--tn-alt-bg);">
+          <div
+            style="display: flex; gap: 24px; padding: 8px 16px; width: 900px; font-weight: 600;"
+            [style.transform]="'translateX(' + (-headerScrollLeft) + 'px)'"
+          >
+            <span style="width: 400px;">Name</span>
+            <span style="width: 240px;">Type</span>
+            <span style="width: 200px;">Path</span>
+          </div>
+        </div>
+        <tn-tree-virtual-scroll-view
+          style="flex: 1; min-height: 0;"
+          [dataSource]="dataSource"
+          [treeControl]="treeControl"
+          [itemSize]="48"
+          [nodeTrackBy]="trackByName"
+          (viewportScrolled)="onViewportScrolled($event)"
+        >
+          <tn-tree-node *cdkTreeNodeDef="let node" cdkTreeNodePadding>
+            <div style="display: flex; gap: 24px; width: 900px;">
+              <span style="width: 400px; display: inline-flex; align-items: center;">
+                <tn-icon [name]="node.expandable ? 'folder' : 'file'" library="mdi" size="sm" style="margin-right: 8px;"></tn-icon>
+                {{ node.name }}
+              </span>
+              <span style="width: 240px;">{{ node.expandable ? 'Pool' : 'Dataset' }}</span>
+              <span style="width: 200px;">/mnt/{{ node.name }}</span>
+            </div>
           </tn-tree-node>
         </tn-tree-virtual-scroll-view>
       </div>
