@@ -253,4 +253,27 @@ describe('TnTreeVirtualScrollViewComponent', () => {
     const viewport = host.tree().virtualScrollViewport();
     expect(viewport.scrollable).not.toBe(viewport);
   });
+
+  it('coerces the bare `scrollWindow` presence attribute to true', async () => {
+    // Regression: with a plain `input(false)` the bare attribute form (which the stories
+    // and real consumers use) binds an empty string — falsy — so the internal-scroll
+    // branch renders instead of window mode. `booleanAttribute` fixes the coercion.
+    @Component({
+      selector: 'tn-tree-virtual-scroll-bare-attr-host',
+      standalone: true,
+      imports: [CdkTreeModule, TnTreeVirtualScrollViewComponent, TnTreeNodeComponent],
+      template: `
+        <tn-tree-virtual-scroll-view scrollWindow [dataSource]="dataSource" [treeControl]="treeControl">
+          <tn-tree-node *cdkTreeNodeDef="let node">{{ node.name }}</tn-tree-node>
+        </tn-tree-virtual-scroll-view>
+      `,
+    })
+    class BareAttrHostComponent extends HostComponent {}
+
+    const bareFixture = TestBed.createComponent(BareAttrHostComponent);
+    bareFixture.detectChanges();
+    await bareFixture.whenStable();
+
+    expect(bareFixture.componentInstance.tree().scrollWindow()).toBe(true);
+  });
 });

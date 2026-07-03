@@ -8,7 +8,7 @@ import { AsyncPipe } from '@angular/common';
 import type {
   AfterViewInit,
   TrackByFunction} from '@angular/core';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, IterableDiffers, ViewContainerRef, ViewEncapsulation, computed, inject, input, output, viewChild,
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, IterableDiffers, ViewContainerRef, ViewEncapsulation, booleanAttribute, computed, inject, input, output, viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { animationFrameScheduler, asapScheduler, BehaviorSubject } from 'rxjs';
@@ -106,10 +106,14 @@ export class TnTreeVirtualScrollViewComponent<T, K = T> extends CdkTree<T, K>
   readonly itemSize = input(defaultTreeItemSize);
   readonly minBufferPx = input(defaultTreeItemSize * 4);
   readonly maxBufferPx = input(defaultTreeItemSize * defaultBufferRows);
-  /** When true the viewport scrolls with the window instead of an internal scroll area. */
-  readonly scrollWindow = input(false);
+  /**
+   * When true the viewport scrolls with the window instead of an internal scroll area.
+   * `booleanAttribute` so the bare presence form (`<... scrollWindow>`) coerces to `true`
+   * rather than the empty-string (falsy) an un-transformed input would receive.
+   */
+  readonly scrollWindow = input(false, { transform: booleanAttribute });
   /** Whether to show the floating "scroll to top" button once scrolled down. */
-  readonly showScrollToTop = input(true);
+  readonly showScrollToTop = input(true, { transform: booleanAttribute });
   /** Accessible label / tooltip for the scroll-to-top button (i18n is the consumer's job). */
   readonly scrollToTopLabel = input('Scroll to top');
 
@@ -143,15 +147,19 @@ export class TnTreeVirtualScrollViewComponent<T, K = T> extends CdkTree<T, K>
     super.ngAfterViewInit?.();
 
     const element = this.virtualScrollViewport().elementRef.nativeElement;
-    // Listen on the ACTUAL scroll source, which may be an external scrollable
-    // (CdkVirtualScrollableElement/Window) rather than the viewport element itself. In
-    // external mode the viewport does not scroll, so a listener on `element` would never
-    // fire and the scroll-to-top button could not react. `scrollable.getElementRef()`
-    // resolves to the viewport in the self-scrolling case and to the external element
-    // otherwise.
-    const scrollSource = this.virtualScrollViewport().scrollable.getElementRef().nativeElement;
-    this.scrollViewportElement = scrollSource;
-    scrollSource.addEventListener('scroll', this.onViewportScroll);
+    const scrollable = this.virtualScrollViewport().scrollable;
+    // `getElementRef()` resolves to the viewport in the self-scrolling case and to the
+    // external scroll element otherwise — in scrollWindow mode that is
+    // `document.documentElement`, which is what we read `scrollLeft` from below.
+    this.scrollViewportElement = scrollable.getElementRef().nativeElement;
+    // React to scrolls via the scrollable's own stream rather than addEventListener on
+    // that element ref. In scrollWindow mode the scroll EVENTS fire on `document` while
+    // the element ref is `document.documentElement`, so a raw listener on the element
+    // would never fire and the scroll-to-top button / `viewportScrolled` could not react.
+    // `elementScrolled()` is wired to the correct target for both internal and window modes.
+    scrollable.elementScrolled()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(this.onViewportScroll);
 
     // Observe the rendered CONTENT wrapper rather than the viewport itself, so
     // `viewportResized` reports the full (possibly horizontally-overflowing) content
@@ -182,7 +190,7 @@ export class TnTreeVirtualScrollViewComponent<T, K = T> extends CdkTree<T, K>
 
   override ngOnDestroy(): void {
     super.ngOnDestroy();
-    this.scrollViewportElement?.removeEventListener('scroll', this.onViewportScroll);
+    // The scroll subscription is torn down by takeUntilDestroyed; just drop refs here.
     this.scrollViewportElement = null;
     this.scrollFrameSubscription?.unsubscribe();
     this.scrollFrameSubscription = null;
