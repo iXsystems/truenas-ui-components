@@ -177,8 +177,8 @@
 }
 
 // CSS-only collapse (no Angular animations dependency): the content row animates
-// between 0fr and 1fr. The inner wrapper carries the padding and clips overflow,
-// so a collapsed panel has zero height with no residual padding.
+// between 0fr and 1fr. The inner wrapper clips overflow so content is hidden as
+// the row shrinks.
 .tn-expansion-panel__content {
   display: grid;
   grid-template-rows: 1fr;
@@ -186,12 +186,21 @@
 
   &--collapsed {
     grid-template-rows: 0fr;
+
+    // A 0fr track can't shrink below the item's minimum contribution, which
+    // includes the item's own padding even with min-height: 0 — leaving the
+    // collapsed row padding-bottom tall, with the first line of content
+    // showing through. Zero it so the row truly reaches 0.
+    .tn-expansion-panel__content-inner {
+      padding-bottom: 0;
+    }
   }
 }
 
 .tn-expansion-panel__content-inner {
   min-height: 0;
   overflow: hidden;
+  transition: padding-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 // Honor reduced-motion now that the collapse is CSS-driven: snap open/closed and
@@ -203,7 +212,8 @@
   .tn-expansion-panel__title,
   .tn-expansion-panel__indicator,
   .tn-expansion-panel__indicator svg,
-  .tn-expansion-panel__content {
+  .tn-expansion-panel__content,
+  .tn-expansion-panel__content-inner {
     transition: none;
   }
 }
