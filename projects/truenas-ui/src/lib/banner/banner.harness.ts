@@ -50,7 +50,13 @@ export class TnBannerHarness extends ComponentHarness {
   static with(options: BannerHarnessFilters = {}) {
     return new HarnessPredicate(TnBannerHarness, options)
       .addOption('textContains', options.textContains, (harness, text) =>
-        HarnessPredicate.stringMatches(harness.getText(), text)
+        HarnessPredicate.stringMatches(
+          harness.getText(),
+          // strings trigger exact matching in `stringMatches`, but since we call the option
+          // `textContains`, this would be misleading. here, we convert strings to a Regex
+          // to trigger partial matching behavior on `stringMatches`.
+          typeof text === 'string' ? new RegExp(helperEscapeRegex(text)) : text
+        )
       );
   }
 
@@ -78,4 +84,14 @@ export class TnBannerHarness extends ComponentHarness {
 export interface BannerHarnessFilters extends BaseHarnessFilters {
   /** Filters by text content within banner. Supports string or regex matching. */
   textContains?: string | RegExp;
+}
+
+/**
+ * helper function to stand-in for `RegExp.escape`, since that doesn't
+ * exist in our deployment target of ES2023.
+ * @param text a string to escape.
+ * @returns an escaped string, safe for using in the `RegExp` constructor.
+ */
+function helperEscapeRegex(text: string): string {
+  return text.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&');
 }
