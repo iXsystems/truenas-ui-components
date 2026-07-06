@@ -14,6 +14,11 @@ import { TnTestIdDirective } from '../test-id';
   templateUrl: './tree-node.component.html',
   styleUrl: './tree-node.component.scss',
   hostDirectives: [{ directive: TnTestIdDirective, inputs: ['tnTestId: testId'] }],
+  // The treeitem role and its aria state live here on the host wrapper (not the inner
+  // `.tn-tree-node`) so AT sees a single treeitem per node. `aria-selected` is intentionally
+  // omitted: neither tn-tree nor the virtual variant manages selection, and a blanket
+  // `aria-selected="false"` would make AT announce every node as "not selected" as if
+  // selection were a feature. A consumer that adds selection should set it explicitly.
   host: {
     'class': 'tn-tree-node-wrapper',
     '[attr.aria-level]': 'level + 1',

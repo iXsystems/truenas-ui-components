@@ -1,10 +1,9 @@
+<!-- The `role="treeitem"` (plus aria-level/aria-expanded) lives on the host
+     `.tn-tree-node-wrapper`, so this inner div is a presentational container —
+     no role or aria-* here, to avoid exposing a second, nested treeitem to AT. -->
 <div class="tn-tree-node"
      cdkTreeNodeToggle
-     role="treeitem"
      [class.tn-tree-node--expandable]="isExpandable"
-     [attr.aria-level]="level + 1"
-     [attr.aria-expanded]="isExpandable ? isExpanded : null"
-     [attr.aria-selected]="false"
      [style.cursor]="isExpandable ? 'pointer' : 'default'">
   
   <div class="tn-tree-node__content">
