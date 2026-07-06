@@ -21,6 +21,14 @@ export interface TnSelectOptionGroup<T = unknown> {
   disabled?: boolean;
 }
 
+/**
+ * A keyboard-navigable row in the open dropdown. Either the synthetic
+ * "select all" action (multiple mode with `showSelectAll`) or a real option.
+ * Both carry the stable DOM `id` used for `aria-activedescendant`.
+ */
+type TnSelectNavEntry<T> =
+  | { kind: 'select-all'; id: string }
+  | { kind: 'option'; option: TnSelectOption<T>; id: string };
 // Minimum gap the dropdown panel keeps from each viewport edge. Also derives
 // the pane's maxWidth (viewport minus both margins) — see attachOverlay().
 const VIEWPORT_MARGIN_PX = 8;
@@ -69,6 +77,16 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
   /** Label of the empty option rendered when `allowEmpty` is set. */
   emptyLabel = input<string>('--');
   disabled = input<boolean>(false);
+  /**
+   * When `true` (multiple mode only), renders a "select all" row at the top of
+   * the dropdown that toggles every selectable (non-disabled) option on/off in
+   * one click. Mirrors webui ix-select's `[showSelectAll]`. Ignored in single
+   * mode. Its checkbox reflects the aggregate state: checked when all are
+   * selected, indeterminate when only some are.
+   */
+  showSelectAll = input<boolean>(false);
+  /** Label of the select-all row rendered when `showSelectAll` is set. */
+  selectAllLabel = input<string>('Select All');
   testId = input<TnTestIdValue>(undefined);
   /** Test-id base, falling back to the bound control name when `testId` is unset. */
   protected resolvedTestId = controlTestId(this.testId);
@@ -163,20 +181,25 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    * then groups). Used by keyboard navigation so we can skip disabled
    * entries and group headers without a separate filter pass.
    */
-  navigableOptions = computed(() => {
-    const result: { option: TnSelectOption<T>; id: string }[] = [];
+  navigableOptions = computed<TnSelectNavEntry<T>[]>(() => {
+    const result: TnSelectNavEntry<T>[] = [];
+    // The select-all row is the first navigable entry when shown, so
+    // ArrowDown from the closed trigger lands on it before the options.
+    if (this.showSelectAllRow()) {
+      result.push({ kind: 'select-all', id: this.selectAllId() });
+    }
     const baseId = `tn-select-opt-${this.idNamespace()}`;
     let i = 0;
     for (const opt of this.displayOptions()) {
       if (!opt.disabled) {
-        result.push({ option: opt, id: `${baseId}-${i}` });
+        result.push({ kind: 'option', option: opt, id: `${baseId}-${i}` });
       }
       i++;
     }
     for (const group of this.optionGroups()) {
       for (const opt of group.options) {
         if (!opt.disabled && !group.disabled) {
-          result.push({ option: opt, id: `${baseId}-${i}` });
+          result.push({ kind: 'option', option: opt, id: `${baseId}-${i}` });
         }
         i++;
       }
@@ -193,7 +216,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
 
   /** Stable DOM id for an option; matches what navigableOptions() assigns. */
   optionId(option: TnSelectOption<T>): string | null {
-    const entry = this.navigableOptions().find((x) => x.option === option);
+    const entry = this.navigableOptions().find((x) => x.kind === 'option' && x.option === option);
     return entry?.id ?? null;
   }
 
@@ -201,7 +224,8 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
   isOptionFocused(option: TnSelectOption<T>): boolean {
     const idx = this.focusedIndex();
     const nav = this.navigableOptions();
-    return idx >= 0 && idx < nav.length && nav[idx].option === option;
+    const entry = idx >= 0 && idx < nav.length ? nav[idx] : null;
+    return entry?.kind === 'option' && entry.option === option;
   }
 
   /**
@@ -290,7 +314,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     const selected = this.selectedValue();
     if (selected !== null && selected !== undefined) {
       const idx = this.navigableOptions().findIndex((x) =>
-        this.compareValues(x.option.value, selected),
+        x.kind === 'option' && this.compareValues(x.option.value, selected),
       );
       this.focusedIndex.set(idx);
     } else if (this.emptyOption()) {
@@ -504,6 +528,90 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     return this.options().length > 0 || this.optionGroups().length > 0;
   });
 
+  /**
+   * Values of every selectable (non-disabled) option, across ungrouped options
+   * and enabled groups. This is the set the select-all row operates on —
+   * disabled options and options in disabled groups are excluded because they
+   * can't be toggled individually either.
+   *
+   * Values are deduped with `compareValues` so a value that appears both
+   * ungrouped and inside a group isn't pushed twice — that would make
+   * select-all diverge from `toggleOption()`, which never produces duplicates.
+   */
+  protected selectableValues = computed<T[]>(() => {
+    const values: T[] = [];
+    const push = (value: T): void => {
+      if (!values.some((v) => this.compareValues(v, value))) {values.push(value);}
+    };
+    for (const opt of this.options()) {
+      if (!opt.disabled) {push(opt.value);}
+    }
+    for (const group of this.optionGroups()) {
+      if (group.disabled) {continue;}
+      for (const opt of group.options) {
+        if (!opt.disabled) {push(opt.value);}
+      }
+    }
+    return values;
+  });
+
+  /** Whether the select-all row is shown (multiple mode, opted in, with options). */
+  protected showSelectAllRow = computed(() =>
+    this.multiple() && this.showSelectAll() && this.selectableValues().length > 0,
+  );
+
+  /** Stable DOM id of the select-all row, for aria-activedescendant. */
+  protected selectAllId = computed(() => `tn-select-selectall-${this.idNamespace()}`);
+
+  /** True when every selectable option is currently selected. */
+  protected allSelected = computed<boolean>(() => {
+    const selectable = this.selectableValues();
+    if (selectable.length === 0) {return false;}
+    const selected = this.selectedValues();
+    return selectable.every((v) => selected.some((s) => this.compareValues(s, v)));
+  });
+
+  /** True when some — but not all — selectable options are selected. */
+  protected selectAllIndeterminate = computed<boolean>(() => {
+    if (this.allSelected()) {return false;}
+    const selected = this.selectedValues();
+    return this.selectableValues().some((v) => selected.some((s) => this.compareValues(s, v)));
+  });
+
+  /** Test-id segments for the select-all row; mirrors ix-select's `[name, 'select-all']`. */
+  protected selectAllTestIdParts(): (string | number | null | undefined)[] {
+    return scopeTestId(this.resolvedTestId(), 'select-all');
+  }
+
+  /**
+   * Toggles every selectable option: clears them all when they're all already
+   * selected, otherwise selects them all. Preserves the multi-select "open"
+   * behaviour — the dropdown stays open so the user can keep adjusting.
+   *
+   * Disabled-but-selected values (e.g. a disabled option pre-selected via
+   * `writeValue`) are preserved on both paths: the user can't toggle those
+   * rows individually, so select-all must not silently discard them either.
+   */
+  protected toggleSelectAll(): void {
+    if (this.isDisabled()) {return;}
+    const selectable = this.selectableValues();
+    const preserved = this.selectedValues().filter(
+      (v) => !selectable.some((s) => this.compareValues(s, v)),
+    );
+    const updated = this.allSelected() ? preserved : [...preserved, ...selectable];
+    this.selectedValues.set(updated);
+    this.onChange(updated);
+    this.multiSelectionChange.emit(updated);
+    this.cdr.markForCheck();
+  }
+
+  /** Whether the select-all row is the keyboard-highlighted item. */
+  protected isSelectAllFocused(): boolean {
+    const idx = this.focusedIndex();
+    const nav = this.navigableOptions();
+    return idx >= 0 && idx < nav.length && nav[idx].kind === 'select-all';
+  }
+
   /** One-shot guard so the object-compare warning fires at most once per instance. */
   private warnedAboutObjectCompare = false;
 
@@ -644,7 +752,12 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     const idx = this.focusedIndex();
     const nav = this.navigableOptions();
     if (idx < 0 || idx >= nav.length) {return;}
-    this.onOptionClick(nav[idx].option);
+    const entry = nav[idx];
+    if (entry.kind === 'select-all') {
+      this.toggleSelectAll();
+    } else {
+      this.onOptionClick(entry.option);
+    }
   }
 
   private scrollFocusedIntoView(): void {

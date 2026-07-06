@@ -46,6 +46,10 @@ const meta: Meta<TnSelectComponent> = {
       control: 'text',
       description: 'Label of the empty option shown when allowEmpty is set',
     },
+    showSelectAll: {
+      control: 'boolean',
+      description: 'Adds a select-all row that toggles every option (multiple mode only)',
+    },
     testId: {
       control: 'text',
       description: 'Test ID for the select component',
@@ -216,6 +220,41 @@ export const MultipleSelection: Story = {
           placeholder="Choose fruits"
           [options]="options"
           [multiple]="true"
+          (multiSelectionChange)="logSelection($event)">
+        </tn-select>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  args: {
+    options: fruitOptions,
+  },
+};
+
+/**
+ * `showSelectAll` adds a "Select All" row at the top of the dropdown (multiple
+ * mode only). Clicking it selects every enabled option; clicking it again when
+ * all are selected clears them. Its checkbox is indeterminate while only some
+ * options are picked. Mirrors the old ix-select `[showSelectAll]`.
+ */
+export const MultipleWithSelectAll: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      logSelection: (_value: unknown) => {
+      }
+    },
+    template: `
+      <tn-form-field
+        label="Select fruits"
+        hint="Use the Select All row to toggle everything at once">
+        <tn-select
+          placeholder="Choose fruits"
+          [options]="options"
+          [multiple]="true"
+          [showSelectAll]="true"
           (multiSelectionChange)="logSelection($event)">
         </tn-select>
       </tn-form-field>

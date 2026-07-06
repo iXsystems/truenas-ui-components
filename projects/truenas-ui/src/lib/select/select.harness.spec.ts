@@ -64,6 +64,55 @@ class TestMultiHostComponent {
 }
 
 @Component({
+  selector: 'tn-test-select-all-host',
+  standalone: true,
+  imports: [TnSelectComponent],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-select
+      testId="fruit"
+      placeholder="Select fruits"
+      [options]="options()"
+      [multiple]="true"
+      [showSelectAll]="true"
+      (multiSelectionChange)="lastArray = $event" />
+  `
+})
+class TestSelectAllHostComponent {
+  // Cherry is disabled — select-all must skip it.
+  options = signal<TnSelectOption<string>[]>([
+    { value: 'apple', label: 'Apple' },
+    { value: 'banana', label: 'Banana' },
+    { value: 'cherry', label: 'Cherry', disabled: true },
+  ]);
+  lastArray: string[] = [];
+}
+
+@Component({
+  selector: 'tn-test-select-all-preselected-host',
+  standalone: true,
+  imports: [TnSelectComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-select
+      placeholder="Select fruits"
+      [options]="options()"
+      [multiple]="true"
+      [showSelectAll]="true"
+      [formControl]="control" />
+  `
+})
+class TestSelectAllPreselectedHostComponent {
+  // Cherry is disabled but pre-selected — select-all must not discard it.
+  options = signal<TnSelectOption<string>[]>([
+    { value: 'apple', label: 'Apple' },
+    { value: 'banana', label: 'Banana' },
+    { value: 'cherry', label: 'Cherry', disabled: true },
+  ]);
+  control = new FormControl<string[]>(['cherry']);
+}
+
+@Component({
   selector: 'tn-test-compare-host',
   standalone: true,
   imports: [TnSelectComponent],
@@ -122,6 +171,40 @@ class TestGroupDisabledHostComponent {
   handleSelection(value: string | null): void {
     this.selectedValue = value;
   }
+}
+
+@Component({
+  selector: 'tn-test-select-all-dup-host',
+  standalone: true,
+  imports: [TnSelectComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-select
+      placeholder="Select fruits"
+      [options]="options()"
+      [optionGroups]="groups()"
+      [multiple]="true"
+      [showSelectAll]="true"
+      [formControl]="control" />
+  `
+})
+class TestSelectAllDuplicateHostComponent {
+  // 'apple' appears both ungrouped and inside a group — select-all must not
+  // add it twice.
+  options = signal<TnSelectOption<string>[]>([
+    { value: 'apple', label: 'Apple' },
+    { value: 'banana', label: 'Banana' },
+  ]);
+  groups = signal<TnSelectOptionGroup<string>[]>([
+    {
+      label: 'More',
+      options: [
+        { value: 'apple', label: 'Apple (again)' },
+        { value: 'cherry', label: 'Cherry' },
+      ]
+    },
+  ]);
+  control = new FormControl<string[]>([]);
 }
 
 @Component({
@@ -444,6 +527,134 @@ describe('TnSelectHarness - multiple mode', () => {
   it('should ignore allowEmpty in multiple mode', async () => {
     const select = await loader.getHarness(TnSelectHarness);
     expect(await select.getOptions()).toEqual(['Apple', 'Banana', 'Cherry']);
+  });
+});
+
+describe('TnSelectHarness - select all', () => {
+  let fixture: ComponentFixture<TestSelectAllHostComponent>;
+  let hostComponent: TestSelectAllHostComponent;
+  let loader: HarnessLoader;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TestSelectAllHostComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestSelectAllHostComponent);
+    hostComponent = fixture.componentInstance;
+    loader = TestbedHarnessEnvironment.loader(fixture);
+  });
+
+  it('should not list the select-all row among the options', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    expect(await select.getOptions()).toEqual(['Apple', 'Banana', 'Cherry']);
+  });
+
+  it('should select every enabled option, skipping disabled ones', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.toggleSelectAll();
+    // Cherry is disabled, so it stays out of the selection.
+    expect(hostComponent.lastArray).toEqual(['apple', 'banana']);
+    expect(await select.getDisplayText()).toBe('Apple, Banana');
+    expect(await select.isSelectAllChecked()).toBe(true);
+  });
+
+  it('should clear the selection when toggled while all selected', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.toggleSelectAll();
+    await select.toggleSelectAll();
+    expect(hostComponent.lastArray).toEqual([]);
+    expect(await select.getDisplayText()).toBe('Select fruits');
+    expect(await select.isSelectAllChecked()).toBe(false);
+  });
+
+  it('should read as unchecked when only some options are selected', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.selectOption('Apple');
+    // Partial selection: the row is neither fully checked nor cleared.
+    expect(await select.isSelectAllChecked()).toBe(false);
+    const indeterminate = document.querySelector(
+      '.tn-select-select-all .tn-checkbox--indeterminate',
+    );
+    expect(indeterminate).not.toBeNull();
+  });
+
+  it('should keep the dropdown open after toggling', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.toggleSelectAll();
+    expect(await select.isOpen()).toBe(true);
+  });
+
+  it('should carry a scoped test id on the select-all row', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.open();
+    const row = document.querySelector('.tn-select-select-all');
+    expect(row?.getAttribute('data-testid')).toBe('option-fruit-select-all');
+  });
+
+  it('should throw from toggleSelectAll when the row is absent', async () => {
+    const plain = TestBed.createComponent(TestMultiHostComponent);
+    const plainLoader = TestbedHarnessEnvironment.loader(plain);
+    const select = await plainLoader.getHarness(TnSelectHarness);
+    await expect(select.toggleSelectAll()).rejects.toThrow('no select-all row');
+  });
+});
+
+describe('TnSelectHarness - select all with pre-selected disabled option', () => {
+  let fixture: ComponentFixture<TestSelectAllPreselectedHostComponent>;
+  let hostComponent: TestSelectAllPreselectedHostComponent;
+  let loader: HarnessLoader;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TestSelectAllPreselectedHostComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestSelectAllPreselectedHostComponent);
+    hostComponent = fixture.componentInstance;
+    loader = TestbedHarnessEnvironment.loader(fixture);
+  });
+
+  it('should keep the disabled selection when selecting all', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.toggleSelectAll();
+    // Cherry (disabled, pre-selected) survives alongside the newly selected enabled options.
+    expect(hostComponent.control.value).toEqual(['cherry', 'apple', 'banana']);
+    expect(await select.isSelectAllChecked()).toBe(true);
+  });
+
+  it('should keep the disabled selection when clearing all', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    // First select-all, then toggle again to clear — the disabled value must remain.
+    await select.toggleSelectAll();
+    await select.toggleSelectAll();
+    expect(hostComponent.control.value).toEqual(['cherry']);
+    expect(await select.isSelectAllChecked()).toBe(false);
+  });
+});
+
+describe('TnSelectHarness - select all with duplicate value across group', () => {
+  let fixture: ComponentFixture<TestSelectAllDuplicateHostComponent>;
+  let hostComponent: TestSelectAllDuplicateHostComponent;
+  let loader: HarnessLoader;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TestSelectAllDuplicateHostComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestSelectAllDuplicateHostComponent);
+    hostComponent = fixture.componentInstance;
+    loader = TestbedHarnessEnvironment.loader(fixture);
+  });
+
+  it('should not add a value twice when it appears ungrouped and in a group', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.toggleSelectAll();
+    // 'apple' is present in both the ungrouped options and the group, but the
+    // selection must contain it exactly once — matching toggleOption's behaviour.
+    expect(hostComponent.control.value).toEqual(['apple', 'banana', 'cherry']);
+    expect(await select.isSelectAllChecked()).toBe(true);
   });
 });
 
