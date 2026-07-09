@@ -3,7 +3,7 @@
   @if (label()) {
     <div class="tn-form-field-label-row">
       <label class="tn-form-field-label" [class.required]="showRequired()">
-        <span [innerHTML]="label() | tnLabelMarkup"></span>
+        <span [attr.id]="labelId()" [innerHTML]="label() | tnLabelMarkup"></span>
         @if (showRequired()) {
           <span class="required-asterisk" aria-label="required">*</span>
         }
@@ -31,15 +31,18 @@
   @if (showSubscript()) {
     <div class="tn-form-field-subscript" [class.tn-form-field-subscript-dynamic]="subscriptSizing() === 'dynamic'">
       @if (showError()) {
+        <!-- role="alert" is implicitly assertive+atomic, so no aria-live here.
+             The id feeds the projected control's aria-describedby (see
+             TnFormFieldContext). -->
         <div
           class="tn-form-field-error"
           role="alert"
-          aria-live="polite">
+          [attr.id]="errorId">
           {{ errorMessage() }}
         </div>
       }
       @if (showHint()) {
-        <div class="tn-form-field-hint">
+        <div class="tn-form-field-hint" [attr.id]="hintId">
           {{ hint() }}
         </div>
       }

@@ -43,6 +43,8 @@ export * from './lib/tab-panel/tab-panel.harness';
 export * from './lib/menu';
 export * from './lib/keyboard-shortcut/keyboard-shortcut.component';
 export * from './lib/form-field/form-field.component';
+export { TN_FORM_FIELD_CONTEXT, injectTnFormFieldAria } from './lib/form-field/form-field-context';
+export type { TnFormFieldContext, TnFormFieldAriaBindings } from './lib/form-field/form-field-context';
 export { TN_FORM_FIELD_ERRORS } from './lib/form-field/form-field.errors';
 export type {
   TnFormFieldErrorMessage,

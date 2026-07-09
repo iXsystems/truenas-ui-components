@@ -7,6 +7,7 @@ import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { Subscription } from 'rxjs';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
+import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import { TnTestIdDirective, composeTestId, controlTestId, scopeTestId, type TnTestIdValue } from '../test-id';
 
 export interface TnSelectOption<T = unknown> {
@@ -53,12 +54,30 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
   optionGroups = input<TnSelectOptionGroup<T>[]>([]);
   placeholder = input<string>('Select an option');
   /**
-   * Accessible label for the select trigger. When set, this is used as the
-   * trigger's `aria-label` instead of the visible `placeholder` — useful in
+   * Explicit accessible label for the select trigger. When set, this is used as
+   * the trigger's `aria-label` instead of the visible `placeholder` — useful in
    * contexts (e.g. a pager's page-size dropdown) where the placeholder text
-   * doesn't accurately describe the field's purpose to screen readers.
+   * doesn't accurately describe the field's purpose to screen readers. Inside a
+   * `tn-form-field` the field's label is associated automatically (via
+   * `aria-labelledby`) and takes precedence over the placeholder fallback;
+   * setting this overrides both.
    */
   ariaLabel = input<string | undefined>(undefined);
+
+  /**
+   * ARIA wiring from an enclosing `tn-form-field` (label, error/hint,
+   * invalid, required). All-null when standalone or when `ariaLabel` overrides.
+   */
+  protected readonly fieldAria = injectTnFormFieldAria(this.ariaLabel);
+
+  /**
+   * `aria-label` for the trigger. An explicit `ariaLabel` always wins; the
+   * `placeholder` fallback only applies while no form-field label is wired via
+   * `aria-labelledby`, so the trigger never advertises two names at once.
+   */
+  protected triggerAriaLabel = computed(() =>
+    this.ariaLabel() ?? (this.fieldAria.labelledby() ? null : this.placeholder())
+  );
   /**
    * Message shown inside the dropdown when no options (and no option groups)
    * are available. Defaults to the English `'No options available'`; consumers
