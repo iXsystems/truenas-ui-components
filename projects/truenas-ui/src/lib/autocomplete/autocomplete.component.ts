@@ -19,6 +19,7 @@ import type { EmbeddedViewRef, OnDestroy, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { Subscription } from 'rxjs';
+import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import type { TnSelectOption } from '../select/select.component';
 import { TnSpinnerComponent } from '../spinner/spinner.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
@@ -122,8 +123,23 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    */
   panelMaxHeight = input<string | number>('320px');
 
+  /**
+   * Explicit accessible name for the text field. Inside a `tn-form-field` the
+   * field's label is associated automatically (via `aria-labelledby`), so leave
+   * this unset there unless the announced name must differ from the visible
+   * label — when set, it wins. Standalone without either, the input has no
+   * accessible name (the placeholder is not one).
+   */
+  ariaLabel = input<string | undefined>(undefined);
+
   /** Test ID attribute */
   testId = input<TnTestIdValue>(undefined);
+
+  /**
+   * ARIA wiring from an enclosing `tn-form-field` (label, error/hint,
+   * invalid, required). All-null when standalone or when `ariaLabel` overrides.
+   */
+  protected readonly fieldAria = injectTnFormFieldAria(this.ariaLabel);
 
   /** Emits the full option (label + value) when one is selected */
   optionSelected = output<TnAutocompleteOption<T>>();

@@ -4,6 +4,7 @@ import { Component, viewChild, inject, input, output, computed, signal, linkedSi
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { InputType } from '../enums/input-type.enum';
+import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import { tnIconMarker } from '../icon/icon-marker';
 import type { IconLibraryType } from '../icon/icon.component';
 import { TnIconComponent } from '../icon/icon.component';
@@ -42,13 +43,19 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
   rows = input<number>(3);
 
   /**
-   * Accessible name for the control. Rendered as `aria-label` on the input/textarea.
-   *
-   * Leave unset when the input is wrapped in a `tn-form-field` (or otherwise has a
-   * visible `<label>`); set it for standalone usage so the control isn't unnamed in
-   * the a11y tree.
+   * Explicit accessible name for the control. Rendered as `aria-label` on the
+   * input/textarea. Inside a `tn-form-field` the field's label is associated
+   * automatically (via `aria-labelledby`), so leave this unset there unless the
+   * announced name must differ from the visible label — when set, it wins. Set
+   * it for standalone usage so the control isn't unnamed in the a11y tree.
    */
   ariaLabel = input<string | undefined>(undefined);
+
+  /**
+   * ARIA wiring from an enclosing `tn-form-field` (label, error/hint,
+   * invalid, required). All-null when standalone or when `ariaLabel` overrides.
+   */
+  protected readonly fieldAria = injectTnFormFieldAria(this.ariaLabel);
 
   /**
    * Native `autocomplete` hint rendered on the input/textarea. Pass the standard

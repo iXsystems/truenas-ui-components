@@ -1,10 +1,12 @@
 
 import { NgTemplateOutlet } from '@angular/common';
 import type { AfterContentInit } from '@angular/core';
-import { Component, input, computed, signal, contentChild, inject, isDevMode, DestroyRef } from '@angular/core';
+import { Component, input, computed, signal, contentChild, forwardRef, inject, isDevMode, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgControl, Validators } from '@angular/forms';
 import type { ValidationErrors } from '@angular/forms';
+import { TN_FORM_FIELD_CONTEXT } from './form-field-context';
+import type { TnFormFieldContext } from './form-field-context';
 import {
   TN_FORM_FIELD_ERRORS,
   activeErrorKey,
@@ -19,6 +21,8 @@ import type { TooltipPosition } from '../tooltip/tooltip.directive';
 
 export type SubscriptSizing = 'fixed' | 'dynamic';
 
+let nextId = 0;
+
 /** Snapshot of the projected control's validation state. */
 interface ControlStateSnapshot {
   invalid: boolean;
@@ -31,10 +35,28 @@ interface ControlStateSnapshot {
   selector: 'tn-form-field',
   standalone: true,
   imports: [NgTemplateOutlet, TnTestIdDirective, TnIconComponent, TnTooltipDirective, LabelMarkupPipe],
+  providers: [
+    // Published to projected controls (their element injector chains through
+    // this host), which bind aria-labelledby/-describedby/-invalid/-required
+    // to the field's label and messages. See TnFormFieldContext.
+    {
+      provide: TN_FORM_FIELD_CONTEXT,
+      useExisting: forwardRef(() => TnFormFieldComponent),
+    },
+  ],
   templateUrl: './form-field.component.html',
   styleUrls: ['./form-field.component.scss']
 })
-export class TnFormFieldComponent implements AfterContentInit {
+export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContext {
+  /** Unique instance id namespacing the label/error/hint ids for ARIA linkage. */
+  private readonly uid = `tn-form-field-${nextId++}`;
+
+  /** Id carried by the error message element (only meaningful while it renders). */
+  protected readonly errorId = `${this.uid}-error`;
+
+  /** Id carried by the hint element (only meaningful while it renders). */
+  protected readonly hintId = `${this.uid}-hint`;
+
   label = input<string>('');
   hint = input<string>('');
   /**
@@ -44,9 +66,10 @@ export class TnFormFieldComponent implements AfterContentInit {
    * see the requirement — e.g. a validator wrapped in `Validators.compose(...)`
    * or a custom validator that emits a `required`-style error.
    *
-   * The indicator is purely visual — for native/a11y semantics pair it with the
-   * projected control's own `required` input (e.g. `tn-input`'s, which renders
-   * the native attribute).
+   * Library form controls surface this state as `aria-required` automatically
+   * (via {@link TnFormFieldContext}); pairing it with the projected control's
+   * own `required` input (e.g. `tn-input`'s, which renders the native
+   * attribute) additionally blocks native form submission.
    */
   required = input<boolean>(false);
   testId = input<TnTestIdValue>(undefined);
@@ -238,4 +261,30 @@ export class TnFormFieldComponent implements AfterContentInit {
   protected showSubscript = computed(() => {
     return this.subscriptSizing() === 'fixed' || this.showError() || this.showHint();
   });
+
+  // ── TnFormFieldContext (consumed by the projected control via DI) ──
+
+  /**
+   * Id of the label *text* span — deliberately not the whole `<label>`, so an
+   * `aria-labelledby` pointing here never picks up the required asterisk's
+   * "required" into the accessible name (that state travels as `aria-required`).
+   */
+  labelId = computed(() => (this.label() ? `${this.uid}-label` : null));
+
+  /** Id of the currently shown error or hint (they are mutually exclusive), or null. */
+  describedBy = computed(() => {
+    if (this.showError()) {
+      return this.errorId;
+    }
+    if (this.showHint()) {
+      return this.hintId;
+    }
+    return null;
+  });
+
+  /** Mirrors the visual error state (invalid AND interacted) for `aria-invalid`. */
+  errorState = computed(() => this.hasError());
+
+  /** Forced or validator-inferred required state, for `aria-required`. */
+  requiredState = computed(() => this.showRequired());
 }
