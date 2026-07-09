@@ -47,6 +47,7 @@ import { TnSelectComponent } from '../select/select.component';
     </tn-form-field>
 
     <tn-input class="standalone" ariaLabel="Standalone" [formControl]="standaloneControl" />
+    <tn-select class="standalone-select" placeholder="Pick one" [formControl]="standaloneSelectControl" />
   `,
 })
 class TestHostComponent {
@@ -57,6 +58,7 @@ class TestHostComponent {
   overriddenControl = new FormControl<string[]>([]);
   unlabeledControl = new FormControl('');
   standaloneControl = new FormControl('');
+  standaloneSelectControl = new FormControl('');
 }
 
 describe('TnFormFieldContext integration', () => {
@@ -121,6 +123,17 @@ describe('TnFormFieldContext integration', () => {
       expect(control.getAttribute('aria-labelledby')).toBeNull();
     });
 
+    it('hands the select trigger name off to the field label without a redundant aria-label', () => {
+      const trigger = controlOf('group', '.tn-select-trigger');
+      expect(referencedText(trigger, 'aria-labelledby')).toBe('Group');
+      expect(trigger.getAttribute('aria-label')).toBeNull();
+
+      // Standalone, the placeholder fallback still names the trigger.
+      const standalone = fixture.nativeElement.querySelector('.standalone-select .tn-select-trigger') as HTMLElement;
+      expect(standalone.getAttribute('aria-labelledby')).toBeNull();
+      expect(standalone.getAttribute('aria-label')).toBe('Pick one');
+    });
+
     it('omits all field-derived attributes on a standalone control', () => {
       const control = fixture.nativeElement.querySelector('.standalone input') as HTMLElement;
       expect(control.getAttribute('aria-labelledby')).toBeNull();
@@ -140,6 +153,20 @@ describe('TnFormFieldContext integration', () => {
       const control = controlOf('name', 'input');
       expect(control.getAttribute('aria-invalid')).toBeNull();
       expect(referencedText(control, 'aria-describedby')).toBe('Your legal name');
+    });
+
+    it('surfaces the error on blur alone — a touched-only transition with no value change', () => {
+      const control = controlOf('name', 'input');
+      expect(control.getAttribute('aria-invalid')).toBeNull();
+
+      // Leaving the empty required field only marks it touched; no
+      // value/status change occurs, so this relies on the control's unified
+      // `events` stream (statusChanges alone would miss it).
+      control.dispatchEvent(new Event('blur'));
+      fixture.detectChanges();
+
+      expect(control.getAttribute('aria-invalid')).toBe('true');
+      expect(referencedText(control, 'aria-describedby')).toBe('This field is required');
     });
 
     it('switches aria-describedby to the error and sets aria-invalid once the error shows', () => {

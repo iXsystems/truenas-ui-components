@@ -160,12 +160,14 @@ export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContex
   ngAfterContentInit(): void {
     const control = this.control();
     if (control) {
-      // Listen for control status changes.
-      // NOTE: `statusChanges` does not emit on touched/pristine-only transitions
-      // (e.g. `markAsTouched()` / `markAllAsTouched()` on blur or submit), so an
-      // error may not surface until the next value/status change. Reacting to
-      // those via `control.control?.events` is tracked as a follow-up.
-      control.statusChanges
+      // Prefer the unified `events` stream: unlike `statusChanges`, it also
+      // emits on touched/pristine-only transitions (`markAsTouched()` on blur,
+      // `markAllAsTouched()` on submit), so the error — visual and ARIA —
+      // surfaces the moment the user leaves a required field empty. Fall back
+      // to `statusChanges` for NgControl implementations whose underlying
+      // AbstractControl isn't reachable yet.
+      const changes = control.control?.events ?? control.statusChanges;
+      changes
         ?.pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(() => {
           this.syncControlState();

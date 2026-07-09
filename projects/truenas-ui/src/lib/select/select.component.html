@@ -12,7 +12,7 @@
     [attr.aria-expanded]="isOpen()"
     [attr.aria-haspopup]="'listbox'"
     [attr.aria-controls]="isOpen() ? 'tn-select-dropdown-' + idNamespace() : null"
-    [attr.aria-label]="ariaLabel() ?? placeholder()"
+    [attr.aria-label]="triggerAriaLabel()"
     [attr.aria-labelledby]="fieldAria.labelledby()"
     [attr.aria-describedby]="fieldAria.describedby()"
     [attr.aria-invalid]="fieldAria.invalid()"

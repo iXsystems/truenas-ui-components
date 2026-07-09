@@ -69,6 +69,15 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    * invalid, required). All-null when standalone or when `ariaLabel` overrides.
    */
   protected readonly fieldAria = injectTnFormFieldAria(this.ariaLabel);
+
+  /**
+   * `aria-label` for the trigger. An explicit `ariaLabel` always wins; the
+   * `placeholder` fallback only applies while no form-field label is wired via
+   * `aria-labelledby`, so the trigger never advertises two names at once.
+   */
+  protected triggerAriaLabel = computed(() =>
+    this.ariaLabel() ?? (this.fieldAria.labelledby() ? null : this.placeholder())
+  );
   /**
    * Message shown inside the dropdown when no options (and no option groups)
    * are available. Defaults to the English `'No options available'`; consumers
