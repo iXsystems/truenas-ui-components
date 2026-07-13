@@ -3,7 +3,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
-import { TnAutocompleteComponent } from '../lib/autocomplete/autocomplete.component';
+import { TnAutocompleteComponent, type TnAutocompleteOption } from '../lib/autocomplete/autocomplete.component';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
 
 const harnessDoc = loadHarnessDoc('autocomplete');
@@ -498,15 +498,36 @@ export const ComponentHarness: Story = {
 
 /**
  * **Test IDs.** The autocomplete **input** (`role="combobox"`) emits
- * `autocomplete-<base>` — shown live in the table. Suggestion options render in
- * a portaled overlay while typing. `testId="country"` → `autocomplete-country`,
- * under `data-testid` (default) / `data-test`.
+ * `autocomplete-<base>` — shown live in the table below. Each **suggestion
+ * option** lives in a portaled overlay (so it's not in the table until the
+ * dropdown is open) and emits `option-<base>-<value>`; the loading and
+ * no-results status rows are stamped under the input's id:
+ *
+ * | Element | Emitted id (base `country`) |
+ * |---|---|
+ * | input | `autocomplete-country` |
+ * | option (value `us`) | `option-country-us` |
+ * | option (value `ca`) | `option-country-ca` |
+ * | loading row | `autocomplete-country-loading` |
+ * | no-results row | `autocomplete-country-no-results` |
+ *
+ * The base falls back to the bound control name (`formControlName="country"`)
+ * when `testId` is unset. The option discriminator defaults to the option's
+ * `value` (else `label`); override it with `[optionTestIdKey]="(o) => o.value.id"`.
+ * Under `data-testid` by default / `data-test`. Focus the input to see the
+ * option ids in the DOM; type a non-match to see the no-results row.
  */
 export const TestIds: Story = {
   render: () => ({
+    props: {
+      options: [
+        { value: 'us', label: 'United States' },
+        { value: 'ca', label: 'Canada' },
+      ] as TnAutocompleteOption<string>[],
+    },
     template: `
       <tn-testid-inspector>
-        <tn-autocomplete testId="country" placeholder="Search countries" />
+        <tn-autocomplete testId="country" [options]="options" placeholder="Search countries" />
       </tn-testid-inspector>
     `,
     moduleMetadata: { imports: [TnAutocompleteComponent, TestIdInspectorComponent] },

@@ -22,7 +22,7 @@ import type { Subscription } from 'rxjs';
 import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import type { TnSelectOption } from '../select/select.component';
 import { TnSpinnerComponent } from '../spinner/spinner.component';
-import { TnTestIdDirective, controlTestId, scopeTestId, type TnTestIdValue } from '../test-id';
+import { TnTestIdDirective, controlTestId, optionTestId, scopeTestId, type TnTestIdValue } from '../test-id';
 
 /**
  * Option shape for `tn-autocomplete` — the `label` is displayed, the `value`
@@ -538,24 +538,11 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
 
   /**
    * Test-id segments for an option row, consumed by `[tnTestId]` with
-   * `tnTestIdType="option"`. The resolved base (explicit `testId`, else the
-   * bound control name) scopes each option so ids stay unique across
-   * autocompletes: base `user` + option value `jane-doe` →
-   * `option-user-jane-doe`; with no base → `option-jane-doe`. The
-   * discriminator comes from `optionTestIdKey` when provided, else the
-   * option's primitive `value`, else its `label`. Mirrors `tn-select`.
+   * `tnTestIdType="option"` — see {@link optionTestId} for the derivation
+   * rules (shared with `tn-select`).
    */
   protected optionTestIdParts(option: TnAutocompleteOption<T>): (string | number | null | undefined)[] {
-    const extractor = this.optionTestIdKey();
-    let key: string | number | null | undefined;
-    if (extractor) {
-      key = extractor(option);
-    } else if (typeof option.value === 'string' || typeof option.value === 'number') {
-      key = option.value;
-    } else {
-      key = option.label;
-    }
-    return scopeTestId(this.resolvedTestId(), key);
+    return optionTestId(this.resolvedTestId(), option, this.optionTestIdKey());
   }
 
   /**

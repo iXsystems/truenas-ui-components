@@ -8,7 +8,7 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { Subscription } from 'rxjs';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
 import { injectTnFormFieldAria } from '../form-field/form-field-context';
-import { TnTestIdDirective, composeTestId, controlTestId, scopeTestId, type TnTestIdValue } from '../test-id';
+import { TnTestIdDirective, composeTestId, controlTestId, optionTestId, scopeTestId, type TnTestIdValue } from '../test-id';
 
 export interface TnSelectOption<T = unknown> {
   value: T;
@@ -249,11 +249,8 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
 
   /**
    * Test-id segments for an option row, consumed by `[tnTestId]` with
-   * `tnTestIdType="option"`. The select's resolved base (explicit `testId`, else
-   * the bound control name) scopes each option so ids stay unique across selects:
-   * base `quick-filters` + option value `ssd` → `option-quick-filters-ssd`; with
-   * no base → `option-ssd`. The discriminator comes from `optionTestIdKey` when
-   * provided, else the option's primitive `value`, else its `label`.
+   * `tnTestIdType="option"` — see {@link optionTestId} for the derivation
+   * rules (shared with `tn-autocomplete`).
    */
   protected optionTestIdParts(option: TnSelectOption<T>): (string | number | null | undefined)[] {
     // The synthetic empty option gets a fixed `empty` discriminator — its
@@ -262,16 +259,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     if (this.isEmptyOption(option)) {
       return scopeTestId(this.resolvedTestId(), 'empty');
     }
-    const extractor = this.optionTestIdKey();
-    let key: string | number | null | undefined;
-    if (extractor) {
-      key = extractor(option);
-    } else if (typeof option.value === 'string' || typeof option.value === 'number') {
-      key = option.value;
-    } else {
-      key = option.label;
-    }
-    return scopeTestId(this.resolvedTestId(), key);
+    return optionTestId(this.resolvedTestId(), option, this.optionTestIdKey());
   }
 
   private onChange = (_value: T | T[] | null) => {};
