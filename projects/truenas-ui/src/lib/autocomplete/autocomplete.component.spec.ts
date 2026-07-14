@@ -2,7 +2,7 @@ import { OverlayContainer } from '@angular/cdk/overlay';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TnAutocompleteComponent, type TnAutocompleteOption } from './autocomplete.component';
 
 interface Country {
@@ -116,6 +116,43 @@ class DisabledOptionsHostComponent {
   allowCustomValue = signal(false);
   control = new FormControl<string | null>(null);
   selected: TnAutocompleteOption<string> | null = null;
+}
+
+@Component({
+  selector: 'tn-test-id-host',
+  standalone: true,
+  imports: [TnAutocompleteComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-autocomplete
+      [options]="options()"
+      [testId]="testId()"
+      [optionTestIdKey]="keyFn()"
+      [loading]="loading()"
+      [formControl]="control" />
+  `
+})
+class TestIdHostComponent {
+  options = signal(countryOptions);
+  testId = signal<string>('country');
+  keyFn = signal<((option: TnAutocompleteOption<string>) => string | number | null | undefined) | undefined>(undefined);
+  loading = signal(false);
+  control = new FormControl<string | null>(null);
+}
+
+@Component({
+  selector: 'tn-control-name-test-host',
+  standalone: true,
+  imports: [TnAutocompleteComponent, ReactiveFormsModule],
+  template: `
+    <form [formGroup]="form">
+      <tn-autocomplete formControlName="country" [options]="options" />
+    </form>
+  `
+})
+class ControlNameHostComponent {
+  options = countryOptions;
+  form = new FormGroup({ country: new FormControl<string | null>(null) });
 }
 
 interface City { id: string; }
@@ -683,6 +720,108 @@ describe('TnAutocompleteComponent', () => {
 
       expect(getOInput().value).toBe('Porto');
       expect(warnSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('test ids', () => {
+    let tFixture: ComponentFixture<TestIdHostComponent>;
+    let tHost: TestIdHostComponent;
+
+    const getTInput = (): HTMLInputElement =>
+      tFixture.nativeElement.querySelector('.tn-autocomplete__input');
+
+    const openAndGetOptionTestIds = (): (string | null)[] => {
+      getTInput().dispatchEvent(new Event('focus'));
+      tFixture.detectChanges();
+      return Array.from(overlayEl.querySelectorAll<HTMLElement>('.tn-autocomplete__option'))
+        .map((el) => el.getAttribute('data-testid'));
+    };
+
+    beforeEach(() => {
+      tFixture = TestBed.createComponent(TestIdHostComponent);
+      tHost = tFixture.componentInstance;
+      tFixture.detectChanges();
+    });
+
+    it('applies the resolved base to the input', () => {
+      expect(getTInput().getAttribute('data-testid')).toBe('autocomplete-country');
+    });
+
+    it('scopes each option with the base: option-<base>-<value>', () => {
+      expect(openAndGetOptionTestIds()).toEqual([
+        'option-country-us',
+        'option-country-ca',
+        'option-country-mx',
+        'option-country-gb',
+        'option-country-de',
+      ]);
+    });
+
+    it('falls back to option-<value> when there is no base', () => {
+      tHost.testId.set('');
+      tFixture.detectChanges();
+      expect(openAndGetOptionTestIds()).toEqual([
+        'option-us', 'option-ca', 'option-mx', 'option-gb', 'option-de',
+      ]);
+    });
+
+    it('uses optionTestIdKey to pick the discriminator (e.g. label over value)', () => {
+      tHost.keyFn.set((o) => o.label);
+      tFixture.detectChanges();
+      expect(openAndGetOptionTestIds()).toEqual([
+        'option-country-united-states',
+        'option-country-canada',
+        'option-country-mexico',
+        'option-country-united-kingdom',
+        'option-country-germany',
+      ]);
+    });
+
+    it('falls back to the label for object-valued options', () => {
+      const oFixture = TestBed.createComponent(ObjectValueHostComponent);
+      oFixture.detectChanges();
+      const input = oFixture.nativeElement.querySelector('.tn-autocomplete__input') as HTMLInputElement;
+      input.dispatchEvent(new Event('focus'));
+      oFixture.detectChanges();
+
+      const ids = Array.from(overlayEl.querySelectorAll<HTMLElement>('.tn-autocomplete__option'))
+        .map((el) => el.getAttribute('data-testid'));
+      expect(ids).toEqual(['option-lisbon', 'option-porto']);
+    });
+
+    it('stamps the loading row scoped under the input id', () => {
+      tHost.options.set([]);
+      tHost.loading.set(true);
+      tFixture.detectChanges();
+
+      getTInput().dispatchEvent(new Event('focus'));
+      tFixture.detectChanges();
+
+      const row = overlayEl.querySelector('.tn-autocomplete__loading');
+      expect(row?.getAttribute('data-testid')).toBe('autocomplete-country-loading');
+    });
+
+    it('stamps the no-results row scoped under the input id', () => {
+      const input = getTInput();
+      input.value = 'zzz';
+      input.dispatchEvent(new Event('input'));
+      tFixture.detectChanges();
+
+      const row = overlayEl.querySelector('.tn-autocomplete__no-results');
+      expect(row?.getAttribute('data-testid')).toBe('autocomplete-country-no-results');
+    });
+
+    it('falls back to the bound control name when testId is unset', () => {
+      const cFixture = TestBed.createComponent(ControlNameHostComponent);
+      cFixture.detectChanges();
+
+      const input = cFixture.nativeElement.querySelector('.tn-autocomplete__input') as HTMLInputElement;
+      expect(input.getAttribute('data-testid')).toBe('autocomplete-country');
+
+      input.dispatchEvent(new Event('focus'));
+      cFixture.detectChanges();
+      const first = overlayEl.querySelector('.tn-autocomplete__option');
+      expect(first?.getAttribute('data-testid')).toBe('option-country-us');
     });
   });
 

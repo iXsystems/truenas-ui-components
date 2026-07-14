@@ -7,7 +7,7 @@
     aria-haspopup="listbox"
     tnTestIdType="autocomplete"
     autocomplete="off"
-    [tnTestId]="testId()"
+    [tnTestId]="resolvedTestId()"
     [class.open]="isOpen()"
     [class.disabled]="isDisabled()"
     [placeholder]="placeholder()"
@@ -50,6 +50,8 @@
             class="tn-autocomplete__option"
             role="option"
             tabindex="-1"
+            tnTestIdType="option"
+            [tnTestId]="optionTestIdParts(option)"
             [class.highlighted]="highlightedIndex() === $index"
             [class.disabled]="option.disabled"
             [attr.id]="uid + '-option-' + $index"
@@ -66,12 +68,18 @@
 
     <div role="status">
       @if (loading()) {
-        <div class="tn-autocomplete__loading">
+        <div
+          class="tn-autocomplete__loading"
+          tnTestIdType="autocomplete"
+          [tnTestId]="statusTestIdParts('loading')">
           <tn-spinner [diameter]="16" [strokeWidth]="2" [ariaLabel]="loadingText()" />
           <span>{{ loadingText() }}</span>
         </div>
       } @else if (!hasResults()) {
-        <div class="tn-autocomplete__no-results">
+        <div
+          class="tn-autocomplete__no-results"
+          tnTestIdType="autocomplete"
+          [tnTestId]="statusTestIdParts('no-results')">
           {{ noResultsText() }}
         </div>
       }
