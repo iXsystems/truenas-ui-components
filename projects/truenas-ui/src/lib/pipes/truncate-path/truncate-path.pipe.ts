@@ -6,7 +6,7 @@ import type { PathSegment } from '../../file-picker/file-picker.interfaces';
  * Maximum directory buttons shown after the root segment before the middle of
  * the path is collapsed into an "…" segment.
  */
-const MAX_VISIBLE_DIRS = 4;
+const MAX_VISIBLE_DIRS = 3;
 
 @Pipe({
   name: 'tnTruncatePath',
@@ -14,8 +14,8 @@ const MAX_VISIBLE_DIRS = 4;
 })
 export class TruncatePathPipe implements PipeTransform {
   transform(path: string, rootPath = '/mnt'): PathSegment[] {
-    // The root is always the first segment, shown as "/"
-    const segments: PathSegment[] = [{ name: '/', path: rootPath }];
+    // The root is always the first segment, shown with its full path (e.g. "/mnt")
+    const segments: PathSegment[] = [{ name: rootPath, path: rootPath }];
 
     if (!path || path === rootPath) {
       return segments;
@@ -40,7 +40,7 @@ export class TruncatePathPipe implements PipeTransform {
 
   /**
    * Collapses the middle of deep paths into an "…" segment that navigates to the
-   * parent of the first visible directory, e.g. /a/b/c/d/e → / … c d e.
+   * parent of the first visible directory, e.g. /mnt/a/b/c/d/e → /mnt … c d e.
    */
   private truncateMiddle(segments: PathSegment[]): PathSegment[] {
     const [root, ...dirs] = segments;
