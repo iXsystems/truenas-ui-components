@@ -26,10 +26,6 @@ const meta: Meta<TnFilePickerComponent> = {
       control: 'boolean',
       description: 'Allow selection of multiple items',
     },
-    allowCreate: {
-      control: 'boolean',
-      description: 'Show "New Folder" button',
-    },
     placeholder: {
       control: 'text',
       description: 'Placeholder text for the input',
@@ -63,7 +59,6 @@ export const Default: Story = {
         <tn-file-picker
           [mode]="mode"
           [multiSelect]="multiSelect"
-          [allowCreate]="allowCreate"
           [placeholder]="placeholder"
           [disabled]="disabled"
           [startPath]="startPath"
@@ -79,7 +74,6 @@ export const Default: Story = {
   args: {
     mode: 'any',
     multiSelect: true,
-    allowCreate: true,
     placeholder: 'Browse files and folders...',
     disabled: false,
     startPath: '/mnt/showcase'
@@ -148,11 +142,6 @@ multiSelect = input<boolean>(false);
 
 ### Creation Permissions
 \`\`\`typescript
-allowCreate = input<boolean>(true);
-\`\`\`
-**Description:** Show "New Folder" button in the file picker popup.
-
-\`\`\`typescript
 createActions = input<FilePickerCreateAction[]>([]);
 \`\`\`
 **Description:** Consumer-defined creation flows (e.g. dataset or zvol creation) shown as buttons in the popup footer, next to Select. Pressing one emits \`createAction\` with \`{ actionId, parentPath }\`; run your creation flow (dialog, API call) and refresh the listing when it completes.
@@ -210,11 +199,6 @@ pathChange = output<string>();
 **Description:** Emitted when user navigates to a different directory.
 
 \`\`\`typescript
-createFolder = output<CreateFolderEvent>();
-\`\`\`
-**Description:** Emitted when user clicks "New Folder" button.
-
-\`\`\`typescript
 error = output<FilePickerError>();
 \`\`\`
 **Description:** Emitted when navigation, validation, or creation operations fail.
@@ -229,7 +213,6 @@ The consuming application implements these callbacks to provide data and operati
 interface FilePickerCallbacks {
   getChildren?: (path: string) => Promise<FileSystemItem[]>;
   validatePath?: (path: string) => Promise<boolean>;
-  createFolder?: (parentPath: string, name: string) => Promise<string>;
 }
 \`\`\`
 
@@ -263,22 +246,6 @@ validatePath: async (path: string) => {
 }
 \`\`\`
 
-### createFolder (optional)
-**Signature:** \`(parentPath: string, name: string) => Promise<string>\`
-
-Called when user creates a new folder. Return the path of the created folder.
-
-**Example:**
-\`\`\`typescript
-createFolder: async (parentPath: string, name: string) => {
-  const response = await this.http.post('/api/filesystem/mkdir', {
-    parent: parentPath,
-    name: name
-  });
-  return response.path;
-}
-\`\`\`
-
 ---
 
 ## Data Models
@@ -294,14 +261,6 @@ interface FileSystemItem {
   permissions?: 'read' | 'write' | 'none';  // Access level (optional)
   icon?: string;             // Custom icon override (optional)
   disabled?: boolean;        // Item cannot be selected (optional)
-}
-\`\`\`
-
-### CreateFolderEvent
-\`\`\`typescript
-interface CreateFolderEvent {
-  parentPath: string;
-  folderName: string;
 }
 \`\`\`
 
@@ -394,7 +353,6 @@ onCreateAction(event: FilePickerCreateActionEvent) {
 \`\`\`html
 <tn-file-picker
   mode="folder"
-  [allowCreate]="true"
   startPath="/mnt/backups"
   rootPath="/mnt/backups"
   [callbacks]="callbacks"
@@ -751,47 +709,6 @@ const mdiShowcaseCallbacks: FilePickerCallbacks = {
            Object.values(mockFilesystem).flat().some(item => item.path === path);
   },
 
-  createFolder: async (parentPath: string, name: string): Promise<string> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    // Simulate backend validation errors (for demo purposes)
-    if (name.toLowerCase() === 'forbidden') {
-      throw new Error('This folder name is not allowed');
-    }
-
-    if (name.length > 100) {
-      throw new Error('Folder name too long');
-    }
-
-    const newFolderPath = `${parentPath}/${name}`;
-
-    // Check for duplicates (backend validation)
-    const existingItems = mockFilesystem[parentPath] || [];
-    if (existingItems.some(item => item.name.toLowerCase() === name.toLowerCase())) {
-      throw new Error('A folder with this name already exists');
-    }
-
-    // Add new folder to mock filesystem
-    const newFolder: FileSystemItem = {
-      path: newFolderPath,
-      name: name,
-      type: 'folder',
-      modified: new Date(),
-      permissions: 'write'
-    };
-
-    // Add to parent directory's children
-    if (!mockFilesystem[parentPath]) {
-      mockFilesystem[parentPath] = [];
-    }
-    mockFilesystem[parentPath].push(newFolder);
-
-    // Initialize empty children array for the new folder
-    mockFilesystem[newFolderPath] = [];
-
-    return newFolderPath;
-  }
 };
 
 // =============================================================================
@@ -809,7 +726,6 @@ export const BasicInteraction: Story = {
         <tn-file-picker
           [mode]="mode"
           [multiSelect]="multiSelect"
-          [allowCreate]="allowCreate"
           [placeholder]="placeholder"
           [startPath]="startPath"
           [callbacks]="callbacks">
@@ -823,7 +739,6 @@ export const BasicInteraction: Story = {
   args: {
     mode: 'any',
     multiSelect: false,
-    allowCreate: true,
     placeholder: 'Select a file...',
     startPath: '/mnt/showcase'
   },
@@ -870,7 +785,6 @@ export const MultiSelectWorkflow: Story = {
         <tn-file-picker
           [mode]="mode"
           [multiSelect]="multiSelect"
-          [allowCreate]="allowCreate"
           [startPath]="startPath"
           [callbacks]="callbacks">
         </tn-file-picker>
@@ -883,7 +797,6 @@ export const MultiSelectWorkflow: Story = {
   args: {
     mode: 'any',
     multiSelect: true,
-    allowCreate: true,
     startPath: '/mnt/showcase'
   },
   play: async ({ canvasElement }) => {
@@ -994,122 +907,6 @@ export const NavigationFlow: Story = {
   }
 };
 
-export const FolderCreation: Story = {
-  render: (args) => ({
-    props: {
-      ...args,
-      callbacks: mdiShowcaseCallbacks
-    },
-    template: `
-      <tn-form-field label="Folder creation test">
-        <tn-file-picker
-          [mode]="mode"
-          [allowCreate]="allowCreate"
-          [startPath]="startPath"
-          [callbacks]="callbacks">
-        </tn-file-picker>
-      </tn-form-field>
-    `,
-    moduleMetadata: {
-      imports: [TnFormFieldComponent, TnFilePickerComponent],
-    }
-  }),
-  args: {
-    mode: 'folder',
-    allowCreate: true,
-    startPath: '/mnt/showcase'
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-
-    // Reset mock filesystem before test
-    resetMockFilesystem();
-
-    // Open picker
-    const folderButton = canvas.getByRole('button', { name: /open file picker/i });
-    await userEvent.click(folderButton);
-
-    // Wait for content
-    await waitFor(() => {
-      void expect(screen.queryByText('documents')).toBeInTheDocument();
-    }, { timeout: 3000 });
-
-    // Pause to let developers see the initial state
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Click "New Folder" button
-    const newFolderButton = screen.getByRole('button', { name: /new folder/i });
-    await userEvent.click(newFolderButton);
-
-    // Wait a moment for Angular to process the changes
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    // Verify editable input appears with default name and is focused
-    await waitFor(() => {
-      const input = screen.getByRole('textbox', { name: 'Folder name' }) as HTMLInputElement;
-      void expect(input).toBeInTheDocument();
-      void expect(input.value).toBe('New Folder');
-      void expect(input).toHaveFocus();
-    }, { timeout: 3000 });
-
-    // Verify New Folder button is disabled during creation
-    void expect(newFolderButton).toBeDisabled();
-
-    // Pause to let developers see the input field
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    // TEST 1: Test duplicate name validation
-    const input1 = screen.getByRole('textbox', { name: 'Folder name' }) as HTMLInputElement;
-    await userEvent.clear(input1);
-    await userEvent.type(input1, 'documents', { delay: 50 }); // Duplicate name with typing delay
-
-    // Pause before submitting
-    await new Promise(resolve => setTimeout(resolve, 500));
-    await userEvent.keyboard('{Enter}');
-
-    // Should show duplicate error
-    await waitFor(() => {
-      void expect(screen.getByText(/already exists/i)).toBeInTheDocument();
-    }, { timeout: 3000 });
-
-    // Pause to let developers see the error
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // Verify input is still present and can be edited
-    const input2 = screen.getByRole('textbox', { name: 'Folder name' }) as HTMLInputElement;
-    void expect(input2).toBeInTheDocument();
-
-    // TEST 2: Save folder with custom name
-    await userEvent.clear(input2);
-    await new Promise(resolve => setTimeout(resolve, 300));
-    await userEvent.type(input2, 'My New Folder', { delay: 50 });
-
-    // Pause before final submission
-    await new Promise(resolve => setTimeout(resolve, 500));
-    await userEvent.keyboard('{Enter}');
-
-    // Wait for folder creation to complete (includes API delay of 800ms)
-    await waitFor(() => {
-      void expect(screen.getByText('My New Folder')).toBeInTheDocument();
-      // Input should be gone (no longer in edit mode)
-      void expect(screen.queryByRole('textbox', { name: 'Folder name' })).not.toBeInTheDocument();
-    }, { timeout: 3000 });
-
-    // Pause to let developers see the success state
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Verify New Folder button is re-enabled
-    void expect(newFolderButton).not.toBeDisabled();
-  },
-  parameters: {
-    docs: {
-      description: {
-        story: 'Tests folder creation workflow: opens picker, clicks "New Folder", verifies input appears with default name, tests duplicate name validation showing inline error, then successfully creates folder with custom name.'
-      }
-    }
-  }
-};
-
 export const CreateActions: Story = {
   render: (args) => ({
     props: {
@@ -1135,7 +932,6 @@ export const CreateActions: Story = {
         <tn-file-picker
           #picker
           [mode]="mode"
-          [allowCreate]="allowCreate"
           [createActions]="createActions"
           [startPath]="startPath"
           [callbacks]="callbacks"
@@ -1149,7 +945,6 @@ export const CreateActions: Story = {
   }),
   args: {
     mode: 'dataset',
-    allowCreate: false,
     createActions: [
       { id: 'dataset', label: 'Create Dataset' }
     ],
@@ -1173,8 +968,6 @@ export const CreateActions: Story = {
     // Pause to let developers see the initial state
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // The consumer-defined action is rendered instead of "New Folder"
-    void expect(screen.queryByRole('button', { name: /new folder/i })).not.toBeInTheDocument();
     const createDatasetButton = screen.getByRole('button', { name: /create dataset/i });
     await userEvent.click(createDatasetButton);
 

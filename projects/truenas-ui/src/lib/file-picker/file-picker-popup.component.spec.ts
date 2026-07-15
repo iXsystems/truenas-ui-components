@@ -288,16 +288,6 @@ describe('TnFilePickerPopupComponent', () => {
       expect(component.pathNavigate.emit).toHaveBeenCalledWith(testPath);
     });
 
-    it('should emit createFolder when creating folder', () => {
-      jest.spyOn(component.createFolder, 'emit');
-      
-      component.onCreateFolder();
-      
-      expect(component.createFolder.emit).toHaveBeenCalledWith({
-        parentPath: '/mnt/tank',
-        folderName: 'New Folder'
-      });
-    });
   });
 
   describe('Selection Handling', () => {

@@ -65,16 +65,6 @@
   }
 }
 
-.tn-file-picker-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  tn-button {
-    font-size: 1rem;
-  }
-}
-
 // Loading state
 .tn-file-picker-loading {
   display: flex;
@@ -172,81 +162,6 @@ tn-table {
     &:not(:has(.file-icon-folder)):not(:has(.file-icon-dataset)):not(:has(.file-icon-mountpoint)) {
       cursor: not-allowed;
     }
-  }
-
-  // Edit mode styling
-  &.editing {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 2px;
-    cursor: default;
-
-    .folder-name-input {
-      flex: 1;
-      border: 2px solid var(--tn-primary, #0066cc);
-      padding: 4px 8px;
-      font-size: inherit;
-      font-family: inherit;
-      background: var(--tn-bg1, white);
-      color: var(--tn-fg1, black);
-      outline: none;
-      border-radius: 3px;
-      min-width: 200px;
-
-      &:focus {
-        border-color: var(--tn-primary, #0066cc);
-        box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
-      }
-
-      &.error {
-        border-color: var(--tn-error, #d32f2f);
-      }
-
-      &:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        background: var(--tn-bg2, #f5f5f5);
-      }
-    }
-
-    .creation-loading-icon {
-      animation: spin 1s linear infinite;
-      color: var(--tn-primary, #0066cc);
-      flex-shrink: 0;
-    }
-  }
-}
-
-// Wrapper for edit mode to support error display
-.file-name-cell-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-// Inline error message styling
-.folder-creation-error {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  padding-left: 36px; // Align with input (icon + gap)
-  margin-bottom: 12px;
-  background: rgba(211, 47, 47, 0.1);
-  border-left: 3px solid var(--tn-error, #d32f2f);
-  border-radius: 3px;
-  font-size: 1rem;
-  color: var(--tn-error, #d32f2f);
-
-  .error-icon {
-    flex-shrink: 0;
-    width: 20px;
-    height: 20px;
-  }
-
-  .error-text {
-    flex: 1;
   }
 }
 

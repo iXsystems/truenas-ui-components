@@ -9,7 +9,7 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { TnFilePickerPopupComponent } from './file-picker-popup.component';
 import type {
-  CreateFolderEvent, FilePickerCallbacks, FilePickerCreateAction, FilePickerCreateActionEvent,
+  FilePickerCallbacks, FilePickerCreateAction, FilePickerCreateActionEvent,
   FilePickerError, FilePickerMode, FileSystemItem
 } from './file-picker.interfaces';
 import { TnIconComponent } from '../icon/icon.component';
@@ -47,7 +47,6 @@ import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDestroy {
   mode = input<FilePickerMode>('any');
   multiSelect = input<boolean>(false);
-  allowCreate = input<boolean>(true);
   /** Consumer-defined creation flows shown as buttons in the popup footer. */
   createActions = input<FilePickerCreateAction[]>([]);
   allowManualInput = input<boolean>(true);
@@ -66,7 +65,6 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
   selectionChange = output<string | string[]>();
   pathChange = output<string>();
-  createFolder = output<CreateFolderEvent>();
   /** Re-emitted from the popup when one of the `createActions` buttons is pressed. */
   createAction = output<FilePickerCreateActionEvent>();
   error = output<FilePickerError>();
@@ -86,8 +84,6 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   selectedItems = signal<string[]>([]);
   loading = signal<boolean>(false);
   hasError = signal<boolean>(false);
-  creatingItemTempId = signal<string | null>(null);
-  creationLoading = signal<boolean>(false);
   private formDisabled = signal<boolean>(false);
 
   // Computed disabled state (combines input and form state)
@@ -187,7 +183,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
   // File browser methods
   onItemClick(item: FileSystemItem): void {
-    if (item.disabled || item.isCreating || this.creatingItemTempId()) {return;}
+    if (item.disabled) {return;}
 
     if (this.multiSelect()) {
       const selected = this.selectedItems();
@@ -207,8 +203,6 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   }
 
   onItemDoubleClick(item: FileSystemItem): void {
-    if (item.isCreating || this.creatingItemTempId()) {return;}
-
     // Define navigatable types
     const isNavigatable = ['folder', 'dataset', 'mountpoint'].includes(item.type);
 
@@ -251,11 +245,6 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   }
 
   navigateToPath(path: string): void {
-    // Prevent navigation if currently creating a folder
-    if (this.creatingItemTempId()) {
-      console.warn('Cannot navigate while creating a folder');
-      return;
-    }
     void this.loadDirectory(this.clampToRoot(path));
   }
 
@@ -267,144 +256,11 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     return isWithinRoot ? path : root;
   }
 
-  onCreateFolder(): void {
-    // Prevent multiple simultaneous creations
-    if (this.creatingItemTempId()) {
-      console.warn('Already creating a folder');
-      return;
-    }
-
-    // Generate temporary ID
-    const tempId = `temp-${Date.now()}`;
-
-    // Create pending item
-    const pendingFolder: FileSystemItem = {
-      path: `${this.currentPath()}/__pending__/${tempId}`,
-      name: 'New Folder',
-      type: 'folder',
-      isCreating: true,
-      tempId: tempId,
-      modified: new Date()
-    };
-
-    // Add to top of file list
-    const currentItems = this.fileItems();
-    this.fileItems.set([pendingFolder, ...currentItems]);
-    this.creatingItemTempId.set(tempId);
-
-    // Still emit event for parent components
-    this.createFolder.emit({
-      parentPath: this.currentPath(),
-      folderName: 'New Folder'
-    });
-  }
-
   onClearSelection(): void {
     this.selectedItems.set([]);
     this.selectedPath.set('');
     this.onChange(this.multiSelect() ? [] : '');
     this.selectionChange.emit(this.multiSelect() ? [] : '');
-  }
-
-  async onSubmitFolderName(name: string, tempId: string): Promise<void> {
-    // Validate folder name
-    const validation = this.validateFolderName(name);
-    if (!validation.valid) {
-      // Update the item with error message
-      this.updateCreatingItemError(tempId, validation.error!);
-      return;
-    }
-
-    const cb = this.callbacks();
-    if (!cb?.createFolder) {
-      this.updateCreatingItemError(tempId, 'Create folder callback not provided');
-      return;
-    }
-
-    // Clear any previous errors
-    this.updateCreatingItemError(tempId, undefined);
-    this.creationLoading.set(true);
-
-    try {
-      // Call the callback with parent path and user-entered name
-      await cb.createFolder(
-        this.currentPath(),
-        name.trim()
-      );
-
-      // Remove pending item
-      this.removePendingItem(tempId);
-      this.creatingItemTempId.set(null);
-
-      // Reload directory to show the newly created folder
-      await this.loadDirectory(this.currentPath());
-
-    } catch (err: unknown) {
-      console.error('Failed to create folder:', err);
-
-      // Show error inline, keep input editable for retry
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create folder';
-      this.updateCreatingItemError(tempId, errorMessage);
-      this.emitError('creation', errorMessage, this.currentPath());
-
-    } finally {
-      this.creationLoading.set(false);
-    }
-  }
-
-  onCancelFolderCreation(tempId: string): void {
-    this.removePendingItem(tempId);
-    this.creatingItemTempId.set(null);
-    this.creationLoading.set(false);
-  }
-
-  private removePendingItem(tempId: string): void {
-    const items = this.fileItems().filter(item => item.tempId !== tempId);
-    this.fileItems.set(items);
-  }
-
-  private updateCreatingItemError(tempId: string, error: string | undefined): void {
-    const items = this.fileItems().map(item => {
-      if (item.tempId === tempId) {
-        return { ...item, creationError: error };
-      }
-      return item;
-    });
-    this.fileItems.set(items);
-  }
-
-  private validateFolderName(name: string): { valid: boolean; error?: string } {
-    const trimmed = name.trim();
-
-    if (!trimmed) {
-      return { valid: false, error: 'Folder name cannot be empty' };
-    }
-
-    if (trimmed.length > 255) {
-      return { valid: false, error: 'Folder name too long (max 255 characters)' };
-    }
-
-    // Check for invalid characters (common across file systems)
-    const invalidChars = /[<>:"|?*\x00-\x1f]/;
-    if (invalidChars.test(trimmed)) {
-      return { valid: false, error: 'Invalid characters in folder name' };
-    }
-
-    // Disallow folder names that are just dots
-    if (/^\.+$/.test(trimmed)) {
-      return { valid: false, error: 'Invalid folder name' };
-    }
-
-    // Check for duplicate names in current directory
-    const existingNames = this.fileItems()
-      .filter(item => !item.isCreating)
-      .map(item => item.name.toLowerCase());
-
-    if (existingNames.includes(trimmed.toLowerCase())) {
-      return { valid: false, error: 'A folder with this name already exists' };
-    }
-
-    return { valid: true };
   }
 
   private async loadDirectory(path: string): Promise<void> {

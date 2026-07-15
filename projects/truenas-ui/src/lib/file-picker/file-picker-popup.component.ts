@@ -1,6 +1,5 @@
 import { A11yModule } from '@angular/cdk/a11y';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import type { OnInit, AfterViewInit, AfterViewChecked} from '@angular/core';
 import { Component, computed, input, output, inject } from '@angular/core';
 import {
   mdiFolder,
@@ -8,14 +7,12 @@ import {
   mdiDatabase,
   mdiHarddisk,
   mdiFolderNetwork,
-  mdiFolderPlus,
   mdiLoading,
   mdiLock,
-  mdiFolderOpen,
-  mdiAlertCircle
+  mdiFolderOpen
 } from '@mdi/js';
 import type {
-  FileSystemItem, CreateFolderEvent, FilePickerMode, FilePickerCreateAction, FilePickerCreateActionEvent
+  FileSystemItem, FilePickerMode, FilePickerCreateAction, FilePickerCreateActionEvent
 } from './file-picker.interfaces';
 import { TnButtonComponent } from '../button/button.component';
 import { registerTruenasIcons } from '../custom-icons/generated-icons';
@@ -47,10 +44,9 @@ import { TnTableColumnDirective, TnHeaderCellDefDirective, TnCellDefDirective } 
     'class': 'tn-file-picker-popup'
   }
 })
-export class TnFilePickerPopupComponent implements OnInit, AfterViewInit, AfterViewChecked {
+export class TnFilePickerPopupComponent {
   mode = input<FilePickerMode>('any');
   multiSelect = input<boolean>(false);
-  allowCreate = input<boolean>(true);
   /**
    * Consumer-defined creation flows rendered as buttons in the footer, next to the
    * Select button. Pressing one emits `createAction` with the action id and the
@@ -97,11 +93,9 @@ export class TnFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
       'database': mdiDatabase,
       'harddisk': mdiHarddisk,
       'folder-network': mdiFolderNetwork,
-      'folder-plus': mdiFolderPlus,
       'loading': mdiLoading,
       'lock': mdiLock,
-      'folder-open': mdiFolderOpen,
-      'alert-circle': mdiAlertCircle
+      'folder-open': mdiFolderOpen
     };
 
     // Register MDI library with resolver for file picker icons
@@ -117,35 +111,15 @@ export class TnFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
     });
   }
 
-  ngOnInit() {
-  }
-
-  ngAfterViewInit() {
-  }
-
-  ngAfterViewChecked(): void {
-    // Auto-focus and select text in input when it appears
-    const inp = document.querySelector('[data-autofocus="true"]') as HTMLInputElement;
-    if (inp && inp !== document.activeElement) {
-      setTimeout(() => {
-        inp.focus();
-        inp.select();
-      }, 0);
-    }
-  }
-
   itemClick = output<FileSystemItem>();
   itemDoubleClick = output<FileSystemItem>();
   pathNavigate = output<string>();
-  createFolder = output<CreateFolderEvent>();
   /** Emits when one of the `createActions` buttons is pressed. */
   createAction = output<FilePickerCreateActionEvent>();
   clearSelection = output<void>();
   close = output<void>();
   submit = output<void>();
   cancel = output<void>();
-  submitFolderName = output<{ name: string; tempId: string }>();
-  cancelFolderCreation = output<string>();
 
   // Table configuration
   displayedColumns = ['select', 'name', 'size', 'modified'];
@@ -184,30 +158,15 @@ export class TnFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
   });
 
   onItemClick(item: FileSystemItem): void {
-    if (item.isCreating) {return;} // Don't allow selection during creation
     this.itemClick.emit(item);
   }
 
   onItemDoubleClick(item: FileSystemItem): void {
-    if (item.isCreating) {return;} // Don't allow navigation during creation
     this.itemDoubleClick.emit(item);
   }
 
   navigateToPath(path: string): void {
-    // Check if any item is in creation mode
-    const hasCreatingItem = this.fileItems().some(item => item.isCreating);
-    if (hasCreatingItem) {
-      console.warn('Cannot navigate while creating a folder');
-      return;
-    }
     this.pathNavigate.emit(path);
-  }
-
-  onCreateFolder(): void {
-    this.createFolder.emit({
-      parentPath: this.currentPath(),
-      folderName: 'New Folder'
-    });
   }
 
   onCreateAction(action: FilePickerCreateAction): void {
@@ -226,45 +185,8 @@ export class TnFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
     this.cancel.emit();
   }
 
-  onFolderNameSubmit(event: Event, item: FileSystemItem): void {
-    const inp = event.target as HTMLInputElement;
-    const name = inp.value.trim();
-
-    if (item.tempId) {
-      // Even if empty, let parent component handle validation
-      this.submitFolderName.emit({ name, tempId: item.tempId });
-    }
-  }
-
-  onFolderNameCancel(item: FileSystemItem): void {
-    if (item.tempId) {
-      this.cancelFolderCreation.emit(item.tempId);
-    }
-  }
-
-  onFolderNameInputBlur(event: Event, item: FileSystemItem): void {
-    // Auto-submit on blur (don't close picker, parent handles submission)
-    const inp = event.target as HTMLInputElement;
-    if (item.tempId) {
-      this.submitFolderName.emit({
-        name: inp.value.trim(),
-        tempId: item.tempId
-      });
-    }
-  }
-
-  onFolderNameKeyDown(event: KeyboardEvent, item: FileSystemItem): void {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      this.onFolderNameSubmit(event, item);
-    } else if (event.key === 'Escape') {
-      event.preventDefault();
-      this.onFolderNameCancel(item);
-    }
-  }
-
   isCreateDisabled(): boolean {
-    return this.fileItems().some(item => item.isCreating) || this.creationLoading();
+    return this.creationLoading();
   }
 
   // Utility methods
