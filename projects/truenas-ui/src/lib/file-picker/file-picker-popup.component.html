@@ -185,8 +185,11 @@
       <span class="selection-count">
         {{ selectedItems().length }} item{{ selectedItems().length !== 1 ? 's' : '' }} selected
       </span>
-    }
-    @if (selectedItems().length === 0) {
+    } @else if (allowCurrentDirectorySelection()) {
+      <span class="selection-count current-directory-selection">
+        Current directory selected
+      </span>
+    } @else {
       <span class="selection-count">
         No items selected
       </span>
@@ -194,7 +197,7 @@
     <div class="footer-actions">
       <tn-button
         label="Select"
-        [disabled]="selectedItems().length === 0"
+        [disabled]="selectedItems().length === 0 && !allowCurrentDirectorySelection()"
         (onClick)="onSubmit()" />
     </div>
   </div>

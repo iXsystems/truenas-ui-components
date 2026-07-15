@@ -57,6 +57,13 @@ export class TnFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
    * shows "/", and ".." never emits a `pathNavigate` above it.
    */
   rootPath = input<string>('/mnt');
+  /**
+   * When enabled, an empty selection stands for the directory currently being
+   * browsed: the footer names it as the implicit selection and the Select button
+   * stays enabled. On `submit` with no `selectedItems`, consumers should treat
+   * `currentPath` as the selection. Keeps empty directories selectable.
+   */
+  allowCurrentDirectorySelection = input<boolean>(false);
   fileItems = input<FileSystemItem[]>([]);
   selectedItems = input<string[]>([]);
   loading = input<boolean>(false);

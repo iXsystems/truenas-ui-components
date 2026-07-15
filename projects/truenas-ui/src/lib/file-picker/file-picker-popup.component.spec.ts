@@ -345,6 +345,43 @@ describe('TnFilePickerPopupComponent', () => {
     });
   });
 
+  describe('Current Directory Selection', () => {
+    function selectButton(): HTMLButtonElement | null {
+      const button = fixture.debugElement.query(By.css('.footer-actions button'));
+      return button ? button.nativeElement as HTMLButtonElement : null;
+    }
+
+    it('should disable Select on empty selection by default', () => {
+      fixture.componentRef.setInput('selectedItems', []);
+      fixture.detectChanges();
+
+      expect(selectButton()?.disabled).toBe(true);
+
+      const count = fixture.debugElement.query(By.css('.selection-count'));
+      expect((count.nativeElement as HTMLElement).textContent).toContain('No items selected');
+    });
+
+    it('should keep Select enabled on empty selection when current directory selection is allowed', () => {
+      fixture.componentRef.setInput('allowCurrentDirectorySelection', true);
+      fixture.componentRef.setInput('selectedItems', []);
+      fixture.detectChanges();
+
+      expect(selectButton()?.disabled).toBe(false);
+
+      const count = fixture.debugElement.query(By.css('.selection-count'));
+      expect((count.nativeElement as HTMLElement).textContent).toContain('Current directory selected');
+    });
+
+    it('should still show the item count when items are selected', () => {
+      fixture.componentRef.setInput('allowCurrentDirectorySelection', true);
+      fixture.componentRef.setInput('selectedItems', ['/mnt/tank/database.db']);
+      fixture.detectChanges();
+
+      const count = fixture.debugElement.query(By.css('.selection-count'));
+      expect((count.nativeElement as HTMLElement).textContent).toContain('1 item selected');
+    });
+  });
+
   describe('Loading State', () => {
     it('should show loading indicator when loading', () => {
       fixture.componentRef.setInput('loading', true);
