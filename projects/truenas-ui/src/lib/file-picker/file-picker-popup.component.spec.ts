@@ -330,18 +330,56 @@ describe('TnFilePickerPopupComponent', () => {
       expect(breadcrumbLabels()).toEqual(['/']);
     });
 
-    it('should navigate no higher than the custom root via ".."', () => {
+    it('should render every path segment and navigate to the custom root via "/"', () => {
       fixture.componentRef.setInput('rootPath', '/dev/zvol');
-      fixture.componentRef.setInput('currentPath', '/dev/zvol/tank');
+      fixture.componentRef.setInput('currentPath', '/dev/zvol/tank/vm');
       fixture.detectChanges();
+
+      expect(breadcrumbLabels()).toEqual(['/', 'tank', 'vm']);
 
       const navigateSpy = jest.fn();
       component.pathNavigate.subscribe(navigateSpy);
 
-      const parentSegment = fixture.debugElement.query(By.css('.breadcrumb-segment.parent-nav'));
-      (parentSegment.nativeElement as HTMLElement).click();
+      const rootSegment = fixture.debugElement.query(By.css('.breadcrumb-segment'));
+      (rootSegment.nativeElement as HTMLElement).click();
 
       expect(navigateSpy).toHaveBeenCalledWith('/dev/zvol');
+    });
+  });
+
+  describe('Create Actions', () => {
+    function actionButtons(): HTMLElement[] {
+      return fixture.debugElement.queryAll(By.css('.tn-file-picker-actions button'))
+        .map((button) => button.nativeElement as HTMLElement);
+    }
+
+    it('should render a button per create action next to the New Folder button', () => {
+      fixture.componentRef.setInput('createActions', [
+        { id: 'dataset', label: 'Create Dataset' },
+        { id: 'zvol', label: 'Create Zvol' },
+      ]);
+      fixture.detectChanges();
+
+      const labels = actionButtons().map((button) => button.textContent?.trim());
+      expect(labels).toEqual(['New Folder', 'Create Dataset', 'Create Zvol']);
+    });
+
+    it('should emit createAction with the action id and browsed path', () => {
+      fixture.componentRef.setInput('allowCreate', false);
+      fixture.componentRef.setInput('createActions', [
+        { id: 'dataset', label: 'Create Dataset' },
+      ]);
+      fixture.detectChanges();
+
+      const actionSpy = jest.fn();
+      component.createAction.subscribe(actionSpy);
+
+      actionButtons()[0].click();
+
+      expect(actionSpy).toHaveBeenCalledWith({
+        actionId: 'dataset',
+        parentPath: '/mnt/tank',
+      });
     });
   });
 

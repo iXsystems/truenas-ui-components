@@ -8,7 +8,10 @@ import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { TnFilePickerPopupComponent } from './file-picker-popup.component';
-import type { CreateFolderEvent, FilePickerCallbacks, FilePickerError, FilePickerMode, FileSystemItem } from './file-picker.interfaces';
+import type {
+  CreateFolderEvent, FilePickerCallbacks, FilePickerCreateAction, FilePickerCreateActionEvent,
+  FilePickerError, FilePickerMode, FileSystemItem
+} from './file-picker.interfaces';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnInputDirective } from '../input/input.directive';
 import { StripMntPrefixPipe } from '../pipes/strip-mnt-prefix/strip-mnt-prefix.pipe';
@@ -45,8 +48,8 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   mode = input<FilePickerMode>('any');
   multiSelect = input<boolean>(false);
   allowCreate = input<boolean>(true);
-  allowDatasetCreate = input<boolean>(false);
-  allowZvolCreate = input<boolean>(false);
+  /** Consumer-defined creation flows shown as buttons in the popup header. */
+  createActions = input<FilePickerCreateAction[]>([]);
   allowManualInput = input<boolean>(true);
   placeholder = input<string>('Select file or folder');
   disabled = input<boolean>(false);
@@ -64,6 +67,8 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   selectionChange = output<string | string[]>();
   pathChange = output<string>();
   createFolder = output<CreateFolderEvent>();
+  /** Re-emitted from the popup when one of the `createActions` buttons is pressed. */
+  createAction = output<FilePickerCreateActionEvent>();
   error = output<FilePickerError>();
 
   wrapperEl = viewChild.required<ElementRef<HTMLDivElement>>('wrapper');

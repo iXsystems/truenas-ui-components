@@ -16,13 +16,29 @@ export interface FilePickerCallbacks {
   getChildren?: (path: string) => Promise<FileSystemItem[]>;
   validatePath?: (path: string) => Promise<boolean>;
   createFolder?: (parentPath: string, name: string) => Promise<string>;
-  createDataset?: (parentPath: string) => Promise<string>;
-  createZvol?: (parentPath: string) => Promise<string>;
 }
 
 export interface CreateFolderEvent {
   parentPath: string;
   folderName: string;
+}
+
+/**
+ * A consumer-defined creation flow surfaced as a button in the picker header,
+ * e.g. creating a dataset or zvol through a dialog. Unlike the built-in
+ * "New Folder" flow, the creation itself happens outside the picker.
+ */
+export interface FilePickerCreateAction {
+  /** Identifies the action in `createAction` events, e.g. 'dataset'. */
+  id: string;
+  /** Button label. */
+  label: string;
+}
+
+export interface FilePickerCreateActionEvent {
+  actionId: string;
+  /** Directory being browsed when the action was triggered. */
+  parentPath: string;
 }
 
 export interface FilePickerError {

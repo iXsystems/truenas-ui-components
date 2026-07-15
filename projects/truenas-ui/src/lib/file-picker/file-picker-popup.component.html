@@ -5,7 +5,6 @@
       <button
         class="breadcrumb-segment"
         [class.current]="last"
-        [class.parent-nav]="segment.name === '..'"
         [disabled]="last"
         (click)="navigateToPath(segment.path)">
         {{ segment.name }}
@@ -20,6 +19,13 @@
         label="New Folder"
         [disabled]="isCreateDisabled()"
         (onClick)="onCreateFolder()" />
+    }
+    @for (action of createActions(); track action.id) {
+      <tn-button
+        variant="outline"
+        [label]="action.label"
+        [disabled]="isCreateDisabled()"
+        (onClick)="onCreateAction(action)" />
     }
   </div>
 </div>

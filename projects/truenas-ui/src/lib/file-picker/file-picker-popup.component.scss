@@ -61,6 +61,11 @@
       margin-left: 8px;
       color: var(--tn-alt-fg1);
     }
+
+    // The root segment is already rendered as "/" — don't double the separator
+    &:first-child:not(:last-child)::after {
+      content: none;
+    }
   }
 }
 

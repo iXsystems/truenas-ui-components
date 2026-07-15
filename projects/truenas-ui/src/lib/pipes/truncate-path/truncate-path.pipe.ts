@@ -2,35 +2,55 @@ import type { PipeTransform } from '@angular/core';
 import { Pipe } from '@angular/core';
 import type { PathSegment } from '../../file-picker/file-picker.interfaces';
 
+/**
+ * Maximum directory buttons shown after the root segment before the middle of
+ * the path is collapsed into an "…" segment.
+ */
+const MAX_VISIBLE_DIRS = 4;
+
 @Pipe({
   name: 'tnTruncatePath',
   standalone: true,
 })
 export class TruncatePathPipe implements PipeTransform {
   transform(path: string, rootPath = '/mnt'): PathSegment[] {
-    // At the root, show just "/"
+    // The root is always the first segment, shown as "/"
+    const segments: PathSegment[] = [{ name: '/', path: rootPath }];
+
     if (!path || path === rootPath) {
-      return [{ name: '/', path: rootPath }];
+      return segments;
     }
 
-    // For subdirectories, show ".." (parent) and current directory
-    const segments: PathSegment[] = [];
-
-    // Calculate parent path, clamped so ".." can never navigate above the root
-    const lastSlashIndex = path.lastIndexOf('/');
-    let parentPath = lastSlashIndex > 0 ? path.substring(0, lastSlashIndex) : rootPath;
-    if (!this.isWithinRoot(parentPath, rootPath)) {
-      parentPath = rootPath;
+    if (!this.isWithinRoot(path, rootPath)) {
+      // Path escaped the root — show just its leaf, with "/" leading back to the root
+      segments.push({ name: path.substring(path.lastIndexOf('/') + 1), path });
+      return segments;
     }
 
-    // Get current directory name
-    const currentDirName = path.substring(lastSlashIndex + 1);
+    // One clickable segment per directory between the root and the current path
+    const relativePath = rootPath === '/' ? path : path.substring(rootPath.length);
+    let segmentPath = rootPath;
+    for (const name of relativePath.split('/').filter(Boolean)) {
+      segmentPath = segmentPath === '/' ? `/${name}` : `${segmentPath}/${name}`;
+      segments.push({ name, path: segmentPath });
+    }
 
-    // Add parent navigation (..) and current directory
-    segments.push({ name: '..', path: parentPath });
-    segments.push({ name: currentDirName, path: path });
+    return this.truncateMiddle(segments);
+  }
 
-    return segments;
+  /**
+   * Collapses the middle of deep paths into an "…" segment that navigates to the
+   * parent of the first visible directory, e.g. /a/b/c/d/e → / … c d e.
+   */
+  private truncateMiddle(segments: PathSegment[]): PathSegment[] {
+    const [root, ...dirs] = segments;
+    if (dirs.length <= MAX_VISIBLE_DIRS) {
+      return segments;
+    }
+
+    const visibleDirs = dirs.slice(-(MAX_VISIBLE_DIRS - 1));
+    const collapsedParent = dirs[dirs.length - MAX_VISIBLE_DIRS];
+    return [root, { name: '…', path: collapsedParent.path }, ...visibleDirs];
   }
 
   private isWithinRoot(path: string, rootPath: string): boolean {

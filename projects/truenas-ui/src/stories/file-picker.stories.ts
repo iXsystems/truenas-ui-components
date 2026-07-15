@@ -153,14 +153,9 @@ allowCreate = input<boolean>(true);
 **Description:** Show "New Folder" button in the file picker popup.
 
 \`\`\`typescript
-allowDatasetCreate = input<boolean>(false);
+createActions = input<FilePickerCreateAction[]>([]);
 \`\`\`
-**Description:** Show "New Dataset" option (requires \`createDataset\` callback).
-
-\`\`\`typescript
-allowZvolCreate = input<boolean>(false);
-\`\`\`
-**Description:** Show "New Zvol" option (requires \`createZvol\` callback).
+**Description:** Consumer-defined creation flows (e.g. dataset or zvol creation) shown as buttons in the popup header. Pressing one emits \`createAction\` with \`{ actionId, parentPath }\`; run your creation flow (dialog, API call) and refresh the listing when it completes.
 
 ### Navigation Configuration
 \`\`\`typescript
@@ -235,8 +230,6 @@ interface FilePickerCallbacks {
   getChildren?: (path: string) => Promise<FileSystemItem[]>;
   validatePath?: (path: string) => Promise<boolean>;
   createFolder?: (parentPath: string, name: string) => Promise<string>;
-  createDataset?: (parentPath: string) => Promise<string>;
-  createZvol?: (parentPath: string) => Promise<string>;
 }
 \`\`\`
 
@@ -285,16 +278,6 @@ createFolder: async (parentPath: string, name: string) => {
   return response.path;
 }
 \`\`\`
-
-### createDataset (optional)
-**Signature:** \`(parentPath: string) => Promise<string>\`
-
-Called when user creates a new ZFS dataset. Return the path of the created dataset.
-
-### createZvol (optional)
-**Signature:** \`(parentPath: string) => Promise<string>\`
-
-Called when user creates a new ZFS zvol. Return the path of the created zvol.
 
 ---
 
@@ -371,17 +354,26 @@ export class MyComponent {
 ### Dataset Selection with Creation
 \`\`\`typescript
 callbacks: FilePickerCallbacks = {
-  getChildren: (path) => this.datasetService.getChildren(path),
-  createDataset: (parentPath) => this.datasetService.create(parentPath)
+  getChildren: (path) => this.datasetService.getChildren(path)
 };
+
+createActions: FilePickerCreateAction[] = [
+  { id: 'dataset', label: 'Create Dataset' }
+];
+
+onCreateAction(event: FilePickerCreateActionEvent) {
+  // Run your creation flow (dialog, API call) for event.parentPath,
+  // then refresh the listing.
+}
 \`\`\`
 
 \`\`\`html
 <tn-file-picker
   mode="dataset"
-  [allowDatasetCreate]="true"
+  [createActions]="createActions"
   [callbacks]="callbacks"
   startPath="/mnt"
+  (createAction)="onCreateAction($event)"
   (selectionChange)="onDatasetSelected($event)">
 </tn-file-picker>
 \`\`\`

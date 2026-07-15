@@ -14,7 +14,9 @@ import {
   mdiFolderOpen,
   mdiAlertCircle
 } from '@mdi/js';
-import type { FileSystemItem, CreateFolderEvent, FilePickerMode } from './file-picker.interfaces';
+import type {
+  FileSystemItem, CreateFolderEvent, FilePickerMode, FilePickerCreateAction, FilePickerCreateActionEvent
+} from './file-picker.interfaces';
 import { TnButtonComponent } from '../button/button.component';
 import { registerTruenasIcons } from '../custom-icons/generated-icons';
 import { TnIconRegistryService } from '../icon/icon-registry.service';
@@ -49,8 +51,12 @@ export class TnFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
   mode = input<FilePickerMode>('any');
   multiSelect = input<boolean>(false);
   allowCreate = input<boolean>(true);
-  allowDatasetCreate = input<boolean>(false);
-  allowZvolCreate = input<boolean>(false);
+  /**
+   * Consumer-defined creation flows rendered as buttons in the header, next to the
+   * built-in "New Folder" button. Pressing one emits `createAction` with the
+   * action id and the currently browsed path.
+   */
+  createActions = input<FilePickerCreateAction[]>([]);
   currentPath = input<string>('/mnt');
   /**
    * Topmost path the breadcrumb can navigate to. At this path the breadcrumb
@@ -132,6 +138,8 @@ export class TnFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
   itemDoubleClick = output<FileSystemItem>();
   pathNavigate = output<string>();
   createFolder = output<CreateFolderEvent>();
+  /** Emits when one of the `createActions` buttons is pressed. */
+  createAction = output<FilePickerCreateActionEvent>();
   clearSelection = output<void>();
   close = output<void>();
   submit = output<void>();
@@ -200,6 +208,10 @@ export class TnFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
       parentPath: this.currentPath(),
       folderName: 'New Folder'
     });
+  }
+
+  onCreateAction(action: FilePickerCreateAction): void {
+    this.createAction.emit({ actionId: action.id, parentPath: this.currentPath() });
   }
 
   onClearSelection(): void {

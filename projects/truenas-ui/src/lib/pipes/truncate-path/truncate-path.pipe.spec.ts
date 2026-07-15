@@ -27,30 +27,35 @@ describe('TruncatePathPipe', () => {
     ]);
   });
 
-  it('should show ".." and directory name for subdirectories', () => {
+  it('should show the root and directory name for a first-level directory', () => {
     const result = pipe.transform('/mnt/tank');
 
     expect(result).toEqual([
-      { name: '..', path: '/mnt' },
+      { name: '/', path: '/mnt' },
       { name: 'tank', path: '/mnt/tank' }
     ]);
   });
 
-  it('should navigate to parent for nested paths', () => {
+  it('should show every directory between the root and the current path', () => {
     const result = pipe.transform('/mnt/tank/documents/subfolder');
 
     expect(result).toEqual([
-      { name: '..', path: '/mnt/tank/documents' },
+      { name: '/', path: '/mnt' },
+      { name: 'tank', path: '/mnt/tank' },
+      { name: 'documents', path: '/mnt/tank/documents' },
       { name: 'subfolder', path: '/mnt/tank/documents/subfolder' }
     ]);
   });
 
-  it('should handle deep nesting correctly', () => {
-    const result = pipe.transform('/mnt/pool/data/backup/2024');
+  it('should collapse the middle of deep paths into a navigable "…" segment', () => {
+    const result = pipe.transform('/mnt/pool/data/backup/2024/january');
 
     expect(result).toEqual([
-      { name: '..', path: '/mnt/pool/data/backup' },
-      { name: '2024', path: '/mnt/pool/data/backup/2024' }
+      { name: '/', path: '/mnt' },
+      { name: '…', path: '/mnt/pool/data' },
+      { name: 'backup', path: '/mnt/pool/data/backup' },
+      { name: '2024', path: '/mnt/pool/data/backup/2024' },
+      { name: 'january', path: '/mnt/pool/data/backup/2024/january' }
     ]);
   });
 
@@ -58,7 +63,7 @@ describe('TruncatePathPipe', () => {
     const result = pipe.transform('/mnt/a');
 
     expect(result).toEqual([
-      { name: '..', path: '/mnt' },
+      { name: '/', path: '/mnt' },
       { name: 'a', path: '/mnt/a' }
     ]);
   });
@@ -72,20 +77,21 @@ describe('TruncatePathPipe', () => {
       ]);
     });
 
-    it('should show ".." and directory name below a custom root', () => {
-      const result = pipe.transform('/dev/zvol/tank', '/dev/zvol');
+    it('should show segments relative to a custom root', () => {
+      const result = pipe.transform('/dev/zvol/tank/vm', '/dev/zvol');
 
       expect(result).toEqual([
-        { name: '..', path: '/dev/zvol' },
-        { name: 'tank', path: '/dev/zvol/tank' }
+        { name: '/', path: '/dev/zvol' },
+        { name: 'tank', path: '/dev/zvol/tank' },
+        { name: 'vm', path: '/dev/zvol/tank/vm' }
       ]);
     });
 
-    it('should clamp ".." to the root when the parent would escape it', () => {
+    it('should show only the leaf when the path escapes the root', () => {
       const result = pipe.transform('/elsewhere/place', '/dev/zvol');
 
       expect(result).toEqual([
-        { name: '..', path: '/dev/zvol' },
+        { name: '/', path: '/dev/zvol' },
         { name: 'place', path: '/elsewhere/place' }
       ]);
     });
@@ -94,7 +100,7 @@ describe('TruncatePathPipe', () => {
       const result = pipe.transform('/mntx/foo', '/mnt');
 
       expect(result).toEqual([
-        { name: '..', path: '/mnt' },
+        { name: '/', path: '/mnt' },
         { name: 'foo', path: '/mntx/foo' }
       ]);
     });
@@ -104,9 +110,10 @@ describe('TruncatePathPipe', () => {
         { name: '/', path: '/' }
       ]);
 
-      expect(pipe.transform('/dev', '/')).toEqual([
-        { name: '..', path: '/' },
-        { name: 'dev', path: '/dev' }
+      expect(pipe.transform('/dev/zvol', '/')).toEqual([
+        { name: '/', path: '/' },
+        { name: 'dev', path: '/dev' },
+        { name: 'zvol', path: '/dev/zvol' }
       ]);
     });
   });
