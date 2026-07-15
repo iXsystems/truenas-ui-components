@@ -1110,6 +1110,91 @@ export const FolderCreation: Story = {
   }
 };
 
+export const CreateActions: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      callbacks: mdiShowcaseCallbacks,
+      onCreateAction: (event: { actionId: string; parentPath: string }, picker: TnFilePickerComponent) => {
+        // A real consumer would run its own creation flow here (dialog, API call).
+        const newDataset: FileSystemItem = {
+          path: `${event.parentPath}/new-dataset`,
+          name: 'new-dataset',
+          type: 'dataset',
+          modified: new Date(),
+          permissions: 'write'
+        };
+        mockFilesystem[event.parentPath] = [...(mockFilesystem[event.parentPath] || []), newDataset];
+
+        // Refresh the listing so the created item shows up
+        picker.navigateToPath(event.parentPath);
+      }
+    },
+    template: `
+      <tn-form-field label="Create actions test">
+        <tn-file-picker
+          #picker
+          [mode]="mode"
+          [allowCreate]="allowCreate"
+          [createActions]="createActions"
+          [startPath]="startPath"
+          [callbacks]="callbacks"
+          (createAction)="onCreateAction($event, picker)">
+        </tn-file-picker>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
+    }
+  }),
+  args: {
+    mode: 'dataset',
+    allowCreate: false,
+    createActions: [
+      { id: 'dataset', label: 'Create Dataset' }
+    ],
+    startPath: '/mnt/showcase'
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    // Reset mock filesystem before test
+    resetMockFilesystem();
+
+    // Open picker
+    const folderButton = canvas.getByRole('button', { name: /open file picker/i });
+    await userEvent.click(folderButton);
+
+    // Wait for content
+    await waitFor(() => {
+      void expect(screen.queryByText('documents')).toBeInTheDocument();
+    }, { timeout: 3000 });
+
+    // Pause to let developers see the initial state
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // The consumer-defined action is rendered instead of "New Folder"
+    void expect(screen.queryByRole('button', { name: /new folder/i })).not.toBeInTheDocument();
+    const createDatasetButton = screen.getByRole('button', { name: /create dataset/i });
+    await userEvent.click(createDatasetButton);
+
+    // The consumer flow created the dataset and refreshed the listing
+    await waitFor(() => {
+      void expect(screen.getByText('new-dataset')).toBeInTheDocument();
+    }, { timeout: 3000 });
+
+    // Pause to let developers see the success state
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Demonstrates consumer-defined create actions: `createActions` renders a "Create Dataset" button in the popup header, and `createAction` emits `{ actionId, parentPath }` so the consumer can run its own creation flow and refresh the listing.'
+      }
+    }
+  }
+};
+
 export const SelectionModes: Story = {
   render: (args) => ({
     props: {
