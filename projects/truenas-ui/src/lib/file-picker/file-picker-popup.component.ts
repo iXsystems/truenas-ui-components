@@ -52,6 +52,11 @@ export class TnFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
   allowDatasetCreate = input<boolean>(false);
   allowZvolCreate = input<boolean>(false);
   currentPath = input<string>('/mnt');
+  /**
+   * Topmost path the breadcrumb can navigate to. At this path the breadcrumb
+   * shows "/", and ".." never emits a `pathNavigate` above it.
+   */
+  rootPath = input<string>('/mnt');
   fileItems = input<FileSystemItem[]>([]);
   selectedItems = input<string[]>([]);
   loading = input<boolean>(false);

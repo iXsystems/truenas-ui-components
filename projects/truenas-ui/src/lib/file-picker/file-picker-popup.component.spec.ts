@@ -309,6 +309,42 @@ describe('TnFilePickerPopupComponent', () => {
     });
   });
 
+  describe('Breadcrumb Root Path', () => {
+    function breadcrumbLabels(): string[] {
+      return fixture.debugElement.queryAll(By.css('.breadcrumb-segment'))
+        .map((segment) => (segment.nativeElement as HTMLElement).textContent?.trim() ?? '');
+    }
+
+    it('should show "/" when the current path is the default /mnt root', () => {
+      fixture.componentRef.setInput('currentPath', '/mnt');
+      fixture.detectChanges();
+
+      expect(breadcrumbLabels()).toEqual(['/']);
+    });
+
+    it('should show "/" when the current path is a custom root', () => {
+      fixture.componentRef.setInput('rootPath', '/dev/zvol');
+      fixture.componentRef.setInput('currentPath', '/dev/zvol');
+      fixture.detectChanges();
+
+      expect(breadcrumbLabels()).toEqual(['/']);
+    });
+
+    it('should navigate no higher than the custom root via ".."', () => {
+      fixture.componentRef.setInput('rootPath', '/dev/zvol');
+      fixture.componentRef.setInput('currentPath', '/dev/zvol/tank');
+      fixture.detectChanges();
+
+      const navigateSpy = jest.fn();
+      component.pathNavigate.subscribe(navigateSpy);
+
+      const parentSegment = fixture.debugElement.query(By.css('.breadcrumb-segment.parent-nav'));
+      (parentSegment.nativeElement as HTMLElement).click();
+
+      expect(navigateSpy).toHaveBeenCalledWith('/dev/zvol');
+    });
+  });
+
   describe('Loading State', () => {
     it('should show loading indicator when loading', () => {
       fixture.componentRef.setInput('loading', true);

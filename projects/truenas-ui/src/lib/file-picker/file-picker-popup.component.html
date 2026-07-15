@@ -1,7 +1,7 @@
 <!-- Header with breadcrumb navigation -->
 <div class="tn-file-picker-header">
   <nav class="tn-file-picker-breadcrumb" aria-label="File path">
-    @for (segment of currentPath() | tnTruncatePath; track $index; let last = $last) {
+    @for (segment of currentPath() | tnTruncatePath : rootPath(); track $index; let last = $last) {
       <button
         class="breadcrumb-segment"
         [class.current]="last"

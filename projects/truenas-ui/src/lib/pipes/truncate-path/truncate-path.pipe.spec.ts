@@ -62,4 +62,52 @@ describe('TruncatePathPipe', () => {
       { name: 'a', path: '/mnt/a' }
     ]);
   });
+
+  describe('custom rootPath', () => {
+    it('should show "/" at a custom root path', () => {
+      const result = pipe.transform('/dev/zvol', '/dev/zvol');
+
+      expect(result).toEqual([
+        { name: '/', path: '/dev/zvol' }
+      ]);
+    });
+
+    it('should show ".." and directory name below a custom root', () => {
+      const result = pipe.transform('/dev/zvol/tank', '/dev/zvol');
+
+      expect(result).toEqual([
+        { name: '..', path: '/dev/zvol' },
+        { name: 'tank', path: '/dev/zvol/tank' }
+      ]);
+    });
+
+    it('should clamp ".." to the root when the parent would escape it', () => {
+      const result = pipe.transform('/elsewhere/place', '/dev/zvol');
+
+      expect(result).toEqual([
+        { name: '..', path: '/dev/zvol' },
+        { name: 'place', path: '/elsewhere/place' }
+      ]);
+    });
+
+    it('should not treat a sibling with the same prefix as being under the root', () => {
+      const result = pipe.transform('/mntx/foo', '/mnt');
+
+      expect(result).toEqual([
+        { name: '..', path: '/mnt' },
+        { name: 'foo', path: '/mntx/foo' }
+      ]);
+    });
+
+    it('should support "/" as the root path', () => {
+      expect(pipe.transform('/', '/')).toEqual([
+        { name: '/', path: '/' }
+      ]);
+
+      expect(pipe.transform('/dev', '/')).toEqual([
+        { name: '..', path: '/' },
+        { name: 'dev', path: '/dev' }
+      ]);
+    });
+  });
 });

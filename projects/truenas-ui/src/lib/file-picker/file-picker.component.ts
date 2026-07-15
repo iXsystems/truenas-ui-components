@@ -56,6 +56,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
    */
   testId = input<TnTestIdValue>(undefined);
   startPath = input<string>('/mnt');
+  /** Restricts navigation — users cannot navigate above this path. */
   rootPath = input<string | undefined>(undefined);
   fileExtensions = input<string[] | undefined>(undefined);
   callbacks = input<FilePickerCallbacks | undefined>(undefined);
@@ -86,6 +87,9 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
+
+  // Root the picker is confined to when rootPath is not provided
+  effectiveRootPath = computed(() => this.rootPath() ?? '/mnt');
 
   // ControlValueAccessor implementation
   private onChange = (_value: string | string[]) => {};
@@ -247,7 +251,15 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       console.warn('Cannot navigate while creating a folder');
       return;
     }
-    void this.loadDirectory(path);
+    void this.loadDirectory(this.clampToRoot(path));
+  }
+
+  private clampToRoot(path: string): string {
+    const root = this.effectiveRootPath();
+    const isWithinRoot = root === '/'
+      ? path.startsWith('/')
+      : path === root || path.startsWith(`${root}/`);
+    return isWithinRoot ? path : root;
   }
 
   onCreateFolder(): void {

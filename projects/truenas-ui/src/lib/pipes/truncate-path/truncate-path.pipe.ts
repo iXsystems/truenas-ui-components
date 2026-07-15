@@ -7,18 +7,21 @@ import type { PathSegment } from '../../file-picker/file-picker.interfaces';
   standalone: true,
 })
 export class TruncatePathPipe implements PipeTransform {
-  transform(path: string): PathSegment[] {
-    // At root /mnt, show just "/"
-    if (!path || path === '/mnt') {
-      return [{ name: '/', path: '/mnt' }];
+  transform(path: string, rootPath = '/mnt'): PathSegment[] {
+    // At the root, show just "/"
+    if (!path || path === rootPath) {
+      return [{ name: '/', path: rootPath }];
     }
 
     // For subdirectories, show ".." (parent) and current directory
     const segments: PathSegment[] = [];
 
-    // Calculate parent path
+    // Calculate parent path, clamped so ".." can never navigate above the root
     const lastSlashIndex = path.lastIndexOf('/');
-    const parentPath = lastSlashIndex > 0 ? path.substring(0, lastSlashIndex) : '/mnt';
+    let parentPath = lastSlashIndex > 0 ? path.substring(0, lastSlashIndex) : rootPath;
+    if (!this.isWithinRoot(parentPath, rootPath)) {
+      parentPath = rootPath;
+    }
 
     // Get current directory name
     const currentDirName = path.substring(lastSlashIndex + 1);
@@ -28,5 +31,12 @@ export class TruncatePathPipe implements PipeTransform {
     segments.push({ name: currentDirName, path: path });
 
     return segments;
+  }
+
+  private isWithinRoot(path: string, rootPath: string): boolean {
+    if (rootPath === '/') {
+      return path.startsWith('/');
+    }
+    return path === rootPath || path.startsWith(`${rootPath}/`);
   }
 }
