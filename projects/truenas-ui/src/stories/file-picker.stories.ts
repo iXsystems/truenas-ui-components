@@ -155,7 +155,7 @@ allowCreate = input<boolean>(true);
 \`\`\`typescript
 createActions = input<FilePickerCreateAction[]>([]);
 \`\`\`
-**Description:** Consumer-defined creation flows (e.g. dataset or zvol creation) shown as buttons in the popup header. Pressing one emits \`createAction\` with \`{ actionId, parentPath }\`; run your creation flow (dialog, API call) and refresh the listing when it completes.
+**Description:** Consumer-defined creation flows (e.g. dataset or zvol creation) shown as buttons in the popup footer, next to Select. Pressing one emits \`createAction\` with \`{ actionId, parentPath }\`; run your creation flow (dialog, API call) and refresh the listing when it completes.
 
 ### Navigation Configuration
 \`\`\`typescript
@@ -1189,7 +1189,7 @@ export const CreateActions: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Demonstrates consumer-defined create actions: `createActions` renders a "Create Dataset" button in the popup header, and `createAction` emits `{ actionId, parentPath }` so the consumer can run its own creation flow and refresh the listing.'
+        story: 'Demonstrates consumer-defined create actions: `createActions` renders a "Create Dataset" button in the popup footer, and `createAction` emits `{ actionId, parentPath }` so the consumer can run its own creation flow and refresh the listing.'
       }
     }
   }

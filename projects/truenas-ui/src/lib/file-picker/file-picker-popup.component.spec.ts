@@ -348,24 +348,23 @@ describe('TnFilePickerPopupComponent', () => {
   });
 
   describe('Create Actions', () => {
-    function actionButtons(): HTMLElement[] {
-      return fixture.debugElement.queryAll(By.css('.tn-file-picker-actions button'))
+    function footerButtons(): HTMLElement[] {
+      return fixture.debugElement.queryAll(By.css('.footer-actions button'))
         .map((button) => button.nativeElement as HTMLElement);
     }
 
-    it('should render a button per create action next to the New Folder button', () => {
+    it('should render a button per create action in the footer, before Select', () => {
       fixture.componentRef.setInput('createActions', [
         { id: 'dataset', label: 'Create Dataset' },
         { id: 'zvol', label: 'Create Zvol' },
       ]);
       fixture.detectChanges();
 
-      const labels = actionButtons().map((button) => button.textContent?.trim());
-      expect(labels).toEqual(['New Folder', 'Create Dataset', 'Create Zvol']);
+      const labels = footerButtons().map((button) => button.textContent?.trim());
+      expect(labels).toEqual(['Create Dataset', 'Create Zvol', 'Select']);
     });
 
     it('should emit createAction with the action id and browsed path', () => {
-      fixture.componentRef.setInput('allowCreate', false);
       fixture.componentRef.setInput('createActions', [
         { id: 'dataset', label: 'Create Dataset' },
       ]);
@@ -374,7 +373,7 @@ describe('TnFilePickerPopupComponent', () => {
       const actionSpy = jest.fn();
       component.createAction.subscribe(actionSpy);
 
-      actionButtons()[0].click();
+      footerButtons()[0].click();
 
       expect(actionSpy).toHaveBeenCalledWith({
         actionId: 'dataset',

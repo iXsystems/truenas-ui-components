@@ -48,7 +48,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   mode = input<FilePickerMode>('any');
   multiSelect = input<boolean>(false);
   allowCreate = input<boolean>(true);
-  /** Consumer-defined creation flows shown as buttons in the popup header. */
+  /** Consumer-defined creation flows shown as buttons in the popup footer. */
   createActions = input<FilePickerCreateAction[]>([]);
   allowManualInput = input<boolean>(true);
   placeholder = input<string>('Select file or folder');

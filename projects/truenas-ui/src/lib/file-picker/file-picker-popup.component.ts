@@ -52,9 +52,9 @@ export class TnFilePickerPopupComponent implements OnInit, AfterViewInit, AfterV
   multiSelect = input<boolean>(false);
   allowCreate = input<boolean>(true);
   /**
-   * Consumer-defined creation flows rendered as buttons in the header, next to the
-   * built-in "New Folder" button. Pressing one emits `createAction` with the
-   * action id and the currently browsed path.
+   * Consumer-defined creation flows rendered as buttons in the footer, next to the
+   * Select button. Pressing one emits `createAction` with the action id and the
+   * currently browsed path.
    */
   createActions = input<FilePickerCreateAction[]>([]);
   currentPath = input<string>('/mnt');

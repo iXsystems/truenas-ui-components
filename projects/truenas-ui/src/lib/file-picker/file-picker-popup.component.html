@@ -20,13 +20,6 @@
         [disabled]="isCreateDisabled()"
         (onClick)="onCreateFolder()" />
     }
-    @for (action of createActions(); track action.id) {
-      <tn-button
-        variant="outline"
-        [label]="action.label"
-        [disabled]="isCreateDisabled()"
-        (onClick)="onCreateAction(action)" />
-    }
   </div>
 </div>
 
@@ -201,6 +194,13 @@
       </span>
     }
     <div class="footer-actions">
+      @for (action of createActions(); track action.id) {
+        <tn-button
+          variant="outline"
+          [label]="action.label"
+          [disabled]="isCreateDisabled()"
+          (onClick)="onCreateAction(action)" />
+      }
       <tn-button
         label="Select"
         [disabled]="selectedItems().length === 0 && !allowCurrentDirectorySelection()"
