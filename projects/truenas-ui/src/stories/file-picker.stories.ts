@@ -147,7 +147,10 @@ multiSelect = input<boolean>(false);
 \`\`\`typescript
 createActions = input<FilePickerCreateAction[]>([]);
 \`\`\`
-**Description:** Consumer-defined creation flows (e.g. dataset or zvol creation) shown as buttons in the popup footer, next to Select. Pressing one emits \`createAction\` with \`{ actionId, parentPath }\`; run your creation flow (dialog, API call) and refresh the listing when it completes.
+**Description:** Consumer-defined creation flows (e.g. dataset or zvol creation) shown as buttons in the popup footer, next to Select. Two shapes:
+
+- **Event-only** (no \`create\`): pressing the button emits \`createAction\` with \`{ actionId, parentPath }\`; run your own flow (dialog, API call) and, when it completes, call \`selectPath(newPath)\` to show the created item selected and applied as the value — or \`refresh()\` to only re-fetch the listing.
+- **Inline** (\`create\` provided): pressing the button opens an editable name row inside the popup. Submitting calls \`create(parentPath, name)\` — your implementation does the real work (e.g. a websocket API call) and owns validation. Resolve with the created path to have it listed and selected; reject with an Error to show its message inline and keep the row editable.
 
 ### Navigation Configuration
 \`\`\`typescript
@@ -324,8 +327,11 @@ createActions: FilePickerCreateAction[] = [
 ];
 
 onCreateAction(event: FilePickerCreateActionEvent) {
-  // Run your creation flow (dialog, API call) for event.parentPath,
-  // then refresh the listing.
+  // Run your creation flow (dialog, API call) for event.parentPath, then
+  // close the loop on the picker (via a template ref or viewChild):
+  //   picker.selectPath(createdPath)  — refreshed listing, new item
+  //                                     selected and applied as the value
+  //   picker.refresh()                — only re-fetch the current listing
 }
 \`\`\`
 
@@ -934,8 +940,8 @@ export const CreateActions: Story = {
         };
         mockFilesystem[event.parentPath] = [...(mockFilesystem[event.parentPath] || []), newDataset];
 
-        // Refresh the listing so the created item shows up
-        picker.navigateToPath(event.parentPath);
+        // Refresh the listing and select the newly created dataset
+        void picker.selectPath(newDataset.path);
       }
     },
     template: `
@@ -987,13 +993,131 @@ export const CreateActions: Story = {
       void expect(screen.getByText('new-dataset')).toBeInTheDocument();
     }, { timeout: 3000 });
 
+    // selectPath() staged the new dataset as the selection and applied it
+    await waitFor(() => {
+      void expect(screen.getByText('1 item selected')).toBeInTheDocument();
+    });
+    const input = canvas.getByRole('textbox') as HTMLInputElement;
+    void expect(input.value).toContain('new-dataset');
+
     // Pause to let developers see the success state
     await new Promise(resolve => setTimeout(resolve, 1000));
   },
   parameters: {
     docs: {
       description: {
-        story: 'Demonstrates consumer-defined create actions: `createActions` renders a "Create Dataset" button in the popup footer, and `createAction` emits `{ actionId, parentPath }` so the consumer can run its own creation flow and refresh the listing.'
+        story: 'Demonstrates the full create-action round-trip: `createActions` renders a "Create Dataset" button in the popup footer, `createAction` emits `{ actionId, parentPath }`, the consumer runs its own creation flow, and `selectPath()` refreshes the listing with the new dataset selected and applied as the picker\'s value. Use `refresh()` instead to only re-fetch the listing.'
+      }
+    }
+  }
+};
+
+export const InlineFolderCreation: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      callbacks: mdiShowcaseCallbacks,
+      createActions: [
+        {
+          id: 'folder',
+          label: 'New Folder',
+          // The callback does the real work — in a real consumer this would
+          // be a websocket API call. Rejections become the inline error.
+          create: async (parentPath: string, name: string): Promise<string> => {
+            await new Promise(resolve => setTimeout(resolve, 800));
+
+            const existing = mockFilesystem[parentPath] || [];
+            if (existing.some(item => item.name.toLowerCase() === name.toLowerCase())) {
+              throw new Error('A folder with this name already exists');
+            }
+
+            const path = `${parentPath}/${name}`;
+            mockFilesystem[parentPath] = [...existing, {
+              path, name, type: 'folder', modified: new Date(), permissions: 'write'
+            }];
+            mockFilesystem[path] = [];
+            return path;
+          }
+        }
+      ]
+    },
+    template: `
+      <tn-form-field label="Inline folder creation">
+        <tn-file-picker
+          [mode]="mode"
+          [createActions]="createActions"
+          [startPath]="startPath"
+          [callbacks]="callbacks">
+        </tn-file-picker>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
+    }
+  }),
+  args: {
+    mode: 'folder',
+    startPath: '/mnt/showcase'
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    // Reset mock filesystem before test
+    resetMockFilesystem();
+
+    // Open picker
+    const folderButton = canvas.getByRole('button', { name: /open file picker/i });
+    await userEvent.click(folderButton);
+
+    await waitFor(() => {
+      void expect(screen.queryByText('documents')).toBeInTheDocument();
+    }, { timeout: 3000 });
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Open the inline creation row
+    await userEvent.click(screen.getByRole('button', { name: /new folder/i }));
+
+    const input = await screen.findByRole('textbox', { name: 'New Folder name' });
+    await waitFor(() => {
+      void expect(input).toHaveFocus();
+    });
+
+    // A duplicate name is rejected by the consumer callback and shown inline
+    await userEvent.type(input, 'documents', { delay: 50 });
+    await userEvent.keyboard('{Enter}');
+
+    await waitFor(() => {
+      void expect(screen.getByText(/already exists/i)).toBeInTheDocument();
+    }, { timeout: 3000 });
+
+    // Pause to let developers see the inline error
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Retry with a valid name: select the rejected one and type over it
+    // (avoids userEvent.clear(), whose strict focus precondition is flaky
+    // inside the preview iframe)
+    await userEvent.tripleClick(input);
+    await userEvent.keyboard('My New Folder');
+    await userEvent.keyboard('{Enter}');
+
+    // The folder is created, listed, and selected as the picker's value
+    await waitFor(() => {
+      void expect(screen.getByText('My New Folder')).toBeInTheDocument();
+      void expect(screen.queryByRole('textbox', { name: 'New Folder name' })).not.toBeInTheDocument();
+    }, { timeout: 3000 });
+
+    await waitFor(() => {
+      void expect(screen.getByText('1 item selected')).toBeInTheDocument();
+    });
+
+    // Pause to let developers see the success state
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Demonstrates the pluggable inline creation flow: a `createActions` entry with a `create` callback opens an editable name row inside the popup. The callback owns the real work (e.g. a websocket API call) — rejections appear as the inline error and the row stays editable, while a resolved path is refreshed into the listing and selected as the picker\'s value.'
       }
     }
   }
@@ -1059,6 +1183,91 @@ export const CurrentDirectorySelection: Story = {
     docs: {
       description: {
         story: 'With an array `mode` (`[\'folder\', \'dataset\']`), only the listed item types are selectable. Because a directory-like type is selectable, an empty selection stands for the directory being browsed: the footer names it, the Select button stays enabled, and submitting picks the current path — which keeps empty directories selectable.'
+      }
+    }
+  }
+};
+
+// Filesystem with a deeply nested directory chain to exercise breadcrumb
+// truncation: /mnt/showcase/documents/projects/2024/reports/quarterly
+const deepFilesystem: Record<string, FileSystemItem[]> = (() => {
+  const fs: Record<string, FileSystemItem[]> = {};
+  let path = '/mnt/showcase';
+  for (const name of ['documents', 'projects', '2024', 'reports', 'quarterly']) {
+    const childPath = `${path}/${name}`;
+    fs[path] = [{ path: childPath, name, type: 'folder', modified: new Date(), permissions: 'write' }];
+    path = childPath;
+  }
+  fs[path] = [
+    { path: `${path}/q1-report.pdf`, name: 'q1-report.pdf', type: 'file', size: 1048576, modified: new Date(), permissions: 'read' },
+    { path: `${path}/q2-report.pdf`, name: 'q2-report.pdf', type: 'file', size: 2097152, modified: new Date(), permissions: 'read' }
+  ];
+  return fs;
+})();
+
+export const DeepNesting: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      callbacks: {
+        getChildren: async (path: string) => deepFilesystem[path] || []
+      } as FilePickerCallbacks
+    },
+    template: `
+      <tn-form-field label="Deeply nested directories">
+        <tn-file-picker
+          [mode]="mode"
+          [startPath]="startPath"
+          [callbacks]="callbacks">
+        </tn-file-picker>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
+    }
+  }),
+  args: {
+    mode: 'any',
+    startPath: '/mnt/showcase/documents/projects/2024/reports/quarterly'
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    // Open picker at the deeply nested start path
+    const folderButton = canvas.getByRole('button', { name: /open file picker/i });
+    await userEvent.click(folderButton);
+
+    await waitFor(() => {
+      void expect(screen.queryByText('q1-report.pdf')).toBeInTheDocument();
+    }, { timeout: 2000 });
+
+    // The middle of the path collapses into a navigable "…" segment:
+    // "/ mnt … 2024 reports quarterly"
+    void expect(screen.getByText('mnt')).toBeInTheDocument();
+    void expect(screen.getByText('…')).toBeInTheDocument();
+    void expect(screen.getByText('2024')).toBeInTheDocument();
+    void expect(screen.getByText('reports')).toBeInTheDocument();
+    void expect(screen.getByText('quarterly')).toBeInTheDocument();
+    void expect(screen.queryByText('documents')).not.toBeInTheDocument();
+
+    // Pause to let developers see the truncated breadcrumb
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // "…" navigates to the parent of the first visible directory (…/projects)
+    await userEvent.click(screen.getByText('…'));
+
+    await waitFor(() => {
+      void expect(screen.getByText('2024')).toBeInTheDocument();
+    }, { timeout: 2000 });
+
+    // The shallower path now fits without truncation
+    void expect(screen.getByText('documents')).toBeInTheDocument();
+    void expect(screen.queryByText('…')).not.toBeInTheDocument();
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Exercises long paths in the header: deep paths collapse their middle into a "…" breadcrumb segment that navigates to the parent of the first visible directory, and the popup keeps a fixed width while navigating.'
       }
     }
   }
