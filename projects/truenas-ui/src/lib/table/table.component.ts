@@ -166,6 +166,9 @@ export class TnTableComponent<T = unknown> implements OnInit {
   /** Emits the row when a clickable row is activated (click or Enter/Space). */
   rowClick = output<T>();
 
+  /** Emits the row when a clickable row is double-clicked. */
+  rowDoubleClick = output<T>();
+
   // --- Content queries ---
   columnDefs = contentChildren(TnTableColumnDirective);
   detailRowDef = contentChild(TnDetailRowDefDirective);
@@ -360,6 +363,11 @@ export class TnTableComponent<T = unknown> implements OnInit {
   onRowClick(row: T): void {
     if (!this.clickable()) { return; }
     this.rowClick.emit(row);
+  }
+
+  onRowDoubleClick(row: T): void {
+    if (!this.clickable()) { return; }
+    this.rowDoubleClick.emit(row);
   }
 
   onRowKeydown(event: KeyboardEvent, row: T): void {

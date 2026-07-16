@@ -310,6 +310,22 @@ describe('TnTableComponent', () => {
       expect(spy).toHaveBeenCalledWith(testData[1]);
     });
 
+    it('should not emit rowDoubleClick when not clickable', () => {
+      const spy = jest.fn();
+      component.rowDoubleClick.subscribe(spy);
+      component.onRowDoubleClick(testData[0]);
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('should emit rowDoubleClick when clickable', () => {
+      fixture.componentRef.setInput('clickable', true);
+      const spy = jest.fn();
+      component.rowDoubleClick.subscribe(spy);
+
+      component.onRowDoubleClick(testData[1]);
+      expect(spy).toHaveBeenCalledWith(testData[1]);
+    });
+
     it('should emit rowClick on Enter keydown', () => {
       fixture.componentRef.setInput('clickable', true);
       const spy = jest.fn();

@@ -76,6 +76,7 @@
         [attr.tabindex]="clickable() ? 0 : null"
         [attr.aria-selected]="clickable() ? isRowActive(row) : null"
         (click)="onRowClick(row)"
+        (dblclick)="onRowDoubleClick(row)"
         (keydown)="onRowKeydown($event, row)">
         @for (column of effectiveDisplayedColumns(); track $index) {
           @if (column === '__select') {
