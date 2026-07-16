@@ -49,6 +49,46 @@ describe('TnFilePickerComponent', () => {
     });
   });
 
+  describe('Programmatic API', () => {
+    it('should re-fetch the current listing on refresh()', async () => {
+      const getChildren = jest.fn().mockResolvedValue([]);
+      fixture.componentRef.setInput('callbacks', { getChildren });
+      fixture.componentRef.setInput('startPath', '/mnt/tank');
+      fixture.detectChanges();
+
+      await component.refresh();
+
+      expect(getChildren).toHaveBeenCalledWith('/mnt/tank');
+    });
+
+    it('should browse to the parent and apply the value on selectPath()', async () => {
+      const getChildren = jest.fn().mockResolvedValue([]);
+      fixture.componentRef.setInput('callbacks', { getChildren });
+      const selectionSpy = jest.fn();
+      component.selectionChange.subscribe(selectionSpy);
+      fixture.detectChanges();
+
+      await component.selectPath('/mnt/tank/new-dataset');
+
+      expect(getChildren).toHaveBeenCalledWith('/mnt/tank');
+      expect(component.currentPath()).toBe('/mnt/tank');
+      expect(component.selectedItems()).toEqual(['/mnt/tank/new-dataset']);
+      expect(component.selectedPath()).toBe('/mnt/tank/new-dataset');
+      expect(selectionSpy).toHaveBeenCalledWith('/mnt/tank/new-dataset');
+    });
+
+    it('should clamp the browsed parent to the root on selectPath()', async () => {
+      const getChildren = jest.fn().mockResolvedValue([]);
+      fixture.componentRef.setInput('callbacks', { getChildren });
+      fixture.componentRef.setInput('rootPath', '/mnt/backups');
+      fixture.detectChanges();
+
+      await component.selectPath('/home/stray');
+
+      expect(getChildren).toHaveBeenCalledWith('/mnt/backups');
+    });
+  });
+
   describe('Current Directory Selection', () => {
     it('should submit the browsed directory on empty selection by default', () => {
       fixture.componentRef.setInput('startPath', '/mnt/tank/music');

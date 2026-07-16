@@ -256,6 +256,33 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     void this.loadDirectory(this.clampToRoot(path));
   }
 
+  /** An inline `create` flow finished — show the new item selected and applied. */
+  onCreated(path: string): void {
+    void this.selectPath(path);
+  }
+
+  /**
+   * Re-fetches the listing of the directory currently being browsed. Call it
+   * when the directory changed outside the picker, e.g. after a
+   * `createAction` flow created something in it.
+   */
+  async refresh(): Promise<void> {
+    await this.loadDirectory(this.currentPath());
+  }
+
+  /**
+   * Programmatically selects `path`, e.g. the mountpoint a `createAction`
+   * flow just created: browses to its parent so the refreshed listing shows
+   * the new item selected, and applies the path as the picker's value (form
+   * value and `selectionChange`). The popup stays open so the user can
+   * confirm with Select or keep browsing.
+   */
+  async selectPath(path: string): Promise<void> {
+    const parent = path.substring(0, path.lastIndexOf('/'));
+    await this.loadDirectory(this.clampToRoot(parent || this.effectiveRootPath()));
+    this.updateSelection(path);
+  }
+
   private clampToRoot(path: string): string {
     const root = this.effectiveRootPath();
     return isPathWithinRoot(path, root) ? path : root;

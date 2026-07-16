@@ -25,6 +25,7 @@
 <!-- File table -->
 @if (!loading()) {
   <div class="tn-file-picker-content">
+
   <tn-table
     [dataSource]="filteredFileItems()"
     [displayedColumns]="multiSelect() ? displayedColumns : displayedColumns.slice(1)"
@@ -39,12 +40,14 @@
         <!-- Select all checkbox -->
       </ng-template>
       <ng-template let-item tnCellDef>
-        <input 
-          type="checkbox" 
-          [checked]="isSelected(item)"
-          [disabled]="!!item.disabled"
-          (click)="$event.stopPropagation()"
-          (change)="onItemClick(item)">
+        @if (!item.inlineCreate) {
+          <input
+            type="checkbox"
+            [checked]="isSelected(item)"
+            [disabled]="!!item.disabled"
+            (click)="$event.stopPropagation()"
+            (change)="onItemClick(item)">
+        }
       </ng-template>
       </ng-container>
     }
@@ -54,6 +57,35 @@
       <ng-template tnHeaderCellDef>Name</ng-template>
       <ng-template let-item tnCellDef>
 
+        <!-- Inline creation row for create actions with a `create` callback -->
+        @if (item.inlineCreate) {
+          @if (inlineCreation(); as creation) {
+            <div class="inline-create-cell">
+              <div class="inline-create-row" [class.has-error]="!!creation.error">
+                <tn-icon class="file-icon" [name]="creation.action.icon || 'mdi-folder'" />
+                <input
+                  type="text"
+                  class="inline-create-input"
+                  spellcheck="false"
+                  autocomplete="off"
+                  [attr.aria-label]="creation.action.label + ' name'"
+                  [class.error]="!!creation.error"
+                  [disabled]="creation.loading"
+                  (keydown)="onInlineCreationKeyDown($event)"
+                  (blur)="onInlineCreationBlur($event)">
+                @if (creation.loading) {
+                  <tn-icon name="mdi-loading" class="creation-loading-icon" />
+                }
+              </div>
+              @if (creation.error) {
+                <div class="inline-create-error">
+                  <tn-icon name="mdi-alert-circle" class="error-icon" />
+                  <span class="error-text">{{ creation.error }}</span>
+                </div>
+              }
+            </div>
+          }
+        } @else {
         <div
              class="file-name-cell"
              [class.selected]="isSelected(item)"
@@ -93,6 +125,7 @@
             </button>
           }
         </div>
+        }
       </ng-template>
     </ng-container>
 
@@ -159,6 +192,7 @@
         <tn-button
           variant="outline"
           [label]="action.label"
+          [disabled]="!!inlineCreation()"
           (onClick)="onCreateAction(action)" />
       }
       <tn-button

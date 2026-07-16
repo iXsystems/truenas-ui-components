@@ -488,6 +488,120 @@ describe('TnFilePickerPopupComponent', () => {
     });
   });
 
+  describe('Inline Creation', () => {
+    let create: jest.Mock;
+
+    beforeEach(() => {
+      create = jest.fn();
+      fixture.componentRef.setInput('createActions', [
+        { id: 'folder', label: 'New Folder', create },
+      ]);
+      fixture.detectChanges();
+    });
+
+    function inlineInput(): HTMLInputElement | null {
+      const input = fixture.debugElement.query(By.css('.inline-create-input'));
+      return input ? input.nativeElement as HTMLInputElement : null;
+    }
+
+    function actionButton(): HTMLButtonElement {
+      return fixture.debugElement.query(By.css('.footer-actions button')).nativeElement as HTMLButtonElement;
+    }
+
+    it('should open the inline row instead of emitting createAction', () => {
+      const actionSpy = jest.fn();
+      component.createAction.subscribe(actionSpy);
+
+      actionButton().click();
+      fixture.detectChanges();
+
+      expect(inlineInput()).not.toBeNull();
+      expect(actionSpy).not.toHaveBeenCalled();
+      expect(actionButton().disabled).toBe(true);
+
+      // The creation row renders as the first item of the listing
+      const firstRowInput = fixture.debugElement.query(
+        By.css('.tn-table__row:first-child .inline-create-input'));
+      expect(firstRowInput).not.toBeNull();
+    });
+
+    it('should focus the input when the row opens', async () => {
+      actionButton().click();
+      fixture.detectChanges();
+      await new Promise(resolve => setTimeout(resolve));
+
+      expect(document.activeElement).toBe(inlineInput());
+    });
+
+    it('should call create with the browsed path and emit created on success', async () => {
+      create.mockResolvedValue('/mnt/tank/new-folder');
+      const createdSpy = jest.fn();
+      component.created.subscribe(createdSpy);
+
+      actionButton().click();
+      fixture.detectChanges();
+
+      const input = inlineInput()!;
+      input.value = ' new-folder ';
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(create).toHaveBeenCalledWith('/mnt/tank', 'new-folder');
+      expect(createdSpy).toHaveBeenCalledWith('/mnt/tank/new-folder');
+      expect(inlineInput()).toBeNull();
+    });
+
+    it('should show the rejection message inline and keep the row editable', async () => {
+      create.mockImplementation(() => Promise.reject(new Error('A folder with this name already exists')));
+
+      actionButton().click();
+      fixture.detectChanges();
+
+      await component.submitInlineCreation('documents');
+      fixture.detectChanges();
+
+      const error = fixture.debugElement.query(By.css('.inline-create-error'));
+      expect((error.nativeElement as HTMLElement).textContent).toContain('A folder with this name already exists');
+      expect(inlineInput()).not.toBeNull();
+      expect(inlineInput()!.disabled).toBe(false);
+    });
+
+    it('should cancel the row on Escape without calling create', () => {
+      actionButton().click();
+      fixture.detectChanges();
+
+      inlineInput()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      fixture.detectChanges();
+
+      expect(inlineInput()).toBeNull();
+      expect(create).not.toHaveBeenCalled();
+    });
+
+    it('should abandon the row when submitting an empty name', () => {
+      actionButton().click();
+      fixture.detectChanges();
+
+      const input = inlineInput()!;
+      input.value = '   ';
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      fixture.detectChanges();
+
+      expect(inlineInput()).toBeNull();
+      expect(create).not.toHaveBeenCalled();
+    });
+
+    it('should abandon the row when navigating away', () => {
+      actionButton().click();
+      fixture.detectChanges();
+
+      component.navigateToPath('/mnt');
+      fixture.detectChanges();
+
+      expect(inlineInput()).toBeNull();
+    });
+  });
+
   describe('Current Directory Selection', () => {
     function selectButton(): HTMLButtonElement | null {
       const button = fixture.debugElement.query(By.css('.footer-actions button'));

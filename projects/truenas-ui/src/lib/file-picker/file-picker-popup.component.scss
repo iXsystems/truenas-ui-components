@@ -7,8 +7,10 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.08);
   border-radius: 8px;
   border: 1px solid var(--tn-lines, #e0e0e0);
-  min-width: 400px;
-  max-width: 600px;
+  // Fixed width so the popup doesn't resize as breadcrumb and file names
+  // change while navigating
+  width: 520px;
+  max-width: calc(100vw - 32px);
   min-height: 500px;
   max-height: 600px;
   font-family: var(--tn-font-family-body);
@@ -97,6 +99,72 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+}
+
+// Inline creation row rendered as the first listing item while a `create`
+// action is open
+.inline-create-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.inline-create-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .inline-create-input {
+    flex: 1;
+    padding: 4px 8px;
+    border: 2px solid var(--tn-primary);
+    border-radius: 3px;
+    background: var(--tn-bg1);
+    color: var(--tn-fg1);
+    font-size: inherit;
+    font-family: inherit;
+    outline: none;
+    min-width: 0;
+
+    &.error {
+      border-color: var(--tn-error, #d32f2f);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      background: var(--tn-bg2);
+    }
+  }
+
+  .creation-loading-icon {
+    animation: spin 1s linear infinite;
+    color: var(--tn-primary);
+    flex-shrink: 0;
+  }
+}
+
+.inline-create-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 4px 8px;
+  background: rgba(211, 47, 47, 0.1);
+  border-left: 3px solid var(--tn-error, #d32f2f);
+  border-radius: 3px;
+  font-size: 1rem;
+  color: var(--tn-error, #d32f2f);
+
+  .error-icon {
+    flex-shrink: 0;
+  }
+
+  .error-text {
+    flex: 1;
+  }
 }
 
 .file-list-viewport {

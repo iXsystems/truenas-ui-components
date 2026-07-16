@@ -1,6 +1,7 @@
 import { A11yModule } from '@angular/cdk/a11y';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import { Component, computed, input, output, inject } from '@angular/core';
+import type { AfterViewChecked } from '@angular/core';
+import { Component, computed, ElementRef, input, output, inject, signal } from '@angular/core';
 import type {
   FileSystemItem, FileSystemItemType, FilePickerMode, FilePickerCreateAction, FilePickerCreateActionEvent
 } from './file-picker.interfaces';
@@ -14,6 +15,14 @@ import { FileSizePipe } from '../pipes/file-size/file-size.pipe';
 import { TruncatePathPipe } from '../pipes/truncate-path/truncate-path.pipe';
 import { TnTableComponent } from '../table/table.component';
 import { TnTableColumnDirective, TnHeaderCellDefDirective, TnCellDefDirective } from '../table-column/table-column.directive';
+
+/** FileSystemItem decorated for display, plus the synthetic inline-create row. */
+interface DisplayedFileItem extends FileSystemItem {
+  /** Dim only items with no interaction left. */
+  dimmed: boolean;
+  /** Marks the synthetic first row hosting the inline creation input. */
+  inlineCreate?: boolean;
+}
 
 @Component({
   selector: 'tn-file-picker-popup',
@@ -36,7 +45,7 @@ import { TnTableColumnDirective, TnHeaderCellDefDirective, TnCellDefDirective } 
     'class': 'tn-file-picker-popup'
   }
 })
-export class TnFilePickerPopupComponent {
+export class TnFilePickerPopupComponent implements AfterViewChecked {
   /**
    * What can be selected: a single mode, or an explicit list of selectable
    * item types, e.g. ['folder', 'dataset'].
@@ -62,17 +71,39 @@ export class TnFilePickerPopupComponent {
   fileExtensions = input<string[] | undefined>(undefined);
 
   private iconRegistry = inject(TnIconRegistryService);
+  private elementRef = inject(ElementRef);
 
   constructor() {
     // Register TrueNAS custom icons
     registerTruenasIcons(this.iconRegistry);
   }
 
+  /**
+   * Auto-focus the inline creation input whenever it is shown and idle.
+   * Runs after every view check on purpose: one-shot focus is fragile here —
+   * render scheduling differs between hosts, and browsers drop focus when a
+   * focused element (the trigger button, or the input while loading) becomes
+   * disabled. Retrying on each check self-heals; it settles as soon as the
+   * input holds focus and stops when the row closes.
+   */
+  ngAfterViewChecked(): void {
+    const creation = this.inlineCreation();
+    if (!creation || creation.loading) {return;}
+
+    const nameInput = (this.elementRef.nativeElement as HTMLElement)
+      .querySelector<HTMLInputElement>('.inline-create-input');
+    if (nameInput && document.activeElement !== nameInput) {
+      setTimeout(() => nameInput.focus());
+    }
+  }
+
   itemClick = output<FileSystemItem>();
   itemDoubleClick = output<FileSystemItem>();
   pathNavigate = output<string>();
-  /** Emits when one of the `createActions` buttons is pressed. */
+  /** Emits when a `createActions` button without a `create` callback is pressed. */
   createAction = output<FilePickerCreateActionEvent>();
+  /** Emits the created path when an inline `create` flow succeeds. */
+  created = output<string>();
   clearSelection = output<void>();
   close = output<void>();
   submit = output<void>();
@@ -92,12 +123,12 @@ export class TnFilePickerPopupComponent {
    */
   allowCurrentDirectorySelection = computed(() => allowsCurrentDirectorySelection(this.mode()));
 
-  filteredFileItems = computed(() => {
+  filteredFileItems = computed<DisplayedFileItem[]>(() => {
     const items = this.fileItems();
     const extensions = this.fileExtensions();
     const selectableTypes = getSelectableTypes(this.mode());
 
-    return items.map(item => {
+    const displayed: DisplayedFileItem[] = items.map(item => {
       let selectable = true;
 
       // Check if the item's type is selectable
@@ -121,13 +152,29 @@ export class TnFilePickerPopupComponent {
         dimmed: item.disabled || (!selectable && !this.isNavigatable(item))
       };
     });
+
+    // The inline creation row renders as the first item of the listing
+    if (this.inlineCreation()) {
+      displayed.unshift({
+        path: '',
+        name: '',
+        type: 'folder',
+        disabled: true,
+        dimmed: false,
+        inlineCreate: true
+      });
+    }
+
+    return displayed;
   });
 
   onItemClick(item: FileSystemItem): void {
+    if ((item as DisplayedFileItem).inlineCreate) {return;}
     this.itemClick.emit(item);
   }
 
   onItemDoubleClick(item: FileSystemItem): void {
+    if ((item as DisplayedFileItem).inlineCreate) {return;}
     this.itemDoubleClick.emit(item);
   }
 
@@ -138,11 +185,72 @@ export class TnFilePickerPopupComponent {
   }
 
   navigateToPath(path: string): void {
+    // Leaving the directory abandons a pending inline creation row
+    this.inlineCreation.set(null);
     this.pathNavigate.emit(path);
   }
 
   onCreateAction(action: FilePickerCreateAction): void {
+    if (action.create) {
+      // The clicked footer button is about to become disabled while focused;
+      // blur it now so the browser's focus fixup doesn't fight the input
+      // focus from ngAfterViewChecked
+      (document.activeElement as HTMLElement | null)?.blur?.();
+      this.inlineCreation.set({ action, loading: false });
+      return;
+    }
     this.createAction.emit({ actionId: action.id, parentPath: this.currentPath() });
+  }
+
+  /**
+   * Inline creation state while a `create`-capable action's row is open.
+   * The consumer's `create` callback does the real work; the row shows its
+   * rejection message as the inline error.
+   */
+  inlineCreation = signal<{ action: FilePickerCreateAction; loading: boolean; error?: string } | null>(null);
+
+  async submitInlineCreation(name: string): Promise<void> {
+    const state = this.inlineCreation();
+    if (!state || state.loading) {return;}
+
+    const trimmed = name.trim();
+    if (!trimmed) {
+      // Submitting an empty name abandons the row
+      this.inlineCreation.set(null);
+      return;
+    }
+
+    this.inlineCreation.set({ ...state, loading: true, error: undefined });
+    try {
+      const createdPath = await state.action.create!(this.currentPath(), trimmed);
+      this.inlineCreation.set(null);
+      this.created.emit(createdPath);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Creation failed';
+      // The row stays editable for retry; ngAfterViewChecked refocuses it
+      this.inlineCreation.set({ ...state, loading: false, error: message });
+    }
+  }
+
+  onInlineCreationKeyDown(event: KeyboardEvent): void {
+    // Keep keystrokes away from the table row, whose Enter/Space activation
+    // would swallow typed spaces
+    event.stopPropagation();
+
+    const inp = event.target as HTMLInputElement;
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      void this.submitInlineCreation(inp.value);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.inlineCreation.set(null);
+    }
+  }
+
+  onInlineCreationBlur(event: Event): void {
+    // Auto-submit on blur, matching inline-rename conventions
+    const inp = event.target as HTMLInputElement;
+    void this.submitInlineCreation(inp.value);
   }
 
   onClearSelection(): void {

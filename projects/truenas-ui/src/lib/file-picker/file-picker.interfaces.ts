@@ -22,13 +22,30 @@ export interface FilePickerCallbacks {
 /**
  * A consumer-defined creation flow surfaced as a button in the picker footer,
  * e.g. creating a dataset or zvol through a dialog. The creation itself
- * happens outside the picker.
+ * always happens outside the picker — either in a fully consumer-owned flow
+ * (`createAction` event) or through the pluggable inline flow (`create`).
  */
 export interface FilePickerCreateAction {
   /** Identifies the action in `createAction` events, e.g. 'dataset'. */
   id: string;
   /** Button label. */
   label: string;
+  /**
+   * Fully-qualified sprite icon id shown in the inline creation row,
+   * e.g. 'tn-dataset'. Defaults to 'mdi-folder'.
+   */
+  icon?: string;
+  /**
+   * Opts into the built-in inline creation row. Pressing the action's button
+   * then renders an editable name row at the top of the listing instead of
+   * emitting `createAction`; submitting calls this with the browsed directory
+   * and the entered name — the implementation does the real work (e.g. a
+   * websocket API call). Resolve with the created path: the picker refreshes
+   * the listing and selects it. Reject with an Error to show its message as
+   * the inline error and keep the row editable for retry. Name validation
+   * (duplicates, invalid characters, …) belongs in this callback.
+   */
+  create?: (parentPath: string, name: string) => Promise<string>;
 }
 
 export interface FilePickerCreateActionEvent {
