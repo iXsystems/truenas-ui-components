@@ -20,7 +20,7 @@ const meta: Meta<TnFilePickerComponent> = {
     mode: {
       control: { type: 'select' },
       options: ['file', 'folder', 'dataset', 'zvol', 'any'],
-      description: 'Selection mode for the file picker',
+      description: 'What can be selected: a single mode, or an array of item types (e.g. [\'folder\', \'dataset\'])',
     },
     multiSelect: {
       control: 'boolean',
@@ -126,7 +126,7 @@ This is the authoritative API documentation for the \`tn-file-picker\` component
 
 ### Selection Configuration
 \`\`\`typescript
-mode = input<FilePickerMode>('any');
+mode = input<FilePickerMode | FileSystemItemType[]>('any');
 \`\`\`
 **Description:** Determines what types of items can be selected.
 - \`'file'\` - Only files can be selected
@@ -134,6 +134,9 @@ mode = input<FilePickerMode>('any');
 - \`'dataset'\` - Only ZFS datasets can be selected
 - \`'zvol'\` - Only ZFS zvols can be selected
 - \`'any'\` - Any item type can be selected (default)
+- \`['folder', 'dataset']\` - Any explicit list of item types (\`'mountpoint'\` is also valid here)
+
+Whenever a directory-like type (\`folder\`, \`dataset\`, \`mountpoint\`) is selectable, an empty selection stands for the directory being browsed: the footer names it, the Select button stays enabled, and submitting picks the current path. This keeps empty directories selectable.
 
 \`\`\`typescript
 multiSelect = input<boolean>(false);
@@ -259,7 +262,7 @@ interface FileSystemItem {
   size?: number;             // Size in bytes (optional)
   modified?: Date;           // Last modified date (optional)
   permissions?: 'read' | 'write' | 'none';  // Access level (optional)
-  icon?: string;             // Custom icon override (optional)
+  icon?: string;             // Fully-qualified sprite icon id override, e.g. 'mdi-folder' (optional)
   disabled?: boolean;        // Item cannot be selected (optional)
 }
 \`\`\`
@@ -755,20 +758,28 @@ export const BasicInteraction: Story = {
       void expect(screen.queryByText('readme.txt')).toBeInTheDocument();
     }, { timeout: 2000 });
 
-    // Test 2: Click on file item to select it
+    // Test 2: Click on file item to select it (anywhere in the row works)
     const fileItem = screen.getByText('readme.txt');
     await userEvent.click(fileItem);
 
-    // Test 3: Verify input field shows selected path (input is in canvasElement)
+    // The selection is staged, not applied yet
+    await waitFor(() => {
+      void expect(screen.getByText('1 item selected')).toBeInTheDocument();
+    });
+
+    // Test 3: Apply the selection
+    await userEvent.click(screen.getByRole('button', { name: 'Select' }));
+
+    // Test 4: Verify input field shows selected path (input is in canvasElement)
     const input = canvas.getByPlaceholderText('Select a file...');
     await waitFor(() => {
-      void expect(input).toHaveValue('/showcase/readme.txt');
+      void expect(input).toHaveValue('/mnt/showcase/readme.txt');
     });
   },
   parameters: {
     docs: {
       description: {
-        story: 'Tests basic user interactions: opening picker, selecting a file, and verifying the selection appears in the input field.'
+        story: 'Tests basic user interactions: opening the picker, selecting a file by clicking its row, applying it with Select, and verifying the selection appears in the input field.'
       }
     }
   }
@@ -889,9 +900,9 @@ export const NavigationFlow: Story = {
     const breadcrumb = screen.getByText('showcase');
     void expect(breadcrumb).toBeInTheDocument();
 
-    // Click breadcrumb to navigate back up (using ".." parent navigation button)
-    const parentNavButton = screen.getByText('..');
-    await userEvent.click(parentNavButton);
+    // Click the root breadcrumb segment to navigate back up
+    const rootSegment = screen.getByText('mnt');
+    await userEvent.click(rootSegment);
 
     // Verify we're back at root
     await waitFor(() => {
@@ -983,6 +994,71 @@ export const CreateActions: Story = {
     docs: {
       description: {
         story: 'Demonstrates consumer-defined create actions: `createActions` renders a "Create Dataset" button in the popup footer, and `createAction` emits `{ actionId, parentPath }` so the consumer can run its own creation flow and refresh the listing.'
+      }
+    }
+  }
+};
+
+export const CurrentDirectorySelection: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      callbacks: mdiShowcaseCallbacks
+    },
+    template: `
+      <tn-form-field label="Current directory selection test">
+        <tn-file-picker
+          [mode]="mode"
+          [placeholder]="placeholder"
+          [startPath]="startPath"
+          [callbacks]="callbacks">
+        </tn-file-picker>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
+    }
+  }),
+  args: {
+    mode: ['folder', 'dataset'],
+    placeholder: 'Select a folder...',
+    startPath: '/mnt/showcase'
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    // Reset mock filesystem before test
+    resetMockFilesystem();
+
+    // Open picker
+    const folderButton = canvas.getByRole('button', { name: /open file picker/i });
+    await userEvent.click(folderButton);
+
+    // Wait for content
+    await waitFor(() => {
+      void expect(screen.queryByText('documents')).toBeInTheDocument();
+    }, { timeout: 3000 });
+
+    // With nothing selected, the footer names the implicit selection and Select stays enabled
+    void expect(screen.getByText('Current directory selected')).toBeInTheDocument();
+    const selectButton = screen.getByRole('button', { name: 'Select' });
+    void expect(selectButton).not.toBeDisabled();
+
+    // Pause to let developers see the footer state
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    await userEvent.click(selectButton);
+
+    // The browsed directory becomes the selection
+    await waitFor(() => {
+      const input = canvas.getByPlaceholderText('Select a folder...') as HTMLInputElement;
+      void expect(input.value).toContain('showcase');
+    }, { timeout: 3000 });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'With an array `mode` (`[\'folder\', \'dataset\']`), only the listed item types are selectable. Because a directory-like type is selectable, an empty selection stands for the directory being browsed: the footer names it, the Select button stays enabled, and submitting picks the current path — which keeps empty directories selectable.'
       }
     }
   }
@@ -1221,8 +1297,13 @@ export const PathInputValidation: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // Find the input field
-    const input = canvas.getByRole('textbox') as HTMLInputElement;
+    // Let the story settle before grabbing the input — an element fetched
+    // mid-bootstrap can be replaced by a re-render and become unfocusable
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const input = await canvas.findByRole('textbox') as HTMLInputElement;
+
+    // Focus the field with a real click before editing
+    await userEvent.click(input);
 
     // Test 1: Enter an invalid path and verify error appears
     await userEvent.clear(input);
@@ -1246,16 +1327,17 @@ export const PathInputValidation: Story = {
     }, { timeout: 500 });*/
 
     // Test 2: Enter a valid path and verify no error persists
+    await userEvent.click(input);
     await userEvent.clear(input);
-    // await userEvent.type(input, '/showcase/documents');
-    await userEvent.paste('/showcase/config.json');
+    // await userEvent.type(input, '/mnt/showcase/documents');
+    await userEvent.paste('/mnt/showcase/config.json');
 
     // Each keystroke triggers validation. Intermediate paths like "/s", "/sh" are invalid
     // and will set error state. Wait for typing to complete and all validations to finish.
     // await new Promise(resolve => setTimeout(resolve, 500));
 
     // Verify the input has the correct value
-    // void expect(input).toHaveValue('/showcase/documents');
+    // void expect(input).toHaveValue('/mnt/showcase/documents');
 
     // Wait for all error timers from intermediate keystrokes to clear (3+ seconds)
     // await new Promise(resolve => setTimeout(resolve, 3500));
