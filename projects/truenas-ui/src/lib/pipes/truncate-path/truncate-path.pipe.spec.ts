@@ -52,7 +52,8 @@ describe('TruncatePathPipe', () => {
 
     expect(result).toEqual([
       { name: 'mnt', path: '/mnt' },
-      { name: '…', path: '/mnt/pool/data/backup' },
+      { name: '…', path: '/mnt/pool/data' },
+      { name: 'backup', path: '/mnt/pool/data/backup' },
       { name: '2024', path: '/mnt/pool/data/backup/2024' },
       { name: 'january', path: '/mnt/pool/data/backup/2024/january' }
     ]);

@@ -7,7 +7,7 @@ import { isPathWithinRoot } from '../../file-picker/path-utils';
  * Maximum directory buttons shown after the root segment before the middle of
  * the path is collapsed into an "…" segment.
  */
-const MAX_VISIBLE_DIRS = 3;
+const MAX_VISIBLE_DIRS = 4;
 
 @Pipe({
   name: 'tnTruncatePath',
@@ -43,7 +43,7 @@ export class TruncatePathPipe implements PipeTransform {
 
   /**
    * Collapses the middle of deep paths into an "…" segment that navigates to the
-   * parent of the first visible directory, e.g. /mnt/a/b/c/d/e → /mnt … c d e.
+   * parent of the first visible directory, e.g. /mnt/a/b/c/d/e/f → /mnt … d e f.
    */
   private truncateMiddle(segments: PathSegment[]): PathSegment[] {
     const [root, ...dirs] = segments;
