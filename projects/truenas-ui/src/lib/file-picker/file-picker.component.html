@@ -4,7 +4,7 @@
       type="text"
       class="tn-file-picker-input"
       [class.error]="hasError()"
-      [value]="selectedPath() | tnStripMntPrefix"
+      [value]="selectedPath()"
       [placeholder]="placeholder()"
       [readonly]="!allowManualInput()"
       [disabled]="isDisabled()"

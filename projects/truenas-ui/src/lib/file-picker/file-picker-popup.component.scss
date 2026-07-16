@@ -62,6 +62,14 @@
       margin-left: 2px;
       color: var(--tn-alt-fg1);
     }
+
+    // Leading slash of the root segment, styled like the other separators
+    // so the breadcrumb reads "/ mnt / showcase"
+    &:first-child::before {
+      content: '/';
+      margin-right: 2px;
+      color: var(--tn-alt-fg1);
+    }
   }
 }
 
@@ -116,6 +124,13 @@ tn-table {
   .tn-table__cell {
     padding: 8px 16px;
     border-bottom: 1px solid var(--tn-lines);
+  }
+
+  // Highlight selected rows with the same treatment as the table's active
+  // row: tinted background plus a primary indicator bar on the left.
+  ::ng-deep .tn-table__row:has(.file-name-cell.selected) {
+    background: var(--tn-bg3);
+    box-shadow: inset 3px 0 0 var(--tn-primary);
   }
 }
 
@@ -236,6 +251,27 @@ tn-table {
   line-height: 1;
 }
 
+// Chevron on navigatable rows: signals the item can be entered and opens it
+// on a single click (double-clicking the row still works)
+.navigate-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  padding: 2px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--tn-fg2);
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--tn-bg3);
+    color: var(--tn-primary);
+  }
+}
+
 // Type column styling
 .file-type {
   font-size: 1rem;
@@ -299,11 +335,19 @@ tn-table {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  // Minimum breathing room between the selection text and the action buttons
+  gap: 16px;
   padding: 16px var(--tn-content-padding, 24px);
   border-top: 1px solid var(--tn-lines);
   background: var(--tn-bg2);
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
+
+  .footer-selection {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
 }
 
 .selection-count {

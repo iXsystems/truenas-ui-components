@@ -1,6 +1,7 @@
 import type { PipeTransform } from '@angular/core';
 import { Pipe } from '@angular/core';
 import type { PathSegment } from '../../file-picker/file-picker.interfaces';
+import { isPathWithinRoot } from '../../file-picker/path-utils';
 
 /**
  * Maximum directory buttons shown after the root segment before the middle of
@@ -14,15 +15,17 @@ const MAX_VISIBLE_DIRS = 3;
 })
 export class TruncatePathPipe implements PipeTransform {
   transform(path: string, rootPath = '/mnt'): PathSegment[] {
-    // The root is always the first segment, shown with its full path (e.g. "/mnt")
-    const segments: PathSegment[] = [{ name: rootPath, path: rootPath }];
+    // The root is always the first segment. Its leading slash is rendered by
+    // the breadcrumb as a separator, so the name omits it (e.g. "mnt"),
+    // reading as "/ mnt / showcase"
+    const segments: PathSegment[] = [{ name: rootPath.replace(/^\//, ''), path: rootPath }];
 
     if (!path || path === rootPath) {
       return segments;
     }
 
-    if (!this.isWithinRoot(path, rootPath)) {
-      // Path escaped the root — show just its leaf, with "/" leading back to the root
+    if (!isPathWithinRoot(path, rootPath)) {
+      // Path escaped the root — show just its leaf after the root segment
       segments.push({ name: path.substring(path.lastIndexOf('/') + 1), path });
       return segments;
     }
@@ -51,12 +54,5 @@ export class TruncatePathPipe implements PipeTransform {
     const visibleDirs = dirs.slice(-(MAX_VISIBLE_DIRS - 1));
     const collapsedParent = dirs[dirs.length - MAX_VISIBLE_DIRS];
     return [root, { name: '…', path: collapsedParent.path }, ...visibleDirs];
-  }
-
-  private isWithinRoot(path: string, rootPath: string): boolean {
-    if (rootPath === '/') {
-      return path.startsWith('/');
-    }
-    return path === rootPath || path.startsWith(`${rootPath}/`);
   }
 }

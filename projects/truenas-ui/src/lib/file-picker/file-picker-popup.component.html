@@ -6,6 +6,7 @@
         class="breadcrumb-segment"
         [class.current]="last"
         [disabled]="last"
+        [attr.aria-label]="segment.name === '…' ? 'Navigate to ' + segment.path : null"
         (click)="navigateToPath(segment.path)">
         {{ segment.name }}
       </button>
@@ -26,7 +27,10 @@
   <div class="tn-file-picker-content">
   <tn-table
     [dataSource]="filteredFileItems()"
-    [displayedColumns]="multiSelect() ? displayedColumns : displayedColumns.slice(1)">
+    [displayedColumns]="multiSelect() ? displayedColumns : displayedColumns.slice(1)"
+    [clickable]="true"
+    (rowClick)="onItemClick($event)"
+    (rowDoubleClick)="onItemDoubleClick($event)">
 
     <!-- Selection column -->
     @if (multiSelect()) {
@@ -52,17 +56,11 @@
 
         <div
              class="file-name-cell"
-             [class.disabled]="!!item.disabled"
-             [class.zfs-object]="isZfsObject(item)"
-             [attr.tabindex]="item.disabled ? null : 0"
-             [attr.role]="'button'"
-             (click)="onItemClick(item)"
-             (dblclick)="onItemDoubleClick(item)"
-             (keydown.enter)="onItemDoubleClick(item)"
-             (keydown.space)="onItemClick(item)">
+             [class.selected]="isSelected(item)"
+             [class.disabled]="!!item.dimmed"
+             [class.zfs-object]="isZfsObject(item)">
           <tn-icon
             [name]="getItemIcon(item)"
-            [library]="getItemIconLibrary(item)"
             [class]="'file-icon file-icon-' + item.type" />
           <span class="file-name">{{ item.name }}</span>
 
@@ -80,6 +78,19 @@
               name="lock"
               library="mdi"
               class="permission-icon" />
+          }
+
+          <!-- Navigation affordance: single click opens the directory -->
+          @if (isNavigatable(item)) {
+            <button
+              type="button"
+              class="navigate-button"
+              [attr.aria-label]="'Open ' + item.name"
+              [attr.title]="'Open ' + item.name"
+              (click)="onNavigateClick($event, item)"
+              (dblclick)="$event.stopPropagation()">
+              <tn-icon name="mdi-chevron-right" size="sm" />
+            </button>
           }
         </div>
       </ng-template>
@@ -124,25 +135,30 @@
 <!-- Footer -->
 @if (!loading()) {
   <div class="tn-file-picker-footer">
-    @if (selectedItems().length > 0) {
-      <span class="selection-count">
-        {{ selectedItems().length }} item{{ selectedItems().length !== 1 ? 's' : '' }} selected
-      </span>
-    } @else if (allowCurrentDirectorySelection()) {
-      <span class="selection-count current-directory-selection">
-        Current directory selected
-      </span>
-    } @else {
-      <span class="selection-count">
-        No items selected
-      </span>
-    }
+    <div class="footer-selection">
+      @if (selectedItems().length > 0) {
+        <span class="selection-count">
+          {{ selectedItems().length }} item{{ selectedItems().length !== 1 ? 's' : '' }} selected
+        </span>
+        <tn-button
+          variant="outline"
+          label="Clear Selection"
+          (onClick)="onClearSelection()" />
+      } @else if (allowCurrentDirectorySelection()) {
+        <span class="selection-count current-directory-selection">
+          Current directory selected
+        </span>
+      } @else {
+        <span class="selection-count">
+          No items selected
+        </span>
+      }
+    </div>
     <div class="footer-actions">
       @for (action of createActions(); track action.id) {
         <tn-button
           variant="outline"
           [label]="action.label"
-          [disabled]="isCreateDisabled()"
           (onClick)="onCreateAction(action)" />
       }
       <tn-button

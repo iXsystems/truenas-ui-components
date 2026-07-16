@@ -10,11 +10,12 @@ import { Subject } from 'rxjs';
 import { TnFilePickerPopupComponent } from './file-picker-popup.component';
 import type {
   FilePickerCallbacks, FilePickerCreateAction, FilePickerCreateActionEvent,
-  FilePickerError, FilePickerMode, FileSystemItem
+  FilePickerError, FilePickerMode, FileSystemItem, FileSystemItemType
 } from './file-picker.interfaces';
+import { allowsCurrentDirectorySelection } from './file-picker.utils';
+import { isPathWithinRoot } from './path-utils';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnInputDirective } from '../input/input.directive';
-import { StripMntPrefixPipe } from '../pipes/strip-mnt-prefix/strip-mnt-prefix.pipe';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 @Component({
@@ -27,7 +28,6 @@ import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
     OverlayModule,
     PortalModule,
     A11yModule,
-    StripMntPrefixPipe,
     TnTestIdDirective
 ],
   providers: [
@@ -45,7 +45,14 @@ import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
   }
 })
 export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDestroy {
-  mode = input<FilePickerMode>('any');
+  /**
+   * What can be selected: a single mode, or an explicit list of selectable
+   * item types, e.g. ['folder', 'dataset']. Whenever a directory-like type
+   * (folder, dataset, mountpoint) is selectable, an empty selection stands
+   * for the directory being browsed and submitting it picks `currentPath` —
+   * this keeps empty directories selectable.
+   */
+  mode = input<FilePickerMode | FileSystemItemType[]>('any');
   multiSelect = input<boolean>(false);
   /** Consumer-defined creation flows shown as buttons in the popup footer. */
   createActions = input<FilePickerCreateAction[]>([]);
@@ -101,7 +108,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   private viewContainerRef = inject(ViewContainerRef);
 
   ngOnInit(): void {
-    this.currentPath.set(this.startPath());
+    this.currentPath.set(this.clampToRoot(this.startPath()));
     this.selectedPath.set(this.multiSelect() ? '' : '');
   }
 
@@ -139,25 +146,22 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   // Event handlers
   onPathInput(event: Event): void {
     const target = event.target as HTMLInputElement;
-    const inputValue = target.value;
+    const path = target.value;
 
     if (this.allowManualInput()) {
-      // Convert display path to full path with /mnt prefix
-      const fullPath = this.toFullPath(inputValue);
-
       const cb = this.callbacks();
       if (cb?.validatePath) {
-        cb.validatePath(fullPath).then(isValid => {
+        cb.validatePath(path).then(isValid => {
           if (isValid) {
-            this.updateSelection(fullPath);
+            this.updateSelection(path);
           } else {
-            this.emitError('validation', `Invalid path: ${inputValue}`, fullPath);
+            this.emitError('validation', `Invalid path: ${path}`, path);
           }
         }).catch(err => {
-          this.emitError('validation', err.message || 'Path validation failed', fullPath);
+          this.emitError('validation', err.message || 'Path validation failed', path);
         });
       } else {
-        this.updateSelection(fullPath);
+        this.updateSelection(path);
       }
     }
 
@@ -218,9 +222,13 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
   onSubmit(): void {
     // Apply the selection and close the popup
-    const selected = this.selectedItems();
+    let selected = this.selectedItems();
 
-    if (selected.length === 0) {return;}
+    if (selected.length === 0) {
+      if (!allowsCurrentDirectorySelection(this.mode())) {return;}
+      // An empty selection stands for the directory being browsed
+      selected = [this.currentPath()];
+    }
 
     // Clear any existing error state
     this.hasError.set(false);
@@ -250,10 +258,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
   private clampToRoot(path: string): string {
     const root = this.effectiveRootPath();
-    const isWithinRoot = root === '/'
-      ? path.startsWith('/')
-      : path === root || path.startsWith(`${root}/`);
-    return isWithinRoot ? path : root;
+    return isPathWithinRoot(path, root) ? path : root;
   }
 
   onClearSelection(): void {
@@ -345,13 +350,6 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     this.selectedPath.set(selected.join(', '));
     this.onChange(this.multiSelect() ? selected : selected[0] || '');
     this.selectionChange.emit(this.multiSelect() ? selected : selected[0] || '');
-  }
-
-  private toFullPath(displayPath: string): string {
-    if (!displayPath) {return '/mnt';}
-    if (displayPath === '/') {return '/mnt';}
-    if (displayPath.startsWith('/')) {return '/mnt' + displayPath;}
-    return '/mnt/' + displayPath;
   }
 
   private emitError(type: FilePickerError['type'], message: string, path?: string): void {

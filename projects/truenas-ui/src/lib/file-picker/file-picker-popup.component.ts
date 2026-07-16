@@ -1,21 +1,13 @@
 import { A11yModule } from '@angular/cdk/a11y';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { Component, computed, input, output, inject } from '@angular/core';
-import {
-  mdiFolder,
-  mdiFile,
-  mdiDatabase,
-  mdiHarddisk,
-  mdiFolderNetwork,
-  mdiLoading,
-  mdiLock,
-  mdiFolderOpen
-} from '@mdi/js';
 import type {
-  FileSystemItem, FilePickerMode, FilePickerCreateAction, FilePickerCreateActionEvent
+  FileSystemItem, FileSystemItemType, FilePickerMode, FilePickerCreateAction, FilePickerCreateActionEvent
 } from './file-picker.interfaces';
+import { allowsCurrentDirectorySelection, getSelectableTypes } from './file-picker.utils';
 import { TnButtonComponent } from '../button/button.component';
 import { registerTruenasIcons } from '../custom-icons/generated-icons';
+import { libIconMarker, tnIconMarker } from '../icon/icon-marker';
 import { TnIconRegistryService } from '../icon/icon-registry.service';
 import { TnIconComponent } from '../icon/icon.component';
 import { FileSizePipe } from '../pipes/file-size/file-size.pipe';
@@ -45,7 +37,11 @@ import { TnTableColumnDirective, TnHeaderCellDefDirective, TnCellDefDirective } 
   }
 })
 export class TnFilePickerPopupComponent {
-  mode = input<FilePickerMode>('any');
+  /**
+   * What can be selected: a single mode, or an explicit list of selectable
+   * item types, e.g. ['folder', 'dataset'].
+   */
+  mode = input<FilePickerMode | FileSystemItemType[]>('any');
   multiSelect = input<boolean>(false);
   /**
    * Consumer-defined creation flows rendered as buttons in the footer, next to the
@@ -55,21 +51,14 @@ export class TnFilePickerPopupComponent {
   createActions = input<FilePickerCreateAction[]>([]);
   currentPath = input<string>('/mnt');
   /**
-   * Topmost path the breadcrumb can navigate to. At this path the breadcrumb
-   * shows "/", and ".." never emits a `pathNavigate` above it.
+   * Topmost path the breadcrumb can navigate to. It is always the first
+   * breadcrumb segment, rendered with its leading slash drawn as a separator
+   * so the path reads "/ mnt / showcase".
    */
   rootPath = input<string>('/mnt');
-  /**
-   * When enabled, an empty selection stands for the directory currently being
-   * browsed: the footer names it as the implicit selection and the Select button
-   * stays enabled. On `submit` with no `selectedItems`, consumers should treat
-   * `currentPath` as the selection. Keeps empty directories selectable.
-   */
-  allowCurrentDirectorySelection = input<boolean>(false);
   fileItems = input<FileSystemItem[]>([]);
   selectedItems = input<string[]>([]);
   loading = input<boolean>(false);
-  creationLoading = input<boolean>(false);
   fileExtensions = input<string[] | undefined>(undefined);
 
   private iconRegistry = inject(TnIconRegistryService);
@@ -77,38 +66,6 @@ export class TnFilePickerPopupComponent {
   constructor() {
     // Register TrueNAS custom icons
     registerTruenasIcons(this.iconRegistry);
-
-    // Register MDI icons used by this component
-    this.registerMdiIcons();
-  }
-
-  /**
-   * Register MDI icon library with all icons used by the file picker component
-   * This makes the component self-contained with zero configuration required
-   */
-  private registerMdiIcons(): void {
-    const mdiIcons: Record<string, string> = {
-      'folder': mdiFolder,
-      'file': mdiFile,
-      'database': mdiDatabase,
-      'harddisk': mdiHarddisk,
-      'folder-network': mdiFolderNetwork,
-      'loading': mdiLoading,
-      'lock': mdiLock,
-      'folder-open': mdiFolderOpen
-    };
-
-    // Register MDI library with resolver for file picker icons
-    this.iconRegistry.registerLibrary({
-      name: 'mdi',
-      resolver: (iconName: string) => {
-        const pathData = mdiIcons[iconName];
-        if (!pathData) {
-          return null;
-        }
-        return `<svg viewBox="0 0 24 24"><path fill="currentColor" d="${pathData}"/></svg>`;
-      }
-    });
   }
 
   itemClick = output<FileSystemItem>();
@@ -125,35 +82,44 @@ export class TnFilePickerPopupComponent {
   displayedColumns = ['select', 'name', 'size', 'modified'];
 
   // Computed values
+
+  /**
+   * Whether an empty selection stands for the directory being browsed: true
+   * whenever the selectable types include a directory-like type. The footer
+   * then names the implicit selection and the Select button stays enabled; on
+   * `submit` with no `selectedItems`, consumers treat `currentPath` as the
+   * selection.
+   */
+  allowCurrentDirectorySelection = computed(() => allowsCurrentDirectorySelection(this.mode()));
+
   filteredFileItems = computed(() => {
     const items = this.fileItems();
     const extensions = this.fileExtensions();
-    const mode = this.mode();
+    const selectableTypes = getSelectableTypes(this.mode());
 
     return items.map(item => {
-      let shouldDisable = false;
+      let selectable = true;
 
-      // Check if item matches mode
-      if (mode !== 'any') {
-        const matchesMode =
-          (mode === 'file' && item.type === 'file') ||
-          (mode === 'folder' && item.type === 'folder') ||
-          (mode === 'dataset' && item.type === 'dataset') ||
-          (mode === 'zvol' && item.type === 'zvol');
-
-        shouldDisable = !matchesMode;
+      // Check if the item's type is selectable
+      if (selectableTypes) {
+        selectable = selectableTypes.includes(item.type);
       }
 
       // Check file extension filter (only applies to files)
       if (extensions && extensions.length > 0 && item.type === 'file') {
-        const matchesExtension = extensions.some(ext =>
+        selectable = selectable && extensions.some(ext =>
           item.name.toLowerCase().endsWith(ext.toLowerCase())
         );
-        shouldDisable = shouldDisable || !matchesExtension;
       }
 
-      // Don't override existing disabled state from backend
-      return { ...item, disabled: item.disabled || shouldDisable };
+      return {
+        ...item,
+        // Don't override existing disabled state from backend
+        disabled: item.disabled || !selectable,
+        // Dim only items with no interaction left: navigatable items can still
+        // be entered by double-click even when they are not selectable
+        dimmed: item.disabled || (!selectable && !this.isNavigatable(item))
+      };
     });
   });
 
@@ -162,6 +128,12 @@ export class TnFilePickerPopupComponent {
   }
 
   onItemDoubleClick(item: FileSystemItem): void {
+    this.itemDoubleClick.emit(item);
+  }
+
+  onNavigateClick(event: Event, item: FileSystemItem): void {
+    // Don't also toggle selection via the cell's click handler
+    event.stopPropagation();
     this.itemDoubleClick.emit(item);
   }
 
@@ -185,56 +157,34 @@ export class TnFilePickerPopupComponent {
     this.cancel.emit();
   }
 
-  isCreateDisabled(): boolean {
-    return this.creationLoading();
-  }
-
   // Utility methods
   isNavigatable(item: FileSystemItem): boolean {
     return ['folder', 'dataset', 'mountpoint'].includes(item.type);
   }
 
+  /**
+   * Fully-qualified sprite icon name for an item. `tnIconMarker`/`libIconMarker`
+   * calls double as build-time markers that pull these icons into the sprite.
+   */
   getItemIcon(item: FileSystemItem): string {
     if (item.icon) {return item.icon;}
 
     switch (item.type) {
-      case 'folder': return 'folder';
-      case 'dataset': return 'tn-dataset';
-      case 'zvol': return 'database';
-      case 'mountpoint': return 'folder-network';
+      case 'folder': return tnIconMarker('folder', 'mdi');
+      case 'dataset': return libIconMarker('tn-dataset');
+      case 'zvol': return tnIconMarker('database', 'mdi');
+      case 'mountpoint': return tnIconMarker('server-network', 'mdi');
       case 'file': return this.getFileIcon(item.name);
-      default: return 'file';
+      default: return tnIconMarker('file', 'mdi');
     }
   }
 
   getFileIcon(filename: string): string {
     const ext = filename.split('.').pop()?.toLowerCase();
     switch (ext) {
-      case 'txt': case 'log': case 'md': case 'readme': return 'file';
-      case 'pdf': return 'file';
-      case 'jpg': case 'jpeg': case 'png': case 'gif': case 'svg': case 'webp': return 'file';
-      case 'mp4': case 'avi': case 'mov': case 'mkv': case 'webm': return 'file';
-      case 'mp3': case 'wav': case 'flac': case 'ogg': case 'aac': return 'file';
-      case 'zip': case 'tar': case 'gz': case 'rar': case '7z': return 'file';
-      case 'js': case 'ts': case 'html': case 'css': case 'py': case 'java': case 'cpp': case 'c': return 'file';
-      case 'json': case 'xml': case 'yaml': case 'yml': case 'toml': return 'file';
-      case 'iso': case 'img': case 'dmg': return 'harddisk';
-      default: return 'file';
+      case 'iso': case 'img': case 'dmg': return tnIconMarker('harddisk', 'mdi');
+      default: return tnIconMarker('file', 'mdi');
     }
-  }
-
-  /**
-   * Get the library type for the icon
-   * @param item FileSystemItem
-   * @returns 'custom' for TrueNAS custom icons, 'mdi' for Material Design Icons
-   */
-  getItemIconLibrary(item: FileSystemItem): 'mdi' | 'custom' {
-    // Use custom library for dataset icon
-    if (item.type === 'dataset') {
-      return 'custom';
-    }
-    // Use mdi for all other icons
-    return 'mdi';
   }
 
   getZfsBadge(item: FileSystemItem): string {

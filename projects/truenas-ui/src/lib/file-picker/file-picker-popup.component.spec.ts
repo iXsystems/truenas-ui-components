@@ -224,17 +224,68 @@ describe('TnFilePickerPopupComponent', () => {
       testFixture.componentRef.setInput('fileItems', mockFileItems);
 
       const filtered = testComponent.filteredFileItems();
-      
+
       expect(filtered.length).toBe(mockFileItems.length);
+    });
+
+    it('should keep navigatable items undimmed when only their selection is filtered out', () => {
+      // Create a fresh component instance for this test
+      const testFixture = TestBed.createComponent(TnFilePickerPopupComponent);
+      const testComponent = testFixture.componentInstance;
+
+      testFixture.componentRef.setInput('mode', 'file');
+      testFixture.componentRef.setInput('fileItems', mockFileItems);
+      testFixture.detectChanges();
+
+      const filtered = testComponent.filteredFileItems();
+      const folder = filtered.find(item => item.type === 'folder');
+      const zvol = filtered.find(item => item.type === 'zvol');
+
+      // The folder cannot be selected but can still be entered — not dimmed
+      expect(folder?.disabled).toBe(true);
+      expect(folder?.dimmed).toBe(false);
+      // The zvol has no interaction left — dimmed
+      expect(zvol?.disabled).toBe(true);
+      expect(zvol?.dimmed).toBe(true);
+    });
+
+    it('should apply the disabled style only to dimmed items', () => {
+      fixture.componentRef.setInput('mode', 'file');
+      fixture.detectChanges();
+
+      const cells = fixture.debugElement.queryAll(By.css('.file-name-cell'));
+      const cellFor = (name: string): HTMLElement | undefined => cells
+        .map(cell => cell.nativeElement as HTMLElement)
+        .find(cell => cell.textContent?.includes(name));
+
+      expect(cellFor('documents')?.classList.contains('disabled')).toBe(false);
+      expect(cellFor('vm-storage')?.classList.contains('disabled')).toBe(true);
+    });
+
+    it('should enable exactly the listed types when mode is an array', () => {
+      // Create a fresh component instance for this test
+      const testFixture = TestBed.createComponent(TnFilePickerPopupComponent);
+      const testComponent = testFixture.componentInstance;
+
+      testFixture.componentRef.setInput('mode', ['folder', 'zvol']);
+      testFixture.componentRef.setInput('fileItems', mockFileItems);
+      testFixture.detectChanges();
+
+      const filtered = testComponent.filteredFileItems();
+
+      expect(filtered.find(item => item.type === 'folder')?.disabled).toBe(false);
+      expect(filtered.find(item => item.type === 'zvol')?.disabled).toBe(false);
+      expect(filtered.filter(item => item.type === 'file').every(item => item.disabled)).toBe(true);
     });
   });
 
   describe('Utility Methods', () => {
-    it('should return correct icons for different file types', () => {
-      expect(component.getItemIcon({ type: 'folder' } as FileSystemItem)).toBe('folder');
+    it('should return fully-qualified sprite icon names for different file types', () => {
+      expect(component.getItemIcon({ type: 'folder' } as FileSystemItem)).toBe('mdi-folder');
       expect(component.getItemIcon({ type: 'dataset' } as FileSystemItem)).toBe('tn-dataset');
-      expect(component.getItemIcon({ type: 'zvol' } as FileSystemItem)).toBe('database');
-      expect(component.getItemIcon({ type: 'file', name: 'test.pdf' } as FileSystemItem)).toBe('file');
+      expect(component.getItemIcon({ type: 'zvol' } as FileSystemItem)).toBe('mdi-database');
+      expect(component.getItemIcon({ type: 'mountpoint' } as FileSystemItem)).toBe('mdi-server-network');
+      expect(component.getItemIcon({ type: 'file', name: 'test.pdf' } as FileSystemItem)).toBe('mdi-file');
     });
 
     it('should identify ZFS objects correctly', () => {
@@ -297,6 +348,71 @@ describe('TnFilePickerPopupComponent', () => {
       expect(component.isSelected(mockFileItems[1])).toBe(true); // database.db
       expect(component.isSelected(mockFileItems[0])).toBe(false); // documents
     });
+
+    it('should select when clicking anywhere in the row, not only the name cell', () => {
+      fixture.detectChanges();
+      const clickSpy = jest.fn();
+      component.itemClick.subscribe(clickSpy);
+
+      // Click the size cell of the database.db row
+      const rows = fixture.debugElement.queryAll(By.css('.tn-table__row'));
+      const sizeCell = rows[1].queryAll(By.css('.tn-table__cell'))[1];
+      (sizeCell.nativeElement as HTMLElement).click();
+
+      expect(clickSpy).toHaveBeenCalledWith(expect.objectContaining({ path: '/mnt/tank/database.db' }));
+    });
+
+    it('should emit clearSelection via the Clear Selection button', () => {
+      fixture.componentRef.setInput('selectedItems', ['/mnt/tank/database.db']);
+      fixture.detectChanges();
+
+      const clearSpy = jest.fn();
+      component.clearSelection.subscribe(clearSpy);
+
+      const clearButton = fixture.debugElement.query(By.css('.footer-selection button'));
+      expect((clearButton.nativeElement as HTMLElement).textContent).toContain('Clear Selection');
+      (clearButton.nativeElement as HTMLElement).click();
+
+      expect(clearSpy).toHaveBeenCalled();
+    });
+
+    it('should mark selected rows in the list', () => {
+      fixture.componentRef.setInput('selectedItems', ['/mnt/tank/documents']);
+      fixture.detectChanges();
+
+      const selectedCells = fixture.debugElement.queryAll(By.css('.file-name-cell.selected'));
+      expect(selectedCells.length).toBe(1);
+      expect((selectedCells[0].nativeElement as HTMLElement).textContent).toContain('documents');
+    });
+  });
+
+  describe('Navigation Affordance', () => {
+    function navigateButtons(): HTMLElement[] {
+      return fixture.debugElement.queryAll(By.css('.navigate-button'))
+        .map(button => button.nativeElement as HTMLElement);
+    }
+
+    it('should show the open chevron only on navigatable items', () => {
+      fixture.detectChanges();
+
+      // documents (folder) is the only navigatable mock item
+      const buttons = navigateButtons();
+      expect(buttons.length).toBe(1);
+      expect(buttons[0].getAttribute('aria-label')).toBe('Open documents');
+    });
+
+    it('should open the directory on a single click without selecting it', () => {
+      fixture.detectChanges();
+      const doubleClickSpy = jest.fn();
+      const clickSpy = jest.fn();
+      component.itemDoubleClick.subscribe(doubleClickSpy);
+      component.itemClick.subscribe(clickSpy);
+
+      navigateButtons()[0].click();
+
+      expect(doubleClickSpy).toHaveBeenCalledWith(expect.objectContaining({ path: '/mnt/tank/documents' }));
+      expect(clickSpy).not.toHaveBeenCalled();
+    });
   });
 
   describe('Breadcrumb Root Path', () => {
@@ -309,7 +425,7 @@ describe('TnFilePickerPopupComponent', () => {
       fixture.componentRef.setInput('currentPath', '/mnt');
       fixture.detectChanges();
 
-      expect(breadcrumbLabels()).toEqual(['/mnt']);
+      expect(breadcrumbLabels()).toEqual(['mnt']);
     });
 
     it('should show the root path when the current path is a custom root', () => {
@@ -317,7 +433,7 @@ describe('TnFilePickerPopupComponent', () => {
       fixture.componentRef.setInput('currentPath', '/dev/zvol');
       fixture.detectChanges();
 
-      expect(breadcrumbLabels()).toEqual(['/dev/zvol']);
+      expect(breadcrumbLabels()).toEqual(['dev/zvol']);
     });
 
     it('should render every path segment and navigate to the custom root via its segment', () => {
@@ -325,7 +441,7 @@ describe('TnFilePickerPopupComponent', () => {
       fixture.componentRef.setInput('currentPath', '/dev/zvol/tank/vm');
       fixture.detectChanges();
 
-      expect(breadcrumbLabels()).toEqual(['/dev/zvol', 'tank', 'vm']);
+      expect(breadcrumbLabels()).toEqual(['dev/zvol', 'tank', 'vm']);
 
       const navigateSpy = jest.fn();
       component.pathNavigate.subscribe(navigateSpy);
@@ -378,18 +494,7 @@ describe('TnFilePickerPopupComponent', () => {
       return button ? button.nativeElement as HTMLButtonElement : null;
     }
 
-    it('should disable Select on empty selection by default', () => {
-      fixture.componentRef.setInput('selectedItems', []);
-      fixture.detectChanges();
-
-      expect(selectButton()?.disabled).toBe(true);
-
-      const count = fixture.debugElement.query(By.css('.selection-count'));
-      expect((count.nativeElement as HTMLElement).textContent).toContain('No items selected');
-    });
-
-    it('should keep Select enabled on empty selection when current directory selection is allowed', () => {
-      fixture.componentRef.setInput('allowCurrentDirectorySelection', true);
+    it('should treat an empty selection as the browsed directory by default', () => {
       fixture.componentRef.setInput('selectedItems', []);
       fixture.detectChanges();
 
@@ -399,8 +504,26 @@ describe('TnFilePickerPopupComponent', () => {
       expect((count.nativeElement as HTMLElement).textContent).toContain('Current directory selected');
     });
 
+    it('should disable Select on empty selection when no directory-like type is selectable', () => {
+      fixture.componentRef.setInput('mode', 'file');
+      fixture.componentRef.setInput('selectedItems', []);
+      fixture.detectChanges();
+
+      expect(selectButton()?.disabled).toBe(true);
+
+      const count = fixture.debugElement.query(By.css('.selection-count'));
+      expect((count.nativeElement as HTMLElement).textContent).toContain('No items selected');
+    });
+
+    it('should allow current directory selection when any type in an array mode is directory-like', () => {
+      fixture.componentRef.setInput('mode', ['file', 'dataset']);
+      fixture.componentRef.setInput('selectedItems', []);
+      fixture.detectChanges();
+
+      expect(selectButton()?.disabled).toBe(false);
+    });
+
     it('should still show the item count when items are selected', () => {
-      fixture.componentRef.setInput('allowCurrentDirectorySelection', true);
       fixture.componentRef.setInput('selectedItems', ['/mnt/tank/database.db']);
       fixture.detectChanges();
 
