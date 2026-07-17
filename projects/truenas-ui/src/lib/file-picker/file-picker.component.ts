@@ -13,7 +13,7 @@ import type {
   FilePickerError, FilePickerMode, FileSystemItem, FileSystemItemType
 } from './file-picker.interfaces';
 import { allowsCurrentDirectorySelection } from './file-picker.utils';
-import { isPathWithinRoot } from './path-utils';
+import { isPathWithinRoot, normalizeRootPath } from './path-utils';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnInputDirective } from '../input/input.directive';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
@@ -96,8 +96,9 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
-  // Root the picker is confined to when rootPath is not provided
-  effectiveRootPath = computed(() => this.rootPath() ?? '/mnt');
+  // Root the picker is confined to when rootPath is not provided, with
+  // trailing slashes collapsed so confinement checks compare exact paths
+  effectiveRootPath = computed(() => normalizeRootPath(this.rootPath() ?? '/mnt'));
 
   // ControlValueAccessor implementation
   private onChange = (_value: string | string[]) => {};
@@ -149,6 +150,20 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     const path = target.value;
 
     if (this.allowManualInput()) {
+      // Clearing the input clears the selection
+      if (!path) {
+        this.onClearSelection();
+        this.onTouched();
+        return;
+      }
+
+      // Manually typed paths honor the same confinement as navigation
+      if (!isPathWithinRoot(path, this.effectiveRootPath())) {
+        this.emitError('validation', `Path is outside of ${this.effectiveRootPath()}`, path);
+        this.onTouched();
+        return;
+      }
+
       const cb = this.callbacks();
       if (cb?.validatePath) {
         cb.validatePath(path).then(isValid => {
@@ -213,8 +228,11 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     // Allow navigation even if disabled, as long as it's a navigatable type
     if (isNavigatable) {
       this.navigateToPath(item.path);
-    } else if (!item.disabled) {
-      // Double-click on selectable item submits immediately
+    } else if (!item.disabled && !this.multiSelect()) {
+      // Double-click on a selectable item submits immediately. In
+      // multi-select this shortcut would silently replace the selection the
+      // user built up with the double-clicked item, so it is single-select
+      // only (the two clicks already toggled the checkbox twice — a no-op).
       this.selectedItems.set([item.path]);
       this.onSubmit();
     }
@@ -288,6 +306,20 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     return isPathWithinRoot(path, root) ? path : root;
   }
 
+  /**
+   * Browsing to another directory drops a not-yet-applied single-select
+   * selection: keeping it would leave the footer claiming an item from a
+   * directory the user is no longer looking at, and would mask the implicit
+   * current-directory selection. Multi-select keeps its selection so items
+   * can be picked across directories. The applied value (`selectedPath`,
+   * form value) is untouched either way.
+   */
+  private clearStalePendingSelection(directoryChanged: boolean): void {
+    if (directoryChanged && !this.multiSelect()) {
+      this.selectedItems.set([]);
+    }
+  }
+
   onClearSelection(): void {
     this.selectedItems.set([]);
     this.selectedPath.set('');
@@ -296,11 +328,13 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   }
 
   private async loadDirectory(path: string): Promise<void> {
+    const directoryChanged = path !== this.currentPath();
     const cb = this.callbacks();
     if (!cb?.getChildren) {
       // Default mock data for development
       this.fileItems.set(this.getMockFileItems(path));
       this.currentPath.set(path);
+      this.clearStalePendingSelection(directoryChanged);
       this.pathChange.emit(path);
       return;
     }
@@ -311,6 +345,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       const items = await cb.getChildren(path);
       this.fileItems.set(items || []);
       this.currentPath.set(path);
+      this.clearStalePendingSelection(directoryChanged);
       this.pathChange.emit(path);
     } catch (err: unknown) {
       console.error('❌ Error loading directory:', err);

@@ -116,5 +116,16 @@ describe('TruncatePathPipe', () => {
         { name: 'zvol', path: '/dev/zvol' }
       ]);
     });
+
+    it('should normalize a root path with a trailing slash', () => {
+      expect(pipe.transform('/dev/zvol/tank', '/dev/zvol/')).toEqual([
+        { name: 'dev/zvol', path: '/dev/zvol' },
+        { name: 'tank', path: '/dev/zvol/tank' }
+      ]);
+
+      expect(pipe.transform('/dev/zvol', '/dev/zvol/')).toEqual([
+        { name: 'dev/zvol', path: '/dev/zvol' }
+      ]);
+    });
   });
 });

@@ -459,6 +459,21 @@ describe('TnTableComponent', () => {
       expect(component.isRowActive(testData[0])).toBe(false);
     });
 
+    it('should mark every row matching the activeWhen predicate as active', () => {
+      fixture.componentRef.setInput('activeWhen', (row: { id: number }) => row.id !== 2);
+      expect(component.isRowActive(testData[0])).toBe(true);
+      expect(component.isRowActive(testData[1])).toBe(false);
+      expect(component.isRowActive(testData[2])).toBe(true);
+    });
+
+    it('should combine activeWhen with activeRow', () => {
+      fixture.componentRef.setInput('activeWhen', (row: { id: number }) => row.id === 3);
+      fixture.componentRef.setInput('activeRow', testData[0]);
+      expect(component.isRowActive(testData[0])).toBe(true);
+      expect(component.isRowActive(testData[1])).toBe(false);
+      expect(component.isRowActive(testData[2])).toBe(true);
+    });
+
     it('should leave active style CSS vars unset by default', () => {
       const host = fixture.nativeElement as HTMLElement;
       expect(host.style.getPropertyValue('--tn-table-active-bg')).toBe('');

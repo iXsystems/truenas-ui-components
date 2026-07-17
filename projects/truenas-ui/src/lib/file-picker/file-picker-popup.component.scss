@@ -152,7 +152,7 @@
   gap: 6px;
   margin-top: 4px;
   padding: 4px 8px;
-  background: rgba(211, 47, 47, 0.1);
+  background: color-mix(in srgb, var(--tn-error, #d32f2f) 10%, transparent);
   border-left: 3px solid var(--tn-error, #d32f2f);
   border-radius: 3px;
   font-size: 1rem;
@@ -194,12 +194,8 @@ tn-table {
     border-bottom: 1px solid var(--tn-lines);
   }
 
-  // Highlight selected rows with the same treatment as the table's active
-  // row: tinted background plus a primary indicator bar on the left.
-  ::ng-deep .tn-table__row:has(.file-name-cell.selected) {
-    background: var(--tn-bg3);
-    box-shadow: inset 3px 0 0 var(--tn-primary);
-  }
+  // Selected rows are highlighted through the table's own active-row styling
+  // (`activeWhen` input) — no DOM reach-in needed here.
 }
 
 .file-checkbox {

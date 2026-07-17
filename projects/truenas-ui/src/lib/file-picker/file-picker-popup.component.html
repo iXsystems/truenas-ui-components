@@ -6,7 +6,7 @@
         class="breadcrumb-segment"
         [class.current]="last"
         [disabled]="last"
-        [attr.aria-label]="segment.name === '…' ? 'Navigate to ' + segment.path : null"
+        [attr.aria-label]="segment.name === '…' || !segment.name ? 'Navigate to ' + segment.path : null"
         (click)="navigateToPath(segment.path)">
         {{ segment.name }}
       </button>
@@ -30,6 +30,7 @@
     [dataSource]="filteredFileItems()"
     [displayedColumns]="multiSelect() ? displayedColumns : displayedColumns.slice(1)"
     [clickable]="true"
+    [activeWhen]="isRowSelected"
     (rowClick)="onItemClick($event)"
     (rowDoubleClick)="onItemDoubleClick($event)">
 
@@ -69,17 +70,21 @@
                   spellcheck="false"
                   autocomplete="off"
                   [attr.aria-label]="creation.action.label + ' name'"
+                  [attr.aria-invalid]="creation.error ? true : null"
+                  [attr.aria-describedby]="creation.error ? inlineErrorId : null"
                   [class.error]="!!creation.error"
                   [disabled]="creation.loading"
+                  [value]="creation.name"
+                  (input)="onInlineCreationInput($event)"
                   (keydown)="onInlineCreationKeyDown($event)"
-                  (blur)="onInlineCreationBlur($event)">
+                  (blur)="onInlineCreationBlur()">
                 @if (creation.loading) {
-                  <tn-icon name="mdi-loading" class="creation-loading-icon" />
+                  <tn-icon name="mdi-loading" class="creation-loading-icon" aria-hidden="true" />
                 }
               </div>
               @if (creation.error) {
-                <div class="inline-create-error">
-                  <tn-icon name="mdi-alert-circle" class="error-icon" />
+                <div class="inline-create-error" role="alert" [id]="inlineErrorId">
+                  <tn-icon name="mdi-alert-circle" class="error-icon" aria-hidden="true" />
                   <span class="error-text">{{ creation.error }}</span>
                 </div>
               }
@@ -195,9 +200,11 @@
           [disabled]="!!inlineCreation()"
           (onClick)="onCreateAction(action)" />
       }
+      <!-- Disabled while the inline creation row is open: its blur auto-submit
+           would race the selection submit -->
       <tn-button
         label="Select"
-        [disabled]="selectedItems().length === 0 && !allowCurrentDirectorySelection()"
+        [disabled]="(selectedItems().length === 0 && !allowCurrentDirectorySelection()) || !!inlineCreation()"
         (onClick)="onSubmit()" />
     </div>
   </div>

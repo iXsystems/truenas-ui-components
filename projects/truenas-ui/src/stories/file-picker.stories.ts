@@ -161,7 +161,7 @@ startPath = input<string>('/mnt');
 \`\`\`typescript
 rootPath = input<string | undefined>(undefined);
 \`\`\`
-**Description:** Restrict navigation - users cannot navigate above this path.
+**Description:** Restrict navigation - users cannot navigate above this path. Defaults to \`/mnt\`. The confinement also applies to manually typed paths: entering a path outside the root emits a \`validation\` error instead of applying it.
 
 \`\`\`typescript
 fileExtensions = input<string[] | undefined>(undefined);
@@ -172,7 +172,7 @@ fileExtensions = input<string[] | undefined>(undefined);
 \`\`\`typescript
 allowManualInput = input<boolean>(true);
 \`\`\`
-**Description:** Allow users to type paths directly in the input field.
+**Description:** Allow users to type paths directly in the input field. Typed paths must stay within \`rootPath\`; clearing the field clears the selection.
 
 \`\`\`typescript
 placeholder = input<string>('Select file or folder');

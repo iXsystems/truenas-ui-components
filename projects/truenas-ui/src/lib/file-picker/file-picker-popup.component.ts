@@ -16,6 +16,18 @@ import { TruncatePathPipe } from '../pipes/truncate-path/truncate-path.pipe';
 import { TnTableComponent } from '../table/table.component';
 import { TnTableColumnDirective, TnHeaderCellDefDirective, TnCellDefDirective } from '../table-column/table-column.directive';
 
+/** Uniquifies the inline-creation error id across popup instances. */
+let nextInlineErrorId = 0;
+
+/** State of an open inline creation row. */
+interface InlineCreationState {
+  action: FilePickerCreateAction;
+  /** Name entered so far, mirrored from the input on every keystroke. */
+  name: string;
+  loading: boolean;
+  error?: string;
+}
+
 /** FileSystemItem decorated for display, plus the synthetic inline-create row. */
 interface DisplayedFileItem extends FileSystemItem {
   /** Dim only items with no interaction left. */
@@ -79,22 +91,41 @@ export class TnFilePickerPopupComponent implements AfterViewChecked {
   }
 
   /**
-   * Auto-focus the inline creation input whenever it is shown and idle.
-   * Runs after every view check on purpose: one-shot focus is fragile here —
-   * render scheduling differs between hosts, and browsers drop focus when a
-   * focused element (the trigger button, or the input while loading) becomes
-   * disabled. Retrying on each check self-heals; it settles as soon as the
-   * input holds focus and stops when the row closes.
+   * Requests a focus of the inline creation input on the next view check.
+   * Set when the row opens and when a failed attempt re-enables the input —
+   * the two moments the input either just entered the DOM or just lost focus
+   * to the `disabled` attribute. Cleared once the focus is scheduled, so
+   * focus is NOT permanently forced back: after an error the user can still
+   * click elsewhere without being trapped in the input.
+   */
+  private pendingCreationFocus = false;
+
+  /**
+   * Focus runs here rather than at the call sites because the input may not
+   * be in the DOM (or may still be disabled) until a later view check, and a
+   * re-render can replace the element after focus() was scheduled — render
+   * scheduling differs between hosts. So the request keeps retrying on each
+   * check and is cleared only once the input actually holds focus.
    */
   ngAfterViewChecked(): void {
+    if (!this.pendingCreationFocus) {return;}
+
     const creation = this.inlineCreation();
-    if (!creation || creation.loading) {return;}
+    if (!creation) {
+      this.pendingCreationFocus = false;
+      return;
+    }
+    if (creation.loading) {return;}
 
     const nameInput = (this.elementRef.nativeElement as HTMLElement)
       .querySelector<HTMLInputElement>('.inline-create-input');
-    if (nameInput && document.activeElement !== nameInput) {
-      setTimeout(() => nameInput.focus());
+    if (!nameInput) {return;}
+
+    if (document.activeElement === nameInput) {
+      this.pendingCreationFocus = false;
+      return;
     }
+    setTimeout(() => nameInput.focus());
   }
 
   itemClick = output<FileSystemItem>();
@@ -196,7 +227,8 @@ export class TnFilePickerPopupComponent implements AfterViewChecked {
       // blur it now so the browser's focus fixup doesn't fight the input
       // focus from ngAfterViewChecked
       (document.activeElement as HTMLElement | null)?.blur?.();
-      this.inlineCreation.set({ action, loading: false });
+      this.inlineCreation.set({ action, name: '', loading: false });
+      this.pendingCreationFocus = true;
       return;
     }
     this.createAction.emit({ actionId: action.id, parentPath: this.currentPath() });
@@ -205,30 +237,43 @@ export class TnFilePickerPopupComponent implements AfterViewChecked {
   /**
    * Inline creation state while a `create`-capable action's row is open.
    * The consumer's `create` callback does the real work; the row shows its
-   * rejection message as the inline error.
+   * rejection message as the inline error. The entered name lives here (not
+   * only in the DOM) so a listing re-render can't wipe it.
    */
-  inlineCreation = signal<{ action: FilePickerCreateAction; loading: boolean; error?: string } | null>(null);
+  inlineCreation = signal<InlineCreationState | null>(null);
 
-  async submitInlineCreation(name: string): Promise<void> {
+  /** Links the inline creation input to its error message for screen readers. */
+  inlineErrorId = `tn-inline-create-error-${nextInlineErrorId++}`;
+
+  async submitInlineCreation(): Promise<void> {
     const state = this.inlineCreation();
     if (!state || state.loading) {return;}
 
-    const trimmed = name.trim();
+    const trimmed = state.name.trim();
     if (!trimmed) {
       // Submitting an empty name abandons the row
       this.inlineCreation.set(null);
       return;
     }
 
-    this.inlineCreation.set({ ...state, loading: true, error: undefined });
+    const pending: InlineCreationState = { ...state, loading: true, error: undefined };
+    this.inlineCreation.set(pending);
     try {
       const createdPath = await state.action.create!(this.currentPath(), trimmed);
+      // Navigating away abandoned the row while the call was in flight —
+      // don't select a result the user already walked away from
+      if (this.inlineCreation() !== pending) {return;}
       this.inlineCreation.set(null);
       this.created.emit(createdPath);
     } catch (err: unknown) {
+      // Same abandonment check: a late rejection must not resurrect the row
+      // (in a different directory, no less)
+      if (this.inlineCreation() !== pending) {return;}
       const message = err instanceof Error ? err.message : 'Creation failed';
       // The row stays editable for retry; ngAfterViewChecked refocuses it
-      this.inlineCreation.set({ ...state, loading: false, error: message });
+      // once (the disabled attribute dropped focus during the attempt)
+      this.inlineCreation.set({ ...pending, loading: false, error: message });
+      this.pendingCreationFocus = true;
     }
   }
 
@@ -237,20 +282,35 @@ export class TnFilePickerPopupComponent implements AfterViewChecked {
     // would swallow typed spaces
     event.stopPropagation();
 
-    const inp = event.target as HTMLInputElement;
     if (event.key === 'Enter') {
       event.preventDefault();
-      void this.submitInlineCreation(inp.value);
+      void this.submitInlineCreation();
     } else if (event.key === 'Escape') {
       event.preventDefault();
       this.inlineCreation.set(null);
     }
   }
 
-  onInlineCreationBlur(event: Event): void {
+  /**
+   * Mirrors the typed name into the creation state and clears a shown error
+   * as soon as the name is edited, re-arming blur submit.
+   */
+  onInlineCreationInput(event: Event): void {
+    const state = this.inlineCreation();
+    if (!state) {return;}
+    const name = (event.target as HTMLInputElement).value;
+    this.inlineCreation.set({ ...state, name, error: undefined });
+  }
+
+  onInlineCreationBlur(): void {
+    // A failed attempt already showed its error — repeating the create call
+    // on every focus loss would loop (submit → error → refocus → blur → …).
+    // The user retries with Enter or by editing the name, or abandons with
+    // Escape / navigation.
+    if (this.inlineCreation()?.error) {return;}
+
     // Auto-submit on blur, matching inline-rename conventions
-    const inp = event.target as HTMLInputElement;
-    void this.submitInlineCreation(inp.value);
+    void this.submitInlineCreation();
   }
 
   onClearSelection(): void {
@@ -312,19 +372,11 @@ export class TnFilePickerPopupComponent implements AfterViewChecked {
     return this.selectedItems().includes(item.path);
   }
 
-  getRowClass = (row: FileSystemItem): string | string[] => {
-    const classes: string[] = [];
-
-    if (this.isSelected(row) && !row.disabled) {
-      classes.push('selected');
-    }
-
-    if (row.disabled) {
-      classes.push('disabled');
-    }
-
-    return classes;
-  }
+  /**
+   * Highlights selected rows through the table's supported active-row
+   * styling (`activeWhen`) instead of reaching into its DOM.
+   */
+  isRowSelected = (row: FileSystemItem): boolean => this.isSelected(row);
 
   getFileInfo(item: FileSystemItem): string {
     const parts: string[] = [];

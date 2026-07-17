@@ -131,6 +131,16 @@ export class TnTableComponent<T = unknown> implements OnInit {
   activeRow = input<T | null>(null);
 
   /**
+   * Optional predicate marking rows as active, in addition to `activeRow`.
+   * Use when several rows can be active at once (e.g. multi-selection
+   * highlighting) or when matching by key rather than by reference. Active
+   * rows get the same `tn-table__row--active` styling and, when `clickable`,
+   * `aria-selected`. Re-evaluated on each change detection, so it may depend
+   * on signals — keep it cheap and pure.
+   */
+  activeWhen = input<((row: T) => boolean) | undefined>(undefined);
+
+  /**
    * Overrides the active-row background color. Accepts any CSS color value
    * (`#hex`, `rgb()`, `var(--token)`). Defaults to `--tn-bg3` when null.
    */
@@ -166,7 +176,12 @@ export class TnTableComponent<T = unknown> implements OnInit {
   /** Emits the row when a clickable row is activated (click or Enter/Space). */
   rowClick = output<T>();
 
-  /** Emits the row when a clickable row is double-clicked. */
+  /**
+   * Emits the row when a clickable row is double-clicked. Double-click has no
+   * keyboard equivalent (Enter/Space emit `rowClick`), so consumers must
+   * provide an accessible alternative for the same action — e.g. a dedicated
+   * button inside the row, as the file picker does for entering directories.
+   */
   rowDoubleClick = output<T>();
 
   // --- Content queries ---
@@ -354,6 +369,7 @@ export class TnTableComponent<T = unknown> implements OnInit {
   // --- Active row ---
 
   isRowActive(row: T): boolean {
+    if (this.activeWhen()?.(row)) { return true; }
     const active = this.activeRow();
     return active !== null && active === row;
   }

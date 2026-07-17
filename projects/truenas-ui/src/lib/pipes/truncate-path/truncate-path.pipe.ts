@@ -1,7 +1,7 @@
 import type { PipeTransform } from '@angular/core';
 import { Pipe } from '@angular/core';
 import type { PathSegment } from '../../file-picker/file-picker.interfaces';
-import { isPathWithinRoot } from '../../file-picker/path-utils';
+import { isPathWithinRoot, normalizeRootPath } from '../../file-picker/path-utils';
 
 /**
  * Maximum directory buttons shown after the root segment before the middle of
@@ -15,24 +15,26 @@ const MAX_VISIBLE_DIRS = 4;
 })
 export class TruncatePathPipe implements PipeTransform {
   transform(path: string, rootPath = '/mnt'): PathSegment[] {
+    const root = normalizeRootPath(rootPath);
+
     // The root is always the first segment. Its leading slash is rendered by
     // the breadcrumb as a separator, so the name omits it (e.g. "mnt"),
     // reading as "/ mnt / showcase"
-    const segments: PathSegment[] = [{ name: rootPath.replace(/^\//, ''), path: rootPath }];
+    const segments: PathSegment[] = [{ name: root.replace(/^\//, ''), path: root }];
 
-    if (!path || path === rootPath) {
+    if (!path || path === root) {
       return segments;
     }
 
-    if (!isPathWithinRoot(path, rootPath)) {
+    if (!isPathWithinRoot(path, root)) {
       // Path escaped the root — show just its leaf after the root segment
       segments.push({ name: path.substring(path.lastIndexOf('/') + 1), path });
       return segments;
     }
 
     // One clickable segment per directory between the root and the current path
-    const relativePath = rootPath === '/' ? path : path.substring(rootPath.length);
-    let segmentPath = rootPath;
+    const relativePath = root === '/' ? path : path.substring(root.length);
+    let segmentPath = root;
     for (const name of relativePath.split('/').filter(Boolean)) {
       segmentPath = segmentPath === '/' ? `/${name}` : `${segmentPath}/${name}`;
       segments.push({ name, path: segmentPath });

@@ -384,6 +384,16 @@ describe('TnFilePickerPopupComponent', () => {
       expect(selectedCells.length).toBe(1);
       expect((selectedCells[0].nativeElement as HTMLElement).textContent).toContain('documents');
     });
+
+    it('should highlight selected rows through the table active-row styling', () => {
+      fixture.componentRef.setInput('selectedItems', ['/mnt/tank/documents']);
+      fixture.detectChanges();
+
+      const activeRows = fixture.debugElement.queryAll(By.css('.tn-table__row--active'));
+      expect(activeRows.length).toBe(1);
+      expect((activeRows[0].nativeElement as HTMLElement).textContent).toContain('documents');
+      expect((activeRows[0].nativeElement as HTMLElement).getAttribute('aria-selected')).toBe('true');
+    });
   });
 
   describe('Navigation Affordance', () => {
@@ -508,6 +518,12 @@ describe('TnFilePickerPopupComponent', () => {
       return fixture.debugElement.query(By.css('.footer-actions button')).nativeElement as HTMLButtonElement;
     }
 
+    function typeName(name: string): void {
+      const input = inlineInput()!;
+      input.value = name;
+      input.dispatchEvent(new Event('input'));
+    }
+
     it('should open the inline row instead of emitting createAction', () => {
       const actionSpy = jest.fn();
       component.createAction.subscribe(actionSpy);
@@ -541,9 +557,8 @@ describe('TnFilePickerPopupComponent', () => {
       actionButton().click();
       fixture.detectChanges();
 
-      const input = inlineInput()!;
-      input.value = ' new-folder ';
-      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      typeName(' new-folder ');
+      inlineInput()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
       await fixture.whenStable();
       fixture.detectChanges();
 
@@ -558,7 +573,8 @@ describe('TnFilePickerPopupComponent', () => {
       actionButton().click();
       fixture.detectChanges();
 
-      await component.submitInlineCreation('documents');
+      typeName('documents');
+      await component.submitInlineCreation();
       fixture.detectChanges();
 
       const error = fixture.debugElement.query(By.css('.inline-create-error'));
@@ -582,9 +598,8 @@ describe('TnFilePickerPopupComponent', () => {
       actionButton().click();
       fixture.detectChanges();
 
-      const input = inlineInput()!;
-      input.value = '   ';
-      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      typeName('   ');
+      inlineInput()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
       fixture.detectChanges();
 
       expect(inlineInput()).toBeNull();
@@ -599,6 +614,154 @@ describe('TnFilePickerPopupComponent', () => {
       fixture.detectChanges();
 
       expect(inlineInput()).toBeNull();
+    });
+
+    it('should keep the typed name when the listing re-renders', () => {
+      actionButton().click();
+      fixture.detectChanges();
+
+      typeName('new-folder');
+
+      // e.g. a background refresh replacing the items while the row is open
+      fixture.componentRef.setInput('fileItems', [
+        { path: '/mnt/tank/other', name: 'other', type: 'folder' },
+      ]);
+      fixture.detectChanges();
+
+      expect(inlineInput()!.value).toBe('new-folder');
+    });
+
+    it('should not resurrect the row when a pending create fails after navigating away', async () => {
+      let reject!: (err: Error) => void;
+      create.mockImplementation(() => new Promise((_, rej) => { reject = rej; }));
+
+      actionButton().click();
+      fixture.detectChanges();
+
+      typeName('new-folder');
+      const submitted = component.submitInlineCreation();
+      component.navigateToPath('/mnt');
+      fixture.detectChanges();
+
+      reject(new Error('Permission denied'));
+      await submitted;
+      fixture.detectChanges();
+
+      expect(inlineInput()).toBeNull();
+      expect(fixture.debugElement.query(By.css('.inline-create-error'))).toBeNull();
+    });
+
+    it('should not emit created when a pending create resolves after navigating away', async () => {
+      let resolve!: (path: string) => void;
+      create.mockImplementation(() => new Promise((res) => { resolve = res; }));
+      const createdSpy = jest.fn();
+      component.created.subscribe(createdSpy);
+
+      actionButton().click();
+      fixture.detectChanges();
+
+      typeName('new-folder');
+      const submitted = component.submitInlineCreation();
+      component.navigateToPath('/mnt');
+      fixture.detectChanges();
+
+      resolve('/mnt/tank/new-folder');
+      await submitted;
+
+      expect(createdSpy).not.toHaveBeenCalled();
+    });
+
+    it('should auto-submit a non-empty name on blur', async () => {
+      create.mockResolvedValue('/mnt/tank/new-folder');
+      const createdSpy = jest.fn();
+      component.created.subscribe(createdSpy);
+
+      actionButton().click();
+      fixture.detectChanges();
+
+      typeName('new-folder');
+      inlineInput()!.dispatchEvent(new Event('blur'));
+      await fixture.whenStable();
+
+      expect(create).toHaveBeenCalledWith('/mnt/tank', 'new-folder');
+      expect(createdSpy).toHaveBeenCalledWith('/mnt/tank/new-folder');
+    });
+
+    it('should not repeat a failed create call on blur', async () => {
+      create.mockImplementation(() => Promise.reject(new Error('Permission denied')));
+
+      actionButton().click();
+      fixture.detectChanges();
+
+      typeName('documents');
+      await component.submitInlineCreation();
+      fixture.detectChanges();
+      expect(create).toHaveBeenCalledTimes(1);
+
+      inlineInput()!.dispatchEvent(new Event('blur'));
+      await fixture.whenStable();
+
+      // The error already told the user — blurring must not loop the call
+      expect(create).toHaveBeenCalledTimes(1);
+      expect(inlineInput()).not.toBeNull();
+    });
+
+    it('should clear the error when the name is edited, re-arming blur submit', async () => {
+      create.mockImplementation(() => Promise.reject(new Error('Permission denied')));
+
+      actionButton().click();
+      fixture.detectChanges();
+
+      typeName('documents');
+      await component.submitInlineCreation();
+      fixture.detectChanges();
+      expect(fixture.debugElement.query(By.css('.inline-create-error'))).not.toBeNull();
+
+      typeName('documents-2');
+      fixture.detectChanges();
+
+      expect(fixture.debugElement.query(By.css('.inline-create-error'))).toBeNull();
+
+      create.mockResolvedValue('/mnt/tank/documents-2');
+      inlineInput()!.dispatchEvent(new Event('blur'));
+      await fixture.whenStable();
+
+      expect(create).toHaveBeenCalledTimes(2);
+      expect(create).toHaveBeenLastCalledWith('/mnt/tank', 'documents-2');
+    });
+
+    it('should announce the error and link it to the input', async () => {
+      create.mockImplementation(() => Promise.reject(new Error('Permission denied')));
+
+      actionButton().click();
+      fixture.detectChanges();
+
+      typeName('documents');
+      await component.submitInlineCreation();
+      fixture.detectChanges();
+
+      const error = fixture.debugElement.query(By.css('.inline-create-error'));
+      const input = inlineInput()!;
+      expect((error.nativeElement as HTMLElement).getAttribute('role')).toBe('alert');
+      expect(input.getAttribute('aria-invalid')).toBe('true');
+      expect(input.getAttribute('aria-describedby'))
+        .toBe((error.nativeElement as HTMLElement).id);
+    });
+
+    it('should disable Select while the inline row is open', () => {
+      const selectButton = (): HTMLButtonElement => fixture.debugElement
+        .queryAll(By.css('.footer-actions button'))
+        .map(button => button.nativeElement as HTMLButtonElement)
+        .find(button => button.textContent?.includes('Select'))!;
+
+      fixture.detectChanges();
+      expect(selectButton().disabled).toBe(false);
+
+      actionButton().click();
+      fixture.detectChanges();
+
+      // Its click would race the row's blur auto-submit
+      expect(selectButton().disabled).toBe(true);
     });
   });
 
