@@ -1,7 +1,7 @@
 import type { PipeTransform } from '@angular/core';
 import { Pipe } from '@angular/core';
-import type { PathSegment } from '../../file-picker/file-picker.interfaces';
-import { isPathWithinRoot, normalizeRootPath } from '../../file-picker/path-utils';
+import type { PathSegment } from './file-picker.interfaces';
+import { isPathWithinRoot, normalizeRootPath } from './path-utils';
 
 /**
  * Maximum directory buttons shown after the root segment before the middle of

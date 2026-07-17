@@ -414,16 +414,6 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     this.selectionChange.emit(this.multiSelect() ? this.selectedItems() : path);
   }
 
-  private updateSelectionFromItems(): void {
-    // Clear any existing error state since popup selections are valid
-    this.hasError.set(false);
-
-    const selected = this.selectedItems();
-    this.selectedPath.set(selected.join(', '));
-    this.onChange(this.multiSelect() ? selected : selected[0] || '');
-    this.selectionChange.emit(this.multiSelect() ? selected : selected[0] || '');
-  }
-
   private emitError(type: FilePickerError['type'], message: string, path?: string): void {
     this.hasError.set(true);
     this.error.emit({ type, message, path });

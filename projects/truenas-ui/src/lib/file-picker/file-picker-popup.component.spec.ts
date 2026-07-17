@@ -68,20 +68,6 @@ describe('TnFilePickerPopupComponent', () => {
   });
 
   describe('File Size Formatting', () => {
-    it('should format file sizes correctly using the existing method (backward compatibility)', () => {
-      expect(component.formatFileSize(1024)).toBe('1 KB');
-      expect(component.formatFileSize(1048576)).toBe('1 MB');
-      expect(component.formatFileSize(1073741824)).toBe('1 GB');
-      expect(component.formatFileSize(268435456)).toBe('256 MB');
-      expect(component.formatFileSize(0)).toBe('0 B');
-    });
-
-    it('should handle edge cases in file size formatting', () => {
-      expect(component.formatFileSize(512)).toBe('512 B');
-      expect(component.formatFileSize(1536)).toBe('1.5 KB'); // 1.5KB
-      expect(component.formatFileSize(2684354560)).toBe('2.5 GB'); // 2.5GB
-    });
-
     it('should use FileSizePipe in the template for proper binary formatting', () => {
       const fileSizePipe = new FileSizePipe();
       
@@ -302,13 +288,6 @@ describe('TnFilePickerPopupComponent', () => {
       expect(component.getZfsBadge({ type: 'mountpoint' } as FileSystemItem)).toBe('MP');
     });
 
-    it('should return correct type display names', () => {
-      expect(component.getTypeDisplayName('file')).toBe('File');
-      expect(component.getTypeDisplayName('folder')).toBe('Folder');
-      expect(component.getTypeDisplayName('dataset')).toBe('Dataset');
-      expect(component.getTypeDisplayName('zvol')).toBe('Zvol');
-      expect(component.getTypeDisplayName('mountpoint')).toBe('Mount Point');
-    });
   });
 
   describe('Event Handling', () => {

@@ -6,13 +6,13 @@ import type {
   FileSystemItem, FileSystemItemType, FilePickerMode, FilePickerCreateAction, FilePickerCreateActionEvent
 } from './file-picker.interfaces';
 import { allowsCurrentDirectorySelection, getSelectableTypes } from './file-picker.utils';
+import { TruncatePathPipe } from './truncate-path.pipe';
 import { TnButtonComponent } from '../button/button.component';
 import { registerTruenasIcons } from '../custom-icons/generated-icons';
 import { libIconMarker, tnIconMarker } from '../icon/icon-marker';
 import { TnIconRegistryService } from '../icon/icon-registry.service';
 import { TnIconComponent } from '../icon/icon.component';
 import { FileSizePipe } from '../pipes/file-size/file-size.pipe';
-import { TruncatePathPipe } from '../pipes/truncate-path/truncate-path.pipe';
 import { TnTableComponent } from '../table/table.component';
 import { TnTableColumnDirective, TnHeaderCellDefDirective, TnCellDefDirective } from '../table-column/table-column.directive';
 
@@ -377,41 +377,6 @@ export class TnFilePickerPopupComponent implements AfterViewChecked {
    * styling (`activeWhen`) instead of reaching into its DOM.
    */
   isRowSelected = (row: FileSystemItem): boolean => this.isSelected(row);
-
-  getFileInfo(item: FileSystemItem): string {
-    const parts: string[] = [];
-    
-    if (item.size !== undefined) {
-      parts.push(this.formatFileSize(item.size));
-    }
-    
-    if (item.modified) {
-      parts.push(item.modified.toLocaleDateString());
-    }
-    
-    return parts.join(' • ');
-  }
-
-  formatFileSize(bytes: number): string {
-    if (bytes === 0) {return '0 B';}
-    
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-  }
-
-  getTypeDisplayName(type: string): string {
-    switch (type) {
-      case 'file': return 'File';
-      case 'folder': return 'Folder';
-      case 'dataset': return 'Dataset';
-      case 'zvol': return 'Zvol';
-      case 'mountpoint': return 'Mount Point';
-      default: return type;
-    }
-  }
 
   formatDate(date: Date): string {
     const now = new Date();
