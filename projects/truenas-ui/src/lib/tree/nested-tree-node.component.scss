@@ -1,5 +1,8 @@
 
-.tn-nested-tree-node-wrapper {
+// Host layout. `:host` (not the `.tn-nested-tree-node-wrapper` host class):
+// under Emulated encapsulation a plain class selector only matches elements
+// INSIDE the template, never the host — the host stayed `display: inline`.
+:host {
   display: block;
   width: 100%;
 }

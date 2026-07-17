@@ -1,9 +1,9 @@
-:host {
-  display: block;
-  width: 100%;
-}
-
+// Host layout. Set on the host CLASS, not `:host`: the component uses
+// ViewEncapsulation.None, under which Angular leaves `:host` untransformed so it
+// matches nothing — the host would fall back to `display: inline`, and its border
+// would fragment into stray tick marks above/below the block-level rows.
 .tn-tree {
+  display: block;
   width: 100%;
   background-color: var(--tn-bg1);
   border: 1px solid var(--tn-lines);
