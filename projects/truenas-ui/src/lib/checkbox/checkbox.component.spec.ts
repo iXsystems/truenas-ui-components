@@ -103,6 +103,17 @@ describe('TnCheckboxComponent', () => {
       expect(getLabelText()).toBeNull();
     });
 
+    it('should expose a hidden label as aria-label so the input stays named', () => {
+      host.hideLabel.set(true);
+      fixture.detectChanges();
+
+      expect(getInput().getAttribute('aria-label')).toBe('Accept');
+    });
+
+    it('should not set aria-label when the label is visible as text', () => {
+      expect(getInput().getAttribute('aria-label')).toBeNull();
+    });
+
     it('should render projected content via tnCheckboxLabel', () => {
       const text = getLabelText('checkbox-projected');
       expect(text?.textContent).toContain('I agree to the');

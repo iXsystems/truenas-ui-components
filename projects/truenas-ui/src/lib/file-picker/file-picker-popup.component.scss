@@ -198,17 +198,6 @@ tn-table {
   // (`activeWhen` input) — no DOM reach-in needed here.
 }
 
-.file-checkbox {
-  display: flex;
-  align-items: center;
-
-  input[type="checkbox"] {
-    margin: 0;
-    width: 16px;
-    height: 16px;
-  }
-}
-
 // File name cell styling
 .file-name-cell {
   display: flex;

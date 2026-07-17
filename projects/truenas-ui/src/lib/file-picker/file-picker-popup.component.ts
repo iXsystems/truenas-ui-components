@@ -8,6 +8,7 @@ import type {
 import { allowsCurrentDirectorySelection, getSelectableTypes } from './file-picker.utils';
 import { TruncatePathPipe } from './truncate-path.pipe';
 import { TnButtonComponent } from '../button/button.component';
+import { TnCheckboxComponent } from '../checkbox/checkbox.component';
 import { registerTruenasIcons } from '../custom-icons/generated-icons';
 import { libIconMarker, tnIconMarker } from '../icon/icon-marker';
 import { TnIconRegistryService } from '../icon/icon-registry.service';
@@ -42,6 +43,7 @@ interface DisplayedFileItem extends FileSystemItem {
   imports: [
     TnIconComponent,
     TnButtonComponent,
+    TnCheckboxComponent,
     TnTableComponent,
     TnTableColumnDirective,
     TnHeaderCellDefDirective,

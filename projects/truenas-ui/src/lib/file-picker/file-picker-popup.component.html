@@ -42,12 +42,13 @@
       </ng-template>
       <ng-template let-item tnCellDef>
         @if (!item.inlineCreate) {
-          <input
-            type="checkbox"
+          <tn-checkbox
+            [hideLabel]="true"
+            [label]="'Select ' + item.name"
             [checked]="isSelected(item)"
             [disabled]="!!item.disabled"
             (click)="$event.stopPropagation()"
-            (change)="onItemClick(item)">
+            (change)="onItemClick(item)" />
         }
       </ng-template>
       </ng-container>

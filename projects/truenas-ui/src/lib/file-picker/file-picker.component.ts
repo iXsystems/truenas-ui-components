@@ -110,7 +110,6 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
   ngOnInit(): void {
     this.currentPath.set(this.clampToRoot(this.startPath()));
-    this.selectedPath.set(this.multiSelect() ? '' : '');
   }
 
   ngOnDestroy(): void {
@@ -299,6 +298,11 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
    * confirm with Select or keep browsing. Paths outside `rootPath` are
    * rejected with a `validation` error — the picker's value honors the same
    * confinement as navigation and manual input.
+   *
+   * This is a single-path operation: like a manually typed path, it
+   * REPLACES any pending multi-selection rather than appending to it —
+   * the intent is to focus the one path (e.g. a just-created item), not to
+   * merge it into picks the user may have abandoned.
    */
   async selectPath(path: string): Promise<void> {
     if (!isPathWithinRoot(path, this.effectiveRootPath())) {
@@ -358,7 +362,6 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       this.clearStalePendingSelection(directoryChanged);
       this.pathChange.emit(path);
     } catch (err: unknown) {
-      console.error('❌ Error loading directory:', err);
       this.emitError('navigation', err instanceof Error ? err.message : 'Failed to load directory', path);
     } finally {
       this.loading.set(false);
@@ -396,6 +399,12 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     ];
   }
 
+  /**
+   * Applies `path` as the picker's whole value. In multi-select this
+   * replaces the selection with the single path — both callers (typed
+   * paths, `selectPath()`) express one deliberate choice, so appending
+   * would be the surprising behavior.
+   */
   private updateSelection(path: string): void {
     // Clear any existing error state since popup selections are valid
     this.hasError.set(false);
