@@ -1,8 +1,8 @@
 import { DataSource } from '@angular/cdk/collections';
 import type { CollectionViewer } from '@angular/cdk/collections';
 import type { Observable } from 'rxjs';
-import { BehaviorSubject, Subject, merge } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, map, takeUntil } from 'rxjs/operators';
+import { BehaviorSubject, merge } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 
 /**
  * Data source for nested trees (`tn-nested-tree-node`).
@@ -15,14 +15,21 @@ export class TnNestedTreeDataSource<T extends { children?: T[] }> extends DataSo
   /** When set, `filter(query)` re-renders the tree from `filterPredicate(data, query)`. */
   filterPredicate?: (data: T[], query: string) => T[];
 
-  /** When set, incoming `data` is sorted recursively before rendering. */
+  /**
+   * When set, incoming `data` is sorted recursively before rendering.
+   *
+   * Note: sorting REWRITES `children` arrays on the caller's node objects
+   * (a new sorted array is assigned per node). Node object identity is
+   * preserved — deliberately, since tree controls track expansion state by
+   * node identity — but don't pass an object graph that is shared with code
+   * relying on the original child order.
+   */
   sortComparer?: (a: T, b: T) => number;
 
   private filterValue = '';
   private readonly filterChanged$ = new BehaviorSubject<string>('');
   private readonly _data = new BehaviorSubject<T[]>([]);
   private readonly _filteredData = new BehaviorSubject<T[]>([]);
-  private readonly disconnect$ = new Subject<void>();
 
   get data(): T[] {
     return this._data.value;
@@ -52,22 +59,25 @@ export class TnNestedTreeDataSource<T extends { children?: T[] }> extends DataSo
     );
   }
 
-  disconnect(): void {
-    this.disconnect$.next();
-    this.disconnect$.complete();
-  }
+  disconnect(): void {}
 
   /** Filters the tree using `filterPredicate` (debounced). No-op until `filterPredicate` is set. */
   filter(query: string): void {
     this.filterChanged$.next(query);
   }
 
+  /**
+   * Deliberately NOT torn down in `disconnect()`: CdkTree disconnects the
+   * datasource when the tree is destroyed, but the same instance may be
+   * reconnected (e.g. a tree behind an `@if`), and filtering must survive that.
+   * The pipeline only references the datasource's own subjects, so it holds no
+   * external resources and is collected with the instance.
+   */
   private detectFilterChanges(): void {
     this.filterChanged$.pipe(
       filter(() => !!this.filterPredicate),
       debounceTime(200),
       distinctUntilChanged(),
-      takeUntil(this.disconnect$),
     ).subscribe((changedValue) => {
       if (this.filterValue === changedValue || !this.filterPredicate) {
         return;

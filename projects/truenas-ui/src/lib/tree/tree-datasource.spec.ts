@@ -61,6 +61,17 @@ describe('TnNestedTreeDataSource', () => {
     tick(200);
     expect(latest(dataSource).map((node) => node.name)).toEqual(['banana', 'apple']);
   }));
+
+  it('keeps filtering functional after a disconnect/reconnect cycle', fakeAsync(() => {
+    const dataSource = new TnNestedTreeDataSource(makeData());
+    dataSource.filterPredicate = (data, query) => data.filter((node) => node.name.includes(query));
+
+    dataSource.disconnect();
+
+    dataSource.filter('app');
+    tick(200);
+    expect(latest(dataSource).map((node) => node.name)).toEqual(['apple']);
+  }));
 });
 
 describe('TnTreeFlatDataSource', () => {
@@ -119,4 +130,35 @@ describe('TnTreeFlatDataSource', () => {
     tick(200);
     expect(latest(dataSource).map((node) => node.name)).toEqual(['banana', 'apple']);
   }));
+
+  it('keeps filtering functional after a disconnect/reconnect cycle', fakeAsync(() => {
+    const { dataSource } = makeDataSource();
+    dataSource.data = makeData();
+    dataSource.filterPredicate = (data, query) => data.filter((node) => node.name.includes(query));
+
+    dataSource.disconnect();
+
+    dataSource.filter('app');
+    tick(200);
+    expect(latest(dataSource).map((node) => node.name)).toEqual(['apple']);
+  }));
+
+  it('accepts a tree control with a custom trackBy key type', () => {
+    const treeControl = createFlatTreeControl<ExampleFlatNode, string>(
+      (node) => node.level,
+      (node) => node.expandable,
+      { trackBy: (node) => node.name },
+    );
+    const flattener = new TnTreeFlattener<ExampleNode, ExampleFlatNode>(
+      (node, level) => ({ name: node.name, level, expandable: !!node.children?.length }),
+      (node) => node.level,
+      (node) => node.expandable,
+      (node) => node.children,
+    );
+    const dataSource = new TnTreeFlatDataSource<ExampleNode, ExampleFlatNode, string>(treeControl, flattener);
+    dataSource.data = makeData();
+
+    treeControl.expand(treeControl.dataNodes[0]);
+    expect(treeControl.isExpanded(treeControl.dataNodes[0])).toBe(true);
+  });
 });

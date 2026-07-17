@@ -2,8 +2,8 @@ import { DataSource } from '@angular/cdk/collections';
 import { CdkTree, CdkTreeModule } from '@angular/cdk/tree';
 import { ChangeDetectorRef, IterableDiffers, ViewContainerRef, Component, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
 import type { Observable} from 'rxjs';
-import { BehaviorSubject, Subject, merge } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, map, takeUntil } from 'rxjs/operators';
+import { BehaviorSubject, merge } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { TnTestIdDirective } from '../test-id';
 import type { TnTreeExpansion } from './tree-expansion.interface';
 
@@ -55,7 +55,7 @@ export class TnTreeFlattener<T, F> {
  * (and call `filter(query)`) and/or `sortComparer`. Both are opt-in; when unset
  * the datasource behaves exactly as before.
  */
-export class TnTreeFlatDataSource<T, F> extends DataSource<F> {
+export class TnTreeFlatDataSource<T, F, K = F> extends DataSource<F> {
   /** When set, `filter(query)` re-renders the tree from `filterPredicate(data, query)`. */
   filterPredicate?: (data: T[], query: string) => T[];
 
@@ -68,10 +68,9 @@ export class TnTreeFlatDataSource<T, F> extends DataSource<F> {
   private _filteredData = new BehaviorSubject<T[]>([]);
   private filterValue = '';
   private readonly filterChanged$ = new BehaviorSubject<string>('');
-  private readonly disconnect$ = new Subject<void>();
 
   constructor(
-    private _treeControl: TnTreeExpansion<F>,
+    private _treeControl: TnTreeExpansion<F, K>,
     private _treeFlattener: TnTreeFlattener<T, F>
   ) {
     super();
@@ -87,9 +86,9 @@ export class TnTreeFlatDataSource<T, F> extends DataSource<F> {
     this.flattenData();
   }
 
-  /** The currently filtered (unflattened) data; equals `data` until `filter()` is used. */
+  /** The currently filtered (unflattened) data; equals `data` while no filter query is active. */
   get filteredData(): T[] {
-    return this._filteredData.value;
+    return this.filterValue ? this._filteredData.value : this.data;
   }
 
   connect(): Observable<F[]> {
@@ -102,10 +101,7 @@ export class TnTreeFlatDataSource<T, F> extends DataSource<F> {
     }));
   }
 
-  disconnect() {
-    this.disconnect$.next();
-    this.disconnect$.complete();
-  }
+  disconnect() {}
 
   /** Filters the tree using `filterPredicate` (debounced). No-op until `filterPredicate` is set. */
   filter(query: string): void {
@@ -119,12 +115,18 @@ export class TnTreeFlatDataSource<T, F> extends DataSource<F> {
     this._treeControl.dataNodes = this._flattenedData.value;
   }
 
+  /**
+   * Deliberately NOT torn down in `disconnect()`: CdkTree disconnects the
+   * datasource when the tree is destroyed, but the same instance may be
+   * reconnected (e.g. a tree behind an `@if`), and filtering must survive that.
+   * The pipeline only references the datasource's own subjects, so it holds no
+   * external resources and is collected with the instance.
+   */
   private detectFilterChanges(): void {
     this.filterChanged$.pipe(
       filter(() => !!this.filterPredicate),
       debounceTime(200),
       distinctUntilChanged(),
-      takeUntil(this.disconnect$),
     ).subscribe((changedValue) => {
       if (this.filterValue === changedValue || !this.filterPredicate) {
         return;

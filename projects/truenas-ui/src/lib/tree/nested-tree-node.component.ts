@@ -39,6 +39,10 @@ export class TnNestedTreeNodeComponent<T, K = T> extends CdkNestedTreeNode<T, K>
   /**
    * Suppresses the built-in toggle button (and its alignment spacer) so the
    * consumer can render a fully custom toggle in the projected content.
+   *
+   * The built-in button is the only keyboard/AT-operable expand control this
+   * component guarantees — when hiding it, the projected replacement must be
+   * an accessible control (a real button with an aria-label, not a bare icon).
    */
   readonly hideToggle = input(false, { transform: booleanAttribute });
 
@@ -135,6 +139,9 @@ export class TnNestedTreeNodeComponent<T, K = T> extends CdkNestedTreeNode<T, K>
     } else {
       this._tree.toggle(this.data);
     }
+    // Mirrors CdkTreeNodeToggle's focus handling. `_keyManager` is a CDK
+    // underscore member, so a CDK upgrade may rename it — the optional call
+    // degrades to "focus not moved" rather than breaking the toggle.
     this._tree._keyManager?.focusItem(this);
   }
 }

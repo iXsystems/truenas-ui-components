@@ -99,6 +99,10 @@ export class TnTreeNodeHarness extends ComponentHarness {
   /**
    * Toggles the node together with all of its descendants (Alt+click on the
    * built-in nested-node toggle).
+   *
+   * Only nested nodes honor the Alt modifier — on a flat node the row's
+   * `cdkTreeNodeToggle` is not Alt-aware, so this degrades to a plain
+   * single-level toggle.
    */
   async toggleWithDescendants(): Promise<void> {
     await (await this.getToggle()).click({ alt: true });
