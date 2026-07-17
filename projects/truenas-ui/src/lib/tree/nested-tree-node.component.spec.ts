@@ -38,9 +38,9 @@ const dataset: ExampleNode[] = [
 
       <tn-nested-tree-node
         *cdkTreeNodeDef="let node; when: hasChild"
-        [testId]="node.name"
+        [testId]="withNodeTestIds ? node.name : undefined"
         [toggleAriaLabel]="'Toggle ' + node.name"
-        [toggleTestId]="['toggle', node.name]"
+        [toggleTestId]="withExplicitToggleTestIds ? ['custom-toggle', node.name] : undefined"
         [hideToggle]="hideToggle"
       >
         {{ node.name }}
@@ -51,6 +51,8 @@ const dataset: ExampleNode[] = [
 })
 class HostComponent {
   hideToggle = false;
+  withNodeTestIds = true;
+  withExplicitToggleTestIds = false;
 
   readonly treeControl = createNestedTreeControl<ExampleNode>((node) => node.children);
   readonly dataSource = new TnNestedTreeDataSource<ExampleNode>(dataset);
@@ -98,11 +100,29 @@ describe('TnNestedTreeNodeComponent', () => {
     expect(container.classList).toContain('tn-tree-invisible');
   });
 
-  it('renders the built-in toggle with the configured aria-label and test id', () => {
+  it('renders the built-in toggle with the configured aria-label and a test id derived from the node testId', () => {
     const toggle = toggleButton('pool');
     expect(toggle).toBeTruthy();
+    expect(toggle?.getAttribute('data-testid')).toBe('button-toggle-pool');
     expect(toggle?.getAttribute('aria-label')).toBe('Toggle pool');
     expect(toggle?.getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('prefers an explicit toggleTestId over the derived one', () => {
+    host.withExplicitToggleTestIds = true;
+    fixture.detectChanges();
+
+    expect(toggleButton('pool')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="button-custom-toggle-pool"]')).toBeTruthy();
+  });
+
+  it('renders no toggle test id when the node has no testId either', () => {
+    host.withNodeTestIds = false;
+    fixture.detectChanges();
+
+    const toggle = fixture.nativeElement.querySelector('.tn-nested-tree-node__toggle');
+    expect(toggle).toBeTruthy();
+    expect(toggle?.hasAttribute('data-testid')).toBe(false);
   });
 
   it('expands one level on plain click', () => {

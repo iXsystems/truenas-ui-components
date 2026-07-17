@@ -376,10 +376,12 @@ export const FilterableNestedTree: Story = {
             {{ node.name }}
           </tn-nested-tree-node>
 
+          <!-- No toggleTestId needed: it derives from the node's testId
+               (button-toggle-<name>) -->
           <tn-nested-tree-node
             *cdkTreeNodeDef="let node; when: hasChild"
+            [testId]="node.name"
             [toggleAriaLabel]="'Toggle ' + node.name"
-            [toggleTestId]="['toggle', node.name]"
           >
             <tn-icon [name]="node.type === 'folder' ? 'folder' : 'file'" library="mdi" size="sm"></tn-icon>
             {{ node.name }}

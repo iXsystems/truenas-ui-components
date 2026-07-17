@@ -10,7 +10,7 @@
         type="button"
         tabindex="-1"
         tnTestIdType="button"
-        [tnTestId]="toggleTestId()"
+        [tnTestId]="resolvedToggleTestId()"
         [class.tn-nested-tree-node__toggle--expanded]="isExpanded"
         [attr.aria-label]="toggleAriaLabel()"
         (click)="toggleNode($event); $event.stopPropagation()"

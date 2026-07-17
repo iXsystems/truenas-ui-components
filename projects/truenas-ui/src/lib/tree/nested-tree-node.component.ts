@@ -1,8 +1,8 @@
 import { CdkTree } from '@angular/cdk/tree';
 import { CdkNestedTreeNode, CdkTreeNode, CDK_TREE_NODE_OUTLET_NODE } from '@angular/cdk/tree';
-import { ElementRef, ChangeDetectorRef, Component, ChangeDetectionStrategy, DestroyRef, ViewEncapsulation, inject, input, booleanAttribute } from '@angular/core';
+import { ElementRef, ChangeDetectorRef, Component, ChangeDetectionStrategy, DestroyRef, ViewEncapsulation, computed, inject, input, booleanAttribute } from '@angular/core';
 import { TnIconComponent } from '../icon/icon.component';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, scopeTestId } from '../test-id';
 import type { TnTestIdValue } from '../test-id';
 
 @Component({
@@ -33,7 +33,12 @@ export class TnNestedTreeNodeComponent<T, K = T> extends CdkNestedTreeNode<T, K>
    */
   readonly toggleAriaLabel = input('Toggle node');
 
-  /** Semantic test-id base applied to the built-in toggle button (`button-` prefixed). */
+  /**
+   * Semantic test-id base applied to the built-in toggle button (`button-`
+   * prefixed). When unset, derives from the node's own `testId` — a row with
+   * `[testId]="['vdev', guid]"` gets `button-toggle-vdev-<guid>` — so every
+   * identified row has an addressable expand control without repeating the id.
+   */
   readonly toggleTestId = input<TnTestIdValue>();
 
   /**
@@ -47,7 +52,23 @@ export class TnNestedTreeNodeComponent<T, K = T> extends CdkNestedTreeNode<T, K>
   readonly hideToggle = input(false, { transform: booleanAttribute });
 
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
+  private readonly hostTestId = inject(TnTestIdDirective, { self: true });
   private destroyed = false;
+
+  /** Explicit `toggleTestId` wins; otherwise `toggle`-scoped from the node's `testId`. */
+  protected readonly resolvedToggleTestId = computed<TnTestIdValue>(() => {
+    const explicit = this.toggleTestId();
+    if (explicit !== undefined && explicit !== null) {
+      return explicit;
+    }
+    const nodeTestId = this.hostTestId.testId();
+    if (nodeTestId === undefined || nodeTestId === null || nodeTestId === '') {
+      return undefined;
+    }
+    // Role leads (button-toggle-<node id>), mirroring tn-dialog-shell's
+    // button-close-<base> convention for fixed chrome.
+    return scopeTestId('toggle', ...(Array.isArray(nodeTestId) ? nodeTestId : [nodeTestId]));
+  });
 
   constructor() {
     super(
