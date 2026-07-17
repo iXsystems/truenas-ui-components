@@ -1,11 +1,14 @@
 import { CdkTreeModule } from '@angular/cdk/tree';
 import { CommonModule } from '@angular/common';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
+import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
 import { tnIconMarker } from '../lib/icon/icon-marker';
 import { TnIconComponent } from '../lib/icon/icon.component';
 import { TnIconButtonComponent } from '../lib/icon-button/icon-button.component';
+import { TnInputComponent } from '../lib/input/input.component';
 import { TnNestedTreeDataSource } from '../lib/tree/nested-tree-datasource';
 import { TnNestedTreeNodeComponent } from '../lib/tree/nested-tree-node.component';
 import { createNestedTreeControl } from '../lib/tree/tree-control.factory';
@@ -346,22 +349,27 @@ export const FilterableNestedTree: Story = {
         || !!node.children?.some((child) => subtreeMatches(child, query));
     };
     dataSource.filterPredicate = (data, query) => data.filter((node) => subtreeMatches(node, query));
+    const filterControl = new FormControl('', { nonNullable: true });
+    filterControl.valueChanges.subscribe((value) => dataSource.filter(value));
 
     return {
+      moduleMetadata: {
+        imports: [ReactiveFormsModule, TnFormFieldComponent, TnInputComponent],
+      },
       props: {
         treeControl,
         dataSource,
+        filterControl,
         hasChild: (_: number, node: FileNode) => !!node.children?.length,
-        onFilter: (value: string) => dataSource.filter(value),
       },
       template: `
-        <input
-          type="text"
-          placeholder="Filter nodes…"
-          aria-label="Filter tree nodes"
-          style="margin-bottom: 8px; padding: 6px 10px; width: 240px;"
-          (input)="onFilter($event.target.value)"
-        />
+        <tn-form-field label="Filter nodes" style="display: block; max-width: 240px; margin-bottom: 8px;">
+          <tn-input
+            placeholder="Filter nodes…"
+            testId="tree-filter"
+            [formControl]="filterControl"
+          ></tn-input>
+        </tn-form-field>
         <tn-tree [dataSource]="dataSource" [treeControl]="treeControl" style="max-width: 400px;">
           <tn-nested-tree-node *cdkTreeNodeDef="let node">
             <tn-icon [name]="node.type === 'folder' ? 'folder' : 'file'" library="mdi" size="sm"></tn-icon>
