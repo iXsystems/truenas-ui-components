@@ -361,6 +361,122 @@ export class TnTableHarness extends ComponentHarness {
     return detailRows.length;
   }
 
+  // --- Card layout (responsive) ---
+
+  /**
+   * Reports the currently rendered layout: `cards` when the container is narrow
+   * enough that `mobileLayout="cards"` has taken effect, otherwise `table`.
+   *
+   * @returns Promise resolving to 'cards' or 'table'.
+   */
+  async getLayoutMode(): Promise<'cards' | 'table'> {
+    const cards = await this.locatorForOptional('.tn-table__cards')();
+    return cards ? 'cards' : 'table';
+  }
+
+  /**
+   * Gets the number of rendered cards (card layout only).
+   *
+   * @returns Promise resolving to the card count.
+   */
+  async getCardCount(): Promise<number> {
+    const cards = await this.locatorForAll('.tn-table__card')();
+    return cards.length;
+  }
+
+  /**
+   * Gets the title text of a card.
+   *
+   * @param cardIndex Zero-based index of the card.
+   * @returns Promise resolving to the card title text.
+   */
+  async getCardTitle(cardIndex: number): Promise<string> {
+    const title = await this.locatorFor(
+      `.tn-table__card[data-row-index="${cardIndex}"] .tn-table__card-title`
+    )();
+    return (await title.text()).trim();
+  }
+
+  /**
+   * Gets the value text of a field within a card, by column name. The field
+   * may be a primary field or one tucked under "More fields".
+   *
+   * @param cardIndex Zero-based index of the card.
+   * @param columnName The column's data-column attribute value.
+   * @returns Promise resolving to the field's value text.
+   */
+  async getCardFieldValue(cardIndex: number, columnName: string): Promise<string> {
+    const value = await this.locatorFor(
+      `.tn-table__card[data-row-index="${cardIndex}"] .tn-table__card-field[data-column="${columnName}"] .tn-table__card-field-value`
+    )();
+    return (await value.text()).trim();
+  }
+
+  /**
+   * Gets the column names of the fields shown directly on a card (i.e. not
+   * those hidden behind the "More fields" disclosure).
+   *
+   * @param cardIndex Zero-based index of the card.
+   * @returns Promise resolving to an array of column names.
+   */
+  async getCardPrimaryFieldColumns(cardIndex: number): Promise<string[]> {
+    const fields = await this.locatorForAll(
+      `.tn-table__card[data-row-index="${cardIndex}"] > .tn-table__card-fields > .tn-table__card-field[data-column]`
+    )();
+    const columns: string[] = [];
+    for (const field of fields) {
+      const col = await field.getAttribute('data-column');
+      if (col !== null) { columns.push(col); }
+    }
+    return columns;
+  }
+
+  /**
+   * Expands the "More fields" disclosure on a card to reveal lower-priority
+   * fields. No-op if the card has no secondary fields.
+   *
+   * @param cardIndex Zero-based index of the card.
+   */
+  async expandCardMoreFields(cardIndex: number): Promise<void> {
+    const summary = await this.locatorForOptional(
+      `.tn-table__card[data-row-index="${cardIndex}"] .tn-table__card-more-summary`
+    )();
+    if (summary) { await summary.click(); }
+  }
+
+  /**
+   * Toggles a card's detail section (card layout equivalent of row expansion).
+   *
+   * @param cardIndex Zero-based index of the card.
+   */
+  async toggleCardDetail(cardIndex: number): Promise<void> {
+    const toggle = await this.locatorFor(
+      `.tn-table__card[data-row-index="${cardIndex}"] .tn-table__card-detail-toggle`
+    )();
+    await toggle.click();
+  }
+
+  /**
+   * Gets the currently selected sort column in the card-layout sort menu, or
+   * `''` when unsorted. Returns null if the sort menu isn't rendered.
+   *
+   * @returns Promise resolving to the selected column name, '', or null.
+   */
+  async getCardSortColumn(): Promise<string | null> {
+    const select = await this.locatorForOptional('.tn-table__cards-sort-select')();
+    if (!select) { return null; }
+    return select.getProperty<string>('value');
+  }
+
+  /**
+   * Clicks the sort-direction toggle in the card-layout sort menu. No-op if no
+   * sort column is active (the toggle is only shown while sorting).
+   */
+  async toggleCardSortDirection(): Promise<void> {
+    const button = await this.locatorForOptional('.tn-table__cards-sort-dir')();
+    if (button) { await button.click(); }
+  }
+
   // --- Internal helpers ---
 
   private async assertRowExists(rowIndex: number): Promise<void> {
