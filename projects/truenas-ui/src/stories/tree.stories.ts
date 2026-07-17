@@ -298,11 +298,16 @@ export const NestedTree: Story = {
           {{ node.name }}
         </tn-nested-tree-node>
 
-        <!-- Node definition for expandable nodes (component provides toggle arrow) -->
-        <tn-nested-tree-node *cdkTreeNodeDef="let node; when: hasChild" cdkTreeNodeToggle>
+        <!-- Node definition for expandable nodes (component provides toggle arrow).
+             Alt+click the toggle to expand/collapse the node with all descendants. -->
+        <tn-nested-tree-node
+          *cdkTreeNodeDef="let node; when: hasChild"
+          [toggleAriaLabel]="'Toggle ' + node.name"
+          [toggleTestId]="['toggle', node.name]"
+        >
           <tn-icon [name]="node.type === 'folder' ? 'folder' : 'file'" library="mdi" size="sm"></tn-icon>
           {{ node.name }}
-          <ng-container slot="children" ixTreeNodeOutlet></ng-container>
+          <ng-container slot="children" tnTreeNodeOutlet></ng-container>
         </tn-nested-tree-node>
       </tn-tree>
     `

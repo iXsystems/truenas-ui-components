@@ -1,11 +1,11 @@
 import { DataSource } from '@angular/cdk/collections';
 import { CdkTree, CdkTreeModule } from '@angular/cdk/tree';
-import type { FlatTreeControl } from '@angular/cdk/tree';
 import { ChangeDetectorRef, IterableDiffers, ViewContainerRef, Component, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
 import type { Observable} from 'rxjs';
-import { BehaviorSubject, merge } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { BehaviorSubject, Subject, merge } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, map, takeUntil } from 'rxjs/operators';
 import { TnTestIdDirective } from '../test-id';
+import type { TnTreeExpansion } from './tree-expansion.interface';
 
 // Re-export CDK Tree types for convenience
 export { FlatTreeControl } from '@angular/cdk/tree';
@@ -50,24 +50,46 @@ export class TnTreeFlattener<T, F> {
 
 /**
  * Data source for flat tree.
+ *
+ * Optionally supports client-side filtering and sorting: set `filterPredicate`
+ * (and call `filter(query)`) and/or `sortComparer`. Both are opt-in; when unset
+ * the datasource behaves exactly as before.
  */
 export class TnTreeFlatDataSource<T, F> extends DataSource<F> {
+  /** When set, `filter(query)` re-renders the tree from `filterPredicate(data, query)`. */
+  filterPredicate?: (data: T[], query: string) => T[];
+
+  /** When set, incoming `data` is sorted (top level) before flattening. */
+  sortComparer?: (a: T, b: T) => number;
+
   private _flattenedData = new BehaviorSubject<F[]>([]);
   private _expandedData = new BehaviorSubject<F[]>([]);
   private _data = new BehaviorSubject<T[]>([]);
+  private _filteredData = new BehaviorSubject<T[]>([]);
+  private filterValue = '';
+  private readonly filterChanged$ = new BehaviorSubject<string>('');
+  private readonly disconnect$ = new Subject<void>();
 
   constructor(
-    private _treeControl: FlatTreeControl<F>,
+    private _treeControl: TnTreeExpansion<F>,
     private _treeFlattener: TnTreeFlattener<T, F>
   ) {
     super();
+    this.detectFilterChanges();
   }
 
   get data() { return this._data.value; }
   set data(value: T[]) {
-    this._data.next(value);
-    this._flattenedData.next(this._treeFlattener.flattenNodes(this.data));
-    this._treeControl.dataNodes = this._flattenedData.value;
+    this._data.next(this.sortComparer ? [...value].sort(this.sortComparer) : value);
+    if (this.filterValue && this.filterPredicate) {
+      this._filteredData.next(this.filterPredicate(this.data, this.filterValue));
+    }
+    this.flattenData();
+  }
+
+  /** The currently filtered (unflattened) data; equals `data` until `filter()` is used. */
+  get filteredData(): T[] {
+    return this._filteredData.value;
   }
 
   connect(): Observable<F[]> {
@@ -80,7 +102,38 @@ export class TnTreeFlatDataSource<T, F> extends DataSource<F> {
     }));
   }
 
-  disconnect() {}
+  disconnect() {
+    this.disconnect$.next();
+    this.disconnect$.complete();
+  }
+
+  /** Filters the tree using `filterPredicate` (debounced). No-op until `filterPredicate` is set. */
+  filter(query: string): void {
+    this.filterChanged$.next(query);
+  }
+
+  private flattenData(): void {
+    this._flattenedData.next(this._treeFlattener.flattenNodes(
+      this.filterValue ? this._filteredData.value : this.data,
+    ));
+    this._treeControl.dataNodes = this._flattenedData.value;
+  }
+
+  private detectFilterChanges(): void {
+    this.filterChanged$.pipe(
+      filter(() => !!this.filterPredicate),
+      debounceTime(200),
+      distinctUntilChanged(),
+      takeUntil(this.disconnect$),
+    ).subscribe((changedValue) => {
+      if (this.filterValue === changedValue || !this.filterPredicate) {
+        return;
+      }
+      this.filterValue = changedValue;
+      this._filteredData.next(this.filterPredicate(this.data, changedValue));
+      this.flattenData();
+    });
+  }
 
   private _getExpandedNodesWithLevel(): F[] {
     const expandedNodes: F[] = [];

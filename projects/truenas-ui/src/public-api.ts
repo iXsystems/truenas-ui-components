@@ -79,6 +79,13 @@ export { TnTreeComponent, FlatTreeControl, TnTreeFlatDataSource, TnTreeFlattener
 export { TnTreeNodeComponent } from './lib/tree/tree-node.component';
 export { TnNestedTreeNodeComponent } from './lib/tree/nested-tree-node.component';
 export { TnTreeNodeOutletDirective } from './lib/tree/tree-node-outlet.directive';
+export { TnNestedTreeDataSource } from './lib/tree/nested-tree-datasource';
+export type { TnTreeExpansion } from './lib/tree/tree-expansion.interface';
+export {
+  createFlatTreeControl, createNestedTreeControl,
+} from './lib/tree/tree-control.factory';
+export type { FlatTreeControlOptions, NestedTreeControlOptions } from './lib/tree/tree-control.factory';
+export * from './lib/tree/tree.harness';
 export {
   TnTreeVirtualScrollViewComponent, defaultTreeItemSize,
 } from './lib/tree/tree-virtual-scroll-view.component';
