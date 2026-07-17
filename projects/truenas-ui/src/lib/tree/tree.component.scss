@@ -10,3 +10,21 @@
   border-radius: 6px;
   overflow: hidden;
 }
+
+// Row separators inside a plain tn-tree draw on TOP instead of the bottom the
+// node components default to, so the last visible row (at any nesting depth)
+// doesn't double up with the tree's own bottom border. The very first row then
+// drops its separator — the tree's top border is already there. Scoped to the
+// tn-tree ELEMENT so virtual-scroll rows (whose host shares the .tn-tree class)
+// keep their own scheme; the extra ancestor classes out-rank the nodes'
+// emulated-encapsulation rules.
+tn-tree .tn-tree-node-wrapper > .tn-tree-node,
+tn-tree .tn-nested-tree-node-wrapper > .tn-nested-tree-node__content {
+  border-bottom: none;
+  border-top: 1px solid var(--tn-lines);
+}
+
+tn-tree > .tn-tree-node-wrapper:first-child > .tn-tree-node,
+tn-tree > .tn-nested-tree-node-wrapper:first-child > .tn-nested-tree-node__content {
+  border-top: none;
+}
