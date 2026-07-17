@@ -77,15 +77,37 @@ describe('TnFilePickerComponent', () => {
       expect(selectionSpy).toHaveBeenCalledWith('/mnt/tank/new-dataset');
     });
 
-    it('should clamp the browsed parent to the root on selectPath()', async () => {
+    it('should reject selectPath() outside the root without browsing or applying', async () => {
+      const getChildren = jest.fn().mockResolvedValue([]);
+      fixture.componentRef.setInput('callbacks', { getChildren });
+      fixture.componentRef.setInput('rootPath', '/mnt/backups');
+      const selectionSpy = jest.fn();
+      const errorSpy = jest.fn();
+      component.selectionChange.subscribe(selectionSpy);
+      component.error.subscribe(errorSpy);
+      fixture.detectChanges();
+
+      await component.selectPath('/home/stray');
+
+      expect(getChildren).not.toHaveBeenCalled();
+      expect(selectionSpy).not.toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalledWith(expect.objectContaining({
+        type: 'validation',
+        path: '/home/stray',
+      }));
+    });
+
+    it('should clamp the browsed parent to the root on selectPath() of the root itself', async () => {
       const getChildren = jest.fn().mockResolvedValue([]);
       fixture.componentRef.setInput('callbacks', { getChildren });
       fixture.componentRef.setInput('rootPath', '/mnt/backups');
       fixture.detectChanges();
 
-      await component.selectPath('/home/stray');
+      // The root's own parent (/mnt) is outside the root — browsing clamps back
+      await component.selectPath('/mnt/backups');
 
       expect(getChildren).toHaveBeenCalledWith('/mnt/backups');
+      expect(component.selectedPath()).toBe('/mnt/backups');
     });
   });
 
@@ -150,18 +172,37 @@ describe('TnFilePickerComponent', () => {
   });
 
   describe('Manual Path Input', () => {
-    function typePath(value: string): void {
-      const inputEl = fixture.nativeElement.querySelector('.tn-file-picker-input') as HTMLInputElement;
-      inputEl.value = value;
-      inputEl.dispatchEvent(new Event('input'));
+    function getInput(): HTMLInputElement {
+      return fixture.nativeElement.querySelector('.tn-file-picker-input') as HTMLInputElement;
     }
+
+    /** Types a path and commits it, as Enter or blur does via `change`. */
+    function commitPath(value: string): void {
+      const inputEl = getInput();
+      inputEl.value = value;
+      inputEl.dispatchEvent(new Event('change'));
+    }
+
+    it('should not validate a path that is still being typed', () => {
+      const errorSpy = jest.fn();
+      component.error.subscribe(errorSpy);
+      fixture.detectChanges();
+
+      // Incomplete prefix of a valid path — outside the root until finished
+      const inputEl = getInput();
+      inputEl.value = '/m';
+      inputEl.dispatchEvent(new Event('input'));
+
+      expect(errorSpy).not.toHaveBeenCalled();
+      expect(component.hasError()).toBe(false);
+    });
 
     it('should apply a typed path within the root', () => {
       const selectionSpy = jest.fn();
       component.selectionChange.subscribe(selectionSpy);
       fixture.detectChanges();
 
-      typePath('/mnt/tank/music');
+      commitPath('/mnt/tank/music');
 
       expect(selectionSpy).toHaveBeenCalledWith('/mnt/tank/music');
       expect(component.selectedPath()).toBe('/mnt/tank/music');
@@ -175,7 +216,7 @@ describe('TnFilePickerComponent', () => {
       component.error.subscribe(errorSpy);
       fixture.detectChanges();
 
-      typePath('/etc/passwd');
+      commitPath('/etc/passwd');
 
       expect(selectionSpy).not.toHaveBeenCalled();
       expect(component.hasError()).toBe(true);
@@ -193,7 +234,7 @@ describe('TnFilePickerComponent', () => {
       fixture.detectChanges();
 
       // Starts with the root prefix, but resolves outside of it
-      typePath('/mnt/../etc/passwd');
+      commitPath('/mnt/../etc/passwd');
 
       expect(selectionSpy).not.toHaveBeenCalled();
       expect(errorSpy).toHaveBeenCalledWith(expect.objectContaining({
@@ -208,7 +249,7 @@ describe('TnFilePickerComponent', () => {
       fixture.detectChanges();
       component.selectedItems.set(['/mnt/tank/file.txt']);
 
-      typePath('');
+      commitPath('');
 
       expect(selectionSpy).toHaveBeenCalledWith('');
       expect(component.selectedItems()).toEqual([]);

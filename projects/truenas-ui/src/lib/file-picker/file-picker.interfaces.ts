@@ -44,6 +44,13 @@ export interface FilePickerCreateAction {
    * the listing and selects it. Reject with an Error to show its message as
    * the inline error and keep the row editable for retry. Name validation
    * (duplicates, invalid characters, …) belongs in this callback.
+   *
+   * The row auto-submits when it loses focus with a non-empty name
+   * (matching inline-rename conventions), so this callback can also fire
+   * when the user clicks away — including on a click that navigates
+   * elsewhere, which abandons the row and silently discards the resolved
+   * path even though the item was created. Implementations should tolerate
+   * that (e.g. creation is cheap to leave behind, or idempotent).
    */
   create?: (parentPath: string, name: string) => Promise<string>;
 }

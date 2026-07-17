@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { userEvent, within, screen, expect, waitFor } from 'storybook/test';
+import { fireEvent, userEvent, within, screen, expect, waitFor } from 'storybook/test';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { TnFilePickerComponent } from '../lib/file-picker/file-picker.component';
 import type { FileSystemItem, FilePickerCallbacks } from '../lib/file-picker/file-picker.interfaces';
@@ -172,7 +172,7 @@ fileExtensions = input<string[] | undefined>(undefined);
 \`\`\`typescript
 allowManualInput = input<boolean>(true);
 \`\`\`
-**Description:** Allow users to type paths directly in the input field. Typed paths must stay within \`rootPath\`; clearing the field clears the selection.
+**Description:** Allow users to type paths directly in the input field. Paths are committed on Enter or blur (not per keystroke) and must stay within \`rootPath\`; clearing the field clears the selection.
 
 \`\`\`typescript
 placeholder = input<string>('Select file or folder');
@@ -1514,51 +1514,31 @@ export const PathInputValidation: Story = {
     // Focus the field with a real click before editing
     await userEvent.click(input);
 
-    // Test 1: Enter an invalid path and verify error appears
+    // Typing alone must not validate — paths only commit on Enter/blur, so
+    // an incomplete out-of-root prefix shows no error while being typed
     await userEvent.clear(input);
-    // await userEvent.type(input, '/invalid');
     await userEvent.paste('/does/not/exist');
+    void expect(input.classList.contains('error')).toBe(false);
 
-    // Wait for error state to appear (validation triggers on every keystroke)
-    /*await waitFor(() => {
-      const pickerElement = canvasElement.querySelector('tn-file-picker');
-      void expect(pickerElement?.classList.contains('error')).toBe(true);
-    }, { timeout: 1500 });*/
+    // Committing the out-of-root path shows the error state
+    await fireEvent.change(input);
+    await waitFor(() => {
+      void expect(input.classList.contains('error')).toBe(true);
+    });
 
-    // Wait for all validations to complete and error timers to clear
-    // Each character typed triggers async validation (100ms) + error timeout (3s)
-    await new Promise(resolve => setTimeout(resolve, 3500));
-
-    // Verify error state has cleared after timeout
-    /*await waitFor(() => {
-      const pickerElement = canvasElement.querySelector('tn-file-picker');
-      void expect(pickerElement?.classList.contains('error')).toBe(false);
-    }, { timeout: 500 });*/
-
-    // Test 2: Enter a valid path and verify no error persists
-    await userEvent.click(input);
+    // Committing a valid path clears the error and applies the value
     await userEvent.clear(input);
-    // await userEvent.type(input, '/mnt/showcase/documents');
     await userEvent.paste('/mnt/showcase/config.json');
-
-    // Each keystroke triggers validation. Intermediate paths like "/s", "/sh" are invalid
-    // and will set error state. Wait for typing to complete and all validations to finish.
-    // await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Verify the input has the correct value
-    // void expect(input).toHaveValue('/mnt/showcase/documents');
-
-    // Wait for all error timers from intermediate keystrokes to clear (3+ seconds)
-    // await new Promise(resolve => setTimeout(resolve, 3500));
-
-    // Verify no error is present after all timers clear
-    // const pickerElement = canvasElement.querySelector('tn-file-picker');
-    // void expect(pickerElement?.classList.contains('error')).toBe(false);
+    await fireEvent.change(input);
+    await waitFor(() => {
+      void expect(input.classList.contains('error')).toBe(false);
+    });
+    void expect(input).toHaveValue('/mnt/showcase/config.json');
   },
   parameters: {
     docs: {
       description: {
-        story: 'Tests manual path input validation: enters an invalid path and verifies error state appears, waits for auto-clear (3 seconds), then enters a valid path and verifies success.'
+        story: 'Tests manual path input validation: paths commit on Enter or blur (never per keystroke), committing a path outside the root shows the error state, and committing a valid path clears it and applies the value.'
       }
     }
   }
@@ -1611,7 +1591,8 @@ export const ErrorHandling: Story = {
     await userEvent.clear(input);
     await userEvent.type(input, '/invalid/path');
 
-    // Trigger validation by blurring the input
+    // Commit the typed path — paths validate on change (Enter or blur)
+    await fireEvent.change(input);
     await userEvent.click(canvasElement);
 
     // Note: Error handling behavior depends on implementation

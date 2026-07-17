@@ -145,7 +145,14 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   }
 
   // Event handlers
-  onPathInput(event: Event): void {
+
+  /**
+   * Commits a manually typed path. Bound to the input's `change` event
+   * (Enter or blur), not `input`: validating per keystroke would emit an
+   * error for every incomplete prefix of a valid path ('/m', '/mn', …)
+   * and spam `validatePath` with paths the user never meant.
+   */
+  onPathCommit(event: Event): void {
     const target = event.target as HTMLInputElement;
     const path = target.value;
 
@@ -206,15 +213,11 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
     if (this.multiSelect()) {
       const selected = this.selectedItems();
-      const index = selected.indexOf(item.path);
-
-      if (index >= 0) {
-        selected.splice(index, 1);
-      } else {
-        selected.push(item.path);
-      }
-
-      this.selectedItems.set([...selected]);
+      this.selectedItems.set(
+        selected.includes(item.path)
+          ? selected.filter((path) => path !== item.path)
+          : [...selected, item.path]
+      );
     } else {
       // Single select - just update selection state, don't apply yet
       this.selectedItems.set([item.path]);
@@ -293,9 +296,16 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
    * flow just created: browses to its parent so the refreshed listing shows
    * the new item selected, and applies the path as the picker's value (form
    * value and `selectionChange`). The popup stays open so the user can
-   * confirm with Select or keep browsing.
+   * confirm with Select or keep browsing. Paths outside `rootPath` are
+   * rejected with a `validation` error — the picker's value honors the same
+   * confinement as navigation and manual input.
    */
   async selectPath(path: string): Promise<void> {
+    if (!isPathWithinRoot(path, this.effectiveRootPath())) {
+      this.emitError('validation', `Path is outside of ${this.effectiveRootPath()}`, path);
+      return;
+    }
+    // The parent still needs clamping: the root's own parent is outside it
     const parent = path.substring(0, path.lastIndexOf('/'));
     await this.loadDirectory(this.clampToRoot(parent || this.effectiveRootPath()));
     this.updateSelection(path);
