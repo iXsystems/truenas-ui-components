@@ -805,4 +805,70 @@ describe('TnFilePickerPopupComponent', () => {
       expect(contentElement).toBeFalsy();
     });
   });
+
+  describe('Test IDs', () => {
+    function testIdOf(selector: string): string | null | undefined {
+      const el = fixture.debugElement.query(By.css(selector));
+      return (el?.nativeElement as HTMLElement | undefined)?.getAttribute('data-testid');
+    }
+
+    beforeEach(() => {
+      fixture.componentRef.setInput('testIdBase', 'backup-target');
+    });
+
+    it('scopes item rows by the base and the item name', () => {
+      fixture.detectChanges();
+
+      expect(testIdOf('[data-testid="option-backup-target-documents"]')).toBeTruthy();
+      // Non-alphanumerics in names kebab-normalize: database.db → database-db
+      expect(testIdOf('[data-testid="option-backup-target-database-db"]')).toBeTruthy();
+    });
+
+    it('scopes the multi-select checkbox like its row', () => {
+      fixture.componentRef.setInput('multiSelect', true);
+      fixture.detectChanges();
+
+      expect(testIdOf('[data-testid="checkbox-backup-target-documents"]')).toBeTruthy();
+    });
+
+    it('derives role-first ids for navigation chrome', () => {
+      fixture.detectChanges();
+
+      expect(testIdOf('[data-testid="button-navigate-backup-target-documents"]')).toBeTruthy();
+      expect(testIdOf('[data-testid="button-breadcrumb-backup-target-mnt"]')).toBeTruthy();
+      expect(testIdOf('[data-testid="button-breadcrumb-backup-target-tank"]')).toBeTruthy();
+    });
+
+    it('derives role-first ids for the footer buttons', () => {
+      fixture.componentRef.setInput('multiSelect', true);
+      fixture.componentRef.setInput('selectedItems', ['/mnt/tank/documents']);
+      fixture.componentRef.setInput('createActions', [{ id: 'dataset', label: 'Create Dataset' }]);
+      fixture.detectChanges();
+
+      expect(testIdOf('[data-testid="button-select-backup-target"]')).toBeTruthy();
+      expect(testIdOf('[data-testid="button-clear-selection-backup-target"]')).toBeTruthy();
+      // Create actions are content children, so the base leads: button-<base>-<action id>
+      expect(testIdOf('[data-testid="button-backup-target-dataset"]')).toBeTruthy();
+    });
+
+    it('scopes the inline creation input', () => {
+      fixture.componentRef.setInput('createActions', [
+        { id: 'folder', label: 'New Folder', create: jest.fn() },
+      ]);
+      fixture.detectChanges();
+      (fixture.debugElement.query(By.css('.footer-actions button')).nativeElement as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(testIdOf('[data-testid="input-create-backup-target"]')).toBeTruthy();
+    });
+
+    it('falls back to bare-role ids with no base', () => {
+      fixture.componentRef.setInput('testIdBase', undefined);
+      fixture.detectChanges();
+
+      // Only one popup can be open at a time, so bare roles stay addressable
+      expect(testIdOf('[data-testid="option-documents"]')).toBeTruthy();
+      expect(testIdOf('[data-testid="button-select"]')).toBeTruthy();
+    });
+  });
 });

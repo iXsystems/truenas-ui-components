@@ -1,8 +1,10 @@
-<div class="tn-file-picker-container" tnTestIdType="file-picker" [tnTestId]="testId()">
+<div class="tn-file-picker-container" tnTestIdType="file-picker" [tnTestId]="resolvedTestId()">
   <div #wrapper ixInput class="tn-file-picker-wrapper" style="padding-right: 40px;">
     <input
       type="text"
       class="tn-file-picker-input"
+      tnTestIdType="input"
+      [tnTestId]="resolvedTestId()"
       [class.error]="hasError()"
       [value]="selectedPath()"
       [placeholder]="placeholder()"
@@ -14,6 +16,8 @@
       type="button"
       class="tn-file-picker-toggle"
       aria-label="Open file picker"
+      tnTestIdType="button"
+      [tnTestId]="toggleTestId()"
       [disabled]="isDisabled()"
       (click)="openFilePicker()">
       <tn-icon name="folder" library="mdi" />
@@ -23,6 +27,9 @@
   <ng-template #filePickerTemplate>
     <tn-file-picker-popup
       class="tn-file-picker-popup"
+      tnTestIdType="file-picker-popup"
+      [tnTestId]="resolvedTestId()"
+      [testIdBase]="resolvedTestId()"
       [mode]="mode()"
       [multiSelect]="multiSelect()"
       [createActions]="createActions()"

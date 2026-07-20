@@ -1,6 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
+import { Component } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TnFilePickerComponent } from './file-picker.component';
 
@@ -339,5 +341,71 @@ describe('TnFilePickerComponent', () => {
 
       expect(getChildren).toHaveBeenCalledWith('/mnt/backups');
     });
+  });
+
+  describe('Test IDs', () => {
+    it('derives the container, input, and toggle ids from an explicit testId', () => {
+      fixture.componentRef.setInput('testId', 'backup-target');
+      fixture.detectChanges();
+
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelector('.tn-file-picker-container')?.getAttribute('data-testid')).toBe('file-picker-backup-target');
+      expect(el.querySelector('input')?.getAttribute('data-testid')).toBe('input-backup-target');
+      expect(el.querySelector('.tn-file-picker-toggle')?.getAttribute('data-testid')).toBe('button-toggle-backup-target');
+    });
+
+    it('emits no attributes with no testId and no bound control', () => {
+      fixture.detectChanges();
+
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelector('.tn-file-picker-container')?.hasAttribute('data-testid')).toBe(false);
+      expect(el.querySelector('input')?.hasAttribute('data-testid')).toBe(false);
+      expect(el.querySelector('.tn-file-picker-toggle')?.hasAttribute('data-testid')).toBe(false);
+    });
+
+    it('scopes the portaled popup with the resolved base', () => {
+      fixture.componentRef.setInput('testId', 'backup-target');
+      fixture.detectChanges();
+
+      component.openFilePicker();
+      fixture.detectChanges();
+
+      const popup = document.querySelector('tn-file-picker-popup');
+      expect(popup?.getAttribute('data-testid')).toBe('file-picker-popup-backup-target');
+
+      component.close();
+    });
+  });
+});
+
+@Component({
+  selector: 'tn-test-form-name-host',
+  standalone: true,
+  imports: [TnFilePickerComponent, ReactiveFormsModule],
+  template: `
+    <form [formGroup]="form">
+      <tn-file-picker formControlName="backupPath" />
+    </form>
+  `
+})
+class TestFormNameHostComponent {
+  form = new FormGroup({ backupPath: new FormControl<string | null>(null) });
+}
+
+describe('TnFilePickerComponent test-id fallback', () => {
+  it('derives data-testid from formControlName when no testId is set', async () => {
+    await TestBed.configureTestingModule({
+      imports: [TestFormNameHostComponent, NoopAnimationsModule],
+      providers: [provideHttpClient()]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(TestFormNameHostComponent);
+    fixture.detectChanges();
+
+    // No explicit testId: the control name `backupPath` becomes the base,
+    // exactly what consumers hand-write today as testId="backup-path".
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.tn-file-picker-container')?.getAttribute('data-testid')).toBe('file-picker-backup-path');
+    expect(el.querySelector('input')?.getAttribute('data-testid')).toBe('input-backup-path');
+    expect(el.querySelector('.tn-file-picker-toggle')?.getAttribute('data-testid')).toBe('button-toggle-backup-path');
   });
 });

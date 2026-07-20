@@ -1612,10 +1612,29 @@ export const ErrorHandling: Story = {
 };
 
 /**
- * **Test IDs.** The file-picker **container** (the inline trigger field) emits
- * `file-picker-<base>` — shown live in the table. The browse popup renders in a
- * portaled overlay. `testId="backup-target"` → `file-picker-backup-target`,
- * under `data-testid` (default) / `data-test`.
+ * **Test IDs.** The `testId` base scopes the whole picker — and when unset it
+ * falls back to the bound control's name, so `formControlName="backupPath"`
+ * yields the same ids as `testId="backup-path"`.
+ *
+ * | Element | Emitted id (base `backup-target`) |
+ * |---|---|
+ * | container | `file-picker-backup-target` |
+ * | path input | `input-backup-target` |
+ * | browse toggle | `button-toggle-backup-target` |
+ * | popup (portaled overlay) | `file-picker-popup-backup-target` |
+ * | item row (name `docs`) | `option-backup-target-docs` |
+ * | row checkbox (multi-select) | `checkbox-backup-target-docs` |
+ * | navigate chevron | `button-navigate-backup-target-docs` |
+ * | breadcrumb segment (`mnt`) | `button-breadcrumb-backup-target-mnt` |
+ * | Select / Clear Selection | `button-select-backup-target` / `button-clear-selection-backup-target` |
+ * | create action (id `dataset`) | `button-backup-target-dataset` |
+ * | inline creation input | `input-create-backup-target` |
+ *
+ * With no base, the trigger chrome stays attribute-free (several pickers per
+ * page would collide), while popup internals fall back to bare roles
+ * (`button-select`, `option-docs`) — only one popup can be open at a time.
+ * Under `data-testid` (default) / `data-test`. Open the popup to see the
+ * derived ids in the DOM.
  */
 export const TestIds: Story = {
   render: () => ({
