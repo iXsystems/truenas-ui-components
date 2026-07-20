@@ -68,20 +68,6 @@ describe('TnFilePickerPopupComponent', () => {
   });
 
   describe('File Size Formatting', () => {
-    it('should format file sizes correctly using the existing method (backward compatibility)', () => {
-      expect(component.formatFileSize(1024)).toBe('1 KB');
-      expect(component.formatFileSize(1048576)).toBe('1 MB');
-      expect(component.formatFileSize(1073741824)).toBe('1 GB');
-      expect(component.formatFileSize(268435456)).toBe('256 MB');
-      expect(component.formatFileSize(0)).toBe('0 B');
-    });
-
-    it('should handle edge cases in file size formatting', () => {
-      expect(component.formatFileSize(512)).toBe('512 B');
-      expect(component.formatFileSize(1536)).toBe('1.5 KB'); // 1.5KB
-      expect(component.formatFileSize(2684354560)).toBe('2.5 GB'); // 2.5GB
-    });
-
     it('should use FileSizePipe in the template for proper binary formatting', () => {
       const fileSizePipe = new FileSizePipe();
       
@@ -224,17 +210,68 @@ describe('TnFilePickerPopupComponent', () => {
       testFixture.componentRef.setInput('fileItems', mockFileItems);
 
       const filtered = testComponent.filteredFileItems();
-      
+
       expect(filtered.length).toBe(mockFileItems.length);
+    });
+
+    it('should keep navigatable items undimmed when only their selection is filtered out', () => {
+      // Create a fresh component instance for this test
+      const testFixture = TestBed.createComponent(TnFilePickerPopupComponent);
+      const testComponent = testFixture.componentInstance;
+
+      testFixture.componentRef.setInput('mode', 'file');
+      testFixture.componentRef.setInput('fileItems', mockFileItems);
+      testFixture.detectChanges();
+
+      const filtered = testComponent.filteredFileItems();
+      const folder = filtered.find(item => item.type === 'folder');
+      const zvol = filtered.find(item => item.type === 'zvol');
+
+      // The folder cannot be selected but can still be entered — not dimmed
+      expect(folder?.disabled).toBe(true);
+      expect(folder?.dimmed).toBe(false);
+      // The zvol has no interaction left — dimmed
+      expect(zvol?.disabled).toBe(true);
+      expect(zvol?.dimmed).toBe(true);
+    });
+
+    it('should apply the disabled style only to dimmed items', () => {
+      fixture.componentRef.setInput('mode', 'file');
+      fixture.detectChanges();
+
+      const cells = fixture.debugElement.queryAll(By.css('.file-name-cell'));
+      const cellFor = (name: string): HTMLElement | undefined => cells
+        .map(cell => cell.nativeElement as HTMLElement)
+        .find(cell => cell.textContent?.includes(name));
+
+      expect(cellFor('documents')?.classList.contains('disabled')).toBe(false);
+      expect(cellFor('vm-storage')?.classList.contains('disabled')).toBe(true);
+    });
+
+    it('should enable exactly the listed types when mode is an array', () => {
+      // Create a fresh component instance for this test
+      const testFixture = TestBed.createComponent(TnFilePickerPopupComponent);
+      const testComponent = testFixture.componentInstance;
+
+      testFixture.componentRef.setInput('mode', ['folder', 'zvol']);
+      testFixture.componentRef.setInput('fileItems', mockFileItems);
+      testFixture.detectChanges();
+
+      const filtered = testComponent.filteredFileItems();
+
+      expect(filtered.find(item => item.type === 'folder')?.disabled).toBe(false);
+      expect(filtered.find(item => item.type === 'zvol')?.disabled).toBe(false);
+      expect(filtered.filter(item => item.type === 'file').every(item => item.disabled)).toBe(true);
     });
   });
 
   describe('Utility Methods', () => {
-    it('should return correct icons for different file types', () => {
-      expect(component.getItemIcon({ type: 'folder' } as FileSystemItem)).toBe('folder');
+    it('should return fully-qualified sprite icon names for different file types', () => {
+      expect(component.getItemIcon({ type: 'folder' } as FileSystemItem)).toBe('mdi-folder');
       expect(component.getItemIcon({ type: 'dataset' } as FileSystemItem)).toBe('tn-dataset');
-      expect(component.getItemIcon({ type: 'zvol' } as FileSystemItem)).toBe('database');
-      expect(component.getItemIcon({ type: 'file', name: 'test.pdf' } as FileSystemItem)).toBe('file');
+      expect(component.getItemIcon({ type: 'zvol' } as FileSystemItem)).toBe('mdi-database');
+      expect(component.getItemIcon({ type: 'mountpoint' } as FileSystemItem)).toBe('mdi-server-network');
+      expect(component.getItemIcon({ type: 'file', name: 'test.pdf' } as FileSystemItem)).toBe('mdi-file');
     });
 
     it('should identify ZFS objects correctly', () => {
@@ -251,13 +288,6 @@ describe('TnFilePickerPopupComponent', () => {
       expect(component.getZfsBadge({ type: 'mountpoint' } as FileSystemItem)).toBe('MP');
     });
 
-    it('should return correct type display names', () => {
-      expect(component.getTypeDisplayName('file')).toBe('File');
-      expect(component.getTypeDisplayName('folder')).toBe('Folder');
-      expect(component.getTypeDisplayName('dataset')).toBe('Dataset');
-      expect(component.getTypeDisplayName('zvol')).toBe('Zvol');
-      expect(component.getTypeDisplayName('mountpoint')).toBe('Mount Point');
-    });
   });
 
   describe('Event Handling', () => {
@@ -288,16 +318,6 @@ describe('TnFilePickerPopupComponent', () => {
       expect(component.pathNavigate.emit).toHaveBeenCalledWith(testPath);
     });
 
-    it('should emit createFolder when creating folder', () => {
-      jest.spyOn(component.createFolder, 'emit');
-      
-      component.onCreateFolder();
-      
-      expect(component.createFolder.emit).toHaveBeenCalledWith({
-        parentPath: '/mnt/tank',
-        folderName: 'New Folder'
-      });
-    });
   });
 
   describe('Selection Handling', () => {
@@ -306,6 +326,465 @@ describe('TnFilePickerPopupComponent', () => {
 
       expect(component.isSelected(mockFileItems[1])).toBe(true); // database.db
       expect(component.isSelected(mockFileItems[0])).toBe(false); // documents
+    });
+
+    it('should select when clicking anywhere in the row, not only the name cell', () => {
+      fixture.detectChanges();
+      const clickSpy = jest.fn();
+      component.itemClick.subscribe(clickSpy);
+
+      // Click the size cell of the database.db row
+      const rows = fixture.debugElement.queryAll(By.css('.tn-table__row'));
+      const sizeCell = rows[1].queryAll(By.css('.tn-table__cell'))[1];
+      (sizeCell.nativeElement as HTMLElement).click();
+
+      expect(clickSpy).toHaveBeenCalledWith(expect.objectContaining({ path: '/mnt/tank/database.db' }));
+    });
+
+    it('should emit clearSelection via the Clear Selection button', () => {
+      fixture.componentRef.setInput('selectedItems', ['/mnt/tank/database.db']);
+      fixture.detectChanges();
+
+      const clearSpy = jest.fn();
+      component.clearSelection.subscribe(clearSpy);
+
+      const clearButton = fixture.debugElement.query(By.css('.footer-selection button'));
+      expect((clearButton.nativeElement as HTMLElement).textContent).toContain('Clear Selection');
+      (clearButton.nativeElement as HTMLElement).click();
+
+      expect(clearSpy).toHaveBeenCalled();
+    });
+
+    it('should mark selected rows in the list', () => {
+      fixture.componentRef.setInput('selectedItems', ['/mnt/tank/documents']);
+      fixture.detectChanges();
+
+      const selectedCells = fixture.debugElement.queryAll(By.css('.file-name-cell.selected'));
+      expect(selectedCells.length).toBe(1);
+      expect((selectedCells[0].nativeElement as HTMLElement).textContent).toContain('documents');
+    });
+
+    it('should highlight selected rows through the table active-row styling', () => {
+      fixture.componentRef.setInput('selectedItems', ['/mnt/tank/documents']);
+      fixture.detectChanges();
+
+      const activeRows = fixture.debugElement.queryAll(By.css('.tn-table__row--active'));
+      expect(activeRows.length).toBe(1);
+      expect((activeRows[0].nativeElement as HTMLElement).textContent).toContain('documents');
+      expect((activeRows[0].nativeElement as HTMLElement).getAttribute('aria-selected')).toBe('true');
+    });
+  });
+
+  describe('Navigation Affordance', () => {
+    function navigateButtons(): HTMLElement[] {
+      return fixture.debugElement.queryAll(By.css('.navigate-button'))
+        .map(button => button.nativeElement as HTMLElement);
+    }
+
+    it('should show the open chevron only on navigatable items', () => {
+      fixture.detectChanges();
+
+      // documents (folder) is the only navigatable mock item
+      const buttons = navigateButtons();
+      expect(buttons.length).toBe(1);
+      expect(buttons[0].getAttribute('aria-label')).toBe('Open documents');
+    });
+
+    it('should open the directory on a single click without selecting it', () => {
+      fixture.detectChanges();
+      const doubleClickSpy = jest.fn();
+      const clickSpy = jest.fn();
+      component.itemDoubleClick.subscribe(doubleClickSpy);
+      component.itemClick.subscribe(clickSpy);
+
+      navigateButtons()[0].click();
+
+      expect(doubleClickSpy).toHaveBeenCalledWith(expect.objectContaining({ path: '/mnt/tank/documents' }));
+      expect(clickSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Breadcrumb Root Path', () => {
+    function breadcrumbLabels(): string[] {
+      return fixture.debugElement.queryAll(By.css('.breadcrumb-segment'))
+        .map((segment) => (segment.nativeElement as HTMLElement).textContent?.trim() ?? '');
+    }
+
+    it('should show the root path when the current path is the default /mnt root', () => {
+      fixture.componentRef.setInput('currentPath', '/mnt');
+      fixture.detectChanges();
+
+      expect(breadcrumbLabels()).toEqual(['mnt']);
+    });
+
+    it('should show the root path when the current path is a custom root', () => {
+      fixture.componentRef.setInput('rootPath', '/dev/zvol');
+      fixture.componentRef.setInput('currentPath', '/dev/zvol');
+      fixture.detectChanges();
+
+      expect(breadcrumbLabels()).toEqual(['dev/zvol']);
+    });
+
+    it('should render every path segment and navigate to the custom root via its segment', () => {
+      fixture.componentRef.setInput('rootPath', '/dev/zvol');
+      fixture.componentRef.setInput('currentPath', '/dev/zvol/tank/vm');
+      fixture.detectChanges();
+
+      expect(breadcrumbLabels()).toEqual(['dev/zvol', 'tank', 'vm']);
+
+      const navigateSpy = jest.fn();
+      component.pathNavigate.subscribe(navigateSpy);
+
+      const rootSegment = fixture.debugElement.query(By.css('.breadcrumb-segment'));
+      (rootSegment.nativeElement as HTMLElement).click();
+
+      expect(navigateSpy).toHaveBeenCalledWith('/dev/zvol');
+    });
+  });
+
+  describe('Create Actions', () => {
+    function footerButtons(): HTMLElement[] {
+      return fixture.debugElement.queryAll(By.css('.footer-actions button'))
+        .map((button) => button.nativeElement as HTMLElement);
+    }
+
+    it('should render a button per create action in the footer, before Select', () => {
+      fixture.componentRef.setInput('createActions', [
+        { id: 'dataset', label: 'Create Dataset' },
+        { id: 'zvol', label: 'Create Zvol' },
+      ]);
+      fixture.detectChanges();
+
+      const labels = footerButtons().map((button) => button.textContent?.trim());
+      expect(labels).toEqual(['Create Dataset', 'Create Zvol', 'Select']);
+    });
+
+    it('should emit createAction with the action id and browsed path', () => {
+      fixture.componentRef.setInput('createActions', [
+        { id: 'dataset', label: 'Create Dataset' },
+      ]);
+      fixture.detectChanges();
+
+      const actionSpy = jest.fn();
+      component.createAction.subscribe(actionSpy);
+
+      footerButtons()[0].click();
+
+      expect(actionSpy).toHaveBeenCalledWith({
+        actionId: 'dataset',
+        parentPath: '/mnt/tank',
+      });
+    });
+  });
+
+  describe('Inline Creation', () => {
+    let create: jest.Mock;
+
+    beforeEach(() => {
+      create = jest.fn();
+      fixture.componentRef.setInput('createActions', [
+        { id: 'folder', label: 'New Folder', create },
+      ]);
+      fixture.detectChanges();
+    });
+
+    function inlineInput(): HTMLInputElement | null {
+      const input = fixture.debugElement.query(By.css('.inline-create-input'));
+      return input ? input.nativeElement as HTMLInputElement : null;
+    }
+
+    function actionButton(): HTMLButtonElement {
+      return fixture.debugElement.query(By.css('.footer-actions button')).nativeElement as HTMLButtonElement;
+    }
+
+    function typeName(name: string): void {
+      const input = inlineInput()!;
+      input.value = name;
+      input.dispatchEvent(new Event('input'));
+    }
+
+    it('should open the inline row instead of emitting createAction', () => {
+      const actionSpy = jest.fn();
+      component.createAction.subscribe(actionSpy);
+
+      actionButton().click();
+      fixture.detectChanges();
+
+      expect(inlineInput()).not.toBeNull();
+      expect(actionSpy).not.toHaveBeenCalled();
+      expect(actionButton().disabled).toBe(true);
+
+      // The creation row renders as the first item of the listing
+      const firstRowInput = fixture.debugElement.query(
+        By.css('.tn-table__row:first-child .inline-create-input'));
+      expect(firstRowInput).not.toBeNull();
+    });
+
+    it('should focus the input when the row opens', async () => {
+      actionButton().click();
+      fixture.detectChanges();
+      await new Promise(resolve => setTimeout(resolve));
+
+      expect(document.activeElement).toBe(inlineInput());
+    });
+
+    it('should call create with the browsed path and emit created on success', async () => {
+      create.mockResolvedValue('/mnt/tank/new-folder');
+      const createdSpy = jest.fn();
+      component.created.subscribe(createdSpy);
+
+      actionButton().click();
+      fixture.detectChanges();
+
+      typeName(' new-folder ');
+      inlineInput()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(create).toHaveBeenCalledWith('/mnt/tank', 'new-folder');
+      expect(createdSpy).toHaveBeenCalledWith('/mnt/tank/new-folder');
+      expect(inlineInput()).toBeNull();
+    });
+
+    it('should show the rejection message inline and keep the row editable', async () => {
+      create.mockImplementation(() => Promise.reject(new Error('A folder with this name already exists')));
+
+      actionButton().click();
+      fixture.detectChanges();
+
+      typeName('documents');
+      await component.submitInlineCreation();
+      fixture.detectChanges();
+
+      const error = fixture.debugElement.query(By.css('.inline-create-error'));
+      expect((error.nativeElement as HTMLElement).textContent).toContain('A folder with this name already exists');
+      expect(inlineInput()).not.toBeNull();
+      expect(inlineInput()!.disabled).toBe(false);
+    });
+
+    it('should cancel the row on Escape without calling create', () => {
+      actionButton().click();
+      fixture.detectChanges();
+
+      inlineInput()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      fixture.detectChanges();
+
+      expect(inlineInput()).toBeNull();
+      expect(create).not.toHaveBeenCalled();
+    });
+
+    it('should abandon the row when submitting an empty name', () => {
+      actionButton().click();
+      fixture.detectChanges();
+
+      typeName('   ');
+      inlineInput()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      fixture.detectChanges();
+
+      expect(inlineInput()).toBeNull();
+      expect(create).not.toHaveBeenCalled();
+    });
+
+    it('should abandon the row when navigating away', () => {
+      actionButton().click();
+      fixture.detectChanges();
+
+      component.navigateToPath('/mnt');
+      fixture.detectChanges();
+
+      expect(inlineInput()).toBeNull();
+    });
+
+    it('should keep the typed name when the listing re-renders', () => {
+      actionButton().click();
+      fixture.detectChanges();
+
+      typeName('new-folder');
+
+      // e.g. a background refresh replacing the items while the row is open
+      fixture.componentRef.setInput('fileItems', [
+        { path: '/mnt/tank/other', name: 'other', type: 'folder' },
+      ]);
+      fixture.detectChanges();
+
+      expect(inlineInput()!.value).toBe('new-folder');
+    });
+
+    it('should not resurrect the row when a pending create fails after navigating away', async () => {
+      let reject!: (err: Error) => void;
+      create.mockImplementation(() => new Promise((_, rej) => { reject = rej; }));
+
+      actionButton().click();
+      fixture.detectChanges();
+
+      typeName('new-folder');
+      const submitted = component.submitInlineCreation();
+      component.navigateToPath('/mnt');
+      fixture.detectChanges();
+
+      reject(new Error('Permission denied'));
+      await submitted;
+      fixture.detectChanges();
+
+      expect(inlineInput()).toBeNull();
+      expect(fixture.debugElement.query(By.css('.inline-create-error'))).toBeNull();
+    });
+
+    it('should not emit created when a pending create resolves after navigating away', async () => {
+      let resolve!: (path: string) => void;
+      create.mockImplementation(() => new Promise((res) => { resolve = res; }));
+      const createdSpy = jest.fn();
+      component.created.subscribe(createdSpy);
+
+      actionButton().click();
+      fixture.detectChanges();
+
+      typeName('new-folder');
+      const submitted = component.submitInlineCreation();
+      component.navigateToPath('/mnt');
+      fixture.detectChanges();
+
+      resolve('/mnt/tank/new-folder');
+      await submitted;
+
+      expect(createdSpy).not.toHaveBeenCalled();
+    });
+
+    it('should auto-submit a non-empty name on blur', async () => {
+      create.mockResolvedValue('/mnt/tank/new-folder');
+      const createdSpy = jest.fn();
+      component.created.subscribe(createdSpy);
+
+      actionButton().click();
+      fixture.detectChanges();
+
+      typeName('new-folder');
+      inlineInput()!.dispatchEvent(new Event('blur'));
+      await fixture.whenStable();
+
+      expect(create).toHaveBeenCalledWith('/mnt/tank', 'new-folder');
+      expect(createdSpy).toHaveBeenCalledWith('/mnt/tank/new-folder');
+    });
+
+    it('should not repeat a failed create call on blur', async () => {
+      create.mockImplementation(() => Promise.reject(new Error('Permission denied')));
+
+      actionButton().click();
+      fixture.detectChanges();
+
+      typeName('documents');
+      await component.submitInlineCreation();
+      fixture.detectChanges();
+      expect(create).toHaveBeenCalledTimes(1);
+
+      inlineInput()!.dispatchEvent(new Event('blur'));
+      await fixture.whenStable();
+
+      // The error already told the user — blurring must not loop the call
+      expect(create).toHaveBeenCalledTimes(1);
+      expect(inlineInput()).not.toBeNull();
+    });
+
+    it('should clear the error when the name is edited, re-arming blur submit', async () => {
+      create.mockImplementation(() => Promise.reject(new Error('Permission denied')));
+
+      actionButton().click();
+      fixture.detectChanges();
+
+      typeName('documents');
+      await component.submitInlineCreation();
+      fixture.detectChanges();
+      expect(fixture.debugElement.query(By.css('.inline-create-error'))).not.toBeNull();
+
+      typeName('documents-2');
+      fixture.detectChanges();
+
+      expect(fixture.debugElement.query(By.css('.inline-create-error'))).toBeNull();
+
+      create.mockResolvedValue('/mnt/tank/documents-2');
+      inlineInput()!.dispatchEvent(new Event('blur'));
+      await fixture.whenStable();
+
+      expect(create).toHaveBeenCalledTimes(2);
+      expect(create).toHaveBeenLastCalledWith('/mnt/tank', 'documents-2');
+    });
+
+    it('should announce the error and link it to the input', async () => {
+      create.mockImplementation(() => Promise.reject(new Error('Permission denied')));
+
+      actionButton().click();
+      fixture.detectChanges();
+
+      typeName('documents');
+      await component.submitInlineCreation();
+      fixture.detectChanges();
+
+      const error = fixture.debugElement.query(By.css('.inline-create-error'));
+      const input = inlineInput()!;
+      expect((error.nativeElement as HTMLElement).getAttribute('role')).toBe('alert');
+      expect(input.getAttribute('aria-invalid')).toBe('true');
+      expect(input.getAttribute('aria-describedby'))
+        .toBe((error.nativeElement as HTMLElement).id);
+    });
+
+    it('should disable Select while the inline row is open', () => {
+      const selectButton = (): HTMLButtonElement => fixture.debugElement
+        .queryAll(By.css('.footer-actions button'))
+        .map(button => button.nativeElement as HTMLButtonElement)
+        .find(button => button.textContent?.includes('Select'))!;
+
+      fixture.detectChanges();
+      expect(selectButton().disabled).toBe(false);
+
+      actionButton().click();
+      fixture.detectChanges();
+
+      // Its click would race the row's blur auto-submit
+      expect(selectButton().disabled).toBe(true);
+    });
+  });
+
+  describe('Current Directory Selection', () => {
+    function selectButton(): HTMLButtonElement | null {
+      const button = fixture.debugElement.query(By.css('.footer-actions button'));
+      return button ? button.nativeElement as HTMLButtonElement : null;
+    }
+
+    it('should treat an empty selection as the browsed directory by default', () => {
+      fixture.componentRef.setInput('selectedItems', []);
+      fixture.detectChanges();
+
+      expect(selectButton()?.disabled).toBe(false);
+
+      const count = fixture.debugElement.query(By.css('.selection-count'));
+      expect((count.nativeElement as HTMLElement).textContent).toContain('Current directory selected');
+    });
+
+    it('should disable Select on empty selection when no directory-like type is selectable', () => {
+      fixture.componentRef.setInput('mode', 'file');
+      fixture.componentRef.setInput('selectedItems', []);
+      fixture.detectChanges();
+
+      expect(selectButton()?.disabled).toBe(true);
+
+      const count = fixture.debugElement.query(By.css('.selection-count'));
+      expect((count.nativeElement as HTMLElement).textContent).toContain('No items selected');
+    });
+
+    it('should allow current directory selection when any type in an array mode is directory-like', () => {
+      fixture.componentRef.setInput('mode', ['file', 'dataset']);
+      fixture.componentRef.setInput('selectedItems', []);
+      fixture.detectChanges();
+
+      expect(selectButton()?.disabled).toBe(false);
+    });
+
+    it('should still show the item count when items are selected', () => {
+      fixture.componentRef.setInput('selectedItems', ['/mnt/tank/database.db']);
+      fixture.detectChanges();
+
+      const count = fixture.debugElement.query(By.css('.selection-count'));
+      expect((count.nativeElement as HTMLElement).textContent).toContain('1 item selected');
     });
   });
 

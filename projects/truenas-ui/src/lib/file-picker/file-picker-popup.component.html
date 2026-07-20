@@ -1,27 +1,17 @@
 <!-- Header with breadcrumb navigation -->
 <div class="tn-file-picker-header">
   <nav class="tn-file-picker-breadcrumb" aria-label="File path">
-    @for (segment of currentPath() | tnTruncatePath; track $index; let last = $last) {
+    @for (segment of currentPath() | tnTruncatePath : rootPath(); track $index; let last = $last) {
       <button
         class="breadcrumb-segment"
         [class.current]="last"
-        [class.parent-nav]="segment.name === '..'"
         [disabled]="last"
+        [attr.aria-label]="segment.name === '…' || !segment.name ? 'Navigate to ' + segment.path : null"
         (click)="navigateToPath(segment.path)">
         {{ segment.name }}
       </button>
     }
   </nav>
-
-  <div class="tn-file-picker-actions">
-    @if (allowCreate()) {
-      <tn-button
-        variant="outline"
-        label="New Folder"
-        [disabled]="isCreateDisabled()"
-        (onClick)="onCreateFolder()" />
-    }
-  </div>
 </div>
 
 <!-- Loading indicator -->
@@ -35,9 +25,14 @@
 <!-- File table -->
 @if (!loading()) {
   <div class="tn-file-picker-content">
+
   <tn-table
     [dataSource]="filteredFileItems()"
-    [displayedColumns]="multiSelect() ? displayedColumns : displayedColumns.slice(1)">
+    [displayedColumns]="multiSelect() ? displayedColumns : displayedColumns.slice(1)"
+    [clickable]="true"
+    [activeWhen]="isRowSelected"
+    (rowClick)="onItemClick($event)"
+    (rowDoubleClick)="onItemDoubleClick($event)">
 
     <!-- Selection column -->
     @if (multiSelect()) {
@@ -46,12 +41,15 @@
         <!-- Select all checkbox -->
       </ng-template>
       <ng-template let-item tnCellDef>
-        <input 
-          type="checkbox" 
-          [checked]="isSelected(item)"
-          [disabled]="!!item.disabled"
-          (click)="$event.stopPropagation()"
-          (change)="onItemClick(item)">
+        @if (!item.inlineCreate) {
+          <tn-checkbox
+            [hideLabel]="true"
+            [label]="'Select ' + item.name"
+            [checked]="isSelected(item)"
+            [disabled]="!!item.disabled"
+            (click)="$event.stopPropagation()"
+            (change)="onItemClick(item)" />
+        }
       </ng-template>
       </ng-container>
     }
@@ -61,84 +59,79 @@
       <ng-template tnHeaderCellDef>Name</ng-template>
       <ng-template let-item tnCellDef>
 
-        <!-- NORMAL MODE: Display name -->
-        @if (!item.isCreating) {
-          <div
-               class="file-name-cell"
-               [class.disabled]="!!item.disabled"
-               [class.zfs-object]="isZfsObject(item)"
-               [attr.tabindex]="item.disabled ? null : 0"
-               [attr.role]="'button'"
-               (click)="onItemClick(item)"
-               (dblclick)="onItemDoubleClick(item)"
-               (keydown.enter)="onItemDoubleClick(item)"
-               (keydown.space)="onItemClick(item)">
-            <tn-icon
-              [name]="getItemIcon(item)"
-              [library]="getItemIconLibrary(item)"
-              [class]="'file-icon file-icon-' + item.type" />
-            <span class="file-name">{{ item.name }}</span>
-
-            <!-- ZFS badge -->
-            @if (isZfsObject(item)) {
-              <span
-                [class]="'zfs-badge zfs-badge-' + item.type">
-                {{ getZfsBadge(item) }}
-              </span>
-            }
-
-            <!-- Permission indicator -->
-            @if (item.permissions === 'none') {
-              <tn-icon
-                name="lock"
-                library="mdi"
-                class="permission-icon" />
-            }
-          </div>
-        }
-
-        <!-- EDIT MODE: Inline name input with error display -->
-        @if (item.isCreating) {
-          <div class="file-name-cell-wrapper">
-            <div class="file-name-cell editing" [class.has-error]="!!item.creationError">
-              <tn-icon
-                name="folder"
-                library="mdi"
-                class="file-icon file-icon-folder" />
-              <input
-                #folderNameInput
-                type="text"
-                role="textbox"
-                aria-label="Folder name"
-                class="folder-name-input"
-                spellcheck="false"
-                autocomplete="off"
-                [class.error]="!!item.creationError"
-                [value]="item.name"
-                [disabled]="creationLoading()"
-                [attr.data-autofocus]="true"
-                (keydown)="onFolderNameKeyDown($event, item)"
-                (blur)="onFolderNameInputBlur($event, item)">
-
-              <!-- Loading indicator during submission -->
-              @if (creationLoading()) {
-                <tn-icon
-                  name="loading"
-                  library="mdi"
-                  class="creation-loading-icon" />
+        <!-- Inline creation row for create actions with a `create` callback -->
+        @if (item.inlineCreate) {
+          @if (inlineCreation(); as creation) {
+            <div class="inline-create-cell">
+              <div class="inline-create-row" [class.has-error]="!!creation.error">
+                <tn-icon class="file-icon" [name]="creation.action.icon || 'mdi-folder'" />
+                <input
+                  type="text"
+                  class="inline-create-input"
+                  spellcheck="false"
+                  autocomplete="off"
+                  [attr.aria-label]="creation.action.label + ' name'"
+                  [attr.aria-invalid]="creation.error ? true : null"
+                  [attr.aria-describedby]="creation.error ? inlineErrorId : null"
+                  [class.error]="!!creation.error"
+                  [disabled]="creation.loading"
+                  [value]="creation.name"
+                  (input)="onInlineCreationInput($event)"
+                  (keydown)="onInlineCreationKeyDown($event)"
+                  (blur)="onInlineCreationBlur()">
+                @if (creation.loading) {
+                  <tn-icon name="mdi-loading" class="creation-loading-icon" aria-hidden="true" />
+                }
+              </div>
+              @if (creation.error) {
+                <div class="inline-create-error" role="alert" [id]="inlineErrorId">
+                  <tn-icon name="mdi-alert-circle" class="error-icon" aria-hidden="true" />
+                  <span class="error-text">{{ creation.error }}</span>
+                </div>
               }
             </div>
+          }
+        } @else {
+        <div
+             class="file-name-cell"
+             [class.selected]="isSelected(item)"
+             [class.disabled]="!!item.dimmed"
+             [class.zfs-object]="isZfsObject(item)">
+          <tn-icon
+            [name]="getItemIcon(item)"
+            [class]="'file-icon file-icon-' + item.type" />
+          <span class="file-name">{{ item.name }}</span>
 
-            <!-- Inline error message -->
-            @if (item.creationError) {
-              <div class="folder-creation-error">
-                <tn-icon name="alert-circle" library="mdi" class="error-icon" />
-                <span class="error-text">{{ item.creationError }}</span>
-              </div>
-            }
-          </div>
+          <!-- ZFS badge -->
+          @if (isZfsObject(item)) {
+            <span
+              [class]="'zfs-badge zfs-badge-' + item.type">
+              {{ getZfsBadge(item) }}
+            </span>
+          }
+
+          <!-- Permission indicator -->
+          @if (item.permissions === 'none') {
+            <tn-icon
+              name="lock"
+              library="mdi"
+              class="permission-icon" />
+          }
+
+          <!-- Navigation affordance: single click opens the directory -->
+          @if (isNavigatable(item)) {
+            <button
+              type="button"
+              class="navigate-button"
+              [attr.aria-label]="'Open ' + item.name"
+              [attr.title]="'Open ' + item.name"
+              (click)="onNavigateClick($event, item)"
+              (dblclick)="$event.stopPropagation()">
+              <tn-icon name="mdi-chevron-right" size="sm" />
+            </button>
+          }
+        </div>
         }
-
       </ng-template>
     </ng-container>
 
@@ -181,20 +174,38 @@
 <!-- Footer -->
 @if (!loading()) {
   <div class="tn-file-picker-footer">
-    @if (selectedItems().length > 0) {
-      <span class="selection-count">
-        {{ selectedItems().length }} item{{ selectedItems().length !== 1 ? 's' : '' }} selected
-      </span>
-    }
-    @if (selectedItems().length === 0) {
-      <span class="selection-count">
-        No items selected
-      </span>
-    }
+    <div class="footer-selection">
+      @if (selectedItems().length > 0) {
+        <span class="selection-count">
+          {{ selectedItems().length }} item{{ selectedItems().length !== 1 ? 's' : '' }} selected
+        </span>
+        <tn-button
+          variant="outline"
+          label="Clear Selection"
+          (onClick)="onClearSelection()" />
+      } @else if (allowCurrentDirectorySelection()) {
+        <span class="selection-count current-directory-selection">
+          Current directory selected
+        </span>
+      } @else {
+        <span class="selection-count">
+          No items selected
+        </span>
+      }
+    </div>
     <div class="footer-actions">
+      @for (action of createActions(); track action.id) {
+        <tn-button
+          variant="outline"
+          [label]="action.label"
+          [disabled]="!!inlineCreation()"
+          (onClick)="onCreateAction(action)" />
+      }
+      <!-- Disabled while the inline creation row is open: its blur auto-submit
+           would race the selection submit -->
       <tn-button
         label="Select"
-        [disabled]="selectedItems().length === 0"
+        [disabled]="(selectedItems().length === 0 && !allowCurrentDirectorySelection()) || !!inlineCreation()"
         (onClick)="onSubmit()" />
     </div>
   </div>

@@ -9,7 +9,7 @@
       [disabled]="isDisabled()"
       [required]="required()"
       [indeterminate]="indeterminate()"
-      [attr.aria-label]="hasProjectedLabel() ? (label() | tnLabelText) : null"
+      [attr.aria-label]="hasProjectedLabel() || hideLabel() ? (label() | tnLabelText) : null"
       [attr.aria-describedby]="error() ? id + '-error' : null"
       [attr.aria-invalid]="error() ? 'true' : null"
       (change)="onCheckboxChange($event)"

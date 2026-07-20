@@ -101,8 +101,6 @@ export * from './lib/pipes/file-size/file-size.pipe';
 export * from './lib/pipes/label-markup/label-markup.pipe';
 export * from './lib/pipes/label-markup/label-text.pipe';
 export * from './lib/pipes/label-markup/label-markup.utils';
-export * from './lib/pipes/strip-mnt-prefix/strip-mnt-prefix.pipe';
-export * from './lib/pipes/truncate-path/truncate-path.pipe';
 export * from './lib/spinner/spinner.component';
 export * from './lib/spinner/branded-spinner.component';
 export * from './lib/progress-bar/progress-bar.component';

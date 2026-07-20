@@ -7,8 +7,10 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.08);
   border-radius: 8px;
   border: 1px solid var(--tn-lines, #e0e0e0);
-  min-width: 400px;
-  max-width: 600px;
+  // Fixed width so the popup doesn't resize as breadcrumb and file names
+  // change while navigating
+  width: 520px;
+  max-width: calc(100vw - 32px);
   min-height: 500px;
   max-height: 600px;
   font-family: var(--tn-font-family-body);
@@ -27,10 +29,11 @@
   border-bottom: 1px solid var(--tn-lines);
 }
 
+// Segments are packed tightly so the breadcrumb reads as a single path,
+// e.g. /mnt/showcase/my-dataset, with each segment still clickable.
 .tn-file-picker-breadcrumb {
   display: flex;
   align-items: center;
-  gap: 4px;
   flex: 1;
   min-width: 0;
 
@@ -39,7 +42,7 @@
     border: none;
     color: var(--tn-primary);
     cursor: pointer;
-    padding: 4px 8px;
+    padding: 4px 2px;
     border-radius: 4px;
     font-size: 1rem;
     white-space: nowrap;
@@ -58,19 +61,17 @@
 
     &:not(:last-child)::after {
       content: '/';
-      margin-left: 8px;
+      margin-left: 2px;
       color: var(--tn-alt-fg1);
     }
-  }
-}
 
-.tn-file-picker-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  tn-button {
-    font-size: 1rem;
+    // Leading slash of the root segment, styled like the other separators
+    // so the breadcrumb reads "/ mnt / showcase"
+    &:first-child::before {
+      content: '/';
+      margin-right: 2px;
+      color: var(--tn-alt-fg1);
+    }
   }
 }
 
@@ -100,6 +101,72 @@
   overflow-y: auto;
 }
 
+// Inline creation row rendered as the first listing item while a `create`
+// action is open
+.inline-create-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.inline-create-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .inline-create-input {
+    flex: 1;
+    padding: 4px 8px;
+    border: 2px solid var(--tn-primary);
+    border-radius: 3px;
+    background: var(--tn-bg1);
+    color: var(--tn-fg1);
+    font-size: inherit;
+    font-family: inherit;
+    outline: none;
+    min-width: 0;
+
+    &.error {
+      border-color: var(--tn-error, #d32f2f);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      background: var(--tn-bg2);
+    }
+  }
+
+  .creation-loading-icon {
+    animation: spin 1s linear infinite;
+    color: var(--tn-primary);
+    flex-shrink: 0;
+  }
+}
+
+.inline-create-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 4px 8px;
+  background: color-mix(in srgb, var(--tn-error, #d32f2f) 10%, transparent);
+  border-left: 3px solid var(--tn-error, #d32f2f);
+  border-radius: 3px;
+  font-size: 1rem;
+  color: var(--tn-error, #d32f2f);
+
+  .error-icon {
+    flex-shrink: 0;
+  }
+
+  .error-text {
+    flex: 1;
+  }
+}
+
 .file-list-viewport {
   width: 100%;
   height: 100%;
@@ -126,17 +193,9 @@ tn-table {
     padding: 8px 16px;
     border-bottom: 1px solid var(--tn-lines);
   }
-}
 
-.file-checkbox {
-  display: flex;
-  align-items: center;
-
-  input[type="checkbox"] {
-    margin: 0;
-    width: 16px;
-    height: 16px;
-  }
+  // Selected rows are highlighted through the table's own active-row styling
+  // (`activeWhen` input) — no DOM reach-in needed here.
 }
 
 // File name cell styling
@@ -171,81 +230,6 @@ tn-table {
     &:not(:has(.file-icon-folder)):not(:has(.file-icon-dataset)):not(:has(.file-icon-mountpoint)) {
       cursor: not-allowed;
     }
-  }
-
-  // Edit mode styling
-  &.editing {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 2px;
-    cursor: default;
-
-    .folder-name-input {
-      flex: 1;
-      border: 2px solid var(--tn-primary, #0066cc);
-      padding: 4px 8px;
-      font-size: inherit;
-      font-family: inherit;
-      background: var(--tn-bg1, white);
-      color: var(--tn-fg1, black);
-      outline: none;
-      border-radius: 3px;
-      min-width: 200px;
-
-      &:focus {
-        border-color: var(--tn-primary, #0066cc);
-        box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
-      }
-
-      &.error {
-        border-color: var(--tn-error, #d32f2f);
-      }
-
-      &:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        background: var(--tn-bg2, #f5f5f5);
-      }
-    }
-
-    .creation-loading-icon {
-      animation: spin 1s linear infinite;
-      color: var(--tn-primary, #0066cc);
-      flex-shrink: 0;
-    }
-  }
-}
-
-// Wrapper for edit mode to support error display
-.file-name-cell-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-// Inline error message styling
-.folder-creation-error {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  padding-left: 36px; // Align with input (icon + gap)
-  margin-bottom: 12px;
-  background: rgba(211, 47, 47, 0.1);
-  border-left: 3px solid var(--tn-error, #d32f2f);
-  border-radius: 3px;
-  font-size: 1rem;
-  color: var(--tn-error, #d32f2f);
-
-  .error-icon {
-    flex-shrink: 0;
-    width: 20px;
-    height: 20px;
-  }
-
-  .error-text {
-    flex: 1;
   }
 }
 
@@ -320,6 +304,27 @@ tn-table {
   line-height: 1;
 }
 
+// Chevron on navigatable rows: signals the item can be entered and opens it
+// on a single click (double-clicking the row still works)
+.navigate-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  padding: 2px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--tn-fg2);
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--tn-bg3);
+    color: var(--tn-primary);
+  }
+}
+
 // Type column styling
 .file-type {
   font-size: 1rem;
@@ -383,11 +388,19 @@ tn-table {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  // Minimum breathing room between the selection text and the action buttons
+  gap: 16px;
   padding: 16px var(--tn-content-padding, 24px);
   border-top: 1px solid var(--tn-lines);
   background: var(--tn-bg2);
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
+
+  .footer-selection {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
 }
 
 .selection-count {

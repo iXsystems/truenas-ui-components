@@ -310,6 +310,22 @@ describe('TnTableComponent', () => {
       expect(spy).toHaveBeenCalledWith(testData[1]);
     });
 
+    it('should not emit rowDoubleClick when not clickable', () => {
+      const spy = jest.fn();
+      component.rowDoubleClick.subscribe(spy);
+      component.onRowDoubleClick(testData[0]);
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('should emit rowDoubleClick when clickable', () => {
+      fixture.componentRef.setInput('clickable', true);
+      const spy = jest.fn();
+      component.rowDoubleClick.subscribe(spy);
+
+      component.onRowDoubleClick(testData[1]);
+      expect(spy).toHaveBeenCalledWith(testData[1]);
+    });
+
     it('should emit rowClick on Enter keydown', () => {
       fixture.componentRef.setInput('clickable', true);
       const spy = jest.fn();
@@ -441,6 +457,21 @@ describe('TnTableComponent', () => {
 
       fixture.componentRef.setInput('activeRow', null);
       expect(component.isRowActive(testData[0])).toBe(false);
+    });
+
+    it('should mark every row matching the activeWhen predicate as active', () => {
+      fixture.componentRef.setInput('activeWhen', (row: { id: number }) => row.id !== 2);
+      expect(component.isRowActive(testData[0])).toBe(true);
+      expect(component.isRowActive(testData[1])).toBe(false);
+      expect(component.isRowActive(testData[2])).toBe(true);
+    });
+
+    it('should combine activeWhen with activeRow', () => {
+      fixture.componentRef.setInput('activeWhen', (row: { id: number }) => row.id === 3);
+      fixture.componentRef.setInput('activeRow', testData[0]);
+      expect(component.isRowActive(testData[0])).toBe(true);
+      expect(component.isRowActive(testData[1])).toBe(false);
+      expect(component.isRowActive(testData[2])).toBe(true);
     });
 
     it('should leave active style CSS vars unset by default', () => {
