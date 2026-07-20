@@ -57,6 +57,14 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   /** Consumer-defined creation flows shown as buttons in the popup footer. */
   createActions = input<FilePickerCreateAction[]>([]);
   allowManualInput = input<boolean>(true);
+  /**
+   * Open the picker popup as soon as the input receives focus while no path is
+   * selected yet — an empty field means the user is about to pick something, so
+   * the browser opens without the extra click on the folder button. A field
+   * that already holds a path keeps plain focus behavior (the user may just
+   * want to edit the text).
+   */
+  openOnFocus = input<boolean>(false);
   placeholder = input<string>('Select file or folder');
   disabled = input<boolean>(false);
   /**
@@ -187,6 +195,17 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     }
 
     this.onTouched();
+  }
+
+  /**
+   * `openOnFocus` entry point. Safe against reopen loops: closing the popup
+   * never programmatically refocuses the input, so a close can't retrigger
+   * this — only a genuine focus transition into the input can.
+   */
+  onInputFocus(): void {
+    if (this.openOnFocus() && !this.selectedPath()) {
+      this.openFilePicker();
+    }
   }
 
   openFilePicker(): void {

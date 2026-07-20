@@ -49,6 +49,41 @@ describe('TnFilePickerComponent', () => {
     });
   });
 
+  describe('Open On Focus', () => {
+    function focusInput(): void {
+      const input = fixture.nativeElement.querySelector('.tn-file-picker-input') as HTMLInputElement;
+      input.dispatchEvent(new FocusEvent('focus'));
+      fixture.detectChanges();
+    }
+
+    it('should open the popup when the input is focused while empty', () => {
+      fixture.componentRef.setInput('openOnFocus', true);
+      fixture.detectChanges();
+
+      focusInput();
+
+      expect(component.isOpen()).toBe(true);
+    });
+
+    it('should not open the popup on focus when a path is already selected', () => {
+      fixture.componentRef.setInput('openOnFocus', true);
+      fixture.detectChanges();
+      component.writeValue('/mnt/tank');
+
+      focusInput();
+
+      expect(component.isOpen()).toBe(false);
+    });
+
+    it('should not open the popup on focus by default', () => {
+      fixture.detectChanges();
+
+      focusInput();
+
+      expect(component.isOpen()).toBe(false);
+    });
+  });
+
   describe('Programmatic API', () => {
     it('should re-fetch the current listing on refresh()', async () => {
       const getChildren = jest.fn().mockResolvedValue([]);

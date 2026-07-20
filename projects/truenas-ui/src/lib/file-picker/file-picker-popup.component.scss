@@ -72,6 +72,12 @@
       margin-right: 2px;
       color: var(--tn-alt-fg1);
     }
+
+    // A `/` root has an empty name — its leading slash IS the whole segment,
+    // so drop its trailing separator or the breadcrumb would read "/ / mnt".
+    &.nameless:not(:last-child)::after {
+      content: none;
+    }
   }
 }
 

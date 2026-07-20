@@ -34,6 +34,10 @@ const meta: Meta<TnFilePickerComponent> = {
       control: 'boolean',
       description: 'Whether the file picker is disabled',
     },
+    openOnFocus: {
+      control: 'boolean',
+      description: 'Open the picker popup when the input receives focus while no path is selected',
+    },
     startPath: {
       control: 'text',
       description: 'Initial directory path',
@@ -1268,6 +1272,123 @@ export const DeepNesting: Story = {
     docs: {
       description: {
         story: 'Exercises long paths in the header: deep paths collapse their middle into a "…" breadcrumb segment that navigates to the parent of the first visible directory, and the popup keeps a fixed width while navigating.'
+      }
+    }
+  }
+};
+
+const slashRootFilesystem: Record<string, FileSystemItem[]> = {
+  '/': [
+    { path: '/mnt', name: 'mnt', type: 'folder' },
+    { path: '/dev/zvol', name: 'dev/zvol', type: 'folder' },
+  ],
+  '/mnt': [
+    { path: '/mnt/dozer', name: 'dozer', type: 'dataset' },
+  ],
+  '/mnt/dozer': [
+    { path: '/mnt/dozer/foo', name: 'foo', type: 'dataset' },
+  ],
+};
+
+export const FilesystemRoot: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      callbacks: {
+        getChildren: async (path: string) => slashRootFilesystem[path] || []
+      } as FilePickerCallbacks
+    },
+    template: `
+      <tn-form-field label="Rooted at /">
+        <tn-file-picker
+          [mode]="mode"
+          [rootPath]="rootPath"
+          [startPath]="startPath"
+          [callbacks]="callbacks">
+        </tn-file-picker>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
+    }
+  }),
+  args: {
+    mode: 'any',
+    rootPath: '/',
+    startPath: '/mnt/dozer'
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    const folderButton = canvas.getByRole('button', { name: /open file picker/i });
+    await userEvent.click(folderButton);
+
+    await waitFor(() => {
+      void expect(screen.queryByText('foo')).toBeInTheDocument();
+    }, { timeout: 2000 });
+
+    // The `/` root renders as a nameless segment whose leading slash IS the
+    // segment; its trailing separator is suppressed so the breadcrumb reads
+    // "/ mnt / dozer" rather than "/ / mnt / dozer".
+    void expect(screen.getByText('mnt')).toBeInTheDocument();
+    void expect(screen.getByText('dozer')).toBeInTheDocument();
+    const rootSegment = document.querySelector('.breadcrumb-segment');
+    void expect(rootSegment).toHaveClass('nameless');
+    void expect(rootSegment).toHaveTextContent('');
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'A picker confined to the filesystem root: with `rootPath="/"` the root breadcrumb segment has no name, so it renders as a single clickable slash instead of doubling the separator.'
+      }
+    }
+  }
+};
+
+export const OpenOnFocus: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      callbacks: {
+        getChildren: async (path: string) => slashRootFilesystem[path] || []
+      } as FilePickerCallbacks
+    },
+    template: `
+      <tn-form-field label="Opens on focus while empty">
+        <tn-file-picker
+          [mode]="mode"
+          [openOnFocus]="openOnFocus"
+          [rootPath]="rootPath"
+          [startPath]="startPath"
+          [callbacks]="callbacks">
+        </tn-file-picker>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
+    }
+  }),
+  args: {
+    mode: 'any',
+    openOnFocus: true,
+    rootPath: '/mnt',
+    startPath: '/mnt'
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    // Focusing the empty input opens the popup without pressing the folder button
+    const input = canvas.getByRole('textbox');
+    input.focus();
+
+    await waitFor(() => {
+      void expect(screen.queryByText('dozer')).toBeInTheDocument();
+    }, { timeout: 2000 });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'With `openOnFocus`, focusing the input while no path is selected opens the browsing popup immediately — the empty field signals the user is about to pick something. A field that already holds a path keeps plain focus behavior so the text can be edited.'
       }
     }
   }
