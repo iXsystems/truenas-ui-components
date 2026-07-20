@@ -1,9 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { fireEvent, userEvent, within, screen, expect, waitFor } from 'storybook/test';
 import { TestIdInspectorComponent } from './testid-inspector.component';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnFilePickerComponent } from '../lib/file-picker/file-picker.component';
 import type { FileSystemItem, FilePickerCallbacks } from '../lib/file-picker/file-picker.interfaces';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
+
+const harnessDoc = loadHarnessDoc('file-picker');
 
 const meta: Meta<TnFilePickerComponent> = {
   title: 'Components/File Picker',
@@ -1624,4 +1627,23 @@ export const TestIds: Story = {
     `,
     moduleMetadata: { imports: [TnFilePickerComponent, TestIdInspectorComponent] },
   }),
+};
+
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      story: { height: 'auto' },
+      canvas: {
+        hidden: true,
+        sourceState: 'none',
+      },
+      description: {
+        story: harnessDoc || '',
+      },
+    },
+    controls: { disable: true },
+    layout: 'fullscreen',
+  },
+  render: () => ({ template: '' }),
 };
