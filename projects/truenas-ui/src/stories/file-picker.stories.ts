@@ -34,9 +34,9 @@ const meta: Meta<TnFilePickerComponent> = {
       control: 'boolean',
       description: 'Whether the file picker is disabled',
     },
-    openOnFocus: {
+    openOnClick: {
       control: 'boolean',
-      description: 'Open the picker popup when the input receives focus while no path is selected',
+      description: 'Open the picker popup when the input is clicked while no path is selected',
     },
     startPath: {
       control: 'text',
@@ -177,6 +177,11 @@ fileExtensions = input<string[] | undefined>(undefined);
 allowManualInput = input<boolean>(true);
 \`\`\`
 **Description:** Allow users to type paths directly in the input field. Paths are committed on Enter or blur (not per keystroke) and must stay within \`rootPath\`; clearing the field clears the selection.
+
+\`\`\`typescript
+openOnClick = input<boolean>(false);
+\`\`\`
+**Description:** Open the picker popup when the input is clicked while no path is selected — an empty field signals the user is about to pick something. Pointer-only by design: keyboard users tabbing through a form never get the overlay opened on them; the folder button remains the keyboard path.
 
 \`\`\`typescript
 placeholder = input<string>('Select file or folder');
@@ -1345,7 +1350,7 @@ export const FilesystemRoot: Story = {
   }
 };
 
-export const OpenOnFocus: Story = {
+export const OpenOnClick: Story = {
   render: (args) => ({
     props: {
       ...args,
@@ -1354,10 +1359,10 @@ export const OpenOnFocus: Story = {
       } as FilePickerCallbacks
     },
     template: `
-      <tn-form-field label="Opens on focus while empty">
+      <tn-form-field label="Opens on click while empty">
         <tn-file-picker
           [mode]="mode"
-          [openOnFocus]="openOnFocus"
+          [openOnClick]="openOnClick"
           [rootPath]="rootPath"
           [startPath]="startPath"
           [callbacks]="callbacks">
@@ -1370,16 +1375,16 @@ export const OpenOnFocus: Story = {
   }),
   args: {
     mode: 'any',
-    openOnFocus: true,
+    openOnClick: true,
     rootPath: '/mnt',
     startPath: '/mnt'
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // Focusing the empty input opens the popup without pressing the folder button
+    // Clicking the empty input opens the popup without pressing the folder button
     const input = canvas.getByRole('textbox');
-    input.focus();
+    await userEvent.click(input);
 
     await waitFor(() => {
       void expect(screen.queryByText('dozer')).toBeInTheDocument();
@@ -1388,7 +1393,7 @@ export const OpenOnFocus: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'With `openOnFocus`, focusing the input while no path is selected opens the browsing popup immediately — the empty field signals the user is about to pick something. A field that already holds a path keeps plain focus behavior so the text can be edited.'
+        story: 'With `openOnClick`, clicking the input while no path is selected opens the browsing popup immediately — the empty field signals the user is about to pick something. A field that already holds a path keeps plain click behavior so the text can be edited. The trigger is deliberately pointer-only: keyboard users tabbing through a form never get the overlay popped open on them, and the folder button remains the keyboard path.'
       }
     }
   }

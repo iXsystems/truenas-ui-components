@@ -58,13 +58,16 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   createActions = input<FilePickerCreateAction[]>([]);
   allowManualInput = input<boolean>(true);
   /**
-   * Open the picker popup as soon as the input receives focus while no path is
-   * selected yet — an empty field means the user is about to pick something, so
-   * the browser opens without the extra click on the folder button. A field
-   * that already holds a path keeps plain focus behavior (the user may just
-   * want to edit the text).
+   * Open the picker popup when the input is clicked while no path is selected
+   * yet — an empty field means the user is about to pick something, so the
+   * browser opens without the extra click on the folder button. A field that
+   * already holds a path keeps plain click behavior (the user may just want to
+   * edit the text). Deliberately pointer-only: opening on focus would pop the
+   * overlay on keyboard users tabbing through a form and leave it open behind
+   * them; tabbing never opens it, and the folder button stays the keyboard
+   * path to the popup.
    */
-  openOnFocus = input<boolean>(false);
+  openOnClick = input<boolean>(false);
   placeholder = input<string>('Select file or folder');
   disabled = input<boolean>(false);
   /**
@@ -197,13 +200,9 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     this.onTouched();
   }
 
-  /**
-   * `openOnFocus` entry point. Safe against reopen loops: closing the popup
-   * never programmatically refocuses the input, so a close can't retrigger
-   * this — only a genuine focus transition into the input can.
-   */
-  onInputFocus(): void {
-    if (this.openOnFocus() && !this.selectedPath()) {
+  /** `openOnClick` entry point. */
+  onInputClick(): void {
+    if (this.openOnClick() && !this.selectedPath()) {
       this.openFilePicker();
     }
   }
