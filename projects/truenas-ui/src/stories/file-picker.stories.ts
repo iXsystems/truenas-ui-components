@@ -1635,23 +1635,56 @@ export const ErrorHandling: Story = {
  * (`button-select`, `option-docs`) — only one popup can be open at a time.
  * Under `data-testid` (default) / `data-test`.
  *
- * The popup is a portaled overlay, so its ids exist only while it is open:
- * **open the picker below** and the table extends live with the popup's rows,
- * checkboxes, navigate chevrons, and footer buttons, marked `(overlay)`.
+ * The live table lists the trigger's ids; the popup renders in a portaled
+ * overlay, so its ids exist only while it is open — the reference list below
+ * the table shows what to expect there (verify in devtools with the popup
+ * open).
  */
 export const TestIds: Story = {
   render: () => ({
     props: {
       createActions: [{ id: 'dataset', label: 'Create Dataset' }],
+      // Expected ids for the popup surface, per element role. Mirrors (and is
+      // kept honest by) the popup "Test IDs" cases in
+      // file-picker-popup.component.spec.ts.
+      popupIds: [
+        { element: 'popup container', id: 'file-picker-popup-backup-target' },
+        { element: 'breadcrumb segment (mnt)', id: 'button-breadcrumb-backup-target-mnt' },
+        { element: 'item row (Documents)', id: 'option-backup-target-documents' },
+        { element: 'row checkbox — multi-select (Documents)', id: 'checkbox-backup-target-documents' },
+        { element: 'navigate chevron (Documents)', id: 'button-navigate-backup-target-documents' },
+        { element: 'create action (id: dataset)', id: 'button-backup-target-dataset' },
+        { element: 'inline creation input', id: 'input-create-backup-target' },
+        { element: 'Select button', id: 'button-select-backup-target' },
+        { element: 'Clear Selection button', id: 'button-clear-selection-backup-target' },
+      ],
     },
     template: `
-      <tn-testid-inspector includeOverlay>
+      <tn-testid-inspector>
         <tn-file-picker
           testId="backup-target"
           [multiSelect]="true"
           [createActions]="createActions"
           placeholder="Choose a path" />
       </tn-testid-inspector>
+
+      <table class="tn-testid-doc" style="margin-top:16px;border-collapse:collapse;font:13px/1.5 monospace;">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:4px 12px;border-bottom:1px solid #ccc;" colspan="2">
+              in the popup (portaled overlay, while open)
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of popupIds; track row.id) {
+            <tr>
+              <td style="padding:4px 12px;">{{ row.element }}</td>
+              <td style="padding:4px 12px;"><strong>{{ row.id }}</strong></td>
+            </tr>
+          }
+        </tbody>
+      </table>
     `,
     moduleMetadata: { imports: [TnFilePickerComponent, TestIdInspectorComponent] },
   }),
