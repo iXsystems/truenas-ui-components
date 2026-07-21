@@ -425,6 +425,25 @@ describe('TnFilePickerPopupComponent', () => {
       expect(breadcrumbLabels()).toEqual(['dev/zvol']);
     });
 
+    it('should render a single leading slash for the / root instead of a doubled separator', () => {
+      fixture.componentRef.setInput('rootPath', '/');
+      fixture.componentRef.setInput('currentPath', '/mnt/dozer');
+      fixture.detectChanges();
+
+      // The root segment has no name — its leading slash pseudo-element is the
+      // whole segment, and the `nameless` class suppresses its trailing
+      // separator so the breadcrumb reads "/ mnt / dozer", not "/ / mnt / dozer".
+      expect(breadcrumbLabels()).toEqual(['', 'mnt', 'dozer']);
+      const rootSegment = fixture.debugElement.query(By.css('.breadcrumb-segment'));
+      expect((rootSegment.nativeElement as HTMLElement).classList).toContain('nameless');
+
+      const navigateSpy = jest.fn();
+      component.pathNavigate.subscribe(navigateSpy);
+      (rootSegment.nativeElement as HTMLElement).click();
+
+      expect(navigateSpy).toHaveBeenCalledWith('/');
+    });
+
     it('should render every path segment and navigate to the custom root via its segment', () => {
       fixture.componentRef.setInput('rootPath', '/dev/zvol');
       fixture.componentRef.setInput('currentPath', '/dev/zvol/tank/vm');

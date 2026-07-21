@@ -8,6 +8,7 @@
       [placeholder]="placeholder()"
       [readonly]="!allowManualInput()"
       [disabled]="isDisabled()"
+      (click)="onInputClick()"
       (change)="onPathCommit($event)">
 
     <button

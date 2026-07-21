@@ -34,6 +34,10 @@ const meta: Meta<TnFilePickerComponent> = {
       control: 'boolean',
       description: 'Whether the file picker is disabled',
     },
+    openOnClick: {
+      control: 'boolean',
+      description: 'Open the picker popup when the input is clicked while no path is selected',
+    },
     startPath: {
       control: 'text',
       description: 'Initial directory path',
@@ -173,6 +177,11 @@ fileExtensions = input<string[] | undefined>(undefined);
 allowManualInput = input<boolean>(true);
 \`\`\`
 **Description:** Allow users to type paths directly in the input field. Paths are committed on Enter or blur (not per keystroke) and must stay within \`rootPath\`; clearing the field clears the selection.
+
+\`\`\`typescript
+openOnClick = input<boolean>(false);
+\`\`\`
+**Description:** Open the picker popup when the input is clicked while no path is selected — an empty field signals the user is about to pick something. Pointer-only by design: keyboard users tabbing through a form never get the overlay opened on them; the folder button remains the keyboard path.
 
 \`\`\`typescript
 placeholder = input<string>('Select file or folder');
@@ -1268,6 +1277,123 @@ export const DeepNesting: Story = {
     docs: {
       description: {
         story: 'Exercises long paths in the header: deep paths collapse their middle into a "…" breadcrumb segment that navigates to the parent of the first visible directory, and the popup keeps a fixed width while navigating.'
+      }
+    }
+  }
+};
+
+const slashRootFilesystem: Record<string, FileSystemItem[]> = {
+  '/': [
+    { path: '/mnt', name: 'mnt', type: 'folder' },
+    { path: '/dev/zvol', name: 'dev/zvol', type: 'folder' },
+  ],
+  '/mnt': [
+    { path: '/mnt/dozer', name: 'dozer', type: 'dataset' },
+  ],
+  '/mnt/dozer': [
+    { path: '/mnt/dozer/foo', name: 'foo', type: 'dataset' },
+  ],
+};
+
+export const FilesystemRoot: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      callbacks: {
+        getChildren: async (path: string) => slashRootFilesystem[path] || []
+      } as FilePickerCallbacks
+    },
+    template: `
+      <tn-form-field label="Rooted at /">
+        <tn-file-picker
+          [mode]="mode"
+          [rootPath]="rootPath"
+          [startPath]="startPath"
+          [callbacks]="callbacks">
+        </tn-file-picker>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
+    }
+  }),
+  args: {
+    mode: 'any',
+    rootPath: '/',
+    startPath: '/mnt/dozer'
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    const folderButton = canvas.getByRole('button', { name: /open file picker/i });
+    await userEvent.click(folderButton);
+
+    await waitFor(() => {
+      void expect(screen.queryByText('foo')).toBeInTheDocument();
+    }, { timeout: 2000 });
+
+    // The `/` root renders as a nameless segment whose leading slash IS the
+    // segment; its trailing separator is suppressed so the breadcrumb reads
+    // "/ mnt / dozer" rather than "/ / mnt / dozer".
+    void expect(screen.getByText('mnt')).toBeInTheDocument();
+    void expect(screen.getByText('dozer')).toBeInTheDocument();
+    const rootSegment = document.querySelector('.breadcrumb-segment');
+    void expect(rootSegment).toHaveClass('nameless');
+    void expect(rootSegment).toHaveTextContent('');
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'A picker confined to the filesystem root: with `rootPath="/"` the root breadcrumb segment has no name, so it renders as a single clickable slash instead of doubling the separator.'
+      }
+    }
+  }
+};
+
+export const OpenOnClick: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      callbacks: {
+        getChildren: async (path: string) => slashRootFilesystem[path] || []
+      } as FilePickerCallbacks
+    },
+    template: `
+      <tn-form-field label="Opens on click while empty">
+        <tn-file-picker
+          [mode]="mode"
+          [openOnClick]="openOnClick"
+          [rootPath]="rootPath"
+          [startPath]="startPath"
+          [callbacks]="callbacks">
+        </tn-file-picker>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
+    }
+  }),
+  args: {
+    mode: 'any',
+    openOnClick: true,
+    rootPath: '/mnt',
+    startPath: '/mnt'
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    // Clicking the empty input opens the popup without pressing the folder button
+    const input = canvas.getByRole('textbox');
+    await userEvent.click(input);
+
+    await waitFor(() => {
+      void expect(screen.queryByText('dozer')).toBeInTheDocument();
+    }, { timeout: 2000 });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'With `openOnClick`, clicking the input while no path is selected opens the browsing popup immediately — the empty field signals the user is about to pick something. A field that already holds a path keeps plain click behavior so the text can be edited. The trigger is deliberately pointer-only: keyboard users tabbing through a form never get the overlay popped open on them, and the folder button remains the keyboard path.'
       }
     }
   }

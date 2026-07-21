@@ -5,6 +5,7 @@
       <button
         class="breadcrumb-segment"
         [class.current]="last"
+        [class.nameless]="!segment.name"
         [disabled]="last"
         [attr.aria-label]="segment.name === '…' || !segment.name ? 'Navigate to ' + segment.path : null"
         (click)="navigateToPath(segment.path)">

@@ -49,6 +49,56 @@ describe('TnFilePickerComponent', () => {
     });
   });
 
+  describe('Open On Click', () => {
+    function getInput(): HTMLInputElement {
+      return fixture.nativeElement.querySelector('.tn-file-picker-input') as HTMLInputElement;
+    }
+
+    function clickInput(): void {
+      getInput().dispatchEvent(new MouseEvent('click'));
+      fixture.detectChanges();
+    }
+
+    it('should open the popup when the input is clicked while empty', () => {
+      fixture.componentRef.setInput('openOnClick', true);
+      fixture.detectChanges();
+
+      clickInput();
+
+      expect(component.isOpen()).toBe(true);
+    });
+
+    it('should not open the popup on click when a path is already selected', () => {
+      fixture.componentRef.setInput('openOnClick', true);
+      fixture.detectChanges();
+      component.writeValue('/mnt/tank');
+
+      clickInput();
+
+      expect(component.isOpen()).toBe(false);
+    });
+
+    it('should not open the popup on click by default', () => {
+      fixture.detectChanges();
+
+      clickInput();
+
+      expect(component.isOpen()).toBe(false);
+    });
+
+    it('should not open the popup on keyboard focus, only on click', () => {
+      fixture.componentRef.setInput('openOnClick', true);
+      fixture.detectChanges();
+
+      // A keyboard user tabbing through a form must not trigger the overlay —
+      // the popup does not trap focus, so it would be left open behind them.
+      getInput().dispatchEvent(new FocusEvent('focus'));
+      fixture.detectChanges();
+
+      expect(component.isOpen()).toBe(false);
+    });
+  });
+
   describe('Programmatic API', () => {
     it('should re-fetch the current listing on refresh()', async () => {
       const getChildren = jest.fn().mockResolvedValue([]);
