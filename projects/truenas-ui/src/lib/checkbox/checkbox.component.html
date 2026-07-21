@@ -1,8 +1,5 @@
 <div [ngClass]="classes()">
   <label class="tn-checkbox__label" tnTestIdType="checkbox" [for]="id" [tnTestId]="resolvedTestId()">
-    <!-- stopPropagation: the bubbling native change would reach ancestor (change)
-         bindings in addition to the component's `change` output, firing them twice
-         per toggle — the output is the single public event. -->
     <input
       #checkboxEl
       type="checkbox"
@@ -15,7 +12,7 @@
       [attr.aria-label]="hasProjectedLabel() || hideLabel() ? (label() | tnLabelText) : null"
       [attr.aria-describedby]="error() ? id + '-error' : null"
       [attr.aria-invalid]="error() ? 'true' : null"
-      (change)="onCheckboxChange($event); $event.stopPropagation()"
+      (change)="onCheckboxChange($event)"
     />
     <span class="tn-checkbox__checkmark"></span>
     @if (!hideLabel()) {
