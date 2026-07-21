@@ -4,6 +4,8 @@
     @for (segment of currentPath() | tnTruncatePath : rootPath(); track $index; let last = $last) {
       <button
         class="breadcrumb-segment"
+        tnTestIdType="button"
+        [tnTestId]="breadcrumbTestId(segment.name)"
         [class.current]="last"
         [class.nameless]="!segment.name"
         [disabled]="last"
@@ -46,6 +48,7 @@
           <tn-checkbox
             [hideLabel]="true"
             [label]="'Select ' + item.name"
+            [testId]="itemTestId(item)"
             [checked]="isSelected(item)"
             [disabled]="!!item.disabled"
             (click)="$event.stopPropagation()"
@@ -71,6 +74,8 @@
                   class="inline-create-input"
                   spellcheck="false"
                   autocomplete="off"
+                  tnTestIdType="input"
+                  [tnTestId]="inlineCreateTestId()"
                   [attr.aria-label]="creation.action.label + ' name'"
                   [attr.aria-invalid]="creation.error ? true : null"
                   [attr.aria-describedby]="creation.error ? inlineErrorId : null"
@@ -95,6 +100,8 @@
         } @else {
         <div
              class="file-name-cell"
+             tnTestIdType="option"
+             [tnTestId]="itemTestId(item)"
              [class.selected]="isSelected(item)"
              [class.disabled]="!!item.dimmed"
              [class.zfs-object]="isZfsObject(item)">
@@ -124,6 +131,8 @@
             <button
               type="button"
               class="navigate-button"
+              tnTestIdType="button"
+              [tnTestId]="navigateTestId(item)"
               [attr.aria-label]="'Open ' + item.name"
               [attr.title]="'Open ' + item.name"
               (click)="onNavigateClick($event, item)"
@@ -183,6 +192,7 @@
         <tn-button
           variant="outline"
           label="Clear Selection"
+          [testId]="clearSelectionTestId()"
           (onClick)="onClearSelection()" />
       } @else if (allowCurrentDirectorySelection()) {
         <span class="selection-count current-directory-selection">
@@ -199,6 +209,7 @@
         <tn-button
           variant="outline"
           [label]="action.label"
+          [testId]="createActionTestId(action)"
           [disabled]="!!inlineCreation()"
           (onClick)="onCreateAction(action)" />
       }
@@ -206,6 +217,7 @@
            would race the selection submit -->
       <tn-button
         label="Select"
+        [testId]="selectTestId()"
         [disabled]="(selectedItems().length === 0 && !allowCurrentDirectorySelection()) || !!inlineCreation()"
         (onClick)="onSubmit()" />
     </div>

@@ -1,9 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { fireEvent, userEvent, within, screen, expect, waitFor } from 'storybook/test';
 import { TestIdInspectorComponent } from './testid-inspector.component';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnFilePickerComponent } from '../lib/file-picker/file-picker.component';
 import type { FileSystemItem, FilePickerCallbacks } from '../lib/file-picker/file-picker.interfaces';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
+
+const harnessDoc = loadHarnessDoc('file-picker');
 
 const meta: Meta<TnFilePickerComponent> = {
   title: 'Components/File Picker',
@@ -1735,19 +1738,99 @@ export const ErrorHandling: Story = {
 };
 
 /**
- * **Test IDs.** The file-picker **container** (the inline trigger field) emits
- * `file-picker-<base>` — shown live in the table. The browse popup renders in a
- * portaled overlay. `testId="backup-target"` → `file-picker-backup-target`,
- * under `data-testid` (default) / `data-test`.
+ * **Test IDs.** The `testId` base scopes the whole picker — and when unset it
+ * falls back to the bound control's name, so `formControlName="backupPath"`
+ * yields the same ids as `testId="backup-path"`.
+ *
+ * | Element | Emitted id (base `backup-target`) |
+ * |---|---|
+ * | container | `file-picker-backup-target` |
+ * | path input | `input-backup-target` |
+ * | browse toggle | `button-toggle-backup-target` |
+ * | popup (portaled overlay) | `file-picker-popup-backup-target` |
+ * | item row (name `docs`) | `option-backup-target-docs` |
+ * | row checkbox (multi-select) | `checkbox-backup-target-docs` |
+ * | navigate chevron | `button-navigate-backup-target-docs` |
+ * | breadcrumb segment (`mnt`) | `button-breadcrumb-backup-target-mnt` |
+ * | Select / Clear Selection | `button-select-backup-target` / `button-clear-selection-backup-target` |
+ * | create action (id `dataset`) | `button-backup-target-dataset` |
+ * | inline creation input | `input-create-backup-target` |
+ *
+ * With no base, the trigger chrome stays attribute-free (several pickers per
+ * page would collide), while popup internals fall back to bare roles
+ * (`button-select`, `option-docs`) — only one popup can be open at a time.
+ * Under `data-testid` (default) / `data-test`.
+ *
+ * The live table lists the trigger's ids; the popup renders in a portaled
+ * overlay, so its ids exist only while it is open — the reference list below
+ * the table shows what to expect there (verify in devtools with the popup
+ * open).
  */
 export const TestIds: Story = {
   render: () => ({
-    props: { callbacks: { listDirectory: () => Promise.resolve([]) } as FilePickerCallbacks },
+    props: {
+      createActions: [{ id: 'dataset', label: 'Create Dataset' }],
+      // Expected ids for the popup surface, per element role. Mirrors (and is
+      // kept honest by) the popup "Test IDs" cases in
+      // file-picker-popup.component.spec.ts.
+      popupIds: [
+        { element: 'popup container', id: 'file-picker-popup-backup-target' },
+        { element: 'breadcrumb segment (mnt)', id: 'button-breadcrumb-backup-target-mnt' },
+        { element: 'item row (Documents)', id: 'option-backup-target-documents' },
+        { element: 'row checkbox — multi-select (Documents)', id: 'checkbox-backup-target-documents' },
+        { element: 'navigate chevron (Documents)', id: 'button-navigate-backup-target-documents' },
+        { element: 'create action (id: dataset)', id: 'button-backup-target-dataset' },
+        { element: 'inline creation input', id: 'input-create-backup-target' },
+        { element: 'Select button', id: 'button-select-backup-target' },
+        { element: 'Clear Selection button', id: 'button-clear-selection-backup-target' },
+      ],
+    },
     template: `
       <tn-testid-inspector>
-        <tn-file-picker testId="backup-target" [callbacks]="callbacks" placeholder="Choose a path" />
+        <tn-file-picker
+          testId="backup-target"
+          [multiSelect]="true"
+          [createActions]="createActions"
+          placeholder="Choose a path" />
       </tn-testid-inspector>
+
+      <table class="tn-testid-doc" style="margin-top:16px;border-collapse:collapse;font:13px/1.5 monospace;">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:4px 12px;border-bottom:1px solid #ccc;" colspan="2">
+              in the popup (portaled overlay, while open)
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of popupIds; track row.id) {
+            <tr>
+              <td style="padding:4px 12px;">{{ row.element }}</td>
+              <td style="padding:4px 12px;"><strong>{{ row.id }}</strong></td>
+            </tr>
+          }
+        </tbody>
+      </table>
     `,
     moduleMetadata: { imports: [TnFilePickerComponent, TestIdInspectorComponent] },
   }),
+};
+
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      story: { height: 'auto' },
+      canvas: {
+        hidden: true,
+        sourceState: 'none',
+      },
+      description: {
+        story: harnessDoc || '',
+      },
+    },
+    controls: { disable: true },
+    layout: 'fullscreen',
+  },
+  render: () => ({ template: '' }),
 };

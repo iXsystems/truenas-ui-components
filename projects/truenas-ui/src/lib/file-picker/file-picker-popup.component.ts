@@ -16,6 +16,7 @@ import { TnIconComponent } from '../icon/icon.component';
 import { FileSizePipe } from '../pipes/file-size/file-size.pipe';
 import { TnTableComponent } from '../table/table.component';
 import { TnTableColumnDirective, TnHeaderCellDefDirective, TnCellDefDirective } from '../table-column/table-column.directive';
+import { TnTestIdDirective, scopeTestId, type TnTestIdValue } from '../test-id';
 
 /** Uniquifies the inline-creation error id across popup instances. */
 let nextInlineErrorId = 0;
@@ -51,7 +52,8 @@ interface DisplayedFileItem extends FileSystemItem {
     ScrollingModule,
     A11yModule,
     FileSizePipe,
-    TruncatePathPipe
+    TruncatePathPipe,
+    TnTestIdDirective
 ],
   templateUrl: './file-picker-popup.component.html',
   styleUrl: './file-picker-popup.component.scss',
@@ -83,6 +85,14 @@ export class TnFilePickerPopupComponent implements AfterViewChecked {
   selectedItems = input<string[]>([]);
   loading = input<boolean>(false);
   fileExtensions = input<string[] | undefined>(undefined);
+  /**
+   * Test-id base the owning picker resolved (explicit `testId`, else the bound
+   * control's name). Scopes every derived id inside the popup so ids stay
+   * unique across pickers; with no base the ids fall back to their bare role
+   * (`button-select`, `option-<name>`), which stays addressable because only
+   * one popup can be open at a time.
+   */
+  testIdBase = input<TnTestIdValue>(undefined);
 
   private iconRegistry = inject(TnIconRegistryService);
   private elementRef = inject(ElementRef);
@@ -155,6 +165,55 @@ export class TnFilePickerPopupComponent implements AfterViewChecked {
    * selection.
    */
   allowCurrentDirectorySelection = computed(() => allowsCurrentDirectorySelection(this.mode()));
+
+  /**
+   * The `testIdBase` normalized to a flat segment array for role-first ids.
+   * Nothing is dropped here — `composeTestId` (via `[tnTestId]`) filters falsy
+   * segments, so an unset base collapses to the bare role.
+   */
+  private readonly baseSegments = computed<(string | number | null | undefined)[]>(() => {
+    const base = this.testIdBase();
+    return Array.isArray(base) ? base : [base];
+  });
+
+  /**
+   * Role-first segments for the footer chrome, mirroring tn-dialog-shell's
+   * `button-close-<base>` convention: `button-select[-<base>]` and
+   * `button-clear-selection[-<base>]`.
+   */
+  protected readonly selectTestId = computed(() => ['select', ...this.baseSegments()]);
+  protected readonly clearSelectionTestId = computed(() => ['clear-selection', ...this.baseSegments()]);
+  /** Role-first segments for the inline creation input: `input-create[-<base>]`. */
+  protected readonly inlineCreateTestId = computed(() => ['create', ...this.baseSegments()]);
+
+  /**
+   * Base-first segments for a listed item's row (`option[-<base>]-<name>`) and
+   * its multi-select checkbox (`checkbox[-<base>]-<name>`). The item NAME is
+   * the discriminator (not the full path): it is unique within the listed
+   * directory and keeps ids stable as the user browses.
+   */
+  itemTestId(item: FileSystemItem): TnTestIdValue {
+    return scopeTestId(this.testIdBase(), item.name);
+  }
+
+  /** Role-first segments for an item's navigation chevron: `button-navigate[-<base>]-<name>`. */
+  navigateTestId(item: FileSystemItem): TnTestIdValue {
+    return ['navigate', ...this.baseSegments(), item.name];
+  }
+
+  /**
+   * Role-first segments for a breadcrumb segment: `button-breadcrumb[-<base>]-<name>`.
+   * The truncation ellipsis normalizes to nothing, leaving that segment at
+   * `button-breadcrumb[-<base>]` — still unique, as at most one is rendered.
+   */
+  breadcrumbTestId(name: string): TnTestIdValue {
+    return ['breadcrumb', ...this.baseSegments(), name];
+  }
+
+  /** Base-first segments for a consumer-defined create action: `button[-<base>]-<action id>`. */
+  createActionTestId(action: FilePickerCreateAction): TnTestIdValue {
+    return scopeTestId(this.testIdBase(), action.id);
+  }
 
   filteredFileItems = computed<DisplayedFileItem[]>(() => {
     const items = this.fileItems();

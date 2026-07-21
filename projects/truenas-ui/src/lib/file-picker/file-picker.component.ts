@@ -16,7 +16,7 @@ import { allowsCurrentDirectorySelection } from './file-picker.utils';
 import { isPathWithinRoot, normalizeRootPath } from './path-utils';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnInputDirective } from '../input/input.directive';
-import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import { TnTestIdDirective, composeTestId, controlTestId, scopeTestId, type TnTestIdValue } from '../test-id';
 
 @Component({
   selector: 'tn-file-picker',
@@ -71,8 +71,12 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   placeholder = input<string>('Select file or folder');
   disabled = input<boolean>(false);
   /**
-   * Test-id applied to the file-picker container. Rendered under whichever attribute name
-   * is configured via `TN_TEST_ATTR` (default `data-testid`).
+   * Test-id base applied to the file-picker container (`file-picker-` prefixed)
+   * and derived onto the inner chrome: the path input (`input-<base>`), the
+   * browse toggle (`button-toggle-<base>`), and the popup and its contents.
+   * Falls back to the bound control's name (`formControlName` etc.) when unset.
+   * Rendered under whichever attribute name is configured via `TN_TEST_ATTR`
+   * (default `data-testid`).
    */
   testId = input<TnTestIdValue>(undefined);
   startPath = input<string>('/mnt');
@@ -106,6 +110,23 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
+
+  /** Explicit `testId` wins; otherwise the bound control's name (formControlName etc.). */
+  protected resolvedTestId = controlTestId(this.testId);
+
+  /**
+   * Role-first test-id segments for the browse toggle: `button-toggle-<base>`.
+   * Gated on a usable base — with several pickers on a page a bare
+   * `button-toggle` on each would be non-unique, so unidentified pickers
+   * stay attribute-free (mirroring tn-tree's toggle derivation).
+   */
+  protected toggleTestId = computed<TnTestIdValue>(() => {
+    const base = this.resolvedTestId();
+    if (composeTestId(undefined, base) === '') {
+      return undefined;
+    }
+    return scopeTestId('toggle', ...(Array.isArray(base) ? base : [base]));
+  });
 
   // Root the picker is confined to when rootPath is not provided, with
   // trailing slashes collapsed so confinement checks compare exact paths
