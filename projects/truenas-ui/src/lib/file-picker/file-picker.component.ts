@@ -78,6 +78,16 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   startPath = input<string>('/mnt');
   /** Restricts navigation — users cannot navigate above this path. */
   rootPath = input<string | undefined>(undefined);
+  /**
+   * Root against which the picker's VALUE is expressed — the form value,
+   * `selectionChange` payloads, and the text shown in the input. Browsing
+   * (`rootPath`, `startPath`, `callbacks`, `selectPath`) keeps absolute paths;
+   * the mapping applies only at the value boundary. E.g. with
+   * `valueRoot="/mnt"`, selecting `/mnt/tank/child` shows and emits the
+   * dataset name `tank/child` instead of the mountpoint path. Typed input is
+   * interpreted in the same value space (absolute paths still pass through).
+   */
+  valueRoot = input<string | undefined>(undefined);
   fileExtensions = input<string[] | undefined>(undefined);
   callbacks = input<FilePickerCallbacks | undefined>(undefined);
 
@@ -132,13 +142,15 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   // ControlValueAccessor implementation
   writeValue(value: string | string[]): void {
     if (this.multiSelect()) {
-      this.selectedItems.set(Array.isArray(value) ? value : value ? [value] : []);
-      // For multi-select, show full paths separated by commas
-      this.selectedPath.set(this.selectedItems().join(', '));
+      const values = Array.isArray(value) ? value : value ? [value] : [];
+      this.selectedItems.set(values.map(entry => this.fromValueSpace(entry)));
+      // For multi-select, show the value-space paths separated by commas
+      this.selectedPath.set(values.join(', '));
     } else {
-      // Store the full path internally
-      this.selectedPath.set(typeof value === 'string' ? value : '');
-      this.selectedItems.set(value ? [typeof value === 'string' ? value : value[0]] : []);
+      const single = typeof value === 'string' ? value : value ? value[0] : '';
+      this.selectedPath.set(single);
+      // Selection state keeps internal absolute paths
+      this.selectedItems.set(single ? [this.fromValueSpace(single)] : []);
     }
   }
 
@@ -164,7 +176,8 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
    */
   onPathCommit(event: Event): void {
     const target = event.target as HTMLInputElement;
-    const path = target.value;
+    // Typed text is expressed in value space, like the text the input displays
+    const path = this.fromValueSpace(target.value);
 
     if (this.allowManualInput()) {
       // Clearing the input clears the selection
@@ -272,14 +285,15 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     this.hasError.set(false);
 
     if (this.multiSelect()) {
-      this.selectedPath.set(selected.join(', '));
-      this.onChange(selected);
-      this.selectionChange.emit(selected);
+      const values = selected.map(path => this.toValueSpace(path));
+      this.selectedPath.set(values.join(', '));
+      this.onChange(values);
+      this.selectionChange.emit(values);
     } else {
-      const path = selected[0];
-      this.selectedPath.set(path);
-      this.onChange(path);
-      this.selectionChange.emit(path);
+      const value = this.toValueSpace(selected[0]);
+      this.selectedPath.set(value);
+      this.onChange(value);
+      this.selectionChange.emit(value);
     }
 
     this.close();
@@ -427,18 +441,36 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     // Clear any existing error state since popup selections are valid
     this.hasError.set(false);
 
+    const value = this.toValueSpace(path);
     if (this.multiSelect()) {
-      const selected = [path];
-      this.selectedItems.set(selected);
-      this.selectedPath.set(selected.join(', '));
-      this.onChange(selected);
-    } else {
-      this.selectedPath.set(path);
       this.selectedItems.set([path]);
-      this.onChange(path);
+      this.selectedPath.set(value);
+      this.onChange([value]);
+    } else {
+      this.selectedPath.set(value);
+      this.selectedItems.set([path]);
+      this.onChange(value);
     }
 
-    this.selectionChange.emit(this.multiSelect() ? this.selectedItems() : path);
+    this.selectionChange.emit(this.multiSelect() ? [value] : value);
+  }
+
+  /** Maps an internal absolute path into the `valueRoot`-relative value space. */
+  private toValueSpace(path: string): string {
+    const valueRoot = this.valueRoot();
+    if (!valueRoot) {return path;}
+    const root = normalizeRootPath(valueRoot);
+    if (path === root) {return '';}
+    if (root === '/') {return path.startsWith('/') ? path.slice(1) : path;}
+    return path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path;
+  }
+
+  /** Maps a `valueRoot`-relative value back into an internal absolute path. */
+  private fromValueSpace(value: string): string {
+    const valueRoot = this.valueRoot();
+    if (!valueRoot || !value || value.startsWith('/')) {return value;}
+    const root = normalizeRootPath(valueRoot);
+    return root === '/' ? `/${value}` : `${root}/${value}`;
   }
 
   private emitError(type: FilePickerError['type'], message: string, path?: string): void {

@@ -99,6 +99,58 @@ describe('TnFilePickerComponent', () => {
     });
   });
 
+  describe('Value Root', () => {
+    function getInput(): HTMLInputElement {
+      return fixture.nativeElement.querySelector('.tn-file-picker-input') as HTMLInputElement;
+    }
+
+    it('shows and emits value-space paths while selection state stays absolute', () => {
+      fixture.componentRef.setInput('valueRoot', '/mnt');
+      fixture.componentRef.setInput('multiSelect', true);
+      fixture.detectChanges();
+
+      component.writeValue(['tank/foo', 'tank/bar']);
+      fixture.detectChanges();
+
+      expect(component.selectedItems()).toEqual(['/mnt/tank/foo', '/mnt/tank/bar']);
+      expect(getInput().value).toBe('tank/foo, tank/bar');
+
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+      component.onSubmit();
+
+      expect(changeSpy).toHaveBeenCalledWith(['tank/foo', 'tank/bar']);
+    });
+
+    it('interprets typed paths in value space', () => {
+      fixture.componentRef.setInput('valueRoot', '/mnt');
+      fixture.detectChanges();
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = getInput();
+      input.value = 'tank/child';
+      input.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+
+      expect(component.selectedItems()).toEqual(['/mnt/tank/child']);
+      expect(getInput().value).toBe('tank/child');
+      expect(changeSpy).toHaveBeenCalledWith('tank/child');
+    });
+
+    it('maps a / value root by stripping the leading slash', () => {
+      fixture.componentRef.setInput('valueRoot', '/');
+      fixture.componentRef.setInput('rootPath', '/');
+      fixture.detectChanges();
+
+      component.writeValue('dozer/foo');
+      fixture.detectChanges();
+
+      expect(component.selectedItems()).toEqual(['/dozer/foo']);
+      expect(getInput().value).toBe('dozer/foo');
+    });
+  });
+
   describe('Programmatic API', () => {
     it('should re-fetch the current listing on refresh()', async () => {
       const getChildren = jest.fn().mockResolvedValue([]);

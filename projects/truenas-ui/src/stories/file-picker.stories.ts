@@ -41,6 +41,10 @@ const meta: Meta<TnFilePickerComponent> = {
     startPath: {
       control: 'text',
       description: 'Initial directory path',
+    },
+    valueRoot: {
+      control: 'text',
+      description: 'Root against which the value (form value, selectionChange, input text) is expressed, e.g. /mnt for dataset names',
     }
   }
 };
@@ -166,6 +170,11 @@ startPath = input<string>('/mnt');
 rootPath = input<string | undefined>(undefined);
 \`\`\`
 **Description:** Restrict navigation - users cannot navigate above this path. Defaults to \`/mnt\`. The confinement also applies to manually typed paths: entering a path outside the root emits a \`validation\` error instead of applying it.
+
+\`\`\`typescript
+valueRoot = input<string | undefined>(undefined);
+\`\`\`
+**Description:** Root against which the picker's VALUE is expressed — the form value, \`selectionChange\` payloads, and the text shown in the input. Browsing (\`rootPath\`, \`startPath\`, \`callbacks\`, \`selectPath\`) keeps absolute paths; the mapping applies only at the value boundary. With \`valueRoot="/mnt"\`, selecting \`/mnt/tank/child\` shows and emits the dataset name \`tank/child\`. Typed input is interpreted in the same value space (absolute paths still pass through).
 
 \`\`\`typescript
 fileExtensions = input<string[] | undefined>(undefined);
