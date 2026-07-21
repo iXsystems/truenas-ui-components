@@ -1633,15 +1633,24 @@ export const ErrorHandling: Story = {
  * With no base, the trigger chrome stays attribute-free (several pickers per
  * page would collide), while popup internals fall back to bare roles
  * (`button-select`, `option-docs`) — only one popup can be open at a time.
- * Under `data-testid` (default) / `data-test`. Open the popup to see the
- * derived ids in the DOM.
+ * Under `data-testid` (default) / `data-test`.
+ *
+ * The popup is a portaled overlay, so its ids exist only while it is open:
+ * **open the picker below** and the table extends live with the popup's rows,
+ * checkboxes, navigate chevrons, and footer buttons, marked `(overlay)`.
  */
 export const TestIds: Story = {
   render: () => ({
-    props: { callbacks: { listDirectory: () => Promise.resolve([]) } as FilePickerCallbacks },
+    props: {
+      createActions: [{ id: 'dataset', label: 'Create Dataset' }],
+    },
     template: `
-      <tn-testid-inspector>
-        <tn-file-picker testId="backup-target" [callbacks]="callbacks" placeholder="Choose a path" />
+      <tn-testid-inspector includeOverlay>
+        <tn-file-picker
+          testId="backup-target"
+          [multiSelect]="true"
+          [createActions]="createActions"
+          placeholder="Choose a path" />
       </tn-testid-inspector>
     `,
     moduleMetadata: { imports: [TnFilePickerComponent, TestIdInspectorComponent] },
