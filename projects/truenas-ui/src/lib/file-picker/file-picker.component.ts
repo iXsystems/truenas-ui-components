@@ -141,16 +141,22 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
   // ControlValueAccessor implementation
   writeValue(value: string | string[]): void {
+    // The display is canonicalized into value space by round-tripping through
+    // the mapping: a consumer may write an absolute path while valueRoot is
+    // set (e.g. /mnt/tank with valueRoot="/mnt"), and echoing it verbatim
+    // would make the field silently flip to the canonical form (tank) on the
+    // next submit. Selection state keeps internal absolute paths either way;
+    // paths outside the value root round-trip unchanged.
     if (this.multiSelect()) {
       const values = Array.isArray(value) ? value : value ? [value] : [];
-      this.selectedItems.set(values.map(entry => this.fromValueSpace(entry)));
-      // For multi-select, show the value-space paths separated by commas
-      this.selectedPath.set(values.join(', '));
+      const items = values.map(entry => this.fromValueSpace(entry));
+      this.selectedItems.set(items);
+      this.selectedPath.set(items.map(item => this.toValueSpace(item)).join(', '));
     } else {
       const single = typeof value === 'string' ? value : value ? value[0] : '';
-      this.selectedPath.set(single);
-      // Selection state keeps internal absolute paths
-      this.selectedItems.set(single ? [this.fromValueSpace(single)] : []);
+      const item = single ? this.fromValueSpace(single) : '';
+      this.selectedItems.set(item ? [item] : []);
+      this.selectedPath.set(item ? this.toValueSpace(item) : '');
     }
   }
 

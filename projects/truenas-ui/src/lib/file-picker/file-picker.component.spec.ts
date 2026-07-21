@@ -182,6 +182,38 @@ describe('TnFilePickerComponent', () => {
       expect(selectionSpy).toHaveBeenCalledWith('');
       expect(getInput().value).toBe('');
     });
+
+    it('canonicalizes an absolute written value into value space, keeping the display stable across submit', () => {
+      fixture.componentRef.setInput('valueRoot', '/mnt');
+      fixture.detectChanges();
+
+      component.writeValue('/mnt/tank');
+      fixture.detectChanges();
+
+      expect(component.selectedItems()).toEqual(['/mnt/tank']);
+      expect(getInput().value).toBe('tank');
+
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+      component.onSubmit();
+      fixture.detectChanges();
+
+      // The field shows the same text before and after submitting
+      expect(changeSpy).toHaveBeenCalledWith('tank');
+      expect(getInput().value).toBe('tank');
+    });
+
+    it('canonicalizes mixed written values in multi-select, passing outside-root paths through', () => {
+      fixture.componentRef.setInput('valueRoot', '/mnt');
+      fixture.componentRef.setInput('multiSelect', true);
+      fixture.detectChanges();
+
+      component.writeValue(['/mnt/tank/foo', 'tank/bar', '/dev/zvol/vol1']);
+      fixture.detectChanges();
+
+      expect(component.selectedItems()).toEqual(['/mnt/tank/foo', '/mnt/tank/bar', '/dev/zvol/vol1']);
+      expect(getInput().value).toBe('tank/foo, tank/bar, /dev/zvol/vol1');
+    });
   });
 
   describe('Programmatic API', () => {
