@@ -1,5 +1,8 @@
 <div [ngClass]="classes()">
   <label class="tn-radio__label" tnTestIdType="radio" [for]="id" [tnTestId]="resolvedTestId()">
+    <!-- stopPropagation: the bubbling native change would reach ancestor (change)
+         bindings in addition to the component's `change` output, firing them twice
+         per toggle — the output is the single public event. -->
     <input
       #radioEl
       type="radio"
@@ -12,7 +15,7 @@
       [required]="required()"
       [attr.aria-describedby]="error() ? id + '-error' : null"
       [attr.aria-invalid]="error() ? 'true' : null"
-      (change)="onRadioChange($event)"
+      (change)="onRadioChange($event); $event.stopPropagation()"
     />
     <span class="tn-radio__checkmark"></span>
     <span class="tn-radio__text" [innerHTML]="label() | tnLabelMarkup"></span>

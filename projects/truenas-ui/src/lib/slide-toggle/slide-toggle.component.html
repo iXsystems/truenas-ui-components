@@ -16,6 +16,9 @@
 
     <!-- Toggle track and thumb -->
     <div class="tn-slide-toggle__bar">
+      <!-- stopPropagation: the bubbling native change would reach ancestor (change)
+           bindings in addition to the component's `change` output, firing them twice
+           per toggle — the output is the single public event. -->
       <input
         #toggleEl
         type="checkbox"
@@ -26,7 +29,7 @@
         [required]="required()"
         [attr.aria-label]="effectiveAriaLabel()"
         [attr.aria-labelledby]="ariaLabelledby()"
-        (change)="onToggleChange($event)"
+        (change)="onToggleChange($event); $event.stopPropagation()"
       />
 
       <div class="tn-slide-toggle__track">
