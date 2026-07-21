@@ -114,6 +114,17 @@ describe('TnFilePickerHarness', () => {
       await picker.setValue('/mnt/tank/media');
       expect(hostComponent.control.value).toBeNull();
     });
+
+    it('replaces the whole multi-select selection with the single typed path', async () => {
+      // Typed input is deliberately one path even in multi-select (commas are
+      // legal in paths, never list separators) — multi-selections are built
+      // through the popup with clickItem + clickSelect instead.
+      hostComponent.multiSelect.set(true);
+      hostComponent.control.setValue(['/mnt/a', '/mnt/b']);
+      const picker = await loader.getHarness(TnFilePickerHarness);
+      await picker.setValue('/mnt/tank/media');
+      expect(hostComponent.control.value).toEqual(['/mnt/tank/media']);
+    });
   });
 
   describe('getPlaceholder', () => {

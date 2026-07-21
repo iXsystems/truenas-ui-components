@@ -7,11 +7,14 @@ import { TnButtonHarness } from '../button/button.harness';
  *
  * The core API (`getValue` / `setValue` / `isDisabled`) mirrors webui's
  * `IxExplorerHarness` so tests migrate with minimal changes: `setValue`
- * accepts a string or string array (joined with commas) and commits it the
- * way a user would — by typing into the path input and triggering its
- * `change` event. Unlike ix-explorer the component renders no label of its
- * own (labels come from a wrapping `tn-form-field`), so instances are
- * filtered by `testId` or `placeholder` instead.
+ * commits a path the way a user would — by typing into the path input and
+ * triggering its `change` event. Two deliberate divergences from ix-explorer:
+ * the component renders no label of its own (labels come from a wrapping
+ * `tn-form-field`), so instances are filtered by `testId` or `placeholder`
+ * instead; and `setValue` takes a single path only — tn-file-picker does not
+ * split typed input on commas in multi-select mode (a comma is part of the
+ * path), so build multi-selections through the popup with
+ * `clickItem` + `clickSelect`.
  *
  * Popup helpers (`open`, `getItemNames`, `clickItem`, …) drive the browse
  * flow. The popup renders in a CDK overlay outside the component, so these
@@ -48,6 +51,11 @@ export class TnFilePickerHarness extends ComponentHarness {
   /**
    * Gets a `HarnessPredicate` that can be used to search for a file picker
    * with specific attributes.
+   *
+   * The `testId` filter (like {@link getTestId}) reads the default test
+   * attributes (`data-testid`, falling back to `data-test`); an app that
+   * overrides `TN_TEST_ATTR` to a custom attribute name will silently
+   * match nothing.
    *
    * @param options Options for filtering which file picker instances are considered a match.
    * @returns A `HarnessPredicate` configured with the given options.
@@ -90,9 +98,16 @@ export class TnFilePickerHarness extends ComponentHarness {
   }
 
   /**
-   * Sets the picker's value by typing into the path input and committing it
-   * via the input's `change` event, exactly as a user pressing Enter would.
-   * Arrays are joined with commas, matching `IxExplorerHarness.setValue`.
+   * Sets the picker's value by typing a single path into the path input and
+   * committing it via the input's `change` event, exactly as a user pressing
+   * Enter would.
+   *
+   * Unlike `IxExplorerHarness.setValue` there is no `string[]` overload:
+   * tn-file-picker treats typed input as ONE path even in multi-select mode
+   * (commas are legal in paths, so they are never list separators). In
+   * multi-select, committing a typed path REPLACES the whole selection with
+   * that single path; build a real multi-selection through the popup with
+   * {@link clickItem} + {@link clickSelect}.
    *
    * Commits go through the component's normal validation: paths outside
    * `rootPath` are rejected (the value stays unchanged and an `error` is
@@ -100,18 +115,14 @@ export class TnFilePickerHarness extends ComponentHarness {
    * Setting an empty string clears the selection. Has no effect when
    * `allowManualInput` is false (the input is readonly).
    *
-   * @param value The path (or paths) to set.
+   * @param value The path to set.
    *
    * @example
    * ```typescript
    * await picker.setValue('/mnt/tank/media');
-   * await picker.setValue(['/mnt/a', '/mnt/b']);
    * ```
    */
-  async setValue(value: string | string[]): Promise<void> {
-    if (Array.isArray(value)) {
-      value = value.join(',');
-    }
+  async setValue(value: string): Promise<void> {
     const input = await this._input();
     await input.clear();
     if (value) {
@@ -169,6 +180,10 @@ export class TnFilePickerHarness extends ComponentHarness {
 
   /**
    * Gets the test-id attribute value from the container.
+   *
+   * Reads the default test attributes (`data-testid`, falling back to
+   * `data-test`). A custom `TN_TEST_ATTR` attribute name is not visible to
+   * the harness and resolves to null here.
    *
    * @returns Promise resolving to the test-id, or null when unset.
    *
