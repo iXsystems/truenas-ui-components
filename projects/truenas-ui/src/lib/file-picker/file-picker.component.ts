@@ -151,6 +151,9 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       const values = Array.isArray(value) ? value : value ? [value] : [];
       const items = values.map(entry => this.fromValueSpace(entry));
       this.selectedItems.set(items);
+      // An entry equal to the value root maps to '' and leaves a stray comma
+      // in the join — accepted, per the documented "the value root is not a
+      // selectable value" caveat in toValueSpace.
       this.selectedPath.set(items.map(item => this.toValueSpace(item)).join(', '));
     } else {
       const single = typeof value === 'string' ? value : value ? value[0] : '';

@@ -1408,6 +1408,73 @@ export const OpenOnClick: Story = {
   }
 };
 
+const datasetFilesystem: Record<string, FileSystemItem[]> = {
+  '/mnt': [
+    { path: '/mnt/tank', name: 'tank', type: 'dataset' },
+  ],
+  '/mnt/tank': [
+    { path: '/mnt/tank/apps', name: 'apps', type: 'dataset' },
+    { path: '/mnt/tank/media', name: 'media', type: 'dataset' },
+  ],
+};
+
+export const DatasetNames: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      callbacks: {
+        getChildren: async (path: string) => datasetFilesystem[path] || []
+      } as FilePickerCallbacks
+    },
+    template: `
+      <tn-form-field label="Source dataset">
+        <tn-file-picker
+          [mode]="mode"
+          [valueRoot]="valueRoot"
+          [rootPath]="rootPath"
+          [startPath]="startPath"
+          [callbacks]="callbacks">
+        </tn-file-picker>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
+    }
+  }),
+  args: {
+    mode: 'dataset',
+    valueRoot: '/mnt',
+    rootPath: '/mnt',
+    startPath: '/mnt/tank'
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    const folderButton = canvas.getByRole('button', { name: /open file picker/i });
+    await userEvent.click(folderButton);
+
+    await waitFor(() => {
+      void expect(screen.queryByText('apps')).toBeInTheDocument();
+    }, { timeout: 2000 });
+
+    await userEvent.click(screen.getByText('apps'));
+    await userEvent.click(screen.getByRole('button', { name: 'Select' }));
+
+    // The field shows the dataset name, not the mountpoint path
+    const input = canvas.getByRole('textbox');
+    await waitFor(() => {
+      void expect(input).toHaveValue('tank/apps');
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'With `valueRoot="/mnt"` the picker speaks dataset names: browsing works on mountpoint paths, but the field text, form value, and `selectionChange` payloads are expressed relative to the value root — selecting `/mnt/tank/apps` yields `tank/apps`. Used by consumers whose value is a dataset id rather than a filesystem path (e.g. replication sources and targets).'
+      }
+    }
+  }
+};
+
 export const SelectionModes: Story = {
   render: (args) => ({
     props: {
