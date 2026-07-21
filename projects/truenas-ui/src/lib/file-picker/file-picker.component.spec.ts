@@ -149,6 +149,39 @@ describe('TnFilePickerComponent', () => {
       expect(component.selectedItems()).toEqual(['/dozer/foo']);
       expect(getInput().value).toBe('dozer/foo');
     });
+
+    it('passes paths outside the value root through untouched', () => {
+      fixture.componentRef.setInput('valueRoot', '/mnt');
+      fixture.componentRef.setInput('rootPath', '/');
+      fixture.detectChanges();
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = getInput();
+      input.value = '/dev/zvol/tank';
+      input.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+
+      expect(component.selectedItems()).toEqual(['/dev/zvol/tank']);
+      expect(getInput().value).toBe('/dev/zvol/tank');
+      expect(changeSpy).toHaveBeenCalledWith('/dev/zvol/tank');
+    });
+
+    it('submits the value root itself as an empty value, same as a cleared selection', () => {
+      // Documented collision: the value root is the container values are named
+      // against, not a selectable value — submitting it is indistinguishable
+      // from clearing, and writeValue('') cannot restore it.
+      fixture.componentRef.setInput('valueRoot', '/mnt');
+      fixture.componentRef.setInput('startPath', '/mnt');
+      fixture.detectChanges();
+      const selectionSpy = jest.fn();
+      component.selectionChange.subscribe(selectionSpy);
+
+      component.onSubmit();
+
+      expect(selectionSpy).toHaveBeenCalledWith('');
+      expect(getInput().value).toBe('');
+    });
   });
 
   describe('Programmatic API', () => {

@@ -455,21 +455,31 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     this.selectionChange.emit(this.multiSelect() ? [value] : value);
   }
 
+  // Mirrors effectiveRootPath so both roots normalize trailing slashes once
+  private normalizedValueRoot = computed(() => {
+    const valueRoot = this.valueRoot();
+    return valueRoot ? normalizeRootPath(valueRoot) : undefined;
+  });
+
   /** Maps an internal absolute path into the `valueRoot`-relative value space. */
   private toValueSpace(path: string): string {
-    const valueRoot = this.valueRoot();
-    if (!valueRoot) {return path;}
-    const root = normalizeRootPath(valueRoot);
+    const root = this.normalizedValueRoot();
+    if (!root) {return path;}
+    // The value root itself maps to '' — the same payload as a cleared
+    // selection, and writeValue('') cannot restore it. Deliberate: a value
+    // root is the container the values are named against (e.g. /mnt for
+    // dataset names), not a selectable value itself. Revisit this mapping
+    // before pairing valueRoot with a selectable root directory.
     if (path === root) {return '';}
     if (root === '/') {return path.startsWith('/') ? path.slice(1) : path;}
+    // Paths outside the value root (e.g. typed absolute paths) pass through
     return path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path;
   }
 
   /** Maps a `valueRoot`-relative value back into an internal absolute path. */
   private fromValueSpace(value: string): string {
-    const valueRoot = this.valueRoot();
-    if (!valueRoot || !value || value.startsWith('/')) {return value;}
-    const root = normalizeRootPath(valueRoot);
+    const root = this.normalizedValueRoot();
+    if (!root || !value || value.startsWith('/')) {return value;}
     return root === '/' ? `/${value}` : `${root}/${value}`;
   }
 
