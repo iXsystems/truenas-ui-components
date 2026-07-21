@@ -95,8 +95,9 @@ export class TnSlideToggleComponent implements AfterViewInit, OnDestroy, Control
     // The bubbling native change would reach ancestor (change) bindings in
     // addition to the component's `change` output — Ivy invokes the binding for
     // both, firing every listener twice per toggle. The output is the single
-    // public event, so the native event stops here.
-    event.stopPropagation();
+    // public event, so the native event stops here. (This component always
+    // stopped it — unlike checkbox/radio it was never affected — the comment
+    // and the regression spec keep it that way.)
     event.stopPropagation();
 
     const target = event.target as HTMLInputElement;
