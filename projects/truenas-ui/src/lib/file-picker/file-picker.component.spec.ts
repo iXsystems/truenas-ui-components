@@ -101,6 +101,123 @@ describe('TnFilePickerComponent', () => {
     });
   });
 
+  describe('Value Root', () => {
+    function getInput(): HTMLInputElement {
+      return fixture.nativeElement.querySelector('.tn-file-picker-input') as HTMLInputElement;
+    }
+
+    it('shows and emits value-space paths while selection state stays absolute', () => {
+      fixture.componentRef.setInput('valueRoot', '/mnt');
+      fixture.componentRef.setInput('multiSelect', true);
+      fixture.detectChanges();
+
+      component.writeValue(['tank/foo', 'tank/bar']);
+      fixture.detectChanges();
+
+      expect(component.selectedItems()).toEqual(['/mnt/tank/foo', '/mnt/tank/bar']);
+      expect(getInput().value).toBe('tank/foo, tank/bar');
+
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+      component.onSubmit();
+
+      expect(changeSpy).toHaveBeenCalledWith(['tank/foo', 'tank/bar']);
+    });
+
+    it('interprets typed paths in value space', () => {
+      fixture.componentRef.setInput('valueRoot', '/mnt');
+      fixture.detectChanges();
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = getInput();
+      input.value = 'tank/child';
+      input.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+
+      expect(component.selectedItems()).toEqual(['/mnt/tank/child']);
+      expect(getInput().value).toBe('tank/child');
+      expect(changeSpy).toHaveBeenCalledWith('tank/child');
+    });
+
+    it('maps a / value root by stripping the leading slash', () => {
+      fixture.componentRef.setInput('valueRoot', '/');
+      fixture.componentRef.setInput('rootPath', '/');
+      fixture.detectChanges();
+
+      component.writeValue('dozer/foo');
+      fixture.detectChanges();
+
+      expect(component.selectedItems()).toEqual(['/dozer/foo']);
+      expect(getInput().value).toBe('dozer/foo');
+    });
+
+    it('passes paths outside the value root through untouched', () => {
+      fixture.componentRef.setInput('valueRoot', '/mnt');
+      fixture.componentRef.setInput('rootPath', '/');
+      fixture.detectChanges();
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = getInput();
+      input.value = '/dev/zvol/tank';
+      input.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+
+      expect(component.selectedItems()).toEqual(['/dev/zvol/tank']);
+      expect(getInput().value).toBe('/dev/zvol/tank');
+      expect(changeSpy).toHaveBeenCalledWith('/dev/zvol/tank');
+    });
+
+    it('submits the value root itself as an empty value, same as a cleared selection', () => {
+      // Documented collision: the value root is the container values are named
+      // against, not a selectable value — submitting it is indistinguishable
+      // from clearing, and writeValue('') cannot restore it.
+      fixture.componentRef.setInput('valueRoot', '/mnt');
+      fixture.componentRef.setInput('startPath', '/mnt');
+      fixture.detectChanges();
+      const selectionSpy = jest.fn();
+      component.selectionChange.subscribe(selectionSpy);
+
+      component.onSubmit();
+
+      expect(selectionSpy).toHaveBeenCalledWith('');
+      expect(getInput().value).toBe('');
+    });
+
+    it('canonicalizes an absolute written value into value space, keeping the display stable across submit', () => {
+      fixture.componentRef.setInput('valueRoot', '/mnt');
+      fixture.detectChanges();
+
+      component.writeValue('/mnt/tank');
+      fixture.detectChanges();
+
+      expect(component.selectedItems()).toEqual(['/mnt/tank']);
+      expect(getInput().value).toBe('tank');
+
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+      component.onSubmit();
+      fixture.detectChanges();
+
+      // The field shows the same text before and after submitting
+      expect(changeSpy).toHaveBeenCalledWith('tank');
+      expect(getInput().value).toBe('tank');
+    });
+
+    it('canonicalizes mixed written values in multi-select, passing outside-root paths through', () => {
+      fixture.componentRef.setInput('valueRoot', '/mnt');
+      fixture.componentRef.setInput('multiSelect', true);
+      fixture.detectChanges();
+
+      component.writeValue(['/mnt/tank/foo', 'tank/bar', '/dev/zvol/vol1']);
+      fixture.detectChanges();
+
+      expect(component.selectedItems()).toEqual(['/mnt/tank/foo', '/mnt/tank/bar', '/dev/zvol/vol1']);
+      expect(getInput().value).toBe('tank/foo, tank/bar, /dev/zvol/vol1');
+    });
+  });
+
   describe('Programmatic API', () => {
     it('should re-fetch the current listing on refresh()', async () => {
       const getChildren = jest.fn().mockResolvedValue([]);

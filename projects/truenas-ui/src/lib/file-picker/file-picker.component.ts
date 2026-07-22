@@ -82,6 +82,16 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   startPath = input<string>('/mnt');
   /** Restricts navigation — users cannot navigate above this path. */
   rootPath = input<string | undefined>(undefined);
+  /**
+   * Root against which the picker's VALUE is expressed — the form value,
+   * `selectionChange` payloads, and the text shown in the input. Browsing
+   * (`rootPath`, `startPath`, `callbacks`, `selectPath`) keeps absolute paths;
+   * the mapping applies only at the value boundary. E.g. with
+   * `valueRoot="/mnt"`, selecting `/mnt/tank/child` shows and emits the
+   * dataset name `tank/child` instead of the mountpoint path. Typed input is
+   * interpreted in the same value space (absolute paths still pass through).
+   */
+  valueRoot = input<string | undefined>(undefined);
   fileExtensions = input<string[] | undefined>(undefined);
   callbacks = input<FilePickerCallbacks | undefined>(undefined);
 
@@ -152,14 +162,25 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
   // ControlValueAccessor implementation
   writeValue(value: string | string[]): void {
+    // The display is canonicalized into value space by round-tripping through
+    // the mapping: a consumer may write an absolute path while valueRoot is
+    // set (e.g. /mnt/tank with valueRoot="/mnt"), and echoing it verbatim
+    // would make the field silently flip to the canonical form (tank) on the
+    // next submit. Selection state keeps internal absolute paths either way;
+    // paths outside the value root round-trip unchanged.
     if (this.multiSelect()) {
-      this.selectedItems.set(Array.isArray(value) ? value : value ? [value] : []);
-      // For multi-select, show full paths separated by commas
-      this.selectedPath.set(this.selectedItems().join(', '));
+      const values = Array.isArray(value) ? value : value ? [value] : [];
+      const items = values.map(entry => this.fromValueSpace(entry));
+      this.selectedItems.set(items);
+      // An entry equal to the value root maps to '' and leaves a stray comma
+      // in the join — accepted, per the documented "the value root is not a
+      // selectable value" caveat in toValueSpace.
+      this.selectedPath.set(items.map(item => this.toValueSpace(item)).join(', '));
     } else {
-      // Store the full path internally
-      this.selectedPath.set(typeof value === 'string' ? value : '');
-      this.selectedItems.set(value ? [typeof value === 'string' ? value : value[0]] : []);
+      const single = typeof value === 'string' ? value : value ? value[0] : '';
+      const item = single ? this.fromValueSpace(single) : '';
+      this.selectedItems.set(item ? [item] : []);
+      this.selectedPath.set(item ? this.toValueSpace(item) : '');
     }
   }
 
@@ -185,7 +206,8 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
    */
   onPathCommit(event: Event): void {
     const target = event.target as HTMLInputElement;
-    const path = target.value;
+    // Typed text is expressed in value space, like the text the input displays
+    const path = this.fromValueSpace(target.value);
 
     if (this.allowManualInput()) {
       // Clearing the input clears the selection
@@ -293,14 +315,15 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     this.hasError.set(false);
 
     if (this.multiSelect()) {
-      this.selectedPath.set(selected.join(', '));
-      this.onChange(selected);
-      this.selectionChange.emit(selected);
+      const values = selected.map(path => this.toValueSpace(path));
+      this.selectedPath.set(values.join(', '));
+      this.onChange(values);
+      this.selectionChange.emit(values);
     } else {
-      const path = selected[0];
-      this.selectedPath.set(path);
-      this.onChange(path);
-      this.selectionChange.emit(path);
+      const value = this.toValueSpace(selected[0]);
+      this.selectedPath.set(value);
+      this.onChange(value);
+      this.selectionChange.emit(value);
     }
 
     this.close();
@@ -448,18 +471,46 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     // Clear any existing error state since popup selections are valid
     this.hasError.set(false);
 
+    const value = this.toValueSpace(path);
     if (this.multiSelect()) {
-      const selected = [path];
-      this.selectedItems.set(selected);
-      this.selectedPath.set(selected.join(', '));
-      this.onChange(selected);
-    } else {
-      this.selectedPath.set(path);
       this.selectedItems.set([path]);
-      this.onChange(path);
+      this.selectedPath.set(value);
+      this.onChange([value]);
+    } else {
+      this.selectedPath.set(value);
+      this.selectedItems.set([path]);
+      this.onChange(value);
     }
 
-    this.selectionChange.emit(this.multiSelect() ? this.selectedItems() : path);
+    this.selectionChange.emit(this.multiSelect() ? [value] : value);
+  }
+
+  // Mirrors effectiveRootPath so both roots normalize trailing slashes once
+  private normalizedValueRoot = computed(() => {
+    const valueRoot = this.valueRoot();
+    return valueRoot ? normalizeRootPath(valueRoot) : undefined;
+  });
+
+  /** Maps an internal absolute path into the `valueRoot`-relative value space. */
+  private toValueSpace(path: string): string {
+    const root = this.normalizedValueRoot();
+    if (!root) {return path;}
+    // The value root itself maps to '' — the same payload as a cleared
+    // selection, and writeValue('') cannot restore it. Deliberate: a value
+    // root is the container the values are named against (e.g. /mnt for
+    // dataset names), not a selectable value itself. Revisit this mapping
+    // before pairing valueRoot with a selectable root directory.
+    if (path === root) {return '';}
+    if (root === '/') {return path.startsWith('/') ? path.slice(1) : path;}
+    // Paths outside the value root (e.g. typed absolute paths) pass through
+    return path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path;
+  }
+
+  /** Maps a `valueRoot`-relative value back into an internal absolute path. */
+  private fromValueSpace(value: string): string {
+    const root = this.normalizedValueRoot();
+    if (!root || !value || value.startsWith('/')) {return value;}
+    return root === '/' ? `/${value}` : `${root}/${value}`;
   }
 
   private emitError(type: FilePickerError['type'], message: string, path?: string): void {

@@ -44,6 +44,10 @@ const meta: Meta<TnFilePickerComponent> = {
     startPath: {
       control: 'text',
       description: 'Initial directory path',
+    },
+    valueRoot: {
+      control: 'text',
+      description: 'Root against which the value (form value, selectionChange, input text) is expressed, e.g. /mnt for dataset names',
     }
   }
 };
@@ -169,6 +173,11 @@ startPath = input<string>('/mnt');
 rootPath = input<string | undefined>(undefined);
 \`\`\`
 **Description:** Restrict navigation - users cannot navigate above this path. Defaults to \`/mnt\`. The confinement also applies to manually typed paths: entering a path outside the root emits a \`validation\` error instead of applying it.
+
+\`\`\`typescript
+valueRoot = input<string | undefined>(undefined);
+\`\`\`
+**Description:** Root against which the picker's VALUE is expressed — the form value, \`selectionChange\` payloads, and the text shown in the input. Browsing (\`rootPath\`, \`startPath\`, \`callbacks\`, \`selectPath\`) keeps absolute paths; the mapping applies only at the value boundary. With \`valueRoot="/mnt"\`, selecting \`/mnt/tank/child\` shows and emits the dataset name \`tank/child\`. Typed input is interpreted in the same value space (absolute paths still pass through).
 
 \`\`\`typescript
 fileExtensions = input<string[] | undefined>(undefined);
@@ -1397,6 +1406,73 @@ export const OpenOnClick: Story = {
     docs: {
       description: {
         story: 'With `openOnClick`, clicking the input while no path is selected opens the browsing popup immediately — the empty field signals the user is about to pick something. A field that already holds a path keeps plain click behavior so the text can be edited. The trigger is deliberately pointer-only: keyboard users tabbing through a form never get the overlay popped open on them, and the folder button remains the keyboard path.'
+      }
+    }
+  }
+};
+
+const datasetFilesystem: Record<string, FileSystemItem[]> = {
+  '/mnt': [
+    { path: '/mnt/tank', name: 'tank', type: 'dataset' },
+  ],
+  '/mnt/tank': [
+    { path: '/mnt/tank/apps', name: 'apps', type: 'dataset' },
+    { path: '/mnt/tank/media', name: 'media', type: 'dataset' },
+  ],
+};
+
+export const DatasetNames: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      callbacks: {
+        getChildren: async (path: string) => datasetFilesystem[path] || []
+      } as FilePickerCallbacks
+    },
+    template: `
+      <tn-form-field label="Source dataset">
+        <tn-file-picker
+          [mode]="mode"
+          [valueRoot]="valueRoot"
+          [rootPath]="rootPath"
+          [startPath]="startPath"
+          [callbacks]="callbacks">
+        </tn-file-picker>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
+    }
+  }),
+  args: {
+    mode: 'dataset',
+    valueRoot: '/mnt',
+    rootPath: '/mnt',
+    startPath: '/mnt/tank'
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    const folderButton = canvas.getByRole('button', { name: /open file picker/i });
+    await userEvent.click(folderButton);
+
+    await waitFor(() => {
+      void expect(screen.queryByText('apps')).toBeInTheDocument();
+    }, { timeout: 2000 });
+
+    await userEvent.click(screen.getByText('apps'));
+    await userEvent.click(screen.getByRole('button', { name: 'Select' }));
+
+    // The field shows the dataset name, not the mountpoint path
+    const input = canvas.getByRole('textbox');
+    await waitFor(() => {
+      void expect(input).toHaveValue('tank/apps');
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'With `valueRoot="/mnt"` the picker speaks dataset names: browsing works on mountpoint paths, but the field text, form value, and `selectionChange` payloads are expressed relative to the value root — selecting `/mnt/tank/apps` yields `tank/apps`. Used by consumers whose value is a dataset id rather than a filesystem path (e.g. replication sources and targets).'
       }
     }
   }
