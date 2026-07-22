@@ -45,14 +45,25 @@ export interface FilePickerCreateAction {
    * the inline error and keep the row editable for retry. Name validation
    * (duplicates, invalid characters, …) belongs in this callback.
    *
-   * The row auto-submits when it loses focus with a non-empty name
-   * (matching inline-rename conventions), so this callback can also fire
-   * when the user clicks away — including on a click that navigates
+   * By default the row auto-submits when it loses focus with a non-empty
+   * name (matching inline-rename conventions), so this callback can also
+   * fire when the user clicks away — including on a click that navigates
    * elsewhere, which abandons the row and silently discards the resolved
    * path even though the item was created. Implementations should tolerate
-   * that (e.g. creation is cheap to leave behind, or idempotent).
+   * that (e.g. creation is cheap to leave behind, or idempotent) — or opt
+   * out of blur submission with `submitOnBlur: false`.
    */
   create?: (parentPath: string, name: string) => Promise<string>;
+  /**
+   * Whether losing focus with a non-empty name submits the inline row
+   * (default true). Set to false for side-effecting or hard-to-reverse
+   * creations (e.g. datasets): clicking away then keeps the row open
+   * instead of silently creating, and the row shows explicit confirm/cancel
+   * buttons so submission stays reachable by mouse (Enter and Escape work
+   * either way). Navigating to another directory still abandons the row
+   * without creating anything.
+   */
+  submitOnBlur?: boolean;
 }
 
 export interface FilePickerCreateActionEvent {

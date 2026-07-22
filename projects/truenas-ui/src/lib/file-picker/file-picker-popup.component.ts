@@ -185,6 +185,9 @@ export class TnFilePickerPopupComponent implements AfterViewChecked {
   protected readonly clearSelectionTestId = computed(() => ['clear-selection', ...this.baseSegments()]);
   /** Role-first segments for the inline creation input: `input-create[-<base>]`. */
   protected readonly inlineCreateTestId = computed(() => ['create', ...this.baseSegments()]);
+  /** Role-first segments for the inline row's explicit confirm/cancel buttons. */
+  protected readonly inlineConfirmTestId = computed(() => ['create-confirm', ...this.baseSegments()]);
+  protected readonly inlineCancelTestId = computed(() => ['create-cancel', ...this.baseSegments()]);
 
   /**
    * Base-first segments for a listed item's row (`option[-<base>]-<name>`) and
@@ -370,8 +373,16 @@ export class TnFilePickerPopupComponent implements AfterViewChecked {
     // Escape / navigation.
     if (this.inlineCreation()?.error) {return;}
 
+    // Actions with `submitOnBlur: false` (side-effecting creations) keep the
+    // row open on focus loss; submission requires Enter or the ✓ button.
+    if (this.inlineCreation()?.action.submitOnBlur === false) {return;}
+
     // Auto-submit on blur, matching inline-rename conventions
     void this.submitInlineCreation();
+  }
+
+  cancelInlineCreation(): void {
+    this.inlineCreation.set(null);
   }
 
   onClearSelection(): void {

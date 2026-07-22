@@ -763,6 +763,93 @@ describe('TnFilePickerPopupComponent', () => {
     });
   });
 
+  describe('Inline Creation – submitOnBlur: false', () => {
+    let create: jest.Mock;
+
+    beforeEach(() => {
+      create = jest.fn();
+      fixture.componentRef.setInput('createActions', [
+        {
+          id: 'dataset', label: 'Create Dataset', create, submitOnBlur: false,
+        },
+      ]);
+      fixture.detectChanges();
+
+      (fixture.debugElement.query(By.css('.footer-actions button')).nativeElement as HTMLButtonElement).click();
+      fixture.detectChanges();
+    });
+
+    function inlineInput(): HTMLInputElement | null {
+      const input = fixture.debugElement.query(By.css('.inline-create-input'));
+      return input ? input.nativeElement as HTMLInputElement : null;
+    }
+
+    function typeName(name: string): void {
+      const input = inlineInput()!;
+      input.value = name;
+      input.dispatchEvent(new Event('input'));
+    }
+
+    it('should keep the row open without creating when the input loses focus', async () => {
+      typeName('heavy-dataset');
+      inlineInput()!.dispatchEvent(new Event('blur'));
+      await fixture.whenStable();
+
+      expect(create).not.toHaveBeenCalled();
+      expect(inlineInput()).not.toBeNull();
+      expect(inlineInput()!.value).toBe('heavy-dataset');
+    });
+
+    it('should submit through the explicit confirm button', async () => {
+      create.mockResolvedValue('/mnt/tank/heavy-dataset');
+      const createdSpy = jest.fn();
+      component.created.subscribe(createdSpy);
+
+      typeName('heavy-dataset');
+      fixture.detectChanges();
+      (fixture.debugElement.query(By.css('.inline-create-button.confirm')).nativeElement as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      expect(create).toHaveBeenCalledWith('/mnt/tank', 'heavy-dataset');
+      expect(createdSpy).toHaveBeenCalledWith('/mnt/tank/heavy-dataset');
+    });
+
+    it('should still submit on Enter', async () => {
+      create.mockResolvedValue('/mnt/tank/heavy-dataset');
+
+      typeName('heavy-dataset');
+      inlineInput()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+      await fixture.whenStable();
+
+      expect(create).toHaveBeenCalledWith('/mnt/tank', 'heavy-dataset');
+    });
+
+    it('should close the row without creating through the cancel button', () => {
+      typeName('heavy-dataset');
+      fixture.detectChanges();
+      (fixture.debugElement.query(By.css('.inline-create-button.cancel')).nativeElement as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(create).not.toHaveBeenCalled();
+      expect(inlineInput()).toBeNull();
+    });
+
+    it('should not render confirm/cancel buttons for default (blur-submitting) actions', () => {
+      // Close the dataset row opened in beforeEach, then open a default action's row
+      inlineInput()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      fixture.detectChanges();
+      fixture.componentRef.setInput('createActions', [
+        { id: 'folder', label: 'New Folder', create },
+      ]);
+      fixture.detectChanges();
+      (fixture.debugElement.query(By.css('.footer-actions button')).nativeElement as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(inlineInput()).not.toBeNull();
+      expect(fixture.debugElement.query(By.css('.inline-create-button'))).toBeNull();
+    });
+  });
+
   describe('Current Directory Selection', () => {
     function selectButton(): HTMLButtonElement | null {
       const button = fixture.debugElement.query(By.css('.footer-actions button'));

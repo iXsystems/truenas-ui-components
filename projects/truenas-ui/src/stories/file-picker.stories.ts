@@ -163,6 +163,8 @@ createActions = input<FilePickerCreateAction[]>([]);
 - **Event-only** (no \`create\`): pressing the button emits \`createAction\` with \`{ actionId, parentPath }\`; run your own flow (dialog, API call) and, when it completes, call \`selectPath(newPath)\` to show the created item selected and applied as the value — or \`refresh()\` to only re-fetch the listing.
 - **Inline** (\`create\` provided): pressing the button opens an editable name row inside the popup. Submitting calls \`create(parentPath, name)\` — your implementation does the real work (e.g. a websocket API call) and owns validation. Resolve with the created path to have it listed and selected; reject with an Error to show its message inline and keep the row editable.
 
+By default the inline row auto-submits when it loses focus with a non-empty name (inline-rename convention). For side-effecting or hard-to-reverse creations (e.g. datasets), set \`submitOnBlur: false\`: clicking away then keeps the row open instead of silently creating, and explicit ✓/✕ buttons appear in the row so submission stays reachable by mouse (Enter and Escape work either way).
+
 ### Navigation Configuration
 \`\`\`typescript
 startPath = input<string>('/mnt');
