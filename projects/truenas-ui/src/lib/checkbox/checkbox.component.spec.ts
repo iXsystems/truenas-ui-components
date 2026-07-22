@@ -23,6 +23,8 @@ import { TnCheckboxComponent, TnCheckboxLabelDirective } from './checkbox.compon
     <tn-checkbox testId="projected" [formControl]="projectedControl">
       <span tnCheckboxLabel>I agree to the <a href="/terms">Terms</a></span>
     </tn-checkbox>
+
+    <tn-checkbox testId="listened" [label]="label()" (change)="changeCount = changeCount + 1" />
   `
 })
 class TestHostComponent {
@@ -34,6 +36,7 @@ class TestHostComponent {
   error = signal<string | null>(null);
   control = new FormControl(false);
   projectedControl = new FormControl(false);
+  changeCount = 0;
 }
 
 describe('TnCheckboxComponent', () => {
@@ -185,6 +188,20 @@ describe('TnCheckboxComponent', () => {
 
     it('should not set aria-invalid when no error', () => {
       expect(getInput().getAttribute('aria-invalid')).toBeNull();
+    });
+  });
+
+  describe('change binding', () => {
+    it('fires a (change) binding exactly once per toggle', () => {
+      // The inner input's native change bubbles to the host, where Ivy invokes a
+      // (change) binding for BOTH the bubbled DOM event and the component's
+      // `change` output — double-firing every listener (e.g. toggling a
+      // file-picker selection on and immediately off). The template stops the
+      // native event so only the output reaches consumers.
+      getInput('checkbox-listened').click();
+      fixture.detectChanges();
+
+      expect(host.changeCount).toBe(1);
     });
   });
 
