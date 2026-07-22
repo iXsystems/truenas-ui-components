@@ -88,6 +88,28 @@
                 @if (creation.loading) {
                   <tn-icon name="mdi-loading" class="creation-loading-icon" aria-hidden="true" />
                 }
+                <!-- Blur doesn't submit for these actions, so mouse users need
+                     explicit confirm/cancel affordances -->
+                @if (creation.action.submitOnBlur === false && !creation.loading) {
+                  <button
+                    type="button"
+                    class="inline-create-button confirm"
+                    tnTestIdType="button"
+                    aria-label="Confirm creation"
+                    [tnTestId]="inlineConfirmTestId()"
+                    (click)="submitInlineCreation()">
+                    <tn-icon name="mdi-check" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    class="inline-create-button cancel"
+                    tnTestIdType="button"
+                    aria-label="Cancel creation"
+                    [tnTestId]="inlineCancelTestId()"
+                    (click)="cancelInlineCreation()">
+                    <tn-icon name="mdi-close" aria-hidden="true" />
+                  </button>
+                }
               </div>
               @if (creation.error) {
                 <div class="inline-create-error" role="alert" [id]="inlineErrorId">

@@ -150,6 +150,32 @@
     color: var(--tn-primary);
     flex-shrink: 0;
   }
+
+  .inline-create-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 4px;
+    border: none;
+    border-radius: 3px;
+    background: transparent;
+    color: var(--tn-fg2);
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background: var(--tn-bg2);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--tn-primary);
+    }
+
+    &.confirm {
+      color: var(--tn-primary);
+    }
+  }
 }
 
 .inline-create-error {
