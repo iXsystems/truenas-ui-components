@@ -82,6 +82,15 @@ export class TnMonthViewComponent {
   });
 
   /**
+   * Names the grid after the month it shows. Without it a screen-reader user arrowing
+   * around hears each day but never which month they are in — the period only appears in
+   * the header, outside the grid.
+   */
+  gridLabel = computed(() => {
+    return this.activeDate().toLocaleDateString('en', { month: 'long', year: 'numeric' });
+  });
+
+  /**
    * The day of the month that carries `tabindex="0"` — the grid's single keyboard entry
    * point, per the roving tabindex pattern.
    *
@@ -136,7 +145,11 @@ export class TnMonthViewComponent {
     const firstDate = new Date(year, month, 1);
     const lastDate = new Date(year, month + 1, 0);
     const startDayOfWeek = firstDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    
+
+    // Read once for the whole grid rather than per cell, so every day is measured
+    // against the same instant as well as allocating a fortieth as much.
+    const today = new Date();
+
     const rows: CalendarCell[][] = [];
     let currentRow: CalendarCell[] = [];
     
@@ -148,7 +161,7 @@ export class TnMonthViewComponent {
     // Add all days of the month
     for (let day = 1; day <= lastDate.getDate(); day++) {
       const date = new Date(year, month, day);
-      currentRow.push(this.createCell(date, day));
+      currentRow.push(this.createCell(date, day, today));
       
       // If we have 7 cells, complete the row
       if (currentRow.length === 7) {
@@ -168,8 +181,7 @@ export class TnMonthViewComponent {
     return rows;
   });
 
-  private createCell(date: Date, value: number): CalendarCell {
-    const today = new Date();
+  private createCell(date: Date, value: number, today: Date): CalendarCell {
     const isToday = isSameDay(date, today);
     const isSelected = this.selected() ? isSameDay(date, this.selected()!) : false;
     const isMarked = this.markedDateKeys().has(dateKey(date));

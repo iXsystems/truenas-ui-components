@@ -1,4 +1,4 @@
-<table role="grid" class="tn-calendar-table">
+<table role="grid" class="tn-calendar-table" [attr.aria-label]="gridLabel()">
   <!-- Table body with year cells -->
   <tbody class="tn-calendar-body">
     @for (row of yearRows(); track trackByRow($index, row); let rowIndex = $index) {

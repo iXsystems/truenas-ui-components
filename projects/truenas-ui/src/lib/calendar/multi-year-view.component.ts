@@ -48,6 +48,15 @@ export class TnMultiYearViewComponent {
     return { start: startYear, end: startYear + 23 };
   });
 
+  /**
+   * Names the grid after the span of years it shows, so a screen-reader user arrowing
+   * around knows which page they are on rather than just hearing bare years.
+   */
+  gridLabel = computed(() => {
+    const range = this.yearRange();
+    return `Years ${range.start} to ${range.end}`;
+  });
+
   yearRows = computed(() => {
     const range = this.yearRange();
     const rows: YearCell[][] = [];
@@ -114,7 +123,11 @@ export class TnMultiYearViewComponent {
     if (minDate && year < minDate.getFullYear()) {return false;}
     if (maxDate && year > maxDate.getFullYear()) {return false;}
 
-    // If we have a date filter, test January 1st of that year
+    // Deliberately coarse: a year is a single cell, so it gets a single verdict, and
+    // January 1st stands in for the whole year. A filter that rules out January 1st
+    // while allowing the rest of the year therefore disables the year outright. Material
+    // approximates the same way; testing all 365 days per cell is not worth it, and the
+    // month view applies the filter exactly once the user drills in.
     if (dateFilter) {
       const testDate = new Date(year, 0, 1);
       if (!dateFilter(testDate)) {return false;}

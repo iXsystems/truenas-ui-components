@@ -265,6 +265,39 @@ describe('TnCalendarComponent', () => {
     });
   });
 
+  // The period only appears in the header, outside the grid, so without a label on the
+  // grid itself a screen-reader user arrowing around never hears which month they are in.
+  describe('grid labelling', () => {
+    const gridLabel = (): string | null => {
+      return fixture.nativeElement.querySelector('.tn-calendar-table')?.getAttribute('aria-label') ?? null;
+    };
+
+    it('names the day grid after the month on screen', () => {
+      fixture.componentRef.setInput('selected', new Date(2031, 4, 12));
+      fixture.detectChanges();
+
+      expect(gridLabel()).toBe('May 2031');
+    });
+
+    it('renames the day grid as the view pages', () => {
+      fixture.componentRef.setInput('selected', new Date(2031, 4, 12));
+      fixture.detectChanges();
+
+      fixture.componentInstance.onNextClicked();
+      fixture.detectChanges();
+
+      expect(gridLabel()).toBe('June 2031');
+    });
+
+    it('names the year grid after the span it shows', () => {
+      fixture.componentRef.setInput('startView', 'year');
+      fixture.componentRef.setInput('selected', new Date(2031, 4, 12));
+      fixture.detectChanges();
+
+      expect(gridLabel()).toBe('Years 2016 to 2039');
+    });
+  });
+
   describe('activeDate', () => {
     const monthLabel = (): string => {
       return fixture.nativeElement.querySelector('.tn-calendar-period-button')?.textContent?.trim() ?? '';

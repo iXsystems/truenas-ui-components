@@ -12,8 +12,6 @@ export class TnCalendarHeaderComponent {
   currentDate = input<Date>(new Date());
   currentView = input<'month' | 'year'>('month');
 
-  monthSelected = output<number>();
-  yearSelected = output<number>();
   viewChanged = output<'month' | 'year'>();
   previousClicked = output<void>();
   nextClicked = output<void>();

@@ -87,21 +87,6 @@ export class TnCalendarComponent implements OnInit {
     }
   }
 
-  onMonthSelected(month: number): void {
-    const newDate = new Date(this.currentDate());
-    newDate.setMonth(month);
-    this.currentDate.set(newDate);
-    this.currentView.set('month');
-    this.viewChanged.emit('month');
-  }
-
-  onYearSelected(year: number): void {
-    const newDate = new Date(this.currentDate());
-    newDate.setFullYear(year);
-    this.currentDate.set(newDate);
-    this.activeDateChange.emit(newDate);
-  }
-
   onViewChanged(view: 'month' | 'year'): void {
     this.currentView.set(view);
     this.viewChanged.emit(view);

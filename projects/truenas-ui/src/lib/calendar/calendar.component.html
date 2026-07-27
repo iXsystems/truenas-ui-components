@@ -1,13 +1,11 @@
 <tn-calendar-header
   [currentDate]="currentDate()"
   [currentView]="currentView()"
-  (monthSelected)="onMonthSelected($event)"
-  (yearSelected)="onYearSelected($event)"
   (viewChanged)="onViewChanged($event)"
   (previousClicked)="onPreviousClicked()"
   (nextClicked)="onNextClicked()" />
 
-<div class="tn-calendar-content" cdkMonitorSubtreeFocus tabindex="-1">
+<div class="tn-calendar-content" tabindex="-1">
   @if (currentView() === 'month') {
     <tn-month-view
       [activeDate]="currentDate()"
