@@ -1,5 +1,10 @@
 // Multi-year view specific styles following the theme system
 
+:host {
+  // Matches the month view's rounding so both views read as one component.
+  --calendar-radius: 4px;
+}
+
 .tn-calendar-table {
   width: 100%;
   border-spacing: 0;
@@ -34,9 +39,7 @@
   font-weight: 500;
   transition: background-color 0.2s ease;
 
-  // Year cells are wide, so the month view's circle becomes a pill here — same
-  // rounded language, shape that actually fits the cell.
-  border-radius: 999px;
+  border-radius: var(--calendar-radius);
 
   &:hover:not(:disabled) {
     background: var(--tn-alt-bg2, #e8f4fd);
