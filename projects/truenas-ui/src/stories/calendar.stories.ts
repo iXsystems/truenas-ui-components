@@ -1,5 +1,6 @@
 import { Component, input, linkedSignal } from '@angular/core';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnCalendarComponent } from '../lib/calendar/calendar.component';
 // Aliased: this file also exports a story named `DateRange`.
 import type { DateRange as TnDateRange } from '../lib/date-range-input/date-range-input.component';
@@ -36,6 +37,8 @@ class CalendarDemoComponent {
   readonly selected = linkedSignal(() => this.initialSelected());
   readonly range = linkedSignal(() => this.initialRange());
 }
+
+const calendarHarnessDoc = loadHarnessDoc('calendar');
 
 const meta: Meta = {
   title: 'Components/Calendar',
@@ -120,4 +123,19 @@ export const MarkedDatesWithDisabledDays: Story = {
     template: `<sb-calendar-demo [markedDates]="marked" [minDate]="minDate"></sb-calendar-demo>`,
     moduleMetadata: { imports: [CalendarDemoComponent] },
   }),
+};
+
+export const CalendarHarness: Story = {
+  name: 'Calendar Harness',
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      story: { height: 'auto' },
+      canvas: { hidden: true, sourceState: 'none' },
+      description: { story: calendarHarnessDoc || '' },
+    },
+    controls: { disable: true },
+    layout: 'fullscreen',
+  },
+  render: () => ({ template: '' }),
 };
