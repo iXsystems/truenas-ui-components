@@ -399,9 +399,6 @@ tn-table {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  // Button labels never wrap, so when the selection text and the buttons don't
-  // fit on one line the two groups stack instead of overflowing the popup.
-  flex-wrap: wrap;
   // Minimum breathing room between the selection text and the action buttons
   gap: 16px;
   padding: 16px var(--tn-content-padding, 24px);
