@@ -39,9 +39,10 @@ export class TnMonthViewComponent {
    */
   markedDates = input<Date[] | undefined>(undefined);
 
-  // Range mode inputs
+  // Range mode inputs. `selecting` is accepted for backwards compatibility but is not
+  // read — which end comes next is derived from start/end by whoever owns the range.
   rangeMode = input<boolean>(false);
-  selectedRange = input<{ start: Date | null; end: Date | null; selecting: 'start' | 'end' } | undefined>(undefined);
+  selectedRange = input<{ start: Date | null; end: Date | null; selecting?: 'start' | 'end' } | undefined>(undefined);
 
   selectedChange = output<Date>();
   activeDateChange = output<Date>();

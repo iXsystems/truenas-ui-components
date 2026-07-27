@@ -52,7 +52,6 @@ export class TnDateInputComponent implements ControlValueAccessor, OnInit, OnDes
   dayRef = viewChild.required<ElementRef<HTMLInputElement>>('dayInput');
   yearRef = viewChild.required<ElementRef<HTMLInputElement>>('yearInput');
   calendarTemplate = viewChild.required<TemplateRef<unknown>>('calendarTemplate');
-  calendar = viewChild.required<TnCalendarComponent>(TnCalendarComponent);
   wrapperEl = viewChild.required<ElementRef<HTMLDivElement>>('wrapper');
 
   private destroy$ = new Subject<void>();
@@ -219,12 +218,8 @@ export class TnDateInputComponent implements ControlValueAccessor, OnInit, OnDes
 
     this.createOverlay();
     this.isOpen.set(true);
-
-    // Reset calendar interaction state when opening
-    const cal = this.calendar();
-    if (cal) {
-      setTimeout(() => cal.resetInteractionState(), 0);
-    }
+    // No calendar state to reset — the calendar renders whatever date this component
+    // binds to it, so reopening already shows the current value.
   }
 
   close(): void {

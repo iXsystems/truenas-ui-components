@@ -1,5 +1,41 @@
+import { Component, input, linkedSignal } from '@angular/core';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { TnCalendarComponent } from '../lib/calendar/calendar.component';
+// Aliased: this file also exports a story named `DateRange`.
+import type { DateRange as TnDateRange } from '../lib/date-range-input/date-range-input.component';
+
+/**
+ * `tn-calendar` is fully controlled: clicking a day emits, it does not self-select. This
+ * host owns the value and binds it back, which is what every real consumer does — see
+ * `TnDateInputComponent` and `TnDateRangeInputComponent`.
+ */
+@Component({
+  selector: 'sb-calendar-demo',
+  standalone: true,
+  imports: [TnCalendarComponent],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-calendar
+      [rangeMode]="rangeMode()"
+      [selected]="selected()"
+      [selectedRange]="range()"
+      [markedDates]="markedDates()"
+      [minDate]="minDate()"
+      (selectedChange)="selected.set($event)"
+      (selectedRangeChange)="range.set($event)"
+    />
+  `,
+})
+class CalendarDemoComponent {
+  readonly rangeMode = input(false);
+  readonly markedDates = input<Date[] | undefined>(undefined);
+  readonly minDate = input<Date | undefined>(undefined);
+  readonly initialSelected = input<Date | undefined>(undefined);
+  readonly initialRange = input<TnDateRange | undefined>(undefined);
+
+  readonly selected = linkedSignal(() => this.initialSelected());
+  readonly range = linkedSignal(() => this.initialRange());
+}
 
 const meta: Meta = {
   title: 'Components/Calendar',
@@ -14,10 +50,12 @@ const daysThisMonth = (...days: number[]): Date[] => {
   return days.map((day) => new Date(now.getFullYear(), now.getMonth(), day));
 };
 
+const marked = daysThisMonth(3, 7, 8, 14, 21, 22, 28);
+
 export const Default: Story = {
   render: () => ({
-    template: `<tn-calendar></tn-calendar>`,
-    moduleMetadata: { imports: [TnCalendarComponent] },
+    template: `<sb-calendar-demo></sb-calendar-demo>`,
+    moduleMetadata: { imports: [CalendarDemoComponent] },
   }),
 };
 
@@ -28,9 +66,9 @@ export const Default: Story = {
  */
 export const MarkedDates: Story = {
   render: () => ({
-    props: { marked: daysThisMonth(3, 7, 8, 14, 21, 22, 28) },
-    template: `<tn-calendar [markedDates]="marked"></tn-calendar>`,
-    moduleMetadata: { imports: [TnCalendarComponent] },
+    props: { marked },
+    template: `<sb-calendar-demo [markedDates]="marked"></sb-calendar-demo>`,
+    moduleMetadata: { imports: [CalendarDemoComponent] },
   }),
 };
 
@@ -40,25 +78,22 @@ export const MarkedDates: Story = {
  */
 export const MarkedDatesWithSelection: Story = {
   render: () => ({
-    props: {
-      marked: daysThisMonth(3, 7, 8, 14, 21, 22, 28),
-      selected: daysThisMonth(14)[0],
-    },
-    template: `<tn-calendar [markedDates]="marked" [selected]="selected"></tn-calendar>`,
-    moduleMetadata: { imports: [TnCalendarComponent] },
+    props: { marked, selected: daysThisMonth(14)[0] },
+    template: `<sb-calendar-demo [markedDates]="marked" [initialSelected]="selected"></sb-calendar-demo>`,
+    moduleMetadata: { imports: [CalendarDemoComponent] },
   }),
 };
 
 /**
  * A selected range reads as one connected run: a band across the days in between, with
  * a solid cap at each end. The band spans the full cell so consecutive days join up
- * however wide the column is.
+ * however wide the column is. Click a day to start a new range, then a second to close it.
  */
 export const DateRange: Story = {
   render: () => ({
     props: { range: { start: daysThisMonth(9)[0], end: daysThisMonth(19)[0] } },
-    template: `<tn-calendar [rangeMode]="true" [selectedRange]="range"></tn-calendar>`,
-    moduleMetadata: { imports: [TnCalendarComponent] },
+    template: `<sb-calendar-demo [rangeMode]="true" [initialRange]="range"></sb-calendar-demo>`,
+    moduleMetadata: { imports: [CalendarDemoComponent] },
   }),
 };
 
@@ -67,12 +102,11 @@ export const DateRange: Story = {
  */
 export const DateRangeWithMarkedDates: Story = {
   render: () => ({
-    props: {
-      range: { start: daysThisMonth(9)[0], end: daysThisMonth(19)[0] },
-      marked: daysThisMonth(3, 7, 8, 14, 21, 22, 28),
-    },
-    template: `<tn-calendar [rangeMode]="true" [selectedRange]="range" [markedDates]="marked"></tn-calendar>`,
-    moduleMetadata: { imports: [TnCalendarComponent] },
+    props: { marked, range: { start: daysThisMonth(9)[0], end: daysThisMonth(19)[0] } },
+    template: `
+      <sb-calendar-demo [rangeMode]="true" [initialRange]="range" [markedDates]="marked"></sb-calendar-demo>
+    `,
+    moduleMetadata: { imports: [CalendarDemoComponent] },
   }),
 };
 
@@ -82,11 +116,8 @@ export const DateRangeWithMarkedDates: Story = {
  */
 export const MarkedDatesWithDisabledDays: Story = {
   render: () => ({
-    props: {
-      marked: daysThisMonth(3, 7, 8, 14, 21, 22, 28),
-      minDate: daysThisMonth(8)[0],
-    },
-    template: `<tn-calendar [markedDates]="marked" [minDate]="minDate"></tn-calendar>`,
-    moduleMetadata: { imports: [TnCalendarComponent] },
+    props: { marked, minDate: daysThisMonth(8)[0] },
+    template: `<sb-calendar-demo [markedDates]="marked" [minDate]="minDate"></sb-calendar-demo>`,
+    moduleMetadata: { imports: [CalendarDemoComponent] },
   }),
 };

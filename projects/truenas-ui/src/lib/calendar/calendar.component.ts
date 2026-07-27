@@ -1,6 +1,6 @@
 
 import type { OnInit } from '@angular/core';
-import { Component, input, output, signal, effect } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
 import { TnCalendarHeaderComponent } from './calendar-header.component';
 import { TnMonthViewComponent } from './month-view.component';
 import { TnMultiYearViewComponent } from './multi-year-view.component';
@@ -42,75 +42,20 @@ export class TnCalendarComponent implements OnInit {
   // Range mode outputs
   selectedRangeChange = output<DateRange>();
 
+  // Which month/year grid is on screen. Navigation state, not selection state.
   currentDate = signal<Date>(new Date());
   currentView = signal<'month' | 'year'>('month');
-  
-  // Range selection state - this is the authoritative source for calendar display
-  rangeState = signal<{
-    start: Date | null;
-    end: Date | null;
-    selecting: 'start' | 'end';
-  }>({
-    start: null,
-    end: null,
-    selecting: 'start'
-  });
-
-  // Track if user has interacted with calendar - once true, ignore external selectedRange
-  private userHasInteracted = false;
-
-  constructor() {
-    // Watch for changes to selectedRange input
-    effect(() => {
-      // Track signals to re-run effect when they change
-      this.selectedRange();
-      const rangeMode = this.rangeMode();
-      // Only update range state from external selectedRange if user hasn't interacted yet
-      if (!this.userHasInteracted && rangeMode) {
-        this.initializeRangeState();
-      }
-    });
-  }
 
   ngOnInit(): void {
     this.currentView.set(this.startView());
 
-    // Initialize range state if in range mode (this also handles currentDate)
-    if (this.rangeMode()) {
-      this.initializeRangeState();
-    } else {
-      const selected = this.selected();
-      if (selected) {
-        // For single date mode, navigate to the selected date's month
-        this.currentDate.set(new Date(selected));
-      }
-    }
-  }
+    // Open on the month the caller's value lives in.
+    const initialDate = this.rangeMode()
+      ? (this.selectedRange()?.start ?? this.selectedRange()?.end ?? null)
+      : (this.selected() ?? null);
 
-  private initializeRangeState(): void {
-    if (this.rangeMode()) {
-      const selectedRange = this.selectedRange();
-      if (selectedRange) {
-        this.rangeState.set({
-          start: selectedRange.start,
-          end: selectedRange.end,
-          selecting: selectedRange.start && selectedRange.end ? 'start' :
-                    selectedRange.start ? 'end' : 'start'
-        });
-
-        // Navigate to the month of the selected start date, or end date if no start date
-        const dateToShow = selectedRange.start || selectedRange.end;
-        if (dateToShow) {
-          this.currentDate.set(new Date(dateToShow));
-        }
-      } else {
-        // No selected range - initialize empty range state
-        this.rangeState.set({
-          start: null,
-          end: null,
-          selecting: 'start'
-        });
-      }
+    if (initialDate) {
+      this.currentDate.set(new Date(initialDate));
     }
   }
 
@@ -172,57 +117,28 @@ export class TnCalendarComponent implements OnInit {
     }
   }
   
+  /**
+   * Works out the next range from the one the caller currently owns and emits it. The
+   * calendar keeps no copy — what it renders next is whatever the caller binds back.
+   */
   private handleRangeSelection(date: Date): void {
-    // Mark that user has interacted - calendar is now authoritative
-    this.userHasInteracted = true;
-    
-    const currentRange = this.rangeState();
-    
-    // If we already have a complete range (both start and end), clear and start fresh
-    if (currentRange.start && currentRange.end && currentRange.selecting === 'start') {
-      const newRangeState = {
-        start: date,
-        end: null,
-        selecting: 'end' as const
-      };
-      this.rangeState.set(newRangeState);
+    const current = this.selectedRange();
+    const start = current?.start ?? null;
+    const end = current?.end ?? null;
+
+    // Nothing pending, or the range is already complete: begin a new one.
+    if (!start || end) {
       this.selectedRangeChange.emit({ start: date, end: null });
       return;
     }
-    
-    if (currentRange.selecting === 'start' || !currentRange.start) {
-      // First click or selecting start date - clear any previous range immediately
-      const newRangeState = {
-        start: date,
-        end: null,
-        selecting: 'end' as const
-      };
-      this.rangeState.set(newRangeState);
+
+    // A second pick before the first restarts the range rather than inverting it.
+    if (date < start) {
       this.selectedRangeChange.emit({ start: date, end: null });
-    } else {
-      // Setting end date
-      const start = currentRange.start!;
-      
-      // If second date is earlier than first, treat it as new start date
-      if (date < start) {
-        const newRangeState = {
-          start: date,
-          end: null,
-          selecting: 'end' as const
-        };
-        this.rangeState.set(newRangeState);
-        this.selectedRangeChange.emit({ start: date, end: null });
-      } else {
-        // Valid end date - complete the range
-        const newRangeState = {
-          start: start,
-          end: date,
-          selecting: 'start' as const
-        };
-        this.rangeState.set(newRangeState);
-        this.selectedRangeChange.emit({ start: start, end: date });
-      }
+      return;
     }
+
+    this.selectedRangeChange.emit({ start, end: date });
   }
 
   onActiveDateChange(date: Date): void {
@@ -237,14 +153,5 @@ export class TnCalendarComponent implements OnInit {
     this.currentView.set('month');
     this.viewChanged.emit('month');
     this.activeDateChange.emit(date);
-  }
-
-  /**
-   * Reset the calendar to accept external range values - called when calendar reopens
-   */
-  resetInteractionState(): void {
-    this.userHasInteracted = false;
-    // Reinitialize range state from selectedRange if provided
-    this.initializeRangeState();
   }
 }

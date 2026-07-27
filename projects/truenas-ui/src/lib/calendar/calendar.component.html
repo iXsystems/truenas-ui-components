@@ -17,7 +17,7 @@
       [maxDate]="maxDate()"
       [markedDates]="markedDates()"
       [rangeMode]="rangeMode()"
-      [selectedRange]="rangeMode() ? rangeState() : undefined"
+      [selectedRange]="rangeMode() ? selectedRange() : undefined"
       (selectedChange)="onSelectedChange($event)"
       (activeDateChange)="onActiveDateChange($event)" />
   }

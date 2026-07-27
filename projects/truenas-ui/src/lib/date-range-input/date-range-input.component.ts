@@ -52,7 +52,6 @@ export class TnDateRangeInputComponent implements ControlValueAccessor, OnInit, 
   endDayRef = viewChild.required<ElementRef<HTMLInputElement>>('endDayInput');
   endYearRef = viewChild.required<ElementRef<HTMLInputElement>>('endYearInput');
   calendarTemplate = viewChild.required<TemplateRef<unknown>>('calendarTemplate');
-  calendar = viewChild.required<TnCalendarComponent>(TnCalendarComponent);
   wrapperEl = viewChild.required<ElementRef<HTMLDivElement>>('wrapper');
 
   private destroy$ = new Subject<void>();
@@ -289,12 +288,8 @@ export class TnDateRangeInputComponent implements ControlValueAccessor, OnInit, 
 
     this.createOverlay();
     this.isOpen.set(true);
-
-    // Reset calendar interaction state when opening
-    const cal = this.calendar();
-    if (cal) {
-      setTimeout(() => cal.resetInteractionState(), 0);
-    }
+    // No calendar state to reset — the calendar renders whatever range this component
+    // binds to it, so reopening already shows the current value.
   }
 
   close(): void {
