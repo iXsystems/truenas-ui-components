@@ -31,8 +31,6 @@ export class TnMultiYearViewComponent {
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
   private injector = inject(Injector);
 
-  readonly cellWidth = 25; // 100/4 for 4 columns
-  readonly cellAspectRatio = 7.14286; // Same as Material
   readonly yearsPerRow = 4;
   readonly yearRowCount = 6; // Shows 24 years total (6 rows x 4 columns)
 

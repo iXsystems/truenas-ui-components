@@ -3,10 +3,21 @@
 :host {
   // Matches the month view's rounding so both views read as one component.
   --calendar-radius: 4px;
+
+  // Row height and indicator size, in fixed units. Row height used to come from
+  // percentage padding on each cell, which resolves against the *width* of the
+  // containing block — so the taller the calendar got the wider it was, and a
+  // full-width calendar ended up with rows hundreds of pixels tall.
+  --calendar-year-row-height: 48px;
+  --calendar-year-indicator-width: 72px;
+  --calendar-year-indicator-height: 36px;
 }
 
 .tn-calendar-table {
   width: 100%;
+  // Four columns' worth, but never past the container — same bargain the month view makes.
+  min-width: min(100%, 224px);
+  table-layout: fixed;
   border-spacing: 0;
   border-collapse: separate;
 }
@@ -16,57 +27,46 @@
   border: none;
 }
 
-.tn-calendar-body {
-  min-width: 224px; // Minimum width to accommodate 4 columns
-}
-
 .tn-calendar-body-cell-container {
   position: relative;
   border: none;
+  height: var(--calendar-year-row-height);
+  width: 25%; // Four columns
 }
 
+// The button fills its cell so the whole column is clickable, exactly as in the month
+// view. What you actually see is the indicator inside it, which stays a fixed size
+// however wide the column gets.
 .tn-calendar-body-cell {
   position: absolute;
-  top: 5%;
-  left: 5%;
-  width: 90%;
-  height: 90%;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
   border: none;
   background: transparent;
   color: var(--tn-fg1, #333);
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
-  transition: background-color 0.2s ease;
 
-  border-radius: var(--calendar-radius);
-
-  &:hover:not(:disabled) {
-    background: var(--tn-alt-bg2, #e8f4fd);
-  }
-
-  // Inset so the ring can never be clipped by an adjacent cell or the table edge.
+  // Drawn on the indicator rather than the button, which spans the whole column.
   &:focus-visible {
-    outline: 2px solid var(--tn-primary, #007bff);
-    outline-offset: -2px;
-    background: var(--tn-alt-bg2, #e8f4fd);
+    outline: none;
+
+    .tn-calendar-body-cell-content {
+      outline: 2px solid var(--tn-primary, #007bff);
+      outline-offset: -2px;
+    }
   }
 
   &:disabled {
     color: var(--tn-fg2, #666);
     opacity: 0.5;
     cursor: default;
-  }
-
-  // Apply today border to the button itself for full coverage
-  &.tn-calendar-body-today:not(.tn-calendar-body-selected) {
-    border: 1px solid var(--tn-primary, #007bff);
-    color: var(--tn-primary, #007bff);
-  }
-
-  &.tn-calendar-body-selected {
-    background: var(--tn-primary, #007bff);
-    color: white;
   }
 }
 
@@ -75,11 +75,28 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  height: 100%;
+  box-sizing: border-box;
+  width: var(--calendar-year-indicator-width);
+  height: var(--calendar-year-indicator-height);
+  max-width: 100%;
+  border-radius: var(--calendar-radius);
   transition: background-color 200ms cubic-bezier(0.25, 0.8, 0.25, 1);
-  
-  // Remove these styles from content since they're now on the button
+}
+
+// Only two states here, and both `:not()` guards sit on the cell, so hover and today
+// simply don't match a selected year — no specificity race to lose.
+.tn-calendar-body-cell:not(:disabled):not(.tn-calendar-body-selected):hover .tn-calendar-body-cell-content {
+  background: var(--tn-alt-bg2, #e8f4fd);
+}
+
+.tn-calendar-body-cell.tn-calendar-body-today:not(.tn-calendar-body-selected) .tn-calendar-body-cell-content {
+  border: 1px solid var(--tn-primary, #007bff);
+  color: var(--tn-primary, #007bff);
+}
+
+.tn-calendar-body-cell.tn-calendar-body-selected .tn-calendar-body-cell-content {
+  background: var(--tn-primary, #007bff);
+  color: white;
 }
 
 .tn-focus-indicator {
