@@ -11,10 +11,15 @@
 
   display: inline-block;
   cursor: pointer;
-  border: 0;
+  // Transparent border (not none) so solid and outline variants have the same
+  // rendered height and align in a shared row of actions.
+  border: 1px solid transparent;
   font-weight: 500;
   line-height: 1;
   font-family: 'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  // A button label never wraps — in a tight flex row wrapping makes buttons
+  // grow to different heights instead of the row overflowing or wrapping.
+  white-space: nowrap;
 
   &:disabled,
   &.is-disabled {
