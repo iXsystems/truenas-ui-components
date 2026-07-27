@@ -1,35 +1,62 @@
-<div class="tn-form-field" [tnTestId]="testId()">
+<div class="tn-form-field" tnTestIdType="form-field" [tnTestId]="testId()">
   <!-- Label -->
   @if (label()) {
-    <label class="tn-form-field-label" [class.required]="required()">
-      {{ label() }}
-      @if (required()) {
-        <span class="required-asterisk" aria-label="required">*</span>
+    <div class="tn-form-field-label-row">
+      <label class="tn-form-field-label" [class.required]="showRequired()">
+        <span [attr.id]="labelId()" [innerHTML]="label() | tnLabelMarkup"></span>
+        @if (showRequired()) {
+          <span class="required-asterisk" aria-label="required">*</span>
+        }
+      </label>
+      @if (tooltip()) {
+        <ng-container [ngTemplateOutlet]="tooltipButton" />
       }
-    </label>
+    </div>
   }
 
   <!-- Form Control Content -->
-  <div class="tn-form-field-wrapper">
+  <div
+    class="tn-form-field-wrapper"
+    [class.tn-form-field-wrapper--inline]="showInlineExtras()">
     <ng-content />
+    @if (showInlineRequired()) {
+      <span class="required-asterisk" aria-label="required">*</span>
+    }
+    @if (showInlineTooltip()) {
+      <ng-container [ngTemplateOutlet]="tooltipButton" />
+    }
   </div>
 
   <!-- Hint or Error Message -->
   @if (showSubscript()) {
     <div class="tn-form-field-subscript" [class.tn-form-field-subscript-dynamic]="subscriptSizing() === 'dynamic'">
       @if (showError()) {
+        <!-- role="alert" is implicitly assertive+atomic, so no aria-live here.
+             The id feeds the projected control's aria-describedby (see
+             TnFormFieldContext). -->
         <div
           class="tn-form-field-error"
           role="alert"
-          aria-live="polite">
+          [attr.id]="errorId">
           {{ errorMessage() }}
         </div>
       }
       @if (showHint()) {
-        <div class="tn-form-field-hint">
+        <div class="tn-form-field-hint" [attr.id]="hintId">
           {{ hint() }}
         </div>
       }
     </div>
   }
 </div>
+
+<ng-template #tooltipButton>
+  <button
+    type="button"
+    class="tn-form-field-tooltip"
+    [attr.aria-label]="tooltip()"
+    [tnTooltip]="tooltip()"
+    [tnTooltipPosition]="tooltipPosition()">
+    <tn-icon name="help-circle" library="mdi" size="sm" />
+  </button>
+</ng-template>

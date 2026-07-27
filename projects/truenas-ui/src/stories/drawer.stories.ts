@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
 import { TnDividerComponent } from '../lib/divider/divider.component';
@@ -235,4 +236,46 @@ export const ComponentHarness: Story = {
     layout: 'fullscreen',
   },
   render: () => ({ template: '' }),
+};
+
+/**
+ * **Test IDs (default).** `tn-drawer` emits `drawer-<base>` on its panel (shown
+ * here in inline `side` mode), under `data-testid` (default) / `data-test`.
+ * `testId="nav"` → `drawer-nav`. In `over` mode the panel is portaled to
+ * `document.body`. Table read live.
+ */
+export const TestIds: Story = {
+  render: () => ({
+    template: `
+      <tn-testid-inspector>
+        <tn-drawer-container style="height: 200px; border: 1px solid var(--tn-lines);">
+          <tn-drawer mode="side" [opened]="true" testId="nav" width="220px">
+            <p style="padding:12px;">Drawer content</p>
+          </tn-drawer>
+          <tn-drawer-content><p style="padding:12px;">Main content</p></tn-drawer-content>
+        </tn-drawer-container>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnDrawerContainerComponent, TnDrawerComponent, TnDrawerContentComponent, TestIdInspectorComponent] },
+  }),
+};
+
+/**
+ * **Scoped test id.** An array base namespaces the id —
+ * `[testId]="['settings','nav']"` → `drawer-settings-nav`.
+ */
+export const ScopedTestIds: Story = {
+  render: () => ({
+    template: `
+      <tn-testid-inspector>
+        <tn-drawer-container style="height: 200px; border: 1px solid var(--tn-lines);">
+          <tn-drawer mode="side" [opened]="true" [testId]="['settings','nav']" width="220px">
+            <p style="padding:12px;">Drawer content</p>
+          </tn-drawer>
+          <tn-drawer-content><p style="padding:12px;">Main content</p></tn-drawer-content>
+        </tn-drawer-container>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnDrawerContainerComponent, TnDrawerComponent, TnDrawerContentComponent, TestIdInspectorComponent] },
+  }),
 };

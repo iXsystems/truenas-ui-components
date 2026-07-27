@@ -1,5 +1,6 @@
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { InputType } from '../lib/enums/input-type.enum';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
@@ -14,6 +15,7 @@ tnIconMarker('close-circle', 'mdi');
 tnIconMarker('email', 'mdi');
 tnIconMarker('eye', 'mdi');
 tnIconMarker('eye-off', 'mdi');
+tnIconMarker('lock', 'mdi');
 
 const meta: Meta<TnInputComponent> = {
   title: 'Components/Input',
@@ -40,6 +42,43 @@ const meta: Meta<TnInputComponent> = {
     rows: {
       control: 'number',
       description: 'Number of rows for textarea',
+    },
+    allowDecimals: {
+      control: 'boolean',
+      description: 'Number type: whether decimals are accepted. Set false for integer-only mode.',
+    },
+    autocomplete: {
+      control: 'text',
+      description: 'Native autocomplete token (username, current-password, one-time-code, ...) for browser/password-manager autofill',
+    },
+    name: {
+      control: 'text',
+      description: 'Native name attribute; typically mirrors the form control name',
+    },
+    readonly: {
+      control: 'boolean',
+      description: 'Whether the input is readonly (visible and focusable, but not editable)',
+    },
+    required: {
+      control: 'boolean',
+      description: 'Renders the native required attribute for assistive technology',
+    },
+    sizeStandard: {
+      control: { type: 'inline-radio' },
+      options: ['iec', 'si'],
+      description: 'Size type: unit standard — iec (KiB/MiB, base-2) or si (kB/MB, base-10).',
+    },
+    sizeDefaultUnit: {
+      control: 'text',
+      description: 'Size type: unit assumed when the user types a bare number (e.g. MiB).',
+    },
+    sizeRound: {
+      control: 'number',
+      description: 'Size type: decimal places used when formatting the value for display.',
+    },
+    showPasswordToggle: {
+      control: 'boolean',
+      description: 'Password type: whether the built-in visibility toggle (eye button) is rendered. Defaults to true.',
     },
     testId: {
       control: 'text',
@@ -144,6 +183,173 @@ export const WithError: Story = {
   },
 };
 
+/**
+ * **Password.** `inputType="password"` renders a built-in visibility toggle:
+ * an eye button that switches the field between masked and plain-text display.
+ * The field always starts masked. Set `showPasswordToggle` to `false` to omit
+ * the toggle (e.g. for secrets that must never be revealed).
+ */
+export const Password: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      passwordControl: new FormControl('foobar'),
+    },
+    template: `
+      <tn-form-field label="Password">
+        <tn-input
+          [inputType]="inputType"
+          [placeholder]="placeholder"
+          [disabled]="disabled"
+          [testId]="testId"
+          [showPasswordToggle]="showPasswordToggle"
+          [prefixIcon]="prefixIcon"
+          [prefixIconLibrary]="prefixIconLibrary"
+          [formControl]="passwordControl">
+        </tn-input>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, ReactiveFormsModule],
+    },
+  }),
+  args: {
+    inputType: InputType.Password,
+    placeholder: 'Enter your password',
+    testId: 'password-input',
+    disabled: false,
+    showPasswordToggle: true,
+    prefixIcon: 'lock',
+    prefixIconLibrary: 'mdi' as const,
+  },
+};
+
+// Named NumberInteger (not Number) to pair with NumberDecimal and to avoid
+// shadowing the global Number constructor in this module.
+export const NumberInteger: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      // Range enforcement is the consumer's job; these validators work because
+      // tn-input emits a real number (not a string) in number mode.
+      portControl: new FormControl<number | null>(443, [Validators.min(1), Validators.max(65535)]),
+    },
+    template: `
+      <tn-form-field
+        label="Port"
+        hint="Integer mode — empty clears to null, value is emitted as a number">
+        <tn-input
+          [inputType]="inputType"
+          [placeholder]="placeholder"
+          [disabled]="disabled"
+          [testId]="testId"
+          [allowDecimals]="allowDecimals"
+          [formControl]="portControl">
+        </tn-input>
+      </tn-form-field>
+      <p style="margin-top: 12px; font-family: monospace;">
+        model: {{ portControl.value === null ? 'null' : portControl.value }}
+        ({{ portControl.value === null ? 'object' : 'number' }})
+      </p>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, ReactiveFormsModule],
+    },
+  }),
+  args: {
+    inputType: InputType.Number,
+    placeholder: 'Enter a port',
+    testId: 'number-input',
+    disabled: false,
+    allowDecimals: false,
+  },
+};
+
+export const NumberDecimal: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      // Decimal mode (the default) accepts a single '.' and emits via parseFloat.
+      weightControl: new FormControl<number | null>(1.5, [Validators.min(0)]),
+    },
+    template: `
+      <tn-form-field
+        label="Weight (kg)"
+        hint="Decimal mode — accepts a single decimal point; empty clears to null">
+        <tn-input
+          [inputType]="inputType"
+          [placeholder]="placeholder"
+          [disabled]="disabled"
+          [testId]="testId"
+          [allowDecimals]="allowDecimals"
+          [formControl]="weightControl">
+        </tn-input>
+      </tn-form-field>
+      <p style="margin-top: 12px; font-family: monospace;">
+        model: {{ weightControl.value === null ? 'null' : weightControl.value }}
+        ({{ weightControl.value === null ? 'object' : 'number' }})
+      </p>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, ReactiveFormsModule],
+    },
+  }),
+  args: {
+    inputType: InputType.Number,
+    placeholder: 'Enter a weight',
+    testId: 'number-decimal-input',
+    disabled: false,
+    allowDecimals: true,
+  },
+};
+
+/**
+ * **Size mode.** The form model holds a raw byte count; the field displays and
+ * accepts a human-readable string (`2 GiB`, `500M`, `2 TB`). Bare numbers use
+ * `sizeDefaultUnit`. The display canonicalizes on blur (`2048 KiB` → `2 MiB`).
+ */
+export const Size: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      // The model is bytes; 200 TiB shown below as the initial human-readable value.
+      sizeControl: new FormControl<number | null>(200 * 1024 ** 4, [Validators.min(0)]),
+    },
+    template: `
+      <tn-form-field
+        label="Local User Upload Bandwidth"
+        hint="Examples: 500 KiB, 500M, 2 TB">
+        <tn-input
+          [inputType]="inputType"
+          [placeholder]="placeholder"
+          [disabled]="disabled"
+          [testId]="testId"
+          [sizeStandard]="sizeStandard"
+          [sizeDefaultUnit]="sizeDefaultUnit"
+          [sizeRound]="sizeRound"
+          [formControl]="sizeControl">
+        </tn-input>
+      </tn-form-field>
+      <p style="margin-top: 12px; font-family: monospace;">
+        model (bytes): {{ sizeControl.value === null ? 'null' : sizeControl.value }}
+        ({{ sizeControl.value === null ? 'object' : 'number' }})
+      </p>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, ReactiveFormsModule],
+    },
+  }),
+  args: {
+    inputType: InputType.Size,
+    placeholder: 'e.g. 2 GiB',
+    testId: 'size-input',
+    disabled: false,
+    sizeStandard: 'iec',
+    sizeDefaultUnit: 'MiB',
+    sizeRound: 2,
+  },
+};
+
 export const Multiline: Story = {
   render: (args) => ({
     props: args,
@@ -199,6 +405,39 @@ export const Disabled: Story = {
     placeholder: 'This field is disabled',
     testId: 'disabled-input',
     disabled: true,
+  },
+};
+
+export const NativeAttributes: Story = {
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-form-field
+        label="Username"
+        hint="Autofill-friendly: name + autocomplete reach the native input">
+        <tn-input
+          [inputType]="inputType"
+          [placeholder]="placeholder"
+          [autocomplete]="autocomplete"
+          [name]="name"
+          [readonly]="readonly"
+          [required]="required"
+          [testId]="testId">
+        </tn-input>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  args: {
+    inputType: InputType.PlainText,
+    placeholder: 'Username',
+    autocomplete: 'username',
+    name: 'username',
+    readonly: false,
+    required: true,
+    testId: 'username-input',
   },
 };
 
@@ -321,4 +560,40 @@ export const ComponentHarness: Story = {
     layout: 'fullscreen'
   },
   render: () => ({ template: '' })
+};
+
+/**
+ * **Test IDs (default).** `tn-input` emits the `input-` prefix on the native
+ * `<input>` (or `textarea-` on the `<textarea>` in multiline mode), under
+ * `data-testid` (default) / `data-test`. `testId="username"` → `input-username`.
+ * With no `testId`, nothing is emitted. Table read live.
+ */
+export const TestIds: Story = {
+  args: { testId: 'username' },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-input placeholder="Username" [testId]="testId" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnInputComponent, TestIdInspectorComponent] },
+  }),
+};
+
+/**
+ * **Scoped test id.** An array base namespaces the id —
+ * `[testId]="['login-form','username']"` → `input-login-form-username`.
+ */
+export const ScopedTestIds: Story = {
+  args: { testId: ['login-form', 'username'] },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-input placeholder="Username" [testId]="testId" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnInputComponent, TestIdInspectorComponent] },
+  }),
 };

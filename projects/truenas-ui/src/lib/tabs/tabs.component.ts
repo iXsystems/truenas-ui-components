@@ -5,7 +5,7 @@ import type { AfterContentInit, ElementRef, AfterViewInit, OnDestroy } from '@an
 import { Component, contentChildren, input, output, ChangeDetectionStrategy, inject, ChangeDetectorRef, viewChild, signal, computed, effect } from '@angular/core';
 import { TnTabComponent } from '../tab/tab.component';
 import { TnTabPanelComponent } from '../tab-panel/tab-panel.component';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 export interface TabChangeEvent {
   index: number;
@@ -33,7 +33,7 @@ export class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDestr
    * Test-id applied to the tablist root element. Rendered under whichever attribute name
    * is configured via `TN_TEST_ATTR` (default `data-testid`).
    */
-  testId = input<string | undefined>(undefined);
+  testId = input<TnTestIdValue>(undefined);
 
   selectedIndexChange = output<number>();
   tabChange = output<TabChangeEvent>();

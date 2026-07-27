@@ -1,4 +1,6 @@
+import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
 import { TnSliderThumbDirective } from '../lib/slider/slider-thumb.directive';
 import { TnSliderWithLabelDirective } from '../lib/slider/slider-with-label.directive';
@@ -77,7 +79,7 @@ export const Default: Story = {
           [labelType]="labelType"
           [labelPrefix]="labelPrefix"
           [labelSuffix]="labelSuffix">
-          <input ixSliderThumb value="50">
+          <input tnSliderThumb value="50">
         </tn-slider>
       </tn-form-field>
     `,
@@ -101,6 +103,69 @@ export const Default: Story = {
     labelPrefix: '',
     labelSuffix: ' km/h'
   }
+};
+
+/**
+ * **Reactive form binding.** Binds a `FormControl` to the inner
+ * `input[tnSliderThumb]`. The slider adopts the control's initial value on init
+ * and the thumb/track fill reflect it; dragging or clicking writes back to the
+ * control. Live value shown below the slider.
+ */
+export const ReactiveForm: Story = {
+  render: () => {
+    const control = new FormControl(35);
+    return {
+      props: { control },
+      template: `
+        <tn-slider [min]="0" [max]="100" [step]="5" labelType="both" labelSuffix="%">
+          <input tnSliderThumb [formControl]="control">
+        </tn-slider>
+        <p>Value: {{ control.value }}</p>
+      `,
+      moduleMetadata: {
+        imports: [ReactiveFormsModule, TnSliderComponent, TnSliderThumbDirective],
+      },
+    };
+  },
+};
+
+/**
+ * **Test IDs (default).** `tn-slider` emits the `slider-` prefix on its
+ * container, under `data-testid` (default) / `data-test`. `testId="volume"` →
+ * `slider-volume`. With no `testId`, nothing is emitted. Table read live.
+ */
+export const TestIds: Story = {
+  args: { testId: 'volume' },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-slider [min]="0" [max]="100" [testId]="testId">
+          <input tnSliderThumb value="50">
+        </tn-slider>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnSliderComponent, TnSliderThumbDirective, TestIdInspectorComponent] },
+  }),
+};
+
+/**
+ * **Scoped test id.** An array base namespaces the id —
+ * `[testId]="['audio','volume']"` → `slider-audio-volume`.
+ */
+export const ScopedTestIds: Story = {
+  args: { testId: ['audio', 'volume'] },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-slider [min]="0" [max]="100" [testId]="testId">
+          <input tnSliderThumb value="50">
+        </tn-slider>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnSliderComponent, TnSliderThumbDirective, TestIdInspectorComponent] },
+  }),
 };
 
 

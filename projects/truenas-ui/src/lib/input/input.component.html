@@ -1,7 +1,7 @@
 <div
   class="tn-input-container"
   [class.tn-input-container--has-prefix]="hasPrefixIcon()"
-  [class.tn-input-container--has-suffix]="hasSuffixIcon()"
+  [class.tn-input-container--has-suffix]="hasSuffixIcon() || hasPasswordToggle()"
 >
   <!-- Prefix icon -->
   @if (hasPrefixIcon()) {
@@ -15,32 +15,53 @@
   }
 
   <!-- Regular input field -->
-  @if (!multiline()) {
+  @if (!showTextarea()) {
     <input
       #inputEl
       class="tn-input"
+      tnTestIdType="input"
       [id]="id"
-      [value]="value"
-      [type]="inputType()"
+      [value]="value()"
+      [type]="resolvedType()"
+      [attr.inputmode]="numericInputMode()"
+      [attr.aria-label]="ariaLabel()"
+      [attr.aria-labelledby]="fieldAria.labelledby()"
+      [attr.aria-describedby]="fieldAria.describedby()"
+      [attr.aria-invalid]="fieldAria.invalid()"
+      [attr.aria-required]="fieldAria.required()"
       [attr.placeholder]="placeholder()"
-      [tnTestId]="testId()"
+      [attr.autocomplete]="autocomplete()"
+      [attr.name]="name()"
+      [tnTestId]="resolvedTestId()"
       [disabled]="isDisabled()"
+      [readonly]="readonly()"
+      [required]="required()"
       (input)="onValueChange($event)"
       (blur)="onBlur()"
     />
   }
 
   <!-- Textarea field -->
-  @if (multiline()) {
+  @if (showTextarea()) {
     <textarea
       #inputEl
       class="tn-input tn-textarea"
+      tnTestIdType="textarea"
       [id]="id"
-      [value]="value"
+      [value]="value()"
+      [attr.aria-label]="ariaLabel()"
+      [attr.aria-labelledby]="fieldAria.labelledby()"
+      [attr.aria-describedby]="fieldAria.describedby()"
+      [attr.aria-invalid]="fieldAria.invalid()"
+      [attr.aria-required]="fieldAria.required()"
       [attr.placeholder]="placeholder()"
-      [tnTestId]="testId()"
+      [attr.autocomplete]="autocomplete()"
+      [attr.name]="name()"
+      [tnTestId]="resolvedTestId()"
       [rows]="rows()"
       [disabled]="isDisabled()"
+      [readonly]="readonly()"
+      [required]="required()"
       (input)="onValueChange($event)"
       (blur)="onBlur()"
     ></textarea>
@@ -51,6 +72,8 @@
     <button
       type="button"
       class="tn-input__suffix-action"
+      tnTestIdType="button"
+      [tnTestId]="suffixActionTestId()"
       [attr.aria-label]="suffixIconAriaLabel()"
       [disabled]="isDisabled()"
       (click)="onSuffixAction.emit($event)"
@@ -60,6 +83,23 @@
         [name]="suffixIcon()!"
         [library]="suffixIconLibrary()"
       />
+    </button>
+  }
+
+  <!-- Password visibility toggle. State is conveyed via the swapping
+       aria-label alone — no aria-pressed, which would contradict a label that
+       already names the action ("Hide password, pressed" is ambiguous). -->
+  @if (hasPasswordToggle()) {
+    <button
+      type="button"
+      class="tn-input__visibility-toggle"
+      tnTestIdType="button"
+      [tnTestId]="passwordToggleTestId()"
+      [attr.aria-label]="passwordVisible() ? 'Hide password' : 'Show password'"
+      [disabled]="isDisabled()"
+      (click)="togglePasswordVisibility()"
+    >
+      <tn-icon size="sm" aria-hidden="true" [name]="passwordToggleIcon()" />
     </button>
   }
 </div>

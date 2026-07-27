@@ -4,7 +4,7 @@ import type { ComponentType } from '@angular/cdk/portal';
 import type { TemplateRef } from '@angular/core';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { TnConfirmDialogComponent } from './confirm-dialog.component';
+import { TnConfirmDialogComponent, type TnConfirmDialogData } from './confirm-dialog.component';
 
 export type TnDialogOpenTarget<C> = ComponentType<C> | TemplateRef<unknown>;
 
@@ -82,13 +82,7 @@ export class TnDialog {
   /**
    * Open a confirmation dialog. Resolves to true if confirmed, false otherwise.
    */
-  async confirm(opts: {
-    title: string;
-    message?: string;
-    confirmText?: string;
-    cancelText?: string;
-    destructive?: boolean;
-  }): Promise<boolean> {
+  async confirm(opts: TnConfirmDialogData): Promise<boolean> {
     const dialogRef = this.open(
       TnConfirmDialogComponent,
       {

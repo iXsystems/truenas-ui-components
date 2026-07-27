@@ -3,14 +3,16 @@ import { CommonModule } from '@angular/common';
 import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
 import { Component, input, output, computed, viewChild, inject } from '@angular/core';
 import { TnIconComponent } from '../icon/icon.component';
-import { TnTestIdDirective } from '../test-id';
+import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
+import { LabelTextPipe } from '../pipes/label-markup/label-text.pipe';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 export type ChipColor = 'primary' | 'secondary' | 'accent';
 
 @Component({
   selector: 'tn-chip',
   standalone: true,
-  imports: [CommonModule, A11yModule, TnIconComponent, TnTestIdDirective],
+  imports: [CommonModule, A11yModule, TnIconComponent, TnTestIdDirective, LabelMarkupPipe, LabelTextPipe],
   templateUrl: './chip.component.html',
   styleUrls: ['./chip.component.scss'],
 })
@@ -22,7 +24,7 @@ export class TnChipComponent implements AfterViewInit, OnDestroy {
   closable = input<boolean>(true);
   disabled = input<boolean>(false);
   color = input<ChipColor>('primary');
-  testId = input<string | undefined>(undefined);
+  testId = input<TnTestIdValue>(undefined);
 
   onClose = output<void>();
   onClick = output<MouseEvent>();

@@ -28,7 +28,7 @@ const meta: Meta<TnBannerComponent> = {
   argTypes: {
     heading: {
       control: 'text',
-      description: 'Main heading text (required)',
+      description: 'Main heading text. Optional — when neither heading nor message is provided, the banner renders arbitrary projected content instead.',
     },
     message: {
       control: 'text',
@@ -212,6 +212,30 @@ export const MultipleBorderedTypes: Story = {
           [bordered]="true">
         </tn-banner>
       </div>
+    `,
+  }),
+};
+
+export const ProjectedContent: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'When neither `heading` nor `message` is provided, the banner renders arbitrary content from its default slot instead of the built-in icon/heading/message layout. Useful for fully custom banner contents.'
+      }
+    }
+  },
+  render: () => ({
+    moduleMetadata: {
+      imports: [TnBannerComponent],
+    },
+    template: `
+      <tn-banner type="warning">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <strong>Custom layout:</strong>
+          <span>Mix any markup you like here — the default content is bypassed.</span>
+          <code style="padding: 2px 6px; background: var(--tn-alt-bg2, #2c2c2c); border-radius: 4px;">v2.0</code>
+        </div>
+      </tn-banner>
     `,
   }),
 };

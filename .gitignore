@@ -23,6 +23,9 @@ yarn-error.log
 *.sublime-workspace
 /.claude/*
 !/.claude/review-prompt.md
+!/.claude/commands
+/.claude/commands/*
+!/.claude/commands/review-branch.md
 
 # Visual Studio Code
 .vscode/*

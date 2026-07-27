@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
 import { TnSlideToggleComponent } from '../lib/slide-toggle/slide-toggle.component';
@@ -383,4 +384,41 @@ export const ComponentHarness: Story = {
     layout: 'fullscreen'
   },
   render: () => ({ template: '' })
+};
+
+/**
+ * **Test IDs (default).** `tn-slide-toggle` emits the `toggle-` prefix on its
+ * visible `<label>` — the native `<input type="checkbox">` is hidden, so the
+ * label is the real hit target. `testId="notifications"` → `toggle-notifications`
+ * (under `data-testid` by default / `data-test`). With no `testId`, nothing is
+ * emitted. Table read live.
+ */
+export const TestIds: Story = {
+  args: { testId: 'notifications' },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-slide-toggle label="Notifications" [testId]="testId" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnSlideToggleComponent, TestIdInspectorComponent] },
+  }),
+};
+
+/**
+ * **Scoped test id.** An array base namespaces the id —
+ * `[testId]="['settings','notifications']"` → `toggle-settings-notifications`.
+ */
+export const ScopedTestIds: Story = {
+  args: { testId: ['settings', 'notifications'] },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-slide-toggle label="Notifications" [testId]="testId" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnSlideToggleComponent, TestIdInspectorComponent] },
+  }),
 };

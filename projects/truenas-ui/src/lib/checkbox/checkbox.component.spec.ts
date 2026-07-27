@@ -23,6 +23,8 @@ import { TnCheckboxComponent, TnCheckboxLabelDirective } from './checkbox.compon
     <tn-checkbox testId="projected" [formControl]="projectedControl">
       <span tnCheckboxLabel>I agree to the <a href="/terms">Terms</a></span>
     </tn-checkbox>
+
+    <tn-checkbox testId="listened" [label]="label()" (change)="changeCount = changeCount + 1" />
   `
 })
 class TestHostComponent {
@@ -34,27 +36,31 @@ class TestHostComponent {
   error = signal<string | null>(null);
   control = new FormControl(false);
   projectedControl = new FormControl(false);
+  changeCount = 0;
 }
 
 describe('TnCheckboxComponent', () => {
   let fixture: ComponentFixture<TestHostComponent>;
   let host: TestHostComponent;
 
-  const getCheckbox = (testId = 'main'): HTMLElement =>
+  const getCheckbox = (testId = 'checkbox-main'): HTMLElement =>
     fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
 
-  const getWrapper = (testId = 'main'): HTMLElement => {
-    const input = getCheckbox(testId);
-    return input.closest('.tn-checkbox') as HTMLElement;
+  const getWrapper = (testId = 'checkbox-main'): HTMLElement => {
+    const label = getCheckbox(testId);
+    return label.closest('.tn-checkbox') as HTMLElement;
   };
 
-  const getLabelText = (testId = 'main'): HTMLElement | null =>
+  const getInput = (testId = 'checkbox-main'): HTMLInputElement =>
+    getWrapper(testId).querySelector('.tn-checkbox__input') as HTMLInputElement;
+
+  const getLabelText = (testId = 'checkbox-main'): HTMLElement | null =>
     getWrapper(testId).querySelector('.tn-checkbox__text');
 
-  const getError = (testId = 'main'): HTMLElement | null =>
+  const getError = (testId = 'checkbox-main'): HTMLElement | null =>
     getWrapper(testId).querySelector('.tn-checkbox__error');
 
-  const clickLabel = (testId = 'main') => {
+  const clickLabel = (testId = 'checkbox-main') => {
     const label = getWrapper(testId).querySelector('.tn-checkbox__label') as HTMLElement;
     label.click();
     fixture.detectChanges();
@@ -75,6 +81,24 @@ describe('TnCheckboxComponent', () => {
       expect(getLabelText()?.textContent?.trim()).toBe('Accept');
     });
 
+    it('should render label markup as bold text', () => {
+      host.label.set('Accept the **Terms**');
+      fixture.detectChanges();
+
+      const text = getLabelText();
+      expect(text?.querySelector('strong')?.textContent).toBe('Terms');
+      expect(text?.textContent?.trim()).toBe('Accept the Terms');
+    });
+
+    it('should escape HTML in the label instead of rendering it', () => {
+      host.label.set('Accept <strong>now</strong>');
+      fixture.detectChanges();
+
+      const text = getLabelText();
+      expect(text?.querySelector('strong')).toBeNull();
+      expect(text?.textContent?.trim()).toBe('Accept <strong>now</strong>');
+    });
+
     it('should hide label when hideLabel is true', () => {
       host.hideLabel.set(true);
       fixture.detectChanges();
@@ -82,8 +106,19 @@ describe('TnCheckboxComponent', () => {
       expect(getLabelText()).toBeNull();
     });
 
+    it('should expose a hidden label as aria-label so the input stays named', () => {
+      host.hideLabel.set(true);
+      fixture.detectChanges();
+
+      expect(getInput().getAttribute('aria-label')).toBe('Accept');
+    });
+
+    it('should not set aria-label when the label is visible as text', () => {
+      expect(getInput().getAttribute('aria-label')).toBeNull();
+    });
+
     it('should render projected content via tnCheckboxLabel', () => {
-      const text = getLabelText('projected');
+      const text = getLabelText('checkbox-projected');
       expect(text?.textContent).toContain('I agree to the');
       expect(text?.querySelector('a')).toBeTruthy();
     });
@@ -148,11 +183,25 @@ describe('TnCheckboxComponent', () => {
       host.error.set('Error');
       fixture.detectChanges();
 
-      expect(getCheckbox().getAttribute('aria-invalid')).toBe('true');
+      expect(getInput().getAttribute('aria-invalid')).toBe('true');
     });
 
     it('should not set aria-invalid when no error', () => {
-      expect(getCheckbox().getAttribute('aria-invalid')).toBeNull();
+      expect(getInput().getAttribute('aria-invalid')).toBeNull();
+    });
+  });
+
+  describe('change binding', () => {
+    it('fires a (change) binding exactly once per toggle', () => {
+      // The inner input's native change bubbles to the host, where Ivy invokes a
+      // (change) binding for BOTH the bubbled DOM event and the component's
+      // `change` output — double-firing every listener (e.g. toggling a
+      // file-picker selection on and immediately off). The template stops the
+      // native event so only the output reaches consumers.
+      getInput('checkbox-listened').click();
+      fixture.detectChanges();
+
+      expect(host.changeCount).toBe(1);
     });
   });
 
@@ -161,28 +210,28 @@ describe('TnCheckboxComponent', () => {
       host.control.setValue(true);
       fixture.detectChanges();
 
-      expect((getCheckbox() as HTMLInputElement).checked).toBe(true);
+      expect(getInput().checked).toBe(true);
     });
 
     it('should handle null writeValue gracefully', () => {
       host.control.setValue(null);
       fixture.detectChanges();
 
-      expect((getCheckbox() as HTMLInputElement).checked).toBe(false);
+      expect(getInput().checked).toBe(false);
     });
 
     it('should handle undefined writeValue gracefully', () => {
       host.control.setValue(undefined as unknown as boolean);
       fixture.detectChanges();
 
-      expect((getCheckbox() as HTMLInputElement).checked).toBe(false);
+      expect(getInput().checked).toBe(false);
     });
 
     it('should disable via form control', () => {
       host.control.disable();
       fixture.detectChanges();
 
-      expect((getCheckbox() as HTMLInputElement).disabled).toBe(true);
+      expect(getInput().disabled).toBe(true);
       expect(getWrapper().classList.contains('tn-checkbox--disabled')).toBe(true);
     });
 
@@ -192,7 +241,7 @@ describe('TnCheckboxComponent', () => {
       host.control.enable();
       fixture.detectChanges();
 
-      expect((getCheckbox() as HTMLInputElement).disabled).toBe(false);
+      expect(getInput().disabled).toBe(false);
     });
 
     it('should update form control on click', () => {
@@ -209,29 +258,29 @@ describe('TnCheckboxComponent', () => {
       host.required.set(true);
       fixture.detectChanges();
 
-      expect((getCheckbox() as HTMLInputElement).required).toBe(true);
+      expect(getInput().required).toBe(true);
     });
 
     it('should set indeterminate property', () => {
       host.indeterminate.set(true);
       fixture.detectChanges();
 
-      expect((getCheckbox() as HTMLInputElement).indeterminate).toBe(true);
+      expect(getInput().indeterminate).toBe(true);
     });
 
     it('should set data-testid attribute', () => {
-      expect(getCheckbox().getAttribute('data-testid')).toBe('main');
+      expect(getCheckbox().getAttribute('data-testid')).toBe('checkbox-main');
     });
   });
 
   describe('content projection', () => {
     it('should update form control when projected-label checkbox is clicked', () => {
-      clickLabel('projected');
+      clickLabel('checkbox-projected');
       expect(host.projectedControl.value).toBe(true);
     });
 
     it('should render link inside projected label', () => {
-      const link = getLabelText('projected')?.querySelector('a');
+      const link = getLabelText('checkbox-projected')?.querySelector('a');
       expect(link).toBeTruthy();
       expect(link?.getAttribute('href')).toBe('/terms');
     });

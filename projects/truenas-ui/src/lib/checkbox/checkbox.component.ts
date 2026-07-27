@@ -4,7 +4,9 @@ import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
 import { Component, viewChild, inject, input, output, computed, signal, forwardRef, contentChildren, Directive } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { TnTestIdDirective } from '../test-id';
+import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
+import { LabelTextPipe } from '../pipes/label-markup/label-text.pipe';
+import { TnTestIdDirective, controlTestId, type TnTestIdValue } from '../test-id';
 
 /**
  * Directive to mark content for projection into the checkbox label area.
@@ -26,7 +28,7 @@ export class TnCheckboxLabelDirective {}
 @Component({
   selector: 'tn-checkbox',
   standalone: true,
-  imports: [CommonModule, FormsModule, A11yModule, TnTestIdDirective],
+  imports: [CommonModule, FormsModule, A11yModule, TnTestIdDirective, LabelMarkupPipe, LabelTextPipe],
   templateUrl: './checkbox.component.html',
   styleUrl: './checkbox.component.scss',
   providers: [
@@ -45,7 +47,9 @@ export class TnCheckboxComponent implements AfterViewInit, OnDestroy, ControlVal
   disabled = input<boolean>(false);
   required = input<boolean>(false);
   indeterminate = input<boolean>(false);
-  testId = input<string | undefined>(undefined);
+  testId = input<TnTestIdValue>(undefined);
+  /** Test-id base, falling back to the bound control name when `testId` is unset. */
+  protected resolvedTestId = controlTestId(this.testId);
   error = input<string | null>(null);
   checked = input<boolean>(false);
 
@@ -109,6 +113,11 @@ export class TnCheckboxComponent implements AfterViewInit, OnDestroy, ControlVal
   }
 
   onCheckboxChange(event: Event): void {
+    // The bubbling native change would reach ancestor (change) bindings in
+    // addition to the component's `change` output — Ivy invokes the binding for
+    // both, firing every listener twice per toggle. The output is the single
+    // public event, so the native event stops here.
+    event.stopPropagation();
     const target = event.target as HTMLInputElement;
     const checked = target.checked;
     this.internalChecked.set(checked);

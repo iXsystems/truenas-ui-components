@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import type { TemplateRef } from '@angular/core';
 import { Component, computed, input, output, viewChild } from '@angular/core';
+import type { TnTestIdValue } from '../test-id';
 
 /**
  * Projection-based menu item for use inside `<tn-menu>`.
@@ -62,12 +63,24 @@ export class TnMenuItemComponent {
   shortcut = input<string | undefined>(undefined);
   disabled = input<boolean>(false);
   selected = input<boolean>(false);
-  testId = input<string | undefined>(undefined);
+  /**
+   * Semantic test-id base. Accepts a single token or an array of segments
+   * (e.g. `['format', format]`) to scope dynamic/repeated items. The owning
+   * `<tn-menu-panel>` prepends the `button` element type.
+   */
+  testId = input<TnTestIdValue>(undefined);
 
   itemClick = output<MouseEvent>();
 
   /** Template capturing whatever the consumer projected as item content. */
   content = viewChild.required<TemplateRef<unknown>>('content');
 
-  resolvedTestId = computed(() => this.testId() ?? (this.id() ? `menu-item-${this.id()}` : undefined));
+  /**
+   * Semantic *base* for the test id — either the explicit `testId` or the `id`.
+   * The owning `<tn-menu-panel>` button declares `tnTestIdType="button"`, so
+   * `TnTestIdDirective` composes the final `button-…` id (and is idempotent, so
+   * an already-`button-`-prefixed value is not doubled). Returns `undefined`
+   * when neither is set, which composes to no attribute.
+   */
+  resolvedTestId = computed(() => this.testId() ?? this.id());
 }

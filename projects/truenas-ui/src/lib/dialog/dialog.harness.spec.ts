@@ -18,7 +18,11 @@ import { TnButtonComponent } from '../button/button.component';
   template: `
     <tn-dialog-shell
       [title]="data?.title ?? 'Test Dialog'"
-      [showFullscreenButton]="data?.showFullscreen ?? false">
+      [testId]="data?.testId"
+      [showFullscreenButton]="data?.showFullscreen ?? false"
+      [showCloseButton]="data?.showCloseButton ?? true"
+      [hideContent]="data?.hideContent ?? false"
+      [hideActions]="data?.hideActions ?? false">
       <p>{{ data?.content ?? 'Dialog content' }}</p>
       <div tnDialogAction>
         <tn-button
@@ -45,6 +49,17 @@ class TestDialogComponent {
 })
 class TestHostComponent {}
 
+// Projects nothing into the content / actions slots, so each `<ng-content>`
+// leaves only a comment anchor — which `:empty` ignores — letting the theme's
+// `:empty { display: none }` rule hide the otherwise-empty bars.
+@Component({
+  selector: 'tn-empty-dialog',
+  standalone: true,
+  imports: [TnDialogShellComponent],
+  template: `<tn-dialog-shell [title]="'Empty'" />`,
+})
+class EmptyDialogComponent {}
+
 /* eslint-enable @angular-eslint/component-max-inline-declarations */
 
 describe('TnDialogHarness', () => {
@@ -55,7 +70,7 @@ describe('TnDialogHarness', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TestHostComponent, TestDialogComponent],
+      imports: [TestHostComponent, TestDialogComponent, EmptyDialogComponent],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TestHostComponent);
@@ -86,6 +101,11 @@ describe('TnDialogHarness', () => {
     it('should load harness', async () => {
       const dialog = await dialogLoader.getHarness(TnDialogHarness);
       expect(dialog).toBeTruthy();
+    });
+
+    it('emits a library-owned test id on the close (✕) button', () => {
+      // close button is library-rendered chrome — consumer can't reach it
+      expect(document.querySelector('[data-testid="button-close"]')).toBeTruthy();
     });
 
     it('should get title text', async () => {
@@ -153,6 +173,53 @@ describe('TnDialogHarness', () => {
     });
   });
 
+  describe('slot visibility inputs', () => {
+    it('renders the close button by default', () => {
+      tnDialog.open(TestDialogComponent, { data: { title: 'Closable' } });
+      fixture.detectChanges();
+      expect(document.querySelector('.tn-dialog__close')).toBeTruthy();
+    });
+
+    it('omits the close button when showCloseButton is false', () => {
+      tnDialog.open(TestDialogComponent, { data: { title: 'Minimize only', showCloseButton: false } });
+      fixture.detectChanges();
+      expect(document.querySelector('.tn-dialog__close')).toBeNull();
+    });
+
+    it('marks the content section hidden when hideContent is true', () => {
+      tnDialog.open(TestDialogComponent, { data: { title: 'No body', hideContent: true } });
+      fixture.detectChanges();
+      expect(document.querySelector('.tn-dialog__content')?.classList).toContain('tn-dialog__content--hidden');
+    });
+
+    it('marks the actions footer hidden when hideActions is true', () => {
+      tnDialog.open(TestDialogComponent, { data: { title: 'No footer', hideActions: true } });
+      fixture.detectChanges();
+      expect(document.querySelector('.tn-dialog__actions')?.classList).toContain('tn-dialog__actions--hidden');
+    });
+
+    it('keeps both slots visible by default', () => {
+      tnDialog.open(TestDialogComponent, { data: { title: 'Default' } });
+      fixture.detectChanges();
+      expect(document.querySelector('.tn-dialog__content')?.classList).not.toContain('tn-dialog__content--hidden');
+      expect(document.querySelector('.tn-dialog__actions')?.classList).not.toContain('tn-dialog__actions--hidden');
+    });
+
+    it('leaves the content/actions slots :empty when nothing is projected (theme hides them)', () => {
+      tnDialog.open(EmptyDialogComponent);
+      fixture.detectChanges();
+
+      const content = document.querySelector('.tn-dialog__content');
+      const actions = document.querySelector('.tn-dialog__actions');
+      expect(content).toBeTruthy();
+      expect(actions).toBeTruthy();
+      // `:empty` ignores the ng-content comment anchor, so the theme's
+      // `:empty { display: none }` rule applies and the empty bars don't render.
+      expect(content?.matches(':empty')).toBe(true);
+      expect(actions?.matches(':empty')).toBe(true);
+    });
+  });
+
   describe('fullscreen', () => {
     beforeEach(() => {
       tnDialog.open(TestDialogComponent, {
@@ -173,6 +240,80 @@ describe('TnDialogHarness', () => {
       expect(await dialog.isFullscreen()).toBe(true);
       await dialog.toggleFullscreen();
       expect(await dialog.isFullscreen()).toBe(false);
+    });
+  });
+
+  describe('accessibility', () => {
+    beforeEach(() => {
+      tnDialog.open(TestDialogComponent, {
+        data: { title: 'Accessible Dialog', showFullscreen: true },
+      });
+      fixture.detectChanges();
+    });
+
+    it('keeps the close button in the tab order', async () => {
+      const dialog = await dialogLoader.getHarness(TnDialogHarness);
+      expect(await dialog.getCloseButtonTabIndex()).toBeNull();
+    });
+
+    it('keeps the fullscreen button in the tab order', async () => {
+      const dialog = await dialogLoader.getHarness(TnDialogHarness);
+      expect(await dialog.getFullscreenButtonTabIndex()).toBeNull();
+    });
+
+    it('gives the dialog an accessible name via aria-labelledby', () => {
+      const container = document.querySelector('cdk-dialog-container');
+      const labelledBy = container?.getAttribute('aria-labelledby');
+      expect(labelledBy).toBeTruthy();
+
+      const title = document.getElementById(labelledBy as string);
+      expect(title?.textContent?.trim()).toBe('Accessible Dialog');
+    });
+
+    it('hides decorative icon glyphs from assistive tech', () => {
+      const closeIcon = document.querySelector('.tn-dialog__close-icon');
+      expect(closeIcon?.getAttribute('aria-hidden')).toBe('true');
+
+      const fullscreenIcon = document.querySelector('.tn-dialog__fullscreen-icon');
+      expect(fullscreenIcon?.getAttribute('aria-hidden')).toBe('true');
+    });
+  });
+
+  describe('chrome button test ids', () => {
+    it('scopes the close button role-first as button-close-<testId>', () => {
+      tnDialog.open(TestDialogComponent, {
+        data: { title: 'Feedback', testId: 'feedback-dialog' },
+      });
+      fixture.detectChanges();
+
+      // role leads, base trails — every dialog's close shares the button-close-* prefix
+      expect(document.querySelector('[data-testid="button-close-feedback-dialog"]')).toBeTruthy();
+      expect(document.querySelector('[data-testid="button-feedback-dialog-close"]')).toBeFalsy();
+    });
+
+    it('scopes the fullscreen button role-first as button-fullscreen-<testId>', () => {
+      tnDialog.open(TestDialogComponent, {
+        data: { title: 'Feedback', testId: 'feedback-dialog', showFullscreen: true },
+      });
+      fixture.detectChanges();
+
+      expect(document.querySelector('[data-testid="button-fullscreen-feedback-dialog"]')).toBeTruthy();
+    });
+
+    it('falls back to the bare role when no testId is set', () => {
+      tnDialog.open(TestDialogComponent, { data: { title: 'No base' } });
+      fixture.detectChanges();
+
+      expect(document.querySelector('[data-testid="button-close"]')).toBeTruthy();
+    });
+
+    it('flattens an array testId without nesting', () => {
+      tnDialog.open(TestDialogComponent, {
+        data: { title: 'Array base', testId: ['feedback', 'dialog'] },
+      });
+      fixture.detectChanges();
+
+      expect(document.querySelector('[data-testid="button-close-feedback-dialog"]')).toBeTruthy();
     });
   });
 
@@ -323,6 +464,20 @@ describe('TnDialogHarness', () => {
         const buttons = await dialog.getActionButtons();
         expect(await buttons[0].getLabel()).toBe('Cancel');
         expect(await buttons[1].getLabel()).toBe('OK');
+      });
+
+      it('emits button-cancel / button-confirm on the config-rendered action buttons', () => {
+        void tnDialog.confirm({ title: 'Delete?' });
+        fixture.detectChanges();
+        expect(document.querySelector('[data-testid="button-cancel"]')).toBeTruthy();
+        expect(document.querySelector('[data-testid="button-confirm"]')).toBeTruthy();
+      });
+
+      it('honors confirmTestId / cancelTestId overrides', () => {
+        void tnDialog.confirm({ title: 'Delete?', confirmTestId: 'delete-dataset', cancelTestId: 'keep-dataset' });
+        fixture.detectChanges();
+        expect(document.querySelector('[data-testid="button-delete-dataset"]')).toBeTruthy();
+        expect(document.querySelector('[data-testid="button-keep-dataset"]')).toBeTruthy();
       });
 
       it('should show custom button labels', async () => {

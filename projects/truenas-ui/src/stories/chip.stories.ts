@@ -1,9 +1,11 @@
-import { ReactiveFormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, userEvent, within } from 'storybook/test';
+import { TestIdInspectorComponent } from './testid-inspector.component';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnChipComponent } from '../lib/chip/chip.component';
-import { InputType } from '../lib/enums/input-type.enum';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
+
+const harnessDoc = loadHarnessDoc('chip');
 
 const meta: Meta<TnChipComponent> = {
   title: 'Components/Chip',
@@ -51,7 +53,7 @@ export const Default: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toBeInTheDocument();
     await expect(chip).toHaveClass('tn-chip--primary');
@@ -70,7 +72,7 @@ export const WithIcon: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toBeInTheDocument();
     await expect(chip).toHaveClass('tn-chip--primary');
@@ -91,7 +93,7 @@ export const NotClosable: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
     const closeButton = chip.querySelector('.tn-chip__close');
 
     await expect(chip).toBeInTheDocument();
@@ -109,7 +111,7 @@ export const Disabled: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toBeInTheDocument();
     await expect(chip).toHaveClass('tn-chip--disabled');
@@ -127,7 +129,7 @@ export const Primary: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toHaveClass('tn-chip--primary');
   },
@@ -143,7 +145,7 @@ export const Secondary: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toHaveClass('tn-chip--secondary');
   },
@@ -159,173 +161,9 @@ export const Accent: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toHaveClass('tn-chip--accent');
-  },
-};
-
-export const ChipInputExample: Story = {
-  render: (args) => ({
-    props: {
-      ...args,
-      tags: ['JavaScript', 'TypeScript', 'Angular'],
-      inputValue: '',
-      inputType: InputType.PlainText,
-      placeholder: 'Type a skill and press Enter to add it as a tag',
-      testId: 'chip-input',
-
-      addTag: function(value: string) {
-        if (value && value.trim() && !this['tags'].includes(value.trim())) {
-          this['tags'] = [...this['tags'], value.trim()];
-          this['inputValue'] = '';
-        }
-      },
-
-      removeTag: function(tagToRemove: string) {
-        this['tags'] = this['tags'].filter((tag: string) => tag !== tagToRemove);
-      },
-
-      onKeyDown: function(event: KeyboardEvent) {
-        if (event.key === 'Enter') {
-          event.preventDefault();
-          this['addTag'](this['inputValue']);
-        } else if (event.key === 'Backspace' && !this['inputValue'] && this['tags'].length > 0) {
-          this['removeTag'](this['tags'][this['tags'].length - 1]);
-        }
-      },
-
-      onInputChange: function(event: Event) {
-        const target = event.target as HTMLInputElement;
-        this['inputValue'] = target.value;
-      },
-
-      focusInput: function() {
-        // Focus the input when the container is clicked
-        setTimeout(() => {
-          const input = document.querySelector('[data-testid="chip-input"]') as HTMLInputElement;
-          if (input) {input.focus();}
-        }, 0);
-      },
-
-      onInputFocus: function(event: FocusEvent) {
-        // Add focus styles to container
-        const container = (event.target as HTMLElement).parentElement;
-        if (container) {
-          container.style.borderColor = 'var(--tn-primary, #007bff)';
-          container.style.boxShadow = '0 0 0 2px rgba(0, 123, 255, 0.25)';
-        }
-      },
-
-      onInputBlur: function(event: FocusEvent) {
-        // Remove focus styles from container
-        const container = (event.target as HTMLElement).parentElement;
-        if (container) {
-          container.style.borderColor = 'var(--tn-lines, #d1d5db)';
-          container.style.boxShadow = 'none';
-        }
-      }
-    },
-    template: `
-      <tn-form-field
-        label="Skills and Technologies"
-        hint="Your technical skills and areas of expertise">
-
-        <!-- Custom chip input container that mimics input styling -->
-        <div class="chip-input-container"
-             style="
-               display: flex;
-               flex-wrap: wrap;
-               align-items: center;
-               gap: 0.375rem;
-               min-height: 2.5rem;
-               padding: 0.5rem 0.75rem;
-               background-color: var(--tn-bg1, #ffffff);
-               border: 1px solid var(--tn-lines, #d1d5db);
-               border-radius: 0.375rem;
-               font-family: var(--tn-font-family-body, 'Inter'), sans-serif;
-               transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-               cursor: text;
-             "
-             (click)="focusInput()">
-
-          <!-- Chips inside the input area -->
-          @for (tag of tags; track tag) {
-          <tn-chip
-            [label]="tag"
-            [color]="color"
-            [closable]="true"
-            [disabled]="disabled"
-            (onClose)="removeTag(tag)"
-            style="flex-shrink: 0;">
-          </tn-chip>
-          }
-
-          <!-- Persistent placeholder text -->
-          @if (!inputValue) {
-          <span style="
-                  color: var(--tn-fg2, #6c757d);
-                  font-style: italic;
-                  font-size: 1rem;
-                  pointer-events: none;
-                  user-select: none;
-                  flex-shrink: 0;
-                  white-space: nowrap;
-                ">
-            {{ placeholder }}
-          </span>
-          }
-
-          <!-- Inline input field -->
-          <input
-            #chipInput
-            [value]="inputValue"
-            [disabled]="disabled"
-            [attr.data-testid]="testId"
-            (input)="onInputChange($event)"
-            (keydown)="onKeyDown($event)"
-            (focus)="onInputFocus($event)"
-            (blur)="onInputBlur($event)"
-            style="
-              border: none;
-              outline: none;
-              background: transparent;
-              flex: 1;
-              min-width: 120px;
-              font-size: 1rem;
-              color: var(--tn-fg1, #212529);
-            "
-            type="text">
-        </div>
-      </tn-form-field>
-    `,
-    moduleMetadata: {
-      imports: [TnFormFieldComponent, ReactiveFormsModule],
-    },
-  }),
-  args: {
-    label: 'Skills',
-    color: 'primary',
-    closable: true,
-    disabled: false,
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const input = canvas.getByTestId('chip-input');
-
-    // Test adding a new tag
-    await userEvent.type(input, 'React');
-    await userEvent.keyboard('{Enter}');
-
-    // Verify the chip was added
-    const chips = canvas.getAllByText('React');
-    await expect(chips[0]).toBeInTheDocument();
-
-    // Test removing a tag
-    const closeButtons = canvas.getAllByLabelText(/Remove/);
-    if (closeButtons.length > 0) {
-      await userEvent.click(closeButtons[0]);
-    }
   },
 };
 
@@ -382,7 +220,7 @@ export const KeyboardNavigation: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const chip = canvas.getByTestId(args.testId!);
+    const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
     await expect(chip).toHaveAttribute('tabindex', '0');
     await expect(chip).toHaveAttribute('role', 'button');
@@ -392,4 +230,62 @@ export const KeyboardNavigation: Story = {
     await userEvent.keyboard('{Enter}');
     await userEvent.keyboard('{Delete}');
   },
+};
+
+/**
+ * **Test IDs (default).** `tn-chip` emits the `chip-` prefix on its
+ * `role="button"` host, under `data-testid` (default) / `data-test`.
+ * `testId="production"` → `chip-production`. With no `testId`, nothing is
+ * emitted. Table read live.
+ */
+export const TestIds: Story = {
+  args: { testId: 'production' },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-chip label="Production" [testId]="testId" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnChipComponent, TestIdInspectorComponent] },
+  }),
+};
+
+/**
+ * **Scoped test id.** An array base namespaces the id —
+ * `[testId]="['filters','active']"` → `chip-filters-active`.
+ */
+export const ScopedTestIds: Story = {
+  args: { testId: ['filters', 'active'] },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-chip label="Active" [testId]="testId" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnChipComponent, TestIdInspectorComponent] },
+  }),
+};
+
+/**
+ * Harness API reference for `TnChipHarness`. Documentation is generated from the
+ * JSDoc in `chip.harness.ts`.
+ */
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      canvas: {
+        hidden: true,
+        sourceState: 'none'
+      },
+      description: {
+        story: harnessDoc || ''
+      }
+    },
+    controls: { disable: true },
+    layout: 'fullscreen'
+  },
+  render: () => ({ template: '' })
 };

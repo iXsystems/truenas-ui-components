@@ -11,10 +11,11 @@ import { TnButtonHarness } from './button.harness';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnButtonComponent],
-  template: `<tn-button [label]="label()" [disabled]="disabled()" (onClick)="handleClick($event)" />`
+  template: `<tn-button [label]="label()" [icon]="icon()" [disabled]="disabled()" (onClick)="handleClick($event)" />`
 })
 class TestHostComponent {
   label = signal('Test Button');
+  icon = signal<string | undefined>(undefined);
   disabled = signal(false);
   clickCount = 0;
 
@@ -149,6 +150,30 @@ describe('TnButtonHarness', () => {
 
       const button = await loader.getHarness(TnButtonHarness.with({ label: /submit/i }));
       expect(button).toBeTruthy();
+    });
+  });
+
+  describe('icon', () => {
+    it('reports no icon by default', async () => {
+      const button = await loader.getHarness(TnButtonHarness);
+      expect(await button.hasIcon()).toBe(false);
+      expect(await button.getIconName()).toBeNull();
+    });
+
+    it('reports the icon name when one is set', async () => {
+      hostComponent.icon.set('check');
+
+      const button = await loader.getHarness(TnButtonHarness);
+      expect(await button.hasIcon()).toBe(true);
+      expect(await button.getIconName()).toBe('check');
+    });
+
+    it('does not leak icon text into the label', async () => {
+      hostComponent.label.set('Save');
+      hostComponent.icon.set('check');
+
+      const button = await loader.getHarness(TnButtonHarness);
+      expect(await button.getLabel()).toBe('Save');
     });
   });
 

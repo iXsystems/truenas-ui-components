@@ -1,6 +1,7 @@
 import type { ElementRef } from '@angular/core';
 import { Component, input, computed, effect, signal, ChangeDetectionStrategy, ViewEncapsulation, inject, viewChild, isDevMode } from '@angular/core';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 import { TnIconRegistryService } from './icon-registry.service';
 
 export type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -16,6 +17,7 @@ export interface IconResult {
 @Component({
   selector: 'tn-icon',
   standalone: true,
+  imports: [TnTestIdDirective],
   templateUrl: './icon.component.html',
   styleUrl: './icon.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,6 +31,8 @@ export interface IconResult {
     '[attr.custom-size]': 'customSize() || null',
     '[style.width]': 'hostDimension()',
     '[style.height]': 'hostDimension()',
+    '[style.min-width]': 'hostMinDimension()',
+    '[style.min-height]': 'hostMinDimension()',
     '[style.font-size]': 'hostFontSize()',
     '[style.color]': 'color() || null',
   }
@@ -42,6 +46,15 @@ export class TnIconComponent {
   tooltip = input<string | undefined>(undefined);
   ariaLabel = input<string | undefined>(undefined);
   library = input<IconLibraryType | undefined>(undefined);
+
+  /**
+   * Semantic test-id base for the icon. The library prepends the element type
+   * (`icon`) and renders the result under whichever attribute name is configured
+   * via `TN_TEST_ATTR` (default `data-testid`) — e.g. `testId="close"` →
+   * `icon-close`. Accepts an array of segments to scope the id (e.g.
+   * `['tooltip', header()]`). Unset emits no attribute.
+   */
+  testId = input<TnTestIdValue>(undefined);
 
   /**
    * When true, the icon will expand to fill its container (100% width and height)
@@ -88,6 +101,20 @@ export class TnIconComponent {
     const custom = this.customSize();
     if (custom) {return custom;}
     if (this.fullSize()) {return '100%';}
+    return null;
+  });
+
+  /**
+   * Inline min-width/min-height override for the custom/full-size paths.
+   * - customSize: pin the minimum to the custom value so flex layouts can't
+   *   squish it (mirrors the preset min-* rules in the stylesheet).
+   * - fullSize: relax the minimum to 0 so the icon can shrink with its
+   *   container instead of being clamped by the `size` attribute's preset min.
+   */
+  hostMinDimension = computed(() => {
+    const custom = this.customSize();
+    if (custom) {return custom;}
+    if (this.fullSize()) {return '0';}
     return null;
   });
 

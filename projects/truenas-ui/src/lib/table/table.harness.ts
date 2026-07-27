@@ -233,6 +233,21 @@ export class TnTableHarness extends ComponentHarness {
     return row.hasClass('tn-table__row--expanded');
   }
 
+  /**
+   * Checks whether a row exposes an expand control. Returns false for rows made
+   * non-expandable via the table's `isRowExpandable` predicate.
+   *
+   * @param rowIndex Zero-based index of the data row.
+   * @returns Promise resolving to true if the row has an expand button.
+   */
+  async hasExpandControl(rowIndex: number): Promise<boolean> {
+    await this.assertRowExists(rowIndex);
+    const button = await this.locatorForOptional(
+      `.tn-table__row[data-row-index="${rowIndex}"] .tn-table__expand-button`
+    )();
+    return button !== null;
+  }
+
   // --- Clickable rows ---
 
   /**
@@ -246,6 +261,21 @@ export class TnTableHarness extends ComponentHarness {
       `.tn-table__row[data-row-index="${rowIndex}"]`
     )();
     await row.click();
+  }
+
+  /**
+   * Double-clicks a row (for tables with `clickable` enabled), triggering
+   * `rowDoubleClick`. Note that a real double-click also fires two single
+   * clicks first; this helper dispatches only the `dblclick` event.
+   *
+   * @param rowIndex Zero-based index of the data row.
+   */
+  async doubleClickRow(rowIndex: number): Promise<void> {
+    await this.assertRowExists(rowIndex);
+    const row = await this.locatorFor(
+      `.tn-table__row[data-row-index="${rowIndex}"]`
+    )();
+    await row.dispatchEvent('dblclick');
   }
 
   /**

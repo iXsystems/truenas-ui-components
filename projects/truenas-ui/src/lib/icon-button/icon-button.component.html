@@ -1,11 +1,14 @@
 <button
   #button
   type="button"
+  tnTestIdType="button"
   [ngClass]="classes()"
   [disabled]="disabled()"
   [attr.aria-label]="effectiveAriaLabel()"
-  [attr.title]="tooltip()"
+  [attr.aria-expanded]="ariaExpanded()"
   [tnTestId]="testId()"
+  [tnTooltip]="tooltip() || ''"
+  [tnTooltipPosition]="tooltipPosition()"
   (click)="onClick.emit($event)"
 >
   <tn-icon
@@ -13,5 +16,7 @@
     [size]="size()"
     [color]="color()"
     [library]="library()"
+    [ngClass]="iconClass()"
     [ariaLabel]="effectiveAriaLabel()" />
+  <ng-content />
 </button>

@@ -1,6 +1,8 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { TN_TEST_ATTR } from '../test-id';
+import { TnCardFooterActionsDirective, TnCardHeaderActionsDirective } from './card-action.directive';
 import { TnCardComponent } from './card.component';
 import type {
   TnCardAction,
@@ -38,10 +40,13 @@ function createHost(providers: unknown[] = []) {
 describe('TnCardComponent testId support', () => {
   it('applies testId from primaryAction to the rendered button', () => {
     const fixture = createHost();
+    // The card forwards the action's testId into <tn-button>, which now owns
+    // the `button-` element-type prefix — so the config carries the *semantic*
+    // id ('smb-share-add') and the rendered DOM gets 'button-smb-share-add'.
     fixture.componentInstance.primary.set({
       label: 'Add',
       handler: () => {},
-      testId: 'button-smb-share-add',
+      testId: 'smb-share-add',
     });
     fixture.detectChanges();
 
@@ -59,7 +64,7 @@ describe('TnCardComponent testId support', () => {
     fixture.componentInstance.secondary.set({
       label: 'Open',
       handler: () => {},
-      testId: 'button-webshare-open',
+      testId: 'webshare-open', // semantic; <tn-button> adds the `button-` prefix
     });
     fixture.detectChanges();
 
@@ -90,7 +95,9 @@ describe('TnCardComponent testId support', () => {
     fixture.componentInstance.menu.set([
       { id: 'a', label: 'Action A' },
     ]);
-    fixture.componentInstance.menuTriggerTestId.set('button-4-actions-menu');
+    // kebab trigger renders via <tn-icon-button>, which owns the `button-`
+    // prefix — config passes the semantic id, DOM gets 'button-4-actions-menu'.
+    fixture.componentInstance.menuTriggerTestId.set('4-actions-menu');
     fixture.detectChanges();
 
     const trigger = fixture.nativeElement.querySelector('.tn-card__menu button') as HTMLElement;
@@ -118,11 +125,14 @@ describe('TnCardComponent testId support', () => {
     const kebabBtn = fixture.nativeElement.querySelector('.tn-card__menu button') as HTMLElement;
     const pill = fixture.nativeElement.querySelector('.tn-card__status') as HTMLElement;
 
-    expect(primaryBtn.getAttribute('data-test')).toBe('p-id');
+    // primary/secondary (<tn-button>) and the kebab trigger (<tn-icon-button>)
+    // own the `button-` prefix; the status pill is a raw [tnTestId] (not typed
+    // yet), so it stays verbatim.
+    expect(primaryBtn.getAttribute('data-test')).toBe('button-p-id');
     expect(primaryBtn.getAttribute('data-testid')).toBeNull();
 
-    expect(secondaryBtn.getAttribute('data-test')).toBe('s-id');
-    expect(kebabBtn.getAttribute('data-test')).toBe('k-id');
+    expect(secondaryBtn.getAttribute('data-test')).toBe('button-s-id');
+    expect(kebabBtn.getAttribute('data-test')).toBe('button-k-id');
     expect(pill.getAttribute('data-test')).toBe('st-id');
   });
 
@@ -131,7 +141,7 @@ describe('TnCardComponent testId support', () => {
     fixture.componentInstance.footerLink.set({
       label: 'View details',
       handler: () => {},
-      testId: 'link-view-details',
+      testId: 'view-details', // semantic; <button> footer link adds the `link-` prefix
     });
     fixture.detectChanges();
 
@@ -157,5 +167,137 @@ describe('TnCardComponent testId support', () => {
     expect(primaryBtn.hasAttribute('data-testid')).toBe(false);
     expect(pill.hasAttribute('data-testid')).toBe(false);
     expect(kebabBtn.hasAttribute('data-testid')).toBe(false);
+  });
+});
+
+@Component({
+  standalone: true,
+  imports: [TnCardComponent, TnCardHeaderActionsDirective, TnCardFooterActionsDirective],
+  template: `<tn-card [primaryAction]="primary()">`
+    + `@if (showHeaderAction()) {<ng-template tnCardHeaderActions><button type="button" class="projected-header-action">Toggle</button></ng-template>}`
+    + `@if (showFooterAction()) {<ng-template tnCardFooterActions><button type="button" class="projected-footer-action">Add</button></ng-template>}`
+    + `Content</tn-card>`,
+})
+class ProjectedActionsHostComponent {
+  showHeaderAction = signal(false);
+  showFooterAction = signal(false);
+  primary = signal<TnCardAction | undefined>(undefined);
+}
+
+describe('TnCardComponent projected action templates', () => {
+  function createProjectedHost() {
+    TestBed.configureTestingModule({ imports: [ProjectedActionsHostComponent] });
+    const fixture = TestBed.createComponent(ProjectedActionsHostComponent);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('renders projected footer actions inside the footer, and shows the footer when only a projected action is present', () => {
+    const fixture = createProjectedHost();
+    expect(fixture.nativeElement.querySelector('.tn-card__footer')).toBeNull();
+
+    fixture.componentInstance.showFooterAction.set(true);
+    fixture.detectChanges();
+
+    const footer = fixture.nativeElement.querySelector('.tn-card__footer') as HTMLElement;
+    expect(footer).toBeTruthy();
+    expect(footer.querySelector('.projected-footer-action')).toBeTruthy();
+  });
+
+  it('renders projected header actions inside the header-right, and shows the header when only a projected action is present', () => {
+    const fixture = createProjectedHost();
+    expect(fixture.nativeElement.querySelector('.tn-card__header')).toBeNull();
+
+    fixture.componentInstance.showHeaderAction.set(true);
+    fixture.detectChanges();
+
+    const headerRight = fixture.nativeElement.querySelector('.tn-card__header-right') as HTMLElement;
+    expect(headerRight).toBeTruthy();
+    expect(headerRight.querySelector('.projected-header-action')).toBeTruthy();
+  });
+
+  it('renders the projected footer action as a direct child of the footer flex row, alongside a declarative primaryAction', () => {
+    const fixture = createProjectedHost();
+    fixture.componentInstance.primary.set({ label: 'Primary', handler: () => {} });
+    fixture.componentInstance.showFooterAction.set(true);
+    fixture.detectChanges();
+
+    const footerRight = fixture.nativeElement.querySelector('.tn-card__footer-right') as HTMLElement;
+    const projected = footerRight.querySelector('.projected-footer-action') as HTMLElement;
+    // No wrapper element: the projected button sits directly in the flex row so it
+    // aligns identically to the declarative <tn-button>.
+    expect(projected).toBeTruthy();
+    expect(projected.parentElement).toBe(footerRight);
+    // Declarative action renders too — projected actions are additive, not a replacement.
+    const primaryBtn = Array.from(footerRight.querySelectorAll('button')).find(
+      (b) => (b as HTMLElement).textContent?.trim() === 'Primary',
+    );
+    expect(primaryBtn).toBeTruthy();
+  });
+});
+
+@Component({
+  standalone: true,
+  imports: [TnCardComponent],
+  template: `<tn-card [title]="title()" [titleRouterLink]="routerLink()" [titleTooltip]="tooltip()">Content</tn-card>`,
+})
+class TitleHostComponent {
+  title = signal<string | undefined>('Recent Orders');
+  routerLink = signal<string | unknown[] | undefined>(undefined);
+  tooltip = signal<string | undefined>(undefined);
+}
+
+describe('TnCardComponent title router link & tooltip', () => {
+  function createTitleHost() {
+    TestBed.configureTestingModule({
+      imports: [TitleHostComponent],
+      providers: [provideRouter([])],
+    });
+    const fixture = TestBed.createComponent(TitleHostComponent);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('renders the title as a routerLink anchor with a trailing link icon when titleRouterLink is set', () => {
+    const fixture = createTitleHost();
+    fixture.componentInstance.routerLink.set(['/orders', 'recent']);
+    fixture.detectChanges();
+
+    const anchor = fixture.nativeElement.querySelector('.tn-card__title a') as HTMLAnchorElement | null;
+    expect(anchor).toBeTruthy();
+    // RouterLink resolves the commands array to a client-side href.
+    expect(anchor?.getAttribute('href')).toBe('/orders/recent');
+    expect(anchor?.textContent).toContain('Recent Orders');
+    // The link carries a trailing icon so it reads visually as a link...
+    const linkIcon = anchor?.querySelector('.tn-card__title-link-icon');
+    expect(linkIcon).toBeTruthy();
+    // ...but the icon is decorative: hidden from the a11y tree so it does not
+    // pollute the link's accessible name (which stays just "Recent Orders").
+    expect(linkIcon?.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('renders a plain h3 with no link or link icon when titleRouterLink is absent', () => {
+    const fixture = createTitleHost();
+
+    const title = fixture.nativeElement.querySelector('.tn-card__title') as HTMLElement;
+    expect(title.tagName.toLowerCase()).toBe('h3');
+    expect(title.querySelector('a')).toBeNull();
+    expect(title.querySelector('.tn-card__title-link-icon')).toBeNull();
+  });
+
+  it('renders titleTooltip as a separate help-icon button (not on the title text) only when set', () => {
+    const fixture = createTitleHost();
+
+    // No tooltip: no help affordance is rendered.
+    expect(fixture.nativeElement.querySelector('.tn-card__title-tooltip')).toBeNull();
+
+    fixture.componentInstance.tooltip.set('Open the full orders page');
+    fixture.detectChanges();
+
+    const tooltipButton = fixture.nativeElement.querySelector('.tn-card__title-tooltip') as HTMLElement | null;
+    expect(tooltipButton).toBeTruthy();
+    // The button's accessible name is generic; the tooltip text is exposed as the
+    // description (aria-describedby) so a screen reader doesn't read it twice.
+    expect(tooltipButton?.getAttribute('aria-label')).toBe('More information');
   });
 });

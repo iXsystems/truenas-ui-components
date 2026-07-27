@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnCardComponent } from '../lib/card/card.component';
 import { TnExpansionPanelComponent } from '../lib/expansion-panel/expansion-panel.component';
@@ -202,4 +203,40 @@ export const ComponentHarness: Story = {
     layout: 'fullscreen'
   },
   render: () => ({ template: '' })
+};
+
+/**
+ * **Test IDs (default).** `tn-expansion-panel` emits `expansion-panel-<base>` on
+ * its root (`testId`) and `button-<base>` on the header toggle (`toggleTestId`),
+ * under `data-testid` (default) / `data-test`.
+ */
+export const TestIds: Story = {
+  render: () => ({
+    template: `
+      <tn-testid-inspector>
+        <tn-expansion-panel testId="advanced" toggleTestId="advanced-toggle" title="Advanced settings">
+          <p>Panel content</p>
+        </tn-expansion-panel>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnExpansionPanelComponent, TestIdInspectorComponent] },
+  }),
+};
+
+/**
+ * **Scoped test ids.** Array bases namespace each id —
+ * `[testId]="['config','advanced']"` → `expansion-panel-config-advanced`,
+ * `[toggleTestId]="['config','advanced-toggle']"` → `button-config-advanced-toggle`.
+ */
+export const ScopedTestIds: Story = {
+  render: () => ({
+    template: `
+      <tn-testid-inspector>
+        <tn-expansion-panel [testId]="['config','advanced']" [toggleTestId]="['config','advanced-toggle']" title="Advanced settings">
+          <p>Panel content</p>
+        </tn-expansion-panel>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnExpansionPanelComponent, TestIdInspectorComponent] },
+  }),
 };

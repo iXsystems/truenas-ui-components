@@ -10,38 +10,51 @@ tn-icon {
   color: var(--tn-icon-color, currentColor);
 
   // Default sizing (fallback when no size attribute matches)
+  // min-width/min-height prevent the icon from being squished by flex layouts.
   width: var(--tn-icon-size, var(--tn-icon-md));
   height: var(--tn-icon-size, var(--tn-icon-md));
+  min-width: var(--tn-icon-size, var(--tn-icon-md));
+  min-height: var(--tn-icon-size, var(--tn-icon-md));
   font-size: var(--tn-icon-size, var(--tn-icon-md));
 
   // Size presets via attribute selectors
   &[size="xs"] {
     width: var(--tn-icon-xs);
     height: var(--tn-icon-xs);
+    min-width: var(--tn-icon-xs);
+    min-height: var(--tn-icon-xs);
     font-size: var(--tn-icon-xs);
   }
 
   &[size="sm"] {
     width: var(--tn-icon-sm);
     height: var(--tn-icon-sm);
+    min-width: var(--tn-icon-sm);
+    min-height: var(--tn-icon-sm);
     font-size: var(--tn-icon-sm);
   }
 
   &[size="md"] {
     width: var(--tn-icon-md);
     height: var(--tn-icon-md);
+    min-width: var(--tn-icon-md);
+    min-height: var(--tn-icon-md);
     font-size: var(--tn-icon-md);
   }
 
   &[size="lg"] {
     width: var(--tn-icon-lg);
     height: var(--tn-icon-lg);
+    min-width: var(--tn-icon-lg);
+    min-height: var(--tn-icon-lg);
     font-size: var(--tn-icon-lg);
   }
 
   &[size="xl"] {
     width: var(--tn-icon-xl);
     height: var(--tn-icon-xl);
+    min-width: var(--tn-icon-xl);
+    min-height: var(--tn-icon-xl);
     font-size: var(--tn-icon-xl);
   }
 }

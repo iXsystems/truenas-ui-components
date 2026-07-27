@@ -42,7 +42,22 @@
     "reinstall": "rm -rf ./node_modules && yarn install",
     "prepare": "husky"
   },
+  "lint-staged": {
+    "projects/truenas-ui/src/**/*.ts": [
+      "eslint --fix",
+      "jest --config ./projects/truenas-ui/jest.config.ts --bail --coverage=false --passWithNoTests --findRelatedTests"
+    ],
+    "projects/truenas-ui/src/**/*.html": [
+      "eslint --fix"
+    ],
+    "scripts/**/*.ts": [
+      "eslint --fix"
+    ]
+  },
   "private": true,
+  "engines": {
+    "node": ">=24"
+  },
   "peerDependencies": {
     "rxjs": "^7.5.0",
     "zone.js": "^0.15.0"
@@ -56,6 +71,7 @@
     "@types/vinyl": "~2.0.12",
     "cheerio": "~1.0.0",
     "fast-glob": "^3.3.3",
+    "filesize": "~11.0.17",
     "svg-sprite": "~2.0.4",
     "tslib": "^2.3.0",
     "tsx": "~4.19.1",
@@ -114,6 +130,7 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.0.0",
+    "lint-staged": "^17.0.7",
     "lucide": "^0.545.0",
     "ng-packagr": "^21.1.0",
     "rxjs": "^7.8.2",

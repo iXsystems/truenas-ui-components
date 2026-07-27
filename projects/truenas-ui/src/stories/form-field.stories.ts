@@ -1,13 +1,17 @@
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnCheckboxComponent } from '../lib/checkbox/checkbox.component';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
+import { tnIconMarker } from '../lib/icon/icon-marker';
 import { TnInputComponent } from '../lib/input/input.component';
 import { TnRadioComponent } from '../lib/radio/radio.component';
 import type { TnSelectOption } from '../lib/select/select.component';
 import { TnSelectComponent } from '../lib/select/select.component';
+
+tnIconMarker('help-circle', 'mdi');
 
 const harnessDoc = loadHarnessDoc('form-field');
 
@@ -69,6 +73,19 @@ When used with Angular reactive forms, the form field automatically:
       control: 'radio',
       options: ['fixed', 'dynamic'],
       description: 'Controls whether the subscript area reserves space when empty. "fixed" always reserves space (prevents layout shift), "dynamic" collapses when empty.',
+    },
+    tooltip: {
+      control: 'text',
+      description: 'Optional tooltip shown via a help icon next to the label.',
+    },
+    tooltipPosition: {
+      control: 'radio',
+      options: ['above', 'below', 'left', 'right', 'before', 'after'],
+      description: 'Placement of the tooltip relative to its help icon.',
+    },
+    errorMessages: {
+      control: 'object',
+      description: 'Per-field overrides for validation messages, keyed by error key. Values are a string or a function receiving the error detail. Takes precedence over the app-wide TN_FORM_FIELD_ERRORS resolver and the built-in defaults.',
     },
   },
 };
@@ -138,6 +155,35 @@ export const RequiredField: Story = {
   },
 };
 
+export const LabelMarkup: Story = {
+  render: (args) => ({
+    props: args,
+    template: `
+      <div style="display: flex; flex-direction: column; gap: 16px; max-width: 400px;">
+        <tn-form-field [label]="label" hint="**bold**, *italic* and \`code\` are supported in labels">
+          <tn-input inputType="text" placeholder="foo"></tn-input>
+        </tn-form-field>
+        <tn-checkbox label="I accept the **Terms of Service**"></tn-checkbox>
+        <tn-radio name="markup-demo" value="a" label="Use the *default* pool"></tn-radio>
+        <tn-radio name="markup-demo" value="b" label="Run \`zpool import\` manually"></tn-radio>
+      </div>
+    `,
+    moduleMetadata: {
+      imports: [TnInputComponent, TnCheckboxComponent, TnRadioComponent],
+    },
+  }),
+  args: {
+    label: 'Type **foo** below',
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Labels accept lightweight markup: `**bold**`, `*italic*` and `` `code` ``. Markers adjacent to whitespace (e.g. `2 * 3`, `*.tar`) are left as literal text, and `\\*` escapes a marker. HTML in labels is always escaped, never rendered.',
+      },
+    },
+  },
+};
+
 export const WithValidation: Story = {
   render: (args) => ({
     props: {
@@ -191,6 +237,74 @@ export const WithValidation: Story = {
   },
 };
 
+export const CustomErrorMessages: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Override validation messages per field with the `errorMessages` map. ' +
+          'Edit the `errorMessages` control to see overrides apply — keys that do ' +
+          'not match the active error (e.g. removing `required`) fall back to the ' +
+          'built-in default. Values may also be functions that receive the error ' +
+          'detail (e.g. `minlength: (e) => "At least " + e.requiredLength`); for ' +
+          'app-wide wording or i18n, provide a `TN_FORM_FIELD_ERRORS` resolver ' +
+          'instead, which per-field entries still win over.',
+      },
+    },
+  },
+  args: {
+    label: 'Username',
+    required: true,
+    testId: 'username-field',
+    errorMessages: {
+      required: 'Pick a username',
+      minlength: 'Use at least 4 characters',
+    },
+  },
+  render: (args) => ({
+    props: {
+      ...args,
+      usernameControl: new FormControl('', [
+        Validators.required,
+        Validators.minLength(4),
+      ]),
+      markAsTouched(this: { usernameControl: FormControl }) {
+        this.usernameControl.markAsTouched();
+        this.usernameControl.updateValueAndValidity();
+      },
+    },
+    template: `
+      <div style="display: flex; flex-direction: column; gap: 1rem; max-width: 400px;">
+        <tn-form-field
+          [label]="label"
+          [required]="required"
+          [testId]="testId"
+          [errorMessages]="errorMessages">
+          <tn-input placeholder="Type 1-3 chars, then click Trigger" [formControl]="usernameControl" />
+        </tn-form-field>
+
+        <button
+          type="button"
+          (click)="markAsTouched()"
+          style="width: fit-content; padding: 0.5rem 1rem; background: var(--tn-primary); color: white; border: none; border-radius: 0.25rem; cursor: pointer;">
+          Trigger Validation
+        </button>
+
+        <div style="font-size: 1rem; color: var(--tn-fg2);">
+          <strong>Form State:</strong><br>
+          Valid: {{ usernameControl.valid }}<br>
+          Touched: {{ usernameControl.touched }}<br>
+          Value: "{{ usernameControl.value }}"<br>
+          Errors: {{ usernameControl.errors | json }}
+        </div>
+      </div>
+    `,
+    moduleMetadata: {
+      imports: [TnInputComponent, ReactiveFormsModule, CommonModule],
+    },
+  }),
+};
+
 export const WithSelect: Story = {
   render: (args) => ({
     props: {
@@ -222,6 +336,40 @@ export const WithSelect: Story = {
   },
 };
 
+export const WithTooltip: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      options: selectOptions,
+    },
+    template: `
+      <tn-form-field
+        [label]="label"
+        [hint]="hint"
+        [required]="required"
+        [testId]="testId"
+        [tooltip]="tooltip"
+        [tooltipPosition]="tooltipPosition"
+        [subscriptSizing]="subscriptSizing">
+        <tn-select
+          [options]="options"
+          placeholder="Multi-Protocol Share">
+        </tn-select>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnSelectComponent],
+    },
+  }),
+  args: {
+    label: 'Purpose',
+    required: true,
+    tooltip: 'Describes how this share will be accessed and what it is used for.',
+    tooltipPosition: "below",
+    testId: 'purpose-field',
+  },
+};
+
 export const WithCheckbox: Story = {
   render: (args) => ({
     props: args,
@@ -231,6 +379,8 @@ export const WithCheckbox: Story = {
         [hint]="hint"
         [required]="required"
         [testId]="testId"
+        [tooltip]="tooltip"
+        [tooltipPosition]="tooltipPosition"
         [subscriptSizing]="subscriptSizing">
         <tn-checkbox
           label="I agree to the terms and conditions">
@@ -246,6 +396,41 @@ export const WithCheckbox: Story = {
     hint: 'Please review our terms before proceeding',
     required: true,
     testId: 'terms-field',
+  },
+};
+
+export const CheckboxWithInlineTooltip: Story = {
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-form-field
+        [tooltip]="tooltip"
+        [tooltipPosition]="tooltipPosition"
+        [testId]="testId"
+        [subscriptSizing]="subscriptSizing">
+        <tn-checkbox
+          label="Enable FXP">
+        </tn-checkbox>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnCheckboxComponent],
+    },
+  }),
+  args: {
+    tooltip: 'FXP allows direct server-to-server file transfers. It is disabled by default for security.',
+    tooltipPosition: 'above',
+    testId: 'enable-fxp-field',
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'When no `label` is set, the tooltip help icon renders inline after the projected control '
+          + 'instead of in the label row — for controls that carry their own label, like `tn-checkbox`. '
+          + 'The field still surfaces validation errors and hints in the subscript area.',
+      },
+    },
   },
 };
 
@@ -448,4 +633,40 @@ export const ComponentHarness: Story = {
     layout: 'fullscreen'
   },
   render: () => ({ template: '' })
+};
+
+/**
+ * **Test IDs (default).** `tn-form-field` emits `form-field-<base>` on its
+ * wrapper, under `data-testid` (default) / `data-test`. The projected control
+ * carries its own id independently (set its `testId`). `testId="email"` →
+ * `form-field-email`.
+ */
+export const TestIds: Story = {
+  render: () => ({
+    template: `
+      <tn-testid-inspector>
+        <tn-form-field testId="email" label="Email">
+          <tn-input placeholder="you@example.com" />
+        </tn-form-field>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnFormFieldComponent, TnInputComponent, TestIdInspectorComponent] },
+  }),
+};
+
+/**
+ * **Scoped test id.** An array base namespaces the id —
+ * `[testId]="['login','email']"` → `form-field-login-email`.
+ */
+export const ScopedTestIds: Story = {
+  render: () => ({
+    template: `
+      <tn-testid-inspector>
+        <tn-form-field [testId]="['login','email']" label="Email">
+          <tn-input placeholder="you@example.com" />
+        </tn-form-field>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnFormFieldComponent, TnInputComponent, TestIdInspectorComponent] },
+  }),
 };

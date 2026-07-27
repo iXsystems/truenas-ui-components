@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, within } from 'storybook/test';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnCardComponent } from '../lib/card/card.component';
 import { tnIconMarker } from '../lib/icon/icon-marker';
@@ -204,4 +205,40 @@ export const ComponentHarness: Story = {
     layout: 'fullscreen'
   },
   render: () => ({ template: '' })
+};
+
+/**
+ * **Test IDs (default).** `tn-icon-button` owns the `button-` prefix on its
+ * rendered `<button>`. `testId="settings"` → `button-settings` (under
+ * `data-testid` by default; `data-test` when overridden via `TN_TEST_ATTR`).
+ * With no `testId`, nothing is emitted — ids are opt-in. Table read live.
+ */
+export const TestIds: Story = {
+  args: { testId: 'settings' },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-icon-button name="cog" library="mdi" ariaLabel="Settings" [testId]="testId" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnIconButtonComponent, TestIdInspectorComponent] },
+  }),
+};
+
+/**
+ * **Scoped test id.** An array base namespaces the id —
+ * `[testId]="['toolbar','settings']"` → `button-toolbar-settings`.
+ */
+export const ScopedTestIds: Story = {
+  args: { testId: ['toolbar', 'settings'] },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-icon-button name="cog" library="mdi" ariaLabel="Settings" [testId]="testId" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnIconButtonComponent, TestIdInspectorComponent] },
+  }),
 };

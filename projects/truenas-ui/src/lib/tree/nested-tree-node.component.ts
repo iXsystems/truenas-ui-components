@@ -1,13 +1,14 @@
 import { CdkTree } from '@angular/cdk/tree';
-import { CdkNestedTreeNode, CdkTreeNode, CDK_TREE_NODE_OUTLET_NODE, CdkTreeModule } from '@angular/cdk/tree';
-import { ElementRef, ChangeDetectorRef, Component, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
-import { TnTreeNodeOutletDirective } from './tree-node-outlet.directive';
+import { CdkNestedTreeNode, CdkTreeNode, CDK_TREE_NODE_OUTLET_NODE } from '@angular/cdk/tree';
+import { ElementRef, ChangeDetectorRef, Component, ChangeDetectionStrategy, DestroyRef, ViewEncapsulation, computed, inject, input, booleanAttribute } from '@angular/core';
 import { TnIconComponent } from '../icon/icon.component';
+import { TnTestIdDirective, scopeTestId } from '../test-id';
+import type { TnTestIdValue } from '../test-id';
 
 @Component({
   selector: 'tn-nested-tree-node',
   standalone: true,
-  imports: [CdkTreeModule, TnIconComponent, TnTreeNodeOutletDirective],
+  imports: [TnIconComponent, TnTestIdDirective],
   exportAs: 'tnNestedTreeNode',
   providers: [
     { provide: CdkNestedTreeNode, useExisting: TnNestedTreeNodeComponent },
@@ -15,6 +16,7 @@ import { TnIconComponent } from '../icon/icon.component';
   ],
   templateUrl: './nested-tree-node.component.html',
   styleUrl: './nested-tree-node.component.scss',
+  hostDirectives: [{ directive: TnTestIdDirective, inputs: ['tnTestId: testId'] }],
   host: {
     'class': 'tn-nested-tree-node-wrapper',
     '[attr.aria-level]': 'level + 1',
@@ -25,6 +27,49 @@ import { TnIconComponent } from '../icon/icon.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TnNestedTreeNodeComponent<T, K = T> extends CdkNestedTreeNode<T, K> {
+  /**
+   * Accessible label for the built-in toggle button. Pass a translated string;
+   * defaults to the previous hardcoded value.
+   */
+  readonly toggleAriaLabel = input('Toggle node');
+
+  /**
+   * Semantic test-id base applied to the built-in toggle button (`button-`
+   * prefixed). When unset, derives from the node's own `testId` — a row with
+   * `[testId]="['vdev', guid]"` gets `button-toggle-vdev-<guid>` — so every
+   * identified row has an addressable expand control without repeating the id.
+   */
+  readonly toggleTestId = input<TnTestIdValue>();
+
+  /**
+   * Suppresses the built-in toggle button (and its alignment spacer) so the
+   * consumer can render a fully custom toggle in the projected content.
+   *
+   * The built-in button is the only keyboard/AT-operable expand control this
+   * component guarantees — when hiding it, the projected replacement must be
+   * an accessible control (a real button with an aria-label, not a bare icon).
+   */
+  readonly hideToggle = input(false, { transform: booleanAttribute });
+
+  private readonly changeDetectorRef = inject(ChangeDetectorRef);
+  private readonly hostTestId = inject(TnTestIdDirective, { self: true });
+  private destroyed = false;
+
+  /** Explicit `toggleTestId` wins; otherwise `toggle`-scoped from the node's `testId`. */
+  protected readonly resolvedToggleTestId = computed<TnTestIdValue>(() => {
+    const explicit = this.toggleTestId();
+    if (explicit !== undefined && explicit !== null) {
+      return explicit;
+    }
+    const nodeTestId = this.hostTestId.testId();
+    if (nodeTestId === undefined || nodeTestId === null || nodeTestId === '') {
+      return undefined;
+    }
+    // Role leads (button-toggle-<node id>), mirroring tn-dialog-shell's
+    // button-close-<base> convention for fixed chrome.
+    return scopeTestId('toggle', ...(Array.isArray(nodeTestId) ? nodeTestId : [nodeTestId]));
+  });
+
   constructor() {
     super(
       inject(ElementRef<HTMLElement>),
@@ -32,6 +77,7 @@ export class TnNestedTreeNodeComponent<T, K = T> extends CdkNestedTreeNode<T, K>
       inject(CDK_TREE_NODE_OUTLET_NODE, { optional: true }),
       inject(ChangeDetectorRef, { optional: true })
     );
+    inject(DestroyRef).onDestroy(() => this.destroyed = true);
   }
 
   /** The tree node's level in the tree */
@@ -39,11 +85,11 @@ export class TnNestedTreeNodeComponent<T, K = T> extends CdkNestedTreeNode<T, K>
     if (this._tree?.treeControl?.getLevel) {
       // Legacy treeControl approach
       return this._tree.treeControl.getLevel(this.data);
-    } else if (this._tree && 'getLevel' in this._tree && typeof (this._tree as { getLevel?: (data: T) => number }).getLevel === 'function') {
-      // Modern childrenAccessor approach - use tree's getLevel method
-      return (this._tree as { getLevel: (data: T) => number }).getLevel(this.data);
     }
-    return 0;
+    // CdkTreeNode's own getter: levelAccessor when available, else the parent
+    // node's aria-level from the DOM — which is what makes nested trees (whose
+    // NestedTreeControl has no getLevel) report correct levels.
+    return this._tree ? super.level : 0;
   }
 
   /** Whether the tree node is expandable */
@@ -51,6 +97,11 @@ export class TnNestedTreeNodeComponent<T, K = T> extends CdkNestedTreeNode<T, K>
     if (this._tree?.treeControl?.isExpandable) {
       // Legacy treeControl approach
       return this._tree.treeControl.isExpandable(this.data);
+    } else if (this._tree?.treeControl) {
+      // NestedTreeControl leaves `isExpandable` undefined unless configured —
+      // fall back to its getChildren (synchronous arrays only).
+      const children = this._tree.treeControl.getChildren?.(this.data);
+      return Array.isArray(children) && children.length > 0;
     } else if (this._tree && 'childrenAccessor' in this._tree && (this._tree as { childrenAccessor?: (data: T) => T[] | undefined }).childrenAccessor) {
       // Modern childrenAccessor approach
       const childrenAccessor = (this._tree as { childrenAccessor: (data: T) => T[] | undefined }).childrenAccessor;
@@ -74,5 +125,44 @@ export class TnNestedTreeNodeComponent<T, K = T> extends CdkNestedTreeNode<T, K>
       return (this._tree as { isExpanded: (data: T) => boolean }).isExpanded(this.data);
     }
     return false;
+  }
+
+  /**
+   * CDK inserts child node views synchronously from `ngAfterContentInit`, i.e.
+   * mid-change-detection. Because the outlet here lives in PROJECTED content
+   * whose view container has already been traversed for the current pass, the
+   * new views would miss their first check and trip dev-mode NG0100. Defer the
+   * insertion to a microtask so the views are created outside change detection
+   * and get a normal first check on the pass that `markForCheck` schedules.
+   */
+  protected override updateChildrenNodes(children?: T[]): void {
+    queueMicrotask(() => {
+      if (this.destroyed) {
+        return;
+      }
+      super.updateChildrenNodes(children);
+      this.changeDetectorRef.markForCheck();
+    });
+  }
+
+  /**
+   * Toggles the node; with the Alt key held, toggles the node together with all
+   * of its descendants. Replaces `cdkTreeNodeToggle` on the built-in button so
+   * the Alt behavior is deterministic (a stacked template listener would run in
+   * an unspecified order relative to the CDK toggle's own click handler).
+   */
+  protected toggleNode(event: Event): void {
+    if (!this._tree) {
+      return;
+    }
+    if ('altKey' in event && (event as MouseEvent | KeyboardEvent).altKey) {
+      this._tree.toggleDescendants(this.data);
+    } else {
+      this._tree.toggle(this.data);
+    }
+    // Mirrors CdkTreeNodeToggle's focus handling. `_keyManager` is a CDK
+    // underscore member, so a CDK upgrade may rename it — the optional call
+    // degrades to "focus not moved" rather than breaking the toggle.
+    this._tree._keyManager?.focusItem(this);
   }
 }

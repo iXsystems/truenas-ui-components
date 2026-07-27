@@ -1,5 +1,6 @@
 import type { BaseHarnessFilters } from '@angular/cdk/testing';
 import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
+import { parseSize, type SizeStandard } from './size-conversion';
 import { TnIconHarness } from '../icon/icon.harness';
 
 /**
@@ -33,6 +34,7 @@ export class TnInputHarness extends ComponentHarness {
   private prefixIconEl = this.locatorForOptional('tn-icon.tn-input__prefix-icon');
   private suffixButton = this.locatorForOptional('.tn-input__suffix-action');
   private suffixIconEl = this.locatorForOptional(TnIconHarness.with({ ancestor: '.tn-input__suffix-action' }));
+  private visibilityToggle = this.locatorForOptional('.tn-input__visibility-toggle');
 
   /**
    * Gets a `HarnessPredicate` that can be used to search for an input
@@ -45,6 +47,9 @@ export class TnInputHarness extends ComponentHarness {
     return new HarnessPredicate(TnInputHarness, options)
       .addOption('placeholder', options.placeholder, async (harness, placeholder) => {
         return (await harness.getPlaceholder()) === placeholder;
+      })
+      .addOption('name', options.name, async (harness, name) => {
+        return (await harness.getName()) === name;
       });
   }
 
@@ -77,6 +82,136 @@ export class TnInputHarness extends ComponentHarness {
     const input = await this.inputEl();
     await input.clear();
     await input.sendKeys(value);
+  }
+
+  /**
+   * Gets the current value parsed as a number, mirroring what the control emits in number mode.
+   * Empty or non-numeric input resolves to null (never 0).
+   *
+   * @returns Promise resolving to the numeric value, or null.
+   */
+  async getNumericValue(): Promise<number | null> {
+    const raw = await this.getValue();
+    if (raw === '' || raw === '-' || raw === '.' || raw === '-.') {
+      return null;
+    }
+    // Mirror the control's parse exactly: integer mode (inputmode="numeric") parses
+    // via parseInt, decimal mode via parseFloat. Reading inputmode rather than always
+    // using parseFloat keeps the harness and component from disagreeing on a string
+    // like "3.5" in integer mode (component emits 3; parseFloat would say 3.5).
+    // Both avoid Number()'s coercions (hex/whitespace) the control never emits.
+    const integerMode = (await this.getInputMode()) === 'numeric';
+    const parsed = integerMode ? parseInt(raw, 10) : parseFloat(raw);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  /**
+   * Gets the displayed value of a `Size`-type input parsed into a byte count,
+   * mirroring what the control emits to the form model.
+   *
+   * The harness reads only the DOM, so it can't see the component's configured
+   * `sizeStandard`/`sizeDefaultUnit` — pass them here to match the field under
+   * test. Defaults to IEC base-2 with a `MiB` default unit (the component
+   * defaults). Empty/invalid input resolves to `null`.
+   *
+   * @param standard Unit standard the field uses (defaults to `'iec'`).
+   * @param defaultUnit Unit assumed for bare numbers (defaults to `'MiB'`).
+   * @returns Promise resolving to the byte count, or null.
+   */
+  async getByteValue(standard: SizeStandard = 'iec', defaultUnit = 'MiB'): Promise<number | null> {
+    return parseSize(await this.getValue(), defaultUnit, standard);
+  }
+
+  /**
+   * Gets the `inputmode` attribute (e.g. 'numeric' or 'decimal' in number mode).
+   *
+   * @returns Promise resolving to the inputmode string, or null if unset.
+   */
+  async getInputMode(): Promise<string | null> {
+    const input = await this.inputEl();
+    return input.getAttribute('inputmode');
+  }
+
+  /**
+   * Whether the field is in integer-only mode (i.e. `allowDecimals` is false).
+   *
+   * Derived from `inputmode`: number mode renders `numeric` for integers and
+   * `decimal` otherwise. A convenience wrapper so tests need not know that mapping.
+   *
+   * @returns Promise resolving to true when only whole numbers are accepted.
+   */
+  async isIntegerOnly(): Promise<boolean> {
+    return (await this.getInputMode()) === 'numeric';
+  }
+
+  /**
+   * Gets the `aria-label` (accessible name set via the `ariaLabel` input).
+   *
+   * @returns Promise resolving to the aria-label string, or null if unset.
+   */
+  async getAriaLabel(): Promise<string | null> {
+    if (await this.isMultiline()) {
+      const textarea = await this.textareaEl();
+      return textarea.getAttribute('aria-label');
+    }
+    const input = await this.inputEl();
+    return input.getAttribute('aria-label');
+  }
+
+  /**
+   * Gets the native `name` attribute (set via the `name` input).
+   *
+   * @returns Promise resolving to the name string, or null if unset.
+   */
+  async getName(): Promise<string | null> {
+    if (await this.isMultiline()) {
+      const textarea = await this.textareaEl();
+      return textarea.getAttribute('name');
+    }
+    const input = await this.inputEl();
+    return input.getAttribute('name');
+  }
+
+  /**
+   * Gets the native `autocomplete` attribute (set via the `autocomplete` input).
+   *
+   * @returns Promise resolving to the autocomplete token, or null if unset.
+   */
+  async getAutocomplete(): Promise<string | null> {
+    if (await this.isMultiline()) {
+      const textarea = await this.textareaEl();
+      return textarea.getAttribute('autocomplete');
+    }
+    const input = await this.inputEl();
+    return input.getAttribute('autocomplete');
+  }
+
+  /**
+   * Checks whether the input is readonly (set via the `readonly` input).
+   *
+   * @returns Promise resolving to true if the input is readonly.
+   */
+  async isReadonly(): Promise<boolean> {
+    if (await this.isMultiline()) {
+      const textarea = await this.textareaEl();
+      return (await textarea.getProperty<boolean>('readOnly')) ?? false;
+    }
+    const input = await this.inputEl();
+    return (await input.getProperty<boolean>('readOnly')) ?? false;
+  }
+
+  /**
+   * Checks whether the input is marked required (set via the `required` input).
+   *
+   * @returns Promise resolving to true if the input is required.
+   */
+  async isRequired(): Promise<boolean> {
+    if (await this.isMultiline()) {
+      const textarea = await this.textareaEl();
+      return (await textarea.getProperty<boolean>('required')) ?? false;
+    }
+    const input = await this.inputEl();
+    return (await input.getProperty<boolean>('required')) ?? false;
   }
 
   /**
@@ -178,6 +313,46 @@ export class TnInputHarness extends ComponentHarness {
   }
 
   /**
+   * Checks whether the password visibility toggle is present.
+   *
+   * @returns Promise resolving to true if the toggle button exists.
+   */
+  async hasPasswordToggle(): Promise<boolean> {
+    const toggle = await this.visibilityToggle();
+    return toggle !== null;
+  }
+
+  /**
+   * Whether the password is currently revealed (the field renders as plain text).
+   *
+   * Only meaningful on password-type inputs; resolves false while masked.
+   *
+   * @returns Promise resolving to true when the value is shown in plain text.
+   */
+  async isPasswordRevealed(): Promise<boolean> {
+    const toggle = await this.visibilityToggle();
+    if (!toggle) {
+      return false;
+    }
+    const input = await this.inputEl();
+    return (await input.getProperty<string>('type')) === 'text';
+  }
+
+  /**
+   * Clicks the password visibility toggle, switching between masked and
+   * plain-text display.
+   *
+   * @returns Promise that resolves when the click action is complete.
+   */
+  async togglePasswordVisibility(): Promise<void> {
+    const toggle = await this.visibilityToggle();
+    if (!toggle) {
+      throw new Error('No password visibility toggle found on this input.');
+    }
+    return toggle.click();
+  }
+
+  /**
    * Focuses the input element.
    *
    * @returns Promise that resolves when the input is focused.
@@ -212,4 +387,6 @@ export class TnInputHarness extends ComponentHarness {
 export interface InputHarnessFilters extends BaseHarnessFilters {
   /** Filters by placeholder text. */
   placeholder?: string;
+  /** Filters by the native `name` attribute (typically the form control name). */
+  name?: string;
 }

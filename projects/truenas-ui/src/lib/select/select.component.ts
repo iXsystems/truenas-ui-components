@@ -1,13 +1,14 @@
 
 import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, ElementRef, forwardRef, inject, input, output, signal, viewChild, ViewContainerRef } from '@angular/core';
-import type { OnDestroy, TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, forwardRef, inject, input, output, signal, viewChild, ViewContainerRef } from '@angular/core';
+import type { ElementRef, OnDestroy, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { Subscription } from 'rxjs';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
-import { TnTestIdDirective } from '../test-id';
+import { injectTnFormFieldAria } from '../form-field/form-field-context';
+import { TnTestIdDirective, composeTestId, controlTestId, optionTestId, scopeTestId, type TnTestIdValue } from '../test-id';
 
 export interface TnSelectOption<T = unknown> {
   value: T;
@@ -20,6 +21,18 @@ export interface TnSelectOptionGroup<T = unknown> {
   options: TnSelectOption<T>[];
   disabled?: boolean;
 }
+
+/**
+ * A keyboard-navigable row in the open dropdown. Either the synthetic
+ * "select all" action (multiple mode with `showSelectAll`) or a real option.
+ * Both carry the stable DOM `id` used for `aria-activedescendant`.
+ */
+type TnSelectNavEntry<T> =
+  | { kind: 'select-all'; id: string }
+  | { kind: 'option'; option: TnSelectOption<T>; id: string };
+// Minimum gap the dropdown panel keeps from each viewport edge. Also derives
+// the pane's maxWidth (viewport minus both margins) — see attachOverlay().
+const VIEWPORT_MARGIN_PX = 8;
 
 @Component({
   selector: 'tn-select',
@@ -41,21 +54,75 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
   optionGroups = input<TnSelectOptionGroup<T>[]>([]);
   placeholder = input<string>('Select an option');
   /**
-   * Accessible label for the select trigger. When set, this is used as the
-   * trigger's `aria-label` instead of the visible `placeholder` — useful in
+   * Explicit accessible label for the select trigger. When set, this is used as
+   * the trigger's `aria-label` instead of the visible `placeholder` — useful in
    * contexts (e.g. a pager's page-size dropdown) where the placeholder text
-   * doesn't accurately describe the field's purpose to screen readers.
+   * doesn't accurately describe the field's purpose to screen readers. Inside a
+   * `tn-form-field` the field's label is associated automatically (via
+   * `aria-labelledby`) and takes precedence over the placeholder fallback;
+   * setting this overrides both.
    */
   ariaLabel = input<string | undefined>(undefined);
+
+  /**
+   * ARIA wiring from an enclosing `tn-form-field` (label, error/hint,
+   * invalid, required). All-null when standalone or when `ariaLabel` overrides.
+   */
+  protected readonly fieldAria = injectTnFormFieldAria(this.ariaLabel);
+
+  /**
+   * `aria-label` for the trigger. An explicit `ariaLabel` always wins; the
+   * `placeholder` fallback only applies while no form-field label is wired via
+   * `aria-labelledby`, so the trigger never advertises two names at once.
+   */
+  protected triggerAriaLabel = computed(() =>
+    this.ariaLabel() ?? (this.fieldAria.labelledby() ? null : this.placeholder())
+  );
   /**
    * Message shown inside the dropdown when no options (and no option groups)
    * are available. Defaults to the English `'No options available'`; consumers
    * with i18n requirements can pass a translated string.
    */
   noOptionsLabel = input<string>('No options available');
+  /**
+   * When `true` (single-select mode only), prepends a synthetic "empty"
+   * option to the dropdown so users can unset a chosen value: picking it
+   * resets the selection to `null`, shows the placeholder again, and emits
+   * `null` via `selectionChange` (and to any bound form control). Mirrors
+   * webui ix-select's `--` option. Ignored when `multiple` is set — there,
+   * values are cleared by toggling them off individually.
+   */
+  allowEmpty = input<boolean>(false);
+  /** Label of the empty option rendered when `allowEmpty` is set. */
+  emptyLabel = input<string>('--');
   disabled = input<boolean>(false);
-  testId = input<string>('');
+  /**
+   * When `true` (multiple mode only), renders a "select all" row at the top of
+   * the dropdown that toggles every selectable (non-disabled) option on/off in
+   * one click. Mirrors webui ix-select's `[showSelectAll]`. Ignored in single
+   * mode. Its checkbox reflects the aggregate state: checked when all are
+   * selected, indeterminate when only some are.
+   */
+  showSelectAll = input<boolean>(false);
+  /** Label of the select-all row rendered when `showSelectAll` is set. */
+  selectAllLabel = input<string>('Select All');
+  testId = input<TnTestIdValue>(undefined);
+  /** Test-id base, falling back to the bound control name when `testId` is unset. */
+  protected resolvedTestId = controlTestId(this.testId);
   multiple = input<boolean>(false);
+
+  /**
+   * Optional extractor for the per-option test-id discriminator. Defaults to
+   * the option's `value` (when a string/number) or its `label`. Provide this
+   * when option values are objects, or to pick a more stable/unique key —
+   * mirrors webui's `[ixTest]="[controlName, option.<field>]"` discriminator.
+   *
+   * @example
+   * ```html
+   * <tn-select testId="user" [optionTestIdKey]="(o) => o.value.id" ... />
+   * ```
+   */
+  optionTestIdKey = input<(option: TnSelectOption<T>) => string | number | null | undefined>();
 
   /**
    * Custom comparator for matching option values against the selected value(s).
@@ -72,7 +139,11 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    */
   compareWith = input<(a: T | null, b: T | null) => boolean>();
 
-  selectionChange = output<T>();
+  /**
+   * Emits the picked value on each selection in single mode. Emits `null`
+   * when the user picks the `allowEmpty` empty option to clear the field.
+   */
+  selectionChange = output<T | null>();
   /** Emits the full array of selected values after each toggle in multiple mode. */
   multiSelectionChange = output<T[]>();
 
@@ -92,34 +163,62 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
 
   /**
    * Id namespace used by all DOM ids the template emits (dropdown panel,
-   * option rows, group labels). Prefers `testId` when set so tests can target
-   * specific instances; otherwise falls back to a per-instance counter so two
+   * option rows, group labels). Prefers the resolved test-id base (explicit
+   * `testId`, else the bound control name) so tests can target specific
+   * instances; otherwise falls back to a per-instance counter so two
    * `<tn-select>`s on the same page never collide on `aria-controls`/group ids.
    */
-  protected idNamespace = computed(() => this.testId() || this.instanceId);
+  protected idNamespace = computed(() => composeTestId(undefined, this.resolvedTestId()) || this.instanceId);
 
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
+
+  /**
+   * The synthetic clear-selection option (`allowEmpty`, single mode only).
+   * Its value is `null` cast to `T` so it flows through the same selection
+   * path as real options — `selectedValue`/`writeValue` already model "no
+   * selection" as `null`, so picking it clears the field for free.
+   */
+  protected emptyOption = computed<TnSelectOption<T> | null>(() => {
+    if (!this.allowEmpty() || this.multiple()) {return null;}
+    return { value: null as unknown as T, label: this.emptyLabel() };
+  });
+
+  /** Ungrouped options as rendered: the empty option (when enabled) first. */
+  protected displayOptions = computed<TnSelectOption<T>[]>(() => {
+    const empty = this.emptyOption();
+    return empty ? [empty, ...this.options()] : this.options();
+  });
+
+  /** Whether `option` is the synthetic `allowEmpty` clear option. */
+  protected isEmptyOption(option: TnSelectOption<T>): boolean {
+    return option === this.emptyOption();
+  }
 
   /**
    * Selectable, non-disabled options in display order (regular options first,
    * then groups). Used by keyboard navigation so we can skip disabled
    * entries and group headers without a separate filter pass.
    */
-  navigableOptions = computed(() => {
-    const result: { option: TnSelectOption<T>; id: string }[] = [];
+  navigableOptions = computed<TnSelectNavEntry<T>[]>(() => {
+    const result: TnSelectNavEntry<T>[] = [];
+    // The select-all row is the first navigable entry when shown, so
+    // ArrowDown from the closed trigger lands on it before the options.
+    if (this.showSelectAllRow()) {
+      result.push({ kind: 'select-all', id: this.selectAllId() });
+    }
     const baseId = `tn-select-opt-${this.idNamespace()}`;
     let i = 0;
-    for (const opt of this.options()) {
+    for (const opt of this.displayOptions()) {
       if (!opt.disabled) {
-        result.push({ option: opt, id: `${baseId}-${i}` });
+        result.push({ kind: 'option', option: opt, id: `${baseId}-${i}` });
       }
       i++;
     }
     for (const group of this.optionGroups()) {
       for (const opt of group.options) {
         if (!opt.disabled && !group.disabled) {
-          result.push({ option: opt, id: `${baseId}-${i}` });
+          result.push({ kind: 'option', option: opt, id: `${baseId}-${i}` });
         }
         i++;
       }
@@ -136,7 +235,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
 
   /** Stable DOM id for an option; matches what navigableOptions() assigns. */
   optionId(option: TnSelectOption<T>): string | null {
-    const entry = this.navigableOptions().find((x) => x.option === option);
+    const entry = this.navigableOptions().find((x) => x.kind === 'option' && x.option === option);
     return entry?.id ?? null;
   }
 
@@ -144,13 +243,28 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
   isOptionFocused(option: TnSelectOption<T>): boolean {
     const idx = this.focusedIndex();
     const nav = this.navigableOptions();
-    return idx >= 0 && idx < nav.length && nav[idx].option === option;
+    const entry = idx >= 0 && idx < nav.length ? nav[idx] : null;
+    return entry?.kind === 'option' && entry.option === option;
+  }
+
+  /**
+   * Test-id segments for an option row, consumed by `[tnTestId]` with
+   * `tnTestIdType="option"` — see {@link optionTestId} for the derivation
+   * rules (shared with `tn-autocomplete`).
+   */
+  protected optionTestIdParts(option: TnSelectOption<T>): (string | number | null | undefined)[] {
+    // The synthetic empty option gets a fixed `empty` discriminator — its
+    // label (`--` by default) would be stripped entirely by kebab
+    // normalization, leaving a non-unique id.
+    if (this.isEmptyOption(option)) {
+      return scopeTestId(this.resolvedTestId(), 'empty');
+    }
+    return optionTestId(this.resolvedTestId(), option, this.optionTestIdKey());
   }
 
   private onChange = (_value: T | T[] | null) => {};
   private onTouched = () => {};
 
-  private elementRef = inject(ElementRef);
   private cdr = inject(ChangeDetectorRef);
   private overlay = inject(Overlay);
   private viewContainerRef = inject(ViewContainerRef);
@@ -207,9 +321,13 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     const selected = this.selectedValue();
     if (selected !== null && selected !== undefined) {
       const idx = this.navigableOptions().findIndex((x) =>
-        this.compareValues(x.option.value, selected),
+        x.kind === 'option' && this.compareValues(x.option.value, selected),
       );
       this.focusedIndex.set(idx);
+    } else if (this.emptyOption()) {
+      // A cleared value means the empty option (always first) is the current
+      // selection — seed keyboard focus there.
+      this.focusedIndex.set(0);
     } else {
       this.focusedIndex.set(-1);
     }
@@ -222,47 +340,68 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    *
    * Why an overlay (vs. an inline absolutely-positioned panel):
    *   - Escapes parent `overflow: hidden`/clipping in surrounding layouts.
-   *   - `outsidePointerEvents()` notifies on outside pointerdown WITHOUT
-   *     intercepting the click (no backdrop) — so the user's click reaches
-   *     the underlying target while the select closes silently.
    *   - Position is recomputed on scroll so the panel stays attached.
-   *   - Width is matched to the trigger so the panel doesn't jump in size.
+   *
+   * Dismissal uses a transparent, full-viewport backdrop (`backdropClick()`).
+   * We previously ran backdrop-less with `outsidePointerEvents()`, but that
+   * only closes when the click lands strictly OUTSIDE the overlay pane — and
+   * the pane was sized to the (often full-width) trigger while the panel itself
+   * is only as wide as its content. The empty pane area to the right of the
+   * options stayed `pointer-events: auto`, so clicks there never counted as
+   * "outside" and the dropdown wouldn't close. A transparent backdrop closes on
+   * ANY click outside the panel regardless of pane geometry — the standard
+   * pattern used by native `<select>` and Material's `mat-select`. We therefore
+   * also drop the explicit `width`: the pane sizes to the panel content so the
+   * clickable surface matches what the user sees.
    */
   private attachOverlay(): void {
     const trigger = this.triggerEl().nativeElement;
+    // Flexible dimensions must stay OFF: with them on, CDK treats a panel
+    // squeezed against the viewport edge as a valid "flexible fit" (no
+    // minWidth is set, so any width fits), never falls through to the
+    // end-aligned positions or push, and the panel content gets clipped at
+    // the screen edge. Rigid dimensions + push keep the panel fully visible;
+    // height is already capped by the panel's own max-height.
     const positionStrategy = this.overlay
       .position()
       .flexibleConnectedTo(trigger)
+      .withFlexibleDimensions(false)
+      .withPush(true)
+      // Push can only rescue a panel narrower than the narrowed viewport
+      // (clientWidth - 2 * margin); the pane maxWidth below covers the
+      // wider-than-viewport case.
+      .withViewportMargin(VIEWPORT_MARGIN_PX)
       .withPositions([
         { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
         { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
+        { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 4 },
+        { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom', offsetY: -4 },
       ]);
 
     this.overlayRef = this.overlay.create({
       positionStrategy,
       scrollStrategy: this.overlay.scrollStrategies.reposition(),
-      hasBackdrop: false,
-      width: trigger.offsetWidth,
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-transparent-backdrop',
+      // Cap the pane so option labels wrap instead of clipping when they are
+      // wider than the viewport. Percentage, not 100vw: the pane resolves %
+      // against the overlay container, which CDK sizes to clientWidth
+      // (scrollbar excluded) — the same base its position math uses — so the
+      // capped pane always fits the push viewport exactly. 100vw includes the
+      // scrollbar and would overshoot by its width.
+      maxWidth: `calc(100% - ${2 * VIEWPORT_MARGIN_PX}px)`,
     });
 
     const portal = new TemplatePortal(this.dropdownTemplate(), this.viewContainerRef);
     this.overlayRef.attach(portal);
 
-    // Click-outside (non-intercepting). The pointer event still reaches the
-    // element the user clicked; we just notice and close.
-    //
-    // Important: ignore events whose target is inside the select host. A
-    // pointerdown on the trigger is "outside the overlay" from CDK's POV but
-    // it's our own toggle target — letting closeDropdown fire here races the
-    // trigger's click handler and the dropdown immediately reopens.
+    // Dismiss on any click outside the panel. The transparent backdrop spans
+    // the viewport and captures the click, so this fires no matter where the
+    // user clicks (including the empty area beside a narrow panel). Clicking
+    // the trigger while open also hits the backdrop — it closes here and the
+    // trigger's own click never fires, so there's no reopen race.
     this.overlaySubs.push(
-      this.overlayRef.outsidePointerEvents().subscribe((event: MouseEvent) => {
-        const target = event.target as Node | null;
-        if (target && this.elementRef.nativeElement.contains(target)) {
-          return;
-        }
-        this.closeDropdown(false);
-      }),
+      this.overlayRef.backdropClick().subscribe(() => this.closeDropdown(false)),
     );
 
     // Escape as a fallback (the trigger keydown handler covers the common case,
@@ -395,6 +534,90 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
   protected hasAnyOptions = computed(() => {
     return this.options().length > 0 || this.optionGroups().length > 0;
   });
+
+  /**
+   * Values of every selectable (non-disabled) option, across ungrouped options
+   * and enabled groups. This is the set the select-all row operates on —
+   * disabled options and options in disabled groups are excluded because they
+   * can't be toggled individually either.
+   *
+   * Values are deduped with `compareValues` so a value that appears both
+   * ungrouped and inside a group isn't pushed twice — that would make
+   * select-all diverge from `toggleOption()`, which never produces duplicates.
+   */
+  protected selectableValues = computed<T[]>(() => {
+    const values: T[] = [];
+    const push = (value: T): void => {
+      if (!values.some((v) => this.compareValues(v, value))) {values.push(value);}
+    };
+    for (const opt of this.options()) {
+      if (!opt.disabled) {push(opt.value);}
+    }
+    for (const group of this.optionGroups()) {
+      if (group.disabled) {continue;}
+      for (const opt of group.options) {
+        if (!opt.disabled) {push(opt.value);}
+      }
+    }
+    return values;
+  });
+
+  /** Whether the select-all row is shown (multiple mode, opted in, with options). */
+  protected showSelectAllRow = computed(() =>
+    this.multiple() && this.showSelectAll() && this.selectableValues().length > 0,
+  );
+
+  /** Stable DOM id of the select-all row, for aria-activedescendant. */
+  protected selectAllId = computed(() => `tn-select-selectall-${this.idNamespace()}`);
+
+  /** True when every selectable option is currently selected. */
+  protected allSelected = computed<boolean>(() => {
+    const selectable = this.selectableValues();
+    if (selectable.length === 0) {return false;}
+    const selected = this.selectedValues();
+    return selectable.every((v) => selected.some((s) => this.compareValues(s, v)));
+  });
+
+  /** True when some — but not all — selectable options are selected. */
+  protected selectAllIndeterminate = computed<boolean>(() => {
+    if (this.allSelected()) {return false;}
+    const selected = this.selectedValues();
+    return this.selectableValues().some((v) => selected.some((s) => this.compareValues(s, v)));
+  });
+
+  /** Test-id segments for the select-all row; mirrors ix-select's `[name, 'select-all']`. */
+  protected selectAllTestIdParts(): (string | number | null | undefined)[] {
+    return scopeTestId(this.resolvedTestId(), 'select-all');
+  }
+
+  /**
+   * Toggles every selectable option: clears them all when they're all already
+   * selected, otherwise selects them all. Preserves the multi-select "open"
+   * behaviour — the dropdown stays open so the user can keep adjusting.
+   *
+   * Disabled-but-selected values (e.g. a disabled option pre-selected via
+   * `writeValue`) are preserved on both paths: the user can't toggle those
+   * rows individually, so select-all must not silently discard them either.
+   */
+  protected toggleSelectAll(): void {
+    if (this.isDisabled()) {return;}
+    const selectable = this.selectableValues();
+    const preserved = this.selectedValues().filter(
+      (v) => !selectable.some((s) => this.compareValues(s, v)),
+    );
+    const updated = this.allSelected() ? preserved : [...preserved, ...selectable];
+    this.selectedValues.set(updated);
+    this.onChange(updated);
+    this.multiSelectionChange.emit(updated);
+    this.cdr.markForCheck();
+  }
+
+  /** Whether the select-all row is the keyboard-highlighted item. */
+  protected isSelectAllFocused(): boolean {
+    const idx = this.focusedIndex();
+    const nav = this.navigableOptions();
+    return idx >= 0 && idx < nav.length && nav[idx].kind === 'select-all';
+  }
 
   /** One-shot guard so the object-compare warning fires at most once per instance. */
   private warnedAboutObjectCompare = false;
@@ -536,7 +759,12 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     const idx = this.focusedIndex();
     const nav = this.navigableOptions();
     if (idx < 0 || idx >= nav.length) {return;}
-    this.onOptionClick(nav[idx].option);
+    const entry = nav[idx];
+    if (entry.kind === 'select-all') {
+      this.toggleSelectAll();
+    } else {
+      this.onOptionClick(entry.option);
+    }
   }
 
   private scrollFocusedIntoView(): void {

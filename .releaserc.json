@@ -9,10 +9,20 @@
         { "type": "perf", "release": "patch" },
         { "type": "refactor", "release": "patch" },
         { "breaking": true, "release": "minor" }
-      ]
+      ],
+      "parserOpts": {
+        "headerPattern": "^(?:.+ / )?(\\w*)(?:\\(([\\w$.\\-*/ ]*)\\))?!?: (.+)$",
+        "headerCorrespondence": ["type", "scope", "subject"],
+        "breakingHeaderPattern": "^(?:.+ / )?(\\w*)(?:\\(([\\w$.\\-*/ ]*)\\))?!: (.+)$"
+      }
     }],
     ["@semantic-release/release-notes-generator", {
       "preset": "conventionalcommits",
+      "parserOpts": {
+        "headerPattern": "^(?:.+ / )?(\\w*)(?:\\(([\\w$.\\-*/ ]*)\\))?!?: (.+)$",
+        "headerCorrespondence": ["type", "scope", "subject"],
+        "breakingHeaderPattern": "^(?:.+ / )?(\\w*)(?:\\(([\\w$.\\-*/ ]*)\\))?!: (.+)$"
+      },
       "presetConfig": {
         "types": [
           { "type": "feat", "section": "Features" },

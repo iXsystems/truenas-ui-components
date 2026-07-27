@@ -1,3 +1,5 @@
+@use '../pipes/label-markup/label-markup' as label-markup;
+
 :host {
   display: inline-block;
   width: fit-content;
@@ -5,6 +7,8 @@
 }
 
 .storybook-button {
+  @include label-markup.inline-code;
+
   display: inline-block;
   cursor: pointer;
   border: 0;
@@ -18,6 +22,20 @@
     cursor: not-allowed;
     pointer-events: none;
   }
+}
+
+.storybook-button--has-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.storybook-button__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 a.storybook-button {

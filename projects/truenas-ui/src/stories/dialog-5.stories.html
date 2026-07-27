@@ -1,0 +1,40 @@
+<tn-dialog-shell
+  title="Export Pool"
+  [showCloseButton]="canClose()"
+  [hideContent]="contentHidden()"
+  [hideActions]="actionsHidden()">
+
+  <!-- Always-present wrapper: the content section is never `:empty`, so it can
+       only be collapsed via the explicit [hideContent] input (see its docs). -->
+  <div>
+    <p>
+      A long-running export. While it runs the close (✕) is hidden, so the job
+      can only be minimized — never dismissed from the chrome.
+    </p>
+    <p>Toggle the new shell inputs to preview each chrome state:</p>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <tn-button
+        type="button"
+        variant="outline"
+        [label]="canClose() ? 'Hide close (✕)' : 'Show close (✕)'"
+        (click)="canClose.set(!canClose())" />
+      <tn-button
+        type="button"
+        variant="outline"
+        [label]="actionsHidden() ? 'Show actions footer' : 'Hide actions footer'"
+        (click)="actionsHidden.set(!actionsHidden())" />
+    </div>
+  </div>
+
+  <!-- The content/actions toggles are cross-placed (content toggles live in the
+       footer, the footer toggle lives in content) so the dialog can never hide
+       both regions at once and strand the user with no controls. -->
+  <div tnDialogAction>
+    <tn-button
+      type="button"
+      variant="outline"
+      [label]="contentHidden() ? 'Show content' : 'Hide content'"
+      (click)="contentHidden.set(!contentHidden())" />
+    <tn-button type="button" color="primary" label="Minimize" (click)="ref.close('minimized')" />
+  </div>
+</tn-dialog-shell>

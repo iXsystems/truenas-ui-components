@@ -443,3 +443,23 @@ describe('TnButtonToggleGroup — checked style inputs', () => {
     expect(groupEl.style.getPropertyValue('--tn-button-toggle-checked-bg')).toBe('var(--tn-primary)');
   });
 });
+
+@Component({
+  standalone: true,
+  imports: [TnButtonToggleComponent, TnButtonToggleGroupComponent],
+  template: `<tn-button-toggle-group testId="format"><tn-button-toggle testId="bold" value="b">B</tn-button-toggle></tn-button-toggle-group>`,
+})
+class ButtonToggleTestIdHostComponent {}
+
+describe('TnButtonToggle test-id prefixes', () => {
+  it('prefixes the group (button-toggle-group-) and each toggle (button-toggle-)', async () => {
+    await TestBed.configureTestingModule({ imports: [ButtonToggleTestIdHostComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(ButtonToggleTestIdHostComponent);
+    fixture.detectChanges();
+
+    const group = fixture.nativeElement.querySelector('div.tn-button-toggle-group') as HTMLElement;
+    const toggleBtn = fixture.nativeElement.querySelector('.tn-button-toggle__button') as HTMLElement;
+    expect(group.getAttribute('data-testid')).toBe('button-toggle-group-format');
+    expect(toggleBtn.getAttribute('data-testid')).toBe('button-toggle-bold');
+  });
+});

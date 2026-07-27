@@ -20,6 +20,12 @@ import type { IconLibraryType } from '../icon/icon.component';
     [disabled]="disabled()"
     [multiline]="multiline()"
     [rows]="rows()"
+    [allowDecimals]="allowDecimals()"
+    [ariaLabel]="ariaLabel()"
+    [autocomplete]="autocomplete()"
+    [name]="name()"
+    [readonly]="readonly()"
+    [required]="required()"
     [prefixIcon]="prefixIcon()"
     [prefixIconLibrary]="prefixIconLibrary()"
     [suffixIcon]="suffixIcon()"
@@ -34,6 +40,12 @@ class TestHostComponent {
   disabled = signal(false);
   multiline = signal(false);
   rows = signal(3);
+  allowDecimals = signal(true);
+  ariaLabel = signal<string | undefined>(undefined);
+  autocomplete = signal<string | undefined>(undefined);
+  name = signal<string | undefined>(undefined);
+  readonly = signal(false);
+  required = signal(false);
   prefixIcon = signal<string | undefined>(undefined);
   prefixIconLibrary = signal<IconLibraryType | undefined>(undefined);
   suffixIcon = signal<string | undefined>(undefined);
@@ -191,6 +203,110 @@ describe('TnInputHarness', () => {
     });
   });
 
+  describe('number type', () => {
+    beforeEach(() => {
+      hostComponent.inputType.set(InputType.Number);
+      fixture.detectChanges();
+    });
+
+    it('should expose decimal inputmode by default', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getInputMode()).toBe('decimal');
+    });
+
+    it('should expose numeric inputmode in integer mode', async () => {
+      hostComponent.allowDecimals.set(false);
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getInputMode()).toBe('numeric');
+    });
+
+    it('should report isIntegerOnly false in decimal mode', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.isIntegerOnly()).toBe(false);
+    });
+
+    it('should report isIntegerOnly true when decimals are disallowed', async () => {
+      hostComponent.allowDecimals.set(false);
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.isIntegerOnly()).toBe(true);
+    });
+
+    it('should read the value as a number', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      await input.setValue('42');
+      expect(await input.getNumericValue()).toBe(42);
+    });
+
+    it('should read an empty value as null', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getNumericValue()).toBeNull();
+    });
+
+    it('should mirror the control and parse as an integer in integer mode', async () => {
+      hostComponent.allowDecimals.set(false);
+      fixture.detectChanges();
+
+      // Put a fractional string into the field without going through keystroke
+      // sanitization (mirrors a writeValue from the form model). In integer mode the
+      // control parses this via parseInt -> 3, so the harness must agree rather than
+      // returning 3.5 via parseFloat.
+      const inputEl = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+      inputEl.value = '3.5';
+
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getNumericValue()).toBe(3);
+    });
+  });
+
+  describe('size type', () => {
+    beforeEach(() => {
+      hostComponent.inputType.set(InputType.Size);
+      fixture.detectChanges();
+    });
+
+    it('should read the displayed value as a byte count', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      await input.setValue('2 GiB');
+      expect(await input.getByteValue()).toBe(2 * 1024 ** 3);
+    });
+
+    it('should read an empty value as null', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getByteValue()).toBeNull();
+    });
+
+    it('should honor a custom default unit for a bare number', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      await input.setValue('200');
+      expect(await input.getByteValue('iec', 'KiB')).toBe(200 * 1024);
+    });
+
+    it('should read SI-standard values when told', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      await input.setValue('2 GB');
+      expect(await input.getByteValue('si')).toBe(2_000_000_000);
+    });
+  });
+
+  describe('aria-label', () => {
+    it('should return null when unset', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getAriaLabel()).toBeNull();
+    });
+
+    it('should expose the aria-label when set', async () => {
+      hostComponent.ariaLabel.set('Full name');
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getAriaLabel()).toBe('Full name');
+    });
+  });
+
   describe('prefix icon', () => {
     it('should not have prefix icon by default', async () => {
       const input = await loader.getHarness(TnInputHarness);
@@ -309,6 +425,58 @@ describe('TnInputHarness', () => {
     });
   });
 
+  describe('password visibility toggle', () => {
+    beforeEach(() => {
+      hostComponent.inputType.set(InputType.Password);
+      fixture.detectChanges();
+    });
+
+    it('should report the toggle on password fields', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.hasPasswordToggle()).toBe(true);
+    });
+
+    it('should not report the toggle on non-password fields', async () => {
+      hostComponent.inputType.set(InputType.PlainText);
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.hasPasswordToggle()).toBe(false);
+    });
+
+    it('should start masked and reveal/mask on toggle', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.isPasswordRevealed()).toBe(false);
+
+      await input.togglePasswordVisibility();
+      expect(await input.isPasswordRevealed()).toBe(true);
+
+      await input.togglePasswordVisibility();
+      expect(await input.isPasswordRevealed()).toBe(false);
+    });
+
+    it('should preserve the value across toggles', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      await input.setValue('hunter2');
+
+      await input.togglePasswordVisibility();
+      expect(await input.getValue()).toBe('hunter2');
+    });
+
+    it('should not confuse the toggle with a suffix action', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.hasSuffixAction()).toBe(false);
+    });
+
+    it('should throw when toggling a field without a toggle', async () => {
+      hostComponent.inputType.set(InputType.PlainText);
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness);
+      await expect(input.togglePasswordVisibility()).rejects.toThrow('No password visibility toggle found on this input.');
+    });
+  });
+
   describe('focus / blur', () => {
     it('should focus the input', async () => {
       const input = await loader.getHarness(TnInputHarness);
@@ -336,6 +504,63 @@ describe('TnInputHarness', () => {
 
       const activeEl = fixture.nativeElement.querySelector(':focus');
       expect(activeEl?.tagName).toBe('TEXTAREA');
+    });
+  });
+
+  describe('native attributes', () => {
+    it('gets the name and autocomplete attributes', async () => {
+      hostComponent.name.set('username');
+      hostComponent.autocomplete.set('username');
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getName()).toBe('username');
+      expect(await input.getAutocomplete()).toBe('username');
+    });
+
+    it('resolves null when name and autocomplete are unset', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getName()).toBeNull();
+      expect(await input.getAutocomplete()).toBeNull();
+    });
+
+    it('reports readonly and required state', async () => {
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.isReadonly()).toBe(false);
+      expect(await input.isRequired()).toBe(false);
+
+      hostComponent.readonly.set(true);
+      hostComponent.required.set(true);
+      fixture.detectChanges();
+
+      expect(await input.isReadonly()).toBe(true);
+      expect(await input.isRequired()).toBe(true);
+    });
+
+    it('filters by name', async () => {
+      hostComponent.name.set('password');
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness.with({ name: 'password' }));
+      expect(await input.getName()).toBe('password');
+
+      const noMatch = await loader.getHarnessOrNull(TnInputHarness.with({ name: 'other' }));
+      expect(noMatch).toBeNull();
+    });
+
+    it('reads native attributes from the textarea when multiline', async () => {
+      hostComponent.multiline.set(true);
+      hostComponent.name.set('notes');
+      hostComponent.autocomplete.set('off');
+      hostComponent.readonly.set(true);
+      hostComponent.required.set(true);
+      fixture.detectChanges();
+
+      const input = await loader.getHarness(TnInputHarness);
+      expect(await input.getName()).toBe('notes');
+      expect(await input.getAutocomplete()).toBe('off');
+      expect(await input.isReadonly()).toBe(true);
+      expect(await input.isRequired()).toBe(true);
     });
   });
 });

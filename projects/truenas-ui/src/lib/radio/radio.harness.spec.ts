@@ -15,7 +15,7 @@ import { TnRadioHarness } from './radio.harness';
       label="Option A"
       value="a"
       name="test-group"
-      testId="radio-a" />
+      testId="a" />
     <tn-radio
       label="Option B"
       value="b"
@@ -24,7 +24,7 @@ import { TnRadioHarness } from './radio.harness';
       label="Disabled Option"
       value="c"
       name="test-group"
-      testId="radio-disabled"
+      testId="disabled"
       [disabled]="true" />
   `,
 })

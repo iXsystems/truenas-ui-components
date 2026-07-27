@@ -4,12 +4,13 @@ import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
 import { Component, viewChild, inject, input, output, computed, signal, forwardRef } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { TnTestIdDirective } from '../test-id';
+import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
+import { TnTestIdDirective, controlTestId, type TnTestIdValue } from '../test-id';
 
 @Component({
   selector: 'tn-radio',
   standalone: true,
-  imports: [CommonModule, FormsModule, A11yModule, TnTestIdDirective],
+  imports: [CommonModule, FormsModule, A11yModule, TnTestIdDirective, LabelMarkupPipe],
   templateUrl: './radio.component.html',
   styleUrl: './radio.component.scss',
   providers: [
@@ -28,7 +29,9 @@ export class TnRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
   name = input<string | undefined>(undefined);
   disabled = input<boolean>(false);
   required = input<boolean>(false);
-  testId = input<string | undefined>(undefined);
+  testId = input<TnTestIdValue>(undefined);
+  /** Test-id base, falling back to the bound control name when `testId` is unset. */
+  protected resolvedTestId = controlTestId(this.testId);
   error = input<string | null>(null);
 
   change = output<unknown>();
@@ -79,6 +82,11 @@ export class TnRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
   }
 
   onRadioChange(event: Event): void {
+    // The bubbling native change would reach ancestor (change) bindings in
+    // addition to the component's `change` output — Ivy invokes the binding for
+    // both, firing every listener twice per toggle. The output is the single
+    // public event, so the native event stops here.
+    event.stopPropagation();
     const target = event.target as HTMLInputElement;
     this.checked = target.checked;
     if (target.checked) {

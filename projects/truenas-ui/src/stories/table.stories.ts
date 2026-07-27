@@ -69,6 +69,10 @@ const meta: Meta<TnTableComponent> = {
     displayedColumns: { description: 'Column names to display in order', control: false },
     selectable: { description: 'Show checkbox column for row selection', control: 'boolean' },
     expandable: { description: 'Enable click-to-expand detail rows', control: 'boolean' },
+    isRowExpandable: {
+      description: 'Optional per-row predicate `(row) => boolean`; rows returning false show no expand control',
+      control: false,
+    },
     bordered: { description: 'Adds an outer border around the table', control: 'boolean' },
     activeRow: { description: 'Row reference to mark with the active-row indicator (left bar)', control: false },
     activeBg: { description: 'Override for the active-row background color (any CSS color or var())', control: 'text' },
@@ -221,6 +225,43 @@ export const ExpandableTable: Story = {
           <div style="padding: 8px 0;">
             <strong>{{ user.name }}</strong> — {{ user.email }}<br>
             Role: {{ user.role }} · Status: {{ user.status }}
+          </div>
+        </ng-template>
+      </tn-table>
+    `,
+  }),
+};
+
+export const PerRowExpandable: Story = {
+  render: () => ({
+    props: {
+      tableData: sampleData,
+      tableColumns: ['name', 'email', 'status'],
+      // Only active users can expand; inactive rows show no expand control.
+      canExpand: (user: User) => user.status === 'active',
+    },
+    template: `
+      <tn-table
+        [dataSource]="tableData"
+        [displayedColumns]="tableColumns"
+        [expandable]="true"
+        [isRowExpandable]="canExpand">
+        <ng-container tnColumnDef="name">
+          <ng-template tnHeaderCellDef>Name</ng-template>
+          <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="email">
+          <ng-template tnHeaderCellDef>Email</ng-template>
+          <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="status">
+          <ng-template tnHeaderCellDef>Status</ng-template>
+          <ng-template let-user tnCellDef>{{ user.status }}</ng-template>
+        </ng-container>
+
+        <ng-template let-user tnDetailRowDef>
+          <div style="padding: 8px 0;">
+            <strong>{{ user.name }}</strong> — {{ user.email }}
           </div>
         </ng-template>
       </tn-table>

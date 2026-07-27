@@ -1,4 +1,4 @@
-<div role="tablist" [ngClass]="classes()" [attr.aria-orientation]="orientation()" [tnTestId]="testId()">
+<div role="tablist" tnTestIdType="tabs" [ngClass]="classes()" [attr.aria-orientation]="orientation()" [tnTestId]="testId()">
   <div #tabHeader class="tn-tabs__header">
     <ng-content select="tn-tab" />
     @if (highlightBarVisible()) {

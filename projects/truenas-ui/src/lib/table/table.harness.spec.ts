@@ -42,12 +42,14 @@ const TEST_USERS: User[] = [
       [displayedColumns]="['name', 'email']"
       [selectable]="selectable"
       [expandable]="expandable"
+      [isRowExpandable]="isRowExpandable"
       [activeRow]="activeRow"
       [loading]="loading"
       [clickable]="clickable"
       (sortChange)="onSort($event)"
       (selectionChange)="selectedUsers = $event"
-      (rowClick)="lastClickedRow = $event">
+      (rowClick)="lastClickedRow = $event"
+      (rowDoubleClick)="lastDoubleClickedRow = $event">
       <ng-container tnColumnDef="name" [sortable]="true">
         <ng-template tnHeaderCellDef>Name</ng-template>
         <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
@@ -70,10 +72,12 @@ class TableHarnessTestComponent {
   tableData: User[] = [...TEST_USERS];
   selectable = false;
   expandable = false;
+  isRowExpandable: ((row: User) => boolean) | undefined = undefined;
   activeRow: User | null = null;
   loading = false;
   clickable = false;
   lastClickedRow: User | null = null;
+  lastDoubleClickedRow: User | null = null;
   lastSort: TnSortEvent | null = null;
   selectedUsers: User[] = [];
 
@@ -261,6 +265,23 @@ describe('TnTableHarness', () => {
       await table.toggleRowExpansion(2);
       expect(await table.getExpandedRowCount()).toBe(2);
     });
+
+    it('should render an expand control on every row by default', async () => {
+      const table = await loader.getHarness(TnTableHarness);
+      expect(await table.hasExpandControl(0)).toBe(true);
+      expect(await table.hasExpandControl(1)).toBe(true);
+      expect(await table.hasExpandControl(2)).toBe(true);
+    });
+
+    it('should not render an expand control on rows the predicate disallows', async () => {
+      component.isRowExpandable = (user) => user.id === 1;
+      fixture.detectChanges();
+
+      const table = await loader.getHarness(TnTableHarness);
+      expect(await table.hasExpandControl(0)).toBe(true);
+      expect(await table.hasExpandControl(1)).toBe(false);
+      expect(await table.hasExpandControl(2)).toBe(false);
+    });
   });
 
   describe('clickable rows', () => {
@@ -285,6 +306,12 @@ describe('TnTableHarness', () => {
       const table = await loader.getHarness(TnTableHarness);
       await table.pressKeyOnRow(0, 'enter');
       expect(component.lastClickedRow?.name).toBe('Alice');
+    });
+
+    it('should emit rowDoubleClick on doubleClickRow', async () => {
+      const table = await loader.getHarness(TnTableHarness);
+      await table.doubleClickRow(1);
+      expect(component.lastDoubleClickedRow?.name).toBe('Bob');
     });
   });
 

@@ -4,15 +4,10 @@ import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { TnAutocompleteComponent } from './autocomplete.component';
+import { TnAutocompleteComponent, type TnAutocompleteOption } from './autocomplete.component';
 import { TnAutocompleteHarness } from './autocomplete.harness';
 
-interface Fruit {
-  id: string;
-  name: string;
-}
-
-const displayFruit = (fruit: Fruit): string => fruit.name;
+type FruitOption = TnAutocompleteOption<string>;
 
 @Component({
   selector: 'tn-test-host',
@@ -22,7 +17,6 @@ const displayFruit = (fruit: Fruit): string => fruit.name;
   template: `
     <tn-autocomplete
       [options]="options()"
-      [displayWith]="displayFruit"
       [placeholder]="placeholder()"
       [disabled]="disabled()"
       [requireSelection]="requireSelection()"
@@ -32,22 +26,21 @@ const displayFruit = (fruit: Fruit): string => fruit.name;
   `
 })
 class TestHostComponent {
-  options = signal<Fruit[]>([
-    { id: 'apple', name: 'Apple' },
-    { id: 'banana', name: 'Banana' },
-    { id: 'cherry', name: 'Cherry' },
-    { id: 'date', name: 'Date' },
-    { id: 'elderberry', name: 'Elderberry' },
+  options = signal<FruitOption[]>([
+    { label: 'Apple', value: 'apple' },
+    { label: 'Banana', value: 'banana' },
+    { label: 'Cherry', value: 'cherry' },
+    { label: 'Date', value: 'date' },
+    { label: 'Elderberry', value: 'elderberry' },
   ]);
   placeholder = signal('Search fruits...');
   disabled = signal(false);
   requireSelection = signal(false);
-  customFilter = signal<((option: Fruit, term: string) => boolean) | undefined>(undefined);
-  control = new FormControl<Fruit | null>(null);
-  selectedValue: Fruit | null = null;
-  displayFruit = displayFruit;
+  customFilter = signal<((option: FruitOption, term: string) => boolean) | undefined>(undefined);
+  control = new FormControl<string | null>(null);
+  selectedValue: FruitOption | null = null;
 
-  handleSelection(value: Fruit): void {
+  handleSelection(value: FruitOption): void {
     this.selectedValue = value;
   }
 }
@@ -133,7 +126,7 @@ describe('TnAutocompleteHarness', () => {
       await ac.selectOption('Cherry');
 
       expect(await ac.getInputValue()).toBe('Cherry');
-      expect(hostComponent.selectedValue).toEqual({ id: 'cherry', name: 'Cherry' });
+      expect(hostComponent.selectedValue).toEqual({ label: 'Cherry', value: 'cherry' });
     });
 
     it('should select an option by regex', async () => {
@@ -141,7 +134,7 @@ describe('TnAutocompleteHarness', () => {
       await ac.selectOption(/ban/i);
 
       expect(await ac.getInputValue()).toBe('Banana');
-      expect(hostComponent.selectedValue).toEqual({ id: 'banana', name: 'Banana' });
+      expect(hostComponent.selectedValue).toEqual({ label: 'Banana', value: 'banana' });
     });
 
     it('should throw when option is not found', async () => {
@@ -155,7 +148,7 @@ describe('TnAutocompleteHarness', () => {
       const ac = await loader.getHarness(TnAutocompleteHarness);
       await ac.selectOption('Apple');
 
-      expect(hostComponent.control.value).toEqual({ id: 'apple', name: 'Apple' });
+      expect(hostComponent.control.value).toBe('apple');
     });
   });
 
@@ -171,7 +164,7 @@ describe('TnAutocompleteHarness', () => {
   describe('filtering', () => {
     it('should use custom filterFn when provided', async () => {
       hostComponent.customFilter.set(
-        (option: Fruit, term: string) => option.name.startsWith(term)
+        (option: FruitOption, term: string) => option.label.startsWith(term)
       );
 
       const ac = await loader.getHarness(TnAutocompleteHarness);

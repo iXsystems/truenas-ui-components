@@ -13,7 +13,7 @@ import {
   viewChild,
   afterNextRender,
 } from '@angular/core';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 export type TnDrawerMode = 'side' | 'over';
 export type TnDrawerPosition = 'start' | 'end';
@@ -57,7 +57,7 @@ export class TnDrawerComponent implements OnDestroy {
    * Test-id applied to the drawer panel. Rendered under whichever attribute name is
    * configured via `TN_TEST_ATTR` (default `data-testid`).
    */
-  testId = input<string | undefined>(undefined);
+  testId = input<TnTestIdValue>(undefined);
 
   /** Fires after the open transition completes */
   openedComplete = output<void>();

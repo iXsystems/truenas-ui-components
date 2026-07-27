@@ -1,0 +1,43 @@
+:host {
+  display: inline-block;
+}
+
+.tn-file-input__container {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+// Visually hidden: the native input (a focusable dialog target) and the
+// screen-reader announcer for selection changes.
+.tn-file-input__native,
+.tn-file-input__announcer {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// Visual styling lives in tn-button; only keep it from forcing its host to
+// stretch within the inline layout.
+.tn-file-input__button {
+  flex-shrink: 0;
+}
+
+.tn-file-input__filename {
+  font-size: 14px;
+  color: var(--tn-fg1);
+  max-width: 30ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &--empty {
+    color: var(--tn-fg2);
+  }
+}

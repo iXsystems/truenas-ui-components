@@ -1,6 +1,7 @@
 <button
   role="tab"
   type="button"
+  tnTestIdType="tab"
   [ngClass]="classes()"
   [tnTestId]="testId()"
   [attr.aria-selected]="isActive()"
@@ -22,7 +23,7 @@
     </span>
   }
   <span class="tn-tab__label">
-    {{ label() }}
+    <span [innerHTML]="label() | tnLabelMarkup"></span>
     <ng-content />
   </span>
 </button>

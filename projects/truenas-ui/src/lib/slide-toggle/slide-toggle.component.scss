@@ -1,5 +1,6 @@
 // Slide Toggle Component Styles
 // Based on Angular Material Design patterns
+@use '../pipes/label-markup/label-markup' as label-markup;
 
 .tn-slide-toggle {
   display: inline-flex;
@@ -16,6 +17,8 @@
   }
 
   &__label-text {
+    @include label-markup.inline-code;
+
     font-size: 14px;
     line-height: 1.4;
     color: var(--tn-fg1);

@@ -1,3 +1,5 @@
+@use '../pipes/label-markup/label-markup' as label-markup;
+
 .tn-menu-container {
   display: inline-block;
   position: relative;
@@ -111,6 +113,8 @@
 }
 
 .tn-menu-item-label {
+  @include label-markup.inline-code;
+
   flex: 1;
   white-space: nowrap;
   overflow: hidden;

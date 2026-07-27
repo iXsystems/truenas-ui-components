@@ -1,3 +1,5 @@
+@use '../pipes/label-markup/label-markup' as label-markup;
+
 .tn-radio {
   display: inline-block;
   margin-bottom: 0.5rem;
@@ -67,6 +69,8 @@
   }
   
   &__text {
+    @include label-markup.inline-code;
+
     color: var(--tn-fg1, #000000);
     font-size: 14px;
     line-height: 1.4;

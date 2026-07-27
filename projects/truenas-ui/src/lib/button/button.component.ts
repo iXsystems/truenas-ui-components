@@ -2,12 +2,14 @@ import { CommonModule } from '@angular/common';
 import type { AfterViewInit } from '@angular/core';
 import { Component, ElementRef, computed, inject, input, output, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TnTestIdDirective } from '../test-id';
+import { TnIconComponent } from '../icon/icon.component';
+import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 @Component({
   selector: 'tn-button',
   standalone: true,
-  imports: [CommonModule, RouterLink, TnTestIdDirective],
+  imports: [CommonModule, RouterLink, TnTestIdDirective, LabelMarkupPipe, TnIconComponent],
   templateUrl: './button.component.html',
   styleUrls: ['./button.component.scss'],
 })
@@ -19,12 +21,34 @@ export class TnButtonComponent implements AfterViewInit {
   variant = input<'filled' | 'outline'>('filled');
   backgroundColor = input<string | undefined>(undefined);
   label = input<string>('Button');
+  /**
+   * Optional icon rendered alongside the label. Accepts any name resolvable by
+   * `tn-icon` (sprite/registry/library). Use `iconPosition` to place it before
+   * or after the label.
+   */
+  icon = input<string | undefined>(undefined);
+  /**
+   * Side of the label the `icon` sits on. `left` (default) renders the icon
+   * before the label; `right` renders it after. No effect when `icon` is unset.
+   */
+  iconPosition = input<'left' | 'right'>('left');
   disabled = input<boolean>(false);
   /**
-   * Test-id applied to the rendered element. Rendered under whichever attribute
-   * name is configured via `TN_TEST_ATTR` (default `data-testid`).
+   * Native `type` of the rendered `<button>`. Defaults to `button` so stray
+   * clicks never submit an enclosing form. Set to `submit` for a form's save
+   * button — this is what makes pressing Enter in a form field fire the
+   * form's `(submit)`/`(ngSubmit)` handler; a `(onClick)` binding alone does
+   * not. Ignored in anchor mode (`href`/`routerLink`).
    */
-  testId = input<string | undefined>(undefined);
+  type = input<'button' | 'submit' | 'reset'>('button');
+  /**
+   * Semantic test-id base for the rendered element. The library prepends the
+   * element type (`button`) and renders the result under whichever attribute
+   * name is configured via `TN_TEST_ATTR` (default `data-testid`) — e.g.
+   * `testId="save"` → `button-save`. Accepts an array of segments to scope the
+   * id (e.g. `[formControlName, 'submit']`).
+   */
+  testId = input<TnTestIdValue>(undefined);
 
   /**
    * Renders the button as an `<a>` with a plain `href` attribute.
@@ -75,7 +99,11 @@ export class TnButtonComponent implements AfterViewInit {
       }
     }
 
-    return ['storybook-button', `storybook-button--${this.size}`, mode];
+    const classes = ['storybook-button', `storybook-button--${this.size}`, mode];
+    if (this.icon()) {
+      classes.push('storybook-button--has-icon');
+    }
+    return classes;
   });
 
   handleAnchorClick(event: MouseEvent): void {

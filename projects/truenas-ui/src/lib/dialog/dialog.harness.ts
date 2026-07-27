@@ -107,6 +107,28 @@ export class TnDialogHarness extends ComponentHarness {
   }
 
   /**
+   * Gets the `tabindex` attribute of the close button, or null if unset.
+   * A null/non-negative value means the button is reachable via the Tab key.
+   *
+   * @returns Promise resolving to the tabindex attribute value.
+   */
+  async getCloseButtonTabIndex(): Promise<string | null> {
+    const closeBtn = await this._closeButton();
+    return closeBtn.getAttribute('tabindex');
+  }
+
+  /**
+   * Gets the `tabindex` attribute of the fullscreen button, or null if unset
+   * or if the dialog has no fullscreen button.
+   *
+   * @returns Promise resolving to the tabindex attribute value.
+   */
+  async getFullscreenButtonTabIndex(): Promise<string | null> {
+    const btn = await this._fullscreenButton();
+    return btn ? btn.getAttribute('tabindex') : null;
+  }
+
+  /**
    * Clicks an action button in the dialog footer by its label.
    * Only matches buttons inside the `tnDialogAction` footer area, not buttons in content.
    *

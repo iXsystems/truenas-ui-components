@@ -1,5 +1,13 @@
+import { provideRouter } from '@angular/router';
+import { applicationConfig } from '@storybook/angular';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, within } from 'storybook/test';
+import { TestIdInspectorComponent } from './testid-inspector.component';
+import { TnButtonComponent } from '../lib/button/button.component';
+import {
+  TnCardFooterActionsDirective,
+  TnCardHeaderActionsDirective,
+} from '../lib/card/card-action.directive';
 import { TnCardHeaderDirective } from '../lib/card/card-header.directive';
 import { TnCardComponent } from '../lib/card/card.component';
 
@@ -36,7 +44,15 @@ const meta: Meta<TnCardComponent> = {
     },
     titleLink: {
       control: 'text',
-      description: 'URL to navigate to when title is clicked',
+      description: 'External URL; navigates via window.location when the title is clicked',
+    },
+    titleRouterLink: {
+      control: 'text',
+      description: 'Angular router commands; renders the title as an in-app (SPA) link',
+    },
+    titleTooltip: {
+      control: 'text',
+      description: 'Help/hover text shown on the title',
     },
     headerStatus: {
       control: 'object',
@@ -97,6 +113,46 @@ export const Default: Story = {
     const canvas = within(canvasElement);
     const card = canvas.getByText('Card Title');
     await expect(card).toBeInTheDocument();
+  },
+};
+
+export const TitleRouterLinkAndTooltip: Story = {
+  decorators: [applicationConfig({ providers: [provideRouter([])] })],
+  args: {
+    title: 'Recent Orders',
+    titleRouterLink: '/orders',
+    titleTooltip: 'Open the full orders page',
+    elevation: 'medium',
+    padding: 'medium',
+    padContent: true,
+  },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-card
+        [title]="title"
+        [titleRouterLink]="titleRouterLink"
+        [titleTooltip]="titleTooltip"
+        [elevation]="elevation"
+        [padding]="padding"
+        [padContent]="padContent"
+      >
+        <p>The title is an in-app router link (client-side navigation) and carries a tooltip.</p>
+      </tn-card>
+    `,
+  }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    // The decorative open-in-new icon is aria-hidden, so the link's accessible
+    // name stays just the title text (not "Recent Orders open-in-new").
+    const link = canvas.getByRole('link', { name: 'Recent Orders' });
+    await expect(link).toBeInTheDocument();
+    // RouterLink resolves the href to an absolute URL in the browser, so just
+    // assert the link is a real anchor with an href rather than an exact value.
+    await expect(link).toHaveAttribute('href');
+    // The tooltip is a separate help affordance (generic name; the tooltip text
+    // is its description), not folded into the title text.
+    await expect(canvas.getByRole('button', { name: 'More information' })).toBeInTheDocument();
   },
 };
 
@@ -455,6 +511,80 @@ export const WithProjectedHeader: Story = {
   },
 };
 
+export const WithProjectedFooterActions: Story = {
+  args: {
+    title: 'Shares',
+    elevation: 'medium',
+    padding: 'medium',
+    padContent: true,
+    bordered: true,
+  },
+  render: (args) => ({
+    props: args,
+    moduleMetadata: {
+      imports: [TnCardFooterActionsDirective, TnButtonComponent],
+    },
+    // Escape hatch for actions the declarative `primaryAction` config can't express
+    // (e.g. a button wrapped in a structural directive for permission gating). The
+    // buttons inside the <ng-template> render as direct children of the footer flex
+    // row — same orientation as a declarative primaryAction, no wrapper or styling.
+    template: `
+      <tn-card
+        [title]="title"
+        [elevation]="elevation"
+        [padding]="padding"
+        [padContent]="padContent"
+        [bordered]="bordered"
+        [background]="background">
+        <p>This card declares its footer actions as projected buttons.</p>
+        <ng-template tnCardFooterActions>
+          <tn-button variant="outline" color="default" label="Import" />
+          <tn-button variant="filled" color="primary" label="Add" />
+        </ng-template>
+      </tn-card>
+    `,
+  }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText('Add')).toBeInTheDocument();
+    await expect(canvas.getByText('Import')).toBeInTheDocument();
+  },
+};
+
+export const WithProjectedHeaderActions: Story = {
+  args: {
+    title: 'Shares',
+    elevation: 'medium',
+    padding: 'medium',
+    padContent: true,
+    bordered: true,
+  },
+  render: (args) => ({
+    props: args,
+    moduleMetadata: {
+      imports: [TnCardHeaderActionsDirective, TnButtonComponent],
+    },
+    template: `
+      <tn-card
+        [title]="title"
+        [elevation]="elevation"
+        [padding]="padding"
+        [padContent]="padContent"
+        [bordered]="bordered"
+        [background]="background">
+        <ng-template tnCardHeaderActions>
+          <tn-button variant="outline" color="default" label="Refresh" />
+        </ng-template>
+        <p>Header actions render top-right, between the header control and the kebab menu.</p>
+      </tn-card>
+    `,
+  }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText('Refresh')).toBeInTheDocument();
+  },
+};
+
 export const CompleteExample: Story = {
   args: {
     title: 'My Service',
@@ -513,5 +643,49 @@ export const CompleteExample: Story = {
         </ul>
       </tn-card>
     `,
+  }),
+};
+
+/**
+ * **Test IDs.** Card slots are data-driven, so each slot's id comes from its
+ * own config field rather than a single base (under `data-testid` by default /
+ * `data-test`):
+ *
+ * | Slot | Config field | Emitted id |
+ * |---|---|---|
+ * | primary action (`tn-button`) | `primaryAction.testId='save'` | `button-save` |
+ * | secondary action (`tn-button`) | `secondaryAction.testId='cancel'` | `button-cancel` |
+ * | footer link (`<button>`) | `footerLink.testId='view-details'` | `link-view-details` |
+ * | header kebab trigger (`tn-icon-button`) | `headerMenuTriggerTestId='actions'` | `button-actions` |
+ * | header status pill (non-interactive `<span>`) | `headerStatus.testId='status-active'` | `status-active` (verbatim — no type prefix) |
+ *
+ * Each forwarded id is type-prefixed by the inner component it lands on; the
+ * status pill is verbatim because it isn't an interactive control. Table below
+ * is read from the live DOM (the kebab *menu items* only exist once opened).
+ */
+export const TestIds: Story = {
+  render: () => ({
+    props: {
+      primary: { label: 'Save', testId: 'save', handler: () => {} },
+      secondary: { label: 'Cancel', testId: 'cancel', handler: () => {} },
+      footer: { label: 'View details', testId: 'view-details', handler: () => {} },
+      status: { label: 'Active', type: 'success', testId: 'status-active' },
+      menu: [{ id: 'edit', label: 'Edit' }],
+    },
+    template: `
+      <tn-testid-inspector>
+        <tn-card
+          title="Server"
+          [headerStatus]="status"
+          [headerMenu]="menu"
+          headerMenuTriggerTestId="actions"
+          [primaryAction]="primary"
+          [secondaryAction]="secondary"
+          [footerLink]="footer">
+          <p>Card content</p>
+        </tn-card>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnCardComponent, TestIdInspectorComponent] },
   }),
 };

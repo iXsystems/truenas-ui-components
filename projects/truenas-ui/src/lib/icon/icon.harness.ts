@@ -79,8 +79,13 @@ export class TnIconHarness extends ComponentHarness {
       })
       .addOption('customSize', options.customSize, async (harness, customSize) => {
         return (await harness.getCustomSize()) === customSize;
+      })
+      .addOption('testId', options.testId, async (harness, testId) => {
+        return (await harness.getTestId()) === testId;
       });
   }
+
+  private root = this.locatorFor('.tn-icon');
 
   /**
    * Gets the icon name.
@@ -217,6 +222,22 @@ export class TnIconHarness extends ComponentHarness {
     const host = await this.host();
     return host.click();
   }
+
+  /**
+   * Gets the composed test-id attribute value (e.g. `icon-close`).
+   *
+   * @returns Promise resolving to the test-id string, or null when unset.
+   *
+   * @example
+   * ```typescript
+   * const icon = await loader.getHarness(TnIconHarness);
+   * expect(await icon.getTestId()).toBe('icon-close');
+   * ```
+   */
+  async getTestId(): Promise<string | null> {
+    const root = await this.root();
+    return (await root.getAttribute('data-testid')) ?? (await root.getAttribute('data-test'));
+  }
 }
 
 /**
@@ -233,4 +254,6 @@ export interface IconHarnessFilters extends BaseHarnessFilters {
   fullSize?: boolean;
   /** Filters by custom size value. */
   customSize?: string;
+  /** Filters by composed test-id value (e.g. `icon-close`). */
+  testId?: string;
 }

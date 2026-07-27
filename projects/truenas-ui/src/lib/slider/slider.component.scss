@@ -82,33 +82,43 @@
     cursor: not-allowed;
   }
   
-  // Focus styles - show visual thumb when focused
+  // Focus styles - the visible focus ring is drawn on the knob instead (see below).
   &:focus {
     outline: none;
   }
-  
+
   &:focus-visible {
     outline: none;
-    
-    + .tn-slider-visual-thumb {
-      outline: 2px solid var(--tn-primary, #007bff);
-      outline-offset: 2px;
-    }
   }
 }
+
+// Keyboard focus ring on the knob. The hidden <input> is projected via <ng-content>
+// and sits *after* the visual thumb in the DOM, so a sibling combinator can't reach
+// back to it — match the container with :has() instead. ::ng-deep is required because
+// the projected input is scoped to the consumer, not this component.
+:host ::ng-deep .tn-slider-container:has(.tn-slider-thumb:focus-visible) .tn-slider-thumb-knob {
+  outline: 2px solid var(--tn-primary, #007bff);
+  outline-offset: 2px;
+}
+
+// Knob width — shared so the visual thumb's centering offset stays in sync with it.
+$knob-width: 20px;
 
 // Visual thumb indicator (real DOM element) - fader style
 .tn-slider-thumb-visual {
   position: absolute;
   top: 50%;
   left: 0;
+  // Center on the knob's own half-width (kept off `transform` so `left` can
+  // animate value changes instead of snapping).
+  margin-left: -$knob-width * 0.5;
   pointer-events: none;
   z-index: 3;
-  transition: transform 0.1s ease-out;
+  transition: left 0.1s ease-out;
 }
 
 .tn-slider-thumb-knob {
-  width: 20px;
+  width: $knob-width;
   height: 24px;
   background: var(--tn-primary, #007bff);
   border: 2px solid var(--tn-bg1, white);

@@ -3,6 +3,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
 import { BehaviorSubject } from 'rxjs';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import type {
   TnTableDataProvider,
   TnTablePagination,
@@ -15,7 +16,7 @@ const meta: Meta<TnTablePagerComponent> = {
   tags: ['autodocs'],
   decorators: [
     moduleMetadata({
-      imports: [FormsModule, NoopAnimationsModule, TnTablePagerComponent],
+      imports: [FormsModule, NoopAnimationsModule, TnTablePagerComponent, TestIdInspectorComponent],
     }),
   ],
   parameters: {
@@ -168,6 +169,77 @@ export const DataProviderMode: Story = {
         size <strong>{{ provider.pagination.pageSize }}</strong>,
         total <strong>{{ provider.totalRows }}</strong>
       </p>
+    `,
+  }),
+};
+
+/**
+ * **Test IDs.** The library owns the element-type prefix: each interactive
+ * element emits a fully-qualified id under the configured attribute
+ * (`data-testid` by default; `data-test` when the app provides
+ * `{ provide: TN_TEST_ATTR, useValue: 'data-test' }`). Consumers don't author
+ * these — the pager renders its own controls.
+ *
+ * With **no base**, the always-rendered controls emit:
+ *
+ * | Element | Emitted id |
+ * |---|---|
+ * | page-size select (`.tn-select-container`) | `select-page-size` |
+ * | first-page button | `button-first-page` |
+ * | previous-page button | `button-previous-page` |
+ * | next-page button | `button-next-page` |
+ * | last-page button | `button-last-page` |
+ *
+ * Pass a **`testId` base** to scope every control — essential when more than one
+ * pager renders in the same view (otherwise the child ids above collide).
+ * `testId="storage"` yields `select-storage-page-size`,
+ * `button-storage-first-page`, etc. (see the **Multiple Pagers** story).
+ *
+ * The table below is read from the **live DOM**, so it always reflects what the
+ * component actually emits. (Page-size *options* live in an overlay and appear
+ * only while the select is open — open it to see `option-page-size-*`.)
+ */
+export const TestIds: Story = {
+  args: {
+    currentPage: 1,
+    pageSize: 20,
+    pageSizeOptions: [10, 20, 50, 100],
+    totalItems: 247,
+  },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-testid-inspector>
+        <tn-table-pager
+          [currentPage]="currentPage"
+          [pageSize]="pageSize"
+          [pageSizeOptions]="pageSizeOptions"
+          [totalItems]="totalItems" />
+      </tn-testid-inspector>
+    `,
+  }),
+};
+
+/**
+ * **Multiple pagers in one view.** Two pagers without a `testId` base would both
+ * emit `select-page-size` / `button-first-page` — duplicate, ambiguous selectors.
+ * Give each a distinct `testId` base and every child id is scoped uniquely:
+ * `select-storage-page-size` vs `select-snapshots-page-size`, etc. The live
+ * tables below show the two disjoint id sets.
+ */
+export const MultiplePagers: Story = {
+  render: () => ({
+    props: { total: 247 },
+    template: `
+      <h4 style="margin:0 0 8px;font:600 13px/1 sans-serif;">Pager testId="storage"</h4>
+      <tn-testid-inspector>
+        <tn-table-pager testId="storage" [totalItems]="total" />
+      </tn-testid-inspector>
+
+      <h4 style="margin:24px 0 8px;font:600 13px/1 sans-serif;">Pager testId="snapshots"</h4>
+      <tn-testid-inspector>
+        <tn-table-pager testId="snapshots" [totalItems]="total" />
+      </tn-testid-inspector>
     `,
   }),
 };

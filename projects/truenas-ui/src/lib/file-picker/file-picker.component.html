@@ -1,19 +1,24 @@
-<div class="tn-file-picker-container" [tnTestId]="testId()">
+<div class="tn-file-picker-container" tnTestIdType="file-picker" [tnTestId]="resolvedTestId()">
   <div #wrapper ixInput class="tn-file-picker-wrapper" style="padding-right: 40px;">
     <input
       type="text"
       class="tn-file-picker-input"
+      tnTestIdType="input"
+      [tnTestId]="resolvedTestId()"
       [class.error]="hasError()"
-      [value]="selectedPath() | tnStripMntPrefix"
+      [value]="selectedPath()"
       [placeholder]="placeholder()"
       [readonly]="!allowManualInput()"
       [disabled]="isDisabled()"
-      (input)="onPathInput($event)">
+      (click)="onInputClick()"
+      (change)="onPathCommit($event)">
 
     <button
       type="button"
       class="tn-file-picker-toggle"
       aria-label="Open file picker"
+      tnTestIdType="button"
+      [tnTestId]="toggleTestId()"
       [disabled]="isDisabled()"
       (click)="openFilePicker()">
       <tn-icon name="folder" library="mdi" />
@@ -23,23 +28,23 @@
   <ng-template #filePickerTemplate>
     <tn-file-picker-popup
       class="tn-file-picker-popup"
+      tnTestIdType="file-picker-popup"
+      [tnTestId]="resolvedTestId()"
+      [testIdBase]="resolvedTestId()"
       [mode]="mode()"
       [multiSelect]="multiSelect()"
-      [allowCreate]="allowCreate()"
-      [allowDatasetCreate]="allowDatasetCreate()"
-      [allowZvolCreate]="allowZvolCreate()"
+      [createActions]="createActions()"
       [currentPath]="currentPath()"
+      [rootPath]="effectiveRootPath()"
       [fileItems]="fileItems()"
       [selectedItems]="selectedItems()"
       [loading]="loading()"
-      [creationLoading]="creationLoading()"
       [fileExtensions]="fileExtensions()"
       (itemClick)="onItemClick($event)"
       (itemDoubleClick)="onItemDoubleClick($event)"
       (pathNavigate)="navigateToPath($event)"
-      (createFolder)="onCreateFolder()"
-      (submitFolderName)="onSubmitFolderName($event.name, $event.tempId)"
-      (cancelFolderCreation)="onCancelFolderCreation($event)"
+      (createAction)="createAction.emit($event)"
+      (created)="onCreated($event)"
       (clearSelection)="onClearSelection()"
       (submit)="onSubmit()"
       (cancel)="onCancel()"

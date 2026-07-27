@@ -24,13 +24,27 @@ class BannerWithActionTestComponent {}
 })
 class BannerWithoutActionTestComponent {}
 
+@Component({
+  standalone: true,
+  imports: [TnBannerComponent],
+  template: `
+    <tn-banner [heading]="heading" [message]="message">
+      <div class="projected-content">Projected Content</div>
+    </tn-banner>
+  `
+})
+class BannerWithProjectedContentTestComponent {
+  heading: string | undefined = undefined;
+  message: string | undefined = undefined;
+}
+
 describe('TnBannerComponent', () => {
   let component: TnBannerComponent;
   let fixture: ComponentFixture<TnBannerComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TnBannerComponent, BannerWithActionTestComponent, BannerWithoutActionTestComponent],
+      imports: [TnBannerComponent, BannerWithActionTestComponent, BannerWithoutActionTestComponent, BannerWithProjectedContentTestComponent],
       providers: [provideHttpClient()]
     }).compileComponents();
 
@@ -218,6 +232,55 @@ describe('TnBannerComponent', () => {
       const actionButton = hostFixture.nativeElement.querySelector('[tnBannerAction]');
       expect(actionButton).toBeTruthy();
       expect(actionButton.textContent.trim()).toBe('Action Button');
+    });
+  });
+
+  describe('arbitrary content projection', () => {
+    it('should render projected content when neither heading nor message is provided', () => {
+      const hostFixture = TestBed.createComponent(BannerWithProjectedContentTestComponent);
+      hostFixture.detectChanges();
+
+      const projected = hostFixture.nativeElement.querySelector('.projected-content');
+      expect(projected).toBeTruthy();
+      expect(projected.textContent.trim()).toBe('Projected Content');
+
+      // Structured layout should not render
+      expect(hostFixture.nativeElement.querySelector('.tn-banner__content')).toBeNull();
+    });
+
+    it('should not display projected content when heading is provided', () => {
+      const hostFixture = TestBed.createComponent(BannerWithProjectedContentTestComponent);
+      hostFixture.componentInstance.heading = 'Real Heading';
+      hostFixture.detectChanges();
+
+      expect(hostFixture.nativeElement.querySelector('.projected-content')).toBeNull();
+
+      const heading = hostFixture.nativeElement.querySelector('.tn-banner__heading');
+      expect(heading.textContent.trim()).toBe('Real Heading');
+    });
+
+    it('should not display projected content when only message is provided', () => {
+      const hostFixture = TestBed.createComponent(BannerWithProjectedContentTestComponent);
+      hostFixture.componentInstance.message = 'Real Message';
+      hostFixture.detectChanges();
+
+      expect(hostFixture.nativeElement.querySelector('.projected-content')).toBeNull();
+
+      const message = hostFixture.nativeElement.querySelector('.tn-banner__message');
+      expect(message.textContent.trim()).toBe('Real Message');
+    });
+
+    it('should render the type icon alongside structured content but not in projection mode', () => {
+      const hostFixture = TestBed.createComponent(BannerWithProjectedContentTestComponent);
+      hostFixture.detectChanges();
+
+      // Projection mode: no icon
+      expect(hostFixture.nativeElement.querySelector('.tn-banner__icon')).toBeNull();
+
+      // Structured mode: icon present
+      hostFixture.componentInstance.heading = 'Heading';
+      hostFixture.detectChanges();
+      expect(hostFixture.nativeElement.querySelector('.tn-banner__icon')).toBeTruthy();
     });
   });
 });

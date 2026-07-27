@@ -33,6 +33,7 @@ export class TnFormFieldHarness extends ComponentHarness {
   private _label = this.locatorForOptional('.tn-form-field-label');
   private _error = this.locatorForOptional('.tn-form-field-error');
   private _hint = this.locatorForOptional('.tn-form-field-hint');
+  private _tooltip = this.locatorForOptional('.tn-form-field-tooltip');
 
   /**
    * Gets a `HarnessPredicate` that can be used to search for a form field
@@ -131,6 +132,55 @@ export class TnFormFieldHarness extends ComponentHarness {
   }
 
   /**
+   * Checks whether the form field has a tooltip help icon.
+   *
+   * @returns Promise resolving to true if the tooltip trigger is present.
+   *
+   * @example
+   * ```typescript
+   * const field = await loader.getHarness(TnFormFieldHarness.with({ label: 'Purpose' }));
+   * expect(await field.hasTooltip()).toBe(true);
+   * ```
+   */
+  async hasTooltip(): Promise<boolean> {
+    const tooltip = await this._tooltip();
+    return tooltip !== null;
+  }
+
+  /**
+   * Gets the tooltip message (read from the trigger's accessible label).
+   *
+   * @returns Promise resolving to the tooltip text, or null if no tooltip.
+   *
+   * @example
+   * ```typescript
+   * const field = await loader.getHarness(TnFormFieldHarness.with({ label: 'Purpose' }));
+   * expect(await field.getTooltip()).toBe('What this share is used for');
+   * ```
+   */
+  async getTooltip(): Promise<string | null> {
+    const tooltip = await this._tooltip();
+    return tooltip ? tooltip.getAttribute('aria-label') : null;
+  }
+
+  /**
+   * Checks whether the tooltip help icon renders inline after the projected
+   * control (label-less mode) rather than in the label row.
+   *
+   * @returns Promise resolving to true if the inline tooltip trigger is present.
+   *
+   * @example
+   * ```typescript
+   * const field = await loader.getHarness(TnFormFieldHarness.with({ testId: 'enable-fxp' }));
+   * expect(await field.isTooltipInline()).toBe(true);
+   * ```
+   */
+  async isTooltipInline(): Promise<boolean> {
+    const inline = await this.locatorForOptional('.tn-form-field-wrapper .tn-form-field-tooltip')();
+    return inline !== null;
+  }
+
+  /**
    * Checks whether the form field is marked as required.
    *
    * @returns Promise resolving to true if the required asterisk is present.
@@ -143,8 +193,10 @@ export class TnFormFieldHarness extends ComponentHarness {
    */
   async isRequired(): Promise<boolean> {
     const label = await this._label();
-    if (!label) { return false; }
-    return label.hasClass('required');
+    if (label) { return label.hasClass('required'); }
+    // Label-less mode renders the asterisk inline after the projected control.
+    const inlineAsterisk = await this.locatorForOptional('.tn-form-field-wrapper .required-asterisk')();
+    return inlineAsterisk !== null;
   }
 
   /**

@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnTabComponent } from '../lib/tab/tab.component';
 import { TnTabPanelComponent } from '../lib/tab-panel/tab-panel.component';
@@ -547,5 +548,42 @@ export const TabsComponentHarness: Story = {
     layout: 'fullscreen'
   },
   render: () => ({ template: '' })
+};
+
+/**
+ * **Test IDs (default).** `tn-tabs` emits `tabs-<base>` on the tablist, each
+ * `tn-tab` emits `tab-<base>` on its header button, and each `tn-tab-panel`
+ * emits `tab-panel-<base>`, under `data-testid` (default) / `data-test`.
+ */
+export const TestIds: Story = {
+  render: () => ({
+    template: `
+      <tn-testid-inspector>
+        <tn-tabs testId="settings">
+          <tn-tab testId="general" label="General" />
+          <tn-tab-panel testId="general" label="General">General content</tn-tab-panel>
+        </tn-tabs>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnTabsComponent, TnTabComponent, TnTabPanelComponent, TestIdInspectorComponent] },
+  }),
+};
+
+/**
+ * **Scoped test ids.** Array bases namespace each id — `['admin','settings']` →
+ * `tabs-admin-settings`, `tab-admin-general`, `tab-panel-admin-general`.
+ */
+export const ScopedTestIds: Story = {
+  render: () => ({
+    template: `
+      <tn-testid-inspector>
+        <tn-tabs [testId]="['admin','settings']">
+          <tn-tab [testId]="['admin','general']" label="General" />
+          <tn-tab-panel [testId]="['admin','general']" label="General">General content</tn-tab-panel>
+        </tn-tabs>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnTabsComponent, TnTabComponent, TnTabPanelComponent, TestIdInspectorComponent] },
+  }),
 };
 

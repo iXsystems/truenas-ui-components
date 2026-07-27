@@ -17,4 +17,10 @@ export interface TnToastConfig {
   type?: TnToastType;
   /** Vertical position. Default: TnToastPosition.Top. */
   position?: TnToastPosition;
+  /**
+   * Test id applied to the action button. Rendered under whichever attribute name is
+   * configured via `TN_TEST_ATTR` (default `data-testid`). Only relevant when an action
+   * is provided.
+   */
+  actionTestId?: string;
 }

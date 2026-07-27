@@ -5,11 +5,13 @@
       type="button"
       variant="outline"
       [label]="data.cancelText || 'Cancel'"
+      [testId]="data.cancelTestId || 'cancel'"
       (click)="ref.close(false)" />
     <tn-button
       type="button"
       [color]="data.destructive ? 'warn' : 'primary'"
       [label]="data.confirmText || 'OK'"
+      [testId]="data.confirmTestId || 'confirm'"
       (click)="ref.close(true)" />
   </div>
 </tn-dialog-shell>

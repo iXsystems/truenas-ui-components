@@ -1,5 +1,8 @@
 
-.tn-nested-tree-node-wrapper {
+// Host layout. `:host` (not the `.tn-nested-tree-node-wrapper` host class):
+// under Emulated encapsulation a plain class selector only matches elements
+// INSIDE the template, never the host — the host stayed `display: inline`.
+:host {
   display: block;
   width: 100%;
 }
@@ -24,7 +27,7 @@
   align-items: center;
   gap: 8px;
   min-height: 48px;
-  padding: 12px 16px;
+  padding: 0 8px;
   border-bottom: 1px solid var(--tn-lines);
   transition: background-color 0.2s ease;
 

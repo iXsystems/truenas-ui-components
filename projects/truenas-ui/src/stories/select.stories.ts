@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
 import type { TnSelectOption, TnSelectOptionGroup } from '../lib/select/select.component';
@@ -36,6 +37,18 @@ const meta: Meta<TnSelectComponent> = {
     disabled: {
       control: 'boolean',
       description: 'Whether the select is disabled',
+    },
+    allowEmpty: {
+      control: 'boolean',
+      description: 'Prepends an empty option that clears the selection (single mode only)',
+    },
+    emptyLabel: {
+      control: 'text',
+      description: 'Label of the empty option shown when allowEmpty is set',
+    },
+    showSelectAll: {
+      control: 'boolean',
+      description: 'Adds a select-all row that toggles every option (multiple mode only)',
     },
     testId: {
       control: 'text',
@@ -220,6 +233,41 @@ export const MultipleSelection: Story = {
   },
 };
 
+/**
+ * `showSelectAll` adds a "Select All" row at the top of the dropdown (multiple
+ * mode only). Clicking it selects every enabled option; clicking it again when
+ * all are selected clears them. Its checkbox is indeterminate while only some
+ * options are picked. Mirrors the old ix-select `[showSelectAll]`.
+ */
+export const MultipleWithSelectAll: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      logSelection: (_value: unknown) => {
+      }
+    },
+    template: `
+      <tn-form-field
+        label="Select fruits"
+        hint="Use the Select All row to toggle everything at once">
+        <tn-select
+          placeholder="Choose fruits"
+          [options]="options"
+          [multiple]="true"
+          [showSelectAll]="true"
+          (multiSelectionChange)="logSelection($event)">
+        </tn-select>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  args: {
+    options: fruitOptions,
+  },
+};
+
 export const MultipleWithGroups: Story = {
   render: (args) => ({
     props: {
@@ -324,6 +372,64 @@ export const FlipUpDropdown: Story = {
   },
 };
 
+// Trigger hugs the right viewport edge while the options are much wider than
+// the trigger — the panel must right-align (or push left) instead of spilling
+// past the screen edge and getting clipped.
+export const NearRightEdge: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      logSelection: (_value: unknown) => {},
+    },
+    template: `
+      <div style="display: flex; justify-content: flex-end;">
+        <div style="width: 120px;">
+          <tn-form-field
+            label="Category"
+            hint="Trigger sits at the right edge — the panel stays on screen">
+            <tn-select
+              [options]="options"
+              placeholder="Tasks"
+              (selectionChange)="logSelection($event)">
+            </tn-select>
+          </tn-form-field>
+        </div>
+      </div>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  args: {
+    options: [
+      { value: 'applications', label: 'Applications' },
+      { value: 'kmip', label: 'Key Management Interoperability Protocol' },
+      { value: 'network', label: 'Network' },
+      { value: 'connect', label: 'TrueNAS Connect Service' },
+      { value: 'ups', label: 'UPS' },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const trigger = canvas.getByRole('combobox');
+
+    await userEvent.click(trigger);
+    const panel = await waitFor(() => {
+      const el = document.querySelector('.tn-select-dropdown');
+      if (!el) {throw new Error('dropdown panel not rendered yet');}
+      return el as HTMLElement;
+    });
+
+    // The whole panel must sit within the viewport — a right edge beyond the
+    // window width means options are clipped off screen.
+    await waitFor(async () => {
+      const rect = panel.getBoundingClientRect();
+      await expect(rect.right).toBeLessThanOrEqual(document.documentElement.clientWidth);
+      await expect(rect.left).toBeGreaterThanOrEqual(0);
+    });
+  },
+};
+
 export const EmptyWithCustomMessage: Story = {
   render: (args) => ({
     props: {
@@ -346,6 +452,66 @@ export const EmptyWithCustomMessage: Story = {
       imports: [TnFormFieldComponent],
     },
   }),
+};
+
+/**
+ * `allowEmpty` prepends a synthetic empty option (`--` by default, override
+ * with `emptyLabel`) so users can unset a chosen value. Picking it resets the
+ * field to the placeholder and emits `null` via `selectionChange` / the bound
+ * form control. Ignored in `multiple` mode.
+ */
+export const ClearableWithAllowEmpty: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      logSelection: (_value: unknown) => {},
+    },
+    template: `
+      <tn-form-field
+        label="Choose a fruit"
+        hint="Pick the -- option to clear the selection">
+        <tn-select
+          [options]="options"
+          [allowEmpty]="allowEmpty"
+          [emptyLabel]="emptyLabel"
+          [placeholder]="placeholder"
+          (selectionChange)="logSelection($event)">
+        </tn-select>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  args: {
+    options: fruitOptions,
+    allowEmpty: true,
+    emptyLabel: '--',
+    placeholder: 'No fruit selected',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const trigger = canvas.getByRole('combobox');
+
+    // Select a value, then clear it through the empty option.
+    await userEvent.click(trigger);
+    const banana = await waitFor(() => {
+      const option = document.querySelector('[data-testid="option-banana"]');
+      if (!option) {throw new Error('option not rendered yet');}
+      return option as HTMLElement;
+    });
+    await userEvent.click(banana);
+    await waitFor(() => expect(trigger.textContent?.trim()).toContain('Banana'));
+
+    await userEvent.click(trigger);
+    const empty = await waitFor(() => {
+      const option = document.querySelector('[data-testid="option-empty"]');
+      if (!option) {throw new Error('empty option not rendered yet');}
+      return option as HTMLElement;
+    });
+    await userEvent.click(empty);
+    await waitFor(() => expect(trigger.textContent?.trim()).toContain('No fruit selected'));
+  },
 };
 
 export const KeyboardNavigation: Story = {
@@ -408,5 +574,38 @@ export const ComponentHarness: Story = {
     layout: 'fullscreen'
   },
   render: () => ({ template: '' })
+};
+
+/**
+ * **Test IDs.** The select **trigger** (the `role="combobox"` element) emits
+ * `select-<base>` — shown live in the table below. Each **option** lives in a
+ * portaled overlay (so it's not in the table until the dropdown is open) and
+ * emits `option-<base>-<value>`:
+ *
+ * | Element | Emitted id (base `disk-type`) |
+ * |---|---|
+ * | trigger | `select-disk-type` |
+ * | option (value `ssd`) | `option-disk-type-ssd` |
+ * | option (value `hdd`) | `option-disk-type-hdd` |
+ *
+ * The option discriminator defaults to the option's `value` (else `label`);
+ * override it with `[optionTestIdKey]="(o) => o.value.id"`. Under `data-testid`
+ * by default / `data-test`. Open the dropdown to see the option ids in the DOM.
+ */
+export const TestIds: Story = {
+  render: () => ({
+    props: {
+      options: [
+        { value: 'ssd', label: 'SSD' },
+        { value: 'hdd', label: 'Spinning Disk' },
+      ] as TnSelectOption[],
+    },
+    template: `
+      <tn-testid-inspector>
+        <tn-select testId="disk-type" [options]="options" placeholder="Select a disk type" />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnSelectComponent, TestIdInspectorComponent] },
+  }),
 };
 

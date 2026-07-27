@@ -4,14 +4,15 @@ import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
 import { Component, viewChild, inject, input, output, computed, signal, forwardRef } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { TnTestIdDirective } from '../test-id';
+import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
+import { TnTestIdDirective, controlTestId, type TnTestIdValue } from '../test-id';
 
 export type SlideToggleColor = 'primary' | 'accent' | 'warn';
 
 @Component({
   selector: 'tn-slide-toggle',
   standalone: true,
-  imports: [CommonModule, FormsModule, A11yModule, TnTestIdDirective],
+  imports: [CommonModule, FormsModule, A11yModule, TnTestIdDirective, LabelMarkupPipe],
   templateUrl: './slide-toggle.component.html',
   styleUrl: './slide-toggle.component.scss',
   providers: [
@@ -30,7 +31,9 @@ export class TnSlideToggleComponent implements AfterViewInit, OnDestroy, Control
   disabled = input<boolean>(false);
   required = input<boolean>(false);
   color = input<SlideToggleColor>('primary');
-  testId = input<string | undefined>(undefined);
+  testId = input<TnTestIdValue>(undefined);
+  /** Test-id base, falling back to the bound control name when `testId` is unset. */
+  protected resolvedTestId = controlTestId(this.testId);
   ariaLabel = input<string | undefined>(undefined);
   ariaLabelledby = input<string | undefined>(undefined);
   checked = input<boolean>(false);
@@ -89,6 +92,12 @@ export class TnSlideToggleComponent implements AfterViewInit, OnDestroy, Control
   }
 
   onToggleChange(event: Event): void {
+    // The bubbling native change would reach ancestor (change) bindings in
+    // addition to the component's `change` output — Ivy invokes the binding for
+    // both, firing every listener twice per toggle. The output is the single
+    // public event, so the native event stops here. (This component always
+    // stopped it — unlike checkbox/radio it was never affected — the comment
+    // and the regression spec keep it that way.)
     event.stopPropagation();
 
     const target = event.target as HTMLInputElement;

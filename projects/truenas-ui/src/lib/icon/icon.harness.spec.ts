@@ -20,6 +20,7 @@ import { TnIconHarness } from './icon.harness';
     [color]="color()"
     [fullSize]="fullSize()"
     [customSize]="customSize()"
+    [testId]="testId()"
     (click)="onIconClick()"
   />`
 })
@@ -31,6 +32,7 @@ class TestHostComponent {
   color = signal<string | undefined>(undefined);
   fullSize = signal(false);
   customSize = signal<string | undefined>(undefined);
+  testId = signal<string | string[] | undefined>(undefined);
   clickCount = 0;
 
   onIconClick(): void {
@@ -88,6 +90,37 @@ describe('TnIconHarness', () => {
       fixture.detectChanges();
 
       expect(await icon.getName()).toBe('star');
+    });
+  });
+
+  describe('getTestId', () => {
+    it('should return null when testId is not set', async () => {
+      const icon = await loader.getHarness(TnIconHarness);
+      expect(await icon.getTestId()).toBeNull();
+    });
+
+    it('should compose the icon element-type prefix', async () => {
+      hostComponent.testId.set('close');
+      fixture.detectChanges();
+
+      const icon = await loader.getHarness(TnIconHarness);
+      expect(await icon.getTestId()).toBe('icon-close');
+    });
+
+    it('should scope a composed id from array segments', async () => {
+      hostComponent.testId.set(['tooltip', 'My Header']);
+      fixture.detectChanges();
+
+      const icon = await loader.getHarness(TnIconHarness);
+      expect(await icon.getTestId()).toBe('icon-tooltip-my-header');
+    });
+
+    it('should filter icons by testId', async () => {
+      hostComponent.testId.set('close');
+      fixture.detectChanges();
+
+      const icon = await loader.getHarness(TnIconHarness.with({ testId: 'icon-close' }));
+      expect(icon).toBeTruthy();
     });
   });
 

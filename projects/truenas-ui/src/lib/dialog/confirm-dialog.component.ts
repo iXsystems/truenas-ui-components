@@ -10,6 +10,13 @@ export interface TnConfirmDialogData {
   confirmText?: string;
   cancelText?: string;
   destructive?: boolean;
+  /**
+   * Semantic test-id bases for the library-rendered action buttons. The buttons
+   * emit `button-confirm` / `button-cancel` by default (the library adds the
+   * `button-` prefix); override here when a page opens more than one dialog.
+   */
+  confirmTestId?: string;
+  cancelTestId?: string;
 }
 
 @Component({
