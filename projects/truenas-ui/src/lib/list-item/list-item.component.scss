@@ -120,6 +120,33 @@
     }
   }
 
+  // Compact rows
+  &--dense {
+    min-height: 32px;
+
+    .tn-list-item__content {
+      padding: 4px 16px;
+    }
+
+    .tn-list-item__leading {
+      margin-right: 8px;
+    }
+
+    .tn-list-item__trailing {
+      margin-left: 8px;
+    }
+  }
+
+  // Multi-line rows: text wraps instead of being truncated
+  &--wrap {
+    .tn-list-item__primary-text,
+    .tn-list-item__secondary-text {
+      overflow: visible;
+      text-overflow: clip;
+      white-space: normal;
+    }
+  }
+
   // Disabled state
   &--disabled {
     opacity: 0.6;
@@ -129,7 +156,7 @@
 }
 
 // Icon styles
-::ng-deep [ixListIcon] {
+::ng-deep [tnListIcon] {
   width: 24px;
   height: 24px;
   font-size: 24px;
@@ -140,7 +167,7 @@
 }
 
 // Avatar styles
-::ng-deep [ixListAvatar] {
+::ng-deep [tnListAvatar] {
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -154,12 +181,12 @@
 }
 
 // List item title directive
-::ng-deep [ixListItemTitle] {
+::ng-deep [tnListItemTitle] {
   font-weight: normal;
 }
 
 // List item line directive
-::ng-deep [ixListItemLine] {
+::ng-deep [tnListItemLine] {
   display: block;
   margin-top: 4px;
   font-size: 14px;
@@ -168,7 +195,7 @@
 }
 
 // Trailing content styles
-::ng-deep [ixListItemTrailing] {
+::ng-deep [tnListItemTrailing] {
   color: var(--tn-fg2);
   font-size: 14px;
 }

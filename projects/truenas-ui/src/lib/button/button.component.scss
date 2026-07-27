@@ -6,6 +6,18 @@
   justify-self: center;
 }
 
+// `fullWidth` — the host stops shrink-wrapping and the rendered <button>/<a>
+// fills it, so consumers never have to reach in for `width: 100%`.
+:host(.tn-button--full-width) {
+  display: block;
+  width: 100%;
+  justify-self: stretch;
+
+  .storybook-button {
+    width: 100%;
+  }
+}
+
 .storybook-button {
   @include label-markup.inline-code;
 

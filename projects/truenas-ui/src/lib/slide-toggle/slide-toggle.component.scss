@@ -2,6 +2,11 @@
 // Based on Angular Material Design patterns
 @use '../pipes/label-markup/label-markup' as label-markup;
 
+:host(.tn-slide-toggle-host--full-width) {
+  display: block;
+  width: 100%;
+}
+
 .tn-slide-toggle {
   display: inline-flex;
   align-items: center;
@@ -14,6 +19,18 @@
     display: flex;
     align-items: center;
     cursor: inherit;
+  }
+
+  // `fullWidth` — fill the row and push the label away from the track, so the
+  // toggle can head a settings row without the consumer overriding internals.
+  &--full-width {
+    display: flex;
+    width: 100%;
+
+    .tn-slide-toggle__label {
+      justify-content: space-between;
+      width: 100%;
+    }
   }
 
   &__label-text {

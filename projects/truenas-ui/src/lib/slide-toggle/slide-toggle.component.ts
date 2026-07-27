@@ -15,6 +15,12 @@ export type SlideToggleColor = 'primary' | 'accent' | 'warn';
   imports: [CommonModule, FormsModule, A11yModule, TnTestIdDirective, LabelMarkupPipe],
   templateUrl: './slide-toggle.component.html',
   styleUrl: './slide-toggle.component.scss',
+  host: {
+    // The `.tn-slide-toggle` class sits on an inner <div>; the host element is
+    // inline by default, so it has to be stretched too or the inner width has
+    // nothing to fill.
+    '[class.tn-slide-toggle-host--full-width]': 'fullWidth()',
+  },
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -28,6 +34,12 @@ export class TnSlideToggleComponent implements AfterViewInit, OnDestroy, Control
 
   labelPosition = input<'before' | 'after'>('after');
   label = input<string | undefined>(undefined);
+  /**
+   * Stretches the toggle to the full width of its container and pushes the label
+   * and the track to opposite ends of the row, instead of shrink-wrapping them
+   * side by side. Use for settings rows and option lists.
+   */
+  fullWidth = input<boolean>(false);
   disabled = input<boolean>(false);
   required = input<boolean>(false);
   color = input<SlideToggleColor>('primary');
@@ -126,6 +138,10 @@ export class TnSlideToggleComponent implements AfterViewInit, OnDestroy, Control
 
     if (this.effectiveChecked()) {
       classes.push('tn-slide-toggle--checked');
+    }
+
+    if (this.fullWidth()) {
+      classes.push('tn-slide-toggle--full-width');
     }
 
     classes.push(`tn-slide-toggle--${this.color()}`);
