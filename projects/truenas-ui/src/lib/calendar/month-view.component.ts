@@ -9,6 +9,8 @@ export interface CalendarCell {
   enabled: boolean;
   selected: boolean;
   today: boolean;
+  /** Whether the date was listed in `markedDates`. */
+  marked: boolean;
   compareStart?: boolean;
   compareEnd?: boolean;
   rangeStart?: boolean;
@@ -30,6 +32,13 @@ export class TnMonthViewComponent {
   maxDate = input<Date | undefined>(undefined);
   dateFilter = input<((date: Date) => boolean) | undefined>(undefined);
 
+  /**
+   * Dates to flag as noteworthy — days a task runs, days with events, and the like.
+   * Order and time-of-day are ignored; only the calendar day is compared. The
+   * calendar owns how a marked day looks, so callers pass dates rather than styles.
+   */
+  markedDates = input<Date[] | undefined>(undefined);
+
   // Range mode inputs
   rangeMode = input<boolean>(false);
   selectedRange = input<{ start: Date | null; end: Date | null; selecting: 'start' | 'end' } | undefined>(undefined);
@@ -48,7 +57,10 @@ export class TnMonthViewComponent {
   ];
 
   // Cell sizing now controlled via CSS custom properties in the SCSS file
-  
+
+  private markedDateKeys = computed(() => {
+    return new Set((this.markedDates() ?? []).map((date) => this.dateKey(date)));
+  });
 
   calendarRows = computed(() => {
     const activeDate = this.activeDate();
@@ -98,6 +110,7 @@ export class TnMonthViewComponent {
     const today = new Date();
     const isToday = this.isSameDate(date, today);
     const isSelected = this.selected() ? this.isSameDate(date, this.selected()!) : false;
+    const isMarked = this.markedDateKeys().has(this.dateKey(date));
     const enabled = this.isDateEnabled(date);
 
     // Range mode calculations
@@ -124,10 +137,11 @@ export class TnMonthViewComponent {
       value,
       date: new Date(date),
       label: date.getDate().toString(),
-      ariaLabel: this.formatAriaLabel(date, isSelected, isToday, rangeStart, rangeEnd, inRange),
+      ariaLabel: this.formatAriaLabel(date, isSelected, isToday, isMarked, rangeStart, rangeEnd, inRange),
       enabled,
       selected: isSelected,
       today: isToday,
+      marked: isMarked,
       rangeStart,
       rangeEnd,
       inRange,
@@ -143,6 +157,7 @@ export class TnMonthViewComponent {
       enabled: false,
       selected: false,
       today: false,
+      marked: false,
     };
   }
 
@@ -163,9 +178,10 @@ export class TnMonthViewComponent {
   }
 
   private formatAriaLabel(
-    date: Date, 
-    isSelected: boolean, 
+    date: Date,
+    isSelected: boolean,
     isToday: boolean,
+    isMarked: boolean,
     rangeStart?: boolean,
     rangeEnd?: boolean,
     inRange?: boolean
@@ -179,6 +195,8 @@ export class TnMonthViewComponent {
     
     if (isSelected) {label += ' (selected)';}
     if (isToday) {label += ' (today)';}
+    // Marked days are otherwise conveyed by background colour alone.
+    if (isMarked) {label += ' (marked)';}
     if (rangeStart) {label += ' (range start)';}
     if (rangeEnd) {label += ' (range end)';}
     if (inRange) {label += ' (in range)';}
@@ -186,9 +204,13 @@ export class TnMonthViewComponent {
     return label;
   }
 
+  private dateKey(date: Date): string {
+    return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+  }
+
   trackByDate(index: number, cell: CalendarCell): string {
     if (cell.value === 0) { return `empty-${index}`; }
-    return `${cell.date.getFullYear()}-${cell.date.getMonth()}-${cell.date.getDate()}`;
+    return this.dateKey(cell.date);
   }
 
   trackByRow(index: number): number {

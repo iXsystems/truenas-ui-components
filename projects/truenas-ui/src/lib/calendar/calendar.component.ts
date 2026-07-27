@@ -22,6 +22,15 @@ export class TnCalendarComponent implements OnInit {
   maxDate = input<Date | undefined>(undefined);
   dateFilter = input<((date: Date) => boolean) | undefined>(undefined);
 
+  /**
+   * Dates to flag as noteworthy — days a task runs, days with events, and the like.
+   * Order and time-of-day are ignored; only the calendar day is compared. The
+   * calendar owns how a marked day looks, so callers pass dates rather than styles.
+   * Marking is independent of `selected`/`selectedRange`, which stay authoritative
+   * where they overlap.
+   */
+  markedDates = input<Date[] | undefined>(undefined);
+
   // Range mode inputs
   rangeMode = input<boolean>(false);
   selectedRange = input<DateRange | undefined>(undefined);

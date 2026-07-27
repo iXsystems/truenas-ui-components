@@ -81,6 +81,12 @@
     cursor: default;
   }
 
+  // Marked days sit underneath selection and range styling, which stay authoritative.
+  &.tn-calendar-body-marked:not(.tn-calendar-body-selected):not(.tn-calendar-body-range-start):not(.tn-calendar-body-range-end):not(.tn-calendar-body-in-range) {
+    background: var(--tn-alt-bg1, #f0f0f0);
+    border-radius: 50%;
+  }
+
   // Apply today border to the button itself for full coverage
   &.tn-calendar-body-today:not(.tn-calendar-body-selected) {
     border: 1px solid var(--tn-primary, #007bff);
