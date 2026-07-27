@@ -139,7 +139,7 @@ describe('TnCalendarComponent', () => {
 
     // Home aims at the 1st, which minDate rules out. Searching on in the direction of
     // travel would head into the previous month, away from every day it could land on.
-    it('doubles back into the month when Home lands on a disabled day', () => {
+    it('searches into the month when Home lands on a disabled day', () => {
       fixture.componentRef.setInput('minDate', new Date(2031, 4, 6));
       fixture.detectChanges();
 
@@ -149,13 +149,63 @@ describe('TnCalendarComponent', () => {
       expect(monthLabel()).toBe('MAY 2031');
     });
 
-    it('doubles back when End lands on a disabled day', () => {
+    it('searches into the month when End lands on a disabled day', () => {
       fixture.componentRef.setInput('maxDate', new Date(2031, 4, 27));
       fixture.detectChanges();
 
       press('End');
 
       expect(activeDay()).toBe(27);
+      expect(monthLabel()).toBe('MAY 2031');
+    });
+
+    // A single filtered-out boundary day, with the neighbouring month wide open. Picking
+    // the search direction from where the target fell relative to the active day sent
+    // Home outwards, onto the 30th of the previous month, paging the view with it.
+    // Home and End mean the ends of *this* month, so they always search inward.
+    it('stays in the month when the 1st is filtered out and Home is pressed', () => {
+      fixture.componentRef.setInput('dateFilter', (date: Date) => date.getDate() !== 1);
+      fixture.detectChanges();
+
+      press('Home');
+
+      expect(monthLabel()).toBe('MAY 2031');
+      expect(activeDay()).toBe(2);
+    });
+
+    it('stays in the month when the last day is filtered out and End is pressed', () => {
+      fixture.componentRef.setInput('dateFilter', (date: Date) => date.getDate() !== 31);
+      fixture.detectChanges();
+
+      press('End');
+
+      expect(monthLabel()).toBe('MAY 2031');
+      expect(activeDay()).toBe(30);
+    });
+
+    it('crosses a filtered-out run at the end of the month to reach the last open day', () => {
+      const blocked = [27, 28, 29, 30, 31];
+      fixture.componentRef.setInput('dateFilter', (date: Date) => !blocked.includes(date.getDate()));
+      fixture.detectChanges();
+
+      press('End');
+
+      expect(monthLabel()).toBe('MAY 2031');
+      expect(activeDay()).toBe(26);
+    });
+
+    // Arrows are the opposite case: leaving the month is exactly what they are for.
+    it('still lets the arrows cross a filtered-out boundary day into the next month', () => {
+      fixture.componentRef.setInput('dateFilter', (date: Date) => date.getDate() !== 31);
+      fixture.detectChanges();
+
+      press('End');
+      expect(activeDay()).toBe(30);
+
+      press('ArrowRight');
+
+      expect(monthLabel()).toBe('JUN 2031');
+      expect(activeDay()).toBe(1);
     });
 
     it('stays put when there is nowhere enabled left to go', () => {
@@ -262,6 +312,26 @@ describe('TnCalendarComponent', () => {
       press('ArrowLeft');
 
       expect(activeYear()).toBe(2034);
+    });
+
+    // Same trap as Home/End in the month view: a single ruled-out year at the edge of
+    // the page must not send the search onto the neighbouring 24-year page.
+    it('stays on the page when the first year is filtered out and Home is pressed', () => {
+      fixture.componentRef.setInput('dateFilter', (date: Date) => date.getFullYear() !== 2016);
+      fixture.detectChanges();
+
+      press('Home');
+
+      expect(activeYear()).toBe(2017);
+    });
+
+    it('stays on the page when the last year is filtered out and End is pressed', () => {
+      fixture.componentRef.setInput('dateFilter', (date: Date) => date.getFullYear() !== 2039);
+      fixture.detectChanges();
+
+      press('End');
+
+      expect(activeYear()).toBe(2038);
     });
   });
 

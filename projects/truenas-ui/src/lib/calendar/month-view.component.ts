@@ -316,35 +316,45 @@ export class TnMonthViewComponent {
     const from = this.activeCellDate();
     if (!from) { return; }
 
-    const target = this.targetForKey(event, from);
-    if (!target) { return; }
+    const move = this.targetForKey(event, from);
+    if (!move) { return; }
 
     // Claim the key before the browser scrolls the page with it.
     event.preventDefault();
 
-    const landing = this.nearestEnabled(target, target >= from ? 1 : -1);
+    const landing = this.nearestEnabled(move.date, move.search);
     if (!landing || isSameDay(landing, from)) { return; }
 
     this.activeDateChange.emit(landing);
     this.focusActiveCellAfterRender();
   }
 
-  private targetForKey(event: KeyboardEvent, from: Date): Date | null {
+  /**
+   * The day a key aims at, and which way to look from there when that day is disabled.
+   *
+   * The search direction belongs to the key, not to where the target happens to fall
+   * relative to the current day. Home and End mean "the ends of *this* month", so they
+   * search inward: looking outward would step straight into the neighbouring month over
+   * a single filtered-out boundary day and page the view, which is not what either key
+   * promises. The arrows and the paging keys keep travelling the way they were already
+   * headed, and crossing into the next month is the point of those.
+   */
+  private targetForKey(event: KeyboardEvent, from: Date): { date: Date; search: 1 | -1 } | null {
     const year = from.getFullYear();
     const month = from.getMonth();
     const day = from.getDate();
     // Overshooting a month's length is fine — the Date constructor rolls it over, which
     // is exactly what arrowing off the end of a month should do.
     switch (event.key) {
-      case 'ArrowLeft': return new Date(year, month, day - 1);
-      case 'ArrowRight': return new Date(year, month, day + 1);
-      case 'ArrowUp': return new Date(year, month, day - 7);
-      case 'ArrowDown': return new Date(year, month, day + 7);
-      case 'Home': return new Date(year, month, 1);
-      case 'End': return new Date(year, month + 1, 0);
+      case 'ArrowLeft': return { date: new Date(year, month, day - 1), search: -1 };
+      case 'ArrowRight': return { date: new Date(year, month, day + 1), search: 1 };
+      case 'ArrowUp': return { date: new Date(year, month, day - 7), search: -1 };
+      case 'ArrowDown': return { date: new Date(year, month, day + 7), search: 1 };
+      case 'Home': return { date: new Date(year, month, 1), search: 1 };
+      case 'End': return { date: new Date(year, month + 1, 0), search: -1 };
       // Shift pages by a year, matching Material and the wider grid convention.
-      case 'PageUp': return this.addMonths(from, event.shiftKey ? -12 : -1);
-      case 'PageDown': return this.addMonths(from, event.shiftKey ? 12 : 1);
+      case 'PageUp': return { date: this.addMonths(from, event.shiftKey ? -12 : -1), search: -1 };
+      case 'PageDown': return { date: this.addMonths(from, event.shiftKey ? 12 : 1), search: 1 };
       default: return null;
     }
   }
@@ -361,10 +371,10 @@ export class TnMonthViewComponent {
    * Steps past days the caller has disabled, so a gap in `dateFilter` or the far side of
    * `minDate`/`maxDate` doesn't park focus somewhere unusable.
    *
-   * Carries on the way the move was already heading, then doubles back if that finds
-   * nothing: Home onto a disabled 1st has to search *into* the month, not away from it.
-   * Doubling back lands on the day we started from at the edges of the allowed range,
-   * which the caller reads as "don't move".
+   * Searches the way the key asked for (see `targetForKey`), then doubles back if that
+   * finds nothing. The fallback is for the ends of the allowed range: arrowing right at
+   * `maxDate` finds nothing ahead, doubles back onto the day we started from, and the
+   * caller reads that as "don't move".
    */
   private nearestEnabled(target: Date, preferred: 1 | -1): Date | null {
     return this.scanForEnabled(target, preferred)

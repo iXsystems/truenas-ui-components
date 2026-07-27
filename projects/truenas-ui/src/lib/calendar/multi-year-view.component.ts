@@ -171,13 +171,13 @@ export class TnMultiYearViewComponent {
     const from = this.activeYear();
     if (from === null) { return; }
 
-    const target = this.targetForKey(event, from);
-    if (target === null) { return; }
+    const move = this.targetForKey(event, from);
+    if (move === null) { return; }
 
     // Claim the key before the browser scrolls the page with it.
     event.preventDefault();
 
-    const landing = this.nearestEnabledYear(target, target >= from ? 1 : -1);
+    const landing = this.nearestEnabledYear(move.year, move.search);
     if (landing === null || landing === from) { return; }
 
     const activeDate = this.activeDate();
@@ -185,19 +185,29 @@ export class TnMultiYearViewComponent {
     this.focusActiveCellAfterRender();
   }
 
-  private targetForKey(event: KeyboardEvent, from: number): number | null {
+  /**
+   * The year a key aims at, and which way to look from there when that year is disabled.
+   *
+   * The search direction belongs to the key, not to where the target happens to fall
+   * relative to the current year. Home and End mean "the ends of *this* page", so they
+   * search inward: looking outward would step onto the neighbouring 24-year page over a
+   * single ruled-out boundary year and turn the page, which is not what either key
+   * promises. The arrows and the paging keys keep travelling the way they were already
+   * headed, and moving onto the next page is the point of those.
+   */
+  private targetForKey(event: KeyboardEvent, from: number): { year: number; search: 1 | -1 } | null {
     const range = this.yearRange();
     const yearsPerPage = range.end - range.start + 1;
 
     switch (event.key) {
-      case 'ArrowLeft': return from - 1;
-      case 'ArrowRight': return from + 1;
-      case 'ArrowUp': return from - this.yearsPerRow;
-      case 'ArrowDown': return from + this.yearsPerRow;
-      case 'Home': return range.start;
-      case 'End': return range.end;
-      case 'PageUp': return from - yearsPerPage;
-      case 'PageDown': return from + yearsPerPage;
+      case 'ArrowLeft': return { year: from - 1, search: -1 };
+      case 'ArrowRight': return { year: from + 1, search: 1 };
+      case 'ArrowUp': return { year: from - this.yearsPerRow, search: -1 };
+      case 'ArrowDown': return { year: from + this.yearsPerRow, search: 1 };
+      case 'Home': return { year: range.start, search: 1 };
+      case 'End': return { year: range.end, search: -1 };
+      case 'PageUp': return { year: from - yearsPerPage, search: -1 };
+      case 'PageDown': return { year: from + yearsPerPage, search: 1 };
       default: return null;
     }
   }
@@ -206,10 +216,10 @@ export class TnMultiYearViewComponent {
    * Steps past years the caller has disabled, so `minDate`/`maxDate` don't park focus
    * somewhere unusable.
    *
-   * Carries on the way the move was already heading, then doubles back if that finds
-   * nothing: Home onto a disabled first year has to search *into* the page, not away
-   * from it. Doubling back lands on the year we started from at the edges of the
-   * allowed range, which the caller reads as "don't move".
+   * Searches the way the key asked for (see `targetForKey`), then doubles back if that
+   * finds nothing. The fallback is for the ends of the allowed range: arrowing right at
+   * `maxDate` finds nothing ahead, doubles back onto the year we started from, and the
+   * caller reads that as "don't move".
    */
   private nearestEnabledYear(target: number, preferred: 1 | -1): number | null {
     return this.scanForEnabledYear(target, preferred)
