@@ -558,7 +558,13 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       .flexibleConnectedTo(this.wrapperEl())
       .withPositions(positions)
       .withFlexibleDimensions(false)
-      .withPush(false);
+      // When no anchored position fits entirely (e.g. the input sits near the
+      // bottom of a short window), push the popup fully into the viewport
+      // instead of letting it render off-screen. The popup's own max-height
+      // caps it at viewport height minus this margin (see the popup SCSS), so
+      // a pushed popup always fits.
+      .withViewportMargin(8)
+      .withPush(true);
 
     this.overlayRef = this.overlay.create({
       positionStrategy,

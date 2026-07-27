@@ -11,8 +11,13 @@
   // change while navigating
   width: 520px;
   max-width: calc(100vw - 32px);
-  min-height: 500px;
-  max-height: 600px;
+  // Fixed height for the same reason, but never taller than the viewport
+  // (minus the position strategy's viewport margin on both sides) — on short
+  // windows the popup shrinks and the listing scrolls instead of the popup
+  // running off-screen. Keep in sync with `withViewportMargin` in
+  // file-picker.component.ts.
+  min-height: min(500px, calc(100vh - 16px));
+  max-height: min(600px, calc(100vh - 16px));
   font-family: var(--tn-font-family-body);
   display: flex;
   flex-direction: column;
@@ -394,6 +399,9 @@ tn-table {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  // Button labels never wrap, so when the selection text and the buttons don't
+  // fit on one line the two groups stack instead of overflowing the popup.
+  flex-wrap: wrap;
   // Minimum breathing room between the selection text and the action buttons
   gap: 16px;
   padding: 16px var(--tn-content-padding, 24px);
