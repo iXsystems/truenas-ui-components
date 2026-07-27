@@ -83,25 +83,40 @@
     cursor: default;
   }
 
-  // Range band spans the full cell so consecutive days join up, with rounded caps
-  // at each end of the run.
-  &.tn-calendar-body-in-range,
-  &.tn-calendar-body-range-start,
-  &.tn-calendar-body-range-end {
+  // The range band is its own layer, matched to the indicator's height so the two read
+  // as one shape. It sits before the indicator in the DOM, so it paints underneath.
+  &.tn-calendar-body-in-range::before,
+  &.tn-calendar-body-range-start::before,
+  &.tn-calendar-body-range-end::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    height: var(--calendar-indicator-size);
     background: var(--tn-alt-bg2, #e8f4fd);
   }
 
-  &.tn-calendar-body-range-start {
-    border-radius: calc(var(--calendar-indicator-size) / 2) 0 0 calc(var(--calendar-indicator-size) / 2);
+  // Days between the ends carry the band edge to edge, so consecutive days join up.
+  &.tn-calendar-body-in-range::before {
+    left: 0;
+    right: 0;
   }
 
-  &.tn-calendar-body-range-end {
-    border-radius: 0 calc(var(--calendar-indicator-size) / 2) calc(var(--calendar-indicator-size) / 2) 0;
+  // At the ends the band stops at the middle of the cell, where the indicator sits —
+  // it never runs on past the circle into empty column.
+  &.tn-calendar-body-range-start::before {
+    left: 50%;
+    right: 0;
   }
 
-  // A single-day range is both ends at once.
-  &.tn-calendar-body-range-start.tn-calendar-body-range-end {
-    border-radius: calc(var(--calendar-indicator-size) / 2);
+  &.tn-calendar-body-range-end::before {
+    left: 0;
+    right: 50%;
+  }
+
+  // A single-day range is both ends at once: the indicator alone, no band.
+  &.tn-calendar-body-range-start.tn-calendar-body-range-end::before {
+    content: none;
   }
 }
 

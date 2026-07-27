@@ -133,6 +133,17 @@ describe('TnCalendarComponent', () => {
       expect(emitted[0].end).toBeNull();
     });
 
+    // Both cap classes on one cell is what suppresses the band, leaving just the indicator.
+    it('marks a single-day range as both ends of the run', () => {
+      const sameDay = new Date(2031, 4, 10);
+      fixture.componentRef.setInput('selectedRange', { start: sameDay, end: sameDay });
+      fixture.detectChanges();
+
+      expect(daysWithClass('tn-calendar-body-range-start')).toEqual([10]);
+      expect(daysWithClass('tn-calendar-body-range-end')).toEqual([10]);
+      expect(daysWithClass('tn-calendar-body-in-range')).toEqual([]);
+    });
+
     it('starts a range when the caller has no range yet', () => {
       fixture.componentRef.setInput('selectedRange', undefined);
       fixture.detectChanges();
