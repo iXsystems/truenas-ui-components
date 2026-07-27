@@ -33,18 +33,22 @@
   font-size: 14px;
   font-weight: 500;
   transition: background-color 0.2s ease;
-  
-  
+
+  // Year cells are wide, so the month view's circle becomes a pill here — same
+  // rounded language, shape that actually fits the cell.
+  border-radius: 999px;
+
   &:hover:not(:disabled) {
     background: var(--tn-alt-bg2, #e8f4fd);
   }
-  
-  &:focus {
+
+  // Inset so the ring can never be clipped by an adjacent cell or the table edge.
+  &:focus-visible {
     outline: 2px solid var(--tn-primary, #007bff);
-    outline-offset: 2px;
+    outline-offset: -2px;
     background: var(--tn-alt-bg2, #e8f4fd);
   }
-  
+
   &:disabled {
     color: var(--tn-fg2, #666);
     opacity: 0.5;

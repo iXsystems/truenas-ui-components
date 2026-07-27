@@ -50,6 +50,33 @@ export const MarkedDatesWithSelection: Story = {
 };
 
 /**
+ * A selected range reads as one connected run: a band across the days in between, with
+ * a solid cap at each end. The band spans the full cell so consecutive days join up
+ * however wide the column is.
+ */
+export const DateRange: Story = {
+  render: () => ({
+    props: { range: { start: daysThisMonth(9)[0], end: daysThisMonth(19)[0] } },
+    template: `<tn-calendar [rangeMode]="true" [selectedRange]="range"></tn-calendar>`,
+    moduleMetadata: { imports: [TnCalendarComponent] },
+  }),
+};
+
+/**
+ * Ranges and marked days coexist — marking survives underneath a range band.
+ */
+export const DateRangeWithMarkedDates: Story = {
+  render: () => ({
+    props: {
+      range: { start: daysThisMonth(9)[0], end: daysThisMonth(19)[0] },
+      marked: daysThisMonth(3, 7, 8, 14, 21, 22, 28),
+    },
+    template: `<tn-calendar [rangeMode]="true" [selectedRange]="range" [markedDates]="marked"></tn-calendar>`,
+    moduleMetadata: { imports: [TnCalendarComponent] },
+  }),
+};
+
+/**
  * `markedDates` composes with `minDate`/`maxDate` and `dateFilter` — a marked day that
  * is disabled still reads as disabled.
  */

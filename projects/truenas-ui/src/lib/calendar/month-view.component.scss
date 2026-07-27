@@ -1,13 +1,24 @@
 :host {
+  display: block;
+
   // Calendar cell sizing custom properties - control all sizing from here
   --calendar-cell-size: 48px;
   --calendar-header-height: 40px;
   --calendar-cell-font-size: 1rem;
   --calendar-header-font-size: 14px;
+
+  // Diameter of the round day indicator. Sized independently of the cell so a
+  // stretched column widens the hit area without deforming the indicator.
+  --calendar-indicator-size: var(--calendar-cell-size);
 }
 
 .tn-calendar-table {
-  width: calc(7 * var(--calendar-cell-size));
+  // Grow into a wider container rather than sitting fixed at 7 cells; consumers
+  // that stretch the calendar get evenly divided columns instead of a fixed grid
+  // with a fixed-size indicator floating inside each cell.
+  width: 100%;
+  min-width: calc(7 * var(--calendar-cell-size));
+  table-layout: fixed;
   border-spacing: 0;
   border-collapse: separate;
 }
@@ -43,36 +54,27 @@
   width: calc(100% / 7); // Exactly 1/7 of the table width
 }
 
+// The button fills its cell so the whole column is clickable, and carries only the
+// range band. Single-day state lives on the round indicator inside it.
 .tn-calendar-body-cell {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  margin: auto;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
   background: transparent;
   border: 0;
   outline: 0;
   cursor: pointer;
   color: var(--tn-fg1, #333);
 
-  // Use custom property for consistent sizing
-  width: var(--calendar-cell-size);
-  height: var(--calendar-cell-size);
-
-  &:not(:disabled) {
-    &:hover:not(.tn-calendar-body-selected):not(.tn-calendar-body-range-start):not(.tn-calendar-body-range-end):not(.tn-calendar-body-in-range) {
-      background: var(--tn-alt-bg2, #e8f4fd);
-    }
-  }
-
-  &:focus {
+  // Inset so the ring can never be clipped by an adjacent cell or the table edge.
+  &:focus-visible {
     outline: 2px solid var(--tn-primary, #007bff);
-    outline-offset: 2px;
-
-    .tn-calendar-body-cell-content.tn-focus-indicator {
-      background: var(--tn-alt-bg2, #e8f4fd);
-    }
+    outline-offset: -2px;
   }
 
   &:disabled {
@@ -81,51 +83,63 @@
     cursor: default;
   }
 
-  // Marked days sit underneath selection and range styling, which stay authoritative.
-  &.tn-calendar-body-marked:not(.tn-calendar-body-selected):not(.tn-calendar-body-range-start):not(.tn-calendar-body-range-end):not(.tn-calendar-body-in-range) {
-    background: var(--tn-alt-bg1, #f0f0f0);
-    border-radius: 50%;
+  // Range band spans the full cell so consecutive days join up, with rounded caps
+  // at each end of the run.
+  &.tn-calendar-body-in-range,
+  &.tn-calendar-body-range-start,
+  &.tn-calendar-body-range-end {
+    background: var(--tn-alt-bg2, #e8f4fd);
   }
 
-  // Apply today border to the button itself for full coverage
-  &.tn-calendar-body-today:not(.tn-calendar-body-selected) {
-    border: 1px solid var(--tn-primary, #007bff);
-    color: var(--tn-primary, #007bff);
-  }
-
-  &.tn-calendar-body-selected {
-    background: var(--tn-primary, #007bff);
-    color: white;
-  }
-
-  // Range styling
   &.tn-calendar-body-range-start {
-    background: var(--tn-primary, #007bff);
-    color: white;
+    border-radius: calc(var(--calendar-indicator-size) / 2) 0 0 calc(var(--calendar-indicator-size) / 2);
   }
 
   &.tn-calendar-body-range-end {
-    background: var(--tn-primary, #007bff);
-    color: white;
+    border-radius: 0 calc(var(--calendar-indicator-size) / 2) calc(var(--calendar-indicator-size) / 2) 0;
   }
 
-  &.tn-calendar-body-in-range {
-    background: var(--tn-primary, #007bff);
-    color: white;
+  // A single-day range is both ends at once.
+  &.tn-calendar-body-range-start.tn-calendar-body-range-end {
+    border-radius: calc(var(--calendar-indicator-size) / 2);
   }
 }
 
+// Round indicator for single-day state: today, marked, selected, hover.
 .tn-calendar-body-cell-content {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  width: 100%;
-  height: 100%;
+  width: var(--calendar-indicator-size);
+  height: var(--calendar-indicator-size);
+  max-width: 100%;
+  border-radius: 50%;
   font-size: var(--calendar-cell-font-size);
   font-weight: 400;
   transition: background-color 200ms cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.tn-calendar-body-cell:not(:disabled):hover .tn-calendar-body-cell-content:not(.tn-calendar-body-selected) {
+  background: var(--tn-alt-bg2, #e8f4fd);
+}
+
+// Marked days sit underneath selection, which stays authoritative.
+.tn-calendar-body-cell.tn-calendar-body-marked .tn-calendar-body-cell-content:not(.tn-calendar-body-selected) {
+  background: var(--tn-alt-bg1, #f0f0f0);
+}
+
+.tn-calendar-body-cell.tn-calendar-body-today .tn-calendar-body-cell-content:not(.tn-calendar-body-selected) {
+  border: 1px solid var(--tn-primary, #007bff);
+  color: var(--tn-primary, #007bff);
+}
+
+.tn-calendar-body-cell.tn-calendar-body-selected .tn-calendar-body-cell-content,
+.tn-calendar-body-cell.tn-calendar-body-range-start .tn-calendar-body-cell-content,
+.tn-calendar-body-cell.tn-calendar-body-range-end .tn-calendar-body-cell-content {
+  background: var(--tn-primary, #007bff);
+  color: white;
 }
 
 .tn-calendar-body-cell-preview {
