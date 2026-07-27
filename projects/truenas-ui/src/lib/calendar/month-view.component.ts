@@ -1,5 +1,14 @@
 
-import { Component, input, output, computed } from '@angular/core';
+import { Component, input, output, computed, inject, afterNextRender, ElementRef, Injector } from '@angular/core';
+import { compareDays, dateKey, isSameDay } from './calendar-dates';
+import type { DateRange } from '../date-range-input/date-range-input.component';
+
+/**
+ * Which background the day indicator paints. Resolved to a single value per cell so
+ * the precedence is stated once, in one place, rather than emerging from the relative
+ * specificity of a handful of CSS rules.
+ */
+export type CalendarCellFill = 'primary' | 'marked' | 'none';
 
 export interface CalendarCell {
   value: number;
@@ -11,6 +20,13 @@ export interface CalendarCell {
   today: boolean;
   /** Whether the date was listed in `markedDates`. */
   marked: boolean;
+  /** Background for the day indicator: selection and range caps outrank marking. */
+  fill: CalendarCellFill;
+  /**
+   * Whether the indicator draws the today outline. Suppressed under a primary fill,
+   * where a primary border and primary text would disappear into the fill.
+   */
+  todayOutline: boolean;
   compareStart?: boolean;
   compareEnd?: boolean;
   rangeStart?: boolean;
@@ -39,13 +55,15 @@ export class TnMonthViewComponent {
    */
   markedDates = input<Date[] | undefined>(undefined);
 
-  // Range mode inputs. `selecting` is accepted for backwards compatibility but is not
-  // read — which end comes next is derived from start/end by whoever owns the range.
+  // Range mode inputs
   rangeMode = input<boolean>(false);
-  selectedRange = input<{ start: Date | null; end: Date | null; selecting?: 'start' | 'end' } | undefined>(undefined);
+  selectedRange = input<DateRange | undefined>(undefined);
 
   selectedChange = output<Date>();
   activeDateChange = output<Date>();
+
+  private host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private injector = inject(Injector);
 
   readonly weekdays = [
     { long: 'Sunday', short: 'S' },
@@ -60,7 +78,50 @@ export class TnMonthViewComponent {
   // Cell sizing now controlled via CSS custom properties in the SCSS file
 
   private markedDateKeys = computed(() => {
-    return new Set((this.markedDates() ?? []).map((date) => this.dateKey(date)));
+    return new Set((this.markedDates() ?? []).map((date) => dateKey(date)));
+  });
+
+  /**
+   * The day of the month that carries `tabindex="0"` — the grid's single keyboard entry
+   * point, per the roving tabindex pattern.
+   *
+   * It follows `activeDate`, but falls back to the nearest enabled day when that day
+   * can't take focus. Without the fallback a month whose active day is disabled (say,
+   * anything before `minDate`) would have no tabbable cell at all, leaving the grid
+   * unreachable by keyboard. `null` only when the whole month is disabled, where there
+   * is nothing worth focusing anyway.
+   *
+   * Derived from the month rather than from `calendarRows()`, which would be circular.
+   */
+  activeDay = computed<number | null>(() => {
+    const activeDate = this.activeDate();
+    if (!activeDate) { return null; }
+
+    const year = activeDate.getFullYear();
+    const month = activeDate.getMonth();
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    const isEnabled = (day: number): boolean => this.isDateEnabled(new Date(year, month, day));
+
+    // Always within the rendered month: both come off the same Date, and `Date` has
+    // already rolled over any overflow the caller handed us.
+    const wanted = activeDate.getDate();
+    if (isEnabled(wanted)) { return wanted; }
+
+    // Spiral outwards from the day we wanted, forward first.
+    for (let offset = 1; offset < lastDay; offset++) {
+      if (wanted + offset <= lastDay && isEnabled(wanted + offset)) { return wanted + offset; }
+      if (wanted - offset >= 1 && isEnabled(wanted - offset)) { return wanted - offset; }
+    }
+
+    return null;
+  });
+
+  private activeCellDate = computed<Date | null>(() => {
+    const day = this.activeDay();
+    if (day === null) { return null; }
+
+    const activeDate = this.activeDate();
+    return new Date(activeDate.getFullYear(), activeDate.getMonth(), day);
   });
 
   calendarRows = computed(() => {
@@ -109,9 +170,9 @@ export class TnMonthViewComponent {
 
   private createCell(date: Date, value: number): CalendarCell {
     const today = new Date();
-    const isToday = this.isSameDate(date, today);
-    const isSelected = this.selected() ? this.isSameDate(date, this.selected()!) : false;
-    const isMarked = this.markedDateKeys().has(this.dateKey(date));
+    const isToday = isSameDay(date, today);
+    const isSelected = this.selected() ? isSameDay(date, this.selected()!) : false;
+    const isMarked = this.markedDateKeys().has(dateKey(date));
     const enabled = this.isDateEnabled(date);
 
     // Range mode calculations
@@ -123,16 +184,24 @@ export class TnMonthViewComponent {
     if (this.rangeMode() && currentRange) {
       const { start, end } = currentRange;
       
-      if (start && this.isSameDate(date, start)) {
+      if (start && isSameDay(date, start)) {
         rangeStart = true;
       }
-      if (end && this.isSameDate(date, end)) {
+      if (end && isSameDay(date, end)) {
         rangeEnd = true;
       }
-      if (start && end && date > start && date < end) {
+      // Strictly between the ends. Compared by day so a start or end carrying a time of
+      // day can't come out as both a cap and an in-between day.
+      if (start && end && compareDays(date, start) > 0 && compareDays(date, end) < 0) {
         inRange = true;
       }
     }
+
+    // Selection and the range caps share one solid fill; marking sits below them and
+    // shows only where neither applies. A cap is a selection too, so `today` must not
+    // paint its outline over it.
+    const isPrimary = isSelected || rangeStart || rangeEnd;
+    const fill: CalendarCellFill = isPrimary ? 'primary' : isMarked ? 'marked' : 'none';
 
     return {
       value,
@@ -143,6 +212,8 @@ export class TnMonthViewComponent {
       selected: isSelected,
       today: isToday,
       marked: isMarked,
+      fill,
+      todayOutline: isToday && !isPrimary,
       rangeStart,
       rangeEnd,
       inRange,
@@ -159,6 +230,8 @@ export class TnMonthViewComponent {
       selected: false,
       today: false,
       marked: false,
+      fill: 'none',
+      todayOutline: false,
     };
   }
 
@@ -166,16 +239,12 @@ export class TnMonthViewComponent {
     const minDate = this.minDate();
     const maxDate = this.maxDate();
     const dateFilter = this.dateFilter();
-    if (minDate && date < minDate) {return false;}
-    if (maxDate && date > maxDate) {return false;}
+    // Bounds are inclusive of their own day: a `minDate` of "today, 14:30" means today
+    // is selectable, not that today is half past the deadline.
+    if (minDate && compareDays(date, minDate) < 0) {return false;}
+    if (maxDate && compareDays(date, maxDate) > 0) {return false;}
     if (dateFilter && !dateFilter(date)) {return false;}
     return true;
-  }
-
-  private isSameDate(date1: Date, date2: Date): boolean {
-    return date1.getFullYear() === date2.getFullYear() &&
-           date1.getMonth() === date2.getMonth() &&
-           date1.getDate() === date2.getDate();
   }
 
   private formatAriaLabel(
@@ -205,13 +274,9 @@ export class TnMonthViewComponent {
     return label;
   }
 
-  private dateKey(date: Date): string {
-    return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-  }
-
   trackByDate(index: number, cell: CalendarCell): string {
     if (cell.value === 0) { return `empty-${index}`; }
-    return this.dateKey(cell.date);
+    return dateKey(cell.date);
   }
 
   trackByRow(index: number): number {
@@ -219,8 +284,103 @@ export class TnMonthViewComponent {
   }
 
   onCellClicked(cell: CalendarCell): void {
-    if (cell.enabled && cell.value > 0) {
-      this.selectedChange.emit(cell.date);
+    if (!cell.enabled || cell.value === 0) { return; }
+
+    // The click already moved browser focus here, so the roving tabindex has to come
+    // along or the two diverge: arrowing on from a clicked day would carry on from
+    // wherever the active day happened to be, jumping the focus somewhere unrelated.
+    this.activeDateChange.emit(cell.date);
+    this.selectedChange.emit(cell.date);
+  }
+
+  /**
+   * Moves the roving tabindex. Selection stays on click/Enter/Space, which the cells
+   * are already buttons for, so this only ever changes which day is active.
+   *
+   * Moves that leave the displayed month emit an `activeDateChange` like any other
+   * navigation; the grid re-renders on the new month with the target day active.
+   */
+  onKeydown(event: KeyboardEvent): void {
+    const from = this.activeCellDate();
+    if (!from) { return; }
+
+    const target = this.targetForKey(event, from);
+    if (!target) { return; }
+
+    // Claim the key before the browser scrolls the page with it.
+    event.preventDefault();
+
+    const landing = this.nearestEnabled(target, target >= from ? 1 : -1);
+    if (!landing || isSameDay(landing, from)) { return; }
+
+    this.activeDateChange.emit(landing);
+    this.focusActiveCellAfterRender();
+  }
+
+  private targetForKey(event: KeyboardEvent, from: Date): Date | null {
+    const year = from.getFullYear();
+    const month = from.getMonth();
+    const day = from.getDate();
+    // Overshooting a month's length is fine — the Date constructor rolls it over, which
+    // is exactly what arrowing off the end of a month should do.
+    switch (event.key) {
+      case 'ArrowLeft': return new Date(year, month, day - 1);
+      case 'ArrowRight': return new Date(year, month, day + 1);
+      case 'ArrowUp': return new Date(year, month, day - 7);
+      case 'ArrowDown': return new Date(year, month, day + 7);
+      case 'Home': return new Date(year, month, 1);
+      case 'End': return new Date(year, month + 1, 0);
+      // Shift pages by a year, matching Material and the wider grid convention.
+      case 'PageUp': return this.addMonths(from, event.shiftKey ? -12 : -1);
+      case 'PageDown': return this.addMonths(from, event.shiftKey ? 12 : 1);
+      default: return null;
     }
+  }
+
+  /** Adds whole months, clamping to the last day when the target month is shorter. */
+  private addMonths(date: Date, delta: number): Date {
+    const year = date.getFullYear();
+    const month = date.getMonth() + delta;
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    return new Date(year, month, Math.min(date.getDate(), lastDay));
+  }
+
+  /**
+   * Steps past days the caller has disabled, so a gap in `dateFilter` or the far side of
+   * `minDate`/`maxDate` doesn't park focus somewhere unusable.
+   *
+   * Carries on the way the move was already heading, then doubles back if that finds
+   * nothing: Home onto a disabled 1st has to search *into* the month, not away from it.
+   * Doubling back lands on the day we started from at the edges of the allowed range,
+   * which the caller reads as "don't move".
+   */
+  private nearestEnabled(target: Date, preferred: 1 | -1): Date | null {
+    return this.scanForEnabled(target, preferred)
+      ?? this.scanForEnabled(target, preferred === 1 ? -1 : 1);
+  }
+
+  /** Bounded, so an everything-disabled filter stops the move instead of spinning. */
+  private scanForEnabled(from: Date, direction: 1 | -1): Date | null {
+    const maxSteps = 62;
+    const candidate = new Date(from);
+
+    for (let step = 0; step <= maxSteps; step++) {
+      if (this.isDateEnabled(candidate)) { return new Date(candidate); }
+      candidate.setDate(candidate.getDate() + direction);
+    }
+
+    return null;
+  }
+
+  /**
+   * Follows the roving tabindex with real focus. The cell elements persist across the
+   * re-render, so the browser keeps focus on the day we just left unless we move it.
+   */
+  private focusActiveCellAfterRender(): void {
+    afterNextRender(() => {
+      this.host.nativeElement
+        .querySelector<HTMLButtonElement>('.tn-calendar-body-cell[tabindex="0"]')
+        ?.focus();
+    }, { injector: this.injector });
   }
 }

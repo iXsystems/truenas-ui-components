@@ -21,7 +21,10 @@
   // that stretch the calendar get evenly divided columns instead of a fixed grid
   // with a fixed-size indicator floating inside each cell.
   width: 100%;
-  min-width: calc(7 * var(--calendar-cell-size));
+  // Hold the 7-cell width where there's room for it, but never past the container:
+  // `min()` yields 100% in anything narrower, so the columns shrink instead of the
+  // table bleeding out of its parent.
+  min-width: min(100%, calc(7 * var(--calendar-cell-size)));
   table-layout: fixed;
   border-spacing: 0;
   border-collapse: separate;
@@ -87,10 +90,16 @@
   cursor: pointer;
   color: var(--tn-fg1, #333);
 
-  // Inset so the ring can never be clipped by an adjacent cell or the table edge.
+  // The button spans the whole column for the hit area, so a ring on it would be far
+  // wider than the day it marks. Draw it on the indicator instead, inset so it can
+  // never be clipped by an adjacent cell or the table edge.
   &:focus-visible {
-    outline: 2px solid var(--tn-primary, #007bff);
-    outline-offset: -2px;
+    outline: none;
+
+    .tn-calendar-body-cell-content {
+      outline: 2px solid var(--tn-primary, #007bff);
+      outline-offset: -2px;
+    }
   }
 
   &:disabled {
@@ -152,25 +161,27 @@
   transition: background-color 200ms cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-.tn-calendar-body-cell:not(:disabled):hover .tn-calendar-body-cell-content:not(.tn-calendar-body-selected) {
+// Which fill wins is decided in the component (see `CalendarCellFill`), so these rules
+// are mutually exclusive by construction and never race on specificity. Hover is the
+// one exception: it overrides `marked`, but never the primary fill.
+.tn-calendar-body-cell:not(:disabled):hover .tn-calendar-body-cell-content:not(.tn-calendar-body-fill-primary) {
   background: var(--tn-alt-bg2, #e8f4fd);
 }
 
-// Marked days sit underneath selection, which stays authoritative.
-.tn-calendar-body-cell.tn-calendar-body-marked .tn-calendar-body-cell-content:not(.tn-calendar-body-selected) {
+.tn-calendar-body-cell-content.tn-calendar-body-fill-marked {
   background: var(--tn-alt-bg1, #f0f0f0);
 }
 
-.tn-calendar-body-cell.tn-calendar-body-today .tn-calendar-body-cell-content:not(.tn-calendar-body-selected) {
-  border: 1px solid var(--tn-primary, #007bff);
-  color: var(--tn-primary, #007bff);
-}
-
-.tn-calendar-body-cell.tn-calendar-body-selected .tn-calendar-body-cell-content,
-.tn-calendar-body-cell.tn-calendar-body-range-start .tn-calendar-body-cell-content,
-.tn-calendar-body-cell.tn-calendar-body-range-end .tn-calendar-body-cell-content {
+.tn-calendar-body-cell-content.tn-calendar-body-fill-primary {
   background: var(--tn-primary, #007bff);
   color: white;
+}
+
+// Layers over `marked` and over no fill at all, but never over the primary fill — the
+// component withholds this class there rather than the two fighting in CSS.
+.tn-calendar-body-cell-content.tn-calendar-body-today-outline {
+  border: 1px solid var(--tn-primary, #007bff);
+  color: var(--tn-primary, #007bff);
 }
 
 .tn-calendar-body-cell-preview {

@@ -1,6 +1,6 @@
-import { Component, input, linkedSignal } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { Component, input, linkedSignal, signal } from '@angular/core';
 import type { Meta, StoryObj } from '@storybook/angular';
-import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnCalendarComponent } from '../lib/calendar/calendar.component';
 // Aliased: this file also exports a story named `DateRange`.
 import type { DateRange as TnDateRange } from '../lib/date-range-input/date-range-input.component';
@@ -38,7 +38,38 @@ class CalendarDemoComponent {
   readonly range = linkedSignal(() => this.initialRange());
 }
 
-const calendarHarnessDoc = loadHarnessDoc('calendar');
+/**
+ * Drives the visible month from outside via `activeDate`, while leaving the calendar's
+ * own paging intact.
+ */
+@Component({
+  selector: 'sb-calendar-active-date-demo',
+  standalone: true,
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+      <button type="button" (click)="jump(-6)">6 months back</button>
+      <button type="button" (click)="jump(0)">Today</button>
+      <button type="button" (click)="jump(6)">6 months on</button>
+    </div>
+    <tn-calendar
+      [activeDate]="activeDate()"
+      [selected]="selected()"
+      (selectedChange)="selected.set($event)"
+    />
+    <p>Showing: {{ activeDate() | date: 'MMMM yyyy' }}</p>
+  `,
+  imports: [TnCalendarComponent, DatePipe],
+})
+class CalendarActiveDateDemoComponent {
+  readonly activeDate = signal(new Date());
+  readonly selected = signal<Date | undefined>(undefined);
+
+  jump(monthsFromNow: number): void {
+    const now = new Date();
+    this.activeDate.set(new Date(now.getFullYear(), now.getMonth() + monthsFromNow, 1));
+  }
+}
 
 const meta: Meta = {
   title: 'Components/Calendar',
@@ -125,17 +156,40 @@ export const MarkedDatesWithDisabledDays: Story = {
   }),
 };
 
-export const CalendarHarness: Story = {
-  name: 'Calendar Harness',
-  tags: ['!dev'],
-  parameters: {
-    docs: {
-      story: { height: 'auto' },
-      canvas: { hidden: true, sourceState: 'none' },
-      description: { story: calendarHarnessDoc || '' },
-    },
-    controls: { disable: true },
-    layout: 'fullscreen',
-  },
-  render: () => ({ template: '' }),
+/**
+ * The grid follows the roving tabindex pattern: one cell is in the tab order at a time,
+ * and the arrow keys move it. Tab into the grid, then:
+ *
+ * - **← →** a day, **↑ ↓** a week
+ * - **Home / End** the first or last day of the month
+ * - **PageUp / PageDown** a month, shifted a year
+ * - **Enter / Space** select the active day
+ *
+ * Moving past the edge of a month pages to the next one, and days ruled out by
+ * `minDate`/`maxDate`/`dateFilter` are stepped over rather than focused. Moving the
+ * active day never changes the selection on its own.
+ */
+export const KeyboardNavigation: Story = {
+  render: () => ({
+    props: { marked, minDate: daysThisMonth(4)[0] },
+    template: `<sb-calendar-demo [markedDates]="marked" [minDate]="minDate"></sb-calendar-demo>`,
+    moduleMetadata: { imports: [CalendarDemoComponent] },
+  }),
+};
+
+/**
+ * `activeDate` drives which month is on screen. It's optional — left unbound the
+ * calendar opens on its value and pages itself — but binding it lets a calendar that
+ * stays mounted follow a value that jumps to another month. It isn't strictly
+ * controlled: paging and arrow keys still work without an echo back, and whatever you
+ * bind next wins.
+ *
+ * Use the buttons to jump the view around, then page with the header to confirm the
+ * calendar still navigates on its own.
+ */
+export const ControlledActiveDate: Story = {
+  render: () => ({
+    template: `<sb-calendar-active-date-demo></sb-calendar-active-date-demo>`,
+    moduleMetadata: { imports: [CalendarActiveDateDemoComponent] },
+  }),
 };

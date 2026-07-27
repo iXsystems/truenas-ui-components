@@ -1,6 +1,7 @@
 
 import type { OnInit } from '@angular/core';
-import { Component, input, output, signal } from '@angular/core';
+import { Component, input, output, signal, linkedSignal } from '@angular/core';
+import { compareDays } from './calendar-dates';
 import { TnCalendarHeaderComponent } from './calendar-header.component';
 import { TnMonthViewComponent } from './month-view.component';
 import { TnMultiYearViewComponent } from './multi-year-view.component';
@@ -31,6 +32,20 @@ export class TnCalendarComponent implements OnInit {
    */
   markedDates = input<Date[] | undefined>(undefined);
 
+  /**
+   * Which month — or which 24-year page, in the year view — is on screen.
+   *
+   * Optional. Left unbound, the calendar opens on the month the bound value lives in and
+   * drives navigation itself. Bind it, alongside `activeDateChange`, to drive the view
+   * from outside: useful for a calendar that stays mounted while its value jumps to
+   * another month, which the open-on-init behaviour alone won't follow.
+   *
+   * Unlike `selected`, this isn't strictly controlled — the calendar still navigates on
+   * its own when the user pages or arrows around, so binding a constant here won't
+   * freeze the view. Changing what you bind always wins.
+   */
+  activeDate = input<Date | undefined>(undefined);
+
   // Range mode inputs
   rangeMode = input<boolean>(false);
   selectedRange = input<DateRange | undefined>(undefined);
@@ -42,14 +57,27 @@ export class TnCalendarComponent implements OnInit {
   // Range mode outputs
   selectedRangeChange = output<DateRange>();
 
-  // Which month/year grid is on screen. Navigation state, not selection state.
-  currentDate = signal<Date>(new Date());
+  /**
+   * Which month/year grid is on screen. Navigation state, not selection state.
+   *
+   * Follows the `activeDate` input whenever the caller changes it, but stays writable so
+   * paging and arrow keys keep working with no echo back from the caller.
+   */
+  currentDate = linkedSignal<Date | undefined, Date>({
+    source: () => this.activeDate(),
+    computation: (activeDate, previous) => activeDate ?? previous?.value ?? new Date(),
+  });
   currentView = signal<'month' | 'year'>('month');
 
   ngOnInit(): void {
     this.currentView.set(this.startView());
 
-    // Open on the month the caller's value lives in.
+    // A bound activeDate already says what should be on screen.
+    if (this.activeDate()) {
+      return;
+    }
+
+    // Otherwise open on the month the caller's value lives in.
     const initialDate = this.rangeMode()
       ? (this.selectedRange()?.start ?? this.selectedRange()?.end ?? null)
       : (this.selected() ?? null);
@@ -133,7 +161,9 @@ export class TnCalendarComponent implements OnInit {
     }
 
     // A second pick before the first restarts the range rather than inverting it.
-    if (date < start) {
+    // Compared by day: the clicked date is midnight, but the caller's start may carry a
+    // time of day, which would otherwise make re-picking the same day restart the range.
+    if (compareDays(date, start) < 0) {
       this.selectedRangeChange.emit({ start: date, end: null });
       return;
     }

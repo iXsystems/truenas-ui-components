@@ -29,22 +29,21 @@
                 [class.tn-calendar-body-selected]="cell.selected"
                 [class.tn-calendar-body-today]="cell.today"
                 [class.tn-calendar-body-marked]="cell.marked"
-                [class.tn-calendar-body-active]="cell.selected"
+                [class.tn-calendar-body-active]="cell.value === activeDay()"
                 [class.tn-calendar-body-range-start]="cell.rangeStart"
                 [class.tn-calendar-body-range-end]="cell.rangeEnd"
                 [class.tn-calendar-body-in-range]="cell.inRange"
                 [disabled]="!cell.enabled"
-                [attr.tabindex]="cell.selected ? 0 : -1"
+                [attr.tabindex]="cell.value === activeDay() ? 0 : -1"
                 [attr.aria-label]="cell.ariaLabel"
                 [attr.aria-pressed]="cell.selected"
                 [attr.aria-current]="cell.today ? 'date' : null"
-                (click)="onCellClicked(cell)">
+                (click)="onCellClicked(cell)"
+                (keydown)="onKeydown($event)">
                 <span class="tn-calendar-body-cell-content tn-focus-indicator"
-                      [class.tn-calendar-body-selected]="cell.selected"
-                      [class.tn-calendar-body-today]="cell.today"
-                      [class.tn-calendar-body-range-start]="cell.rangeStart"
-                      [class.tn-calendar-body-range-end]="cell.rangeEnd"
-                      [class.tn-calendar-body-in-range]="cell.inRange">
+                      [class.tn-calendar-body-fill-primary]="cell.fill === 'primary'"
+                      [class.tn-calendar-body-fill-marked]="cell.fill === 'marked'"
+                      [class.tn-calendar-body-today-outline]="cell.todayOutline">
                   {{ cell.value }}
                 </span>
                 <span aria-hidden="true" class="tn-calendar-body-cell-preview"></span>

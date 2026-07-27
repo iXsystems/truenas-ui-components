@@ -110,7 +110,11 @@ export class TnCalendarCellHarness extends ComponentHarness {
     return (await this.host()).getProperty<boolean>('disabled');
   }
 
-  /** Whether the cell is currently activated using keyboard navigation. */
+  /**
+   * Whether the cell holds the grid's roving tabindex — the one cell reachable with Tab,
+   * which the arrow keys move. Independent of selection: arrowing around changes which
+   * cell is active without selecting anything.
+   */
   async isActive(): Promise<boolean> {
     return (await this.host()).hasClass('tn-calendar-body-active');
   }

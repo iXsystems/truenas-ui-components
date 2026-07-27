@@ -113,6 +113,42 @@ describe('TnCalendarHarness', () => {
     });
   });
 
+  describe('active cell', () => {
+    const pressOnGrid = async (key: string): Promise<void> => {
+      const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+      // Dispatched on the cell holding the roving tabindex — where focus actually is.
+      fixture.nativeElement.querySelector('.tn-calendar-body-cell[tabindex="0"]').dispatchEvent(event);
+      fixture.detectChanges();
+      await fixture.whenStable();
+    };
+
+    it('reports exactly one active cell', async () => {
+      expect(await textsOf(await calendar.getCells({ active: true }))).toEqual(['10']);
+    });
+
+    // `active` used to be wired to the selected cell, making this method a synonym for
+    // isSelected(). It now means what it means in Material: the roving tabindex.
+    it('tracks the roving tabindex rather than the selection', async () => {
+      await pressOnGrid('ArrowRight');
+
+      expect(await textsOf(await calendar.getCells({ active: true }))).toEqual(['11']);
+      expect(await textsOf(await calendar.getCells({ selected: true }))).toEqual(['10']);
+    });
+
+    it('moves real focus with the active cell', async () => {
+      await pressOnGrid('ArrowDown');
+
+      expect(document.activeElement?.textContent?.trim()).toBe('17');
+    });
+
+    it('leaves only the active cell reachable with Tab', async () => {
+      const tabbable = fixture.nativeElement.querySelectorAll('.tn-calendar-body-cell[tabindex="0"]');
+
+      expect(tabbable).toHaveLength(1);
+      expect(tabbable[0].textContent?.trim()).toBe('10');
+    });
+  });
+
   describe('range state', () => {
     beforeEach(() => {
       host.rangeMode.set(true);

@@ -17,16 +17,15 @@
               class="tn-calendar-body-cell"
               [class.tn-calendar-body-selected]="cell.selected"
               [class.tn-calendar-body-today]="cell.today"
-              [class.tn-calendar-body-active]="cell.selected"
+              [class.tn-calendar-body-active]="cell.year === activeYear()"
               [disabled]="!cell.enabled"
-              [attr.tabindex]="cell.selected ? 0 : -1"
+              [attr.tabindex]="cell.year === activeYear() ? 0 : -1"
               [attr.aria-label]="cell.ariaLabel"
               [attr.aria-pressed]="cell.selected"
               [attr.aria-current]="cell.today ? 'date' : null"
-              (click)="onYearClicked(cell)">
-              <span class="tn-calendar-body-cell-content tn-focus-indicator"
-                    [class.tn-calendar-body-selected]="cell.selected"
-                    [class.tn-calendar-body-today]="cell.today">
+              (click)="onYearClicked(cell)"
+              (keydown)="onKeydown($event)">
+              <span class="tn-calendar-body-cell-content tn-focus-indicator">
                 {{ cell.value }}
               </span>
               <span aria-hidden="true" class="tn-calendar-body-cell-preview"></span>

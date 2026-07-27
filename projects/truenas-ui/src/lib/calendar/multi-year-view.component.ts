@@ -1,5 +1,5 @@
 
-import { Component, input, output, computed } from '@angular/core';
+import { Component, input, output, computed, inject, afterNextRender, ElementRef, Injector } from '@angular/core';
 
 export interface YearCell {
   value: number;
@@ -27,6 +27,9 @@ export class TnMultiYearViewComponent {
 
   selectedChange = output<Date>();
   activeDateChange = output<Date>();
+
+  private host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private injector = inject(Injector);
 
   readonly cellWidth = 25; // 100/4 for 4 columns
   readonly cellAspectRatio = 7.14286; // Same as Material
@@ -61,6 +64,27 @@ export class TnMultiYearViewComponent {
     }
     
     return rows;
+  });
+
+  /**
+   * The year that carries `tabindex="0"` — the grid's single keyboard entry point, per
+   * the roving tabindex pattern. Follows `activeDate`, falling back to the nearest
+   * enabled year in the page so a range whose active year is disabled still has a
+   * tabbable cell. `null` only when every year on the page is disabled.
+   */
+  activeYear = computed<number | null>(() => {
+    const range = this.yearRange();
+    const wanted = Math.min(Math.max(this.activeDate().getFullYear(), range.start), range.end);
+    if (this.isYearEnabled(wanted)) { return wanted; }
+
+    // Spiral outwards from the year we wanted, forward first.
+    const span = range.end - range.start;
+    for (let offset = 1; offset <= span; offset++) {
+      if (wanted + offset <= range.end && this.isYearEnabled(wanted + offset)) { return wanted + offset; }
+      if (wanted - offset >= range.start && this.isYearEnabled(wanted - offset)) { return wanted - offset; }
+    }
+
+    return null;
   });
 
   private createYearCell(year: number): YearCell {
@@ -123,5 +147,85 @@ export class TnMultiYearViewComponent {
       const newDate = new Date(cell.year, currentDate.getMonth(), currentDate.getDate());
       this.selectedChange.emit(newDate);
     }
+  }
+
+  /**
+   * Moves the roving tabindex across the year grid. Picking a year stays on
+   * click/Enter/Space, which the cells are already buttons for.
+   *
+   * Moves past either end of the 24-year page emit an `activeDateChange` like the
+   * header's paging buttons do, and the grid re-renders on the neighbouring page.
+   */
+  onKeydown(event: KeyboardEvent): void {
+    const from = this.activeYear();
+    if (from === null) { return; }
+
+    const target = this.targetForKey(event, from);
+    if (target === null) { return; }
+
+    // Claim the key before the browser scrolls the page with it.
+    event.preventDefault();
+
+    const landing = this.nearestEnabledYear(target, target >= from ? 1 : -1);
+    if (landing === null || landing === from) { return; }
+
+    const activeDate = this.activeDate();
+    this.activeDateChange.emit(new Date(landing, activeDate.getMonth(), activeDate.getDate()));
+    this.focusActiveCellAfterRender();
+  }
+
+  private targetForKey(event: KeyboardEvent, from: number): number | null {
+    const range = this.yearRange();
+    const yearsPerPage = range.end - range.start + 1;
+
+    switch (event.key) {
+      case 'ArrowLeft': return from - 1;
+      case 'ArrowRight': return from + 1;
+      case 'ArrowUp': return from - this.yearsPerRow;
+      case 'ArrowDown': return from + this.yearsPerRow;
+      case 'Home': return range.start;
+      case 'End': return range.end;
+      case 'PageUp': return from - yearsPerPage;
+      case 'PageDown': return from + yearsPerPage;
+      default: return null;
+    }
+  }
+
+  /**
+   * Steps past years the caller has disabled, so `minDate`/`maxDate` don't park focus
+   * somewhere unusable.
+   *
+   * Carries on the way the move was already heading, then doubles back if that finds
+   * nothing: Home onto a disabled first year has to search *into* the page, not away
+   * from it. Doubling back lands on the year we started from at the edges of the
+   * allowed range, which the caller reads as "don't move".
+   */
+  private nearestEnabledYear(target: number, preferred: 1 | -1): number | null {
+    return this.scanForEnabledYear(target, preferred)
+      ?? this.scanForEnabledYear(target, preferred === 1 ? -1 : 1);
+  }
+
+  /** Bounded, so an everything-disabled range stops the move instead of spinning. */
+  private scanForEnabledYear(from: number, direction: 1 | -1): number | null {
+    const maxSteps = 48;
+
+    for (let step = 0; step <= maxSteps; step++) {
+      const candidate = from + (step * direction);
+      if (this.isYearEnabled(candidate)) { return candidate; }
+    }
+
+    return null;
+  }
+
+  /**
+   * Follows the roving tabindex with real focus. The cell elements persist across the
+   * re-render, so the browser keeps focus on the year we just left unless we move it.
+   */
+  private focusActiveCellAfterRender(): void {
+    afterNextRender(() => {
+      this.host.nativeElement
+        .querySelector<HTMLButtonElement>('.tn-calendar-body-cell[tabindex="0"]')
+        ?.focus();
+    }, { injector: this.injector });
   }
 }

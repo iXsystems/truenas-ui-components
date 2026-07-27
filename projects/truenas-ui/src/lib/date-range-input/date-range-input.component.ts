@@ -73,10 +73,6 @@ export class TnDateRangeInputComponent implements ControlValueAccessor, OnInit, 
   endYear = signal<string>('');
   
   private currentFocus: 'start' | 'end' = 'start';
-  // Always provide current range to calendar for initial display
-  initialRange = computed(() => {
-    return this.value();
-  });
 
   private overlay = inject(Overlay);
   private viewContainerRef = inject(ViewContainerRef);
