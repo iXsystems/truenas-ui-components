@@ -1,5 +1,6 @@
 import type { BaseHarnessFilters, ModifierKeys, TestKey } from '@angular/cdk/testing';
 import { ComponentHarness, HarnessPredicate, parallel } from '@angular/cdk/testing';
+import { isoDateString } from './calendar-dates';
 
 /** The views `tn-calendar` can show. */
 export type TnCalendarView = 'month' | 'year';
@@ -9,8 +10,19 @@ export type CalendarHarnessFilters = BaseHarnessFilters;
 
 /** A set of criteria that can be used to filter a list of calendar cell instances. */
 export interface CalendarCellHarnessFilters extends BaseHarnessFilters {
-  /** Filters based on the text of the cell. */
+  /**
+   * Filters based on the text of the cell — as rendered, so formatted for the app's
+   * locale right down to the numerals. `'14'` finds nothing in a calendar showing
+   * `١٤`. Prefer `date` (or `year`) unless the rendered text is what you mean to assert.
+   */
   text?: string | RegExp;
+  /**
+   * Filters day cells by the calendar day they represent, whatever the locale renders.
+   * Time of day is ignored.
+   */
+  date?: Date;
+  /** Filters year cells by the year they represent, whatever the locale renders. */
+  year?: number;
   /** Filters based on whether the cell is selected. */
   selected?: boolean;
   /** Filters based on whether the cell is activated using keyboard navigation. */
@@ -29,17 +41,20 @@ export interface CalendarCellHarnessFilters extends BaseHarnessFilters {
  * Harness for interacting with a single day (or year) cell inside `tn-calendar`.
  *
  * Modelled on Angular Material's `MatCalendarCellHarness` so specs can move across
- * with the method names intact. Two differences worth knowing:
+ * with the method names intact. Three differences worth knowing:
  *
  * - `isMarked()` is new — it reports the `markedDates` state, which Material has no
  *   equivalent for.
+ * - `getDate()` and the `date` filter are new, and are the reliable way to name a cell:
+ *   the text is formatted for the app's locale, so `'14'` misses a calendar rendering
+ *   `١٤`.
  * - There are no comparison-range or preview-range methods (`isComparisonRangeStart()`
  *   and friends); `tn-calendar` has no comparison range to report.
  *
  * @example
  * ```typescript
  * const calendar = await loader.getHarness(TnCalendarHarness);
- * const [first] = await calendar.getCells({ text: '14' });
+ * const [first] = await calendar.getCells({ date: new Date(2031, 4, 14) });
  * await first.select();
  * expect(await first.isSelected()).toBe(true);
  * ```
@@ -70,6 +85,12 @@ export class TnCalendarCellHarness extends ComponentHarness {
       .addOption('text', options.text, (harness, text) =>
         HarnessPredicate.stringMatches(harness.getText(), text)
       )
+      .addOption('date', options.date, async (harness, date) =>
+        (await harness.getDateStamp()) === isoDateString(date)
+      )
+      .addOption('year', options.year, async (harness, year) =>
+        (await harness.getYear()) === year
+      )
       .addOption('selected', options.selected, async (harness, selected) =>
         (await harness.isSelected()) === selected
       )
@@ -98,6 +119,33 @@ export class TnCalendarCellHarness extends ComponentHarness {
   /** Gets the aria-label of the calendar cell. */
   async getAriaLabel(): Promise<string> {
     return (await this.host()).getAttribute('aria-label').then((label) => label ?? '');
+  }
+
+  /**
+   * Gets the calendar day this cell represents, independent of how it is rendered —
+   * `getText()` is formatted for the locale, so it reads `١٤` in Arabic while this still
+   * answers the 14th. Midnight local time. `null` on a year cell, which has no day.
+   */
+  async getDate(): Promise<Date | null> {
+    const stamp = await this.getDateStamp();
+    if (!stamp) { return null; }
+
+    const [year, month, day] = stamp.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  /**
+   * Gets the year this cell represents, independent of how it is rendered. Works on year
+   * cells; `null` on a day cell.
+   */
+  async getYear(): Promise<number | null> {
+    const year = await (await this.host()).getAttribute('data-tn-year');
+    return year === null ? null : Number(year);
+  }
+
+  /** The raw `YYYY-MM-DD` stamp, for comparing without rebuilding a `Date`. */
+  protected async getDateStamp(): Promise<string | null> {
+    return (await this.host()).getAttribute('data-tn-date');
   }
 
   /** Whether the cell is selected. */
@@ -206,7 +254,8 @@ export class TnCalendarCellHarness extends ComponentHarness {
  *
  * - `getCurrentView()` resolves to `'month' | 'year'`. `tn-calendar` has no separate
  *   multi-year view — its year view *is* the multi-year grid.
- * - Cell filters gain `marked` for the `markedDates` state, and drop Material's
+ * - Cell filters gain `marked` for the `markedDates` state and `date`/`year` for naming
+ *   a cell without going through its rendered text, and drop Material's
  *   `inComparisonRange`, which has no equivalent here.
  *
  * @example
@@ -222,7 +271,7 @@ export class TnCalendarCellHarness extends ComponentHarness {
  * expect(await calendar.getCurrentViewLabel()).toBe('MAR 2022');
  *
  * // Pick a day
- * await calendar.selectCell({ text: '14' });
+ * await calendar.selectCell({ date: new Date(2022, 2, 14) });
  * ```
  */
 export class TnCalendarHarness extends ComponentHarness {

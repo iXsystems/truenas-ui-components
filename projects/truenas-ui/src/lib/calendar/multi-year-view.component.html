@@ -13,6 +13,7 @@
             <button
               type="button"
               class="tn-calendar-body-cell"
+              [attr.data-tn-year]="cell.year"
               [class.tn-calendar-body-selected]="cell.selected"
               [class.tn-calendar-body-today]="cell.today"
               [class.tn-calendar-body-active]="cell.year === activeYear()"

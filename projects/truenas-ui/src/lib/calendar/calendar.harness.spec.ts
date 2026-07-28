@@ -1,7 +1,7 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestKey, parallel } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component, signal } from '@angular/core';
+import { Component, LOCALE_ID, signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnCalendarComponent } from './calendar.component';
@@ -118,6 +118,87 @@ describe('TnCalendarHarness', () => {
 
       expect(await marked.isMarked()).toBe(true);
       expect(await plain.isMarked()).toBe(false);
+    });
+  });
+
+  // `text` matches what the cell renders, which the locale formats — numerals included.
+  // `date` and `year` name a cell by what it *is*, so they survive translation.
+  describe('naming a cell without its rendered text', () => {
+    it('finds a day by date', async () => {
+      const [cell] = await calendar.getCells({ date: day(14) });
+
+      expect(await cell.getText()).toBe('14');
+    });
+
+    it('ignores time of day on the filter', async () => {
+      const [cell] = await calendar.getCells({ date: new Date(2031, 4, 14, 23, 45) });
+
+      expect(await cell.getText()).toBe('14');
+    });
+
+    it('reads back the day a cell stands for', async () => {
+      const [cell] = await calendar.getCells({ text: '14' });
+
+      expect((await cell.getDate())?.toDateString()).toBe(day(14).toDateString());
+      expect(await cell.getYear()).toBeNull();
+    });
+
+    it('selects by date', async () => {
+      await calendar.selectCell({ date: day(18) });
+      fixture.detectChanges();
+
+      expect(host.selected()?.getDate()).toBe(18);
+    });
+
+    it('finds nothing for a day outside the month on screen', async () => {
+      expect(await calendar.getCells({ date: new Date(2031, 5, 14) })).toEqual([]);
+    });
+
+    it('names a year cell by year', async () => {
+      await calendar.changeView();
+
+      const [cell] = await calendar.getCells({ year: 2033 });
+
+      expect(await cell.getYear()).toBe(2033);
+      expect(await cell.getDate()).toBeNull();
+    });
+  });
+
+  // A calendar rendering Arabic-Indic numerals is where matching on text falls over.
+  describe('naming cells in a locale that renumbers them', () => {
+    beforeEach(async () => {
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({
+        imports: [CalendarHostComponent],
+        providers: [{ provide: LOCALE_ID, useValue: 'ar-EG' }]
+      }).compileComponents();
+
+      fixture = TestBed.createComponent(CalendarHostComponent);
+      host = fixture.componentInstance;
+      host.selected.set(day(10));
+      fixture.detectChanges();
+
+      loader = TestbedHarnessEnvironment.loader(fixture);
+      calendar = await loader.getHarness(TnCalendarHarness);
+    });
+
+    it('still finds the day by date', async () => {
+      const [cell] = await calendar.getCells({ date: day(14) });
+
+      expect(await cell.getText()).toBe('١٤');
+      expect((await cell.getDate())?.getDate()).toBe(14);
+    });
+
+    it('shows why text matching is the wrong tool here', async () => {
+      expect(await calendar.getCells({ text: '14' })).toEqual([]);
+      expect(await calendar.getCells({ text: '١٤' })).toHaveLength(1);
+    });
+
+    it('still selects by date', async () => {
+      await calendar.selectCell({ date: day(18) });
+      fixture.detectChanges();
+
+      expect(host.selected()?.getDate()).toBe(18);
     });
   });
 
