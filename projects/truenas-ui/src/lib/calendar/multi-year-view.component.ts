@@ -1,5 +1,6 @@
 
 import { Component, input, output, computed, inject, afterNextRender, ElementRef, Injector } from '@angular/core';
+import { withYear } from './calendar-dates';
 
 export interface YearCell {
   value: number;
@@ -153,10 +154,9 @@ export class TnMultiYearViewComponent {
 
   onYearClicked(cell: YearCell): void {
     if (cell.enabled) {
-      // Create a new date with the selected year, keeping current month and day
-      const currentDate = this.activeDate();
-      const newDate = new Date(cell.year, currentDate.getMonth(), currentDate.getDate());
-      this.selectedChange.emit(newDate);
+      // Keeps the month and day, clamped: moving off 29 February into a non-leap year
+      // would otherwise roll over into March and change the month too.
+      this.selectedChange.emit(withYear(this.activeDate(), cell.year));
     }
   }
 
@@ -180,8 +180,7 @@ export class TnMultiYearViewComponent {
     const landing = this.nearestEnabledYear(move.year, move.search);
     if (landing === null || landing === from) { return; }
 
-    const activeDate = this.activeDate();
-    this.activeDateChange.emit(new Date(landing, activeDate.getMonth(), activeDate.getDate()));
+    this.activeDateChange.emit(withYear(this.activeDate(), landing));
     this.focusActiveCellAfterRender();
   }
 

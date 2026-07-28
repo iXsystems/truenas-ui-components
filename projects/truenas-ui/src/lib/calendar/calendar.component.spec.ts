@@ -337,6 +337,61 @@ describe('TnCalendarComponent', () => {
 
   // The period only appears in the header, outside the grid, so without a label on the
   // grid itself a screen-reader user arrowing around never hears which month they are in.
+  // `new Date(2033, 1, 29)` is already 1 March. Carrying the day across years unclamped
+  // moved the month as well as the year, so paging the year grid off a leap day landed
+  // in March. Own setup: the visible date is fixed in ngOnInit, so the leap day has to
+  // be bound before the first change detection.
+  describe('leaving a leap day in the year view', () => {
+    const press = (key: string): void => {
+      const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+      fixture.nativeElement.querySelector('.tn-calendar-body-cell[tabindex="0"]').dispatchEvent(event);
+      fixture.detectChanges();
+    };
+
+    const emittedActiveDates = (): Date[] => {
+      const emitted: Date[] = [];
+      fixture.componentInstance.activeDateChange.subscribe((date) => emitted.push(date));
+      return emitted;
+    };
+
+    beforeEach(() => {
+      fixture.componentRef.setInput('startView', 'year');
+      fixture.componentRef.setInput('selected', new Date(2032, 1, 29)); // 29 Feb, a leap year
+      fixture.detectChanges();
+    });
+
+    it('clamps to the end of February when arrowing into a non-leap year', () => {
+      const emitted = emittedActiveDates();
+
+      press('ArrowRight');
+
+      expect(emitted[0].getFullYear()).toBe(2033);
+      expect(emitted[0].getMonth()).toBe(1);
+      expect(emitted[0].getDate()).toBe(28);
+    });
+
+    it('clamps when a year is clicked rather than arrowed to', () => {
+      const cell = [...fixture.nativeElement.querySelectorAll('.tn-calendar-body-cell')]
+        .find((candidate: HTMLElement) => candidate.textContent?.trim() === '2033') as HTMLButtonElement;
+
+      cell.click();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.tn-calendar-period-button').textContent.trim())
+        .toBe('FEB 2033');
+    });
+
+    it('keeps the 29th when the landing year is also a leap year', () => {
+      const emitted = emittedActiveDates();
+
+      press('ArrowDown'); // Four years on to 2036, also a leap year.
+
+      expect(emitted[0].getFullYear()).toBe(2036);
+      expect(emitted[0].getMonth()).toBe(1);
+      expect(emitted[0].getDate()).toBe(29);
+    });
+  });
+
   describe('grid labelling', () => {
     const gridLabel = (): string | null => {
       return fixture.nativeElement.querySelector('.tn-calendar-table')?.getAttribute('aria-label') ?? null;

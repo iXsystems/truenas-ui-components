@@ -1,6 +1,6 @@
 
 import { Component, input, output, computed, inject, afterNextRender, ElementRef, Injector } from '@angular/core';
-import { compareDays, dateKey, isSameDay } from './calendar-dates';
+import { addMonths, compareDays, dateKey, isSameDay } from './calendar-dates';
 import type { DateRange } from '../date-range-input/date-range-input.component';
 
 /**
@@ -353,18 +353,10 @@ export class TnMonthViewComponent {
       case 'Home': return { date: new Date(year, month, 1), search: 1 };
       case 'End': return { date: new Date(year, month + 1, 0), search: -1 };
       // Shift pages by a year, matching Material and the wider grid convention.
-      case 'PageUp': return { date: this.addMonths(from, event.shiftKey ? -12 : -1), search: -1 };
-      case 'PageDown': return { date: this.addMonths(from, event.shiftKey ? 12 : 1), search: 1 };
+      case 'PageUp': return { date: addMonths(from, event.shiftKey ? -12 : -1), search: -1 };
+      case 'PageDown': return { date: addMonths(from, event.shiftKey ? 12 : 1), search: 1 };
       default: return null;
     }
-  }
-
-  /** Adds whole months, clamping to the last day when the target month is shorter. */
-  private addMonths(date: Date, delta: number): Date {
-    const year = date.getFullYear();
-    const month = date.getMonth() + delta;
-    const lastDay = new Date(year, month + 1, 0).getDate();
-    return new Date(year, month, Math.min(date.getDate(), lastDay));
   }
 
   /**

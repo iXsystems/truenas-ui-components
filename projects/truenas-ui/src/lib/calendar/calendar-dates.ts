@@ -29,3 +29,27 @@ export function isSameDay(a: Date, b: Date): boolean {
 export function dateKey(date: Date): string {
   return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 }
+
+/**
+ * Adds whole months, clamping to the last day when the target month is shorter, so
+ * navigating never silently lands in the month after the one asked for. `new Date` rolls
+ * 31 January + 1 month over into early March; this returns 28 (or 29) February.
+ */
+export function addMonths(date: Date, delta: number): Date {
+  return atMonthAndDay(date, date.getFullYear(), date.getMonth() + delta);
+}
+
+/**
+ * The same month and day in another year, clamped the same way — 29 February in a
+ * non-leap year is 28 February, not 1 March. Without the clamp, paging the year grid off
+ * a leap day quietly changes the month as well as the year.
+ */
+export function withYear(date: Date, year: number): Date {
+  return atMonthAndDay(date, year, date.getMonth());
+}
+
+/** Keeps `date`'s day-of-month where the target month is long enough to hold it. */
+function atMonthAndDay(date: Date, year: number, month: number): Date {
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  return new Date(year, month, Math.min(date.getDate(), lastDay));
+}

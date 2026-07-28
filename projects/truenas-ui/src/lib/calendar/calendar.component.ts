@@ -51,6 +51,15 @@ export class TnCalendarComponent implements OnInit {
   selectedRange = input<DateRange | undefined>(undefined);
 
   selectedChange = output<Date>();
+  /**
+   * The date the calendar is now sitting on — the month it shows, and the day holding
+   * the grid's roving tabindex.
+   *
+   * This is navigation, not selection: it fires on paging, on arrow keys, and on
+   * clicking a day (a click moves the active cell as well as choosing the date, so the
+   * two never drift apart). Treat it as "the view moved", not "the user picked a date" —
+   * `selectedChange` is the one that means a choice was made.
+   */
   activeDateChange = output<Date>();
   viewChanged = output<'month' | 'year'>();
 
