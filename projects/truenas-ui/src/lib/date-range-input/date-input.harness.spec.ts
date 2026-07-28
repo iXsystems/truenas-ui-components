@@ -1,7 +1,7 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { parallel } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component } from '@angular/core';
+import { Component, LOCALE_ID } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TnDateInputComponent } from './date-input.component';
@@ -111,6 +111,44 @@ describe('TnDateInputHarness', () => {
     expect(await calendar.getCurrentViewLabel()).toBe('APR 2026');
     const selected = await calendar.getCells({ selected: true });
     expect(await parallel(() => selected.map((cell) => cell.getText()))).toEqual(['15']);
+  });
+
+  // The harness used to page the calendar by reading its header and matching cell text
+  // against Western digits, so it broke the moment the calendar started speaking the
+  // app's language. It now navigates on `data-tn-date`, which no locale rewrites.
+  describe.each(['en-US', 'de-DE', 'ar-EG'])('under %s', (locale) => {
+    beforeEach(async () => {
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({
+        imports: [DateInputHarnessTestComponent],
+        providers: [{ provide: LOCALE_ID, useValue: locale }]
+      }).compileComponents();
+
+      fixture = TestBed.createComponent(DateInputHarnessTestComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      loader = TestbedHarnessEnvironment.loader(fixture);
+    });
+
+    it('selects a date through the calendar popup', async () => {
+      const harness = await loader.getHarness(TnDateInputHarness);
+
+      await harness.selectDate(new Date(2026, 3, 15));
+
+      expect(component.control.value?.getFullYear()).toBe(2026);
+      expect(component.control.value?.getMonth()).toBe(3);
+      expect(component.control.value?.getDate()).toBe(15);
+    });
+
+    it('pages backwards to reach an earlier month', async () => {
+      const harness = await loader.getHarness(TnDateInputHarness);
+
+      await harness.selectDate(new Date(2024, 10, 3));
+
+      expect(component.control.value?.getFullYear()).toBe(2024);
+      expect(component.control.value?.getMonth()).toBe(10);
+      expect(component.control.value?.getDate()).toBe(3);
+    });
   });
 
   it('should reopen on a value the form set while the calendar was closed', async () => {

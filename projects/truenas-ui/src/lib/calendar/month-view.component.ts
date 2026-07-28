@@ -1,6 +1,6 @@
 
 import { Component, input, output, computed, inject, afterNextRender, ElementRef, Injector, LOCALE_ID } from '@angular/core';
-import { addMonths, compareDays, dateKey, firstDayOfWeek, isSameDay } from './calendar-dates';
+import { addMonths, compareDays, dateKey, firstDayOfWeek, isoDateString, isSameDay } from './calendar-dates';
 import { injectTnCalendarIntl } from './calendar-intl';
 import type { DateRange } from '../date-range-input/date-range-input.component';
 
@@ -19,6 +19,11 @@ export interface CalendarCell {
   enabled: boolean;
   selected: boolean;
   today: boolean;
+  /**
+   * `YYYY-MM-DD` for this day, rendered as `data-tn-date`. A handle that survives
+   * translation, for tests that would otherwise match on locale-formatted cell text.
+   */
+  isoDate: string;
   /** Whether the date was listed in `markedDates`. */
   marked: boolean;
   /**
@@ -256,6 +261,7 @@ export class TnMonthViewComponent {
     return {
       value,
       date: new Date(date),
+      isoDate: isoDateString(date),
       label: dayFormat.format(value),
       ariaLabel: this.formatAriaLabel(date, isMarked, rangeStart, rangeEnd, inRange),
       enabled,
@@ -275,6 +281,7 @@ export class TnMonthViewComponent {
     return {
       value: 0,
       date: new Date(),
+      isoDate: '',
       label: '',
       ariaLabel: '',
       enabled: false,

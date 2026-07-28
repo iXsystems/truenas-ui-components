@@ -31,6 +31,22 @@ export function dateKey(date: Date): string {
 }
 
 /**
+ * `YYYY-MM-DD` for the day this date falls on, built from its local parts.
+ *
+ * Rendered onto each day cell as `data-tn-date`, which gives tests a handle on a day
+ * that survives translation — cell text is formatted for the locale, right down to the
+ * numerals, so matching on it only works in English.
+ *
+ * Deliberately not `toISOString()`: that converts to UTC first, so anywhere east or west
+ * of Greenwich it can name the day before or after the one shown.
+ */
+export function isoDateString(date: Date): string {
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+/**
  * Adds whole months, clamping to the last day when the target month is shorter, so
  * navigating never silently lands in the month after the one asked for. `new Date` rolls
  * 31 January + 1 month over into early March; this returns 28 (or 29) February.

@@ -1,6 +1,6 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component } from '@angular/core';
+import { Component, LOCALE_ID } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import type { DateRange } from './date-range-input.component';
@@ -104,6 +104,28 @@ describe('TnDateRangeInputHarness', () => {
 
     expect(await harness.getStartText()).toBe('04/01/2026');
     expect(await harness.getEndText()).toBe('04/20/2026');
+  });
+
+  // selectRange drives the same calendar helper twice, so it broke in exactly the same
+  // way once the calendar started rendering the app's own language and numerals.
+  it('should select a range under a non-English locale', async () => {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [DateRangeHarnessTestComponent],
+      providers: [{ provide: LOCALE_ID, useValue: 'ar-EG' }]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(DateRangeHarnessTestComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    loader = TestbedHarnessEnvironment.loader(fixture);
+
+    const harness = await loader.getHarness(TnDateRangeInputHarness);
+    await harness.selectRange({ start: new Date(2026, 3, 1), end: new Date(2026, 4, 20) });
+
+    expect(component.control.value?.start?.getMonth()).toBe(3);
+    expect(component.control.value?.end?.getMonth()).toBe(4);
+    expect(component.control.value?.end?.getDate()).toBe(20);
   });
 
   // Range mode is what `resetInteractionState()` used to guard: the calendar kept its
