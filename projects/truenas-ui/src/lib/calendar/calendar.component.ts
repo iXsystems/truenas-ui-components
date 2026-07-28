@@ -1,7 +1,8 @@
 
 import type { OnInit } from '@angular/core';
-import { Component, input, output, signal, linkedSignal, computed, inject, LOCALE_ID } from '@angular/core';
+import { Component, input, output, signal, linkedSignal, computed, inject, ElementRef, Injector, LOCALE_ID } from '@angular/core';
 import { YEARS_PER_PAGE, addMonths, compareDays, withYear } from './calendar-dates';
+import { focusActiveCellAfterRender } from './calendar-focus';
 import { TnCalendarHeaderComponent } from './calendar-header.component';
 import { TnMonthViewComponent } from './month-view.component';
 import { TnMultiYearViewComponent } from './multi-year-view.component';
@@ -64,6 +65,8 @@ export class TnCalendarComponent implements OnInit {
   locale = input<string | undefined>(undefined);
 
   private appLocale = inject(LOCALE_ID);
+  private host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private injector = inject(Injector);
 
   /** The locale actually in force: the input when bound, the app's otherwise. */
   protected resolvedLocale = computed(() => this.locale() ?? this.appLocale);
@@ -189,12 +192,19 @@ export class TnCalendarComponent implements OnInit {
     this.activeDateChange.emit(date);
   }
 
+  /**
+   * A year picked in the year grid moves the view to that year and returns to the day
+   * grid. It is navigation, not selection — no `selectedChange` — so the user lands on
+   * the month they asked for and picks a day from there.
+   */
   onYearSelectedFromView(date: Date): void {
-    // When a year is selected from the multi-year view, update the current date
-    // and switch back to month view
     this.currentDate.set(date);
     this.currentView.set('month');
     this.viewChanged.emit('month');
     this.activeDateChange.emit(date);
+
+    // Switching grids destroys the year cell the user just activated, which drops focus
+    // to `<body>` and restarts the tab order. Carry it over to the day now active.
+    focusActiveCellAfterRender(this.host, this.injector);
   }
 }

@@ -1,6 +1,7 @@
 
-import { Component, input, output, computed, inject, afterNextRender, ElementRef, Injector, LOCALE_ID } from '@angular/core';
+import { Component, input, output, computed, inject, ElementRef, Injector, LOCALE_ID } from '@angular/core';
 import { addMonths, compareDays, dateKey, firstDayOfWeek, isoDateString, isSameDay } from './calendar-dates';
+import { focusActiveCellAfterRender } from './calendar-focus';
 import { injectTnCalendarIntl } from './calendar-intl';
 import type { DateRange } from '../date-range-input/date-range-input.component';
 
@@ -29,7 +30,7 @@ export interface CalendarCell {
   /**
    * Whether the day is part of what the caller has chosen — the selected date in
    * single-date mode, or anywhere from the start to the end of the range in range mode.
-   * Drives `aria-selected`, which otherwise had nothing to report in range mode.
+   * Drives `aria-pressed`, which otherwise had nothing to report in range mode.
    */
   inSelection: boolean;
   /** Background for the day indicator: selection and range caps outrank marking. */
@@ -39,8 +40,6 @@ export interface CalendarCell {
    * where a primary border and primary text would disappear into the fill.
    */
   todayOutline: boolean;
-  compareStart?: boolean;
-  compareEnd?: boolean;
   rangeStart?: boolean;
   rangeEnd?: boolean;
   inRange?: boolean;
@@ -308,7 +307,7 @@ export class TnMonthViewComponent {
 
   /**
    * Spells out the state a day is in, but only the parts no ARIA attribute already
-   * carries. Selection lives on the cell's `aria-selected` and today on `aria-current`,
+   * carries. Selection lives on the button's `aria-pressed` and today on `aria-current`,
    * so repeating them here had screen readers announce each one twice. Marking and the
    * range positions have no attribute equivalent, and would otherwise be conveyed by
    * background colour alone.
@@ -375,7 +374,7 @@ export class TnMonthViewComponent {
     if (!landing || isSameDay(landing, from)) { return; }
 
     this.activeDateChange.emit(landing);
-    this.focusActiveCellAfterRender();
+    focusActiveCellAfterRender(this.host, this.injector);
   }
 
   /**
@@ -433,17 +432,5 @@ export class TnMonthViewComponent {
     }
 
     return null;
-  }
-
-  /**
-   * Follows the roving tabindex with real focus. The cell elements persist across the
-   * re-render, so the browser keeps focus on the day we just left unless we move it.
-   */
-  private focusActiveCellAfterRender(): void {
-    afterNextRender(() => {
-      this.host.nativeElement
-        .querySelector<HTMLButtonElement>('.tn-calendar-body-cell[tabindex="0"]')
-        ?.focus();
-    }, { injector: this.injector });
   }
 }

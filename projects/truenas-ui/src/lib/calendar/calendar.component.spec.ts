@@ -435,6 +435,61 @@ describe('TnCalendarComponent', () => {
     });
   });
 
+  // Picking a year swaps the year grid for the day grid, which destroys the cell the
+  // user just activated. Focus then falls to <body> and the tab order restarts from the
+  // top of the page — mid-interaction, for the keyboard users the grid exists to serve.
+  describe('focus when the year grid hands back to the day grid', () => {
+    const yearCell = (year: number): HTMLButtonElement => {
+      const cell = fixture.nativeElement
+        .querySelector<HTMLButtonElement>(`.tn-calendar-body-cell[data-tn-year="${year}"]`);
+      if (!cell) { throw new Error(`no cell for year ${year}`); }
+      return cell;
+    };
+
+    const settle = async (): Promise<void> => {
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+    };
+
+    beforeEach(() => {
+      fixture.componentRef.setInput('startView', 'year');
+      fixture.componentRef.setInput('selected', new Date(2031, 4, 12));
+      fixture.detectChanges();
+    });
+
+    it('lands focus on the day the new grid made active', async () => {
+      const cell = yearCell(2028);
+      cell.focus();
+      cell.click();
+      await settle();
+
+      // The same month and day, in the year picked — see `withYear`.
+      expect(document.activeElement).toBe(
+        fixture.nativeElement.querySelector('.tn-calendar-body-cell[data-tn-date="2028-05-12"]')
+      );
+    });
+
+    // A year can be selectable while the month it lands on has no selectable day in it —
+    // the year grid judges a year by its 1st of January. There is then no cell to focus,
+    // and the switch has to go through anyway rather than dying on the missing target.
+    it('still switches when the month it lands on has no day to focus', async () => {
+      const notMay2028 = (date: Date): boolean => {
+        return !(date.getFullYear() === 2028 && date.getMonth() === 4);
+      };
+      fixture.componentRef.setInput('dateFilter', notMay2028);
+      fixture.detectChanges();
+
+      const cell = yearCell(2028);
+      cell.focus();
+      cell.click();
+      await settle();
+
+      expect(fixture.nativeElement.querySelector('tn-month-view')).toBeTruthy();
+      expect(fixture.nativeElement.querySelectorAll('.tn-calendar-body-cell[tabindex="0"]')).toHaveLength(0);
+    });
+  });
+
   // The period only appears in the header, outside the grid, so without a label on the
   // grid itself a screen-reader user arrowing around never hears which month they are in.
   // `new Date(2033, 1, 29)` is already 1 March. Carrying the day across years unclamped

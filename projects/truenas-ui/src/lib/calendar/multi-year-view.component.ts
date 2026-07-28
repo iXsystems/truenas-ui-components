@@ -1,10 +1,10 @@
 
-import { Component, input, output, computed, inject, afterNextRender, ElementRef, Injector, LOCALE_ID } from '@angular/core';
+import { Component, input, output, computed, inject, ElementRef, Injector, LOCALE_ID } from '@angular/core';
 import { YEARS_PER_PAGE, withYear, yearPageStart } from './calendar-dates';
+import { focusActiveCellAfterRender } from './calendar-focus';
 import { injectTnCalendarIntl } from './calendar-intl';
 
 export interface YearCell {
-  value: number;
   year: number;
   label: string;
   ariaLabel: string;
@@ -124,8 +124,7 @@ export class TnMultiYearViewComponent {
     const enabled = this.isYearEnabled(year);
 
     return {
-      value: year,
-      year: year,
+      year,
       label: formatYear(year),
       ariaLabel: this.formatYearAriaLabel(formatYear(year), isToday),
       enabled,
@@ -155,7 +154,7 @@ export class TnMultiYearViewComponent {
   }
 
   /**
-   * Selection is carried by the cell's `aria-selected`, so it is deliberately not
+   * Selection is carried by the button's `aria-pressed`, so it is deliberately not
    * repeated here. "Current year" stays: `aria-current="date"` on a year cell is vague
    * enough that spelling it out earns its place.
    */
@@ -204,7 +203,7 @@ export class TnMultiYearViewComponent {
     if (landing === null || landing === from) { return; }
 
     this.activeDateChange.emit(withYear(this.activeDate(), landing));
-    this.focusActiveCellAfterRender();
+    focusActiveCellAfterRender(this.host, this.injector);
   }
 
   /**
@@ -258,17 +257,5 @@ export class TnMultiYearViewComponent {
     }
 
     return null;
-  }
-
-  /**
-   * Follows the roving tabindex with real focus. The cell elements persist across the
-   * re-render, so the browser keeps focus on the year we just left unless we move it.
-   */
-  private focusActiveCellAfterRender(): void {
-    afterNextRender(() => {
-      this.host.nativeElement
-        .querySelector<HTMLButtonElement>('.tn-calendar-body-cell[tabindex="0"]')
-        ?.focus();
-    }, { injector: this.injector });
   }
 }
