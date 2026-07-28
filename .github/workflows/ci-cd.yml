@@ -67,6 +67,37 @@ jobs:
       - name: Run script tests
         run: yarn test:scripts
 
+  test-storybook:
+    name: Storybook Interaction Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Install Playwright browsers
+        run: yarn playwright install --with-deps chromium
+
+      - name: Build Storybook
+        run: yarn build-storybook
+
+      - name: Serve Storybook and run interaction tests
+        run: |
+          npx concurrently -k -s first -n "SB,TEST" \
+            "npx http-server storybook-static --port 6006 --silent" \
+            "npx wait-on tcp:127.0.0.1:6006 && yarn test-sb --url http://127.0.0.1:6006"
+
   build:
     name: Build Library
     runs-on: ubuntu-latest

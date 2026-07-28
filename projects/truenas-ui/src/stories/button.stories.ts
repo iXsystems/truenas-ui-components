@@ -234,7 +234,10 @@ export const AsRouterLink: Story = {
     const link = canvas.getByRole('link', { name: /Open audit page/i });
 
     await expect(link.tagName.toLowerCase()).toBe('a');
-    await expect(link.getAttribute('href')).toBe('/audit/settings');
+    // RouterLink may render the href relative or absolute depending on the
+    // environment's base URL, so compare pathnames.
+    const href = new URL(link.getAttribute('href')!, window.location.origin);
+    await expect(href.pathname).toBe('/audit/settings');
   },
 };
 
@@ -247,11 +250,14 @@ export const DisabledLink: Story = {
     disabled: true,
   },
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const link = canvas.getByRole('link', { name: /Audit Settings/i });
+    // A disabled link drops its href, which removes the `link` role from the
+    // accessibility tree by design — so query the anchor element directly.
+    const link = canvasElement.querySelector('a')!;
 
+    await expect(link).toBeTruthy();
     await expect(link.getAttribute('aria-disabled')).toBe('true');
     await expect(link.hasAttribute('href')).toBe(false);
+    await expect(link.getAttribute('tabindex')).toBe('-1');
   },
 };
 
