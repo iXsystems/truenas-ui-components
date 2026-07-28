@@ -1,9 +1,12 @@
 import { DatePipe } from '@angular/common';
 import { Component, input, linkedSignal, signal } from '@angular/core';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnCalendarComponent } from '../lib/calendar/calendar.component';
 // Aliased: this file also exports a story named `DateRange`.
 import type { DateRange as TnDateRange } from '../lib/date-range-input/date-range-input.component';
+
+const harnessDoc = loadHarnessDoc('calendar');
 
 /**
  * `tn-calendar` is fully controlled: clicking a day emits, it does not self-select. This
@@ -225,4 +228,23 @@ export const ControlledActiveDate: Story = {
     template: `<sb-calendar-active-date-demo></sb-calendar-active-date-demo>`,
     moduleMetadata: { imports: [CalendarActiveDateDemoComponent] },
   }),
+};
+
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      story: { height: 'auto' },
+      canvas: {
+        hidden: true,
+        sourceState: 'none',
+      },
+      description: {
+        story: harnessDoc || '',
+      },
+    },
+    controls: { disable: true },
+    layout: 'fullscreen',
+  },
+  render: () => ({ template: '' }),
 };
