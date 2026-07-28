@@ -22,7 +22,7 @@
               [attr.aria-current]="cell.today ? 'date' : null"
               (click)="onYearClicked(cell)"
               (keydown)="onKeydown($event)">
-              <span class="tn-calendar-body-cell-content tn-focus-indicator">
+              <span class="tn-calendar-body-cell-content">
                 {{ cell.value }}
               </span>
               <span aria-hidden="true" class="tn-calendar-body-cell-preview"></span>

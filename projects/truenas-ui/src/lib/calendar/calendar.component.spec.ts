@@ -1,3 +1,4 @@
+import { LOCALE_ID } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnCalendarComponent } from './calendar.component';
@@ -389,6 +390,27 @@ describe('TnCalendarComponent', () => {
       expect(emitted[0].getFullYear()).toBe(2036);
       expect(emitted[0].getMonth()).toBe(1);
       expect(emitted[0].getDate()).toBe(29);
+    });
+  });
+
+  // The header used to hold its own array of English month abbreviations.
+  describe('period label locale', () => {
+    const periodLabelWith = async (locale: string): Promise<string> => {
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({
+        imports: [TnCalendarComponent],
+        providers: [{ provide: LOCALE_ID, useValue: locale }]
+      }).compileComponents();
+
+      const localised = TestBed.createComponent(TnCalendarComponent);
+      localised.componentRef.setInput('selected', new Date(2031, 4, 12));
+      localised.detectChanges();
+      return localised.nativeElement.querySelector('.tn-calendar-period-button').textContent.trim();
+    };
+
+    it('abbreviates the month in the app locale', async () => {
+      expect(await periodLabelWith('en-US')).toBe('MAY 2031');
+      expect(await periodLabelWith('de-DE')).toBe('MAI 2031');
     });
   });
 

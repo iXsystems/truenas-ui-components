@@ -205,18 +205,3 @@
   border: 0 !important;
 }
 
-.tn-focus-indicator {
-  position: relative;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    opacity: 0;
-    background: currentColor;
-    transition: opacity 200ms cubic-bezier(0.25, 0.8, 0.25, 1);
-  }
-}

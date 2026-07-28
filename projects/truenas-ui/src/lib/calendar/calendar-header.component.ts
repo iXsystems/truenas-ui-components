@@ -1,5 +1,5 @@
 
-import { Component, input, output, computed } from '@angular/core';
+import { Component, input, output, computed, inject, LOCALE_ID } from '@angular/core';
 
 @Component({
   selector: 'tn-calendar-header',
@@ -16,10 +16,11 @@ export class TnCalendarHeaderComponent {
   previousClicked = output<void>();
   nextClicked = output<void>();
 
-  private months = [
-    'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-    'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
-  ];
+  /**
+   * Dates are formatted for the app's locale rather than a fixed one. Angular's
+   * `LOCALE_ID` is the standard place to set that, and defaults to `en-US`.
+   */
+  private locale = inject(LOCALE_ID);
 
   periodLabelId = `tn-calendar-period-label-${Math.floor(Math.random() * 10000)}`;
 
@@ -28,7 +29,9 @@ export class TnCalendarHeaderComponent {
     if (!date) {return '';}
 
     if (this.currentView() === 'month') {
-      const month = this.months[date.getMonth()];
+      // Upper-cased rather than asked for in caps: no locale offers a short month name
+      // that is already capitalised the way this header wants it.
+      const month = date.toLocaleDateString(this.locale, { month: 'short' }).toUpperCase();
       const year = date.getFullYear();
       return `${month} ${year}`;
     } else {

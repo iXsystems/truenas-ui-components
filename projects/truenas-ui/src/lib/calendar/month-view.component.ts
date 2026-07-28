@@ -1,5 +1,5 @@
 
-import { Component, input, output, computed, inject, afterNextRender, ElementRef, Injector } from '@angular/core';
+import { Component, input, output, computed, inject, afterNextRender, ElementRef, Injector, LOCALE_ID } from '@angular/core';
 import { addMonths, compareDays, dateKey, isSameDay } from './calendar-dates';
 import type { DateRange } from '../date-range-input/date-range-input.component';
 
@@ -65,15 +65,25 @@ export class TnMonthViewComponent {
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
   private injector = inject(Injector);
 
-  readonly weekdays = [
-    { long: 'Sunday', short: 'S' },
-    { long: 'Monday', short: 'M' },
-    { long: 'Tuesday', short: 'T' },
-    { long: 'Wednesday', short: 'W' },
-    { long: 'Thursday', short: 'T' },
-    { long: 'Friday', short: 'F' },
-    { long: 'Saturday', short: 'S' },
-  ];
+  /**
+   * Dates are formatted for the app's locale rather than a fixed one. Angular's
+   * `LOCALE_ID` is the standard place to set that, and defaults to `en-US`.
+   */
+  private locale = inject(LOCALE_ID);
+
+  /**
+   * Column headings, read out of the locale rather than spelled out in English. The
+   * dates are an arbitrary Sunday-to-Saturday week, used only to name the days.
+   */
+  readonly weekdays = computed(() => {
+    const long = new Intl.DateTimeFormat(this.locale, { weekday: 'long' });
+    const narrow = new Intl.DateTimeFormat(this.locale, { weekday: 'narrow' });
+
+    return Array.from({ length: 7 }, (_, day) => {
+      const date = new Date(2024, 0, 7 + day); // 7 Jan 2024 was a Sunday.
+      return { long: long.format(date), short: narrow.format(date) };
+    });
+  });
 
   // Cell sizing now controlled via CSS custom properties in the SCSS file
 
@@ -87,7 +97,7 @@ export class TnMonthViewComponent {
    * the header, outside the grid.
    */
   gridLabel = computed(() => {
-    return this.activeDate().toLocaleDateString('en', { month: 'long', year: 'numeric' });
+    return this.activeDate().toLocaleDateString(this.locale, { month: 'long', year: 'numeric' });
   });
 
   /**
@@ -273,7 +283,7 @@ export class TnMonthViewComponent {
     rangeEnd?: boolean,
     inRange?: boolean
   ): string {
-    let label = date.toLocaleDateString('en', {
+    let label = date.toLocaleDateString(this.locale, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',

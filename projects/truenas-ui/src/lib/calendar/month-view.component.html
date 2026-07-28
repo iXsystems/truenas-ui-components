@@ -2,7 +2,7 @@
   <!-- Table header with day names -->
   <thead class="tn-calendar-table-header">
     <tr>
-      @for (day of weekdays; track day) {
+      @for (day of weekdays(); track day.long) {
         <th scope="col">
           <span class="cdk-visually-hidden">{{ day.long }}</span>
           <span aria-hidden="true">{{ day.short }}</span>
@@ -40,7 +40,7 @@
                 [attr.aria-current]="cell.today ? 'date' : null"
                 (click)="onCellClicked(cell)"
                 (keydown)="onKeydown($event)">
-                <span class="tn-calendar-body-cell-content tn-focus-indicator"
+                <span class="tn-calendar-body-cell-content"
                       [class.tn-calendar-body-fill-primary]="cell.fill === 'primary'"
                       [class.tn-calendar-body-fill-marked]="cell.fill === 'marked'"
                       [class.tn-calendar-body-today-outline]="cell.todayOutline">

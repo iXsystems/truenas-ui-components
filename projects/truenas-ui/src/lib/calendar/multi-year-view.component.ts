@@ -82,7 +82,8 @@ export class TnMultiYearViewComponent {
    */
   activeYear = computed<number | null>(() => {
     const range = this.yearRange();
-    const wanted = Math.min(Math.max(this.activeDate().getFullYear(), range.start), range.end);
+    // Always inside the page: the range is derived from this same year.
+    const wanted = this.activeDate().getFullYear();
     if (this.isYearEnabled(wanted)) { return wanted; }
 
     // Spiral outwards from the year we wanted, forward first.

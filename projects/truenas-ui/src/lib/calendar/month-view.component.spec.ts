@@ -1,3 +1,4 @@
+import { LOCALE_ID } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnMonthViewComponent } from './month-view.component';
@@ -130,6 +131,61 @@ describe('TnMonthViewComponent markedDates', () => {
     const emptyCells = component.calendarRows()[0].filter((cell) => cell.value === 0);
     expect(emptyCells.length).toBeGreaterThan(0);
     expect(emptyCells.every((cell) => !cell.marked)).toBe(true);
+  });
+});
+
+// Dates used to be formatted against a hardcoded 'en' and the weekday headings were an
+// English literal array, so a German app still got an English calendar. They now follow
+// LOCALE_ID, which is where an Angular app already declares its locale.
+describe('TnMonthViewComponent locale', () => {
+  const renderWith = async (locale: string): Promise<ComponentFixture<TnMonthViewComponent>> => {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [TnMonthViewComponent],
+      providers: [{ provide: LOCALE_ID, useValue: locale }]
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(TnMonthViewComponent);
+    fixture.componentRef.setInput('activeDate', new Date(2031, 4, 10));
+    fixture.detectChanges();
+    return fixture;
+  };
+
+  const weekdayHeadings = (fixture: ComponentFixture<TnMonthViewComponent>): string[] => {
+    const cells = fixture.nativeElement.querySelectorAll('thead th span[aria-hidden="true"]');
+    return Array.from(cells as NodeListOf<HTMLElement>).map((cell) => cell.textContent?.trim() ?? '');
+  };
+
+  const gridLabel = (fixture: ComponentFixture<TnMonthViewComponent>): string | null => {
+    return fixture.nativeElement.querySelector('.tn-calendar-table')?.getAttribute('aria-label') ?? null;
+  };
+
+  it('names the grid in the app locale', async () => {
+    expect(gridLabel(await renderWith('en-US'))).toBe('May 2031');
+    expect(gridLabel(await renderWith('de-DE'))).toBe('Mai 2031');
+  });
+
+  it('reads the weekday headings out of the locale', async () => {
+    const english = await renderWith('en-US');
+    expect(weekdayHeadings(english)).toEqual(['S', 'M', 'T', 'W', 'T', 'F', 'S']);
+
+    const french = await renderWith('fr-FR');
+    expect(weekdayHeadings(french)).toEqual(['D', 'L', 'M', 'M', 'J', 'V', 'S']);
+  });
+
+  it('starts the weekday headings on Sunday, matching the grid', async () => {
+    const fixture = await renderWith('en-US');
+    const full = fixture.nativeElement.querySelectorAll('thead th .cdk-visually-hidden');
+
+    expect((full[0] as HTMLElement).textContent?.trim()).toBe('Sunday');
+    expect((full[6] as HTMLElement).textContent?.trim()).toBe('Saturday');
+  });
+
+  it('formats the day aria-labels in the app locale', async () => {
+    const fixture = await renderWith('de-DE');
+    const cell = fixture.nativeElement.querySelectorAll('.tn-calendar-body-cell')[9] as HTMLElement;
+
+    expect(cell.getAttribute('aria-label')).toContain('Mai');
   });
 });
 
