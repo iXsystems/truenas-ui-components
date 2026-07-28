@@ -1,6 +1,7 @@
-import { LOCALE_ID } from '@angular/core';
+import { LOCALE_ID, signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
+import type { TnCalendarIntl } from './calendar-intl';
 import { TN_CALENDAR_INTL } from './calendar-intl';
 import { TnCalendarComponent } from './calendar.component';
 import type { DateRange } from '../date-range-input/date-range-input.component';
@@ -467,6 +468,35 @@ describe('TnCalendarComponent', () => {
 
       expect(localised.nativeElement.querySelector('.tn-calendar-next-button').getAttribute('aria-label'))
         .toBe('Next month');
+    });
+
+    // A plain object is read once, so an app that switches language at runtime — the
+    // integration the token's own example shows — kept English on every calendar already
+    // built. Provided as a signal, the wording follows without recreating anything.
+    it('follows a language switch on a calendar already on screen', async () => {
+      const wording = signal<Partial<TnCalendarIntl>>({ marked: '(marked)', nextMonth: 'Next month' });
+      const localised = await renderWith([{ provide: TN_CALENDAR_INTL, useValue: wording }]);
+      localised.componentRef.setInput('markedDates', [new Date(2031, 4, 12)]);
+      localised.detectChanges();
+
+      expect(dayLabel(localised, 12)).toContain('(marked)');
+
+      wording.set({ marked: '(markiert)', nextMonth: 'Nächster Monat' });
+      localised.detectChanges();
+
+      expect(dayLabel(localised, 12)).toContain('(markiert)');
+      expect(localised.nativeElement.querySelector('.tn-calendar-next-button').getAttribute('aria-label'))
+        .toBe('Nächster Monat');
+    });
+
+    it('still accepts wording that never changes', async () => {
+      const localised = await renderWith([
+        { provide: TN_CALENDAR_INTL, useValue: { marked: '(markiert)' } }
+      ]);
+      localised.componentRef.setInput('markedDates', [new Date(2031, 4, 12)]);
+      localised.detectChanges();
+
+      expect(dayLabel(localised, 12)).toContain('(markiert)');
     });
 
     it('renders year numerals in the locale', async () => {

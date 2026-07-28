@@ -67,7 +67,7 @@ export class TnMultiYearViewComponent {
    */
   gridLabel = computed(() => {
     const range = this.yearRange();
-    return this.intl.yearGridLabel(range.start, range.end);
+    return this.intl().yearGridLabel(range.start, range.end);
   });
 
   yearRows = computed(() => {
@@ -160,7 +160,7 @@ export class TnMultiYearViewComponent {
   private formatYearAriaLabel(year: string, isToday: boolean): string {
     let label = year;
 
-    if (isToday) {label += ` ${this.intl.currentYear}`;}
+    if (isToday) {label += ` ${this.intl().currentYear}`;}
 
     return label;
   }

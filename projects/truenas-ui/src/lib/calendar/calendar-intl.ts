@@ -1,4 +1,5 @@
-import { InjectionToken, inject } from '@angular/core';
+import type { Signal } from '@angular/core';
+import { InjectionToken, computed, inject } from '@angular/core';
 
 /**
  * The calendar's user-facing wording.
@@ -52,6 +53,14 @@ export const TN_CALENDAR_INTL_DEFAULTS: TnCalendarIntl = {
 };
 
 /**
+ * What an app may provide for {@link TN_CALENDAR_INTL}: the wording itself, or a signal
+ * carrying it. Provide the signal form when the language can change while the app is
+ * running — a plain object is read once and never again, so every open calendar would
+ * keep the wording it was built with.
+ */
+export type TnCalendarIntlInput = Partial<TnCalendarIntl> | Signal<Partial<TnCalendarIntl>>;
+
+/**
  * Injection token for the calendar's wording.
  *
  * Because the library ships no localized strings, this is the recommended hook for
@@ -64,10 +73,11 @@ export const TN_CALENDAR_INTL_DEFAULTS: TnCalendarIntl = {
  *
  * @example
  * ```ts
+ * // Fixed for the lifetime of the app — the language is chosen at build or bootstrap.
  * providers: [
  *   {
  *     provide: TN_CALENDAR_INTL,
- *     useFactory: (translate: TranslateService): Partial<TnCalendarIntl> => ({
+ *     useFactory: (translate: TranslateService): TnCalendarIntlInput => ({
  *       marked: translate.instant('calendar.marked'),
  *       previousMonth: translate.instant('calendar.previousMonth'),
  *       yearGridLabel: (from, to) => translate.instant('calendar.years', { from, to }),
@@ -76,13 +86,41 @@ export const TN_CALENDAR_INTL_DEFAULTS: TnCalendarIntl = {
  *   },
  * ];
  * ```
+ *
+ * @example
+ * ```ts
+ * // Switchable at runtime: a signal, so calendars already on screen follow along.
+ * providers: [
+ *   {
+ *     provide: TN_CALENDAR_INTL,
+ *     useFactory: (): TnCalendarIntlInput => {
+ *       const translate = inject(TranslateService);
+ *       const lang = toSignal(translate.onLangChange, { initialValue: null });
+ *       return computed(() => {
+ *         lang(); // Re-read every string when the language changes.
+ *         return { marked: translate.instant('calendar.marked') };
+ *       });
+ *     },
+ *   },
+ * ];
+ * ```
  */
-export const TN_CALENDAR_INTL = new InjectionToken<Partial<TnCalendarIntl>>('TN_CALENDAR_INTL');
+export const TN_CALENDAR_INTL = new InjectionToken<TnCalendarIntlInput>('TN_CALENDAR_INTL');
 
 /**
  * Resolves the wording for a calendar component: whatever the app provided, laid over
  * the built-in defaults.
+ *
+ * Returns a signal rather than a plain object so a language switch reaches calendars that
+ * are already on screen. Read it inside a `computed` — as every caller here does — and
+ * the labels recompute on their own.
  */
-export function injectTnCalendarIntl(): TnCalendarIntl {
-  return { ...TN_CALENDAR_INTL_DEFAULTS, ...(inject(TN_CALENDAR_INTL, { optional: true }) ?? {}) };
+export function injectTnCalendarIntl(): Signal<TnCalendarIntl> {
+  const provided = inject(TN_CALENDAR_INTL, { optional: true });
+
+  return computed(() => {
+    // Signals are functions; a plain object of wording is not.
+    const wording = typeof provided === 'function' ? provided() : provided;
+    return { ...TN_CALENDAR_INTL_DEFAULTS, ...(wording ?? {}) };
+  });
 }

@@ -130,7 +130,7 @@ export class TnMonthViewComponent {
   gridLabel = computed(() => {
     const period = this.activeDate()
       .toLocaleDateString(this.resolvedLocale(), { month: 'long', year: 'numeric' });
-    return this.intl.monthGridLabel(period);
+    return this.intl().monthGridLabel(period);
   });
 
   /**
@@ -327,10 +327,10 @@ export class TnMonthViewComponent {
       day: 'numeric'
     });
 
-    if (isMarked) {label += ` ${this.intl.marked}`;}
-    if (rangeStart) {label += ` ${this.intl.rangeStart}`;}
-    if (rangeEnd) {label += ` ${this.intl.rangeEnd}`;}
-    if (inRange) {label += ` ${this.intl.inRange}`;}
+    if (isMarked) {label += ` ${this.intl().marked}`;}
+    if (rangeStart) {label += ` ${this.intl().rangeStart}`;}
+    if (rangeEnd) {label += ` ${this.intl().rangeEnd}`;}
+    if (inRange) {label += ` ${this.intl().inRange}`;}
 
     return label;
   }

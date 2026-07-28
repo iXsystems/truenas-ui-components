@@ -51,14 +51,14 @@ export class TnCalendarHeaderComponent {
   });
 
   previousLabel = computed(() => {
-    return this.currentView() === 'month' ? this.intl.previousMonth : this.intl.previousYears;
+    return this.currentView() === 'month' ? this.intl().previousMonth : this.intl().previousYears;
   });
 
   nextLabel = computed(() => {
-    return this.currentView() === 'month' ? this.intl.nextMonth : this.intl.nextYears;
+    return this.currentView() === 'month' ? this.intl().nextMonth : this.intl().nextYears;
   });
 
-  periodButtonLabel = computed(() => this.intl.chooseMonthAndYear);
+  periodButtonLabel = computed(() => this.intl().chooseMonthAndYear);
 
   toggleView(): void {
     const newView = this.currentView() === 'month' ? 'year' : 'month';
