@@ -1,7 +1,7 @@
 
 import type { OnInit } from '@angular/core';
 import { Component, input, output, signal, linkedSignal, computed, inject, LOCALE_ID } from '@angular/core';
-import { compareDays } from './calendar-dates';
+import { YEARS_PER_PAGE, compareDays } from './calendar-dates';
 import { TnCalendarHeaderComponent } from './calendar-header.component';
 import { TnMonthViewComponent } from './month-view.component';
 import { TnMultiYearViewComponent } from './multi-year-view.component';
@@ -33,7 +33,7 @@ export class TnCalendarComponent implements OnInit {
   markedDates = input<Date[] | undefined>(undefined);
 
   /**
-   * Which month — or which 24-year page, in the year view — is on screen.
+   * Which month — or which page of years, in the year view — is on screen.
    *
    * Optional. Left unbound, the calendar opens on the month the bound value lives in and
    * drives navigation itself. Bind it, alongside `activeDateChange`, to drive the view
@@ -130,8 +130,8 @@ export class TnCalendarComponent implements OnInit {
     if (this.currentView() === 'month') {
       newDate = new Date(current.getFullYear(), current.getMonth() - 1, 1);
     } else {
-      // For year view, navigate by 24-year ranges (like Material)
-      newDate = new Date(current.getFullYear() - 24, current.getMonth(), 1);
+      // A page at a time, the same span the grid renders and the header labels.
+      newDate = new Date(current.getFullYear() - YEARS_PER_PAGE, current.getMonth(), 1);
     }
     
     this.currentDate.set(newDate);
@@ -145,8 +145,8 @@ export class TnCalendarComponent implements OnInit {
     if (this.currentView() === 'month') {
       newDate = new Date(current.getFullYear(), current.getMonth() + 1, 1);
     } else {
-      // For year view, navigate by 24-year ranges (like Material)
-      newDate = new Date(current.getFullYear() + 24, current.getMonth(), 1);
+      // A page at a time, the same span the grid renders and the header labels.
+      newDate = new Date(current.getFullYear() + YEARS_PER_PAGE, current.getMonth(), 1);
     }
     
     this.currentDate.set(newDate);

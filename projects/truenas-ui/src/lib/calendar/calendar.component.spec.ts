@@ -1,6 +1,7 @@
 import { LOCALE_ID, signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
+import { YEARS_PER_PAGE } from './calendar-dates';
 import type { TnCalendarIntl } from './calendar-intl';
 import { TN_CALENDAR_INTL } from './calendar-intl';
 import { TnCalendarComponent } from './calendar.component';
@@ -247,6 +248,68 @@ describe('TnCalendarComponent', () => {
 
       expect(emitted).toHaveLength(1);
       expect(emitted[0].getDate()).toBe(13);
+    });
+  });
+
+  // The header label, the years the grid renders, and the paging buttons all have to
+  // agree on how wide a page is. Three places derive it from YEARS_PER_PAGE; the buttons
+  // used to carry their own literal 24, correct only by coincidence.
+  describe('year paging stays in step with the page the grid renders', () => {
+    const renderedYears = (): number[] => {
+      const cells = fixture.nativeElement.querySelectorAll('.tn-calendar-body-cell[data-tn-year]');
+      return Array.from(cells as NodeListOf<HTMLElement>)
+        .map((cell) => Number(cell.getAttribute('data-tn-year')));
+    };
+
+    const headerSpan = (): number[] => {
+      const label = fixture.nativeElement.querySelector('.tn-calendar-period-button').textContent.trim();
+      return label.split('–').map((part: string) => Number(part.trim()));
+    };
+
+    beforeEach(() => {
+      fixture.componentRef.setInput('startView', 'year');
+      fixture.componentRef.setInput('selected', new Date(2031, 4, 12));
+      fixture.detectChanges();
+    });
+
+    const expectHeaderMatchesGrid = (): void => {
+      const years = renderedYears();
+      const [from, to] = headerSpan();
+
+      expect(years[0]).toBe(from);
+      expect(years[years.length - 1]).toBe(to);
+      expect(years).toHaveLength(YEARS_PER_PAGE);
+    };
+
+    it('agrees on the first page', () => {
+      expectHeaderMatchesGrid();
+    });
+
+    it('still agrees after paging back', () => {
+      fixture.componentInstance.onPreviousClicked();
+      fixture.detectChanges();
+
+      expectHeaderMatchesGrid();
+      expect(renderedYears()[0]).toBe(2016 - YEARS_PER_PAGE);
+    });
+
+    it('still agrees after paging forward', () => {
+      fixture.componentInstance.onNextClicked();
+      fixture.detectChanges();
+
+      expectHeaderMatchesGrid();
+      expect(renderedYears()[0]).toBe(2016 + YEARS_PER_PAGE);
+    });
+
+    it('lands back where it started after a round trip', () => {
+      const before = renderedYears();
+
+      fixture.componentInstance.onNextClicked();
+      fixture.detectChanges();
+      fixture.componentInstance.onPreviousClicked();
+      fixture.detectChanges();
+
+      expect(renderedYears()).toEqual(before);
     });
   });
 
