@@ -1,6 +1,7 @@
 
 import { Component, input, output, computed, inject, afterNextRender, ElementRef, Injector, LOCALE_ID } from '@angular/core';
-import { addMonths, compareDays, dateKey, isSameDay } from './calendar-dates';
+import { addMonths, compareDays, dateKey, firstDayOfWeek, isSameDay } from './calendar-dates';
+import { injectTnCalendarIntl } from './calendar-intl';
 import type { DateRange } from '../date-range-input/date-range-input.component';
 
 /**
@@ -20,6 +21,12 @@ export interface CalendarCell {
   today: boolean;
   /** Whether the date was listed in `markedDates`. */
   marked: boolean;
+  /**
+   * Whether the day is part of what the caller has chosen — the selected date in
+   * single-date mode, or anywhere from the start to the end of the range in range mode.
+   * Drives `aria-selected`, which otherwise had nothing to report in range mode.
+   */
+  inSelection: boolean;
   /** Background for the day indicator: selection and range caps outrank marking. */
   fill: CalendarCellFill;
   /**
@@ -62,25 +69,44 @@ export class TnMonthViewComponent {
   selectedChange = output<Date>();
   activeDateChange = output<Date>();
 
+  /**
+   * Locale for dates, weekday names and the first day of the week. Falls back to the
+   * app's `LOCALE_ID`; `tn-calendar` binds it from its own `locale` input.
+   */
+  locale = input<string | undefined>(undefined);
+
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
   private injector = inject(Injector);
+  private appLocale = inject(LOCALE_ID);
+  private intl = injectTnCalendarIntl();
+
+  private resolvedLocale = computed(() => this.locale() ?? this.appLocale);
 
   /**
-   * Dates are formatted for the app's locale rather than a fixed one. Angular's
-   * `LOCALE_ID` is the standard place to set that, and defaults to `en-US`.
+   * Which day the week starts on in this locale, as a `Date.getDay()` index. Everything
+   * about the grid's shape hangs off it: the order of the headings and how many blank
+   * cells precede the 1st.
    */
-  private locale = inject(LOCALE_ID);
+  private weekStart = computed(() => firstDayOfWeek(this.resolvedLocale()));
+
+  /** Day numbers in the locale's own numerals, without a thousands separator. */
+  private dayFormat = computed(() => {
+    return new Intl.NumberFormat(this.resolvedLocale(), { useGrouping: false });
+  });
 
   /**
-   * Column headings, read out of the locale rather than spelled out in English. The
-   * dates are an arbitrary Sunday-to-Saturday week, used only to name the days.
+   * Column headings, named and ordered by the locale — Sunday first in the US, Monday
+   * across most of Europe. The dates are an arbitrary week, used only to name the days.
    */
   readonly weekdays = computed(() => {
-    const long = new Intl.DateTimeFormat(this.locale, { weekday: 'long' });
-    const narrow = new Intl.DateTimeFormat(this.locale, { weekday: 'narrow' });
+    const locale = this.resolvedLocale();
+    const long = new Intl.DateTimeFormat(locale, { weekday: 'long' });
+    const narrow = new Intl.DateTimeFormat(locale, { weekday: 'narrow' });
+    const weekStart = this.weekStart();
 
-    return Array.from({ length: 7 }, (_, day) => {
-      const date = new Date(2024, 0, 7 + day); // 7 Jan 2024 was a Sunday.
+    return Array.from({ length: 7 }, (_, column) => {
+      // 7 Jan 2024 was a Sunday, so adding a getDay() index lands on that weekday.
+      const date = new Date(2024, 0, 7 + ((weekStart + column) % 7));
       return { long: long.format(date), short: narrow.format(date) };
     });
   });
@@ -97,7 +123,9 @@ export class TnMonthViewComponent {
    * the header, outside the grid.
    */
   gridLabel = computed(() => {
-    return this.activeDate().toLocaleDateString(this.locale, { month: 'long', year: 'numeric' });
+    const period = this.activeDate()
+      .toLocaleDateString(this.resolvedLocale(), { month: 'long', year: 'numeric' });
+    return this.intl.monthGridLabel(period);
   });
 
   /**
@@ -145,20 +173,20 @@ export class TnMonthViewComponent {
 
   calendarRows = computed(() => {
     const activeDate = this.activeDate();
-    // Track selectedRange signal so computed recalculates when range changes
-    this.selectedRange();
-
     if (!activeDate) {return [];}
-    
+
     const year = activeDate.getFullYear();
     const month = activeDate.getMonth();
     const firstDate = new Date(year, month, 1);
     const lastDate = new Date(year, month + 1, 0);
-    const startDayOfWeek = firstDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    // How far into the week the 1st falls, counted from wherever this locale's week
+    // begins — that many blanks lead the grid.
+    const startDayOfWeek = (firstDate.getDay() - this.weekStart() + 7) % 7;
 
     // Read once for the whole grid rather than per cell, so every day is measured
     // against the same instant as well as allocating a fortieth as much.
     const today = new Date();
+    const dayFormat = this.dayFormat();
 
     const rows: CalendarCell[][] = [];
     let currentRow: CalendarCell[] = [];
@@ -171,7 +199,7 @@ export class TnMonthViewComponent {
     // Add all days of the month
     for (let day = 1; day <= lastDate.getDate(); day++) {
       const date = new Date(year, month, day);
-      currentRow.push(this.createCell(date, day, today));
+      currentRow.push(this.createCell(date, day, today, dayFormat));
       
       // If we have 7 cells, complete the row
       if (currentRow.length === 7) {
@@ -191,7 +219,7 @@ export class TnMonthViewComponent {
     return rows;
   });
 
-  private createCell(date: Date, value: number, today: Date): CalendarCell {
+  private createCell(date: Date, value: number, today: Date, dayFormat: Intl.NumberFormat): CalendarCell {
     const isToday = isSameDay(date, today);
     const isSelected = this.selected() ? isSameDay(date, this.selected()!) : false;
     const isMarked = this.markedDateKeys().has(dateKey(date));
@@ -228,12 +256,13 @@ export class TnMonthViewComponent {
     return {
       value,
       date: new Date(date),
-      label: date.getDate().toString(),
+      label: dayFormat.format(value),
       ariaLabel: this.formatAriaLabel(date, isMarked, rangeStart, rangeEnd, inRange),
       enabled,
       selected: isSelected,
       today: isToday,
       marked: isMarked,
+      inSelection: isSelected || rangeStart || rangeEnd || inRange,
       fill,
       todayOutline: isToday && !isPrimary,
       rangeStart,
@@ -252,6 +281,7 @@ export class TnMonthViewComponent {
       selected: false,
       today: false,
       marked: false,
+      inSelection: false,
       fill: 'none',
       todayOutline: false,
     };
@@ -283,17 +313,17 @@ export class TnMonthViewComponent {
     rangeEnd?: boolean,
     inRange?: boolean
   ): string {
-    let label = date.toLocaleDateString(this.locale, {
+    let label = date.toLocaleDateString(this.resolvedLocale(), {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     });
 
-    if (isMarked) {label += ' (marked)';}
-    if (rangeStart) {label += ' (range start)';}
-    if (rangeEnd) {label += ' (range end)';}
-    if (inRange) {label += ' (in range)';}
+    if (isMarked) {label += ` ${this.intl.marked}`;}
+    if (rangeStart) {label += ` ${this.intl.rangeStart}`;}
+    if (rangeEnd) {label += ` ${this.intl.rangeEnd}`;}
+    if (inRange) {label += ` ${this.intl.inRange}`;}
 
     return label;
   }

@@ -22,6 +22,7 @@ import type { DateRange as TnDateRange } from '../lib/date-range-input/date-rang
       [selectedRange]="range()"
       [markedDates]="markedDates()"
       [minDate]="minDate()"
+      [locale]="locale()"
       (selectedChange)="selected.set($event)"
       (selectedRangeChange)="range.set($event)"
     />
@@ -31,6 +32,7 @@ class CalendarDemoComponent {
   readonly rangeMode = input(false);
   readonly markedDates = input<Date[] | undefined>(undefined);
   readonly minDate = input<Date | undefined>(undefined);
+  readonly locale = input<string | undefined>(undefined);
   readonly initialSelected = input<Date | undefined>(undefined);
   readonly initialRange = input<TnDateRange | undefined>(undefined);
 
@@ -173,6 +175,37 @@ export const KeyboardNavigation: Story = {
   render: () => ({
     props: { marked, minDate: daysThisMonth(4)[0] },
     template: `<sb-calendar-demo [markedDates]="marked" [minDate]="minDate"></sb-calendar-demo>`,
+    moduleMetadata: { imports: [CalendarDemoComponent] },
+  }),
+};
+
+/**
+ * Everything a locale already knows — month and weekday names, date order, numerals, and
+ * **which day the week starts on** — comes from the locale. German and French calendars
+ * start on Monday, US ones on Sunday, and the headings and leading blanks move together.
+ *
+ * The locale is the app's `LOCALE_ID`, so an app that sets it once gets a calendar that
+ * agrees with `DatePipe` and everything else. Nothing reads the browser's language on its
+ * own; an app that wants that opts in at bootstrap with
+ * `{ provide: LOCALE_ID, useValue: navigator.language }`. Bind the `locale` input only
+ * when one calendar needs to differ from the rest of the app, as these do.
+ *
+ * Wording that isn't a date — `(marked)`, the header button labels — is not translated
+ * here. Provide `TN_CALENDAR_INTL` for that; anything left out keeps its English default.
+ */
+export const Locales: Story = {
+  render: () => ({
+    props: { marked },
+    template: `
+      <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+        @for (locale of ['en-US', 'de-DE', 'ar-EG']; track locale) {
+          <div>
+            <p style="margin: 0 0 8px; font-weight: 600;">{{ locale }}</p>
+            <sb-calendar-demo [locale]="locale" [markedDates]="marked" />
+          </div>
+        }
+      </div>
+    `,
     moduleMetadata: { imports: [CalendarDemoComponent] },
   }),
 };

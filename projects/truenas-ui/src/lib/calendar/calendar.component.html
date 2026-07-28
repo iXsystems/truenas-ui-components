@@ -1,14 +1,16 @@
 <tn-calendar-header
   [currentDate]="currentDate()"
+  [locale]="resolvedLocale()"
   [currentView]="currentView()"
   (viewChanged)="onViewChanged($event)"
   (previousClicked)="onPreviousClicked()"
   (nextClicked)="onNextClicked()" />
 
-<div class="tn-calendar-content" tabindex="-1">
+<div class="tn-calendar-content">
   @if (currentView() === 'month') {
     <tn-month-view
       [activeDate]="currentDate()"
+      [locale]="resolvedLocale()"
       [selected]="selected()"
       [dateFilter]="dateFilter()"
       [minDate]="minDate()"
@@ -24,6 +26,7 @@
   @if (currentView() === 'year') {
     <tn-multi-year-view
       [activeDate]="currentDate()"
+      [locale]="resolvedLocale()"
       [selected]="selected()"
       [dateFilter]="dateFilter()"
       [minDate]="minDate()"

@@ -116,6 +116,20 @@ describe('TnMonthViewComponent markedDates', () => {
       expect(cellFor(8)?.getAttribute('aria-label')).not.toContain('(selected)');
     });
 
+    // In range mode nothing is ever `selected`, so binding aria-selected to that alone
+    // left the range picker with no selection state to expose at all.
+    it('reports the whole range as selected, ends included', () => {
+      fixture.componentRef.setInput('rangeMode', true);
+      fixture.componentRef.setInput('selectedRange', {
+        start: new Date(2031, 4, 10),
+        end: new Date(2031, 4, 13),
+      });
+      fixture.detectChanges();
+
+      expect([9, 10, 11, 12, 13, 14].map((day) => gridcellFor(day)?.getAttribute('aria-selected')))
+        .toEqual(['false', 'true', 'true', 'true', 'true', 'false']);
+    });
+
     it('leaves the padding cells without a selection state to announce', () => {
       const padding = fixture.nativeElement.querySelectorAll('[role="gridcell"]')[0] as HTMLElement;
 
@@ -169,16 +183,55 @@ describe('TnMonthViewComponent locale', () => {
     const english = await renderWith('en-US');
     expect(weekdayHeadings(english)).toEqual(['S', 'M', 'T', 'W', 'T', 'F', 'S']);
 
+    // French starts its week on Monday, so the same names come round in a different order.
     const french = await renderWith('fr-FR');
-    expect(weekdayHeadings(french)).toEqual(['D', 'L', 'M', 'M', 'J', 'V', 'S']);
+    expect(weekdayHeadings(french)).toEqual(['L', 'M', 'M', 'J', 'V', 'S', 'D']);
   });
 
-  it('starts the weekday headings on Sunday, matching the grid', async () => {
-    const fixture = await renderWith('en-US');
-    const full = fixture.nativeElement.querySelectorAll('thead th .cdk-visually-hidden');
+  it('starts the week where the locale starts it', async () => {
+    const firstHeading = async (locale: string): Promise<string> => {
+      const fixture = await renderWith(locale);
+      const full = fixture.nativeElement.querySelectorAll('thead th .cdk-visually-hidden');
+      return (full[0] as HTMLElement).textContent?.trim() ?? '';
+    };
 
-    expect((full[0] as HTMLElement).textContent?.trim()).toBe('Sunday');
-    expect((full[6] as HTMLElement).textContent?.trim()).toBe('Saturday');
+    expect(await firstHeading('en-US')).toBe('Sunday');
+    expect(await firstHeading('de-DE')).toBe('Montag');
+  });
+
+  // The headings and the leading blanks have to agree, or every day sits under the wrong
+  // column. September 2026 opens on a Tuesday: two blanks from Sunday, one from Monday.
+  it('pads the first row to match where the week starts', async () => {
+    const firstRow = async (locale: string): Promise<string[]> => {
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({
+        imports: [TnMonthViewComponent],
+        providers: [{ provide: LOCALE_ID, useValue: locale }]
+      }).compileComponents();
+
+      const fixture = TestBed.createComponent(TnMonthViewComponent);
+      fixture.componentRef.setInput('activeDate', new Date(2026, 8, 15));
+      fixture.detectChanges();
+
+      const cells = fixture.nativeElement.querySelectorAll('tbody tr')[0].querySelectorAll('td');
+      return Array.from(cells as NodeListOf<HTMLElement>)
+        .map((cell) => cell.querySelector('button')?.textContent?.trim() ?? '');
+    };
+
+    expect(await firstRow('en-US')).toEqual(['', '', '1', '2', '3', '4', '5']);
+    expect(await firstRow('de-DE')).toEqual(['', '1', '2', '3', '4', '5', '6']);
+  });
+
+  // The year grid already read its numerals from the locale; the day grid has to agree,
+  // or an Arabic calendar shows Arabic years above Western days.
+  it('renders day numerals in the locale', async () => {
+    const arabic = await renderWith('ar-EG');
+    const days = Array.from(
+      arabic.nativeElement.querySelectorAll('.tn-calendar-body-cell') as NodeListOf<HTMLElement>
+    ).map((cell) => cell.textContent?.trim());
+
+    expect(days[0]).toBe('١');
+    expect(days[9]).toBe('١٠');
   });
 
   it('formats the day aria-labels in the app locale', async () => {

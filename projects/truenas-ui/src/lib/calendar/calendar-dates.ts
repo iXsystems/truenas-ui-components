@@ -53,3 +53,28 @@ function atMonthAndDay(date: Date, year: number, month: number): Date {
   const lastDay = new Date(year, month + 1, 0).getDate();
   return new Date(year, month, Math.min(date.getDate(), lastDay));
 }
+
+/**
+ * The day a week starts on in the given locale, as a `Date.getDay()` index — 0 for
+ * Sunday through 6 for Saturday. Sunday in the US, Monday across most of Europe,
+ * Saturday in much of the Middle East.
+ *
+ * Read from `Intl`, which reports it ISO-style (1 Monday … 7 Sunday). Not every engine
+ * exposes it — Firefox notably lagged — so anything that cannot answer falls back to
+ * Sunday, which is what the grid did for every locale before.
+ */
+export function firstDayOfWeek(locale: string): number {
+  try {
+    const info = new Intl.Locale(locale) as Intl.Locale & {
+      getWeekInfo?: () => { firstDay: number };
+      weekInfo?: { firstDay: number };
+    };
+    const firstDay = info.getWeekInfo?.().firstDay ?? info.weekInfo?.firstDay;
+
+    // ISO counts Sunday as 7; `Date.getDay()` counts it as 0.
+    return firstDay === undefined ? 0 : firstDay % 7;
+  } catch {
+    // A malformed locale tag shouldn't take the calendar down with it.
+    return 0;
+  }
+}

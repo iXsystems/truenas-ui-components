@@ -1,6 +1,7 @@
 import { LOCALE_ID } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
+import { TN_CALENDAR_INTL } from './calendar-intl';
 import { TnCalendarComponent } from './calendar.component';
 import type { DateRange } from '../date-range-input/date-range-input.component';
 
@@ -390,6 +391,95 @@ describe('TnCalendarComponent', () => {
       expect(emitted[0].getFullYear()).toBe(2036);
       expect(emitted[0].getMonth()).toBe(1);
       expect(emitted[0].getDate()).toBe(29);
+    });
+  });
+
+  // Dates follow the locale; the prose around them follows TN_CALENDAR_INTL. These cover
+  // the seam between the two.
+  describe('localisation', () => {
+    // Inputs are applied before the first change detection: the visible date and the
+    // starting view are both fixed in ngOnInit and ignore later changes.
+    const renderWith = async (
+      providers: unknown[],
+      inputs: Record<string, unknown> = {}
+    ): Promise<ComponentFixture<TnCalendarComponent>> => {
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({
+        imports: [TnCalendarComponent],
+        providers: providers as never[]
+      }).compileComponents();
+
+      const localised = TestBed.createComponent(TnCalendarComponent);
+      localised.componentRef.setInput('selected', new Date(2031, 4, 12));
+      Object.entries(inputs).forEach(([name, value]) => localised.componentRef.setInput(name, value));
+      localised.detectChanges();
+      return localised;
+    };
+
+    const dayLabel = (localised: ComponentFixture<TnCalendarComponent>, day: number): string => {
+      const cells = localised.nativeElement.querySelectorAll('.tn-calendar-body-cell');
+      const match = Array.from(cells as NodeListOf<HTMLElement>)
+        .find((cell) => cell.textContent?.trim() === String(day));
+      return match?.getAttribute('aria-label') ?? '';
+    };
+
+    it('takes the locale from the input ahead of the app', async () => {
+      const localised = await renderWith([{ provide: LOCALE_ID, useValue: 'en-US' }]);
+      localised.componentRef.setInput('locale', 'de-DE');
+      localised.detectChanges();
+
+      expect(localised.nativeElement.querySelector('.tn-calendar-period-button').textContent.trim())
+        .toBe('MAI 2031');
+    });
+
+    it('falls back to the app locale when the input is unbound', async () => {
+      const localised = await renderWith([{ provide: LOCALE_ID, useValue: 'de-DE' }]);
+
+      expect(localised.nativeElement.querySelector('.tn-calendar-period-button').textContent.trim())
+        .toBe('MAI 2031');
+    });
+
+    it('uses the built-in wording when no intl is provided', async () => {
+      const localised = await renderWith([]);
+      localised.componentRef.setInput('markedDates', [new Date(2031, 4, 12)]);
+      localised.detectChanges();
+
+      expect(dayLabel(localised, 12)).toContain('(marked)');
+    });
+
+    it('takes wording from TN_CALENDAR_INTL when provided', async () => {
+      const localised = await renderWith([
+        { provide: TN_CALENDAR_INTL, useValue: { marked: '(markiert)', previousMonth: 'Vorheriger Monat' } }
+      ]);
+      localised.componentRef.setInput('markedDates', [new Date(2031, 4, 12)]);
+      localised.detectChanges();
+
+      expect(dayLabel(localised, 12)).toContain('(markiert)');
+      expect(localised.nativeElement.querySelector('.tn-calendar-previous-button').getAttribute('aria-label'))
+        .toBe('Vorheriger Monat');
+    });
+
+    // A partial override should not blank out everything it left alone.
+    it('falls back to the defaults for wording an app does not override', async () => {
+      const localised = await renderWith([
+        { provide: TN_CALENDAR_INTL, useValue: { marked: '(markiert)' } }
+      ]);
+
+      expect(localised.nativeElement.querySelector('.tn-calendar-next-button').getAttribute('aria-label'))
+        .toBe('Next month');
+    });
+
+    it('renders year numerals in the locale', async () => {
+      const localised = await renderWith(
+        [{ provide: LOCALE_ID, useValue: 'ar-EG' }],
+        { startView: 'year' }
+      );
+
+      const years = Array.from(
+        localised.nativeElement.querySelectorAll('.tn-calendar-body-cell') as NodeListOf<HTMLElement>
+      ).map((cell) => cell.textContent?.trim());
+
+      expect(years[0]).toBe('٢٠١٦');
     });
   });
 

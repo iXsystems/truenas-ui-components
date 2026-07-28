@@ -22,7 +22,7 @@
             class="tn-calendar-body-cell-container"
             [attr.data-tn-row]="rowIndex"
             [attr.data-tn-col]="colIndex"
-            [attr.aria-selected]="cell.value > 0 ? cell.selected : null">
+            [attr.aria-selected]="cell.value > 0 ? cell.inSelection : null">
             @if (cell.value > 0) {
               <button
                 type="button"
@@ -44,7 +44,7 @@
                       [class.tn-calendar-body-fill-primary]="cell.fill === 'primary'"
                       [class.tn-calendar-body-fill-marked]="cell.fill === 'marked'"
                       [class.tn-calendar-body-today-outline]="cell.todayOutline">
-                  {{ cell.value }}
+                  {{ cell.label }}
                 </span>
                 <span aria-hidden="true" class="tn-calendar-body-cell-preview"></span>
               </button>

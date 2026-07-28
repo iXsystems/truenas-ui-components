@@ -1,6 +1,6 @@
 
 import type { OnInit } from '@angular/core';
-import { Component, input, output, signal, linkedSignal } from '@angular/core';
+import { Component, input, output, signal, linkedSignal, computed, inject, LOCALE_ID } from '@angular/core';
 import { compareDays } from './calendar-dates';
 import { TnCalendarHeaderComponent } from './calendar-header.component';
 import { TnMonthViewComponent } from './month-view.component';
@@ -45,6 +45,28 @@ export class TnCalendarComponent implements OnInit {
    * freeze the view. Changing what you bind always wins.
    */
   activeDate = input<Date | undefined>(undefined);
+
+  /**
+   * Locale for dates, month and weekday names, and which day the week starts on.
+   *
+   * Defaults to the app's `LOCALE_ID`, which is where an Angular app already declares
+   * its locale — so a `ng build --localize` app is right without touching this. Bind it
+   * only when one calendar needs a different locale from the rest of the app.
+   *
+   * Nothing here reads the browser's language on its own: doing so would quietly
+   * disagree with `DatePipe` and every other locale-aware part of the app. An app that
+   * wants that behaviour opts into it once, at bootstrap:
+   * `{ provide: LOCALE_ID, useValue: navigator.language }`.
+   *
+   * Wording that isn't a date — "(marked)", the header button labels — comes from
+   * `TN_CALENDAR_INTL` instead.
+   */
+  locale = input<string | undefined>(undefined);
+
+  private appLocale = inject(LOCALE_ID);
+
+  /** The locale actually in force: the input when bound, the app's otherwise. */
+  protected resolvedLocale = computed(() => this.locale() ?? this.appLocale);
 
   // Range mode inputs
   rangeMode = input<boolean>(false);

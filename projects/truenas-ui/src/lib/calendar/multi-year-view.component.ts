@@ -1,6 +1,7 @@
 
-import { Component, input, output, computed, inject, afterNextRender, ElementRef, Injector } from '@angular/core';
+import { Component, input, output, computed, inject, afterNextRender, ElementRef, Injector, LOCALE_ID } from '@angular/core';
 import { withYear } from './calendar-dates';
+import { injectTnCalendarIntl } from './calendar-intl';
 
 export interface YearCell {
   value: number;
@@ -26,11 +27,24 @@ export class TnMultiYearViewComponent {
   maxDate = input<Date | undefined>(undefined);
   dateFilter = input<((date: Date) => boolean) | undefined>(undefined);
 
+  /**
+   * Locale for the year numerals — Arabic-Indic digits in `ar`, Western in `en`. Falls
+   * back to the app's `LOCALE_ID`; `tn-calendar` binds it from its own `locale` input.
+   */
+  locale = input<string | undefined>(undefined);
+
   selectedChange = output<Date>();
   activeDateChange = output<Date>();
 
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
   private injector = inject(Injector);
+  private appLocale = inject(LOCALE_ID);
+  private intl = injectTnCalendarIntl();
+
+  /** Years read out in the locale's own numerals, without a thousands separator. */
+  private yearFormat = computed(() => {
+    return new Intl.NumberFormat(this.locale() ?? this.appLocale, { useGrouping: false });
+  });
 
   readonly yearsPerRow = 4;
   readonly yearRowCount = 6; // Shows 24 years total (6 rows x 4 columns)
@@ -53,11 +67,13 @@ export class TnMultiYearViewComponent {
    */
   gridLabel = computed(() => {
     const range = this.yearRange();
-    return `Years ${range.start} to ${range.end}`;
+    return this.intl.yearGridLabel(range.start, range.end);
   });
 
   yearRows = computed(() => {
     const range = this.yearRange();
+    const format = this.yearFormat();
+    const formatYear = (year: number): string => format.format(year);
     const rows: YearCell[][] = [];
     
     for (let row = 0; row < this.yearRowCount; row++) {
@@ -65,7 +81,7 @@ export class TnMultiYearViewComponent {
       
       for (let col = 0; col < this.yearsPerRow; col++) {
         const year = range.start + (row * this.yearsPerRow) + col;
-        yearRow.push(this.createYearCell(year));
+        yearRow.push(this.createYearCell(year, formatYear));
       }
       
       rows.push(yearRow);
@@ -96,7 +112,7 @@ export class TnMultiYearViewComponent {
     return null;
   });
 
-  private createYearCell(year: number): YearCell {
+  private createYearCell(year: number, formatYear: (year: number) => string): YearCell {
     const today = new Date();
     const currentYear = today.getFullYear();
     const selectedYear = this.selected()?.getFullYear();
@@ -108,8 +124,8 @@ export class TnMultiYearViewComponent {
     return {
       value: year,
       year: year,
-      label: year.toString(),
-      ariaLabel: this.formatYearAriaLabel(year, isToday),
+      label: formatYear(year),
+      ariaLabel: this.formatYearAriaLabel(formatYear(year), isToday),
       enabled,
       selected: isSelected,
       today: isToday,
@@ -141,10 +157,10 @@ export class TnMultiYearViewComponent {
    * repeated here. "Current year" stays: `aria-current="date"` on a year cell is vague
    * enough that spelling it out earns its place.
    */
-  private formatYearAriaLabel(year: number, isToday: boolean): string {
-    let label = year.toString();
+  private formatYearAriaLabel(year: string, isToday: boolean): string {
+    let label = year;
 
-    if (isToday) {label += ' (current year)';}
+    if (isToday) {label += ` ${this.intl.currentYear}`;}
 
     return label;
   }
