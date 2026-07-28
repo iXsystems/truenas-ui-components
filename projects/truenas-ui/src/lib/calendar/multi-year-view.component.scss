@@ -100,10 +100,3 @@
   // text, where hardcoded white lands at 2:1 against WCAG AA's 4.5:1.
   color: var(--tn-primary-txt, #fff);
 }
-
-
-.tn-calendar-body-cell-preview {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}

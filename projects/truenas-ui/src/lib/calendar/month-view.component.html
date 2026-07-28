@@ -21,8 +21,7 @@
             role="gridcell"
             class="tn-calendar-body-cell-container"
             [attr.data-tn-row]="rowIndex"
-            [attr.data-tn-col]="colIndex"
-            [attr.aria-selected]="cell.value > 0 ? cell.inSelection : null">
+            [attr.data-tn-col]="colIndex">
             @if (cell.value > 0) {
               <button
                 type="button"
@@ -38,6 +37,7 @@
                 [disabled]="!cell.enabled"
                 [attr.tabindex]="cell.value === activeDay() ? 0 : -1"
                 [attr.aria-label]="cell.ariaLabel"
+                [attr.aria-pressed]="cell.inSelection"
                 [attr.aria-current]="cell.today ? 'date' : null"
                 (click)="onCellClicked(cell)"
                 (keydown)="onKeydown($event)">
@@ -47,7 +47,6 @@
                       [class.tn-calendar-body-today-outline]="cell.todayOutline">
                   {{ cell.label }}
                 </span>
-                <span aria-hidden="true" class="tn-calendar-body-cell-preview"></span>
               </button>
             }
           </td>

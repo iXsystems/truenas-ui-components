@@ -100,9 +100,9 @@ describe('TnCalendarHarness', () => {
       expect(await cell.getAriaLabel()).toContain('May 10, 2031');
     });
 
-    // Selection is exposed as `aria-selected` on the gridcell, so it is deliberately
+    // Selection is exposed as `aria-pressed` on the cell button, so it is deliberately
     // absent from the label — it used to be announced from both at once.
-    it('leaves selection to aria-selected rather than repeating it in the label', async () => {
+    it('leaves selection to aria-pressed rather than repeating it in the label', async () => {
       const [cell] = await calendar.getCells({ text: '10' });
 
       expect(await cell.isSelected()).toBe(true);

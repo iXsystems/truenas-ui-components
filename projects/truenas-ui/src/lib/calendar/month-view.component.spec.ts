@@ -99,16 +99,21 @@ describe('TnMonthViewComponent markedDates', () => {
       return cellFor(day)?.closest('[role="gridcell"]') as HTMLElement ?? null;
     };
 
-    it('exposes selection on the gridcell, not as a pressed button', () => {
+    // The focusable element is the button inside the gridcell, and that is what a screen
+    // reader announces — `aria-selected` on the surrounding `<td>` doesn't reliably come
+    // along with it. Angular Material carries selection on the button's `aria-pressed`
+    // for exactly this reason (angular/components#23476), and leaves the gridcell bare;
+    // this follows suit rather than splitting the state across both elements.
+    it('exposes selection as a pressed button, not on the gridcell', () => {
       fixture.componentRef.setInput('selected', new Date(2031, 4, 8));
       fixture.detectChanges();
 
-      expect(gridcellFor(8)?.getAttribute('aria-selected')).toBe('true');
-      expect(gridcellFor(7)?.getAttribute('aria-selected')).toBe('false');
-      expect(cellFor(8)?.hasAttribute('aria-pressed')).toBe(false);
+      expect(cellFor(8)?.getAttribute('aria-pressed')).toBe('true');
+      expect(cellFor(7)?.getAttribute('aria-pressed')).toBe('false');
+      expect(gridcellFor(8)?.hasAttribute('aria-selected')).toBe(false);
     });
 
-    it('keeps selection out of the label, where aria-selected already says it', () => {
+    it('keeps selection out of the label, where aria-pressed already says it', () => {
       fixture.componentRef.setInput('selected', new Date(2031, 4, 8));
       fixture.detectChanges();
 
@@ -116,8 +121,8 @@ describe('TnMonthViewComponent markedDates', () => {
       expect(cellFor(8)?.getAttribute('aria-label')).not.toContain('(selected)');
     });
 
-    // In range mode nothing is ever `selected`, so binding aria-selected to that alone
-    // left the range picker with no selection state to expose at all.
+    // In range mode nothing is ever `selected`, so binding the pressed state to that
+    // alone left the range picker with no selection state to expose at all.
     it('reports the whole range as selected, ends included', () => {
       fixture.componentRef.setInput('rangeMode', true);
       fixture.componentRef.setInput('selectedRange', {
@@ -126,7 +131,7 @@ describe('TnMonthViewComponent markedDates', () => {
       });
       fixture.detectChanges();
 
-      expect([9, 10, 11, 12, 13, 14].map((day) => gridcellFor(day)?.getAttribute('aria-selected')))
+      expect([9, 10, 11, 12, 13, 14].map((day) => cellFor(day)?.getAttribute('aria-pressed')))
         .toEqual(['false', 'true', 'true', 'true', 'true', 'false']);
     });
 
@@ -135,6 +140,7 @@ describe('TnMonthViewComponent markedDates', () => {
 
       expect(padding.querySelector('.tn-calendar-body-cell')).toBeNull();
       expect(padding.hasAttribute('aria-selected')).toBe(false);
+      expect(padding.hasAttribute('aria-pressed')).toBe(false);
     });
   });
 
