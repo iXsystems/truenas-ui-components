@@ -8,16 +8,23 @@
 
   <!-- Text content -->
   <div class="tn-list-item__text">
-    <!-- Primary text -->
+    <!--
+      Primary text. The catch-all slot needs no guard: a projected node is
+      assigned to exactly one slot, so anything carrying [tnListItemTitle] or
+      [tnListItemPrimary] lands in the slot above and can never reach the
+      catch-all. Gating this on a directive query would instead key projection
+      and rendering off two different things — the slot matches the attribute,
+      a contentChildren query matches the directive instance — so an attribute
+      written without its directive imported would toggle the guard while
+      projecting exactly as before.
+    -->
     <div class="tn-list-item__primary-text">
       <ng-content select="[tnListItemTitle], [tnListItemPrimary]" />
-      @if (!hasPrimaryTextDirective()) {
-        <ng-content />
-      }
+      <ng-content />
     </div>
 
     <!-- Secondary text -->
-    @if (hasSecondaryTextContent()) {
+    @if (hasSecondaryText()) {
       <div class="tn-list-item__secondary-text">
         <ng-content select="[tnListItemLine], [tnListItemSecondary]" />
       </div>

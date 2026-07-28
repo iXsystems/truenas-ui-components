@@ -75,13 +75,13 @@ export const BasicList: Story = {
     template: `
       <tn-list [dense]="dense" [disabled]="disabled">
         <tn-list-item>
-          <span ixListItemTitle>First Item</span>
+          <span tnListItemTitle>First Item</span>
         </tn-list-item>
         <tn-list-item>
-          <span ixListItemTitle>Second Item</span>
+          <span tnListItemTitle>Second Item</span>
         </tn-list-item>
         <tn-list-item>
-          <span ixListItemTitle>Third Item</span>
+          <span tnListItemTitle>Third Item</span>
         </tn-list-item>
       </tn-list>
     `
@@ -100,49 +100,117 @@ export const ListWithSections: Story = {
         <!-- Recent Files Section -->
         <tn-list-subheader>Recent Files</tn-list-subheader>
         <tn-list-item>
-          <span ixListIcon>📄</span>
-          <span ixListItemTitle>document.pdf</span>
-          <span ixListItemLine>Modified 2 hours ago</span>
+          <span tnListIcon>📄</span>
+          <span tnListItemTitle>document.pdf</span>
+          <span tnListItemLine>Modified 2 hours ago</span>
         </tn-list-item>
         <tn-list-item>
-          <span ixListIcon>📊</span>
-          <span ixListItemTitle>report.xlsx</span>
-          <span ixListItemLine>Modified yesterday</span>
+          <span tnListIcon>📊</span>
+          <span tnListItemTitle>report.xlsx</span>
+          <span tnListItemLine>Modified yesterday</span>
         </tn-list-item>
         <tn-list-item>
-          <span ixListIcon>🖼️</span>
-          <span ixListItemTitle>presentation.pptx</span>
-          <span ixListItemLine>Modified 3 days ago</span>
+          <span tnListIcon>🖼️</span>
+          <span tnListItemTitle>presentation.pptx</span>
+          <span tnListItemLine>Modified 3 days ago</span>
         </tn-list-item>
         <tn-divider [inset]="false"></tn-divider>
 
         <!-- Archived Files Section -->
         <tn-list-subheader>Archived Files</tn-list-subheader>
         <tn-list-item>
-          <span ixListIcon>📦</span>
-          <span ixListItemTitle>backup-2023.zip</span>
-          <span ixListItemLine>Modified last week</span>
+          <span tnListIcon>📦</span>
+          <span tnListItemTitle>backup-2023.zip</span>
+          <span tnListItemLine>Modified last week</span>
         </tn-list-item>
         <tn-list-item>
-          <span ixListIcon>📁</span>
-          <span ixListItemTitle>old-project.tar.gz</span>
-          <span ixListItemLine>Modified last month</span>
+          <span tnListIcon>📁</span>
+          <span tnListItemTitle>old-project.tar.gz</span>
+          <span tnListItemLine>Modified last month</span>
         </tn-list-item>
         <tn-divider [inset]="false"></tn-divider>
 
         <!-- Shared Files Section -->
         <tn-list-subheader>Shared Files</tn-list-subheader>
         <tn-list-item>
-          <span ixListIcon>🤝</span>
-          <span ixListItemTitle>team-notes.md</span>
-          <span ixListItemLine>Shared with 5 people</span>
+          <span tnListIcon>🤝</span>
+          <span tnListItemTitle>team-notes.md</span>
+          <span tnListItemLine>Shared with 5 people</span>
         </tn-list-item>
         <tn-list-item>
-          <span ixListIcon>📝</span>
-          <span ixListItemTitle>meeting-minutes.docx</span>
-          <span ixListItemLine>Shared with team</span>
+          <span tnListIcon>📝</span>
+          <span tnListItemTitle>meeting-minutes.docx</span>
+          <span tnListItemLine>Shared with team</span>
         </tn-list-item>
       </tn-list>
+    `
+  }),
+};
+
+/**
+ * **Dense rows.** `[dense]` on `tn-list-item` drops the row's minimum height to
+ * 32px and tightens the vertical padding and the leading/trailing gutters. It is
+ * per-row, so a dense row can sit next to a default one — the list below pairs
+ * each variant so the metrics are directly comparable.
+ */
+export const DenseListItems: Story = {
+  render: () => ({
+    template: `
+      <tn-list>
+        <tn-list-subheader>Default</tn-list-subheader>
+        <tn-list-item>
+          <span tnListIcon>💾</span>
+          <span tnListItemTitle>tank/apps</span>
+          <span tnListItemLine>2.4 TiB used</span>
+        </tn-list-item>
+        <tn-list-item>
+          <span tnListIcon>💾</span>
+          <span tnListItemTitle>tank/backups</span>
+          <span tnListItemLine>810 GiB used</span>
+        </tn-list-item>
+
+        <tn-list-subheader>Dense</tn-list-subheader>
+        <tn-list-item [dense]="true">
+          <span tnListIcon>💾</span>
+          <span tnListItemTitle>tank/apps</span>
+          <span tnListItemLine>2.4 TiB used</span>
+        </tn-list-item>
+        <tn-list-item [dense]="true">
+          <span tnListIcon>💾</span>
+          <span tnListItemTitle>tank/backups</span>
+          <span tnListItemLine>810 GiB used</span>
+        </tn-list-item>
+      </tn-list>
+    `
+  }),
+};
+
+/**
+ * **Wrapping rows.** By default the primary and secondary text are truncated
+ * with an ellipsis on one line. `[wrap]` lets them run onto as many lines as
+ * they need — use it for paths, sentences, and anything else that has to stay
+ * fully readable. The narrow column below forces the difference into view.
+ */
+export const WrappingListItems: Story = {
+  render: () => ({
+    template: `
+      <div style="width: 320px;">
+        <tn-list>
+          <tn-list-subheader>Truncated (default)</tn-list-subheader>
+          <tn-list-item>
+            <span tnListIcon>📁</span>
+            <span tnListItemTitle>/mnt/tank/media/shows/archive/2019/quarter-four</span>
+            <span tnListItemLine>Snapshot taken before the pool was expanded to six disks</span>
+          </tn-list-item>
+
+          <tn-list-subheader>Wrapped</tn-list-subheader>
+          <tn-list-item [wrap]="true">
+            <span tnListIcon>📁</span>
+            <span tnListItemTitle>/mnt/tank/media/shows/archive/2019/quarter-four</span>
+            <span tnListItemLine>Snapshot taken before the pool was expanded to six disks</span>
+          </tn-list-item>
+        </tn-list>
+      </div>
     `
   }),
 };
@@ -163,29 +231,29 @@ export const ListWithSelection: Story = {
     template: `
       <tn-selection-list [dense]="dense" [disabled]="disabled" (selectionChange)="onSelectionChange($event)">
         <tn-list-option [value]="'inbox'" [selected]="false">
-          <span ixListIcon>📥</span>
-          <span ixListItemTitle>Inbox</span>
-          <span ixListItemLine>25 new messages</span>
+          <span tnListIcon>📥</span>
+          <span tnListItemTitle>Inbox</span>
+          <span tnListItemLine>25 new messages</span>
         </tn-list-option>
         <tn-list-option [value]="'sent'" [selected]="true">
-          <span ixListIcon>📤</span>
-          <span ixListItemTitle>Sent</span>
-          <span ixListItemLine>Last sent 2 hours ago</span>
+          <span tnListIcon>📤</span>
+          <span tnListItemTitle>Sent</span>
+          <span tnListItemLine>Last sent 2 hours ago</span>
         </tn-list-option>
         <tn-list-option [value]="'drafts'" [selected]="false">
-          <span ixListIcon>📝</span>
-          <span ixListItemTitle>Drafts</span>
-          <span ixListItemLine>3 unsaved drafts</span>
+          <span tnListIcon>📝</span>
+          <span tnListItemTitle>Drafts</span>
+          <span tnListItemLine>3 unsaved drafts</span>
         </tn-list-option>
         <tn-list-option [value]="'spam'" [selected]="false">
-          <span ixListIcon>🚫</span>
-          <span ixListItemTitle>Spam</span>
-          <span ixListItemLine>12 filtered messages</span>
+          <span tnListIcon>🚫</span>
+          <span tnListItemTitle>Spam</span>
+          <span tnListItemLine>12 filtered messages</span>
         </tn-list-option>
         <tn-list-option [value]="'trash'" [selected]="false">
-          <span ixListIcon>🗑️</span>
-          <span ixListItemTitle>Trash</span>
-          <span ixListItemLine>Empty</span>
+          <span tnListIcon>🗑️</span>
+          <span tnListItemTitle>Trash</span>
+          <span tnListItemLine>Empty</span>
         </tn-list-option>
       </tn-selection-list>
     `

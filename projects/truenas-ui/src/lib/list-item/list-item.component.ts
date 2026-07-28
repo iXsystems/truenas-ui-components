@@ -4,9 +4,7 @@ import {
   TnListAvatarDirective,
   TnListIconDirective,
   TnListItemLineDirective,
-  TnListItemPrimaryDirective,
   TnListItemSecondaryDirective,
-  TnListItemTitleDirective,
   TnListItemTrailingDirective
 } from '../list-directives/list-directives';
 
@@ -52,24 +50,16 @@ export class TnListItemComponent {
   private secondaryLines = contentChildren(TnListItemLineDirective, { descendants: true });
   private secondaryTexts = contentChildren(TnListItemSecondaryDirective, { descendants: true });
   private trailing = contentChildren(TnListItemTrailingDirective, { descendants: true });
-  private titles = contentChildren(TnListItemTitleDirective, { descendants: true });
-  private primaries = contentChildren(TnListItemPrimaryDirective, { descendants: true });
 
   protected hasLeadingContent = computed(
     () => this.leadingIcons().length > 0 || this.leadingAvatars().length > 0
   );
 
-  protected hasSecondaryTextContent = computed(
-    () => this.secondaryLines().length > 0 || this.secondaryTexts().length > 0
-  );
-
   protected hasTrailingContent = computed(() => this.trailing().length > 0);
 
-  protected hasPrimaryTextDirective = computed(
-    () => this.titles().length > 0 || this.primaries().length > 0
+  hasSecondaryText = computed(
+    () => this.secondaryLines().length > 0 || this.secondaryTexts().length > 0
   );
-
-  hasSecondaryText = computed(() => this.hasSecondaryTextContent());
 
   hasThirdText = computed(
     () => this.secondaryLines().length + this.secondaryTexts().length > 1

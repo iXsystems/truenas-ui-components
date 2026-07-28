@@ -93,10 +93,36 @@ describe('TnListItemComponent', () => {
       expect(host.classList).not.toContain('tn-list-item--three-line');
     });
 
-    it('suppresses the default slot when a [tnListItemTitle] is projected', () => {
+    it('renders the primary text exactly once', () => {
       const primary = fixture.nativeElement.querySelector('.tn-list-item__primary-text');
 
       expect(primary.textContent.trim()).toBe('Title');
+    });
+  });
+
+  // Projection matches the attribute; a contentChildren query matches the
+  // directive instance. Nothing may be gated on the second while the first
+  // decides where content lands, or the two disagree for a consumer who writes
+  // the attribute without importing its directive.
+  describe('with a primary-text attribute but no directive imported', () => {
+    it('still renders the primary text exactly once', async () => {
+      @Component({
+        selector: 'tn-list-item-undeclared-title-test',
+        standalone: true,
+        imports: [TnListItemComponent],
+        template: `<tn-list-item><span tnListItemTitle>Title</span></tn-list-item>`,
+      })
+      class UndeclaredTitleHostComponent {}
+
+      await TestBed.configureTestingModule({ imports: [UndeclaredTitleHostComponent] }).compileComponents();
+
+      const fixture = TestBed.createComponent(UndeclaredTitleHostComponent);
+      fixture.detectChanges();
+
+      const primary = fixture.nativeElement.querySelector('.tn-list-item__primary-text');
+
+      expect(primary.textContent.trim()).toBe('Title');
+      expect(primary.querySelectorAll('[tnListItemTitle]')).toHaveLength(1);
     });
   });
 
