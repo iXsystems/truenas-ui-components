@@ -155,6 +155,14 @@
   }
 }
 
+// The blocks below style projected content from inside the component, which is
+// what `::ng-deep` is for here — they do not pierce into any other component.
+// They are still the deprecated shape: each of these directives already stamps
+// a host class (.tn-list-icon, .tn-list-avatar, .tn-list-item-title,
+// .tn-list-item-line), so the rules belong on the directives themselves and
+// these selectors can go away. Left as-is to keep this change reviewable;
+// moving them is a standalone cleanup.
+
 // Icon styles
 ::ng-deep [tnListIcon] {
   width: 24px;

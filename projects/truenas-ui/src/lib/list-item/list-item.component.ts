@@ -8,6 +8,32 @@ import {
   TnListItemTrailingDirective
 } from '../list-directives/list-directives';
 
+/**
+ * A single row of a `tn-list`.
+ *
+ * **The content directives must be imported by the component that declares the
+ * row.** Every slot but the primary text is rendered only when a matching
+ * directive *instance* is found, and directives apply only in the template that
+ * declares them — importing `TnListItemComponent` alone does not bring them
+ * into scope. Write `<span tnListIcon>` without `TnListIconDirective` in that
+ * component's `imports` and the attribute is inert: no instance, so the leading
+ * slot never renders and the icon silently disappears. The same holds for
+ * `[tnListAvatar]`, `[tnListItemLine]`, `[tnListItemSecondary]` and
+ * `[tnListItemTrailing]`. Import them alongside the component:
+ *
+ * ```ts
+ * import {
+ *   TnListItemComponent,
+ *   TnListIconDirective,
+ *   TnListItemLineDirective,
+ *   TnListItemTrailingDirective,
+ * } from '@truenas/ui-components';
+ * ```
+ *
+ * The primary-text slot is the deliberate exception — it has no gate, so
+ * `[tnListItemTitle]` and `[tnListItemPrimary]` render either way. See the
+ * comment in `list-item.component.html` for why the asymmetry is there.
+ */
 @Component({
   selector: 'tn-list-item',
   standalone: true,
@@ -45,6 +71,18 @@ export class TnListItemComponent {
   // is still hidden behind the flag they feed. A `querySelector` cannot — the
   // element is not in the DOM until its slot renders, and its slot does not
   // render until the flag is set, so every gated slot stayed empty forever.
+  //
+  // These match directive *instances* while the slots they gate project by
+  // *attribute*, so the two disagree for a consumer who writes the attribute
+  // without importing the directive: nothing matches here, the slot stays
+  // closed, and the content vanishes. The primary-text slot avoids this by not
+  // gating at all — see the comment in the template. The side slots cannot
+  // follow it: their wrapper elements carry their own gutters, so rendering
+  // them unconditionally would leave empty ones spacing out every row, and the
+  // --two-line/--three-line host classes need the counts regardless. So the
+  // requirement is documented on the class and on each directive instead. It
+  // cannot be checked at runtime: content that never projects is never in the
+  // DOM to be found.
   private leadingIcons = contentChildren(TnListIconDirective, { descendants: true });
   private leadingAvatars = contentChildren(TnListAvatarDirective, { descendants: true });
   private secondaryLines = contentChildren(TnListItemLineDirective, { descendants: true });

@@ -126,6 +126,42 @@ describe('TnListItemComponent', () => {
     });
   });
 
+  // The side slots do gate on the directive instance, so they carry the cost the
+  // primary slot avoids: the attribute alone is inert. This is a documented
+  // requirement rather than a bug — the wrappers carry gutters that would space
+  // out every row if rendered empty — but it is pinned here so the day someone
+  // makes these slots attribute-driven, this test tells them the contract moved
+  // rather than leaving the change silent.
+  describe('with side-slot attributes but no directives imported', () => {
+    it('drops the content, because the slots gate on the directive instance', async () => {
+      @Component({
+        selector: 'tn-list-item-undeclared-slots-test',
+        standalone: true,
+        imports: [TnListItemComponent],
+        template: `<tn-list-item>
+          <span tnListIcon class="icon">icon</span><span tnListItemLine>Secondary</span><span tnListItemTrailing class="trailing">trailing</span>
+        </tn-list-item>`,
+      })
+      class UndeclaredSlotsHostComponent {}
+
+      await TestBed.configureTestingModule({ imports: [UndeclaredSlotsHostComponent] }).compileComponents();
+
+      const fixture = TestBed.createComponent(UndeclaredSlotsHostComponent);
+      fixture.detectChanges();
+
+      const element = fixture.nativeElement;
+
+      expect(element.querySelector('.tn-list-item__leading')).toBeNull();
+      expect(element.querySelector('.tn-list-item__secondary-text')).toBeNull();
+      expect(element.querySelector('.tn-list-item__trailing')).toBeNull();
+      // The content is gone entirely: it matched a select, so it never fell
+      // through to the catch-all either.
+      expect(element.querySelector('.icon')).toBeNull();
+      expect(element.querySelector('.trailing')).toBeNull();
+      expect(element.textContent).not.toContain('Secondary');
+    });
+  });
+
   describe('without projected directives', () => {
     let fixture: ComponentFixture<PlainHostComponent>;
 
