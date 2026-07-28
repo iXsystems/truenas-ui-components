@@ -1,5 +1,6 @@
 import type { Signal } from '@angular/core';
 import { InjectionToken, computed, inject } from '@angular/core';
+import { YEARS_PER_PAGE } from './calendar-dates';
 
 /**
  * The calendar's user-facing wording.
@@ -48,8 +49,8 @@ export const TN_CALENDAR_INTL_DEFAULTS: TnCalendarIntl = {
   chooseMonthAndYear: 'Choose month and year',
   previousMonth: 'Previous month',
   nextMonth: 'Next month',
-  previousYears: 'Previous 24 years',
-  nextYears: 'Next 24 years',
+  previousYears: `Previous ${YEARS_PER_PAGE} years`,
+  nextYears: `Next ${YEARS_PER_PAGE} years`,
 };
 
 /**

@@ -174,7 +174,9 @@
 
 .tn-calendar-body-cell-content.tn-calendar-body-fill-primary {
   background: var(--tn-primary, #007bff);
-  color: white;
+  // The theme names its own on-primary colour: Nord pairs a light primary with dark
+  // text, where hardcoded white lands at 2:1 against WCAG AA's 4.5:1.
+  color: var(--tn-primary-txt, #fff);
 }
 
 // Layers over `marked` and over no fill at all, but never over the primary fill — the

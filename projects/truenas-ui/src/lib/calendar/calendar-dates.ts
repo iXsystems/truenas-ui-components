@@ -70,6 +70,21 @@ function atMonthAndDay(date: Date, year: number, month: number): Date {
   return new Date(year, month, Math.min(date.getDate(), lastDay));
 }
 
+/** How many years one page of the year grid shows. */
+export const YEARS_PER_PAGE = 24;
+
+/**
+ * The first year of the page containing `year`.
+ *
+ * Pages are fixed blocks counted from year 0, not windows centred on the year asked
+ * about — 2020 sits near the top of 2016–2039 rather than in the middle of 2008–2031.
+ * The year view and the header both need this answer and must agree on it, or the
+ * header labels a span the grid isn't showing.
+ */
+export function yearPageStart(year: number): number {
+  return Math.floor(year / YEARS_PER_PAGE) * YEARS_PER_PAGE;
+}
+
 /**
  * The day a week starts on in the given locale, as a `Date.getDay()` index — 0 for
  * Sunday through 6 for Saturday. Sunday in the US, Monday across most of Europe,

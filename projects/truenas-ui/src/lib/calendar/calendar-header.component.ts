@@ -1,5 +1,7 @@
 
+import { _IdGenerator } from '@angular/cdk/a11y';
 import { Component, input, output, computed, inject, LOCALE_ID } from '@angular/core';
+import { YEARS_PER_PAGE, yearPageStart } from './calendar-dates';
 import { injectTnCalendarIntl } from './calendar-intl';
 
 @Component({
@@ -28,7 +30,13 @@ export class TnCalendarHeaderComponent {
 
   private resolvedLocale = computed(() => this.locale() ?? this.appLocale);
 
-  periodLabelId = `tn-calendar-period-label-${Math.floor(Math.random() * 10000)}`;
+  /**
+   * Ties the period button to its live region through `aria-describedby`. Counted rather
+   * than drawn at random: two calendars on one page — a start and an end picker, say —
+   * had a real chance of minting the same id out of only 10,000, and a duplicate id
+   * silently unhooks the association with nothing to show for it.
+   */
+  periodLabelId = inject(_IdGenerator).getId('tn-calendar-period-label-');
 
   periodLabel = computed(() => {
     const date = this.currentDate();
@@ -42,11 +50,11 @@ export class TnCalendarHeaderComponent {
       // already capitalised the way this header wants it.
       return date.toLocaleDateString(locale, { month: 'short', year: 'numeric' }).toUpperCase();
     } else {
-      // For year view, show the year range (24 years like Material)
-      const currentYear = date.getFullYear();
-      const startYear = Math.floor(currentYear / 24) * 24;
+      // The span the year grid is showing. Shared with the view so the two cannot
+      // disagree about which page is on screen.
+      const startYear = yearPageStart(date.getFullYear());
       const yearFormat = new Intl.NumberFormat(locale, { useGrouping: false });
-      return `${yearFormat.format(startYear)} – ${yearFormat.format(startYear + 23)}`;
+      return `${yearFormat.format(startYear)} – ${yearFormat.format(startYear + YEARS_PER_PAGE - 1)}`;
     }
   });
 

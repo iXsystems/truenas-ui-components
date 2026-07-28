@@ -513,6 +513,38 @@ describe('TnCalendarComponent', () => {
     });
   });
 
+  // Two pickers on one page is the ordinary case, not an exotic one — a date range built
+  // from a start and an end input puts two calendars in the same document. The period
+  // label's id used to come from Math.random() over 10,000 values, and a collision
+  // silently unhooks aria-describedby with nothing visible to show for it.
+  describe('period label id', () => {
+    it('is unique across calendars sharing a page', async () => {
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({ imports: [TnCalendarComponent] }).compileComponents();
+
+      const ids = Array.from({ length: 25 }, () => {
+        const calendar = TestBed.createComponent(TnCalendarComponent);
+        calendar.detectChanges();
+        return calendar.nativeElement
+          .querySelector('.tn-calendar-period-button')
+          .getAttribute('aria-describedby') as string;
+      });
+
+      expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    it('points at a label that actually exists', () => {
+      fixture.detectChanges();
+
+      const describedBy = fixture.nativeElement
+        .querySelector('.tn-calendar-period-button')
+        .getAttribute('aria-describedby');
+
+      expect(fixture.nativeElement.querySelector(`#${describedBy}`)?.textContent?.trim())
+        .toBeTruthy();
+    });
+  });
+
   // The header used to hold its own array of English month abbreviations.
   describe('period label locale', () => {
     const periodLabelWith = async (locale: string): Promise<string> => {

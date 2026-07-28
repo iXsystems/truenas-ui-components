@@ -1,6 +1,6 @@
 
 import { Component, input, output, computed, inject, afterNextRender, ElementRef, Injector, LOCALE_ID } from '@angular/core';
-import { withYear } from './calendar-dates';
+import { YEARS_PER_PAGE, withYear, yearPageStart } from './calendar-dates';
 import { injectTnCalendarIntl } from './calendar-intl';
 
 export interface YearCell {
@@ -47,18 +47,15 @@ export class TnMultiYearViewComponent {
   });
 
   readonly yearsPerRow = 4;
-  readonly yearRowCount = 6; // Shows 24 years total (6 rows x 4 columns)
+  readonly yearRowCount = YEARS_PER_PAGE / this.yearsPerRow;
 
-  // Calculate the year range to display
+  /**
+   * The page of years on screen. Pages are fixed blocks, so the active year sits
+   * wherever it falls within one rather than in the middle — see `yearPageStart`.
+   */
   yearRange = computed(() => {
-    const activeDate = this.activeDate();
-    const currentYear = activeDate.getFullYear();
-
-    // Calculate the starting year for a 24-year range
-    // We want the active year to be roughly in the middle
-    const startYear = Math.floor(currentYear / 24) * 24;
-
-    return { start: startYear, end: startYear + 23 };
+    const start = yearPageStart(this.activeDate().getFullYear());
+    return { start, end: start + YEARS_PER_PAGE - 1 };
   });
 
   /**
@@ -74,6 +71,9 @@ export class TnMultiYearViewComponent {
     const range = this.yearRange();
     const format = this.yearFormat();
     const formatYear = (year: number): string => format.format(year);
+    // Read once for the whole grid rather than per cell, matching the month view: every
+    // year is then measured against the same instant, and 24 allocations become one.
+    const thisYear = new Date().getFullYear();
     const rows: YearCell[][] = [];
     
     for (let row = 0; row < this.yearRowCount; row++) {
@@ -81,7 +81,7 @@ export class TnMultiYearViewComponent {
       
       for (let col = 0; col < this.yearsPerRow; col++) {
         const year = range.start + (row * this.yearsPerRow) + col;
-        yearRow.push(this.createYearCell(year, formatYear));
+        yearRow.push(this.createYearCell(year, formatYear, thisYear));
       }
       
       rows.push(yearRow);
@@ -112,12 +112,14 @@ export class TnMultiYearViewComponent {
     return null;
   });
 
-  private createYearCell(year: number, formatYear: (year: number) => string): YearCell {
-    const today = new Date();
-    const currentYear = today.getFullYear();
+  private createYearCell(
+    year: number,
+    formatYear: (year: number) => string,
+    thisYear: number
+  ): YearCell {
     const selectedYear = this.selected()?.getFullYear();
 
-    const isToday = year === currentYear;
+    const isToday = year === thisYear;
     const isSelected = year === selectedYear;
     const enabled = this.isYearEnabled(year);
 
