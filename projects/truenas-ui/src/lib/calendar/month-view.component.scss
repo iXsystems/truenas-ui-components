@@ -40,15 +40,16 @@
     color: var(--tn-fg2, #666);
 
     // The header's fill comes from the ambient table styling, so round the outer
-    // corners of the row rather than painting a background of our own.
+    // corners of the row rather than painting a background of our own. Logical corners:
+    // under `dir="rtl"` the first column is the one on the right.
     &:first-child {
-      border-bottom-left-radius: var(--calendar-radius);
-      border-top-left-radius: var(--calendar-radius);
+      border-start-start-radius: var(--calendar-radius);
+      border-end-start-radius: var(--calendar-radius);
     }
 
     &:last-child {
-      border-bottom-right-radius: var(--calendar-radius);
-      border-top-right-radius: var(--calendar-radius);
+      border-start-end-radius: var(--calendar-radius);
+      border-end-end-radius: var(--calendar-radius);
     }
   }
 }
@@ -123,20 +124,22 @@
 
   // Days between the ends carry the band edge to edge, so consecutive days join up.
   &.tn-calendar-body-in-range::before {
-    left: 0;
-    right: 0;
+    inset-inline: 0;
   }
 
   // At the ends the band stops at the middle of the cell, where the indicator sits —
   // it never runs on past the indicator into empty column.
+  //
+  // Logical rather than left/right: the grid mirrors under `dir="rtl"`, and physical
+  // sides would leave both caps banding away from the range, into days outside it.
   &.tn-calendar-body-range-start::before {
-    left: 50%;
-    right: 0;
+    inset-inline-start: 50%;
+    inset-inline-end: 0;
   }
 
   &.tn-calendar-body-range-end::before {
-    left: 0;
-    right: 50%;
+    inset-inline-start: 0;
+    inset-inline-end: 50%;
   }
 
   // A single-day range is both ends at once: the indicator alone, no band.
@@ -188,10 +191,7 @@
 
 .tn-calendar-body-cell-preview {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: transparent;
 }
 
