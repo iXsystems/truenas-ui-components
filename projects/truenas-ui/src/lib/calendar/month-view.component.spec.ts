@@ -91,6 +91,38 @@ describe('TnMonthViewComponent markedDates', () => {
     expect(cellFor(7)?.getAttribute('aria-label')).not.toContain('(marked)');
   });
 
+  // Each piece of state should be announced once: through an ARIA attribute where one
+  // exists, and through the label only where none does.
+  describe('state is announced once', () => {
+    const gridcellFor = (day: number): HTMLElement | null => {
+      return cellFor(day)?.closest('[role="gridcell"]') as HTMLElement ?? null;
+    };
+
+    it('exposes selection on the gridcell, not as a pressed button', () => {
+      fixture.componentRef.setInput('selected', new Date(2031, 4, 8));
+      fixture.detectChanges();
+
+      expect(gridcellFor(8)?.getAttribute('aria-selected')).toBe('true');
+      expect(gridcellFor(7)?.getAttribute('aria-selected')).toBe('false');
+      expect(cellFor(8)?.hasAttribute('aria-pressed')).toBe(false);
+    });
+
+    it('keeps selection out of the label, where aria-selected already says it', () => {
+      fixture.componentRef.setInput('selected', new Date(2031, 4, 8));
+      fixture.detectChanges();
+
+      expect(cellFor(8)?.getAttribute('aria-label')).toContain('May 8, 2031');
+      expect(cellFor(8)?.getAttribute('aria-label')).not.toContain('(selected)');
+    });
+
+    it('leaves the padding cells without a selection state to announce', () => {
+      const padding = fixture.nativeElement.querySelectorAll('[role="gridcell"]')[0] as HTMLElement;
+
+      expect(padding.querySelector('.tn-calendar-body-cell')).toBeNull();
+      expect(padding.hasAttribute('aria-selected')).toBe(false);
+    });
+  });
+
   it('does not mark the padding cells that precede the first of the month', () => {
     fixture.componentRef.setInput('markedDates', [new Date(2031, 4, 1)]);
     fixture.detectChanges();

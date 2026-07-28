@@ -1,4 +1,4 @@
-import type { BaseHarnessFilters } from '@angular/cdk/testing';
+import type { BaseHarnessFilters, ModifierKeys, TestKey } from '@angular/cdk/testing';
 import { ComponentHarness, HarnessPredicate, parallel } from '@angular/cdk/testing';
 
 /** The views `tn-calendar` can show. */
@@ -158,6 +158,25 @@ export class TnCalendarCellHarness extends ComponentHarness {
     return (await this.host()).click();
   }
 
+  /**
+   * Presses a key on the cell. The grid handles its keys on the cells themselves, so
+   * this is how the roving tabindex is driven — arrows, Home/End and PageUp/PageDown
+   * move the active cell, while Enter and Space select.
+   *
+   * @param key The key to press, e.g. `TestKey.RIGHT_ARROW`.
+   * @param modifiers Modifier keys held while pressing, e.g. `{ shift: true }`.
+   *
+   * @example
+   * ```typescript
+   * const [cell] = await calendar.getCells({ active: true });
+   * await cell.press(TestKey.PAGE_DOWN, { shift: true }); // a year on
+   * ```
+   */
+  async press(key: TestKey | string, modifiers?: ModifierKeys): Promise<void> {
+    const host = await this.host();
+    return modifiers ? host.sendKeys(modifiers, key) : host.sendKeys(key);
+  }
+
   /** Hovers over the calendar cell. */
   async hover(): Promise<void> {
     return (await this.host()).hover();
@@ -273,5 +292,41 @@ export class TnCalendarHarness extends ComponentHarness {
       throw Error(`Cannot find calendar cell matching filter ${JSON.stringify(filter)}`);
     }
     await cells[0].select();
+  }
+
+  /**
+   * Gets the cell holding the grid's roving tabindex — the one cell Tab reaches, and the
+   * one the arrow keys move.
+   *
+   * `null` only when every cell in the view is disabled, where there is nothing to focus.
+   */
+  async getActiveCell(): Promise<TnCalendarCellHarness | null> {
+    const [active] = await this.getCells({ active: true });
+    return active ?? null;
+  }
+
+  /**
+   * Moves the grid's roving tabindex with the keyboard, without going through the DOM.
+   *
+   * Arrows move by a day or a week (a year or a row of years); Home and End reach the
+   * ends of the month or year page; PageUp and PageDown page, shifted by a year. Moving
+   * never changes the selection — use `selectCell()` or `TnCalendarCellHarness.select()`
+   * for that.
+   *
+   * @param key The key to press, e.g. `TestKey.RIGHT_ARROW`.
+   * @param modifiers Modifier keys held while pressing, e.g. `{ shift: true }`.
+   *
+   * @example
+   * ```typescript
+   * await calendar.moveActiveCell(TestKey.DOWN_ARROW);
+   * expect(await (await calendar.getActiveCell())!.getText()).toBe('17');
+   * ```
+   */
+  async moveActiveCell(key: TestKey | string, modifiers?: ModifierKeys): Promise<void> {
+    const active = await this.getActiveCell();
+    if (!active) {
+      throw Error('Cannot move the active cell: the calendar has no cell able to take focus.');
+    }
+    await active.press(key, modifiers);
   }
 }

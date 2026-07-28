@@ -219,7 +219,7 @@ export class TnMonthViewComponent {
       value,
       date: new Date(date),
       label: date.getDate().toString(),
-      ariaLabel: this.formatAriaLabel(date, isSelected, isToday, isMarked, rangeStart, rangeEnd, inRange),
+      ariaLabel: this.formatAriaLabel(date, isMarked, rangeStart, rangeEnd, inRange),
       enabled,
       selected: isSelected,
       today: isToday,
@@ -259,30 +259,32 @@ export class TnMonthViewComponent {
     return true;
   }
 
+  /**
+   * Spells out the state a day is in, but only the parts no ARIA attribute already
+   * carries. Selection lives on the cell's `aria-selected` and today on `aria-current`,
+   * so repeating them here had screen readers announce each one twice. Marking and the
+   * range positions have no attribute equivalent, and would otherwise be conveyed by
+   * background colour alone.
+   */
   private formatAriaLabel(
     date: Date,
-    isSelected: boolean,
-    isToday: boolean,
     isMarked: boolean,
     rangeStart?: boolean,
     rangeEnd?: boolean,
     inRange?: boolean
   ): string {
-    let label = date.toLocaleDateString('en', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    let label = date.toLocaleDateString('en', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
-    
-    if (isSelected) {label += ' (selected)';}
-    if (isToday) {label += ' (today)';}
-    // Marked days are otherwise conveyed by background colour alone.
+
     if (isMarked) {label += ' (marked)';}
     if (rangeStart) {label += ' (range start)';}
     if (rangeEnd) {label += ' (range end)';}
     if (inRange) {label += ' (in range)';}
-    
+
     return label;
   }
 

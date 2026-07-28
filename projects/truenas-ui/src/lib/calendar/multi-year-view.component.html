@@ -8,7 +8,8 @@
             role="gridcell"
             class="tn-calendar-body-cell-container"
             [attr.data-tn-row]="rowIndex"
-            [attr.data-tn-col]="colIndex">
+            [attr.data-tn-col]="colIndex"
+            [attr.aria-selected]="cell.selected">
             <button
               type="button"
               class="tn-calendar-body-cell"
@@ -18,7 +19,6 @@
               [disabled]="!cell.enabled"
               [attr.tabindex]="cell.year === activeYear() ? 0 : -1"
               [attr.aria-label]="cell.ariaLabel"
-              [attr.aria-pressed]="cell.selected"
               [attr.aria-current]="cell.today ? 'date' : null"
               (click)="onYearClicked(cell)"
               (keydown)="onKeydown($event)">

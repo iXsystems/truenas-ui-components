@@ -108,7 +108,7 @@ export class TnMultiYearViewComponent {
       value: year,
       year: year,
       label: year.toString(),
-      ariaLabel: this.formatYearAriaLabel(year, isSelected, isToday),
+      ariaLabel: this.formatYearAriaLabel(year, isToday),
       enabled,
       selected: isSelected,
       today: isToday,
@@ -135,12 +135,16 @@ export class TnMultiYearViewComponent {
     return true;
   }
 
-  private formatYearAriaLabel(year: number, isSelected: boolean, isToday: boolean): string {
+  /**
+   * Selection is carried by the cell's `aria-selected`, so it is deliberately not
+   * repeated here. "Current year" stays: `aria-current="date"` on a year cell is vague
+   * enough that spelling it out earns its place.
+   */
+  private formatYearAriaLabel(year: number, isToday: boolean): string {
     let label = year.toString();
-    
-    if (isSelected) {label += ' (selected)';}
+
     if (isToday) {label += ' (current year)';}
-    
+
     return label;
   }
 

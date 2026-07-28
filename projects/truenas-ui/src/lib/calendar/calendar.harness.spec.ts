@@ -1,5 +1,5 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
-import { parallel } from '@angular/cdk/testing';
+import { TestKey, parallel } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Component, signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
@@ -98,7 +98,15 @@ describe('TnCalendarHarness', () => {
       const [cell] = await calendar.getCells({ text: '10' });
 
       expect(await cell.getAriaLabel()).toContain('May 10, 2031');
-      expect(await cell.getAriaLabel()).toContain('(selected)');
+    });
+
+    // Selection is exposed as `aria-selected` on the gridcell, so it is deliberately
+    // absent from the label — it used to be announced from both at once.
+    it('leaves selection to aria-selected rather than repeating it in the label', async () => {
+      const [cell] = await calendar.getCells({ text: '10' });
+
+      expect(await cell.isSelected()).toBe(true);
+      expect(await cell.getAriaLabel()).not.toContain('(selected)');
     });
 
     it('reports marked state per cell', async () => {
@@ -114,29 +122,25 @@ describe('TnCalendarHarness', () => {
   });
 
   describe('active cell', () => {
-    const pressOnGrid = async (key: string): Promise<void> => {
-      const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
-      // Dispatched on the cell holding the roving tabindex — where focus actually is.
-      fixture.nativeElement.querySelector('.tn-calendar-body-cell[tabindex="0"]').dispatchEvent(event);
-      fixture.detectChanges();
-      await fixture.whenStable();
-    };
-
     it('reports exactly one active cell', async () => {
       expect(await textsOf(await calendar.getCells({ active: true }))).toEqual(['10']);
+    });
+
+    it('hands back the active cell directly', async () => {
+      expect(await (await calendar.getActiveCell())?.getText()).toBe('10');
     });
 
     // `active` used to be wired to the selected cell, making this method a synonym for
     // isSelected(). It now means what it means in Material: the roving tabindex.
     it('tracks the roving tabindex rather than the selection', async () => {
-      await pressOnGrid('ArrowRight');
+      await calendar.moveActiveCell(TestKey.RIGHT_ARROW);
 
       expect(await textsOf(await calendar.getCells({ active: true }))).toEqual(['11']);
       expect(await textsOf(await calendar.getCells({ selected: true }))).toEqual(['10']);
     });
 
     it('moves real focus with the active cell', async () => {
-      await pressOnGrid('ArrowDown');
+      await calendar.moveActiveCell(TestKey.DOWN_ARROW);
 
       expect(document.activeElement?.textContent?.trim()).toBe('17');
     });
@@ -146,6 +150,30 @@ describe('TnCalendarHarness', () => {
 
       expect(tabbable).toHaveLength(1);
       expect(tabbable[0].textContent?.trim()).toBe('10');
+    });
+
+    it('reaches the ends of the month with Home and End', async () => {
+      await calendar.moveActiveCell(TestKey.HOME);
+      expect(await (await calendar.getActiveCell())?.getText()).toBe('1');
+
+      await calendar.moveActiveCell(TestKey.END);
+      expect(await (await calendar.getActiveCell())?.getText()).toBe('31');
+    });
+
+    it('pages a month at a time, and a year when shifted', async () => {
+      await calendar.moveActiveCell(TestKey.PAGE_DOWN);
+      expect(await calendar.getCurrentViewLabel()).toBe('JUN 2031');
+
+      await calendar.moveActiveCell(TestKey.PAGE_DOWN, { shift: true });
+      expect(await calendar.getCurrentViewLabel()).toBe('JUN 2032');
+    });
+
+    it('can also press keys through the cell harness', async () => {
+      const [cell] = await calendar.getCells({ active: true });
+
+      await cell.press(TestKey.LEFT_ARROW);
+
+      expect(await (await calendar.getActiveCell())?.getText()).toBe('9');
     });
   });
 

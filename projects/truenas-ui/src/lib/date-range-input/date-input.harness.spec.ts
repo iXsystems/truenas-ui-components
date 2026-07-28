@@ -1,10 +1,12 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
+import { parallel } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Component } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TnDateInputComponent } from './date-input.component';
 import { TnDateInputHarness } from './date-input.harness';
+import { TnCalendarHarness } from '../calendar/calendar.harness';
 
 @Component({
   selector: 'tn-date-input-harness-test',
@@ -90,5 +92,38 @@ describe('TnDateInputHarness', () => {
     expect(component.control.value?.getMonth()).toBe(3);
     expect(component.control.value?.getDate()).toBe(15);
     expect(await harness.getDisplayText()).toBe('04/15/2026');
+  });
+
+  // The calendar keeps no copy of the selection, so reopening only shows the current
+  // value because closing disposes the overlay and a fresh calendar opens on the bound
+  // date. That is what let `resetInteractionState()` go; if the overlay is ever made to
+  // reuse its portal, this is the test that should notice.
+  it('should reopen the calendar on the committed value', async () => {
+    const harness = await loader.getHarness(TnDateInputHarness);
+    const overlay = TestbedHarnessEnvironment.documentRootLoader(fixture);
+
+    await harness.selectDate(new Date(2026, 3, 15));
+    expect(await harness.isCalendarOpen()).toBe(false);
+
+    await harness.openCalendar();
+
+    const calendar = await overlay.getHarness(TnCalendarHarness);
+    expect(await calendar.getCurrentViewLabel()).toBe('APR 2026');
+    const selected = await calendar.getCells({ selected: true });
+    expect(await parallel(() => selected.map((cell) => cell.getText()))).toEqual(['15']);
+  });
+
+  it('should reopen on a value the form set while the calendar was closed', async () => {
+    const harness = await loader.getHarness(TnDateInputHarness);
+    const overlay = TestbedHarnessEnvironment.documentRootLoader(fixture);
+
+    await harness.selectDate(new Date(2026, 3, 15));
+    component.control.setValue(new Date(2027, 8, 3));
+    fixture.detectChanges();
+
+    await harness.openCalendar();
+
+    const calendar = await overlay.getHarness(TnCalendarHarness);
+    expect(await calendar.getCurrentViewLabel()).toBe('SEP 2027');
   });
 });
