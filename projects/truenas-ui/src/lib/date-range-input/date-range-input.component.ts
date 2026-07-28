@@ -3,10 +3,9 @@ import { Overlay, type OverlayRef, type ConnectedPosition } from '@angular/cdk/o
 import { OverlayModule } from '@angular/cdk/overlay';
 import { TemplatePortal, PortalModule } from '@angular/cdk/portal';
 import type { OnInit, TemplateRef, OnDestroy , ElementRef} from '@angular/core';
-import { Component, input, forwardRef, signal, computed, viewChild, ViewContainerRef, inject } from '@angular/core';
+import { Component, input, forwardRef, signal, computed, viewChild, ViewContainerRef, inject, afterNextRender, Injector } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Subject } from 'rxjs';
 import { TnCalendarComponent } from '../calendar/calendar.component';
 import { TnInputDirective } from '../input/input.directive';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
@@ -54,7 +53,6 @@ export class TnDateRangeInputComponent implements ControlValueAccessor, OnInit, 
   calendarTemplate = viewChild.required<TemplateRef<unknown>>('calendarTemplate');
   wrapperEl = viewChild.required<ElementRef<HTMLDivElement>>('wrapper');
 
-  private destroy$ = new Subject<void>();
   private overlayRef?: OverlayRef;
   private portal?: TemplatePortal;
   isOpen = signal<boolean>(false);
@@ -76,6 +74,7 @@ export class TnDateRangeInputComponent implements ControlValueAccessor, OnInit, 
 
   private overlay = inject(Overlay);
   private viewContainerRef = inject(ViewContainerRef);
+  private injector = inject(Injector);
 
   ngOnInit() {
     // Initialize display values
@@ -83,8 +82,6 @@ export class TnDateRangeInputComponent implements ControlValueAccessor, OnInit, 
   }
 
   ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
     this.close();
   }
 
@@ -157,8 +154,12 @@ export class TnDateRangeInputComponent implements ControlValueAccessor, OnInit, 
       if (this.endDayRef()?.nativeElement) {this.endDayRef().nativeElement.value = '';}
       if (this.endYearRef()?.nativeElement) {this.endYearRef().nativeElement.value = '';}
       
-      // Focus end month for next selection
-      setTimeout(() => this.endMonthRef()?.nativeElement?.focus(), 0);
+      // Move to the end date once the cleared segments have been painted. Tied to the
+      // render rather than to a zero timeout, as the calendar's own focus handling is.
+      afterNextRender(
+        () => this.endMonthRef()?.nativeElement?.focus(),
+        { injector: this.injector }
+      );
     } else if (range.start && range.end) {
       // Both dates selected - close calendar
       this.close();
@@ -346,6 +347,8 @@ export class TnDateRangeInputComponent implements ControlValueAccessor, OnInit, 
     });
 
     // Close datepicker when backdrop is clicked
+    // No teardown to track: `dispose()` in close() ends this subscription with the
+    // overlay, and ngOnDestroy closes.
     this.overlayRef.backdropClick().subscribe(() => {
       this.close();
     });

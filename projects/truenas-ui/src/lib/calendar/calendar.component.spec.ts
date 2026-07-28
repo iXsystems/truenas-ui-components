@@ -240,6 +240,40 @@ describe('TnCalendarComponent', () => {
       expect(monthLabel()).toBe('MAY 2031');
     });
 
+    // The header buttons and PageUp/PageDown are the same journey by two routes, and
+    // used to disagree: the buttons dropped the roving tabindex onto the 1st while the
+    // keys carried the day across.
+    it('lands on the same day whether paged by button or by key', () => {
+      press('PageUp');
+      const byKey = { month: monthLabel(), day: activeDay() };
+
+      fixture.componentRef.setInput('selected', new Date(2031, 4, 12));
+      press('PageDown'); // Back to May, day preserved.
+      fixture.componentInstance.onPreviousClicked();
+      fixture.detectChanges();
+
+      expect({ month: monthLabel(), day: activeDay() }).toEqual(byKey);
+    });
+
+    it('carries the day through header paging', () => {
+      fixture.componentInstance.onPreviousClicked();
+      fixture.detectChanges();
+
+      expect(monthLabel()).toBe('APR 2031');
+      expect(activeDay()).toBe(12);
+    });
+
+    it('clamps the day when the month it pages into is shorter', () => {
+      press('End'); // The 31st of May.
+      expect(activeDay()).toBe(31);
+
+      fixture.componentInstance.onNextClicked();
+      fixture.detectChanges();
+
+      expect(monthLabel()).toBe('JUN 2031');
+      expect(activeDay()).toBe(30);
+    });
+
     it('emits activeDateChange so a caller can follow the navigation', () => {
       const emitted: Date[] = [];
       fixture.componentInstance.activeDateChange.subscribe((date) => emitted.push(date));

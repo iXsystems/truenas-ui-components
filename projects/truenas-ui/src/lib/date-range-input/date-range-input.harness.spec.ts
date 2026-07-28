@@ -128,6 +128,24 @@ describe('TnDateRangeInputHarness', () => {
     expect(component.control.value?.end?.getDate()).toBe(20);
   });
 
+  // Picking a start hands the user on to the end date. The focus call moved from a zero
+  // timeout to afterNextRender, which is exactly the kind of change that can silently
+  // stop happening.
+  it('should move focus to the end date once the start is picked', async () => {
+    const harness = await loader.getHarness(TnDateRangeInputHarness);
+    const overlay = TestbedHarnessEnvironment.documentRootLoader(fixture);
+
+    await harness.openCalendar();
+    const calendar = await overlay.getHarness(TnCalendarHarness);
+    await calendar.selectCell({ text: '10' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // The fourth segment input: start month/day/year, then the end month.
+    const segments = fixture.nativeElement.querySelectorAll('input');
+    expect(document.activeElement).toBe(segments[3]);
+  });
+
   // Range mode is what `resetInteractionState()` used to guard: the calendar kept its
   // own copy of the range and had to be told to forget it on reopen. Now it keeps none
   // and simply renders what this component binds — which only holds up because closing

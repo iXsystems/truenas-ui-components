@@ -1,7 +1,7 @@
 
 import type { OnInit } from '@angular/core';
 import { Component, input, output, signal, linkedSignal, computed, inject, LOCALE_ID } from '@angular/core';
-import { YEARS_PER_PAGE, compareDays } from './calendar-dates';
+import { YEARS_PER_PAGE, addMonths, compareDays, withYear } from './calendar-dates';
 import { TnCalendarHeaderComponent } from './calendar-header.component';
 import { TnMonthViewComponent } from './month-view.component';
 import { TnMultiYearViewComponent } from './multi-year-view.component';
@@ -124,31 +124,28 @@ export class TnCalendarComponent implements OnInit {
   }
 
   onPreviousClicked(): void {
-    const current = this.currentDate();
-    let newDate: Date;
-    
-    if (this.currentView() === 'month') {
-      newDate = new Date(current.getFullYear(), current.getMonth() - 1, 1);
-    } else {
-      // A page at a time, the same span the grid renders and the header labels.
-      newDate = new Date(current.getFullYear() - YEARS_PER_PAGE, current.getMonth(), 1);
-    }
-    
-    this.currentDate.set(newDate);
-    this.activeDateChange.emit(newDate);
+    this.page(-1);
   }
 
   onNextClicked(): void {
+    this.page(1);
+  }
+
+  /**
+   * Steps the view one page in `direction`: a month in the day view, a page of years in
+   * the year view — the same spans `PageUp`/`PageDown` move, and the same the header
+   * labels.
+   *
+   * Carries the day across, clamped, rather than dropping to the 1st. The keyboard has
+   * always done this, so resetting here left the roving tabindex somewhere different
+   * depending on whether the user clicked the arrow or pressed the key.
+   */
+  private page(direction: 1 | -1): void {
     const current = this.currentDate();
-    let newDate: Date;
-    
-    if (this.currentView() === 'month') {
-      newDate = new Date(current.getFullYear(), current.getMonth() + 1, 1);
-    } else {
-      // A page at a time, the same span the grid renders and the header labels.
-      newDate = new Date(current.getFullYear() + YEARS_PER_PAGE, current.getMonth(), 1);
-    }
-    
+    const newDate = this.currentView() === 'month'
+      ? addMonths(current, direction)
+      : withYear(current, current.getFullYear() + (direction * YEARS_PER_PAGE));
+
     this.currentDate.set(newDate);
     this.activeDateChange.emit(newDate);
   }
