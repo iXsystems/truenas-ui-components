@@ -37,9 +37,10 @@
     (rowClick)="onItemClick($event)"
     (rowDoubleClick)="onItemDoubleClick($event)">
 
-    <!-- Selection column -->
+    <!-- Selection column: explicit width so the auto table layout doesn't
+         hand the near-empty column a share of the spare width -->
     @if (multiSelect()) {
-      <ng-container tnColumnDef="select">
+      <ng-container tnColumnDef="select" width="20px">
       <ng-template tnHeaderCellDef>
         <!-- Select all checkbox -->
       </ng-template>

@@ -158,6 +158,13 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    // Focus rings on embedded controls (e.g. tn-checkbox in a selection
+    // column) paint a few px outside the control's box; `overflow: hidden`
+    // clips at the padding edge, so without padding the ring is cut off at the
+    // content edge. The symmetric padding/negative-margin pair gives rings
+    // room to paint while keeping content position and cell size unchanged.
+    padding: 4px;
+    margin: -4px;
 
     > * {
       min-width: 0;
