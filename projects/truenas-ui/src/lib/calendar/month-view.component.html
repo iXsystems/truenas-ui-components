@@ -1,8 +1,8 @@
-<table role="grid" class="tn-calendar-table">
+<table role="grid" class="tn-calendar-table" [attr.aria-label]="gridLabel()">
   <!-- Table header with day names -->
   <thead class="tn-calendar-table-header">
     <tr>
-      @for (day of weekdays; track day) {
+      @for (day of weekdays(); track day.long) {
         <th scope="col">
           <span class="cdk-visually-hidden">{{ day.long }}</span>
           <span aria-hidden="true">{{ day.short }}</span>
@@ -26,27 +26,27 @@
               <button
                 type="button"
                 class="tn-calendar-body-cell"
+                [attr.data-tn-date]="cell.isoDate"
                 [class.tn-calendar-body-selected]="cell.selected"
                 [class.tn-calendar-body-today]="cell.today"
-                [class.tn-calendar-body-active]="cell.selected"
+                [class.tn-calendar-body-marked]="cell.marked"
+                [class.tn-calendar-body-active]="cell.value === activeDay()"
                 [class.tn-calendar-body-range-start]="cell.rangeStart"
                 [class.tn-calendar-body-range-end]="cell.rangeEnd"
                 [class.tn-calendar-body-in-range]="cell.inRange"
                 [disabled]="!cell.enabled"
-                [attr.tabindex]="cell.selected ? 0 : -1"
+                [attr.tabindex]="cell.value === activeDay() ? 0 : -1"
                 [attr.aria-label]="cell.ariaLabel"
-                [attr.aria-pressed]="cell.selected"
+                [attr.aria-pressed]="cell.inSelection"
                 [attr.aria-current]="cell.today ? 'date' : null"
-                (click)="onCellClicked(cell)">
-                <span class="tn-calendar-body-cell-content tn-focus-indicator"
-                      [class.tn-calendar-body-selected]="cell.selected"
-                      [class.tn-calendar-body-today]="cell.today"
-                      [class.tn-calendar-body-range-start]="cell.rangeStart"
-                      [class.tn-calendar-body-range-end]="cell.rangeEnd"
-                      [class.tn-calendar-body-in-range]="cell.inRange">
-                  {{ cell.value }}
+                (click)="onCellClicked(cell)"
+                (keydown)="onKeydown($event)">
+                <span class="tn-calendar-body-cell-content"
+                      [class.tn-calendar-body-fill-primary]="cell.fill === 'primary'"
+                      [class.tn-calendar-body-fill-marked]="cell.fill === 'marked'"
+                      [class.tn-calendar-body-today-outline]="cell.todayOutline">
+                  {{ cell.label }}
                 </span>
-                <span aria-hidden="true" class="tn-calendar-body-cell-preview"></span>
               </button>
             }
           </td>

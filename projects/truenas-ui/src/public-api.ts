@@ -106,6 +106,8 @@ export * from './lib/spinner/branded-spinner.component';
 export * from './lib/progress-bar/progress-bar.component';
 export * from './lib/progress-bar/particle-progress-bar.component';
 export * from './lib/calendar/calendar.component';
+export * from './lib/calendar/calendar.harness';
+export * from './lib/calendar/calendar-intl';
 export * from './lib/calendar/calendar-header.component';
 export * from './lib/calendar/month-view.component';
 export * from './lib/calendar/multi-year-view.component';

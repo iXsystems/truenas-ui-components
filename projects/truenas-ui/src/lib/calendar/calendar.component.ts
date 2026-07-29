@@ -1,6 +1,8 @@
 
 import type { OnInit } from '@angular/core';
-import { Component, input, output, signal, effect } from '@angular/core';
+import { Component, input, output, signal, linkedSignal, computed, inject, ElementRef, Injector, LOCALE_ID } from '@angular/core';
+import { YEARS_PER_PAGE, addMonths, compareDays, withYear } from './calendar-dates';
+import { focusActiveCellAfterRender } from './calendar-focus';
 import { TnCalendarHeaderComponent } from './calendar-header.component';
 import { TnMonthViewComponent } from './month-view.component';
 import { TnMultiYearViewComponent } from './multi-year-view.component';
@@ -22,102 +24,101 @@ export class TnCalendarComponent implements OnInit {
   maxDate = input<Date | undefined>(undefined);
   dateFilter = input<((date: Date) => boolean) | undefined>(undefined);
 
+  /**
+   * Dates to flag as noteworthy — days a task runs, days with events, and the like.
+   * Order and time-of-day are ignored; only the calendar day is compared. The
+   * calendar owns how a marked day looks, so callers pass dates rather than styles.
+   * Marking is independent of `selected`/`selectedRange`, which stay authoritative
+   * where they overlap.
+   */
+  markedDates = input<Date[] | undefined>(undefined);
+
+  /**
+   * Which month — or which page of years, in the year view — is on screen.
+   *
+   * Optional. Left unbound, the calendar opens on the month the bound value lives in and
+   * drives navigation itself. Bind it, alongside `activeDateChange`, to drive the view
+   * from outside: useful for a calendar that stays mounted while its value jumps to
+   * another month, which the open-on-init behaviour alone won't follow.
+   *
+   * Unlike `selected`, this isn't strictly controlled — the calendar still navigates on
+   * its own when the user pages or arrows around, so binding a constant here won't
+   * freeze the view. Changing what you bind always wins.
+   */
+  activeDate = input<Date | undefined>(undefined);
+
+  /**
+   * Locale for dates, month and weekday names, and which day the week starts on.
+   *
+   * Defaults to the app's `LOCALE_ID`, which is where an Angular app already declares
+   * its locale — so a `ng build --localize` app is right without touching this. Bind it
+   * only when one calendar needs a different locale from the rest of the app.
+   *
+   * Nothing here reads the browser's language on its own: doing so would quietly
+   * disagree with `DatePipe` and every other locale-aware part of the app. An app that
+   * wants that behaviour opts into it once, at bootstrap:
+   * `{ provide: LOCALE_ID, useValue: navigator.language }`.
+   *
+   * Wording that isn't a date — "(marked)", the header button labels — comes from
+   * `TN_CALENDAR_INTL` instead.
+   */
+  locale = input<string | undefined>(undefined);
+
+  private appLocale = inject(LOCALE_ID);
+  private host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private injector = inject(Injector);
+
+  /** The locale actually in force: the input when bound, the app's otherwise. */
+  protected resolvedLocale = computed(() => this.locale() ?? this.appLocale);
+
   // Range mode inputs
   rangeMode = input<boolean>(false);
   selectedRange = input<DateRange | undefined>(undefined);
 
   selectedChange = output<Date>();
+  /**
+   * The date the calendar is now sitting on — the month it shows, and the day holding
+   * the grid's roving tabindex.
+   *
+   * This is navigation, not selection: it fires on paging, on arrow keys, and on
+   * clicking a day (a click moves the active cell as well as choosing the date, so the
+   * two never drift apart). Treat it as "the view moved", not "the user picked a date" —
+   * `selectedChange` is the one that means a choice was made.
+   */
   activeDateChange = output<Date>();
   viewChanged = output<'month' | 'year'>();
 
   // Range mode outputs
   selectedRangeChange = output<DateRange>();
 
-  currentDate = signal<Date>(new Date());
-  currentView = signal<'month' | 'year'>('month');
-  
-  // Range selection state - this is the authoritative source for calendar display
-  rangeState = signal<{
-    start: Date | null;
-    end: Date | null;
-    selecting: 'start' | 'end';
-  }>({
-    start: null,
-    end: null,
-    selecting: 'start'
+  /**
+   * Which month/year grid is on screen. Navigation state, not selection state.
+   *
+   * Follows the `activeDate` input whenever the caller changes it, but stays writable so
+   * paging and arrow keys keep working with no echo back from the caller.
+   */
+  currentDate = linkedSignal<Date | undefined, Date>({
+    source: () => this.activeDate(),
+    computation: (activeDate, previous) => activeDate ?? previous?.value ?? new Date(),
   });
-
-  // Track if user has interacted with calendar - once true, ignore external selectedRange
-  private userHasInteracted = false;
-
-  constructor() {
-    // Watch for changes to selectedRange input
-    effect(() => {
-      // Track signals to re-run effect when they change
-      this.selectedRange();
-      const rangeMode = this.rangeMode();
-      // Only update range state from external selectedRange if user hasn't interacted yet
-      if (!this.userHasInteracted && rangeMode) {
-        this.initializeRangeState();
-      }
-    });
-  }
+  currentView = signal<'month' | 'year'>('month');
 
   ngOnInit(): void {
     this.currentView.set(this.startView());
 
-    // Initialize range state if in range mode (this also handles currentDate)
-    if (this.rangeMode()) {
-      this.initializeRangeState();
-    } else {
-      const selected = this.selected();
-      if (selected) {
-        // For single date mode, navigate to the selected date's month
-        this.currentDate.set(new Date(selected));
-      }
+    // A bound activeDate already says what should be on screen.
+    if (this.activeDate()) {
+      return;
     }
-  }
 
-  private initializeRangeState(): void {
-    if (this.rangeMode()) {
-      const selectedRange = this.selectedRange();
-      if (selectedRange) {
-        this.rangeState.set({
-          start: selectedRange.start,
-          end: selectedRange.end,
-          selecting: selectedRange.start && selectedRange.end ? 'start' :
-                    selectedRange.start ? 'end' : 'start'
-        });
+    // Otherwise open on the month the caller's value lives in.
+    const initialDate = this.rangeMode()
+      ? (this.selectedRange()?.start ?? this.selectedRange()?.end ?? null)
+      : (this.selected() ?? null);
 
-        // Navigate to the month of the selected start date, or end date if no start date
-        const dateToShow = selectedRange.start || selectedRange.end;
-        if (dateToShow) {
-          this.currentDate.set(new Date(dateToShow));
-        }
-      } else {
-        // No selected range - initialize empty range state
-        this.rangeState.set({
-          start: null,
-          end: null,
-          selecting: 'start'
-        });
-      }
+    if (initialDate) {
+      this.currentDate.set(new Date(initialDate));
     }
-  }
-
-  onMonthSelected(month: number): void {
-    const newDate = new Date(this.currentDate());
-    newDate.setMonth(month);
-    this.currentDate.set(newDate);
-    this.currentView.set('month');
-    this.viewChanged.emit('month');
-  }
-
-  onYearSelected(year: number): void {
-    const newDate = new Date(this.currentDate());
-    newDate.setFullYear(year);
-    this.currentDate.set(newDate);
-    this.activeDateChange.emit(newDate);
   }
 
   onViewChanged(view: 'month' | 'year'): void {
@@ -126,31 +127,28 @@ export class TnCalendarComponent implements OnInit {
   }
 
   onPreviousClicked(): void {
-    const current = this.currentDate();
-    let newDate: Date;
-    
-    if (this.currentView() === 'month') {
-      newDate = new Date(current.getFullYear(), current.getMonth() - 1, 1);
-    } else {
-      // For year view, navigate by 24-year ranges (like Material)
-      newDate = new Date(current.getFullYear() - 24, current.getMonth(), 1);
-    }
-    
-    this.currentDate.set(newDate);
-    this.activeDateChange.emit(newDate);
+    this.page(-1);
   }
 
   onNextClicked(): void {
+    this.page(1);
+  }
+
+  /**
+   * Steps the view one page in `direction`: a month in the day view, a page of years in
+   * the year view — the same spans `PageUp`/`PageDown` move, and the same the header
+   * labels.
+   *
+   * Carries the day across, clamped, rather than dropping to the 1st. The keyboard has
+   * always done this, so resetting here left the roving tabindex somewhere different
+   * depending on whether the user clicked the arrow or pressed the key.
+   */
+  private page(direction: 1 | -1): void {
     const current = this.currentDate();
-    let newDate: Date;
-    
-    if (this.currentView() === 'month') {
-      newDate = new Date(current.getFullYear(), current.getMonth() + 1, 1);
-    } else {
-      // For year view, navigate by 24-year ranges (like Material)
-      newDate = new Date(current.getFullYear() + 24, current.getMonth(), 1);
-    }
-    
+    const newDate = this.currentView() === 'month'
+      ? addMonths(current, direction)
+      : withYear(current, current.getFullYear() + (direction * YEARS_PER_PAGE));
+
     this.currentDate.set(newDate);
     this.activeDateChange.emit(newDate);
   }
@@ -163,57 +161,30 @@ export class TnCalendarComponent implements OnInit {
     }
   }
   
+  /**
+   * Works out the next range from the one the caller currently owns and emits it. The
+   * calendar keeps no copy — what it renders next is whatever the caller binds back.
+   */
   private handleRangeSelection(date: Date): void {
-    // Mark that user has interacted - calendar is now authoritative
-    this.userHasInteracted = true;
-    
-    const currentRange = this.rangeState();
-    
-    // If we already have a complete range (both start and end), clear and start fresh
-    if (currentRange.start && currentRange.end && currentRange.selecting === 'start') {
-      const newRangeState = {
-        start: date,
-        end: null,
-        selecting: 'end' as const
-      };
-      this.rangeState.set(newRangeState);
+    const current = this.selectedRange();
+    const start = current?.start ?? null;
+    const end = current?.end ?? null;
+
+    // Nothing pending, or the range is already complete: begin a new one.
+    if (!start || end) {
       this.selectedRangeChange.emit({ start: date, end: null });
       return;
     }
-    
-    if (currentRange.selecting === 'start' || !currentRange.start) {
-      // First click or selecting start date - clear any previous range immediately
-      const newRangeState = {
-        start: date,
-        end: null,
-        selecting: 'end' as const
-      };
-      this.rangeState.set(newRangeState);
+
+    // A second pick before the first restarts the range rather than inverting it.
+    // Compared by day: the clicked date is midnight, but the caller's start may carry a
+    // time of day, which would otherwise make re-picking the same day restart the range.
+    if (compareDays(date, start) < 0) {
       this.selectedRangeChange.emit({ start: date, end: null });
-    } else {
-      // Setting end date
-      const start = currentRange.start!;
-      
-      // If second date is earlier than first, treat it as new start date
-      if (date < start) {
-        const newRangeState = {
-          start: date,
-          end: null,
-          selecting: 'end' as const
-        };
-        this.rangeState.set(newRangeState);
-        this.selectedRangeChange.emit({ start: date, end: null });
-      } else {
-        // Valid end date - complete the range
-        const newRangeState = {
-          start: start,
-          end: date,
-          selecting: 'start' as const
-        };
-        this.rangeState.set(newRangeState);
-        this.selectedRangeChange.emit({ start: start, end: date });
-      }
+      return;
     }
+
+    this.selectedRangeChange.emit({ start, end: date });
   }
 
   onActiveDateChange(date: Date): void {
@@ -221,21 +192,19 @@ export class TnCalendarComponent implements OnInit {
     this.activeDateChange.emit(date);
   }
 
+  /**
+   * A year picked in the year grid moves the view to that year and returns to the day
+   * grid. It is navigation, not selection — no `selectedChange` — so the user lands on
+   * the month they asked for and picks a day from there.
+   */
   onYearSelectedFromView(date: Date): void {
-    // When a year is selected from the multi-year view, update the current date
-    // and switch back to month view
     this.currentDate.set(date);
     this.currentView.set('month');
     this.viewChanged.emit('month');
     this.activeDateChange.emit(date);
-  }
 
-  /**
-   * Reset the calendar to accept external range values - called when calendar reopens
-   */
-  resetInteractionState(): void {
-    this.userHasInteracted = false;
-    // Reinitialize range state from selectedRange if provided
-    this.initializeRangeState();
+    // Switching grids destroys the year cell the user just activated, which drops focus
+    // to `<body>` and restarts the tab order. Carry it over to the day now active.
+    focusActiveCellAfterRender(this.host, this.injector);
   }
 }

@@ -8,7 +8,6 @@ import { ViewContainerRef } from '@angular/core';
 import { Component, input, forwardRef, signal, computed, viewChild, inject } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Subject } from 'rxjs';
 import { TnCalendarComponent } from '../calendar/calendar.component';
 import { TnInputDirective } from '../input/input.directive';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
@@ -52,10 +51,8 @@ export class TnDateInputComponent implements ControlValueAccessor, OnInit, OnDes
   dayRef = viewChild.required<ElementRef<HTMLInputElement>>('dayInput');
   yearRef = viewChild.required<ElementRef<HTMLInputElement>>('yearInput');
   calendarTemplate = viewChild.required<TemplateRef<unknown>>('calendarTemplate');
-  calendar = viewChild.required<TnCalendarComponent>(TnCalendarComponent);
   wrapperEl = viewChild.required<ElementRef<HTMLDivElement>>('wrapper');
 
-  private destroy$ = new Subject<void>();
   private overlayRef?: OverlayRef;
   private portal?: TemplatePortal;
   isOpen = signal<boolean>(false);
@@ -76,8 +73,6 @@ export class TnDateInputComponent implements ControlValueAccessor, OnInit, OnDes
   }
 
   ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
     this.close();
   }
 
@@ -219,12 +214,8 @@ export class TnDateInputComponent implements ControlValueAccessor, OnInit, OnDes
 
     this.createOverlay();
     this.isOpen.set(true);
-
-    // Reset calendar interaction state when opening
-    const cal = this.calendar();
-    if (cal) {
-      setTimeout(() => cal.resetInteractionState(), 0);
-    }
+    // No calendar state to reset — the calendar renders whatever date this component
+    // binds to it, so reopening already shows the current value.
   }
 
   close(): void {
@@ -285,6 +276,8 @@ export class TnDateInputComponent implements ControlValueAccessor, OnInit, OnDes
     });
 
     // Close datepicker when backdrop is clicked
+    // No teardown to track: `dispose()` in close() ends this subscription with the
+    // overlay, and ngOnDestroy closes.
     this.overlayRef.backdropClick().subscribe(() => {
       this.close();
     });

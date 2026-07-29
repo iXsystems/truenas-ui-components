@@ -1,22 +1,23 @@
 <tn-calendar-header
   [currentDate]="currentDate()"
+  [locale]="resolvedLocale()"
   [currentView]="currentView()"
-  (monthSelected)="onMonthSelected($event)"
-  (yearSelected)="onYearSelected($event)"
   (viewChanged)="onViewChanged($event)"
   (previousClicked)="onPreviousClicked()"
   (nextClicked)="onNextClicked()" />
 
-<div class="tn-calendar-content" cdkMonitorSubtreeFocus tabindex="-1">
+<div class="tn-calendar-content">
   @if (currentView() === 'month') {
     <tn-month-view
       [activeDate]="currentDate()"
+      [locale]="resolvedLocale()"
       [selected]="selected()"
       [dateFilter]="dateFilter()"
       [minDate]="minDate()"
       [maxDate]="maxDate()"
+      [markedDates]="markedDates()"
       [rangeMode]="rangeMode()"
-      [selectedRange]="rangeMode() ? rangeState() : undefined"
+      [selectedRange]="rangeMode() ? selectedRange() : undefined"
       (selectedChange)="onSelectedChange($event)"
       (activeDateChange)="onActiveDateChange($event)" />
   }
@@ -25,6 +26,7 @@
   @if (currentView() === 'year') {
     <tn-multi-year-view
       [activeDate]="currentDate()"
+      [locale]="resolvedLocale()"
       [selected]="selected()"
       [dateFilter]="dateFilter()"
       [minDate]="minDate()"

@@ -1,13 +1,31 @@
 :host {
+  display: block;
+
   // Calendar cell sizing custom properties - control all sizing from here
   --calendar-cell-size: 48px;
   --calendar-header-height: 40px;
   --calendar-cell-font-size: 1rem;
   --calendar-header-font-size: 14px;
+
+  // Size of the day indicator. Sized independently of the cell so a stretched
+  // column widens the hit area without deforming the indicator.
+  --calendar-indicator-size: var(--calendar-cell-size);
+
+  // Corner rounding for the header row and the day indicator. Deliberately subtle —
+  // 4px is the rounding used across the rest of the library.
+  --calendar-radius: 4px;
 }
 
 .tn-calendar-table {
-  width: calc(7 * var(--calendar-cell-size));
+  // Grow into a wider container rather than sitting fixed at 7 cells; consumers
+  // that stretch the calendar get evenly divided columns instead of a fixed grid
+  // with a fixed-size indicator floating inside each cell.
+  width: 100%;
+  // Hold the 7-cell width where there's room for it, but never past the container:
+  // `min()` yields 100% in anything narrower, so the columns shrink instead of the
+  // table bleeding out of its parent.
+  min-width: min(100%, calc(7 * var(--calendar-cell-size)));
+  table-layout: fixed;
   border-spacing: 0;
   border-collapse: separate;
 }
@@ -20,6 +38,19 @@
     font-size: var(--calendar-header-font-size);
     font-weight: 500;
     color: var(--tn-fg2, #666);
+
+    // The header's fill comes from the ambient table styling, so round the outer
+    // corners of the row rather than painting a background of our own. Logical corners:
+    // under `dir="rtl"` the first column is the one on the right.
+    &:first-child {
+      border-start-start-radius: var(--calendar-radius);
+      border-end-start-radius: var(--calendar-radius);
+    }
+
+    &:last-child {
+      border-start-end-radius: var(--calendar-radius);
+      border-end-end-radius: var(--calendar-radius);
+    }
   }
 }
 
@@ -43,35 +74,32 @@
   width: calc(100% / 7); // Exactly 1/7 of the table width
 }
 
+// The button fills its cell so the whole column is clickable, and carries only the
+// range band. Single-day state lives on the indicator inside it.
 .tn-calendar-body-cell {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  margin: auto;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
   background: transparent;
   border: 0;
   outline: 0;
   cursor: pointer;
   color: var(--tn-fg1, #333);
 
-  // Use custom property for consistent sizing
-  width: var(--calendar-cell-size);
-  height: var(--calendar-cell-size);
+  // The button spans the whole column for the hit area, so a ring on it would be far
+  // wider than the day it marks. Draw it on the indicator instead, inset so it can
+  // never be clipped by an adjacent cell or the table edge.
+  &:focus-visible {
+    outline: none;
 
-  &:not(:disabled) {
-    &:hover:not(.tn-calendar-body-selected):not(.tn-calendar-body-range-start):not(.tn-calendar-body-range-end):not(.tn-calendar-body-in-range) {
-      background: var(--tn-alt-bg2, #e8f4fd);
-    }
-  }
-
-  &:focus {
-    outline: 2px solid var(--tn-primary, #007bff);
-    outline-offset: 2px;
-
-    .tn-calendar-body-cell-content.tn-focus-indicator {
-      background: var(--tn-alt-bg2, #e8f4fd);
+    .tn-calendar-body-cell-content {
+      outline: 2px solid var(--tn-primary, #007bff);
+      outline-offset: -2px;
     }
   }
 
@@ -81,54 +109,84 @@
     cursor: default;
   }
 
-  // Apply today border to the button itself for full coverage
-  &.tn-calendar-body-today:not(.tn-calendar-body-selected) {
-    border: 1px solid var(--tn-primary, #007bff);
-    color: var(--tn-primary, #007bff);
+  // The range band is its own layer, matched to the indicator's height so the two read
+  // as one shape. It sits before the indicator in the DOM, so it paints underneath.
+  &.tn-calendar-body-in-range::before,
+  &.tn-calendar-body-range-start::before,
+  &.tn-calendar-body-range-end::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    height: var(--calendar-indicator-size);
+    background: var(--tn-alt-bg2, #e8f4fd);
   }
 
-  &.tn-calendar-body-selected {
-    background: var(--tn-primary, #007bff);
-    color: white;
+  // Days between the ends carry the band edge to edge, so consecutive days join up.
+  &.tn-calendar-body-in-range::before {
+    inset-inline: 0;
   }
 
-  // Range styling
-  &.tn-calendar-body-range-start {
-    background: var(--tn-primary, #007bff);
-    color: white;
+  // At the ends the band stops at the middle of the cell, where the indicator sits —
+  // it never runs on past the indicator into empty column.
+  //
+  // Logical rather than left/right: the grid mirrors under `dir="rtl"`, and physical
+  // sides would leave both caps banding away from the range, into days outside it.
+  &.tn-calendar-body-range-start::before {
+    inset-inline-start: 50%;
+    inset-inline-end: 0;
   }
 
-  &.tn-calendar-body-range-end {
-    background: var(--tn-primary, #007bff);
-    color: white;
+  &.tn-calendar-body-range-end::before {
+    inset-inline-start: 0;
+    inset-inline-end: 50%;
   }
 
-  &.tn-calendar-body-in-range {
-    background: var(--tn-primary, #007bff);
-    color: white;
+  // A single-day range is both ends at once: the indicator alone, no band.
+  &.tn-calendar-body-range-start.tn-calendar-body-range-end::before {
+    content: none;
   }
 }
 
+// Indicator for single-day state: today, marked, selected, hover.
 .tn-calendar-body-cell-content {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  width: 100%;
-  height: 100%;
+  width: var(--calendar-indicator-size);
+  height: var(--calendar-indicator-size);
+  max-width: 100%;
+  border-radius: var(--calendar-radius);
   font-size: var(--calendar-cell-font-size);
   font-weight: 400;
   transition: background-color 200ms cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-.tn-calendar-body-cell-preview {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: transparent;
+// Which fill wins is decided in the component (see `CalendarCellFill`), so these rules
+// are mutually exclusive by construction and never race on specificity. Hover is the
+// one exception: it overrides `marked`, but never the primary fill.
+.tn-calendar-body-cell:not(:disabled):hover .tn-calendar-body-cell-content:not(.tn-calendar-body-fill-primary) {
+  background: var(--tn-alt-bg2, #e8f4fd);
+}
+
+.tn-calendar-body-cell-content.tn-calendar-body-fill-marked {
+  background: var(--tn-alt-bg1, #f0f0f0);
+}
+
+.tn-calendar-body-cell-content.tn-calendar-body-fill-primary {
+  background: var(--tn-primary, #007bff);
+  // The theme names its own on-primary colour: Nord pairs a light primary with dark
+  // text, where hardcoded white lands at 2:1 against WCAG AA's 4.5:1.
+  color: var(--tn-primary-txt, #fff);
+}
+
+// Layers over `marked` and over no fill at all, but never over the primary fill — the
+// component withholds this class there rather than the two fighting in CSS.
+.tn-calendar-body-cell-content.tn-calendar-body-today-outline {
+  border: 1px solid var(--tn-primary, #007bff);
+  color: var(--tn-primary, #007bff);
 }
 
 .cdk-visually-hidden {
@@ -143,18 +201,3 @@
   border: 0 !important;
 }
 
-.tn-focus-indicator {
-  position: relative;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    opacity: 0;
-    background: currentColor;
-    transition: opacity 200ms cubic-bezier(0.25, 0.8, 0.25, 1);
-  }
-}

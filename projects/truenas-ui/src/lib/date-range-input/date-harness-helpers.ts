@@ -1,4 +1,5 @@
 import type { LocatorFactory, TestElement } from '@angular/cdk/testing';
+import { isoDateString } from '../calendar/calendar-dates';
 
 /**
  * Formats a Date into zero-padded month, day, and year strings.
@@ -45,13 +46,8 @@ export async function setInputValue(
   await el.blur();
 }
 
-const MONTHS = [
-  'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
-];
-
 /**
- * Navigates the calendar overlay to the target month/year, then clicks the day cell.
+ * Navigates the calendar overlay to the target month, then clicks that day.
  * Assumes the calendar popup is already open.
  *
  * @param rootLocator The document root locator factory (for finding overlay elements).
@@ -63,65 +59,62 @@ export async function selectCalendarDate(
 ): Promise<void> {
   await navigateCalendarTo(rootLocator, date);
 
-  const dayStr = date.getDate().toString();
-  const cells = await rootLocator.locatorForAll(
-    '.tn-calendar-body-cell:not([disabled])'
+  // Matched on `data-tn-date` rather than the cell's text: the text is formatted for the
+  // locale, right down to the numerals, so "15" finds nothing in an Arabic calendar.
+  const target = isoDateString(date);
+  const cell = await rootLocator.locatorForOptional(
+    `.tn-calendar-body-cell[data-tn-date="${target}"]:not([disabled])`
   )();
 
-  for (const cell of cells) {
-    if ((await cell.text()).trim() === dayStr) {
-      await cell.click();
-      return;
-    }
+  if (!cell) {
+    throw new Error(`Could not find an enabled calendar cell for ${target}`);
   }
 
-  throw new Error(
-    `Could not find enabled calendar cell for day ${dayStr}`
-  );
+  await cell.click();
 }
 
 /**
- * Navigates the calendar to show the month/year of the target date by
- * clicking previous/next buttons as needed.
+ * Pages the calendar to the month the target date falls in.
+ *
+ * Reads where the calendar currently sits from the days it is rendering rather than from
+ * the header, which is written in the app's language and numerals. Every day cell in the
+ * grid belongs to the displayed month, so the first one answers the question.
  */
 async function navigateCalendarTo(
   rootLocator: LocatorFactory,
   date: Date
 ): Promise<void> {
-  const targetLabel = `${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+  const monthsFrom = (from: { year: number; month: number }): number => {
+    return (date.getFullYear() * 12 + date.getMonth()) - (from.year * 12 + from.month);
+  };
 
-  // Safety limit to prevent infinite loops
-  for (let i = 0; i < 120; i++) {
-    const periodButton = await rootLocator.locatorFor(
-      '.tn-calendar-period-button'
+  // A generous bound on the paging loop: a decade either way, and far more than the
+  // handful of clicks any real navigation needs.
+  for (let step = 0; step < 240; step++) {
+    const shown = await displayedMonth(rootLocator);
+    const delta = monthsFrom(shown);
+    if (delta === 0) { return; }
+
+    const button = await rootLocator.locatorFor(
+      delta > 0 ? '.tn-calendar-next-button' : '.tn-calendar-previous-button'
     )();
-    const currentLabel = (await periodButton.text()).trim();
-
-    if (currentLabel === targetLabel) {
-      return;
-    }
-
-    const currentDate = parseCalendarLabel(currentLabel);
-    const targetTime = date.getFullYear() * 12 + date.getMonth();
-    const currentTime = currentDate.year * 12 + currentDate.month;
-
-    const navSelector = targetTime > currentTime
-      ? '.tn-calendar-next-button'
-      : '.tn-calendar-previous-button';
-
-    const navButton = await rootLocator.locatorFor(navSelector)();
-    await navButton.click();
+    await button.click();
   }
 
-  throw new Error(`Could not navigate calendar to ${targetLabel}`);
+  throw new Error(`Could not navigate the calendar to ${isoDateString(date)}`);
 }
 
-function parseCalendarLabel(label: string): {
-  year: number;
-  month: number;
-} {
-  const parts = label.split(' ');
-  const monthIndex = MONTHS.indexOf(parts[0]);
-  const year = parseInt(parts[1], 10);
-  return { year, month: monthIndex >= 0 ? monthIndex : 0 };
+/** The month on screen, read off the first day cell the grid rendered. */
+async function displayedMonth(
+  rootLocator: LocatorFactory
+): Promise<{ year: number; month: number }> {
+  const cell = await rootLocator.locatorForOptional('.tn-calendar-body-cell[data-tn-date]')();
+  const stamp = await cell?.getAttribute('data-tn-date');
+
+  if (!stamp) {
+    throw new Error('Could not read the displayed month: the calendar rendered no day cells.');
+  }
+
+  const [year, month] = stamp.split('-').map(Number);
+  return { year, month: month - 1 };
 }
