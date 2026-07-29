@@ -1711,18 +1711,15 @@ export const PathInputValidation: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // Let the story settle before grabbing the input — an element fetched
-    // mid-bootstrap can be replaced by a re-render and become unfocusable
-    await new Promise(resolve => setTimeout(resolve, 300));
     const input = await canvas.findByRole('textbox') as HTMLInputElement;
 
-    // Focus the field with a real click before editing
-    await userEvent.click(input);
+    // Edit via fireEvent.input rather than userEvent.clear/paste — those
+    // require real document focus, which parallel test-runner workers
+    // sharing one browser cannot reliably hold.
 
     // Typing alone must not validate — paths only commit on Enter/blur, so
     // an incomplete out-of-root prefix shows no error while being typed
-    await userEvent.clear(input);
-    await userEvent.paste('/does/not/exist');
+    await fireEvent.input(input, { target: { value: '/does/not/exist' } });
     void expect(input.classList.contains('error')).toBe(false);
 
     // Committing the out-of-root path shows the error state
@@ -1732,8 +1729,7 @@ export const PathInputValidation: Story = {
     });
 
     // Committing a valid path clears the error and applies the value
-    await userEvent.clear(input);
-    await userEvent.paste('/mnt/showcase/config.json');
+    await fireEvent.input(input, { target: { value: '/mnt/showcase/config.json' } });
     await fireEvent.change(input);
     await waitFor(() => {
       void expect(input.classList.contains('error')).toBe(false);
@@ -1791,10 +1787,11 @@ export const ErrorHandling: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // Test validation error by entering invalid path
-    const input = canvas.getByRole('textbox') as HTMLInputElement;
-    await userEvent.clear(input);
-    await userEvent.type(input, '/invalid/path');
+    // Test validation error by entering invalid path. Edit via fireEvent.input
+    // rather than userEvent.clear/type — those require real document focus,
+    // which parallel test-runner workers sharing one browser cannot hold.
+    const input = await canvas.findByRole('textbox') as HTMLInputElement;
+    await fireEvent.input(input, { target: { value: '/invalid/path' } });
 
     // Commit the typed path — paths validate on change (Enter or blur)
     await fireEvent.change(input);
