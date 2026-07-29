@@ -120,6 +120,33 @@
     }
   }
 
+  // Compact rows
+  &--dense {
+    min-height: 32px;
+
+    .tn-list-item__content {
+      padding: 4px 16px;
+    }
+
+    .tn-list-item__leading {
+      margin-right: 8px;
+    }
+
+    .tn-list-item__trailing {
+      margin-left: 8px;
+    }
+  }
+
+  // Multi-line rows: text wraps instead of being truncated
+  &--wrap {
+    .tn-list-item__primary-text,
+    .tn-list-item__secondary-text {
+      overflow: visible;
+      text-overflow: clip;
+      white-space: normal;
+    }
+  }
+
   // Disabled state
   &--disabled {
     opacity: 0.6;
@@ -128,8 +155,16 @@
   }
 }
 
+// The blocks below style projected content from inside the component, which is
+// what `::ng-deep` is for here — they do not pierce into any other component.
+// They are still the deprecated shape: each of these directives already stamps
+// a host class (.tn-list-icon, .tn-list-avatar, .tn-list-item-title,
+// .tn-list-item-line), so the rules belong on the directives themselves and
+// these selectors can go away. Left as-is to keep this change reviewable;
+// moving them is a standalone cleanup.
+
 // Icon styles
-::ng-deep [ixListIcon] {
+::ng-deep [tnListIcon] {
   width: 24px;
   height: 24px;
   font-size: 24px;
@@ -140,7 +175,7 @@
 }
 
 // Avatar styles
-::ng-deep [ixListAvatar] {
+::ng-deep [tnListAvatar] {
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -154,12 +189,12 @@
 }
 
 // List item title directive
-::ng-deep [ixListItemTitle] {
+::ng-deep [tnListItemTitle] {
   font-weight: normal;
 }
 
 // List item line directive
-::ng-deep [ixListItemLine] {
+::ng-deep [tnListItemLine] {
   display: block;
   margin-top: 4px;
   font-size: 14px;
@@ -168,7 +203,7 @@
 }
 
 // Trailing content styles
-::ng-deep [ixListItemTrailing] {
+::ng-deep [tnListItemTrailing] {
   color: var(--tn-fg2);
   font-size: 14px;
 }

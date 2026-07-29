@@ -6,6 +6,25 @@
   justify-self: center;
 }
 
+// `fullWidth` — the host stops shrink-wrapping and the rendered <button>/<a>
+// fills it, so consumers never have to reach in for `width: 100%`.
+//
+// Coupled to `.storybook-button`, the legacy class the template puts on all
+// three rendered forms (<button>, <a href>, <a routerLink>) — which is why one
+// selector covers them. Renaming that class silently drops the inner width and
+// leaves a stretched host wrapped around a shrink-wrapped control, so rename it
+// here and in button.component.html together. The FullWidth story's play test
+// asserts the inner control matches the host width and will catch the break.
+:host(.tn-button--full-width) {
+  display: block;
+  width: 100%;
+  justify-self: stretch;
+
+  .storybook-button {
+    width: 100%;
+  }
+}
+
 .storybook-button {
   @include label-markup.inline-code;
 

@@ -59,6 +59,10 @@ The slide toggle can be used standalone or integrated with reactive forms. It su
       options: ['primary', 'accent', 'warn'],
       description: 'Color theme of the toggle',
     },
+    fullWidth: {
+      control: 'boolean',
+      description: 'Stretches the toggle across its container, pushing the label and track to opposite ends',
+    },
     ariaLabel: {
       control: 'text',
       description: 'Accessibility label for screen readers',
@@ -167,6 +171,40 @@ export const LabelBefore: Story = {
     required: false,
     color: 'primary',
   },
+};
+
+/**
+ * **Full width.** `fullWidth` stretches the toggle across its container and
+ * pushes the label and the track to opposite ends, which is the shape settings
+ * rows and option lists want. Without it the label and track shrink-wrap side
+ * by side, whatever the container's width. The bordered 360px column below is
+ * the story's, so the difference between the two rows is visible.
+ */
+export const FullWidth: Story = {
+  args: {
+    label: 'Enable notifications',
+    labelPosition: 'after',
+    disabled: false,
+    required: false,
+    color: 'primary',
+    fullWidth: true,
+  },
+  render: (args) => ({
+    props: args,
+    template: `
+      <div style="width: 360px; display: flex; flex-direction: column; gap: 16px;
+                  padding: 16px; border: 1px dashed var(--lines, #ccc);">
+        <tn-slide-toggle
+          [label]="label"
+          [labelPosition]="labelPosition"
+          [disabled]="disabled"
+          [color]="color"
+          [fullWidth]="fullWidth" />
+        <tn-slide-toggle label="Automatic updates" [color]="color" [fullWidth]="fullWidth" />
+        <tn-slide-toggle label="Shrink-wrapped (fullWidth off)" [color]="color" />
+      </div>
+    `,
+  }),
 };
 
 export const NoLabel: Story = {
