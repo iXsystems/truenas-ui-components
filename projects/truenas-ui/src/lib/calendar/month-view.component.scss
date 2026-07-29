@@ -33,6 +33,11 @@
 .tn-calendar-table-header {
   th {
     text-align: center;
+    // `table-layout: fixed` takes every column's width from the first row, which is this
+    // header — the width on the body cells below never gets a say. Leaving it unset means
+    // the grid is sized by whatever ambient `th` rule the host app happens to have, which
+    // can push the table clean past its container.
+    width: calc(100% / 7);
     height: var(--calendar-header-height);
     padding: 8px 0;
     font-size: var(--calendar-header-font-size);
