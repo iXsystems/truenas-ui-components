@@ -75,6 +75,7 @@
         [class.tn-table__row--clickable]="clickable()"
         [attr.tabindex]="clickable() ? 0 : null"
         [attr.aria-selected]="clickable() ? isRowActive(row) : null"
+        [attr.aria-expanded]="isRowExpandTrigger(row) ? isRowExpanded(row) : null"
         (click)="onRowClick(row)"
         (dblclick)="onRowDoubleClick(row)"
         (keydown)="onRowKeydown($event, row)">

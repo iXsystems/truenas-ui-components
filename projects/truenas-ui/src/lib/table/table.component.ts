@@ -440,6 +440,17 @@ export class TnTableComponent<T = unknown> implements OnInit {
     return this.expandedRows().has(row);
   }
 
+  /**
+   * Whether the row element itself acts as the expand/collapse control, which is what makes an
+   * `aria-expanded` on it meaningful: a screen-reader user who focuses the row and presses Enter
+   * otherwise gets no announcement that anything expanded, since only the chevron carries the
+   * state. Also requires `clickable` — without it the row isn't activatable and
+   * {@link onRowClick} returns before toggling anything.
+   */
+  isRowExpandTrigger(row: T): boolean {
+    return this.expandOnRowClick() && this.clickable() && this.canExpandRow(row);
+  }
+
   // --- Active row ---
 
   isRowActive(row: T): boolean {

@@ -392,7 +392,7 @@ describe('TnTableComponent', () => {
   });
 
   describe('fixedLayout', () => {
-    it('is off by default, so cells keep the single-line ellipsis layout', () => {
+    it('is off by default, so columns keep sizing to their content', () => {
       expect(fixture.nativeElement.classList).not.toContain('tn-table--fixed-layout');
     });
 
@@ -410,8 +410,13 @@ describe('TnTableComponent', () => {
       // Checked against the source — Jest neither compiles the SCSS into `ɵcmp.styles` nor
       // resolves `table-layout` through `getComputedStyle`, so there is nothing to assert at
       // runtime.
-      const scss = readFileSync(join(__dirname, 'table.component.scss'), 'utf8');
-      const rules = scss.match(/[^{}\n]*tn-table--fixed-layout[^{}]*\{/g) ?? [];
+      //
+      // Comments name the class too, so they are dropped before matching; whitespace is then
+      // collapsed so a selector reformatted across lines still reads as one rule here.
+      const scss = readFileSync(join(__dirname, 'table.component.scss'), 'utf8')
+        .replace(/\/\/[^\n]*/g, '')
+        .replace(/\s+/g, ' ');
+      const rules = scss.match(/[^{};]*tn-table--fixed-layout[^{};]*\{/g) ?? [];
 
       expect(rules.length).toBeGreaterThan(0);
       for (const rule of rules) {
@@ -423,7 +428,7 @@ describe('TnTableComponent', () => {
   describe('width floor', () => {
     const tableEl = (): HTMLElement => fixture.nativeElement.querySelector('table') as HTMLElement;
 
-    it('applies no floor without wrapCells, since auto layout overflows and scrolls on its own', () => {
+    it('applies no floor without fixedLayout, since auto layout overflows and scrolls on its own', () => {
       fixture.componentRef.setInput('displayedColumns', ['a', 'b', 'c']);
       fixture.detectChanges();
 
@@ -687,6 +692,45 @@ describe('TnTableComponent', () => {
         component.onRowClick(testData[0]);
 
         expect(component.isRowExpanded(testData[0])).toBe(false);
+      });
+
+      describe('row aria-expanded', () => {
+        const firstRow = (): HTMLElement =>
+          fixture.nativeElement.querySelector('.tn-table__row') as HTMLElement;
+
+        it('announces the row as a collapsed expander, since the row is the control here', () => {
+          // Without this a screen-reader user who focuses the row and presses Enter hears nothing
+          // change: the state lives only on the chevron they never touched.
+          expect(firstRow().getAttribute('aria-expanded')).toBe('false');
+        });
+
+        it('flips to true once the row is expanded', () => {
+          component.onRowClick(testData[0]);
+          fixture.detectChanges();
+
+          expect(firstRow().getAttribute('aria-expanded')).toBe('true');
+        });
+
+        it('stays off the row when only the chevron expands, which carries its own state', () => {
+          fixture.componentRef.setInput('expandOnRowClick', false);
+          fixture.detectChanges();
+
+          expect(firstRow().getAttribute('aria-expanded')).toBeNull();
+        });
+
+        it('stays off a row that is not activatable, since Enter never toggles it', () => {
+          fixture.componentRef.setInput('clickable', false);
+          fixture.detectChanges();
+
+          expect(firstRow().getAttribute('aria-expanded')).toBeNull();
+        });
+
+        it('stays off a row the predicate rejects, which never expands', () => {
+          fixture.componentRef.setInput('isRowExpandable', (row: { id: number }) => row.id !== 1);
+          fixture.detectChanges();
+
+          expect(firstRow().getAttribute('aria-expanded')).toBeNull();
+        });
       });
     });
 
