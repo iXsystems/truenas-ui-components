@@ -10,6 +10,7 @@ import {
   effect,
   inject,
   input,
+  model,
   output,
   signal,
 } from '@angular/core';
@@ -79,6 +80,7 @@ function getExpandDuration(): string {
   host: {
     class: 'tn-table',
     '[class.tn-table--bordered]': 'bordered()',
+    '[class.tn-table--wrap-cells]': 'wrapCells()',
     '[class.tn-table--loading]': 'loading()',
     '[style.--tn-table-active-bg]': 'activeBg()',
     '[style.--tn-table-active-indicator]': 'activeIndicator()',
@@ -93,6 +95,14 @@ export class TnTableComponent<T = unknown> implements OnInit {
   trackBy = input<((index: number, item: T) => unknown) | undefined>(undefined);
 
   emptyMessage = input<string>('No data available');
+
+  /**
+   * Optional second line under `emptyMessage`, for empty states that carry both a headline and an
+   * explanation (e.g. "No search results" plus what to try instead). Omitted when empty, so tables
+   * with a single-line empty state are unaffected.
+   */
+  emptyDescription = input<string>('');
+
   emptyIcon = input<string>('');
 
   // --- Feature inputs (all opt-in) ---
@@ -169,6 +179,64 @@ export class TnTableComponent<T = unknown> implements OnInit {
    */
   clickable = input<boolean>(false);
 
+  /**
+   * When true, activating a row (click or Enter/Space) toggles its expansion, in addition to the
+   * chevron. Requires `clickable` — that is what makes rows activatable at all — and `expandable`;
+   * rows the `isRowExpandable` predicate rejects are unaffected, since `toggleRowExpansion` gates
+   * on it. `rowClick` still emits, so a consumer can both expand and react to the click.
+   */
+  expandOnRowClick = input<boolean>(false);
+
+  /**
+   * When true, expanding a row collapses whichever row was expanded before, so at most one detail
+   * row is open at a time. Default (false) allows any number.
+   */
+  singleExpand = input<boolean>(false);
+
+  /**
+   * When true, the table lays out `fixed` at full width and cells wrap instead of ellipsis-clipping.
+   *
+   * The default `auto` layout sizes columns to their content, so one long unbreakable value (a
+   * path, a cron description) widens its column until the row overflows its container and the
+   * trailing columns are clipped. With this set, column widths come from each `*tnColumnDef
+   * [width]` (or are shared equally), and long values wrap within their cell.
+   */
+  wrapCells = input<boolean>(false);
+
+  /**
+   * Smallest width a column is allowed to shrink to before the host scrolls horizontally instead.
+   * Any CSS length.
+   *
+   * `wrapCells` pins `table-layout: fixed`, under which the table always fits its container
+   * exactly — so without a floor a narrow viewport just keeps shrinking the columns, wrapping
+   * every cell to a couple of characters per line: technically visible, unreadable, and never
+   * scrollable. The floor is derived as this times the column count, so it scales with the table
+   * rather than needing a hand-picked number per page: a three-column card never scrolls on a
+   * desktop, an eleven-column list scrolls when it has to.
+   *
+   * Only applies with `wrapCells`. Without it the table lays out `auto`, sizing to its content and
+   * overflowing the host — which scrolls on its own.
+   */
+  minColumnWidth = input<string>('120px');
+
+  /**
+   * Explicit width floor, overriding the {@link minColumnWidth} derivation. Any CSS length. Reach
+   * for this only when a specific table needs a floor its column count doesn't imply.
+   */
+  minWidth = input<string>('');
+
+  /** The floor actually applied to the table — explicit if given, else derived. */
+  protected readonly resolvedMinWidth = computed<string | null>(() => {
+    const explicit = this.minWidth();
+    if (explicit) {
+      return explicit;
+    }
+    if (!this.wrapCells()) {
+      return null;
+    }
+    return `calc(${this.minColumnWidth()} * ${this.effectiveDisplayedColumns().length})`;
+  });
+
   // --- Outputs ---
   sortChange = output<TnSortEvent>();
   selectionChange = output<T[]>();
@@ -189,8 +257,13 @@ export class TnTableComponent<T = unknown> implements OnInit {
   detailRowDef = contentChild(TnDetailRowDefDirective);
 
   // --- Sort state ---
-  sortColumn = signal<string>('');
-  sortDirection = signal<'asc' | 'desc' | ''>('');
+  /**
+   * Sorted column and direction. Two-way bindable (`[(sortColumn)]`), so a consumer that owns the
+   * sort — a data provider, a table destroyed and rebuilt when its list empties out — can restore
+   * the header's arrow instead of reaching in and setting the signal from an effect.
+   */
+  sortColumn = model<string>('');
+  sortDirection = model<'asc' | 'desc' | ''>('');
 
   /**
    * Set of currently expanded row references.
@@ -357,6 +430,9 @@ export class TnTableComponent<T = unknown> implements OnInit {
     if (expanded.has(row)) {
       expanded.delete(row);
     } else {
+      if (this.singleExpand()) {
+        expanded.clear();
+      }
       expanded.add(row);
     }
     this.expandedRows.set(expanded);
@@ -378,6 +454,9 @@ export class TnTableComponent<T = unknown> implements OnInit {
 
   onRowClick(row: T): void {
     if (!this.clickable()) { return; }
+    if (this.expandOnRowClick()) {
+      this.toggleRowExpansion(row);
+    }
     this.rowClick.emit(row);
   }
 
@@ -390,6 +469,9 @@ export class TnTableComponent<T = unknown> implements OnInit {
     if (!this.clickable()) { return; }
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
+      if (this.expandOnRowClick()) {
+        this.toggleRowExpansion(row);
+      }
       this.rowClick.emit(row);
     }
   }

@@ -1,4 +1,4 @@
-<table class="tn-table__table">
+<table class="tn-table__table" [style.min-width]="resolvedMinWidth()">
   <!-- Header Row -->
   <thead class="tn-table__header">
     <tr class="tn-table__header-row">
@@ -143,6 +143,7 @@
   <tn-empty
     size="compact"
     [title]="emptyMessage()"
+    [description]="emptyDescription()"
     [icon]="emptyIcon()" />
 }
 

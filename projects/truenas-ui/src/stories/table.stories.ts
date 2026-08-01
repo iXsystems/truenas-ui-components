@@ -80,6 +80,25 @@ const meta: Meta<TnTableComponent> = {
     loading: { description: 'Shows a spinner overlay over the table while reloading data', control: 'boolean' },
     loadingMessage: { description: 'Accessible label announced while loading', control: 'text' },
     clickable: { description: 'Makes rows keyboard-focusable (tabindex=0); Enter/Space emit rowClick', control: 'boolean' },
+    expandOnRowClick: {
+      description: 'Activating a row (click or Enter/Space) also toggles its expansion; needs clickable + expandable',
+      control: 'boolean',
+    },
+    singleExpand: { description: 'Expanding a row collapses the previously expanded one', control: 'boolean' },
+    wrapCells: {
+      description: 'Lays the table out fixed-width and wraps long cell values instead of ellipsis-clipping them',
+      control: 'boolean',
+    },
+    minColumnWidth: {
+      description: 'Smallest a column may shrink to with wrapCells; the width floor is this times the column count',
+      control: 'text',
+    },
+    minWidth: {
+      description: 'Explicit width floor (any CSS length), overriding the minColumnWidth derivation',
+      control: 'text',
+    },
+    emptyMessage: { description: 'Headline shown when there are no rows', control: 'text' },
+    emptyDescription: { description: 'Optional second line under emptyMessage', control: 'text' },
   },
 };
 

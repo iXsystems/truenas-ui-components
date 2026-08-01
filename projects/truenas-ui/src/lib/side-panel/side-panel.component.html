@@ -40,7 +40,7 @@
           name="close"
           library="mdi"
           size="sm"
-          ariaLabel="Dismiss"
+          [ariaLabel]="closeButtonAriaLabel()"
           [testId]="closeButtonTestId()"
           (onClick)="dismiss()" />
       </div>

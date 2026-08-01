@@ -92,6 +92,13 @@ export class TnSidePanelComponent implements OnDestroy {
    */
   closeButtonTestId = input<string | undefined>(undefined);
 
+  /**
+   * Accessible name for the close button. Defaults to "Dismiss"; override to translate it, or to
+   * name what is being closed ("Close Add Dataset form") — a screen-reader user tabbing to it out
+   * of context otherwise hears only "Dismiss".
+   */
+  closeButtonAriaLabel = input<string>('Dismiss');
+
   // Outputs
   opened = output<void>();
   closed = output<void>();

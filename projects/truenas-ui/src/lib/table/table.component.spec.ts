@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { Component, signal } from '@angular/core';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
@@ -389,6 +391,101 @@ describe('TnTableComponent', () => {
     });
   });
 
+  describe('wrapCells', () => {
+    it('is off by default, so cells keep the single-line ellipsis layout', () => {
+      expect(fixture.nativeElement.classList).not.toContain('tn-table--wrap-cells');
+    });
+
+    it('marks the host when enabled', () => {
+      fixture.componentRef.setInput('wrapCells', true);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.classList).toContain('tn-table--wrap-cells');
+    });
+
+    it('scopes its rules to :host, without which they could never match', () => {
+      // The class lands on the HOST element, which carries `_nghost` and not `_ngcontent`, so a
+      // plain `.tn-table--wrap-cells` rule is silently inert under emulated encapsulation: the
+      // class is applied, nothing is styled, and a test asserting only the class still passes.
+      // Checked against the source — Jest neither compiles the SCSS into `ɵcmp.styles` nor
+      // resolves `table-layout` through `getComputedStyle`, so there is nothing to assert at
+      // runtime.
+      const scss = readFileSync(join(__dirname, 'table.component.scss'), 'utf8');
+      const rules = scss.match(/[^{}\n]*tn-table--wrap-cells[^{}]*\{/g) ?? [];
+
+      expect(rules.length).toBeGreaterThan(0);
+      for (const rule of rules) {
+        expect(rule).toContain(':host(');
+      }
+    });
+  });
+
+  describe('width floor', () => {
+    const tableEl = (): HTMLElement => fixture.nativeElement.querySelector('table') as HTMLElement;
+
+    it('applies no floor without wrapCells, since auto layout overflows and scrolls on its own', () => {
+      fixture.componentRef.setInput('displayedColumns', ['a', 'b', 'c']);
+      fixture.detectChanges();
+
+      expect(tableEl().style.minWidth).toBe('');
+    });
+
+    it('derives the floor from the column count, so no page has to pick a number', () => {
+      fixture.componentRef.setInput('displayedColumns', ['a', 'b', 'c']);
+      fixture.componentRef.setInput('wrapCells', true);
+      fixture.detectChanges();
+
+      expect(tableEl().style.minWidth).toBe('calc(120px * 3)');
+    });
+
+    it('grows the floor with the table, so a wide list scrolls where a narrow one does not', () => {
+      fixture.componentRef.setInput('displayedColumns', ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']);
+      fixture.componentRef.setInput('wrapCells', true);
+      fixture.detectChanges();
+
+      expect(tableEl().style.minWidth).toBe('calc(120px * 8)');
+    });
+
+    it('counts the columns the table adds itself', () => {
+      fixture.componentRef.setInput('displayedColumns', ['a', 'b']);
+      fixture.componentRef.setInput('wrapCells', true);
+      fixture.componentRef.setInput('selectable', true);
+      fixture.detectChanges();
+
+      expect(tableEl().style.minWidth).toBe('calc(120px * 3)');
+    });
+
+    it('honours a custom minColumnWidth', () => {
+      fixture.componentRef.setInput('displayedColumns', ['a', 'b']);
+      fixture.componentRef.setInput('wrapCells', true);
+      fixture.componentRef.setInput('minColumnWidth', '10rem');
+      fixture.detectChanges();
+
+      expect(tableEl().style.minWidth).toBe('calc(10rem * 2)');
+    });
+
+    it('lets an explicit minWidth override the derivation', () => {
+      fixture.componentRef.setInput('displayedColumns', ['a', 'b']);
+      fixture.componentRef.setInput('wrapCells', true);
+      fixture.componentRef.setInput('minWidth', '900px');
+      fixture.detectChanges();
+
+      expect(tableEl().style.minWidth).toBe('900px');
+    });
+  });
+
+  describe('emptyDescription', () => {
+    it('renders a second line under the empty message when given one', () => {
+      fixture.componentRef.setInput('dataSource', []);
+      fixture.componentRef.setInput('emptyMessage', 'No results');
+      fixture.componentRef.setInput('emptyDescription', 'Try a different search.');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('No results');
+      expect(fixture.nativeElement.textContent).toContain('Try a different search.');
+    });
+  });
+
   describe('loading state', () => {
     it('should default to not loading', () => {
       expect(component.loading()).toBe(false);
@@ -526,6 +623,71 @@ describe('TnTableComponent', () => {
       fixture.detectChanges();
       component.toggleRowExpansion(testData[0]);
       expect(component.isRowExpanded(testData[0])).toBe(false);
+    });
+
+    describe('singleExpand', () => {
+      it('collapses the previously expanded row', () => {
+        fixture.componentRef.setInput('singleExpand', true);
+        fixture.detectChanges();
+
+        component.toggleRowExpansion(testData[0]);
+        component.toggleRowExpansion(testData[1]);
+
+        expect(component.isRowExpanded(testData[0])).toBe(false);
+        expect(component.isRowExpanded(testData[1])).toBe(true);
+      });
+
+      it('still collapses the open row when it is toggled again', () => {
+        fixture.componentRef.setInput('singleExpand', true);
+        fixture.detectChanges();
+
+        component.toggleRowExpansion(testData[0]);
+        component.toggleRowExpansion(testData[0]);
+
+        expect(component.isRowExpanded(testData[0])).toBe(false);
+      });
+    });
+
+    describe('expandOnRowClick', () => {
+      beforeEach(() => {
+        fixture.componentRef.setInput('clickable', true);
+        fixture.componentRef.setInput('expandOnRowClick', true);
+        fixture.detectChanges();
+      });
+
+      it('toggles expansion when a row is activated, and still emits rowClick', () => {
+        const clicked = jest.fn();
+        component.rowClick.subscribe(clicked);
+
+        component.onRowClick(testData[0]);
+
+        expect(component.isRowExpanded(testData[0])).toBe(true);
+        expect(clicked).toHaveBeenCalledWith(testData[0]);
+      });
+
+      it('toggles expansion from the keyboard too', () => {
+        component.onRowKeydown(new KeyboardEvent('keydown', { key: 'Enter' }), testData[0]);
+
+        expect(component.isRowExpanded(testData[0])).toBe(true);
+      });
+
+      it('leaves expansion alone when not enabled', () => {
+        fixture.componentRef.setInput('expandOnRowClick', false);
+        fixture.detectChanges();
+
+        component.onRowClick(testData[0]);
+
+        expect(component.isRowExpanded(testData[0])).toBe(false);
+      });
+
+      it('does not expand a row the predicate rejects', () => {
+        fixture.componentRef.setInput('isRowExpandable', (row: { id: number }) => row.id !== 1);
+        fixture.detectChanges();
+
+        component.onRowClick(testData[0]);
+
+        expect(component.isRowExpanded(testData[0])).toBe(false);
+      });
     });
 
     describe('isRowExpandable predicate', () => {

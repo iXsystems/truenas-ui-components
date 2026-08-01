@@ -3,6 +3,29 @@
 :host {
   display: block;
   position: relative;
+  width: 100%;
+
+  // The table can't shrink below its columns' min-content, so on a narrow viewport it would
+  // otherwise overflow the host and be clipped with no way to reach the trailing columns.
+  // Lives here rather than on `.tn-table` (which carries the same class but, being the host,
+  // is matched by `_nghost` and never by the `_ngcontent` that a plain class rule compiles to).
+  overflow-x: auto;
+}
+
+// `wrapCells` opt-in: the default `auto` layout sizes columns to their content, so one long
+// unbreakable value widens its column until the row overflows its container and the trailing
+// columns clip. Fixed layout takes widths from each column def instead, and cells wrap.
+// Host-scoped (see above) — a plain `.tn-table--wrap-cells` selector would never match the host.
+:host(.tn-table--wrap-cells) {
+  table {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  .tn-table__cell-content {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
 }
 
 :host(.tn-table--bordered) {
@@ -11,10 +34,6 @@
 }
 
 .tn-table {
-  display: block;
-  width: 100%;
-  overflow-x: auto;
-
   &__table {
     width: 100%;
     border-collapse: collapse;
