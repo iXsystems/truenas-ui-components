@@ -12,19 +12,15 @@
   overflow-x: auto;
 }
 
-// `wrapCells` opt-in: the default `auto` layout sizes columns to their content, so one long
-// unbreakable value widens its column until the row overflows its container and the trailing
-// columns clip. Fixed layout takes widths from each column def instead, and cells wrap.
-// Host-scoped (see above) — a plain `.tn-table--wrap-cells` selector would never match the host.
-:host(.tn-table--wrap-cells) {
+// `fixedLayout` opt-in. Cells wrap either way (see `__cell-content`); this additionally pins
+// equal-width columns, so no column can grow to dominate the row. Costs the auto layout's
+// content-proportional sizing, so it suits a table of similar-length values, not one with a
+// single long text column among short ones.
+// Host-scoped (see above) — a plain `.tn-table--fixed-layout` selector would never match the host.
+:host(.tn-table--fixed-layout) {
   table {
     table-layout: fixed;
     width: 100%;
-  }
-
-  .tn-table__cell-content {
-    white-space: normal;
-    overflow-wrap: anywhere;
   }
 }
 
@@ -174,9 +170,11 @@
     display: flex;
     align-items: center;
     min-height: 24px;
-    white-space: nowrap;
+    // Wrap by default: a cell that can't fit should get taller, not be silently truncated. A
+    // table whose columns still can't fit overflows the host, which scrolls.
+    white-space: normal;
+    overflow-wrap: anywhere;
     overflow: hidden;
-    text-overflow: ellipsis;
     // Focus rings on embedded controls (e.g. tn-checkbox in a selection
     // column) paint a few px outside the control's box; `overflow: hidden`
     // clips at the padding edge, so without padding the ring is cut off at the

@@ -391,27 +391,27 @@ describe('TnTableComponent', () => {
     });
   });
 
-  describe('wrapCells', () => {
+  describe('fixedLayout', () => {
     it('is off by default, so cells keep the single-line ellipsis layout', () => {
-      expect(fixture.nativeElement.classList).not.toContain('tn-table--wrap-cells');
+      expect(fixture.nativeElement.classList).not.toContain('tn-table--fixed-layout');
     });
 
     it('marks the host when enabled', () => {
-      fixture.componentRef.setInput('wrapCells', true);
+      fixture.componentRef.setInput('fixedLayout', true);
       fixture.detectChanges();
 
-      expect(fixture.nativeElement.classList).toContain('tn-table--wrap-cells');
+      expect(fixture.nativeElement.classList).toContain('tn-table--fixed-layout');
     });
 
     it('scopes its rules to :host, without which they could never match', () => {
       // The class lands on the HOST element, which carries `_nghost` and not `_ngcontent`, so a
-      // plain `.tn-table--wrap-cells` rule is silently inert under emulated encapsulation: the
+      // plain `.tn-table--fixed-layout` rule is silently inert under emulated encapsulation: the
       // class is applied, nothing is styled, and a test asserting only the class still passes.
       // Checked against the source — Jest neither compiles the SCSS into `ɵcmp.styles` nor
       // resolves `table-layout` through `getComputedStyle`, so there is nothing to assert at
       // runtime.
       const scss = readFileSync(join(__dirname, 'table.component.scss'), 'utf8');
-      const rules = scss.match(/[^{}\n]*tn-table--wrap-cells[^{}]*\{/g) ?? [];
+      const rules = scss.match(/[^{}\n]*tn-table--fixed-layout[^{}]*\{/g) ?? [];
 
       expect(rules.length).toBeGreaterThan(0);
       for (const rule of rules) {
@@ -432,7 +432,7 @@ describe('TnTableComponent', () => {
 
     it('derives the floor from the column count, so no page has to pick a number', () => {
       fixture.componentRef.setInput('displayedColumns', ['a', 'b', 'c']);
-      fixture.componentRef.setInput('wrapCells', true);
+      fixture.componentRef.setInput('fixedLayout', true);
       fixture.detectChanges();
 
       expect(tableEl().style.minWidth).toBe('calc(120px * 3)');
@@ -440,7 +440,7 @@ describe('TnTableComponent', () => {
 
     it('grows the floor with the table, so a wide list scrolls where a narrow one does not', () => {
       fixture.componentRef.setInput('displayedColumns', ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']);
-      fixture.componentRef.setInput('wrapCells', true);
+      fixture.componentRef.setInput('fixedLayout', true);
       fixture.detectChanges();
 
       expect(tableEl().style.minWidth).toBe('calc(120px * 8)');
@@ -448,7 +448,7 @@ describe('TnTableComponent', () => {
 
     it('counts the columns the table adds itself', () => {
       fixture.componentRef.setInput('displayedColumns', ['a', 'b']);
-      fixture.componentRef.setInput('wrapCells', true);
+      fixture.componentRef.setInput('fixedLayout', true);
       fixture.componentRef.setInput('selectable', true);
       fixture.detectChanges();
 
@@ -457,7 +457,7 @@ describe('TnTableComponent', () => {
 
     it('honours a custom minColumnWidth', () => {
       fixture.componentRef.setInput('displayedColumns', ['a', 'b']);
-      fixture.componentRef.setInput('wrapCells', true);
+      fixture.componentRef.setInput('fixedLayout', true);
       fixture.componentRef.setInput('minColumnWidth', '10rem');
       fixture.detectChanges();
 
@@ -466,7 +466,7 @@ describe('TnTableComponent', () => {
 
     it('lets an explicit minWidth override the derivation', () => {
       fixture.componentRef.setInput('displayedColumns', ['a', 'b']);
-      fixture.componentRef.setInput('wrapCells', true);
+      fixture.componentRef.setInput('fixedLayout', true);
       fixture.componentRef.setInput('minWidth', '900px');
       fixture.detectChanges();
 

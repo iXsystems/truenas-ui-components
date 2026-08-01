@@ -85,12 +85,12 @@ const meta: Meta<TnTableComponent> = {
       control: 'boolean',
     },
     singleExpand: { description: 'Expanding a row collapses the previously expanded one', control: 'boolean' },
-    wrapCells: {
-      description: 'Lays the table out fixed-width and wraps long cell values instead of ellipsis-clipping them',
+    fixedLayout: {
+      description: 'Equal-width columns (cells wrap regardless — that is the default)',
       control: 'boolean',
     },
     minColumnWidth: {
-      description: 'Smallest a column may shrink to with wrapCells; the width floor is this times the column count',
+      description: 'Smallest a column may shrink to with fixedLayout; the width floor is this times the column count',
       control: 'text',
     },
     minWidth: {

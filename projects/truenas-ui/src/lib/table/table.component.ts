@@ -80,7 +80,7 @@ function getExpandDuration(): string {
   host: {
     class: 'tn-table',
     '[class.tn-table--bordered]': 'bordered()',
-    '[class.tn-table--wrap-cells]': 'wrapCells()',
+    '[class.tn-table--fixed-layout]': 'fixedLayout()',
     '[class.tn-table--loading]': 'loading()',
     '[style.--tn-table-active-bg]': 'activeBg()',
     '[style.--tn-table-active-indicator]': 'activeIndicator()',
@@ -194,28 +194,26 @@ export class TnTableComponent<T = unknown> implements OnInit {
   singleExpand = input<boolean>(false);
 
   /**
-   * When true, the table lays out `fixed` at full width and cells wrap instead of ellipsis-clipping.
+   * Lays the table out `fixed` at full width, so every column without an explicit `[width]` gets
+   * an equal share and none can grow to dominate the row.
    *
-   * The default `auto` layout sizes columns to their content, so one long unbreakable value (a
-   * path, a cron description) widens its column until the row overflows its container and the
-   * trailing columns are clipped. With this set, column widths come from each `*tnColumnDef
-   * [width]` (or are shared equally), and long values wrap within their cell.
+   * Cells wrap regardless of this (that is the table's default), so reach for it only when equal
+   * columns are actually wanted: it gives up the `auto` layout's content-proportional sizing,
+   * which a table with one long text column among short ones usually wants to keep.
    */
-  wrapCells = input<boolean>(false);
+  fixedLayout = input<boolean>(false);
 
   /**
    * Smallest width a column is allowed to shrink to before the host scrolls horizontally instead.
    * Any CSS length.
    *
-   * `wrapCells` pins `table-layout: fixed`, under which the table always fits its container
-   * exactly — so without a floor a narrow viewport just keeps shrinking the columns, wrapping
-   * every cell to a couple of characters per line: technically visible, unreadable, and never
-   * scrollable. The floor is derived as this times the column count, so it scales with the table
-   * rather than needing a hand-picked number per page: a three-column card never scrolls on a
-   * desktop, an eleven-column list scrolls when it has to.
+   * `fixedLayout` makes the table fit its container exactly — so without a floor a narrow viewport
+   * just keeps shrinking the columns, wrapping every cell to a couple of characters per line:
+   * technically visible, unreadable, and never scrollable. The floor is derived as this times the
+   * column count, so it scales with the table rather than needing a hand-picked number per page.
    *
-   * Only applies with `wrapCells`. Without it the table lays out `auto`, sizing to its content and
-   * overflowing the host — which scrolls on its own.
+   * Only applies with `fixedLayout`. Without it the table lays out `auto`, sizing to its content
+   * and overflowing the host — which scrolls on its own.
    */
   minColumnWidth = input<string>('120px');
 
@@ -231,7 +229,7 @@ export class TnTableComponent<T = unknown> implements OnInit {
     if (explicit) {
       return explicit;
     }
-    if (!this.wrapCells()) {
+    if (!this.fixedLayout()) {
       return null;
     }
     return `calc(${this.minColumnWidth()} * ${this.effectiveDisplayedColumns().length})`;
