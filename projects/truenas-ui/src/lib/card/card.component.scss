@@ -1,3 +1,15 @@
+// The host is a custom element, so without this it lays out inline and consumers have to set
+// `display: block` themselves before any height rule here behaves predictably.
+:host {
+  display: block;
+}
+
+// `.tn-card`'s `height: 100%` resolves against the host, so opting out of fill-height has to
+// release both. Driven by the `fillHeight` input via a host class binding.
+:host(.tn-card--content-height) {
+  height: auto;
+}
+
 .tn-card {
   height: 100%;
   display: flex;
@@ -5,6 +17,11 @@
   border-radius: 8px;
   transition: box-shadow 0.3s ease;
   overflow: hidden;
+
+  // Opt out of fill-height (see the `fillHeight` input) for cards that size to their content.
+  &--content-height {
+    height: auto;
+  }
 
   &--elevation-none {
     box-shadow: none;

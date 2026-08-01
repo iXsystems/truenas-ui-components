@@ -38,6 +38,9 @@ import { TnTooltipDirective } from '../tooltip/tooltip.directive';
   ],
   templateUrl: './card.component.html',
   styleUrls: ['./card.component.scss'],
+  host: {
+    '[class.tn-card--content-height]': '!fillHeight()',
+  },
 })
 export class TnCardComponent {
   private iconRegistry = inject(TnIconRegistryService);
@@ -74,6 +77,16 @@ export class TnCardComponent {
   elevation = input<'none' | 'low' | 'medium' | 'high'>('medium');
   padding = input<'small' | 'medium' | 'large'>('medium');
   padContent = input<boolean>(true);
+
+  /**
+   * Whether the card stretches to fill its container's height.
+   *
+   * Defaults to `true`, which is what an equal-height dashboard grid wants: every card in a row
+   * matches the tallest. Set it to `false` for a card that should size to its content instead —
+   * typically a full-page card wrapping a table, which otherwise leaves a large empty area below
+   * the content when the page is taller than the table.
+   */
+  fillHeight = input<boolean>(true);
   bordered = input<boolean>(false);
   background = input<boolean>(true);
 
@@ -123,8 +136,11 @@ export class TnCardComponent {
     const contentPaddingClass = this.padContent() ? `tn-card--content-padding-${this.padding()}` : 'tn-card--content-padding-none';
     const borderedClass = this.bordered() ? 'tn-card--bordered' : '';
     const backgroundClass = this.background() ? 'tn-card--background' : '';
+    const heightClass = this.fillHeight() ? '' : 'tn-card--content-height';
 
-    return ['tn-card', elevationClass, paddingClass, contentPaddingClass, borderedClass, backgroundClass].filter(Boolean);
+    return [
+      'tn-card', elevationClass, paddingClass, contentPaddingClass, borderedClass, backgroundClass, heightClass,
+    ].filter(Boolean);
   });
 
   hasHeader = computed(() => {
