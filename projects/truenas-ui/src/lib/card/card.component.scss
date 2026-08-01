@@ -4,10 +4,17 @@
   display: block;
 }
 
-// `.tn-card`'s `height: 100%` resolves against the host, so opting out of fill-height has to
-// release both. Driven by the `fillHeight` input via a host class binding.
-:host(.tn-card--content-height) {
+// Opt out of fill-height (see the `fillHeight` input) for cards that size to their content.
+// `.tn-card`'s `height: 100%` resolves against the host, so releasing the host alone isn't
+// enough — the inner element has to release its own height too. The modifier lives on the
+// host only (a `tn-card-host--` name, since the host is not itself a `.tn-card`) so there is
+// one source of truth for the opt-out.
+:host(.tn-card-host--content-height) {
   height: auto;
+
+  .tn-card {
+    height: auto;
+  }
 }
 
 .tn-card {
@@ -17,11 +24,6 @@
   border-radius: 8px;
   transition: box-shadow 0.3s ease;
   overflow: hidden;
-
-  // Opt out of fill-height (see the `fillHeight` input) for cards that size to their content.
-  &--content-height {
-    height: auto;
-  }
 
   &--elevation-none {
     box-shadow: none;

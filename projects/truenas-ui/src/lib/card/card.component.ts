@@ -39,7 +39,7 @@ import { TnTooltipDirective } from '../tooltip/tooltip.directive';
   templateUrl: './card.component.html',
   styleUrls: ['./card.component.scss'],
   host: {
-    '[class.tn-card--content-height]': '!fillHeight()',
+    '[class.tn-card-host--content-height]': '!fillHeight()',
   },
 })
 export class TnCardComponent {
@@ -136,10 +136,11 @@ export class TnCardComponent {
     const contentPaddingClass = this.padContent() ? `tn-card--content-padding-${this.padding()}` : 'tn-card--content-padding-none';
     const borderedClass = this.bordered() ? 'tn-card--bordered' : '';
     const backgroundClass = this.background() ? 'tn-card--background' : '';
-    const heightClass = this.fillHeight() ? '' : 'tn-card--content-height';
 
+    // Note: fill-height has no class here — the opt-out is a host modifier
+    // (`tn-card-host--content-height`) that releases the host and this element together.
     return [
-      'tn-card', elevationClass, paddingClass, contentPaddingClass, borderedClass, backgroundClass, heightClass,
+      'tn-card', elevationClass, paddingClass, contentPaddingClass, borderedClass, backgroundClass,
     ].filter(Boolean);
   });
 

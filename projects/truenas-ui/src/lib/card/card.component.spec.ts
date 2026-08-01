@@ -319,23 +319,21 @@ describe('TnCardComponent fillHeight', () => {
     return fixture;
   }
 
-  // `.tn-card` sets `height: 100%`, which resolves against the host — so opting out has to mark
-  // both the inner element and the host, or the card still fills its container.
-  it('fills its container by default, marking neither the host nor the card', () => {
+  // `.tn-card` sets `height: 100%`, which resolves against the host — so the opt-out lives on
+  // the host and releases both from there (`:host(.tn-card-host--content-height) .tn-card`).
+  it('fills its container by default, leaving the host unmarked', () => {
     const fixture = createHeightHost();
 
     const host = fixture.nativeElement.querySelector('tn-card') as HTMLElement;
-    expect(host.classList.contains('tn-card--content-height')).toBe(false);
-    expect(host.querySelector('.tn-card--content-height')).toBeNull();
+    expect(host.classList.contains('tn-card-host--content-height')).toBe(false);
   });
 
-  it('marks host and card for content height when fillHeight is false', () => {
+  it('marks the host for content height when fillHeight is false', () => {
     const fixture = createHeightHost();
     fixture.componentInstance.fillHeight.set(false);
     fixture.detectChanges();
 
     const host = fixture.nativeElement.querySelector('tn-card') as HTMLElement;
-    expect(host.classList.contains('tn-card--content-height')).toBe(true);
-    expect(host.querySelector('.tn-card--content-height')).toBeTruthy();
+    expect(host.classList.contains('tn-card-host--content-height')).toBe(true);
   });
 });
