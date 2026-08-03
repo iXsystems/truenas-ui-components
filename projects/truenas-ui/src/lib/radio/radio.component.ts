@@ -120,13 +120,11 @@ export class TnRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
     }
 
     if (this.group) {
+      // The group reconciles every option's DOM afterwards — this one and the sibling the
+      // browser unchecked. No `change` emit either: inside a group the group's own output is the
+      // single public event, and emitting here too would fire a projected radio's (change)
+      // binding twice per pick.
       this.group.select(this.value());
-      // `[checked]` only rewrites the input whose bound value actually changed, so the option
-      // the browser just unchecked keeps its stale DOM state. Reconcile it with where the group
-      // actually landed.
-      this.syncNativeChecked();
-      // No `change` emit: inside a group the group's own output is the single public event, and
-      // emitting here too would fire a projected radio's (change) binding twice per pick.
     } else {
       this.standaloneChecked.set(true);
       this.onChange(this.value());
@@ -135,8 +133,12 @@ export class TnRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
     }
   }
 
-  /** Writes the resolved {@link checked} state straight to the input, past Angular's binding diff. */
-  private syncNativeChecked(): void {
+  /**
+   * Writes the resolved {@link checked} state straight to the input, past Angular's binding diff.
+   * Called by the enclosing group after a pick: the browser has already flipped two inputs by
+   * then, and `[checked]` only rewrites an input whose bound value actually changed.
+   */
+  syncNativeChecked(): void {
     this.radioEl().nativeElement.checked = this.checked();
   }
 

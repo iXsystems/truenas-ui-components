@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, forwardRef, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, contentChildren, forwardRef, input, output, signal, viewChildren } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TN_RADIO_GROUP } from './radio-group.token';
@@ -110,9 +110,12 @@ export class TnRadioGroupComponent<T = unknown> implements ControlValueAccessor,
   required = input<boolean>(false);
 
   /**
-   * Test-id base for the group and, scoped by the option label, for every option it renders:
-   * base `encryption` yields `radio-group-encryption` on the group and
+   * Test-id base for the group and, scoped by the option label, for every option rendered from
+   * `options`: base `encryption` yields `radio-group-encryption` on the group and
    * `radio-encryption-passphrase` on its options. Falls back to the bound control name.
+   *
+   * Projected `<tn-radio>` children keep their own test-id resolution — the group does not reach
+   * into content it did not render — so give each one a `testId` of its own.
    */
   testId = input<TnTestIdValue>(undefined);
 
@@ -143,6 +146,10 @@ export class TnRadioGroupComponent<T = unknown> implements ControlValueAccessor,
 
   /** Test-id base, falling back to the bound control name when `testId` is unset. */
   protected readonly resolvedTestId = controlTestId(this.testId);
+
+  /** Options rendered from `options` (view) and projected ones (content) — see {@link syncNativeChecked}. */
+  private readonly renderedOptions = viewChildren(TnRadioComponent);
+  private readonly projectedOptions = contentChildren(TnRadioComponent, { descendants: true });
 
   private readonly uid = `tn-radio-group-${nextGroupId++}`;
 
@@ -190,6 +197,7 @@ export class TnRadioGroupComponent<T = unknown> implements ControlValueAccessor,
     this.onChange(value as T | null);
     this.onTouched();
     this.change.emit(value as T | null);
+    this.syncNativeChecked();
   }
 
   // ── ControlValueAccessor ──
@@ -217,6 +225,19 @@ export class TnRadioGroupComponent<T = unknown> implements ControlValueAccessor,
    */
   protected onFocusOut(): void {
     this.onTouched();
+  }
+
+  /**
+   * Reconciles every option's native `checked` with the group's value. A pick reaches the DOM
+   * before Angular: the browser checks the clicked input and unchecks its sibling on its own, and
+   * `[checked]` then only rewrites an input whose bound value actually changed. When the value
+   * lands somewhere the bindings don't account for — a consumer reverting the pick, a comparator
+   * that matches neither option — one or both inputs are left showing the browser's guess.
+   */
+  private syncNativeChecked(): void {
+    for (const option of [...this.renderedOptions(), ...this.projectedOptions()]) {
+      option.syncNativeChecked();
+    }
   }
 
   /** Per-option test-id segments: the group's base scoped by the option label. */

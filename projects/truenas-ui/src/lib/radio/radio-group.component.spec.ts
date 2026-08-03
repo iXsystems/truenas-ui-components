@@ -45,6 +45,13 @@ interface ObjectValue {
       <tn-radio label="Delta" value="d" (change)="projectedOptionChanges.push($event)" />
     </tn-radio-group>
 
+    <tn-radio-group
+      testId="veto"
+      ariaLabel="Veto"
+      [formControl]="vetoControl"
+      [options]="options"
+      (change)="vetoControl.setValue('a')" />
+
     <tn-form-field label="Required letter">
       <tn-radio-group testId="required" [formControl]="requiredControl" [options]="options" />
     </tn-form-field>
@@ -55,6 +62,7 @@ class TestHostComponent {
   readonly objectControl = new FormControl<ObjectValue | null>(null);
   readonly projectedControl = new FormControl<string | null>('c');
   readonly requiredControl = new FormControl<string | null>(null, Validators.required);
+  readonly vetoControl = new FormControl<string | null>('a');
 
   readonly inline = signal(false);
   readonly required = signal(false);
@@ -166,6 +174,20 @@ describe('TnRadioGroupComponent', () => {
       await (await letterGroup()).select('Beta');
 
       expect(host.control.touched).toBe(true);
+    });
+
+    it('re-renders the previous option when the consumer reverts the pick', async () => {
+      // The browser checks the clicked option and unchecks its sibling before Angular sees
+      // anything. When the value ends up back where it started, neither `[checked]` binding
+      // changed value, so nothing rewrites either input — without an explicit reconcile the
+      // group renders with the wrong option checked, or with none at all.
+      const group = await loader.getHarness(TnRadioGroupHarness.with({ ariaLabel: 'Veto' }));
+      await group.select('Beta');
+
+      expect(host.vetoControl.value).toBe('a');
+
+      const checked = await Promise.all((await group.getOptions()).map((option) => option.isChecked()));
+      expect(checked).toEqual([true, false]);
     });
 
     it('matches object values through compareWith', async () => {
