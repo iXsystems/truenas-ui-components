@@ -27,6 +27,12 @@ export class TnRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
 
   label = input<string>('Radio');
   value = input<unknown>('');
+  /**
+   * Native `name`, which is what binds radios into one keyboard-navigable set. Inside a
+   * `tn-radio-group` it takes precedence over the group's own name — which means setting it there
+   * quietly excludes this option from the group's arrow-key navigation and lets it be checked
+   * alongside a sibling. Only set it on a standalone radio.
+   */
   name = input<string | undefined>(undefined);
   disabled = input<boolean>(false);
   required = input<boolean>(false);

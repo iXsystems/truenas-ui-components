@@ -7,6 +7,7 @@
   [attr.aria-labelledby]="fieldAria.labelledby()"
   [attr.aria-describedby]="fieldAria.describedby()"
   [attr.aria-invalid]="fieldAria.invalid()"
+  [attr.aria-disabled]="isDisabled() ? true : null"
   [attr.aria-required]="ariaRequired() ? true : null"
   [attr.aria-orientation]="inline() ? 'horizontal' : 'vertical'"
   [tnTestId]="resolvedTestId()"

@@ -75,7 +75,10 @@ Both resolve the group through DI, so they behave identically and can be mixed.
     },
     name: {
       control: 'text',
-      description: 'Native `name` shared by the options. Defaults to a per-instance generated name.',
+      description:
+        'Native `name` shared by the options — what makes arrow keys move within the group. '
+        + 'Defaults to a per-instance generated name. Never set `name` on a projected `<tn-radio>`: '
+        + 'its own name wins, dropping it out of the group.',
     },
     testId: {
       control: 'text',

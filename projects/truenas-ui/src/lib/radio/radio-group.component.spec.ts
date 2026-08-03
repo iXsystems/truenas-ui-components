@@ -213,10 +213,16 @@ describe('TnRadioGroupComponent', () => {
   });
 
   describe('projected options', () => {
-    it('drives projected tn-radio children the same as rendered ones', async () => {
+    it('renders the control value as checked on first paint', async () => {
+      // The initial render has no user interaction behind it, so nothing reconciles the DOM —
+      // it rests entirely on the `[checked]` binding reading the group's value through DI.
       const group = await loader.getHarness(TnRadioGroupHarness.with({ ariaLabel: 'Projected' }));
 
       expect(await group.getCheckedLabel()).toBe('Gamma');
+    });
+
+    it('drives projected tn-radio children the same as rendered ones', async () => {
+      const group = await loader.getHarness(TnRadioGroupHarness.with({ ariaLabel: 'Projected' }));
 
       await group.select('Delta');
 
@@ -255,6 +261,18 @@ describe('TnRadioGroupComponent', () => {
       fixture.detectChanges();
 
       expect(await (await letterGroup()).isDisabled()).toBe(true);
+    });
+
+    it('announces the disabled state on the radiogroup itself', () => {
+      // Per-option `disabled` is what blocks interaction, but it says nothing to a screen reader
+      // that lands on the container — and leaves nothing to style the group as a whole against.
+      const root = fixture.nativeElement.querySelector('.tn-radio-group') as HTMLElement;
+      expect(root.getAttribute('aria-disabled')).toBeNull();
+
+      host.control.disable();
+      fixture.detectChanges();
+
+      expect(root.getAttribute('aria-disabled')).toBe('true');
     });
 
     it('ignores picks while disabled', async () => {

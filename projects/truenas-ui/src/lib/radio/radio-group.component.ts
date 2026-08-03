@@ -94,6 +94,10 @@ export class TnRadioGroupComponent<T = unknown> implements ControlValueAccessor,
    * something outside the group depends on the value. The scope of a native radio `name` is the
    * whole form (or document), so two groups sharing an explicit name fuse into one — prefer the
    * default when the same call site can render more than once.
+   *
+   * It is the group's name that binds the set, so a projected `<tn-radio name="…">` overrides it
+   * for itself and drops out: still rendered inside the group, but outside its arrow-key
+   * navigation and independently checkable. Leave `name` off projected children.
    */
   name = input<string | undefined>(undefined);
 
@@ -167,7 +171,12 @@ export class TnRadioGroupComponent<T = unknown> implements ControlValueAccessor,
   /** Group name handed to every child radio; generated per instance unless `name` is set. */
   readonly resolvedName = computed(() => this.name() ?? this.uid);
 
-  /** Combined disabled state (own input plus a disabled bound control), read by child radios. */
+  /**
+   * Combined disabled state (own input plus a disabled bound control), read by child radios and
+   * announced on the group root. The native `disabled` on each option is what blocks interaction;
+   * `aria-disabled` on the radiogroup is what tells a screen reader landing on the container
+   * about it, and gives styling an `[aria-disabled]` hook for the group as a whole.
+   */
   readonly isDisabled = computed(() => this.disabled() || this.formDisabled());
 
   /**
