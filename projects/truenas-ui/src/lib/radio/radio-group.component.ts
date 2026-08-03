@@ -149,6 +149,13 @@ export class TnRadioGroupComponent<T = unknown> implements ControlValueAccessor,
 
   /** Options rendered from `options` (view) and projected ones (content) — see {@link syncNativeChecked}. */
   private readonly renderedOptions = viewChildren(TnRadioComponent);
+
+  /**
+   * `descendants: true` so a projected option wrapped in markup is still found. This over-matches
+   * a `tn-radio-group` nested in the projected content, picking up its options too — harmless,
+   * because {@link syncNativeChecked} has each option write its *own* resolved checked state, and
+   * that derives from the option's nearest group rather than from this one.
+   */
   private readonly projectedOptions = contentChildren(TnRadioComponent, { descendants: true });
 
   private readonly uid = `tn-radio-group-${nextGroupId++}`;
@@ -190,6 +197,9 @@ export class TnRadioGroupComponent<T = unknown> implements ControlValueAccessor,
   }
 
   select(value: unknown): void {
+    // Only the whole-group disable is checked here. A single `option.disabled` (or a disabled
+    // projected child) is enforced by the DOM instead: a disabled native radio fires no change,
+    // and a click on its label is ignored, so the call never reaches this method.
     if (this.isDisabled()) {
       return;
     }

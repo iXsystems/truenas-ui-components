@@ -46,7 +46,9 @@ export class TnRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
   /**
    * The enclosing `tn-radio-group`, when there is one. Present for options rendered from the
    * group's `options` input as well as for projected ones — element injectors chain through the
-   * template an element is *declared* in, which is the group either way.
+   * template an element is *declared* in, which is the group either way. With groups nested in
+   * projected content it resolves to the nearest one, so an option always derives its state from
+   * the group it visually belongs to.
    */
   private group = inject(TN_RADIO_GROUP, { optional: true });
 

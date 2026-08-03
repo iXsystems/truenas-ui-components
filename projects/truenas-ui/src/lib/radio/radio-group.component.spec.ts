@@ -45,6 +45,15 @@ interface ObjectValue {
       <tn-radio label="Delta" value="d" (change)="projectedOptionChanges.push($event)" />
     </tn-radio-group>
 
+    <tn-radio-group testId="outer" ariaLabel="Outer" [formControl]="outerControl">
+      <tn-radio label="Outer A" value="oa" />
+      <tn-radio label="Outer B" value="ob" />
+      <tn-radio-group testId="inner" ariaLabel="Inner" [formControl]="innerControl">
+        <tn-radio label="Inner A" value="ia" />
+        <tn-radio label="Inner B" value="ib" />
+      </tn-radio-group>
+    </tn-radio-group>
+
     <tn-radio-group
       testId="veto"
       ariaLabel="Veto"
@@ -63,6 +72,8 @@ class TestHostComponent {
   readonly projectedControl = new FormControl<string | null>('c');
   readonly requiredControl = new FormControl<string | null>(null, Validators.required);
   readonly vetoControl = new FormControl<string | null>('a');
+  readonly outerControl = new FormControl<string | null>('ob');
+  readonly innerControl = new FormControl<string | null>('ia');
 
   readonly inline = signal(false);
   readonly required = signal(false);
@@ -211,6 +222,20 @@ describe('TnRadioGroupComponent', () => {
 
       expect(host.projectedControl.value).toBe('d');
       expect(await group.getCheckedLabel()).toBe('Delta');
+    });
+
+    it('leaves a nested group alone when the outer one reconciles a pick', async () => {
+      // Nesting radiogroups is an odd shape, but the outer group's content query reaches the
+      // inner group's options, so the boundary is worth pinning: reconciliation has each option
+      // write its own checked state, which derives from its nearest group, not the outer value.
+      const outer = await loader.getHarness(TnRadioGroupHarness.with({ ariaLabel: 'Outer' }));
+      const inner = await loader.getHarness(TnRadioGroupHarness.with({ ariaLabel: 'Inner' }));
+
+      await outer.select('Outer A');
+
+      expect(host.outerControl.value).toBe('oa');
+      expect(host.innerControl.value).toBe('ia');
+      expect(await inner.getCheckedLabel()).toBe('Inner A');
     });
 
     it('emits the pick once, from the group rather than the option', async () => {

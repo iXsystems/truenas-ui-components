@@ -1,6 +1,7 @@
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
@@ -150,6 +151,44 @@ export const InsideFormField: Story = {
       </button>
     `,
   }),
+};
+
+/**
+ * **Keyboard navigation.** Arrow keys move the selection between options and skip the rest of the
+ * page, because every option shares one native `name`. Nothing implements that — the browser does,
+ * given a well-formed group — so the play function guards the wiring it depends on: split the
+ * generated name across options and this story fails.
+ */
+export const KeyboardNavigation: Story = {
+  render: () => ({
+    props: {
+      control: new FormControl('red'),
+      options: colorOptions.filter((option) => !option.disabled),
+    },
+    template: `
+      <tn-radio-group ariaLabel="Favorite color" [formControl]="control" [options]="options" />
+      <p data-testid="selected">Selected: {{ control.value }}</p>
+    `,
+  }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const radios = canvas.getAllByRole('radio') as HTMLInputElement[];
+    const selected = canvas.getByTestId('selected');
+
+    radios[0].focus();
+    await userEvent.keyboard('{ArrowDown}');
+
+    // Roving focus follows the selection, and the pick reaches the bound control — the arrow key
+    // is a real selection, not just a focus move.
+    await waitFor(() => expect(selected).toHaveTextContent('Selected: blue'));
+    await expect(radios[1]).toHaveFocus();
+    await expect(radios[1].checked).toBe(true);
+    await expect(radios[0].checked).toBe(false);
+
+    // And it wraps at the end rather than escaping the group.
+    await userEvent.keyboard('{ArrowDown}{ArrowDown}');
+    await waitFor(() => expect(selected).toHaveTextContent('Selected: red'));
+  },
 };
 
 /**
