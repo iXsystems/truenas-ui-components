@@ -117,6 +117,10 @@ export class TnRadioGroupComponent<T = unknown> implements ControlValueAccessor,
    * option values are objects — the default is identity, so a structurally-equal-but-distinct
    * object would leave the group rendering nothing as checked.
    *
+   * Called once per option on every check, including while nothing is selected — the selected
+   * value is `null` then, so the comparator must tolerate `null` on either side rather than
+   * dereferencing straight into a property.
+   *
    * @example
    * ```ts
    * compareWith = (a, b) => a?.id === b?.id;
