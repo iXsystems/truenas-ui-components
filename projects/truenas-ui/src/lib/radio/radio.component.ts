@@ -35,6 +35,10 @@ export class TnRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
   protected resolvedTestId = controlTestId(this.testId);
   error = input<string | null>(null);
 
+  /**
+   * Emits the picked value — only while standalone. Inside a `tn-radio-group` the group's own
+   * `change` is the single public event, so bind it there instead.
+   */
   change = output<unknown>();
 
   id = `tn-radio-${Math.random().toString(36).substr(2, 9)}`;
@@ -117,17 +121,18 @@ export class TnRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
 
     if (this.group) {
       this.group.select(this.value());
-      // The group can refuse the pick (it is disabled), and even when it accepts, `[checked]`
-      // only rewrites the input whose bound value actually changed. Either way the DOM was
-      // already flipped by the browser, so reconcile it with the state we ended up in.
+      // `[checked]` only rewrites the input whose bound value actually changed, so the option
+      // the browser just unchecked keeps its stale DOM state. Reconcile it with where the group
+      // actually landed.
       this.syncNativeChecked();
+      // No `change` emit: inside a group the group's own output is the single public event, and
+      // emitting here too would fire a projected radio's (change) binding twice per pick.
     } else {
       this.standaloneChecked.set(true);
       this.onChange(this.value());
       this.onTouched();
+      this.change.emit(this.value());
     }
-
-    this.change.emit(this.value());
   }
 
   /** Writes the resolved {@link checked} state straight to the input, past Angular's binding diff. */

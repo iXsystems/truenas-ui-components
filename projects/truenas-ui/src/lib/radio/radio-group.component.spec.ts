@@ -36,9 +36,13 @@ interface ObjectValue {
       [options]="objectOptions"
       [compareWith]="compareById" />
 
-    <tn-radio-group testId="projected" ariaLabel="Projected" [formControl]="projectedControl">
-      <tn-radio label="Gamma" value="c" />
-      <tn-radio label="Delta" value="d" />
+    <tn-radio-group
+      testId="projected"
+      ariaLabel="Projected"
+      [formControl]="projectedControl"
+      (change)="projectedChanges.push($event)">
+      <tn-radio label="Gamma" value="c" (change)="projectedOptionChanges.push($event)" />
+      <tn-radio label="Delta" value="d" (change)="projectedOptionChanges.push($event)" />
     </tn-radio-group>
 
     <tn-form-field label="Required letter">
@@ -55,6 +59,8 @@ class TestHostComponent {
   readonly inline = signal(false);
   readonly required = signal(false);
   readonly changes: (string | null)[] = [];
+  readonly projectedChanges: unknown[] = [];
+  readonly projectedOptionChanges: unknown[] = [];
 
   readonly options: TnRadioOption<string>[] = [
     { value: 'a', label: 'Alpha' },
@@ -183,6 +189,16 @@ describe('TnRadioGroupComponent', () => {
 
       expect(host.projectedControl.value).toBe('d');
       expect(await group.getCheckedLabel()).toBe('Delta');
+    });
+
+    it('emits the pick once, from the group rather than the option', async () => {
+      // A projected radio carries its own (change) output; inside a group the group's output is
+      // the single public event, so binding both must not deliver the pick twice.
+      const group = await loader.getHarness(TnRadioGroupHarness.with({ ariaLabel: 'Projected' }));
+      await group.select('Delta');
+
+      expect(host.projectedChanges).toEqual(['d']);
+      expect(host.projectedOptionChanges).toEqual([]);
     });
   });
 

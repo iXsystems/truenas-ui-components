@@ -75,6 +75,10 @@ export class TnRadioGroupComponent<T = unknown> implements ControlValueAccessor,
   /**
    * Options to render. Leave unset to project `<tn-radio>` children instead — the group drives
    * both the same way.
+   *
+   * Options are tracked by `value`, so object values must be referentially stable — rebuilding
+   * them as fresh literals on every change detection pass re-creates the whole list. Same
+   * requirement the `compareWith` case implies; hold the objects in a field.
    */
   options = input<TnRadioOption<T>[]>([]);
 
