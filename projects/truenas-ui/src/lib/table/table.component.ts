@@ -200,22 +200,32 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * Cells wrap regardless of this (that is the table's default), so reach for it only when equal
    * columns are actually wanted: it gives up the `auto` layout's content-proportional sizing,
    * which a table with one long text column among short ones usually wants to keep.
+   *
+   * Changes the layout algorithm only — the table still shrinks with its container, with no floor
+   * unless {@link minColumnWidth} or {@link minWidth} sets one.
    */
   fixedLayout = input<boolean>(false);
 
   /**
    * Smallest width a column is allowed to shrink to before the host scrolls horizontally instead.
-   * Any CSS length.
+   * Any CSS length. Empty (the default) applies no floor.
    *
-   * `fixedLayout` makes the table fit its container exactly — so without a floor a narrow viewport
-   * just keeps shrinking the columns, wrapping every cell to a couple of characters per line:
-   * technically visible, unreadable, and never scrollable. The floor is derived as this times the
-   * column count, so it scales with the table rather than needing a hand-picked number per page.
+   * `fixedLayout` makes the table fit its container exactly, so past a certain width the columns
+   * keep shrinking and wrap every cell to a couple of characters per line: technically visible,
+   * unreadable, and never scrollable. Set this to scroll instead once a column would go below it.
+   * The floor is derived as this times the column count, so it scales with the table rather than
+   * needing a hand-picked number per page.
+   *
+   * Opt-in rather than on by default, because a derived floor cannot know the table's container: a
+   * full-width page table has room for one, while the same table in a dashboard card or beside a
+   * details pane would just scroll at every ordinary window size. Only the consumer knows which it
+   * is — reach for it when the table can actually get narrow enough to matter, typically a
+   * full-width table on a phone.
    *
    * Only applies with `fixedLayout`. Without it the table lays out `auto`, sizing to its content
    * and overflowing the host — which scrolls on its own.
    */
-  minColumnWidth = input<string>('120px');
+  minColumnWidth = input<string>('');
 
   /**
    * Explicit width floor, overriding the {@link minColumnWidth} derivation. Any CSS length. Reach
@@ -223,16 +233,17 @@ export class TnTableComponent<T = unknown> implements OnInit {
    */
   minWidth = input<string>('');
 
-  /** The floor actually applied to the table — explicit if given, else derived. */
+  /** The floor actually applied to the table — explicit if given, else derived, else none. */
   protected readonly resolvedMinWidth = computed<string | null>(() => {
     const explicit = this.minWidth();
     if (explicit) {
       return explicit;
     }
-    if (!this.fixedLayout()) {
+    const perColumn = this.minColumnWidth();
+    if (!perColumn || !this.fixedLayout()) {
       return null;
     }
-    return `calc(${this.minColumnWidth()} * ${this.effectiveDisplayedColumns().length})`;
+    return `calc(${perColumn} * ${this.effectiveDisplayedColumns().length})`;
   });
 
   // --- Outputs ---
