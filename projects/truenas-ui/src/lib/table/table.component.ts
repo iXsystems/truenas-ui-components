@@ -10,6 +10,7 @@ import {
   effect,
   inject,
   input,
+  model,
   output,
   signal,
 } from '@angular/core';
@@ -79,6 +80,7 @@ function getExpandDuration(): string {
   host: {
     class: 'tn-table',
     '[class.tn-table--bordered]': 'bordered()',
+    '[class.tn-table--fixed-layout]': 'fixedLayout()',
     '[class.tn-table--loading]': 'loading()',
     '[style.--tn-table-active-bg]': 'activeBg()',
     '[style.--tn-table-active-indicator]': 'activeIndicator()',
@@ -93,6 +95,14 @@ export class TnTableComponent<T = unknown> implements OnInit {
   trackBy = input<((index: number, item: T) => unknown) | undefined>(undefined);
 
   emptyMessage = input<string>('No data available');
+
+  /**
+   * Optional second line under `emptyMessage`, for empty states that carry both a headline and an
+   * explanation (e.g. "No search results" plus what to try instead). Omitted when empty, so tables
+   * with a single-line empty state are unaffected.
+   */
+  emptyDescription = input<string>('');
+
   emptyIcon = input<string>('');
 
   // --- Feature inputs (all opt-in) ---
@@ -169,6 +179,62 @@ export class TnTableComponent<T = unknown> implements OnInit {
    */
   clickable = input<boolean>(false);
 
+  /**
+   * When true, activating a row (click or Enter/Space) toggles its expansion, in addition to the
+   * chevron. Requires `clickable` — that is what makes rows activatable at all — and `expandable`;
+   * rows the `isRowExpandable` predicate rejects are unaffected, since `toggleRowExpansion` gates
+   * on it. `rowClick` still emits, so a consumer can both expand and react to the click.
+   */
+  expandOnRowClick = input<boolean>(false);
+
+  /**
+   * When true, expanding a row collapses whichever row was expanded before, so at most one detail
+   * row is open at a time. Default (false) allows any number.
+   */
+  singleExpand = input<boolean>(false);
+
+  /**
+   * Lays the table out `fixed` at full width, so every column without an explicit `[width]` gets
+   * an equal share and none can grow to dominate the row.
+   *
+   * Cells wrap regardless of this (that is the table's default), so reach for it only when equal
+   * columns are actually wanted: it gives up the `auto` layout's content-proportional sizing,
+   * which a table with one long text column among short ones usually wants to keep.
+   */
+  fixedLayout = input<boolean>(false);
+
+  /**
+   * Smallest width a column is allowed to shrink to before the host scrolls horizontally instead.
+   * Any CSS length.
+   *
+   * `fixedLayout` makes the table fit its container exactly — so without a floor a narrow viewport
+   * just keeps shrinking the columns, wrapping every cell to a couple of characters per line:
+   * technically visible, unreadable, and never scrollable. The floor is derived as this times the
+   * column count, so it scales with the table rather than needing a hand-picked number per page.
+   *
+   * Only applies with `fixedLayout`. Without it the table lays out `auto`, sizing to its content
+   * and overflowing the host — which scrolls on its own.
+   */
+  minColumnWidth = input<string>('120px');
+
+  /**
+   * Explicit width floor, overriding the {@link minColumnWidth} derivation. Any CSS length. Reach
+   * for this only when a specific table needs a floor its column count doesn't imply.
+   */
+  minWidth = input<string>('');
+
+  /** The floor actually applied to the table — explicit if given, else derived. */
+  protected readonly resolvedMinWidth = computed<string | null>(() => {
+    const explicit = this.minWidth();
+    if (explicit) {
+      return explicit;
+    }
+    if (!this.fixedLayout()) {
+      return null;
+    }
+    return `calc(${this.minColumnWidth()} * ${this.effectiveDisplayedColumns().length})`;
+  });
+
   // --- Outputs ---
   sortChange = output<TnSortEvent>();
   selectionChange = output<T[]>();
@@ -189,8 +255,13 @@ export class TnTableComponent<T = unknown> implements OnInit {
   detailRowDef = contentChild(TnDetailRowDefDirective);
 
   // --- Sort state ---
-  sortColumn = signal<string>('');
-  sortDirection = signal<'asc' | 'desc' | ''>('');
+  /**
+   * Sorted column and direction. Two-way bindable (`[(sortColumn)]`), so a consumer that owns the
+   * sort — a data provider, a table destroyed and rebuilt when its list empties out — can restore
+   * the header's arrow instead of reaching in and setting the signal from an effect.
+   */
+  sortColumn = model<string>('');
+  sortDirection = model<'asc' | 'desc' | ''>('');
 
   /**
    * Set of currently expanded row references.
@@ -357,6 +428,9 @@ export class TnTableComponent<T = unknown> implements OnInit {
     if (expanded.has(row)) {
       expanded.delete(row);
     } else {
+      if (this.singleExpand()) {
+        expanded.clear();
+      }
       expanded.add(row);
     }
     this.expandedRows.set(expanded);
@@ -364,6 +438,17 @@ export class TnTableComponent<T = unknown> implements OnInit {
 
   isRowExpanded(row: T): boolean {
     return this.expandedRows().has(row);
+  }
+
+  /**
+   * Whether the row element itself acts as the expand/collapse control, which is what makes an
+   * `aria-expanded` on it meaningful: a screen-reader user who focuses the row and presses Enter
+   * otherwise gets no announcement that anything expanded, since only the chevron carries the
+   * state. Also requires `clickable` — without it the row isn't activatable and
+   * {@link onRowClick} returns before toggling anything.
+   */
+  isRowExpandTrigger(row: T): boolean {
+    return this.expandOnRowClick() && this.clickable() && this.canExpandRow(row);
   }
 
   // --- Active row ---
@@ -378,6 +463,9 @@ export class TnTableComponent<T = unknown> implements OnInit {
 
   onRowClick(row: T): void {
     if (!this.clickable()) { return; }
+    if (this.expandOnRowClick()) {
+      this.toggleRowExpansion(row);
+    }
     this.rowClick.emit(row);
   }
 
@@ -390,6 +478,9 @@ export class TnTableComponent<T = unknown> implements OnInit {
     if (!this.clickable()) { return; }
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
+      if (this.expandOnRowClick()) {
+        this.toggleRowExpansion(row);
+      }
       this.rowClick.emit(row);
     }
   }

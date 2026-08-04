@@ -3,6 +3,25 @@
 :host {
   display: block;
   position: relative;
+  width: 100%;
+
+  // The table can't shrink below its columns' min-content, so on a narrow viewport it would
+  // otherwise overflow the host and be clipped with no way to reach the trailing columns.
+  // Lives here rather than on `.tn-table` (which carries the same class but, being the host,
+  // is matched by `_nghost` and never by the `_ngcontent` that a plain class rule compiles to).
+  overflow-x: auto;
+}
+
+// `fixedLayout` opt-in. Cells wrap either way (see `__cell-content`); this additionally pins
+// equal-width columns, so no column can grow to dominate the row. Costs the auto layout's
+// content-proportional sizing, so it suits a table of similar-length values, not one with a
+// single long text column among short ones.
+// Host-scoped (see above) — a plain `.tn-table--fixed-layout` selector would never match the host.
+:host(.tn-table--fixed-layout) {
+  table {
+    table-layout: fixed;
+    width: 100%;
+  }
 }
 
 :host(.tn-table--bordered) {
@@ -11,10 +30,6 @@
 }
 
 .tn-table {
-  display: block;
-  width: 100%;
-  overflow-x: auto;
-
   &__table {
     width: 100%;
     border-collapse: collapse;
@@ -155,9 +170,11 @@
     display: flex;
     align-items: center;
     min-height: 24px;
-    white-space: nowrap;
+    // Wrap by default: a cell that can't fit should get taller, not be silently truncated. A
+    // table whose columns still can't fit overflows the host, which scrolls.
+    white-space: normal;
+    overflow-wrap: anywhere;
     overflow: hidden;
-    text-overflow: ellipsis;
     // Focus rings on embedded controls (e.g. tn-checkbox in a selection
     // column) paint a few px outside the control's box; `overflow: hidden`
     // clips at the padding edge, so without padding the ring is cut off at the

@@ -15,6 +15,10 @@ import type { TnMenuComponent } from './menu.component';
   host: {
     '(click)': 'onClick()',
     '(keydown.arrowDown)': 'onArrowDown($event)',
+    // A trigger has to announce that it opens a menu, and whether that menu is currently open —
+    // without these a screen reader reads it as a plain button and never reports the open state.
+    'aria-haspopup': 'menu',
+    '[attr.aria-expanded]': 'isOpen()',
   },
 })
 export class TnMenuTriggerDirective implements OnDestroy {
@@ -23,6 +27,12 @@ export class TnMenuTriggerDirective implements OnDestroy {
 
   private overlayRef?: OverlayRef;
   private isMenuOpen = signal<boolean>(false);
+
+  /**
+   * Whether the menu is currently open. Exposed (with `exportAs: 'tnMenuTrigger'`) so a template
+   * can reflect the state — e.g. keeping a row's action button visible while its menu is open.
+   */
+  readonly isOpen = this.isMenuOpen.asReadonly();
   private itemClickSub?: OutputRefSubscription;
   /**
    * RxJS subscriptions for the current overlay's `backdropClick()` and
