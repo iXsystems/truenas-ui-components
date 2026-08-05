@@ -4,7 +4,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TnChipInputComponent, type TnChipInputOption } from './chip-input.component';
 import { TnChipInputHarness } from './chip-input.harness';
 
@@ -294,5 +294,107 @@ describe('TnChipInputComponent value mode', () => {
 
     // Admins (value 1) is selected; only Users and Guests remain matching "s".
     expect(await chipInput.getSuggestions()).toEqual(['Users', 'Guests']);
+  });
+});
+
+@Component({
+  selector: 'tn-control-name-host',
+  standalone: true,
+  imports: [TnChipInputComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <form [formGroup]="form">
+      <tn-chip-input
+        formControlName="isnsServers"
+        [suggestions]="suggestions"
+        [allowCustomValue]="true" />
+    </form>
+  `,
+})
+class ControlNameHostComponent {
+  form = new FormGroup({ isnsServers: new FormControl<string[]>(['alpha']) });
+  suggestions = ['bravo'];
+}
+
+@Component({
+  selector: 'tn-explicit-test-id-host',
+  standalone: true,
+  imports: [TnChipInputComponent, ReactiveFormsModule],
+  template: `
+    <form [formGroup]="form">
+      <tn-chip-input testId="tags" formControlName="isnsServers" [allowCustomValue]="true" />
+    </form>
+  `,
+})
+class ExplicitTestIdHostComponent {
+  form = new FormGroup({ isnsServers: new FormControl<string[]>([]) });
+}
+
+interface Group { id: string; }
+
+@Component({
+  selector: 'tn-object-value-test-id-host',
+  standalone: true,
+  imports: [TnChipInputComponent, ReactiveFormsModule],
+  template: `
+    <form [formGroup]="form">
+      <tn-chip-input formControlName="groups" [options]="options" [compareWith]="compareWith" />
+    </form>
+  `,
+})
+class ObjectValueTestIdHostComponent {
+  options: TnChipInputOption<Group>[] = [{ label: 'Admins', value: { id: 'admins' } }];
+  form = new FormGroup({ groups: new FormControl<Group[]>([{ id: 'admins' }]) });
+  compareWith = (a: Group | null, b: Group | null): boolean => a?.id === b?.id;
+}
+
+describe('TnChipInputComponent test ids', () => {
+  const getInput = (fixture: ComponentFixture<unknown>): HTMLInputElement =>
+    fixture.nativeElement.querySelector('.tn-chip-input__field') as HTMLInputElement;
+
+  it('falls back to the bound control name when testId is unset', async () => {
+    await TestBed.configureTestingModule({
+      imports: [ControlNameHostComponent],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(ControlNameHostComponent);
+    fixture.detectChanges();
+
+    expect(getInput(fixture).getAttribute('data-testid')).toBe('chip-input-isns-servers');
+
+    // tn-chip stamps the id on its inner button element, not the host.
+    const chip = fixture.nativeElement.querySelector('.tn-chip-input__chip [role="button"]');
+    expect(chip?.getAttribute('data-testid')).toBe('chip-isns-servers-alpha');
+
+    // Suggestions are portaled into a CDK overlay on the document root.
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    await (await loader.getHarness(TnChipInputHarness)).typeText('bra');
+    const suggestion = document.querySelector('.tn-chip-input__option');
+    expect(suggestion?.getAttribute('data-testid')).toBe('option-isns-servers-bravo');
+  });
+
+  it('prefers an explicit testId over the bound control name', async () => {
+    await TestBed.configureTestingModule({
+      imports: [ExplicitTestIdHostComponent],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(ExplicitTestIdHostComponent);
+    fixture.detectChanges();
+
+    expect(getInput(fixture).getAttribute('data-testid')).toBe('chip-input-tags');
+  });
+
+  // Stringifying an object value would stamp `chip-groups-object-object` on every
+  // chip — duplicate ids that break automation harder than a missing attribute.
+  it('discriminates object-valued chips by their label', async () => {
+    await TestBed.configureTestingModule({
+      imports: [ObjectValueTestIdHostComponent],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(ObjectValueTestIdHostComponent);
+    fixture.detectChanges();
+
+    const chip = fixture.nativeElement.querySelector('.tn-chip-input__chip [role="button"]');
+    expect(chip?.getAttribute('data-testid')).toBe('chip-groups-admins');
   });
 });

@@ -273,9 +273,12 @@ export const ComponentHarness: Story = {
 };
 
 /**
- * **Test IDs.** The field emits `chip-input-<base>`; each chip and suggestion is
- * scoped beneath it (`option-<base>-<value>`). `testId="tags"` →
- * `chip-input-tags`, under `data-testid` (default) / `data-test`.
+ * **Test IDs.** The field emits `chip-input-<base>`; chips are scoped beneath it
+ * as `chip-<base>-<value>` and suggestion rows as `option-<base>-<value>`.
+ * `testId="tags"` → `chip-input-tags`, under `data-testid` (default) /
+ * `data-test`. With no `testId`, the base falls back to the bound control name,
+ * so `formControlName="isnsServers"` → `chip-input-isns-servers`; a control-less
+ * input with no `testId` emits nothing.
  */
 export const TestIds: Story = {
   render: () => ({

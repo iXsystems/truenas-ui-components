@@ -20,7 +20,9 @@ import type { Subscription } from 'rxjs';
 import { TnChipComponent } from '../chip/chip.component';
 import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import type { TnSelectOption } from '../select/select.component';
-import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import {
+  TnTestIdDirective, composeTestId, controlTestId, optionTestId, scopeTestId, type TnTestIdValue,
+} from '../test-id';
 
 /**
  * Option shape for `tn-chip-input`'s value mode — the `label` is displayed on
@@ -169,9 +171,12 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
   /**
    * Semantic test-id base. The library prepends the `chip-input` element type
    * (e.g. `testId="tags"` → `chip-input-tags`); each chip and suggestion is
-   * scoped beneath it.
+   * scoped beneath it. Falls back to the bound control name when unset, so
+   * `<tn-chip-input formControlName="isnsServers">` emits `chip-input-isns-servers`.
    */
   testId = input<TnTestIdValue>(undefined);
+  /** Test-id base, falling back to the bound control name when `testId` is unset. */
+  protected resolvedTestId = controlTestId(this.testId);
 
   /** Emits the committed value whenever a chip is added. */
   chipAdded = output<T>();
@@ -418,13 +423,42 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
     return match ? match.label : String(value);
   }
 
-  /** Scopes a per-chip test id beneath the component's base. */
+  /**
+   * Scopes a per-chip test id beneath the component's base.
+   *
+   * The discriminator is the value itself when primitive, else the matching
+   * option's label — `String(value)` on an object is `[object Object]`, which
+   * would stamp an identical id on every chip. Duplicates are worse than
+   * absence for automation, so an object value with no option to name it yet
+   * (options still loading) stays attribute-free rather than colliding.
+   */
   protected chipTestId(value: T): TnTestIdValue {
-    const base = this.testId();
-    if (base === undefined) {
+    const base = this.resolvedTestId();
+    // Gated on a *usable* base: an unscoped `chip-<value>` would collide across
+    // every chip-input on the page, so unidentified inputs stay attribute-free.
+    if (composeTestId(undefined, base) === '') {
       return undefined;
     }
-    return [...(Array.isArray(base) ? base : [base]), value as unknown as string];
+    if (typeof value === 'string' || typeof value === 'number') {
+      return scopeTestId(base, value);
+    }
+    const match = this.optionList().find((option) => this.valueMatches(option.value, value));
+    return match ? scopeTestId(base, match.label) : undefined;
+  }
+
+  /**
+   * Scopes a per-suggestion test id beneath the component's base, via the shared
+   * dropdown-option derivation. Unlike `tn-select` / `tn-autocomplete`, which
+   * emit an unscoped `option-<value>` when they have no base, an unidentified
+   * chip-input stays attribute-free — its rows carry no page-unique id, so
+   * emitting one would invite collisions between inputs.
+   */
+  protected suggestionTestId(option: TnChipInputOption<T>): TnTestIdValue {
+    const base = this.resolvedTestId();
+    if (composeTestId(undefined, base) === '') {
+      return undefined;
+    }
+    return optionTestId(base, option);
   }
 
   // ── Internal ──
