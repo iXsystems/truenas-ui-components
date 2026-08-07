@@ -15,10 +15,3 @@ jobs:
     permissions:
       contents: read
     uses: iXsystems/ux-github-workflows/.github/workflows/check-ticket.yml@master
-    with:
-      # This repo's titles carry a second rule the shared default knows nothing about:
-      # semantic-release parses the conventional-commit type, and only finds it last.
-      help-text: |
-        Add the ticket number to the pull request title, keeping the conventional commit type last so Semantic Release can parse it, for example:
-          NAS-12345 / feat(button): add loading state
-          NAS-12345 / 27.0.0-BETA.1 / fix(icon): correct sprite path
