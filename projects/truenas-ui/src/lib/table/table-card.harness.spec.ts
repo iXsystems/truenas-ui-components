@@ -449,8 +449,9 @@ describe('TnTable card layout', () => {
       expect(tableMinWidth()).toBe('calc(120px * 5)');
     });
 
-    // The actions column claims a fixed width rather than a `minColumnWidth` share, so it is
-    // added rather than counted — reserving a whole column for it would overstate the floor.
+    // The structural columns have fixed widths, so they contribute those rather than a
+    // `minColumnWidth` share each — reserving full shares overstates the floor, and the slack
+    // hides shortfalls elsewhere in it.
     it('adds the actions column width to the floor', () => {
       component.withActions = true;
       fixture.detectChanges();
@@ -458,13 +459,13 @@ describe('TnTable card layout', () => {
       expect(tableMinWidth()).toBe('calc(120px * 5 + var(--tn-table-actions-width, 96px))');
     });
 
-    it('counts the select and expand columns in the floor', () => {
+    it('counts the select and expand columns as shares, and adds the actions width', () => {
       component.selectable = true;
       component.expandable = true;
       component.withActions = true;
       fixture.detectChanges();
 
-      // 5 displayed + __select + __expand, plus the actions column's own width.
+      // 5 displayed + __select + __expand as shares, plus the actions column's own width.
       expect(tableMinWidth()).toBe('calc(120px * 7 + var(--tn-table-actions-width, 96px))');
     });
   });

@@ -484,17 +484,21 @@ export class TnTableHarness extends ComponentHarness {
   }
 
   /**
-   * Gets the active sort direction in the card layout, read from the direction
-   * toggle's accessible label (the toggle names the action it would perform, so
-   * "Sort ascending" means the current direction is descending).
+   * Gets the active sort direction in the card layout, read from the direction toggle's
+   * `data-sort-direction`. Deliberately not derived from the button's `aria-label`: matching
+   * display text would silently report one direction forever if the wording or locale changed.
    *
-   * @returns Promise resolving to 'asc', 'desc', or null when unsorted.
+   * @returns Promise resolving to 'asc' or 'desc', `''` when sorted by nothing, or null when the
+   *   card sort menu isn't rendered at all (table layout, or no sortable columns) — the same
+   *   null-vs-empty distinction {@link getCardSortColumn} makes.
    */
-  async getCardSortDirection(): Promise<'asc' | 'desc' | null> {
+  async getCardSortDirection(): Promise<'asc' | 'desc' | '' | null> {
+    const menu = await this.locatorForOptional('.tn-table__cards-sort')();
+    if (!menu) { return null; }
     const button = await this.locatorForOptional('.tn-table__cards-sort-dir')();
-    if (!button) { return null; }
-    const label = await button.getAttribute('aria-label');
-    return label === 'Sort ascending' ? 'desc' : 'asc';
+    if (!button) { return ''; }
+    const direction = await button.getAttribute('data-sort-direction');
+    return direction === 'desc' ? 'desc' : 'asc';
   }
 
   /**

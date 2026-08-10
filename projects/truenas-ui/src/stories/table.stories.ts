@@ -861,7 +861,7 @@ export const ResponsiveCardsInteractive: Story = {
     docs: {
       description: {
         story:
-          'Card mode with `clickable`, `expandable` and `expandOnRowClick`. Activating a card — click, or focus it and press Enter — toggles its detail section and emits `rowClick`; the card carries `aria-expanded` while it is the expand trigger, and the "Details" button carries the same state for pointer users. The active card is marked with `aria-current` rather than `aria-selected`, which `role="listitem"` does not permit.\n\nControls projected into the detail section stay usable: clicking a button or typing in a field inside the panel does not activate the card or collapse the panel out from under you.\n\n**Accessibility limitation:** a clickable card is focusable and responds to Enter/Space, but it is not *announced* as a control. The roles that would announce it (`button`, `option`) have presentational children, which would hide the card\'s own checkbox, row actions and "Details" toggle from assistive tech, so the card stays a `listitem`. If an action has to be discoverable by screen-reader users, project an explicit control through `[tnRowActionsDef]` instead of relying on card activation.',
+          'Card mode with `clickable`, `expandable` and `expandOnRowClick`. Activating a card — click, or focus it and press Enter — toggles its detail section and emits `rowClick`; exactly one control owns the expanded state — the card carries `aria-expanded` while it is the expand trigger (as here), and the "Details" button carries it instead when the button is the only way to expand, so the same panel is never announced twice. Whichever owns it points `aria-controls` at the panel. The active card is marked with `aria-current` rather than `aria-selected`, which `role="listitem"` does not permit.\n\nControls projected into the detail section stay usable: clicking a button or typing in a field inside the panel does not activate the card or collapse the panel out from under you.\n\n**Accessibility limitation:** a clickable card is focusable and responds to Enter/Space, but it is not *announced* as a control. The roles that would announce it (`button`, `option`) have presentational children, which would hide the card\'s own checkbox, row actions and "Details" toggle from assistive tech, so the card stays a `listitem`. If an action has to be discoverable by screen-reader users, project an explicit control through `[tnRowActionsDef]` instead of relying on card activation.',
       },
     },
   },
@@ -974,6 +974,45 @@ export const ScrollModePinnedColumns: Story = {
       </div>
     `,
   }),
+  // Pinning is host-scoped CSS and sticky geometry, which jsdom cannot lay out — so the unit
+  // specs can only assert the state machine (the host class, which layout renders). These are the
+  // invariants that actually broke, three rounds in a row: a pinned column overlapping its
+  // neighbour, and a pinned action button that paints but can't be clicked.
+  play: async ({ canvasElement }) => {
+    const host = canvasElement.querySelector('tn-table') as HTMLElement;
+    const row = host.querySelector('.tn-table__row') as HTMLElement;
+    const cells = [...row.querySelectorAll('.tn-table__cell')] as HTMLElement[];
+    const selectCell = cells[0];
+    const firstDataCell = cells[1];
+    const actionsCell = row.querySelector('.tn-table__actions-cell') as HTMLElement;
+
+    await expect(host.classList.contains('tn-table--scroll')).toBe(true);
+    await expect(selectCell.classList.contains('tn-table__select-cell')).toBe(true);
+
+    // Scroll far enough that unpinned columns have left the viewport.
+    host.scrollLeft = 250;
+    await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+
+    const hostBox = host.getBoundingClientRect();
+    const selectBox = selectCell.getBoundingClientRect();
+    const dataBox = firstDataCell.getBoundingClientRect();
+
+    // The checkbox column is flush with the host's left edge, and the first data column starts
+    // exactly where it ends — no overlap, no gap.
+    await expect(Math.round(selectBox.left)).toBe(Math.round(hostBox.left));
+    await expect(Math.round(dataBox.left)).toBe(Math.round(selectBox.right));
+
+    // The actions column stays flush with the host's right edge.
+    await expect(Math.round(actionsCell.getBoundingClientRect().right))
+      .toBe(Math.round(hostBox.right));
+
+    // Every action button is actually hittable at its centre — not merely painted.
+    for (const button of [...actionsCell.querySelectorAll('button')] as HTMLElement[]) {
+      const box = button.getBoundingClientRect();
+      const topmost = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+      await expect(button.contains(topmost) || button === topmost).toBe(true);
+    }
+  },
 };
 
 export const ComponentHarness: Story = {

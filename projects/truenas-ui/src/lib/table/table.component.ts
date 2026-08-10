@@ -268,9 +268,15 @@ export class TnTableComponent<T = unknown> implements OnInit {
     if (!this.fixedLayout()) {
       return null;
     }
-    // The actions column contributes its own fixed width rather than a `minColumnWidth` share —
-    // it claims `--tn-table-actions-width` under `fixedLayout`, so reserving a full column's
-    // worth for it would overstate the floor.
+    // The actions column adds its own fixed width rather than a `minColumnWidth` share, because
+    // that is exactly what it claims under `fixedLayout` — and the cell is `border-box`, so the
+    // value added here is its real outer width. (`--tn-table-select-width` and
+    // `--tn-table-expand-width` are treated as ordinary shares instead: they over-reserve
+    // slightly, which is the behavior this component has always had and has tests for. Unifying
+    // all three belongs in its own change.)
+    //
+    // The `var()` fallback keeps the calc() valid if a consumer unsets the property; it mirrors
+    // the default in table.component.scss.
     const columns = `${this.minColumnWidth()} * ${this.effectiveDisplayedColumns().length}`;
     return this.rowActionsDef()
       ? `calc(${columns} + var(--tn-table-actions-width, 96px))`
@@ -473,10 +479,10 @@ export class TnTableComponent<T = unknown> implements OnInit {
   });
 
   /**
-   * Every column the table actually renders, including the trailing actions
-   * column, which `effectiveDisplayedColumns` does not track because it comes from
-   * a content template rather than `displayedColumns`. Shared by the width floor
-   * and the detail row's `colspan` so the two cannot drift apart.
+   * Every column the table actually renders, including the trailing actions column, which
+   * `effectiveDisplayedColumns` does not track because it comes from a content template rather
+   * than `displayedColumns`. Used for the detail row's `colspan`, so a detail row spans the full
+   * width no matter which structural columns are on.
    */
   totalColumnCount = computed(
     () => this.effectiveDisplayedColumns().length + (this.rowActionsDef() ? 1 : 0)

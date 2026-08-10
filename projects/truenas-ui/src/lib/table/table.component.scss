@@ -26,12 +26,18 @@
 // quantity. They must be: as a content-box width the two differed by exactly the cell's 24px of
 // horizontal padding, and the pinned data column overlapped the checkboxes by that much.
 //
-// `--tn-table-actions-width` sizes the trailing actions column. It needs a real width because
-// `fixedLayout` distributes only what columns don't claim; consumers projecting more than a
-// couple of controls can raise it.
+// `--tn-table-actions-width` sizes the trailing actions column under `fixedLayout`, which
+// distributes only what columns don't claim; consumers projecting more than a couple of controls
+// can raise it. `--tn-table-expand-width` is the chevron column.
+//
+// All three are **outer** widths (the cells set `box-sizing: border-box`), and the width floor in
+// `resolvedMinWidth` adds them verbatim. Keep it that way: an earlier revision had one as an
+// outer width and one as a content width, which both misaligned the pinned columns by a cell's
+// padding and made the floor understate the table by the same amount.
 :host {
   --tn-table-select-width: 72px;
   --tn-table-actions-width: 96px;
+  --tn-table-expand-width: 48px;
 }
 
 // Screen-reader-only text. `.cdk-visually-hidden` comes from the CDK's global a11y stylesheet,
@@ -59,11 +65,34 @@
     table-layout: fixed;
     width: 100%;
   }
+
+  // Under fixed layout a column gets only what it claims, and `width: 1%` is taken literally —
+  // which starved this column to ~8px and pushed the controls out of the clip. border-box so the
+  // declared value is the column's outer width, matching `--tn-table-select-width` and the width
+  // floor's arithmetic.
+  .tn-table__actions-cell {
+    box-sizing: border-box;
+    width: var(--tn-table-actions-width);
+  }
 }
 
 :host(.tn-table--bordered) {
   border: 1px solid var(--tn-lines);
   border-radius: 4px;
+}
+
+// While loading, prevent interaction with the table behind the overlay. This is the backstop that
+// matters: the overlay itself doesn't cover a horizontally scrolled table, so without this a user
+// could fire a row action against stale data mid-reload.
+//
+// Host-scoped because `tn-table--loading` is a host class. Written as a nested
+// `&--loading .tn-table__table` it compiled to `.tn-table--loading[_ngcontent-*] ...`, which the
+// host — it carries `[_nghost-*]` — never matches, so the rule had never applied.
+:host(.tn-table--loading) {
+  .tn-table__table {
+    pointer-events: none;
+    user-select: none;
+  }
 }
 
 // Scroll mode: pin the first column (and the actions column, handled in
@@ -298,8 +327,12 @@
     pointer-events: none;
   }
 
+  // Deliberately not pinned. Pinning select + first data + actions already consumes most of a
+  // 320px viewport; adding a fourth pinned column leaves no scrollable middle at all. The chevron
+  // stays reachable by scrolling, and card mode gives it a dedicated "Details" control.
   &__expand-cell {
-    width: 48px;
+    box-sizing: border-box;
+    width: var(--tn-table-expand-width);
     padding: 0 16px 0 8px;
     text-align: center;
   }
@@ -346,11 +379,17 @@
   // focusable. Under auto layout a cell's `width` is a minimum, so `nowrap` content still
   // widens the column past this when it needs to.
   &__actions-cell {
-    width: var(--tn-table-actions-width);
+    // Shrink-to-fit under auto layout, so a single icon button doesn't reserve a full column.
+    // `fixedLayout` overrides this with the explicit width below — 1% there means 1%.
+    width: 1%;
     white-space: nowrap;
     text-align: right;
     position: sticky;
     right: 0;
+    // Above the left-pinned columns (1-2). On a container too narrow for both pinned groups they
+    // overlap, and a covered name is cosmetic where a covered action button is a tap that
+    // silently does nothing.
+    z-index: 3;
     // Inherited from the row for the same reason as the pinned first column in
     // scroll mode: opaque, but in step with the row's active/hover/expanded fill
     // instead of notching it at the right edge. The `__header` rule below
@@ -373,12 +412,18 @@
   // visible (dimmed) during reloads. Derive the dim from the table background
   // so it adapts across light/dark themes instead of relying on a hardcoded
   // black tint.
-  // Above the pinned columns (z-index 1-2), not merely later in the DOM. On a tie the sticky
-  // checkbox column would sit on top of the scrim and stay clickable during a reload.
+  // Above the pinned columns (z-index 1-3), not merely later in the DOM. On a tie the sticky
+  // columns would sit on top of the scrim and stay clickable during a reload.
+  //
+  // Known limitation: the overlay is absolutely positioned inside the host, which is the scroll
+  // container, so on a horizontally scrolled table it scrolls with the content and stops covering
+  // the visible strip. Interaction is blocked regardless by the `--loading` rule below, so this
+  // is cosmetic; covering the viewport properly needs the table moved into an inner scrolling
+  // wrapper, which is a structural change beyond this layout work.
   &__loading-overlay {
     position: absolute;
     inset: 0;
-    z-index: 3;
+    z-index: 4;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -388,11 +433,7 @@
     border-radius: 4px;
   }
 
-  // While loading, prevent interaction with the table behind the overlay.
-  &--loading .tn-table__table {
-    pointer-events: none;
-    user-select: none;
-  }
+  // Moved to a `:host()` block — see below.
 
   // Dense variant
   &--dense {

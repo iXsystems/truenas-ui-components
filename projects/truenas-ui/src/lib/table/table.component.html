@@ -43,6 +43,7 @@
               type="button"
               class="tn-table__cards-sort-dir"
               [attr.aria-label]="sortDirection() === 'desc' ? 'Sort ascending' : 'Sort descending'"
+              [attr.data-sort-direction]="sortDirection()"
               (click)="toggleSortDirection()">
               <tn-icon
                 size="sm"
@@ -169,7 +170,9 @@
             type="button"
             class="tn-table__card-detail-toggle"
             [attr.aria-expanded]="isCardExpandTrigger(row) ? null : isRowExpanded(row)"
-            [attr.aria-controls]="isCardExpandTrigger(row) ? null : detailPanelId(rowIdx)"
+            [attr.aria-controls]="
+              !isCardExpandTrigger(row) && isRowExpanded(row) ? detailPanelId(rowIdx) : null
+            "
             (click)="toggleRowExpansion(row); $event.stopPropagation()">
             <span>Details</span>
             <tn-icon
