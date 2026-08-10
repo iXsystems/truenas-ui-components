@@ -94,7 +94,8 @@
         [class.tn-table__card--clickable]="clickable()"
         [attr.tabindex]="clickable() ? 0 : null"
         [attr.aria-current]="isRowActive(row) ? 'true' : null"
-        [attr.aria-expanded]="isRowExpandTrigger(row) ? isRowExpanded(row) : null"
+        [attr.aria-expanded]="isCardExpandTrigger(row) ? isRowExpanded(row) : null"
+        [attr.aria-controls]="isCardExpandTrigger(row) && isRowExpanded(row) ? detailPanelId(rowIdx) : null"
         (click)="onCardClick($event, row)"
         (dblclick)="onCardDoubleClick($event, row)"
         (keydown)="onCardKeydown($event, row)">
@@ -143,7 +144,10 @@
         -->
         @if (cardSecondaryColumns().length > 0) {
           <details class="tn-table__card-more">
-            <summary class="tn-table__card-more-summary">More fields</summary>
+            <summary class="tn-table__card-more-summary">
+              <span>More fields</span>
+              <tn-icon size="sm" name="mat-keyboard_arrow_down" />
+            </summary>
             <dl class="tn-table__card-fields">
               @for (column of cardSecondaryColumns(); track column) {
                 <ng-container
@@ -155,10 +159,17 @@
         }
 
         @if (canExpandRow(row) && detailRowDef()) {
+          <!--
+            When the card itself is the expand trigger it already carries
+            `aria-expanded`, so the button drops its own copy — otherwise the same
+            panel's state is announced twice by two different controls. Whichever
+            control owns the state points `aria-controls` at the panel.
+          -->
           <button
             type="button"
             class="tn-table__card-detail-toggle"
-            [attr.aria-expanded]="isRowExpanded(row)"
+            [attr.aria-expanded]="isCardExpandTrigger(row) ? null : isRowExpanded(row)"
+            [attr.aria-controls]="isCardExpandTrigger(row) ? null : detailPanelId(rowIdx)"
             (click)="toggleRowExpansion(row); $event.stopPropagation()">
             <span>Details</span>
             <tn-icon
@@ -166,7 +177,7 @@
               [name]="isRowExpanded(row) ? 'mat-keyboard_arrow_up' : 'mat-keyboard_arrow_down'" />
           </button>
           @if (isRowExpanded(row)) {
-            <div class="tn-table__card-detail">
+            <div class="tn-table__card-detail" [attr.id]="detailPanelId(rowIdx)">
               <ng-container
                 [ngTemplateOutlet]="detailRowDef()!.template"
                 [ngTemplateOutletContext]="{ $implicit: row }" />

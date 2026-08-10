@@ -19,10 +19,19 @@
   border-radius: 4px;
 }
 
-// Width of the leading checkbox column. Shared by `__select-cell` and the pinning offset in
-// scroll mode so the two can't drift apart.
+// Fixed widths for the two structural edge columns.
+//
+// `--tn-table-select-width` is the checkbox column's **outer** width — the cell sets
+// `box-sizing: border-box` so its `width` and the pinned neighbour's `left` offset are the same
+// quantity. They must be: as a content-box width the two differed by exactly the cell's 24px of
+// horizontal padding, and the pinned data column overlapped the checkboxes by that much.
+//
+// `--tn-table-actions-width` sizes the trailing actions column. It needs a real width because
+// `fixedLayout` distributes only what columns don't claim; consumers projecting more than a
+// couple of controls can raise it.
 :host {
-  --tn-table-select-width: 48px;
+  --tn-table-select-width: 72px;
+  --tn-table-actions-width: 96px;
 }
 
 // Screen-reader-only text. `.cdk-visually-hidden` comes from the CDK's global a11y stylesheet,
@@ -74,7 +83,6 @@
   .tn-table__select-cell {
     position: sticky;
     left: 0;
-    z-index: 2;
   }
 
   .tn-table__header-cell:first-child,
@@ -84,6 +92,14 @@
     position: sticky;
     left: 0;
     z-index: 1;
+  }
+
+  // Above its pinned neighbour, so the data column can't paint over the checkboxes. Spelled out
+  // to outweigh the `:first-child` rule above rather than relying on source order — the select
+  // cell matches both, and a bare `.tn-table__select-cell { z-index: 2 }` silently lost.
+  .tn-table__header-row > .tn-table__header-cell.tn-table__select-cell,
+  .tn-table__row > .tn-table__cell.tn-table__select-cell {
+    z-index: 2;
   }
 
   .tn-table__select-cell + .tn-table__header-cell,
@@ -270,6 +286,9 @@
   }
 
   &__select-cell {
+    // border-box so this width is the column's outer width, matching the `left` offset the
+    // pinned data column uses in scroll mode. Content box stays 48px, as before.
+    box-sizing: border-box;
     width: var(--tn-table-select-width);
     padding: 0 8px 0 16px;
     cursor: pointer;
@@ -321,8 +340,13 @@
   // Trailing actions column (rendered when [tnRowActionsDef] is provided).
   // Pinned to the right edge so the controls stay reachable while the body
   // scrolls horizontally.
+  // An explicit width, not the `width: 1%` shrink-to-fit trick. That trick only works under
+  // `table-layout: auto`; `fixedLayout` honors 1% literally, giving the column ~8px and pushing
+  // the projected controls outside the host's clip — painted but unclickable, and still
+  // focusable. Under auto layout a cell's `width` is a minimum, so `nowrap` content still
+  // widens the column past this when it needs to.
   &__actions-cell {
-    width: 1%;
+    width: var(--tn-table-actions-width);
     white-space: nowrap;
     text-align: right;
     position: sticky;
@@ -349,16 +373,18 @@
   // visible (dimmed) during reloads. Derive the dim from the table background
   // so it adapts across light/dark themes instead of relying on a hardcoded
   // black tint.
+  // Above the pinned columns (z-index 1-2), not merely later in the DOM. On a tie the sticky
+  // checkbox column would sit on top of the scrim and stay clickable during a reload.
   &__loading-overlay {
     position: absolute;
     inset: 0;
+    z-index: 3;
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: color-mix(in srgb, var(--tn-bg2, #282828) 65%, transparent);
     backdrop-filter: blur(1px);
     pointer-events: all;
-    z-index: 1;
     border-radius: 4px;
   }
 
@@ -411,6 +437,9 @@
     color: var(--tn-fg2);
   }
 
+  // A native <select> rather than `tn-select`: the toolbar wants the platform picker on the
+  // narrow viewports card mode targets. The trade-off is that the option popup is OS-rendered,
+  // so the theming below reaches the closed control only.
   &__cards-sort-select {
     height: 32px;
     padding: 0 8px;
@@ -419,6 +448,12 @@
     background-color: var(--tn-bg2);
     color: var(--tn-fg1);
     font-size: 14px;
+
+    // Matches `__cards-sort-dir`, which had a focus ring while this didn't.
+    &:focus-visible {
+      outline: 2px solid var(--tn-primary);
+      outline-offset: 2px;
+    }
   }
 
   &__cards-sort-dir {
@@ -455,9 +490,12 @@
     border-radius: 6px;
     padding: 12px;
 
+    // The indicator bar is an inset shadow, as the table rows do it. Widening `border-left` from
+    // 1px to 3px instead shifted the card's content 2px, so a column of cards visibly
+    // misaligned as the active card changed.
     &--active {
       background-color: var(--tn-table-active-bg, var(--tn-bg3, #333333));
-      border-left: 3px solid var(--tn-table-active-indicator, var(--tn-primary, #007db3));
+      box-shadow: inset 3px 0 0 0 var(--tn-table-active-indicator, var(--tn-primary, #007db3));
     }
 
     &--clickable {
@@ -530,6 +568,10 @@
     overflow-wrap: anywhere;
   }
 
+  &__card-more[open] > .tn-table__card-more-summary tn-icon {
+    transform: rotate(180deg);
+  }
+
   &__card-more {
     margin-top: 2px;
   }
@@ -538,16 +580,25 @@
   // primary blue measures 3.21:1 on `--tn-bg2` and 2.75:1 on an active card, short of
   // the 4.5:1 AA needs for normal-size text. The underline (summary) and chevron
   // (toggle) carry the affordance instead of color.
+  // Matches `__card-detail-toggle`: body text plus a chevron that flips when open. Previously
+  // this was underlined (reading as a link) while the sibling disclosure used a chevron — two
+  // conventions for the same gesture on one card.
   &__card-more-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     padding: 4px 0;
     font-size: 13px;
     color: var(--tn-fg1);
-    text-decoration: underline;
     cursor: pointer;
     list-style: none;
 
     &::-webkit-details-marker {
       display: none;
+    }
+
+    tn-icon {
+      transition: transform 0.2s ease;
     }
 
     &:focus-visible {

@@ -484,6 +484,20 @@ export class TnTableHarness extends ComponentHarness {
   }
 
   /**
+   * Gets the active sort direction in the card layout, read from the direction
+   * toggle's accessible label (the toggle names the action it would perform, so
+   * "Sort ascending" means the current direction is descending).
+   *
+   * @returns Promise resolving to 'asc', 'desc', or null when unsorted.
+   */
+  async getCardSortDirection(): Promise<'asc' | 'desc' | null> {
+    const button = await this.locatorForOptional('.tn-table__cards-sort-dir')();
+    if (!button) { return null; }
+    const label = await button.getAttribute('aria-label');
+    return label === 'Sort ascending' ? 'desc' : 'asc';
+  }
+
+  /**
    * Clicks the sort-direction toggle in the card-layout sort menu. No-op if no
    * sort column is active (the toggle is only shown while sorting).
    */

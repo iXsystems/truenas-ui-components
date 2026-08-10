@@ -198,6 +198,16 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * When true, rows become keyboard-focusable (tabindex=0) and clicking or
    * pressing Enter/Space emits `rowClick`. Use this for "click row to view
    * details" patterns. Independent of `selectable` (checkbox) and `expandable`.
+   *
+   * Accessibility limitation in card mode: a card is `role="listitem"`, and the
+   * roles that would announce it as activatable (`button`, `option`) have
+   * presentational children, which would hide the card's own checkbox, row
+   * actions and "Details" toggle from assistive tech. So a clickable card is
+   * focusable and responds to Enter/Space, but is not announced as a control.
+   * Active state is conveyed with `aria-current`, and expansion with
+   * `aria-expanded` when `expandOnRowClick` is set. If an action must be
+   * discoverable by screen-reader users, project an explicit control through
+   * `[tnRowActionsDef]` rather than relying on card activation alone.
    */
   clickable = input<boolean>(false);
 
@@ -258,7 +268,13 @@ export class TnTableComponent<T = unknown> implements OnInit {
     if (!this.fixedLayout()) {
       return null;
     }
-    return `calc(${this.minColumnWidth()} * ${this.totalColumnCount()})`;
+    // The actions column contributes its own fixed width rather than a `minColumnWidth` share —
+    // it claims `--tn-table-actions-width` under `fixedLayout`, so reserving a full column's
+    // worth for it would overstate the floor.
+    const columns = `${this.minColumnWidth()} * ${this.effectiveDisplayedColumns().length}`;
+    return this.rowActionsDef()
+      ? `calc(${columns} + var(--tn-table-actions-width, 96px))`
+      : `calc(${columns})`;
   });
 
   // --- Responsive (card) inputs ---
@@ -325,6 +341,10 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * approach could address this.
    */
   expandedRows = signal<Set<unknown>>(new Set());
+
+  // Per-instance prefix for generated DOM ids, so two tables on a page can't collide.
+  private static instanceCount = 0;
+  private readonly instanceId = `tn-table-${TnTableComponent.instanceCount++}`;
 
   // --- Selection state ---
   selection = new SelectionModel<T>(true, []);
@@ -550,6 +570,23 @@ export class TnTableComponent<T = unknown> implements OnInit {
    */
   isRowExpandTrigger(row: T): boolean {
     return this.expandOnRowClick() && this.clickable() && this.canExpandRow(row);
+  }
+
+  /**
+   * Card-mode counterpart of {@link isRowExpandTrigger}, additionally requiring a detail
+   * template. Card mode renders no expansion affordance at all without one, so `aria-expanded`
+   * on the card would advertise a state change that produces nothing.
+   *
+   * Table mode deliberately keeps the looser check: its rows are asserted to carry
+   * `aria-expanded` from `expandOnRowClick` alone, and that predates this layout.
+   */
+  isCardExpandTrigger(row: T): boolean {
+    return this.isRowExpandTrigger(row) && !!this.detailRowDef();
+  }
+
+  /** DOM id for a row's detail panel, so the expand trigger can point `aria-controls` at it. */
+  detailPanelId(rowIndex: number): string {
+    return `${this.instanceId}-detail-${rowIndex}`;
   }
 
   // --- Active row ---

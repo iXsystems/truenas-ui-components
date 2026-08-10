@@ -828,9 +828,13 @@ export const ResponsiveCards: Story = {
           <ng-container tnColumnDef="name" label="Name" [cardTitle]="true" [sortable]="true">
             <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
           </ng-container>
+          <!--
+            Status is weighted, not colored: the red token on the card background measures
+            2.78:1, under AA. Color alone would also be the only cue, which fails 1.4.1.
+          -->
           <ng-container tnColumnDef="status" label="Status" [priority]="100" [sortable]="true">
             <ng-template let-user tnCellDef>
-              <span [style.color]="user.status === 'active' ? 'var(--tn-green)' : 'var(--tn-red)'">
+              <span [style.font-weight]="user.status === 'active' ? '600' : '400'">
                 {{ user.status }}
               </span>
             </ng-template>
@@ -857,7 +861,7 @@ export const ResponsiveCardsInteractive: Story = {
     docs: {
       description: {
         story:
-          'Card mode with `clickable`, `expandable` and `expandOnRowClick`. Activating a card — click, or focus it and press Enter — toggles its detail section and emits `rowClick`; the card carries `aria-expanded` while it is the expand trigger, and the "Details" button carries the same state for pointer users. The active card is marked with `aria-current` rather than `aria-selected`, which `role="listitem"` does not permit.\n\nControls projected into the detail section stay usable: clicking a button or typing in a field inside the panel does not activate the card or collapse the panel out from under you.',
+          'Card mode with `clickable`, `expandable` and `expandOnRowClick`. Activating a card — click, or focus it and press Enter — toggles its detail section and emits `rowClick`; the card carries `aria-expanded` while it is the expand trigger, and the "Details" button carries the same state for pointer users. The active card is marked with `aria-current` rather than `aria-selected`, which `role="listitem"` does not permit.\n\nControls projected into the detail section stay usable: clicking a button or typing in a field inside the panel does not activate the card or collapse the panel out from under you.\n\n**Accessibility limitation:** a clickable card is focusable and responds to Enter/Space, but it is not *announced* as a control. The roles that would announce it (`button`, `option`) have presentational children, which would hide the card\'s own checkbox, row actions and "Details" toggle from assistive tech, so the card stays a `listitem`. If an action has to be discoverable by screen-reader users, project an explicit control through `[tnRowActionsDef]` instead of relying on card activation.',
       },
     },
   },

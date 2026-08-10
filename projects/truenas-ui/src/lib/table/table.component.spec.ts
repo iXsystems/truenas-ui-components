@@ -909,11 +909,16 @@ describe('TnTableComponent', () => {
     describe('card activation', () => {
       const row = { id: 1 };
 
+      // The fabricated event carries a `currentTarget` standing in for the card, which is what
+      // `isCardControlTarget` compares its match against. Without it every match looked like a
+      // nested control and the "card itself activates" escape hatch went untested.
       function clickEventFrom(html: string): Event {
-        const host = document.createElement('div');
-        host.innerHTML = html;
-        const target = host.firstElementChild as HTMLElement;
-        return { target } as unknown as Event;
+        const card = document.createElement('div');
+        card.className = 'tn-table__card';
+        card.tabIndex = 0;
+        card.innerHTML = html;
+        const target = card.firstElementChild as HTMLElement;
+        return { target, currentTarget: card } as unknown as Event;
       }
 
       it('should emit rowClick when a clickable card body is activated', () => {
@@ -944,12 +949,14 @@ describe('TnTableComponent', () => {
       it('should emit rowClick when a value folded under "More fields" is clicked', () => {
         fixture.componentRef.setInput('clickable', true);
         fixture.detectChanges();
-        const host = document.createElement('div');
-        host.innerHTML =
+        const card = document.createElement('div');
+        card.className = 'tn-table__card';
+        card.tabIndex = 0;
+        card.innerHTML =
           '<details class="tn-table__card-more"><dd class="tn-table__card-field-value">x</dd></details>';
-        const target = host.querySelector('.tn-table__card-field-value') as HTMLElement;
+        const target = card.querySelector('.tn-table__card-field-value') as HTMLElement;
         const emit = jest.spyOn(component.rowClick, 'emit');
-        component.onCardClick({ target } as unknown as Event, row);
+        component.onCardClick({ target, currentTarget: card } as unknown as Event, row);
         expect(emit).toHaveBeenCalledWith(row);
       });
 

@@ -63,7 +63,7 @@ class MockResizeObserver {
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-table
-      mobileLayout="cards"
+      [mobileLayout]="mobileLayout"
       [dataSource]="tableData"
       [displayedColumns]="displayedColumns"
       [selectable]="selectable"
@@ -125,6 +125,7 @@ class MockResizeObserver {
 class TableCardTestComponent {
   tableData: Server[] = [...SERVERS];
   displayedColumns = ['id', 'name', 'status', 'role', 'email'];
+  mobileLayout: 'cards' | 'scroll' = 'cards';
   selectable = false;
   clickable = false;
   expandable = false;
@@ -171,6 +172,16 @@ describe('TnTable card layout', () => {
     MockResizeObserver.instances.forEach((o) => o.emitWidth(320));
     fixture.detectChanges();
     await fixture.whenStable();
+  }
+
+  /** Drives the card toolbar's sort <select> the way a user would. */
+  function selectSortColumn(column: string): void {
+    const select = fixture.nativeElement.querySelector(
+      '.tn-table__cards-sort-select'
+    ) as HTMLSelectElement;
+    select.value = column;
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
   }
 
   function cardEl(index: number): HTMLElement {
@@ -228,7 +239,8 @@ describe('TnTable card layout', () => {
         '.tn-table__card[data-row-index="0"] .tn-table__card-field[data-column]'
       );
       const columns = [...shown].map((el) => (el as HTMLElement).dataset['column']);
-      expect(columns).not.toContain('id');
+      // Asserted in full — `not.toContain('id')` would also pass if no fields rendered at all.
+      expect(columns).toEqual(['status', 'role', 'email']);
     });
 
     it('orders fields by descending priority', async () => {
@@ -279,24 +291,24 @@ describe('TnTable card layout', () => {
     it('flips direction from the card toolbar', async () => {
       await harness.clickSortHeader('name');
       await goNarrow();
+      expect(await harness.getCardSortDirection()).toBe('asc');
 
       await harness.toggleCardSortDirection();
 
-      const table = fixture.debugElement.children[0].componentInstance as TnTableComponent;
-      expect(table.sortDirection()).toBe('desc');
+      expect(await harness.getCardSortDirection()).toBe('desc');
     });
 
     it('resets to ascending when the sorted column changes', async () => {
+      await harness.clickSortHeader('name');
       await goNarrow();
-      const table = fixture.debugElement.children[0].componentInstance as TnTableComponent;
+      await harness.toggleCardSortDirection();
+      expect(await harness.getCardSortDirection()).toBe('desc');
 
-      table.setSortColumn('name');
-      table.toggleSortDirection();
-      expect(table.sortDirection()).toBe('desc');
+      // Picking a different column must not inherit the previous direction.
+      selectSortColumn('status');
 
-      table.setSortColumn('status');
-
-      expect(table.sortDirection()).toBe('asc');
+      expect(await harness.getCardSortColumn()).toBe('status');
+      expect(await harness.getCardSortDirection()).toBe('asc');
     });
   });
 
@@ -437,11 +449,13 @@ describe('TnTable card layout', () => {
       expect(tableMinWidth()).toBe('calc(120px * 5)');
     });
 
-    it('counts the actions column in the floor', () => {
+    // The actions column claims a fixed width rather than a `minColumnWidth` share, so it is
+    // added rather than counted — reserving a whole column for it would overstate the floor.
+    it('adds the actions column width to the floor', () => {
       component.withActions = true;
       fixture.detectChanges();
 
-      expect(tableMinWidth()).toBe('calc(120px * 6)');
+      expect(tableMinWidth()).toBe('calc(120px * 5 + var(--tn-table-actions-width, 96px))');
     });
 
     it('counts the select and expand columns in the floor', () => {
@@ -450,8 +464,60 @@ describe('TnTable card layout', () => {
       component.withActions = true;
       fixture.detectChanges();
 
-      // 5 displayed + __select + __expand + actions
-      expect(tableMinWidth()).toBe('calc(120px * 8)');
+      // 5 displayed + __select + __expand, plus the actions column's own width.
+      expect(tableMinWidth()).toBe('calc(120px * 7 + var(--tn-table-actions-width, 96px))');
+    });
+  });
+
+  // Scroll mode is the default `mobileLayout`, and had no coverage at all — the pinned-column
+  // rules are host-scoped CSS, so what's assertable in jsdom is that the host state class lands
+  // and the table (not cards) still renders. The pinning geometry itself is verified in a browser.
+  describe('scroll mode', () => {
+    beforeEach(() => {
+      component.mobileLayout = 'scroll';
+      component.selectable = true;
+      fixture.detectChanges();
+    });
+
+    function host(): HTMLElement {
+      return fixture.nativeElement.querySelector('tn-table') as HTMLElement;
+    }
+
+    it('marks the host tn-table--scroll below the breakpoint and keeps the table', async () => {
+      expect(host().classList.contains('tn-table--scroll')).toBe(false);
+
+      await goNarrow();
+
+      expect(host().classList.contains('tn-table--scroll')).toBe(true);
+      expect(host().classList.contains('tn-table--cards')).toBe(false);
+      expect(await harness.getLayoutMode()).toBe('table');
+      expect(await harness.getRowCount()).toBe(2);
+    });
+
+    it('drops the scroll state again above the breakpoint', async () => {
+      await goNarrow();
+      expect(host().classList.contains('tn-table--scroll')).toBe(true);
+
+      MockResizeObserver.instances.forEach((o) => o.emitWidth(900));
+      fixture.detectChanges();
+
+      expect(host().classList.contains('tn-table--scroll')).toBe(false);
+    });
+
+    it('never enters card mode while mobileLayout is scroll', async () => {
+      await goNarrow();
+
+      expect(await harness.getCardCount()).toBe(0);
+      expect(await harness.getLayoutMode()).toBe('table');
+    });
+
+    it('renders the select column first, so the pinning rules have their anchor', async () => {
+      await goNarrow();
+
+      const firstCell = fixture.nativeElement.querySelector(
+        '.tn-table__row > .tn-table__cell'
+      ) as HTMLElement;
+      expect(firstCell.classList.contains('tn-table__select-cell')).toBe(true);
     });
   });
 
