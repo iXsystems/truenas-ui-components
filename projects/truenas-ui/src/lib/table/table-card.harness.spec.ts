@@ -72,6 +72,8 @@ class MockResizeObserver {
       [expandOnRowClick]="expandOnRowClick"
       [cardPrimaryCount]="cardPrimaryCount"
       [fixedLayout]="fixedLayout"
+      [minColumnWidth]="minColumnWidth"
+      [minWidth]="minWidth"
       (rowClick)="rowClicks.push($event)"
       (rowDoubleClick)="rowDoubleClicks.push($event)">
       <!-- id is displayed in table mode but deliberately kept off the card. -->
@@ -132,6 +134,8 @@ class TableCardTestComponent {
   expandOnRowClick = false;
   withActions = false;
   fixedLayout = false;
+  minColumnWidth = '';
+  minWidth = '';
   titleOnName = true;
   cardPrimaryCount = 3;
   rowClicks: Server[] = [];
@@ -442,11 +446,32 @@ describe('TnTable card layout', () => {
 
     beforeEach(() => {
       component.fixedLayout = true;
+      // The derived floor is opt-in: `minColumnWidth` defaults to '' and applies none.
+      component.minColumnWidth = '120px';
       fixture.detectChanges();
     });
 
     it('derives the floor from the displayed columns', () => {
       expect(tableMinWidth()).toBe('calc(120px * 5)');
+    });
+
+    // The floor is opt-in (#168). The actions column contributes only to a floor that exists — it
+    // must not conjure one on its own, or every actions table would silently get a floor back.
+    it('applies no floor at all when minColumnWidth is unset, even with an actions column', () => {
+      component.minColumnWidth = '';
+      component.withActions = true;
+      fixture.detectChanges();
+
+      expect(tableMinWidth()).toBe('');
+    });
+
+    it('still honours an explicit minWidth over the derivation', () => {
+      component.minColumnWidth = '';
+      component.minWidth = '900px';
+      component.withActions = true;
+      fixture.detectChanges();
+
+      expect(tableMinWidth()).toBe('900px');
     });
 
     // The structural columns have fixed widths, so they contribute those rather than a

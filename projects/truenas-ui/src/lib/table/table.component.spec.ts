@@ -435,9 +435,20 @@ describe('TnTableComponent', () => {
       expect(tableEl().style.minWidth).toBe('');
     });
 
+    it('applies no floor with fixedLayout alone, so a table in a card or split pane still fits it', () => {
+      // A derived floor cannot know the container, so it is opt-in: defaulting it on scrolled every
+      // table that shares its row with something else at ordinary window sizes.
+      fixture.componentRef.setInput('displayedColumns', ['a', 'b', 'c']);
+      fixture.componentRef.setInput('fixedLayout', true);
+      fixture.detectChanges();
+
+      expect(tableEl().style.minWidth).toBe('');
+    });
+
     it('derives the floor from the column count, so no page has to pick a number', () => {
       fixture.componentRef.setInput('displayedColumns', ['a', 'b', 'c']);
       fixture.componentRef.setInput('fixedLayout', true);
+      fixture.componentRef.setInput('minColumnWidth', '120px');
       fixture.detectChanges();
 
       expect(tableEl().style.minWidth).toBe('calc(120px * 3)');
@@ -446,6 +457,7 @@ describe('TnTableComponent', () => {
     it('grows the floor with the table, so a wide list scrolls where a narrow one does not', () => {
       fixture.componentRef.setInput('displayedColumns', ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']);
       fixture.componentRef.setInput('fixedLayout', true);
+      fixture.componentRef.setInput('minColumnWidth', '120px');
       fixture.detectChanges();
 
       expect(tableEl().style.minWidth).toBe('calc(120px * 8)');
@@ -454,19 +466,28 @@ describe('TnTableComponent', () => {
     it('counts the columns the table adds itself', () => {
       fixture.componentRef.setInput('displayedColumns', ['a', 'b']);
       fixture.componentRef.setInput('fixedLayout', true);
+      fixture.componentRef.setInput('minColumnWidth', '120px');
       fixture.componentRef.setInput('selectable', true);
       fixture.detectChanges();
 
       expect(tableEl().style.minWidth).toBe('calc(120px * 3)');
     });
 
-    it('honours a custom minColumnWidth', () => {
+    it('honours any CSS length as the per-column floor', () => {
       fixture.componentRef.setInput('displayedColumns', ['a', 'b']);
       fixture.componentRef.setInput('fixedLayout', true);
       fixture.componentRef.setInput('minColumnWidth', '10rem');
       fixture.detectChanges();
 
       expect(tableEl().style.minWidth).toBe('calc(10rem * 2)');
+    });
+
+    it('ignores minColumnWidth without fixedLayout, where auto layout already scrolls', () => {
+      fixture.componentRef.setInput('displayedColumns', ['a', 'b']);
+      fixture.componentRef.setInput('minColumnWidth', '120px');
+      fixture.detectChanges();
+
+      expect(tableEl().style.minWidth).toBe('');
     });
 
     it('lets an explicit minWidth override the derivation', () => {

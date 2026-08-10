@@ -118,7 +118,8 @@ const meta: Meta<TnTableComponent> = {
       control: 'boolean',
     },
     minColumnWidth: {
-      description: 'Smallest a column may shrink to with fixedLayout; the width floor is this times the column count',
+      description: 'Opt-in: smallest a column may shrink to with fixedLayout, before the host scrolls instead. '
+        + 'The width floor is this times the column count; empty (the default) applies no floor',
       control: 'text',
     },
     minWidth: {
@@ -665,7 +666,8 @@ export const WrappingAndFixedLayout: Story = {
         being truncated. Toggle <code>[fixedLayout]</code> in Controls to give every column an
         equal share instead of sizing them to their content, and narrow the preview past
         <code>minColumnWidth × 3</code> to see the table scroll rather than shrink to unreadable
-        columns.
+        columns. That floor is opt-in — this story sets <code>[minColumnWidth]</code> to get it;
+        clear the control and the table keeps shrinking with its container instead.
       </p>
       <tn-table
         [dataSource]="tableData"
