@@ -806,6 +806,9 @@ export const ResponsiveCards: Story = {
     displayedColumns: ['name', 'email', 'role', 'status'],
     selectable: true,
     cardBreakpoint: 640,
+    // Two of the three fields show directly; the rest fold, so the "More fields"
+    // disclosure the description talks about is actually visible.
+    cardPrimaryCount: 2,
   },
   render: (args) => ({
     props: {
@@ -820,6 +823,7 @@ export const ResponsiveCards: Story = {
           [displayedColumns]="displayedColumns"
           [selectable]="selectable"
           [cardBreakpoint]="cardBreakpoint"
+          [cardPrimaryCount]="cardPrimaryCount"
           mobileLayout="cards">
           <ng-container tnColumnDef="name" label="Name" [cardTitle]="true" [sortable]="true">
             <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
@@ -836,6 +840,127 @@ export const ResponsiveCards: Story = {
           </ng-container>
           <ng-container tnColumnDef="email" label="Email" cardLabel="Email address" [priority]="20">
             <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+          </ng-container>
+          <ng-template tnRowActionsDef let-user>
+            <tn-icon-button [name]="editIcon" size="lg" ariaLabel="Edit" />
+            <tn-icon-button [name]="deleteIcon" size="lg" ariaLabel="Delete" />
+          </ng-template>
+        </tn-table>
+      </div>
+    `,
+  }),
+};
+
+export const ResponsiveCardsInteractive: Story = {
+  name: 'Responsive Cards (clickable + expandable)',
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Card mode with `clickable`, `expandable` and `expandOnRowClick`. Activating a card — click, or focus it and press Enter — toggles its detail section and emits `rowClick`; the card carries `aria-expanded` while it is the expand trigger, and the "Details" button carries the same state for pointer users. The active card is marked with `aria-current` rather than `aria-selected`, which `role="listitem"` does not permit.\n\nControls projected into the detail section stay usable: clicking a button or typing in a field inside the panel does not activate the card or collapse the panel out from under you.',
+      },
+    },
+  },
+  args: {
+    dataSource: sampleData,
+    displayedColumns: ['name', 'email', 'role', 'status'],
+    clickable: true,
+    expandable: true,
+    expandOnRowClick: true,
+    cardPrimaryCount: 2,
+  },
+  render: (args) => ({
+    props: {
+      ...args,
+      activeUser: sampleData[1],
+      saveIcon: tnIconMarker('check', 'mdi'),
+    },
+    template: `
+      <div style="width: 520px; max-width: 100%; resize: horizontal; overflow: auto; padding: 0 8px 8px 0;">
+        <tn-table
+          [dataSource]="dataSource"
+          [displayedColumns]="displayedColumns"
+          [clickable]="clickable"
+          [expandable]="expandable"
+          [expandOnRowClick]="expandOnRowClick"
+          [cardPrimaryCount]="cardPrimaryCount"
+          [activeRow]="activeUser"
+          mobileLayout="cards"
+          (rowClick)="activeUser = $event">
+          <ng-container tnColumnDef="name" label="Name" [cardTitle]="true" [sortable]="true">
+            <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
+          </ng-container>
+          <ng-container tnColumnDef="status" label="Status" [priority]="100">
+            <ng-template let-user tnCellDef>{{ user.status }}</ng-template>
+          </ng-container>
+          <ng-container tnColumnDef="role" label="Role" [priority]="80">
+            <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
+          </ng-container>
+          <ng-container tnColumnDef="email" label="Email" cardLabel="Email address" [priority]="20">
+            <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+          </ng-container>
+          <!--
+            Interactive content inside the detail panel — the case that has to keep
+            working when the whole card is also clickable.
+          -->
+          <ng-template let-user tnDetailRowDef>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <tn-input
+                [ariaLabel]="'Notes for ' + user.name"
+                placeholder="Add a note"
+                style="flex: 1;" />
+              <tn-icon-button [name]="saveIcon" size="lg" ariaLabel="Save note" />
+            </div>
+          </ng-template>
+        </tn-table>
+      </div>
+    `,
+  }),
+};
+
+export const ScrollModePinnedColumns: Story = {
+  name: 'Scroll Mode (pinned columns)',
+  parameters: {
+    docs: {
+      description: {
+        story:
+          '`mobileLayout="scroll"` is the default: below `cardBreakpoint` the table is kept and scrolled horizontally, with the leading column and the `[tnRowActionsDef]` column pinned so a row stays identifiable and actionable while the middle scrolls. When `selectable` is on, the checkbox column pins at the edge and the first data column pins just past it — pinning follows the column\'s role, not its position.\n\n`fixedLayout` plus `minColumnWidth` gives the table a width floor (scaled by column count, including the actions column), which is what makes it overflow and scroll rather than wrapping every cell down to a few characters. **Drag the wrapper narrower** to see the columns pin.',
+      },
+    },
+  },
+  args: {
+    dataSource: sampleData,
+    displayedColumns: ['name', 'email', 'role', 'status'],
+    selectable: true,
+    fixedLayout: true,
+    minColumnWidth: '140px',
+  },
+  render: (args) => ({
+    props: {
+      ...args,
+      editIcon: tnIconMarker('pencil', 'mdi'),
+      deleteIcon: tnIconMarker('delete', 'mdi'),
+    },
+    template: `
+      <div style="width: 460px; max-width: 100%; resize: horizontal; overflow: auto; padding: 0 8px 8px 0;">
+        <tn-table
+          [dataSource]="dataSource"
+          [displayedColumns]="displayedColumns"
+          [selectable]="selectable"
+          [fixedLayout]="fixedLayout"
+          [minColumnWidth]="minColumnWidth"
+          mobileLayout="scroll">
+          <ng-container tnColumnDef="name" label="Name" [sortable]="true">
+            <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
+          </ng-container>
+          <ng-container tnColumnDef="email" label="Email">
+            <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+          </ng-container>
+          <ng-container tnColumnDef="role" label="Role">
+            <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
+          </ng-container>
+          <ng-container tnColumnDef="status" label="Status">
+            <ng-template let-user tnCellDef>{{ user.status }}</ng-template>
           </ng-container>
           <ng-template tnRowActionsDef let-user>
             <tn-icon-button [name]="editIcon" size="lg" ariaLabel="Edit" />

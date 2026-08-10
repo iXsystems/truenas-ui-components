@@ -3,16 +3,19 @@
   @if (selectable() || sortableColumns().length > 0) {
     <div class="tn-table__cards-toolbar">
       @if (selectable()) {
-        <label class="tn-table__cards-selectall">
+        <!--
+          A plain <div>, not a <label>: tn-checkbox renders its own <label for>,
+          and nesting one label inside another is invalid. The visible text is
+          passed through the checkbox's own `label` input so it stays associated.
+        -->
+        <div class="tn-table__cards-selectall">
           <tn-checkbox
             class="tn-table__checkbox"
-            label="Select all rows"
-            [hideLabel]="true"
+            label="Select all"
             [checked]="isAllSelected()"
             [indeterminate]="isIndeterminate()"
             (click)="toggleSelectAll(); $event.preventDefault()" />
-          <span>Select all</span>
-        </label>
+        </div>
       }
       @if (sortableColumns().length > 0) {
         <div class="tn-table__cards-sort">
@@ -22,9 +25,17 @@
             aria-label="Sort by"
             [value]="sortColumn()"
             (change)="onSortSelectChange($event)">
-            <option value="">Unsorted</option>
+            <!--
+              `[selected]` on the options, not just `[value]` on the <select>:
+              the select's value is bound before the @for options exist, so the
+              browser discards it and the binding is never dirty again — a table
+              sorted before card mode engaged would render as "Unsorted".
+            -->
+            <option value="" [selected]="!sortColumn()">Unsorted</option>
             @for (column of sortableColumns(); track column) {
-              <option [value]="column">{{ getCardLabel(column) }}</option>
+              <option [value]="column" [selected]="column === sortColumn()">
+                {{ getCardLabel(column) }}
+              </option>
             }
           </select>
           @if (sortColumn()) {
@@ -62,11 +73,14 @@
     <!--
       Card ARIA differs from the table row on purpose, because `listitem` supports
       far less than `row` does:
-        - Active state uses `aria-current`, which is valid on any element, rather
-          than `aria-selected`, which `listitem` does not support (an earlier
-          revision set it here and it was dropped for that reason).
+        - Active state uses `aria-current`, not `aria-selected`, which `listitem`
+          does not support (an earlier revision set it here and it was dropped for
+          that reason; axe reports it as a critical aria-allowed-attr violation).
         - Selection state stays on the checkbox, which is a real control.
-        - Expansion state stays on the "Details" button, for the same reason.
+        - `aria-expanded` IS permitted here, so the card carries it whenever the
+          card itself acts as the expand trigger, matching what table mode does
+          for its rows. The "Details" button keeps its own state for the case
+          where the button, not the card, is the control.
       The card is deliberately NOT `role="button"`: that role has presentational
       children, which would hide the card's checkbox, row actions and "Details"
       toggle from assistive tech entirely.
@@ -80,18 +94,21 @@
         [class.tn-table__card--clickable]="clickable()"
         [attr.tabindex]="clickable() ? 0 : null"
         [attr.aria-current]="isRowActive(row) ? 'true' : null"
+        [attr.aria-expanded]="isRowExpandTrigger(row) ? isRowExpanded(row) : null"
         (click)="onCardClick($event, row)"
+        (dblclick)="onCardDoubleClick($event, row)"
         (keydown)="onCardKeydown($event, row)">
         <div class="tn-table__card-header">
           @if (selectable()) {
-            <label class="tn-table__card-select">
+            <!-- <div>, not <label> — see the toolbar's select-all above. -->
+            <div class="tn-table__card-select">
               <tn-checkbox
                 class="tn-table__checkbox"
                 [label]="'Select row ' + (rowIdx + 1)"
                 [hideLabel]="true"
                 [checked]="isRowSelected(row)"
                 (click)="toggleRowSelection(row); $event.preventDefault(); $event.stopPropagation()" />
-            </label>
+            </div>
           }
           <span class="tn-table__card-title">
             @if (getColumnDef(cardTitleColumn())?.cellTemplate(); as tmpl) {
@@ -117,17 +134,25 @@
               [ngTemplateOutlet]="cardField"
               [ngTemplateOutletContext]="{ $implicit: column, row: row }" />
           }
-          @if (cardSecondaryColumns().length > 0) {
-            <details class="tn-table__card-more">
-              <summary class="tn-table__card-more-summary">More fields</summary>
+        </dl>
+
+        <!--
+          The disclosure sits outside the primary <dl> and wraps its fields in a
+          <dl> of its own: <details> is not a permitted child of <dl>, so nesting
+          it there detached the folded dt/dd pairs from any description list.
+        -->
+        @if (cardSecondaryColumns().length > 0) {
+          <details class="tn-table__card-more">
+            <summary class="tn-table__card-more-summary">More fields</summary>
+            <dl class="tn-table__card-fields">
               @for (column of cardSecondaryColumns(); track column) {
                 <ng-container
                   [ngTemplateOutlet]="cardField"
                   [ngTemplateOutletContext]="{ $implicit: column, row: row }" />
               }
-            </details>
-          }
-        </dl>
+            </dl>
+          </details>
+        }
 
         @if (canExpandRow(row) && detailRowDef()) {
           <button
@@ -298,7 +323,7 @@
           <tr class="tn-table__detail-row" [@detailExpand]="'expanded'">
             <td
               class="tn-table__detail-cell"
-              [attr.colspan]="effectiveDisplayedColumns().length + (rowActionsDef() ? 1 : 0)">
+              [attr.colspan]="totalColumnCount()">
               <ng-container
                 [ngTemplateOutlet]="detailRowDef()!.template"
                 [ngTemplateOutletContext]="{ $implicit: row }" />

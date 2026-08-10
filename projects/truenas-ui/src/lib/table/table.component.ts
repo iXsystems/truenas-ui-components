@@ -96,6 +96,11 @@ function getExpandDuration(): string {
     '[class.tn-table--bordered]': 'bordered()',
     '[class.tn-table--fixed-layout]': 'fixedLayout()',
     '[class.tn-table--loading]': 'loading()',
+    // `--cards` is a state hook only: card mode is styled through the
+    // `__cards*` element classes, not from the host. It is kept as the
+    // documented way for consumers and tests to detect the active layout
+    // without reaching for internal element classes. `--scroll` is both a
+    // hook and the selector the pinned-column rules key off.
     '[class.tn-table--cards]': 'isCardMode()',
     '[class.tn-table--scroll]': 'isScrollMode()',
     '[style.--tn-table-active-bg]': 'activeBg()',
@@ -253,7 +258,7 @@ export class TnTableComponent<T = unknown> implements OnInit {
     if (!this.fixedLayout()) {
       return null;
     }
-    return `calc(${this.minColumnWidth()} * ${this.effectiveDisplayedColumns().length})`;
+    return `calc(${this.minColumnWidth()} * ${this.totalColumnCount()})`;
   });
 
   // --- Responsive (card) inputs ---
@@ -447,6 +452,16 @@ export class TnTableComponent<T = unknown> implements OnInit {
     return cols;
   });
 
+  /**
+   * Every column the table actually renders, including the trailing actions
+   * column, which `effectiveDisplayedColumns` does not track because it comes from
+   * a content template rather than `displayedColumns`. Shared by the width floor
+   * and the detail row's `colspan` so the two cannot drift apart.
+   */
+  totalColumnCount = computed(
+    () => this.effectiveDisplayedColumns().length + (this.rowActionsDef() ? 1 : 0)
+  );
+
   isAllSelected = computed(() => {
     const numSelected = this.selectionCount();
     const numRows = this.data().length;
@@ -585,6 +600,12 @@ export class TnTableComponent<T = unknown> implements OnInit {
     this.rowClick.emit(row);
   }
 
+  /** Card-mode counterpart of {@link onRowDoubleClick}, with the same guard. */
+  onCardDoubleClick(event: Event, row: T): void {
+    if (!this.clickable() || this.isCardControlTarget(event)) { return; }
+    this.rowDoubleClick.emit(row);
+  }
+
   onCardKeydown(event: KeyboardEvent, row: T): void {
     if (!this.clickable()) { return; }
     if (event.key !== 'Enter' && event.key !== ' ') { return; }
@@ -596,14 +617,30 @@ export class TnTableComponent<T = unknown> implements OnInit {
     this.rowClick.emit(row);
   }
 
+  /**
+   * Anything focusable or otherwise interactive, plus the card's own controls and
+   * its projected detail panel.
+   *
+   * A class allowlist is not enough: the detail panel renders consumer content
+   * inside the clickable card, so an allowlist lets a click on a projected button
+   * bubble up and fire `rowClick` — and with `expandOnRowClick`, collapse the very
+   * panel being used. Table mode never had that problem, because there the detail
+   * row is a sibling `<tr>` outside the clickable row.
+   *
+   * The card's own field values are deliberately not interactive, so they still
+   * activate the card whether primary or folded under "More fields".
+   */
   private isCardControlTarget(event: Event): boolean {
     const target = event.target as HTMLElement | null;
-    // Only the interactive controls suppress card activation — notably the
-    // "More fields" summary toggle, NOT the whole <details>, so clicking a field
-    // value behaves the same whether it's a primary field or folded under it.
-    return !!target?.closest(
-      '.tn-table__card-actions, .tn-table__card-select, .tn-table__card-more-summary, .tn-table__card-detail-toggle'
+    const match = target?.closest(
+      'a[href], button, input, select, textarea, summary, [contenteditable]:not([contenteditable="false"]),' +
+        '[tabindex]:not([tabindex="-1"]),' +
+        '.tn-table__card-actions, .tn-table__card-select, .tn-table__card-more-summary,' +
+        '.tn-table__card-detail-toggle, .tn-table__card-detail'
     );
+    // The card itself is focusable when `clickable`, so it matches the selector's
+    // focusable clause. It is the activation surface, not a control within it.
+    return !!match && match !== event.currentTarget;
   }
 
   /** Handles the card-mode sort `<select>` change. */
@@ -637,12 +674,16 @@ export class TnTableComponent<T = unknown> implements OnInit {
 
   /**
    * The column rendered as the card title. The first `displayedColumns` entry
-   * whose def sets `cardTitle`, falling back to the first displayed column.
+   * whose def sets `cardTitle`, else the first column not marked `cardHidden` —
+   * a column the consumer asked to keep off the card must not be promoted to its
+   * most prominent slot. Falls back to the first displayed column only when every
+   * column is hidden, since a card still needs a title.
    */
   cardTitleColumn = computed<string>(() => {
     const cols = this.displayedColumns();
     const explicit = cols.find((c) => this.getColumnDef(c)?.cardTitle());
-    return explicit ?? cols[0] ?? '';
+    const visible = cols.find((c) => !this.getColumnDef(c)?.cardHidden());
+    return explicit ?? visible ?? cols[0] ?? '';
   });
 
   /**
@@ -680,14 +721,20 @@ export class TnTableComponent<T = unknown> implements OnInit {
 
   // --- Card-mode sort ---
 
-  /** Sets (or clears, when passed `''`) the active sort column for card mode. */
+  /**
+   * Sets (or clears, when passed `''`) the active sort column for card mode.
+   * Switching columns resets to ascending, matching what clicking a different
+   * header does in table mode — the same `sortChange` contract should not depend
+   * on which layout the viewport happens to be showing.
+   */
   setSortColumn(column: string): void {
     if (!column) {
       this.sortColumn.set('');
       this.sortDirection.set('');
     } else {
+      const changed = this.sortColumn() !== column;
       this.sortColumn.set(column);
-      if (this.sortDirection() === '') {
+      if (changed || this.sortDirection() === '') {
         this.sortDirection.set('asc');
       }
     }

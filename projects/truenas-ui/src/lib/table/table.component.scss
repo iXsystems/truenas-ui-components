@@ -10,6 +10,34 @@
   // Lives here rather than on `.tn-table` (which carries the same class but, being the host,
   // is matched by `_nghost` and never by the `_ngcontent` that a plain class rule compiles to).
   overflow-x: auto;
+
+  // The radius lives here rather than on `__table`, which used `overflow: hidden` to clip it.
+  // That made the table the scrollport for its own sticky cells, so every pinned column stuck
+  // to a box that never scrolls. The host is what actually scrolls, and `overflow-x: auto`
+  // already clips to this radius, so moving it here keeps the rounded corners and lets
+  // `position: sticky` resolve against the right ancestor.
+  border-radius: 4px;
+}
+
+// Width of the leading checkbox column. Shared by `__select-cell` and the pinning offset in
+// scroll mode so the two can't drift apart.
+:host {
+  --tn-table-select-width: 48px;
+}
+
+// Screen-reader-only text. `.cdk-visually-hidden` comes from the CDK's global a11y stylesheet,
+// which this library does not ship; without a local definition the "Expand" / "Actions" header
+// labels render as visible text. Same local copy the calendar components keep.
+.cdk-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }
 
 // `fixedLayout` opt-in. Cells wrap either way (see `__cell-content`); this additionally pins
@@ -39,30 +67,40 @@
 // the host (it carries `[_nghost-*]`) never matches. Written that way the whole
 // block is silently dead.
 :host(.tn-table--scroll) {
-  // `__table` sets `overflow: hidden` to clip its own border-radius, which makes
-  // the table itself the scroll container for any sticky descendant — so the
-  // pinned cells below would stick to a box that never scrolls, i.e. not at all.
-  // Releasing it hands that role back to the host, which is what actually scrolls.
-  // Scoped to scroll mode so the radius clipping is untouched everywhere else.
-  .tn-table__table {
-    overflow: visible;
+  // Pinned by role, not by position. `:first-child` is the checkbox when `selectable`
+  // is on, which would hold a column of checkboxes at the edge while the row's actual
+  // identity scrolled away. So: the select cell pins at 0 when present, and the first
+  // real data column pins just past it.
+  .tn-table__select-cell {
+    position: sticky;
+    left: 0;
+    z-index: 2;
   }
 
   .tn-table__header-cell:first-child,
-  .tn-table__row > .tn-table__cell:first-child {
+  .tn-table__row > .tn-table__cell:first-child,
+  .tn-table__select-cell + .tn-table__header-cell,
+  .tn-table__row > .tn-table__select-cell + .tn-table__cell {
     position: sticky;
     left: 0;
     z-index: 1;
   }
 
+  .tn-table__select-cell + .tn-table__header-cell,
+  .tn-table__row > .tn-table__select-cell + .tn-table__cell {
+    left: var(--tn-table-select-width);
+  }
+
   // Opaque so the cells scrolling underneath don't show through, but taken from
   // the row rather than hard-coded, so an active / hovered / expanded row isn't
   // notched at its pinned left edge.
-  .tn-table__row > .tn-table__cell:first-child {
+  .tn-table__row > .tn-table__cell:first-child,
+  .tn-table__row > .tn-table__select-cell + .tn-table__cell {
     background-color: inherit;
   }
 
-  .tn-table__header-row .tn-table__header-cell:first-child {
+  .tn-table__header-row .tn-table__header-cell:first-child,
+  .tn-table__header-row .tn-table__select-cell + .tn-table__header-cell {
     background-color: var(--tn-topbar);
   }
 }
@@ -73,8 +111,9 @@
     border-collapse: collapse;
     border-spacing: 0;
     background-color: var(--tn-bg2);
-    border-radius: 4px;
-    overflow: hidden;
+    // No `overflow: hidden` / `border-radius` here — both moved to `:host`, which is the
+    // element that scrolls. Clipping here made this the scrollport for sticky descendants,
+    // silently disabling every pinned column.
   }
 
   &__header {
@@ -231,7 +270,7 @@
   }
 
   &__select-cell {
-    width: 48px;
+    width: var(--tn-table-select-width);
     padding: 0 8px 0 16px;
     cursor: pointer;
   }
@@ -486,23 +525,34 @@
     min-width: 0;
     text-align: right;
     color: var(--tn-fg1);
-    overflow: hidden;
-    text-overflow: ellipsis;
+    // No `text-overflow: ellipsis` — it needs `white-space: nowrap` to do anything, and on a
+    // narrow card wrapping a long value is better than truncating it.
+    overflow-wrap: anywhere;
   }
 
   &__card-more {
     margin-top: 2px;
   }
 
+  // Both card disclosures use the body text color, not `--tn-primary`: at 13px the
+  // primary blue measures 3.21:1 on `--tn-bg2` and 2.75:1 on an active card, short of
+  // the 4.5:1 AA needs for normal-size text. The underline (summary) and chevron
+  // (toggle) carry the affordance instead of color.
   &__card-more-summary {
     padding: 4px 0;
     font-size: 13px;
-    color: var(--tn-primary);
+    color: var(--tn-fg1);
+    text-decoration: underline;
     cursor: pointer;
     list-style: none;
 
     &::-webkit-details-marker {
       display: none;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--tn-primary);
+      outline-offset: 2px;
     }
   }
 
@@ -514,9 +564,14 @@
     padding: 4px 0;
     background: none;
     border: none;
-    color: var(--tn-primary);
+    color: var(--tn-fg1);
     font-size: 13px;
     cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--tn-primary);
+      outline-offset: 2px;
+    }
   }
 
   &__card-detail {

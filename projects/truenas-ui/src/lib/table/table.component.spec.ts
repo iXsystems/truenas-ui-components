@@ -823,9 +823,10 @@ describe('TnTableComponent', () => {
       expect(component.cardPrimaryCount()).toBe(3);
     });
 
-    it('should not be in card or scroll mode at a wide container width', () => {
-      // ResizeObserver is unavailable under jsdom, so containerWidth stays
-      // Infinity — the table renders normally regardless of mobileLayout.
+    // An unmeasured host (no ResizeObserver under jsdom, or SSR) must fail safe to
+    // the full table rather than collapsing into cards. The breakpoint crossing
+    // itself is covered in table-card.harness.spec.ts, which mocks ResizeObserver.
+    it('should render the table layout while the container is unmeasured', () => {
       fixture.componentRef.setInput('mobileLayout', 'cards');
       fixture.detectChanges();
       expect(component.isCardMode()).toBe(false);
@@ -861,29 +862,9 @@ describe('TnTableComponent', () => {
       });
     });
 
-    describe('getCardLabel precedence', () => {
-      function fakeDef(opts: { cardLabel?: string; label?: string }): void {
-        jest.spyOn(component, 'getColumnDef').mockReturnValue({
-          cardLabel: () => opts.cardLabel,
-          label: () => opts.label,
-        } as never);
-      }
-
-      it('should prefer cardLabel over label and name', () => {
-        fakeDef({ cardLabel: 'Email address', label: 'Email' });
-        expect(component.getCardLabel('email')).toBe('Email address');
-      });
-
-      it('should fall back to the shared label when cardLabel is unset', () => {
-        fakeDef({ label: 'Email' });
-        expect(component.getCardLabel('email')).toBe('Email');
-      });
-
-      it('should fall back to the column name when neither is set', () => {
-        fakeDef({});
-        expect(component.getCardLabel('email')).toBe('email');
-      });
-    });
+    // `getCardLabel`'s cardLabel -> label -> name precedence is covered against real
+    // `tnColumnDef` inputs in table-card.harness.spec.ts. Asserting it here against a
+    // mocked `getColumnDef` would pass even if the directive lost those inputs.
 
     describe('card-mode sort', () => {
       it('should set the sort column to ascending and emit', () => {
