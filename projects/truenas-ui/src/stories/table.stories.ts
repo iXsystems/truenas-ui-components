@@ -1022,10 +1022,17 @@ export const ScrollModePinnedColumns: Story = {
         .toBe(Math.round(hostBox.right));
 
       // The projected controls fit the column, so a shortfall in `--tn-table-actions-width` fails
-      // here — before a control's centre crosses the edge and silently stops being clickable.
+      // here — before a control's centre crosses the edge and silently stops being clickable. The
+      // hit-test loop below does NOT catch that case on its own: a third control overflows the
+      // column while its centre is still inside the host, so this assertion is the only guard.
+      //
       // Compared on the cell's own scroll/client widths: `clientWidth` includes the cell's 32px of
-      // padding, so measuring the content wrapper against it would still pass while the content
-      // overflowed its actual content box.
+      // padding, so measuring the content wrapper against it hands that padding over for free and
+      // passes while the content overflows its real content box.
+      //
+      // Caveat: `scrollWidth` only sees inline-end overflow. This layout overflows right, so the
+      // guard holds — but under `direction: rtl` the overflow would go left, where `scrollWidth`
+      // reports nothing, and this would need a rect comparison instead.
       await expect(actionsCell.scrollWidth).toBeLessThanOrEqual(actionsCell.clientWidth);
 
       // Every action button is actually hittable at its centre — not merely painted.
@@ -1039,9 +1046,18 @@ export const ScrollModePinnedColumns: Story = {
       }
     };
 
-    // Wide enough that the pinned groups don't meet, then narrow enough that they do.
-    await assertPinnedAt('460px');
-    await assertPinnedAt('280px');
+    try {
+      // Wide enough that the pinned groups don't meet, then narrow enough that they do.
+      await assertPinnedAt('460px');
+      await assertPinnedAt('280px');
+    } finally {
+      // Leave the published example as its template declares it. Without this the story renders at
+      // the narrowest width the test uses, pre-scrolled, with the title column truncated — while
+      // its own docs invite the reader to drag it narrower.
+      wrapper.style.width = '460px';
+      host.scrollLeft = 0;
+      await settle();
+    }
   },
 };
 

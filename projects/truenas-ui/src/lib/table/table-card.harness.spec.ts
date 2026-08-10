@@ -456,7 +456,7 @@ describe('TnTable card layout', () => {
       component.withActions = true;
       fixture.detectChanges();
 
-      expect(tableMinWidth()).toBe('calc(120px * 5 + var(--tn-table-actions-width, 96px))');
+      expect(tableMinWidth()).toBe('calc(120px * 5 + var(--tn-table-actions-width))');
     });
 
     it('counts the select and expand columns as shares, and adds the actions width', () => {
@@ -466,7 +466,7 @@ describe('TnTable card layout', () => {
       fixture.detectChanges();
 
       // 5 displayed + __select + __expand as shares, plus the actions column's own width.
-      expect(tableMinWidth()).toBe('calc(120px * 7 + var(--tn-table-actions-width, 96px))');
+      expect(tableMinWidth()).toBe('calc(120px * 7 + var(--tn-table-actions-width))');
     });
   });
 

@@ -275,11 +275,15 @@ export class TnTableComponent<T = unknown> implements OnInit {
     // slightly, which is the behavior this component has always had and has tests for. Unifying
     // all three belongs in its own change.)
     //
-    // The `var()` fallback keeps the calc() valid if a consumer unsets the property; it mirrors
-    // the default in table.component.scss.
+    // No `var()` fallback on purpose. A duplicated default here is a second source of truth for a
+    // number the stylesheet owns, and it drifted the moment that default changed — leaving the
+    // exact value whose shortfall clipped the actions column sitting in code labelled "the
+    // default". `:host` always defines the property, so the only way to reach a fallback is to
+    // unset it deliberately, and an invalid calc() (no floor) is a more debuggable outcome than a
+    // floor computed from a stale constant.
     const columns = `${this.minColumnWidth()} * ${this.effectiveDisplayedColumns().length}`;
     return this.rowActionsDef()
-      ? `calc(${columns} + var(--tn-table-actions-width, 96px))`
+      ? `calc(${columns} + var(--tn-table-actions-width))`
       : `calc(${columns})`;
   });
 
