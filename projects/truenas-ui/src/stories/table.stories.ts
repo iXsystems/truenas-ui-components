@@ -976,42 +976,72 @@ export const ScrollModePinnedColumns: Story = {
   }),
   // Pinning is host-scoped CSS and sticky geometry, which jsdom cannot lay out — so the unit
   // specs can only assert the state machine (the host class, which layout renders). These are the
-  // invariants that actually broke, three rounds in a row: a pinned column overlapping its
-  // neighbour, and a pinned action button that paints but can't be clicked.
+  // invariants that actually broke: a pinned column overlapping its neighbour, a pinned action
+  // button that paints but can't be clicked, and an actions column too narrow for its content.
+  //
+  // Run at two widths, and set them explicitly. The pinned groups only collide below ~314px
+  // (the first data column's right edge is fixed once pinned, while the actions column's left edge
+  // tracks the host), so a single wide measurement passes even with the pinning broken. The
+  // wrapper's own `max-width: 100%` also means the effective width would otherwise depend on the
+  // CI canvas — a guard whose coverage varies by viewport is not a guard.
   play: async ({ canvasElement }) => {
     const host = canvasElement.querySelector('tn-table') as HTMLElement;
-    const row = host.querySelector('.tn-table__row') as HTMLElement;
-    const cells = [...row.querySelectorAll('.tn-table__cell')] as HTMLElement[];
-    const selectCell = cells[0];
-    const firstDataCell = cells[1];
-    const actionsCell = row.querySelector('.tn-table__actions-cell') as HTMLElement;
+    const wrapper = host.parentElement as HTMLElement;
 
     await expect(host.classList.contains('tn-table--scroll')).toBe(true);
-    await expect(selectCell.classList.contains('tn-table__select-cell')).toBe(true);
 
-    // Scroll far enough that unpinned columns have left the viewport.
-    host.scrollLeft = 250;
-    await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+    const settle = async (): Promise<void> => {
+      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+    };
 
-    const hostBox = host.getBoundingClientRect();
-    const selectBox = selectCell.getBoundingClientRect();
-    const dataBox = firstDataCell.getBoundingClientRect();
+    const assertPinnedAt = async (width: string): Promise<void> => {
+      wrapper.style.width = width;
+      await settle();
+      host.scrollLeft = 400;
+      await settle();
 
-    // The checkbox column is flush with the host's left edge, and the first data column starts
-    // exactly where it ends — no overlap, no gap.
-    await expect(Math.round(selectBox.left)).toBe(Math.round(hostBox.left));
-    await expect(Math.round(dataBox.left)).toBe(Math.round(selectBox.right));
+      const row = host.querySelector('.tn-table__row') as HTMLElement;
+      const cells = [...row.querySelectorAll('.tn-table__cell')] as HTMLElement[];
+      const selectCell = cells[0];
+      const firstDataCell = cells[1];
+      const actionsCell = row.querySelector('.tn-table__actions-cell') as HTMLElement;
+      await expect(selectCell.classList.contains('tn-table__select-cell')).toBe(true);
 
-    // The actions column stays flush with the host's right edge.
-    await expect(Math.round(actionsCell.getBoundingClientRect().right))
-      .toBe(Math.round(hostBox.right));
+      const hostBox = host.getBoundingClientRect();
+      const selectBox = selectCell.getBoundingClientRect();
+      const dataBox = firstDataCell.getBoundingClientRect();
 
-    // Every action button is actually hittable at its centre — not merely painted.
-    for (const button of [...actionsCell.querySelectorAll('button')] as HTMLElement[]) {
-      const box = button.getBoundingClientRect();
-      const topmost = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
-      await expect(button.contains(topmost) || button === topmost).toBe(true);
-    }
+      // The checkbox column is flush with the host's left edge, and the first data column starts
+      // exactly where it ends — no overlap, no gap.
+      await expect(Math.round(selectBox.left)).toBe(Math.round(hostBox.left));
+      await expect(Math.round(dataBox.left)).toBe(Math.round(selectBox.right));
+
+      // The actions column stays flush with the host's right edge.
+      await expect(Math.round(actionsCell.getBoundingClientRect().right))
+        .toBe(Math.round(hostBox.right));
+
+      // The projected controls fit the column, so a shortfall in `--tn-table-actions-width` fails
+      // here — before a control's centre crosses the edge and silently stops being clickable.
+      // Compared on the cell's own scroll/client widths: `clientWidth` includes the cell's 32px of
+      // padding, so measuring the content wrapper against it would still pass while the content
+      // overflowed its actual content box.
+      await expect(actionsCell.scrollWidth).toBeLessThanOrEqual(actionsCell.clientWidth);
+
+      // Every action button is actually hittable at its centre — not merely painted.
+      for (const button of [...actionsCell.querySelectorAll('button')] as HTMLElement[]) {
+        const box = button.getBoundingClientRect();
+        const topmost = document.elementFromPoint(
+          box.left + box.width / 2,
+          box.top + box.height / 2
+        );
+        await expect(button.contains(topmost) || button === topmost).toBe(true);
+      }
+    };
+
+    // Wide enough that the pinned groups don't meet, then narrow enough that they do.
+    await assertPinnedAt('460px');
+    await assertPinnedAt('280px');
   },
 };
 

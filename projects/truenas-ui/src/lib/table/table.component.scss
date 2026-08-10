@@ -27,17 +27,25 @@
 // horizontal padding, and the pinned data column overlapped the checkboxes by that much.
 //
 // `--tn-table-actions-width` sizes the trailing actions column under `fixedLayout`, which
-// distributes only what columns don't claim; consumers projecting more than a couple of controls
-// can raise it. `--tn-table-expand-width` is the chevron column.
+// distributes only what columns don't claim. `--tn-table-expand-width` is the chevron column.
 //
-// All three are **outer** widths (the cells set `box-sizing: border-box`), and the width floor in
-// `resolvedMinWidth` adds them verbatim. Keep it that way: an earlier revision had one as an
-// outer width and one as a content width, which both misaligned the pinned columns by a cell's
-// padding and made the floor understate the table by the same amount.
+// All three are **outer** widths — the cells set `box-sizing: border-box` — so each one is 32px
+// wider than the space its content actually gets (`__cell`'s `padding: 0 16px`; the expand cell's
+// inset is 24px). The defaults account for that: 128px holds two 40px icon buttons plus their gap
+// with room to spare. `table-layout: fixed` ignores content, so a column can never grow past this
+// on its own — projecting a third control means raising the value, and the
+// ScrollModePinnedColumns play function asserts the content still fits so a shortfall fails a test
+// instead of silently clipping a tap target.
+//
+// Keep them outer widths: an earlier revision mixed one outer and one content width, which
+// misaligned the pinned columns by a cell's padding and made the width floor understate the table
+// by the same amount. The floor adds `--tn-table-actions-width` verbatim and treats select and
+// expand as `minColumnWidth` shares — see `resolvedMinWidth`, which explains why, and note that
+// unifying all three is a follow-up rather than the current rule.
 :host {
   --tn-table-select-width: 72px;
-  --tn-table-actions-width: 96px;
-  --tn-table-expand-width: 48px;
+  --tn-table-actions-width: 128px;
+  --tn-table-expand-width: 56px;
 }
 
 // Screen-reader-only text. `.cdk-visually-hidden` comes from the CDK's global a11y stylesheet,
@@ -433,7 +441,8 @@
     border-radius: 4px;
   }
 
-  // Moved to a `:host()` block — see below.
+  // The loading `pointer-events` backstop lives in the `:host(.tn-table--loading)` block near the
+  // top of this file — it has to be host-scoped to match at all.
 
   // Dense variant
   &--dense {
