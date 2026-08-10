@@ -59,6 +59,18 @@
   </ng-template>
 
   <div class="tn-table__cards" role="list">
+    <!--
+      Card ARIA differs from the table row on purpose, because `listitem` supports
+      far less than `row` does:
+        - Active state uses `aria-current`, which is valid on any element, rather
+          than `aria-selected`, which `listitem` does not support (an earlier
+          revision set it here and it was dropped for that reason).
+        - Selection state stays on the checkbox, which is a real control.
+        - Expansion state stays on the "Details" button, for the same reason.
+      The card is deliberately NOT `role="button"`: that role has presentational
+      children, which would hide the card's checkbox, row actions and "Details"
+      toggle from assistive tech entirely.
+    -->
     @for (row of data(); track trackByFn()($index, row); let rowIdx = $index) {
       <div
         class="tn-table__card"
@@ -67,6 +79,7 @@
         [class.tn-table__card--active]="isRowActive(row)"
         [class.tn-table__card--clickable]="clickable()"
         [attr.tabindex]="clickable() ? 0 : null"
+        [attr.aria-current]="isRowActive(row) ? 'true' : null"
         (click)="onCardClick($event, row)"
         (keydown)="onCardKeydown($event, row)">
         <div class="tn-table__card-header">

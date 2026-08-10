@@ -797,7 +797,7 @@ export const ResponsiveCards: Story = {
     docs: {
       description: {
         story:
-          'When the table container is narrower than `cardBreakpoint` and `mobileLayout="cards"` (the default), each row collapses into a card. The `cardTitle` column anchors the card header alongside any `[tnRowActionsDef]` controls; remaining columns become priority-ranked fields, with lower-priority ones folded under "More fields". This story constrains the table to 380px to force card mode; resize the canvas to see the regular table return above the breakpoint.',
+          'When the table container is narrower than `cardBreakpoint` and `mobileLayout="cards"` is set, each row collapses into a card. Card mode is opt-in — `mobileLayout` defaults to `scroll`, which keeps the table and scrolls it horizontally instead. The `cardTitle` column anchors the card header alongside any `[tnRowActionsDef]` controls; remaining columns become priority-ranked fields, with lower-priority ones folded under "More fields".\n\nThe switch is driven by a `ResizeObserver` on the table\'s own host, so it follows the **container**, not the viewport — a table in a narrow sidebar goes to cards on a wide screen. The wrapper here starts at 520px (below the breakpoint, so cards) and is resizable: **drag its bottom-right handle** past 640px to watch the regular table come back. Lowering the `cardBreakpoint` control below 520 flips it the same way.',
       },
     },
   },
@@ -805,6 +805,7 @@ export const ResponsiveCards: Story = {
     dataSource: sampleData,
     displayedColumns: ['name', 'email', 'role', 'status'],
     selectable: true,
+    cardBreakpoint: 640,
   },
   render: (args) => ({
     props: {
@@ -813,11 +814,12 @@ export const ResponsiveCards: Story = {
       deleteIcon: tnIconMarker('delete', 'mdi'),
     },
     template: `
-      <div style="max-width: 380px;">
+      <div style="width: 520px; max-width: 100%; resize: horizontal; overflow: auto; padding: 0 8px 8px 0;">
         <tn-table
           [dataSource]="dataSource"
           [displayedColumns]="displayedColumns"
           [selectable]="selectable"
+          [cardBreakpoint]="cardBreakpoint"
           mobileLayout="cards">
           <ng-container tnColumnDef="name" label="Name" [cardTitle]="true" [sortable]="true">
             <ng-template let-user tnCellDef>{{ user.name }}</ng-template>

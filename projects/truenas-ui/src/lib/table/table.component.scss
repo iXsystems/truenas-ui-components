@@ -29,6 +29,44 @@
   border-radius: 4px;
 }
 
+// Scroll mode: pin the first column (and the actions column, handled in
+// `__actions-cell`) so they stay visible while the body scrolls horizontally.
+//
+// Host-scoped for the same reason as `--fixed-layout` above: `tn-table--scroll`
+// lives on the host, and Angular's emulated encapsulation appends
+// `[_ngcontent-*]` to *every* compound selector — so a nested `&--scroll`
+// descendant selector compiles to `.tn-table--scroll[_ngcontent-*] ...`, which
+// the host (it carries `[_nghost-*]`) never matches. Written that way the whole
+// block is silently dead.
+:host(.tn-table--scroll) {
+  // `__table` sets `overflow: hidden` to clip its own border-radius, which makes
+  // the table itself the scroll container for any sticky descendant — so the
+  // pinned cells below would stick to a box that never scrolls, i.e. not at all.
+  // Releasing it hands that role back to the host, which is what actually scrolls.
+  // Scoped to scroll mode so the radius clipping is untouched everywhere else.
+  .tn-table__table {
+    overflow: visible;
+  }
+
+  .tn-table__header-cell:first-child,
+  .tn-table__row > .tn-table__cell:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+  }
+
+  // Opaque so the cells scrolling underneath don't show through, but taken from
+  // the row rather than hard-coded, so an active / hovered / expanded row isn't
+  // notched at its pinned left edge.
+  .tn-table__row > .tn-table__cell:first-child {
+    background-color: inherit;
+  }
+
+  .tn-table__header-row .tn-table__header-cell:first-child {
+    background-color: var(--tn-topbar);
+  }
+}
+
 .tn-table {
   &__table {
     width: 100%;
@@ -96,6 +134,10 @@
   &__row {
     height: 48px;
     transition: background-color 0.2s ease;
+    // Opaque rather than transparent-over-`__body` so the sticky cells below can
+    // pick the row's fill up with `inherit` and stay in step with its state.
+    // Visually identical, since `__body` is this same color.
+    background-color: var(--tn-bg2);
 
     &:hover {
       background-color: var(--tn-alt-bg1);
@@ -246,7 +288,11 @@
     text-align: right;
     position: sticky;
     right: 0;
-    background-color: var(--tn-bg2);
+    // Inherited from the row for the same reason as the pinned first column in
+    // scroll mode: opaque, but in step with the row's active/hover/expanded fill
+    // instead of notching it at the right edge. The `__header` rule below
+    // re-establishes an opaque fill for the header, whose row sets none.
+    background-color: inherit;
     border-left: 1px solid var(--tn-lines);
   }
 
@@ -297,25 +343,6 @@
     .tn-table__cell {
       padding: 0 12px;
       font-size: 13px;
-    }
-  }
-
-  // --- Scroll mode: pin the first column (and the actions column, handled
-  // above) so they stay visible while the body scrolls horizontally. ---
-  &--scroll {
-    .tn-table__header-cell:first-child,
-    .tn-table__row > .tn-table__cell:first-child {
-      position: sticky;
-      left: 0;
-      z-index: 1;
-    }
-
-    .tn-table__row > .tn-table__cell:first-child {
-      background-color: var(--tn-bg2);
-    }
-
-    .tn-table__header-row .tn-table__header-cell:first-child {
-      background-color: var(--tn-topbar);
     }
   }
 

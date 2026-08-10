@@ -490,5 +490,40 @@ describe('TnTableHarness', () => {
 
       expect(component.selectedUsers).toHaveLength(3);
     });
+
+    describe('card ARIA', () => {
+      function card(index: number): HTMLElement {
+        return fixture.nativeElement.querySelector(
+          `.tn-table__card[data-row-index="${index}"]`
+        ) as HTMLElement;
+      }
+
+      it('marks the active card with aria-current', () => {
+        component.activeRow = TEST_USERS[1];
+        forceCardMode();
+
+        expect(card(1).getAttribute('aria-current')).toBe('true');
+        expect(card(0).getAttribute('aria-current')).toBeNull();
+      });
+
+      it('leaves aria-current off every card when none is active', () => {
+        forceCardMode();
+
+        expect(card(0).getAttribute('aria-current')).toBeNull();
+        expect(card(1).getAttribute('aria-current')).toBeNull();
+      });
+
+      // `listitem` supports neither, so setting them here would be ignored by
+      // assistive tech and flagged by axe. Selection lives on the checkbox and
+      // expansion on the "Details" button instead.
+      it('does not put aria-selected or role=button on the card', () => {
+        component.activeRow = TEST_USERS[0];
+        component.clickable = true;
+        forceCardMode();
+
+        expect(card(0).getAttribute('aria-selected')).toBeNull();
+        expect(card(0).getAttribute('role')).toBe('listitem');
+      });
+    });
   });
 });
