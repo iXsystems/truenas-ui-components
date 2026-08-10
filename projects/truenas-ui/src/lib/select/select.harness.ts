@@ -167,7 +167,10 @@ export class TnSelectHarness extends ComponentHarness {
     await this.open();
     // Dropdown panel is rendered in a CDK overlay (outside the host element),
     // so we search the document root rather than the harness-local subtree.
-    const options = await this.documentRootLocatorFactory().locatorForAll('.tn-select-option')();
+    // Exclude the select-all row (`.tn-select-select-all`) — it's a bulk
+    // action, not a choice; use `toggleSelectAll()` for it.
+    const options = await this.documentRootLocatorFactory()
+      .locatorForAll('.tn-select-option:not(.tn-select-select-all)')();
 
     for (const option of options) {
       const text = (await option.text()).trim();
@@ -232,7 +235,9 @@ export class TnSelectHarness extends ComponentHarness {
     await this.open();
     // Dropdown panel is rendered in a CDK overlay (outside the host element),
     // so we search the document root rather than the harness-local subtree.
-    const options = await this.documentRootLocatorFactory().locatorForAll('.tn-select-option')();
+    // The select-all row is excluded — it's a bulk action, not an option.
+    const options = await this.documentRootLocatorFactory()
+      .locatorForAll('.tn-select-option:not(.tn-select-select-all)')();
     const labels: string[] = [];
 
     for (const option of options) {
@@ -240,6 +245,48 @@ export class TnSelectHarness extends ComponentHarness {
     }
 
     return labels;
+  }
+
+  /**
+   * Toggles the select-all row (multiple mode with `showSelectAll`). Opens the
+   * dropdown if needed. Throws when the select-all row isn't present.
+   *
+   * @returns Promise that resolves once the row has been clicked.
+   *
+   * @example
+   * ```typescript
+   * const select = await loader.getHarness(TnSelectHarness);
+   * await select.toggleSelectAll(); // selects every option
+   * await select.toggleSelectAll(); // clears them again
+   * ```
+   */
+  async toggleSelectAll(): Promise<void> {
+    await this.open();
+    // Rendered in the CDK overlay, outside the host subtree.
+    const row = await this.documentRootLocatorFactory()
+      .locatorForOptional('.tn-select-select-all')();
+    if (!row) {
+      await this.close();
+      throw new Error('Select has no select-all row — set `multiple` and `showSelectAll`.');
+    }
+    await row.click();
+  }
+
+  /**
+   * Whether the select-all checkbox reads as fully checked (all options
+   * selected). Opens the dropdown if needed. Throws when the row isn't present.
+   *
+   * @returns Promise resolving to true when every option is selected.
+   */
+  async isSelectAllChecked(): Promise<boolean> {
+    await this.open();
+    const row = await this.documentRootLocatorFactory()
+      .locatorForOptional('.tn-select-select-all')();
+    if (!row) {
+      await this.close();
+      throw new Error('Select has no select-all row — set `multiple` and `showSelectAll`.');
+    }
+    return row.hasClass('selected');
   }
 }
 

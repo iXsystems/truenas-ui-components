@@ -264,6 +264,21 @@ export class TnTableHarness extends ComponentHarness {
   }
 
   /**
+   * Double-clicks a row (for tables with `clickable` enabled), triggering
+   * `rowDoubleClick`. Note that a real double-click also fires two single
+   * clicks first; this helper dispatches only the `dblclick` event.
+   *
+   * @param rowIndex Zero-based index of the data row.
+   */
+  async doubleClickRow(rowIndex: number): Promise<void> {
+    await this.assertRowExists(rowIndex);
+    const row = await this.locatorFor(
+      `.tn-table__row[data-row-index="${rowIndex}"]`
+    )();
+    await row.dispatchEvent('dblclick');
+  }
+
+  /**
    * Sends a keyboard event to a row (Enter/Space activate clickable rows).
    *
    * @param rowIndex Zero-based index of the data row.

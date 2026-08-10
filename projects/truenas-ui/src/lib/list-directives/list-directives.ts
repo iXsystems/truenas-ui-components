@@ -1,5 +1,24 @@
 import { Directive } from '@angular/core';
 
+/*
+ * Content directives for `tn-list-item` / `tn-list-option`.
+ *
+ * Each of these must be imported by the component whose template writes the
+ * attribute. `tn-list-item` renders its leading, secondary and trailing slots
+ * only when a matching directive *instance* is present, and a directive applies
+ * only in the template that declares it — importing the list-item component
+ * does not bring these into scope. An attribute written without its directive
+ * imported is inert: the slot stays closed and the content silently disappears.
+ * `[tnListItemTitle]` and `[tnListItemPrimary]` are the exception; their slot is
+ * ungated, so they project either way (they still need importing for the class
+ * and styling).
+ */
+
+/**
+ * Leading icon of a list row.
+ *
+ * Requires importing `TnListIconDirective`, or the leading slot never renders.
+ */
 @Directive({
   selector: '[tnListIcon]',
   standalone: true,
@@ -9,6 +28,11 @@ import { Directive } from '@angular/core';
 })
 export class TnListIconDirective {}
 
+/**
+ * Leading avatar of a list row.
+ *
+ * Requires importing `TnListAvatarDirective`, or the leading slot never renders.
+ */
 @Directive({
   selector: '[tnListAvatar]',
   standalone: true,
@@ -18,6 +42,10 @@ export class TnListIconDirective {}
 })
 export class TnListAvatarDirective {}
 
+/**
+ * Primary text of a list row. Projects whether or not this directive is
+ * imported — the primary slot is ungated — but import it for the styling.
+ */
 @Directive({
   selector: '[tnListItemTitle]',
   standalone: true,
@@ -27,6 +55,12 @@ export class TnListAvatarDirective {}
 })
 export class TnListItemTitleDirective {}
 
+/**
+ * Secondary line of a list row. Two or more make the row three-line.
+ *
+ * Requires importing `TnListItemLineDirective`, or the secondary slot never
+ * renders and the row is not marked as multi-line.
+ */
 @Directive({
   selector: '[tnListItemLine]',
   standalone: true,
@@ -36,6 +70,10 @@ export class TnListItemTitleDirective {}
 })
 export class TnListItemLineDirective {}
 
+/**
+ * Primary text of a list row. Projects whether or not this directive is
+ * imported — the primary slot is ungated — but import it for the styling.
+ */
 @Directive({
   selector: '[tnListItemPrimary]',
   standalone: true,
@@ -45,6 +83,12 @@ export class TnListItemLineDirective {}
 })
 export class TnListItemPrimaryDirective {}
 
+/**
+ * Secondary text of a list row.
+ *
+ * Requires importing `TnListItemSecondaryDirective`, or the secondary slot
+ * never renders and the row is not marked as multi-line.
+ */
 @Directive({
   selector: '[tnListItemSecondary]',
   standalone: true,
@@ -54,6 +98,12 @@ export class TnListItemPrimaryDirective {}
 })
 export class TnListItemSecondaryDirective {}
 
+/**
+ * Trailing content of a list row — a control, a badge, a chevron.
+ *
+ * Requires importing `TnListItemTrailingDirective`, or the trailing slot never
+ * renders.
+ */
 @Directive({
   selector: '[tnListItemTrailing]',
   standalone: true,

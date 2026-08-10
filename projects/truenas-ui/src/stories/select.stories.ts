@@ -46,6 +46,10 @@ const meta: Meta<TnSelectComponent> = {
       control: 'text',
       description: 'Label of the empty option shown when allowEmpty is set',
     },
+    showSelectAll: {
+      control: 'boolean',
+      description: 'Adds a select-all row that toggles every option (multiple mode only)',
+    },
     testId: {
       control: 'text',
       description: 'Test ID for the select component',
@@ -229,6 +233,41 @@ export const MultipleSelection: Story = {
   },
 };
 
+/**
+ * `showSelectAll` adds a "Select All" row at the top of the dropdown (multiple
+ * mode only). Clicking it selects every enabled option; clicking it again when
+ * all are selected clears them. Its checkbox is indeterminate while only some
+ * options are picked. Mirrors the old ix-select `[showSelectAll]`.
+ */
+export const MultipleWithSelectAll: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      logSelection: (_value: unknown) => {
+      }
+    },
+    template: `
+      <tn-form-field
+        label="Select fruits"
+        hint="Use the Select All row to toggle everything at once">
+        <tn-select
+          placeholder="Choose fruits"
+          [options]="options"
+          [multiple]="true"
+          [showSelectAll]="true"
+          (multiSelectionChange)="logSelection($event)">
+        </tn-select>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  args: {
+    options: fruitOptions,
+  },
+};
+
 export const MultipleWithGroups: Story = {
   render: (args) => ({
     props: {
@@ -330,6 +369,64 @@ export const FlipUpDropdown: Story = {
   }),
   args: {
     options: [10, 20, 50, 100].map((n) => ({ value: n, label: String(n) })),
+  },
+};
+
+// Trigger hugs the right viewport edge while the options are much wider than
+// the trigger — the panel must right-align (or push left) instead of spilling
+// past the screen edge and getting clipped.
+export const NearRightEdge: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      logSelection: (_value: unknown) => {},
+    },
+    template: `
+      <div style="display: flex; justify-content: flex-end;">
+        <div style="width: 120px;">
+          <tn-form-field
+            label="Category"
+            hint="Trigger sits at the right edge — the panel stays on screen">
+            <tn-select
+              [options]="options"
+              placeholder="Tasks"
+              (selectionChange)="logSelection($event)">
+            </tn-select>
+          </tn-form-field>
+        </div>
+      </div>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  args: {
+    options: [
+      { value: 'applications', label: 'Applications' },
+      { value: 'kmip', label: 'Key Management Interoperability Protocol' },
+      { value: 'network', label: 'Network' },
+      { value: 'connect', label: 'TrueNAS Connect Service' },
+      { value: 'ups', label: 'UPS' },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const trigger = canvas.getByRole('combobox');
+
+    await userEvent.click(trigger);
+    const panel = await waitFor(() => {
+      const el = document.querySelector('.tn-select-dropdown');
+      if (!el) {throw new Error('dropdown panel not rendered yet');}
+      return el as HTMLElement;
+    });
+
+    // The whole panel must sit within the viewport — a right edge beyond the
+    // window width means options are clipped off screen.
+    await waitFor(async () => {
+      const rect = panel.getBoundingClientRect();
+      await expect(rect.right).toBeLessThanOrEqual(document.documentElement.clientWidth);
+      await expect(rect.left).toBeGreaterThanOrEqual(0);
+    });
   },
 };
 

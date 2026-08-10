@@ -30,6 +30,10 @@ const meta: Meta<TnCardComponent> = {
       control: 'boolean',
       description: 'Enable content area padding. Set to false ONLY for full-width content like tables, images, or charts.',
     },
+    fillHeight: {
+      control: 'boolean',
+      description: 'Stretch the card to fill its container height (default). Set to false for a card that sizes to its content, e.g. a full-page card wrapping a table.',
+    },
     bordered: {
       control: 'boolean',
       description: 'Show border around card',
@@ -89,6 +93,7 @@ const meta: Meta<TnCardComponent> = {
         [padContent]="padContent"
         [bordered]="bordered"
         [background]="background"
+        [fillHeight]="fillHeight ?? true"
       >
         <p>This is the card content. You can put any content here including other components, text, images, etc.</p>
         <p>The card provides a clean container with customizable elevation, padding, and optional borders.</p>
@@ -254,6 +259,72 @@ export const FullWidthContent: Story = {
       </tn-card>
     `,
   }),
+};
+
+/**
+ * Cards fill their container's height by default — what an equal-height dashboard grid wants,
+ * where every card in a row matches the tallest.
+ *
+ * Set `[fillHeight]="false"` for a card that should size to its content instead. The typical
+ * case is a full-page card wrapping a table: in a container taller than the content, the
+ * default leaves a large empty area below the last row.
+ *
+ * Both cards below sit in the same 320px-tall container.
+ */
+export const ContentHeight: Story = {
+  args: {
+    elevation: 'medium',
+    padding: 'medium',
+    padContent: false,
+    bordered: true,
+    background: true,
+  },
+  render: (args) => ({
+    props: args,
+    template: `
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; height: 320px;">
+        <tn-card
+          title="fillHeight (default)"
+          [elevation]="elevation"
+          [padding]="padding"
+          [padContent]="padContent"
+          [bordered]="bordered"
+          [background]="background">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr><td style="padding: 8px 16px;">Pool A</td><td style="padding: 8px 16px;">Online</td></tr>
+            <tr><td style="padding: 8px 16px;">Pool B</td><td style="padding: 8px 16px;">Online</td></tr>
+          </table>
+        </tn-card>
+
+        <tn-card
+          title="fillHeight = false"
+          [fillHeight]="false"
+          [elevation]="elevation"
+          [padding]="padding"
+          [padContent]="padContent"
+          [bordered]="bordered"
+          [background]="background">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr><td style="padding: 8px 16px;">Pool A</td><td style="padding: 8px 16px;">Online</td></tr>
+            <tr><td style="padding: 8px 16px;">Pool B</td><td style="padding: 8px 16px;">Online</td></tr>
+          </table>
+        </tn-card>
+      </div>
+    `,
+  }),
+  play: async ({ canvasElement }) => {
+    // Measure the visible `.tn-card` box, not the host: as a grid item the host is stretched
+    // by `align-self: stretch` either way (which applies exactly when its height is `auto`).
+    // Releasing the inner element is what removes the visible empty area below the content.
+    const [filled, contentSized] = Array.from(
+      canvasElement.querySelectorAll<HTMLElement>('tn-card')
+    ).map((host) => ({
+      host: host.getBoundingClientRect().height,
+      card: host.querySelector('.tn-card')!.getBoundingClientRect().height,
+    }));
+    await expect(filled.card).toBeGreaterThanOrEqual(filled.host);
+    await expect(contentSized.card).toBeLessThan(contentSized.host);
+  },
 };
 
 export const BorderedLowElevation: Story = {

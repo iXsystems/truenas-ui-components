@@ -2,7 +2,7 @@ import { FocusMonitor } from '@angular/cdk/a11y';
 import { Component } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TnInputComponent } from './input.component';
 import { parseSize } from './size-conversion';
 import { InputType } from '../enums/input-type.enum';
@@ -861,6 +861,38 @@ describe('TnInputComponent with FormControl', () => {
   });
 });
 
+
+@Component({
+  selector: 'tn-test-form-name-host',
+  standalone: true,
+  imports: [TnInputComponent, ReactiveFormsModule],
+  template: `
+    <form [formGroup]="form">
+      <tn-input formControlName="sshPort" />
+    </form>
+  `,
+})
+class TestFormNameHostComponent {
+  form = new FormGroup({ sshPort: new FormControl('') });
+}
+
+describe('TnInputComponent test-id fallback', () => {
+  function render(): HTMLElement {
+    TestBed.configureTestingModule({
+      imports: [TestFormNameHostComponent],
+      providers: [TnIconTesting.jest.providers()],
+    });
+    const fixture = TestBed.createComponent(TestFormNameHostComponent);
+    fixture.detectChanges();
+    return fixture.nativeElement.querySelector('input') as HTMLElement;
+  }
+
+  it('derives data-testid from formControlName when no testId is set', () => {
+    // No explicit testId: the control name `sshPort` becomes `input-ssh-port`,
+    // exactly what consumers hand-write today as testId="ssh-port".
+    expect(render().getAttribute('data-testid')).toBe('input-ssh-port');
+  });
+});
 
 @Component({
   selector: 'tn-test-number-cva-host',

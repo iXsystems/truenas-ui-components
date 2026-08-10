@@ -1,10 +1,17 @@
 import { CdkTreeModule } from '@angular/cdk/tree';
 import { CommonModule } from '@angular/common';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
+import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
 import { tnIconMarker } from '../lib/icon/icon-marker';
 import { TnIconComponent } from '../lib/icon/icon.component';
+import { TnIconButtonComponent } from '../lib/icon-button/icon-button.component';
+import { TnInputComponent } from '../lib/input/input.component';
+import { TnNestedTreeDataSource } from '../lib/tree/nested-tree-datasource';
 import { TnNestedTreeNodeComponent } from '../lib/tree/nested-tree-node.component';
+import { createNestedTreeControl } from '../lib/tree/tree-control.factory';
 import { TnTreeNodeOutletDirective } from '../lib/tree/tree-node-outlet.directive';
 import { TnTreeNodeComponent } from '../lib/tree/tree-node.component';
 import { TnTreeComponent, FlatTreeControl, TnTreeFlatDataSource, TnTreeFlattener, ArrayDataSource } from '../lib/tree/tree.component';
@@ -16,6 +23,13 @@ tnIconMarker('file', 'mdi');
 tnIconMarker('folder', 'mdi');
 tnIconMarker('nas', 'mdi');
 tnIconMarker('share-variant', 'mdi');
+// Dynamically-referenced by the CustomToggle story's tn-icon-button
+tnIconMarker('chevron-down', 'mdi');
+tnIconMarker('chevron-right', 'mdi');
+
+const harnessDoc = [loadHarnessDoc('tree'), loadHarnessDoc('tree-node')]
+  .filter(Boolean)
+  .join('\n\n---\n\n');
 
 // Example data structure for CDK Tree integration
 interface FileNode {
@@ -44,7 +58,8 @@ const meta: Meta<TnTreeComponent<FileNode, FileFlatNode>> = {
         TnTreeNodeComponent,
         TnNestedTreeNodeComponent,
         TnTreeNodeOutletDirective,
-        TnIconComponent
+        TnIconComponent,
+        TnIconButtonComponent
       ],
     }),
   ],
@@ -298,13 +313,148 @@ export const NestedTree: Story = {
           {{ node.name }}
         </tn-nested-tree-node>
 
-        <!-- Node definition for expandable nodes (component provides toggle arrow) -->
-        <tn-nested-tree-node *cdkTreeNodeDef="let node; when: hasChild" cdkTreeNodeToggle>
+        <!-- Node definition for expandable nodes (component provides toggle arrow).
+             Alt+click the toggle to expand/collapse the node with all descendants. -->
+        <tn-nested-tree-node
+          *cdkTreeNodeDef="let node; when: hasChild"
+          [toggleAriaLabel]="'Toggle ' + node.name"
+          [toggleTestId]="['toggle', node.name]"
+        >
           <tn-icon [name]="node.type === 'folder' ? 'folder' : 'file'" library="mdi" size="sm"></tn-icon>
           {{ node.name }}
-          <ng-container slot="children" ixTreeNodeOutlet></ng-container>
+          <ng-container slot="children" tnTreeNodeOutlet></ng-container>
         </tn-nested-tree-node>
       </tn-tree>
     `
   }),
+};
+
+export const FilterableNestedTree: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Nested tree driven by the legacy-control path most consumers migrate onto: '
+          + '`createNestedTreeControl` for expansion state and `TnNestedTreeDataSource` for data. '
+          + 'Type in the filter box to narrow the tree through the datasource\'s debounced `filter()` '
+          + '(the predicate here keeps any root whose subtree matches). '
+          + 'Alt+click a toggle to expand or collapse a node together with all of its descendants.'
+      }
+    }
+  },
+  render: () => {
+    const treeControl = createNestedTreeControl<FileNode>((node) => node.children);
+    const dataSource = new TnNestedTreeDataSource<FileNode>(TREE_DATA);
+    const subtreeMatches = (node: FileNode, query: string): boolean => {
+      return node.name.toLowerCase().includes(query.toLowerCase())
+        || !!node.children?.some((child) => subtreeMatches(child, query));
+    };
+    dataSource.filterPredicate = (data, query) => data.filter((node) => subtreeMatches(node, query));
+    const filterControl = new FormControl('', { nonNullable: true });
+    filterControl.valueChanges.subscribe((value) => dataSource.filter(value));
+
+    return {
+      moduleMetadata: {
+        imports: [ReactiveFormsModule, TnFormFieldComponent, TnInputComponent],
+      },
+      props: {
+        treeControl,
+        dataSource,
+        filterControl,
+        hasChild: (_: number, node: FileNode) => !!node.children?.length,
+      },
+      template: `
+        <tn-form-field label="Filter nodes" style="display: block; max-width: 240px; margin-bottom: 8px;">
+          <tn-input
+            placeholder="Filter nodes…"
+            testId="tree-filter"
+            [formControl]="filterControl"
+          ></tn-input>
+        </tn-form-field>
+        <tn-tree [dataSource]="dataSource" [treeControl]="treeControl" style="max-width: 400px;">
+          <tn-nested-tree-node *cdkTreeNodeDef="let node">
+            <tn-icon [name]="node.type === 'folder' ? 'folder' : 'file'" library="mdi" size="sm"></tn-icon>
+            {{ node.name }}
+          </tn-nested-tree-node>
+
+          <!-- No toggleTestId needed: it derives from the node's testId
+               (button-toggle-<name>) -->
+          <tn-nested-tree-node
+            *cdkTreeNodeDef="let node; when: hasChild"
+            [testId]="node.name"
+            [toggleAriaLabel]="'Toggle ' + node.name"
+          >
+            <tn-icon [name]="node.type === 'folder' ? 'folder' : 'file'" library="mdi" size="sm"></tn-icon>
+            {{ node.name }}
+            <ng-container slot="children" tnTreeNodeOutlet></ng-container>
+          </tn-nested-tree-node>
+        </tn-tree>
+      `
+    };
+  },
+};
+
+export const CustomToggle: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Expandable nodes rendered with `hideToggle`, replacing the built-in chevron with a '
+          + 'consumer-provided `tn-icon-button`. The built-in button is the only keyboard-operable '
+          + 'expand control the component guarantees, so a custom toggle must itself be an accessible '
+          + 'control — a real button with an aria-label (and ideally a test id), as shown here.'
+      }
+    }
+  },
+  render: () => {
+    const treeControl = createNestedTreeControl<FileNode>((node) => node.children);
+    const dataSource = new TnNestedTreeDataSource<FileNode>(TREE_DATA);
+
+    return {
+      props: {
+        treeControl,
+        dataSource,
+        hasChild: (_: number, node: FileNode) => !!node.children?.length,
+      },
+      template: `
+        <tn-tree [dataSource]="dataSource" [treeControl]="treeControl" style="max-width: 400px;">
+          <tn-nested-tree-node *cdkTreeNodeDef="let node">
+            <tn-icon [name]="'file'" library="mdi" size="sm"></tn-icon>
+            {{ node.name }}
+          </tn-nested-tree-node>
+
+          <tn-nested-tree-node *cdkTreeNodeDef="let node; when: hasChild" hideToggle>
+            <tn-icon-button
+              library="mdi"
+              size="sm"
+              [name]="treeControl.isExpanded(node) ? 'chevron-down' : 'chevron-right'"
+              [ariaLabel]="'Toggle ' + node.name"
+              [testId]="['toggle', node.name]"
+              (click)="treeControl.toggle(node)"
+            ></tn-icon-button>
+            <tn-icon [name]="'folder'" library="mdi" size="sm"></tn-icon>
+            {{ node.name }}
+            <ng-container slot="children" tnTreeNodeOutlet></ng-container>
+          </tn-nested-tree-node>
+        </tn-tree>
+      `
+    };
+  },
+};
+
+/**
+ * Auto-generated API documentation for `TnTreeHarness` / `TnTreeNodeHarness`, rendered in the
+ * Docs tab. Use the harnesses to drive trees in consumer tests (query nodes by text/level/
+ * expansion, expand/collapse, Alt-toggle descendants).
+ */
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      story: { height: 'auto' },
+      canvas: { hidden: true, sourceState: 'none' },
+      description: { story: harnessDoc || '' },
+    },
+    controls: { disable: true },
+    layout: 'fullscreen',
+  },
+  render: () => ({ template: '' }),
 };

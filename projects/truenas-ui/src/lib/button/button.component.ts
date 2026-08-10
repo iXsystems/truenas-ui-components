@@ -12,6 +12,9 @@ import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
   imports: [CommonModule, RouterLink, TnTestIdDirective, LabelMarkupPipe, TnIconComponent],
   templateUrl: './button.component.html',
   styleUrls: ['./button.component.scss'],
+  host: {
+    '[class.tn-button--full-width]': 'fullWidth()',
+  },
 })
 export class TnButtonComponent implements AfterViewInit {
   size = 'large';
@@ -33,6 +36,11 @@ export class TnButtonComponent implements AfterViewInit {
    */
   iconPosition = input<'left' | 'right'>('left');
   disabled = input<boolean>(false);
+  /**
+   * Stretches the button to the full width of its container instead of
+   * shrink-wrapping the label. Use for buttons that head or foot a form column.
+   */
+  fullWidth = input<boolean>(false);
   /**
    * Native `type` of the rendered `<button>`. Defaults to `button` so stray
    * clicks never submit an enclosing form. Set to `submit` for a form's save

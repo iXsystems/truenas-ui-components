@@ -5,14 +5,18 @@
     class="tn-select-trigger"
     role="combobox"
     tnTestIdType="select"
-    [tnTestId]="testId()"
+    [tnTestId]="resolvedTestId()"
     [attr.tabindex]="isDisabled() ? -1 : 0"
     [class.disabled]="isDisabled()"
     [class.open]="isOpen()"
     [attr.aria-expanded]="isOpen()"
     [attr.aria-haspopup]="'listbox'"
     [attr.aria-controls]="isOpen() ? 'tn-select-dropdown-' + idNamespace() : null"
-    [attr.aria-label]="ariaLabel() ?? placeholder()"
+    [attr.aria-label]="triggerAriaLabel()"
+    [attr.aria-labelledby]="fieldAria.labelledby()"
+    [attr.aria-describedby]="fieldAria.describedby()"
+    [attr.aria-invalid]="fieldAria.invalid()"
+    [attr.aria-required]="fieldAria.required()"
     [attr.aria-disabled]="isDisabled()"
     [attr.aria-activedescendant]="isOpen() ? focusedOptionId() : null"
     (click)="toggleDropdown()"
@@ -46,6 +50,34 @@
 
     <!-- Options List -->
     <div class="tn-select-options">
+      <!-- Select-all row (multiple mode with showSelectAll). Toggles every
+           selectable option; its checkbox reflects all/some/none. -->
+      @if (showSelectAllRow()) {
+        <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events -->
+        <div
+          class="tn-select-option tn-select-select-all"
+          role="option"
+          tabindex="-1"
+          tnTestIdType="option"
+          [tnTestId]="selectAllTestIdParts()"
+          [attr.id]="selectAllId()"
+          [class.selected]="allSelected()"
+          [class.focused]="isSelectAllFocused()"
+          [attr.aria-selected]="allSelected()"
+          (mousedown)="$event.preventDefault()"
+          (click)="toggleSelectAll()">
+          <tn-checkbox
+            class="tn-select-check"
+            label=""
+            [checked]="allSelected()"
+            [indeterminate]="selectAllIndeterminate()"
+            [disabled]="true"
+            [hideLabel]="true" />
+          {{ selectAllLabel() }}
+        </div>
+        <div class="tn-select-separator" role="separator"></div>
+      }
+
       <!-- Regular Options (preceded by the synthetic empty option when allowEmpty is set) -->
       @for (option of displayOptions(); track $index) {
         <!-- Option activation lives on the trigger via aria-activedescendant; options have tabindex="-1" and never receive DOM focus. -->

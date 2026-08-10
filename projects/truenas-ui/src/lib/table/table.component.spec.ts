@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { Component, signal } from '@angular/core';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
@@ -310,6 +312,22 @@ describe('TnTableComponent', () => {
       expect(spy).toHaveBeenCalledWith(testData[1]);
     });
 
+    it('should not emit rowDoubleClick when not clickable', () => {
+      const spy = jest.fn();
+      component.rowDoubleClick.subscribe(spy);
+      component.onRowDoubleClick(testData[0]);
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('should emit rowDoubleClick when clickable', () => {
+      fixture.componentRef.setInput('clickable', true);
+      const spy = jest.fn();
+      component.rowDoubleClick.subscribe(spy);
+
+      component.onRowDoubleClick(testData[1]);
+      expect(spy).toHaveBeenCalledWith(testData[1]);
+    });
+
     it('should emit rowClick on Enter keydown', () => {
       fixture.componentRef.setInput('clickable', true);
       const spy = jest.fn();
@@ -370,6 +388,106 @@ describe('TnTableComponent', () => {
       for (const row of rows) {
         expect(row.getAttribute('tabindex')).toBeNull();
       }
+    });
+  });
+
+  describe('fixedLayout', () => {
+    it('is off by default, so columns keep sizing to their content', () => {
+      expect(fixture.nativeElement.classList).not.toContain('tn-table--fixed-layout');
+    });
+
+    it('marks the host when enabled', () => {
+      fixture.componentRef.setInput('fixedLayout', true);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.classList).toContain('tn-table--fixed-layout');
+    });
+
+    it('scopes its rules to :host, without which they could never match', () => {
+      // The class lands on the HOST element, which carries `_nghost` and not `_ngcontent`, so a
+      // plain `.tn-table--fixed-layout` rule is silently inert under emulated encapsulation: the
+      // class is applied, nothing is styled, and a test asserting only the class still passes.
+      // Checked against the source — Jest neither compiles the SCSS into `ɵcmp.styles` nor
+      // resolves `table-layout` through `getComputedStyle`, so there is nothing to assert at
+      // runtime.
+      //
+      // Comments name the class too, so they are dropped before matching; whitespace is then
+      // collapsed so a selector reformatted across lines still reads as one rule here.
+      const scss = readFileSync(join(__dirname, 'table.component.scss'), 'utf8')
+        .replace(/\/\/[^\n]*/g, '')
+        .replace(/\s+/g, ' ');
+      const rules = scss.match(/[^{};]*tn-table--fixed-layout[^{};]*\{/g) ?? [];
+
+      expect(rules.length).toBeGreaterThan(0);
+      for (const rule of rules) {
+        expect(rule).toContain(':host(');
+      }
+    });
+  });
+
+  describe('width floor', () => {
+    const tableEl = (): HTMLElement => fixture.nativeElement.querySelector('table') as HTMLElement;
+
+    it('applies no floor without fixedLayout, since auto layout overflows and scrolls on its own', () => {
+      fixture.componentRef.setInput('displayedColumns', ['a', 'b', 'c']);
+      fixture.detectChanges();
+
+      expect(tableEl().style.minWidth).toBe('');
+    });
+
+    it('derives the floor from the column count, so no page has to pick a number', () => {
+      fixture.componentRef.setInput('displayedColumns', ['a', 'b', 'c']);
+      fixture.componentRef.setInput('fixedLayout', true);
+      fixture.detectChanges();
+
+      expect(tableEl().style.minWidth).toBe('calc(120px * 3)');
+    });
+
+    it('grows the floor with the table, so a wide list scrolls where a narrow one does not', () => {
+      fixture.componentRef.setInput('displayedColumns', ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']);
+      fixture.componentRef.setInput('fixedLayout', true);
+      fixture.detectChanges();
+
+      expect(tableEl().style.minWidth).toBe('calc(120px * 8)');
+    });
+
+    it('counts the columns the table adds itself', () => {
+      fixture.componentRef.setInput('displayedColumns', ['a', 'b']);
+      fixture.componentRef.setInput('fixedLayout', true);
+      fixture.componentRef.setInput('selectable', true);
+      fixture.detectChanges();
+
+      expect(tableEl().style.minWidth).toBe('calc(120px * 3)');
+    });
+
+    it('honours a custom minColumnWidth', () => {
+      fixture.componentRef.setInput('displayedColumns', ['a', 'b']);
+      fixture.componentRef.setInput('fixedLayout', true);
+      fixture.componentRef.setInput('minColumnWidth', '10rem');
+      fixture.detectChanges();
+
+      expect(tableEl().style.minWidth).toBe('calc(10rem * 2)');
+    });
+
+    it('lets an explicit minWidth override the derivation', () => {
+      fixture.componentRef.setInput('displayedColumns', ['a', 'b']);
+      fixture.componentRef.setInput('fixedLayout', true);
+      fixture.componentRef.setInput('minWidth', '900px');
+      fixture.detectChanges();
+
+      expect(tableEl().style.minWidth).toBe('900px');
+    });
+  });
+
+  describe('emptyDescription', () => {
+    it('renders a second line under the empty message when given one', () => {
+      fixture.componentRef.setInput('dataSource', []);
+      fixture.componentRef.setInput('emptyMessage', 'No results');
+      fixture.componentRef.setInput('emptyDescription', 'Try a different search.');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('No results');
+      expect(fixture.nativeElement.textContent).toContain('Try a different search.');
     });
   });
 
@@ -443,6 +561,21 @@ describe('TnTableComponent', () => {
       expect(component.isRowActive(testData[0])).toBe(false);
     });
 
+    it('should mark every row matching the activeWhen predicate as active', () => {
+      fixture.componentRef.setInput('activeWhen', (row: { id: number }) => row.id !== 2);
+      expect(component.isRowActive(testData[0])).toBe(true);
+      expect(component.isRowActive(testData[1])).toBe(false);
+      expect(component.isRowActive(testData[2])).toBe(true);
+    });
+
+    it('should combine activeWhen with activeRow', () => {
+      fixture.componentRef.setInput('activeWhen', (row: { id: number }) => row.id === 3);
+      fixture.componentRef.setInput('activeRow', testData[0]);
+      expect(component.isRowActive(testData[0])).toBe(true);
+      expect(component.isRowActive(testData[1])).toBe(false);
+      expect(component.isRowActive(testData[2])).toBe(true);
+    });
+
     it('should leave active style CSS vars unset by default', () => {
       const host = fixture.nativeElement as HTMLElement;
       expect(host.style.getPropertyValue('--tn-table-active-bg')).toBe('');
@@ -495,6 +628,110 @@ describe('TnTableComponent', () => {
       fixture.detectChanges();
       component.toggleRowExpansion(testData[0]);
       expect(component.isRowExpanded(testData[0])).toBe(false);
+    });
+
+    describe('singleExpand', () => {
+      it('collapses the previously expanded row', () => {
+        fixture.componentRef.setInput('singleExpand', true);
+        fixture.detectChanges();
+
+        component.toggleRowExpansion(testData[0]);
+        component.toggleRowExpansion(testData[1]);
+
+        expect(component.isRowExpanded(testData[0])).toBe(false);
+        expect(component.isRowExpanded(testData[1])).toBe(true);
+      });
+
+      it('still collapses the open row when it is toggled again', () => {
+        fixture.componentRef.setInput('singleExpand', true);
+        fixture.detectChanges();
+
+        component.toggleRowExpansion(testData[0]);
+        component.toggleRowExpansion(testData[0]);
+
+        expect(component.isRowExpanded(testData[0])).toBe(false);
+      });
+    });
+
+    describe('expandOnRowClick', () => {
+      beforeEach(() => {
+        fixture.componentRef.setInput('clickable', true);
+        fixture.componentRef.setInput('expandOnRowClick', true);
+        fixture.detectChanges();
+      });
+
+      it('toggles expansion when a row is activated, and still emits rowClick', () => {
+        const clicked = jest.fn();
+        component.rowClick.subscribe(clicked);
+
+        component.onRowClick(testData[0]);
+
+        expect(component.isRowExpanded(testData[0])).toBe(true);
+        expect(clicked).toHaveBeenCalledWith(testData[0]);
+      });
+
+      it('toggles expansion from the keyboard too', () => {
+        component.onRowKeydown(new KeyboardEvent('keydown', { key: 'Enter' }), testData[0]);
+
+        expect(component.isRowExpanded(testData[0])).toBe(true);
+      });
+
+      it('leaves expansion alone when not enabled', () => {
+        fixture.componentRef.setInput('expandOnRowClick', false);
+        fixture.detectChanges();
+
+        component.onRowClick(testData[0]);
+
+        expect(component.isRowExpanded(testData[0])).toBe(false);
+      });
+
+      it('does not expand a row the predicate rejects', () => {
+        fixture.componentRef.setInput('isRowExpandable', (row: { id: number }) => row.id !== 1);
+        fixture.detectChanges();
+
+        component.onRowClick(testData[0]);
+
+        expect(component.isRowExpanded(testData[0])).toBe(false);
+      });
+
+      describe('row aria-expanded', () => {
+        const firstRow = (): HTMLElement =>
+          fixture.nativeElement.querySelector('.tn-table__row') as HTMLElement;
+
+        it('announces the row as a collapsed expander, since the row is the control here', () => {
+          // Without this a screen-reader user who focuses the row and presses Enter hears nothing
+          // change: the state lives only on the chevron they never touched.
+          expect(firstRow().getAttribute('aria-expanded')).toBe('false');
+        });
+
+        it('flips to true once the row is expanded', () => {
+          component.onRowClick(testData[0]);
+          fixture.detectChanges();
+
+          expect(firstRow().getAttribute('aria-expanded')).toBe('true');
+        });
+
+        it('stays off the row when only the chevron expands, which carries its own state', () => {
+          fixture.componentRef.setInput('expandOnRowClick', false);
+          fixture.detectChanges();
+
+          expect(firstRow().getAttribute('aria-expanded')).toBeNull();
+        });
+
+        it('stays off a row that is not activatable, since Enter never toggles it', () => {
+          fixture.componentRef.setInput('clickable', false);
+          fixture.detectChanges();
+
+          expect(firstRow().getAttribute('aria-expanded')).toBeNull();
+        });
+
+        it('stays off a row the predicate rejects, which never expands', () => {
+          fixture.componentRef.setInput('isRowExpandable', (row: { id: number }) => row.id !== 1);
+          fixture.detectChanges();
+
+          expect(firstRow().getAttribute('aria-expanded')).toBeNull();
+        });
+      });
     });
 
     describe('isRowExpandable predicate', () => {
@@ -744,6 +981,56 @@ describe('TnTableComponent', () => {
           row
         );
         expect(emit).not.toHaveBeenCalled();
+      });
+
+      describe('expandOnRowClick', () => {
+        beforeEach(() => {
+          fixture.componentRef.setInput('clickable', true);
+          fixture.componentRef.setInput('expandable', true);
+          fixture.componentRef.setInput('expandOnRowClick', true);
+          fixture.detectChanges();
+        });
+
+        it('should toggle the card detail section when the card is activated', () => {
+          const event = clickEventFrom('<span class="tn-table__card-title">x</span>');
+          component.onCardClick(event, row);
+          expect(component.isRowExpanded(row)).toBe(true);
+
+          component.onCardClick(event, row);
+          expect(component.isRowExpanded(row)).toBe(false);
+        });
+
+        it('should toggle the card detail section on Enter', () => {
+          const target = document.createElement('span');
+          target.className = 'tn-table__card-title';
+          const event = {
+            key: 'Enter',
+            target,
+            preventDefault: jest.fn(),
+          } as unknown as KeyboardEvent;
+
+          component.onCardKeydown(event, row);
+          expect(component.isRowExpanded(row)).toBe(true);
+        });
+
+        it('should not toggle expansion when the activation came from a card control', () => {
+          component.onCardClick(
+            clickEventFrom('<div class="tn-table__card-actions"><button>edit</button></div>'),
+            row
+          );
+          expect(component.isRowExpanded(row)).toBe(false);
+        });
+
+        it('should leave expansion alone when expandOnRowClick is off', () => {
+          fixture.componentRef.setInput('expandOnRowClick', false);
+          fixture.detectChanges();
+          const emit = jest.spyOn(component.rowClick, 'emit');
+
+          component.onCardClick(clickEventFrom('<span class="tn-table__card-title">x</span>'), row);
+
+          expect(component.isRowExpanded(row)).toBe(false);
+          expect(emit).toHaveBeenCalledWith(row);
+        });
       });
     });
   });

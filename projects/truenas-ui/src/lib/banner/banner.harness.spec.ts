@@ -113,4 +113,24 @@ describe('TnBannerHarness', () => {
       TnBannerHarness.with({ textContains: 'NonExistentText12345' })
     )).toBe(false);
   });
+
+  it('should partial match with strings', async () => {
+    hostComponent.message.set('Error: timeout occurred');
+    fixture.detectChanges();
+
+    const banner = await loader.getHarness(
+      TnBannerHarness.with({ textContains: 'Error:' })
+    );
+    expect(banner).toBeTruthy();
+  });
+
+  it('should partial match on  strings containing special characters', async () => {
+    hostComponent.message.set('Look! I\'m calling a function: fxn()');
+    fixture.detectChanges();
+
+    const banner = await loader.getHarness(
+      TnBannerHarness.with({ textContains: 'fxn()' })
+    );
+    expect(banner).toBeTruthy();
+  });
 });

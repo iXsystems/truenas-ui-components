@@ -9,7 +9,7 @@
     <button
       type="button"
       class="tn-calendar-period-button"
-      [attr.aria-label]="'Choose month and year'"
+      [attr.aria-label]="periodButtonLabel()"
       [attr.aria-describedby]="periodLabelId"
       (click)="toggleView()">
       <span [attr.aria-hidden]="true">{{ periodLabel() }}</span>

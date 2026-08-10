@@ -304,6 +304,19 @@ describe('TnButtonComponent', () => {
     });
   });
 
+  describe('fullWidth', () => {
+    it('shrink-wraps by default', () => {
+      expect(fixture.nativeElement.classList).not.toContain('tn-button--full-width');
+    });
+
+    it('marks the host so it and the rendered button fill the container', () => {
+      fixture.componentRef.setInput('fullWidth', true);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.classList).toContain('tn-button--full-width');
+    });
+  });
+
   describe('testId under the data-test convention (webui consumers)', () => {
     it('emits the same value under data-test when TN_TEST_ATTR is overridden', async () => {
       const { TN_TEST_ATTR } = await import('../test-id');

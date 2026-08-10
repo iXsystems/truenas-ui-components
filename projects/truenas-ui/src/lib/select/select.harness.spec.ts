@@ -3,6 +3,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import type { TnSelectOption, TnSelectOptionGroup } from './select.component';
 import { TnSelectComponent } from './select.component';
 import { TnSelectHarness } from './select.harness';
@@ -60,6 +61,55 @@ class TestMultiHostComponent {
   handleSelection(value: string | null): void {
     this.selectedValues.push(value);
   }
+}
+
+@Component({
+  selector: 'tn-test-select-all-host',
+  standalone: true,
+  imports: [TnSelectComponent],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-select
+      testId="fruit"
+      placeholder="Select fruits"
+      [options]="options()"
+      [multiple]="true"
+      [showSelectAll]="true"
+      (multiSelectionChange)="lastArray = $event" />
+  `
+})
+class TestSelectAllHostComponent {
+  // Cherry is disabled — select-all must skip it.
+  options = signal<TnSelectOption<string>[]>([
+    { value: 'apple', label: 'Apple' },
+    { value: 'banana', label: 'Banana' },
+    { value: 'cherry', label: 'Cherry', disabled: true },
+  ]);
+  lastArray: string[] = [];
+}
+
+@Component({
+  selector: 'tn-test-select-all-preselected-host',
+  standalone: true,
+  imports: [TnSelectComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-select
+      placeholder="Select fruits"
+      [options]="options()"
+      [multiple]="true"
+      [showSelectAll]="true"
+      [formControl]="control" />
+  `
+})
+class TestSelectAllPreselectedHostComponent {
+  // Cherry is disabled but pre-selected — select-all must not discard it.
+  options = signal<TnSelectOption<string>[]>([
+    { value: 'apple', label: 'Apple' },
+    { value: 'banana', label: 'Banana' },
+    { value: 'cherry', label: 'Cherry', disabled: true },
+  ]);
+  control = new FormControl<string[]>(['cherry']);
 }
 
 @Component({
@@ -121,6 +171,40 @@ class TestGroupDisabledHostComponent {
   handleSelection(value: string | null): void {
     this.selectedValue = value;
   }
+}
+
+@Component({
+  selector: 'tn-test-select-all-dup-host',
+  standalone: true,
+  imports: [TnSelectComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-select
+      placeholder="Select fruits"
+      [options]="options()"
+      [optionGroups]="groups()"
+      [multiple]="true"
+      [showSelectAll]="true"
+      [formControl]="control" />
+  `
+})
+class TestSelectAllDuplicateHostComponent {
+  // 'apple' appears both ungrouped and inside a group — select-all must not
+  // add it twice.
+  options = signal<TnSelectOption<string>[]>([
+    { value: 'apple', label: 'Apple' },
+    { value: 'banana', label: 'Banana' },
+  ]);
+  groups = signal<TnSelectOptionGroup<string>[]>([
+    {
+      label: 'More',
+      options: [
+        { value: 'apple', label: 'Apple (again)' },
+        { value: 'cherry', label: 'Cherry' },
+      ]
+    },
+  ]);
+  control = new FormControl<string[]>([]);
 }
 
 @Component({
@@ -271,6 +355,23 @@ describe('TnSelectHarness', () => {
       // (flip above when there's no room below), which doesn't add a custom
       // class for us to assert on — covered by CDK's own tests.
       expect(document.querySelector('.tn-select-dropdown')).not.toBeNull();
+    });
+
+    it('should close when the backdrop (outside click) is clicked', async () => {
+      const select = await loader.getHarness(TnSelectHarness);
+      await select.open();
+      expect(await select.isOpen()).toBe(true);
+
+      // A click anywhere outside the panel lands on the transparent backdrop
+      // that CDK renders over the viewport. This is the dismiss path that was
+      // previously broken: the backdrop-less overlay only closed on clicks
+      // strictly outside the (oversized) pane, so clicks in the empty area
+      // beside a narrow panel never dismissed it.
+      const backdrop = document.querySelector<HTMLElement>('.cdk-overlay-backdrop');
+      expect(backdrop).not.toBeNull();
+      backdrop!.click();
+
+      expect(await select.isOpen()).toBe(false);
     });
   });
 
@@ -426,6 +527,134 @@ describe('TnSelectHarness - multiple mode', () => {
   it('should ignore allowEmpty in multiple mode', async () => {
     const select = await loader.getHarness(TnSelectHarness);
     expect(await select.getOptions()).toEqual(['Apple', 'Banana', 'Cherry']);
+  });
+});
+
+describe('TnSelectHarness - select all', () => {
+  let fixture: ComponentFixture<TestSelectAllHostComponent>;
+  let hostComponent: TestSelectAllHostComponent;
+  let loader: HarnessLoader;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TestSelectAllHostComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestSelectAllHostComponent);
+    hostComponent = fixture.componentInstance;
+    loader = TestbedHarnessEnvironment.loader(fixture);
+  });
+
+  it('should not list the select-all row among the options', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    expect(await select.getOptions()).toEqual(['Apple', 'Banana', 'Cherry']);
+  });
+
+  it('should select every enabled option, skipping disabled ones', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.toggleSelectAll();
+    // Cherry is disabled, so it stays out of the selection.
+    expect(hostComponent.lastArray).toEqual(['apple', 'banana']);
+    expect(await select.getDisplayText()).toBe('Apple, Banana');
+    expect(await select.isSelectAllChecked()).toBe(true);
+  });
+
+  it('should clear the selection when toggled while all selected', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.toggleSelectAll();
+    await select.toggleSelectAll();
+    expect(hostComponent.lastArray).toEqual([]);
+    expect(await select.getDisplayText()).toBe('Select fruits');
+    expect(await select.isSelectAllChecked()).toBe(false);
+  });
+
+  it('should read as unchecked when only some options are selected', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.selectOption('Apple');
+    // Partial selection: the row is neither fully checked nor cleared.
+    expect(await select.isSelectAllChecked()).toBe(false);
+    const indeterminate = document.querySelector(
+      '.tn-select-select-all .tn-checkbox--indeterminate',
+    );
+    expect(indeterminate).not.toBeNull();
+  });
+
+  it('should keep the dropdown open after toggling', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.toggleSelectAll();
+    expect(await select.isOpen()).toBe(true);
+  });
+
+  it('should carry a scoped test id on the select-all row', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.open();
+    const row = document.querySelector('.tn-select-select-all');
+    expect(row?.getAttribute('data-testid')).toBe('option-fruit-select-all');
+  });
+
+  it('should throw from toggleSelectAll when the row is absent', async () => {
+    const plain = TestBed.createComponent(TestMultiHostComponent);
+    const plainLoader = TestbedHarnessEnvironment.loader(plain);
+    const select = await plainLoader.getHarness(TnSelectHarness);
+    await expect(select.toggleSelectAll()).rejects.toThrow('no select-all row');
+  });
+});
+
+describe('TnSelectHarness - select all with pre-selected disabled option', () => {
+  let fixture: ComponentFixture<TestSelectAllPreselectedHostComponent>;
+  let hostComponent: TestSelectAllPreselectedHostComponent;
+  let loader: HarnessLoader;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TestSelectAllPreselectedHostComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestSelectAllPreselectedHostComponent);
+    hostComponent = fixture.componentInstance;
+    loader = TestbedHarnessEnvironment.loader(fixture);
+  });
+
+  it('should keep the disabled selection when selecting all', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.toggleSelectAll();
+    // Cherry (disabled, pre-selected) survives alongside the newly selected enabled options.
+    expect(hostComponent.control.value).toEqual(['cherry', 'apple', 'banana']);
+    expect(await select.isSelectAllChecked()).toBe(true);
+  });
+
+  it('should keep the disabled selection when clearing all', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    // First select-all, then toggle again to clear — the disabled value must remain.
+    await select.toggleSelectAll();
+    await select.toggleSelectAll();
+    expect(hostComponent.control.value).toEqual(['cherry']);
+    expect(await select.isSelectAllChecked()).toBe(false);
+  });
+});
+
+describe('TnSelectHarness - select all with duplicate value across group', () => {
+  let fixture: ComponentFixture<TestSelectAllDuplicateHostComponent>;
+  let hostComponent: TestSelectAllDuplicateHostComponent;
+  let loader: HarnessLoader;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TestSelectAllDuplicateHostComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestSelectAllDuplicateHostComponent);
+    hostComponent = fixture.componentInstance;
+    loader = TestbedHarnessEnvironment.loader(fixture);
+  });
+
+  it('should not add a value twice when it appears ungrouped and in a group', async () => {
+    const select = await loader.getHarness(TnSelectHarness);
+    await select.toggleSelectAll();
+    // 'apple' is present in both the ungrouped options and the group, but the
+    // selection must contain it exactly once — matching toggleOption's behaviour.
+    expect(hostComponent.control.value).toEqual(['apple', 'banana', 'cherry']);
+    expect(await select.isSelectAllChecked()).toBe(true);
   });
 });
 
@@ -611,6 +840,16 @@ describe('TnSelectComponent - keyboard navigation', () => {
     return focused ? (focused.textContent ?? '').trim() : null;
   }
 
+  /** Opens the dropdown and clicks the option with the given label. */
+  function pickOption(label: string): void {
+    trigger.click();
+    fixture.detectChanges();
+    const option = Array.from(document.querySelectorAll<HTMLElement>('.tn-select-option'))
+      .find((el) => (el.textContent ?? '').trim() === label);
+    option?.click();
+    fixture.detectChanges();
+  }
+
   it('opens the dropdown on ArrowDown when closed', () => {
     expect(document.querySelector('.tn-select-dropdown')).toBeNull();
 
@@ -729,6 +968,67 @@ describe('TnSelectComponent - keyboard navigation', () => {
     expect(document.activeElement).toBe(trigger);
   });
 
+  it('highlights the first option as soon as the dropdown opens by click', () => {
+    trigger.click();
+    fixture.detectChanges();
+
+    expect(focusedOptionLabel()).toBe('Apple');
+  });
+
+  it('Enter picks the first option right after opening, with no ArrowDown', () => {
+    trigger.click();
+    fixture.detectChanges();
+    press('Enter');
+
+    expect(hostComponent.selectedValue).toBe('apple');
+    expect(document.querySelector('.tn-select-dropdown')).toBeNull();
+  });
+
+  it('Space picks the first option right after opening', () => {
+    press('Enter'); // opens (closed + Enter opens)
+    press(' ');
+
+    expect(hostComponent.selectedValue).toBe('apple');
+  });
+
+  it('highlights the first enabled option when the leading option is disabled', () => {
+    hostComponent.options.set([
+      { value: 'a', label: 'A', disabled: true },
+      { value: 'b', label: 'B' },
+    ]);
+    fixture.detectChanges();
+
+    trigger.click();
+    fixture.detectChanges();
+
+    expect(focusedOptionLabel()).toBe('B');
+  });
+
+  it('highlights the current selection, not the first option, when one is set', () => {
+    pickOption('Cherry');
+
+    trigger.click();
+    fixture.detectChanges();
+
+    expect(focusedOptionLabel()).toBe('Cherry');
+  });
+
+  it('falls back to the first option when the selection is not navigable', () => {
+    // A previously-picked option can become disabled; it's then no longer
+    // navigable, so the highlight must land somewhere rather than vanish.
+    pickOption('Banana');
+    hostComponent.options.set([
+      { value: 'apple', label: 'Apple' },
+      { value: 'banana', label: 'Banana', disabled: true },
+    ]);
+    fixture.detectChanges();
+
+    trigger.click();
+    fixture.detectChanges();
+
+    expect(focusedOptionLabel()).toBe('Apple');
+  });
+
   it('Tab closes the dropdown without refocusing the trigger', () => {
     // Pressing Tab from the trigger should let the natural Tab advance move
     // focus to the next element — closeDropdown must not yank it back.
@@ -833,6 +1133,59 @@ describe('TnSelectComponent — per-option test ids', () => {
     ]);
     fixture.detectChanges();
     expect(openAndGetOptionTestIds()).toEqual(['option-quick-filters-ssd', 'option-quick-filters-hdd']);
+  });
+});
+
+// ===========================================================================
+// Control-name fallback — an unset testId scopes the whole select (trigger,
+// options, DOM-id namespace) by the bound formControlName, not just the trigger.
+// ===========================================================================
+@Component({
+  selector: 'tn-test-optionid-form-host',
+  standalone: true,
+  imports: [TnSelectComponent, ReactiveFormsModule],
+   
+  template: `
+    <form [formGroup]="form">
+      <tn-select formControlName="disk" [options]="options" />
+    </form>
+  `,
+})
+class OptionTestIdFormHostComponent {
+  form = new FormGroup({ disk: new FormControl('') });
+  options: TnSelectOption<string>[] = [
+    { value: 'ssd', label: 'SSD' },
+    { value: 'hdd', label: 'Spinning Disk' },
+  ];
+}
+
+describe('TnSelectComponent — control-name test-id fallback', () => {
+  let fixture: ComponentFixture<OptionTestIdFormHostComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({ imports: [OptionTestIdFormHostComponent] }).compileComponents();
+    fixture = TestBed.createComponent(OptionTestIdFormHostComponent);
+    fixture.detectChanges();
+  });
+
+  afterEach(() => fixture.destroy());
+
+  it('scopes the trigger AND the option rows by the control name', () => {
+    const trigger = fixture.nativeElement.querySelector('.tn-select-trigger') as HTMLElement;
+    expect(trigger.getAttribute('data-testid')).toBe('select-disk');
+
+    trigger.click();
+    fixture.detectChanges();
+    const optionTestIds = Array.from(document.querySelectorAll<HTMLElement>('.tn-select-option'))
+      .map((el) => el.getAttribute('data-testid'));
+    expect(optionTestIds).toEqual(['option-disk-ssd', 'option-disk-hdd']);
+  });
+
+  it('derives the DOM-id namespace from the control name (not the instance counter)', () => {
+    const trigger = fixture.nativeElement.querySelector('.tn-select-trigger') as HTMLElement;
+    trigger.click(); // aria-controls (→ panel id, built from the namespace) is only set while open.
+    fixture.detectChanges();
+    expect(trigger.getAttribute('aria-controls')).toBe('tn-select-dropdown-disk');
   });
 });
 

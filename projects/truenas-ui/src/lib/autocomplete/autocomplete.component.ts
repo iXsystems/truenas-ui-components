@@ -19,9 +19,10 @@ import type { EmbeddedViewRef, OnDestroy, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { Subscription } from 'rxjs';
+import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import type { TnSelectOption } from '../select/select.component';
 import { TnSpinnerComponent } from '../spinner/spinner.component';
-import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import { TnTestIdDirective, controlTestId, optionTestId, scopeTestId, type TnTestIdValue } from '../test-id';
 
 /**
  * Option shape for `tn-autocomplete` — the `label` is displayed, the `value`
@@ -122,8 +123,39 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    */
   panelMaxHeight = input<string | number>('320px');
 
+  /**
+   * Explicit accessible name for the text field. Inside a `tn-form-field` the
+   * field's label is associated automatically (via `aria-labelledby`), so leave
+   * this unset there unless the announced name must differ from the visible
+   * label — when set, it wins. Standalone without either, the input has no
+   * accessible name (the placeholder is not one).
+   */
+  ariaLabel = input<string | undefined>(undefined);
+
   /** Test ID attribute */
   testId = input<TnTestIdValue>(undefined);
+
+  /** Test-id base, falling back to the bound control name when `testId` is unset. */
+  protected resolvedTestId = controlTestId(this.testId);
+
+  /**
+   * Optional extractor for the per-option test-id discriminator. Defaults to
+   * the option's `value` (when a string/number) or its `label`. Provide this
+   * when option values are objects, or to pick a more stable/unique key —
+   * mirrors `tn-select`'s input of the same name.
+   *
+   * @example
+   * ```html
+   * <tn-autocomplete testId="user" [optionTestIdKey]="(o) => o.value.id" ... />
+   * ```
+   */
+  optionTestIdKey = input<(option: TnAutocompleteOption<T>) => string | number | null | undefined>();
+
+  /**
+   * ARIA wiring from an enclosing `tn-form-field` (label, error/hint,
+   * invalid, required). All-null when standalone or when `ariaLabel` overrides.
+   */
+  protected readonly fieldAria = injectTnFormFieldAria(this.ariaLabel);
 
   /** Emits the full option (label + value) when one is selected */
   optionSelected = output<TnAutocompleteOption<T>>();
@@ -502,6 +534,27 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       return false;
     }
     return this.valueMatches(option.value, value);
+  }
+
+  /**
+   * Test-id segments for an option row, consumed by `[tnTestId]` with
+   * `tnTestIdType="option"` — see {@link optionTestId} for the derivation
+   * rules (shared with `tn-select`).
+   */
+  protected optionTestIdParts(option: TnAutocompleteOption<T>): (string | number | null | undefined)[] {
+    return optionTestId(this.resolvedTestId(), option, this.optionTestIdKey());
+  }
+
+  /**
+   * Test-id segments for the loading / no-results status rows, consumed by
+   * `[tnTestId]` with `tnTestIdType="autocomplete"` so they nest under the
+   * input's own id: base `user` → `autocomplete-user-loading` /
+   * `autocomplete-user-no-results` (unscoped `autocomplete-loading` /
+   * `autocomplete-no-results` with no base). Mirrors webui's ix-combobox,
+   * which stamps its status option so automation can assert on those states.
+   */
+  protected statusTestIdParts(status: 'loading' | 'no-results'): (string | number | null | undefined)[] {
+    return scopeTestId(this.resolvedTestId(), status);
   }
 
   // ── Internal ──

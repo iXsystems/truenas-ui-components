@@ -1,16 +1,18 @@
 import { ChangeDetectionStrategy, Component, computed, signal, ViewEncapsulation } from '@angular/core';
 import { TnToastPosition, TnToastType } from './toast.types';
+import { tnIconMarker } from '../icon/icon-marker';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective } from '../test-id';
 
-// Material icons render via the `material-icons` CSS font (see icon.component.ts),
-// so they don't need sprite scanning — the literal `mat-` prefix matches what
-// the runtime icon resolver would produce from a Material library name.
+// The sprite generator only sees icon names in templates and in `tnIconMarker()` calls.
+// These live in a map, so without the marker they'd be dropped from the sprite on the
+// next regeneration — and there is no `material-icons` font in this library to fall
+// back to, so the toast would render an empty icon.
 const TOAST_ICONS = {
-  [TnToastType.Info]: 'mat-info',
-  [TnToastType.Success]: 'mat-check_circle',
-  [TnToastType.Warning]: 'mat-warning',
-  [TnToastType.Error]: 'mat-error',
+  [TnToastType.Info]: tnIconMarker('info', 'material'),
+  [TnToastType.Success]: tnIconMarker('check_circle', 'material'),
+  [TnToastType.Warning]: tnIconMarker('warning', 'material'),
+  [TnToastType.Error]: tnIconMarker('error', 'material'),
 };
 
 @Component({

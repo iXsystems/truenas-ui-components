@@ -20,6 +20,10 @@ import { writeTestId } from './write-test-id';
  * {@link composeTestId}). When no `tnTestIdType` is set the value is written
  * verbatim, so existing call sites are unaffected.
  *
+ * Form controls derive an unset base from the bound control's name via
+ * {@link controlTestId} before passing it here, so a control stays targetable by
+ * automation without the consumer repeating the name as a `testId`.
+ *
  * @example
  * ```html
  * <!-- component-owned prefix: emits data-testid="button-save" -->

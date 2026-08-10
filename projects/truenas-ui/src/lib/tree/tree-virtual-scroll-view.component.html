@@ -1,0 +1,44 @@
+<!-- The two branches are intentionally near-identical: `scrollWindow` is a structural
+     directive (CdkVirtualScrollableWindow) selected by the bare attribute's presence, so
+     it can't be toggled via a property binding on a single viewport. Don't DRY this into
+     one element — dropping the attribute selection breaks window-scroll mode. -->
+@if (scrollWindow()) {
+  <cdk-virtual-scroll-viewport
+    scrollWindow
+    [itemSize]="itemSize()"
+    [minBufferPx]="resolvedMinBufferPx()"
+    [maxBufferPx]="resolvedMaxBufferPx()"
+  >
+    <ng-container *cdkVirtualFor="let item of nodes$ | async; trackBy: innerTrackBy()">
+      <ng-template tnTreeVirtualScrollNodeOutlet [data]="item" />
+    </ng-container>
+  </cdk-virtual-scroll-viewport>
+} @else {
+  <cdk-virtual-scroll-viewport
+    class="tn-tree-virtual-scroll-view__viewport"
+    [itemSize]="itemSize()"
+    [minBufferPx]="resolvedMinBufferPx()"
+    [maxBufferPx]="resolvedMaxBufferPx()"
+  >
+    <ng-container *cdkVirtualFor="let item of nodes$ | async; trackBy: innerTrackBy()">
+      <ng-template tnTreeVirtualScrollNodeOutlet [data]="item" />
+    </ng-container>
+  </cdk-virtual-scroll-viewport>
+}
+
+<!-- Required so CdkTree finds a node outlet during init, but intentionally left
+     empty: rows are rendered through the virtual scroll viewport above, not here. -->
+<ng-container cdkTreeNodeOutlet />
+
+@if (isScrollTopButtonVisible) {
+  <tn-icon-button
+    name="arrow-up"
+    library="mdi"
+    class="tn-tree-virtual-scroll-view__scroll-top"
+    testId="scroll-to-top"
+    [class.tn-tree-virtual-scroll-view__scroll-top--fixed]="scrollWindow()"
+    [ariaLabel]="scrollToTopLabel()"
+    [tooltip]="scrollToTopLabel()"
+    (onClick)="scrollToTop()"
+  />
+}

@@ -1,0 +1,25 @@
+<div
+  class="tn-radio-group"
+  role="radiogroup"
+  tnTestIdType="radio-group"
+  [class.tn-radio-group--inline]="inline()"
+  [attr.aria-label]="ariaLabel() || null"
+  [attr.aria-labelledby]="fieldAria.labelledby()"
+  [attr.aria-describedby]="fieldAria.describedby()"
+  [attr.aria-invalid]="fieldAria.invalid()"
+  [attr.aria-disabled]="isDisabled() ? true : null"
+  [attr.aria-required]="ariaRequired() ? true : null"
+  [attr.aria-orientation]="inline() ? 'horizontal' : 'vertical'"
+  [tnTestId]="resolvedTestId()"
+  (focusout)="onFocusOut()"
+>
+  @for (option of options(); track option.value) {
+    <tn-radio
+      [label]="option.label"
+      [value]="option.value"
+      [disabled]="!!option.disabled"
+      [testId]="optionTestId(option)"
+    />
+  }
+  <ng-content />
+</div>

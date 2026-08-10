@@ -47,6 +47,10 @@ const meta: Meta<TnButtonComponent> = {
       options: ['left', 'right'],
       description: 'Side of the label the icon sits on. No effect when icon is unset.',
     },
+    fullWidth: {
+      control: 'boolean',
+      description: 'Stretches the button to fill its container instead of shrink-wrapping the label.',
+    },
     href: {
       control: 'text',
       description: 'When set, renders as <a> with this href',
@@ -157,6 +161,42 @@ export const OutlineWarn: Story = {
 };
 
 /**
+ * **Full width.** `fullWidth` stretches both the host `tn-button` and the
+ * rendered `<button>` to the container's width, so the button no longer
+ * shrink-wraps its label. Use it for buttons that head or foot a form column —
+ * previously this needed `::ng-deep` in the consuming app. The narrow container
+ * below is the story's, not the component's: the default button sizes to its
+ * label inside it, the full-width one fills it.
+ */
+export const FullWidth: Story = {
+  args: {
+    color: 'primary',
+    variant: 'filled',
+    label: 'Save changes',
+    fullWidth: true,
+  },
+  render: (args) => ({
+    props: args,
+    template: `
+      <div style="width: 320px; display: flex; flex-direction: column; gap: 12px;">
+        <tn-button [color]="color" [variant]="variant" [label]="label" [fullWidth]="fullWidth" />
+        <tn-button color="default" variant="outline" label="Cancel" [fullWidth]="fullWidth" />
+      </div>
+    `,
+  }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const [save] = canvas.getAllByRole('button');
+    const host = save.closest('tn-button')!;
+
+    await expect(host.classList.contains('tn-button--full-width')).toBe(true);
+    // The rendered control fills the host, and the host fills the 320px column.
+    await expect(save.getBoundingClientRect().width).toBe(host.getBoundingClientRect().width);
+    await expect(Math.round(host.getBoundingClientRect().width)).toBe(320);
+  },
+};
+
+/**
  * **Icon (left).** Set `icon` to render a `tn-icon` alongside the label.
  * `iconPosition` defaults to `left`, placing the icon before the label.
  */
@@ -234,7 +274,10 @@ export const AsRouterLink: Story = {
     const link = canvas.getByRole('link', { name: /Open audit page/i });
 
     await expect(link.tagName.toLowerCase()).toBe('a');
-    await expect(link.getAttribute('href')).toBe('/audit/settings');
+    // RouterLink may render the href relative or absolute depending on the
+    // environment's base URL, so compare pathnames.
+    const href = new URL(link.getAttribute('href')!, window.location.origin);
+    await expect(href.pathname).toBe('/audit/settings');
   },
 };
 
@@ -247,11 +290,14 @@ export const DisabledLink: Story = {
     disabled: true,
   },
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const link = canvas.getByRole('link', { name: /Audit Settings/i });
+    // A disabled link drops its href, which removes the `link` role from the
+    // accessibility tree by design — so query the anchor element directly.
+    const link = canvasElement.querySelector('a')!;
 
+    await expect(link).toBeTruthy();
     await expect(link.getAttribute('aria-disabled')).toBe('true');
     await expect(link.hasAttribute('href')).toBe(false);
+    await expect(link.getAttribute('tabindex')).toBe('-1');
   },
 };
 

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
+import { TnRadioGroupComponent } from '../lib/radio/radio-group.component';
 import { TnRadioComponent } from '../lib/radio/radio.component';
 
 const harnessDoc = loadHarnessDoc('radio');
@@ -104,38 +105,26 @@ export const Required: Story = {
   },
 };
 
+/**
+ * Several options belong in a `tn-radio-group`, which owns the value for the whole set — binding
+ * one form control to several standalone `tn-radio`s renders stale, since Angular suppresses the
+ * model→view write on whichever accessor originated the change. See **Components/Radio Group**.
+ */
 export const RadioGroup: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <div style="display: flex; flex-direction: column; gap: 1rem;">
-        <h3>Select your favorite color:</h3>
-        <tn-radio
-          label="Red"
-          value="red"
-          name="color"
-          [disabled]="false">
-        </tn-radio>
-        <tn-radio
-          label="Blue"
-          value="blue"
-          name="color"
-          [disabled]="false">
-        </tn-radio>
-        <tn-radio
-          label="Green"
-          value="green"
-          name="color"
-          [disabled]="false">
-        </tn-radio>
-        <tn-radio
-          label="Yellow (Disabled)"
-          value="yellow"
-          name="color"
-          [disabled]="true">
-        </tn-radio>
-      </div>
+      <h3>Select your favorite color:</h3>
+      <tn-radio-group
+        ariaLabel="Favorite color"
+        [options]="[
+          { value: 'red', label: 'Red' },
+          { value: 'blue', label: 'Blue' },
+          { value: 'green', label: 'Green' },
+          { value: 'yellow', label: 'Yellow (Disabled)', disabled: true }
+        ]" />
     `,
+    moduleMetadata: { imports: [TnRadioGroupComponent] },
   }),
   args: {},
 };

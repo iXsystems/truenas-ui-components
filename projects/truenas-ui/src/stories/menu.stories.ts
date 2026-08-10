@@ -45,7 +45,7 @@ export const Default: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <tn-button [tnMenuTriggerFor]="menu">Menu</tn-button>
+      <tn-button label="Menu" [tnMenuTriggerFor]="menu" />
       <tn-menu
         #menu
         [items]="items"
@@ -89,7 +89,7 @@ export const WithIcons: Story = {
     },
     template: `
       <div style="padding: 20px;">
-        <tn-button [tnMenuTriggerFor]="menu">Icon Methods Demo</tn-button>
+        <tn-button label="Icon Methods Demo" [tnMenuTriggerFor]="menu" />
         <tn-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></tn-menu>
 
         <div style="margin-top: 24px; padding: 16px; border: 1px solid var(--tn-lines, #ddd); border-radius: 4px; font-size: 14px; color: var(--tn-fg2, #666666);">
@@ -160,7 +160,7 @@ export const WithSeparators: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <tn-button [tnMenuTriggerFor]="menu">User Menu</tn-button>
+      <tn-button label="User Menu" [tnMenuTriggerFor]="menu" />
       <tn-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></tn-menu>
     `,
     moduleMetadata: {
@@ -181,7 +181,7 @@ export const WithDisabledItems: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <tn-button [tnMenuTriggerFor]="menu">Actions</tn-button>
+      <tn-button label="Actions" [tnMenuTriggerFor]="menu" />
       <tn-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></tn-menu>
     `,
     moduleMetadata: {
@@ -197,7 +197,7 @@ export const DisabledButton: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <tn-button [tnMenuTriggerFor]="menu" [disabled]="true">Disabled Menu</tn-button>
+      <tn-button label="Disabled Menu" [tnMenuTriggerFor]="menu" [disabled]="true" />
       <tn-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></tn-menu>
     `,
     moduleMetadata: {
@@ -218,7 +218,7 @@ export const PositionAbove: Story = {
     props: args,
     template: `
       <div style="margin-top: 200px; padding: 20px;">
-        <tn-button [tnMenuTriggerFor]="menu" tnMenuPosition="above">Menu Above</tn-button>
+        <tn-button label="Menu Above" [tnMenuTriggerFor]="menu" tnMenuPosition="above" />
         <tn-menu
           #menu
           [items]="items"
@@ -283,7 +283,7 @@ export const NestedMenus: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <tn-button [tnMenuTriggerFor]="menu">Menu with Submenus</tn-button>
+      <tn-button label="Menu with Submenus" [tnMenuTriggerFor]="menu" />
       <tn-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></tn-menu>
     `,
     moduleMetadata: {
@@ -314,7 +314,7 @@ export const WithKeyboardShortcuts: Story = {
     props: args,
     template: `
       <div>
-        <tn-button [tnMenuTriggerFor]="menu">File Menu</tn-button>
+        <tn-button label="File Menu" [tnMenuTriggerFor]="menu" />
         <tn-menu
           #menu
           [items]="items"
@@ -401,7 +401,7 @@ export const WithSelectedItem: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <tn-button [tnMenuTriggerFor]="menu">Export Format</tn-button>
+      <tn-button label="Export Format" [tnMenuTriggerFor]="menu" />
       <tn-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)"></tn-menu>
     `,
     moduleMetadata: {
@@ -426,7 +426,7 @@ export const TemplatedItems: Story = {
       },
     },
     template: `
-      <tn-button [tnMenuTriggerFor]="menu">Export as {{ format | uppercase }}</tn-button>
+      <tn-button [label]="'Export as ' + (format | uppercase)" [tnMenuTriggerFor]="menu" />
       <tn-menu #menu>
         <tn-menu-item id="csv"  label="CSV"  [selected]="format === 'csv'"  (itemClick)="setFormat('csv')" />
         <tn-menu-item id="json" label="JSON" [selected]="format === 'json'" (itemClick)="setFormat('json')" />
@@ -449,7 +449,7 @@ export const TemplatedItems: Story = {
 export const TemplatedItemsCustomLayout: Story = {
   render: () => ({
     template: `
-      <tn-button [tnMenuTriggerFor]="menu">Notifications</tn-button>
+      <tn-button label="Notifications" [tnMenuTriggerFor]="menu" />
       <tn-menu #menu>
         <tn-menu-item id="inbox">
           <span style="display:flex;align-items:center;gap:12px;width:100%;">

@@ -32,6 +32,9 @@ export * from './lib/checkbox/checkbox.component';
 export * from './lib/checkbox/checkbox.harness';
 export * from './lib/radio/radio.component';
 export * from './lib/radio/radio.harness';
+export * from './lib/radio/radio-group.component';
+export * from './lib/radio/radio-group.harness';
+export * from './lib/radio/radio-group.token';
 export * from './lib/slide-toggle/slide-toggle.component';
 export * from './lib/slide-toggle/slide-toggle.harness';
 export * from './lib/tabs/tabs.component';
@@ -43,6 +46,8 @@ export * from './lib/tab-panel/tab-panel.harness';
 export * from './lib/menu';
 export * from './lib/keyboard-shortcut/keyboard-shortcut.component';
 export * from './lib/form-field/form-field.component';
+export { TN_FORM_FIELD_CONTEXT, injectTnFormFieldAria } from './lib/form-field/form-field-context';
+export type { TnFormFieldContext, TnFormFieldAriaBindings } from './lib/form-field/form-field-context';
 export { TN_FORM_FIELD_ERRORS } from './lib/form-field/form-field.errors';
 export type {
   TnFormFieldErrorMessage,
@@ -77,6 +82,19 @@ export { TnTreeComponent, FlatTreeControl, TnTreeFlatDataSource, TnTreeFlattener
 export { TnTreeNodeComponent } from './lib/tree/tree-node.component';
 export { TnNestedTreeNodeComponent } from './lib/tree/nested-tree-node.component';
 export { TnTreeNodeOutletDirective } from './lib/tree/tree-node-outlet.directive';
+export { TnNestedTreeDataSource } from './lib/tree/nested-tree-datasource';
+export type { TnTreeExpansion } from './lib/tree/tree-expansion.interface';
+export {
+  createFlatTreeControl, createNestedTreeControl,
+} from './lib/tree/tree-control.factory';
+export type { FlatTreeControlOptions, NestedTreeControlOptions } from './lib/tree/tree-control.factory';
+export * from './lib/tree/tree.harness';
+export {
+  TnTreeVirtualScrollViewComponent, defaultTreeItemSize,
+} from './lib/tree/tree-virtual-scroll-view.component';
+export { TnTreeVirtualScrollNodeOutletDirective } from './lib/tree/tree-virtual-scroll-node-outlet.directive';
+export type { TnTreeVirtualNodeData } from './lib/tree/tree-virtual-node-data.interface';
+export * from './lib/tree/tree-virtual-scroll-view.harness';
 export * from './lib/enums/disk-type.enum';
 export * from './lib/enums/input-type.enum';
 export * from './lib/enums/modifier-keys.enum';
@@ -86,13 +104,13 @@ export * from './lib/pipes/file-size/file-size.pipe';
 export * from './lib/pipes/label-markup/label-markup.pipe';
 export * from './lib/pipes/label-markup/label-text.pipe';
 export * from './lib/pipes/label-markup/label-markup.utils';
-export * from './lib/pipes/strip-mnt-prefix/strip-mnt-prefix.pipe';
-export * from './lib/pipes/truncate-path/truncate-path.pipe';
 export * from './lib/spinner/spinner.component';
 export * from './lib/spinner/branded-spinner.component';
 export * from './lib/progress-bar/progress-bar.component';
 export * from './lib/progress-bar/particle-progress-bar.component';
 export * from './lib/calendar/calendar.component';
+export * from './lib/calendar/calendar.harness';
+export * from './lib/calendar/calendar-intl';
 export * from './lib/calendar/calendar-header.component';
 export * from './lib/calendar/month-view.component';
 export * from './lib/calendar/multi-year-view.component';

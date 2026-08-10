@@ -1,0 +1,27 @@
+.tn-radio-group-host {
+  display: block;
+}
+
+.tn-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tn-radio-group-gap, 8px);
+
+  &--inline {
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    column-gap: var(--tn-radio-group-inline-gap, 16px);
+  }
+
+  // The options carry their own stacking margin for standalone use (and consumers may add
+  // more with a `tn-radio + tn-radio` rule); inside the group the flex `gap` owns the spacing,
+  // so both are cancelled. Two classes / a child selector each out-specify what they override.
+  > tn-radio {
+    margin: 0;
+  }
+
+  .tn-radio {
+    margin-bottom: 0;
+  }
+}

@@ -50,7 +50,8 @@ const TEST_USERS: User[] = [
       [mobileLayout]="mobileLayout"
       (sortChange)="onSort($event)"
       (selectionChange)="selectedUsers = $event"
-      (rowClick)="lastClickedRow = $event">
+      (rowClick)="lastClickedRow = $event"
+      (rowDoubleClick)="lastDoubleClickedRow = $event">
       <ng-container tnColumnDef="name" [sortable]="true">
         <ng-template tnHeaderCellDef>Name</ng-template>
         <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
@@ -79,6 +80,7 @@ class TableHarnessTestComponent {
   loading = false;
   clickable = false;
   lastClickedRow: User | null = null;
+  lastDoubleClickedRow: User | null = null;
   lastSort: TnSortEvent | null = null;
   selectedUsers: User[] = [];
 
@@ -335,6 +337,12 @@ describe('TnTableHarness', () => {
       const table = await loader.getHarness(TnTableHarness);
       await table.pressKeyOnRow(0, 'enter');
       expect(component.lastClickedRow?.name).toBe('Alice');
+    });
+
+    it('should emit rowDoubleClick on doubleClickRow', async () => {
+      const table = await loader.getHarness(TnTableHarness);
+      await table.doubleClickRow(1);
+      expect(component.lastDoubleClickedRow?.name).toBe('Bob');
     });
   });
 

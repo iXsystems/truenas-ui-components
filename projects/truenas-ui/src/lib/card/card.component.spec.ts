@@ -301,3 +301,39 @@ describe('TnCardComponent title router link & tooltip', () => {
     expect(tooltipButton?.getAttribute('aria-label')).toBe('More information');
   });
 });
+
+@Component({
+  standalone: true,
+  imports: [TnCardComponent],
+  template: `<tn-card [fillHeight]="fillHeight()">Content</tn-card>`,
+})
+class HeightHostComponent {
+  fillHeight = signal(true);
+}
+
+describe('TnCardComponent fillHeight', () => {
+  function createHeightHost() {
+    TestBed.configureTestingModule({ imports: [HeightHostComponent] });
+    const fixture = TestBed.createComponent(HeightHostComponent);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  // `.tn-card` sets `height: 100%`, which resolves against the host — so the opt-out lives on
+  // the host and releases both from there (`:host(.tn-card-host--content-height) .tn-card`).
+  it('fills its container by default, leaving the host unmarked', () => {
+    const fixture = createHeightHost();
+
+    const host = fixture.nativeElement.querySelector('tn-card') as HTMLElement;
+    expect(host.classList.contains('tn-card-host--content-height')).toBe(false);
+  });
+
+  it('marks the host for content height when fillHeight is false', () => {
+    const fixture = createHeightHost();
+    fixture.componentInstance.fillHeight.set(false);
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement.querySelector('tn-card') as HTMLElement;
+    expect(host.classList.contains('tn-card-host--content-height')).toBe(true);
+  });
+});

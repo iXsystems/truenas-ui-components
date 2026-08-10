@@ -30,9 +30,11 @@ export const BasicFlow: Story = {
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
 
-    const usernameInput = await canvas.findByTestId('username');
-    const passwordInput = await canvas.findByTestId('password');
-    const submitButton = await canvas.getByRole('button');
+    // tnTestId renders derived ids: `<control type>-<testId>`.
+    const usernameInput = await canvas.findByTestId('input-username');
+    const passwordInput = await canvas.findByTestId('input-password');
+    // The password input renders its own visibility-toggle button, so match by name
+    const submitButton = canvas.getByRole('button', { name: /login/i });
 
     await step('Enter email and password', async () => {
       await userEvent.type(usernameInput, 'johndoe');

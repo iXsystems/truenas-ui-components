@@ -93,27 +93,30 @@ yarn generate-sprite  # Generate icon sprite (runs automatically on build)
 This project uses [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) and [Semantic Release](https://semantic-release.gitbook.io/semantic-release/) for automated versioning and publishing. Every PR title **must** follow this format:
 
 ```
-type(scope): description
+NAS-12345 / type(scope): description
 ```
 
+- **ticket** — Required. The Jira ticket, uppercase `NAS-<number>`, followed by ` / `. Extra prefix segments are allowed (e.g. a version: `NAS-12345 / 27.0.0-BETA.1 / feat: ...`). Semantic Release strips everything before the last ` / `.
 - **type** — Required. See the table below.
 - **scope** — Optional. The area of the codebase (e.g., `button`, `icon`, `ci`).
 - **description** — Required. A short summary of the change in imperative mood.
 
 Examples:
 ```
-feat: add dropdown component
-fix(button): correct focus ring on disabled state
-refactor: simplify icon resolution logic
-docs: update contributing guide
-chore: upgrade Angular to v21
+NAS-12345 / feat: add dropdown component
+NAS-12345 / fix(button): correct focus ring on disabled state
+NAS-12345 / 27.0.0-BETA.1 / refactor: simplify icon resolution logic
+NAS-12345 / docs: update contributing guide
+NAS-12345 / chore: upgrade Angular to v21
 ```
+
+The ticket must be uppercase — bugclerk only links the Jira ticket for `NAS-`, not `nas-`.
 
 ### Why It Matters
 
 When a PR is **squash-merged**, GitHub uses the PR title as the commit message. Semantic Release analyzes these commit messages to automatically determine version bumps and generate release notes. A non-conventional PR title means the commit won't be categorized correctly.
 
-CI will reject PRs that don't have a valid conventional commit title.
+CI will reject PRs that don't have a valid conventional commit title, and separately reject PRs whose title doesn't reference a `NAS-` ticket.
 
 ### Commit Type Reference
 
@@ -147,8 +150,8 @@ Breaking changes signal to consumers that they need to update their version cons
 
 ### How Auto-Publishing Works
 
-1. You open a PR with a conventional commit-style title
-2. CI validates the PR title
+1. You open a PR with a ticket-prefixed, conventional commit-style title
+2. CI validates the PR title (conventional format + ticket reference)
 3. PR is reviewed and **squash-merged** to `main`
 4. CI runs lint, test, and build — all must pass
 5. A path check verifies that published library files actually changed (not just docs, tests, or CI config)

@@ -16,6 +16,8 @@ export class TnStepComponent {
   optional = input<boolean>(false);
   completed = input<boolean>(false);
   hasError = input<boolean>(false);
+  /** Message shown beneath the step label while the step is in an error state. */
+  errorMessage = input<string | undefined>(undefined);
   data = input<unknown>(null);
 
   content = viewChild.required<TemplateRef<unknown>>('content');

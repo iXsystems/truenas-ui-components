@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
+import { expect, userEvent, within } from 'storybook/test';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnCheckboxComponent } from '../lib/checkbox/checkbox.component';
 import { tnIconMarker } from '../lib/icon/icon-marker';
@@ -35,6 +36,29 @@ const sampleData: User[] = [
   { id: 3, name: 'Carol Williams', email: 'carol@example.com', role: 'Editor', status: 'inactive' },
   { id: 4, name: 'David Brown', email: 'david@example.com', role: 'User', status: 'active' },
   { id: 5, name: 'Eve Davis', email: 'eve@example.com', role: 'Admin', status: 'active' },
+];
+
+/**
+ * Values with no break opportunity — a dataset path, a spelled-out cron — which under the old
+ * nowrap + ellipsis default were silently truncated, and which under `auto` layout widen their
+ * column enough to push the trailing ones out of view.
+ */
+const longValueData = [
+  {
+    task: 'nightly-replication',
+    target: '/mnt/tank/apps/production/postgresql/data/backups/nightly',
+    schedule: 'Every day at 02:00, except on the last Sunday of the month',
+  },
+  {
+    task: 'scrub',
+    target: '/mnt/tank',
+    schedule: 'Every 35 days',
+  },
+  {
+    task: 'snapshot-retention',
+    target: '/mnt/tank/vm/windows-server-2022-domain-controller/disk0',
+    schedule: 'Hourly, keeping 24 hourly, 7 daily and 4 weekly snapshots',
+  },
 ];
 
 const meta: Meta<TnTableComponent> = {
@@ -84,6 +108,25 @@ const meta: Meta<TnTableComponent> = {
     loading: { description: 'Shows a spinner overlay over the table while reloading data', control: 'boolean' },
     loadingMessage: { description: 'Accessible label announced while loading', control: 'text' },
     clickable: { description: 'Makes rows keyboard-focusable (tabindex=0); Enter/Space emit rowClick', control: 'boolean' },
+    expandOnRowClick: {
+      description: 'Activating a row (click or Enter/Space) also toggles its expansion; needs clickable + expandable',
+      control: 'boolean',
+    },
+    singleExpand: { description: 'Expanding a row collapses the previously expanded one', control: 'boolean' },
+    fixedLayout: {
+      description: 'Equal-width columns (cells wrap regardless — that is the default)',
+      control: 'boolean',
+    },
+    minColumnWidth: {
+      description: 'Smallest a column may shrink to with fixedLayout; the width floor is this times the column count',
+      control: 'text',
+    },
+    minWidth: {
+      description: 'Explicit width floor (any CSS length), overriding the minColumnWidth derivation',
+      control: 'text',
+    },
+    emptyMessage: { description: 'Headline shown when there are no rows', control: 'text' },
+    emptyDescription: { description: 'Optional second line under emptyMessage', control: 'text' },
   },
 };
 
@@ -607,6 +650,112 @@ export const ColumnWidths: Story = {
       </tn-table>
     `,
   }),
+};
+
+export const WrappingAndFixedLayout: Story = {
+  args: {
+    fixedLayout: false,
+    minColumnWidth: '120px',
+  },
+  render: (args) => ({
+    props: { ...args, tableData: longValueData, tableColumns: ['task', 'target', 'schedule'] },
+    template: `
+      <p style="margin-bottom: 8px;">
+        Long unbreakable values (dataset paths, cron descriptions) wrap by default rather than
+        being truncated. Toggle <code>[fixedLayout]</code> in Controls to give every column an
+        equal share instead of sizing them to their content, and narrow the preview past
+        <code>minColumnWidth × 3</code> to see the table scroll rather than shrink to unreadable
+        columns.
+      </p>
+      <tn-table
+        [dataSource]="tableData"
+        [displayedColumns]="tableColumns"
+        [fixedLayout]="fixedLayout"
+        [minColumnWidth]="minColumnWidth"
+        [bordered]="true">
+        <ng-container tnColumnDef="task">
+          <ng-template tnHeaderCellDef>Task</ng-template>
+          <ng-template let-row tnCellDef>{{ row.task }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="target">
+          <ng-template tnHeaderCellDef>Target</ng-template>
+          <ng-template let-row tnCellDef>{{ row.target }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="schedule">
+          <ng-template tnHeaderCellDef>Schedule</ng-template>
+          <ng-template let-row tnCellDef>{{ row.schedule }}</ng-template>
+        </ng-container>
+      </tn-table>
+    `,
+  }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const cell = canvas.getByText(longValueData[0].target);
+
+    // The value wraps within its column instead of being clipped, so the cell is taller than the
+    // single line it would occupy under the old nowrap + ellipsis default.
+    await expect(cell).toBeInTheDocument();
+    await expect(getComputedStyle(cell.closest('.tn-table__cell-content')!).whiteSpace)
+      .toBe('normal');
+  },
+};
+
+export const ExpandOnRowClick: Story = {
+  args: {
+    singleExpand: true,
+  },
+  render: (args) => ({
+    props: { ...args, tableData: sampleData, tableColumns: ['name', 'email', 'role'] },
+    template: `
+      <p style="margin-bottom: 8px;">
+        The whole row toggles its detail — click it, or focus it and press Enter. With
+        <code>[singleExpand]</code> on, opening one row closes the previous one; toggle it off in
+        Controls to allow several at once.
+      </p>
+      <tn-table
+        [dataSource]="tableData"
+        [displayedColumns]="tableColumns"
+        [expandable]="true"
+        [clickable]="true"
+        [expandOnRowClick]="true"
+        [singleExpand]="singleExpand">
+        <ng-container tnColumnDef="name">
+          <ng-template tnHeaderCellDef>Name</ng-template>
+          <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="email">
+          <ng-template tnHeaderCellDef>Email</ng-template>
+          <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="role">
+          <ng-template tnHeaderCellDef>Role</ng-template>
+          <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
+        </ng-container>
+
+        <ng-template let-user tnDetailRowDef>
+          <div style="padding: 8px 0;">
+            Status: {{ user.status }}
+          </div>
+        </ng-template>
+      </tn-table>
+    `,
+  }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const rows = canvas.getAllByRole('row').filter((row) => row.classList.contains('tn-table__row'));
+
+    // The row is the expand control here, so it must say so — a screen-reader user activating it
+    // otherwise gets no announcement that anything opened.
+    await expect(rows[0]).toHaveAttribute('aria-expanded', 'false');
+
+    await userEvent.click(rows[0]);
+    await expect(rows[0]).toHaveAttribute('aria-expanded', 'true');
+
+    // singleExpand: opening the second row closes the first.
+    await userEvent.click(rows[1]);
+    await expect(rows[1]).toHaveAttribute('aria-expanded', 'true');
+    await expect(rows[0]).toHaveAttribute('aria-expanded', 'false');
+  },
 };
 
 export const EmptyTable: Story = {

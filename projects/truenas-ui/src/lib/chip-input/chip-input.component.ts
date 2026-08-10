@@ -18,6 +18,7 @@ import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { Subscription } from 'rxjs';
 import { TnChipComponent } from '../chip/chip.component';
+import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import type { TnSelectOption } from '../select/select.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
@@ -151,8 +152,19 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
    */
   compareWith = input<((a: T | null, b: T | null) => boolean) | undefined>(undefined);
 
-  /** Accessible name for the text field. Leave unset inside a `tn-form-field`. */
+  /**
+   * Explicit accessible name for the text field. Inside a `tn-form-field` the
+   * field's label is associated automatically (via `aria-labelledby`), so leave
+   * this unset there unless the announced name must differ from the visible
+   * label — when set, it wins.
+   */
   ariaLabel = input<string | undefined>(undefined);
+
+  /**
+   * ARIA wiring from an enclosing `tn-form-field` (label, error/hint,
+   * invalid, required). All-null when standalone or when `ariaLabel` overrides.
+   */
+  protected readonly fieldAria = injectTnFormFieldAria(this.ariaLabel);
 
   /**
    * Semantic test-id base. The library prepends the `chip-input` element type
