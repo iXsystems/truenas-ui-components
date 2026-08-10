@@ -316,21 +316,22 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     if (this.isDisabled() || this.isOpen()) {return;}
     this.isOpen.set(true);
 
-    // Seed keyboard focus at the current selection when there is one;
-    // otherwise leave it unset so the next ArrowDown lands on the first item.
+    // Seed keyboard focus at the current selection when there is one, else at
+    // the first navigable row. Something is ALWAYS highlighted while the panel
+    // is open (matching mat-select): a freshly-opened select must be operable
+    // with Enter/Space straight away, without an ArrowDown first.
     const selected = this.selectedValue();
-    if (selected !== null && selected !== undefined) {
-      const idx = this.navigableOptions().findIndex((x) =>
-        x.kind === 'option' && this.compareValues(x.option.value, selected),
-      );
-      this.focusedIndex.set(idx);
-    } else if (this.emptyOption()) {
-      // A cleared value means the empty option (always first) is the current
-      // selection — seed keyboard focus there.
-      this.focusedIndex.set(0);
-    } else {
-      this.focusedIndex.set(-1);
-    }
+    const idx = selected === null || selected === undefined
+      ? -1
+      : this.navigableOptions().findIndex((x) =>
+          x.kind === 'option' && this.compareValues(x.option.value, selected),
+        );
+    // findIndex can also miss (e.g. the selected option is disabled, so it
+    // isn't navigable) — fall back to the first row there too. `-1` would
+    // leave the panel with nothing highlighted, which is the state we're
+    // avoiding. When `allowEmpty` is set the first row IS the empty option,
+    // so a cleared value lands on it for free.
+    this.focusedIndex.set(idx >= 0 ? idx : 0);
 
     this.attachOverlay();
   }
@@ -680,8 +681,9 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
       case 'ArrowDown':
         event.preventDefault();
         if (!this.isOpen()) {
+          // openDropdown() already seeds the highlight (selection, else first),
+          // so opening must not also advance a row.
           this.openDropdown();
-          if (this.focusedIndex() < 0) {this.moveFocus('first');}
         } else {
           this.moveFocus(1);
         }
