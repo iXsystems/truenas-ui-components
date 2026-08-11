@@ -49,8 +49,12 @@ export interface TnSortEvent {
 /**
  * How the table adapts when its container is narrower than `cardBreakpoint`:
  * - `scroll` — the table keeps its columns and scrolls horizontally, with the
- *   first column and the actions column pinned in place. Default — preserves the
- *   existing horizontal-scroll behavior, so card mode is strictly opt-in.
+ *   first column and the actions column pinned in place *while it overflows*.
+ *   Default — preserves the existing horizontal-scroll behavior, so card mode is
+ *   strictly opt-in. Note that overflow is not automatic: `auto` layout (the
+ *   default) sizes to content and overflows on its own, but a `fixedLayout` table
+ *   fits its container exactly, so it only overflows — and only then pins — once
+ *   `minColumnWidth` or `minWidth` gives it a floor.
  * - `cards`  — each row collapses into a stacked card (title + actions header,
  *   priority-ranked label/value fields, optional detail content).
  * Above the breakpoint both modes render the regular table.
@@ -526,12 +530,15 @@ export class TnTableComponent<T = unknown> implements OnInit {
     const colDef = this.getColumnDef(column);
     if (!colDef?.sortable()) { return; }
 
-    if (this.sortColumn() === column) {
-      const current = this.sortDirection();
-      if (current === 'asc') {
-        this.sortDirection.set('desc');
-      } else if (current === 'desc') {
-        this.sortDirection.set('');
+    // `&& this.sortDirection()` matters: a column set with an empty direction is *not* sorted, and
+    // that state is reachable through the two-way `[(sortColumn)]` binding — a consumer restoring
+    // only the column lands in it. Without the guard neither inner branch matched, so the click
+    // mutated nothing and still emitted a "cleared" event, leaving a header the user could click
+    // forever with no arrow to explain it. Folding it into the not-sorted branch starts a fresh
+    // ascending sort, which is what clicking an unsorted header does everywhere else.
+    if (this.sortColumn() === column && this.sortDirection()) {
+      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : '');
+      if (!this.sortDirection()) {
         this.sortColumn.set('');
       }
     } else {
@@ -803,10 +810,16 @@ export class TnTableComponent<T = unknown> implements OnInit {
     this.sortChange.emit({ column: this.sortColumn(), direction: this.sortDirection() });
   }
 
-  /** Flips the active sort direction between ascending and descending. */
+  /**
+   * Flips the active sort direction between ascending and descending.
+   *
+   * Starts from ascending, so a column carrying an empty direction — reachable by restoring only
+   * `sortColumn` through its two-way binding — sorts ascending rather than skipping straight to
+   * descending. Same reading of "empty direction means not sorted" as {@link onSortClick}.
+   */
   toggleSortDirection(): void {
     if (!this.sortColumn()) { return; }
-    this.sortDirection.set(this.sortDirection() === 'desc' ? 'asc' : 'desc');
+    this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
     this.sortChange.emit({ column: this.sortColumn(), direction: this.sortDirection() });
   }
 

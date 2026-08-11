@@ -320,6 +320,51 @@ describe('TnTable card layout', () => {
         expect(component.sortEvents).toEqual([{ column: '', direction: '' }]);
       });
 
+      // A column set with an empty direction is not sorted. It's reachable through the two-way
+      // `[(sortColumn)]` binding — a consumer restoring only the column — and all three sort
+      // controls used to disagree about it: the header did nothing (but still emitted), the card
+      // direction toggle jumped straight to descending, and only the card select got it right.
+      describe('a restored column with no direction', () => {
+        function table(): TnTableComponent {
+          return fixture.debugElement.children[0].componentInstance as TnTableComponent;
+        }
+
+        function restoreColumnOnly(): void {
+          table().sortColumn.set('name');
+          table().sortDirection.set('');
+          fixture.detectChanges();
+          component.sortEvents = [];
+        }
+
+        it('starts a fresh ascending sort from the table header', async () => {
+          restoreColumnOnly();
+
+          await harness.clickSortHeader('name');
+
+          expect(table().sortDirection()).toBe('asc');
+          expect(component.sortEvents).toEqual([{ column: 'name', direction: 'asc' }]);
+        });
+
+        it('starts at ascending from the card direction toggle, not descending', async () => {
+          await goNarrow();
+          restoreColumnOnly();
+
+          await harness.toggleCardSortDirection();
+
+          expect(await harness.getCardSortDirection()).toBe('asc');
+          expect(component.sortEvents).toEqual([{ column: 'name', direction: 'asc' }]);
+        });
+
+        it('starts a fresh ascending sort from the card sort menu', async () => {
+          await goNarrow();
+          restoreColumnOnly();
+
+          selectSortColumn('name');
+
+          expect(component.sortEvents).toEqual([{ column: 'name', direction: 'asc' }]);
+        });
+      });
+
       it('still names the column when a sort is applied, in both layouts', async () => {
         await harness.clickSortHeader('name');
         expect(component.sortEvents.at(-1)).toEqual({ column: 'name', direction: 'asc' });
