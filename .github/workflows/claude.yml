@@ -25,9 +25,10 @@ name: Claude Review
 # claude-opus-4-8, and the shared workflow defaults to claude-opus-5. Left at
 # the default deliberately, since that is what the other consumers will run.
 #
-# The local `.github/workflows/check-member.yml` is left in place by this PR
-# but is now unreferenced — the shared review calls the shared gate directly.
-# Deleting it is a separate change, kept out of a test PR.
+# The local `.github/workflows/check-member.yml` goes with this: the shared
+# review calls the shared gate itself, so nothing referenced the copy any more.
+# It was also the version from before the missing-`pull_request`-payload guard,
+# so it threw on a non-PR event where the shared one reports `false`.
 #
 # Check names change with this, which matters if any are required in branch
 # protection: `check-member / Check Member Access` and `review` become
