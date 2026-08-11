@@ -1,45 +1,62 @@
 name: Claude Review
+
+# TEST PULL REQUEST — NOT MERGEABLE AS IT STANDS.
+#
+# Both refs below point at `feat/shared-claude-review-gated` in
+# iXsystems/ux-github-workflows (its PR #3) so that branch can be exercised
+# here before it lands. Before this merges, both must become `@master` and the
+# `tooling-ref` input must be dropped:
+#
+#   uses: iXsystems/ux-github-workflows/.github/workflows/claude-review-gated.yml@master
+#   (and delete the `with:` block entirely — tooling-ref defaults to master)
+#
+# Left pointing at the branch, this breaks the moment that branch is deleted
+# after PR #3 merges.
+#
+# What replaces what: the review previously ran inline here on
+# claude-code-action v1.0.134 in tag mode, posting one sticky comment and
+# always passing. The shared workflow runs agent mode, posts inline comments
+# plus one edited-in-place summary, and fails the job at MEDIUM and above.
+# `.claude/review-prompt.md` stays exactly as it is and is still what gets
+# read — the shared severity rubric is appended after it, so this repo's file
+# keeps saying what to look for in *this* code and says nothing about grading.
+#
+# Note the model changes as part of this: the inline version pinned
+# claude-opus-4-8, and the shared workflow defaults to claude-opus-5. Left at
+# the default deliberately, since that is what the other consumers will run.
+#
+# The local `.github/workflows/check-member.yml` is left in place by this PR
+# but is now unreferenced — the shared review calls the shared gate directly.
+# Deleting it is a separate change, kept out of a test PR.
+#
+# Check names change with this, which matters if any are required in branch
+# protection: `check-member / Check Member Access` and `review` become
+# `review / check-member / Check member access` and `review / Automatic PR
+# review`. Note the lowercase in the member check.
+
 on:
   pull_request:
     types: [opened, synchronize]
     branches:
       - main
-jobs:
-  check-member:
-    permissions:
-      contents: read
-    uses: ./.github/workflows/check-member.yml
 
+jobs:
   review:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: [check-member]
-    if: |
-      needs.check-member.outputs.is_member == 'true' &&
-      !contains(github.event.pull_request.labels.*.name, 'skip-claude')
+    # TEST PIN — see the header. `@master` before merge.
+    uses: iXsystems/ux-github-workflows/.github/workflows/claude-review-gated.yml@feat/shared-claude-review-gated
     permissions:
       contents: read
       issues: write
       pull-requests: write
       id-token: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 10
-
-      - name: Automatic PR Review
-        uses: anthropics/claude-code-action@v1.0.134
-        with:
-          anthropic_api_key: ${{ secrets.CLAUDE_API_KEY }}
-          claude_args: "--model claude-opus-4-8"
-          track_progress: true
-          use_sticky_comment: true
-          prompt: |
-            REPO: ${{ github.repository }}
-            PR NUMBER: ${{ github.event.pull_request.number }}
-
-            Please review this pull request using the guidelines below.
-            It should be already checked out in the current directory.
-
-            {{file:.claude/review-prompt.md}}
+    with:
+      # The schema, rubric and scripts are checked out at run time from the
+      # shared repo, and a reusable workflow cannot see the ref it was itself
+      # called at. So this has to repeat the branch above, or the workflow
+      # under test would run against master's tooling.
+      tooling-ref: feat/shared-claude-review-gated
+    secrets:
+      # This repo calls it CLAUDE_API_KEY; truenas-connect/ui calls it
+      # CLAUDE_TOKEN. That is why the shared workflow names the secret instead
+      # of inheriting.
+      anthropic-api-key: ${{ secrets.CLAUDE_API_KEY }}
