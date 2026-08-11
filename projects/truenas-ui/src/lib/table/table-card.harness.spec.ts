@@ -3,6 +3,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Component } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import type { TnSortEvent } from './table.component';
 import { TnTableComponent } from './table.component';
 import { TnTableHarness } from './table.harness';
 import {
@@ -74,6 +75,7 @@ class MockResizeObserver {
       [fixedLayout]="fixedLayout"
       [minColumnWidth]="minColumnWidth"
       [minWidth]="minWidth"
+      (sortChange)="sortEvents.push($event)"
       (rowClick)="rowClicks.push($event)"
       (rowDoubleClick)="rowDoubleClicks.push($event)">
       <!-- id is displayed in table mode but deliberately kept off the card. -->
@@ -138,6 +140,7 @@ class TableCardTestComponent {
   minWidth = '';
   titleOnName = true;
   cardPrimaryCount = 3;
+  sortEvents: TnSortEvent[] = [];
   rowClicks: Server[] = [];
   rowDoubleClicks: Server[] = [];
   actionClicks: Server[] = [];
@@ -290,6 +293,42 @@ describe('TnTable card layout', () => {
       await goNarrow();
 
       expect(await harness.getCardSortColumn()).toBe('name');
+    });
+
+    // The two layouts share one `sortChange` contract, so the shape emitted on clear must not
+    // depend on which one is rendered. Table mode used to fall back to the clicked column name
+    // (`sortColumn() || column`) while card mode emitted '', so a consumer keying off
+    // `event.column` got a different answer at different container widths.
+    describe('sortChange parity on clear', () => {
+      it('emits an empty column from the table header', async () => {
+        await harness.clickSortHeader('name'); // asc
+        await harness.clickSortHeader('name'); // desc
+        component.sortEvents = [];
+
+        await harness.clickSortHeader('name'); // cleared
+
+        expect(component.sortEvents).toEqual([{ column: '', direction: '' }]);
+      });
+
+      it('emits the same from the card sort menu', async () => {
+        await harness.clickSortHeader('name');
+        await goNarrow();
+        component.sortEvents = [];
+
+        selectSortColumn('');
+
+        expect(component.sortEvents).toEqual([{ column: '', direction: '' }]);
+      });
+
+      it('still names the column when a sort is applied, in both layouts', async () => {
+        await harness.clickSortHeader('name');
+        expect(component.sortEvents.at(-1)).toEqual({ column: 'name', direction: 'asc' });
+
+        await goNarrow();
+        selectSortColumn('status');
+
+        expect(component.sortEvents.at(-1)).toEqual({ column: 'status', direction: 'asc' });
+      });
     });
 
     it('flips direction from the card toolbar', async () => {

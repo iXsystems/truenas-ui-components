@@ -539,8 +539,12 @@ export class TnTableComponent<T = unknown> implements OnInit {
       this.sortDirection.set('asc');
     }
 
+    // Emits the *resulting* sort state, so clearing a sort reports `{ column: '', direction: '' }`
+    // rather than naming the column that was just cleared. Card mode's `setSortColumn('')` has
+    // always emitted the empty column, and a consumer keying off `event.column` should not get a
+    // different answer depending on which layout the container width happens to be showing.
     this.sortChange.emit({
-      column: this.sortColumn() || column,
+      column: this.sortColumn(),
       direction: this.sortDirection(),
     });
   }
@@ -781,9 +785,9 @@ export class TnTableComponent<T = unknown> implements OnInit {
 
   /**
    * Sets (or clears, when passed `''`) the active sort column for card mode.
-   * Switching columns resets to ascending, matching what clicking a different
-   * header does in table mode — the same `sortChange` contract should not depend
-   * on which layout the viewport happens to be showing.
+   * Switching columns resets to ascending, and clearing emits an empty `column` —
+   * both matching {@link onSortClick}, since the same `sortChange` contract should
+   * not depend on which layout the container width happens to be showing.
    */
   setSortColumn(column: string): void {
     if (!column) {
