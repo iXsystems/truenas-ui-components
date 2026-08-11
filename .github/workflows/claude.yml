@@ -1,17 +1,8 @@
 name: Claude Review
 
-# TEST PULL REQUEST — NOT MERGEABLE AS IT STANDS.
-#
-# Both refs below point at `feat/shared-claude-review-gated` in
-# iXsystems/ux-github-workflows (its PR #3) so that branch can be exercised
-# here before it lands. Before this merges, both must become `@master` and the
-# `tooling-ref` input must be dropped:
-#
-#   uses: iXsystems/ux-github-workflows/.github/workflows/claude-review.yml@master
-#   (and delete the `with:` block entirely — tooling-ref defaults to master)
-#
-# Left pointing at the branch, this breaks the moment that branch is deleted
-# after PR #3 merges.
+# Calls the shared review workflow in iXsystems/ux-github-workflows, which is
+# where the schema, the severity rubric and the gate script live. Only the
+# trigger below and the secret name are this repo's.
 #
 # What replaces what: the review previously ran inline here on
 # claude-code-action v1.0.134 in tag mode, posting one sticky comment and
@@ -43,19 +34,12 @@ on:
 
 jobs:
   review:
-    # TEST PIN — see the header. `@master` before merge.
-    uses: iXsystems/ux-github-workflows/.github/workflows/claude-review.yml@feat/shared-claude-review-gated
+    uses: iXsystems/ux-github-workflows/.github/workflows/claude-review.yml@master
     permissions:
       contents: read
       issues: write
       pull-requests: write
       id-token: write
-    with:
-      # The schema, rubric and scripts are checked out at run time from the
-      # shared repo, and a reusable workflow cannot see the ref it was itself
-      # called at. So this has to repeat the branch above, or the workflow
-      # under test would run against master's tooling.
-      tooling-ref: feat/shared-claude-review-gated
     secrets:
       # This repo calls it CLAUDE_API_KEY; truenas-connect/ui calls it
       # CLAUDE_TOKEN. That is why the shared workflow names the secret instead
