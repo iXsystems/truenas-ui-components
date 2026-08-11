@@ -12,10 +12,13 @@ name: Claude Review
 # severity rubric is appended after it — so that file says what to look for in
 # *this* code and nothing about grading.
 #
-# The checks this reports are `review / check-member / Check member access` and
-# `review / Automatic PR review`, both named by the shared workflow. Anything
-# requiring them in branch protection stops reporting, silently, if they are
-# renamed upstream.
+# Reports as `review / <job names in ux-github-workflows>` — two checks, since
+# the shared workflow runs the write-access gate as a job of its own. Branch
+# protection matches those whole strings, so the shared workflow's job names are
+# API: renaming one there silently stops the check reporting here. A required
+# check that never reports does not fail, it stays pending — so the PR becomes
+# unmergeable with nothing red on it to explain why. Same caveat, same wording,
+# as `check-ticket.yml` in this repo.
 #
 # The model is the shared default rather than an input, deliberately: it is
 # then the one the other consumers run.
