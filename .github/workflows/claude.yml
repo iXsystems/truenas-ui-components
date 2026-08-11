@@ -7,7 +7,7 @@ name: Claude Review
 # here before it lands. Before this merges, both must become `@master` and the
 # `tooling-ref` input must be dropped:
 #
-#   uses: iXsystems/ux-github-workflows/.github/workflows/claude-review-gated.yml@master
+#   uses: iXsystems/ux-github-workflows/.github/workflows/claude-review.yml@master
 #   (and delete the `with:` block entirely — tooling-ref defaults to master)
 #
 # Left pointing at the branch, this breaks the moment that branch is deleted
@@ -44,7 +44,7 @@ on:
 jobs:
   review:
     # TEST PIN — see the header. `@master` before merge.
-    uses: iXsystems/ux-github-workflows/.github/workflows/claude-review-gated.yml@feat/shared-claude-review-gated
+    uses: iXsystems/ux-github-workflows/.github/workflows/claude-review.yml@feat/shared-claude-review-gated
     permissions:
       contents: read
       issues: write
