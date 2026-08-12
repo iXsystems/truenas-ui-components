@@ -653,6 +653,7 @@ export class TnTableComponent<T = unknown> implements OnInit {
 
   onRowKeydown(event: KeyboardEvent, row: T): void {
     if (!this.clickable()) { return; }
+    if (this.isRowControlTarget(event)) { return; }
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       if (this.expandOnRowClick()) {
@@ -706,17 +707,48 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * The card's own field values are deliberately not interactive, so they still
    * activate the card whether primary or folded under "More fields".
    */
-  private isCardControlTarget(event: Event): boolean {
+  /** Anything focusable or otherwise interactive, regardless of layout. */
+  private static readonly INTERACTIVE_SELECTOR =
+    'a[href], button, input, select, textarea, summary,'
+    + ' [contenteditable]:not([contenteditable="false"]), [tabindex]:not([tabindex="-1"])';
+
+  /**
+   * Whether an event originated on a control *within* the activation surface rather than on
+   * the surface itself.
+   *
+   * @param event The DOM event; its `currentTarget` is the activation surface.
+   * @param containerSelectors Layout-specific wrappers that count as controls.
+   */
+  private isControlTarget(event: Event, containerSelectors: string): boolean {
     const target = event.target as HTMLElement | null;
     const match = target?.closest(
-      'a[href], button, input, select, textarea, summary, [contenteditable]:not([contenteditable="false"]),' +
-        '[tabindex]:not([tabindex="-1"]),' +
-        '.tn-table__card-actions, .tn-table__card-select, .tn-table__card-more-summary,' +
-        '.tn-table__card-detail-toggle, .tn-table__card-detail'
+      `${TnTableComponent.INTERACTIVE_SELECTOR}, ${containerSelectors}`
     );
-    // The card itself is focusable when `clickable`, so it matches the selector's
-    // focusable clause. It is the activation surface, not a control within it.
+    // The row/card itself is focusable when `clickable`, so it matches the focusable clause.
+    // It is the activation surface, not a control within it.
     return !!match && match !== event.currentTarget;
+  }
+
+  private isCardControlTarget(event: Event): boolean {
+    return this.isControlTarget(
+      event,
+      '.tn-table__card-actions, .tn-table__card-select, .tn-table__card-more-summary,'
+        + ' .tn-table__card-detail-toggle, .tn-table__card-detail'
+    );
+  }
+
+  /**
+   * Table-mode counterpart. The cells stop `click` themselves, but nothing stopped `keydown`,
+   * so Enter on a projected action button bubbled to the row and got `preventDefault()`d —
+   * which *is* how Enter activates a `<button>`, so the consumer's handler never ran and
+   * `rowClick` fired for the row instead. Card mode has always guarded this; the two layouts
+   * disagreed about what a projected control does under the keyboard.
+   */
+  private isRowControlTarget(event: Event): boolean {
+    return this.isControlTarget(
+      event,
+      '.tn-table__select-cell, .tn-table__expand-cell, .tn-table__actions-cell'
+    );
   }
 
   /** Handles the card-mode sort `<select>` change. */

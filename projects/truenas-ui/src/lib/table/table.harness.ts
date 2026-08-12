@@ -59,7 +59,8 @@ export class TnTableHarness extends ComponentHarness {
       throw new Error(
         `TnTableHarness.${method}() has no meaning in the card layout. `
           + 'Use the card API instead — getCardCount(), getCardTitle(), getCardFieldValue(), '
-          + 'toggleCardDetail(), expandCardMoreFields() — or widen the container above '
+          + 'toggleCardDetail(), expandCardMoreFields(), getCardSortColumn(), '
+          + 'getCardSortDirection(), toggleCardSortDirection() — or widen the container above '
           + 'cardBreakpoint.'
       );
     }
@@ -138,6 +139,7 @@ export class TnTableHarness extends ComponentHarness {
    * @param columnName The column's data-column attribute value.
    */
   async clickSortHeader(columnName: string): Promise<void> {
+    await this.assertTableLayout('clickSortHeader');
     const header = await this.locatorFor(
       `th[data-column="${columnName}"]`
     )();
@@ -151,6 +153,7 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to true if the column is sortable.
    */
   async isSortable(columnName: string): Promise<boolean> {
+    await this.assertTableLayout('isSortable');
     const header = await this.locatorFor(
       `th[data-column="${columnName}"]`
     )();
@@ -164,6 +167,7 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to 'ascending', 'descending', or null.
    */
   async getSortDirection(columnName: string): Promise<string | null> {
+    await this.assertTableLayout('getSortDirection');
     const header = await this.locatorFor(
       `th[data-column="${columnName}"]`
     )();

@@ -734,6 +734,60 @@ describe('TnTable card layout', () => {
     });
   });
 
+  // Table mode, deliberately: the cells stop `click`, but nothing stopped `keydown`, so
+  // Enter on a projected action button bubbled to the row and was `preventDefault()`d —
+  // which is exactly how Enter activates a <button>, so the consumer's handler never ran
+  // and `rowClick` fired for the row instead. Card mode had guarded this from the start.
+  describe('projected controls under the keyboard (table mode)', () => {
+    beforeEach(() => {
+      component.clickable = true;
+      component.withActions = true;
+      fixture.detectChanges();
+    });
+
+    function pressKey(el: HTMLElement, key: string): KeyboardEvent {
+      const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+      el.dispatchEvent(event);
+      fixture.detectChanges();
+      return event;
+    }
+
+    it('leaves Enter on a projected row action alone', () => {
+      const button = fixture.nativeElement.querySelector(
+        '.tn-table__row .row-action'
+      ) as HTMLElement;
+
+      const event = pressKey(button, 'Enter');
+
+      // Not cancelled, so the button's own activation still happens...
+      expect(event.defaultPrevented).toBe(false);
+      // ...and the row doesn't claim the keystroke.
+      expect(component.rowClicks).toEqual([]);
+    });
+
+    it('leaves Space on the row checkbox alone', () => {
+      component.selectable = true;
+      fixture.detectChanges();
+      const input = fixture.nativeElement.querySelector(
+        '.tn-table__row .tn-table__select-cell input[type="checkbox"]'
+      ) as HTMLElement;
+
+      const event = pressKey(input, ' ');
+
+      expect(event.defaultPrevented).toBe(false);
+      expect(component.rowClicks).toEqual([]);
+    });
+
+    it('still activates the row when the key lands on the row itself', () => {
+      const row = fixture.nativeElement.querySelector('.tn-table__row') as HTMLElement;
+
+      const event = pressKey(row, 'Enter');
+
+      expect(event.defaultPrevented).toBe(true);
+      expect(component.rowClicks).toEqual([SERVERS[0]]);
+    });
+  });
+
   describe('harness query API in card mode', () => {
     it('counts cards from getRowCount rather than answering zero', async () => {
       await goNarrow();
@@ -789,6 +843,10 @@ describe('TnTable card layout', () => {
       ['getRowTexts', () => harness.getRowTexts(0)],
       ['getCellText', () => harness.getCellText(0, 'name')],
       ['getAllRowTexts', () => harness.getAllRowTexts()],
+      // The sort block resolves `th[data-column]`, which card mode never renders.
+      ['clickSortHeader', () => harness.clickSortHeader('name')],
+      ['isSortable', () => harness.isSortable('name')],
+      ['getSortDirection', () => harness.getSortDirection('name')],
     ])('throws from %s instead of answering emptily', async (_name, call) => {
       await goNarrow();
 
