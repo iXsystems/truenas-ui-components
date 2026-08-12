@@ -327,6 +327,31 @@ describe('TnTable card layout', () => {
       expect(options).toEqual(['', 'name', 'status']);
     });
 
+    // Reconciliation is against the rendered option set, so it holds for every reason a
+    // sorted column can go missing — not just `cardHidden`.
+    it('keeps an active non-sortable column in the menu', async () => {
+      const table = fixture.debugElement.children[0].componentInstance as TnTableComponent;
+      table.sortColumn.set('role'); // displayed, but never [sortable]
+      table.sortDirection.set('desc');
+      fixture.detectChanges();
+      await goNarrow();
+
+      expect(await harness.getCardSortColumn()).toBe('role');
+      expect(await harness.getCardSortDirection()).toBe('desc');
+    });
+
+    it('keeps an active column that is not displayed at all in the menu', async () => {
+      const table = fixture.debugElement.children[0].componentInstance as TnTableComponent;
+      table.sortColumn.set('ghost');
+      table.sortDirection.set('asc');
+      fixture.detectChanges();
+      await goNarrow();
+
+      // Better a listed column with a bare name than a picker reading "Unsorted" beside an
+      // arrow, with no way to clear it.
+      expect(await harness.getCardSortColumn()).toBe('ghost');
+    });
+
     it('still sorts by a cardHidden column from the table header', async () => {
       // The exclusion is card-layout-only; the column is visible in table mode.
       await harness.clickSortHeader('id');
@@ -686,9 +711,38 @@ describe('TnTable card layout', () => {
     });
   });
 
-  // Scroll mode is the default `mobileLayout`, and had no coverage at all — the pinned-column
-  // rules are host-scoped CSS, so what's assertable in jsdom is that the host state class lands
-  // and the table (not cards) still renders. The pinning geometry itself is verified in a browser.
+  describe('harness query API in card mode', () => {
+    it('counts cards from getRowCount rather than answering zero', async () => {
+      await goNarrow();
+
+      expect(await harness.getRowCount()).toBe(2);
+    });
+
+    it('counts expanded card details from getExpandedRowCount', async () => {
+      component.expandable = true;
+      fixture.detectChanges();
+      await goNarrow();
+      expect(await harness.getExpandedRowCount()).toBe(0);
+
+      await harness.toggleCardDetail(0);
+
+      expect(await harness.getExpandedRowCount()).toBe(1);
+    });
+
+    // These have no card equivalent. Throwing beats an empty array, which reads as "the
+    // table is empty" and greens a test over a rendered card list.
+    it.each([
+      ['getHeaderTexts', () => harness.getHeaderTexts()],
+      ['getRowTexts', () => harness.getRowTexts(0)],
+      ['getCellText', () => harness.getCellText(0, 'name')],
+      ['getAllRowTexts', () => harness.getAllRowTexts()],
+    ])('throws from %s instead of answering emptily', async (_name, call) => {
+      await goNarrow();
+
+      await expect(call()).rejects.toThrow(/no meaning in the card layout/);
+    });
+  });
+
   describe('active row', () => {
     // `getActiveRowIndex()` used to answer null in card mode — "nothing is active" — over a
     // visibly active card, which greens a test rather than failing it.
@@ -709,6 +763,10 @@ describe('TnTable card layout', () => {
     });
   });
 
+  // Scroll mode is the default `mobileLayout`. The pinned-column rules are host-scoped CSS,
+  // so what's assertable in jsdom is that the host state class lands and the table (not cards)
+  // still renders; the pinning geometry itself is verified in a browser by the
+  // ScrollModePinnedColumns play function.
   describe('scroll mode', () => {
     beforeEach(() => {
       component.mobileLayout = 'scroll';

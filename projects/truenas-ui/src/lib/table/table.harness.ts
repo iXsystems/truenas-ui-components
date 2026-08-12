@@ -40,8 +40,28 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to the row count.
    */
   async getRowCount(): Promise<number> {
-    const rows = await this.locatorForAll('.tn-table__row')();
+    // Counts cards in card mode. Answering 0 there was the silent-wrong-answer shape the
+    // selection block rejects, and this is the harness's own headline example — a consumer
+    // that narrows the container and asserts emptiness would pass vacuously.
+    const selector = (await this.isCards()) ? '.tn-table__card' : '.tn-table__row';
+    const rows = await this.locatorForAll(selector)();
     return rows.length;
+  }
+
+  /**
+   * Throws when the rendered layout is `cards`, for queries that have no card equivalent.
+   * The alternative is an empty array or a 0, which reads as "the table is empty" and
+   * greens a test over a rendered card list — the failure mode the selection and
+   * active-row methods were made layout-aware to avoid.
+   */
+  private async assertTableLayout(method: string): Promise<void> {
+    if (await this.isCards()) {
+      throw new Error(
+        `TnTableHarness.${method}() has no meaning in the card layout. `
+          + 'Use getCardCount(), getCardTitle() or getCardFieldValue(), '
+          + 'or widen the container above cardBreakpoint.'
+      );
+    }
   }
 
   /**
@@ -50,6 +70,7 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to an array of header text strings.
    */
   async getHeaderTexts(): Promise<string[]> {
+    await this.assertTableLayout('getHeaderTexts');
     const textEls = await this.locatorForAll('.tn-table__header-text')();
     const texts: string[] = [];
     for (const el of textEls) {
@@ -65,6 +86,7 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to an array of cell text strings.
    */
   async getRowTexts(rowIndex: number): Promise<string[]> {
+    await this.assertTableLayout('getRowTexts');
     await this.assertRowExists(rowIndex);
     const cells = await this.locatorForAll(
       `.tn-table__row[data-row-index="${rowIndex}"] .tn-table__cell[data-column]`
@@ -84,6 +106,7 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to the cell text.
    */
   async getCellText(rowIndex: number, columnName: string): Promise<string> {
+    await this.assertTableLayout('getCellText');
     await this.assertRowExists(rowIndex);
     const cell = await this.locatorFor(
       `.tn-table__row[data-row-index="${rowIndex}"] [data-column="${columnName}"]`
@@ -97,6 +120,7 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to an array of row text arrays.
    */
   async getAllRowTexts(): Promise<string[][]> {
+    await this.assertTableLayout('getAllRowTexts');
     const count = await this.getRowCount();
     const result: string[][] = [];
     for (let i = 0; i < count; i++) {
@@ -208,7 +232,13 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to the number of checked row checkboxes.
    */
   async getSelectedRowCount(): Promise<number> {
-    const ancestor = (await this.isCards()) ? '.tn-table__card' : '.tn-table__row';
+    // Scoped to the select cell, not the whole row/card: a checkbox projected through
+    // `[tnRowActionsDef]` sits inside the row, and in card mode the detail panel is a
+    // descendant of the card, so a checkbox in a detail template would inflate the count.
+    // (Table mode escaped the second case only because its detail row is a sibling `<tr>`.)
+    const ancestor = (await this.isCards())
+      ? '.tn-table__card-select'
+      : '.tn-table__row .tn-table__select-cell';
     const checkboxes = await this.locatorForAll(TnCheckboxHarness.with({ ancestor }))();
     let count = 0;
     for (const cb of checkboxes) {
@@ -401,6 +431,10 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to the number of visible detail rows.
    */
   async getExpandedRowCount(): Promise<number> {
+    if (await this.isCards()) {
+      const panels = await this.locatorForAll('.tn-table__card-detail')();
+      return panels.length;
+    }
     const detailRows = await this.locatorForAll('.tn-table__detail-row')();
     return detailRows.length;
   }

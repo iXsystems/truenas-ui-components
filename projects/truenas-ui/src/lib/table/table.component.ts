@@ -803,19 +803,23 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * The title column stays eligible: it is excluded from the *fields*, but it is
    * displayed, so sorting by it is meaningful.
    */
-  sortableColumns = computed<string[]>(() =>
-    this.displayedColumns().filter((c) => {
+  sortableColumns = computed<string[]>(() => {
+    const listed = this.displayedColumns().filter((c) => {
       const def = this.getColumnDef(c);
-      if (!def?.sortable()) { return false; }
-      // The active column stays listed even when `cardHidden`. Filtering it out stranded
-      // the toolbar in a self-contradicting state: no `<option>` matched, so the browser
-      // reset the picker to "Unsorted" while the direction toggle still rendered an arrow
-      // beside it — and picking "Unsorted" fired no `change`, because it was already
-      // selected, so the sort was unreachable from card mode. It is already sorted; hiding
-      // it costs more than it saves.
-      return !def.cardHidden() || c === this.sortColumn();
-    })
-  );
+      return !!def?.sortable() && !def.cardHidden();
+    });
+
+    // Reconciled against the rendered option set, not against one reason for exclusion.
+    // Whatever the active column is, it must have an `<option>`: with none matching, the
+    // browser resets the picker to "Unsorted" while the direction toggle still renders an
+    // arrow beside it, and picking "Unsorted" fires no `change` — it is already the
+    // selected option — so the sort becomes unclearable from card mode. `cardHidden` was
+    // only one way in; `sortColumn` is a two-way `model()`, and a dynamic
+    // `displayedColumns` (a column-visibility toggle) can drop a sorted column or leave
+    // one that was never `sortable()`.
+    const active = this.sortColumn();
+    return active && !listed.includes(active) ? [...listed, active] : listed;
+  });
 
   // --- Card-mode sort ---
 

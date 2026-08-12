@@ -564,10 +564,23 @@
     &--clickable {
       cursor: pointer;
 
+      // An inset shadow, not an `outline`: the card's border box fills the host exactly, and
+      // `:host` has `overflow-x: auto` (which promotes `overflow-y` to auto), so the host
+      // clips at its padding box and an outline's left/right strokes were clipped away —
+      // keyboard focus showed only the top and bottom rules. The table row solved the same
+      // problem the same way; see `__row--active#{&}--clickable:focus-visible`.
       &:focus-visible {
-        outline: 2px solid var(--tn-primary);
-        outline-offset: 1px;
+        outline: none;
+        box-shadow: inset 0 0 0 2px var(--tn-primary);
       }
+    }
+
+    // Compose both, or the focus ring would replace the active indicator (they share the
+    // same property) and a focused active card would lose its left bar.
+    &--active#{&}--clickable:focus-visible {
+      box-shadow:
+        inset 3px 0 0 0 var(--tn-table-active-indicator, var(--tn-primary, #007db3)),
+        inset 0 0 0 2px var(--tn-primary);
     }
   }
 
@@ -641,8 +654,8 @@
 
   // Both card disclosures use the body text color, not `--tn-primary`: at 13px the
   // primary blue measures 3.21:1 on `--tn-bg2` and 2.75:1 on an active card, short of
-  // the 4.5:1 AA needs for normal-size text. The underline (summary) and chevron
-  // (toggle) carry the affordance instead of color.
+  // the 4.5:1 AA needs for normal-size text. A chevron carries the affordance on both
+  // disclosures instead of color.
   // Matches `__card-detail-toggle`: body text plus a chevron that flips when open. Previously
   // this was underlined (reading as a link) while the sibling disclosure used a chevron — two
   // conventions for the same gesture on one card.
