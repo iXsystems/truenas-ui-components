@@ -207,6 +207,19 @@ describe('TnTable card layout', () => {
       expect(await harness.getCardCount()).toBe(2);
     });
 
+    it('treats a zero width as unmeasurable rather than narrow', async () => {
+      // A table inside a `display: none` container reports a 0x0 contentRect. Reading that
+      // as "narrow" would flip it to card mode and tear down anything keyed off
+      // isCardMode() for a resize that never happened. `measureContainer` has always
+      // guarded this; the observer path had not.
+      MockResizeObserver.instances.forEach((o) => o.emitWidth(0));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(await harness.getLayoutMode()).toBe('table');
+      expect(await harness.getCardCount()).toBe(0);
+    });
+
     it('returns to the table layout when the container grows past the breakpoint', async () => {
       await goNarrow();
       expect(await harness.getLayoutMode()).toBe('cards');
@@ -353,6 +366,21 @@ describe('TnTable card layout', () => {
 
           expect(await harness.getCardSortDirection()).toBe('asc');
           expect(component.sortEvents).toEqual([{ column: 'name', direction: 'asc' }]);
+        });
+
+        it('shows a neutral direction icon rather than claiming a direction', async () => {
+          await goNarrow();
+          restoreColumnOnly();
+
+          const button = fixture.nativeElement.querySelector(
+            '.tn-table__cards-sort-dir'
+          ) as HTMLElement;
+          // Still rendered — it is how the user escapes the state — but neutral.
+          expect(button).not.toBeNull();
+          expect(button.getAttribute('data-sort-direction')).toBe('');
+          expect(button.getAttribute('aria-label')).toBe('Sort ascending');
+          expect(button.querySelector('tn-icon')?.getAttribute('name')).toBe('mat-unfold_more');
+          expect(await harness.getCardSortDirection()).toBe('');
         });
 
         it('starts a fresh ascending sort from the card sort menu', async () => {

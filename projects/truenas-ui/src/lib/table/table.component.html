@@ -55,15 +55,30 @@
             }
           </select>
           @if (sortColumn()) {
+            <!--
+              Three states, not two. A column with an empty direction is not sorted —
+              reachable through the two-way binding — and this control used to render an
+              up arrow labelled "Sort descending" for it, while table mode showed no
+              arrow and no `aria-sort` for the same state. It keeps rendering, because
+              it is how the user escapes that state, but shows the neutral
+              `mat-unfold_more` the table header already uses for unsorted columns.
+
+              The label names the action, so it is "Sort ascending" both when unsorted
+              and when descending — `toggleSortDirection()` starts at ascending.
+            -->
             <button
               type="button"
               class="tn-table__cards-sort-dir"
-              [attr.aria-label]="sortDirection() === 'desc' ? 'Sort ascending' : 'Sort descending'"
+              [attr.aria-label]="sortDirection() === 'asc' ? 'Sort descending' : 'Sort ascending'"
               [attr.data-sort-direction]="sortDirection()"
               (click)="toggleSortDirection()">
-              <tn-icon
-                size="sm"
-                [name]="sortDirection() === 'desc' ? 'mat-arrow_downward' : 'mat-arrow_upward'" />
+              @if (sortDirection() === 'asc') {
+                <tn-icon size="sm" name="mat-arrow_upward" />
+              } @else if (sortDirection() === 'desc') {
+                <tn-icon size="sm" name="mat-arrow_downward" />
+              } @else {
+                <tn-icon size="sm" name="mat-unfold_more" />
+              }
             </button>
           }
         </div>

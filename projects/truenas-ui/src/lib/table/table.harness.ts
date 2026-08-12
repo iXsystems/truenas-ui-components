@@ -498,7 +498,11 @@ export class TnTableHarness extends ComponentHarness {
     const button = await this.locatorForOptional('.tn-table__cards-sort-dir')();
     if (!button) { return ''; }
     const direction = await button.getAttribute('data-sort-direction');
-    return direction === 'desc' ? 'desc' : 'asc';
+    // Report the empty direction rather than rounding it up to 'asc'. A column set with
+    // no direction is not sorted, and claiming otherwise made this getter contradict its
+    // own contract — and hid the fact that the button rendered a direction for it.
+    if (direction === 'asc' || direction === 'desc') { return direction; }
+    return '';
   }
 
   /**

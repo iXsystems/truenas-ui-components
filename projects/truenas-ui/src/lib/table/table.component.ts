@@ -442,7 +442,12 @@ export class TnTableComponent<T = unknown> implements OnInit {
         this.resizeObserver = new ResizeObserver((entries) => {
           const width = entries[0]?.contentRect.width;
           if (typeof width === 'number') {
-            this.containerWidth.set(width);
+            // `|| Infinity` for the same reason `measureContainer` applies it: a 0 width
+            // means unmeasurable, not narrow. An element inside a `display: none`
+            // container reports 0x0, so without this a table in a tab that gets hidden
+            // flips to card mode and tears down anything keyed off `isCardMode()` — the
+            // open `<details>` state, for one — for a resize that never happened.
+            this.containerWidth.set(width || Infinity);
           }
         });
         this.resizeObserver.observe(host);
