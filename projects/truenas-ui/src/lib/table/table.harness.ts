@@ -58,8 +58,9 @@ export class TnTableHarness extends ComponentHarness {
     if (await this.isCards()) {
       throw new Error(
         `TnTableHarness.${method}() has no meaning in the card layout. `
-          + 'Use getCardCount(), getCardTitle() or getCardFieldValue(), '
-          + 'or widen the container above cardBreakpoint.'
+          + 'Use the card API instead — getCardCount(), getCardTitle(), getCardFieldValue(), '
+          + 'toggleCardDetail(), expandCardMoreFields() — or widen the container above '
+          + 'cardBreakpoint.'
       );
     }
   }
@@ -257,6 +258,7 @@ export class TnTableHarness extends ComponentHarness {
    * @param rowIndex Zero-based index of the data row.
    */
   async toggleRowExpansion(rowIndex: number): Promise<void> {
+    await this.assertTableLayout('toggleRowExpansion');
     await this.assertRowExists(rowIndex);
     const button = await this.locatorFor(
       `.tn-table__row[data-row-index="${rowIndex}"] .tn-table__expand-button`
@@ -271,6 +273,7 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to true if the row has the expanded class.
    */
   async isRowExpanded(rowIndex: number): Promise<boolean> {
+    await this.assertTableLayout('isRowExpanded');
     await this.assertRowExists(rowIndex);
     const row = await this.locatorFor(
       `.tn-table__row[data-row-index="${rowIndex}"]`
@@ -286,6 +289,7 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to true if the row has an expand button.
    */
   async hasExpandControl(rowIndex: number): Promise<boolean> {
+    await this.assertTableLayout('hasExpandControl');
     await this.assertRowExists(rowIndex);
     const button = await this.locatorForOptional(
       `.tn-table__row[data-row-index="${rowIndex}"] .tn-table__expand-button`
@@ -301,6 +305,7 @@ export class TnTableHarness extends ComponentHarness {
    * @param rowIndex Zero-based index of the data row.
    */
   async clickRow(rowIndex: number): Promise<void> {
+    await this.assertTableLayout('clickRow');
     await this.assertRowExists(rowIndex);
     const row = await this.locatorFor(
       `.tn-table__row[data-row-index="${rowIndex}"]`
@@ -316,6 +321,7 @@ export class TnTableHarness extends ComponentHarness {
    * @param rowIndex Zero-based index of the data row.
    */
   async doubleClickRow(rowIndex: number): Promise<void> {
+    await this.assertTableLayout('doubleClickRow');
     await this.assertRowExists(rowIndex);
     const row = await this.locatorFor(
       `.tn-table__row[data-row-index="${rowIndex}"]`
@@ -330,6 +336,7 @@ export class TnTableHarness extends ComponentHarness {
    * @param key Which key to press — Enter or Space.
    */
   async pressKeyOnRow(rowIndex: number, key: 'enter' | 'space'): Promise<void> {
+    await this.assertTableLayout('pressKeyOnRow');
     await this.assertRowExists(rowIndex);
     const row = await this.locatorFor(
       `.tn-table__row[data-row-index="${rowIndex}"]`
@@ -348,6 +355,7 @@ export class TnTableHarness extends ComponentHarness {
    * @param rowIndex Zero-based index of the data row.
    */
   async isRowFocusable(rowIndex: number): Promise<boolean> {
+    await this.assertTableLayout('isRowFocusable');
     await this.assertRowExists(rowIndex);
     const row = await this.locatorFor(
       `.tn-table__row[data-row-index="${rowIndex}"]`
@@ -416,6 +424,7 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to the detail row text.
    */
   async getDetailRowContent(detailIndex: number): Promise<string> {
+    await this.assertTableLayout('getDetailRowContent');
     const detailRows = await this.locatorForAll('.tn-table__detail-row')();
     if (detailIndex >= detailRows.length) {
       throw new Error(
@@ -580,10 +589,14 @@ export class TnTableHarness extends ComponentHarness {
   // --- Internal helpers ---
 
   private async assertRowExists(rowIndex: number): Promise<void> {
-    const count = await this.getRowCount();
-    if (rowIndex >= count) {
+    // Counts `.tn-table__row` directly rather than calling `getRowCount()`, which is
+    // layout-aware: in card mode that counts cards, so this guard passed for every valid
+    // index and stopped catching the very mismatch it exists for. Row-only methods pair it
+    // with `assertTableLayout()`, which reports the layout mismatch first.
+    const rows = await this.locatorForAll('.tn-table__row')();
+    if (rowIndex >= rows.length) {
       throw new Error(
-        `Row index ${rowIndex} out of bounds (${count} rows)`
+        `Row index ${rowIndex} out of bounds (${rows.length} rows)`
       );
     }
   }

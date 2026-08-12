@@ -54,8 +54,13 @@
               </option>
             }
           </select>
-          @if (sortColumn()) {
+          @if (canSortActiveColumn()) {
             <!--
+              Gated on the column being genuinely sortable, not merely active:
+              `sortableColumns` keeps a non-sortable active column listed so the sort stays
+              clearable, and this toggle must not ride along — card mode would otherwise
+              reorder by a column whose table header ignores clicks.
+
               Three states, not two. A column with an empty direction is not sorted —
               reachable through the two-way binding — and this control used to render an
               up arrow labelled "Sort descending" for it, while table mode showed no

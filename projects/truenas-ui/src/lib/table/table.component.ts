@@ -821,6 +821,20 @@ export class TnTableComponent<T = unknown> implements OnInit {
     return active && !listed.includes(active) ? [...listed, active] : listed;
   });
 
+  /**
+   * Whether the active sort column is one the table can actually sort by.
+   *
+   * `sortableColumns` rescues an active column into the menu so it stays clearable, even
+   * when it is `cardHidden`, absent from `displayedColumns`, or never `sortable()`. That
+   * escape hatch must not hand card mode a capability table mode refuses: clicking a
+   * non-sortable header does nothing, so the direction toggle is hidden — and
+   * {@link toggleSortDirection} refuses — for the same column.
+   */
+  protected readonly canSortActiveColumn = computed<boolean>(() => {
+    const column = this.sortColumn();
+    return !!column && !!this.getColumnDef(column)?.sortable();
+  });
+
   // --- Card-mode sort ---
 
   /**
@@ -851,7 +865,10 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * descending. Same reading of "empty direction means not sorted" as {@link onSortClick}.
    */
   toggleSortDirection(): void {
-    if (!this.sortColumn()) { return; }
+    // Guarded, not just hidden: the control is gone from the template for a non-sortable
+    // active column, and the method refuses too, so the API can't reorder by a column the
+    // table header would ignore.
+    if (!this.canSortActiveColumn()) { return; }
     this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
     this.sortChange.emit({ column: this.sortColumn(), direction: this.sortDirection() });
   }

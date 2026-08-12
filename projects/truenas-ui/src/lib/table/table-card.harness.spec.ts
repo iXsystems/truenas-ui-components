@@ -329,15 +329,33 @@ describe('TnTable card layout', () => {
 
     // Reconciliation is against the rendered option set, so it holds for every reason a
     // sorted column can go missing — not just `cardHidden`.
-    it('keeps an active non-sortable column in the menu', async () => {
+    it('keeps an active non-sortable column listed, but offers no direction toggle', async () => {
       const table = fixture.debugElement.children[0].componentInstance as TnTableComponent;
       table.sortColumn.set('role'); // displayed, but never [sortable]
       table.sortDirection.set('desc');
       fixture.detectChanges();
       await goNarrow();
 
+      // Listed so the sort stays clearable...
       expect(await harness.getCardSortColumn()).toBe('role');
-      expect(await harness.getCardSortDirection()).toBe('desc');
+      // ...but the toggle doesn't ride along: clicking the `role` header in table mode does
+      // nothing, so card mode must not offer to reorder by it either.
+      expect(fixture.nativeElement.querySelector('.tn-table__cards-sort-dir')).toBeNull();
+      expect(await harness.getCardSortDirection()).toBe('');
+    });
+
+    it('refuses toggleSortDirection for a non-sortable active column', async () => {
+      const table = fixture.debugElement.children[0].componentInstance as TnTableComponent;
+      table.sortColumn.set('role');
+      table.sortDirection.set('asc');
+      fixture.detectChanges();
+      await goNarrow();
+      component.sortEvents = [];
+
+      table.toggleSortDirection();
+
+      expect(table.sortDirection()).toBe('asc');
+      expect(component.sortEvents).toEqual([]);
     });
 
     it('keeps an active column that is not displayed at all in the menu', async () => {
@@ -727,6 +745,36 @@ describe('TnTable card layout', () => {
       await harness.toggleCardDetail(0);
 
       expect(await harness.getExpandedRowCount()).toBe(1);
+    });
+
+    // `hasExpandControl` answered a silent `false` in card mode once `assertRowExists`
+    // started counting cards: it cleared the bounds guard, then found no
+    // `.tn-table__expand-button` over a card that renders a "Details" button.
+    it('throws from hasExpandControl instead of answering a silent false', async () => {
+      component.expandable = true;
+      fixture.detectChanges();
+      await goNarrow();
+
+      await expect(harness.hasExpandControl(0)).rejects.toThrow(/no meaning in the card layout/);
+    });
+
+    // These used to fail with a raw CDK locator error naming an internal class, which is
+    // worse than the bounds message they replaced.
+    it.each([
+      ['isRowExpanded', () => harness.isRowExpanded(0)],
+      ['toggleRowExpansion', () => harness.toggleRowExpansion(0)],
+      ['clickRow', () => harness.clickRow(0)],
+      ['doubleClickRow', () => harness.doubleClickRow(0)],
+      ['isRowFocusable', () => harness.isRowFocusable(0)],
+      ['getDetailRowContent', () => harness.getDetailRowContent(0)],
+    ])('names the card API when %s is called in card mode', async (_name, call) => {
+      await goNarrow();
+
+      await expect(call()).rejects.toThrow(/no meaning in the card layout/);
+    });
+
+    it('still reports row bounds correctly in table mode', async () => {
+      await expect(harness.clickRow(99)).rejects.toThrow(/out of bounds \(2 rows\)/);
     });
 
     // These have no card equivalent. Throwing beats an empty array, which reads as "the
