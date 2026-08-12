@@ -78,8 +78,12 @@ class MockResizeObserver {
       (sortChange)="sortEvents.push($event)"
       (rowClick)="rowClicks.push($event)"
       (rowDoubleClick)="rowDoubleClicks.push($event)">
-      <!-- id is displayed in table mode but deliberately kept off the card. -->
-      <ng-container tnColumnDef="id" label="ID" [cardHidden]="true">
+      <!--
+        id is displayed in table mode but deliberately kept off the card. Sortable on
+        purpose: a cardHidden column must stay sortable from the table header while
+        being absent from the card sort menu.
+      -->
+      <ng-container tnColumnDef="id" label="ID" [cardHidden]="true" [sortable]="true">
         <ng-template tnHeaderCellDef>ID</ng-template>
         <ng-template let-row tnCellDef>{{ row.id }}</ng-template>
       </ng-container>
@@ -290,6 +294,25 @@ describe('TnTable card layout', () => {
       expect(label.textContent?.trim()).toBe('Email address');
     });
 
+    it('keeps a cardHidden column out of the card sort menu', async () => {
+      await goNarrow();
+
+      const options = [...fixture.nativeElement.querySelectorAll(
+        '.tn-table__cards-sort-select option'
+      )].map((o) => (o as HTMLOptionElement).value);
+
+      // '' is the "Unsorted" option. `id` is sortable but cardHidden, so offering it
+      // would reorder the cards by a value no card displays.
+      expect(options).toEqual(['', 'name', 'status']);
+    });
+
+    it('still sorts by a cardHidden column from the table header', async () => {
+      // The exclusion is card-layout-only; the column is visible in table mode.
+      await harness.clickSortHeader('id');
+
+      expect(component.sortEvents.at(-1)).toEqual({ column: 'id', direction: 'asc' });
+    });
+
     it('reads field values through the harness', async () => {
       await goNarrow();
 
@@ -489,6 +512,41 @@ describe('TnTable card layout', () => {
       expect(component.rowClicks).toHaveLength(1);
     });
 
+    // The Details button is the control a screen-reader user reaches by tabbing, so it
+    // reports the state unconditionally — including when the card is also a trigger and
+    // carries the same state. Redundant beats muting the real control.
+    it('reports expanded state on the Details button even when the card is a trigger', async () => {
+      component.expandOnRowClick = true;
+      fixture.detectChanges();
+      await goNarrow();
+
+      const button = (): HTMLElement =>
+        cardEl(0).querySelector('.tn-table__card-detail-toggle') as HTMLElement;
+      expect(button().getAttribute('aria-expanded')).toBe('false');
+      expect(button().hasAttribute('aria-controls')).toBe(false);
+
+      await harness.toggleCardDetail(0);
+
+      expect(button().getAttribute('aria-expanded')).toBe('true');
+      expect(button().getAttribute('aria-controls')).toBe(
+        cardEl(0).querySelector('.tn-table__card-detail')?.getAttribute('id')
+      );
+      // The card still carries it too, for a user who focuses the card itself.
+      expect(cardEl(0).getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('reports expanded state on the Details button when it is the only trigger', async () => {
+      await goNarrow();
+
+      const button = (): HTMLElement =>
+        cardEl(0).querySelector('.tn-table__card-detail-toggle') as HTMLElement;
+      expect(button().getAttribute('aria-expanded')).toBe('false');
+
+      await harness.toggleCardDetail(0);
+
+      expect(button().getAttribute('aria-expanded')).toBe('true');
+    });
+
     it('leaves aria-expanded off when the card is not an expand trigger', async () => {
       await goNarrow();
 
@@ -671,8 +729,30 @@ describe('TnTable card layout', () => {
 
       await goNarrow();
 
-      const checkbox = cardEl(0).querySelector('input[type="checkbox"]') as HTMLInputElement;
-      expect(checkbox.checked).toBe(true);
+      // Asserted through the harness, not a raw DOM poke: the row-based locators used
+      // to answer 0 here, so a "selection survived" check could pass vacuously.
+      expect(await harness.getSelectedRowCount()).toBe(1);
+      expect(await harness.isRowSelected(0)).toBe(true);
+      expect(await harness.isRowSelected(1)).toBe(false);
+    });
+
+    it('selects and counts through the harness in card mode', async () => {
+      await goNarrow();
+
+      await harness.toggleRowSelection(1);
+
+      expect(await harness.isRowSelected(1)).toBe(true);
+      expect(await harness.getSelectedRowCount()).toBe(1);
+    });
+
+    it('selects every card through the harness select-all', async () => {
+      await goNarrow();
+
+      await harness.toggleSelectAll();
+
+      expect(await harness.getSelectedRowCount()).toBe(2);
+      expect(await harness.isRowSelected(0)).toBe(true);
+      expect(await harness.isRowSelected(1)).toBe(true);
     });
   });
 });

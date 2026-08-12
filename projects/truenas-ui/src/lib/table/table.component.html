@@ -35,7 +35,7 @@
       }
       @if (sortableColumns().length > 0) {
         <div class="tn-table__cards-sort">
-          <tn-icon name="mat-sort" size="sm" />
+          <tn-icon name="mat-sort" size="sm" aria-hidden="true" />
           <select
             class="tn-table__cards-sort-select"
             aria-label="Sort by"
@@ -86,6 +86,13 @@
     </div>
   }
 
+  <!--
+    Decorative `tn-icon`s carry `aria-hidden="true"`. tn-icon renders `role="img"` and
+    falls back to its `name` for the accessible name, so without this the raw token
+    leaks: a standalone "mat-sort" image beside Select all, and disclosures announced
+    as "More fields mat-keyboard_arrow_down". The repo convention is the same — see
+    button, card, input and file-picker-popup.
+  -->
   <ng-template #cardField let-column let-row="row">
     <div class="tn-table__card-field" [attr.data-column]="column">
       <dt class="tn-table__card-field-label">{{ getCardLabel(column) }}</dt>
@@ -111,8 +118,9 @@
         - Selection state stays on the checkbox, which is a real control.
         - `aria-expanded` IS permitted here, so the card carries it whenever the
           card itself acts as the expand trigger, matching what table mode does
-          for its rows. The "Details" button keeps its own state for the case
-          where the button, not the card, is the control.
+          for its rows. The "Details" button reports the same state unconditionally,
+          because it is the control a screen-reader user actually tabs to — see the
+          note above it.
       The card is deliberately NOT `role="button"`: that role has presentational
       children, which would hide the card's checkbox, row actions and "Details"
       toggle from assistive tech entirely.
@@ -183,7 +191,7 @@
           <details class="tn-table__card-more">
             <summary class="tn-table__card-more-summary">
               <span>More fields</span>
-              <tn-icon size="sm" name="mat-keyboard_arrow_down" />
+              <tn-icon size="sm" name="mat-keyboard_arrow_down" aria-hidden="true" />
             </summary>
             <dl class="tn-table__card-fields">
               @for (column of cardSecondaryColumns(); track column) {
@@ -197,22 +205,28 @@
 
         @if (canExpandRow(row) && detailRowDef()) {
           <!--
-            When the card itself is the expand trigger it already carries
-            `aria-expanded`, so the button drops its own copy — otherwise the same
-            panel's state is announced twice by two different controls. Whichever
-            control owns the state points `aria-controls` at the panel.
+            The button always carries the state, even when the card is also a trigger.
+            An earlier revision suppressed it here to avoid announcing the same panel
+            twice, but that muted the primary control: this button is what a
+            screen-reader user reaches by tabbing through controls, and it was
+            announced as a bare "Details, button" with no expanded state, before or
+            after activation. The state sat on the `role="listitem"` card, heard only
+            if the user happened to focus the card itself.
+
+            Two controls that each toggle the same region and each report its state is
+            the disclosure pattern applied twice — redundant, not invalid. Redundancy
+            is the cheaper failure.
           -->
           <button
             type="button"
             class="tn-table__card-detail-toggle"
-            [attr.aria-expanded]="isCardExpandTrigger(row) ? null : isRowExpanded(row)"
-            [attr.aria-controls]="
-              !isCardExpandTrigger(row) && isRowExpanded(row) ? detailPanelId(rowIdx) : null
-            "
+            [attr.aria-expanded]="isRowExpanded(row)"
+            [attr.aria-controls]="isRowExpanded(row) ? detailPanelId(rowIdx) : null"
             (click)="toggleRowExpansion(row); $event.stopPropagation()">
             <span>Details</span>
             <tn-icon
               size="sm"
+              aria-hidden="true"
               [name]="isRowExpanded(row) ? 'mat-keyboard_arrow_up' : 'mat-keyboard_arrow_down'" />
           </button>
           @if (isRowExpanded(row)) {

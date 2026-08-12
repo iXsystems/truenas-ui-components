@@ -103,8 +103,9 @@
   }
 }
 
-// Scroll mode: pin the first column (and the actions column, handled in
-// `__actions-cell`) so they stay visible while the body scrolls horizontally.
+// Scroll mode: pin the leading column(s) and the trailing actions column so they stay
+// visible while the body scrolls horizontally. All of it lives in this block — pinning is
+// what scroll mode does, per `TnTableMobileLayout` and the ScrollModePinnedColumns story.
 //
 // Host-scoped for the same reason as `--fixed-layout` above: `tn-table--scroll`
 // lives on the host, and Angular's emulated encapsulation appends
@@ -129,6 +130,17 @@
     position: sticky;
     left: 0;
     z-index: 1;
+  }
+
+  // The trailing actions column, pinned to the right edge — the counterpart of the
+  // left-pinned columns above, and scoped here with them rather than applying at every
+  // width. z-index 3 puts it above both: on a container too narrow for both pinned
+  // groups they overlap, and a covered name is cosmetic where a covered action button
+  // is a tap that silently does nothing.
+  .tn-table__actions-cell {
+    position: sticky;
+    right: 0;
+    z-index: 3;
   }
 
   // Above its pinned neighbour, so the data column can't paint over the checkboxes. Spelled out
@@ -392,12 +404,13 @@
     width: 1%;
     white-space: nowrap;
     text-align: right;
-    position: sticky;
-    right: 0;
-    // Above the left-pinned columns (1-2). On a container too narrow for both pinned groups they
-    // overlap, and a covered name is cosmetic where a covered action button is a tap that
-    // silently does nothing.
-    z-index: 3;
+    // NOT pinned here — see the `:host(.tn-table--scroll)` block. Pinning was
+    // unconditional, so an overflowing wide table floated its actions column over the
+    // scrolling cells while the leading column scrolled away: half of the pinned pair,
+    // in a mode that documents neither. `TnTableMobileLayout` and the
+    // ScrollModePinnedColumns story both frame pinning as what scroll mode does, so
+    // both edge columns are pinned in the same place.
+    //
     // Inherited from the row for the same reason as the pinned first column in
     // scroll mode: opaque, but in step with the row's active/hover/expanded fill
     // instead of notching it at the right edge. The `__header` rule below

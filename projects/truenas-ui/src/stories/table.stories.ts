@@ -126,6 +126,22 @@ const meta: Meta<TnTableComponent> = {
       description: 'Explicit width floor (any CSS length), overriding the minColumnWidth derivation',
       control: 'text',
     },
+    mobileLayout: {
+      description: 'How the table adapts below cardBreakpoint: `scroll` (default) keeps the table '
+        + 'and pins its edge columns while it overflows; `cards` collapses each row into a card',
+      control: { type: 'inline-radio' },
+      options: ['scroll', 'cards'],
+    },
+    cardBreakpoint: {
+      description: 'Container width (px) below which mobileLayout takes effect. Measured on the '
+        + "table's own host, so a narrow sidebar adapts on a wide screen",
+      control: 'number',
+    },
+    cardPrimaryCount: {
+      description: 'Fields shown directly on each card before the rest fold under "More fields". '
+        + 'The title column is not counted',
+      control: 'number',
+    },
     emptyMessage: { description: 'Headline shown when there are no rows', control: 'text' },
     emptyDescription: { description: 'Optional second line under emptyMessage', control: 'text' },
   },
@@ -808,6 +824,7 @@ export const ResponsiveCards: Story = {
     displayedColumns: ['name', 'email', 'role', 'status'],
     selectable: true,
     cardBreakpoint: 640,
+    mobileLayout: 'cards',
     // Two of the three fields show directly; the rest fold, so the "More fields"
     // disclosure the description talks about is actually visible.
     cardPrimaryCount: 2,
@@ -826,7 +843,7 @@ export const ResponsiveCards: Story = {
           [selectable]="selectable"
           [cardBreakpoint]="cardBreakpoint"
           [cardPrimaryCount]="cardPrimaryCount"
-          mobileLayout="cards">
+          [mobileLayout]="mobileLayout">
           <ng-container tnColumnDef="name" label="Name" [cardTitle]="true" [sortable]="true">
             <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
           </ng-container>

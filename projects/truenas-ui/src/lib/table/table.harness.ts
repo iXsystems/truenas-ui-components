@@ -146,55 +146,70 @@ export class TnTableHarness extends ComponentHarness {
   }
 
   // --- Selection ---
+  //
+  // Layout-aware, all four of them. Card mode renders no `.tn-table__row` at all —
+  // selection lives in `.tn-table__card .tn-table__card-select` — so a row-based
+  // locator either throws or, worse, answers 0 for a table with rows selected.
+  // Consumers shouldn't have to branch on the rendered layout to ask "is this row
+  // selected", so these resolve the right selectors themselves.
+  //
+  // The click target is the WRAPPER in both layouts (the `<td>`, or the card's
+  // `<div>`): `.tn-table__checkbox` is `pointer-events: none`, so clicking the
+  // checkbox itself exercises a path no user can take.
 
-  /**
-   * Clicks the select-all checkbox in the header.
-   */
-  async toggleSelectAll(): Promise<void> {
-    const cell = await this.locatorFor(
-      '.tn-table__header-row .tn-table__select-cell'
-    )();
-    await cell.click();
+  /** True when the container is narrow enough that card mode is rendered. */
+  private async isCards(): Promise<boolean> {
+    return (await this.getLayoutMode()) === 'cards';
   }
 
   /**
-   * Toggles selection for a specific row by clicking its checkbox cell.
+   * Clicks the select-all control — the header checkbox in table mode, the card
+   * toolbar's "Select all" in card mode.
+   */
+  async toggleSelectAll(): Promise<void> {
+    const selector = (await this.isCards())
+      ? '.tn-table__cards-selectall'
+      : '.tn-table__header-row .tn-table__select-cell';
+    const target = await this.locatorFor(selector)();
+    await target.click();
+  }
+
+  /**
+   * Toggles selection for a specific row (or its card) by clicking its checkbox
+   * wrapper.
    *
    * @param rowIndex Zero-based index of the data row.
    */
   async toggleRowSelection(rowIndex: number): Promise<void> {
-    await this.assertRowExists(rowIndex);
-    const cell = await this.locatorFor(
-      `.tn-table__row[data-row-index="${rowIndex}"] .tn-table__select-cell`
-    )();
-    await cell.click();
+    const selector = (await this.isCards())
+      ? `.tn-table__card[data-row-index="${rowIndex}"] .tn-table__card-select`
+      : `.tn-table__row[data-row-index="${rowIndex}"] .tn-table__select-cell`;
+    const target = await this.locatorFor(selector)();
+    await target.click();
   }
 
   /**
-   * Checks if a specific row's checkbox is checked.
+   * Checks if a specific row (or its card) is selected.
    *
    * @param rowIndex Zero-based index of the data row.
    * @returns Promise resolving to true if the row's checkbox is checked.
    */
   async isRowSelected(rowIndex: number): Promise<boolean> {
-    await this.assertRowExists(rowIndex);
-    const checkbox = await this.locatorFor(
-      TnCheckboxHarness.with({
-        ancestor: `.tn-table__row[data-row-index="${rowIndex}"]`,
-      })
-    )();
+    const ancestor = (await this.isCards())
+      ? `.tn-table__card[data-row-index="${rowIndex}"]`
+      : `.tn-table__row[data-row-index="${rowIndex}"]`;
+    const checkbox = await this.locatorFor(TnCheckboxHarness.with({ ancestor }))();
     return checkbox.isChecked();
   }
 
   /**
-   * Gets the count of currently selected rows.
+   * Gets the count of currently selected rows, in either layout.
    *
    * @returns Promise resolving to the number of checked row checkboxes.
    */
   async getSelectedRowCount(): Promise<number> {
-    const checkboxes = await this.locatorForAll(
-      TnCheckboxHarness.with({ ancestor: '.tn-table__row' })
-    )();
+    const ancestor = (await this.isCards()) ? '.tn-table__card' : '.tn-table__row';
+    const checkboxes = await this.locatorForAll(TnCheckboxHarness.with({ ancestor }))();
     let count = 0;
     for (const cb of checkboxes) {
       if (await cb.isChecked()) {

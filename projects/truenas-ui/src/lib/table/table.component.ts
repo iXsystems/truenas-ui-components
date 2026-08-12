@@ -788,9 +788,24 @@ export class TnTableComponent<T = unknown> implements OnInit {
     this.cardFieldColumns().slice(this.cardPrimaryCount())
   );
 
-  /** Displayed columns that are sortable — populates the card-mode sort menu. */
+  /**
+   * Displayed columns that are sortable — populates the card-mode sort menu.
+   *
+   * `cardHidden` columns are excluded, because this menu *is* part of the card layout
+   * and `cardHidden` promises the column is "omitted entirely" from it. Offering one
+   * here would let a user reorder the cards by a value no card shows, with the
+   * direction toggle giving no clue what changed — and such a column often has no
+   * readable label either, since `getCardLabel()` falls back to the raw column name
+   * when the header lives only in a `tnHeaderCellDef` template.
+   *
+   * The title column stays eligible: it is excluded from the *fields*, but it is
+   * displayed, so sorting by it is meaningful.
+   */
   sortableColumns = computed<string[]>(() =>
-    this.displayedColumns().filter((c) => this.getColumnDef(c)?.sortable())
+    this.displayedColumns().filter((c) => {
+      const def = this.getColumnDef(c);
+      return def?.sortable() && !def.cardHidden();
+    })
   );
 
   // --- Card-mode sort ---
