@@ -114,8 +114,8 @@ export class TnDetailRowDefDirective {
  * <tn-table [dataSource]="data" [displayedColumns]="columns">
  *   ...column defs...
  *   <ng-template tnRowActionsDef let-row>
- *     <tn-icon-button [name]="editIcon" ariaLabel="Edit" (click)="edit(row)" />
- *     <tn-icon-button [name]="deleteIcon" ariaLabel="Delete" (click)="remove(row)" />
+ *     <tn-icon-button name="mat-edit" ariaLabel="Edit" (click)="edit(row)" />
+ *     <tn-icon-button name="mat-delete" ariaLabel="Delete" (click)="remove(row)" />
  *   </ng-template>
  * </tn-table>
  * ```

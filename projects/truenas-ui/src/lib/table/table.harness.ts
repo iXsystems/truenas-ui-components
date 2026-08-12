@@ -163,6 +163,10 @@ export class TnTableHarness extends ComponentHarness {
   /**
    * Gets the current sort direction for a column via aria-sort.
    *
+   * `aria-sort="none"` — which a sortable-but-unsorted header now carries, so it is
+   * discoverable as sortable — is normalised to null, keeping "not sorted" a single value
+   * for callers. Only a non-sortable header has no attribute at all, and both answer null.
+   *
    * @param columnName The column's data-column attribute value.
    * @returns Promise resolving to 'ascending', 'descending', or null.
    */
@@ -171,7 +175,8 @@ export class TnTableHarness extends ComponentHarness {
     const header = await this.locatorFor(
       `th[data-column="${columnName}"]`
     )();
-    return header.getAttribute('aria-sort');
+    const sort = await header.getAttribute('aria-sort');
+    return sort === 'none' ? null : sort;
   }
 
   // --- Selection ---

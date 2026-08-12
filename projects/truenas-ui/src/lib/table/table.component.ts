@@ -694,19 +694,6 @@ export class TnTableComponent<T = unknown> implements OnInit {
     this.rowClick.emit(row);
   }
 
-  /**
-   * Anything focusable or otherwise interactive, plus the card's own controls and
-   * its projected detail panel.
-   *
-   * A class allowlist is not enough: the detail panel renders consumer content
-   * inside the clickable card, so an allowlist lets a click on a projected button
-   * bubble up and fire `rowClick` — and with `expandOnRowClick`, collapse the very
-   * panel being used. Table mode never had that problem, because there the detail
-   * row is a sibling `<tr>` outside the clickable row.
-   *
-   * The card's own field values are deliberately not interactive, so they still
-   * activate the card whether primary or folded under "More fields".
-   */
   /** Anything focusable or otherwise interactive, regardless of layout. */
   private static readonly INTERACTIVE_SELECTOR =
     'a[href], button, input, select, textarea, summary,'
@@ -729,6 +716,18 @@ export class TnTableComponent<T = unknown> implements OnInit {
     return !!match && match !== event.currentTarget;
   }
 
+  /**
+   * Interactive elements plus the card's own controls and its projected detail panel.
+   *
+   * A class allowlist is not enough: the detail panel renders consumer content inside the
+   * clickable card, so an allowlist lets a click on a projected button bubble up and fire
+   * `rowClick` — and with `expandOnRowClick`, collapse the very panel being used. Table mode
+   * never had that problem, because there the detail row is a sibling `<tr>` outside the
+   * clickable row.
+   *
+   * The card's own field values are deliberately not interactive, so they still activate the
+   * card whether primary or folded under "More fields".
+   */
   private isCardControlTarget(event: Event): boolean {
     return this.isControlTarget(
       event,

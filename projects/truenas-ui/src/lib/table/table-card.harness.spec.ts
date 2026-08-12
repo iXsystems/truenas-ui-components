@@ -788,6 +788,44 @@ describe('TnTable card layout', () => {
     });
   });
 
+  // The sort icon is aria-hidden, so `aria-sort` is the only thing left telling a screen
+  // reader a header is sortable. Binding it to null when unsorted left nothing at all.
+  describe('sortable header discoverability (table mode)', () => {
+    function th(column: string): HTMLElement {
+      return fixture.nativeElement.querySelector(`th[data-column="${column}"]`) as HTMLElement;
+    }
+
+    it('marks a sortable but unsorted header aria-sort="none"', () => {
+      expect(th('name').getAttribute('aria-sort')).toBe('none');
+    });
+
+    it('leaves a non-sortable header with no aria-sort at all', () => {
+      expect(th('role').getAttribute('aria-sort')).toBeNull();
+    });
+
+    it('reports the direction once sorted, and returns to none when cleared', async () => {
+      await harness.clickSortHeader('name');
+      expect(th('name').getAttribute('aria-sort')).toBe('ascending');
+
+      await harness.clickSortHeader('name');
+      expect(th('name').getAttribute('aria-sort')).toBe('descending');
+
+      await harness.clickSortHeader('name');
+      expect(th('name').getAttribute('aria-sort')).toBe('none');
+    });
+
+    // The harness keeps "not sorted" a single value for callers, so consumer tests that
+    // assert null keep working.
+    it('normalises none to null through the harness', async () => {
+      expect(await harness.getSortDirection('name')).toBeNull();
+      expect(await harness.getSortDirection('role')).toBeNull();
+
+      await harness.clickSortHeader('name');
+
+      expect(await harness.getSortDirection('name')).toBe('ascending');
+    });
+  });
+
   describe('harness query API in card mode', () => {
     it('counts cards from getRowCount rather than answering zero', async () => {
       await goNarrow();

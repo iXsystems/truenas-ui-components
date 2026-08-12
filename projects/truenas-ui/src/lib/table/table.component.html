@@ -278,8 +278,8 @@
               [style.width]="getColumnDef(column)?.width()"
               [attr.aria-sort]="
                 isSorted(column)
-                  ? sortDirection() === 'asc' ? 'ascending' : 'descending'
-                  : null
+                  ? (sortDirection() === 'asc' ? 'ascending' : 'descending')
+                  : (getColumnDef(column)?.sortable() ? 'none' : null)
               "
               [attr.tabindex]="getColumnDef(column)?.sortable() ? 0 : null"
               [attr.data-column]="column"
@@ -361,6 +361,7 @@
                     (click)="toggleRowExpansion(row)">
                     <tn-icon
                       class="tn-table__expand-icon"
+                      aria-hidden="true"
                       [name]="isRowExpanded(row) ? 'mat-keyboard_arrow_up' : 'mat-keyboard_arrow_down'" />
                   </button>
                 }
