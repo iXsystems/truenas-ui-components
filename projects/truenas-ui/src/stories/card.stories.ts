@@ -76,7 +76,7 @@ const meta: Meta<TnCardComponent> = {
       control: 'object',
       description: 'Array of TnMenuItem objects for header menu',
     },
-    headerMenuAriaLabel: {
+    headerMenuTriggerAriaLabel: {
       control: 'text',
       description:
         'Accessible name for the header menu trigger. Defaults to "Card menu"; pass an '
@@ -85,7 +85,7 @@ const meta: Meta<TnCardComponent> = {
     headerMenuTriggerTooltip: {
       control: 'text',
       description:
-        'Hover tooltip for the header menu trigger. Falls back to headerMenuAriaLabel; with '
+        'Hover tooltip for the header menu trigger. Falls back to headerMenuTriggerAriaLabel; with '
         + 'neither set the trigger has no tooltip.',
     },
     primaryAction: {
@@ -457,7 +457,7 @@ export const WithHeaderMenu: Story = {
       { id: 'sep1', label: '', separator: true },
       { id: '3', label: 'Delete', action: () => {}, icon: 'delete' },
     ],
-    headerMenuAriaLabel: 'More Actions',
+    headerMenuTriggerAriaLabel: 'More Actions',
     headerMenuTriggerTooltip: 'Show more actions',
   },
   render: (args) => ({
@@ -470,11 +470,11 @@ export const WithHeaderMenu: Story = {
         [padContent]="padContent"
         [bordered]="bordered"
         [background]="background"
-        [headerMenuAriaLabel]="headerMenuAriaLabel"
+        [headerMenuTriggerAriaLabel]="headerMenuTriggerAriaLabel"
         [headerMenuTriggerTooltip]="headerMenuTriggerTooltip"
         [headerMenu]="headerMenu">
         <p>This card includes a three-dot menu icon in the header with common actions. Click the dots to open the menu.</p>
-        <p>The trigger's accessible name comes from <code>headerMenuAriaLabel</code>, so an app with an i18n layer can pass a translated string. <code>headerMenuTriggerTooltip</code> overrides the visible hover hint — clear it in the Controls panel and the tooltip falls back to the accessible name.</p>
+        <p>The trigger's accessible name comes from <code>headerMenuTriggerAriaLabel</code>, so an app with an i18n layer can pass a translated string. <code>headerMenuTriggerTooltip</code> overrides the visible hover hint — clear it in the Controls panel and the tooltip falls back to the accessible name.</p>
       </tn-card>
     `,
   }),

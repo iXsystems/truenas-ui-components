@@ -76,8 +76,8 @@ export class TnCardComponent {
   titleTooltip = input<string | undefined>(undefined);
   /**
    * Accessible name for the help button that carries `titleTooltip`. Same reason as
-   * `headerMenuAriaLabel`: the library cannot translate its own `'More information'` default, so a
-   * consumer with an i18n layer passes an already-translated string here.
+   * `headerMenuTriggerAriaLabel`: the library cannot translate its own `'More information'`
+   * default, so a consumer with an i18n layer passes an already-translated string here.
    */
   titleTooltipAriaLabel = input<string | undefined>(undefined);
 
@@ -119,15 +119,15 @@ export class TnCardComponent {
    * English `'Card menu'` fallback. Also used as the trigger's tooltip when
    * `headerMenuTriggerTooltip` is not set.
    */
-  headerMenuAriaLabel = input<string | undefined>(undefined);
+  headerMenuTriggerAriaLabel = input<string | undefined>(undefined);
   /**
-   * Hover tooltip for the kebab-menu trigger. Defaults to `headerMenuAriaLabel`, so setting a
-   * single translated string covers both the accessible name and the visible hint.
+   * Hover tooltip for the kebab-menu trigger. Defaults to `headerMenuTriggerAriaLabel`, so setting
+   * a single translated string covers both the accessible name and the visible hint.
    */
   headerMenuTriggerTooltip = input<string | undefined>(undefined);
 
   protected readonly resolvedHeaderMenuAriaLabel = computed(
-    () => this.headerMenuAriaLabel() ?? 'Card menu',
+    () => this.headerMenuTriggerAriaLabel() ?? 'Card menu',
   );
 
   /**
@@ -137,7 +137,7 @@ export class TnCardComponent {
    * only repeats the button's accessible name.
    */
   protected readonly resolvedHeaderMenuTooltip = computed(
-    () => this.headerMenuTriggerTooltip() ?? this.headerMenuAriaLabel(),
+    () => this.headerMenuTriggerTooltip() ?? this.headerMenuTriggerAriaLabel(),
   );
 
   // Footer elements (bottom-right) - Always render in footer

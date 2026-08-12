@@ -16,7 +16,7 @@ import type { TnMenuItem } from '../menu/menu.component';
 @Component({
   standalone: true,
   imports: [TnCardComponent],
-  template: `<tn-card [headerStatus]="status()" [headerControl]="control()" [headerMenu]="menu()" [headerMenuTriggerTestId]="menuTriggerTestId()" [headerMenuAriaLabel]="menuAriaLabel()" [headerMenuTriggerTooltip]="menuTooltip()" [primaryAction]="primary()" [secondaryAction]="secondary()" [footerLink]="footerLink()">Content</tn-card>`,
+  template: `<tn-card [headerStatus]="status()" [headerControl]="control()" [headerMenu]="menu()" [headerMenuTriggerTestId]="menuTriggerTestId()" [headerMenuTriggerAriaLabel]="menuAriaLabel()" [headerMenuTriggerTooltip]="menuTooltip()" [primaryAction]="primary()" [secondaryAction]="secondary()" [footerLink]="footerLink()">Content</tn-card>`,
 })
 class HostComponent {
   status = signal<TnCardHeaderStatus | undefined>(undefined);
@@ -158,7 +158,7 @@ describe('TnCardComponent testId support', () => {
     expect(trigger.getAttribute('aria-label')).toBe('Weitere Aktionen');
   });
 
-  it('falls back to headerMenuAriaLabel for the trigger tooltip, and prefers an explicit one', async () => {
+  it('falls back to headerMenuTriggerAriaLabel for the trigger tooltip, and prefers an explicit one', async () => {
     const fixture = createHost();
     fixture.componentInstance.menu.set([{ id: 'a', label: 'Action A' }]);
     fixture.componentInstance.menuAriaLabel.set('More Actions');
