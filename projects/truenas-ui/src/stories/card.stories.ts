@@ -1,7 +1,7 @@
 import { provideRouter } from '@angular/router';
 import { applicationConfig } from '@storybook/angular';
 import type { Meta, StoryObj } from '@storybook/angular';
-import { expect, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { TnButtonComponent } from '../lib/button/button.component';
 import {
@@ -551,6 +551,25 @@ export const WithDisabledActionTooltip: Story = {
       </tn-card>
     `,
   }),
+  // Pins the disabled-hover guarantee no unit test can cover: the disabled inner
+  // <button> has pointer-events: none, so hover lands on the <tn-button> host where
+  // the tooltip directive lives. Runs in a real browser via test-storybook.
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const label = canvas.getByText('Open WebShare');
+    const buttonHost = label.closest('tn-button') as HTMLElement;
+    const innerButton = buttonHost.querySelector('button') as HTMLButtonElement;
+    await expect(innerButton).toBeDisabled();
+
+    await userEvent.hover(buttonHost);
+    await waitFor(async () => {
+      const tooltip = document.querySelector('.tn-tooltip-panel');
+      await expect(tooltip?.textContent).toContain(
+        'WebShare is unavailable because the WebShare service is not running.',
+      );
+    });
+    await userEvent.unhover(buttonHost);
+  },
 };
 
 export const WithFooterLink: Story = {

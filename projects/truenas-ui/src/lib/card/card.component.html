@@ -116,6 +116,9 @@
       </div>
 
       <div class="tn-card__footer-right">
+        <!-- Click guards: the disabled inner button has pointer-events: none, so clicks
+             hit-test through to the <tn-button> host (which is what lets the tooltip show
+             while disabled) — without the guard a disabled action would still run. -->
         @if (secondaryAction(); as action) {
           <tn-button
             variant="outline"
@@ -124,7 +127,7 @@
             [disabled]="action.disabled || false"
             [testId]="action.testId"
             [tnTooltip]="action.tooltip || ''"
-            (click)="action.handler()" />
+            (click)="!action.disabled && action.handler()" />
         }
 
         @if (primaryAction(); as action) {
@@ -135,7 +138,7 @@
             [disabled]="action.disabled || false"
             [testId]="action.testId"
             [tnTooltip]="action.tooltip || ''"
-            (click)="action.handler()" />
+            (click)="!action.disabled && action.handler()" />
         }
 
         <!-- Projected footer actions (escape hatch for custom/permission-gated controls) -->

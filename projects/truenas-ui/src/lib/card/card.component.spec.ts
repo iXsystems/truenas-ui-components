@@ -233,6 +233,87 @@ describe('TnCardComponent action tooltips', () => {
     const tooltip = tnButton.injector.get(TnTooltipDirective);
     // An empty message makes the directive a no-op: no overlay, no aria-describedby.
     expect(tooltip.message()).toBe('');
+
+    const innerButton = tnButton.nativeElement.querySelector('button') as HTMLButtonElement;
+    expect(innerButton.getAttribute('aria-describedby')).toBeNull();
+  });
+
+  it('mirrors aria-describedby onto the inner button so screen readers announce the tooltip', () => {
+    const fixture = createHost();
+    fixture.componentInstance.secondary.set({
+      label: 'Open',
+      handler: () => {},
+      tooltip: 'WebShare service is not running',
+    });
+    fixture.detectChanges();
+
+    // The directive host is the <tn-button> wrapper, which assistive tech never focuses —
+    // the description must land on the real <button> to be announced.
+    const innerButton = fixture.nativeElement.querySelector(
+      '.tn-card__footer-right tn-button button',
+    ) as HTMLButtonElement;
+    expect(innerButton.getAttribute('aria-describedby')).toMatch(/^tn-tooltip-/);
+  });
+
+  it('shows the tooltip when the inner button receives keyboard focus (focusin bubbles to the host)', () => {
+    jest.useFakeTimers();
+    try {
+      const fixture = createHost();
+      fixture.componentInstance.secondary.set({
+        label: 'Open',
+        handler: () => {},
+        tooltip: 'WebShare service is not running',
+      });
+      fixture.detectChanges();
+
+      const innerButton = fixture.nativeElement.querySelector(
+        '.tn-card__footer-right tn-button button',
+      ) as HTMLButtonElement;
+      innerButton.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+      jest.runAllTimers();
+      fixture.detectChanges();
+
+      expect(document.body.textContent).toContain('WebShare service is not running');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+});
+
+describe('TnCardComponent disabled action click guard', () => {
+  it('does not run a disabled action handler when the click lands on the button host', () => {
+    const handler = jest.fn();
+    const fixture = createHost();
+    fixture.componentInstance.secondary.set({
+      label: 'Open',
+      handler,
+      disabled: true,
+    });
+    fixture.detectChanges();
+
+    // The disabled inner <button> has pointer-events: none, so a real click over it
+    // hit-tests through to the <tn-button> host — simulate that retargeted click.
+    const tnButton = fixture.nativeElement.querySelector('.tn-card__footer-right tn-button') as HTMLElement;
+    tnButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('still runs the handler for an enabled action', () => {
+    const handler = jest.fn();
+    const fixture = createHost();
+    fixture.componentInstance.primary.set({
+      label: 'Add',
+      handler,
+    });
+    fixture.detectChanges();
+
+    const innerButton = fixture.nativeElement.querySelector(
+      '.tn-card__footer-right tn-button button',
+    ) as HTMLButtonElement;
+    innerButton.click();
+
+    expect(handler).toHaveBeenCalledTimes(1);
   });
 });
 

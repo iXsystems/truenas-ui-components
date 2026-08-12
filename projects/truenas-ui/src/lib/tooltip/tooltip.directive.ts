@@ -10,13 +10,14 @@ import {
 } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 import type {
+  AfterViewInit,
   OnDestroy,
-  OnInit,
   ComponentRef
 } from '@angular/core';
 import {
   Directive,
   input,
+  effect,
   HostListener,
   ElementRef,
   ViewContainerRef,
@@ -27,6 +28,13 @@ import { TnTooltipComponent } from './tooltip.component';
 
 export type TooltipPosition = 'above' | 'below' | 'left' | 'right' | 'before' | 'after';
 
+/**
+ * Elements that can receive focus / are read by assistive tech. Used to decide whether
+ * the directive's host is itself the interactive element, or a wrapper (e.g. `<tn-button>`)
+ * whose inner control should carry `aria-describedby`.
+ */
+const INTERACTIVE_SELECTOR = 'button, a[href], input, select, textarea, [tabindex]';
+
 @Directive({
   selector: '[tnTooltip]',
   standalone: true,
@@ -34,7 +42,7 @@ export type TooltipPosition = 'above' | 'below' | 'left' | 'right' | 'before' | 
     '[attr.aria-describedby]': '_ariaDescribedBy',
   }
 })
-export class TnTooltipDirective implements OnInit, OnDestroy {
+export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   message = input<string>('', { alias: 'tnTooltip' });
   position = input<TooltipPosition>('above', { alias: 'tnTooltipPosition' });
   disabled = input<boolean>(false, { alias: 'tnTooltipDisabled' });
@@ -48,7 +56,8 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
   private _hideTimeout: ReturnType<typeof setTimeout> | null = null;
   private _isTooltipVisible = false;
   private _positionSub: Subscription | null = null;
-  private _tooltipId = '';
+  // Unique ID for aria-describedby
+  private _tooltipId = `tn-tooltip-${Math.random().toString(36).substr(2, 9)}`;
 
   /**
    * Only point `aria-describedby` at the tooltip when there is actually a message to
@@ -64,9 +73,49 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
   private _viewContainerRef = inject(ViewContainerRef);
   private _overlayPositionBuilder = inject(OverlayPositionBuilder);
 
-  ngOnInit() {
-    // Generate unique ID for aria-describedby
-    this._tooltipId = `tn-tooltip-${Math.random().toString(36).substr(2, 9)}`;
+  private _viewInitialized = false;
+
+  /**
+   * Re-sync the mirrored `aria-describedby` (see ngAfterViewInit) when the inputs
+   * change. The initial write cannot happen here: on the first run the host's child
+   * components (e.g. tn-button's inner `<button>`) have not rendered yet.
+   */
+  private readonly _mirrorAriaDescribedBy = effect(() => {
+    this.disabled();
+    this.message();
+    if (this._viewInitialized) {
+      this._syncInnerAriaDescribedBy();
+    }
+  });
+
+  /**
+   * When the directive sits on a non-interactive wrapper (e.g. a `<tn-button>` host),
+   * the `aria-describedby` host binding lands on an element assistive tech never
+   * focuses — screen readers read descriptions off the focused inner control. Mirror
+   * the attribute onto the first interactive descendant so the tooltip is announced.
+   */
+  ngAfterViewInit(): void {
+    this._viewInitialized = true;
+    this._syncInnerAriaDescribedBy();
+  }
+
+  private _syncInnerAriaDescribedBy(): void {
+    const host = this._elementRef.nativeElement as HTMLElement;
+    if (host.matches(INTERACTIVE_SELECTOR)) {
+      return;
+    }
+
+    const inner = host.querySelector<HTMLElement>(INTERACTIVE_SELECTOR);
+    if (!inner) {
+      return;
+    }
+
+    const describedBy = this._ariaDescribedBy;
+    if (describedBy) {
+      inner.setAttribute('aria-describedby', describedBy);
+    } else {
+      inner.removeAttribute('aria-describedby');
+    }
   }
 
   ngOnDestroy() {
@@ -92,15 +141,18 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
     this.hide(this.hideDelay());
   }
 
-  @HostListener('focus')
-  _onFocus(): void {
+  // focusin/focusout (not focus/blur): focus does not bubble, so on a wrapper host
+  // (e.g. `<tn-button>`) a focus listener never fires when the inner control is
+  // focused via keyboard. focusin/focusout bubble and cover both shapes.
+  @HostListener('focusin')
+  _onFocusIn(): void {
     if (!this.disabled() && this.message()) {
       this.show(this.showDelay());
     }
   }
 
-  @HostListener('blur')
-  _onBlur(): void {
+  @HostListener('focusout')
+  _onFocusOut(): void {
     this.hide(this.hideDelay());
   }
 
