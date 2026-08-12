@@ -221,9 +221,11 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * rows the `isRowExpandable` predicate rejects are unaffected, since `toggleRowExpansion` gates
    * on it. `rowClick` still emits, so a consumer can both expand and react to the click.
    *
-   * Applies in card mode too, where activating the card toggles its detail section — the card's
-   * "Details" button keeps carrying the `aria-expanded` state, since the card element itself is a
-   * `listitem` and cannot.
+   * Applies in card mode too, where activating the card toggles its detail section. Both controls
+   * report the state: the card carries `aria-expanded` while it is the trigger (`listitem` does
+   * permit it, unlike `aria-selected`), and the "Details" button carries it unconditionally,
+   * because that button is what a screen-reader user reaches by tabbing. The redundancy is
+   * deliberate — see the comment above the button in the template.
    */
   expandOnRowClick = input<boolean>(false);
 
@@ -762,7 +764,7 @@ export class TnTableComponent<T = unknown> implements OnInit {
 
   /**
    * Columns rendered as label/value fields in a card, ordered by descending
-   * `priority` (ties keep `displayedColumns` order). Excludes the title column
+   * `cardPriority` (ties keep `displayedColumns` order). Excludes the title column
    * and any `cardHidden` columns.
    */
   cardFieldColumns = computed<string[]>(() => {
@@ -771,8 +773,8 @@ export class TnTableComponent<T = unknown> implements OnInit {
       .map((name, index) => ({ name, index }))
       .filter(({ name }) => name !== title && !this.getColumnDef(name)?.cardHidden());
     fields.sort((a, b) => {
-      const pa = this.getColumnDef(a.name)?.priority() ?? 0;
-      const pb = this.getColumnDef(b.name)?.priority() ?? 0;
+      const pa = this.getColumnDef(a.name)?.cardPriority() ?? 0;
+      const pb = this.getColumnDef(b.name)?.cardPriority() ?? 0;
       return pb - pa || a.index - b.index;
     });
     return fields.map((f) => f.name);
@@ -804,7 +806,14 @@ export class TnTableComponent<T = unknown> implements OnInit {
   sortableColumns = computed<string[]>(() =>
     this.displayedColumns().filter((c) => {
       const def = this.getColumnDef(c);
-      return def?.sortable() && !def.cardHidden();
+      if (!def?.sortable()) { return false; }
+      // The active column stays listed even when `cardHidden`. Filtering it out stranded
+      // the toolbar in a self-contradicting state: no `<option>` matched, so the browser
+      // reset the picker to "Unsorted" while the direction toggle still rendered an arrow
+      // beside it — and picking "Unsorted" fired no `change`, because it was already
+      // selected, so the sort was unreachable from card mode. It is already sorted; hiding
+      // it costs more than it saves.
+      return !def.cardHidden() || c === this.sortColumn();
     })
   );
 

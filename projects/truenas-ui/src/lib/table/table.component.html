@@ -73,11 +73,11 @@
               [attr.data-sort-direction]="sortDirection()"
               (click)="toggleSortDirection()">
               @if (sortDirection() === 'asc') {
-                <tn-icon size="sm" name="mat-arrow_upward" />
+                <tn-icon size="sm" name="mat-arrow_upward" aria-hidden="true" />
               } @else if (sortDirection() === 'desc') {
-                <tn-icon size="sm" name="mat-arrow_downward" />
+                <tn-icon size="sm" name="mat-arrow_downward" aria-hidden="true" />
               } @else {
-                <tn-icon size="sm" name="mat-unfold_more" />
+                <tn-icon size="sm" name="mat-unfold_more" aria-hidden="true" />
               }
             </button>
           }

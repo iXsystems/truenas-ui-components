@@ -13,6 +13,7 @@ import {
   TnRowActionsDefDirective,
   TnTableColumnDirective,
 } from '../table-column/table-column.directive';
+import { emitContainerWidth, installMockResizeObserver } from './testing/mock-resize-observer';
 
 interface Server {
   id: number;
@@ -27,27 +28,9 @@ const SERVERS: Server[] = [
   { id: 102, name: 'beta', status: 'idle', role: 'replica', email: 'b@example.com' },
 ];
 
-// jsdom has no ResizeObserver, so the table can't measure its own container. This
-// stand-in lets a test push a width through the real callback path.
-class MockResizeObserver {
-  static instances: MockResizeObserver[] = [];
-  constructor(private cb: ResizeObserverCallback) {
-    MockResizeObserver.instances.push(this);
-  }
-  observe(): void { /* no-op */ }
-  unobserve(): void { /* no-op */ }
-  disconnect(): void { /* no-op */ }
-  emitWidth(width: number): void {
-    this.cb(
-      [{ contentRect: { width } } as ResizeObserverEntry],
-      this as unknown as ResizeObserver
-    );
-  }
-}
-
 /**
  * Exercises card mode with real `tnColumnDef` inputs — `cardTitle`, `cardHidden`,
- * `priority` and `cardLabel` — driven through the public harness rather than raw
+ * `cardPriority` and `cardLabel` — driven through the public harness rather than raw
  * DOM queries, so the harness's card API is covered by the same tests.
  */
 @Component({
@@ -75,6 +58,7 @@ class MockResizeObserver {
       [fixedLayout]="fixedLayout"
       [minColumnWidth]="minColumnWidth"
       [minWidth]="minWidth"
+      [activeRow]="activeRow"
       (sortChange)="sortEvents.push($event)"
       (rowClick)="rowClicks.push($event)"
       (rowDoubleClick)="rowDoubleClicks.push($event)">
@@ -93,17 +77,17 @@ class MockResizeObserver {
         <ng-template let-row tnCellDef>{{ row.name }}</ng-template>
       </ng-container>
 
-      <ng-container tnColumnDef="status" label="Status" [priority]="100" [sortable]="true">
+      <ng-container tnColumnDef="status" label="Status" [cardPriority]="100" [sortable]="true">
         <ng-template tnHeaderCellDef>Status</ng-template>
         <ng-template let-row tnCellDef>{{ row.status }}</ng-template>
       </ng-container>
 
-      <ng-container tnColumnDef="role" label="Role" [priority]="80">
+      <ng-container tnColumnDef="role" label="Role" [cardPriority]="80">
         <ng-template tnHeaderCellDef>Role</ng-template>
         <ng-template let-row tnCellDef>{{ row.role }}</ng-template>
       </ng-container>
 
-      <ng-container tnColumnDef="email" label="Email" cardLabel="Email address" [priority]="10">
+      <ng-container tnColumnDef="email" label="Email" cardLabel="Email address" [cardPriority]="10">
         <ng-template tnHeaderCellDef>Email</ng-template>
         <ng-template let-row tnCellDef>{{ row.email }}</ng-template>
       </ng-container>
@@ -142,6 +126,7 @@ class TableCardTestComponent {
   fixedLayout = false;
   minColumnWidth = '';
   minWidth = '';
+  activeRow: Server | null = null;
   titleOnName = true;
   cardPrimaryCount = 3;
   sortEvents: TnSortEvent[] = [];
@@ -156,12 +141,10 @@ describe('TnTable card layout', () => {
   let component: TableCardTestComponent;
   let loader: HarnessLoader;
   let harness: TnTableHarness;
-  let originalResizeObserver: typeof ResizeObserver | undefined;
+  let restoreResizeObserver: () => void;
 
   beforeEach(async () => {
-    originalResizeObserver = globalThis.ResizeObserver;
-    MockResizeObserver.instances = [];
-    globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+    restoreResizeObserver = installMockResizeObserver();
 
     await TestBed.configureTestingModule({
       imports: [TableCardTestComponent, NoopAnimationsModule],
@@ -175,12 +158,12 @@ describe('TnTable card layout', () => {
   });
 
   afterEach(() => {
-    globalThis.ResizeObserver = originalResizeObserver as typeof ResizeObserver;
+    restoreResizeObserver();
   });
 
   /** Pushes a sub-breakpoint width so the table switches to cards. */
   async function goNarrow(): Promise<void> {
-    MockResizeObserver.instances.forEach((o) => o.emitWidth(320));
+    emitContainerWidth(320);
     fixture.detectChanges();
     await fixture.whenStable();
   }
@@ -216,7 +199,7 @@ describe('TnTable card layout', () => {
       // as "narrow" would flip it to card mode and tear down anything keyed off
       // isCardMode() for a resize that never happened. `measureContainer` has always
       // guarded this; the observer path had not.
-      MockResizeObserver.instances.forEach((o) => o.emitWidth(0));
+      emitContainerWidth(0);
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -228,7 +211,7 @@ describe('TnTable card layout', () => {
       await goNarrow();
       expect(await harness.getLayoutMode()).toBe('cards');
 
-      MockResizeObserver.instances.forEach((o) => o.emitWidth(900));
+      emitContainerWidth(900);
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -303,6 +286,44 @@ describe('TnTable card layout', () => {
 
       // '' is the "Unsorted" option. `id` is sortable but cardHidden, so offering it
       // would reorder the cards by a value no card displays.
+      expect(options).toEqual(['', 'name', 'status']);
+    });
+
+    // The filter must not strand an *active* sort. Dropping the sorted column from the
+    // menu left the picker reset to "Unsorted" while the direction toggle still showed an
+    // arrow — and picking "Unsorted" fired no change event, because it was already
+    // selected, so the sort could not be cleared from card mode at all.
+    it('keeps an active cardHidden column in the menu after switching to cards', async () => {
+      await harness.clickSortHeader('id');
+      await goNarrow();
+
+      const options = [...fixture.nativeElement.querySelectorAll(
+        '.tn-table__cards-sort-select option'
+      )].map((o) => (o as HTMLOptionElement).value);
+      expect(options).toContain('id');
+      expect(await harness.getCardSortColumn()).toBe('id');
+      expect(await harness.getCardSortDirection()).toBe('asc');
+    });
+
+    it('lets an active cardHidden sort be cleared from card mode', async () => {
+      await harness.clickSortHeader('id');
+      await goNarrow();
+      component.sortEvents = [];
+
+      selectSortColumn('');
+
+      expect(await harness.getCardSortColumn()).toBe('');
+      expect(component.sortEvents).toEqual([{ column: '', direction: '' }]);
+    });
+
+    it('drops the column from the menu again once the sort moves elsewhere', async () => {
+      await harness.clickSortHeader('id');
+      await goNarrow();
+      selectSortColumn('name');
+
+      const options = [...fixture.nativeElement.querySelectorAll(
+        '.tn-table__cards-sort-select option'
+      )].map((o) => (o as HTMLOptionElement).value);
       expect(options).toEqual(['', 'name', 'status']);
     });
 
@@ -668,6 +689,26 @@ describe('TnTable card layout', () => {
   // Scroll mode is the default `mobileLayout`, and had no coverage at all — the pinned-column
   // rules are host-scoped CSS, so what's assertable in jsdom is that the host state class lands
   // and the table (not cards) still renders. The pinning geometry itself is verified in a browser.
+  describe('active row', () => {
+    // `getActiveRowIndex()` used to answer null in card mode — "nothing is active" — over a
+    // visibly active card, which greens a test rather than failing it.
+    it('reports the active card index through the harness', async () => {
+      component.activeRow = SERVERS[1];
+      fixture.detectChanges();
+      await goNarrow();
+
+      expect(await harness.getActiveRowIndex()).toBe(1);
+      expect(await harness.isRowActive(1)).toBe(true);
+      expect(await harness.isRowActive(0)).toBe(false);
+    });
+
+    it('reports no active card when none is set', async () => {
+      await goNarrow();
+
+      expect(await harness.getActiveRowIndex()).toBeNull();
+    });
+  });
+
   describe('scroll mode', () => {
     beforeEach(() => {
       component.mobileLayout = 'scroll';
@@ -694,7 +735,7 @@ describe('TnTable card layout', () => {
       await goNarrow();
       expect(host().classList.contains('tn-table--scroll')).toBe(true);
 
-      MockResizeObserver.instances.forEach((o) => o.emitWidth(900));
+      emitContainerWidth(900);
       fixture.detectChanges();
 
       expect(host().classList.contains('tn-table--scroll')).toBe(false);

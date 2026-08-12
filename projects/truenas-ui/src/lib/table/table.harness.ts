@@ -346,6 +346,12 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to true if the row has the active class.
    */
   async isRowActive(rowIndex: number): Promise<boolean> {
+    if (await this.isCards()) {
+      const card = await this.locatorFor(
+        `.tn-table__card[data-row-index="${rowIndex}"]`
+      )();
+      return card.hasClass('tn-table__card--active');
+    }
     await this.assertRowExists(rowIndex);
     const row = await this.locatorFor(
       `.tn-table__row[data-row-index="${rowIndex}"]`
@@ -359,9 +365,17 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to the active row index or null.
    */
   async getActiveRowIndex(): Promise<number | null> {
-    const row = await this.locatorForOptional('.tn-table__row--active')();
-    if (!row) { return null; }
-    const attr = await row.getAttribute('data-row-index');
+    // Layout-aware for the same reason as the selection block: card mode marks the active
+    // row as `.tn-table__card--active` and renders no `.tn-table__row` at all, so a
+    // row-only locator answered null — "nothing is active" — over a visibly active card.
+    // Silent wrong answers are worse than a throw; this one could green a test after a
+    // resize.
+    const selector = (await this.isCards())
+      ? '.tn-table__card--active'
+      : '.tn-table__row--active';
+    const active = await this.locatorForOptional(selector)();
+    if (!active) { return null; }
+    const attr = await active.getAttribute('data-row-index');
     return attr === null ? null : Number(attr);
   }
 

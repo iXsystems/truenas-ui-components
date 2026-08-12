@@ -851,17 +851,17 @@ export const ResponsiveCards: Story = {
             Status is weighted, not colored: the red token on the card background measures
             2.78:1, under AA. Color alone would also be the only cue, which fails 1.4.1.
           -->
-          <ng-container tnColumnDef="status" label="Status" [priority]="100" [sortable]="true">
+          <ng-container tnColumnDef="status" label="Status" [cardPriority]="100" [sortable]="true">
             <ng-template let-user tnCellDef>
               <span [style.font-weight]="user.status === 'active' ? '600' : '400'">
                 {{ user.status }}
               </span>
             </ng-template>
           </ng-container>
-          <ng-container tnColumnDef="role" label="Role" [priority]="80">
+          <ng-container tnColumnDef="role" label="Role" [cardPriority]="80">
             <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
           </ng-container>
-          <ng-container tnColumnDef="email" label="Email" cardLabel="Email address" [priority]="20">
+          <ng-container tnColumnDef="email" label="Email" cardLabel="Email address" [cardPriority]="20">
             <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
           </ng-container>
           <ng-template tnRowActionsDef let-user>
@@ -880,7 +880,7 @@ export const ResponsiveCardsInteractive: Story = {
     docs: {
       description: {
         story:
-          'Card mode with `clickable`, `expandable` and `expandOnRowClick`. Activating a card — click, or focus it and press Enter — toggles its detail section and emits `rowClick`; exactly one control owns the expanded state — the card carries `aria-expanded` while it is the expand trigger (as here), and the "Details" button carries it instead when the button is the only way to expand, so the same panel is never announced twice. Whichever owns it points `aria-controls` at the panel. The active card is marked with `aria-current` rather than `aria-selected`, which `role="listitem"` does not permit.\n\nControls projected into the detail section stay usable: clicking a button or typing in a field inside the panel does not activate the card or collapse the panel out from under you.\n\n**Accessibility limitation:** a clickable card is focusable and responds to Enter/Space, but it is not *announced* as a control. The roles that would announce it (`button`, `option`) have presentational children, which would hide the card\'s own checkbox, row actions and "Details" toggle from assistive tech, so the card stays a `listitem`. If an action has to be discoverable by screen-reader users, project an explicit control through `[tnRowActionsDef]` instead of relying on card activation.',
+          'Card mode with `clickable`, `expandable` and `expandOnRowClick`. Activating a card — click, or focus it and press Enter — toggles its detail section and emits `rowClick`; both controls report the expanded state, deliberately — the "Details" button carries `aria-expanded` and `aria-controls` unconditionally, because it is what a screen-reader user reaches by tabbing, and the card carries the same pair while it is itself the trigger. Announcing one panel from two controls that each genuinely toggle it is the disclosure pattern applied twice: redundant, not invalid, and better than leaving the primary control mute. The active card is marked with `aria-current` rather than `aria-selected`, which `role="listitem"` does not permit.\n\nControls projected into the detail section stay usable: clicking a button or typing in a field inside the panel does not activate the card or collapse the panel out from under you.\n\n**Accessibility limitation:** a clickable card is focusable and responds to Enter/Space, but it is not *announced* as a control. The roles that would announce it (`button`, `option`) have presentational children, which would hide the card\'s own checkbox, row actions and "Details" toggle from assistive tech, so the card stays a `listitem`. If an action has to be discoverable by screen-reader users, project an explicit control through `[tnRowActionsDef]` instead of relying on card activation.',
       },
     },
   },
@@ -913,13 +913,13 @@ export const ResponsiveCardsInteractive: Story = {
           <ng-container tnColumnDef="name" label="Name" [cardTitle]="true" [sortable]="true">
             <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
           </ng-container>
-          <ng-container tnColumnDef="status" label="Status" [priority]="100">
+          <ng-container tnColumnDef="status" label="Status" [cardPriority]="100">
             <ng-template let-user tnCellDef>{{ user.status }}</ng-template>
           </ng-container>
-          <ng-container tnColumnDef="role" label="Role" [priority]="80">
+          <ng-container tnColumnDef="role" label="Role" [cardPriority]="80">
             <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
           </ng-container>
-          <ng-container tnColumnDef="email" label="Email" cardLabel="Email address" [priority]="20">
+          <ng-container tnColumnDef="email" label="Email" cardLabel="Email address" [cardPriority]="20">
             <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
           </ng-container>
           <!--

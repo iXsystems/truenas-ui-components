@@ -42,7 +42,7 @@ export class TnTableColumnDirective {
    * in which case columns fall back to their `displayedColumns` order. Has no
    * effect in the regular (wide) table layout.
    */
-  priority = input<number>(0);
+  cardPriority = input<number>(0);
 
   /**
    * Marks this column as the card's title in card mode — rendered prominently

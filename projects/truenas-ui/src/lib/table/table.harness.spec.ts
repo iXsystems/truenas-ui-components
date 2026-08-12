@@ -13,6 +13,7 @@ import {
   TnHeaderCellDefDirective,
   TnTableColumnDirective,
 } from '../table-column/table-column.directive';
+import { emitContainerWidth, installMockResizeObserver } from './testing/mock-resize-observer';
 
 interface User {
   id: number;
@@ -98,35 +99,14 @@ class TableHarnessTestComponent {
   }
 }
 
-// jsdom has no ResizeObserver, so tn-table can't measure its container on its
-// own. This mock captures the observer the component creates and lets a test
-// push a width through the real callback path — no reaching into private state.
-class MockResizeObserver {
-  static instances: MockResizeObserver[] = [];
-  constructor(private cb: ResizeObserverCallback) {
-    MockResizeObserver.instances.push(this);
-  }
-  observe(): void {}
-  unobserve(): void {}
-  disconnect(): void {}
-  emitWidth(width: number): void {
-    this.cb(
-      [{ contentRect: { width } } as ResizeObserverEntry],
-      this as unknown as ResizeObserver
-    );
-  }
-}
-
 describe('TnTableHarness', () => {
   let fixture: ComponentFixture<TableHarnessTestComponent>;
   let component: TableHarnessTestComponent;
   let loader: HarnessLoader;
-  let originalResizeObserver: typeof ResizeObserver | undefined;
+  let restoreResizeObserver: () => void;
 
   beforeEach(async () => {
-    originalResizeObserver = globalThis.ResizeObserver;
-    MockResizeObserver.instances = [];
-    globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+    restoreResizeObserver = installMockResizeObserver();
 
     await TestBed.configureTestingModule({
       imports: [TableHarnessTestComponent, NoopAnimationsModule],
@@ -139,7 +119,7 @@ describe('TnTableHarness', () => {
   });
 
   afterEach(() => {
-    globalThis.ResizeObserver = originalResizeObserver as typeof ResizeObserver;
+    restoreResizeObserver();
   });
 
   describe('basic queries', () => {
@@ -438,7 +418,7 @@ describe('TnTableHarness', () => {
     // `mobileLayout` is opted into via the host (below); here we push a sub-
     // breakpoint width through the component's ResizeObserver (mocked above).
     function forceCardMode(): TnTableComponent {
-      MockResizeObserver.instances.forEach((o) => o.emitWidth(320));
+      emitContainerWidth(320);
       fixture.detectChanges();
       return fixture.debugElement.query(By.directive(TnTableComponent))
         .componentInstance as TnTableComponent;
