@@ -23,7 +23,7 @@ class HostComponent {
   control = signal<TnCardControl | undefined>(undefined);
   menu = signal<TnMenuItem[] | undefined>(undefined);
   menuTriggerTestId = signal<string | undefined>(undefined);
-  menuAriaLabel = signal<string>('Card menu');
+  menuAriaLabel = signal<string | undefined>(undefined);
   menuTooltip = signal<string | undefined>(undefined);
   primary = signal<TnCardAction | undefined>(undefined);
   secondary = signal<TnCardAction | undefined>(undefined);
@@ -132,6 +132,18 @@ describe('TnCardComponent testId support', () => {
 
     const trigger = fixture.nativeElement.querySelector('.tn-card__menu button') as HTMLElement;
     expect(trigger.getAttribute('aria-label')).toBe('Card menu');
+  });
+
+  it('leaves the kebab trigger without a tooltip until one is asked for', async () => {
+    const fixture = createHost();
+    fixture.componentInstance.menu.set([{ id: 'a', label: 'Action A' }]);
+    fixture.detectChanges();
+
+    // The built-in name is deliberately not a tooltip fallback: existing consumers would all
+    // gain a hover hint that only repeats the button's accessible name.
+    const trigger = fixture.nativeElement.querySelector('.tn-card__menu button') as HTMLElement;
+    expect(trigger.getAttribute('aria-describedby')).toBeNull();
+    expect(await showTooltip(fixture, trigger)).toBeUndefined();
   });
 
   it('lets a consumer supply a translated accessible name for the kebab trigger', () => {
@@ -297,12 +309,13 @@ describe('TnCardComponent projected action templates', () => {
 @Component({
   standalone: true,
   imports: [TnCardComponent],
-  template: `<tn-card [title]="title()" [titleRouterLink]="routerLink()" [titleTooltip]="tooltip()">Content</tn-card>`,
+  template: `<tn-card [title]="title()" [titleRouterLink]="routerLink()" [titleTooltip]="tooltip()" [titleTooltipAriaLabel]="tooltipAriaLabel()">Content</tn-card>`,
 })
 class TitleHostComponent {
   title = signal<string | undefined>('Recent Orders');
   routerLink = signal<string | unknown[] | undefined>(undefined);
   tooltip = signal<string | undefined>(undefined);
+  tooltipAriaLabel = signal<string | undefined>(undefined);
 }
 
 describe('TnCardComponent title router link & tooltip', () => {
@@ -357,6 +370,18 @@ describe('TnCardComponent title router link & tooltip', () => {
     // The button's accessible name is generic; the tooltip text is exposed as the
     // description (aria-describedby) so a screen reader doesn't read it twice.
     expect(tooltipButton?.getAttribute('aria-label')).toBe('More information');
+  });
+
+  it('lets a consumer supply a translated accessible name for the title help button', () => {
+    const fixture = createTitleHost();
+    fixture.componentInstance.tooltip.set('Open the full orders page');
+    // Same untranslatable-default problem as the kebab trigger: the library ships English, so
+    // an app with an i18n layer has to be able to pass its own string.
+    fixture.componentInstance.tooltipAriaLabel.set('Weitere Informationen');
+    fixture.detectChanges();
+
+    const tooltipButton = fixture.nativeElement.querySelector('.tn-card__title-tooltip') as HTMLElement | null;
+    expect(tooltipButton?.getAttribute('aria-label')).toBe('Weitere Informationen');
   });
 });
 

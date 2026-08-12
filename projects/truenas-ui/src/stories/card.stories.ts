@@ -58,6 +58,12 @@ const meta: Meta<TnCardComponent> = {
       control: 'text',
       description: 'Help/hover text shown on the title',
     },
+    titleTooltipAriaLabel: {
+      control: 'text',
+      description:
+        'Accessible name for the title help button. Defaults to "More information"; pass an '
+        + 'already-translated string from an app with an i18n layer.',
+    },
     headerStatus: {
       control: 'object',
       description: 'Status badge configuration (label, type)',
@@ -78,7 +84,9 @@ const meta: Meta<TnCardComponent> = {
     },
     headerMenuTriggerTooltip: {
       control: 'text',
-      description: 'Hover tooltip for the header menu trigger. Defaults to headerMenuAriaLabel.',
+      description:
+        'Hover tooltip for the header menu trigger. Falls back to headerMenuAriaLabel; with '
+        + 'neither set the trigger has no tooltip.',
     },
     primaryAction: {
       control: 'object',
@@ -137,6 +145,7 @@ export const TitleRouterLinkAndTooltip: Story = {
     title: 'Recent Orders',
     titleRouterLink: '/orders',
     titleTooltip: 'Open the full orders page',
+    titleTooltipAriaLabel: 'More information',
     elevation: 'medium',
     padding: 'medium',
     padContent: true,
@@ -148,6 +157,7 @@ export const TitleRouterLinkAndTooltip: Story = {
         [title]="title"
         [titleRouterLink]="titleRouterLink"
         [titleTooltip]="titleTooltip"
+        [titleTooltipAriaLabel]="titleTooltipAriaLabel"
         [elevation]="elevation"
         [padding]="padding"
         [padContent]="padContent"
