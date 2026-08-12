@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { TN_TEST_ATTR } from '../test-id';
 import { TnCardFooterActionsDirective, TnCardHeaderActionsDirective } from './card-action.directive';
@@ -11,6 +12,7 @@ import type {
   TnCardHeaderStatus,
 } from './card.interfaces';
 import type { TnMenuItem } from '../menu/menu.component';
+import { TnTooltipDirective } from '../tooltip/tooltip.directive';
 
 @Component({
   standalone: true,
@@ -183,6 +185,56 @@ class ProjectedActionsHostComponent {
   showFooterAction = signal(false);
   primary = signal<TnCardAction | undefined>(undefined);
 }
+
+describe('TnCardComponent action tooltips', () => {
+  it('wires the action tooltip into the tnTooltip directive on the button host, including when disabled', () => {
+    const fixture = createHost();
+    fixture.componentInstance.secondary.set({
+      label: 'Open WebShare',
+      handler: () => {},
+      disabled: true,
+      tooltip: 'WebShare service is not running',
+    });
+    fixture.detectChanges();
+
+    const tnButton = fixture.debugElement.query(By.css('.tn-card__footer-right tn-button'));
+    const tooltip = tnButton.injector.get(TnTooltipDirective);
+    expect(tooltip.message()).toBe('WebShare service is not running');
+
+    // The disabled inner <button> has pointer-events: none, so hover hit-tests the
+    // <tn-button> host where the directive lives — the tooltip still shows while disabled.
+    const innerButton = tnButton.nativeElement.querySelector('button') as HTMLButtonElement;
+    expect(innerButton.disabled).toBe(true);
+  });
+
+  it('applies the tooltip to the primaryAction button as well', () => {
+    const fixture = createHost();
+    fixture.componentInstance.primary.set({
+      label: 'Add',
+      handler: () => {},
+      tooltip: 'Create a new share',
+    });
+    fixture.detectChanges();
+
+    const tnButton = fixture.debugElement.query(By.css('.tn-card__footer-right tn-button'));
+    const tooltip = tnButton.injector.get(TnTooltipDirective);
+    expect(tooltip.message()).toBe('Create a new share');
+  });
+
+  it('leaves the tooltip message empty (directive inert) when the action has no tooltip', () => {
+    const fixture = createHost();
+    fixture.componentInstance.secondary.set({
+      label: 'Open',
+      handler: () => {},
+    });
+    fixture.detectChanges();
+
+    const tnButton = fixture.debugElement.query(By.css('.tn-card__footer-right tn-button'));
+    const tooltip = tnButton.injector.get(TnTooltipDirective);
+    // An empty message makes the directive a no-op: no overlay, no aria-describedby.
+    expect(tooltip.message()).toBe('');
+  });
+});
 
 describe('TnCardComponent projected action templates', () => {
   function createProjectedHost() {

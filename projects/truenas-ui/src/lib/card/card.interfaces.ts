@@ -4,6 +4,12 @@ export interface TnCardAction {
   disabled?: boolean;
   icon?: string;
   /**
+   * Tooltip shown while hovering or focusing the action button. Rendered on the button's
+   * host element so it still shows when the action is disabled — useful for explaining
+   * why an action is unavailable.
+   */
+  tooltip?: string;
+  /**
    * Test-id applied to the rendered action button. Rendered under whichever attribute name
    * is configured via `TN_TEST_ATTR` (default `data-testid`).
    */

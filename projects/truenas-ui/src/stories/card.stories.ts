@@ -513,6 +513,46 @@ export const WithFooterActions: Story = {
   }),
 };
 
+/**
+ * Actions accept an optional `tooltip`, rendered on the button's host element so it
+ * still shows on hover while the action is disabled — the standard way to explain
+ * why an action is currently unavailable.
+ */
+export const WithDisabledActionTooltip: Story = {
+  args: {
+    title: 'WebShare',
+    elevation: 'medium',
+    padding: 'medium',
+    padContent: true,
+    primaryAction: {
+      label: 'Add',
+      handler: () => {},
+    },
+    secondaryAction: {
+      label: 'Open WebShare',
+      handler: () => {},
+      disabled: true,
+      tooltip: 'WebShare is unavailable because the WebShare service is not running.',
+    },
+  },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-card
+        [title]="title"
+        [elevation]="elevation"
+        [padding]="padding"
+        [padContent]="padContent"
+        [bordered]="bordered"
+        [background]="background"
+        [primaryAction]="primaryAction"
+        [secondaryAction]="secondaryAction">
+        <p>Hover the disabled secondary action to see the reason it is unavailable.</p>
+      </tn-card>
+    `,
+  }),
+};
+
 export const WithFooterLink: Story = {
   args: {
     title: 'Welcome',
