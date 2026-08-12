@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
+import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { TN_TEST_ATTR } from '../test-id';
 import { TnCardFooterActionsDirective, TnCardHeaderActionsDirective } from './card-action.directive';
@@ -38,6 +38,23 @@ function createHost(providers: unknown[] = []) {
   const fixture = TestBed.createComponent(HostComponent);
   fixture.detectChanges();
   return fixture;
+}
+
+/** Hovers `element`, reads the text of the tooltip that pops up, then hovers away again. */
+async function showTooltip(
+  fixture: ComponentFixture<HostComponent>,
+  element: HTMLElement,
+): Promise<string | undefined> {
+  element.dispatchEvent(new MouseEvent('mouseenter'));
+  await new Promise((resolve) => setTimeout(resolve));
+  fixture.detectChanges();
+
+  const text = document.querySelector('.tn-tooltip')?.textContent ?? undefined;
+
+  element.dispatchEvent(new MouseEvent('mouseleave'));
+  await new Promise((resolve) => setTimeout(resolve));
+  fixture.detectChanges();
+  return text;
 }
 
 describe('TnCardComponent testId support', () => {
@@ -129,21 +146,21 @@ describe('TnCardComponent testId support', () => {
     expect(trigger.getAttribute('aria-label')).toBe('Weitere Aktionen');
   });
 
-  it('falls back to headerMenuAriaLabel for the trigger tooltip, and prefers an explicit one', () => {
+  it('falls back to headerMenuAriaLabel for the trigger tooltip, and prefers an explicit one', async () => {
     const fixture = createHost();
     fixture.componentInstance.menu.set([{ id: 'a', label: 'Action A' }]);
     fixture.componentInstance.menuAriaLabel.set('More Actions');
     fixture.detectChanges();
 
-    const card = fixture.debugElement.query(By.directive(TnCardComponent));
-    const cardInstance = card.componentInstance as TnCardComponent & {
-      resolvedHeaderMenuTooltip: () => string;
-    };
-    expect(cardInstance.resolvedHeaderMenuTooltip()).toBe('More Actions');
+    const trigger = fixture.nativeElement.querySelector('.tn-card__menu button') as HTMLElement;
+    // The tooltip has to hang off the focusable button rather than the tn-icon-button host, or
+    // neither the aria-describedby link nor the focus trigger reaches a keyboard user.
+    expect(trigger.getAttribute('aria-describedby')).toBeTruthy();
+    expect(await showTooltip(fixture, trigger)).toBe('More Actions');
 
     fixture.componentInstance.menuTooltip.set('Show more');
     fixture.detectChanges();
-    expect(cardInstance.resolvedHeaderMenuTooltip()).toBe('Show more');
+    expect(await showTooltip(fixture, trigger)).toBe('Show more');
   });
 
   it('honors TN_TEST_ATTR override for every slot', () => {

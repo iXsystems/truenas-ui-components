@@ -448,6 +448,7 @@ export const WithHeaderMenu: Story = {
       { id: '3', label: 'Delete', action: () => {}, icon: 'delete' },
     ],
     headerMenuAriaLabel: 'More Actions',
+    headerMenuTriggerTooltip: 'Show more actions',
   },
   render: (args) => ({
     props: args,
@@ -460,9 +461,10 @@ export const WithHeaderMenu: Story = {
         [bordered]="bordered"
         [background]="background"
         [headerMenuAriaLabel]="headerMenuAriaLabel"
+        [headerMenuTriggerTooltip]="headerMenuTriggerTooltip"
         [headerMenu]="headerMenu">
         <p>This card includes a three-dot menu icon in the header with common actions. Click the dots to open the menu.</p>
-        <p>The trigger's accessible name and tooltip come from <code>headerMenuAriaLabel</code>, so an app with an i18n layer can pass a translated string.</p>
+        <p>The trigger's accessible name comes from <code>headerMenuAriaLabel</code>, so an app with an i18n layer can pass a translated string. <code>headerMenuTriggerTooltip</code> overrides the visible hover hint — clear it in the Controls panel and the tooltip falls back to the accessible name.</p>
       </tn-card>
     `,
   }),
