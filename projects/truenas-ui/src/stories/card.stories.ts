@@ -70,6 +70,16 @@ const meta: Meta<TnCardComponent> = {
       control: 'object',
       description: 'Array of TnMenuItem objects for header menu',
     },
+    headerMenuAriaLabel: {
+      control: 'text',
+      description:
+        'Accessible name for the header menu trigger. Defaults to "Card menu"; pass an '
+        + 'already-translated string from an app with an i18n layer.',
+    },
+    headerMenuTriggerTooltip: {
+      control: 'text',
+      description: 'Hover tooltip for the header menu trigger. Defaults to headerMenuAriaLabel.',
+    },
     primaryAction: {
       control: 'object',
       description: 'Primary footer action button (label, handler, icon)',
@@ -437,6 +447,7 @@ export const WithHeaderMenu: Story = {
       { id: 'sep1', label: '', separator: true },
       { id: '3', label: 'Delete', action: () => {}, icon: 'delete' },
     ],
+    headerMenuAriaLabel: 'More Actions',
   },
   render: (args) => ({
     props: args,
@@ -448,8 +459,10 @@ export const WithHeaderMenu: Story = {
         [padContent]="padContent"
         [bordered]="bordered"
         [background]="background"
+        [headerMenuAriaLabel]="headerMenuAriaLabel"
         [headerMenu]="headerMenu">
         <p>This card includes a three-dot menu icon in the header with common actions. Click the dots to open the menu.</p>
+        <p>The trigger's accessible name and tooltip come from <code>headerMenuAriaLabel</code>, so an app with an i18n layer can pass a translated string.</p>
       </tn-card>
     `,
   }),

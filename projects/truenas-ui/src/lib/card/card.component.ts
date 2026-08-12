@@ -100,6 +100,24 @@ export class TnCardComponent {
    * (default `data-testid`).
    */
   headerMenuTriggerTestId = input<string | undefined>(undefined);
+  /**
+   * Accessible name for the kebab-menu trigger rendered when `headerMenu` is set.
+   *
+   * The library cannot translate its own default, so a consumer with an i18n layer must be able to
+   * supply an already-translated string here — otherwise the trigger's only accessible name is the
+   * English fallback below. Also used as the trigger's tooltip when `headerMenuTriggerTooltip` is
+   * not set.
+   */
+  headerMenuAriaLabel = input<string>('Card menu');
+  /**
+   * Hover tooltip for the kebab-menu trigger. Defaults to `headerMenuAriaLabel`, so setting a
+   * single translated string covers both the accessible name and the visible hint.
+   */
+  headerMenuTriggerTooltip = input<string | undefined>(undefined);
+
+  protected readonly resolvedHeaderMenuTooltip = computed(
+    () => this.headerMenuTriggerTooltip() ?? this.headerMenuAriaLabel(),
+  );
 
   // Footer elements (bottom-right) - Always render in footer
   primaryAction = input<TnCardAction | undefined>(undefined);

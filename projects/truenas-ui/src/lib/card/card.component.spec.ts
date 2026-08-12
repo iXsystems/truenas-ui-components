@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { TN_TEST_ATTR } from '../test-id';
 import { TnCardFooterActionsDirective, TnCardHeaderActionsDirective } from './card-action.directive';
@@ -15,13 +16,15 @@ import type { TnMenuItem } from '../menu/menu.component';
 @Component({
   standalone: true,
   imports: [TnCardComponent],
-  template: `<tn-card [headerStatus]="status()" [headerControl]="control()" [headerMenu]="menu()" [headerMenuTriggerTestId]="menuTriggerTestId()" [primaryAction]="primary()" [secondaryAction]="secondary()" [footerLink]="footerLink()">Content</tn-card>`,
+  template: `<tn-card [headerStatus]="status()" [headerControl]="control()" [headerMenu]="menu()" [headerMenuTriggerTestId]="menuTriggerTestId()" [headerMenuAriaLabel]="menuAriaLabel()" [headerMenuTriggerTooltip]="menuTooltip()" [primaryAction]="primary()" [secondaryAction]="secondary()" [footerLink]="footerLink()">Content</tn-card>`,
 })
 class HostComponent {
   status = signal<TnCardHeaderStatus | undefined>(undefined);
   control = signal<TnCardControl | undefined>(undefined);
   menu = signal<TnMenuItem[] | undefined>(undefined);
   menuTriggerTestId = signal<string | undefined>(undefined);
+  menuAriaLabel = signal<string>('Card menu');
+  menuTooltip = signal<string | undefined>(undefined);
   primary = signal<TnCardAction | undefined>(undefined);
   secondary = signal<TnCardAction | undefined>(undefined);
   footerLink = signal<TnCardFooterLink | undefined>(undefined);
@@ -103,6 +106,44 @@ describe('TnCardComponent testId support', () => {
     const trigger = fixture.nativeElement.querySelector('.tn-card__menu button') as HTMLElement;
     expect(trigger).toBeTruthy();
     expect(trigger.getAttribute('data-testid')).toBe('button-4-actions-menu');
+  });
+
+  it('names the kebab trigger "Card menu" by default', () => {
+    const fixture = createHost();
+    fixture.componentInstance.menu.set([{ id: 'a', label: 'Action A' }]);
+    fixture.detectChanges();
+
+    const trigger = fixture.nativeElement.querySelector('.tn-card__menu button') as HTMLElement;
+    expect(trigger.getAttribute('aria-label')).toBe('Card menu');
+  });
+
+  it('lets a consumer supply a translated accessible name for the kebab trigger', () => {
+    const fixture = createHost();
+    fixture.componentInstance.menu.set([{ id: 'a', label: 'Action A' }]);
+    // A consumer with an i18n layer passes an already-translated string; the library cannot
+    // translate its own default.
+    fixture.componentInstance.menuAriaLabel.set('Weitere Aktionen');
+    fixture.detectChanges();
+
+    const trigger = fixture.nativeElement.querySelector('.tn-card__menu button') as HTMLElement;
+    expect(trigger.getAttribute('aria-label')).toBe('Weitere Aktionen');
+  });
+
+  it('falls back to headerMenuAriaLabel for the trigger tooltip, and prefers an explicit one', () => {
+    const fixture = createHost();
+    fixture.componentInstance.menu.set([{ id: 'a', label: 'Action A' }]);
+    fixture.componentInstance.menuAriaLabel.set('More Actions');
+    fixture.detectChanges();
+
+    const card = fixture.debugElement.query(By.directive(TnCardComponent));
+    const cardInstance = card.componentInstance as TnCardComponent & {
+      resolvedHeaderMenuTooltip: () => string;
+    };
+    expect(cardInstance.resolvedHeaderMenuTooltip()).toBe('More Actions');
+
+    fixture.componentInstance.menuTooltip.set('Show more');
+    fixture.detectChanges();
+    expect(cardInstance.resolvedHeaderMenuTooltip()).toBe('Show more');
   });
 
   it('honors TN_TEST_ATTR override for every slot', () => {

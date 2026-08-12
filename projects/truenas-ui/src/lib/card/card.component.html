@@ -79,7 +79,8 @@
                 name="dots-vertical"
                 library="mdi"
                 size="md"
-                ariaLabel="Card menu"
+                [ariaLabel]="headerMenuAriaLabel()"
+                [tnTooltip]="resolvedHeaderMenuTooltip()"
                 [testId]="headerMenuTriggerTestId()"
                 [tnMenuTriggerFor]="cardMenu" />
               <tn-menu
