@@ -7,14 +7,30 @@
           A plain <div>, not a <label>: tn-checkbox renders its own <label for>,
           and nesting one label inside another is invalid. The visible text is
           passed through the checkbox's own `label` input so it stays associated.
+
+          The handler goes on THIS wrapper, not on <tn-checkbox>: the checkbox is
+          `pointer-events: none` (see `__checkbox` in the stylesheet), so it and its
+          subtree are outside hit testing and a real click lands here instead. A
+          handler bound on the checkbox is never in the event path — which is how the
+          label -> div change silently killed mouse and touch selection while keyboard
+          kept working, since Space on the hidden input dispatches its own bubbling
+          click. Table mode binds the same handler on its <td> for this reason.
+
+          The click/key and focusable lint rules are suppressed rather than satisfied:
+          this wrapper is a pointer hit area around a control that is already
+          focusable and already handles Space. Giving it `tabindex` and a key handler
+          would add a second tab stop and a second activation path for the same
+          checkbox, which is worse than the rule it silences.
         -->
-        <div class="tn-table__cards-selectall">
+        <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+        <div
+          class="tn-table__cards-selectall"
+          (click)="toggleSelectAll(); $event.preventDefault()">
           <tn-checkbox
             class="tn-table__checkbox"
             label="Select all"
             [checked]="isAllSelected()"
-            [indeterminate]="isIndeterminate()"
-            (click)="toggleSelectAll(); $event.preventDefault()" />
+            [indeterminate]="isIndeterminate()" />
         </div>
       }
       @if (sortableColumns().length > 0) {
@@ -102,14 +118,19 @@
         (keydown)="onCardKeydown($event, row)">
         <div class="tn-table__card-header">
           @if (selectable()) {
-            <!-- <div>, not <label> — see the toolbar's select-all above. -->
-            <div class="tn-table__card-select">
+            <!--
+              <div>, not <label>, and the handler is on the wrapper rather than the
+              checkbox — see the toolbar's select-all above for both reasons.
+            -->
+            <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+            <div
+              class="tn-table__card-select"
+              (click)="toggleRowSelection(row); $event.preventDefault(); $event.stopPropagation()">
               <tn-checkbox
                 class="tn-table__checkbox"
                 [label]="'Select row ' + (rowIdx + 1)"
                 [hideLabel]="true"
-                [checked]="isRowSelected(row)"
-                (click)="toggleRowSelection(row); $event.preventDefault(); $event.stopPropagation()" />
+                [checked]="isRowSelected(row)" />
             </div>
           }
           <span class="tn-table__card-title">

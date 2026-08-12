@@ -444,15 +444,13 @@ describe('TnTableHarness', () => {
         .componentInstance as TnTableComponent;
     }
 
-    // Click the checkbox host, which carries the `(click)` toggle handler (with
-    // preventDefault to avoid the shared checkbox's `<label for>` + nested-input
-    // double-activation). A host click fires that handler exactly once —
-    // deterministic, and the same path a real user click takes.
+    // Click the WRAPPER, which is what a real click can reach and where the `(click)`
+    // toggle handler lives. `<tn-checkbox>` is `pointer-events: none`, so clicking it
+    // directly — as this helper used to — skips hit testing entirely and would keep
+    // passing even with no handler bound anywhere a user could hit.
     function clickCardCheckbox(scopeSelector: string): void {
-      const host = fixture.nativeElement.querySelector(
-        `${scopeSelector} tn-checkbox`
-      ) as HTMLElement;
-      host.click();
+      const wrapper = fixture.nativeElement.querySelector(scopeSelector) as HTMLElement;
+      wrapper.click();
       fixture.detectChanges();
     }
 
@@ -470,17 +468,17 @@ describe('TnTableHarness', () => {
 
     it('selects a single row from its card checkbox', () => {
       forceCardMode();
-      clickCardCheckbox('.tn-table__card[data-row-index="0"]');
+      clickCardCheckbox('.tn-table__card[data-row-index="0"] .tn-table__card-select');
 
       expect(component.selectedUsers).toEqual([TEST_USERS[0]]);
     });
 
     it('deselects a row when its card checkbox is clicked again', () => {
       forceCardMode();
-      clickCardCheckbox('.tn-table__card[data-row-index="1"]');
+      clickCardCheckbox('.tn-table__card[data-row-index="1"] .tn-table__card-select');
       expect(component.selectedUsers).toEqual([TEST_USERS[1]]);
 
-      clickCardCheckbox('.tn-table__card[data-row-index="1"]');
+      clickCardCheckbox('.tn-table__card[data-row-index="1"] .tn-table__card-select');
       expect(component.selectedUsers).toEqual([]);
     });
 

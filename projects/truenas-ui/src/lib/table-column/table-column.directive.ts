@@ -47,7 +47,10 @@ export class TnTableColumnDirective {
   /**
    * Marks this column as the card's title in card mode — rendered prominently
    * in the card header alongside any row actions, never as a label/value field.
-   * If no column sets this, the first displayed column is used as the title.
+   * If no column sets this, the first displayed column that isn't `cardHidden` is
+   * used, falling back to the first displayed column when every column is hidden —
+   * a column deliberately kept off the card is not promoted to its most prominent
+   * slot.
    */
   cardTitle = input<boolean>(false);
 
@@ -59,9 +62,13 @@ export class TnTableColumnDirective {
   cardHidden = input<boolean>(false);
 
   /**
-   * Overrides the field label shown for this column in card mode. Defaults to
-   * the column's header text (or the column name when no header template is
-   * provided).
+   * Overrides the field label shown for this column in card mode. Defaults to the
+   * column's `label`, then to the column name.
+   *
+   * A `tnHeaderCellDef` template is NOT used here — it is an `ng-template`, not
+   * text, so there is nothing to read out. A column whose header comes only from
+   * that template renders its bare column name as the card field label; set
+   * `label` (or `cardLabel`) to give the card something readable.
    */
   cardLabel = input<string | undefined>(undefined);
 
