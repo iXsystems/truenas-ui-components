@@ -1,6 +1,7 @@
 /* eslint-disable @angular-eslint/no-input-rename */
 // Input aliasing is intentional for directive API consistency (e.g., ixTooltip, ixTooltipPosition)
 // This follows the standard Angular pattern used by Material and other directive-based components
+import { FocusMonitor } from '@angular/cdk/a11y';
 import {
   Overlay,
   type OverlayRef,
@@ -19,6 +20,7 @@ import {
   input,
   HostListener,
   ElementRef,
+  NgZone,
   ViewContainerRef,
   inject
 } from '@angular/core';
@@ -48,6 +50,7 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
   private _hideTimeout: ReturnType<typeof setTimeout> | null = null;
   private _isTooltipVisible = false;
   private _positionSub: Subscription | null = null;
+  private _focusSub: Subscription | null = null;
   private _tooltipId = '';
 
   /**
@@ -63,16 +66,35 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
   private _elementRef = inject(ElementRef<HTMLElement>);
   private _viewContainerRef = inject(ViewContainerRef);
   private _overlayPositionBuilder = inject(OverlayPositionBuilder);
+  private _focusMonitor = inject(FocusMonitor);
+  private _ngZone = inject(NgZone);
 
   ngOnInit() {
     // Generate unique ID for aria-describedby
     this._tooltipId = `tn-tooltip-${Math.random().toString(36).substr(2, 9)}`;
+
+    // Focus opens the tooltip only when the focus actually came from the keyboard. A plain
+    // `focus` listener also fires for programmatic `.focus()` — e.g. TnMenuTriggerDirective
+    // restoring focus to its trigger after the menu closes — which popped a tooltip back up
+    // next to a button the pointer was nowhere near, and left it there until the user clicked
+    // or tabbed away. Routing through FocusMonitor (same approach as MatTooltip) also skips
+    // mouse/touch focus, where the hover handlers already cover the interaction.
+    this._focusSub = this._focusMonitor.monitor(this._elementRef).subscribe((origin) => {
+      // FocusMonitor emits outside the Angular zone, so re-enter before touching the overlay.
+      if (!origin) {
+        this._ngZone.run(() => this.hide(this.hideDelay()));
+      } else if (origin === 'keyboard') {
+        this._ngZone.run(() => this.show(this.showDelay()));
+      }
+    });
   }
 
   ngOnDestroy() {
     this._clearTimeouts();
     this.hide(0);
     this._positionSub?.unsubscribe();
+    this._focusSub?.unsubscribe();
+    this._focusMonitor.stopMonitoring(this._elementRef);
 
     if (this._overlayRef) {
       this._overlayRef.dispose();
@@ -89,18 +111,6 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
 
   @HostListener('mouseleave')
   _onMouseLeave(): void {
-    this.hide(this.hideDelay());
-  }
-
-  @HostListener('focus')
-  _onFocus(): void {
-    if (!this.disabled() && this.message()) {
-      this.show(this.showDelay());
-    }
-  }
-
-  @HostListener('blur')
-  _onBlur(): void {
     this.hide(this.hideDelay());
   }
 
