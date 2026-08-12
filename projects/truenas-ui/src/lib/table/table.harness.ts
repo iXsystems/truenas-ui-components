@@ -224,9 +224,14 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to true if the row's checkbox is checked.
    */
   async isRowSelected(rowIndex: number): Promise<boolean> {
+    // Scoped to the select cell, matching `toggleRowSelection` and `getSelectedRowCount`.
+    // Resolving against the whole row/card takes the first checkbox in document order, which
+    // is the selection one only while `selectable` is on — with it off and a `tn-checkbox`
+    // projected through `[tnRowActionsDef]`, this reported that checkbox's state instead of
+    // failing to find a selection control.
     const ancestor = (await this.isCards())
-      ? `.tn-table__card[data-row-index="${rowIndex}"]`
-      : `.tn-table__row[data-row-index="${rowIndex}"]`;
+      ? `.tn-table__card[data-row-index="${rowIndex}"] .tn-table__card-select`
+      : `.tn-table__row[data-row-index="${rowIndex}"] .tn-table__select-cell`;
     const checkbox = await this.locatorFor(TnCheckboxHarness.with({ ancestor }))();
     return checkbox.isChecked();
   }
@@ -586,8 +591,10 @@ export class TnTableHarness extends ComponentHarness {
 
   /**
    * Clicks the sort-direction toggle in the card-layout sort menu. No-op when the toggle
-   * isn't rendered: no active sort column, or an active column that isn't `sortable()` —
-   * card mode deliberately declines to reorder by a column whose table header ignores clicks.
+   * isn't rendered, which is three cases: the table layout is showing (the whole card sort
+   * menu is absent — so a call made before the container narrowed does nothing and reports
+   * success), no active sort column, or an active column that isn't `sortable()` — card mode
+   * deliberately declines to reorder by a column whose table header ignores clicks.
    */
   async toggleCardSortDirection(): Promise<void> {
     const button = await this.locatorForOptional('.tn-table__cards-sort-dir')();

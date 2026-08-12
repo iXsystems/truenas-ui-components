@@ -295,9 +295,16 @@
                   }
                 </span>
                 @if (getColumnDef(column)?.sortable()) {
+                  <!--
+                    aria-hidden: the <th> has no aria-label, so its accessible name is
+                    computed from its contents — without this, every sortable column
+                    announced as "Name mat-unfold_more". `aria-sort` on the <th> already
+                    carries the state properly, so the token is pure noise.
+                  -->
                   <tn-icon
                     class="tn-table__sort-icon"
                     size="sm"
+                    aria-hidden="true"
                     [name]="
                       isSorted(column)
                         ? (sortDirection() === 'asc' ? 'mat-arrow_upward' : 'mat-arrow_downward')

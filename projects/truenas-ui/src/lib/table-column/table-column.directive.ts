@@ -103,19 +103,19 @@ export class TnDetailRowDefDirective {
 /**
  * Directive to define a row's action controls (e.g. edit/delete buttons).
  *
- * Place inside `tn-table` to render a trailing, sticky-right actions column in
- * the regular table layout. In card mode (see `mobileLayout` on `tn-table`) the
- * same template is rendered inline beside the card title, so row actions stay
- * reachable at every viewport width. The template receives the row as its
- * implicit context.
+ * Place inside `tn-table` to render a trailing actions column, pinned to the right edge
+ * in `scroll` mode (see `mobileLayout` on `tn-table`) and scrolling with the rest of the
+ * table above `cardBreakpoint`. In card mode the same template is rendered inline beside
+ * the card title, so row actions stay reachable at every viewport width. The template
+ * receives the row as its implicit context.
  *
  * @example
  * ```html
  * <tn-table [dataSource]="data" [displayedColumns]="columns">
  *   ...column defs...
  *   <ng-template tnRowActionsDef let-row>
- *     <tn-icon-button icon="edit" (click)="edit(row)" />
- *     <tn-icon-button icon="delete" (click)="remove(row)" />
+ *     <tn-icon-button [name]="editIcon" ariaLabel="Edit" (click)="edit(row)" />
+ *     <tn-icon-button [name]="deleteIcon" ariaLabel="Delete" (click)="remove(row)" />
  *   </ng-template>
  * </tn-table>
  * ```
