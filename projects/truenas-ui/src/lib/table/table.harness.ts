@@ -560,9 +560,12 @@ export class TnTableHarness extends ComponentHarness {
    * `data-sort-direction`. Deliberately not derived from the button's `aria-label`: matching
    * display text would silently report one direction forever if the wording or locale changed.
    *
-   * @returns Promise resolving to 'asc' or 'desc', `''` when sorted by nothing, or null when the
-   *   card sort menu isn't rendered at all (table layout, or no sortable columns) — the same
-   *   null-vs-empty distinction {@link getCardSortColumn} makes.
+   * @returns Promise resolving to 'asc' or 'desc'; `''` both when sorted by nothing and when the
+   *   active column isn't sortable (the toggle isn't rendered in either case, and this reads the
+   *   rendered control — so a non-sortable active column reports `''` even though the component's
+   *   `sortDirection()` holds a value); or null when the card sort menu isn't rendered at all
+   *   (table layout, or no sortable columns) — the same null-vs-empty distinction
+   *   {@link getCardSortColumn} makes.
    */
   async getCardSortDirection(): Promise<'asc' | 'desc' | '' | null> {
     const menu = await this.locatorForOptional('.tn-table__cards-sort')();
@@ -578,8 +581,9 @@ export class TnTableHarness extends ComponentHarness {
   }
 
   /**
-   * Clicks the sort-direction toggle in the card-layout sort menu. No-op if no
-   * sort column is active (the toggle is only shown while sorting).
+   * Clicks the sort-direction toggle in the card-layout sort menu. No-op when the toggle
+   * isn't rendered: no active sort column, or an active column that isn't `sortable()` —
+   * card mode deliberately declines to reorder by a column whose table header ignores clicks.
    */
   async toggleCardSortDirection(): Promise<void> {
     const button = await this.locatorForOptional('.tn-table__cards-sort-dir')();

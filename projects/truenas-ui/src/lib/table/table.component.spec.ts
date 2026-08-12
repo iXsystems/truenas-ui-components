@@ -905,8 +905,9 @@ describe('TnTableComponent', () => {
 
       // This fixture is the bare component, so it has no `tnColumnDef` content children and
       // no column is sortable — the toggle refuses, which is the same guard that stops card
-      // mode reordering by a column whose table header ignores clicks. The positive
-      // asc <-> desc path is covered in table-card.harness.spec.ts, against real defs.
+      // mode reordering by a column whose table header ignores clicks. Both halves of the
+      // positive asc <-> desc path are covered in table-card.harness.spec.ts
+      // ("flips direction from the card toolbar, both ways"), against real defs.
       it('should not toggle direction for a column with no sortable def', () => {
         component.setSortColumn('name');
         expect(component.sortDirection()).toBe('asc');

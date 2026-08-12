@@ -491,14 +491,19 @@ describe('TnTable card layout', () => {
       });
     });
 
-    it('flips direction from the card toolbar', async () => {
+    it('flips direction from the card toolbar, both ways', async () => {
       await harness.clickSortHeader('name');
       await goNarrow();
       expect(await harness.getCardSortDirection()).toBe('asc');
 
       await harness.toggleCardSortDirection();
-
       expect(await harness.getCardSortDirection()).toBe('desc');
+
+      // desc -> asc as well. This half lost its only assertion when the bare-component
+      // test was repointed at the sortability guard, and the ''-> asc case exercises the
+      // same ternary arm, so branch coverage would not have shown the gap.
+      await harness.toggleCardSortDirection();
+      expect(await harness.getCardSortDirection()).toBe('asc');
     });
 
     it('resets to ascending when the sorted column changes', async () => {
