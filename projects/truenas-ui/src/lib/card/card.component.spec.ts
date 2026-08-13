@@ -263,6 +263,25 @@ describe('TnCardComponent action tooltips', () => {
     expect(description?.textContent).toContain('WebShare service is not running');
   });
 
+  it('strips markup from the aria description while the visual tooltip keeps it', () => {
+    const fixture = createHost();
+    fixture.componentInstance.secondary.set({
+      label: 'Open',
+      handler: () => {},
+      tooltip: 'Service <b>stopped</b> &amp; unreachable',
+    });
+    fixture.detectChanges();
+
+    // The overlay tooltip renders the message as HTML; the persistent description is
+    // plain text so screen readers never announce literal tags or entities.
+    const innerButton = fixture.nativeElement.querySelector(
+      '.tn-card__footer-right tn-button button',
+    ) as HTMLButtonElement;
+    const describedBy = innerButton.getAttribute('aria-describedby');
+    const description = document.getElementById(describedBy!.split(/\s+/)[0]);
+    expect(description?.textContent).toBe('Service stopped & unreachable');
+  });
+
   it('preserves aria-describedby tokens the inner control already carries', () => {
     const fixture = createHost();
     fixture.componentInstance.secondary.set({

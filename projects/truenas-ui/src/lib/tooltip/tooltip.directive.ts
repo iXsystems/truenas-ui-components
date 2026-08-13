@@ -110,7 +110,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     const target = host.matches(INTERACTIVE_SELECTOR)
       ? host
       : host.querySelector<HTMLElement>(INTERACTIVE_SELECTOR) ?? host;
-    const message = !this.disabled() ? this.message() : '';
+    const message = !this.disabled() ? this._plainTextMessage(this.message()) : '';
 
     if (this._describedTarget === target && this._describedMessage === message) {
       return;
@@ -122,6 +122,18 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
       this._describedTarget = target;
       this._describedMessage = message;
     }
+  }
+
+  /**
+   * The overlay tooltip renders its message as HTML (`[innerHTML]`), but AriaDescriber
+   * writes the description as plain text — strip any markup so screen readers never
+   * announce literal tags. DOMParser parses inert markup (no script execution).
+   */
+  private _plainTextMessage(message: string): string {
+    if (!message.includes('<') && !message.includes('&')) {
+      return message;
+    }
+    return new DOMParser().parseFromString(message, 'text/html').body.textContent ?? '';
   }
 
   private _removeAriaDescription(): void {
