@@ -1,7 +1,7 @@
 @if (isCardMode()) {
   <!-- Card layout (narrow container) -->
   @if (selectable() || sortableColumns().length > 0) {
-    <div class="tn-table__cards-toolbar">
+    <div class="tn-table__cards-toolbar" [attr.inert]="loading() ? '' : null">
       @if (selectable()) {
         <!--
           A plain <div>, not a <label>: tn-checkbox renders its own <label for>,
@@ -113,7 +113,7 @@
     </div>
   </ng-template>
 
-  <div class="tn-table__cards" role="list">
+  <div class="tn-table__cards" role="list" [attr.inert]="loading() ? '' : null">
     <!--
       Card ARIA differs from the table row on purpose, because `listitem` supports
       far less than `row` does:
@@ -246,7 +246,10 @@
     }
   </div>
 } @else {
-  <table class="tn-table__table" [style.min-width]="resolvedMinWidth()">
+  <table
+    class="tn-table__table"
+    [style.min-width]="resolvedMinWidth()"
+    [attr.inert]="loading() ? '' : null">
     <!-- Header Row -->
     <thead class="tn-table__header">
       <tr class="tn-table__header-row">
@@ -283,9 +286,9 @@
               "
               [attr.tabindex]="getColumnDef(column)?.sortable() ? 0 : null"
               [attr.data-column]="column"
-              (click)="getColumnDef(column)?.sortable() && onSortClick(column)"
-              (keydown.enter)="onSortClick(column)"
-              (keydown.space)="onSortClick(column); $event.preventDefault()">
+              (click)="onSortHeaderClick(column, $event)"
+              (keydown.enter)="onSortHeaderKeydown(column, $event)"
+              (keydown.space)="onSortHeaderKeydown(column, $event)">
               <span class="tn-table__sort-container">
                 <span class="tn-table__header-text">
                   @if (getColumnDef(column)?.headerTemplate(); as tmpl) {

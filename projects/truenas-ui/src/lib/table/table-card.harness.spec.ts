@@ -59,6 +59,7 @@ const SERVERS: Server[] = [
       [minColumnWidth]="minColumnWidth"
       [minWidth]="minWidth"
       [activeRow]="activeRow"
+      [loading]="loading"
       (sortChange)="sortEvents.push($event)"
       (rowClick)="rowClicks.push($event)"
       (rowDoubleClick)="rowDoubleClicks.push($event)">
@@ -77,13 +78,29 @@ const SERVERS: Server[] = [
         <ng-template let-row tnCellDef>{{ row.name }}</ng-template>
       </ng-container>
 
+      <!-- A control in a SORTABLE header: clicking it must not also re-sort the table. -->
       <ng-container tnColumnDef="status" label="Status" [cardPriority]="100" [sortable]="true">
-        <ng-template tnHeaderCellDef>Status</ng-template>
+        <ng-template tnHeaderCellDef>
+          <button
+            type="button"
+            class="header-filter-sortable"
+            (click)="headerFilterClicks = headerFilterClicks + 1">
+            Status
+          </button>
+        </ng-template>
         <ng-template let-row tnCellDef>{{ row.status }}</ng-template>
       </ng-container>
 
+      <!--
+        A control projected into a NON-sortable header. Every other header in this fixture
+        projects plain text, which is exactly why the header-guard bug was invisible.
+      -->
       <ng-container tnColumnDef="role" label="Role" [cardPriority]="80">
-        <ng-template tnHeaderCellDef>Role</ng-template>
+        <ng-template tnHeaderCellDef>
+          <button type="button" class="header-filter" (click)="headerFilterClicks = headerFilterClicks + 1">
+            Role
+          </button>
+        </ng-template>
         <ng-template let-row tnCellDef>{{ row.role }}</ng-template>
       </ng-container>
 
@@ -127,6 +144,7 @@ class TableCardTestComponent {
   minColumnWidth = '';
   minWidth = '';
   activeRow: Server | null = null;
+  loading = false;
   titleOnName = true;
   cardPrimaryCount = 3;
   sortEvents: TnSortEvent[] = [];
@@ -134,6 +152,7 @@ class TableCardTestComponent {
   rowDoubleClicks: Server[] = [];
   actionClicks: Server[] = [];
   detailButtonClicks = 0;
+  headerFilterClicks = 0;
 }
 
 describe('TnTable card layout', () => {
@@ -868,6 +887,82 @@ describe('TnTable card layout', () => {
       fixture.detectChanges();
 
       expect(component.rowDoubleClicks).toEqual([]);
+    });
+  });
+
+  // The header is an activation surface too. A control projected through tnHeaderCellDef
+  // used to break both ways: its click also re-sorted, and Space on it was swallowed by the
+  // header's own preventDefault even when the column wasn't sortable at all.
+  describe('projected controls in a header cell', () => {
+    function th(column: string): HTMLElement {
+      return fixture.nativeElement.querySelector(`th[data-column="${column}"]`) as HTMLElement;
+    }
+
+    it('does not sort when a control inside a sortable header is clicked', () => {
+      const button = th('status').querySelector('.header-filter-sortable') as HTMLElement;
+
+      button.click();
+      fixture.detectChanges();
+
+      expect(component.headerFilterClicks).toBe(1);
+      expect(component.sortEvents).toEqual([]);
+    });
+
+    it('does not sort on Enter pressed on a control in a sortable header', () => {
+      const button = th('status').querySelector('.header-filter-sortable') as HTMLElement;
+      const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+
+      button.dispatchEvent(event);
+      fixture.detectChanges();
+
+      expect(component.sortEvents).toEqual([]);
+    });
+
+    it('does not swallow Space pressed on a control in a non-sortable header', () => {
+      const button = th('role').querySelector('.header-filter') as HTMLElement;
+      const event = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+
+      button.dispatchEvent(event);
+      fixture.detectChanges();
+
+      // Previously the header's preventDefault ran even though onSortClick had returned
+      // early, so the control was simply dead.
+      expect(event.defaultPrevented).toBe(false);
+      expect(component.sortEvents).toEqual([]);
+    });
+
+    it('still sorts when the header itself is activated', () => {
+      const event = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+      th('name').dispatchEvent(event);
+      fixture.detectChanges();
+
+      expect(event.defaultPrevented).toBe(true);
+      expect(component.sortEvents.at(-1)).toEqual({ column: 'name', direction: 'asc' });
+    });
+  });
+
+  describe('loading blocks interaction in both layouts', () => {
+    it('marks every rendered surface inert while loading', async () => {
+      component.loading = true;
+      fixture.detectChanges();
+
+      const table = fixture.nativeElement.querySelector('.tn-table__table') as HTMLElement;
+      expect(table.hasAttribute('inert')).toBe(true);
+
+      await goNarrow();
+
+      const cards = fixture.nativeElement.querySelector('.tn-table__cards') as HTMLElement;
+      expect(cards.hasAttribute('inert')).toBe(true);
+    });
+
+    it('drops inert again once loading finishes', () => {
+      component.loading = true;
+      fixture.detectChanges();
+      component.loading = false;
+      fixture.detectChanges();
+
+      const table = fixture.nativeElement.querySelector('.tn-table__table') as HTMLElement;
+      expect(table.hasAttribute('inert')).toBe(false);
     });
   });
 

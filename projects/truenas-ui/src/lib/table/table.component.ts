@@ -318,6 +318,9 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * Container width (px) below which `mobileLayout` takes effect. The component
    * observes its own host width (via `ResizeObserver`), so this responds to the
    * available container — a table in a narrow sidebar adapts on a wide screen.
+   *
+   * Measured against the host's **content box** — its border and padding are excluded — so a
+   * `[bordered]` table crosses the threshold at the same content width as an unbordered one.
    */
   cardBreakpoint = input<number>(640);
 
@@ -457,9 +460,25 @@ export class TnTableComponent<T = unknown> implements OnInit {
     });
   }
 
-  /** Reads the host's current width into `containerWidth`. */
+  /**
+   * Reads the host's current **content-box** width into `containerWidth`.
+   *
+   * Content box specifically, to match the `ResizeObserver` callback's `contentRect`. The
+   * initial read used `getBoundingClientRect()` — the border box — so the two paths measured
+   * different quantities, and `[bordered]` puts a 1px border on each side: a bordered table
+   * whose content box is 639px rendered as a table on first paint (641 is not < 640) and
+   * flipped to cards on the observer's first callback, with no resize having happened. Host
+   * padding widens the gap further.
+   */
   private measureContainer(host: HTMLElement): void {
-    this.containerWidth.set(host.getBoundingClientRect().width || Infinity);
+    const hostStyle = getComputedStyle(host);
+    const inset =
+      parseFloat(hostStyle.paddingLeft || '0')
+      + parseFloat(hostStyle.paddingRight || '0')
+      + parseFloat(hostStyle.borderLeftWidth || '0')
+      + parseFloat(hostStyle.borderRightWidth || '0');
+    const contentWidth = host.getBoundingClientRect().width - (Number.isNaN(inset) ? 0 : inset);
+    this.containerWidth.set(contentWidth > 0 ? contentWidth : Infinity);
   }
 
   ngOnInit(): void {
@@ -723,9 +742,10 @@ export class TnTableComponent<T = unknown> implements OnInit {
    */
   private isControlTarget(event: Event, containerSelectors: string): boolean {
     const target = event.target as HTMLElement | null;
-    const match = target?.closest(
-      `${TnTableComponent.INTERACTIVE_SELECTOR}, ${containerSelectors}`
-    );
+    const selector = containerSelectors
+      ? `${TnTableComponent.INTERACTIVE_SELECTOR}, ${containerSelectors}`
+      : TnTableComponent.INTERACTIVE_SELECTOR;
+    const match = target?.closest(selector);
     // The row/card itself is focusable when `clickable`, so it matches the focusable clause.
     // It is the activation surface, not a control within it.
     return !!match && match !== event.currentTarget;
@@ -763,6 +783,40 @@ export class TnTableComponent<T = unknown> implements OnInit {
       event,
       '.tn-table__select-cell, .tn-table__expand-cell, .tn-table__actions-cell'
     );
+  }
+
+  /**
+   * Header-cell activation, guarded like the row and the card.
+   *
+   * A `<th>` is an activation surface too, and a control projected through
+   * `tnHeaderCellDef` broke both ways without this: clicking a filter button re-sorted the
+   * table as well as running the button's own handler, and Space on a checkbox in a
+   * *non-sortable* header was swallowed entirely — `onSortClick` returned early on the
+   * missing `sortable()`, but the template's `preventDefault()` ran regardless, so the
+   * control was simply dead.
+   *
+   * @param column The column the header belongs to.
+   * @param event The originating DOM event.
+   */
+  onSortHeaderClick(column: string, event: Event): void {
+    if (this.isControlTarget(event, '')) { return; }
+    if (!this.getColumnDef(column)?.sortable()) { return; }
+    this.onSortClick(column);
+  }
+
+  /**
+   * Keyboard counterpart of {@link onSortHeaderClick}.
+   *
+   * Takes `Event` rather than `KeyboardEvent` because Angular types `$event` as `Event` for
+   * the `keydown.enter` / `keydown.space` pseudo-events; narrowing happens here.
+   */
+  onSortHeaderKeydown(column: string, event: Event): void {
+    if (this.isControlTarget(event, '')) { return; }
+    if (!this.getColumnDef(column)?.sortable()) { return; }
+    // Only swallow the key once we know this header owns it, so Space on a projected
+    // control still reaches that control.
+    if ((event as KeyboardEvent).key === ' ') { event.preventDefault(); }
+    this.onSortClick(column);
   }
 
   /** Handles the card-mode sort `<select>` change. */

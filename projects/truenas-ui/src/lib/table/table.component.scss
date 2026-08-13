@@ -90,8 +90,15 @@
   border-radius: 4px;
 }
 
-// While loading, prevent interaction with the content behind the overlay. This is the backstop
-// that matters, because the overlay cannot be relied on to cover everything (see below).
+// While loading, prevent interaction with the content behind the overlay — the backstop that
+// matters, because the overlay cannot be relied on to cover everything (see below).
+//
+// This half only stops the POINTER. The template pairs it with `inert` on the same three
+// surfaces, which is what actually removes them from the tab order: `pointer-events: none`
+// leaves every card, row, sortable header, Details button and projected row action focusable
+// and activatable by keyboard, so Enter mid-reload still emitted `rowClick` or `sortChange`
+// against stale data. `inert` also reaches projected consumer controls, which a guard inside
+// this component's own handlers could not.
 //
 // Host-scoped because `tn-table--loading` is a host class. Written as a nested
 // `&--loading .tn-table__table` it compiled to `.tn-table--loading[_ngcontent-*] ...`, which the
