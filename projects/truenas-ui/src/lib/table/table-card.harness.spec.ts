@@ -3,6 +3,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Component } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { emitContainerWidth, installMockResizeObserver } from './table-testing';
 import type { TnSortEvent } from './table.component';
 import { TnTableComponent } from './table.component';
 import { TnTableHarness } from './table.harness';
@@ -13,7 +14,6 @@ import {
   TnRowActionsDefDirective,
   TnTableColumnDirective,
 } from '../table-column/table-column.directive';
-import { emitContainerWidth, installMockResizeObserver } from './testing/mock-resize-observer';
 
 interface Server {
   id: number;
@@ -1354,8 +1354,11 @@ describe('TnTable card layout', () => {
       expect(await rendersCards(fresh)).toBe(true);
     });
 
-    // `width` resolves to `auto` with no layout box — jsdom always, a browser for anything
-    // inside `display: none` — so the padding-subtracting fallback still has to be right.
+    // Whenever `width` does not resolve to a used `px` length the padding-subtracting
+    // fallback runs, so it still has to be right. jsdom takes that path for the host here
+    // because jest-preset-angular's `replace-resources` transformer drops `styleUrl`
+    // outright, so `:host { width: 100% }` never reaches the cascade and `width` resolves to
+    // `auto`. The percentage case a browser produces is covered separately below.
     it('falls back to clientWidth minus horizontal padding when width resolves to auto', async () => {
       const fresh = freshFixture((host) => {
         host.style.padding = '0 40px';
@@ -1374,6 +1377,42 @@ describe('TnTable card layout', () => {
       });
 
       expect(await rendersCards(fresh)).toBe(false);
+    });
+
+    // The case above only reaches the fallback because Jest strips `styleUrl`. In a browser
+    // `:host { width: 100% }` is in the cascade, and `width` resolves to the *used* value
+    // only for an element that has a layout box — without one it resolves to the computed
+    // value, the string '100%'. Parsed bare that is 100, under every sane `cardBreakpoint`,
+    // so a table built inside an inactive tab body or a collapsed panel would render as
+    // cards on a container that was never measured. Stubbed, because the real stylesheet
+    // cannot reach jsdom.
+    it('ignores a percentage width from a host with no layout box', async () => {
+      const real = window.getComputedStyle.bind(window);
+      const spy = jest
+        .spyOn(window, 'getComputedStyle')
+        .mockImplementation(((element: Element, pseudo?: string | null) => {
+          const style = real(element, pseudo ?? undefined);
+          if (element.tagName !== 'TN-TABLE') {
+            return style;
+          }
+          return new Proxy(style, {
+            get(target, prop, receiver) {
+              if (prop === 'width') { return '100%'; }
+              const value = Reflect.get(target, prop, receiver);
+              return typeof value === 'function' ? value.bind(target) : value;
+            },
+          });
+        }) as typeof window.getComputedStyle);
+
+      try {
+        const fresh = freshFixture((host) => {
+          Object.defineProperty(host, 'clientWidth', { value: 0, configurable: true });
+        });
+
+        expect(await rendersCards(fresh)).toBe(false);
+      } finally {
+        spy.mockRestore();
+      }
     });
   });
 });

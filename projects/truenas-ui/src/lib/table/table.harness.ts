@@ -754,11 +754,6 @@ export class TnTableHarness extends ComponentHarness {
 
   // --- Internal helpers ---
 
-  /**
-   * Bounds check for the layout-aware methods. Counts whatever the rendered layout shows, via
-   * `getRowCount()` — unlike {@link assertRowExists}, which deliberately counts rows only,
-   * because its callers refuse card mode outright.
-   */
   /** The card box itself — the element carrying `tabindex`, the handlers and the ARIA state. */
   private async cardAt(cardIndex: number): Promise<TestElement> {
     return this.locatorFor(`.tn-table__card[data-row-index="${cardIndex}"]`)();
@@ -772,6 +767,11 @@ export class TnTableHarness extends ComponentHarness {
     return title ?? (await this.cardAt(cardIndex));
   }
 
+  /**
+   * Bounds check for the layout-aware methods. Counts whatever the rendered layout shows, via
+   * `getRowCount()` — unlike {@link assertRowExists}, which deliberately counts rows only,
+   * because its callers refuse card mode outright.
+   */
   private async assertIndexExists(index: number): Promise<void> {
     const count = await this.getRowCount();
     if (index >= count) {

@@ -575,12 +575,21 @@ export class TnTableComponent<T = unknown> implements OnInit {
     // integer-rounded, and the rounding is not neutral at the boundary: a 639.6px content
     // box against the default 640 breakpoint reads as 640 here and 639.6 on the observer's
     // first callback, so the table renders for a frame and then flips to cards with no
-    // resize having happened — the first-paint flip this measurement exists to remove. It
-    // stays as the fallback for engines that resolve `width` to `auto` rather than to a used
-    // length: jsdom does, as does any element with no layout box (`display: none`), which
-    // then falls through to the 0 -> Infinity guard below exactly as before.
+    // resize having happened — the first-paint flip this measurement exists to remove.
+    //
+    // Only a `px` value is a used width, and the unit check is load-bearing rather than
+    // defensive. `width` resolves to the *used* value only for an element that has a layout
+    // box; without one it resolves to the computed value, and `:host` declares `width: 100%`
+    // — so a table built inside a `display: none` container (an inactive tab body, a
+    // collapsed panel) resolves to the string '100%'. Parsed bare that is the number 100,
+    // which is under every sane `cardBreakpoint`: a container that was never measured would
+    // render as cards. Rejecting the non-px value falls through to `clientWidth`, which is 0
+    // there, and on to the 0 -> Infinity guard below — the same answer the `ResizeObserver`
+    // callback gives a 0x0 contentRect. jsdom takes this path too, resolving `width` to
+    // 'auto' whenever no stylesheet reaches the host.
     const hostStyle = getComputedStyle(host);
-    const usedWidth = parseFloat(hostStyle.width);
+    const resolvedWidth = hostStyle.width;
+    const usedWidth = resolvedWidth.endsWith('px') ? parseFloat(resolvedWidth) : NaN;
     let contentWidth: number;
     if (Number.isFinite(usedWidth)) {
       contentWidth = usedWidth;

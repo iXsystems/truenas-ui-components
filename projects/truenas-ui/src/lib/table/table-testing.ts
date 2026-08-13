@@ -8,6 +8,10 @@
  * need `contentBoxSize` or a `disconnect()` assertion would have drifted, leaving the
  * other silently no longer exercising the resize path.
  *
+ * Exported from the public API because `TnTableHarness`'s layout-mismatch messages tell the
+ * caller to widen or narrow the container past `cardBreakpoint`, and without a stand-in
+ * observer there is no way for a consumer's own spec to do that.
+ *
  * @example
  * ```typescript
  * let restoreResizeObserver: () => void;

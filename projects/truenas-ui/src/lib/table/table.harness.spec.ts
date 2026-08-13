@@ -4,6 +4,7 @@ import { Component } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { emitContainerWidth, installMockResizeObserver } from './table-testing';
 import type { TnSortEvent } from './table.component';
 import { TnTableComponent } from './table.component';
 import { TnTableHarness } from './table.harness';
@@ -13,7 +14,6 @@ import {
   TnHeaderCellDefDirective,
   TnTableColumnDirective,
 } from '../table-column/table-column.directive';
-import { emitContainerWidth, installMockResizeObserver } from './testing/mock-resize-observer';
 
 interface User {
   id: number;
@@ -491,9 +491,13 @@ describe('TnTableHarness', () => {
         expect(card(1).getAttribute('aria-current')).toBeNull();
       });
 
-      // `listitem` supports neither, so setting them here would be ignored by
-      // assistive tech and flagged by axe. Selection lives on the checkbox and
-      // expansion on the "Details" button instead.
+      // `listitem` supports neither: `aria-selected` is not among its allowed attributes and
+      // axe flags it as a critical aria-allowed-attr violation, and `role="button"` has
+      // presentational children, which would hide the card's checkbox, row actions and
+      // "Details" toggle from assistive tech entirely. Selection stays on the checkbox, which
+      // is a real control. `aria-expanded` is a different case — `listitem` inherits it from
+      // the abstract `section` role, so the card does carry it when it is the expand trigger;
+      // see the template comment above the card list.
       it('does not put aria-selected or role=button on the card', () => {
         component.activeRow = TEST_USERS[0];
         component.clickable = true;
