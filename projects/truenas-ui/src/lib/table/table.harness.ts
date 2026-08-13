@@ -70,6 +70,8 @@ export class TnTableHarness extends ComponentHarness {
    * Gets the text content of header cells (excludes sort icons).
    *
    * @returns Promise resolving to an array of header text strings.
+   * @throws Error in the card layout, which renders no header row;
+   *   the thrown message names the card API.
    */
   async getHeaderTexts(): Promise<string[]> {
     await this.assertTableLayout('getHeaderTexts');
@@ -86,6 +88,7 @@ export class TnTableHarness extends ComponentHarness {
    *
    * @param rowIndex Zero-based index of the data row.
    * @returns Promise resolving to an array of cell text strings.
+   * @throws Error in the card layout, which renders no rows; the thrown message names the card API.
    */
   async getRowTexts(rowIndex: number): Promise<string[]> {
     await this.assertTableLayout('getRowTexts');
@@ -106,6 +109,8 @@ export class TnTableHarness extends ComponentHarness {
    * @param rowIndex Zero-based index of the data row.
    * @param columnName The column's data-column attribute value.
    * @returns Promise resolving to the cell text.
+   * @throws Error in the card layout, which renders no cells;
+   *   the thrown message names the card API.
    */
   async getCellText(rowIndex: number, columnName: string): Promise<string> {
     await this.assertTableLayout('getCellText');
@@ -120,6 +125,7 @@ export class TnTableHarness extends ComponentHarness {
    * Gets all row texts as a 2D string array (data-column cells only).
    *
    * @returns Promise resolving to an array of row text arrays.
+   * @throws Error in the card layout, which renders no rows; the thrown message names the card API.
    */
   async getAllRowTexts(): Promise<string[][]> {
     await this.assertTableLayout('getAllRowTexts');
@@ -137,6 +143,8 @@ export class TnTableHarness extends ComponentHarness {
    * Clicks a sortable column header to cycle sort direction.
    *
    * @param columnName The column's data-column attribute value.
+   * @throws Error in the card layout, which renders no column headers;
+   *   the thrown message names the card API.
    */
   async clickSortHeader(columnName: string): Promise<void> {
     await this.assertTableLayout('clickSortHeader');
@@ -151,6 +159,8 @@ export class TnTableHarness extends ComponentHarness {
    *
    * @param columnName The column's data-column attribute value.
    * @returns Promise resolving to true if the column is sortable.
+   * @throws Error in the card layout, which renders no column headers;
+   *   the thrown message names the card API.
    */
   async isSortable(columnName: string): Promise<boolean> {
     await this.assertTableLayout('isSortable');
@@ -169,6 +179,8 @@ export class TnTableHarness extends ComponentHarness {
    *
    * @param columnName The column's data-column attribute value.
    * @returns Promise resolving to 'ascending', 'descending', or null.
+   * @throws Error in the card layout, which renders no column headers;
+   *   the thrown message names the card API.
    */
   async getSortDirection(columnName: string): Promise<string | null> {
     await this.assertTableLayout('getSortDirection');
@@ -270,6 +282,8 @@ export class TnTableHarness extends ComponentHarness {
    * Clicks the expand button for a specific row.
    *
    * @param rowIndex Zero-based index of the data row.
+   * @throws Error in the card layout — use `toggleCardDetail()`;
+   *   the thrown message names the card API.
    */
   async toggleRowExpansion(rowIndex: number): Promise<void> {
     await this.assertTableLayout('toggleRowExpansion');
@@ -285,6 +299,7 @@ export class TnTableHarness extends ComponentHarness {
    *
    * @param rowIndex Zero-based index of the data row.
    * @returns Promise resolving to true if the row has the expanded class.
+   * @throws Error in the card layout, which renders no rows; the thrown message names the card API.
    */
   async isRowExpanded(rowIndex: number): Promise<boolean> {
     await this.assertTableLayout('isRowExpanded');
@@ -301,6 +316,8 @@ export class TnTableHarness extends ComponentHarness {
    *
    * @param rowIndex Zero-based index of the data row.
    * @returns Promise resolving to true if the row has an expand button.
+   * @throws Error in the card layout, whose expand control is the card's Details button;
+   *   the thrown message names the card API.
    */
   async hasExpandControl(rowIndex: number): Promise<boolean> {
     await this.assertTableLayout('hasExpandControl');
@@ -317,6 +334,7 @@ export class TnTableHarness extends ComponentHarness {
    * Clicks a row (for tables with `clickable` enabled).
    *
    * @param rowIndex Zero-based index of the data row.
+   * @throws Error in the card layout, which renders no rows; the thrown message names the card API.
    */
   async clickRow(rowIndex: number): Promise<void> {
     await this.assertTableLayout('clickRow');
@@ -333,6 +351,7 @@ export class TnTableHarness extends ComponentHarness {
    * clicks first; this helper dispatches only the `dblclick` event.
    *
    * @param rowIndex Zero-based index of the data row.
+   * @throws Error in the card layout, which renders no rows; the thrown message names the card API.
    */
   async doubleClickRow(rowIndex: number): Promise<void> {
     await this.assertTableLayout('doubleClickRow');
@@ -348,6 +367,7 @@ export class TnTableHarness extends ComponentHarness {
    *
    * @param rowIndex Zero-based index of the data row.
    * @param key Which key to press — Enter or Space.
+   * @throws Error in the card layout, which renders no rows; the thrown message names the card API.
    */
   async pressKeyOnRow(rowIndex: number, key: 'enter' | 'space'): Promise<void> {
     await this.assertTableLayout('pressKeyOnRow');
@@ -367,6 +387,7 @@ export class TnTableHarness extends ComponentHarness {
    * Checks if a row is keyboard-focusable (tabindex=0).
    *
    * @param rowIndex Zero-based index of the data row.
+   * @throws Error in the card layout, which renders no rows; the thrown message names the card API.
    */
   async isRowFocusable(rowIndex: number): Promise<boolean> {
     await this.assertTableLayout('isRowFocusable');
@@ -436,6 +457,8 @@ export class TnTableHarness extends ComponentHarness {
    *
    * @param detailIndex Zero-based index among currently visible detail rows.
    * @returns Promise resolving to the detail row text.
+   * @throws Error in the card layout — use the card detail panel;
+   *   the thrown message names the card API.
    */
   async getDetailRowContent(detailIndex: number): Promise<string> {
     await this.assertTableLayout('getDetailRowContent');

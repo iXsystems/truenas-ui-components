@@ -638,16 +638,31 @@ export class TnTableComponent<T = unknown> implements OnInit {
 
   // --- Row click ---
 
-  onRowClick(row: T): void {
+  /**
+   * @param row The activated row.
+   * @param event The originating DOM event, when there is one. Optional so a consumer (or a
+   *   test) can still activate a row programmatically; the control-target guard only applies
+   *   to real events, which is the only case where a projected control can be the source.
+   */
+  onRowClick(row: T, event?: Event): void {
     if (!this.clickable()) { return; }
+    // Mirrors `onCardClick`. Only the select, expand and actions cells stop `click`
+    // themselves, so a control projected into an ordinary `tnCellDef` — a checkbox, a
+    // link — used to activate the row as well: `rowClick` fired and, under
+    // `expandOnRowClick`, the detail panel toggled out from under the user. Card mode
+    // never did that, so the same consumer template behaved differently either side of
+    // `cardBreakpoint`.
+    if (event && this.isRowControlTarget(event)) { return; }
     if (this.expandOnRowClick()) {
       this.toggleRowExpansion(row);
     }
     this.rowClick.emit(row);
   }
 
-  onRowDoubleClick(row: T): void {
+  /** @param event See {@link onRowClick} — same guard, same optionality. */
+  onRowDoubleClick(row: T, event?: Event): void {
     if (!this.clickable()) { return; }
+    if (event && this.isRowControlTarget(event)) { return; }
     this.rowDoubleClick.emit(row);
   }
 

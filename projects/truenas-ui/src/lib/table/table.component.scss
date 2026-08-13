@@ -29,10 +29,11 @@
 // `--tn-table-actions-width` sizes the trailing actions column under `fixedLayout`, which
 // distributes only what columns don't claim. `--tn-table-expand-width` is the chevron column.
 //
-// All three are **outer** widths — the cells set `box-sizing: border-box` — so each one is 32px
-// wider than the space its content actually gets (`__cell`'s `padding: 0 16px`; the expand cell's
-// inset is 24px). The defaults account for that: 128px holds two 40px icon buttons plus their gap
-// with room to spare. `table-layout: fixed` ignores content, so a column can never grow past this
+// All three are **outer** widths — the cells set `box-sizing: border-box` — so each one is wider
+// than the space its content actually gets by that cell's own horizontal padding: 32px for the
+// actions cell, which keeps `__cell`'s `padding: 0 16px`, and 24px for the select and expand
+// cells, which override it. The defaults account for that: 128px holds two 40px icon buttons
+// plus their gap with room to spare. `table-layout: fixed` ignores content, so a column can never grow past this
 // on its own — projecting a third control means raising the value, and the
 // ScrollModePinnedColumns play function asserts the content still fits so a shortfall fails a test
 // instead of silently clipping a tap target.
@@ -89,15 +90,23 @@
   border-radius: 4px;
 }
 
-// While loading, prevent interaction with the table behind the overlay. This is the backstop that
-// matters: the overlay itself doesn't cover a horizontally scrolled table, so without this a user
-// could fire a row action against stale data mid-reload.
+// While loading, prevent interaction with the content behind the overlay. This is the backstop
+// that matters, because the overlay cannot be relied on to cover everything (see below).
 //
 // Host-scoped because `tn-table--loading` is a host class. Written as a nested
 // `&--loading .tn-table__table` it compiled to `.tn-table--loading[_ngcontent-*] ...`, which the
 // host — it carries `[_nghost-*]` — never matches, so the rule had never applied.
 :host(.tn-table--loading) {
-  .tn-table__table {
+  // Every rendered surface, not just `__table` — card mode never renders that element, so
+  // scoping to it left the whole card layout live during a reload. That matters because the
+  // overlay above cannot be relied on: it is absolutely positioned inside the host, and with
+  // a consumer-set height (`tn-table { max-height: 400px }` over a long card list) it scrolls
+  // out of the visible strip, leaving a card's Details toggle, its checkbox or a projected
+  // row action clickable against stale data. The toolbar counts too — the sort picker and
+  // "Select all" sit above the cards and are equally live.
+  .tn-table__table,
+  .tn-table__cards,
+  .tn-table__cards-toolbar {
     pointer-events: none;
     user-select: none;
   }

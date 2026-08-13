@@ -826,6 +826,51 @@ describe('TnTable card layout', () => {
     });
   });
 
+  // The mouse mirror of the keydown guard. Only the select/expand/actions cells stop
+  // `click`; a control projected into an ordinary `tnCellDef` used to activate the row too,
+  // while card mode never did — same consumer template, behaviour keyed to container width.
+  describe('projected controls under the mouse (table mode)', () => {
+    beforeEach(() => {
+      component.clickable = true;
+      component.withActions = true;
+      fixture.detectChanges();
+    });
+
+    it('does not activate the row when a projected action is clicked', () => {
+      const button = fixture.nativeElement.querySelector(
+        '.tn-table__row .row-action'
+      ) as HTMLElement;
+
+      button.click();
+      fixture.detectChanges();
+
+      expect(component.actionClicks).toEqual([SERVERS[0]]);
+      expect(component.rowClicks).toEqual([]);
+    });
+
+    it('still activates the row when the click lands on the row itself', () => {
+      const cell = fixture.nativeElement.querySelector(
+        '.tn-table__row .tn-table__cell'
+      ) as HTMLElement;
+
+      cell.click();
+      fixture.detectChanges();
+
+      expect(component.rowClicks).toEqual([SERVERS[0]]);
+    });
+
+    it('does not activate the row on a projected action double-click', () => {
+      const button = fixture.nativeElement.querySelector(
+        '.tn-table__row .row-action'
+      ) as HTMLElement;
+
+      button.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+      fixture.detectChanges();
+
+      expect(component.rowDoubleClicks).toEqual([]);
+    });
+  });
+
   describe('harness query API in card mode', () => {
     it('counts cards from getRowCount rather than answering zero', async () => {
       await goNarrow();
