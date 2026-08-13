@@ -67,6 +67,23 @@ export class TnTableHarness extends ComponentHarness {
   }
 
   /**
+   * Mirror of {@link assertTableLayout} for the card API. `getCardCount()` answering 0 in
+   * table mode is the same silent-wrong-answer shape rejected for `getRowCount()`: a spec
+   * that forgot to push a sub-breakpoint width would assert emptiness and pass over 20
+   * rendered rows.
+   */
+  private async assertCardLayout(method: string): Promise<void> {
+    if (!(await this.isCards())) {
+      throw new Error(
+        `TnTableHarness.${method}() has no meaning in the table layout. `
+          + 'Use the row API instead — getRowCount(), getCellText(), getRowTexts(), '
+          + 'toggleRowExpansion(), clickSortHeader() — or narrow the container below '
+          + 'cardBreakpoint.'
+      );
+    }
+  }
+
+  /**
    * Gets the text content of header cells (excludes sort icons).
    *
    * @returns Promise resolving to an array of header text strings.
@@ -506,6 +523,7 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to the card count.
    */
   async getCardCount(): Promise<number> {
+    await this.assertCardLayout('getCardCount');
     const cards = await this.locatorForAll('.tn-table__card')();
     return cards.length;
   }
@@ -517,6 +535,7 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to the card title text.
    */
   async getCardTitle(cardIndex: number): Promise<string> {
+    await this.assertCardLayout('getCardTitle');
     const title = await this.locatorFor(
       `.tn-table__card[data-row-index="${cardIndex}"] .tn-table__card-title`
     )();
@@ -532,6 +551,7 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to the field's value text.
    */
   async getCardFieldValue(cardIndex: number, columnName: string): Promise<string> {
+    await this.assertCardLayout('getCardFieldValue');
     const value = await this.locatorFor(
       `.tn-table__card[data-row-index="${cardIndex}"] .tn-table__card-field[data-column="${columnName}"] .tn-table__card-field-value`
     )();
@@ -546,6 +566,7 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to an array of column names.
    */
   async getCardPrimaryFieldColumns(cardIndex: number): Promise<string[]> {
+    await this.assertCardLayout('getCardPrimaryFieldColumns');
     const fields = await this.locatorForAll(
       `.tn-table__card[data-row-index="${cardIndex}"] > .tn-table__card-fields > .tn-table__card-field[data-column]`
     )();
@@ -564,6 +585,7 @@ export class TnTableHarness extends ComponentHarness {
    * @param cardIndex Zero-based index of the card.
    */
   async expandCardMoreFields(cardIndex: number): Promise<void> {
+    await this.assertCardLayout('expandCardMoreFields');
     const disclosure = await this.locatorForOptional(
       `.tn-table__card[data-row-index="${cardIndex}"] .tn-table__card-more`
     )();
@@ -584,6 +606,7 @@ export class TnTableHarness extends ComponentHarness {
    * @param cardIndex Zero-based index of the card.
    */
   async toggleCardDetail(cardIndex: number): Promise<void> {
+    await this.assertCardLayout('toggleCardDetail');
     const toggle = await this.locatorFor(
       `.tn-table__card[data-row-index="${cardIndex}"] .tn-table__card-detail-toggle`
     )();

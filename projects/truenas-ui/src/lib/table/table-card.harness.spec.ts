@@ -225,7 +225,9 @@ describe('TnTable card layout', () => {
       await fixture.whenStable();
 
       expect(await harness.getLayoutMode()).toBe('table');
-      expect(await harness.getCardCount()).toBe(0);
+      // getCardCount() would answer 0 here, which is why it now throws instead — see
+      // 'harness diagnostics'. getLayoutMode() is the honest question.
+      await expect(harness.getCardCount()).rejects.toThrow(/no meaning in the table layout/);
     });
 
     it('returns to the table layout when the container grows past the breakpoint', async () => {
@@ -1074,6 +1076,13 @@ describe('TnTable card layout', () => {
       );
     });
 
+    it('card methods name the row API when called in table mode', async () => {
+      await expect(harness.getCardCount()).rejects.toThrow(/no meaning in the table layout/);
+      await expect(harness.getCardTitle(0)).rejects.toThrow(/Use the row API instead/);
+      await expect(harness.getCardFieldValue(0, 'status')).rejects.toThrow(/narrow the container/);
+      await expect(harness.toggleCardDetail(0)).rejects.toThrow(/no meaning in the table layout/);
+    });
+
     it('expandCardMoreFields is idempotent', async () => {
       component.cardPrimaryCount = 1;
       fixture.detectChanges();
@@ -1213,8 +1222,8 @@ describe('TnTable card layout', () => {
     it('never enters card mode while mobileLayout is scroll', async () => {
       await goNarrow();
 
-      expect(await harness.getCardCount()).toBe(0);
       expect(await harness.getLayoutMode()).toBe('table');
+      await expect(harness.getCardCount()).rejects.toThrow(/no meaning in the table layout/);
     });
 
     it('renders the select column first, so the pinning rules have their anchor', async () => {

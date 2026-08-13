@@ -180,8 +180,13 @@
     background-color: inherit;
   }
 
-  .tn-table__header-row .tn-table__header-cell:first-child,
-  .tn-table__header-row .tn-table__select-cell + .tn-table__header-cell {
+  // Scoped to `:not(:hover)` so the sortable hover fill — a far less specific selector —
+  // still gets a turn. Without it this rule outweighed it and the pinned column, usually
+  // the primary sortable one, stayed flat while every other header tinted: exactly backwards
+  // from the affordance intended. The `background-color: inherit` trick used for the body
+  // cells above can't transfer here, since `__header-row` sets no fill of its own.
+  .tn-table__header-row .tn-table__header-cell:first-child:not(:hover),
+  .tn-table__header-row .tn-table__select-cell + .tn-table__header-cell:not(:hover) {
     background-color: var(--tn-topbar);
   }
 }

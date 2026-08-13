@@ -154,9 +154,18 @@
             <div
               class="tn-table__card-select"
               (click)="toggleRowSelection(row); $event.preventDefault(); $event.stopPropagation()">
+              <!--
+                Named from the card's title, not "Select row N": with `hideLabel` this is the
+                checkbox's entire accessible name, and a card list has no visible row numbers
+                to match it against. Falls back to the index when the title column renders
+                derived data through a `tnCellDef` and `getCellValue` has nothing to return —
+                the same case `getCardLabel()` already falls back for.
+              -->
               <tn-checkbox
                 class="tn-table__checkbox"
-                [label]="'Select row ' + (rowIdx + 1)"
+                [label]="
+                  'Select ' + (getCellValue(row, cardTitleColumn()) ?? 'row ' + (rowIdx + 1))
+                "
                 [hideLabel]="true"
                 [checked]="isRowSelected(row)" />
             </div>
