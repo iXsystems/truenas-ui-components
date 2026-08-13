@@ -119,11 +119,19 @@ describe('TnTooltipDirective sticky mode', () => {
     expect(tooltipPanel()).toBeNull();
   }));
 
+  it('moves focus onto the tooltip panel when pinned from the keyboard', fakeAsync(() => {
+    host.focus();
+    // A click with detail 0 is what Enter/Space on a button produces.
+    click(0);
+
+    expect(document.activeElement).toBe(tooltipPanel());
+    // Focused ahead of the message, so Tab reaches the tooltip's own links first.
+    expect(tooltipPanel()?.getAttribute('tabindex')).toBe('-1');
+  }));
+
   it('dismisses on Escape and restores focus to the host', fakeAsync(() => {
     host.focus();
     click(0);
-
-    expect(document.activeElement).toBe(closeButton());
 
     document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     tick();
@@ -131,6 +139,18 @@ describe('TnTooltipDirective sticky mode', () => {
 
     expect(tooltipPanel()).toBeNull();
     expect(document.activeElement).toBe(host);
+  }));
+
+  it('does not intercept Escape while it is only a hover tooltip', fakeAsync(() => {
+    // A permanent keydownEvents() subscription would make the tooltip's overlay the top-most
+    // Escape handler, stealing the key from whatever dialog the host sits in.
+    hover();
+
+    const escape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    document.body.dispatchEvent(escape);
+    tick();
+
+    expect(escape.defaultPrevented).toBe(false);
   }));
 
   it('dismisses on an outside click', fakeAsync(() => {

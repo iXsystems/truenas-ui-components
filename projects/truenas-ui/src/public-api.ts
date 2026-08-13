@@ -125,6 +125,7 @@ export * from './lib/slider/slider-with-label.directive';
 export * from './lib/button-toggle';
 export * from './lib/tooltip/tooltip.directive';
 export * from './lib/tooltip/tooltip.component';
+export * from './lib/tooltip/tooltip.harness';
 export * from './lib/dialog';
 export * from './lib/side-panel';
 export * from './lib/stepper';

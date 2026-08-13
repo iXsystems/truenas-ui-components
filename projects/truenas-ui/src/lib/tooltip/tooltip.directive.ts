@@ -12,7 +12,8 @@ import { ComponentPortal } from '@angular/cdk/portal';
 import type {
   OnDestroy,
   OnInit,
-  ComponentRef
+  ComponentRef,
+  OutputRefSubscription
 } from '@angular/core';
 import {
   Directive,
@@ -60,8 +61,9 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
   private _isTooltipVisible = false;
   private _isSticky = false;
   private _positionSub: Subscription | null = null;
-  private _overlaySubs: Subscription[] = [];
-  private _dismissSub: { unsubscribe(): void } | null = null;
+  private _escapeSub: Subscription | null = null;
+  private _outsideClickSub: Subscription | null = null;
+  private _dismissSub: OutputRefSubscription | null = null;
   private _tooltipId = '';
 
   /**
@@ -87,8 +89,6 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
     this._clearTimeouts();
     this._destroyTooltip();
     this._positionSub?.unsubscribe();
-    this._overlaySubs.forEach((sub) => sub.unsubscribe());
-    this._overlaySubs = [];
 
     if (this._overlayRef) {
       this._overlayRef.dispose();
@@ -194,6 +194,12 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
   /**
    * Pins the tooltip open. Shows it first if it isn't visible yet, so it works both as a
    * follow-up to hover and on its own (e.g. a keyboard-activated host).
+   *
+   * This is the imperative escape hatch and deliberately ignores `tnTooltipSticky` - that input
+   * only governs whether clicking the host pins the tooltip.
+   *
+   * @param options.focusTooltip Move focus into the tooltip, so its content is reachable
+   * without a pointer.
    */
   stick(options: { focusTooltip?: boolean } = {}): void {
     if (this.disabled() || !this.message()) {
@@ -209,11 +215,15 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
     this._attachTooltip();
     this._isSticky = true;
     this._tooltipInstance?.setInput('sticky', true);
+    this._subscribeToEscape();
+    this._subscribeToOutsideClicks();
 
     if (options.focusTooltip && this._tooltipInstance) {
-      // The dismiss button only exists after the sticky input has been rendered.
+      // The panel is only focusable once the sticky input has been rendered. Focus goes to the
+      // panel rather than the dismiss button so that Tab walks the tooltip's own content
+      // first - the links it holds are the reason sticky mode exists.
       this._tooltipInstance.changeDetectorRef.detectChanges();
-      this._tooltipInstance.instance.focusCloseButton();
+      this._tooltipInstance.instance.focusPanel();
     }
   }
 
@@ -247,32 +257,6 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
       scrollStrategy: this._overlay.scrollStrategies.reposition({ scrollThrottle: 20 }),
       panelClass: ['tn-tooltip-panel', `tn-tooltip-panel-${this.position()}`, this.tooltipClass()].filter(Boolean),
     });
-
-    // Escape closes a pinned tooltip even when focus has moved inside it: the CDK keyboard
-    // dispatcher forwards document keydowns to the top-most attached overlay.
-    this._overlaySubs.push(
-      this._overlayRef.keydownEvents().subscribe((event) => {
-        if (event.key !== 'Escape') {
-          return;
-        }
-
-        event.preventDefault();
-        this.unstick(this._isSticky && this._isFocusInsideTooltip());
-      })
-    );
-
-    // Clicking anywhere outside dismisses a pinned tooltip. Clicks on the host itself are left
-    // to the host click handler, which toggles sticky mode.
-    this._overlaySubs.push(
-      this._overlayRef.outsidePointerEvents().subscribe((event) => {
-        const target = event.target as Node | null;
-        if (!this._isSticky || (target && this._elementRef.nativeElement.contains(target))) {
-          return;
-        }
-
-        this.unstick();
-      })
-    );
 
     this._positionSub = (positionStrategy as FlexibleConnectedPositionStrategy).positionChanges
       .subscribe((change) => {
@@ -319,7 +303,6 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
       this._tooltipInstance = this._overlayRef.attach(portal);
       this._tooltipInstance.setInput('message', this.message());
       this._tooltipInstance.setInput('id', this._tooltipId);
-      this._tooltipInstance.setInput('sticky', this._isSticky);
       this._tooltipInstance.setInput('closeAriaLabel', this.closeAriaLabel());
       this._dismissSub = this._tooltipInstance.instance.onDismiss.subscribe(() => {
         // The dismiss button is only reachable while pinned, and it can hold focus - hand it
@@ -330,9 +313,51 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Listens for Escape only while the tooltip is pinned. The CDK keyboard dispatcher hands the
+   * event to the top-most overlay that has subscribers and stops there, so a permanent
+   * subscription would let a plain hover tooltip swallow the Escape meant for the dialog it
+   * sits in.
+   */
+  private _subscribeToEscape(): void {
+    if (this._escapeSub || !this._overlayRef) {
+      return;
+    }
+
+    this._escapeSub = this._overlayRef.keydownEvents().subscribe((event) => {
+      if (event.key !== 'Escape') {
+        return;
+      }
+
+      event.preventDefault();
+      this.unstick(this._isFocusInsideTooltip());
+    });
+  }
+
+  /** Dismisses a pinned tooltip when the user clicks anything else on the page. */
+  private _subscribeToOutsideClicks(): void {
+    if (this._outsideClickSub || !this._overlayRef) {
+      return;
+    }
+
+    this._outsideClickSub = this._overlayRef.outsidePointerEvents().subscribe((event) => {
+      // Clicks on the host are left to the host click handler, which toggles sticky mode.
+      const target = event.target as Node | null;
+      if (target && this._elementRef.nativeElement.contains(target)) {
+        return;
+      }
+
+      this.unstick();
+    });
+  }
+
   private _destroyTooltip(): void {
     this._isSticky = false;
 
+    this._escapeSub?.unsubscribe();
+    this._escapeSub = null;
+    this._outsideClickSub?.unsubscribe();
+    this._outsideClickSub = null;
     this._dismissSub?.unsubscribe();
     this._dismissSub = null;
 

@@ -31,14 +31,15 @@ export class TnTooltipComponent {
   /** Emitted when the user activates the dismiss button. */
   onDismiss = output<void>();
 
-  private closeButton = viewChild<ElementRef<HTMLButtonElement>>('closeButton');
+  private panel = viewChild.required<ElementRef<HTMLElement>>('panel');
 
   /**
-   * Moves focus onto the dismiss button. Used when sticky mode is entered from the
-   * keyboard, so the tooltip's interactive content is reachable without a pointer.
-   * No-op while the button is not rendered (i.e. outside sticky mode).
+   * Moves focus onto the tooltip panel. Used when sticky mode is entered from the keyboard, so
+   * the tooltip's content is reachable without a pointer: from the panel, Tab walks the message
+   * (links included) and then the dismiss button. The panel is only focusable in sticky mode,
+   * so this is a no-op otherwise.
    */
-  focusCloseButton(): void {
-    this.closeButton()?.nativeElement.focus();
+  focusPanel(): void {
+    this.panel().nativeElement.focus();
   }
 }

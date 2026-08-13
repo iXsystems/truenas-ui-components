@@ -36,6 +36,12 @@
   gap: 4px;
   max-width: 280px;
   padding-right: 4px;
+
+  // The panel takes focus when sticky mode is entered from the keyboard; the ring belongs on
+  // whatever is tabbed to next, not on the container itself.
+  &:focus {
+    outline: none;
+  }
 }
 
 .tn-tooltip__message {

@@ -1,9 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
 import { TnTooltipComponent } from '../lib/tooltip/tooltip.component';
 import type { TooltipPosition } from '../lib/tooltip/tooltip.directive';
 import { TnTooltipDirective } from '../lib/tooltip/tooltip.directive';
+
+// Load harness documentation
+const harnessDoc = loadHarnessDoc('tooltip');
 
 const meta: Meta = {
   title: 'Components/Tooltip',
@@ -125,8 +129,8 @@ Sticky mode fixes that: clicking the host pins the tooltip open, the tooltip sto
 click-through, and a dismiss button appears next to the message.
 
 A pinned tooltip is dismissed by clicking the host again, by the dismiss button, by clicking
-outside it, or with Escape. Activating the host from the keyboard moves focus onto the dismiss
-button, and dismissing hands focus back to the host.
+outside it, or with Escape. Activating the host from the keyboard moves focus into the tooltip,
+so Tab walks its content and then the dismiss button; dismissing hands focus back to the host.
 
 \`\`\`html
 <!-- sticky is on by default -->
@@ -387,4 +391,21 @@ tooltipText = 'First line\\nSecond line\\nThird line';
       },
     },
   },
+};
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      canvas: {
+        hidden: true,
+        sourceState: 'none'
+      },
+      description: {
+        story: harnessDoc || ''
+      }
+    },
+    controls: { disable: true },
+    layout: 'fullscreen'
+  },
+  render: () => ({ template: '' })
 };

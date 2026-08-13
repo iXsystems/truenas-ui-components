@@ -1,8 +1,10 @@
 <div
+  #panel
   class="tn-tooltip"
   role="tooltip"
   [id]="id()"
   [class.tn-tooltip--sticky]="sticky()"
+  [attr.tabindex]="sticky() ? -1 : null"
   [attr.aria-hidden]="false">
   <div class="tn-tooltip__message" [innerHTML]="message()"></div>
 

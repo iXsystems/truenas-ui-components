@@ -107,14 +107,22 @@ describe('TnTooltipComponent sticky mode', () => {
     expect(dismissed).toHaveBeenCalledTimes(1);
   });
 
-  it('focuses the dismiss button on request', () => {
+  it('focuses the panel on request, so Tab reaches the message before the dismiss button', () => {
     const fixture = createStickyTooltip();
     document.body.appendChild(fixture.nativeElement);
 
-    fixture.componentInstance.focusCloseButton();
+    fixture.componentInstance.focusPanel();
 
-    expect(document.activeElement).toBe(fixture.nativeElement.querySelector('.tn-tooltip__close'));
+    expect(document.activeElement).toBe(fixture.nativeElement.querySelector('.tn-tooltip'));
     fixture.nativeElement.remove();
+  });
+
+  it('makes the panel focusable only in sticky mode', () => {
+    const hoverFixture = createTooltip('Hover message');
+    expect((hoverFixture.nativeElement.querySelector('.tn-tooltip') as HTMLElement).hasAttribute('tabindex')).toBe(false);
+
+    const stickyFixture = createStickyTooltip();
+    expect((stickyFixture.nativeElement.querySelector('.tn-tooltip') as HTMLElement).getAttribute('tabindex')).toBe('-1');
   });
 
   it('keeps the message readable when the dismiss button is present', () => {
