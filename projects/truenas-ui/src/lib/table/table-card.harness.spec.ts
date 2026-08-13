@@ -976,6 +976,51 @@ describe('TnTable card layout', () => {
       expect(document.activeElement).toBe(header);
     });
 
+    // Signals are glitch-free, so a false -> true flip inside one task runs the effect once,
+    // seeing only `true` — with focus already on <body>. Overwriting the saved element there
+    // loses the focus permanently, which is the symptom the effect exists to prevent.
+    it('survives a coalesced loading flip', async () => {
+      const header = fixture.nativeElement.querySelector('th[data-column="name"]') as HTMLElement;
+      header.focus();
+
+      component.loading = true;
+      fixture.detectChanges();
+      (document.activeElement as HTMLElement).blur();
+
+      // Second load begins while focus is still parked on <body>.
+      component.loading = false;
+      component.loading = true;
+      fixture.detectChanges();
+      expect(document.activeElement).toBe(document.body);
+
+      component.loading = false;
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(document.activeElement).toBe(header);
+    });
+
+    it('falls back to the host when the remembered element is gone', async () => {
+      const firstRow = fixture.nativeElement.querySelector('.tn-table__row') as HTMLElement;
+      const cell = firstRow.querySelector('.tn-table__cell') as HTMLElement;
+      cell.setAttribute('tabindex', '0');
+      cell.focus();
+
+      component.loading = true;
+      fixture.detectChanges();
+      (document.activeElement as HTMLElement).blur();
+      // Detached explicitly: the default index `trackBy` reuses row elements, so simply
+      // swapping the data would not disconnect it. An id-based `trackBy` would.
+      cell.remove();
+
+      component.loading = false;
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const host = fixture.nativeElement.querySelector('tn-table') as HTMLElement;
+      expect(document.activeElement).toBe(host);
+    });
+
     it('does not steal focus back if the user moved on during the load', async () => {
       const header = fixture.nativeElement.querySelector('th[data-column="name"]') as HTMLElement;
       const elsewhere = document.createElement('button');

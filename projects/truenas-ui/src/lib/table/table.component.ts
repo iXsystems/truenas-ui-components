@@ -203,6 +203,12 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * When true, shows a spinner overlay over the table. Existing rows remain
    * visible (dimmed) so reloads don't cause layout jumps; if there are no rows
    * yet, the spinner replaces the empty state.
+   *
+   * The rendered surfaces are `inert` while this is true, so they leave the tab order *and*
+   * the accessibility tree — a screen-reader user hears the overlay's "Loading..." status
+   * rather than the stale rows. That is deliberate: `pointer-events` alone left every row,
+   * header and projected control activatable by keyboard against data being replaced.
+   * Focus is captured on the way in and restored on the way out.
    */
   loading = input<boolean>(false);
 
@@ -455,7 +461,14 @@ export class TnTableComponent<T = unknown> implements OnInit {
 
       if (this.loading()) {
         const active = document.activeElement as HTMLElement | null;
-        this.focusBeforeLoading = active && host.contains(active) ? active : null;
+        // `<body>` is what `inert` leaves behind, not evidence the user moved on. Signals are
+        // glitch-free, so a false -> true flip inside one task (a store that clears loading on
+        // a cache hit and re-sets it for the network request) runs this effect once, seeing
+        // only `true` — and overwriting a still-valid saved element with null there would lose
+        // the focus permanently, which is the symptom this whole effect exists to prevent.
+        if (active && active !== document.body) {
+          this.focusBeforeLoading = host.contains(active) ? active : null;
+        }
         return;
       }
 
@@ -464,11 +477,26 @@ export class TnTableComponent<T = unknown> implements OnInit {
       this.focusBeforeLoading = null;
       afterNextRender(
         () => {
-          // Only if `inert` actually took the focus — never steal it back from wherever the
-          // user has moved on to.
-          if (previous.isConnected && document.activeElement === document.body) {
+          // Never steal focus back from wherever the user moved on to.
+          if (document.activeElement !== document.body) { return; }
+
+          if (previous.isConnected) {
             previous.focus();
+            // A second load can re-apply `inert` before this hook runs, and focusing into an
+            // inert subtree is refused outright — so re-arm rather than dropping the element.
+            if (document.activeElement !== previous) {
+              this.focusBeforeLoading = previous;
+            }
+            return;
           }
+
+          // The remembered element is gone: a reload dropped the focused row under an
+          // id-based `trackBy`, or the container flipped to cards mid-load. Keep focus in the
+          // region rather than leaving the user at the top of the document.
+          if (!host.hasAttribute('tabindex')) {
+            host.setAttribute('tabindex', '-1');
+          }
+          host.focus();
         },
         { injector: this.injector }
       );
