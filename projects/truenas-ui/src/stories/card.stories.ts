@@ -551,17 +551,21 @@ export const WithDisabledActionTooltip: Story = {
       </tn-card>
     `,
   }),
-  // Verifies the tooltip shows for a disabled action when hover events land on the
-  // <tn-button> host — the destination real pointer hover is retargeted to, since the
-  // disabled inner <button> has pointer-events: none. Note userEvent.hover dispatches
-  // synthetic events on the host directly and does no hit-testing, so the retargeting
-  // itself is browser behaviour this play relies on rather than exercises.
+  // Two assertions that together pin the disabled-hover behaviour in a real browser:
+  // 1. The computed pointer-events: none on the disabled inner <button> — the rule
+  //    (in button.component.scss) that makes the browser retarget real pointer hover
+  //    to the <tn-button> host. Without it the feature silently dies, so it is
+  //    asserted here rather than trusted.
+  // 2. The tooltip appears when hover events land on that host. userEvent.hover
+  //    dispatches synthetic events on the host directly and does no hit-testing, so
+  //    the retargeting itself is standard browser behaviour built on assertion 1.
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const label = canvas.getByText('Open WebShare');
     const buttonHost = label.closest('tn-button') as HTMLElement;
     const innerButton = buttonHost.querySelector('button') as HTMLButtonElement;
     await expect(innerButton).toBeDisabled();
+    await expect(getComputedStyle(innerButton).pointerEvents).toBe('none');
 
     await userEvent.hover(buttonHost);
     await waitFor(async () => {

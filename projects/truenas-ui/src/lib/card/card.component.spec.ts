@@ -329,6 +329,8 @@ describe('TnCardComponent disabled action click guard', () => {
 
     // The disabled inner <button> has pointer-events: none, so a real click over it
     // hit-tests through to the <tn-button> host — simulate that retargeted click.
+    // tn-button itself halts host clicks while disabled, so the card's plain
+    // (click)="action.handler()" binding never fires.
     const tnButton = fixture.nativeElement.querySelector('.tn-card__footer-right tn-button') as HTMLElement;
     tnButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
