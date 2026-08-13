@@ -955,6 +955,45 @@ describe('TnTable card layout', () => {
       expect(cards.hasAttribute('inert')).toBe(true);
     });
 
+    // `inert` blurs whatever is focused inside it, and the flow that starts most loads is a
+    // keyboard user pressing Enter on a sortable header — so without restoring focus they
+    // were dropped to <body> and had to tab back from the top of the document.
+    it('restores focus to the element inert took it from', async () => {
+      const header = fixture.nativeElement.querySelector('th[data-column="name"]') as HTMLElement;
+      header.focus();
+      expect(document.activeElement).toBe(header);
+
+      component.loading = true;
+      fixture.detectChanges();
+      // jsdom does not implement inert's blur, so stand in for it.
+      (document.activeElement as HTMLElement).blur();
+      expect(document.activeElement).toBe(document.body);
+
+      component.loading = false;
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(document.activeElement).toBe(header);
+    });
+
+    it('does not steal focus back if the user moved on during the load', async () => {
+      const header = fixture.nativeElement.querySelector('th[data-column="name"]') as HTMLElement;
+      const elsewhere = document.createElement('button');
+      document.body.appendChild(elsewhere);
+      header.focus();
+
+      component.loading = true;
+      fixture.detectChanges();
+      elsewhere.focus();
+
+      component.loading = false;
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(document.activeElement).toBe(elsewhere);
+      elsewhere.remove();
+    });
+
     it('drops inert again once loading finishes', () => {
       component.loading = true;
       fixture.detectChanges();

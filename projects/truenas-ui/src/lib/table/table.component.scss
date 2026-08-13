@@ -238,7 +238,11 @@
     opacity: 0;
     transition: opacity 0.2s ease;
 
-    .tn-table__header-cell--sortable:hover & {
+    // Hover reveals it for the mouse; `:focus-visible` does the same for the keyboard, which
+    // otherwise got a focus ring and no sort affordance at all. Touch has no hover either,
+    // but there the icon is revealed once the column is sorted.
+    .tn-table__header-cell--sortable:hover &,
+    .tn-table__header-cell--sortable:focus-visible & {
       opacity: 0.5;
     }
 

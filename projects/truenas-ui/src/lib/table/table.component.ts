@@ -11,6 +11,7 @@ import {
   effect,
   ElementRef,
   inject,
+  Injector,
   input,
   model,
   output,
@@ -114,6 +115,16 @@ function getExpandDuration(): string {
 export class TnTableComponent<T = unknown> implements OnInit {
   private destroyRef = inject(DestroyRef);
   private elementRef = inject(ElementRef<HTMLElement>);
+  private injector = inject(Injector);
+
+  /**
+   * Element that had focus when `loading` went true, so it can be restored afterwards.
+   *
+   * `inert` blurs whatever is focused inside it and refuses focus while set, so without this
+   * a keyboard user who pressed Enter on a sortable header — the flow that *starts* most
+   * loads — was dropped to `<body>` and had to tab back from the top of the document.
+   */
+  private focusBeforeLoading: HTMLElement | null = null;
 
   // --- Core inputs ---
   dataSource = input<TnTableDataSource<T> | T[]>([]);
@@ -435,6 +446,34 @@ export class TnTableComponent<T = unknown> implements OnInit {
       }
     });
 
+    // Save focus on the way into `loading`, restore it on the way out. The restore is
+    // deferred to after the next render because the surfaces only drop `inert` when the
+    // template updates, and focusing an element still inside an inert subtree is a no-op.
+    effect(() => {
+      const host = this.elementRef.nativeElement;
+      if (typeof document === 'undefined') { return; }
+
+      if (this.loading()) {
+        const active = document.activeElement as HTMLElement | null;
+        this.focusBeforeLoading = active && host.contains(active) ? active : null;
+        return;
+      }
+
+      const previous = this.focusBeforeLoading;
+      if (!previous) { return; }
+      this.focusBeforeLoading = null;
+      afterNextRender(
+        () => {
+          // Only if `inert` actually took the focus — never steal it back from wherever the
+          // user has moved on to.
+          if (previous.isConnected && document.activeElement === document.body) {
+            previous.focus();
+          }
+        },
+        { injector: this.injector }
+      );
+    });
+
     // Measure the host width to drive card/scroll mode. The initial read is
     // taken in `afterNextRender` (guaranteed post-layout, so we get the real
     // width rather than a pre-layout 0), then a `ResizeObserver` keeps it in
@@ -471,13 +510,17 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * padding widens the gap further.
    */
   private measureContainer(host: HTMLElement): void {
+    // `clientWidth` minus horizontal padding is exactly `contentRect.width`: it already
+    // excludes the border AND any vertical scrollbar, which a border-box-derived width does
+    // not. `:host` sets `overflow-x: auto` — which promotes `overflow-y` to auto — so a
+    // height-constrained table on a platform with classic scrollbars measured ~15px wider
+    // here than the observer did, reintroducing the very first-paint flip the border fix
+    // removed. `getBoundingClientRect()` is also the *transformed* size, so a table inside a
+    // scaled dialog mis-measured too.
     const hostStyle = getComputedStyle(host);
-    const inset =
-      parseFloat(hostStyle.paddingLeft || '0')
-      + parseFloat(hostStyle.paddingRight || '0')
-      + parseFloat(hostStyle.borderLeftWidth || '0')
-      + parseFloat(hostStyle.borderRightWidth || '0');
-    const contentWidth = host.getBoundingClientRect().width - (Number.isNaN(inset) ? 0 : inset);
+    const padding =
+      parseFloat(hostStyle.paddingLeft || '0') + parseFloat(hostStyle.paddingRight || '0');
+    const contentWidth = host.clientWidth - (Number.isNaN(padding) ? 0 : padding);
     this.containerWidth.set(contentWidth > 0 ? contentWidth : Infinity);
   }
 
