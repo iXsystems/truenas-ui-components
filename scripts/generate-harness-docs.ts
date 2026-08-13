@@ -432,6 +432,13 @@ function main() {
     console.log(`\n✅ Successfully generated ${successCount} documentation(s)`);
     if (errorCount > 0) {
       console.log(`⚠️  ${errorCount} file(s) had errors`);
+      // Fail the build. A per-file throw is caught above so the other harnesses still get
+      // documented, but reporting success anyway means `yarn build-storybook` ships a
+      // registry quietly missing those components, and `loadHarnessDoc()` returning null
+      // reads to a story as "this component has no harness". That is not hypothetical: a
+      // `ts.isJSDocText` call not present in every TypeScript version silently dropped three
+      // harnesses here while the script printed the success line.
+      process.exitCode = 1;
     }
     console.log(`📦 Documentation available via loadHarnessDoc()\n`);
 

@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { emitContainerWidth, installMockResizeObserver } from './table-testing';
+import { TnTableTesting } from './table-testing';
 import type { TnSortEvent } from './table.component';
 import { TnTableComponent } from './table.component';
 import { TnTableHarness } from './table.harness';
@@ -106,7 +106,7 @@ describe('TnTableHarness', () => {
   let restoreResizeObserver: () => void;
 
   beforeEach(async () => {
-    restoreResizeObserver = installMockResizeObserver();
+    restoreResizeObserver = TnTableTesting.installResizeObserver();
 
     await TestBed.configureTestingModule({
       imports: [TableHarnessTestComponent, NoopAnimationsModule],
@@ -418,7 +418,7 @@ describe('TnTableHarness', () => {
     // `mobileLayout` is opted into via the host (below); here we push a sub-
     // breakpoint width through the component's ResizeObserver (mocked above).
     function forceCardMode(): TnTableComponent {
-      emitContainerWidth(320);
+      TnTableTesting.emitContainerWidth(320);
       fixture.detectChanges();
       return fixture.debugElement.query(By.directive(TnTableComponent))
         .componentInstance as TnTableComponent;

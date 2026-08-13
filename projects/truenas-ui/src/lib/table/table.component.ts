@@ -585,8 +585,9 @@ export class TnTableComponent<T = unknown> implements OnInit {
     // which is under every sane `cardBreakpoint`: a container that was never measured would
     // render as cards. Rejecting the non-px value falls through to `clientWidth`, which is 0
     // there, and on to the 0 -> Infinity guard below — the same answer the `ResizeObserver`
-    // callback gives a 0x0 contentRect. jsdom takes this path too, resolving `width` to
-    // 'auto' whenever no stylesheet reaches the host.
+    // callback gives a 0x0 contentRect. jsdom takes this path too: with no rule matching the
+    // host it resolves `width` to the empty string rather than filling in an initial value
+    // (checked against jsdom 26.1.0, the version jest-environment-jsdom resolves here).
     const hostStyle = getComputedStyle(host);
     const resolvedWidth = hostStyle.width;
     const usedWidth = resolvedWidth.endsWith('px') ? parseFloat(resolvedWidth) : NaN;

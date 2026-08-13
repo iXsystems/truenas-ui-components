@@ -3,7 +3,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Component } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { emitContainerWidth, installMockResizeObserver } from './table-testing';
+import { TnTableTesting } from './table-testing';
 import type { TnSortEvent } from './table.component';
 import { TnTableComponent } from './table.component';
 import { TnTableHarness } from './table.harness';
@@ -165,7 +165,7 @@ describe('TnTable card layout', () => {
   let restoreResizeObserver: () => void;
 
   beforeEach(async () => {
-    restoreResizeObserver = installMockResizeObserver();
+    restoreResizeObserver = TnTableTesting.installResizeObserver();
 
     await TestBed.configureTestingModule({
       imports: [TableCardTestComponent, NoopAnimationsModule],
@@ -184,7 +184,7 @@ describe('TnTable card layout', () => {
 
   /** Pushes a sub-breakpoint width so the table switches to cards. */
   async function goNarrow(): Promise<void> {
-    emitContainerWidth(320);
+    TnTableTesting.emitContainerWidth(320);
     fixture.detectChanges();
     await fixture.whenStable();
   }
@@ -220,7 +220,7 @@ describe('TnTable card layout', () => {
       // as "narrow" would flip it to card mode and tear down anything keyed off
       // isCardMode() for a resize that never happened. `measureContainer` has always
       // guarded this; the observer path had not.
-      emitContainerWidth(0);
+      TnTableTesting.emitContainerWidth(0);
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -234,7 +234,7 @@ describe('TnTable card layout', () => {
       await goNarrow();
       expect(await harness.getLayoutMode()).toBe('cards');
 
-      emitContainerWidth(900);
+      TnTableTesting.emitContainerWidth(900);
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -1261,7 +1261,7 @@ describe('TnTable card layout', () => {
       await goNarrow();
       expect(host().classList.contains('tn-table--scroll')).toBe(true);
 
-      emitContainerWidth(900);
+      TnTableTesting.emitContainerWidth(900);
       fixture.detectChanges();
 
       expect(host().classList.contains('tn-table--scroll')).toBe(false);
@@ -1357,9 +1357,10 @@ describe('TnTable card layout', () => {
     // Whenever `width` does not resolve to a used `px` length the padding-subtracting
     // fallback runs, so it still has to be right. jsdom takes that path for the host here
     // because jest-preset-angular's `replace-resources` transformer drops `styleUrl`
-    // outright, so `:host { width: 100% }` never reaches the cascade and `width` resolves to
-    // `auto`. The percentage case a browser produces is covered separately below.
-    it('falls back to clientWidth minus horizontal padding when width resolves to auto', async () => {
+    // outright: `:host { width: 100% }` never reaches the cascade, no rule matches the host,
+    // and jsdom resolves `width` to the empty string rather than to an initial value. The
+    // percentage case a browser produces is covered separately below.
+    it('falls back to clientWidth minus horizontal padding when width has no px length', async () => {
       const fresh = freshFixture((host) => {
         host.style.padding = '0 40px';
         // 700 - 80 = 620, under the breakpoint. The unadjusted 700 would render a table.
