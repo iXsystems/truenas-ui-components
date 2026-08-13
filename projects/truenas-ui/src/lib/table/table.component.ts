@@ -51,11 +51,17 @@ export interface TnSortEvent {
  * How the table adapts when its container is narrower than `cardBreakpoint`:
  * - `scroll` — the table keeps its columns and scrolls horizontally, with the
  *   first column and the actions column pinned in place *while it overflows*.
- *   Default — preserves the existing horizontal-scroll behavior, so card mode is
- *   strictly opt-in. Note that overflow is not automatic: `auto` layout (the
- *   default) sizes to content and overflows on its own, but a `fixedLayout` table
- *   fits its container exactly, so it only overflows — and only then pins — once
- *   `minColumnWidth` or `minWidth` gives it a floor.
+ *   Default, and card mode is strictly opt-in — but note this is NOT a no-op for
+ *   existing tables: because the default `cardBreakpoint` is 640, any table whose
+ *   host content box measures under that (a phone, or a sidebar or dashboard card
+ *   on a desktop) gets `tn-table--scroll` and therefore the pinning, where it
+ *   previously scrolled all of its columns together. Raise `cardBreakpoint` if a
+ *   table should never pin.
+ *
+ *   Overflow is not automatic either: `auto` layout (the default) sizes to content
+ *   and overflows on its own, but a `fixedLayout` table fits its container exactly,
+ *   so it only overflows — and only then pins — once `minColumnWidth` or `minWidth`
+ *   gives it a floor.
  * - `cards`  — each row collapses into a stacked card (title + actions header,
  *   priority-ranked label/value fields, optional detail content).
  * Above the breakpoint both modes render the regular table.

@@ -227,6 +227,7 @@ export class TnTableHarness extends ComponentHarness {
    * @param rowIndex Zero-based index of the data row.
    */
   async toggleRowSelection(rowIndex: number): Promise<void> {
+    await this.assertIndexExists(rowIndex);
     const selector = (await this.isCards())
       ? `.tn-table__card[data-row-index="${rowIndex}"] .tn-table__card-select`
       : `.tn-table__row[data-row-index="${rowIndex}"] .tn-table__select-cell`;
@@ -241,6 +242,7 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to true if the row's checkbox is checked.
    */
   async isRowSelected(rowIndex: number): Promise<boolean> {
+    await this.assertIndexExists(rowIndex);
     // Scoped to the select cell, matching `toggleRowSelection` and `getSelectedRowCount`.
     // Resolving against the whole row/card takes the first checkbox in document order, which
     // is the selection one only while `selectable` is on — with it off and a `tn-checkbox`
@@ -562,10 +564,18 @@ export class TnTableHarness extends ComponentHarness {
    * @param cardIndex Zero-based index of the card.
    */
   async expandCardMoreFields(cardIndex: number): Promise<void> {
-    const summary = await this.locatorForOptional(
+    const disclosure = await this.locatorForOptional(
+      `.tn-table__card[data-row-index="${cardIndex}"] .tn-table__card-more`
+    )();
+    if (!disclosure) { return; }
+    // Idempotent, because the name and the doc promise an expand while `<summary>` toggles.
+    // A second call used to collapse it — and under a real WebDriver, where `text()` returns
+    // only visible text, `getCardFieldValue()` on a folded field would then come back empty.
+    if (await disclosure.getProperty<boolean>('open')) { return; }
+    const summary = await this.locatorFor(
       `.tn-table__card[data-row-index="${cardIndex}"] .tn-table__card-more-summary`
     )();
-    if (summary) { await summary.click(); }
+    await summary.click();
   }
 
   /**
@@ -630,6 +640,19 @@ export class TnTableHarness extends ComponentHarness {
   }
 
   // --- Internal helpers ---
+
+  /**
+   * Bounds check for the layout-aware methods. Counts whatever the rendered layout shows, via
+   * `getRowCount()` — unlike {@link assertRowExists}, which deliberately counts rows only,
+   * because its callers refuse card mode outright.
+   */
+  private async assertIndexExists(index: number): Promise<void> {
+    const count = await this.getRowCount();
+    if (index >= count) {
+      const noun = (await this.isCards()) ? 'cards' : 'rows';
+      throw new Error(`Row index ${index} out of bounds (${count} ${noun})`);
+    }
+  }
 
   private async assertRowExists(rowIndex: number): Promise<void> {
     // Counts `.tn-table__row` directly rather than calling `getRowCount()`, which is

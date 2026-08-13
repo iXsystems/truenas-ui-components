@@ -1058,6 +1058,36 @@ describe('TnTable card layout', () => {
     });
   });
 
+  describe('harness diagnostics', () => {
+    it('reports card bounds from the selection methods in card mode', async () => {
+      await goNarrow();
+
+      await expect(harness.toggleRowSelection(99)).rejects.toThrow(
+        /Row index 99 out of bounds \(2 cards\)/
+      );
+      await expect(harness.isRowSelected(99)).rejects.toThrow(/out of bounds \(2 cards\)/);
+    });
+
+    it('reports row bounds from the selection methods in table mode', async () => {
+      await expect(harness.toggleRowSelection(99)).rejects.toThrow(
+        /Row index 99 out of bounds \(2 rows\)/
+      );
+    });
+
+    it('expandCardMoreFields is idempotent', async () => {
+      component.cardPrimaryCount = 1;
+      fixture.detectChanges();
+      await goNarrow();
+
+      await harness.expandCardMoreFields(0);
+      await harness.expandCardMoreFields(0);
+
+      const details = cardEl(0).querySelector('.tn-table__card-more') as HTMLDetailsElement;
+      // A second call used to collapse it again, because <summary> toggles.
+      expect(details.open).toBe(true);
+    });
+  });
+
   describe('harness query API in card mode', () => {
     it('counts cards from getRowCount rather than answering zero', async () => {
       await goNarrow();
