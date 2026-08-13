@@ -60,6 +60,7 @@ const SERVERS: Server[] = [
       [minWidth]="minWidth"
       [activeRow]="activeRow"
       [loading]="loading"
+      [trackBy]="trackByFn"
       (sortChange)="sortEvents.push($event)"
       (rowClick)="rowClicks.push($event)"
       (rowDoubleClick)="rowDoubleClicks.push($event)">
@@ -145,6 +146,7 @@ class TableCardTestComponent {
   minWidth = '';
   activeRow: Server | null = null;
   loading = false;
+  trackByFn: ((index: number, row: Server) => unknown) | undefined = undefined;
   titleOnName = true;
   cardPrimaryCount = 3;
   sortEvents: TnSortEvent[] = [];
@@ -1001,6 +1003,8 @@ describe('TnTable card layout', () => {
     });
 
     it('falls back to the host when the remembered element is gone', async () => {
+      component.trackByFn = (_index: number, row: Server) => row.id;
+      fixture.detectChanges();
       const firstRow = fixture.nativeElement.querySelector('.tn-table__row') as HTMLElement;
       const cell = firstRow.querySelector('.tn-table__cell') as HTMLElement;
       cell.setAttribute('tabindex', '0');
@@ -1009,9 +1013,13 @@ describe('TnTable card layout', () => {
       component.loading = true;
       fixture.detectChanges();
       (document.activeElement as HTMLElement).blur();
-      // Detached explicitly: the default index `trackBy` reuses row elements, so simply
-      // swapping the data would not disconnect it. An id-based `trackBy` would.
-      cell.remove();
+      // The scenario the fallback exists for: an id-based `trackBy` plus a reload that drops
+      // the focused row, so Angular destroys that element rather than reusing it. (Under the
+      // default index `trackBy` the row element is reused and nothing detaches — which is why
+      // an earlier version of this test proved nothing.)
+      component.tableData = [SERVERS[1]];
+      fixture.detectChanges();
+      expect(cell.isConnected).toBe(false);
 
       component.loading = false;
       fixture.detectChanges();

@@ -482,12 +482,19 @@ export class TnTableComponent<T = unknown> implements OnInit {
 
           if (previous.isConnected) {
             previous.focus();
-            // A second load can re-apply `inert` before this hook runs, and focusing into an
-            // inert subtree is refused outright — so re-arm rather than dropping the element.
-            if (document.activeElement !== previous) {
+            if (document.activeElement === previous) { return; }
+
+            // Focus was refused. `loading()` discriminates why: true means a second load
+            // re-applied `inert` before this hook ran, so keep the element for next time.
+            // False means it is simply no longer focusable — a `<th>` reused for a
+            // non-sortable column (the header `@for` tracks `$index`), a projected action
+            // that came back `disabled` — and re-arming there would retry the same dead
+            // element on every load, parking the user on `<body>` indefinitely. Reading the
+            // signal here is untracked, so it costs nothing.
+            if (this.loading()) {
               this.focusBeforeLoading = previous;
+              return;
             }
-            return;
           }
 
           // The remembered element is gone: a reload dropped the focused row under an
