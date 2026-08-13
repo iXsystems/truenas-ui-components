@@ -2,6 +2,18 @@
   class="tn-tooltip"
   role="tooltip"
   [id]="id()"
-  [attr.aria-hidden]="false"
-  [innerHTML]="message()">
+  [class.tn-tooltip--sticky]="sticky()"
+  [attr.aria-hidden]="false">
+  <div class="tn-tooltip__message" [innerHTML]="message()"></div>
+
+  @if (sticky()) {
+    <button
+      #closeButton
+      type="button"
+      class="tn-tooltip__close"
+      [attr.aria-label]="closeAriaLabel()"
+      (click)="onDismiss.emit()">
+      <tn-icon name="close" library="mdi" size="xs" />
+    </button>
+  }
 </div>

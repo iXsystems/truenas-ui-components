@@ -41,13 +41,27 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
   showDelay = input<number>(0, { alias: 'tnTooltipShowDelay' });
   hideDelay = input<number>(0, { alias: 'tnTooltipHideDelay' });
   tooltipClass = input<string>('', { alias: 'tnTooltipClass' });
+  /**
+   * Allows clicking the host to pin ("stick") the tooltip open so its content can be
+   * interacted with — needed for tooltips that contain links or other controls. While pinned,
+   * the tooltip renders a dismiss button and ignores `mouseleave`/`blur`; it closes on a second
+   * click of the host, on the dismiss button, on an outside click, or on Escape.
+   *
+   * Enabled by default: hover behaviour is unchanged until the host is actually clicked.
+   */
+  stickyEnabled = input<boolean>(true, { alias: 'tnTooltipSticky' });
+  /** Accessible name for the dismiss button rendered in sticky mode. */
+  closeAriaLabel = input<string>('Close tooltip', { alias: 'tnTooltipCloseAriaLabel' });
 
   private _overlayRef: OverlayRef | null = null;
   private _tooltipInstance: ComponentRef<TnTooltipComponent> | null = null;
   private _showTimeout: ReturnType<typeof setTimeout> | null = null;
   private _hideTimeout: ReturnType<typeof setTimeout> | null = null;
   private _isTooltipVisible = false;
+  private _isSticky = false;
   private _positionSub: Subscription | null = null;
+  private _overlaySubs: Subscription[] = [];
+  private _dismissSub: { unsubscribe(): void } | null = null;
   private _tooltipId = '';
 
   /**
@@ -71,8 +85,10 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this._clearTimeouts();
-    this.hide(0);
+    this._destroyTooltip();
     this._positionSub?.unsubscribe();
+    this._overlaySubs.forEach((sub) => sub.unsubscribe());
+    this._overlaySubs = [];
 
     if (this._overlayRef) {
       this._overlayRef.dispose();
@@ -89,6 +105,12 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
 
   @HostListener('mouseleave')
   _onMouseLeave(): void {
+    // A pinned tooltip stays put until it is explicitly dismissed - otherwise the pointer
+    // could never travel from the host to the tooltip's own links.
+    if (this._isSticky) {
+      return;
+    }
+
     this.hide(this.hideDelay());
   }
 
@@ -101,7 +123,29 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
 
   @HostListener('blur')
   _onBlur(): void {
+    // Entering sticky mode moves focus into the tooltip, which blurs the host; hiding here
+    // would tear the tooltip down the moment the user reaches its content.
+    if (this._isSticky) {
+      return;
+    }
+
     this.hide(this.hideDelay());
+  }
+
+  @HostListener('click', ['$event'])
+  _onClick(event: MouseEvent): void {
+    if (!this.stickyEnabled() || this.disabled() || !this.message()) {
+      return;
+    }
+
+    if (this._isSticky) {
+      this.unstick();
+      return;
+    }
+
+    // `detail === 0` means the click came from the keyboard (Enter/Space on a button), where
+    // there is no pointer to reach the tooltip with - so focus is moved into it instead.
+    this.stick({ focusTooltip: event.detail === 0 });
   }
 
   @HostListener('keydown', ['$event'])
@@ -128,22 +172,64 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
     }, delay);
   }
 
-  /** Hides the tooltip */
+  /** Hides the tooltip, unpinning it if it was sticky */
   hide(delay: number = 0): void {
     this._clearTimeouts();
 
     this._hideTimeout = setTimeout(() => {
-      if (this._tooltipInstance) {
-        this._tooltipInstance.destroy();
-        this._tooltipInstance = null;
-        this._isTooltipVisible = false;
-      }
+      this._destroyTooltip();
     }, delay);
   }
 
   /** Toggle the tooltip visibility */
   toggle(): void {
     this._isTooltipVisible ? this.hide() : this.show();
+  }
+
+  /** Whether the tooltip is currently pinned open */
+  isSticky(): boolean {
+    return this._isSticky;
+  }
+
+  /**
+   * Pins the tooltip open. Shows it first if it isn't visible yet, so it works both as a
+   * follow-up to hover and on its own (e.g. a keyboard-activated host).
+   */
+  stick(options: { focusTooltip?: boolean } = {}): void {
+    if (this.disabled() || !this.message()) {
+      return;
+    }
+
+    this._clearTimeouts();
+
+    if (!this._overlayRef) {
+      this._createOverlay();
+    }
+
+    this._attachTooltip();
+    this._isSticky = true;
+    this._tooltipInstance?.setInput('sticky', true);
+
+    if (options.focusTooltip && this._tooltipInstance) {
+      // The dismiss button only exists after the sticky input has been rendered.
+      this._tooltipInstance.changeDetectorRef.detectChanges();
+      this._tooltipInstance.instance.focusCloseButton();
+    }
+  }
+
+  /**
+   * Unpins and hides the tooltip.
+   *
+   * @param restoreFocus Move focus back to the host. Used when the tooltip is dismissed from
+   * the keyboard, where focus would otherwise be lost with the removed element.
+   */
+  unstick(restoreFocus = false): void {
+    if (restoreFocus) {
+      // Focus before teardown, so the browser never falls back to <body> in between.
+      (this._elementRef.nativeElement as HTMLElement).focus?.();
+    }
+
+    this.hide(0);
   }
 
   private _createOverlay(): void {
@@ -161,6 +247,32 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
       scrollStrategy: this._overlay.scrollStrategies.reposition({ scrollThrottle: 20 }),
       panelClass: ['tn-tooltip-panel', `tn-tooltip-panel-${this.position()}`, this.tooltipClass()].filter(Boolean),
     });
+
+    // Escape closes a pinned tooltip even when focus has moved inside it: the CDK keyboard
+    // dispatcher forwards document keydowns to the top-most attached overlay.
+    this._overlaySubs.push(
+      this._overlayRef.keydownEvents().subscribe((event) => {
+        if (event.key !== 'Escape') {
+          return;
+        }
+
+        event.preventDefault();
+        this.unstick(this._isSticky && this._isFocusInsideTooltip());
+      })
+    );
+
+    // Clicking anywhere outside dismisses a pinned tooltip. Clicks on the host itself are left
+    // to the host click handler, which toggles sticky mode.
+    this._overlaySubs.push(
+      this._overlayRef.outsidePointerEvents().subscribe((event) => {
+        const target = event.target as Node | null;
+        if (!this._isSticky || (target && this._elementRef.nativeElement.contains(target))) {
+          return;
+        }
+
+        this.unstick();
+      })
+    );
 
     this._positionSub = (positionStrategy as FlexibleConnectedPositionStrategy).positionChanges
       .subscribe((change) => {
@@ -207,8 +319,39 @@ export class TnTooltipDirective implements OnInit, OnDestroy {
       this._tooltipInstance = this._overlayRef.attach(portal);
       this._tooltipInstance.setInput('message', this.message());
       this._tooltipInstance.setInput('id', this._tooltipId);
+      this._tooltipInstance.setInput('sticky', this._isSticky);
+      this._tooltipInstance.setInput('closeAriaLabel', this.closeAriaLabel());
+      this._dismissSub = this._tooltipInstance.instance.onDismiss.subscribe(() => {
+        // The dismiss button is only reachable while pinned, and it can hold focus - hand it
+        // back to the host so keyboard users don't end up on <body>.
+        this.unstick(this._isFocusInsideTooltip());
+      });
       this._isTooltipVisible = true;
     }
+  }
+
+  private _destroyTooltip(): void {
+    this._isSticky = false;
+
+    this._dismissSub?.unsubscribe();
+    this._dismissSub = null;
+
+    if (!this._tooltipInstance) {
+      return;
+    }
+
+    this._tooltipInstance = null;
+    this._isTooltipVisible = false;
+
+    // Detaching the portal destroys the tooltip component and empties the overlay pane. The
+    // pane has to go too: left attached it keeps swallowing pointer events in sticky mode.
+    this._overlayRef?.detach();
+  }
+
+  private _isFocusInsideTooltip(): boolean {
+    const overlayElement = this._overlayRef?.overlayElement;
+    const activeElement = this._elementRef.nativeElement.ownerDocument?.activeElement;
+    return !!overlayElement && !!activeElement && overlayElement.contains(activeElement);
   }
 
   private _getPositions(): ConnectedPosition[] {

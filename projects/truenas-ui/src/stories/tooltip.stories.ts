@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { TnButtonComponent } from '../lib/button/button.component';
 import { TnTooltipComponent } from '../lib/tooltip/tooltip.component';
 import type { TooltipPosition } from '../lib/tooltip/tooltip.directive';
@@ -28,6 +29,14 @@ const meta: Meta = {
     tnTooltipHideDelay: {
       control: { type: 'number' },
       description: 'Delay in ms before hiding tooltip'
+    },
+    tnTooltipSticky: {
+      control: 'boolean',
+      description: 'Whether clicking the host pins the tooltip open so its content can be interacted with. Enabled by default; a pinned tooltip shows a dismiss button and closes on a second host click, on the dismiss button, on an outside click, or on Escape.'
+    },
+    tnTooltipCloseAriaLabel: {
+      control: 'text',
+      description: 'Accessible name for the dismiss button rendered in sticky mode'
     }
   },
 };
@@ -45,7 +54,8 @@ export const Default: Story = {
           [tnTooltipPosition]="tnTooltipPosition"
           [tnTooltipDisabled]="tnTooltipDisabled"
           [tnTooltipShowDelay]="tnTooltipShowDelay"
-          [tnTooltipHideDelay]="tnTooltipHideDelay">
+          [tnTooltipHideDelay]="tnTooltipHideDelay"
+          [tnTooltipSticky]="tnTooltipSticky">
         </tn-button>
       </div>
     `,
@@ -63,8 +73,72 @@ export const Default: Story = {
     tnTooltipPosition: 'above' as TooltipPosition,
     tnTooltipDisabled: false,
     tnTooltipShowDelay: 0,
-    tnTooltipHideDelay: 0
+    tnTooltipHideDelay: 0,
+    tnTooltipSticky: true
   }
+};
+
+export const Sticky: Story = {
+  render: () => ({
+    template: `
+      <div style="padding: 80px; display: flex; flex-direction: column; gap: 24px; align-items: center;">
+        <tn-button
+          label="Click to pin a tooltip with a link"
+          tnTooltipPosition="below"
+          tnTooltip="Datasets inherit settings from their parent. <a href='https://www.truenas.com/docs/' target='_blank' rel='noopener'>Read the docs</a>">
+        </tn-button>
+
+        <tn-button
+          label="Hover only (sticky off)"
+          tnTooltip="This one can't be pinned"
+          [tnTooltipSticky]="false">
+        </tn-button>
+      </div>
+    `,
+    moduleMetadata: {
+      imports: [
+        TnButtonComponent,
+        TnTooltipDirective,
+        TnTooltipComponent
+      ],
+    },
+  }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    // The tooltip renders in a CDK overlay, outside the story canvas.
+    const overlay = within(document.body);
+
+    await userEvent.click(canvas.getByText('Click to pin a tooltip with a link'));
+
+    const dismiss = await overlay.findByRole('button', { name: 'Close tooltip' });
+    await expect(dismiss).toBeInTheDocument();
+
+    await userEvent.click(dismiss);
+    await waitFor(() => expect(document.querySelector('.tn-tooltip')).toBeNull());
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: `
+Tooltips disappear on \`mouseleave\`, which makes any interactive content inside them unreachable.
+Sticky mode fixes that: clicking the host pins the tooltip open, the tooltip stops being
+click-through, and a dismiss button appears next to the message.
+
+A pinned tooltip is dismissed by clicking the host again, by the dismiss button, by clicking
+outside it, or with Escape. Activating the host from the keyboard moves focus onto the dismiss
+button, and dismissing hands focus back to the host.
+
+\`\`\`html
+<!-- sticky is on by default -->
+<button [tnTooltip]="'See the <a href=\\'/docs\\'>docs</a>'">Help</button>
+
+<!-- opt out for tooltips that are plain labels -->
+<button tnTooltip="Delete" [tnTooltipSticky]="false">…</button>
+\`\`\`
+        `,
+      },
+    },
+  },
 };
 
 export const Positions: Story = {

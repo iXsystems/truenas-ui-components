@@ -37,6 +37,13 @@ export class TnIconButtonComponent implements AfterViewInit {
   tooltip = input<string | undefined>(undefined);
   /** Position of the styled tooltip relative to the button. */
   tooltipPosition = input<TooltipPosition>('above');
+  /**
+   * Whether clicking the button pins its tooltip open (see `tnTooltipSticky`). Off by default,
+   * unlike the directive: an icon button's click belongs to its action, and its tooltip is a
+   * label for that action rather than content to interact with. Turn it on for buttons whose
+   * tooltip holds links or other interactive markup.
+   */
+  tooltipSticky = input<boolean>(false);
   library = input<IconLibraryType | undefined>(undefined);
   /** Extra class(es) applied to the inner icon, e.g. for animations or state colors. */
   iconClass = input<string>('');
