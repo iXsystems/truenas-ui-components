@@ -324,11 +324,17 @@ describe('TnCardComponent action tooltips', () => {
       const innerButton = fixture.nativeElement.querySelector(
         '.tn-card__footer-right tn-button button',
       ) as HTMLButtonElement;
+      // Assert on the overlay tooltip element specifically — AriaDescriber keeps the
+      // message in a hidden description container at all times, so a body-text check
+      // would pass whether or not focusin actually showed the tooltip.
+      expect(document.querySelector('[role="tooltip"]')).toBeNull();
+
       innerButton.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
       jest.runAllTimers();
       fixture.detectChanges();
 
-      expect(document.body.textContent).toContain('WebShare service is not running');
+      const tooltip = document.querySelector('[role="tooltip"]');
+      expect(tooltip?.textContent).toContain('WebShare service is not running');
     } finally {
       jest.useRealTimers();
     }
