@@ -240,7 +240,7 @@ describe('TnCardComponent action tooltips', () => {
     expect(innerButton.getAttribute('aria-describedby')).toBeNull();
   });
 
-  it('mirrors aria-describedby onto the inner button so screen readers announce the tooltip', () => {
+  it('describes the inner button with the tooltip text so screen readers announce it', () => {
     const fixture = createHost();
     fixture.componentInstance.secondary.set({
       label: 'Open',
@@ -250,11 +250,17 @@ describe('TnCardComponent action tooltips', () => {
     fixture.detectChanges();
 
     // The directive host is the <tn-button> wrapper, which assistive tech never focuses —
-    // the description must land on the real <button> to be announced.
+    // the description must land on the real <button> to be announced. AriaDescriber keeps
+    // the text in a persistent hidden element, so the reference resolves at focus time,
+    // not only while the overlay tooltip is open.
     const innerButton = fixture.nativeElement.querySelector(
       '.tn-card__footer-right tn-button button',
     ) as HTMLButtonElement;
-    expect(innerButton.getAttribute('aria-describedby')).toMatch(/^tn-tooltip-/);
+    const describedBy = innerButton.getAttribute('aria-describedby');
+    expect(describedBy).toBeTruthy();
+
+    const description = document.getElementById(describedBy!.split(/\s+/)[0]);
+    expect(description?.textContent).toContain('WebShare service is not running');
   });
 
   it('preserves aria-describedby tokens the inner control already carries', () => {
@@ -269,13 +275,13 @@ describe('TnCardComponent action tooltips', () => {
     const innerButton = fixture.nativeElement.querySelector(
       '.tn-card__footer-right tn-button button',
     ) as HTMLButtonElement;
-    const tooltipId = innerButton.getAttribute('aria-describedby');
-    expect(tooltipId).toMatch(/^tn-tooltip-/);
+    const tooltipToken = innerButton.getAttribute('aria-describedby');
+    expect(tooltipToken).toBeTruthy();
 
     // Simulate a description owned by someone else (a form hint / error id).
-    innerButton.setAttribute('aria-describedby', `field-hint ${tooltipId}`);
+    innerButton.setAttribute('aria-describedby', `field-hint ${tooltipToken}`);
 
-    // Dropping the tooltip must remove only our token, not the pre-existing one.
+    // Dropping the tooltip must remove only its own token, not the pre-existing one.
     fixture.componentInstance.secondary.set({
       label: 'Open',
       handler: () => {},
