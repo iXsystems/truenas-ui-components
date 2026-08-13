@@ -107,9 +107,17 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
 
   private _syncAriaDescription(): void {
     const host = this._elementRef.nativeElement as HTMLElement;
-    const target = host.matches(INTERACTIVE_SELECTOR)
-      ? host
-      : host.querySelector<HTMLElement>(INTERACTIVE_SELECTOR) ?? host;
+    let target = host;
+    if (!host.matches(INTERACTIVE_SELECTOR)) {
+      // Forward the description only when it is unambiguous: a wrapper with exactly
+      // one interactive descendant (e.g. tn-button's inner <button>). A container
+      // holding several controls keeps the description on the host — describing an
+      // arbitrary first control would attach the text to the wrong element.
+      const candidates = host.querySelectorAll<HTMLElement>(INTERACTIVE_SELECTOR);
+      if (candidates.length === 1) {
+        target = candidates[0];
+      }
+    }
     const message = !this.disabled() ? this._plainTextMessage(this.message()) : '';
 
     if (this._describedTarget === target && this._describedMessage === message) {
