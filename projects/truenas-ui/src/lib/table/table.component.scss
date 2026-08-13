@@ -180,13 +180,19 @@
     background-color: inherit;
   }
 
-  // Scoped to `:not(:hover)` so the sortable hover fill — a far less specific selector —
-  // still gets a turn. Without it this rule outweighed it and the pinned column, usually
-  // the primary sortable one, stayed flat while every other header tinted: exactly backwards
-  // from the affordance intended. The `background-color: inherit` trick used for the body
-  // cells above can't transfer here, since `__header-row` sets no fill of its own.
-  .tn-table__header-row .tn-table__header-cell:first-child:not(:hover),
-  .tn-table__header-row .tn-table__select-cell + .tn-table__header-cell:not(:hover) {
+  // Stands down only for a *sortable* header being hovered, so that header's hover fill — a
+  // far less specific selector — gets a turn. Without any exclusion this rule outweighed it
+  // and the pinned column, usually the primary sortable one, stayed flat while every other
+  // header tinted: exactly backwards from the affordance intended. A bare `:not(:hover)`
+  // over-corrected, since only `--sortable` headers have a hover fill to hand over to: it
+  // dropped the opaque fill from a hovered *non-sortable* pinned header and let the cells
+  // scrolling underneath show through. The `background-color: inherit` trick used for the
+  // body cells above can't transfer here, since `__header-row` sets no fill of its own.
+  .tn-table__header-row
+    .tn-table__header-cell:first-child:not(.tn-table__header-cell--sortable:hover),
+  .tn-table__header-row
+    .tn-table__select-cell
+    + .tn-table__header-cell:not(.tn-table__header-cell--sortable:hover) {
     background-color: var(--tn-topbar);
   }
 }

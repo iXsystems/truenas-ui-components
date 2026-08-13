@@ -121,11 +121,14 @@
           does not support (an earlier revision set it here and it was dropped for
           that reason; axe reports it as a critical aria-allowed-attr violation).
         - Selection state stays on the checkbox, which is a real control.
-        - `aria-expanded` IS permitted here, so the card carries it whenever the
-          card itself acts as the expand trigger, matching what table mode does
-          for its rows. The "Details" button reports the same state unconditionally,
-          because it is the control a screen-reader user actually tabs to — see the
-          note above it.
+        - `aria-expanded` IS permitted here — `listitem` is a subclass of the
+          abstract `section` role, and `section` supports `aria-expanded`, so
+          `listitem` inherits it (axe-core's own role table lists it in
+          `listitem`'s allowedAttrs alongside aria-level/posinset/setsize). So the
+          card carries it whenever the card itself acts as the expand trigger,
+          matching what table mode does for its rows. The "Details" button reports
+          the same state unconditionally, because it is the control a screen-reader
+          user actually tabs to — see the note above it.
       The card is deliberately NOT `role="button"`: that role has presentational
       children, which would hide the card's checkbox, row actions and "Details"
       toggle from assistive tech entirely.

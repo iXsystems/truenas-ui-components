@@ -1,4 +1,4 @@
-import type { BaseHarnessFilters } from '@angular/cdk/testing';
+import type { BaseHarnessFilters, TestElement } from '@angular/cdk/testing';
 import { ComponentHarness, HarnessPredicate, TestKey } from '@angular/cdk/testing';
 import { TnCheckboxHarness } from '../checkbox/checkbox.harness';
 
@@ -37,7 +37,10 @@ export class TnTableHarness extends ComponentHarness {
   /**
    * Gets the number of data rows (excludes header and detail rows).
    *
-   * @returns Promise resolving to the row count.
+   * Layout-aware: counts rendered cards in the card layout, so the count tracks what the
+   * user sees rather than reporting 0 for a container that happens to be narrow.
+   *
+   * @returns Promise resolving to the row count, or the card count in the card layout.
    */
   async getRowCount(): Promise<number> {
     // Counts cards in card mode. Answering 0 there was the silent-wrong-answer shape the
@@ -60,8 +63,9 @@ export class TnTableHarness extends ComponentHarness {
         `TnTableHarness.${method}() has no meaning in the card layout. `
           + 'Use the card API instead — getCardCount(), getCardTitle(), getCardFieldValue(), '
           + 'toggleCardDetail(), expandCardMoreFields(), getCardSortColumn(), '
-          + 'getCardSortDirection(), toggleCardSortDirection() — or widen the container above '
-          + 'cardBreakpoint.'
+          + 'getCardSortDirection(), toggleCardSortDirection(), clickCard(), '
+          + 'doubleClickCard(), pressKeyOnCard(), isCardFocusable() — or widen the container '
+          + 'above cardBreakpoint.'
       );
     }
   }
@@ -77,7 +81,8 @@ export class TnTableHarness extends ComponentHarness {
       throw new Error(
         `TnTableHarness.${method}() has no meaning in the table layout. `
           + 'Use the row API instead — getRowCount(), getCellText(), getRowTexts(), '
-          + 'toggleRowExpansion(), clickSortHeader() — or narrow the container below '
+          + 'toggleRowExpansion(), clickSortHeader(), clickRow(), doubleClickRow(), '
+          + 'pressKeyOnRow(), isRowFocusable() — or narrow the container below '
           + 'cardBreakpoint.'
       );
     }
@@ -353,7 +358,7 @@ export class TnTableHarness extends ComponentHarness {
    * Clicks a row (for tables with `clickable` enabled).
    *
    * @param rowIndex Zero-based index of the data row.
-   * @throws Error in the card layout, which renders no rows; the thrown message names the card API.
+   * @throws Error in the card layout, which renders no rows; use {@link clickCard} there.
    */
   async clickRow(rowIndex: number): Promise<void> {
     await this.assertTableLayout('clickRow');
@@ -370,7 +375,7 @@ export class TnTableHarness extends ComponentHarness {
    * clicks first; this helper dispatches only the `dblclick` event.
    *
    * @param rowIndex Zero-based index of the data row.
-   * @throws Error in the card layout, which renders no rows; the thrown message names the card API.
+   * @throws Error in the card layout, which renders no rows; use {@link doubleClickCard} there.
    */
   async doubleClickRow(rowIndex: number): Promise<void> {
     await this.assertTableLayout('doubleClickRow');
@@ -386,7 +391,7 @@ export class TnTableHarness extends ComponentHarness {
    *
    * @param rowIndex Zero-based index of the data row.
    * @param key Which key to press — Enter or Space.
-   * @throws Error in the card layout, which renders no rows; the thrown message names the card API.
+   * @throws Error in the card layout, which renders no rows; use {@link pressKeyOnCard} there.
    */
   async pressKeyOnRow(rowIndex: number, key: 'enter' | 'space'): Promise<void> {
     await this.assertTableLayout('pressKeyOnRow');
@@ -406,7 +411,7 @@ export class TnTableHarness extends ComponentHarness {
    * Checks if a row is keyboard-focusable (tabindex=0).
    *
    * @param rowIndex Zero-based index of the data row.
-   * @throws Error in the card layout, which renders no rows; the thrown message names the card API.
+   * @throws Error in the card layout, which renders no rows; use {@link isCardFocusable} there.
    */
   async isRowFocusable(rowIndex: number): Promise<boolean> {
     await this.assertTableLayout('isRowFocusable');
@@ -434,8 +439,11 @@ export class TnTableHarness extends ComponentHarness {
   /**
    * Checks if a data row is currently marked active.
    *
-   * @param rowIndex Zero-based index of the data row.
-   * @returns Promise resolving to true if the row has the active class.
+   * Layout-aware: reads the card's active class in the card layout, which marks the same
+   * state with `aria-current` rather than the row's `aria-selected`.
+   *
+   * @param rowIndex Zero-based index of the data row (or card).
+   * @returns Promise resolving to true if the row — or card — has the active class.
    */
   async isRowActive(rowIndex: number): Promise<boolean> {
     if (await this.isCards()) {
@@ -493,7 +501,11 @@ export class TnTableHarness extends ComponentHarness {
   /**
    * Gets the count of currently expanded detail rows.
    *
-   * @returns Promise resolving to the number of visible detail rows.
+   * Layout-aware: counts open card detail panels in the card layout, which renders the same
+   * expansion state without a detail `<tr>`.
+   *
+   * @returns Promise resolving to the number of visible detail rows, or open card detail
+   *   panels in the card layout.
    */
   async getExpandedRowCount(): Promise<number> {
     if (await this.isCards()) {
@@ -662,6 +674,84 @@ export class TnTableHarness extends ComponentHarness {
     if (button) { await button.click(); }
   }
 
+  // --- Card activation ---
+  //
+  // Mirrors of the four clickable-row methods. Without them the row methods' `@throws` sent a
+  // card-mode spec to a card API that could not activate anything, and the only way through
+  // was raw DOM — which is what the harness exists to spare a consumer.
+
+  /**
+   * Clicks a card body (card mirror of {@link clickRow}, for tables with `clickable`).
+   *
+   * Targets the card's title rather than the card box, because the card box's centre can sit
+   * on a projected row action or the selection checkbox, and the activation guard ignores
+   * clicks that originate on a control — the click would land and nothing would happen.
+   *
+   * @param cardIndex Zero-based index of the card.
+   * @throws Error in the table layout; use {@link clickRow} there.
+   */
+  async clickCard(cardIndex: number): Promise<void> {
+    await this.assertCardLayout('clickCard');
+    await this.assertIndexExists(cardIndex);
+    const target = await this.cardActivationTarget(cardIndex);
+    await target.click();
+  }
+
+  /**
+   * Double-clicks a card, triggering `rowDoubleClick` (card mirror of
+   * {@link doubleClickRow}). As there, only the `dblclick` event is dispatched — a real
+   * double-click also fires two single clicks first.
+   *
+   * Dispatched on the card rather than on the title {@link clickCard} aims at, because a
+   * synthesised event does not bubble: sent to the title it would never reach the card's
+   * handler. There is no cost to it here — the target is set explicitly, so unlike a real
+   * pointer click it cannot land on a projected control.
+   *
+   * @param cardIndex Zero-based index of the card.
+   * @throws Error in the table layout; use {@link doubleClickRow} there.
+   */
+  async doubleClickCard(cardIndex: number): Promise<void> {
+    await this.assertCardLayout('doubleClickCard');
+    await this.assertIndexExists(cardIndex);
+    const card = await this.cardAt(cardIndex);
+    await card.dispatchEvent('dblclick');
+  }
+
+  /**
+   * Sends a keyboard event to a card (Enter/Space activate clickable cards). Card mirror of
+   * {@link pressKeyOnRow}; the key goes to the card itself, which is the element that carries
+   * `tabindex` and the keydown handler.
+   *
+   * @param cardIndex Zero-based index of the card.
+   * @param key Which key to press — Enter or Space.
+   * @throws Error in the table layout; use {@link pressKeyOnRow} there.
+   */
+  async pressKeyOnCard(cardIndex: number, key: 'enter' | 'space'): Promise<void> {
+    await this.assertCardLayout('pressKeyOnCard');
+    await this.assertIndexExists(cardIndex);
+    const card = await this.cardAt(cardIndex);
+    await card.focus();
+    if (key === 'enter') {
+      await card.sendKeys(TestKey.ENTER);
+    } else {
+      await card.sendKeys(' ');
+    }
+  }
+
+  /**
+   * Checks if a card is keyboard-focusable (tabindex=0). Card mirror of
+   * {@link isRowFocusable}.
+   *
+   * @param cardIndex Zero-based index of the card.
+   * @throws Error in the table layout; use {@link isRowFocusable} there.
+   */
+  async isCardFocusable(cardIndex: number): Promise<boolean> {
+    await this.assertCardLayout('isCardFocusable');
+    await this.assertIndexExists(cardIndex);
+    const card = await this.cardAt(cardIndex);
+    return (await card.getAttribute('tabindex')) === '0';
+  }
+
   // --- Internal helpers ---
 
   /**
@@ -669,6 +759,19 @@ export class TnTableHarness extends ComponentHarness {
    * `getRowCount()` — unlike {@link assertRowExists}, which deliberately counts rows only,
    * because its callers refuse card mode outright.
    */
+  /** The card box itself — the element carrying `tabindex`, the handlers and the ARIA state. */
+  private async cardAt(cardIndex: number): Promise<TestElement> {
+    return this.locatorFor(`.tn-table__card[data-row-index="${cardIndex}"]`)();
+  }
+
+  /** The surface pointer activation is aimed at — see {@link clickCard} for why not the card. */
+  private async cardActivationTarget(cardIndex: number): Promise<TestElement> {
+    const title = await this.locatorForOptional(
+      `.tn-table__card[data-row-index="${cardIndex}"] .tn-table__card-title`
+    )();
+    return title ?? (await this.cardAt(cardIndex));
+  }
+
   private async assertIndexExists(index: number): Promise<void> {
     const count = await this.getRowCount();
     if (index >= count) {

@@ -42,8 +42,15 @@ export interface TnTableDataSource<T = unknown> {
   disconnect?(): void;
 }
 
+/** Payload of the table's `sortChange` output. */
 export interface TnSortEvent {
+  /**
+   * The column that is sorted *after* the change, or `''` when the sort was cleared — the
+   * third click on a table header, or the "Unsorted" option in card mode. Both layouts
+   * report the resulting state, so a cleared sort never names the column just cleared.
+   */
   column: string;
+  /** Direction after the change; `''` when no sort is active, which is always the case when `column` is `''`. */
   direction: 'asc' | 'desc' | '';
 }
 
@@ -354,6 +361,11 @@ export class TnTableComponent<T = unknown> implements OnInit {
   cardPrimaryCount = input<number>(3);
 
   // --- Outputs ---
+  /**
+   * Emits the resulting sort state whenever the user changes it, from either layout.
+   * Clearing a sort emits `{ column: '', direction: '' }` rather than naming the column
+   * that was cleared — see {@link TnSortEvent}.
+   */
   sortChange = output<TnSortEvent>();
   selectionChange = output<T[]>();
 
@@ -551,17 +563,32 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * padding widens the gap further.
    */
   private measureContainer(host: HTMLElement): void {
-    // `clientWidth` minus horizontal padding is exactly `contentRect.width`: it already
-    // excludes the border AND any vertical scrollbar, which a border-box-derived width does
-    // not. `:host` sets `overflow-x: auto` — which promotes `overflow-y` to auto — so a
-    // height-constrained table on a platform with classic scrollbars measured ~15px wider
-    // here than the observer did, reintroducing the very first-paint flip the border fix
-    // removed. `getBoundingClientRect()` is also the *transformed* size, so a table inside a
-    // scaled dialog mis-measured too.
+    // The computed `width` is the *used* content-box width — content box even under
+    // `box-sizing: border-box`, already net of the border and of any vertical scrollbar
+    // gutter, and untransformed. That matches `contentRect.width` down to the fraction,
+    // which is the point: `:host` sets `overflow-x: auto` (which promotes `overflow-y` to
+    // auto), so on a platform with classic scrollbars a border-box width measured ~15px
+    // wider here than the observer did, and `getBoundingClientRect()` reports the
+    // *transformed* size, so a table inside a scaled dialog mis-measured as well.
+    //
+    // `clientWidth` minus horizontal padding gets all of that right too, but it is
+    // integer-rounded, and the rounding is not neutral at the boundary: a 639.6px content
+    // box against the default 640 breakpoint reads as 640 here and 639.6 on the observer's
+    // first callback, so the table renders for a frame and then flips to cards with no
+    // resize having happened — the first-paint flip this measurement exists to remove. It
+    // stays as the fallback for engines that resolve `width` to `auto` rather than to a used
+    // length: jsdom does, as does any element with no layout box (`display: none`), which
+    // then falls through to the 0 -> Infinity guard below exactly as before.
     const hostStyle = getComputedStyle(host);
-    const padding =
-      parseFloat(hostStyle.paddingLeft || '0') + parseFloat(hostStyle.paddingRight || '0');
-    const contentWidth = host.clientWidth - (Number.isNaN(padding) ? 0 : padding);
+    const usedWidth = parseFloat(hostStyle.width);
+    let contentWidth: number;
+    if (Number.isFinite(usedWidth)) {
+      contentWidth = usedWidth;
+    } else {
+      const padding =
+        parseFloat(hostStyle.paddingLeft || '0') + parseFloat(hostStyle.paddingRight || '0');
+      contentWidth = host.clientWidth - (Number.isNaN(padding) ? 0 : padding);
+    }
     this.containerWidth.set(contentWidth > 0 ? contentWidth : Infinity);
   }
 

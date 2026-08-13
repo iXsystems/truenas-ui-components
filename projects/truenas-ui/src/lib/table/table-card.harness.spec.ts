@@ -653,10 +653,13 @@ describe('TnTable card layout', () => {
       fixture.detectChanges();
     });
 
+    // Through the harness, not raw DOM: these four mirrors exist so a card-mode spec never
+    // has to reach past the harness to activate anything, and covering them here is what
+    // keeps that true.
     it('emits rowClick from the card body', async () => {
       await goNarrow();
 
-      (cardEl(0).querySelector('.tn-table__card-title') as HTMLElement).click();
+      await harness.clickCard(0);
       fixture.detectChanges();
 
       expect(component.rowClicks).toEqual([SERVERS[0]]);
@@ -665,10 +668,41 @@ describe('TnTable card layout', () => {
     it('emits rowDoubleClick from the card body', async () => {
       await goNarrow();
 
-      cardEl(1).dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+      await harness.doubleClickCard(1);
       fixture.detectChanges();
 
       expect(component.rowDoubleClicks).toEqual([SERVERS[1]]);
+    });
+
+    it.each([
+      ['enter' as const, 0],
+      ['space' as const, 1],
+    ])('activates a card with %s from the keyboard', async (key, index) => {
+      await goNarrow();
+
+      await harness.pressKeyOnCard(index, key);
+      fixture.detectChanges();
+
+      expect(component.rowClicks).toEqual([SERVERS[index]]);
+    });
+
+    it('reports a clickable card as focusable and a non-clickable one as not', async () => {
+      await goNarrow();
+      expect(await harness.isCardFocusable(0)).toBe(true);
+
+      component.clickable = false;
+      fixture.detectChanges();
+
+      expect(await harness.isCardFocusable(0)).toBe(false);
+    });
+
+    it('reports card bounds from the activation mirrors', async () => {
+      await goNarrow();
+
+      await expect(harness.clickCard(99)).rejects.toThrow(/out of bounds \(2 cards\)/);
+      await expect(harness.pressKeyOnCard(99, 'enter')).rejects.toThrow(
+        /out of bounds \(2 cards\)/
+      );
     });
 
     it('does not emit rowClick when a projected row action is clicked', async () => {
@@ -1081,6 +1115,10 @@ describe('TnTable card layout', () => {
       await expect(harness.getCardTitle(0)).rejects.toThrow(/Use the row API instead/);
       await expect(harness.getCardFieldValue(0, 'status')).rejects.toThrow(/narrow the container/);
       await expect(harness.toggleCardDetail(0)).rejects.toThrow(/no meaning in the table layout/);
+      await expect(harness.clickCard(0)).rejects.toThrow(/no meaning in the table layout/);
+      await expect(harness.doubleClickCard(0)).rejects.toThrow(/no meaning in the table layout/);
+      await expect(harness.pressKeyOnCard(0, 'enter')).rejects.toThrow(/Use the row API instead/);
+      await expect(harness.isCardFocusable(0)).rejects.toThrow(/Use the row API instead/);
     });
 
     it('expandCardMoreFields is idempotent', async () => {
@@ -1139,6 +1177,16 @@ describe('TnTable card layout', () => {
       await goNarrow();
 
       await expect(call()).rejects.toThrow(/no meaning in the card layout/);
+    });
+
+    // The row methods' `@throws` sends the reader to these four by name; the message is only
+    // worth anything if they exist and are listed.
+    it('offers the card activation mirrors in the message the row methods throw', async () => {
+      await goNarrow();
+
+      await expect(harness.clickRow(0)).rejects.toThrow(
+        /clickCard\(\), doubleClickCard\(\), pressKeyOnCard\(\), isCardFocusable\(\)/
+      );
     });
 
     it('still reports row bounds correctly in table mode', async () => {
@@ -1272,6 +1320,60 @@ describe('TnTable card layout', () => {
       expect(await harness.getSelectedRowCount()).toBe(2);
       expect(await harness.isRowSelected(0)).toBe(true);
       expect(await harness.isRowSelected(1)).toBe(true);
+    });
+  });
+  // The initial read happens once, in `afterNextRender`, so each of these needs its own
+  // fixture with the host prepared before the first change detection — the shared one has
+  // already measured by the time a test body runs.
+  describe('initial measurement', () => {
+    function freshFixture(prepare: (host: HTMLElement) => void): ComponentFixture<TableCardTestComponent> {
+      const fresh = TestBed.createComponent(TableCardTestComponent);
+      prepare(fresh.nativeElement.querySelector('tn-table') as HTMLElement);
+      fresh.detectChanges();
+      return fresh;
+    }
+
+    async function rendersCards(fresh: ComponentFixture<TableCardTestComponent>): Promise<boolean> {
+      await fresh.whenStable();
+      fresh.detectChanges();
+      const cards = fresh.nativeElement.querySelector('.tn-table__cards');
+      fresh.destroy();
+      return cards !== null;
+    }
+
+    // A 639.6px content box is under the 640 breakpoint, but `clientWidth` rounds it to 640
+    // and answers "not narrow". `contentRect.width` does not round, so the table rendered for
+    // a frame and then flipped to cards on the observer's first callback — a first-paint flip
+    // with no resize behind it, which is the thing this measurement exists to prevent.
+    it('measures the fractional content width rather than the rounded clientWidth', async () => {
+      const fresh = freshFixture((host) => {
+        host.style.width = '639.6px';
+        Object.defineProperty(host, 'clientWidth', { value: 640, configurable: true });
+      });
+
+      expect(await rendersCards(fresh)).toBe(true);
+    });
+
+    // `width` resolves to `auto` with no layout box — jsdom always, a browser for anything
+    // inside `display: none` — so the padding-subtracting fallback still has to be right.
+    it('falls back to clientWidth minus horizontal padding when width resolves to auto', async () => {
+      const fresh = freshFixture((host) => {
+        host.style.padding = '0 40px';
+        // 700 - 80 = 620, under the breakpoint. The unadjusted 700 would render a table.
+        Object.defineProperty(host, 'clientWidth', { value: 700, configurable: true });
+      });
+
+      expect(await rendersCards(fresh)).toBe(true);
+    });
+
+    // An element inside a `display: none` container measures 0x0 on both paths. Reading that
+    // as "narrow" tears down anything keyed off isCardMode() for a resize that never happened.
+    it('treats an unmeasurable host as wide rather than narrow', async () => {
+      const fresh = freshFixture((host) => {
+        Object.defineProperty(host, 'clientWidth', { value: 0, configurable: true });
+      });
+
+      expect(await rendersCards(fresh)).toBe(false);
     });
   });
 });
