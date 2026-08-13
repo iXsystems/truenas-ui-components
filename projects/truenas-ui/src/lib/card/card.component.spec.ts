@@ -187,7 +187,7 @@ class ProjectedActionsHostComponent {
 }
 
 describe('TnCardComponent action tooltips', () => {
-  it('wires the action tooltip into the tnTooltip directive on the button host, including when disabled', () => {
+  it('keeps the tooltip directive wired on the button host when the action is disabled', () => {
     const fixture = createHost();
     fixture.componentInstance.secondary.set({
       label: 'Open WebShare',
@@ -197,12 +197,14 @@ describe('TnCardComponent action tooltips', () => {
     });
     fixture.detectChanges();
 
+    // This only verifies the wiring (directive on the host, message set, button disabled).
+    // Whether hover actually reaches the host while the inner button is disabled depends
+    // on browser hit-testing of its pointer-events: none rule, which jsdom cannot
+    // exercise — the WithDisabledActionTooltip story documents that behaviour.
     const tnButton = fixture.debugElement.query(By.css('.tn-card__footer-right tn-button'));
     const tooltip = tnButton.injector.get(TnTooltipDirective);
     expect(tooltip.message()).toBe('WebShare service is not running');
 
-    // The disabled inner <button> has pointer-events: none, so hover hit-tests the
-    // <tn-button> host where the directive lives — the tooltip still shows while disabled.
     const innerButton = tnButton.nativeElement.querySelector('button') as HTMLButtonElement;
     expect(innerButton.disabled).toBe(true);
   });
@@ -253,6 +255,34 @@ describe('TnCardComponent action tooltips', () => {
       '.tn-card__footer-right tn-button button',
     ) as HTMLButtonElement;
     expect(innerButton.getAttribute('aria-describedby')).toMatch(/^tn-tooltip-/);
+  });
+
+  it('preserves aria-describedby tokens the inner control already carries', () => {
+    const fixture = createHost();
+    fixture.componentInstance.secondary.set({
+      label: 'Open',
+      handler: () => {},
+      tooltip: 'WebShare service is not running',
+    });
+    fixture.detectChanges();
+
+    const innerButton = fixture.nativeElement.querySelector(
+      '.tn-card__footer-right tn-button button',
+    ) as HTMLButtonElement;
+    const tooltipId = innerButton.getAttribute('aria-describedby');
+    expect(tooltipId).toMatch(/^tn-tooltip-/);
+
+    // Simulate a description owned by someone else (a form hint / error id).
+    innerButton.setAttribute('aria-describedby', `field-hint ${tooltipId}`);
+
+    // Dropping the tooltip must remove only our token, not the pre-existing one.
+    fixture.componentInstance.secondary.set({
+      label: 'Open',
+      handler: () => {},
+    });
+    fixture.detectChanges();
+
+    expect(innerButton.getAttribute('aria-describedby')).toBe('field-hint');
   });
 
   it('shows the tooltip when the inner button receives keyboard focus (focusin bubbles to the host)', () => {

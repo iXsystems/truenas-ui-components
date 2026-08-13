@@ -551,9 +551,11 @@ export const WithDisabledActionTooltip: Story = {
       </tn-card>
     `,
   }),
-  // Pins the disabled-hover guarantee no unit test can cover: the disabled inner
-  // <button> has pointer-events: none, so hover lands on the <tn-button> host where
-  // the tooltip directive lives. Runs in a real browser via test-storybook.
+  // Verifies the tooltip shows for a disabled action when hover events land on the
+  // <tn-button> host — the destination real pointer hover is retargeted to, since the
+  // disabled inner <button> has pointer-events: none. Note userEvent.hover dispatches
+  // synthetic events on the host directly and does no hit-testing, so the retargeting
+  // itself is browser behaviour this play relies on rather than exercises.
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const label = canvas.getByText('Open WebShare');

@@ -74,6 +74,8 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   private _overlayPositionBuilder = inject(OverlayPositionBuilder);
 
   private _viewInitialized = false;
+  private _mirrorTarget: HTMLElement | null = null;
+  private _innerObserver: MutationObserver | null = null;
 
   /**
    * Re-sync the mirrored `aria-describedby` (see ngAfterViewInit) when the inputs
@@ -92,11 +94,20 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * When the directive sits on a non-interactive wrapper (e.g. a `<tn-button>` host),
    * the `aria-describedby` host binding lands on an element assistive tech never
    * focuses — screen readers read descriptions off the focused inner control. Mirror
-   * the attribute onto the first interactive descendant so the tooltip is announced.
+   * the tooltip id onto the first interactive descendant so the tooltip is announced.
    */
   ngAfterViewInit(): void {
     this._viewInitialized = true;
     this._syncInnerAriaDescribedBy();
+
+    const host = this._elementRef.nativeElement as HTMLElement;
+    if (!host.matches(INTERACTIVE_SELECTOR) && typeof MutationObserver !== 'undefined') {
+      // The inner control can render after view init (@if branches inside the wrapper
+      // swapping, deferred content) — re-mirror when the host's subtree changes. Our
+      // own attribute writes do not produce childList mutations, so this cannot loop.
+      this._innerObserver = new MutationObserver(() => this._syncInnerAriaDescribedBy());
+      this._innerObserver.observe(host, { childList: true, subtree: true });
+    }
   }
 
   private _syncInnerAriaDescribedBy(): void {
@@ -106,15 +117,35 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     }
 
     const inner = host.querySelector<HTMLElement>(INTERACTIVE_SELECTOR);
-    if (!inner) {
-      return;
+    if (this._mirrorTarget && this._mirrorTarget !== inner) {
+      // The previous target was replaced — take our token back off it.
+      this._applyMirroredId(this._mirrorTarget, null);
+    }
+    this._mirrorTarget = inner;
+
+    if (inner) {
+      this._applyMirroredId(inner, this._ariaDescribedBy);
+    }
+  }
+
+  /**
+   * Add or remove only our tooltip id within the target's `aria-describedby` token
+   * list — the control may already carry descriptions of its own (form hints, error
+   * ids) that must survive the tooltip appearing and disappearing.
+   */
+  private _applyMirroredId(target: HTMLElement, id: string | null): void {
+    const tokens = (target.getAttribute('aria-describedby') ?? '')
+      .split(/\s+/)
+      .filter((token) => token && token !== this._tooltipId);
+
+    if (id) {
+      tokens.push(id);
     }
 
-    const describedBy = this._ariaDescribedBy;
-    if (describedBy) {
-      inner.setAttribute('aria-describedby', describedBy);
+    if (tokens.length) {
+      target.setAttribute('aria-describedby', tokens.join(' '));
     } else {
-      inner.removeAttribute('aria-describedby');
+      target.removeAttribute('aria-describedby');
     }
   }
 
@@ -122,6 +153,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     this._clearTimeouts();
     this.hide(0);
     this._positionSub?.unsubscribe();
+    this._innerObserver?.disconnect();
 
     if (this._overlayRef) {
       this._overlayRef.dispose();
