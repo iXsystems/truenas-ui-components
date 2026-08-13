@@ -551,14 +551,15 @@ export const WithDisabledActionTooltip: Story = {
       </tn-card>
     `,
   }),
-  // Two assertions that together pin the disabled-hover behaviour in a real browser:
-  // 1. The computed pointer-events: none on the disabled inner <button> — the rule
-  //    (in button.component.scss) that makes the browser retarget real pointer hover
-  //    to the <tn-button> host. Without it the feature silently dies, so it is
-  //    asserted here rather than trusted.
-  // 2. The tooltip appears when hover events land on that host. userEvent.hover
-  //    dispatches synthetic events on the host directly and does no hit-testing, so
-  //    the retargeting itself is standard browser behaviour built on assertion 1.
+  // Pins the disabled-hover behaviour in a real browser:
+  // 1. pointer-events: none is computed on the disabled inner <button> — the rule
+  //    (in button.component.scss) the whole feature depends on.
+  // 2. Real browser hit-testing at the button's centre resolves to the <tn-button>
+  //    host: elementFromPoint respects pointer-events, so this fails if the rule is
+  //    dropped OR the host stops generating a hover box (e.g. a display: contents
+  //    refactor) — either would silently kill the disabled tooltip.
+  // 3. The tooltip appears when hover events land on that host (userEvent.hover
+  //    dispatches synthetic events, so assertion 2 is what ties it to real pointers).
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const label = canvas.getByText('Open WebShare');
@@ -566,6 +567,10 @@ export const WithDisabledActionTooltip: Story = {
     const innerButton = buttonHost.querySelector('button') as HTMLButtonElement;
     await expect(innerButton).toBeDisabled();
     await expect(getComputedStyle(innerButton).pointerEvents).toBe('none');
+
+    const rect = innerButton.getBoundingClientRect();
+    const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    await expect(hit).toBe(buttonHost);
 
     await userEvent.hover(buttonHost);
     await waitFor(async () => {
