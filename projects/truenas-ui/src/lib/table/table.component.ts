@@ -2,13 +2,16 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
 import { SelectionModel } from '@angular/cdk/collections';
 import { CommonModule } from '@angular/common';
 import {
+  afterNextRender,
   Component,
   computed,
   contentChild,
   contentChildren,
   DestroyRef,
   effect,
+  ElementRef,
   inject,
+  Injector,
   input,
   model,
   output,
@@ -21,6 +24,7 @@ import { TnIconComponent } from '../icon/icon.component';
 import { TnSpinnerComponent } from '../spinner/spinner.component';
 import {
   TnDetailRowDefDirective,
+  TnRowActionsDefDirective,
   TnTableColumnDirective,
 } from '../table-column/table-column.directive';
 import { TnTestIdDirective } from '../test-id';
@@ -38,10 +42,38 @@ export interface TnTableDataSource<T = unknown> {
   disconnect?(): void;
 }
 
+/** Payload of the table's `sortChange` output. */
 export interface TnSortEvent {
+  /**
+   * The column that is sorted *after* the change, or `''` when the sort was cleared — the
+   * third click on a table header, or the "Unsorted" option in card mode. Both layouts
+   * report the resulting state, so a cleared sort never names the column just cleared.
+   */
   column: string;
+  /** Direction after the change; `''` when no sort is active, which is always the case when `column` is `''`. */
   direction: 'asc' | 'desc' | '';
 }
+
+/**
+ * How the table adapts when its container is narrower than `cardBreakpoint`:
+ * - `scroll` — the table keeps its columns and scrolls horizontally, with the
+ *   first column and the actions column pinned in place *while it overflows*.
+ *   Default, and card mode is strictly opt-in — but note this is NOT a no-op for
+ *   existing tables: because the default `cardBreakpoint` is 640, any table whose
+ *   host content box measures under that (a phone, or a sidebar or dashboard card
+ *   on a desktop) gets `tn-table--scroll` and therefore the pinning, where it
+ *   previously scrolled all of its columns together. Raise `cardBreakpoint` if a
+ *   table should never pin.
+ *
+ *   Overflow is not automatic either: `auto` layout (the default) sizes to content
+ *   and overflows on its own, but a `fixedLayout` table fits its container exactly,
+ *   so it only overflows — and only then pins — once `minColumnWidth` or `minWidth`
+ *   gives it a floor.
+ * - `cards`  — each row collapses into a stacked card (title + actions header,
+ *   priority-ranked label/value fields, optional detail content).
+ * Above the breakpoint both modes render the regular table.
+ */
+export type TnTableMobileLayout = 'cards' | 'scroll';
 
 /**
  * Animation duration for detail row expand/collapse.
@@ -82,12 +114,30 @@ function getExpandDuration(): string {
     '[class.tn-table--bordered]': 'bordered()',
     '[class.tn-table--fixed-layout]': 'fixedLayout()',
     '[class.tn-table--loading]': 'loading()',
+    // `--cards` is a state hook only: card mode is styled through the
+    // `__cards*` element classes, not from the host. It is kept as the
+    // documented way for consumers and tests to detect the active layout
+    // without reaching for internal element classes. `--scroll` is both a
+    // hook and the selector the pinned-column rules key off.
+    '[class.tn-table--cards]': 'isCardMode()',
+    '[class.tn-table--scroll]': 'isScrollMode()',
     '[style.--tn-table-active-bg]': 'activeBg()',
     '[style.--tn-table-active-indicator]': 'activeIndicator()',
   },
 })
 export class TnTableComponent<T = unknown> implements OnInit {
   private destroyRef = inject(DestroyRef);
+  private elementRef = inject(ElementRef<HTMLElement>);
+  private injector = inject(Injector);
+
+  /**
+   * Element that had focus when `loading` went true, so it can be restored afterwards.
+   *
+   * `inert` blurs whatever is focused inside it and refuses focus while set, so without this
+   * a keyboard user who pressed Enter on a sortable header — the flow that *starts* most
+   * loads — was dropped to `<body>` and had to tab back from the top of the document.
+   */
+  private focusBeforeLoading: HTMLElement | null = null;
 
   // --- Core inputs ---
   dataSource = input<TnTableDataSource<T> | T[]>([]);
@@ -166,6 +216,12 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * When true, shows a spinner overlay over the table. Existing rows remain
    * visible (dimmed) so reloads don't cause layout jumps; if there are no rows
    * yet, the spinner replaces the empty state.
+   *
+   * The rendered surfaces are `inert` while this is true, so they leave the tab order *and*
+   * the accessibility tree — a screen-reader user hears the overlay's "Loading..." status
+   * rather than the stale rows. That is deliberate: `pointer-events` alone left every row,
+   * header and projected control activatable by keyboard against data being replaced.
+   * Focus is captured on the way in and restored on the way out.
    */
   loading = input<boolean>(false);
 
@@ -176,6 +232,16 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * When true, rows become keyboard-focusable (tabindex=0) and clicking or
    * pressing Enter/Space emits `rowClick`. Use this for "click row to view
    * details" patterns. Independent of `selectable` (checkbox) and `expandable`.
+   *
+   * Accessibility limitation in card mode: a card is `role="listitem"`, and the
+   * roles that would announce it as activatable (`button`, `option`) have
+   * presentational children, which would hide the card's own checkbox, row
+   * actions and "Details" toggle from assistive tech. So a clickable card is
+   * focusable and responds to Enter/Space, but is not announced as a control.
+   * Active state is conveyed with `aria-current`, and expansion with
+   * `aria-expanded` when `expandOnRowClick` is set. If an action must be
+   * discoverable by screen-reader users, project an explicit control through
+   * `[tnRowActionsDef]` rather than relying on card activation alone.
    */
   clickable = input<boolean>(false);
 
@@ -184,6 +250,12 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * chevron. Requires `clickable` — that is what makes rows activatable at all — and `expandable`;
    * rows the `isRowExpandable` predicate rejects are unaffected, since `toggleRowExpansion` gates
    * on it. `rowClick` still emits, so a consumer can both expand and react to the click.
+   *
+   * Applies in card mode too, where activating the card toggles its detail section. Both controls
+   * report the state: the card carries `aria-expanded` while it is the trigger (`listitem` does
+   * permit it, unlike `aria-selected`), and the "Details" button carries it unconditionally,
+   * because that button is what a screen-reader user reaches by tabbing. The redundancy is
+   * deliberate — see the comment above the button in the template.
    */
   expandOnRowClick = input<boolean>(false);
 
@@ -243,10 +315,57 @@ export class TnTableComponent<T = unknown> implements OnInit {
     if (!perColumn || !this.fixedLayout()) {
       return null;
     }
-    return `calc(${perColumn} * ${this.effectiveDisplayedColumns().length})`;
+    // The actions column adds its own fixed width rather than a `minColumnWidth` share, because
+    // that is exactly what it claims under `fixedLayout` — and the cell is `border-box`, so the
+    // value added here is its real outer width. (`--tn-table-select-width` and
+    // `--tn-table-expand-width` are treated as ordinary shares instead: they over-reserve
+    // slightly, which is the behavior this component has always had and has tests for. Unifying
+    // all three belongs in its own change.)
+    //
+    // No `var()` fallback on purpose. A duplicated default here is a second source of truth for a
+    // number the stylesheet owns, and it drifted the moment that default changed — leaving the
+    // exact value whose shortfall clipped the actions column sitting in code labelled "the
+    // default". `:host` always defines the property, so the only way to reach a fallback is to
+    // unset it deliberately, and an invalid calc() (no floor) is a more debuggable outcome than a
+    // floor computed from a stale constant.
+    const columns = `${perColumn} * ${this.effectiveDisplayedColumns().length}`;
+    return this.rowActionsDef()
+      ? `calc(${columns} + var(--tn-table-actions-width))`
+      : `calc(${columns})`;
   });
 
+  // --- Responsive (card) inputs ---
+
+  /**
+   * How the table adapts when its container is narrower than `cardBreakpoint`.
+   * See {@link TnTableMobileLayout}. Defaults to `scroll`, which preserves the
+   * existing horizontal-scroll behavior; set to `cards` to opt into the stacked
+   * card layout.
+   */
+  mobileLayout = input<TnTableMobileLayout>('scroll');
+
+  /**
+   * Container width (px) below which `mobileLayout` takes effect. The component
+   * observes its own host width (via `ResizeObserver`), so this responds to the
+   * available container — a table in a narrow sidebar adapts on a wide screen.
+   *
+   * Measured against the host's **content box** — its border and padding are excluded — so a
+   * `[bordered]` table crosses the threshold at the same content width as an unbordered one.
+   */
+  cardBreakpoint = input<number>(640);
+
+  /**
+   * Number of fields shown directly on each card before the rest fold under a
+   * "More fields" disclosure. The title column is not counted. Defaults to `3`.
+   */
+  cardPrimaryCount = input<number>(3);
+
   // --- Outputs ---
+  /**
+   * Emits the resulting sort state whenever the user changes it, from either layout.
+   * Clearing a sort emits `{ column: '', direction: '' }` rather than naming the column
+   * that was cleared — see {@link TnSortEvent}.
+   */
   sortChange = output<TnSortEvent>();
   selectionChange = output<T[]>();
 
@@ -264,6 +383,12 @@ export class TnTableComponent<T = unknown> implements OnInit {
   // --- Content queries ---
   columnDefs = contentChildren(TnTableColumnDirective);
   detailRowDef = contentChild(TnDetailRowDefDirective);
+  rowActionsDef = contentChild(TnRowActionsDefDirective);
+
+  // --- Responsive state ---
+  /** Observed host width in px; drives the switch into card mode. */
+  private containerWidth = signal<number>(Infinity);
+  private resizeObserver?: ResizeObserver;
 
   // --- Sort state ---
   /**
@@ -281,6 +406,10 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * approach could address this.
    */
   expandedRows = signal<Set<unknown>>(new Set());
+
+  // Per-instance prefix for generated DOM ids, so two tables on a page can't collide.
+  private static instanceCount = 0;
+  private readonly instanceId = `tn-table-${TnTableComponent.instanceCount++}`;
 
   // --- Selection state ---
   selection = new SelectionModel<T>(true, []);
@@ -340,16 +469,159 @@ export class TnTableComponent<T = unknown> implements OnInit {
         this.expandedRows.set(next);
       }
     });
+
+    // Save focus on the way into `loading`, restore it on the way out. The restore is
+    // deferred to after the next render because the surfaces only drop `inert` when the
+    // template updates, and focusing an element still inside an inert subtree is a no-op.
+    effect(() => {
+      const host = this.elementRef.nativeElement;
+      if (typeof document === 'undefined') { return; }
+
+      if (this.loading()) {
+        const active = document.activeElement as HTMLElement | null;
+        // `<body>` is what `inert` leaves behind, not evidence the user moved on. Signals are
+        // glitch-free, so a false -> true flip inside one task (a store that clears loading on
+        // a cache hit and re-sets it for the network request) runs this effect once, seeing
+        // only `true` — and overwriting a still-valid saved element with null there would lose
+        // the focus permanently, which is the symptom this whole effect exists to prevent.
+        if (active && active !== document.body) {
+          this.focusBeforeLoading = host.contains(active) ? active : null;
+        }
+        return;
+      }
+
+      const previous = this.focusBeforeLoading;
+      if (!previous) { return; }
+      this.focusBeforeLoading = null;
+      afterNextRender(
+        () => {
+          // Never steal focus back from wherever the user moved on to.
+          if (document.activeElement !== document.body) { return; }
+
+          if (previous.isConnected) {
+            previous.focus();
+            if (document.activeElement === previous) { return; }
+
+            // Focus was refused. `loading()` discriminates why: true means a second load
+            // re-applied `inert` before this hook ran, so keep the element for next time.
+            // False means it is simply no longer focusable — a `<th>` reused for a
+            // non-sortable column (the header `@for` tracks `$index`), a projected action
+            // that came back `disabled` — and re-arming there would retry the same dead
+            // element on every load, parking the user on `<body>` indefinitely. Reading the
+            // signal here is untracked, so it costs nothing.
+            if (this.loading()) {
+              this.focusBeforeLoading = previous;
+              return;
+            }
+          }
+
+          // The remembered element is gone: a reload dropped the focused row under an
+          // id-based `trackBy`, or the container flipped to cards mid-load. Keep focus in the
+          // region rather than leaving the user at the top of the document.
+          if (!host.hasAttribute('tabindex')) {
+            host.setAttribute('tabindex', '-1');
+          }
+          host.focus();
+        },
+        { injector: this.injector }
+      );
+    });
+
+    // Measure the host width to drive card/scroll mode. The initial read is
+    // taken in `afterNextRender` (guaranteed post-layout, so we get the real
+    // width rather than a pre-layout 0), then a `ResizeObserver` keeps it in
+    // sync as the container resizes. Both are browser-only — `afterNextRender`
+    // does not run during SSR and `ResizeObserver` is feature-detected.
+    afterNextRender(() => {
+      const host = this.elementRef.nativeElement;
+      this.measureContainer(host);
+      if (typeof ResizeObserver !== 'undefined') {
+        this.resizeObserver = new ResizeObserver((entries) => {
+          const width = entries[0]?.contentRect.width;
+          if (typeof width === 'number') {
+            // `|| Infinity` for the same reason `measureContainer` applies it: a 0 width
+            // means unmeasurable, not narrow. An element inside a `display: none`
+            // container reports 0x0, so without this a table in a tab that gets hidden
+            // flips to card mode and tears down anything keyed off `isCardMode()` — the
+            // open `<details>` state, for one — for a resize that never happened.
+            this.containerWidth.set(width || Infinity);
+          }
+        });
+        this.resizeObserver.observe(host);
+      }
+    });
+  }
+
+  /**
+   * Reads the host's current **content-box** width into `containerWidth`.
+   *
+   * Content box specifically, to match the `ResizeObserver` callback's `contentRect`. The
+   * initial read used `getBoundingClientRect()` — the border box — so the two paths measured
+   * different quantities, and `[bordered]` puts a 1px border on each side: a bordered table
+   * whose content box is 639px rendered as a table on first paint (641 is not < 640) and
+   * flipped to cards on the observer's first callback, with no resize having happened. Host
+   * padding widens the gap further.
+   */
+  private measureContainer(host: HTMLElement): void {
+    // The computed `width` is the *used* content-box width — content box even under
+    // `box-sizing: border-box`, already net of the border and of any vertical scrollbar
+    // gutter, and untransformed. That matches `contentRect.width` down to the fraction,
+    // which is the point: `:host` sets `overflow-x: auto` (which promotes `overflow-y` to
+    // auto), so on a platform with classic scrollbars a border-box width measured ~15px
+    // wider here than the observer did, and `getBoundingClientRect()` reports the
+    // *transformed* size, so a table inside a scaled dialog mis-measured as well.
+    //
+    // `clientWidth` minus horizontal padding gets all of that right too, but it is
+    // integer-rounded, and the rounding is not neutral at the boundary: a 639.6px content
+    // box against the default 640 breakpoint reads as 640 here and 639.6 on the observer's
+    // first callback, so the table renders for a frame and then flips to cards with no
+    // resize having happened — the first-paint flip this measurement exists to remove.
+    //
+    // Only a `px` value is a used width, and the unit check is load-bearing rather than
+    // defensive. `width` resolves to the *used* value only for an element that has a layout
+    // box; without one it resolves to the computed value, and `:host` declares `width: 100%`
+    // — so a table built inside a `display: none` container (an inactive tab body, a
+    // collapsed panel) resolves to the string '100%'. Parsed bare that is the number 100,
+    // which is under every sane `cardBreakpoint`: a container that was never measured would
+    // render as cards. Rejecting the non-px value falls through to `clientWidth`, which is 0
+    // there, and on to the 0 -> Infinity guard below — the same answer the `ResizeObserver`
+    // callback gives a 0x0 contentRect. jsdom takes this path too: with no rule matching the
+    // host it resolves `width` to the empty string rather than filling in an initial value
+    // (checked against jsdom 26.1.0, the version jest-environment-jsdom resolves here).
+    const hostStyle = getComputedStyle(host);
+    const resolvedWidth = hostStyle.width;
+    const usedWidth = resolvedWidth.endsWith('px') ? parseFloat(resolvedWidth) : NaN;
+    let contentWidth: number;
+    if (Number.isFinite(usedWidth)) {
+      contentWidth = usedWidth;
+    } else {
+      const padding =
+        parseFloat(hostStyle.paddingLeft || '0') + parseFloat(hostStyle.paddingRight || '0');
+      contentWidth = host.clientWidth - (Number.isNaN(padding) ? 0 : padding);
+    }
+    this.containerWidth.set(contentWidth > 0 ? contentWidth : Infinity);
   }
 
   ngOnInit(): void {
     this.initialized = true;
 
-    // Clean up SelectionModel on destroy
     this.destroyRef.onDestroy(() => {
       this.selection.clear();
+      this.resizeObserver?.disconnect();
     });
   }
+
+  // --- Responsive computeds ---
+
+  /** True when the layout should collapse rows into cards. */
+  isCardMode = computed(
+    () => this.mobileLayout() === 'cards' && this.containerWidth() < this.cardBreakpoint()
+  );
+
+  /** True when the layout should keep the table but pin edge columns and scroll. */
+  isScrollMode = computed(
+    () => this.mobileLayout() === 'scroll' && this.containerWidth() < this.cardBreakpoint()
+  );
 
   // --- Computed ---
 
@@ -371,6 +643,16 @@ export class TnTableComponent<T = unknown> implements OnInit {
     }
     return cols;
   });
+
+  /**
+   * Every column the table actually renders, including the trailing actions column, which
+   * `effectiveDisplayedColumns` does not track because it comes from a content template rather
+   * than `displayedColumns`. Used for the detail row's `colspan`, so a detail row spans the full
+   * width no matter which structural columns are on.
+   */
+  totalColumnCount = computed(
+    () => this.effectiveDisplayedColumns().length + (this.rowActionsDef() ? 1 : 0)
+  );
 
   isAllSelected = computed(() => {
     const numSelected = this.selectionCount();
@@ -395,12 +677,15 @@ export class TnTableComponent<T = unknown> implements OnInit {
     const colDef = this.getColumnDef(column);
     if (!colDef?.sortable()) { return; }
 
-    if (this.sortColumn() === column) {
-      const current = this.sortDirection();
-      if (current === 'asc') {
-        this.sortDirection.set('desc');
-      } else if (current === 'desc') {
-        this.sortDirection.set('');
+    // `&& this.sortDirection()` matters: a column set with an empty direction is *not* sorted, and
+    // that state is reachable through the two-way `[(sortColumn)]` binding — a consumer restoring
+    // only the column lands in it. Without the guard neither inner branch matched, so the click
+    // mutated nothing and still emitted a "cleared" event, leaving a header the user could click
+    // forever with no arrow to explain it. Folding it into the not-sorted branch starts a fresh
+    // ascending sort, which is what clicking an unsorted header does everywhere else.
+    if (this.sortColumn() === column && this.sortDirection()) {
+      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : '');
+      if (!this.sortDirection()) {
         this.sortColumn.set('');
       }
     } else {
@@ -408,8 +693,12 @@ export class TnTableComponent<T = unknown> implements OnInit {
       this.sortDirection.set('asc');
     }
 
+    // Emits the *resulting* sort state, so clearing a sort reports `{ column: '', direction: '' }`
+    // rather than naming the column that was just cleared. Card mode's `setSortColumn('')` has
+    // always emitted the empty column, and a consumer keying off `event.column` should not get a
+    // different answer depending on which layout the container width happens to be showing.
     this.sortChange.emit({
-      column: this.sortColumn() || column,
+      column: this.sortColumn(),
       direction: this.sortDirection(),
     });
   }
@@ -462,6 +751,23 @@ export class TnTableComponent<T = unknown> implements OnInit {
     return this.expandOnRowClick() && this.clickable() && this.canExpandRow(row);
   }
 
+  /**
+   * Card-mode counterpart of {@link isRowExpandTrigger}, additionally requiring a detail
+   * template. Card mode renders no expansion affordance at all without one, so `aria-expanded`
+   * on the card would advertise a state change that produces nothing.
+   *
+   * Table mode deliberately keeps the looser check: its rows are asserted to carry
+   * `aria-expanded` from `expandOnRowClick` alone, and that predates this layout.
+   */
+  isCardExpandTrigger(row: T): boolean {
+    return this.isRowExpandTrigger(row) && !!this.detailRowDef();
+  }
+
+  /** DOM id for a row's detail panel, so the expand trigger can point `aria-controls` at it. */
+  detailPanelId(rowIndex: number): string {
+    return `${this.instanceId}-detail-${rowIndex}`;
+  }
+
   // --- Active row ---
 
   isRowActive(row: T): boolean {
@@ -472,21 +778,37 @@ export class TnTableComponent<T = unknown> implements OnInit {
 
   // --- Row click ---
 
-  onRowClick(row: T): void {
+  /**
+   * @param row The activated row.
+   * @param event The originating DOM event, when there is one. Optional so a consumer (or a
+   *   test) can still activate a row programmatically; the control-target guard only applies
+   *   to real events, which is the only case where a projected control can be the source.
+   */
+  onRowClick(row: T, event?: Event): void {
     if (!this.clickable()) { return; }
+    // Mirrors `onCardClick`. Only the select, expand and actions cells stop `click`
+    // themselves, so a control projected into an ordinary `tnCellDef` — a checkbox, a
+    // link — used to activate the row as well: `rowClick` fired and, under
+    // `expandOnRowClick`, the detail panel toggled out from under the user. Card mode
+    // never did that, so the same consumer template behaved differently either side of
+    // `cardBreakpoint`.
+    if (event && this.isRowControlTarget(event)) { return; }
     if (this.expandOnRowClick()) {
       this.toggleRowExpansion(row);
     }
     this.rowClick.emit(row);
   }
 
-  onRowDoubleClick(row: T): void {
+  /** @param event See {@link onRowClick} — same guard, same optionality. */
+  onRowDoubleClick(row: T, event?: Event): void {
     if (!this.clickable()) { return; }
+    if (event && this.isRowControlTarget(event)) { return; }
     this.rowDoubleClick.emit(row);
   }
 
   onRowKeydown(event: KeyboardEvent, row: T): void {
     if (!this.clickable()) { return; }
+    if (this.isRowControlTarget(event)) { return; }
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       if (this.expandOnRowClick()) {
@@ -494,6 +816,133 @@ export class TnTableComponent<T = unknown> implements OnInit {
       }
       this.rowClick.emit(row);
     }
+  }
+
+  // --- Card activation ---
+  // Cards reuse `rowClick`, but the card header embeds its own controls
+  // (selection checkbox, row actions, "more"/detail toggles). Activating the
+  // card must ignore clicks/keys that originate from those controls so a tap on
+  // an action button doesn't also fire `rowClick`.
+
+  onCardClick(event: Event, row: T): void {
+    if (!this.clickable() || this.isCardControlTarget(event)) { return; }
+    if (this.expandOnRowClick()) {
+      this.toggleRowExpansion(row);
+    }
+    this.rowClick.emit(row);
+  }
+
+  /** Card-mode counterpart of {@link onRowDoubleClick}, with the same guard. */
+  onCardDoubleClick(event: Event, row: T): void {
+    if (!this.clickable() || this.isCardControlTarget(event)) { return; }
+    this.rowDoubleClick.emit(row);
+  }
+
+  onCardKeydown(event: KeyboardEvent, row: T): void {
+    if (!this.clickable()) { return; }
+    if (event.key !== 'Enter' && event.key !== ' ') { return; }
+    if (this.isCardControlTarget(event)) { return; }
+    event.preventDefault();
+    if (this.expandOnRowClick()) {
+      this.toggleRowExpansion(row);
+    }
+    this.rowClick.emit(row);
+  }
+
+  /** Anything focusable or otherwise interactive, regardless of layout. */
+  private static readonly INTERACTIVE_SELECTOR =
+    'a[href], button, input, select, textarea, summary,'
+    + ' [contenteditable]:not([contenteditable="false"]), [tabindex]:not([tabindex="-1"])';
+
+  /**
+   * Whether an event originated on a control *within* the activation surface rather than on
+   * the surface itself.
+   *
+   * @param event The DOM event; its `currentTarget` is the activation surface.
+   * @param containerSelectors Layout-specific wrappers that count as controls.
+   */
+  private isControlTarget(event: Event, containerSelectors: string): boolean {
+    const target = event.target as HTMLElement | null;
+    const selector = containerSelectors
+      ? `${TnTableComponent.INTERACTIVE_SELECTOR}, ${containerSelectors}`
+      : TnTableComponent.INTERACTIVE_SELECTOR;
+    const match = target?.closest(selector);
+    // The row/card itself is focusable when `clickable`, so it matches the focusable clause.
+    // It is the activation surface, not a control within it.
+    return !!match && match !== event.currentTarget;
+  }
+
+  /**
+   * Interactive elements plus the card's own controls and its projected detail panel.
+   *
+   * A class allowlist is not enough: the detail panel renders consumer content inside the
+   * clickable card, so an allowlist lets a click on a projected button bubble up and fire
+   * `rowClick` — and with `expandOnRowClick`, collapse the very panel being used. Table mode
+   * never had that problem, because there the detail row is a sibling `<tr>` outside the
+   * clickable row.
+   *
+   * The card's own field values are deliberately not interactive, so they still activate the
+   * card whether primary or folded under "More fields".
+   */
+  private isCardControlTarget(event: Event): boolean {
+    return this.isControlTarget(
+      event,
+      '.tn-table__card-actions, .tn-table__card-select, .tn-table__card-more-summary,'
+        + ' .tn-table__card-detail-toggle, .tn-table__card-detail'
+    );
+  }
+
+  /**
+   * Table-mode counterpart. The cells stop `click` themselves, but nothing stopped `keydown`,
+   * so Enter on a projected action button bubbled to the row and got `preventDefault()`d —
+   * which *is* how Enter activates a `<button>`, so the consumer's handler never ran and
+   * `rowClick` fired for the row instead. Card mode has always guarded this; the two layouts
+   * disagreed about what a projected control does under the keyboard.
+   */
+  private isRowControlTarget(event: Event): boolean {
+    return this.isControlTarget(
+      event,
+      '.tn-table__select-cell, .tn-table__expand-cell, .tn-table__actions-cell'
+    );
+  }
+
+  /**
+   * Header-cell activation, guarded like the row and the card.
+   *
+   * A `<th>` is an activation surface too, and a control projected through
+   * `tnHeaderCellDef` broke both ways without this: clicking a filter button re-sorted the
+   * table as well as running the button's own handler, and Space on a checkbox in a
+   * *non-sortable* header was swallowed entirely — `onSortClick` returned early on the
+   * missing `sortable()`, but the template's `preventDefault()` ran regardless, so the
+   * control was simply dead.
+   *
+   * @param column The column the header belongs to.
+   * @param event The originating DOM event.
+   */
+  onSortHeaderClick(column: string, event: Event): void {
+    if (this.isControlTarget(event, '')) { return; }
+    if (!this.getColumnDef(column)?.sortable()) { return; }
+    this.onSortClick(column);
+  }
+
+  /**
+   * Keyboard counterpart of {@link onSortHeaderClick}.
+   *
+   * Takes `Event` rather than `KeyboardEvent` because Angular types `$event` as `Event` for
+   * the `keydown.enter` / `keydown.space` pseudo-events; narrowing happens here.
+   */
+  onSortHeaderKeydown(column: string, event: Event): void {
+    if (this.isControlTarget(event, '')) { return; }
+    if (!this.getColumnDef(column)?.sortable()) { return; }
+    // Only swallow the key once we know this header owns it, so Space on a projected
+    // control still reaches that control.
+    if ((event as KeyboardEvent).key === ' ') { event.preventDefault(); }
+    this.onSortClick(column);
+  }
+
+  /** Handles the card-mode sort `<select>` change. */
+  onSortSelectChange(event: Event): void {
+    this.setSortColumn((event.target as HTMLSelectElement).value);
   }
 
   // --- Selection methods ---
@@ -518,10 +967,146 @@ export class TnTableComponent<T = unknown> implements OnInit {
     return this.selection.isSelected(row);
   }
 
+  // --- Card-mode computeds ---
+
+  /**
+   * The column rendered as the card title. The first `displayedColumns` entry
+   * whose def sets `cardTitle`, else the first column not marked `cardHidden` —
+   * a column the consumer asked to keep off the card must not be promoted to its
+   * most prominent slot. Falls back to the first displayed column only when every
+   * column is hidden, since a card still needs a title.
+   */
+  cardTitleColumn = computed<string>(() => {
+    const cols = this.displayedColumns();
+    const explicit = cols.find((c) => this.getColumnDef(c)?.cardTitle());
+    const visible = cols.find((c) => !this.getColumnDef(c)?.cardHidden());
+    return explicit ?? visible ?? cols[0] ?? '';
+  });
+
+  /**
+   * Columns rendered as label/value fields in a card, ordered by descending
+   * `cardPriority` (ties keep `displayedColumns` order). Excludes the title column
+   * and any `cardHidden` columns.
+   */
+  cardFieldColumns = computed<string[]>(() => {
+    const title = this.cardTitleColumn();
+    const fields = this.displayedColumns()
+      .map((name, index) => ({ name, index }))
+      .filter(({ name }) => name !== title && !this.getColumnDef(name)?.cardHidden());
+    fields.sort((a, b) => {
+      const pa = this.getColumnDef(a.name)?.cardPriority() ?? 0;
+      const pb = this.getColumnDef(b.name)?.cardPriority() ?? 0;
+      return pb - pa || a.index - b.index;
+    });
+    return fields.map((f) => f.name);
+  });
+
+  /** Fields shown directly on the card (up to `cardPrimaryCount`). */
+  cardPrimaryColumns = computed<string[]>(() =>
+    this.cardFieldColumns().slice(0, this.cardPrimaryCount())
+  );
+
+  /** Fields tucked behind the "More fields" disclosure. */
+  cardSecondaryColumns = computed<string[]>(() =>
+    this.cardFieldColumns().slice(this.cardPrimaryCount())
+  );
+
+  /**
+   * Displayed columns that are sortable — populates the card-mode sort menu.
+   *
+   * `cardHidden` columns are excluded, because this menu *is* part of the card layout
+   * and `cardHidden` promises the column is "omitted entirely" from it. Offering one
+   * here would let a user reorder the cards by a value no card shows, with the
+   * direction toggle giving no clue what changed — and such a column often has no
+   * readable label either, since `getCardLabel()` falls back to the raw column name
+   * when the header lives only in a `tnHeaderCellDef` template.
+   *
+   * The title column stays eligible: it is excluded from the *fields*, but it is
+   * displayed, so sorting by it is meaningful.
+   */
+  sortableColumns = computed<string[]>(() => {
+    const listed = this.displayedColumns().filter((c) => {
+      const def = this.getColumnDef(c);
+      return !!def?.sortable() && !def.cardHidden();
+    });
+
+    // Reconciled against the rendered option set, not against one reason for exclusion.
+    // Whatever the active column is, it must have an `<option>`: with none matching, the
+    // browser resets the picker to "Unsorted" while the direction toggle still renders an
+    // arrow beside it, and picking "Unsorted" fires no `change` — it is already the
+    // selected option — so the sort becomes unclearable from card mode. `cardHidden` was
+    // only one way in; `sortColumn` is a two-way `model()`, and a dynamic
+    // `displayedColumns` (a column-visibility toggle) can drop a sorted column or leave
+    // one that was never `sortable()`.
+    const active = this.sortColumn();
+    return active && !listed.includes(active) ? [...listed, active] : listed;
+  });
+
+  /**
+   * Whether the active sort column is one the table can actually sort by.
+   *
+   * `sortableColumns` rescues an active column into the menu so it stays clearable, even
+   * when it is `cardHidden`, absent from `displayedColumns`, or never `sortable()`. That
+   * escape hatch must not hand card mode a capability table mode refuses: clicking a
+   * non-sortable header does nothing, so the direction toggle is hidden — and
+   * {@link toggleSortDirection} refuses — for the same column.
+   */
+  protected readonly canSortActiveColumn = computed<boolean>(() => {
+    const column = this.sortColumn();
+    return !!column && !!this.getColumnDef(column)?.sortable();
+  });
+
+  // --- Card-mode sort ---
+
+  /**
+   * Sets (or clears, when passed `''`) the active sort column for card mode.
+   * Switching columns resets to ascending, and clearing emits an empty `column` —
+   * both matching {@link onSortClick}, since the same `sortChange` contract should
+   * not depend on which layout the container width happens to be showing.
+   */
+  setSortColumn(column: string): void {
+    if (!column) {
+      this.sortColumn.set('');
+      this.sortDirection.set('');
+    } else {
+      const changed = this.sortColumn() !== column;
+      this.sortColumn.set(column);
+      if (changed || this.sortDirection() === '') {
+        this.sortDirection.set('asc');
+      }
+    }
+    this.sortChange.emit({ column: this.sortColumn(), direction: this.sortDirection() });
+  }
+
+  /**
+   * Flips the active sort direction between ascending and descending.
+   *
+   * Starts from ascending, so a column carrying an empty direction — reachable by restoring only
+   * `sortColumn` through its two-way binding — sorts ascending rather than skipping straight to
+   * descending. Same reading of "empty direction means not sorted" as {@link onSortClick}.
+   */
+  toggleSortDirection(): void {
+    // Guarded, not just hidden: the control is gone from the template for a non-sortable
+    // active column, and the method refuses too, so the API can't reorder by a column the
+    // table header would ignore.
+    if (!this.canSortActiveColumn()) { return; }
+    this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
+    this.sortChange.emit({ column: this.sortColumn(), direction: this.sortDirection() });
+  }
+
   // --- Column helpers ---
 
   getColumnDef(columnName: string): TnTableColumnDirective | undefined {
     return this.columnDefMap().get(columnName);
+  }
+
+  /**
+   * Field label for a column in card mode. Precedence: `cardLabel` override →
+   * shared `label` → the column name.
+   */
+  getCardLabel(column: string): string {
+    const def = this.getColumnDef(column);
+    return def?.cardLabel() ?? def?.label() ?? column;
   }
 
   getCellValue(row: T, column: string): unknown {
