@@ -124,6 +124,7 @@
             [label]="action.label"
             [disabled]="action.disabled || false"
             [testId]="action.testId"
+            [tnTooltip]="action.tooltip || ''"
             (click)="action.handler()" />
         }
 
@@ -134,6 +135,7 @@
             [label]="action.label"
             [disabled]="action.disabled || false"
             [testId]="action.testId"
+            [tnTooltip]="action.tooltip || ''"
             (click)="action.handler()" />
         }
 
