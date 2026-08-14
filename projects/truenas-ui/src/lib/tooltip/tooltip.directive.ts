@@ -41,7 +41,9 @@ const INTERACTIVE_SELECTOR = 'button, a[href], input, select, textarea, [tabinde
   standalone: true,
 })
 export class TnTooltipDirective implements AfterViewInit, OnDestroy {
-  message = input<string>('', { alias: 'tnTooltip' });
+  // Nullable by contract: consumers bind expressions like [tnTooltip]="reason ?? null",
+  // and under strictTemplates a string-only input would reject them at compile time.
+  message = input<string | null | undefined>('', { alias: 'tnTooltip' });
   position = input<TooltipPosition>('above', { alias: 'tnTooltipPosition' });
   disabled = input<boolean>(false, { alias: 'tnTooltipDisabled' });
   showDelay = input<number>(0, { alias: 'tnTooltipShowDelay' });
@@ -118,8 +120,6 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
         target = candidates[0];
       }
     }
-    // message() is typed string but bindings like [tnTooltip]="maybe ?? null" deliver
-    // null/undefined at runtime — coalesce before string operations.
     const rawMessage = this.message() ?? '';
     const message = !this.disabled() && rawMessage ? this._plainTextMessage(rawMessage) : '';
 
@@ -311,7 +311,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     if (!this._tooltipInstance) {
       const portal = new ComponentPortal(TnTooltipComponent, this._viewContainerRef);
       this._tooltipInstance = this._overlayRef.attach(portal);
-      this._tooltipInstance.setInput('message', this.message());
+      this._tooltipInstance.setInput('message', this.message() ?? '');
       this._tooltipInstance.setInput('id', this._tooltipId);
       this._isTooltipVisible = true;
     }

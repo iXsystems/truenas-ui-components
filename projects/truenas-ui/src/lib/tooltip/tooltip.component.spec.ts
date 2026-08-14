@@ -69,8 +69,8 @@ class DescriptionHostComponent {}
   template: `<button class="null-host" [tnTooltip]="message">Null message</button>`,
 })
 class NullMessageHostComponent {
-  // Typed loosely on purpose: real consumers bind expressions like `reason ?? null`,
-  // which deliver null despite the input's string type.
+  // Real consumers bind expressions like `reason ?? null` — the input accepts them
+  // by contract and the runtime must treat them as "no tooltip".
   message: string | null = null;
 }
 
