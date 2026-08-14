@@ -70,18 +70,46 @@ class DescriptionHostComponent {}
 })
 class NullMessageHostComponent {
   // Real consumers bind expressions like `reason ?? null` — the input accepts them
-  // by contract and the runtime must treat them as "no tooltip".
-  message: string | null = null;
+  // by contract (via its transform) and the runtime must treat them as "no tooltip".
+  message: string | null | undefined = null;
 }
 
-describe('TnTooltipDirective null message tolerance', () => {
-  it('tolerates a null message binding without throwing and adds no description', () => {
+describe('TnTooltipDirective nullish message tolerance', () => {
+  function createNullHost() {
     TestBed.configureTestingModule({ imports: [NullMessageHostComponent] });
-    const fixture = TestBed.createComponent(NullMessageHostComponent);
+    return TestBed.createComponent(NullMessageHostComponent);
+  }
+
+  it('tolerates a null message binding without throwing and adds no description', () => {
+    const fixture = createNullHost();
 
     expect(() => fixture.detectChanges()).not.toThrow();
 
     const button = (fixture.nativeElement as HTMLElement).querySelector('.null-host');
+    expect(button?.getAttribute('aria-describedby')).toBeNull();
+  });
+
+  it('treats an undefined message the same as no tooltip', () => {
+    const fixture = createNullHost();
+    fixture.componentInstance.message = undefined;
+
+    expect(() => fixture.detectChanges()).not.toThrow();
+
+    const button = (fixture.nativeElement as HTMLElement).querySelector('.null-host');
+    expect(button?.getAttribute('aria-describedby')).toBeNull();
+  });
+
+  it('removes an existing description when the message becomes null', () => {
+    const fixture = createNullHost();
+    fixture.componentInstance.message = 'Reason';
+    fixture.detectChanges();
+
+    const button = (fixture.nativeElement as HTMLElement).querySelector('.null-host');
+    expect(button?.getAttribute('aria-describedby')).toBeTruthy();
+
+    fixture.componentInstance.message = null;
+    fixture.detectChanges();
+
     expect(button?.getAttribute('aria-describedby')).toBeNull();
   });
 });
