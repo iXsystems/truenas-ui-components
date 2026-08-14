@@ -124,6 +124,23 @@ export class TnButtonComponent implements AfterViewInit {
   }
 
   private hostRef = inject(ElementRef<HTMLElement>);
+
+  constructor() {
+    // A disabled native <button> suppresses its own click events, but its
+    // pointer-events: none style retargets clicks over it to this host element —
+    // where consumers commonly bind (click). Halt those here so a disabled
+    // tn-button is inert for every consumer, matching what handleAnchorClick
+    // does for the anchor variants. Registered in the constructor (before any
+    // template listener on the host) and capture-phase, so it runs first and
+    // stopImmediatePropagation() reliably blocks host (click) handlers.
+    const host = this.hostRef.nativeElement as HTMLElement;
+    host.addEventListener('click', (event: MouseEvent) => {
+      if (this.disabled()) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    }, { capture: true });
+  }
   // The template renders exactly one of `<a [routerLink]>`, `<a [href]>`, or
   // `<button>` via `@if/@else`, and each carries the `#button` ref — so this
   // resolves to whichever variant is active. Using a viewChild instead of a
