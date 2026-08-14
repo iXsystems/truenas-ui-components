@@ -118,7 +118,10 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
         target = candidates[0];
       }
     }
-    const message = !this.disabled() ? this._plainTextMessage(this.message()) : '';
+    // message() is typed string but bindings like [tnTooltip]="maybe ?? null" deliver
+    // null/undefined at runtime — coalesce before string operations.
+    const rawMessage = this.message() ?? '';
+    const message = !this.disabled() && rawMessage ? this._plainTextMessage(rawMessage) : '';
 
     if (this._describedTarget === target && this._describedMessage === message) {
       return;

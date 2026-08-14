@@ -63,6 +63,29 @@ describe('TnTooltipComponent HTML rendering', () => {
 })
 class DescriptionHostComponent {}
 
+@Component({
+  standalone: true,
+  imports: [TnTooltipDirective],
+  template: `<button class="null-host" [tnTooltip]="message">Null message</button>`,
+})
+class NullMessageHostComponent {
+  // Typed loosely on purpose: real consumers bind expressions like `reason ?? null`,
+  // which deliver null despite the input's string type.
+  message: string | null = null;
+}
+
+describe('TnTooltipDirective null message tolerance', () => {
+  it('tolerates a null message binding without throwing and adds no description', () => {
+    TestBed.configureTestingModule({ imports: [NullMessageHostComponent] });
+    const fixture = TestBed.createComponent(NullMessageHostComponent);
+
+    expect(() => fixture.detectChanges()).not.toThrow();
+
+    const button = (fixture.nativeElement as HTMLElement).querySelector('.null-host');
+    expect(button?.getAttribute('aria-describedby')).toBeNull();
+  });
+});
+
 describe('TnTooltipDirective aria description targeting', () => {
   function createHosts() {
     TestBed.configureTestingModule({ imports: [DescriptionHostComponent] });
