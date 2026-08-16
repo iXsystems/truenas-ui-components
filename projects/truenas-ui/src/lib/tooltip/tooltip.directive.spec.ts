@@ -81,14 +81,16 @@ describe('TnTooltipDirective sticky mode', () => {
     expect(closeButton()?.getAttribute('aria-label')).toBe('Close tooltip');
   }));
 
-  it('keeps a pinned tooltip open on mouseleave and blur', fakeAsync(() => {
+  it('keeps a pinned tooltip open on mouseleave and focusout', fakeAsync(() => {
     hover();
     click();
 
     leave();
     expect(tooltipPanel()).not.toBeNull();
 
-    host.dispatchEvent(new FocusEvent('blur'));
+    // Focus moving into the overlay leaves the host, so without the sticky guard this
+    // focusout would hide the tooltip the moment the user reached its content.
+    host.dispatchEvent(new FocusEvent('focusout'));
     tick();
     fixture.detectChanges();
     expect(tooltipPanel()).not.toBeNull();

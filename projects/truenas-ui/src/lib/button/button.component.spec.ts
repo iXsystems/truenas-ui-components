@@ -1,3 +1,4 @@
+import { Component, signal } from '@angular/core';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
@@ -334,5 +335,49 @@ describe('TnButtonComponent', () => {
       expect(button.getAttribute('data-test')).toBe('button-save');
       expect(button.getAttribute('data-testid')).toBeNull();
     });
+  });
+});
+
+@Component({
+  standalone: true,
+  imports: [TnButtonComponent],
+  template: `<tn-button label="Open" [disabled]="disabled()" (click)="clicks = clicks + 1" />`,
+})
+class ClickHostComponent {
+  disabled = signal(false);
+  clicks = 0;
+}
+
+describe('TnButtonComponent disabled host-click interception', () => {
+  let fixture: ComponentFixture<ClickHostComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ClickHostComponent],
+      providers: [provideRouter([])],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ClickHostComponent);
+    fixture.detectChanges();
+  });
+
+  it('halts clicks retargeted to the host while disabled, so host (click) bindings never fire', () => {
+    fixture.componentInstance.disabled.set(true);
+    fixture.detectChanges();
+
+    // The disabled inner <button> has pointer-events: none, so a real click over it
+    // hit-tests through to the <tn-button> host, where consumers bind (click) —
+    // dispatch there to simulate the retargeted click.
+    const host = fixture.nativeElement.querySelector('tn-button') as HTMLElement;
+    host.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(fixture.componentInstance.clicks).toBe(0);
+  });
+
+  it('leaves host (click) bindings working while enabled', () => {
+    const innerButton = fixture.nativeElement.querySelector('tn-button button') as HTMLButtonElement;
+    innerButton.click();
+
+    expect(fixture.componentInstance.clicks).toBe(1);
   });
 });

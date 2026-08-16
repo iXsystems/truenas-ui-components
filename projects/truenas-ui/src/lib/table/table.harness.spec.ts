@@ -2,7 +2,9 @@ import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Component } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { TnTableTesting } from './table-testing';
 import type { TnSortEvent } from './table.component';
 import { TnTableComponent } from './table.component';
 import { TnTableHarness } from './table.harness';
@@ -46,6 +48,7 @@ const TEST_USERS: User[] = [
       [activeRow]="activeRow"
       [loading]="loading"
       [clickable]="clickable"
+      [mobileLayout]="mobileLayout"
       (sortChange)="onSort($event)"
       (selectionChange)="selectedUsers = $event"
       (rowClick)="lastClickedRow = $event"
@@ -72,6 +75,7 @@ class TableHarnessTestComponent {
   tableData: User[] = [...TEST_USERS];
   selectable = false;
   expandable = false;
+  mobileLayout: 'cards' | 'scroll' = 'scroll';
   isRowExpandable: ((row: User) => boolean) | undefined = undefined;
   activeRow: User | null = null;
   loading = false;
@@ -99,8 +103,11 @@ describe('TnTableHarness', () => {
   let fixture: ComponentFixture<TableHarnessTestComponent>;
   let component: TableHarnessTestComponent;
   let loader: HarnessLoader;
+  let restoreResizeObserver: () => void;
 
   beforeEach(async () => {
+    restoreResizeObserver = TnTableTesting.installResizeObserver();
+
     await TestBed.configureTestingModule({
       imports: [TableHarnessTestComponent, NoopAnimationsModule],
     }).compileComponents();
@@ -109,6 +116,10 @@ describe('TnTableHarness', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
     loader = TestbedHarnessEnvironment.loader(fixture);
+  });
+
+  afterEach(() => {
+    restoreResizeObserver();
   });
 
   describe('basic queries', () => {
@@ -399,6 +410,102 @@ describe('TnTableHarness', () => {
 
       expect(await table.isRowSelected(0)).toBe(true);
       expect(await table.isRowExpanded(0)).toBe(true);
+    });
+  });
+
+  describe('card layout selection', () => {
+    // jsdom reports a 0px host width, so card mode never engages on its own.
+    // `mobileLayout` is opted into via the host (below); here we push a sub-
+    // breakpoint width through the component's ResizeObserver (mocked above).
+    function forceCardMode(): TnTableComponent {
+      TnTableTesting.emitContainerWidth(320);
+      fixture.detectChanges();
+      return fixture.debugElement.query(By.directive(TnTableComponent))
+        .componentInstance as TnTableComponent;
+    }
+
+    // Click the WRAPPER, which is what a real click can reach and where the `(click)`
+    // toggle handler lives. `<tn-checkbox>` is `pointer-events: none`, so clicking it
+    // directly — as this helper used to — skips hit testing entirely and would keep
+    // passing even with no handler bound anywhere a user could hit.
+    function clickCardCheckbox(scopeSelector: string): void {
+      const wrapper = fixture.nativeElement.querySelector(scopeSelector) as HTMLElement;
+      wrapper.click();
+      fixture.detectChanges();
+    }
+
+    beforeEach(() => {
+      component.selectable = true;
+      component.mobileLayout = 'cards';
+      fixture.detectChanges();
+    });
+
+    it('renders cards below the breakpoint', () => {
+      const table = forceCardMode();
+      expect(table.isCardMode()).toBe(true);
+      expect(fixture.nativeElement.querySelectorAll('.tn-table__card').length).toBe(3);
+    });
+
+    it('selects a single row from its card checkbox', () => {
+      forceCardMode();
+      clickCardCheckbox('.tn-table__card[data-row-index="0"] .tn-table__card-select');
+
+      expect(component.selectedUsers).toEqual([TEST_USERS[0]]);
+    });
+
+    it('deselects a row when its card checkbox is clicked again', () => {
+      forceCardMode();
+      clickCardCheckbox('.tn-table__card[data-row-index="1"] .tn-table__card-select');
+      expect(component.selectedUsers).toEqual([TEST_USERS[1]]);
+
+      clickCardCheckbox('.tn-table__card[data-row-index="1"] .tn-table__card-select');
+      expect(component.selectedUsers).toEqual([]);
+    });
+
+    it('selects every row from the card toolbar "select all" checkbox', () => {
+      forceCardMode();
+      clickCardCheckbox('.tn-table__cards-selectall');
+
+      expect(component.selectedUsers).toHaveLength(3);
+    });
+
+    describe('card ARIA', () => {
+      function card(index: number): HTMLElement {
+        return fixture.nativeElement.querySelector(
+          `.tn-table__card[data-row-index="${index}"]`
+        ) as HTMLElement;
+      }
+
+      it('marks the active card with aria-current', () => {
+        component.activeRow = TEST_USERS[1];
+        forceCardMode();
+
+        expect(card(1).getAttribute('aria-current')).toBe('true');
+        expect(card(0).getAttribute('aria-current')).toBeNull();
+      });
+
+      it('leaves aria-current off every card when none is active', () => {
+        forceCardMode();
+
+        expect(card(0).getAttribute('aria-current')).toBeNull();
+        expect(card(1).getAttribute('aria-current')).toBeNull();
+      });
+
+      // `listitem` supports neither: `aria-selected` is not among its allowed attributes and
+      // axe flags it as a critical aria-allowed-attr violation, and `role="button"` has
+      // presentational children, which would hide the card's checkbox, row actions and
+      // "Details" toggle from assistive tech entirely. Selection stays on the checkbox, which
+      // is a real control. `aria-expanded` is a different case — `listitem` inherits it from
+      // the abstract `section` role, so the card does carry it when it is the expand trigger;
+      // see the template comment above the card list.
+      it('does not put aria-selected or role=button on the card', () => {
+        component.activeRow = TEST_USERS[0];
+        component.clickable = true;
+        forceCardMode();
+
+        expect(card(0).getAttribute('aria-selected')).toBeNull();
+        expect(card(0).getAttribute('role')).toBe('listitem');
+      });
     });
   });
 });

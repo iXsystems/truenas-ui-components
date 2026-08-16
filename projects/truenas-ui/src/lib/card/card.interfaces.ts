@@ -4,6 +4,15 @@ export interface TnCardAction {
   disabled?: boolean;
   icon?: string;
   /**
+   * Tooltip for the action button — useful for explaining why an action is unavailable.
+   * Shows on pointer hover (including while the action is disabled, since hover
+   * retargets to the button's host element) and on keyboard focus while enabled. A
+   * disabled native button is not focusable, so keyboard-only users cannot reach the
+   * reason; screen reader users can still read it when browsing the button via its
+   * persistent `aria-describedby` description.
+   */
+  tooltip?: string;
+  /**
    * Test-id applied to the rendered action button. Rendered under whichever attribute name
    * is configured via `TN_TEST_ATTR` (default `data-testid`).
    */

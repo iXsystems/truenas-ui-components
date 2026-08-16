@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { TN_TEST_ATTR } from '../test-id';
 import { TnCardFooterActionsDirective, TnCardHeaderActionsDirective } from './card-action.directive';
@@ -11,6 +12,7 @@ import type {
   TnCardHeaderStatus,
 } from './card.interfaces';
 import type { TnMenuItem } from '../menu/menu.component';
+import { TnTooltipDirective } from '../tooltip/tooltip.directive';
 
 @Component({
   standalone: true,
@@ -183,6 +185,200 @@ class ProjectedActionsHostComponent {
   showFooterAction = signal(false);
   primary = signal<TnCardAction | undefined>(undefined);
 }
+
+describe('TnCardComponent action tooltips', () => {
+  it('keeps the tooltip directive wired on the button host when the action is disabled', () => {
+    const fixture = createHost();
+    fixture.componentInstance.secondary.set({
+      label: 'Open WebShare',
+      handler: () => {},
+      disabled: true,
+      tooltip: 'WebShare service is not running',
+    });
+    fixture.detectChanges();
+
+    // This only verifies the wiring (directive on the host, message set, button disabled).
+    // Whether hover actually reaches the host while the inner button is disabled depends
+    // on browser hit-testing of its pointer-events: none rule, which jsdom cannot
+    // exercise — the WithDisabledActionTooltip story documents that behaviour.
+    const tnButton = fixture.debugElement.query(By.css('.tn-card__footer-right tn-button'));
+    const tooltip = tnButton.injector.get(TnTooltipDirective);
+    expect(tooltip.message()).toBe('WebShare service is not running');
+
+    const innerButton = tnButton.nativeElement.querySelector('button') as HTMLButtonElement;
+    expect(innerButton.disabled).toBe(true);
+  });
+
+  it('applies the tooltip to the primaryAction button as well', () => {
+    const fixture = createHost();
+    fixture.componentInstance.primary.set({
+      label: 'Add',
+      handler: () => {},
+      tooltip: 'Create a new share',
+    });
+    fixture.detectChanges();
+
+    const tnButton = fixture.debugElement.query(By.css('.tn-card__footer-right tn-button'));
+    const tooltip = tnButton.injector.get(TnTooltipDirective);
+    expect(tooltip.message()).toBe('Create a new share');
+  });
+
+  it('leaves the tooltip message empty (directive inert) when the action has no tooltip', () => {
+    const fixture = createHost();
+    fixture.componentInstance.secondary.set({
+      label: 'Open',
+      handler: () => {},
+    });
+    fixture.detectChanges();
+
+    const tnButton = fixture.debugElement.query(By.css('.tn-card__footer-right tn-button'));
+    const tooltip = tnButton.injector.get(TnTooltipDirective);
+    // An empty message makes the directive a no-op: no overlay, no aria-describedby.
+    expect(tooltip.message()).toBe('');
+
+    const innerButton = tnButton.nativeElement.querySelector('button') as HTMLButtonElement;
+    expect(innerButton.getAttribute('aria-describedby')).toBeNull();
+  });
+
+  it('describes the inner button with the tooltip text so screen readers announce it', () => {
+    const fixture = createHost();
+    fixture.componentInstance.secondary.set({
+      label: 'Open',
+      handler: () => {},
+      tooltip: 'WebShare service is not running',
+    });
+    fixture.detectChanges();
+
+    // The directive host is the <tn-button> wrapper, which assistive tech never focuses —
+    // the description must land on the real <button> to be announced. AriaDescriber keeps
+    // the text in a persistent hidden element, so the reference resolves at focus time,
+    // not only while the overlay tooltip is open.
+    const innerButton = fixture.nativeElement.querySelector(
+      '.tn-card__footer-right tn-button button',
+    ) as HTMLButtonElement;
+    const describedBy = innerButton.getAttribute('aria-describedby');
+    expect(describedBy).toBeTruthy();
+
+    const description = document.getElementById(describedBy!.split(/\s+/)[0]);
+    expect(description?.textContent).toContain('WebShare service is not running');
+  });
+
+  it('strips markup from the aria description while the visual tooltip keeps it', () => {
+    const fixture = createHost();
+    fixture.componentInstance.secondary.set({
+      label: 'Open',
+      handler: () => {},
+      tooltip: 'Service <b>stopped</b> &amp; unreachable',
+    });
+    fixture.detectChanges();
+
+    // The overlay tooltip renders the message as HTML; the persistent description is
+    // plain text so screen readers never announce literal tags or entities.
+    const innerButton = fixture.nativeElement.querySelector(
+      '.tn-card__footer-right tn-button button',
+    ) as HTMLButtonElement;
+    const describedBy = innerButton.getAttribute('aria-describedby');
+    const description = document.getElementById(describedBy!.split(/\s+/)[0]);
+    expect(description?.textContent).toBe('Service stopped & unreachable');
+  });
+
+  it('preserves aria-describedby tokens the inner control already carries', () => {
+    const fixture = createHost();
+    fixture.componentInstance.secondary.set({
+      label: 'Open',
+      handler: () => {},
+      tooltip: 'WebShare service is not running',
+    });
+    fixture.detectChanges();
+
+    const innerButton = fixture.nativeElement.querySelector(
+      '.tn-card__footer-right tn-button button',
+    ) as HTMLButtonElement;
+    const tooltipToken = innerButton.getAttribute('aria-describedby');
+    expect(tooltipToken).toBeTruthy();
+
+    // Simulate a description owned by someone else (a form hint / error id).
+    innerButton.setAttribute('aria-describedby', `field-hint ${tooltipToken}`);
+
+    // Dropping the tooltip must remove only its own token, not the pre-existing one.
+    fixture.componentInstance.secondary.set({
+      label: 'Open',
+      handler: () => {},
+    });
+    fixture.detectChanges();
+
+    expect(innerButton.getAttribute('aria-describedby')).toBe('field-hint');
+  });
+
+  it('shows the tooltip when the inner button receives keyboard focus (focusin bubbles to the host)', () => {
+    jest.useFakeTimers();
+    try {
+      const fixture = createHost();
+      fixture.componentInstance.secondary.set({
+        label: 'Open',
+        handler: () => {},
+        tooltip: 'WebShare service is not running',
+      });
+      fixture.detectChanges();
+
+      const innerButton = fixture.nativeElement.querySelector(
+        '.tn-card__footer-right tn-button button',
+      ) as HTMLButtonElement;
+      // Assert on the overlay tooltip element specifically — AriaDescriber keeps the
+      // message in a hidden description container at all times, so a body-text check
+      // would pass whether or not focusin actually showed the tooltip.
+      expect(document.querySelector('[role="tooltip"]')).toBeNull();
+
+      innerButton.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+      jest.runAllTimers();
+      fixture.detectChanges();
+
+      const tooltip = document.querySelector('[role="tooltip"]');
+      expect(tooltip?.textContent).toContain('WebShare service is not running');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+});
+
+describe('TnCardComponent disabled action click guard', () => {
+  it('does not run a disabled action handler when the click lands on the button host', () => {
+    const handler = jest.fn();
+    const fixture = createHost();
+    fixture.componentInstance.secondary.set({
+      label: 'Open',
+      handler,
+      disabled: true,
+    });
+    fixture.detectChanges();
+
+    // The disabled inner <button> has pointer-events: none, so a real click over it
+    // hit-tests through to the <tn-button> host — simulate that retargeted click.
+    // tn-button itself halts host clicks while disabled, so the card's plain
+    // (click)="action.handler()" binding never fires.
+    const tnButton = fixture.nativeElement.querySelector('.tn-card__footer-right tn-button') as HTMLElement;
+    tnButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('still runs the handler for an enabled action', () => {
+    const handler = jest.fn();
+    const fixture = createHost();
+    fixture.componentInstance.primary.set({
+      label: 'Add',
+      handler,
+    });
+    fixture.detectChanges();
+
+    const innerButton = fixture.nativeElement.querySelector(
+      '.tn-card__footer-right tn-button button',
+    ) as HTMLButtonElement;
+    innerButton.click();
+
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe('TnCardComponent projected action templates', () => {
   function createProjectedHost() {

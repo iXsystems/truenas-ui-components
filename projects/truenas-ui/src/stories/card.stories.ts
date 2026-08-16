@@ -1,7 +1,7 @@
 import { provideRouter } from '@angular/router';
 import { applicationConfig } from '@storybook/angular';
 import type { Meta, StoryObj } from '@storybook/angular';
-import { expect, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { TnButtonComponent } from '../lib/button/button.component';
 import {
@@ -511,6 +511,76 @@ export const WithFooterActions: Story = {
       </tn-card>
     `,
   }),
+};
+
+/**
+ * Actions accept an optional `tooltip`, rendered on the button's host element so it
+ * still shows on hover while the action is disabled — the standard way to explain
+ * why an action is currently unavailable.
+ */
+export const WithDisabledActionTooltip: Story = {
+  args: {
+    title: 'WebShare',
+    elevation: 'medium',
+    padding: 'medium',
+    padContent: true,
+    primaryAction: {
+      label: 'Add',
+      handler: () => {},
+    },
+    secondaryAction: {
+      label: 'Open WebShare',
+      handler: () => {},
+      disabled: true,
+      tooltip: 'WebShare is unavailable because the WebShare service is not running.',
+    },
+  },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-card
+        [title]="title"
+        [elevation]="elevation"
+        [padding]="padding"
+        [padContent]="padContent"
+        [bordered]="bordered"
+        [background]="background"
+        [primaryAction]="primaryAction"
+        [secondaryAction]="secondaryAction">
+        <p>Hover the disabled secondary action to see the reason it is unavailable.</p>
+      </tn-card>
+    `,
+  }),
+  // Pins the disabled-hover behaviour in a real browser:
+  // 1. pointer-events: none is computed on the disabled inner <button> — the rule
+  //    (in button.component.scss) the whole feature depends on.
+  // 2. Real browser hit-testing at the button's centre resolves to the <tn-button>
+  //    host: elementFromPoint respects pointer-events, so this fails if the rule is
+  //    dropped OR the host stops generating a hover box (e.g. a display: contents
+  //    refactor) — either would silently kill the disabled tooltip.
+  // 3. The tooltip appears when hover events land on that host (userEvent.hover
+  //    dispatches synthetic events, so assertion 2 is what ties it to real pointers).
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const label = canvas.getByText('Open WebShare');
+    const buttonHost = label.closest('tn-button') as HTMLElement;
+    const innerButton = buttonHost.querySelector('button') as HTMLButtonElement;
+    await expect(innerButton).toBeDisabled();
+    await expect(getComputedStyle(innerButton).pointerEvents).toBe('none');
+
+    const rect = innerButton.getBoundingClientRect();
+    const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    await expect(hit).toBe(buttonHost);
+
+    await userEvent.hover(buttonHost);
+    await waitFor(async () => {
+      const tooltip = document.querySelector('.tn-tooltip-panel');
+      await expect(tooltip?.textContent).toContain(
+        'WebShare is unavailable because the WebShare service is not running.',
+      );
+    });
+    await userEvent.unhover(buttonHost);
+  },
 };
 
 export const WithFooterLink: Story = {
