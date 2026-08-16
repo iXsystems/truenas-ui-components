@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { hasInteractiveContent } from './interactive-content';
 import { TnTooltipComponent } from './tooltip.component';
 import { TnTooltipDirective } from './tooltip.directive';
 
@@ -132,6 +133,38 @@ describe('TnTooltipComponent sticky mode', () => {
     const message = fixture.nativeElement.querySelector('.tn-tooltip__message') as HTMLElement;
 
     expect(message.textContent?.trim()).toBe('Pinned message');
+  });
+});
+
+describe('hasInteractiveContent', () => {
+  it('detects a link, which is what makes a tooltip worth pinning', () => {
+    expect(hasInteractiveContent('Token (<a href="https://example.com">Instructions</a>)')).toBe(true);
+  });
+
+  it.each([
+    ['<button type="button">Retry</button>'],
+    ['<input type="text">'],
+    ['<select><option>a</option></select>'],
+    ['<textarea></textarea>'],
+    ['<span tabindex="0">focusable</span>'],
+  ])('detects other reachable content: %s', (message) => {
+    expect(hasInteractiveContent(message)).toBe(true);
+  });
+
+  it('rejects plain help text, which is the overwhelming majority of tooltips', () => {
+    expect(hasInteractiveContent('Customizes the importance of the alert.')).toBe(false);
+  });
+
+  it('rejects markup that is only formatting', () => {
+    expect(hasInteractiveContent('<b>Online</b> &mdash; <i>healthy</i><br>Second line')).toBe(false);
+  });
+
+  it('rejects an anchor with no href, which is not a link the user can follow', () => {
+    expect(hasInteractiveContent('<a>Not a link</a>')).toBe(false);
+  });
+
+  it('rejects an empty message', () => {
+    expect(hasInteractiveContent('')).toBe(false);
   });
 });
 

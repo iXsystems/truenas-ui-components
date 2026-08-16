@@ -11,9 +11,13 @@ import { TnIconTesting } from '../icon/icon-testing';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnTooltipDirective],
-  template: `<button type="button" [tnTooltip]="message()">host</button>`,
+  template: `
+    <button type="button" [tnTooltip]="message()">host</button>
+    <button type="button" id="plain" [tnTooltip]="'Pool is healthy'">plain host</button>
+  `,
 })
 class TestHostComponent {
+  // The link makes this tooltip click-to-open; the plain one beside it stays a hover tooltip.
   message = signal('Pool is <a href="#pool">online</a>');
 }
 
@@ -21,6 +25,7 @@ describe('TnTooltipHarness', () => {
   let fixture: ComponentFixture<TestHostComponent>;
   let rootLoader: HarnessLoader;
   let host: HTMLButtonElement;
+  let plainHost: HTMLButtonElement;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -35,14 +40,15 @@ describe('TnTooltipHarness', () => {
     fixture.detectChanges();
     rootLoader = TnTooltipTesting.rootLoader(fixture);
     host = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+    plainHost = fixture.nativeElement.querySelector('#plain') as HTMLButtonElement;
   });
 
   it('finds a hover tooltip and reads its text', async () => {
-    host.dispatchEvent(new MouseEvent('mouseenter'));
+    plainHost.dispatchEvent(new MouseEvent('mouseenter'));
 
     const tooltip = await rootLoader.getHarness(TnTooltipHarness);
 
-    expect(await tooltip.getText()).toBe('Pool is online');
+    expect(await tooltip.getText()).toBe('Pool is healthy');
     expect(await tooltip.isSticky()).toBe(false);
     expect(await tooltip.getDismissLabel()).toBeNull();
   });
@@ -60,7 +66,7 @@ describe('TnTooltipHarness', () => {
   });
 
   it('refuses to dismiss a tooltip that is not sticky', async () => {
-    host.dispatchEvent(new MouseEvent('mouseenter'));
+    plainHost.dispatchEvent(new MouseEvent('mouseenter'));
 
     const tooltip = await rootLoader.getHarness(TnTooltipHarness);
 

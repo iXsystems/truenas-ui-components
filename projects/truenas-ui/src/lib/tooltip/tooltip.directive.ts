@@ -18,6 +18,7 @@ import type {
 } from '@angular/core';
 import {
   Directive,
+  computed,
   input,
   effect,
   HostListener,
@@ -26,6 +27,7 @@ import {
   inject
 } from '@angular/core';
 import type { Subscription } from 'rxjs';
+import { hasInteractiveContent } from './interactive-content';
 import { TnTooltipComponent } from './tooltip.component';
 
 export type TooltipPosition = 'above' | 'below' | 'left' | 'right' | 'before' | 'after';
@@ -36,6 +38,10 @@ export type TooltipPosition = 'above' | 'below' | 'left' | 'right' | 'before' | 
  * whose inner control should carry `aria-describedby`.
  */
 const INTERACTIVE_SELECTOR = 'button, a[href], input, select, textarea, [tabindex]';
+
+/** Half the arrow's base, and the panel's corner radius - both mirror `tooltip.component.scss`. */
+const ARROW_HALF_WIDTH = 6;
+const PANEL_BORDER_RADIUS = 4;
 
 @Directive({
   selector: '[tnTooltip]',
@@ -49,12 +55,17 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   hideDelay = input<number>(0, { alias: 'tnTooltipHideDelay' });
   tooltipClass = input<string>('', { alias: 'tnTooltipClass' });
   /**
-   * Allows clicking the host to pin ("stick") the tooltip open so its content can be
-   * interacted with — needed for tooltips that contain links or other controls. While pinned,
-   * the tooltip renders a dismiss button and ignores `mouseleave`/`focusout`; it closes on a second
-   * click of the host, on the dismiss button, on an outside click, or on Escape.
+   * Allows the tooltip to be pinned ("stuck") open so its content can be interacted with —
+   * needed for tooltips that contain links or other controls.
    *
-   * Enabled by default: hover behaviour is unchanged until the host is actually clicked.
+   * Pinning is not a second stage layered on hover: a tooltip that can be pinned is opened by
+   * clicking the host and by nothing else, because a tooltip that appeared on hover and then had
+   * to be clicked made the user chase a target that was already on screen. See `_isPinnable`
+   * for which tooltips this applies to.
+   *
+   * While pinned the tooltip renders a dismiss button and ignores `mouseleave`/`focusout`; it
+   * closes on a second click of the host, on the dismiss button, on an outside click, or on
+   * Escape.
    */
   stickyEnabled = input<boolean>(true, { alias: 'tnTooltipSticky' });
   /** Accessible name for the dismiss button rendered in sticky mode. */
@@ -83,6 +94,28 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   private _describedTarget: HTMLElement | null = null;
   private _describedMessage = '';
   private _innerObserver: MutationObserver | null = null;
+
+  /**
+   * The message, guaranteed to be a string.
+   *
+   * An input default only applies while the input is left unbound, so a template binding
+   * `[tnTooltip]="condition ? text : null"` — a common way to switch a tooltip off — delivers a
+   * literal `null` straight past the `''` default. Everything internal reads this rather than
+   * `message()`, so a string method is never called on a non-string.
+   */
+  private readonly _text = computed(() => this.message() ?? '');
+
+  /**
+   * Whether this tooltip is opened by a click and pinned, rather than shown on hover.
+   *
+   * Only messages carrying interactive content earn the click interaction, because they are the
+   * ones a hover tooltip cannot serve — it disappears on the way to the link. Plain help text,
+   * which is the overwhelming majority, keeps the hover behaviour and never pins: pinning it
+   * would cost a click and buy the reader nothing.
+   */
+  private readonly _isPinnable = computed(
+    () => this.stickyEnabled() && !this.disabled() && hasInteractiveContent(this._text()),
+  );
 
   /**
    * Re-sync the description (see ngAfterViewInit) when the inputs change. The initial
@@ -134,7 +167,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
         target = candidates[0];
       }
     }
-    const message = !this.disabled() ? this._plainTextMessage(this.message()) : '';
+    const message = !this.disabled() ? this._plainTextMessage(this._text()) : '';
 
     if (this._describedTarget === target && this._describedMessage === message) {
       return;
@@ -183,7 +216,13 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
 
   @HostListener('mouseenter')
   _onMouseEnter(): void {
-    if (!this.disabled() && this.message()) {
+    // A pinnable tooltip is opened by the click alone - showing it on hover first would put the
+    // content on screen and then still demand a click to make it usable.
+    if (this._isPinnable()) {
+      return;
+    }
+
+    if (!this.disabled() && this._text()) {
       this.show(this.showDelay());
     }
   }
@@ -204,7 +243,13 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   // focused via keyboard. focusin/focusout bubble and cover both shapes.
   @HostListener('focusin')
   _onFocusIn(): void {
-    if (!this.disabled() && this.message()) {
+    // Same as hover: keyboard users open a pinnable tooltip with Enter/Space, which arrives as a
+    // click. Opening it on focus would show an unpinned copy they then had to activate anyway.
+    if (this._isPinnable()) {
+      return;
+    }
+
+    if (!this.disabled() && this._text()) {
       this.show(this.showDelay());
     }
   }
@@ -230,7 +275,10 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
 
   @HostListener('click', ['$event'])
   _onClick(event: MouseEvent): void {
-    if (!this.stickyEnabled() || this.disabled() || !this.message()) {
+    // Plain help text is deliberately excluded: pinning a sentence the user can already read
+    // achieves nothing, and it would hijack the click of every button that carries a tooltip.
+    // An empty message is excluded by the same check, since it has no interactive content.
+    if (!this._isPinnable()) {
       return;
     }
 
@@ -253,7 +301,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
 
   /** Shows the tooltip */
   show(delay: number = 0): void {
-    if (this.disabled() || !this.message()) {
+    if (this.disabled() || !this._text()) {
       return;
     }
 
@@ -305,7 +353,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * without a pointer.
    */
   stick(options: { focusTooltip?: boolean } = {}): void {
-    if (this.disabled() || !this.message()) {
+    if (this.disabled() || !this._text()) {
       return;
     }
 
@@ -321,11 +369,17 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     this._subscribeToEscape();
     this._subscribeToOutsideClicks();
 
+    // Sticky mode changes the panel's size (it is allowed to be wider and it gains a dismiss
+    // button), so the position computed for the hover-sized panel is now stale: the panel would
+    // keep its old left edge, grow to one side and drift off its origin. Render the new size
+    // first, then let the strategy re-run against it.
+    this._tooltipInstance?.changeDetectorRef.detectChanges();
+    this._overlayRef?.updatePosition();
+    this._updateArrowOffset();
+
     if (options.focusTooltip && this._tooltipInstance) {
-      // The panel is only focusable once the sticky input has been rendered. Focus goes to the
-      // panel rather than the dismiss button so that Tab walks the tooltip's own content
-      // first - the links it holds are the reason sticky mode exists.
-      this._tooltipInstance.changeDetectorRef.detectChanges();
+      // Focus goes to the panel rather than the dismiss button so that Tab walks the tooltip's
+      // own content first - the links it holds are the reason sticky mode exists.
       this._tooltipInstance.instance.focusPanel();
     }
   }
@@ -380,7 +434,40 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
         ];
         panel.classList.remove(...allPositionClasses);
         panel.classList.add(`tn-tooltip-panel-${actual}`);
+        this._updateArrowOffset();
       });
+  }
+
+  /**
+   * Points the speech-bubble arrow at the host rather than at the panel's own centre.
+   *
+   * The two only coincide when the panel is perfectly centred on its origin. They come apart
+   * whenever the panel is nudged sideways to stay inside the viewport, or when it is resized
+   * after being placed (entering sticky mode), which used to leave the arrow pointing at empty
+   * space next to the control it belongs to.
+   */
+  private _updateArrowOffset(): void {
+    const panel = this._overlayRef?.overlayElement;
+    if (!panel) {
+      return;
+    }
+
+    const hostRect = (this._elementRef.nativeElement as HTMLElement).getBoundingClientRect();
+    const panelRect = panel.getBoundingClientRect();
+    const isVertical = panel.classList.contains('tn-tooltip-panel-above')
+      || panel.classList.contains('tn-tooltip-panel-below');
+
+    const offset = isVertical
+      ? hostRect.left + hostRect.width / 2 - panelRect.left
+      : hostRect.top + hostRect.height / 2 - panelRect.top;
+    const extent = isVertical ? panelRect.width : panelRect.height;
+
+    // Keep the arrow clear of the rounded corners, so it always reads as part of the bubble
+    // even when the host sits far off to one side.
+    const inset = ARROW_HALF_WIDTH + PANEL_BORDER_RADIUS;
+    const clamped = Math.max(inset, Math.min(extent - inset, offset));
+
+    panel.style.setProperty('--tn-tooltip-arrow-offset', `${clamped}px`);
   }
 
   private _resolvePosition(pair: ConnectedPosition): TooltipPosition {
@@ -404,7 +491,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     if (!this._tooltipInstance) {
       const portal = new ComponentPortal(TnTooltipComponent, this._viewContainerRef);
       this._tooltipInstance = this._overlayRef.attach(portal);
-      this._tooltipInstance.setInput('message', this.message());
+      this._tooltipInstance.setInput('message', this._text());
       this._tooltipInstance.setInput('id', this._tooltipId);
       this._tooltipInstance.setInput('closeAriaLabel', this.closeAriaLabel());
       this._dismissSub = this._tooltipInstance.instance.onDismiss.subscribe(() => {

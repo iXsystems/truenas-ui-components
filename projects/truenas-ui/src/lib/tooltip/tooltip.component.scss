@@ -110,10 +110,14 @@
   }
 }
 
-// Position-specific pointers
+// Position-specific pointers.
+//
+// The arrow tracks the host via `--tn-tooltip-arrow-offset`, which the directive writes onto the
+// overlay pane after every placement. It falls back to the panel's centre, which is where the
+// host is whenever the panel is neither viewport-clamped nor resized after placement.
 :host-context(.tn-tooltip-panel-above) .tn-tooltip::after {
   top: 100%;
-  left: 50%;
+  left: var(--tn-tooltip-arrow-offset, 50%);
   transform: translateX(-50%);
   border-width: 6px 6px 0 6px;
   border-color: rgba(55, 55, 55, 0.9) transparent transparent transparent;
@@ -121,7 +125,7 @@
 
 :host-context(.tn-tooltip-panel-below) .tn-tooltip::after {
   bottom: 100%;
-  left: 50%;
+  left: var(--tn-tooltip-arrow-offset, 50%);
   transform: translateX(-50%);
   border-width: 0 6px 6px 6px;
   border-color: transparent transparent rgba(55, 55, 55, 0.9) transparent;
@@ -129,7 +133,7 @@
 
 :host-context(.tn-tooltip-panel-left) .tn-tooltip::after,
 :host-context(.tn-tooltip-panel-before) .tn-tooltip::after {
-  top: 50%;
+  top: var(--tn-tooltip-arrow-offset, 50%);
   left: 100%;
   transform: translateY(-50%);
   border-width: 6px 0 6px 6px;
@@ -138,7 +142,7 @@
 
 :host-context(.tn-tooltip-panel-right) .tn-tooltip::after,
 :host-context(.tn-tooltip-panel-after) .tn-tooltip::after {
-  top: 50%;
+  top: var(--tn-tooltip-arrow-offset, 50%);
   right: 100%;
   transform: translateY(-50%);
   border-width: 6px 6px 6px 0;

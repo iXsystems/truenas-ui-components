@@ -10,9 +10,11 @@ import { TnTooltipDirective } from './tooltip.directive';
   imports: [TnTooltipDirective],
   template: `
     <button type="button" [tnTooltip]="message()" [tnTooltipSticky]="sticky()" [tnTooltipDisabled]="disabled()">host</button>
+    <button type="button" id="plain" [tnTooltip]="'Plain help text'">plain host</button>
   `,
 })
 class HostComponent {
+  // A link in the message is what makes this tooltip click-to-open rather than hover.
   message = signal('Read the <a href="#docs">docs</a>');
   sticky = signal(true);
   disabled = signal(false);
@@ -29,6 +31,7 @@ function closeButton(): HTMLButtonElement | null {
 describe('TnTooltipDirective sticky mode', () => {
   let fixture: ComponentFixture<HostComponent>;
   let host: HTMLButtonElement;
+  let plainHost: HTMLButtonElement;
 
   beforeEach(() => {
     // The dismiss button renders a tn-icon, whose sprite loader would otherwise fire a real XHR.
@@ -39,6 +42,7 @@ describe('TnTooltipDirective sticky mode', () => {
     fixture = TestBed.createComponent(HostComponent);
     fixture.detectChanges();
     host = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+    plainHost = fixture.nativeElement.querySelector('#plain') as HTMLButtonElement;
   });
 
   afterEach(fakeAsync(() => {
@@ -46,14 +50,14 @@ describe('TnTooltipDirective sticky mode', () => {
     tick();
   }));
 
-  function hover(): void {
-    host.dispatchEvent(new MouseEvent('mouseenter'));
+  function hover(target: HTMLElement = host): void {
+    target.dispatchEvent(new MouseEvent('mouseenter'));
     tick();
     fixture.detectChanges();
   }
 
-  function leave(): void {
-    host.dispatchEvent(new MouseEvent('mouseleave'));
+  function leave(target: HTMLElement = host): void {
+    target.dispatchEvent(new MouseEvent('mouseleave'));
     tick();
     fixture.detectChanges();
   }
@@ -64,16 +68,38 @@ describe('TnTooltipDirective sticky mode', () => {
     fixture.detectChanges();
   }
 
-  it('shows on hover and hides on mouseleave when not pinned', fakeAsync(() => {
-    hover();
+  it('shows plain help text on hover and hides it on mouseleave', fakeAsync(() => {
+    hover(plainHost);
     expect(tooltipPanel()).not.toBeNull();
     expect(closeButton()).toBeNull();
 
-    leave();
+    leave(plainHost);
     expect(tooltipPanel()).toBeNull();
   }));
 
-  it('pins the tooltip on click and renders a dismiss button', fakeAsync(() => {
+  it('does not open a pinnable tooltip on hover - the click is the only way in', fakeAsync(() => {
+    hover();
+
+    expect(tooltipPanel()).toBeNull();
+  }));
+
+  it('does not open a pinnable tooltip on focus either', fakeAsync(() => {
+    host.dispatchEvent(new FocusEvent('focusin'));
+    tick();
+    fixture.detectChanges();
+
+    expect(tooltipPanel()).toBeNull();
+  }));
+
+  it('never pins plain help text, so it does not hijack the host click', fakeAsync(() => {
+    plainHost.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+    tick();
+    fixture.detectChanges();
+
+    expect(tooltipPanel()).toBeNull();
+  }));
+
+  it('opens the tooltip already pinned on click, with a dismiss button', fakeAsync(() => {
     click();
 
     expect(tooltipPanel()).not.toBeNull();
@@ -82,7 +108,6 @@ describe('TnTooltipDirective sticky mode', () => {
   }));
 
   it('keeps a pinned tooltip open on mouseleave and focusout', fakeAsync(() => {
-    hover();
     click();
 
     leave();
@@ -146,7 +171,7 @@ describe('TnTooltipDirective sticky mode', () => {
   it('does not intercept Escape while it is only a hover tooltip', fakeAsync(() => {
     // A permanent keydownEvents() subscription would make the tooltip's overlay the top-most
     // Escape handler, stealing the key from whatever dialog the host sits in.
-    hover();
+    hover(plainHost);
 
     const escape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
     document.body.dispatchEvent(escape);
@@ -168,13 +193,14 @@ describe('TnTooltipDirective sticky mode', () => {
     outside.remove();
   }));
 
-  it('does not pin when sticky mode is turned off', fakeAsync(() => {
+  it('falls back to hover when sticky mode is turned off, even with a link in the message', fakeAsync(() => {
     fixture.componentInstance.sticky.set(false);
     fixture.detectChanges();
 
     hover();
-    click();
+    expect(tooltipPanel()).not.toBeNull();
 
+    click();
     expect(closeButton()).toBeNull();
 
     leave();
@@ -204,15 +230,117 @@ describe('TnTooltipDirective sticky mode', () => {
     click();
     expect(tooltipPanel()).toBeNull();
 
-    hover();
+    click();
     expect(tooltipPanel()).not.toBeNull();
-    expect(closeButton()).toBeNull();
+    expect(closeButton()).not.toBeNull();
   }));
 
   it('leaves no overlay pane behind once hidden', fakeAsync(() => {
-    hover();
-    leave();
+    hover(plainHost);
+    leave(plainHost);
 
     expect(document.querySelector('.cdk-overlay-pane')).toBeNull();
   }));
+
+  describe('a null message', () => {
+    // Switching a tooltip off with `[tnTooltip]="condition ? text : null"` is common in consuming
+    // apps, and an explicitly bound null bypasses the input's '' default. Every string operation
+    // in here has to survive it: webui's collapsed-sidenav links do exactly this, and each one
+    // threw "Cannot read properties of null (reading 'includes')" out of ngAfterViewInit.
+    beforeEach(() => {
+      fixture.componentInstance.message.set(null as unknown as string);
+      fixture.detectChanges();
+    });
+
+    it('renders without throwing', () => {
+      expect(() => fixture.detectChanges()).not.toThrow();
+    });
+
+    it('shows nothing on hover', fakeAsync(() => {
+      expect(() => hover()).not.toThrow();
+      expect(tooltipPanel()).toBeNull();
+    }));
+
+    it('shows nothing on click', fakeAsync(() => {
+      expect(() => click()).not.toThrow();
+      expect(tooltipPanel()).toBeNull();
+    }));
+
+    it('describes nothing to assistive tech', () => {
+      expect(host.getAttribute('aria-describedby')).toBeNull();
+    });
+  });
+
+  describe('arrow placement', () => {
+    const pane = () => document.querySelector('.cdk-overlay-pane') as HTMLElement;
+    const arrowOffset = () => pane().style.getPropertyValue('--tn-tooltip-arrow-offset');
+
+    // These stub geometry that jsdom does not provide; nothing else in the file may inherit it.
+    afterEach(() => jest.restoreAllMocks());
+
+    /**
+     * jsdom gives every element a zero-sized rect, so the geometry has to be supplied. These
+     * stand for a host at x 100-116 (centre 108) under a panel placed at `panelLeft`.
+     */
+    function stubGeometry(target: HTMLElement, panelLeft: number, panelWidth: number): void {
+      jest.spyOn(target, 'getBoundingClientRect').mockReturnValue({
+        left: 100, width: 16, top: 200, height: 16,
+      } as DOMRect);
+      jest.spyOn(pane(), 'getBoundingClientRect').mockReturnValue({
+        left: panelLeft, width: panelWidth, top: 100, height: 60,
+      } as DOMRect);
+    }
+
+    function reposition(): void {
+      window.dispatchEvent(new Event('resize'));
+      tick(100);
+      fixture.detectChanges();
+    }
+
+    it('points the arrow at the host rather than at the panel centre', fakeAsync(() => {
+      hover(plainHost);
+      stubGeometry(plainHost, 40, 200);
+
+      reposition();
+
+      // Host centre 108 sits 68px into a panel starting at 40 - not the 100px panel centre.
+      expect(arrowOffset()).toBe('68px');
+    }));
+
+    it('keeps the arrow clear of the panel corners when the host is far to one side', fakeAsync(() => {
+      hover(plainHost);
+      // A panel pushed right of the host by viewport clamping: the host centre lands outside it.
+      stubGeometry(plainHost, 300, 200);
+
+      reposition();
+
+      expect(arrowOffset()).toBe('10px');
+    }));
+
+    it('re-places the panel when pinning resizes it, so the arrow stays on the host', fakeAsync(() => {
+      // The resize happens inside the single click that opens a pinnable tooltip: the panel is
+      // attached at hover width and only then switched into the wider sticky layout. Stubbed on
+      // the prototype so the pane is covered from the moment it comes into existence.
+      jest.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+        if (this === host) {
+          return { left: 100, width: 16, top: 200, height: 16 } as DOMRect;
+        }
+
+        if (this.classList.contains('cdk-overlay-pane')) {
+          return this.querySelector('.tn-tooltip--sticky')
+            ? { left: 20, width: 280, top: 100, height: 60 } as DOMRect
+            : { left: 40, width: 200, top: 100, height: 60 } as DOMRect;
+        }
+
+        return { left: 0, width: 0, top: 0, height: 0 } as DOMRect;
+      });
+
+      click();
+
+      expect(closeButton()).not.toBeNull();
+      // Host centre 108, sticky panel starting at 20. Reading 68px would mean the offset was
+      // computed against the hover-sized panel and never refreshed - the reported bug.
+      expect(arrowOffset()).toBe('88px');
+    }));
+  });
 });
