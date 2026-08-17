@@ -6,6 +6,7 @@ import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 import type { TooltipPosition } from '../tooltip/tooltip.directive';
 import { TnTooltipDirective } from '../tooltip/tooltip.directive';
+import { defineFocusDelegate } from '../utils/focus-delegate';
 
 @Component({
   selector: 'tn-icon-button',
@@ -86,11 +87,16 @@ export class TnIconButtonComponent implements AfterViewInit {
     // inner button ref. We don't restore the original `focus` on destroy
     // because the host element is destroyed at the same time.
     //
+    // `defineProperty` rather than `host.focus = ...`: plain assignment is only
+    // an own-property write while `focus` is a data property on
+    // `HTMLElement.prototype`. Tooling that redefines it as an accessor with a
+    // setter - Storybook's interactions addon does exactly this - turns the
+    // assignment into a *global* write, and every element on the page then
+    // focuses this instance's inner button. See `defineFocusDelegate`.
+    //
     // If this component is ever moved to `ViewEncapsulation.ShadowDom`, drop
     // this override and rely on the shadow root's `delegatesFocus: true`
     // option, which is the platform-native equivalent.
-    const host = this.hostRef.nativeElement as HTMLElement;
-    const inner = this.buttonRef().nativeElement;
-    host.focus = (options?: FocusOptions) => inner.focus(options);
+    defineFocusDelegate(this.hostRef.nativeElement as HTMLElement, this.buttonRef().nativeElement);
   }
 }

@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { TnIconComponent } from '../icon/icon.component';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import { defineFocusDelegate } from '../utils/focus-delegate';
 
 @Component({
   selector: 'tn-button',
@@ -159,7 +160,9 @@ export class TnButtonComponent implements AfterViewInit {
     // landing on the styled inner element (the host has no visual styling).
     // Also delegate `host.focus()` to the inner element so callers holding a
     // ref to the host (FocusMonitor, MatMenuTrigger restore, etc.) focus
-    // something visible — same pattern used in TnIconButtonComponent.
+    // something visible — same pattern used in TnIconButtonComponent. The
+    // delegation is defined rather than assigned; see `defineFocusDelegate` for
+    // why a plain assignment can escape this element.
     const host = this.hostRef.nativeElement as HTMLElement;
     const inner = this.innerRef().nativeElement;
 
@@ -169,6 +172,6 @@ export class TnButtonComponent implements AfterViewInit {
       host.removeAttribute('tabindex');
     }
 
-    host.focus = (options?: FocusOptions) => inner.focus(options);
+    defineFocusDelegate(host, inner);
   }
 }
