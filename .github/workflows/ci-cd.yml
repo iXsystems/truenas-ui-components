@@ -9,15 +9,20 @@ on:
       - main
   workflow_dispatch:
 
+# Read-only by default; the three jobs that need to write grant it to themselves.
+# This repo publishes to npm, so lint/test/build — the jobs that execute
+# dependency and Playwright code — should not be holding a token that can cut a
+# release or push to Pages.
 permissions:
-  contents: write
-  packages: write
-  pages: write
-  id-token: write
+  contents: read
 
+# Cancelling is limited to pull_request. This workflow also carries `release`
+# and `deploy` on pushes to main, so an unconditional cancel let a rapid second
+# merge kill an in-flight semantic-release — potentially between the npm publish
+# and the GitHub release/tag that records it.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   lint:
@@ -27,17 +32,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Prepare
+        uses: iXsystems/ux-github-workflows/.github/actions/prepare@master
         with:
-          node-version: '24'
-          cache: 'yarn'
-
-      - name: Install dependencies
-        run: yarn install --immutable
+          yarn-cache: 'true'
 
       - name: Run linter
         run: yarn lint
@@ -49,17 +47,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Prepare
+        uses: iXsystems/ux-github-workflows/.github/actions/prepare@master
         with:
-          node-version: '24'
-          cache: 'yarn'
-
-      - name: Install dependencies
-        run: yarn install --immutable
+          yarn-cache: 'true'
 
       - name: Run component tests
         run: yarn test
@@ -74,17 +65,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Prepare
+        uses: iXsystems/ux-github-workflows/.github/actions/prepare@master
         with:
-          node-version: '24'
-          cache: 'yarn'
-
-      - name: Install dependencies
-        run: yarn install --immutable
+          yarn-cache: 'true'
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
@@ -105,17 +89,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Prepare
+        uses: iXsystems/ux-github-workflows/.github/actions/prepare@master
         with:
-          node-version: '24'
-          cache: 'yarn'
-
-      - name: Install dependencies
-        run: yarn install --immutable
+          yarn-cache: 'true'
 
       - name: Build library
         run: yarn build
@@ -125,21 +102,20 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint, test, build]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # configure-pages reads the Pages config; upload-pages-artifact signs the
+    # artifact that deploy-pages later verifies, which is what id-token is for.
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Prepare
+        uses: iXsystems/ux-github-workflows/.github/actions/prepare@master
         with:
-          node-version: '24'
-          cache: 'yarn'
-
-      - name: Install dependencies
-        run: yarn install --immutable
+          yarn-cache: 'true'
 
       - name: Build Storybook
         run: yarn build-storybook
@@ -157,6 +133,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-storybook
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -170,6 +149,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint, test, build]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # @semantic-release/github creates the release and tag (contents) and
+    # comments on the issues and PRs it ships (issues, pull-requests).
+    # npm publishing authenticates with NPM_TOKEN, not the GitHub token, and
+    # provenance is not enabled — so no id-token here. `packages: write` was
+    # never needed: this publishes to npmjs.org, not GitHub Packages.
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -206,20 +194,11 @@ jobs:
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Enable Corepack
+      - name: Prepare
         if: steps.changes.outputs.has_changes == 'true'
-        run: corepack enable
-
-      - name: Setup Node.js
-        if: steps.changes.outputs.has_changes == 'true'
-        uses: actions/setup-node@v4
+        uses: iXsystems/ux-github-workflows/.github/actions/prepare@master
         with:
-          node-version: '24'
-          cache: 'yarn'
-
-      - name: Install dependencies
-        if: steps.changes.outputs.has_changes == 'true'
-        run: yarn install --immutable
+          yarn-cache: 'true'
 
       - name: Build library
         if: steps.changes.outputs.has_changes == 'true'

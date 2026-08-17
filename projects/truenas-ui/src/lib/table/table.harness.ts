@@ -1,4 +1,4 @@
-import type { BaseHarnessFilters } from '@angular/cdk/testing';
+import type { BaseHarnessFilters, TestElement } from '@angular/cdk/testing';
 import { ComponentHarness, HarnessPredicate, TestKey } from '@angular/cdk/testing';
 import { TnCheckboxHarness } from '../checkbox/checkbox.harness';
 
@@ -37,19 +37,66 @@ export class TnTableHarness extends ComponentHarness {
   /**
    * Gets the number of data rows (excludes header and detail rows).
    *
-   * @returns Promise resolving to the row count.
+   * Layout-aware: counts rendered cards in the card layout, so the count tracks what the
+   * user sees rather than reporting 0 for a container that happens to be narrow.
+   *
+   * @returns Promise resolving to the row count, or the card count in the card layout.
    */
   async getRowCount(): Promise<number> {
-    const rows = await this.locatorForAll('.tn-table__row')();
+    // Counts cards in card mode. Answering 0 there was the silent-wrong-answer shape the
+    // selection block rejects, and this is the harness's own headline example — a consumer
+    // that narrows the container and asserts emptiness would pass vacuously.
+    const selector = (await this.isCards()) ? '.tn-table__card' : '.tn-table__row';
+    const rows = await this.locatorForAll(selector)();
     return rows.length;
+  }
+
+  /**
+   * Throws when the rendered layout is `cards`, for queries that have no card equivalent.
+   * The alternative is an empty array or a 0, which reads as "the table is empty" and
+   * greens a test over a rendered card list — the failure mode the selection and
+   * active-row methods were made layout-aware to avoid.
+   */
+  private async assertTableLayout(method: string): Promise<void> {
+    if (await this.isCards()) {
+      throw new Error(
+        `TnTableHarness.${method}() has no meaning in the card layout. `
+          + 'Use the card API instead — getCardCount(), getCardTitle(), getCardFieldValue(), '
+          + 'toggleCardDetail(), expandCardMoreFields(), getCardSortColumn(), '
+          + 'getCardSortDirection(), toggleCardSortDirection(), clickCard(), '
+          + 'doubleClickCard(), pressKeyOnCard(), isCardFocusable() — or widen the container '
+          + 'above cardBreakpoint.'
+      );
+    }
+  }
+
+  /**
+   * Mirror of {@link assertTableLayout} for the card API. `getCardCount()` answering 0 in
+   * table mode is the same silent-wrong-answer shape rejected for `getRowCount()`: a spec
+   * that forgot to push a sub-breakpoint width would assert emptiness and pass over 20
+   * rendered rows.
+   */
+  private async assertCardLayout(method: string): Promise<void> {
+    if (!(await this.isCards())) {
+      throw new Error(
+        `TnTableHarness.${method}() has no meaning in the table layout. `
+          + 'Use the row API instead — getRowCount(), getCellText(), getRowTexts(), '
+          + 'toggleRowExpansion(), clickSortHeader(), clickRow(), doubleClickRow(), '
+          + 'pressKeyOnRow(), isRowFocusable() — or narrow the container below '
+          + 'cardBreakpoint.'
+      );
+    }
   }
 
   /**
    * Gets the text content of header cells (excludes sort icons).
    *
    * @returns Promise resolving to an array of header text strings.
+   * @throws Error in the card layout, which renders no header row;
+   *   the thrown message names the card API.
    */
   async getHeaderTexts(): Promise<string[]> {
+    await this.assertTableLayout('getHeaderTexts');
     const textEls = await this.locatorForAll('.tn-table__header-text')();
     const texts: string[] = [];
     for (const el of textEls) {
@@ -63,8 +110,10 @@ export class TnTableHarness extends ComponentHarness {
    *
    * @param rowIndex Zero-based index of the data row.
    * @returns Promise resolving to an array of cell text strings.
+   * @throws Error in the card layout, which renders no rows; the thrown message names the card API.
    */
   async getRowTexts(rowIndex: number): Promise<string[]> {
+    await this.assertTableLayout('getRowTexts');
     await this.assertRowExists(rowIndex);
     const cells = await this.locatorForAll(
       `.tn-table__row[data-row-index="${rowIndex}"] .tn-table__cell[data-column]`
@@ -82,8 +131,11 @@ export class TnTableHarness extends ComponentHarness {
    * @param rowIndex Zero-based index of the data row.
    * @param columnName The column's data-column attribute value.
    * @returns Promise resolving to the cell text.
+   * @throws Error in the card layout, which renders no cells;
+   *   the thrown message names the card API.
    */
   async getCellText(rowIndex: number, columnName: string): Promise<string> {
+    await this.assertTableLayout('getCellText');
     await this.assertRowExists(rowIndex);
     const cell = await this.locatorFor(
       `.tn-table__row[data-row-index="${rowIndex}"] [data-column="${columnName}"]`
@@ -95,8 +147,10 @@ export class TnTableHarness extends ComponentHarness {
    * Gets all row texts as a 2D string array (data-column cells only).
    *
    * @returns Promise resolving to an array of row text arrays.
+   * @throws Error in the card layout, which renders no rows; the thrown message names the card API.
    */
   async getAllRowTexts(): Promise<string[][]> {
+    await this.assertTableLayout('getAllRowTexts');
     const count = await this.getRowCount();
     const result: string[][] = [];
     for (let i = 0; i < count; i++) {
@@ -111,8 +165,11 @@ export class TnTableHarness extends ComponentHarness {
    * Clicks a sortable column header to cycle sort direction.
    *
    * @param columnName The column's data-column attribute value.
+   * @throws Error in the card layout, which renders no column headers;
+   *   the thrown message names the card API.
    */
   async clickSortHeader(columnName: string): Promise<void> {
+    await this.assertTableLayout('clickSortHeader');
     const header = await this.locatorFor(
       `th[data-column="${columnName}"]`
     )();
@@ -124,8 +181,11 @@ export class TnTableHarness extends ComponentHarness {
    *
    * @param columnName The column's data-column attribute value.
    * @returns Promise resolving to true if the column is sortable.
+   * @throws Error in the card layout, which renders no column headers;
+   *   the thrown message names the card API.
    */
   async isSortable(columnName: string): Promise<boolean> {
+    await this.assertTableLayout('isSortable');
     const header = await this.locatorFor(
       `th[data-column="${columnName}"]`
     )();
@@ -135,66 +195,102 @@ export class TnTableHarness extends ComponentHarness {
   /**
    * Gets the current sort direction for a column via aria-sort.
    *
+   * `aria-sort="none"` — which a sortable-but-unsorted header now carries, so it is
+   * discoverable as sortable — is normalised to null, keeping "not sorted" a single value
+   * for callers. Only a non-sortable header has no attribute at all, and both answer null.
+   *
    * @param columnName The column's data-column attribute value.
    * @returns Promise resolving to 'ascending', 'descending', or null.
+   * @throws Error in the card layout, which renders no column headers;
+   *   the thrown message names the card API.
    */
   async getSortDirection(columnName: string): Promise<string | null> {
+    await this.assertTableLayout('getSortDirection');
     const header = await this.locatorFor(
       `th[data-column="${columnName}"]`
     )();
-    return header.getAttribute('aria-sort');
+    const sort = await header.getAttribute('aria-sort');
+    return sort === 'none' ? null : sort;
   }
 
   // --- Selection ---
+  //
+  // Layout-aware, all four of them. Card mode renders no `.tn-table__row` at all —
+  // selection lives in `.tn-table__card .tn-table__card-select` — so a row-based
+  // locator either throws or, worse, answers 0 for a table with rows selected.
+  // Consumers shouldn't have to branch on the rendered layout to ask "is this row
+  // selected", so these resolve the right selectors themselves.
+  //
+  // The click target is the WRAPPER in both layouts (the `<td>`, or the card's
+  // `<div>`): `.tn-table__checkbox` is `pointer-events: none`, so clicking the
+  // checkbox itself exercises a path no user can take.
 
-  /**
-   * Clicks the select-all checkbox in the header.
-   */
-  async toggleSelectAll(): Promise<void> {
-    const cell = await this.locatorFor(
-      '.tn-table__header-row .tn-table__select-cell'
-    )();
-    await cell.click();
+  /** True when the container is narrow enough that card mode is rendered. */
+  private async isCards(): Promise<boolean> {
+    return (await this.getLayoutMode()) === 'cards';
   }
 
   /**
-   * Toggles selection for a specific row by clicking its checkbox cell.
+   * Clicks the select-all control — the header checkbox in table mode, the card
+   * toolbar's "Select all" in card mode.
+   */
+  async toggleSelectAll(): Promise<void> {
+    const selector = (await this.isCards())
+      ? '.tn-table__cards-selectall'
+      : '.tn-table__header-row .tn-table__select-cell';
+    const target = await this.locatorFor(selector)();
+    await target.click();
+  }
+
+  /**
+   * Toggles selection for a specific row (or its card) by clicking its checkbox
+   * wrapper.
    *
    * @param rowIndex Zero-based index of the data row.
    */
   async toggleRowSelection(rowIndex: number): Promise<void> {
-    await this.assertRowExists(rowIndex);
-    const cell = await this.locatorFor(
-      `.tn-table__row[data-row-index="${rowIndex}"] .tn-table__select-cell`
-    )();
-    await cell.click();
+    await this.assertIndexExists(rowIndex);
+    const selector = (await this.isCards())
+      ? `.tn-table__card[data-row-index="${rowIndex}"] .tn-table__card-select`
+      : `.tn-table__row[data-row-index="${rowIndex}"] .tn-table__select-cell`;
+    const target = await this.locatorFor(selector)();
+    await target.click();
   }
 
   /**
-   * Checks if a specific row's checkbox is checked.
+   * Checks if a specific row (or its card) is selected.
    *
    * @param rowIndex Zero-based index of the data row.
    * @returns Promise resolving to true if the row's checkbox is checked.
    */
   async isRowSelected(rowIndex: number): Promise<boolean> {
-    await this.assertRowExists(rowIndex);
-    const checkbox = await this.locatorFor(
-      TnCheckboxHarness.with({
-        ancestor: `.tn-table__row[data-row-index="${rowIndex}"]`,
-      })
-    )();
+    await this.assertIndexExists(rowIndex);
+    // Scoped to the select cell, matching `toggleRowSelection` and `getSelectedRowCount`.
+    // Resolving against the whole row/card takes the first checkbox in document order, which
+    // is the selection one only while `selectable` is on — with it off and a `tn-checkbox`
+    // projected through `[tnRowActionsDef]`, this reported that checkbox's state instead of
+    // failing to find a selection control.
+    const ancestor = (await this.isCards())
+      ? `.tn-table__card[data-row-index="${rowIndex}"] .tn-table__card-select`
+      : `.tn-table__row[data-row-index="${rowIndex}"] .tn-table__select-cell`;
+    const checkbox = await this.locatorFor(TnCheckboxHarness.with({ ancestor }))();
     return checkbox.isChecked();
   }
 
   /**
-   * Gets the count of currently selected rows.
+   * Gets the count of currently selected rows, in either layout.
    *
    * @returns Promise resolving to the number of checked row checkboxes.
    */
   async getSelectedRowCount(): Promise<number> {
-    const checkboxes = await this.locatorForAll(
-      TnCheckboxHarness.with({ ancestor: '.tn-table__row' })
-    )();
+    // Scoped to the select cell, not the whole row/card: a checkbox projected through
+    // `[tnRowActionsDef]` sits inside the row, and in card mode the detail panel is a
+    // descendant of the card, so a checkbox in a detail template would inflate the count.
+    // (Table mode escaped the second case only because its detail row is a sibling `<tr>`.)
+    const ancestor = (await this.isCards())
+      ? '.tn-table__card-select'
+      : '.tn-table__row .tn-table__select-cell';
+    const checkboxes = await this.locatorForAll(TnCheckboxHarness.with({ ancestor }))();
     let count = 0;
     for (const cb of checkboxes) {
       if (await cb.isChecked()) {
@@ -210,8 +306,11 @@ export class TnTableHarness extends ComponentHarness {
    * Clicks the expand button for a specific row.
    *
    * @param rowIndex Zero-based index of the data row.
+   * @throws Error in the card layout — use `toggleCardDetail()`;
+   *   the thrown message names the card API.
    */
   async toggleRowExpansion(rowIndex: number): Promise<void> {
+    await this.assertTableLayout('toggleRowExpansion');
     await this.assertRowExists(rowIndex);
     const button = await this.locatorFor(
       `.tn-table__row[data-row-index="${rowIndex}"] .tn-table__expand-button`
@@ -224,8 +323,10 @@ export class TnTableHarness extends ComponentHarness {
    *
    * @param rowIndex Zero-based index of the data row.
    * @returns Promise resolving to true if the row has the expanded class.
+   * @throws Error in the card layout, which renders no rows; the thrown message names the card API.
    */
   async isRowExpanded(rowIndex: number): Promise<boolean> {
+    await this.assertTableLayout('isRowExpanded');
     await this.assertRowExists(rowIndex);
     const row = await this.locatorFor(
       `.tn-table__row[data-row-index="${rowIndex}"]`
@@ -239,8 +340,11 @@ export class TnTableHarness extends ComponentHarness {
    *
    * @param rowIndex Zero-based index of the data row.
    * @returns Promise resolving to true if the row has an expand button.
+   * @throws Error in the card layout, whose expand control is the card's Details button;
+   *   the thrown message names the card API.
    */
   async hasExpandControl(rowIndex: number): Promise<boolean> {
+    await this.assertTableLayout('hasExpandControl');
     await this.assertRowExists(rowIndex);
     const button = await this.locatorForOptional(
       `.tn-table__row[data-row-index="${rowIndex}"] .tn-table__expand-button`
@@ -254,8 +358,10 @@ export class TnTableHarness extends ComponentHarness {
    * Clicks a row (for tables with `clickable` enabled).
    *
    * @param rowIndex Zero-based index of the data row.
+   * @throws Error in the card layout, which renders no rows; use {@link clickCard} there.
    */
   async clickRow(rowIndex: number): Promise<void> {
+    await this.assertTableLayout('clickRow');
     await this.assertRowExists(rowIndex);
     const row = await this.locatorFor(
       `.tn-table__row[data-row-index="${rowIndex}"]`
@@ -269,8 +375,10 @@ export class TnTableHarness extends ComponentHarness {
    * clicks first; this helper dispatches only the `dblclick` event.
    *
    * @param rowIndex Zero-based index of the data row.
+   * @throws Error in the card layout, which renders no rows; use {@link doubleClickCard} there.
    */
   async doubleClickRow(rowIndex: number): Promise<void> {
+    await this.assertTableLayout('doubleClickRow');
     await this.assertRowExists(rowIndex);
     const row = await this.locatorFor(
       `.tn-table__row[data-row-index="${rowIndex}"]`
@@ -283,8 +391,10 @@ export class TnTableHarness extends ComponentHarness {
    *
    * @param rowIndex Zero-based index of the data row.
    * @param key Which key to press — Enter or Space.
+   * @throws Error in the card layout, which renders no rows; use {@link pressKeyOnCard} there.
    */
   async pressKeyOnRow(rowIndex: number, key: 'enter' | 'space'): Promise<void> {
+    await this.assertTableLayout('pressKeyOnRow');
     await this.assertRowExists(rowIndex);
     const row = await this.locatorFor(
       `.tn-table__row[data-row-index="${rowIndex}"]`
@@ -301,8 +411,10 @@ export class TnTableHarness extends ComponentHarness {
    * Checks if a row is keyboard-focusable (tabindex=0).
    *
    * @param rowIndex Zero-based index of the data row.
+   * @throws Error in the card layout, which renders no rows; use {@link isCardFocusable} there.
    */
   async isRowFocusable(rowIndex: number): Promise<boolean> {
+    await this.assertTableLayout('isRowFocusable');
     await this.assertRowExists(rowIndex);
     const row = await this.locatorFor(
       `.tn-table__row[data-row-index="${rowIndex}"]`
@@ -327,10 +439,19 @@ export class TnTableHarness extends ComponentHarness {
   /**
    * Checks if a data row is currently marked active.
    *
-   * @param rowIndex Zero-based index of the data row.
-   * @returns Promise resolving to true if the row has the active class.
+   * Layout-aware: reads the card's active class in the card layout, which marks the same
+   * state with `aria-current` rather than the row's `aria-selected`.
+   *
+   * @param rowIndex Zero-based index of the data row (or card).
+   * @returns Promise resolving to true if the row — or card — has the active class.
    */
   async isRowActive(rowIndex: number): Promise<boolean> {
+    if (await this.isCards()) {
+      const card = await this.locatorFor(
+        `.tn-table__card[data-row-index="${rowIndex}"]`
+      )();
+      return card.hasClass('tn-table__card--active');
+    }
     await this.assertRowExists(rowIndex);
     const row = await this.locatorFor(
       `.tn-table__row[data-row-index="${rowIndex}"]`
@@ -344,9 +465,17 @@ export class TnTableHarness extends ComponentHarness {
    * @returns Promise resolving to the active row index or null.
    */
   async getActiveRowIndex(): Promise<number | null> {
-    const row = await this.locatorForOptional('.tn-table__row--active')();
-    if (!row) { return null; }
-    const attr = await row.getAttribute('data-row-index');
+    // Layout-aware for the same reason as the selection block: card mode marks the active
+    // row as `.tn-table__card--active` and renders no `.tn-table__row` at all, so a
+    // row-only locator answered null — "nothing is active" — over a visibly active card.
+    // Silent wrong answers are worse than a throw; this one could green a test after a
+    // resize.
+    const selector = (await this.isCards())
+      ? '.tn-table__card--active'
+      : '.tn-table__row--active';
+    const active = await this.locatorForOptional(selector)();
+    if (!active) { return null; }
+    const attr = await active.getAttribute('data-row-index');
     return attr === null ? null : Number(attr);
   }
 
@@ -355,8 +484,11 @@ export class TnTableHarness extends ComponentHarness {
    *
    * @param detailIndex Zero-based index among currently visible detail rows.
    * @returns Promise resolving to the detail row text.
+   * @throws Error in the card layout — use the card detail panel;
+   *   the thrown message names the card API.
    */
   async getDetailRowContent(detailIndex: number): Promise<string> {
+    await this.assertTableLayout('getDetailRowContent');
     const detailRows = await this.locatorForAll('.tn-table__detail-row')();
     if (detailIndex >= detailRows.length) {
       throw new Error(
@@ -369,20 +501,294 @@ export class TnTableHarness extends ComponentHarness {
   /**
    * Gets the count of currently expanded detail rows.
    *
-   * @returns Promise resolving to the number of visible detail rows.
+   * Layout-aware: counts open card detail panels in the card layout, which renders the same
+   * expansion state without a detail `<tr>`.
+   *
+   * @returns Promise resolving to the number of visible detail rows, or open card detail
+   *   panels in the card layout.
    */
   async getExpandedRowCount(): Promise<number> {
+    if (await this.isCards()) {
+      const panels = await this.locatorForAll('.tn-table__card-detail')();
+      return panels.length;
+    }
     const detailRows = await this.locatorForAll('.tn-table__detail-row')();
     return detailRows.length;
   }
 
+  // --- Card layout (responsive) ---
+
+  /**
+   * Reports the currently rendered layout: `cards` when the container is narrow
+   * enough that `mobileLayout="cards"` has taken effect, otherwise `table`.
+   *
+   * @returns Promise resolving to 'cards' or 'table'.
+   */
+  async getLayoutMode(): Promise<'cards' | 'table'> {
+    const cards = await this.locatorForOptional('.tn-table__cards')();
+    return cards ? 'cards' : 'table';
+  }
+
+  /**
+   * Gets the number of rendered cards (card layout only).
+   *
+   * @returns Promise resolving to the card count.
+   */
+  async getCardCount(): Promise<number> {
+    await this.assertCardLayout('getCardCount');
+    const cards = await this.locatorForAll('.tn-table__card')();
+    return cards.length;
+  }
+
+  /**
+   * Gets the title text of a card.
+   *
+   * @param cardIndex Zero-based index of the card.
+   * @returns Promise resolving to the card title text.
+   */
+  async getCardTitle(cardIndex: number): Promise<string> {
+    await this.assertCardLayout('getCardTitle');
+    const title = await this.locatorFor(
+      `.tn-table__card[data-row-index="${cardIndex}"] .tn-table__card-title`
+    )();
+    return (await title.text()).trim();
+  }
+
+  /**
+   * Gets the value text of a field within a card, by column name. The field
+   * may be a primary field or one tucked under "More fields".
+   *
+   * @param cardIndex Zero-based index of the card.
+   * @param columnName The column's data-column attribute value.
+   * @returns Promise resolving to the field's value text.
+   */
+  async getCardFieldValue(cardIndex: number, columnName: string): Promise<string> {
+    await this.assertCardLayout('getCardFieldValue');
+    const value = await this.locatorFor(
+      `.tn-table__card[data-row-index="${cardIndex}"] .tn-table__card-field[data-column="${columnName}"] .tn-table__card-field-value`
+    )();
+    return (await value.text()).trim();
+  }
+
+  /**
+   * Gets the column names of the fields shown directly on a card (i.e. not
+   * those hidden behind the "More fields" disclosure).
+   *
+   * @param cardIndex Zero-based index of the card.
+   * @returns Promise resolving to an array of column names.
+   */
+  async getCardPrimaryFieldColumns(cardIndex: number): Promise<string[]> {
+    await this.assertCardLayout('getCardPrimaryFieldColumns');
+    const fields = await this.locatorForAll(
+      `.tn-table__card[data-row-index="${cardIndex}"] > .tn-table__card-fields > .tn-table__card-field[data-column]`
+    )();
+    const columns: string[] = [];
+    for (const field of fields) {
+      const col = await field.getAttribute('data-column');
+      if (col !== null) { columns.push(col); }
+    }
+    return columns;
+  }
+
+  /**
+   * Expands the "More fields" disclosure on a card to reveal lower-priority
+   * fields. No-op if the card has no secondary fields.
+   *
+   * @param cardIndex Zero-based index of the card.
+   */
+  async expandCardMoreFields(cardIndex: number): Promise<void> {
+    await this.assertCardLayout('expandCardMoreFields');
+    const disclosure = await this.locatorForOptional(
+      `.tn-table__card[data-row-index="${cardIndex}"] .tn-table__card-more`
+    )();
+    if (!disclosure) { return; }
+    // Idempotent, because the name and the doc promise an expand while `<summary>` toggles.
+    // A second call used to collapse it — and under a real WebDriver, where `text()` returns
+    // only visible text, `getCardFieldValue()` on a folded field would then come back empty.
+    if (await disclosure.getProperty<boolean>('open')) { return; }
+    const summary = await this.locatorFor(
+      `.tn-table__card[data-row-index="${cardIndex}"] .tn-table__card-more-summary`
+    )();
+    await summary.click();
+  }
+
+  /**
+   * Toggles a card's detail section (card layout equivalent of row expansion).
+   *
+   * @param cardIndex Zero-based index of the card.
+   */
+  async toggleCardDetail(cardIndex: number): Promise<void> {
+    await this.assertCardLayout('toggleCardDetail');
+    const toggle = await this.locatorFor(
+      `.tn-table__card[data-row-index="${cardIndex}"] .tn-table__card-detail-toggle`
+    )();
+    await toggle.click();
+  }
+
+  /**
+   * Gets the currently selected sort column in the card-layout sort menu, or
+   * `''` when unsorted. Returns null if the sort menu isn't rendered.
+   *
+   * @returns Promise resolving to the selected column name, '', or null.
+   */
+  async getCardSortColumn(): Promise<string | null> {
+    const select = await this.locatorForOptional('.tn-table__cards-sort-select')();
+    if (!select) { return null; }
+    return select.getProperty<string>('value');
+  }
+
+  /**
+   * Gets the active sort direction in the card layout, read from the direction toggle's
+   * `data-sort-direction`. Deliberately not derived from the button's `aria-label`: matching
+   * display text would silently report one direction forever if the wording or locale changed.
+   *
+   * @returns Promise resolving to 'asc' or 'desc'; `''` both when sorted by nothing and when the
+   *   active column isn't sortable (the toggle isn't rendered in either case, and this reads the
+   *   rendered control — so a non-sortable active column reports `''` even though the component's
+   *   `sortDirection()` holds a value); or null when the card sort menu isn't rendered at all
+   *   (table layout, or no sortable columns) — the same null-vs-empty distinction
+   *   {@link getCardSortColumn} makes.
+   */
+  async getCardSortDirection(): Promise<'asc' | 'desc' | '' | null> {
+    const menu = await this.locatorForOptional('.tn-table__cards-sort')();
+    if (!menu) { return null; }
+    const button = await this.locatorForOptional('.tn-table__cards-sort-dir')();
+    if (!button) { return ''; }
+    const direction = await button.getAttribute('data-sort-direction');
+    // Report the empty direction rather than rounding it up to 'asc'. A column set with
+    // no direction is not sorted, and claiming otherwise made this getter contradict its
+    // own contract — and hid the fact that the button rendered a direction for it.
+    if (direction === 'asc' || direction === 'desc') { return direction; }
+    return '';
+  }
+
+  /**
+   * Clicks the sort-direction toggle in the card-layout sort menu. No-op when the toggle
+   * isn't rendered, which is three cases: the table layout is showing (the whole card sort
+   * menu is absent — so a call made before the container narrowed does nothing and reports
+   * success), no active sort column, or an active column that isn't `sortable()` — card mode
+   * deliberately declines to reorder by a column whose table header ignores clicks.
+   */
+  async toggleCardSortDirection(): Promise<void> {
+    const button = await this.locatorForOptional('.tn-table__cards-sort-dir')();
+    if (button) { await button.click(); }
+  }
+
+  // --- Card activation ---
+  //
+  // Mirrors of the four clickable-row methods. Without them the row methods' `@throws` sent a
+  // card-mode spec to a card API that could not activate anything, and the only way through
+  // was raw DOM — which is what the harness exists to spare a consumer.
+
+  /**
+   * Clicks a card body (card mirror of {@link clickRow}, for tables with `clickable`).
+   *
+   * Targets the card's title rather than the card box, because the card box's centre can sit
+   * on a projected row action or the selection checkbox, and the activation guard ignores
+   * clicks that originate on a control — the click would land and nothing would happen.
+   *
+   * @param cardIndex Zero-based index of the card.
+   * @throws Error in the table layout; use {@link clickRow} there.
+   */
+  async clickCard(cardIndex: number): Promise<void> {
+    await this.assertCardLayout('clickCard');
+    await this.assertIndexExists(cardIndex);
+    const target = await this.cardActivationTarget(cardIndex);
+    await target.click();
+  }
+
+  /**
+   * Double-clicks a card, triggering `rowDoubleClick` (card mirror of
+   * {@link doubleClickRow}). As there, only the `dblclick` event is dispatched — a real
+   * double-click also fires two single clicks first.
+   *
+   * Dispatched on the card rather than on the title {@link clickCard} aims at, because a
+   * synthesised event does not bubble: sent to the title it would never reach the card's
+   * handler. There is no cost to it here — the target is set explicitly, so unlike a real
+   * pointer click it cannot land on a projected control.
+   *
+   * @param cardIndex Zero-based index of the card.
+   * @throws Error in the table layout; use {@link doubleClickRow} there.
+   */
+  async doubleClickCard(cardIndex: number): Promise<void> {
+    await this.assertCardLayout('doubleClickCard');
+    await this.assertIndexExists(cardIndex);
+    const card = await this.cardAt(cardIndex);
+    await card.dispatchEvent('dblclick');
+  }
+
+  /**
+   * Sends a keyboard event to a card (Enter/Space activate clickable cards). Card mirror of
+   * {@link pressKeyOnRow}; the key goes to the card itself, which is the element that carries
+   * `tabindex` and the keydown handler.
+   *
+   * @param cardIndex Zero-based index of the card.
+   * @param key Which key to press — Enter or Space.
+   * @throws Error in the table layout; use {@link pressKeyOnRow} there.
+   */
+  async pressKeyOnCard(cardIndex: number, key: 'enter' | 'space'): Promise<void> {
+    await this.assertCardLayout('pressKeyOnCard');
+    await this.assertIndexExists(cardIndex);
+    const card = await this.cardAt(cardIndex);
+    await card.focus();
+    if (key === 'enter') {
+      await card.sendKeys(TestKey.ENTER);
+    } else {
+      await card.sendKeys(' ');
+    }
+  }
+
+  /**
+   * Checks if a card is keyboard-focusable (tabindex=0). Card mirror of
+   * {@link isRowFocusable}.
+   *
+   * @param cardIndex Zero-based index of the card.
+   * @throws Error in the table layout; use {@link isRowFocusable} there.
+   */
+  async isCardFocusable(cardIndex: number): Promise<boolean> {
+    await this.assertCardLayout('isCardFocusable');
+    await this.assertIndexExists(cardIndex);
+    const card = await this.cardAt(cardIndex);
+    return (await card.getAttribute('tabindex')) === '0';
+  }
+
   // --- Internal helpers ---
 
-  private async assertRowExists(rowIndex: number): Promise<void> {
+  /** The card box itself — the element carrying `tabindex`, the handlers and the ARIA state. */
+  private async cardAt(cardIndex: number): Promise<TestElement> {
+    return this.locatorFor(`.tn-table__card[data-row-index="${cardIndex}"]`)();
+  }
+
+  /** The surface pointer activation is aimed at — see {@link clickCard} for why not the card. */
+  private async cardActivationTarget(cardIndex: number): Promise<TestElement> {
+    const title = await this.locatorForOptional(
+      `.tn-table__card[data-row-index="${cardIndex}"] .tn-table__card-title`
+    )();
+    return title ?? (await this.cardAt(cardIndex));
+  }
+
+  /**
+   * Bounds check for the layout-aware methods. Counts whatever the rendered layout shows, via
+   * `getRowCount()` — unlike {@link assertRowExists}, which deliberately counts rows only,
+   * because its callers refuse card mode outright.
+   */
+  private async assertIndexExists(index: number): Promise<void> {
     const count = await this.getRowCount();
-    if (rowIndex >= count) {
+    if (index >= count) {
+      const noun = (await this.isCards()) ? 'cards' : 'rows';
+      throw new Error(`Row index ${index} out of bounds (${count} ${noun})`);
+    }
+  }
+
+  private async assertRowExists(rowIndex: number): Promise<void> {
+    // Counts `.tn-table__row` directly rather than calling `getRowCount()`, which is
+    // layout-aware: in card mode that counts cards, so this guard passed for every valid
+    // index and stopped catching the very mismatch it exists for. Row-only methods pair it
+    // with `assertTableLayout()`, which reports the layout mismatch first.
+    const rows = await this.locatorForAll('.tn-table__row')();
+    if (rowIndex >= rows.length) {
       throw new Error(
-        `Row index ${rowIndex} out of bounds (${count} rows)`
+        `Row index ${rowIndex} out of bounds (${rows.length} rows)`
       );
     }
   }

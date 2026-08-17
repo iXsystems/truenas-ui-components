@@ -1,5 +1,7 @@
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { TnTooltipComponent } from './tooltip.component';
+import { TnTooltipDirective } from './tooltip.directive';
 
 function createTooltip(message: string) {
   const fixture = TestBed.createComponent(TnTooltipComponent);
@@ -49,5 +51,107 @@ describe('TnTooltipComponent HTML rendering', () => {
     const tooltip = fixture.nativeElement.querySelector('.tn-tooltip') as HTMLElement;
 
     expect(tooltip.textContent?.trim()).toBe('Just plain text');
+  });
+});
+
+@Component({
+  standalone: true,
+  imports: [TnTooltipDirective],
+  template: `<button class="interactive-host" tnTooltip="Button reason">Direct</button>
+    <div class="wrapper" tnTooltip="Wrapper reason"><button>Only control</button></div>
+    <div class="container" tnTooltip="Container reason"><button>First</button><button>Second</button></div>`,
+})
+class DescriptionHostComponent {}
+
+@Component({
+  standalone: true,
+  imports: [TnTooltipDirective],
+  template: `<button class="null-host" [tnTooltip]="message">Null message</button>`,
+})
+class NullMessageHostComponent {
+  // Real consumers bind expressions like `reason ?? null` — the input accepts them
+  // by contract (via its transform) and the runtime must treat them as "no tooltip".
+  message: string | null | undefined = null;
+}
+
+describe('TnTooltipDirective nullish message tolerance', () => {
+  function createNullHost() {
+    TestBed.configureTestingModule({ imports: [NullMessageHostComponent] });
+    return TestBed.createComponent(NullMessageHostComponent);
+  }
+
+  it('tolerates a null message binding without throwing and adds no description', () => {
+    const fixture = createNullHost();
+
+    expect(() => fixture.detectChanges()).not.toThrow();
+
+    const button = (fixture.nativeElement as HTMLElement).querySelector('.null-host');
+    expect(button?.getAttribute('aria-describedby')).toBeNull();
+  });
+
+  it('treats an undefined message the same as no tooltip', () => {
+    const fixture = createNullHost();
+    fixture.componentInstance.message = undefined;
+
+    expect(() => fixture.detectChanges()).not.toThrow();
+
+    const button = (fixture.nativeElement as HTMLElement).querySelector('.null-host');
+    expect(button?.getAttribute('aria-describedby')).toBeNull();
+  });
+
+  it('removes an existing description when the message becomes null', () => {
+    const fixture = createNullHost();
+    fixture.componentInstance.message = 'Reason';
+    fixture.detectChanges();
+
+    const button = (fixture.nativeElement as HTMLElement).querySelector('.null-host');
+    expect(button?.getAttribute('aria-describedby')).toBeTruthy();
+
+    fixture.componentInstance.message = null;
+    fixture.detectChanges();
+
+    expect(button?.getAttribute('aria-describedby')).toBeNull();
+  });
+});
+
+describe('TnTooltipDirective aria description targeting', () => {
+  function createHosts() {
+    TestBed.configureTestingModule({ imports: [DescriptionHostComponent] });
+    const fixture = TestBed.createComponent(DescriptionHostComponent);
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  function describedText(el: Element | null): string | null {
+    const id = el?.getAttribute('aria-describedby');
+    if (!id) {
+      return null;
+    }
+    return document.getElementById(id.split(/\s+/)[0])?.textContent ?? null;
+  }
+
+  it('describes an interactive host directly', () => {
+    const root = createHosts();
+    expect(describedText(root.querySelector('.interactive-host'))).toBe('Button reason');
+  });
+
+  it('forwards the description to the single interactive descendant of a wrapper', () => {
+    const root = createHosts();
+    const wrapper = root.querySelector('.wrapper');
+
+    expect(describedText(wrapper!.querySelector('button'))).toBe('Wrapper reason');
+    expect(wrapper?.getAttribute('aria-describedby')).toBeNull();
+  });
+
+  it('keeps the description on a container host with several controls', () => {
+    const root = createHosts();
+    const container = root.querySelector('.container');
+
+    // Forwarding would attach the reason to an arbitrary first control — with more
+    // than one interactive descendant the description stays on the host itself.
+    expect(describedText(container)).toBe('Container reason');
+    for (const button of Array.from(container!.querySelectorAll('button'))) {
+      expect(button.getAttribute('aria-describedby')).toBeNull();
+    }
   });
 });

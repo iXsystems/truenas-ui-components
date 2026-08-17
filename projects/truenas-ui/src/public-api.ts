@@ -75,6 +75,7 @@ export * from './lib/selection-list/selection-list.component';
 export * from './lib/list-option/list-option.component';
 export * from './lib/table/table.component';
 export * from './lib/table/table.harness';
+export * from './lib/table/table-testing';
 export * from './lib/table-column/table-column.directive';
 export * from './lib/table-pager/table-pager.component';
 export * from './lib/table-pager/table-pager.harness';

@@ -89,6 +89,37 @@ function findHarnessFiles(): string[] {
 }
 
 /**
+ * Flatten a JSDoc description into plain text.
+ *
+ * TypeScript models a description as a plain `string` only while it contains no inline tag. One
+ * `{@link Foo}` anywhere in it turns the whole thing into a `NodeArray` of `JSDocText` and
+ * `JSDocLink` nodes, and `toString()` on that array is `[object Object],[object Object]` — which
+ * is what reached the rendered docs table for every method whose description linked to another,
+ * taking the surrounding prose down with it. Joining the parts keeps both.
+ */
+function jsDocTextToString(
+  comment: string | ts.NodeArray<ts.JSDocComment> | undefined
+): string {
+  if (!comment) {
+    return '';
+  }
+  if (typeof comment === 'string') {
+    return comment;
+  }
+  return comment
+    .map((part) => {
+      // Both node kinds carry `text`; only the link kinds (JSDocLink / JSDocLinkCode /
+      // JSDocLinkPlain) carry `name`, which holds the target — `text` is then just the
+      // trailing label, if the author wrote one. Discriminated on the property rather than
+      // with `ts.isJSDocText`, which is not present in every TypeScript version this script
+      // has to run under.
+      const target = (part as ts.JSDocLink).name;
+      return `${target ? `\`${target.getText()}\`` : ''}${part.text}`;
+    })
+    .join('');
+}
+
+/**
  * Extract JSDoc comment text from a node
  */
 function getJSDocComment(node: ts.Node): string {
@@ -97,7 +128,7 @@ function getJSDocComment(node: ts.Node): string {
   let description = '';
   for (const comment of jsDocComments) {
     if (ts.isJSDoc(comment)) {
-      description = comment.comment?.toString() || '';
+      description = jsDocTextToString(comment.comment);
       break;
     }
   }
@@ -401,6 +432,13 @@ function main() {
     console.log(`\n✅ Successfully generated ${successCount} documentation(s)`);
     if (errorCount > 0) {
       console.log(`⚠️  ${errorCount} file(s) had errors`);
+      // Fail the build. A per-file throw is caught above so the other harnesses still get
+      // documented, but reporting success anyway means `yarn build-storybook` ships a
+      // registry quietly missing those components, and `loadHarnessDoc()` returning null
+      // reads to a story as "this component has no harness". That is not hypothetical: a
+      // `ts.isJSDocText` call not present in every TypeScript version silently dropped three
+      // harnesses here while the script printed the success line.
+      process.exitCode = 1;
     }
     console.log(`📦 Documentation available via loadHarnessDoc()\n`);
 

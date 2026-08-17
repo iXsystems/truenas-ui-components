@@ -435,9 +435,20 @@ describe('TnTableComponent', () => {
       expect(tableEl().style.minWidth).toBe('');
     });
 
+    it('applies no floor with fixedLayout alone, so a table in a card or split pane still fits it', () => {
+      // A derived floor cannot know the container, so it is opt-in: defaulting it on scrolled every
+      // table that shares its row with something else at ordinary window sizes.
+      fixture.componentRef.setInput('displayedColumns', ['a', 'b', 'c']);
+      fixture.componentRef.setInput('fixedLayout', true);
+      fixture.detectChanges();
+
+      expect(tableEl().style.minWidth).toBe('');
+    });
+
     it('derives the floor from the column count, so no page has to pick a number', () => {
       fixture.componentRef.setInput('displayedColumns', ['a', 'b', 'c']);
       fixture.componentRef.setInput('fixedLayout', true);
+      fixture.componentRef.setInput('minColumnWidth', '120px');
       fixture.detectChanges();
 
       expect(tableEl().style.minWidth).toBe('calc(120px * 3)');
@@ -446,6 +457,7 @@ describe('TnTableComponent', () => {
     it('grows the floor with the table, so a wide list scrolls where a narrow one does not', () => {
       fixture.componentRef.setInput('displayedColumns', ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']);
       fixture.componentRef.setInput('fixedLayout', true);
+      fixture.componentRef.setInput('minColumnWidth', '120px');
       fixture.detectChanges();
 
       expect(tableEl().style.minWidth).toBe('calc(120px * 8)');
@@ -454,19 +466,28 @@ describe('TnTableComponent', () => {
     it('counts the columns the table adds itself', () => {
       fixture.componentRef.setInput('displayedColumns', ['a', 'b']);
       fixture.componentRef.setInput('fixedLayout', true);
+      fixture.componentRef.setInput('minColumnWidth', '120px');
       fixture.componentRef.setInput('selectable', true);
       fixture.detectChanges();
 
       expect(tableEl().style.minWidth).toBe('calc(120px * 3)');
     });
 
-    it('honours a custom minColumnWidth', () => {
+    it('honours any CSS length as the per-column floor', () => {
       fixture.componentRef.setInput('displayedColumns', ['a', 'b']);
       fixture.componentRef.setInput('fixedLayout', true);
       fixture.componentRef.setInput('minColumnWidth', '10rem');
       fixture.detectChanges();
 
       expect(tableEl().style.minWidth).toBe('calc(10rem * 2)');
+    });
+
+    it('ignores minColumnWidth without fixedLayout, where auto layout already scrolls', () => {
+      fixture.componentRef.setInput('displayedColumns', ['a', 'b']);
+      fixture.componentRef.setInput('minColumnWidth', '120px');
+      fixture.detectChanges();
+
+      expect(tableEl().style.minWidth).toBe('');
     });
 
     it('lets an explicit minWidth override the derivation', () => {
@@ -812,6 +833,219 @@ describe('TnTableComponent', () => {
 
         expect(component.isRowExpanded(testData[0])).toBe(true);
         expect(component.isRowExpanded(testData[1])).toBe(false);
+      });
+    });
+  });
+
+  describe('responsive (card) mode', () => {
+    it('should default to scroll layout with a 640px breakpoint', () => {
+      expect(component.mobileLayout()).toBe('scroll');
+      expect(component.cardBreakpoint()).toBe(640);
+      expect(component.cardPrimaryCount()).toBe(3);
+    });
+
+    // An unmeasured host (no ResizeObserver under jsdom, or SSR) must fail safe to
+    // the full table rather than collapsing into cards. The breakpoint crossing
+    // itself is covered in table-card.harness.spec.ts, which mocks ResizeObserver.
+    it('should render the table layout while the container is unmeasured', () => {
+      fixture.componentRef.setInput('mobileLayout', 'cards');
+      fixture.detectChanges();
+      expect(component.isCardMode()).toBe(false);
+      expect(component.isScrollMode()).toBe(false);
+    });
+
+    describe('card column computeds (no column defs)', () => {
+      beforeEach(() => {
+        fixture.componentRef.setInput('displayedColumns', ['name', 'email', 'role', 'status', 'id']);
+        fixture.detectChanges();
+      });
+
+      it('should fall back to the first displayed column as the title', () => {
+        expect(component.cardTitleColumn()).toBe('name');
+      });
+
+      it('should list field columns excluding the title, preserving order without priorities', () => {
+        expect(component.cardFieldColumns()).toEqual(['email', 'role', 'status', 'id']);
+      });
+
+      it('should split fields into primary and secondary by cardPrimaryCount', () => {
+        expect(component.cardPrimaryColumns()).toEqual(['email', 'role', 'status']);
+        expect(component.cardSecondaryColumns()).toEqual(['id']);
+
+        fixture.componentRef.setInput('cardPrimaryCount', 2);
+        fixture.detectChanges();
+        expect(component.cardPrimaryColumns()).toEqual(['email', 'role']);
+        expect(component.cardSecondaryColumns()).toEqual(['status', 'id']);
+      });
+
+      it('should default the card label to the column name with no defs', () => {
+        expect(component.getCardLabel('email')).toBe('email');
+      });
+    });
+
+    // `getCardLabel`'s cardLabel -> label -> name precedence is covered against real
+    // `tnColumnDef` inputs in table-card.harness.spec.ts. Asserting it here against a
+    // mocked `getColumnDef` would pass even if the directive lost those inputs.
+
+    describe('card-mode sort', () => {
+      it('should set the sort column to ascending and emit', () => {
+        const emit = jest.spyOn(component.sortChange, 'emit');
+        component.setSortColumn('name');
+        expect(component.sortColumn()).toBe('name');
+        expect(component.sortDirection()).toBe('asc');
+        expect(emit).toHaveBeenCalledWith({ column: 'name', direction: 'asc' });
+      });
+
+      it('should clear the sort when passed an empty column', () => {
+        component.setSortColumn('name');
+        component.setSortColumn('');
+        expect(component.sortColumn()).toBe('');
+        expect(component.sortDirection()).toBe('');
+      });
+
+      // This fixture is the bare component, so it has no `tnColumnDef` content children and
+      // no column is sortable — the toggle refuses, which is the same guard that stops card
+      // mode reordering by a column whose table header ignores clicks. Both halves of the
+      // positive asc <-> desc path are covered in table-card.harness.spec.ts
+      // ("flips direction from the card toolbar, both ways"), against real defs.
+      it('should not toggle direction for a column with no sortable def', () => {
+        component.setSortColumn('name');
+        expect(component.sortDirection()).toBe('asc');
+
+        component.toggleSortDirection();
+
+        expect(component.sortDirection()).toBe('asc');
+      });
+
+      it('should not toggle direction when no column is sorted', () => {
+        component.toggleSortDirection();
+        expect(component.sortDirection()).toBe('');
+      });
+
+      it('should set the sort column from a <select> change event', () => {
+        const target = document.createElement('select');
+        const option = document.createElement('option');
+        option.value = 'email';
+        target.append(option);
+        target.value = 'email';
+        component.onSortSelectChange({ target } as unknown as Event);
+        expect(component.sortColumn()).toBe('email');
+      });
+    });
+
+    describe('card activation', () => {
+      const row = { id: 1 };
+
+      // The fabricated event carries a `currentTarget` standing in for the card, which is what
+      // `isCardControlTarget` compares its match against. Without it every match looked like a
+      // nested control and the "card itself activates" escape hatch went untested.
+      function clickEventFrom(html: string): Event {
+        const card = document.createElement('div');
+        card.className = 'tn-table__card';
+        card.tabIndex = 0;
+        card.innerHTML = html;
+        const target = card.firstElementChild as HTMLElement;
+        return { target, currentTarget: card } as unknown as Event;
+      }
+
+      it('should emit rowClick when a clickable card body is activated', () => {
+        fixture.componentRef.setInput('clickable', true);
+        fixture.detectChanges();
+        const emit = jest.spyOn(component.rowClick, 'emit');
+        component.onCardClick(clickEventFrom('<span class="tn-table__card-title">x</span>'), row);
+        expect(emit).toHaveBeenCalledWith(row);
+      });
+
+      it('should not emit rowClick when the activation came from a card control', () => {
+        fixture.componentRef.setInput('clickable', true);
+        fixture.detectChanges();
+        const emit = jest.spyOn(component.rowClick, 'emit');
+        component.onCardClick(
+          clickEventFrom('<div class="tn-table__card-actions"><button>edit</button></div>'),
+          row
+        );
+        expect(emit).not.toHaveBeenCalled();
+      });
+
+      it('should not emit rowClick when not clickable', () => {
+        const emit = jest.spyOn(component.rowClick, 'emit');
+        component.onCardClick(clickEventFrom('<span class="tn-table__card-title">x</span>'), row);
+        expect(emit).not.toHaveBeenCalled();
+      });
+
+      it('should emit rowClick when a value folded under "More fields" is clicked', () => {
+        fixture.componentRef.setInput('clickable', true);
+        fixture.detectChanges();
+        const card = document.createElement('div');
+        card.className = 'tn-table__card';
+        card.tabIndex = 0;
+        card.innerHTML =
+          '<details class="tn-table__card-more"><dd class="tn-table__card-field-value">x</dd></details>';
+        const target = card.querySelector('.tn-table__card-field-value') as HTMLElement;
+        const emit = jest.spyOn(component.rowClick, 'emit');
+        component.onCardClick({ target, currentTarget: card } as unknown as Event, row);
+        expect(emit).toHaveBeenCalledWith(row);
+      });
+
+      it('should not emit rowClick when the "More fields" summary toggle is clicked', () => {
+        fixture.componentRef.setInput('clickable', true);
+        fixture.detectChanges();
+        const emit = jest.spyOn(component.rowClick, 'emit');
+        component.onCardClick(
+          clickEventFrom('<summary class="tn-table__card-more-summary">More fields</summary>'),
+          row
+        );
+        expect(emit).not.toHaveBeenCalled();
+      });
+
+      describe('expandOnRowClick', () => {
+        beforeEach(() => {
+          fixture.componentRef.setInput('clickable', true);
+          fixture.componentRef.setInput('expandable', true);
+          fixture.componentRef.setInput('expandOnRowClick', true);
+          fixture.detectChanges();
+        });
+
+        it('should toggle the card detail section when the card is activated', () => {
+          const event = clickEventFrom('<span class="tn-table__card-title">x</span>');
+          component.onCardClick(event, row);
+          expect(component.isRowExpanded(row)).toBe(true);
+
+          component.onCardClick(event, row);
+          expect(component.isRowExpanded(row)).toBe(false);
+        });
+
+        it('should toggle the card detail section on Enter', () => {
+          const target = document.createElement('span');
+          target.className = 'tn-table__card-title';
+          const event = {
+            key: 'Enter',
+            target,
+            preventDefault: jest.fn(),
+          } as unknown as KeyboardEvent;
+
+          component.onCardKeydown(event, row);
+          expect(component.isRowExpanded(row)).toBe(true);
+        });
+
+        it('should not toggle expansion when the activation came from a card control', () => {
+          component.onCardClick(
+            clickEventFrom('<div class="tn-table__card-actions"><button>edit</button></div>'),
+            row
+          );
+          expect(component.isRowExpanded(row)).toBe(false);
+        });
+
+        it('should leave expansion alone when expandOnRowClick is off', () => {
+          fixture.componentRef.setInput('expandOnRowClick', false);
+          fixture.detectChanges();
+          const emit = jest.spyOn(component.rowClick, 'emit');
+
+          component.onCardClick(clickEventFrom('<span class="tn-table__card-title">x</span>'), row);
+
+          expect(component.isRowExpanded(row)).toBe(false);
+          expect(emit).toHaveBeenCalledWith(row);
+        });
       });
     });
   });

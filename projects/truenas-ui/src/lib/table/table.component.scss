@@ -10,6 +10,58 @@
   // Lives here rather than on `.tn-table` (which carries the same class but, being the host,
   // is matched by `_nghost` and never by the `_ngcontent` that a plain class rule compiles to).
   overflow-x: auto;
+
+  // The radius lives here rather than on `__table`, which used `overflow: hidden` to clip it.
+  // That made the table the scrollport for its own sticky cells, so every pinned column stuck
+  // to a box that never scrolls. The host is what actually scrolls, and `overflow-x: auto`
+  // already clips to this radius, so moving it here keeps the rounded corners and lets
+  // `position: sticky` resolve against the right ancestor.
+  border-radius: 4px;
+}
+
+// Fixed widths for the two structural edge columns.
+//
+// `--tn-table-select-width` is the checkbox column's **outer** width — the cell sets
+// `box-sizing: border-box` so its `width` and the pinned neighbour's `left` offset are the same
+// quantity. They must be: as a content-box width the two differed by exactly the cell's 24px of
+// horizontal padding, and the pinned data column overlapped the checkboxes by that much.
+//
+// `--tn-table-actions-width` sizes the trailing actions column under `fixedLayout`, which
+// distributes only what columns don't claim. `--tn-table-expand-width` is the chevron column.
+//
+// All three are **outer** widths — the cells set `box-sizing: border-box` — so each one is wider
+// than the space its content actually gets by that cell's own horizontal padding: 32px for the
+// actions cell, which keeps `__cell`'s `padding: 0 16px`, and 24px for the select and expand
+// cells, which override it. The defaults account for that: 128px holds two 40px icon buttons
+// plus their gap with room to spare. `table-layout: fixed` ignores content, so a column can never grow past this
+// on its own — projecting a third control means raising the value, and the
+// ScrollModePinnedColumns play function asserts the content still fits so a shortfall fails a test
+// instead of silently clipping a tap target.
+//
+// Keep them outer widths: an earlier revision mixed one outer and one content width, which
+// misaligned the pinned columns by a cell's padding and made the width floor understate the table
+// by the same amount. The floor adds `--tn-table-actions-width` verbatim and treats select and
+// expand as `minColumnWidth` shares — see `resolvedMinWidth`, which explains why, and note that
+// unifying all three is a follow-up rather than the current rule.
+:host {
+  --tn-table-select-width: 72px;
+  --tn-table-actions-width: 128px;
+  --tn-table-expand-width: 56px;
+}
+
+// Screen-reader-only text. `.cdk-visually-hidden` comes from the CDK's global a11y stylesheet,
+// which this library does not ship; without a local definition the "Expand" / "Actions" header
+// labels render as visible text. Same local copy the calendar components keep.
+.cdk-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }
 
 // `fixedLayout` opt-in. Cells wrap either way (see `__cell-content`); this additionally pins
@@ -22,11 +74,127 @@
     table-layout: fixed;
     width: 100%;
   }
+
+  // Under fixed layout a column gets only what it claims, and `width: 1%` is taken literally —
+  // which starved this column to ~8px and pushed the controls out of the clip. border-box so the
+  // declared value is the column's outer width, matching `--tn-table-select-width` and the width
+  // floor's arithmetic.
+  .tn-table__actions-cell {
+    box-sizing: border-box;
+    width: var(--tn-table-actions-width);
+  }
 }
 
 :host(.tn-table--bordered) {
   border: 1px solid var(--tn-lines);
   border-radius: 4px;
+}
+
+// While loading, prevent interaction with the content behind the overlay — the backstop that
+// matters, because the overlay cannot be relied on to cover everything (see below).
+//
+// This half only stops the POINTER. The template pairs it with `inert` on the same three
+// surfaces, which is what actually removes them from the tab order: `pointer-events: none`
+// leaves every card, row, sortable header, Details button and projected row action focusable
+// and activatable by keyboard, so Enter mid-reload still emitted `rowClick` or `sortChange`
+// against stale data. `inert` also reaches projected consumer controls, which a guard inside
+// this component's own handlers could not.
+//
+// Host-scoped because `tn-table--loading` is a host class. Written as a nested
+// `&--loading .tn-table__table` it compiled to `.tn-table--loading[_ngcontent-*] ...`, which the
+// host — it carries `[_nghost-*]` — never matches, so the rule had never applied.
+:host(.tn-table--loading) {
+  // Every rendered surface, not just `__table` — card mode never renders that element, so
+  // scoping to it left the whole card layout live during a reload. That matters because the
+  // overlay above cannot be relied on: it is absolutely positioned inside the host, and with
+  // a consumer-set height (`tn-table { max-height: 400px }` over a long card list) it scrolls
+  // out of the visible strip, leaving a card's Details toggle, its checkbox or a projected
+  // row action clickable against stale data. The toolbar counts too — the sort picker and
+  // "Select all" sit above the cards and are equally live.
+  .tn-table__table,
+  .tn-table__cards,
+  .tn-table__cards-toolbar {
+    pointer-events: none;
+    user-select: none;
+  }
+}
+
+// Scroll mode: pin the leading column(s) and the trailing actions column so they stay
+// visible while the body scrolls horizontally. All of it lives in this block — pinning is
+// what scroll mode does, per `TnTableMobileLayout` and the ScrollModePinnedColumns story.
+//
+// Host-scoped for the same reason as `--fixed-layout` above: `tn-table--scroll`
+// lives on the host, and Angular's emulated encapsulation appends
+// `[_ngcontent-*]` to *every* compound selector — so a nested `&--scroll`
+// descendant selector compiles to `.tn-table--scroll[_ngcontent-*] ...`, which
+// the host (it carries `[_nghost-*]`) never matches. Written that way the whole
+// block is silently dead.
+:host(.tn-table--scroll) {
+  // Pinned by role, not by position. `:first-child` is the checkbox when `selectable`
+  // is on, which would hold a column of checkboxes at the edge while the row's actual
+  // identity scrolled away. So: the select cell pins at 0 when present, and the first
+  // real data column pins just past it.
+  .tn-table__select-cell {
+    position: sticky;
+    left: 0;
+  }
+
+  .tn-table__header-cell:first-child,
+  .tn-table__row > .tn-table__cell:first-child,
+  .tn-table__select-cell + .tn-table__header-cell,
+  .tn-table__row > .tn-table__select-cell + .tn-table__cell {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+  }
+
+  // The trailing actions column, pinned to the right edge — the counterpart of the
+  // left-pinned columns above, and scoped here with them rather than applying at every
+  // width. z-index 3 puts it above both: on a container too narrow for both pinned
+  // groups they overlap, and a covered name is cosmetic where a covered action button
+  // is a tap that silently does nothing.
+  .tn-table__actions-cell {
+    position: sticky;
+    right: 0;
+    z-index: 3;
+  }
+
+  // Above its pinned neighbour, so the data column can't paint over the checkboxes. Spelled out
+  // to outweigh the `:first-child` rule above rather than relying on source order — the select
+  // cell matches both, and a bare `.tn-table__select-cell { z-index: 2 }` silently lost.
+  .tn-table__header-row > .tn-table__header-cell.tn-table__select-cell,
+  .tn-table__row > .tn-table__cell.tn-table__select-cell {
+    z-index: 2;
+  }
+
+  .tn-table__select-cell + .tn-table__header-cell,
+  .tn-table__row > .tn-table__select-cell + .tn-table__cell {
+    left: var(--tn-table-select-width);
+  }
+
+  // Opaque so the cells scrolling underneath don't show through, but taken from
+  // the row rather than hard-coded, so an active / hovered / expanded row isn't
+  // notched at its pinned left edge.
+  .tn-table__row > .tn-table__cell:first-child,
+  .tn-table__row > .tn-table__select-cell + .tn-table__cell {
+    background-color: inherit;
+  }
+
+  // Stands down only for a *sortable* header being hovered, so that header's hover fill — a
+  // far less specific selector — gets a turn. Without any exclusion this rule outweighed it
+  // and the pinned column, usually the primary sortable one, stayed flat while every other
+  // header tinted: exactly backwards from the affordance intended. A bare `:not(:hover)`
+  // over-corrected, since only `--sortable` headers have a hover fill to hand over to: it
+  // dropped the opaque fill from a hovered *non-sortable* pinned header and let the cells
+  // scrolling underneath show through. The `background-color: inherit` trick used for the
+  // body cells above can't transfer here, since `__header-row` sets no fill of its own.
+  .tn-table__header-row
+    .tn-table__header-cell:first-child:not(.tn-table__header-cell--sortable:hover),
+  .tn-table__header-row
+    .tn-table__select-cell
+    + .tn-table__header-cell:not(.tn-table__header-cell--sortable:hover) {
+    background-color: var(--tn-topbar);
+  }
 }
 
 .tn-table {
@@ -35,8 +203,9 @@
     border-collapse: collapse;
     border-spacing: 0;
     background-color: var(--tn-bg2);
-    border-radius: 4px;
-    overflow: hidden;
+    // No `overflow: hidden` / `border-radius` here — both moved to `:host`, which is the
+    // element that scrolls. Clipping here made this the scrollport for sticky descendants,
+    // silently disabling every pinned column.
   }
 
   &__header {
@@ -80,7 +249,11 @@
     opacity: 0;
     transition: opacity 0.2s ease;
 
-    .tn-table__header-cell--sortable:hover & {
+    // Hover reveals it for the mouse; `:focus-visible` does the same for the keyboard, which
+    // otherwise got a focus ring and no sort affordance at all. Touch has no hover either,
+    // but there the icon is revealed once the column is sorted.
+    .tn-table__header-cell--sortable:hover &,
+    .tn-table__header-cell--sortable:focus-visible & {
       opacity: 0.5;
     }
 
@@ -96,6 +269,10 @@
   &__row {
     height: 48px;
     transition: background-color 0.2s ease;
+    // Opaque rather than transparent-over-`__body` so the sticky cells below can
+    // pick the row's fill up with `inherit` and stay in step with its state.
+    // Visually identical, since `__body` is this same color.
+    background-color: var(--tn-bg2);
 
     &:hover {
       background-color: var(--tn-alt-bg1);
@@ -189,7 +366,10 @@
   }
 
   &__select-cell {
-    width: 48px;
+    // border-box so this width is the column's outer width, matching the `left` offset the
+    // pinned data column uses in scroll mode. Content box stays 48px, as before.
+    box-sizing: border-box;
+    width: var(--tn-table-select-width);
     padding: 0 8px 0 16px;
     cursor: pointer;
   }
@@ -198,8 +378,12 @@
     pointer-events: none;
   }
 
+  // Deliberately not pinned. Pinning select + first data + actions already consumes most of a
+  // 320px viewport; adding a fourth pinned column leaves no scrollable middle at all. The chevron
+  // stays reachable by scrolling, and card mode gives it a dedicated "Details" control.
   &__expand-cell {
-    width: 48px;
+    box-sizing: border-box;
+    width: var(--tn-table-expand-width);
     padding: 0 16px 0 8px;
     text-align: center;
   }
@@ -237,28 +421,72 @@
     padding: 16px;
   }
 
+  // Trailing actions column (rendered when [tnRowActionsDef] is provided).
+  // Pinned to the right edge so the controls stay reachable while the body
+  // scrolls horizontally.
+  // An explicit width, not the `width: 1%` shrink-to-fit trick. That trick only works under
+  // `table-layout: auto`; `fixedLayout` honors 1% literally, giving the column ~8px and pushing
+  // the projected controls outside the host's clip — painted but unclickable, and still
+  // focusable. Under auto layout a cell's `width` is a minimum, so `nowrap` content still
+  // widens the column past this when it needs to.
+  &__actions-cell {
+    // Shrink-to-fit under auto layout, so a single icon button doesn't reserve a full column.
+    // `fixedLayout` overrides this with the explicit width below — 1% there means 1%.
+    width: 1%;
+    white-space: nowrap;
+    text-align: right;
+    // NOT pinned here — see the `:host(.tn-table--scroll)` block. Pinning was
+    // unconditional, so an overflowing wide table floated its actions column over the
+    // scrolling cells while the leading column scrolled away: half of the pinned pair,
+    // in a mode that documents neither. `TnTableMobileLayout` and the
+    // ScrollModePinnedColumns story both frame pinning as what scroll mode does, so
+    // both edge columns are pinned in the same place.
+    //
+    // Inherited from the row for the same reason as the pinned first column in
+    // scroll mode: opaque, but in step with the row's active/hover/expanded fill
+    // instead of notching it at the right edge. The `__header` rule below
+    // re-establishes an opaque fill for the header, whose row sets none.
+    background-color: inherit;
+    border-left: 1px solid var(--tn-lines);
+  }
+
+  &__header &__actions-cell {
+    background-color: var(--tn-topbar);
+  }
+
+  &__actions-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
   // Loading overlay — sits on top of the table body so existing rows stay
   // visible (dimmed) during reloads. Derive the dim from the table background
   // so it adapts across light/dark themes instead of relying on a hardcoded
   // black tint.
+  // Above the pinned columns (z-index 1-3), not merely later in the DOM. On a tie the sticky
+  // columns would sit on top of the scrim and stay clickable during a reload.
+  //
+  // Known limitation: the overlay is absolutely positioned inside the host, which is the scroll
+  // container, so on a horizontally scrolled table it scrolls with the content and stops covering
+  // the visible strip. Interaction is blocked regardless by the `--loading` rule below, so this
+  // is cosmetic; covering the viewport properly needs the table moved into an inner scrolling
+  // wrapper, which is a structural change beyond this layout work.
   &__loading-overlay {
     position: absolute;
     inset: 0;
+    z-index: 4;
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: color-mix(in srgb, var(--tn-bg2, #282828) 65%, transparent);
     backdrop-filter: blur(1px);
     pointer-events: all;
-    z-index: 1;
     border-radius: 4px;
   }
 
-  // While loading, prevent interaction with the table behind the overlay.
-  &--loading .tn-table__table {
-    pointer-events: none;
-    user-select: none;
-  }
+  // The loading `pointer-events` backstop lives in the `:host(.tn-table--loading)` block near the
+  // top of this file — it has to be host-scoped to match at all.
 
   // Dense variant
   &--dense {
@@ -277,6 +505,239 @@
     }
   }
 
+  // --- Card layout ---
+  &__cards-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 4px 12px;
+  }
+
+  &__cards-selectall {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--tn-fg1);
+    cursor: pointer;
+  }
+
+  &__cards-sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    color: var(--tn-fg2);
+  }
+
+  // A native <select> rather than `tn-select`: the toolbar wants the platform picker on the
+  // narrow viewports card mode targets. The trade-off is that the option popup is OS-rendered,
+  // so the theming below reaches the closed control only.
+  &__cards-sort-select {
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid var(--tn-lines);
+    border-radius: 4px;
+    background-color: var(--tn-bg2);
+    color: var(--tn-fg1);
+    font-size: 14px;
+
+    // Matches `__cards-sort-dir`, which had a focus ring while this didn't.
+    &:focus-visible {
+      outline: 2px solid var(--tn-primary);
+      outline-offset: 2px;
+    }
+  }
+
+  &__cards-sort-dir {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--tn-lines);
+    border-radius: 4px;
+    background: none;
+    color: var(--tn-fg2);
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--tn-alt-bg1);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--tn-primary);
+      outline-offset: 2px;
+    }
+  }
+
+  &__cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__card {
+    background-color: var(--tn-bg2);
+    border: 1px solid var(--tn-lines);
+    border-radius: 6px;
+    padding: 12px;
+
+    // The indicator bar is an inset shadow, as the table rows do it. Widening `border-left` from
+    // 1px to 3px instead shifted the card's content 2px, so a column of cards visibly
+    // misaligned as the active card changed.
+    &--active {
+      background-color: var(--tn-table-active-bg, var(--tn-bg3, #333333));
+      box-shadow: inset 3px 0 0 0 var(--tn-table-active-indicator, var(--tn-primary, #007db3));
+    }
+
+    &--clickable {
+      cursor: pointer;
+
+      // An inset shadow, not an `outline`: the card's border box fills the host exactly, and
+      // `:host` has `overflow-x: auto` (which promotes `overflow-y` to auto), so the host
+      // clips at its padding box and an outline's left/right strokes were clipped away —
+      // keyboard focus showed only the top and bottom rules. The table row solved the same
+      // problem the same way; see `__row--active#{&}--clickable:focus-visible`.
+      &:focus-visible {
+        outline: none;
+        box-shadow: inset 0 0 0 2px var(--tn-primary);
+      }
+    }
+
+    // Compose both, or the focus ring would replace the active indicator (they share the
+    // same property) and a focused active card would lose its left bar.
+    &--active#{&}--clickable:focus-visible {
+      box-shadow:
+        inset 3px 0 0 0 var(--tn-table-active-indicator, var(--tn-primary, #007db3)),
+        inset 0 0 0 2px var(--tn-primary);
+    }
+  }
+
+  &__card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__card-select {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  &__card-title {
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--tn-fg1);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__card-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  &__card-fields {
+    margin: 0;
+    padding: 10px 0 0;
+  }
+
+  &__card-field {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 3px 0;
+    font-size: 13px;
+  }
+
+  &__card-field-label {
+    flex-shrink: 0;
+    color: var(--tn-fg2);
+  }
+
+  &__card-field-value {
+    margin: 0;
+    min-width: 0;
+    text-align: right;
+    color: var(--tn-fg1);
+    // No `text-overflow: ellipsis` — it needs `white-space: nowrap` to do anything, and on a
+    // narrow card wrapping a long value is better than truncating it.
+    overflow-wrap: anywhere;
+  }
+
+  &__card-more[open] > .tn-table__card-more-summary tn-icon {
+    transform: rotate(180deg);
+  }
+
+  &__card-more {
+    margin-top: 2px;
+  }
+
+  // Both card disclosures use the body text color, not `--tn-primary`: at 13px the
+  // primary blue measures 3.21:1 on `--tn-bg2` and 2.75:1 on an active card, short of
+  // the 4.5:1 AA needs for normal-size text. A chevron carries the affordance on both
+  // disclosures instead of color.
+  // Matches `__card-detail-toggle`: body text plus a chevron that flips when open. Previously
+  // this was underlined (reading as a link) while the sibling disclosure used a chevron — two
+  // conventions for the same gesture on one card.
+  &__card-more-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 0;
+    font-size: 13px;
+    color: var(--tn-fg1);
+    cursor: pointer;
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    tn-icon {
+      transition: transform 0.2s ease;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--tn-primary);
+      outline-offset: 2px;
+    }
+  }
+
+  &__card-detail-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    padding: 4px 0;
+    background: none;
+    border: none;
+    color: var(--tn-fg1);
+    font-size: 13px;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--tn-primary);
+      outline-offset: 2px;
+    }
+  }
+
+  &__card-detail {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--tn-lines);
+  }
+
   @media (max-width: 768px) {
     &__table {
       font-size: 12px;
@@ -289,6 +750,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    &__card-more-summary tn-icon,
     &__sort-icon,
     &__expand-icon,
     &__row {

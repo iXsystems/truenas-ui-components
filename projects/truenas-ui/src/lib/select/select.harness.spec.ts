@@ -840,6 +840,16 @@ describe('TnSelectComponent - keyboard navigation', () => {
     return focused ? (focused.textContent ?? '').trim() : null;
   }
 
+  /** Opens the dropdown and clicks the option with the given label. */
+  function pickOption(label: string): void {
+    trigger.click();
+    fixture.detectChanges();
+    const option = Array.from(document.querySelectorAll<HTMLElement>('.tn-select-option'))
+      .find((el) => (el.textContent ?? '').trim() === label);
+    option?.click();
+    fixture.detectChanges();
+  }
+
   it('opens the dropdown on ArrowDown when closed', () => {
     expect(document.querySelector('.tn-select-dropdown')).toBeNull();
 
@@ -956,6 +966,67 @@ describe('TnSelectComponent - keyboard navigation', () => {
 
     expect(hostComponent.selectedValue).toBe('apple');
     expect(document.activeElement).toBe(trigger);
+  });
+
+  it('highlights the first option as soon as the dropdown opens by click', () => {
+    trigger.click();
+    fixture.detectChanges();
+
+    expect(focusedOptionLabel()).toBe('Apple');
+  });
+
+  it('Enter picks the first option right after opening, with no ArrowDown', () => {
+    trigger.click();
+    fixture.detectChanges();
+    press('Enter');
+
+    expect(hostComponent.selectedValue).toBe('apple');
+    expect(document.querySelector('.tn-select-dropdown')).toBeNull();
+  });
+
+  it('Space picks the first option right after opening', () => {
+    press('Enter'); // opens (closed + Enter opens)
+    press(' ');
+
+    expect(hostComponent.selectedValue).toBe('apple');
+  });
+
+  it('highlights the first enabled option when the leading option is disabled', () => {
+    hostComponent.options.set([
+      { value: 'a', label: 'A', disabled: true },
+      { value: 'b', label: 'B' },
+    ]);
+    fixture.detectChanges();
+
+    trigger.click();
+    fixture.detectChanges();
+
+    expect(focusedOptionLabel()).toBe('B');
+  });
+
+  it('highlights the current selection, not the first option, when one is set', () => {
+    pickOption('Cherry');
+
+    trigger.click();
+    fixture.detectChanges();
+
+    expect(focusedOptionLabel()).toBe('Cherry');
+  });
+
+  it('falls back to the first option when the selection is not navigable', () => {
+    // A previously-picked option can become disabled; it's then no longer
+    // navigable, so the highlight must land somewhere rather than vanish.
+    pickOption('Banana');
+    hostComponent.options.set([
+      { value: 'apple', label: 'Apple' },
+      { value: 'banana', label: 'Banana', disabled: true },
+    ]);
+    fixture.detectChanges();
+
+    trigger.click();
+    fixture.detectChanges();
+
+    expect(focusedOptionLabel()).toBe('Apple');
   });
 
   it('Tab closes the dropdown without refocusing the trigger', () => {
