@@ -148,6 +148,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * click — disagreeing with the description `_syncAriaDescription` has already moved on to.
    */
   private readonly _syncPanelInputs = effect(() => {
+    const disabled = this.disabled();
     const message = this.message();
     const closeAriaLabel = this.closeAriaLabel();
     const panelAriaLabel = this.panelAriaLabel();
@@ -159,7 +160,14 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
 
     // A message switched off while the panel is up (`[tnTooltip]="condition ? text : null"`)
     // would otherwise leave an empty panel pinned, which nothing can be read out of.
-    if (!message) {
+    //
+    // `disabled` is the other input that decides whether a panel may be on screen at all, and it
+    // needs the same treatment: `show()` and `stick()` both refuse to open while disabled, so a
+    // panel still up after `[tnTooltipDisabled]` flips on is a state neither entry point could
+    // produce. A pinned one has no `mouseleave`/`focusout` to take it down either, so it would
+    // sit there indefinitely — describing a host whose `aria-describedby` has already been
+    // dropped — until the user happened to click, press Escape, or click outside.
+    if (disabled || !message) {
       this.hide(0);
       return;
     }
@@ -247,11 +255,14 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Whether the host is in a state where the click that pins the tooltip can never arrive.
+   * Whether the host is in a state where the click that pins the tooltip cannot be relied on.
    *
    * A disabled control is: a native disabled `<button>` fires no click at all, and
    * `<tn-button [disabled]>` swallows the retargeted one in a capture-phase listener before this
-   * directive's host binding runs. Suppressing hover for a pinnable message would then leave the
+   * directive's host binding runs. `aria-disabled` is the exception that keeps this a rule about
+   * intent rather than about event plumbing — it is advisory, so the element still dispatches
+   * clicks normally. `_onClick` therefore declines to pin for any host this reports, rather than
+   * relying on the click not showing up. Suppressing hover for a pinnable message would then leave the
    * tooltip with no way in whatsoever — and a disabled control with a tooltip explaining why,
    * docs link included, is a normal thing to build. Those fall back to plain hover behaviour,
    * which is what they did before pinning existed: the link stays out of reach, but the
@@ -466,7 +477,15 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     // Plain help text is deliberately excluded from *opening* this way: pinning a sentence the
     // user can already read achieves nothing, and it would hijack the click of every button that
     // carries a tooltip. An empty message is excluded by the same check, having nothing to reach.
-    if (!this._isPinnable()) {
+    //
+    // `_isHostClickBlocked` has to be checked here too, not just in `_onMouseEnter`/`_onFocusIn`.
+    // Those two already fell back to hover for such a host, and an `aria-disabled` one still
+    // dispatches clicks — so without this the panel would open on hover and then get pinned by
+    // the very click the fallback exists to work around, which is the two-stage flow pinning was
+    // meant to replace. It would also leave a control the app advertises as disabled carrying
+    // `aria-expanded`/`aria-haspopup`/`aria-controls`, which `_syncHostPopupState` clears for
+    // exactly this case.
+    if (!this._isPinnable() || this._isHostClickBlocked()) {
       return;
     }
 

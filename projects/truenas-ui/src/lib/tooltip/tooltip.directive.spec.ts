@@ -369,6 +369,41 @@ describe('TnTooltipDirective sticky mode', () => {
       hover(ariaDisabled);
       expect(tooltipPanel()).not.toBeNull();
     }));
+
+    // aria-disabled is advisory, so unlike `:disabled` the element still dispatches clicks. The
+    // hover fallback above puts the panel on screen; without the same check in `_onClick` that
+    // click would then pin it, which is the two-stage "hover, then click what is already on
+    // screen" flow the fallback exists to avoid.
+    it('does not pin an aria-disabled host, whose click does still arrive', fakeAsync(() => {
+      const ariaDisabled = disabledHost();
+      ariaDisabled.removeAttribute('disabled');
+      ariaDisabled.setAttribute('aria-disabled', 'true');
+
+      hover(ariaDisabled);
+      ariaDisabled.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+      tick();
+      fixture.detectChanges();
+
+      expect(closeButton()).toBeNull();
+
+      // ...and it stays a hover panel, rather than one that outlives the pointer.
+      leave(ariaDisabled);
+      expect(tooltipPanel()).toBeNull();
+    }));
+
+    it('leaves an aria-disabled host advertising no disclosure state after a click', fakeAsync(() => {
+      const ariaDisabled = disabledHost();
+      ariaDisabled.removeAttribute('disabled');
+      ariaDisabled.setAttribute('aria-disabled', 'true');
+
+      hover(ariaDisabled);
+      ariaDisabled.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+      tick();
+      fixture.detectChanges();
+
+      expect(ariaDisabled.getAttribute('aria-expanded')).toBeNull();
+      expect(ariaDisabled.getAttribute('aria-controls')).toBeNull();
+    }));
   });
 
   // Nothing restricts pinning to focusable hosts, so the keyboard dismissal path has to put focus
@@ -533,6 +568,44 @@ describe('TnTooltipDirective sticky mode', () => {
     it('describes nothing to assistive tech', () => {
       expect(host.getAttribute('aria-describedby')).toBeNull();
     });
+  });
+
+  // `show()`/`stick()` both refuse to open while disabled, so a panel still up after the input
+  // flips is a state neither entry point could produce - and a pinned one has no mouseleave or
+  // focusout left to close it.
+  describe('disabling a tooltip that is already pinned', () => {
+    it('takes the panel down', fakeAsync(() => {
+      click();
+      expect(closeButton()).not.toBeNull();
+
+      fixture.componentInstance.disabled.set(true);
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      expect(tooltipPanel()).toBeNull();
+    }));
+
+    it('stops advertising the host as expanded', fakeAsync(() => {
+      click();
+      expect(host.getAttribute('aria-expanded')).toBe('true');
+
+      fixture.componentInstance.disabled.set(true);
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      expect(host.getAttribute('aria-expanded')).not.toBe('true');
+    }));
+
+    it('leaves a plain hover tooltip unaffected while it is not showing', fakeAsync(() => {
+      fixture.componentInstance.disabled.set(true);
+      fixture.detectChanges();
+      tick();
+
+      expect(() => hover()).not.toThrow();
+      expect(tooltipPanel()).toBeNull();
+    }));
   });
 
   describe('arrow placement', () => {

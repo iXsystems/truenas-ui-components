@@ -149,9 +149,11 @@ The click is additive, not exclusive: the host's own \`(click)\` handler still r
 that both acts and pins does both. A host that navigates away should keep its tooltip plain or
 set \`[tnTooltipSticky]="false"\`.
 
-A **disabled** host never delivers a click, so pinning it is impossible — those tooltips fall back
-to opening on hover, which keeps the explanation for *why* the control is disabled visible. The
-link inside it stays out of reach, as it was before pinning existed.
+A **disabled** host does not pin — those tooltips fall back to opening on hover, which keeps the
+explanation for *why* the control is disabled visible. The link inside it stays out of reach, as
+it was before pinning existed. A truly disabled control delivers no click to pin with in the first
+place; \`aria-disabled\` is advisory and still dispatches one, so pinning is declined for it
+deliberately rather than by accident.
 
 A pinned tooltip is dismissed by clicking the host again, by the dismiss button, by clicking
 outside it, or with Escape. It is not modal and traps nothing — Tab past the dismiss button walks
