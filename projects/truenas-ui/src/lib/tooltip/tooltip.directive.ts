@@ -48,7 +48,13 @@ const PANEL_BORDER_RADIUS = 4;
   standalone: true,
 })
 export class TnTooltipDirective implements AfterViewInit, OnDestroy {
-  message = input<string>('', { alias: 'tnTooltip' });
+  // Nullable by contract: consumers bind expressions like [tnTooltip]="reason ?? null",
+  // and under strictTemplates a string-only input would reject them at compile time.
+  // The transform normalises at the boundary so every read site still sees a string.
+  message = input('', {
+    alias: 'tnTooltip',
+    transform: (value: string | null | undefined): string => value ?? '',
+  });
   position = input<TooltipPosition>('above', { alias: 'tnTooltipPosition' });
   disabled = input<boolean>(false, { alias: 'tnTooltipDisabled' });
   showDelay = input<number>(0, { alias: 'tnTooltipShowDelay' });
