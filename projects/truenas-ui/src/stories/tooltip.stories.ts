@@ -36,7 +36,7 @@ const meta: Meta = {
     },
     tnTooltipSticky: {
       control: 'boolean',
-      description: 'Whether a message containing interactive content (a link, button or field) may be pinned open by clicking the host. Enabled by default, and only ever applies to such messages — plain help text always hovers and is never pinnable, so this control has no effect on it. Set it to false to force a message with a link back to hover behaviour.'
+      description: 'Whether a message containing a link may be pinned open by clicking the host. Enabled by default, and only ever applies to such messages — plain help text always hovers and is never pinnable, so this control has no effect on it. Set it to false to force a message with a link back to hover behaviour.'
     },
     tnTooltipCloseAriaLabel: {
       control: 'text',
@@ -129,7 +129,8 @@ Sticky mode fixes that: the tooltip is pinned open, stops being click-through, a
 button next to the message.
 
 **The message decides, not the input.** A tooltip is pinnable only when its message contains
-something reachable — a link, button or form field. Plain help text, which is nearly every
+something the reader can reach — in practice a link, since the message is sanitized as HTML and
+form controls are stripped out of it before display. Plain help text, which is nearly every
 tooltip, keeps hovering and is never pinned: pinning a sentence the reader can already see costs a
 click and buys nothing. \`tnTooltipSticky\` only narrows that rule; it cannot make plain text
 pinnable.

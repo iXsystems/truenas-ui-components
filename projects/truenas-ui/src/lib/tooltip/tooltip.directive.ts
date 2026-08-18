@@ -65,8 +65,8 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * needed for tooltips that contain links or other controls.
    *
    * This only narrows the rule in `_isPinnable`, it cannot widen it: plain help text is never
-   * pinnable however this is set. Setting it to false forces a message that does hold interactive
-   * content back into plain hover behaviour.
+   * pinnable however this is set. Setting it to false forces a message that does hold a link back
+   * into plain hover behaviour, where the link is unreachable.
    *
    * Pinning is not a second stage layered on hover: a tooltip that can be pinned is opened by
    * clicking the host and by nothing else, because a tooltip that appeared on hover and then had
@@ -116,10 +116,13 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   /**
    * Whether this tooltip is opened by a click and pinned, rather than shown on hover.
    *
-   * Only messages carrying interactive content earn the click interaction, because they are the
-   * ones a hover tooltip cannot serve — it disappears on the way to the link. Plain help text,
-   * which is the overwhelming majority, keeps the hover behaviour and never pins: pinning it
-   * would cost a click and buy the reader nothing.
+   * Only messages carrying content the reader can reach earn the click interaction, because they
+   * are the ones a hover tooltip cannot serve — it disappears on the way to the link. Plain help
+   * text, which is the overwhelming majority, keeps the hover behaviour and never pins: pinning
+   * it would cost a click and buy the reader nothing.
+   *
+   * `hasInteractiveContent` is deliberately strict about what counts, since the message is
+   * sanitized before it renders — see `REACHABLE_CONTENT_SELECTOR`.
    */
   private readonly _isPinnable = computed(
     () => this.stickyEnabled() && !this.disabled() && hasInteractiveContent(this.message()),
@@ -197,7 +200,9 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * jump to it. A hover tooltip reveals nothing on activation and carries none of this.
    */
   private _syncHostPopupState(target: HTMLElement): void {
-    if (!this._isPinnable()) {
+    // `_isSticky` counts too: `stick()` can pin a tooltip the host click never would have, and a
+    // panel that is up must be advertised as up whichever route opened it.
+    if (!this._isPinnable() && !this._isSticky) {
       this._clearHostPopupState();
       return;
     }
@@ -361,15 +366,17 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
 
   @HostListener('click', ['$event'])
   _onClick(event: MouseEvent): void {
-    // Plain help text is deliberately excluded: pinning a sentence the user can already read
-    // achieves nothing, and it would hijack the click of every button that carries a tooltip.
-    // An empty message is excluded by the same check, since it has no interactive content.
-    if (!this._isPinnable()) {
+    // Dismissal is keyed on being pinned rather than on being pinnable, so a tooltip pinned
+    // imperatively through `stick()` still closes on a host click like every other pinned one.
+    if (this._isSticky) {
+      this.unstick();
       return;
     }
 
-    if (this._isSticky) {
-      this.unstick();
+    // Plain help text is deliberately excluded from *opening* this way: pinning a sentence the
+    // user can already read achieves nothing, and it would hijack the click of every button that
+    // carries a tooltip. An empty message is excluded by the same check, having nothing to reach.
+    if (!this._isPinnable()) {
       return;
     }
 
@@ -432,8 +439,10 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * Pins the tooltip open. Shows it first if it isn't visible yet, so it works both as a
    * follow-up to hover and on its own (e.g. a keyboard-activated host).
    *
-   * This is the imperative escape hatch and deliberately ignores `tnTooltipSticky` - that input
-   * only governs whether clicking the host pins the tooltip.
+   * This is the imperative escape hatch: it pins any tooltip with a message, ignoring both
+   * `tnTooltipSticky` and the interactive-content rule that decide whether the *host click* pins
+   * one. A tooltip pinned this way behaves like any other pinned tooltip — dismiss button,
+   * Escape, outside click, and a host click all close it again.
    *
    * @param options.focusTooltip Move focus into the tooltip, so its content is reachable
    * without a pointer.

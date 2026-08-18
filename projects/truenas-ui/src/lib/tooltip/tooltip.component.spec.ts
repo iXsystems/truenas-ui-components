@@ -162,14 +162,27 @@ describe('hasInteractiveContent', () => {
     expect(hasInteractiveContent('Token (<a href="https://example.com">Instructions</a>)')).toBe(true);
   });
 
-  it.each([
-    ['<button type="button">Retry</button>'],
-    ['<input type="text">'],
-    ['<select><option>a</option></select>'],
-    ['<textarea></textarea>'],
-    ['<span tabindex="0">focusable</span>'],
-  ])('detects other reachable content: %s', (message) => {
-    expect(hasInteractiveContent(message)).toBe(true);
+  it('detects anything else the user can tab to', () => {
+    expect(hasInteractiveContent('<span tabindex="0">focusable</span>')).toBe(true);
+  });
+
+  // Detection has to agree with what the message actually renders as. The message is bound as a
+  // plain string, so Angular sanitizes it in SecurityContext.HTML, and form controls are not on
+  // the allowlist - counting them would make the tooltip click-only in order to reach a control
+  // that was stripped before it was ever displayed. SANITIZED_AWAY guards that agreement.
+  const SANITIZED_AWAY = [
+    ['a button', '<button type="button">Retry</button>', 'Retry'],
+    ['a text field', 'Name <input type="text">', 'Name'],
+    ['a select', '<select><option>a</option></select>', 'a'],
+    ['a textarea', '<textarea>x</textarea>', 'x'],
+  ];
+
+  it.each(SANITIZED_AWAY)('rejects %s, which the sanitizer strips before it can be reached', (_label, message) => {
+    expect(hasInteractiveContent(message)).toBe(false);
+  });
+
+  it('rejects tabindex="-1", which survives sanitization but is not user-reachable', () => {
+    expect(hasInteractiveContent('<span tabindex="-1">skipped</span>')).toBe(false);
   });
 
   it('rejects plain help text, which is the overwhelming majority of tooltips', () => {
@@ -186,6 +199,29 @@ describe('hasInteractiveContent', () => {
 
   it('rejects an empty message', () => {
     expect(hasInteractiveContent('')).toBe(false);
+  });
+
+  describe('agrees with what the message renders as', () => {
+    beforeEach(() => {
+      TestBed.configureTestingModule({
+        imports: [TnTooltipComponent],
+        providers: [provideHttpClient(), provideHttpClientTesting()],
+      });
+    });
+
+    it.each(SANITIZED_AWAY)('renders %s as bare text, so there is nothing to pin for', (_label, message, text) => {
+      const rendered = createTooltip(message).nativeElement.querySelector('.tn-tooltip__message') as HTMLElement;
+
+      expect(rendered.querySelector('button, input, select, textarea')).toBeNull();
+      expect(rendered.textContent?.trim()).toBe(text);
+    });
+
+    it('keeps a link, which is why that one is worth pinning for', () => {
+      const rendered = createTooltip('Read the <a href="#docs">docs</a>')
+        .nativeElement.querySelector('.tn-tooltip__message') as HTMLElement;
+
+      expect(rendered.querySelector('a[href]')).not.toBeNull();
+    });
   });
 });
 

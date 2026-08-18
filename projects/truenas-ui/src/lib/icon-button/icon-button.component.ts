@@ -39,12 +39,15 @@ export class TnIconButtonComponent implements AfterViewInit {
   /** Position of the styled tooltip relative to the button. */
   tooltipPosition = input<TooltipPosition>('above');
   /**
-   * Whether clicking the button pins its tooltip open (see `tnTooltipSticky`). Off by default,
-   * unlike the directive: an icon button's click belongs to its action, and its tooltip is a
-   * label for that action rather than content to interact with. Turn it on for buttons whose
-   * tooltip holds links or other interactive markup.
+   * Whether a tooltip message holding a link may be pinned open by clicking the button (see
+   * `tnTooltipSticky`). On by default, like the directive.
+   *
+   * It does not make plain tooltips pinnable — an icon button's tooltip is nearly always a label
+   * for its action, and those keep hovering and never touch the click. Set it to false only to
+   * force a message that does hold a link back to hover behaviour, accepting that the link is
+   * then unreachable.
    */
-  tooltipSticky = input<boolean>(false);
+  tooltipSticky = input<boolean>(true);
   library = input<IconLibraryType | undefined>(undefined);
   /** Extra class(es) applied to the inner icon, e.g. for animations or state colors. */
   iconClass = input<string>('');

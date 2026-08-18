@@ -240,6 +240,44 @@ describe('TnTooltipDirective sticky mode', () => {
     expect(closeButton()).not.toBeNull();
   }));
 
+  // stick() ignores both `tnTooltipSticky` and the interactive-content rule by design. What it
+  // must not do is produce a pinned tooltip that behaves unlike a pinned tooltip.
+  describe('a tooltip pinned imperatively through stick()', () => {
+    function stickPlainHost(): void {
+      const directive = fixture.debugElement
+        .query((node) => node.nativeElement === plainHost)
+        .injector.get(TnTooltipDirective);
+      directive.stick();
+      tick();
+      fixture.detectChanges();
+    }
+
+    it('dismisses on a host click, like every other pinned tooltip', fakeAsync(() => {
+      stickPlainHost();
+      expect(closeButton()).not.toBeNull();
+
+      plainHost.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+      tick();
+      fixture.detectChanges();
+
+      expect(tooltipPanel()).toBeNull();
+    }));
+
+    it('advertises itself on the host while it is up', fakeAsync(() => {
+      stickPlainHost();
+
+      expect(plainHost.getAttribute('aria-expanded')).toBe('true');
+      expect(plainHost.getAttribute('aria-controls')).toBe(tooltipPanel()?.id);
+
+      plainHost.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+      tick();
+      fixture.detectChanges();
+
+      // Back to a plain hover tooltip, which advertises nothing.
+      expect(plainHost.hasAttribute('aria-expanded')).toBe(false);
+    }));
+  });
+
   describe('the host disclosure state', () => {
     // Nothing else on a plain button says "clicking me opens something", so the pinnable host has
     // to carry the state that does.
