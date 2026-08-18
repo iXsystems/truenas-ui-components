@@ -1,6 +1,6 @@
 
 import type { ElementRef } from '@angular/core';
-import { Component, computed, input, output, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { TnIconComponent } from '../icon/icon.component';
 
 @Component({
@@ -26,8 +26,8 @@ export class TnTooltipComponent {
    * It also changes what the panel *is* for assistive tech: ARIA's `tooltip` role is specified as
    * non-focusable, non-interactive content that something else is described by, so a screen
    * reader may flatten it to a text description and never expose the link or the dismiss button -
-   * exactly what pinning exists to make reachable. A pinned panel is therefore a `dialog`,
-   * labelled by its own message.
+   * exactly what pinning exists to make reachable. A pinned panel is therefore a `dialog`, named
+   * by `panelAriaLabel`.
    *
    * It is a *non-modal* dialog and deliberately traps nothing: Tab past the dismiss button walks
    * out into the page while the panel stays open. That is the right shape for a popup the user
@@ -39,11 +39,17 @@ export class TnTooltipComponent {
   /** Accessible name for the dismiss button, so consumers can localize it. */
   closeAriaLabel = input('Close tooltip');
 
+  /**
+   * Accessible name for the pinned panel (see `sticky`), so consumers can localize it.
+   *
+   * A short static name rather than the message: a screen reader reads a dialog's name on entry
+   * and then its content, so naming it after the message would announce that message twice —
+   * three times counting the host's own description.
+   */
+  panelAriaLabel = input('Tooltip');
+
   /** Emitted when the user activates the dismiss button. */
   onDismiss = output<void>();
-
-  /** Names the pinned panel (see `sticky`) without duplicating the message into an aria-label. */
-  protected messageId = computed(() => `${this.id()}-message`);
 
   private panel = viewChild.required<ElementRef<HTMLElement>>('panel');
 

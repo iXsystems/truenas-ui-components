@@ -41,6 +41,10 @@ const meta: Meta = {
     tnTooltipCloseAriaLabel: {
       control: 'text',
       description: 'Accessible name for the dismiss button rendered in sticky mode'
+    },
+    tnTooltipAriaLabel: {
+      control: 'text',
+      description: 'Accessible name for the panel itself once pinned, where it is announced as a dialog. A short static name rather than the message, which a screen reader reads straight after it.'
     }
   },
 };

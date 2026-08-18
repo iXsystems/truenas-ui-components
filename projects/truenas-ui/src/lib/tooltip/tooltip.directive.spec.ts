@@ -8,10 +8,14 @@ import { TnTooltipDirective } from './tooltip.directive';
 @Component({
   standalone: true,
   imports: [TnTooltipDirective],
+  // Each host stands for one shape the directive has to handle; splitting them across fixtures
+  // would mean re-stubbing the overlay geometry four times.
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
-    <button type="button" [tnTooltip]="message()" [tnTooltipSticky]="sticky()" [tnTooltipDisabled]="disabled()">host</button>
+    <button type="button" [tnTooltip]="message()" [tnTooltipSticky]="sticky()" [tnTooltipDisabled]="disabled()" [tnTooltipCloseAriaLabel]="closeLabel()">host</button>
     <button type="button" id="plain" [tnTooltip]="'Plain help text'">plain host</button>
     <button type="button" id="owns-expanded" aria-expanded="true" [tnTooltip]="ownerMessage()">menu trigger</button>
+    <button type="button" id="side" tnTooltip="Plain help text" tnTooltipPosition="right">side host</button>
   `,
 })
 class HostComponent {
@@ -21,6 +25,7 @@ class HostComponent {
   disabled = signal(false);
   // A host that drives something of its own (a menu, a select) and happens to carry a tooltip.
   ownerMessage = signal('Plain help text');
+  closeLabel = signal('Close tooltip');
 }
 
 function tooltipPanel(): HTMLElement | null {
@@ -36,6 +41,7 @@ describe('TnTooltipDirective sticky mode', () => {
   let host: HTMLButtonElement;
   let plainHost: HTMLButtonElement;
   let ownerHost: HTMLButtonElement;
+  let sideHost: HTMLButtonElement;
 
   beforeEach(() => {
     // The dismiss button renders a tn-icon, whose sprite loader would otherwise fire a real XHR.
@@ -48,6 +54,7 @@ describe('TnTooltipDirective sticky mode', () => {
     host = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
     plainHost = fixture.nativeElement.querySelector('#plain') as HTMLButtonElement;
     ownerHost = fixture.nativeElement.querySelector('#owns-expanded') as HTMLButtonElement;
+    sideHost = fixture.nativeElement.querySelector('#side') as HTMLButtonElement;
   });
 
   afterEach(fakeAsync(() => {
@@ -242,6 +249,44 @@ describe('TnTooltipDirective sticky mode', () => {
 
   // stick() ignores both `tnTooltipSticky` and the interactive-content rule by design. What it
   // must not do is produce a pinned tooltip that behaves unlike a pinned tooltip.
+  // A hover panel lived for a second, so a message that changed underneath it was near
+  // unobservable. A pinned panel stays until the user dismisses it, and `aria-describedby`
+  // follows the input immediately - so a panel left on the old message would have the announced
+  // text and the link on screen disagreeing for as long as it stayed up.
+  it('re-renders a pinned panel when the message changes underneath it', fakeAsync(() => {
+    click();
+    expect(tooltipPanel()?.textContent).toContain('Read the');
+
+    fixture.componentInstance.message.set('Now says <a href="#other">something else</a>');
+    fixture.detectChanges();
+    tick();
+
+    expect(tooltipPanel()?.textContent).toContain('Now says');
+    expect(tooltipPanel()?.querySelector('a')?.getAttribute('href')).toBe('#other');
+    expect(host.getAttribute('aria-describedby')).not.toBeNull();
+  }));
+
+  it('takes a pinned panel down when its message is switched off', fakeAsync(() => {
+    click();
+    expect(tooltipPanel()).not.toBeNull();
+
+    fixture.componentInstance.message.set(null as unknown as string);
+    fixture.detectChanges();
+    tick();
+
+    expect(tooltipPanel()).toBeNull();
+  }));
+
+  it('re-renders a pinned panel when the dismiss label changes underneath it', fakeAsync(() => {
+    click();
+
+    fixture.componentInstance.closeLabel.set('Cerrar');
+    fixture.detectChanges();
+    tick();
+
+    expect(closeButton()?.getAttribute('aria-label')).toBe('Cerrar');
+  }));
+
   describe('a tooltip pinned imperatively through stick()', () => {
     function stickPlainHost(): void {
       const directive = fixture.debugElement
@@ -387,8 +432,29 @@ describe('TnTooltipDirective sticky mode', () => {
     const pane = () => document.querySelector('.cdk-overlay-pane') as HTMLElement;
     const arrowOffset = () => pane().style.getPropertyValue('--tn-tooltip-arrow-offset');
 
+    // The clamp reads the arrow's half-base and the panel's corner radius off the panel. Angular
+    // component styles are not injected under Jest, so without this the directive's own fallback
+    // constants would be the only thing under test and the stylesheet could drift away from them
+    // unnoticed. Deliberately not 6px/4px, so a test passing on the fallback would fail here.
+    const STUBBED_ARROW_HALF_WIDTH = 8;
+    const STUBBED_PANEL_RADIUS = 6;
+    const STUBBED_INSET = STUBBED_ARROW_HALF_WIDTH + STUBBED_PANEL_RADIUS;
+    let panelStyles: HTMLStyleElement;
+
+    beforeEach(() => {
+      panelStyles = document.createElement('style');
+      panelStyles.textContent = `.tn-tooltip {
+        --tn-tooltip-arrow-half-width: ${STUBBED_ARROW_HALF_WIDTH}px;
+        --tn-tooltip-radius: ${STUBBED_PANEL_RADIUS}px;
+      }`;
+      document.head.appendChild(panelStyles);
+    });
+
     // These stub geometry that jsdom does not provide; nothing else in the file may inherit it.
-    afterEach(() => jest.restoreAllMocks());
+    afterEach(() => {
+      panelStyles.remove();
+      jest.restoreAllMocks();
+    });
 
     /**
      * jsdom gives every element a zero-sized rect, so the geometry has to be supplied. These
@@ -400,6 +466,19 @@ describe('TnTooltipDirective sticky mode', () => {
       } as DOMRect);
       jest.spyOn(pane(), 'getBoundingClientRect').mockReturnValue({
         left: panelLeft, width: panelWidth, top: 100, height: 60,
+      } as DOMRect);
+    }
+
+    /**
+     * The same for a side-placed panel, where the offset runs down the panel instead of across
+     * it: a host at y 200-216 (centre 208) beside a panel placed at `panelTop`.
+     */
+    function stubVerticalGeometry(target: HTMLElement, panelTop: number, panelHeight: number): void {
+      jest.spyOn(target, 'getBoundingClientRect').mockReturnValue({
+        left: 100, width: 16, top: 200, height: 16,
+      } as DOMRect);
+      jest.spyOn(pane(), 'getBoundingClientRect').mockReturnValue({
+        left: 300, width: 200, top: panelTop, height: panelHeight,
       } as DOMRect);
     }
 
@@ -426,7 +505,40 @@ describe('TnTooltipDirective sticky mode', () => {
 
       reposition();
 
-      expect(arrowOffset()).toBe('10px');
+      // The stylesheet's inset, not the directive's fallback - see STUBBED_INSET.
+      expect(arrowOffset()).toBe(`${STUBBED_INSET}px`);
+    }));
+
+    it('clamps against the far corner too', fakeAsync(() => {
+      hover(plainHost);
+      // A panel pushed left of the host: the host centre lands past its right edge.
+      stubGeometry(plainHost, -160, 200);
+
+      reposition();
+
+      expect(arrowOffset()).toBe(`${200 - STUBBED_INSET}px`);
+    }));
+
+    // A side-placed panel runs the other branch of the offset maths: a different axis, with its
+    // own dimension and its own sign.
+    it('points the arrow down the panel when the tooltip sits beside its host', fakeAsync(() => {
+      hover(sideHost);
+      stubVerticalGeometry(sideHost, 100, 200);
+
+      reposition();
+
+      // Host centre 208 sits 108px down a panel starting at 100 - not the 100px panel centre.
+      expect(arrowOffset()).toBe('108px');
+    }));
+
+    it('clamps a side-placed arrow clear of the corners as well', fakeAsync(() => {
+      hover(sideHost);
+      // A panel pushed below the host by viewport clamping: the host centre lands above it.
+      stubVerticalGeometry(sideHost, 300, 200);
+
+      reposition();
+
+      expect(arrowOffset()).toBe(`${STUBBED_INSET}px`);
     }));
 
     it('re-places the panel when pinning resizes it, so the arrow stays on the host', fakeAsync(() => {

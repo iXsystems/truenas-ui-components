@@ -131,22 +131,30 @@ describe('TnTooltipComponent sticky mode', () => {
   // ARIA's `tooltip` role is non-focusable, non-interactive content, so a screen reader may
   // flatten a pinned panel to a text description and never expose the link or the dismiss button -
   // the very things pinning exists to make reachable.
-  it('becomes a labelled dialog once pinned, so its content is exposed to assistive tech', () => {
+  it('becomes a named dialog once pinned, so its content is exposed to assistive tech', () => {
+    const panel = createStickyTooltip().nativeElement.querySelector('.tn-tooltip') as HTMLElement;
+
+    expect(panel.getAttribute('role')).toBe('dialog');
+    // A short static name, not the message: a dialog's name is read on entry and its content
+    // right after, so naming it after the message would announce that message twice.
+    expect(panel.getAttribute('aria-label')).toBe('Tooltip');
+    expect(panel.textContent).toContain('Pinned message');
+  });
+
+  it('lets the panel name be localized', () => {
     const fixture = createStickyTooltip();
-    fixture.componentRef.setInput('id', 'tn-tooltip-abc');
+    fixture.componentRef.setInput('panelAriaLabel', 'Informacion');
     fixture.detectChanges();
     const panel = fixture.nativeElement.querySelector('.tn-tooltip') as HTMLElement;
 
-    expect(panel.getAttribute('role')).toBe('dialog');
-    expect(panel.getAttribute('aria-labelledby')).toBe('tn-tooltip-abc-message');
-    expect(fixture.nativeElement.querySelector('#tn-tooltip-abc-message')).not.toBeNull();
+    expect(panel.getAttribute('aria-label')).toBe('Informacion');
   });
 
   it('stays a plain tooltip while it is only shown on hover', () => {
     const panel = createTooltip('Hover message').nativeElement.querySelector('.tn-tooltip') as HTMLElement;
 
     expect(panel.getAttribute('role')).toBe('tooltip');
-    expect(panel.hasAttribute('aria-labelledby')).toBe(false);
+    expect(panel.hasAttribute('aria-label')).toBe(false);
   });
 
   it('keeps the message readable when the dismiss button is present', () => {

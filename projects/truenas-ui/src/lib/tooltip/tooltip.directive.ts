@@ -10,6 +10,7 @@ import {
   OverlayPositionBuilder
 } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
+import { ScrollDispatcher, ViewportRuler } from '@angular/cdk/scrolling';
 import type {
   AfterViewInit,
   OnDestroy,
@@ -26,11 +27,14 @@ import {
   ViewContainerRef,
   inject
 } from '@angular/core';
-import type { Subscription } from 'rxjs';
+import { merge, type Subscription } from 'rxjs';
 import { hasInteractiveContent, INTERACTIVE_SELECTOR } from './interactive-content';
 import { TnTooltipComponent } from './tooltip.component';
 
 export type TooltipPosition = 'above' | 'below' | 'left' | 'right' | 'before' | 'after';
+
+/** Matches the overlay's own `scrollThrottle`, so the arrow is refreshed on the same beat. */
+const REPOSITION_THROTTLE = 20;
 
 /**
  * Half the arrow's base, and the panel's corner radius. `tooltip.component.scss` owns both and
@@ -86,6 +90,8 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   stickyEnabled = input<boolean>(true, { alias: 'tnTooltipSticky' });
   /** Accessible name for the dismiss button rendered in sticky mode. */
   closeAriaLabel = input<string>('Close tooltip', { alias: 'tnTooltipCloseAriaLabel' });
+  /** Accessible name for the panel itself once pinned, where it is announced as a dialog. */
+  panelAriaLabel = input<string>('Tooltip', { alias: 'tnTooltipAriaLabel' });
 
   private _overlayRef: OverlayRef | null = null;
   private _tooltipInstance: ComponentRef<TnTooltipComponent> | null = null;
@@ -94,6 +100,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   private _isTooltipVisible = false;
   private _isSticky = false;
   private _positionSub: Subscription | null = null;
+  private _repositionSub: Subscription | null = null;
   private _escapeSub: Subscription | null = null;
   private _outsideClickSub: Subscription | null = null;
   private _dismissSub: OutputRefSubscription | null = null;
@@ -105,13 +112,16 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   private _viewContainerRef = inject(ViewContainerRef);
   private _overlayPositionBuilder = inject(OverlayPositionBuilder);
   private _ariaDescriber = inject(AriaDescriber);
+  private _scrollDispatcher = inject(ScrollDispatcher);
+  private _viewportRuler = inject(ViewportRuler);
 
   private _viewInitialized = false;
   private _describedTarget: HTMLElement | null = null;
   private _describedMessage = '';
   private _innerObserver: MutationObserver | null = null;
   private _popupStateTarget: HTMLElement | null = null;
-  private _popupStateAttributes: string[] = [];
+  private _popupStateWritten: Record<string, string> = {};
+  private _cachedArrowInset: number | null = null;
 
   /**
    * Whether this tooltip is opened by a click and pinned, rather than shown on hover.
@@ -127,6 +137,42 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   private readonly _isPinnable = computed(
     () => this.stickyEnabled() && !this.disabled() && hasInteractiveContent(this.message()),
   );
+
+  /**
+   * Keeps a panel that is already on screen in step with its inputs.
+   *
+   * `_attachTooltip` seeds these once, which was enough while every panel was a hover panel that
+   * lived for a second. A pinned panel stays up until the user dismisses it, so a message that
+   * changes underneath it would leave the rendered text — and the link the user is about to
+   * click — disagreeing with the description `_syncAriaDescription` has already moved on to.
+   */
+  private readonly _syncPanelInputs = effect(() => {
+    const message = this.message();
+    const closeAriaLabel = this.closeAriaLabel();
+    const panelAriaLabel = this.panelAriaLabel();
+
+    const instance = this._tooltipInstance;
+    if (!instance) {
+      return;
+    }
+
+    // A message switched off while the panel is up (`[tnTooltip]="condition ? text : null"`)
+    // would otherwise leave an empty panel pinned, which nothing can be read out of.
+    if (!message) {
+      this.hide(0);
+      return;
+    }
+
+    instance.setInput('message', message);
+    instance.setInput('closeAriaLabel', closeAriaLabel);
+    instance.setInput('panelAriaLabel', panelAriaLabel);
+
+    // A different message is a different size, so the placement computed for the old one is
+    // stale in exactly the way entering sticky mode makes it stale. Re-run both.
+    instance.changeDetectorRef.detectChanges();
+    this._overlayRef?.updatePosition();
+    this._updateArrowOffset();
+  });
 
   /**
    * Re-sync the ARIA attributes (see ngAfterViewInit) when the inputs change. The initial
@@ -213,47 +259,63 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Writes the disclosure attributes, remembering exactly which ones were written.
+   * Writes the disclosure attributes, remembering the exact value written for each.
    *
-   * A host that already carries one of them keeps it, and this directive never removes one it
-   * did not write. Hosts own these legitimately and mean something else by them: a
-   * `tnMenuTrigger` is `aria-haspopup="menu"`, a `<tn-select>` points `aria-controls` at its own
-   * listbox, and `<tn-icon-button [ariaExpanded]>` binds `aria-expanded` to the same inner
-   * `<button>` a `tnTooltip` on it would land on. There is only one of each attribute to go
+   * A host that carries one of them keeps it, and this directive never removes or overwrites a
+   * value it did not itself put there. Hosts own these legitimately and mean something else by
+   * them: a `tnMenuTrigger` is `aria-haspopup="menu"`, a `<tn-select>` points `aria-controls` at
+   * its own listbox, and `<tn-icon-button [ariaExpanded]>` binds `aria-expanded` to the same
+   * inner `<button>` a `tnTooltip` on it would land on. There is only one of each attribute to go
    * around, and the host's click is what they describe — a tooltip is the lesser claim.
+   *
+   * Ownership is decided by value rather than by whether the attribute was absent the first time
+   * this ran, so a host that starts with nothing bound (`ariaExpanded` defaults to `undefined`)
+   * and writes its own value later takes the attribute back at that point instead of being
+   * fought over it.
    */
   private _writeHostPopupState(target: HTMLElement, attributes: Record<string, string>): void {
     if (this._popupStateTarget && this._popupStateTarget !== target) {
       this._clearHostPopupState();
     }
 
-    const written: string[] = [];
+    const written: Record<string, string> = {};
     for (const [name, value] of Object.entries(attributes)) {
-      if (target.hasAttribute(name) && !this._popupStateAttributes.includes(name)) {
+      if (!this._ownsHostAttribute(target, name)) {
         continue;
       }
 
       target.setAttribute(name, value);
-      written.push(name);
+      written[name] = value;
     }
 
-    for (const name of this._popupStateAttributes) {
-      if (!written.includes(name)) {
-        this._popupStateTarget?.removeAttribute(name);
+    for (const name of Object.keys(this._popupStateWritten)) {
+      if (!(name in written) && this._popupStateTarget && this._ownsHostAttribute(this._popupStateTarget, name)) {
+        this._popupStateTarget.removeAttribute(name);
       }
     }
 
-    this._popupStateTarget = written.length ? target : null;
-    this._popupStateAttributes = written;
+    this._popupStateTarget = Object.keys(written).length ? target : null;
+    this._popupStateWritten = written;
+  }
+
+  /** Whether the attribute is free to write: absent, or still holding the value written for it. */
+  private _ownsHostAttribute(target: HTMLElement, name: string): boolean {
+    const current = target.getAttribute(name);
+    return current === null || current === this._popupStateWritten[name];
   }
 
   private _clearHostPopupState(): void {
-    for (const name of this._popupStateAttributes) {
-      this._popupStateTarget?.removeAttribute(name);
+    const target = this._popupStateTarget;
+    if (target) {
+      for (const name of Object.keys(this._popupStateWritten)) {
+        if (this._ownsHostAttribute(target, name)) {
+          target.removeAttribute(name);
+        }
+      }
     }
 
     this._popupStateTarget = null;
-    this._popupStateAttributes = [];
+    this._popupStateWritten = {};
   }
 
   private _syncAriaDescription(target: HTMLElement): void {
@@ -295,6 +357,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     this._clearTimeouts();
     this._destroyTooltip();
     this._positionSub?.unsubscribe();
+    this._repositionSub?.unsubscribe();
     this._innerObserver?.disconnect();
     this._removeAriaDescription();
     this._clearHostPopupState();
@@ -511,6 +574,19 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
       panelClass: ['tn-tooltip-panel', `tn-tooltip-panel-${this.position()}`, this.tooltipClass()].filter(Boolean),
     });
 
+    // `positionChanges` fires only when the chosen position *changes*, so it cannot carry the
+    // arrow on its own: a panel re-placed at the same position but different coordinates - which
+    // is what viewport clamping does, and the case the arrow offset exists for - emits nothing.
+    // These are the events the reposition scroll strategy re-places on, so the arrow follows it.
+    this._repositionSub = merge(
+      this._scrollDispatcher.scrolled(REPOSITION_THROTTLE),
+      this._viewportRuler.change(REPOSITION_THROTTLE),
+    ).subscribe(() => {
+      if (this._isTooltipVisible) {
+        this._updateArrowOffset();
+      }
+    });
+
     this._positionSub = (positionStrategy as FlexibleConnectedPositionStrategy).positionChanges
       .subscribe((change) => {
         // The position panelClass is applied to the overlay pane (overlayElement), so the
@@ -568,10 +644,19 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
 
   /**
    * How far the arrow has to stay from the panel's edge: its own half-base plus the corner
-   * radius. Both are read off the rendered panel so a change in the stylesheet cannot leave a
+   * radius. Both are read off the rendered panel, so a change in the stylesheet cannot leave a
    * stale number behind here.
+   *
+   * Cached for as long as the panel is attached. Only the stylesheet can move these, while the
+   * caller runs on every reposition — which, with the reposition scroll strategy, is every 20ms
+   * for as long as the user keeps scrolling; a `getComputedStyle` per frame to re-read two
+   * constants is not worth it.
    */
   private _arrowInset(pane: HTMLElement): number {
+    if (this._cachedArrowInset !== null) {
+      return this._cachedArrowInset;
+    }
+
     const panel = pane.querySelector<HTMLElement>('.tn-tooltip');
     if (!panel || typeof getComputedStyle === 'undefined') {
       return FALLBACK_ARROW_HALF_WIDTH + FALLBACK_PANEL_RADIUS;
@@ -583,8 +668,9 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
       return Number.isFinite(value) ? value : fallback;
     };
 
-    return read(ARROW_HALF_WIDTH_PROPERTY, FALLBACK_ARROW_HALF_WIDTH)
+    this._cachedArrowInset = read(ARROW_HALF_WIDTH_PROPERTY, FALLBACK_ARROW_HALF_WIDTH)
       + read(PANEL_RADIUS_PROPERTY, FALLBACK_PANEL_RADIUS);
+    return this._cachedArrowInset;
   }
 
   private _resolvePosition(pair: ConnectedPosition): TooltipPosition {
@@ -611,6 +697,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
       this._tooltipInstance.setInput('message', this.message());
       this._tooltipInstance.setInput('id', this._tooltipId);
       this._tooltipInstance.setInput('closeAriaLabel', this.closeAriaLabel());
+      this._tooltipInstance.setInput('panelAriaLabel', this.panelAriaLabel());
       this._dismissSub = this._tooltipInstance.instance.onDismiss.subscribe(() => {
         // The dismiss button is only reachable while pinned, and it can hold focus - hand it
         // back to the host so keyboard users don't end up on <body>.
@@ -678,6 +765,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
 
     this._tooltipInstance = null;
     this._isTooltipVisible = false;
+    this._cachedArrowInset = null;
 
     // Detaching the portal destroys the tooltip component and empties the overlay pane. The
     // pane has to go too: left attached it keeps swallowing pointer events in sticky mode.
