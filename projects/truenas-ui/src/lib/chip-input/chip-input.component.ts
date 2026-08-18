@@ -430,20 +430,17 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
    * option's label — `String(value)` on an object is `[object Object]`, which
    * would stamp an identical id on every chip. Duplicates are worse than
    * absence for automation, so an object value with no option to name it yet
-   * (options still loading) stays attribute-free rather than colliding.
+   * (options still loading) stays attribute-free rather than colliding. A primitive
+   * that normalizes away is dropped for the same reason — see
+   * {@link discriminatedTestId}.
    */
   protected chipTestId(value: T): TnTestIdValue {
     const base = this.resolvedTestId();
-    // Gated on a *usable* base: an unscoped `chip-<value>` would collide across
-    // every chip-input on the page, so unidentified inputs stay attribute-free.
-    if (composeTestId(undefined, base) === '') {
-      return undefined;
-    }
     if (typeof value === 'string' || typeof value === 'number') {
-      return scopeTestId(base, value);
+      return this.discriminatedTestId(scopeTestId(base, value));
     }
     const match = this.optionList().find((option) => this.valueMatches(option.value, value));
-    return match ? scopeTestId(base, match.label) : undefined;
+    return match ? this.discriminatedTestId(scopeTestId(base, match.label)) : undefined;
   }
 
   /**
@@ -454,11 +451,26 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
    * emitting one would invite collisions between inputs.
    */
   protected suggestionTestId(option: TnChipInputOption<T>): TnTestIdValue {
-    const base = this.resolvedTestId();
-    if (composeTestId(undefined, base) === '') {
+    return this.discriminatedTestId(optionTestId(this.resolvedTestId(), option));
+  }
+
+  /**
+   * Keeps a scoped id only when both halves of it survive normalization.
+   *
+   * The base has to be usable: an unscoped `chip-<value>` would collide across every
+   * chip-input on the page, so unidentified inputs stay attribute-free. The
+   * discriminator has to contribute a segment of its own, because
+   * `kebabTestSegment` drops every run of non-alphanumerics — a value like `*`, `**`
+   * or a CJK-only tag normalizes to nothing and collapses the id back to the bare
+   * base, stamping the same id on every chip. That is the duplicate-id case the
+   * object-value path already avoids, reached through a primitive instead.
+   */
+  private discriminatedTestId(scoped: (string | number | null | undefined)[]): TnTestIdValue {
+    const baseId = composeTestId(undefined, this.resolvedTestId());
+    if (baseId === '' || composeTestId(undefined, scoped) === baseId) {
       return undefined;
     }
-    return optionTestId(base, option);
+    return scoped;
   }
 
   // ── Internal ──

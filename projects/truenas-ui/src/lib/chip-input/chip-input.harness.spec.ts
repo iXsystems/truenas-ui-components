@@ -348,6 +348,25 @@ class ObjectValueTestIdHostComponent {
   compareWith = (a: Group | null, b: Group | null): boolean => a?.id === b?.id;
 }
 
+@Component({
+  selector: 'tn-unnormalizable-value-host',
+  standalone: true,
+  imports: [TnChipInputComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <form [formGroup]="form">
+      <tn-chip-input
+        formControlName="hostsAllow"
+        [suggestions]="suggestions"
+        [allowCustomValue]="true" />
+    </form>
+  `,
+})
+class UnnormalizableValueHostComponent {
+  form = new FormGroup({ hostsAllow: new FormControl<string[]>(['*', '**', 'alpha']) });
+  suggestions = ['***'];
+}
+
 describe('TnChipInputComponent test ids', () => {
   const getInput = (fixture: ComponentFixture<unknown>): HTMLInputElement =>
     fixture.nativeElement.querySelector('.tn-chip-input__field') as HTMLInputElement;
@@ -396,5 +415,41 @@ describe('TnChipInputComponent test ids', () => {
 
     const chip = fixture.nativeElement.querySelector('.tn-chip-input__chip [role="button"]');
     expect(chip?.getAttribute('data-testid')).toBe('chip-groups-admins');
+  });
+  // `*` and `**` both normalize to nothing, so scoping them under the base composes
+  // the bare `chip-hosts-allow` twice — duplicate ids, the failure the object-value
+  // path already guards against, reached through a primitive value instead.
+  it('omits the id for chips whose value normalizes away, rather than duplicating the base', async () => {
+    await TestBed.configureTestingModule({
+      imports: [UnnormalizableValueHostComponent],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(UnnormalizableValueHostComponent);
+    fixture.detectChanges();
+
+    const chips = Array.from(
+      fixture.nativeElement.querySelectorAll('.tn-chip-input__chip [role="button"]'),
+    ) as HTMLElement[];
+    expect(chips.map((chip) => chip.getAttribute('data-testid')))
+      .toEqual([null, null, 'chip-hosts-allow-alpha']);
+
+    // The field itself keeps its id — only the indistinguishable chips go without.
+    expect(getInput(fixture).getAttribute('data-testid')).toBe('chip-input-hosts-allow');
+  });
+
+  it('omits the id for a suggestion row whose value normalizes away', async () => {
+    await TestBed.configureTestingModule({
+      imports: [UnnormalizableValueHostComponent],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(UnnormalizableValueHostComponent);
+    fixture.detectChanges();
+
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    await (await loader.getHarness(TnChipInputHarness)).typeText('*');
+
+    const suggestion = document.querySelector('.tn-chip-input__option');
+    expect(suggestion).not.toBeNull();
+    expect(suggestion?.getAttribute('data-testid')).toBeNull();
   });
 });
