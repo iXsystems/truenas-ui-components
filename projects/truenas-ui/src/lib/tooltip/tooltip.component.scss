@@ -11,10 +11,16 @@
 }
 
 .tn-tooltip {
+  // Half the arrow's base, and the panel's corner radius. Custom properties rather than literals
+  // because the directive reads them back off this element to clamp the arrow away from the
+  // corners (`_updateArrowOffset`) - changing either value here is enough, the clamp follows.
+  --tn-tooltip-arrow-half-width: 6px;
+  --tn-tooltip-radius: 4px;
+
   background: rgba(55, 55, 55, 0.9);
   color: white;
   padding: 6px 8px;
-  border-radius: 4px;
+  border-radius: var(--tn-tooltip-radius);
   font-size: 12px;
   font-weight: 500;
   line-height: 1.4;
@@ -119,7 +125,7 @@
   top: 100%;
   left: var(--tn-tooltip-arrow-offset, 50%);
   transform: translateX(-50%);
-  border-width: 6px 6px 0 6px;
+  border-width: var(--tn-tooltip-arrow-half-width) var(--tn-tooltip-arrow-half-width) 0 var(--tn-tooltip-arrow-half-width);
   border-color: rgba(55, 55, 55, 0.9) transparent transparent transparent;
 }
 
@@ -127,7 +133,7 @@
   bottom: 100%;
   left: var(--tn-tooltip-arrow-offset, 50%);
   transform: translateX(-50%);
-  border-width: 0 6px 6px 6px;
+  border-width: 0 var(--tn-tooltip-arrow-half-width) var(--tn-tooltip-arrow-half-width) var(--tn-tooltip-arrow-half-width);
   border-color: transparent transparent rgba(55, 55, 55, 0.9) transparent;
 }
 
@@ -136,7 +142,7 @@
   top: var(--tn-tooltip-arrow-offset, 50%);
   left: 100%;
   transform: translateY(-50%);
-  border-width: 6px 0 6px 6px;
+  border-width: var(--tn-tooltip-arrow-half-width) 0 var(--tn-tooltip-arrow-half-width) var(--tn-tooltip-arrow-half-width);
   border-color: transparent transparent transparent rgba(55, 55, 55, 0.9);
 }
 
@@ -145,7 +151,7 @@
   top: var(--tn-tooltip-arrow-offset, 50%);
   right: 100%;
   transform: translateY(-50%);
-  border-width: 6px 6px 6px 0;
+  border-width: var(--tn-tooltip-arrow-half-width) var(--tn-tooltip-arrow-half-width) var(--tn-tooltip-arrow-half-width) 0;
   border-color: transparent rgba(55, 55, 55, 0.9) transparent transparent;
 }
 

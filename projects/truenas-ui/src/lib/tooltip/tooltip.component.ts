@@ -28,6 +28,11 @@ export class TnTooltipComponent {
    * reader may flatten it to a text description and never expose the link or the dismiss button -
    * exactly what pinning exists to make reachable. A pinned panel is therefore a `dialog`,
    * labelled by its own message.
+   *
+   * It is a *non-modal* dialog and deliberately traps nothing: Tab past the dismiss button walks
+   * out into the page while the panel stays open. That is the right shape for a popup the user
+   * can also leave by Escape or by clicking outside, and it keeps a tooltip from holding the
+   * keyboard hostage.
    */
   sticky = input(false);
 

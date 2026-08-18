@@ -32,9 +32,16 @@ import { TnTooltipComponent } from './tooltip.component';
 
 export type TooltipPosition = 'above' | 'below' | 'left' | 'right' | 'before' | 'after';
 
-/** Half the arrow's base, and the panel's corner radius - both mirror `tooltip.component.scss`. */
-const ARROW_HALF_WIDTH = 6;
-const PANEL_BORDER_RADIUS = 4;
+/**
+ * Half the arrow's base, and the panel's corner radius. `tooltip.component.scss` owns both and
+ * publishes them as these custom properties; these are only the fallback for environments that
+ * do not resolve custom properties (jsdom in the unit tests), so the arrow clamp still gets
+ * plausible geometry there.
+ */
+const ARROW_HALF_WIDTH_PROPERTY = '--tn-tooltip-arrow-half-width';
+const PANEL_RADIUS_PROPERTY = '--tn-tooltip-radius';
+const FALLBACK_ARROW_HALF_WIDTH = 6;
+const FALLBACK_PANEL_RADIUS = 4;
 
 @Directive({
   selector: '[tnTooltip]',
@@ -69,6 +76,12 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * While pinned the tooltip renders a dismiss button and ignores `mouseleave`/`focusout`; it
    * closes on a second click of the host, on the dismiss button, on an outside click, or on
    * Escape.
+   *
+   * The pinning click is additive, not exclusive: the host's own click handler still runs, so a
+   * `<tn-button (click)="save()">` carrying a message with a link both saves and pins. Suppressing
+   * the host's action would be worse — a menu trigger or a toggle that silently stopped working
+   * because someone put a link in its tooltip — but a host that navigates away should either keep
+   * its tooltip plain or set this to false.
    */
   stickyEnabled = input<boolean>(true, { alias: 'tnTooltipSticky' });
   /** Accessible name for the dismiss button rendered in sticky mode. */
@@ -97,7 +110,8 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   private _describedTarget: HTMLElement | null = null;
   private _describedMessage = '';
   private _innerObserver: MutationObserver | null = null;
-  private _expandedTarget: HTMLElement | null = null;
+  private _popupStateTarget: HTMLElement | null = null;
+  private _popupStateAttributes: string[] = [];
 
   /**
    * Whether this tooltip is opened by a click and pinned, rather than shown on hover.
@@ -152,7 +166,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   private _syncAria(): void {
     const target = this._ariaTarget();
     this._syncAriaDescription(target);
-    this._syncAriaExpanded(target);
+    this._syncHostPopupState(target);
   }
 
   /**
@@ -174,25 +188,67 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * A pinnable tooltip is opened by clicking its host, and nothing about a plain button says so.
-   * `aria-expanded` is the state that says it: it marks the control as one that reveals content,
-   * and then tracks whether that content is currently up. Hover tooltips reveal nothing on
-   * activation, so they must not carry it.
+   * Marks a pinnable host as the disclosure control for its tooltip.
+   *
+   * Nothing about a plain button says "clicking me reveals something", so the host has to carry
+   * the state that does: `aria-expanded` for whether the panel is currently up, `aria-haspopup`
+   * for what kind of thing it opens (a pinned panel is a `dialog` — see `TnTooltipComponent`'s
+   * `sticky`), and `aria-controls` pointing at the panel while it exists, so assistive tech can
+   * jump to it. A hover tooltip reveals nothing on activation and carries none of this.
    */
-  private _syncAriaExpanded(target: HTMLElement): void {
-    if (this._expandedTarget && this._expandedTarget !== target) {
-      this._expandedTarget.removeAttribute('aria-expanded');
-      this._expandedTarget = null;
-    }
-
+  private _syncHostPopupState(target: HTMLElement): void {
     if (!this._isPinnable()) {
-      target.removeAttribute('aria-expanded');
-      this._expandedTarget = null;
+      this._clearHostPopupState();
       return;
     }
 
-    target.setAttribute('aria-expanded', String(this._isSticky));
-    this._expandedTarget = target;
+    this._writeHostPopupState(target, this._isSticky
+      ? { 'aria-expanded': 'true', 'aria-haspopup': 'dialog', 'aria-controls': this._tooltipId }
+      : { 'aria-expanded': 'false', 'aria-haspopup': 'dialog' });
+  }
+
+  /**
+   * Writes the disclosure attributes, remembering exactly which ones were written.
+   *
+   * A host that already carries one of them keeps it, and this directive never removes one it
+   * did not write. Hosts own these legitimately and mean something else by them: a
+   * `tnMenuTrigger` is `aria-haspopup="menu"`, a `<tn-select>` points `aria-controls` at its own
+   * listbox, and `<tn-icon-button [ariaExpanded]>` binds `aria-expanded` to the same inner
+   * `<button>` a `tnTooltip` on it would land on. There is only one of each attribute to go
+   * around, and the host's click is what they describe — a tooltip is the lesser claim.
+   */
+  private _writeHostPopupState(target: HTMLElement, attributes: Record<string, string>): void {
+    if (this._popupStateTarget && this._popupStateTarget !== target) {
+      this._clearHostPopupState();
+    }
+
+    const written: string[] = [];
+    for (const [name, value] of Object.entries(attributes)) {
+      if (target.hasAttribute(name) && !this._popupStateAttributes.includes(name)) {
+        continue;
+      }
+
+      target.setAttribute(name, value);
+      written.push(name);
+    }
+
+    for (const name of this._popupStateAttributes) {
+      if (!written.includes(name)) {
+        this._popupStateTarget?.removeAttribute(name);
+      }
+    }
+
+    this._popupStateTarget = written.length ? target : null;
+    this._popupStateAttributes = written;
+  }
+
+  private _clearHostPopupState(): void {
+    for (const name of this._popupStateAttributes) {
+      this._popupStateTarget?.removeAttribute(name);
+    }
+
+    this._popupStateTarget = null;
+    this._popupStateAttributes = [];
   }
 
   private _syncAriaDescription(target: HTMLElement): void {
@@ -236,8 +292,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     this._positionSub?.unsubscribe();
     this._innerObserver?.disconnect();
     this._removeAriaDescription();
-    this._expandedTarget?.removeAttribute('aria-expanded');
-    this._expandedTarget = null;
+    this._clearHostPopupState();
 
     if (this._overlayRef) {
       this._overlayRef.dispose();
@@ -396,7 +451,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
 
     this._attachTooltip();
     this._isSticky = true;
-    this._syncAriaExpanded(this._ariaTarget());
+    this._syncHostPopupState(this._ariaTarget());
     this._tooltipInstance?.setInput('sticky', true);
     this._subscribeToEscape();
     this._subscribeToOutsideClicks();
@@ -496,10 +551,31 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
 
     // Keep the arrow clear of the rounded corners, so it always reads as part of the bubble
     // even when the host sits far off to one side.
-    const inset = ARROW_HALF_WIDTH + PANEL_BORDER_RADIUS;
+    const inset = this._arrowInset(panel);
     const clamped = Math.max(inset, Math.min(extent - inset, offset));
 
     panel.style.setProperty('--tn-tooltip-arrow-offset', `${clamped}px`);
+  }
+
+  /**
+   * How far the arrow has to stay from the panel's edge: its own half-base plus the corner
+   * radius. Both are read off the rendered panel so a change in the stylesheet cannot leave a
+   * stale number behind here.
+   */
+  private _arrowInset(pane: HTMLElement): number {
+    const panel = pane.querySelector<HTMLElement>('.tn-tooltip');
+    if (!panel || typeof getComputedStyle === 'undefined') {
+      return FALLBACK_ARROW_HALF_WIDTH + FALLBACK_PANEL_RADIUS;
+    }
+
+    const styles = getComputedStyle(panel);
+    const read = (property: string, fallback: number): number => {
+      const value = Number.parseFloat(styles.getPropertyValue(property));
+      return Number.isFinite(value) ? value : fallback;
+    };
+
+    return read(ARROW_HALF_WIDTH_PROPERTY, FALLBACK_ARROW_HALF_WIDTH)
+      + read(PANEL_RADIUS_PROPERTY, FALLBACK_PANEL_RADIUS);
   }
 
   private _resolvePosition(pair: ConnectedPosition): TooltipPosition {
@@ -577,7 +653,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     const wasSticky = this._isSticky;
     this._isSticky = false;
     if (wasSticky) {
-      this._syncAriaExpanded(this._ariaTarget());
+      this._syncHostPopupState(this._ariaTarget());
     }
 
     this._escapeSub?.unsubscribe();

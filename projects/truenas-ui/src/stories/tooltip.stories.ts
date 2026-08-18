@@ -136,11 +136,17 @@ pinnable.
 
 **A pinnable tooltip opens on click only.** ⚠️ This is a change in behaviour: a message with a
 link no longer appears on hover or on focus at all, because a tooltip that appeared on hover and
-then still had to be clicked made the user chase a target already on screen. Its host carries
-\`aria-expanded\` so assistive tech announces it as a control that reveals something.
+then still had to be clicked made the user chase a target already on screen. Its host is marked
+up as the control that reveals it (\`aria-expanded\`, \`aria-haspopup="dialog"\`,
+\`aria-controls\`), except where the host already owns one of those for something of its own.
+
+The click is additive, not exclusive: the host's own \`(click)\` handler still runs, so a button
+that both acts and pins does both. A host that navigates away should keep its tooltip plain or
+set \`[tnTooltipSticky]="false"\`.
 
 A pinned tooltip is dismissed by clicking the host again, by the dismiss button, by clicking
-outside it, or with Escape. Activating the host from the keyboard moves focus into the tooltip,
+outside it, or with Escape. It is not modal and traps nothing — Tab past the dismiss button walks
+back out into the page. Activating the host from the keyboard moves focus into the tooltip,
 so Tab walks its content and then the dismiss button; dismissing hands focus back to the host.
 
 \`\`\`html

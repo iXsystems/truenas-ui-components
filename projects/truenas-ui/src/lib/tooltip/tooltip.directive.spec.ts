@@ -11,6 +11,7 @@ import { TnTooltipDirective } from './tooltip.directive';
   template: `
     <button type="button" [tnTooltip]="message()" [tnTooltipSticky]="sticky()" [tnTooltipDisabled]="disabled()">host</button>
     <button type="button" id="plain" [tnTooltip]="'Plain help text'">plain host</button>
+    <button type="button" id="owns-expanded" aria-expanded="true" [tnTooltip]="ownerMessage()">menu trigger</button>
   `,
 })
 class HostComponent {
@@ -18,6 +19,8 @@ class HostComponent {
   message = signal('Read the <a href="#docs">docs</a>');
   sticky = signal(true);
   disabled = signal(false);
+  // A host that drives something of its own (a menu, a select) and happens to carry a tooltip.
+  ownerMessage = signal('Plain help text');
 }
 
 function tooltipPanel(): HTMLElement | null {
@@ -32,6 +35,7 @@ describe('TnTooltipDirective sticky mode', () => {
   let fixture: ComponentFixture<HostComponent>;
   let host: HTMLButtonElement;
   let plainHost: HTMLButtonElement;
+  let ownerHost: HTMLButtonElement;
 
   beforeEach(() => {
     // The dismiss button renders a tn-icon, whose sprite loader would otherwise fire a real XHR.
@@ -43,6 +47,7 @@ describe('TnTooltipDirective sticky mode', () => {
     fixture.detectChanges();
     host = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
     plainHost = fixture.nativeElement.querySelector('#plain') as HTMLButtonElement;
+    ownerHost = fixture.nativeElement.querySelector('#owns-expanded') as HTMLButtonElement;
   });
 
   afterEach(fakeAsync(() => {
@@ -235,21 +240,26 @@ describe('TnTooltipDirective sticky mode', () => {
     expect(closeButton()).not.toBeNull();
   }));
 
-  describe('aria-expanded', () => {
+  describe('the host disclosure state', () => {
     // Nothing else on a plain button says "clicking me opens something", so the pinnable host has
     // to carry the state that does.
-    it('marks a pinnable host as a control that reveals content, and tracks whether it is open', fakeAsync(() => {
+    it('marks a pinnable host as a control that reveals a dialog, and tracks whether it is open', fakeAsync(() => {
       expect(host.getAttribute('aria-expanded')).toBe('false');
+      expect(host.getAttribute('aria-haspopup')).toBe('dialog');
+      expect(host.hasAttribute('aria-controls')).toBe(false);
 
       click();
       expect(host.getAttribute('aria-expanded')).toBe('true');
+      expect(host.getAttribute('aria-controls')).toBe(tooltipPanel()?.id);
 
       click();
       expect(host.getAttribute('aria-expanded')).toBe('false');
+      expect(host.hasAttribute('aria-controls')).toBe(false);
     }));
 
     it('leaves it off a hover tooltip, which reveals nothing on activation', () => {
       expect(plainHost.hasAttribute('aria-expanded')).toBe(false);
+      expect(plainHost.hasAttribute('aria-haspopup')).toBe(false);
     });
 
     it('drops it when the message stops being pinnable', () => {
@@ -257,6 +267,7 @@ describe('TnTooltipDirective sticky mode', () => {
       fixture.detectChanges();
 
       expect(host.hasAttribute('aria-expanded')).toBe(false);
+      expect(host.hasAttribute('aria-haspopup')).toBe(false);
     });
 
     it('drops it when sticky mode is turned off', () => {
@@ -264,7 +275,37 @@ describe('TnTooltipDirective sticky mode', () => {
       fixture.detectChanges();
 
       expect(host.hasAttribute('aria-expanded')).toBe(false);
+      expect(host.hasAttribute('aria-haspopup')).toBe(false);
     });
+
+    // A host can own aria-expanded for something else entirely - tn-icon-button binds it to the
+    // same inner <button> a tooltip would land on, and a menu trigger owns aria-haspopup="menu".
+    // Clearing what we never wrote, or overwriting what the host means, would strip the state
+    // describing what the click really does.
+    it('never touches an aria-expanded the host owns, with a plain tooltip', () => {
+      expect(ownerHost.getAttribute('aria-expanded')).toBe('true');
+
+      fixture.componentInstance.ownerMessage.set('Different help text');
+      fixture.detectChanges();
+
+      expect(ownerHost.getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('never touches an aria-expanded the host owns, even with a pinnable tooltip', fakeAsync(() => {
+      fixture.componentInstance.ownerMessage.set('Read the <a href="#docs">docs</a>');
+      fixture.detectChanges();
+
+      expect(ownerHost.getAttribute('aria-expanded')).toBe('true');
+      // The attributes it does not own are still its tooltip's to write.
+      expect(ownerHost.getAttribute('aria-haspopup')).toBe('dialog');
+
+      ownerHost.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+      tick();
+      fixture.detectChanges();
+
+      expect(tooltipPanel()).not.toBeNull();
+      expect(ownerHost.getAttribute('aria-expanded')).toBe('true');
+    }));
   });
 
   it('leaves no overlay pane behind once hidden', fakeAsync(() => {
