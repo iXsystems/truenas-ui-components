@@ -149,6 +149,10 @@ The click is additive, not exclusive: the host's own \`(click)\` handler still r
 that both acts and pins does both. A host that navigates away should keep its tooltip plain or
 set \`[tnTooltipSticky]="false"\`.
 
+A **disabled** host never delivers a click, so pinning it is impossible — those tooltips fall back
+to opening on hover, which keeps the explanation for *why* the control is disabled visible. The
+link inside it stays out of reach, as it was before pinning existed.
+
 A pinned tooltip is dismissed by clicking the host again, by the dismiss button, by clicking
 outside it, or with Escape. It is not modal and traps nothing — Tab past the dismiss button walks
 back out into the page. Activating the host from the keyboard moves focus into the tooltip,

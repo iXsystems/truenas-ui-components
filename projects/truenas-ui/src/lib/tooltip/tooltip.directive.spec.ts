@@ -4,10 +4,11 @@ import { Component, signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TnTooltipDirective } from './tooltip.directive';
+import { TnButtonComponent } from '../button/button.component';
 
 @Component({
   standalone: true,
-  imports: [TnTooltipDirective],
+  imports: [TnTooltipDirective, TnButtonComponent],
   // Each host stands for one shape the directive has to handle; splitting them across fixtures
   // would mean re-stubbing the overlay geometry four times.
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
@@ -16,6 +17,10 @@ import { TnTooltipDirective } from './tooltip.directive';
     <button type="button" id="plain" [tnTooltip]="'Plain help text'">plain host</button>
     <button type="button" id="owns-expanded" aria-expanded="true" [tnTooltip]="ownerMessage()">menu trigger</button>
     <button type="button" id="side" tnTooltip="Plain help text" tnTooltipPosition="right">side host</button>
+    <button type="button" id="native-disabled" disabled [tnTooltip]="message()">disabled host</button>
+    <div id="wrapper-disabled" [tnTooltip]="message()"><button type="button" disabled>inner</button></div>
+    <span id="span-host" [tnTooltip]="message()">span host</span>
+    <tn-button id="tn-button-disabled" label="Create pool" [disabled]="true" [tnTooltip]="message()" />
   `,
 })
 class HostComponent {
@@ -286,6 +291,108 @@ describe('TnTooltipDirective sticky mode', () => {
 
     expect(closeButton()?.getAttribute('aria-label')).toBe('Cerrar');
   }));
+
+  // Pinning made the click the only way in. A disabled control never delivers one - the native
+  // button fires none, and tn-button swallows the retargeted one in a capture-phase listener - so
+  // suppressing hover as well would leave the tooltip with no way in at all. A disabled control
+  // with a tooltip explaining why is exactly the thing this would have broken.
+  describe('a host that cannot deliver the pinning click', () => {
+    const disabledHost = () => fixture.nativeElement.querySelector('#native-disabled') as HTMLButtonElement;
+    const disabledWrapper = () => fixture.nativeElement.querySelector('#wrapper-disabled') as HTMLElement;
+
+    it('falls back to hover on a disabled host', fakeAsync(() => {
+      hover(disabledHost());
+
+      expect(tooltipPanel()).not.toBeNull();
+      expect(closeButton()).toBeNull();
+
+      leave(disabledHost());
+      expect(tooltipPanel()).toBeNull();
+    }));
+
+    it('falls back to hover when the disabled control is inside a wrapper host', fakeAsync(() => {
+      hover(disabledWrapper());
+
+      expect(tooltipPanel()).not.toBeNull();
+    }));
+
+    // The reported case: tn-button registers a capture-phase click listener that
+    // stopImmediatePropagation()s while disabled, so the directive's own host binding never runs.
+    it('falls back to hover on a disabled tn-button, whose click never reaches the directive', fakeAsync(() => {
+      const button = fixture.nativeElement.querySelector('#tn-button-disabled') as HTMLElement;
+
+      button.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+      tick();
+      fixture.detectChanges();
+      expect(tooltipPanel()).toBeNull();
+
+      hover(button);
+      expect(tooltipPanel()).not.toBeNull();
+      expect(tooltipPanel()?.textContent).toContain('Read the');
+    }));
+
+    it('advertises no disclosure state, since there is nothing to disclose by clicking', () => {
+      expect(disabledHost().hasAttribute('aria-expanded')).toBe(false);
+      expect(disabledHost().hasAttribute('aria-haspopup')).toBe(false);
+    });
+
+    // Read live from the event handler, so this needs no re-sync to be correct.
+    it('goes back to click-only once the host is enabled again', fakeAsync(() => {
+      disabledHost().removeAttribute('disabled');
+
+      hover(disabledHost());
+      expect(tooltipPanel()).toBeNull();
+
+      disabledHost().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+      tick();
+      fixture.detectChanges();
+      expect(closeButton()).not.toBeNull();
+    }));
+
+    // The disclosure attributes are written, not read, so they do need the re-sync. Real
+    // microtasks rather than fakeAsync: MutationObserver's queue is not part of the fake clock.
+    it('picks the disclosure state back up when disabled is toggled off', async () => {
+      expect(disabledHost().hasAttribute('aria-haspopup')).toBe(false);
+
+      disabledHost().removeAttribute('disabled');
+      await Promise.resolve();
+
+      expect(disabledHost().getAttribute('aria-haspopup')).toBe('dialog');
+      expect(disabledHost().getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('treats aria-disabled the same way', fakeAsync(() => {
+      const ariaDisabled = disabledHost();
+      ariaDisabled.removeAttribute('disabled');
+      ariaDisabled.setAttribute('aria-disabled', 'true');
+
+      hover(ariaDisabled);
+      expect(tooltipPanel()).not.toBeNull();
+    }));
+  });
+
+  // Nothing restricts pinning to focusable hosts, so the keyboard dismissal path has to put focus
+  // somewhere real rather than assume the host can take it.
+  describe('restoring focus from a non-focusable host', () => {
+    const spanHost = () => fixture.nativeElement.querySelector('#span-host') as HTMLElement;
+
+    it('makes the host focusable rather than dropping focus to the body', fakeAsync(() => {
+      document.body.appendChild(fixture.nativeElement);
+      spanHost().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
+      tick();
+      fixture.detectChanges();
+      expect(tooltipPanel()).not.toBeNull();
+
+      closeButton()?.focus();
+      closeButton()?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      tick();
+      fixture.detectChanges();
+
+      expect(spanHost().getAttribute('tabindex')).toBe('-1');
+      expect(document.activeElement).toBe(spanHost());
+      fixture.nativeElement.remove();
+    }));
+  });
 
   describe('a tooltip pinned imperatively through stick()', () => {
     function stickPlainHost(): void {

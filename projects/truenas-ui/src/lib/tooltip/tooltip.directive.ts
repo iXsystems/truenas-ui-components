@@ -33,7 +33,7 @@ import { TnTooltipComponent } from './tooltip.component';
 
 export type TooltipPosition = 'above' | 'below' | 'left' | 'right' | 'before' | 'after';
 
-/** Matches the overlay's own `scrollThrottle`, so the arrow is refreshed on the same beat. */
+/** Drives both the overlay's reposition strategy and the arrow refresh that follows it. */
 const REPOSITION_THROTTLE = 20;
 
 /**
@@ -69,8 +69,9 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * needed for tooltips that contain links or other controls.
    *
    * This only narrows the rule in `_isPinnable`, it cannot widen it: plain help text is never
-   * pinnable however this is set. Setting it to false forces a message that does hold a link back
-   * into plain hover behaviour, where the link is unreachable.
+   * pinnable however this is set, and neither is a message on a host that cannot deliver the
+   * click - see `_isHostClickBlocked`. Setting it to false forces a message that does hold a
+   * link back into plain hover behaviour, where the link is unreachable.
    *
    * Pinning is not a second stage layered on hover: a tooltip that can be pinned is opened by
    * clicking the host and by nothing else, because a tooltip that appeared on hover and then had
@@ -202,13 +203,22 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     this._syncAria();
 
     const host = this._elementRef.nativeElement as HTMLElement;
-    if (!host.matches(INTERACTIVE_SELECTOR) && typeof MutationObserver !== 'undefined') {
-      // The inner control can render after view init (@if branches inside the wrapper
-      // swapping, deferred content) — re-describe when the host's subtree changes.
-      // AriaDescriber writes attributes only, which produces no childList mutations,
-      // so this cannot loop.
+    if (typeof MutationObserver !== 'undefined') {
+      // Two things move underneath this. The inner control can render after view init (@if
+      // branches inside the wrapper swapping, deferred content), and `disabled` can be toggled
+      // on it at any time — which decides whether the pinning click can arrive at all, and so
+      // whether the host advertises itself as a disclosure control.
+      //
+      // The attribute filter is what keeps this from looping: everything written back from
+      // `_syncAria` (aria-describedby, aria-expanded, aria-haspopup, aria-controls) is outside
+      // it, so no write of ours can retrigger the observer.
       this._innerObserver = new MutationObserver(() => this._syncAria());
-      this._innerObserver.observe(host, { childList: true, subtree: true });
+      this._innerObserver.observe(host, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['disabled', 'aria-disabled'],
+      });
     }
   }
 
@@ -237,6 +247,22 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   }
 
   /**
+   * Whether the host is in a state where the click that pins the tooltip can never arrive.
+   *
+   * A disabled control is: a native disabled `<button>` fires no click at all, and
+   * `<tn-button [disabled]>` swallows the retargeted one in a capture-phase listener before this
+   * directive's host binding runs. Suppressing hover for a pinnable message would then leave the
+   * tooltip with no way in whatsoever — and a disabled control with a tooltip explaining why,
+   * docs link included, is a normal thing to build. Those fall back to plain hover behaviour,
+   * which is what they did before pinning existed: the link stays out of reach, but the
+   * explanation does not.
+   */
+  private _isHostClickBlocked(): boolean {
+    const target = this._ariaTarget();
+    return target.matches(':disabled') || target.getAttribute('aria-disabled') === 'true';
+  }
+
+  /**
    * Marks a pinnable host as the disclosure control for its tooltip.
    *
    * Nothing about a plain button says "clicking me reveals something", so the host has to carry
@@ -247,8 +273,9 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    */
   private _syncHostPopupState(target: HTMLElement): void {
     // `_isSticky` counts too: `stick()` can pin a tooltip the host click never would have, and a
-    // panel that is up must be advertised as up whichever route opened it.
-    if (!this._isPinnable() && !this._isSticky) {
+    // panel that is up must be advertised as up whichever route opened it. A host that cannot
+    // deliver the click is back to being a hover tooltip, and advertises nothing.
+    if ((!this._isPinnable() || this._isHostClickBlocked()) && !this._isSticky) {
       this._clearHostPopupState();
       return;
     }
@@ -372,7 +399,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   _onMouseEnter(): void {
     // A pinnable tooltip is opened by the click alone - showing it on hover first would put the
     // content on screen and then still demand a click to make it usable.
-    if (this._isPinnable()) {
+    if (this._isPinnable() && !this._isHostClickBlocked()) {
       return;
     }
 
@@ -399,7 +426,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   _onFocusIn(): void {
     // Same as hover: keyboard users open a pinnable tooltip with Enter/Space, which arrives as a
     // click. Opening it on focus would show an unpinned copy they then had to activate anyway.
-    if (this._isPinnable()) {
+    if (this._isPinnable() && !this._isHostClickBlocked()) {
       return;
     }
 
@@ -444,7 +471,10 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     }
 
     // `detail === 0` means the click came from the keyboard (Enter/Space on a button), where
-    // there is no pointer to reach the tooltip with - so focus is moved into it instead.
+    // there is no pointer to reach the tooltip with - so focus is moved into it instead. It is
+    // also 0 for programmatic clicks (`HTMLElement.click()` always synthesises one), which are
+    // lumped in with keyboard activation: that is the one case where the focus move is wrong,
+    // and `MouseEvent` offers nothing better to tell the two apart.
     this.stick({ focusTooltip: event.detail === 0 });
   }
 
@@ -552,10 +582,34 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   unstick(restoreFocus = false): void {
     if (restoreFocus) {
       // Focus before teardown, so the browser never falls back to <body> in between.
-      (this._elementRef.nativeElement as HTMLElement).focus?.();
+      this._restoreFocusTarget().focus?.();
     }
 
     this.hide(0);
+  }
+
+  /**
+   * Where focus goes when a pinned tooltip is dismissed from the keyboard.
+   *
+   * Nothing restricts pinning to focusable hosts — `<span tnTooltip="… <a href>…">` pins like
+   * anything else — so focusing the host blindly is a no-op there, and tearing the panel down
+   * straight after drops focus to `<body>`. Prefer the element that would carry the tooltip's
+   * ARIA state, and if even that cannot hold focus, make the host able to: `tabindex="-1"` keeps
+   * it out of the tab order while letting it be a focus target, and is left in place because
+   * removing it again would drop the focus it was added to catch.
+   */
+  private _restoreFocusTarget(): HTMLElement {
+    const target = this._ariaTarget();
+    if (target.matches(INTERACTIVE_SELECTOR)) {
+      return target;
+    }
+
+    const host = this._elementRef.nativeElement as HTMLElement;
+    if (!host.hasAttribute('tabindex')) {
+      host.setAttribute('tabindex', '-1');
+    }
+
+    return host;
   }
 
   private _createOverlay(): void {
@@ -570,14 +624,17 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
 
     this._overlayRef = this._overlay.create({
       positionStrategy,
-      scrollStrategy: this._overlay.scrollStrategies.reposition({ scrollThrottle: 20 }),
+      scrollStrategy: this._overlay.scrollStrategies.reposition({ scrollThrottle: REPOSITION_THROTTLE }),
       panelClass: ['tn-tooltip-panel', `tn-tooltip-panel-${this.position()}`, this.tooltipClass()].filter(Boolean),
     });
 
-    // `positionChanges` fires only when the chosen position *changes*, so it cannot carry the
-    // arrow on its own: a panel re-placed at the same position but different coordinates - which
-    // is what viewport clamping does, and the case the arrow offset exists for - emits nothing.
-    // These are the events the reposition scroll strategy re-places on, so the arrow follows it.
+    // `positionChanges` cannot carry the arrow on its own. CDK emits it from `_applyPosition`
+    // behind `position !== this._lastPosition || scrollVisibility changed` (cdk 21.1.0), so a
+    // panel re-placed at the *same* position with different coordinates - viewport clamping,
+    // which is the case the arrow offset exists for - emits nothing at all. These are the events
+    // that re-place the overlay, so the arrow follows it; the side-placement specs in
+    // `tooltip.directive.spec.ts` fail without this. On a genuine flip both paths run, which is
+    // two rect reads either way since the inset is cached.
     this._repositionSub = merge(
       this._scrollDispatcher.scrolled(REPOSITION_THROTTLE),
       this._viewportRuler.change(REPOSITION_THROTTLE),
