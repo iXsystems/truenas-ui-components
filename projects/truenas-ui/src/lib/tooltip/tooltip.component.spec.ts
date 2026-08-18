@@ -128,6 +128,27 @@ describe('TnTooltipComponent sticky mode', () => {
     expect((stickyFixture.nativeElement.querySelector('.tn-tooltip') as HTMLElement).getAttribute('tabindex')).toBe('-1');
   });
 
+  // ARIA's `tooltip` role is non-focusable, non-interactive content, so a screen reader may
+  // flatten a pinned panel to a text description and never expose the link or the dismiss button -
+  // the very things pinning exists to make reachable.
+  it('becomes a labelled dialog once pinned, so its content is exposed to assistive tech', () => {
+    const fixture = createStickyTooltip();
+    fixture.componentRef.setInput('id', 'tn-tooltip-abc');
+    fixture.detectChanges();
+    const panel = fixture.nativeElement.querySelector('.tn-tooltip') as HTMLElement;
+
+    expect(panel.getAttribute('role')).toBe('dialog');
+    expect(panel.getAttribute('aria-labelledby')).toBe('tn-tooltip-abc-message');
+    expect(fixture.nativeElement.querySelector('#tn-tooltip-abc-message')).not.toBeNull();
+  });
+
+  it('stays a plain tooltip while it is only shown on hover', () => {
+    const panel = createTooltip('Hover message').nativeElement.querySelector('.tn-tooltip') as HTMLElement;
+
+    expect(panel.getAttribute('role')).toBe('tooltip');
+    expect(panel.hasAttribute('aria-labelledby')).toBe(false);
+  });
+
   it('keeps the message readable when the dismiss button is present', () => {
     const fixture = createStickyTooltip();
     const message = fixture.nativeElement.querySelector('.tn-tooltip__message') as HTMLElement;

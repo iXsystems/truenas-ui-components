@@ -1,6 +1,6 @@
 
 import type { ElementRef } from '@angular/core';
-import { Component, input, output, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, input, output, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { TnIconComponent } from '../icon/icon.component';
 
 @Component({
@@ -22,6 +22,12 @@ export class TnTooltipComponent {
   /**
    * Pinned ("sticky") mode. The tooltip stops being click-through so its content can be
    * interacted with, and a dismiss button is rendered next to the message.
+   *
+   * It also changes what the panel *is* for assistive tech: ARIA's `tooltip` role is specified as
+   * non-focusable, non-interactive content that something else is described by, so a screen
+   * reader may flatten it to a text description and never expose the link or the dismiss button -
+   * exactly what pinning exists to make reachable. A pinned panel is therefore a `dialog`,
+   * labelled by its own message.
    */
   sticky = input(false);
 
@@ -30,6 +36,9 @@ export class TnTooltipComponent {
 
   /** Emitted when the user activates the dismiss button. */
   onDismiss = output<void>();
+
+  /** Names the pinned panel (see `sticky`) without duplicating the message into an aria-label. */
+  protected messageId = computed(() => `${this.id()}-message`);
 
   private panel = viewChild.required<ElementRef<HTMLElement>>('panel');
 

@@ -1,7 +1,5 @@
-import type { BaseHarnessFilters, HarnessLoader } from '@angular/cdk/testing';
+import type { BaseHarnessFilters } from '@angular/cdk/testing';
 import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
-import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import type { ComponentFixture } from '@angular/core/testing';
 
 /**
  * Harness for interacting with a tooltip rendered by `tnTooltip` in tests.
@@ -151,29 +149,6 @@ export class TnTooltipHarness extends ComponentHarness {
   async clickContent(selector: string): Promise<void> {
     const element = await this.locatorFor(`.tn-tooltip__message ${selector}`)();
     return element.click();
-  }
-}
-
-/**
- * Test utilities for tooltips.
- *
- * Provides a document-root `HarnessLoader` that can find tooltips rendered in CDK overlays.
- *
- * @example
- * ```typescript
- * import { TnTooltipTesting, TnTooltipHarness } from '@truenas/ui-components';
- *
- * const rootLoader = TnTooltipTesting.rootLoader(fixture);
- * const tooltip = await rootLoader.getHarness(TnTooltipHarness);
- * ```
- */
-export class TnTooltipTesting {
-  /**
-   * Creates a `HarnessLoader` that searches the entire document, including the CDK overlays
-   * that tooltips are rendered into.
-   */
-  static rootLoader(fixture: ComponentFixture<unknown>): HarnessLoader {
-    return TestbedHarnessEnvironment.documentRootLoader(fixture);
   }
 }
 

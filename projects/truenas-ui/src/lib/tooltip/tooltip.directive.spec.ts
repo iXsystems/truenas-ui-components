@@ -235,6 +235,38 @@ describe('TnTooltipDirective sticky mode', () => {
     expect(closeButton()).not.toBeNull();
   }));
 
+  describe('aria-expanded', () => {
+    // Nothing else on a plain button says "clicking me opens something", so the pinnable host has
+    // to carry the state that does.
+    it('marks a pinnable host as a control that reveals content, and tracks whether it is open', fakeAsync(() => {
+      expect(host.getAttribute('aria-expanded')).toBe('false');
+
+      click();
+      expect(host.getAttribute('aria-expanded')).toBe('true');
+
+      click();
+      expect(host.getAttribute('aria-expanded')).toBe('false');
+    }));
+
+    it('leaves it off a hover tooltip, which reveals nothing on activation', () => {
+      expect(plainHost.hasAttribute('aria-expanded')).toBe(false);
+    });
+
+    it('drops it when the message stops being pinnable', () => {
+      fixture.componentInstance.message.set('Plain help text');
+      fixture.detectChanges();
+
+      expect(host.hasAttribute('aria-expanded')).toBe(false);
+    });
+
+    it('drops it when sticky mode is turned off', () => {
+      fixture.componentInstance.sticky.set(false);
+      fixture.detectChanges();
+
+      expect(host.hasAttribute('aria-expanded')).toBe(false);
+    });
+  });
+
   it('leaves no overlay pane behind once hidden', fakeAsync(() => {
     hover(plainHost);
     leave(plainHost);
@@ -244,9 +276,10 @@ describe('TnTooltipDirective sticky mode', () => {
 
   describe('a null message', () => {
     // Switching a tooltip off with `[tnTooltip]="condition ? text : null"` is common in consuming
-    // apps, and an explicitly bound null bypasses the input's '' default. Every string operation
-    // in here has to survive it: webui's collapsed-sidenav links do exactly this, and each one
-    // threw "Cannot read properties of null (reading 'includes')" out of ngAfterViewInit.
+    // apps, and an explicitly bound null bypasses the input's '' default — the input transform is
+    // what turns it back into a string. These cover that the sticky paths (click, pinnability)
+    // are normalised too: webui's collapsed-sidenav links do exactly this, and each one threw
+    // "Cannot read properties of null (reading 'includes')" out of ngAfterViewInit.
     beforeEach(() => {
       fixture.componentInstance.message.set(null as unknown as string);
       fixture.detectChanges();

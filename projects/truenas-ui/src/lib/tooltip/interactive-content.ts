@@ -1,5 +1,11 @@
-/** Content a user would want to reach, and therefore needs the tooltip pinned to reach. */
-const INTERACTIVE_CONTENT_SELECTOR = 'a[href], button, input, select, textarea, [tabindex]';
+/**
+ * Elements that can receive focus / are read by assistive tech.
+ *
+ * Used for two related questions, which is why it lives here rather than in either caller: is the
+ * directive's host itself the interactive element (so it, and not a wrapper, carries
+ * `aria-describedby`), and does a tooltip message hold something the user would want to reach?
+ */
+export const INTERACTIVE_SELECTOR = 'button, a[href], input, select, textarea, [tabindex]';
 
 /**
  * Whether a tooltip message holds something clickable.
@@ -17,5 +23,5 @@ export function hasInteractiveContent(message: string | null | undefined): boole
   }
 
   const parsed = new DOMParser().parseFromString(message, 'text/html');
-  return !!parsed.body.querySelector(INTERACTIVE_CONTENT_SELECTOR);
+  return !!parsed.body.querySelector(INTERACTIVE_SELECTOR);
 }

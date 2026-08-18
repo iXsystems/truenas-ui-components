@@ -1,12 +1,13 @@
 <div
   #panel
   class="tn-tooltip"
-  role="tooltip"
   [id]="id()"
+  [attr.role]="sticky() ? 'dialog' : 'tooltip'"
+  [attr.aria-labelledby]="sticky() ? messageId() : null"
   [class.tn-tooltip--sticky]="sticky()"
   [attr.tabindex]="sticky() ? -1 : null"
   [attr.aria-hidden]="false">
-  <div class="tn-tooltip__message" [innerHTML]="message()"></div>
+  <div class="tn-tooltip__message" [id]="messageId()" [innerHTML]="message()"></div>
 
   @if (sticky()) {
     <button

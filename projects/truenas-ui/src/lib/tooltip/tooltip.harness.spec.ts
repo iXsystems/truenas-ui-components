@@ -3,8 +3,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { Component, signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
+import { TnTooltipTesting } from './tooltip-testing';
 import { TnTooltipDirective } from './tooltip.directive';
-import { TnTooltipHarness, TnTooltipTesting } from './tooltip.harness';
+import { TnTooltipHarness } from './tooltip.harness';
 import { TnIconTesting } from '../icon/icon-testing';
 
 @Component({

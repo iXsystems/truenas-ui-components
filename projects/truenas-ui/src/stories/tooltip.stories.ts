@@ -36,7 +36,7 @@ const meta: Meta = {
     },
     tnTooltipSticky: {
       control: 'boolean',
-      description: 'Whether clicking the host pins the tooltip open so its content can be interacted with. Enabled by default; a pinned tooltip shows a dismiss button and closes on a second host click, on the dismiss button, on an outside click, or on Escape.'
+      description: 'Whether a message containing interactive content (a link, button or field) may be pinned open by clicking the host. Enabled by default, and only ever applies to such messages — plain help text always hovers and is never pinnable, so this control has no effect on it. Set it to false to force a message with a link back to hover behaviour.'
     },
     tnTooltipCloseAriaLabel: {
       control: 'text',
@@ -93,8 +93,8 @@ export const Sticky: Story = {
         </tn-button>
 
         <tn-button
-          label="Hover only (sticky off)"
-          tnTooltip="This one can't be pinned"
+          label="Same message, sticky off"
+          tnTooltip="Datasets inherit settings from their parent. <a href='https://www.truenas.com/docs/' target='_blank' rel='noopener'>Read the docs</a>"
           [tnTooltipSticky]="false">
         </tn-button>
       </div>
@@ -125,19 +125,33 @@ export const Sticky: Story = {
       description: {
         story: `
 Tooltips disappear on \`mouseleave\`, which makes any interactive content inside them unreachable.
-Sticky mode fixes that: clicking the host pins the tooltip open, the tooltip stops being
-click-through, and a dismiss button appears next to the message.
+Sticky mode fixes that: the tooltip is pinned open, stops being click-through, and gains a dismiss
+button next to the message.
+
+**The message decides, not the input.** A tooltip is pinnable only when its message contains
+something reachable — a link, button or form field. Plain help text, which is nearly every
+tooltip, keeps hovering and is never pinned: pinning a sentence the reader can already see costs a
+click and buys nothing. \`tnTooltipSticky\` only narrows that rule; it cannot make plain text
+pinnable.
+
+**A pinnable tooltip opens on click only.** ⚠️ This is a change in behaviour: a message with a
+link no longer appears on hover or on focus at all, because a tooltip that appeared on hover and
+then still had to be clicked made the user chase a target already on screen. Its host carries
+\`aria-expanded\` so assistive tech announces it as a control that reveals something.
 
 A pinned tooltip is dismissed by clicking the host again, by the dismiss button, by clicking
 outside it, or with Escape. Activating the host from the keyboard moves focus into the tooltip,
 so Tab walks its content and then the dismiss button; dismissing hands focus back to the host.
 
 \`\`\`html
-<!-- sticky is on by default -->
+<!-- pinnable: the message holds a link, so clicking the host opens it -->
 <button [tnTooltip]="'See the <a href=\\'/docs\\'>docs</a>'">Help</button>
 
-<!-- opt out for tooltips that are plain labels -->
-<button tnTooltip="Delete" [tnTooltipSticky]="false">…</button>
+<!-- always a hover tooltip: plain text is never pinnable, with or without the input -->
+<button tnTooltip="Delete">…</button>
+
+<!-- opt a message with a link back into hover behaviour -->
+<button [tnTooltip]="'See the <a href=\\'/docs\\'>docs</a>'" [tnTooltipSticky]="false">Help</button>
 \`\`\`
         `,
       },

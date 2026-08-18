@@ -27,17 +27,10 @@ import {
   inject
 } from '@angular/core';
 import type { Subscription } from 'rxjs';
-import { hasInteractiveContent } from './interactive-content';
+import { hasInteractiveContent, INTERACTIVE_SELECTOR } from './interactive-content';
 import { TnTooltipComponent } from './tooltip.component';
 
 export type TooltipPosition = 'above' | 'below' | 'left' | 'right' | 'before' | 'after';
-
-/**
- * Elements that can receive focus / are read by assistive tech. Used to decide whether
- * the directive's host is itself the interactive element, or a wrapper (e.g. `<tn-button>`)
- * whose inner control should carry `aria-describedby`.
- */
-const INTERACTIVE_SELECTOR = 'button, a[href], input, select, textarea, [tabindex]';
 
 /** Half the arrow's base, and the panel's corner radius - both mirror `tooltip.component.scss`. */
 const ARROW_HALF_WIDTH = 6;
@@ -63,6 +56,10 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   /**
    * Allows the tooltip to be pinned ("stuck") open so its content can be interacted with —
    * needed for tooltips that contain links or other controls.
+   *
+   * This only narrows the rule in `_isPinnable`, it cannot widen it: plain help text is never
+   * pinnable however this is set. Setting it to false forces a message that does hold interactive
+   * content back into plain hover behaviour.
    *
    * Pinning is not a second stage layered on hover: a tooltip that can be pinned is opened by
    * clicking the host and by nothing else, because a tooltip that appeared on hover and then had
@@ -100,16 +97,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   private _describedTarget: HTMLElement | null = null;
   private _describedMessage = '';
   private _innerObserver: MutationObserver | null = null;
-
-  /**
-   * The message, guaranteed to be a string.
-   *
-   * An input default only applies while the input is left unbound, so a template binding
-   * `[tnTooltip]="condition ? text : null"` — a common way to switch a tooltip off — delivers a
-   * literal `null` straight past the `''` default. Everything internal reads this rather than
-   * `message()`, so a string method is never called on a non-string.
-   */
-  private readonly _text = computed(() => this.message() ?? '');
+  private _expandedTarget: HTMLElement | null = null;
 
   /**
    * Whether this tooltip is opened by a click and pinned, rather than shown on hover.
@@ -120,19 +108,20 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * would cost a click and buy the reader nothing.
    */
   private readonly _isPinnable = computed(
-    () => this.stickyEnabled() && !this.disabled() && hasInteractiveContent(this._text()),
+    () => this.stickyEnabled() && !this.disabled() && hasInteractiveContent(this.message()),
   );
 
   /**
-   * Re-sync the description (see ngAfterViewInit) when the inputs change. The initial
+   * Re-sync the ARIA attributes (see ngAfterViewInit) when the inputs change. The initial
    * write cannot happen here: on the first run the host's child components (e.g.
    * tn-button's inner `<button>`) have not rendered yet.
    */
-  private readonly _syncDescriptionOnInputChange = effect(() => {
+  private readonly _syncAriaOnInputChange = effect(() => {
     this.disabled();
     this.message();
+    this._isPinnable();
     if (this._viewInitialized) {
-      this._syncAriaDescription();
+      this._syncAria();
     }
   });
 
@@ -147,7 +136,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    */
   ngAfterViewInit(): void {
     this._viewInitialized = true;
-    this._syncAriaDescription();
+    this._syncAria();
 
     const host = this._elementRef.nativeElement as HTMLElement;
     if (!host.matches(INTERACTIVE_SELECTOR) && typeof MutationObserver !== 'undefined') {
@@ -155,25 +144,59 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
       // swapping, deferred content) — re-describe when the host's subtree changes.
       // AriaDescriber writes attributes only, which produces no childList mutations,
       // so this cannot loop.
-      this._innerObserver = new MutationObserver(() => this._syncAriaDescription());
+      this._innerObserver = new MutationObserver(() => this._syncAria());
       this._innerObserver.observe(host, { childList: true, subtree: true });
     }
   }
 
-  private _syncAriaDescription(): void {
+  private _syncAria(): void {
+    const target = this._ariaTarget();
+    this._syncAriaDescription(target);
+    this._syncAriaExpanded(target);
+  }
+
+  /**
+   * The element the tooltip's ARIA attributes belong on: the host when it is itself a control,
+   * otherwise its single interactive descendant (e.g. `<tn-button>`'s inner `<button>`), because
+   * screen readers read descriptions and states off the focused control, not off wrappers.
+   *
+   * A container holding several controls keeps them on the host — annotating an arbitrary first
+   * control would attach the text to the wrong element.
+   */
+  private _ariaTarget(): HTMLElement {
     const host = this._elementRef.nativeElement as HTMLElement;
-    let target = host;
-    if (!host.matches(INTERACTIVE_SELECTOR)) {
-      // Forward the description only when it is unambiguous: a wrapper with exactly
-      // one interactive descendant (e.g. tn-button's inner <button>). A container
-      // holding several controls keeps the description on the host — describing an
-      // arbitrary first control would attach the text to the wrong element.
-      const candidates = host.querySelectorAll<HTMLElement>(INTERACTIVE_SELECTOR);
-      if (candidates.length === 1) {
-        target = candidates[0];
-      }
+    if (host.matches(INTERACTIVE_SELECTOR)) {
+      return host;
     }
-    const message = !this.disabled() ? this._plainTextMessage(this._text()) : '';
+
+    const candidates = host.querySelectorAll<HTMLElement>(INTERACTIVE_SELECTOR);
+    return candidates.length === 1 ? candidates[0] : host;
+  }
+
+  /**
+   * A pinnable tooltip is opened by clicking its host, and nothing about a plain button says so.
+   * `aria-expanded` is the state that says it: it marks the control as one that reveals content,
+   * and then tracks whether that content is currently up. Hover tooltips reveal nothing on
+   * activation, so they must not carry it.
+   */
+  private _syncAriaExpanded(target: HTMLElement): void {
+    if (this._expandedTarget && this._expandedTarget !== target) {
+      this._expandedTarget.removeAttribute('aria-expanded');
+      this._expandedTarget = null;
+    }
+
+    if (!this._isPinnable()) {
+      target.removeAttribute('aria-expanded');
+      this._expandedTarget = null;
+      return;
+    }
+
+    target.setAttribute('aria-expanded', String(this._isSticky));
+    this._expandedTarget = target;
+  }
+
+  private _syncAriaDescription(target: HTMLElement): void {
+    const message = !this.disabled() ? this._plainTextMessage(this.message()) : '';
 
     if (this._describedTarget === target && this._describedMessage === message) {
       return;
@@ -213,6 +236,8 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     this._positionSub?.unsubscribe();
     this._innerObserver?.disconnect();
     this._removeAriaDescription();
+    this._expandedTarget?.removeAttribute('aria-expanded');
+    this._expandedTarget = null;
 
     if (this._overlayRef) {
       this._overlayRef.dispose();
@@ -228,7 +253,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
       return;
     }
 
-    if (!this.disabled() && this._text()) {
+    if (!this.disabled() && this.message()) {
       this.show(this.showDelay());
     }
   }
@@ -255,7 +280,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
       return;
     }
 
-    if (!this.disabled() && this._text()) {
+    if (!this.disabled() && this.message()) {
       this.show(this.showDelay());
     }
   }
@@ -307,7 +332,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
 
   /** Shows the tooltip */
   show(delay: number = 0): void {
-    if (this.disabled() || !this._text()) {
+    if (this.disabled() || !this.message()) {
       return;
     }
 
@@ -359,7 +384,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * without a pointer.
    */
   stick(options: { focusTooltip?: boolean } = {}): void {
-    if (this.disabled() || !this._text()) {
+    if (this.disabled() || !this.message()) {
       return;
     }
 
@@ -371,6 +396,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
 
     this._attachTooltip();
     this._isSticky = true;
+    this._syncAriaExpanded(this._ariaTarget());
     this._tooltipInstance?.setInput('sticky', true);
     this._subscribeToEscape();
     this._subscribeToOutsideClicks();
@@ -497,7 +523,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     if (!this._tooltipInstance) {
       const portal = new ComponentPortal(TnTooltipComponent, this._viewContainerRef);
       this._tooltipInstance = this._overlayRef.attach(portal);
-      this._tooltipInstance.setInput('message', this._text());
+      this._tooltipInstance.setInput('message', this.message());
       this._tooltipInstance.setInput('id', this._tooltipId);
       this._tooltipInstance.setInput('closeAriaLabel', this.closeAriaLabel());
       this._dismissSub = this._tooltipInstance.instance.onDismiss.subscribe(() => {
@@ -548,7 +574,11 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   }
 
   private _destroyTooltip(): void {
+    const wasSticky = this._isSticky;
     this._isSticky = false;
+    if (wasSticky) {
+      this._syncAriaExpanded(this._ariaTarget());
+    }
 
     this._escapeSub?.unsubscribe();
     this._escapeSub = null;
