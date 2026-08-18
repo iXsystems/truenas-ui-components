@@ -406,16 +406,73 @@ describe('TnTooltipDirective sticky mode', () => {
     }));
   });
 
-  // Nothing restricts pinning to focusable hosts, so the keyboard dismissal path has to put focus
-  // somewhere real rather than assume the host can take it.
+  // A host that is not a control cannot be focused or activated from the keyboard, and the click
+  // is the only way into a pinned panel — so pinning there would put the tooltip out of reach of
+  // the keyboard entirely, and would advertise a disclosure (`aria-expanded` is invalid on a bare
+  // `<span>` anyway) that nobody could operate. Same principle as the disabled hosts above.
+  describe('a host that cannot be operated from the keyboard', () => {
+    const spanHost = () => fixture.nativeElement.querySelector('#span-host') as HTMLElement;
+
+    it('falls back to hover rather than pinning on click', fakeAsync(() => {
+      spanHost().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+      tick();
+      fixture.detectChanges();
+      expect(tooltipPanel()).toBeNull();
+
+      hover(spanHost());
+      expect(tooltipPanel()).not.toBeNull();
+      expect(closeButton()).toBeNull();
+
+      leave(spanHost());
+      expect(tooltipPanel()).toBeNull();
+    }));
+
+    // The panel does open on hover here, so the click that follows must not pin what is already
+    // on screen — the same two-stage flow the aria-disabled fallback guards against.
+    it('does not pin the hover panel when the click arrives', fakeAsync(() => {
+      hover(spanHost());
+      spanHost().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+      tick();
+      fixture.detectChanges();
+
+      expect(closeButton()).toBeNull();
+      expect(spanHost().hasAttribute('aria-expanded')).toBe(false);
+    }));
+
+    it('advertises no disclosure state, which is not valid on a non-control anyway', () => {
+      expect(spanHost().hasAttribute('aria-expanded')).toBe(false);
+      expect(spanHost().hasAttribute('aria-haspopup')).toBe(false);
+    });
+
+    // `tabindex="-1"` makes an element a focus target without putting it in the tab order, so it
+    // is no more keyboard-operable than the bare span - and `_restoreFocusTarget` leaves exactly
+    // that behind on hosts it had to focus by hand.
+    it('does not count tabindex="-1" as being operable', fakeAsync(() => {
+      spanHost().setAttribute('tabindex', '-1');
+
+      hover(spanHost());
+      expect(tooltipPanel()).not.toBeNull();
+      expect(closeButton()).toBeNull();
+    }));
+  });
+
+  // Pinning is still reachable through `stick()` on such a host, so the keyboard dismissal path
+  // has to put focus somewhere real rather than assume the host can take it.
   describe('restoring focus from a non-focusable host', () => {
     const spanHost = () => fixture.nativeElement.querySelector('#span-host') as HTMLElement;
 
-    it('makes the host focusable rather than dropping focus to the body', fakeAsync(() => {
-      document.body.appendChild(fixture.nativeElement);
-      spanHost().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
+    function stickSpanHost(): void {
+      fixture.debugElement
+        .query((node) => node.nativeElement === spanHost())
+        .injector.get(TnTooltipDirective)
+        .stick({ focusTooltip: true });
       tick();
       fixture.detectChanges();
+    }
+
+    it('makes the host focusable rather than dropping focus to the body', fakeAsync(() => {
+      document.body.appendChild(fixture.nativeElement);
+      stickSpanHost();
       expect(tooltipPanel()).not.toBeNull();
 
       closeButton()?.focus();

@@ -274,6 +274,36 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   }
 
   /**
+   * Whether the element carrying the tooltip's ARIA state can be operated from the keyboard.
+   *
+   * `_ariaTarget` falls back to the bare host when that host is not a control and holds no single
+   * interactive descendant — `<span [tnTooltip]="'… <a href>…'">` is exactly that shape. Such a
+   * host can be clicked with a pointer, so nothing in `_isHostClickBlocked` catches it, but it
+   * cannot be focused or activated with Enter/Space, and the click is the only way into a pinned
+   * panel. Going click-only there would put the tooltip out of reach of the keyboard entirely,
+   * and would write `aria-expanded` — not a global attribute, invalid on a `<span>`'s implicit
+   * `generic` role — advertising a disclosure nobody can operate.
+   *
+   * `tabindex="-1"` does not count: it makes an element a focus target without putting it in the
+   * tab order, and `_restoreFocusTarget` leaves one behind on hosts it had to focus by hand.
+   */
+  private _isHostKeyboardOperable(): boolean {
+    const target = this._ariaTarget();
+    return target.matches(INTERACTIVE_SELECTOR) && target.getAttribute('tabindex') !== '-1';
+  }
+
+  /**
+   * Whether this tooltip is opened by clicking its host, rather than on hover.
+   *
+   * `_isPinnable` is the message's half of that decision; the host has the other half, and both
+   * have to agree. A host that cannot deliver the pinning click, or cannot be operated from the
+   * keyboard at all, goes back to being a hover tooltip.
+   */
+  private _pinsOnClick(): boolean {
+    return this._isPinnable() && !this._isHostClickBlocked() && this._isHostKeyboardOperable();
+  }
+
+  /**
    * Marks a pinnable host as the disclosure control for its tooltip.
    *
    * Nothing about a plain button says "clicking me reveals something", so the host has to carry
@@ -284,9 +314,9 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    */
   private _syncHostPopupState(target: HTMLElement): void {
     // `_isSticky` counts too: `stick()` can pin a tooltip the host click never would have, and a
-    // panel that is up must be advertised as up whichever route opened it. A host that cannot
-    // deliver the click is back to being a hover tooltip, and advertises nothing.
-    if ((!this._isPinnable() || this._isHostClickBlocked()) && !this._isSticky) {
+    // panel that is up must be advertised as up whichever route opened it. A host that does not
+    // open on click is back to being a hover tooltip, and advertises nothing.
+    if (!this._pinsOnClick() && !this._isSticky) {
       this._clearHostPopupState();
       return;
     }
@@ -410,7 +440,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   _onMouseEnter(): void {
     // A pinnable tooltip is opened by the click alone - showing it on hover first would put the
     // content on screen and then still demand a click to make it usable.
-    if (this._isPinnable() && !this._isHostClickBlocked()) {
+    if (this._pinsOnClick()) {
       return;
     }
 
@@ -437,7 +467,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   _onFocusIn(): void {
     // Same as hover: keyboard users open a pinnable tooltip with Enter/Space, which arrives as a
     // click. Opening it on focus would show an unpinned copy they then had to activate anyway.
-    if (this._isPinnable() && !this._isHostClickBlocked()) {
+    if (this._pinsOnClick()) {
       return;
     }
 
@@ -478,14 +508,14 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     // user can already read achieves nothing, and it would hijack the click of every button that
     // carries a tooltip. An empty message is excluded by the same check, having nothing to reach.
     //
-    // `_isHostClickBlocked` has to be checked here too, not just in `_onMouseEnter`/`_onFocusIn`.
-    // Those two already fell back to hover for such a host, and an `aria-disabled` one still
-    // dispatches clicks — so without this the panel would open on hover and then get pinned by
-    // the very click the fallback exists to work around, which is the two-stage flow pinning was
-    // meant to replace. It would also leave a control the app advertises as disabled carrying
-    // `aria-expanded`/`aria-haspopup`/`aria-controls`, which `_syncHostPopupState` clears for
-    // exactly this case.
-    if (!this._isPinnable() || this._isHostClickBlocked()) {
+    // The host-side half of `_pinsOnClick` has to be checked here too, not just in
+    // `_onMouseEnter`/`_onFocusIn`. Those two already fell back to hover for such a host, and
+    // both an `aria-disabled` control and a plain `<span>` still dispatch clicks — so without
+    // this the panel would open on hover and then get pinned by the very click the fallback
+    // exists to work around, which is the two-stage flow pinning was meant to replace. It would
+    // also leave a host `_syncHostPopupState` deliberately advertises as nothing carrying
+    // `aria-expanded`/`aria-haspopup`/`aria-controls`.
+    if (!this._pinsOnClick()) {
       return;
     }
 
@@ -610,9 +640,10 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   /**
    * Where focus goes when a pinned tooltip is dismissed from the keyboard.
    *
-   * Nothing restricts pinning to focusable hosts — `<span tnTooltip="… <a href>…">` pins like
-   * anything else — so focusing the host blindly is a no-op there, and tearing the panel down
-   * straight after drops focus to `<body>`. Prefer the element that would carry the tooltip's
+   * A non-focusable host never pins on its own click (see `_isHostKeyboardOperable`), but
+   * `stick()` pins whatever it is called on — `<span tnTooltip="… <a href>…">` included — so
+   * focusing the host blindly is a no-op there, and tearing the panel down straight after drops
+   * focus to `<body>`. Prefer the element that would carry the tooltip's
    * ARIA state, and if even that cannot hold focus, make the host able to: `tabindex="-1"` keeps
    * it out of the tab order while letting it be a focus target, and is left in place because
    * removing it again would drop the focus it was added to catch.

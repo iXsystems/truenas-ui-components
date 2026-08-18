@@ -155,6 +155,12 @@ it was before pinning existed. A truly disabled control delivers no click to pin
 place; \`aria-disabled\` is advisory and still dispatches one, so pinning is declined for it
 deliberately rather than by accident.
 
+The same goes for a host that is **not a control** at all (\`<span [tnTooltip]="…">\`, with no
+single interactive element inside it). A pointer can click it, but nothing can focus or activate
+it from the keyboard, and the click is the only way into a pinned panel — so those hosts keep
+hover behaviour too, and carry no disclosure state (\`aria-expanded\` is not valid on a
+\`<span>\`). Put the tooltip on the button or link itself when its message holds a link.
+
 A pinned tooltip is dismissed by clicking the host again, by the dismiss button, by clicking
 outside it, or with Escape. It is not modal and traps nothing — Tab past the dismiss button walks
 back out into the page. Activating the host from the keyboard moves focus into the tooltip,
