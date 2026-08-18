@@ -163,6 +163,7 @@ Every interactive component listed below supports `testId`:
 | `tn-card` | `TnCardAction.testId`, `TnCardHeaderStatus.testId`, `TnCardControl.testId`, `TnCardFooterLink.testId`, `headerMenuTriggerTestId` input | each rendered slot |
 | `tn-checkbox` | `testId` input | inner `<input>` |
 | `tn-chip` | `testId` input | chip root |
+| `tn-chip-input` | `testId` input, else the bound control name | inner `<input>`, each chip and each suggestion row |
 | `tn-date-input` | `testId` input | `.tn-date-input-container` |
 | `tn-date-range-input` | `testId` input | `.tn-date-range-container` |
 | `tn-drawer` | `testId` input | both side-mode and over-mode panels |

@@ -1,5 +1,5 @@
 import { signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
@@ -273,16 +273,32 @@ export const ComponentHarness: Story = {
 };
 
 /**
- * **Test IDs.** The field emits `chip-input-<base>`; each chip and suggestion is
- * scoped beneath it (`option-<base>-<value>`). `testId="tags"` →
- * `chip-input-tags`, under `data-testid` (default) / `data-test`.
+ * **Test IDs.** The field emits `chip-input-<base>`; chips are scoped beneath it
+ * as `chip-<base>-<value>` and suggestion rows as `option-<base>-<value>`.
+ * `testId="tags"` → `chip-input-tags`, under `data-testid` (default) /
+ * `data-test`. With no `testId`, the base falls back to the bound control name,
+ * so `formControlName="isnsServers"` → `chip-input-isns-servers`; a control-less
+ * input with no `testId` emits nothing. The second field below takes that path —
+ * its field, chips and suggestion rows are all named from the control.
+ *
+ * A discriminator that normalizes to nothing (`*`, `**`, a CJK-only tag) would
+ * collapse a chip's id back to the bare base, so those chips stay attribute-free
+ * rather than sharing one id.
  */
 export const TestIds: Story = {
   render: () => ({
-    props: { control: new FormControl<string[]>(['one']) },
+    props: {
+      control: new FormControl<string[]>(['one']),
+      // The second field is deliberately testId-less: the inspector reads ids live, so
+      // the control-name fallback is demonstrated rather than only described above.
+      form: new FormGroup({ isnsServers: new FormControl<string[]>(['10.0.0.1']) }),
+    },
     template: `
       <tn-testid-inspector>
         <tn-chip-input [formControl]="control" testId="tags" placeholder="Add a tag" />
+        <form [formGroup]="form">
+          <tn-chip-input formControlName="isnsServers" placeholder="Add a server" />
+        </form>
       </tn-testid-inspector>
     `,
     moduleMetadata: { imports: [TnChipInputComponent, TestIdInspectorComponent, ReactiveFormsModule] },
