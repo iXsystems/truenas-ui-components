@@ -34,7 +34,8 @@
                 type="button"
                 class="tn-card__title-tooltip"
                 [attr.aria-label]="resolvedTitleTooltipAriaLabel()"
-                [tnTooltip]="tooltip">
+                [tnTooltip]="tooltip"
+                [tnTooltipSticky]="tooltipSticky()">
                 <tn-icon name="help-circle" library="mdi" size="sm" [attr.aria-hidden]="true" />
               </button>
             }
@@ -125,6 +126,7 @@
             [disabled]="action.disabled || false"
             [testId]="action.testId"
             [tnTooltip]="action.tooltip || ''"
+            [tnTooltipSticky]="tooltipSticky()"
             (click)="action.handler()" />
         }
 
@@ -136,6 +138,7 @@
             [disabled]="action.disabled || false"
             [testId]="action.testId"
             [tnTooltip]="action.tooltip || ''"
+            [tnTooltipSticky]="tooltipSticky()"
             (click)="action.handler()" />
         }
 

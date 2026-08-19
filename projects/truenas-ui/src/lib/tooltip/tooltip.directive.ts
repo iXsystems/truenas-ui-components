@@ -84,10 +84,11 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * link changes behaviour with no code change on your side — it stops appearing on hover and on
    * keyboard focus, and the host's click opens it instead. Nothing else about the host changes.
    * Anything that forwards a caller-supplied message to a `<button>` is a candidate: inside this
-   * library that is `<tn-form-field [tooltip]>`, `<tn-form-section [tooltip]>` and `<tn-card>`'s
-   * title and action tooltips, all of which render a help button and pass the message straight
-   * through. Set this to `false` on any of them to keep the old hover behaviour, at the cost of
-   * the link staying out of reach.
+   * library that is `<tn-form-field [tooltip]>`, `<tn-form-section [tooltip]>`, `<tn-card>`'s
+   * title and action tooltips and `<tn-icon-button [tooltip]>`, all of which render a button and
+   * pass the message straight through. Each re-exports this as a `tooltipSticky` input, so
+   * `[tooltipSticky]="false"` on any of them keeps the old hover behaviour, at the cost of the
+   * link staying out of reach.
    *
    * This only narrows the rule in `_isPinnable`, it cannot widen it: plain help text is never
    * pinnable however this is set, and neither is a message on a host that cannot deliver the

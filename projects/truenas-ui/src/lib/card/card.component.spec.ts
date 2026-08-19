@@ -19,7 +19,7 @@ import { TnTooltipDirective } from '../tooltip/tooltip.directive';
 @Component({
   standalone: true,
   imports: [TnCardComponent],
-  template: `<tn-card [headerStatus]="status()" [headerControl]="control()" [headerMenu]="menu()" [headerMenuTriggerTestId]="menuTriggerTestId()" [headerMenuTriggerAriaLabel]="menuAriaLabel()" [headerMenuTriggerTooltip]="menuTooltip()" [primaryAction]="primary()" [secondaryAction]="secondary()" [footerLink]="footerLink()">Content</tn-card>`,
+  template: `<tn-card [headerStatus]="status()" [headerControl]="control()" [headerMenu]="menu()" [headerMenuTriggerTestId]="menuTriggerTestId()" [headerMenuTriggerAriaLabel]="menuAriaLabel()" [headerMenuTriggerTooltip]="menuTooltip()" [tooltipSticky]="tooltipSticky()" [primaryAction]="primary()" [secondaryAction]="secondary()" [footerLink]="footerLink()">Content</tn-card>`,
 })
 class HostComponent {
   status = signal<TnCardHeaderStatus | undefined>(undefined);
@@ -28,6 +28,7 @@ class HostComponent {
   menuTriggerTestId = signal<string | undefined>(undefined);
   menuAriaLabel = signal<string | undefined>(undefined);
   menuTooltip = signal<string | undefined>(undefined);
+  tooltipSticky = signal(true);
   primary = signal<TnCardAction | undefined>(undefined);
   secondary = signal<TnCardAction | undefined>(undefined);
   footerLink = signal<TnCardFooterLink | undefined>(undefined);
@@ -286,6 +287,30 @@ describe('TnCardComponent action tooltips', () => {
     expect(innerButton.disabled).toBe(true);
   });
 
+  // The card owns the only host these messages get, so the flag has to reach the directive from
+  // here; a message with a link is the only kind it can be observed through.
+  describe('tooltipSticky', () => {
+    const LINK_MESSAGE = 'Read the <a href="#docs">docs</a>';
+
+    it('forwards the card-level flag to the action tooltips', () => {
+      const fixture = createHost();
+      fixture.componentInstance.secondary.set({
+        label: 'Open WebShare',
+        handler: () => {},
+        tooltip: LINK_MESSAGE,
+      });
+      fixture.detectChanges();
+
+      const tnButton = fixture.debugElement.query(By.css('.tn-card__footer-right tn-button'));
+      const tooltip = tnButton.injector.get(TnTooltipDirective);
+      expect(tooltip.stickyEnabled()).toBe(true);
+
+      fixture.componentInstance.tooltipSticky.set(false);
+      fixture.detectChanges();
+      expect(tooltip.stickyEnabled()).toBe(false);
+    });
+  });
+
   it('applies the tooltip to the primaryAction button as well', () => {
     const fixture = createHost();
     fixture.componentInstance.primary.set({
@@ -514,13 +539,14 @@ describe('TnCardComponent projected action templates', () => {
 @Component({
   standalone: true,
   imports: [TnCardComponent],
-  template: `<tn-card [title]="title()" [titleRouterLink]="routerLink()" [titleTooltip]="tooltip()" [titleTooltipAriaLabel]="tooltipAriaLabel()">Content</tn-card>`,
+  template: `<tn-card [title]="title()" [titleRouterLink]="routerLink()" [titleTooltip]="tooltip()" [titleTooltipAriaLabel]="tooltipAriaLabel()" [tooltipSticky]="sticky()">Content</tn-card>`,
 })
 class TitleHostComponent {
   title = signal<string | undefined>('Recent Orders');
   routerLink = signal<string | unknown[] | undefined>(undefined);
   tooltip = signal<string | undefined>(undefined);
   tooltipAriaLabel = signal<string | undefined>(undefined);
+  sticky = signal(true);
 }
 
 describe('TnCardComponent title router link & tooltip', () => {
@@ -575,6 +601,22 @@ describe('TnCardComponent title router link & tooltip', () => {
     // The button's accessible name is generic; the tooltip text is exposed as the
     // description (aria-describedby) so a screen reader doesn't read it twice.
     expect(tooltipButton?.getAttribute('aria-label')).toBe('More information');
+  });
+
+  it('forwards tooltipSticky to the title help button', () => {
+    const fixture = createTitleHost();
+    // Only a message that holds something reachable is pinnable at all, so that is what the flag
+    // is observable through.
+    fixture.componentInstance.tooltip.set('Read the <a href="#docs">docs</a>');
+    fixture.detectChanges();
+
+    const help = fixture.debugElement.query(By.css('.tn-card__title-tooltip'));
+    const tooltip = help.injector.get(TnTooltipDirective);
+    expect(tooltip.stickyEnabled()).toBe(true);
+
+    fixture.componentInstance.sticky.set(false);
+    fixture.detectChanges();
+    expect(tooltip.stickyEnabled()).toBe(false);
   });
 
   it('lets a consumer supply a translated accessible name for the title help button', () => {

@@ -148,10 +148,11 @@ something of its own, since between them they describe a single popup.
 
 ⚠️ **On upgrade, this applies to tooltips you have already written.** \`tnTooltipSticky\` defaults
 to \`true\`, so any existing message that happens to contain a link flips from hover to
-click-to-open with no code change. Components that forward a caller-supplied message to a help
-\`<button>\` are where this shows up — \`<tn-form-field [tooltip]>\`, \`<tn-form-section [tooltip]>\`
-and \`<tn-card>\`'s title and action tooltips. Pass \`[tnTooltipSticky]="false"\` to keep the old
-behaviour on any of them.
+click-to-open with no code change. Components that forward a caller-supplied message to a
+\`<button>\` are where this shows up — \`<tn-form-field [tooltip]>\`, \`<tn-form-section [tooltip]>\`,
+\`<tn-card>\`'s title and action tooltips and \`<tn-icon-button [tooltip]>\`. Each re-exports the
+flag as a \`tooltipSticky\` input, so \`[tooltipSticky]="false"\` keeps the old behaviour on any of
+them.
 
 The click is additive, not exclusive: the host's own \`(click)\` handler still runs, so a button
 that both acts and pins does both. A host that navigates away should keep its tooltip plain or

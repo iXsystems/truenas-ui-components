@@ -85,6 +85,17 @@ export class TnCardComponent {
     () => this.titleTooltipAriaLabel() ?? 'More information',
   );
 
+  /**
+   * Whether a tooltip message holding a link may be pinned open by clicking its host (see
+   * `tnTooltipSticky`). On by default, like the directive, and applies to every tooltip the card
+   * renders from a caller-supplied message: the title help button and the footer actions.
+   *
+   * It does not make plain tooltips pinnable — card help and action hints are nearly always plain
+   * text, and those keep hovering. Set it to false only to force a message that does hold a link
+   * back to hover behaviour, accepting that the link is then unreachable.
+   */
+  tooltipSticky = input<boolean>(true);
+
   elevation = input<'none' | 'low' | 'medium' | 'high'>('medium');
   padding = input<'small' | 'medium' | 'large'>('medium');
   padContent = input<boolean>(true);

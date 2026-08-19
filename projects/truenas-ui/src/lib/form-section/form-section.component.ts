@@ -35,6 +35,16 @@ export class TnFormSectionComponent {
   /** Placement of the tooltip relative to its help icon. */
   tooltipPosition = input<TooltipPosition>('above');
 
+  /**
+   * Whether a tooltip message holding a link may be pinned open by clicking the help button (see
+   * `tnTooltipSticky`). On by default, like the directive.
+   *
+   * It does not make plain tooltips pinnable — section help is nearly always plain text, and that
+   * keeps hovering. Set it to false only to force a message that does hold a link back to hover
+   * behaviour, accepting that the link is then unreachable.
+   */
+  tooltipSticky = input<boolean>(true);
+
   /** Test id applied to the host for harness/e2e selection. */
   testId = input<TnTestIdValue>(undefined);
 
