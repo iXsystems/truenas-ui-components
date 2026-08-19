@@ -57,6 +57,15 @@ const meta: Meta<TnIconButtonComponent> = {
       control: 'text',
       description: 'Tooltip text for the button',
     },
+    tooltipPosition: {
+      control: 'select',
+      options: ['above', 'below', 'left', 'right', 'before', 'after'],
+      description: 'Position of the tooltip relative to the button',
+    },
+    tooltipSticky: {
+      control: 'boolean',
+      description: 'Whether a tooltip message holding a link may be pinned open by clicking the button. On by default, and only ever applies to such messages — a plain label, which is nearly every icon button tooltip, keeps hovering and never touches the click. Set it to false to force a message with a link back to hover behaviour, accepting that the link is then unreachable.',
+    },
     ariaLabel: {
       control: 'text',
       description: 'Accessible label for the button',
@@ -108,6 +117,30 @@ export const WithTooltip: Story = {
     tooltip: 'More information',
     ariaLabel: 'Information',
   },
+};
+
+export const WithPinnableTooltip: Story = {
+  args: {
+    name: 'information',
+    size: 'md',
+    library: 'mdi',
+    tooltip: 'Snapshots are read-only. <a href="https://www.truenas.com/docs/" target="_blank" rel="noopener">Read the docs</a>',
+    ariaLabel: 'About snapshots',
+    tooltipSticky: true,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: `
+A tooltip whose message holds a link is opened by clicking the button rather than on hover, so the
+link can be reached — the button's own \`(click)\` still runs alongside. \`tooltipSticky\` is the
+way out of that: set it to \`false\` and the message goes back to appearing on hover, with the link
+out of reach. It cannot work the other way round — a plain label is never pinnable, whatever this
+is set to.
+`
+      }
+    }
+  }
 };
 
 export const Disabled: Story = {
