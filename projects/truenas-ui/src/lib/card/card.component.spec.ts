@@ -1,4 +1,6 @@
+import { FocusMonitor } from '@angular/cdk/a11y';
 import { Component, signal } from '@angular/core';
+import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
@@ -17,13 +19,15 @@ import { TnTooltipDirective } from '../tooltip/tooltip.directive';
 @Component({
   standalone: true,
   imports: [TnCardComponent],
-  template: `<tn-card [headerStatus]="status()" [headerControl]="control()" [headerMenu]="menu()" [headerMenuTriggerTestId]="menuTriggerTestId()" [primaryAction]="primary()" [secondaryAction]="secondary()" [footerLink]="footerLink()">Content</tn-card>`,
+  template: `<tn-card [headerStatus]="status()" [headerControl]="control()" [headerMenu]="menu()" [headerMenuTriggerTestId]="menuTriggerTestId()" [headerMenuTriggerAriaLabel]="menuAriaLabel()" [headerMenuTriggerTooltip]="menuTooltip()" [primaryAction]="primary()" [secondaryAction]="secondary()" [footerLink]="footerLink()">Content</tn-card>`,
 })
 class HostComponent {
   status = signal<TnCardHeaderStatus | undefined>(undefined);
   control = signal<TnCardControl | undefined>(undefined);
   menu = signal<TnMenuItem[] | undefined>(undefined);
   menuTriggerTestId = signal<string | undefined>(undefined);
+  menuAriaLabel = signal<string | undefined>(undefined);
+  menuTooltip = signal<string | undefined>(undefined);
   primary = signal<TnCardAction | undefined>(undefined);
   secondary = signal<TnCardAction | undefined>(undefined);
   footerLink = signal<TnCardFooterLink | undefined>(undefined);
@@ -37,6 +41,23 @@ function createHost(providers: unknown[] = []) {
   const fixture = TestBed.createComponent(HostComponent);
   fixture.detectChanges();
   return fixture;
+}
+
+/** Hovers `element`, reads the text of the tooltip that pops up, then hovers away again. */
+async function showTooltip(
+  fixture: ComponentFixture<HostComponent>,
+  element: HTMLElement,
+): Promise<string | undefined> {
+  element.dispatchEvent(new MouseEvent('mouseenter'));
+  await new Promise((resolve) => setTimeout(resolve));
+  fixture.detectChanges();
+
+  const text = document.querySelector('.tn-tooltip')?.textContent ?? undefined;
+
+  element.dispatchEvent(new MouseEvent('mouseleave'));
+  await new Promise((resolve) => setTimeout(resolve));
+  fixture.detectChanges();
+  return text;
 }
 
 describe('TnCardComponent testId support', () => {
@@ -105,6 +126,62 @@ describe('TnCardComponent testId support', () => {
     const trigger = fixture.nativeElement.querySelector('.tn-card__menu button') as HTMLElement;
     expect(trigger).toBeTruthy();
     expect(trigger.getAttribute('data-testid')).toBe('button-4-actions-menu');
+  });
+
+  it('names the kebab trigger "Card menu" by default', () => {
+    const fixture = createHost();
+    fixture.componentInstance.menu.set([{ id: 'a', label: 'Action A' }]);
+    fixture.detectChanges();
+
+    const trigger = fixture.nativeElement.querySelector('.tn-card__menu button') as HTMLElement;
+    expect(trigger.getAttribute('aria-label')).toBe('Card menu');
+  });
+
+  it('leaves the kebab trigger without a tooltip until one is asked for', async () => {
+    const fixture = createHost();
+    fixture.componentInstance.menu.set([{ id: 'a', label: 'Action A' }]);
+    fixture.detectChanges();
+
+    // The built-in name is deliberately not a tooltip fallback: existing consumers would all
+    // gain a hover hint that only repeats the button's accessible name.
+    const trigger = fixture.nativeElement.querySelector('.tn-card__menu button') as HTMLElement;
+    expect(trigger.getAttribute('aria-describedby')).toBeNull();
+    expect(await showTooltip(fixture, trigger)).toBeUndefined();
+  });
+
+  it('lets a consumer supply a translated accessible name for the kebab trigger', () => {
+    const fixture = createHost();
+    fixture.componentInstance.menu.set([{ id: 'a', label: 'Action A' }]);
+    // A consumer with an i18n layer passes an already-translated string; the library cannot
+    // translate its own default.
+    fixture.componentInstance.menuAriaLabel.set('Weitere Aktionen');
+    fixture.detectChanges();
+
+    const trigger = fixture.nativeElement.querySelector('.tn-card__menu button') as HTMLElement;
+    expect(trigger.getAttribute('aria-label')).toBe('Weitere Aktionen');
+  });
+
+  it('falls back to headerMenuTriggerAriaLabel for the trigger tooltip, and prefers an explicit one', async () => {
+    const fixture = createHost();
+    fixture.componentInstance.menu.set([{ id: 'a', label: 'Action A' }]);
+    fixture.componentInstance.menuAriaLabel.set('More Actions');
+    fixture.detectChanges();
+
+    const trigger = fixture.nativeElement.querySelector('.tn-card__menu button') as HTMLElement;
+    // The tooltip has to hang off the focusable button rather than the tn-icon-button host, or
+    // neither the description nor the focus trigger reaches a keyboard user.
+    expect(await showTooltip(fixture, trigger)).toBe('More Actions');
+    // No description while the tooltip only repeats the trigger's accessible name —
+    // AriaDescriber skips it so a screen reader does not read the same string twice.
+    expect(trigger.getAttribute('aria-describedby')).toBeNull();
+
+    fixture.componentInstance.menuTooltip.set('Show more');
+    fixture.detectChanges();
+    expect(await showTooltip(fixture, trigger)).toBe('Show more');
+    // A tooltip that says something the name does not is announced as the description.
+    const describedBy = trigger.getAttribute('aria-describedby');
+    expect(describedBy).toBeTruthy();
+    expect(document.getElementById(describedBy!.split(/\s+/)[0])?.textContent).toBe('Show more');
   });
 
   it('honors TN_TEST_ATTR override for every slot', () => {
@@ -310,7 +387,7 @@ describe('TnCardComponent action tooltips', () => {
     expect(innerButton.getAttribute('aria-describedby')).toBe('field-hint');
   });
 
-  it('shows the tooltip when the inner button receives keyboard focus (focusin bubbles to the host)', () => {
+  it('shows the tooltip when the inner button receives keyboard focus (FocusMonitor watches descendants)', () => {
     jest.useFakeTimers();
     try {
       const fixture = createHost();
@@ -326,10 +403,12 @@ describe('TnCardComponent action tooltips', () => {
       ) as HTMLButtonElement;
       // Assert on the overlay tooltip element specifically — AriaDescriber keeps the
       // message in a hidden description container at all times, so a body-text check
-      // would pass whether or not focusin actually showed the tooltip.
+      // would pass whether or not the focus actually showed the tooltip.
       expect(document.querySelector('[role="tooltip"]')).toBeNull();
 
-      innerButton.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+      // The directive host is the <tn-button> wrapper; FocusMonitor monitors descendants,
+      // so focusing the inner control still opens the tooltip — but only for keyboard focus.
+      TestBed.inject(FocusMonitor).focusVia(innerButton, 'keyboard');
       jest.runAllTimers();
       fixture.detectChanges();
 
@@ -435,12 +514,13 @@ describe('TnCardComponent projected action templates', () => {
 @Component({
   standalone: true,
   imports: [TnCardComponent],
-  template: `<tn-card [title]="title()" [titleRouterLink]="routerLink()" [titleTooltip]="tooltip()">Content</tn-card>`,
+  template: `<tn-card [title]="title()" [titleRouterLink]="routerLink()" [titleTooltip]="tooltip()" [titleTooltipAriaLabel]="tooltipAriaLabel()">Content</tn-card>`,
 })
 class TitleHostComponent {
   title = signal<string | undefined>('Recent Orders');
   routerLink = signal<string | unknown[] | undefined>(undefined);
   tooltip = signal<string | undefined>(undefined);
+  tooltipAriaLabel = signal<string | undefined>(undefined);
 }
 
 describe('TnCardComponent title router link & tooltip', () => {
@@ -495,6 +575,18 @@ describe('TnCardComponent title router link & tooltip', () => {
     // The button's accessible name is generic; the tooltip text is exposed as the
     // description (aria-describedby) so a screen reader doesn't read it twice.
     expect(tooltipButton?.getAttribute('aria-label')).toBe('More information');
+  });
+
+  it('lets a consumer supply a translated accessible name for the title help button', () => {
+    const fixture = createTitleHost();
+    fixture.componentInstance.tooltip.set('Open the full orders page');
+    // Same untranslatable-default problem as the kebab trigger: the library ships English, so
+    // an app with an i18n layer has to be able to pass its own string.
+    fixture.componentInstance.tooltipAriaLabel.set('Weitere Informationen');
+    fixture.detectChanges();
+
+    const tooltipButton = fixture.nativeElement.querySelector('.tn-card__title-tooltip') as HTMLElement | null;
+    expect(tooltipButton?.getAttribute('aria-label')).toBe('Weitere Informationen');
   });
 });
 

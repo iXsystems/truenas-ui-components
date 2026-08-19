@@ -1,7 +1,7 @@
 /* eslint-disable @angular-eslint/no-input-rename */
 // Input aliasing is intentional for directive API consistency (e.g., ixTooltip, ixTooltipPosition)
 // This follows the standard Angular pattern used by Material and other directive-based components
-import { AriaDescriber } from '@angular/cdk/a11y';
+import { AriaDescriber, FocusMonitor } from '@angular/cdk/a11y';
 import {
   Overlay,
   type OverlayRef,
@@ -21,6 +21,7 @@ import {
   effect,
   HostListener,
   ElementRef,
+  NgZone,
   ViewContainerRef,
   inject
 } from '@angular/core';
@@ -60,6 +61,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   private _hideTimeout: ReturnType<typeof setTimeout> | null = null;
   private _isTooltipVisible = false;
   private _positionSub: Subscription | null = null;
+  private _focusSub: Subscription | null = null;
   // Unique ID for the overlay tooltip element
   private _tooltipId = `tn-tooltip-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -68,6 +70,8 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   private _viewContainerRef = inject(ViewContainerRef);
   private _overlayPositionBuilder = inject(OverlayPositionBuilder);
   private _ariaDescriber = inject(AriaDescriber);
+  private _focusMonitor = inject(FocusMonitor);
+  private _ngZone = inject(NgZone);
 
   private _viewInitialized = false;
   private _describedTarget: HTMLElement | null = null;
@@ -109,6 +113,23 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
       this._innerObserver = new MutationObserver(() => this._syncAriaDescription());
       this._innerObserver.observe(host, { childList: true, subtree: true });
     }
+
+    // Focus opens the tooltip only when the focus actually came from the keyboard. A plain
+    // `focus`/`focusin` listener also fires for programmatic `.focus()` — e.g.
+    // TnMenuTriggerDirective restoring focus to its trigger after the menu closes — which
+    // popped a tooltip back up next to a button the pointer was nowhere near, and left it
+    // there until the user clicked or tabbed away. Routing through FocusMonitor (same
+    // approach as MatTooltip) also skips mouse/touch focus, where the hover handlers already
+    // cover the interaction, and it watches descendants — so a wrapper host (e.g.
+    // `<tn-button>`) still reacts when its inner control takes focus.
+    this._focusSub = this._focusMonitor.monitor(this._elementRef, true).subscribe((origin) => {
+      // FocusMonitor emits outside the Angular zone, so re-enter before touching the overlay.
+      if (!origin) {
+        this._ngZone.run(() => this.hide(this.hideDelay()));
+      } else if (origin === 'keyboard') {
+        this._ngZone.run(() => this.show(this.showDelay()));
+      }
+    });
   }
 
   private _syncAriaDescription(): void {
@@ -162,6 +183,8 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     this._clearTimeouts();
     this.hide(0);
     this._positionSub?.unsubscribe();
+    this._focusSub?.unsubscribe();
+    this._focusMonitor.stopMonitoring(this._elementRef);
     this._innerObserver?.disconnect();
     this._removeAriaDescription();
 
@@ -180,29 +203,6 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
 
   @HostListener('mouseleave')
   _onMouseLeave(): void {
-    this.hide(this.hideDelay());
-  }
-
-  // focusin/focusout (not focus/blur): focus does not bubble, so on a wrapper host
-  // (e.g. `<tn-button>`) a focus listener never fires when the inner control is
-  // focused via keyboard. focusin/focusout bubble and cover both shapes.
-  @HostListener('focusin')
-  _onFocusIn(): void {
-    if (!this.disabled() && this.message()) {
-      this.show(this.showDelay());
-    }
-  }
-
-  @HostListener('focusout', ['$event'])
-  _onFocusOut(event: FocusEvent): void {
-    // focusout bubbles for every focus move inside the host too — only hide when
-    // focus actually leaves the host, or a wrapper-internal move would tear down
-    // the visible tooltip via the armed hide timeout.
-    const next = event.relatedTarget as Node | null;
-    if (next && this._elementRef.nativeElement.contains(next)) {
-      return;
-    }
-
     this.hide(this.hideDelay());
   }
 
