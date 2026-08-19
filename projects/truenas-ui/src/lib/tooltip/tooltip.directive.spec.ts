@@ -18,6 +18,7 @@ import { TnButtonComponent } from '../button/button.component';
     <button type="button" [tnTooltip]="message()" [tnTooltipSticky]="sticky()" [tnTooltipDisabled]="disabled()" [tnTooltipCloseAriaLabel]="closeLabel()">host</button>
     <button type="button" id="plain" [tnTooltip]="'Plain help text'">plain host</button>
     <button type="button" id="owns-expanded" aria-expanded="true" [tnTooltip]="ownerMessage()">menu trigger</button>
+    <button type="button" id="late-expanded" [attr.aria-expanded]="lateExpanded()" [tnTooltip]="message()">late owner</button>
     <button type="button" id="side" tnTooltip="Plain help text" tnTooltipPosition="right">side host</button>
     <button type="button" id="native-disabled" disabled [tnTooltip]="message()">disabled host</button>
     <div id="wrapper-disabled" [tnTooltip]="message()"><button type="button" disabled>inner</button></div>
@@ -34,6 +35,9 @@ class HostComponent {
   disabled = signal(false);
   // A host that drives something of its own (a menu, a select) and happens to carry a tooltip.
   ownerMessage = signal('Plain help text');
+  // A host whose own aria-expanded binding starts unset - `<tn-icon-button [ariaExpanded]>` is
+  // exactly this shape - and resolves to a value only later.
+  lateExpanded = signal<string | null>(null);
   closeLabel = signal('Close tooltip');
 }
 
@@ -676,6 +680,55 @@ describe('TnTooltipDirective sticky mode', () => {
       expect(ownerHost.hasAttribute('aria-haspopup')).toBe(false);
       expect(ownerHost.hasAttribute('aria-controls')).toBe(false);
     }));
+  });
+
+  // Ownership cannot be re-derived from the current value, because a value comparison cannot tell
+  // "the host wrote nothing" from "the host wrote the same string we did" - and `aria-expanded`
+  // is written as `"false"` by both. So a write the directive did not make is recorded when it
+  // happens, through the same MutationObserver that watches the rest of the host.
+  describe('a host that starts with no aria-expanded and takes it over later', () => {
+    const lateHost = () => fixture.nativeElement.querySelector('#late-expanded') as HTMLElement;
+
+    /**
+     * The observer's callback is a microtask jsdom schedules outside Zone's queue, so `tick()`
+     * never reaches it - these have to run as real async tests rather than in `fakeAsync`.
+     */
+    async function settleObserver(): Promise<void> {
+      await new Promise((resolve) => setTimeout(resolve));
+      fixture.detectChanges();
+    }
+
+    it('claims the attributes while the host has none of its own', () => {
+      expect(lateHost().getAttribute('aria-expanded')).toBe('false');
+      expect(lateHost().getAttribute('aria-haspopup')).toBe('dialog');
+    });
+
+    it('hands them back when the host writes the same value the tooltip wrote', async () => {
+      expect(lateHost().getAttribute('aria-expanded')).toBe('false');
+
+      // The consumer's binding resolves to the string already sitting there. Nothing about the
+      // attribute changes, so only the fact that the host wrote it can be noticed.
+      fixture.componentInstance.lateExpanded.set('false');
+      fixture.detectChanges();
+      await settleObserver();
+
+      expect(lateHost().getAttribute('aria-expanded')).toBe('false');
+      expect(lateHost().hasAttribute('aria-haspopup')).toBe(false);
+    });
+
+    it('does not announce the host as expanded when its tooltip is pinned', async () => {
+      fixture.componentInstance.lateExpanded.set('false');
+      fixture.detectChanges();
+      await settleObserver();
+
+      lateHost().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+      await settleObserver();
+
+      // The panel is up, but the host's own collapsed popup keeps its value.
+      expect(tooltipPanel()).not.toBeNull();
+      expect(lateHost().getAttribute('aria-expanded')).toBe('false');
+      expect(lateHost().hasAttribute('aria-controls')).toBe(false);
+    });
   });
 
   it('leaves no overlay pane behind once hidden', fakeAsync(() => {

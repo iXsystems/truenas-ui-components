@@ -47,6 +47,13 @@ const REPOSITION_THROTTLE = 20;
  * do not resolve custom properties (jsdom in the unit tests), so the arrow clamp still gets
  * plausible geometry there.
  */
+/**
+ * The disclosure attributes a pinnable tooltip puts on its host, and the set whose ownership
+ * `_writeHostPopupState` tracks. They describe one popup between them, so they are claimed and
+ * yielded together.
+ */
+const POPUP_STATE_ATTRIBUTES = ['aria-expanded', 'aria-haspopup', 'aria-controls'];
+
 const ARROW_HALF_WIDTH_PROPERTY = '--tn-tooltip-arrow-half-width';
 const PANEL_RADIUS_PROPERTY = '--tn-tooltip-radius';
 const FALLBACK_ARROW_HALF_WIDTH = 6;
@@ -139,6 +146,8 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   private _innerObserver: MutationObserver | null = null;
   private _popupStateTarget: HTMLElement | null = null;
   private _popupStateWritten: Record<string, string> = {};
+  private _popupStateSelfWrites: Record<string, number> = {};
+  private _popupStateHostOwned = new Set<string>();
   private _cachedArrowInset: number | null = null;
 
   /**
@@ -234,15 +243,20 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
       // on it at any time — which decides whether the pinning click can arrive at all, and so
       // whether the host advertises itself as a disclosure control.
       //
-      // The attribute filter is what keeps this from looping: everything written back from
-      // `_syncAria` (aria-describedby, aria-expanded, aria-haspopup, aria-controls) is outside
-      // it, so no write of ours can retrigger the observer.
-      this._innerObserver = new MutationObserver(() => this._syncAria());
+      // The disclosure attributes are watched as well, but for a different reason: to notice the
+      // host writing one of them itself. See `_absorbPopupStateRecords`, which also keeps our own
+      // writes of them from retriggering this. `aria-describedby` stays outside the filter, so
+      // `AriaDescriber` cannot loop it.
+      this._innerObserver = new MutationObserver((records) => {
+        if (this._absorbPopupStateRecords(records)) {
+          this._syncAria();
+        }
+      });
       this._innerObserver.observe(host, {
         childList: true,
         subtree: true,
         attributes: true,
-        attributeFilter: ['disabled', 'aria-disabled'],
+        attributeFilter: ['disabled', 'aria-disabled', ...POPUP_STATE_ATTRIBUTES],
       });
     }
 
@@ -408,10 +422,14 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * one of each attribute to go around, and the host's click is what they describe — a tooltip is
    * the lesser claim.
    *
-   * Ownership is decided by value rather than by whether the attribute was absent the first time
-   * this ran, so a host that starts with nothing bound (`ariaExpanded` defaults to `undefined`)
-   * and writes its own value later takes the attribute back at that point instead of being
-   * fought over it.
+   * Ownership is not re-derived from the current value each time, because a value comparison
+   * cannot tell "the host wrote nothing" from "the host wrote the same string we did" — and
+   * `aria-expanded="false"` is exactly that string. `<tn-icon-button [ariaExpanded]="expanded()">`
+   * with `expanded()` starting `undefined` walks straight into it: the attribute is absent at the
+   * first sync so the tooltip claims it, the consumer later sets `false`, Angular writes the same
+   * `"false"` the tooltip wrote, and on pin the host's collapsed popup would be announced as
+   * expanded. So a write the tooltip did not make is recorded as a fact when it happens — see
+   * `_absorbPopupStateRecords` — and the host keeps the attribute from then on.
    *
    * And it is decided for the group, not per attribute: the three describe one popup between
    * them, so yielding them one at a time would leave the host describing two. A menu trigger
@@ -423,12 +441,13 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * click and closes on Escape, an outside click or the dismiss button.
    */
   private _writeHostPopupState(target: HTMLElement, attributes: Record<string, string>): void {
+    // A different target is a different element's attributes, so nothing learned about the old
+    // one carries over: this clears what was written there and starts from no ownership.
     if (this._popupStateTarget && this._popupStateTarget !== target) {
       this._clearHostPopupState();
+      this._popupStateHostOwned.clear();
     }
 
-    // Checked before `_clearHostPopupState` runs, since ownership is decided against the values
-    // this directive last wrote and clearing forgets them.
     const hostOwnsAny = Object.keys(attributes).some((name) => !this._ownsHostAttribute(target, name));
     if (hostOwnsAny) {
       this._clearHostPopupState();
@@ -437,13 +456,13 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
 
     const written: Record<string, string> = {};
     for (const [name, value] of Object.entries(attributes)) {
-      target.setAttribute(name, value);
+      this._setPopupStateAttribute(target, name, value);
       written[name] = value;
     }
 
     for (const name of Object.keys(this._popupStateWritten)) {
       if (!(name in written) && this._popupStateTarget && this._ownsHostAttribute(this._popupStateTarget, name)) {
-        this._popupStateTarget.removeAttribute(name);
+        this._removePopupStateAttribute(this._popupStateTarget, name);
       }
     }
 
@@ -451,10 +470,86 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     this._popupStateWritten = written;
   }
 
-  /** Whether the attribute is free to write: absent, or still holding the value written for it. */
+  /**
+   * Whether the attribute is free to write: never written by the host, and either absent or still
+   * holding the value written for it.
+   */
   private _ownsHostAttribute(target: HTMLElement, name: string): boolean {
+    if (this._popupStateHostOwned.has(name)) {
+      return false;
+    }
+
     const current = target.getAttribute(name);
     return current === null || current === this._popupStateWritten[name];
+  }
+
+  /**
+   * Separates the observer records caused by this directive's own writes from the rest, and
+   * returns whether what is left is worth a re-sync.
+   *
+   * Every mutation of a disclosure attribute arrives here, including the ones `_writeHostPopupState`
+   * just made — which is why `attributeFilter` can list them without looping. Each write registers
+   * itself in `_popupStateSelfWrites` first, and one write produces exactly one record, so the
+   * counter cancels them out one for one. Anything left over came from the host, and that is the
+   * fact worth keeping: the value it wrote may well be the one already there.
+   */
+  private _absorbPopupStateRecords(records: MutationRecord[]): boolean {
+    let needsSync = false;
+
+    for (const record of records) {
+      const name = record.attributeName;
+      if (!name || !POPUP_STATE_ATTRIBUTES.includes(name)) {
+        // childList, `disabled`, `aria-disabled` - the mutations this observer was here for.
+        needsSync = true;
+        continue;
+      }
+
+      // These attributes mean nothing to this directive on any element but the one it writes to,
+      // and a wrapper's subtree can hold controls carrying them for reasons of their own.
+      if (record.target !== this._ariaTarget()) {
+        continue;
+      }
+
+      const pending = this._popupStateSelfWrites[name] ?? 0;
+      if (pending > 0) {
+        this._popupStateSelfWrites[name] = pending - 1;
+        continue;
+      }
+
+      this._popupStateHostOwned.add(name);
+      needsSync = true;
+    }
+
+    return needsSync;
+  }
+
+  private _setPopupStateAttribute(target: HTMLElement, name: string, value: string): void {
+    this._countPopupStateWrite(name);
+    target.setAttribute(name, value);
+  }
+
+  /** Removing an attribute that is not there mutates nothing, so it must not be counted either. */
+  private _removePopupStateAttribute(target: HTMLElement, name: string): void {
+    if (!target.hasAttribute(name)) {
+      return;
+    }
+
+    this._countPopupStateWrite(name);
+    target.removeAttribute(name);
+  }
+
+  /**
+   * Registers a write of our own so `_absorbPopupStateRecords` can cancel out the record it
+   * produces. Only writes made while the observer is connected produce one — the first
+   * `_syncAria` runs before `ngAfterViewInit` has created it, and counting that one would leave a
+   * credit behind for the host's first write to spend.
+   */
+  private _countPopupStateWrite(name: string): void {
+    if (!this._innerObserver) {
+      return;
+    }
+
+    this._popupStateSelfWrites[name] = (this._popupStateSelfWrites[name] ?? 0) + 1;
   }
 
   private _clearHostPopupState(): void {
@@ -462,7 +557,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     if (target) {
       for (const name of Object.keys(this._popupStateWritten)) {
         if (this._ownsHostAttribute(target, name)) {
-          target.removeAttribute(name);
+          this._removePopupStateAttribute(target, name);
         }
       }
     }
