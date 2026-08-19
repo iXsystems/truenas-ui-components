@@ -580,16 +580,17 @@ export const ComponentHarness: Story = {
  * **Test IDs.** The select **trigger** (the `role="combobox"` element) emits
  * `select-<base>` — shown live in the table below. Each **option** lives in a
  * portaled overlay (so it's not in the table until the dropdown is open) and
- * emits `option-<base>-<value>`:
+ * emits `option-<base>-<label>`:
  *
  * | Element | Emitted id (base `disk-type`) |
  * |---|---|
  * | trigger | `select-disk-type` |
- * | option (value `ssd`) | `option-disk-type-ssd` |
- * | option (value `hdd`) | `option-disk-type-hdd` |
+ * | option (label `SSD`) | `option-disk-type-ssd` |
+ * | option (label `Spinning Disk`) | `option-disk-type-spinning-disk` |
  *
- * The option discriminator defaults to the option's `value` (else `label`);
- * override it with `[optionTestIdKey]="(o) => o.value.id"`. Under `data-testid`
+ * The option discriminator defaults to the option's `label` — the text on screen,
+ * rather than a value that is often an enum ordinal or a record id. Override it
+ * with `[optionTestIdKey]="(o) => o.value.id"`. Under `data-testid`
  * by default / `data-test`. Open the dropdown to see the option ids in the DOM.
  */
 export const TestIds: Story = {

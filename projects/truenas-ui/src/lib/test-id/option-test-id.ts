@@ -15,27 +15,38 @@ export interface TnOptionTestIdSource {
  * `[tnTestId]` with `tnTestIdType="option"`. The component's resolved base
  * (explicit `testId`, else the bound control name) scopes a per-option
  * discriminator so ids stay unique across instances: base `user` + option
- * value `jane-doe` → `option-user-jane-doe`; with no base → `option-jane-doe`.
+ * label `Jane Doe` → `option-user-jane-doe`; with no base → `option-jane-doe`.
  *
  * The discriminator comes from `extractor` when provided (a component's
- * `optionTestIdKey` input), else the option's primitive `value`, else its
- * `label`. Shared by `tn-select` and `tn-autocomplete` so the derivation
- * rules can't drift between dropdown components; synthetic rows with fixed
- * discriminators (e.g. select's `allowEmpty` option) are handled by the
+ * `optionTestIdKey` input), else the option's **`label`** — the text actually
+ * on screen — falling back to a primitive `value` only for the labelless
+ * option. Shared by `tn-select`, `tn-autocomplete` and `tn-chip-input` so the
+ * derivation rules can't drift between dropdown components; synthetic rows with
+ * fixed discriminators (e.g. select's `allowEmpty` option) are handled by the
  * caller before delegating here.
+ *
+ * **Why the label and not the value.** An option's value is frequently opaque
+ * to everyone but the code that owns it — an enum ordinal, a record id, a
+ * protocol constant — so keying ids off it yields `option-sshconnectmode-0` or
+ * `option-user-1734`: not unique in any way a test author can predict, and
+ * silently renumbered whenever the enum or the records change. The label is the
+ * one part of an option that both the person writing the test and the person
+ * reading the page can see, so it is the useful default. Where an id must be
+ * stable across locales or an id-per-record is genuinely wanted, `extractor`
+ * (`[optionTestIdKey]`) still overrides it — that is what the input is for.
  */
 export function optionTestId<O extends TnOptionTestIdSource>(
   base: TnTestIdValue,
   option: O,
   extractor?: (option: O) => string | number | null | undefined,
 ): (string | number | null | undefined)[] {
-  let key: string | number | null | undefined;
   if (extractor) {
-    key = extractor(option);
-  } else if (typeof option.value === 'string' || typeof option.value === 'number') {
-    key = option.value;
-  } else {
-    key = option.label;
+    return scopeTestId(base, extractor(option));
   }
-  return scopeTestId(base, key);
+  // A labelless option is the only case left with anything to salvage: a primitive
+  // value at least discriminates the row, where an object value has nothing usable.
+  const primitiveValue = typeof option.value === 'string' || typeof option.value === 'number'
+    ? option.value
+    : undefined;
+  return scopeTestId(base, option.label || primitiveValue);
 }

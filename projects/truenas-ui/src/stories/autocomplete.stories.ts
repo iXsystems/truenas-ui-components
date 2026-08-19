@@ -500,20 +500,21 @@ export const ComponentHarness: Story = {
  * **Test IDs.** The autocomplete **input** (`role="combobox"`) emits
  * `autocomplete-<base>` — shown live in the table below. Each **suggestion
  * option** lives in a portaled overlay (so it's not in the table until the
- * dropdown is open) and emits `option-<base>-<value>`; the loading and
+ * dropdown is open) and emits `option-<base>-<label>`; the loading and
  * no-results status rows are stamped under the input's id:
  *
  * | Element | Emitted id (base `country`) |
  * |---|---|
  * | input | `autocomplete-country` |
- * | option (value `us`) | `option-country-us` |
- * | option (value `ca`) | `option-country-ca` |
+ * | option (label `United States`) | `option-country-united-states` |
+ * | option (label `Canada`) | `option-country-canada` |
  * | loading row | `autocomplete-country-loading` |
  * | no-results row | `autocomplete-country-no-results` |
  *
  * The base falls back to the bound control name (`formControlName="country"`)
  * when `testId` is unset. The option discriminator defaults to the option's
- * `value` (else `label`); override it with `[optionTestIdKey]="(o) => o.value.id"`.
+ * `label` — the text on screen, rather than a value that is often an enum ordinal
+ * or a record id. Override it with `[optionTestIdKey]="(o) => o.value.id"`.
  * Under `data-testid` by default / `data-test`. Focus the input to see the
  * option ids in the DOM; type a non-match to see the no-results row.
  */

@@ -349,6 +349,24 @@ class ObjectValueTestIdHostComponent {
 }
 
 @Component({
+  selector: 'tn-labelled-primitive-value-host',
+  standalone: true,
+  imports: [TnChipInputComponent, ReactiveFormsModule],
+  template: `
+    <form [formGroup]="form">
+      <tn-chip-input testId="tags" formControlName="regions" [options]="options" />
+    </form>
+  `,
+})
+class LabelledPrimitiveValueHostComponent {
+  options: TnChipInputOption<string>[] = [
+    { label: 'United States', value: 'us' },
+    { label: 'Canada', value: 'ca' },
+  ];
+  form = new FormGroup({ regions: new FormControl<string[]>(['us']) });
+}
+
+@Component({
   selector: 'tn-unnormalizable-value-host',
   standalone: true,
   imports: [TnChipInputComponent, ReactiveFormsModule],
@@ -416,6 +434,26 @@ describe('TnChipInputComponent test ids', () => {
     const chip = fixture.nativeElement.querySelector('.tn-chip-input__chip [role="button"]');
     expect(chip?.getAttribute('data-testid')).toBe('chip-groups-admins');
   });
+  // A chip and the suggestion row that created it show the same text, so they carry the
+  // same discriminator — naming one by the label and the other by the value would leave
+  // automation unable to assert that the row it clicked is the chip it got.
+  it('names a chip and its suggestion by the option label, not the value behind it', async () => {
+    await TestBed.configureTestingModule({
+      imports: [LabelledPrimitiveValueHostComponent],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(LabelledPrimitiveValueHostComponent);
+    fixture.detectChanges();
+
+    const chip = fixture.nativeElement.querySelector('.tn-chip-input__chip [role="button"]');
+    expect(chip?.getAttribute('data-testid')).toBe('chip-tags-united-states');
+
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    await (await loader.getHarness(TnChipInputHarness)).typeText('can');
+    const suggestion = document.querySelector('.tn-chip-input__option');
+    expect(suggestion?.getAttribute('data-testid')).toBe('option-tags-canada');
+  });
+
   // `*` and `**` both normalize to nothing, so scoping them under the base composes
   // the bare `chip-hosts-allow` twice — duplicate ids, the failure the object-value
   // path already guards against, reached through a primitive value instead.

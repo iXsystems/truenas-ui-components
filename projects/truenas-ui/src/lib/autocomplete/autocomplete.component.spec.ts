@@ -747,27 +747,7 @@ describe('TnAutocompleteComponent', () => {
       expect(getTInput().getAttribute('data-testid')).toBe('autocomplete-country');
     });
 
-    it('scopes each option with the base: option-<base>-<value>', () => {
-      expect(openAndGetOptionTestIds()).toEqual([
-        'option-country-us',
-        'option-country-ca',
-        'option-country-mx',
-        'option-country-gb',
-        'option-country-de',
-      ]);
-    });
-
-    it('falls back to option-<value> when there is no base', () => {
-      tHost.testId.set('');
-      tFixture.detectChanges();
-      expect(openAndGetOptionTestIds()).toEqual([
-        'option-us', 'option-ca', 'option-mx', 'option-gb', 'option-de',
-      ]);
-    });
-
-    it('uses optionTestIdKey to pick the discriminator (e.g. label over value)', () => {
-      tHost.keyFn.set((o) => o.label);
-      tFixture.detectChanges();
+    it('scopes each option with the base: option-<base>-<label>', () => {
       expect(openAndGetOptionTestIds()).toEqual([
         'option-country-united-states',
         'option-country-canada',
@@ -777,7 +757,27 @@ describe('TnAutocompleteComponent', () => {
       ]);
     });
 
-    it('falls back to the label for object-valued options', () => {
+    it('falls back to option-<label> when there is no base', () => {
+      tHost.testId.set('');
+      tFixture.detectChanges();
+      expect(openAndGetOptionTestIds()).toEqual([
+        'option-united-states', 'option-canada', 'option-mexico', 'option-united-kingdom', 'option-germany',
+      ]);
+    });
+
+    it('uses optionTestIdKey to pick the discriminator (e.g. the value over the label)', () => {
+      tHost.keyFn.set((o) => o.value);
+      tFixture.detectChanges();
+      expect(openAndGetOptionTestIds()).toEqual([
+        'option-country-us',
+        'option-country-ca',
+        'option-country-mx',
+        'option-country-gb',
+        'option-country-de',
+      ]);
+    });
+
+    it('uses the label for object-valued options too', () => {
       const oFixture = TestBed.createComponent(ObjectValueHostComponent);
       oFixture.detectChanges();
       const input = oFixture.nativeElement.querySelector('.tn-autocomplete__input') as HTMLInputElement;
@@ -821,7 +821,7 @@ describe('TnAutocompleteComponent', () => {
       input.dispatchEvent(new Event('focus'));
       cFixture.detectChanges();
       const first = overlayEl.querySelector('.tn-autocomplete__option');
-      expect(first?.getAttribute('data-testid')).toBe('option-country-us');
+      expect(first?.getAttribute('data-testid')).toBe('option-country-united-states');
     });
   });
 

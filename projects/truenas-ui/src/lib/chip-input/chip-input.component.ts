@@ -426,21 +426,25 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
   /**
    * Scopes a per-chip test id beneath the component's base.
    *
-   * The discriminator is the value itself when primitive, else the matching
-   * option's label — `String(value)` on an object is `[object Object]`, which
-   * would stamp an identical id on every chip. Duplicates are worse than
-   * absence for automation, so an object value with no option to name it yet
-   * (options still loading) stays attribute-free rather than colliding. A primitive
-   * that normalizes away is dropped for the same reason — see
-   * {@link discriminatedTestId}.
+   * The discriminator is the chip's own text — {@link displayLabel}, the matching
+   * option's label — so a chip and the suggestion row that created it carry the
+   * same discriminator rather than one naming the label and the other the value.
+   * A free-text chip has no option to name it and is its own text, so its value
+   * stands in; an object value with no match cannot be, because `String(value)`
+   * on an object is `[object Object]` and would stamp an identical id on every
+   * chip. Duplicates are worse than absence for automation, so that chip stays
+   * attribute-free rather than colliding. A primitive that normalizes away is
+   * dropped for the same reason — see {@link discriminatedTestId}.
    */
   protected chipTestId(value: T): TnTestIdValue {
     const base = this.resolvedTestId();
-    if (typeof value === 'string' || typeof value === 'number') {
-      return this.discriminatedTestId(scopeTestId(base, value));
-    }
     const match = this.optionList().find((option) => this.valueMatches(option.value, value));
-    return match ? this.discriminatedTestId(scopeTestId(base, match.label)) : undefined;
+    if (match) {
+      return this.discriminatedTestId(scopeTestId(base, match.label));
+    }
+    return typeof value === 'string' || typeof value === 'number'
+      ? this.discriminatedTestId(scopeTestId(base, value))
+      : undefined;
   }
 
   /**

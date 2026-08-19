@@ -1107,23 +1107,23 @@ describe('TnSelectComponent — per-option test ids', () => {
     expect(container.hasAttribute('data-testid')).toBe(false);
   });
 
-  it('scopes each option with the select base: option-<base>-<value>', () => {
-    expect(openAndGetOptionTestIds()).toEqual(['option-quick-filters-ssd', 'option-quick-filters-hdd']);
-  });
-
-  it('falls back to option-<value> when the select has no base', () => {
-    host.testId.set('');
-    fixture.detectChanges();
-    expect(openAndGetOptionTestIds()).toEqual(['option-ssd', 'option-hdd']);
-  });
-
-  it('uses optionTestIdKey to pick the discriminator (e.g. label over value)', () => {
-    host.keyFn.set((o) => o.label);
-    fixture.detectChanges();
+  it('scopes each option with the select base: option-<base>-<label>', () => {
     expect(openAndGetOptionTestIds()).toEqual([
       'option-quick-filters-ssd',
       'option-quick-filters-spinning-disk',
     ]);
+  });
+
+  it('falls back to option-<label> when the select has no base', () => {
+    host.testId.set('');
+    fixture.detectChanges();
+    expect(openAndGetOptionTestIds()).toEqual(['option-ssd', 'option-spinning-disk']);
+  });
+
+  it('uses optionTestIdKey to pick the discriminator (e.g. the value over the label)', () => {
+    host.keyFn.set((o) => o.value);
+    fixture.detectChanges();
+    expect(openAndGetOptionTestIds()).toEqual(['option-quick-filters-ssd', 'option-quick-filters-hdd']);
   });
 
   it('scopes grouped options the same way', () => {
@@ -1178,7 +1178,7 @@ describe('TnSelectComponent — control-name test-id fallback', () => {
     fixture.detectChanges();
     const optionTestIds = Array.from(document.querySelectorAll<HTMLElement>('.tn-select-option'))
       .map((el) => el.getAttribute('data-testid'));
-    expect(optionTestIds).toEqual(['option-disk-ssd', 'option-disk-hdd']);
+    expect(optionTestIds).toEqual(['option-disk-ssd', 'option-disk-spinning-disk']);
   });
 
   it('derives the DOM-id namespace from the control name (not the instance counter)', () => {
