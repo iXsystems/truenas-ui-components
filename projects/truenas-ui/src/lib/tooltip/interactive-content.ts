@@ -34,11 +34,16 @@ export const KEYBOARD_ACTIVATABLE_SELECTOR =
  * displayed, so matching them here would flip the tooltip to click-only in order to reach a
  * control that never renders; with `<input>` the pinned panel would come up empty.
  *
+ * The `[tabindex]` clause has to exclude them explicitly rather than lean on their tag names not
+ * being listed: a `tabindex` is an attribute anything can carry, so `<button tabindex="0">` would
+ * otherwise come back in through it and reintroduce exactly the case above.
+ *
  * `tabindex="-1"` is excluded for the same reason from the other direction: it survives
  * sanitization but is reachable only programmatically, so it is nothing for the user to click
  * towards.
  */
-const REACHABLE_CONTENT_SELECTOR = 'a[href], [tabindex]:not([tabindex="-1"])';
+const REACHABLE_CONTENT_SELECTOR =
+  'a[href], [tabindex]:not([tabindex="-1"]):not(button):not(input):not(select):not(textarea)';
 
 /**
  * Whether a tooltip message holds something the user can reach.

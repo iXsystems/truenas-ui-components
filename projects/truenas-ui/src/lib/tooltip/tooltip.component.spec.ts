@@ -183,6 +183,12 @@ describe('hasInteractiveContent', () => {
     ['a text field', 'Name <input type="text">', 'Name'],
     ['a select', '<select><option>a</option></select>', 'a'],
     ['a textarea', '<textarea>x</textarea>', 'x'],
+    // Carrying a tabindex changes nothing about what the sanitizer keeps: the element is still
+    // dropped to its text. A reachability check keyed on tabindex alone would readmit all four.
+    ['a button in the tab order', '<button type="button" tabindex="0">Retry</button>', 'Retry'],
+    ['a text field in the tab order', 'Name <input type="text" tabindex="0">', 'Name'],
+    ['a select in the tab order', '<select tabindex="0"><option>a</option></select>', 'a'],
+    ['a textarea in the tab order', '<textarea tabindex="0">x</textarea>', 'x'],
   ];
 
   it.each(SANITIZED_AWAY)('rejects %s, which the sanitizer strips before it can be reached', (_label, message) => {
