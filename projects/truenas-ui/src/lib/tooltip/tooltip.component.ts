@@ -29,10 +29,13 @@ export class TnTooltipComponent {
    * exactly what pinning exists to make reachable. A pinned panel is therefore a `dialog`, named
    * by `panelAriaLabel`.
    *
-   * It is a *non-modal* dialog and deliberately traps nothing: Tab past the dismiss button walks
-   * out into the page while the panel stays open. That is the right shape for a popup the user
-   * can also leave by Escape or by clicking outside, and it keeps a tooltip from holding the
-   * keyboard hostage.
+   * It is a *non-modal* dialog and deliberately traps nothing: Tab past the dismiss button leaves
+   * the panel while it stays open. Where focus lands next is wherever the panel sits in the tab
+   * order, which is the end of it - CDK appends its overlay container as the last child of
+   * `<body>` - so in practice Tab leaves the document for the browser's own chrome rather than
+   * continuing after the host. Not trapping is the right shape for a popup the user can also
+   * leave by Escape or by clicking outside, and it keeps a tooltip from holding the keyboard
+   * hostage.
    */
   sticky = input(false);
 

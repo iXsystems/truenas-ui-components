@@ -170,8 +170,9 @@ hover behaviour too, and carry no disclosure state (\`aria-expanded\` is not val
 \`<span>\`). Put the tooltip on the button or link itself when its message holds a link.
 
 A pinned tooltip is dismissed by clicking the host again, by the dismiss button, by clicking
-outside it, or with Escape. It is not modal and traps nothing — Tab past the dismiss button walks
-back out into the page. Activating the host from the keyboard moves focus into the tooltip,
+outside it, or with Escape. It is not modal and traps nothing — Tab past the dismiss button leaves
+the panel, though not back to the host's neighbourhood: the overlay is the last child of
+\`<body>\`, so Tab from there continues out of the document into the browser's own chrome. Activating the host from the keyboard moves focus into the tooltip,
 so Tab walks its content and then the dismiss button; dismissing hands focus back to the host.
 
 \`\`\`html
