@@ -366,7 +366,17 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     // `_isSticky` counts too: `stick()` can pin a tooltip the host click never would have, and a
     // panel that is up must be advertised as up whichever route opened it. A host that does not
     // open on click is back to being a hover tooltip, and advertises nothing.
-    if (!this._pinsOnClick() && !this._isSticky) {
+    //
+    // That second route still has to clear the same bar as the first, though. `stick()` pins
+    // whatever it is called on - `<span tnTooltip="… <a href>…">` included, which
+    // `_restoreFocusTarget` calls out by name - and none of the three attributes is allowed on
+    // that span's implicit `generic` role. `_isHostKeyboardOperable` is the check for it in both
+    // directions: the elements a click can mean "activate me" on are exactly the ones (`button`,
+    // `a[href]`, and the two roles emulating them) whose roles support these attributes, which is
+    // why the click path never reaches an invalid host either.
+    const advertisesDisclosure = this._pinsOnClick()
+      || (this._isSticky && this._isHostKeyboardOperable());
+    if (!advertisesDisclosure) {
       this._clearHostPopupState();
       return;
     }

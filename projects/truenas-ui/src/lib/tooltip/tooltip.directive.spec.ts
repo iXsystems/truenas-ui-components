@@ -522,6 +522,17 @@ describe('TnTooltipDirective sticky mode', () => {
       fixture.nativeElement.remove();
     }));
 
+    // Pinning it does not make the markup valid: none of the three attributes is allowed on a
+    // `<span>`'s implicit `generic` role, so a panel pinned this way stays unadvertised rather
+    // than reintroducing through `stick()` the axe violation the click path declines to produce.
+    it('still writes no disclosure state onto a host that cannot carry it', fakeAsync(() => {
+      stickSpanHost();
+      expect(tooltipPanel()).not.toBeNull();
+
+      expect(spanHost().hasAttribute('aria-expanded')).toBe(false);
+      expect(spanHost().hasAttribute('aria-haspopup')).toBe(false);
+      expect(spanHost().hasAttribute('aria-controls')).toBe(false);
+    }));
   });
 
   describe('a tooltip pinned imperatively through stick()', () => {
