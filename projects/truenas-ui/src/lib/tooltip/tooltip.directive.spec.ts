@@ -19,6 +19,14 @@ import { TnButtonComponent } from '../button/button.component';
     <button type="button" id="plain" [tnTooltip]="'Plain help text'">plain host</button>
     <button type="button" id="owns-expanded" aria-expanded="true" [tnTooltip]="ownerMessage()">menu trigger</button>
     <button type="button" id="late-expanded" [attr.aria-expanded]="lateExpanded()" [tnTooltip]="message()">late owner</button>
+    <button type="button" id="owns-controls" aria-controls="panel-1" [tnTooltip]="message()">tab</button>
+    <div id="swap-host" [tnTooltip]="message()">
+      @if (swappedToButton()) {
+        <button type="button" [attr.aria-expanded]="swappedExpanded()">inner button</button>
+      } @else {
+        <a href="#swap">inner link</a>
+      }
+    </div>
     <button type="button" id="side" tnTooltip="Plain help text" tnTooltipPosition="right">side host</button>
     <button type="button" id="native-disabled" disabled [tnTooltip]="message()">disabled host</button>
     <div id="wrapper-disabled" [tnTooltip]="message()"><button type="button" disabled>inner</button></div>
@@ -38,6 +46,11 @@ class HostComponent {
   // A host whose own aria-expanded binding starts unset - `<tn-icon-button [ariaExpanded]>` is
   // exactly this shape - and resolves to a value only later.
   lateExpanded = signal<string | null>(null);
+  // A wrapper whose single inner control is replaced rather than mutated - a `<tn-button>` with
+  // an `@if` around its `[href]` branch is this shape - and whose replacement later takes
+  // `aria-expanded` over for itself.
+  swappedToButton = signal(false);
+  swappedExpanded = signal<string | null>(null);
   closeLabel = signal('Close tooltip');
 }
 
@@ -717,6 +730,65 @@ describe('TnTooltipDirective sticky mode', () => {
       expect(ownerHost.hasAttribute('aria-haspopup')).toBe(false);
       expect(ownerHost.hasAttribute('aria-controls')).toBe(false);
     }));
+
+    // Ownership is decided over the whole set, not over the attributes a given sync is about to
+    // write. `aria-controls` is only written while pinned, so a host owning that one alone would
+    // slip past an unpinned check - leaving the tooltip's collapsed dialog advertised next to the
+    // host's own `aria-controls`, and dropped again the moment the pin brought `aria-controls`
+    // into the set.
+    it('yields the set to a host that owns only the attribute the unpinned state never writes', fakeAsync(() => {
+      const controlsHost = fixture.nativeElement.querySelector('#owns-controls') as HTMLElement;
+
+      expect(controlsHost.hasAttribute('aria-expanded')).toBe(false);
+      expect(controlsHost.hasAttribute('aria-haspopup')).toBe(false);
+
+      controlsHost.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+      tick();
+      fixture.detectChanges();
+
+      // Still pins, and the host's own target is left pointing where it pointed.
+      expect(tooltipPanel()).not.toBeNull();
+      expect(controlsHost.getAttribute('aria-controls')).toBe('panel-1');
+      expect(controlsHost.hasAttribute('aria-expanded')).toBe(false);
+    }));
+  });
+
+  // The ledger that tells this directive's own writes apart from the host's is spent by the
+  // records those writes produce - and a write to an element that has already left the DOM
+  // produces none. Held in one bucket per attribute name, such an unspendable credit would be
+  // spent by the next host write instead, and the takeover would go unnoticed.
+  describe('a wrapper whose inner control is swapped out', () => {
+    const innerControl = () => fixture.nativeElement
+      .querySelector('#swap-host a, #swap-host button') as HTMLElement;
+
+    async function settleObserver(): Promise<void> {
+      await new Promise((resolve) => setTimeout(resolve));
+      fixture.detectChanges();
+    }
+
+    it('still notices the replacement taking a disclosure attribute over', async () => {
+      expect(innerControl().tagName).toBe('A');
+      expect(innerControl().getAttribute('aria-expanded')).toBe('false');
+
+      // Swapping the branch detaches the <a> the attributes were written on, and the tooltip
+      // clears them there before claiming them on the <button> that replaced it.
+      fixture.componentInstance.swappedToButton.set(true);
+      fixture.detectChanges();
+      await settleObserver();
+
+      expect(innerControl().tagName).toBe('BUTTON');
+      expect(innerControl().getAttribute('aria-expanded')).toBe('false');
+      expect(innerControl().getAttribute('aria-haspopup')).toBe('dialog');
+
+      // The replacement's own binding then resolves to the value already sitting there, exactly
+      // as `<tn-icon-button [ariaExpanded]>` does.
+      fixture.componentInstance.swappedExpanded.set('false');
+      fixture.detectChanges();
+      await settleObserver();
+
+      expect(innerControl().getAttribute('aria-expanded')).toBe('false');
+      expect(innerControl().hasAttribute('aria-haspopup')).toBe(false);
+    });
   });
 
   // Ownership cannot be re-derived from the current value, because a value comparison cannot tell

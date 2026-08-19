@@ -42,18 +42,18 @@ export type TooltipPosition = 'above' | 'below' | 'left' | 'right' | 'before' | 
 const REPOSITION_THROTTLE = 20;
 
 /**
- * Half the arrow's base, and the panel's corner radius. `tooltip.component.scss` owns both and
- * publishes them as these custom properties; these are only the fallback for environments that
- * do not resolve custom properties (jsdom in the unit tests), so the arrow clamp still gets
- * plausible geometry there.
- */
-/**
  * The disclosure attributes a pinnable tooltip puts on its host, and the set whose ownership
  * `_writeHostPopupState` tracks. They describe one popup between them, so they are claimed and
  * yielded together.
  */
 const POPUP_STATE_ATTRIBUTES = ['aria-expanded', 'aria-haspopup', 'aria-controls'];
 
+/**
+ * Half the arrow's base, and the panel's corner radius. `tooltip.component.scss` owns both and
+ * publishes them as these custom properties; these are only the fallback for environments that
+ * do not resolve custom properties (jsdom in the unit tests), so the arrow clamp still gets
+ * plausible geometry there.
+ */
 const ARROW_HALF_WIDTH_PROPERTY = '--tn-tooltip-arrow-half-width';
 const PANEL_RADIUS_PROPERTY = '--tn-tooltip-radius';
 const FALLBACK_ARROW_HALF_WIDTH = 6;
@@ -146,7 +146,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   private _innerObserver: MutationObserver | null = null;
   private _popupStateTarget: HTMLElement | null = null;
   private _popupStateWritten: Record<string, string> = {};
-  private _popupStateSelfWrites: Record<string, number> = {};
+  private _popupStateSelfWrites = new WeakMap<Element, Record<string, number>>();
   private _popupStateHostOwned = new Set<string>();
   private _cachedArrowInset: number | null = null;
 
@@ -448,7 +448,10 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
       this._popupStateHostOwned.clear();
     }
 
-    const hostOwnsAny = Object.keys(attributes).some((name) => !this._ownsHostAttribute(target, name));
+    // Over the whole set, not just the attributes about to be written: `aria-controls` is only
+    // written while pinned, and a host owning that one alone would otherwise go unnoticed until
+    // the pin - flipping between advertising and not on a host that never changed.
+    const hostOwnsAny = POPUP_STATE_ATTRIBUTES.some((name) => !this._ownsHostAttribute(target, name));
     if (hostOwnsAny) {
       this._clearHostPopupState();
       return;
@@ -504,15 +507,19 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
         continue;
       }
 
-      // These attributes mean nothing to this directive on any element but the one it writes to,
-      // and a wrapper's subtree can hold controls carrying them for reasons of their own.
-      if (record.target !== this._ariaTarget()) {
+      // The ledger is spent before anything else is decided: a write of ours is a write of ours
+      // wherever it landed, and leaving the credit unspent here would leave it to be spent by
+      // some later write of the host's.
+      const pending = this._popupStateSelfWrites.get(record.target as Element);
+      const credits = pending?.[name] ?? 0;
+      if (pending && credits > 0) {
+        pending[name] = credits - 1;
         continue;
       }
 
-      const pending = this._popupStateSelfWrites[name] ?? 0;
-      if (pending > 0) {
-        this._popupStateSelfWrites[name] = pending - 1;
+      // These attributes mean nothing to this directive on any element but the one it writes to,
+      // and a wrapper's subtree can hold controls carrying them for reasons of their own.
+      if (record.target !== this._ariaTarget()) {
         continue;
       }
 
@@ -524,7 +531,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   }
 
   private _setPopupStateAttribute(target: HTMLElement, name: string, value: string): void {
-    this._countPopupStateWrite(name);
+    this._countPopupStateWrite(target, name);
     target.setAttribute(name, value);
   }
 
@@ -534,7 +541,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
       return;
     }
 
-    this._countPopupStateWrite(name);
+    this._countPopupStateWrite(target, name);
     target.removeAttribute(name);
   }
 
@@ -543,13 +550,23 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * produces. Only writes made while the observer is connected produce one — the first
    * `_syncAria` runs before `ngAfterViewInit` has created it, and counting that one would leave a
    * credit behind for the host's first write to spend.
+   *
+   * Kept per element rather than per attribute name, because a write and the record it produces
+   * can come apart when the element does. A wrapper swapping its inner control (`<tn-button>`
+   * moving between `<a>` and `<button>` through an `@if`) has `_clearHostPopupState` write to the
+   * outgoing element, which is detached by then and so is no longer observed: no record is ever
+   * queued for it. A single shared ledger would carry those credits over to the incoming element
+   * and absorb the host's own writes there as if they were ours. Per element, they are stranded
+   * on a node nothing consults again, and the WeakMap lets it go.
    */
-  private _countPopupStateWrite(name: string): void {
+  private _countPopupStateWrite(target: Element, name: string): void {
     if (!this._innerObserver) {
       return;
     }
 
-    this._popupStateSelfWrites[name] = (this._popupStateSelfWrites[name] ?? 0) + 1;
+    const pending = this._popupStateSelfWrites.get(target) ?? {};
+    pending[name] = (pending[name] ?? 0) + 1;
+    this._popupStateSelfWrites.set(target, pending);
   }
 
   private _clearHostPopupState(): void {
