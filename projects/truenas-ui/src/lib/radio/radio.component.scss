@@ -79,7 +79,7 @@
   &__error {
     margin-top: 0.25rem;
     font-size: 12px;
-    color: var(--tn-red-text, #df5c5c);
+    color: var(--tn-red-text, var(--tn-red, #df5c5c));
   }
   
   // States
