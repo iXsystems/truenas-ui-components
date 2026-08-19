@@ -73,6 +73,15 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * Allows the tooltip to be pinned ("stuck") open so its content can be interacted with —
    * needed for tooltips that contain links or other controls.
    *
+   * UPGRADING: this defaults to `true`, so an existing tooltip whose message happens to contain a
+   * link changes behaviour with no code change on your side — it stops appearing on hover and on
+   * keyboard focus, and the host's click opens it instead. Nothing else about the host changes.
+   * Anything that forwards a caller-supplied message to a `<button>` is a candidate: inside this
+   * library that is `<tn-form-field [tooltip]>`, `<tn-form-section [tooltip]>` and `<tn-card>`'s
+   * title and action tooltips, all of which render a help button and pass the message straight
+   * through. Set this to `false` on any of them to keep the old hover behaviour, at the cost of
+   * the link staying out of reach.
+   *
    * This only narrows the rule in `_isPinnable`, it cannot widen it: plain help text is never
    * pinnable however this is set, and neither is a message on a host that cannot deliver the
    * click - see `_isHostClickBlocked`. Setting it to false forces a message that does hold a

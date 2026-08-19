@@ -36,7 +36,7 @@ const meta: Meta = {
     },
     tnTooltipSticky: {
       control: 'boolean',
-      description: 'Whether a message containing a link may be pinned open by clicking the host. Enabled by default, and only ever applies to such messages — plain help text always hovers and is never pinnable, so this control has no effect on it. Set it to false to force a message with a link back to hover behaviour.'
+      description: 'Whether a message containing a link may be pinned open by clicking the host. Enabled by default, and only ever applies to such messages — plain help text always hovers and is never pinnable, so this control has no effect on it. Set it to false to force a message with a link back to hover behaviour. Upgrading: because it defaults to true, an existing tooltip whose message already holds a link switches from hover to click-to-open without any code change.'
     },
     tnTooltipCloseAriaLabel: {
       control: 'text',
@@ -143,7 +143,15 @@ pinnable.
 link no longer appears on hover or on focus at all, because a tooltip that appeared on hover and
 then still had to be clicked made the user chase a target already on screen. Its host is marked
 up as the control that reveals it (\`aria-expanded\`, \`aria-haspopup="dialog"\`,
-\`aria-controls\`), except where the host already owns one of those for something of its own.
+\`aria-controls\`) — all three together, or none of them where the host already owns any one for
+something of its own, since between them they describe a single popup.
+
+⚠️ **On upgrade, this applies to tooltips you have already written.** \`tnTooltipSticky\` defaults
+to \`true\`, so any existing message that happens to contain a link flips from hover to
+click-to-open with no code change. Components that forward a caller-supplied message to a help
+\`<button>\` are where this shows up — \`<tn-form-field [tooltip]>\`, \`<tn-form-section [tooltip]>\`
+and \`<tn-card>\`'s title and action tooltips. Pass \`[tnTooltipSticky]="false"\` to keep the old
+behaviour on any of them.
 
 The click is additive, not exclusive: the host's own \`(click)\` handler still runs, so a button
 that both acts and pins does both. A host that navigates away should keep its tooltip plain or
