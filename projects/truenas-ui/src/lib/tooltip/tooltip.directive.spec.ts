@@ -656,20 +656,25 @@ describe('TnTooltipDirective sticky mode', () => {
       expect(ownerHost.getAttribute('aria-expanded')).toBe('true');
     });
 
-    it('never touches an aria-expanded the host owns, even with a pinnable tooltip', fakeAsync(() => {
+    // The three describe one popup between them, so they are yielded as a set: writing the two
+    // the host does not own would announce "expanded dialog controlling tn-tooltip-xxx", mixing
+    // the host's own expanded region with a tooltip panel that may well be closed.
+    it('yields the whole set, not just the attribute the host owns', fakeAsync(() => {
       fixture.componentInstance.ownerMessage.set('Read the <a href="#docs">docs</a>');
       fixture.detectChanges();
 
       expect(ownerHost.getAttribute('aria-expanded')).toBe('true');
-      // The attributes it does not own are still its tooltip's to write.
-      expect(ownerHost.getAttribute('aria-haspopup')).toBe('dialog');
+      expect(ownerHost.hasAttribute('aria-haspopup')).toBe(false);
 
       ownerHost.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
       tick();
       fixture.detectChanges();
 
+      // Still pins - only the advertising is dropped, and the panel is reached by the same click.
       expect(tooltipPanel()).not.toBeNull();
       expect(ownerHost.getAttribute('aria-expanded')).toBe('true');
+      expect(ownerHost.hasAttribute('aria-haspopup')).toBe(false);
+      expect(ownerHost.hasAttribute('aria-controls')).toBe(false);
     }));
   });
 

@@ -391,29 +391,43 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   /**
    * Writes the disclosure attributes, remembering the exact value written for each.
    *
-   * A host that carries one of them keeps it, and this directive never removes or overwrites a
-   * value it did not itself put there. Hosts own these legitimately and mean something else by
-   * them: a `tnMenuTrigger` is `aria-haspopup="menu"`, a `<tn-select>` points `aria-controls` at
-   * its own listbox, and `<tn-icon-button [ariaExpanded]>` binds `aria-expanded` to the same
-   * inner `<button>` a `tnTooltip` on it would land on. There is only one of each attribute to go
-   * around, and the host's click is what they describe — a tooltip is the lesser claim.
+   * A host that carries any of them keeps all three, and this directive never removes or
+   * overwrites a value it did not itself put there. Hosts own these legitimately and mean
+   * something else by them: a `tnMenuTrigger` is `aria-haspopup="menu"`, a `<tn-select>` points
+   * `aria-controls` at its own listbox, and `<tn-icon-button [ariaExpanded]>` binds
+   * `aria-expanded` to the same inner `<button>` a `tnTooltip` on it would land on. There is only
+   * one of each attribute to go around, and the host's click is what they describe — a tooltip is
+   * the lesser claim.
    *
    * Ownership is decided by value rather than by whether the attribute was absent the first time
    * this ran, so a host that starts with nothing bound (`ariaExpanded` defaults to `undefined`)
    * and writes its own value later takes the attribute back at that point instead of being
    * fought over it.
+   *
+   * And it is decided for the group, not per attribute: the three describe one popup between
+   * them, so yielding them one at a time would leave the host describing two. A menu trigger
+   * carrying its own `aria-expanded="true"` would keep that value and still take
+   * `aria-haspopup="dialog"` and an `aria-controls` pointing at the tooltip panel, announcing
+   * "expanded dialog controlling tn-tooltip-xxx" for a panel that may well be closed. So if any
+   * one of them is spoken for, the tooltip writes none of them and the host keeps the coherent
+   * state it owns. Nothing about reaching the panel depends on them: it still opens on the host
+   * click and closes on Escape, an outside click or the dismiss button.
    */
   private _writeHostPopupState(target: HTMLElement, attributes: Record<string, string>): void {
     if (this._popupStateTarget && this._popupStateTarget !== target) {
       this._clearHostPopupState();
     }
 
+    // Checked before `_clearHostPopupState` runs, since ownership is decided against the values
+    // this directive last wrote and clearing forgets them.
+    const hostOwnsAny = Object.keys(attributes).some((name) => !this._ownsHostAttribute(target, name));
+    if (hostOwnsAny) {
+      this._clearHostPopupState();
+      return;
+    }
+
     const written: Record<string, string> = {};
     for (const [name, value] of Object.entries(attributes)) {
-      if (!this._ownsHostAttribute(target, name)) {
-        continue;
-      }
-
       target.setAttribute(name, value);
       written[name] = value;
     }
