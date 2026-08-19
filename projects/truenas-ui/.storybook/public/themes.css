@@ -24,6 +24,11 @@
   --tn-yellow: #DED142;
   --tn-orange: #E68D37;
   --tn-red: #CE2929;
+  /* --tn-red-text is --tn-red re-tuned for 4.5:1 text contrast (--tn-red itself
+     stays 3:1-tuned for borders/icons). It cascades from :root like any other
+     var, so a theme that overrides --tn-red without also overriding
+     --tn-red-text silently inherits THIS value rather than deriving from its
+     own --tn-red -- every theme below must set both together. */
   --tn-red-text: #e26c6c;
   --tn-magenta: #C006C7;
   --tn-violet: #7617D8;
