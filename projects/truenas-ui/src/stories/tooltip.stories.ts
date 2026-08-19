@@ -63,7 +63,9 @@ export const Default: Story = {
           [tnTooltipDisabled]="tnTooltipDisabled"
           [tnTooltipShowDelay]="tnTooltipShowDelay"
           [tnTooltipHideDelay]="tnTooltipHideDelay"
-          [tnTooltipSticky]="tnTooltipSticky">
+          [tnTooltipSticky]="tnTooltipSticky"
+          [tnTooltipCloseAriaLabel]="tnTooltipCloseAriaLabel"
+          [tnTooltipAriaLabel]="tnTooltipAriaLabel">
         </tn-button>
       </div>
     `,
@@ -82,7 +84,9 @@ export const Default: Story = {
     tnTooltipDisabled: false,
     tnTooltipShowDelay: 0,
     tnTooltipHideDelay: 0,
-    tnTooltipSticky: true
+    tnTooltipSticky: true,
+    tnTooltipCloseAriaLabel: 'Close tooltip',
+    tnTooltipAriaLabel: 'Tooltip'
   }
 };
 
