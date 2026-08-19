@@ -573,6 +573,43 @@ describe('TnTooltipDirective sticky mode', () => {
     }));
   });
 
+  // The three entry points have to agree: `toggle()` routing to `show()` would put up an
+  // unpinned panel for a message that can only be used pinned - `pointer-events: none`, so the
+  // link in it is unclickable, and gone again on `mouseleave`.
+  describe('toggle()', () => {
+    function toggleOn(target: HTMLElement): void {
+      fixture.debugElement
+        .query((node) => node.nativeElement === target)
+        .injector.get(TnTooltipDirective)
+        .toggle();
+      tick();
+      fixture.detectChanges();
+    }
+
+    it('opens a pinnable message pinned, as the host click would', fakeAsync(() => {
+      toggleOn(host);
+
+      expect(tooltipPanel()).not.toBeNull();
+      expect(closeButton()).not.toBeNull();
+    }));
+
+    it('closes it again on a second call', fakeAsync(() => {
+      toggleOn(host);
+      toggleOn(host);
+
+      expect(tooltipPanel()).toBeNull();
+    }));
+
+    it('still just shows and hides plain help text', fakeAsync(() => {
+      toggleOn(plainHost);
+      expect(tooltipPanel()).not.toBeNull();
+      expect(closeButton()).toBeNull();
+
+      toggleOn(plainHost);
+      expect(tooltipPanel()).toBeNull();
+    }));
+  });
+
   describe('a tooltip pinned imperatively through stick()', () => {
     function stickPlainHost(): void {
       const directive = fixture.debugElement

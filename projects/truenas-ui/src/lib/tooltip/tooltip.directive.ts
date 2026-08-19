@@ -715,8 +715,25 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     }, delay);
   }
 
-  /** Toggle the tooltip visibility */
+  /**
+   * Toggles the tooltip, opening it the way its host's own click would.
+   *
+   * Routed through `_pinsOnClick` for the same reason `_onClick` is: `show()` on a pinnable
+   * message puts up a `role="tooltip"` panel with `pointer-events: none`, so the link inside it
+   * cannot be clicked and `mouseleave` takes it away again — the unreachable state pinning exists
+   * to replace, which a public method should not be able to produce either.
+   */
   toggle(): void {
+    if (this._isSticky) {
+      this.unstick();
+      return;
+    }
+
+    if (this._pinsOnClick()) {
+      this.stick();
+      return;
+    }
+
     this._isTooltipVisible ? this.hide() : this.show();
   }
 
