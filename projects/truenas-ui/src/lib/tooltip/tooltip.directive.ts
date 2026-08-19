@@ -323,6 +323,8 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    *   interactive descendant — `<span [tnTooltip]="'… <a href>…'">` is exactly that. It can be
    *   clicked with a pointer, so nothing in `_isHostClickBlocked` catches it, but it cannot be
    *   focused or activated at all, and `aria-expanded` is invalid on its implicit `generic` role.
+   *   A host wearing `role="button"` is the same case: the role renames it for assistive tech
+   *   without making the browser synthesise a click for it.
    * - A text control (`<input>`, `<select>`, `<textarea>`) is focusable but not *activatable*:
    *   Enter submits the form and Space types a space, so no click ever arrives. On top of that,
    *   every pointer click into the field — placing the caret — would toggle the panel.
@@ -371,9 +373,9 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     // whatever it is called on - `<span tnTooltip="… <a href>…">` included, which
     // `_restoreFocusTarget` calls out by name - and none of the three attributes is allowed on
     // that span's implicit `generic` role. `_isHostKeyboardOperable` is the check for it in both
-    // directions: the elements a click can mean "activate me" on are exactly the ones (`button`,
-    // `a[href]`, and the two roles emulating them) whose roles support these attributes, which is
-    // why the click path never reaches an invalid host either.
+    // directions: the elements a keyboard activation can reach as a click (`button` and
+    // `a[href]`) are exactly the ones whose roles support these attributes, which is why the
+    // click path never reaches an invalid host either.
     const advertisesDisclosure = this._pinsOnClick()
       || (this._isSticky && this._isHostKeyboardOperable());
     if (!advertisesDisclosure) {

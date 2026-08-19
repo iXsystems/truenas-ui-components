@@ -8,7 +8,7 @@
 export const INTERACTIVE_SELECTOR = 'button, a[href], input, select, textarea, [tabindex]';
 
 /**
- * Elements whose activation the keyboard can actually deliver as a click.
+ * Elements the browser synthesises a click on when the keyboard activates them.
  *
  * Answers a different question from `INTERACTIVE_SELECTOR`, which is only "is this the element
  * ARIA belongs on". Every native control is focusable, but focusable is not activatable: on an
@@ -16,13 +16,19 @@ export const INTERACTIVE_SELECTOR = 'button, a[href], input, select, textarea, [
  * the picker — neither dispatches a click. A tooltip that can only be opened by clicking its host
  * would therefore have no keyboard route in at all on those hosts, so they fall back to hover.
  *
- * `button` and `a[href]` are activated by Enter/Space and Enter respectively. The ARIA roles are
- * here for hosts that emulate them, and require an explicit `tabindex` because — unlike the two
- * native elements — a role alone does not put the element in the tab order; `tabindex="-1"` is
- * excluded by the caller, being focusable only programmatically.
+ * That leaves the two elements where the browser itself turns the key press into a click:
+ * `button` (Enter and Space) and `a[href]` (Enter). `tabindex="-1"` is excluded by the caller,
+ * being focusable only programmatically.
+ *
+ * `role="button"`/`role="link"` are deliberately *not* here. A role renames an element for
+ * assistive tech and changes no behaviour whatsoever: `<div role="button" tabindex="0">` gets
+ * `keydown` on Enter/Space and nothing else, and a consumer emulating a button calls its own
+ * handler rather than `element.click()`, so no click ever reaches the directive. Trusting the
+ * role would produce exactly the failure this selector exists to prevent — a click-only tooltip
+ * with no way to open it from the keyboard. Those hosts fall back to hover, as the bare `<span>`
+ * does.
  */
-export const KEYBOARD_ACTIVATABLE_SELECTOR =
-  'button, a[href], [role="button"][tabindex], [role="link"][tabindex]';
+export const KEYBOARD_ACTIVATABLE_SELECTOR = 'button, a[href]';
 
 /**
  * Content inside a tooltip *message* that the user can actually reach.

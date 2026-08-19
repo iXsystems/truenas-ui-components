@@ -23,6 +23,7 @@ import { TnButtonComponent } from '../button/button.component';
     <div id="wrapper-disabled" [tnTooltip]="message()"><button type="button" disabled>inner</button></div>
     <span id="span-host" [tnTooltip]="message()">span host</span>
     <input id="input-host" [tnTooltip]="message()" />
+    <div id="role-host" role="button" tabindex="0" [tnTooltip]="message()">emulated button</div>
     <tn-button id="tn-button-disabled" label="Create pool" [disabled]="true" [tnTooltip]="message()" />
   `,
 })
@@ -489,6 +490,39 @@ describe('TnTooltipDirective sticky mode', () => {
       it('advertises no disclosure state', () => {
         expect(inputHost().hasAttribute('aria-expanded')).toBe(false);
         expect(inputHost().hasAttribute('aria-haspopup')).toBe(false);
+      });
+    });
+
+    // A role renames an element for assistive tech and changes no behaviour: this host gets
+    // `keydown` on Enter/Space and nothing else, and a consumer emulating a button calls its own
+    // handler rather than `element.click()`. Trusting the role would leave the panel click-only
+    // with no keyboard route in - the failure the whole check exists to prevent.
+    describe('a host wearing role="button", which the browser still sends no click for', () => {
+      const roleHost = () => fixture.nativeElement.querySelector('#role-host') as HTMLElement;
+
+      it('shows the message on keyboard focus rather than waiting for a click', fakeAsync(() => {
+        TestBed.inject(FocusMonitor).focusVia(roleHost(), 'keyboard');
+        tick();
+        fixture.detectChanges();
+
+        expect(tooltipPanel()).not.toBeNull();
+        expect(closeButton()).toBeNull();
+      }));
+
+      it('falls back to hover, and pins on neither route', fakeAsync(() => {
+        hover(roleHost());
+        expect(tooltipPanel()).not.toBeNull();
+
+        roleHost().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+        tick();
+        fixture.detectChanges();
+
+        expect(closeButton()).toBeNull();
+      }));
+
+      it('advertises no disclosure it cannot deliver', () => {
+        expect(roleHost().hasAttribute('aria-expanded')).toBe(false);
+        expect(roleHost().hasAttribute('aria-haspopup')).toBe(false);
       });
     });
   });
