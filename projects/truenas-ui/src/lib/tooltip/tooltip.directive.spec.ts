@@ -1,4 +1,5 @@
 import { FocusMonitor } from '@angular/cdk/a11y';
+import { OverlayRef } from '@angular/cdk/overlay';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, signal } from '@angular/core';
@@ -520,6 +521,7 @@ describe('TnTooltipDirective sticky mode', () => {
       expect(document.activeElement).toBe(spanHost());
       fixture.nativeElement.remove();
     }));
+
   });
 
   describe('a tooltip pinned imperatively through stick()', () => {
@@ -632,6 +634,45 @@ describe('TnTooltipDirective sticky mode', () => {
 
     expect(document.querySelector('.cdk-overlay-pane')).toBeNull();
   }));
+
+  // The arrow is measured against the pane, so it has to be measured after CDK has moved the
+  // pane, not before. Both this directive and `RepositionScrollStrategy` reach `scrolled()`
+  // through the same shared subject with the same audit window, so it comes down to subscription
+  // order - and CDK subscribes from inside `attach()`. A same-position re-placement emits no
+  // `positionChanges`, so nothing follows to correct a stale reading.
+  describe('the arrow across a scroll', () => {
+    const pane = () => document.querySelector('.cdk-overlay-pane') as HTMLElement;
+    const arrowOffset = () => pane().style.getPropertyValue('--tn-tooltip-arrow-offset');
+
+    afterEach(() => jest.restoreAllMocks());
+
+    it('measures the panel after the scroll has re-placed it', fakeAsync(() => {
+      hover(sideHost);
+
+      // A side-placed panel, where the offset runs down the panel: the host sits at y 170-186
+      // (centre 178) and the scroll moves the panel from 100 up to 70.
+      let panelTop = 100;
+      jest.spyOn(sideHost, 'getBoundingClientRect').mockReturnValue({
+        left: 100, width: 16, top: 170, height: 16,
+      } as DOMRect);
+      jest.spyOn(pane(), 'getBoundingClientRect').mockImplementation(() => ({
+        left: 300, width: 200, top: panelTop, height: 200,
+      }) as DOMRect);
+      // Stands in for the re-placement `RepositionScrollStrategy` performs on each scroll tick.
+      jest.spyOn(OverlayRef.prototype, 'updatePosition').mockImplementation(() => {
+        panelTop = 70;
+      });
+
+      // A page scroll, which reaches the directive through CDK's ScrollDispatcher.
+      document.dispatchEvent(new Event('scroll'));
+      tick(100);
+      fixture.detectChanges();
+
+      // 178 - 70. Reading 78px would mean the arrow was measured against the panel's pre-scroll
+      // top of 100, i.e. before CDK had moved it.
+      expect(arrowOffset()).toBe('108px');
+    }));
+  });
 
   describe('a null message', () => {
     // Switching a tooltip off with `[tnTooltip]="condition ? text : null"` is common in consuming

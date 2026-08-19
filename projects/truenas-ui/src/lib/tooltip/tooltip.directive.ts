@@ -696,22 +696,6 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
       panelClass: ['tn-tooltip-panel', `tn-tooltip-panel-${this.position()}`, this.tooltipClass()].filter(Boolean),
     });
 
-    // `positionChanges` cannot carry the arrow on its own. CDK emits it from `_applyPosition`
-    // behind `position !== this._lastPosition || scrollVisibility changed` (cdk 21.1.0), so a
-    // panel re-placed at the *same* position with different coordinates - viewport clamping,
-    // which is the case the arrow offset exists for - emits nothing at all. These are the events
-    // that re-place the overlay, so the arrow follows it; the side-placement specs in
-    // `tooltip.directive.spec.ts` fail without this. On a genuine flip both paths run, which is
-    // two rect reads either way since the inset is cached.
-    this._repositionSub = merge(
-      this._scrollDispatcher.scrolled(REPOSITION_THROTTLE),
-      this._viewportRuler.change(REPOSITION_THROTTLE),
-    ).subscribe(() => {
-      if (this._isTooltipVisible) {
-        this._updateArrowOffset();
-      }
-    });
-
     this._positionSub = (positionStrategy as FlexibleConnectedPositionStrategy).positionChanges
       .subscribe((change) => {
         // The position panelClass is applied to the overlay pane (overlayElement), so the
@@ -829,7 +813,41 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
         this.unstick(this._isFocusInsideTooltip());
       });
       this._isTooltipVisible = true;
+
+      this._subscribeToReposition();
     }
+  }
+
+  /**
+   * Keeps the arrow pointing at the host across re-placements that `positionChanges` does not
+   * report.
+   *
+   * CDK emits `positionChanges` from `_applyPosition` behind
+   * `position !== this._lastPosition || scrollVisibility changed` (cdk 21.1.0), so a panel
+   * re-placed at the *same* position with different coordinates — viewport clamping, which is the
+   * case the arrow offset exists for — emits nothing at all. Listening to the events that drive
+   * those re-placements covers it; the side-placement specs in `tooltip.directive.spec.ts` fail
+   * without this. On a genuine flip both paths run, which is two rect reads either way since the
+   * inset is cached.
+   *
+   * Subscribed here rather than in `_createOverlay`, and deliberately after
+   * `this._overlayRef.attach()`, because the arrow has to be measured against the pane's *new*
+   * position. `RepositionScrollStrategy.enable()` reaches `_scrollDispatcher.scrolled()` through
+   * the same shared subject and the same audit window that this does, so the two run in
+   * subscription order — and `enable()` is called from inside `attach()`. Subscribing before it
+   * put `_updateArrowOffset` first on every scroll tick, reading the pane rect from before the
+   * re-placement: on a pinned side-placed panel, a vertical scroll moved `hostRect.top` while
+   * `panelRect.top` still held the previous value, and since a same-position re-placement emits
+   * no `positionChanges` nothing came along to correct it.
+   *
+   * Re-attaching re-runs the CDK's subscriptions too, so this has to be renewed per attach rather
+   * than held for the lifetime of the overlay - hence the teardown in `_destroyTooltip`.
+   */
+  private _subscribeToReposition(): void {
+    this._repositionSub = merge(
+      this._scrollDispatcher.scrolled(REPOSITION_THROTTLE),
+      this._viewportRuler.change(REPOSITION_THROTTLE),
+    ).subscribe(() => this._updateArrowOffset());
   }
 
   /**
@@ -877,6 +895,8 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
       this._syncHostPopupState(this._ariaTarget());
     }
 
+    this._repositionSub?.unsubscribe();
+    this._repositionSub = null;
     this._escapeSub?.unsubscribe();
     this._escapeSub = null;
     this._outsideClickSub?.unsubscribe();
