@@ -33,7 +33,7 @@
               <button
                 type="button"
                 class="tn-card__title-tooltip"
-                aria-label="More information"
+                [attr.aria-label]="resolvedTitleTooltipAriaLabel()"
                 [tnTooltip]="tooltip">
                 <tn-icon name="help-circle" library="mdi" size="sm" [attr.aria-hidden]="true" />
               </button>
@@ -79,7 +79,8 @@
                 name="dots-vertical"
                 library="mdi"
                 size="md"
-                ariaLabel="Card menu"
+                [ariaLabel]="resolvedHeaderMenuAriaLabel()"
+                [tooltip]="resolvedHeaderMenuTooltip()"
                 [testId]="headerMenuTriggerTestId()"
                 [tnMenuTriggerFor]="cardMenu" />
               <tn-menu

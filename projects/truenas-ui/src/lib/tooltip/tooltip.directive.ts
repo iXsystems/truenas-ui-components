@@ -1,7 +1,7 @@
 /* eslint-disable @angular-eslint/no-input-rename */
 // Input aliasing is intentional for directive API consistency (e.g., ixTooltip, ixTooltipPosition)
 // This follows the standard Angular pattern used by Material and other directive-based components
-import { AriaDescriber } from '@angular/cdk/a11y';
+import { AriaDescriber, FocusMonitor } from '@angular/cdk/a11y';
 import {
   Overlay,
   type OverlayRef,
@@ -24,6 +24,7 @@ import {
   effect,
   HostListener,
   ElementRef,
+  NgZone,
   ViewContainerRef,
   inject
 } from '@angular/core';
@@ -78,7 +79,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * to be clicked made the user chase a target that was already on screen. See `_isPinnable`
    * for which tooltips this applies to.
    *
-   * While pinned the tooltip renders a dismiss button and ignores `mouseleave`/`focusout`; it
+   * While pinned the tooltip renders a dismiss button and ignores `mouseleave` and blur; it
    * closes on a second click of the host, on the dismiss button, on an outside click, or on
    * Escape.
    *
@@ -105,6 +106,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   private _escapeSub: Subscription | null = null;
   private _outsideClickSub: Subscription | null = null;
   private _dismissSub: OutputRefSubscription | null = null;
+  private _focusSub: Subscription | null = null;
   // Unique ID for the overlay tooltip element
   private _tooltipId = `tn-tooltip-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -115,6 +117,8 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   private _ariaDescriber = inject(AriaDescriber);
   private _scrollDispatcher = inject(ScrollDispatcher);
   private _viewportRuler = inject(ViewportRuler);
+  private _focusMonitor = inject(FocusMonitor);
+  private _ngZone = inject(NgZone);
 
   private _viewInitialized = false;
   private _describedTarget: HTMLElement | null = null;
@@ -164,7 +168,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     // `disabled` is the other input that decides whether a panel may be on screen at all, and it
     // needs the same treatment: `show()` and `stick()` both refuse to open while disabled, so a
     // panel still up after `[tnTooltipDisabled]` flips on is a state neither entry point could
-    // produce. A pinned one has no `mouseleave`/`focusout` to take it down either, so it would
+    // produce. A pinned one has no `mouseleave` or blur to take it down either, so it would
     // sit there indefinitely — describing a host whose `aria-describedby` has already been
     // dropped — until the user happened to click, press Escape, or click outside.
     if (disabled || !message) {
@@ -228,6 +232,37 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
         attributeFilter: ['disabled', 'aria-disabled'],
       });
     }
+
+    // Focus opens the tooltip only when the focus actually came from the keyboard. A plain
+    // `focus`/`focusin` listener also fires for programmatic `.focus()` — e.g.
+    // TnMenuTriggerDirective restoring focus to its trigger after the menu closes — which
+    // popped a tooltip back up next to a button the pointer was nowhere near, and left it
+    // there until the user clicked or tabbed away. Routing through FocusMonitor (same
+    // approach as MatTooltip) also skips mouse/touch focus, where the hover handlers already
+    // cover the interaction, and it watches descendants — so a wrapper host (e.g.
+    // `<tn-button>`) still reacts when its inner control takes focus.
+    this._focusSub = this._focusMonitor.monitor(this._elementRef, true).subscribe((origin) => {
+      // FocusMonitor emits outside the Angular zone, so re-enter before touching the overlay.
+      if (!origin) {
+        // Entering sticky mode moves focus into the tooltip overlay, which lives outside the
+        // host, so FocusMonitor reports the host as blurred; hiding here would tear the panel
+        // down the moment the user reached its content.
+        if (this._isSticky) {
+          return;
+        }
+
+        this._ngZone.run(() => this.hide(this.hideDelay()));
+      } else if (origin === 'keyboard') {
+        // Same as hover: keyboard users open a pinnable tooltip with Enter/Space, which arrives
+        // as a click. Opening it on focus would show an unpinned copy they then had to activate
+        // anyway.
+        if (this._pinsOnClick()) {
+          return;
+        }
+
+        this._ngZone.run(() => this.show(this.showDelay()));
+      }
+    });
   }
 
   private _syncAria(): void {
@@ -426,6 +461,8 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     this._destroyTooltip();
     this._positionSub?.unsubscribe();
     this._repositionSub?.unsubscribe();
+    this._focusSub?.unsubscribe();
+    this._focusMonitor.stopMonitoring(this._elementRef);
     this._innerObserver?.disconnect();
     this._removeAriaDescription();
     this._clearHostPopupState();
@@ -460,41 +497,6 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     this.hide(this.hideDelay());
   }
 
-  // focusin/focusout (not focus/blur): focus does not bubble, so on a wrapper host
-  // (e.g. `<tn-button>`) a focus listener never fires when the inner control is
-  // focused via keyboard. focusin/focusout bubble and cover both shapes.
-  @HostListener('focusin')
-  _onFocusIn(): void {
-    // Same as hover: keyboard users open a pinnable tooltip with Enter/Space, which arrives as a
-    // click. Opening it on focus would show an unpinned copy they then had to activate anyway.
-    if (this._pinsOnClick()) {
-      return;
-    }
-
-    if (!this.disabled() && this.message()) {
-      this.show(this.showDelay());
-    }
-  }
-
-  @HostListener('focusout', ['$event'])
-  _onFocusOut(event: FocusEvent): void {
-    // Entering sticky mode moves focus into the tooltip overlay, which lives outside the
-    // host; hiding here would tear the tooltip down the moment the user reaches its content.
-    if (this._isSticky) {
-      return;
-    }
-
-    // focusout bubbles for every focus move inside the host too — only hide when
-    // focus actually leaves the host, or a wrapper-internal move would tear down
-    // the visible tooltip via the armed hide timeout.
-    const next = event.relatedTarget as Node | null;
-    if (next && this._elementRef.nativeElement.contains(next)) {
-      return;
-    }
-
-    this.hide(this.hideDelay());
-  }
-
   @HostListener('click', ['$event'])
   _onClick(event: MouseEvent): void {
     // Dismissal is keyed on being pinned rather than on being pinnable, so a tooltip pinned
@@ -509,7 +511,8 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     // carries a tooltip. An empty message is excluded by the same check, having nothing to reach.
     //
     // The host-side half of `_pinsOnClick` has to be checked here too, not just in
-    // `_onMouseEnter`/`_onFocusIn`. Those two already fell back to hover for such a host, and
+    // `_onMouseEnter` and the keyboard-focus branch. Those two already fell back to hover for
+    // such a host, and
     // both an `aria-disabled` control and a plain `<span>` still dispatch clicks — so without
     // this the panel would open on hover and then get pinned by the very click the fallback
     // exists to work around, which is the two-stage flow pinning was meant to replace. It would

@@ -1,3 +1,4 @@
+import { FocusMonitor } from '@angular/cdk/a11y';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, signal } from '@angular/core';
@@ -100,8 +101,8 @@ describe('TnTooltipDirective sticky mode', () => {
     expect(tooltipPanel()).toBeNull();
   }));
 
-  it('does not open a pinnable tooltip on focus either', fakeAsync(() => {
-    host.dispatchEvent(new FocusEvent('focusin'));
+  it('does not open a pinnable tooltip on keyboard focus either', fakeAsync(() => {
+    TestBed.inject(FocusMonitor).focusVia(host, 'keyboard');
     tick();
     fixture.detectChanges();
 
@@ -124,15 +125,15 @@ describe('TnTooltipDirective sticky mode', () => {
     expect(closeButton()?.getAttribute('aria-label')).toBe('Close tooltip');
   }));
 
-  it('keeps a pinned tooltip open on mouseleave and focusout', fakeAsync(() => {
+  it('keeps a pinned tooltip open on mouseleave and blur', fakeAsync(() => {
     click();
 
     leave();
     expect(tooltipPanel()).not.toBeNull();
 
-    // Focus moving into the overlay leaves the host, so without the sticky guard this
-    // focusout would hide the tooltip the moment the user reached its content.
-    host.dispatchEvent(new FocusEvent('focusout'));
+    // Focus moving into the overlay leaves the host, so without the sticky guard this blur
+    // would hide the tooltip the moment the user reached its content.
+    host.blur();
     tick();
     fixture.detectChanges();
     expect(tooltipPanel()).not.toBeNull();
@@ -454,6 +455,7 @@ describe('TnTooltipDirective sticky mode', () => {
       expect(tooltipPanel()).not.toBeNull();
       expect(closeButton()).toBeNull();
     }));
+
   });
 
   // Pinning is still reachable through `stick()` on such a host, so the keyboard dismissal path
@@ -629,7 +631,7 @@ describe('TnTooltipDirective sticky mode', () => {
 
   // `show()`/`stick()` both refuse to open while disabled, so a panel still up after the input
   // flips is a state neither entry point could produce - and a pinned one has no mouseleave or
-  // focusout left to close it.
+  // blur left to close it.
   describe('disabling a tooltip that is already pinned', () => {
     it('takes the panel down', fakeAsync(() => {
       click();
@@ -805,3 +807,88 @@ describe('TnTooltipDirective sticky mode', () => {
     }));
   });
 });
+
+@Component({
+  standalone: true,
+  imports: [TnTooltipDirective],
+  template: `<button tnTooltip="Card menu">Trigger</button>`,
+})
+class FocusHostComponent {}
+
+function createHost(): ComponentFixture<FocusHostComponent> {
+  TestBed.configureTestingModule({ imports: [FocusHostComponent] });
+  const fixture = TestBed.createComponent(FocusHostComponent);
+  fixture.detectChanges();
+  return fixture;
+}
+
+/** Lets the directive's show/hide timeouts run, then syncs the view. */
+async function settle(fixture: ComponentFixture<FocusHostComponent>): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve));
+  fixture.detectChanges();
+}
+
+function visibleTooltip(): string | undefined {
+  return document.querySelector('.tn-tooltip')?.textContent?.trim();
+}
+
+describe('TnTooltipDirective focus handling', () => {
+  it('shows on hover', async () => {
+    const fixture = createHost();
+    const trigger = fixture.nativeElement.querySelector('button') as HTMLElement;
+
+    trigger.dispatchEvent(new MouseEvent('mouseenter'));
+    await settle(fixture);
+
+    expect(visibleTooltip()).toBe('Card menu');
+  });
+
+  it('shows on keyboard focus', async () => {
+    const fixture = createHost();
+    const trigger = fixture.nativeElement.querySelector('button') as HTMLElement;
+
+    TestBed.inject(FocusMonitor).focusVia(trigger, 'keyboard');
+    await settle(fixture);
+
+    expect(visibleTooltip()).toBe('Card menu');
+  });
+
+  it('stays hidden when focus is restored programmatically', async () => {
+    const fixture = createHost();
+    const trigger = fixture.nativeElement.querySelector('button') as HTMLElement;
+
+    // A menu trigger returning focus to itself after its menu closes focuses the button with no
+    // user gesture behind it. Showing a tooltip there parks it over the button with the pointer
+    // nowhere near, and nothing hides it until the user clicks or tabs away.
+    TestBed.inject(FocusMonitor).focusVia(trigger, 'program');
+    await settle(fixture);
+
+    expect(visibleTooltip()).toBeUndefined();
+  });
+
+  it('stays hidden when the button is focused by a mouse click', async () => {
+    const fixture = createHost();
+    const trigger = fixture.nativeElement.querySelector('button') as HTMLElement;
+
+    // Hover already covers this interaction — `mouseenter` fired before the click.
+    TestBed.inject(FocusMonitor).focusVia(trigger, 'mouse');
+    await settle(fixture);
+
+    expect(visibleTooltip()).toBeUndefined();
+  });
+
+  it('hides again on blur', async () => {
+    const fixture = createHost();
+    const trigger = fixture.nativeElement.querySelector('button') as HTMLElement;
+
+    TestBed.inject(FocusMonitor).focusVia(trigger, 'keyboard');
+    await settle(fixture);
+    expect(visibleTooltip()).toBe('Card menu');
+
+    trigger.blur();
+    await settle(fixture);
+
+    expect(visibleTooltip()).toBeUndefined();
+  });
+});
+

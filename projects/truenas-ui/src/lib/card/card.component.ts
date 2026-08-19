@@ -74,6 +74,17 @@ export class TnCardComponent {
 
   /** Help/hover text shown on the title via the tooltip directive. */
   titleTooltip = input<string | undefined>(undefined);
+  /**
+   * Accessible name for the help button that carries `titleTooltip`. Same reason as
+   * `headerMenuTriggerAriaLabel`: the library cannot translate its own `'More information'`
+   * default, so a consumer with an i18n layer passes an already-translated string here.
+   */
+  titleTooltipAriaLabel = input<string | undefined>(undefined);
+
+  protected readonly resolvedTitleTooltipAriaLabel = computed(
+    () => this.titleTooltipAriaLabel() ?? 'More information',
+  );
+
   elevation = input<'none' | 'low' | 'medium' | 'high'>('medium');
   padding = input<'small' | 'medium' | 'large'>('medium');
   padContent = input<boolean>(true);
@@ -100,6 +111,34 @@ export class TnCardComponent {
    * (default `data-testid`).
    */
   headerMenuTriggerTestId = input<string | undefined>(undefined);
+  /**
+   * Accessible name for the kebab-menu trigger rendered when `headerMenu` is set.
+   *
+   * The library cannot translate its own default, so a consumer with an i18n layer must be able to
+   * supply an already-translated string here — otherwise the trigger's only accessible name is the
+   * English `'Card menu'` fallback. Also used as the trigger's tooltip when
+   * `headerMenuTriggerTooltip` is not set.
+   */
+  headerMenuTriggerAriaLabel = input<string | undefined>(undefined);
+  /**
+   * Hover tooltip for the kebab-menu trigger. Defaults to `headerMenuTriggerAriaLabel`, so setting
+   * a single translated string covers both the accessible name and the visible hint.
+   */
+  headerMenuTriggerTooltip = input<string | undefined>(undefined);
+
+  protected readonly resolvedHeaderMenuAriaLabel = computed(
+    () => this.headerMenuTriggerAriaLabel() ?? 'Card menu',
+  );
+
+  /**
+   * The trigger has no tooltip unless the consumer asks for one — either explicitly, or by naming
+   * the trigger and letting that one string drive both. Falling back to the built-in `'Card menu'`
+   * default instead would put a new hover hint on every existing `[headerMenu]` consumer, one that
+   * only repeats the button's accessible name.
+   */
+  protected readonly resolvedHeaderMenuTooltip = computed(
+    () => this.headerMenuTriggerTooltip() ?? this.headerMenuTriggerAriaLabel(),
+  );
 
   // Footer elements (bottom-right) - Always render in footer
   primaryAction = input<TnCardAction | undefined>(undefined);

@@ -58,6 +58,12 @@ const meta: Meta<TnCardComponent> = {
       control: 'text',
       description: 'Help/hover text shown on the title',
     },
+    titleTooltipAriaLabel: {
+      control: 'text',
+      description:
+        'Accessible name for the title help button. Defaults to "More information"; pass an '
+        + 'already-translated string from an app with an i18n layer.',
+    },
     headerStatus: {
       control: 'object',
       description: 'Status badge configuration (label, type)',
@@ -69,6 +75,18 @@ const meta: Meta<TnCardComponent> = {
     headerMenu: {
       control: 'object',
       description: 'Array of TnMenuItem objects for header menu',
+    },
+    headerMenuTriggerAriaLabel: {
+      control: 'text',
+      description:
+        'Accessible name for the header menu trigger. Defaults to "Card menu"; pass an '
+        + 'already-translated string from an app with an i18n layer.',
+    },
+    headerMenuTriggerTooltip: {
+      control: 'text',
+      description:
+        'Hover tooltip for the header menu trigger. Falls back to headerMenuTriggerAriaLabel; with '
+        + 'neither set the trigger has no tooltip.',
     },
     primaryAction: {
       control: 'object',
@@ -127,6 +145,7 @@ export const TitleRouterLinkAndTooltip: Story = {
     title: 'Recent Orders',
     titleRouterLink: '/orders',
     titleTooltip: 'Open the full orders page',
+    titleTooltipAriaLabel: 'More information',
     elevation: 'medium',
     padding: 'medium',
     padContent: true,
@@ -138,6 +157,7 @@ export const TitleRouterLinkAndTooltip: Story = {
         [title]="title"
         [titleRouterLink]="titleRouterLink"
         [titleTooltip]="titleTooltip"
+        [titleTooltipAriaLabel]="titleTooltipAriaLabel"
         [elevation]="elevation"
         [padding]="padding"
         [padContent]="padContent"
@@ -437,6 +457,8 @@ export const WithHeaderMenu: Story = {
       { id: 'sep1', label: '', separator: true },
       { id: '3', label: 'Delete', action: () => {}, icon: 'delete' },
     ],
+    headerMenuTriggerAriaLabel: 'More Actions',
+    headerMenuTriggerTooltip: 'Show more actions',
   },
   render: (args) => ({
     props: args,
@@ -448,8 +470,11 @@ export const WithHeaderMenu: Story = {
         [padContent]="padContent"
         [bordered]="bordered"
         [background]="background"
+        [headerMenuTriggerAriaLabel]="headerMenuTriggerAriaLabel"
+        [headerMenuTriggerTooltip]="headerMenuTriggerTooltip"
         [headerMenu]="headerMenu">
         <p>This card includes a three-dot menu icon in the header with common actions. Click the dots to open the menu.</p>
+        <p>The trigger's accessible name comes from <code>headerMenuTriggerAriaLabel</code>, so an app with an i18n layer can pass a translated string. <code>headerMenuTriggerTooltip</code> overrides the visible hover hint — clear it in the Controls panel and the tooltip falls back to the accessible name.</p>
       </tn-card>
     `,
   }),
