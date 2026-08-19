@@ -367,6 +367,45 @@ class LabelledPrimitiveValueHostComponent {
 }
 
 @Component({
+  selector: 'tn-async-options-host',
+  standalone: true,
+  imports: [TnChipInputComponent, ReactiveFormsModule],
+  template: `
+    <form [formGroup]="form">
+      <tn-chip-input testId="tags" formControlName="regions" [options]="options" />
+    </form>
+  `,
+})
+class AsyncOptionsHostComponent {
+  options: TnChipInputOption<string>[] = [];
+  form = new FormGroup({ regions: new FormControl<string[]>(['us']) });
+}
+
+@Component({
+  selector: 'tn-option-key-host',
+  standalone: true,
+  imports: [TnChipInputComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <form [formGroup]="form">
+      <tn-chip-input
+        testId="users"
+        formControlName="members"
+        [options]="options"
+        [optionTestIdKey]="keyFn" />
+    </form>
+  `,
+})
+class OptionTestIdKeyHostComponent {
+  options: TnChipInputOption<string>[] = [
+    { label: 'Jane Doe', value: 'u-1' },
+    { label: 'Jane Doe', value: 'u-2' },
+  ];
+  keyFn = (option: TnChipInputOption<string>): string => option.value;
+  form = new FormGroup({ members: new FormControl<string[]>(['u-1']) });
+}
+
+@Component({
   selector: 'tn-unnormalizable-label-host',
   standalone: true,
   imports: [TnChipInputComponent, ReactiveFormsModule],
@@ -470,6 +509,46 @@ describe('TnChipInputComponent test ids', () => {
     await (await loader.getHarness(TnChipInputHarness)).typeText('can');
     const suggestion = document.querySelector('.tn-chip-input__option');
     expect(suggestion?.getAttribute('data-testid')).toBe('option-tags-canada');
+  });
+
+  // A pre-populated control renders its chips before an async `[options]` load resolves,
+  // so the chip is named by its own value until the option that explains it arrives.
+  it('names an option-backed chip by its value until the options load', async () => {
+    await TestBed.configureTestingModule({
+      imports: [AsyncOptionsHostComponent],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(AsyncOptionsHostComponent);
+    fixture.detectChanges();
+
+    const chipId = (): string | null | undefined => fixture.nativeElement
+      .querySelector('.tn-chip-input__chip [role="button"]')
+      ?.getAttribute('data-testid');
+    expect(chipId()).toBe('chip-tags-us');
+
+    fixture.componentInstance.options = [{ label: 'United States', value: 'us' }];
+    fixture.detectChanges();
+    expect(chipId()).toBe('chip-tags-united-states');
+  });
+
+  // Two records can share a display name, and the label default then stamps one id on
+  // both; the extractor is the way out, and it has to reach the chip as well as the row
+  // or the pair stops agreeing.
+  it('lets optionTestIdKey pick the discriminator for both a chip and its suggestion', async () => {
+    await TestBed.configureTestingModule({
+      imports: [OptionTestIdKeyHostComponent],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(OptionTestIdKeyHostComponent);
+    fixture.detectChanges();
+
+    const chip = fixture.nativeElement.querySelector('.tn-chip-input__chip [role="button"]');
+    expect(chip?.getAttribute('data-testid')).toBe('chip-users-u-1');
+
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    await (await loader.getHarness(TnChipInputHarness)).typeText('Jane');
+    const suggestion = document.querySelector('.tn-chip-input__option');
+    expect(suggestion?.getAttribute('data-testid')).toBe('option-users-u-2');
   });
 
   // A localized label normalizes to nothing, so keying off it would collapse every such

@@ -283,8 +283,13 @@ export const ComponentHarness: Story = {
  * its field, chips and suggestion rows are all named from the control.
  *
  * A discriminator that normalizes to nothing (`*`, `**`, a CJK-only tag) would
- * collapse a chip's id back to the bare base, so those chips stay attribute-free
- * rather than sharing one id.
+ * collapse a chip's id back to the bare base. An option-backed chip falls back to
+ * the value behind the label there; a chip with nothing else to be named by stays
+ * attribute-free rather than sharing one id.
+ *
+ * Where two options share a display name, or ids must survive a locale change,
+ * `[optionTestIdKey]="(o) => o.value.id"` picks the discriminator instead — for
+ * the chip and its suggestion row alike.
  */
 export const TestIds: Story = {
   render: () => ({
