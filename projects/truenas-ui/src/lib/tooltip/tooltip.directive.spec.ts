@@ -21,6 +21,7 @@ import { TnButtonComponent } from '../button/button.component';
     <button type="button" id="native-disabled" disabled [tnTooltip]="message()">disabled host</button>
     <div id="wrapper-disabled" [tnTooltip]="message()"><button type="button" disabled>inner</button></div>
     <span id="span-host" [tnTooltip]="message()">span host</span>
+    <input id="input-host" [tnTooltip]="message()" />
     <tn-button id="tn-button-disabled" label="Create pool" [disabled]="true" [tnTooltip]="message()" />
   `,
 })
@@ -456,6 +457,39 @@ describe('TnTooltipDirective sticky mode', () => {
       expect(closeButton()).toBeNull();
     }));
 
+    // A text control is focusable, which is what made it look operable, but Enter submits the
+    // form and Space types a space - neither produces the click a pinned panel is opened by.
+    describe('a text control host, which is focusable but not activatable', () => {
+      const inputHost = () => fixture.nativeElement.querySelector('#input-host') as HTMLInputElement;
+
+      it('shows the message on keyboard focus instead of waiting for a click', fakeAsync(() => {
+        TestBed.inject(FocusMonitor).focusVia(inputHost(), 'keyboard');
+        tick();
+        fixture.detectChanges();
+
+        expect(tooltipPanel()).not.toBeNull();
+        expect(closeButton()).toBeNull();
+      }));
+
+      // Every click into a text field places the caret, so pinning here would toggle the panel
+      // each time the user repositioned the cursor.
+      it('does not pin when a click lands in the field', fakeAsync(() => {
+        hover(inputHost());
+        inputHost().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+        tick();
+        fixture.detectChanges();
+
+        expect(tooltipPanel()).not.toBeNull();
+        expect(closeButton()).toBeNull();
+      }));
+
+      // `aria-expanded` is not supported on `role="textbox"`, and there is no disclosure to
+      // describe in the first place.
+      it('advertises no disclosure state', () => {
+        expect(inputHost().hasAttribute('aria-expanded')).toBe(false);
+        expect(inputHost().hasAttribute('aria-haspopup')).toBe(false);
+      });
+    });
   });
 
   // Pinning is still reachable through `stick()` on such a host, so the keyboard dismissal path

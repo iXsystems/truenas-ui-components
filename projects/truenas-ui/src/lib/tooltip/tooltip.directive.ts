@@ -29,7 +29,11 @@ import {
   inject
 } from '@angular/core';
 import { merge, type Subscription } from 'rxjs';
-import { hasInteractiveContent, INTERACTIVE_SELECTOR } from './interactive-content';
+import {
+  hasInteractiveContent,
+  INTERACTIVE_SELECTOR,
+  KEYBOARD_ACTIVATABLE_SELECTOR
+} from './interactive-content';
 import { TnTooltipComponent } from './tooltip.component';
 
 export type TooltipPosition = 'above' | 'below' | 'left' | 'right' | 'before' | 'after';
@@ -311,20 +315,31 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   /**
    * Whether the element carrying the tooltip's ARIA state can be operated from the keyboard.
    *
-   * `_ariaTarget` falls back to the bare host when that host is not a control and holds no single
-   * interactive descendant — `<span [tnTooltip]="'… <a href>…'">` is exactly that shape. Such a
-   * host can be clicked with a pointer, so nothing in `_isHostClickBlocked` catches it, but it
-   * cannot be focused or activated with Enter/Space, and the click is the only way into a pinned
-   * panel. Going click-only there would put the tooltip out of reach of the keyboard entirely,
-   * and would write `aria-expanded` — not a global attribute, invalid on a `<span>`'s implicit
-   * `generic` role — advertising a disclosure nobody can operate.
+   * The click is the only way into a pinned panel, so a host that cannot produce one from the
+   * keyboard would put the tooltip out of reach of keyboard users entirely — and would write
+   * `aria-expanded`, advertising a disclosure they cannot operate. Two host shapes fail that way:
+   *
+   * - `_ariaTarget` falls back to the bare host when it is not a control and holds no single
+   *   interactive descendant — `<span [tnTooltip]="'… <a href>…'">` is exactly that. It can be
+   *   clicked with a pointer, so nothing in `_isHostClickBlocked` catches it, but it cannot be
+   *   focused or activated at all, and `aria-expanded` is invalid on its implicit `generic` role.
+   * - A text control (`<input>`, `<select>`, `<textarea>`) is focusable but not *activatable*:
+   *   Enter submits the form and Space types a space, so no click ever arrives. On top of that,
+   *   every pointer click into the field — placing the caret — would toggle the panel.
+   *
+   * The question is therefore "does a click on this element mean *activate me*", which is what
+   * `KEYBOARD_ACTIVATABLE_SELECTOR` answers; `INTERACTIVE_SELECTOR` answers the broader "is this
+   * the element ARIA belongs on" and is too wide to stand in for it. Both shapes fall back to
+   * plain hover, which is what they did before pinning existed.
    *
    * `tabindex="-1"` does not count: it makes an element a focus target without putting it in the
    * tab order, and `_restoreFocusTarget` leaves one behind on hosts it had to focus by hand.
    */
   private _isHostKeyboardOperable(): boolean {
     const target = this._ariaTarget();
-    return target.matches(INTERACTIVE_SELECTOR) && target.getAttribute('tabindex') !== '-1';
+    return (
+      target.matches(KEYBOARD_ACTIVATABLE_SELECTOR) && target.getAttribute('tabindex') !== '-1'
+    );
   }
 
   /**

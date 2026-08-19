@@ -8,6 +8,23 @@
 export const INTERACTIVE_SELECTOR = 'button, a[href], input, select, textarea, [tabindex]';
 
 /**
+ * Elements whose activation the keyboard can actually deliver as a click.
+ *
+ * Answers a different question from `INTERACTIVE_SELECTOR`, which is only "is this the element
+ * ARIA belongs on". Every native control is focusable, but focusable is not activatable: on an
+ * `<input>`, `<select>` or `<textarea>`, Enter submits the form and Space types a space or opens
+ * the picker — neither dispatches a click. A tooltip that can only be opened by clicking its host
+ * would therefore have no keyboard route in at all on those hosts, so they fall back to hover.
+ *
+ * `button` and `a[href]` are activated by Enter/Space and Enter respectively. The ARIA roles are
+ * here for hosts that emulate them, and require an explicit `tabindex` because — unlike the two
+ * native elements — a role alone does not put the element in the tab order; `tabindex="-1"` is
+ * excluded by the caller, being focusable only programmatically.
+ */
+export const KEYBOARD_ACTIVATABLE_SELECTOR =
+  'button, a[href], [role="button"][tabindex], [role="link"][tabindex]';
+
+/**
  * Content inside a tooltip *message* that the user can actually reach.
  *
  * Deliberately narrower than `INTERACTIVE_SELECTOR`, and it must stay that way. The message is
