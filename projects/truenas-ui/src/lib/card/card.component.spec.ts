@@ -309,6 +309,25 @@ describe('TnCardComponent action tooltips', () => {
       fixture.detectChanges();
       expect(tooltip.stickyEnabled()).toBe(false);
     });
+
+    // The one tooltip the card renders that the flag deliberately does not reach: the trigger's
+    // click already opens the menu, so its tooltip stays on hover however the card is configured.
+    it('never lets the flag reach the kebab-menu trigger', () => {
+      const fixture = createHost();
+      fixture.componentInstance.menu.set([{ label: 'Edit' }]);
+      fixture.componentInstance.menuTooltip.set(LINK_MESSAGE);
+      fixture.detectChanges();
+
+      // The directive sits on the icon button's inner `<button>`, not on `<tn-icon-button>`.
+      const trigger = fixture.debugElement.query(By.css('.tn-card__menu tn-icon-button'));
+      const tooltip = trigger.query(By.directive(TnTooltipDirective)).injector.get(TnTooltipDirective);
+      expect(tooltip.message()).toBe(LINK_MESSAGE);
+      expect(tooltip.stickyEnabled()).toBe(false);
+
+      fixture.componentInstance.tooltipSticky.set(true);
+      fixture.detectChanges();
+      expect(tooltip.stickyEnabled()).toBe(false);
+    });
   });
 
   it('applies the tooltip to the primaryAction button as well', () => {

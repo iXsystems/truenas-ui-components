@@ -160,7 +160,9 @@ them.
 
 The click is additive, not exclusive: the host's own \`(click)\` handler still runs, so a button
 that both acts and pins does both. A host that navigates away should keep its tooltip plain or
-set \`[tnTooltipSticky]="false"\`.
+set \`[tnTooltipSticky]="false"\`, and so should one whose click already opens something — a
+\`tnMenuTrigger\` would otherwise raise the panel over its own menu. That is why \`<tn-card>\`'s
+kebab-menu trigger is not in the list above: its tooltip always hovers.
 
 A **disabled** host does not pin — those tooltips fall back to opening on hover, which keeps the
 explanation for *why* the control is disabled visible. The link inside it stays out of reach, as

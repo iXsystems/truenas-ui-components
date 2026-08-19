@@ -90,6 +90,11 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * `[tooltipSticky]="false"` on any of them keeps the old hover behaviour, at the cost of the
    * link staying out of reach.
    *
+   * A host whose click is already spoken for wants that opt-out permanently, not on upgrade: a
+   * `tnMenuTrigger` would raise the panel over the menu the same click opens, and lose the hover
+   * hint doing it. `<tn-card>`'s kebab-menu trigger passes `false` for exactly that reason, which
+   * is why it is not in the list above.
+   *
    * This only narrows the rule in `_isPinnable`, it cannot widen it: plain help text is never
    * pinnable however this is set, and neither is a message on a host that cannot deliver the
    * click - see `_isHostClickBlocked`. Setting it to false forces a message that does hold a

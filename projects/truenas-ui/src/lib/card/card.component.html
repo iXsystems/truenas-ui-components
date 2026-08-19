@@ -76,12 +76,19 @@
         @if (headerMenu(); as menu) {
           @if (menu.length) {
             <div class="tn-card__menu">
+              <!--
+                Not `[tooltipSticky]="tooltipSticky()"`: this trigger's click is already spoken
+                for. Pinning would open the menu and a panel over it from the same click, and
+                would take the hint off hover on the way - so the trigger's tooltip always hovers,
+                whatever its message holds. See `tooltipSticky`.
+              -->
               <tn-icon-button
                 name="dots-vertical"
                 library="mdi"
                 size="md"
                 [ariaLabel]="resolvedHeaderMenuAriaLabel()"
                 [tooltip]="resolvedHeaderMenuTooltip()"
+                [tooltipSticky]="false"
                 [testId]="headerMenuTriggerTestId()"
                 [tnMenuTriggerFor]="cardMenu" />
               <tn-menu
