@@ -426,9 +426,10 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
   /**
    * Scopes a per-chip test id beneath the component's base.
    *
-   * The discriminator is the chip's own text — {@link displayLabel}, the matching
-   * option's label — so a chip and the suggestion row that created it carry the
-   * same discriminator rather than one naming the label and the other the value.
+   * A chip backed by an option goes through the same {@link optionTestId}
+   * derivation as the suggestion row that created it, so the two carry the same
+   * discriminator by construction rather than one naming the label and the other
+   * the value — including whatever fallback that shared rule settles on.
    * A free-text chip has no option to name it and is its own text, so its value
    * stands in; an object value with no match cannot be, because `String(value)`
    * on an object is `[object Object]` and would stamp an identical id on every
@@ -440,7 +441,7 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
     const base = this.resolvedTestId();
     const match = this.optionList().find((option) => this.valueMatches(option.value, value));
     if (match) {
-      return this.discriminatedTestId(scopeTestId(base, match.label));
+      return this.discriminatedTestId(optionTestId(base, match));
     }
     return typeof value === 'string' || typeof value === 'number'
       ? this.discriminatedTestId(scopeTestId(base, value))
@@ -450,7 +451,7 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
   /**
    * Scopes a per-suggestion test id beneath the component's base, via the shared
    * dropdown-option derivation. Unlike `tn-select` / `tn-autocomplete`, which
-   * emit an unscoped `option-<value>` when they have no base, an unidentified
+   * emit an unscoped `option-<label>` when they have no base, an unidentified
    * chip-input stays attribute-free — its rows carry no page-unique id, so
    * emitting one would invite collisions between inputs.
    */

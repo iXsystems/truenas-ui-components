@@ -27,8 +27,24 @@ describe('optionTestId', () => {
     expect(optionTestId('city', { label: '', value: 'porto' })).toEqual(['city', 'porto']);
   });
 
+  it('falls back to a primitive value when the label normalizes away', () => {
+    // Truthy labels that `kebabTestSegment` strips to nothing would otherwise
+    // collapse every such option onto the bare base.
+    expect(optionTestId('lang', { label: '日本語', value: 'ja' })).toEqual(['lang', 'ja']);
+    expect(optionTestId('lang', { label: '--', value: 'none' })).toEqual(['lang', 'none']);
+  });
+
+  it('keeps such options distinct once composed', () => {
+    const ids = [
+      { label: '日本語', value: 'ja' },
+      { label: '한국어', value: 'ko' },
+    ].map((option) => composeTestId('option', optionTestId('lang', option)));
+    expect(ids).toEqual(['option-lang-ja', 'option-lang-ko']);
+  });
+
   it('yields no discriminator when neither half is usable', () => {
     expect(composeTestId('option', optionTestId('city', { label: '', value: { id: 'lis' } }))).toBe('option-city');
+    expect(composeTestId('option', optionTestId('city', { label: '***', value: { id: 'lis' } }))).toBe('option-city');
   });
 
   it('prefers the extractor over label and value', () => {

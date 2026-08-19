@@ -367,6 +367,24 @@ class LabelledPrimitiveValueHostComponent {
 }
 
 @Component({
+  selector: 'tn-unnormalizable-label-host',
+  standalone: true,
+  imports: [TnChipInputComponent, ReactiveFormsModule],
+  template: `
+    <form [formGroup]="form">
+      <tn-chip-input testId="tags" formControlName="langs" [options]="options" />
+    </form>
+  `,
+})
+class UnnormalizableLabelHostComponent {
+  options: TnChipInputOption<string>[] = [
+    { label: '日本語', value: 'ja' },
+    { label: '한국어', value: 'ko' },
+  ];
+  form = new FormGroup({ langs: new FormControl<string[]>(['ja']) });
+}
+
+@Component({
   selector: 'tn-unnormalizable-value-host',
   standalone: true,
   imports: [TnChipInputComponent, ReactiveFormsModule],
@@ -452,6 +470,26 @@ describe('TnChipInputComponent test ids', () => {
     await (await loader.getHarness(TnChipInputHarness)).typeText('can');
     const suggestion = document.querySelector('.tn-chip-input__option');
     expect(suggestion?.getAttribute('data-testid')).toBe('option-tags-canada');
+  });
+
+  // A localized label normalizes to nothing, so keying off it would collapse every such
+  // row onto the bare base — the value behind it stands in, and the chip still agrees
+  // with its suggestion row.
+  it('falls back to the value when the option label normalizes away', async () => {
+    await TestBed.configureTestingModule({
+      imports: [UnnormalizableLabelHostComponent],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(UnnormalizableLabelHostComponent);
+    fixture.detectChanges();
+
+    const chip = fixture.nativeElement.querySelector('.tn-chip-input__chip [role="button"]');
+    expect(chip?.getAttribute('data-testid')).toBe('chip-tags-ja');
+
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    await (await loader.getHarness(TnChipInputHarness)).typeText('한국');
+    const suggestion = document.querySelector('.tn-chip-input__option');
+    expect(suggestion?.getAttribute('data-testid')).toBe('option-tags-ko');
   });
 
   // `*` and `**` both normalize to nothing, so scoping them under the base composes

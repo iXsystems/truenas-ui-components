@@ -1126,6 +1126,18 @@ describe('TnSelectComponent — per-option test ids', () => {
     expect(openAndGetOptionTestIds()).toEqual(['option-quick-filters-ssd', 'option-quick-filters-hdd']);
   });
 
+  // A label with no alphanumerics normalizes to nothing, so keying off it would give
+  // every such option the bare `option-quick-filters` — the trap the synthetic empty
+  // option is hard-coded around. The value behind the label stands in instead.
+  it('falls back to the value for labels that normalize away', () => {
+    host.options.set([
+      { value: 'ja', label: '日本語' },
+      { value: 'ko', label: '한국어' },
+    ]);
+    fixture.detectChanges();
+    expect(openAndGetOptionTestIds()).toEqual(['option-quick-filters-ja', 'option-quick-filters-ko']);
+  });
+
   it('scopes grouped options the same way', () => {
     host.options.set([]);
     host.groups.set([
