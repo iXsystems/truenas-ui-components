@@ -38,6 +38,19 @@ export class TnToastComponent {
 
   icon = computed(() => TOAST_ICONS[this.type()]);
 
+  /**
+   * The live-region role, which is also the only thing declaring how urgently the
+   * toast is announced: `alert` implies `aria-live="assertive"` and `status`
+   * implies `polite`.
+   *
+   * The template carried `role="alert"` and `aria-live="polite"` together (#190).
+   * An explicit `aria-live` overrides the role's implicit one, so every toast was
+   * announced politely — including `error`, the one type that needs to interrupt.
+   * Deriving the role from the type and leaving `aria-live` off keeps a single
+   * source: there is no second attribute left to disagree with this one.
+   */
+  role = computed(() => (this.type() === TnToastType.Error ? 'alert' : 'status'));
+
   onAction: () => void = () => {};
   onDismiss: () => void = () => {};
 }
