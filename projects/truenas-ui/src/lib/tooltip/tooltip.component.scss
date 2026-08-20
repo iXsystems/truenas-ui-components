@@ -76,8 +76,19 @@
   cursor: pointer;
   display: flex;
   flex: none;
+  justify-content: center;
   opacity: 0.7;
   padding: 0;
+
+  // The close glyph is 12px (`--tn-icon-xs`); on its own that is half the 24x24 target WCAG 2.2
+  // asks for, and a miss on a pinned panel is worse than usual because the panel stays open. The
+  // button therefore grows to 24x24 around the glyph, and the negative margins spend the extra
+  // space on the panel's own padding instead of on its size: the outer box is 20x16, so the glyph
+  // still sits beside the message's first line, a one-line panel is exactly as tall as it was,
+  // and the panel widens by 8px rather than by the full 12.
+  block-size: 24px;
+  inline-size: 24px;
+  margin: -4px -4px -4px 0;
 
   &:hover {
     opacity: 1;
