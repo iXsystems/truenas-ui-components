@@ -24,8 +24,9 @@
   --tn-yellow: #DED142;
   --tn-orange: #E68D37;
   --tn-red: #CE2929;
-  /* 4.5:1 against --tn-bg1 (measured 4.68:1); --tn-red itself is only 3.15:1, tuned for the 3:1 border/icon minimum. */
-  --tn-error-text: #db6161;
+  /* >=4.5:1 against both --tn-bg1 (5.17:1) and --tn-bg2 (4.57:1); --tn-red itself
+     is only 3.15:1 on --tn-bg1, tuned for the 3:1 border/icon minimum. */
+  --tn-error-text: #de6d6d;
   --tn-magenta: #C006C7;
   --tn-violet: #7617D8;
   --tn-blue: #007db3;
@@ -85,8 +86,9 @@
   --tn-yellow: #DED142;
   --tn-orange: #E68D37;
   --tn-red: #CE2929;
-  /* 4.5:1 against --tn-bg1 (measured 4.68:1); --tn-red itself is only 3.15:1. */
-  --tn-error-text: #db6161;
+  /* >=4.5:1 against both --tn-bg1 (5.17:1) and --tn-bg2 (4.57:1); --tn-red itself
+     is only 3.15:1 on --tn-bg1. */
+  --tn-error-text: #de6d6d;
   --tn-magenta: #C006C7;
   --tn-violet: #7617D8;
   --tn-blue: #007db3;
@@ -201,8 +203,9 @@
   --tn-yellow: #ebcb8b;
   --tn-orange: #d08770;
   --tn-red: #bf616a;
-  /* 4.5:1 against --tn-bg1 (measured 4.60:1); --tn-red itself is only 3.05:1. */
-  --tn-error-text: #d08a91;
+  /* >=4.5:1 against both --tn-bg1 (5.67:1) and --tn-bg2 (4.57:1); --tn-red itself
+     is only 3.05:1 on --tn-bg1. */
+  --tn-error-text: #d9a0a6;
   --tn-magenta: #b48ead;
   --tn-violet: #775daa;
   --tn-blue: #5e81aC;
@@ -280,8 +283,9 @@
   --tn-yellow: #b58900;
   --tn-orange: #cb4b16;
   --tn-red: #dc322f;
-  /* 4.5:1 against --tn-bg1 (measured 4.62:1); --tn-red itself is only 3.25:1. */
-  --tn-error-text: #e56765;
+  /* >=4.5:1 against both --tn-bg1 (5.28:1) and --tn-bg2 (4.57:1); --tn-red itself
+     is only 3.25:1 on --tn-bg1. */
+  --tn-error-text: #e87876;
   --tn-magenta: #d33682;
   --tn-violet: #6c71c4;
   --tn-blue: #268bd2;
@@ -320,8 +324,9 @@
   --tn-yellow: #f0cb00;
   --tn-orange: #ee9302;
   --tn-red: #ff0013;
-  /* 4.5:1 against --tn-bg1 (measured 4.58:1); --tn-red itself is only 3.64:1. */
-  --tn-error-text: #ff525f;
+  /* >=4.5:1 against both --tn-bg1 (6.01:1) and --tn-bg2 (4.61:1); --tn-red itself
+     is only 3.64:1 on --tn-bg1. */
+  --tn-error-text: #ff8089;
   --tn-magenta: #d238ff;
   --tn-violet: #c17ecc;
   --tn-blue: #1274b5;

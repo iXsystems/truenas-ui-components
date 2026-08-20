@@ -6,8 +6,10 @@ import { join } from 'path';
  * theme-aware token added to fix #186 (`--tn-red` itself is only tuned for
  * the 3:1 border/icon minimum, not the 4.5:1 text minimum). This measures
  * the real WCAG contrast ratio of that token, per theme, against the actual
- * values shipped in themes.css — rather than asserting the fix, it reports
- * the numbers acceptance criteria asked for and guards against regression.
+ * values shipped in themes.css — both `--tn-bg1` (the page canvas) and
+ * `--tn-bg2` (cards, panels — tn-radio renders on both) — rather than
+ * asserting the fix, it reports the numbers acceptance criteria asked for
+ * and guards against regression.
  *
  * jsdom has no layout engine, so axe-core's color-contrast rule (which needs
  * real rendering) can't produce a meaningful pass/fail here — it reports
@@ -59,16 +61,50 @@ function extractVar(body: string, name: string): string | undefined {
   return match?.[1].trim();
 }
 
-function resolveColor(rawValue: string, body: string): string {
+function resolveColor(rawValue: string, body: string): string | undefined {
   const varRef = /^var\((--[\w-]+)\)$/.exec(rawValue);
   if (varRef) {
     const resolved = extractVar(body, varRef[1]);
-    if (!resolved) {
-      throw new Error(`Could not resolve ${rawValue} within block`);
-    }
-    return resolveColor(resolved, body);
+    return resolved ? resolveColor(resolved, body) : undefined;
   }
   return rawValue;
+}
+
+interface ThemeCase {
+  selector: string;
+  error?: string;
+  bg1?: string;
+  bg2?: string;
+  errorText?: string;
+  bg1Ratio?: number;
+  bg2Ratio?: number;
+  bg1RatioLabel?: string;
+  bg2RatioLabel?: string;
+}
+
+function buildCase(selector: string, body: string): ThemeCase {
+  const bg1 = extractVar(body, '--tn-bg1');
+  const bg2 = extractVar(body, '--tn-bg2');
+  const errorTextRaw = extractVar(body, '--tn-error-text');
+  if (!bg1 || !bg2 || !errorTextRaw) {
+    return { selector, error: `${selector} is missing --tn-bg1, --tn-bg2 or --tn-error-text` };
+  }
+  const errorText = resolveColor(errorTextRaw, body);
+  if (!errorText) {
+    return { selector, error: `${selector}'s --tn-error-text (${errorTextRaw}) could not be resolved` };
+  }
+  const bg1Ratio = contrastRatio(errorText, bg1);
+  const bg2Ratio = contrastRatio(errorText, bg2);
+  return {
+    selector,
+    bg1,
+    bg2,
+    errorText,
+    bg1Ratio,
+    bg2Ratio,
+    bg1RatioLabel: bg1Ratio.toFixed(2),
+    bg2RatioLabel: bg2Ratio.toFixed(2),
+  };
 }
 
 describe('tn-radio error text contrast (#186)', () => {
@@ -79,31 +115,41 @@ describe('tn-radio error text contrast (#186)', () => {
     expect(themeBlocks.size).toBe(9);
   });
 
-  const cases = Array.from(themeBlocks.entries()).map(([selector, body]) => {
-    const bg1 = extractVar(body, '--tn-bg1');
-    const errorTextRaw = extractVar(body, '--tn-error-text');
-    if (!bg1 || !errorTextRaw) {
-      throw new Error(`${selector} is missing --tn-bg1 or --tn-error-text`);
-    }
-    const errorText = resolveColor(errorTextRaw, body);
-    const ratio = contrastRatio(errorText, bg1);
-    return { selector, bg1, errorText, ratio, ratioLabel: ratio.toFixed(2) };
+  const cases = Array.from(themeBlocks.entries()).map(([selector, body]) => buildCase(selector, body));
+
+  it.each(cases)('$selector defines --tn-bg1, --tn-bg2 and --tn-error-text', (c) => {
+    expect(c.error).toBeUndefined();
   });
 
-  it.each(cases)(
-    '$selector: $errorText on $bg1 measures $ratioLabel : 1',
-    ({ ratio }) => {
-      expect(ratio).toBeGreaterThanOrEqual(4.5);
+  it.each(cases.filter((c) => !c.error))(
+    '$selector: $errorText on --tn-bg1 ($bg1) measures $bg1RatioLabel : 1',
+    ({ bg1Ratio }) => {
+      expect(bg1Ratio).toBeGreaterThanOrEqual(4.5);
     }
   );
 
-  it('the SCSS fallback is itself accessible on a dark surface', () => {
+  it.each(cases.filter((c) => !c.error))(
+    '$selector: $errorText on --tn-bg2 ($bg2) measures $bg2RatioLabel : 1',
+    ({ bg2Ratio }) => {
+      expect(bg2Ratio).toBeGreaterThanOrEqual(4.5);
+    }
+  );
+
+  it('the SCSS fallback matches the default theme and is accessible on it', () => {
     const scss = readFileSync(RADIO_SCSS_PATH, 'utf8');
     const fallbackMatch = /--tn-error-text,\s*(#[0-9a-fA-F]{3,6})\)/.exec(scss);
     expect(fallbackMatch).not.toBeNull();
     const fallback = fallbackMatch![1];
-    const darkSurface = '#1E1E1E'; // this theme's --tn-bg1, representative of the dark surfaces
-    const ratio = contrastRatio(fallback, darkSurface);
+
+    // :root carries the same values as the default theme (.tn-dark) before any
+    // theme class is applied — the surface a missing stylesheet actually renders on.
+    const rootBody = themeBlocks.get(':root');
+    expect(rootBody).toBeDefined();
+    const rootBg1 = extractVar(rootBody!, '--tn-bg1');
+    const rootErrorText = resolveColor(extractVar(rootBody!, '--tn-error-text')!, rootBody!);
+    expect(fallback.toLowerCase()).toBe(rootErrorText?.toLowerCase());
+
+    const ratio = contrastRatio(fallback, rootBg1!);
     expect(ratio).toBeGreaterThanOrEqual(4.5);
   });
 });

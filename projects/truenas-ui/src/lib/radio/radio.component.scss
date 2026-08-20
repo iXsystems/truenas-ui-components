@@ -80,9 +80,14 @@
     margin-top: 0.25rem;
     font-size: 12px;
     // --tn-red is tuned for the 3:1 border/icon minimum (WCAG 1.4.11), not the
-    // 4.5:1 text minimum (WCAG 1.4.3) this line needs. The fallback is itself
-    // accessible on a dark surface (~6:1 against a #1E1E1E-class background).
-    color: var(--tn-error-text, #ff6b6b);
+    // 4.5:1 text minimum (WCAG 1.4.3) this line needs. The fallback is the
+    // default theme's own --tn-error-text value, so a missing stylesheet
+    // renders the same red the default theme would give — 5.17:1 against a
+    // #1E1E1E-class dark surface. No single color can also clear 4.5:1 against
+    // an ancestor's own white fallback (e.g. tn-card's `var(--tn-bg2, #ffffff)`)
+    // at the same time — that pair of thresholds is mutually unsatisfiable —
+    // so this optimizes for the surface the library actually defaults to.
+    color: var(--tn-error-text, #de6d6d);
   }
   
   // States
