@@ -84,10 +84,15 @@
     // 2.94:1, a pre-existing gap this ticket doesn't touch. Either way it
     // doesn't meet the 4.5:1 text minimum (WCAG 1.4.3) this line needs, which
     // is why a separate token exists. The var() fallback only takes effect
-    // when no theme stylesheet loads at all, so the only background it can
-    // reach is the UA default (white) — #1E1E1E is itself defined in the
-    // stylesheet the fallback assumes is missing. #b91c1c clears 4.5:1 there
-    // (6.47:1).
+    // when --tn-error-text itself is undefined. Every theme this library
+    // ships defines --tn-bg1 and --tn-error-text together (see copy-themes,
+    // which keeps every generated copy of themes.css in lockstep), so the
+    // fallback's one real trigger is themes.css never loading at all — the
+    // UA default, white. #b91c1c clears 4.5:1 there (6.47:1). No single
+    // color also clears 4.5:1 against an arbitrary dark surface (that pair
+    // of thresholds is mutually unsatisfiable), so a third-party theme that
+    // defines --tn-bg1 without adopting this token is a residual risk this
+    // fallback can't also cover.
     color: var(--tn-error-text, #b91c1c);
   }
   
