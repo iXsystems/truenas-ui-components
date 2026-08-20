@@ -33,7 +33,8 @@ var(--tn-lines)     // Border/divider lines
 ### Status Colors
 
 ```scss
-var(--tn-red)       // Error, danger, destructive actions
+var(--tn-red)       // Error, danger, destructive actions -- 3:1-tuned for borders/icons only
+var(--tn-red-text)  // Error/danger TEXT -- use this, not --tn-red, for any text color; >=4.5:1
 var(--tn-green)     // Success, positive states
 var(--tn-yellow)    // Warning, caution
 var(--tn-orange)    // Alert, attention needed

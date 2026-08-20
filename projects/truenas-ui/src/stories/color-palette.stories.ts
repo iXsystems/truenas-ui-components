@@ -20,7 +20,7 @@ type Story = StoryObj;
 const fgVars = ['--tn-fg1', '--tn-fg2', '--tn-fg3', '--tn-fg4', '--tn-alt-fg1', '--tn-alt-fg2'];
 const bgVars = ['--tn-bg1', '--tn-bg2', '--tn-bg3', '--tn-alt-bg1', '--tn-alt-bg2'];
 const uiVars = ['--tn-primary', '--tn-primary-txt', '--tn-accent', '--tn-topbar', '--tn-topbar-txt', '--tn-lines'];
-const statusVars = ['--tn-red', '--tn-green', '--tn-yellow', '--tn-orange', '--tn-blue', '--tn-cyan', '--tn-magenta', '--tn-violet'];
+const statusVars = ['--tn-red', '--tn-red-text', '--tn-green', '--tn-yellow', '--tn-orange', '--tn-blue', '--tn-cyan', '--tn-magenta', '--tn-violet'];
 
 function swatchRow(varName: string, type: 'bg' | 'fg'): string {
   if (type === 'bg') {
