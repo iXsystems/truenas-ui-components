@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
@@ -161,6 +163,66 @@ describe('tn-chip accessibility (#188)', () => {
       // on a button, so that half is asserted separately by the click tests
       // above; what matters here is that keydown itself contributes nothing.
       expect(host.clickCount).toBe(0);
+    });
+  });
+
+  /**
+   * Moving the click handler onto the body button moved the click TARGET with
+   * it, so the chip's padding has to move too — padding left on the wrapper is
+   * a band that looks like the chip and activates nothing.
+   *
+   * jsdom has no layout engine and Jest does not compile the component's SCSS,
+   * so the hit area cannot be measured here (same constraint that made
+   * `radio-error-contrast.spec.ts` read the stylesheet directly). Asserting on
+   * which rule owns the padding is the reachable form of the invariant. The
+   * values are matched loosely so retuning the chip's size does not fail this.
+   */
+  describe('the body button owns the padded hit area', () => {
+    const scss = readFileSync(join(__dirname, './chip.component.scss'), 'utf8');
+
+    /** Extracts a nested SCSS block's body by brace-matching from its header. */
+    function block(header: string): string {
+      const start = scss.indexOf(header);
+      expect(start).toBeGreaterThanOrEqual(0);
+      const open = scss.indexOf('{', start);
+      let depth = 0;
+      for (let i = open; i < scss.length; i++) {
+        if (scss[i] === '{') {
+          depth++;
+        } else if (scss[i] === '}' && --depth === 0) {
+          return scss.slice(open + 1, i);
+        }
+      }
+      throw new Error(`unterminated block for ${header}`);
+    }
+
+    /** Declarations of the block itself, excluding any nested rule. */
+    function ownDeclarations(blockBody: string): string {
+      let depth = 0;
+      let out = '';
+      for (const char of blockBody) {
+        if (char === '{') {
+          depth++;
+        } else if (char === '}') {
+          depth--;
+        } else if (depth === 0) {
+          out += char;
+        }
+      }
+      return out;
+    }
+
+    it('leaves the wrapper no padding of its own', () => {
+      expect(ownDeclarations(block('.tn-chip {'))).toMatch(/padding:\s*0\s*;/);
+    });
+
+    it('puts a real padding on the body button', () => {
+      expect(ownDeclarations(block('&__body {'))).toMatch(/padding:\s*[1-9]/);
+    });
+
+    it('keeps the wrapper from advertising a click it cannot deliver', () => {
+      expect(ownDeclarations(block('.tn-chip {'))).not.toMatch(/cursor:\s*pointer/);
+      expect(ownDeclarations(block('&__body {'))).toMatch(/cursor:\s*pointer/);
     });
   });
 

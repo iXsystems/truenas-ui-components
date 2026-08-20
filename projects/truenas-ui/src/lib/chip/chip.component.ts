@@ -32,7 +32,11 @@ export class TnChipComponent implements AfterViewInit, OnDestroy {
   private focusMonitor = inject(FocusMonitor);
 
   ngAfterViewInit() {
-    this.focusMonitor.monitor(this.chipEl());
+    // checkChildren, because since #188 the wrapper this points at is not
+    // itself focusable — the body and close buttons inside it are. Monitoring
+    // it alone would never fire, silently dropping the cdk-focused /
+    // cdk-keyboard-focused classes the chip applied before.
+    this.focusMonitor.monitor(this.chipEl(), true);
   }
 
   ngOnDestroy() {
