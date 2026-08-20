@@ -5,15 +5,25 @@ import { TnSpinnerComponent } from './spinner.component';
 describe('TnSpinnerComponent', () => {
   let component: TnSpinnerComponent;
   let fixture: ComponentFixture<TnSpinnerComponent>;
+  let warn: jest.SpyInstance;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TnSpinnerComponent]
     }).compileComponents();
 
+    // Almost every fixture here is unnamed, and #202 makes an unnamed spinner
+    // warn in dev mode — which Jest is. Silenced so this suite's output stays
+    // readable; the warning itself is asserted in `spinner-a11y.spec.ts`.
+    warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
     fixture = TestBed.createComponent(TnSpinnerComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    warn.mockRestore();
   });
 
   it('should create', () => {
