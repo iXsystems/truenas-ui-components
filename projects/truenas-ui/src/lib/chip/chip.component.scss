@@ -13,10 +13,13 @@
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   border: 1px solid transparent;
-  outline: none;
   user-select: none;
 
-  &:focus-visible {
+  // The wrapper is no longer focusable — the body button inside it is — so the
+  // ring is drawn here from the button's state, keeping it around the whole
+  // chip as before. :focus-within would be wrong: it would also fire for the
+  // close button, which draws its own ring.
+  &:has(> .tn-chip__body:focus-visible) {
     outline: 2px solid var(--tn-primary);
     outline-offset: 2px;
   }
@@ -67,6 +70,26 @@
 
   &--closable {
     padding-right: 8px;
+  }
+
+  // Reset to a plain span-like box: the wrapper above owns the chip's
+  // background, border, padding and focus ring, so the body button contributes
+  // only the icon/label row. `gap` is repeated here because the wrapper's own
+  // gap now separates the body from the close button, not the icon from the label.
+  &__body {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
+    cursor: inherit;
+    outline: none;
   }
 
   &__icon {
@@ -141,8 +164,8 @@
 // High contrast theme adjustments
 .high-contrast .tn-chip {
   border-width: 2px;
-  
-  &:focus-visible {
+
+  &:has(> .tn-chip__body:focus-visible) {
     outline-width: 3px;
   }
 }

@@ -57,7 +57,7 @@ export const Default: Story = {
 
     await expect(chip).toBeInTheDocument();
     await expect(chip).toHaveClass('tn-chip--primary');
-    await userEvent.click(chip);
+    await userEvent.click(chip.querySelector('.tn-chip__body') as HTMLElement);
   },
 };
 
@@ -115,7 +115,11 @@ export const Disabled: Story = {
 
     await expect(chip).toBeInTheDocument();
     await expect(chip).toHaveClass('tn-chip--disabled');
-    await expect(chip).toHaveAttribute('aria-disabled', 'true');
+    // Disabled state lives on the body button, not the wrapper: the wrapper has
+    // no role, and aria-disabled on a roleless element is itself an axe
+    // violation (aria-allowed-attr).
+    await expect(chip.querySelector('.tn-chip__body')).toBeDisabled();
+    await expect(chip.querySelector('.tn-chip__close')).toBeDisabled();
   },
 };
 
@@ -222,19 +226,29 @@ export const KeyboardNavigation: Story = {
     const canvas = within(canvasElement);
     const chip = canvas.getByTestId(`chip-${args.testId as string}`);
 
-    await expect(chip).toHaveAttribute('tabindex', '0');
-    await expect(chip).toHaveAttribute('role', 'button');
+    // The chip body is a real <button>, so it is focusable natively — the
+    // wrapper carries no role or tabindex, which is what keeps the close
+    // button from being a nested interactive control (#188).
+    const body = chip.querySelector('.tn-chip__body') as HTMLButtonElement;
+    await expect(body.tagName).toBe('BUTTON');
+    await expect(chip).not.toHaveAttribute('role');
+    await expect(chip).not.toHaveAttribute('tabindex');
 
     // Test keyboard interaction
-    chip.focus();
+    body.focus();
+    await expect(body).toHaveFocus();
     await userEvent.keyboard('{Enter}');
     await userEvent.keyboard('{Delete}');
+
+    // Close is a sibling of the body, and its own tab stop.
+    await userEvent.tab();
+    await expect(chip.querySelector('.tn-chip__close')).toHaveFocus();
   },
 };
 
 /**
  * **Test IDs (default).** `tn-chip` emits the `chip-` prefix on its
- * `role="button"` host, under `data-testid` (default) / `data-test`.
+ * `.tn-chip` wrapper, under `data-testid` (default) / `data-test`.
  * `testId="production"` → `chip-production`. With no `testId`, nothing is
  * emitted. Table read live.
  */

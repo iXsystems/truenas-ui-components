@@ -68,14 +68,19 @@ export class TnChipComponent implements AfterViewInit, OnDestroy {
     this.onClose.emit();
   }
 
+  /**
+   * Handles the chip's Delete/Backspace dismiss shortcut. Bound to both the
+   * body and the close button so the shortcut works wherever focus sits inside
+   * the chip; the wrapper between them carries no role and is not focusable,
+   * so it is not a legitimate place to hang a key handler.
+   *
+   * Enter and Space are deliberately absent: the body is a native `<button>`,
+   * which already turns both into a `click`. Handling them here as well would
+   * emit `onClick` twice per keypress.
+   */
   handleKeyDown(event: KeyboardEvent): void {
     if (this.disabled()) {
       return;
-    }
-
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      this.onClick.emit(event as unknown as MouseEvent);
     }
 
     if (this.closable() && (event.key === 'Delete' || event.key === 'Backspace')) {
