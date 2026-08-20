@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { hasInteractiveContent } from './interactive-content';
+import { hasInteractiveContent, plainTextMessage } from './interactive-content';
 import { TnTooltipComponent } from './tooltip.component';
 import { TnTooltipDirective } from './tooltip.directive';
 
@@ -236,6 +236,30 @@ describe('hasInteractiveContent', () => {
 
       expect(rendered.querySelector('a[href]')).not.toBeNull();
     });
+  });
+});
+
+// The same message reaches two kinds of consumer: the panel, which renders it as HTML, and
+// plain-text APIs (AriaDescriber, the aria-label on an icon-only help button) that would otherwise
+// announce its tags literally.
+describe('plainTextMessage', () => {
+  it('strips the link a pinnable message exists for, keeping its text', () => {
+    expect(plainTextMessage('Read the <a href="#docs">docs</a>')).toBe('Read the docs');
+  });
+
+  it('decodes entities, which are announced just as literally as tags', () => {
+    expect(plainTextMessage('<b>Online</b> &mdash; healthy')).toBe('Online — healthy');
+  });
+
+  it('returns plain help text untouched, which is the overwhelming majority of tooltips', () => {
+    expect(plainTextMessage('Customizes the importance of the alert.')).toBe(
+      'Customizes the importance of the alert.'
+    );
+  });
+
+  it('treats a nullish message as no message', () => {
+    expect(plainTextMessage(null)).toBe('');
+    expect(plainTextMessage(undefined)).toBe('');
   });
 });
 

@@ -645,4 +645,24 @@ describe('TnFormFieldComponent tooltipSticky', () => {
     fixture.detectChanges();
     expect(tooltip.stickyEnabled()).toBe(false);
   });
+
+  // The help button is icon-only, so the message is its accessible name - and a message holding a
+  // link is exactly what this feature makes normal to pass. Announced raw it would be read out as
+  // literal tags.
+  it('names the help button with the message as text, not as markup', async () => {
+    await TestBed.configureTestingModule({
+      imports: [StickyHostComponent],
+      providers: [TnIconTesting.jest.providers()],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(StickyHostComponent);
+    fixture.detectChanges();
+
+    const button = fixture.debugElement.query(By.css('.tn-form-field-tooltip')).nativeElement;
+    expect(button.getAttribute('aria-label')).toBe('Read the docs');
+
+    fixture.componentInstance.tooltip = 'Plain help text';
+    fixture.detectChanges();
+    expect(button.getAttribute('aria-label')).toBe('Plain help text');
+  });
 });

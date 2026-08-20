@@ -32,7 +32,8 @@ import { merge, type Subscription } from 'rxjs';
 import {
   hasInteractiveContent,
   INTERACTIVE_SELECTOR,
-  KEYBOARD_ACTIVATABLE_SELECTOR
+  KEYBOARD_ACTIVATABLE_SELECTOR,
+  plainTextMessage
 } from './interactive-content';
 import { TnTooltipComponent } from './tooltip.component';
 
@@ -590,7 +591,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   }
 
   private _syncAriaDescription(target: HTMLElement): void {
-    const message = !this.disabled() ? this._plainTextMessage(this.message()) : '';
+    const message = !this.disabled() ? plainTextMessage(this.message()) : '';
 
     if (this._describedTarget === target && this._describedMessage === message) {
       return;
@@ -602,18 +603,6 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
       this._describedTarget = target;
       this._describedMessage = message;
     }
-  }
-
-  /**
-   * The overlay tooltip renders its message as HTML (`[innerHTML]`), but AriaDescriber
-   * writes the description as plain text — strip any markup so screen readers never
-   * announce literal tags. DOMParser parses inert markup (no script execution).
-   */
-  private _plainTextMessage(message: string): string {
-    if (!message.includes('<') && !message.includes('&')) {
-      return message;
-    }
-    return new DOMParser().parseFromString(message, 'text/html').body.textContent ?? '';
   }
 
   private _removeAriaDescription(): void {

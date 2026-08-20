@@ -16,6 +16,7 @@ import type { TnFormFieldErrorMessages } from './form-field.errors';
 import { TnIconComponent } from '../icon/icon.component';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import { plainTextMessage } from '../tooltip/interactive-content';
 import { TnTooltipDirective } from '../tooltip/tooltip.directive';
 import type { TooltipPosition } from '../tooltip/tooltip.directive';
 
@@ -99,6 +100,13 @@ export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContex
    * behaviour, accepting that the link is then unreachable.
    */
   tooltipSticky = input<boolean>(true);
+
+  /**
+   * Accessible name for the help button, which is icon-only and so has nothing else to be named
+   * by. The message is what the button is for, but it may hold markup — a link is the whole point
+   * of `tooltipSticky` — and `aria-label` takes plain text, so the tags come off first.
+   */
+  protected readonly tooltipAriaLabel = computed(() => plainTextMessage(this.tooltip()));
 
   /**
    * Per-field overrides for validation messages, keyed by error key. Values may

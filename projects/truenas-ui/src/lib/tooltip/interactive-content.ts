@@ -70,3 +70,28 @@ export function hasInteractiveContent(message: string | null | undefined): boole
   const parsed = new DOMParser().parseFromString(message, 'text/html');
   return !!parsed.body.querySelector(REACHABLE_CONTENT_SELECTOR);
 }
+
+/**
+ * The message as a screen reader should hear it.
+ *
+ * A message is rendered through `[innerHTML]`, so it may legitimately hold markup — a link is the
+ * whole reason sticky mode exists. Anywhere the same string is handed to an API that takes plain
+ * text (`AriaDescriber`, an `aria-label` on the help button that carries it), the tags have to
+ * come off first, or assistive tech announces them literally.
+ *
+ * DOMParser builds an inert document, so nothing in the markup executes or loads. The fast path
+ * skips it for the ordinary case of a message that is already plain text; `&` counts as markup
+ * because entities need decoding too.
+ */
+export function plainTextMessage(message: string | null | undefined): string {
+  if (!message) {
+    return '';
+  }
+  if (!message.includes('<') && !message.includes('&')) {
+    return message;
+  }
+  if (typeof DOMParser === 'undefined') {
+    return message;
+  }
+  return new DOMParser().parseFromString(message, 'text/html').body.textContent ?? '';
+}

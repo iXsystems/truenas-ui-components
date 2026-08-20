@@ -124,6 +124,17 @@ describe('TnFormSectionComponent', () => {
     expect(tooltip.stickyEnabled()).toBe(false);
   });
 
+  // The help button is icon-only, so the message is its accessible name - and a message holding a
+  // link is exactly what this feature makes normal to pass. Announced raw it would be read out as
+  // literal tags.
+  it('names the help button with the message as text, not as markup', () => {
+    host.tooltip = 'Read the <a href="#docs">docs</a>';
+    fixture.detectChanges();
+
+    const button = fixture.debugElement.query(By.css('.tn-form-section__tooltip'));
+    expect(button.nativeElement.getAttribute('aria-label')).toBe('Read the docs');
+  });
+
   describe('harness', () => {
     it('reads the heading text', async () => {
       const section = await loader.getHarness(TnFormSectionHarness);
