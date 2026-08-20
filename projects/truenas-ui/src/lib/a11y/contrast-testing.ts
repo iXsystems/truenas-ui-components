@@ -252,7 +252,7 @@ function palette(
 
   // `var(--x)` and `var(--x, <fallback>)`, where the fallback may itself be a
   // `var()`. That nesting is not hypothetical: `radio.component.scss` reads
-  // `var(--tn-error-text, var(--tn-red, #de6d6d))`, and a spec measuring what
+  // `var(--tn-error-text, var(--tn-red, #b91c1c))`, and a spec measuring what
   // that renders as has to walk the whole chain. These two are function
   // declarations rather than `const` arrows because they call each other, and
   // one of the two references would otherwise be a forward one.

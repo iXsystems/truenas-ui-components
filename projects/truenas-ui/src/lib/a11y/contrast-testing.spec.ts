@@ -263,7 +263,7 @@ describe('themePalettes', () => {
   });
 
   it('walks a fallback that is itself a var(), which is the shape the SCSS uses', () => {
-    // `radio.component.scss` reads `var(--tn-error-text, var(--tn-red, #de6d6d))`,
+    // `radio.component.scss` reads `var(--tn-error-text, var(--tn-red, #b91c1c))`,
     // so a spec measuring what that renders as needs the whole chain, not the
     // first hop.
     expect(bySelector('.tn-dark').color('--tn-nested-fallback')).toBe('#654321');
