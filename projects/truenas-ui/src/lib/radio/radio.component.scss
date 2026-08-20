@@ -79,7 +79,10 @@
   &__error {
     margin-top: 0.25rem;
     font-size: 12px;
-    color: var(--tn-red, #dc3545);
+    // --tn-red is tuned for the 3:1 border/icon minimum (WCAG 1.4.11), not the
+    // 4.5:1 text minimum (WCAG 1.4.3) this line needs. The fallback is itself
+    // accessible on a dark surface (~6:1 against a #1E1E1E-class background).
+    color: var(--tn-error-text, #ff6b6b);
   }
   
   // States
