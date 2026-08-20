@@ -85,10 +85,12 @@
     // doesn't meet the 4.5:1 text minimum (WCAG 1.4.3) this line needs, which
     // is why a separate token exists. The --tn-red middle link is NOT reached
     // by a theme added to this file: :root already declares --tn-error-text,
-    // and that declaration wins the cascade for any element that also
-    // matches :root — which every theme class here does, since themes are
-    // applied as a class on the root element — regardless of whether the new
-    // theme's own class declares --tn-error-text. A theme added here must set
+    // and a theme class is applied to the same root element (themes are
+    // applied as a class on document.documentElement) with the same
+    // specificity as :root, so a theme class that itself declares
+    // --tn-error-text wins by source order — but a theme class that omits
+    // the property declares nothing to compete with :root, so :root's
+    // declaration is what applies. A theme added here must set
     // --tn-error-text itself; it cannot rely on this fallback. The middle
     // link exists for a consumer whose entire stylesheet predates this token
     // — one that defines neither --tn-error-text nor the :root rule that

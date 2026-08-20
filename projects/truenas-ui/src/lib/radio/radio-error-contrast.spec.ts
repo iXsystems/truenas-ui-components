@@ -142,8 +142,9 @@ describe('tn-radio error text contrast (#186)', () => {
     // before a hardcoded literal — otherwise that stylesheet's own tuning is
     // silently discarded. This does not help a theme added within this
     // repo's own themes.css: :root already declares --tn-error-text there,
-    // and wins the cascade regardless of what the new theme's own class
-    // declares, so such a theme must set --tn-error-text itself.
+    // and a theme class that omits the property has nothing to compete with
+    // that declaration, so such a theme must set --tn-error-text itself
+    // rather than relying on the fallback.
     const chainMatch = /--tn-error-text,\s*var\(--tn-red,\s*(#[0-9a-fA-F]{3,6})\)\)/.exec(scss);
     expect(chainMatch).not.toBeNull();
     const literal = chainMatch![1];
