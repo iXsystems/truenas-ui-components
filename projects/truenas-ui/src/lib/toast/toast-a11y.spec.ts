@@ -3,7 +3,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import axe from 'axe-core';
 import { TnToastComponent } from './toast.component';
-import { TnToastService } from './toast.service';
+import { TN_TOAST_ANNOUNCE_DELAY_MS, TnToastService } from './toast.service';
 import { TnToastType } from './toast.types';
 import { TnIconTesting } from '../icon/icon-testing';
 
@@ -260,15 +260,13 @@ describe('tn-toast live-region timing (#195)', () => {
   }
 
   /**
-   * Run the frame the service defers the message to, then render it.
+   * Reach the step the service defers the message to, then render it.
    *
-   * `tick(16)` is what fires the `requestAnimationFrame`: zone.js schedules one
-   * as a macrotask a frame out. The explicit `ApplicationRef.tick()` is because
-   * setting a signal only marks the view dirty — nothing in a TestBed zone test
-   * renders it on its own.
+   * The explicit `ApplicationRef.tick()` is because setting a signal only marks
+   * the view dirty — nothing in a TestBed zone test renders it on its own.
    */
-  function nextFrame(): void {
-    tick(16);
+  function announceStep(): void {
+    tick(TN_TOAST_ANNOUNCE_DELAY_MS);
     TestBed.inject(ApplicationRef).tick();
   }
 
@@ -285,7 +283,7 @@ describe('tn-toast live-region timing (#195)', () => {
         expect(el.getAttribute('role')).toBe('status');
         expect(messageOf(el)).toBe('');
 
-        nextFrame();
+        announceStep();
 
         expect(renderedRegion()).toBe(el);
         expect(messageOf(el)).toBe('Changes saved');
@@ -302,7 +300,7 @@ describe('tn-toast live-region timing (#195)', () => {
       expect(el.getAttribute('role')).toBe('alert');
       expect(messageOf(el)).toBe('');
 
-      nextFrame();
+      announceStep();
 
       expect(renderedRegion()).toBe(el);
       expect(messageOf(el)).toBe('Save failed');
@@ -318,7 +316,7 @@ describe('tn-toast live-region timing (#195)', () => {
       expect(el.querySelector('.tn-toast__action')?.textContent?.trim()).toBe('Undo');
       expect(messageOf(el)).toBe('');
 
-      nextFrame();
+      announceStep();
 
       expect(renderedRegion()).toBe(el);
       expect(messageOf(el)).toBe('Item deleted');
@@ -333,7 +331,7 @@ describe('tn-toast live-region timing (#195)', () => {
       // Dismisses the first synchronously, while its frame is still pending.
       service.open('Second', { duration: 0 });
 
-      nextFrame();
+      announceStep();
 
       const regions = document.querySelectorAll('.tn-toast');
       expect(regions).toHaveLength(2);
@@ -357,7 +355,7 @@ describe('tn-toast live-region timing (#195)', () => {
       expect(messageOf(el)).toBe('');
       expect(el.classList.contains('tn-toast--visible')).toBe(false);
 
-      nextFrame();
+      announceStep();
 
       // Both land in the one frame: the toast becomes visible in the same
       // render that gives it something to say, so there is no empty flash.

@@ -1,6 +1,6 @@
 import { ApplicationRef } from '@angular/core';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { TnToastService } from './toast.service';
+import { TN_TOAST_ANNOUNCE_DELAY_MS, TnToastService } from './toast.service';
 import { TnToastPosition, TnToastType } from './toast.types';
 import { TnIconTesting } from '../icon/icon-testing';
 
@@ -31,12 +31,12 @@ describe('TnToastService', () => {
     expect(document.querySelector('tn-toast')).not.toBeNull();
   });
 
-  // The message lands a frame after insertion, so that the live region changes
-  // rather than arriving already populated (#195). `toast-a11y.spec.ts` holds
-  // that contract; this only needs to reach the same frame before reading.
+  // The message lands after insertion, so that the live region changes rather
+  // than arriving already populated (#195). `toast-a11y.spec.ts` holds that
+  // contract; this only needs to reach the same step before reading.
   it('should render the message text', fakeAsync(() => {
     service.open('Hello world', { duration: 0 });
-    tick(16);
+    tick(TN_TOAST_ANNOUNCE_DELAY_MS);
     detectChanges();
     const message = document.querySelector('.tn-toast__message');
     expect(message?.textContent?.trim()).toBe('Hello world');

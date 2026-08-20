@@ -11,6 +11,25 @@ import { TnToastComponent } from './toast.component';
 import type { TnToastConfig } from './toast.types';
 import { TnToastPosition, TnToastType } from './toast.types';
 
+/**
+ * How long the live region is left attached and empty before the message is
+ * written into it, in milliseconds.
+ *
+ * WHY A TIMER AND NOT THE ANIMATION FRAME THE TRANSITION RIDES
+ * -----------------------------------------------------------
+ * A `requestAnimationFrame` callback runs BEFORE that frame's style, layout and
+ * accessibility-tree update. Attaching the region in one task and populating it
+ * from the next frame's callback therefore commits both mutations in a single
+ * accessibility-tree update — which is the already-populated insertion this
+ * deferral exists to avoid, still there and harder to see. The region needs a
+ * rendering pass of its own, which means yielding past one.
+ *
+ * 100ms is what `@angular/cdk`'s `LiveAnnouncer` waits before writing into its
+ * own region — a dependency of this project already, and the closest thing to a
+ * measured number available.
+ */
+export const TN_TOAST_ANNOUNCE_DELAY_MS = 100;
+
 export class TnToastRef {
   private readonly _onAction = new Subject<void>();
   private readonly _afterDismissed = new Subject<void>();
@@ -53,6 +72,12 @@ export class TnToastService {
 
   /**
    * Opens a toast notification.
+   *
+   * The toast is attached synchronously, but its message and its enter
+   * transition both land `TN_TOAST_ANNOUNCE_DELAY_MS` later — the delay is what
+   * makes the text a *change* to a live region a screen reader is already
+   * watching. A test reading `.tn-toast__message` must let that elapse; one
+   * asserting on the call rather than the DOM should use `TnToastMock`.
    *
    * @param message The message to display.
    * @param actionOrConfig Optional action button text, or config object.
@@ -127,13 +152,17 @@ export class TnToastService {
     // tick, so the message below is a second mutation whatever schedules it.
     componentRef.changeDetectorRef.detectChanges();
 
-    // Announce, and animate in. The message rides the same frame as the enter
-    // transition because that is the frame the toast becomes visible in: it is
-    // `opacity: 0` until `visible`, so the empty region above is never seen.
-    const frame = requestAnimationFrame(() => {
+    // Announce, and animate in — together, and not before. The toast is
+    // `opacity: 0` until `visible`, so holding the enter transition back to the
+    // step that populates the region is also what keeps the empty region above
+    // from ever being seen. The cost is that the toast appears
+    // TN_TOAST_ANNOUNCE_DELAY_MS later than it is attached; `duration` still
+    // runs from the call, so a default toast is shown for 3900ms rather than
+    // 4000ms.
+    const announce = setTimeout(() => {
       instance.message.set(message);
       instance.visible.set(true);
-    });
+    }, TN_TOAST_ANNOUNCE_DELAY_MS);
 
     // Auto-dismiss
     let timeout: ReturnType<typeof setTimeout> | null = null;
@@ -144,11 +173,12 @@ export class TnToastService {
     // Cleanup on dismiss
     ref.afterDismissed().subscribe(() => {
       if (timeout) { clearTimeout(timeout); }
-      // Dropping the frame is what keeps the deferral above from outliving the
-      // toast: `open()` twice in one task dismisses the first synchronously,
-      // and a pending frame would then populate a live region belonging to a
-      // toast already on its way out — announcing a message nobody was shown.
-      cancelAnimationFrame(frame);
+      // Dropping the pending announcement is what keeps the deferral above from
+      // outliving the toast: `open()` twice in one task dismisses the first
+      // synchronously, and a pending timer would then populate a live region
+      // belonging to a toast already on its way out — announcing a message
+      // nobody was shown.
+      clearTimeout(announce);
       instance.visible.set(false);
 
       // Wait for animation to complete before removing
