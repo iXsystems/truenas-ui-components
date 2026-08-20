@@ -142,8 +142,8 @@ export class TnToastService {
     // reader reports is a CHANGE to a live region's content, so the region has
     // to be present and empty before the text arrives. Inserting the region
     // already populated is special-cased for `role="alert"` and announced
-    // reliably, but the `status` regions this component uses for info, success
-    // and warning (#190) are announced unreliably that way, and on several
+    // reliably, but the `status` regions this component uses for info and
+    // success (#190, #194) are announced unreliably that way, and on several
     // readers not at all.
     this.appRef.attachView(componentRef.hostView);
     document.body.appendChild(componentRef.location.nativeElement as HTMLElement);
