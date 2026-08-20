@@ -107,19 +107,31 @@ export class TnToastService {
     ref._componentRef = componentRef;
 
     const instance = componentRef.instance;
-    instance.message.set(message);
     instance.action.set(action ?? null);
     instance.type.set(type);
     instance.position.set(position);
     instance.onAction = () => ref._triggerAction();
     instance.onDismiss = () => ref.dismiss();
 
-    // Attach to DOM
+    // Attach to DOM. `message` is deliberately still empty here: what a screen
+    // reader reports is a CHANGE to a live region's content, so the region has
+    // to be present and empty before the text arrives. Inserting the region
+    // already populated is special-cased for `role="alert"` and announced
+    // reliably, but the `status` regions this component uses for info, success
+    // and warning (#190) are announced unreliably that way, and on several
+    // readers not at all.
     this.appRef.attachView(componentRef.hostView);
     document.body.appendChild(componentRef.location.nativeElement as HTMLElement);
 
-    // Animate in
+    // Render the empty region now rather than waiting for the next scheduled
+    // tick, so the message below is a second mutation whatever schedules it.
+    componentRef.changeDetectorRef.detectChanges();
+
+    // Announce, and animate in. The message rides the same frame as the enter
+    // transition because that is the frame the toast becomes visible in: it is
+    // `opacity: 0` until `visible`, so the empty region above is never seen.
     requestAnimationFrame(() => {
+      instance.message.set(message);
       instance.visible.set(true);
     });
 

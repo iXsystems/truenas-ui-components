@@ -1,8 +1,11 @@
-import { TestBed } from '@angular/core/testing';
+import { ApplicationRef } from '@angular/core';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import axe from 'axe-core';
 import { TnToastComponent } from './toast.component';
+import { TnToastService } from './toast.service';
 import { TnToastType } from './toast.types';
+import { TnIconTesting } from '../icon/icon-testing';
 
 /**
  * Guards the live-region contract fixed for #190: the toast carried
@@ -184,5 +187,144 @@ describe('tn-toast accessibility (#190)', () => {
       expect(violated).toEqual([]);
       expect(evaluated).toContain('aria-roles');
     });
+  });
+});
+
+/**
+ * Guards the live-region TIMING fixed for #195, which is the other half of
+ * making a toast announce: #190 settled WHAT the region says it is, this
+ * settles WHEN its content arrives.
+ *
+ * A screen reader reports a *change* to a live region's content. The service
+ * set `message` on the component instance and only then appended the host, so
+ * the region and its text entered the DOM in one mutation and there was no
+ * change to report. `role="alert"` survives that — readers special-case an
+ * alert appearing already populated — but `role="status"`, which info, success
+ * and warning toasts carry, is announced unreliably that way and on several
+ * readers not at all.
+ *
+ * WHY THESE ASSERTIONS ARE PAIRED, AND READ THE SAME ELEMENT TWICE
+ * ---------------------------------------------------------------
+ * Neither sample means anything alone. "Empty at insertion" is satisfied by a
+ * toast that never populates, and "populated afterwards" by the pre-fix code.
+ * The contract is the transition between them, so each test asserts both ends
+ * and that `region()` returns the SAME node at each — a service that replaced
+ * the element instead of mutating it would satisfy both samples while giving a
+ * reader a fresh region it was never watching.
+ *
+ * WHY THIS SUITE DRIVES THE SERVICE AND NOT A FIXTURE
+ * --------------------------------------------------
+ * The defect is in the order of the service's own steps — set, attach, render
+ * — and a component fixture is attached before a test can observe anything.
+ * There is nothing here a `TnToastComponent` fixture could fail on.
+ */
+describe('tn-toast live-region timing (#195)', () => {
+  let service: TnToastService;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [TnIconTesting.jest.providers()],
+    });
+    service = TestBed.inject(TnToastService);
+  });
+
+  afterEach(() => {
+    document.querySelectorAll('tn-toast').forEach((el) => el.remove());
+  });
+
+  /**
+   * The live region in the document, asserted to be RENDERED — its bindings
+   * applied, not merely created.
+   *
+   * That distinction is the difference between these tests and vacuous ones.
+   * `createComponent` runs the template's create pass, so `.tn-toast` is in the
+   * DOM before any change detection has applied a binding: no `role`, and
+   * `{{ message() }}` still empty. A region carrying no role is not one a
+   * screen reader watches, and "empty at insertion" is satisfied by it — so
+   * three of the tests below passed against the pre-fix service until this
+   * helper read `role`. Measured, not assumed.
+   *
+   * Read from `document` rather than a fixture because when the element gets
+   * there, and in what state, is the whole subject.
+   */
+  function renderedRegion(): HTMLElement {
+    const el = document.querySelector('.tn-toast');
+    expect(el).not.toBeNull();
+    expect((el as HTMLElement).getAttribute('role')).not.toBeNull();
+    return el as HTMLElement;
+  }
+
+  /** The message text a screen reader would announce out of `el`. */
+  function messageOf(el: HTMLElement): string {
+    return (el.querySelector('.tn-toast__message')?.textContent ?? '').trim();
+  }
+
+  /**
+   * Run the frame the service defers the message to, then render it.
+   *
+   * `tick(16)` is what fires the `requestAnimationFrame`: zone.js schedules one
+   * as a macrotask a frame out. The explicit `ApplicationRef.tick()` is because
+   * setting a signal only marks the view dirty — nothing in a TestBed zone test
+   * renders it on its own.
+   */
+  function nextFrame(): void {
+    tick(16);
+    TestBed.inject(ApplicationRef).tick();
+  }
+
+  describe('the region is inserted empty and populated afterwards', () => {
+    it.each([TnToastType.Info, TnToastType.Success, TnToastType.Warning])(
+      'gives a polite %s toast a content change to announce',
+      fakeAsync((type: TnToastType) => {
+        service.open('Changes saved', { type, duration: 0 });
+
+        const el = renderedRegion();
+        // In the document — an unattached region is one no reader is watching,
+        // so populating it later would announce nothing either.
+        expect(document.body.contains(el)).toBe(true);
+        expect(el.getAttribute('role')).toBe('status');
+        expect(messageOf(el)).toBe('');
+
+        nextFrame();
+
+        expect(renderedRegion()).toBe(el);
+        expect(messageOf(el)).toBe('Changes saved');
+      })
+    );
+
+    // Error toasts were never the broken case, and the deferral does not cost
+    // them anything: a change to an `alert` region is announced just as its
+    // populated insertion was. Asserted because it is what #195 must not break.
+    it('keeps an error toast announcing, on the role that interrupts', fakeAsync(() => {
+      service.open('Save failed', { type: TnToastType.Error, duration: 0 });
+
+      const el = renderedRegion();
+      expect(el.getAttribute('role')).toBe('alert');
+      expect(messageOf(el)).toBe('');
+
+      nextFrame();
+
+      expect(renderedRegion()).toBe(el);
+      expect(messageOf(el)).toBe('Save failed');
+    }));
+  });
+
+  describe('the visible behaviour is unchanged', () => {
+    it('never shows the empty region, and still runs the enter transition', fakeAsync(() => {
+      service.open('Changes saved', { duration: 0 });
+
+      const el = renderedRegion();
+      // `.tn-toast` is `opacity: 0` until `--visible`, so this is the empty
+      // region being invisible rather than merely off-screen.
+      expect(messageOf(el)).toBe('');
+      expect(el.classList.contains('tn-toast--visible')).toBe(false);
+
+      nextFrame();
+
+      // Both land in the one frame: the toast becomes visible in the same
+      // render that gives it something to say, so there is no empty flash.
+      expect(messageOf(el)).toBe('Changes saved');
+      expect(el.classList.contains('tn-toast--visible')).toBe(true);
+    }));
   });
 });

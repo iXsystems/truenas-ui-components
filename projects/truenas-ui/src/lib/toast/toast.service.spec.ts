@@ -31,12 +31,16 @@ describe('TnToastService', () => {
     expect(document.querySelector('tn-toast')).not.toBeNull();
   });
 
-  it('should render the message text', () => {
-    service.open('Hello world');
+  // The message lands a frame after insertion, so that the live region changes
+  // rather than arriving already populated (#195). `toast-a11y.spec.ts` holds
+  // that contract; this only needs to reach the same frame before reading.
+  it('should render the message text', fakeAsync(() => {
+    service.open('Hello world', { duration: 0 });
+    tick(16);
     detectChanges();
     const message = document.querySelector('.tn-toast__message');
     expect(message?.textContent?.trim()).toBe('Hello world');
-  });
+  }));
 
   it('should return a TnToastRef', () => {
     const ref = service.open('Test');
