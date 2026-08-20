@@ -157,11 +157,12 @@ describe('tn-chip accessibility (#188)', () => {
      * click. The pre-#188 template also handled them in `handleKeyDown`, which
      * on a real button would emit `onClick` twice per keypress.
      */
-    it.each(['Enter', ' '])('emits onClick exactly once per %s keypress', (key) => {
+    it.each(['Enter', ' '])('does not emit onClick from the %s keydown itself', (key) => {
       body().dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
-      // jsdom does not synthesise the click a browser derives from Enter/Space
-      // on a button, so that half is asserted separately by the click tests
-      // above; what matters here is that keydown itself contributes nothing.
+      // The browser's own Enter/Space -> click on a native button is what emits
+      // onClick, and jsdom does not synthesise it; the click tests above cover
+      // that half. What this pins down is the other half — that keydown adds
+      // nothing of its own, so the two cannot combine into a double emit.
       expect(host.clickCount).toBe(0);
     });
   });
@@ -214,6 +215,37 @@ describe('tn-chip accessibility (#188)', () => {
 
     it('leaves the wrapper no padding of its own', () => {
       expect(ownDeclarations(block('.tn-chip {'))).toMatch(/padding:\s*0\s*;/);
+    });
+
+    /**
+     * The single exception, and deliberately so. `--closable` insets the close
+     * circle from the chip's border, and that 8px sits BEYOND the circle, so
+     * no element can own it without changing what a click there means: on the
+     * body, the chip activates from outside the close button; on the close
+     * button, a click at the chip's edge deletes the chip. Dead is the safest
+     * of the three next to a destructive control.
+     *
+     * Asserted rather than merely commented because the previous version of
+     * this suite claimed the wrapper had no padding at all, which was not true
+     * of a closable chip — `ownDeclarations` strips nested blocks and could
+     * not see this one.
+     */
+    it('insets a closable chip by 8px, the only wrapper padding and the only dead strip', () => {
+      expect(ownDeclarations(block('&--closable {'))).toMatch(/padding-right:\s*8px\s*;/);
+    });
+
+    it('has no other wrapper padding hiding in a nested block', () => {
+      const nestedPadding = block('.tn-chip {')
+        .split('\n')
+        .filter((line) => /^\s+padding(-\w+)?:/.test(line) && !/padding:\s*0\s*;/.test(line));
+
+      // Only the two accounted for above: __body's real padding, and the
+      // closable inset. A third would be a new dead strip.
+      expect(nestedPadding.map((line) => line.trim())).toEqual([
+        'padding-right: 8px;',
+        'padding: 6px 12px;',
+        'padding-right: 6px;',
+      ]);
     });
 
     it('puts a real padding on the body button', () => {

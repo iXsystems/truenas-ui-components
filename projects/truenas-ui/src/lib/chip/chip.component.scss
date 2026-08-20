@@ -72,6 +72,14 @@
     pointer-events: none;
   }
 
+  // The one piece of padding left on the wrapper, and so the one strip of a
+  // chip that does not emit onClick. It is the inset that keeps the close
+  // circle off the chip's border, and it sits BEYOND that circle, so no
+  // element can own it without changing what a click there means: give it to
+  // the body and the chip activates from outside the close button; give it to
+  // the close button and a click at the chip's edge deletes the chip. Dead is
+  // the safest of the three next to a destructive control. Asserted, with this
+  // reasoning, in chip-a11y.spec.ts.
   &--closable {
     padding-right: 8px;
   }
