@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import axe from 'axe-core';
 import { TnSlideToggleComponent } from './slide-toggle.component';
 
@@ -40,6 +41,19 @@ class TestHostComponent {
   label = signal<string | undefined>('Enable notifications');
   labelPosition = signal<'before' | 'after'>('after');
   disabled = signal(false);
+  changeCount = 0;
+}
+
+/** The CVA half of `isDisabled()`, which the `[disabled]` input cannot reach. */
+@Component({
+  selector: 'tn-form-test-host',
+  standalone: true,
+  imports: [TnSlideToggleComponent, ReactiveFormsModule],
+  template: `<tn-slide-toggle label="Enable notifications" [formControl]="control"
+    (change)="changeCount = changeCount + 1" />`
+})
+class FormTestHostComponent {
+  control = new FormControl(false);
   changeCount = 0;
 }
 
@@ -189,10 +203,12 @@ describe('tn-slide-toggle accessibility (#189)', () => {
       expect(host.changeCount).toBe(2);
     });
 
-    // The removed onLabelClick() opened with `if (!this.isDisabled() ...)`. That
-    // guard is now the native one — a <label> does not forward a click to a
-    // disabled control — so this covers the branch the explicit check used to.
-    it('does nothing when the toggle is disabled', () => {
+    // The removed onLabelClick() opened with `if (!this.isDisabled() ...)`, and
+    // `isDisabled()` is `disabled() || formDisabled()`. The guard is now the
+    // native one — a <label> does not forward a click to a disabled control —
+    // so both halves are driven: this one, and the CVA describe below the
+    // bottom of this one.
+    it('does nothing when disabled through the [disabled] input', () => {
       host.disabled.set(true);
       fixture.detectChanges();
 
@@ -202,5 +218,55 @@ describe('tn-slide-toggle accessibility (#189)', () => {
       expect(input().checked).toBe(false);
       expect(host.changeCount).toBe(0);
     });
+  });
+
+});
+
+/**
+ * The other half of `isDisabled()`. A sibling describe rather than a nested one
+ * so it gets its own TestBed from the usual per-test reset, instead of tearing
+ * down a fixture the outer `beforeEach` has already built.
+ */
+describe('tn-slide-toggle label clicks under a disabled form control (#189)', () => {
+  let host: FormTestHostComponent;
+  let fixture: ComponentFixture<FormTestHostComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [FormTestHostComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(FormTestHostComponent);
+    host = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  function input(): HTMLInputElement {
+    return fixture.nativeElement.querySelector('.tn-slide-toggle__input') as HTMLInputElement;
+  }
+
+  function labelText(): HTMLElement {
+    return fixture.nativeElement.querySelector('.tn-slide-toggle__label-text') as HTMLElement;
+  }
+
+  it('ignores a label click once the control is disabled', () => {
+    host.control.disable();
+    fixture.detectChanges();
+
+    labelText().click();
+    fixture.detectChanges();
+
+    expect(input().disabled).toBe(true);
+    expect(input().checked).toBe(false);
+    expect(host.changeCount).toBe(0);
+    expect(host.control.value).toBe(false);
+  });
+
+  it('still toggles on a label click while the control is enabled', () => {
+    labelText().click();
+    fixture.detectChanges();
+
+    expect(host.control.value).toBe(true);
+    expect(host.changeCount).toBe(1);
   });
 });
