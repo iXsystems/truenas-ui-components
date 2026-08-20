@@ -49,25 +49,34 @@ export class TnProgressBarComponent {
   ariaLabel = input<string | null>(null);
   ariaLabelledby = input<string | null>(null);
 
+  private readonly hasLabelledby = computed(() => (this.ariaLabelledby() ?? '').trim() !== '');
+
   /** Whether the caller gave this bar a name of its own. Blank is not a name. */
   private readonly named = computed(() => {
-    return (this.ariaLabel() ?? '').trim() !== '' || (this.ariaLabelledby() ?? '').trim() !== '';
+    return (this.ariaLabel() ?? '').trim() !== '' || this.hasLabelledby();
   });
 
   /**
    * The name to render, or `null` to render no `aria-label` attribute.
    *
-   * Null when `ariaLabelledby` is set, because `aria-labelledby` wins the ARIA
-   * name calculation outright — a fallback emitted alongside it would be a name
-   * that nothing announces, and reads to anyone inspecting the element as one
-   * that is in force when it is not.
+   * `aria-labelledby` wins the ARIA name calculation when it RESOLVES, which is
+   * what makes the two branches below differ:
+   *
+   * - An explicit `ariaLabel` is always emitted, `ariaLabelledby` or not.
+   *   Suppressing it would be safe only while the IDREF resolves; against a typo
+   *   or an element that has not rendered yet it would leave the bar unnamed in
+   *   precisely the case where the caller supplied a name.
+   * - The generic fallback is withheld beside an `ariaLabelledby`. There it
+   *   would do the opposite of its job — masking a dangling IDREF with a name
+   *   that says nothing, clean to axe and useless to a listener, with no warning
+   *   either because the caller did name it. Unnamed at least still fails loudly.
    */
   resolvedAriaLabel = computed(() => {
-    if ((this.ariaLabelledby() ?? '').trim() !== '') {
-      return null;
+    const label = this.ariaLabel();
+    if ((label ?? '').trim() !== '') {
+      return label;
     }
-    const label = (this.ariaLabel() ?? '').trim();
-    return label !== '' ? this.ariaLabel() : TN_PROGRESS_BAR_DEFAULT_LABEL;
+    return this.hasLabelledby() ? null : TN_PROGRESS_BAR_DEFAULT_LABEL;
   });
 
   constructor() {

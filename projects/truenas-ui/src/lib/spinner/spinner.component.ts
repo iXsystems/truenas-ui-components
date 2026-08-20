@@ -44,25 +44,27 @@ export class TnSpinnerComponent {
   ariaLabel = input<string | null>(null);
   ariaLabelledby = input<string | null>(null);
 
+  private readonly hasLabelledby = computed(() => (this.ariaLabelledby() ?? '').trim() !== '');
+
   /** Whether the caller gave this spinner a name of its own. Blank is not a name. */
   private readonly named = computed(() => {
-    return (this.ariaLabel() ?? '').trim() !== '' || (this.ariaLabelledby() ?? '').trim() !== '';
+    return (this.ariaLabel() ?? '').trim() !== '' || this.hasLabelledby();
   });
 
   /**
-   * The name to render, or `null` to render no `aria-label` attribute.
-   *
-   * Null when `ariaLabelledby` is set, because `aria-labelledby` wins the ARIA
-   * name calculation outright — a fallback emitted alongside it would be a name
-   * that nothing announces, and reads to anyone inspecting the element as one
-   * that is in force when it is not.
+   * The name to render, or `null` to render no `aria-label` attribute. Same two
+   * branches as `TnProgressBarComponent.resolvedAriaLabel`, where the reasoning
+   * is set out: an explicit `ariaLabel` always survives, because
+   * `aria-labelledby` only wins the name calculation while its IDREF resolves;
+   * the generic fallback is withheld beside one, because there it would mask a
+   * dangling IDREF with a name that says nothing.
    */
   resolvedAriaLabel = computed(() => {
-    if ((this.ariaLabelledby() ?? '').trim() !== '') {
-      return null;
+    const label = this.ariaLabel();
+    if ((label ?? '').trim() !== '') {
+      return label;
     }
-    const label = (this.ariaLabel() ?? '').trim();
-    return label !== '' ? this.ariaLabel() : TN_SPINNER_DEFAULT_LABEL;
+    return this.hasLabelledby() ? null : TN_SPINNER_DEFAULT_LABEL;
   });
 
   constructor() {

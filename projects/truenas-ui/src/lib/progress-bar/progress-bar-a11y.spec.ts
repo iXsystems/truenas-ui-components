@@ -176,17 +176,67 @@ describe('tn-progress-bar accessibility (#202)', () => {
     });
 
     /**
-     * `aria-labelledby` wins over `aria-label` in the ARIA name calculation, so
-     * a fallback emitted alongside it would be dead weight that nothing
-     * announces — and reads, to anyone inspecting the element, as a name that is
-     * in force when it is not.
+     * `aria-labelledby` wins over `aria-label` only while its IDREF RESOLVES, so
+     * the generic fallback is withheld beside one — there it would mask a
+     * dangling reference with a name that says nothing — while an explicit
+     * `ariaLabel` is not, because it is the only name left when the reference
+     * does not resolve. These two tests are that pair.
      */
-    it('emits no aria-label at all when ariaLabelledby is set', () => {
+    it('withholds the generic fallback when only ariaLabelledby is set', () => {
       host.ariaLabelledby.set('tn-external-label');
       fixture.detectChanges();
 
       expect(bar().getAttribute('aria-labelledby')).toBe('tn-external-label');
       expect(bar().hasAttribute('aria-label')).toBe(false);
+    });
+
+    it('keeps an explicit ariaLabel alongside ariaLabelledby', () => {
+      host.ariaLabel.set('Copying files');
+      host.ariaLabelledby.set('tn-external-label');
+      fixture.detectChanges();
+
+      expect(bar().getAttribute('aria-labelledby')).toBe('tn-external-label');
+      expect(bar().getAttribute('aria-label')).toBe('Copying files');
+    });
+
+    /**
+     * The regression the pair above exists to prevent, and the reason this is
+     * an axe assertion rather than a DOM one: a dangling IDREF contributes
+     * nothing to the accessible name, so `aria-label` is all that stands
+     * between this bar and the very violation #202 is about.
+     */
+    it('still names the bar when ariaLabelledby points at nothing', async () => {
+      host.ariaLabel.set('Copying files');
+      host.ariaLabelledby.set('tn-no-such-element');
+      fixture.detectChanges();
+
+      const { violated, evaluated } = await axeResult(
+        fixture.nativeElement, bar(), ['aria-progressbar-name']
+      );
+
+      expect(violated).toEqual([]);
+      expect(evaluated).toContain('aria-progressbar-name');
+    });
+
+    /**
+     * The other half of that pair, and the evidence for withholding the generic
+     * fallback beside an `ariaLabelledby`: on its own, a dangling IDREF is still
+     * a violation, so it is reported rather than quietly papered over by a name
+     * that says nothing.
+     *
+     * It is also what stops the test above passing for free. Without it, that
+     * one is equally satisfied by an axe that treats ANY `aria-labelledby` as a
+     * name without resolving it — this is the assertion that shows it resolves.
+     */
+    it('reports a bar whose only name is an ariaLabelledby pointing at nothing', async () => {
+      host.ariaLabelledby.set('tn-no-such-element');
+      fixture.detectChanges();
+
+      const { violated } = await axeResult(
+        fixture.nativeElement, bar(), ['aria-progressbar-name']
+      );
+
+      expect(violated).toEqual(['aria-progressbar-name']);
     });
 
     it('reinstates the fallback if the caller clears ariaLabel again', () => {

@@ -158,17 +158,58 @@ describe('tn-spinner accessibility (#202)', () => {
     });
 
     /**
-     * `aria-labelledby` wins over `aria-label` in the ARIA name calculation, so
-     * a fallback emitted alongside it would be dead weight that nothing
-     * announces — and reads, to anyone inspecting the element, as a name that is
-     * in force when it is not.
+     * `aria-labelledby` wins over `aria-label` only while its IDREF RESOLVES, so
+     * the generic fallback is withheld beside one — there it would mask a
+     * dangling reference with a name that says nothing — while an explicit
+     * `ariaLabel` is not, because it is the only name left when the reference
+     * does not resolve. These three tests are that pair and its regression.
      */
-    it('emits no aria-label at all when ariaLabelledby is set', () => {
+    it('withholds the generic fallback when only ariaLabelledby is set', () => {
       host.ariaLabelledby.set('tn-external-label');
       fixture.detectChanges();
 
       expect(spinner().getAttribute('aria-labelledby')).toBe('tn-external-label');
       expect(spinner().hasAttribute('aria-label')).toBe(false);
+    });
+
+    it('keeps an explicit ariaLabel alongside ariaLabelledby', () => {
+      host.ariaLabel.set('Loading datasets');
+      host.ariaLabelledby.set('tn-external-label');
+      fixture.detectChanges();
+
+      expect(spinner().getAttribute('aria-labelledby')).toBe('tn-external-label');
+      expect(spinner().getAttribute('aria-label')).toBe('Loading datasets');
+    });
+
+    it('still names the spinner when ariaLabelledby points at nothing', async () => {
+      host.ariaLabel.set('Loading datasets');
+      host.ariaLabelledby.set('tn-no-such-element');
+      fixture.detectChanges();
+
+      const { violated, evaluated } = await axeResult(
+        fixture.nativeElement, spinner(), ['aria-progressbar-name']
+      );
+
+      expect(violated).toEqual([]);
+      expect(evaluated).toContain('aria-progressbar-name');
+    });
+
+    /**
+     * The evidence for withholding the generic fallback beside an
+     * `ariaLabelledby` — a dangling IDREF alone is still a violation, so it is
+     * reported rather than papered over — and equally what stops the test above
+     * passing for free, by showing that axe resolves the IDREF rather than
+     * treating any `aria-labelledby` as a name.
+     */
+    it('reports a spinner whose only name is an ariaLabelledby pointing at nothing', async () => {
+      host.ariaLabelledby.set('tn-no-such-element');
+      fixture.detectChanges();
+
+      const { violated } = await axeResult(
+        fixture.nativeElement, spinner(), ['aria-progressbar-name']
+      );
+
+      expect(violated).toEqual(['aria-progressbar-name']);
     });
 
     it('reinstates the fallback if the caller clears ariaLabel again', () => {
