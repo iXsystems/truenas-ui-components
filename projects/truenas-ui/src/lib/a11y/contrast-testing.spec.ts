@@ -333,4 +333,14 @@ describe('themePalettes', () => {
   it('refuses a stylesheet whose braces do not balance, rather than mis-attributing what follows', () => {
     expect(() => themePalettes(':root { --tn-bg1: #ffffff; } }')).toThrow('unbalanced braces');
   });
+
+  it('refuses a block left open too, which is the quieter half of the same fault', () => {
+    // Without the closing brace on `:root`, the next selector is swallowed into
+    // its body and the palette that comes back is called
+    // `--tn-bg1: #ffffff; .tn-dark` — a surface no spec looks for, in a list
+    // that still has the right shape.
+    const unclosed = ':root { --tn-bg1: #ffffff; .tn-dark { --tn-bg1: #000000; }';
+
+    expect(() => themePalettes(unclosed)).toThrow('unbalanced braces');
+  });
 });

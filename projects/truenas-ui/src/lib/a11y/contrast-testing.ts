@@ -341,6 +341,16 @@ function declarationBlocks(css: string): DeclarationBlock[] {
       buffer += character;
     }
   }
+  // A `{` that was never closed is the other half of the same fault, and the
+  // quieter half: the block it opened is never emitted, and the NEXT selector is
+  // swallowed into its body — so `:root {` with its `}` dropped hands back a
+  // palette whose selector is `--tn-bg1: #ffffff; .tn-dark`, matching nothing a
+  // spec looks for while everything downstream still passes.
+  if (open.length > 0) {
+    throw new Error(
+      `themePalettes: unbalanced braces in the CSS given — ${open.length} block(s) left open`
+    );
+  }
   return blocks;
 }
 
