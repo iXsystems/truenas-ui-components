@@ -11,6 +11,25 @@ import { TnToastComponent } from './toast.component';
 import type { TnToastConfig } from './toast.types';
 import { TnToastPosition, TnToastType } from './toast.types';
 
+/**
+ * How long the live region is left attached and empty before the message is
+ * written into it, in milliseconds.
+ *
+ * WHY A TIMER AND NOT THE ANIMATION FRAME THE TRANSITION RIDES
+ * -----------------------------------------------------------
+ * A `requestAnimationFrame` callback runs BEFORE that frame's style, layout and
+ * accessibility-tree update. Attaching the region in one task and populating it
+ * from the next frame's callback therefore commits both mutations in a single
+ * accessibility-tree update — which is the already-populated insertion this
+ * deferral exists to avoid, still there and harder to see. The region needs a
+ * rendering pass of its own, which means yielding past one.
+ *
+ * 100ms is what `@angular/cdk`'s `LiveAnnouncer` waits before writing into its
+ * own region — a dependency of this project already, and the closest thing to a
+ * measured number available.
+ */
+export const TN_TOAST_ANNOUNCE_DELAY_MS = 100;
+
 export class TnToastRef {
   private readonly _onAction = new Subject<void>();
   private readonly _afterDismissed = new Subject<void>();
@@ -53,6 +72,12 @@ export class TnToastService {
 
   /**
    * Opens a toast notification.
+   *
+   * The toast is attached synchronously, but its message and its enter
+   * transition both land `TN_TOAST_ANNOUNCE_DELAY_MS` later — the delay is what
+   * makes the text a *change* to a live region a screen reader is already
+   * watching. A test reading `.tn-toast__message` must let that elapse; one
+   * asserting on the call rather than the DOM should use `TnToastMock`.
    *
    * @param message The message to display.
    * @param actionOrConfig Optional action button text, or config object.
@@ -107,31 +132,55 @@ export class TnToastService {
     ref._componentRef = componentRef;
 
     const instance = componentRef.instance;
-    instance.message.set(message);
     instance.action.set(action ?? null);
     instance.type.set(type);
     instance.position.set(position);
     instance.onAction = () => ref._triggerAction();
     instance.onDismiss = () => ref.dismiss();
 
-    // Attach to DOM
+    // Attach to DOM. `message` is deliberately still empty here: what a screen
+    // reader reports is a CHANGE to a live region's content, so the region has
+    // to be present and empty before the text arrives. Inserting the region
+    // already populated is special-cased for `role="alert"` and announced
+    // reliably, but the `status` regions this component uses for info, success
+    // and warning (#190) are announced unreliably that way, and on several
+    // readers not at all.
     this.appRef.attachView(componentRef.hostView);
     document.body.appendChild(componentRef.location.nativeElement as HTMLElement);
 
-    // Animate in
-    requestAnimationFrame(() => {
-      instance.visible.set(true);
-    });
+    // Render the empty region now rather than waiting for the next scheduled
+    // tick, so the message below is a second mutation whatever schedules it.
+    componentRef.changeDetectorRef.detectChanges();
 
-    // Auto-dismiss
+    // Announce, and animate in — together, and not before. The toast is
+    // `opacity: 0` until `visible`, so holding the enter transition back to the
+    // step that populates the region is also what keeps the empty region above
+    // from ever being seen. The cost is that the toast appears
+    // TN_TOAST_ANNOUNCE_DELAY_MS later than it is attached.
     let timeout: ReturnType<typeof setTimeout> | null = null;
-    if (duration > 0) {
-      timeout = setTimeout(() => ref.dismiss(), duration);
-    }
+    const announce = setTimeout(() => {
+      instance.message.set(message);
+      instance.visible.set(true);
+
+      // The auto-dismiss clock starts here, so `duration` measures time the
+      // toast is ON SCREEN. Started at the call instead, any duration shorter
+      // than the announce delay would dismiss the toast before it was ever
+      // shown — and dismissal cancels the pending announcement, so it would
+      // never appear and never announce either.
+      if (duration > 0) {
+        timeout = setTimeout(() => ref.dismiss(), duration);
+      }
+    }, TN_TOAST_ANNOUNCE_DELAY_MS);
 
     // Cleanup on dismiss
     ref.afterDismissed().subscribe(() => {
       if (timeout) { clearTimeout(timeout); }
+      // Dropping the pending announcement is what keeps the deferral above from
+      // outliving the toast: `open()` twice in one task dismisses the first
+      // synchronously, and a pending timer would then populate a live region
+      // belonging to a toast already on its way out — announcing a message
+      // nobody was shown.
+      clearTimeout(announce);
       instance.visible.set(false);
 
       // Wait for animation to complete before removing
