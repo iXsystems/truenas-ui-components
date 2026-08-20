@@ -106,6 +106,31 @@ describe('tn-chip accessibility (#188)', () => {
       expect(root().getAttribute('role')).toBeNull();
       expect(root().hasAttribute('tabindex')).toBe(false);
     });
+
+    /**
+     * Positive control. Every assertion above is `toEqual([])`, which is also
+     * what axe returns when it evaluates nothing at all — a renamed rule, an
+     * axe upgrade that drops it, a jsdom change that makes the tree invisible
+     * to it. This rebuilds the exact structure the chip had before #188 and
+     * requires axe to still object to it, so the guards above cannot quietly
+     * go vacuous without this failing first.
+     */
+    it('still reports the violation for the structure the chip used to have', async () => {
+      const previous = document.createElement('div');
+      previous.innerHTML =
+        '<div role="button" tabindex="0" aria-label="Has SSH Access">'
+        + '<span>Has SSH Access</span>'
+        + '<button type="button" aria-label="Remove Has SSH Access">x</button>'
+        + '</div>';
+      document.body.appendChild(previous);
+
+      const results = await axe.run(previous, {
+        runOnly: { type: 'rule', values: ['nested-interactive'] },
+      });
+      previous.remove();
+
+      expect(results.violations.map((v) => v.id)).toEqual(['nested-interactive']);
+    });
   });
 
   /**
@@ -236,15 +261,18 @@ describe('tn-chip accessibility (#188)', () => {
 
     it('has no other wrapper padding hiding in a nested block', () => {
       const nestedPadding = block('.tn-chip {')
+        .replace(/\/\/.*$/gm, '') // comments discuss padding; only declarations count
         .split('\n')
-        .filter((line) => /^\s+padding(-\w+)?:/.test(line) && !/padding:\s*0\s*;/.test(line));
+        .map((line) => line.trim())
+        .filter((line) => /^padding(-\w+)?:/.test(line) && !/^padding:\s*0\s*;/.test(line));
 
       // Only the two accounted for above: __body's real padding, and the
-      // closable inset. A third would be a new dead strip.
-      expect(nestedPadding.map((line) => line.trim())).toEqual([
+      // closable inset. A third would be a new dead strip. Sorted, so that
+      // reordering declarations — which changes nothing — does not fail here.
+      expect(nestedPadding.sort()).toEqual([
+        'padding-right: 6px;',
         'padding-right: 8px;',
         'padding: 6px 12px;',
-        'padding-right: 6px;',
       ]);
     });
 
