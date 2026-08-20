@@ -417,6 +417,9 @@ assertive, `status` is polite — and an explicit `aria-live` on the same elemen
 *overrides* it. Setting both is not redundant, it is a contradiction, and it is
 the defect fixed in banner, radio, checkbox and toast (#190, #194). Prefer the
 role and leave `aria-live` off; there is then no second attribute to disagree.
+`table.component.html` still sets both. There they agree — `status` and `polite`
+say the same thing — so it is redundancy rather than a defect, and it has not
+been cleaned up.
 
 **A component whose politeness follows a severity takes it from
 `lib/a11y/live-region.ts`.** `tnLiveRegionRole(severity)` is the single place

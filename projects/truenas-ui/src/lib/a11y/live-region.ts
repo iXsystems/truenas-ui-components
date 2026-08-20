@@ -32,21 +32,22 @@
  * attribute left to disagree with it.
  */
 
-/** The severity levels that map onto a live-region role. */
-export type TnLiveRegionSeverity = 'info' | 'success' | 'warning' | 'error';
-
-/** The severities that interrupt. See the note above for why `warning` is here. */
+/**
+ * The severities that interrupt, out of the four this library uses — `info`,
+ * `success`, `warning`, `error`. See the note above for why `warning` is here.
+ */
 export const TN_ASSERTIVE_SEVERITIES: readonly string[] = ['warning', 'error'];
 
 /**
  * The live-region role a component of this severity should carry — which is
  * also the only thing declaring its politeness.
  *
- * `severity` is typed `string` rather than `TnLiveRegionSeverity` because a
+ * `severity` is typed `string` rather than a union of the four levels because a
  * TypeScript string enum member is not assignable to the literal union it
- * spells, and `TnToastType` is one. Callers pass their own severity type; an
- * unrecognised value resolves to the polite role, which is the safe default —
- * it announces without interrupting.
+ * spells, and `TnToastType` is one — a union here would force every toast call
+ * site through a cast. Callers pass their own severity type, which is where the
+ * spelling is checked; an unrecognised value resolves to the polite role, which
+ * is the safe default because it announces without interrupting.
  */
 export function tnLiveRegionRole(severity: string): 'alert' | 'status' {
   return TN_ASSERTIVE_SEVERITIES.includes(severity) ? 'alert' : 'status';

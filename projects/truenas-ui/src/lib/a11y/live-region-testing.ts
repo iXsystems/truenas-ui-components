@@ -9,8 +9,11 @@
  * way — and four private near-copies of that resolution is the shape that lets
  * one of them quietly drift into being the lenient one.
  *
- * Not exported from `public-api.ts`: this is test-tree code that happens to
- * live beside the production module it guards, the way `icon-testing.ts` does.
+ * Not exported from `public-api.ts`, unlike `icon-testing.ts` and
+ * `toast-testing.ts`, which are. Those exist for consumers testing THEIR code
+ * against this library; these two functions assert an internal contract of this
+ * library's own markup, so exporting them would widen the public surface with
+ * something no consumer has a use for.
  */
 
 /** Politeness each live-region role implies, per ARIA 1.2. */
