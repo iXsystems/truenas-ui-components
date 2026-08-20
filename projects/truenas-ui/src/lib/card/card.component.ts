@@ -87,13 +87,20 @@ export class TnCardComponent {
 
   /**
    * Whether a tooltip message holding a link may be pinned open by clicking its host (see
-   * `tnTooltipSticky`). On by default, like the directive, and applies to the two tooltips whose
-   * host has no other use for the click: the title help button and the footer actions.
+   * `tnTooltipSticky`). On by default, like the directive, and it reaches the title help button
+   * and the footer actions.
    *
-   * The kebab-menu trigger is deliberately not one of them. Its click already opens the menu, so
-   * a pinnable tooltip there would put a panel over the menu from that same click and take the
-   * hint off hover to do it; `headerMenuTriggerTooltip` therefore always hovers, and this flag
-   * does not reach it.
+   * The help button has no other use for the click, so there pinning is all the click does. A
+   * footer action does have one: pinning is additive there, exactly as `tnTooltipSticky` describes
+   * it — one click on a `TnCardAction` whose `tooltip` holds a link both runs `handler()` and pins
+   * the panel. That is fine for a handler that leaves the card in place, and worth a second look
+   * for one that navigates away or closes it, since the panel it pinned goes with the card. Set
+   * this to false for such a card.
+   *
+   * The kebab-menu trigger is deliberately out of scope. Its click already opens the menu, so a
+   * pinnable tooltip there would put a panel over the menu from that same click and take the hint
+   * off hover to do it; `headerMenuTriggerTooltip` therefore always hovers, and this flag does not
+   * reach it.
    *
    * It does not make plain tooltips pinnable — card help and action hints are nearly always plain
    * text, and those keep hovering. Set it to false only to force a message that does hold a link
