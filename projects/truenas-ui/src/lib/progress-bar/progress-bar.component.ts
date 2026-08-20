@@ -1,5 +1,6 @@
 
-import { Component, input, ChangeDetectionStrategy, computed, effect, isDevMode } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy, computed } from '@angular/core';
+import { tnAccessibleName } from '../a11y/accessible-name';
 
 export type ProgressBarMode = 'determinate' | 'indeterminate' | 'buffer';
 
@@ -17,8 +18,8 @@ export type ProgressBarMode = 'determinate' | 'indeterminate' | 'buffer';
  * the value too.
  *
  * A generic name is still a poor one, so it is paired with the dev-mode warning
- * in the constructor. Exported so specs assert against it by name rather than
- * by a copied string literal.
+ * `tnAccessibleName` raises. Exported so specs assert against it by name rather
+ * than by a copied string literal.
  */
 export const TN_PROGRESS_BAR_DEFAULT_LABEL = 'Progress';
 
@@ -49,57 +50,26 @@ export class TnProgressBarComponent {
   ariaLabel = input<string | null>(null);
   ariaLabelledby = input<string | null>(null);
 
-  private readonly hasLabelledby = computed(() => (this.ariaLabelledby() ?? '').trim() !== '');
-
-  /** Whether the caller gave this bar a name of its own. Blank is not a name. */
-  private readonly named = computed(() => {
-    return (this.ariaLabel() ?? '').trim() !== '' || this.hasLabelledby();
-  });
-
   /**
-   * The name to render, or `null` to render no `aria-label` attribute.
+   * The name to render, or `null` to render no `aria-label` attribute — and the
+   * dev-mode warning when the caller named neither input.
    *
-   * `aria-labelledby` wins the ARIA name calculation when it RESOLVES, which is
-   * what makes the two branches below differ:
+   * Both halves live in `../a11y/accessible-name`, shared with `tn-spinner` and
+   * `tn-branded-spinner` (#206), where the reasoning for each is set out: why an
+   * explicit `ariaLabel` always survives, and why the generic fallback is
+   * withheld beside an `ariaLabelledby`.
    *
-   * - An explicit `ariaLabel` is always emitted, `ariaLabelledby` or not.
-   *   Suppressing it would be safe only while the IDREF resolves; against a typo
-   *   or an element that has not rendered yet it would leave the bar unnamed in
-   *   precisely the case where the caller supplied a name.
-   * - The generic fallback is withheld beside an `ariaLabelledby`. There it
-   *   would do the opposite of its job — masking a dangling IDREF with a name
-   *   that says nothing, clean to axe and useless to a listener, with no warning
-   *   either because the caller did name it. Unnamed at least still fails loudly.
+   * A field initializer rather than the constructor, because it registers an
+   * `effect` and so needs an injection context; this is one, and it keeps the
+   * signal beside the inputs it reads.
    */
-  resolvedAriaLabel = computed(() => {
-    const label = this.ariaLabel();
-    if ((label ?? '').trim() !== '') {
-      return label;
-    }
-    return this.hasLabelledby() ? null : TN_PROGRESS_BAR_DEFAULT_LABEL;
+  resolvedAriaLabel = tnAccessibleName({
+    selector: 'tn-progress-bar',
+    fallback: TN_PROGRESS_BAR_DEFAULT_LABEL,
+    activity: 'progressing',
+    ariaLabel: this.ariaLabel,
+    ariaLabelledby: this.ariaLabelledby
   });
-
-  constructor() {
-    // The fallback keeps a forgotten label from reaching assistive technology
-    // as silence; this keeps it from reaching the developer as silence. Without
-    // it the fix would satisfy axe while removing the only remaining signal
-    // that the label was missing.
-    //
-    // An effect rather than a lifecycle hook, so a bar that is named later
-    // stops warning — and, because it re-runs only when the two inputs change,
-    // a bar that stays unnamed warns once rather than once per animation frame.
-    if (isDevMode()) {
-      effect(() => {
-        if (!this.named()) {
-          console.warn(
-            `[tn-progress-bar] No ariaLabel or ariaLabelledby was set, so it falls back to `
-            + `"${TN_PROGRESS_BAR_DEFAULT_LABEL}". Assistive technology cannot say WHAT is `
-            + `progressing — pass ariaLabel, or ariaLabelledby pointing at visible text.`
-          );
-        }
-      });
-    }
-  }
 
   /**
    * Gets the transform value for the primary progress bar

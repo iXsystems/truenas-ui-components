@@ -50,8 +50,9 @@ export const Indeterminate: Story = {
 
 // Branded Spinner Stories
 export const Branded = {
-  render: (args: { ariaLabel: string }) => ({
-    template: `<tn-branded-spinner [ariaLabel]="ariaLabel"></tn-branded-spinner>`,
+  render: (args: { ariaLabel: string; ariaLabelledby: string | null }) => ({
+    template: `<tn-branded-spinner [ariaLabel]="ariaLabel"
+      [ariaLabelledby]="ariaLabelledby"></tn-branded-spinner>`,
     props: args,
     moduleMetadata: {
       imports: [TnBrandedSpinnerComponent],
@@ -59,10 +60,16 @@ export const Branded = {
   }),
   args: {
     ariaLabel: 'Loading system...',
+    ariaLabelledby: null,
   },
   argTypes: {
-    // Only show controls relevant to branded spinner
+    // Only show controls relevant to branded spinner. `ariaLabelledby` joined
+    // them in #206, when this spinner gained the input the other two already
+    // had — it was hidden below, as a control that did not apply.
     ariaLabel: {
+      control: 'text',
+    },
+    ariaLabelledby: {
       control: 'text',
     },
     // Hide controls that don't apply to branded spinner
@@ -70,7 +77,6 @@ export const Branded = {
     value: { table: { disable: true } },
     diameter: { table: { disable: true } },
     strokeWidth: { table: { disable: true } },
-    ariaLabelledby: { table: { disable: true } },
   },
 };
 
