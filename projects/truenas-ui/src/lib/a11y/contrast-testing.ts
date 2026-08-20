@@ -74,12 +74,16 @@ interface Rgba {
 /**
  * Does `ratio` clear the AA minimum for text of this size?
  *
- * Takes a ratio rather than two colours so that a spec reports the measurement
- * it asserts on — `expect(ratio).toBeGreaterThanOrEqual(AA_MINIMUM.normal)` in a
- * titled case says which number failed, where a boolean says only "false".
+ * Takes a ratio rather than two colours so the measurement can be made once and
+ * then both asserted on and reported — `formatRatio` it into the case title, and
+ * the failure names the colour and the number as well as the theme.
  *
- * The comparison is on the unrounded ratio. A pair measuring 4.4999 does not
- * clear AA, however it prints.
+ * That is worth knowing when choosing between this and `AA_MINIMUM` directly:
+ * `expect(meetsAa(ratio, 'normal')).toBe(true)` fails with "expected true", so
+ * the number has to be in the title, while
+ * `expect(ratio).toBeGreaterThanOrEqual(AA_MINIMUM.normal)` puts it in the
+ * failure output instead. Both compare the same unrounded value; a pair
+ * measuring 4.4999 does not clear AA, however it prints.
  */
 export function meetsAa(ratio: number, size: TextSize): boolean {
   // 1:1 is identical colours and 21:1 is black on white; nothing real lands
@@ -182,32 +186,31 @@ export interface ThemePalette {
 export function themePalettes(css: string): ThemePalette[] {
   const declarations = new Map<string, Map<string, string>>();
   const order: string[] = [];
-  // Comments go first, for two reasons. `themes.css` records measured ratios
-  // next to the tokens they are about, so `/* --tn-red is only 3.15:1 */` would
-  // otherwise read as a declaration; and every theme block is introduced by a
-  // banner comment, which would otherwise be captured as part of its selector.
-  const withoutComments = css.replace(/\/\*[\s\S]*?\*\//g, '');
-  // Braces do not nest inside a declaration block, so `[^{}]*` is enough to find
-  // one. A block inside `@media` is still found, because the scan simply resumes
-  // past the `{` it could not match across — what is lost is the media query it
-  // was nested in, and a palette that only applies at one viewport width is not
-  // a thing this stylesheet has.
-  const blockPattern = /([^{}]+?)\s*\{([^{}]*)\}/g;
-  let match: RegExpExecArray | null;
-  while ((match = blockPattern.exec(withoutComments)) !== null) {
-    const [, rawSelector, body] = match;
-    const properties = customProperties(body);
+  for (const block of declarationBlocks(css)) {
+    const properties = customProperties(block.body);
     if (!properties.has('--tn-bg1')) {
       continue;
     }
-    const selector = rawSelector.trim();
-    if (!declarations.has(selector)) {
-      declarations.set(selector, new Map());
-      order.push(selector);
+    // A palette that only applies under a condition is not one this can measure:
+    // merged into the unconditional palette of the same selector it reports
+    // colours that render together at no viewport width, and kept apart it is a
+    // surface whose applicability only a browser can decide. Neither is worth
+    // guessing at silently, so it says so.
+    if (block.nestedIn !== null) {
+      throw new Error(
+        `themePalettes: the palette at ${block.selector} is nested inside ${block.nestedIn}. `
+        + 'A palette that applies only under a condition renders differently from the '
+        + 'unconditional one, and measuring the two as if they were one surface reports '
+        + 'colours that never appear together.'
+      );
+    }
+    if (!declarations.has(block.selector)) {
+      declarations.set(block.selector, new Map());
+      order.push(block.selector);
     }
     // Later declarations win, as they do in the cascade, so a palette split
     // across two blocks reads the way the browser reads it.
-    const merged = declarations.get(selector) as Map<string, string>;
+    const merged = declarations.get(block.selector) as Map<string, string>;
     properties.forEach((value, name) => merged.set(name, value));
   }
 
@@ -269,20 +272,76 @@ function palette(
     return resolve(token, chain);
   }
 
+  function color(token: string): string {
+    const value = resolve(token, []);
+    // Resolved, but resolved to what? Reaching the maths with a font stack or a
+    // length gives `NaN`, and a `NaN` ratio fails an AA assertion for a reason
+    // that has nothing to do with contrast. The context is the selector and the
+    // token, because `"IBM Plex Sans", sans-serif is not a colour` on its own
+    // does not say which of them named it.
+    parseColor(value, `${selector} ${token}`);
+    return value;
+  }
+
   return {
     selector,
     declares: (token) => own.has(token),
-    color: (token) => {
-      const value = resolve(token, []);
-      // Resolved, but resolved to what? Reaching the maths with a font stack or
-      // a length gives `NaN`, and a `NaN` ratio fails an AA assertion for a
-      // reason that has nothing to do with contrast.
-      parseColor(value, `${selector} ${token}`);
-      return value;
-    },
-    contrast: (token, surfaceToken) =>
-      contrastRatio(resolve(token, []), resolve(surfaceToken, [])),
+    color,
+    // Through `color` rather than `resolve`, so that a token resolving to a
+    // non-colour is reported the same way here as it is there.
+    contrast: (token, surfaceToken) => contrastRatio(color(token), color(surfaceToken)),
   };
+}
+
+/** One `selector { … }` block, and the at-rule it sits inside if it sits in one. */
+interface DeclarationBlock {
+  selector: string;
+  body: string;
+  /** The at-rule prelude — `@media (min-width: 768px)` — or `null` at top level. */
+  nestedIn: string | null;
+}
+
+/**
+ * Every declaration block in `css`, with its nesting recorded.
+ *
+ * A brace walk rather than a regex, because the nesting is the point: a regex
+ * for `selector { no braces here }` finds a block inside `@media` perfectly well
+ * and cannot tell you it was in one, which is how a conditional palette would
+ * come to be merged into the unconditional palette of the same selector.
+ *
+ * Comments go first, for two reasons. `themes.css` records measured ratios next
+ * to the tokens they are about, so `/* --tn-red is only 3.15:1 *\/` would
+ * otherwise read as a declaration; and every theme block is introduced by a
+ * banner comment, which would otherwise be captured as part of its selector.
+ */
+function declarationBlocks(css: string): DeclarationBlock[] {
+  const blocks: DeclarationBlock[] = [];
+  const open: string[] = [];
+  let buffer = '';
+  for (const character of css.replace(/\/\*[\s\S]*?\*\//g, '')) {
+    if (character === '{') {
+      open.push(buffer.trim());
+      buffer = '';
+    } else if (character === '}') {
+      const prelude = open.pop();
+      // A `}` with nothing open is a stylesheet this cannot read. Continuing
+      // would silently attribute everything after it to the wrong nesting.
+      if (prelude === undefined) {
+        throw new Error('themePalettes: unbalanced braces in the CSS given');
+      }
+      if (!prelude.startsWith('@')) {
+        blocks.push({
+          selector: prelude,
+          body: buffer,
+          nestedIn: open.find((enclosing) => enclosing.startsWith('@')) ?? null,
+        });
+      }
+      buffer = '';
+    } else {
+      buffer += character;
+    }
+  }
+  return blocks;
 }
 
 /** The custom properties a declaration block sets. Comments are already gone. */

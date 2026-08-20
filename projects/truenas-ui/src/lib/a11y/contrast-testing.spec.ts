@@ -281,9 +281,14 @@ describe('themePalettes', () => {
       .toThrow('does not declare --tn-invented');
   });
 
-  it('refuses a token that resolves to something that is not a colour', () => {
+  it('refuses a token that resolves to something that is not a colour, and names it', () => {
     expect(() => bySelector(':root').color('--tn-font-family-body'))
-      .toThrow('not a colour this can read');
+      .toThrow(':root --tn-font-family-body');
+    // Through contrast() too: the message is the same one, because a font stack
+    // reaching the maths is the same mistake whichever entry point it came in
+    // by, and "not a colour" without the token name does not say which.
+    expect(() => bySelector(':root').contrast('--tn-font-family-body', '--tn-bg1'))
+      .toThrow(':root --tn-font-family-body');
   });
 
   it('refuses a var() chain that loops, rather than following it forever', () => {
@@ -303,5 +308,29 @@ describe('themePalettes', () => {
    */
   it('refuses to return no palettes at all', () => {
     expect(() => themePalettes('.tn-button { color: red; }')).toThrow('no themed surface found');
+  });
+
+  /**
+   * The fixture's `@media` block declares a token that is not a colour, so it is
+   * skipped for being no palette rather than for being conditional. A
+   * conditional block that IS a palette is the case that matters: merged into
+   * the unconditional `:root` by selector — which is what a scan that cannot see
+   * nesting does — it wins, and every spec downstream measures a surface that
+   * renders at one viewport width against tokens that render at another.
+   */
+  it('refuses a palette nested inside an at-rule, rather than merging it into the unconditional one', () => {
+    const conditional = `
+      :root { --tn-bg1: #ffffff; --tn-fg1: #767676; }
+      @media (prefers-contrast: more) {
+        :root { --tn-bg1: #000000; --tn-fg1: #ffffff; }
+      }
+    `;
+
+    expect(() => themePalettes(conditional))
+      .toThrow('nested inside @media (prefers-contrast: more)');
+  });
+
+  it('refuses a stylesheet whose braces do not balance, rather than mis-attributing what follows', () => {
+    expect(() => themePalettes(':root { --tn-bg1: #ffffff; } }')).toThrow('unbalanced braces');
   });
 });
