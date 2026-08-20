@@ -162,7 +162,7 @@ Status colors are tuned for the 3:1 UI-component/border minimum (WCAG 1.4.11), n
 
 - `--tn-error-text`: Error/validation text, 4.5:1 against `--tn-bg1` and `--tn-bg2` in every theme
 
-A custom theme that omits `--tn-error-text` falls back to `--tn-red`, which is not guaranteed to clear 4.5:1 for text.
+A custom theme must define `--tn-error-text` explicitly — omitting it does not fall back to that theme's own `--tn-red`. `:root` always defines `--tn-error-text` (see below), and that declaration wins the cascade for any element that also matches `:root`, which every theme class here does. The error text then silently renders in the default theme's color instead, which is not guaranteed to be accessible against the new theme's palette.
 
 ---
 

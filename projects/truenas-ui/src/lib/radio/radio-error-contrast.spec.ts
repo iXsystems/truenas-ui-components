@@ -137,9 +137,13 @@ describe('tn-radio error text contrast (#186)', () => {
 
   it('the SCSS fallback chains through --tn-red before a literal, and the literal is accessible where it is actually reachable', () => {
     const scss = readFileSync(RADIO_SCSS_PATH, 'utf8');
-    // A theme that predates --tn-error-text may still define --tn-red, so the
-    // chain must try that before a hardcoded literal — otherwise a theme
-    // author's own tuning is silently discarded.
+    // A consumer stylesheet that predates --tn-error-text entirely (no :root
+    // rule declaring it) may still define --tn-red, so the chain tries that
+    // before a hardcoded literal — otherwise that stylesheet's own tuning is
+    // silently discarded. This does not help a theme added within this
+    // repo's own themes.css: :root already declares --tn-error-text there,
+    // and wins the cascade regardless of what the new theme's own class
+    // declares, so such a theme must set --tn-error-text itself.
     const chainMatch = /--tn-error-text,\s*var\(--tn-red,\s*(#[0-9a-fA-F]{3,6})\)\)/.exec(scss);
     expect(chainMatch).not.toBeNull();
     const literal = chainMatch![1];

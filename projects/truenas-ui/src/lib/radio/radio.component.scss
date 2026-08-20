@@ -83,15 +83,22 @@
     // most themes but not all — themes.css:365 documents .tn-high-contrast at
     // 2.94:1, a pre-existing gap this ticket doesn't touch. Either way it
     // doesn't meet the 4.5:1 text minimum (WCAG 1.4.3) this line needs, which
-    // is why a separate token exists. A theme that predates --tn-error-text
-    // still defines --tn-red — it's used throughout this library — so the
-    // fallback chain tries that before a hardcoded literal, rather than
-    // discarding a theme author's own tuning. Only a stylesheet that defines
-    // neither token reaches the literal, and that means no theme loaded at
-    // all — the UA default, white. #b91c1c clears 4.5:1 there (6.47:1); no
-    // single color also clears 4.5:1 against an arbitrary dark surface (that
-    // pair of thresholds is mutually unsatisfiable), so this only optimizes
-    // for the surface actually reachable at that point in the chain.
+    // is why a separate token exists. The --tn-red middle link is NOT reached
+    // by a theme added to this file: :root already declares --tn-error-text,
+    // and that declaration wins the cascade for any element that also
+    // matches :root — which every theme class here does, since themes are
+    // applied as a class on the root element — regardless of whether the new
+    // theme's own class declares --tn-error-text. A theme added here must set
+    // --tn-error-text itself; it cannot rely on this fallback. The middle
+    // link exists for a consumer whose entire stylesheet predates this token
+    // — one that defines neither --tn-error-text nor the :root rule that
+    // declares it — where it preserves that stylesheet's own --tn-red rather
+    // than jumping straight to the literal. Only a stylesheet that defines
+    // neither token reaches the literal, meaning no theme loaded at all — the
+    // UA default, white. #b91c1c clears 4.5:1 there (6.47:1); no single color
+    // also clears 4.5:1 against an arbitrary dark surface (that pair of
+    // thresholds is mutually unsatisfiable), so this only optimizes for the
+    // surface actually reachable at that point in the chain.
     color: var(--tn-error-text, var(--tn-red, #b91c1c));
   }
   
