@@ -350,6 +350,19 @@ describe('themePalettes', () => {
     expect(() => themePalettes(doublyNested)).toThrow('@media (prefers-contrast: more)');
   });
 
+  it('refuses a palette nested inside a plain selector too, not only inside an at-rule', () => {
+    // CSS nesting reaches the same end by a different route: `:root` inside
+    // `.tn-theme-host` applies only in that subtree, and merged by selector into
+    // the top-level `:root` it reports a background that renders on one surface
+    // against a foreground that renders on another.
+    const nestedPalette = `
+      :root { --tn-bg1: #ffffff; }
+      .tn-theme-host { :root { --tn-bg1: #000000; } }
+    `;
+
+    expect(() => themePalettes(nestedPalette)).toThrow('nested inside .tn-theme-host');
+  });
+
   it('keeps the declarations that come before a nested rule, rather than losing the palette', () => {
     // Native CSS nesting inside a palette block. With one shared buffer, the
     // `{` of the nested rule discards everything above it: `--tn-bg1` goes, the

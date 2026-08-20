@@ -116,9 +116,16 @@ export function formatRatio(ratio: number): string {
 /**
  * The WCAG 2.1 contrast ratio between two CSS colours, from 1 to 21.
  *
- * Accepts hex (3, 4, 6 or 8 digits) and `rgb()`/`rgba()`, in comma or
- * space-with-slash form. Anything else — a named colour, `hsl()`, `color-mix()`
- * — throws rather than being guessed at.
+ * Accepts hex (3, 4, 6 or 8 digits) and `rgb()`/`rgba()`. Any colour function
+ * this cannot read — a named colour, `hsl()`, `color-mix()` — throws rather than
+ * being guessed at.
+ *
+ * Within `rgb()` the separators are read leniently: commas, whitespace and the
+ * slash are interchangeable, so the legacy and modern forms both work and so
+ * does a mixture of them that CSS itself would reject. The input here is a
+ * stylesheet the browser has already accepted, so a separator this is lenient
+ * about is not a way to get a wrong number — being wrong about the components
+ * is, and every one of those throws.
  *
  * The order of the arguments matters only for alpha: a translucent
  * `foreground` is composited over `background` first, because that is the colour
@@ -191,23 +198,23 @@ export function themePalettes(css: string): ThemePalette[] {
     if (!properties.has('--tn-bg1')) {
       continue;
     }
-    // A palette that only applies under a condition is not one this can measure:
-    // merged into the unconditional palette of the same selector it reports
-    // colours that render together at no viewport width, and kept apart it is a
+    // A palette that applies only inside something else is not one this can
+    // measure: merged into the unconditional palette of the same selector it
+    // reports colours that render together nowhere, and kept apart it is a
     // surface whose applicability only a browser can decide. Neither is worth
     // guessing at silently, so it says so.
     //
-    // The narrow reading is deliberate: this fires on a conditional *palette*.
-    // An at-rule that overrides one token without declaring `--tn-bg1` is not a
+    // The narrow reading is deliberate: this fires on a nested *palette*. A
+    // block that overrides one token without declaring `--tn-bg1` is not a
     // surface, so it is skipped like any other non-palette block — and a spec
-    // measuring that token gets the unconditional value, which is the answer for
-    // every condition but one.
+    // measuring that token gets the unconditional value, which is what renders
+    // everywhere but there.
     if (block.nestedIn !== null) {
       throw new Error(
         `themePalettes: the palette at ${block.selector} is nested inside ${block.nestedIn}. `
-        + 'A palette that applies only under a condition renders differently from the '
-        + 'unconditional one, and measuring the two as if they were one surface reports '
-        + 'colours that never appear together.'
+        + 'A palette that applies only there renders on a different surface from the '
+        + 'unconditional one, and measuring the two as if they were one reports colours '
+        + 'that never appear together.'
       );
     }
     if (!declarations.has(block.selector)) {
@@ -250,7 +257,11 @@ function palette(
     const value = declared(token);
     if (value === undefined) {
       throw new Error(
-        `themePalettes: ${selector} does not declare ${token}, and neither does :root`
+        `themePalettes: ${selector} does not declare ${token}`
+        // Saying "and neither does :root" on the `:root` palette itself reads as
+        // a bug in the message, which is a poor advertisement for the rest of
+        // what this module says.
+        + (own === root ? '' : ', and neither does :root')
       );
     }
     return resolveValue(value, [...chain, token]);
@@ -299,11 +310,18 @@ function palette(
   };
 }
 
-/** One `selector { … }` block, and the at-rule it sits inside if it sits in one. */
+/** One `selector { … }` block, and whatever it sits inside if it sits in anything. */
 interface DeclarationBlock {
   selector: string;
   body: string;
-  /** The at-rule prelude — `@media (min-width: 768px)` — or `null` at top level. */
+  /**
+   * The prelude of the innermost enclosing block — `@media (min-width: 768px)`,
+   * or a selector when CSS nesting puts one rule inside another — or `null` at
+   * top level. Any enclosure at all, because a palette inside a selector applies
+   * only within that subtree exactly as one inside `@media` applies only under
+   * that condition, and neither is the surface an unconditional palette of the
+   * same name describes.
+   */
   nestedIn: string | null;
 }
 
@@ -355,10 +373,10 @@ function declarationBlocks(css: string): DeclarationBlock[] {
         blocks.push({
           selector: closing.prelude,
           body: closing.body,
-          // The innermost at-rule, not the outermost: `@media` inside
+          // The innermost enclosure, not the outermost: `@media` inside
           // `@supports` is scoped by the `@media`, and naming the outer one in
           // the refusal would send a reader to the wrong line.
-          nestedIn: [...open].reverse().find((block) => block.prelude.startsWith('@'))?.prelude ?? null,
+          nestedIn: open[open.length - 1]?.prelude ?? null,
         });
       }
     } else {
