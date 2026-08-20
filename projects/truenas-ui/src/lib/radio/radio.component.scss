@@ -79,29 +79,16 @@
   &__error {
     margin-top: 0.25rem;
     font-size: 12px;
-    // --tn-red is tuned toward the 3:1 border/icon minimum (WCAG 1.4.11) in
-    // most themes but not all — themes.css's .tn-high-contrast block
-    // documents it at 2.94:1, a pre-existing gap this ticket doesn't touch.
-    // Either way it doesn't meet the 4.5:1 text minimum (WCAG 1.4.3) this
-    // line needs, which is why a separate token exists. The --tn-red middle
-    // link is NOT reached by a theme added to this file: :root already
-    // declares --tn-error-text, and a theme class is applied to the same
-    // root element (themes are applied as a class on
-    // document.documentElement) with the same specificity as :root, so a
-    // theme class that itself declares --tn-error-text wins by source order
-    // — but a theme class that omits the property declares nothing to
-    // compete with :root, so :root's declaration is what applies. A theme
-    // added here must set --tn-error-text itself; it cannot rely on this
-    // fallback. The middle link exists for a consumer whose entire
-    // stylesheet predates this token — one that defines neither
-    // --tn-error-text nor the :root rule that declares it — where it
-    // preserves that stylesheet's own --tn-red rather than jumping straight
-    // to the literal. Only a stylesheet that defines neither token reaches
-    // the literal, meaning no theme loaded at all — the UA default, white.
-    // #b91c1c clears 4.5:1 there (6.47:1); no single color also clears
-    // 4.5:1 against an arbitrary dark surface (that pair of thresholds is
-    // mutually unsatisfiable), so this only optimizes for the surface
-    // actually reachable at that point in the chain.
+    // Text needs 4.5:1 (WCAG 1.4.3). --tn-red is tuned toward the 3:1
+    // border/icon minimum (WCAG 1.4.11) — themes.css's .tn-high-contrast
+    // block documents even that at 2.94:1, a pre-existing gap this ticket
+    // does not touch — and it falls short of 4.5:1 in seven of the nine
+    // themes, so error text reads --tn-error-text instead. A theme must
+    // declare that token itself: :root always does, so a theme omitting it
+    // inherits the default red rather than reaching the --tn-red arm below.
+    // See theming.mdx for the cascade reasoning. That arm is for a consumer
+    // stylesheet predating the token entirely; the literal only for no theme
+    // stylesheet at all (UA white, where #b91c1c measures 6.47:1).
     color: var(--tn-error-text, var(--tn-red, #b91c1c));
   }
   
