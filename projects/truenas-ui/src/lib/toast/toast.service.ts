@@ -156,19 +156,21 @@ export class TnToastService {
     // `opacity: 0` until `visible`, so holding the enter transition back to the
     // step that populates the region is also what keeps the empty region above
     // from ever being seen. The cost is that the toast appears
-    // TN_TOAST_ANNOUNCE_DELAY_MS later than it is attached; `duration` still
-    // runs from the call, so a default toast is shown for 3900ms rather than
-    // 4000ms.
+    // TN_TOAST_ANNOUNCE_DELAY_MS later than it is attached.
+    let timeout: ReturnType<typeof setTimeout> | null = null;
     const announce = setTimeout(() => {
       instance.message.set(message);
       instance.visible.set(true);
-    }, TN_TOAST_ANNOUNCE_DELAY_MS);
 
-    // Auto-dismiss
-    let timeout: ReturnType<typeof setTimeout> | null = null;
-    if (duration > 0) {
-      timeout = setTimeout(() => ref.dismiss(), duration);
-    }
+      // The auto-dismiss clock starts here, so `duration` measures time the
+      // toast is ON SCREEN. Started at the call instead, any duration shorter
+      // than the announce delay would dismiss the toast before it was ever
+      // shown — and dismissal cancels the pending announcement, so it would
+      // never appear and never announce either.
+      if (duration > 0) {
+        timeout = setTimeout(() => ref.dismiss(), duration);
+      }
+    }, TN_TOAST_ANNOUNCE_DELAY_MS);
 
     // Cleanup on dismiss
     ref.afterDismissed().subscribe(() => {

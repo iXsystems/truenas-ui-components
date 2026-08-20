@@ -246,12 +246,18 @@ describe('tn-toast live-region timing (#195)', () => {
    *
    * Read from `document` rather than a fixture because when the element gets
    * there, and in what state, is the whole subject.
+   *
+   * `index` is which region, in document order. A dismissed toast stays
+   * attached for the 200ms of its exit, so "the toast" is not always the only
+   * one present and defaulting to the first would quietly read the wrong
+   * element in any test that opens two.
    */
-  function renderedRegion(): HTMLElement {
-    const el = document.querySelector('.tn-toast');
-    expect(el).not.toBeNull();
-    expect((el as HTMLElement).getAttribute('role')).not.toBeNull();
-    return el as HTMLElement;
+  function renderedRegion(index = 0): HTMLElement {
+    const regions = document.querySelectorAll('.tn-toast');
+    expect(regions.length).toBeGreaterThan(index);
+    const el = regions[index] as HTMLElement;
+    expect(el.getAttribute('role')).not.toBeNull();
+    return el;
   }
 
   /** The message text a screen reader would announce out of `el`. */
@@ -333,13 +339,13 @@ describe('tn-toast live-region timing (#195)', () => {
 
       announceStep();
 
-      const regions = document.querySelectorAll('.tn-toast');
-      expect(regions).toHaveLength(2);
+      expect(document.querySelectorAll('.tn-toast')).toHaveLength(2);
       // The first is still attached — it is removed 200ms later — so a reader
       // is still watching it. Populating it now would announce a message the
       // user was never shown.
+      expect(renderedRegion(0)).toBe(first);
       expect(messageOf(first)).toBe('');
-      expect(messageOf(regions[1] as HTMLElement)).toBe('Second');
+      expect(messageOf(renderedRegion(1))).toBe('Second');
 
       tick(200);
     }));
