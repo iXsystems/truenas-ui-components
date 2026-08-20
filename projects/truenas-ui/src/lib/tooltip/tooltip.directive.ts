@@ -245,10 +245,12 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
 
     const host = this._elementRef.nativeElement as HTMLElement;
     if (typeof MutationObserver !== 'undefined') {
-      // Two things move underneath this. The inner control can render after view init (@if
+      // Three things move underneath this. The inner control can render after view init (@if
       // branches inside the wrapper swapping, deferred content), and `disabled` can be toggled
       // on it at any time — which decides whether the pinning click can arrive at all, and so
-      // whether the host advertises itself as a disclosure control.
+      // whether the host advertises itself as a disclosure control. `tabindex` reads the same
+      // way, through `_isHostKeyboardOperable` and through `_ariaTarget`'s `INTERACTIVE_SELECTOR`
+      // match: a control that leaves the tab order stops being one the click can operate.
       //
       // The disclosure attributes are watched as well, but for a different reason: to notice the
       // host writing one of them itself. See `_absorbPopupStateRecords`, which also keeps our own
@@ -263,7 +265,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
         childList: true,
         subtree: true,
         attributes: true,
-        attributeFilter: ['disabled', 'aria-disabled', ...POPUP_STATE_ATTRIBUTES],
+        attributeFilter: ['disabled', 'aria-disabled', 'tabindex', ...POPUP_STATE_ATTRIBUTES],
       });
     }
 

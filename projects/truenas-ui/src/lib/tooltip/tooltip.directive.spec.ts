@@ -28,6 +28,7 @@ import { TnButtonComponent } from '../button/button.component';
       }
     </div>
     <button type="button" id="side" tnTooltip="Plain help text" tnTooltipPosition="right">side host</button>
+    <button type="button" id="collapsible" [attr.tabindex]="hostTabindex()" [tnTooltip]="message()">collapsible host</button>
     <button type="button" id="native-disabled" disabled [tnTooltip]="message()">disabled host</button>
     <div id="wrapper-disabled" [tnTooltip]="message()"><button type="button" disabled>inner</button></div>
     <span id="span-host" [tnTooltip]="message()">span host</span>
@@ -51,6 +52,10 @@ class HostComponent {
   // `aria-expanded` over for itself.
   swappedToButton = signal(false);
   swappedExpanded = signal<string | null>(null);
+  // A control that takes itself out of the tab order while collapsed - a rail button in a
+  // collapsed sidebar is this shape - which is the difference between a click it can be operated
+  // by and one it cannot.
+  hostTabindex = signal<string | null>(null);
   closeLabel = signal('Close tooltip');
 }
 
@@ -541,6 +546,64 @@ describe('TnTooltipDirective sticky mode', () => {
         expect(roleHost().hasAttribute('aria-expanded')).toBe(false);
         expect(roleHost().hasAttribute('aria-haspopup')).toBe(false);
       });
+    });
+  });
+
+  // `tabindex` is read straight off the DOM by `_isHostKeyboardOperable`, so a host that flips it
+  // after view init changes which interaction it supports without any input changing. Nothing but
+  // the host observer can notice that - and the disclosure attributes it wrote are still sitting
+  // there, promising a dialog the click no longer opens.
+  describe('a control host that leaves the tab order after view init', () => {
+    const collapsibleHost = () => fixture.nativeElement.querySelector('#collapsible') as HTMLElement;
+
+    /** The observer's callback is a microtask outside Zone's queue, so `tick()` never reaches it. */
+    async function settleObserver(): Promise<void> {
+      await new Promise((resolve) => setTimeout(resolve));
+      fixture.detectChanges();
+    }
+
+    function clickHost(): void {
+      collapsibleHost().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+    }
+
+    it('advertises the disclosure while it is still operable', () => {
+      expect(collapsibleHost().getAttribute('aria-expanded')).toBe('false');
+      expect(collapsibleHost().getAttribute('aria-haspopup')).toBe('dialog');
+    });
+
+    it('drops the disclosure state and goes back to hover once tabindex="-1" lands', async () => {
+      fixture.componentInstance.hostTabindex.set('-1');
+      fixture.detectChanges();
+      await settleObserver();
+
+      expect(collapsibleHost().hasAttribute('aria-expanded')).toBe(false);
+      expect(collapsibleHost().hasAttribute('aria-haspopup')).toBe(false);
+
+      clickHost();
+      await settleObserver();
+      expect(tooltipPanel()).toBeNull();
+
+      collapsibleHost().dispatchEvent(new MouseEvent('mouseenter'));
+      await settleObserver();
+      expect(tooltipPanel()).not.toBeNull();
+      expect(closeButton()).toBeNull();
+    });
+
+    it('picks the disclosure back up when the host rejoins the tab order', async () => {
+      fixture.componentInstance.hostTabindex.set('-1');
+      fixture.detectChanges();
+      await settleObserver();
+
+      fixture.componentInstance.hostTabindex.set(null);
+      fixture.detectChanges();
+      await settleObserver();
+
+      expect(collapsibleHost().getAttribute('aria-expanded')).toBe('false');
+      expect(collapsibleHost().getAttribute('aria-haspopup')).toBe('dialog');
+
+      clickHost();
+      await settleObserver();
+      expect(closeButton()).not.toBeNull();
     });
   });
 
