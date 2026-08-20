@@ -158,7 +158,7 @@ describe('tn-chip accessibility (#188)', () => {
       document.body.appendChild(previous);
 
       const { violated } = await axeResult(
-        previous, previous.firstElementChild as HTMLElement, ['nested-interactive']
+        previous, previous.querySelector('[role="button"]'), ['nested-interactive']
       );
       previous.remove();
 
@@ -171,25 +171,27 @@ describe('tn-chip accessibility (#188)', () => {
    * `aria-disabled` on a roleless element is an `aria-allowed-attr` violation,
    * which would trade #188 for a different finding of the same severity.
    *
-   * No `evaluated` assertion here, deliberately. The regression this guards
-   * would land on the WRAPPER, and the wrapper has no `aria-*` attribute for
-   * `aria-allowed-attr` to match — so the rule is not evaluated on it, and
-   * requiring it to be would fail on correct markup. Asserting `evaluated`
-   * across the three targets would pass on the body's and close button's
-   * `aria-label` instead, which is the vacuous guard `../a11y/axe-testing`
-   * exists to stop: green, and not about the element in question. What keeps
-   * this honest is the positive control above, which proves axe is running.
+   * `evaluated` names `nested-interactive` only, and deliberately not the two
+   * `aria-*` rules. The regression THOSE guard would land on the wrapper, and
+   * the wrapper has no `aria-*` attribute for `aria-allowed-attr` to match — so
+   * they are not evaluated on it, and requiring them to be would fail on
+   * correct markup. Naming them here would instead be satisfied by the body's
+   * and close button's `aria-label`: green, and not about the element in
+   * question, which is the vacuous guard `../a11y/axe-testing` exists to stop.
+   * What keeps that half honest is the positive control above, which proves axe
+   * is running at all.
    */
   it('raises no ARIA violation when disabled', async () => {
     host.disabled.set(true);
     fixture.detectChanges();
 
-    const { violated } = await axeResult(
+    const { violated, evaluated } = await axeResult(
       fixture.nativeElement, [root(), body(), close()],
       ['aria-allowed-attr', 'aria-valid-attr-value', 'nested-interactive']
     );
 
     expect(violated).toEqual([]);
+    expect(evaluated).toContain('nested-interactive');
     expect(body().disabled).toBe(true);
     expect(close()!.disabled).toBe(true);
   });

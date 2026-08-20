@@ -193,11 +193,14 @@ describe('tn-slide-toggle accessibility (#189)', () => {
      */
     it('still fails the label rule on a checkbox with no label', async () => {
       const unlabelled = document.createElement('div');
-      unlabelled.innerHTML = '<input type="checkbox" id="tn-slide-toggle-control">';
+      // No `id`, deliberately: an id is the one attribute that could let a
+      // stray `label[for]` elsewhere in the document give this input a name
+      // and quietly defuse the control.
+      unlabelled.innerHTML = '<input type="checkbox">';
       document.body.appendChild(unlabelled);
 
       const { violated } = await axeResult(
-        unlabelled, unlabelled.querySelector('input') as HTMLElement, ['label']
+        unlabelled, unlabelled.querySelector('input'), ['label']
       );
       unlabelled.remove();
 

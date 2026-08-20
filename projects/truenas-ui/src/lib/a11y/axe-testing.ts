@@ -37,11 +37,27 @@ import axe from 'axe-core';
  * would fail on the defect. Only a positive control does that — see the pre-#188
  * markup rebuilt in `chip-a11y.spec.ts`, which is also the control for this
  * function reporting a violation at all.
+ *
+ * Not exported from `public-api.ts`, and must not be — the same rule as
+ * `live-region-testing.ts`, for a second reason on top of that one. These
+ * assertions are about this library's own markup and no consumer has a use for
+ * them; and `axe-core` is a devDependency, so making this file reachable from
+ * the public API would pull it into the ng-packagr build and out to consumers.
  */
 
 /** What axe said about the named elements: which rules objected, and which ran. */
 export interface AxeAttribution {
-  /** Rules that reported a violation ON one of `targets`. */
+  /**
+   * Rules that reported a violation ON one of `targets`.
+   *
+   * Violations only. A rule axe placed in `incomplete` — it looked, and could
+   * not decide without a human — is NOT counted here, so it reads as a pass to
+   * every caller while still counting as `evaluated`. That asymmetry is
+   * deliberate but it is a fail-open, so a spec whose rule can return
+   * `incomplete` under jsdom should assert on the DOM instead of on this.
+   * Nothing in the three current callers does: measured with `elementRef`,
+   * every rule they run lands in `violations` or `passes`.
+   */
   violated: string[];
   /** Rules axe attributed to one of `targets` at all, in any bucket. */
   evaluated: string[];
@@ -65,12 +81,20 @@ export interface AxeAttribution {
  */
 export async function axeResult(
   root: HTMLElement,
-  targets: HTMLElement | readonly (HTMLElement | null)[],
+  targets: HTMLElement | null | readonly (HTMLElement | null)[],
   rules: string[],
 ): Promise<AxeAttribution> {
   const wanted = (Array.isArray(targets) ? targets : [targets]) as readonly (HTMLElement | null)[];
-  // A missing target would silently match nothing, which is the vacuous guard
-  // this module exists to prevent — so it is an error rather than an empty result.
+  // Every way of naming no element at all is an error rather than an empty
+  // result, because an empty result is `{violated: [], evaluated: []}` — a
+  // clean bill of health from a filter that matched nothing, which is precisely
+  // the vacuous green this module exists to prevent. `null` is accepted in the
+  // signature, rather than rejected by the type, so that a `querySelector` can
+  // be passed straight in and be CHECKED here; typing it out would only push
+  // callers into an `as HTMLElement` cast that routes around this guard.
+  if (wanted.length === 0) {
+    throw new Error('axeResult: no target elements given');
+  }
   wanted.forEach((el, i) => {
     if (el === null || el === undefined) {
       throw new Error(`axeResult: target ${i} of ${wanted.length} is not in the DOM`);
