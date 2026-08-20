@@ -127,15 +127,21 @@ describe('tn-slide-toggle accessibility (#189)', () => {
   }
 
   describe('one tab stop per toggle', () => {
+    // `toBe` on the single element, not `toEqual` on the array: toEqual walks
+    // DOM nodes structurally, so it would accept a DIFFERENT element that
+    // happened to match the input's shape — which is exactly the confusion
+    // this assertion exists to rule out.
     it('puts the only tab stop on the input, with the label after it', () => {
-      expect(tabStops()).toEqual([input()]);
+      expect(tabStops()).toHaveLength(1);
+      expect(tabStops()[0]).toBe(input());
     });
 
     it('puts the only tab stop on the input, with the label before it', () => {
       host.labelPosition.set('before');
       fixture.detectChanges();
 
-      expect(tabStops()).toEqual([input()]);
+      expect(tabStops()).toHaveLength(1);
+      expect(tabStops()[0]).toBe(input());
     });
 
     it('leaves no tab stop at all when the toggle is disabled', () => {
