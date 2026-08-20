@@ -158,6 +158,12 @@ Each theme defines the following CSS custom properties:
 - `--tn-orange`: Secondary warning
 - `--tn-cyan`: Info accent
 
+Status colors are tuned for the 3:1 UI-component/border minimum (WCAG 1.4.11), not the 4.5:1 text minimum (WCAG 1.4.3). For text — validation messages, inline errors — use the text-safe counterpart instead:
+
+- `--tn-error-text`: Error/validation text, 4.5:1 against `--tn-bg1` and `--tn-bg2` in every theme
+
+A custom theme that omits `--tn-error-text` falls back to `--tn-red`, which is not guaranteed to clear 4.5:1 for text.
+
 ---
 
 ## Theme Definitions
