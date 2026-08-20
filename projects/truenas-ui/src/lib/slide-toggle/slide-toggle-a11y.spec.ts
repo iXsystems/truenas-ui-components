@@ -199,10 +199,17 @@ describe('tn-slide-toggle accessibility (#189)', () => {
       unlabelled.innerHTML = '<input type="checkbox">';
       document.body.appendChild(unlabelled);
 
-      const { violated } = await axeResult(
-        unlabelled, unlabelled.querySelector('input'), ['label']
-      );
-      unlabelled.remove();
+      // try/finally: `axeResult` throws rather than returning a vacuous pass,
+      // and a fixture left behind by that throw would be scanned by every later
+      // test in this file — an unlabelled input among them.
+      let violated: string[];
+      try {
+        ({ violated } = await axeResult(
+          unlabelled, unlabelled.querySelector('input'), ['label']
+        ));
+      } finally {
+        unlabelled.remove();
+      }
 
       expect(violated).toEqual(['label']);
     });

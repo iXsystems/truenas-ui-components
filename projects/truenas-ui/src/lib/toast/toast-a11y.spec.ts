@@ -136,8 +136,15 @@ describe('tn-toast accessibility (#190)', () => {
       bogus.innerHTML = '<div role="alertt">Save failed</div>';
       document.body.appendChild(bogus);
 
-      const { violated } = await axeResult(bogus, bogus.querySelector('[role]'), ['aria-roles']);
-      bogus.remove();
+      // try/finally: `axeResult` throws rather than returning a vacuous pass,
+      // and a fixture left behind by that throw would be scanned by every later
+      // test in this file.
+      let violated: string[];
+      try {
+        ({ violated } = await axeResult(bogus, bogus.querySelector('[role]'), ['aria-roles']));
+      } finally {
+        bogus.remove();
+      }
 
       expect(violated).toEqual(['aria-roles']);
     });

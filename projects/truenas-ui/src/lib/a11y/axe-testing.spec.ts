@@ -104,6 +104,23 @@ describe('axeResult', () => {
       await expect(axeResult(root, [], ['aria-allowed-attr'])).rejects.toThrow('no target elements');
     });
 
+    it('rejects an empty rule list', async () => {
+      const { child } = withAriaDescendant();
+
+      await expect(axeResult(root, child, [])).rejects.toThrow('no rules given');
+    });
+
+    // axe treats a detached tree as hidden and exempts every node in it, so a
+    // fixture that forgot its `appendChild` would come back clean whatever its
+    // markup said.
+    it('rejects a root that is not in the document', async () => {
+      const orphan = document.createElement('div');
+      orphan.innerHTML = '<button type="button" aria-label="Close">x</button>';
+
+      await expect(axeResult(orphan, orphan.querySelector('button'), ['aria-allowed-attr']))
+        .rejects.toThrow('not in the document');
+    });
+
     it('rejects a null target', async () => {
       await expect(axeResult(root, root.querySelector('.absent'), ['aria-allowed-attr']))
         .rejects.toThrow('not in the DOM');

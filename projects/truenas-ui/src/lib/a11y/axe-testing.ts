@@ -111,6 +111,21 @@ export async function axeResult(
   if (wanted.length === 0) {
     throw new Error('axeResult: no target elements given');
   }
+  // Same reasoning for the other two ways of scanning nothing. No rules means
+  // axe runs none and reports none; a detached root means axe walks a tree it
+  // considers hidden and exempts every node in it — a fixture that forgot its
+  // `appendChild` comes back clean, which is the failure this whole module is
+  // about, arriving one level up.
+  if (rules.length === 0) {
+    throw new Error('axeResult: no rules given');
+  }
+  if (!root.isConnected) {
+    throw new Error(
+      'axeResult: the scanned root is not in the document. axe treats a detached '
+      + 'tree as hidden and exempts every node in it, so this would pass whatever '
+      + 'the markup says.'
+    );
+  }
   wanted.forEach((el, i) => {
     if (el === null || el === undefined) {
       throw new Error(`axeResult: target ${i} of ${wanted.length} is not in the DOM`);

@@ -159,10 +159,17 @@ describe('tn-chip accessibility (#188)', () => {
         + '</div>';
       document.body.appendChild(previous);
 
-      const { violated } = await axeResult(
-        previous, previous.querySelector('[role="button"]'), ['nested-interactive']
-      );
-      previous.remove();
+      // try/finally, because `axeResult` throws rather than returning a vacuous
+      // pass — and a fixture left in `document.body` by that throw would be
+      // scanned by every later test in this file.
+      let violated: string[];
+      try {
+        ({ violated } = await axeResult(
+          previous, previous.querySelector('[role="button"]'), ['nested-interactive']
+        ));
+      } finally {
+        previous.remove();
+      }
 
       expect(violated).toEqual(['nested-interactive']);
     });
