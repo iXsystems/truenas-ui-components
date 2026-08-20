@@ -337,6 +337,33 @@ describe('themePalettes', () => {
       .toThrow('nested inside @media (prefers-contrast: more)');
   });
 
+  it('names the innermost at-rule scoping the palette, not the outermost', () => {
+    const doublyNested = `
+      :root { --tn-bg1: #ffffff; }
+      @supports (color: color-mix(in srgb, red, blue)) {
+        @media (prefers-contrast: more) {
+          :root { --tn-bg1: #000000; }
+        }
+      }
+    `;
+
+    expect(() => themePalettes(doublyNested)).toThrow('@media (prefers-contrast: more)');
+  });
+
+  it('keeps the declarations that come before a nested rule, rather than losing the palette', () => {
+    // Native CSS nesting inside a palette block. With one shared buffer, the
+    // `{` of the nested rule discards everything above it: `--tn-bg1` goes, the
+    // block stops counting as a palette, and the surface disappears from the
+    // list with nothing to say it was ever there.
+    const nested = ':root { --tn-bg1: #ffffff; .tn-card { color: red; } --tn-fg1: #767676; }';
+
+    const [palette] = themePalettes(nested);
+
+    expect(palette.selector).toBe(':root');
+    expect(palette.color('--tn-bg1')).toBe('#ffffff');
+    expect(palette.color('--tn-fg1')).toBe('#767676');
+  });
+
   it('refuses a stylesheet whose braces do not balance, rather than mis-attributing what follows', () => {
     expect(() => themePalettes(':root { --tn-bg1: #ffffff; } }')).toThrow('unbalanced braces');
   });

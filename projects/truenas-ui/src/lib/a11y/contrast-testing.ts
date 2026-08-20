@@ -196,6 +196,12 @@ export function themePalettes(css: string): ThemePalette[] {
     // colours that render together at no viewport width, and kept apart it is a
     // surface whose applicability only a browser can decide. Neither is worth
     // guessing at silently, so it says so.
+    //
+    // The narrow reading is deliberate: this fires on a conditional *palette*.
+    // An at-rule that overrides one token without declaring `--tn-bg1` is not a
+    // surface, so it is skipped like any other non-palette block — and a spec
+    // measuring that token gets the unconditional value, which is the answer for
+    // every condition but one.
     if (block.nestedIn !== null) {
       throw new Error(
         `themePalettes: the palette at ${block.selector} is nested inside ${block.nestedIn}. `
@@ -316,29 +322,47 @@ interface DeclarationBlock {
  */
 function declarationBlocks(css: string): DeclarationBlock[] {
   const blocks: DeclarationBlock[] = [];
-  const open: string[] = [];
-  let buffer = '';
+  const open: { prelude: string; body: string }[] = [];
+  // Text not yet attributed: the prelude being read, or the declarations of the
+  // innermost open block. Each block keeps its own body, because one shared
+  // buffer loses the declarations that came BEFORE a nested rule — a palette
+  // holding `--tn-bg1` above a nested selector would stop being a palette, and
+  // do it silently.
+  let pending = '';
   for (const character of css.replace(/\/\*[\s\S]*?\*\//g, '')) {
     if (character === '{') {
-      open.push(buffer.trim());
-      buffer = '';
+      // Everything after the last `;` is the prelude of the block opening now;
+      // everything before it belongs to the block already open. (A declaration
+      // sitting immediately before a nested rule without its semicolon is a CSS
+      // syntax error, so there is no third case to split here.)
+      const lastSemicolon = pending.lastIndexOf(';');
+      const enclosing = open[open.length - 1];
+      if (enclosing) {
+        enclosing.body += pending.slice(0, lastSemicolon + 1);
+      }
+      open.push({ prelude: pending.slice(lastSemicolon + 1).trim(), body: '' });
+      pending = '';
     } else if (character === '}') {
-      const prelude = open.pop();
+      const closing = open.pop();
       // A `}` with nothing open is a stylesheet this cannot read. Continuing
       // would silently attribute everything after it to the wrong nesting.
-      if (prelude === undefined) {
+      if (closing === undefined) {
         throw new Error('themePalettes: unbalanced braces in the CSS given');
       }
-      if (!prelude.startsWith('@')) {
+      closing.body += pending;
+      pending = '';
+      if (!closing.prelude.startsWith('@')) {
         blocks.push({
-          selector: prelude,
-          body: buffer,
-          nestedIn: open.find((enclosing) => enclosing.startsWith('@')) ?? null,
+          selector: closing.prelude,
+          body: closing.body,
+          // The innermost at-rule, not the outermost: `@media` inside
+          // `@supports` is scoped by the `@media`, and naming the outer one in
+          // the refusal would send a reader to the wrong line.
+          nestedIn: [...open].reverse().find((block) => block.prelude.startsWith('@'))?.prelude ?? null,
         });
       }
-      buffer = '';
     } else {
-      buffer += character;
+      pending += character;
     }
   }
   // A `{` that was never closed is the other half of the same fault, and the
