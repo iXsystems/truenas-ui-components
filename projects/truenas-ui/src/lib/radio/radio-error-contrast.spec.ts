@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { TN_THEME_DEFINITIONS } from '../theme/theme.constants';
 
 /**
  * tn-radio's error text (`.tn-radio__error`) reads `--tn-error-text`, a
@@ -111,8 +112,20 @@ describe('tn-radio error text contrast (#186)', () => {
   const css = readFileSync(THEMES_CSS_PATH, 'utf8');
   const themeBlocks = extractThemeBlocks(css);
 
-  it('found all nine themed surfaces in themes.css', () => {
-    expect(themeBlocks.size).toBe(9);
+  // Derived from the theme registry rather than hardcoded: extractThemeBlocks
+  // silently drops a block whose --tn-bg1 isn't a hex literal (e.g. rgb()),
+  // so a fixed expected count could stay coincidentally correct while a
+  // themed surface goes unmeasured. Tying it to TN_THEME_DEFINITIONS plus
+  // :root, and naming every registered selector below, fails on exactly
+  // which surface went missing instead.
+  const expectedSelectors = [':root', ...TN_THEME_DEFINITIONS.map((theme) => `.${theme.className}`)];
+
+  it('found every registered themed surface in themes.css', () => {
+    expect(themeBlocks.size).toBe(expectedSelectors.length);
+  });
+
+  it.each(expectedSelectors)('%s is a themed surface found in themes.css', (selector) => {
+    expect(themeBlocks.has(selector)).toBe(true);
   });
 
   const cases = Array.from(themeBlocks.entries()).map(([selector, body]) => buildCase(selector, body));
