@@ -23,12 +23,14 @@
   --tn-lines: #383838;
   --tn-yellow: #DED142;
   --tn-orange: #E68D37;
+  /* --tn-red-text is --tn-red re-tuned so it measures >=4.5:1 against
+     --tn-bg1 AND --tn-bg2 (--tn-red itself stays 3:1-tuned for borders/
+     icons, and is not re-checked here). It cascades from :root like any
+     other var, so a theme overriding --tn-red without also overriding
+     --tn-red-text silently inherits THIS value instead of deriving from
+     its own --tn-red -- every theme below sets both together; keep doing
+     so in any new one. */
   --tn-red: #CE2929;
-  /* --tn-red-text is --tn-red re-tuned for 4.5:1 text contrast (--tn-red itself
-     stays 3:1-tuned for borders/icons). It cascades from :root like any other
-     var, so a theme that overrides --tn-red without also overriding
-     --tn-red-text silently inherits THIS value rather than deriving from its
-     own --tn-red -- every theme below must set both together. */
   --tn-red-text: #e26c6c;
   --tn-magenta: #C006C7;
   --tn-violet: #7617D8;
@@ -88,7 +90,7 @@
   --tn-lines: #4a4a4a;
   --tn-yellow: #DED142;
   --tn-orange: #E68D37;
-  --tn-red: #CE2929;
+  --tn-red: #CE2929; /* keep --tn-red-text paired -- see :root */
   --tn-red-text: #e26c6c;
   --tn-magenta: #C006C7;
   --tn-violet: #7617D8;
@@ -125,7 +127,7 @@
   --tn-lines: #d0d0d0;
   --tn-yellow: #DED142;
   --tn-orange: #E68D37;
-  --tn-red: #CE2929;
+  --tn-red: #CE2929; /* keep --tn-red-text paired -- see :root */
   --tn-red-text: var(--tn-red);
   --tn-magenta: #C006C7;
   --tn-violet: #7617D8;
@@ -163,7 +165,7 @@
   --tn-lines: #50526e;
   --tn-yellow: #f1fa8c;
   --tn-orange: #ffb86c;
-  --tn-red: #ff5555;
+  --tn-red: #ff5555; /* keep --tn-red-text paired -- see :root */
   --tn-red-text: #ff5858;
   --tn-magenta: #ff79c6;
   --tn-violet: #bd93f9;
@@ -201,7 +203,7 @@
   --tn-lines: #576277;
   --tn-yellow: #ebcb8b;
   --tn-orange: #d08770;
-  --tn-red: #bf616a;
+  --tn-red: #bf616a; /* keep --tn-red-text paired -- see :root */
   --tn-red-text: #d9a1a7;
   --tn-magenta: #b48ead;
   --tn-violet: #775daa;
@@ -238,7 +240,7 @@
   --tn-lines: #d5d5d5;
   --tn-yellow: #f0cb00;
   --tn-orange: #ee9302;
-  --tn-red: #ff0013;
+  --tn-red: #ff0013; /* keep --tn-red-text paired -- see :root */
   --tn-red-text: #dc0010;
   --tn-magenta: #d238ff;
   --tn-violet: #c17ecc;
@@ -278,7 +280,7 @@
   --tn-lines: #586e75;
   --tn-yellow: #b58900;
   --tn-orange: #cb4b16;
-  --tn-red: #dc322f;
+  --tn-red: #dc322f; /* keep --tn-red-text paired -- see :root */
   --tn-red-text: #e87977;
   --tn-magenta: #d33682;
   --tn-violet: #6c71c4;
@@ -317,7 +319,7 @@
   --tn-lines: #56646f;
   --tn-yellow: #f0cb00;
   --tn-orange: #ee9302;
-  --tn-red: #ff0013;
+  --tn-red: #ff0013; /* keep --tn-red-text paired -- see :root */
   --tn-red-text: #ff8089;
   --tn-magenta: #d238ff;
   --tn-violet: #c17ecc;
@@ -353,7 +355,7 @@
   --tn-lines: #c0c0c0;
   --tn-yellow: #f0cb00;
   --tn-orange: #ee9302;
-  --tn-red: #ff0013;
+  --tn-red: #ff0013; /* keep --tn-red-text paired -- see :root */
   --tn-red-text: #c4000f;
   --tn-magenta: #d238ff;
   --tn-violet: #9844b1;
