@@ -27,6 +27,7 @@ export class TnChipHarness extends ComponentHarness {
   static hostSelector = 'tn-chip';
 
   private _chip = this.locatorFor('.tn-chip');
+  private _body = this.locatorFor('.tn-chip__body');
   private _label = this.locatorFor('.tn-chip__label');
   private _icon = this.locatorForOptional('.tn-chip__icon');
   private _closeButton = this.locatorForOptional('.tn-chip__close');
@@ -100,8 +101,8 @@ export class TnChipHarness extends ComponentHarness {
    * ```
    */
   async isDisabled(): Promise<boolean> {
-    const chip = await this._chip();
-    return (await chip.getAttribute('aria-disabled')) === 'true';
+    const body = await this._body();
+    return body.getProperty<boolean>('disabled');
   }
 
   /**
@@ -146,8 +147,8 @@ export class TnChipHarness extends ComponentHarness {
    * ```
    */
   async click(): Promise<void> {
-    const chip = await this._chip();
-    return chip.click();
+    const body = await this._body();
+    return body.click();
   }
 
   /**
