@@ -1,4 +1,5 @@
 import { axeResult } from './axe-testing';
+import * as publicApi from '../../public-api';
 
 /**
  * Guards `axeResult` itself, because every other a11y spec now trusts it and a
@@ -17,6 +18,21 @@ import { axeResult } from './axe-testing';
  * is about axe attribution, and a component would only add a way for the test
  * to fail for reasons that are not about it.
  */
+/**
+ * The docblock in `axe-testing.ts` says this module must not be exported, and
+ * until this test that was the only thing saying so. `axe-core` is a
+ * devDependency, so an `export * from './lib/a11y/axe-testing'` added to
+ * `public-api.ts` — by the same reflex that exported `icon-testing` and
+ * `toast-testing`, which are genuinely for consumers — would pull it into the
+ * ng-packagr build and ship it. Nothing else would fail: the library builds,
+ * and the break lands on whoever installs the package.
+ */
+describe('axe-testing is not part of the public API', () => {
+  it('is not re-exported from public-api.ts', () => {
+    expect(Object.keys(publicApi)).not.toContain('axeResult');
+  });
+});
+
 describe('axeResult', () => {
   let root: HTMLElement;
 
@@ -170,10 +186,13 @@ describe('axeResult', () => {
       elsewhere.innerHTML = '<button type="button" aria-label="Close">x</button>';
       document.body.appendChild(elsewhere);
 
-      const attempt = axeResult(root, elsewhere.querySelector('button'), ['aria-allowed-attr']);
+      try {
+        const attempt = axeResult(root, elsewhere.querySelector('button'), ['aria-allowed-attr']);
 
-      await expect(attempt).rejects.toThrow('not inside the scanned root');
-      elsewhere.remove();
+        await expect(attempt).rejects.toThrow('not inside the scanned root');
+      } finally {
+        elsewhere.remove();
+      }
     });
   });
 });
