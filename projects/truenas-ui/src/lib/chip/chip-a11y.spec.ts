@@ -3,8 +3,8 @@ import { join } from 'path';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
-import axe from 'axe-core';
 import { TnChipComponent } from './chip.component';
+import { axeResult } from '../a11y/axe-testing';
 
 /**
  * Guards the structure fixed for #188: the chip used to render a focusable
@@ -67,30 +67,57 @@ describe('tn-chip accessibility (#188)', () => {
     return fixture.nativeElement.querySelector('.tn-chip__close');
   }
 
-  async function violationIds(rules: string[]): Promise<string[]> {
-    const results = await axe.run(fixture.nativeElement as HTMLElement, {
-      runOnly: { type: 'rule', values: rules },
-    });
-    return results.violations.map((v) => v.id);
+  /**
+   * The elements `nested-interactive` can report this chip on.
+   *
+   * Both, because the fix has two shapes of regression and they land on
+   * different nodes: putting the close button back inside `.tn-chip__body`
+   * reports on the body, while giving the wrapper back its `role="button"`
+   * reports on the wrapper. Only the body is *evaluated* today — the rule
+   * selects on widget role, and post-fix the wrapper has none — so naming the
+   * wrapper adds no `evaluated` coverage and does add the violation it would
+   * carry if that role came back.
+   */
+  function interactiveTargets(): HTMLElement[] {
+    return [root(), body()];
   }
 
   describe('nested-interactive', () => {
+    // `evaluated` is asserted alongside every empty `violated`, because an empty
+    // `violations` is also what axe returns when it evaluated nothing at all.
+    // It is non-vacuous here: the rule matches `.tn-chip__body` itself, which is
+    // the node the "close is not nested inside the body" regression reports on.
     it('raises no violation on a closable chip', async () => {
-      expect(await violationIds(['nested-interactive'])).toEqual([]);
+      const { violated, evaluated } = await axeResult(
+        fixture.nativeElement, interactiveTargets(), ['nested-interactive']
+      );
+
+      expect(violated).toEqual([]);
+      expect(evaluated).toContain('nested-interactive');
     });
 
     it('raises no violation on a closable chip with an icon', async () => {
       host.icon.set('mdi:star');
       fixture.detectChanges();
 
-      expect(await violationIds(['nested-interactive'])).toEqual([]);
+      const { violated, evaluated } = await axeResult(
+        fixture.nativeElement, interactiveTargets(), ['nested-interactive']
+      );
+
+      expect(violated).toEqual([]);
+      expect(evaluated).toContain('nested-interactive');
     });
 
     it('raises no violation on a non-closable chip', async () => {
       host.closable.set(false);
       fixture.detectChanges();
 
-      expect(await violationIds(['nested-interactive'])).toEqual([]);
+      const { violated, evaluated } = await axeResult(
+        fixture.nativeElement, interactiveTargets(), ['nested-interactive']
+      );
+
+      expect(violated).toEqual([]);
+      expect(evaluated).toContain('nested-interactive');
     });
 
     it('keeps the close button a sibling of the chip body, not a descendant', () => {
@@ -104,12 +131,24 @@ describe('tn-chip accessibility (#188)', () => {
     });
 
     /**
-     * Positive control. Every assertion above is `toEqual([])`, which is also
-     * what axe returns when it evaluates nothing at all — a renamed rule, an
-     * axe upgrade that drops it, a jsdom change that makes the tree invisible
-     * to it. This rebuilds the exact structure the chip had before #188 and
-     * requires axe to still object to it, so the guards above cannot quietly
-     * go vacuous without this failing first.
+     * Positive control, and the strongest guard in any of the a11y specs — it
+     * is the only one that shows axe FAILING on the defect rather than passing
+     * on the fix.
+     *
+     * Every assertion above is `toEqual([])`, which is also what axe returns
+     * when it evaluates nothing at all — an upgrade that narrows which nodes
+     * the rule selects, a jsdom change that makes the tree invisible to it.
+     * (Renaming or dropping the rule outright is the case that does not go
+     * quiet: axe rejects with "Could not find configured rule".) This
+     * rebuilds the exact structure the chip had before #188 and requires axe to
+     * still object to it, so the guards above cannot quietly go vacuous without
+     * this failing first.
+     *
+     * It runs through the shared `axeResult` on purpose, so it is also the
+     * control for that wrapper: an attribution bug there — a filter that
+     * matched nothing — would empty `violated` in every spec that uses it, and
+     * this is the assertion that would catch it. The violation is attributed to
+     * the wrapper, which is the node that carries the offending widget role.
      */
     it('still reports the violation for the structure the chip used to have', async () => {
       const previous = document.createElement('div');
@@ -120,12 +159,19 @@ describe('tn-chip accessibility (#188)', () => {
         + '</div>';
       document.body.appendChild(previous);
 
-      const results = await axe.run(previous, {
-        runOnly: { type: 'rule', values: ['nested-interactive'] },
-      });
-      previous.remove();
+      // try/finally, because `axeResult` throws rather than returning a vacuous
+      // pass — and a fixture left in `document.body` by that throw would be
+      // scanned by every later test in this file.
+      let violated: string[];
+      try {
+        ({ violated } = await axeResult(
+          previous, previous.querySelector('[role="button"]'), ['nested-interactive']
+        ));
+      } finally {
+        previous.remove();
+      }
 
-      expect(results.violations.map((v) => v.id)).toEqual(['nested-interactive']);
+      expect(violated).toEqual(['nested-interactive']);
     });
   });
 
@@ -133,12 +179,28 @@ describe('tn-chip accessibility (#188)', () => {
    * The wrapper carries no role, so ARIA state must not be parked on it —
    * `aria-disabled` on a roleless element is an `aria-allowed-attr` violation,
    * which would trade #188 for a different finding of the same severity.
+   *
+   * `evaluated` names `nested-interactive` only, and deliberately not the two
+   * `aria-*` rules. The regression THOSE guard would land on the wrapper, and
+   * the wrapper has no `aria-*` attribute for `aria-allowed-attr` to match — so
+   * they are not evaluated on it, and requiring them to be would fail on
+   * correct markup. Naming them here would instead be satisfied by the body's
+   * and close button's `aria-label`: green, and not about the element in
+   * question, which is the vacuous guard `../a11y/axe-testing` exists to stop.
+   * What keeps that half honest is the positive control above, which proves axe
+   * is running at all.
    */
   it('raises no ARIA violation when disabled', async () => {
     host.disabled.set(true);
     fixture.detectChanges();
 
-    expect(await violationIds(['aria-allowed-attr', 'aria-valid-attr-value', 'nested-interactive'])).toEqual([]);
+    const { violated, evaluated } = await axeResult(
+      fixture.nativeElement, [root(), body(), close()],
+      ['aria-allowed-attr', 'aria-valid-attr-value', 'nested-interactive']
+    );
+
+    expect(violated).toEqual([]);
+    expect(evaluated).toContain('nested-interactive');
     expect(body().disabled).toBe(true);
     expect(close()!.disabled).toBe(true);
   });
