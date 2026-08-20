@@ -431,6 +431,38 @@ passes just as happily on markup that reintroduces the other. Use `liveSources()
 and `politeness()` from `lib/a11y/live-region-testing.ts`; see
 `banner-a11y.spec.ts` for the shape.
 
+### Running axe in a spec
+
+**Use `axeResult()` from `lib/a11y/axe-testing.ts`. Do not write another axe
+wrapper.** Three specs each grew a private near-copy and two of them were wrong
+in the direction that makes a test pass (#196). The correct version is subtle
+enough that writing it again from memory is how the lenient copy gets made.
+
+**Never assert on `violations` alone.** An empty `violations` is also what axe
+returns when it evaluated nothing at all — a detached tree, a renamed rule, an
+upgrade that dropped one. Pair it with `evaluated`.
+
+**`evaluated` only means something when it is attributed to the element under
+test.** A rule lands in `passes` if it matched *any* node in the scanned tree, so
+a tree-wide check is satisfied by a descendant the spec is not about — `tn-icon`
+renders `aria-label` and `aria-hidden`, and that alone made toast's
+`aria-allowed-attr` guard green while the rule never looked at the toast.
+`axeResult()` takes the target elements for exactly this reason. Pass more than
+one when a fix has more than one shape of regression: the chip names both its
+wrapper and its body, because `nested-interactive` reports on whichever of them
+carries the widget role.
+
+**A guard that cannot be attributed to the element under test is deleted, not
+left green**, with a comment recording what was measured. `nested-interactive` is
+the worked example: it is evaluated on the slide toggle's `<input>` and never on
+the label text the fix was about, and it *passed* the pre-fix markup anyway.
+
+**Prove the rule can still fail, with a positive control.** Rebuild the pre-fix
+markup in the spec and require axe to object to it — see the pre-#188 structure
+in `chip-a11y.spec.ts`, and the unlabelled checkbox in
+`slide-toggle-a11y.spec.ts`. It is the only assertion that shows axe failing
+rather than passing, and it doubles as the control for `axeResult()` itself.
+
 ### Keyboard Navigation
 Support standard keys:
 - **Tab** - Focus navigation

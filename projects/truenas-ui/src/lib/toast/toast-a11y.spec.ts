@@ -1,10 +1,10 @@
 import { ApplicationRef } from '@angular/core';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
-import axe from 'axe-core';
 import { TnToastComponent } from './toast.component';
 import { TN_TOAST_ANNOUNCE_DELAY_MS, TnToastService } from './toast.service';
 import { TnToastType } from './toast.types';
+import { axeResult } from '../a11y/axe-testing';
 import { liveSources, politeness } from '../a11y/live-region-testing';
 import { TnIconTesting } from '../icon/icon-testing';
 
@@ -36,9 +36,11 @@ import { TnIconTesting } from '../icon/icon-testing';
  * shape a rule-per-attribute linter can see.
  *
  * So the assertions that hold this fix in place are the DOM ones. The axe block
- * is a forward guard, and it asserts `evaluated` for the reason
- * `slide-toggle-a11y.spec.ts` (#189) does: an empty `violations` is also what
- * axe returns when it ran nothing at all.
+ * is a forward guard, and it asserts `evaluated` because an empty `violations`
+ * is also what axe returns when it ran nothing at all. `axeResult` counts only
+ * what axe attributed to the element passed to it, for the reason set out in
+ * `../a11y/axe-testing` — the vacuous version of this very guard is where that
+ * module came from.
  */
 
 describe('tn-toast accessibility (#190)', () => {
@@ -63,38 +65,6 @@ describe('tn-toast accessibility (#190)', () => {
     component.type.set(type);
     fixture.detectChanges();
     return fixture.nativeElement.querySelector('.tn-toast') as HTMLElement;
-  }
-
-  /**
-   * `{violated, evaluated}` for `rules`, counting only what axe said about `el`
-   * ITSELF.
-   *
-   * The per-element filter is the point. A rule lands in `passes` if it matched
-   * anywhere in the tree, and `tn-icon` renders `aria-label` and `aria-hidden`
-   * — so a tree-wide `evaluated` reports `aria-allowed-attr` as run whether or
-   * not it ever looked at the toast. That is not a hypothetical: this spec
-   * asserted exactly that, and the assertion was satisfied by the icon, because
-   * removing `aria-live` left the toast with no `aria-*` attribute for the rule
-   * to match. A guard on the wrong element is the vacuous guard the header note
-   * warns about, wearing the costume of a fix.
-   *
-   * `elementRef` is what makes the filter identity-based; without it a node
-   * result carries only a CSS selector, and comparing those compares strings.
-   */
-  async function axeResult(
-    el: HTMLElement, rules: string[]
-  ): Promise<{ violated: string[]; evaluated: string[] }> {
-    const results = await axe.run(fixture.nativeElement as HTMLElement, {
-      runOnly: { type: 'rule', values: rules },
-      elementRef: true,
-    });
-    const touches = (rule: axe.Result): boolean =>
-      rule.nodes.some((node) => (node as { element?: Element }).element === el);
-    return {
-      violated: results.violations.filter(touches).map((v) => v.id),
-      evaluated: [...results.violations, ...results.passes, ...results.incomplete]
-        .filter(touches).map((v) => v.id),
-    };
   }
 
   describe('exactly one source of politeness', () => {
@@ -145,7 +115,7 @@ describe('tn-toast accessibility (#190)', () => {
     it.each(Object.values(TnToastType))('raises no ARIA violation on a %s toast', async (type) => {
       const el = region(type);
 
-      const { violated, evaluated } = await axeResult(el, [
+      const { violated, evaluated } = await axeResult(fixture.nativeElement, el, [
         'aria-allowed-attr', 'aria-valid-attr-value', 'aria-roles'
       ]);
 
