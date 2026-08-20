@@ -223,19 +223,26 @@ describe('themePalettes', () => {
     return found;
   };
 
-  it('finds the blocks that declare a palette, and only those', () => {
-    // `.tn-not-a-palette` declares a token without being a themed surface, and
-    // the `:root` inside `@media` declares one that is not a colour at all —
-    // counting either would put a surface with no `--tn-bg1` in front of a spec
-    // that then measures against `undefined`.
+  it('finds the blocks that declare a palette, and only those, under the selector alone', () => {
+    // Three claims in one assertion, because each of them is a wrong entry in
+    // this exact list: `.tn-not-a-palette` declares a token without being a
+    // themed surface and must not appear; the `:root` inside `@media` declares
+    // one that is not a colour at all and must not merge into the `:root` that
+    // is here; and `.tn-dark` is introduced by the banner comment style
+    // themes.css uses, which read as part of the selector would put
+    // `/* ... */ .tn-dark` here instead — a palette no spec would ever find.
     expect(palettes.map((palette) => palette.selector)).toEqual([':root', '.tn-dark']);
   });
 
-  it('does not read a banner comment as part of the selector below it', () => {
-    // The `.tn-dark` above is introduced by exactly the comment style
-    // themes.css uses. Captured as part of the selector, it would produce a
-    // palette no `find` in any spec would ever match.
-    expect(palettes.map((palette) => palette.selector)).toContain('.tn-dark');
+  it('reads a final declaration that omits its optional semicolon', () => {
+    // Dropping it is not a syntax error in CSS. Dropped here, the block loses
+    // `--tn-bg1` and stops being a palette at all — it vanishes from this list
+    // rather than reporting a wrong colour.
+    const noTrailingSemicolon = ':root { --tn-fg1: #767676; --tn-bg1: #ffffff }';
+
+    const [palette] = themePalettes(noTrailingSemicolon);
+
+    expect(palette.color('--tn-bg1')).toBe('#ffffff');
   });
 
   it('does not read a commented-out declaration as a declaration', () => {

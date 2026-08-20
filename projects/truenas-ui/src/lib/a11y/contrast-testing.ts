@@ -354,10 +354,17 @@ function declarationBlocks(css: string): DeclarationBlock[] {
   return blocks;
 }
 
-/** The custom properties a declaration block sets. Comments are already gone. */
+/**
+ * The custom properties a declaration block sets. Comments are already gone.
+ *
+ * The final semicolon in a block is optional in CSS, so it is optional here.
+ * Requiring it drops the last declaration — and when that declaration is
+ * `--tn-bg1`, the whole block stops counting as a palette and disappears from
+ * `themePalettes` with nothing said.
+ */
 function customProperties(body: string): Map<string, string> {
   const properties = new Map<string, string>();
-  const declaration = /(--[\w-]+)\s*:\s*([^;]+);/g;
+  const declaration = /(--[\w-]+)\s*:\s*([^;]+)(?:;|$)/g;
   let match: RegExpExecArray | null;
   while ((match = declaration.exec(body)) !== null) {
     properties.set(match[1], match[2].trim());
