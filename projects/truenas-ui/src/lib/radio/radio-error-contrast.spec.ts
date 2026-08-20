@@ -135,17 +135,19 @@ describe('tn-radio error text contrast (#186)', () => {
     }
   );
 
-  it('the SCSS fallback is accessible on the surface a missing stylesheet actually renders on', () => {
+  it('the SCSS fallback chains through --tn-red before a literal, and the literal is accessible where it is actually reachable', () => {
     const scss = readFileSync(RADIO_SCSS_PATH, 'utf8');
-    const fallbackMatch = /--tn-error-text,\s*(#[0-9a-fA-F]{3,6})\)/.exec(scss);
-    expect(fallbackMatch).not.toBeNull();
-    const fallback = fallbackMatch![1];
+    // A theme that predates --tn-error-text may still define --tn-red, so the
+    // chain must try that before a hardcoded literal — otherwise a theme
+    // author's own tuning is silently discarded.
+    const chainMatch = /--tn-error-text,\s*var\(--tn-red,\s*(#[0-9a-fA-F]{3,6})\)\)/.exec(scss);
+    expect(chainMatch).not.toBeNull();
+    const literal = chainMatch![1];
 
-    // The var() fallback only takes effect when --tn-error-text is undefined,
-    // i.e. no theme stylesheet loaded at all — so :root's own tokens (defined
-    // in that same stylesheet) are never actually reachable here. The surface
-    // that IS reachable is the browser's UA default: white.
-    const ratio = contrastRatio(fallback, '#ffffff');
+    // The literal is reached only when neither --tn-error-text nor --tn-red
+    // is defined, i.e. no theme stylesheet loaded at all — the surface that
+    // IS reachable there is the browser's UA default: white.
+    const ratio = contrastRatio(literal, '#ffffff');
     expect(ratio).toBeGreaterThanOrEqual(4.5);
   });
 });
