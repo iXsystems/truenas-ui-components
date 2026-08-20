@@ -3,14 +3,12 @@
 
     <!-- Label before toggle -->
     @if (label() && labelPosition() === 'before') {
+      <!-- No tabindex, role or click handler: the enclosing <label for> already
+           forwards a click to the input, and the input is the control's single
+           tab stop. See slide-toggle-a11y.spec.ts (#189). -->
       <span
         class="tn-slide-toggle__label-text tn-slide-toggle__label-text--before"
-        tabindex="0"
-        role="button"
-        [innerHTML]="label() | tnLabelMarkup"
-        (click)="onLabelClick()"
-        (keydown.enter)="onLabelClick()"
-        (keydown.space)="onLabelClick()">
+        [innerHTML]="label() | tnLabelMarkup">
       </span>
     }
 
@@ -63,14 +61,10 @@
 
     <!-- Label after toggle -->
     @if (label() && labelPosition() === 'after') {
+      <!-- Plain text, for the same reason as the `before` span above. -->
       <span
         class="tn-slide-toggle__label-text tn-slide-toggle__label-text--after"
-        tabindex="0"
-        role="button"
-        [innerHTML]="label() | tnLabelMarkup"
-        (click)="onLabelClick()"
-        (keydown.enter)="onLabelClick()"
-        (keydown.space)="onLabelClick()">
+        [innerHTML]="label() | tnLabelMarkup">
       </span>
     }
 
