@@ -135,21 +135,17 @@ describe('tn-radio error text contrast (#186)', () => {
     }
   );
 
-  it('the SCSS fallback matches the default theme and is accessible on it', () => {
+  it('the SCSS fallback is accessible on the surface a missing stylesheet actually renders on', () => {
     const scss = readFileSync(RADIO_SCSS_PATH, 'utf8');
     const fallbackMatch = /--tn-error-text,\s*(#[0-9a-fA-F]{3,6})\)/.exec(scss);
     expect(fallbackMatch).not.toBeNull();
     const fallback = fallbackMatch![1];
 
-    // :root carries the same values as the default theme (.tn-dark) before any
-    // theme class is applied — the surface a missing stylesheet actually renders on.
-    const rootBody = themeBlocks.get(':root');
-    expect(rootBody).toBeDefined();
-    const rootBg1 = extractVar(rootBody!, '--tn-bg1');
-    const rootErrorText = resolveColor(extractVar(rootBody!, '--tn-error-text')!, rootBody!);
-    expect(fallback.toLowerCase()).toBe(rootErrorText?.toLowerCase());
-
-    const ratio = contrastRatio(fallback, rootBg1!);
+    // The var() fallback only takes effect when --tn-error-text is undefined,
+    // i.e. no theme stylesheet loaded at all — so :root's own tokens (defined
+    // in that same stylesheet) are never actually reachable here. The surface
+    // that IS reachable is the browser's UA default: white.
+    const ratio = contrastRatio(fallback, '#ffffff');
     expect(ratio).toBeGreaterThanOrEqual(4.5);
   });
 });

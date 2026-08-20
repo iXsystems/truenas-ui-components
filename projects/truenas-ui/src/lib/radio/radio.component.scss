@@ -79,15 +79,16 @@
   &__error {
     margin-top: 0.25rem;
     font-size: 12px;
-    // --tn-red is tuned for the 3:1 border/icon minimum (WCAG 1.4.11), not the
-    // 4.5:1 text minimum (WCAG 1.4.3) this line needs. The fallback is the
-    // default theme's own --tn-error-text value, so a missing stylesheet
-    // renders the same red the default theme would give — 5.17:1 against a
-    // #1E1E1E-class dark surface. No single color can also clear 4.5:1 against
-    // an ancestor's own white fallback (e.g. tn-card's `var(--tn-bg2, #ffffff)`)
-    // at the same time — that pair of thresholds is mutually unsatisfiable —
-    // so this optimizes for the surface the library actually defaults to.
-    color: var(--tn-error-text, #de6d6d);
+    // --tn-red is tuned toward the 3:1 border/icon minimum (WCAG 1.4.11) in
+    // most themes but not all — themes.css:365 documents .tn-high-contrast at
+    // 2.94:1, a pre-existing gap this ticket doesn't touch. Either way it
+    // doesn't meet the 4.5:1 text minimum (WCAG 1.4.3) this line needs, which
+    // is why a separate token exists. The var() fallback only takes effect
+    // when no theme stylesheet loads at all, so the only background it can
+    // reach is the UA default (white) — #1E1E1E is itself defined in the
+    // stylesheet the fallback assumes is missing. #b91c1c clears 4.5:1 there
+    // (6.47:1).
+    color: var(--tn-error-text, #b91c1c);
   }
   
   // States
