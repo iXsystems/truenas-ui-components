@@ -38,6 +38,10 @@ const meta: Meta<TnFormSectionComponent> = {
       options: ['above', 'below', 'left', 'right', 'before', 'after'],
       description: 'Placement of the tooltip relative to its help icon.',
     },
+    tooltipSticky: {
+      control: 'boolean',
+      description: 'Whether a tooltip message holding a link may be pinned open by clicking the help button. On by default, and only ever applies to such messages — plain section help, which is nearly every one, keeps hovering. Set it to false to force a message with a link back to hover behaviour, accepting that the link is then unreachable.',
+    },
   },
   render: (args) => ({
     props: args,
@@ -49,6 +53,7 @@ const meta: Meta<TnFormSectionComponent> = {
         [heading]="heading"
         [tooltip]="tooltip"
         [tooltipPosition]="tooltipPosition"
+        [tooltipSticky]="tooltipSticky"
       >
         <tn-form-field label="Hostname">
           <tn-input placeholder="truenas.local" />
@@ -79,6 +84,26 @@ export const WithTooltip: Story = {
     heading: 'Network Settings',
     tooltip: 'These settings control how the interface reaches the network.',
   },
+};
+
+export const WithPinnableTooltip: Story = {
+  args: {
+    heading: 'Network Settings',
+    tooltip: 'Bridges cannot be edited while the interface is up. <a href="https://www.truenas.com/docs/" target="_blank" rel="noopener">Read the docs</a>',
+    tooltipSticky: true,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: `
+Section help that holds a link is opened by clicking the help button rather than on hover, so the
+link can be reached. \`tooltipSticky\` is the way out of that: set it to \`false\` and the message
+goes back to appearing on hover, with the link out of reach. It cannot work the other way round —
+plain help text is never pinnable, whatever this is set to.
+`
+      }
+    }
+  }
 };
 
 export const MarkupHeading: Story = {
