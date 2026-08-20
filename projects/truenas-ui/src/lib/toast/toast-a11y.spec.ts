@@ -104,17 +104,34 @@ describe('tn-toast accessibility (#190)', () => {
   }
 
   /**
-   * `{violated, evaluated}` for `rules`.
+   * `{violated, evaluated}` for `rules`, counting only what axe said about `el`
+   * ITSELF.
    *
-   * `evaluated` is the half that matters — see the header note.
+   * The per-element filter is the point. A rule lands in `passes` if it matched
+   * anywhere in the tree, and `tn-icon` renders `aria-label` and `aria-hidden`
+   * — so a tree-wide `evaluated` reports `aria-allowed-attr` as run whether or
+   * not it ever looked at the toast. That is not a hypothetical: this spec
+   * asserted exactly that, and the assertion was satisfied by the icon, because
+   * removing `aria-live` left the toast with no `aria-*` attribute for the rule
+   * to match. A guard on the wrong element is the vacuous guard the header note
+   * warns about, wearing the costume of a fix.
+   *
+   * `elementRef` is what makes the filter identity-based; without it a node
+   * result carries only a CSS selector, and comparing those compares strings.
    */
-  async function axeResult(rules: string[]): Promise<{ violated: string[]; evaluated: string[] }> {
+  async function axeResult(
+    el: HTMLElement, rules: string[]
+  ): Promise<{ violated: string[]; evaluated: string[] }> {
     const results = await axe.run(fixture.nativeElement as HTMLElement, {
       runOnly: { type: 'rule', values: rules },
+      elementRef: true,
     });
+    const touches = (rule: axe.Result): boolean =>
+      rule.nodes.some((node) => (node as { element?: Element }).element === el);
     return {
-      violated: results.violations.map((v) => v.id),
-      evaluated: [...results.violations, ...results.passes, ...results.incomplete].map((v) => v.id),
+      violated: results.violations.filter(touches).map((v) => v.id),
+      evaluated: [...results.violations, ...results.passes, ...results.incomplete]
+        .filter(touches).map((v) => v.id),
     };
   }
 
@@ -150,15 +167,22 @@ describe('tn-toast accessibility (#190)', () => {
   });
 
   describe('axe', () => {
+    // `aria-roles` is the rule asserted as evaluated because it is the one that
+    // still MATCHES the toast after the fix: it selects on the `role` attribute,
+    // which is now the element's only ARIA marking. The attribute-value rules
+    // are worth running — a typo'd role would be caught by neither of the DOM
+    // suites above, which compare against the two expected spellings — but they
+    // match no node here, so requiring them in `evaluated` would fail on
+    // correct markup.
     it.each(Object.values(TnToastType))('raises no ARIA violation on a %s toast', async (type) => {
-      region(type);
+      const el = region(type);
 
-      const { violated, evaluated } = await axeResult([
+      const { violated, evaluated } = await axeResult(el, [
         'aria-allowed-attr', 'aria-valid-attr-value', 'aria-roles'
       ]);
 
       expect(violated).toEqual([]);
-      expect(evaluated).toContain('aria-allowed-attr');
+      expect(evaluated).toContain('aria-roles');
     });
   });
 });
