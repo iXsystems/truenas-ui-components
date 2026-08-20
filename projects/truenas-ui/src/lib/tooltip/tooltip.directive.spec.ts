@@ -1242,3 +1242,84 @@ describe('TnTooltipDirective focus handling', () => {
   });
 });
 
+
+@Component({
+  standalone: true,
+  imports: [TnTooltipDirective],
+  template: `<button [tnTooltip]="message()">Trigger</button>`,
+})
+class ObserverHostComponent {
+  message = signal('Plain help text');
+}
+
+/**
+ * The host observer exists for the things `_syncAria` reads out of the DOM rather than out of a
+ * signal, none of which can change the answer for a plain hover tooltip on a host that is itself
+ * the control - the shape almost every tooltip in the library has. A table of tooltip'd action
+ * buttons would otherwise carry one live subtree observer per row with nothing to report.
+ */
+describe('TnTooltipDirective host observation', () => {
+  const LINK_MESSAGE = 'Read the <a href="#docs">docs</a>';
+
+  let observe: jest.SpyInstance;
+  let disconnect: jest.SpyInstance;
+  let fixture: ComponentFixture<ObserverHostComponent>;
+  let host: HTMLElement;
+
+  beforeEach(() => {
+    observe = jest.spyOn(MutationObserver.prototype, 'observe');
+    disconnect = jest.spyOn(MutationObserver.prototype, 'disconnect');
+    TestBed.configureTestingModule({ imports: [ObserverHostComponent] });
+    fixture = TestBed.createComponent(ObserverHostComponent);
+    fixture.detectChanges();
+    host = fixture.nativeElement.querySelector('button') as HTMLElement;
+  });
+
+  afterEach(() => {
+    observe.mockRestore();
+    disconnect.mockRestore();
+  });
+
+  /** Observers other parts of the framework connect elsewhere are none of this test's business. */
+  function timesObserved(): number {
+    return observe.mock.calls.filter(([target]) => target === host).length;
+  }
+
+  async function setMessage(message: string): Promise<void> {
+    fixture.componentInstance.message.set(message);
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+  }
+
+  it('leaves a plain-text tooltip on a control host unobserved', () => {
+    expect(timesObserved()).toBe(0);
+  });
+
+  it('starts observing when the message turns pinnable, and stops when it stops', async () => {
+    await setMessage(LINK_MESSAGE);
+    expect(timesObserved()).toBe(1);
+    expect(host.getAttribute('aria-haspopup')).toBe('dialog');
+
+    await setMessage('Plain help text');
+    expect(disconnect).toHaveBeenCalled();
+    expect(host.hasAttribute('aria-haspopup')).toBe(false);
+  });
+
+  // Disconnecting drops the records queued for the tooltip's own writes, whose ledger credits
+  // would otherwise still be waiting to be spent - on the host's next write, which is exactly the
+  // one that must not be mistaken for ours.
+  it('still notices the host claiming an attribute after a round trip', async () => {
+    await setMessage(LINK_MESSAGE);
+    await setMessage('Plain help text');
+    await setMessage(LINK_MESSAGE);
+    expect(host.getAttribute('aria-expanded')).toBe('false');
+
+    host.setAttribute('aria-expanded', 'true');
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+
+    expect(host.getAttribute('aria-expanded')).toBe('true');
+    expect(host.hasAttribute('aria-haspopup')).toBe(false);
+  });
+});

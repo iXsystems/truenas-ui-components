@@ -227,6 +227,9 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     this._isPinnable();
     if (this._viewInitialized) {
       this._syncAria();
+      // A message that becomes (or stops being) pinnable changes whether there is anything left
+      // for the observer to report - see `_observeHost`.
+      this._observeHost();
     }
   });
 
@@ -242,32 +245,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this._viewInitialized = true;
     this._syncAria();
-
-    const host = this._elementRef.nativeElement as HTMLElement;
-    if (typeof MutationObserver !== 'undefined') {
-      // Three things move underneath this. The inner control can render after view init (@if
-      // branches inside the wrapper swapping, deferred content), and `disabled` can be toggled
-      // on it at any time — which decides whether the pinning click can arrive at all, and so
-      // whether the host advertises itself as a disclosure control. `tabindex` reads the same
-      // way, through `_isHostKeyboardOperable` and through `_ariaTarget`'s `INTERACTIVE_SELECTOR`
-      // match: a control that leaves the tab order stops being one the click can operate.
-      //
-      // The disclosure attributes are watched as well, but for a different reason: to notice the
-      // host writing one of them itself. See `_absorbPopupStateRecords`, which also keeps our own
-      // writes of them from retriggering this. `aria-describedby` stays outside the filter, so
-      // `AriaDescriber` cannot loop it.
-      this._innerObserver = new MutationObserver((records) => {
-        if (this._absorbPopupStateRecords(records)) {
-          this._syncAria();
-        }
-      });
-      this._innerObserver.observe(host, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['disabled', 'aria-disabled', 'tabindex', ...POPUP_STATE_ATTRIBUTES],
-      });
-    }
+    this._observeHost();
 
     // Focus opens the tooltip only when the focus actually came from the keyboard. A plain
     // `focus`/`focusin` listener also fires for programmatic `.focus()` — e.g.
@@ -305,6 +283,67 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     const target = this._ariaTarget();
     this._syncAriaDescription(target);
     this._syncHostPopupState(target);
+  }
+
+  /**
+   * Watches the host for the things `_syncAria` reads out of the DOM rather than out of a signal,
+   * for as long as any of them can still change the answer.
+   *
+   * Three things move underneath it. The inner control can render after view init (`@if` branches
+   * inside the wrapper swapping, deferred content). `disabled`/`aria-disabled` can be toggled on
+   * it at any time, which decides whether the pinning click can arrive at all, and so whether the
+   * host advertises itself as a disclosure control; `tabindex` reads the same way, through
+   * `_isHostKeyboardOperable` and through `_ariaTarget`'s `INTERACTIVE_SELECTOR` match. The
+   * disclosure attributes are watched for a different reason: to notice the host writing one of
+   * them itself. See `_absorbPopupStateRecords`, which also keeps our own writes of them from
+   * retriggering this. `aria-describedby` stays outside the filter, so `AriaDescriber` cannot
+   * loop it.
+   *
+   * None of that can matter on a host that is itself the control (`<button tnTooltip>`,
+   * `tn-icon-button`'s inner button — the overwhelming majority) while its tooltip is a plain
+   * hover one: `_ariaTarget` is the host whatever the subtree does, and the rest is read only on
+   * the way to pinning something. A table rendering hundreds of tooltip'd action buttons would
+   * otherwise carry hundreds of live subtree observers with nothing to report, so those hosts go
+   * unobserved until their message turns pinnable — or until `stick()` pins one anyway, which it
+   * will do on a message the host click never would have.
+   */
+  private _observeHost(): void {
+    const host = this._elementRef.nativeElement as HTMLElement;
+    const needed = this._isPinnable() || this._isSticky || !host.matches(INTERACTIVE_SELECTOR);
+
+    if (!needed) {
+      this._disconnectHostObserver();
+      return;
+    }
+
+    if (this._innerObserver || typeof MutationObserver === 'undefined') {
+      return;
+    }
+
+    this._innerObserver = new MutationObserver((records) => {
+      if (this._absorbPopupStateRecords(records)) {
+        this._syncAria();
+      }
+    });
+    this._innerObserver.observe(host, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['disabled', 'aria-disabled', 'tabindex', ...POPUP_STATE_ATTRIBUTES],
+    });
+  }
+
+  private _disconnectHostObserver(): void {
+    if (!this._innerObserver) {
+      return;
+    }
+
+    this._innerObserver.disconnect();
+    this._innerObserver = null;
+    // Disconnecting drops records that were already queued, including any for writes of ours that
+    // `_countPopupStateWrite` has credited. Those credits have nothing left to cancel out, and
+    // left in place they would be spent on the host's own writes if the observer came back.
+    this._popupStateSelfWrites = new WeakMap();
   }
 
   /**
@@ -622,7 +661,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     this._repositionSub?.unsubscribe();
     this._focusSub?.unsubscribe();
     this._focusMonitor.stopMonitoring(this._elementRef);
-    this._innerObserver?.disconnect();
+    this._disconnectHostObserver();
     this._removeAriaDescription();
     this._clearHostPopupState();
 
@@ -781,6 +820,9 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
 
     this._attachTooltip();
     this._isSticky = true;
+    // Before the write below, so the record it produces has a ledger credit waiting for it: a
+    // host whose message is not pinnable is unobserved until `stick()` pins it anyway.
+    this._observeHost();
     this._syncHostPopupState(this._ariaTarget());
     this._tooltipInstance?.setInput('sticky', true);
     this._subscribeToEscape();
@@ -1053,7 +1095,10 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
     const wasSticky = this._isSticky;
     this._isSticky = false;
     if (wasSticky) {
+      // Sync first, then re-decide: the attributes come off while the observer is still there to
+      // absorb the records for them.
       this._syncHostPopupState(this._ariaTarget());
+      this._observeHost();
     }
 
     this._repositionSub?.unsubscribe();
