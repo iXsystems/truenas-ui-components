@@ -307,6 +307,44 @@ describe('tn-toast live-region timing (#195)', () => {
       expect(renderedRegion()).toBe(el);
       expect(messageOf(el)).toBe('Save failed');
     }));
+
+    // An action label is set before the host is attached, so this region is
+    // NOT empty at insertion — and it does not need to be. What a reader
+    // reports is the mutation, and the message still arrives as one.
+    it('announces a toast whose region already carries an action label', fakeAsync(() => {
+      service.open('Item deleted', 'Undo', { duration: 0 });
+
+      const el = renderedRegion();
+      expect(el.querySelector('.tn-toast__action')?.textContent?.trim()).toBe('Undo');
+      expect(messageOf(el)).toBe('');
+
+      nextFrame();
+
+      expect(renderedRegion()).toBe(el);
+      expect(messageOf(el)).toBe('Item deleted');
+    }));
+  });
+
+  describe('a toast dismissed before its frame never announces', () => {
+    it('leaves a superseded toast silent, and announces the one that replaced it', fakeAsync(() => {
+      service.open('First', { duration: 0 });
+      const first = renderedRegion();
+
+      // Dismisses the first synchronously, while its frame is still pending.
+      service.open('Second', { duration: 0 });
+
+      nextFrame();
+
+      const regions = document.querySelectorAll('.tn-toast');
+      expect(regions).toHaveLength(2);
+      // The first is still attached — it is removed 200ms later — so a reader
+      // is still watching it. Populating it now would announce a message the
+      // user was never shown.
+      expect(messageOf(first)).toBe('');
+      expect(messageOf(regions[1] as HTMLElement)).toBe('Second');
+
+      tick(200);
+    }));
   });
 
   describe('the visible behaviour is unchanged', () => {

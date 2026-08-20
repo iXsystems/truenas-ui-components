@@ -130,7 +130,7 @@ export class TnToastService {
     // Announce, and animate in. The message rides the same frame as the enter
     // transition because that is the frame the toast becomes visible in: it is
     // `opacity: 0` until `visible`, so the empty region above is never seen.
-    requestAnimationFrame(() => {
+    const frame = requestAnimationFrame(() => {
       instance.message.set(message);
       instance.visible.set(true);
     });
@@ -144,6 +144,11 @@ export class TnToastService {
     // Cleanup on dismiss
     ref.afterDismissed().subscribe(() => {
       if (timeout) { clearTimeout(timeout); }
+      // Dropping the frame is what keeps the deferral above from outliving the
+      // toast: `open()` twice in one task dismisses the first synchronously,
+      // and a pending frame would then populate a live region belonging to a
+      // toast already on its way out — announcing a message nobody was shown.
+      cancelAnimationFrame(frame);
       instance.visible.set(false);
 
       // Wait for animation to complete before removing
