@@ -404,7 +404,12 @@ describe('TnCardComponent action tooltips', () => {
       // Assert on the overlay tooltip element specifically — AriaDescriber keeps the
       // message in a hidden description container at all times, so a body-text check
       // would pass whether or not the focus actually showed the tooltip.
-      expect(document.querySelector('[role="tooltip"]')).toBeNull();
+      //
+      // `.tn-tooltip` is what distinguishes the two, not `[role="tooltip"]`: the
+      // overlay dropped that role in #203 precisely so it stops duplicating the
+      // describer's node in the accessibility tree. The describer's container carries
+      // CDK's own classes and never this one, so the selector is still exclusive.
+      expect(document.querySelector('.tn-tooltip')).toBeNull();
 
       // The directive host is the <tn-button> wrapper; FocusMonitor monitors descendants,
       // so focusing the inner control still opens the tooltip — but only for keyboard focus.
@@ -412,8 +417,12 @@ describe('TnCardComponent action tooltips', () => {
       jest.runAllTimers();
       fixture.detectChanges();
 
-      const tooltip = document.querySelector('[role="tooltip"]');
-      expect(tooltip?.textContent).toContain('WebShare service is not running');
+      const tooltip = document.querySelector('.tn-tooltip');
+      // Asserted non-null first: `tooltip?.textContent` on a missing overlay is
+      // `undefined`, which fails `toContain` as a matcher error rather than as
+      // "the tooltip did not show" — the failure this test exists to report.
+      expect(tooltip).not.toBeNull();
+      expect(tooltip!.textContent).toContain('WebShare service is not running');
     } finally {
       jest.useRealTimers();
     }

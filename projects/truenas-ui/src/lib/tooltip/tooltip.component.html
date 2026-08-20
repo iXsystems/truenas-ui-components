@@ -1,7 +1,6 @@
 <div
   class="tn-tooltip"
-  role="tooltip"
-  [id]="id()"
-  [attr.aria-hidden]="false"
+  aria-hidden="true"
+  [attr.id]="id() || null"
   [innerHTML]="message()">
 </div>
