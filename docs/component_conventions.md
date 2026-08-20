@@ -470,6 +470,43 @@ in `chip-a11y.spec.ts`, and the unlabelled checkbox in
 `slide-toggle-a11y.spec.ts`. It is the only assertion that shows axe failing
 rather than passing, and it doubles as the control for `axeResult()` itself.
 
+### Measuring colour contrast in a spec
+
+**Use `lib/a11y/contrast-testing.ts`. Do not write the formula again.** Three
+cycles working one `tn-radio` contrast bug wrote seven throwaway implementations
+of it in a day, in two languages (#197). Nothing about the computation varies per
+ticket, and each hand-roll is another chance to get a step wrong in the direction
+that makes a failing colour look passing.
+
+**`themePalettes(css)` reads the tokens; `contrast()` measures one against the
+surface it renders on.** That pairing — a token and the background behind it — is
+the form every one of those scripts actually needed. Pass the text of
+`styles/themes.css`; the module takes CSS rather than reading the file, so the
+resolution rules can be covered against a fixture that no theme retune breaks.
+
+**`declares()` and `color()` answer different questions.** `color()` resolves the
+way the browser does, following `var()` chains and inheriting from `:root`;
+`declares()` says whether *this* block sets the token. A token tuned per theme —
+`--tn-error-text` is, since it exists to clear 4.5:1 against that theme's own
+background — is a defect when a theme inherits `:root`'s value, and only
+`declares()` sees it.
+
+**Never compare a rounded ratio.** `4.4999` formats as `"4.50"`, and a check
+built on the formatted value clears AA on a colour that fails it. `meetsAa()`
+takes the unrounded ratio; `formatRatio()` is for titles and messages only.
+
+**A translucent foreground is composited before it is measured.** Half the
+palette's foreground tokens are `rgba()` — `--tn-fg2` is
+`rgba(255,255,255,0.85)`. Measuring one as if it were opaque reports 16.67:1
+where it renders at 12.30:1. A translucent *background* throws instead: what is
+behind it decides the answer, and only the caller knows what that is.
+
+**This is not axe's `color-contrast` rule, and cannot be.** That rule needs a
+layout engine to find what is actually painted behind an element; under jsdom it
+reports `incomplete`, which `axeResult()` treats as an error. What these
+assertions measure is the palette as shipped, against the surface the spec names.
+See `radio-error-contrast.spec.ts` for the shape.
+
 ### Keyboard Navigation
 Support standard keys:
 - **Tab** - Focus navigation

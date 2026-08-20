@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { contrastRatio, formatRatio, meetsAa, themePalettes } from '../a11y/contrast-testing';
 import { TN_THEME_DEFINITIONS } from '../theme/theme.constants';
 
 /**
@@ -16,135 +17,101 @@ import { TN_THEME_DEFINITIONS } from '../theme/theme.constants';
  * real rendering) can't produce a meaningful pass/fail here — it reports
  * "incomplete" rather than checking anything. Computing the ratio directly
  * from the shipped values is the more honest check.
+ *
+ * The maths and the token lookup come from `lib/a11y/contrast-testing.ts`
+ * (#197). They used to be hand-rolled here, which is how seven copies of this
+ * formula got written in a day — see that module for what each copy is a chance
+ * to get wrong.
  */
 
 const THEMES_CSS_PATH = join(__dirname, '../../styles/themes.css');
 const RADIO_SCSS_PATH = join(__dirname, './radio.component.scss');
 
-function hexToRgb(hex: string): [number, number, number] {
-  const clean = hex.replace('#', '');
-  const full = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean;
-  const num = parseInt(full, 16);
-  return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
-}
-
-function relativeLuminance([r, g, b]: [number, number, number]): number {
-  const channel = (c: number) => {
-    const s = c / 255;
-    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-  };
-  const [rl, gl, bl] = [r, g, b].map(channel);
-  return 0.2126 * rl + 0.7152 * gl + 0.0722 * bl;
-}
-
-function contrastRatio(hexA: string, hexB: string): number {
-  const lA = relativeLuminance(hexToRgb(hexA));
-  const lB = relativeLuminance(hexToRgb(hexB));
-  const [lighter, darker] = lA > lB ? [lA, lB] : [lB, lA];
-  return (lighter + 0.05) / (darker + 0.05);
-}
-
-function extractThemeBlocks(css: string): Map<string, string> {
-  const blocks = new Map<string, string>();
-  const blockPattern = /(:root|\.tn-[\w-]+)\s*{([^}]*)}/g;
-  let match: RegExpExecArray | null;
-  while ((match = blockPattern.exec(css)) !== null) {
-    const [, selector, body] = match;
-    if (/--tn-bg1:\s*#/.test(body)) {
-      blocks.set(selector, body);
-    }
-  }
-  return blocks;
-}
-
-function extractVar(body: string, name: string): string | undefined {
-  const match = new RegExp(`${name}:\\s*([^;]+);`).exec(body);
-  return match?.[1].trim();
-}
-
-function resolveColor(rawValue: string, body: string): string | undefined {
-  const varRef = /^var\((--[\w-]+)\)$/.exec(rawValue);
-  if (varRef) {
-    const resolved = extractVar(body, varRef[1]);
-    return resolved ? resolveColor(resolved, body) : undefined;
-  }
-  return rawValue;
-}
+/**
+ * Declared by each theme itself, not inherited from `:root`. `--tn-error-text`
+ * exists to clear 4.5:1 against a particular theme's background, so a theme
+ * falling back to `:root`'s value is measuring a colour that was tuned for a
+ * different surface — `declares` is what sees that, where `color` would resolve
+ * it and report a number.
+ */
+const REQUIRED_TOKENS = ['--tn-bg1', '--tn-bg2', '--tn-error-text'];
 
 interface ThemeCase {
   selector: string;
-  error?: string;
-  bg1?: string;
-  bg2?: string;
-  errorText?: string;
-  bg1Ratio?: number;
-  bg2Ratio?: number;
-  bg1RatioLabel?: string;
-  bg2RatioLabel?: string;
-}
-
-function buildCase(selector: string, body: string): ThemeCase {
-  const bg1 = extractVar(body, '--tn-bg1');
-  const bg2 = extractVar(body, '--tn-bg2');
-  const errorTextRaw = extractVar(body, '--tn-error-text');
-  if (!bg1 || !bg2 || !errorTextRaw) {
-    return { selector, error: `${selector} is missing --tn-bg1, --tn-bg2 or --tn-error-text` };
-  }
-  const errorText = resolveColor(errorTextRaw, body);
-  if (!errorText) {
-    return { selector, error: `${selector}'s --tn-error-text (${errorTextRaw}) could not be resolved` };
-  }
-  const bg1Ratio = contrastRatio(errorText, bg1);
-  const bg2Ratio = contrastRatio(errorText, bg2);
-  return {
-    selector,
-    bg1,
-    bg2,
-    errorText,
-    bg1Ratio,
-    bg2Ratio,
-    bg1RatioLabel: bg1Ratio.toFixed(2),
-    bg2RatioLabel: bg2Ratio.toFixed(2),
-  };
+  errorText: string;
+  bg1: string;
+  bg2: string;
+  bg1Ratio: number;
+  bg2Ratio: number;
+  bg1RatioLabel: string;
+  bg2RatioLabel: string;
 }
 
 describe('tn-radio error text contrast (#186)', () => {
   const css = readFileSync(THEMES_CSS_PATH, 'utf8');
-  const themeBlocks = extractThemeBlocks(css);
+  const palettes = themePalettes(css);
 
-  // Derived from the theme registry rather than hardcoded: extractThemeBlocks
-  // silently drops a block whose --tn-bg1 isn't a hex literal (e.g. rgb()),
-  // so a fixed expected count could stay coincidentally correct while a
-  // themed surface goes unmeasured. Tying it to TN_THEME_DEFINITIONS plus
-  // :root, and naming every registered selector below, fails on exactly
-  // which surface went missing instead.
+  // Derived from the theme registry rather than hardcoded: a themed surface
+  // that stops being recognised — a renamed class, a block that drops
+  // `--tn-bg1` — would otherwise go unmeasured while every remaining case still
+  // passed. Tying the count to TN_THEME_DEFINITIONS plus :root, and naming every
+  // registered selector below, fails on exactly which surface went missing.
   const expectedSelectors = [':root', ...TN_THEME_DEFINITIONS.map((theme) => `.${theme.className}`)];
 
   it('found every registered themed surface in themes.css', () => {
-    expect(themeBlocks.size).toBe(expectedSelectors.length);
+    expect(palettes).toHaveLength(expectedSelectors.length);
   });
 
   it.each(expectedSelectors)('%s is a themed surface found in themes.css', (selector) => {
-    expect(themeBlocks.has(selector)).toBe(true);
+    expect(palettes.map((palette) => palette.selector)).toContain(selector);
   });
 
-  const cases = Array.from(themeBlocks.entries()).map(([selector, body]) => buildCase(selector, body));
+  const declarations = palettes.map((palette) => ({
+    selector: palette.selector,
+    missing: REQUIRED_TOKENS.filter((token) => !palette.declares(token)),
+  }));
 
-  it.each(cases)('$selector defines --tn-bg1, --tn-bg2 and --tn-error-text', (c) => {
-    expect(c.error).toBeUndefined();
+  it.each(declarations)('$selector declares --tn-bg1, --tn-bg2 and --tn-error-text itself', ({ missing }) => {
+    expect(missing).toEqual([]);
   });
 
-  it.each(cases.filter((c) => !c.error))(
-    '$selector: $errorText on --tn-bg1 ($bg1) measures $bg1RatioLabel : 1',
+  // Only the surfaces that passed the check above are measured — a palette
+  // missing a token has already failed, and measuring it would add a second
+  // failure saying the same thing in worse words. If that leaves nothing to
+  // measure, `it.each` errors on the empty array rather than reporting a suite
+  // with no contrast cases in it as green.
+  const cases: ThemeCase[] = palettes
+    .filter((palette) => REQUIRED_TOKENS.every((token) => palette.declares(token)))
+    .map((palette) => {
+      const bg1Ratio = palette.contrast('--tn-error-text', '--tn-bg1');
+      const bg2Ratio = palette.contrast('--tn-error-text', '--tn-bg2');
+      return {
+        selector: palette.selector,
+        errorText: palette.color('--tn-error-text'),
+        bg1: palette.color('--tn-bg1'),
+        bg2: palette.color('--tn-bg2'),
+        bg1Ratio,
+        bg2Ratio,
+        bg1RatioLabel: formatRatio(bg1Ratio),
+        bg2RatioLabel: formatRatio(bg2Ratio),
+      };
+    });
+
+  // `normal`, not `large`: `.tn-radio__error` is 12px, well under the 18pt (or
+  // 14pt bold) that AA counts as large text, so 4.5:1 applies rather than 3:1.
+  // The measured ratio is in each case's title, so a failure names the colour
+  // and the number it came to as well as the theme it belongs to.
+  it.each(cases)(
+    '$selector: $errorText on --tn-bg1 ($bg1) measures $bg1RatioLabel',
     ({ bg1Ratio }) => {
-      expect(bg1Ratio).toBeGreaterThanOrEqual(4.5);
+      expect(meetsAa(bg1Ratio, 'normal')).toBe(true);
     }
   );
 
-  it.each(cases.filter((c) => !c.error))(
-    '$selector: $errorText on --tn-bg2 ($bg2) measures $bg2RatioLabel : 1',
+  it.each(cases)(
+    '$selector: $errorText on --tn-bg2 ($bg2) measures $bg2RatioLabel',
     ({ bg2Ratio }) => {
-      expect(bg2Ratio).toBeGreaterThanOrEqual(4.5);
+      expect(meetsAa(bg2Ratio, 'normal')).toBe(true);
     }
   );
 
@@ -157,7 +124,8 @@ describe('tn-radio error text contrast (#186)', () => {
     // repo's own themes.css: :root already declares --tn-error-text there,
     // and a theme class that omits the property has nothing to compete with
     // that declaration, so such a theme must set --tn-error-text itself
-    // rather than relying on the fallback.
+    // rather than relying on the fallback. That is what the `declares` cases
+    // above hold every theme to.
     const chainMatch = /--tn-error-text,\s*var\(--tn-red,\s*(#[0-9a-fA-F]{3,6})\)\)/.exec(scss);
     expect(chainMatch).not.toBeNull();
     const literal = chainMatch![1];
@@ -165,7 +133,6 @@ describe('tn-radio error text contrast (#186)', () => {
     // The literal is reached only when neither --tn-error-text nor --tn-red
     // is defined, i.e. no theme stylesheet loaded at all — the surface that
     // IS reachable there is the browser's UA default: white.
-    const ratio = contrastRatio(literal, '#ffffff');
-    expect(ratio).toBeGreaterThanOrEqual(4.5);
+    expect(meetsAa(contrastRatio(literal, '#ffffff'), 'normal')).toBe(true);
   });
 });
