@@ -68,7 +68,16 @@ describe('tn-slide-toggle accessibility (#189)', () => {
     return fixture.nativeElement.querySelector('.tn-slide-toggle__label-text');
   }
 
-  /** Every element a Tab press would stop on, in document order. */
+  /**
+   * The focusable elements this component renders, in document order.
+   *
+   * Deliberately NOT a general tab-order implementation: it does not check
+   * visibility, does not handle `contenteditable` or `<summary>`, and treats any
+   * non-negative `tabindex` alike. It is sound for the markup under test —
+   * one input and one span — and stating that is cheaper than a correct
+   * implementation nothing else would use. jsdom has no layout, so a visibility
+   * check here could not be honest anyway.
+   */
   function tabStops(): HTMLElement[] {
     const candidates = fixture.nativeElement.querySelectorAll(
       'a[href], button, input, select, textarea, [tabindex]'
@@ -178,6 +187,20 @@ describe('tn-slide-toggle accessibility (#189)', () => {
 
       expect(input().checked).toBe(false);
       expect(host.changeCount).toBe(2);
+    });
+
+    // The removed onLabelClick() opened with `if (!this.isDisabled() ...)`. That
+    // guard is now the native one — a <label> does not forward a click to a
+    // disabled control — so this covers the branch the explicit check used to.
+    it('does nothing when the toggle is disabled', () => {
+      host.disabled.set(true);
+      fixture.detectChanges();
+
+      labelText()!.click();
+      fixture.detectChanges();
+
+      expect(input().checked).toBe(false);
+      expect(host.changeCount).toBe(0);
     });
   });
 });
