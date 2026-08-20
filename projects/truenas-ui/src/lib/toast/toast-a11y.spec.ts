@@ -5,6 +5,7 @@ import axe from 'axe-core';
 import { TnToastComponent } from './toast.component';
 import { TN_TOAST_ANNOUNCE_DELAY_MS, TnToastService } from './toast.service';
 import { TnToastType } from './toast.types';
+import { liveSources, politeness } from '../a11y/live-region-testing';
 import { TnIconTesting } from '../icon/icon-testing';
 
 /**
@@ -19,10 +20,12 @@ import { TnIconTesting } from '../icon/icon-testing';
  * ---------------------------------------------------------------------
  * The defect was two sources disagreeing, so a test naming one attribute would
  * pass just as happily on markup that reintroduced the other. `politeness()`
- * below therefore resolves what a screen reader would resolve — implicit from
- * the role, explicit from `aria-live` — and `liveSources()` counts how many
- * were on offer. One assertion for what it announces, one for there being a
- * single thing saying so.
+ * therefore resolves what a screen reader would resolve — implicit from the
+ * role, explicit from `aria-live` — and `liveSources()` counts how many were on
+ * offer. One assertion for what it announces, one for there being a single
+ * thing saying so. Both come from `../a11y/live-region-testing`, shared with
+ * the banner, radio and checkbox specs (#194) so that no copy of them can drift
+ * into being the lenient one.
  *
  * WHAT AXE DOES NOT CATCH, WHICH IS WHY THE DOM TESTS COME FIRST
  * -------------------------------------------------------------
@@ -37,15 +40,6 @@ import { TnIconTesting } from '../icon/icon-testing';
  * `slide-toggle-a11y.spec.ts` (#189) does: an empty `violations` is also what
  * axe returns when it ran nothing at all.
  */
-
-/** Politeness each live-region role implies, per ARIA 1.2. */
-const IMPLICIT_POLITENESS: Record<string, string> = {
-  alert: 'assertive',
-  status: 'polite',
-  log: 'polite',
-  marquee: 'off',
-  timer: 'off',
-};
 
 describe('tn-toast accessibility (#190)', () => {
   let fixture: ComponentFixture<TnToastComponent>;
@@ -69,41 +63,6 @@ describe('tn-toast accessibility (#190)', () => {
     component.type.set(type);
     fixture.detectChanges();
     return fixture.nativeElement.querySelector('.tn-toast') as HTMLElement;
-  }
-
-  /**
-   * Every attribute on `el` that declares a politeness, as `attr=value` pairs.
-   *
-   * A live-region ROLE counts as one of them: that is the whole point of #190,
-   * where the second source was implicit and so easy to leave in place. A role
-   * that is not a live region (or none at all) contributes nothing.
-   */
-  function liveSources(el: HTMLElement): string[] {
-    const sources: string[] = [];
-    const role = el.getAttribute('role');
-    if (role !== null && role in IMPLICIT_POLITENESS) {
-      sources.push(`role=${role}`);
-    }
-    const live = el.getAttribute('aria-live');
-    if (live !== null) {
-      sources.push(`aria-live=${live}`);
-    }
-    return sources;
-  }
-
-  /**
-   * What a screen reader resolves the politeness to.
-   *
-   * An explicit `aria-live` beats the role's implicit value, which is exactly
-   * how the broken markup turned an alert into a polite one.
-   */
-  function politeness(el: HTMLElement): string {
-    const live = el.getAttribute('aria-live');
-    if (live !== null) {
-      return live;
-    }
-    const role = el.getAttribute('role');
-    return (role !== null && IMPLICIT_POLITENESS[role]) || 'off';
   }
 
   /**
@@ -147,11 +106,17 @@ describe('tn-toast accessibility (#190)', () => {
   });
 
   describe('politeness follows the toast type', () => {
-    it('interrupts for an error, which is the case that needs to', () => {
-      expect(politeness(region(TnToastType.Error))).toBe('assertive');
-    });
+    // `warning` interrupts as of #194, where it was the divergence between this
+    // component and the banner. The reason is in `../a11y/live-region.ts`; what
+    // is asserted here is only that the component obeys it.
+    it.each([TnToastType.Error, TnToastType.Warning])(
+      'interrupts for a %s toast, which is a case that needs to',
+      (type) => {
+        expect(politeness(region(type))).toBe('assertive');
+      }
+    );
 
-    it.each([TnToastType.Info, TnToastType.Success, TnToastType.Warning])(
+    it.each([TnToastType.Info, TnToastType.Success])(
       'does not interrupt for a %s toast',
       (type) => {
         expect(politeness(region(type))).toBe('polite');
@@ -199,9 +164,9 @@ describe('tn-toast accessibility (#190)', () => {
  * set `message` on the component instance and only then appended the host, so
  * the region and its text entered the DOM in one mutation and there was no
  * change to report. `role="alert"` survives that — readers special-case an
- * alert appearing already populated — but `role="status"`, which info, success
- * and warning toasts carry, is announced unreliably that way and on several
- * readers not at all.
+ * alert appearing already populated — but `role="status"`, which info and
+ * success toasts carry (warning joined the alerts in #194), is announced
+ * unreliably that way and on several readers not at all.
  *
  * WHY THESE ASSERTIONS ARE PAIRED, AND READ THE SAME ELEMENT TWICE
  * ---------------------------------------------------------------
@@ -277,7 +242,7 @@ describe('tn-toast live-region timing (#195)', () => {
   }
 
   describe('the region is inserted empty and populated afterwards', () => {
-    it.each([TnToastType.Info, TnToastType.Success, TnToastType.Warning])(
+    it.each([TnToastType.Info, TnToastType.Success])(
       'gives a polite %s toast a content change to announce',
       fakeAsync((type: TnToastType) => {
         service.open('Changes saved', { type, duration: 0 });
@@ -296,21 +261,25 @@ describe('tn-toast live-region timing (#195)', () => {
       })
     );
 
-    // Error toasts were never the broken case, and the deferral does not cost
+    // Alert toasts were never the broken case, and the deferral does not cost
     // them anything: a change to an `alert` region is announced just as its
-    // populated insertion was. Asserted because it is what #195 must not break.
-    it('keeps an error toast announcing, on the role that interrupts', fakeAsync(() => {
-      service.open('Save failed', { type: TnToastType.Error, duration: 0 });
+    // populated insertion was. Asserted because it is what #195 must not break
+    // — and re-run for `warning`, which #194 moved onto this role.
+    it.each([TnToastType.Error, TnToastType.Warning])(
+      'keeps a %s toast announcing, on the role that interrupts',
+      fakeAsync((type: TnToastType) => {
+        service.open('Save failed', { type, duration: 0 });
 
-      const el = renderedRegion();
-      expect(el.getAttribute('role')).toBe('alert');
-      expect(messageOf(el)).toBe('');
+        const el = renderedRegion();
+        expect(el.getAttribute('role')).toBe('alert');
+        expect(messageOf(el)).toBe('');
 
-      announceStep();
+        announceStep();
 
-      expect(renderedRegion()).toBe(el);
-      expect(messageOf(el)).toBe('Save failed');
-    }));
+        expect(renderedRegion()).toBe(el);
+        expect(messageOf(el)).toBe('Save failed');
+      })
+    );
 
     // An action label is set before the host is attached, so this region is
     // NOT empty at insertion — and it does not need to be. What a reader

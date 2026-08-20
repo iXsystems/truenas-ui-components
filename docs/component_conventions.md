@@ -410,6 +410,24 @@ Add when semantic HTML is insufficient:
 </button>
 ```
 
+### Live Regions
+
+**Declare politeness exactly once.** A live-region role implies one — `alert` is
+assertive, `status` is polite — and an explicit `aria-live` on the same element
+*overrides* it. Setting both is not redundant, it is a contradiction, and it is
+the defect fixed in banner, radio, checkbox and toast (#190, #194). Prefer the
+role and leave `aria-live` off; there is then no second attribute to disagree.
+
+**A component whose politeness follows a severity takes it from
+`lib/a11y/live-region.ts`.** `tnLiveRegionRole(severity)` is the single place
+deciding which severities interrupt — banner and toast disagreed about `warning`
+until it existed. Do not restate the mapping in a `computed`.
+
+**Assert the RESOLVED politeness, not an attribute.** A spec naming one source
+passes just as happily on markup that reintroduces the other. Use `liveSources()`
+and `politeness()` from `lib/a11y/live-region-testing.ts`; see
+`banner-a11y.spec.ts` for the shape.
+
 ### Keyboard Navigation
 Support standard keys:
 - **Tab** - Focus navigation

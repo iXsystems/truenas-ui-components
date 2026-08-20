@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, signal, ViewEncapsulation } from '@angular/core';
 import { TnToastPosition, TnToastType } from './toast.types';
+import { tnLiveRegionRole } from '../a11y/live-region';
 import { tnIconMarker } from '../icon/icon-marker';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective } from '../test-id';
@@ -48,8 +49,12 @@ export class TnToastComponent {
    * announced politely — including `error`, the one type that needs to interrupt.
    * Deriving the role from the type and leaving `aria-live` off keeps a single
    * source: there is no second attribute left to disagree with this one.
+   *
+   * WHICH types get `alert` is shared with banner rather than decided here
+   * (#194): #190 mapped `warning` to `status` while banner mapped it to
+   * `alert`, and `../a11y/live-region.ts` is now the one place that answers it.
    */
-  role = computed(() => (this.type() === TnToastType.Error ? 'alert' : 'status'));
+  role = computed(() => tnLiveRegionRole(this.type()));
 
   onAction: () => void = () => {};
   onDismiss: () => void = () => {};
