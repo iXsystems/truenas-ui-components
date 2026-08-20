@@ -158,6 +158,12 @@ Each theme defines the following CSS custom properties:
 - `--tn-orange`: Secondary warning
 - `--tn-cyan`: Info accent
 
+`--tn-red` is tuned toward the 3:1 UI-component/border minimum (WCAG 1.4.11) in most themes but not all — `.tn-high-contrast`'s `--tn-red` measures 2.94:1 against `--tn-bg1` — and it is not tuned for the 4.5:1 text minimum (WCAG 1.4.3). The other status colors are not tuned toward either threshold. For text — validation messages, inline errors — use the text-safe counterpart instead:
+
+- `--tn-error-text`: Error/validation text, 4.5:1 against `--tn-bg1` and `--tn-bg2` in every theme
+
+A custom theme must define `--tn-error-text` explicitly — omitting it does not fall back to that theme's own `--tn-red`. `:root` always defines `--tn-error-text` (see below). A theme class is applied to the same root element and has the same specificity as `:root`, so a theme class that itself declares `--tn-error-text` would win by source order — but a theme class that omits the property declares nothing to compete with `:root` at all, so `:root`'s value is what applies. The error text then silently renders in the default theme's color instead, which is not guaranteed to be accessible against the new theme's palette.
+
 ---
 
 ## Theme Definitions
