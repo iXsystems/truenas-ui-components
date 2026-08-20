@@ -1,4 +1,5 @@
 import { axeResult } from './axe-testing';
+import * as axeTesting from './axe-testing';
 import * as publicApi from '../../public-api';
 
 /**
@@ -26,10 +27,18 @@ import * as publicApi from '../../public-api';
  * `toast-testing`, which are genuinely for consumers — would pull it into the
  * ng-packagr build and ship it. Nothing else would fail: the library builds,
  * and the break lands on whoever installs the package.
+ *
+ * The names come from the module rather than being restated here, because a
+ * guard keyed to the literal `'axeResult'` covers one name and not the module.
+ * Two ordinary edits would walk out from under it: a second export added here
+ * and re-exported on its own, which this file would never have heard of; and a
+ * rename, where the named import above breaks and gets fixed while a string
+ * literal quietly stops matching anything. That is the same shape — green for a
+ * reason unrelated to the claim — that the rest of this file is about.
  */
 describe('axe-testing is not part of the public API', () => {
-  it('is not re-exported from public-api.ts', () => {
-    expect(Object.keys(publicApi)).not.toContain('axeResult');
+  it('exports nothing that public-api.ts also exports', () => {
+    expect(Object.keys(publicApi).filter((name) => name in axeTesting)).toEqual([]);
   });
 });
 
