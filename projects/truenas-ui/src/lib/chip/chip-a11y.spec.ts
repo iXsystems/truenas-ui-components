@@ -47,16 +47,12 @@ describe('tn-chip accessibility (#188)', () => {
       imports: [TestHostComponent]
     }).compileComponents();
 
+    // TestBed attaches the fixture to the document itself, which axe needs —
+    // it walks up to the document root to decide visibility, and treats a
+    // detached tree as hidden and therefore exempt from every rule below.
     fixture = TestBed.createComponent(TestHostComponent);
     host = fixture.componentInstance;
-    // axe walks up to the document to resolve visibility and duplicate ids, so
-    // the fixture has to be attached rather than reviewed as a detached tree.
-    document.body.appendChild(fixture.nativeElement);
     fixture.detectChanges();
-  });
-
-  afterEach(() => {
-    fixture.nativeElement.remove();
   });
 
   function root(): HTMLElement {
@@ -200,8 +196,13 @@ describe('tn-chip accessibility (#188)', () => {
    * jsdom has no layout engine and Jest does not compile the component's SCSS,
    * so the hit area cannot be measured here (same constraint that made
    * `radio-error-contrast.spec.ts` read the stylesheet directly). Asserting on
-   * which rule owns the padding is the reachable form of the invariant. The
-   * values are matched loosely so retuning the chip's size does not fail this.
+   * which rule owns the padding is the reachable form of the invariant.
+   *
+   * Most of these match loosely — "the body has some non-zero padding" — so
+   * retuning the chip's size does not fail them. The last one is the
+   * exception: it enumerates every padding declaration by value, because its
+   * job is to notice a NEW one, and that cannot be done without naming the
+   * ones already accounted for. Retuning the chip means updating that list.
    */
   describe('the body button owns the padded hit area', () => {
     const scss = readFileSync(join(__dirname, './chip.component.scss'), 'utf8');
