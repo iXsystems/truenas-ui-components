@@ -439,8 +439,15 @@ in the direction that makes a test pass (#196). The correct version is subtle
 enough that writing it again from memory is how the lenient copy gets made.
 
 **Never assert on `violations` alone.** An empty `violations` is also what axe
-returns when it evaluated nothing at all — a detached tree, a renamed rule, an
-upgrade that dropped one. Pair it with `evaluated`.
+returns when it evaluated nothing at all — a detached tree, an upgrade that
+narrows which nodes a rule selects. Pair it with `evaluated`. (A rule that is
+renamed or removed is the one case that stays loud: axe rejects with "Could not
+find configured rule" rather than returning nothing.)
+
+**A rule axe could not decide on is an error, not a pass.** `axeResult()` throws
+on an `incomplete` result attributed to a target, because counted the obvious way
+it satisfies the "axe really ran" half of a guard while contributing nothing to
+the "and found nothing" half — green from both halves at once.
 
 **`evaluated` only means something when it is attributed to the element under
 test.** A rule lands in `passes` if it matched *any* node in the scanned tree, so

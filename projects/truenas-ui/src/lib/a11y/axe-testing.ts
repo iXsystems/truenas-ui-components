@@ -14,8 +14,11 @@ import axe from 'axe-core';
  * WHAT THE SUBTLETY IS
  * --------------------
  * `expect(violations).toEqual([])` is also what axe returns when it evaluated
- * NOTHING — a detached tree it considers hidden, a renamed rule, an upgrade that
- * drops one. So a spec needs a second assertion proving axe actually looked, and
+ * NOTHING — a tree it considers hidden, a rule that no longer matches the
+ * element, an upgrade that changes which nodes a rule selects. (A rule that is
+ * renamed or dropped outright is the one case that does NOT go quiet: axe-core
+ * 4.10.3 rejects with "Could not find configured rule" rather than returning
+ * nothing.) So a spec needs a second assertion proving axe actually looked, and
  * the obvious form of it, "the rule appears in violations ∪ passes ∪
  * incomplete", is vacuous: a rule lands in `passes` if it matched ANY node in
  * the scanned tree, including descendants the spec is not about.
@@ -30,6 +33,17 @@ import axe from 'axe-core';
  * elements the caller names. `elementRef` is what makes that identity-based —
  * without it a node result carries only a CSS selector, and comparing those
  * compares strings.
+ *
+ * INCOMPLETE IS AN ERROR, NOT A PASS
+ * ----------------------------------
+ * axe puts a rule in `incomplete` when it looked and could not decide without a
+ * human. Counted as evaluated-but-not-violated — the obvious reading — that is
+ * the worst of both: it satisfies the "axe really ran" half of a guard while
+ * contributing nothing to the "and found nothing" half, so an axe-core bump that
+ * moves a rule into `incomplete` under jsdom would leave every caller green with
+ * no assertion left standing. So it throws instead. Measured on the callers
+ * today, no rule any of them runs lands there; if one starts to, the spec should
+ * assert on the DOM rather than pretend axe answered.
  *
  * WHAT THIS STILL CANNOT DO
  * -------------------------
@@ -50,16 +64,18 @@ export interface AxeAttribution {
   /**
    * Rules that reported a violation ON one of `targets`.
    *
-   * Violations only. A rule axe placed in `incomplete` — it looked, and could
-   * not decide without a human — is NOT counted here, so it reads as a pass to
-   * every caller while still counting as `evaluated`. That asymmetry is
-   * deliberate but it is a fail-open, so a spec whose rule can return
-   * `incomplete` under jsdom should assert on the DOM instead of on this.
-   * Nothing in the three current callers does: measured with `elementRef`,
-   * every rule they run lands in `violations` or `passes`.
+   * Violations only — a rule axe could not decide on never reaches a caller as
+   * one of these, and never reaches a caller as a pass either, because
+   * `axeResult` throws on it. See INCOMPLETE below.
    */
   violated: string[];
-  /** Rules axe attributed to one of `targets` at all, in any bucket. */
+  /**
+   * Rules axe attributed to one of `targets`, in `violations` or `passes`.
+   *
+   * Not `incomplete`: counting it here is what would let a rule axe could not
+   * decide on satisfy an `evaluated` assertion while contributing nothing to
+   * `violated` — green from both halves of the guard at once.
+   */
   evaluated: string[];
 }
 
@@ -118,9 +134,18 @@ export async function axeResult(
   const touches = (rule: axe.Result): boolean =>
     rule.nodes.some((node) => wanted.includes((node as { element?: Element }).element as HTMLElement));
 
+  const undecided = results.incomplete.filter(touches).map((v) => v.id);
+  if (undecided.length > 0) {
+    throw new Error(
+      `axeResult: axe could not decide ${undecided.join(', ')} on the target `
+      + 'element(s). An incomplete result is neither a pass nor a violation, so '
+      + 'asserting on it either way would be green for no reason — assert on the '
+      + 'DOM instead.'
+    );
+  }
+
   return {
     violated: results.violations.filter(touches).map((v) => v.id),
-    evaluated: [...results.violations, ...results.passes, ...results.incomplete]
-      .filter(touches).map((v) => v.id),
+    evaluated: [...results.violations, ...results.passes].filter(touches).map((v) => v.id),
   };
 }

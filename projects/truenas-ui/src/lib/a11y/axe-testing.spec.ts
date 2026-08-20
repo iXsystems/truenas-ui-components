@@ -127,6 +127,27 @@ describe('axeResult', () => {
         .rejects.toThrow('not inside the scanned root');
     });
 
+    /**
+     * The fail-open this module would otherwise have: read as
+     * evaluated-but-not-violated, an `incomplete` result is green from both
+     * halves of a guard at once — the rule "ran", and it "found nothing".
+     *
+     * `frame-tested` on an `<iframe>` is how to reach it here. It is the one
+     * rule found to return an incomplete result WITH a node attached under
+     * jsdom, which is what this needs: `color-contrast` is the more obvious
+     * candidate and it comes back with an empty node list, so it attributes to
+     * no target and this filter never sees it. That node-less shape is safe on
+     * its own — it reaches neither bucket, so an `evaluated` assertion fails
+     * red — and it is the shape WITH nodes that had to be made loud.
+     */
+    it('rejects a rule axe could not decide on, rather than reporting it as a pass', async () => {
+      root.innerHTML = '<iframe title="A frame" src="about:blank"></iframe>';
+
+      const attempt = axeResult(root, root.querySelector('iframe'), ['frame-tested']);
+
+      await expect(attempt).rejects.toThrow('could not decide');
+    });
+
     it('rejects a target that is in the document but outside the scanned root', async () => {
       const elsewhere = document.createElement('div');
       elsewhere.innerHTML = '<button type="button" aria-label="Close">x</button>';

@@ -136,8 +136,10 @@ describe('tn-chip accessibility (#188)', () => {
      * on the fix.
      *
      * Every assertion above is `toEqual([])`, which is also what axe returns
-     * when it evaluates nothing at all — a renamed rule, an axe upgrade that
-     * drops it, a jsdom change that makes the tree invisible to it. This
+     * when it evaluates nothing at all — an upgrade that narrows which nodes
+     * the rule selects, a jsdom change that makes the tree invisible to it.
+     * (Renaming or dropping the rule outright is the case that does not go
+     * quiet: axe rejects with "Could not find configured rule".) This
      * rebuilds the exact structure the chip had before #188 and requires axe to
      * still object to it, so the guards above cannot quietly go vacuous without
      * this failing first.

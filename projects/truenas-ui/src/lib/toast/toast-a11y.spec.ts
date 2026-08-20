@@ -122,6 +122,25 @@ describe('tn-toast accessibility (#190)', () => {
       expect(violated).toEqual([]);
       expect(evaluated).toContain('aria-roles');
     });
+
+    /**
+     * Positive control, in the shape `chip-a11y.spec.ts` uses. `evaluated`
+     * proves `aria-roles` looked at the toast; it does not prove the rule can
+     * still fail, and `toEqual([])` is what a rule that has quietly stopped
+     * failing returns too. A misspelled role is the defect it exists to catch —
+     * the DOM suite above compares against the two expected spellings, so a
+     * third one would have to be caught here or nowhere.
+     */
+    it('still reports a violation for a role that is not a real one', async () => {
+      const bogus = document.createElement('div');
+      bogus.innerHTML = '<div role="alertt">Save failed</div>';
+      document.body.appendChild(bogus);
+
+      const { violated } = await axeResult(bogus, bogus.querySelector('[role]'), ['aria-roles']);
+      bogus.remove();
+
+      expect(violated).toEqual(['aria-roles']);
+    });
   });
 });
 
