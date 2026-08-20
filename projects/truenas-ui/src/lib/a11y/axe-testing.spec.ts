@@ -82,21 +82,15 @@ describe('axeResult', () => {
       expect(evaluated).toContain('aria-allowed-attr');
     });
 
-    // Identity, not a selector: two elements matching the same CSS path must
-    // not be confused for one another, which is what comparing the `target`
-    // strings axe returns by default would do.
-    it('tells apart two elements a selector cannot', async () => {
-      root.innerHTML =
-        '<div><button type="button" aria-label="One">1</button></div>'
-        + '<div><button type="button" aria-hidden="true" aria-label="">2</button></div>';
-      const first = root.querySelectorAll('button')[0] as HTMLElement;
-      const second = root.querySelectorAll('button')[1] as HTMLElement;
-
-      const firstResult = await axeResult(root, first, ['aria-valid-attr-value']);
-      const secondResult = await axeResult(root, second, ['aria-valid-attr-value']);
-
-      expect(firstResult.evaluated).not.toEqual(secondResult.evaluated);
-    });
+    // There is deliberately no test here that `elementRef` beats comparing
+    // axe's `target` selector strings. Writing one requires two elements axe
+    // would give the SAME selector, and it does not produce one — it
+    // disambiguates siblings with `:nth-child`. A test using two elements with
+    // distinct selectors proves nothing, because a string comparison passes it
+    // too; the first version of this file had exactly that test, asserting
+    // identity and demonstrating none of it. `elementRef` is used because a
+    // caller cannot reconstruct axe's selector for an element it already holds,
+    // which is a reason rather than a testable claim.
   });
 
   /**
@@ -120,6 +114,28 @@ describe('axeResult', () => {
 
       await expect(axeResult(root, [child, null], ['aria-allowed-attr']))
         .rejects.toThrow('not in the DOM');
+    });
+
+    // Non-null is not enough: axe only attributes results to nodes it walked,
+    // so a target outside the scanned root matches nothing for the same reason
+    // an empty list does.
+    it('rejects a target that is detached from the document', async () => {
+      const detached = document.createElement('button');
+      detached.setAttribute('aria-label', 'Close');
+
+      await expect(axeResult(root, detached, ['aria-allowed-attr']))
+        .rejects.toThrow('not inside the scanned root');
+    });
+
+    it('rejects a target that is in the document but outside the scanned root', async () => {
+      const elsewhere = document.createElement('div');
+      elsewhere.innerHTML = '<button type="button" aria-label="Close">x</button>';
+      document.body.appendChild(elsewhere);
+
+      const attempt = axeResult(root, elsewhere.querySelector('button'), ['aria-allowed-attr']);
+
+      await expect(attempt).rejects.toThrow('not inside the scanned root');
+      elsewhere.remove();
     });
   });
 });

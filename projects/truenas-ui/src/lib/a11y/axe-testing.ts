@@ -99,6 +99,15 @@ export async function axeResult(
     if (el === null || el === undefined) {
       throw new Error(`axeResult: target ${i} of ${wanted.length} is not in the DOM`);
     }
+    // Inside the scanned tree, not merely non-null. axe only ever attributes a
+    // result to a node it walked, so a target outside `root` — detached, or
+    // simply in another fixture — matches nothing and returns the same vacuous
+    // pass an empty list would.
+    if (!root.contains(el)) {
+      throw new Error(
+        `axeResult: target ${i} of ${wanted.length} is not inside the scanned root`
+      );
+    }
   });
 
   const results = await axe.run(root, {
