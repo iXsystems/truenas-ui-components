@@ -295,8 +295,10 @@ describe('tn-chip accessibility (#188)', () => {
     });
 
     it.each(['Delete', 'Backspace'])('still emits onClose on %s while close is focused', (key) => {
-      // The handler sits on the wrapper rather than the body button precisely
-      // so the shortcut survives wherever focus is inside the chip.
+      // The handler is bound to the close button as well as the body, rather
+      // than once on the wrapper, precisely so the shortcut survives wherever
+      // focus is inside the chip — the wrapper carries no role and is not
+      // focusable, so it is not a legitimate place to hang a key handler.
       close()!.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
 
       expect(host.closeCount).toBe(1);
