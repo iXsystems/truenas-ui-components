@@ -21,6 +21,7 @@ const fgVars = ['--tn-fg1', '--tn-fg2', '--tn-fg3', '--tn-fg4', '--tn-alt-fg1', 
 const bgVars = ['--tn-bg1', '--tn-bg2', '--tn-bg3', '--tn-alt-bg1', '--tn-alt-bg2'];
 const uiVars = ['--tn-primary', '--tn-primary-txt', '--tn-accent', '--tn-topbar', '--tn-topbar-txt', '--tn-lines'];
 const statusVars = ['--tn-red', '--tn-green', '--tn-yellow', '--tn-orange', '--tn-blue', '--tn-cyan', '--tn-magenta', '--tn-violet'];
+const statusTextVars = ['--tn-error-text'];
 
 function swatchRow(varName: string, type: 'bg' | 'fg'): string {
   if (type === 'bg') {
@@ -103,7 +104,11 @@ export const UIColors: Story = {
 
 export const StatusColors: Story = {
   render: () => ({
-    template: section('Status Colors', statusVars, 'bg'),
+    // --tn-error-text is only guaranteed as a text color against --tn-bg1/--tn-bg2
+    // (see component_styling.md), not as the 3:1 border/component color the other
+    // status vars are for — rendered as a text swatch rather than a bg swatch so
+    // the story doesn't imply it's interchangeable with them.
+    template: section('Status Colors', statusVars, 'bg') + section('Status Text Colors', statusTextVars, 'fg'),
   }),
 };
 
