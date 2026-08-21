@@ -43,8 +43,13 @@
     .tn-stepper__step {
       display: flex;
 
+      // `1 1 auto`, not the `flex: 1` shorthand — that resolves to a basis of 0, which sizes
+      // every item to an equal share of the ROW. Each item is a header plus a connector, so
+      // equal items mean connectors as unequal as the labels are, and a long label squeezed
+      // to fit its share. With `auto` the item starts at its content width and only the free
+      // space is split evenly, which is what the connectors used to split between them.
       &:not(.tn-stepper__step--last) {
-        flex: 1;
+        flex: 1 1 auto;
       }
     }
 
