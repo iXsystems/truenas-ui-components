@@ -1,8 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
 import { TnTooltipComponent } from '../lib/tooltip/tooltip.component';
 import type { TooltipPosition } from '../lib/tooltip/tooltip.directive';
 import { TnTooltipDirective } from '../lib/tooltip/tooltip.directive';
+
+// Load harness documentation
+const harnessDoc = loadHarnessDoc('tooltip');
 
 const meta: Meta = {
   title: 'Components/Tooltip',
@@ -28,6 +33,18 @@ const meta: Meta = {
     tnTooltipHideDelay: {
       control: { type: 'number' },
       description: 'Delay in ms before hiding tooltip'
+    },
+    tnTooltipSticky: {
+      control: 'boolean',
+      description: 'Whether a message containing a link may be pinned open by clicking the host. Enabled by default, and only ever applies to such messages — plain help text always hovers and is never pinnable, so this control has no effect on it. Set it to false to force a message with a link back to hover behaviour. Upgrading: because it defaults to true, an existing tooltip whose message already holds a link switches from hover to click-to-open without any code change.'
+    },
+    tnTooltipCloseAriaLabel: {
+      control: 'text',
+      description: 'Accessible name for the dismiss button rendered in sticky mode'
+    },
+    tnTooltipAriaLabel: {
+      control: 'text',
+      description: 'Accessible name for the panel itself once pinned, where it is announced as a dialog. A short static name rather than the message, which a screen reader reads straight after it.'
     }
   },
 };
@@ -45,7 +62,10 @@ export const Default: Story = {
           [tnTooltipPosition]="tnTooltipPosition"
           [tnTooltipDisabled]="tnTooltipDisabled"
           [tnTooltipShowDelay]="tnTooltipShowDelay"
-          [tnTooltipHideDelay]="tnTooltipHideDelay">
+          [tnTooltipHideDelay]="tnTooltipHideDelay"
+          [tnTooltipSticky]="tnTooltipSticky"
+          [tnTooltipCloseAriaLabel]="tnTooltipCloseAriaLabel"
+          [tnTooltipAriaLabel]="tnTooltipAriaLabel">
         </tn-button>
       </div>
     `,
@@ -63,8 +83,119 @@ export const Default: Story = {
     tnTooltipPosition: 'above' as TooltipPosition,
     tnTooltipDisabled: false,
     tnTooltipShowDelay: 0,
-    tnTooltipHideDelay: 0
+    tnTooltipHideDelay: 0,
+    tnTooltipSticky: true,
+    tnTooltipCloseAriaLabel: 'Close tooltip',
+    tnTooltipAriaLabel: 'Tooltip'
   }
+};
+
+export const Sticky: Story = {
+  render: () => ({
+    template: `
+      <div style="padding: 80px; display: flex; flex-direction: column; gap: 24px; align-items: center;">
+        <tn-button
+          label="Click to pin a tooltip with a link"
+          tnTooltipPosition="below"
+          tnTooltip="Datasets inherit settings from their parent. <a href='https://www.truenas.com/docs/' target='_blank' rel='noopener'>Read the docs</a>">
+        </tn-button>
+
+        <tn-button
+          label="Same message, sticky off"
+          tnTooltip="Datasets inherit settings from their parent. <a href='https://www.truenas.com/docs/' target='_blank' rel='noopener'>Read the docs</a>"
+          [tnTooltipSticky]="false">
+        </tn-button>
+      </div>
+    `,
+    moduleMetadata: {
+      imports: [
+        TnButtonComponent,
+        TnTooltipDirective,
+        TnTooltipComponent
+      ],
+    },
+  }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    // The tooltip renders in a CDK overlay, outside the story canvas.
+    const overlay = within(document.body);
+
+    await userEvent.click(canvas.getByText('Click to pin a tooltip with a link'));
+
+    const dismiss = await overlay.findByRole('button', { name: 'Close tooltip' });
+    await expect(dismiss).toBeInTheDocument();
+
+    await userEvent.click(dismiss);
+    await waitFor(() => expect(document.querySelector('.tn-tooltip')).toBeNull());
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: `
+Tooltips disappear on \`mouseleave\`, which makes any interactive content inside them unreachable.
+Sticky mode fixes that: the tooltip is pinned open, stops being click-through, and gains a dismiss
+button next to the message.
+
+**The message decides, not the input.** A tooltip is pinnable only when its message contains
+something the reader can reach — in practice a link, since the message is sanitized as HTML and
+form controls are stripped out of it before display. Plain help text, which is nearly every
+tooltip, keeps hovering and is never pinned: pinning a sentence the reader can already see costs a
+click and buys nothing. \`tnTooltipSticky\` only narrows that rule; it cannot make plain text
+pinnable.
+
+**A pinnable tooltip opens on click only.** ⚠️ This is a change in behaviour: a message with a
+link no longer appears on hover or on focus at all, because a tooltip that appeared on hover and
+then still had to be clicked made the user chase a target already on screen. Its host is marked
+up as the control that reveals it (\`aria-expanded\`, \`aria-haspopup="dialog"\`,
+\`aria-controls\`) — all three together, or none of them where the host already owns any one for
+something of its own, since between them they describe a single popup.
+
+⚠️ **On upgrade, this applies to tooltips you have already written.** \`tnTooltipSticky\` defaults
+to \`true\`, so any existing message that happens to contain a link flips from hover to
+click-to-open with no code change. Components that forward a caller-supplied message to a
+\`<button>\` are where this shows up — \`<tn-form-field [tooltip]>\`, \`<tn-form-section [tooltip]>\`,
+\`<tn-card>\`'s title and action tooltips and \`<tn-icon-button [tooltip]>\`. Each re-exports the
+flag as a \`tooltipSticky\` input, so \`[tooltipSticky]="false"\` keeps the old behaviour on any of
+them.
+
+The click is additive, not exclusive: the host's own \`(click)\` handler still runs, so a button
+that both acts and pins does both. A host that navigates away should keep its tooltip plain or
+set \`[tnTooltipSticky]="false"\`, and so should one whose click already opens something — a
+\`tnMenuTrigger\` would otherwise raise the panel over its own menu. That is why \`<tn-card>\`'s
+kebab-menu trigger is not in the list above: its tooltip always hovers.
+
+A **disabled** host does not pin — those tooltips fall back to opening on hover, which keeps the
+explanation for *why* the control is disabled visible. The link inside it stays out of reach, as
+it was before pinning existed. A truly disabled control delivers no click to pin with in the first
+place; \`aria-disabled\` is advisory and still dispatches one, so pinning is declined for it
+deliberately rather than by accident.
+
+The same goes for a host that is **not a control** at all (\`<span [tnTooltip]="…">\`, with no
+single interactive element inside it). A pointer can click it, but nothing can focus or activate
+it from the keyboard, and the click is the only way into a pinned panel — so those hosts keep
+hover behaviour too, and carry no disclosure state (\`aria-expanded\` is not valid on a
+\`<span>\`). Put the tooltip on the button or link itself when its message holds a link.
+
+A pinned tooltip is dismissed by clicking the host again, by the dismiss button, by clicking
+outside it, or with Escape. It is not modal and traps nothing — Tab past the dismiss button leaves
+the panel, though not back to the host's neighbourhood: the overlay is the last child of
+\`<body>\`, so Tab from there continues out of the document into the browser's own chrome. Activating the host from the keyboard moves focus into the tooltip,
+so Tab walks its content and then the dismiss button; dismissing hands focus back to the host.
+
+\`\`\`html
+<!-- pinnable: the message holds a link, so clicking the host opens it -->
+<button [tnTooltip]="'See the <a href=\\'/docs\\'>docs</a>'">Help</button>
+
+<!-- always a hover tooltip: plain text is never pinnable, with or without the input -->
+<button tnTooltip="Delete">…</button>
+
+<!-- opt a message with a link back into hover behaviour -->
+<button [tnTooltip]="'See the <a href=\\'/docs\\'>docs</a>'" [tnTooltipSticky]="false">Help</button>
+\`\`\`
+        `,
+      },
+    },
+  },
 };
 
 export const Positions: Story = {
@@ -313,4 +444,21 @@ tooltipText = 'First line\\nSecond line\\nThird line';
       },
     },
   },
+};
+export const ComponentHarness: Story = {
+  tags: ['!dev'],
+  parameters: {
+    docs: {
+      canvas: {
+        hidden: true,
+        sourceState: 'none'
+      },
+      description: {
+        story: harnessDoc || ''
+      }
+    },
+    controls: { disable: true },
+    layout: 'fullscreen'
+  },
+  render: () => ({ template: '' })
 };

@@ -341,6 +341,53 @@ describe('TnButtonComponent', () => {
 @Component({
   standalone: true,
   imports: [TnButtonComponent],
+  template: `<tn-button label="First" /><tn-button label="Second" />`,
+})
+class TwoButtonsComponent {}
+
+describe('TnButtonComponent focus delegation', () => {
+  it('focuses each host\'s own inner control, even with focus patched on the prototype', async () => {
+    // Storybook's interactions addon redefines HTMLElement.prototype.focus as an accessor pair.
+    // A `host.focus = fn` assignment is then routed to that page-wide setter instead of creating
+    // an own property, so the last button rendered captures every .focus() call on the page.
+    const original = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'focus');
+    let currentFocus = HTMLElement.prototype.focus;
+    Object.defineProperty(HTMLElement.prototype, 'focus', {
+      configurable: true,
+      get: () => currentFocus,
+      set: (value: typeof currentFocus) => { currentFocus = value; },
+    });
+
+    try {
+      await TestBed.configureTestingModule({
+        imports: [TwoButtonsComponent],
+        providers: [provideRouter([])],
+      }).compileComponents();
+
+      const local = TestBed.createComponent(TwoButtonsComponent);
+      document.body.appendChild(local.nativeElement);
+      local.detectChanges();
+
+      const [firstHost, secondHost] = Array.from(
+        local.nativeElement.querySelectorAll('tn-button'),
+      ) as HTMLElement[];
+
+      firstHost.focus();
+      expect(document.activeElement).toBe(firstHost.querySelector('button'));
+
+      secondHost.focus();
+      expect(document.activeElement).toBe(secondHost.querySelector('button'));
+
+      local.nativeElement.remove();
+    } finally {
+      Object.defineProperty(HTMLElement.prototype, 'focus', original!);
+    }
+  });
+});
+
+@Component({
+  standalone: true,
+  imports: [TnButtonComponent],
   template: `<tn-button label="Open" [disabled]="disabled()" (click)="clicks = clicks + 1" />`,
 })
 class ClickHostComponent {

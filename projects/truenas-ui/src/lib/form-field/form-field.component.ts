@@ -16,6 +16,7 @@ import type { TnFormFieldErrorMessages } from './form-field.errors';
 import { TnIconComponent } from '../icon/icon.component';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import { plainTextMessage } from '../tooltip/interactive-content';
 import { TnTooltipDirective } from '../tooltip/tooltip.directive';
 import type { TooltipPosition } from '../tooltip/tooltip.directive';
 
@@ -90,6 +91,22 @@ export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContex
   tooltip = input<string>('');
   /** Placement of the tooltip relative to its help icon. */
   tooltipPosition = input<TooltipPosition>('above');
+  /**
+   * Whether a tooltip message holding a link may be pinned open by clicking the help button (see
+   * `tnTooltipSticky`). On by default, like the directive.
+   *
+   * It does not make plain tooltips pinnable — field help is nearly always plain text, and that
+   * keeps hovering. Set it to false only to force a message that does hold a link back to hover
+   * behaviour, accepting that the link is then unreachable.
+   */
+  tooltipSticky = input<boolean>(true);
+
+  /**
+   * Accessible name for the help button, which is icon-only and so has nothing else to be named
+   * by. The message is what the button is for, but it may hold markup — a link is the whole point
+   * of `tooltipSticky` — and `aria-label` takes plain text, so the tags come off first.
+   */
+  protected readonly tooltipAriaLabel = computed(() => plainTextMessage(this.tooltip()));
 
   /**
    * Per-field overrides for validation messages, keyed by error key. Values may

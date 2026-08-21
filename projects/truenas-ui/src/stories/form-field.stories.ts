@@ -83,6 +83,10 @@ When used with Angular reactive forms, the form field automatically:
       options: ['above', 'below', 'left', 'right', 'before', 'after'],
       description: 'Placement of the tooltip relative to its help icon.',
     },
+    tooltipSticky: {
+      control: 'boolean',
+      description: 'Whether a tooltip message holding a link may be pinned open by clicking the help button. On by default, and only ever applies to such messages — plain field help, which is nearly every one, keeps hovering. Set it to false to force a message with a link back to hover behaviour, accepting that the link is then unreachable.',
+    },
     errorMessages: {
       control: 'object',
       description: 'Per-field overrides for validation messages, keyed by error key. Values are a string or a function receiving the error detail. Takes precedence over the app-wide TN_FORM_FIELD_ERRORS resolver and the built-in defaults.',
@@ -368,6 +372,47 @@ export const WithTooltip: Story = {
     tooltipPosition: "below",
     testId: 'purpose-field',
   },
+};
+
+export const WithPinnableTooltip: Story = {
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-form-field
+        [label]="label"
+        [hint]="hint"
+        [required]="required"
+        [testId]="testId"
+        [tooltip]="tooltip"
+        [tooltipPosition]="tooltipPosition"
+        [tooltipSticky]="tooltipSticky"
+        [subscriptSizing]="subscriptSizing">
+        <tn-input placeholder="tank/dataset" />
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnInputComponent],
+    },
+  }),
+  args: {
+    label: 'Dataset',
+    tooltip: 'Snapshots are read-only. <a href="https://www.truenas.com/docs/" target="_blank" rel="noopener">Read the docs</a>',
+    tooltipPosition: 'above',
+    tooltipSticky: true,
+    testId: 'dataset-field',
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: `
+Field help that holds a link is opened by clicking the help button rather than on hover, so the
+link can be reached. \`tooltipSticky\` is the way out of that: set it to \`false\` and the message
+goes back to appearing on hover, with the link out of reach. It cannot work the other way round —
+plain help text is never pinnable, whatever this is set to.
+`
+      }
+    }
+  }
 };
 
 export const WithCheckbox: Story = {

@@ -150,6 +150,9 @@ export class TnFormFieldHarness extends ComponentHarness {
   /**
    * Gets the tooltip message (read from the trigger's accessible label).
    *
+   * A message holding markup — a link, say — comes back as the text a screen reader hears, since
+   * that is what the label carries; assert against the message's text, not its tags.
+   *
    * @returns Promise resolving to the tooltip text, or null if no tooltip.
    *
    * @example
