@@ -40,13 +40,20 @@
     </div>
   }
 
-  <!-- Panel -->
+  <!--
+    Panel. `cdkTrapFocus` keeps Tab inside it while it is open; what moves focus
+    IN on open is `tnFocusOnOpen` in the component, not
+    `[cdkTrapFocusAutoCapture]`, which used to be here and could silently do
+    nothing (#227). `tabindex="-1"` is what makes this element the target it
+    focuses — see `../a11y/initial-focus.ts` for why the container and not the
+    first control inside it.
+  -->
   <div
+    #panel
     class="tn-side-panel__panel"
     tabindex="-1"
     cdkTrapFocus
     [style.width]="width()"
-    [cdkTrapFocusAutoCapture]="open()"
     (transitionend)="onTransitionEnd($event)"
     (keydown)="onKeydown($event)">
 

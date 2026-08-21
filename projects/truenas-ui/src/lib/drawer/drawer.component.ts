@@ -1,8 +1,10 @@
 import { A11yModule } from '@angular/cdk/a11y';
 import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
-import type { ElementRef, OnDestroy } from '@angular/core';
+import type { OnDestroy } from '@angular/core';
 import {
   Component,
+  ElementRef,
+  Injector,
   computed,
   effect,
   inject,
@@ -14,6 +16,7 @@ import {
   afterNextRender,
 } from '@angular/core';
 import { tnAccessibleName } from '../a11y/accessible-name';
+import { tnFocusOnOpen } from '../a11y/initial-focus';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 import { tnTransitionLifecycle } from '../utils/transition-lifecycle';
 
@@ -41,6 +44,25 @@ export type TnDrawerPosition = 'start' | 'end';
  */
 export const TN_DRAWER_DEFAULT_LABEL = 'Drawer';
 
+/**
+ * A drawer, which is two different things by `mode`: in `side` it is
+ * persistent navigation beside the page's content, and in `over` it is a modal
+ * dialog with focus trapped in it.
+ *
+ * FOCUS ON OPEN, IN `over` MODE ONLY
+ * ----------------------------------
+ * An `over` drawer moves focus to the panel container when it opens, whatever
+ * you projected into it, so that a screen reader announces the dialog it has
+ * just entered before any control in it. A `side` drawer does not: navigation
+ * that appears beside the content must not take focus from the page.
+ *
+ * **`[cdkFocusInitial]` is not honoured** (#227). It used to be, through the
+ * CDK auto-capture this replaced, and `cdkTrapFocus` is still on the panel — so
+ * the marker looks like it should work and does not. To focus a control of your
+ * own, focus it yourself once the drawer is open; the component leaves focus
+ * alone as soon as it is inside the panel. `lib/a11y/initial-focus.ts` holds
+ * the reasoning for capturing the container rather than a control.
+ */
 @Component({
   selector: 'tn-drawer',
   standalone: true,
@@ -57,6 +79,16 @@ export const TN_DRAWER_DEFAULT_LABEL = 'Drawer';
 })
 export class TnDrawerComponent implements OnDestroy {
   private readonly document = inject(DOCUMENT);
+
+  /**
+   * The host, which contains the `side`-mode panel. The `over`-mode one is
+   * portaled out to `document.body`, so "does this drawer hold focus" is a
+   * question about both this and `overlayRef`.
+   */
+  private readonly hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  /** For the `afterNextRender` an effect below schedules, outside injection context. */
+  private readonly injector = inject(Injector);
 
   /** Whether the drawer sits alongside content ('side') or overlays it ('over') */
   mode = input<TnDrawerMode>('side');
@@ -114,6 +146,13 @@ export class TnDrawerComponent implements OnDestroy {
   /** Reference to the overlay element (portaled to body in over mode) */
   protected overlayRef = viewChild<ElementRef>('overlay');
 
+  /**
+   * The `over`-mode panel, which is what focus moves to when a modal drawer
+   * opens. Optional rather than required: it lives inside an `@if` on the mode,
+   * so a `side` drawer never renders it.
+   */
+  private overPanelRef = viewChild<ElementRef<HTMLElement>>('overPanel');
+
   /** Focus trap should be active only in 'over' mode when open */
   protected trapFocus = computed(() => this.mode() === 'over' && this.opened());
 
@@ -168,6 +207,14 @@ export class TnDrawerComponent implements OnDestroy {
   );
 
   constructor() {
+    // Moves focus onto the panel when a MODAL drawer opens (#227) — `trapFocus`
+    // rather than `opened`, because a `side` drawer is navigation the page keeps
+    // beside its content and must not steal focus when it appears. This is the
+    // half `[cdkTrapFocusAutoCapture]` only kept when the drawer happened to
+    // hold a tabbable element; `../a11y/initial-focus.ts` holds the reasoning
+    // and the timing, and `restoreFocus` below is the return leg.
+    tnFocusOnOpen(this.trapFocus, () => this.overPanelRef()?.nativeElement);
+
     // Capture focus before opening in over mode, and restore it on close
     effect(() => {
       const opened = this.opened();
@@ -190,8 +237,51 @@ export class TnDrawerComponent implements OnDestroy {
         // `over` to `side` WHILE OPEN — a responsive layout crossing its
         // breakpoint — fails the first test without having closed, and would
         // otherwise have focus yanked out of it and back to whatever opened it.
+        // That switch owes a restore only in the one case where the teardown
+        // orphaned focus, which is the effect below, not this branch.
         this.restoreFocus();
       }
+    });
+
+    // A drawer that stops being MODAL while staying open owes the same restore
+    // a close owes, and by the same mechanism: `@if (mode() === 'over')` in the
+    // template destroys the panel that holds focus, which drops it on `<body>`.
+    // Until #227 `CdkTrapFocus.ngOnDestroy` covered this, off the back of the
+    // auto-capture that replaced — the trap was on the destroyed panel, so its
+    // teardown restored. Nothing else does: the close branch above is gated on
+    // `!opened` and the drawer has not closed, and `tnFocusOnOpen` only acts on
+    // an edge INTO modality.
+    //
+    // Read after the render rather than in the effect, because the teardown is
+    // what leaves the evidence, and only when focus was orphaned: `<body>` is
+    // what the browser falls back to when the focused element goes away, and a
+    // user who is somewhere else on the page is not to be moved.
+    let wasModal = false;
+    effect(() => {
+      const modal = this.trapFocus();
+      const lost = wasModal && !modal && this.opened();
+      wasModal = modal;
+      if (!lost) {
+        return;
+      }
+
+      afterNextRender(
+        () => {
+          const active = this.document.activeElement;
+          if (active && active !== this.document.body) {
+            return;
+          }
+
+          // Focused WITHOUT spending the saved element, which is why this is
+          // not `restoreFocus()`. `CdkTrapFocus` held a capture of its own, so
+          // before #227 this switch restored focus AND left the close's restore
+          // owed — two records, one each. There is one now, and both halves
+          // still have to come out of it. `drawer-a11y.spec.ts` asserts the
+          // second half.
+          this.previousFocus?.focus();
+        },
+        { injector: this.injector }
+      );
     });
 
     // Portal overlay to document.body in over mode to avoid clipping
@@ -205,7 +295,28 @@ export class TnDrawerComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.overlayRef()?.nativeElement?.remove();
+    const overlay = this.overlayRef()?.nativeElement as HTMLElement | undefined;
+
+    // A drawer destroyed WHILE OPEN never runs the close branch of the effect
+    // above, so the restore has to happen here as well — removing the overlay
+    // drops focus onto `<body>`, and `CdkTrapFocus.ngOnDestroy` used to cover
+    // that off the back of the auto-capture #227 replaced.
+    //
+    // Only when this drawer is what focus is being taken FROM, and read before
+    // the removal, which is the thing that takes it. Both places are asked,
+    // because the `over` panel is portaled out to `<body>` while the `side` one
+    // is inline in the host. Restoring unconditionally moves focus for a user
+    // who is somewhere else entirely — and this component has a standing way to
+    // reach that state: an `over` open captures `previousFocus`, a breakpoint
+    // switches the drawer to `side` without closing it, and the capture is
+    // still unspent however long the user then spends elsewhere on the page.
+    const active = this.document.activeElement;
+    const heldFocus = this.hostRef.nativeElement.contains(active) || !!overlay?.contains(active);
+    overlay?.remove();
+
+    if (heldFocus) {
+      this.restoreFocus();
+    }
   }
 
   /** Open the drawer */

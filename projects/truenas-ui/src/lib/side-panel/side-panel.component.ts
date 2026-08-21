@@ -10,6 +10,7 @@ import { mdiClose } from '@mdi/js';
 import { take } from 'rxjs';
 import type { Observable } from 'rxjs';
 import { tnAccessibleName } from '../a11y/accessible-name';
+import { tnFocusOnOpen } from '../a11y/initial-focus';
 import { TnIconRegistryService } from '../icon/icon-registry.service';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
@@ -68,6 +69,23 @@ export class TnSidePanelActionDirective {}
 })
 export class TnSidePanelHeaderActionDirective {}
 
+/**
+ * A modal side panel: `role="dialog"` with `aria-modal="true"`, focus trapped
+ * while it is open and restored to the opener when it closes.
+ *
+ * FOCUS ON OPEN
+ * -------------
+ * Opening moves focus to the panel container, whatever you projected into it,
+ * so that a screen reader announces the dialog it has just entered before any
+ * control in it. The first Tab then reaches the close button.
+ *
+ * **`[cdkFocusInitial]` is not honoured** (#227). It used to be, through the
+ * CDK auto-capture this replaced, and `cdkTrapFocus` is still on the panel — so
+ * the marker looks like it should work and does not. To focus a control of your
+ * own, focus it yourself once the panel is open; the component leaves focus
+ * alone as soon as it is inside the panel. `lib/a11y/initial-focus.ts` holds
+ * the reasoning for capturing the container rather than a control.
+ */
 @Component({
   selector: 'tn-side-panel',
   standalone: true,
@@ -85,6 +103,7 @@ export class TnSidePanelComponent implements OnDestroy {
   private destroyRef = inject(DestroyRef);
 
   private overlayRef = viewChild.required<ElementRef>('overlay');
+  private panelRef = viewChild.required<ElementRef<HTMLElement>>('panel');
   protected initialized = signal(false);
 
   // Two-way bindable via [(open)]
@@ -221,6 +240,14 @@ export class TnSidePanelComponent implements OnDestroy {
   constructor() {
     this.registerMdiIcons();
 
+    // Moves focus onto the panel when it opens (#227) — the other half of the
+    // focus contract `aria-modal="true"` declares, and the half
+    // `[cdkTrapFocusAutoCapture]` only kept when the panel happened to contain a
+    // tabbable element, which the default panel, whose only control is its own ×
+    // button, did not. `../a11y/initial-focus.ts` holds the reasoning and the
+    // timing; `restoreFocus` below is the return leg.
+    tnFocusOnOpen(this.open, () => this.panelRef().nativeElement);
+
     effect(() => {
       if (this.open()) {
         this.previouslyFocusedElement = this.document.activeElement as HTMLElement;
@@ -244,7 +271,26 @@ export class TnSidePanelComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.overlayRef().nativeElement.remove();
+    const overlay = this.overlayRef().nativeElement as HTMLElement;
+
+    // A panel destroyed WHILE OPEN never runs the close branch of the effect
+    // above, so the restore has to happen here as well — removing the overlay
+    // drops focus onto `<body>`, and `CdkTrapFocus.ngOnDestroy` used to cover
+    // that off the back of the auto-capture #227 replaced.
+    //
+    // Only when this panel is what focus is being taken FROM, and read before
+    // the removal, which is the thing that takes it. Restoring unconditionally
+    // moves focus for a user who is somewhere else entirely: a panel with
+    // `hasBackdrop=false` does not stop them clicking into the page behind it,
+    // and destroying it would then yank them out of whatever they were typing
+    // in and back to a trigger they left minutes ago. A no-op after an
+    // ordinary close either way, which clears `previouslyFocusedElement`.
+    const heldFocus = overlay.contains(this.document.activeElement);
+    overlay.remove();
+
+    if (heldFocus) {
+      this.restoreFocus();
+    }
   }
 
   protected dismiss(): void {

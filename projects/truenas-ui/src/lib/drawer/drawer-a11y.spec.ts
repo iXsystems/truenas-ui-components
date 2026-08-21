@@ -379,12 +379,14 @@ describe('drawer accessibility (#214)', () => {
      * one saved focus on it — the drawer is still on screen, and the close that
      * follows later is what the saved element is for.
      *
-     * Focus does still leave the drawer at the switch, and that is not this
-     * component: `mode` decides which of two panels the template renders, so the
-     * over-mode panel is DESTROYED, and `CdkTrapFocus.ngOnDestroy` restores the
-     * element it captured. Measured — with the guard below in place the effect
-     * does not run its restore branch, and focus lands on the opener anyway.
-     * Pre-existing, unchanged here, and noted on the pull request.
+     * Focus does still leave the drawer at the switch: `mode` decides which of
+     * two panels the template renders, so the over-mode panel is DESTROYED and
+     * the browser drops focus on `<body>`. It used to be `CdkTrapFocus` that
+     * put it back, from a capture of its own — the component's saved element
+     * was never spent on it, which is what let the close below still restore.
+     * Both halves come out of the one saved element now (#227), and the
+     * component focuses it at the switch without consuming it, so what this
+     * test asserts is unchanged.
      *
      * What this asserts is the part the component owns: the saved element
      * survives the mode change, so the eventual close still restores it. Without

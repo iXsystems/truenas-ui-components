@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { expectOpeningMovesFocusInside } from './focus-capture';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
@@ -152,6 +153,21 @@ export const OverMode: Story = {
       imports: sharedImports,
     },
   }),
+
+  /**
+   * An `over` drawer is a modal dialog, so opening one must put focus inside it
+   * (#227) — and this is the shape with nothing tabbable in it at all: the nav
+   * entries are `<a>` elements with no `href`. It failed in CI against the
+   * first version of the fix. `focus-capture.ts` holds the assertion, shared
+   * with `tn-side-panel`, whose bug this component has now repeated for the
+   * third time.
+   *
+   * Unlike the side panel, `role="dialog"` and `aria-modal` sit on the PANEL
+   * here rather than on a wrapping overlay, so the panel is the dialog.
+   */
+  play: async ({ canvasElement }) => {
+    await expectOpeningMovesFocusInside(canvasElement, 'Open Drawer', '.tn-drawer__panel--over');
+  },
 };
 
 export const EndPosition: Story = {

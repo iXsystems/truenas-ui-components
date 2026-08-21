@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { expectOpeningMovesFocusInside } from './focus-capture';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
 import { tnIconMarker } from '../lib/icon/icon-marker';
@@ -14,6 +15,13 @@ const labelStyle = 'display: block; font-weight: 600; margin-bottom: 6px; color:
 const sectionStyle = 'padding: 16px; background: var(--tn-bg1); border-radius: 6px; border: 1px solid var(--tn-lines);';
 const rowStyle = 'display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border: 1px solid var(--tn-lines); border-radius: 6px;';
 const textareaStyle = 'width: 100%; padding: 10px 12px; border: 1px solid var(--tn-lines); border-radius: 4px; background: var(--tn-bg1); color: var(--tn-fg1); box-sizing: border-box; font-size: 1rem; font-family: inherit; resize: vertical; min-height: 80px;';
+
+/**
+ * `role="dialog"` and `aria-modal` are on the OVERLAY in this component, not on
+ * the panel — so the overlay is what focus has to end up inside. The panel is a
+ * child of it. `focus-capture.ts` holds the assertion, shared with `tn-drawer`.
+ */
+const SIDE_PANEL_DIALOG = '.tn-side-panel__overlay';
 
 const meta: Meta<TnSidePanelComponent> = {
   title: 'Components/Side Panel',
@@ -226,6 +234,13 @@ export const Default: Story = {
       </tn-side-panel>
     `,
   }),
+
+  // The story the defect was reported against: the only tabbable inside this
+  // panel is its own × button, which is the shape the capture failed for — in
+  // the original report, and again in CI against the first version of the fix.
+  play: async ({ canvasElement }) => {
+    await expectOpeningMovesFocusInside(canvasElement, 'View Dataset Details', SIDE_PANEL_DIALOG);
+  },
 };
 
 export const WithActions: Story = {
@@ -321,6 +336,14 @@ export const WithActions: Story = {
       </tn-side-panel>
     `,
   }),
+
+  // The other shape from the report — a panel with a form in it, which captured
+  // focus both before the fix and under the first version of it. Kept as the
+  // control: it says the change did not trade one shape's behaviour for the
+  // other's, and it is the reason the two are known to differ at all.
+  play: async ({ canvasElement }) => {
+    await expectOpeningMovesFocusInside(canvasElement, 'Add User', SIDE_PANEL_DIALOG);
+  },
 };
 
 export const NestedPanels: Story = {
