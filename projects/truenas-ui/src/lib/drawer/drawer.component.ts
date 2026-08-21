@@ -139,10 +139,21 @@ export class TnDrawerComponent implements OnDestroy {
   private previousFocus: HTMLElement | null = null;
 
   constructor() {
-    // Capture focus before opening in over mode for later restoration
+    // Capture focus before opening in over mode, and restore it on close
     effect(() => {
       if (this.mode() === 'over' && this.opened()) {
         this.previousFocus = this.document.activeElement as HTMLElement;
+      } else {
+        // Restored HERE rather than on `transitionend` (#214). The panel becomes
+        // `inert` the moment it closes, so the browser blurs whatever inside it
+        // had focus and moves it to `<body>` immediately — and `transitionend`
+        // is not guaranteed to arrive to put it back. This component's own
+        // stylesheet sets `transition: none` on an initialized panel under
+        // `prefers-reduced-motion`, so for a user with that preference the event
+        // never fires at all and focus would be left on `<body>` every time.
+        //
+        // A no-op in side mode, where `previousFocus` is never captured.
+        this.restoreFocus();
       }
     });
 
@@ -201,7 +212,11 @@ export class TnDrawerComponent implements OnDestroy {
     }
   }
 
-  /** Handle transition end — emit events and restore focus after animation completes */
+  /**
+   * Handle transition end — emit the open/close events once the animation is
+   * over. Focus restoration is NOT here; it happens as soon as the drawer
+   * closes, because this event does not fire under `prefers-reduced-motion`.
+   */
   protected onTransitionEnd(event: TransitionEvent): void {
     if (event.propertyName !== 'transform' || event.target !== event.currentTarget) {
       return;
@@ -210,7 +225,6 @@ export class TnDrawerComponent implements OnDestroy {
       this.openedComplete.emit();
     } else {
       this.closed.emit();
-      this.restoreFocus();
     }
   }
 

@@ -37,14 +37,24 @@ export class TnSidePanelHarness extends ComponentHarness {
     return this.documentRootLocatorFactory().locatorFor(`[data-tn-panel="${panelId}"].tn-side-panel__overlay`)();
   }
 
-  /** Get the panel title text. */
+  /**
+   * Get the panel title text, or `''` for a panel that renders no title.
+   *
+   * `locatorForOptional`, not `locatorFor`: since #214 a panel with no `title`
+   * renders no heading element at all — an `<h2>` with nothing in it is an
+   * `empty-heading` violation — and `locatorFor` throws on a selector that
+   * matches nothing. That would turn `getTitle()` into an error rather than an
+   * empty string, and would make `TnSidePanelHarness.with({title})` REJECT on an
+   * untitled panel instead of simply not matching it, so a filter aimed at one
+   * panel would fail on the presence of another.
+   */
   async getTitle(): Promise<string> {
     const host = await this.host();
     const panelId = await host.getAttribute('data-tn-panel');
-    const titleEl = await this.documentRootLocatorFactory().locatorFor(
+    const titleEl = await this.documentRootLocatorFactory().locatorForOptional(
       `[data-tn-panel="${panelId}"] .tn-side-panel__title`,
     )();
-    return (await titleEl.text()).trim();
+    return titleEl ? (await titleEl.text()).trim() : '';
   }
 
   /** Whether the panel is currently open. */

@@ -342,21 +342,6 @@ describe('tn-side-panel accessibility (#214)', () => {
   });
 
   describe('the keyboard contract the modal model brings', () => {
-    /**
-     * Focus restoration hangs off `transitionend` on the panel, which jsdom
-     * never fires — it has no layout and runs no transitions. Dispatching it is
-     * the only way to reach the branch, and it has to carry
-     * `propertyName: 'transform'` and target the panel itself, because the
-     * handler ignores every other transition and anything bubbling up from a
-     * child.
-     */
-    function endCloseTransition(): void {
-      const event = new Event('transitionend', { bubbles: false });
-      Object.defineProperty(event, 'propertyName', { value: 'transform' });
-      panel().dispatchEvent(event);
-      fixture.detectChanges();
-    }
-
     it('closes on Escape', () => {
       openPanel();
       panel().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
@@ -365,23 +350,64 @@ describe('tn-side-panel accessibility (#214)', () => {
       expect(host.open()).toBe(false);
     });
 
-    it('returns focus to the element that opened it', () => {
+    /**
+     * Restoration happens on close, and this test deliberately does NOT dispatch
+     * a `transitionend` — because that is exactly what a user with
+     * `prefers-reduced-motion` never gets. This component's stylesheet sets
+     * `transition-duration: 0ms` under that preference, a zero-duration
+     * transition fires no event, and the overlay is `inert` from the moment it
+     * closes, so waiting for the event would leave focus on `<body>`.
+     */
+    it('returns focus to the element that opened it, without waiting for a transition', () => {
       const trigger = fixture.nativeElement.querySelector('#trigger') as HTMLElement;
       trigger.focus();
       expect(document.activeElement).toBe(trigger);
 
       openPanel();
-      // The panel takes focus off the trigger the way a real open does, so the
+      // Focus is moved off the trigger the way a real open does, so the
       // restoration below is restoring something rather than asserting that
       // focus never moved.
       (overlay().querySelector('#inside') as HTMLElement).focus();
+      expect(document.activeElement).not.toBe(trigger);
 
       host.open.set(false);
       fixture.detectChanges();
-      endCloseTransition();
 
       expect(document.activeElement).toBe(trigger);
     });
+
+    it('does not restore focus a second time when the close transition ends', () => {
+      const trigger = fixture.nativeElement.querySelector('#trigger') as HTMLElement;
+      const other = fixture.nativeElement.querySelector('#external-title') as HTMLElement;
+      trigger.focus();
+
+      openPanel();
+      (overlay().querySelector('#inside') as HTMLElement).focus();
+      host.open.set(false);
+      fixture.detectChanges();
+      expect(document.activeElement).toBe(trigger);
+
+      // Whatever the user focused after the close stays focused: the restore is
+      // spent, so the late `transitionend` must not pull focus back again.
+      other.tabIndex = -1;
+      other.focus();
+      endCloseTransition();
+
+      expect(document.activeElement).toBe(other);
+    });
+
+    /**
+     * `transitionend` is what emits `closed`, and jsdom never fires it — it has
+     * no layout and runs no transitions. The event has to carry
+     * `propertyName: 'transform'` and target the panel itself, because the
+     * handler ignores every other transition and anything bubbling from a child.
+     */
+    function endCloseTransition(): void {
+      const event = new Event('transitionend', { bubbles: false });
+      Object.defineProperty(event, 'propertyName', { value: 'transform' });
+      panel().dispatchEvent(event);
+      fixture.detectChanges();
+    }
   });
 
   /**

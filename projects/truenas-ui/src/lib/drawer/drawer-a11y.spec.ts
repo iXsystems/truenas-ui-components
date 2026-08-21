@@ -326,19 +326,6 @@ describe('drawer accessibility (#214)', () => {
   });
 
   describe('the keyboard contract each model brings', () => {
-    /**
-     * Focus restoration hangs off `transitionend`, which jsdom never fires — it
-     * has no layout and runs no transitions. The event has to carry
-     * `propertyName: 'transform'` and target the panel itself, because the
-     * handler ignores every other transition and anything bubbling from a child.
-     */
-    function endCloseTransition(): void {
-      const event = new Event('transitionend', { bubbles: false });
-      Object.defineProperty(event, 'propertyName', { value: 'transform' });
-      panel().dispatchEvent(event);
-      fixture.detectChanges();
-    }
-
     it('closes an over drawer on Escape, which the modal model implies', () => {
       openOver();
       panel().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
@@ -363,20 +350,59 @@ describe('drawer accessibility (#214)', () => {
       expect(host.opened()).toBe(true);
     });
 
-    it('returns focus to the element that opened an over drawer', () => {
+    /**
+     * Restoration happens on close, and this test deliberately does NOT dispatch
+     * a `transitionend` — because that is exactly what a user with
+     * `prefers-reduced-motion` never gets. This component's stylesheet sets
+     * `transition: none` on an initialized panel under that preference, so the
+     * event never fires, and the panel is `inert` from the moment it closes:
+     * waiting for the event would leave focus on `<body>`.
+     */
+    it('returns focus to the opener on close, without waiting for a transition', () => {
       const trigger = fixture.nativeElement.querySelector('#trigger') as HTMLElement;
       trigger.focus();
       expect(document.activeElement).toBe(trigger);
 
       openOver();
       (panel().querySelector('#in-drawer') as HTMLElement).focus();
+      expect(document.activeElement).not.toBe(trigger);
 
       host.opened.set(false);
       fixture.detectChanges();
-      endCloseTransition();
 
       expect(document.activeElement).toBe(trigger);
     });
+
+    it('does not pull focus back again when the close transition ends', () => {
+      const trigger = fixture.nativeElement.querySelector('#trigger') as HTMLElement;
+      const other = fixture.nativeElement.querySelector('#external-title') as HTMLElement;
+      trigger.focus();
+
+      openOver();
+      (panel().querySelector('#in-drawer') as HTMLElement).focus();
+      host.opened.set(false);
+      fixture.detectChanges();
+      expect(document.activeElement).toBe(trigger);
+
+      other.tabIndex = -1;
+      other.focus();
+      endCloseTransition();
+
+      expect(document.activeElement).toBe(other);
+    });
+
+    /**
+     * `transitionend` is what emits `closed`, and jsdom never fires it — it has
+     * no layout and runs no transitions. The event has to carry
+     * `propertyName: 'transform'` and target the panel itself, because the
+     * handler ignores every other transition and anything bubbling from a child.
+     */
+    function endCloseTransition(): void {
+      const event = new Event('transitionend', { bubbles: false });
+      Object.defineProperty(event, 'propertyName', { value: 'transform' });
+      panel().dispatchEvent(event);
+      fixture.detectChanges();
+    }
   });
 
   /**

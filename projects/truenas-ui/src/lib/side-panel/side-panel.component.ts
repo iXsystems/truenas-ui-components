@@ -194,6 +194,16 @@ export class TnSidePanelComponent implements OnDestroy {
     effect(() => {
       if (this.open()) {
         this.previouslyFocusedElement = this.document.activeElement as HTMLElement;
+      } else {
+        // Restored HERE rather than on `transitionend` (#214). The overlay
+        // becomes `inert` the moment it closes, so the browser blurs whatever
+        // inside it had focus and moves it to `<body>` immediately — and
+        // `transitionend` is not guaranteed to arrive to put it back. This
+        // component's own stylesheet sets `transition-duration: 0ms` under
+        // `prefers-reduced-motion`, and a zero-duration transition runs no
+        // transition and fires no event, so a user with that preference would
+        // have been left on `<body>` every time a panel closed.
+        this.restoreFocus();
       }
     });
 
@@ -245,7 +255,6 @@ export class TnSidePanelComponent implements OnDestroy {
       this.opened.emit();
     } else {
       this.closed.emit();
-      this.restoreFocus();
     }
   }
 

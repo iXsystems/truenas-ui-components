@@ -92,6 +92,29 @@ describe('TnSidePanelHarness', () => {
       const panel = await loader.getHarness(TnSidePanelHarness);
       expect(await panel.getTitle()).toBe('Updated Title');
     });
+
+    // Since #214 an untitled panel renders no heading element at all, and the
+    // locator has to tolerate that: `locatorFor` would throw here, turning a
+    // panel with no title into an error rather than an empty title.
+    it('should return an empty string for a panel with no title', async () => {
+      hostComponent.title.set('');
+      fixture.detectChanges();
+
+      const panel = await loader.getHarness(TnSidePanelHarness);
+      expect(await panel.getTitle()).toBe('');
+    });
+
+    // And the same for the predicate built on it: an untitled panel must simply
+    // not match, rather than making the whole query fail.
+    it('should let with({title}) skip an untitled panel instead of rejecting', async () => {
+      hostComponent.title.set('');
+      fixture.detectChanges();
+
+      const matches = await loader.getAllHarnesses(
+        TnSidePanelHarness.with({ title: 'Test Panel' }),
+      );
+      expect(matches.length).toBe(0);
+    });
   });
 
   describe('isOpen()', () => {
