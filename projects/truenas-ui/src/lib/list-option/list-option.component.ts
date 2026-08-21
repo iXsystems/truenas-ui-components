@@ -159,14 +159,29 @@ export class TnListOptionComponent implements AfterContentInit {
     this.toggle();
   }
 
+  /**
+   * The key is swallowed BEFORE the disabled guard, not after it.
+   *
+   * Declining to toggle is not the same as declining the key. Space scrolls the
+   * page on any element that is neither a form control nor a scroller, and the
+   * option host is neither — so bailing out first hands the browser a Space
+   * with its default action intact, on an element the user deliberately focused
+   * and got nothing from. Nothing upstream saves it either: the listbox's own
+   * handler falls through for Space on purpose, so that the key reaches here.
+   *
+   * Only reachable under a parent `tn-selection-list` (#216), whose roving
+   * tabindex is what makes a disabled option focusable — standalone it carries
+   * no `tabindex`, so it cannot hold focus and this never fires on it.
+   */
   @HostListener('keydown.space', ['$event'])
   @HostListener('keydown.enter', ['$event'])
   onKeydown(event: Event): void {
+    event.preventDefault();
+
     if (this.effectiveDisabled()) {
       return;
     }
 
-    event.preventDefault();
     this.toggle();
   }
 

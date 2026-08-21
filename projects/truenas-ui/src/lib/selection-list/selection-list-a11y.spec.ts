@@ -283,6 +283,34 @@ describe('tn-selection-list keyboard navigation (#216)', () => {
       expect(options()[2].getAttribute('aria-selected')).toBe('false');
       expect(host.changes).toEqual([]);
     });
+
+    /**
+     * The other half of that keypress, and the half the toggle assertion above
+     * cannot see: refusing to toggle is not the same as consuming the key.
+     *
+     * Space has a default action — scroll the page — on any element that is
+     * neither a form control nor a scroller, and the option host is neither.
+     * Nothing else swallows it either: the listbox's own handler falls through
+     * `default:` for `' '`, deliberately, so that Space reaches the option. So
+     * a Space the option declines has to be prevented by the option.
+     *
+     * This became reachable with the roving tabindex: a disabled option
+     * previously carried no `tabindex`, so it could not hold focus and its
+     * guard could never be hit by a real keypress.
+     */
+    it('consume Space rather than letting the page scroll', () => {
+      press('ArrowDown');
+      press('ArrowDown');
+
+      expect(focusedIndex()).toBe(2);
+
+      const event = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+      (document.activeElement as HTMLElement).dispatchEvent(event);
+      fixture.detectChanges();
+
+      expect(event.defaultPrevented).toBe(true);
+      expect(host.changes).toEqual([]);
+    });
   });
 
   /**
