@@ -241,10 +241,11 @@ describe('tn-list-option accessibility (#213)', () => {
      * anyway — the picture and the state disagreeing, from a click on the
      * picture.
      *
-     * `inert` in the template is what actually blocks the pointer; this
-     * declaration is the fallback for a browser without it, which is why it is
-     * guarded separately rather than treated as covered by the inert assertion
-     * above.
+     * Guarded separately from `inert`, and not covered by it: an inert subtree
+     * does not receive targeted mouse events, which stops the checkbox acting
+     * on a click without handing that click to the row. This declaration is
+     * what does that, so deleting it would leave the click dead rather than
+     * merely unstyled.
      */
     it('keeps the checkbox from taking the click', () => {
       expect(scssBlock('&__checkbox {')).toMatch(/pointer-events:\s*none\s*;/);

@@ -64,14 +64,13 @@
     position: relative;
     display: flex;
     align-items: center;
-    // Belt and braces for the pointer half of "presentational". `inert` in the
-    // template is what actually removes this subtree from hit testing, and in
-    // every browser that supports it this declaration changes nothing; it is
-    // here for the ones that do not, where an inert checkbox would still take
-    // the click, toggle its own native input, and leave the option's selection
-    // where it was — which is the desync the `$event.stopPropagation()` handler
-    // it replaces used to produce. Either way the click reaches the row and
-    // toggles the option once.
+    // The pointer half of "presentational", and the template's `inert` does not
+    // cover it: an inert subtree does not RECEIVE targeted mouse events, which
+    // stops the checkbox acting on a click without handing that click to
+    // anything else. This is what puts it on the row, so clicking the checkbox
+    // toggles the option exactly as clicking its label does — where the
+    // `$event.stopPropagation()` this replaces produced the opposite, a native
+    // input flipping itself while the option's own selection stayed put.
     pointer-events: none;
   }
 

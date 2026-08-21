@@ -39,13 +39,14 @@
        order in one attribute — the same reasoning already written into
        expansion-panel.component.html.
 
-       `inert` covers the pointer too, so the click handler that used to sit
-       here goes with it. It stopped a checkbox click from reaching the host's
-       toggle, which left the native input flipping itself while the option's
-       own selection did not move; the click now lands on the row and toggles
-       the option once, as a click anywhere else on the row already did. The
-       stylesheet's `pointer-events: none` is belt and braces for a browser
-       without `inert` — see the comment there.
+       The mouse is the stylesheet's job, not `inert`'s. An inert subtree does
+       not RECEIVE targeted mouse events, which is not the same as passing them
+       on, so `pointer-events: none` in `&__checkbox` is what actually puts the
+       click on the row — see the comment there. That is what replaces the
+       `$event.stopPropagation()` this element used to carry: the handler kept a
+       checkbox click from reaching the host's toggle, leaving the native input
+       to flip itself while the option's own selection did not move. The click
+       now toggles the option once, as a click anywhere else on the row did.
 
        `select.component.html` makes the same nested checkbox presentational a
        different way, with `[disabled]="true"`. That also stops axe reporting,
