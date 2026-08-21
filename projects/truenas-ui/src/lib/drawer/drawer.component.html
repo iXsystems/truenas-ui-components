@@ -48,7 +48,15 @@
       [class.tn-drawer__backdrop--visible]="opened()"
       (click)="onBackdropClick()"></div>
 
+    <!--
+      `cdkTrapFocus` keeps Tab inside the open drawer; what moves focus IN is
+      `tnFocusOnOpen` in the component, not `[cdkTrapFocusAutoCapture]`, which
+      used to be here and could silently do nothing for a drawer holding no
+      tabbable control (#227). `tabindex="-1"` is what makes this element the
+      target it focuses — see `../a11y/initial-focus.ts`.
+    -->
     <div
+      #overPanel
       tabindex="-1"
       tnTestIdType="drawer"
       [class]="drawerClasses()"
@@ -61,7 +69,6 @@
       [attr.aria-labelledby]="ariaLabelledby()"
       [tnTestId]="testId()"
       [cdkTrapFocus]="trapFocus()"
-      [cdkTrapFocusAutoCapture]="trapFocus()"
       (keydown)="onKeydown($event)"
       (transitionend)="onTransitionEnd($event)">
       <ng-container *ngTemplateOutlet="drawerContent" />

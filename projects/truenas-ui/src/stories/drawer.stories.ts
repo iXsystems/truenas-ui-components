@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
@@ -152,6 +153,30 @@ export const OverMode: Story = {
       imports: sharedImports,
     },
   }),
+
+  /**
+   * An `over` drawer is a modal dialog, so opening one must put focus inside it
+   * (#227). Asserted here rather than only in Jest because whether a real click
+   * ends up inside the panel depends on layout, the transition and `inert` —
+   * none of which jsdom implements. The panel is portaled to `document.body`, so
+   * it is found from the document rather than from `canvasElement`.
+   */
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const trigger = canvas.getByRole('button', { name: 'Open Drawer' });
+
+    trigger.focus();
+    await userEvent.click(trigger);
+
+    const panel = document.querySelector('.tn-drawer__panel--over') as HTMLElement;
+    await expect(panel).toBeInTheDocument();
+
+    await waitFor(async () => {
+      await expect(panel.getAttribute('aria-modal')).toBe('true');
+      await expect(panel.contains(document.activeElement)).toBe(true);
+      await expect(document.activeElement).not.toBe(trigger);
+    });
+  },
 };
 
 export const EndPosition: Story = {

@@ -14,6 +14,7 @@ import {
   afterNextRender,
 } from '@angular/core';
 import { tnAccessibleName } from '../a11y/accessible-name';
+import { tnFocusOnOpen } from '../a11y/initial-focus';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 import { tnTransitionLifecycle } from '../utils/transition-lifecycle';
 
@@ -114,6 +115,13 @@ export class TnDrawerComponent implements OnDestroy {
   /** Reference to the overlay element (portaled to body in over mode) */
   protected overlayRef = viewChild<ElementRef>('overlay');
 
+  /**
+   * The `over`-mode panel, which is what focus moves to when a modal drawer
+   * opens. Optional rather than required: it lives inside an `@if` on the mode,
+   * so a `side` drawer never renders it.
+   */
+  private overPanelRef = viewChild<ElementRef<HTMLElement>>('overPanel');
+
   /** Focus trap should be active only in 'over' mode when open */
   protected trapFocus = computed(() => this.mode() === 'over' && this.opened());
 
@@ -168,6 +176,14 @@ export class TnDrawerComponent implements OnDestroy {
   );
 
   constructor() {
+    // Moves focus onto the panel when a MODAL drawer opens (#227) — `trapFocus`
+    // rather than `opened`, because a `side` drawer is navigation the page keeps
+    // beside its content and must not steal focus when it appears. This is the
+    // half `[cdkTrapFocusAutoCapture]` only kept when the drawer happened to
+    // hold a tabbable element; `../a11y/initial-focus.ts` holds the reasoning
+    // and the timing, and `restoreFocus` below is the return leg.
+    tnFocusOnOpen(this.trapFocus, () => this.overPanelRef()?.nativeElement);
+
     // Capture focus before opening in over mode, and restore it on close
     effect(() => {
       const opened = this.opened();

@@ -37,12 +37,18 @@ import { axeResult } from '../a11y/axe-testing';
  *
  * THE MODEL: MODAL
  * ----------------
- * The panel already trapped focus with `cdkTrapFocus`, auto-captured it on open,
- * closed on Escape and restored focus to the opener on close. `role="dialog"`
- * plus `aria-modal="true"` describes that, so this ticket implements no new
- * contract for it — it makes the existing one nameable and stops it reaching the
- * tab order while closed. Declaring a focus contract and not implementing it is
- * what the ticket calls worse than the current state; this is the other case.
+ * The panel already trapped focus with `cdkTrapFocus`, asked the CDK to capture
+ * it on open, closed on Escape and restored focus to the opener on close.
+ * `role="dialog"` plus `aria-modal="true"` describes that, so this ticket
+ * implements no new contract for it — it makes the existing one nameable and
+ * stops it reaching the tab order while closed. Declaring a focus contract and
+ * not implementing it is what the ticket calls worse than the current state;
+ * this is the other case.
+ *
+ * The capture half of that turned out not to hold: `[cdkTrapFocusAutoCapture]`
+ * did nothing at all for a panel with no tabbable content, and this file's
+ * restoration tests could not see it because they moved focus by hand first.
+ * #227 replaced it and `side-panel-focus-capture.spec.ts` owns it.
  */
 
 @Component({
@@ -145,6 +151,17 @@ describe('tn-side-panel accessibility (#214)', () => {
   function openPanel(): void {
     host.open.set(true);
     fixture.detectChanges();
+  }
+
+  /**
+   * Opens and lets the render settle, which is what runs the `afterNextRender`
+   * the panel defers its focus capture to (#227). The plain `openPanel` above is
+   * enough for the ARIA assertions, which read attributes written during change
+   * detection; anything about focus needs this one.
+   */
+  async function openPanelAndSettle(): Promise<void> {
+    openPanel();
+    await fixture.whenStable();
   }
 
   /** The elements the dialog rules can report on. */
@@ -290,8 +307,9 @@ describe('tn-side-panel accessibility (#214)', () => {
 
     it('raises no violation with no backdrop, which does not change the model', async () => {
       // A panel without a backdrop still traps focus — `cdkTrapFocus` is on the
-      // panel unconditionally and auto-captures on open — so `aria-modal="true"`
-      // still describes it, and the same rules have to run over it.
+      // panel unconditionally, and the component moves focus into it on open —
+      // so `aria-modal="true"` still describes it, and the same rules have to
+      // run over it.
       host.hasBackdrop.set(false);
       openPanel();
 
@@ -365,16 +383,17 @@ describe('tn-side-panel accessibility (#214)', () => {
      * transition fires no event, and the overlay is `inert` from the moment it
      * closes, so waiting for the event would leave focus on `<body>`.
      */
-    it('returns focus to the element that opened it, without waiting for a transition', () => {
+    it('returns focus to the element that opened it, without waiting for a transition', async () => {
       const trigger = fixture.nativeElement.querySelector('#trigger') as HTMLElement;
       trigger.focus();
       expect(document.activeElement).toBe(trigger);
 
-      openPanel();
-      // Focus is moved off the trigger the way a real open does, so the
-      // restoration below is restoring something rather than asserting that
-      // focus never moved.
-      (overlay().querySelector('#inside') as HTMLElement).focus();
+      // The open moves focus off the trigger by itself (#227), so this restores
+      // something rather than asserting that focus never moved. It used to be a
+      // `.focus()` call here, with a comment saying that is what a real open
+      // does — and the panel it was standing in for was not doing it.
+      // `side-panel-focus-capture.spec.ts` owns that half.
+      await openPanelAndSettle();
       expect(document.activeElement).not.toBe(trigger);
 
       host.open.set(false);
@@ -383,13 +402,12 @@ describe('tn-side-panel accessibility (#214)', () => {
       expect(document.activeElement).toBe(trigger);
     });
 
-    it('does not restore focus a second time when the close transition ends', () => {
+    it('does not restore focus a second time when the close transition ends', async () => {
       const trigger = fixture.nativeElement.querySelector('#trigger') as HTMLElement;
       const other = fixture.nativeElement.querySelector('#external-title') as HTMLElement;
       trigger.focus();
 
-      openPanel();
-      (overlay().querySelector('#inside') as HTMLElement).focus();
+      await openPanelAndSettle();
       host.open.set(false);
       fixture.detectChanges();
       expect(document.activeElement).toBe(trigger);

@@ -10,6 +10,7 @@ import { mdiClose } from '@mdi/js';
 import { take } from 'rxjs';
 import type { Observable } from 'rxjs';
 import { tnAccessibleName } from '../a11y/accessible-name';
+import { tnFocusOnOpen } from '../a11y/initial-focus';
 import { TnIconRegistryService } from '../icon/icon-registry.service';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
@@ -85,6 +86,7 @@ export class TnSidePanelComponent implements OnDestroy {
   private destroyRef = inject(DestroyRef);
 
   private overlayRef = viewChild.required<ElementRef>('overlay');
+  private panelRef = viewChild.required<ElementRef<HTMLElement>>('panel');
   protected initialized = signal(false);
 
   // Two-way bindable via [(open)]
@@ -220,6 +222,14 @@ export class TnSidePanelComponent implements OnDestroy {
 
   constructor() {
     this.registerMdiIcons();
+
+    // Moves focus onto the panel when it opens (#227) — the other half of the
+    // focus contract `aria-modal="true"` declares, and the half
+    // `[cdkTrapFocusAutoCapture]` only kept when the panel happened to contain a
+    // tabbable element, which the default panel, whose only control is its own ×
+    // button, did not. `../a11y/initial-focus.ts` holds the reasoning and the
+    // timing; `restoreFocus` below is the return leg.
+    tnFocusOnOpen(this.open, () => this.panelRef().nativeElement);
 
     effect(() => {
       if (this.open()) {
