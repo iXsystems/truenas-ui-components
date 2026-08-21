@@ -9,6 +9,13 @@ describe('TnParticleProgressBarComponent', () => {
   let mockContext: Partial<CanvasRenderingContext2D>;
 
   beforeEach(async () => {
+    // Every fixture here is unnamed, and #209 makes an unnamed bar warn in dev
+    // mode — which Jest is. Silenced so this suite's output stays readable; the
+    // warning itself is asserted in `particle-progress-bar-a11y.spec.ts`. Not
+    // held in a variable because the existing `jest.restoreAllMocks()` below
+    // already puts it back, and nothing here asserts on it.
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+
     // Mock canvas context
     mockContext = {
       clearRect: jest.fn(),
