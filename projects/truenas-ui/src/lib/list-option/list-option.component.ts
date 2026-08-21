@@ -172,10 +172,20 @@ export class TnListOptionComponent implements AfterContentInit {
    * Only reachable under a parent `tn-selection-list` (#216), whose roving
    * tabindex is what makes a disabled option focusable — standalone it carries
    * no `tabindex`, so it cannot hold focus and this never fires on it.
+   *
+   * Which is safe only because the key has to have been pressed on the host
+   * itself. A host listener hears whatever bubbles out of projected content, so
+   * a consumer's `<input>` inside an option would otherwise have its Space
+   * swallowed by the `preventDefault()` above — and, on an enabled option,
+   * toggle the option as well as typing.
    */
   @HostListener('keydown.space', ['$event'])
   @HostListener('keydown.enter', ['$event'])
   onKeydown(event: Event): void {
+    if (event.target !== this.elementRef.nativeElement) {
+      return;
+    }
+
     event.preventDefault();
 
     if (this.effectiveDisabled()) {
