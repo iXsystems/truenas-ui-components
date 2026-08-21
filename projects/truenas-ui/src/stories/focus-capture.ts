@@ -42,17 +42,33 @@ export async function expectOpeningMovesFocusInside(
   trigger.focus();
   await userEvent.click(trigger);
 
-  const dialog = document.querySelector(dialogSelector) as HTMLElement | null;
-  await expect(dialog, `no element matched ${dialogSelector} after the click`).toBeInTheDocument();
+  const dialog = document.querySelector(dialogSelector);
+  // Thrown rather than asserted. `toBeInTheDocument()` on a `null` throws out
+  // of jest-dom's own type check before it reaches a matcher, taking the
+  // message with it — so the one assertion whose failure needs explaining is
+  // the one that cannot carry an explanation.
+  if (!(dialog instanceof HTMLElement)) {
+    throw new Error(`no element matched ${dialogSelector} after clicking the trigger`);
+  }
 
   await waitFor(async () => {
-    // Read first, so that both assertions below describe the SAME instant. The
-    // dialog check also proves the element found above is this story's open
-    // panel rather than a stale one left in the document by another story.
+    // Read once, so that every assertion below describes the SAME instant.
     const active = document.activeElement;
-    const modal = dialog?.getAttribute('aria-modal');
+    const modal = dialog.getAttribute('aria-modal');
 
+    // Also proves the element found above is this story's OPEN panel rather
+    // than a stale one another story left in the document.
     await expect(modal, `${dialogSelector} did not open: aria-modal is ${describe(modal)}`).toBe('true');
+
+    // Ordered before the `contains` check below, not after it, because both
+    // fail together in the case that matters and this one names it: the
+    // trigger sits in the canvas and the dialog is portaled to `document.body`,
+    // so focus being inside the dialog already implies it is not on the
+    // trigger. Read the other way round it is an assertion that cannot fail.
+    await expect(
+      active === trigger,
+      `focus never left the trigger, ${describeElement(trigger)}`
+    ).toBe(false);
 
     // The assertion the ticket measured as false. It failed in CI reading
     // "expected false to be true" and naming neither element, which is why it
@@ -60,20 +76,15 @@ export async function expectOpeningMovesFocusInside(
     // whole round to find out, and this file exists because of a test that
     // looked like it had checked something.
     await expect(
-      dialog?.contains(active),
+      dialog.contains(active),
       `focus is on ${describeElement(active)}, outside the open ${dialogSelector}`
     ).toBe(true);
-
-    await expect(
-      active === trigger,
-      `focus never left the trigger, ${describeElement(trigger)}`
-    ).toBe(false);
   });
 }
 
-/** `null` and `undefined` are the two answers worth telling apart in a message. */
-function describe(value: string | null | undefined): string {
-  return value === null ? 'absent' : value === undefined ? 'unreadable' : `"${value}"`;
+/** An absent attribute and an empty one read the same way otherwise. */
+function describe(value: string | null): string {
+  return value === null ? 'absent' : `"${value}"`;
 }
 
 /**

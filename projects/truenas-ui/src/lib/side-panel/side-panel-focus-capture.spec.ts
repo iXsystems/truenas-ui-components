@@ -204,27 +204,60 @@ describe('tn-side-panel focus capture (#227)', () => {
    * that a dropped first call is noticed and followed, which is the part that
    * was missing.
    */
-  it('tries again on the next frame when the first focus is silently dropped', async () => {
+  it('tries again after a first focus that is silently dropped', async () => {
     trigger().focus();
     const target = panel();
     const reallyFocus = HTMLElement.prototype.focus.bind(target);
+    let attempts = 0;
+    jest.spyOn(target, 'focus').mockImplementation(() => {
+      attempts++;
+      // Exactly the first call goes nowhere, the way the browser declines one.
+      if (attempts > 1) {
+        reallyFocus();
+      }
+    });
+
+    await openByClick();
+    await nextFrame();
+
+    // Both halves matter, and neither on its own would fail against a single
+    // undeferred call: the count says a second attempt was made, and the
+    // active element says it was the attempt that worked. Which frame the
+    // retry lands on is not asserted — jsdom is free to serve one during
+    // `whenStable`, and it does, intermittently.
+    expect(attempts).toBeGreaterThan(1);
+    expect(document.activeElement).toBe(target);
+  });
+
+  /**
+   * The retry re-attempts until the move takes — and "focus is inside the
+   * panel" is the move having taken, whoever put it there. A caller focusing
+   * the first field of their form, or a user who has started typing in one,
+   * must not be pulled back to the container on the next frame.
+   *
+   * Staged like the test above: the component's own call goes nowhere, so a
+   * retry is pending when focus arrives inside by another route.
+   */
+  it('leaves focus alone when it is already inside the panel', async () => {
+    trigger().focus();
+    const target = panel();
     let dropped = false;
     jest.spyOn(target, 'focus').mockImplementation(() => {
-      // Exactly one call goes nowhere, the way the browser declines one.
-      if (!dropped) {
-        dropped = true;
-        return;
-      }
-      reallyFocus();
+      dropped = true;
     });
 
     await openByClick();
     expect(dropped).toBe(true);
-    expect(document.activeElement).not.toBe(target);
+
+    (overlay().querySelector('.tn-icon-button') as HTMLElement).focus();
+    const landed = document.activeElement;
+    expect(target.contains(landed)).toBe(true);
+    expect(landed).not.toBe(target);
 
     await nextFrame();
+    await nextFrame();
 
-    expect(document.activeElement).toBe(target);
+    expect(document.activeElement).toBe(landed);
   });
 
   /**
@@ -242,14 +275,24 @@ describe('tn-side-panel focus capture (#227)', () => {
     const focusSpy = jest.spyOn(target, 'focus').mockImplementation(() => undefined);
 
     await openByClick();
-    for (let i = 0; i < 40; i++) {
-      await nextFrame();
-    }
-    const settled = focusSpy.mock.calls.length;
 
-    for (let i = 0; i < 10; i++) {
+    // Run frames until a frame passes with no new attempt. Capped so that a
+    // capture which never gives up fails this test rather than hanging it, and
+    // counted in frames rather than assumed, because how long the window is
+    // worth in frames depends on how fast jsdom serves them.
+    const cap = 200;
+    let frames = 0;
+    let previous = -1;
+    while (focusSpy.mock.calls.length !== previous && frames < cap) {
+      previous = focusSpy.mock.calls.length;
       await nextFrame();
+      frames++;
     }
+    expect(frames).toBeLessThan(cap);
+
+    const settled = focusSpy.mock.calls.length;
+    await nextFrame();
+    await nextFrame();
 
     expect(focusSpy.mock.calls.length).toBe(settled);
   });

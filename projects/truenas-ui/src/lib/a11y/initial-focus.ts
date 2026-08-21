@@ -150,20 +150,22 @@ export function tnFocusOnOpen(
     }
 
     afterNextRender(
-      () => zone.runOutsideAngular(() => capture(isOpen, target, RETRY_FRAMES)),
+      () => zone.runOutsideAngular(() => capture(isOpen, target, performance.now() + CAPTURE_WINDOW_MS)),
       { injector }
     );
   });
 }
 
 /**
- * How many animation frames the capture may re-attempt over before giving up.
+ * How long the capture may keep re-attempting before it gives up.
  *
- * Both components transition for 300ms, which is 18 frames at 60Hz; 24 covers
- * that with a margin and is still a fifth of a second. There is no value in
- * trying for longer — a panel that is still refusing focus a full transition
- * after it opened is not mid-anything, and holding a callback alive past the
- * point it can help only delays the give-up.
+ * A DURATION rather than a count of frames, because what it has to outlast is
+ * the opening transition and that is measured in milliseconds: both components
+ * transition for 300ms, and a frame budget picked to cover it at 60Hz covers
+ * half of it on a 120Hz display — giving up early, silently, on exactly the
+ * hardware where nobody would think to look. 400ms is the transition plus a
+ * margin. There is no value in trying for longer: a panel still refusing focus
+ * a full transition after it opened is not mid-anything.
  *
  * Giving up is silent, deliberately. This is a11y behaviour on a component in
  * a library, so the failure the user experiences is the bug in #227 — nothing
@@ -171,19 +173,25 @@ export function tnFocusOnOpen(
  * regression here are `side-panel-focus-capture.spec.ts` and the `play`
  * functions, which run where a maintainer is looking.
  */
-const RETRY_FRAMES = 24;
+const CAPTURE_WINDOW_MS = 400;
+
+/** Whether focus is on `element` or on something inside it. */
+function holdsFocus(element: HTMLElement): boolean {
+  const active = element.ownerDocument.activeElement;
+  return element === active || element.contains(active);
+}
 
 /**
  * Focus `target`, read back whether it took, and try again next frame if it
- * did not.
+ * did not, until `deadline` (a `performance.now()` reading) passes.
  *
  * Recursive rather than a loop because each attempt has to wait for a frame,
- * and `framesLeft` is what makes it terminate.
+ * and the deadline is what makes it terminate.
  */
 function capture(
   isOpen: Signal<boolean>,
   target: () => HTMLElement | null | undefined,
-  framesLeft: number
+  deadline: number
 ): void {
   // Re-read rather than trusting the edge: a surface opened and closed again
   // must not be focused after it has gone inert, which would fight the closing
@@ -198,21 +206,28 @@ function capture(
     return;
   }
 
+  // BEFORE the call, not after it. `contains` rather than `===` so that
+  // someone already on a control INSIDE the panel is left there — a caller who
+  // focused the first field of their form, or a user who has started typing in
+  // one. That is not hypothetical while a retry is pending: the attempts below
+  // outlive the frame that scheduled them, so focus can arrive by another
+  // route between two of them. Reading this only AFTER the call would notice
+  // and stop, having already taken the focus away, which is the whole harm.
+  if (holdsFocus(element)) {
+    return;
+  }
+
   element.focus();
 
-  // `contains` rather than `===` so that a caller who focuses a control of
-  // their own inside the panel — the first field of a form — is left alone
-  // instead of being pulled back to the container on the next frame.
-  const active = element.ownerDocument.activeElement;
-  if (element === active || element.contains(active)) {
+  if (holdsFocus(element)) {
     return;
   }
 
   // `requestAnimationFrame` is absent in a non-browser platform, and the
   // give-up below is the right behaviour there rather than a crash.
-  if (framesLeft <= 0 || typeof requestAnimationFrame !== 'function') {
+  if (performance.now() >= deadline || typeof requestAnimationFrame !== 'function') {
     return;
   }
 
-  requestAnimationFrame(() => capture(isOpen, target, framesLeft - 1));
+  requestAnimationFrame(() => capture(isOpen, target, deadline));
 }
