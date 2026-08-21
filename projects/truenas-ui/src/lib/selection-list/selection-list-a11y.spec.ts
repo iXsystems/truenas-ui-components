@@ -1,0 +1,671 @@
+import { Component, signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import type { ComponentFixture } from '@angular/core/testing';
+import type { TnSelectionChange } from './selection-list.component';
+import { TnSelectionListComponent } from './selection-list.component';
+import { axeResult } from '../a11y/axe-testing';
+import { TnListOptionComponent } from '../list-option/list-option.component';
+
+/**
+ * Keyboard navigation for `tn-selection-list` (#216).
+ *
+ * The host has carried `role="listbox"` all along with no keyboard handling of
+ * any kind. That went unnoticed while nothing in an option was a working tab
+ * stop either; #213 made the option itself the stop, which left the component
+ * reachable but at one Tab press per option — a twenty-item list costing twenty
+ * stops, where WAI-ARIA APG expects one stop and nineteen ArrowDown presses.
+ *
+ * WHICH MODEL, AND WHY
+ * --------------------
+ * Roving tabindex over REAL DOM FOCUS, not `aria-activedescendant`. Two reasons,
+ * both specific to this component rather than general preference:
+ *
+ * 1. `tn-list-option` already carries the `keydown.space` / `keydown.enter`
+ *    handlers that toggle it, and they fire on the focused element. Under
+ *    `aria-activedescendant` focus would sit on the listbox and those handlers
+ *    could never fire, so the parent would have to toggle the active option
+ *    itself — a second route into `toggle()` and the double-toggle this spec
+ *    guards against.
+ * 2. The focus ring #215 added is `:host(:focus-visible)` on the option. It
+ *    fires on DOM focus and nothing else, so an `aria-activedescendant` model
+ *    would have silently taken the indicator away and needed a class-based
+ *    replacement. Moving real focus keeps the rule that already exists working.
+ *
+ * `tn-select` makes the opposite choice, and correctly: it is a combobox whose
+ * options live in an overlay while focus stays on the trigger, so
+ * `aria-activedescendant` is the only model available to it. The two components
+ * diverge because the shape of the widget differs, not by oversight.
+ */
+
+interface TestOption {
+  value: string;
+  label: string;
+  disabled: boolean;
+}
+
+@Component({
+  selector: 'tn-test-host',
+  standalone: true,
+  imports: [TnSelectionListComponent, TnListOptionComponent],
+  // Held to three lines by @angular-eslint/component-max-inline-declarations,
+  // which is why the @for body is not broken up the way it would be in a real
+  // template.
+  template: `<tn-selection-list (selectionChange)="onSelectionChange($event)">
+    @for (item of items(); track item.value) {<tn-list-option [value]="item.value"
+      [disabled]="item.disabled">{{ item.label }}</tn-list-option>}</tn-selection-list>`
+})
+class TestHostComponent {
+  items = signal<TestOption[]>([
+    { value: 'a', label: 'Option A', disabled: false },
+    { value: 'b', label: 'Option B', disabled: false },
+    { value: 'c', label: 'Option C', disabled: true },
+    { value: 'd', label: 'Option D', disabled: false }
+  ]);
+
+  changes: TnSelectionChange[] = [];
+
+  onSelectionChange(event: TnSelectionChange): void {
+    this.changes.push(event);
+  }
+}
+
+describe('tn-selection-list keyboard navigation (#216)', () => {
+  let host: TestHostComponent;
+  let fixture: ComponentFixture<TestHostComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TestHostComponent]
+    }).compileComponents();
+
+    // Attached to the document, which axe needs — it walks up to the document
+    // root to decide visibility and exempts a detached tree from every rule.
+    // Real focus needs it too: `HTMLElement.focus()` on a detached element
+    // leaves `document.activeElement` on `<body>`, so every assertion about
+    // where focus landed would be vacuous.
+    fixture = TestBed.createComponent(TestHostComponent);
+    host = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  function list(): HTMLElement {
+    return fixture.nativeElement.querySelector('tn-selection-list') as HTMLElement;
+  }
+
+  function options(): HTMLElement[] {
+    return Array.from(fixture.nativeElement.querySelectorAll('tn-list-option'));
+  }
+
+  function tabindexes(): (string | null)[] {
+    return options().map((option) => option.getAttribute('tabindex'));
+  }
+
+  /** Dispatch a key on whatever currently holds focus, as a browser would. */
+  function press(key: string): void {
+    const target = (document.activeElement ?? list()) as HTMLElement;
+    target.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+    fixture.detectChanges();
+  }
+
+  function focusedIndex(): number {
+    return options().indexOf(document.activeElement as HTMLElement);
+  }
+
+  describe('the listbox is a single tab stop', () => {
+    /**
+     * The defect, stated as an assertion: before #216 every option carried
+     * `tabindex="0"` (bar the disabled one, which carried none), so a four-item
+     * list cost four Tab presses and a twenty-item list cost twenty.
+     */
+    it('puts exactly one option in the tab order', () => {
+      expect(tabindexes().filter((value) => value === '0')).toHaveLength(1);
+    });
+
+    it('gives every other option tabindex="-1" rather than removing it', () => {
+      // -1 rather than absent, including on the disabled option: an option with
+      // no `tabindex` at all cannot be focused programmatically either, so the
+      // arrow keys would have nothing to move focus to.
+      expect(tabindexes()).toEqual(['0', '-1', '-1', '-1']);
+    });
+
+    it('starts the roving tabindex on the first option when nothing is selected', () => {
+      expect(tabindexes()[0]).toBe('0');
+    });
+
+    /**
+     * APG puts the initial stop on the selected option, so tabbing into a list
+     * that already has a selection lands where the user left off rather than at
+     * the top.
+     */
+    it('starts the roving tabindex on the first selected option', () => {
+      options()[2 - 1].click();
+      fixture.detectChanges();
+
+      expect(tabindexes()).toEqual(['-1', '0', '-1', '-1']);
+    });
+
+    it('moves the tab stop to the option the arrow keys land on', () => {
+      options()[0].focus();
+      press('ArrowDown');
+
+      expect(tabindexes()).toEqual(['-1', '0', '-1', '-1']);
+    });
+
+    /**
+     * The route a click takes, walked directly rather than through `click()`.
+     *
+     * What moves the tab stop on a click is the focus a real browser gives the
+     * option on mousedown — `onFocusIn` is the only handler involved, and the
+     * listbox has no click handler at all. jsdom's `HTMLElement.click()` runs
+     * none of that: it dispatches a `MouseEvent` and no focus default. A test
+     * written as focus-then-click therefore asserts nothing the click did, and
+     * would stay green if clicking stopped moving the stop entirely.
+     */
+    it('moves the tab stop to an option that takes focus, as a click does', () => {
+      options()[3].focus();
+      fixture.detectChanges();
+
+      expect(tabindexes()).toEqual(['-1', '-1', '-1', '0']);
+    });
+  });
+
+  describe('arrow keys move focus', () => {
+    beforeEach(() => {
+      options()[0].focus();
+      fixture.detectChanges();
+    });
+
+    it('moves focus down the list on ArrowDown', () => {
+      press('ArrowDown');
+
+      expect(focusedIndex()).toBe(1);
+    });
+
+    it('moves focus up the list on ArrowUp', () => {
+      press('ArrowDown');
+      press('ArrowDown');
+      press('ArrowUp');
+
+      expect(focusedIndex()).toBe(1);
+    });
+
+    /**
+     * Wrapping rather than stopping, matching `tn-select`'s option list — the
+     * two widgets differ on the focus model and there is no reason for them to
+     * also differ on what the last ArrowDown does.
+     */
+    it('wraps from the last option to the first', () => {
+      press('End');
+      press('ArrowDown');
+
+      expect(focusedIndex()).toBe(0);
+    });
+
+    it('wraps from the first option to the last', () => {
+      press('ArrowUp');
+
+      expect(focusedIndex()).toBe(3);
+    });
+
+    it('jumps to the first option on Home', () => {
+      press('End');
+      press('Home');
+
+      expect(focusedIndex()).toBe(0);
+    });
+
+    it('jumps to the last option on End', () => {
+      press('End');
+
+      expect(focusedIndex()).toBe(3);
+    });
+
+    /**
+     * The keys the listbox claims are the ones it acts on, and no others: a
+     * `preventDefault()` on every keydown would swallow Tab and trap the user
+     * in the list.
+     */
+    it.each(['ArrowDown', 'ArrowUp', 'Home', 'End'])('prevents the default scroll on %s', (key) => {
+      const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+      (document.activeElement as HTMLElement).dispatchEvent(event);
+      fixture.detectChanges();
+
+      expect(event.defaultPrevented).toBe(true);
+    });
+
+    /**
+     * A modified navigation key is somebody else's. Ctrl/Cmd+Home and
+     * Ctrl/Cmd+End jump to the top and bottom of the document, and
+     * Shift+ArrowDown is APG's extend-the-selection, which this listbox does
+     * not implement — so consuming them takes a shortcut away and gives the
+     * user nothing in exchange.
+     */
+    it.each([
+      ['Home', { ctrlKey: true }],
+      ['End', { metaKey: true }],
+      ['ArrowDown', { shiftKey: true }],
+      ['ArrowUp', { altKey: true }]
+    ])('leaves a modified %s to the browser', (key, modifier) => {
+      const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...modifier });
+      (document.activeElement as HTMLElement).dispatchEvent(event);
+      fixture.detectChanges();
+
+      expect(event.defaultPrevented).toBe(false);
+      expect(focusedIndex()).toBe(0);
+    });
+
+    it.each(['Tab', 'Escape', 'a'])('leaves %s to the browser', (key) => {
+      const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+      (document.activeElement as HTMLElement).dispatchEvent(event);
+      fixture.detectChanges();
+
+      expect(event.defaultPrevented).toBe(false);
+      expect(focusedIndex()).toBe(0);
+    });
+  });
+
+  /**
+   * THE DISABLED-OPTION DECISION, ASSERTED EITHER WAY.
+   *
+   * Arrow keys DO visit a disabled option. APG keeps `aria-disabled` options
+   * focusable so a keyboard user can perceive that they exist, and the objection
+   * `tn-list-option` recorded against that — "offering focus would only be a
+   * stop where nothing happens" — was about the TAB ORDER, where each extra stop
+   * costs a Tab press. Under a roving tabindex there is exactly one tab stop
+   * whatever the arrow keys visit, so that cost is gone and skipping the option
+   * only hides it.
+   *
+   * `tn-select` skips its disabled options, and that divergence is deliberate
+   * for the same reason: its options are in an overlay a user opens to pick
+   * from, so a stop that cannot be picked is noise. An inline list is something
+   * a user reads.
+   */
+  describe('disabled options', () => {
+    beforeEach(() => {
+      options()[0].focus();
+      fixture.detectChanges();
+    });
+
+    it('are visited by the arrow keys', () => {
+      press('ArrowDown');
+      press('ArrowDown');
+
+      expect(focusedIndex()).toBe(2);
+      expect(options()[2].getAttribute('aria-disabled')).toBe('true');
+    });
+
+    it('can be moved past in both directions', () => {
+      press('End');
+      press('ArrowUp');
+
+      expect(focusedIndex()).toBe(2);
+
+      press('ArrowUp');
+
+      expect(focusedIndex()).toBe(1);
+    });
+
+    it('do not toggle on Space', () => {
+      press('ArrowDown');
+      press('ArrowDown');
+      press(' ');
+
+      expect(options()[2].getAttribute('aria-selected')).toBe('false');
+      expect(host.changes).toEqual([]);
+    });
+
+    /**
+     * The other half of that keypress, and the half the toggle assertion above
+     * cannot see: refusing to toggle is not the same as consuming the key.
+     *
+     * Space has a default action — scroll the page — on any element that is
+     * neither a form control nor a scroller, and the option host is neither.
+     * Nothing else swallows it either: the listbox's own handler falls through
+     * `default:` for `' '`, deliberately, so that Space reaches the option. So
+     * a Space the option declines has to be prevented by the option.
+     *
+     * This became reachable with the roving tabindex: a disabled option
+     * previously carried no `tabindex`, so it could not hold focus and its
+     * guard could never be hit by a real keypress.
+     */
+    it('consume Space rather than letting the page scroll', () => {
+      press('ArrowDown');
+      press('ArrowDown');
+
+      expect(focusedIndex()).toBe(2);
+
+      const event = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+      (document.activeElement as HTMLElement).dispatchEvent(event);
+      fixture.detectChanges();
+
+      expect(event.defaultPrevented).toBe(true);
+      expect(host.changes).toEqual([]);
+    });
+  });
+
+  /**
+   * The parent claims the navigation keys and nothing else. `tn-list-option`
+   * has toggled on Space and Enter since before this ticket, and both events
+   * bubble to the listbox host — so a parent handler that also toggled would
+   * toggle twice, selecting and immediately deselecting, and look like nothing
+   * happened at all.
+   */
+  describe('Space and Enter still toggle, exactly once', () => {
+    beforeEach(() => {
+      options()[0].focus();
+      fixture.detectChanges();
+    });
+
+    it.each([' ', 'Enter'])('toggles the focused option on %s', (key) => {
+      press(key);
+
+      expect(options()[0].getAttribute('aria-selected')).toBe('true');
+    });
+
+    it.each([' ', 'Enter'])('emits one selectionChange per %s', (key) => {
+      press(key);
+
+      expect(host.changes).toHaveLength(1);
+      expect(host.changes[0].options.map((option) => option.value())).toEqual(['a']);
+    });
+
+    it.each([' ', 'Enter'])('toggles back off on a second %s', (key) => {
+      press(key);
+      press(key);
+
+      expect(options()[0].getAttribute('aria-selected')).toBe('false');
+      expect(host.changes).toHaveLength(2);
+      expect(host.changes[1].options).toEqual([]);
+    });
+
+    it('toggles the option the arrow keys moved to, not the one tabbed into', () => {
+      press('ArrowDown');
+      press(' ');
+
+      expect(options()[0].getAttribute('aria-selected')).toBe('false');
+      expect(options()[1].getAttribute('aria-selected')).toBe('true');
+    });
+  });
+
+  /**
+   * The focus indicator #215 added is `:host(:focus-visible)`, which fires on
+   * DOM focus and on nothing else. jsdom has no layout engine and does not
+   * evaluate `:focus-visible`, so what is asserted here is the precondition the
+   * rule needs — that real focus actually lands on the option the arrow keys
+   * chose, rather than the listbox merely pointing at it with
+   * `aria-activedescendant`. `list-option-a11y.spec.ts` asserts the rule itself
+   * is still in the stylesheet.
+   */
+  describe('focus really moves, so the #215 focus ring still shows', () => {
+    it('leaves DOM focus on the option the arrow keys chose', () => {
+      options()[0].focus();
+      press('ArrowDown');
+
+      expect(document.activeElement).toBe(options()[1]);
+    });
+
+    it('does not keep focus on the listbox itself', () => {
+      options()[0].focus();
+      press('ArrowDown');
+
+      expect(document.activeElement).not.toBe(list());
+    });
+
+    /**
+     * `aria-activedescendant` is the model this component did NOT choose, and
+     * setting it while DOM focus is elsewhere points assistive technology at one
+     * option while the browser focuses another.
+     */
+    it('does not also drive aria-activedescendant', () => {
+      options()[0].focus();
+      press('ArrowDown');
+
+      expect(list().hasAttribute('aria-activedescendant')).toBe(false);
+    });
+  });
+
+  describe('the listbox structure axe checks', () => {
+    it('raises no violation on a populated list', async () => {
+      const { violated, evaluated } = await axeResult(
+        fixture.nativeElement,
+        [list(), ...options()],
+        ['aria-required-children', 'aria-required-parent']
+      );
+
+      expect(violated).toEqual([]);
+      expect(evaluated).toContain('aria-required-children');
+      expect(evaluated).toContain('aria-required-parent');
+    });
+
+    it('keeps role="listbox" on the host', () => {
+      expect(list().getAttribute('role')).toBe('listbox');
+    });
+
+    it('keeps every child a role="option"', () => {
+      expect(options().map((option) => option.getAttribute('role')))
+        .toEqual(['option', 'option', 'option', 'option']);
+    });
+  });
+
+  /**
+   * An empty list and a list whose options change under it are where a roving
+   * index goes out of bounds — an index kept in a field, pointing past the end
+   * after the last option is removed, and a keypress that throws.
+   */
+  describe('when the options change', () => {
+    it('survives arrow keys on an empty list', () => {
+      host.items.set([]);
+      fixture.detectChanges();
+
+      expect(() => {
+        list().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      }).not.toThrow();
+    });
+
+    it('keeps exactly one tab stop after options are removed', () => {
+      options()[3].focus();
+      fixture.detectChanges();
+
+      host.items.update((items) => items.slice(0, 2));
+      fixture.detectChanges();
+
+      expect(tabindexes().filter((value) => value === '0')).toHaveLength(1);
+    });
+
+    /**
+     * Removing the option a user is standing on takes their focus with it —
+     * the browser drops it to `<body>`, so the next Tab restarts from the top
+     * of the document rather than continuing past the list. Moving the tab stop
+     * does not cover this: the stop is where focus would RESUME, not where it
+     * currently is.
+     */
+    it('moves focus to the new tab stop when the focused option is removed', () => {
+      options()[3].focus();
+      fixture.detectChanges();
+
+      expect(focusedIndex()).toBe(3);
+
+      host.items.update((items) => items.slice(0, 2));
+      fixture.detectChanges();
+
+      expect(focusedIndex()).toBe(1);
+      expect(tabindexes()).toEqual(['-1', '0']);
+    });
+
+    /** The other side of that: focus the list does not hold is not the list's to take. */
+    it('leaves focus alone when the options change from outside the list', () => {
+      const outside = document.createElement('button');
+      document.body.appendChild(outside);
+
+      options()[3].focus();
+      outside.focus();
+
+      host.items.update((items) => items.slice(0, 2));
+      fixture.detectChanges();
+
+      expect(document.activeElement).toBe(outside);
+
+      outside.remove();
+    });
+
+    it('keeps exactly one tab stop after options are added', () => {
+      host.items.update((items) => [
+        ...items,
+        { value: 'e', label: 'Option E', disabled: false }
+      ]);
+      fixture.detectChanges();
+
+      expect(tabindexes().filter((value) => value === '0')).toHaveLength(1);
+    });
+
+    /**
+     * Removal and insertion ABOVE the option the user is standing on, which is
+     * where an index and a caret come apart.
+     *
+     * Every case above changes the list at or below the caret, where clamping a
+     * remembered index happens to land on the right option and hides the
+     * question. Editing above it shifts every option down or up by one while
+     * DOM focus stays put, so an index remembered from before the edit now
+     * names a DIFFERENT option — the tab stop moves off the focused option, and
+     * the next arrow key starts counting from somewhere the user is not.
+     *
+     * Five options rather than the default four, because with four the clamp
+     * `Math.min(3, 2)` coincidentally lands back on the focused option.
+     */
+    describe('an option is added or removed above the caret', () => {
+      beforeEach(() => {
+        host.items.update((items) => [
+          ...items,
+          { value: 'e', label: 'Option E', disabled: false }
+        ]);
+        fixture.detectChanges();
+
+        options()[3].focus();
+        fixture.detectChanges();
+      });
+
+      /** a b c d e, focus on d, remove a — d is index 2 of b c d e. */
+      it('keeps the tab stop on the focused option when one above it is removed', () => {
+        host.items.update((items) => items.slice(1));
+        fixture.detectChanges();
+
+        expect(focusedIndex()).toBe(2);
+        expect(tabindexes()).toEqual(['-1', '-1', '0', '-1']);
+      });
+
+      /**
+       * The same drift, felt as a keypress: one ArrowDown from d should be e,
+       * and lands two options away if it counts from the remembered index.
+       */
+      it('moves focus one option from where focus actually is', () => {
+        host.items.update((items) => items.slice(1));
+        fixture.detectChanges();
+
+        press('ArrowDown');
+
+        expect(focusedIndex()).toBe(3);
+      });
+
+      it('moves focus back one option from where focus actually is', () => {
+        host.items.update((items) => items.slice(1));
+        fixture.detectChanges();
+
+        press('ArrowUp');
+
+        expect(focusedIndex()).toBe(1);
+      });
+
+      /** The other direction: z a b c d e, focus still on d, now index 4. */
+      it('keeps the tab stop on the focused option when one is inserted above it', () => {
+        host.items.update((items) => [
+          { value: 'z', label: 'Option Z', disabled: false },
+          ...items
+        ]);
+        fixture.detectChanges();
+
+        expect(focusedIndex()).toBe(4);
+        expect(tabindexes()).toEqual(['-1', '-1', '-1', '-1', '0', '-1']);
+      });
+
+      /**
+       * And with focus elsewhere on the page, where there is no caret to read
+       * the answer off. The tab stop is where a returning Tab lands, so it has
+       * to follow the option the user was last on rather than the slot that
+       * option used to occupy — otherwise a list edited while they were away
+       * returns them to a neighbour.
+       */
+      it('keeps the tab stop with the last visited option after focus has left', () => {
+        const outside = document.createElement('button');
+        document.body.appendChild(outside);
+        outside.focus();
+        fixture.detectChanges();
+
+        host.items.update((items) => items.slice(1));
+        fixture.detectChanges();
+
+        expect(tabindexes()).toEqual(['-1', '-1', '0', '-1']);
+
+        outside.remove();
+      });
+    });
+  });
+
+  /**
+   * The listener is on the listbox host and hears every keydown that bubbles
+   * through it, so the navigation keys are claimed only when the option host
+   * itself is the target. Nothing in this library projects a focusable control
+   * into an option and `role="option"` arguably forbids one, but a consumer can
+   * — and Home taken off an input's caret, with a `preventDefault()` on top, is
+   * the listbox reaching into a control it does not own.
+   */
+  describe('a focusable control projected into an option', () => {
+    it('keeps the navigation keys', () => {
+      @Component({
+        selector: 'tn-projected-host',
+        standalone: true,
+        imports: [TnSelectionListComponent, TnListOptionComponent],
+        template: `<tn-selection-list><tn-list-option value="a"><input /></tn-list-option>
+          <tn-list-option value="b">Option B</tn-list-option></tn-selection-list>`
+      })
+      class ProjectedHostComponent {}
+
+      const projected = TestBed.createComponent(ProjectedHostComponent);
+      projected.detectChanges();
+
+      const input = projected.nativeElement.querySelector('input') as HTMLInputElement;
+      input.focus();
+
+      const event = new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true });
+      input.dispatchEvent(event);
+      projected.detectChanges();
+
+      expect(event.defaultPrevented).toBe(false);
+      expect(document.activeElement).toBe(input);
+    });
+  });
+
+  /**
+   * `tn-list-option` is exported on its own and is used outside a
+   * `tn-selection-list`. The roving tabindex is the parent's, so an option with
+   * no parent has to stay the plain tab stop #213 made it — otherwise this fix
+   * takes a standalone option out of the tab order entirely.
+   */
+  describe('an option outside a selection list is unaffected', () => {
+    it('stays in the tab order', async () => {
+      @Component({
+        selector: 'tn-lone-host',
+        standalone: true,
+        imports: [TnListOptionComponent],
+        template: `<tn-list-option value="lone">Lone option</tn-list-option>`
+      })
+      class LoneHostComponent {}
+
+      const lone = TestBed.createComponent(LoneHostComponent);
+      lone.detectChanges();
+
+      const option = lone.nativeElement.querySelector('tn-list-option') as HTMLElement;
+
+      expect(option.tabIndex).toBe(0);
+    });
+  });
+});

@@ -275,6 +275,35 @@ describe('tn-list-option accessibility (#213)', () => {
 
       expect(option().getAttribute('aria-selected')).toBe('false');
     });
+
+    /**
+     * The option acts on its OWN key presses. Its keydown handler is on the
+     * host, which hears everything that bubbles out of projected content, so a
+     * consumer's text input inside an option would otherwise find Space
+     * `preventDefault()`ed away and the option toggling as it typed.
+     */
+    it.each([' ', 'Enter'])('leaves %s alone when a projected control has focus', (key) => {
+      @Component({
+        selector: 'tn-projected-host',
+        standalone: true,
+        imports: [TnListOptionComponent],
+        template: `<tn-list-option><input /></tn-list-option>`
+      })
+      class ProjectedHostComponent {}
+
+      const projected = TestBed.createComponent(ProjectedHostComponent);
+      projected.detectChanges();
+
+      const input = projected.nativeElement.querySelector('input') as HTMLInputElement;
+      const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+      input.dispatchEvent(event);
+      projected.detectChanges();
+
+      const optionHost = projected.nativeElement.querySelector('tn-list-option') as HTMLElement;
+
+      expect(event.defaultPrevented).toBe(false);
+      expect(optionHost.getAttribute('aria-selected')).toBe('false');
+    });
   });
 
   /**
