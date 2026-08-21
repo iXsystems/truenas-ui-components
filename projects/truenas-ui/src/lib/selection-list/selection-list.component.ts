@@ -29,7 +29,15 @@ export interface TnSelectionChange {
     '[class.tn-selection-list--dense]': 'dense()',
     '[class.tn-selection-list--disabled]': 'isDisabled()',
     'role': 'listbox',
-    '[attr.aria-multiselectable]': 'multiple()'
+    '[attr.aria-multiselectable]': 'multiple()',
+    // Both listeners are on the host and rely on bubbling from the options,
+    // rather than being bound per option: contentChildren gives components, not
+    // template bindings, so there is nowhere to attach a per-option listener
+    // without the option knowing about its parent. Keydown bubbles from the
+    // focused option to here, which is also what lets tn-list-option keep its
+    // own Space/Enter handlers untouched — see onKeydown.
+    '(keydown)': 'onKeydown($event)',
+    '(focusin)': 'onFocusIn($event)'
   }
 })
 export class TnSelectionListComponent implements ControlValueAccessor {
@@ -47,6 +55,45 @@ export class TnSelectionListComponent implements ControlValueAccessor {
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
+  /**
+   * The option the user has moved to, or `null` while they have not moved yet.
+   *
+   * Kept separate from `activeIndex` rather than seeded with a starting value,
+   * because "where the user last was" and "where a user who has not arrived yet
+   * would land" are different questions and only the second one should follow
+   * the selection around. See `activeIndex`.
+   */
+  private visitedIndex = signal<number | null>(null);
+
+  /**
+   * Which option carries the listbox's single tab stop.
+   *
+   * Before the user has touched the list this tracks the first selected option,
+   * which is what APG asks for — tabbing into a list that already has a
+   * selection should land where the user left off rather than at the top. Once
+   * they have moved, `visitedIndex` pins it and the selection no longer drags
+   * the tab stop around underneath them.
+   *
+   * Clamped rather than stored as a plain index, because the options are
+   * content children and the caller can remove them: an index held in a field
+   * outlives the option it pointed at, and the next keypress reads past the end
+   * of the array.
+   */
+  private activeIndex = computed(() => {
+    const opts = this.options();
+    if (opts.length === 0) {
+      return -1;
+    }
+
+    const visited = this.visitedIndex();
+    if (visited !== null) {
+      return Math.min(visited, opts.length - 1);
+    }
+
+    const firstSelected = opts.findIndex(option => option.effectiveSelected());
+    return firstSelected === -1 ? 0 : firstSelected;
+  });
+
   private onChange = (_: unknown[]) => {};
   private onTouched = () => {};
 
@@ -60,6 +107,97 @@ export class TnSelectionListComponent implements ControlValueAccessor {
         option.internalColor.set(currentColor);
       });
     });
+
+    // The roving tabindex itself: one stop for the whole listbox, moved rather
+    // than added to. Written from an effect because it has to re-run both when
+    // the active option changes and when the set of options does — an option
+    // added after the list was rendered would otherwise arrive with no tabindex
+    // assigned and fall back to its standalone value, putting a second stop in
+    // the tab order.
+    effect(() => {
+      const opts = this.options();
+      const active = this.activeIndex();
+      opts.forEach((option, index) => {
+        option.rovingTabindex.set(index === active ? 0 : -1);
+      });
+    });
+  }
+
+  /**
+   * ArrowUp / ArrowDown / Home / End, and deliberately nothing else.
+   *
+   * Space and Enter are absent because `tn-list-option` has handled them since
+   * before this component had any keyboard handling at all, and its keydown
+   * bubbles up to here. Toggling from both places would toggle twice — select
+   * then immediately deselect — which reads as the key doing nothing rather
+   * than as a bug, so it is worth stating why it is missing rather than leaving
+   * a later reader to add it.
+   *
+   * Every other key is left alone, Tab included: `preventDefault()` on an
+   * unrecognised key is how a widget traps a keyboard user inside it.
+   *
+   * Navigation is not gated on `isDisabled()`. Moving focus changes nothing —
+   * every route into `toggle()` is already closed for a disabled option by the
+   * option's own guard — and a disabled list a user can read through is the
+   * same reasoning that has the arrow keys visit disabled options at all.
+   */
+  onKeydown(event: KeyboardEvent): void {
+    const count = this.options().length;
+    if (count === 0) {
+      return;
+    }
+
+    const current = this.activeIndex();
+    let next: number;
+
+    switch (event.key) {
+      case 'ArrowDown':
+        next = (current + 1) % count;
+        break;
+      case 'ArrowUp':
+        next = (current - 1 + count) % count;
+        break;
+      case 'Home':
+        next = 0;
+        break;
+      case 'End':
+        next = count - 1;
+        break;
+      default:
+        return;
+    }
+
+    // After the switch, so it happens only for the keys actually handled — and
+    // only once the list is known to be non-empty, so a swallowed key always
+    // moved something.
+    event.preventDefault();
+    this.visitedIndex.set(next);
+    this.options()[next].focus();
+  }
+
+  /**
+   * Keep the tab stop under whichever option actually holds focus.
+   *
+   * Covers the routes into the list that are not the arrow keys — a click, and
+   * a Tab that lands here — so that leaving the list and coming back returns to
+   * the option the user was last on, rather than to the one the arrow keys
+   * happened to leave the index at.
+   *
+   * `contains` rather than an identity check on the target, because focus can
+   * land on something projected into the option rather than on the option host.
+   */
+  onFocusIn(event: FocusEvent): void {
+    const target = event.target as Node | null;
+    if (target === null) {
+      return;
+    }
+
+    const index = this.options()
+      .findIndex(option => (option.elementRef.nativeElement as HTMLElement).contains(target));
+
+    if (index !== -1) {
+      this.visitedIndex.set(index);
+    }
   }
 
   // ControlValueAccessor implementation

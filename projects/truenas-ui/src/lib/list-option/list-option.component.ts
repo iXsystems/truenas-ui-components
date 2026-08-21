@@ -25,16 +25,19 @@ import { TnCheckboxComponent } from '../checkbox/checkbox.component';
     // them reachable, and it keeps the count the same: one tab stop per option,
     // now on the element that acts on it.
     //
-    // A listbox should really manage a single roving tabindex across its
-    // options rather than making each one a stop; tn-selection-list has no
-    // keyboard handling at all today, so that is its own piece of work and is
-    // proposed on the PR rather than done here.
+    // Inside a tn-selection-list that is no longer true: the listbox owns a
+    // single roving tabindex across its options (#216) and hands each one the
+    // value it should carry, so the list costs one Tab press however long it
+    // is. What is below is the STANDALONE behaviour — tn-list-option is
+    // exported on its own, and an option with no parent list has to stay the
+    // plain tab stop #213 made it rather than fall out of the tab order.
     //
-    // A disabled option is left out of the tab order, matching the
+    // Standalone, a disabled option is left out of the tab order, matching the
     // `pointer-events: none` the disabled modifier already sets — every other
     // route into toggle() is closed for it, so offering focus would only be a
-    // stop where nothing happens.
-    '[attr.tabindex]': 'effectiveDisabled() ? null : 0',
+    // stop where nothing happens. Under a roving tabindex that trade is
+    // different and the listbox decides it differently; see effectiveTabindex.
+    '[attr.tabindex]': 'effectiveTabindex()',
     '[attr.aria-selected]': 'effectiveSelected()',
     '[attr.aria-disabled]': 'effectiveDisabled()'
   }
@@ -75,6 +78,35 @@ export class TnListOptionComponent implements AfterContentInit {
     return internal !== null ? internal : this.color();
   });
 
+  /**
+   * The tabindex a parent `tn-selection-list` has assigned, or `null` when this
+   * option is standalone.
+   *
+   * Set by the listbox's roving tabindex (#216): 0 on the one option that is
+   * the list's single tab stop, -1 on the rest. `null` is not "no tab stop" but
+   * "no parent" — it is what keeps a `tn-list-option` used on its own behaving
+   * as #213 left it, and it is why this is a nullable number rather than a
+   * number defaulting to -1.
+   */
+  rovingTabindex = signal<number | null>(null);
+
+  /**
+   * -1 rather than a removed attribute for a disabled option under a roving
+   * tabindex, which is the one place these two paths disagree. An element with
+   * no `tabindex` cannot be focused programmatically either, so dropping the
+   * attribute would leave the listbox's arrow keys with nothing to move focus
+   * to — and the listbox deliberately visits disabled options, so that they can
+   * be perceived rather than silently skipped. Standalone, where every stop
+   * costs a Tab press, the disabled option is still left out entirely.
+   */
+  effectiveTabindex = computed(() => {
+    const roving = this.rovingTabindex();
+    if (roving !== null) {
+      return roving;
+    }
+    return this.effectiveDisabled() ? null : 0;
+  });
+
   protected hasLeadingContent = signal<boolean>(false);
   protected hasSecondaryTextContent = signal<boolean>(false);
   protected hasPrimaryTextDirective = signal<boolean>(false);
@@ -103,6 +135,19 @@ export class TnListOptionComponent implements AfterContentInit {
       element.querySelector('[tnListItemTitle]') ||
       element.querySelector('[tnListItemPrimary]')
     ));
+  }
+
+  /**
+   * Move real DOM focus to this option.
+   *
+   * Called by the parent listbox as the arrow keys move (#216). Focus lands on
+   * the host, which is both the element carrying the roving tabindex and the
+   * element `:host(:focus-visible)` draws the #215 focus ring on — the two
+   * reasons the listbox moves focus rather than pointing at the option with
+   * `aria-activedescendant`.
+   */
+  focus(): void {
+    (this.elementRef.nativeElement as HTMLElement).focus();
   }
 
   @HostListener('click', ['$event'])
