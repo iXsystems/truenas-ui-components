@@ -517,6 +517,97 @@ describe('tn-selection-list keyboard navigation (#216)', () => {
 
       expect(tabindexes().filter((value) => value === '0')).toHaveLength(1);
     });
+
+    /**
+     * Removal and insertion ABOVE the option the user is standing on, which is
+     * where an index and a caret come apart.
+     *
+     * Every case above changes the list at or below the caret, where clamping a
+     * remembered index happens to land on the right option and hides the
+     * question. Editing above it shifts every option down or up by one while
+     * DOM focus stays put, so an index remembered from before the edit now
+     * names a DIFFERENT option — the tab stop moves off the focused option, and
+     * the next arrow key starts counting from somewhere the user is not.
+     *
+     * Five options rather than the default four, because with four the clamp
+     * `Math.min(3, 2)` coincidentally lands back on the focused option.
+     */
+    describe('an option is added or removed above the caret', () => {
+      beforeEach(() => {
+        host.items.update((items) => [
+          ...items,
+          { value: 'e', label: 'Option E', disabled: false }
+        ]);
+        fixture.detectChanges();
+
+        options()[3].focus();
+        fixture.detectChanges();
+      });
+
+      /** a b c d e, focus on d, remove a — d is index 2 of b c d e. */
+      it('keeps the tab stop on the focused option when one above it is removed', () => {
+        host.items.update((items) => items.slice(1));
+        fixture.detectChanges();
+
+        expect(focusedIndex()).toBe(2);
+        expect(tabindexes()).toEqual(['-1', '-1', '0', '-1']);
+      });
+
+      /**
+       * The same drift, felt as a keypress: one ArrowDown from d should be e,
+       * and lands two options away if it counts from the remembered index.
+       */
+      it('moves focus one option from where focus actually is', () => {
+        host.items.update((items) => items.slice(1));
+        fixture.detectChanges();
+
+        press('ArrowDown');
+
+        expect(focusedIndex()).toBe(3);
+      });
+
+      it('moves focus back one option from where focus actually is', () => {
+        host.items.update((items) => items.slice(1));
+        fixture.detectChanges();
+
+        press('ArrowUp');
+
+        expect(focusedIndex()).toBe(1);
+      });
+
+      /** The other direction: z a b c d e, focus still on d, now index 4. */
+      it('keeps the tab stop on the focused option when one is inserted above it', () => {
+        host.items.update((items) => [
+          { value: 'z', label: 'Option Z', disabled: false },
+          ...items
+        ]);
+        fixture.detectChanges();
+
+        expect(focusedIndex()).toBe(4);
+        expect(tabindexes()).toEqual(['-1', '-1', '-1', '-1', '0', '-1']);
+      });
+
+      /**
+       * And with focus elsewhere on the page, where there is no caret to read
+       * the answer off. The tab stop is where a returning Tab lands, so it has
+       * to follow the option the user was last on rather than the slot that
+       * option used to occupy — otherwise a list edited while they were away
+       * returns them to a neighbour.
+       */
+      it('keeps the tab stop with the last visited option after focus has left', () => {
+        const outside = document.createElement('button');
+        document.body.appendChild(outside);
+        outside.focus();
+        fixture.detectChanges();
+
+        host.items.update((items) => items.slice(1));
+        fixture.detectChanges();
+
+        expect(tabindexes()).toEqual(['-1', '-1', '0', '-1']);
+
+        outside.remove();
+      });
+    });
   });
 
   /**

@@ -57,14 +57,24 @@ export class TnSelectionListComponent implements ControlValueAccessor {
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
   /**
-   * The option the user has moved to, or `null` while they have not moved yet.
+   * The option the user has moved to, and the slot it occupied at the time —
+   * or `null` while they have not moved yet.
    *
    * Kept separate from `activeIndex` rather than seeded with a starting value,
    * because "where the user last was" and "where a user who has not arrived yet
    * would land" are different questions and only the second one should follow
    * the selection around. See `activeIndex`.
+   *
+   * The OPTION and not merely its index, because the options are content
+   * children and the caller can add or remove them ABOVE the one the user is
+   * standing on. An index survives that edit while quietly changing meaning —
+   * it names whichever option shifted into the slot — so the tab stop and the
+   * arrow keys' starting point both come away from the option holding focus,
+   * and one ArrowDown lands two options from where the user is. A reference
+   * cannot drift that way. The index rides along only as the fallback for the
+   * one case a reference cannot answer: the option itself being removed.
    */
-  private visitedIndex = signal<number | null>(null);
+  private visited = signal<{ option: TnListOptionComponent; index: number } | null>(null);
 
   /**
    * Which option carries the listbox's single tab stop.
@@ -72,13 +82,14 @@ export class TnSelectionListComponent implements ControlValueAccessor {
    * Before the user has touched the list this tracks the first selected option,
    * which is what APG asks for — tabbing into a list that already has a
    * selection should land where the user left off rather than at the top. Once
-   * they have moved, `visitedIndex` pins it and the selection no longer drags
-   * the tab stop around underneath them.
+   * they have moved, `visited` pins it and the selection no longer drags the
+   * tab stop around underneath them.
    *
-   * Clamped rather than stored as a plain index, because the options are
-   * content children and the caller can remove them: an index held in a field
-   * outlives the option it pointed at, and the next keypress reads past the end
-   * of the array.
+   * Resolved against the current options on every read rather than stored, so
+   * that a list edited underneath the user still points at the option they were
+   * on. Only once that option has left the list is there nothing to resolve,
+   * and the remembered slot is the best answer left — clamped, because an index
+   * held across a removal otherwise reads past the end of the array.
    */
   private activeIndex = computed(() => {
     const opts = this.options();
@@ -86,9 +97,10 @@ export class TnSelectionListComponent implements ControlValueAccessor {
       return -1;
     }
 
-    const visited = this.visitedIndex();
+    const visited = this.visited();
     if (visited !== null) {
-      return Math.min(visited, opts.length - 1);
+      const current = opts.indexOf(visited.option);
+      return current === -1 ? Math.min(visited.index, opts.length - 1) : current;
     }
 
     const firstSelected = opts.findIndex(option => option.effectiveSelected());
@@ -233,9 +245,13 @@ export class TnSelectionListComponent implements ControlValueAccessor {
 
     // After the switch, so it happens only for the keys actually handled — and
     // only once the list is known to be non-empty, so a swallowed key always
-    // moved something.
+    // has an option to land on. It may land on the one already focused: End at
+    // the last option, Home at the first, either arrow on a one-option list.
+    // Consuming those is still right — the key IS the listbox's and its default
+    // action is scrolling the page out from under a user who asked to move
+    // within the list.
     event.preventDefault();
-    this.visitedIndex.set(next);
+    this.visited.set({ option: opts[next], index: next });
     opts[next].focus();
   }
 
@@ -256,12 +272,13 @@ export class TnSelectionListComponent implements ControlValueAccessor {
       return;
     }
 
-    const index = this.options()
+    const opts = this.options();
+    const index = opts
       .findIndex(option => (option.elementRef.nativeElement as HTMLElement).contains(target));
 
     if (index !== -1) {
-      this.visitedIndex.set(index);
-      this.focusedOptionElement = this.options()[index].elementRef.nativeElement as HTMLElement;
+      this.visited.set({ option: opts[index], index });
+      this.focusedOptionElement = opts[index].elementRef.nativeElement as HTMLElement;
     }
   }
 
