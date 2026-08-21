@@ -141,9 +141,11 @@ export class TnDrawerComponent implements OnDestroy {
   constructor() {
     // Capture focus before opening in over mode, and restore it on close
     effect(() => {
-      if (this.mode() === 'over' && this.opened()) {
+      const opened = this.opened();
+
+      if (opened && this.mode() === 'over') {
         this.previousFocus = this.document.activeElement as HTMLElement;
-      } else {
+      } else if (!opened) {
         // Restored HERE rather than on `transitionend` (#214). The panel becomes
         // `inert` the moment it closes, so the browser blurs whatever inside it
         // had focus and moves it to `<body>` immediately — and `transitionend`
@@ -153,6 +155,12 @@ export class TnDrawerComponent implements OnDestroy {
         // never fires at all and focus would be left on `<body>` every time.
         //
         // A no-op in side mode, where `previousFocus` is never captured.
+        //
+        // Gated on `!opened` rather than on the negation of the branch above,
+        // because those are not the same condition: a drawer that switches from
+        // `over` to `side` WHILE OPEN — a responsive layout crossing its
+        // breakpoint — fails the first test without having closed, and would
+        // otherwise have focus yanked out of it and back to whatever opened it.
         this.restoreFocus();
       }
     });

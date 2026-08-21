@@ -373,6 +373,47 @@ describe('drawer accessibility (#214)', () => {
       expect(document.activeElement).toBe(trigger);
     });
 
+    /**
+     * A responsive layout crossing its breakpoint switches `mode` while the
+     * drawer is open. That is not a close, so the component must not spend its
+     * one saved focus on it — the drawer is still on screen, and the close that
+     * follows later is what the saved element is for.
+     *
+     * Focus does still leave the drawer at the switch, and that is not this
+     * component: `mode` decides which of two panels the template renders, so the
+     * over-mode panel is DESTROYED, and `CdkTrapFocus.ngOnDestroy` restores the
+     * element it captured. Measured — with the guard below in place the effect
+     * does not run its restore branch, and focus lands on the opener anyway.
+     * Pre-existing, unchanged here, and noted on the pull request.
+     *
+     * What this asserts is the part the component owns: the saved element
+     * survives the mode change, so the eventual close still restores it. Without
+     * the `!opened` guard the mode change consumes it and the close below
+     * restores nothing.
+     */
+    it('saves its restore for the close, not for a mode change while open', () => {
+      const trigger = fixture.nativeElement.querySelector('#trigger') as HTMLElement;
+      const other = fixture.nativeElement.querySelector('#external-title') as HTMLElement;
+      other.tabIndex = -1;
+      trigger.focus();
+
+      openOver();
+      (panel().querySelector('#in-drawer') as HTMLElement).focus();
+
+      host.mode.set('side');
+      fixture.detectChanges();
+      expect(host.opened()).toBe(true);
+
+      // Somewhere else entirely, so the close below has something to restore
+      // FROM — otherwise focus sitting on the trigger would prove nothing.
+      other.focus();
+
+      host.opened.set(false);
+      fixture.detectChanges();
+
+      expect(document.activeElement).toBe(trigger);
+    });
+
     it('does not pull focus back again when the close transition ends', () => {
       const trigger = fixture.nativeElement.querySelector('#trigger') as HTMLElement;
       const other = fixture.nativeElement.querySelector('#external-title') as HTMLElement;
