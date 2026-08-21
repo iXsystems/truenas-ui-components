@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expectOpeningMovesFocusInside } from './focus-capture';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
@@ -156,26 +156,17 @@ export const OverMode: Story = {
 
   /**
    * An `over` drawer is a modal dialog, so opening one must put focus inside it
-   * (#227). Asserted here rather than only in Jest because whether a real click
-   * ends up inside the panel depends on layout, the transition and `inert` —
-   * none of which jsdom implements. The panel is portaled to `document.body`, so
-   * it is found from the document rather than from `canvasElement`.
+   * (#227) — and this is the shape with nothing tabbable in it at all: the nav
+   * entries are `<a>` elements with no `href`. It failed in CI against the
+   * first version of the fix. `focus-capture.ts` holds the assertion, shared
+   * with `tn-side-panel`, whose bug this component has now repeated for the
+   * third time.
+   *
+   * Unlike the side panel, `role="dialog"` and `aria-modal` sit on the PANEL
+   * here rather than on a wrapping overlay, so the panel is the dialog.
    */
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const trigger = canvas.getByRole('button', { name: 'Open Drawer' });
-
-    trigger.focus();
-    await userEvent.click(trigger);
-
-    const panel = document.querySelector('.tn-drawer__panel--over') as HTMLElement;
-    await expect(panel).toBeInTheDocument();
-
-    await waitFor(async () => {
-      await expect(panel.getAttribute('aria-modal')).toBe('true');
-      await expect(panel.contains(document.activeElement)).toBe(true);
-      await expect(document.activeElement).not.toBe(trigger);
-    });
+    await expectOpeningMovesFocusInside(canvasElement, 'Open Drawer', '.tn-drawer__panel--over');
   },
 };
 

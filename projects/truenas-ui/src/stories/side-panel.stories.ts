@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expectOpeningMovesFocusInside } from './focus-capture';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
 import { tnIconMarker } from '../lib/icon/icon-marker';
@@ -17,39 +17,11 @@ const rowStyle = 'display: flex; justify-content: space-between; align-items: ce
 const textareaStyle = 'width: 100%; padding: 10px 12px; border: 1px solid var(--tn-lines); border-radius: 4px; background: var(--tn-bg1); color: var(--tn-fg1); box-sizing: border-box; font-size: 1rem; font-family: inherit; resize: vertical; min-height: 80px;';
 
 /**
- * Opens a panel by clicking its trigger and asserts that focus ends up inside
- * it — the browser half of #227, where the defect was found and where jsdom
- * cannot follow.
- *
- * A unit spec can only assert what the component does (it focuses the panel
- * container; `side-panel-focus-capture.spec.ts` owns that). Whether a real user
- * clicking a real trigger ends up inside the dialog depends on layout, the CSS
- * transition and `inert`, none of which jsdom implements — the reported symptom
- * was invisible to the whole Jest suite and visible on the first click here.
- *
- * The panel is portaled to `document.body`, so it is found from the document
- * rather than from `canvasElement`.
+ * `role="dialog"` and `aria-modal` are on the OVERLAY in this component, not on
+ * the panel — so the overlay is what focus has to end up inside. The panel is a
+ * child of it. `focus-capture.ts` holds the assertion, shared with `tn-drawer`.
  */
-async function expectFocusMovesIntoPanel(canvasElement: HTMLElement, triggerName: string | RegExp): Promise<void> {
-  const canvas = within(canvasElement);
-  const trigger = canvas.getByRole('button', { name: triggerName });
-
-  trigger.focus();
-  await userEvent.click(trigger);
-
-  const overlay = document.querySelector('.tn-side-panel__overlay') as HTMLElement;
-  await expect(overlay).toBeInTheDocument();
-
-  await waitFor(async () => {
-    await expect(overlay.getAttribute('aria-modal')).toBe('true');
-    // The assertion the ticket measured as false: `aria-modal` has told
-    // assistive technology to ignore everything outside this element, so focus
-    // being outside it means focus is on something the user has been told does
-    // not exist.
-    await expect(overlay.contains(document.activeElement)).toBe(true);
-    await expect(document.activeElement).not.toBe(trigger);
-  });
-}
+const SIDE_PANEL_DIALOG = '.tn-side-panel__overlay';
 
 const meta: Meta<TnSidePanelComponent> = {
   title: 'Components/Side Panel',
@@ -264,9 +236,10 @@ export const Default: Story = {
   }),
 
   // The story the defect was reported against: the only tabbable inside this
-  // panel is its own × button, which is the shape the capture failed for.
+  // panel is its own × button, which is the shape the capture failed for — in
+  // the original report, and again in CI against the first version of the fix.
   play: async ({ canvasElement }) => {
-    await expectFocusMovesIntoPanel(canvasElement, 'View Dataset Details');
+    await expectOpeningMovesFocusInside(canvasElement, 'View Dataset Details', SIDE_PANEL_DIALOG);
   },
 };
 
@@ -365,10 +338,11 @@ export const WithActions: Story = {
   }),
 
   // The other shape from the report — a panel with a form in it, which captured
-  // focus even before the fix. Kept as the control: it says the change did not
-  // trade one shape's behaviour for the other's.
+  // focus both before the fix and under the first version of it. Kept as the
+  // control: it says the change did not trade one shape's behaviour for the
+  // other's, and it is the reason the two are known to differ at all.
   play: async ({ canvasElement }) => {
-    await expectFocusMovesIntoPanel(canvasElement, 'Add User');
+    await expectOpeningMovesFocusInside(canvasElement, 'Add User', SIDE_PANEL_DIALOG);
   },
 };
 

@@ -1,4 +1,4 @@
-import { Injector, afterNextRender, effect, inject } from '@angular/core';
+import { Injector, NgZone, afterNextRender, effect, inject } from '@angular/core';
 import type { Signal } from '@angular/core';
 
 /**
@@ -77,8 +77,33 @@ import type { Signal } from '@angular/core';
  * The attribute is removed by the same change detection pass this effect runs
  * in, so a `focus()` from inside the effect would race the binding that makes
  * the element focusable in the first place. `afterNextRender` runs once that
- * pass has written the DOM, which is the earliest moment the panel is
- * guaranteed to be focusable.
+ * pass has written the DOM, which is the earliest point the panel can be
+ * focusable.
+ *
+ * WHY THE MOVE IS CHECKED RATHER THAN ASSUMED
+ * -------------------------------------------
+ * `HTMLElement.focus()` reports nothing. It is a request, and the browser
+ * declines it silently whenever the element is not focusable AT THAT INSTANT —
+ * which is the same silence that made the bug this file exists for invisible.
+ * A single deferred call is therefore a guess about timing, and CI measured it
+ * wrong: with the call in `afterNextRender` alone, `side-panel--default` and
+ * `drawer--over-mode` both opened with focus still outside the dialog, while
+ * `side-panel--with-actions` captured. Three shapes of the same component,
+ * two outcomes, one code path — so the deciding factor was the state of the
+ * panel when the call landed, not the call.
+ *
+ * **What that state is has not been established here**, and this comment will
+ * not pretend otherwise: no browser can run in the environment these cycles
+ * work in, so the evidence is the CI log and no more. The panel being mid
+ * transition is the ticket's own hypothesis and remains one.
+ *
+ * What does not need establishing is the remedy. Focus is observable —
+ * `document.activeElement` says where it went — so the move is READ BACK, and
+ * re-attempted on animation frames until it takes or the open transition has
+ * had time to finish. When the first call works, which is every jsdom spec and
+ * was `--with-actions` in CI, nothing after it runs and this costs one
+ * comparison. Reading back a write whose failure mode is silence is the same
+ * rule `handoff.py` follows for the same reason.
  *
  * @param isOpen Whether the surface is open AND modal. `tn-drawer` is modal
  *   only in `over` mode, so it passes a computed condition rather than its
@@ -92,6 +117,10 @@ export function tnFocusOnOpen(
   target: () => HTMLElement | null | undefined
 ): void {
   const injector = inject(Injector);
+  // The retries run outside Angular, because they touch no state it tracks: a
+  // `focus()` per frame inside the zone is a change detection pass per frame,
+  // for the whole length of an opening transition.
+  const zone = inject(NgZone);
 
   /**
    * What the effect last saw, so that only a CHANGE into the open state moves
@@ -121,15 +150,69 @@ export function tnFocusOnOpen(
     }
 
     afterNextRender(
-      () => {
-        // Re-read rather than trusting the edge: a surface opened and closed
-        // again within one pass must not be focused after it has gone inert,
-        // which would fight the closing component's focus restoration.
-        if (isOpen()) {
-          target()?.focus();
-        }
-      },
+      () => zone.runOutsideAngular(() => capture(isOpen, target, RETRY_FRAMES)),
       { injector }
     );
   });
+}
+
+/**
+ * How many animation frames the capture may re-attempt over before giving up.
+ *
+ * Both components transition for 300ms, which is 18 frames at 60Hz; 24 covers
+ * that with a margin and is still a fifth of a second. There is no value in
+ * trying for longer — a panel that is still refusing focus a full transition
+ * after it opened is not mid-anything, and holding a callback alive past the
+ * point it can help only delays the give-up.
+ *
+ * Giving up is silent, deliberately. This is a11y behaviour on a component in
+ * a library, so the failure the user experiences is the bug in #227 — nothing
+ * is gained by also writing to their console, and the assertions that catch a
+ * regression here are `side-panel-focus-capture.spec.ts` and the `play`
+ * functions, which run where a maintainer is looking.
+ */
+const RETRY_FRAMES = 24;
+
+/**
+ * Focus `target`, read back whether it took, and try again next frame if it
+ * did not.
+ *
+ * Recursive rather than a loop because each attempt has to wait for a frame,
+ * and `framesLeft` is what makes it terminate.
+ */
+function capture(
+  isOpen: Signal<boolean>,
+  target: () => HTMLElement | null | undefined,
+  framesLeft: number
+): void {
+  // Re-read rather than trusting the edge: a surface opened and closed again
+  // must not be focused after it has gone inert, which would fight the closing
+  // component's focus restoration. Checked on EVERY attempt, not only the
+  // first, because the retries outlive the frame that scheduled them.
+  if (!isOpen()) {
+    return;
+  }
+
+  const element = target();
+  if (!element) {
+    return;
+  }
+
+  element.focus();
+
+  // `contains` rather than `===` so that a caller who focuses a control of
+  // their own inside the panel — the first field of a form — is left alone
+  // instead of being pulled back to the container on the next frame.
+  const active = element.ownerDocument.activeElement;
+  if (element === active || element.contains(active)) {
+    return;
+  }
+
+  // `requestAnimationFrame` is absent in a non-browser platform, and the
+  // give-up below is the right behaviour there rather than a crash.
+  if (framesLeft <= 0 || typeof requestAnimationFrame !== 'function') {
+    return;
+  }
+
+  requestAnimationFrame(() => capture(isOpen, target, framesLeft - 1));
 }

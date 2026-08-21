@@ -119,6 +119,15 @@ describe('tn-side-panel focus capture (#227)', () => {
     await fixture.whenStable();
   }
 
+  /**
+   * Lets one animation frame pass, which is what the capture's retry waits for.
+   * Our own callback is queued after it, so by the time this resolves the
+   * re-attempt has already run.
+   */
+  function nextFrame(): Promise<void> {
+    return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+  }
+
   it('moves focus into the panel, for a panel whose only control is its × button', async () => {
     trigger().focus();
     expect(document.activeElement).toBe(trigger());
@@ -181,6 +190,68 @@ describe('tn-side-panel focus capture (#227)', () => {
     await openByClick();
 
     expect(document.activeElement).toBe(panel());
+  });
+
+  /**
+   * `focus()` is a request the browser may decline in silence, and CI measured
+   * it declining one: with the capture as a single deferred call, this panel
+   * opened with focus still on the trigger in Chromium while the panel
+   * containing a form captured normally. `../a11y/initial-focus.ts` therefore
+   * reads the move back and re-attempts it on animation frames.
+   *
+   * The decline is staged here rather than reproduced, because jsdom has no
+   * notion of an element being unfocusable for a moment — what is asserted is
+   * that a dropped first call is noticed and followed, which is the part that
+   * was missing.
+   */
+  it('tries again on the next frame when the first focus is silently dropped', async () => {
+    trigger().focus();
+    const target = panel();
+    const reallyFocus = HTMLElement.prototype.focus.bind(target);
+    let dropped = false;
+    jest.spyOn(target, 'focus').mockImplementation(() => {
+      // Exactly one call goes nowhere, the way the browser declines one.
+      if (!dropped) {
+        dropped = true;
+        return;
+      }
+      reallyFocus();
+    });
+
+    await openByClick();
+    expect(dropped).toBe(true);
+    expect(document.activeElement).not.toBe(target);
+
+    await nextFrame();
+
+    expect(document.activeElement).toBe(target);
+  });
+
+  /**
+   * The retry has to stop. A panel still refusing focus a full transition after
+   * it opened is not mid-anything, and a callback that re-arms itself forever
+   * is a leak on every open.
+   *
+   * Asserted as "the attempts plateau" rather than against the frame budget
+   * itself, so that tuning the budget does not rewrite the test that says it
+   * terminates.
+   */
+  it('gives up rather than re-attempting forever', async () => {
+    trigger().focus();
+    const target = panel();
+    const focusSpy = jest.spyOn(target, 'focus').mockImplementation(() => undefined);
+
+    await openByClick();
+    for (let i = 0; i < 40; i++) {
+      await nextFrame();
+    }
+    const settled = focusSpy.mock.calls.length;
+
+    for (let i = 0; i < 10; i++) {
+      await nextFrame();
+    }
+
+    expect(focusSpy.mock.calls.length).toBe(settled);
   });
 
   /**
