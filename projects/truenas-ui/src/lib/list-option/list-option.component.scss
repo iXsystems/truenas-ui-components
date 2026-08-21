@@ -132,8 +132,20 @@
   }
 }
 
-:host(:focus) {
-  outline: none;
+// The host is the tab stop now (#213), so its focus has to be visible AS focus.
+// This rule used to set `outline: none` and tint the background, which was
+// harmless while nothing in the option could be focused at all — the only
+// focusable element was the checkbox's own input, and that drew its own ring.
+// With a real tab stop here, `outline: none` would leave a keyboard user with
+// nothing but the tint `:hover` already uses, which does not tell them where
+// focus is.
+//
+// The offset is inset rather than the +2px the chip uses: options sit flush
+// against each other in a list, so an outward ring would be clipped by, or
+// overlap, the neighbouring option.
+:host(:focus-visible) {
+  outline: 2px solid var(--tn-primary);
+  outline-offset: -2px;
 
   .tn-list-option__content {
     background-color: var(--tn-alt-bg2);

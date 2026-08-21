@@ -68,6 +68,36 @@ describe('tn-list-option accessibility (#213)', () => {
     ) as HTMLInputElement;
   }
 
+  const scss = readFileSync(join(__dirname, './list-option.component.scss'), 'utf8');
+
+  /**
+   * The body of one SCSS rule, brace-matched from its header.
+   *
+   * Two assertions below are about declarations Jest cannot observe: jsdom has
+   * no layout engine and Jest does not compile the component's SCSS, so the
+   * stylesheet is read directly — the same constraint that makes
+   * `chip-a11y.spec.ts` read its own SCSS. Brace-matched rather than regexed
+   * over the whole file, because both declarations appear in more than one rule
+   * here: `--disabled` also sets `pointer-events: none`, and `outline` is set
+   * by more than one state. Matching the wrong one would stay green with the
+   * rule under test deleted.
+   */
+  function scssBlock(header: string): string {
+    const start = scss.indexOf(header);
+    expect(start).toBeGreaterThanOrEqual(0);
+
+    const open = scss.indexOf('{', start);
+    let depth = 0;
+    for (let i = open; i < scss.length; i++) {
+      if (scss[i] === '{') {
+        depth++;
+      } else if (scss[i] === '}' && --depth === 0) {
+        return scss.slice(open + 1, i);
+      }
+    }
+    throw new Error(`unterminated block for ${header}`);
+  }
+
   describe('nested-interactive', () => {
     // `evaluated` is asserted alongside every empty `violated`, because an empty
     // `violations` is also what axe returns when it evaluated nothing at all.
@@ -209,39 +239,15 @@ describe('tn-list-option accessibility (#213)', () => {
      * either. It used to swallow the click with `$event.stopPropagation()`,
      * which stopped the row from toggling while the native input flipped itself
      * anyway — the picture and the state disagreeing, from a click on the
-     * picture. `pointer-events: none` is what replaced that handler.
+     * picture.
      *
      * `inert` in the template is what actually blocks the pointer; this
      * declaration is the fallback for a browser without it, which is why it is
      * guarded separately rather than treated as covered by the inert assertion
      * above.
-     *
-     * Asserted against the stylesheet because jsdom has no layout engine and
-     * Jest does not compile the component's SCSS, so the behaviour itself is
-     * not observable here — the same constraint that makes `chip-a11y.spec.ts`
-     * read its SCSS directly. Brace-matched rather than regexed over the whole
-     * file: `--disabled` sets the identical declaration, and matching that one
-     * would be green with the checkbox rule deleted.
      */
     it('keeps the checkbox from taking the click', () => {
-      const scss = readFileSync(join(__dirname, './list-option.component.scss'), 'utf8');
-      const start = scss.indexOf('&__checkbox {');
-      expect(start).toBeGreaterThanOrEqual(0);
-
-      const open = scss.indexOf('{', start);
-      let depth = 0;
-      let end = -1;
-      for (let i = open; i < scss.length; i++) {
-        if (scss[i] === '{') {
-          depth++;
-        } else if (scss[i] === '}' && --depth === 0) {
-          end = i;
-          break;
-        }
-      }
-      expect(end).toBeGreaterThan(open);
-
-      expect(scss.slice(open + 1, end)).toMatch(/pointer-events:\s*none\s*;/);
+      expect(scssBlock('&__checkbox {')).toMatch(/pointer-events:\s*none\s*;/);
     });
   });
 
@@ -306,6 +312,24 @@ describe('tn-list-option accessibility (#213)', () => {
       fixture.detectChanges();
 
       expect(option().getAttribute('aria-selected')).toBe('false');
+    });
+
+    /**
+     * A tab stop a keyboard user cannot see is not a tab stop they can use.
+     * This rule used to be `:host(:focus) { outline: none; … }`, which cost
+     * nothing while the host could not be focused; the moment it became the
+     * option's tab stop it left focus indicated only by the background tint
+     * `:hover` already applies.
+     *
+     * Asserted on the stylesheet for the reason given on `scssBlock` — and
+     * asserted on the block rather than on the file, because `outline: none`
+     * elsewhere in it would satisfy a looser match.
+     */
+    it('draws a visible focus ring on the tab stop', () => {
+      const focusRule = scssBlock(':host(:focus-visible) {');
+
+      expect(focusRule).toMatch(/outline:\s*[1-9]/);
+      expect(focusRule).not.toMatch(/outline:\s*none/);
     });
 
     it('leaves the presentational checkbox unfocusable', () => {
