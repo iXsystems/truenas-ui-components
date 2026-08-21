@@ -42,14 +42,41 @@
           <span class="tn-stepper__step-subtitle">Optional</span>
         }
       </div>
+
+      <!--
+        Completed / error state, for a screen reader only — the indicator says it with a CSS
+        class and an aria-hidden glyph, neither of which reaches assistive technology.
+
+        A sibling of __step-label rather than a child of it, because the narrow-screen rule in
+        this component's stylesheet sets `display: none` on __step-label — which would take the
+        state with it on exactly the viewport where the visible label is already gone.
+      -->
+      @if (stepStatusText()[i]; as status) {
+        <span class="cdk-visually-hidden">{{ status }}</span>
+      }
     </div>
   </ng-template>
 
+  <!--
+    The header is an ordered list in both orientations, which is the whole ARIA model this
+    component uses (#204): it is what tells a screen reader how many steps there are and which
+    position each one holds, and it costs no keyboard contract. A tablist was the alternative
+    and is wrong here — `linear` gates a step behind the completion of every step before it, so
+    `role="tab"` would advertise free navigation the component refuses to perform.
+
+    A list may contain nothing but list items, so the connector moves inside the item it leads
+    away from; it used to be a sibling of the headers.
+
+    `role="list"` is redundant with `<ol>` and is not decoration: the stylesheet sets
+    `list-style: none`, and Safari drops the list role from the accessibility tree when it
+    does. Without this attribute the count and position would be lost on VoiceOver, which is
+    the reader this whole model is for.
+  -->
   @if (isVertical()) {
     <!-- Vertical: content renders inline beneath the active step's header -->
-    <div class="tn-stepper__header">
+    <ol class="tn-stepper__header" role="list">
       @for (step of steps(); track $index; let i = $index) {
-        <div class="tn-stepper__step" [class.tn-stepper__step--last]="i === steps().length - 1">
+        <li class="tn-stepper__step" [class.tn-stepper__step--last]="i === steps().length - 1">
           <ng-container *ngTemplateOutlet="stepHeader; context: { step, i }" />
 
           <div class="tn-stepper__step-body">
@@ -59,20 +86,22 @@
               </div>
             }
           </div>
-        </div>
+        </li>
       }
-    </div>
+    </ol>
   } @else {
     <!-- Horizontal: headers in a row, active content below -->
-    <div class="tn-stepper__header">
+    <ol class="tn-stepper__header" role="list">
       @for (step of steps(); track $index; let i = $index) {
-        <ng-container *ngTemplateOutlet="stepHeader; context: { step, i }" />
+        <li class="tn-stepper__step" [class.tn-stepper__step--last]="i === steps().length - 1">
+          <ng-container *ngTemplateOutlet="stepHeader; context: { step, i }" />
 
-        @if (i < steps().length - 1) {
-          <div class="tn-stepper__connector"></div>
-        }
+          @if (i < steps().length - 1) {
+            <div class="tn-stepper__connector"></div>
+          }
+        </li>
       }
-    </div>
+    </ol>
 
     <div class="tn-stepper__content">
       @for (step of steps(); track $index; let i = $index) {
