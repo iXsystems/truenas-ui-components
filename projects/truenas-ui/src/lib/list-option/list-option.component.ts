@@ -93,8 +93,11 @@ export class TnListOptionComponent implements AfterContentInit {
    * Not a precedence: a disabled list cannot be overridden by an enabled
    * option, and a list that is enabled has nothing to say about an option that
    * disabled itself. Only the second half is a fallback chain, and it is the
-   * one that already existed: `internalDisabled` is the `ControlValueAccessor`
-   * slot and outranks the input when it has been written.
+   * one that already existed: `internalDisabled` outranks the input when it has
+   * been written. Nothing in the library writes it any more — `setDisabledState()`
+   * was its only writer and now stops at `listDisabled` — so it is kept for the
+   * public surface it has always been part of, alongside `internalSelected` and
+   * `internalColor`, rather than because a path in here still uses it.
    */
   effectiveDisabled = computed(() => {
     if (this.listDisabled()) {
