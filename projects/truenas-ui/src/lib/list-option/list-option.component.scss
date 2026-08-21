@@ -64,6 +64,11 @@
     position: relative;
     display: flex;
     align-items: center;
+    // The checkbox is presentational (see the template's `inert`), so it must
+    // not swallow the click either: without this, a click on the checkbox
+    // toggles the native input and leaves the option's own state where it was.
+    // With it, the click reaches the row and toggles the option once.
+    pointer-events: none;
   }
 
 

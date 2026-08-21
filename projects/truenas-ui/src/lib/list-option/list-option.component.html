@@ -22,13 +22,32 @@
     }
   </div>
 
-  <!-- Checkbox on the right -->
-  <div class="tn-list-option__checkbox">
+  <!-- Checkbox on the right: a PICTURE of the option's selection, not a second
+       control. The host carries role="option" and binds aria-selected, which is
+       how a listbox option is supposed to report selection, so a real checkbox
+       in here says the same thing twice and offers a control that is not the
+       listener's to operate. axe scores that `nested-interactive` (#213).
+
+       `inert` rather than aria-hidden, and rather than the tabindex="-1" this
+       used to carry. The tabindex was on the <tn-checkbox> ELEMENT, not on the
+       native <input> inside it, so the control stayed focusable and axe kept
+       reporting — and even on the input it would only have left the tab order,
+       which axe explicitly treats as an unreliable way to hide a widget.
+       aria-hidden="true" fixes the other half only: the input stays focusable,
+       so nested-interactive still reports and aria-hidden-focus joins it.
+       `inert` removes the subtree from the accessibility tree AND the focus
+       order in one attribute — the same reasoning already written into
+       expansion-panel.component.html.
+
+       The click handler that used to sit here stopped a checkbox click from
+       reaching the host's toggle, which left the native input flipping itself
+       while the option's own state did not move. `pointer-events: none` in the
+       stylesheet replaces it: the click lands on the row and toggles the option
+       once, which is what a click anywhere else on the row already did. -->
+  <div class="tn-list-option__checkbox" inert>
     <tn-checkbox
-      tabindex="-1"
       [checked]="effectiveSelected()"
       [disabled]="effectiveDisabled()"
-      [hideLabel]="true"
-      (click)="$event.stopPropagation()" />
+      [hideLabel]="true" />
   </div>
 </div>
