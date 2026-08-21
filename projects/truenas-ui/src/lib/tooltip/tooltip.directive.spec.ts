@@ -29,6 +29,7 @@ import { TnButtonComponent } from '../button/button.component';
     </div>
     <button type="button" id="side" tnTooltip="Plain help text" tnTooltipPosition="right">side host</button>
     <button type="button" id="collapsible" [attr.tabindex]="hostTabindex()" [tnTooltip]="message()">collapsible host</button>
+    <a id="conditional-link" [attr.href]="hostHref()" [tnTooltip]="message()">conditional link host</a>
     <button type="button" id="native-disabled" disabled [tnTooltip]="message()">disabled host</button>
     <div id="wrapper-disabled" [tnTooltip]="message()"><button type="button" disabled>inner</button></div>
     <span id="span-host" [tnTooltip]="message()">span host</span>
@@ -56,6 +57,10 @@ class HostComponent {
   // collapsed sidebar is this shape - which is the difference between a click it can be operated
   // by and one it cannot.
   hostTabindex = signal<string | null>(null);
+  // An anchor that is only sometimes a link (`[attr.href]="canNavigate ? url : null"`). Without
+  // the href it is neither `INTERACTIVE_SELECTOR` nor `KEYBOARD_ACTIVATABLE_SELECTOR`, so it
+  // stops being a host a click can pin - the same transition `hostTabindex` makes.
+  hostHref = signal<string | null>('#go');
   closeLabel = signal('Close tooltip');
 }
 
@@ -607,6 +612,65 @@ describe('TnTooltipDirective sticky mode', () => {
     });
   });
 
+  // `href` decides the same thing `tabindex` does: both `INTERACTIVE_SELECTOR` and
+  // `KEYBOARD_ACTIVATABLE_SELECTOR` say `a[href]`, so an anchor that drops its href stops being
+  // activatable from the keyboard. `_pinsOnClick` is read live and stops pinning on its own, but
+  // the disclosure attributes are written once and stay until something re-syncs - so the host
+  // observer has to watch `href` too, or they sit there advertising a dialog nothing opens.
+  describe('an anchor host that stops being a link after view init', () => {
+    const linkHost = () => fixture.nativeElement.querySelector('#conditional-link') as HTMLElement;
+
+    /** The observer's callback is a microtask outside Zone's queue, so `tick()` never reaches it. */
+    async function settleObserver(): Promise<void> {
+      await new Promise((resolve) => setTimeout(resolve));
+      fixture.detectChanges();
+    }
+
+    function clickLinkHost(): void {
+      linkHost().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+    }
+
+    it('advertises the disclosure while the href is there', () => {
+      expect(linkHost().getAttribute('aria-expanded')).toBe('false');
+      expect(linkHost().getAttribute('aria-haspopup')).toBe('dialog');
+    });
+
+    it('drops the disclosure state and goes back to hover once the href goes', async () => {
+      fixture.componentInstance.hostHref.set(null);
+      fixture.detectChanges();
+      await settleObserver();
+
+      expect(linkHost().hasAttribute('aria-expanded')).toBe(false);
+      expect(linkHost().hasAttribute('aria-haspopup')).toBe(false);
+
+      clickLinkHost();
+      await settleObserver();
+      expect(tooltipPanel()).toBeNull();
+
+      linkHost().dispatchEvent(new MouseEvent('mouseenter'));
+      await settleObserver();
+      expect(tooltipPanel()).not.toBeNull();
+      expect(closeButton()).toBeNull();
+    });
+
+    it('picks the disclosure back up when the href returns', async () => {
+      fixture.componentInstance.hostHref.set(null);
+      fixture.detectChanges();
+      await settleObserver();
+
+      fixture.componentInstance.hostHref.set('#go');
+      fixture.detectChanges();
+      await settleObserver();
+
+      expect(linkHost().getAttribute('aria-expanded')).toBe('false');
+      expect(linkHost().getAttribute('aria-haspopup')).toBe('dialog');
+
+      clickLinkHost();
+      await settleObserver();
+      expect(closeButton()).not.toBeNull();
+    });
+  });
+
   // Pinning is still reachable through `stick()` on such a host, so the keyboard dismissal path
   // has to put focus somewhere real rather than assume the host can take it.
   describe('restoring focus from a non-focusable host', () => {
@@ -683,6 +747,43 @@ describe('TnTooltipDirective sticky mode', () => {
 
       toggleOn(plainHost);
       expect(tooltipPanel()).toBeNull();
+    }));
+  });
+
+  describe('isSticky()', () => {
+    function directiveOn(target: HTMLElement): TnTooltipDirective {
+      return fixture.debugElement
+        .query((node) => node.nativeElement === target)
+        .injector.get(TnTooltipDirective);
+    }
+
+    it('reports the pin as soon as the host click makes it', fakeAsync(() => {
+      expect(directiveOn(host).isSticky()).toBe(false);
+
+      click();
+
+      expect(directiveOn(host).isSticky()).toBe(true);
+    }));
+
+    // `unstick` ends in `hide(0)`, which only *schedules* the teardown. Reading the flag out of
+    // that timeout would leave a public "is it pinned right now" answering `true` for a macrotask
+    // after the call that unpinned it - a caller cannot see the timeout to wait for it.
+    it('reports the unpin as soon as unstick() returns, not a macrotask later', fakeAsync(() => {
+      click();
+      const directive = directiveOn(host);
+
+      directive.unstick();
+
+      expect(directive.isSticky()).toBe(false);
+      // And the host stops advertising an open panel at the same moment, rather than drifting out
+      // of step with the flag until the teardown runs.
+      expect(host.getAttribute('aria-expanded')).toBe('false');
+      expect(host.hasAttribute('aria-controls')).toBe(false);
+
+      tick();
+      fixture.detectChanges();
+      expect(tooltipPanel()).toBeNull();
+      expect(directive.isSticky()).toBe(false);
     }));
   });
 
@@ -851,6 +952,32 @@ describe('TnTooltipDirective sticky mode', () => {
 
       expect(innerControl().getAttribute('aria-expanded')).toBe('false');
       expect(innerControl().hasAttribute('aria-haspopup')).toBe(false);
+    });
+
+    // Yielding is a fact about the element that wrote the attribute, not about the host slot it
+    // occupied. Held as a bare attribute name it outlived that element and denied the disclosure
+    // state to every later occupant - and permanently, because yielding leaves nothing written to
+    // notice the next swap by, so the state never came back for the life of the directive.
+    it('re-claims the attributes on a replacement that owns nothing itself', async () => {
+      fixture.componentInstance.swappedToButton.set(true);
+      fixture.detectChanges();
+      await settleObserver();
+
+      // The <button> takes aria-expanded over, so the tooltip yields all three.
+      fixture.componentInstance.swappedExpanded.set('false');
+      fixture.detectChanges();
+      await settleObserver();
+      expect(innerControl().hasAttribute('aria-haspopup')).toBe(false);
+
+      // A fresh <a> replaces it, carrying no attributes of its own: nothing about the button it
+      // replaced says anything about this element.
+      fixture.componentInstance.swappedToButton.set(false);
+      fixture.detectChanges();
+      await settleObserver();
+
+      expect(innerControl().tagName).toBe('A');
+      expect(innerControl().getAttribute('aria-expanded')).toBe('false');
+      expect(innerControl().getAttribute('aria-haspopup')).toBe('dialog');
     });
   });
 

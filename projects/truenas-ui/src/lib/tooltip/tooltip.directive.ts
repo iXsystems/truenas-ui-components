@@ -154,7 +154,19 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   private _popupStateTarget: HTMLElement | null = null;
   private _popupStateWritten: Record<string, string> = {};
   private _popupStateSelfWrites = new WeakMap<Element, Record<string, number>>();
-  private _popupStateHostOwned = new Set<string>();
+  /**
+   * Which disclosure attributes the host has been seen writing for itself, per element.
+   *
+   * Per element for the same reason `_popupStateSelfWrites` is, and then some: ownership is a
+   * fact about the element that carries the attribute, and the target moves (`<tn-button>`
+   * swapping between `<a>` and `<button>` through an `@if`). Held as bare names it outlived the
+   * element it was learned from and denied the disclosure state to a replacement carrying no
+   * attributes of its own — permanently, since the yielded state leaves `_popupStateTarget`
+   * null and so hid the target change from the reset in `_writeHostPopupState`. Keyed by
+   * element, the replacement starts owning nothing because it does, and the fact survives for
+   * as long as the element it is about.
+   */
+  private _popupStateHostOwned = new WeakMap<Element, Set<string>>();
   private _cachedArrowInset: number | null = null;
 
   /**
@@ -292,8 +304,10 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * Three things move underneath it. The inner control can render after view init (`@if` branches
    * inside the wrapper swapping, deferred content). `disabled`/`aria-disabled` can be toggled on
    * it at any time, which decides whether the pinning click can arrive at all, and so whether the
-   * host advertises itself as a disclosure control; `tabindex` reads the same way, through
-   * `_isHostKeyboardOperable` and through `_ariaTarget`'s `INTERACTIVE_SELECTOR` match. The
+   * host advertises itself as a disclosure control; `tabindex` and `href` read the same way,
+   * through `_isHostKeyboardOperable` and through `_ariaTarget`'s `INTERACTIVE_SELECTOR` match —
+   * both selectors say `a[href]`, so an anchor dropping its `href` stops being activatable
+   * exactly as one taking `tabindex="-1"` does, and the disclosure state has to come off it. The
    * disclosure attributes are watched for a different reason: to notice the host writing one of
    * them itself. See `_absorbPopupStateRecords`, which also keeps our own writes of them from
    * retriggering this. `aria-describedby` stays outside the filter, so `AriaDescriber` cannot
@@ -329,7 +343,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ['disabled', 'aria-disabled', 'tabindex', ...POPUP_STATE_ATTRIBUTES],
+      attributeFilter: ['disabled', 'aria-disabled', 'tabindex', 'href', ...POPUP_STATE_ATTRIBUTES],
     });
   }
 
@@ -489,11 +503,12 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * click and closes on Escape, an outside click or the dismiss button.
    */
   private _writeHostPopupState(target: HTMLElement, attributes: Record<string, string>): void {
-    // A different target is a different element's attributes, so nothing learned about the old
-    // one carries over: this clears what was written there and starts from no ownership.
+    // A different target is a different element's attributes, so what was written on the old one
+    // comes off it. Nothing learned about it carries over either — see `_popupStateHostOwned`,
+    // which is keyed by element rather than reset here, because this branch cannot see a target
+    // change that happened while the state was yielded and `_popupStateTarget` was null.
     if (this._popupStateTarget && this._popupStateTarget !== target) {
       this._clearHostPopupState();
-      this._popupStateHostOwned.clear();
     }
 
     // Over the whole set, not just the attributes about to be written: `aria-controls` is only
@@ -526,7 +541,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * holding the value written for it.
    */
   private _ownsHostAttribute(target: HTMLElement, name: string): boolean {
-    if (this._popupStateHostOwned.has(name)) {
+    if (this._popupStateHostOwned.get(target)?.has(name)) {
       return false;
     }
 
@@ -555,10 +570,12 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
         continue;
       }
 
+      const element = record.target as Element;
+
       // The ledger is spent before anything else is decided: a write of ours is a write of ours
       // wherever it landed, and leaving the credit unspent here would leave it to be spent by
       // some later write of the host's.
-      const pending = this._popupStateSelfWrites.get(record.target as Element);
+      const pending = this._popupStateSelfWrites.get(element);
       const credits = pending?.[name] ?? 0;
       if (pending && credits > 0) {
         pending[name] = credits - 1;
@@ -567,11 +584,13 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
 
       // These attributes mean nothing to this directive on any element but the one it writes to,
       // and a wrapper's subtree can hold controls carrying them for reasons of their own.
-      if (record.target !== this._ariaTarget()) {
+      if (element !== this._ariaTarget()) {
         continue;
       }
 
-      this._popupStateHostOwned.add(name);
+      const owned = this._popupStateHostOwned.get(element) ?? new Set<string>();
+      owned.add(name);
+      this._popupStateHostOwned.set(element, owned);
       needsSync = true;
     }
 
@@ -855,7 +874,31 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
       this._restoreFocusTarget().focus?.();
     }
 
+    // Before `hide`, which only *schedules* the teardown that would otherwise be what drops the
+    // flag: `isSticky()` answers "is it pinned right now", and a caller reading it straight after
+    // this returns is asking about the call it just made, not about a macrotask it cannot see.
+    this._releaseSticky();
     this.hide(0);
+  }
+
+  /**
+   * Drops the pinned flag and re-advertises the host without it.
+   *
+   * Shared by `unstick()` and `_destroyTooltip` rather than done in either, so the flag and the
+   * disclosure state it drives cannot come apart: whichever gets there first does both halves,
+   * and the other finds nothing left to do. Closing routes that do not go through `unstick()` —
+   * Escape on the host, a disabled input, `ngOnDestroy` — still arrive here through the teardown.
+   */
+  private _releaseSticky(): void {
+    if (!this._isSticky) {
+      return;
+    }
+
+    this._isSticky = false;
+    // Sync first, then re-decide: the attributes come off while the observer is still there to
+    // absorb the records for them.
+    this._syncHostPopupState(this._ariaTarget());
+    this._observeHost();
   }
 
   /**
@@ -1092,14 +1135,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   }
 
   private _destroyTooltip(): void {
-    const wasSticky = this._isSticky;
-    this._isSticky = false;
-    if (wasSticky) {
-      // Sync first, then re-decide: the attributes come off while the observer is still there to
-      // absorb the records for them.
-      this._syncHostPopupState(this._ariaTarget());
-      this._observeHost();
-    }
+    this._releaseSticky();
 
     this._repositionSub?.unsubscribe();
     this._repositionSub = null;
