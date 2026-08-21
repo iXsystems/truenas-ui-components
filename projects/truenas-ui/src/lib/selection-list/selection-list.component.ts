@@ -120,13 +120,24 @@ export class TnSelectionListComponent implements ControlValueAccessor {
   private onTouched = () => {};
 
   constructor() {
-    // Effect to update options when they change
+    // Push what the list decides for all of its options down onto each of them,
+    // re-running both when the decision changes and when the set of options
+    // does — an option added after the list was rendered has to arrive carrying
+    // the list's current state rather than its own defaults.
+    //
+    // `isDisabled()` and not the `disabled` input, so that the plain input and
+    // `setDisabledState()` reach the options by the same route and cannot come
+    // apart again (#221). It lands on `option.listDisabled`, a signal of the
+    // option's own that is ORed with its `[disabled]` input rather than
+    // overwriting it — see TnListOptionComponent.effectiveDisabled.
     effect(() => {
       const opts = this.options();
       const currentColor = this.color();
+      const disabled = this.isDisabled();
       opts.forEach(option => {
         option.selectionList = this;
         option.internalColor.set(currentColor);
+        option.listDisabled.set(disabled);
       });
     });
 
@@ -182,16 +193,11 @@ export class TnSelectionListComponent implements ControlValueAccessor {
    * reasoning that has the arrow keys visit disabled options at all.
    *
    * That is a statement about NAVIGATION only, and deliberately not the wider
-   * claim that a disabled list cannot be toggled. It cannot be toggled by
-   * mouse — `.tn-selection-list--disabled` sets `pointer-events: none` — and it
-   * cannot be toggled through a reactive form, because `setDisabledState`
-   * pushes down to each `option.internalDisabled` and the option's own guard
-   * then refuses. But the plain `[disabled]` INPUT reaches neither: it feeds
-   * `isDisabled()`, which drives that class and nothing else, so Space on an
-   * option of a `[disabled]` list still toggles it. That gap predates the
-   * keyboard handling added here and is not widened by it — arrow keys move
-   * focus and never toggle — so it is reported on the PR rather than fixed
-   * under a ticket about navigation.
+   * claim that a disabled list can be toggled. It cannot: `isDisabled()` is
+   * pushed onto every option's `listDisabled` by the effect in the constructor
+   * (#221), so the option's own guard refuses the toggle whichever route asked
+   * for it — mouse, Space, Enter or a reactive form. What a disabled list still
+   * allows is moving through it, which selects nothing.
    *
    * Only keys pressed ON an option host are the listbox's. The handler is on
    * the host and hears everything that bubbles through it, so without that test
@@ -315,12 +321,20 @@ export class TnSelectionListComponent implements ControlValueAccessor {
     this.onTouched = fn;
   }
 
+  /**
+   * Records the form's state and stops there — the effect in the constructor is
+   * what reaches the options, via `isDisabled()`.
+   *
+   * It used to also write each `option.internalDisabled` directly, which is the
+   * only reason this route enforced anything while `[disabled]` enforced
+   * nothing. Two problems, both fixed by routing it through the same signal the
+   * input uses: the two paths could disagree, and `internalDisabled` is the
+   * slot an option's own `[disabled]` input falls back to — so `control.enable()`
+   * wrote `false` over an option the consumer had disabled independently, and
+   * never gave it back.
+   */
   setDisabledState(isDisabled: boolean): void {
     this.formDisabled.set(isDisabled);
-    const opts = this.options();
-    opts.forEach(option => {
-      option.internalDisabled.set(isDisabled);
-    });
   }
 
   onOptionSelectionChange(): void {
