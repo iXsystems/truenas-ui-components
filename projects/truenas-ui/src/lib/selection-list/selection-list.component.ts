@@ -136,10 +136,21 @@ export class TnSelectionListComponent implements ControlValueAccessor {
    * Every other key is left alone, Tab included: `preventDefault()` on an
    * unrecognised key is how a widget traps a keyboard user inside it.
    *
-   * Navigation is not gated on `isDisabled()`. Moving focus changes nothing —
-   * every route into `toggle()` is already closed for a disabled option by the
-   * option's own guard — and a disabled list a user can read through is the
-   * same reasoning that has the arrow keys visit disabled options at all.
+   * Navigation is not gated on `isDisabled()`, because moving focus selects
+   * nothing: a disabled list a user can still read through is the same
+   * reasoning that has the arrow keys visit disabled options at all.
+   *
+   * That is a statement about NAVIGATION only, and deliberately not the wider
+   * claim that a disabled list cannot be toggled. It cannot be toggled by
+   * mouse — `.tn-selection-list--disabled` sets `pointer-events: none` — and it
+   * cannot be toggled through a reactive form, because `setDisabledState`
+   * pushes down to each `option.internalDisabled` and the option's own guard
+   * then refuses. But the plain `[disabled]` INPUT reaches neither: it feeds
+   * `isDisabled()`, which drives that class and nothing else, so Space on an
+   * option of a `[disabled]` list still toggles it. That gap predates the
+   * keyboard handling added here and is not widened by it — arrow keys move
+   * focus and never toggle — so it is reported on the PR rather than fixed
+   * under a ticket about navigation.
    */
   onKeydown(event: KeyboardEvent): void {
     const count = this.options().length;
