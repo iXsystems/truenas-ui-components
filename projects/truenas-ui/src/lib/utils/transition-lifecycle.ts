@@ -1,4 +1,4 @@
-import { DestroyRef, effect, inject } from '@angular/core';
+import { DestroyRef, NgZone, effect, inject } from '@angular/core';
 import type { Signal } from '@angular/core';
 
 /**
@@ -75,7 +75,8 @@ export interface TnTransitionLifecycle {
  *
  * **Must be called from an injection context** — a field initializer or the
  * constructor — because it registers an `effect` and takes a `DestroyRef` to
- * cancel a timer that would otherwise emit from a destroyed component.
+ * cancel a timer that would otherwise emit from a destroyed component, and an
+ * `NgZone` to keep that timer out of Angular's.
  *
  * @param state The animated state: the component's `open` / `opened` model.
  * @param settled Called once per settled change, with the state settled into.
@@ -85,6 +86,7 @@ export function tnTransitionLifecycle(
   settled: (state: boolean) => void
 ): TnTransitionLifecycle {
   const destroyRef = inject(DestroyRef);
+  const zone = inject(NgZone);
 
   /**
    * The state a change is waiting to report, or `null` when nothing is pending.
@@ -148,7 +150,20 @@ export function tnTransitionLifecycle(
     // has not, at any point, finished opening.
     disarm();
     pending = current;
-    timer = setTimeout(report, TN_TRANSITION_FALLBACK_MS);
+    // OUTSIDE the Angular zone, and back inside it only to report. This effect
+    // runs within `ApplicationRef.tick()`, which zone change detection invokes
+    // inside `NgZone.run(...)`, so a plain `setTimeout` here would be a zone
+    // macrotask and hold `NgZone` unstable for the whole fallback window after
+    // every open and close — even the ones a `transitionend` reports early.
+    // That is a cost paid by callers who never asked for a timer: a `fakeAsync`
+    // spec that toggles the state fails with "1 timer(s) still in the queue"
+    // naming a timer its author did not write, and `whenStable()` (so every
+    // component-harness interaction) waits the full window. The emit itself
+    // must be back inside, since `settled` is what fires the component's
+    // outputs and a consumer's handler has to be seen by change detection.
+    timer = zone.runOutsideAngular(() =>
+      setTimeout(() => zone.run(report), TN_TRANSITION_FALLBACK_MS)
+    );
   });
 
   destroyRef.onDestroy(disarm);

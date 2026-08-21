@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, NgZone, signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TnDrawerComponent } from './drawer.component';
@@ -46,9 +46,10 @@ class TestHostComponent {
  * ----------------------------------------------------------------------
  * The fallback is a timer, so these tests need `fakeAsync` to see it — and a
  * timer is only reachable by `tick()` if it was scheduled inside that
- * `fakeAsync` zone. Angular arms this one from an `effect`, which runs in the
- * `NgZone`, which `TestBed` creates once, lazily, at the FIRST
- * `TestBed.createComponent` of the suite. A `beforeEach` that creates a fixture
+ * `fakeAsync` zone. This one is armed with `runOutsideAngular`, so it lands in
+ * the zone `NgZone` was CONSTRUCTED in — and `TestBed` constructs that once,
+ * lazily, at the FIRST `TestBed.createComponent` of the suite. A `beforeEach`
+ * that creates a fixture
  * therefore fixes the zone for every test after it, and the fallback then fires
  * on the real clock a third of a second after the test has already finished.
  *
@@ -188,6 +189,22 @@ describe('TnDrawerComponent lifecycle outputs', () => {
 
     expect(host.openedComplete).not.toHaveBeenCalled();
     expect(host.closed).toHaveBeenCalledTimes(1);
+  }));
+
+  it('does not hold NgZone unstable while the fallback is armed', fakeAsync(() => {
+    createDrawer();
+    setOpened(true);
+
+    // The timer is armed from an `effect`, which runs inside
+    // `ApplicationRef.tick()` inside `NgZone.run(...)`, so scheduling it
+    // without `runOutsideAngular` makes it an Angular-zone macrotask — and
+    // `fixture.whenStable()` and CDK's `forceStabilize()` would then block for
+    // the whole fallback window after every open and every close, in every
+    // downstream suite that toggles one of these components.
+    expect(TestBed.inject(NgZone).hasPendingMacrotasks).toBe(false);
+
+    tick(TN_TRANSITION_FALLBACK_MS);
+    expect(host.openedComplete).toHaveBeenCalledTimes(1);
   }));
 
   it('emits nothing after the drawer is destroyed mid-transition', fakeAsync(() => {
