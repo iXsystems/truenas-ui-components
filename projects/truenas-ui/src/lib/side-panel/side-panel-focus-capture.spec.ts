@@ -147,12 +147,16 @@ describe('tn-side-panel focus capture (#227)', () => {
    * close button instead would still satisfy the two tests above; this is the
    * one that says which was chosen.
    */
-  it('focuses the panel container itself, which is what names the dialog', async () => {
+  it('focuses the panel container itself, inside the element that names the dialog', async () => {
     await openByClick();
 
     expect(document.activeElement).toBe(panel());
     expect(panel().getAttribute('tabindex')).toBe('-1');
+    // The role, the modal flag and the name are on the OVERLAY here — the panel
+    // is a child of it, so focus landing on the panel is focus landing in the
+    // dialog, with no control of its own claiming the announcement.
     expect(overlay().getAttribute('aria-modal')).toBe('true');
+    expect(overlay().contains(panel())).toBe(true);
   });
 
   it('leaves focus alone while the panel stays closed', async () => {
@@ -215,5 +219,22 @@ describe('tn-side-panel focus capture (#227)', () => {
     fixture.detectChanges();
 
     expect(document.activeElement).toBe(trigger());
+  });
+
+  /**
+   * Destroying a panel that is still open — a `@if` around it, a route change —
+   * is the other way focus leaves it, and it runs no close. The removal drops
+   * focus on `<body>`, and until #227 it was `CdkTrapFocus.ngOnDestroy` that
+   * put it back, off the back of the auto-capture that replaced.
+   */
+  it('returns focus to the trigger when a panel is destroyed while open', async () => {
+    trigger().focus();
+    const opener = trigger();
+    await openByClick();
+    expect(document.activeElement).not.toBe(opener);
+
+    fixture.destroy();
+
+    expect(document.activeElement).toBe(opener);
   });
 });

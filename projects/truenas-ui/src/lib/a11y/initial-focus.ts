@@ -33,10 +33,14 @@ import type { Signal } from '@angular/core';
  *   the whole defect — a rule that depends on the content is a rule that has a
  *   content shape it fails for, and this one failed for the commonest shape
  *   there is.
- * - A screen reader announces the container's name and role — "Edit dataset,
- *   dialog" — and then reads into it. Landing on the × button instead announces
- *   "Dismiss, button", which is the one control in the panel that tells the
- *   listener nothing about what just opened.
+ * - Focus arriving on it is focus arriving in the dialog with nothing else
+ *   claimed: a screen reader announces the dialog it has just entered — its
+ *   name and role — and reads on into the content. That is the announcement the
+ *   ELEMENT CARRYING `role="dialog"` produces, which is this container in
+ *   `tn-drawer` and its parent overlay in `tn-side-panel`; the container is
+ *   inside it either way. Landing on the × button instead announces "Dismiss,
+ *   button" first, which is the one control in the panel that says nothing
+ *   about what just opened.
  * - Sequential navigation from a container proceeds INTO it, so the first Tab
  *   still reaches the close button: the same place auto-capture aimed at, one
  *   keystroke later, with the announcement first.

@@ -122,6 +122,24 @@ describe('tn-drawer focus capture (#227)', () => {
 
       expect(document.activeElement).toBe(trigger());
     });
+
+    /**
+     * Destroying a drawer that is still open — a route change, a `@if` around
+     * the container — is the other way focus leaves it, and it runs no close.
+     * The removal drops focus on `<body>`, and until #227 it was
+     * `CdkTrapFocus.ngOnDestroy` that put it back, off the back of the
+     * auto-capture that replaced.
+     */
+    it('returns focus to the trigger when a drawer is destroyed while open', async () => {
+      trigger().focus();
+      const opener = trigger();
+      await openByClick();
+      expect(document.activeElement).not.toBe(opener);
+
+      fixture.destroy();
+
+      expect(document.activeElement).toBe(opener);
+    });
   });
 
   describe('side mode, which is navigation', () => {

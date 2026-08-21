@@ -255,6 +255,14 @@ export class TnSidePanelComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.overlayRef().nativeElement.remove();
+
+    // A panel destroyed WHILE OPEN never runs the close branch of the effect
+    // above, so the restore has to happen here as well — and removing the
+    // overlay has just dropped focus onto `<body>`. `CdkTrapFocus.ngOnDestroy`
+    // used to cover this case, off the back of the auto-capture that #227
+    // replaced; it is the component's now. A no-op after an ordinary close,
+    // which clears `previouslyFocusedElement`.
+    this.restoreFocus();
   }
 
   protected dismiss(): void {
