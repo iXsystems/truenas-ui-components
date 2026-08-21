@@ -161,9 +161,18 @@ export function tnFocusOnOpen(
     }
 
     afterNextRender(
-      () => zone.runOutsideAngular(
-        () => capture(isOpen, target, performance.now() + TN_TRANSITION_FALLBACK_MS)
-      ),
+      () => zone.runOutsideAngular(() => {
+        const element = target();
+        if (!element) {
+          return;
+        }
+
+        // Whose focus this capture is entitled to take: whatever holds it at
+        // the moment the surface opens, which is the trigger in the ordinary
+        // case. See `capture`.
+        const claimant = element.ownerDocument.activeElement;
+        capture(isOpen, target, claimant, performance.now() + TN_TRANSITION_FALLBACK_MS);
+      }),
       { injector }
     );
   });
@@ -203,10 +212,14 @@ function holdsFocus(element: HTMLElement): boolean {
  *
  * Recursive rather than a loop because each attempt has to wait for a frame,
  * and the deadline is what makes it terminate.
+ *
+ * @param claimant What held focus when the surface opened. A retry is only
+ *   entitled to take focus from THAT, or from `<body>` — see below.
  */
 function capture(
   isOpen: Signal<boolean>,
   target: () => HTMLElement | null | undefined,
+  claimant: Element | null,
   deadline: number
 ): void {
   // Re-read rather than trusting the edge: a surface opened and closed again
@@ -233,6 +246,21 @@ function capture(
     return;
   }
 
+  // Focus is somewhere this capture has no claim on, so it stops rather than
+  // taking it. `claimant` is what held focus when the surface opened — the
+  // trigger, ordinarily — and `<body>` is where the browser leaves it when the
+  // element holding it goes away.
+  //
+  // What this rules out is a SECOND surface opening inside the retry window: a
+  // nested panel, or a dialog raised from this one. Its capture succeeds, and
+  // without this the first panel's pending retry would take focus straight
+  // back off it on the next frame, from a panel the user has already left.
+  const doc = element.ownerDocument;
+  const active = doc.activeElement;
+  if (active !== claimant && active !== doc.body) {
+    return;
+  }
+
   element.focus();
 
   if (holdsFocus(element)) {
@@ -245,5 +273,5 @@ function capture(
     return;
   }
 
-  requestAnimationFrame(() => capture(isOpen, target, deadline));
+  requestAnimationFrame(() => capture(isOpen, target, claimant, deadline));
 }

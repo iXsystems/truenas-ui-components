@@ -297,6 +297,40 @@ describe('tn-side-panel focus capture (#227)', () => {
   });
 
   /**
+   * A pending retry must not take focus off whatever has since claimed it.
+   *
+   * The case that matters is a SECOND modal surface opening inside the window —
+   * a nested panel, or a dialog raised from this one. Its own capture succeeds,
+   * and this panel's retry would then take focus straight back off it on the
+   * next frame, out of a surface the user has already moved on to. It is staged
+   * here as focus simply arriving somewhere else, because what the retry can
+   * see is only that focus is no longer where it was entitled to take it from.
+   */
+  it('gives up when focus has moved somewhere it has no claim on', async () => {
+    const target = panel();
+    jest.spyOn(target, 'focus').mockImplementation(() => undefined);
+
+    const pending: FrameRequestCallback[] = [];
+    jest.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
+      pending.push(callback);
+      return pending.length;
+    });
+
+    trigger().focus();
+    await openByClick();
+    expect(pending).toHaveLength(1);
+
+    const elsewhere = fixture.nativeElement.querySelector('#elsewhere') as HTMLElement;
+    elsewhere.focus();
+
+    pending.shift()?.(0);
+
+    expect(document.activeElement).toBe(elsewhere);
+    // And it stopped: no further frame was asked for.
+    expect(pending).toHaveLength(0);
+  });
+
+  /**
    * The retry has to stop. A panel still refusing focus a full transition after
    * it opened is not mid-anything, and a callback that re-arms itself forever
    * is a leak on every open.
