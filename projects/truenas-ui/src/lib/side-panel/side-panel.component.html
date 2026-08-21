@@ -12,8 +12,9 @@
   `aria-label` and `aria-labelledby` are gated on `open()` for the same reason
   `aria-modal` is: a closed panel is not in the accessibility tree, so a name on
   it would describe nothing. `resolvedAriaLabelledby` prefers the visible
-  heading; `resolvedAriaLabel` is the fallback for a panel with no title, and is
-  `null` whenever the labelledby resolves.
+  heading. `resolvedAriaLabel` is `null` when the panel is named by a heading or
+  an IDREF and the caller passed no `ariaLabel` of their own — an explicit one is
+  always emitted, so that a dangling IDREF cannot leave the panel unnamed.
 -->
 <div
   #overlay

@@ -14,8 +14,10 @@
 
   `aria-label` is `resolvedAriaLabel()` in both modes: `dialog` in over mode must
   have a name, and `navigation` in side mode wants one as soon as a page has more
-  than one landmark of that role. It is `null` whenever `ariaLabelledby` is set,
-  which is the branch `tnAccessibleName` owns.
+  than one landmark of that role. Beside an `ariaLabelledby` it is the GENERIC
+  FALLBACK that is withheld, not an explicit `ariaLabel` — which is always
+  emitted, so that a dangling IDREF cannot leave the panel unnamed. That branch
+  is `tnAccessibleName`'s, and its reasoning is set out there.
 -->
 
 <!-- Side mode: panel renders inline -->
