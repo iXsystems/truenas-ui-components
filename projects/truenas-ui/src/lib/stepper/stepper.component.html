@@ -66,10 +66,15 @@
 
     A list may contain nothing but list items, so the connector moves inside the item it leads
     away from; it used to be a sibling of the headers.
+
+    `role="list"` is redundant with `<ol>` and is not decoration: the stylesheet sets
+    `list-style: none`, and Safari drops the list role from the accessibility tree when it
+    does. Without this attribute the count and position would be lost on VoiceOver, which is
+    the reader this whole model is for.
   -->
   @if (isVertical()) {
     <!-- Vertical: content renders inline beneath the active step's header -->
-    <ol class="tn-stepper__header">
+    <ol class="tn-stepper__header" role="list">
       @for (step of steps(); track $index; let i = $index) {
         <li class="tn-stepper__step" [class.tn-stepper__step--last]="i === steps().length - 1">
           <ng-container *ngTemplateOutlet="stepHeader; context: { step, i }" />
@@ -86,7 +91,7 @@
     </ol>
   } @else {
     <!-- Horizontal: headers in a row, active content below -->
-    <ol class="tn-stepper__header">
+    <ol class="tn-stepper__header" role="list">
       @for (step of steps(); track $index; let i = $index) {
         <li class="tn-stepper__step" [class.tn-stepper__step--last]="i === steps().length - 1">
           <ng-container *ngTemplateOutlet="stepHeader; context: { step, i }" />

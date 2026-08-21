@@ -81,15 +81,34 @@ class StepperA11yHostComponent {
 /**
  * The rules the stepper's header structure can be wrong under.
  *
- * `list` and `listitem` are the two the fix is about. The three `aria-*` rules
- * and `nested-interactive` are here because the structure change moved every
- * step header one level deeper, inside a new element — the cheapest way for that
- * to go wrong is a role or attribute landing somewhere it is not allowed.
- * `aria-command-name` is what fails if a step header ever loses its label, which
- * is the other half of "a screen reader can tell which step is which".
+ * `aria-required-children` and `listitem` are the two the fix is about — the
+ * container's children and the item's container.
+ *
+ * NOT `list`, and that is worth stating because it is the obvious choice, and
+ * because losing it costs something. axe declares it `matches:
+ * 'no-role-matches'`, so an `<ol>` carrying an explicit `role="list"` — which
+ * this one must, see the Safari note in the template — is skipped by it
+ * entirely. Naming it here would not fail; it would quietly never be attributed
+ * to anything, which is the vacuous green this spec is otherwise built to
+ * avoid.
+ *
+ * `aria-required-children` is what still runs on a role-bearing list, and it is
+ * NOT the same check. It objects to an owned element whose role is not
+ * `listitem`; a roleless `div` is generic and passes straight through it —
+ * measured, not assumed. The connector is a roleless `div`, so putting it back
+ * beside the items is a regression NO axe rule reports once the role is
+ * explicit. `keeps the horizontal connector inside its list item` below is what
+ * guards it, by reading the DOM.
+ *
+ * The three `aria-*` rules and `nested-interactive` are here because the
+ * structure change moved every step header one level deeper, inside a new
+ * element — the cheapest way for that to go wrong is a role or attribute
+ * landing somewhere it is not allowed. `aria-command-name` is what fails if a
+ * step header ever loses its label, which is the other half of "a screen reader
+ * can tell which step is which".
  */
 const STRUCTURE_RULES = [
-  'list',
+  'aria-required-children',
   'listitem',
   'aria-allowed-attr',
   'aria-allowed-role',
@@ -141,6 +160,26 @@ describe('tn-stepper accessibility (#204)', () => {
       expect(items().every((item) => item.parentElement === list())).toBe(true);
     });
 
+    /**
+     * `role="list"` on an `<ol>` is redundant to the HTML spec and is not
+     * redundant to Safari: the stylesheet sets `list-style: none` on this
+     * element, and Safari drops the list role from the accessibility tree when
+     * it does. Losing it loses the step count and each step's position — the
+     * whole of what this change added — on VoiceOver, which is the reader the
+     * list model is most for, and no axe rule reports the loss.
+     *
+     * Asserted in both orientations, since each renders its own `<ol>`.
+     */
+    it.each(['horizontal', 'vertical'] as const)(
+      'keeps the explicit list role that survives list-style: none in Safari (%s)',
+      (orientation) => {
+        host.orientation.set(orientation);
+        fixture.detectChanges();
+
+        expect(list().getAttribute('role')).toBe('list');
+      },
+    );
+
     it('renders the same list in vertical orientation', () => {
       host.orientation.set('vertical');
       fixture.detectChanges();
@@ -150,9 +189,17 @@ describe('tn-stepper accessibility (#204)', () => {
       expect(items().every((item) => item.parentElement === list())).toBe(true);
     });
 
-    // The connector was a sibling of the step headers before #204, which is a
-    // `div` directly inside the `<ol>` — the exact shape the `list` rule
-    // reports. It moved inside the item it leads away from.
+    /**
+     * The connector was a sibling of the step headers before #204, which puts a
+     * `div` directly inside the `<ol>`. It moved inside the item it leads away
+     * from.
+     *
+     * This is the ONLY guard on that, and it reads the DOM rather than asking
+     * axe, because axe cannot answer it: the explicit `role="list"` the Safari
+     * fix requires takes the `list` rule out of play, and the rule that
+     * replaces it lets a roleless `div` through. See `STRUCTURE_RULES`, and the
+     * test that measures it at the bottom of this file.
+     */
     it('keeps the horizontal connector inside its list item, not loose in the list', () => {
       const connectors: HTMLElement[] =
         Array.from(fixture.nativeElement.querySelectorAll('.tn-stepper__connector'));
@@ -161,6 +208,20 @@ describe('tn-stepper accessibility (#204)', () => {
       expect(connectors.every((c) => c.parentElement?.classList.contains('tn-stepper__step')))
         .toBe(true);
     });
+
+    // Stated as the general invariant as well as about the connector, so that
+    // anything else added to the header — a progress bar, a divider — has to go
+    // inside an item too.
+    it.each(['horizontal', 'vertical'] as const)(
+      'holds nothing but list items directly in the list (%s)',
+      (orientation) => {
+        host.orientation.set(orientation);
+        fixture.detectChanges();
+
+        expect(Array.from(list().children).map((child) => child.tagName))
+          .toEqual(['LI', 'LI', 'LI']);
+      },
+    );
 
     it('gives every step header exactly one list item', () => {
       expect(headers().length).toBe(3);
@@ -180,7 +241,7 @@ describe('tn-stepper accessibility (#204)', () => {
       );
 
       expect(violated).toEqual([]);
-      expect(evaluated).toContain('list');
+      expect(evaluated).toContain('aria-required-children');
       expect(evaluated).toContain('listitem');
       expect(evaluated).toContain('aria-command-name');
     });
@@ -194,7 +255,7 @@ describe('tn-stepper accessibility (#204)', () => {
       );
 
       expect(violated).toEqual([]);
-      expect(evaluated).toContain('list');
+      expect(evaluated).toContain('aria-required-children');
       expect(evaluated).toContain('listitem');
     });
 
@@ -207,7 +268,7 @@ describe('tn-stepper accessibility (#204)', () => {
       );
 
       expect(violated).toEqual([]);
-      expect(evaluated).toContain('list');
+      expect(evaluated).toContain('aria-required-children');
       expect(headers()[2].getAttribute('aria-disabled')).toBe('true');
     });
 
@@ -223,7 +284,7 @@ describe('tn-stepper accessibility (#204)', () => {
       );
 
       expect(violated).toEqual([]);
-      expect(evaluated).toContain('list');
+      expect(evaluated).toContain('aria-required-children');
       expect(evaluated).toContain('aria-command-name');
     });
   });
@@ -364,7 +425,7 @@ describe('tn-stepper accessibility (#204)', () => {
         + '<div role="button" tabindex="0">2 Layout</div>'
         + '</div>',
         '.tn-stepper__header',
-        ['list', 'listitem'],
+        ['list', 'listitem', 'aria-required-children'],
       );
 
       expect(evaluated).toEqual([]);
@@ -372,28 +433,59 @@ describe('tn-stepper accessibility (#204)', () => {
     });
 
     /**
-     * And the control for the fix's own regression: put the connector back
-     * beside the items, inside the `<ol>`, and axe objects. Without this, a
-     * change that reverted the connector's position would leave every
-     * `violated` above empty and every `evaluated` still satisfied by the
-     * remaining items.
+     * The control for `aria-required-children` itself — the rule every "raises
+     * no violation" above leans on. Without this, an axe or `axeResult` change
+     * that stopped attributing it would empty `violated` everywhere in this
+     * file and satisfy nothing but `evaluated`.
+     *
+     * The child carries `role="button"` rather than being the roleless `div`
+     * the connector is, because a roleless child is generic and this rule lets
+     * it through — which is measured directly by the test after this one, and
+     * is why the connector's position is guarded by reading the DOM instead.
      *
      * It runs through the shared `axeResult` on purpose, so it is also the
      * control for that wrapper: an attribution bug there — a filter matching
      * nothing — would empty `violated` in every spec that uses it.
      */
-    it('still reports the violation for a connector loose in the list', async () => {
+    it('still reports a list child whose role is not listitem', async () => {
       const { violated } = await scan(
-        '<ol class="tn-stepper__header">'
+        // `role="list"` because that is what the component renders, and it is
+        // what decides which rule reports: axe skips `list` on a role-bearing
+        // <ol>, so a control written without the attribute would be proving
+        // that a rule the component never runs still works.
+        '<ol class="tn-stepper__header" role="list">'
+        + '<li><div role="button" tabindex="0">1 Pool name</div></li>'
+        + '<div role="button" tabindex="0">Loose</div>'
+        + '</ol>',
+        'ol',
+        ['aria-required-children'],
+      );
+
+      expect(violated).toEqual(['aria-required-children']);
+    });
+
+    /**
+     * The measurement behind the paragraph in `STRUCTURE_RULES`, kept as a test
+     * rather than left as a claim in a comment: this IS the pre-fix connector
+     * shape, and `aria-required-children` evaluates the list and says nothing.
+     *
+     * If a later axe-core does start reporting it, this test fails — and the
+     * right response is to add the rule back as a guard on the component, not
+     * to loosen this.
+     */
+    it('says nothing about a roleless div loose in the list, which the connector is', async () => {
+      const { violated, evaluated } = await scan(
+        '<ol class="tn-stepper__header" role="list">'
         + '<li><div role="button" tabindex="0">1 Pool name</div></li>'
         + '<div class="tn-stepper__connector"></div>'
         + '<li><div role="button" tabindex="0">2 Layout</div></li>'
         + '</ol>',
         'ol',
-        ['list'],
+        ['aria-required-children'],
       );
 
-      expect(violated).toEqual(['list']);
+      expect(evaluated).toEqual(['aria-required-children']);
+      expect(violated).toEqual([]);
     });
   });
 });

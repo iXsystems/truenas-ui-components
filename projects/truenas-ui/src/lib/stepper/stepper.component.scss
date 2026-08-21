@@ -13,6 +13,11 @@
   // The header is an <ol> (see the template — it is how the step count and each step's
   // position reach a screen reader). Strip the list's own presentation once, here, so both
   // orientations start from the same box as the <div> it replaced.
+  //
+  // `list-style: none` is what makes Safari drop the list role from the accessibility tree —
+  // which would take the count and position with it, on the one browser whose screen reader
+  // this change is most for. The explicit `role="list"` in the template is what holds it; do
+  // not remove one without the other.
   .tn-stepper__header {
     list-style: none;
     margin: 0;
@@ -30,12 +35,13 @@
     }
 
     // The connector used to be a sibling of the headers in this flex row and absorbed the
-    // free space itself. It now sits inside the list item, so the ITEM is what grows — and
-    // the header inside it must not, or it would stretch to the item's full width and pull
-    // its centred label away from its indicator.
+    // free space itself. It now sits inside the list item, so the ITEM is what grows.
+    //
+    // Nothing is said here about how the header itself flexes: as a flex child it defaults to
+    // `0 1 auto`, which is exactly what it had as a direct child of the row — free to shrink
+    // so a long label wraps rather than overflowing, and not free to grow.
     .tn-stepper__step {
       display: flex;
-      align-items: flex-start;
 
       &:not(.tn-stepper__step--last) {
         flex: 1;
@@ -44,7 +50,6 @@
 
     .tn-stepper__step-header {
       display: flex;
-      flex: 0 0 auto;
       flex-direction: column;
       align-items: center;
       text-align: center;

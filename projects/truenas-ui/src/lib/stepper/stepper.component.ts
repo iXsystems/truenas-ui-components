@@ -12,9 +12,9 @@ import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
  * Screen-reader text for a step whose header shows the error glyph.
  *
  * Exported so specs assert by name rather than by a copied literal, the same
- * reason `TN_SPINNER_DEFAULT_LABEL` is — and so a consumer localising this
- * library has one place to find the strings the stepper speaks but never
- * renders.
+ * reason `TN_SPINNER_DEFAULT_LABEL` is. It is not an override point — nothing
+ * reads a token or an input in its place, so a consumer cannot change what the
+ * stepper says here.
  */
 export const TN_STEPPER_STATUS_ERROR = 'Error';
 
