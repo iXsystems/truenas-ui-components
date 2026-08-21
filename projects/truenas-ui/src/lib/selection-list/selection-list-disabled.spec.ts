@@ -4,7 +4,6 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import type { TnSelectionChange } from './selection-list.component';
 import { TnSelectionListComponent } from './selection-list.component';
-import { axeResult } from '../a11y/axe-testing';
 import { TnListOptionComponent } from '../list-option/list-option.component';
 
 /**
@@ -233,42 +232,24 @@ describe('tn-selection-list [disabled] (#221, #225)', () => {
     });
 
     /**
-     * `aria-disabled` on `role="listbox"` is a supported combination, and this
-     * is what says so rather than the ARIA spec being quoted in a comment. The
-     * rules are the two that can object to an attribute the host did not carry
-     * before: whether it is allowed on the role at all, and whether its value
-     * is one the attribute accepts.
+     * NO AXE ASSERTION HERE, DELIBERATELY.
+     *
+     * The obvious one to reach for is `aria-allowed-attr` on the host, and it
+     * cannot see this fix: `aria-disabled` is a GLOBAL ARIA attribute, allowed
+     * on every role, so the rule never weighs it against `role="listbox"` at
+     * all. Measured rather than reasoned — with the host binding deleted, a
+     * scan for `aria-allowed-attr` and `aria-valid-attr-value` still returned
+     * `violated: []` with both rules in `evaluated`, because the host carries
+     * `aria-multiselectable` and the rules attribute themselves to it either
+     * way. `aria-required-children` / `aria-required-parent` are the same
+     * story: a global attribute on the parent cannot move them, and
+     * `selection-list-a11y.spec.ts` already scans both over these elements.
+     *
+     * So the DOM assertions above are the guard, and they are the real one —
+     * all seven fail with the binding removed. An axe scan added here would
+     * have passed either way, which is the vacuous green `axe-testing.ts`
+     * exists to warn about.
      */
-    it('raises no axe violation for the attribute it added', async () => {
-      const { violated, evaluated } = await axeResult(
-        fixture.nativeElement,
-        [list()],
-        ['aria-allowed-attr', 'aria-valid-attr-value']
-      );
-
-      expect(violated).toEqual([]);
-      expect(evaluated).toContain('aria-allowed-attr');
-      expect(evaluated).toContain('aria-valid-attr-value');
-    });
-
-    /**
-     * The structure rules `selection-list-a11y.spec.ts` runs on an ENABLED
-     * list, run again here — the host attribute is new on this element and the
-     * listbox/option relationship is what an attribute on the parent could
-     * disturb. Scanned over the host and its options together, matching that
-     * spec's own targets.
-     */
-    it('keeps the listbox structure axe checks green while disabled', async () => {
-      const { violated, evaluated } = await axeResult(
-        fixture.nativeElement,
-        [list(), ...options()],
-        ['aria-required-children', 'aria-required-parent']
-      );
-
-      expect(violated).toEqual([]);
-      expect(evaluated).toContain('aria-required-children');
-      expect(evaluated).toContain('aria-required-parent');
-    });
 
     /**
      * The list is still readable with the arrow keys while disabled — the same
