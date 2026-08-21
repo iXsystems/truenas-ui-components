@@ -211,6 +211,11 @@ describe('tn-list-option accessibility (#213)', () => {
      * anyway — the picture and the state disagreeing, from a click on the
      * picture. `pointer-events: none` is what replaced that handler.
      *
+     * `inert` in the template is what actually blocks the pointer; this
+     * declaration is the fallback for a browser without it, which is why it is
+     * guarded separately rather than treated as covered by the inert assertion
+     * above.
+     *
      * Asserted against the stylesheet because jsdom has no layout engine and
      * Jest does not compile the component's SCSS, so the behaviour itself is
      * not observable here — the same constraint that makes `chip-a11y.spec.ts`
@@ -262,6 +267,54 @@ describe('tn-list-option accessibility (#213)', () => {
       fixture.detectChanges();
 
       expect(option().getAttribute('aria-selected')).toBe('false');
+    });
+  });
+
+  /**
+   * Making the checkbox presentational takes away the only focusable element
+   * this component had, so the option has to become the tab stop itself — one
+   * per option either way, but now on the element that acts on the keypress.
+   *
+   * The checkbox was never a working one: it swallowed the click, so Space on
+   * the focused input flipped the input and left `aria-selected` behind. These
+   * assert the replacement is a real stop and not merely a present attribute.
+   */
+  describe('the option is reachable from the keyboard', () => {
+    it('is in the tab order', () => {
+      expect(option().tabIndex).toBe(0);
+    });
+
+    it('leaves a disabled option out of the tab order', () => {
+      host.disabled.set(true);
+      fixture.detectChanges();
+
+      expect(option().hasAttribute('tabindex')).toBe(false);
+    });
+
+    it.each([' ', 'Enter'])('toggles selection on %s', (key) => {
+      option().dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+      fixture.detectChanges();
+
+      expect(option().getAttribute('aria-selected')).toBe('true');
+    });
+
+    it.each([' ', 'Enter'])('does not toggle on %s when disabled', (key) => {
+      host.disabled.set(true);
+      fixture.detectChanges();
+
+      option().dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+      fixture.detectChanges();
+
+      expect(option().getAttribute('aria-selected')).toBe('false');
+    });
+
+    it('leaves the presentational checkbox unfocusable', () => {
+      // `inert` is what does this in a browser. jsdom does not implement it, so
+      // the assertion is on the attribute that carries the intent rather than
+      // on `document.activeElement` — which here would report the input as
+      // focused and say nothing about the shipped behaviour.
+      expect(checkboxWrapper().hasAttribute('inert')).toBe(true);
+      expect(checkboxInput().hasAttribute('tabindex')).toBe(false);
     });
   });
 

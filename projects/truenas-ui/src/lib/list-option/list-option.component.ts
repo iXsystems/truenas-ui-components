@@ -15,6 +15,26 @@ import { TnCheckboxComponent } from '../checkbox/checkbox.component';
     '[class.tn-list-option--selected]': 'effectiveSelected()',
     '[class.tn-list-option--disabled]': 'effectiveDisabled()',
     'role': 'option',
+    // The option is the control, so it has to be the tab stop. Before #213 the
+    // only focusable thing in here was the nested checkbox's native <input>,
+    // and reaching it did nothing useful: the checkbox swallowed the click, so
+    // Space flipped the input and left the option's own selection where it was.
+    // Making the checkbox presentational removes that tab stop, and the
+    // keydown.space / keydown.enter handlers below have always needed one —
+    // the host was never focusable, so they could not fire. This is what makes
+    // them reachable, and it keeps the count the same: one tab stop per option,
+    // now on the element that acts on it.
+    //
+    // A listbox should really manage a single roving tabindex across its
+    // options rather than making each one a stop; tn-selection-list has no
+    // keyboard handling at all today, so that is its own piece of work and is
+    // proposed on the PR rather than done here.
+    //
+    // A disabled option is left out of the tab order, matching the
+    // `pointer-events: none` the disabled modifier already sets — every other
+    // route into toggle() is closed for it, so offering focus would only be a
+    // stop where nothing happens.
+    '[attr.tabindex]': 'effectiveDisabled() ? null : 0',
     '[attr.aria-selected]': 'effectiveSelected()',
     '[attr.aria-disabled]': 'effectiveDisabled()'
   }

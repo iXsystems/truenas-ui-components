@@ -64,10 +64,14 @@
     position: relative;
     display: flex;
     align-items: center;
-    // The checkbox is presentational (see the template's `inert`), so it must
-    // not swallow the click either: without this, a click on the checkbox
-    // toggles the native input and leaves the option's own state where it was.
-    // With it, the click reaches the row and toggles the option once.
+    // Belt and braces for the pointer half of "presentational". `inert` in the
+    // template is what actually removes this subtree from hit testing, and in
+    // every browser that supports it this declaration changes nothing; it is
+    // here for the ones that do not, where an inert checkbox would still take
+    // the click, toggle its own native input, and leave the option's selection
+    // where it was — which is the desync the `$event.stopPropagation()` handler
+    // it replaces used to produce. Either way the click reaches the row and
+    // toggles the option once.
     pointer-events: none;
   }
 
