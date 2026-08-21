@@ -1,19 +1,30 @@
+<!-- The chip body is a real <button>, and the close button is its SIBLING rather
+     than its descendant. A focusable wrapper containing a focusable control fails
+     axe's nested-interactive rule: assistive technology flattens the inner control,
+     so close can be unreachable or announced as part of the chip's own name.
+     The Delete/Backspace dismiss shortcut is bound to both buttons rather than
+     to the wrapper, so it works wherever focus sits inside the chip while the
+     handler still lives on genuinely focusable elements. Enter/Space need no
+     handler at all: a native button already turns them into clicks. -->
 <div
   #chipEl
-  role="button"
   tnTestIdType="chip"
   [ngClass]="classes()"
   [tnTestId]="testId()"
-  [attr.aria-label]="label() | tnLabelText"
-  [attr.aria-disabled]="disabled()"
-  [attr.tabindex]="disabled() ? -1 : 0"
-  (click)="handleClick($event)"
-  (keydown)="handleKeyDown($event)"
 >
-  @if (icon()) {
-    <tn-icon class="tn-chip__icon" size="sm" [name]="icon()!" />
-  }
-  <span class="tn-chip__label" [innerHTML]="label() | tnLabelMarkup"></span>
+  <button
+    type="button"
+    class="tn-chip__body"
+    [attr.aria-label]="label() | tnLabelText"
+    [disabled]="disabled()"
+    (click)="handleClick($event)"
+    (keydown)="handleKeyDown($event)"
+  >
+    @if (icon()) {
+      <tn-icon class="tn-chip__icon" size="sm" [name]="icon()!" />
+    }
+    <span class="tn-chip__label" [innerHTML]="label() | tnLabelMarkup"></span>
+  </button>
   @if (closable()) {
     <button
       type="button"
@@ -21,6 +32,7 @@
       [attr.aria-label]="'Remove ' + (label() | tnLabelText)"
       [disabled]="disabled()"
       (click)="handleClose($event)"
+      (keydown)="handleKeyDown($event)"
     >
       <span class="tn-chip__close-icon">×</span>
     </button>

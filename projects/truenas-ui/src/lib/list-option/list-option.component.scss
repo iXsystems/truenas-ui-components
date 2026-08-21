@@ -64,6 +64,14 @@
     position: relative;
     display: flex;
     align-items: center;
+    // The pointer half of "presentational", and the template's `inert` does not
+    // cover it: an inert subtree does not RECEIVE targeted mouse events, which
+    // stops the checkbox acting on a click without handing that click to
+    // anything else. This is what puts it on the row, so clicking the checkbox
+    // toggles the option exactly as clicking its label does — where the
+    // `$event.stopPropagation()` this replaces produced the opposite, a native
+    // input flipping itself while the option's own selection stayed put.
+    pointer-events: none;
   }
 
 
@@ -123,8 +131,20 @@
   }
 }
 
-:host(:focus) {
-  outline: none;
+// The host is the tab stop now (#213), so its focus has to be visible AS focus.
+// This rule used to set `outline: none` and tint the background, which was
+// harmless while nothing in the option could be focused at all — the only
+// focusable element was the checkbox's own input, and that drew its own ring.
+// With a real tab stop here, `outline: none` would leave a keyboard user with
+// nothing but the tint `:hover` already uses, which does not tell them where
+// focus is.
+//
+// The offset is inset rather than the +2px the chip uses: options sit flush
+// against each other in a list, so an outward ring would be clipped by, or
+// overlap, the neighbouring option.
+:host(:focus-visible) {
+  outline: 2px solid var(--tn-primary);
+  outline-offset: -2px;
 
   .tn-list-option__content {
     background-color: var(--tn-alt-bg2);

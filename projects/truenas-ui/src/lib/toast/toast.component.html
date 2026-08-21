@@ -1,7 +1,6 @@
 <div
   class="tn-toast"
-  role="alert"
-  aria-live="polite"
+  [attr.role]="role()"
   [class.tn-toast--visible]="visible()"
   [class.tn-toast--info]="type() === 'info'"
   [class.tn-toast--success]="type() === 'success'"

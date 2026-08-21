@@ -40,6 +40,14 @@ var(--tn-orange)    // Alert, attention needed
 var(--tn-blue)      // Info, neutral information
 ```
 
+**`--tn-red` is tuned toward the 3:1 UI-component/border minimum (WCAG 1.4.11) in most themes but not all — `.tn-high-contrast`'s `--tn-red` measures 2.94:1 against `--tn-bg1` — and it is not tuned for the 4.5:1 text minimum (WCAG 1.4.3). The other status colors are not tuned toward either threshold.** In several themes `--tn-red` on `--tn-bg1` clears 3:1 but not 4.5:1. For text — validation messages, inline errors — use the text-safe counterpart instead:
+
+```scss
+var(--tn-error-text)  // Error/validation text, 4.5:1 against --tn-bg1 in every theme
+```
+
+Defined per theme in `themes.css`, alongside the status colors it pairs with. Where `--tn-green`/`--tn-yellow`/etc. get a text use, give them the same `-text` counterpart rather than reusing the raw status color for text.
+
 ### Icon Sizes
 
 ```scss

@@ -772,8 +772,8 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
    * Toggles the tooltip, opening it the way its host's own click would.
    *
    * Routed through `_pinsOnClick` for the same reason `_onClick` is: `show()` on a pinnable
-   * message puts up a `role="tooltip"` panel with `pointer-events: none`, so the link inside it
-   * cannot be clicked and `mouseleave` takes it away again — the unreachable state pinning exists
+   * message puts up a decorative, `aria-hidden` panel with `pointer-events: none`, so the link
+   * inside it cannot be clicked and `mouseleave` takes it away again — the unreachable state pinning exists
    * to replace, which a public method should not be able to produce either.
    */
   toggle(): void {

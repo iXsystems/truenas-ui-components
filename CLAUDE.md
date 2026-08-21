@@ -143,6 +143,43 @@ Look at these story files for reference:
 - `projects/truenas-ui/src/stories/card.stories.ts`
 - `projects/truenas-ui/src/stories/menu.stories.ts`
 
+## Opening a pull request: do NOT invent a Jira ticket
+
+`CONTRIBUTE.md` requires every PR title to start `NAS-<number> / ` and CI
+rejects titles without one. **You cannot mint that number and you must not
+copy one.**
+
+**What actually happens:** open the PR with a title that has *no* `NAS-`
+prefix — just `type(scope): description` — then apply the **`jira`** label.
+bugclerk files a fresh Jira issue and rewrites the PR title with its key,
+usually within seconds, and comments the Jira URL. `check-ticket` goes green
+on the rename.
+
+```
+./scripts/forge.py developer POST /issues/<pr>/labels '{"labels":["jira","no-time-tracked"]}'
+```
+
+**Why this is written down.** Every cycle that learned the title format by
+reading a recent merged PR copied the key along with the shape — because what
+is on `main` is the *post-rename* title. Six agent pull requests ended up
+attached to two Jira issues instead of six: NAS-142299 collected three, and
+NAS-142319 collected three more. Each cycle reasoned carefully and reached the
+wrong answer, because the only evidence available said the key belongs in the
+title.
+
+**Do not invent one either.** One cycle cut a branch on `NAS-142300`, thought
+better of it, and backed out; the next free id bugclerk assigned was 142316,
+so 142300 was someone else's ticket. An invented number maps to nothing or to
+a stranger's work, and bugclerk links it either way.
+
+**Branch names need no Jira key at all** — `<issue>-<slug>` is the convention
+here, e.g. `204-stepper-aria-structure`.
+
+**The one exception:** carry an existing `NAS-` key only when the work truly
+belongs to that Jira issue — a follow-up commit to a PR that already has one.
+Not "a related ticket", not "the same component". If you are choosing a key
+rather than continuing one, leave it out.
+
 ## Important Notes for Agents
 
 - **Don't read all files at once** - Load only what you need for the current task

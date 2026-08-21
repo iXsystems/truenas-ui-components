@@ -318,6 +318,21 @@ describe('TnDialogHarness', () => {
   });
 
   describe('with() filter', () => {
+    // The two untitled-dialog cases below trip `tnAccessibleName`'s dev-mode
+    // warning by design — it is what tells a developer their dialog fell back
+    // to a generic name. Mocked so an expected warning does not print a stack
+    // trace over every run of this suite; it is asserted on properly in
+    // `dialog-shell-a11y.spec.ts`.
+    let warn: jest.SpyInstance;
+
+    beforeEach(() => {
+      warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    });
+
+    afterEach(() => {
+      warn.mockRestore();
+    });
+
     it('should filter by exact title', async () => {
       tnDialog.open(TestDialogComponent, { data: { title: 'First Dialog' } });
       fixture.detectChanges();
@@ -345,6 +360,32 @@ describe('TnDialogHarness', () => {
       expect(
         await dialogLoader.hasHarness(TnDialogHarness.with({ title: 'NonExistent' })),
       ).toBe(false);
+    });
+
+    /**
+     * A dialog with no title renders no heading at all since #219, so the
+     * harness's title locator is optional. Both halves matter: `getTitle()`
+     * answers `''` rather than rejecting, and — because `with({title})` calls
+     * it on every candidate — one untitled dialog in the document must not
+     * make a title-filtered lookup of a DIFFERENT dialog throw.
+     */
+    it('reports an empty title for a dialog that renders no heading', async () => {
+      tnDialog.open(TestDialogComponent, { data: { title: '' } });
+      fixture.detectChanges();
+
+      const dialog = await dialogLoader.getHarness(TnDialogHarness);
+      expect(await dialog.getTitle()).toBe('');
+    });
+
+    it('filters by title with an untitled dialog also open', async () => {
+      tnDialog.open(TestDialogComponent, { data: { title: '' } });
+      tnDialog.open(TestDialogComponent, { data: { title: 'Second Dialog' } });
+      fixture.detectChanges();
+
+      const dialog = await dialogLoader.getHarness(
+        TnDialogHarness.with({ title: 'Second Dialog' }),
+      );
+      expect(await dialog.getTitle()).toBe('Second Dialog');
     });
 
     it('should distinguish between multiple open dialogs', async () => {

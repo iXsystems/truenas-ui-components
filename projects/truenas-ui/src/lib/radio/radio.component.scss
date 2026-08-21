@@ -79,7 +79,17 @@
   &__error {
     margin-top: 0.25rem;
     font-size: 12px;
-    color: var(--tn-red, #dc3545);
+    // Text needs 4.5:1 (WCAG 1.4.3). --tn-red is tuned toward the 3:1
+    // border/icon minimum (WCAG 1.4.11) — themes.css's .tn-high-contrast
+    // block documents even that at 2.94:1, a pre-existing gap this ticket
+    // does not touch — and it falls short of 4.5:1 in seven of the nine
+    // themes, so error text reads --tn-error-text instead. A theme must
+    // declare that token itself: :root always does, so a theme omitting it
+    // inherits the default red rather than reaching the --tn-red arm below.
+    // See theming.mdx for the cascade reasoning. That arm is for a consumer
+    // stylesheet predating the token entirely; the literal only for no theme
+    // stylesheet at all (UA white, where #b91c1c measures 6.47:1).
+    color: var(--tn-error-text, var(--tn-red, #b91c1c));
   }
   
   // States

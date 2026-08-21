@@ -3,6 +3,23 @@
   <ng-content />
 </ng-template>
 
+<!--
+  A CLOSED drawer is `inert` as well as `aria-hidden` (#214). It stays in the DOM
+  and keeps whatever the caller projected into it — nav links, buttons — so
+  `aria-hidden` alone hid a subtree a keyboard user could still Tab into, landing
+  focus on controls that are off-screen or clipped to zero width. `inert` takes
+  the subtree out of the focus order and the accessibility tree together;
+  `aria-hidden` stays beside it for browsers without `inert` (Firefox before
+  112), where it is still the half that works.
+
+  `aria-label` is `resolvedAriaLabel()` in both modes: `dialog` in over mode must
+  have a name, and `navigation` in side mode wants one as soon as a page has more
+  than one landmark of that role. Beside an `ariaLabelledby` it is the GENERIC
+  FALLBACK that is withheld, not an explicit `ariaLabel` — which is always
+  emitted, so that a dangling IDREF cannot leave the panel unnamed. That branch
+  is `tnAccessibleName`'s, and its reasoning is set out there.
+-->
+
 <!-- Side mode: panel renders inline -->
 @if (mode() !== 'over') {
   <div
@@ -12,7 +29,9 @@
     [style.width]="width()"
     [attr.role]="panelRole()"
     [attr.aria-hidden]="!opened() ? 'true' : null"
-    [attr.aria-label]="ariaLabel()"
+    [attr.inert]="opened() ? null : ''"
+    [attr.aria-label]="resolvedAriaLabel()"
+    [attr.aria-labelledby]="ariaLabelledby()"
     [tnTestId]="testId()"
     (transitionend)="onTransitionEnd($event)">
     <ng-container *ngTemplateOutlet="drawerContent" />
@@ -37,7 +56,9 @@
       [attr.role]="panelRole()"
       [attr.aria-modal]="opened() ? 'true' : null"
       [attr.aria-hidden]="!opened() ? 'true' : null"
-      [attr.aria-label]="ariaLabel()"
+      [attr.inert]="opened() ? null : ''"
+      [attr.aria-label]="resolvedAriaLabel()"
+      [attr.aria-labelledby]="ariaLabelledby()"
       [tnTestId]="testId()"
       [cdkTrapFocus]="trapFocus()"
       [cdkTrapFocusAutoCapture]="trapFocus()"

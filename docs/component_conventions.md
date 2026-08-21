@@ -410,6 +410,103 @@ Add when semantic HTML is insufficient:
 </button>
 ```
 
+### Live Regions
+
+**Declare politeness exactly once.** A live-region role implies one — `alert` is
+assertive, `status` is polite — and an explicit `aria-live` on the same element
+*overrides* it. Setting both is not redundant, it is a contradiction, and it is
+the defect fixed in banner, radio, checkbox and toast (#190, #194). Prefer the
+role and leave `aria-live` off; there is then no second attribute to disagree.
+`table.component.html` still sets both. There they agree — `status` and `polite`
+say the same thing — so it is redundancy rather than a defect, and it has not
+been cleaned up.
+
+**A component whose politeness follows a severity takes it from
+`lib/a11y/live-region.ts`.** `tnLiveRegionRole(severity)` is the single place
+deciding which severities interrupt — banner and toast disagreed about `warning`
+until it existed. Do not restate the mapping in a `computed`.
+
+**Assert the RESOLVED politeness, not an attribute.** A spec naming one source
+passes just as happily on markup that reintroduces the other. Use `liveSources()`
+and `politeness()` from `lib/a11y/live-region-testing.ts`; see
+`banner-a11y.spec.ts` for the shape.
+
+### Running axe in a spec
+
+**Use `axeResult()` from `lib/a11y/axe-testing.ts`. Do not write another axe
+wrapper.** Three specs each grew a private near-copy and two of them were wrong
+in the direction that makes a test pass (#196). The correct version is subtle
+enough that writing it again from memory is how the lenient copy gets made.
+
+**Never assert on `violations` alone.** An empty `violations` is also what axe
+returns when it evaluated nothing at all — a detached tree, an upgrade that
+narrows which nodes a rule selects. Pair it with `evaluated`. (A rule that is
+renamed or removed is the one case that stays loud: axe rejects with "Could not
+find configured rule" rather than returning nothing.)
+
+**A rule axe could not decide on is an error, not a pass.** `axeResult()` throws
+on an `incomplete` result attributed to a target, because counted the obvious way
+it satisfies the "axe really ran" half of a guard while contributing nothing to
+the "and found nothing" half — green from both halves at once.
+
+**`evaluated` only means something when it is attributed to the element under
+test.** A rule lands in `passes` if it matched *any* node in the scanned tree, so
+a tree-wide check is satisfied by a descendant the spec is not about — `tn-icon`
+renders `aria-label` and `aria-hidden`, and that alone made toast's
+`aria-allowed-attr` guard green while the rule never looked at the toast.
+`axeResult()` takes the target elements for exactly this reason. Pass more than
+one when a fix has more than one shape of regression: the chip names both its
+wrapper and its body, because `nested-interactive` reports on whichever of them
+carries the widget role.
+
+**A guard that cannot be attributed to the element under test is deleted, not
+left green**, with a comment recording what was measured. `nested-interactive` is
+the worked example: it is evaluated on the slide toggle's `<input>` and never on
+the label text the fix was about, and it *passed* the pre-fix markup anyway.
+
+**Prove the rule can still fail, with a positive control.** Rebuild the pre-fix
+markup in the spec and require axe to object to it — see the pre-#188 structure
+in `chip-a11y.spec.ts`, and the unlabelled checkbox in
+`slide-toggle-a11y.spec.ts`. It is the only assertion that shows axe failing
+rather than passing, and it doubles as the control for `axeResult()` itself.
+
+### Measuring colour contrast in a spec
+
+**Use `lib/a11y/contrast-testing.ts`. Do not write the formula again.** Three
+cycles working one `tn-radio` contrast bug wrote seven throwaway implementations
+of it in a day, in two languages (#197). Nothing about the computation varies per
+ticket, and each hand-roll is another chance to get a step wrong in the direction
+that makes a failing colour look passing.
+
+**`themePalettes(css)` reads the tokens; `contrast()` measures one against the
+surface it renders on.** That pairing — a token and the background behind it — is
+the form every one of those scripts actually needed. Pass the text of
+`styles/themes.css`; the module takes CSS rather than reading the file, so the
+resolution rules can be covered against a fixture that no theme retune breaks.
+
+**`declares()` and `color()` answer different questions.** `color()` resolves the
+way the browser does, following `var()` chains and inheriting from `:root`;
+`declares()` says whether *this* block sets the token. A token tuned per theme —
+`--tn-error-text` is, since it exists to clear 4.5:1 against that theme's own
+background — is a defect when a theme inherits `:root`'s value, and only
+`declares()` sees it.
+
+**Never compare a rounded ratio.** `4.4999` formats as `"4.50"`, and a check
+built on the formatted value clears AA on a colour that fails it. `meetsAa()`
+takes the unrounded ratio; `formatRatio()` is for titles and messages only.
+
+**A translucent foreground is composited before it is measured.** Half the
+palette's foreground tokens are `rgba()` — `--tn-fg2` is
+`rgba(255,255,255,0.85)`. Measuring one as if it were opaque reports 16.67:1
+where it renders at 12.30:1. A translucent *background* throws instead: what is
+behind it decides the answer, and only the caller knows what that is.
+
+**This is not axe's `color-contrast` rule, and cannot be.** That rule needs a
+layout engine to find what is actually painted behind an element; under jsdom it
+reports `incomplete`, which `axeResult()` treats as an error. What these
+assertions measure is the palette as shipped, against the surface the spec names.
+See `radio-error-contrast.spec.ts` for the shape.
+
 ### Keyboard Navigation
 Support standard keys:
 - **Tab** - Focus navigation

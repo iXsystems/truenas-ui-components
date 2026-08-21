@@ -381,8 +381,8 @@ describe('TnChipInputComponent test ids', () => {
 
     expect(getInput(fixture).getAttribute('data-testid')).toBe('chip-input-isns-servers');
 
-    // tn-chip stamps the id on its inner button element, not the host.
-    const chip = fixture.nativeElement.querySelector('.tn-chip-input__chip [role="button"]');
+    // tn-chip stamps the id on its inner `.tn-chip` wrapper, not the host.
+    const chip = fixture.nativeElement.querySelector('.tn-chip-input__chip .tn-chip');
     expect(chip?.getAttribute('data-testid')).toBe('chip-isns-servers-alpha');
 
     // Suggestions are portaled into a CDK overlay on the document root.
@@ -413,7 +413,7 @@ describe('TnChipInputComponent test ids', () => {
     const fixture = TestBed.createComponent(ObjectValueTestIdHostComponent);
     fixture.detectChanges();
 
-    const chip = fixture.nativeElement.querySelector('.tn-chip-input__chip [role="button"]');
+    const chip = fixture.nativeElement.querySelector('.tn-chip-input__chip .tn-chip');
     expect(chip?.getAttribute('data-testid')).toBe('chip-groups-admins');
   });
   // `*` and `**` both normalize to nothing, so scoping them under the base composes
@@ -428,7 +428,7 @@ describe('TnChipInputComponent test ids', () => {
     fixture.detectChanges();
 
     const chips = Array.from(
-      fixture.nativeElement.querySelectorAll('.tn-chip-input__chip [role="button"]'),
+      fixture.nativeElement.querySelectorAll('.tn-chip-input__chip .tn-chip'),
     ) as HTMLElement[];
     expect(chips.map((chip) => chip.getAttribute('data-testid')))
       .toEqual([null, null, 'chip-hosts-allow-alpha']);

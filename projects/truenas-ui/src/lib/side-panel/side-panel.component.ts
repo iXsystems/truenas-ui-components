@@ -9,9 +9,31 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { mdiClose } from '@mdi/js';
 import { take } from 'rxjs';
 import type { Observable } from 'rxjs';
+import { tnAccessibleName } from '../a11y/accessible-name';
 import { TnIconRegistryService } from '../icon/icon-registry.service';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import { tnTransitionLifecycle } from '../utils/transition-lifecycle';
+
+/**
+ * The accessible name an open panel falls back to when it has no `title` and the
+ * caller named neither `ariaLabel` nor `ariaLabelledby` (#214).
+ *
+ * `title` defaults to `''`, so the DEFAULT rendering of this component was a
+ * `role="dialog"` with `aria-labelledby` pointing at an empty `<h2>` — measured
+ * as an `aria-dialog-name` violation, alongside `empty-heading`. A dialog with no
+ * name is announced as "dialog" and nothing else, which is the whole of what a
+ * screen-reader user gets told about a surface that just covered the page.
+ *
+ * Withholding `role="dialog"` until there is a name would be the other way to
+ * clear the rule, and it is worse: the panel traps focus either way, so a
+ * listener would be moved into a region with no announcement that anything had
+ * opened. A generic name is still a poor one, so it is paired with the dev-mode
+ * warning `tnAccessibleName` raises.
+ *
+ * Exported so specs assert against it by name rather than by a copied literal.
+ */
+export const TN_SIDE_PANEL_DEFAULT_LABEL = 'Side panel';
 
 /**
  * Directive to mark an element as a side-panel footer action.
@@ -99,8 +121,44 @@ export class TnSidePanelComponent implements OnDestroy {
    */
   closeButtonAriaLabel = input<string>('Dismiss');
 
-  // Outputs
+  /**
+   * Accessible name for the panel itself, for a panel that renders no `title`.
+   *
+   * A `title` outranks it: the heading is what the user can see, and
+   * `aria-labelledby` wins the ARIA name calculation while it resolves. The
+   * attribute is still rendered beside the heading rather than suppressed — see
+   * `tnAccessibleName`, which owns that rule for every component in this
+   * library, and the reason it is safer than the alternative.
+   */
+  ariaLabel = input<string | null>(null);
+
+  /**
+   * IDREF naming the panel from text elsewhere on the page, for a panel that
+   * renders no `title`. Same precedence: a `title` wins, because it is the
+   * visible heading.
+   */
+  ariaLabelledby = input<string | null>(null);
+
+  /**
+   * Fires once the panel has finished opening.
+   *
+   * "Finished" means the open transition ended, OR that it was going to take
+   * longer than `TN_TRANSITION_FALLBACK_MS` to say so — which is what a user
+   * with `prefers-reduced-motion: reduce` gets, since this component's own
+   * stylesheet zeroes the duration for them and a transition that does not run
+   * fires no `transitionend` (#218). A consumer may assume the panel has
+   * reached its open state and that `open()` is true; it may NOT assume the
+   * animation is visually complete, because for that user there was none.
+   */
   opened = output<void>();
+
+  /**
+   * Fires once the panel has finished closing. Same guarantee as `opened`, and
+   * the same caveat: it reports the state, not the animation.
+   *
+   * Focus restoration does NOT hang off this — it happens as soon as the panel
+   * closes (#214). See the effect in the constructor.
+   */
   closed = output<void>();
 
   // Content projection queries
@@ -111,8 +169,54 @@ export class TnSidePanelComponent implements OnDestroy {
   readonly panelId = `tn-side-panel-${Math.random().toString(36).substring(2, 9)}`;
   readonly titleId = `${this.panelId}-title`;
 
+  /**
+   * Whether there is a heading to render, and to name the dialog from.
+   *
+   * Trimmed, because a whitespace-only title renders a heading that looks empty
+   * to a sighted user and names the dialog with nothing — which is the state
+   * that failed `aria-dialog-name` before #214, arriving by a second route.
+   */
+  protected hasTitle = computed(() => this.title().trim() !== '');
+
+  /**
+   * What the dialog is named by, in the order ARIA resolves: the visible heading
+   * when there is one, the caller's IDREF otherwise.
+   */
+  protected resolvedAriaLabelledby = computed(
+    () => (this.hasTitle() ? this.titleId : this.ariaLabelledby())
+  );
+
+  /**
+   * The name to render as `aria-label`, or `null` to render none — and the
+   * dev-mode warning when the panel has no name from any route.
+   *
+   * Both halves live in `../a11y/accessible-name`, shared with the three
+   * progressbars, where the reasoning for each branch is set out. `title` reaches
+   * it as the `ariaLabelledby` above, so a titled panel is named, takes no
+   * fallback and raises no warning.
+   */
+  protected resolvedAriaLabel = tnAccessibleName({
+    selector: 'tn-side-panel',
+    fallback: TN_SIDE_PANEL_DEFAULT_LABEL,
+    activity: 'open',
+    hint: 'On this component the usual route is title, which is also the visible heading.',
+    ariaLabel: this.ariaLabel,
+    ariaLabelledby: this.resolvedAriaLabelledby,
+  });
+
   // Focus restoration
   private previouslyFocusedElement: HTMLElement | null = null;
+
+  /**
+   * Decides when an open or a close counts as finished, so that the outputs
+   * above fire exactly once per change whether or not a transition ran. A field
+   * initializer rather than the constructor, because it registers an `effect`
+   * and so needs an injection context.
+   */
+  private lifecycle = tnTransitionLifecycle(
+    this.open,
+    (open) => (open ? this.opened.emit() : this.closed.emit())
+  );
 
   constructor() {
     this.registerMdiIcons();
@@ -120,6 +224,16 @@ export class TnSidePanelComponent implements OnDestroy {
     effect(() => {
       if (this.open()) {
         this.previouslyFocusedElement = this.document.activeElement as HTMLElement;
+      } else {
+        // Restored HERE rather than on `transitionend` (#214). The overlay
+        // becomes `inert` the moment it closes, so the browser blurs whatever
+        // inside it had focus and moves it to `<body>` immediately — and
+        // `transitionend` is not guaranteed to arrive to put it back. This
+        // component's own stylesheet sets `transition-duration: 0ms` under
+        // `prefers-reduced-motion`, and a zero-duration transition runs no
+        // transition and fires no event, so a user with that preference would
+        // have been left on `<body>` every time a panel closed.
+        this.restoreFocus();
       }
     });
 
@@ -167,12 +281,11 @@ export class TnSidePanelComponent implements OnDestroy {
       return;
     }
 
-    if (this.open()) {
-      this.opened.emit();
-    } else {
-      this.closed.emit();
-      this.restoreFocus();
-    }
+    // Which output to emit is `lifecycle`'s to decide, from the state the change
+    // it is tracking settled into — NOT from `open()` read here. The two differ
+    // exactly when this event is late: a panel reopened while the close was
+    // still animating reads `open() === true` on the stale close's event.
+    this.lifecycle.transitionEnded();
   }
 
   private restoreFocus(): void {

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, signal, ViewEncapsulation } from '@angular/core';
 import { TnToastPosition, TnToastType } from './toast.types';
+import { tnLiveRegionRole } from '../a11y/live-region';
 import { tnIconMarker } from '../icon/icon-marker';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective } from '../test-id';
@@ -37,6 +38,23 @@ export class TnToastComponent {
   visible = signal(false);
 
   icon = computed(() => TOAST_ICONS[this.type()]);
+
+  /**
+   * The live-region role, which is also the only thing declaring how urgently the
+   * toast is announced: `alert` implies `aria-live="assertive"` and `status`
+   * implies `polite`.
+   *
+   * The template carried `role="alert"` and `aria-live="polite"` together (#190).
+   * An explicit `aria-live` overrides the role's implicit one, so every toast was
+   * announced politely — including `error`, the one type that needs to interrupt.
+   * Deriving the role from the type and leaving `aria-live` off keeps a single
+   * source: there is no second attribute left to disagree with this one.
+   *
+   * WHICH types get `alert` is shared with banner rather than decided here
+   * (#194): #190 mapped `warning` to `status` while banner mapped it to
+   * `alert`, and `../a11y/live-region.ts` is now the one place that answers it.
+   */
+  role = computed(() => tnLiveRegionRole(this.type()));
 
   onAction: () => void = () => {};
   onDismiss: () => void = () => {};

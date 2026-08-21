@@ -1,6 +1,6 @@
 import { ApplicationRef } from '@angular/core';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { TnToastService } from './toast.service';
+import { TN_TOAST_ANNOUNCE_DELAY_MS, TnToastService } from './toast.service';
 import { TnToastPosition, TnToastType } from './toast.types';
 import { TnIconTesting } from '../icon/icon-testing';
 
@@ -31,12 +31,16 @@ describe('TnToastService', () => {
     expect(document.querySelector('tn-toast')).not.toBeNull();
   });
 
-  it('should render the message text', () => {
-    service.open('Hello world');
+  // The message lands after insertion, so that the live region changes rather
+  // than arriving already populated (#195). `toast-a11y.spec.ts` holds that
+  // contract; this only needs to reach the same step before reading.
+  it('should render the message text', fakeAsync(() => {
+    service.open('Hello world', { duration: 0 });
+    tick(TN_TOAST_ANNOUNCE_DELAY_MS);
     detectChanges();
     const message = document.querySelector('.tn-toast__message');
     expect(message?.textContent?.trim()).toBe('Hello world');
-  });
+  }));
 
   it('should return a TnToastRef', () => {
     const ref = service.open('Test');
@@ -58,17 +62,35 @@ describe('TnToastService', () => {
     tick(200);
   }));
 
+  // `duration` is time on screen, so it is counted from the announcement and
+  // not from the call (#195).
   it('should auto-dismiss after duration', fakeAsync(() => {
     const ref = service.open('Test', { duration: 1000 });
     let dismissed = false;
     ref.afterDismissed().subscribe(() => { dismissed = true; });
 
-    tick(999);
+    tick(TN_TOAST_ANNOUNCE_DELAY_MS + 999);
     expect(dismissed).toBe(false);
 
     tick(1);
     expect(dismissed).toBe(true);
 
+    tick(200);
+  }));
+
+  // Counted from the call, this duration would elapse before the toast was
+  // ever shown — and dismissal cancels the pending announcement, so it would
+  // appear and announce nothing at all.
+  it('should still show a toast whose duration is shorter than the announce delay', fakeAsync(() => {
+    service.open('Brief', { duration: 50 });
+
+    tick(TN_TOAST_ANNOUNCE_DELAY_MS);
+    detectChanges();
+    const message = document.querySelector('.tn-toast__message');
+    expect(message?.textContent?.trim()).toBe('Brief');
+    expect(document.querySelector('.tn-toast')?.classList.contains('tn-toast--visible')).toBe(true);
+
+    tick(50);
     tick(200);
   }));
 
@@ -165,7 +187,7 @@ describe('TnToastService', () => {
     let dismissed = false;
     ref.afterDismissed().subscribe(() => { dismissed = true; });
 
-    tick(3999);
+    tick(TN_TOAST_ANNOUNCE_DELAY_MS + 3999);
     expect(dismissed).toBe(false);
 
     tick(1);

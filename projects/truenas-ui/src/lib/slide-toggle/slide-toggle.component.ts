@@ -122,12 +122,11 @@ export class TnSlideToggleComponent implements AfterViewInit, OnDestroy, Control
     this.toggleChange.emit(checked);
   }
 
-  onLabelClick(): void {
-    const toggleEl = this.toggleEl();
-    if (!this.isDisabled() && toggleEl) {
-      toggleEl.nativeElement.click();
-    }
-  }
+  // There is deliberately no label click handler. The label text sits inside
+  // `<label [for]="id">`, whose native activation already forwards a click to
+  // the input — including the native no-op when the input is disabled. A
+  // handler here duplicated that, and the `tabindex`/`role="button"` it was
+  // reached by gave one control two tab stops (#189).
 
   classes = computed(() => {
     const classes = ['tn-slide-toggle'];

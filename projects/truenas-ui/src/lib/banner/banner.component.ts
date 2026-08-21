@@ -6,6 +6,7 @@ import {
   mdiAlertCircle,
   mdiCheckCircle,
 } from '@mdi/js';
+import { tnLiveRegionRole } from '../a11y/live-region';
 import { TnIconRegistryService } from '../icon/icon-registry.service';
 import { TnIconComponent } from '../icon/icon.component';
 
@@ -102,15 +103,15 @@ export class TnBannerComponent {
   });
 
   /**
-   * Get ARIA role based on banner type
-   * Error/warning use 'alert' for immediate attention
-   * Info/success use 'status' for polite announcements
+   * The live-region role, which is also the only thing declaring how urgently
+   * the banner is announced: `alert` implies `aria-live="assertive"` and
+   * `status` implies `polite`. The template carries no `aria-live`, because an
+   * explicit one would override this.
+   *
+   * The mapping is shared with toast rather than restated here — see
+   * `../a11y/live-region.ts` for which severities interrupt and why.
    */
-  ariaRole = computed(() => {
-    return this.type() === 'error' || this.type() === 'warning'
-      ? 'alert'
-      : 'status';
-  });
+  ariaRole = computed(() => tnLiveRegionRole(this.type()));
 
   /**
    * Generate CSS classes using BEM methodology

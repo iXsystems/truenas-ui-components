@@ -24,6 +24,9 @@
   --tn-yellow: #DED142;
   --tn-orange: #E68D37;
   --tn-red: #CE2929;
+  /* >=4.5:1 against both --tn-bg1 (5.17:1) and --tn-bg2 (4.57:1); --tn-red itself
+     is only 3.15:1 on --tn-bg1, tuned for the 3:1 border/icon minimum. */
+  --tn-error-text: #de6d6d;
   --tn-magenta: #C006C7;
   --tn-violet: #7617D8;
   --tn-blue: #007db3;
@@ -83,6 +86,9 @@
   --tn-yellow: #DED142;
   --tn-orange: #E68D37;
   --tn-red: #CE2929;
+  /* >=4.5:1 against both --tn-bg1 (5.17:1) and --tn-bg2 (4.57:1); --tn-red itself
+     is only 3.15:1 on --tn-bg1. */
+  --tn-error-text: #de6d6d;
   --tn-magenta: #C006C7;
   --tn-violet: #7617D8;
   --tn-blue: #007db3;
@@ -119,6 +125,8 @@
   --tn-yellow: #DED142;
   --tn-orange: #E68D37;
   --tn-red: #CE2929;
+  /* --tn-red already clears 4.5:1 against --tn-bg1 here (measured 4.72:1). */
+  --tn-error-text: var(--tn-red);
   --tn-magenta: #C006C7;
   --tn-violet: #7617D8;
   --tn-blue: #007db3;
@@ -156,6 +164,8 @@
   --tn-yellow: #f1fa8c;
   --tn-orange: #ffb86c;
   --tn-red: #ff5555;
+  /* --tn-red already clears 4.5:1 against --tn-bg1 here (measured 5.50:1). */
+  --tn-error-text: var(--tn-red);
   --tn-magenta: #ff79c6;
   --tn-violet: #bd93f9;
   --tn-blue: #6272a4;
@@ -193,6 +203,9 @@
   --tn-yellow: #ebcb8b;
   --tn-orange: #d08770;
   --tn-red: #bf616a;
+  /* >=4.5:1 against both --tn-bg1 (5.67:1) and --tn-bg2 (4.57:1); --tn-red itself
+     is only 3.05:1 on --tn-bg1. */
+  --tn-error-text: #d9a0a6;
   --tn-magenta: #b48ead;
   --tn-violet: #775daa;
   --tn-blue: #5e81aC;
@@ -229,6 +242,8 @@
   --tn-yellow: #f0cb00;
   --tn-orange: #ee9302;
   --tn-red: #ff0013;
+  /* 4.5:1 against --tn-bg1 (measured 4.67:1); --tn-red itself is only 3.57:1. */
+  --tn-error-text: #db0010;
   --tn-magenta: #d238ff;
   --tn-violet: #c17ecc;
   --tn-blue: #0D5687;
@@ -268,6 +283,9 @@
   --tn-yellow: #b58900;
   --tn-orange: #cb4b16;
   --tn-red: #dc322f;
+  /* >=4.5:1 against both --tn-bg1 (5.28:1) and --tn-bg2 (4.57:1); --tn-red itself
+     is only 3.25:1 on --tn-bg1. */
+  --tn-error-text: #e87876;
   --tn-magenta: #d33682;
   --tn-violet: #6c71c4;
   --tn-blue: #268bd2;
@@ -306,6 +324,9 @@
   --tn-yellow: #f0cb00;
   --tn-orange: #ee9302;
   --tn-red: #ff0013;
+  /* >=4.5:1 against both --tn-bg1 (6.01:1) and --tn-bg2 (4.61:1); --tn-red itself
+     is only 3.64:1 on --tn-bg1. */
+  --tn-error-text: #ff8089;
   --tn-magenta: #d238ff;
   --tn-violet: #c17ecc;
   --tn-blue: #1274b5;
@@ -341,6 +362,8 @@
   --tn-yellow: #f0cb00;
   --tn-orange: #ee9302;
   --tn-red: #ff0013;
+  /* 4.5:1 against --tn-bg1 (measured 4.68:1); --tn-red itself is only 2.94:1 — the worst of the nine. */
+  --tn-error-text: #c2000e;
   --tn-magenta: #d238ff;
   --tn-violet: #9844b1;
   --tn-blue: #4784ac;
@@ -561,6 +584,19 @@ tn-dialog-shell {
   margin-left: 16px; /* Space between title and button */
 }
 
+/*
+  What pushes the header chrome to the right edge when there is no title.
+  `.tn-dialog__title` has `flex: 1` and used to do that job, but since #219 an
+  untitled dialog renders no heading at all — an empty `<h2>` is an
+  `empty-heading` violation — and the buttons would otherwise sit hard left.
+  Only the FIRST of them takes the auto margin, so the 16px between the
+  fullscreen and close buttons is unchanged.
+*/
+.tn-dialog__header > .tn-dialog__fullscreen:first-child,
+.tn-dialog__header > .tn-dialog__close:first-child {
+  margin-left: auto;
+}
+
 .tn-dialog__close:hover {
   background: var(--tn-alt-bg1, #f8f9fa);
   color: var(--tn-fg1, #000000);
@@ -603,14 +639,21 @@ tn-dialog-shell {
   gap: 16px;
 }
 
-/* Hide a content section / actions footer that has nothing to show, so it
-   doesn't render as an empty bordered, padded bar.
+/* Hide a header / content section / actions footer that has nothing to show, so
+   it doesn't render as an empty bordered, padded bar.
    - `:empty` covers dialogs that project nothing into the slot (the ng-content
      comment anchor is ignored by `:empty`, but real text/elements are not).
    - The `--hidden` modifier (driven by the [hideContent]/[hideActions] inputs)
      covers slots that always project a wrapper element whose contents are
      conditional, so the slot is never truly `:empty`.
+   The header joined this list with #219: it used to render its `<h2>`
+   unconditionally and so was never empty, but an untitled dialog now renders no
+   heading — and one opened with [showCloseButton]="false" and no fullscreen
+   button has nothing else in its header either. The `@if` anchors it is left
+   with are comment nodes, which `:empty` ignores, same as the ng-content anchor
+   above.
    Declared after the layout rules above so it wins on equal specificity. */
+.tn-dialog__header:empty,
 .tn-dialog__content:empty,
 .tn-dialog__content--hidden,
 .tn-dialog__actions:empty,

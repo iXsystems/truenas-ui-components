@@ -1,4 +1,21 @@
-<!-- Overlay wrapper: portaled to document.body -->
+<!--
+  Overlay wrapper: portaled to document.body.
+
+  A CLOSED panel is `inert` as well as `aria-hidden` (#214). It stays in the DOM
+  and keeps its close button and its projected content, so `aria-hidden` alone
+  hid a subtree a keyboard user could still Tab into — landing focus on controls
+  that are translated off-screen. `inert` takes the subtree out of the focus
+  order and the accessibility tree together; `aria-hidden` stays beside it for
+  browsers without `inert` (Firefox before 112), where it is still the half that
+  works. Same reasoning as the checkbox in `list-option.component.html`.
+
+  `aria-label` and `aria-labelledby` are gated on `open()` for the same reason
+  `aria-modal` is: a closed panel is not in the accessibility tree, so a name on
+  it would describe nothing. `resolvedAriaLabelledby` prefers the visible
+  heading. `resolvedAriaLabel` is `null` when the panel is named by a heading or
+  an IDREF and the caller passed no `ariaLabel` of their own — an explicit one is
+  always emitted, so that a dangling IDREF cannot leave the panel unnamed.
+-->
 <div
   #overlay
   class="tn-side-panel__overlay"
@@ -9,8 +26,10 @@
   [class.tn-side-panel__overlay--initialized]="initialized()"
   [class.tn-side-panel__overlay--open]="open()"
   [attr.aria-modal]="open() ? 'true' : null"
-  [attr.aria-labelledby]="open() ? titleId : null"
-  [attr.aria-hidden]="!open() ? 'true' : null">
+  [attr.aria-labelledby]="open() ? resolvedAriaLabelledby() : null"
+  [attr.aria-label]="open() ? resolvedAriaLabel() : null"
+  [attr.aria-hidden]="!open() ? 'true' : null"
+  [attr.inert]="open() ? null : ''">
 
   <!-- Backdrop -->
   @if (hasBackdrop()) {
@@ -33,7 +52,14 @@
 
     <!-- Header -->
     <header class="tn-side-panel__header">
-      <h2 class="tn-side-panel__title" [id]="titleId">{{ title() }}</h2>
+      <!--
+        No heading element at all when there is no title, rather than an empty
+        one: an `<h2>` with no text is an `empty-heading` violation, and it puts
+        a level-2 heading with nothing in it into the document outline.
+      -->
+      @if (hasTitle()) {
+        <h2 class="tn-side-panel__title" [id]="titleId">{{ title() }}</h2>
+      }
       <div class="tn-side-panel__header-actions">
         <ng-content select="[tnSidePanelHeaderAction]" />
         <tn-icon-button

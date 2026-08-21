@@ -135,6 +135,9 @@ describe('TnTooltipComponent sticky mode', () => {
     const panel = createStickyTooltip().nativeElement.querySelector('.tn-tooltip') as HTMLElement;
 
     expect(panel.getAttribute('role')).toBe('dialog');
+    // And exposed, unlike the hover panel: an `aria-hidden` subtree holding a focusable dismiss
+    // button is both a contradiction and an axe violation.
+    expect(panel.hasAttribute('aria-hidden')).toBe(false);
     // A short static name, not the message: a dialog's name is read on entry and its content
     // right after, so naming it after the message would announce that message twice.
     expect(panel.getAttribute('aria-label')).toBe('Tooltip');
@@ -150,10 +153,14 @@ describe('TnTooltipComponent sticky mode', () => {
     expect(panel.getAttribute('aria-label')).toBe('Informacion');
   });
 
-  it('stays a plain tooltip while it is only shown on hover', () => {
+  // The hover panel stays decorative (#203): the message reaches assistive tech through the
+  // describer on the host, so a role here would be a second tooltip for one message. Pinning is
+  // the only state that reverses this, because it is the only one with content to reach.
+  it('stays decorative while it is only shown on hover', () => {
     const panel = createTooltip('Hover message').nativeElement.querySelector('.tn-tooltip') as HTMLElement;
 
-    expect(panel.getAttribute('role')).toBe('tooltip');
+    expect(panel.getAttribute('role')).toBeNull();
+    expect(panel.getAttribute('aria-hidden')).toBe('true');
     expect(panel.hasAttribute('aria-label')).toBe(false);
   });
 
