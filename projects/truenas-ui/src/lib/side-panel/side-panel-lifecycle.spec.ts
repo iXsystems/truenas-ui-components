@@ -67,8 +67,9 @@ describe('TnSidePanelComponent lifecycle outputs', () => {
   });
 
   /** Build the fixture under test. Call first, from inside the `fakeAsync` body. */
-  function createPanel(): void {
+  function createPanel(open = false): void {
     panel = TestBed.createComponent(TnSidePanelComponent);
+    panel.componentRef.setInput('open', open);
     panel.detectChanges();
 
     opened = jest.fn();
@@ -141,6 +142,23 @@ describe('TnSidePanelComponent lifecycle outputs', () => {
 
     expect(opened).not.toHaveBeenCalled();
     expect(closed).not.toHaveBeenCalled();
+  }));
+
+  it('emits nothing for a panel that RENDERS open, which never opened', fakeAsync(() => {
+    createPanel(true);
+    tick(TN_TRANSITION_FALLBACK_MS);
+
+    expect(opened).not.toHaveBeenCalled();
+    expect(closed).not.toHaveBeenCalled();
+  }));
+
+  it('still emits closed for a panel that rendered open and is then closed', fakeAsync(() => {
+    createPanel(true);
+    setOpen(false);
+    tick(TN_TRANSITION_FALLBACK_MS);
+
+    expect(opened).not.toHaveBeenCalled();
+    expect(closed).toHaveBeenCalledTimes(1);
   }));
 
   it('emits only the final state when a close interrupts an open', fakeAsync(() => {

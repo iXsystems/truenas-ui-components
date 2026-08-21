@@ -112,14 +112,30 @@ export function tnTransitionLifecycle(
     settled(settledState);
   }
 
-  // The initial state is not a change: nothing transitioned into it, so a panel
-  // that renders closed and stays closed must emit no `closed`. `previous`
-  // starts at the state's own first value rather than at a sentinel so that
-  // there is one rule here and not two.
-  let previous = state();
+  /**
+   * The last state reported on, or `null` before the first `effect` run has
+   * established what the component STARTED in.
+   *
+   * That first run is the only place the starting value can be read. This
+   * function is called from a field initializer, which runs during
+   * construction — before Angular has applied any input binding — so `state()`
+   * there is the input's DEFAULT, not the caller's `[open]="true"`. Seeding
+   * from it would make a component that renders already open look like an
+   * immediate open, and emit a lifecycle event, 400ms after init, for an
+   * animation that never happened. The effect's first run is after bindings,
+   * and is the earliest point that reads what the caller asked for.
+   *
+   * The initial state is not a change either way: nothing transitioned into it,
+   * so a panel that renders closed and stays closed emits no `closed`.
+   */
+  let previous: boolean | null = null;
 
   effect(() => {
     const current = state();
+    if (previous === null) {
+      previous = current;
+      return;
+    }
     if (current === previous) {
       return;
     }

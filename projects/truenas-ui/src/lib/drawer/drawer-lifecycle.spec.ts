@@ -1,4 +1,4 @@
-import { Component, signal, viewChild } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TnDrawerComponent } from './drawer.component';
@@ -12,7 +12,6 @@ import { TN_TRANSITION_FALLBACK_MS } from '../utils/transition-lifecycle';
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-drawer
-      #drawer
       ariaLabel="Navigation"
       [mode]="mode()"
       [(opened)]="opened"
@@ -23,7 +22,6 @@ import { TN_TRANSITION_FALLBACK_MS } from '../utils/transition-lifecycle';
   `,
 })
 class TestHostComponent {
-  drawer = viewChild.required<TnDrawerComponent>('drawer');
   mode = signal<TnDrawerMode>('side');
   opened = signal(false);
   openedComplete = jest.fn();
@@ -78,10 +76,11 @@ describe('TnDrawerComponent lifecycle outputs', () => {
   });
 
   /** Build the fixture under test. Call first, from inside the `fakeAsync` body. */
-  function createDrawer(mode: TnDrawerMode = 'side'): void {
+  function createDrawer(mode: TnDrawerMode = 'side', opened = false): void {
     fixture = TestBed.createComponent(TestHostComponent);
     host = fixture.componentInstance;
     host.mode.set(mode);
+    host.opened.set(opened);
     fixture.detectChanges();
   }
 
@@ -162,6 +161,23 @@ describe('TnDrawerComponent lifecycle outputs', () => {
 
     expect(host.openedComplete).not.toHaveBeenCalled();
     expect(host.closed).not.toHaveBeenCalled();
+  }));
+
+  it('emits nothing for a drawer that RENDERS open, which never opened', fakeAsync(() => {
+    createDrawer('side', true);
+    tick(TN_TRANSITION_FALLBACK_MS);
+
+    expect(host.openedComplete).not.toHaveBeenCalled();
+    expect(host.closed).not.toHaveBeenCalled();
+  }));
+
+  it('still emits closed for a drawer that rendered open and is then closed', fakeAsync(() => {
+    createDrawer('side', true);
+    setOpened(false);
+    tick(TN_TRANSITION_FALLBACK_MS);
+
+    expect(host.openedComplete).not.toHaveBeenCalled();
+    expect(host.closed).toHaveBeenCalledTimes(1);
   }));
 
   it('emits only the final state when a close interrupts an open', fakeAsync(() => {
