@@ -30,6 +30,14 @@ import { TnDrawerComponent } from './drawer.component';
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <button type="button" id="trigger" (click)="opened.set(true)">Toggle</button>
+    <!--
+      Somewhere else on the page to be. A side-mode drawer is beside the
+      content rather than over it, so the user is free to work here while it is
+      open, and where focus is when the drawer goes away decides whether it
+      owes them a restore. No backticks in here: this is an inline template,
+      and one would end the template literal.
+    -->
+    <button type="button" id="elsewhere">Elsewhere</button>
     <tn-drawer-container>
       <tn-drawer ariaLabel="Datasets" [mode]="mode()" [(opened)]="opened">
         @if (withContent()) {
@@ -139,6 +147,32 @@ describe('tn-drawer focus capture (#227)', () => {
       fixture.destroy();
 
       expect(document.activeElement).toBe(opener);
+    });
+
+    /**
+     * The other half, and the one an unconditional restore-on-destroy gets
+     * wrong. This component has a standing route to it, which is why the case
+     * is asserted here rather than only on `tn-side-panel`: an `over` open
+     * records the opener, a breakpoint switches the drawer to `side` WITHOUT
+     * closing it — so nothing spends that record — and the user carries on
+     * using the page beside it. Destroying the drawer then, minutes later,
+     * must not throw them back to a button they pressed before the resize.
+     */
+    it('leaves focus alone on destroy when a switch to side left the opener unspent', async () => {
+      trigger().focus();
+      await openByClick();
+
+      host.mode.set('side');
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const elsewhere = fixture.nativeElement.querySelector('#elsewhere') as HTMLElement;
+      elsewhere.focus();
+      expect(document.activeElement).toBe(elsewhere);
+
+      fixture.destroy();
+
+      expect(document.activeElement).toBe(elsewhere);
     });
   });
 

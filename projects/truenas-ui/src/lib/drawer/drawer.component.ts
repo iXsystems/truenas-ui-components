@@ -1,8 +1,9 @@
 import { A11yModule } from '@angular/cdk/a11y';
 import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
-import type { ElementRef, OnDestroy } from '@angular/core';
+import type { OnDestroy } from '@angular/core';
 import {
   Component,
+  ElementRef,
   computed,
   effect,
   inject,
@@ -77,6 +78,13 @@ export const TN_DRAWER_DEFAULT_LABEL = 'Drawer';
 })
 export class TnDrawerComponent implements OnDestroy {
   private readonly document = inject(DOCUMENT);
+
+  /**
+   * The host, which contains the `side`-mode panel. The `over`-mode one is
+   * portaled out to `document.body`, so "does this drawer hold focus" is a
+   * question about both this and `overlayRef`.
+   */
+  private readonly hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
 
   /** Whether the drawer sits alongside content ('side') or overlays it ('over') */
   mode = input<TnDrawerMode>('side');
@@ -240,18 +248,28 @@ export class TnDrawerComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.overlayRef()?.nativeElement?.remove();
+    const overlay = this.overlayRef()?.nativeElement as HTMLElement | undefined;
 
     // A drawer destroyed WHILE OPEN never runs the close branch of the effect
-    // above, so the restore has to happen here as well — and removing the
-    // overlay has just dropped focus onto `<body>`. `CdkTrapFocus.ngOnDestroy`
-    // used to cover this case, off the back of the auto-capture that #227
-    // replaced; it is the component's now. A no-op unless an `over` open
-    // captured a `previousFocus` that no close has spent — so an ordinary close
-    // and a drawer that has only ever been `side` both reach here with nothing
-    // to do, while one that opened in `over` and was switched to `side` at a
-    // breakpoint still owes the restore, and does it.
-    this.restoreFocus();
+    // above, so the restore has to happen here as well — removing the overlay
+    // drops focus onto `<body>`, and `CdkTrapFocus.ngOnDestroy` used to cover
+    // that off the back of the auto-capture #227 replaced.
+    //
+    // Only when this drawer is what focus is being taken FROM, and read before
+    // the removal, which is the thing that takes it. Both places are asked,
+    // because the `over` panel is portaled out to `<body>` while the `side` one
+    // is inline in the host. Restoring unconditionally moves focus for a user
+    // who is somewhere else entirely — and this component has a standing way to
+    // reach that state: an `over` open captures `previousFocus`, a breakpoint
+    // switches the drawer to `side` without closing it, and the capture is
+    // still unspent however long the user then spends elsewhere on the page.
+    const active = this.document.activeElement;
+    const heldFocus = this.hostRef.nativeElement.contains(active) || !!overlay?.contains(active);
+    overlay?.remove();
+
+    if (heldFocus) {
+      this.restoreFocus();
+    }
   }
 
   /** Open the drawer */

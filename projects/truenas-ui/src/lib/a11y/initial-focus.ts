@@ -1,5 +1,6 @@
 import { Injector, NgZone, afterNextRender, effect, inject } from '@angular/core';
 import type { Signal } from '@angular/core';
+import { TN_TRANSITION_FALLBACK_MS } from '../utils/transition-lifecycle';
 
 /**
  * The one place that decides WHERE focus goes when a modal surface opens.
@@ -160,22 +161,28 @@ export function tnFocusOnOpen(
     }
 
     afterNextRender(
-      () => zone.runOutsideAngular(() => capture(isOpen, target, performance.now() + CAPTURE_WINDOW_MS)),
+      () => zone.runOutsideAngular(
+        () => capture(isOpen, target, performance.now() + TN_TRANSITION_FALLBACK_MS)
+      ),
       { injector }
     );
   });
 }
 
-/**
- * How long the capture may keep re-attempting before it gives up.
+/*
+ * HOW LONG THE CAPTURE MAY KEEP RE-ATTEMPTING
+ * -------------------------------------------
+ * `TN_TRANSITION_FALLBACK_MS`, which is the same question asked once: how long
+ * to allow for an opening transition that both stylesheets set to 300ms, plus
+ * a margin. A second constant here would be a second thing to remember when
+ * one of those durations changes, and this one fails SILENTLY when it is left
+ * behind — the capture just gives up early — where the lifecycle's fallback
+ * only reports a frame or two soon. The quieter failure is the worse one to
+ * couple loosely.
  *
- * A DURATION rather than a count of frames, because what it has to outlast is
- * the opening transition and that is measured in milliseconds: both components
- * transition for 300ms, and a frame budget picked to cover it at 60Hz covers
- * half of it on a 120Hz display — giving up early, silently, on exactly the
- * hardware where nobody would think to look. 400ms is the transition plus a
- * margin. There is no value in trying for longer: a panel still refusing focus
- * a full transition after it opened is not mid-anything.
+ * A duration and not a count of frames: a frame budget sized for 60Hz covers
+ * half the transition on a 120Hz display, which is exactly the hardware nobody
+ * would think to check.
  *
  * Giving up is silent, deliberately. This is a11y behaviour on a component in
  * a library, so the failure the user experiences is the bug in #227 — nothing
@@ -183,7 +190,6 @@ export function tnFocusOnOpen(
  * regression here are `side-panel-focus-capture.spec.ts` and the `play`
  * functions, which run where a maintainer is looking.
  */
-const CAPTURE_WINDOW_MS = 400;
 
 /** Whether focus is on `element` or on something inside it. */
 function holdsFocus(element: HTMLElement): boolean {

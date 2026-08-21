@@ -54,6 +54,12 @@ import { TnSidePanelComponent } from './side-panel.component';
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <button type="button" id="trigger" (click)="open.set(true)">Open</button>
+    <!--
+      Somewhere else on the page to be. A panel with no backdrop does not stop
+      the user reaching this while it is open, and where focus is when the panel
+      goes away decides whether the panel owes them a restore.
+    -->
+    <button type="button" id="elsewhere">Elsewhere</button>
     <tn-side-panel title="Edit dataset" [(open)]="open">
       <p>Panel body</p>
       @if (withForm()) {
@@ -380,5 +386,31 @@ describe('tn-side-panel focus capture (#227)', () => {
     fixture.destroy();
 
     expect(document.activeElement).toBe(opener);
+  });
+
+  /**
+   * The other half of that, and the half a restore-on-destroy gets wrong if it
+   * is unconditional: a restore is owed only when the destruction is what took
+   * the focus away.
+   *
+   * `hasBackdrop=false` is a supported configuration and does not stop the user
+   * reaching the page behind an open panel. Someone who has clicked into a
+   * field back there, and whose panel is then destroyed by a route change,
+   * would be thrown out of what they were typing in and back to a trigger they
+   * left minutes ago — a worse version of the bug this ticket is about, because
+   * this one moves focus while they are using the page rather than merely
+   * failing to.
+   */
+  it('leaves focus alone when a panel destroyed while open did not hold it', async () => {
+    trigger().focus();
+    await openByClick();
+
+    const elsewhere = fixture.nativeElement.querySelector('#elsewhere') as HTMLElement;
+    elsewhere.focus();
+    expect(document.activeElement).toBe(elsewhere);
+
+    fixture.destroy();
+
+    expect(document.activeElement).toBe(elsewhere);
   });
 });

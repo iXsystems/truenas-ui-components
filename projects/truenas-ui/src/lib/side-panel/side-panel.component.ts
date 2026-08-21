@@ -271,15 +271,26 @@ export class TnSidePanelComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.overlayRef().nativeElement.remove();
+    const overlay = this.overlayRef().nativeElement as HTMLElement;
 
     // A panel destroyed WHILE OPEN never runs the close branch of the effect
-    // above, so the restore has to happen here as well — and removing the
-    // overlay has just dropped focus onto `<body>`. `CdkTrapFocus.ngOnDestroy`
-    // used to cover this case, off the back of the auto-capture that #227
-    // replaced; it is the component's now. A no-op after an ordinary close,
-    // which clears `previouslyFocusedElement`.
-    this.restoreFocus();
+    // above, so the restore has to happen here as well — removing the overlay
+    // drops focus onto `<body>`, and `CdkTrapFocus.ngOnDestroy` used to cover
+    // that off the back of the auto-capture #227 replaced.
+    //
+    // Only when this panel is what focus is being taken FROM, and read before
+    // the removal, which is the thing that takes it. Restoring unconditionally
+    // moves focus for a user who is somewhere else entirely: a panel with
+    // `hasBackdrop=false` does not stop them clicking into the page behind it,
+    // and destroying it would then yank them out of whatever they were typing
+    // in and back to a trigger they left minutes ago. A no-op after an
+    // ordinary close either way, which clears `previouslyFocusedElement`.
+    const heldFocus = overlay.contains(this.document.activeElement);
+    overlay.remove();
+
+    if (heldFocus) {
+      this.restoreFocus();
+    }
   }
 
   protected dismiss(): void {
