@@ -227,18 +227,25 @@ describe('tn-side-panel accessibility (#214)', () => {
   });
 
   describe('the heading the dialog is named by', () => {
-    it('renders no heading element at all when there is no title', async () => {
+    it('renders no heading element at all when there is no title', () => {
       host.title.set('');
       openPanel();
 
       expect(heading()).toBeNull();
 
-      // The rule that reported the empty `<h2>`, asserted on the element that
-      // replaced it: the header is still there, and axe has nothing to object
-      // to in it.
-      const header = overlay().querySelector('.tn-side-panel__header') as HTMLElement;
-      const { violated } = await axeResult(overlay(), header, ['empty-heading']);
-      expect(violated).toEqual([]);
+      // Said again without the class, because `heading()` depends on one:
+      // renaming `.tn-side-panel__title` while still rendering an
+      // unconditional empty `<h2>` would leave the assertion above passing
+      // with an empty level-2 heading back in the header and back in the
+      // document outline.
+      //
+      // Not an axe scan. `empty-heading` selects heading elements, so with
+      // none rendered there is nothing for it to evaluate and it reports
+      // clean whatever the header holds — the vacuous result this file's
+      // header rules out. The rule's teeth are asserted where it does have a
+      // target: `still reports the empty heading itself`, below, on the
+      // markup this replaced.
+      expect(overlay().querySelectorAll('h1, h2, h3, h4, h5, h6')).toHaveLength(0);
     });
 
     it('renders the heading, with the id the dialog points at, when there is one', async () => {
