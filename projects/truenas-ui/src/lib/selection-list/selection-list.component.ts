@@ -37,7 +37,8 @@ export interface TnSelectionChange {
     // focused option to here, which is also what lets tn-list-option keep its
     // own Space/Enter handlers untouched — see onKeydown.
     '(keydown)': 'onKeydown($event)',
-    '(focusin)': 'onFocusIn($event)'
+    '(focusin)': 'onFocusIn($event)',
+    '(focusout)': 'onFocusOut($event)'
   }
 })
 export class TnSelectionListComponent implements ControlValueAccessor {
@@ -94,6 +95,15 @@ export class TnSelectionListComponent implements ControlValueAccessor {
     return firstSelected === -1 ? 0 : firstSelected;
   });
 
+  /**
+   * The option host that currently holds DOM focus, or `null`.
+   *
+   * Held as an element rather than an index, because the whole point of it is
+   * to outlive the option: an index still resolves after a removal, to whatever
+   * option moved into that slot.
+   */
+  private focusedOptionElement: HTMLElement | null = null;
+
   private onChange = (_: unknown[]) => {};
   private onTouched = () => {};
 
@@ -120,6 +130,24 @@ export class TnSelectionListComponent implements ControlValueAccessor {
       opts.forEach((option, index) => {
         option.rovingTabindex.set(index === active ? 0 : -1);
       });
+
+      // Moving the tab STOP is not enough when the option that held focus is
+      // the one that went away: the browser drops focus to <body>, so a
+      // keyboard user who filtered the list from inside it finds their next Tab
+      // starting at the top of the document. Put focus on whichever option the
+      // stop landed on, which is where they were.
+      //
+      // Both halves of the test carry weight. `isConnected` distinguishes an
+      // option that was REMOVED from one the user merely left, and
+      // `document.body` says nothing else has claimed focus since — without it
+      // an unrelated re-render could pull focus away from elsewhere on the page.
+      const lost = this.focusedOptionElement;
+      if (lost !== null && !lost.isConnected) {
+        this.focusedOptionElement = null;
+        if (active !== -1 && document.activeElement === document.body) {
+          opts[active].focus();
+        }
+      }
     });
   }
 
@@ -208,6 +236,22 @@ export class TnSelectionListComponent implements ControlValueAccessor {
 
     if (index !== -1) {
       this.visitedIndex.set(index);
+      this.focusedOptionElement = this.options()[index].elementRef.nativeElement as HTMLElement;
+    }
+  }
+
+  /**
+   * Forget the focused option once focus leaves it under its own steam.
+   *
+   * Guarded on the option still being in the document, because a `focusout`
+   * fired BY a removal — Firefox fires one, Chrome does not — is exactly the
+   * case the restore in the constructor exists for, and clearing on it would
+   * defeat that restore in one browser and not the other.
+   */
+  onFocusOut(event: FocusEvent): void {
+    const from = event.target as HTMLElement | null;
+    if (from !== null && from.isConnected) {
+      this.focusedOptionElement = null;
     }
   }
 

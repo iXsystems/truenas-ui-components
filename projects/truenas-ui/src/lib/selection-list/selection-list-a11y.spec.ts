@@ -151,9 +151,18 @@ describe('tn-selection-list keyboard navigation (#216)', () => {
       expect(tabindexes()).toEqual(['-1', '0', '-1', '-1']);
     });
 
-    it('moves the tab stop to an option that is clicked', () => {
+    /**
+     * The route a click takes, walked directly rather than through `click()`.
+     *
+     * What moves the tab stop on a click is the focus a real browser gives the
+     * option on mousedown — `onFocusIn` is the only handler involved, and the
+     * listbox has no click handler at all. jsdom's `HTMLElement.click()` runs
+     * none of that: it dispatches a `MouseEvent` and no focus default. A test
+     * written as focus-then-click therefore asserts nothing the click did, and
+     * would stay green if clicking stopped moving the stop entirely.
+     */
+    it('moves the tab stop to an option that takes focus, as a click does', () => {
       options()[3].focus();
-      options()[3].click();
       fixture.detectChanges();
 
       expect(tabindexes()).toEqual(['-1', '-1', '-1', '0']);
@@ -440,6 +449,42 @@ describe('tn-selection-list keyboard navigation (#216)', () => {
       fixture.detectChanges();
 
       expect(tabindexes().filter((value) => value === '0')).toHaveLength(1);
+    });
+
+    /**
+     * Removing the option a user is standing on takes their focus with it —
+     * the browser drops it to `<body>`, so the next Tab restarts from the top
+     * of the document rather than continuing past the list. Moving the tab stop
+     * does not cover this: the stop is where focus would RESUME, not where it
+     * currently is.
+     */
+    it('moves focus to the new tab stop when the focused option is removed', () => {
+      options()[3].focus();
+      fixture.detectChanges();
+
+      expect(focusedIndex()).toBe(3);
+
+      host.items.update((items) => items.slice(0, 2));
+      fixture.detectChanges();
+
+      expect(focusedIndex()).toBe(1);
+      expect(tabindexes()).toEqual(['-1', '0']);
+    });
+
+    /** The other side of that: focus the list does not hold is not the list's to take. */
+    it('leaves focus alone when the options change from outside the list', () => {
+      const outside = document.createElement('button');
+      document.body.appendChild(outside);
+
+      options()[3].focus();
+      outside.focus();
+
+      host.items.update((items) => items.slice(0, 2));
+      fixture.detectChanges();
+
+      expect(document.activeElement).toBe(outside);
+
+      outside.remove();
     });
 
     it('keeps exactly one tab stop after options are added', () => {
