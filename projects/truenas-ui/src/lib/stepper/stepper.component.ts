@@ -8,6 +8,19 @@ import { TnIconComponent } from '../icon/icon.component';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
+/**
+ * Screen-reader text for a step whose header shows the error glyph.
+ *
+ * Exported so specs assert by name rather than by a copied literal, the same
+ * reason `TN_SPINNER_DEFAULT_LABEL` is — and so a consumer localising this
+ * library has one place to find the strings the stepper speaks but never
+ * renders.
+ */
+export const TN_STEPPER_STATUS_ERROR = 'Error';
+
+/** Screen-reader text for a step whose header shows the completed state. */
+export const TN_STEPPER_STATUS_COMPLETED = 'Completed';
+
 @Component({
   selector: 'tn-stepper',
   templateUrl: './stepper.component.html',
@@ -106,6 +119,29 @@ export class TnStepperComponent {
       return this.steps().map(() => false);
     }
     return this.steps().map((_step, index) => !this.canSelectStep(index));
+  });
+
+  // Per-index screen-reader text for state the header otherwise conveys only through a CSS
+  // class and an `aria-hidden` icon. `null` for the two states already spoken by something
+  // else: an optional step renders the word "Optional" as visible text, and the current step
+  // carries `aria-current="step"`.
+  //
+  // An errored step gets the word even when it also renders an `errorMessage`, because that
+  // message says what is wrong and not that anything is — "Pick at least two disks" reads as
+  // instruction, not as failure.
+  //
+  // Error before completed, matching the indicator's own precedence in the template — a step
+  // that is both should not announce itself as done.
+  readonly stepStatusText = computed<Array<string | null>>(() => {
+    return this.steps().map((step) => {
+      if (step.hasError()) {
+        return TN_STEPPER_STATUS_ERROR;
+      }
+      if (step.completed()) {
+        return TN_STEPPER_STATUS_COMPLETED;
+      }
+      return null;
+    });
   });
 
   selectStep(index: number): void {
