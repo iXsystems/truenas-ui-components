@@ -4,6 +4,7 @@ import type { OnDestroy } from '@angular/core';
 import {
   Component,
   ElementRef,
+  Injector,
   computed,
   effect,
   inject,
@@ -85,6 +86,9 @@ export class TnDrawerComponent implements OnDestroy {
    * question about both this and `overlayRef`.
    */
   private readonly hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  /** For the `afterNextRender` an effect below schedules, outside injection context. */
+  private readonly injector = inject(Injector);
 
   /** Whether the drawer sits alongside content ('side') or overlays it ('over') */
   mode = input<TnDrawerMode>('side');
@@ -233,8 +237,51 @@ export class TnDrawerComponent implements OnDestroy {
         // `over` to `side` WHILE OPEN — a responsive layout crossing its
         // breakpoint — fails the first test without having closed, and would
         // otherwise have focus yanked out of it and back to whatever opened it.
+        // That switch owes a restore only in the one case where the teardown
+        // orphaned focus, which is the effect below, not this branch.
         this.restoreFocus();
       }
+    });
+
+    // A drawer that stops being MODAL while staying open owes the same restore
+    // a close owes, and by the same mechanism: `@if (mode() === 'over')` in the
+    // template destroys the panel that holds focus, which drops it on `<body>`.
+    // Until #227 `CdkTrapFocus.ngOnDestroy` covered this, off the back of the
+    // auto-capture that replaced — the trap was on the destroyed panel, so its
+    // teardown restored. Nothing else does: the close branch above is gated on
+    // `!opened` and the drawer has not closed, and `tnFocusOnOpen` only acts on
+    // an edge INTO modality.
+    //
+    // Read after the render rather than in the effect, because the teardown is
+    // what leaves the evidence, and only when focus was orphaned: `<body>` is
+    // what the browser falls back to when the focused element goes away, and a
+    // user who is somewhere else on the page is not to be moved.
+    let wasModal = false;
+    effect(() => {
+      const modal = this.trapFocus();
+      const lost = wasModal && !modal && this.opened();
+      wasModal = modal;
+      if (!lost) {
+        return;
+      }
+
+      afterNextRender(
+        () => {
+          const active = this.document.activeElement;
+          if (active && active !== this.document.body) {
+            return;
+          }
+
+          // Focused WITHOUT spending the saved element, which is why this is
+          // not `restoreFocus()`. `CdkTrapFocus` held a capture of its own, so
+          // before #227 this switch restored focus AND left the close's restore
+          // owed — two records, one each. There is one now, and both halves
+          // still have to come out of it. `drawer-a11y.spec.ts` asserts the
+          // second half.
+          this.previousFocus?.focus();
+        },
+        { injector: this.injector }
+      );
     });
 
     // Portal overlay to document.body in over mode to avoid clipping

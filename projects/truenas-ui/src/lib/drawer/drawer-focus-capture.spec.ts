@@ -150,6 +150,28 @@ describe('tn-drawer focus capture (#227)', () => {
     });
 
     /**
+     * `@if (mode() === 'over')` destroys the panel focus is on, and the browser
+     * falls back to `<body>` when a focused element goes away. Nothing else in
+     * the component covers it: the drawer has not closed, so the close branch
+     * does not run, and `tnFocusOnOpen` only acts on an edge INTO modality.
+     * Until #227 `CdkTrapFocus.ngOnDestroy` restored here, off the back of the
+     * auto-capture that replaced — so this is a regression the removal opened
+     * rather than a case that never worked.
+     */
+    it('returns focus to the trigger when a switch to side destroys the panel holding it', async () => {
+      trigger().focus();
+      const opener = trigger();
+      await openByClick();
+      expect(document.activeElement).not.toBe(opener);
+
+      host.mode.set('side');
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(document.activeElement).toBe(opener);
+    });
+
+    /**
      * The other half, and the one an unconditional restore-on-destroy gets
      * wrong. This component has a standing route to it, which is why the case
      * is asserted here rather than only on `tn-side-panel`: an `over` open
