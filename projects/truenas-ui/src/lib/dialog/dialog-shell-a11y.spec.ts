@@ -47,6 +47,7 @@ interface DialogShellA11yState {
   title: WritableSignal<string>;
   ariaLabel: WritableSignal<string | null>;
   ariaLabelledby: WritableSignal<string | null>;
+  showCloseButton: WritableSignal<boolean>;
 }
 
 /* eslint-disable @angular-eslint/component-max-inline-declarations */
@@ -59,7 +60,8 @@ interface DialogShellA11yState {
     <tn-dialog-shell
       [title]="state.title()"
       [ariaLabel]="state.ariaLabel()"
-      [ariaLabelledby]="state.ariaLabelledby()">
+      [ariaLabelledby]="state.ariaLabelledby()"
+      [showCloseButton]="state.showCloseButton()">
       <p>Dialog body</p>
     </tn-dialog-shell>
   `,
@@ -119,6 +121,7 @@ describe('tn-dialog-shell accessibility (#219)', () => {
       title: signal('Delete dataset'),
       ariaLabel: signal<string | null>(null),
       ariaLabelledby: signal<string | null>(null),
+      showCloseButton: signal(true),
     };
     dialog = TestBed.inject(TnDialog);
     cdkDialog = TestBed.inject(Dialog);
@@ -323,6 +326,40 @@ describe('tn-dialog-shell accessibility (#219)', () => {
       // asserted where it does have a target: `still reports the empty heading
       // itself`, below.
       expect(container().querySelectorAll('h1, h2, h3, h4, h5, h6')).toHaveLength(0);
+    });
+
+    /**
+     * The header used to render its `<h2>` unconditionally, so it always had an
+     * element in it. An untitled dialog with no fullscreen button and
+     * `[showCloseButton]="false"` now has nothing in its header at all, and
+     * `.tn-dialog__header` is a bordered, padded bar — so `themes.css` hides it
+     * with `:empty`, the same rule the content section and the actions footer
+     * already use.
+     *
+     * What is asserted here is that rule's PRECONDITION, not the rule: jsdom
+     * loads no stylesheet, so `display: none` cannot be observed from a spec.
+     * `:empty` ignores comment nodes — which is all Angular leaves behind for an
+     * `@if` that did not render — so it matches exactly when the header has no
+     * element children, and that is what this measures.
+     */
+    it('leaves no element in the header when there is no title and no chrome', () => {
+      state.title.set('');
+      state.showCloseButton.set(false);
+      openDialog();
+
+      const header = container().querySelector('.tn-dialog__header')!;
+      expect(header.children).toHaveLength(0);
+      // The nodes it does hold are comments, which is what makes `:empty` match.
+      expect([...header.childNodes].every((node) => node.nodeType === Node.COMMENT_NODE)).toBe(true);
+    });
+
+    it('keeps the header when there is chrome but no title', () => {
+      state.title.set('');
+      openDialog();
+
+      const header = container().querySelector('.tn-dialog__header')!;
+      expect(header.querySelector('.tn-dialog__close')).not.toBeNull();
+      expect(header.children.length).toBeGreaterThan(0);
     });
 
     it('renders the heading, with the id the dialog points at, when there is one', async () => {
