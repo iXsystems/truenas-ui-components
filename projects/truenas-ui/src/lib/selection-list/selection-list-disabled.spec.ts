@@ -4,10 +4,12 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import type { TnSelectionChange } from './selection-list.component';
 import { TnSelectionListComponent } from './selection-list.component';
+import { axeResult } from '../a11y/axe-testing';
 import { TnListOptionComponent } from '../list-option/list-option.component';
 
 /**
- * `[disabled]` on `tn-selection-list` reaching its options (#221).
+ * `[disabled]` on `tn-selection-list` reaching its options (#221), and the
+ * listbox reporting that state on its own host (#225).
  *
  * Two routes put the list into the same state and only one of them used to
  * arrive: `setDisabledState()` — the `ControlValueAccessor` hook, so a reactive
@@ -38,6 +40,15 @@ import { TnListOptionComponent } from '../list-option/list-option.component';
  * fix keeps the list's state in a signal of its own (`listDisabled`) and ORs the
  * two, so neither source can erase the other. Every re-enable case below exists
  * to pin that.
+ *
+ * WHAT #225 ADDED, AND WHY IT IS A SEPARATE CLAIM
+ * ----------------------------------------------
+ * #221 left the listbox host itself saying nothing, so assistive technology had
+ * to read the list's state off its children. That inference fails in two
+ * ordinary cases the per-option assertions above cannot see: a disabled list
+ * with no options has nothing to infer from, and a list whose options are each
+ * disabled by the consumer is not a disabled list. Both are asserted below,
+ * alongside the host attribute itself on both routes.
  */
 
 interface TestOption {
@@ -85,7 +96,7 @@ class FormHostComponent {
   control = new FormControl<unknown[]>([]);
 }
 
-describe('tn-selection-list [disabled] (#221)', () => {
+describe('tn-selection-list [disabled] (#221, #225)', () => {
   let host: TestHostComponent;
   let fixture: ComponentFixture<TestHostComponent>;
 
@@ -103,8 +114,16 @@ describe('tn-selection-list [disabled] (#221)', () => {
     fixture.detectChanges();
   });
 
+  function list(): HTMLElement {
+    return fixture.nativeElement.querySelector('tn-selection-list') as HTMLElement;
+  }
+
   function options(): HTMLElement[] {
     return Array.from(fixture.nativeElement.querySelectorAll('tn-list-option'));
+  }
+
+  function hostAriaDisabled(): string | null {
+    return list().getAttribute('aria-disabled');
   }
 
   function ariaSelected(): (string | null)[] {
@@ -150,6 +169,10 @@ describe('tn-selection-list [disabled] (#221)', () => {
     it('leaves an independently disabled option disabled', () => {
       expect(ariaDisabled()).toEqual(['false', 'false', 'true']);
     });
+
+    it('reports aria-disabled="false" on the host', () => {
+      expect(hostAriaDisabled()).toBe('false');
+    });
   });
 
   describe('a disabled list refuses its options', () => {
@@ -190,6 +213,61 @@ describe('tn-selection-list [disabled] (#221)', () => {
 
     it('reports aria-disabled="true" on every option', () => {
       expect(ariaDisabled()).toEqual(['true', 'true', 'true']);
+    });
+
+    it('reports aria-disabled="true" on the host', () => {
+      expect(hostAriaDisabled()).toBe('true');
+    });
+
+    /**
+     * The case the per-option assertions structurally cannot cover: with no
+     * options there is nothing for assistive technology to infer the state
+     * from, so the host attribute is the only thing left saying it.
+     */
+    it('still reports it on an empty list', () => {
+      host.items.set([]);
+      fixture.detectChanges();
+
+      expect(options()).toEqual([]);
+      expect(hostAriaDisabled()).toBe('true');
+    });
+
+    /**
+     * `aria-disabled` on `role="listbox"` is a supported combination, and this
+     * is what says so rather than the ARIA spec being quoted in a comment. The
+     * rules are the two that can object to an attribute the host did not carry
+     * before: whether it is allowed on the role at all, and whether its value
+     * is one the attribute accepts.
+     */
+    it('raises no axe violation for the attribute it added', async () => {
+      const { violated, evaluated } = await axeResult(
+        fixture.nativeElement,
+        [list()],
+        ['aria-allowed-attr', 'aria-valid-attr-value']
+      );
+
+      expect(violated).toEqual([]);
+      expect(evaluated).toContain('aria-allowed-attr');
+      expect(evaluated).toContain('aria-valid-attr-value');
+    });
+
+    /**
+     * The structure rules `selection-list-a11y.spec.ts` runs on an ENABLED
+     * list, run again here — the host attribute is new on this element and the
+     * listbox/option relationship is what an attribute on the parent could
+     * disturb. Scanned over the host and its options together, matching that
+     * spec's own targets.
+     */
+    it('keeps the listbox structure axe checks green while disabled', async () => {
+      const { violated, evaluated } = await axeResult(
+        fixture.nativeElement,
+        [list(), ...options()],
+        ['aria-required-children', 'aria-required-parent']
+      );
+
+      expect(violated).toEqual([]);
+      expect(evaluated).toContain('aria-required-children');
+      expect(evaluated).toContain('aria-required-parent');
     });
 
     /**
@@ -255,6 +333,28 @@ describe('tn-selection-list [disabled] (#221)', () => {
       expect(ariaSelected()[2]).toBe('false');
       expect(host.changes).toEqual([]);
     });
+
+    it('reports aria-disabled="false" on the host again', () => {
+      expect(hostAriaDisabled()).toBe('false');
+    });
+  });
+
+  /**
+   * The other half of #225's claim, and the one an inference from the children
+   * gets backwards: every option being disabled is a property of the options.
+   * The list is still enabled — a consumer can enable any of them without
+   * touching it, and it must not announce itself as disabled meanwhile.
+   */
+  describe('every option disabled independently is not a disabled list', () => {
+    beforeEach(() => {
+      host.items.update((items) => items.map((item) => ({ ...item, disabled: true })));
+      fixture.detectChanges();
+    });
+
+    it('leaves aria-disabled="false" on the host', () => {
+      expect(ariaDisabled()).toEqual(['true', 'true', 'true']);
+      expect(hostAriaDisabled()).toBe('false');
+    });
   });
 
   /**
@@ -276,6 +376,11 @@ describe('tn-selection-list [disabled] (#221)', () => {
 
     function formOptions(): HTMLElement[] {
       return Array.from(formFixture.nativeElement.querySelectorAll('tn-list-option'));
+    }
+
+    function formHostAriaDisabled(): string | null {
+      return (formFixture.nativeElement.querySelector('tn-selection-list') as HTMLElement)
+        .getAttribute('aria-disabled');
     }
 
     it('disables every option on control.disable()', () => {
@@ -318,6 +423,26 @@ describe('tn-selection-list [disabled] (#221)', () => {
 
       expect(formOptions().map((option) => option.getAttribute('aria-disabled')))
         .toEqual(['false', 'false', 'true']);
+    });
+
+    it('reports aria-disabled="false" on the host while the control is enabled', () => {
+      expect(formHostAriaDisabled()).toBe('false');
+    });
+
+    it('reports aria-disabled="true" on the host on control.disable()', () => {
+      formHost.control.disable();
+      formFixture.detectChanges();
+
+      expect(formHostAriaDisabled()).toBe('true');
+    });
+
+    it('reports aria-disabled="false" on the host again on control.enable()', () => {
+      formHost.control.disable();
+      formFixture.detectChanges();
+      formHost.control.enable();
+      formFixture.detectChanges();
+
+      expect(formHostAriaDisabled()).toBe('false');
     });
   });
 });

@@ -29,6 +29,14 @@ export interface TnSelectionChange {
     '[class.tn-selection-list--dense]': 'dense()',
     '[class.tn-selection-list--disabled]': 'isDisabled()',
     'role': 'listbox',
+    // The listbox states its own disabled-ness rather than leaving assistive
+    // technology to infer it from its children (#225). Inferring is not the same
+    // claim and is wrong in two ordinary cases: an empty disabled list has no
+    // children to read it off, and a consumer who disables every option
+    // individually has not disabled the LIST. `isDisabled()` and not the
+    // `disabled` input, so the plain input and `setDisabledState()` reach it by
+    // the same route the options do — see the effect in the constructor.
+    '[attr.aria-disabled]': 'isDisabled()',
     '[attr.aria-multiselectable]': 'multiple()',
     // Both listeners are on the host and rely on bubbling from the options,
     // rather than being bound per option: contentChildren gives components, not
