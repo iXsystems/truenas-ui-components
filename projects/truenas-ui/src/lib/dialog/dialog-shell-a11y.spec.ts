@@ -259,6 +259,50 @@ describe('tn-dialog-shell accessibility (#219)', () => {
 
       expect(container().getAttribute('aria-labelledby')).toBe(heading()!.id);
     });
+
+    /**
+     * A BLANK input is not a name, and must not count as one while the routes
+     * are being chosen between. Coalescing with `??` would stop at the empty
+     * string — "provided" — never reach the config, and hand the dialog the
+     * generic fallback while a real name sat one route further down. That is
+     * the single case where the fallback is worse than doing nothing, so both
+     * routes are pinned here rather than left to the helper.
+     */
+    it('does not let a blank ariaLabel input shadow a DialogConfig ariaLabel', () => {
+      state.title.set('');
+      state.ariaLabel.set('');
+      openDialog({ ariaLabel: 'Add dataset' });
+
+      expect(container().getAttribute('aria-label')).toBe('Add dataset');
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('does not let a blank ariaLabelledby input clear a DialogConfig ariaLabelledBy', () => {
+      state.title.set('');
+      state.ariaLabelledby.set('   ');
+      openDialog({ ariaLabelledBy: 'external-dialog-title' });
+
+      expect(container().getAttribute('aria-labelledby')).toBe('external-dialog-title');
+      expect(container().getAttribute('aria-label')).toBeNull();
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    /**
+     * With nothing to fall through TO, a blank input still ends at the fallback
+     * and still warns — the same state as passing nothing at all. This is what
+     * says the fix above changed which route is consulted rather than making a
+     * blank string into a name.
+     */
+    it('still falls back, and warns, when the only names offered are blank', () => {
+      state.title.set('');
+      state.ariaLabel.set('');
+      state.ariaLabelledby.set('   ');
+      openDialog();
+
+      expect(container().getAttribute('aria-labelledby')).toBeNull();
+      expect(container().getAttribute('aria-label')).toBe(TN_DIALOG_SHELL_DEFAULT_LABEL);
+      expect(warn).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('the heading the dialog is named by', () => {

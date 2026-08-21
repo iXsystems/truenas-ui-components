@@ -29,6 +29,22 @@ let nextUniqueId = 0;
  */
 export const TN_DIALOG_SHELL_DEFAULT_LABEL = 'Dialog';
 
+/**
+ * The first value that is a name, or `null` if none of them is one.
+ *
+ * Blank is not a name — the rule `tnAccessibleName` already applies to what it
+ * is handed, and this is the same rule applied one step earlier, while the
+ * routes are still being chosen between. `??` would answer that a blank input
+ * had been "provided" and stop there, so an empty `ariaLabel` on the shell
+ * would shadow a real one passed to `TnDialog.open` and the dialog would take
+ * the generic fallback instead — the one case where the fallback is worse than
+ * doing nothing. Blank `ariaLabelledby` is the same shape and worse in effect:
+ * it would clear the IDREF the config had put on the container.
+ */
+function firstNonBlank(...values: (string | null | undefined)[]): string | null {
+  return values.find((value) => (value ?? '').trim() !== '') ?? null;
+}
+
 @Component({
   selector: 'tn-dialog-shell',
   templateUrl: './dialog-shell.component.html',
@@ -138,12 +154,14 @@ export class TnDialogShellComponent implements OnInit {
    * component writes both attributes onto that element and would otherwise
    * clear one it did not set.
    */
-  private resolvedAriaLabelledby = computed(
-    () => (this.hasTitle() ? this.titleId : this.ariaLabelledby() ?? this.ref.config.ariaLabelledBy ?? null)
-  );
+  private resolvedAriaLabelledby = computed(() => (
+    this.hasTitle() ? this.titleId : firstNonBlank(this.ariaLabelledby(), this.ref.config.ariaLabelledBy)
+  ));
 
   /** An explicit label, from this component's input or from the `DialogConfig`. */
-  private explicitAriaLabel = computed(() => this.ariaLabel() ?? this.ref.config.ariaLabel ?? null);
+  private explicitAriaLabel = computed(
+    () => firstNonBlank(this.ariaLabel(), this.ref.config.ariaLabel)
+  );
 
   /**
    * The name to render as `aria-label`, or `null` to render none — and the
