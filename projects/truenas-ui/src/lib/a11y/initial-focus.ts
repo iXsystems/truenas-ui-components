@@ -9,12 +9,14 @@ import type { Signal } from '@angular/core';
  * `tn-side-panel` and `tn-drawer` both asked the CDK for it, with
  * `[cdkTrapFocusAutoCapture]="open()"`, and both could open with focus still on
  * the trigger BEHIND them (#227). Auto-capture calls
- * `FocusTrap.focusFirstTabbableElement()`, which walks the panel for the first
- * element the CDK's `InteractivityChecker` calls tabbable — a test that reads
- * layout (`offsetWidth`, `getClientRects()`, computed `visibility`) — and
- * returns `false`, silently, when it finds nothing. Nobody reads that `false`.
- * So the guarantee was: focus moves inside IF the panel happens to contain
- * something the browser considers tabbable at the moment capture runs.
+ * `FocusTrap.focusInitialElement()`, which takes a `[cdkFocusInitial]` if the
+ * caller marked one and otherwise falls through to
+ * `focusFirstTabbableElement()` — a walk for the first element the CDK's
+ * `InteractivityChecker` calls tabbable, which is a test that reads layout
+ * (`offsetWidth`, `getClientRects()`, computed `visibility`). Both return
+ * `false`, silently, when they find nothing. Nobody reads that `false`. So the
+ * guarantee was: focus moves inside IF the panel happens to contain something
+ * the browser considers tabbable at the moment capture runs.
  *
  * That is a guarantee about the caller's content, not about the component. A
  * panel whose only control is its own × button is one layout detail away from
@@ -45,10 +47,18 @@ import type { Signal } from '@angular/core';
  *   still reaches the close button: the same place auto-capture aimed at, one
  *   keystroke later, with the announcement first.
  *
+ * **`[cdkFocusInitial]` NO LONGER DOES ANYTHING on either component**, and that
+ * is a removal, not an oversight: it was honoured by the auto-capture this
+ * replaced, `cdkTrapFocus` is still on both elements, and a consumer has every
+ * reason to expect the marker to keep working. Both components say so in their
+ * class documentation, which is where a consumer reads. Nothing in this
+ * repository uses it.
+ *
  * A caller who needs a specific control focused instead — the first field of a
- * form — should focus it themselves; there is no input for it, because nothing
- * has asked for one and a per-component override is another way for the
- * guarantee above to be conditional.
+ * form — should focus it themselves, which the capture leaves alone once focus
+ * is inside the panel. There is no input for it, because nothing has asked for
+ * one and a per-component override is another way for the guarantee above to be
+ * conditional.
  *
  * WHY A SHARED FUNCTION AND NOT A COPY PER COMPONENT
  * -------------------------------------------------

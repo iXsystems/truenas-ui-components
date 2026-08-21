@@ -42,6 +42,25 @@ export type TnDrawerPosition = 'start' | 'end';
  */
 export const TN_DRAWER_DEFAULT_LABEL = 'Drawer';
 
+/**
+ * A drawer, which is two different things by `mode`: in `side` it is
+ * persistent navigation beside the page's content, and in `over` it is a modal
+ * dialog with focus trapped in it.
+ *
+ * FOCUS ON OPEN, IN `over` MODE ONLY
+ * ----------------------------------
+ * An `over` drawer moves focus to the panel container when it opens, whatever
+ * you projected into it, so that a screen reader announces the dialog it has
+ * just entered before any control in it. A `side` drawer does not: navigation
+ * that appears beside the content must not take focus from the page.
+ *
+ * **`[cdkFocusInitial]` is not honoured** (#227). It used to be, through the
+ * CDK auto-capture this replaced, and `cdkTrapFocus` is still on the panel — so
+ * the marker looks like it should work and does not. To focus a control of your
+ * own, focus it yourself once the drawer is open; the component leaves focus
+ * alone as soon as it is inside the panel. `lib/a11y/initial-focus.ts` holds
+ * the reasoning for capturing the container rather than a control.
+ */
 @Component({
   selector: 'tn-drawer',
   standalone: true,

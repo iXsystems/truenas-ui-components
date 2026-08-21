@@ -89,6 +89,10 @@ describe('tn-side-panel focus capture (#227)', () => {
     // The overlay is portaled to document.body and only removed on destroy, so
     // without this the next fixture in this file finds the previous one's panel.
     fixture.destroy();
+    // Several tests below stub `focus` or `requestAnimationFrame` to stage a
+    // browser that declines a call. A stub that outlived its test would stage
+    // it for every test after it too.
+    jest.restoreAllMocks();
   });
 
   function overlay(): HTMLElement {
@@ -233,31 +237,57 @@ describe('tn-side-panel focus capture (#227)', () => {
    * The retry re-attempts until the move takes — and "focus is inside the
    * panel" is the move having taken, whoever put it there. A caller focusing
    * the first field of their form, or a user who has started typing in one,
-   * must not be pulled back to the container on the next frame.
+   * must not be pulled back to the container by a pending retry.
    *
-   * Staged like the test above: the component's own call goes nowhere, so a
-   * retry is pending when focus arrives inside by another route.
+   * TWO THINGS THIS TEST HAS TO GET RIGHT TO BE ABLE TO FAIL
+   * -------------------------------------------------------
+   * The retry's `focus()` must be REAL. Stubbing it for the whole test makes
+   * the final assertion true by construction — nothing is left that could move
+   * focus — and the test then passes with the guard deleted, which is what an
+   * earlier version of it did. So exactly the FIRST call is declined, to leave
+   * a retry pending, and every call after it goes through.
+   *
+   * And the retry must run at a known moment. `requestAnimationFrame` is
+   * stubbed to hand the callback back rather than schedule it, so the frame
+   * lands after the close button has taken focus rather than racing it —
+   * jsdom is otherwise free to serve a frame inside `whenStable`, and does.
    */
   it('leaves focus alone when it is already inside the panel', async () => {
-    trigger().focus();
     const target = panel();
-    let dropped = false;
+    const reallyFocus = HTMLElement.prototype.focus.bind(target);
+    let attempts = 0;
     jest.spyOn(target, 'focus').mockImplementation(() => {
-      dropped = true;
+      attempts++;
+      if (attempts > 1) {
+        reallyFocus();
+      }
     });
 
+    const pending: FrameRequestCallback[] = [];
+    jest.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
+      pending.push(callback);
+      return pending.length;
+    });
+
+    trigger().focus();
     await openByClick();
-    expect(dropped).toBe(true);
+
+    // The component asked once, was declined, and has a retry waiting.
+    expect(attempts).toBe(1);
+    expect(pending).toHaveLength(1);
 
     (overlay().querySelector('.tn-icon-button') as HTMLElement).focus();
     const landed = document.activeElement;
     expect(target.contains(landed)).toBe(true);
     expect(landed).not.toBe(target);
 
-    await nextFrame();
-    await nextFrame();
+    pending.shift()?.(0);
 
+    // The retry saw focus already inside and did not spend its call. Reading
+    // that AFTER focusing, or comparing with `===` instead of `contains`,
+    // moves focus to the container here.
     expect(document.activeElement).toBe(landed);
+    expect(attempts).toBe(1);
   });
 
   /**

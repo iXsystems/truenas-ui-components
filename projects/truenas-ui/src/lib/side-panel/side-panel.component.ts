@@ -69,6 +69,23 @@ export class TnSidePanelActionDirective {}
 })
 export class TnSidePanelHeaderActionDirective {}
 
+/**
+ * A modal side panel: `role="dialog"` with `aria-modal="true"`, focus trapped
+ * while it is open and restored to the opener when it closes.
+ *
+ * FOCUS ON OPEN
+ * -------------
+ * Opening moves focus to the panel container, whatever you projected into it,
+ * so that a screen reader announces the dialog it has just entered before any
+ * control in it. The first Tab then reaches the close button.
+ *
+ * **`[cdkFocusInitial]` is not honoured** (#227). It used to be, through the
+ * CDK auto-capture this replaced, and `cdkTrapFocus` is still on the panel — so
+ * the marker looks like it should work and does not. To focus a control of your
+ * own, focus it yourself once the panel is open; the component leaves focus
+ * alone as soon as it is inside the panel. `lib/a11y/initial-focus.ts` holds
+ * the reasoning for capturing the container rather than a control.
+ */
 @Component({
   selector: 'tn-side-panel',
   standalone: true,
