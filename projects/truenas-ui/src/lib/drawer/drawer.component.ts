@@ -227,8 +227,11 @@ export class TnDrawerComponent implements OnDestroy {
     // above, so the restore has to happen here as well — and removing the
     // overlay has just dropped focus onto `<body>`. `CdkTrapFocus.ngOnDestroy`
     // used to cover this case, off the back of the auto-capture that #227
-    // replaced; it is the component's now. A no-op in `side` mode and after an
-    // ordinary close, neither of which leaves a `previousFocus` behind.
+    // replaced; it is the component's now. A no-op unless an `over` open
+    // captured a `previousFocus` that no close has spent — so an ordinary close
+    // and a drawer that has only ever been `side` both reach here with nothing
+    // to do, while one that opened in `over` and was switched to `side` at a
+    // breakpoint still owes the restore, and does it.
     this.restoreFocus();
   }
 
