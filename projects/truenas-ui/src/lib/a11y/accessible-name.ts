@@ -68,6 +68,13 @@ export interface TnAccessibleNameConfig {
    * `'progressing'` for a progress bar, `'loading'` for a spinner.
    */
   activity: string;
+  /**
+   * Appended to the warning when the component has a naming route of its own
+   * that the standard advice does not mention — `tn-side-panel` names itself
+   * from `title`, so a developer sent only to `ariaLabel` is sent to the wrong
+   * input. Optional: the three progressbars have no such route and pass nothing.
+   */
+  hint?: string;
   /** The component's `ariaLabel` input. */
   ariaLabel: Signal<string | null>;
   /** The component's `ariaLabelledby` input. */
@@ -111,6 +118,7 @@ export function tnAccessibleName(config: TnAccessibleNameConfig): Signal<string 
           `[${config.selector}] No ariaLabel or ariaLabelledby was set, so it falls back to `
           + `"${config.fallback}". Assistive technology cannot say WHAT is ${config.activity} `
           + `— pass ariaLabel, or ariaLabelledby pointing at visible text.`
+          + (config.hint ? ` ${config.hint}` : '')
         );
       }
     });
