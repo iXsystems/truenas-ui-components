@@ -68,7 +68,42 @@ export class TnListOptionComponent implements AfterContentInit {
     return internal !== null ? internal : this.selected();
   });
 
+  /**
+   * Whether the parent `tn-selection-list` is disabled as a whole, pushed down
+   * by the listbox (#221). `false` when there is no parent.
+   *
+   * Kept apart from `internalDisabled` rather than written into it, because the
+   * two answer different questions and a single slot cannot hold both. The list
+   * disabling itself must not erase an option the consumer disabled on its own,
+   * and re-enabling the list is exactly where a shared slot loses that: the
+   * parent has no record of what the option's own state was before it wrote
+   * over it, so `[disabled]="true"` on the option never comes back. That is not
+   * hypothetical — it is what `setDisabledState()` did to a per-option
+   * `[disabled]` on every `control.enable()` before this signal existed.
+   *
+   * A plain boolean rather than the nullable this sits beside: absent and
+   * not-disabled are the same thing for a parent's opinion, whereas
+   * `internalDisabled` needs `null` to mean "the input still speaks".
+   */
+  listDisabled = signal<boolean>(false);
+
+  /**
+   * Disabled if EITHER source says so — the list as a whole, or this option.
+   *
+   * Not a precedence: a disabled list cannot be overridden by an enabled
+   * option, and a list that is enabled has nothing to say about an option that
+   * disabled itself. Only the second half is a fallback chain, and it is the
+   * one that already existed: `internalDisabled` outranks the input when it has
+   * been written. Nothing in the library writes it any more — `setDisabledState()`
+   * was its only writer and now stops at `listDisabled` — so it is kept for the
+   * public surface it has always been part of, alongside `internalSelected` and
+   * `internalColor`, rather than because a path in here still uses it.
+   */
   effectiveDisabled = computed(() => {
+    if (this.listDisabled()) {
+      return true;
+    }
+
     const internal = this.internalDisabled();
     return internal !== null ? internal : this.disabled();
   });
