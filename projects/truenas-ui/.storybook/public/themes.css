@@ -584,6 +584,19 @@ tn-dialog-shell {
   margin-left: 16px; /* Space between title and button */
 }
 
+/*
+  What pushes the header chrome to the right edge when there is no title.
+  `.tn-dialog__title` has `flex: 1` and used to do that job, but since #219 an
+  untitled dialog renders no heading at all — an empty `<h2>` is an
+  `empty-heading` violation — and the buttons would otherwise sit hard left.
+  Only the FIRST of them takes the auto margin, so the 16px between the
+  fullscreen and close buttons is unchanged.
+*/
+.tn-dialog__header > .tn-dialog__fullscreen:first-child,
+.tn-dialog__header > .tn-dialog__close:first-child {
+  margin-left: auto;
+}
+
 .tn-dialog__close:hover {
   background: var(--tn-alt-bg1, #f8f9fa);
   color: var(--tn-fg1, #000000);
@@ -626,14 +639,21 @@ tn-dialog-shell {
   gap: 16px;
 }
 
-/* Hide a content section / actions footer that has nothing to show, so it
-   doesn't render as an empty bordered, padded bar.
+/* Hide a header / content section / actions footer that has nothing to show, so
+   it doesn't render as an empty bordered, padded bar.
    - `:empty` covers dialogs that project nothing into the slot (the ng-content
      comment anchor is ignored by `:empty`, but real text/elements are not).
    - The `--hidden` modifier (driven by the [hideContent]/[hideActions] inputs)
      covers slots that always project a wrapper element whose contents are
      conditional, so the slot is never truly `:empty`.
+   The header joined this list with #219: it used to render its `<h2>`
+   unconditionally and so was never empty, but an untitled dialog now renders no
+   heading — and one opened with [showCloseButton]="false" and no fullscreen
+   button has nothing else in its header either. The `@if` anchors it is left
+   with are comment nodes, which `:empty` ignores, same as the ng-content anchor
+   above.
    Declared after the layout rules above so it wins on equal specificity. */
+.tn-dialog__header:empty,
 .tn-dialog__content:empty,
 .tn-dialog__content--hidden,
 .tn-dialog__actions:empty,
