@@ -85,6 +85,11 @@
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+  // What pushes the close button to the right edge when there is no title.
+  // `.tn-side-panel__title` has `flex: 1` and used to do that job, but since
+  // #214 an untitled panel renders no heading at all — an empty `<h2>` is an
+  // `empty-heading` violation — and the actions would otherwise sit hard left.
+  margin-left: auto;
 }
 
 // Scrollable content area

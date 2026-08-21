@@ -7,6 +7,7 @@ import { TnSidePanelComponent } from './side-panel.component';
 describe('TnSidePanelComponent', () => {
   let component: TnSidePanelComponent;
   let fixture: ComponentFixture<TnSidePanelComponent>;
+  let warn: jest.SpyInstance;
 
   function getOverlay(): HTMLElement {
     return document.querySelector(`[data-tn-panel="${component.panelId}"].tn-side-panel__overlay`)!;
@@ -18,6 +19,12 @@ describe('TnSidePanelComponent', () => {
       providers: [provideHttpClient()],
     }).compileComponents();
 
+    // Almost every fixture here is untitled and unlabelled, and #214 makes an
+    // unnamed panel warn in dev mode — which Jest is. Silenced so this suite's
+    // output stays readable; the warning itself is asserted in
+    // `side-panel-a11y.spec.ts`.
+    warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
     fixture = TestBed.createComponent(TnSidePanelComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -26,6 +33,7 @@ describe('TnSidePanelComponent', () => {
   afterEach(() => {
     // Clean up portaled overlay from document.body
     fixture.destroy();
+    warn.mockRestore();
   });
 
   describe('overlay classes', () => {
@@ -70,7 +78,11 @@ describe('TnSidePanelComponent', () => {
       expect(getOverlay().getAttribute('aria-hidden')).toBeNull();
     });
 
-    it('should set aria-labelledby when open', () => {
+    // Titled, because since #214 the heading is what `aria-labelledby` points
+    // at and an untitled panel renders none — it is named by `aria-label`
+    // instead, which `side-panel-a11y.spec.ts` covers.
+    it('should set aria-labelledby to the title when open', () => {
+      fixture.componentRef.setInput('title', 'My Panel');
       fixture.componentRef.setInput('open', true);
       fixture.detectChanges();
       expect(getOverlay().getAttribute('aria-labelledby')).toBe(component.titleId);
