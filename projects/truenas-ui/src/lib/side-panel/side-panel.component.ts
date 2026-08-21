@@ -13,6 +13,7 @@ import { tnAccessibleName } from '../a11y/accessible-name';
 import { TnIconRegistryService } from '../icon/icon-registry.service';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import { tnTransitionLifecycle } from '../utils/transition-lifecycle';
 
 /**
  * The accessible name an open panel falls back to when it has no `title` and the
@@ -138,8 +139,26 @@ export class TnSidePanelComponent implements OnDestroy {
    */
   ariaLabelledby = input<string | null>(null);
 
-  // Outputs
+  /**
+   * Fires once the panel has finished opening.
+   *
+   * "Finished" means the open transition ended, OR that it was going to take
+   * longer than `TN_TRANSITION_FALLBACK_MS` to say so — which is what a user
+   * with `prefers-reduced-motion: reduce` gets, since this component's own
+   * stylesheet zeroes the duration for them and a transition that does not run
+   * fires no `transitionend` (#218). A consumer may assume the panel has
+   * reached its open state and that `open()` is true; it may NOT assume the
+   * animation is visually complete, because for that user there was none.
+   */
   opened = output<void>();
+
+  /**
+   * Fires once the panel has finished closing. Same guarantee as `opened`, and
+   * the same caveat: it reports the state, not the animation.
+   *
+   * Focus restoration does NOT hang off this — it happens as soon as the panel
+   * closes (#214). See the effect in the constructor.
+   */
   closed = output<void>();
 
   // Content projection queries
@@ -187,6 +206,17 @@ export class TnSidePanelComponent implements OnDestroy {
 
   // Focus restoration
   private previouslyFocusedElement: HTMLElement | null = null;
+
+  /**
+   * Decides when an open or a close counts as finished, so that the outputs
+   * above fire exactly once per change whether or not a transition ran. A field
+   * initializer rather than the constructor, because it registers an `effect`
+   * and so needs an injection context.
+   */
+  private lifecycle = tnTransitionLifecycle(
+    this.open,
+    (open) => (open ? this.opened.emit() : this.closed.emit())
+  );
 
   constructor() {
     this.registerMdiIcons();
@@ -251,11 +281,11 @@ export class TnSidePanelComponent implements OnDestroy {
       return;
     }
 
-    if (this.open()) {
-      this.opened.emit();
-    } else {
-      this.closed.emit();
-    }
+    // Which output to emit is `lifecycle`'s to decide, from the state the change
+    // it is tracking settled into — NOT from `open()` read here. The two differ
+    // exactly when this event is late: a panel reopened while the close was
+    // still animating reads `open() === true` on the stale close's event.
+    this.lifecycle.transitionEnded();
   }
 
   private restoreFocus(): void {

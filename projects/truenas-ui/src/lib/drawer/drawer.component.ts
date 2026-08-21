@@ -15,6 +15,7 @@ import {
 } from '@angular/core';
 import { tnAccessibleName } from '../a11y/accessible-name';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import { tnTransitionLifecycle } from '../utils/transition-lifecycle';
 
 export type TnDrawerMode = 'side' | 'over';
 export type TnDrawerPosition = 'start' | 'end';
@@ -84,10 +85,27 @@ export class TnDrawerComponent implements OnDestroy {
    */
   testId = input<TnTestIdValue>(undefined);
 
-  /** Fires after the open transition completes */
+  /**
+   * Fires once the drawer has finished opening.
+   *
+   * "Finished" means the open transition ended, OR that it was going to take
+   * longer than `TN_TRANSITION_FALLBACK_MS` to say so — which is what a user
+   * with `prefers-reduced-motion: reduce` gets, since this component's own
+   * stylesheet removes the transition for them and one that does not run fires
+   * no `transitionend` (#218). A consumer may assume the drawer has reached its
+   * open state and that `opened()` is true; it may NOT assume the animation is
+   * visually complete, because for that user there was none.
+   */
   openedComplete = output<void>();
 
-  /** Fires after the close transition completes */
+  /**
+   * Fires once the drawer has finished closing. Same guarantee as
+   * `openedComplete`, and the same caveat: it reports the state, not the
+   * animation.
+   *
+   * Focus restoration does NOT hang off this — it happens as soon as the drawer
+   * closes (#214). See the effect in the constructor.
+   */
   closed = output<void>();
 
   /** Whether the component has rendered (prevents transition flash on load) */
@@ -137,6 +155,17 @@ export class TnDrawerComponent implements OnDestroy {
 
   /** Previous focus element for restoration (only captured in over mode) */
   private previousFocus: HTMLElement | null = null;
+
+  /**
+   * Decides when an open or a close counts as finished, so that the outputs
+   * above fire exactly once per change whether or not a transition ran. A field
+   * initializer rather than the constructor, because it registers an `effect`
+   * and so needs an injection context.
+   */
+  private lifecycle = tnTransitionLifecycle(
+    this.opened,
+    (opened) => (opened ? this.openedComplete.emit() : this.closed.emit())
+  );
 
   constructor() {
     // Capture focus before opening in over mode, and restore it on close
@@ -221,19 +250,22 @@ export class TnDrawerComponent implements OnDestroy {
   }
 
   /**
-   * Handle transition end — emit the open/close events once the animation is
-   * over. Focus restoration is NOT here; it happens as soon as the drawer
-   * closes, because this event does not fire under `prefers-reduced-motion`.
+   * Handle transition end — report the open/close early, since the animation is
+   * demonstrably over. Focus restoration is NOT here; it happens as soon as the
+   * drawer closes, because this event does not fire under
+   * `prefers-reduced-motion` — and neither, for the same reason, does the
+   * emission depend on it any more (#218).
+   *
+   * Which output to emit is `lifecycle`'s to decide, from the state the change
+   * it is tracking settled into — NOT from `opened()` read here. The two differ
+   * exactly when this event is late: a drawer reopened while the close was still
+   * animating reads `opened() === true` on the stale close's event.
    */
   protected onTransitionEnd(event: TransitionEvent): void {
     if (event.propertyName !== 'transform' || event.target !== event.currentTarget) {
       return;
     }
-    if (this.opened()) {
-      this.openedComplete.emit();
-    } else {
-      this.closed.emit();
-    }
+    this.lifecycle.transitionEnded();
   }
 
   private restoreFocus(): void {
