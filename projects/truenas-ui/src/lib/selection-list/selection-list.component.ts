@@ -179,10 +179,24 @@ export class TnSelectionListComponent implements ControlValueAccessor {
    * keyboard handling added here and is not widened by it — arrow keys move
    * focus and never toggle — so it is reported on the PR rather than fixed
    * under a ticket about navigation.
+   *
+   * Only keys pressed ON an option host are the listbox's. The handler is on
+   * the host and hears everything that bubbles through it, so without that test
+   * a consumer who projects a focusable control into an option — a text input,
+   * a slider — would have Home and End taken off its caret and the arrows taken
+   * off its value, and get a `preventDefault()` for it. Nothing in this library
+   * projects such a control today, which is why this is a target check rather
+   * than a redesign.
    */
   onKeydown(event: KeyboardEvent): void {
-    const count = this.options().length;
+    const opts = this.options();
+    const count = opts.length;
     if (count === 0) {
+      return;
+    }
+
+    const target = event.target as HTMLElement | null;
+    if (!opts.some(option => option.elementRef.nativeElement === target)) {
       return;
     }
 
@@ -211,7 +225,7 @@ export class TnSelectionListComponent implements ControlValueAccessor {
     // moved something.
     event.preventDefault();
     this.visitedIndex.set(next);
-    this.options()[next].focus();
+    opts[next].focus();
   }
 
   /**

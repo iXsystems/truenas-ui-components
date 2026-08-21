@@ -499,6 +499,40 @@ describe('tn-selection-list keyboard navigation (#216)', () => {
   });
 
   /**
+   * The listener is on the listbox host and hears every keydown that bubbles
+   * through it, so the navigation keys are claimed only when the option host
+   * itself is the target. Nothing in this library projects a focusable control
+   * into an option and `role="option"` arguably forbids one, but a consumer can
+   * — and Home taken off an input's caret, with a `preventDefault()` on top, is
+   * the listbox reaching into a control it does not own.
+   */
+  describe('a focusable control projected into an option', () => {
+    it('keeps the navigation keys', () => {
+      @Component({
+        selector: 'tn-projected-host',
+        standalone: true,
+        imports: [TnSelectionListComponent, TnListOptionComponent],
+        template: `<tn-selection-list><tn-list-option value="a"><input /></tn-list-option>
+          <tn-list-option value="b">Option B</tn-list-option></tn-selection-list>`
+      })
+      class ProjectedHostComponent {}
+
+      const projected = TestBed.createComponent(ProjectedHostComponent);
+      projected.detectChanges();
+
+      const input = projected.nativeElement.querySelector('input') as HTMLInputElement;
+      input.focus();
+
+      const event = new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true });
+      input.dispatchEvent(event);
+      projected.detectChanges();
+
+      expect(event.defaultPrevented).toBe(false);
+      expect(document.activeElement).toBe(input);
+    });
+  });
+
+  /**
    * `tn-list-option` is exported on its own and is used outside a
    * `tn-selection-list`. The roving tabindex is the parent's, so an option with
    * no parent has to stay the plain tab stop #213 made it — otherwise this fix
