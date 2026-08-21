@@ -1,5 +1,8 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { hasInteractiveContent, plainTextMessage } from './interactive-content';
 import { TnTooltipComponent } from './tooltip.component';
 import { TnTooltipDirective } from './tooltip.directive';
 
@@ -51,6 +54,219 @@ describe('TnTooltipComponent HTML rendering', () => {
     const tooltip = fixture.nativeElement.querySelector('.tn-tooltip') as HTMLElement;
 
     expect(tooltip.textContent?.trim()).toBe('Just plain text');
+  });
+});
+
+describe('TnTooltipComponent sticky mode', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [TnTooltipComponent],
+      // The dismiss button renders a tn-icon, which loads the sprite config over HTTP.
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+  });
+
+  function createStickyTooltip() {
+    const fixture = TestBed.createComponent(TnTooltipComponent);
+    fixture.componentRef.setInput('message', 'Pinned message');
+    fixture.componentRef.setInput('sticky', true);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('renders no dismiss button outside sticky mode', () => {
+    const fixture = createTooltip('Hover message');
+
+    expect(fixture.nativeElement.querySelector('.tn-tooltip__close')).toBeNull();
+    expect((fixture.nativeElement as HTMLElement).classList).not.toContain('tn-tooltip-component--sticky');
+  });
+
+  it('renders a labelled dismiss button in sticky mode', () => {
+    const fixture = createStickyTooltip();
+    const close = fixture.nativeElement.querySelector('.tn-tooltip__close') as HTMLButtonElement;
+
+    expect(close).not.toBeNull();
+    expect(close.type).toBe('button');
+    expect(close.getAttribute('aria-label')).toBe('Close tooltip');
+    expect((fixture.nativeElement as HTMLElement).classList).toContain('tn-tooltip-component--sticky');
+  });
+
+  it('lets the dismiss button label be localized', () => {
+    const fixture = createStickyTooltip();
+    fixture.componentRef.setInput('closeAriaLabel', 'Cerrar');
+    fixture.detectChanges();
+    const close = fixture.nativeElement.querySelector('.tn-tooltip__close') as HTMLButtonElement;
+
+    expect(close.getAttribute('aria-label')).toBe('Cerrar');
+  });
+
+  it('emits onDismiss when the dismiss button is clicked', () => {
+    const fixture = createStickyTooltip();
+    const dismissed = jest.fn();
+    fixture.componentInstance.onDismiss.subscribe(dismissed);
+
+    (fixture.nativeElement.querySelector('.tn-tooltip__close') as HTMLButtonElement).click();
+
+    expect(dismissed).toHaveBeenCalledTimes(1);
+  });
+
+  it('focuses the panel on request, so Tab reaches the message before the dismiss button', () => {
+    const fixture = createStickyTooltip();
+    document.body.appendChild(fixture.nativeElement);
+
+    fixture.componentInstance.focusPanel();
+
+    expect(document.activeElement).toBe(fixture.nativeElement.querySelector('.tn-tooltip'));
+    fixture.nativeElement.remove();
+  });
+
+  it('makes the panel focusable only in sticky mode', () => {
+    const hoverFixture = createTooltip('Hover message');
+    expect((hoverFixture.nativeElement.querySelector('.tn-tooltip') as HTMLElement).hasAttribute('tabindex')).toBe(false);
+
+    const stickyFixture = createStickyTooltip();
+    expect((stickyFixture.nativeElement.querySelector('.tn-tooltip') as HTMLElement).getAttribute('tabindex')).toBe('-1');
+  });
+
+  // ARIA's `tooltip` role is non-focusable, non-interactive content, so a screen reader may
+  // flatten a pinned panel to a text description and never expose the link or the dismiss button -
+  // the very things pinning exists to make reachable.
+  it('becomes a named dialog once pinned, so its content is exposed to assistive tech', () => {
+    const panel = createStickyTooltip().nativeElement.querySelector('.tn-tooltip') as HTMLElement;
+
+    expect(panel.getAttribute('role')).toBe('dialog');
+    // And exposed, unlike the hover panel: an `aria-hidden` subtree holding a focusable dismiss
+    // button is both a contradiction and an axe violation.
+    expect(panel.hasAttribute('aria-hidden')).toBe(false);
+    // A short static name, not the message: a dialog's name is read on entry and its content
+    // right after, so naming it after the message would announce that message twice.
+    expect(panel.getAttribute('aria-label')).toBe('Tooltip');
+    expect(panel.textContent).toContain('Pinned message');
+  });
+
+  it('lets the panel name be localized', () => {
+    const fixture = createStickyTooltip();
+    fixture.componentRef.setInput('panelAriaLabel', 'Informacion');
+    fixture.detectChanges();
+    const panel = fixture.nativeElement.querySelector('.tn-tooltip') as HTMLElement;
+
+    expect(panel.getAttribute('aria-label')).toBe('Informacion');
+  });
+
+  // The hover panel stays decorative (#203): the message reaches assistive tech through the
+  // describer on the host, so a role here would be a second tooltip for one message. Pinning is
+  // the only state that reverses this, because it is the only one with content to reach.
+  it('stays decorative while it is only shown on hover', () => {
+    const panel = createTooltip('Hover message').nativeElement.querySelector('.tn-tooltip') as HTMLElement;
+
+    expect(panel.getAttribute('role')).toBeNull();
+    expect(panel.getAttribute('aria-hidden')).toBe('true');
+    expect(panel.hasAttribute('aria-label')).toBe(false);
+  });
+
+  it('keeps the message readable when the dismiss button is present', () => {
+    const fixture = createStickyTooltip();
+    const message = fixture.nativeElement.querySelector('.tn-tooltip__message') as HTMLElement;
+
+    expect(message.textContent?.trim()).toBe('Pinned message');
+  });
+});
+
+describe('hasInteractiveContent', () => {
+  it('detects a link, which is what makes a tooltip worth pinning', () => {
+    expect(hasInteractiveContent('Token (<a href="https://example.com">Instructions</a>)')).toBe(true);
+  });
+
+  it('detects anything else the user can tab to', () => {
+    expect(hasInteractiveContent('<span tabindex="0">focusable</span>')).toBe(true);
+  });
+
+  // Detection has to agree with what the message actually renders as. The message is bound as a
+  // plain string, so Angular sanitizes it in SecurityContext.HTML, and form controls are not on
+  // the allowlist - counting them would make the tooltip click-only in order to reach a control
+  // that was stripped before it was ever displayed. SANITIZED_AWAY guards that agreement.
+  const SANITIZED_AWAY = [
+    ['a button', '<button type="button">Retry</button>', 'Retry'],
+    ['a text field', 'Name <input type="text">', 'Name'],
+    ['a select', '<select><option>a</option></select>', 'a'],
+    ['a textarea', '<textarea>x</textarea>', 'x'],
+    // Carrying a tabindex changes nothing about what the sanitizer keeps: the element is still
+    // dropped to its text. A reachability check keyed on tabindex alone would readmit all four.
+    ['a button in the tab order', '<button type="button" tabindex="0">Retry</button>', 'Retry'],
+    ['a text field in the tab order', 'Name <input type="text" tabindex="0">', 'Name'],
+    ['a select in the tab order', '<select tabindex="0"><option>a</option></select>', 'a'],
+    ['a textarea in the tab order', '<textarea tabindex="0">x</textarea>', 'x'],
+  ];
+
+  it.each(SANITIZED_AWAY)('rejects %s, which the sanitizer strips before it can be reached', (_label, message) => {
+    expect(hasInteractiveContent(message)).toBe(false);
+  });
+
+  it('rejects tabindex="-1", which survives sanitization but is not user-reachable', () => {
+    expect(hasInteractiveContent('<span tabindex="-1">skipped</span>')).toBe(false);
+  });
+
+  it('rejects plain help text, which is the overwhelming majority of tooltips', () => {
+    expect(hasInteractiveContent('Customizes the importance of the alert.')).toBe(false);
+  });
+
+  it('rejects markup that is only formatting', () => {
+    expect(hasInteractiveContent('<b>Online</b> &mdash; <i>healthy</i><br>Second line')).toBe(false);
+  });
+
+  it('rejects an anchor with no href, which is not a link the user can follow', () => {
+    expect(hasInteractiveContent('<a>Not a link</a>')).toBe(false);
+  });
+
+  it('rejects an empty message', () => {
+    expect(hasInteractiveContent('')).toBe(false);
+  });
+
+  describe('agrees with what the message renders as', () => {
+    beforeEach(() => {
+      TestBed.configureTestingModule({
+        imports: [TnTooltipComponent],
+        providers: [provideHttpClient(), provideHttpClientTesting()],
+      });
+    });
+
+    it.each(SANITIZED_AWAY)('renders %s as bare text, so there is nothing to pin for', (_label, message, text) => {
+      const rendered = createTooltip(message).nativeElement.querySelector('.tn-tooltip__message') as HTMLElement;
+
+      expect(rendered.querySelector('button, input, select, textarea')).toBeNull();
+      expect(rendered.textContent?.trim()).toBe(text);
+    });
+
+    it('keeps a link, which is why that one is worth pinning for', () => {
+      const rendered = createTooltip('Read the <a href="#docs">docs</a>')
+        .nativeElement.querySelector('.tn-tooltip__message') as HTMLElement;
+
+      expect(rendered.querySelector('a[href]')).not.toBeNull();
+    });
+  });
+});
+
+// The same message reaches two kinds of consumer: the panel, which renders it as HTML, and
+// plain-text APIs (AriaDescriber, the aria-label on an icon-only help button) that would otherwise
+// announce its tags literally.
+describe('plainTextMessage', () => {
+  it('strips the link a pinnable message exists for, keeping its text', () => {
+    expect(plainTextMessage('Read the <a href="#docs">docs</a>')).toBe('Read the docs');
+  });
+
+  it('decodes entities, which are announced just as literally as tags', () => {
+    expect(plainTextMessage('<b>Online</b> &mdash; healthy')).toBe('Online — healthy');
+  });
+
+  it('returns plain help text untouched, which is the overwhelming majority of tooltips', () => {
+    expect(plainTextMessage('Customizes the importance of the alert.')).toBe(
+      'Customizes the importance of the alert.'
+    );
+  });
+
+  it('treats a nullish message as no message', () => {
+    expect(plainTextMessage(null)).toBe('');
+    expect(plainTextMessage(undefined)).toBe('');
   });
 });
 

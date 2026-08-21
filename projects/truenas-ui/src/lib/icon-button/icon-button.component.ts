@@ -6,6 +6,7 @@ import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 import type { TooltipPosition } from '../tooltip/tooltip.directive';
 import { TnTooltipDirective } from '../tooltip/tooltip.directive';
+import { defineFocusDelegate } from '../utils/focus-delegate';
 
 @Component({
   selector: 'tn-icon-button',
@@ -37,6 +38,16 @@ export class TnIconButtonComponent implements AfterViewInit {
   tooltip = input<string | undefined>(undefined);
   /** Position of the styled tooltip relative to the button. */
   tooltipPosition = input<TooltipPosition>('above');
+  /**
+   * Whether a tooltip message holding a link may be pinned open by clicking the button (see
+   * `tnTooltipSticky`). On by default, like the directive.
+   *
+   * It does not make plain tooltips pinnable — an icon button's tooltip is nearly always a label
+   * for its action, and those keep hovering and never touch the click. Set it to false only to
+   * force a message that does hold a link back to hover behaviour, accepting that the link is
+   * then unreachable.
+   */
+  tooltipSticky = input<boolean>(true);
   library = input<IconLibraryType | undefined>(undefined);
   /** Extra class(es) applied to the inner icon, e.g. for animations or state colors. */
   iconClass = input<string>('');
@@ -79,11 +90,16 @@ export class TnIconButtonComponent implements AfterViewInit {
     // inner button ref. We don't restore the original `focus` on destroy
     // because the host element is destroyed at the same time.
     //
+    // `defineProperty` rather than `host.focus = ...`: plain assignment is only
+    // an own-property write while `focus` is a data property on
+    // `HTMLElement.prototype`. Tooling that redefines it as an accessor with a
+    // setter - Storybook's interactions addon does exactly this - turns the
+    // assignment into a *global* write, and every element on the page then
+    // focuses this instance's inner button. See `defineFocusDelegate`.
+    //
     // If this component is ever moved to `ViewEncapsulation.ShadowDom`, drop
     // this override and rely on the shadow root's `delegatesFocus: true`
     // option, which is the platform-native equivalent.
-    const host = this.hostRef.nativeElement as HTMLElement;
-    const inner = this.buttonRef().nativeElement;
-    host.focus = (options?: FocusOptions) => inner.focus(options);
+    defineFocusDelegate(this.hostRef.nativeElement as HTMLElement, this.buttonRef().nativeElement);
   }
 }

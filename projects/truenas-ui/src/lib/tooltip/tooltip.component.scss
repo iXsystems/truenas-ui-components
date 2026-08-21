@@ -4,23 +4,101 @@
   z-index: 1200;
 }
 
+// A pinned tooltip has to receive pointer events; that is the whole point of the mode -
+// its content (links, the dismiss button) is meant to be clickable.
+:host(.tn-tooltip-component--sticky) {
+  pointer-events: auto;
+}
+
 .tn-tooltip {
+  // Half the arrow's base, and the panel's corner radius. Custom properties rather than literals
+  // because the directive reads them back off this element to clamp the arrow away from the
+  // corners (`_updateArrowOffset`) - changing either value here is enough, the clamp follows.
+  --tn-tooltip-arrow-half-width: 6px;
+  --tn-tooltip-radius: 4px;
+
   background: rgba(55, 55, 55, 0.9);
   color: white;
   padding: 6px 8px;
-  border-radius: 4px;
+  border-radius: var(--tn-tooltip-radius);
   font-size: 12px;
   font-weight: 500;
   line-height: 1.4;
   max-width: 200px;
   word-wrap: break-word;
-  white-space: pre-line;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(4px);
   
   // Animation for smooth appearance
   animation: tn-tooltip-show 150ms cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
   transform-origin: center bottom;
+}
+
+// Sticky (pinned) tooltip: message and dismiss button sit side by side. It is allowed to be
+// a bit wider than a hover tooltip because it carries interactive content.
+.tn-tooltip--sticky {
+  align-items: flex-start;
+  display: flex;
+  gap: 4px;
+  max-width: 280px;
+  padding-right: 4px;
+
+  // The panel takes focus when sticky mode is entered from the keyboard; the ring belongs on
+  // whatever is tabbed to next, not on the container itself.
+  &:focus {
+    outline: none;
+  }
+}
+
+.tn-tooltip__message {
+  // Without this the message refuses to shrink below its longest word inside the flex row.
+  min-width: 0;
+  word-wrap: break-word;
+
+  // Lives on the message rather than on `.tn-tooltip` so that the whitespace between the
+  // message and the dismiss button in the sticky layout stays collapsible.
+  white-space: pre-line;
+
+  // Injected markup carries no encapsulation attribute, so links inside `message` can only be
+  // reached through ::ng-deep.
+  ::ng-deep a {
+    color: inherit;
+    text-decoration: underline;
+  }
+}
+
+.tn-tooltip__close {
+  align-items: center;
+  background: none;
+  border: 0;
+  border-radius: 2px;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  flex: none;
+  justify-content: center;
+  opacity: 0.7;
+  padding: 0;
+
+  // The close glyph is 12px (`--tn-icon-xs`); on its own that is half the 24x24 target WCAG 2.2
+  // asks for, and a miss on a pinned panel is worse than usual because the panel stays open. The
+  // button therefore grows to 24x24 around the glyph, and the negative margins spend the extra
+  // space on the panel's own padding instead of on its size: the outer box is 20x16, so the glyph
+  // still sits beside the message's first line, a one-line panel is exactly as tall as it was,
+  // and the panel widens by 8px rather than by the full 12.
+  block-size: 24px;
+  inline-size: 24px;
+  margin: -4px -4px -4px 0;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  &:focus-visible {
+    opacity: 1;
+    outline: 1px solid currentcolor;
+    outline-offset: 1px;
+  }
 }
 
 @keyframes tn-tooltip-show {
@@ -49,38 +127,42 @@
   }
 }
 
-// Position-specific pointers
+// Position-specific pointers.
+//
+// The arrow tracks the host via `--tn-tooltip-arrow-offset`, which the directive writes onto the
+// overlay pane after every placement. It falls back to the panel's centre, which is where the
+// host is whenever the panel is neither viewport-clamped nor resized after placement.
 :host-context(.tn-tooltip-panel-above) .tn-tooltip::after {
   top: 100%;
-  left: 50%;
+  left: var(--tn-tooltip-arrow-offset, 50%);
   transform: translateX(-50%);
-  border-width: 6px 6px 0 6px;
+  border-width: var(--tn-tooltip-arrow-half-width) var(--tn-tooltip-arrow-half-width) 0 var(--tn-tooltip-arrow-half-width);
   border-color: rgba(55, 55, 55, 0.9) transparent transparent transparent;
 }
 
 :host-context(.tn-tooltip-panel-below) .tn-tooltip::after {
   bottom: 100%;
-  left: 50%;
+  left: var(--tn-tooltip-arrow-offset, 50%);
   transform: translateX(-50%);
-  border-width: 0 6px 6px 6px;
+  border-width: 0 var(--tn-tooltip-arrow-half-width) var(--tn-tooltip-arrow-half-width) var(--tn-tooltip-arrow-half-width);
   border-color: transparent transparent rgba(55, 55, 55, 0.9) transparent;
 }
 
 :host-context(.tn-tooltip-panel-left) .tn-tooltip::after,
 :host-context(.tn-tooltip-panel-before) .tn-tooltip::after {
-  top: 50%;
+  top: var(--tn-tooltip-arrow-offset, 50%);
   left: 100%;
   transform: translateY(-50%);
-  border-width: 6px 0 6px 6px;
+  border-width: var(--tn-tooltip-arrow-half-width) 0 var(--tn-tooltip-arrow-half-width) var(--tn-tooltip-arrow-half-width);
   border-color: transparent transparent transparent rgba(55, 55, 55, 0.9);
 }
 
 :host-context(.tn-tooltip-panel-right) .tn-tooltip::after,
 :host-context(.tn-tooltip-panel-after) .tn-tooltip::after {
-  top: 50%;
+  top: var(--tn-tooltip-arrow-offset, 50%);
   right: 100%;
   transform: translateY(-50%);
-  border-width: 6px 6px 6px 0;
+  border-width: var(--tn-tooltip-arrow-half-width) var(--tn-tooltip-arrow-half-width) var(--tn-tooltip-arrow-half-width) 0;
   border-color: transparent rgba(55, 55, 55, 0.9) transparent transparent;
 }
 

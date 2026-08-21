@@ -22,9 +22,10 @@
         <button
           type="button"
           class="tn-form-section__tooltip"
-          [attr.aria-label]="tooltip()"
+          [attr.aria-label]="tooltipAriaLabel()"
           [tnTooltip]="tooltip()"
-          [tnTooltipPosition]="tooltipPosition()">
+          [tnTooltipPosition]="tooltipPosition()"
+          [tnTooltipSticky]="tooltipSticky()">
           <tn-icon name="help-circle" library="mdi" size="sm" />
         </button>
       }
