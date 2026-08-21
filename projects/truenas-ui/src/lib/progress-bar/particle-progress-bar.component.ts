@@ -46,10 +46,10 @@ const TRACK_INSET = 50;
  * nothing else — no role, no name, no value — and because it never claimed
  * `role="progressbar"` it could not fail `aria-progressbar-name` either, so
  * every axe-based check in this library was silent on it by construction.
- * Measured on the unchanged component under jsdom, over the five rules a
- * progressbar can fail: 0 violations, 0 passes, 0 incomplete. Not clean —
- * unexamined. `particle-progress-bar-a11y.spec.ts` keeps that measurement as a
- * test.
+ * Measured on the unchanged component under jsdom, sweeping `svg-img-alt` and
+ * the four rules `particle-progress-bar-a11y.spec.ts` keeps: 0 violations, 0
+ * passes, 0 incomplete, on every one of them. Not clean — unexamined. That
+ * spec keeps the measurement as its first test.
  *
  * It is a progressbar because it is a WHOLE indicator rather than an overlay on
  * someone else's. The SVG draws its own background track and its own fill rect,

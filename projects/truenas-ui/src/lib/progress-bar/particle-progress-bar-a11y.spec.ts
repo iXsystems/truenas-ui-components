@@ -16,13 +16,14 @@ import { axeResult } from '../a11y/axe-testing';
  * was found by a human reading the folder (#206). This one is a step further
  * again: it never claimed `role="progressbar"`, and a rule that selects on the
  * role cannot report on an element that does not carry it. Measured on the
- * unchanged component under jsdom, over five rules a progressbar can fail:
+ * unchanged component under jsdom, sweeping `svg-img-alt` and the four
+ * `PROGRESSBAR_RULES` below:
  *
  *   host attributes   class="tn-particle-progress-bar"  — and nothing else
  *   role              null
  *   aria-*            none
  *   text content      ""
- *   axe               0 violations, 0 passes, 0 incomplete
+ *   axe               0 violations, 0 passes, 0 incomplete — on all five
  *
  * Zero passes is the part that matters, and it is why this file leads with a
  * test that keeps that measurement rather than merely describing it: an empty
@@ -50,11 +51,18 @@ class TestHostComponent {
 }
 
 /**
- * The rules a progressbar in this library can fail. Named as a list so that a
- * rule which stops matching shows up as a shrinking `evaluated` in one place,
- * rather than as a quietly narrower scan in whichever test happened to name it.
+ * The rules a progressbar in this library can fail. Named as a list so that the
+ * scans below widen together rather than each naming whichever rules its author
+ * had in mind — every one of these gets to object to every fixture.
  *
- * Two fixtures below deliberately do NOT use it — the ones whose
+ * What the `evaluated` assertions then check is `aria-progressbar-name` and
+ * only that: it is the rule that selects on the role, so it is the one whose
+ * silence WAS the defect, and the one whose disappearance would make an empty
+ * `violated` vacuous again. The other three are here to fail if they ever
+ * object — a real violation from any of them lands in `violated`, which is
+ * asserted empty — not to be proven to have run.
+ *
+ * Two fixtures below deliberately do NOT use this list — the ones whose
  * `aria-labelledby` dangles, where `aria-valid-attr-value` is undecidable. The
  * reason is written beside them.
  */
