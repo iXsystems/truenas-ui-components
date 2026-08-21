@@ -152,7 +152,8 @@ export class TnSelectionListComponent implements ControlValueAccessor {
   }
 
   /**
-   * ArrowUp / ArrowDown / Home / End, and deliberately nothing else.
+   * ArrowUp / ArrowDown / Home / End — unmodified, and pressed on an option
+   * host — and deliberately nothing else.
    *
    * Space and Enter are absent because `tn-list-option` has handled them since
    * before this component had any keyboard handling at all, and its keydown
@@ -197,6 +198,16 @@ export class TnSelectionListComponent implements ControlValueAccessor {
 
     const target = event.target as HTMLElement | null;
     if (!opts.some(option => option.elementRef.nativeElement === target)) {
+      return;
+    }
+
+    // A MODIFIED navigation key belongs to someone else. Ctrl/Cmd+Home and
+    // Ctrl/Cmd+End are the browser's jump to the top and bottom of the
+    // document, and Shift+ArrowDown is APG's extend-the-selection, which this
+    // listbox does not implement — claiming any of them swallows a shortcut and
+    // gives nothing back. Tested inline rather than through
+    // `@angular/cdk/keycodes`, matching `select.component.ts`.
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
       return;
     }
 

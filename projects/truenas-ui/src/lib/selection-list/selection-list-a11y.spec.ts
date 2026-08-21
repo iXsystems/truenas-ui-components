@@ -233,6 +233,27 @@ describe('tn-selection-list keyboard navigation (#216)', () => {
       expect(event.defaultPrevented).toBe(true);
     });
 
+    /**
+     * A modified navigation key is somebody else's. Ctrl/Cmd+Home and
+     * Ctrl/Cmd+End jump to the top and bottom of the document, and
+     * Shift+ArrowDown is APG's extend-the-selection, which this listbox does
+     * not implement — so consuming them takes a shortcut away and gives the
+     * user nothing in exchange.
+     */
+    it.each([
+      ['Home', { ctrlKey: true }],
+      ['End', { metaKey: true }],
+      ['ArrowDown', { shiftKey: true }],
+      ['ArrowUp', { altKey: true }]
+    ])('leaves a modified %s to the browser', (key, modifier) => {
+      const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...modifier });
+      (document.activeElement as HTMLElement).dispatchEvent(event);
+      fixture.detectChanges();
+
+      expect(event.defaultPrevented).toBe(false);
+      expect(focusedIndex()).toBe(0);
+    });
+
     it.each(['Tab', 'Escape', 'a'])('leaves %s to the browser', (key) => {
       const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
       (document.activeElement as HTMLElement).dispatchEvent(event);
