@@ -139,9 +139,9 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   protected resolvedTestId = controlTestId(this.testId);
 
   /**
-   * Optional extractor for the per-option test-id discriminator. Defaults to
-   * the option's `value` (when a string/number) or its `label`. Provide this
-   * when option values are objects, or to pick a more stable/unique key —
+   * Optional extractor for the per-option test-id discriminator. Defaults to the
+   * option's `label`, the text actually on screen — provide this to key off a
+   * locale-independent field instead, or where an id per record is wanted —
    * mirrors `tn-select`'s input of the same name.
    *
    * @example

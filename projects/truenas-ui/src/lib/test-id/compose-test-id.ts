@@ -13,9 +13,16 @@ export type TnTestIdValue = string | number | (string | number | null | undefine
  * collapse any run of non-alphanumeric characters to a single hyphen, and trim
  * leading/trailing hyphens.
  *
- * Mirrors the normalization webui's legacy `ixTest` directive applied via
- * lodash `kebabCase`, so migrated values stay stable (`sshPort` → `ssh-port`,
- * `addr_trtype` → `addr-trtype`, `'My Label'` → `my-label`).
+ * Follows webui's legacy `ixTest` directive (lodash `kebabCase`) for the cases
+ * that matter to migrated values — `sshPort` → `ssh-port`, `addr_trtype` →
+ * `addr-trtype`, `'My Label'` → `my-label` — but deliberately not for the
+ * letter↔digit boundary, which lodash splits and this does not: `nvme0n1` stays
+ * `nvme0n1` rather than becoming `nvme-0-n-1`, and `ipv4` stays `ipv4`. Device
+ * and protocol names read better whole, and they are exactly the strings that
+ * end up in ids. A consumer that must reproduce a legacy lodash-derived id
+ * byte-for-byte pre-normalizes the dynamic part itself before handing it over
+ * (webui's `normalizeTestIdString` does this); the result then passes through
+ * here unchanged.
  */
 export function kebabTestSegment(part: string | number): string {
   return String(part)

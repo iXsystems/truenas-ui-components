@@ -273,8 +273,9 @@ export const ComponentHarness: Story = {
 };
 
 /**
- * **Test IDs.** The field emits `chip-input-<base>`; chips are scoped beneath it
- * as `chip-<base>-<value>` and suggestion rows as `option-<base>-<value>`.
+ * **Test IDs.** The field emits `chip-input-<base>`; chips and suggestion rows are
+ * scoped beneath it by the text they show — `chip-<base>-<label>` and
+ * `option-<base>-<label>`, falling back to the value for a free-text chip.
  * `testId="tags"` → `chip-input-tags`, under `data-testid` (default) /
  * `data-test`. With no `testId`, the base falls back to the bound control name,
  * so `formControlName="isnsServers"` → `chip-input-isns-servers`; a control-less
@@ -282,8 +283,13 @@ export const ComponentHarness: Story = {
  * its field, chips and suggestion rows are all named from the control.
  *
  * A discriminator that normalizes to nothing (`*`, `**`, a CJK-only tag) would
- * collapse a chip's id back to the bare base, so those chips stay attribute-free
- * rather than sharing one id.
+ * collapse a chip's id back to the bare base. An option-backed chip falls back to
+ * the value behind the label there; a chip with nothing else to be named by stays
+ * attribute-free rather than sharing one id.
+ *
+ * Where two options share a display name, or ids must survive a locale change,
+ * `[optionTestIdKey]="(o) => o.value.id"` picks the discriminator instead — for
+ * the chip and its suggestion row alike.
  */
 export const TestIds: Story = {
   render: () => ({

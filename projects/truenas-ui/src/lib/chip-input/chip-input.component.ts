@@ -178,6 +178,21 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
   /** Test-id base, falling back to the bound control name when `testId` is unset. */
   protected resolvedTestId = controlTestId(this.testId);
 
+  /**
+   * Optional extractor for the per-option test-id discriminator, applied to both
+   * a suggestion row and the chip it becomes. Defaults to the option's `label`,
+   * the text actually on screen — provide this to key off a locale-independent
+   * field instead, or where two options share a display name and the derived ids
+   * would otherwise collide. Free-text chips have no option to extract from and
+   * stay named by their own value.
+   *
+   * @example
+   * ```html
+   * <tn-chip-input testId="users" [optionTestIdKey]="(o) => o.value.id" ... />
+   * ```
+   */
+  optionTestIdKey = input<(option: TnChipInputOption<T>) => string | number | null | undefined>();
+
   /** Emits the committed value whenever a chip is added. */
   chipAdded = output<T>();
 
@@ -419,39 +434,49 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
 
   /** The label shown on a chip for a committed value. */
   protected displayLabel(value: T): string {
-    const match = this.optionList().find((option) => this.valueMatches(option.value, value));
+    const match = this.optionFor(value);
     return match ? match.label : String(value);
   }
 
   /**
    * Scopes a per-chip test id beneath the component's base.
    *
-   * The discriminator is the value itself when primitive, else the matching
-   * option's label — `String(value)` on an object is `[object Object]`, which
-   * would stamp an identical id on every chip. Duplicates are worse than
-   * absence for automation, so an object value with no option to name it yet
-   * (options still loading) stays attribute-free rather than colliding. A primitive
-   * that normalizes away is dropped for the same reason — see
-   * {@link discriminatedTestId}.
+   * A chip backed by an option goes through the same {@link optionTestId}
+   * derivation as the suggestion row that created it, so the two carry the same
+   * discriminator by construction rather than one naming the label and the other
+   * the value — including whatever fallback that shared rule settles on, and any
+   * `optionTestIdKey` override.
+   *
+   * A value with no matching option is named by itself when it is a primitive:
+   * either a free-text chip, which is its own text, or an option-backed value
+   * whose options have not arrived yet — an async `[options]` load moves such a
+   * chip's id from the value to the resolved label once it does. An object value
+   * with no match cannot stand in for itself, because `String(value)` on an
+   * object is `[object Object]` and would stamp an identical id on every chip.
+   * Duplicates are worse than absence for automation, so that chip stays
+   * attribute-free rather than colliding. A primitive that normalizes away is
+   * dropped for the same reason — see {@link discriminatedTestId}.
    */
   protected chipTestId(value: T): TnTestIdValue {
     const base = this.resolvedTestId();
-    if (typeof value === 'string' || typeof value === 'number') {
-      return this.discriminatedTestId(scopeTestId(base, value));
+    const match = this.optionFor(value);
+    if (match) {
+      return this.discriminatedTestId(optionTestId(base, match, this.optionTestIdKey()));
     }
-    const match = this.optionList().find((option) => this.valueMatches(option.value, value));
-    return match ? this.discriminatedTestId(scopeTestId(base, match.label)) : undefined;
+    return typeof value === 'string' || typeof value === 'number'
+      ? this.discriminatedTestId(scopeTestId(base, value))
+      : undefined;
   }
 
   /**
    * Scopes a per-suggestion test id beneath the component's base, via the shared
    * dropdown-option derivation. Unlike `tn-select` / `tn-autocomplete`, which
-   * emit an unscoped `option-<value>` when they have no base, an unidentified
+   * emit an unscoped `option-<label>` when they have no base, an unidentified
    * chip-input stays attribute-free — its rows carry no page-unique id, so
    * emitting one would invite collisions between inputs.
    */
   protected suggestionTestId(option: TnChipInputOption<T>): TnTestIdValue {
-    return this.discriminatedTestId(optionTestId(this.resolvedTestId(), option));
+    return this.discriminatedTestId(optionTestId(this.resolvedTestId(), option, this.optionTestIdKey()));
   }
 
   /**
@@ -512,6 +537,40 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
     this.chipAdded.emit(value);
     this.clearInput();
   }
+
+  /**
+   * The option a committed value came from, or `undefined` for a free-text chip.
+   *
+   * Both the chip's label and its test id need this lookup, and both are called
+   * from the template — once per chip per change-detection cycle — so a linear
+   * scan of the options would be quadratic in (chips × options) on every cycle.
+   * With the default identity comparator, {@link optionIndex} answers in constant
+   * time; a custom `compareWith` can't be indexed (only it knows what equality
+   * means for the value), so that path keeps the scan.
+   */
+  private optionFor(value: T): TnChipInputOption<T> | undefined {
+    const comparator = this.compareWith();
+    if (comparator) {
+      return this.optionList().find((option) => comparator(option.value, value));
+    }
+    return this.optionIndex().get(value);
+  }
+
+  /**
+   * Value → option, rebuilt only when the option list changes. First entry wins,
+   * matching the `find` it replaces where a value is repeated across options.
+   * Keys compare by `Map` identity, which agrees with the `===` this stands in
+   * for on every value a form control can hold.
+   */
+  private optionIndex = computed<Map<T, TnChipInputOption<T>>>(() => {
+    const index = new Map<T, TnChipInputOption<T>>();
+    for (const option of this.optionList()) {
+      if (!index.has(option.value)) {
+        index.set(option.value, option);
+      }
+    }
+    return index;
+  });
 
   private valuesIncludes(value: T): boolean {
     return this.values().some((existing) => this.valueMatches(existing, value));
