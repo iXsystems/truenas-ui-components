@@ -82,9 +82,13 @@ const FALLBACK_LITERAL = '#b91c1c';
  * a number here; adding text means using `--tn-error-text`.
  *
  * What this scan covers is `lib/**\/*.scss` and `stories/`. `styles/themes.css`
- * is not scanned: it still colours `.tn-dialog--destructive .tn-dialog__title`
- * from `--tn-red`, which is the same defect in a component #234 does not name,
- * and adding the file here would fail on that rather than guard anything.
+ * is not scanned, and the one thing there that would trip it is not obviously a
+ * defect: `.tn-dialog--destructive .tn-dialog__title` reads `--tn-red`, but that
+ * title is an `<h2>` with no font-size override, so it renders at the UA default
+ * 24px and is WCAG large text — held to 3:1, which is the threshold `--tn-red`
+ * IS tuned for. Deciding it needs measuring against the dialog's own surface
+ * rather than assuming, so it is left out of this ticket rather than allowlisted
+ * with a reason that has not been checked.
  */
 const KEEPS_RED: Readonly<Record<string, { count: number; why: string }>> = {
   'file-picker/file-picker-popup.component.scss': {
