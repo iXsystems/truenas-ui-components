@@ -401,16 +401,29 @@ one comes back clean whatever the markup says. `TestBed.createComponent` attache
 the fixture for you, which is why the examples above just work — but `axeScan` and
 `axeResult` both check, and throw rather than let it pass.
 
-`axeScan` also throws on a root with no children, no text **and** no `role` or
-`aria-*` attribute of its own, which is what a host whose `detectChanges()` never
-ran looks like. That is asked of the tree rather than of axe's output, precisely
-so that the empty-but-rendered case above stays an ordinary result.
+`axeScan` also throws on a root with no children and no text, which is what a host
+whose `detectChanges()` never ran looks like. That is asked of the tree rather
+than of axe's output, precisely so that the empty-but-rendered case above stays an
+ordinary result.
 
-The `role`/`aria-*` part of that is for a component whose whole accessibility
-surface is host attributes — `tn-divider` has a 0-byte template and declares
-`role="separator"` and `aria-orientation` in `host: {}`. It renders childless and
-textless, and it is exactly the component a scan has most to say about, since the
-rules that match are the ones about those attributes. Scan it as usual.
+### A component that is its own host: `{ hostOnly: true }`
+
+`tn-divider` has a 0-byte template and declares `role="separator"` and
+`aria-orientation` in `host: {}`, so it renders childless and textless having done
+exactly what it was asked to — and it is worth scanning, since the rules that
+match are the ones about those attributes. Say so:
+
+```typescript
+const scan = await axeScan(fixture, { hostOnly: true });
+```
+
+The flag is required rather than inferred from the host's `role`, because a
+component whose whole template sits inside an `@if` that has not run yet looks
+identical: Angular applies a static host `role` at `createComponent`, before any
+change detection. Inferring the escape would report that one as a near-clean scan
+of a component that rendered none of itself. `hostOnly` relaxes the guard, it does
+not switch it off — a root with nothing inside it and no `role` or `aria-*` on it
+is still rejected.
 
 ## Edge Cases to Test
 

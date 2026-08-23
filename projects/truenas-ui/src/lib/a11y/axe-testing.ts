@@ -255,6 +255,22 @@ export interface AxeScan {
   passed: string[];
 }
 
+/** What a caller can tell `axeScan` that it cannot see for itself. */
+export interface AxeScanOptions {
+  /**
+   * The component renders nothing inside its host, and that is expected.
+   *
+   * `axeScan` throws on a childless, textless root, because that is what a
+   * fixture whose `detectChanges()` never ran looks like. A component that IS
+   * its host looks the same — `tn-divider` has a 0-byte template and declares
+   * `role="separator"` on the host — and nothing in the DOM tells the two apart,
+   * so the caller says which it has. The scan still has to find something: a
+   * root that is empty AND carries no `role` or `aria-*` is rejected whatever
+   * this says.
+   */
+  hostOnly?: boolean;
+}
+
 /**
  * The rules `axeScan` declines to run, each with the reason, because a rule
  * skipped for no stated reason is how a scan quietly becomes the lenient one.
@@ -345,10 +361,11 @@ function toFinding(result: axe.Result): AxeFinding {
  * looked at anything returns the same empty result as a clean one. So a root
  * that is detached — axe treats it as hidden and exempts every node in it — and
  * a root that is empty are both errors rather than a clean bill of health.
- * "Empty" means no children, no text AND no `role` or `aria-*` on the root: a
- * component whose whole accessibility surface is host attributes, `tn-divider`
- * being the one here, renders to exactly that and is scanned rather than
- * rejected.
+ *
+ * A component whose whole accessibility surface is its host renders to exactly
+ * that empty shape and is worth scanning — `tn-divider` has a 0-byte template
+ * and `role="separator"` + `aria-orientation` on the host, and a scan of it
+ * passes ten rules. Pass `{ hostOnly: true }` for it; see `AxeScanOptions`.
  *
  * A tree axe reported NOTHING about is a different thing and is returned, not
  * thrown on. That is the ordinary answer for a presentational component: with
@@ -371,6 +388,7 @@ function toFinding(result: axe.Result): AxeFinding {
  */
 export async function axeScan(
   target: HTMLElement | { nativeElement: HTMLElement } | null | undefined,
+  { hostOnly = false }: AxeScanOptions = {},
 ): Promise<AxeScan> {
   if (target === null || target === undefined) {
     throw new Error('axeScan: no element to scan');
@@ -400,22 +418,39 @@ export async function axeScan(
   // unrendered host is what the guard is actually for, and it is visible here
   // directly: it has no children and no text.
   //
-  // Except when the host itself carries the accessibility surface. `tn-divider`
-  // has a 0-byte template and puts `role="separator"` plus `aria-orientation` in
-  // `host: {}`, so it reaches here childless and textless having rendered exactly
-  // what it was asked to — and a scan of it is not vacuous, since
-  // `aria-allowed-attr` and `aria-valid-attr-value` both match those attributes.
-  // An unrendered host has no `role` and no `aria-*` either, so the two are
-  // distinguishable and the guard keeps its purpose.
+  // The one shape that is legitimately childless is a component that IS its host,
+  // and it cannot be told from an unrendered one by looking, which is why it is
+  // the caller who says so rather than a predicate here. Measured, both of these
+  // reach this line with `children.length === 0` and `role` already set:
+  //
+  //   - `TestBed.createComponent(TnDividerComponent)` + `detectChanges()` — a
+  //     0-byte template, `role="separator"` and `aria-orientation` on the host.
+  //   - a component whose whole template sits inside an `@if`, before the change
+  //     detection that would have made the condition true. Angular applies a
+  //     static host `role` at createComponent, so the host is marked either way.
+  //
+  // A `role`-based predicate would therefore let the second case through as a
+  // near-clean scan of a component that never rendered — the exact reading this
+  // module exists to prevent — so `hostOnly` is required, and the message says so.
   const bare = root.children.length === 0 && (root.textContent ?? '').trim() === '';
+  if (bare && !hostOnly) {
+    throw new Error(
+      'axeScan: the scanned root is empty — no child elements and no text — so '
+      + 'a clean result from it would say nothing about the component. Check the '
+      + 'fixture rendered and that detectChanges() ran. If the component IS its '
+      + 'host — tn-divider has a 0-byte template and declares role="separator" in '
+      + 'host: {} — pass { hostOnly: true } to say the emptiness is expected.'
+    );
+  }
+  // `hostOnly` relaxes the guard; it does not switch it off. A root with nothing
+  // inside it and nothing on it is vacuous however it is labelled.
   const marked = root.hasAttribute('role')
     || root.getAttributeNames().some((name) => name.startsWith('aria-'));
   if (bare && !marked) {
     throw new Error(
-      'axeScan: the scanned root is empty — no child elements, no text, and no '
-      + 'role or aria-* attribute on the root itself — so a clean result from it '
-      + 'would say nothing about the component. Check the fixture rendered and '
-      + 'that detectChanges() ran.'
+      'axeScan: hostOnly says the accessibility surface is on the root itself, '
+      + 'but the root carries no role and no aria-* attribute, and nothing is '
+      + 'rendered inside it — so there is nothing here for a rule to match.'
     );
   }
 

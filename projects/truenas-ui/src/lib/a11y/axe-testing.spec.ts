@@ -1,6 +1,25 @@
+import { Component } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { axeResult, axeScan } from './axe-testing';
 import * as axeTesting from './axe-testing';
 import * as publicApi from '../../public-api';
+import { TnDividerComponent } from '../divider/divider.component';
+
+/**
+ * A host that carries a static `role` and renders its template only once a
+ * condition turns true — the shape `hostOnly` exists to keep distinguishable
+ * from a component that is genuinely all host. Local, because no component in
+ * the library is written this way today and the guard has to hold if one is.
+ */
+@Component({
+  selector: 'tn-conditional-template-host',
+  standalone: true,
+  template: '@if (show) {<div role="button" tabindex="0"><button type="button">x</button></div>}',
+  host: { 'role': 'status' },
+})
+class ConditionalTemplateHostComponent {
+  show = false;
+}
 
 /**
  * Guards `axeResult` itself, because every other a11y spec now trusts it and a
@@ -384,37 +403,75 @@ describe('axeScan', () => {
       await expect(axeScan(root)).resolves.toBeDefined();
     });
 
-    /**
-     * The host-attribute case, which is `tn-divider`: a 0-byte template and
-     * `role="separator"` plus `aria-orientation` declared in `host: {}`. It
-     * renders childless and textless, so a guard reading only the tree would
-     * reject a fixture that rendered correctly — and reject it on the one shape
-     * where the scan has the most to say, since the rules that match are the
-     * ones about those very attributes.
-     */
-    it('accepts a root whose whole accessibility surface is host attributes', async () => {
+  });
+
+  /**
+   * A component that IS its host: `tn-divider` has a 0-byte template and puts
+   * `role="separator"` and `aria-orientation` in `host: {}`, so it renders
+   * childless and textless having done exactly what it was asked to. The tree
+   * guard above cannot tell that from a fixture that never rendered — measured,
+   * a component whose template sits inside a false `@if` reaches it looking
+   * identical, static host `role` included — so the caller says which it has and
+   * both cases below are covered rather than one being traded for the other.
+   */
+  describe('a component whose whole surface is its host', () => {
+    it('scans it when hostOnly says the emptiness is expected', async () => {
       root.setAttribute('role', 'separator');
       root.setAttribute('aria-orientation', 'horizontal');
 
-      const scan = await axeScan(root);
+      const scan = await axeScan(root, { hostOnly: true });
 
       expect(scan.violations).toEqual([]);
-      // Non-vacuous: axe really did evaluate the host attributes, which is why
-      // rejecting this root would have cost a real answer rather than an empty
-      // one. `aria-allowed-attr` is the rule that matches `aria-orientation` on
-      // `role="separator"`.
+      // Non-vacuous, which is the whole reason this shape is worth scanning:
+      // `aria-allowed-attr` is the rule that matches `aria-orientation` on
+      // `role="separator"`, so a scan here has a real verdict to give.
       expect(scan.passed).toContain('aria-allowed-attr');
     });
 
-    // The same guard from the other side: a bare root carrying an `aria-*` and
-    // no `role` is still a rendered host, and axe has a verdict on it — here a
-    // real one, since `aria-orientation` is not allowed on a generic `<div>`.
-    it('accepts a root marked with aria-* alone, and reports what axe found', async () => {
+    it('reports a real finding on the host, not just passes', async () => {
       root.setAttribute('aria-orientation', 'horizontal');
 
-      const scan = await axeScan(root);
+      const scan = await axeScan(root, { hostOnly: true });
 
+      // `aria-orientation` is not allowed on a `<div>` with no role.
       expect(scan.violations.map((v) => v.rule)).toEqual(['aria-allowed-attr']);
+    });
+
+    it('still refuses a root with nothing inside it and nothing on it', async () => {
+      await expect(axeScan(root, { hostOnly: true }))
+        .rejects.toThrow('there is nothing here for a rule to match');
+    });
+
+    /**
+     * The end-to-end case, on the real component rather than hand-built markup,
+     * because the claim under test is about what Angular renders for a host-only
+     * component and not about axe attribution.
+     */
+    it('scans tn-divider, whose host is all there is', async () => {
+      TestBed.configureTestingModule({ imports: [TnDividerComponent] });
+      const fixture = TestBed.createComponent(TnDividerComponent);
+      fixture.detectChanges();
+
+      const scan = await axeScan(fixture, { hostOnly: true });
+
+      expect(scan.violations).toEqual([]);
+      expect(scan.incomplete).toEqual([]);
+      expect(scan.passed).toContain('aria-allowed-attr');
+    });
+
+    /**
+     * And the case `hostOnly` is kept explicit for. This host carries a static
+     * `role` — Angular applies those at `createComponent`, before any change
+     * detection — and its whole template is inside an `@if` that has not run, so
+     * it is indistinguishable from `tn-divider` by looking. Inferring the escape
+     * from `role` alone would report this as a near-clean scan of a component
+     * that rendered none of itself.
+     */
+    it('rejects a marked host that never rendered its template', async () => {
+      TestBed.configureTestingModule({ imports: [ConditionalTemplateHostComponent] });
+      const fixture = TestBed.createComponent(ConditionalTemplateHostComponent);
+
+      await expect(axeScan(fixture)).rejects.toThrow('Check the fixture rendered');
     });
   });
 });
