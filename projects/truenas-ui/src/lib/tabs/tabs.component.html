@@ -1,5 +1,11 @@
-<div role="tablist" tnTestIdType="tabs" [ngClass]="classes()" [attr.aria-orientation]="orientation()" [tnTestId]="testId()">
-  <div #tabHeader class="tn-tabs__header">
+<div tnTestIdType="tabs" [ngClass]="classes()" [tnTestId]="testId()">
+  <!--
+    `role="tablist"` sits here rather than on the wrapper above, because a tablist may own
+    nothing but tabs and the wrapper also holds the panels — which failed axe
+    `aria-required-children` in every Tabs story (#232). `aria-orientation` describes the
+    tablist, so it travels with the role.
+  -->
+  <div #tabHeader role="tablist" class="tn-tabs__header" [attr.aria-orientation]="orientation()">
     <ng-content select="tn-tab" />
     @if (highlightBarVisible()) {
       <div class="tn-tabs__highlight-bar"

@@ -1,0 +1,17 @@
+<!--
+  One `@if` per tab, rather than one around the pair. A control-flow block is projected by
+  the selector of its SINGLE root node, so a block holding two `tn-tab`s matches no
+  `ng-content select="tn-tab"` at all — the tabs are then found by `contentChildren` and
+  never rendered, which is a different defect from the one this fixture is for.
+-->
+<tn-tabs>
+  @if (showTabs()) {
+    <tn-tab label="Overview" />
+  }
+  @if (showTabs()) {
+    <tn-tab label="Details" />
+  }
+
+  <tn-tab-panel>Overview content</tn-tab-panel>
+  <tn-tab-panel>Details content</tn-tab-panel>
+</tn-tabs>

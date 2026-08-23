@@ -1,0 +1,9 @@
+<tn-tabs [orientation]="orientation()">
+  <tn-tab label="Overview" />
+  <tn-tab label="Details" [disabled]="detailsDisabled()" />
+  <tn-tab label="Settings" />
+
+  <tn-tab-panel>Overview content</tn-tab-panel>
+  <tn-tab-panel>Details content</tn-tab-panel>
+  <tn-tab-panel>Settings content</tn-tab-panel>
+</tn-tabs>

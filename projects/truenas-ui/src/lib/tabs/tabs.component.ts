@@ -7,6 +7,8 @@ import { TnTabComponent } from '../tab/tab.component';
 import { TnTabPanelComponent } from '../tab-panel/tab-panel.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
+let nextGroupId = 0;
+
 export interface TabChangeEvent {
   index: number;
   tab: TnTabComponent;
@@ -30,10 +32,18 @@ export class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDestr
   orientation = input<'horizontal' | 'vertical'>('horizontal');
   highlightPosition = input<'left' | 'right' | 'top' | 'bottom'>('bottom');
   /**
-   * Test-id applied to the tablist root element. Rendered under whichever attribute name
-   * is configured via `TN_TEST_ATTR` (default `data-testid`).
+   * Test-id applied to the root element — the wrapper around the tablist and the panels,
+   * not the tablist itself, which is the header inside it. Rendered under whichever
+   * attribute name is configured via `TN_TEST_ATTR` (default `data-testid`).
    */
   testId = input<TnTestIdValue>(undefined);
+
+  /**
+   * Namespace for the ids this group hands to its tabs and panels, so that two `tn-tabs`
+   * on one page cannot both mint `tab-0` and cross-wire each other's `aria-controls` and
+   * `aria-labelledby`. See `tab-ids.ts`.
+   */
+  private readonly groupId = `tn-tabs-${nextGroupId++}`;
 
   selectedIndexChange = output<number>();
   tabChange = output<TabChangeEvent>();
@@ -81,12 +91,12 @@ export class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDestr
 
     // Listen for tab changes
     effect(() => {
-      // Track tabs signal to react to changes
-      const tabs = this.tabs();
-      if (tabs.length > 0) {
-        this.initializeTabs();
-        this.updateHighlightBar();
-      }
+      // Runs on an empty tab set as well, because `initializeTabs` is what clears each
+      // panel's `hasTab`: skipping it when the last tab is removed would leave every panel
+      // pointing `aria-labelledby` at a tab that no longer exists, which is the dangling
+      // reference #232 removed. Both calls below no-op on their own when there are no tabs.
+      this.initializeTabs();
+      this.updateHighlightBar();
     });
   }
 
@@ -115,9 +125,16 @@ export class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDestr
 
   private initializeTabs() {
     const currentIndex = this.internalSelectedIndex();
+    // Tabs and panels are separate content children and nothing pairs them up but their
+    // position, so a group can be given more of one than the other. Each side is told
+    // whether its opposite number exists, and renders its cross-reference only if it does.
+    const tabCount = this.tabs().length;
+    const panelCount = this.panels().length;
 
     this.tabs().forEach((tab, index) => {
       tab.index.set(index);
+      tab.groupId.set(this.groupId);
+      tab.hasPanel.set(index < panelCount);
       tab.isActive.set(index === currentIndex);
       tab.tabsComponent = this;
 
@@ -129,6 +146,8 @@ export class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDestr
 
     this.panels().forEach((panel, index) => {
       panel.index.set(index);
+      panel.groupId.set(this.groupId);
+      panel.hasTab.set(index < tabCount);
       panel.isActive.set(index === currentIndex);
     });
 
