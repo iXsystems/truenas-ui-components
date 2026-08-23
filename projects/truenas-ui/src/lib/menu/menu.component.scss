@@ -93,7 +93,15 @@
   &.tn-menu-item--selected {
     background: var(--tn-alt-bg2, #e8f4fd);
     font-weight: 600;
-    color: var(--tn-primary-text, var(--tn-primary, #0074a7));
+    // Left on --tn-primary deliberately. --tn-primary-text is tuned, and
+    // measured, against --tn-bg1 and --tn-bg2; this row paints on --tn-alt-bg2,
+    // where it measures 2.37:1 in :root and fails in six of the nine palettes.
+    // Reading it here would be claiming a guarantee the token does not make.
+    // --tn-alt-bg2 has no foreground that clears AA across the palettes at all
+    // — even --tn-fg1 is 1.45:1 on it in Solarized Dark — so this row needs the
+    // surface reconsidered rather than a different colour on it, which is a
+    // wider change than #242.
+    color: var(--tn-primary, #007bff);
   }
 
   &.disabled {

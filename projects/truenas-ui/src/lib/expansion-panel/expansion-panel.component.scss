@@ -107,7 +107,7 @@
     
     // The chevron is an <svg>, not text — 3:1 applies.
     .tn-expansion-panel__indicator {
-      color: var(--tn-primary);
+      color: var(--tn-primary, #3b82f6);
     }
 
     .tn-expansion-panel__header:hover:not(:disabled) {

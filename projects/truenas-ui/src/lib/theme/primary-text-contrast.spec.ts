@@ -11,6 +11,13 @@ import { contrastRatio, formatRatio, meetsAa, themePalettes } from '../a11y/cont
  * arrangement `--tn-error-text` already has for `--tn-red`, and this measures it
  * against the values actually shipped in `themes.css`.
  *
+ * WHAT THE TOKEN CLAIMS: 4.5:1 on `--tn-bg1` and on `--tn-bg2`, the page canvas
+ * and the card/panel surface, and nothing beyond that. It is NOT a
+ * general-purpose accent colour: on `--tn-alt-bg2` it measures 2.37:1 in
+ * `:root`. `KEEPS_PRIMARY` below is where a call site on some other surface is
+ * recorded, with the reason, rather than being migrated to a guarantee that
+ * does not cover it.
+ *
  * jsdom has no layout engine, so axe's `color-contrast` rule cannot decide
  * anything here — it reports `incomplete` rather than checking, and `axeResult`
  * throws on that. Computing the ratio from the shipped values is the claim that
@@ -42,24 +49,37 @@ const REQUIRED_TOKENS = ['--tn-bg1', '--tn-bg2', '--tn-primary-text'];
 const FALLBACK_LITERAL = '#0074a7';
 
 /**
- * `color:` declarations that legitimately still read `--tn-primary`, by the file
- * they are in and the count in it. Every one paints an icon rather than text —
- * an `<svg>` or a `<tn-icon>` — which is non-text content under WCAG 1.4.11 at
- * 3:1, exactly what `--tn-primary` is tuned for. The tick in `tn-slide-toggle`
- * has a second reason: `--accent` and `--warn` re-point `--tn-primary` locally
- * to colour the whole toggle, and reading `--tn-primary-text` would make the
- * tick ignore them.
+ * `color:` declarations that still read `--tn-primary`, by the file they are in,
+ * with the count in that file and why it is right there.
+ *
+ * Most are icons — an `<svg>` or a `<tn-icon>` — which are non-text content
+ * under WCAG 1.4.11 at 3:1, exactly what `--tn-primary` is tuned for. The one
+ * that is text is `tn-menu`'s selected row, and the reason is the surface: what
+ * `--tn-primary-text` guarantees, and what the cases above measure, is 4.5:1 on
+ * `--tn-bg1` and `--tn-bg2`. It says nothing about `--tn-alt-bg2`, where it
+ * measures 2.37:1 in `:root`.
  *
  * A count rather than a bare allowlist, so that a NEW `color: var(--tn-primary)`
  * in one of these files is still caught. Adding a decorative icon means adding
- * to a number here; adding text means using `--tn-primary-text`.
+ * to a number here; adding text on --tn-bg1/--tn-bg2 means using
+ * `--tn-primary-text`.
  */
-const NON_TEXT_COLOR_USES: Readonly<Record<string, number>> = {
-  'expansion-panel/expansion-panel.component.scss': 1,
-  'file-picker/file-picker-popup.component.scss': 3,
-  'form-field/form-field.component.scss': 1,
-  'form-section/form-section.component.scss': 1,
-  'slide-toggle/slide-toggle.component.scss': 1,
+const KEEPS_PRIMARY: Readonly<Record<string, { count: number; why: string }>> = {
+  'expansion-panel/expansion-panel.component.scss': { count: 1, why: 'the <svg> chevron' },
+  'file-picker/file-picker-popup.component.scss': {
+    count: 3,
+    why: 'the spinner, the folder icon and the chevron',
+  },
+  'form-field/form-field.component.scss': { count: 1, why: 'the icon-only help button' },
+  'form-section/form-section.component.scss': { count: 1, why: 'the icon-only help button' },
+  'menu/menu.component.scss': {
+    count: 1,
+    why: 'the selected row, which is text but paints on --tn-alt-bg2, not --tn-bg1/--tn-bg2',
+  },
+  'slide-toggle/slide-toggle.component.scss': {
+    count: 1,
+    why: 'the <svg> tick, which --accent and --warn re-colour by re-pointing --tn-primary',
+  },
 };
 
 /**
@@ -169,17 +189,19 @@ describe('--tn-primary-text contrast (#242)', () => {
       .map(({ file, scss }) => ({
         file,
         count: (scss.match(PRIMARY_AS_COLOR) ?? []).length,
-        allowed: NON_TEXT_COLOR_USES[file] ?? 0,
+        allowed: KEEPS_PRIMARY[file]?.count ?? 0,
+        why: KEEPS_PRIMARY[file]?.why ?? 'nothing',
       }))
       .filter(({ count, allowed }) => count > 0 || allowed > 0);
 
     it.each(remaining)(
-      '$file paints $allowed non-text thing(s) with color: var(--tn-primary)',
+      '$file keeps color: var(--tn-primary) on $allowed thing(s): $why',
       ({ count, allowed }) => {
-        // Text reading --tn-primary is the defect; an icon reading it is
-        // correct. If this fails, either the declaration is text and wants
-        // --tn-primary-text, or it is an icon and belongs in
-        // NON_TEXT_COLOR_USES with a note saying which icon.
+        // Body text on --tn-bg1/--tn-bg2 reading --tn-primary is the defect
+        // #242 is about. Anything else reading it may well be right. If this
+        // fails, either the declaration is such text and wants
+        // --tn-primary-text, or it belongs in KEEPS_PRIMARY with a `why`
+        // saying which thing it paints and on what.
         expect(count).toBe(allowed);
       }
     );
@@ -188,12 +210,13 @@ describe('--tn-primary-text contrast (#242)', () => {
       // Without this a renamed or deleted component leaves a stale entry that
       // nothing measures, and the case above passes it as 0 === 0.
       const scanned = files.map(({ file }) => file);
-      expect(Object.keys(NON_TEXT_COLOR_USES).filter((file) => !scanned.includes(file))).toEqual([]);
+      expect(Object.keys(KEEPS_PRIMARY).filter((file) => !scanned.includes(file))).toEqual([]);
     });
 
-    // On the declaration, not on a bare `includes`: the comment above
-    // tn-slide-toggle's tick names the token to explain why it does NOT read it,
-    // and that file has no declaration to check.
+    // On the declaration, not on a bare `includes`: the comments above
+    // tn-slide-toggle's tick and tn-menu's selected row name the token to
+    // explain why they do NOT read it, and neither file has a declaration to
+    // check.
     const migrated = files.filter(({ scss }) => /color: var\(--tn-primary-text/.test(scss));
 
     it('some component reads --tn-primary-text', () => {
