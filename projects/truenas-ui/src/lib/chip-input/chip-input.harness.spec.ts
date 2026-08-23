@@ -502,7 +502,7 @@ describe('TnChipInputComponent test ids', () => {
     const fixture = TestBed.createComponent(LabelledPrimitiveValueHostComponent);
     fixture.detectChanges();
 
-    const chip = fixture.nativeElement.querySelector('.tn-chip-input__chip [role="button"]');
+    const chip = fixture.nativeElement.querySelector('.tn-chip-input__chip .tn-chip');
     expect(chip?.getAttribute('data-testid')).toBe('chip-tags-united-states');
 
     const loader = TestbedHarnessEnvironment.loader(fixture);
@@ -522,7 +522,7 @@ describe('TnChipInputComponent test ids', () => {
     fixture.detectChanges();
 
     const chipId = (): string | null | undefined => fixture.nativeElement
-      .querySelector('.tn-chip-input__chip [role="button"]')
+      .querySelector('.tn-chip-input__chip .tn-chip')
       ?.getAttribute('data-testid');
     expect(chipId()).toBe('chip-tags-us');
 
@@ -542,7 +542,7 @@ describe('TnChipInputComponent test ids', () => {
     const fixture = TestBed.createComponent(OptionTestIdKeyHostComponent);
     fixture.detectChanges();
 
-    const chip = fixture.nativeElement.querySelector('.tn-chip-input__chip [role="button"]');
+    const chip = fixture.nativeElement.querySelector('.tn-chip-input__chip .tn-chip');
     expect(chip?.getAttribute('data-testid')).toBe('chip-users-u-1');
 
     const loader = TestbedHarnessEnvironment.loader(fixture);
@@ -562,7 +562,7 @@ describe('TnChipInputComponent test ids', () => {
     const fixture = TestBed.createComponent(UnnormalizableLabelHostComponent);
     fixture.detectChanges();
 
-    const chip = fixture.nativeElement.querySelector('.tn-chip-input__chip [role="button"]');
+    const chip = fixture.nativeElement.querySelector('.tn-chip-input__chip .tn-chip');
     expect(chip?.getAttribute('data-testid')).toBe('chip-tags-ja');
 
     const loader = TestbedHarnessEnvironment.loader(fixture);
