@@ -1,0 +1,8 @@
+# Without this, "Open a blank issue" sits under the two forms and makes every
+# required field on them optional again — which is the whole reason they are
+# forms rather than markdown templates.
+#
+# This applies to the web UI only. Issues created through the API carry a body
+# verbatim and never see a template, so automation that files tickets is
+# unaffected by this setting.
+blank_issues_enabled: false

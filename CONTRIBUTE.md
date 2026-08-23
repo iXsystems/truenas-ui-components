@@ -555,7 +555,11 @@ If you have questions or run into issues:
 
 - Check existing documentation
 - Search existing GitHub issues
-- Create a new issue with a detailed description
-- Tag it appropriately (bug, question, enhancement, etc.)
+- Open a new issue with the **Bug report** or **Task** form. What they ask for — a
+  reproduction, the tool you found it with, acceptance criteria — is what the work needs
+  before it can start, so filling them in is the difference between a ticket someone can
+  pick up and one that has to be sent back
+- Leave the labels off. Priority and routing labels are applied during triage, from
+  context about the rest of the board that a single ticket does not carry
 
 Thank you for contributing to TrueNAS-UI Components!
