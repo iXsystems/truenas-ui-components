@@ -373,10 +373,14 @@ export async function axeScan(
   }
 
   // No `runOnly`: naming nothing is the point of a probe, so this is every rule
-  // axe ships minus `SKIPPED_RULES`. `elementRef` is on for consistency with
-  // `axeResult` and so a caller can correlate a finding with a node it holds.
+  // axe ships minus `SKIPPED_RULES`.
+  //
+  // No `elementRef` either, unlike `axeResult`. That flag exists to attribute a
+  // result to an element the caller already holds, and a probe holds none — it
+  // reports what it finds, by selector and markup, to someone who does not yet
+  // know which element to ask about. Turning it on would put an `element` on
+  // every node result for nothing to read.
   const results = await axe.run(root, {
-    elementRef: true,
     rules: Object.fromEntries(SKIPPED_RULES.map(({ rule }) => [rule, { enabled: false }])),
   });
 

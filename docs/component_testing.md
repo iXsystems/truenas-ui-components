@@ -348,12 +348,18 @@ it('has nothing for axe to report', async () => {
 
   expect(violations).toEqual([]);
   expect(incomplete).toEqual([]);
-  expect(passed).toContain('nested-interactive');
+  // Name a rule YOUR component exercises — `button-name` for something that
+  // renders a button, `aria-valid-attr-value` for something with ARIA
+  // references. Print `passed` once to see what is available; copying a rule
+  // your markup never triggers just fails for a reason that is not about
+  // accessibility.
+  expect(passed).toContain('button-name');
 });
 ```
 
 See `lib/chip/chip-a11y.spec.ts` for the whole call on a real fixture, across four
-component states.
+component states — it names `nested-interactive`, the rule the chip's own fix was
+about.
 
 **Never assert on `violations` alone.** It is only what axe is *sure* about.
 A rule it looked at and could not decide lands in `incomplete`, and the gap
