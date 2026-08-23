@@ -321,6 +321,70 @@ export const Primary: Story = {
 };
 ```
 
+## Accessibility Tests
+
+**Do not write your own axe wrapper.** `lib/a11y/axe-testing.ts` exports two, and
+between them they cover what an accessibility ticket needs. Four cycles in one day
+each wrote a throwaway probe spec inside `src/` because this section did not exist
+(#252).
+
+| You want | Use | It answers |
+|---|---|---|
+| "What does axe say about this component?" | `axeScan(fixture)` | everything, with nothing named in advance |
+| "Does this fix stay fixed?" | `axeResult(root, targets, rules)` | whether *these* rules object to *these* elements |
+
+Start with `axeScan` to find out what is wrong. Write the regression test with
+`axeResult`, which pins a named rule to a named element and is what belongs in a
+spec long-term. `component_conventions.md` has the rules for that half.
+
+### Scanning a component: `axeScan`
+
+```typescript
+import { axeScan } from '../a11y/axe-testing';
+
+it('has nothing for axe to report', async () => {
+  // A fixture or an element — axeScan takes either.
+  const { violations, incomplete, passed } = await axeScan(fixture);
+
+  expect(violations).toEqual([]);
+  expect(incomplete).toEqual([]);
+  expect(passed).toContain('nested-interactive');
+});
+```
+
+See `lib/chip/chip-a11y.spec.ts` for the whole call on a real fixture, across four
+component states.
+
+**Never assert on `violations` alone.** It is only what axe is *sure* about.
+A rule it looked at and could not decide lands in `incomplete`, and the gap
+between the two is where real defects sit: a `<button aria-labelledby="nope">`
+whose referenced id does not exist has no accessible name at all, and axe returns
+**zero violations** for it — the finding is `aria-valid-attr-value`, impact
+`critical`, in `incomplete`. So `expect(violations).toEqual([])` passes on it.
+Assert on both, every time.
+
+The other two fields exist so that nothing is silently missing:
+
+- **`passed`** — rule ids that matched a node and passed. An empty `violations`
+  means nothing without it. (`axeScan` also throws outright if axe attributed no
+  result to any node, so a fixture that never rendered fails loudly instead of
+  reporting itself clean.)
+- **`notRun`** — rules `axeScan` declined, with the reason. Always
+  `color-contrast`: jsdom has no layout engine, so axe can return no verdict on
+  it. **Measure colour with `lib/a11y/contrast-testing.ts` instead** — see
+  `lib/theme/error-text-contrast.spec.ts`.
+
+A fifth field, `undecided`, collects any rule axe could not decide *and* could not
+point at a node for. It is empty on everything measured so far; it exists so such
+a rule is reported rather than dropped.
+
+### The fixture must be in the document
+
+axe treats a detached tree as hidden and exempts every node in it, so a scan of
+one comes back clean whatever the markup says. `TestBed.createComponent` attaches
+the fixture for you, which is why the examples above just work — but `axeScan` and
+`axeResult` both check, and throw rather than let it pass.
+
 ## Edge Cases to Test
 
 ### Null/Undefined Values

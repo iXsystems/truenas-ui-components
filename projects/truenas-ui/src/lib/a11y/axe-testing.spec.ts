@@ -1,4 +1,4 @@
-import { axeResult } from './axe-testing';
+import { axeResult, axeScan } from './axe-testing';
 import * as axeTesting from './axe-testing';
 import * as publicApi from '../../public-api';
 
@@ -202,6 +202,142 @@ describe('axeResult', () => {
       } finally {
         elsewhere.remove();
       }
+    });
+  });
+});
+
+/**
+ * Guards `axeScan`, the probe half of this module.
+ *
+ * The claim it has to hold up is narrower than `axeResult`'s and more easily
+ * lost: that a caller reading `violations` alone is reading the wrong half. The
+ * `incomplete` test below is the whole reason the return type has four buckets
+ * instead of one array, so it is the one to keep if any of these ever have to go.
+ *
+ * Hand-built DOM again, for the reason the file already gives: the property
+ * under test is about what axe reports, and a component would only add ways for
+ * the test to fail that are not about it. The worked example on a real fixture
+ * is `chip-a11y.spec.ts`.
+ */
+describe('axeScan', () => {
+  let root: HTMLElement;
+
+  beforeEach(() => {
+    root = document.createElement('div');
+    document.body.appendChild(root);
+  });
+
+  afterEach(() => {
+    root.remove();
+  });
+
+  describe('what it reports', () => {
+    it('reports a violation with the rule, its impact and the node it is on', async () => {
+      root.innerHTML = '<div role="button" tabindex="0"><button type="button">x</button></div>';
+
+      const { violations } = await axeScan(root);
+
+      expect(violations.map((v) => v.rule)).toEqual(['nested-interactive']);
+      expect(violations[0].impact).toBe('serious');
+      expect(violations[0].help).toBe('Interactive controls must not be nested');
+      expect(violations[0].nodes).toEqual([
+        expect.objectContaining({ target: 'div[role="button"]' }),
+      ]);
+    });
+
+    /**
+     * THE test in this block, and the one criterion the ticket (#252) spells out.
+     *
+     * A dangling `aria-labelledby` is a real, critical defect — the control has
+     * no accessible name — and axe reports ZERO violations for it, because it
+     * cannot tell a reference into a not-yet-rendered part of the page from a
+     * broken one. Measured against axe-core 4.10.3 under jsdom, not assumed.
+     *
+     * So a probe written the obvious way, `expect(violations).toEqual([])`,
+     * passes on this markup. Both halves are asserted here, together, because
+     * the empty `violations` is what makes the populated `incomplete` mean
+     * something.
+     */
+    it('puts a dangling aria-labelledby in incomplete, where violations alone would miss it', async () => {
+      root.innerHTML = '<button type="button" aria-labelledby="not-a-real-id">x</button>';
+
+      const { violations, incomplete } = await axeScan(root);
+
+      expect(violations).toEqual([]);
+      expect(incomplete.map((v) => v.rule)).toContain('aria-valid-attr-value');
+      expect(incomplete.find((v) => v.rule === 'aria-valid-attr-value')!.nodes[0].summary)
+        .toContain('ARIA attribute element ID does not exist on the page');
+    });
+
+    it('names the rules that ran and passed, so an empty violations list is not vacuous', async () => {
+      root.innerHTML = '<button type="button">Save</button>';
+
+      const { violations, passed } = await axeScan(root);
+
+      expect(violations).toEqual([]);
+      expect(passed).toContain('button-name');
+    });
+
+    /**
+     * `color-contrast` is declined rather than run — it needs a layout engine
+     * jsdom does not have, so it can only ever come back undecided, and running
+     * it makes jsdom log a canvas error on every scan. What matters is that the
+     * gap is visible in the result: a rule that was never run is not a rule that
+     * passed, and a caller reading an empty `violations` needs to know which is
+     * which.
+     */
+    it('reports the rule it declined to run, rather than leaving the gap silent', async () => {
+      root.innerHTML = '<button type="button">Save</button>';
+
+      const { notRun, incomplete, undecided, passed } = await axeScan(root);
+
+      expect(notRun.map((r) => r.rule)).toEqual(['color-contrast']);
+      expect(notRun[0].reason).toContain('contrast-testing.ts');
+      // And it is genuinely absent from every bucket a caller would act on,
+      // rather than merely declared skipped.
+      expect(incomplete.map((v) => v.rule)).not.toContain('color-contrast');
+      expect(undecided).not.toContain('color-contrast');
+      expect(passed).not.toContain('color-contrast');
+    });
+
+    it('accepts a fixture as well as an element, so a caller can pass either', async () => {
+      root.innerHTML = '<div role="button" tabindex="0"><button type="button">x</button></div>';
+
+      const { violations } = await axeScan({ nativeElement: root });
+
+      expect(violations.map((v) => v.rule)).toEqual(['nested-interactive']);
+    });
+  });
+
+  /**
+   * The same premise as `axeResult`'s guards one level up: an empty result is
+   * also what a scan of nothing returns, and a probe reporting "no violations"
+   * from a scan that never looked is the failure this module exists for.
+   */
+  describe('refuses to report on nothing', () => {
+    it('rejects a root that is not in the document', async () => {
+      const orphan = document.createElement('div');
+      orphan.innerHTML = '<div role="button" tabindex="0"><button type="button">x</button></div>';
+
+      await expect(axeScan(orphan)).rejects.toThrow('not in the document');
+    });
+
+    it('rejects a null element, rather than treating it as an empty tree', async () => {
+      await expect(axeScan(root.querySelector('.absent'))).rejects.toThrow('no element to scan');
+    });
+
+    it('rejects a fixture whose host never rendered', async () => {
+      await expect(axeScan({ nativeElement: null as unknown as HTMLElement }))
+        .rejects.toThrow('no nativeElement');
+    });
+
+    /**
+     * An empty element really does come back with all three buckets empty —
+     * measured, not assumed — so without this guard `axeScan` would report a
+     * fixture that failed to render as perfectly accessible.
+     */
+    it('rejects a tree axe attributed nothing to', async () => {
+      await expect(axeScan(root)).rejects.toThrow('evaluated nothing');
     });
   });
 });

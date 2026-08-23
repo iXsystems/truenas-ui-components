@@ -33,8 +33,8 @@ This file helps coding agents quickly find the right documentation for working o
 | `component_creation_checklist.md` | Step-by-step component creation workflow | Creating any new component | ~200 lines |
 | `component_templates.md` | Copy-paste boilerplate code for all file types | Need template code for .ts/.html/.scss/.spec/.stories files | ~740 lines |
 | `component_styling.md` | CSS patterns, theme variables, responsive design | Working on styles or appearance | ~480 lines |
-| `component_testing.md` | Testing patterns, Jest examples, mocking | Writing or debugging tests | ~740 lines |
-| `component_conventions.md` | Naming rules, architecture decisions, patterns | Understanding project structure or design choices | ~510 lines |
+| `component_testing.md` | Testing patterns, Jest examples, accessibility scans, mocking | Writing or debugging tests | ~800 lines |
+| `component_conventions.md` | Naming rules, architecture decisions, patterns | Understanding project structure or design choices | ~610 lines |
 | `harness_documentation.md` | Auto-generating harness API docs in Storybook | Creating harness documentation or integrating into stories | ~570 lines |
 
 ## Common Usage Patterns
