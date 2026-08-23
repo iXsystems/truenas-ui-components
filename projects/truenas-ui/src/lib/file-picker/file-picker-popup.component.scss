@@ -140,7 +140,7 @@
     min-width: 0;
 
     &.error {
-      border-color: var(--tn-error, #d32f2f);
+      border-color: var(--tn-error);
     }
 
     &:disabled {
@@ -164,11 +164,11 @@
   gap: 6px;
   margin-top: 4px;
   padding: 4px 8px;
-  background: color-mix(in srgb, var(--tn-error, #d32f2f) 10%, transparent);
-  border-left: 3px solid var(--tn-error, #d32f2f);
+  background: color-mix(in srgb, var(--tn-error) 10%, transparent);
+  border-left: 3px solid var(--tn-error);
   border-radius: 3px;
   font-size: 1rem;
-  color: var(--tn-error, #d32f2f);
+  color: var(--tn-error);
 
   .error-icon {
     flex-shrink: 0;

@@ -54,10 +54,10 @@
   }
 
   &.error {
-    border-color: var(--tn-error, #dc3545);
+    border-color: var(--tn-error);
 
     &:focus {
-      border-color: var(--tn-error, #dc3545);
+      border-color: var(--tn-error);
       box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
     }
   }
@@ -108,10 +108,10 @@
   // Error state integration
   &.error {
     .tn-file-picker-input {
-      border-color: var(--tn-error, #dc3545);
+      border-color: var(--tn-error);
 
       &:focus {
-        border-color: var(--tn-error, #dc3545);
+        border-color: var(--tn-error);
         box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
       }
     }

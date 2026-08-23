@@ -14,7 +14,7 @@
 
   &.required {
     .required-asterisk {
-      color: var(--tn-error, #dc3545);
+      color: var(--tn-error);
       margin-left: 0.25rem;
     }
   }
@@ -49,12 +49,12 @@
   }
 
   &.error {
-    border-color: var(--tn-error, #dc3545);
+    border-color: var(--tn-error);
 
     &:focus-visible,
     &.open {
-      border-color: var(--tn-error, #dc3545);
-      box-shadow: 0 0 0 2px color-mix(in srgb, var(--tn-error, #dc3545) 25%, transparent);
+      border-color: var(--tn-error);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--tn-error) 25%, transparent);
     }
   }
 
@@ -215,7 +215,7 @@
 .tn-select-error {
   margin-top: 0.25rem;
   font-size: 0.75rem;
-  color: var(--tn-error, #dc3545);
+  color: var(--tn-error);
 }
 
 // Accessibility improvements
