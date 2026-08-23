@@ -20,8 +20,10 @@ body:
 
         A ticket title gets copied into the pull request that fixes it, and pull requests
         here are squash-merged — so the PR title becomes the commit subject that
-        `.releaserc.json` reads. Only `feat`, `fix`, `perf` and `refactor` cut a release;
-        anything else merges, cuts no version and appears in no changelog. A prefix in a
+        `.releaserc.json` reads. Only `feat`, `fix`, `perf`, `refactor` and a revert cut a
+        release; `docs`, `style`, `test`, `build`, `ci` and `chore` merge, cut no version
+        and appear in no changelog — and an unrecognised type is worse still: it fails the
+        PR title check outright and blocks the fix from merging at all. A prefix in a
         ticket title is how that silent no-op gets started. Choosing the commit type is the
         job of whoever writes the fix, not of whoever reports it.
 
