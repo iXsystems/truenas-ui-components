@@ -178,7 +178,8 @@ describe('meetsAa', () => {
  * because the claims here are about the rules — inheritance, `var()` chains,
  * what counts as a palette — and pinning them to shipped colour values would
  * make this file fail every time a theme is retuned, for a reason that is not
- * about it. `radio-error-contrast.spec.ts` is what measures the real stylesheet.
+ * about it. `theme/error-text-contrast.spec.ts` is what measures the real
+ * stylesheet.
  */
 describe('themePalettes', () => {
   const FIXTURE = `

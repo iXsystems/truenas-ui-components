@@ -32,7 +32,7 @@ import { contrastRatio, formatRatio, meetsAa, themePalettes } from '../a11y/cont
  * is what checks the page.
  *
  * The maths and the token lookup are `lib/a11y/contrast-testing.ts` (#197).
- * `primary-text-contrast.spec.ts` and `radio-error-contrast.spec.ts` are the
+ * `primary-text-contrast.spec.ts` and `error-text-contrast.spec.ts` are the
  * same shape for `--tn-primary-text` and `--tn-error-text`.
  */
 
