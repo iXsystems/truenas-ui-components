@@ -45,7 +45,7 @@
   .breadcrumb-segment {
     background: transparent;
     border: none;
-    color: var(--tn-primary);
+    color: var(--tn-primary-text, var(--tn-primary, #0074a7));
     cursor: pointer;
     padding: 4px 2px;
     border-radius: 4px;
@@ -150,6 +150,7 @@
     }
   }
 
+  // An icon, not text — 3:1 applies, which --tn-primary is tuned for.
   .creation-loading-icon {
     animation: spin 1s linear infinite;
     color: var(--tn-primary);
@@ -252,7 +253,7 @@ tn-table {
   flex-shrink: 0;
   line-height: 1;
 
-  // Folder color
+  // Folder color. An icon, not text — 3:1 applies.
   &.file-icon-folder {
     color: var(--tn-primary);
   }
@@ -332,6 +333,7 @@ tn-table {
   &:hover,
   &:focus-visible {
     background: var(--tn-bg3);
+    // The chevron is an icon, not text — 3:1 applies.
     color: var(--tn-primary);
   }
 }

@@ -328,8 +328,8 @@ export const WithKeyboardShortcuts: Story = {
           Avoid single letters like H, K, T, F, B, L as they conflict with screen reader navigation.
           <br><br>
           <strong>Learn more:</strong>&nbsp;&nbsp;
-          <a href="https://www.w3.org/WAI/WCAG21/Understanding/character-key-shortcuts.html" target="_blank" rel="noopener" style="color: var(--tn-primary, #007bff);">WCAG 2.1.4 Character Key Shortcuts</a> •
-          <a href="https://webaim.org/techniques/keyboard/" target="_blank" rel="noopener" style="color: var(--tn-primary, #007bff);">WebAIM Keyboard Accessibility</a>
+          <a href="https://www.w3.org/WAI/WCAG21/Understanding/character-key-shortcuts.html" target="_blank" rel="noopener" style="color: var(--tn-primary-text, #0074a7);">WCAG 2.1.4 Character Key Shortcuts</a> •
+          <a href="https://webaim.org/techniques/keyboard/" target="_blank" rel="noopener" style="color: var(--tn-primary-text, #0074a7);">WebAIM Keyboard Accessibility</a>
         </div>
       </div>
     `,

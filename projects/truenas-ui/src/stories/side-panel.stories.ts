@@ -604,7 +604,7 @@ export const WidePanel: Story = {
 
           <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
             <div style="${sectionStyle} text-align: center;">
-              <div style="font-size: 2rem; font-weight: 700; color: var(--tn-primary);">24.10</div>
+              <div style="font-size: 2rem; font-weight: 700; color: var(--tn-primary-text);">24.10</div>
               <div style="font-size: 0.8125rem; color: var(--tn-fg2); margin-top: 4px;">TrueNAS Version</div>
             </div>
             <div style="${sectionStyle} text-align: center;">

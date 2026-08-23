@@ -45,6 +45,7 @@
 
   &:hover,
   &:focus-visible {
+    // The button holds an icon and no text — 3:1 applies.
     color: var(--tn-primary, #007bff);
   }
 
@@ -126,7 +127,7 @@
 // Focus state handling
 .tn-form-field-wrapper:has(:focus-visible) {
   .tn-form-field-label {
-    color: var(--tn-primary, #007bff);
+    color: var(--tn-primary-text, var(--tn-primary, #0074a7));
   }
 }
 

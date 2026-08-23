@@ -82,7 +82,7 @@ tn-toast {
 .tn-toast__action {
   background: none;
   border: none;
-  color: var(--tn-primary, #3b82f6);
+  color: var(--tn-primary-text, var(--tn-primary, #0074a7));
   font-family: inherit;
   font-size: 1rem;
   font-weight: 600;

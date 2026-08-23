@@ -210,7 +210,7 @@ export const RichLabel: Story = {
           <span tnCheckboxLabel>
             I have read and agree to the
             <a href="https://example.com/terms" target="_blank"
-              style="color: var(--tn-primary); text-decoration: underline;">
+              style="color: var(--tn-primary-text); text-decoration: underline;">
               Terms of Service
             </a>
           </span>
@@ -220,12 +220,12 @@ export const RichLabel: Story = {
           <span tnCheckboxLabel>
             I accept the
             <a href="https://example.com/privacy" target="_blank"
-              style="color: var(--tn-primary); text-decoration: underline;">
+              style="color: var(--tn-primary-text); text-decoration: underline;">
               Privacy Policy
             </a>
             and
             <a href="https://example.com/cookies" target="_blank"
-              style="color: var(--tn-primary); text-decoration: underline;">
+              style="color: var(--tn-primary-text); text-decoration: underline;">
               Cookie Policy
             </a>
           </span>

@@ -101,10 +101,11 @@
     .tn-expansion-panel__title {
       font-size: 1rem;
       font-weight: 400;
-      color: var(--tn-primary, #3b82f6);
+      color: var(--tn-primary-text, var(--tn-primary, #0074a7));
       text-decoration: none;
     }
     
+    // The chevron is an <svg>, not text — 3:1 applies.
     .tn-expansion-panel__indicator {
       color: var(--tn-primary, #3b82f6);
     }
