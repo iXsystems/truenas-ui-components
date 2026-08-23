@@ -75,10 +75,10 @@ const REQUIRED_TOKENS = [...Object.keys(SURFACES), ...STATUS_TOKENS];
  *
  * The terminal literal is `.tn-blue`'s value for that semantic. It is reachable
  * only when no theme stylesheet is loaded at all, where the surface is the UA
- * default white and a light theme's value is the right one; `LITERALS_ON_WHITE`
- * below holds each to AA there. The untuned Tailwind hexes they replace did not
- * clear it: #3b82f6 measures 3.68:1 on white, #f59e0b 2.15:1, #ef4444 3.76:1
- * and #10b981 2.54:1.
+ * default white and a light theme's value is the right one; the last case in
+ * this file measures each of them there. The untuned Tailwind hexes they
+ * replace did not clear it: #3b82f6 measures 3.68:1 on white, #f59e0b 2.15:1,
+ * #ef4444 3.76:1 and #10b981 2.54:1.
  */
 const EXPECTED_CHAIN: Readonly<Record<string, string>> = {
   '--tn-info': 'var(--tn-info, var(--tn-blue, #006997))',
