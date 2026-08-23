@@ -53,6 +53,30 @@
   --tn-teal: #008080;
   --tn-slategray: #708090;
   --tn-salmon: #fa8072;
+  /* SEMANTIC STATUS COLOURS. Drawn as text — banner headings, toast and card
+     status labels, form error messages, the required asterisk — as well as
+     borders and icons, so each clears the 4.5:1 text minimum rather than the
+     3:1 non-text one. Every theme declares its own: the value is a
+     hue-preserving lightness shift of THAT theme's own hue token (--tn-blue,
+     --tn-orange, --tn-red, --tn-green), the smallest step that clears 4.5:1 on
+     all three surfaces a status colour is painted on — --tn-alt-bg1 (the
+     banner), --tn-bg1 (the page, the file-picker popup) and --tn-bg2 (the card,
+     the toast) — and on the 10% wash of itself that tn-file-picker's inline
+     error paints behind it. Ratios below are on --tn-alt-bg1 / --tn-bg1 /
+     --tn-bg2.
+
+     --tn-error is NOT --tn-error-text. That one is --tn-red's companion and
+     guarantees 4.5:1 on --tn-bg1 and --tn-bg2 only; it measures 3.64:1 on
+     --tn-alt-bg1 here, where tn-banner draws an error heading.
+
+     A reader spells the whole chain — var(--tn-error, var(--tn-red, #bd2626)) —
+     as radio.component.scss does for --tn-error-text, so a consumer stylesheet
+     that predates these four keeps its own palette; semantic-status-contrast
+     .spec.ts pins that shape and the literals. */
+  --tn-info: #00adf8; /* 4.65:1 / 6.62:1 / 5.85:1; --tn-blue is 2.56:1 on --tn-alt-bg1 */
+  --tn-warning: var(--tn-orange); /* 4.60:1 / 6.53:1 / 5.78:1 — needs no shade of its own */
+  --tn-error: #e78888; /* 4.62:1 / 6.57:1 / 5.81:1; --tn-red is 2.22:1 on --tn-alt-bg1 */
+  --tn-success: var(--tn-green); /* 5.16:1 / 7.33:1 / 6.49:1 — needs no shade of its own */
   --tn-font-family-header: "Titillium Web", sans-serif;
   --tn-font-family-body: "IBM Plex Sans", "Roboto", "Helvetica Neue", sans-serif;
   --tn-font-family-monospace: "Droid Sans Mono", "Courier New", Courier, monospace;
@@ -120,6 +144,12 @@
   --tn-teal: #008080;
   --tn-slategray: #708090;
   --tn-salmon: #fa8072;
+  /* Semantic status colours — see the note in :root. On --tn-alt-bg1 /
+     --tn-bg1 / --tn-bg2. */
+  --tn-info: #00adf8; /* 4.65:1 / 6.62:1 / 5.85:1 */
+  --tn-warning: var(--tn-orange); /* 4.60:1 / 6.53:1 / 5.78:1 */
+  --tn-error: #e78888; /* 4.62:1 / 6.57:1 / 5.81:1 */
+  --tn-success: var(--tn-green); /* 5.16:1 / 7.33:1 / 6.49:1 */
 }
 
 /* ================================
@@ -162,6 +192,13 @@
   --tn-teal: #008080;
   --tn-slategray: #708090;
   --tn-salmon: #fa8072;
+  /* Semantic status colours — see the note in :root. Darkened rather than
+     lightened, this being a light theme. On --tn-alt-bg1 / --tn-bg1 /
+     --tn-bg2. */
+  --tn-info: #006997; /* 5.31:1 / 5.41:1 / 6.06:1 */
+  --tn-warning: #955313; /* 5.23:1 / 5.32:1 / 5.96:1 */
+  --tn-error: #bd2626; /* 5.31:1 / 5.41:1 / 6.05:1 */
+  --tn-success: #416f26; /* 5.23:1 / 5.32:1 / 5.95:1 */
 }
 
 /* ================================
@@ -204,6 +241,12 @@
   --tn-teal: #008080;
   --tn-slategray: #708090;
   --tn-salmon: #fa8072;
+  /* Semantic status colours — see the note in :root. On --tn-alt-bg1 /
+     --tn-bg1 / --tn-bg2. */
+  --tn-info: #9fa9c8; /* 4.62:1 / 7.40:1 / 6.09:1 */
+  --tn-warning: var(--tn-orange); /* 6.33:1 / 10.15:1 / 8.36:1 */
+  --tn-error: #ff8888; /* 4.69:1 / 7.52:1 / 6.19:1 */
+  --tn-success: var(--tn-green); /* 7.86:1 / 12.60:1 / 10.38:1 */
 }
 
 /* ================================
@@ -249,6 +292,13 @@
   --tn-teal: #008080;
   --tn-slategray: #708090;
   --tn-salmon: #fa8072;
+  /* Semantic status colours — see the note in :root. This palette's surfaces
+     sit close together, so every one of these is a long shift. On
+     --tn-alt-bg1 / --tn-bg1 / --tn-bg2. */
+  --tn-info: #b4c4d8; /* 4.86:1 / 7.03:1 / 5.67:1 */
+  --tn-warning: #e4b9ab; /* 4.86:1 / 7.03:1 / 5.67:1 */
+  --tn-error: #e2b8bc; /* 4.85:1 / 7.03:1 / 5.66:1 */
+  --tn-success: #b4caa1; /* 4.89:1 / 7.08:1 / 5.70:1 */
 }
 
 /* ================================
@@ -290,6 +340,13 @@
   --tn-teal: #008080;
   --tn-slategray: #708090;
   --tn-salmon: #fa8072;
+  /* Semantic status colours — see the note in :root. Darkened rather than
+     lightened, this being a light theme. On --tn-alt-bg1 / --tn-bg1 /
+     --tn-bg2. */
+  --tn-info: var(--tn-blue); /* 6.83:1 / 6.95:1 / 7.46:1 — needs no shade of its own */
+  --tn-warning: #8e5801; /* 5.20:1 / 5.29:1 / 5.67:1 */
+  --tn-error: #c4000f; /* 5.49:1 / 5.59:1 / 6.00:1 */
+  --tn-success: #187232; /* 5.28:1 / 5.37:1 / 5.76:1 */
 }
 
 /* ================================
@@ -336,6 +393,12 @@
   --tn-teal: #008080;
   --tn-slategray: #708090;
   --tn-salmon: #fa8072;
+  /* Semantic status colours — see the note in :root. On --tn-alt-bg1 /
+     --tn-bg1 / --tn-bg2. */
+  --tn-info: #73b6e6; /* 4.62:1 / 6.84:1 / 5.92:1 */
+  --tn-warning: #f09b78; /* 4.67:1 / 6.91:1 / 5.98:1 */
+  --tn-error: #ee9998; /* 4.66:1 / 6.90:1 / 5.97:1 */
+  --tn-success: #a2ba00; /* 4.62:1 / 6.83:1 / 5.92:1 */
 }
 
 
@@ -380,6 +443,12 @@
   --tn-teal: #008080;
   --tn-slategray: #708090;
   --tn-salmon: #fa8072;
+  /* Semantic status colours — see the note in :root. On --tn-alt-bg1 /
+     --tn-bg1 / --tn-bg2. */
+  --tn-info: #79c1f2; /* 4.64:1 / 7.41:1 / 5.68:1 */
+  --tn-warning: #fda61c; /* 4.61:1 / 7.36:1 / 5.64:1 */
+  --tn-error: #ff9ea5; /* 4.63:1 / 7.38:1 / 5.66:1 */
+  --tn-success: #2ed45f; /* 4.63:1 / 7.39:1 / 5.67:1 */
 }
 
 /* ================================
@@ -421,6 +490,14 @@
   --tn-teal: #008080;
   --tn-slategray: #708090;
   --tn-salmon: #fa8072;
+  /* Semantic status colours — see the note in :root. Darkened rather than
+     lightened, this being a light theme, and further than the other two: the
+     accessibility theme is the one where a status colour has to hold up. On
+     --tn-alt-bg1 / --tn-bg1 / --tn-bg2. */
+  --tn-info: #315c78; /* 6.28:1 / 5.27:1 / 7.16:1 */
+  --tn-warning: #7c4d01; /* 6.31:1 / 5.30:1 / 7.19:1 */
+  --tn-error: #ad000d; /* 6.62:1 / 5.56:1 / 7.55:1 */
+  --tn-success: #296300; /* 6.40:1 / 5.37:1 / 7.29:1 */
 }
 
 /* ================================
