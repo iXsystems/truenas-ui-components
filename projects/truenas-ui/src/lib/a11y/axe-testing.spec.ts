@@ -383,5 +383,38 @@ describe('axeScan', () => {
 
       await expect(axeScan(root)).resolves.toBeDefined();
     });
+
+    /**
+     * The host-attribute case, which is `tn-divider`: a 0-byte template and
+     * `role="separator"` plus `aria-orientation` declared in `host: {}`. It
+     * renders childless and textless, so a guard reading only the tree would
+     * reject a fixture that rendered correctly — and reject it on the one shape
+     * where the scan has the most to say, since the rules that match are the
+     * ones about those very attributes.
+     */
+    it('accepts a root whose whole accessibility surface is host attributes', async () => {
+      root.setAttribute('role', 'separator');
+      root.setAttribute('aria-orientation', 'horizontal');
+
+      const scan = await axeScan(root);
+
+      expect(scan.violations).toEqual([]);
+      // Non-vacuous: axe really did evaluate the host attributes, which is why
+      // rejecting this root would have cost a real answer rather than an empty
+      // one. `aria-allowed-attr` is the rule that matches `aria-orientation` on
+      // `role="separator"`.
+      expect(scan.passed).toContain('aria-allowed-attr');
+    });
+
+    // The same guard from the other side: a bare root carrying an `aria-*` and
+    // no `role` is still a rendered host, and axe has a verdict on it — here a
+    // real one, since `aria-orientation` is not allowed on a generic `<div>`.
+    it('accepts a root marked with aria-* alone, and reports what axe found', async () => {
+      root.setAttribute('aria-orientation', 'horizontal');
+
+      const scan = await axeScan(root);
+
+      expect(scan.violations.map((v) => v.rule)).toEqual(['aria-allowed-attr']);
+    });
   });
 });

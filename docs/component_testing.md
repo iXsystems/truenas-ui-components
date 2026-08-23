@@ -401,10 +401,16 @@ one comes back clean whatever the markup says. `TestBed.createComponent` attache
 the fixture for you, which is why the examples above just work — but `axeScan` and
 `axeResult` both check, and throw rather than let it pass.
 
-`axeScan` also throws on a root with no children and no text, which is what a host
-whose `detectChanges()` never ran looks like. That is asked of the tree rather
-than of axe's output, precisely so that the empty-but-rendered case above stays an
-ordinary result.
+`axeScan` also throws on a root with no children, no text **and** no `role` or
+`aria-*` attribute of its own, which is what a host whose `detectChanges()` never
+ran looks like. That is asked of the tree rather than of axe's output, precisely
+so that the empty-but-rendered case above stays an ordinary result.
+
+The `role`/`aria-*` part of that is for a component whose whole accessibility
+surface is host attributes — `tn-divider` has a 0-byte template and declares
+`role="separator"` and `aria-orientation` in `host: {}`. It renders childless and
+textless, and it is exactly the component a scan has most to say about, since the
+rules that match are the ones about those attributes. Scan it as usual.
 
 ## Edge Cases to Test
 

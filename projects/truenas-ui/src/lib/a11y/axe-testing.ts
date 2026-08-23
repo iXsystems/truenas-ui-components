@@ -345,6 +345,10 @@ function toFinding(result: axe.Result): AxeFinding {
  * looked at anything returns the same empty result as a clean one. So a root
  * that is detached — axe treats it as hidden and exempts every node in it — and
  * a root that is empty are both errors rather than a clean bill of health.
+ * "Empty" means no children, no text AND no `role` or `aria-*` on the root: a
+ * component whose whole accessibility surface is host attributes, `tn-divider`
+ * being the one here, renders to exactly that and is scanned rather than
+ * rejected.
  *
  * A tree axe reported NOTHING about is a different thing and is returned, not
  * thrown on. That is the ordinary answer for a presentational component: with
@@ -395,11 +399,23 @@ export async function axeScan(
   // there would blame the fixture for markup that rendered perfectly. An
   // unrendered host is what the guard is actually for, and it is visible here
   // directly: it has no children and no text.
-  if (root.children.length === 0 && (root.textContent ?? '').trim() === '') {
+  //
+  // Except when the host itself carries the accessibility surface. `tn-divider`
+  // has a 0-byte template and puts `role="separator"` plus `aria-orientation` in
+  // `host: {}`, so it reaches here childless and textless having rendered exactly
+  // what it was asked to — and a scan of it is not vacuous, since
+  // `aria-allowed-attr` and `aria-valid-attr-value` both match those attributes.
+  // An unrendered host has no `role` and no `aria-*` either, so the two are
+  // distinguishable and the guard keeps its purpose.
+  const bare = root.children.length === 0 && (root.textContent ?? '').trim() === '';
+  const marked = root.hasAttribute('role')
+    || root.getAttributeNames().some((name) => name.startsWith('aria-'));
+  if (bare && !marked) {
     throw new Error(
-      'axeScan: the scanned root is empty — no child elements and no text — so '
-      + 'a clean result from it would say nothing about the component. Check the '
-      + 'fixture rendered and that detectChanges() ran.'
+      'axeScan: the scanned root is empty — no child elements, no text, and no '
+      + 'role or aria-* attribute on the root itself — so a clean result from it '
+      + 'would say nothing about the component. Check the fixture rendered and '
+      + 'that detectChanges() ran.'
     );
   }
 
