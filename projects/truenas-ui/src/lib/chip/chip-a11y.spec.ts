@@ -238,10 +238,11 @@ describe('tn-chip accessibility (#188)', () => {
 
       expect(violations).toEqual([]);
       expect(incomplete).toEqual([]);
-      // `axeScan` throws rather than returning an empty scan, so this cannot go
-      // vacuous the way an unpaired `toEqual([])` can. Naming a rule the chip
-      // actually exercises says more than the count: it is the one the fix was
-      // about, and it is evaluated on the body button post-#188.
+      // This is what stops the two `toEqual([])` above going vacuous: a scan
+      // that matched no rule at all returns empty too, and only `passed` tells
+      // the two apart. Naming a rule the chip actually exercises says more than
+      // the count: it is the one the fix was about, and it is evaluated on the
+      // body button post-#188.
       expect(passed).toContain('nested-interactive');
     });
   });

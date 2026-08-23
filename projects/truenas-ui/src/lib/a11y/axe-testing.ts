@@ -190,7 +190,14 @@ export interface AxeFinding {
   impact: string | null;
   /** axe's one-line description of the rule, e.g. "Interactive controls must not be nested". */
   help: string;
-  /** The nodes this rule reported on. Never empty — see `undecided`. */
+  /**
+   * The nodes this rule reported on.
+   *
+   * Never empty in `incomplete`, where a node-less result is moved to
+   * `undecided` instead. That rescue is `incomplete`-only: axe defines a
+   * violation and a pass by the nodes they were found on, so neither bucket
+   * produces a node-less entry to rescue.
+   */
   nodes: AxeFindingNode[];
 }
 
@@ -240,8 +247,10 @@ export interface AxeScan {
   /**
    * Rule ids that matched a node in the tree and passed.
    *
-   * The proof that an empty `violations` means something. See `axeResult`'s
-   * `evaluated` for the same idea applied to a named element.
+   * The proof that an empty `violations` means something, and the field to
+   * assert on when it has to: an empty `passed` says no rule applied to this
+   * tree at all, which a purely presentational component reaches legitimately.
+   * See `axeResult`'s `evaluated` for the same idea applied to a named element.
    */
   passed: string[];
 }
@@ -330,13 +339,20 @@ function toFinding(result: axe.Result): AxeFinding {
  * So `expect(scan.violations).toEqual([])` is a check that passes while the
  * defect stands. Assert on `incomplete` as well, every time.
  *
- * A SCAN THAT LOOKED AT NOTHING THROWS
- * ------------------------------------
- * Same premise as `axeResult`'s guards, arriving one level up: an empty result
- * is also what axe returns for a tree it walked and found no rule applicable to
- * — a detached fixture, which axe treats as hidden and exempts entirely. Both
- * that and "axe attributed nothing to any node" are errors here rather than a
- * clean bill of health.
+ * A SCAN OF NOTHING THROWS — AN EMPTY SCAN OF SOMETHING DOES NOT
+ * --------------------------------------------------------------
+ * Same premise as `axeResult`'s guards, arriving one level up: a scan that never
+ * looked at anything returns the same empty result as a clean one. So a root
+ * that is detached — axe treats it as hidden and exempts every node in it — and
+ * a root that is empty are both errors rather than a clean bill of health.
+ *
+ * A tree axe reported NOTHING about is a different thing and is returned, not
+ * thrown on. That is the ordinary answer for a presentational component: with
+ * `color-contrast` declined, `<div><p>Some text</p></div>` matches no rule in the
+ * ruleset, and every bucket comes back empty on markup that is entirely correct.
+ * `passed` is what tells the two apart — an empty one means no rule applied here,
+ * so assert `expect(passed.length).toBeGreaterThan(0)` in a spec where a rule
+ * genuinely should have.
  *
  * WHAT THIS STILL CANNOT DO
  * -------------------------
@@ -371,6 +387,21 @@ export async function axeScan(
       + 'clean scan whatever the markup says.'
     );
   }
+  // "Nothing rendered" is asked of the TREE, not of axe's output, because those
+  // are not the same question and the difference is a false alarm on the most
+  // ordinary use of this function. A tree axe reports nothing about is usually a
+  // presentational one — measured, `<div><p>Some text</p></div>` matches no rule
+  // in the ruleset once `color-contrast` is declined — and a probe that threw
+  // there would blame the fixture for markup that rendered perfectly. An
+  // unrendered host is what the guard is actually for, and it is visible here
+  // directly: it has no children and no text.
+  if (root.children.length === 0 && (root.textContent ?? '').trim() === '') {
+    throw new Error(
+      'axeScan: the scanned root is empty — no child elements and no text — so '
+      + 'a clean result from it would say nothing about the component. Check the '
+      + 'fixture rendered and that detectChanges() ran.'
+    );
+  }
 
   // No `runOnly`: naming nothing is the point of a probe, so this is every rule
   // axe ships minus `SKIPPED_RULES`.
@@ -385,25 +416,11 @@ export async function axeScan(
   });
 
   const hasNodes = (result: axe.Result): boolean => result.nodes.length > 0;
-  const scan: AxeScan = {
+  return {
     violations: results.violations.filter(hasNodes).map(toFinding),
     incomplete: results.incomplete.filter(hasNodes).map(toFinding),
     undecided: results.incomplete.filter((r) => !hasNodes(r)).map((r) => r.id),
     notRun: SKIPPED_RULES,
     passed: results.passes.filter(hasNodes).map((r) => r.id),
   };
-
-  if (
-    scan.violations.length === 0
-    && scan.incomplete.length === 0
-    && scan.passed.length === 0
-  ) {
-    throw new Error(
-      'axeScan: axe attributed no result to any node in this tree, so an empty '
-      + 'violations list here means it evaluated nothing rather than that the '
-      + 'markup is clean. Check the fixture rendered and that detectChanges() ran.'
-    );
-  }
-
-  return scan;
 }

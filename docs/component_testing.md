@@ -372,9 +372,9 @@ Assert on both, every time.
 The other two fields exist so that nothing is silently missing:
 
 - **`passed`** — rule ids that matched a node and passed. An empty `violations`
-  means nothing without it. (`axeScan` also throws outright if axe attributed no
-  result to any node, so a fixture that never rendered fails loudly instead of
-  reporting itself clean.)
+  means nothing without it, which is why the snippet above asserts on it. A scan
+  that matched no rule at all returns `violations: []` too, and `passed` is the
+  only field that tells the two apart.
 - **`notRun`** — rules `axeScan` declined, with the reason. Always
   `color-contrast`: jsdom has no layout engine, so axe can return no verdict on
   it. **Measure colour with `lib/a11y/contrast-testing.ts` instead** — see
@@ -384,12 +384,27 @@ A fifth field, `undecided`, collects any rule axe could not decide *and* could n
 point at a node for. It is empty on everything measured so far; it exists so such
 a rule is reported rather than dropped.
 
+### An empty scan is a real answer for a presentational component
+
+If your component renders only `<div>`s, text and classes, expect **every bucket
+empty, `passed` included** — no rule in the ruleset matches that markup once
+`color-contrast` is declined. That is not a broken fixture and `axeScan` returns
+it normally. It does mean the snippet's `expect(passed).toContain(...)` has no
+rule to name, so drop that line rather than inventing one: there is nothing here
+for axe to check, and the accessibility question for such a component is answered
+by the component that consumes it.
+
 ### The fixture must be in the document
 
 axe treats a detached tree as hidden and exempts every node in it, so a scan of
 one comes back clean whatever the markup says. `TestBed.createComponent` attaches
 the fixture for you, which is why the examples above just work — but `axeScan` and
 `axeResult` both check, and throw rather than let it pass.
+
+`axeScan` also throws on a root with no children and no text, which is what a host
+whose `detectChanges()` never ran looks like. That is asked of the tree rather
+than of axe's output, precisely so that the empty-but-rendered case above stays an
+ordinary result.
 
 ## Edge Cases to Test
 

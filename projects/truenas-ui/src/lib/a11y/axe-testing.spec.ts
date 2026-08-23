@@ -336,8 +336,52 @@ describe('axeScan', () => {
      * measured, not assumed — so without this guard `axeScan` would report a
      * fixture that failed to render as perfectly accessible.
      */
-    it('rejects a tree axe attributed nothing to', async () => {
-      await expect(axeScan(root)).rejects.toThrow('evaluated nothing');
+    it('rejects an empty tree, which a fixture that never rendered is', async () => {
+      await expect(axeScan(root)).rejects.toThrow('the scanned root is empty');
+    });
+  });
+
+  /**
+   * The other side of that guard, and the reason it asks the TREE rather than
+   * axe's output. Both of these are rendered trees, so neither is the failure
+   * the block above is about — and a guard that could not tell them apart from
+   * an unrendered fixture would reject them.
+   */
+  describe('a rendered tree no rule applies to', () => {
+    /**
+     * These two markup samples are measured, not assumed: with `color-contrast`
+     * declined, each returns every bucket empty — no violation, no incomplete,
+     * nothing passed — because no rule in the ruleset matches a `<div>`, a `<p>`
+     * or a `<span>`. A guard keyed to "axe attributed nothing" would therefore
+     * throw here, telling a caller to check a fixture that rendered exactly what
+     * it was asked to. That is the first thing a probe is pointed at on a
+     * presentational component, so it has to be an ordinary answer.
+     */
+    it('comes back empty rather than throwing', async () => {
+      for (const markup of [
+        '<div class="tn-card"><div class="tn-card__content">Some text</div></div>',
+        '<div><p>Some text</p><span>more</span></div>',
+      ]) {
+        root.innerHTML = markup;
+
+        const scan = await axeScan(root);
+
+        expect(scan.violations).toEqual([]);
+        expect(scan.incomplete).toEqual([]);
+        // The empty `passed` is what says "no rule applied here" rather than
+        // "everything was checked and was fine" — which is the distinction a
+        // caller needs, and the reason this returns instead of throwing.
+        expect(scan.passed).toEqual([]);
+        expect(scan.notRun.map((r) => r.rule)).toEqual(['color-contrast']);
+      }
+    });
+
+    // Text alone is a rendered tree: a component whose host holds only projected
+    // text has no child elements, and the guard must not read that as unrendered.
+    it('accepts a root holding only text', async () => {
+      root.textContent = 'Some text';
+
+      await expect(axeScan(root)).resolves.toBeDefined();
     });
   });
 });
