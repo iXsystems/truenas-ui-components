@@ -91,7 +91,7 @@
 
 .tn-calendar-body-cell.tn-calendar-body-today:not(.tn-calendar-body-selected) .tn-calendar-body-cell-content {
   border: 1px solid var(--tn-primary, #007bff);
-  color: var(--tn-primary, #007bff);
+  color: var(--tn-primary-text, var(--tn-primary, #0074a7));
 }
 
 .tn-calendar-body-cell.tn-calendar-body-selected .tn-calendar-body-cell-content {

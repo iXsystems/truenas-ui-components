@@ -93,7 +93,7 @@
   &.tn-menu-item--selected {
     background: var(--tn-alt-bg2, #e8f4fd);
     font-weight: 600;
-    color: var(--tn-primary, #007bff);
+    color: var(--tn-primary-text, var(--tn-primary, #0074a7));
   }
 
   &.disabled {

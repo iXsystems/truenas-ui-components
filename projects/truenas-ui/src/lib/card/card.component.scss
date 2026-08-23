@@ -142,7 +142,7 @@
   transition: color 0.2s ease;
 
   &:hover {
-    color: var(--tn-primary, #2563eb);
+    color: var(--tn-primary-text, var(--tn-primary, #0074a7));
   }
 }
 
@@ -247,7 +247,7 @@
 .tn-card__footer-link {
   border: none;
   background: transparent;
-  color: var(--tn-primary, #2563eb);
+  color: var(--tn-primary-text, var(--tn-primary, #0074a7));
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;

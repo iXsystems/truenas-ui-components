@@ -191,7 +191,7 @@
 // component withholds this class there rather than the two fighting in CSS.
 .tn-calendar-body-cell-content.tn-calendar-body-today-outline {
   border: 1px solid var(--tn-primary, #007bff);
-  color: var(--tn-primary, #007bff);
+  color: var(--tn-primary-text, var(--tn-primary, #0074a7));
 }
 
 .cdk-visually-hidden {
