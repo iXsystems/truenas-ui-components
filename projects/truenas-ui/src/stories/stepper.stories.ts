@@ -303,7 +303,7 @@ export const StepStates: Story = {
         
         <tn-step label="Error Step" [hasError]="true">
           <h4>⚠ Profile Setup Failed</h4>
-          <p style="color: var(--tn-red, #dc3545);">
+          <p style="color: var(--tn-error-text, var(--tn-red, #b91c1c));">
             There was an error during profile setup. Please review and try again.
           </p>
           <div style="background: var(--tn-red, #dc3545); color: white; padding: 8px; border-radius: 4px; margin-top: 8px;">

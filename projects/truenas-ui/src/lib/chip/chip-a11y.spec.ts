@@ -15,7 +15,7 @@ import { axeResult } from '../a11y/axe-testing';
  * The Storybook a11y addon reports the same rule, but only in its panel: no
  * CI job fails on it. Running axe here is what actually holds the fix in place.
  *
- * Unlike the color-contrast rule (see `radio-error-contrast.spec.ts`, which
+ * Unlike the color-contrast rule (see `theme/error-text-contrast.spec.ts`, which
  * computes ratios by hand because jsdom has no layout engine),
  * `nested-interactive` is pure DOM structure and axe evaluates it correctly
  * under jsdom — verified by watching it report the violation before the fix.
@@ -257,7 +257,7 @@ describe('tn-chip accessibility (#188)', () => {
    *
    * jsdom has no layout engine and Jest does not compile the component's SCSS,
    * so the hit area cannot be measured here (same constraint that made
-   * `radio-error-contrast.spec.ts` read the stylesheet directly). Asserting on
+   * `theme/error-text-contrast.spec.ts` read the stylesheet directly). Asserting on
    * which rule owns the padding is the reachable form of the invariant.
    *
    * Most of these match loosely — "the body has some non-zero padding" — so

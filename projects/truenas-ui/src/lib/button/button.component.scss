@@ -104,8 +104,11 @@ a.storybook-button {
 }
 .button-outline-warn {
   background-color: transparent;
+  // The border keeps --tn-red, which is tuned for the 3:1 non-text minimum; the
+  // label is text and needs 4.5:1, which --tn-red misses in seven of the nine
+  // palettes (#234). Same split as .button-outline-primary above.
   border: 1px solid var(--tn-red);
-  color: var(--tn-red);
+  color: var(--tn-error-text, var(--tn-red, #b91c1c));
   transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 .button-outline-warn:hover {

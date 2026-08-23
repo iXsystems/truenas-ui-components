@@ -505,7 +505,7 @@ behind it decides the answer, and only the caller knows what that is.
 layout engine to find what is actually painted behind an element; under jsdom it
 reports `incomplete`, which `axeResult()` treats as an error. What these
 assertions measure is the palette as shipped, against the surface the spec names.
-See `radio-error-contrast.spec.ts` for the shape.
+See `theme/error-text-contrast.spec.ts` for the shape.
 
 ### Keyboard Navigation
 Support standard keys:

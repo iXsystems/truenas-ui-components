@@ -25,7 +25,7 @@ import { contrastRatio, formatRatio, meetsAa, themePalettes } from '../a11y/cont
  * about a rendered page. `yarn test-sb` is what checks the page.
  *
  * The maths and the token lookup are `lib/a11y/contrast-testing.ts` (#197);
- * nothing is re-derived here. `radio-error-contrast.spec.ts` is the same shape
+ * nothing is re-derived here. `error-text-contrast.spec.ts` is the same shape
  * for `--tn-error-text`.
  */
 

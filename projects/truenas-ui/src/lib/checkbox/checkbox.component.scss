@@ -103,7 +103,9 @@
   }
 
   &__error {
-    color: var(--tn-red, #dc2626);
+    // Text, so it needs 4.5:1 — --tn-red is tuned for the 3:1 border/icon
+    // minimum and measures 2.79:1 on --tn-bg2 in :root (#234).
+    color: var(--tn-error-text, var(--tn-red, #b91c1c));
     font-size: 12px;
     font-family: var(--tn-font-family-body, 'Inter', sans-serif);
     margin-top: 4px;

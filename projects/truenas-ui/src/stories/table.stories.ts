@@ -178,7 +178,7 @@ export const BasicTable: Story = {
         <ng-container tnColumnDef="status">
           <ng-template tnHeaderCellDef>Status</ng-template>
           <ng-template let-user tnCellDef>
-            <span [style.color]="user.status === 'active' ? 'var(--tn-green)' : 'var(--tn-red)'">
+            <span [style.color]="user.status === 'active' ? 'var(--tn-success, var(--tn-green, #416f26))' : 'var(--tn-error-text, var(--tn-red, #b91c1c))'">
               {{ user.status }}
             </span>
           </ng-template>
@@ -560,7 +560,7 @@ export const BorderedTable: Story = {
         <ng-container tnColumnDef="status">
           <ng-template tnHeaderCellDef>Status</ng-template>
           <ng-template let-user tnCellDef>
-            <span [style.color]="user.status === 'active' ? 'var(--tn-green)' : 'var(--tn-red)'">
+            <span [style.color]="user.status === 'active' ? 'var(--tn-success, var(--tn-green, #416f26))' : 'var(--tn-error-text, var(--tn-red, #b91c1c))'">
               {{ user.status }}
             </span>
           </ng-template>
@@ -622,7 +622,7 @@ export const TableWithFiltering: Story = {
         <ng-container tnColumnDef="status">
           <ng-template tnHeaderCellDef>Status</ng-template>
           <ng-template let-user tnCellDef>
-            <span [style.color]="user.status === 'active' ? 'var(--tn-green)' : 'var(--tn-red)'">
+            <span [style.color]="user.status === 'active' ? 'var(--tn-success, var(--tn-green, #416f26))' : 'var(--tn-error-text, var(--tn-red, #b91c1c))'">
               {{ user.status }}
             </span>
           </ng-template>
