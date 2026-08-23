@@ -1,9 +1,9 @@
-# Same two notes as bug_report.yml: the title rule lives in the first markdown
-# block because GitHub's built-in title field takes no description, and there is
-# no `labels:` key because labels are routing state applied at triage.
+# Same notes as bug_report.yml: the title rule lives in the first markdown block
+# because GitHub's built-in title field takes no description, nothing pre-fills
+# that field, and there is no `labels:` key because labels are routing state
+# applied at triage.
 name: Task
 description: Something the library should do and does not yet — a feature, a refactor, or infrastructure work.
-title: ''
 body:
   - type: markdown
     attributes:

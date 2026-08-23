@@ -1,6 +1,7 @@
 # GitHub renders the issue title as a built-in field that takes no per-field
 # description, so the rule about titles is the first thing in the form body
-# instead. `title:` below only pre-fills it.
+# instead. There is no top-level `title:` either: it only pre-fills the box, and
+# anything pre-filled here would be a prefix of exactly the kind the rule warns off.
 #
 # No `labels:` key on purpose. Labels here are routing state applied during
 # triage from board-wide context (priority, bug, blocked, ...); a form that
@@ -8,7 +9,6 @@
 # shapes the body, not the labels.
 name: Bug report
 description: Something the library does today is wrong, and you can make it happen.
-title: ''
 body:
   - type: markdown
     attributes:
