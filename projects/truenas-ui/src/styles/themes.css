@@ -18,7 +18,11 @@
   --tn-fg4: rgba(255,255,255,0.35);
   --tn-alt-bg1: #383838;
   --tn-alt-bg2: #545454;
-  --tn-alt-fg1: rgba(194,194,194,0.5);
+  /* Muted body text (placeholders, group labels, breadcrumb separators). At 0.5
+     it composited to #707070 and read 3.37:1 on --tn-bg1; 0.8 gives >=4.5:1 on
+     every dark surface it is drawn on: --tn-bg1 6.47:1, --tn-bg2 5.86:1,
+     --tn-bg3 5.15:1, --tn-alt-bg1 4.84:1 (the stepper draws it there). */
+  --tn-alt-fg1: rgba(194,194,194,0.8);
   --tn-alt-fg2: #e1e1e1;
   --tn-lines: #383838;
   --tn-yellow: #DED142;
@@ -80,7 +84,9 @@
   --tn-fg4: rgba(255,255,255,0.35);
   --tn-alt-bg1: #383838;
   --tn-alt-bg2: #545454;
-  --tn-alt-fg1: rgba(194,194,194,0.5);
+  /* Muted body text. 0.5 read 3.37:1 on --tn-bg1; 0.8 gives >=4.5:1 on every
+     dark surface it is drawn on — see the note in :root. */
+  --tn-alt-fg1: rgba(194,194,194,0.8);
   --tn-alt-fg2: #e1e1e1;
   --tn-lines: #4a4a4a;
   --tn-yellow: #DED142;
