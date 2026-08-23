@@ -7,6 +7,8 @@ import { TnTabComponent } from '../tab/tab.component';
 import { TnTabPanelComponent } from '../tab-panel/tab-panel.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
+let nextGroupId = 0;
+
 export interface TabChangeEvent {
   index: number;
   tab: TnTabComponent;
@@ -30,10 +32,18 @@ export class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDestr
   orientation = input<'horizontal' | 'vertical'>('horizontal');
   highlightPosition = input<'left' | 'right' | 'top' | 'bottom'>('bottom');
   /**
-   * Test-id applied to the tablist root element. Rendered under whichever attribute name
-   * is configured via `TN_TEST_ATTR` (default `data-testid`).
+   * Test-id applied to the root element — the wrapper around the tablist and the panels,
+   * not the tablist itself, which is the header inside it. Rendered under whichever
+   * attribute name is configured via `TN_TEST_ATTR` (default `data-testid`).
    */
   testId = input<TnTestIdValue>(undefined);
+
+  /**
+   * Namespace for the ids this group hands to its tabs and panels, so that two `tn-tabs`
+   * on one page cannot both mint `tab-0` and cross-wire each other's `aria-controls` and
+   * `aria-labelledby`. See `tab-ids.ts`.
+   */
+  private readonly groupId = `tn-tabs-${nextGroupId++}`;
 
   selectedIndexChange = output<number>();
   tabChange = output<TabChangeEvent>();
@@ -118,6 +128,7 @@ export class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDestr
 
     this.tabs().forEach((tab, index) => {
       tab.index.set(index);
+      tab.groupId.set(this.groupId);
       tab.isActive.set(index === currentIndex);
       tab.tabsComponent = this;
 
@@ -129,6 +140,7 @@ export class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDestr
 
     this.panels().forEach((panel, index) => {
       panel.index.set(index);
+      panel.groupId.set(this.groupId);
       panel.isActive.set(index === currentIndex);
     });
 

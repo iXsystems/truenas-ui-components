@@ -342,24 +342,26 @@ describe('TnTabsComponent', () => {
     });
   });
 
+  // The modifier classes are on the `.tn-tabs` root, which is NOT the tablist: since #232
+  // the role sits on the header inside it, so these read the root by class.
   describe('CSS classes', () => {
     it('should apply horizontal class by default', () => {
-      const tablist = fixture.nativeElement.querySelector('[role="tablist"]');
-      expect(tablist.classList.contains('tn-tabs--horizontal')).toBe(true);
+      const root = fixture.nativeElement.querySelector('.tn-tabs');
+      expect(root.classList.contains('tn-tabs--horizontal')).toBe(true);
     });
 
     it('should apply vertical class', () => {
       host.orientation.set('vertical');
       fixture.detectChanges();
 
-      const tablist = fixture.nativeElement.querySelector('[role="tablist"]');
-      expect(tablist.classList.contains('tn-tabs--vertical')).toBe(true);
-      expect(tablist.classList.contains('tn-tabs--horizontal')).toBe(false);
+      const root = fixture.nativeElement.querySelector('.tn-tabs');
+      expect(root.classList.contains('tn-tabs--vertical')).toBe(true);
+      expect(root.classList.contains('tn-tabs--horizontal')).toBe(false);
     });
 
     it('should apply highlight position class', () => {
-      const tablist = fixture.nativeElement.querySelector('[role="tablist"]');
-      expect(tablist.classList.contains('tn-tabs--highlight-bottom')).toBe(true);
+      const root = fixture.nativeElement.querySelector('.tn-tabs');
+      expect(root.classList.contains('tn-tabs--highlight-bottom')).toBe(true);
     });
 
     it('should apply active class to selected tab', () => {
@@ -445,15 +447,18 @@ describe('TnTabsComponent (lazy loading)', () => {
 class TabsTestIdHostComponent {}
 
 describe('TnTabs test-id prefixes', () => {
-  it('prefixes tablist (tabs-), tab (tab-), and panel (tab-panel-)', async () => {
+  // `tabs-` is on the `.tn-tabs` root rather than on the tablist. The two were the same
+  // element until #232 moved the role onto the header; the test id did not move with it,
+  // because it is the whole component a consumer selects by, not its header.
+  it('prefixes root (tabs-), tab (tab-), and panel (tab-panel-)', async () => {
     await TestBed.configureTestingModule({ imports: [TabsTestIdHostComponent] }).compileComponents();
     const fixture = TestBed.createComponent(TabsTestIdHostComponent);
     fixture.detectChanges();
 
-    const tablist = fixture.nativeElement.querySelector('[role="tablist"]') as HTMLElement;
+    const root = fixture.nativeElement.querySelector('.tn-tabs') as HTMLElement;
     const tab = fixture.nativeElement.querySelector('[role="tab"]') as HTMLElement;
     const panel = fixture.nativeElement.querySelector('[role="tabpanel"]') as HTMLElement;
-    expect(tablist.getAttribute('data-testid')).toBe('tabs-settings');
+    expect(root.getAttribute('data-testid')).toBe('tabs-settings');
     expect(tab.getAttribute('data-testid')).toBe('tab-general');
     expect(panel.getAttribute('data-testid')).toBe('tab-panel-general');
   });

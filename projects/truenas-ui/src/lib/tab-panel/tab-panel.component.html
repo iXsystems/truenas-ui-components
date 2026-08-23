@@ -3,8 +3,9 @@
   tnTestIdType="tab-panel"
   [ngClass]="classes()"
   [tnTestId]="testId()"
+  [attr.id]="panelId()"
   [attr.aria-hidden]="!isActive()"
-  [attr.aria-labelledby]="'tab-' + index()"
+  [attr.aria-labelledby]="tabId()"
   [attr.tabindex]="isActive() ? 0 : -1"
 >
   @if (shouldRender()) {
