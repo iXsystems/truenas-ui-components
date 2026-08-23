@@ -4,7 +4,7 @@ import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnChipComponent } from './chip.component';
-import { axeResult } from '../a11y/axe-testing';
+import { axeResult, axeScan } from '../a11y/axe-testing';
 
 /**
  * Guards the structure fixed for #188: the chip used to render a focusable
@@ -203,6 +203,48 @@ describe('tn-chip accessibility (#188)', () => {
     expect(evaluated).toContain('nested-interactive');
     expect(body().disabled).toBe(true);
     expect(close()!.disabled).toBe(true);
+  });
+
+  /**
+   * The whole-fixture sweep, and the worked example of `axeScan` — the probe
+   * half of `../a11y/axe-testing` (#252). The full call is here on purpose, so a
+   * cycle picking up an accessibility ticket can copy it rather than write its
+   * own scan.
+   *
+   * It is not a replacement for the `axeResult` guards above and does not try to
+   * be: those pin a named rule to a named element, which is what survives an axe
+   * upgrade that changes which nodes a rule selects. What this adds is the
+   * opposite property — it names nothing, so it covers the rules nobody thought
+   * to name. The docblock on "raises no ARIA violation when disabled" explains
+   * why `evaluated` there cannot honestly name the two `aria-*` rules; a sweep
+   * has no such problem, because it makes no claim about which element was
+   * looked at.
+   *
+   * Both buckets are asserted. `violations` alone would pass on a dangling
+   * `aria-labelledby`, which axe reports as `incomplete` — see
+   * `../a11y/axe-testing.spec.ts`, where that is measured.
+   */
+  describe('the whole chip, with no rule named in advance', () => {
+    it.each([
+      ['closable', () => { /* the default fixture */ }],
+      ['with an icon', () => host.icon.set('mdi:star')],
+      ['non-closable', () => host.closable.set(false)],
+      ['disabled', () => host.disabled.set(true)],
+    ])('has nothing for axe to report when %s', async (_name, arrange) => {
+      arrange();
+      fixture.detectChanges();
+
+      const { violations, incomplete, passed } = await axeScan(fixture);
+
+      expect(violations).toEqual([]);
+      expect(incomplete).toEqual([]);
+      // This is what stops the two `toEqual([])` above going vacuous: a scan
+      // that matched no rule at all returns empty too, and only `passed` tells
+      // the two apart. Naming a rule the chip actually exercises says more than
+      // the count: it is the one the fix was about, and it is evaluated on the
+      // body button post-#188.
+      expect(passed).toContain('nested-interactive');
+    });
   });
 
   describe('the close control', () => {

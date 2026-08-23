@@ -433,10 +433,19 @@ and `politeness()` from `lib/a11y/live-region-testing.ts`; see
 
 ### Running axe in a spec
 
-**Use `axeResult()` from `lib/a11y/axe-testing.ts`. Do not write another axe
-wrapper.** Three specs each grew a private near-copy and two of them were wrong
-in the direction that makes a test pass (#196). The correct version is subtle
-enough that writing it again from memory is how the lenient copy gets made.
+**Use `lib/a11y/axe-testing.ts`. Do not write another axe wrapper.** Three specs
+each grew a private near-copy and two of them were wrong in the direction that
+makes a test pass (#196); four cycles in one day then wrote the same throwaway
+probe from scratch (#252). The correct version is subtle enough that writing it
+again from memory is how the lenient copy gets made.
+
+**It exports two, and the choice is not a matter of taste.** `axeScan(fixture)`
+is the probe — it names no rule and no element, and reports everything axe found,
+which is what you want when you do not yet know what is wrong. `axeResult()` is
+the guard, and it is what belongs in a spec long-term: the rest of this section is
+about it. `docs/component_testing.md` has the worked example of the probe; a
+finding it turns up gets pinned down with `axeResult()` before it is committed as
+a regression test.
 
 **Never assert on `violations` alone.** An empty `violations` is also what axe
 returns when it evaluated nothing at all — a detached tree, an upgrade that
