@@ -5,7 +5,7 @@
   [tnTestId]="testId()"
   [attr.id]="panelId()"
   [attr.aria-hidden]="!isActive()"
-  [attr.aria-labelledby]="tabId()"
+  [attr.aria-labelledby]="hasTab() ? tabId() : null"
   [attr.tabindex]="isActive() ? 0 : -1"
 >
   @if (shouldRender()) {

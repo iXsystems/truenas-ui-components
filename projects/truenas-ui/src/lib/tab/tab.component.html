@@ -5,7 +5,7 @@
   [ngClass]="classes()"
   [tnTestId]="testId()"
   [attr.id]="tabId()"
-  [attr.aria-controls]="panelId()"
+  [attr.aria-controls]="hasPanel() ? panelId() : null"
   [attr.aria-selected]="isActive()"
   [attr.aria-disabled]="disabled()"
   [attr.tabindex]="tabIndex()"

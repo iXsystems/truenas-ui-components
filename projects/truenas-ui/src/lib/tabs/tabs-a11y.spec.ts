@@ -57,6 +57,15 @@ class TabsA11yHostComponent {
 })
 class TabsA11yMultiHostComponent {}
 
+/** Two groups, one with a tab too many and one with a panel too many. */
+@Component({
+  selector: 'tn-tabs-a11y-mismatched-host',
+  standalone: true,
+  imports: [TnTabsComponent, TnTabComponent, TnTabPanelComponent],
+  templateUrl: './test-hosts/mismatched-host.component.html',
+})
+class TabsA11yMismatchedHostComponent {}
+
 /**
  * The rules this structure can be wrong under.
  *
@@ -239,32 +248,6 @@ describe('tn-tabs accessibility (#232)', () => {
   });
 
   /**
-   * The ids were `tab-{index}` before this change, which is unique within one
-   * tab group and duplicated across every other one on the page. A Storybook
-   * docs page renders all ten Tabs stories at once, so `tab-0` would have
-   * resolved to whichever came first in the document and every panel after the
-   * first would have been labelled by another group's tab.
-   */
-  describe('two tab groups on one page', () => {
-    it('gives every tab and panel an id unique across both groups', async () => {
-      await TestBed.resetTestingModule().configureTestingModule({
-        imports: [TabsA11yMultiHostComponent],
-      }).compileComponents();
-
-      const multi = TestBed.createComponent(TabsA11yMultiHostComponent);
-      multi.detectChanges();
-
-      const ids: string[] = Array.from(
-        multi.nativeElement.querySelectorAll('[role="tab"], [role="tabpanel"]') as
-          NodeListOf<HTMLElement>
-      ).map((el) => el.id);
-
-      expect(ids.length).toBe(8);
-      expect(new Set(ids).size).toBe(ids.length);
-    });
-  });
-
-  /**
    * Positive controls. Every `expect(violated).toEqual([])` above is also what
    * axe returns when it evaluated nothing, so these rebuild the markup the fix
    * replaced and assert the rules do fire on it.
@@ -336,5 +319,126 @@ describe('tn-tabs accessibility (#232)', () => {
           previous.remove();
         }
       });
+  });
+});
+
+/**
+ * The ids were `tab-{index}` before #232, which is unique within one tab group
+ * and duplicated across every other one on the page. A Storybook docs page
+ * renders all ten Tabs stories at once, so `tab-0` would have resolved to
+ * whichever came first in the document and every panel after the first would
+ * have been labelled by another group's tab.
+ */
+describe('tn-tabs accessibility (#232): two tab groups on one page', () => {
+  let fixture: ComponentFixture<TabsA11yMultiHostComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TabsA11yMultiHostComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TabsA11yMultiHostComponent);
+    fixture.detectChanges();
+  });
+
+  it('gives every tab and panel an id unique across both groups', () => {
+    const ids: string[] = Array.from(
+      fixture.nativeElement.querySelectorAll('[role="tab"], [role="tabpanel"]') as
+        NodeListOf<HTMLElement>
+    ).map((el) => el.id);
+
+    expect(ids.length).toBe(8);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('keeps each panel labelled by a tab in its own group', () => {
+    const groups: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('.tn-tabs'));
+
+    expect(groups.length).toBe(2);
+    groups.forEach((group) => {
+      const tabs: HTMLElement[] = Array.from(group.querySelectorAll('[role="tab"]'));
+      const panels: HTMLElement[] = Array.from(group.querySelectorAll('[role="tabpanel"]'));
+
+      panels.forEach((panel, i) => {
+        expect(panel.getAttribute('aria-labelledby')).toBe(tabs[i].id);
+        expect(group.contains(
+          document.getElementById(panel.getAttribute('aria-labelledby') as string) as HTMLElement
+        )).toBe(true);
+      });
+    });
+  });
+});
+
+/**
+ * Tabs and panels are separate content children paired only by position, so a
+ * consumer can hand `tn-tabs` more of one than the other. Neither cross-
+ * reference may be rendered without the element it names: an `aria-controls`
+ * resolving to nothing is the defect this fix would otherwise have introduced,
+ * on the way to removing the same defect from `aria-labelledby`.
+ */
+describe('tn-tabs accessibility (#232): more tabs than panels, and the reverse', () => {
+  let fixture: ComponentFixture<TabsA11yMismatchedHostComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TabsA11yMismatchedHostComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TabsA11yMismatchedHostComponent);
+    fixture.detectChanges();
+  });
+
+  function groups(): HTMLElement[] {
+    return Array.from(fixture.nativeElement.querySelectorAll('.tn-tabs'));
+  }
+
+  function tabsIn(group: HTMLElement): HTMLElement[] {
+    return Array.from(group.querySelectorAll('[role="tab"]'));
+  }
+
+  function panelsIn(group: HTMLElement): HTMLElement[] {
+    return Array.from(group.querySelectorAll('[role="tabpanel"]'));
+  }
+
+  it('omits aria-controls on the tab that has no panel', () => {
+    const tabs = tabsIn(groups()[0]);
+
+    expect(tabs.length).toBe(2);
+    expect(tabs[0].getAttribute('aria-controls')).toBe(panelsIn(groups()[0])[0].id);
+    expect(tabs[1].hasAttribute('aria-controls')).toBe(false);
+  });
+
+  it('omits aria-labelledby on the panel that has no tab', () => {
+    const panels = panelsIn(groups()[1]);
+
+    expect(panels.length).toBe(2);
+    expect(panels[0].getAttribute('aria-labelledby')).toBe(tabsIn(groups()[1])[0].id);
+    expect(panels[1].hasAttribute('aria-labelledby')).toBe(false);
+  });
+
+  it('leaves no reference that resolves to nothing', () => {
+    const referring: HTMLElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('[aria-controls], [aria-labelledby]')
+    );
+
+    expect(referring.length).toBe(4);
+    referring.forEach((el) => {
+      const id = el.getAttribute('aria-controls') ?? el.getAttribute('aria-labelledby') as string;
+      expect(document.getElementById(id)).not.toBeNull();
+    });
+  });
+
+  it('raises no violation on either group', async () => {
+    for (const group of groups()) {
+      const { violated, evaluated } = await axeResult(
+        fixture.nativeElement,
+        [group.querySelector('[role="tablist"]') as HTMLElement,
+          ...tabsIn(group), ...panelsIn(group)],
+        TABLIST_RULES,
+      );
+
+      expect(violated).toEqual([]);
+      expect(evaluated).toContain('aria-required-children');
+    }
   });
 });

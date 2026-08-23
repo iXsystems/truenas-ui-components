@@ -125,10 +125,16 @@ export class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDestr
 
   private initializeTabs() {
     const currentIndex = this.internalSelectedIndex();
+    // Tabs and panels are separate content children and nothing pairs them up but their
+    // position, so a group can be given more of one than the other. Each side is told
+    // whether its opposite number exists, and renders its cross-reference only if it does.
+    const tabCount = this.tabs().length;
+    const panelCount = this.panels().length;
 
     this.tabs().forEach((tab, index) => {
       tab.index.set(index);
       tab.groupId.set(this.groupId);
+      tab.hasPanel.set(index < panelCount);
       tab.isActive.set(index === currentIndex);
       tab.tabsComponent = this;
 
@@ -141,6 +147,7 @@ export class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDestr
     this.panels().forEach((panel, index) => {
       panel.index.set(index);
       panel.groupId.set(this.groupId);
+      panel.hasTab.set(index < tabCount);
       panel.isActive.set(index === currentIndex);
     });
 

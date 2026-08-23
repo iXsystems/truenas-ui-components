@@ -31,10 +31,17 @@ export class TnTabComponent implements AfterContentInit {
   /**
    * Id namespace, set by the parent `tn-tabs` so that both ends of the tab↔panel wiring
    * agree. The default is unique per instance rather than a constant, so a `tn-tab`
-   * rendered outside a `tn-tabs` mints an id that collides with nothing — it has no panel
-   * to point at either way, and a duplicate id is worse than an unmatched one.
+   * rendered outside a `tn-tabs` still renders an `id` that collides with nothing.
    */
   groupId = signal<string>(`tn-tab-unowned-${nextUnownedGroupId++}`);
+  /**
+   * Whether the parent has a panel at this tab's index, which is what decides whether
+   * `aria-controls` is rendered at all. `tn-tabs` walks its tabs and its panels
+   * independently, so a group given more tabs than panels — or a `tn-tab` used outside a
+   * `tn-tabs`, which is why this starts false — would otherwise point `aria-controls` at
+   * an id no element in the document carries.
+   */
+  hasPanel = signal<boolean>(false);
   isActive = signal<boolean>(false);
   tabsComponent?: {
     onKeydown: (event: KeyboardEvent, index: number) => void;

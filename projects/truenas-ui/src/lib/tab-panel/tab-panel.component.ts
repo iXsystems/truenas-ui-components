@@ -26,10 +26,18 @@ export class TnTabPanelComponent {
   /**
    * Id namespace, set by the parent `tn-tabs` so that both ends of the tab↔panel wiring
    * agree. Unique per instance by default, for the same reason as on `tn-tab`: a panel
-   * rendered outside a `tn-tabs` has no tab to be labelled by, and an id colliding with
-   * another group's panel would be worse than one matching nothing.
+   * rendered outside a `tn-tabs` still renders an `id`, and one colliding with another
+   * group's panel would be worse than one nothing points at.
    */
   groupId = signal<string>(`tn-tab-panel-unowned-${nextUnownedGroupId++}`);
+  /**
+   * Whether the parent has a tab at this panel's index, which is what decides whether
+   * `aria-labelledby` is rendered. The mirror of `hasPanel` on `tn-tab`, and for the same
+   * reason: more panels than tabs, or a panel outside a `tn-tabs`, would otherwise leave
+   * this pointing at an id nothing carries — which is what `aria-labelledby="tab-0"` did
+   * unconditionally before #232.
+   */
+  hasTab = signal<boolean>(false);
   isActive = signal<boolean>(false);
   hasBeenActive = signal<boolean>(false);
 
