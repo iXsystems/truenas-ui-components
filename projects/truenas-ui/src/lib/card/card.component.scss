@@ -181,22 +181,22 @@
 
   &--success {
     background-color: rgba(16, 185, 129, 0.1);
-    color: var(--tn-success);
+    color: var(--tn-success, var(--tn-green, #416f26));
   }
 
   &--warning {
     background-color: rgba(245, 158, 11, 0.1);
-    color: var(--tn-warning);
+    color: var(--tn-warning, var(--tn-orange, #955313));
   }
 
   &--error {
     background-color: rgba(239, 68, 68, 0.1);
-    color: var(--tn-error);
+    color: var(--tn-error, var(--tn-red, #bd2626));
   }
 
   &--info {
     background-color: rgba(59, 130, 246, 0.1);
-    color: var(--tn-info);
+    color: var(--tn-info, var(--tn-blue, #006997));
   }
 
   &--neutral {

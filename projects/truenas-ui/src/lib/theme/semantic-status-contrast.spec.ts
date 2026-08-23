@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { TN_THEME_DEFINITIONS } from './theme.constants';
-import { formatRatio, meetsAa, themePalettes } from '../a11y/contrast-testing';
+import { contrastRatio, formatRatio, meetsAa, themePalettes } from '../a11y/contrast-testing';
 
 /**
  * `--tn-info`, `--tn-warning`, `--tn-error` and `--tn-success` were read by
@@ -9,8 +9,8 @@ import { formatRatio, meetsAa, themePalettes } from '../a11y/contrast-testing';
  * them rendered its hardcoded fallback — an untuned Tailwind hex — in all nine
  * palettes (#233). On `--tn-alt-bg1`, the surface tn-banner draws its heading
  * on, that fallback measured 3.19:1 for info and 1.88:1 for warning in the
- * light themes. This measures the values now shipped in `themes.css`, and
- * checks that no reader has kept a fallback to fall back to.
+ * light themes. This measures the values now shipped in `themes.css`, and holds
+ * every reader to the fallback chain in `EXPECTED_CHAIN`.
  *
  * WHAT THE TOKENS CLAIM: 4.5:1 on `--tn-alt-bg1`, `--tn-bg1` and `--tn-bg2` —
  * the banner surface, the page and file-picker popup, and the card and toast.
@@ -63,18 +63,63 @@ const SURFACES: Readonly<Record<string, string>> = {
 const REQUIRED_TOKENS = [...Object.keys(SURFACES), ...STATUS_TOKENS];
 
 /**
- * A reader that still carries a hardcoded fallback: `var(--tn-info, #3b82f6)`.
- * Now that every palette declares the tokens, a fallback is reachable only when
- * no theme stylesheet is loaded at all — and what it renders there is the
- * untuned colour this ticket is about, silently. The token name must be
- * followed by a comma, so `--tn-error-text`'s own deliberate chain
- * (`var(--tn-error-text, var(--tn-red, …))`) is not matched.
+ * How a reader must spell each token: the same chain as
+ * `radio.component.scss`'s `var(--tn-error-text, var(--tn-red, #b91c1c))` and
+ * the nine `--tn-primary-text` sites from #242.
  *
- * Not a global regex: `test` on one of those carries `lastIndex` from the
- * previous call, so scanning a list of files with it skips matches in every
- * other file.
+ * The middle link is the hue token the semantic one is derived from, so a
+ * consumer stylesheet that predates these four but defines the TrueNAS palette
+ * keeps its own branding rather than having it discarded for a literal. Within
+ * this repo the chain always stops at the first link, since every palette
+ * declares all four — the cases above are what keeps that true.
+ *
+ * The terminal literal is `.tn-blue`'s value for that semantic. It is reachable
+ * only when no theme stylesheet is loaded at all, where the surface is the UA
+ * default white and a light theme's value is the right one; `LITERALS_ON_WHITE`
+ * below holds each to AA there. The untuned Tailwind hexes they replace did not
+ * clear it: #3b82f6 measures 3.68:1 on white, #f59e0b 2.15:1, #ef4444 3.76:1
+ * and #10b981 2.54:1.
  */
-const FALLBACK = /var\(\s*--tn-(?:info|warning|error|success)\s*,/;
+const EXPECTED_CHAIN: Readonly<Record<string, string>> = {
+  '--tn-info': 'var(--tn-info, var(--tn-blue, #006997))',
+  '--tn-warning': 'var(--tn-warning, var(--tn-orange, #955313))',
+  '--tn-error': 'var(--tn-error, var(--tn-red, #bd2626))',
+  '--tn-success': 'var(--tn-success, var(--tn-green, #416f26))',
+};
+
+/**
+ * Every `var(--tn-<status>…)` expression in `source`, whole.
+ *
+ * A brace walk rather than a regex because the chain nests: `[^)]*\)` stops at
+ * the inner `var(--tn-blue, …)`'s bracket and reports two thirds of a
+ * declaration as the offender, which sends the reader looking for a fault in
+ * the part that was cut off.
+ *
+ * `(?![\w-])` rather than `\b` after the name: a word boundary sits between
+ * `error` and the hyphen too, so `\b` matches `--tn-error-text` — which is a
+ * different token with a different guarantee, and it reported
+ * `radio.component.scss`'s deliberate chain as a violation.
+ */
+function statusVarExpressions(source: string): { token: string; expression: string }[] {
+  const found: { token: string; expression: string }[] = [];
+  const opening = /var\(\s*(--tn-(?:info|warning|error|success))(?![\w-])/g;
+  let match: RegExpExecArray | null;
+  while ((match = opening.exec(source)) !== null) {
+    let depth = 0;
+    for (let index = match.index; index < source.length; index += 1) {
+      if (source[index] === '(') {
+        depth += 1;
+      } else if (source[index] === ')') {
+        depth -= 1;
+        if (depth === 0) {
+          found.push({ token: match[1], expression: source.slice(match.index, index + 1) });
+          break;
+        }
+      }
+    }
+  }
+  return found;
+}
 
 function sourceFiles(directory: string, extensions: readonly string[]): string[] {
   return readdirSync(directory, { recursive: true, encoding: 'utf8' })
@@ -183,18 +228,44 @@ describe('semantic status token contrast (#233)', () => {
       expect(files.length).toBeGreaterThan(0);
     });
 
-    it('no reader keeps a hardcoded fallback', () => {
-      const offenders = files
-        .filter(({ source }) => FALLBACK.test(source))
-        .map(({ file }) => file);
-      expect(offenders).toEqual([]);
+    const reads = files
+      .map(({ file, source }) => ({ file, expressions: statusVarExpressions(source) }))
+      .filter(({ expressions }) => expressions.length > 0);
+
+    it.each(reads)('$file spells every status token as the full chain', ({ expressions }) => {
+      // Listing the offenders rather than asserting a boolean, so a failure
+      // prints the declaration that differs instead of "expected true". What
+      // this catches is a reader that drops the chain — leaving the variants of
+      // a banner indistinguishable when no theme stylesheet is loaded, since
+      // border-left-color then falls back to currentColor — or one that keeps
+      // an untuned literal in it.
+      const wrong = expressions
+        .filter(({ token, expression }) => expression !== EXPECTED_CHAIN[token])
+        .map(({ expression }) => expression);
+      expect(wrong).toEqual([]);
     });
 
     it.each(STATUS_TOKENS)('%s is read by at least one component', (token) => {
       // Without this, deleting every reader would make the case above pass by
       // having nothing left to scan.
-      const reading = files.filter(({ source }) => source.includes(`var(${token})`));
+      const reading = reads.filter(({ expressions }) =>
+        expressions.some((expression) => expression.token === token));
       expect(reading.length).toBeGreaterThan(0);
     });
+
+    const literals = Object.entries(EXPECTED_CHAIN).map(([token, chain]) => ({
+      token,
+      literal: (/#[0-9a-fA-F]{3,8}/.exec(chain) as RegExpExecArray)[0],
+    }));
+
+    it.each(literals)(
+      '$token: $literal clears AA on white, the surface it is actually reachable on',
+      ({ literal }) => {
+        // Reached only when neither the status token nor the hue token is
+        // defined, i.e. no theme stylesheet loaded at all — so the background
+        // is the browser's own default.
+        expect(meetsAa(contrastRatio(literal, '#ffffff'), 'normal')).toBe(true);
+      }
+    );
   });
 });

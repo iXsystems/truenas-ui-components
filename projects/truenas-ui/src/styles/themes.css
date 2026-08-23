@@ -67,7 +67,12 @@
 
      --tn-error is NOT --tn-error-text. That one is --tn-red's companion and
      guarantees 4.5:1 on --tn-bg1 and --tn-bg2 only; it measures 3.64:1 on
-     --tn-alt-bg1 here, where tn-banner draws an error heading. */
+     --tn-alt-bg1 here, where tn-banner draws an error heading.
+
+     A reader spells the whole chain — var(--tn-error, var(--tn-red, #bd2626)) —
+     as radio.component.scss does for --tn-error-text, so a consumer stylesheet
+     that predates these four keeps its own palette; semantic-status-contrast
+     .spec.ts pins that shape and the literals. */
   --tn-info: #00adf8; /* 4.65:1 / 6.62:1 / 5.85:1; --tn-blue is 2.56:1 on --tn-alt-bg1 */
   --tn-warning: var(--tn-orange); /* 4.60:1 / 6.53:1 / 5.78:1 — needs no shade of its own */
   --tn-error: #e78888; /* 4.62:1 / 6.57:1 / 5.81:1; --tn-red is 2.22:1 on --tn-alt-bg1 */
