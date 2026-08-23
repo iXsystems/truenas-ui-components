@@ -91,12 +91,12 @@ export class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDestr
 
     // Listen for tab changes
     effect(() => {
-      // Track tabs signal to react to changes
-      const tabs = this.tabs();
-      if (tabs.length > 0) {
-        this.initializeTabs();
-        this.updateHighlightBar();
-      }
+      // Runs on an empty tab set as well, because `initializeTabs` is what clears each
+      // panel's `hasTab`: skipping it when the last tab is removed would leave every panel
+      // pointing `aria-labelledby` at a tab that no longer exists, which is the dangling
+      // reference #232 removed. Both calls below no-op on their own when there are no tabs.
+      this.initializeTabs();
+      this.updateHighlightBar();
     });
   }
 

@@ -57,6 +57,17 @@ class TabsA11yHostComponent {
 })
 class TabsA11yMultiHostComponent {}
 
+/** A group whose tabs can be taken away while its panels stay. */
+@Component({
+  selector: 'tn-tabs-a11y-removable-host',
+  standalone: true,
+  imports: [TnTabsComponent, TnTabComponent, TnTabPanelComponent],
+  templateUrl: './test-hosts/removable-tabs-host.component.html',
+})
+class TabsA11yRemovableHostComponent {
+  showTabs = signal(true);
+}
+
 /** Two groups, one with a tab too many and one with a panel too many. */
 @Component({
   selector: 'tn-tabs-a11y-mismatched-host',
@@ -84,7 +95,10 @@ class TabsA11yMismatchedHostComponent {}
  * below reads the DOM as well rather than leaving it to axe.
  *
  * `aria-allowed-attr` covers `aria-orientation` moving with the role: it is
- * allowed on `tablist` and not on a roleless `div`.
+ * allowed on `tablist` and not on a roleless `div`. `aria-allowed-role` is the
+ * one about where the role may sit at all — it reports a role given to an
+ * element whose implicit semantics forbid it, which is the risk in moving a
+ * role from one element to another rather than in the role itself.
  */
 const TABLIST_RULES = [
   'aria-required-children',
@@ -366,6 +380,61 @@ describe('tn-tabs accessibility (#232): two tab groups on one page', () => {
         )).toBe(true);
       });
     });
+  });
+});
+
+/**
+ * Taking the tabs away is the mismatch below arriving by a different route, and
+ * it is the one a consumer reaches by accident: an `@if` around the tabs leaves
+ * the panels behind. What makes it worth its own fixture is that it is a
+ * TRANSITION — every panel has already been told it has a tab, so nothing is
+ * dangling until the moment the tabs go, and only a re-run of `initializeTabs`
+ * takes the reference back off.
+ */
+describe('tn-tabs accessibility (#232): the last tab removed', () => {
+  let host: TabsA11yRemovableHostComponent;
+  let fixture: ComponentFixture<TabsA11yRemovableHostComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TabsA11yRemovableHostComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TabsA11yRemovableHostComponent);
+    host = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  function panels(): HTMLElement[] {
+    return Array.from(fixture.nativeElement.querySelectorAll('[role="tabpanel"]'));
+  }
+
+  it('labels each panel while its tab is there', () => {
+    const tabs: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('[role="tab"]'));
+
+    expect(panels().map((panel) => panel.getAttribute('aria-labelledby')))
+      .toEqual(tabs.map((tab) => tab.id));
+  });
+
+  it('takes aria-labelledby back off when the tabs go', () => {
+    host.showTabs.set(false);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('[role="tab"]').length).toBe(0);
+    expect(panels().length).toBe(2);
+    expect(panels().some((panel) => panel.hasAttribute('aria-labelledby'))).toBe(false);
+  });
+
+  it('puts it back when the tabs return', () => {
+    host.showTabs.set(false);
+    fixture.detectChanges();
+    host.showTabs.set(true);
+    fixture.detectChanges();
+
+    const tabs: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('[role="tab"]'));
+
+    expect(panels().map((panel) => panel.getAttribute('aria-labelledby')))
+      .toEqual(tabs.map((tab) => tab.id));
   });
 });
 
