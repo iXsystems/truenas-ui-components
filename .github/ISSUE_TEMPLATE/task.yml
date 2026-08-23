@@ -1,0 +1,82 @@
+# Same two notes as bug_report.yml: the title rule lives in the first markdown
+# block because GitHub's built-in title field takes no description, and there is
+# no `labels:` key because labels are routing state applied at triage.
+name: Task
+description: Something the library should do and does not yet — a feature, a refactor, or infrastructure work.
+title: ''
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### The title names the change — no `type(scope):` prefix
+
+        Write what should be true when this is done, in plain words: *"Give an untitled
+        dialog an accessible name"*. Not `feat(dialog): ...`.
+
+        A ticket title gets copied into the pull request that implements it, and pull
+        requests here are squash-merged — so the PR title becomes the commit subject that
+        `.releaserc.json` reads. Only `feat`, `fix`, `perf` and `refactor` cut a release;
+        anything else merges, cuts no version and appears in no changelog. A prefix in a
+        ticket title is how that silent no-op gets started. Choosing the commit type is the
+        job of whoever writes the change, not of whoever asks for it.
+
+        **Reporting something that is already broken?** Use the bug report form instead —
+        it asks for the reproduction, which is the first thing that work needs.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What should exist
+      description: >-
+        The change itself: the API, the behaviour, or the file that should be there
+        afterwards. Concrete enough that two people would build the same thing.
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why — what it costs today
+      description: >-
+        What is being worked around in the meantime, and by whom. A cost that has already
+        been paid is the strongest case; an anticipated one should say what would trigger it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria
+      description: >-
+        What must be true for this to be closed, as things that can be checked. This is what
+        the work is reviewed against, so leave nothing to be inferred from the description.
+      placeholder: |
+        - [ ] tn-dialog without a heading gets aria-label from its `label` input
+        - [ ] No empty <h2> is rendered when there is no heading
+    validations:
+      required: true
+
+  - type: dropdown
+    id: found_with
+    attributes:
+      label: How this came up
+      description: >-
+        The instrument matters, the same way it does on a bug — a jsdom test and a real
+        browser disagree about what they can see, and a finding from one is not evidence
+        about the other.
+      options:
+        - A code review
+        - An audit or scan (say which, above)
+        - Building something that needed it
+        - A pattern repeated across components
+        - Following up on another ticket
+        - Other — described above
+    validations:
+      required: true
+
+  - type: input
+    id: component
+    attributes:
+      label: Component or area
+      description: The `tn-` selector or the directory this touches, if it is confined to one.
+      placeholder: tn-dialog
