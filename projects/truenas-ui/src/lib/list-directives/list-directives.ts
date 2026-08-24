@@ -122,9 +122,16 @@ export class TnListItemTrailingDirective {}
  * `role="separator"`, unless a `role="list"` is what owns it, where a separator
  * is not an allowed child and invalidates the list.
  *
- * It no longer matches `tn-divider` as well. On that element it only ever
- * restated what the component already declares, and once the role varies by
- * context a second source for it is a second answer waiting to disagree.
+ * **It no longer matches `tn-divider` as well, which is a breaking change**:
+ * code that writes `<tn-divider>` while importing only this directive now has
+ * no match for that element and stops compiling. Import `TnDividerComponent`
+ * for the element form — it is what declares the element, and what every use of
+ * `<tn-divider>` in this repository already imports.
+ *
+ * On `tn-divider` this only ever restated what the component declares, and once
+ * the role varies by context, a second source for it is a second answer waiting
+ * to disagree — two instances of the tracking that decides it, on one element,
+ * writing one attribute.
  */
 @Directive({
   selector: '[tnDivider]',

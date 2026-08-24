@@ -78,9 +78,16 @@ export function ariaOwnerRole(host: Element): string | null {
   // owner.
   let candidate = host.parentElement?.closest('[role]') ?? null;
   while (candidate) {
-    // `role` is a token list and the first valid token wins, so an empty or
-    // whitespace-only attribute names no role and is transparent like any
-    // other unmarked element.
+    // The FIRST token, not the first token that names a real role, which is
+    // what a browser resolves. Telling those apart needs the role vocabulary,
+    // and the difference only shows on a fallback chain whose first entry is
+    // misspelled — `role="lst list"` reads here as an owner called `lst`, so
+    // the caller decides it prescribes nothing. That is the same answer this
+    // returns for any role it does not know, and one such wrapper is markup to
+    // fix rather than a case to model.
+    //
+    // An empty or whitespace-only attribute names no role at all, and is
+    // transparent like any other unmarked element.
     const role = (candidate.getAttribute('role') ?? '').trim().split(/\s+/)[0];
     if (role && role !== 'presentation' && role !== 'none') {
       return role;

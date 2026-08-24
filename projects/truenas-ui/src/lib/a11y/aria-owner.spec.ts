@@ -60,12 +60,14 @@ describe('ariaOwnerRole', () => {
     expect(ariaOwnerRole(nest('list', '   ', null))).toBe('list');
   });
 
-  it('takes the first token of a role list, as a browser does', () => {
-    // `role` is a token list and the first valid one wins. So a fallback chain
-    // starting with `presentation` is transparent...
+  it('takes the first token of a role list', () => {
+    // A fallback chain starting with `presentation` is transparent...
     expect(ariaOwnerRole(nest('list', 'presentation none', null))).toBe('list');
     // ...and one starting with a real role is that role, not the whole string.
     expect(ariaOwnerRole(nest('list menu', null))).toBe('list');
+    // A browser would resolve the first token that names a REAL role; this
+    // takes the first token, full stop. See the comment on the walk.
+    expect(ariaOwnerRole(nest('lst list', null))).toBe('lst');
   });
 
   it('ignores a role on the element itself', () => {
