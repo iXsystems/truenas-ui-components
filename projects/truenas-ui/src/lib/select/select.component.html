@@ -75,7 +75,11 @@
             [hideLabel]="true" />
           {{ selectAllLabel() }}
         </div>
-        <div class="tn-select-separator" role="separator"></div>
+        <!-- Decorative only, and deliberately role-less: the panel above is a
+             `role="listbox"`, which owns `option` and `group` and nothing else,
+             so a `role="separator"` here invalidates the whole listbox
+             (aria-required-children, #259). The rule is drawn by its class. -->
+        <div class="tn-select-separator"></div>
       }
 
       <!-- Regular Options (preceded by the synthetic empty option when allowEmpty is set) -->
@@ -111,12 +115,11 @@
 
       <!-- Option Groups -->
       @for (group of optionGroups(); track $index; let isFirst = $first) {
-        <!-- Group Separator (not shown before first group if we have regular options) -->
+        <!-- Group Separator (not shown before first group if we have regular
+             options). Role-less for the same reason as the one above the
+             options — see there. -->
         @if (!isFirst || displayOptions().length > 0) {
-          <div
-            class="tn-select-separator"
-            role="separator">
-          </div>
+          <div class="tn-select-separator"></div>
         }
 
         <div role="group" [attr.aria-labelledby]="'tn-select-group-' + idNamespace() + '-' + $index">
