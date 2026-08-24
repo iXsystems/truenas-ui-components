@@ -66,7 +66,7 @@ const CHIP_SURFACES: readonly ChipSurface[] = [
   { name: '--accent', foreground: '--tn-accent-txt', background: '--tn-accent' },
   // Hover moves the accent chip onto --tn-alt-bg2, so the label moves onto that
   // surface's companion rather than carrying --tn-accent-txt, which is tuned
-  // for the accent fill and measures 1.45:1 on the grey in Solarized Dark.
+  // for the accent fill and measures 1.93:1 on the grey in Solarized Dark.
   { name: '--accent:hover', foreground: '--tn-alt-fg2', background: '--tn-alt-bg2' },
 ];
 
@@ -113,7 +113,7 @@ interface ScssRule {
  * independently — which is what this used to do — collects the right two SETS
  * of tokens while saying nothing about which goes with which, so re-pairing an
  * existing foreground with an existing surface passes: `--tn-alt-fg2` on
- * `--tn-accent` is 1.45:1 in Solarized Dark and both halves are already in the
+ * `--tn-accent` is 2.58:1 in Solarized Dark and both halves are already in the
  * table.
  */
 function scssRules(scss: string): ScssRule[] {
@@ -251,7 +251,7 @@ describe('tn-chip label contrast (#238)', () => {
     it('every themed surface it paints is a pair the table measures', () => {
       // The pairing, not the two halves separately: both `--tn-alt-fg2` and
       // `--tn-accent` are already in the table, and putting them together is
-      // 1.45:1 in Solarized Dark.
+      // 2.58:1 in Solarized Dark.
       expect([...paintedPairs].filter((pair) => !expectedPairs.has(pair)).sort()).toEqual([]);
     });
 
@@ -275,14 +275,32 @@ describe('tn-chip label contrast (#238)', () => {
       expect(painted.map((surface) => surface.foreground)).not.toContain('--tn-fg1');
     });
 
+    it('nothing between the chip wrapper and the label sets a colour of its own', () => {
+      // Everything above reads the colour off the rule that paints the
+      // BACKGROUND, and walks outward from there. That is right for a variant
+      // and blind to a descendant: `.tn-chip__body` and `.tn-chip__label` sit
+      // between the wrapper and the text and paint no background at all, so a
+      // `color:` on either would repaint every label in every palette while
+      // every pair above still matched. They may say `inherit` and nothing
+      // else; a colour that belongs there belongs on the variant, next to the
+      // surface it goes with.
+      const between = rules.filter((rule) => rule.selector === '&__body' || rule.selector === '&__label');
+      expect(between.map((rule) => rule.selector).sort()).toEqual(['&__body', '&__label']);
+      expect(
+        between
+          .filter((rule) => (rule.declarations.get('color') ?? 'inherit') !== 'inherit')
+          .map((rule) => rule.selector)
+      ).toEqual([]);
+    });
+
     it('a <code> span in the label keeps the chip\'s own surface', () => {
       // `label-markup.inline-code` paints <code> on --tn-bg2 and inherits the
       // colour, which on a filled chip is a surface none of the pairs above
       // describe: in TN Dark it is --tn-accent-txt (#1E1E1E) on #282828,
-      // 1.00:1. The mixin is included by ten components and is right for the
+      // 1.13:1. The mixin is included by ten components and is right for the
       // other nine, so the chip overrides it rather than the mixin changing.
-      // The override lives in another file's mixin, so nothing above can see
-      // it going missing — this is what does.
+      // The wash comes from another file, so nothing above can see the
+      // override going missing — this is what does.
       const override = rules.find((rule) => rule.selector === '::ng-deep code');
       expect(override?.declarations.get('background')).toBe('transparent');
     });

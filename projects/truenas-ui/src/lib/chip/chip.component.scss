@@ -47,13 +47,13 @@
     border-color: var(--tn-primary);
 
     // No hover background. It used to swap to --tn-blue, which is a raw hue
-    // token rather than a themed surface and so has no companion foreground:
-    // the label stayed --tn-primary-txt and measured 3.14:1 in Nord and 3.68:1
-    // in Solarized Dark. The swap was also a no-op in five of the nine
-    // palettes, where --tn-primary already resolves to --tn-blue, which is how
-    // it survived — it did nothing at all in the themes anyone looked at.
-    // .button-primary, the filled button, likewise changes no colour on hover;
-    // the lift and shadow on .tn-chip:hover above are the affordance.
+    // token rather than a themed surface and so has no companion foreground.
+    // In seven of the nine palettes --tn-primary already resolves to the same
+    // colour as --tn-blue, so the swap did nothing at all — which is how it
+    // survived. The two where it did anything are the two it broke: Nord, at
+    // 3.14:1, and Solarized Dark, at 3.68:1. .button-primary, the filled
+    // button, likewise changes no colour on hover; the lift and shadow on
+    // .tn-chip:hover above are the affordance every variant shares.
   }
 
   &--secondary {
@@ -77,7 +77,7 @@
       // --tn-alt-bg2, not --tn-accent, is what this paints, so the label takes
       // that surface's companion — the same pair --secondary:hover uses.
       // Keeping --tn-accent-txt here would carry a colour tuned for the accent
-      // fill onto a grey one, which is 1.45:1 in Solarized Dark.
+      // fill onto a grey one, which is 1.93:1 in Solarized Dark.
       color: var(--tn-alt-fg2);
       border-color: var(--tn-alt-bg2);
     }
@@ -148,7 +148,7 @@
     // off a surface the colour was chosen for. The chip is the one that labels
     // a FILLED variant surface, so a <code> span in a chip label swaps the
     // background out from under a colour paired with --tn-primary or
-    // --tn-accent — in TN Dark that is #1E1E1E on #282828, 1.00:1.
+    // --tn-accent — in TN Dark that is #1E1E1E on #282828, 1.13:1.
     //
     // So <code> keeps the chip's own surface, which is the one every pair
     // above measures, and the monospace font and the border do the
