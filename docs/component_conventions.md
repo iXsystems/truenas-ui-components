@@ -503,6 +503,53 @@ passes just as happily on markup that reintroduces the other. Use `liveSources()
 and `politeness()` from `lib/a11y/live-region-testing.ts`; see
 `banner-a11y.spec.ts` for the shape.
 
+### Scrolling Regions
+
+**An element that scrolls has to be reachable from a keyboard.** axe's
+`scrollable-region-focusable` reports any element that scrolls, is not in the
+tab order, and contains nothing that is — because content below its fold is
+content a keyboard cannot get to. Five elements in this library are scroll
+containers and every one of them can be handed content with no control in it.
+
+**Take the measurement from `lib/a11y/scrollable-region.ts`. Do not write it
+again.** `tnScrollableRegion(() => element)` returns the signal a component
+binds its `tabindex` (and, where the element is not already named, its `role`
+and `aria-label`) to. What it is not is one comparison:
+
+- **axe's own 13px buffer**, `getScroll(node, 13)`. Measuring with a bare `>`
+  marks regions the rule considers fine, because `scrollHeight` and
+  `clientHeight` are integers rounded from fractional layout.
+- **The computed `overflow` on the overflowing axis.** Content wider than a
+  `overflow-x: visible` box does not scroll; it spills out and is on screen, and
+  axe does not report it.
+- **A `ResizeObserver` on the region AND on its direct children**, plus a
+  `MutationObserver`. The children are the half that catches growth no DOM
+  mutation announces — an image loading, a webfont swapping.
+- **A focus latch.** Removing `tabindex` from an element that HAS focus blurs it
+  to `<body>`, so a region that stops overflowing while someone is reading it
+  keeps its tab stop until focus leaves. Focus *retains* a stop; it does not
+  grant one — `tn-drawer` focuses its own panel on open, and the earlier
+  `overflowing || focused` reading made every modal drawer a tab stop.
+
+**The component still decides what to put on the element**, because that is what
+legitimately differs: `tn-drawer`'s panel is already a named `role="dialog"` and
+takes only the tab stop, while `tn-side-panel`'s bare `<section>` takes
+`role="group"` and a name as well. A directive owning those attributes through
+host bindings would clobber the template bindings the drawer already has.
+
+**A scrolling region that takes a tab stop is named.** A focusable element with
+no accessible name is announced as a bare "group". Prefer a name the component
+already has — `tn-tab-panel` uses its own `label`, which is what its tab says —
+and expose an input for it where there is none.
+
+**Test it with `lib/a11y/scrollable-region-testing.ts`.** jsdom has no layout
+engine, so nothing in this library can overflow under jest by itself:
+`scrollingTo(el, scrollSize, clientSize, axis)` stubs the two readings and sets
+the matching `overflow` inline, which is what both axe and the helper read.
+Stubbing only the sizes gives a rule that never matches and a spec that is green
+for nothing. `staticScroller()` is the positive control every such spec needs
+beside it.
+
 ### Running axe in a spec
 
 **Use `lib/a11y/axe-testing.ts`. Do not write another axe wrapper.** Three specs

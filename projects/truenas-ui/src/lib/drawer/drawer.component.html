@@ -20,11 +20,39 @@
   is `tnAccessibleName`'s, and its reasoning is set out there.
 -->
 
+<!--
+  THE PANEL IS THE ELEMENT THAT SCROLLS (#270)
+  --------------------------------------------
+  `.tn-drawer__panel` is `overflow-y: auto`, so whatever a caller projects into
+  a drawer scrolls inside this element — and axe's `scrollable-region-focusable`
+  reports a scroll container that is neither in the tab order nor holds anything
+  that is. `tabindex="-1"` does not answer it: that is a focus TARGET for
+  `tnFocusOnOpen`, not a tab stop, and a drawer holding only static content —
+  a details pane, a legend — has no tabbable descendant to satisfy the rule
+  either. A keyboard user could then not reach the part below the fold.
+
+  So the resting `-1` becomes `0` while the panel actually overflows.
+  `panelKeyboardReachable` is `tnScrollableRegion`'s, shared with
+  `tn-side-panel` and three others; the component says what it measures and why
+  the answer is held true while the panel has focus.
+
+  Only `tabindex` moves. Unlike the side panel's bare `<section>`, this element
+  already carries a role and a name in both modes — a named `role="dialog"` or
+  `role="navigation"` — so it is announced as itself when focus lands on it, and
+  a `role="group"` here would replace the model the drawer declares with a
+  description of its scrollbar.
+
+  Both branches carry `#panel`, and only one of them is ever rendered. That is
+  what makes the measurement follow a drawer whose `mode` changes at runtime:
+  the `@if` destroys one element and builds the other, and the query re-answers.
+-->
+
 <!-- Side mode: panel renders inline -->
 @if (mode() !== 'over') {
   <div
-    tabindex="-1"
+    #panel
     tnTestIdType="drawer"
+    [attr.tabindex]="panelKeyboardReachable() ? '0' : '-1'"
     [class]="drawerClasses()"
     [style.width]="width()"
     [attr.role]="panelRole()"
@@ -56,9 +84,10 @@
       target it focuses — see `../a11y/initial-focus.ts`.
     -->
     <div
+      #panel
       #overPanel
-      tabindex="-1"
       tnTestIdType="drawer"
+      [attr.tabindex]="panelKeyboardReachable() ? '0' : '-1'"
       [class]="drawerClasses()"
       [style.width]="width()"
       [attr.role]="panelRole()"
