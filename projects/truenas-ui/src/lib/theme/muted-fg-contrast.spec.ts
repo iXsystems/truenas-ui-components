@@ -35,7 +35,10 @@ import { formatRatio, themePalettes } from '../a11y/contrast-testing';
  * anything here — it reports `incomplete` rather than checking, and `axeResult`
  * throws on that. Computing the ratio from the shipped values is the claim that
  * can honestly be made without a browser: it is about the palette rather than
- * about a rendered page. `yarn test-sb` is what checks the page.
+ * about a rendered page. `yarn test-sb` is what checks the page, and it builds
+ * Storybook first — so the copy of this stylesheet under `.storybook/public/`
+ * is regenerated from the one measured here rather than read as it was
+ * committed. `themes-css-copy.spec.ts` keeps the committed copy honest anyway.
  *
  * The maths and the token lookup are `lib/a11y/contrast-testing.ts` (#197);
  * nothing is re-derived here. `primary-text-contrast.spec.ts` and
