@@ -27,8 +27,10 @@
      #545454 here and #DED142 in TN Dark. A foreground picked once for both
      cannot work, and tn-chip's accent label picked --tn-fg1, which measured
      1.20:1 on the yellow and failed in six of the nine palettes (#238). Every
-     theme declares its own, chosen from that theme's own darkest or lightest
-     surface where one clears 4.5:1, and the measured ratio is on each. */
+     theme declares its own, preferring a colour already in that theme — its
+     own --tn-bg1, or the near-black its light surfaces use — and falling back
+     to plain white or black where the accent's luminance leaves the palette no
+     value that clears 4.5:1. The measured ratio is on each. */
   --tn-accent-txt: #ffffff; /* 7.57:1 on --tn-accent */
   --tn-bg1: #1E1E1E;
   --tn-bg2: #282828;
@@ -486,10 +488,11 @@
    ================================ */
 .tn-high-contrast {
   --tn-primary: var(--tn-blue); /* WCAG fix try another shade of blue #007db3 or black #000000 */
-  /* Black, where the other eight themes put white or near-white on their
-     --tn-primary fill. This theme's --tn-blue is light enough that white
-     measures 4.07:1 on it — it was inheriting :root's #ffffff, having never
-     declared its own, and that is the value that failed (#238). */
+  /* Black. Six of the other eight themes put white on their --tn-primary fill
+     and Nord puts #333333 on its pale one; this theme's --tn-blue is light
+     enough that white measures only 4.07:1. It was inheriting :root's #ffffff,
+     having never declared a --tn-primary-txt of its own, and that is the value
+     that failed (#238). */
   --tn-primary-txt: #000000; /* 5.16:1 on --tn-primary */
   /* >=4.5:1 against both --tn-bg1 (4.61:1) and --tn-bg2 (6.27:1); --tn-primary
      itself is only 2.99:1 on --tn-bg1 — which, in the accessibility theme, is

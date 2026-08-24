@@ -30,8 +30,8 @@ import { TN_THEME_DEFINITIONS } from '../theme/theme.constants';
  *    measurements of a hardcoded list, and a list is exactly as current as the
  *    last person to edit it: a new variant, or a `color:` moved to a different
  *    token, would leave all of the above green while measuring markup that no
- *    longer exists. `EXPECTED_*` reads the stylesheet and fails if it and this
- *    table have diverged in either direction.
+ *    longer exists. `scssRules` reads the stylesheet back and the pairing cases
+ *    fail if it and `CHIP_SURFACES` have diverged in either direction.
  *
  * NOT AXE'S `color-contrast` RULE, which needs a layout engine to find what is
  * really painted behind an element and reports `incomplete` under jsdom rather
@@ -233,8 +233,11 @@ describe('tn-chip label contrast (#238)', () => {
     const chipRule = rules.find((rule) => rule.selector === '.tn-chip');
 
     it('reads the stylesheet', () => {
-      // Without this a moved or renamed file leaves every scan below matching
-      // nothing, which passes as "no unexpected surface".
+      // A moved file throws in `readFileSync` and is loud on its own. This is
+      // for the quiet half: the wrapper renamed away from `.tn-chip`, which
+      // leaves a stylesheet that parses into rules none of the lookups below
+      // find, and a `chipRule` of `undefined` whose declarations are read with
+      // `?.` and compared against nothing.
       expect(chipRule).toBeDefined();
     });
 
