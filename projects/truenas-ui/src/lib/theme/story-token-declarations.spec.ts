@@ -141,8 +141,8 @@ const PARTIALLY_DECLARED_TOKENS: Record<string, { inheritedBy: string[]; why: st
   '--tn-topbar-txt': {
     inheritedBy: ['.tn-blue', '.tn-paper', '.tn-high-contrast'],
     why: 'text drawn on the --tn-topbar bar, so the value a theme needs follows from its own '
-      + 'bar: six palettes have a bar that :root\'s rgba(255,255,255,0.85) does not suit and '
-      + 'declare their own, and three have one it does. Which of those three is right to '
+      + 'bar: :root sets rgba(255,255,255,0.85), five themes have a bar it does not suit and '
+      + 'declare their own, and these three have one it does. Which of the three is right to '
       + 'inherit is measured by #277, not here — PR #281 gives .tn-blue its own value and '
       + 'leaves the other two inheriting, and this entry loses .tn-blue when that lands.',
   },
