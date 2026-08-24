@@ -431,7 +431,13 @@
      1.46:1, the worst pair in the palette, because Solarized's base01/base02
      sit deliberately close to its own background. Two steps that both clear
      3:1 do not fit between those and this theme's --tn-fg2, so both move up to
-     where they do. Nothing reads either token, so nothing regresses. */
+     where they do. Nothing reads either token, so nothing regresses.
+     They land above this theme's own --tn-fg1 (2.79:1 on --tn-bg1, 2.42:1 on
+     --tn-bg2) — the one palette of nine where a non-text token out-reads a text
+     one. Nothing clearing 3:1 could sit under 2.79:1, so that is --tn-fg1's
+     defect (#265) rather than this one's. Recorded as OUTREADS_TEXT in
+     muted-fg-contrast.spec.ts, and asserted to still be true there, so retuning
+     --tn-fg1 takes the exception with it. */
   --tn-fg3: #779099; /* 4.46:1 on --tn-bg1, 3.86:1 on --tn-bg2 */
   --tn-fg4: #6e868e; /* 3.91:1 on --tn-bg1, 3.38:1 on --tn-bg2 */
   --tn-alt-bg1: #0e4853;

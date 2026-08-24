@@ -78,6 +78,38 @@ const SURFACES: Readonly<Record<string, string>> = {
  */
 const REQUIRED_TOKENS = [...Object.keys(SURFACES), ...MUTED_TOKENS];
 
+/**
+ * The text foregrounds. No case here holds them to a threshold — #240 is about
+ * the two tokens that are NOT text — but they are what the retune moved five
+ * palettes' worth of values up toward, and a token guaranteed only 3:1 reading
+ * as well as one carrying body copy is the way this fix could go wrong.
+ *
+ * Their order relative to EACH OTHER is a per-theme choice and is deliberately
+ * not pinned: `.tn-midnight` reads `--tn-fg2` at 9.04:1 over `--tn-fg1` at
+ * 6.25:1 on `--tn-bg1`. The claim is only that neither muted token out-reads
+ * either of these.
+ */
+const TEXT_TOKENS = ['--tn-fg1', '--tn-fg2'];
+
+const RANK_REQUIRED = [...Object.keys(SURFACES), ...TEXT_TOKENS, ...MUTED_TOKENS];
+
+/**
+ * Palettes where a muted token does out-read a text one, and why.
+ * `.tn-solarized-dark`'s `--tn-fg1` measures 2.79:1 on `--tn-bg1` and 2.42:1 on
+ * `--tn-bg2` — beneath the 3:1 floor `--tn-fg3` and `--tn-fg4` are now held to —
+ * so both necessarily clear it. No value that clears 3:1 can sit under 2.79:1,
+ * so this is not something the retune could have avoided by choosing different
+ * colours: it is `--tn-fg1` that is wrong, tracked as #265.
+ *
+ * Asserted to STILL BE TRUE rather than merely skipped, so #265 retuning
+ * `--tn-fg1` breaks this suite and takes the exception out with it, instead of
+ * leaving a note here that has quietly stopped describing the palette.
+ */
+const OUTREADS_TEXT: Readonly<Record<string, string>> = {
+  '.tn-solarized-dark':
+    '--tn-fg1 is 2.79:1 on --tn-bg1 and 2.42:1 on --tn-bg2, below the 3:1 these two now clear (#265)',
+};
+
 interface ThemeCase {
   selector: string;
   token: string;
@@ -168,4 +200,47 @@ describe('--tn-fg3/--tn-fg4 non-text contrast (#240)', () => {
       expect(fg4).toBeLessThan(fg3);
     }
   );
+
+  // The same argument, against the tokens on the other side. The case above
+  // pins --tn-fg3 against --tn-fg4, which is the pair the retune moved together;
+  // it says nothing about either landing on top of a token that carries actual
+  // text, which is what raising a 3:1 token risks.
+  const ranked = palettes
+    .filter((palette) => RANK_REQUIRED.every((token) => palette.declares(token)))
+    .flatMap((palette) => Object.keys(SURFACES).map((surface) => {
+      const ratio = (token: string) => palette.contrast(token, surface);
+      return {
+        selector: palette.selector,
+        surface,
+        ratios: [...TEXT_TOKENS, ...MUTED_TOKENS]
+          .map((token) => `${token.slice(5)} ${formatRatio(ratio(token))}`)
+          .join(', '),
+        // `>=` rather than `>`: a muted token that measures exactly what a text
+        // token does is that text token under another name. Listed in pairs so a
+        // failure prints which two met and at what numbers.
+        outreading: MUTED_TOKENS.flatMap((muted) => TEXT_TOKENS
+          .filter((text) => ratio(muted) >= ratio(text))
+          .map((text) =>
+            `${muted} ${formatRatio(ratio(muted))} over ${text} ${formatRatio(ratio(text))}`)),
+      };
+    }));
+
+  it.each(ranked.filter(({ selector }) => !OUTREADS_TEXT[selector]))(
+    '$selector on $surface: neither muted token out-reads a text one — $ratios',
+    ({ outreading }) => {
+      expect(outreading).toEqual([]);
+    }
+  );
+
+  it.each(ranked.filter(({ selector }) => OUTREADS_TEXT[selector]))(
+    '$selector on $surface: the recorded #265 inversion is still there — $ratios',
+    ({ outreading }) => {
+      expect(outreading).not.toEqual([]);
+    }
+  );
+
+  it('every palette recorded in OUTREADS_TEXT was measured', () => {
+    const measured = ranked.map(({ selector }) => selector);
+    expect(Object.keys(OUTREADS_TEXT).filter((selector) => !measured.includes(selector))).toEqual([]);
+  });
 });
