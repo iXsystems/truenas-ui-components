@@ -550,6 +550,43 @@ Stubbing only the sizes gives a rule that never matches and a spec that is green
 for nothing. `staticScroller()` is the positive control every such spec needs
 beside it.
 
+#### A combobox popup is the exception, and does NOT take a tab stop
+
+**Do not reach for `tnScrollableRegion` when the scrolling thing is a dropdown.**
+axe exempts a combobox popup from `scrollable-region-focusable` outright — its
+options are reached with the arrow keys through the input's
+`aria-activedescendant` and are `tabindex="-1"` on purpose, so giving the panel a
+tab stop would add a stop the ARIA pattern says should not be there.
+
+**The exemption tests the SCROLL CONTAINER'S OWN ROLE.** `isComboboxPopup` reads
+the node's role first and returns false for anything that is not `listbox`,
+`menu`, `tree`, `grid` or `dialog` — then resolves the combobox by
+`aria-controls`/`aria-owns` pointing at the node's id. So a role-less wrapper
+carrying the `overflow`, whether inside the listbox or around it, is reported
+even though the panel it belongs to is exempt. `tn-select` and `tn-autocomplete`
+both missed the exemption that way (#292).
+
+**So the `overflow` goes on the `role="listbox"` element itself** — the shape
+`tn-chip-input`, `tn-select` and `tn-autocomplete` now share. Two consequences
+worth knowing before moving one: a `scroll` handler has to move with it, because
+a `scroll` event fires on the element that scrolls and does not bubble; and
+anything ARIA does not allow inside a listbox (a `role="status"` row for loading
+or no-results) is a SIBLING, so it ends up outside the scrolling area.
+
+**The panel's `max-height` follows the overflow only where the panel IS the
+listbox**, which is `tn-chip-input` and `tn-select`. A panel with a sibling row
+keeps its own cap: `tn-autocomplete` declares the max-height on the wrapper,
+which is a flex column, and the listbox scrolls inside whatever is left
+(`min-height: 0`, or a flex item floors at its content height and pushes the
+status row past the cap). A cap on the listbox alone would bound the options and
+let the panel grow past the number a caller asked for.
+
+**A spec for one asserts `evaluated` does NOT contain the rule.** "Excluded" and
+"passed" are different verdicts and only the first says the exemption applied —
+a pass would mean axe found something tabbable in the panel. Pair it with a
+control that takes the `aria-controls` away and gets the violation back; see
+`select-scrollable-dropdown.spec.ts`.
+
 ### Running axe in a spec
 
 **Use `lib/a11y/axe-testing.ts`. Do not write another axe wrapper.** Three specs
