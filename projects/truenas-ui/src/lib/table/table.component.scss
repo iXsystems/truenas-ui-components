@@ -230,20 +230,18 @@
       cursor: pointer;
       user-select: none;
 
-      // Derived from the topbar itself rather than from --tn-alt-bg1, which is
-      // near-white in blue/paper/high-contrast and would clash with light
-      // topbar text. It does NOT preserve contrast with --tn-topbar-txt, which
-      // this comment used to claim: every palette's label is lighter than its
-      // bar, so mixing 15% of the label into the bar moves the surface toward
-      // the text and the ratio can only fall. On the four mid-tone bars it
-      // falls below 4.5:1 — see the hover-fill cases in
-      // text-token-surface-contrast.spec.ts, which measure it and record those
-      // four (#277). Fixing it needs a hover colour of its own per palette,
-      // because there is no direction to move a bar in that suits both a
-      // near-black one, where only lightening is visible, and a mid-tone one,
-      // where lightening is what breaks it.
+      // The bar's own hover token, declared by every palette. It was derived —
+      // `color-mix(in srgb, var(--tn-topbar) 85%, var(--tn-topbar-txt))` — and
+      // that could not work: every palette's label is lighter than its bar, so
+      // mixing 15% of the label into the bar moved the surface toward the text
+      // and the label's ratio could only fall. On the four mid-tone bars it
+      // fell below 4.5:1 (#284). No single direction fixes that either, which
+      // is why the value is per-palette rather than a different mix: a
+      // near-black bar can only lighten, and lightening is exactly what breaks
+      // a mid-tone one. themes.css records both ratios on each value and
+      // text-token-surface-contrast.spec.ts holds all nine to them.
       &:hover {
-        background-color: color-mix(in srgb, var(--tn-topbar) 85%, var(--tn-topbar-txt));
+        background-color: var(--tn-topbar-hover);
       }
     }
   }
