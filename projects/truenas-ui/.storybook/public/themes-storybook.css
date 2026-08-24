@@ -38,35 +38,53 @@
    a foreground and its own background together, from the same palette, so it
    stays self-consistent on all nine.
 
-   WHY THE OVERRIDES AT THE BOTTOM ARE A CLOSED LIST
-   -------------------------------------------------
+   WHY THE OVERRIDE AT THE BOTTOM IS A CLOSED LIST OF ONE
+   ------------------------------------------------------
    `convert()` in `storybook/theming` builds `theme.color` from
    `createColors()`, and only FOUR of those roles come from the theme object:
    `primary`, `secondary`, `defaultText` and `inverseText`. Every other role —
    and `red2` in both of the syntax palettes — is a constant shared by the
-   light and dark bases, so no docs theme can reach it. The overrides below are
-   derived from that function rather than noticed one at a time, which is the
-   whole difference between this list and the one it replaces.
+   light and dark bases, so no docs theme can reach it. The table below is that
+   function's leftovers, enumerated from it rather than noticed one at a time,
+   which is the whole difference between this and the list it replaces: a
+   reader can tell it is complete, and can tell which entries got a rule.
 
-   Storybook paints docs TEXT with these unreachable roles. Measured against
-   `appContentBg` (#282828), the surface `DocsWrapper` and the syntax
-   highlighter's own wrapper both paint:
+   Storybook paints docs TEXT with these unreachable roles. Ratios are against
+   `appContentBg` (#282828), which `DocsWrapper` paints behind the page and the
+   syntax highlighter's wrapper paints again behind an MDX code fence. A Canvas
+   "Show code" block is the exception and is NOT this surface: `Preview` passes
+   `dark: true`, which re-wraps the block in `convert(themes.dark)`, so it sits
+   on #222325 — near enough that nothing below changes verdict, far enough that
+   quoting one number for both would be wrong.
 
      role                      value     ratio   painted on            here?
      color.dark                #5C6570   2.49:1  h6, blockquote        yes
-     code red2 (.token.deleted) #9a050f  1.69:1  diff syntax           yes
-     color.darkest             #2E3338   1.16:1  span.frame caption    no (1)
-     color.negative            #FF4400   4.27:1  required-arg marker   no (2)
-     color.orange              #FC521F   4.47:1  story-mount error     no (2)
-     transparentize(.6, text)  ~#717171  3.02:1  argstable section     no (2,3)
+                                                 argstable object      no (1)
+                                                 control
+     color.darkest             #2E3338   1.16:1  span.frame caption    no (2)
+     code red2                 #9a050f   1.69:1  `diff` syntax         no (3)
+     color.negative            #FF4400   4.27:1  required-arg marker   no (1)
+     color.orange              #FC521F   4.47:1  story-mount error     no (1)
+     transparentize(.6, text)  ~#717171  3.02:1  argstable section     no (1,4)
                                                  header, Typeset label
 
-   (1) reachable, but nothing here emits `span.frame` markup — a dead selector
+   (1) inside `.docblock-argstable`, which addon-docs marks `sb-unstyled`, or
+       styled by emotion with a generated class. Either way there is no hook a
+       hand-written selector can hold that a Storybook patch release will not
+       move silently — which is a worse failure than the one it would fix. The
+       argstable's object control is the one of these that renders TODAY, on
+       the six pages declaring `control: 'object'`; it is the follow-up this
+       change deliberately does not reach.
+   (2) reachable, but nothing here emits `span.frame` markup — a dead selector
        would be worse than a documented omission.
-   (2) styled by emotion with a generated class and no stable hook. A selector
-       for these would be a hash that a Storybook patch release changes
-       silently, which is a worse failure than the one it fixes.
-   (3) neither renders on any docs page in this repository today: no story
+   (3) `red2` is #9a050f in BOTH syntax palettes, the one entry the dark
+       palette did not retune. It has a stable hook — `.token.deleted` — and
+       still gets no rule: this Storybook registers eleven Prism grammars and
+       `diff` is not among them, so no sample can emit that token and the
+       selector would be dead by (2)'s own argument. Worse, forcing a colour
+       there would also hit a `<Source dark={false}>` block, whose wrapper is
+       `themes.light` white.
+   (4) neither renders on any docs page in this repository today: no story
        declares `argTypes[…].table.category`, and no MDX uses `Typeset`. Both
        are one edit away, so they are recorded rather than dismissed.
 
@@ -112,10 +130,16 @@ html, body {
 
 /* ================================
    TYPEFACE
-   `create()` accepts `fontBase` and `fontCode` and has no third slot, so the
-   header face is the one typographic choice the docs theme cannot carry.
-   Colour is deliberately absent: these headings take `theme.color.defaultText`
-   (#dedede, 10.96:1 on #282828) like the rest of the docs chrome.
+   Predates #293 and is left alone, but not left unexplained, because the
+   obvious reading of it is wrong: this does NOT put the header face on docs
+   headings. addon-docs styles the same elements through `toGlobalSelector` at
+   0,1,0 and spreads a reset setting `fontFamily: theme.typography.fonts.base`,
+   so a docs heading renders in `fontBase` and this 0,0,1 rule loses. Where it
+   does apply is a heading a story renders, outside addon-docs' reach.
+
+   Colour is deliberately absent either way: docs headings take
+   `theme.color.defaultText` (#dedede, 10.96:1 on #282828) like the rest of the
+   chrome, which is the whole point of #293.
    ================================ */
 h1, h2, h3, h4,
 .sbdocs-title h1, .sbdocs-title h2, .sbdocs-title h3, .sbdocs-title h4 {
@@ -123,9 +147,10 @@ h1, h2, h3, h4,
 }
 
 /* ================================
-   THE ROLES `truenasTheme` CANNOT REACH
-   See the table in the header for the full set and why these two are the ones
-   with rules. Both values are the smallest hue-preserving lightness step off
+   THE ONE ROLE `truenasTheme` CANNOT REACH AND A SELECTOR CAN
+   The table in the header is the full set; this is the only entry that both
+   renders here and has a hook that will still be there after a Storybook patch
+   release. Its value is the smallest hue-preserving lightness step off
    Storybook's own that clears 4.5:1 on BOTH docs surfaces — the method
    themes.css documents for `--tn-primary-text`. Ratios are against
    `appContentBg` #282828 then `appBg` #1e1e1e.
@@ -138,19 +163,4 @@ h1, h2, h3, h4,
    against the 0,1,0 of addon-docs' own `:where(h6:not(…))` rule. */
 .sbdocs-content :where(h6, blockquote):not(.sb-unstyled *) {
   color: #86909b; /* 4.55:1, 5.14:1 */
-}
-
-/* The syntax highlighter's `deleted` token. `red2` is #9a050f in BOTH of
-   Storybook's syntax palettes — the one entry the dark palette did not
-   retune — so it is 1.69:1 wherever a diff is highlighted, on the light theme
-   and on the dark one alike.
-
-   `!important` rather than more selectors: emotion styles this from the
-   highlighter's wrapper at the same specificity this rule can reach, and the
-   order its <style> is injected in relative to a static stylesheet is not
-   something to depend on. Nothing in this repository renders a diff sample
-   today; the rule is here because the palette ships broken, not because a page
-   was seen failing. */
-.sbdocs .token.deleted {
-  color: #f9535e !important; /* 4.51:1, 5.10:1 */
 }

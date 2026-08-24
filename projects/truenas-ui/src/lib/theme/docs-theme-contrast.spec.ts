@@ -55,12 +55,19 @@ const storybookCss = readFileSync(join(STYLES_DIR, 'themes-storybook.css'), 'utf
  * The surfaces a docs page paints, by the `create()` key that sets each.
  *
  * `appContentBg` is the one most things land on: `DocsWrapper` paints it behind
- * the whole page, and the syntax highlighter's own wrapper paints it again
- * behind every code sample. `appBg` backs the argstable's section rows and
- * `barBg` the canvas toolbar. All three are measured for every foreground
- * rather than each foreground against the one surface it was found on — which
- * is the assumption that would rot the moment a Storybook release moved a
- * block from one to another.
+ * the whole page, and the syntax highlighter's wrapper paints it again behind
+ * an MDX code fence. `appBg` backs the argstable's section rows and `barBg` the
+ * canvas toolbar. All three are measured for every foreground rather than each
+ * foreground against the one surface it was found on — which is the assumption
+ * that would rot the moment a Storybook release moved a block from one to
+ * another.
+ *
+ * ONE DOCS SURFACE IS NOT IN THIS LIST and cannot be: a Canvas "Show code"
+ * block is re-wrapped in `convert(themes.dark)` — `Preview` passes `dark: true`
+ * unconditionally — so it renders on Storybook's #222325 rather than on
+ * anything `truenasTheme` declares. No theme value reaches it, so there is
+ * nothing here that could regress it; the colours measured below are 4.81:1 and
+ * better there as it happens, and `themes-storybook.css` says so beside them.
  */
 const SURFACE_KEYS = ['appContentBg', 'appBg', 'barBg'] as const;
 
@@ -76,7 +83,15 @@ const SURFACE_KEYS = ['appContentBg', 'appBg', 'barBg'] as const;
  * - `textColor` becomes `color.defaultText`, which addon-docs uses for body
  *   copy, headings, table cells and `code`. Fifteen call sites.
  * - `colorSecondary` becomes `color.secondary`, which is every link on a docs
- *   page and the argstable's expand controls. Eight call sites.
+ *   page. Eight call sites.
+ *
+ * Measured against the bare surfaces the theme declares, which is the claim
+ * these cases make and the limit of it. `Expandable` in the argstable composes
+ * a `hsl(0 0 100 / 0.02)` wash of its own, so `colorSecondary` renders there on
+ * #2c2c2c at 4.36:1 rather than the 4.62:1 below. Not measured here and not
+ * fixed: it needs a `type.detail`, which docgen would supply and `angular.json`
+ * has compodoc off, so nothing renders it today. Recorded because the number is
+ * real and a future reader should not have to rediscover it.
  *
  * `colorPrimary` is NOT here, and its absence is the measured kind rather than
  * the forgotten kind: `theme.color.primary` appears nowhere in addon-docs, so
@@ -120,6 +135,36 @@ function themeValue(key: string): string {
   );
 }
 
+/**
+ * How deep the braces in `css` nest: 1 for a flat stylesheet, 0 for one with no
+ * rules at all, 2 for the first `@media` or nested selector.
+ *
+ * A character walk over the raw text, deliberately not sharing anything with
+ * `cssRules` — a parser cannot be the witness for the property it silently
+ * relies on. Throws on unbalanced braces rather than returning a depth, because
+ * every count after the imbalance is meaningless and a number here would be
+ * read as one.
+ */
+function maxBraceDepth(css: string): number {
+  let depth = 0;
+  let deepest = 0;
+  for (const character of css.replace(/\/\*[\s\S]*?\*\//g, '')) {
+    if (character === '{') {
+      depth += 1;
+      deepest = Math.max(deepest, depth);
+    } else if (character === '}') {
+      depth -= 1;
+      if (depth < 0) {
+        throw new Error('themes-storybook.css: a } closes a block that was never opened');
+      }
+    }
+  }
+  if (depth !== 0) {
+    throw new Error(`themes-storybook.css: ${depth} block(s) left open`);
+  }
+  return deepest;
+}
+
 /** One `selector { … }` rule in `themes-storybook.css`, comments already gone. */
 interface CssRule {
   selector: string;
@@ -133,6 +178,14 @@ interface CssRule {
  * case below asserts the file stays flat — no `@media`, no nesting — so the two
  * cannot disagree silently. That file's parser is not exported and this is the
  * one stylesheet in the repository written entirely by hand for Storybook.
+ *
+ * Flatness has to be measured OUTSIDE this function, on the raw text, which is
+ * the whole reason `maxBraceDepth` exists separately. Everything a nested rule
+ * would break happens inside the regex: `([^{}]+)` cannot capture a `}`, so
+ * `.a { color: red; .b { color: blue; } }` yields one rule whose selector is
+ * `color: red; .b` and whose outer declaration is gone. Asked afterwards
+ * whether any selector contains a brace, this parser always answers no — a
+ * check that cannot fail, over exactly the input that broke it.
  */
 function cssRules(css: string): CssRule[] {
   const withoutComments = css.replace(/\/\*[\s\S]*?\*\//g, '');
@@ -253,7 +306,7 @@ describe('Storybook docs-page theming (#293)', () => {
     it('is flat — no at-rules and no nesting, which is what the parser here assumes', () => {
       const stripped = storybookCss.replace(/\/\*[\s\S]*?\*\//g, '');
       expect(stripped).not.toMatch(/@\w/);
-      expect(rules.every((rule) => !rule.selector.includes('}'))).toBe(true);
+      expect(maxBraceDepth(storybookCss)).toBe(1);
     });
 
     const painters = rules.filter((rule) => rule.declarations
@@ -263,10 +316,9 @@ describe('Storybook docs-page theming (#293)', () => {
     // fails this case until someone adds it here — which is the point: #293 was
     // a list of tag overrides that grew one noticed element at a time and could
     // not be told apart from a complete one by reading it. This is the reading.
-    it('only the canvas selectors and the two documented overrides paint anything', () => {
+    it('only the canvas selectors and the one documented override paint anything', () => {
       expect(painters.map((rule) => rule.selector).sort()).toEqual([
         ...Object.keys(CANVAS_SELECTORS),
-        '.sbdocs .token.deleted',
         '.sbdocs-content :where(h6, blockquote):not(.sb-unstyled *)',
       ].sort());
     });
@@ -283,9 +335,11 @@ describe('Storybook docs-page theming (#293)', () => {
       }
     );
 
-    // The overrides for the roles no docs theme can reach. Their values are
-    // literal hex precisely because the surface under them does not follow the
-    // switcher, so each is measured against every surface the theme declares.
+    // The override for the one role no docs theme can reach and a selector can.
+    // Its value is literal hex precisely because the surface under it does not
+    // follow the switcher, so it is measured against every surface the theme
+    // declares. Written as a list rather than as that one case, so a second
+    // override added later is measured without anyone remembering to.
     const literals = rules.flatMap((rule) => rule.declarations
       .filter(({ property, value }) => PAINTING_PROPERTIES.includes(property)
         && /#[0-9a-f]{3,8}\b/i.test(value))
@@ -309,10 +363,10 @@ describe('Storybook docs-page theming (#293)', () => {
       }
     );
 
-    // The two overrides are the whole reason this file still exists after the
-    // theme was wired. If they were ever deleted, the case above would measure
+    // The override is most of the reason this file still has rules at all after
+    // the theme was wired. If it were ever deleted, the case above would measure
     // nothing and pass — a suite that has stopped checking, reported as green.
-    it('the documented overrides are still here to measure', () => {
+    it('the documented override is still here to measure', () => {
       expect(literals.length).toBeGreaterThan(0);
     });
   });
