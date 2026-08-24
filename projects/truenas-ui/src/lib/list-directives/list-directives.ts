@@ -113,12 +113,24 @@ export class TnListItemSecondaryDirective {}
 })
 export class TnListItemTrailingDirective {}
 
+/**
+ * The divider's styling, for an element that is already something else.
+ *
+ * Carries no role. It used to declare `role="separator"`, which is the defect
+ * in #237 arriving by a second route: these directives are list content, and a
+ * separator is not an allowed child of `role="list"` — so inside the one place
+ * this is meant to be used, that role invalidated the list. It also matches
+ * `tn-divider` itself, where it was a second source for an attribute
+ * `TnDividerComponent` already owns and now varies by context.
+ *
+ * A decorative rule needs no role. Use the `<tn-divider>` element where the
+ * separator semantics are wanted; it keeps them everywhere they are valid.
+ */
 @Directive({
   selector: 'tn-divider, [tnDivider]',
   standalone: true,
   host: {
-    'class': 'tn-divider',
-    'role': 'separator'
+    'class': 'tn-divider'
   }
 })
 export class TnDividerDirective {}

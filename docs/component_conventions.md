@@ -410,6 +410,36 @@ Add when semantic HTML is insufficient:
 </button>
 ```
 
+### Roles That Depend on the Container
+
+**A container role can forbid its children's roles.** `role="list"` owns only
+`listitem`, so a `role="heading"` subheader or a `role="separator"` divider
+between two rows invalidates the whole list — `aria-required-children`, and the
+defect fixed in #237. The same shape recurs: `listbox` owns `option` and `group`,
+`tablist` owns `tab`, `row` owns the cell roles.
+
+**Neither side can be fixed by deleting a role.** The subheader and the divider
+are correct on their own; it is the pairing that is not. So a component whose
+role is only valid in some containers decides at `ngOnInit` and binds it:
+
+```ts
+'[attr.role]': 'role()'    // 'separator', or 'presentation' inside a list
+```
+
+**Ask the DOM, not the injector.** `isInsideAriaList()` in `lib/list/list-context.ts`
+is the worked example, and its docblock has the reasoning: an element injector
+walks the template that *declared* the element, which content projection makes
+diverge from where it renders, while the accessibility tree is built from the
+DOM. `inject(TnListComponent, { optional: true })` therefore answers a different
+question and gets `<some-panel><tn-divider /></some-panel>` wrong.
+
+**Move a required role rather than dropping it.** Inside a list the subheader's
+host becomes the `listitem` the list requires and the heading moves to the
+element around the text — `<li><h3>` in plain HTML. Dropping to
+`role="presentation"` would have satisfied axe by removing the section heading
+from the accessibility tree, which is a silent regression a passing rule cannot
+show you.
+
 ### Live Regions
 
 **Declare politeness exactly once.** A live-region role implies one — `alert` is
