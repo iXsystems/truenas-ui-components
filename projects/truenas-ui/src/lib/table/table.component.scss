@@ -374,10 +374,6 @@
     cursor: pointer;
   }
 
-  &__checkbox {
-    pointer-events: none;
-  }
-
   // Deliberately not pinned. Pinning select + first data + actions already consumes most of a
   // 320px viewport; adding a fourth pinned column leaves no scrollable middle at all. The chevron
   // stays reachable by scrolling, and card mode gives it a dedicated "Details" control.
