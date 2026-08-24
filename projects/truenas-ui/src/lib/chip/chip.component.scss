@@ -33,15 +33,27 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
+  // Every variant below pairs its `color` with the token it paints as
+  // `background-color`, in the resting state and on hover alike. That pairing
+  // is the whole of #238: the label used to be chosen independently of the
+  // surface, so a theme was free to move one and not the other, and TN Dark
+  // did — --tn-accent resolves to yellow there while the label stayed --tn-fg1,
+  // at 1.20:1. chip-contrast.spec.ts measures each pair below in all nine
+  // palettes and is the reason a new surface here cannot repeat it.
+
   &--primary {
     background-color: var(--tn-primary);
     color: var(--tn-primary-txt);
     border-color: var(--tn-primary);
 
-    &:hover:not(.tn-chip--disabled) {
-      background-color: var(--tn-blue);
-      border-color: var(--tn-blue);
-    }
+    // No hover background. It used to swap to --tn-blue, which is a raw hue
+    // token rather than a themed surface and so has no companion foreground:
+    // the label stayed --tn-primary-txt and measured 3.14:1 in Nord and 3.68:1
+    // in Solarized Dark. The swap was also a no-op in five of the nine
+    // palettes, where --tn-primary already resolves to --tn-blue, which is how
+    // it survived — it did nothing at all in the themes anyone looked at.
+    // .button-primary, the filled button, likewise changes no colour on hover;
+    // the lift and shadow on .tn-chip:hover above are the affordance.
   }
 
   &--secondary {
@@ -57,11 +69,16 @@
 
   &--accent {
     background-color: var(--tn-accent);
-    color: var(--tn-fg1);
+    color: var(--tn-accent-txt);
     border-color: var(--tn-accent);
 
     &:hover:not(.tn-chip--disabled) {
       background-color: var(--tn-alt-bg2);
+      // --tn-alt-bg2, not --tn-accent, is what this paints, so the label takes
+      // that surface's companion — the same pair --secondary:hover uses.
+      // Keeping --tn-accent-txt here would carry a colour tuned for the accent
+      // fill onto a grey one, which is 1.45:1 in Solarized Dark.
+      color: var(--tn-alt-fg2);
       border-color: var(--tn-alt-bg2);
     }
   }
