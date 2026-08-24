@@ -1,4 +1,4 @@
-import { InjectionToken } from '@angular/core';
+import { InjectionToken, isDevMode } from '@angular/core';
 import type { AbstractControl, ValidationErrors } from '@angular/forms';
 
 /**
@@ -134,4 +134,94 @@ export function activeErrorKey(errors: ValidationErrors): string | null {
     }
   }
   return Object.keys(errors)[0] ?? null;
+}
+
+/**
+ * Runs a caller-supplied message provider, swallowing any throw so a buggy
+ * override or resolver cannot break change detection. Logs in dev mode and
+ * returns null so resolution falls through to the next layer.
+ *
+ * A blank message counts as "no answer" and falls through too, so a
+ * translation service that returns `''` for a missing key does not hide the
+ * error behind an empty subscript.
+ *
+ * @internal
+ */
+function runGuarded(
+  provider: () => string | null | undefined,
+  selector: string,
+  context: string
+): string | null {
+  try {
+    const message = provider();
+    return message != null && message.trim() !== '' ? message : null;
+  } catch (error) {
+    if (isDevMode()) {
+      console.error(
+        `[${selector}] ${context} threw while resolving a validation message`,
+        error
+      );
+    }
+    return null;
+  }
+}
+
+/** What {@link resolveErrorMessage} needs to answer for one control. */
+export interface ResolveErrorMessageOptions {
+  /** The control's current errors — the caller has already checked it has some. */
+  errors: ValidationErrors;
+  /** Per-instance overrides, keyed by error key. Consulted first. */
+  errorMessages?: TnFormFieldErrorMessages;
+  /** The app-wide resolver from {@link TN_FORM_FIELD_ERRORS}, if one is provided. */
+  resolver?: TnFormFieldErrorResolver | null;
+  /** The failing control, passed through to the resolver. */
+  control?: AbstractControl | null;
+  /** Component selector, used only to attribute dev-mode error logs. */
+  selector: string;
+}
+
+/**
+ * Resolves a user-facing message for a control's active error, in the order
+ * `tn-form-field` has always used:
+ *
+ * 1. a per-instance `errorMessages` override (string or factory),
+ * 2. the app-wide {@link TN_FORM_FIELD_ERRORS} resolver,
+ * 3. {@link defaultErrorMessage} for Angular's standard validators,
+ * 4. the error value itself, when a custom validator returned its own string,
+ * 5. the raw error key.
+ *
+ * Shared with `tn-form-errors` so a group-level message reads exactly like the
+ * field-level one it sits beside.
+ */
+export function resolveErrorMessage(options: ResolveErrorMessageOptions): string {
+  const { errors, errorMessages, resolver, control, selector } = options;
+
+  const key = activeErrorKey(errors);
+  if (!key) {return 'Invalid input';}
+
+  const value = errors[key];
+
+  const override = errorMessages?.[key];
+  if (override != null) {
+    const message = runGuarded(
+      () => (typeof override === 'function' ? override(value) : override),
+      selector,
+      `errorMessages["${key}"]`
+    );
+    if (message != null) {return message;}
+  }
+
+  const resolved = runGuarded(
+    () => resolver?.(key, value, control ?? null),
+    selector,
+    'TN_FORM_FIELD_ERRORS resolver'
+  );
+  if (resolved != null) {return resolved;}
+
+  const builtIn = defaultErrorMessage(key, value);
+  if (builtIn != null) {return builtIn;}
+
+  if (typeof value === 'string') {return value;}
+
+  return key;
 }

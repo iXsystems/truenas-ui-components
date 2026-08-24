@@ -1,7 +1,7 @@
 
 import { NgTemplateOutlet } from '@angular/common';
 import type { AfterContentInit } from '@angular/core';
-import { Component, input, computed, signal, contentChild, forwardRef, inject, isDevMode, DestroyRef } from '@angular/core';
+import { Component, input, computed, signal, contentChild, forwardRef, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgControl, Validators } from '@angular/forms';
 import type { ValidationErrors } from '@angular/forms';
@@ -9,8 +9,7 @@ import { TN_FORM_FIELD_CONTEXT } from './form-field-context';
 import type { TnFormFieldContext } from './form-field-context';
 import {
   TN_FORM_FIELD_ERRORS,
-  activeErrorKey,
-  defaultErrorMessage,
+  resolveErrorMessage,
 } from './form-field.errors';
 import type { TnFormFieldErrorMessages } from './form-field.errors';
 import { TnIconComponent } from '../icon/icon.component';
@@ -213,60 +212,19 @@ export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContex
    * `errorMessages` input (and the injected resolver), so it is reactive: the
    * displayed message updates when either the control errors or the overrides
    * change — e.g. a runtime locale switch.
+   *
+   * The ladder itself lives in `./form-field.errors`, shared with
+   * `tn-form-errors` so a group-level message reads exactly like the
+   * field-level one it sits beside.
    */
   private resolveErrorMessage(errors: ValidationErrors): string {
-    const key = activeErrorKey(errors);
-    if (!key) {return 'Invalid input';}
-
-    const value = errors[key];
-
-    // 1. Per-field override (string or factory). A throwing factory must not
-    //    break change detection, so fall through to the next layer instead.
-    const override = this.errorMessages()[key];
-    if (override != null) {
-      const message = this.runGuarded(
-        () => (typeof override === 'function' ? override(value) : override),
-        `errorMessages["${key}"]`
-      );
-      if (message != null) {return message;}
-    }
-
-    // 2. App-wide resolver (e.g. wired to a translation service).
-    const resolved = this.runGuarded(
-      () => this.errorResolver?.(key, value, this.control()?.control ?? null),
-      'TN_FORM_FIELD_ERRORS resolver'
-    );
-    if (resolved != null) {return resolved;}
-
-    // 3. Built-in default messages for standard validators.
-    const builtIn = defaultErrorMessage(key, value);
-    if (builtIn != null) {return builtIn;}
-
-    // 4. A custom validator that returned its own message string.
-    if (typeof value === 'string') {return value;}
-
-    // 5. Last resort: the raw error key.
-    return key;
-  }
-
-  /**
-   * Runs a caller-supplied message provider, swallowing any throw so a buggy
-   * override or resolver cannot break change detection. Logs in dev mode and
-   * returns null so resolution falls through to the next layer.
-   */
-  private runGuarded(provider: () => string | null | undefined, context: string): string | null {
-    try {
-      // Treat a blank message as "no answer" so it falls through to the next
-      // layer instead of hiding the error — e.g. a translation service that
-      // returns '' for a missing key.
-      const message = provider();
-      return message != null && message.trim() !== '' ? message : null;
-    } catch (error) {
-      if (isDevMode()) {
-        console.error(`[tn-form-field] ${context} threw while resolving a validation message`, error);
-      }
-      return null;
-    }
+    return resolveErrorMessage({
+      errors,
+      errorMessages: this.errorMessages(),
+      resolver: this.errorResolver,
+      control: this.control()?.control ?? null,
+      selector: 'tn-form-field',
+    });
   }
 
   showError = computed(() => {

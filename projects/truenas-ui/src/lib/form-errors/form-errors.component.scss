@@ -1,0 +1,8 @@
+// Matches `.tn-form-field-error`, so a group message and the field messages
+// around it are the same text at the same weight.
+.tn-form-errors {
+  color: var(--tn-error, var(--tn-red, #bd2626));
+  font-size: 0.75rem;
+  line-height: 1.4;
+  margin: 0;
+}

@@ -1,0 +1,11 @@
+@if (show()) {
+  <!-- role="alert" is implicitly assertive and atomic, so no aria-live beside
+       it — the same markup tn-form-field uses for its own subscript. -->
+  <div
+    class="tn-form-errors"
+    role="alert"
+    tnTestIdType="error"
+    [attr.id]="errorId"
+    [tnTestId]="testId()"
+  >{{ errorMessage() }}</div>
+}

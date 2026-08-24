@@ -48,13 +48,15 @@ export * from './lib/keyboard-shortcut/keyboard-shortcut.component';
 export * from './lib/form-field/form-field.component';
 export { TN_FORM_FIELD_CONTEXT, injectTnFormFieldAria } from './lib/form-field/form-field-context';
 export type { TnFormFieldContext, TnFormFieldAriaBindings } from './lib/form-field/form-field-context';
-export { TN_FORM_FIELD_ERRORS } from './lib/form-field/form-field.errors';
+export { TN_FORM_FIELD_ERRORS, resolveErrorMessage } from './lib/form-field/form-field.errors';
 export type {
   TnFormFieldErrorMessage,
   TnFormFieldErrorMessages,
   TnFormFieldErrorResolver,
 } from './lib/form-field/form-field.errors';
 export * from './lib/form-field/form-field.harness';
+export * from './lib/form-errors/form-errors.component';
+export * from './lib/form-errors/form-errors.harness';
 export * from './lib/form-section/form-section.component';
 export * from './lib/form-section/form-section.harness';
 export * from './lib/select/select.component';
