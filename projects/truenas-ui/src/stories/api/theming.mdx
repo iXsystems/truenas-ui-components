@@ -141,10 +141,14 @@ Each theme defines the following CSS custom properties:
 ### Text Colors
 - `--tn-fg1`: Primary text color (headings, body)
 - `--tn-fg2`: Secondary text color (labels, descriptions)
-- `--tn-fg3`: Muted text (placeholders, timestamps, hints)
-- `--tn-fg4`: Very subdued text (disabled states, decorative)
-- `--tn-alt-fg1`: Alternative text color 1
+- `--tn-alt-fg1`: Muted text (placeholders, group labels, breadcrumb separators)
 - `--tn-alt-fg2`: Alternative text color 2
+
+### Non-Text Foregrounds
+- `--tn-fg3`: De-emphasized non-text foreground (icon and glyph strokes, decorative marks)
+- `--tn-fg4`: The most subdued foreground (inactive affordances, decorative marks)
+
+`--tn-fg3` and `--tn-fg4` are **not text colors**, despite sitting in the same numeric ramp as `--tn-fg1` and `--tn-fg2`. Each is tuned to the 3:1 UI-component/graphical-object minimum (WCAG 1.4.11) against `--tn-bg1` and `--tn-bg2` in every theme, and to nothing on any other surface. Neither reaches the 4.5:1 text minimum (WCAG 1.4.3) anywhere, and neither is meant to: a muted value that clears 4.5:1 on a light surface is a value you cannot tell apart from `--tn-fg2`, which is what the muted step exists to be distinct from. For muted text — placeholders, timestamps, hints — use `--tn-alt-fg1`, which is tuned for it and clears 4.5:1 against `--tn-bg1` and `--tn-bg2` in eight of the nine themes; in `.tn-solarized-dark` it measures 4.11:1 on `--tn-bg2`, along with that theme's `--tn-fg1` (2.79:1 on `--tn-bg1`) and `--tn-fg2` (4.32:1 on `--tn-bg2`).
 
 ### UI Elements
 - `--tn-lines`: Border and divider color
