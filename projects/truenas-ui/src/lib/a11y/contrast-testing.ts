@@ -182,6 +182,55 @@ export function compositeColor(front: string, back: string): string {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
+/**
+ * What `color-mix(in srgb, <first> <firstPercent>%, <second>)` computes to, as
+ * `rgb(r, g, b)`.
+ *
+ * A stylesheet that derives one colour from two others puts a surface on the
+ * page that is not any token, so a spec measuring the tokens measures something
+ * nobody sees — `table.component.scss` hovers its sortable headers to a mix of
+ * `--tn-topbar` with `--tn-topbar-txt`, and until this existed that fill could
+ * only be argued about (#277). `parseColor` refuses `color-mix()` itself, and
+ * rightly: this takes the two colours and the percentage, which is what the
+ * caller has to have read out of the stylesheet anyway.
+ *
+ * BOTH INPUTS MUST BE OPAQUE, and a translucent one throws. CSS mixes those
+ * with premultiplied alpha and hands back a translucent colour, whose rendered
+ * value depends on whatever is behind it — the same reason `contrastRatio`
+ * refuses a translucent background. Supporting it here would produce a number
+ * for a colour that renders differently everywhere it is used.
+ *
+ * Channels are not rounded, for the reason `compositeColor` gives: the result
+ * feeds a gamma curve, and rounding first moves the ratio.
+ */
+export function mixColors(first: string, second: string, firstPercent: number): string {
+  if (!Number.isFinite(firstPercent) || firstPercent < 0 || firstPercent > 100) {
+    throw new Error(`mixColors: ${String(firstPercent)} is not a percentage between 0 and 100`);
+  }
+  const opaque = (colour: string, role: string): Rgba => {
+    const parsed = parseColor(colour, `mixColors ${role}`);
+    if (parsed.a !== 1) {
+      throw new Error(
+        `mixColors: ${role} ${colour} is not opaque. CSS mixes a translucent colour with `
+        + 'premultiplied alpha and the result is translucent too, so what it renders as '
+        + 'depends on what is behind it.'
+      );
+    }
+    return parsed;
+  };
+  const a = opaque(first, 'first');
+  const b = opaque(second, 'second');
+  // Both weights divided out of the integer percentages rather than one taken
+  // as `1 - other`: at 85% that subtraction gives 0.15000000000000002, and the
+  // channel it produces differs in the last bits from the one `compositeColor`
+  // computes for the same mix. Two functions that are the same arithmetic
+  // should agree exactly, and the spec asserts that they do.
+  const weight = firstPercent / 100;
+  const rest = (100 - firstPercent) / 100;
+  const mix = (from: number, to: number): number => from * weight + to * rest;
+  return `rgb(${mix(a.r, b.r)}, ${mix(a.g, b.g)}, ${mix(a.b, b.b)})`;
+}
+
 /** One themed surface from `themes.css`: `:root`, `.tn-dark`, `.tn-nord`, … */
 export interface ThemePalette {
   /** The selector the block was declared under. */

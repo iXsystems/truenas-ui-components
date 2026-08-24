@@ -18,7 +18,18 @@
   --tn-btn-default-bg: #545454;
   --tn-btn-default-txt: #ffffff;
   --tn-topbar: #111111;
-  --tn-topbar-txt: rgba(255,255,255,0.85);
+  /* TEXT DRAWN ON THE --tn-topbar BAR, and on nothing else: tn-table's header
+     is the only thing in this library that reads it. That makes its one
+     pairing its whole job, so every palette's value clears 4.5:1 on that
+     palette's own bar and records the ratio — unlike --tn-fg1/--tn-fg2, which
+     answer to the page surfaces and cannot also answer to a coloured bar. Four
+     palettes did not, and #277 gave each its own value: .tn-blue inherited
+     this one onto a mid-blue bar at 3.75:1, .tn-dracula read 4.09:1,
+     .tn-solarized-dark 3.39:1 and .tn-midnight 3.12:1. The two that still
+     inherit are the two with dark bars — .tn-paper at 6.12:1 and
+     .tn-high-contrast at 14.84:1 — where this value is already the right one.
+     text-token-surface-contrast.spec.ts holds all nine to it. */
+  --tn-topbar-txt: rgba(255,255,255,0.85); /* 13.68:1 on --tn-topbar */
   --tn-accent: #545454;
   /* TEXT DRAWN ON A --tn-accent FILL — the companion --tn-accent never had, and
      the same arrangement as --tn-primary / --tn-primary-txt above.
@@ -139,7 +150,7 @@
      itself is only 3.64:1 on --tn-bg1 — see the note in :root. */
   --tn-primary-text: #0099db;
   --tn-topbar: #111111;
-  --tn-topbar-txt: rgba(255,255,255,0.85);
+  --tn-topbar-txt: rgba(255,255,255,0.85); /* 13.68:1 on --tn-topbar */
   --tn-accent: var(--tn-yellow);
   /* The yellow this resolves to is the brightest accent of the nine, so the
      text on it is this theme's own --tn-bg1 rather than a light shade. */
@@ -195,6 +206,11 @@
      this is a light theme. */
   --tn-primary-text: #0074a7;
   --tn-topbar: #007db3;
+  /* Declared rather than inherited: :root's rgba(255,255,255,0.85) composites
+     to 3.75:1 on this bar. White is the whole of the remaining headroom and it
+     clears by 0.08 (#277) — a bar any lighter than #007db3 would leave this
+     palette with no legible label at all. */
+  --tn-topbar-txt: #ffffff; /* 4.58:1 on --tn-topbar */
   --tn-accent: #DED142;
   --tn-accent-txt: #282a36; /* 9.02:1 on --tn-accent */
   --tn-bg1: #f2f2f2;
@@ -248,7 +264,11 @@
      itself is only 3.67:1 on --tn-bg1. */
   --tn-primary-text: #8592b8;
   --tn-topbar: #6272a4;
-  --tn-topbar-txt: #efefef;
+  /* Was #efefef, which read 4.09:1 on this bar (#277). Dracula's own two
+     lighter tones do not save it either — --tn-alt-fg1 (#f8f8f2) reads 4.41:1
+     here and --tn-alt-fg2 (#fafaf5) 4.49:1 — so nothing already in the palette
+     clears 4.5:1 on this bar; white does, by 0.21. */
+  --tn-topbar-txt: #ffffff; /* 4.71:1 on --tn-topbar */
   --tn-accent: #bd93f9;
   --tn-accent-txt: #282a36; /* 5.90:1 on --tn-accent */
   --tn-bg1: #181a26;
@@ -300,7 +320,7 @@
      surfaces, not these. */
   --tn-primary-text: var(--tn-primary);
   --tn-topbar: #4c566a;
-  --tn-topbar-txt: #eceff4;
+  --tn-topbar-txt: #eceff4; /* 6.40:1 on --tn-topbar */
   --tn-accent: #5e81aC;
   /* Black, where every other theme uses one of its own surfaces. Nord's accent
      sits mid-luminance and the palette runs out at both ends before clearing
@@ -417,10 +437,8 @@
      --tn-bg1, and anything clearing that as text is too light to carry white.
      So the two separate, and pinning the literal keeps every fill, border and
      focus ring rendering the colour it already did. --tn-topbar below is
-     pinned to the same literal so that the bar does not move either: its
-     label, --tn-topbar-txt (#cdcdcd), measures 3.39:1 on it — a pairing that
-     no spec covers and that this change neither improves nor worsens, but one
-     a lighter bar would take further down. */
+     pinned to the same literal so that the bar does not move either; its
+     label is --tn-topbar-txt, and #277 measured and fixed that pairing. */
   --tn-primary: #586e75;
   --tn-primary-txt: #ffffff;
   /* >=4.5:1 against both --tn-bg1 (5.34:1) and --tn-bg2 (4.62:1); --tn-primary
@@ -432,7 +450,11 @@
      --tn-fg2 — this is the only theme declaring both halves of this pair. */
   --tn-btn-default-txt: var(--tn-fg2);
   --tn-topbar: #586e75;
-  --tn-topbar-txt: #cdcdcd;
+  /* Was #cdcdcd, which read 3.39:1 on this bar — one of the two pairings #277
+     was filed for. Solarized's own base3 (#fdf6e3) would clear at 4.99:1;
+     white is taken instead because this bar is --tn-primary's literal and the
+     brightest label is what leaves the most room if it ever moves. */
+  --tn-topbar-txt: #ffffff; /* 5.38:1 on --tn-topbar */
   --tn-accent: var(--tn-cyan);
   --tn-accent-txt: #002b36; /* 4.75:1 on --tn-accent */
   --tn-bg1: #002b36;
@@ -511,7 +533,10 @@
      itself is only 2.90:1 on --tn-bg1. */
   --tn-primary-text: #50afee;
   --tn-topbar: var(--tn-blue);
-  --tn-topbar-txt: var(--tn-fg2);
+  /* Was var(--tn-fg2) (#cccccc), which read 3.12:1 on this bar (#277). This
+     palette's --tn-fg2 answers to --tn-bg1/--tn-bg2 and cannot also answer to
+     a mid-blue bar, which is why the bar's label is its own token. */
+  --tn-topbar-txt: #ffffff; /* 5.01:1 on --tn-topbar */
   --tn-accent: var(--tn-violet);
   --tn-accent-txt: #212a35; /* 4.92:1 on --tn-accent */
   --tn-bg1: #212a35;
