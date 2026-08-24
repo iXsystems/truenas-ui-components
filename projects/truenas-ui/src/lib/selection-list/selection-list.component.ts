@@ -1,5 +1,5 @@
 
-import { Component, input, output, contentChildren, signal, computed, forwardRef, effect } from '@angular/core';
+import { Component, ElementRef, input, output, contentChildren, signal, computed, forwardRef, effect, inject } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { injectTnFormFieldAria } from '../form-field/form-field-context';
@@ -30,15 +30,8 @@ export interface TnSelectionChange {
     '[class.tn-selection-list--dense]': 'dense()',
     '[class.tn-selection-list--disabled]': 'isDisabled()',
     'role': 'listbox',
-    // A `role="listbox"` is an ARIA input field, and an input field with no
-    // accessible name is announced as bare "listbox" — the options say what is
-    // in it, never what it is FOR (#235). Both attributes are emitted because
-    // ARIA's name calculation prefers `aria-labelledby` only while it RESOLVES:
-    // suppressing an explicit `aria-label` beside a dangling IDREF would leave
-    // the list unnamed in exactly the case where a name was supplied. Same
-    // reasoning as `a11y/accessible-name.ts`.
-    '[attr.aria-label]': 'resolvedAriaLabel()',
-    '[attr.aria-labelledby]': 'resolvedAriaLabelledby()',
+    // The naming attributes are NOT host bindings — see `applyName`.
+    //
     // The listbox states its own disabled-ness rather than leaving assistive
     // technology to infer it from its children (#225). Inferring is not the same
     // claim and is wrong in two ordinary cases: an empty disabled list has no
@@ -110,11 +103,12 @@ export class TnSelectionListComponent implements ControlValueAccessor {
    */
   private readonly fieldAria = injectTnFormFieldAria(this.explicitAriaLabel);
 
-  /** The `aria-label` to render, or `null` for none. */
-  protected readonly resolvedAriaLabel = computed(() => this.explicitAriaLabel() ?? null);
+  /** The `aria-label` this component supplies, or `null` when it supplies none. */
+  private readonly resolvedAriaLabel = computed(() => this.explicitAriaLabel() ?? null);
 
   /**
-   * The `aria-labelledby` to render, or `null` for none.
+   * The `aria-labelledby` this component supplies, or `null` when it supplies
+   * none.
    *
    * The explicit input wins over the enclosing field, so a consumer who points
    * the list at their own visible text keeps it. With neither, a list outside a
@@ -122,13 +116,21 @@ export class TnSelectionListComponent implements ControlValueAccessor {
    * ("List") would satisfy axe while announcing nothing the user can act on, and
    * only the consumer knows what this list holds.
    */
-  protected readonly resolvedAriaLabelledby = computed(() => {
+  private readonly resolvedAriaLabelledby = computed(() => {
     const labelledby = this.ariaLabelledby();
     if (labelledby !== undefined && labelledby.trim() !== '') {
       return labelledby;
     }
     return this.fieldAria.labelledby();
   });
+
+  private readonly hostElement = inject(ElementRef<HTMLElement>).nativeElement;
+
+  /**
+   * The naming attributes this component has written to the host, so that it
+   * only ever removes its own. See {@link applyName}.
+   */
+  private readonly written = new Set<string>();
 
   selectionChange = output<TnSelectionChange>();
 
@@ -203,6 +205,39 @@ export class TnSelectionListComponent implements ControlValueAccessor {
   private onTouched = () => {};
 
   constructor() {
+    // The naming attributes, written here rather than as host bindings.
+    //
+    // A `role="listbox"` is an ARIA input field, and one with no accessible name
+    // is announced as bare "listbox" — the options say what is IN the list,
+    // never what it is FOR (#235).
+    //
+    // WHY NOT A HOST BINDING, WHICH IS WHAT EVERY OTHER ATTRIBUTE HERE USES
+    // ---------------------------------------------------------------------
+    // Because the role is on the HOST, `<tn-selection-list aria-label="…">` and
+    // `[attr.aria-labelledby]="…"` are valid markup that named this list before
+    // it had any naming input at all — and a host binding writes its attribute
+    // on every pass whether or not this component has a name to write. Measured
+    // on Angular 21: with `[attr.aria-label]` and `[attr.aria-labelledby]` bound
+    // in the PARENT template, a host binding of the same attributes ran last and
+    // left the element with neither, so the list went from named to unnamed and
+    // nothing said so. The parent's write reappeared only on a later pass, and
+    // only for the attribute whose bound value had changed.
+    //
+    // So the rule is ownership rather than precedence: this component writes an
+    // attribute when it has a name for it, and removes it only if the value it
+    // removes is one this component put there. Anything a consumer set by any
+    // route is left alone.
+    //
+    // Both attributes are written, rather than one suppressing the other,
+    // because ARIA prefers `aria-labelledby` only while it RESOLVES — dropping
+    // an explicit `aria-label` beside a dangling IDREF would leave the list
+    // unnamed in exactly the case where a name was supplied. Same reasoning as
+    // `a11y/accessible-name.ts`.
+    effect(() => {
+      this.applyName('aria-label', this.resolvedAriaLabel());
+      this.applyName('aria-labelledby', this.resolvedAriaLabelledby());
+    });
+
     // Push what the list decides for all of its options down onto each of them,
     // re-running both when the decision changes and when the set of options
     // does — an option added after the list was rendered has to arrive carrying
@@ -383,6 +418,27 @@ export class TnSelectionListComponent implements ControlValueAccessor {
     const from = event.target as HTMLElement | null;
     if (from !== null && from.isConnected) {
       this.focusedOptionElement = null;
+    }
+  }
+
+  /**
+   * Write one naming attribute to the host, or take back one this component
+   * previously wrote — and never touch one it did not.
+   *
+   * The `written` guard is the whole point: without it, `value === null` means
+   * "remove", which removes a name the consumer put on the element directly.
+   * With it, `null` means "this component has nothing to say about this
+   * attribute", and whatever is there stays there. See the constructor.
+   */
+  private applyName(attribute: string, value: string | null): void {
+    if (value !== null) {
+      this.hostElement.setAttribute(attribute, value);
+      this.written.add(attribute);
+      return;
+    }
+    if (this.written.has(attribute)) {
+      this.hostElement.removeAttribute(attribute);
+      this.written.delete(attribute);
     }
   }
 

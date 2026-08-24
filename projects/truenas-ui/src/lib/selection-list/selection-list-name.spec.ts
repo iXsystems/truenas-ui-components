@@ -267,6 +267,77 @@ describe('tn-selection-list accessible name (#235)', () => {
   });
 
   /**
+   * A name the consumer writes onto the host directly, as an ATTRIBUTE BINDING
+   * rather than through the input.
+   *
+   * This is the case that makes the naming attributes an effect rather than two
+   * host bindings. The `role="listbox"` is on the host, so this markup named the
+   * list before the input existed; measured on Angular 21, a host binding of the
+   * same attributes runs after the parent's and left the element with neither,
+   * so the list went silently from named to unnamed. The component now removes
+   * only attributes it wrote itself.
+   */
+  describe('a name bound onto the host by the parent template', () => {
+    @Component({
+      selector: 'tn-attr-bound-host',
+      standalone: true,
+      imports: [TnSelectionListComponent, TnListOptionComponent],
+      template: `<span id="heading">Mailboxes</span><tn-selection-list
+        [attr.aria-labelledby]="id()" [attr.aria-label]="label()"><tn-list-option
+        value="inbox">Inbox</tn-list-option></tn-selection-list>`
+    })
+    class AttrBoundHostComponent {
+      id = signal<string | null>(null);
+      label = signal<string | null>(null);
+    }
+
+    it('survives, when it is an aria-label', () => {
+      const fixture = TestBed.createComponent(AttrBoundHostComponent);
+      fixture.componentInstance.label.set('Folders');
+      fixture.detectChanges();
+
+      expect(accessibleName(list(fixture))).toBe('Folders');
+    });
+
+    it('survives, when it is an aria-labelledby', () => {
+      const fixture = TestBed.createComponent(AttrBoundHostComponent);
+      fixture.componentInstance.id.set('heading');
+      fixture.detectChanges();
+
+      expect(accessibleName(list(fixture))).toBe('Mailboxes');
+    });
+
+    /** And keeps surviving: the effect re-runs on every pass, not only the first. */
+    it('survives a later change-detection pass', () => {
+      const fixture = TestBed.createComponent(AttrBoundHostComponent);
+      fixture.componentInstance.label.set('Folders');
+      fixture.detectChanges();
+
+      fixture.componentInstance.id.set('heading');
+      fixture.detectChanges();
+
+      expect(accessibleName(list(fixture))).toBe('Mailboxes');
+      expect(list(fixture).getAttribute('aria-label')).toBe('Folders');
+    });
+
+    /**
+     * The other side of the ownership rule: a name this component DID write is
+     * still its to take back when the input that produced it goes away.
+     */
+    it('does not stop the component removing a name it wrote itself', () => {
+      const fixture = TestBed.createComponent(StandaloneHostComponent);
+      fixture.detectChanges();
+
+      expect(list(fixture).getAttribute('aria-label')).toBe('Mailboxes');
+
+      fixture.componentInstance.label.set(undefined);
+      fixture.detectChanges();
+
+      expect(list(fixture).hasAttribute('aria-label')).toBe(false);
+    });
+  });
+
+  /**
    * The sweep that names nothing, so a rule nobody thought of is still reported.
    */
   describe('the whole list, with nothing named in advance', () => {
