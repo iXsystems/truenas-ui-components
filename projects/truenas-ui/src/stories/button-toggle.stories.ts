@@ -166,12 +166,12 @@ export const CustomCheckedColors: Story = {
         </div>
 
         <div>
-          <p style="margin: 0 0 8px;">Custom hex</p>
+          <p style="margin: 0 0 8px;">Accent color</p>
           <tn-button-toggle-group
             [ngModel]="'a'"
-            checkedBg="#71BF44"
-            checkedColor="#ffffff"
-            checkedBorder="#5fa036">
+            checkedBg="var(--tn-accent)"
+            checkedColor="var(--tn-accent-txt)"
+            checkedBorder="var(--tn-accent)">
             <tn-button-toggle value="a">Option A</tn-button-toggle>
             <tn-button-toggle value="b">Option B</tn-button-toggle>
             <tn-button-toggle value="c">Option C</tn-button-toggle>

@@ -336,19 +336,19 @@ export const LibraryComparison: Story = {
           <h4 style="margin-top: 0;">Material (Default)</h4>
           <tn-icon name="home" size="lg" tooltip="Material Home"></tn-icon>
           <div style="margin-top: 8px;">name="home"</div>
-          <div style="font-size: 12px; color: var(--text-secondary, #666);">Unicode fallback</div>
+          <div style="font-size: 12px; color: var(--tn-alt-fg1);">Unicode fallback</div>
         </div>
         <div style="text-align: center; border: 1px solid var(--border-color, #ccc); padding: 16px; border-radius: 8px;">
           <h4 style="margin-top: 0;">Lucide</h4>
           <tn-icon name="home" library="lucide" size="lg" tooltip="Lucide Home"></tn-icon>
           <div style="margin-top: 8px;">library="lucide"</div>
-          <div style="font-size: 12px; color: var(--text-secondary, #666);">Library parameter</div>
+          <div style="font-size: 12px; color: var(--tn-alt-fg1);">Library parameter</div>
         </div>
         <div style="text-align: center; border: 1px solid var(--border-color, #ccc); padding: 16px; border-radius: 8px;">
           <h4 style="margin-top: 0;">MDI</h4>
           <tn-icon name="folder" library="mdi" size="lg" tooltip="MDI Folder"></tn-icon>
           <div style="margin-top: 8px;">library="mdi"</div>
-          <div style="font-size: 12px; color: var(--text-secondary, #666);">Library parameter</div>
+          <div style="font-size: 12px; color: var(--tn-alt-fg1);">Library parameter</div>
         </div>
       </div>
     `,
@@ -412,7 +412,7 @@ export const FullSize: Story = {
     template: `
       <div style="padding: 20px;">
         <h4>Full Size Mode</h4>
-        <p style="margin-bottom: 16px; color: var(--text-secondary, #666);">
+        <p style="margin-bottom: 16px; color: var(--tn-alt-fg1);">
           When <code>[fullSize]="true"</code>, the icon expands to fill its container instead of using fixed dimensions.
           This is useful for logos, splash screens, or when you need the icon to scale with its parent element.
         </p>
@@ -446,7 +446,7 @@ export const FullSize: Story = {
               <tn-icon name="server" library="mdi" size="lg"></tn-icon>
             </div>
             <code style="display: block; margin-top: 8px; font-size: 11px;">size="lg"</code>
-            <div style="font-size: 12px; color: var(--text-secondary, #666);">Icon stays at fixed lg size</div>
+            <div style="font-size: 12px; color: var(--tn-alt-fg1);">Icon stays at fixed lg size</div>
           </div>
           <div style="text-align: center; border: 1px solid var(--border-color, #ccc); padding: 16px; border-radius: 8px;">
             <h5 style="margin-top: 0;">Full Size</h5>
@@ -454,7 +454,7 @@ export const FullSize: Story = {
               <tn-icon name="server" library="mdi" [fullSize]="true"></tn-icon>
             </div>
             <code style="display: block; margin-top: 8px; font-size: 11px;">[fullSize]="true"</code>
-            <div style="font-size: 12px; color: var(--text-secondary, #666);">Icon fills container</div>
+            <div style="font-size: 12px; color: var(--tn-alt-fg1);">Icon fills container</div>
           </div>
         </div>
       </div>
@@ -486,7 +486,7 @@ export const CustomSize: Story = {
     template: `
       <div style="padding: 20px;">
         <h4>Custom Size</h4>
-        <p style="margin-bottom: 16px; color: var(--text-secondary, #666);">
+        <p style="margin-bottom: 16px; color: var(--tn-alt-fg1);">
           Use <code>customSize</code> to set an explicit size using any valid CSS value.
           This overrides both <code>size</code> presets and <code>fullSize</code>.
         </p>
