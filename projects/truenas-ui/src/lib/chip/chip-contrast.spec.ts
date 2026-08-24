@@ -1,6 +1,13 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { AA_MINIMUM, formatRatio, meetsAa, themePalettes } from '../a11y/contrast-testing';
+import {
+  AA_MINIMUM,
+  compositeColor,
+  contrastRatio,
+  formatRatio,
+  meetsAa,
+  themePalettes,
+} from '../a11y/contrast-testing';
 import { TN_THEME_DEFINITIONS } from '../theme/theme.constants';
 
 /**
@@ -68,7 +75,69 @@ const CHIP_SURFACES: readonly ChipSurface[] = [
   // surface's companion rather than carrying --tn-accent-txt, which is tuned
   // for the accent fill and measures 1.93:1 on the grey in Solarized Dark.
   { name: '--accent:hover', foreground: '--tn-alt-fg2', background: '--tn-alt-bg2' },
+  // The close circle's hover, which fills with the chip's label colour and
+  // paints the × in the chip's background — each of the three below is one of
+  // the pairs above with its two halves swapped (#261). They are listed rather
+  // than derived because a contrast ratio being symmetric is a fact about the
+  // maths, not a promise that the stylesheet swapped the right pair: writing
+  // --tn-accent-txt as the fill on a hovered accent chip would be an invert of
+  // something, just not of the surface it lands on.
+  { name: '--primary close:hover', foreground: '--tn-primary', background: '--tn-primary-txt' },
+  { name: '--secondary close:hover', foreground: '--tn-alt-bg2', background: '--tn-alt-fg2' },
+  { name: '--accent close:hover', foreground: '--tn-alt-bg2', background: '--tn-alt-fg2' },
 ];
+
+/**
+ * The `×` in the close button, and the surface it is really painted on (#261).
+ *
+ * The glyph is `color: inherit` all the way up to the variant, so its colour is
+ * the chip's LABEL colour — chosen, in the table above, for the chip's own
+ * background. The circle then paints something of its own over that background,
+ * and the glyph sits on the result. Those are two different surfaces, and the
+ * table above measures the wrong one of them.
+ *
+ * `chipBackground` is what the circle is painted over, so it is the variant's
+ * background in the state that variant is in — `--secondary:hover` moves the
+ * chip to `--tn-alt-bg2` and the circle's backdrop moves with it. What the
+ * circle paints ON that is read out of the stylesheet rather than listed here,
+ * because "the wash is gone" and "the wash is still there" have to produce
+ * different results from the same spec, or removing it proves nothing.
+ */
+interface CloseSurface {
+  /** How it reads in a failure: `--accent:hover`. */
+  readonly name: string;
+  /** The token in force on the `×`, which is the variant's label colour. */
+  readonly glyph: string;
+  /** The chip's own background, which the close circle is painted over. */
+  readonly chipBackground: string;
+}
+
+const CLOSE_SURFACES: readonly CloseSurface[] = [
+  { name: '--primary', glyph: '--tn-primary-txt', chipBackground: '--tn-primary' },
+  { name: '--secondary', glyph: '--tn-alt-fg2', chipBackground: '--tn-alt-bg1' },
+  { name: '--secondary:hover', glyph: '--tn-alt-fg2', chipBackground: '--tn-alt-bg2' },
+  { name: '--accent', glyph: '--tn-accent-txt', chipBackground: '--tn-accent' },
+  { name: '--accent:hover', glyph: '--tn-alt-fg2', chipBackground: '--tn-alt-bg2' },
+];
+
+/**
+ * Every rule allowed to paint a background on the close circle, flattened, with
+ * what it is for.
+ *
+ * An allowlist rather than a measurement of whatever it finds, because the
+ * defect this file now guards is a rule that paints the circle a colour NOBODY
+ * measured — and a spec that measures every rule it finds can only ever report
+ * on rules it knows how to interpret. A new theme-scoped override lands here as
+ * a failure naming the selector, which is the point at which someone has to say
+ * what it is and where it is measured.
+ */
+const CLOSE_BACKGROUND_RULES: Readonly<Record<string, string>> = {
+  '.tn-chip__close': 'the resting circle, measured against every variant by "the × clears AA" below',
+  '.tn-chip--primary .tn-chip__close:hover:not(:disabled)':
+    'the hover invert, whose pair is in CHIP_SURFACES and measured with the labels',
+  '.tn-chip--secondary .tn-chip__close:hover:not(:disabled)': 'the same invert on the hovered secondary chip',
+  '.tn-chip--accent .tn-chip__close:hover:not(:disabled)': 'the same invert on the hovered accent chip',
+};
 
 /**
  * Both halves of every pair above, which is what each palette has to declare
@@ -89,12 +158,16 @@ const REQUIRED_TOKENS = [
  */
 const NOT_A_LABEL_SURFACE: Readonly<Record<string, string>> = {
   none: 'the body button, which is transparent over the wrapper the pairs above measure',
-  transparent: 'the <code> override, which puts a code span back on the chip\'s own surface after the label-markup mixin painted it --tn-bg2',
-  'rgba(255, 255, 255, 0.2)': 'the close circle, a wash over whatever the chip already paints — the × is a glyph on that wash, not the label, and is not measured here',
-  'rgba(255, 255, 255, 0.3)': 'the same wash, on hover',
-  'rgba(0, 0, 0, 0.2)': 'the same circle in TN Dark on --secondary, where a light wash would disappear',
-  'rgba(0, 0, 0, 0.3)': 'the same dark wash, on hover',
+  // Two rules paint this and neither introduces a surface: the <code> override,
+  // which puts a code span back on the chip's own surface after the
+  // label-markup mixin painted it --tn-bg2, and the resting close circle, which
+  // paints nothing so that the × sits on the chip's own surface too (#261). The
+  // second is not merely excused — "the × clears AA" below composites whatever
+  // that rule declares over every variant, so a wash returning there is caught
+  // as a contrast failure rather than as an unexplained literal.
+  transparent: 'the <code> override and the resting close circle, both of which leave the chip\'s own surface showing',
 };
+
 
 /** One rule in the stylesheet: its own declarations, and what it nests inside. */
 interface ScssRule {
@@ -186,6 +259,26 @@ function labelColor(rule: ScssRule | null): string | undefined {
   return undefined;
 }
 
+/**
+ * The selector a nested rule actually matches, with `&` resolved outward.
+ *
+ * `&__close` says nothing on its own about which element it lands on, and the
+ * close circle is reachable by two routes — `.tn-chip { &__close }` and the
+ * theme-scoped `.tn-dark .tn-chip { &--secondary { .tn-chip__close } }`. The
+ * guard below has to enumerate every rule that paints the circle, in either
+ * shape, so it needs the flattened form rather than the fragment.
+ */
+function flattenSelector(rule: ScssRule): string {
+  const nesting: string[] = [];
+  for (let current: ScssRule | null = rule; current !== null; current = current.parent) {
+    nesting.unshift(current.selector);
+  }
+  return nesting.reduce((enclosing, selector) =>
+    selector.includes('&')
+      ? selector.replace(/&/g, enclosing)
+      : (enclosing === '' ? selector : `${enclosing} ${selector}`));
+}
+
 /** `var(--tn-x)` -> `--tn-x`; anything else unchanged, to be judged as a literal. */
 function tokenOf(value: string): string {
   return /^var\(\s*(--[\w-]+)\s*\)$/.exec(value)?.[1] ?? value;
@@ -217,6 +310,7 @@ describe('tn-chip label contrast (#238)', () => {
   const css = readFileSync(join(STYLES_DIR, 'themes.css'), 'utf8');
   const scss = readFileSync(CHIP_SCSS, 'utf8');
   const palettes = themePalettes(css);
+  const rules = scssRules(scss);
 
   // Derived from the theme registry rather than hardcoded: a themed surface
   // that stops being recognised — a renamed class, a block that drops
@@ -229,7 +323,6 @@ describe('tn-chip label contrast (#238)', () => {
   });
 
   describe('the table above still describes chip.component.scss', () => {
-    const rules = scssRules(scss);
     const chipRule = rules.find((rule) => rule.selector === '.tn-chip');
 
     it('reads the stylesheet', () => {
@@ -291,6 +384,18 @@ describe('tn-chip label contrast (#238)', () => {
           (value) => !(value in NOT_A_LABEL_SURFACE)
         )
       ).toEqual([]);
+    });
+
+    it('every explanation is about a literal the stylesheet still paints', () => {
+      // The other direction, and the one that rots quietly. This map is the
+      // only place in the file that says "no need to measure that", so an entry
+      // for a value nothing paints is that sentence about nothing: #261 deleted
+      // four `rgba()` washes and their four excuses would have sat here
+      // indefinitely, reading to the next person as a live decision not to
+      // measure the close circle. The tally above catches a themed pairing that
+      // disappears; this catches a literal one.
+      const paintedLiterals = new Set(onALiteral.map((surface) => surface.background));
+      expect(Object.keys(NOT_A_LABEL_SURFACE).filter((value) => !paintedLiterals.has(value))).toEqual([]);
     });
 
     it('no rule reintroduces --tn-fg1 as the chip label', () => {
@@ -384,6 +489,106 @@ describe('tn-chip label contrast (#238)', () => {
     it.each(cases)(
       '$selector $name: $foreground on $background measures $ratioLabel',
       ({ ratio }) => {
+        expect(meetsAa(ratio, 'normal')).toBe(true);
+      }
+    );
+  });
+
+  describe('the × clears AA on the surface actually painted behind it (#261)', () => {
+    // Read out of the stylesheet, not listed: the whole claim is about what the
+    // circle paints over the chip, so a spec that hardcoded the value would go
+    // on passing after someone changed it.
+    const closeRules = rules.filter(
+      (rule) =>
+        flattenSelector(rule).includes('__close')
+        && (rule.declarations.has('background-color') || rule.declarations.has('background'))
+    );
+    const resting = closeRules.find((rule) => flattenSelector(rule) === '.tn-chip__close');
+
+    it('only the rules named in CLOSE_BACKGROUND_RULES paint the close circle', () => {
+      // Catches the reintroduction this file cannot otherwise see: a
+      // theme-scoped override — `.tn-dark .tn-chip--secondary .tn-chip__close`
+      // was one until #261 — paints a surface the cases below never reach,
+      // because they composite the RESTING rule over each variant. A wash that
+      // exists only under one theme class would be invisible to them.
+      expect(closeRules.map(flattenSelector).sort()).toEqual(Object.keys(CLOSE_BACKGROUND_RULES).sort());
+    });
+
+    it('the resting circle declares a background', () => {
+      // `resting` is read with `?.` below, and a `.tn-chip__close` that stops
+      // declaring one at all would leave every case measuring `undefined` —
+      // which throws in `compositeColor` rather than passing, but says nothing
+      // useful about why. This says it.
+      expect(resting).toBeDefined();
+    });
+
+    const wash = resting?.declarations.get('background-color')
+      ?? (resting?.declarations.get('background') as string);
+
+    it('the glyph takes the chip\'s label colour and nothing of its own', () => {
+      // The premise of `CLOSE_SURFACES.glyph`. `.tn-chip__close` says
+      // `color: inherit` and `.tn-chip__close-icon` says nothing, so the `×`
+      // renders in the variant's label colour — which is why washing the
+      // circle moves the surface out from under a colour chosen for the chip.
+      // A `color:` appearing on either would make every case below measure a
+      // colour the glyph no longer has.
+      const glyphRules = rules.filter(
+        (rule) => rule.selector === '&__close' || rule.selector === '&__close-icon'
+      );
+      expect(glyphRules.map((rule) => rule.selector).sort()).toEqual(['&__close', '&__close-icon']);
+      expect(
+        glyphRules
+          .filter((rule) => (rule.declarations.get('color') ?? 'inherit') !== 'inherit')
+          .map((rule) => rule.selector)
+      ).toEqual([]);
+    });
+
+    it('the × is normal-size text, so 4.5:1 applies rather than 3:1', () => {
+      // AA's large-text allowance starts at 24px, or 18.66px bold. The glyph is
+      // bold, so the second threshold is the one in play and 14px is under it.
+      // Read off `&__close-icon` itself: `.tn-chip` also declares
+      // `font-size: 14px`, so a file-wide search passes while the glyph grows.
+      const glyph = rules.find((rule) => rule.selector === '&__close-icon');
+      expect(glyph?.declarations.get('font-size')).toBe('14px');
+      expect(glyph?.declarations.get('font-weight')).toBe('bold');
+      expect(AA_MINIMUM.normal).toBe(4.5);
+    });
+
+    const cases = palettes
+      .filter((palette) => REQUIRED_TOKENS.every((token) => palette.declares(token)))
+      .flatMap((palette) =>
+        CLOSE_SURFACES.map((surface) => {
+          // Two steps, in the order a browser paints them: the circle's own
+          // background over the chip's, then the glyph on the result. Going
+          // straight to `contrastRatio` with the wash as the background throws,
+          // by design — a translucent surface has no ratio of its own.
+          const behind = compositeColor(wash, palette.color(surface.chipBackground));
+          const ratio = contrastRatio(palette.color(surface.glyph), behind);
+          return {
+            selector: palette.selector,
+            name: surface.name,
+            glyph: palette.color(surface.glyph),
+            chip: palette.color(surface.chipBackground),
+            behind,
+            ratio,
+            ratioLabel: formatRatio(ratio),
+          };
+        })
+      );
+
+    it('there are circles to measure', () => {
+      expect(cases).toHaveLength(expectedSelectors.length * CLOSE_SURFACES.length);
+    });
+
+    it.each(cases)(
+      '$selector $name: the × in $glyph on $chip, washed to $behind, measures $ratioLabel',
+      ({ ratio }) => {
+        // 4.5:1, not 3:1. The `×` is a visible text node inside a button that
+        // carries its own `aria-label`, so axe's `color-contrast` rule evaluates
+        // it as text — and hiding it from the accessibility tree would satisfy
+        // the rule while changing nothing a sighted user sees, which is not a
+        // fix. `.tn-chip__close-icon` is 14px, below the 18.66px bold that would
+        // make 3:1 apply.
         expect(meetsAa(ratio, 'normal')).toBe(true);
       }
     );

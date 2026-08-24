@@ -54,6 +54,15 @@
     // 3.14:1, and Solarized Dark, at 3.68:1. .button-primary, the filled
     // button, likewise changes no colour on hover; the lift and shadow on
     // .tn-chip:hover above are the affordance every variant shares.
+
+    // The close circle's own hover, which the chip's lack of one does not
+    // cover: it is a second control and needs to say when it is the target.
+    // This variant repaints nothing on hover, so the circle inverts against
+    // --tn-primary in both states.
+    .tn-chip__close:hover:not(:disabled) {
+      background-color: var(--tn-primary-txt);
+      color: var(--tn-primary);
+    }
   }
 
   &--secondary {
@@ -64,6 +73,15 @@
     &:hover:not(.tn-chip--disabled) {
       background-color: var(--tn-alt-bg2);
       border-color: var(--tn-accent);
+    }
+
+    // Not nested inside the rule above, and it does not need to be: the close
+    // button cannot be hovered without the chip being hovered, so the surface
+    // this inverts against is always --tn-alt-bg2 and its companion is always
+    // --tn-alt-fg2. Nesting it would only lengthen the selector.
+    .tn-chip__close:hover:not(:disabled) {
+      background-color: var(--tn-alt-fg2);
+      color: var(--tn-alt-bg2);
     }
   }
 
@@ -80,6 +98,13 @@
       // fill onto a grey one, which is 1.93:1 in Solarized Dark.
       color: var(--tn-alt-fg2);
       border-color: var(--tn-alt-bg2);
+    }
+
+    // Hover moves this variant onto the same surface --secondary:hover uses, so
+    // the circle inverts against the same pair. See the note there.
+    .tn-chip__close:hover:not(:disabled) {
+      background-color: var(--tn-alt-fg2);
+      color: var(--tn-alt-bg2);
     }
   }
 
@@ -171,25 +196,49 @@
     max-width: 200px;
   }
 
+  // A RING, NOT A WASH (#261). This used to paint rgba(255, 255, 255, 0.2) over
+  // whatever the chip already paints, while the × inside took `color: inherit`
+  // — the chip's label colour, which every variant above chooses for its own
+  // UNWASHED surface. The wash lightens the circle by a fixed 20% towards white
+  // in every theme, so a light label loses contrast against it: white on
+  // --tn-primary is 4.58:1 on the chip and 3.31:1 on the circle, and eight of
+  // the 27 variant/palette combinations landed between 3:1 and 4.5:1. The × is
+  // a visible text node in a button carrying its own aria-label, so axe reads it
+  // as text and 4.5:1 is the threshold; hiding it from the accessibility tree
+  // would clear the rule without changing anything a sighted user sees, and is
+  // not a fix.
+  //
+  // Painting nothing puts the glyph back on the chip's own surface — the one
+  // pair chip-contrast.spec.ts already asserts clears 4.5:1 in all nine
+  // palettes — so the circle stops having a contrast question of its own, and
+  // the border does the distinguishing instead. currentColor for the ring
+  // because it is the label colour, already measured against this surface;
+  // --tn-lines is a colour for the page and can vanish on a filled chip, the
+  // same reason __label's <code> border uses currentColor.
   &__close {
     display: flex;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
     width: 20px;
     height: 20px;
     padding: 0;
     margin: 0;
-    border: none;
+    border: 1px solid currentColor;
     border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: transparent;
     color: inherit;
     cursor: pointer;
-    transition: background-color 0.2s ease-in-out;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
     outline: none;
 
-    &:hover:not(:disabled) {
-      background-color: rgba(255, 255, 255, 0.3);
-    }
+    // Hover is per variant, not here: it fills the circle with the chip's own
+    // label colour and paints the × in the chip's background, which is the
+    // label pair reversed. Contrast is symmetric, so every one of those is a
+    // ratio chip-contrast.spec.ts already measures — a hover state that cannot
+    // fail AA without the resting label failing first. It cannot be written
+    // once at this level, because `currentColor` would give the fill but there
+    // is no keyword for "the background behind me" to give the glyph.
 
     &:focus-visible {
       outline: 1px solid currentColor;
@@ -209,18 +258,13 @@
   }
 }
 
-// Dark theme adjustments
-.tn-dark .tn-chip {
-  &--secondary {
-    .tn-chip__close {
-      background-color: rgba(0, 0, 0, 0.2);
-      
-      &:hover:not(:disabled) {
-        background-color: rgba(0, 0, 0, 0.3);
-      }
-    }
-  }
-}
+// No dark theme adjustment for the close circle any more (#261). It used to
+// wash rgba(0, 0, 0, 0.2) instead of the white one, for TN Dark's --secondary
+// only — a light wash on that variant's grey would have disappeared. It was a
+// per-theme patch on a per-theme problem, and it covered exactly one of the
+// eight palettes the white wash actually broke: Nord's --secondary measured
+// 3.70:1 and Midnight's 3.97:1 with no override of their own. Painting nothing
+// removes the question in all nine at once, so there is nothing left to patch.
 
 // High contrast theme adjustments
 .high-contrast .tn-chip {
