@@ -139,12 +139,13 @@ const ROOT_ONLY_TOKENS: Record<string, string> = {
  */
 const PARTIALLY_DECLARED_TOKENS: Record<string, { inheritedBy: string[]; why: string }> = {
   '--tn-topbar-txt': {
-    inheritedBy: ['.tn-blue', '.tn-paper', '.tn-high-contrast'],
+    inheritedBy: ['.tn-paper', '.tn-high-contrast'],
     why: 'text drawn on the --tn-topbar bar, so the value a theme needs follows from its own '
-      + 'bar: :root sets rgba(255,255,255,0.85), five themes have a bar it does not suit and '
-      + 'declare their own, and these three have one it does. Which of the three is right to '
-      + 'inherit is measured by #277, not here — PR #281 gives .tn-blue its own value and '
-      + 'leaves the other two inheriting, and this entry loses .tn-blue when that lands.',
+      + 'bar: :root sets rgba(255,255,255,0.85), six themes have a bar it does not suit and '
+      + 'declare their own, and these two have one it does. Which of them is right to inherit '
+      + 'is measured by #277, not here — it measured the pairing in all nine palettes, and '
+      + '#281 gave .tn-blue its own value, which is why this entry names two palettes rather '
+      + 'than the three that inherited when it was written.',
   },
 };
 
