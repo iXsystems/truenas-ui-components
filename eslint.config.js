@@ -127,7 +127,21 @@ module.exports = [
         },
       ],
 
-      // Import ordering
+      // Import ordering.
+      //
+      // internal/parent/sibling/index are deliberately ONE group, so a `./x`
+      // and a `../y` import are sorted against each other. The plugin does not
+      // expect that: comparing those two, it splits both paths on '/', sees the
+      // first segments differ ('.' vs '..'), skips the text comparison as
+      // "different groups anyway", and falls through to a path-segment-count
+      // tie-break (eslint-plugin-import 2.32.0, lib/rules/order.js).
+      //
+      // The upshot is that the comparison is not a total order — `./a` can rank
+      // below `../b/c` while `../b/c` ranks below `../d/e/f`, and equal segment
+      // counts compare as equal — so which arrangement passes depends on the
+      // order the file already had, and an accepted file can look unsorted.
+      // Run `yarn lint:fix` and take what it gives you; sorting these by hand
+      // is guesswork.
       'import/order': [
         'error',
         {
