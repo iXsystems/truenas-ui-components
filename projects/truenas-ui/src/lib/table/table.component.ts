@@ -654,9 +654,20 @@ export class TnTableComponent<T = unknown> implements OnInit {
     () => this.effectiveDisplayedColumns().length + (this.rowActionsDef() ? 1 : 0)
   );
 
+  /**
+   * How many rows a select-all can actually select.
+   *
+   * `SelectionModel` stores selections in a `Set`, so `selection.selected.length`
+   * counts DISTINCT rows while `data().length` counts array entries. A `dataSource`
+   * holding the same row reference twice makes the two disagree, and every comparison
+   * of a selection count against a row count has to use this one to stay honest —
+   * see {@link isAllSelected}.
+   */
+  private distinctRowCount = computed(() => new Set(this.data()).size);
+
   isAllSelected = computed(() => {
     const numSelected = this.selectionCount();
-    const numRows = this.data().length;
+    const numRows = this.distinctRowCount();
     return numRows > 0 && numSelected === numRows;
   });
 
@@ -678,8 +689,12 @@ export class TnTableComponent<T = unknown> implements OnInit {
    *
    * The hit area around the checkbox stands down for the same reason, so the two
    * cannot disagree about whether the control is live.
+   *
+   * An empty table is the only case that has to be disabled rather than fixed: a
+   * repeated row reference produces the same DOM-versus-model divergence, and
+   * {@link distinctRowCount} resolves that one by making the control work.
    */
-  canSelectAll = computed(() => this.data().length > 0);
+  canSelectAll = computed(() => this.distinctRowCount() > 0);
 
   trackByFn = computed(() => {
     const custom = this.trackBy();

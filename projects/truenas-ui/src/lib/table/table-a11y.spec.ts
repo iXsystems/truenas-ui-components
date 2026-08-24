@@ -356,6 +356,47 @@ describe('tn-table selection accessibility', () => {
     });
   });
 
+  // `SelectionModel` stores selections in a `Set`, so selecting every row of
+  // `[a, a, b]` leaves TWO selections for THREE array entries. Counting rows as
+  // `data().length` therefore never reaches "all selected" — see `distinctRowCount`.
+  // The stuck toggle predates #236; what is new is that the box can now be clicked,
+  // so a click that the model does not follow leaves the DOM and the model disagreeing.
+  describe('with a row reference repeated in the data', () => {
+    const repeated: Row = { id: 1, name: 'alpha' };
+    const other: Row = { id: 2, name: 'beta' };
+
+    const headerBox = (): HTMLInputElement => el<HTMLInputElement>(
+      '.tn-table__header-row .tn-table__select-cell input[type="checkbox"]'
+    );
+
+    beforeEach(() => {
+      host.rows.set([repeated, repeated, other]);
+      fixture.detectChanges();
+      host.selectionEvents = 0;
+    });
+
+    it('checks the header box once every distinct row is selected', () => {
+      clickOn(headerBox());
+
+      expect(host.selectionEvents).toBe(1);
+      expect(headerBox().checked).toBe(true);
+      expect(headerBox().indeterminate).toBe(false);
+    });
+
+    it('clears the selection on the second click', () => {
+      clickOn(headerBox());
+      clickOn(headerBox());
+
+      expect(headerBox().checked).toBe(false);
+      expect(headerBox().indeterminate).toBe(false);
+      expect(
+        Array.from(fixture.nativeElement.querySelectorAll<HTMLInputElement>(
+          '.tn-table__row .tn-table__select-cell input[type="checkbox"]'
+        )).every((box) => !box.checked)
+      ).toBe(true);
+    });
+  });
+
   it('reports nothing anywhere in a selectable table', async () => {
     // The probe, kept as a guard. `nested-interactive` on the select-all cell is
     // what this ticket fixed and is pinned by name above; this is what catches the
