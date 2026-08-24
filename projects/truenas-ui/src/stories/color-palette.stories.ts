@@ -22,7 +22,9 @@ const fgVars = ['--tn-fg1', '--tn-fg2', '--tn-fg3', '--tn-fg4', '--tn-alt-fg1', 
 /**
  * What each foreground is for, under each swatch. `--tn-fg3` and `--tn-fg4` are
  * NOT text: they are tuned to the 3:1 non-text minimum against --tn-bg1 and
- * --tn-bg2 and reach the 4.5:1 text minimum in no theme (#240). Labelling every
+ * --tn-bg2, and neither is guaranteed as text in any theme — --tn-fg4 reaches
+ * the 4.5:1 text minimum in none of the nine and --tn-fg3 in only four (#240).
+ * Labelling every
  * row "Text" is what this story used to do, and it is the same claim theming.mdx
  * was making — so a reader who scanned the grid instead of the prose still came
  * away with it.
@@ -87,7 +89,7 @@ function comboGrid(): string {
   return `
     <div style="margin-bottom:32px;">
       <h3 style="font-size:16px; font-weight:700; color:var(--tn-fg1); margin-bottom:12px; border-bottom:1px solid var(--tn-lines); padding-bottom:8px;">Foreground × Background Combinations</h3>
-      <p style="font-size:12px; color:var(--tn-fg2); margin:0 0 12px;">Every cell renders "Aa" as a color sample, not as a recommendation: the <code>fg3</code> and <code>fg4</code> rows are non-text foregrounds and reach the 4.5:1 text minimum in no theme. Only the <code>bg1</code> and <code>bg2</code> columns of those two rows carry a guarantee at all — the 3:1 non-text minimum.</p>
+      <p style="font-size:12px; color:var(--tn-fg2); margin:0 0 12px;">Every cell renders "Aa" as a color sample, not as a recommendation: the <code>fg3</code> and <code>fg4</code> rows are non-text foregrounds, and neither is guaranteed as text in any theme (<code>fg4</code> reaches the 4.5:1 text minimum in none of the nine, <code>fg3</code> in only four). Only the <code>bg1</code> and <code>bg2</code> columns of those two rows carry a guarantee at all — the 3:1 non-text minimum.</p>
       <div style="overflow-x:auto;">
         <table style="border-collapse:collapse; width:100%;">
           <thead><tr><th></th>${headers}</tr></thead>
