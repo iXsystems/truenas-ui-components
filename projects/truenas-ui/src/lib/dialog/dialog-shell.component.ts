@@ -153,14 +153,19 @@ export class TnDialogShellComponent implements OnInit {
    * `ref.config` rather than leaving CDK's binding to render it, because this
    * component writes both attributes onto that element and would otherwise
    * clear one it did not set.
+   *
+   * Guarded, even though `DialogRef.config` is non-optional: a shell rendered
+   * directly in a consumer's test gets its `DialogRef` from a mock provider,
+   * which supplies the methods but no config. Naming then falls back to the
+   * component's own inputs, which is what such a test is exercising anyway.
    */
   private resolvedAriaLabelledby = computed(() => (
-    this.hasTitle() ? this.titleId : firstNonBlank(this.ariaLabelledby(), this.ref.config.ariaLabelledBy)
+    this.hasTitle() ? this.titleId : firstNonBlank(this.ariaLabelledby(), this.ref.config?.ariaLabelledBy)
   ));
 
   /** An explicit label, from this component's input or from the `DialogConfig`. */
   private explicitAriaLabel = computed(
-    () => firstNonBlank(this.ariaLabel(), this.ref.config.ariaLabel)
+    () => firstNonBlank(this.ariaLabel(), this.ref.config?.ariaLabel)
   );
 
   /**
