@@ -3,6 +3,7 @@ import { join } from 'path';
 import { TN_THEME_DEFINITIONS } from './theme.constants';
 import {
   AA_MINIMUM,
+  compositeColor,
   contrastRatio,
   formatRatio,
   meetsAa,
@@ -297,6 +298,12 @@ const MIX_PERCENT = /var\(--tn-topbar\)\s*(\d+)%/;
  * `mixColors` refuses a translucent input and reads every form the maths reads,
  * so this asks the one module that already knows both. Mixing against black at
  * 50% is arbitrary; only whether it throws is used.
+ *
+ * Asked of the header BAR, not of the label on it. A translucent label has an
+ * answer — it is composited onto the bar before the mix, and the hover cases
+ * below set out why that is exact rather than an approximation. A translucent
+ * bar is the case with no answer, because what is behind the header decides its
+ * colour and nothing here can see that.
  */
 function isOpaque(colour: string): boolean {
   try {
@@ -328,8 +335,14 @@ function isOpaque(colour: string): boolean {
  * near-black one, where only lightening is visible at all, and a mid-tone one,
  * where lightening is exactly what breaks it. That wants a hover colour of its
  * own in each palette, which is a token added to nine of them rather than
- * something a survey settles. `.tn-nord` is the fifth measurable palette and it
- * clears by 0.02, which says the same thing about how little room this leaves.
+ * something a survey settles.
+ *
+ * The five that are not here all clear, and how narrowly says the same thing
+ * about how little room the derivation leaves: `.tn-nord` by 0.02 (4.52:1) and
+ * `.tn-paper` by 0.14 (4.64:1). The other three have near-black bars —
+ * `.tn-high-contrast` at 12.00:1, `:root` and `.tn-dark` at 10.08:1 — which is
+ * the far end of the same problem, and why lightening cannot be the fix
+ * everywhere.
  */
 const HOVER_GAPS: Readonly<Record<string, string>> = {
   '.tn-blue': '#ffffff on the mix of #007db3 — 3.59:1, resting 4.58:1',
@@ -738,7 +751,32 @@ describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#
 
     /**
      * Each palette's hovered header: the label on the fill it renders on, or the
-     * reason there is no opaque colour to measure.
+     * reason there is nothing to measure it against.
+     *
+     * A TRANSLUCENT LABEL IS NOT THAT REASON, though it read as one until the
+     * review of #281 said otherwise. CSS does mix a translucent colour with
+     * premultiplied alpha and hand back a translucent fill — but the mix is
+     * painted on the `<th>`, over the `<thead>`, and `table.component.scss:211`
+     * fills `.tn-table__header` with `--tn-topbar`, opaque in all nine palettes.
+     * Nothing in that file is ever vertically sticky either: its three
+     * `position: sticky` rules pin columns horizontally, and the pinned-header
+     * rule hands the pinned cell back to the same `--tn-topbar` fill. So no row
+     * ever scrolls behind this, and the backdrop is known.
+     *
+     * Which makes the whole thing measurable with the two functions already
+     * here. Compositing the label onto the bar BEFORE the mix gives exactly what
+     * CSS's premultiplied mix composites to over that same bar: for a label
+     * (L, a) mixed at share k over a bar B, both routes come to
+     * `B(1 - ka) + kaL`. Working `:root` through — bar `#111111`, label
+     * `rgba(255,255,255,0.85)` — the premultiplied mix is
+     * `rgba(48.04, 48.04, 48.04, 0.9775)`, over `#111111` that renders as
+     * `rgb(47.345)`, and compositing first gives `rgb(219.3)` mixed to the same
+     * `rgb(47.345)`. An opaque label passes through `compositeColor` unchanged,
+     * so the five palettes measured before this are measured identically.
+     *
+     * The one case left with no answer is a translucent BAR, where what is
+     * behind the header decides the colour and nothing here knows it. No palette
+     * does that today, which is why the block for it below is empty.
      */
     const hovers = measured.map((palette) => {
       const label = palette.color('--tn-topbar-txt');
@@ -747,17 +785,19 @@ describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#
         selector: palette.selector,
         label,
         bar,
-        opaqueLabel: isOpaque(label),
+        opaqueBar: isOpaque(bar),
         resting: formatRatio(palette.contrast('--tn-topbar-txt', '--tn-topbar')),
         recorded: HOVER_GAPS[palette.selector],
       };
-      // A translucent label is the one case with no answer: CSS mixes those
-      // with premultiplied alpha into a translucent fill, and under a sticky
-      // header what shows through is whichever row is scrolling behind it.
-      if (!common.opaqueLabel) {
-        return { ...common, fill: undefined, ratio: undefined, ratioLabel: 'nothing opaque to measure' };
+      if (!common.opaqueBar) {
+        return {
+          ...common,
+          fill: undefined,
+          ratio: undefined,
+          ratioLabel: 'no opaque backdrop to composite against',
+        };
       }
-      const fill = mixColors(bar, label, barShare);
+      const fill = mixColors(bar, compositeColor(label, bar), barShare);
       const ratio = contrastRatio(label, fill);
       return { ...common, fill, ratio, ratioLabel: formatRatio(ratio) };
     });
@@ -766,12 +806,12 @@ describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#
       expect(hovers.length).toBeGreaterThan(0);
     });
 
-    const opaque = hovers.filter((one) => one.ratio !== undefined);
+    const measurable = hovers.filter((one) => one.ratio !== undefined);
 
-    it('some palette labels its bar with an opaque colour', () => {
-      // All four translucent ones would leave this describe measuring nothing
-      // while every case in it still passed.
-      expect(opaque.length).toBeGreaterThan(0);
+    it('some palette fills its header bar with an opaque colour', () => {
+      // Every bar going translucent at once would leave this describe measuring
+      // nothing while every case in it still passed.
+      expect(measurable.length).toBeGreaterThan(0);
     });
 
     // Registered only when there is something in it, because `it.each` treats
@@ -779,7 +819,7 @@ describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#
     // every measurable palette is a recorded gap — a real state, and one the
     // "still a gap" cases below cover in full, so it must not be the thing that
     // turns the suite red.
-    const clearing = opaque.filter((one) => one.recorded === undefined);
+    const clearing = measurable.filter((one) => one.recorded === undefined);
 
     if (clearing.length > 0) {
       it.each(clearing)(
@@ -790,7 +830,7 @@ describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#
       );
     }
 
-    const recorded = opaque.filter((one) => one.recorded !== undefined);
+    const recorded = measurable.filter((one) => one.recorded !== undefined);
 
     // On `recorded`, not on `HOVER_GAPS` — an entry naming a palette that has
     // stopped being measured leaves the table empty while the object is not,
@@ -806,28 +846,29 @@ describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#
     }
 
     it('every HOVER_GAPS entry is about a palette that was measured', () => {
-      // A palette that has stopped labelling its bar opaquely drops out of
-      // `opaque` silently, taking its entry's assertion with it.
-      const selectors = opaque.map(({ selector }) => selector);
+      // A palette whose bar has stopped being opaque drops out of `measurable`
+      // silently, taking its entry's assertion with it.
+      const selectors = measurable.map(({ selector }) => selector);
       expect(Object.keys(HOVER_GAPS).filter((one) => !selectors.includes(one))).toEqual([]);
     });
 
-    // Same guard, and the empty case here is the good one: every palette
-    // labelling its bar opaquely means every palette is measured above, which
-    // is strictly more coverage than this block reports.
+    // Same guard, and the empty case here is the good one — as of #281's review
+    // it is also the actual one: every palette fills its bar opaquely, so every
+    // palette is measured above and this block reports nothing. It stays for the
+    // case it is now the only cover for, a bar that becomes translucent and
+    // takes its backdrop out of this file's knowledge.
     const unmeasurable = hovers.filter((one) => one.ratio === undefined);
 
     if (unmeasurable.length > 0) {
       it.each(unmeasurable)(
-        '$selector: labels its bar $label, which the mix makes translucent — $ratioLabel',
-        ({ opaqueLabel }) => {
-          // Recorded rather than skipped: these are the palettes where the claim
-          // cannot be made at all, and a reader should not take their absence
-          // from the cases above as a pass. Asserted on the alpha rather than on
-          // the notation — a label that becomes opaque belongs in the measured
-          // cases, and spelling it `rgb(255, 255, 255)` must not be a way to
-          // stay here.
-          expect(opaqueLabel).toBe(false);
+        '$selector: fills its bar $bar, which is translucent — $ratioLabel',
+        ({ opaqueBar }) => {
+          // Recorded rather than skipped: this is the palette where the claim
+          // cannot be made at all, and a reader should not take its absence from
+          // the cases above as a pass. Asserted on the alpha rather than on the
+          // notation — a bar that becomes opaque belongs in the measured cases,
+          // and spelling it `rgb(17, 17, 17)` must not be a way to stay here.
+          expect(opaqueBar).toBe(false);
         }
       );
     }
