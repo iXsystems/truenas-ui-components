@@ -33,7 +33,11 @@
      overflow/clipping. Attach/detach (driven by open()/close()) controls
      visibility; the input keeps DOM focus throughout. -->
 <ng-template #dropdownTemplate>
-  <div class="tn-autocomplete__dropdown">
+  <!-- The max-height is declared here, and inherits: it bounds the panel as a
+       whole AND the listbox inside it, which are two elements now. -->
+  <div
+    class="tn-autocomplete__dropdown"
+    [style.--tn-autocomplete-panel-max-height]="panelMaxHeightValue()">
 
     <!-- Per ARIA, a listbox may only contain option/group children, so the
          loading and no-results rows live OUTSIDE it as live-region siblings.
@@ -53,7 +57,6 @@
       role="listbox"
       [attr.id]="uid + '-dropdown'"
       [attr.aria-busy]="loading() ? true : null"
-      [style.--tn-autocomplete-panel-max-height]="panelMaxHeightValue()"
       (scroll)="onPanelScroll($event)">
       @if (hasResults()) {
         @for (option of filteredOptions(); track $index) {

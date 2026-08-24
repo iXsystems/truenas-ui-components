@@ -51,6 +51,17 @@
   border-radius: 0.375rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   padding: 0.25rem 0;
+
+  // `panelMaxHeight` bounds the PANEL, and the panel is more than the scrolling
+  // part of it: the status row is a sibling of the listbox, so a cap on the
+  // listbox alone would let loading + no-results push the panel past it. The
+  // column is what makes both true at once — the listbox shrinks to whatever is
+  // left, and the status row keeps its height.
+  display: flex;
+  flex-direction: column;
+  // Default mirrors the `panelMaxHeight` input default; the bound custom
+  // property overrides it when a caller sets the input.
+  max-height: var(--tn-autocomplete-panel-max-height, 320px);
 }
 
 // The scrollport, and the `role="listbox"` element on purpose — see the
@@ -58,10 +69,14 @@
 // its child, so it sits below the scrolling area and stays visible while the
 // options scroll.
 .tn-autocomplete__listbox {
-  // Default mirrors the `panelMaxHeight` input default; the bound custom
-  // property overrides it when a caller sets the input.
+  // The cap in its own right, for a panel that is nothing but options — and
+  // never more than the wrapper's, which is the same value.
   max-height: var(--tn-autocomplete-panel-max-height, 320px);
   overflow-y: auto;
+  // A flex item floors at its content height. Without this the listbox refuses
+  // to shrink for the status row and pushes it past the panel's max-height,
+  // which is the cap this whole block exists to keep.
+  min-height: 0;
 }
 
 .tn-autocomplete__option {
