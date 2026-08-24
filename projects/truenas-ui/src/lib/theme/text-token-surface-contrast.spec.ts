@@ -1,7 +1,14 @@
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { TN_THEME_DEFINITIONS } from './theme.constants';
-import { AA_MINIMUM, formatRatio, meetsAa, themePalettes } from '../a11y/contrast-testing';
+import {
+  AA_MINIMUM,
+  compositeColor,
+  contrastRatio,
+  formatRatio,
+  meetsAa,
+  themePalettes,
+} from '../a11y/contrast-testing';
 
 /**
  * The text tokens, measured on the surfaces `text-fg-contrast.spec.ts`
@@ -91,8 +98,26 @@ interface Pairing {
  * From the scan #277 asked for: every `color:` declaration in `src/lib` that
  * resolves to a text token, paired with the surface it actually paints on. The
  * pairings that land on `--tn-bg1`/`--tn-bg2` are not here — they are
- * `text-fg-contrast.spec.ts`'s — and neither are the ones `NOT_TEXT_HERE`
- * excludes, each with its reason.
+ * `text-fg-contrast.spec.ts`'s.
+ *
+ * TWO KINDS OF DECLARATION ARE LEFT OUT, named rather than silently dropped,
+ * because a state missing from a table reads as a state nobody thought of:
+ *
+ * - **The disabled states**, everywhere. Each sets `opacity` on the control or
+ *   an ancestor (0.5 or 0.6), so what renders is not the token in force, and
+ *   this file measures tokens. Axe's own `color-contrast` rule skips disabled
+ *   controls for the same class of reason. That is the disabled input, select
+ *   trigger, autocomplete input, chip-input, file-picker input and
+ *   button-toggle.
+ * - **The icons and glyphs.** An `<svg>` or an icon font is non-text content
+ *   under WCAG 1.4.11 at 3:1, not 1.4.3 at 4.5:1 — the table expand chevron,
+ *   the tree toggles, the icon-button and input visibility toggles, the
+ *   slide-toggle tick and minus, and the file-picker navigate chevron, which
+ *   re-points to `--tn-primary` on the very hover that paints `--tn-bg3`, so
+ *   the pairing does not arise there at all.
+ *
+ * The sortable table header's hover fill is not left out. It is a `color-mix`
+ * rather than a token, so it is measured separately below.
  *
  * Keyed by the pairing rather than by the call site: what fails is a palette
  * declaring two colours that do not go together, and every component putting
@@ -154,32 +179,6 @@ const PAIRINGS: readonly Pairing[] = [
     where: 'the table header (table.component.scss:212-213)',
   },
 ];
-
-/**
- * `color:` declarations on an untuned surface that are NOT text, and why.
- *
- * Named rather than silently dropped: a state missing from a table reads as a
- * state nobody thought of, and the case for excluding each of these is one a
- * reader can disagree with.
- */
-const NOT_TEXT_HERE: Readonly<Record<string, string>> = {
-  'the disabled states': 'excluded everywhere — every one of them sets `opacity` on the '
-    + 'control or an ancestor (0.5 or 0.6), so the colour that renders is not the token in '
-    + 'force, and this file measures tokens. Axe\'s own `color-contrast` rule skips disabled '
-    + 'controls for the same class of reason. That covers the disabled input, select trigger, '
-    + 'autocomplete input, chip-input, file-picker input and button-toggle',
-  'the icons and glyphs': 'excluded — an <svg> or an icon font is non-text content under WCAG '
-    + '1.4.11 at 3:1, not 1.4.3 at 4.5:1. That is the table expand chevron, the tree toggles, '
-    + 'the icon-button and input visibility toggles, the slide-toggle tick and minus, and the '
-    + 'file-picker navigate chevron — which re-points to --tn-primary on the very hover that '
-    + 'paints --tn-bg3, so the pairing does not arise there at all',
-  'the sorted table header hover': 'excluded — it fills with '
-    + '`color-mix(in srgb, var(--tn-topbar) 85%, var(--tn-topbar-txt))`, and `contrast-testing.ts` '
-    + 'refuses a colour it cannot read rather than guessing at one. It is a lightening of '
-    + '--tn-topbar toward its own label colour, so it can only sit between the measured '
-    + '--tn-topbar-txt-on---tn-topbar pairing and 1:1 — which makes the measured pairing the '
-    + 'floor for it, not a separate claim',
-};
 
 /** A (palette, token, surface) that does not clear AA, for a reason of its own. */
 interface KnownGap {
@@ -261,6 +260,74 @@ const KNOWN_GAPS: readonly KnownGap[] = [
 function pairingKey(selector: string, token: string, surface: string): string {
   return `${selector} ${token} on ${surface}`;
 }
+
+/**
+ * The declaration the sortable table header hovers to, read out of the
+ * stylesheet rather than copied here.
+ *
+ * Copying it would leave these cases measuring a fill the table has stopped
+ * painting — including one changed to fix what they record.
+ */
+const HOVER_FILL_SCSS = join(LIB_DIR, 'table/table.component.scss');
+const HOVER_FILL = /background-color:\s*(color-mix\([^;]*\));/;
+
+/**
+ * The mix percentage above, as the alpha that produces the same colour.
+ *
+ * `color-mix(in srgb, A 85%, B)` is `0.85 * A + 0.15 * B` per channel, which is
+ * exactly B composited over A at alpha 0.15 — so `compositeColor` does this
+ * without any colour maths being written here. The 15 is read off the
+ * declaration rather than assumed, so a percentage change fails rather than
+ * being measured wrong.
+ */
+const MIX_PERCENT = /var\(--tn-topbar\)\s*(\d+)%/;
+
+/**
+ * `--tn-topbar-txt` at the mix's own alpha, ready to composite over the bar.
+ *
+ * Six-digit hex only, and it throws on anything else rather than guessing. A
+ * TRANSLUCENT label is the case that matters: CSS mixes those with
+ * premultiplied alpha and hands back a translucent fill, and a translucent
+ * background has no ratio of its own — under a sticky header what shows through
+ * is whichever row is scrolling behind it. Four palettes label their bar with
+ * `rgba(255,255,255,0.85)`, and the caller records them as unmeasurable rather
+ * than reporting a number for a colour that renders nowhere.
+ */
+function atMixAlpha(colour: string, alpha: number): string {
+  const hex = /^#([0-9a-f]{6})$/i.exec(colour.trim());
+  if (hex === null) {
+    throw new Error(
+      `atMixAlpha: ${colour} is not an opaque six-digit hex, so the mix CSS computes from it `
+      + 'is translucent and depends on what is behind the header'
+    );
+  }
+  const byte = (at: number): number => parseInt(hex[1].slice(at, at + 2), 16);
+  return `rgba(${byte(0)}, ${byte(2)}, ${byte(4)}, ${alpha})`;
+}
+
+/**
+ * Palettes whose sortable header hover fill does not clear AA, with the ratio.
+ *
+ * The same shape and the same rule as `KNOWN_GAPS`: asserted to still be
+ * failing, so a fix takes the entry out rather than leaving it here excusing
+ * nothing. These four are the palettes with mid-tone bars, where the resting
+ * pairing already has little headroom and mixing the label into the bar spends
+ * what is left.
+ *
+ * Not fixed here for the reason `table.component.scss` gives at the
+ * declaration: there is no single direction to move a bar in that suits both a
+ * near-black one, where only lightening is visible at all, and a mid-tone one,
+ * where lightening is exactly what breaks it. That wants a hover colour of its
+ * own in each palette, which is a token added to nine of them rather than
+ * something a survey settles. `.tn-nord` is the fifth measurable palette and it
+ * clears by 0.02, which says the same thing about how little room this leaves.
+ */
+const HOVER_GAPS: Readonly<Record<string, string>> = {
+  '.tn-blue': '#ffffff on the mix of #007db3 — 3.59:1, resting 4.58:1',
+  '.tn-dracula': '#ffffff on the mix of #6272a4 — 3.54:1, resting 4.71:1',
+  '.tn-solarized-dark': '#ffffff on the mix of #586e75 — 3.92:1, resting 5.38:1',
+  '.tn-midnight': '#ffffff on the mix of #1274b5 — 3.83:1, resting 5.01:1',
+};
 
 /**
  * A `background`/`background-color` declaration filling one of the untuned
@@ -350,8 +417,9 @@ const PAINTS_UNTUNED: Readonly<Record<string, { fills: number; text: number; why
     text: 15,
     why: 'the folder type badge fills --tn-alt-bg1 and the ZFS badge --tn-alt-bg2, both under '
       + '--tn-alt-fg2; the navigate button fills --tn-bg3 on hover but re-points its chevron to '
-      + '--tn-primary, an icon at 3:1. Its table header override used to add a sixteenth, '
-      + '--tn-fg1 on tn-table\'s --tn-topbar, and #277 removed it',
+      + '--tn-primary, an icon at 3:1. Its table header rule used to declare a sixteenth, a '
+      + '--tn-fg1 that emulated encapsulation never let reach tn-table\'s own <th>; #277 '
+      + 'removed it',
   },
   'file-picker/file-picker.component.scss': {
     fills: 1,
@@ -440,6 +508,21 @@ const PAINTS_UNTUNED: Readonly<Record<string, { fills: number; text: number; why
       + 'is an icon',
   },
 };
+
+/**
+ * `scss` with its comments removed, so the scan counts declarations rather than
+ * prose about declarations.
+ *
+ * Load-bearing here in a way it is not in `primary-text-contrast.spec.ts`: the
+ * comments this ticket added explain what a removed `color: var(--tn-fg1)` used
+ * to do, spelled exactly as the declaration was, and a scan that reads those
+ * counts a call site that no longer exists. It fools the guard in the other
+ * direction too — a real declaration commented out still counts, so the file
+ * looks unchanged.
+ */
+function withoutComments(scss: string): string {
+  return scss.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(?:^|\s)\/\/.*$/gm, '');
+}
 
 function scssFiles(directory: string): string[] {
   return readdirSync(directory, { recursive: true, encoding: 'utf8' })
@@ -578,8 +661,8 @@ describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#
     const counted = files
       .map(({ file, scss }) => ({
         file,
-        fills: (scss.match(untunedFill()) ?? []).length,
-        text: (scss.match(textColour()) ?? []).length,
+        fills: (withoutComments(scss).match(untunedFill()) ?? []).length,
+        text: (withoutComments(scss).match(textColour()) ?? []).length,
         recorded: PAINTS_UNTUNED[file],
       }))
       .filter(({ fills, recorded }) => fills > 0 || recorded !== undefined);
@@ -610,12 +693,109 @@ describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#
     });
   });
 
-  it('records what is on these surfaces and is not measured as text', () => {
-    // The exclusions are load-bearing — they are why the pairing list is ten
-    // entries rather than thirty — so they are held to being present and
-    // explained rather than left as prose that can be deleted without notice.
-    expect(Object.keys(NOT_TEXT_HERE).length).toBe(3);
-    expect(Object.values(NOT_TEXT_HERE).every((why) => why.length > 0)).toBe(true);
+  describe('the sortable header hover fill, which is a color-mix rather than a token', () => {
+    const scss = readFileSync(HOVER_FILL_SCSS, 'utf8');
+    const declaration = HOVER_FILL.exec(scss)?.[1];
+
+    it('tn-table still hovers its sortable headers to a color-mix', () => {
+      // If this fails the fill has been changed or removed, and every case below
+      // is measuring something the table no longer paints. A fill that is a
+      // plain token belongs in PAIRINGS instead.
+      expect(declaration).toBeDefined();
+    });
+
+    const percent = declaration === undefined ? undefined : MIX_PERCENT.exec(declaration)?.[1];
+
+    it('it is a mix of --tn-topbar with --tn-topbar-txt, by a percentage this can read', () => {
+      // The two tokens and the number are what the arithmetic below depends on.
+      // A mix toward some third colour is a different claim and would be
+      // measured wrong rather than not at all.
+      expect(declaration).toContain('var(--tn-topbar-txt)');
+      expect(percent).toMatch(/^\d+$/);
+    });
+
+    const alpha = percent === undefined ? 0.15 : (100 - Number(percent)) / 100;
+
+    /**
+     * Each palette's hovered header: the label on the fill it renders on, or the
+     * reason there is no opaque colour to measure.
+     */
+    const hovers = measured.map((palette) => {
+      const label = palette.color('--tn-topbar-txt');
+      const bar = palette.color('--tn-topbar');
+      try {
+        const fill = compositeColor(atMixAlpha(label, alpha), bar);
+        const ratio = contrastRatio(label, fill);
+        return {
+          selector: palette.selector,
+          label,
+          bar,
+          fill,
+          ratio,
+          ratioLabel: formatRatio(ratio),
+          resting: formatRatio(palette.contrast('--tn-topbar-txt', '--tn-topbar')),
+          recorded: HOVER_GAPS[palette.selector],
+        };
+      } catch {
+        return {
+          selector: palette.selector,
+          label,
+          bar,
+          fill: undefined,
+          ratio: undefined,
+          ratioLabel: 'nothing opaque to measure',
+          resting: formatRatio(palette.contrast('--tn-topbar-txt', '--tn-topbar')),
+          recorded: HOVER_GAPS[palette.selector],
+        };
+      }
+    });
+
+    it('there are hovered headers to measure', () => {
+      expect(hovers.length).toBeGreaterThan(0);
+    });
+
+    const opaque = hovers.filter((one) => one.ratio !== undefined);
+
+    it('some palette labels its bar with an opaque colour', () => {
+      // All four translucent ones would leave this describe measuring nothing
+      // while every case in it still passed.
+      expect(opaque.length).toBeGreaterThan(0);
+    });
+
+    it.each(opaque.filter((one) => one.recorded === undefined))(
+      '$selector: $label on the hovered header ($fill, mixed from $bar) is $ratioLabel, resting $resting',
+      ({ ratio }) => {
+        expect(meetsAa(ratio as number, 'normal')).toBe(true);
+      }
+    );
+
+    const recorded = opaque.filter((one) => one.recorded !== undefined);
+
+    if (Object.keys(HOVER_GAPS).length > 0) {
+      it.each(recorded)(
+        '$selector: its recorded hover gap is still a gap — $ratioLabel, resting $resting',
+        ({ ratio }) => {
+          expect(meetsAa(ratio as number, 'normal')).toBe(false);
+        }
+      );
+    }
+
+    it('every HOVER_GAPS entry is about a palette that was measured', () => {
+      // A palette that has stopped labelling its bar opaquely drops out of
+      // `opaque` silently, taking its entry's assertion with it.
+      const selectors = opaque.map(({ selector }) => selector);
+      expect(Object.keys(HOVER_GAPS).filter((one) => !selectors.includes(one))).toEqual([]);
+    });
+
+    it.each(hovers.filter((one) => one.ratio === undefined))(
+      '$selector: labels its bar $label, which the mix makes translucent — $ratioLabel',
+      ({ label }) => {
+        // Recorded rather than skipped: these are the palettes where the claim
+        // cannot be made at all, and a reader should not take their absence from
+        // the cases above as a pass.
+        expect(label).toMatch(/^rgba?\(/);
+      }
+    );
   });
 
   it('the threshold these cases use is the AA one for normal text', () => {
