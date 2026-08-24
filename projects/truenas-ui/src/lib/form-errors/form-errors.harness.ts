@@ -42,6 +42,7 @@ export class TnFormErrorsHarness extends ComponentHarness {
   }
 
   private message = this.locatorForOptional('.tn-form-errors');
+  private dismissButton = this.locatorForOptional('.tn-form-errors-dismiss button');
 
   /** Whether a message is currently rendered. */
   async hasMessage(): Promise<boolean> {
@@ -52,6 +53,30 @@ export class TnFormErrorsHarness extends ComponentHarness {
   async getMessage(): Promise<string> {
     const message = await this.message();
     return message ? (await message.text()).trim() : '';
+  }
+
+  /**
+   * Whether the shown message carries a dismiss button — true only when the
+   * active error key is one of the host's `dismissibleErrors`.
+   */
+  async isDismissible(): Promise<boolean> {
+    return (await this.dismissButton()) !== null;
+  }
+
+  /**
+   * Clicks the dismiss button, as a user clearing a server-side error would.
+   *
+   * The component only emits `dismiss` — clearing the error is the consumer's
+   * job — so what the message does next depends on the handler under test.
+   *
+   * @throws If the shown message is not dismissible.
+   */
+  async dismiss(): Promise<void> {
+    const button = await this.dismissButton();
+    if (!button) {
+      throw new Error('Cannot dismiss: tn-form-errors shows no dismissible error.');
+    }
+    await button.click();
   }
 }
 

@@ -1,11 +1,26 @@
 @if (show()) {
-  <!-- role="alert" is implicitly assertive and atomic, so no aria-live beside
-       it — the same markup tn-form-field uses for its own subscript. -->
-  <div
-    class="tn-form-errors"
-    role="alert"
-    tnTestIdType="error"
-    [attr.id]="errorId"
-    [tnTestId]="testId()"
-  >{{ errorMessage() }}</div>
+  <div class="tn-form-errors-row">
+    <!-- role="alert" is implicitly assertive and atomic, so no aria-live beside
+         it — the same markup tn-form-field uses for its own subscript. The
+         dismiss button stays OUTSIDE it: a live region announces everything it
+         contains, and the button's name is not part of the error. -->
+    <div
+      class="tn-form-errors"
+      role="alert"
+      tnTestIdType="error"
+      [attr.id]="errorId"
+      [tnTestId]="testId()"
+    >{{ errorMessage() }}</div>
+    @if (showDismiss()) {
+      <tn-icon-button
+        class="tn-form-errors-dismiss"
+        name="close"
+        library="mdi"
+        size="sm"
+        [ariaLabel]="resolvedDismissAriaLabel()"
+        [tooltip]="resolvedDismissTooltip()"
+        (onClick)="dismissError()"
+      />
+    }
+  </div>
 }

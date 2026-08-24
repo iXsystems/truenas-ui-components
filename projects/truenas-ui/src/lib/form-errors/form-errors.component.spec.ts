@@ -7,8 +7,9 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import type { AbstractControl, ValidationErrors } from '@angular/forms';
 import { TnFormErrorsComponent } from './form-errors.component';
 import { TnFormErrorsHarness } from './form-errors.harness';
-import { TN_FORM_FIELD_ERRORS } from '../form-field/form-field.errors';
+import { TN_FORM_FIELD_DISMISSIBLE_ERRORS, TN_FORM_FIELD_ERRORS } from '../form-field/form-field.errors';
 import type { TnFormFieldErrorMessages, TnFormFieldErrorResolver } from '../form-field/form-field.errors';
+import { TnIconTesting } from '../icon/icon-testing';
 
 /** Fails the GROUP, the way a cross-field validator does. */
 function bothOrNeither(group: AbstractControl): ValidationErrors | null {
@@ -20,8 +21,11 @@ function bothOrNeither(group: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'tn-form-errors-host',
   imports: [ReactiveFormsModule, TnFormErrorsComponent],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `<tn-form-errors
     [control]="control()" [errorMessages]="errorMessages()" [showWhenUntouched]="showWhenUntouched()"
+    [dismissibleErrors]="dismissibleErrors()" [dismissAriaLabel]="dismissAriaLabel()"
+    (dismiss)="dismissed.push($event)"
   />`,
 })
 class HostComponent {
@@ -41,6 +45,9 @@ class HostComponent {
   readonly control = signal<AbstractControl>(this.group);
   readonly errorMessages = signal<TnFormFieldErrorMessages>({});
   readonly showWhenUntouched = signal(false);
+  readonly dismissibleErrors = signal<readonly string[] | undefined>([]);
+  readonly dismissAriaLabel = signal<string | undefined>(undefined);
+  readonly dismissed: string[] = [];
 }
 
 describe('TnFormErrorsComponent', () => {
@@ -49,10 +56,19 @@ describe('TnFormErrorsComponent', () => {
   let loader: HarnessLoader;
   let errors: TnFormErrorsHarness;
 
-  async function setUp(resolver?: TnFormFieldErrorResolver): Promise<void> {
+  async function setUp(
+    resolver?: TnFormFieldErrorResolver,
+    appWideDismissible?: readonly string[]
+  ): Promise<void> {
     await TestBed.configureTestingModule({
       imports: [HostComponent],
-      providers: resolver ? [{ provide: TN_FORM_FIELD_ERRORS, useValue: resolver }] : [],
+      providers: [
+        TnIconTesting.jest.providers(),
+        ...(resolver ? [{ provide: TN_FORM_FIELD_ERRORS, useValue: resolver }] : []),
+        ...(appWideDismissible
+          ? [{ provide: TN_FORM_FIELD_DISMISSIBLE_ERRORS, useValue: appWideDismissible }]
+          : []),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(HostComponent);
@@ -205,6 +221,122 @@ describe('TnFormErrorsComponent', () => {
       const id = fixture.nativeElement.querySelector('.tn-form-errors')?.getAttribute('id');
 
       expect(id).toMatch(/^tn-form-errors-\d+$/);
+    });
+  });
+
+  describe('dismissing an error', () => {
+    /**
+     * Attaches a server-side style failure the user cannot edit their way out of.
+     * The value is the message itself, which the resolution ladder renders as-is.
+     */
+    function attachServerError(): void {
+      host.group.setErrors({ manualValidateError: 'The pool is offline' });
+      host.group.markAllAsTouched();
+      fixture.detectChanges();
+    }
+
+    beforeEach(async () => {
+      await setUp();
+    });
+
+    it('leaves an ordinary error undismissable', async () => {
+      invalidate();
+      host.group.markAllAsTouched();
+      fixture.detectChanges();
+
+      expect(await errors.isDismissible()).toBe(false);
+    });
+
+    it('offers a dismiss button for a listed error key', async () => {
+      host.dismissibleErrors.set(['manualValidateError']);
+      attachServerError();
+
+      expect(await errors.isDismissible()).toBe(true);
+    });
+
+    it('emits the key of the message that was on screen', async () => {
+      host.dismissibleErrors.set(['manualValidateError']);
+      attachServerError();
+
+      await errors.dismiss();
+
+      expect(host.dismissed).toEqual(['manualValidateError']);
+    });
+
+    it('drops the dismissed key, so the message goes with it', async () => {
+      host.dismissibleErrors.set(['manualValidateError']);
+      attachServerError();
+
+      await errors.dismiss();
+      fixture.detectChanges();
+
+      expect(host.group.errors).toBeNull();
+      expect(await errors.hasMessage()).toBe(false);
+    });
+
+    it('leaves the group\'s other errors alone', async () => {
+      host.dismissibleErrors.set(['manualValidateError']);
+      host.group.setErrors({ manualValidateError: 'The pool is offline', bothOrNeither: true });
+      host.group.markAllAsTouched();
+      fixture.detectChanges();
+
+      await errors.dismiss();
+      fixture.detectChanges();
+
+      expect(host.group.errors).toEqual({ bothOrNeither: true });
+      expect(await errors.getMessage()).toBe('bothOrNeither');
+    });
+
+    it('honours an app-wide default when the instance names no keys', async () => {
+      TestBed.resetTestingModule();
+      await setUp(undefined, ['manualValidateError']);
+      host.dismissibleErrors.set(undefined);
+      attachServerError();
+
+      expect(await errors.isDismissible()).toBe(true);
+    });
+
+    it('withholds the button when a listed key is not the error being shown', async () => {
+      // `required` outranks the custom key, so the message on screen is the
+      // required one — and the button would then belong to a message nobody sees.
+      host.dismissibleErrors.set(['manualValidateError']);
+      host.group.setErrors({ required: true, manualValidateError: 'Nope' });
+      host.group.markAllAsTouched();
+      fixture.detectChanges();
+
+      expect(await errors.hasMessage()).toBe(true);
+      expect(await errors.isDismissible()).toBe(false);
+    });
+
+    it('names the button in English by default', async () => {
+      host.dismissibleErrors.set(['manualValidateError']);
+      attachServerError();
+
+      const button = fixture.nativeElement.querySelector('.tn-form-errors-dismiss button');
+
+      expect(button?.getAttribute('aria-label')).toBe('Dismiss this error');
+    });
+
+    it('lets a consumer supply a translated name for the button', async () => {
+      // The library ships no localized strings, so an app with an i18n layer has
+      // to be able to name the button itself.
+      host.dismissibleErrors.set(['manualValidateError']);
+      host.dismissAriaLabel.set('Diese Fehlermeldung entfernen');
+      attachServerError();
+
+      const button = fixture.nativeElement.querySelector('.tn-form-errors-dismiss button');
+
+      expect(button?.getAttribute('aria-label')).toBe('Diese Fehlermeldung entfernen');
+    });
+
+    it('keeps the button out of the alert, so its name is not announced as part of the error', async () => {
+      host.dismissibleErrors.set(['manualValidateError']);
+      attachServerError();
+
+      const alert = fixture.nativeElement.querySelector('.tn-form-errors');
+
+      expect(alert.querySelector('button')).toBeNull();
+      expect(await errors.getMessage()).toBe('The pool is offline');
     });
   });
 });

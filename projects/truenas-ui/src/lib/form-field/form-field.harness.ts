@@ -34,6 +34,7 @@ export class TnFormFieldHarness extends ComponentHarness {
   private _error = this.locatorForOptional('.tn-form-field-error');
   private _hint = this.locatorForOptional('.tn-form-field-hint');
   private _tooltip = this.locatorForOptional('.tn-form-field-tooltip');
+  private _dismiss = this.locatorForOptional('.tn-form-field-error-dismiss button');
 
   /**
    * Gets a `HarnessPredicate` that can be used to search for a form field
@@ -113,6 +114,45 @@ export class TnFormFieldHarness extends ComponentHarness {
   async hasError(): Promise<boolean> {
     const error = await this._error();
     return error !== null;
+  }
+
+  /**
+   * Checks whether the shown error carries a dismiss button — true only when the
+   * active error key is one of the field's `dismissibleErrors`.
+   *
+   * @returns Promise resolving to true if the dismiss button is present.
+   *
+   * @example
+   * ```typescript
+   * const field = await loader.getHarness(TnFormFieldHarness.with({ label: 'Image' }));
+   * expect(await field.isErrorDismissible()).toBe(true);
+   * ```
+   */
+  async isErrorDismissible(): Promise<boolean> {
+    return (await this._dismiss()) !== null;
+  }
+
+  /**
+   * Clicks the dismiss button, as a user clearing a server-side error would.
+   *
+   * The field only emits `dismiss` — clearing the error is the consumer's job —
+   * so what the message does next depends on the handler under test.
+   *
+   * @throws If the shown error is not dismissible.
+   *
+   * @example
+   * ```typescript
+   * const field = await loader.getHarness(TnFormFieldHarness.with({ label: 'Image' }));
+   * await field.dismissError();
+   * expect(await field.hasError()).toBe(false);
+   * ```
+   */
+  async dismissError(): Promise<void> {
+    const button = await this._dismiss();
+    if (!button) {
+      throw new Error('Cannot dismiss: the form field shows no dismissible error.');
+    }
+    await button.click();
   }
 
   /**

@@ -1,18 +1,25 @@
 
 import { NgTemplateOutlet } from '@angular/common';
 import type { AfterContentInit } from '@angular/core';
-import { Component, input, computed, signal, contentChild, forwardRef, inject, DestroyRef } from '@angular/core';
+import {
+  Component, ElementRef, input, output, computed, signal, contentChild, forwardRef, inject,
+  viewChild, DestroyRef,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgControl, Validators } from '@angular/forms';
 import type { ValidationErrors } from '@angular/forms';
 import { TN_FORM_FIELD_CONTEXT } from './form-field-context';
 import type { TnFormFieldContext } from './form-field-context';
 import {
+  TN_FORM_FIELD_DISMISSIBLE_ERRORS,
   TN_FORM_FIELD_ERRORS,
+  activeErrorKey,
+  clearDismissibleErrors,
   resolveErrorMessage,
 } from './form-field.errors';
 import type { TnFormFieldErrorMessages } from './form-field.errors';
 import { TnIconComponent } from '../icon/icon.component';
+import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 import { plainTextMessage } from '../tooltip/interactive-content';
@@ -22,6 +29,21 @@ import type { TooltipPosition } from '../tooltip/tooltip.directive';
 export type SubscriptSizing = 'fixed' | 'dynamic';
 
 let nextId = 0;
+
+/**
+ * What counts as the control to hand focus back to once the dismiss button the
+ * user just activated has been removed from the DOM. First match inside the
+ * field's wrapper wins — for every control the library projects that is the
+ * control itself.
+ */
+const FOCUSABLE_SELECTOR = [
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  'button:not([disabled])',
+  'a[href]',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
 
 /** Snapshot of the projected control's validation state. */
 interface ControlStateSnapshot {
@@ -34,7 +56,10 @@ interface ControlStateSnapshot {
 @Component({
   selector: 'tn-form-field',
   standalone: true,
-  imports: [NgTemplateOutlet, TnTestIdDirective, TnIconComponent, TnTooltipDirective, LabelMarkupPipe],
+  imports: [
+    NgTemplateOutlet, TnTestIdDirective, TnIconComponent, TnIconButtonComponent, TnTooltipDirective,
+    LabelMarkupPipe,
+  ],
   providers: [
     // Published to projected controls (their element injector chains through
     // this host), which bind aria-labelledby/-describedby/-invalid/-required
@@ -115,7 +140,62 @@ export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContex
    */
   errorMessages = input<TnFormFieldErrorMessages>({});
 
+  /**
+   * Error keys whose message renders with a dismiss button beside it — in
+   * practice a failure the user cannot fix by editing the value, so the message
+   * would otherwise stick until the control changes: a server-side rejection an
+   * error handler attached to the control, or an async validator that judged the
+   * value the user already picked.
+   *
+   * Only the error actually being shown gets the button. A control carrying both
+   * a dismissible key and `required` shows the `required` message, undismissable,
+   * because that is the message on screen.
+   *
+   * Dismissing deletes these keys from the control's errors — listing them here
+   * is what grants that, since a message the user can close but that does not go
+   * away would be worse than no button. Every listed key the control carries goes
+   * at once, not just the one behind the message: an app that spreads one failure
+   * across sibling keys (a flag, its message, a legacy alias) would otherwise see
+   * the message reappear from a sibling. Unlisted errors are left alone, and
+   * {@link dismiss} reports which message went.
+   *
+   * Left unset, the app-wide {@link TN_FORM_FIELD_DISMISSIBLE_ERRORS} default
+   * applies; pass `[]` to opt this field out of it.
+   */
+  dismissibleErrors = input<readonly string[] | undefined>(undefined);
+
+  /**
+   * Accessible name for the dismiss button, which is icon-only and so has
+   * nothing else to be named by. The library cannot translate its own
+   * `'Dismiss this error'` default, so a consumer with an i18n layer passes an
+   * already-translated string here.
+   */
+  dismissAriaLabel = input<string | undefined>(undefined);
+
+  /**
+   * Hover tooltip for the dismiss button. Defaults to the resolved
+   * `dismissAriaLabel`, so one translated string covers both the accessible name
+   * and the visible hint.
+   */
+  dismissTooltip = input<string | undefined>(undefined);
+
+  /**
+   * Emits the error key the user dismissed, after it has been removed — the key
+   * of the message that was on screen, so a consumer listing several dismissible
+   * keys knows which one went.
+   */
+  dismiss = output<string>();
+
   control = contentChild(NgControl);
+
+  private host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  /**
+   * `read: ElementRef` because the ref sits on `tn-icon-button`, and a component
+   * ref resolves to the instance by default — the element is what the focus
+   * check needs.
+   */
+  private dismissButton = viewChild('dismissButton', { read: ElementRef<HTMLElement> });
 
   private destroyRef = inject(DestroyRef);
 
@@ -125,6 +205,9 @@ export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContex
    * runtime will not be picked up by an already-created field.
    */
   private errorResolver = inject(TN_FORM_FIELD_ERRORS, { optional: true });
+
+  /** App-wide dismissible keys, used when the field names none of its own. */
+  private defaultDismissibleErrors = inject(TN_FORM_FIELD_DISMISSIBLE_ERRORS, { optional: true });
 
   /**
    * Snapshot of the relevant control state. Updated from the control's status
@@ -172,6 +255,66 @@ export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContex
     const { errors } = this.controlState();
     return errors ? this.resolveErrorMessage(errors) : '';
   });
+
+  /**
+   * The error key the shown message came from. Same pick `resolveErrorMessage`
+   * makes, so the dismiss button can never belong to an error other than the one
+   * being read.
+   */
+  protected activeError = computed(() => {
+    const { errors } = this.controlState();
+    return errors ? activeErrorKey(errors) : null;
+  });
+
+  /** The field's own list when it has one, otherwise the app-wide default. */
+  protected resolvedDismissibleErrors = computed(
+    () => this.dismissibleErrors() ?? this.defaultDismissibleErrors ?? [],
+  );
+
+  protected showDismiss = computed(() => {
+    const key = this.activeError();
+    return this.showError() && !!key && this.resolvedDismissibleErrors().includes(key);
+  });
+
+  protected readonly resolvedDismissAriaLabel = computed(
+    () => this.dismissAriaLabel() ?? 'Dismiss this error',
+  );
+
+  protected readonly resolvedDismissTooltip = computed(
+    () => this.dismissTooltip() ?? this.resolvedDismissAriaLabel(),
+  );
+
+  /**
+   * Drops the dismissed error, then puts focus back on the control rather than
+   * letting it fall to `<body>` with the button — dismissing a server-side error
+   * means "let me try again", and the control is where trying again happens.
+   *
+   * Focus only moves if it was on the button to begin with: a dismiss triggered
+   * from anywhere else (a Safari mouse click, which leaves the button unfocused)
+   * has no focus to lose and should not steal any.
+   */
+  protected dismissError(): void {
+    const key = this.activeError();
+    const control = this.control()?.control;
+    if (!key || !control) {
+      return;
+    }
+    // `contains`, not identity: tn-icon-button delegates focus to the native
+    // button it renders, so the active element is that child, not the host.
+    const button = this.dismissButton()?.nativeElement;
+    const hadFocus = !!button && button.contains(button.ownerDocument.activeElement);
+
+    clearDismissibleErrors(control, this.resolvedDismissibleErrors());
+    this.syncControlState();
+    this.dismiss.emit(key);
+
+    if (hadFocus) {
+      this.host.nativeElement
+        .querySelector('.tn-form-field-wrapper')
+        ?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)
+        ?.focus();
+    }
+  }
 
   ngAfterContentInit(): void {
     const control = this.control();

@@ -68,6 +68,55 @@ export const TN_FORM_FIELD_ERRORS = new InjectionToken<TnFormFieldErrorResolver>
 );
 
 /**
+ * App-wide default for which error keys carry a dismiss button, for apps whose
+ * server-side failures always land under the same keys. A field's
+ * `dismissibleErrors` input overrides it — including with `[]`, to opt one field
+ * out of the default.
+ *
+ * Listing a key here grants permission to delete it: dismissing removes it from
+ * the control's errors, since a message the user can close but that will not go
+ * away is worse than no button at all.
+ *
+ * @example
+ * ```ts
+ * providers: [
+ *   {
+ *     provide: TN_FORM_FIELD_DISMISSIBLE_ERRORS,
+ *     useValue: ['manualValidateError', 'manualValidateErrorMsg'],
+ *   },
+ * ];
+ * ```
+ */
+export const TN_FORM_FIELD_DISMISSIBLE_ERRORS = new InjectionToken<readonly string[]>(
+  'TN_FORM_FIELD_DISMISSIBLE_ERRORS'
+);
+
+/**
+ * Removes every dismissible key a control currently carries, leaving the rest.
+ *
+ * All of them, not just the one behind the message: an app may spread a single
+ * failure across sibling keys — a flag, its message, a legacy alias — and a
+ * sibling left behind would simply render the same message again with its own
+ * close button. The opt-in list is what bounds this.
+ *
+ * `setErrors`, not a delete plus `updateValueAndValidity()`: re-running the
+ * validators would recompute the whole map, and a manual error nothing validates
+ * is exactly the kind that gets dismissed.
+ *
+ * @internal
+ */
+export function clearDismissibleErrors(
+  control: AbstractControl,
+  dismissible: readonly string[]
+): void {
+  const remaining = { ...control.errors };
+  for (const key of dismissible) {
+    delete remaining[key];
+  }
+  control.setErrors(Object.keys(remaining).length ? remaining : null);
+}
+
+/**
  * Built-in fallback messages for Angular's standard validators. Used only when
  * neither a per-field `errorMessages` entry nor a {@link TN_FORM_FIELD_ERRORS}
  * resolver supplies a message. English-only by design — override the others for

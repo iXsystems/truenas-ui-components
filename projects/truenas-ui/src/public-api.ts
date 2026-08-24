@@ -48,7 +48,9 @@ export * from './lib/keyboard-shortcut/keyboard-shortcut.component';
 export * from './lib/form-field/form-field.component';
 export { TN_FORM_FIELD_CONTEXT, injectTnFormFieldAria } from './lib/form-field/form-field-context';
 export type { TnFormFieldContext, TnFormFieldAriaBindings } from './lib/form-field/form-field-context';
-export { TN_FORM_FIELD_ERRORS, resolveErrorMessage } from './lib/form-field/form-field.errors';
+export {
+  TN_FORM_FIELD_DISMISSIBLE_ERRORS, TN_FORM_FIELD_ERRORS, resolveErrorMessage,
+} from './lib/form-field/form-field.errors';
 export type {
   TnFormFieldErrorMessage,
   TnFormFieldErrorMessages,

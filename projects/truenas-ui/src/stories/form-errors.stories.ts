@@ -5,9 +5,12 @@ import { moduleMetadata } from '@storybook/angular';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnFormErrorsComponent } from '../lib/form-errors/form-errors.component';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
+import { tnIconMarker } from '../lib/icon/icon-marker';
 import { TnInputComponent } from '../lib/input/input.component';
 
 const harnessDoc = loadHarnessDoc('form-errors');
+
+tnIconMarker('close', 'mdi');
 
 /** Fails the GROUP rather than either field, the way a cross-field rule does. */
 function bothOrNeither(group: AbstractControl): ValidationErrors | null {
@@ -68,6 +71,19 @@ group message reads exactly like the field messages around it. Like \`tn-form-fi
 Only once the control is touched or dirty, so a freshly opened form does not greet the user with
 errors. Set \`showWhenUntouched\` where the invalid value did not come from the user — an edit form
 populated from an API.
+
+## Dismissible errors
+
+Some failures the user cannot edit their way out of — a server-side rejection an error handler
+attached to the group. List those keys in \`dismissibleErrors\` and the message gets a close button
+beside it.
+
+Dismissing deletes the key from the group's errors — listing it is what grants that — and
+\`dismiss\` reports what went, for a handler that wants to react. Unlike \`tn-form-field\` there is
+no control to hand focus back to afterwards, so move focus yourself if it matters.
+
+Leave the input unset to take the app-wide \`TN_FORM_FIELD_DISMISSIBLE_ERRORS\` default, which an
+app whose server failures always land under the same keys wires once; pass \`[]\` to opt out.
         `,
       },
     },
@@ -91,6 +107,24 @@ populated from an API.
       control: 'text',
       description:
         'Test-id base for the message element (`error-` prefixed). No fallback: a control does not know its own name.',
+    },
+    dismissibleErrors: {
+      control: 'object',
+      description:
+        'Error keys whose message renders with a close button, and which dismissing deletes. Only the error actually shown gets one. Unset falls back to the app-wide TN_FORM_FIELD_DISMISSIBLE_ERRORS default.',
+    },
+    dismissAriaLabel: {
+      control: 'text',
+      description:
+        'Accessible name for the close button. The library ships no localized strings, so pass an already-translated one.',
+    },
+    dismissTooltip: {
+      control: 'text',
+      description: 'Hover hint for the close button. Defaults to `dismissAriaLabel`.',
+    },
+    dismiss: {
+      action: 'dismiss',
+      description: 'Emits the error key the user dismissed.',
     },
   },
 };
@@ -178,6 +212,46 @@ export const ChildErrorsStayWithTheirField: Story = {
       description: {
         story:
           'The group is invalid, but its own `errors` are null — the failure is the field\'s. `tn-form-errors` stays silent rather than repeating what the field already says.',
+      },
+    },
+  },
+};
+
+export const DismissibleServerError: Story = {
+  render: () => {
+    const group = new FormGroup({ pool: new FormControl('tank') });
+    // What an error handler leaves behind after the API rejects the request.
+    const reject = (): void => {
+      group.setErrors({ manualValidateError: 'Pool "tank" is offline — bring it up and retry' });
+      group.markAllAsTouched();
+    };
+    reject();
+
+    return {
+      props: { group, reject },
+      template: `
+        <div [formGroup]="group" style="max-width: 24rem">
+          <tn-form-field label="Pool">
+            <tn-input formControlName="pool"></tn-input>
+          </tn-form-field>
+
+          <tn-form-errors
+            [control]="group"
+            [dismissibleErrors]="['manualValidateError']"
+          ></tn-form-errors>
+
+          <button type="button" style="width: fit-content; margin-top: 0.5rem" (click)="reject()">
+            Reject again
+          </button>
+        </div>
+      `,
+    };
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'No edit to the form will clear this one, so the message would sit there forever. The close button drops the key the message came from — which listing it in `dismissibleErrors` is what permits.',
       },
     },
   },

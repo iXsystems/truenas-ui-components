@@ -31,14 +31,30 @@
   @if (showSubscript()) {
     <div class="tn-form-field-subscript" [class.tn-form-field-subscript-dynamic]="subscriptSizing() === 'dynamic'">
       @if (showError()) {
-        <!-- role="alert" is implicitly assertive+atomic, so no aria-live here.
-             The id feeds the projected control's aria-describedby (see
-             TnFormFieldContext). -->
-        <div
-          class="tn-form-field-error"
-          role="alert"
-          [attr.id]="errorId">
-          {{ errorMessage() }}
+        <div class="tn-form-field-error-row">
+          <!-- role="alert" is implicitly assertive+atomic, so no aria-live here.
+               The id feeds the projected control's aria-describedby (see
+               TnFormFieldContext). The dismiss button stays OUTSIDE it: a live
+               region announces everything it contains, and the button's name is
+               not part of the error. -->
+          <div
+            class="tn-form-field-error"
+            role="alert"
+            [attr.id]="errorId">
+            {{ errorMessage() }}
+          </div>
+          @if (showDismiss()) {
+            <tn-icon-button
+              #dismissButton
+              class="tn-form-field-error-dismiss"
+              name="close"
+              library="mdi"
+              size="sm"
+              [ariaLabel]="resolvedDismissAriaLabel()"
+              [tooltip]="resolvedDismissTooltip()"
+              (onClick)="dismissError()"
+            />
+          }
         </div>
       }
       @if (showHint()) {
