@@ -542,8 +542,26 @@
   --tn-bg1: #212a35;
   --tn-bg2: #303d48;
   --tn-bg3: #3d4a55;
-  --tn-fg1: #aaaaaa;
-  --tn-fg2: #cccccc;
+  /* Was #aaaaaa, the calmer half of a deliberate inversion: --tn-fg2 (#cccccc)
+     was this palette's emphasis colour and --tn-fg1 the quieter one, the only
+     palette of nine ordered that way. Both cleared 4.5:1 on --tn-bg1 and
+     --tn-bg2, which is all the text tokens claim — but on the three fills that
+     sit above --tn-bg2, #aaaaaa read 3.91:1 on --tn-bg3/--tn-alt-bg1 and
+     3.19:1 on --tn-alt-bg2, the worst of the nine palettes (#282). Those fills
+     are the hovered menu item and list item, the active table row, the banner
+     and the stepper indicator, so that was primary text on ordinary
+     interactive states.
+
+     THE FILLS COULD NOT MOVE INSTEAD. #aaaaaa clears 4.5:1 only on a surface of
+     luminance 0.0504 or below, and --tn-bg2 is already at 0.0443: all three
+     fills would have had to land in the band between the card surface and a
+     ceiling just above it, 12.9% of the elevation --tn-alt-bg2 has today. The
+     fills exist to read as raised, so keeping the inversion meant keeping the
+     failure. #cccccc holds its role unchanged. */
+  --tn-fg1: #e0e0e0; /* 10.99:1 on --tn-bg1, 8.43:1 on --tn-bg2, 6.89:1 on
+                        --tn-bg3/--tn-alt-bg1, 5.62:1 on --tn-alt-bg2 */
+  --tn-fg2: #cccccc; /* 9.04:1 on --tn-bg1, 6.93:1 on --tn-bg2, 5.66:1 on
+                        --tn-bg3/--tn-alt-bg1, 4.62:1 on --tn-alt-bg2 */
   /* Non-text, 3:1 on --tn-bg1/--tn-bg2 — see the note in :root (#240).
      #666666 read 1.94:1 on --tn-bg2 and #888888 3.14:1, so --tn-fg4 had to
      move a long way and --tn-fg3 had to move with it to stay a step ahead. */

@@ -90,11 +90,22 @@ const REQUIRED_TOKENS = [...Object.keys(SURFACES), ...Object.keys(TEXT_TOKENS)];
  * Asserted to STILL BE TRUE rather than merely skipped, the same way
  * `OUTREADS_TEXT` is, so a palette that stops inverting takes its entry out
  * instead of leaving a note here that has quietly stopped describing it.
+ *
+ * EMPTY, AND THAT IS THE CURRENT STATE RATHER THAN A DISABLED RECORD. Its one
+ * entry was `.tn-midnight`, whose `--tn-fg2` (#cccccc) was the emphasis colour
+ * and whose `--tn-fg1` (#aaaaaa) was the calmer one. #282 is what took it out:
+ * the two clear 4.5:1 on the two surfaces measured here, which is what this
+ * record said and it was true, but on the three fills above `--tn-bg2` the
+ * calmer of the two ran out first and `--tn-fg1` failed the primary text role on
+ * the hovered menu item, the hovered row and the active table row — the exact
+ * shape described above, arriving on surfaces this file does not measure.
+ * `--tn-fg1` is now #e0e0e0 and leads the ramp, so the entry describes nothing.
+ *
+ * The record stays because the inversion it covers is still a legitimate
+ * per-theme choice — what #282 showed is that it costs a palette its headroom on
+ * the untuned fills, not that it is forbidden.
  */
-const FG2_OUTREADS_FG1: Readonly<Record<string, string>> = {
-  '.tn-midnight': '--tn-fg2 (#cccccc) is the emphasis colour here and --tn-fg1 (#aaaaaa) '
-    + 'the calmer one; both clear 4.5:1 on both surfaces, so neither role is failing',
-};
+const FG2_OUTREADS_FG1: Readonly<Record<string, string>> = {};
 
 interface TokenCase {
   selector: string;
