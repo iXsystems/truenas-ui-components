@@ -280,11 +280,12 @@
   --tn-topbar-txt: #eceff4;
   --tn-accent: #5e81aC;
   /* Black, where every other theme uses one of its own surfaces. Nord's accent
-     sits mid-luminance and its whole Polar Night range is too light to clear
-     AA on it — the darkest, #2e3440, measures 3.10:1, and the lightest Snow
-     Storm 4.03:1. Nothing in the palette works, so the text is black. Retuning
-     --tn-accent itself would have been the alternative, and it is a border and
-     fill colour elsewhere. */
+     sits mid-luminance and the palette runs out at both ends before clearing
+     AA on it: the darkest Polar Night, #2e3440, measures 3.10:1, and the
+     lightest Snow Storm, #eceff4, 3.50:1. Nothing in the palette works, so the
+     text is black — 4.03:1 for pure white is still short. Retuning --tn-accent
+     itself would have been the alternative, and it is a border and fill colour
+     elsewhere. */
   --tn-accent-txt: #000000; /* 5.21:1 on --tn-accent */
   --tn-bg1: #2e3440;
   --tn-bg2: #3b4252;

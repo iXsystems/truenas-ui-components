@@ -79,8 +79,8 @@ const REQUIRED_TOKENS = [
 ].sort();
 
 /**
- * `color:` and `background-color:` values in `chip.component.scss` that name no
- * theme token, with why each one is not a surface this file measures.
+ * Backgrounds `chip.component.scss` paints that name no theme token, with why
+ * each one is not a label surface this file measures.
  *
  * A map rather than a bare list, because "this value is fine" and "this value
  * is fine FOR THIS REASON" rot differently: a wash that stops being decorative
@@ -88,31 +88,112 @@ const REQUIRED_TOKENS = [
  * disagree with.
  */
 const NOT_A_LABEL_SURFACE: Readonly<Record<string, string>> = {
-  inherit: 'the body button and the close glyph both take the chip wrapper\'s colour, which is what every pair above measures',
-  'rgba(255, 255, 255, 0.2)': 'the close circle, a wash over whatever the chip already paints — see the note below',
+  none: 'the body button, which is transparent over the wrapper the pairs above measure',
+  transparent: 'the <code> override, which puts a code span back on the chip\'s own surface after the label-markup mixin painted it --tn-bg2',
+  'rgba(255, 255, 255, 0.2)': 'the close circle, a wash over whatever the chip already paints — the × is a glyph on that wash, not the label, and is not measured here',
   'rgba(255, 255, 255, 0.3)': 'the same wash, on hover',
   'rgba(0, 0, 0, 0.2)': 'the same circle in TN Dark on --secondary, where a light wash would disappear',
   'rgba(0, 0, 0, 0.3)': 'the same dark wash, on hover',
 };
 
-/**
- * A `color:` declaration, but not `border-color:` or `background-color:`.
- *
- * The `(^|[^-\w])` is load-bearing and is the same guard
- * `primary-text-contrast.spec.ts` uses: `background-color: var(--tn-accent)`
- * contains `color: var(--tn-accent)` as a substring, and a border is not a
- * label.
- */
-const COLOR_DECLARATION = /(?:^|[^-\w])color:\s*([^;]+);/g;
-const BACKGROUND_COLOR_DECLARATION = /background-color:\s*([^;]+);/g;
+/** One rule in the stylesheet: its own declarations, and what it nests inside. */
+interface ScssRule {
+  selector: string;
+  declarations: Map<string, string>;
+  parent: ScssRule | null;
+}
 
-function declaredValues(scss: string, pattern: RegExp): string[] {
-  return [...scss.matchAll(pattern)].map((match) => match[1].trim());
+/**
+ * Every rule in `scss`, each pointing at the rule it nests inside.
+ *
+ * A brace walk rather than a regex, and the nesting is the reason. `color` and
+ * `background-color` are almost never declared together: `&--secondary:hover`
+ * repaints the background and inherits its label colour from `&--secondary`,
+ * one level up and on the same element. Scanning for the two properties
+ * independently — which is what this used to do — collects the right two SETS
+ * of tokens while saying nothing about which goes with which, so re-pairing an
+ * existing foreground with an existing surface passes: `--tn-alt-fg2` on
+ * `--tn-accent` is 1.45:1 in Solarized Dark and both halves are already in the
+ * table.
+ */
+function scssRules(scss: string): ScssRule[] {
+  // Both comment forms go first. `//` runs to end of line and `/* */` does not,
+  // and either can contain a brace or a semicolon that would otherwise be read
+  // as structure.
+  const source = scss.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  const rules: ScssRule[] = [];
+  const open: ScssRule[] = [];
+  let pending = '';
+
+  function absorb(rule: ScssRule, text: string): void {
+    for (const chunk of text.split(';')) {
+      const declaration = /^\s*([-\w]+)\s*:\s*([\s\S]+?)\s*$/.exec(chunk);
+      if (declaration) {
+        rule.declarations.set(declaration[1], declaration[2]);
+      }
+    }
+  }
+
+  for (const character of source) {
+    if (character === '{') {
+      // Everything after the last `;` is the prelude of the rule opening now;
+      // everything before it belongs to the rule already open.
+      const lastSemicolon = pending.lastIndexOf(';');
+      const enclosing = open[open.length - 1] ?? null;
+      if (enclosing) {
+        absorb(enclosing, pending.slice(0, lastSemicolon + 1));
+      }
+      const rule: ScssRule = {
+        selector: pending.slice(lastSemicolon + 1).trim(),
+        declarations: new Map(),
+        parent: enclosing,
+      };
+      open.push(rule);
+      rules.push(rule);
+      pending = '';
+    } else if (character === '}') {
+      const closing = open.pop();
+      if (closing === undefined) {
+        throw new Error('chip.component.scss: unbalanced braces — a } with nothing open');
+      }
+      absorb(closing, pending);
+      pending = '';
+    } else {
+      pending += character;
+    }
+  }
+  if (open.length > 0) {
+    throw new Error(`chip.component.scss: unbalanced braces — ${open.length} rule(s) left open`);
+  }
+  return rules;
+}
+
+/**
+ * The `color` in force on the element this rule matches: its own, or the
+ * nearest enclosing rule's.
+ *
+ * Nesting stands in for inheritance because of what the chip's selectors are.
+ * `&--secondary:hover` and `&--secondary` match the SAME element, so the outer
+ * `color` is the one that renders, not merely one that might cascade down.
+ */
+function labelColor(rule: ScssRule | null): string | undefined {
+  for (let current = rule; current !== null; current = current.parent) {
+    const own = current.declarations.get('color');
+    if (own !== undefined) {
+      return own;
+    }
+  }
+  return undefined;
 }
 
 /** `var(--tn-x)` -> `--tn-x`; anything else unchanged, to be judged as a literal. */
 function tokenOf(value: string): string {
   return /^var\(\s*(--[\w-]+)\s*\)$/.exec(value)?.[1] ?? value;
+}
+
+/** `--tn-alt-fg2 on --tn-alt-bg2`, the form both directions of the guard compare. */
+function pairing(foreground: string | undefined, background: string): string {
+  return `${foreground ?? 'no colour in force'} on ${background}`;
 }
 
 describe('tn-chip label contrast (#238)', () => {
@@ -131,51 +212,88 @@ describe('tn-chip label contrast (#238)', () => {
   });
 
   describe('the table above still describes chip.component.scss', () => {
+    const rules = scssRules(scss);
+    const chipRule = rules.find((rule) => rule.selector === '.tn-chip');
+
     it('reads the stylesheet', () => {
       // Without this a moved or renamed file leaves every scan below matching
-      // nothing, which passes as "no unexpected token".
-      expect(scss).toContain('.tn-chip');
+      // nothing, which passes as "no unexpected surface".
+      expect(chipRule).toBeDefined();
     });
 
-    const foregrounds = declaredValues(scss, COLOR_DECLARATION).map(tokenOf);
-    const backgrounds = declaredValues(scss, BACKGROUND_COLOR_DECLARATION).map(tokenOf);
+    /**
+     * Every (colour, background) the stylesheet actually puts together, read
+     * off the rule that paints the background. `background` as well as
+     * `background-color`, because the shorthand resets the longhand and is what
+     * the <code> override uses.
+     */
+    const painted = rules
+      .filter((rule) => rule.declarations.has('background-color') || rule.declarations.has('background'))
+      .map((rule) => {
+        const background = rule.declarations.get('background-color') ?? (rule.declarations.get('background') as string);
+        const foreground = labelColor(rule);
+        return {
+          selector: rule.selector,
+          background: tokenOf(background),
+          foreground: foreground === undefined ? undefined : tokenOf(foreground),
+        };
+      });
 
-    it('every color: it declares is either a measured foreground or an explained literal', () => {
-      const expected = new Set<string>(CHIP_SURFACES.map((surface) => surface.foreground));
-      expect(
-        [...new Set(foregrounds)].filter((value) => !expected.has(value) && !(value in NOT_A_LABEL_SURFACE))
-      ).toEqual([]);
+    it('paints something', () => {
+      expect(painted.length).toBeGreaterThan(0);
     });
 
-    it('every background-color: it declares is either a measured surface or an explained literal', () => {
-      const expected = new Set<string>(CHIP_SURFACES.map((surface) => surface.background));
-      expect(
-        [...new Set(backgrounds)].filter((value) => !expected.has(value) && !(value in NOT_A_LABEL_SURFACE))
-      ).toEqual([]);
+    const onATheme = painted.filter((surface) => surface.background.startsWith('--'));
+    const onALiteral = painted.filter((surface) => !surface.background.startsWith('--'));
+    const expectedPairs = new Set(CHIP_SURFACES.map((surface) => pairing(surface.foreground, surface.background)));
+    const paintedPairs = new Set(onATheme.map((surface) => pairing(surface.foreground, surface.background)));
+
+    it('every themed surface it paints is a pair the table measures', () => {
+      // The pairing, not the two halves separately: both `--tn-alt-fg2` and
+      // `--tn-accent` are already in the table, and putting them together is
+      // 1.45:1 in Solarized Dark.
+      expect([...paintedPairs].filter((pair) => !expectedPairs.has(pair)).sort()).toEqual([]);
     });
 
-    it.each(CHIP_SURFACES)('$name: the stylesheet still paints $background', ({ background }) => {
-      // The other direction: a pair deleted from the stylesheet but left in the
+    it('every pair the table measures is one the stylesheet still paints', () => {
+      // The other direction: a rule deleted from the stylesheet but left in the
       // table is measured forever, and the reader believes it is covered.
-      expect(backgrounds).toContain(background);
+      expect([...expectedPairs].filter((pair) => !paintedPairs.has(pair)).sort()).toEqual([]);
     });
 
-    it.each(CHIP_SURFACES)('$name: the stylesheet still labels it $foreground', ({ foreground }) => {
-      expect(foregrounds).toContain(foreground);
+    it('every background it paints that is not a theme token is explained', () => {
+      expect(
+        [...new Set(onALiteral.map((surface) => surface.background))].filter(
+          (value) => !(value in NOT_A_LABEL_SURFACE)
+        )
+      ).toEqual([]);
     });
 
     it('no rule reintroduces --tn-fg1 as the chip label', () => {
       // The specific value that failed. Named on its own so a regression says
       // what came back rather than only that something unexpected appeared.
-      expect(foregrounds).not.toContain('--tn-fg1');
+      expect(painted.map((surface) => surface.foreground)).not.toContain('--tn-fg1');
+    });
+
+    it('a <code> span in the label keeps the chip\'s own surface', () => {
+      // `label-markup.inline-code` paints <code> on --tn-bg2 and inherits the
+      // colour, which on a filled chip is a surface none of the pairs above
+      // describe: in TN Dark it is --tn-accent-txt (#1E1E1E) on #282828,
+      // 1.00:1. The mixin is included by ten components and is right for the
+      // other nine, so the chip overrides it rather than the mixin changing.
+      // The override lives in another file's mixin, so nothing above can see
+      // it going missing — this is what does.
+      const override = rules.find((rule) => rule.selector === '::ng-deep code');
+      expect(override?.declarations.get('background')).toBe('transparent');
     });
 
     it('the label is normal-size text, so 4.5:1 applies rather than 3:1', () => {
-      // AA's 3:1 large-text allowance starts at 24px, or 18.66px bold. Both
-      // declarations are on `.tn-chip` and inherited by `.tn-chip__label`; if
-      // either moves, the threshold every case below uses is the wrong one.
-      expect(scss).toContain('font-size: 14px;');
-      expect(scss).toContain('font-weight: 500;');
+      // AA's 3:1 large-text allowance starts at 24px, or 18.66px bold. Read off
+      // the `.tn-chip` rule itself rather than searched for in the file:
+      // `.tn-chip__close-icon` also declares `font-size: 14px`, so a substring
+      // search passes while the label moves into large-text size.
+      expect(chipRule?.declarations.get('font-size')).toBe('14px');
+      expect(chipRule?.declarations.get('font-weight')).toBe('500');
       expect(AA_MINIMUM.normal).toBe(4.5);
     });
   });

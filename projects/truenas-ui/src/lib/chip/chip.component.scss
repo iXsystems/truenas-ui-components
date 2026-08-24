@@ -142,6 +142,23 @@
   &__label {
     @include label-markup.inline-code;
 
+    // The mixin paints <code> on --tn-bg2 and leaves the colour inherited. On
+    // the other nine components that include it that is fine: their labels
+    // already sit on --tn-bg1 or --tn-bg2, so the wash is a near-neutral step
+    // off a surface the colour was chosen for. The chip is the one that labels
+    // a FILLED variant surface, so a <code> span in a chip label swaps the
+    // background out from under a colour paired with --tn-primary or
+    // --tn-accent — in TN Dark that is #1E1E1E on #282828, 1.00:1.
+    //
+    // So <code> keeps the chip's own surface, which is the one every pair
+    // above measures, and the monospace font and the border do the
+    // distinguishing instead. currentColor for the border because --tn-lines
+    // is a colour for the page, and on a filled chip it can vanish.
+    ::ng-deep code {
+      background: transparent;
+      border-color: currentColor;
+    }
+
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
