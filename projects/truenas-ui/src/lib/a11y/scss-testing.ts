@@ -151,10 +151,13 @@ export function inheritedValue(rule: ScssRule | null, property: string): string 
  * `var(--tn-x)` and `var(--tn-x, <fallback>)` -> `--tn-x`; anything else
  * unchanged, to be judged as a literal.
  *
- * The fallback is dropped rather than read, because `themePalettes` follows the
- * whole chain from the token name and uses the fallback only when the token is
- * declared nowhere — which is what the browser does. Keeping it here would mean
- * two places deciding what a `var()` resolves to.
+ * The fallback is dropped rather than read, and it is dropped for good: what a
+ * caller does with the name is look it up in the palette, which resolves the
+ * token there and THROWS if it is declared nowhere. It does not reach for a
+ * fallback this function never handed it. That is the intended answer — a
+ * fallback in a component stylesheet is for a consumer with no theme loaded, and
+ * a spec measuring this library's own palettes wants to hear that a token has
+ * gone missing rather than to silently measure the literal behind it.
  */
 export function tokenOf(value: string): string {
   return /^var\(\s*(--[\w-]+)\s*[,)]/.exec(value.trim())?.[1] ?? value.trim();
