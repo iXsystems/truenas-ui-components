@@ -47,11 +47,12 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
     value: () => number;
     labelPrefix: () => string;
     labelSuffix: () => string;
-    // The RESOLVED names, not the raw inputs: the slider is what folds in an
-    // enclosing `tn-form-field`'s label and drops a blank one, so a directive
-    // reading the inputs directly would miss the wrapped case entirely (#235).
+    // The naming values, blank-normalised by the slider — and the two sources of
+    // `aria-labelledby` kept apart, because they rank differently against a
+    // label written on this input. See ariaLabelledby().
     resolvedAriaLabel: () => string | null;
-    resolvedAriaLabelledby: () => string | null;
+    explicitAriaLabelledby: () => string | null;
+    fieldAriaLabelledby: () => string | null;
     updateValue: (value: number) => void;
     markTouched: () => void;
     getSliderRect: () => DOMRect;
@@ -280,18 +281,41 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
   }
 
   /**
-   * Resolve the accessible name for the range input: whatever the parent slider
-   * resolved — its own `aria-label`/`aria-labelledby` input, or an enclosing
-   * `tn-form-field`'s label (#235) — otherwise a value placed directly on the
-   * `<input tnSliderThumb>`. Returning the fallback keeps the host binding from
-   * wiping a directly-set label. Null removes the attribute.
+   * The `aria-label` for the range input: the parent slider's input when set,
+   * otherwise a value placed directly on the `<input tnSliderThumb>`. Returning
+   * the fallback keeps the host binding from wiping a directly-set label. Null
+   * removes the attribute.
    */
   ariaLabel(): string | null {
     return this.slider?.resolvedAriaLabel() ?? this.fallbackAriaLabel;
   }
 
+  /**
+   * The `aria-labelledby` for the range input — and the one place the precedence
+   * between an explicit name and an inherited one is decided.
+   *
+   * An explicit reference comes first, from the slider's input or from this
+   * input itself. **An enclosing `tn-form-field`'s label comes last, and only
+   * when nothing has named the control directly.** That ordering is the point:
+   * `aria-labelledby` beats `aria-label` in the ARIA name calculation whenever
+   * it resolves, so emitting the field's label beside an `aria-label` written on
+   * this input would render both attributes and announce the FIELD's label —
+   * silently replacing the name the consumer wrote on the control (#235).
+   *
+   * The slider's own `ariaLabel` input needs no such check here, because
+   * `injectTnFormFieldAria` already withholds the field's label whenever it is
+   * set; this covers the label that is written past the slider, onto the
+   * projected input, which the slider's inputs never see.
+   */
   ariaLabelledby(): string | null {
-    return this.slider?.resolvedAriaLabelledby() ?? this.fallbackAriaLabelledby;
+    const explicit = this.slider?.explicitAriaLabelledby() ?? this.fallbackAriaLabelledby;
+    if (explicit !== null) {
+      return explicit;
+    }
+    if (this.ariaLabel() !== null) {
+      return null;
+    }
+    return this.slider?.fieldAriaLabelledby() ?? null;
   }
 
   /**

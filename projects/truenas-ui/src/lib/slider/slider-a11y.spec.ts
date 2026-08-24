@@ -209,6 +209,48 @@ describe('tn-slider accessible name (#235)', () => {
       expect(accessibleName(thumb(fixture))).toBe('Brightness');
     });
 
+    /**
+     * The field's label is chrome the consumer did not write on the control, so
+     * it must not replace one they did. It would otherwise do so SILENTLY: both
+     * attributes render, and `aria-labelledby` beats `aria-label` in the name
+     * calculation, so the control announces "Speed Control" while the markup
+     * plainly says "Brightness".
+     */
+    it('beats an enclosing form field label', () => {
+      @Component({
+        selector: 'tn-thumb-label-in-field-host',
+        standalone: true,
+        imports: [TnFormFieldComponent, TnSliderComponent, TnSliderThumbDirective],
+        template: `<tn-form-field label="Speed Control"><tn-slider>
+          <input tnSliderThumb aria-label="Brightness" value="50"></tn-slider></tn-form-field>`
+      })
+      class ThumbLabelInFieldHostComponent {}
+
+      const fixture = TestBed.createComponent(ThumbLabelInFieldHostComponent);
+      fixture.detectChanges();
+
+      expect(accessibleName(thumb(fixture))).toBe('Brightness');
+      expect(thumb(fixture).hasAttribute('aria-labelledby')).toBe(false);
+    });
+
+    /** A reference written on the input is explicit too, and outranks the field. */
+    it('beats an enclosing form field label when it is a reference', () => {
+      @Component({
+        selector: 'tn-thumb-ref-in-field-host',
+        standalone: true,
+        imports: [TnFormFieldComponent, TnSliderComponent, TnSliderThumbDirective],
+        template: `<span id="own-label">Brightness</span><tn-form-field label="Speed Control">
+          <tn-slider><input tnSliderThumb aria-labelledby="own-label" value="50"></tn-slider>
+          </tn-form-field>`
+      })
+      class ThumbRefInFieldHostComponent {}
+
+      const fixture = TestBed.createComponent(ThumbRefInFieldHostComponent);
+      fixture.detectChanges();
+
+      expect(accessibleName(thumb(fixture))).toBe('Brightness');
+    });
+
     it('loses to the slider input, which is the more specific instruction', () => {
       @Component({
         selector: 'tn-both-labels-host',

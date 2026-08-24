@@ -158,11 +158,11 @@ describe('accessibleName', () => {
   });
 
   /**
-   * An id that a `label[for="…"]` selector would have to escape. Written as a
-   * selector it throws `ReferenceError: CSS is not defined` under jsdom — which
-   * is why the lookup compares the `for` attribute instead.
+   * An id full of CSS selector punctuation, which is where a lookup that builds
+   * a selector string goes wrong — the first version of this reached for
+   * `CSS.escape`, which is not defined under jsdom and threw.
    */
-  it('finds a label for an id a CSS selector would have to escape', () => {
+  it('finds a label for an id full of selector punctuation', () => {
     root.innerHTML = '<label for="a.b:c">Volume</label><input id="a.b:c" type="range">';
     const el = root.querySelector('input') as HTMLElement;
 

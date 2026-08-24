@@ -65,10 +65,12 @@ function nativeLabel(el: HTMLElement): string | null {
   if (!LABELABLE.includes(el.tagName.toLowerCase())) {
     return null;
   }
-  // The explicit label is found by comparing `for` rather than by building a
-  // `label[for="…"]` selector, which would need `CSS.escape` for an id
-  // containing a `.` or a `:` — and `CSS` is simply not defined under jsdom, so
-  // that form throws `ReferenceError` on the ids it exists to handle.
+  // The explicit label is found by comparing `for` rather than by matching a
+  // `label[for="…"]` selector. A quoted attribute selector needs no escaping, so
+  // that form would have worked — but reaching for `CSS.escape` to build one
+  // does not: `CSS` is not defined under jsdom and the call throws
+  // `ReferenceError`. Comparing the attribute keeps the question in the DOM,
+  // where there is no selector syntax to get wrong in the first place.
   const id = el.getAttribute('id');
   const explicit = id !== null && id !== ''
     ? Array.from(el.ownerDocument.querySelectorAll('label[for]'))

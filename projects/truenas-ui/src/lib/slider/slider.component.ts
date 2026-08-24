@@ -66,10 +66,15 @@ export class TnSliderComponent implements ControlValueAccessor, OnDestroy, After
   /**
    * Accessible name forwarded to the inner range input — the focusable element
    * screen readers actually announce. Set this (or `aria-labelledby`) when the
-   * slider isn't already labelled by a `tn-form-field`/`<label>`, otherwise a
+   * slider isn't already inside a labelled `tn-form-field`, otherwise a
    * standalone `<tn-slider><input tnSliderThumb></tn-slider>` announces only
-   * "slider". A label set directly on the `input[tnSliderThumb]` is used as a
-   * fallback when neither is provided here.
+   * "slider".
+   *
+   * The full precedence, most specific first: these two inputs, then a label
+   * written directly on the `input[tnSliderThumb]`, then an enclosing
+   * `tn-form-field`'s label. The field comes last because it is chrome the
+   * consumer did not write on the control — see
+   * `TnSliderThumbDirective.ariaLabelledby`, where that ordering is applied.
    */
   ariaLabel = input<string | undefined>(undefined, { alias: 'aria-label' });
   ariaLabelledby = input<string | undefined>(undefined, { alias: 'aria-labelledby' });
@@ -105,21 +110,25 @@ export class TnSliderComponent implements ControlValueAccessor, OnDestroy, After
   readonly resolvedAriaLabel = computed(() => this.explicitAriaLabel() ?? null);
 
   /**
-   * The `aria-labelledby` the thumb should render, or `null` for none.
+   * The `ariaLabelledby` INPUT, blank normalised away, or `null` when unset.
    *
-   * The explicit input wins over the enclosing field, so a consumer who points
-   * the slider at their own visible text keeps it. With neither, an unwrapped
-   * slider gets `null` and stays unnamed — deliberately: a generic fallback
-   * ("Slider") would satisfy axe while announcing nothing the user can act on,
-   * and only the consumer knows what this slider controls.
+   * Kept separate from {@link fieldAriaLabelledby} rather than folded into one
+   * resolved value, because the two rank differently against a label written on
+   * the projected input — see `TnSliderThumbDirective.ariaLabelledby`.
    */
-  readonly resolvedAriaLabelledby = computed(() => {
+  readonly explicitAriaLabelledby = computed(() => {
     const labelledby = this.ariaLabelledby();
-    if (labelledby !== undefined && labelledby.trim() !== '') {
-      return labelledby;
-    }
-    return this.fieldAria.labelledby();
+    return labelledby !== undefined && labelledby.trim() !== '' ? labelledby : null;
   });
+
+  /**
+   * The enclosing `tn-form-field`'s label id, or `null` outside one.
+   *
+   * With no field and no input, a slider stays unnamed — deliberately: a
+   * generic fallback ("Slider") would satisfy axe while announcing nothing the
+   * user can act on, and only the consumer knows what this slider controls.
+   */
+  readonly fieldAriaLabelledby = computed(() => this.fieldAria.labelledby());
 
   thumbDirective = contentChild.required(TnSliderThumbDirective);
   sliderContainer = viewChild.required<ElementRef<HTMLDivElement>>('sliderContainer');
