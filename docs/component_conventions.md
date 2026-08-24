@@ -479,6 +479,30 @@ in `chip-a11y.spec.ts`, and the unlabelled checkbox in
 `slide-toggle-a11y.spec.ts`. It is the only assertion that shows axe failing
 rather than passing, and it doubles as the control for `axeResult()` itself.
 
+### Asserting an accessible name in a spec
+
+**An axe naming rule is a PRESENCE check and is not enough on its own.** `label`,
+`aria-input-field-name` and their siblings ask whether the element is named, not
+whether it is named *correctly* — `aria-label="_"` satisfies every one of them.
+So a fix that wires a control to the wrong label, or to a label that has not
+rendered, passes the whole suite (#235).
+
+**Pair the rule with `accessibleName()` from `lib/a11y/accessible-name-testing.ts`**,
+which resolves the string a screen reader would announce, and assert on that
+string. `slider-a11y.spec.ts` and `selection-list-name.spec.ts` are the worked
+examples: each asserts the name, that it follows the label when the label
+changes, and that the axe rule stays quiet.
+
+It implements the first three steps of the ARIA name calculation —
+`aria-labelledby`, `aria-label`, a native `<label>` — and deliberately no more.
+Add a step when a spec needs it, with the spec; a second unexercised
+implementation of a subtle algorithm is the failure the axe section above is
+about.
+
+**A dangling `aria-labelledby` comes back `null`, not `''`.** It is the case axe
+cannot report — a reference to a missing id lands in `incomplete`, never in
+`violations` — so this is the only assertion in a spec that catches it.
+
 ### Measuring colour contrast in a spec
 
 **Use `lib/a11y/contrast-testing.ts`. Do not write the formula again.** Three

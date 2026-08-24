@@ -229,7 +229,7 @@ export const ListWithSelection: Story = {
       }
     },
     template: `
-      <tn-selection-list [dense]="dense" [disabled]="disabled" (selectionChange)="onSelectionChange($event)">
+      <tn-selection-list ariaLabel="Mailboxes" [dense]="dense" [disabled]="disabled" (selectionChange)="onSelectionChange($event)">
         <tn-list-option [value]="'inbox'" [selected]="false">
           <span tnListIcon>📥</span>
           <span tnListItemTitle>Inbox</span>

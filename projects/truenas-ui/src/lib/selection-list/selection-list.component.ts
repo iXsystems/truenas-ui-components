@@ -2,6 +2,7 @@
 import { Component, input, output, contentChildren, signal, computed, forwardRef, effect } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import { TnListOptionComponent } from '../list-option/list-option.component';
 import { TnTestIdDirective } from '../test-id';
 
@@ -29,6 +30,15 @@ export interface TnSelectionChange {
     '[class.tn-selection-list--dense]': 'dense()',
     '[class.tn-selection-list--disabled]': 'isDisabled()',
     'role': 'listbox',
+    // A `role="listbox"` is an ARIA input field, and an input field with no
+    // accessible name is announced as bare "listbox" — the options say what is
+    // in it, never what it is FOR (#235). Both attributes are emitted because
+    // ARIA's name calculation prefers `aria-labelledby` only while it RESOLVES:
+    // suppressing an explicit `aria-label` beside a dangling IDREF would leave
+    // the list unnamed in exactly the case where a name was supplied. Same
+    // reasoning as `a11y/accessible-name.ts`.
+    '[attr.aria-label]': 'resolvedAriaLabel()',
+    '[attr.aria-labelledby]': 'resolvedAriaLabelledby()',
     // The listbox states its own disabled-ness rather than leaving assistive
     // technology to infer it from its children (#225). Inferring is not the same
     // claim and is wrong in two ordinary cases: an empty disabled list has no
@@ -54,6 +64,54 @@ export class TnSelectionListComponent implements ControlValueAccessor {
   disabled = input<boolean>(false);
   multiple = input<boolean>(true);
   color = input<'primary' | 'accent' | 'warn'>('primary');
+
+  /**
+   * Explicit accessible name for the listbox. Inside a `tn-form-field` with a
+   * label this is unnecessary — the field names the list automatically — but a
+   * list with neither is announced as an unlabelled listbox.
+   */
+  ariaLabel = input<string | undefined>(undefined);
+
+  /** Id of visible text naming the listbox. Wins over `ariaLabel` where it resolves. */
+  ariaLabelledby = input<string | undefined>(undefined);
+
+  /**
+   * ARIA wiring from an enclosing `tn-form-field`. Only `labelledby` is read:
+   * #235 is about the listbox having no accessible name, and the field's
+   * `describedby`/`invalid`/`required` are a separate question this list has
+   * never answered either way.
+   */
+  private readonly fieldAria = injectTnFormFieldAria(this.ariaLabel);
+
+  /**
+   * The `aria-label` to render, or `null` for none.
+   *
+   * Blank is `null` rather than passed through: `aria-label=""` names the
+   * listbox as emptily as no attribute at all, while satisfying axe's
+   * `aria-input-field-name` rule — a green check on a control a screen reader
+   * announces as "listbox".
+   */
+  protected readonly resolvedAriaLabel = computed(() => {
+    const label = this.ariaLabel();
+    return label !== undefined && label.trim() !== '' ? label : null;
+  });
+
+  /**
+   * The `aria-labelledby` to render, or `null` for none.
+   *
+   * The explicit input wins over the enclosing field, so a consumer who points
+   * the list at their own visible text keeps it. With neither, a list outside a
+   * field gets `null` and stays unnamed — deliberately: a generic fallback
+   * ("List") would satisfy axe while announcing nothing the user can act on, and
+   * only the consumer knows what this list holds.
+   */
+  protected readonly resolvedAriaLabelledby = computed(() => {
+    const labelledby = this.ariaLabelledby();
+    if (labelledby !== undefined && labelledby.trim() !== '') {
+      return labelledby;
+    }
+    return this.fieldAria.labelledby();
+  });
 
   selectionChange = output<TnSelectionChange>();
 

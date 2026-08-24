@@ -3,6 +3,11 @@ import { ElementRef, Directive, forwardRef, signal, inject } from '@angular/core
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
+/** An attribute value that is absent or whitespace-only is not a name. */
+function blankToNull(value: string | null): string | null {
+  return value !== null && value.trim() !== '' ? value : null;
+}
+
 @Directive({
   selector: 'input[tnSliderThumb]',
   standalone: true,
@@ -42,8 +47,11 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
     value: () => number;
     labelPrefix: () => string;
     labelSuffix: () => string;
-    ariaLabel: () => string | undefined;
-    ariaLabelledby: () => string | undefined;
+    // The RESOLVED names, not the raw inputs: the slider is what folds in an
+    // enclosing `tn-form-field`'s label and drops a blank one, so a directive
+    // reading the inputs directly would miss the wrapped case entirely (#235).
+    resolvedAriaLabel: () => string | null;
+    resolvedAriaLabelledby: () => string | null;
     updateValue: (value: number) => void;
     markTouched: () => void;
     getSliderRect: () => DOMRect;
@@ -80,8 +88,11 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
   ngOnInit() {
     // Make the native input visually hidden but still accessible
     const input = this.elementRef.nativeElement;
-    this.fallbackAriaLabel = input.getAttribute('aria-label');
-    this.fallbackAriaLabelledby = input.getAttribute('aria-labelledby');
+    // Blank is not a name, so it is not kept as a fallback: an `aria-label=""`
+    // left on the input would re-render as the same empty attribute, which
+    // satisfies axe's `label` rule while announcing nothing (#235).
+    this.fallbackAriaLabel = blankToNull(input.getAttribute('aria-label'));
+    this.fallbackAriaLabelledby = blankToNull(input.getAttribute('aria-labelledby'));
     input.style.opacity = '0';
     input.style.position = 'absolute';
     input.style.width = '100%';
@@ -269,17 +280,18 @@ export class TnSliderThumbDirective implements ControlValueAccessor, OnInit, OnD
   }
 
   /**
-   * Resolve the accessible name for the range input: the parent slider's
-   * `aria-label`/`aria-labelledby` input when set, otherwise a value placed
-   * directly on the `<input tnSliderThumb>`. Returning the fallback keeps the
-   * host binding from wiping a directly-set label. Null removes the attribute.
+   * Resolve the accessible name for the range input: whatever the parent slider
+   * resolved — its own `aria-label`/`aria-labelledby` input, or an enclosing
+   * `tn-form-field`'s label (#235) — otherwise a value placed directly on the
+   * `<input tnSliderThumb>`. Returning the fallback keeps the host binding from
+   * wiping a directly-set label. Null removes the attribute.
    */
   ariaLabel(): string | null {
-    return this.slider?.ariaLabel() ?? this.fallbackAriaLabel;
+    return this.slider?.resolvedAriaLabel() ?? this.fallbackAriaLabel;
   }
 
   ariaLabelledby(): string | null {
-    return this.slider?.ariaLabelledby() ?? this.fallbackAriaLabelledby;
+    return this.slider?.resolvedAriaLabelledby() ?? this.fallbackAriaLabelledby;
   }
 
   /**
