@@ -133,11 +133,10 @@ describe('tn-table-pager landmark naming (#249)', () => {
 
       const [first] = pagers();
       expect(first.getAttribute('aria-labelledby')).toBe('storage-heading');
-      // The fallback is withheld beside a resolving `aria-labelledby` rather than
-      // rendered under it: a generic name there would be clean to axe and useless
-      // to a listener if the IDREF were the broken one. That rule is
-      // `tnResolvedAriaLabel`'s, shared with the progressbars and the dialogs.
-      expect(first.hasAttribute('aria-label')).toBe(false);
+      // The IDREF wins the name — which is what a browser does — while the
+      // default `aria-label` stays rendered underneath it. See the next test for
+      // what that underneath is for.
+      expect(first.getAttribute('aria-label')).toBe('Table pagination (storage)');
       expect(accessibleName(first)).toBe('Storage pools');
       expect(await landmarkUnique()).toEqual([]);
     });
@@ -148,11 +147,26 @@ describe('tn-table-pager landmark naming (#249)', () => {
       fixture.detectChanges();
 
       const [first] = pagers();
-      // Both attributes, and the IDREF wins the name — which is what a browser
-      // does. The `aria-label` survives so that a typo'd or not-yet-rendered
-      // IDREF leaves the pager named rather than silent.
       expect(first.getAttribute('aria-label')).toBe('Storage pool pagination');
       expect(accessibleName(first)).toBe('Storage pools');
+      expect(await landmarkUnique()).toEqual([]);
+    });
+
+    /**
+     * The reason the `aria-label` is emitted beside an `ariaLabelledby` instead
+     * of being withheld under it. Nothing reports one unnamed navigation
+     * landmark — `landmark-unique` compares landmarks against each other, and
+     * axe has no `landmark-name` rule — so a pager that dropped its name here
+     * would announce nothing and fail no check, which is #249 made worse rather
+     * than fixed. Both pagers stay named and distinguishable through the typo.
+     */
+    it('stays named when its ariaLabelledby resolves to nothing', async () => {
+      host.firstLabelledby.set('storage-headnig');
+      fixture.detectChanges();
+
+      const [first, second] = pagers();
+      expect(accessibleName(first)).toBe('Table pagination (storage)');
+      expect(accessibleName(first)).not.toEqual(accessibleName(second));
       expect(await landmarkUnique()).toEqual([]);
     });
   });

@@ -18,7 +18,6 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Observable, Subscription } from 'rxjs';
-import { tnResolvedAriaLabel } from '../a11y/accessible-name';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnSelectComponent, type TnSelectOption } from '../select/select.component';
 import { TN_TEST_ATTR, composeTestId, scopeTestId, writeTestId, type TnTestIdValue } from '../test-id';
@@ -240,11 +239,11 @@ export class TnTablePagerComponent {
    * IDREF naming the pager from text already on the page — the heading over the
    * table it pages, typically, which is the name the user can see.
    *
-   * Wins over `tablePaginationLabel` in the ARIA name computation while it
-   * resolves, so pass one or the other rather than both. An explicit
-   * `tablePaginationLabel` is still rendered beside it — see `tnResolvedAriaLabel`,
-   * which owns that rule for this library, and the reason it is safer than
-   * suppressing it.
+   * Wins over the `aria-label` in the ARIA name computation while it resolves,
+   * so pass one or the other rather than both. The `aria-label` is rendered
+   * beside it either way and is what the pager falls back to if the IDREF is
+   * typo'd or names an element that has not rendered yet — see
+   * `resolvedTablePaginationLabel`.
    */
   ariaLabelledby = input<string | undefined>(undefined);
 
@@ -257,9 +256,9 @@ export class TnTablePagerComponent {
   protected resolvedLastPageLabel = computed(() => this.lastPageLabel() ?? this.defaultLabels().lastPage);
 
   /**
-   * The landmark name a pager falls back to when the consumer names neither
-   * `tablePaginationLabel` nor `ariaLabelledby` — the DI default, scoped by
-   * `testId` when there is one.
+   * The landmark name a pager falls back to when the consumer sets no
+   * `tablePaginationLabel` — the DI default, scoped by `testId` when there is
+   * one.
    *
    * The scoping is what stops the DEFAULT from being the same string on every
    * pager, which is the shape #249 reported: two pagers, both announcing "Table
@@ -289,19 +288,30 @@ export class TnTablePagerComponent {
   });
 
   /**
-   * The name to render as `aria-label`, or `null` to render none.
+   * The name rendered as `aria-label`, always — the explicit
+   * `tablePaginationLabel` when there is one, the scoped default otherwise.
    *
-   * The rule lives in `../a11y/accessible-name`, shared with the progressbars and
-   * the dialogs, where both branches are set out: why an explicit label survives
-   * beside an `ariaLabelledby`, and why the generic fallback does not. This pager
-   * takes the rule WITHOUT that module's dev-mode warning — its fallback is a
-   * name the consumer configures through `TN_TABLE_PAGER_LABELS`, and a lone
-   * pager announcing "Table pagination" is correct rather than a defect.
+   * **It is emitted beside an `ariaLabelledby` rather than withheld under it**,
+   * which is where this differs from `../a11y/accessible-name`, the shared rule
+   * the progressbars and the dialogs take. That rule drops the generic fallback
+   * when the caller supplies an IDREF, so a dangling IDREF surfaces as an
+   * unnamed element instead of being masked by a name that says nothing. The
+   * trade is only worth making where "unnamed" is itself caught: a progressbar
+   * fails `aria-progressbar-name`, a dialog fails `aria-dialog-name`. A
+   * `navigation` landmark fails neither, and `landmark-unique` compares
+   * landmarks against each other, so one unnamed pager violates nothing at all.
+   *
+   * Withholding here would therefore turn a typo in `ariaLabelledby` into a
+   * pager that announces nothing and reports nothing — a worse version of the
+   * defect #249 opened on. So the pager keeps a name it can always fall back to,
+   * and accepts that a dangling IDREF is masked by a generic one.
    */
-  protected resolvedTablePaginationLabel = tnResolvedAriaLabel({
-    ariaLabel: this.tablePaginationLabel,
-    ariaLabelledby: this.ariaLabelledby,
-    fallback: this.defaultTablePaginationLabel,
+  protected resolvedTablePaginationLabel = computed(() => {
+    const label = this.tablePaginationLabel();
+    // Blank is not a name: `aria-label=" "` leaves the landmark as unnamed as no
+    // `aria-label` would, and axe reads it the same way, so it takes the default
+    // rather than being treated as an answer.
+    return (label ?? '').trim() === '' ? this.defaultTablePaginationLabel() : label;
   });
 
   /** Emits the new 1-based page number whenever the user navigates. */

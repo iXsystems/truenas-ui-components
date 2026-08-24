@@ -1,4 +1,4 @@
-import { computed, effect, isDevMode, signal } from '@angular/core';
+import { computed, effect, isDevMode } from '@angular/core';
 import type { Signal } from '@angular/core';
 
 /**
@@ -48,58 +48,26 @@ import type { Signal } from '@angular/core';
  * `live-region.ts`. It is how this library's own components agree with each
  * other; a consumer naming its own element has `aria-label`.
  *
- * THE RULE AND THE WARNING ARE SEPARATE FUNCTIONS
- * ----------------------------------------------
- * `tnResolvedAriaLabel` is the two-branch rule on its own; `tnAccessibleName` is
- * that rule plus the dev-mode warning. The split exists for `tn-table-pager`
- * (#249), which needs the rule and must not have the warning: its fallback is a
- * DESIGNED name that a consumer configures through `TN_TABLE_PAGER_LABELS`, not
- * a last resort for a name someone forgot, and a single unnamed pager announcing
- * "Table pagination" is correct rather than a defect. Warning on it would fire
- * on the ordinary case and teach readers to ignore the warning on the three
- * progressbars and the two dialogs, where it means something.
+ * WHAT THE SECOND BRANCH DEPENDS ON, AND THE ONE COMPONENT IT RULES OUT
+ * --------------------------------------------------------------------
+ * "Unnamed at least still fails loudly" is not a property of being unnamed. It
+ * is a property of every caller here: an unnamed `role="progressbar"` fails
+ * axe's `aria-progressbar-name`, and an unnamed dialog fails `aria-dialog-name`.
+ * Withholding the fallback trades a masked dangling IDREF for a red check, which
+ * is a good trade only while that red check exists.
  *
- * What is NOT split is the rule itself, which is the part that was getting
- * copied wrong. A caller that opts out of the warning still cannot write its own
- * version of the branches below.
+ * It does not exist for a landmark. `tn-table-pager` is `role="navigation"`, and
+ * axe's only landmark-naming rule is `landmark-unique`, which compares landmarks
+ * against EACH OTHER — one unnamed navigation landmark on a page violates
+ * nothing. So a pager given a typo'd `ariaLabelledby` would go silently unnamed,
+ * which is the failure #249 reported made worse, not fixed. The pager therefore
+ * names itself unconditionally and does not call this function; the reason is
+ * written out at `resolvedTablePaginationLabel` in `table-pager.component.ts`.
+ *
+ * That is the exception rather than an invitation. Routing the pager through
+ * here would be a regression, and any other caller that reaches for this
+ * function needs to be able to name the axe rule that catches it when unnamed.
  */
-
-/** The three signals the naming rule reads. */
-export interface TnAriaLabelConfig {
-  /** The component's `ariaLabel` input, or whatever plays that part. */
-  ariaLabel: Signal<string | null | undefined>;
-  /** The component's `ariaLabelledby` input, or whatever plays that part. */
-  ariaLabelledby: Signal<string | null | undefined>;
-  /**
-   * The name to render when the caller supplies neither.
-   *
-   * A signal rather than a string, because `tn-table-pager`'s fallback comes
-   * from the `TN_TABLE_PAGER_LABELS` token, which a consumer may provide as a
-   * signal so that a language change re-renders the label. `tnAccessibleName`
-   * wraps its plain-string `fallback` to reach this.
-   */
-  fallback: Signal<string>;
-}
-
-/**
- * The name to render as `aria-label`, or `null` to render no `aria-label` at
- * all. The rule, without the warning — see `tnAccessibleName` for the pair, and
- * the docblock above for why a caller would want only this half.
- */
-export function tnResolvedAriaLabel(config: TnAriaLabelConfig): Signal<string | null> {
-  // Blank is not a name. A whitespace-only `ariaLabel` names the element as
-  // emptily as no `ariaLabel`, and axe agrees, so it takes the fallback rather
-  // than being treated as an answer.
-  const hasLabelledby = computed(() => (config.ariaLabelledby() ?? '').trim() !== '');
-
-  return computed(() => {
-    const label = config.ariaLabel();
-    if ((label ?? '').trim() !== '') {
-      return label ?? null;
-    }
-    return hasLabelledby() ? null : config.fallback();
-  });
-}
 
 /** What a component needs to tell this function about itself. */
 export interface TnAccessibleNameConfig {
@@ -149,18 +117,19 @@ export interface TnAccessibleNameConfig {
  * for a copy of it to get wrong.
  */
 export function tnAccessibleName(config: TnAccessibleNameConfig): Signal<string | null> {
-  const fallback = signal(config.fallback).asReadonly();
-  const resolved = tnResolvedAriaLabel({
-    ariaLabel: config.ariaLabel,
-    ariaLabelledby: config.ariaLabelledby,
-    fallback,
+  // Blank is not a name. A whitespace-only `ariaLabel` names the element as
+  // emptily as no `ariaLabel`, and axe agrees, so it takes the fallback and
+  // raises the warning rather than being treated as an answer.
+  const hasLabelledby = computed(() => (config.ariaLabelledby() ?? '').trim() !== '');
+  const named = computed(() => (config.ariaLabel() ?? '').trim() !== '' || hasLabelledby());
+
+  const resolved = computed(() => {
+    const label = config.ariaLabel();
+    if ((label ?? '').trim() !== '') {
+      return label;
+    }
+    return hasLabelledby() ? null : config.fallback;
   });
-  // Blank is not a name, the same way it is not one to the rule above: a
-  // whitespace-only `ariaLabel` leaves the element as unnamed as no `ariaLabel`,
-  // so it raises the warning rather than being treated as an answer.
-  const named = computed(
-    () => (config.ariaLabel() ?? '').trim() !== '' || (config.ariaLabelledby() ?? '').trim() !== ''
-  );
 
   if (isDevMode()) {
     effect(() => {
