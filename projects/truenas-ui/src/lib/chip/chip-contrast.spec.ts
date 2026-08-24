@@ -135,28 +135,66 @@ const CLOSE_SURFACES: readonly CloseSurface[] = [
  * measurement below rests on: the glyph colour in `CLOSE_SURFACES` is the
  * variant's label colour, and that is only true while the circle inherits it.
  */
-const CLOSE_RULES: Readonly<Record<string, { background: string; color: string; why: string }>> = {
+const CLOSE_RULES: Readonly<Record<string, { paints: Readonly<Record<string, string>>; why: string }>> = {
   '.tn-chip__close': {
-    background: 'transparent',
-    color: 'inherit',
+    paints: {
+      'background-color': 'transparent',
+      color: 'inherit',
+      border: '1px solid currentColor',
+      outline: 'none',
+    },
     why: 'the resting circle, composited over every variant by "the × clears AA" below',
   },
+  '.tn-chip__close:focus-visible': {
+    paints: { outline: '1px solid currentColor' },
+    why: 'the focus ring, drawn outside the circle and so on the chip, in the label colour',
+  },
   '.tn-chip--primary .tn-chip__close:hover:not(:disabled)': {
-    background: 'var(--tn-primary-txt)',
-    color: 'var(--tn-primary)',
+    paints: {
+      'background-color': 'var(--tn-primary-txt)',
+      color: 'var(--tn-primary)',
+      'outline-color': 'var(--tn-primary-txt)',
+    },
     why: 'the hover invert, whose pair is in CHIP_SURFACES and measured with the labels',
   },
   '.tn-chip--secondary .tn-chip__close:hover:not(:disabled)': {
-    background: 'var(--tn-alt-fg2)',
-    color: 'var(--tn-alt-bg2)',
+    paints: {
+      'background-color': 'var(--tn-alt-fg2)',
+      color: 'var(--tn-alt-bg2)',
+      'outline-color': 'var(--tn-alt-fg2)',
+    },
     why: 'the same invert on the hovered secondary chip, which is on --tn-alt-bg2 by then',
   },
   '.tn-chip--accent .tn-chip__close:hover:not(:disabled)': {
-    background: 'var(--tn-alt-fg2)',
-    color: 'var(--tn-alt-bg2)',
+    paints: {
+      'background-color': 'var(--tn-alt-fg2)',
+      color: 'var(--tn-alt-bg2)',
+      'outline-color': 'var(--tn-alt-fg2)',
+    },
     why: 'the same invert on the hovered accent chip, which lands on the same surface',
   },
 };
+
+/**
+ * Every property that decides what colour some part of the close circle comes
+ * out, longhand and shorthand alike.
+ *
+ * Wider than the two the measurement itself reads, because the guard is about
+ * what a rule is ALLOWED to do rather than about what this file happens to
+ * measure. A theme-scoped `border-color` repaints the ring that is the whole of
+ * the circle's visibility, and an `outline-color` repaints the focus indicator;
+ * neither touches `background-color` or `color`, so a guard keyed to those two
+ * would admit the rule to the stylesheet without admitting it to this table.
+ */
+const COLOUR_PROPERTIES = [
+  'background',
+  'background-color',
+  'color',
+  'border',
+  'border-color',
+  'outline',
+  'outline-color',
+];
 
 /**
  * Both halves of every pair above, which is what each palette has to declare
@@ -523,10 +561,17 @@ describe('tn-chip label contrast (#238)', () => {
     // theme-scoped override — `.tn-dark .tn-chip--secondary .tn-chip__close`
     // was one until #261 — which is exactly where a colour nobody measured
     // would come back.
+    /** What `rule` sets that decides a colour, and nothing else. */
+    function paints(rule: ScssRule): Record<string, string> {
+      return Object.fromEntries(
+        COLOUR_PROPERTIES
+          .filter((property) => rule.declarations.has(property))
+          .map((property) => [property, rule.declarations.get(property) as string])
+      );
+    }
+
     const closeRules = rules.filter(
-      (rule) =>
-        flattenSelector(rule).includes('__close')
-        && ['background-color', 'background', 'color'].some((property) => rule.declarations.has(property))
+      (rule) => flattenSelector(rule).includes('__close') && Object.keys(paints(rule)).length > 0
     );
 
     it('only the rules named in CLOSE_RULES colour the close circle', () => {
@@ -534,14 +579,14 @@ describe('tn-chip label contrast (#238)', () => {
     });
 
     it.each(Object.entries(CLOSE_RULES))('%s paints what CLOSE_RULES says it does', (selector, expected) => {
-      // Not just WHICH rules colour the circle but WHAT they set, because the
-      // cases below take both from the table: the glyph colour comes from
-      // `CLOSE_SURFACES`, which is only right while `.tn-chip__close` is still
-      // `color: inherit` and no other rule has repainted it.
+      // The WHOLE set, not the properties this file goes on to measure. The
+      // cases below take the glyph colour from `CLOSE_SURFACES`, which is only
+      // right while `.tn-chip__close` is still `color: inherit` and nothing has
+      // repainted it — and the ring and the focus indicator are not measured
+      // here at all, so an exact comparison is what stops them changing
+      // unremarked under a spec that would still be green.
       const rule = closeRules.find((candidate) => flattenSelector(candidate) === selector);
-      expect(rule?.declarations.get('background-color') ?? rule?.declarations.get('background'))
-        .toBe(expected.background);
-      expect(rule?.declarations.get('color')).toBe(expected.color);
+      expect(rule && paints(rule)).toEqual(expected.paints);
     });
 
     it('a rule that inverts the circle restates the focus ring as the label colour', () => {
@@ -556,18 +601,23 @@ describe('tn-chip label contrast (#238)', () => {
       // The fill is the label colour, so restating `outline-color` as the fill
       // is what puts it back. Asserted as EQUAL TO the fill rather than as a
       // named token, so that changing the invert moves both or fails.
-      const inverting = Object.entries(CLOSE_RULES).filter(([, rule]) => rule.color !== 'inherit');
+      //
+      // Derived from the table rather than listed: an invert is any rule that
+      // fills the circle and repaints the glyph, so a fourth variant gaining
+      // one is covered the moment it is described, without a second list to
+      // remember to add it to.
+      const inverting = Object.entries(CLOSE_RULES).filter(
+        ([, rule]) => rule.paints.color !== undefined && rule.paints.color !== 'inherit'
+      );
       expect(inverting.length).toBeGreaterThan(0);
       expect(
         inverting
           .map(([selector, expected]) => ({
             selector,
-            outline: closeRules
-              .find((rule) => flattenSelector(rule) === selector)
-              ?.declarations.get('outline-color'),
-            fill: expected.background,
+            outline: expected.paints['outline-color'],
+            fill: expected.paints['background-color'],
           }))
-          .filter(({ outline, fill }) => outline !== fill)
+          .filter(({ outline, fill }) => outline === undefined || outline !== fill)
       ).toEqual([]);
     });
 
