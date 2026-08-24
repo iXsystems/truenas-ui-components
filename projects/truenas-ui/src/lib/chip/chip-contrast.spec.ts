@@ -8,6 +8,13 @@ import {
   meetsAa,
   themePalettes,
 } from '../a11y/contrast-testing';
+import type { ScssRule } from '../a11y/scss-testing';
+import {
+  flattenSelector,
+  inheritedValue,
+  scssRules,
+  tokenOf,
+} from '../a11y/scss-testing';
 import { TN_THEME_DEFINITIONS } from '../theme/theme.constants';
 
 /**
@@ -226,121 +233,6 @@ const NOT_A_LABEL_SURFACE: Readonly<Record<string, string>> = {
 };
 
 
-/** One rule in the stylesheet: its own declarations, and what it nests inside. */
-interface ScssRule {
-  selector: string;
-  declarations: Map<string, string>;
-  parent: ScssRule | null;
-}
-
-/**
- * Every rule in `scss`, each pointing at the rule it nests inside.
- *
- * A brace walk rather than a regex, and the nesting is the reason. `color` and
- * `background-color` are almost never declared together: `&--secondary:hover`
- * repaints the background and inherits its label colour from `&--secondary`,
- * one level up and on the same element. Scanning for the two properties
- * independently — which is what this used to do — collects the right two SETS
- * of tokens while saying nothing about which goes with which, so re-pairing an
- * existing foreground with an existing surface passes: `--tn-alt-fg2` on
- * `--tn-accent` is 2.58:1 in Solarized Dark and both halves are already in the
- * table.
- */
-function scssRules(scss: string): ScssRule[] {
-  // Both comment forms go first. `//` runs to end of line and `/* */` does not,
-  // and either can contain a brace or a semicolon that would otherwise be read
-  // as structure.
-  const source = scss.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
-  const rules: ScssRule[] = [];
-  const open: ScssRule[] = [];
-  let pending = '';
-
-  function absorb(rule: ScssRule, text: string): void {
-    for (const chunk of text.split(';')) {
-      const declaration = /^\s*([-\w]+)\s*:\s*([\s\S]+?)\s*$/.exec(chunk);
-      if (declaration) {
-        rule.declarations.set(declaration[1], declaration[2]);
-      }
-    }
-  }
-
-  for (const character of source) {
-    if (character === '{') {
-      // Everything after the last `;` is the prelude of the rule opening now;
-      // everything before it belongs to the rule already open.
-      const lastSemicolon = pending.lastIndexOf(';');
-      const enclosing = open[open.length - 1] ?? null;
-      if (enclosing) {
-        absorb(enclosing, pending.slice(0, lastSemicolon + 1));
-      }
-      const rule: ScssRule = {
-        selector: pending.slice(lastSemicolon + 1).trim(),
-        declarations: new Map(),
-        parent: enclosing,
-      };
-      open.push(rule);
-      rules.push(rule);
-      pending = '';
-    } else if (character === '}') {
-      const closing = open.pop();
-      if (closing === undefined) {
-        throw new Error('chip.component.scss: unbalanced braces — a } with nothing open');
-      }
-      absorb(closing, pending);
-      pending = '';
-    } else {
-      pending += character;
-    }
-  }
-  if (open.length > 0) {
-    throw new Error(`chip.component.scss: unbalanced braces — ${open.length} rule(s) left open`);
-  }
-  return rules;
-}
-
-/**
- * The `color` in force on the element this rule matches: its own, or the
- * nearest enclosing rule's.
- *
- * Nesting stands in for inheritance because of what the chip's selectors are.
- * `&--secondary:hover` and `&--secondary` match the SAME element, so the outer
- * `color` is the one that renders, not merely one that might cascade down.
- */
-function labelColor(rule: ScssRule | null): string | undefined {
-  for (let current = rule; current !== null; current = current.parent) {
-    const own = current.declarations.get('color');
-    if (own !== undefined) {
-      return own;
-    }
-  }
-  return undefined;
-}
-
-/**
- * The selector a nested rule actually matches, with `&` resolved outward.
- *
- * `&__close` says nothing on its own about which element it lands on, and the
- * close circle is reachable by two routes — `.tn-chip { &__close }` and the
- * theme-scoped `.tn-dark .tn-chip { &--secondary { .tn-chip__close } }`. The
- * guard below has to enumerate every rule that paints the circle, in either
- * shape, so it needs the flattened form rather than the fragment.
- */
-function flattenSelector(rule: ScssRule): string {
-  const nesting: string[] = [];
-  for (let current: ScssRule | null = rule; current !== null; current = current.parent) {
-    nesting.unshift(current.selector);
-  }
-  return nesting.reduce((enclosing, selector) =>
-    selector.includes('&')
-      ? selector.replace(/&/g, enclosing)
-      : (enclosing === '' ? selector : `${enclosing} ${selector}`));
-}
-
-/** `var(--tn-x)` -> `--tn-x`; anything else unchanged, to be judged as a literal. */
-function tokenOf(value: string): string {
-  return /^var\(\s*(--[\w-]+)\s*\)$/.exec(value)?.[1] ?? value;
-}
-
 /** `--tn-alt-fg2 on --tn-alt-bg2`, the form the guard compares. */
 function pairing(foreground: string | undefined, background: string): string {
   return `${foreground ?? 'no colour in force'} on ${background}`;
@@ -367,7 +259,7 @@ describe('tn-chip label contrast (#238)', () => {
   const css = readFileSync(join(STYLES_DIR, 'themes.css'), 'utf8');
   const scss = readFileSync(CHIP_SCSS, 'utf8');
   const palettes = themePalettes(css);
-  const rules = scssRules(scss);
+  const rules = scssRules(scss, 'chip.component.scss');
 
   // Derived from the theme registry rather than hardcoded: a themed surface
   // that stops being recognised — a renamed class, a block that drops
@@ -401,7 +293,7 @@ describe('tn-chip label contrast (#238)', () => {
       .filter((rule) => rule.declarations.has('background-color') || rule.declarations.has('background'))
       .map((rule) => {
         const background = rule.declarations.get('background-color') ?? (rule.declarations.get('background') as string);
-        const foreground = labelColor(rule);
+        const foreground = inheritedValue(rule, 'color');
         return {
           selector: rule.selector,
           background: tokenOf(background),
