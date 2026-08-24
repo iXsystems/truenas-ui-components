@@ -18,6 +18,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Observable, Subscription } from 'rxjs';
+import { tnResolvedAriaLabel } from '../a11y/accessible-name';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnSelectComponent, type TnSelectOption } from '../select/select.component';
 import { TN_TEST_ATTR, composeTestId, scopeTestId, writeTestId, type TnTestIdValue } from '../test-id';
@@ -144,6 +145,7 @@ export interface TnTableDataProvider {
     'class': 'tn-table-pager',
     'role': 'navigation',
     '[attr.aria-label]': 'resolvedTablePaginationLabel()',
+    '[attr.aria-labelledby]': 'ariaLabelledby() || null',
   },
 })
 export class TnTablePagerComponent {
@@ -222,7 +224,29 @@ export class TnTablePagerComponent {
   previousPageLabel = input<string | undefined>(undefined);
   nextPageLabel = input<string | undefined>(undefined);
   lastPageLabel = input<string | undefined>(undefined);
+
+  /**
+   * Accessible name for the pager's `navigation` landmark — what a screen
+   * reader user picking this pager out of a landmark list hears.
+   *
+   * **Name every pager on a page that has more than one.** Two pagers both
+   * announcing the DI default are one landmark repeated as far as that list is
+   * concerned, which is what #249 was: `landmark-unique` fails and the user has
+   * nothing to choose between them.
+   */
   tablePaginationLabel = input<string | undefined>(undefined);
+
+  /**
+   * IDREF naming the pager from text already on the page — the heading over the
+   * table it pages, typically, which is the name the user can see.
+   *
+   * Wins over `tablePaginationLabel` in the ARIA name computation while it
+   * resolves, so pass one or the other rather than both. An explicit
+   * `tablePaginationLabel` is still rendered beside it — see `tnResolvedAriaLabel`,
+   * which owns that rule for this library, and the reason it is safer than
+   * suppressing it.
+   */
+  ariaLabelledby = input<string | undefined>(undefined);
 
   /** Resolved labels: explicit input takes precedence over the DI default. */
   protected resolvedItemsPerPageLabel = computed(() => this.itemsPerPageLabel() ?? this.defaultLabels().itemsPerPage);
@@ -231,9 +255,54 @@ export class TnTablePagerComponent {
   protected resolvedPreviousPageLabel = computed(() => this.previousPageLabel() ?? this.defaultLabels().previousPage);
   protected resolvedNextPageLabel = computed(() => this.nextPageLabel() ?? this.defaultLabels().nextPage);
   protected resolvedLastPageLabel = computed(() => this.lastPageLabel() ?? this.defaultLabels().lastPage);
-  protected resolvedTablePaginationLabel = computed(
-    () => this.tablePaginationLabel() ?? this.defaultLabels().tablePagination,
-  );
+
+  /**
+   * The landmark name a pager falls back to when the consumer names neither
+   * `tablePaginationLabel` nor `ariaLabelledby` — the DI default, scoped by
+   * `testId` when there is one.
+   *
+   * The scoping is what stops the DEFAULT from being the same string on every
+   * pager, which is the shape #249 reported: two pagers, both announcing "Table
+   * pagination", indistinguishable in a landmark list. `testId` is the only
+   * per-instance identity the pager already has, and a page with two pagers
+   * needs distinct ones anyway — without them the pagers' own child controls
+   * collide on `select-page-size` / `button-first-page` (see the **Multiple
+   * Pagers** story), so the multi-pager case that trips this rule is exactly the
+   * case that already sets it.
+   *
+   * **It is a fallback and not the good answer.** A test id is a developer-facing
+   * token: it is not translated, and `storage` reads as the word rather than as
+   * "Storage pools". A pager whose name matters names itself with
+   * `tablePaginationLabel`, or points at the table's visible heading with
+   * `ariaLabelledby`; this only keeps the unnamed case from being ambiguous as
+   * well as generic.
+   *
+   * Appended in parentheses rather than woven into the sentence, because the
+   * base string comes from `TN_TABLE_PAGER_LABELS` and may be in any language —
+   * there is no word order here to get right, only a translated name and a
+   * scope after it.
+   */
+  private defaultTablePaginationLabel = computed(() => {
+    const base = this.defaultLabels().tablePagination;
+    const scope = composeTestId(undefined, this.testId());
+    return scope === '' ? base : `${base} (${scope})`;
+  });
+
+  /**
+   * The name to render as `aria-label`, or `null` to render none.
+   *
+   * The rule lives in `../a11y/accessible-name`, shared with the progressbars and
+   * the dialogs, where both branches are set out: why an explicit label survives
+   * beside an `ariaLabelledby`, and why the generic fallback does not. This pager
+   * takes the rule WITHOUT that module's dev-mode warning — its fallback is a
+   * name the consumer configures through `TN_TABLE_PAGER_LABELS`, and a lone
+   * pager announcing "Table pagination" is correct rather than a defect.
+   */
+  protected resolvedTablePaginationLabel = tnResolvedAriaLabel({
+    ariaLabel: this.tablePaginationLabel,
+    ariaLabelledby: this.ariaLabelledby,
+    fallback: this.defaultTablePaginationLabel,
+  });
 
   /** Emits the new 1-based page number whenever the user navigates. */
   pageChange = output<number>();
