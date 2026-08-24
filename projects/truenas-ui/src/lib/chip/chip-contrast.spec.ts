@@ -191,9 +191,26 @@ function tokenOf(value: string): string {
   return /^var\(\s*(--[\w-]+)\s*\)$/.exec(value)?.[1] ?? value;
 }
 
-/** `--tn-alt-fg2 on --tn-alt-bg2`, the form both directions of the guard compare. */
+/** `--tn-alt-fg2 on --tn-alt-bg2`, the form the guard compares. */
 function pairing(foreground: string | undefined, background: string): string {
   return `${foreground ?? 'no colour in force'} on ${background}`;
+}
+
+/**
+ * How many times each pairing appears — a count, not a set.
+ *
+ * Two rules paint `--tn-alt-fg2` on `--tn-alt-bg2`: `--secondary:hover` and
+ * `--accent:hover`. Deduplicated into a set they are one entry, so deleting
+ * either rule leaves the other covering for it and the guard green while the
+ * table goes on claiming to measure a surface nothing paints. The count is what
+ * tells the two apart.
+ */
+function tally(pairings: readonly string[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const pair of pairings) {
+    counts[pair] = (counts[pair] ?? 0) + 1;
+  }
+  return counts;
 }
 
 describe('tn-chip label contrast (#238)', () => {
@@ -245,20 +262,24 @@ describe('tn-chip label contrast (#238)', () => {
 
     const onATheme = painted.filter((surface) => surface.background.startsWith('--'));
     const onALiteral = painted.filter((surface) => !surface.background.startsWith('--'));
-    const expectedPairs = new Set(CHIP_SURFACES.map((surface) => pairing(surface.foreground, surface.background)));
-    const paintedPairs = new Set(onATheme.map((surface) => pairing(surface.foreground, surface.background)));
 
-    it('every themed surface it paints is a pair the table measures', () => {
-      // The pairing, not the two halves separately: both `--tn-alt-fg2` and
+    it('the stylesheet paints exactly the pairings the table measures, as many times each', () => {
+      // Both directions and the count, in one comparison.
+      //
+      // The PAIRING, not the two halves separately: both `--tn-alt-fg2` and
       // `--tn-accent` are already in the table, and putting them together is
-      // 2.58:1 in Solarized Dark.
-      expect([...paintedPairs].filter((pair) => !expectedPairs.has(pair)).sort()).toEqual([]);
-    });
-
-    it('every pair the table measures is one the stylesheet still paints', () => {
-      // The other direction: a rule deleted from the stylesheet but left in the
-      // table is measured forever, and the reader believes it is covered.
-      expect([...expectedPairs].filter((pair) => !paintedPairs.has(pair)).sort()).toEqual([]);
+      // 2.58:1 in Solarized Dark — a set of foregrounds and a set of surfaces
+      // would have nothing to say about it.
+      //
+      // The COUNT, not the set of pairings: `--secondary:hover` and
+      // `--accent:hover` paint the same pair, so one of them can go missing
+      // behind the other while the table still claims to measure both.
+      //
+      // And a pairing here that is not in the table catches the reverse — a
+      // rule deleted from the stylesheet is otherwise measured forever, and
+      // the reader believes it is covered.
+      expect(tally(onATheme.map((surface) => pairing(surface.foreground, surface.background))))
+        .toEqual(tally(CHIP_SURFACES.map((surface) => pairing(surface.foreground, surface.background))));
     });
 
     it('every background it paints that is not a theme token is explained', () => {
