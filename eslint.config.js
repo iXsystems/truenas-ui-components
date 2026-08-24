@@ -127,7 +127,17 @@ module.exports = [
         },
       ],
 
-      // Import ordering
+      // Import ordering.
+      //
+      // internal/parent/sibling/index are deliberately ONE group, so a `./x`
+      // and a `../y` import sort against each other. Be aware of how the plugin
+      // compares those two: it splits both paths on '/', sees that the first
+      // segments differ ('.' vs '..'), stops comparing text there, and falls
+      // through to the tie-break — FEWER path segments first, equal counts tie
+      // (eslint-plugin-import 2.32.0, lib/rules/order.js). So `./size-conversion`
+      // sorts before `../enums/input-type.enum`, which reads backwards but is
+      // what this config asks for. Let `yarn lint:fix` decide the order rather
+      // than sorting imports by hand.
       'import/order': [
         'error',
         {
