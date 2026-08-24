@@ -208,41 +208,6 @@ interface KnownGap {
  * them describing a defect that no longer existed.
  */
 const KNOWN_GAPS: readonly KnownGap[] = [
-  // .tn-midnight is the one palette of nine that inverts its text ramp on
-  // purpose: --tn-fg2 (#cccccc) is its emphasis colour and --tn-fg1 (#aaaaaa)
-  // the calmer one, which text-fg-contrast.spec.ts records in FG2_OUTREADS_FG1
-  // and holds to still being true. Both clear 4.5:1 on --tn-bg1 and --tn-bg2,
-  // which is the whole of what the tokens claim. On the three surfaces above
-  // --tn-bg2 the calmer of the two runs out first, and its own --tn-fg2 clears
-  // every one of them (5.66:1, 4.62:1, 5.66:1) — so this is the palette's
-  // deliberate ordering meeting a surface nothing tuned it against, not a token
-  // that is wrong everywhere.
-  //
-  // Not fixed here, and the two ways to fix it are both palette design: lifting
-  // --tn-fg1 above --tn-fg2 undoes the inversion this theme chose, and darkening
-  // three fills that sit deliberately above --tn-bg2 (#303d48) takes the
-  // elevation cue with them. #277 is the ticket that measured it; changing a
-  // theme's ramp is not a survey's call to make.
-  {
-    selector: '.tn-midnight',
-    token: '--tn-fg1',
-    surface: '--tn-alt-bg1',
-    why: '#aaaaaa on #3d4a55 — 3.91:1. Its --tn-fg2 (#cccccc) reads 5.66:1 on the same fill',
-  },
-  {
-    selector: '.tn-midnight',
-    token: '--tn-fg1',
-    surface: '--tn-alt-bg2',
-    why: '#aaaaaa on #4a5762 — 3.19:1, the worst of the nine. Its --tn-fg2 reads 4.62:1 there',
-  },
-  {
-    selector: '.tn-midnight',
-    token: '--tn-fg1',
-    surface: '--tn-bg3',
-    why: '#aaaaaa on #3d4a55 — 3.91:1. --tn-bg3 and --tn-alt-bg1 are the same colour in this '
-      + 'palette, so this is the entry above under the other name, and both are measured '
-      + 'because a palette is free to separate them',
-  },
   // The pairing #277 was filed for. --tn-alt-fg1 is Solarized's base1, picked by
   // #265 as the dimmest of that palette's own tones clearing 4.5:1 on --tn-bg1
   // (5.61:1) and --tn-bg2 (4.86:1) — the step below --tn-fg2 rather than a

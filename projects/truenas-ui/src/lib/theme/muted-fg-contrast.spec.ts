@@ -76,9 +76,12 @@ const SURFACES: Readonly<Record<string, string>> = {
  * as well as one carrying body copy is the way this fix could go wrong.
  *
  * Their order relative to EACH OTHER is a per-theme choice and is deliberately
- * not pinned: `.tn-midnight` reads `--tn-fg2` at 9.04:1 over `--tn-fg1` at
- * 6.25:1 on `--tn-bg1`. The claim is only that neither muted token out-reads
- * either of these.
+ * not pinned. `.tn-midnight` used to be the example — it read `--tn-fg2` at
+ * 9.04:1 over `--tn-fg1` at 6.25:1 on `--tn-bg1` — until #282 lifted its
+ * `--tn-fg1` to clear AA on the fills above `--tn-bg2`, and no palette inverts
+ * the pair today. Not pinned all the same: which of the two leads is
+ * `text-fg-contrast.spec.ts`'s question, and it records rather than forbids.
+ * The claim here is only that neither muted token out-reads either of these.
  */
 const TEXT_TOKENS = ['--tn-fg1', '--tn-fg2'];
 
