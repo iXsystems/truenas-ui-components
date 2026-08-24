@@ -17,6 +17,7 @@ import {
 } from '@angular/core';
 import { tnAccessibleName } from '../a11y/accessible-name';
 import { tnFocusOnOpen } from '../a11y/initial-focus';
+import { tnScrollableRegion } from '../a11y/scrollable-region';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 import { tnTransitionLifecycle } from '../utils/transition-lifecycle';
 
@@ -152,6 +153,36 @@ export class TnDrawerComponent implements OnDestroy {
    * so a `side` drawer never renders it.
    */
   private overPanelRef = viewChild<ElementRef<HTMLElement>>('overPanel');
+
+  /**
+   * Whichever panel is currently rendered — the `side` one or the `over` one.
+   *
+   * Both template branches carry `#panel` and the `@if` on `mode` renders
+   * exactly one, so this is "the drawer's panel" without the caller having to
+   * ask which mode it is in. A drawer whose `mode` changes at runtime destroys
+   * one element and builds the other, and this query re-answers with it.
+   */
+  private panelRef = viewChild<ElementRef<HTMLElement>>('panel');
+
+  /**
+   * Whether the panel carries a real tab stop rather than its resting `-1`
+   * (#270).
+   *
+   * `.tn-drawer__panel` is the element with `overflow-y: auto`, so a drawer
+   * whose projected content is taller than it is scrolls here — and until this
+   * ticket nothing about it was reachable from a keyboard unless the caller
+   * happened to project a tabbable control. The measurement, the observers that
+   * keep it current and the rule that decides when the tab stop may be given
+   * back are `tnScrollableRegion`'s; see `../a11y/scrollable-region.ts`, which
+   * is also where the reasoning for holding it on while the panel has focus is
+   * set out.
+   *
+   * A field initializer rather than the constructor, because it registers an
+   * `effect` and so needs an injection context.
+   */
+  protected panelKeyboardReachable = tnScrollableRegion(
+    () => this.panelRef()?.nativeElement
+  );
 
   /** Focus trap should be active only in 'over' mode when open */
   protected trapFocus = computed(() => this.mode() === 'over' && this.opened());

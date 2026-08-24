@@ -2,7 +2,7 @@ import { A11yModule } from '@angular/cdk/a11y';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import {
   Component, Directive, input, output, model, computed, effect, inject, signal,
-  contentChildren, viewChild, afterNextRender, DestroyRef, NgZone,
+  contentChildren, viewChild, afterNextRender, DestroyRef,
 } from '@angular/core';
 import type { ElementRef, OnDestroy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -11,6 +11,7 @@ import { take } from 'rxjs';
 import type { Observable } from 'rxjs';
 import { tnAccessibleName } from '../a11y/accessible-name';
 import { tnFocusOnOpen } from '../a11y/initial-focus';
+import { TN_SCROLLABLE_REGION_TOLERANCE_PX, tnScrollableRegion } from '../a11y/scrollable-region';
 import { TnIconRegistryService } from '../icon/icon-registry.service';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
@@ -57,21 +58,14 @@ export const TN_SIDE_PANEL_CONTENT_LABEL = 'Panel content';
  * How far the content has to exceed the region before the region counts as
  * scrolling (#248).
  *
- * This is axe's own number: `scrollable-region-focusable` matches through
- * `getScroll(node, 13)`, so it ignores an overflow smaller than this and would
- * not report a region that has one. Measuring with a bare `>` instead would put
- * a tab stop on panels the rule considers fine — and `scrollHeight` and
- * `clientHeight` are integers rounded from fractional layout, so a panel whose
- * content fits to within a pixel reads as overflowing by one.
- *
- * Matching the rule keeps the component and the check that judges it saying the
- * same thing about the same panel. It is a property of the rule rather than a
- * knob, so it is not an input and consumers have no reason to read it — but it
- * is exported, because `side-panel-scrollable-content.spec.ts` pins it against
- * axe's own buffer from both sides, and a spec that recopied the literal would
- * pin the copy to itself.
+ * **This is now `TN_SCROLLABLE_REGION_TOLERANCE_PX`**, which is axe's own 13px
+ * buffer and lives with the measurement it belongs to (#270). The alias stays
+ * because it is what `side-panel-scrollable-content.spec.ts` pins against axe
+ * from both sides, and that spec is a guard on this component rather than on
+ * the helper — see `../a11y/scrollable-region.ts` for what the number is and
+ * why it is copied from the rule at all.
  */
-export const TN_SIDE_PANEL_OVERFLOW_TOLERANCE_PX = 13;
+export const TN_SIDE_PANEL_OVERFLOW_TOLERANCE_PX = TN_SCROLLABLE_REGION_TOLERANCE_PX;
 
 /**
  * Directive to mark an element as a side-panel footer action.
@@ -138,7 +132,6 @@ export class TnSidePanelComponent implements OnDestroy {
   private iconRegistry = inject(TnIconRegistryService);
   private document = inject(DOCUMENT);
   private destroyRef = inject(DestroyRef);
-  private zone = inject(NgZone);
 
   private overlayRef = viewChild.required<ElementRef>('overlay');
   private panelRef = viewChild.required<ElementRef<HTMLElement>>('panel');
@@ -146,55 +139,25 @@ export class TnSidePanelComponent implements OnDestroy {
   protected initialized = signal(false);
 
   /**
-   * Whether the content region currently overflows (#248).
+   * Whether the content region carries the tab stop, its role and its name
+   * (#248) — which is NOT the same question as whether it currently overflows.
    *
-   * Measured, not derived: nothing about the panel's inputs says whether what a
-   * caller projected fits, and the answer changes with the viewport and with
-   * the content itself. See `measureContentOverflow` for what keeps it current.
+   * The measurement, the two observers that keep it current and the focus rule
+   * that decides when the attributes may be taken off again are all
+   * `tnScrollableRegion`'s (#270); this component decides only what to put on
+   * the element, which is the part that differs between the five regions in
+   * this library that scroll. `../a11y/scrollable-region.ts` sets out why the
+   * answer is held true while the region has focus, and why `role` and
+   * `aria-label` are gated on the same signal as `tabindex` rather than left on.
    *
-   * This is the measurement on its own. What the region is actually marked with
-   * is `contentKeyboardReachable`, which is this OR the region's own focus.
+   * Read in `afterNextRender`, which is where the helper takes its first
+   * measurement — before the overlay is portaled to `<body>` below, which does
+   * not affect it: `.tn-side-panel__overlay` is `position: fixed; inset: 0`, so
+   * its size comes from the viewport rather than from its parent.
    */
-  protected contentScrollable = signal(false);
-
-  /**
-   * Whether the content region itself currently holds focus (#248).
-   *
-   * Tracked from the region's own `focus`/`blur`, which do not bubble, so this
-   * is about the `<section>` and not about anything a caller projected into it.
-   * See `contentKeyboardReachable` for what it is for.
-   */
-  protected contentFocused = signal(false);
-
-  /**
-   * Whether the region carries the tab stop, its role and its name — which is
-   * NOT the same question as whether it currently overflows (#248).
-   *
-   * Content can stop overflowing while the region is focused: a validation
-   * message clears, an expander collapses, the panel widens. Dropping
-   * `tabindex` at that moment removes the tab stop from the ELEMENT THAT HAS
-   * FOCUS, and a focused element that stops being focusable is blurred to
-   * `<body>` — so a keyboard user reading a panel would find themselves outside
-   * the open dialog, with the next Tab starting from the top of the page,
-   * because content they were not interacting with got shorter. That is a worse
-   * failure than the one this ticket fixes, and it is caused by the fix.
-   *
-   * So focus holds the attributes on until it leaves of its own accord. The
-   * `blur` that clears this signal has already happened by the time Angular
-   * writes the attribute away, so nothing is focused when the tab stop goes,
-   * and the region is not a tab stop for the NEXT Tab through the panel.
-   *
-   * Retaining `role` and `aria-label` alongside `tabindex` rather than only the
-   * tabindex: a focused group that loses its name mid-read is announced as a
-   * bare "group" on the next thing a screen reader says about it, and the
-   * unlabelled group is the state the name exists to prevent.
-   */
-  protected contentKeyboardReachable = computed(
-    () => this.contentScrollable() || this.contentFocused()
+  protected contentKeyboardReachable = tnScrollableRegion(
+    () => this.contentRef().nativeElement
   );
-
-  private contentResize?: ResizeObserver;
-  private contentMutations?: MutationObserver;
 
   // Two-way bindable via [(open)]
   open = model<boolean>(false);
@@ -364,15 +327,10 @@ export class TnSidePanelComponent implements OnDestroy {
     afterNextRender(() => {
       this.document.body.appendChild(this.overlayRef().nativeElement);
       this.initialized.set(true);
-      this.measureContentOverflow();
-      this.watchContentOverflow();
     });
   }
 
   ngOnDestroy(): void {
-    this.contentResize?.disconnect();
-    this.contentMutations?.disconnect();
-
     const overlay = this.overlayRef().nativeElement as HTMLElement;
 
     // A panel destroyed WHILE OPEN never runs the close branch of the effect
@@ -434,110 +392,6 @@ export class TnSidePanelComponent implements OnDestroy {
     // exactly when this event is late: a panel reopened while the close was
     // still animating reads `open() === true` on the stale close's event.
     this.lifecycle.transitionEnded();
-  }
-
-  /**
-   * Read whether the content region overflows, and record it (#248).
-   *
-   * A layout read and nothing else, so it is safe to call from either observer
-   * below: the only write it makes is to a signal, and the attributes that
-   * follow are written by Angular in its own pass rather than here. Setting the
-   * signal to the value it already holds is a no-op, which is what most calls
-   * are.
-   */
-  private measureContentOverflow(): void {
-    const content = this.contentRef().nativeElement;
-    this.contentScrollable.set(
-      content.scrollHeight > content.clientHeight + TN_SIDE_PANEL_OVERFLOW_TOLERANCE_PX
-    );
-  }
-
-  /**
-   * Keep that measurement current, from the two directions it can go stale.
-   *
-   * A scroll container overflows when its content is taller than its box, and
-   * either half can change on its own — so both are watched, by the instrument
-   * that can see them:
-   *
-   * - **The box.** The panel is full-height and `width` is an input, so a
-   *   viewport resize or a narrower panel reflows the content.
-   * - **The content.** A caller's form revealing a validation message changes
-   *   `scrollHeight` while the region's own size stays exactly the same, so a
-   *   `ResizeObserver` on the region alone never fires for it.
-   *
-   * `MutationObserver` catches the second only when the growth IS a DOM change.
-   * Plenty of it is not: an image finishing loading, a webfont swapping in, a
-   * class toggle opening an expander. What all of those DO change is the size
-   * of the child that holds them, which is why the `ResizeObserver` is pointed
-   * at the region's direct children as well as at the region — see
-   * `observeContentBoxes`. Layout propagates, so a grandchild growing grows the
-   * child that contains it.
-   *
-   * `attributes` is therefore deliberately NOT observed. The class toggle above
-   * arrives as a resize instead, and watching attributes would mean watching
-   * the ones this measurement itself writes onto the observed element — the
-   * measurement called from its own result.
-   *
-   * Both are feature-detected, because neither exists during SSR and
-   * `ResizeObserver` does not exist under jsdom — where the fallback is the
-   * single `afterNextRender` reading, and a region that reads as fitting is the
-   * safe answer either way.
-   *
-   * Outside the Angular zone, for the reason `../a11y/initial-focus.ts` gives
-   * for its retries: a projected form mutates on every keystroke, and a
-   * zone-patched callback would be a change detection pass for each one. The
-   * signal notifies Angular by itself when the answer actually changes.
-   */
-  private watchContentOverflow(): void {
-    const content = this.contentRef().nativeElement;
-
-    this.zone.runOutsideAngular(() => {
-      if (typeof ResizeObserver !== 'undefined') {
-        this.contentResize = new ResizeObserver(() => this.measureContentOverflow());
-      }
-
-      if (typeof MutationObserver !== 'undefined') {
-        this.contentMutations = new MutationObserver(() => {
-          // Which elements exist has just changed, so what is observed has to
-          // change with it before the region is measured again.
-          this.observeContentBoxes();
-          this.measureContentOverflow();
-        });
-        this.contentMutations.observe(content, {
-          childList: true,
-          subtree: true,
-          characterData: true,
-        });
-      }
-
-      this.observeContentBoxes();
-    });
-  }
-
-  /**
-   * Point the `ResizeObserver` at the content region and at each of its direct
-   * children, replacing whatever it was watching before.
-   *
-   * The children are the half that catches content growth no DOM mutation
-   * announces — see `watchContentOverflow`. They are re-read rather than
-   * tracked incrementally because the set changes only when `childList` does,
-   * which is the callback this runs in, and a panel's content is a handful of
-   * elements rather than a list.
-   *
-   * `disconnect` first: `observe` on an element already observed is a no-op, so
-   * without it a child that was removed would keep its registration and keep
-   * the observer alive.
-   */
-  private observeContentBoxes(): void {
-    const resize = this.contentResize;
-    if (!resize) {
-      return;
-    }
-
-    const content = this.contentRef().nativeElement;
-    resize.disconnect();
-    resize.observe(content);
-    Array.from(content.children).forEach((child) => resize.observe(child));
   }
 
   private restoreFocus(): void {

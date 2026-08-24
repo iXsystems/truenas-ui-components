@@ -93,10 +93,10 @@
       The gate is `contentKeyboardReachable`, which is the measurement OR the
       region's own focus, not the measurement alone. Content that stops
       overflowing while the region is focused would otherwise take the tab stop
-      off the focused element and blur a keyboard user out of the open panel;
-      `contentKeyboardReachable` on the component says why in full. `focus` and
-      `blur` do not bubble, so they report this `<section>` rather than anything
-      projected into it.
+      off the focused element and blur a keyboard user out of the open panel.
+      Both halves are `tnScrollableRegion`'s, in `../a11y/scrollable-region.ts`,
+      which says why in full — including why it listens for this element's own
+      `focus`/`blur` itself rather than leaving each caller to bind them.
 
       `role="group"` rather than the `region` a named `<section>` would imply:
       `region` is a landmark, and a landmark named the same thing in every panel
@@ -108,9 +108,7 @@
       class="tn-side-panel__content"
       [attr.tabindex]="contentKeyboardReachable() ? '0' : null"
       [attr.role]="contentKeyboardReachable() ? 'group' : null"
-      [attr.aria-label]="contentKeyboardReachable() ? contentAriaLabel() : null"
-      (focus)="contentFocused.set(true)"
-      (blur)="contentFocused.set(false)">
+      [attr.aria-label]="contentKeyboardReachable() ? contentAriaLabel() : null">
       <ng-content />
     </section>
 
