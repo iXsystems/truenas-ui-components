@@ -388,8 +388,8 @@ describe('tn-list section accessibility', () => {
 
       // The lag is real and is the price of not throwing
       // ExpressionChangedAfterItHasBeenChecked on correct markup — see
-      // `AriaOwnerDirective`. Measured, not assumed: `createHost` has run one
-      // pass, and the divider is already inside the list by now.
+      // `AriaOwner`. Measured, not assumed: `createHost` has run one pass, and
+      // the divider is already inside the list by the end of it.
       expect(divider.parentElement?.tagName).toBe('TN-LIST');
       expect(divider.getAttribute('role')).toBe('separator');
 
@@ -402,6 +402,21 @@ describe('tn-list section accessibility', () => {
         ['aria-required-children']
       );
       expect(violated).toEqual([]);
+    });
+
+    it('takes that pass on its own in a running application', async () => {
+      // The one above drives change detection by hand and so has to ask for the
+      // second pass. This one attaches the fixture to `ApplicationRef` and lets
+      // the scheduler drive it, which is how a bootstrapped app runs — and the
+      // role is correct with no interaction of any kind. That is the difference
+      // between one cycle of lag and a role that is wrong until someone clicks
+      // something.
+      const running = TestBed.createComponent(GatedHostComponent);
+      running.autoDetectChanges();
+      await running.whenStable();
+
+      const divider = running.nativeElement.querySelector('tn-divider') as HTMLElement;
+      expect(divider.getAttribute('role')).toBe('presentation');
     });
   });
 

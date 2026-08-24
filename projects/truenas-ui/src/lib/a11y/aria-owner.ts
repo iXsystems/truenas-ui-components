@@ -153,9 +153,12 @@ export function prescribesItsChildren(ownerRole: string | null): boolean {
  * across both passes.
  *
  * The cost of that is one change-detection cycle of lag: an element projected
- * into its owner during a pass is re-read on the NEXT one. A one-frame-stale
- * decorative role is the acceptable end of this trade; the permanent one was
- * not.
+ * into its owner during a pass is re-read on the NEXT one. A running
+ * application runs that next one on its own — measured, and asserted in
+ * `list/list-a11y.spec.ts` on a fixture attached to `ApplicationRef` the way a
+ * bootstrapped app is, where the role corrects itself with no interaction. A
+ * test that drives `detectChanges()` by hand is the case that has to ask,
+ * because nothing else will.
  */
 export class AriaOwner {
   private readonly owner = signal<string | null>(null);
