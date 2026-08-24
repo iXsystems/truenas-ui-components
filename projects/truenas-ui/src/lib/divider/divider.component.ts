@@ -1,14 +1,16 @@
 
 import { Component, ElementRef, inject, input, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
-import { isInsideAriaList } from '../list/list-context';
+import { ariaOwnerRole } from '../a11y/aria-owner';
 
 /**
  * A rule between things.
  *
- * `role="separator"` on its own, and nothing at all inside a `role="list"`,
- * where a separator is not an allowed child and invalidates the list it sits in
- * (#237). See `isInsideAriaList` for why the DOM decides that rather than DI.
+ * `role="separator"`, except where the element that owns it is a `role="list"`:
+ * a list owns only `listitem`, so a separator between two rows invalidates the
+ * list it sits in (#237). Owned by a ROW of that list — a divider inside a
+ * `tn-list-item` — it is a separator like anywhere else. See `ariaOwnerRole`
+ * for why the DOM decides that rather than DI.
  */
 @Component({
   selector: 'tn-divider',
@@ -41,7 +43,7 @@ export class TnDividerComponent implements OnInit {
   protected readonly role = signal<'separator' | 'presentation'>('separator');
 
   ngOnInit(): void {
-    if (isInsideAriaList(this.host)) {
+    if (ariaOwnerRole(this.host) === 'list') {
       this.role.set('presentation');
     }
   }

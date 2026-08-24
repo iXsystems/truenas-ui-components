@@ -54,8 +54,29 @@ import { TnListSubheaderComponent } from '../list-subheader/list-subheader.compo
 class TestHostComponent {}
 
 /**
+ * A divider one level further in, inside a row. The row owns it, and a
+ * separator inside a `listitem` is legal — so this is the case a "is there a
+ * list anywhere above me" check demotes for nothing.
+ */
+@Component({
+  selector: 'tn-nested-divider-a11y-host',
+  standalone: true,
+  imports: [TnListComponent, TnListItemComponent, TnDividerComponent],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-list>
+      <tn-list-item>
+        tank
+        <tn-divider />
+      </tn-list-item>
+    </tn-list>
+  `,
+})
+class NestedDividerHostComponent {}
+
+/**
  * A list that projects its rows, so that the divider is DECLARED outside the
- * list and RENDERED inside it. This is the case `isInsideAriaList` reads the DOM
+ * list and RENDERED inside it. This is the case `ariaOwnerRole` reads the DOM
  * for — an element injector would answer "no list here" and leave the separator
  * role on, which is the bug.
  */
@@ -210,6 +231,29 @@ describe('tn-list section accessibility', () => {
       // used to declare `role="separator"` statically — which no binding on the
       // component can be relied on to overwrite.
       expect(el('div[tnDivider]').getAttribute('role')).toBeNull();
+    });
+  });
+
+  describe('a divider inside a row of a list', () => {
+    it('is still a separator, because the row owns it and not the list', async () => {
+      await TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({ imports: [NestedDividerHostComponent] })
+        .compileComponents();
+      const nested = TestBed.createComponent(NestedDividerHostComponent);
+      nested.detectChanges();
+
+      const divider = nested.nativeElement.querySelector('tn-divider') as HTMLElement;
+      expect(divider.getAttribute('role')).toBe('separator');
+      expect(divider.getAttribute('aria-orientation')).toBe('horizontal');
+
+      // And the list is still valid: what it owns is the row, which may hold
+      // whatever it likes.
+      const { violated } = await axeResult(
+        nested.nativeElement,
+        [nested.nativeElement.querySelector('tn-list') as HTMLElement],
+        ['aria-required-children']
+      );
+      expect(violated).toEqual([]);
     });
   });
 

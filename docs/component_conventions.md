@@ -426,12 +426,16 @@ role is only valid in some containers decides at `ngOnInit` and binds it:
 '[attr.role]': 'role()'    // 'separator', or 'presentation' inside a list
 ```
 
-**Ask the DOM, not the injector.** `isInsideAriaList()` in `lib/list/list-context.ts`
-is the worked example, and its docblock has the reasoning: an element injector
-walks the template that *declared* the element, which content projection makes
-diverge from where it renders, while the accessibility tree is built from the
-DOM. `inject(TnListComponent, { optional: true })` therefore answers a different
-question and gets `<some-panel><tn-divider /></some-panel>` wrong.
+**Ask `ariaOwnerRole()` in `lib/a11y/aria-owner.ts`, not the injector.** Its
+docblock has the reasoning; the two things it is easy to get wrong are:
+
+- **The owner is the nearest ancestor with a role, not the nearest list.** A
+  divider inside a `tn-list-item` is owned by the row, where a separator is
+  legal. "Is there a list above me" demotes it for nothing.
+- **An element injector walks the template that *declared* the element**, which
+  content projection makes diverge from where it renders, while the
+  accessibility tree is built from the DOM. `inject(TnListComponent, { optional: true })`
+  therefore gets `<some-panel><tn-divider /></some-panel>` wrong.
 
 **Move a required role rather than dropping it.** Inside a list the subheader's
 host becomes the `listitem` the list requires and the heading moves to the
