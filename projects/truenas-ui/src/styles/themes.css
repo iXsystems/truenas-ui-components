@@ -264,9 +264,10 @@
      itself is only 3.67:1 on --tn-bg1. */
   --tn-primary-text: #8592b8;
   --tn-topbar: #6272a4;
-  /* Was #efefef, which read 4.09:1 on this bar (#277). Dracula's own near-white
-     tones are all below #efefef, so nothing in the palette clears 4.5:1 here;
-     white does, by 0.21. */
+  /* Was #efefef, which read 4.09:1 on this bar (#277). Dracula's own two
+     lighter tones do not save it either — --tn-alt-fg1 (#f8f8f2) reads 4.41:1
+     here and --tn-alt-fg2 (#fafaf5) 4.49:1 — so nothing already in the palette
+     clears 4.5:1 on this bar; white does, by 0.21. */
   --tn-topbar-txt: #ffffff; /* 4.71:1 on --tn-topbar */
   --tn-accent: #bd93f9;
   --tn-accent-txt: #282a36; /* 5.90:1 on --tn-accent */

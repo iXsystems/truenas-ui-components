@@ -3,10 +3,10 @@ import { join } from 'path';
 import { TN_THEME_DEFINITIONS } from './theme.constants';
 import {
   AA_MINIMUM,
-  compositeColor,
   contrastRatio,
   formatRatio,
   meetsAa,
+  mixColors,
   themePalettes,
 } from '../a11y/contrast-testing';
 
@@ -144,7 +144,13 @@ const PAIRINGS: readonly Pairing[] = [
   {
     token: '--tn-fg1',
     surface: '--tn-bg3',
-    where: 'the table cell on an active row, and the highlighted chip-input option',
+    where: 'the table cell on an active row; the title, field value, more-summary and detail '
+      + 'toggle of an active table card; the highlighted chip-input option',
+  },
+  {
+    token: '--tn-fg2',
+    surface: '--tn-bg3',
+    where: 'the field label of an active table card — its <dt>, beside a --tn-fg1 value',
   },
   {
     token: '--tn-fg2',
@@ -272,62 +278,40 @@ const HOVER_FILL_SCSS = join(LIB_DIR, 'table/table.component.scss');
 const HOVER_FILL = /background-color:\s*(color-mix\([^;]*\));/;
 
 /**
- * The mix percentage above, as the alpha that produces the same colour.
- *
- * `color-mix(in srgb, A 85%, B)` is `0.85 * A + 0.15 * B` per channel, which is
- * exactly B composited over A at alpha 0.15 — so `compositeColor` does this
- * without any colour maths being written here. The 15 is read off the
- * declaration rather than assumed, so a percentage change fails rather than
- * being measured wrong.
+ * The percentage of `--tn-topbar` in the mix, read off the declaration rather
+ * than assumed, so a percentage change fails rather than being measured wrong.
  */
 const MIX_PERCENT = /var\(--tn-topbar\)\s*(\d+)%/;
 
 /**
  * Is `colour` opaque?
  *
- * Asked of `contrastRatio` rather than of the notation, because the notation is
- * not the question: `rgb(255, 255, 255)` and `#ffffff` are both opaque and only
- * one of them looks it, and a check on the spelling would quietly drop the
- * other out of the measurement while still passing. `contrastRatio` refuses a
- * translucent BACKGROUND — what is behind it decides the answer — so putting
- * the colour in that position asks exactly this and asks the module that
- * already knows.
+ * Asked of `mixColors` rather than of the notation, because the notation is not
+ * the question: `#ffffff`, `#fff` and `rgb(255, 255, 255)` are all opaque and
+ * only one of them looks like the shape a regex here would be written for. A
+ * check on the spelling would quietly drop the others out of the measurement
+ * while still passing — and it would answer "translucent" for a colour that is
+ * merely spelled unusually, which is a hole in this file reported as a palette
+ * that renders nothing measurable.
+ *
+ * `mixColors` refuses a translucent input and reads every form the maths reads,
+ * so this asks the one module that already knows both. Mixing against black at
+ * 50% is arbitrary; only whether it throws is used.
  */
 function isOpaque(colour: string): boolean {
   try {
-    contrastRatio('#000000', colour);
+    mixColors(colour, '#000000', 50);
     return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * `--tn-topbar-txt` at the mix's own alpha, ready to composite over the bar.
- *
- * Only reached for a label `isOpaque` has already accepted, so a colour it
- * cannot take apart is a gap in this function rather than a palette to excuse —
- * hence a throw that says so, and no caller catching it.
- */
-function atMixAlpha(colour: string, alpha: number): string {
-  const text = colour.trim();
-  const hex = /^#([0-9a-f]{6})$/i.exec(text);
-  if (hex !== null) {
-    const byte = (at: number): number => parseInt(hex[1].slice(at, at + 2), 16);
-    return `rgba(${byte(0)}, ${byte(2)}, ${byte(4)}, ${alpha})`;
-  }
-  const functional = /^rgba?\(([^)]*)\)$/i.exec(text);
-  if (functional !== null) {
-    const parts = functional[1].split(/[\s,/]+/).filter((part) => part.length > 0);
-    if (parts.length === 3) {
-      return `rgba(${parts.join(', ')}, ${alpha})`;
+  } catch (error) {
+    // Only translucency answers "no". A colour the maths cannot read at all is
+    // a fault to surface, not a palette to file under "nothing to measure" —
+    // swallowing both is how a `hsl()` token would come to look like a
+    // deliberate exclusion.
+    if (error instanceof Error && error.message.includes('is not opaque')) {
+      return false;
     }
+    throw error;
   }
-  throw new Error(
-    `atMixAlpha: ${colour} is opaque but not in a form this can re-emit with an alpha. `
-    + 'The hover fill cannot be computed, which is a hole in this spec rather than a '
-    + 'palette that renders nothing measurable.'
-  );
 }
 
 /**
@@ -513,7 +497,9 @@ const PAINTS_UNTUNED: Readonly<Record<string, { fills: number; text: number; why
     text: 12,
     why: 'the header and its actions cell fill --tn-topbar under --tn-topbar-txt; hovered, '
       + 'expanded and detail rows fill --tn-alt-bg1 and active rows --tn-bg3, under the cell\'s '
-      + '--tn-fg1; the sortable header hover is a color-mix this cannot read',
+      + '--tn-fg1; an active CARD fills --tn-bg3 too, under both --tn-fg1 and the --tn-fg2 of '
+      + 'its field labels; the hovered card sort direction fills --tn-alt-bg1 under --tn-fg2; '
+      + 'the sortable header hover is a color-mix, measured separately',
   },
   'tabs/tabs.component.scss': {
     fills: 1,
@@ -744,7 +730,7 @@ describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#
       expect(percent).toMatch(/^\d+$/);
     });
 
-    const alpha = percent === undefined ? 0.15 : (100 - Number(percent)) / 100;
+    const barShare = percent === undefined ? 85 : Number(percent);
 
     /**
      * Each palette's hovered header: the label on the fill it renders on, or the
@@ -767,7 +753,7 @@ describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#
       if (!common.opaqueLabel) {
         return { ...common, fill: undefined, ratio: undefined, ratioLabel: 'nothing opaque to measure' };
       }
-      const fill = compositeColor(atMixAlpha(label, alpha), bar);
+      const fill = mixColors(bar, label, barShare);
       const ratio = contrastRatio(label, fill);
       return { ...common, fill, ratio, ratioLabel: formatRatio(ratio) };
     });
