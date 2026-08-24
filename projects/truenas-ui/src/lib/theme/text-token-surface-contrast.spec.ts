@@ -285,6 +285,20 @@ const HOVER_FILL = /background-color:\s*(color-mix\([^;]*\));/;
 const MIX_PERCENT = /var\(--tn-topbar\)\s*(\d+)%/;
 
 /**
+ * The space the mix is interpolated in, read off the declaration for the same
+ * reason as the percentage — and it is not a formality.
+ *
+ * `mixColors` computes `color-mix(in srgb, …)`, weighting the sRGB channels
+ * directly. `color-mix(in oklab, …)` of the same two colours at the same
+ * percentage is a DIFFERENT colour, and a perceptual space is exactly what
+ * someone reaching for a better-looking hover would switch to. Nothing else
+ * here would notice: the tokens and the percentage would still match, and every
+ * case below would go on reporting ratios for a fill the table had stopped
+ * painting.
+ */
+const MIX_SPACE = /color-mix\(\s*in\s+([\w-]+)/;
+
+/**
  * Palettes whose sortable header hover fill does not clear AA, with the ratio.
  *
  * The same shape and the same rule as `KNOWN_GAPS`: asserted to still be
@@ -701,12 +715,16 @@ describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#
     });
 
     const percent = declaration === undefined ? undefined : MIX_PERCENT.exec(declaration)?.[1];
+    const space = declaration === undefined ? undefined : MIX_SPACE.exec(declaration)?.[1];
 
-    it('it is a mix of --tn-topbar with --tn-topbar-txt, by a percentage this can read', () => {
-      // The two tokens and the number are what the arithmetic below depends on.
-      // A mix toward some third colour is a different claim and would be
-      // measured wrong rather than not at all.
+    it('it is an sRGB mix of --tn-topbar with --tn-topbar-txt, by a percentage this can read', () => {
+      // The two tokens, the space and the number are what the arithmetic below
+      // depends on. A mix toward some third colour is a different claim and
+      // would be measured wrong rather than not at all — and so is the same mix
+      // in a different space, since `mixColors` weights sRGB channels and is the
+      // only thing this file can compute the fill with.
       expect(declaration).toContain('var(--tn-topbar-txt)');
+      expect(space).toBe('srgb');
       expect(percent).toMatch(/^\d+$/);
     });
 
