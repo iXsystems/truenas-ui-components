@@ -204,6 +204,12 @@ tn-table {
     // applied it would have put --tn-fg1, the page's body colour, on a bar
     // filled with --tn-topbar, which measures 1.32:1 in .tn-high-contrast and
     // 1.55:1 in .tn-blue. The header's colour is tn-table's --tn-topbar-txt.
+    //
+    // The rest of this rule, and the `td, .tn-table__cell` one below it, are
+    // inert for the identical reason. They are left alone: #277 is about text
+    // on untuned surfaces, and only the `color` was that. Removing the whole
+    // block is a real cleanup and wants its own change, where "these override
+    // nothing" can be the claim under review rather than a side effect.
     padding: 12px 16px;
     border-bottom: 2px solid var(--tn-lines);
   }

@@ -644,7 +644,11 @@ describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#
       expect([...excused.keys()].filter((key) => !painted.has(key))).toEqual([]);
     });
 
-    if (KNOWN_GAPS.length > 0) {
+    // On `gaps`, not on `KNOWN_GAPS`: a stale entry — one naming a pairing
+    // nothing paints any more — leaves this table empty while the list is not,
+    // and `it.each` errors on an empty table. The case above is what names that
+    // entry; a collection error would say only that the table was empty.
+    if (gaps.length > 0) {
       it.each(gaps)(
         '$selector: $token on $surface still measures $ratioLabel',
         ({ ratio }) => {
@@ -770,16 +774,29 @@ describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#
       expect(opaque.length).toBeGreaterThan(0);
     });
 
-    it.each(opaque.filter((one) => one.recorded === undefined))(
-      '$selector: $label on the hovered header ($fill, mixed from $bar) is $ratioLabel, resting $resting',
-      ({ ratio }) => {
-        expect(meetsAa(ratio as number, 'normal')).toBe(true);
-      }
-    );
+    // Registered only when there is something in it, because `it.each` treats
+    // an empty table as an error rather than as no cases. Empty here means
+    // every measurable palette is a recorded gap — a real state, and one the
+    // "still a gap" cases below cover in full, so it must not be the thing that
+    // turns the suite red.
+    const clearing = opaque.filter((one) => one.recorded === undefined);
+
+    if (clearing.length > 0) {
+      it.each(clearing)(
+        '$selector: $label on the hovered header ($fill, mixed from $bar) is $ratioLabel, resting $resting',
+        ({ ratio }) => {
+          expect(meetsAa(ratio as number, 'normal')).toBe(true);
+        }
+      );
+    }
 
     const recorded = opaque.filter((one) => one.recorded !== undefined);
 
-    if (Object.keys(HOVER_GAPS).length > 0) {
+    // On `recorded`, not on `HOVER_GAPS` — an entry naming a palette that has
+    // stopped being measured leaves the table empty while the object is not,
+    // and the case above is what should report that rather than a collection
+    // error with no palette in it.
+    if (recorded.length > 0) {
       it.each(recorded)(
         '$selector: its recorded hover gap is still a gap — $ratioLabel, resting $resting',
         ({ ratio }) => {
@@ -795,17 +812,25 @@ describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#
       expect(Object.keys(HOVER_GAPS).filter((one) => !selectors.includes(one))).toEqual([]);
     });
 
-    it.each(hovers.filter((one) => one.ratio === undefined))(
-      '$selector: labels its bar $label, which the mix makes translucent — $ratioLabel',
-      ({ opaqueLabel }) => {
-        // Recorded rather than skipped: these are the palettes where the claim
-        // cannot be made at all, and a reader should not take their absence from
-        // the cases above as a pass. Asserted on the alpha rather than on the
-        // notation — a label that becomes opaque belongs in the measured cases,
-        // and spelling it `rgb(255, 255, 255)` must not be a way to stay here.
-        expect(opaqueLabel).toBe(false);
-      }
-    );
+    // Same guard, and the empty case here is the good one: every palette
+    // labelling its bar opaquely means every palette is measured above, which
+    // is strictly more coverage than this block reports.
+    const unmeasurable = hovers.filter((one) => one.ratio === undefined);
+
+    if (unmeasurable.length > 0) {
+      it.each(unmeasurable)(
+        '$selector: labels its bar $label, which the mix makes translucent — $ratioLabel',
+        ({ opaqueLabel }) => {
+          // Recorded rather than skipped: these are the palettes where the claim
+          // cannot be made at all, and a reader should not take their absence
+          // from the cases above as a pass. Asserted on the alpha rather than on
+          // the notation — a label that becomes opaque belongs in the measured
+          // cases, and spelling it `rgb(255, 255, 255)` must not be a way to
+          // stay here.
+          expect(opaqueLabel).toBe(false);
+        }
+      );
+    }
   });
 
   it('the threshold these cases use is the AA one for normal text', () => {
