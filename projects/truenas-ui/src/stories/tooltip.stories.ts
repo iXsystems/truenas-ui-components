@@ -303,7 +303,9 @@ export const OnDifferentElements: Story = {
           tnTooltip="Button tooltip">
         </tn-button>
 
+        <label for="tooltip-demo-input" style="color: var(--tn-fg1);">Server name</label>
         <input
+          id="tooltip-demo-input"
           type="text"
           placeholder="Hover for tooltip"
           tnTooltip="This input has a helpful tooltip"

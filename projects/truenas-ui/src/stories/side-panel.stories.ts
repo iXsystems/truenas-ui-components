@@ -157,7 +157,7 @@ export const Default: Story = {
 
         <div style="display: flex; flex-direction: column; gap: 24px;">
           <div>
-            <h4 style="margin: 0 0 12px 0; color: var(--tn-fg1);">Dataset: tank/media</h4>
+            <h3 style="margin: 0 0 12px 0; color: var(--tn-fg1);">Dataset: tank/media</h3>
             <p style="color: var(--tn-fg2); font-size: 1rem; margin: 0;">
               This dataset stores media files including photos, videos, and music. It uses LZ4 compression and has snapshots enabled.
             </p>
@@ -268,24 +268,24 @@ export const WithActions: Story = {
           </div>
 
           <div>
-            <label style="${labelStyle}">Full Name</label>
-            <input type="text" placeholder="e.g. John Doe" style="${inputStyle}" />
+            <label for="add-user-full-name" style="${labelStyle}">Full Name</label>
+            <input id="add-user-full-name" type="text" placeholder="e.g. John Doe" style="${inputStyle}" />
           </div>
           <div>
-            <label style="${labelStyle}">Username</label>
-            <input type="text" placeholder="e.g. jdoe" style="${inputStyle}" />
+            <label for="add-user-username" style="${labelStyle}">Username</label>
+            <input id="add-user-username" type="text" placeholder="e.g. jdoe" style="${inputStyle}" />
           </div>
           <div>
-            <label style="${labelStyle}">Email</label>
-            <input type="email" placeholder="e.g. john@example.com" style="${inputStyle}" />
+            <label for="add-user-email" style="${labelStyle}">Email</label>
+            <input id="add-user-email" type="email" placeholder="e.g. john@example.com" style="${inputStyle}" />
           </div>
           <div>
-            <label style="${labelStyle}">Password</label>
-            <input type="password" placeholder="Enter password" style="${inputStyle}" />
+            <label for="add-user-password" style="${labelStyle}">Password</label>
+            <input id="add-user-password" type="password" placeholder="Enter password" style="${inputStyle}" />
           </div>
           <div>
-            <label style="${labelStyle}">Confirm Password</label>
-            <input type="password" placeholder="Confirm password" style="${inputStyle}" />
+            <label for="add-user-confirm-password" style="${labelStyle}">Confirm Password</label>
+            <input id="add-user-confirm-password" type="password" placeholder="Confirm password" style="${inputStyle}" />
           </div>
 
           <div style="padding-bottom: 16px; border-bottom: 1px solid var(--tn-lines); padding-top: 8px;">
@@ -294,16 +294,16 @@ export const WithActions: Story = {
           </div>
 
           <div>
-            <label style="${labelStyle}">User ID</label>
-            <input type="number" value="1001" style="${inputStyle}" />
+            <label for="add-user-uid" style="${labelStyle}">User ID</label>
+            <input id="add-user-uid" type="number" value="1001" style="${inputStyle}" />
           </div>
           <div>
-            <label style="${labelStyle}">Primary Group</label>
-            <input type="text" value="users" style="${inputStyle}" />
+            <label for="add-user-primary-group" style="${labelStyle}">Primary Group</label>
+            <input id="add-user-primary-group" type="text" value="users" style="${inputStyle}" />
           </div>
           <div>
-            <label style="${labelStyle}">Auxiliary Groups</label>
-            <input type="text" placeholder="e.g. wheel, ftp, samba" style="${inputStyle}" />
+            <label for="add-user-aux-groups" style="${labelStyle}">Auxiliary Groups</label>
+            <input id="add-user-aux-groups" type="text" placeholder="e.g. wheel, ftp, samba" style="${inputStyle}" />
           </div>
 
           <div style="padding-bottom: 16px; border-bottom: 1px solid var(--tn-lines); padding-top: 8px;">
@@ -312,12 +312,12 @@ export const WithActions: Story = {
           </div>
 
           <div>
-            <label style="${labelStyle}">Home Directory</label>
-            <input type="text" value="/nonexistent" style="${inputStyle}" />
+            <label for="add-user-home-directory" style="${labelStyle}">Home Directory</label>
+            <input id="add-user-home-directory" type="text" value="/nonexistent" style="${inputStyle}" />
           </div>
           <div>
-            <label style="${labelStyle}">Shell</label>
-            <input type="text" value="/usr/bin/zsh" style="${inputStyle}" />
+            <label for="add-user-shell" style="${labelStyle}">Shell</label>
+            <input id="add-user-shell" type="text" value="/usr/bin/zsh" style="${inputStyle}" />
           </div>
 
           <div style="padding-bottom: 16px; border-bottom: 1px solid var(--tn-lines); padding-top: 8px;">
@@ -326,8 +326,8 @@ export const WithActions: Story = {
           </div>
 
           <div>
-            <label style="${labelStyle}">SSH Public Key</label>
-            <textarea placeholder="Paste public key here..." style="${textareaStyle}"></textarea>
+            <label for="add-user-ssh-key" style="${labelStyle}">SSH Public Key</label>
+            <textarea id="add-user-ssh-key" placeholder="Paste public key here..." style="${textareaStyle}"></textarea>
           </div>
         </div>
 
@@ -421,20 +421,20 @@ export const NestedPanels: Story = {
             </div>
 
             <div>
-              <label style="${labelStyle}">Share Name</label>
-              <input type="text" value="media" style="${inputStyle}" />
+              <label for="edit-share-name" style="${labelStyle}">Share Name</label>
+              <input id="edit-share-name" type="text" value="media" style="${inputStyle}" />
             </div>
             <div>
-              <label style="${labelStyle}">Path</label>
-              <input type="text" value="/mnt/tank/media" style="${inputStyle}" />
+              <label for="edit-share-path" style="${labelStyle}">Path</label>
+              <input id="edit-share-path" type="text" value="/mnt/tank/media" style="${inputStyle}" />
             </div>
             <div>
-              <label style="${labelStyle}">Description</label>
-              <input type="text" value="Media files share" style="${inputStyle}" />
+              <label for="edit-share-description" style="${labelStyle}">Description</label>
+              <input id="edit-share-description" type="text" value="Media files share" style="${inputStyle}" />
             </div>
             <div>
-              <label style="${labelStyle}">Purpose</label>
-              <input type="text" value="Default share parameters" style="${inputStyle}" />
+              <label for="edit-share-purpose" style="${labelStyle}">Purpose</label>
+              <input id="edit-share-purpose" type="text" value="Default share parameters" style="${inputStyle}" />
             </div>
 
             <div style="padding-bottom: 16px; border-bottom: 1px solid var(--tn-lines); padding-top: 8px;">
@@ -443,12 +443,12 @@ export const NestedPanels: Story = {
             </div>
 
             <div>
-              <label style="${labelStyle}">Allowed Hosts</label>
-              <textarea placeholder="One host per line..." style="${textareaStyle}"></textarea>
+              <label for="edit-share-allowed-hosts" style="${labelStyle}">Allowed Hosts</label>
+              <textarea id="edit-share-allowed-hosts" placeholder="One host per line..." style="${textareaStyle}"></textarea>
             </div>
             <div>
-              <label style="${labelStyle}">Denied Hosts</label>
-              <textarea placeholder="One host per line..." style="${textareaStyle}"></textarea>
+              <label for="edit-share-denied-hosts" style="${labelStyle}">Denied Hosts</label>
+              <textarea id="edit-share-denied-hosts" placeholder="One host per line..." style="${textareaStyle}"></textarea>
             </div>
 
             <div style="padding-bottom: 16px; border-bottom: 1px solid var(--tn-lines); padding-top: 8px;">
@@ -457,8 +457,8 @@ export const NestedPanels: Story = {
             </div>
 
             <div>
-              <label style="${labelStyle}">Auxiliary Parameters</label>
-              <textarea placeholder="smb.conf parameters..." style="${textareaStyle}"></textarea>
+              <label for="edit-share-aux-params" style="${labelStyle}">Auxiliary Parameters</label>
+              <textarea id="edit-share-aux-params" placeholder="smb.conf parameters..." style="${textareaStyle}"></textarea>
             </div>
           </div>
 

@@ -710,9 +710,9 @@ export const WithProjectedHeader: Story = {
         [bordered]="bordered"
         [background]="background">
         <div tnCardHeader style="display: flex; align-items: center; gap: 12px;">
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--tn-green);"></span>
           <h3 style="margin: 0; font-size: 1.125rem; font-weight: 600;">Custom Header Content</h3>
-          <span style="font-size: 0.75rem; color: #6b7280;">— with icon and subtitle</span>
+          <span style="font-size: 0.75rem; color: var(--tn-alt-fg1);">— with icon and subtitle</span>
         </div>
         <p>This card uses projected header content instead of a simple title string.</p>
         <p>You can put any content in the header using the <code>tnCardHeader</code> attribute.</p>
