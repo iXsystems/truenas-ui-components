@@ -461,6 +461,27 @@ element around the text — `<li><h3>` in plain HTML. Dropping to
 from the accessibility tree, which is a silent regression a passing rule cannot
 show you.
 
+**Where it cannot be moved, keep the text as an accessible name.** The same
+subheader inside a `listbox` has nowhere to move the heading to (#259).
+`listitem` is not an allowed child there either, and — measured, and asserted as
+a control in `list/list-a11y.spec.ts` — **axe reads THROUGH a `group` when it
+collects what a listbox owns**, so wrapping the heading in the one container the
+listbox does allow reports the identical violation with the heading named
+instead. So the host becomes the `group` and takes the section's own text as its
+accessible name, via `aria-labelledby` to the unmarked span around it. The text
+is still in the accessibility tree and still announced; what it is announced as
+changes, from a heading to a named section.
+
+That the answer differs per container is the point of asking who owns you: there
+is no one substitute role, and `presentation` is never it.
+
+**A decorative element needs no substitute at all** — it carries no role and the
+stylesheet still draws it. `tn-divider` resolves to `presentation` because its
+host is shared with the standalone case; the two rules in
+`select.component.html`, written directly inside that component's own listbox,
+simply have no `role` attribute. Where an element sits is only a question worth
+asking with `ariaOwner()` when the same component renders in both places.
+
 ### Live Regions
 
 **Declare politeness exactly once.** A live-region role implies one — `alert` is
