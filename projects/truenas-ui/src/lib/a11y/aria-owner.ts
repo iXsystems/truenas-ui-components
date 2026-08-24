@@ -156,13 +156,8 @@ export function prescribesItsChildren(ownerRole: string | null): boolean {
  * into its owner during a pass is re-read on the NEXT one. A one-frame-stale
  * decorative role is the acceptable end of this trade; the permanent one was
  * not.
- *
- * The DOM read is skipped entirely while the host's parent is unchanged, which
- * is every cycle but the first and any that moves it — so the steady-state cost
- * is one property read per cycle.
  */
 export class AriaOwner {
-  private checkedParent: Element | null = null;
   private readonly owner = signal<string | null>(null);
 
   constructor(private readonly host: Element) {}
@@ -170,16 +165,15 @@ export class AriaOwner {
   /** The role that owns this element, or `null` while nothing above it has one. */
   readonly role: Signal<string | null> = this.owner.asReadonly();
 
-  /** Re-reads the owner if the host has been reparented. Call from `ngDoCheck`. */
+  /** Re-reads the owner. Call from `ngDoCheck`. */
   check(): void {
-    const parent = this.host.parentElement;
-    // `null` is also the signal's initial value, so a host that starts with no
-    // parent needs no write to be correct — and gets one as soon as it is
-    // attached, because the parent will then differ.
-    if (parent === this.checkedParent) {
-      return;
-    }
-    this.checkedParent = parent;
+    // Every cycle, with nothing cached. Caching on the host's own parent looks
+    // free and is wrong: moving a WRAPPER into a list changes the owner without
+    // changing the host's parent, and the stale answer never gets corrected.
+    //
+    // The walk is a native `closest` over the one to three elements between a
+    // divider and its container, and a signal set to a value it already holds
+    // notifies nobody, so an unchanged answer costs nothing downstream.
     this.owner.set(ariaOwnerRole(this.host));
   }
 }
