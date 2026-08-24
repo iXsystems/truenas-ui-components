@@ -297,9 +297,13 @@ export class TnTablePagerComponent {
    * when the caller supplies an IDREF, so a dangling IDREF surfaces as an
    * unnamed element instead of being masked by a name that says nothing. The
    * trade is only worth making where "unnamed" is itself caught: a progressbar
-   * fails `aria-progressbar-name`, a dialog fails `aria-dialog-name`. A
-   * `navigation` landmark fails neither, and `landmark-unique` compares
-   * landmarks against each other, so one unnamed pager violates nothing at all.
+   * fails `aria-progressbar-name`, an `over` drawer fails `aria-dialog-name`,
+   * and a `side` drawer — a landmark, like this — rests on that module's
+   * dev-mode warning instead. This pager has neither. `landmark-unique` compares
+   * landmarks against each other, so one unnamed pager violates nothing at all;
+   * and the warning is one it cannot take, because the fallback here is a name
+   * the consumer configures through `TN_TABLE_PAGER_LABELS` rather than one
+   * someone forgot, so it would fire on the ordinary case.
    *
    * Withholding here would therefore turn a typo in `ariaLabelledby` into a
    * pager that announces nothing and reports nothing — a worse version of the

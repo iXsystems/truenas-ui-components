@@ -48,25 +48,32 @@ import type { Signal } from '@angular/core';
  * `live-region.ts`. It is how this library's own components agree with each
  * other; a consumer naming its own element has `aria-label`.
  *
- * WHAT THE SECOND BRANCH DEPENDS ON, AND THE ONE COMPONENT IT RULES OUT
- * --------------------------------------------------------------------
+ * WHAT THE SECOND BRANCH DEPENDS ON, AND THE ONE CALLER THAT CANNOT HAVE IT
+ * -------------------------------------------------------------------------
  * "Unnamed at least still fails loudly" is not a property of being unnamed. It
- * is a property of every caller here: an unnamed `role="progressbar"` fails
- * axe's `aria-progressbar-name`, and an unnamed dialog fails `aria-dialog-name`.
- * Withholding the fallback trades a masked dangling IDREF for a red check, which
- * is a good trade only while that red check exists.
+ * is a property of every caller here, and of two different mechanisms. An
+ * unnamed `role="progressbar"` fails axe's `aria-progressbar-name` and an
+ * unnamed `over` drawer fails `aria-dialog-name`; a `side` drawer is a
+ * `role="navigation"` landmark that axe reports only once there are two of them,
+ * and rests instead on the dev-mode warning below. That is why the rule and the
+ * warning are one function: taking the branch without one of the two leaves the
+ * loudness the branch assumes.
  *
- * It does not exist for a landmark. `tn-table-pager` is `role="navigation"`, and
- * axe's only landmark-naming rule is `landmark-unique`, which compares landmarks
- * against EACH OTHER — one unnamed navigation landmark on a page violates
- * nothing. So a pager given a typo'd `ariaLabelledby` would go silently unnamed,
- * which is the failure #249 reported made worse, not fixed. The pager therefore
- * names itself unconditionally and does not call this function; the reason is
- * written out at `resolvedTablePaginationLabel` in `table-pager.component.ts`.
+ * `tn-table-pager` (#249) is the caller that can have neither. It is
+ * `role="navigation"`, so no axe rule names it — `landmark-unique` compares
+ * landmarks against EACH OTHER, and one unnamed landmark violates nothing. And
+ * its fallback is a DESIGNED name the consumer configures through
+ * `TN_TABLE_PAGER_LABELS` rather than a last resort for a name someone forgot,
+ * so the warning would fire on the ordinary case and teach readers to ignore it
+ * where it means something. Withholding there would turn a typo'd
+ * `ariaLabelledby` into a pager that announces nothing and reports nothing —
+ * the failure #249 opened on, made worse. So the pager names itself
+ * unconditionally and does not call this function; the reasoning is written out
+ * at `resolvedTablePaginationLabel` in `table-pager.component.ts`.
  *
- * That is the exception rather than an invitation. Routing the pager through
- * here would be a regression, and any other caller that reaches for this
- * function needs to be able to name the axe rule that catches it when unnamed.
+ * That is an exception with a reason rather than an invitation. A caller
+ * reaching for this function should be able to say which of the two — an axe
+ * name rule, or the warning below — catches it when it ends up unnamed.
  */
 
 /** What a component needs to tell this function about itself. */
