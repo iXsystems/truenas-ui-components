@@ -395,6 +395,62 @@ describe('tn-selection-list accessible name (#235)', () => {
     });
 
     /**
+     * And the reverse, which is the case that made this a per-pass question
+     * rather than a `computed` one: withholding the field's label while the
+     * consumer's name stands has to STOP withholding when that name goes away.
+     * A `computed` cannot — a DOM attribute is not a signal, so nothing it read
+     * changed — and the list is left with no accessible name at all.
+     */
+    it('gives the field label back when the consumer clears their own', () => {
+      @Component({
+        selector: 'tn-clearable-attr-label-host',
+        standalone: true,
+        imports: [TnFormFieldComponent, TnSelectionListComponent, TnListOptionComponent],
+        template: `<tn-form-field label="Mailboxes"><tn-selection-list
+          [attr.aria-label]="label()"><tn-list-option
+          value="inbox">Inbox</tn-list-option></tn-selection-list></tn-form-field>`
+      })
+      class ClearableAttrLabelHostComponent {
+        label = signal<string | null>('Folders');
+      }
+
+      const fixture = TestBed.createComponent(ClearableAttrLabelHostComponent);
+      fixture.detectChanges();
+
+      expect(accessibleName(list(fixture))).toBe('Folders');
+
+      fixture.componentInstance.label.set(null);
+      fixture.detectChanges();
+
+      expect(accessibleName(list(fixture))).toBe('Mailboxes');
+    });
+
+    /** And takes it away again when the consumer names it once more. */
+    it('withholds the field label again when the consumer names it later', () => {
+      @Component({
+        selector: 'tn-late-attr-label-host',
+        standalone: true,
+        imports: [TnFormFieldComponent, TnSelectionListComponent, TnListOptionComponent],
+        template: `<tn-form-field label="Mailboxes"><tn-selection-list
+          [attr.aria-label]="label()"><tn-list-option
+          value="inbox">Inbox</tn-list-option></tn-selection-list></tn-form-field>`
+      })
+      class LateAttrLabelHostComponent {
+        label = signal<string | null>(null);
+      }
+
+      const fixture = TestBed.createComponent(LateAttrLabelHostComponent);
+      fixture.detectChanges();
+
+      expect(accessibleName(list(fixture))).toBe('Mailboxes');
+
+      fixture.componentInstance.label.set('Folders');
+      fixture.detectChanges();
+
+      expect(accessibleName(list(fixture))).toBe('Folders');
+    });
+
+    /**
      * The other side of the ownership rule: a name this component DID write is
      * still its to take back when the input that produced it goes away.
      */
