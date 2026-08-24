@@ -1,1 +1,7 @@
-<ng-content />
+<!--
+  The heading role lives here when the host has had to become a `listitem` —
+  see the class docblock. Rendered either way rather than behind an `@if`, so
+  there is one DOM shape and one `<ng-content>`; outside a list it is an
+  unmarked span and the host is the heading.
+-->
+<span [attr.role]="inList() ? 'heading' : null" [attr.aria-level]="inList() ? '3' : null"><ng-content /></span>

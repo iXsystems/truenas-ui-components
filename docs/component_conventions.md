@@ -410,6 +410,57 @@ Add when semantic HTML is insufficient:
 </button>
 ```
 
+### Roles That Depend on the Container
+
+**A container role can forbid its children's roles.** `role="list"` owns only
+`listitem`, so a `role="heading"` subheader or a `role="separator"` divider
+between two rows invalidates the whole list — `aria-required-children`, and the
+defect fixed in #237. The same shape recurs: `listbox` owns `option` and `group`,
+`tablist` owns `tab`, `row` owns the cell roles.
+
+**Neither side can be fixed by deleting a role.** The subheader and the divider
+are correct on their own; it is the pairing that is not. So a component whose
+role is only valid in some containers takes `ariaOwner()` from
+`lib/a11y/aria-owner.ts` and binds a `computed`:
+
+```ts
+@Component({ host: { '[attr.role]': 'role()' } })
+export class TnDividerComponent implements DoCheck {
+  private readonly owner = ariaOwner();
+  protected readonly role = computed(
+    () => prescribesItsChildren(this.owner.role()) ? 'presentation' : 'separator'
+  );
+  ngDoCheck(): void { this.owner.check(); }
+}
+```
+
+Its docblock has the reasoning. The three things it is easy to get wrong, each
+measured rather than argued:
+
+- **The owner is the nearest ancestor with a role, not the nearest list.** A
+  divider inside a `tn-list-item` is owned by the row, where a separator is
+  legal. "Is there a list above me" demotes it for nothing. `presentation` and
+  `none` are transparent, like no role at all.
+- **An element injector walks the template that *declared* the element**, which
+  content projection makes diverge from where it renders, while the
+  accessibility tree is built from the DOM. `inject(TnListComponent, { optional: true })`
+  therefore gets `<some-panel><tn-divider /></some-panel>` wrong.
+- **The answer cannot be taken once, in `ngOnInit`.** An `<ng-content>` inside
+  an `@if` projects during the panel's own view refresh, which is after the
+  hooks of the content it projects — so an element can be initialised outside
+  its owner and end up inside it. `ariaOwner()` re-reads after every render as
+  well as from `ngDoCheck`, because `ngDoCheck` does not run for an `OnPush`
+  view that nothing dirtied, which is exactly the case: the projection dirties
+  another view, not this one. Reading the DOM in the binding instead throws
+  `ExpressionChangedAfterItHasBeenChecked` on markup that is correct.
+
+**Move a required role rather than dropping it.** Inside a list the subheader's
+host becomes the `listitem` the list requires and the heading moves to the
+element around the text — `<li><h3>` in plain HTML. Dropping to
+`role="presentation"` would have satisfied axe by removing the section heading
+from the accessibility tree, which is a silent regression a passing rule cannot
+show you.
+
 ### Live Regions
 
 **Declare politeness exactly once.** A live-region role implies one — `alert` is

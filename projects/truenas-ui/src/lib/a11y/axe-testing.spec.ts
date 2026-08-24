@@ -406,9 +406,10 @@ describe('axeScan', () => {
   });
 
   /**
-   * A component that IS its host: `tn-divider` has a 0-byte template and puts
-   * `role="separator"` and `aria-orientation` in `host: {}`, so it renders
-   * childless and textless having done exactly what it was asked to. The tree
+   * A component that IS its host: `tn-divider` has a 0-byte template and renders
+   * `role="separator"` and `aria-orientation` on the host — from bindings since
+   * #237, so after `detectChanges()` rather than at `createComponent` — leaving
+   * it childless and textless having done exactly what it was asked to. The tree
    * guard above cannot tell that from a fixture that never rendered — measured,
    * a component whose template sits inside a false `@if` reaches it looking
    * identical, static host `role` included — so the caller says which it has and

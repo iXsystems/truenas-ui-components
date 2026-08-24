@@ -1,4 +1,6 @@
-import { Directive } from '@angular/core';
+import { Directive, computed } from '@angular/core';
+import type { DoCheck } from '@angular/core';
+import { ariaOwner, prescribesItsChildren } from '../a11y/aria-owner';
 
 /*
  * Content directives for `tn-list-item` / `tn-list-option`.
@@ -113,12 +115,40 @@ export class TnListItemSecondaryDirective {}
 })
 export class TnListItemTrailingDirective {}
 
+/**
+ * Makes an element that is already something else read as a divider.
+ *
+ * Same ARIA as `TnDividerComponent` and for the same reason (#237):
+ * `role="separator"`, unless a `role="list"` is what owns it, where a separator
+ * is not an allowed child and invalidates the list.
+ *
+ * **It no longer matches `tn-divider` as well, which is a breaking change**:
+ * code that writes `<tn-divider>` while importing only this directive now has
+ * no match for that element and stops compiling. Import `TnDividerComponent`
+ * for the element form — it is what declares the element, and what every use of
+ * `<tn-divider>` in this repository already imports.
+ *
+ * On `tn-divider` this only ever restated what the component declares, and once
+ * the role varies by context, a second source for it is a second answer waiting
+ * to disagree — two instances of the tracking that decides it, on one element,
+ * writing one attribute.
+ */
 @Directive({
-  selector: 'tn-divider, [tnDivider]',
+  selector: '[tnDivider]',
   standalone: true,
   host: {
     'class': 'tn-divider',
-    'role': 'separator'
+    '[attr.role]': 'role()'
   }
 })
-export class TnDividerDirective {}
+export class TnDividerDirective implements DoCheck {
+  private readonly owner = ariaOwner();
+
+  protected readonly role = computed(
+    () => prescribesItsChildren(this.owner.role()) ? 'presentation' : 'separator'
+  );
+
+  ngDoCheck(): void {
+    this.owner.check();
+  }
+}
