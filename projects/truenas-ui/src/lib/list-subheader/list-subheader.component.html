@@ -1,7 +1,9 @@
 <!--
-  The heading role lives here when the host has had to become a `listitem` —
-  see the class docblock. Rendered either way rather than behind an `@if`, so
-  there is one DOM shape and one `<ng-content>`; outside a list it is an
-  unmarked span and the host is the heading.
+  The heading role lives here when a list has made the host the `listitem` it
+  requires — see the class docblock. Rendered either way rather than behind an
+  `@if`, so there is one DOM shape and one `<ng-content>`; where the host is the
+  heading, and inside a listbox where nothing may be one, this is an unmarked
+  span. The `id` is emitted only for the listbox, which is the one form that has
+  to point at this text to be named by it.
 -->
-<span [attr.role]="inList() ? 'heading' : null" [attr.aria-level]="inList() ? '3' : null"><ng-content /></span>
+<span [attr.id]="namesGroup() ? textId : null" [attr.role]="headingInside() ? 'heading' : null" [attr.aria-level]="headingInside() ? '3' : null"><ng-content /></span>

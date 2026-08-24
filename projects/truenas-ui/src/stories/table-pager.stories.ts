@@ -223,22 +223,33 @@ export const TestIds: Story = {
 /**
  * **Multiple pagers in one view.** Two pagers without a `testId` base would both
  * emit `select-page-size` / `button-first-page` — duplicate, ambiguous selectors.
- * Give each a distinct `testId` base and every child id is scoped uniquely:
- * `select-storage-page-size` vs `select-snapshots-page-size`, etc. The live
- * tables below show the two disjoint id sets.
+ * Give each a distinct `testId` base (`storage` and `snapshots` below) and every
+ * child id is scoped uniquely: `select-storage-page-size` vs
+ * `select-snapshots-page-size`, etc. The live tables below show the two disjoint
+ * id sets.
+ *
+ * **Name them too.** Each pager is a `navigation` landmark, and two landmarks
+ * with the same accessible name are one entry repeated in a screen reader's
+ * landmark list — nothing to choose between them. The pager scopes its default
+ * name by `testId` when you give it one, so these would read "Table pagination
+ * (storage)" and "Table pagination (snapshots)" with no naming inputs at all; a
+ * test id is a developer's token rather than user-facing copy, though, so name
+ * them properly. Both routes are shown: the storage pager points
+ * `ariaLabelledby` at the heading above it, and the snapshots pager sets
+ * `tablePaginationLabel` directly.
  */
 export const MultiplePagers: Story = {
   render: () => ({
     props: { total: 247 },
     template: `
-      <h4 style="margin:0 0 8px;font:600 13px/1 sans-serif;">Pager testId="storage"</h4>
+      <h4 id="pager-story-storage" style="margin:0 0 8px;font:600 13px/1 sans-serif;">Storage pools</h4>
       <tn-testid-inspector>
-        <tn-table-pager testId="storage" [totalItems]="total" />
+        <tn-table-pager testId="storage" ariaLabelledby="pager-story-storage" [totalItems]="total" />
       </tn-testid-inspector>
 
-      <h4 style="margin:24px 0 8px;font:600 13px/1 sans-serif;">Pager testId="snapshots"</h4>
+      <h4 style="margin:24px 0 8px;font:600 13px/1 sans-serif;">Snapshots</h4>
       <tn-testid-inspector>
-        <tn-table-pager testId="snapshots" [totalItems]="total" />
+        <tn-table-pager testId="snapshots" tablePaginationLabel="Snapshots pagination" [totalItems]="total" />
       </tn-testid-inspector>
     `,
   }),

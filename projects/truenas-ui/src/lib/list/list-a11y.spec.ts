@@ -3,6 +3,7 @@ import type { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnListComponent } from './list.component';
+import { accessibleName } from '../a11y/accessible-name-testing';
 import { axeResult, axeScan } from '../a11y/axe-testing';
 import { TnDividerComponent } from '../divider/divider.component';
 import { TnDividerDirective, TnListItemTitleDirective } from '../list-directives/list-directives';
@@ -177,6 +178,25 @@ class GatedHostComponent {}
   `,
 })
 class ListboxHostComponent {}
+
+/**
+ * A SUBHEADER in that same listbox, which #237 deliberately left alone and #259
+ * is (see the describe block below for what the answer is and why it differs
+ * from the list's).
+ */
+@Component({
+  selector: 'tn-listbox-subheader-a11y-host',
+  standalone: true,
+  imports: [TnSelectionListComponent, TnListOptionComponent, TnListSubheaderComponent],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-selection-list aria-label="Mailboxes">
+      <tn-list-subheader>Personal</tn-list-subheader>
+      <tn-list-option [value]="'inbox'">Inbox</tn-list-option>
+    </tn-selection-list>
+  `,
+})
+class ListboxSubheaderHostComponent {}
 
 /** The same three components, with nothing around them. */
 @Component({
@@ -435,6 +455,117 @@ describe('tn-list section accessibility', () => {
       );
       expect(violated).toEqual([]);
       expect(evaluated).toContain('aria-required-children');
+    });
+  });
+
+  /**
+   * #259. `listitem` is the LIST's answer to `aria-required-children` and is not
+   * available here — a `listbox` owns `option` and `group` and no more — so the
+   * subheader becomes the `group` and takes the section's text as its accessible
+   * name.
+   *
+   * Moving the heading one level in, the way a list does, does NOT work here and
+   * the case below proves it: axe reads THROUGH a `group` when it collects what
+   * a listbox owns, so a group wrapping a `role="heading"` reports the same
+   * violation with the heading named instead. The section is therefore announced
+   * as a named group rather than as a heading, which is the route the ticket
+   * asks for — what it rules out is `role="presentation"`, which would take the
+   * text out of the tree altogether.
+   *
+   * The group holds the text and NOT the options that follow it. A subheader is
+   * a sibling of the rows it introduces — it is projected content and has
+   * nothing to wrap — so this names the section without enclosing it. A listbox
+   * that wants its options genuinely grouped has to nest them, which is markup
+   * for the consumer to write.
+   */
+  describe('a subheader inside a listbox', () => {
+    let listbox: ComponentFixture<ListboxSubheaderHostComponent>;
+
+    const find = <T extends HTMLElement>(selector: string): T => {
+      const found = listbox.nativeElement.querySelector(selector) as T | null;
+      if (!found) { throw new Error(`no element matched ${selector}`); }
+      return found;
+    };
+
+    beforeEach(async () => { listbox = await createHost(ListboxSubheaderHostComponent); });
+
+    it('reports no aria-required-children violation on the listbox', async () => {
+      const { violated, evaluated } = await axeResult(
+        listbox.nativeElement,
+        [find('tn-selection-list')],
+        ['aria-required-children'],
+      );
+
+      expect(violated).toEqual([]);
+      expect(evaluated).toContain('aria-required-children');
+    });
+
+    it('is the group a listbox may own, and is not a heading anywhere', () => {
+      const subheader = find('tn-list-subheader');
+
+      expect(subheader.getAttribute('role')).toBe('group');
+      // Neither on the host nor one level in. Both are the violation, in the
+      // two shapes this component can produce them — see the docblock above.
+      expect(subheader.getAttribute('aria-level')).toBeNull();
+      expect(subheader.querySelectorAll('[role="heading"]')).toHaveLength(0);
+    });
+
+    it('keeps the section text in the accessibility tree, as the group name', () => {
+      const subheader = find('tn-list-subheader');
+      const text = find('tn-list-subheader span');
+
+      // The assertion the ticket's criterion is about: dropping the role is
+      // only correct while the text is still announced, and a `role="group"`
+      // that resolved to no name would announce nothing at all.
+      expect(subheader.getAttribute('aria-labelledby')).toBe(text.id);
+      expect(text.id).not.toBe('');
+      expect(accessibleName(subheader)).toBe('Personal');
+    });
+
+    it('positive control: the pre-#259 roles still fail the same rule', async () => {
+      // The shape this ticket removed, rebuilt by hand — without it, the empty
+      // `violated` above is also what an axe upgrade that stopped matching this
+      // markup looks like.
+      const panel = document.createElement('div');
+      panel.setAttribute('role', 'listbox');
+      panel.setAttribute('aria-label', 'Mailboxes');
+      panel.innerHTML =
+        '<div role="heading" aria-level="3">Personal</div>'
+        + '<div role="option" aria-selected="false">Inbox</div>';
+      document.body.appendChild(panel);
+
+      try {
+        const { violated } = await axeResult(panel, [panel], ['aria-required-children']);
+
+        expect(violated).toEqual(['aria-required-children']);
+      } finally {
+        panel.remove();
+      }
+    });
+
+    it('control: a group around the heading does not rescue it either', async () => {
+      // The list's answer — move the heading one level in — applied to a
+      // listbox, which is the obvious fix and the wrong one. axe reads through
+      // a `group` when it collects what a listbox owns, so the heading is still
+      // reported as a child of the listbox. This is why the heading role is
+      // dropped inside a listbox rather than relocated, and it is asserted
+      // rather than described because the reason is entirely in axe's
+      // behaviour.
+      const panel = document.createElement('div');
+      panel.setAttribute('role', 'listbox');
+      panel.setAttribute('aria-label', 'Mailboxes');
+      panel.innerHTML =
+        '<div role="group"><span role="heading" aria-level="3">Personal</span></div>'
+        + '<div role="option" aria-selected="false">Inbox</div>';
+      document.body.appendChild(panel);
+
+      try {
+        const { violated } = await axeResult(panel, [panel], ['aria-required-children']);
+
+        expect(violated).toEqual(['aria-required-children']);
+      } finally {
+        panel.remove();
+      }
     });
   });
 

@@ -144,6 +144,7 @@ export interface TnTableDataProvider {
     'class': 'tn-table-pager',
     'role': 'navigation',
     '[attr.aria-label]': 'resolvedTablePaginationLabel()',
+    '[attr.aria-labelledby]': 'ariaLabelledby() || null',
   },
 })
 export class TnTablePagerComponent {
@@ -222,7 +223,29 @@ export class TnTablePagerComponent {
   previousPageLabel = input<string | undefined>(undefined);
   nextPageLabel = input<string | undefined>(undefined);
   lastPageLabel = input<string | undefined>(undefined);
+
+  /**
+   * Accessible name for the pager's `navigation` landmark — what a screen
+   * reader user picking this pager out of a landmark list hears.
+   *
+   * **Name every pager on a page that has more than one.** Two pagers both
+   * announcing the DI default are one landmark repeated as far as that list is
+   * concerned, which is what #249 was: `landmark-unique` fails and the user has
+   * nothing to choose between them.
+   */
   tablePaginationLabel = input<string | undefined>(undefined);
+
+  /**
+   * IDREF naming the pager from text already on the page — the heading over the
+   * table it pages, typically, which is the name the user can see.
+   *
+   * Wins over the `aria-label` in the ARIA name computation while it resolves,
+   * so pass one or the other rather than both. The `aria-label` is rendered
+   * beside it either way and is what the pager falls back to if the IDREF is
+   * typo'd or names an element that has not rendered yet — see
+   * `resolvedTablePaginationLabel`.
+   */
+  ariaLabelledby = input<string | undefined>(undefined);
 
   /** Resolved labels: explicit input takes precedence over the DI default. */
   protected resolvedItemsPerPageLabel = computed(() => this.itemsPerPageLabel() ?? this.defaultLabels().itemsPerPage);
@@ -231,9 +254,69 @@ export class TnTablePagerComponent {
   protected resolvedPreviousPageLabel = computed(() => this.previousPageLabel() ?? this.defaultLabels().previousPage);
   protected resolvedNextPageLabel = computed(() => this.nextPageLabel() ?? this.defaultLabels().nextPage);
   protected resolvedLastPageLabel = computed(() => this.lastPageLabel() ?? this.defaultLabels().lastPage);
-  protected resolvedTablePaginationLabel = computed(
-    () => this.tablePaginationLabel() ?? this.defaultLabels().tablePagination,
-  );
+
+  /**
+   * The landmark name a pager falls back to when the consumer sets no
+   * `tablePaginationLabel` — the DI default, scoped by `testId` when there is
+   * one.
+   *
+   * The scoping is what stops the DEFAULT from being the same string on every
+   * pager, which is the shape #249 reported: two pagers, both announcing "Table
+   * pagination", indistinguishable in a landmark list. `testId` is the only
+   * per-instance identity the pager already has, and a page with two pagers
+   * needs distinct ones anyway — without them the pagers' own child controls
+   * collide on `select-page-size` / `button-first-page` (see the **Multiple
+   * Pagers** story), so the multi-pager case that trips this rule is exactly the
+   * case that already sets it.
+   *
+   * **It is a fallback and not the good answer.** A test id is a developer-facing
+   * token: it is not translated, and `storage` reads as the word rather than as
+   * "Storage pools". A pager whose name matters names itself with
+   * `tablePaginationLabel`, or points at the table's visible heading with
+   * `ariaLabelledby`; this only keeps the unnamed case from being ambiguous as
+   * well as generic.
+   *
+   * Appended in parentheses rather than woven into the sentence, because the
+   * base string comes from `TN_TABLE_PAGER_LABELS` and may be in any language —
+   * there is no word order here to get right, only a translated name and a
+   * scope after it.
+   */
+  private defaultTablePaginationLabel = computed(() => {
+    const base = this.defaultLabels().tablePagination;
+    const scope = composeTestId(undefined, this.testId());
+    return scope === '' ? base : `${base} (${scope})`;
+  });
+
+  /**
+   * The name rendered as `aria-label`, always — the explicit
+   * `tablePaginationLabel` when there is one, the scoped default otherwise.
+   *
+   * **It is emitted beside an `ariaLabelledby` rather than withheld under it**,
+   * which is where this differs from `../a11y/accessible-name`, the shared rule
+   * the progressbars and the dialogs take. That rule drops the generic fallback
+   * when the caller supplies an IDREF, so a dangling IDREF surfaces as an
+   * unnamed element instead of being masked by a name that says nothing. The
+   * trade is only worth making where "unnamed" is itself caught: a progressbar
+   * fails `aria-progressbar-name`, an `over` drawer fails `aria-dialog-name`,
+   * and a `side` drawer — a landmark, like this — rests on that module's
+   * dev-mode warning instead. This pager has neither. `landmark-unique` compares
+   * landmarks against each other, so one unnamed pager violates nothing at all;
+   * and the warning is one it cannot take, because the fallback here is a name
+   * the consumer configures through `TN_TABLE_PAGER_LABELS` rather than one
+   * someone forgot, so it would fire on the ordinary case.
+   *
+   * Withholding here would therefore turn a typo in `ariaLabelledby` into a
+   * pager that announces nothing and reports nothing — a worse version of the
+   * defect #249 opened on. So the pager keeps a name it can always fall back to,
+   * and accepts that a dangling IDREF is masked by a generic one.
+   */
+  protected resolvedTablePaginationLabel = computed(() => {
+    const label = this.tablePaginationLabel();
+    // Blank is not a name: `aria-label=" "` leaves the landmark as unnamed as no
+    // `aria-label` would, and axe reads it the same way, so it takes the default
+    // rather than being treated as an answer.
+    return (label ?? '').trim() === '' ? this.defaultTablePaginationLabel() : label;
+  });
 
   /** Emits the new 1-based page number whenever the user navigates. */
   pageChange = output<number>();

@@ -149,6 +149,39 @@ export function contrastRatio(foreground: string, background: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
+/**
+ * The opaque colour a translucent `front` renders as when it is painted over
+ * `back` — source-over compositing, as `rgb(r, g, b)`.
+ *
+ * This is the answer `contrastRatio` refuses to guess at. A translucent
+ * BACKGROUND has no ratio of its own, so that function throws and tells the
+ * caller to "composite it against that surface and pass the result" — and until
+ * this was exported there was no way to do so, which is how a wash painted over
+ * a themed surface came to be excused from measurement rather than measured
+ * (#261: `.tn-chip__close` washing `rgba(255,255,255,0.2)` over the chip, with
+ * the `×` inheriting a colour chosen for the unwashed surface, at 3.31:1).
+ *
+ * `back` must be opaque, for the same reason `contrastRatio`'s background must
+ * be: what is behind it decides the answer. Stacking two washes is therefore
+ * two calls, innermost first, which is also the order a browser paints them.
+ *
+ * Channels are not rounded. The result feeds `contrastRatio`, which linearises
+ * each channel through a gamma curve, and rounding first moves the ratio in
+ * whichever direction the rounding went — the same class of mistake as
+ * comparing a `formatRatio` string against a threshold.
+ */
+export function compositeColor(front: string, back: string): string {
+  const behind = parseColor(back, 'back');
+  if (behind.a !== 1) {
+    throw new Error(
+      `compositeColor: the backdrop ${back} is not opaque, so the colour it renders `
+      + 'as depends on what is behind it. Composite that pair first and pass the result.'
+    );
+  }
+  const { r, g, b } = compositeOver(parseColor(front, 'front'), behind);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
 /** One themed surface from `themes.css`: `:root`, `.tn-dark`, `.tn-nord`, … */
 export interface ThemePalette {
   /** The selector the block was declared under. */
@@ -416,6 +449,15 @@ function customProperties(body: string): Map<string, string> {
 
 function parseColor(value: string, context: string): Rgba {
   const text = value.trim();
+  // The one colour keyword read here, and it is not a hue: `transparent` is
+  // `rgba(0, 0, 0, 0)`, which is how a stylesheet says "paint nothing". Refusing
+  // it would mean a spec compositing a declared background could not read the
+  // value that means there is no wash — the very state #261's fix puts the
+  // close circle in. Every actual colour name stays refused: `red` has to be
+  // converted, and guessing at one is how a wrong ratio gets asserted.
+  if (text.toLowerCase() === 'transparent') {
+    return { r: 0, g: 0, b: 0, a: 0 };
+  }
   const hex = /^#([0-9a-f]+)$/i.exec(text);
   if (hex) {
     return parseHex(hex[1], text, context);

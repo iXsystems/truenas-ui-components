@@ -461,6 +461,27 @@ element around the text — `<li><h3>` in plain HTML. Dropping to
 from the accessibility tree, which is a silent regression a passing rule cannot
 show you.
 
+**Where it cannot be moved, keep the text as an accessible name.** The same
+subheader inside a `listbox` has nowhere to move the heading to (#259).
+`listitem` is not an allowed child there either, and — measured, and asserted as
+a control in `list/list-a11y.spec.ts` — **axe reads THROUGH a `group` when it
+collects what a listbox owns**, so wrapping the heading in the one container the
+listbox does allow reports the identical violation with the heading named
+instead. So the host becomes the `group` and takes the section's own text as its
+accessible name, via `aria-labelledby` to the unmarked span around it. The text
+is still in the accessibility tree and still announced; what it is announced as
+changes, from a heading to a named section.
+
+That the answer differs per container is the point of asking who owns you: there
+is no one substitute role, and `presentation` is never it.
+
+**A decorative element needs no substitute at all** — it carries no role and the
+stylesheet still draws it. `tn-divider` resolves to `presentation` because its
+host is shared with the standalone case; the two rules in
+`select.component.html`, written directly inside that component's own listbox,
+simply have no `role` attribute. Where an element sits is only a question worth
+asking with `ariaOwner()` when the same component renders in both places.
+
 ### Live Regions
 
 **Declare politeness exactly once.** A live-region role implies one — `alert` is
@@ -590,6 +611,37 @@ layout engine to find what is actually painted behind an element; under jsdom it
 reports `incomplete`, which `axeResult()` treats as an error. What these
 assertions measure is the palette as shipped, against the surface the spec names.
 See `theme/error-text-contrast.spec.ts` for the shape.
+
+### Reading a stylesheet back in a spec
+
+**Use `lib/a11y/scss-testing.ts`. Do not write another brace walk.** A contrast
+spec is a hardcoded table of pairs, and a table is exactly as current as the last
+person to edit it — a new variant, or a `color:` moved to another token, leaves
+every case green while measuring markup that no longer exists. The half of such a
+spec that stops it rotting reads the `.scss` back, and that half is identical
+whichever component it is pointed at. It was written inside
+`chip/chip-contrast.spec.ts` and moved here when
+`pipes/label-markup/inline-code-contrast.spec.ts` became its second caller (#262).
+
+**`scssRules(scss, source)` returns every rule with its `parent`, and the nesting
+is the point.** `color` and `background-color` are rarely declared together:
+`&--secondary:hover` repaints the background and inherits its label colour from
+`&--secondary`, one level up and on the same element. Collecting the two
+properties independently gives the right two *sets* of tokens and says nothing
+about which goes with which, so re-pairing an existing foreground with an
+existing surface passes.
+
+**`inheritedValue(rule, 'color')` walks that chain; `flattenSelector(rule)`
+resolves `&` outward.** Use the flattened form whenever a guard enumerates the
+rules that paint something — `&__close` finds the one rule written inside
+`.tn-chip` and misses every theme-scoped override of it, which is exactly where
+an unmeasured colour comes back.
+
+**It reads nesting and declarations, not Sass.** `@include`, `@if` and
+interpolation are invisible to it. A spec that needs to know which rule includes
+a mixin can rewrite the include into a marker declaration before parsing — see
+`inline-code-contrast.spec.ts` — and a spec that needs the *compiled* output has
+to compile it.
 
 ### Keyboard Navigation
 Support standard keys:
