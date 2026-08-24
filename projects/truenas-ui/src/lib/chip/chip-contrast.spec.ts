@@ -121,22 +121,41 @@ const CLOSE_SURFACES: readonly CloseSurface[] = [
 ];
 
 /**
- * Every rule allowed to paint a background on the close circle, flattened, with
- * what it is for.
+ * Every rule allowed to colour the close circle, by the selector it really
+ * matches, with what it may set and why.
  *
  * An allowlist rather than a measurement of whatever it finds, because the
- * defect this file now guards is a rule that paints the circle a colour NOBODY
+ * defect this file guards is a rule colouring the circle in a way NOBODY
  * measured — and a spec that measures every rule it finds can only ever report
  * on rules it knows how to interpret. A new theme-scoped override lands here as
  * a failure naming the selector, which is the point at which someone has to say
  * what it is and where it is measured.
+ *
+ * `color` as well as `background`, because the two together are what the
+ * measurement below rests on: the glyph colour in `CLOSE_SURFACES` is the
+ * variant's label colour, and that is only true while the circle inherits it.
  */
-const CLOSE_BACKGROUND_RULES: Readonly<Record<string, string>> = {
-  '.tn-chip__close': 'the resting circle, measured against every variant by "the × clears AA" below',
-  '.tn-chip--primary .tn-chip__close:hover:not(:disabled)':
-    'the hover invert, whose pair is in CHIP_SURFACES and measured with the labels',
-  '.tn-chip--secondary .tn-chip__close:hover:not(:disabled)': 'the same invert on the hovered secondary chip',
-  '.tn-chip--accent .tn-chip__close:hover:not(:disabled)': 'the same invert on the hovered accent chip',
+const CLOSE_RULES: Readonly<Record<string, { background: string; color: string; why: string }>> = {
+  '.tn-chip__close': {
+    background: 'transparent',
+    color: 'inherit',
+    why: 'the resting circle, composited over every variant by "the × clears AA" below',
+  },
+  '.tn-chip--primary .tn-chip__close:hover:not(:disabled)': {
+    background: 'var(--tn-primary-txt)',
+    color: 'var(--tn-primary)',
+    why: 'the hover invert, whose pair is in CHIP_SURFACES and measured with the labels',
+  },
+  '.tn-chip--secondary .tn-chip__close:hover:not(:disabled)': {
+    background: 'var(--tn-alt-fg2)',
+    color: 'var(--tn-alt-bg2)',
+    why: 'the same invert on the hovered secondary chip, which is on --tn-alt-bg2 by then',
+  },
+  '.tn-chip--accent .tn-chip__close:hover:not(:disabled)': {
+    background: 'var(--tn-alt-fg2)',
+    color: 'var(--tn-alt-bg2)',
+    why: 'the same invert on the hovered accent chip, which lands on the same surface',
+  },
 };
 
 /**
@@ -498,50 +517,77 @@ describe('tn-chip label contrast (#238)', () => {
     // Read out of the stylesheet, not listed: the whole claim is about what the
     // circle paints over the chip, so a spec that hardcoded the value would go
     // on passing after someone changed it.
+    // Every rule that touches the circle's own colours, by the selector it
+    // really matches. `flattenSelector` rather than the fragment: `&__close`
+    // finds the one rule written inside `.tn-chip` and misses every
+    // theme-scoped override — `.tn-dark .tn-chip--secondary .tn-chip__close`
+    // was one until #261 — which is exactly where a colour nobody measured
+    // would come back.
     const closeRules = rules.filter(
       (rule) =>
         flattenSelector(rule).includes('__close')
-        && (rule.declarations.has('background-color') || rule.declarations.has('background'))
+        && ['background-color', 'background', 'color'].some((property) => rule.declarations.has(property))
     );
-    const resting = closeRules.find((rule) => flattenSelector(rule) === '.tn-chip__close');
 
-    it('only the rules named in CLOSE_BACKGROUND_RULES paint the close circle', () => {
-      // Catches the reintroduction this file cannot otherwise see: a
-      // theme-scoped override — `.tn-dark .tn-chip--secondary .tn-chip__close`
-      // was one until #261 — paints a surface the cases below never reach,
-      // because they composite the RESTING rule over each variant. A wash that
-      // exists only under one theme class would be invisible to them.
-      expect(closeRules.map(flattenSelector).sort()).toEqual(Object.keys(CLOSE_BACKGROUND_RULES).sort());
+    it('only the rules named in CLOSE_RULES colour the close circle', () => {
+      expect(closeRules.map(flattenSelector).sort()).toEqual(Object.keys(CLOSE_RULES).sort());
     });
 
-    it('the resting circle declares a background', () => {
-      // `resting` is read with `?.` below, and a `.tn-chip__close` that stops
-      // declaring one at all would leave every case measuring `undefined` —
-      // which throws in `compositeColor` rather than passing, but says nothing
-      // useful about why. This says it.
-      expect(resting).toBeDefined();
+    it.each(Object.entries(CLOSE_RULES))('%s paints what CLOSE_RULES says it does', (selector, expected) => {
+      // Not just WHICH rules colour the circle but WHAT they set, because the
+      // cases below take both from the table: the glyph colour comes from
+      // `CLOSE_SURFACES`, which is only right while `.tn-chip__close` is still
+      // `color: inherit` and no other rule has repainted it.
+      const rule = closeRules.find((candidate) => flattenSelector(candidate) === selector);
+      expect(rule?.declarations.get('background-color') ?? rule?.declarations.get('background'))
+        .toBe(expected.background);
+      expect(rule?.declarations.get('color')).toBe(expected.color);
     });
 
-    const wash = resting?.declarations.get('background-color')
-      ?? (resting?.declarations.get('background') as string);
-
-    it('the glyph takes the chip\'s label colour and nothing of its own', () => {
-      // The premise of `CLOSE_SURFACES.glyph`. `.tn-chip__close` says
-      // `color: inherit` and `.tn-chip__close-icon` says nothing, so the `×`
-      // renders in the variant's label colour — which is why washing the
-      // circle moves the surface out from under a colour chosen for the chip.
-      // A `color:` appearing on either would make every case below measure a
-      // colour the glyph no longer has.
-      const glyphRules = rules.filter(
-        (rule) => rule.selector === '&__close' || rule.selector === '&__close-icon'
-      );
-      expect(glyphRules.map((rule) => rule.selector).sort()).toEqual(['&__close', '&__close-icon']);
+    it('a rule that inverts the circle restates the focus ring as the label colour', () => {
+      // `.tn-chip__close:focus-visible` draws `outline: 1px solid currentColor`,
+      // and the outline is OUTSIDE the circle — it lands on the chip's own
+      // background. At rest that is fine: `currentColor` is the label colour
+      // there. Under the invert `currentColor` becomes the chip's BACKGROUND,
+      // so a keyboard user who happens to be hovering the button they are
+      // focused on gets a ring painted in the background colour on the
+      // background: 1:1, no indicator at all.
+      //
+      // The fill is the label colour, so restating `outline-color` as the fill
+      // is what puts it back. Asserted as EQUAL TO the fill rather than as a
+      // named token, so that changing the invert moves both or fails.
+      const inverting = Object.entries(CLOSE_RULES).filter(([, rule]) => rule.color !== 'inherit');
+      expect(inverting.length).toBeGreaterThan(0);
       expect(
-        glyphRules
-          .filter((rule) => (rule.declarations.get('color') ?? 'inherit') !== 'inherit')
-          .map((rule) => rule.selector)
+        inverting
+          .map(([selector, expected]) => ({
+            selector,
+            outline: closeRules
+              .find((rule) => flattenSelector(rule) === selector)
+              ?.declarations.get('outline-color'),
+            fill: expected.background,
+          }))
+          .filter(({ outline, fill }) => outline !== fill)
       ).toEqual([]);
     });
+
+    // Thrown rather than asserted in an `it`. Everything below is built here in
+    // the describe body — the case titles carry the measured ratio, so they
+    // cannot be — and a guard that runs after the thing it guards is not a
+    // guard: an absent rule would already have thrown inside `compositeColor`
+    // during collection, with a message about `undefined` rather than about the
+    // stylesheet. This is the same failure, said usefully, at the point it
+    // happens.
+    const resting = closeRules.find((rule) => flattenSelector(rule) === '.tn-chip__close');
+    if (resting === undefined) {
+      throw new Error(
+        'chip-contrast.spec.ts: no rule in chip.component.scss flattens to .tn-chip__close, so '
+        + 'there is nothing to composite over the variants. The close circle has been renamed or '
+        + 'has stopped declaring a background of its own.'
+      );
+    }
+    const wash = resting.declarations.get('background-color')
+      ?? (resting.declarations.get('background') as string);
 
     it('the × is normal-size text, so 4.5:1 applies rather than 3:1', () => {
       // AA's large-text allowance starts at 24px, or 18.66px bold. The glyph is
