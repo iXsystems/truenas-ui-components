@@ -130,13 +130,24 @@ describe('custom properties read by the story files (#268)', () => {
   // Not an ignore list: an entry that stops matching reality fails here, so a
   // fixed token cannot be left recorded as broken and a worsening count cannot
   // pass unnoticed.
-  it.each(Object.entries(KNOWN_PHANTOM_TOKENS))(
-    'still reads the recorded phantom token %s at %i site(s) — fix it and delete its entry (#278)',
-    (property, count) => {
-      expect(declared.has(property)).toBe(false);
-      expect(references.filter((reference) => reference.property === property)).toHaveLength(count);
-    },
-  );
+  //
+  // One case over the whole record rather than `it.each` over its entries,
+  // because `it.each` on an empty table is a jest error — and emptying this
+  // record is exactly what #278 finishing looks like. The sweep that retires
+  // this list must not have to repair the spec that asked for it.
+  it('reads every recorded phantom token, still undeclared and at the recorded count (#278)', () => {
+    const recorded = Object.entries(KNOWN_PHANTOM_TOKENS).map(([property, count]) => `${property} ×${count}`);
+
+    const actual = Object.keys(KNOWN_PHANTOM_TOKENS).map((property) => {
+      const sites = references.filter((reference) => reference.property === property);
+      // A recorded token that themes.css now declares is fixed by the other
+      // route — it stopped being phantom without its references moving — and
+      // says so here rather than passing on the count alone.
+      return `${property} ×${sites.length}${declared.has(property) ? ' (now declared in themes.css)' : ''}`;
+    });
+
+    expect(actual).toEqual(recorded);
+  });
 
   // #268's own defect, named so its regression reads as itself rather than as a
   // line in the general case above.
