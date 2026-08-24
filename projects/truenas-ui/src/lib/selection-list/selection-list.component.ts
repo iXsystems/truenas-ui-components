@@ -78,48 +78,57 @@ export class TnSelectionListComponent implements ControlValueAccessor {
   ariaLabelledby = input<string | undefined>(undefined, { alias: 'aria-labelledby' });
 
   /**
-   * The `ariaLabel` input with a blank one normalised away.
+   * ARIA wiring from an enclosing `tn-form-field`, read for `labelledby` alone:
+   * #235 is about the listbox having no accessible name, and the field's
+   * `describedby`/`invalid`/`required` are a separate question this list has
+   * never answered either way.
+   *
+   * Called with NO argument, so it reports the field's label id unconditioned.
+   * Handing it the `ariaLabel` input would have it suppress the field itself —
+   * on truthiness, so a whitespace-only label would cancel the field while being
+   * dropped as no name, leaving nothing — and it would only do so while this
+   * field is initialised after the one it reads, since a signal captured before
+   * its own initialiser runs arrives as `undefined` and is swallowed by an
+   * optional call. The suppression is applied below instead, where the rest of
+   * the precedence is.
+   */
+  private readonly fieldAria = injectTnFormFieldAria();
+
+  /**
+   * The `aria-label` this component supplies, or `null` when it supplies none.
    *
    * Blank is not a name: `aria-label=""` names the listbox as emptily as no
    * attribute at all, while satisfying axe's `aria-input-field-name` rule — a
    * green check on a control a screen reader announces as "listbox".
-   *
-   * `injectTnFormFieldAria` reads THIS rather than the raw input, and that is
-   * load-bearing: it suppresses the field's label whenever the explicit one is
-   * truthy, and `'   '` is truthy — so passing the raw input would leave a
-   * whitespace-only `aria-label` inside a labelled field with no name from
-   * either side. Declared before `fieldAria` because that call captures it.
    */
-  private readonly explicitAriaLabel = computed(() => {
+  private readonly resolvedAriaLabel = computed(() => {
     const label = this.ariaLabel();
-    return label !== undefined && label.trim() !== '' ? label : undefined;
+    return label !== undefined && label.trim() !== '' ? label : null;
   });
 
   /**
-   * ARIA wiring from an enclosing `tn-form-field`. Only `labelledby` is read:
-   * #235 is about the listbox having no accessible name, and the field's
-   * `describedby`/`invalid`/`required` are a separate question this list has
-   * never answered either way.
-   */
-  private readonly fieldAria = injectTnFormFieldAria(this.explicitAriaLabel);
-
-  /** The `aria-label` this component supplies, or `null` when it supplies none. */
-  private readonly resolvedAriaLabel = computed(() => this.explicitAriaLabel() ?? null);
-
-  /**
    * The `aria-labelledby` this component supplies, or `null` when it supplies
-   * none.
+   * none — and the one place the precedence is decided.
    *
-   * The explicit input wins over the enclosing field, so a consumer who points
-   * the list at their own visible text keeps it. With neither, a list outside a
-   * field gets `null` and stays unnamed — deliberately: a generic fallback
-   * ("List") would satisfy axe while announcing nothing the user can act on, and
-   * only the consumer knows what this list holds.
+   * The explicit reference comes first, so a consumer who points the list at
+   * their own visible text keeps it. An explicit `aria-label` comes next, and
+   * withholds the field's reference rather than rendering beside it: ARIA's name
+   * calculation prefers `aria-labelledby` wherever it resolves, so emitting both
+   * would announce the FIELD's label over the name written on the list.
+   *
+   * The field's label comes last, and only when nothing above has named the
+   * list. With none of the three, a list outside a field gets `null` and stays
+   * unnamed — deliberately: a generic fallback ("List") would satisfy axe while
+   * announcing nothing the user can act on, and only the consumer knows what
+   * this list holds.
    */
   private readonly resolvedAriaLabelledby = computed(() => {
     const labelledby = this.ariaLabelledby();
     if (labelledby !== undefined && labelledby.trim() !== '') {
       return labelledby;
+    }
+    if (this.resolvedAriaLabel() !== null) {
+      return null;
     }
     return this.fieldAria.labelledby();
   });

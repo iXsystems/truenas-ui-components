@@ -101,6 +101,32 @@ describe('tn-selection-list accessible name (#235)', () => {
     });
 
     /**
+     * The ordering the whole resolution exists to produce, and the case it is
+     * easiest to leave untested: an explicit name and a field label together.
+     *
+     * The explicit one wins, and the field's reference is WITHHELD rather than
+     * rendered beside it. Rendering both would announce the field's label —
+     * `aria-labelledby` beats `aria-label` wherever it resolves — so the second
+     * assertion is the one that catches a regression the first cannot see.
+     */
+    it('wins over an enclosing form field label', () => {
+      @Component({
+        selector: 'tn-named-in-field-list-host',
+        standalone: true,
+        imports: [TnFormFieldComponent, TnSelectionListComponent, TnListOptionComponent],
+        template: `<tn-form-field label="Mailboxes"><tn-selection-list aria-label="Folders">
+          <tn-list-option value="inbox">Inbox</tn-list-option></tn-selection-list></tn-form-field>`
+      })
+      class NamedInFieldHostComponent {}
+
+      const named = TestBed.createComponent(NamedInFieldHostComponent);
+      named.detectChanges();
+
+      expect(accessibleName(list(named))).toBe('Folders');
+      expect(list(named).hasAttribute('aria-labelledby')).toBe(false);
+    });
+
+    /**
      * A blank `aria-label` must not take the field's label away with it.
      * `injectTnFormFieldAria` suppresses the field whenever the explicit name is
      * TRUTHY, and `'   '` is truthy — so a list handing it the raw input ends up

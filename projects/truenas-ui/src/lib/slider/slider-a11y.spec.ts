@@ -108,6 +108,32 @@ describe('tn-slider accessible name (#235)', () => {
     });
 
     /**
+     * The ordering the whole resolution exists to produce, and the case it is
+     * easiest to leave untested: an explicit name and a field label together.
+     *
+     * The explicit one wins, and the field's reference is WITHHELD rather than
+     * rendered beside it. Rendering both would announce the field's label —
+     * `aria-labelledby` beats `aria-label` wherever it resolves — so the second
+     * assertion is the one that catches a regression the first cannot see.
+     */
+    it('loses to an explicit name on the slider', () => {
+      @Component({
+        selector: 'tn-named-in-field-host',
+        standalone: true,
+        imports: [TnFormFieldComponent, TnSliderComponent, TnSliderThumbDirective],
+        template: `<tn-form-field label="Speed Control"><tn-slider aria-label="Volume">
+          <input tnSliderThumb value="50"></tn-slider></tn-form-field>`
+      })
+      class NamedInFieldHostComponent {}
+
+      const named = TestBed.createComponent(NamedInFieldHostComponent);
+      named.detectChanges();
+
+      expect(accessibleName(thumb(named))).toBe('Volume');
+      expect(thumb(named).hasAttribute('aria-labelledby')).toBe(false);
+    });
+
+    /**
      * A blank `aria-label` must not take the field's label away with it.
      * `injectTnFormFieldAria` suppresses the field whenever the explicit name is
      * TRUTHY, and `'   '` is truthy — so a slider handing it the raw input ends
