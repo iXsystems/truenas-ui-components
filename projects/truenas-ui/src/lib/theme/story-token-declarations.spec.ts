@@ -21,9 +21,12 @@ import { join, relative } from 'path';
  * this spec is for.
  *
  * KNOWN_PHANTOM_TOKENS records the ones still outstanding. It is deliberately
- * not an ignore list: every entry is asserted to still be referenced, so
- * fixing one turns this spec red until its entry goes too, and the list can
- * only ever shrink. See #278 for the sweep that empties it.
+ * not an ignore list: every entry is asserted to still be referenced, so an
+ * entry cannot outlive the defect it excuses — fixing a token turns this spec
+ * red until its entry goes too. It does not stop the list GROWING: a new
+ * phantom token added with a matching entry in the same commit passes here.
+ * What it removes is doing that silently, since the entry is an edit to this
+ * file and reads as what it is. See #278 for the sweep that empties it.
  *
  * SCOPE. This reads `src/stories/` only — the demo markup, where a token is
  * typed into an inline `style` attribute with no stylesheet to check it
