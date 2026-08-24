@@ -2,7 +2,7 @@ import { A11yModule } from '@angular/cdk/a11y';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import {
   Component, Directive, input, output, model, computed, effect, inject, signal,
-  contentChildren, viewChild, afterNextRender, DestroyRef,
+  contentChildren, viewChild, afterNextRender, DestroyRef, NgZone,
 } from '@angular/core';
 import type { ElementRef, OnDestroy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -35,6 +35,23 @@ import { tnTransitionLifecycle } from '../utils/transition-lifecycle';
  * Exported so specs assert against it by name rather than by a copied literal.
  */
 export const TN_SIDE_PANEL_DEFAULT_LABEL = 'Side panel';
+
+/**
+ * The name given to the scrolling content region once it becomes focusable
+ * (#248).
+ *
+ * A focusable element with no accessible name is announced as a bare "group",
+ * which tells a listener that something has been reached and nothing about what
+ * it is. It names the region rather than repeating the panel's own title: the
+ * dialog announces that on entry, so a second copy of it here would say the
+ * same words twice and still not distinguish the part that scrolls.
+ *
+ * Overridable through `contentAriaLabel`, on the same reasoning as
+ * `closeButtonAriaLabel` — a string this library renders into a consumer's UI
+ * has to be translatable. Exported so specs assert against it by name rather
+ * than by a copied literal.
+ */
+export const TN_SIDE_PANEL_CONTENT_LABEL = 'Panel content';
 
 /**
  * Directive to mark an element as a side-panel footer action.
@@ -101,10 +118,25 @@ export class TnSidePanelComponent implements OnDestroy {
   private iconRegistry = inject(TnIconRegistryService);
   private document = inject(DOCUMENT);
   private destroyRef = inject(DestroyRef);
+  private zone = inject(NgZone);
 
   private overlayRef = viewChild.required<ElementRef>('overlay');
   private panelRef = viewChild.required<ElementRef<HTMLElement>>('panel');
+  private contentRef = viewChild.required<ElementRef<HTMLElement>>('content');
   protected initialized = signal(false);
+
+  /**
+   * Whether the content region currently overflows, and so needs to be
+   * reachable by keyboard (#248).
+   *
+   * Measured, not derived: nothing about the panel's inputs says whether what a
+   * caller projected fits, and the answer changes with the viewport and with
+   * the content itself. See `measureContentOverflow` for what keeps it current.
+   */
+  protected contentScrollable = signal(false);
+
+  private contentResize?: ResizeObserver;
+  private contentMutations?: MutationObserver;
 
   // Two-way bindable via [(open)]
   open = model<boolean>(false);
@@ -139,6 +171,13 @@ export class TnSidePanelComponent implements OnDestroy {
    * of context otherwise hears only "Dismiss".
    */
   closeButtonAriaLabel = input<string>('Dismiss');
+
+  /**
+   * Accessible name for the scrolling content region, which is named only while
+   * it is focusable — see `TN_SIDE_PANEL_CONTENT_LABEL`. Override it to
+   * translate it, or to say what the region holds ("Dataset properties").
+   */
+  contentAriaLabel = input<string>(TN_SIDE_PANEL_CONTENT_LABEL);
 
   /**
    * Accessible name for the panel itself, for a panel that renders no `title`.
@@ -267,10 +306,15 @@ export class TnSidePanelComponent implements OnDestroy {
     afterNextRender(() => {
       this.document.body.appendChild(this.overlayRef().nativeElement);
       this.initialized.set(true);
+      this.measureContentOverflow();
+      this.watchContentOverflow();
     });
   }
 
   ngOnDestroy(): void {
+    this.contentResize?.disconnect();
+    this.contentMutations?.disconnect();
+
     const overlay = this.overlayRef().nativeElement as HTMLElement;
 
     // A panel destroyed WHILE OPEN never runs the close branch of the effect
@@ -332,6 +376,68 @@ export class TnSidePanelComponent implements OnDestroy {
     // exactly when this event is late: a panel reopened while the close was
     // still animating reads `open() === true` on the stale close's event.
     this.lifecycle.transitionEnded();
+  }
+
+  /**
+   * Read whether the content region overflows, and record it (#248).
+   *
+   * A layout read and nothing else, so it is safe to call from either observer
+   * below: the only write it makes is to a signal, and the attributes that
+   * follow are written by Angular in its own pass rather than here. Setting the
+   * signal to the value it already holds is a no-op, which is what most calls
+   * are.
+   */
+  private measureContentOverflow(): void {
+    const content = this.contentRef().nativeElement;
+    this.contentScrollable.set(content.scrollHeight > content.clientHeight);
+  }
+
+  /**
+   * Keep that measurement current, from the two directions it can go stale.
+   *
+   * A scroll container overflows when its content is taller than its box, and
+   * either half can change on its own:
+   *
+   * - **The box.** The panel is full-height and `width` is an input, so a
+   *   viewport resize or a narrower panel reflows the content. That is
+   *   `ResizeObserver` on the region itself.
+   * - **The content.** A caller's form revealing a validation message, or an
+   *   expanding section, changes `scrollHeight` while the region's own size
+   *   stays exactly the same — so a `ResizeObserver` never fires for it. That
+   *   is `MutationObserver`, and it is why there are two.
+   *
+   * `attributes` is deliberately NOT observed: the attributes this measurement
+   * writes land on the observed element, so watching them would call the
+   * measurement from its own result.
+   *
+   * Both are feature-detected, because neither exists during SSR and
+   * `ResizeObserver` does not exist under jsdom — where the fallback is the
+   * single `afterNextRender` reading, and a region that reads as fitting is the
+   * safe answer either way.
+   *
+   * Outside the Angular zone, for the reason `../a11y/initial-focus.ts` gives
+   * for its retries: a projected form mutates on every keystroke, and a
+   * zone-patched callback would be a change detection pass for each one. The
+   * signal notifies Angular by itself when the answer actually changes.
+   */
+  private watchContentOverflow(): void {
+    const content = this.contentRef().nativeElement;
+
+    this.zone.runOutsideAngular(() => {
+      if (typeof ResizeObserver !== 'undefined') {
+        this.contentResize = new ResizeObserver(() => this.measureContentOverflow());
+        this.contentResize.observe(content);
+      }
+
+      if (typeof MutationObserver !== 'undefined') {
+        this.contentMutations = new MutationObserver(() => this.measureContentOverflow());
+        this.contentMutations.observe(content, {
+          childList: true,
+          subtree: true,
+          characterData: true,
+        });
+      }
+    });
   }
 
   private restoreFocus(): void {

@@ -79,8 +79,30 @@
       </div>
     </header>
 
-    <!-- Content -->
-    <section class="tn-side-panel__content">
+    <!--
+      Content. This is the element that scrolls, and a scrolling element a
+      keyboard cannot reach is content below the fold that a keyboard cannot
+      read (#248). The panel's own `tabindex="-1"` above does not cover it: that
+      is a focus TARGET, not a tab stop, and it is on the container rather than
+      on the element with the overflow.
+
+      All three attributes are gated on the same measurement, and the gate is
+      the point — an unconditional tab stop would land on every panel in the
+      library, including the ones whose content fits, where it announces a group
+      and does nothing. `contentScrollable` is what the component measures; see
+      `measureContentOverflow`.
+
+      `role="group"` rather than the `region` a named `<section>` would imply:
+      `region` is a landmark, and a landmark named the same thing in every panel
+      is what `landmark-unique` reports the moment two of them are open. A group
+      is not summarised, which is what this is.
+    -->
+    <section
+      #content
+      class="tn-side-panel__content"
+      [attr.tabindex]="contentScrollable() ? '0' : null"
+      [attr.role]="contentScrollable() ? 'group' : null"
+      [attr.aria-label]="contentScrollable() ? contentAriaLabel() : null">
       <ng-content />
     </section>
 
