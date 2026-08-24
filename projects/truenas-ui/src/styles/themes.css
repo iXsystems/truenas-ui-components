@@ -37,8 +37,23 @@
   --tn-bg3: #333333;
   --tn-fg1: #ffffff;
   --tn-fg2: rgba(255,255,255,0.85);
-  --tn-fg3: rgba(255,255,255,0.55);
-  --tn-fg4: rgba(255,255,255,0.35);
+  /* NON-TEXT foregrounds. They were documented as "muted text" and "very
+     subdued text" and cannot carry that (#240): measured on the surfaces they
+     would sit on, --tn-fg4 cleared the 4.5:1 text minimum in NONE of the nine
+     palettes and --tn-fg3 in four. Retuning them to clear it was tried on
+     paper and is self-defeating — on a light palette the value that reaches
+     4.5:1 lands within a shade of that theme's own --tn-fg2, so the muted step
+     stops being distinguishable from secondary text, which is the entire
+     reason these tokens exist. Muted TEXT is --tn-alt-fg1, which is tuned for
+     exactly that and says so above.
+
+     What they guarantee instead is the 3:1 WCAG 1.4.11 non-text minimum
+     against --tn-bg1 and --tn-bg2 — icon and glyph strokes, decorative marks,
+     inactive affordances — and nothing on any other surface. Every palette
+     declares both itself and records the pair it measures;
+     muted-fg-contrast.spec.ts holds all nine to it. */
+  --tn-fg3: rgba(255,255,255,0.55); /* 5.91:1 on --tn-bg1, 5.52:1 on --tn-bg2 */
+  --tn-fg4: rgba(255,255,255,0.35); /* 3.21:1 on --tn-bg1, 3.12:1 on --tn-bg2 */
   --tn-alt-bg1: #383838;
   --tn-alt-bg2: #545454;
   /* Muted body text (placeholders, group labels, breadcrumb separators). At 0.5
@@ -134,8 +149,9 @@
   --tn-bg3: #333333;
   --tn-fg1: #e0e0e0;
   --tn-fg2: rgba(255,255,255,0.85);
-  --tn-fg3: rgba(255,255,255,0.55);
-  --tn-fg4: rgba(255,255,255,0.35);
+  /* Non-text, 3:1 on --tn-bg1/--tn-bg2 — see the note in :root (#240). */
+  --tn-fg3: rgba(255,255,255,0.55); /* 5.91:1 on --tn-bg1, 5.52:1 on --tn-bg2 */
+  --tn-fg4: rgba(255,255,255,0.35); /* 3.21:1 on --tn-bg1, 3.12:1 on --tn-bg2 */
   --tn-alt-bg1: #383838;
   --tn-alt-bg2: #545454;
   /* Muted body text. 0.5 read 3.37:1 on --tn-bg1; 0.8 gives >=4.5:1 on every
@@ -186,8 +202,12 @@
   --tn-bg3: #e8e8e8;
   --tn-fg1: #585858;
   --tn-fg2: #666666;
-  --tn-fg3: #888888;
-  --tn-fg4: #909090;
+  /* Non-text, 3:1 on --tn-bg1/--tn-bg2 — see the note in :root (#240). #888888
+     was 3.17:1 and #909090 2.85:1, so --tn-fg4 missed the minimum outright and
+     --tn-fg3 sat close enough to it to leave --tn-fg4 nowhere to go. Both step
+     one shade darker, which keeps the ~0.3 the ramp had between them. */
+  --tn-fg3: #7f7f7f; /* 3.58:1 on --tn-bg1, 4.00:1 on --tn-bg2 */
+  --tn-fg4: #868686; /* 3.25:1 on --tn-bg1, 3.64:1 on --tn-bg2 */
   --tn-alt-bg1: #f0f0f0;
   --tn-alt-bg2: #e8e8e8;
   --tn-alt-fg1: #181a26;
@@ -236,8 +256,9 @@
   --tn-bg3: #343746;
   --tn-fg1: #efefef;
   --tn-fg2: #cacac5;
-  --tn-fg3: #9a9a95;
-  --tn-fg4: #7a7a75;
+  /* Non-text, 3:1 on --tn-bg1/--tn-bg2 — see the note in :root (#240). */
+  --tn-fg3: #9a9a95; /* 6.12:1 on --tn-bg1, 5.04:1 on --tn-bg2 */
+  --tn-fg4: #7a7a75; /* 4.01:1 on --tn-bg1, 3.30:1 on --tn-bg2 */
   --tn-alt-bg1: #3a3d4a;
   --tn-alt-bg2: #44475a;
   --tn-alt-fg1: #f8f8f2;
@@ -294,8 +315,13 @@
   --tn-bg3: #454d5e;
   --tn-fg1: #eceff4;
   --tn-fg2: #e5e9f0;
-  --tn-fg3: #a0a8b4;
-  --tn-fg4: #7b8394;
+  /* Non-text, 3:1 on --tn-bg1/--tn-bg2 — see the note in :root (#240).
+     --tn-fg4 was #7b8394 and read 2.64:1 on --tn-bg2 — #3b4252, the lighter of
+     the two surfaces and so the harder for a light foreground to clear on a
+     dark theme; it steps toward this theme's own --tn-fg2 by the
+     smallest amount that gets there with room to spare. */
+  --tn-fg3: #a0a8b4; /* 5.21:1 on --tn-bg1, 4.19:1 on --tn-bg2 */
+  --tn-fg4: #8b92a2; /* 4.00:1 on --tn-bg1, 3.23:1 on --tn-bg2 */
   --tn-alt-bg1: #434c5e;
   --tn-alt-bg2: #4c566a;
   --tn-alt-fg1: #d8dee9;
@@ -344,8 +370,11 @@
   --tn-bg3: #e8e8e8;
   --tn-fg1: #3f3f3f;
   --tn-fg2: #666666;
-  --tn-fg3: #888888;
-  --tn-fg4: #909090;
+  /* Non-text, 3:1 on --tn-bg1/--tn-bg2 — see the note in :root (#240). Same
+     two values, and the same one-shade step, as .tn-blue: #909090 read 2.85:1
+     on --tn-bg1 and #888888 left nothing between it and the minimum. */
+  --tn-fg3: #7f7f7f; /* 3.58:1 on --tn-bg1, 3.84:1 on --tn-bg2 */
+  --tn-fg4: #868686; /* 3.25:1 on --tn-bg1, 3.49:1 on --tn-bg2 */
   --tn-alt-bg1: #f0f0f0;
   --tn-alt-bg2: #e8e8e8;
   --tn-alt-fg1: #181a26;
@@ -397,8 +426,21 @@
   --tn-bg3: #0a4050;
   --tn-fg1: #586e75;
   --tn-fg2: #7f99a2;
-  --tn-fg3: #4a5e65;
-  --tn-fg4: #3a4d53;
+  /* Non-text, 3:1 on --tn-bg1/--tn-bg2 — see the note in :root (#240). The
+     largest move of the nine, and the only one that changes a theme's look
+     rather than nudging it: #4a5e65 read 1.91:1 on --tn-bg2 and #3a4d53
+     1.46:1, the worst pair in the palette, because Solarized's base01/base02
+     sit deliberately close to its own background. Two steps that both clear
+     3:1 do not fit between those and this theme's --tn-fg2, so both move up to
+     where they do. Nothing reads either token, so nothing regresses.
+     They land above this theme's own --tn-fg1 (2.79:1 on --tn-bg1, 2.42:1 on
+     --tn-bg2) — the one palette of nine where a non-text token out-reads a text
+     one. Nothing clearing 3:1 could sit under 2.79:1, so that is --tn-fg1's
+     defect (#265) rather than this one's. Recorded as OUTREADS_TEXT in
+     muted-fg-contrast.spec.ts, and asserted to still be true there, so retuning
+     --tn-fg1 takes the exception with it. */
+  --tn-fg3: #779099; /* 4.46:1 on --tn-bg1, 3.86:1 on --tn-bg2 */
+  --tn-fg4: #6e868e; /* 3.91:1 on --tn-bg1, 3.38:1 on --tn-bg2 */
   --tn-alt-bg1: #0e4853;
   --tn-alt-bg2: #155a68;
   --tn-alt-fg1: #839496;
@@ -451,8 +493,11 @@
   --tn-bg3: #3d4a55;
   --tn-fg1: #aaaaaa;
   --tn-fg2: #cccccc;
-  --tn-fg3: #888888;
-  --tn-fg4: #666666;
+  /* Non-text, 3:1 on --tn-bg1/--tn-bg2 — see the note in :root (#240).
+     #666666 read 1.94:1 on --tn-bg2 and #888888 3.14:1, so --tn-fg4 had to
+     move a long way and --tn-fg3 had to move with it to stay a step ahead. */
+  --tn-fg3: #969696; /* 4.91:1 on --tn-bg1, 3.76:1 on --tn-bg2 */
+  --tn-fg4: #8a8a8a; /* 4.20:1 on --tn-bg1, 3.22:1 on --tn-bg2 */
   --tn-alt-bg1: #3d4a55;
   --tn-alt-bg2: #4a5762;
   --tn-alt-fg1: #c1c1c1;
@@ -506,8 +551,10 @@
   --tn-bg3: #d0d0d0;
   --tn-fg1: #222222;
   --tn-fg2: #333333;
-  --tn-fg3: #666666;
-  --tn-fg4: #777777;
+  /* Non-text, 3:1 on --tn-bg1/--tn-bg2 — see the note in :root (#240). Both
+     already clear it on both surfaces here, so neither moves. */
+  --tn-fg3: #666666; /* 4.23:1 on --tn-bg1, 5.74:1 on --tn-bg2 */
+  --tn-fg4: #777777; /* 3.30:1 on --tn-bg1, 4.48:1 on --tn-bg2 */
   --tn-alt-bg1: #f0f0f0;
   --tn-alt-bg2: #e8e8e8;
   --tn-alt-fg1: #181a26;
