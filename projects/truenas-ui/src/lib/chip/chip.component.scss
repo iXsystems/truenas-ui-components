@@ -33,15 +33,27 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
+  // Every variant below pairs its `color` with the token it paints as
+  // `background-color`, in the resting state and on hover alike. That pairing
+  // is the whole of #238: the label used to be chosen independently of the
+  // surface, so a theme was free to move one and not the other, and TN Dark
+  // did — --tn-accent resolves to yellow there while the label stayed --tn-fg1,
+  // at 1.20:1. chip-contrast.spec.ts measures each pair below in all nine
+  // palettes and is the reason a new surface here cannot repeat it.
+
   &--primary {
     background-color: var(--tn-primary);
     color: var(--tn-primary-txt);
     border-color: var(--tn-primary);
 
-    &:hover:not(.tn-chip--disabled) {
-      background-color: var(--tn-blue);
-      border-color: var(--tn-blue);
-    }
+    // No hover background. It used to swap to --tn-blue, which is a raw hue
+    // token rather than a themed surface and so has no companion foreground.
+    // In seven of the nine palettes --tn-primary already resolves to the same
+    // colour as --tn-blue, so the swap did nothing at all — which is how it
+    // survived. The two where it did anything are the two it broke: Nord, at
+    // 3.14:1, and Solarized Dark, at 3.68:1. .button-primary, the filled
+    // button, likewise changes no colour on hover; the lift and shadow on
+    // .tn-chip:hover above are the affordance every variant shares.
   }
 
   &--secondary {
@@ -57,11 +69,16 @@
 
   &--accent {
     background-color: var(--tn-accent);
-    color: var(--tn-fg1);
+    color: var(--tn-accent-txt);
     border-color: var(--tn-accent);
 
     &:hover:not(.tn-chip--disabled) {
       background-color: var(--tn-alt-bg2);
+      // --tn-alt-bg2, not --tn-accent, is what this paints, so the label takes
+      // that surface's companion — the same pair --secondary:hover uses.
+      // Keeping --tn-accent-txt here would carry a colour tuned for the accent
+      // fill onto a grey one, which is 1.93:1 in Solarized Dark.
+      color: var(--tn-alt-fg2);
       border-color: var(--tn-alt-bg2);
     }
   }
@@ -124,6 +141,29 @@
 
   &__label {
     @include label-markup.inline-code;
+
+    // The mixin paints <code> on --tn-bg2 and leaves the colour inherited. For
+    // most of the ten components that include it that is fine: their labels
+    // already sit on --tn-bg1 or --tn-bg2, so the wash is a near-neutral step
+    // off a surface the colour was chosen for. A chip label sits on a FILLED
+    // variant surface, so a <code> span in one swaps the background out from
+    // under a colour paired with --tn-primary or --tn-accent — in TN Dark that
+    // is #1E1E1E on #282828, 1.13:1.
+    //
+    // So <code> keeps the chip's own surface, which is the one every pair
+    // above measures, and the monospace font and the border do the
+    // distinguishing instead. currentColor for the border because --tn-lines
+    // is a colour for the page, and on a filled chip it can vanish.
+    //
+    // The chip is not the only filled label in the library — .button-primary
+    // and .button-warn include the same mixin over their own fills, and have
+    // the same problem. Fixing them is not this ticket; #238 is the chip, and
+    // the mixin is right where it is used on the page's own surfaces. Filed as
+    // a proposed ticket on #238.
+    ::ng-deep code {
+      background: transparent;
+      border-color: currentColor;
+    }
 
     white-space: nowrap;
     overflow: hidden;
