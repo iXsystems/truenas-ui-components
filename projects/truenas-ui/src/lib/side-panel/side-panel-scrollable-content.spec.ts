@@ -1,7 +1,11 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
-import { TN_SIDE_PANEL_CONTENT_LABEL, TnSidePanelComponent } from './side-panel.component';
+import {
+  TN_SIDE_PANEL_CONTENT_LABEL,
+  TN_SIDE_PANEL_OVERFLOW_TOLERANCE_PX,
+  TnSidePanelComponent,
+} from './side-panel.component';
 import { axeResult } from '../a11y/axe-testing';
 
 /**
@@ -43,6 +47,11 @@ import { axeResult } from '../a11y/axe-testing';
  * and does nothing, on the commonest shape of panel there is. So the attribute
  * follows the measurement, and `does not make a panel that fits keyboard
  * focusable` is the half of this file that guards against over-fixing.
+ *
+ * With one exception, which is the other half of the same problem: the
+ * attribute is held on while the region HAS focus, because removing it from a
+ * focused element blurs the user out of the panel. See `when the content stops
+ * overflowing UNDER a keyboard user` below.
  */
 
 @Component({
@@ -285,6 +294,84 @@ describe('tn-side-panel scrolling content region (#248)', () => {
     });
   });
 
+  describe('when the content stops overflowing UNDER a keyboard user', () => {
+    /**
+     * The failure this fix can cause, rather than the one it fixes.
+     *
+     * Taking `tabindex` off an element that currently has focus makes the
+     * browser blur it to `<body>` — so a keyboard user reading a panel is
+     * dropped out of the open dialog, and their next Tab restarts from the top
+     * of the page, because content they were not interacting with got shorter.
+     * A validation message clearing, an expander collapsing and the panel
+     * widening all reach this, and every one of them is a routine thing for a
+     * caller's own form to do while someone reads it.
+     *
+     * WHAT THESE TESTS CAN AND CANNOT SEE
+     * -----------------------------------
+     * jsdom does not implement the blur-on-losing-focusability behaviour, so
+     * the consequence cannot be reproduced here — `document.activeElement`
+     * stays put under jsdom whatever the attribute does. What is asserted is
+     * the CONDITION instead: the attributes are never taken off the region
+     * while it holds focus. That is the thing the component controls, and the
+     * browser behaviour follows from it rather than the other way round.
+     *
+     * The release half matters just as much and is the reason this is not
+     * simply "keep the tab stop forever once granted": a panel that fits is
+     * back to no tab stop as soon as focus leaves.
+     */
+    beforeEach(async () => {
+      await openPanel();
+      scrollingTo(content(), 400);
+      await mutateContent(() => host.extra.set(true));
+
+      content().focus();
+      fixture.detectChanges();
+      expect(document.activeElement).toBe(content());
+    });
+
+    it('keeps the tab stop on the region while it holds focus', async () => {
+      scrollingTo(content(), REGION_HEIGHT);
+      await mutateContent(() => host.extra.set(false));
+
+      expect(content().getAttribute('tabindex')).toBe('0');
+      expect(document.activeElement).toBe(content());
+    });
+
+    it('keeps the region named for as long as it stays focusable', async () => {
+      scrollingTo(content(), REGION_HEIGHT);
+      await mutateContent(() => host.extra.set(false));
+
+      // A focused group that loses its name mid-read is announced as a bare
+      // "group" by the next thing said about it — the state the name exists to
+      // prevent, arriving while someone is standing in it.
+      expect(content().getAttribute('role')).toBe('group');
+      expect(content().getAttribute('aria-label')).toBe(TN_SIDE_PANEL_CONTENT_LABEL);
+    });
+
+    it('gives the tab stop up once focus leaves of its own accord', async () => {
+      scrollingTo(content(), REGION_HEIGHT);
+      await mutateContent(() => host.extra.set(false));
+
+      const trigger = fixture.nativeElement.querySelector('#trigger') as HTMLElement;
+      trigger.focus();
+      fixture.detectChanges();
+
+      expect(document.activeElement).toBe(trigger);
+      expect(content().getAttribute('tabindex')).toBeNull();
+      expect(content().getAttribute('role')).toBeNull();
+      expect(content().getAttribute('aria-label')).toBeNull();
+    });
+
+    it('still keeps the tab stop if the content is still overflowing', async () => {
+      // The retention above is about focus, not about the measurement having
+      // gone stale — a region that both overflows and has focus is the ordinary
+      // case and is unaffected.
+      await mutateContent(() => host.extra.set(false));
+
+      expect(content().getAttribute('tabindex')).toBe('0');
+    });
+  });
+
   describe('a panel whose content fits', () => {
     /**
      * The over-fix guard. Every panel in this library renders this `<section>`,
@@ -321,6 +408,100 @@ describe('tn-side-panel scrolling content region (#248)', () => {
       // The same region, past the threshold, to show the assertion above is
       // about the size of the overflow and not about the wiring.
       scrollingTo(content(), REGION_HEIGHT + 40);
+      await mutateContent(() => host.extra.set(false));
+
+      expect(content().getAttribute('tabindex')).toBe('0');
+    });
+  });
+
+  describe('the tolerance, pinned to the rule it was copied from', () => {
+    /**
+     * `TN_SIDE_PANEL_OVERFLOW_TOLERANCE_PX` is axe's own buffer, copied:
+     * `scrollable-region-focusable` matches through `getScroll(node, 13)`, and
+     * the component measures `scrollHeight > clientHeight + 13` so that the two
+     * agree about which panels scroll.
+     *
+     * A copied constant with nothing checking the copy is the problem. If axe
+     * LOWERS its buffer in a version bump, every panel overflowing between the
+     * new buffer and 13 is a region axe reports and the component does not mark
+     * — the reported defect, silently reinstated by a dependency update, with
+     * every test in this file still green because they all measure well clear
+     * of the line.
+     *
+     * These two pin it, from both sides, by asking axe rather than by asserting
+     * the number. The markup is static and unfocusable, so the rule's verdict
+     * is a statement about the overflow alone; the heights are one pixel apart
+     * and derived from the constant, so the pair says exactly "axe's buffer is
+     * this constant" and fails on a bump in either direction. The other
+     * direction — axe RAISING its buffer — is harmless in itself, a tab stop
+     * on a panel the rule would not have reported, but it is the same copy
+     * having gone stale and is worth the same failure rather than a silent
+     * divergence.
+     *
+     * `ignores an overflow smaller than the one axe matches on` above is the
+     * component's side of the same agreement, well inside the line where a
+     * reader can see the shape. This is the line itself.
+     */
+    function staticScroller(scrollHeight: number): { root: HTMLElement; section: HTMLElement } {
+      const root = document.createElement('div');
+      root.innerHTML = '<section class="scroller"><p>Panel body</p></section>';
+      document.body.appendChild(root);
+      const section = root.querySelector('.scroller') as HTMLElement;
+      scrollingTo(section, scrollHeight);
+      return { root, section };
+    }
+
+    it('is the largest overflow axe still declines to call a scroll region', async () => {
+      const { root, section } = staticScroller(
+        REGION_HEIGHT + TN_SIDE_PANEL_OVERFLOW_TOLERANCE_PX
+      );
+
+      try {
+        const { violated, evaluated } = await axeResult(
+          root, section, ['scrollable-region-focusable']
+        );
+
+        expect(violated).toEqual([]);
+        // Not merely unviolated — unmatched. The rule reaches neither
+        // `violations` nor `passes` for an element it does not consider a
+        // scroll container, and that distinction is the whole assertion: an
+        // element axe PASSED would be one it thinks scrolls and thinks is
+        // reachable, which this unfocusable section is not.
+        expect(evaluated).not.toContain('scrollable-region-focusable');
+      } finally {
+        root.remove();
+      }
+    });
+
+    it('is one pixel below the smallest overflow axe reports', async () => {
+      const { root, section } = staticScroller(
+        REGION_HEIGHT + TN_SIDE_PANEL_OVERFLOW_TOLERANCE_PX + 1
+      );
+
+      try {
+        const { violated } = await axeResult(
+          root, section, ['scrollable-region-focusable']
+        );
+
+        expect(violated).toEqual(['scrollable-region-focusable']);
+      } finally {
+        root.remove();
+      }
+    });
+
+    /**
+     * And the component's own boundary, at the same two heights, so the three
+     * things that have to agree — axe's buffer, the constant, and what the
+     * panel actually marks — are asserted against each other in one place.
+     */
+    it('is where the panel itself starts marking the region', async () => {
+      await openPanel();
+      scrollingTo(content(), REGION_HEIGHT + TN_SIDE_PANEL_OVERFLOW_TOLERANCE_PX);
+      await mutateContent(() => host.extra.set(true));
+
+      expect(content().getAttribute('tabindex')).toBeNull();
+
+      scrollingTo(content(), REGION_HEIGHT + TN_SIDE_PANEL_OVERFLOW_TOLERANCE_PX + 1);
       await mutateContent(() => host.extra.set(false));
 
       expect(content().getAttribute('tabindex')).toBe('0');

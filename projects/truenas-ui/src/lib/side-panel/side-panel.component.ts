@@ -65,10 +65,13 @@ export const TN_SIDE_PANEL_CONTENT_LABEL = 'Panel content';
  * content fits to within a pixel reads as overflowing by one.
  *
  * Matching the rule keeps the component and the check that judges it saying the
- * same thing about the same panel. Not exported: it is a property of the rule,
- * not a knob.
+ * same thing about the same panel. It is a property of the rule rather than a
+ * knob, so it is not an input and consumers have no reason to read it — but it
+ * is exported, because `side-panel-scrollable-content.spec.ts` pins it against
+ * axe's own buffer from both sides, and a spec that recopied the literal would
+ * pin the copy to itself.
  */
-const TN_SIDE_PANEL_OVERFLOW_TOLERANCE_PX = 13;
+export const TN_SIDE_PANEL_OVERFLOW_TOLERANCE_PX = 13;
 
 /**
  * Directive to mark an element as a side-panel footer action.
@@ -143,14 +146,52 @@ export class TnSidePanelComponent implements OnDestroy {
   protected initialized = signal(false);
 
   /**
-   * Whether the content region currently overflows, and so needs to be
-   * reachable by keyboard (#248).
+   * Whether the content region currently overflows (#248).
    *
    * Measured, not derived: nothing about the panel's inputs says whether what a
    * caller projected fits, and the answer changes with the viewport and with
    * the content itself. See `measureContentOverflow` for what keeps it current.
+   *
+   * This is the measurement on its own. What the region is actually marked with
+   * is `contentKeyboardReachable`, which is this OR the region's own focus.
    */
   protected contentScrollable = signal(false);
+
+  /**
+   * Whether the content region itself currently holds focus (#248).
+   *
+   * Tracked from the region's own `focus`/`blur`, which do not bubble, so this
+   * is about the `<section>` and not about anything a caller projected into it.
+   * See `contentKeyboardReachable` for what it is for.
+   */
+  protected contentFocused = signal(false);
+
+  /**
+   * Whether the region carries the tab stop, its role and its name — which is
+   * NOT the same question as whether it currently overflows (#248).
+   *
+   * Content can stop overflowing while the region is focused: a validation
+   * message clears, an expander collapses, the panel widens. Dropping
+   * `tabindex` at that moment removes the tab stop from the ELEMENT THAT HAS
+   * FOCUS, and a focused element that stops being focusable is blurred to
+   * `<body>` — so a keyboard user reading a panel would find themselves outside
+   * the open dialog, with the next Tab starting from the top of the page,
+   * because content they were not interacting with got shorter. That is a worse
+   * failure than the one this ticket fixes, and it is caused by the fix.
+   *
+   * So focus holds the attributes on until it leaves of its own accord. The
+   * `blur` that clears this signal has already happened by the time Angular
+   * writes the attribute away, so nothing is focused when the tab stop goes,
+   * and the region is not a tab stop for the NEXT Tab through the panel.
+   *
+   * Retaining `role` and `aria-label` alongside `tabindex` rather than only the
+   * tabindex: a focused group that loses its name mid-read is announced as a
+   * bare "group" on the next thing a screen reader says about it, and the
+   * unlabelled group is the state the name exists to prevent.
+   */
+  protected contentKeyboardReachable = computed(
+    () => this.contentScrollable() || this.contentFocused()
+  );
 
   private contentResize?: ResizeObserver;
   private contentMutations?: MutationObserver;

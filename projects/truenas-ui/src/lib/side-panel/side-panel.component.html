@@ -86,11 +86,17 @@
       is a focus TARGET, not a tab stop, and it is on the container rather than
       on the element with the overflow.
 
-      All three attributes are gated on the same measurement, and the gate is
-      the point — an unconditional tab stop would land on every panel in the
-      library, including the ones whose content fits, where it announces a group
-      and does nothing. `contentScrollable` is what the component measures; see
-      `measureContentOverflow`.
+      All three attributes are gated together, and the gate is the point — an
+      unconditional tab stop would land on every panel in the library, including
+      the ones whose content fits, where it announces a group and does nothing.
+
+      The gate is `contentKeyboardReachable`, which is the measurement OR the
+      region's own focus, not the measurement alone. Content that stops
+      overflowing while the region is focused would otherwise take the tab stop
+      off the focused element and blur a keyboard user out of the open panel;
+      `contentKeyboardReachable` on the component says why in full. `focus` and
+      `blur` do not bubble, so they report this `<section>` rather than anything
+      projected into it.
 
       `role="group"` rather than the `region` a named `<section>` would imply:
       `region` is a landmark, and a landmark named the same thing in every panel
@@ -100,9 +106,11 @@
     <section
       #content
       class="tn-side-panel__content"
-      [attr.tabindex]="contentScrollable() ? '0' : null"
-      [attr.role]="contentScrollable() ? 'group' : null"
-      [attr.aria-label]="contentScrollable() ? contentAriaLabel() : null">
+      [attr.tabindex]="contentKeyboardReachable() ? '0' : null"
+      [attr.role]="contentKeyboardReachable() ? 'group' : null"
+      [attr.aria-label]="contentKeyboardReachable() ? contentAriaLabel() : null"
+      (focus)="contentFocused.set(true)"
+      (blur)="contentFocused.set(false)">
       <ng-content />
     </section>
 
