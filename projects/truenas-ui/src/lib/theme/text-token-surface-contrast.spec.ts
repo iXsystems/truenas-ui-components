@@ -283,26 +283,51 @@ const HOVER_FILL = /background-color:\s*(color-mix\([^;]*\));/;
 const MIX_PERCENT = /var\(--tn-topbar\)\s*(\d+)%/;
 
 /**
+ * Is `colour` opaque?
+ *
+ * Asked of `contrastRatio` rather than of the notation, because the notation is
+ * not the question: `rgb(255, 255, 255)` and `#ffffff` are both opaque and only
+ * one of them looks it, and a check on the spelling would quietly drop the
+ * other out of the measurement while still passing. `contrastRatio` refuses a
+ * translucent BACKGROUND — what is behind it decides the answer — so putting
+ * the colour in that position asks exactly this and asks the module that
+ * already knows.
+ */
+function isOpaque(colour: string): boolean {
+  try {
+    contrastRatio('#000000', colour);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * `--tn-topbar-txt` at the mix's own alpha, ready to composite over the bar.
  *
- * Six-digit hex only, and it throws on anything else rather than guessing. A
- * TRANSLUCENT label is the case that matters: CSS mixes those with
- * premultiplied alpha and hands back a translucent fill, and a translucent
- * background has no ratio of its own — under a sticky header what shows through
- * is whichever row is scrolling behind it. Four palettes label their bar with
- * `rgba(255,255,255,0.85)`, and the caller records them as unmeasurable rather
- * than reporting a number for a colour that renders nowhere.
+ * Only reached for a label `isOpaque` has already accepted, so a colour it
+ * cannot take apart is a gap in this function rather than a palette to excuse —
+ * hence a throw that says so, and no caller catching it.
  */
 function atMixAlpha(colour: string, alpha: number): string {
-  const hex = /^#([0-9a-f]{6})$/i.exec(colour.trim());
-  if (hex === null) {
-    throw new Error(
-      `atMixAlpha: ${colour} is not an opaque six-digit hex, so the mix CSS computes from it `
-      + 'is translucent and depends on what is behind the header'
-    );
+  const text = colour.trim();
+  const hex = /^#([0-9a-f]{6})$/i.exec(text);
+  if (hex !== null) {
+    const byte = (at: number): number => parseInt(hex[1].slice(at, at + 2), 16);
+    return `rgba(${byte(0)}, ${byte(2)}, ${byte(4)}, ${alpha})`;
   }
-  const byte = (at: number): number => parseInt(hex[1].slice(at, at + 2), 16);
-  return `rgba(${byte(0)}, ${byte(2)}, ${byte(4)}, ${alpha})`;
+  const functional = /^rgba?\(([^)]*)\)$/i.exec(text);
+  if (functional !== null) {
+    const parts = functional[1].split(/[\s,/]+/).filter((part) => part.length > 0);
+    if (parts.length === 3) {
+      return `rgba(${parts.join(', ')}, ${alpha})`;
+    }
+  }
+  throw new Error(
+    `atMixAlpha: ${colour} is opaque but not in a form this can re-emit with an alpha. `
+    + 'The hover fill cannot be computed, which is a hole in this spec rather than a '
+    + 'palette that renders nothing measurable.'
+  );
 }
 
 /**
@@ -694,7 +719,12 @@ describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#
   });
 
   describe('the sortable header hover fill, which is a color-mix rather than a token', () => {
-    const scss = readFileSync(HOVER_FILL_SCSS, 'utf8');
+    // Comments stripped first, and for a sharper reason than the file scan's:
+    // the comment sitting immediately above this very declaration explains what
+    // the fill used to claim, and a `color-mix` quoted in prose — here or in a
+    // commented-out declaration above the live one — would be matched instead
+    // and point every case below at a fill nothing paints.
+    const scss = withoutComments(readFileSync(HOVER_FILL_SCSS, 'utf8'));
     const declaration = HOVER_FILL.exec(scss)?.[1];
 
     it('tn-table still hovers its sortable headers to a color-mix', () => {
@@ -723,31 +753,23 @@ describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#
     const hovers = measured.map((palette) => {
       const label = palette.color('--tn-topbar-txt');
       const bar = palette.color('--tn-topbar');
-      try {
-        const fill = compositeColor(atMixAlpha(label, alpha), bar);
-        const ratio = contrastRatio(label, fill);
-        return {
-          selector: palette.selector,
-          label,
-          bar,
-          fill,
-          ratio,
-          ratioLabel: formatRatio(ratio),
-          resting: formatRatio(palette.contrast('--tn-topbar-txt', '--tn-topbar')),
-          recorded: HOVER_GAPS[palette.selector],
-        };
-      } catch {
-        return {
-          selector: palette.selector,
-          label,
-          bar,
-          fill: undefined,
-          ratio: undefined,
-          ratioLabel: 'nothing opaque to measure',
-          resting: formatRatio(palette.contrast('--tn-topbar-txt', '--tn-topbar')),
-          recorded: HOVER_GAPS[palette.selector],
-        };
+      const common = {
+        selector: palette.selector,
+        label,
+        bar,
+        opaqueLabel: isOpaque(label),
+        resting: formatRatio(palette.contrast('--tn-topbar-txt', '--tn-topbar')),
+        recorded: HOVER_GAPS[palette.selector],
+      };
+      // A translucent label is the one case with no answer: CSS mixes those
+      // with premultiplied alpha into a translucent fill, and under a sticky
+      // header what shows through is whichever row is scrolling behind it.
+      if (!common.opaqueLabel) {
+        return { ...common, fill: undefined, ratio: undefined, ratioLabel: 'nothing opaque to measure' };
       }
+      const fill = compositeColor(atMixAlpha(label, alpha), bar);
+      const ratio = contrastRatio(label, fill);
+      return { ...common, fill, ratio, ratioLabel: formatRatio(ratio) };
     });
 
     it('there are hovered headers to measure', () => {
@@ -789,11 +811,13 @@ describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#
 
     it.each(hovers.filter((one) => one.ratio === undefined))(
       '$selector: labels its bar $label, which the mix makes translucent — $ratioLabel',
-      ({ label }) => {
+      ({ opaqueLabel }) => {
         // Recorded rather than skipped: these are the palettes where the claim
         // cannot be made at all, and a reader should not take their absence from
-        // the cases above as a pass.
-        expect(label).toMatch(/^rgba?\(/);
+        // the cases above as a pass. Asserted on the alpha rather than on the
+        // notation — a label that becomes opaque belongs in the measured cases,
+        // and spelling it `rgb(255, 255, 255)` must not be a way to stay here.
+        expect(opaqueLabel).toBe(false);
       }
     );
   });
