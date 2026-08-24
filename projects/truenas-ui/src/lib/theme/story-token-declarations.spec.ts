@@ -26,7 +26,7 @@ import { join, relative } from 'path';
  * red until its entry goes too. It does not stop the list GROWING: a new
  * phantom token added with a matching entry in the same commit passes here.
  * What it removes is doing that silently, since the entry is an edit to this
- * file and reads as what it is. See #278 for the sweep that empties it.
+ * file and reads as what it is. The sweep that empties it is proposed on #268.
  *
  * SCOPE. This reads `src/stories/` only — the demo markup, where a token is
  * typed into an inline `style` attribute with no stylesheet to check it
@@ -55,7 +55,7 @@ const THEMES_CSS = join(__dirname, '../../styles/themes.css');
  * `--success`/`--warning`/`--danger` are semantic status colours with
  * `--tn-green`/`--tn-yellow`/`--tn-red` and the `--tn-*-bg` pairs as
  * candidates, and `--fg1`/`--fg2`/`--lines`/`--tn-alt-bg` look like `--tn-`
- * prefixes dropped by hand. Proposed as #278.
+ * prefixes dropped by hand. Proposed as a sweep on #268.
  */
 const KNOWN_PHANTOM_TOKENS: Record<string, number> = {
   '--danger': 1,
@@ -136,9 +136,9 @@ describe('custom properties read by the story files (#268)', () => {
   //
   // One case over the whole record rather than `it.each` over its entries,
   // because `it.each` on an empty table is a jest error — and emptying this
-  // record is exactly what #278 finishing looks like. The sweep that retires
+  // record is exactly what the sweep finishing looks like. The sweep that retires
   // this list must not have to repair the spec that asked for it.
-  it('reads every recorded phantom token, still undeclared and at the recorded count (#278)', () => {
+  it('reads every recorded phantom token, still undeclared and at the recorded count', () => {
     const recorded = Object.entries(KNOWN_PHANTOM_TOKENS).map(([property, count]) => `${property} ×${count}`);
 
     const actual = Object.keys(KNOWN_PHANTOM_TOKENS).map((property) => {
