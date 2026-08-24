@@ -6,6 +6,9 @@ import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import { TnListOptionComponent } from '../list-option/list-option.component';
 import { TnTestIdDirective } from '../test-id';
 
+/** The attributes that can name the listbox host. */
+const NAME_ATTRIBUTES = ['aria-label', 'aria-labelledby'];
+
 export interface TnSelectionChange {
   source: TnSelectionListComponent;
   options: TnListOptionComponent[];
@@ -127,7 +130,7 @@ export class TnSelectionListComponent implements ControlValueAccessor {
     if (labelledby !== undefined && labelledby.trim() !== '') {
       return labelledby;
     }
-    if (this.resolvedAriaLabel() !== null) {
+    if (this.resolvedAriaLabel() !== null || this.namedByConsumer()) {
       return null;
     }
     return this.fieldAria.labelledby();
@@ -428,6 +431,42 @@ export class TnSelectionListComponent implements ControlValueAccessor {
     if (from !== null && from.isConnected) {
       this.focusedOptionElement = null;
     }
+  }
+
+  /**
+   * Whether the host already carries a name this component did not write.
+   *
+   * The ownership rule in {@link applyName} keeps such a name from being
+   * REMOVED. That is not enough on its own: a list inside a
+   * `<tn-form-field label="Mailboxes">` still had a field label to add, and
+   * adding it beside a consumer's `[attr.aria-label]="'Folders'"` announces
+   * "Mailboxes" — `aria-labelledby` wins the name calculation wherever it
+   * resolves, so the name the consumer wrote is outranked rather than removed.
+   * So a name from any route has to withhold the field's, exactly as an explicit
+   * input does.
+   *
+   * Read from the DOM rather than from an input because that is the only place
+   * this route exists: an `[attr.…]` binding in the parent template never
+   * reaches an input. It is read inside the effect, after Angular has applied
+   * that binding for the pass.
+   *
+   * WHAT THIS DOES NOT COVER, DELIBERATELY
+   * --------------------------------------
+   * A DOM attribute is not a signal, so this is answered when the surrounding
+   * computed re-runs and not when the attribute changes. A consumer whose
+   * `[attr.aria-label]` starts empty and fills in LATER, on a list that is
+   * inside a labelled field and has already been given the field's reference,
+   * keeps that reference until something else about the list changes. Closing
+   * that would mean observing the attribute — a `MutationObserver`, or a render
+   * hook running on every pass — which is a large mechanism for a narrow case,
+   * on a route (`[attr.…]` rather than the input) that already has a documented
+   * one that works. The input is the supported way to name this list.
+   */
+  private namedByConsumer(): boolean {
+    return NAME_ATTRIBUTES.some((attribute) => {
+      const current = this.hostElement.getAttribute(attribute);
+      return current !== null && current.trim() !== '' && current !== this.written.get(attribute);
+    });
   }
 
   /**

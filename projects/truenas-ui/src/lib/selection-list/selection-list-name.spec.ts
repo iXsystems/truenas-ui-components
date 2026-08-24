@@ -370,6 +370,31 @@ describe('tn-selection-list accessible name (#235)', () => {
     });
 
     /**
+     * Not being REMOVED is not enough — the field's label must not be added
+     * beside it either. `aria-labelledby` beats `aria-label` wherever it
+     * resolves, so a field reference added next to the consumer's name
+     * outranks it: the list keeps the attribute and still announces the wrong
+     * thing.
+     */
+    it('is not outranked by an enclosing form field label', () => {
+      @Component({
+        selector: 'tn-attr-label-in-field-host',
+        standalone: true,
+        imports: [TnFormFieldComponent, TnSelectionListComponent, TnListOptionComponent],
+        template: `<tn-form-field label="Mailboxes"><tn-selection-list
+          [attr.aria-label]="'Folders'"><tn-list-option
+          value="inbox">Inbox</tn-list-option></tn-selection-list></tn-form-field>`
+      })
+      class AttrLabelInFieldHostComponent {}
+
+      const fixture = TestBed.createComponent(AttrLabelInFieldHostComponent);
+      fixture.detectChanges();
+
+      expect(accessibleName(list(fixture))).toBe('Folders');
+      expect(list(fixture).hasAttribute('aria-labelledby')).toBe(false);
+    });
+
+    /**
      * The other side of the ownership rule: a name this component DID write is
      * still its to take back when the input that produced it goes away.
      */
