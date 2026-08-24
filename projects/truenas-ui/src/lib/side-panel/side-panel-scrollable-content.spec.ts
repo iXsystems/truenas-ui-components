@@ -24,7 +24,7 @@ import { axeResult } from '../a11y/axe-testing';
  * -----------------------------------
  * jsdom has no layout engine, so `scrollHeight` and `clientHeight` are `0` on
  * every element and no component in this library can overflow under jest by
- * itself. `overflowing()` below stubs those two readings on the real element
+ * itself. `scrollingTo()` below stubs those two readings on the real element
  * and sets `overflow-y` inline — the two facts axe's `getScroll` reads, and the
  * two the component reads. The stylesheet already sets `overflow-y: auto` on
  * this class in a browser; jest does not compile the component's SCSS, so the
@@ -71,14 +71,77 @@ class SidePanelScrollHostComponent {
   control = signal(false);
 }
 
+/**
+ * Stand-in for `ResizeObserver`, which jsdom does not implement — so the half
+ * of the measurement that reacts to a BOX change has no callback path here
+ * without one.
+ *
+ * Declared locally rather than reached for from `TnTableTesting`: that one is
+ * public API shaped around `tn-table`'s container width (`emitContainerWidth`),
+ * and this component reads neither the entries nor a width. The same choice
+ * `tree-virtual-scroll-view.component.spec.ts` made, for the same reason.
+ */
+class MockResizeObserver {
+  static instances: MockResizeObserver[] = [];
+
+  /**
+   * What this observer is currently watching, which is the half of the fix a
+   * callback cannot show: firing the callback proves the component re-measures,
+   * not that a resize of a CHILD would ever have reached it.
+   */
+  observed: Element[] = [];
+
+  constructor(private cb: ResizeObserverCallback) {
+    MockResizeObserver.instances.push(this);
+  }
+
+  observe(target: Element): void {
+    this.observed.push(target);
+  }
+
+  unobserve(target: Element): void {
+    this.observed = this.observed.filter((element) => element !== target);
+  }
+
+  disconnect(): void {
+    this.observed = [];
+  }
+
+  /** Everything every registered observer is watching. */
+  static targets(): Element[] {
+    return MockResizeObserver.instances.flatMap((observer) => observer.observed);
+  }
+
+  /**
+   * Fire every registered observer, as a resize of something it watches.
+   *
+   * The entries are empty because the component reads none: it re-measures the
+   * region itself whatever resized, which is the only answer that is right when
+   * what resized was a child.
+   */
+  static emit(): void {
+    MockResizeObserver.instances.forEach(
+      (observer) => observer.cb([], observer as unknown as ResizeObserver)
+    );
+  }
+}
+
 describe('tn-side-panel scrolling content region (#248)', () => {
   let fixture: ComponentFixture<SidePanelScrollHostComponent>;
   let host: SidePanelScrollHostComponent;
+  let originalResizeObserver: typeof ResizeObserver;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [SidePanelScrollHostComponent],
     }).compileComponents();
+
+    // Installed before the fixture, because the component feature-detects
+    // `ResizeObserver` once, when it starts watching. Its `observe` is a no-op,
+    // so the tests that drive the mutation path are unaffected by it being here.
+    originalResizeObserver = globalThis.ResizeObserver;
+    MockResizeObserver.instances = [];
+    globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 
     fixture = TestBed.createComponent(SidePanelScrollHostComponent);
     host = fixture.componentInstance;
@@ -89,6 +152,7 @@ describe('tn-side-panel scrolling content region (#248)', () => {
     // The overlay is portaled to document.body and only removed on destroy, so
     // without this every later fixture scans the previous one's panel too.
     fixture.destroy();
+    globalThis.ResizeObserver = originalResizeObserver;
   });
 
   /** The overlay is in `document.body`, not in the fixture — it is portaled there. */
@@ -104,20 +168,22 @@ describe('tn-side-panel scrolling content region (#248)', () => {
     return overlay().querySelector('.tn-side-panel__panel') as HTMLElement;
   }
 
+  /** The visible height every case here measures against. */
+  const REGION_HEIGHT = 200;
+
   /**
-   * Make `el` read as a scrolling element that overflows, or as one that fits.
+   * Make `el` read as a scrolling element whose content is `scrollHeight` tall.
    *
-   * The `+ 13` in axe's own `getScroll` is why the overflow is 200px rather
-   * than a pixel: the rule ignores anything smaller, so a one-pixel difference
-   * would leave it unmatched and the test vacuously green.
+   * The heights are given rather than derived from a boolean because the
+   * threshold is what two of these tests are about: axe matches the rule
+   * through `getScroll(node, 13)` and the component measures against the same
+   * 13px, so `208` and `400` are on opposite sides of a line that a
+   * true/false argument would hide.
    */
-  function overflowing(el: HTMLElement, overflows: boolean): void {
+  function scrollingTo(el: HTMLElement, scrollHeight: number): void {
     el.style.overflowY = 'auto';
-    Object.defineProperty(el, 'scrollHeight', {
-      value: overflows ? 400 : 200,
-      configurable: true,
-    });
-    Object.defineProperty(el, 'clientHeight', { value: 200, configurable: true });
+    Object.defineProperty(el, 'scrollHeight', { value: scrollHeight, configurable: true });
+    Object.defineProperty(el, 'clientHeight', { value: REGION_HEIGHT, configurable: true });
   }
 
   /**
@@ -163,7 +229,7 @@ describe('tn-side-panel scrolling content region (#248)', () => {
       previous.innerHTML = '<section class="scroller"><p>Panel body</p></section>';
       document.body.appendChild(previous);
       const section = previous.querySelector('.scroller') as HTMLElement;
-      overflowing(section, true);
+      scrollingTo(section, 400);
 
       try {
         const { violated } = await axeResult(
@@ -179,7 +245,7 @@ describe('tn-side-panel scrolling content region (#248)', () => {
   describe('a panel whose content overflows', () => {
     beforeEach(async () => {
       await openPanel();
-      overflowing(content(), true);
+      scrollingTo(content(), 400);
       await mutateContent(() => host.extra.set(true));
     });
 
@@ -210,7 +276,7 @@ describe('tn-side-panel scrolling content region (#248)', () => {
     });
 
     it('gives the region back when the content shrinks to fit', async () => {
-      overflowing(content(), false);
+      scrollingTo(content(), REGION_HEIGHT);
       await mutateContent(() => host.extra.set(false));
 
       expect(content().getAttribute('tabindex')).toBeNull();
@@ -228,12 +294,83 @@ describe('tn-side-panel scrolling content region (#248)', () => {
      */
     it('does not make the scrolling region a tab stop', async () => {
       await openPanel();
-      overflowing(content(), false);
+      scrollingTo(content(), REGION_HEIGHT);
       await mutateContent(() => host.extra.set(true));
 
       expect(content().getAttribute('tabindex')).toBeNull();
       expect(content().getAttribute('role')).toBeNull();
       expect(content().getAttribute('aria-label')).toBeNull();
+    });
+
+    /**
+     * The tolerance, from both sides of it.
+     *
+     * `scrollHeight` and `clientHeight` are integers rounded from fractional
+     * layout, so a region whose content fits can read as overflowing by a pixel
+     * — and axe would not call that a scroll container either, because its own
+     * matcher ignores an overflow below 13px. A tab stop the rule cannot see is
+     * a tab stop nothing would ever have asked for.
+     */
+    it('ignores an overflow smaller than the one axe matches on', async () => {
+      await openPanel();
+      scrollingTo(content(), REGION_HEIGHT + 8);
+      await mutateContent(() => host.extra.set(true));
+
+      expect(content().getAttribute('tabindex')).toBeNull();
+
+      // The same region, past the threshold, to show the assertion above is
+      // about the size of the overflow and not about the wiring.
+      scrollingTo(content(), REGION_HEIGHT + 40);
+      await mutateContent(() => host.extra.set(false));
+
+      expect(content().getAttribute('tabindex')).toBe('0');
+    });
+  });
+
+  describe('what the measurement follows', () => {
+    /**
+     * The box-changed direction: the panel narrows, the same content reflows
+     * taller, and NOTHING about the DOM changed. That is a `ResizeObserver`
+     * callback and no mutation record at all, so this is the only path in the
+     * file that does not go through `mutateContent`.
+     */
+    it('re-measures when the region resizes, with no DOM mutation', async () => {
+      await openPanel();
+      expect(MockResizeObserver.targets()).toContain(content());
+      expect(content().getAttribute('tabindex')).toBeNull();
+
+      scrollingTo(content(), 400);
+      MockResizeObserver.emit();
+      fixture.detectChanges();
+
+      expect(content().getAttribute('tabindex')).toBe('0');
+    });
+
+    /**
+     * The child-resized direction, which is the one a `MutationObserver` cannot
+     * see: an image finishing loading or a webfont swapping in changes how tall
+     * a child is and produces no mutation record. The component observes each
+     * direct child for exactly this, so a resize reported against a child has
+     * to re-measure the region — which is why the mock fires every observer it
+     * holds rather than filtering by target.
+     */
+    it('re-measures when a child of the region resizes', async () => {
+      await openPanel();
+      await mutateContent(() => host.extra.set(true));
+      expect(content().getAttribute('tabindex')).toBeNull();
+
+      // The registration is the assertion. The mock fires every observer it
+      // holds, so the callback alone would look identical if the component
+      // watched only the region — and a child that grows would never have
+      // produced one.
+      const child = content().querySelector('#extra') as HTMLElement;
+      expect(MockResizeObserver.targets()).toContain(child);
+
+      scrollingTo(content(), 400);
+      MockResizeObserver.emit();
+      fixture.detectChanges();
+
+      expect(content().getAttribute('tabindex')).toBe('0');
     });
   });
 
@@ -250,7 +387,7 @@ describe('tn-side-panel scrolling content region (#248)', () => {
       trigger.focus();
 
       await openPanel();
-      overflowing(content(), true);
+      scrollingTo(content(), 400);
       await mutateContent(() => host.extra.set(true));
 
       expect(content().getAttribute('tabindex')).toBe('0');

@@ -54,6 +54,23 @@ export const TN_SIDE_PANEL_DEFAULT_LABEL = 'Side panel';
 export const TN_SIDE_PANEL_CONTENT_LABEL = 'Panel content';
 
 /**
+ * How far the content has to exceed the region before the region counts as
+ * scrolling (#248).
+ *
+ * This is axe's own number: `scrollable-region-focusable` matches through
+ * `getScroll(node, 13)`, so it ignores an overflow smaller than this and would
+ * not report a region that has one. Measuring with a bare `>` instead would put
+ * a tab stop on panels the rule considers fine — and `scrollHeight` and
+ * `clientHeight` are integers rounded from fractional layout, so a panel whose
+ * content fits to within a pixel reads as overflowing by one.
+ *
+ * Matching the rule keeps the component and the check that judges it saying the
+ * same thing about the same panel. Not exported: it is a property of the rule,
+ * not a knob.
+ */
+const TN_SIDE_PANEL_OVERFLOW_TOLERANCE_PX = 13;
+
+/**
  * Directive to mark an element as a side-panel footer action.
  *
  * @example
@@ -389,26 +406,36 @@ export class TnSidePanelComponent implements OnDestroy {
    */
   private measureContentOverflow(): void {
     const content = this.contentRef().nativeElement;
-    this.contentScrollable.set(content.scrollHeight > content.clientHeight);
+    this.contentScrollable.set(
+      content.scrollHeight > content.clientHeight + TN_SIDE_PANEL_OVERFLOW_TOLERANCE_PX
+    );
   }
 
   /**
    * Keep that measurement current, from the two directions it can go stale.
    *
    * A scroll container overflows when its content is taller than its box, and
-   * either half can change on its own:
+   * either half can change on its own — so both are watched, by the instrument
+   * that can see them:
    *
    * - **The box.** The panel is full-height and `width` is an input, so a
-   *   viewport resize or a narrower panel reflows the content. That is
-   *   `ResizeObserver` on the region itself.
-   * - **The content.** A caller's form revealing a validation message, or an
-   *   expanding section, changes `scrollHeight` while the region's own size
-   *   stays exactly the same — so a `ResizeObserver` never fires for it. That
-   *   is `MutationObserver`, and it is why there are two.
+   *   viewport resize or a narrower panel reflows the content.
+   * - **The content.** A caller's form revealing a validation message changes
+   *   `scrollHeight` while the region's own size stays exactly the same, so a
+   *   `ResizeObserver` on the region alone never fires for it.
    *
-   * `attributes` is deliberately NOT observed: the attributes this measurement
-   * writes land on the observed element, so watching them would call the
-   * measurement from its own result.
+   * `MutationObserver` catches the second only when the growth IS a DOM change.
+   * Plenty of it is not: an image finishing loading, a webfont swapping in, a
+   * class toggle opening an expander. What all of those DO change is the size
+   * of the child that holds them, which is why the `ResizeObserver` is pointed
+   * at the region's direct children as well as at the region — see
+   * `observeContentBoxes`. Layout propagates, so a grandchild growing grows the
+   * child that contains it.
+   *
+   * `attributes` is therefore deliberately NOT observed. The class toggle above
+   * arrives as a resize instead, and watching attributes would mean watching
+   * the ones this measurement itself writes onto the observed element — the
+   * measurement called from its own result.
    *
    * Both are feature-detected, because neither exists during SSR and
    * `ResizeObserver` does not exist under jsdom — where the fallback is the
@@ -426,18 +453,50 @@ export class TnSidePanelComponent implements OnDestroy {
     this.zone.runOutsideAngular(() => {
       if (typeof ResizeObserver !== 'undefined') {
         this.contentResize = new ResizeObserver(() => this.measureContentOverflow());
-        this.contentResize.observe(content);
       }
 
       if (typeof MutationObserver !== 'undefined') {
-        this.contentMutations = new MutationObserver(() => this.measureContentOverflow());
+        this.contentMutations = new MutationObserver(() => {
+          // Which elements exist has just changed, so what is observed has to
+          // change with it before the region is measured again.
+          this.observeContentBoxes();
+          this.measureContentOverflow();
+        });
         this.contentMutations.observe(content, {
           childList: true,
           subtree: true,
           characterData: true,
         });
       }
+
+      this.observeContentBoxes();
     });
+  }
+
+  /**
+   * Point the `ResizeObserver` at the content region and at each of its direct
+   * children, replacing whatever it was watching before.
+   *
+   * The children are the half that catches content growth no DOM mutation
+   * announces — see `watchContentOverflow`. They are re-read rather than
+   * tracked incrementally because the set changes only when `childList` does,
+   * which is the callback this runs in, and a panel's content is a handful of
+   * elements rather than a list.
+   *
+   * `disconnect` first: `observe` on an element already observed is a no-op, so
+   * without it a child that was removed would keep its registration and keep
+   * the observer alive.
+   */
+  private observeContentBoxes(): void {
+    const resize = this.contentResize;
+    if (!resize) {
+      return;
+    }
+
+    const content = this.contentRef().nativeElement;
+    resize.disconnect();
+    resize.observe(content);
+    Array.from(content.children).forEach((child) => resize.observe(child));
   }
 
   private restoreFocus(): void {
