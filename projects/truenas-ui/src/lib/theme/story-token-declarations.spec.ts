@@ -51,13 +51,16 @@ const THEMES_CSS = join(__dirname, '../../styles/themes.css');
  * fallback in all nine palettes.
  *
  * Empty, and meant to stay that way. #268 seeded it with the ten the scan
- * turned up outside that ticket's own `--border-color`, and #279 swept them:
- * `--fg1`/`--fg2`/`--lines` were `--tn-` prefixes dropped by hand,
- * `--tn-alt-bg` resolved to `--tn-alt-bg1`, `--success`/`--warning`/`--danger`
- * to the semantic status tokens, and `--warning-bg`/`--success-bg` to
- * `--tn-alt-bg1`, which is the surface `tn-banner` paints behind a status
- * heading and the one the status tokens are measured against — no palette
- * declares a status-tinted background of its own.
+ * turned up outside that ticket's own `--border-color`, and #279 swept all
+ * ten: `--fg1`, `--fg2` and `--lines` were `--tn-` prefixes dropped by hand;
+ * `--tn-alt-bg` resolved to `--tn-alt-bg1`; `--success`, `--warning` and
+ * `--danger` to the semantic status tokens; and the two status callouts'
+ * surfaces, `--warning-bg` and `--success-bg`, to `--tn-alt-bg1`, which is
+ * what `tn-banner` paints behind a status heading and one of the three
+ * surfaces the status tokens are measured on — no palette declares a
+ * status-tinted background of its own. `--warning-fg`, the text of the
+ * callout `--warning-bg` filled, became `--tn-warning` alongside it, matching
+ * what `--success` already did in the other one.
  *
  * An addition here is a new phantom token being recorded rather than fixed,
  * which is a decision to argue for in review, not a formality.
