@@ -88,7 +88,7 @@ export const TN_SCROLLABLE_REGION_TOLERANCE_PX = 13;
  * `getComputedStyle` is feature-detected because this file is imported by
  * components that render under SSR, where it does not exist. Reading as "does
  * not scroll" is the safe answer there: nothing is focusable on a server, and
- * the first measurement in the browser happens in `afterNextRender`.
+ * the browser takes its own first measurement as soon as the region binds.
  */
 function overflows(region: HTMLElement): boolean {
   const buffer = TN_SCROLLABLE_REGION_TOLERANCE_PX;
@@ -113,7 +113,7 @@ function overflows(region: HTMLElement): boolean {
  * answer current.
  *
  * **Must be called from an injection context** — a field initializer or the
- * constructor — because it registers an `afterNextRender` and an `onDestroy`.
+ * constructor — because it registers an `effect` and an `onDestroy`.
  *
  * The caller binds the returned signal to whatever attributes its own markup
  * needs; see the note above on what each caller still decides. Everything the
@@ -346,10 +346,15 @@ export function tnScrollableRegion(
    * that was not stays not.
    *
    * An `effect` rather than a `computed` with a captured variable, because a
-   * computed is lazy — it re-derives only when something reads it, so a growth
-   * and a shrink that both happened between two reads would collapse into "not
+   * computed is lazy: it re-derives only when something reads it, and nothing
+   * reads this one while the region is off screen or the view is detached — so
+   * a growth and a shrink spanning that gap would collapse into "not
    * overflowing, focused" and drop the tab stop out from under a keyboard user.
-   * The latch has to see every transition, which means being eager.
+   *
+   * An effect coalesces too, and that is harmless where the laziness is not: it
+   * runs once per change detection, so the pair it can miss is a growth and a
+   * shrink between two RENDERS — a state the DOM never showed anyone, and so
+   * one nobody can have been standing on.
    */
   const reachable = signal(false);
   effect(() => {
