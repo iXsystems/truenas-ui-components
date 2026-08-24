@@ -1,0 +1,15 @@
+<tn-form-list
+  [control]="entries"
+  [label]="label()"
+  [required]="required()"
+  [canAdd]="canAdd()"
+  [disabled]="disabled()"
+  [empty]="empty()"
+  (add)="addEntry()"
+>
+  @for (entry of entries.controls; track entry; let i = $index) {
+    <tn-form-list-item label="address" [canDelete]="canDelete()" (delete)="removeEntry(i)">
+      <tn-input [formControl]="entry" />
+    </tn-form-list-item>
+  }
+</tn-form-list>

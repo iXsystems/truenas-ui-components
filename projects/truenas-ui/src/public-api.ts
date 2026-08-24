@@ -57,6 +57,9 @@ export type {
 export * from './lib/form-field/form-field.harness';
 export * from './lib/form-errors/form-errors.component';
 export * from './lib/form-errors/form-errors.harness';
+export * from './lib/form-list/form-list.component';
+export * from './lib/form-list/form-list-item.component';
+export * from './lib/form-list/form-list.harness';
 export * from './lib/form-section/form-section.component';
 export * from './lib/form-section/form-section.harness';
 export * from './lib/select/select.component';

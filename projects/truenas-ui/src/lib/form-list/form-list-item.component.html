@@ -1,0 +1,17 @@
+<div class="tn-form-list-item">
+  @if (canDelete()) {
+    <tn-icon-button
+      class="tn-form-list-item__remove"
+      name="close"
+      library="mdi"
+      size="sm"
+      [ariaLabel]="resolvedRemoveAriaLabel()"
+      [testId]="resolvedTestId()"
+      (onClick)="delete.emit()"
+    />
+  }
+
+  <div class="tn-form-list-item__content">
+    <ng-content />
+  </div>
+</div>
