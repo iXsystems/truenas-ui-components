@@ -101,14 +101,21 @@ export function ariaOwnerRole(host: Element): string | null {
  * Whether a container with this role prescribes what its children may be, so
  * that a decorative element inside it must carry no role of its own.
  *
- * These are the containers THIS LIBRARY declares — `tn-list` and
- * `tn-selection-list` — rather than a reimplementation of ARIA's ownership
- * table, which is long, versioned, and already implemented by the tool that
- * checks it. Adding `tablist` or `tree` when a component grows one is a line
- * here; guessing at all of them now would be a table nobody maintains.
+ * These are the two containers #237 covers — `tn-list` and `tn-selection-list` —
+ * rather than a reimplementation of ARIA's ownership table, which is long,
+ * versioned, and already implemented by the tool that checks it.
  *
- * `menu` and `menubar` are deliberately absent: they DO allow `separator`
- * among their children, so a rule inside a menu keeps its role.
+ * **It is not the complete set of such containers in this library.** `tn-tree`
+ * and `tn-tree-virtual-scroll-view` declare `role="tree"`, which owns only
+ * `treeitem` and `group`, so a divider written inside one is the same defect
+ * with a different container name. It is left out because nothing composes
+ * those two that way today and because a fix there wants its own reproduction
+ * and its own guard, not a line added here on the strength of reading the
+ * ownership table. Adding a role is that line when a ticket asks for it.
+ *
+ * `menu` and `menubar` are deliberately absent for the opposite reason: they DO
+ * allow `separator` among their children, so a rule inside a menu keeps its
+ * role.
  */
 export function prescribesItsChildren(ownerRole: string | null): boolean {
   return ownerRole === 'list' || ownerRole === 'listbox';

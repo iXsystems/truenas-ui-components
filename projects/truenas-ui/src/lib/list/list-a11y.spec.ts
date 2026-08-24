@@ -40,8 +40,9 @@ import { TnSelectionListComponent } from '../selection-list/selection-list.compo
   ],
   // The story the ticket reproduced on, in miniature: a list composed with the
   // subheader and the divider from the same library. `TnDividerDirective` is
-  // imported because the story imports it, and it matches `tn-divider` too —
-  // which is how a second `role="separator"` used to reach the element.
+  // imported because the story imports it, and it used to match `tn-divider` as
+  // well — which is how a second `role="separator"` reached that element. It
+  // matches only the attribute form now, and both forms are asserted below.
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-list>
