@@ -654,9 +654,20 @@ export class TnTableComponent<T = unknown> implements OnInit {
     () => this.effectiveDisplayedColumns().length + (this.rowActionsDef() ? 1 : 0)
   );
 
+  /**
+   * How many rows a select-all can actually select.
+   *
+   * `SelectionModel` stores selections in a `Set`, so `selection.selected.length`
+   * counts DISTINCT rows while `data().length` counts array entries. A `dataSource`
+   * holding the same row reference twice makes the two disagree, and every comparison
+   * of a selection count against a row count has to use this one to stay honest —
+   * see {@link isAllSelected}.
+   */
+  private distinctRowCount = computed(() => new Set(this.data()).size);
+
   isAllSelected = computed(() => {
     const numSelected = this.selectionCount();
-    const numRows = this.data().length;
+    const numRows = this.distinctRowCount();
     return numRows > 0 && numSelected === numRows;
   });
 
@@ -664,6 +675,26 @@ export class TnTableComponent<T = unknown> implements OnInit {
     const count = this.selectionCount();
     return count > 0 && !this.isAllSelected();
   });
+
+  /**
+   * Whether the select-all control has anything to act on.
+   *
+   * Disabling it on an empty table is a correctness guard, not a nicety. Since #236
+   * the checkbox is a real control the user can click, and its `checked` binding is
+   * one-way: the DOM follows `isAllSelected()`, and Angular only writes the attribute
+   * back when that value CHANGES. With no rows, `isAllSelected()` is pinned false —
+   * selecting nothing leaves the count at zero — so a click would flip the input in
+   * the DOM, change no bound value, and leave a checked-looking box over an empty
+   * selection until something else re-rendered it.
+   *
+   * The hit area around the checkbox stands down for the same reason, so the two
+   * cannot disagree about whether the control is live.
+   *
+   * An empty table is the only case that has to be disabled rather than fixed: a
+   * repeated row reference produces the same DOM-versus-model divergence, and
+   * {@link distinctRowCount} resolves that one by making the control work.
+   */
+  canSelectAll = computed(() => this.distinctRowCount() > 0);
 
   trackByFn = computed(() => {
     const custom = this.trackBy();
@@ -946,6 +977,79 @@ export class TnTableComponent<T = unknown> implements OnInit {
   }
 
   // --- Selection methods ---
+  //
+  // Every selection surface — the header cell, a row cell, and card mode's toolbar
+  // and card wrappers — is a checkbox with a hit area around it. The checkbox is the
+  // widget: it is the only tab stop, it activates itself, and it reports through
+  // `(change)`. The wrapper exists so that clicking the cell's padding works too, and
+  // it stands down for any click that started inside the checkbox.
+  //
+  // Before #236 it was the other way round: `.tn-table__checkbox` was
+  // `pointer-events: none`, so the wrapper caught every click and the checkbox caught
+  // none. That is why the header <th> had to be `role="checkbox" tabindex="0"` — the
+  // only focusable, activatable thing in the cell was the cell — and why axe reported
+  // a widget nested in a widget.
+
+  /**
+   * Whether an event started inside a selection checkbox rather than on the hit area
+   * around it.
+   *
+   * Matched on the component's host class rather than through
+   * {@link isControlTarget}, because the element clicked is usually neither the input
+   * nor the host: `tn-checkbox` renders a `<label>` wrapping the input and its
+   * checkmark, and a click on the checkmark activates the input as the label's default
+   * action. `closest('input')` says no to that click, and the toggle would then happen
+   * twice — once here, once from the label's own activation.
+   *
+   * @param event The DOM event; its `currentTarget` is the hit area.
+   */
+  private isSelectionCheckboxTarget(event: Event): boolean {
+    const target = event.target as HTMLElement | null;
+    return !!target?.closest('.tn-table__checkbox');
+  }
+
+  /**
+   * Click on the hit area around a select-all checkbox, in either layout.
+   *
+   * @param event The originating click.
+   */
+  onSelectAllHitAreaClick(event: Event): void {
+    if (!this.canSelectAll()) { return; }
+    if (this.isSelectionCheckboxTarget(event)) { return; }
+    this.toggleSelectAll();
+  }
+
+  /**
+   * Enter on the select-all checkbox.
+   *
+   * A native checkbox answers to Space and not to Enter, and the `<th>` this replaced
+   * handled both. Bound on the header's checkbox only, which is where that behaviour
+   * existed — card mode's select-all never had it.
+   *
+   * @param event The originating keydown; typed as `Event` because Angular types
+   *   `$event` that way for the `keydown.enter` pseudo-event.
+   */
+  onSelectAllEnter(event: Event): void {
+    // Enter inside a form submits it, and this control is often inside one.
+    event.preventDefault();
+    if (!this.canSelectAll()) { return; }
+    this.toggleSelectAll();
+  }
+
+  /**
+   * Click on the hit area around a row's selection checkbox, in either layout.
+   *
+   * Propagation stops whichever path activates the checkbox: a row is clickable and a
+   * card is activatable, and selecting is not activating.
+   *
+   * @param event The originating click.
+   * @param row The row the cell or card belongs to.
+   */
+  onRowSelectHitAreaClick(event: Event, row: T): void {
+    event.stopPropagation();
+    if (this.isSelectionCheckboxTarget(event)) { return; }
+    this.toggleRowSelection(row);
+  }
 
   toggleSelectAll(): void {
     if (this.isAllSelected()) {

@@ -8,13 +8,19 @@
           and nesting one label inside another is invalid. The visible text is
           passed through the checkbox's own `label` input so it stays associated.
 
-          The handler goes on THIS wrapper, not on <tn-checkbox>: the checkbox is
-          `pointer-events: none` (see `__checkbox` in the stylesheet), so it and its
-          subtree are outside hit testing and a real click lands here instead. A
-          handler bound on the checkbox is never in the event path — which is how the
-          label -> div change silently killed mouse and touch selection while keyboard
-          kept working, since Space on the hidden input dispatches its own bubbling
-          click. Table mode binds the same handler on its <td> for this reason.
+          Two activation paths, deliberately, and they are mutually exclusive. The
+          checkbox activates itself and reports through `(change)`; this wrapper is
+          only the hit area around it, so its handler stands down for anything that
+          started inside the checkbox — see `onSelectAllHitAreaClick`. Until #236 the
+          wrapper was the only path, because `.tn-table__checkbox` was
+          `pointer-events: none` and no real click could reach the control; that
+          shape is what forced a focusable `role="checkbox"` onto the table header's
+          <th>, nesting one widget inside another.
+
+          No `preventDefault()` here any more, and that is load-bearing rather than
+          tidiness: a click on the checkbox's own <label> bubbles to this wrapper, and
+          cancelling it cancels the label's default action — which is how the label
+          activates the input.
 
           The click/key and focusable lint rules are suppressed rather than satisfied:
           this wrapper is a pointer hit area around a control that is already
@@ -25,12 +31,14 @@
         <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
         <div
           class="tn-table__cards-selectall"
-          (click)="toggleSelectAll(); $event.preventDefault()">
+          (click)="onSelectAllHitAreaClick($event)">
           <tn-checkbox
             class="tn-table__checkbox"
             label="Select all"
+            [disabled]="!canSelectAll()"
             [checked]="isAllSelected()"
-            [indeterminate]="isIndeterminate()" />
+            [indeterminate]="isIndeterminate()"
+            (change)="toggleSelectAll()" />
         </div>
       }
       @if (sortableColumns().length > 0) {
@@ -156,7 +164,7 @@
             <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
             <div
               class="tn-table__card-select"
-              (click)="toggleRowSelection(row); $event.preventDefault(); $event.stopPropagation()">
+              (click)="onRowSelectHitAreaClick($event, row)">
               <!--
                 Named from the card's title, not "Select row N": with `hideLabel` this is the
                 checkbox's entire accessible name, and a card list has no visible row numbers
@@ -170,7 +178,8 @@
                   'Select ' + (getCellValue(row, cardTitleColumn()) ?? 'row ' + (rowIdx + 1))
                 "
                 [hideLabel]="true"
-                [checked]="isRowSelected(row)" />
+                [checked]="isRowSelected(row)"
+                (change)="toggleRowSelection(row)" />
             </div>
           }
           <span class="tn-table__card-title">
@@ -267,19 +276,34 @@
       <tr class="tn-table__header-row">
         @for (column of effectiveDisplayedColumns(); track $index) {
           @if (column === '__select') {
+            <!--
+              A plain <th>, so it keeps its implicit `columnheader` role. It used to
+              carry `role="checkbox"` and `tabindex="0"` of its own, with the real
+              checkbox inside it: two tab stops for one action, a widget nested in a
+              widget (axe `nested-interactive`), and a selection column that was no
+              longer a header at all (#236).
+
+              The cell is now only the hit area — the same arrangement card mode has
+              always used, and the same `(change)` + hit-area pair as the row cells
+              below. `onSelectAllHitAreaClick` stands down when the click started
+              inside the checkbox, which activates itself.
+
+              Enter is bound because the removed <th> handled it and a native checkbox
+              does not; Space needs no binding, being the checkbox's own key.
+
+              `disabled` on an empty table is not decoration — see `canSelectAll`.
+            -->
             <th class="tn-table__header-cell tn-table__select-cell"
-              role="checkbox"
-              tabindex="0"
-              [attr.aria-checked]="isAllSelected()"
-              (click)="toggleSelectAll()"
-              (keydown.enter)="toggleSelectAll()"
-              (keydown.space)="toggleSelectAll(); $event.preventDefault()">
+              (click)="onSelectAllHitAreaClick($event)">
               <tn-checkbox
                 class="tn-table__checkbox"
                 label="Select all rows"
                 [hideLabel]="true"
+                [disabled]="!canSelectAll()"
                 [checked]="isAllSelected()"
-                [indeterminate]="isIndeterminate()" />
+                [indeterminate]="isIndeterminate()"
+                (change)="toggleSelectAll()"
+                (keydown.enter)="onSelectAllEnter($event)" />
             </th>
           } @else if (column === '__expand') {
             <th class="tn-table__header-cell tn-table__expand-cell">
@@ -357,12 +381,13 @@
           @for (column of effectiveDisplayedColumns(); track $index) {
             @if (column === '__select') {
               <td class="tn-table__cell tn-table__select-cell"
-                (click)="toggleRowSelection(row); $event.stopPropagation()">
+                (click)="onRowSelectHitAreaClick($event, row)">
                 <tn-checkbox
                   class="tn-table__checkbox"
                   [label]="'Select row ' + (rowIdx + 1)"
                   [hideLabel]="true"
-                  [checked]="isRowSelected(row)" />
+                  [checked]="isRowSelected(row)"
+                  (change)="toggleRowSelection(row)" />
               </td>
             } @else if (column === '__expand') {
               <td class="tn-table__cell tn-table__expand-cell"
