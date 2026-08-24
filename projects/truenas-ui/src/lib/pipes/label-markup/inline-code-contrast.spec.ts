@@ -299,22 +299,14 @@ const KNOWN_GAPS: readonly KnownGap[] = [
   { selector: '.tn-midnight', colour: 'white', surface: '--tn-red', why: '.button-warn fills --tn-red, a 3:1 token, and labels it white — 3.99:1' },
   { selector: '.tn-nord', colour: 'white', surface: '--tn-red', why: '.button-warn fills --tn-red, a 3:1 token, and labels it white — 4.09:1' },
   { selector: '.tn-paper', colour: 'white', surface: '--tn-red', why: '.button-warn fills --tn-red, a 3:1 token, and labels it white — 3.99:1' },
-  // Solarized Dark's own text tokens, which is open as #265: --tn-fg1 is #586e75
-  // and reads 2.79:1 on this theme's --tn-bg1 and 2.42:1 on its --tn-bg2, and
-  // --tn-fg2 is 4.32:1 on --tn-bg2. themes.css's convention for every other
-  // palette is that a text token clears 4.5:1 on BOTH page surfaces; this one
-  // does not, so a label there fails on the page, on a card, and in a code span
-  // alike. Nothing about the mixin is involved.
-  { selector: '.tn-solarized-dark', colour: '--tn-fg1', surface: '--tn-bg1', why: "Solarized Dark's --tn-fg1 is 2.79:1 on its own page (#265)" },
-  { selector: '.tn-solarized-dark', colour: '--tn-fg1', surface: '--tn-bg2', why: "Solarized Dark's --tn-fg1 is 2.42:1 on its own card surface (#265)" },
-  { selector: '.tn-solarized-dark', colour: '--tn-fg2', surface: '--tn-bg2', why: "Solarized Dark's --tn-fg2 is 4.32:1 on its own card surface (#265)" },
-  // The same palette again, one step further along: it is the only theme that
-  // declares --tn-btn-default-txt for itself, as `var(--tn-fg2)`, and pairs it
-  // with a --tn-btn-default-bg of its own. So the default button's label is
-  // 3.03:1 there — on the button's own fill, with no page surface involved. It
-  // is listed separately because fixing --tn-fg2 for the page does not
-  // necessarily fix this pairing, and whoever takes #265 needs to see it.
-  { selector: '.tn-solarized-dark', colour: '--tn-btn-default-txt', surface: '--tn-btn-default-bg', why: "Solarized Dark pairs its own --tn-btn-default-txt (var(--tn-fg2)) with its own fill — 3.03:1 (#265)" },
+  // Four .tn-solarized-dark entries used to sit here and are gone: that theme's
+  // --tn-fg1 (2.79:1 on --tn-bg1, 2.42:1 on --tn-bg2), its --tn-fg2 (4.32:1 on
+  // --tn-bg2), and its --tn-btn-default-txt against its own fill (3.03:1),
+  // which was listed separately because fixing --tn-fg2 for the page need not
+  // have fixed a pairing with no page surface in it. #265 retuned all three
+  // tokens and it did fix all four pairings; the "still failing" assertion
+  // below is what turned them red rather than leaving them here excusing
+  // nothing. text-fg-contrast.spec.ts is what holds those tokens now.
 ];
 
 /** How a gap and a measured case are matched up. */

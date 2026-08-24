@@ -101,28 +101,28 @@ const REQUIRED_TOKENS = [...Object.keys(SURFACES), ...TEXT_TOKENS, ...MUTED_TOKE
 
 /**
  * Muted-over-text inversions that are real, recorded as the PAIR that inverts
- * and why. `.tn-solarized-dark`'s `--tn-fg1` measures 2.79:1 on `--tn-bg1` and
- * 2.42:1 on `--tn-bg2` — beneath the 3:1 floor `--tn-fg3` and `--tn-fg4` are now
- * held to — so both necessarily clear it. No value that clears 3:1 can sit under
- * 2.79:1, so this is not something the retune could have avoided by choosing
- * different colours: it is `--tn-fg1` that is wrong, tracked as #265.
+ * and why.
+ *
+ * EMPTY, and that is the resolved state rather than an unwritten one. It held
+ * `.tn-solarized-dark`'s `--tn-fg3/--tn-fg1` and `--tn-fg4/--tn-fg1` while that
+ * theme's `--tn-fg1` measured 2.79:1 on `--tn-bg1` and 2.42:1 on `--tn-bg2` —
+ * beneath the 3:1 floor these two are held to, so both necessarily cleared it.
+ * No value clearing 3:1 could sit under 2.79:1, so it was never something this
+ * retune could have avoided by choosing different colours; it was `--tn-fg1`
+ * that was wrong. #265 retuned it to #fdf6e3 (13.92:1 / 12.05:1), which is what
+ * failed the "still there" case below and took the entry out — the mechanism
+ * working, rather than a note anyone had to remember to delete.
  *
  * By the pair rather than by the palette, because recording the palette
  * suppressed every comparison in it. `--tn-fg3` against Solarized Dark's
- * `--tn-fg2` (4.32:1 on `--tn-bg2`) is a live claim with nothing to do with
- * #265, and a `--tn-fg3` of #c0d0d5 — well past that `--tn-fg2` — shipped green
- * while the entry was keyed on the theme.
+ * `--tn-fg2` was a live claim with nothing to do with #265, and a `--tn-fg3` of
+ * #c0d0d5 — well past that `--tn-fg2` — shipped green while the entry was keyed
+ * on the theme.
  *
- * Asserted to STILL BE TRUE rather than merely skipped, so #265 retuning
- * `--tn-fg1` breaks this suite and takes the entry out with it, instead of
- * leaving a note here that has quietly stopped describing the palette.
+ * Anything added here is asserted to STILL BE TRUE rather than merely skipped,
+ * so a pair that stops inverting takes its own entry out the same way.
  */
-const OUTREADS_TEXT: Readonly<Record<string, { pairs: string[]; why: string }>> = {
-  '.tn-solarized-dark': {
-    pairs: ['--tn-fg3/--tn-fg1', '--tn-fg4/--tn-fg1'],
-    why: '--tn-fg1 is 2.79:1 on --tn-bg1 and 2.42:1 on --tn-bg2, below the 3:1 these two now clear (#265)',
-  },
-};
+const OUTREADS_TEXT: Readonly<Record<string, { pairs: string[]; why: string }>> = {};
 
 interface ThemeCase {
   selector: string;
