@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import type { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnListComponent } from './list.component';
@@ -75,6 +76,26 @@ class TestHostComponent {}
 class NestedDividerHostComponent {}
 
 /**
+ * A divider one wrapper further in, where the wrapper is presentational. The
+ * wrapper is not in the accessibility tree, so the list still owns the divider —
+ * and a walk that stopped at the first `role` attribute it met would decide the
+ * wrapper owns it.
+ */
+@Component({
+  selector: 'tn-presentational-wrapper-a11y-host',
+  standalone: true,
+  imports: [TnListComponent, TnListItemComponent, TnDividerComponent],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-list>
+      <tn-list-item>tank</tn-list-item>
+      <div role="presentation"><tn-divider /></div>
+    </tn-list>
+  `,
+})
+class PresentationalWrapperHostComponent {}
+
+/**
  * A list that projects its rows, so that the divider is DECLARED outside the
  * list and RENDERED inside it. This is the case `ariaOwnerRole` reads the DOM
  * for — an element injector would answer "no list here" and leave the separator
@@ -123,13 +144,23 @@ describe('tn-list section accessibility', () => {
     return found;
   };
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [TestHostComponent] }).compileComponents();
-    fixture = TestBed.createComponent(TestHostComponent);
-    fixture.detectChanges();
-  });
+  /**
+   * Configured per describe rather than once at the top, because the cases
+   * below use different hosts and `configureTestingModule` may be called only
+   * once per test. Angular resets the TestBed between tests on its own, so this
+   * is the whole setup — a `resetTestingModule()` inside a test would leave
+   * `el()` reading a fixture that had been torn down.
+   */
+  const createHost = async <T,>(type: Type<T>): Promise<ComponentFixture<T>> => {
+    await TestBed.configureTestingModule({ imports: [type] }).compileComponents();
+    const created = TestBed.createComponent(type);
+    created.detectChanges();
+    return created;
+  };
 
   describe('the list as a whole', () => {
+    beforeEach(async () => { fixture = await createHost(TestHostComponent); });
+
     it('reports no aria-required-children violation', async () => {
       const list = el('tn-list');
 
@@ -181,6 +212,8 @@ describe('tn-list section accessibility', () => {
   });
 
   describe('a subheader inside a list', () => {
+    beforeEach(async () => { fixture = await createHost(TestHostComponent); });
+
     it('is the listitem the list requires, with the heading one level in', () => {
       const subheader = el('tn-list-subheader');
       const heading = el('tn-list-subheader [role="heading"]');
@@ -211,6 +244,8 @@ describe('tn-list section accessibility', () => {
   });
 
   describe('a divider inside a list', () => {
+    beforeEach(async () => { fixture = await createHost(TestHostComponent); });
+
     it('is decorative, and drops the orientation that goes with the role', () => {
       const divider = el('tn-divider');
 
@@ -226,22 +261,21 @@ describe('tn-list section accessibility', () => {
       expect(el('tn-divider').classList.contains('tn-divider')).toBe(true);
     });
 
-    it('carries no separator role from the directive that also matches it', () => {
-      // `TnDividerDirective` matches `tn-divider` as well as `[tnDivider]`, and
-      // used to declare `role="separator"` statically — which no binding on the
-      // component can be relied on to overwrite.
-      expect(el('div[tnDivider]').getAttribute('role')).toBeNull();
+    it('is decorative in the attribute form too', () => {
+      // The `[tnDivider]` form reaches the same answer through its own
+      // directive. It used to declare `role="separator"` statically, and
+      // matched `tn-divider` as well — a second, static source for the
+      // component's own attribute.
+      expect(el('div[tnDivider]').getAttribute('role')).toBe('presentation');
     });
   });
 
   describe('a divider inside a row of a list', () => {
-    it('is still a separator, because the row owns it and not the list', async () => {
-      await TestBed.resetTestingModule();
-      await TestBed.configureTestingModule({ imports: [NestedDividerHostComponent] })
-        .compileComponents();
-      const nested = TestBed.createComponent(NestedDividerHostComponent);
-      nested.detectChanges();
+    let nested: ComponentFixture<NestedDividerHostComponent>;
 
+    beforeEach(async () => { nested = await createHost(NestedDividerHostComponent); });
+
+    it('is still a separator, because the row owns it and not the list', async () => {
       const divider = nested.nativeElement.querySelector('tn-divider') as HTMLElement;
       expect(divider.getAttribute('role')).toBe('separator');
       expect(divider.getAttribute('aria-orientation')).toBe('horizontal');
@@ -257,14 +291,34 @@ describe('tn-list section accessibility', () => {
     });
   });
 
-  describe('a divider projected into a list', () => {
-    it('is decorative, though it was declared outside one', async () => {
-      await TestBed.resetTestingModule();
-      await TestBed.configureTestingModule({ imports: [ProjectedHostComponent] })
-        .compileComponents();
-      const projected = TestBed.createComponent(ProjectedHostComponent);
-      projected.detectChanges();
+  describe('a divider under a presentational wrapper in a list', () => {
+    let wrapped: ComponentFixture<PresentationalWrapperHostComponent>;
 
+    beforeEach(async () => { wrapped = await createHost(PresentationalWrapperHostComponent); });
+
+    it('is decorative, because presentation does not own anything', async () => {
+      // `role="presentation"` takes the wrapper out of the accessibility tree
+      // and leaves its children where they were, so the list still owns the
+      // divider — a walk that stopped at the first role attribute would report
+      // the wrapper as the owner and leave the separator role on.
+      const divider = wrapped.nativeElement.querySelector('tn-divider') as HTMLElement;
+      expect(divider.getAttribute('role')).toBe('presentation');
+
+      const { violated } = await axeResult(
+        wrapped.nativeElement,
+        [wrapped.nativeElement.querySelector('tn-list') as HTMLElement],
+        ['aria-required-children']
+      );
+      expect(violated).toEqual([]);
+    });
+  });
+
+  describe('a divider projected into a list', () => {
+    let projected: ComponentFixture<ProjectedHostComponent>;
+
+    beforeEach(async () => { projected = await createHost(ProjectedHostComponent); });
+
+    it('is decorative, though it was declared outside one', async () => {
       const divider = projected.nativeElement.querySelector('tn-divider') as HTMLElement;
       expect(divider.getAttribute('role')).toBe('presentation');
 
@@ -280,13 +334,7 @@ describe('tn-list section accessibility', () => {
   describe('outside a list', () => {
     let standalone: ComponentFixture<StandaloneHostComponent>;
 
-    beforeEach(async () => {
-      await TestBed.resetTestingModule();
-      await TestBed.configureTestingModule({ imports: [StandaloneHostComponent] })
-        .compileComponents();
-      standalone = TestBed.createComponent(StandaloneHostComponent);
-      standalone.detectChanges();
-    });
+    beforeEach(async () => { standalone = await createHost(StandaloneHostComponent); });
 
     it('tn-divider keeps role="separator" and its orientation', () => {
       const divider = standalone.nativeElement.querySelector('tn-divider') as HTMLElement;

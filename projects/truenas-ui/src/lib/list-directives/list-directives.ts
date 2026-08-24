@@ -1,4 +1,6 @@
-import { Directive } from '@angular/core';
+import { Directive, ElementRef, inject, signal } from '@angular/core';
+import type { OnInit } from '@angular/core';
+import { ariaOwnerRole } from '../a11y/aria-owner';
 
 /*
  * Content directives for `tn-list-item` / `tn-list-option`.
@@ -114,23 +116,32 @@ export class TnListItemSecondaryDirective {}
 export class TnListItemTrailingDirective {}
 
 /**
- * The divider's styling, for an element that is already something else.
+ * Makes an element that is already something else read as a divider.
  *
- * Carries no role. It used to declare `role="separator"`, which is the defect
- * in #237 arriving by a second route: these directives are list content, and a
- * separator is not an allowed child of `role="list"` — so inside the one place
- * this is meant to be used, that role invalidated the list. It also matches
- * `tn-divider` itself, where it was a second source for an attribute
- * `TnDividerComponent` already owns and now varies by context.
+ * Same ARIA as `TnDividerComponent` and for the same reason (#237):
+ * `role="separator"`, unless a `role="list"` is what owns it, where a separator
+ * is not an allowed child and invalidates the list.
  *
- * A decorative rule needs no role. Use the `<tn-divider>` element where the
- * separator semantics are wanted; it keeps them everywhere they are valid.
+ * It no longer matches `tn-divider` as well. On that element it only ever
+ * restated what the component already declares, and once the role varies by
+ * context a second source for it is a second answer waiting to disagree.
  */
 @Directive({
-  selector: 'tn-divider, [tnDivider]',
+  selector: '[tnDivider]',
   standalone: true,
   host: {
-    'class': 'tn-divider'
+    'class': 'tn-divider',
+    '[attr.role]': 'role()'
   }
 })
-export class TnDividerDirective {}
+export class TnDividerDirective implements OnInit {
+  private readonly host = inject(ElementRef).nativeElement as HTMLElement;
+
+  protected readonly role = signal<'separator' | 'presentation'>('separator');
+
+  ngOnInit(): void {
+    if (ariaOwnerRole(this.host) === 'list') {
+      this.role.set('presentation');
+    }
+  }
+}

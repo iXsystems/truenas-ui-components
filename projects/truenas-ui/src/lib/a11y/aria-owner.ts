@@ -24,8 +24,15 @@
  * ```
  *
  * Asking "is there a list above me" instead answers yes here and demotes a
- * valid separator. Role-less elements are transparent — a plain `<div>` wrapper
- * between the two passes ownership through, which is also how axe walks it.
+ * valid separator.
+ *
+ * Two kinds of ancestor are TRANSPARENT and passed straight through, because
+ * that is what the accessibility tree does with them and what axe does when it
+ * collects a container's owned nodes: an element with no role at all — a plain
+ * `<div>` wrapper — and one whose role is `presentation`/`none`, which removes
+ * the element from the tree while leaving its children where they were. Stopping
+ * at a presentational wrapper would report it as the owner, and a divider inside
+ * one inside a list would keep the separator role that invalidates the list.
  *
  * WHY THE DOM AND NOT DEPENDENCY INJECTION
  * ----------------------------------------
@@ -52,8 +59,11 @@
  * is invisible here, and so is `aria-owns`, which can reparent an element from
  * anywhere in the document. Neither is a gap this library can reach: its own
  * containers all declare their roles, and a `<ul>` cannot legally contain a
- * `<tn-divider>` in the first place. A component that needs either should say
- * so rather than widening this quietly.
+ * `<tn-divider>` in the first place. Nor does it model the cases where a
+ * `presentation` role is IGNORED — on a focusable element, or one carrying a
+ * global `aria-*` attribute — which would make a wrapper opaque again. A
+ * component that needs any of those should say so rather than widening this
+ * quietly.
  *
  * Call it once, from `ngOnInit`: by then the host is attached to its parent
  * (projection included) and host bindings have not run yet, so a signal set
@@ -65,5 +75,16 @@ export function ariaOwnerRole(host: Element): string | null {
   // From the parent, not the host: `closest` matches the element it starts on,
   // so a host with a role of its own would otherwise be reported as its own
   // owner.
-  return host.parentElement?.closest('[role]')?.getAttribute('role') ?? null;
+  let candidate = host.parentElement?.closest('[role]') ?? null;
+  while (candidate) {
+    // `role` is a token list and the first valid token wins, so an empty or
+    // whitespace-only attribute names no role and is transparent like any
+    // other unmarked element.
+    const role = (candidate.getAttribute('role') ?? '').trim().split(/\s+/)[0];
+    if (role && role !== 'presentation' && role !== 'none') {
+      return role;
+    }
+    candidate = candidate.parentElement?.closest('[role]') ?? null;
+  }
+  return null;
 }

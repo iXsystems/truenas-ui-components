@@ -262,8 +262,8 @@ export interface AxeScanOptions {
    *
    * `axeScan` throws on a childless, textless root, because that is what a
    * fixture whose `detectChanges()` never ran looks like. A component that IS
-   * its host looks the same — `tn-divider` has a 0-byte template and declares
-   * `role="separator"` on the host — and nothing in the DOM tells the two apart,
+   * its host looks the same — `tn-divider` has a 0-byte template and renders its
+   * whole ARIA on the host — and nothing in the DOM tells the two apart,
    * so the caller says which it has. The scan still has to find something: a
    * root that is empty AND carries no `role` or `aria-*` is rejected whatever
    * this says.
@@ -438,8 +438,8 @@ export async function axeScan(
       'axeScan: the scanned root is empty — no child elements and no text — so '
       + 'a clean result from it would say nothing about the component. Check the '
       + 'fixture rendered and that detectChanges() ran. If the component IS its '
-      + 'host — tn-divider has a 0-byte template and declares role="separator" in '
-      + 'host: {} — pass { hostOnly: true } to say the emptiness is expected.'
+      + 'host — tn-divider has a 0-byte template and renders its whole ARIA on '
+      + 'the host — pass { hostOnly: true } to say the emptiness is expected.'
     );
   }
   // `hostOnly` relaxes the guard; it does not switch it off. A root with nothing
