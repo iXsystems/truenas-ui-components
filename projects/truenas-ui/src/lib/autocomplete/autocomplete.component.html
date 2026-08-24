@@ -10,7 +10,7 @@
     [tnTestId]="resolvedTestId()"
     [class.open]="isOpen()"
     [class.disabled]="isDisabled()"
-    [placeholder]="placeholder()"
+    [placeholder]="resolvedPlaceholder()"
     [disabled]="isDisabled()"
     [value]="searchTerm()"
     [attr.aria-label]="ariaLabel()"
@@ -72,15 +72,15 @@
           class="tn-autocomplete__loading"
           tnTestIdType="autocomplete"
           [tnTestId]="statusTestIdParts('loading')">
-          <tn-spinner [diameter]="16" [strokeWidth]="2" [ariaLabel]="loadingText()" />
-          <span>{{ loadingText() }}</span>
+          <tn-spinner [diameter]="16" [strokeWidth]="2" [ariaLabel]="resolvedLoadingText()" />
+          <span>{{ resolvedLoadingText() }}</span>
         </div>
       } @else if (!hasResults()) {
         <div
           class="tn-autocomplete__no-results"
           tnTestIdType="autocomplete"
           [tnTestId]="statusTestIdParts('no-results')">
-          {{ noResultsText() }}
+          {{ resolvedNoResultsText() }}
         </div>
       }
     </div>

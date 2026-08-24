@@ -73,7 +73,7 @@
             [indeterminate]="selectAllIndeterminate()"
             [disabled]="true"
             [hideLabel]="true" />
-          {{ selectAllLabel() }}
+          {{ resolvedSelectAllLabel() }}
         </div>
         <div class="tn-select-separator" role="separator"></div>
       }
@@ -162,7 +162,7 @@
       <!-- No Options Message -->
       @if (!hasAnyOptions()) {
         <div class="tn-select-no-options">
-          {{ noOptionsLabel() }}
+          {{ resolvedNoOptionsLabel() }}
         </div>
       }
     </div>

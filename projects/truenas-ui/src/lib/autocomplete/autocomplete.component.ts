@@ -7,15 +7,17 @@ import {
   computed,
   effect,
   forwardRef,
+  InjectionToken,
   inject,
   input,
   isDevMode,
+  isSignal,
   output,
   signal,
   untracked,
   viewChild,
 } from '@angular/core';
-import type { EmbeddedViewRef, OnDestroy, TemplateRef } from '@angular/core';
+import type { EmbeddedViewRef, OnDestroy, Signal, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { Subscription } from 'rxjs';
@@ -34,6 +36,40 @@ import { TnTestIdDirective, controlTestId, optionTestId, scopeTestId, type TnTes
 export type TnAutocompleteOption<T = unknown> = TnSelectOption<T>;
 
 let nextId = 0;
+
+/**
+ * Copy rendered inside `tn-autocomplete` that is the same for every instance in
+ * an app. Provide {@link TN_AUTOCOMPLETE_LABELS} at the app root rather than
+ * repeating the identical strings on each call site; inputs on
+ * `<tn-autocomplete>` still win where one instance needs its own wording.
+ */
+export interface TnAutocompleteLabels {
+  /** Placeholder shown in the text field while it is empty. */
+  placeholder: string;
+  /** Text shown next to the spinner while `loading` is set. */
+  loading: string;
+  /** Text shown when no option matches the search term. */
+  noResults: string;
+}
+
+/** English defaults used when no `TN_AUTOCOMPLETE_LABELS` provider is registered. */
+export const TN_AUTOCOMPLETE_DEFAULT_LABELS: TnAutocompleteLabels = {
+  placeholder: 'Type to search...',
+  loading: 'Loading...',
+  noResults: 'No results found',
+};
+
+/**
+ * DI token for app-wide default labels. Provide either a static object or a
+ * `Signal<TnAutocompleteLabels>` — the latter lets every autocomplete react to
+ * language changes when the consumer wires it up to an i18n service.
+ *
+ * Explicit input bindings on `<tn-autocomplete>` still win over these defaults.
+ */
+export const TN_AUTOCOMPLETE_LABELS = new InjectionToken<TnAutocompleteLabels | Signal<TnAutocompleteLabels>>(
+  'TN_AUTOCOMPLETE_LABELS',
+  { providedIn: 'root', factory: () => TN_AUTOCOMPLETE_DEFAULT_LABELS },
+);
 
 @Component({
   selector: 'tn-autocomplete',
@@ -73,8 +109,13 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    */
   compareWith = input<((a: T | null, b: T | null) => boolean) | undefined>(undefined);
 
-  /** Placeholder text for the input */
-  placeholder = input<string>('Type to search...');
+  /**
+   * Placeholder text for the input. Label inputs are nullable on purpose: the
+   * component reads the `resolved*` computeds below, which fall back to
+   * {@link TN_AUTOCOMPLETE_LABELS} (a signal — so language changes propagate
+   * live). An explicit input binding always wins.
+   */
+  placeholder = input<string | undefined>(undefined);
 
   /** Whether the input is disabled */
   disabled = input<boolean>(false);
@@ -98,13 +139,13 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   loading = input<boolean>(false);
 
   /** Text shown next to the spinner while `loading` is set. */
-  loadingText = input<string>('Loading...');
+  loadingText = input<string | undefined>(undefined);
 
   /** Custom filter function. Defaults to case-insensitive includes on the option label */
   filterFn = input<((option: TnAutocompleteOption<T>, searchTerm: string) => boolean) | undefined>(undefined);
 
   /** Text shown when no options match the search */
-  noResultsText = input<string>('No results found');
+  noResultsText = input<string | undefined>(undefined);
 
   /**
    * Maximum number of options to render.
@@ -156,6 +197,28 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    * invalid, required). All-null when standalone or when `ariaLabel` overrides.
    */
   protected readonly fieldAria = injectTnFormFieldAria(this.ariaLabel);
+
+  private readonly providedLabels = inject(TN_AUTOCOMPLETE_LABELS);
+
+  /**
+   * Normalize the injected token into a Signal so consumers can supply either a
+   * plain object or a reactive signal (e.g. derived from a TranslateService's
+   * onLangChange) and the autocomplete re-renders when labels change.
+   */
+  private readonly defaultLabels: Signal<TnAutocompleteLabels> = isSignal(this.providedLabels)
+    ? this.providedLabels
+    : signal(this.providedLabels).asReadonly();
+
+  /** Resolved labels: an explicit input takes precedence over the DI default. */
+  protected readonly resolvedPlaceholder = computed(
+    () => this.placeholder() ?? this.defaultLabels().placeholder,
+  );
+  protected readonly resolvedLoadingText = computed(
+    () => this.loadingText() ?? this.defaultLabels().loading,
+  );
+  protected readonly resolvedNoResultsText = computed(
+    () => this.noResultsText() ?? this.defaultLabels().noResults,
+  );
 
   /** Emits the full option (label + value) when one is selected */
   optionSelected = output<TnAutocompleteOption<T>>();
